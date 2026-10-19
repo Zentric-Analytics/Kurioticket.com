@@ -199,17 +199,14 @@ test("mobile result rhythm no longer reserves space for the removed summary card
   );
 });
 
-test("Cars keeps flat right-side mobile tracking while desktop blue card spans map width", () => {
-  assert.match(alertSource, /col-start-2 row-start-1 mb-0 w-auto min-w-0 max-w-full justify-self-end bg-transparent/);
-  assert.match(alertSource, /sm:col-span-2 sm:col-start-1 sm:row-start-1 sm:w-full/);
-  assert.match(alertSource, /sm:border-blue-100 sm:bg-\[#EDF6FF\]/);
-  assert.match(alertSource, /lg:bg-\[#EEF6FF\]/);
-  assert.match(alertSource, /lg:col-span-1 lg:w-full lg:max-w-none lg:justify-self-stretch/);
-  assert.match(resultsSource, /data-cars-price-alert-sidebar-slot[\s\S]*?<CarsResultsMapPreview/);
+test("Cars keeps a flat accessible tracking toggle inside rate details across breakpoints", () => {
+  const picker = readFileSync("src/components/results/CarDealPicker.tsx", "utf8");
+  assert.match(alertSource, /data-cars-price-alert className="inline-flex min-w-0 shrink-0 items-center justify-end"/);
   assert.match(alertSource, /text-\[#1769AA\]/);
-  assert.match(alertSource, /sm:rounded-full sm:bg-blue-50/);
-  assert.match(alertSource, /whitespace-nowrap text-\[12px\] font-semibold leading-\[17px\] text-\[#07133B\]/);
-  assert.match(alertSource, /h-11 w-\[51px\] shrink-0/);
-  assert.match(alertSource, /h-11 w-11 shrink-0 items-center justify-center rounded-full[^"]*sm:w-12/);
-  assert.match(alertSource, /h-6 w-11 shrink-0 items-center rounded-full border transition-colors sm:h-7 sm:w-12/);
+  assert.match(alertSource, /whitespace-nowrap text-\[11px\] font-semibold leading-4/);
+  assert.match(alertSource, /relative inline-flex h-11 w-11 shrink-0 items-center justify-center/);
+  assert.match(alertSource, /relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors/);
+  assert.match(picker, /data-car-rate-provider-alert-row/);
+  assert.doesNotMatch(resultsSource, /data-cars-price-alert-sidebar-slot|<CarPriceAlertControl/);
 });
+

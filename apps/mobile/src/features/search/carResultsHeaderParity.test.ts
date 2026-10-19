@@ -156,13 +156,13 @@ test("Cars keep a modest outer gutter while preserving result-card spacing with 
   const slot = cars.match(/carResultCardSlot:\{([^}]*)\}/)?.[1] ?? "";
   assert.doesNotMatch(slot, /(?:minW|w|W)idth|position|absolute|transform|margin(?:Horizontal)?:-|Dimensions|window|screen/);
   assert.doesNotMatch(cars, /carResultCardSlot:\{[^}]*width:"100%"|carResultCardSlot:\{[^}]*Dimensions/);
-  assert.match(cars, /renderItem=\{\(\{item,index\}\)=><View style=\{r\.carResultCardSlot\}><CarResultCard result=\{item\} rank=\{index\} badge=\{carBadges\.get\(item\.id\)\} imageUri=\{resolveNativeCarImageUri\(item\.imageUrl\)\} searchParams=\{payload\} resultBackgroundColor=\{carCanvasColor\}\/><\/View>\}/);
+  assert.match(cars, /renderItem=\{\(\{item,index\}\)=><View style=\{r\.carResultCardSlot\}><CarResultCard result=\{item\} rank=\{index\} badge=\{carBadges\.get\(item\.id\)\} imageUri=\{resolveNativeCarImageUri\(item\.imageUrl\)\} searchParams=\{payload\} resultBackgroundColor=\{carCanvasColor\} plan=\{plan\.plan\} priceAlertsAvailable=\{availability\.priceAlerts\}\/><\/View>\}/);
   assert.match(cars, /style=\{\[r\.skeleton,r\.carResultCardSlot,\{backgroundColor:/);
   assert.match(cars, /skeleton:\{height:216/);
   assert.doesNotMatch(cars, /<NativeCarPriceAlert[^>]*carResultCardSlot|<View accessibilityLabel="Car results summary"[^>]*carResultCardSlot/);
 });
 
-test("Cars result count and tracking row match mobile-web type, inset and breathing space", () => {
+test("Cars result count preserves mobile-web type, inset and breathing space", () => {
   assert.match(cars, /const carResultCountLabel = \(count: number\) => `\$\{count\} \$\{count === 1 \? "result" : "results"\} found`/);
   assert.match(cars, /<Text accessibilityRole="header" numberOfLines=\{1\} style=\{\[r\.carResultCount,\{color:theme\.textPrimary\}\]\}>\{carResultCountLabel\(filtered\.length\)\}<\/Text>/);
   assert.match(cars, /carResultCount:\{fontSize:12,lineHeight:16,fontWeight:"600",fontFamily:appFonts\.semibold\}/);
@@ -187,60 +187,40 @@ test("Cars result count and tracking row match mobile-web type, inset and breath
   assert.match(hotels, /hotelResultsItemSeparator: \{ height: 14 \}/);
 });
 
-test("native Cars summary follows phone web typography and preserves exact tracking-toggle placement", () => {
+test("native and web Cars keep compact result counts while tracking only the opened rate", () => {
   const webCars = readFileSync("../../src/components/results/CarsResultsClient.tsx", "utf8");
   const webAlert = readFileSync("../../src/components/results/CarPriceAlertControl.tsx", "utf8");
+  const picker = readFileSync("src/features/search/NativeCarResultOfferPicker.tsx", "utf8");
   assert.match(webCars, /"max-sm:pt-2"/);
-  assert.match(webCars, /truncate whitespace-nowrap text-\[12px\] font-semibold leading-4 tracking-\[-0\.002em\]/);
-  assert.match(webCars, /gap-x-1\.5 gap-y-0 px-2 max-\[359px\]:px-1/);
-  assert.match(webAlert, /flex h-11 w-\[51px\] shrink-0 items-center justify-end/);
-  assert.match(webAlert, /relative inline-flex h-11 w-11 shrink-0 items-center justify-center/);
-  assert.match(cars, /carResultsSummaryRow:\{marginTop:8,marginBottom:2,minHeight:44,paddingHorizontal:8,flexDirection:"row",alignItems:"center",justifyContent:"space-between",gap:8\},carResultsSummaryRowNarrow:\{paddingHorizontal:4\}/);
-  assert.match(cars, /carResultCount:\{fontSize:12,lineHeight:16,fontWeight:"600",fontFamily:appFonts\.semibold\}/);
-  assert.match(carAlert, /control: \{ flexShrink: 1, minWidth: 0, minHeight: 44, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 6 \}/);
-  assert.match(carAlert, /switchSlot: \{ width: 51, height: 44, flexShrink: 0, flexDirection: "row", alignItems: "center", justifyContent: "flex-end" \}/);
-  assert.match(carAlert, /switchTouchTarget: \{ width: 44, height: 44, alignItems: "center", justifyContent: "center" \}/);
-  assert.match(carAlert, /switchTrack: \{ width: 44, height: 24/);
-  assert.match(webCars, /max-sm:w-\[calc\(100%_-_28px\)\]/);
-  assert.match(cars, /useWindowDimensions/);
-  assert.match(cars, /viewportWidth < 360 && r\.carResultsSummaryRowNarrow/);
-  const webWrapperInset = 28 / 2; // standalone mobile web is 100% - 28px
-  const nativeWrapperInset = 14; // native FlatList body padding
-  for (const [viewport, webSummaryInset, nativeSummaryInset] of [[320, 4, 4], [359, 4, 4], [360, 8, 8], [390, 8, 8], [414, 8, 8]] as const) {
-    assert.equal(nativeWrapperInset + nativeSummaryInset, webWrapperInset + webSummaryInset,
-      "count and toggle match mobile-web gutter at viewport width " + viewport);
-  }
-  assert.equal(nativeWrapperInset + 8, 22);
-  assert.equal(nativeWrapperInset + 4, 18);
-});
-
-test("Cars Results places one compact price control alongside the count without a separate panel", () => {
-  assert.equal((cars.match(/<NativeCarPriceAlert/g) ?? []).length, 1);
-  const summary = cars.indexOf('<View accessibilityLabel="Car results summary"');
-  const count = cars.indexOf('carResultCountLabel(filtered.length)', summary);
-  const alertControl = cars.indexOf("<NativeCarPriceAlert", summary);
-  const list = cars.indexOf("<FlatList ref={carScrollRef}");
-  assert.ok(summary >= 0 && count > summary && alertControl > count);
-  assert.ok(list > alertControl);
-  assert.match(cars, /carFilterSectionHeader:\{paddingTop:8,paddingBottom:8\}/);
-  assert.match(hotels, /hotelFilterSectionHeader: \{ paddingBottom: 12 \}/);
-  assert.match(cars, /body:\{paddingHorizontal:14\}/);
-  assert.match(cars, /carResultsSummaryRow:\{marginTop:8,marginBottom:2,minHeight:44,paddingHorizontal:8,flexDirection:"row",alignItems:"center",justifyContent:"space-between",gap:8\},carResultsSummaryRowNarrow:\{paddingHorizontal:4\}/);
-  assert.match(carAlert, /<Bell accessible=\{false\} size=\{16\}/);
-  assert.match(carAlert, /<Pressable accessibilityRole="switch" accessibilityLabel="Track car prices"/);
-  assert.match(carAlert, />Track car prices<\/Text>/);
-  assert.match(carAlert, /numberOfLines=\{1\} ellipsizeMode="tail"/);
-  assert.doesNotMatch(carAlert, /Track rental car prices|<Switch\b/);
-  assert.doesNotMatch(carAlert, /styles\.control, \{ backgroundColor: theme\.priceAlertSurface/);
-  assert.match(carAlert, /control: \{ flexShrink: 1, minWidth: 0, minHeight: 44/);
-  assert.match(carAlert, /switchSlot: \{ width: 51, height: 44, flexShrink: 0, flexDirection: "row", alignItems: "center", justifyContent: "flex-end" \}/);
+  assert.match(webCars, /truncate whitespace-nowrap text-\[12px\] font-semibold leading-4/);
+  assert.match(cars, /carResultCount:\{fontSize:12,lineHeight:16,fontWeight:"600"/);
+  assert.doesNotMatch(webCars, /<CarPriceAlertControl|data-cars-price-alert-sidebar-slot/);
+  assert.doesNotMatch(cars, /<NativeCarPriceAlert/);
+  assert.match(picker, /<NativeCarPriceAlert/);
+  assert.match(picker, /Booking provider ·/);
+  assert.match(webAlert, /relative inline-flex h-11 w-11 shrink-0/);
+  assert.match(carAlert, /switchSlot: \{ width: 44, height: 44/);
   assert.match(carAlert, /switchTouchTarget: \{ width: 44, height: 44/);
   assert.match(carAlert, /switchTrack: \{ width: 44, height: 24/);
+  assert.match(cars, /viewportWidth < 360 && r\.carResultsSummaryRowNarrow/);
+});
+
+test("Cars offers render per-rate tracking beside provider while results stay count-only", () => {
+  const picker = readFileSync("src/features/search/NativeCarResultOfferPicker.tsx", "utf8");
+  const summary = cars.slice(cars.indexOf("const listHeader="), cars.indexOf("const listEmpty="));
+  assert.match(summary, /carResultCountLabel\(filtered\.length\)/);
+  assert.doesNotMatch(summary, /NativeCarPriceAlert/);
+  assert.match(picker, /sellerRow/);
+  assert.match(picker, /Booking provider ·/);
+  assert.match(picker, /<NativeCarPriceAlert key=\{result\.id \+ ":" \+ selectedChoice\.key\}/);
+  assert.match(picker, /plan=\{plan\} resultId=\{result\.id\} offer=\{selectedChoice\.offer\}/);
+  assert.match(picker, /<CarPriceAlertSnackbar/);
+  assert.match(carAlert, />Track prices<\/Text>/);
+  assert.match(carAlert, /<Bell accessible=\{false\} size=\{14\}/);
   assert.match(carAlert, /travelApi\.priceAlerts\(\)/);
   assert.match(carAlert, /updatePriceAlertStatus/);
   assert.match(carAlert, /createPriceAlert/);
-  assert.doesNotMatch(carAlert, /not available yet/);
-  assert.match(hotels, /compactPriceAlertSwitchSlot: \{ minWidth: 51, minHeight: 44, flexShrink: 0, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 4 \}/);
+  assert.match(hotels, /compactPriceAlertSwitchSlot: \{ minWidth: 51, minHeight: 44/);
 });
 
 test("Cars Results gives handled child taps to its primary vertical scroll owner", () => {
@@ -261,7 +241,7 @@ test("Cars Results gives handled child taps to its primary vertical scroll owner
   const listHeaderStart = cars.indexOf("const listHeader=");
   const listHeaderEnd = cars.indexOf("const listEmpty=", listHeaderStart);
   const listHeader = cars.slice(listHeaderStart, listHeaderEnd);
-  assert.ok(listHeader.indexOf("<View accessibilityLabel=\"Car results summary\"") < listHeader.indexOf("<NativeCarPriceAlert"));
+  assert.doesNotMatch(listHeader, /<NativeCarPriceAlert/);
   assert.match(resultsScrollOpeningTag, /renderItem=\{\(\{item,index\}\)=>[\s\S]*?<CarResultCard/);
 });
 
@@ -277,7 +257,7 @@ test("Cars Price Alert keeps focus reconciliation silent while mutation progress
 test("Cars Price Alert reconciliation remains race-safe and preserves its known match", () => {
   assert.match(carAlert, /const disabled = loading \|\| !alertKnown \|\| \(!available && !tracking\)/);
   assert.doesNotMatch(carAlert, /const disabled = pending \|\|/);
-  assert.match(carAlert, /matchingAlertState && matchingAlertState\.planKey === planKey/);
+  assert.match(carAlert, /matchingAlertState && matchingAlertState\.planKey === scopeKey/);
   assert.match(carAlert, /const reconciliation = \+\+reconciliationRef\.current/);
   assert.match(carAlert, /if \(reconciliation !== reconciliationRef\.current\) return/);
   assert.doesNotMatch(carAlert, /setLoading\(true\);\s*setCurrentMatchingAlert\(undefined\)/);
@@ -348,5 +328,5 @@ test("Cars Price Alert removes the manual target sheet and uses transient snackb
   assert.match(carAlert, /Animated\.timing\(opacity, \{ toValue: 0/);
   assert.match(carAlert, /if \(finished\) onDismiss\(feedback\)/);
   assert.match(carAlert, /clearTimeout\(dismissTimer\)/);
-  assert.match(cars, /onDismiss=\{dismissPriceAlertFeedback\}/);
+  assert.match(readFileSync("src/features/search/NativeCarResultOfferPicker.tsx", "utf8"), /<CarPriceAlertSnackbar/);
 });

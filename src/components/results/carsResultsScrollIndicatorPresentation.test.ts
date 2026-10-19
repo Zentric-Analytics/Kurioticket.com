@@ -35,14 +35,15 @@ test("native scrollbar suppression is route-owned and mobile-only", () => {
   assert.doesNotMatch(globalCss, /\*::-webkit-scrollbar/);
 });
 
-test("Cars indicator starts at the Track prices bar and measures the results region", () => {
+test("Cars indicator starts at the results summary after the price alert moves to rate details", () => {
   assert.match(resultsSource, /data-cars-results-scroll-region/);
-  assert.match(indicatorSource, /data-cars-price-alert/);
+  assert.match(indicatorSource, /data-cars-results-summary-row/);
+  assert.doesNotMatch(indicatorSource, /data-cars-price-alert/);
   assert.match(indicatorSource, /data-cars-results-scroll-region/);
   assert.match(indicatorSource, /regionBottom - viewportHeight/);
 });
 
-test("custom indicator is passive and uses dynamic Track-prices top geometry", () => {
+test("custom indicator is passive and uses dynamic results-summary top geometry", () => {
   assert.match(indicatorSource, /pointer-events-none fixed/);
   assert.match(indicatorSource, /safe-area-inset-right/);
   assert.match(indicatorSource, /safe-area-inset-bottom/);

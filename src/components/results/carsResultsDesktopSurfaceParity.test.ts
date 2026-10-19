@@ -85,10 +85,8 @@ test("desktop Cars results body is compact, centered, and keeps shared surfaces 
     results,
     /data-cars-results-loading-hotel-column[\s\S]*?lg:max-w-\[928px\] lg:rounded-2xl[\s\S]*?lg:grid-cols-\[232px_minmax\(0,1fr\)\] xl:grid-cols-\[236px_minmax\(0,1fr\)\]/,
   );
-  assert.match(
-    alert,
-    /data-cars-price-alert[\s\S]*?className="col-start-2 row-start-1 mb-0 w-auto min-w-0 max-w-full/,
-  );
+  assert.match(alert, /data-cars-price-alert className="inline-flex min-w-0 shrink-0 items-center justify-end"/);
+  assert.doesNotMatch(results, /data-cars-price-alert-sidebar-slot/);
   assert.match(
     card,
     /hidden md:grid lg:grid-cols-\[192px_minmax\(0,1fr\)\] xl:grid-cols-\[200px_minmax\(0,1fr\)\]/,
@@ -132,14 +130,12 @@ test("desktop Cars breathing room separates map, filters, toolbar and result car
   assert.doesNotMatch(results, /lg:max-w-\[1080px\]/);
 });
 
-test("desktop Cars aligns full-width tracking over the map while count and Sort remain visible", () => {
+test("desktop Cars keeps map and count-and-sort layout without a results-wide tracking bar", () => {
   assert.match(results, /lg:max-w-\[928px\] lg:rounded-2xl lg:border lg:border-\[#E1E6EA\]/);
   assert.match(results, /data-cars-results-content-column className=\{cn\("min-w-0 space-y-0 sm:space-y-4", !embedded && presentation === "standalone" && "lg:space-y-5"\)\}/);
-  assert.match(results, /data-cars-price-alert-sidebar-slot[\s\S]*?<CarsResultsMapPreview/);
-  assert.match(results, /data-cars-results-summary-row[\s\S]*?<CarPriceAlertControl[\s\S]*?desktopPortalTarget=\{desktopCarPriceAlertTarget\}/);
+  assert.match(results, /<CarsResultsMapPreview location=\{search\.pickupLocation\} \/>/);
+  assert.doesNotMatch(results, /data-cars-price-alert-sidebar-slot|<CarPriceAlertControl|desktopCarPriceAlertTarget/);
   assert.match(results, /lg:grid-cols-\[minmax\(0,1fr\)_auto\]/);
-  assert.match(alert, /lg:w-full lg:max-w-none lg:justify-self-stretch/);
-  assert.match(results, /data-cars-price-alert-sidebar-slot[\s\S]*?className="mb-3 w-full empty:hidden"/);
   assert.match(loading, /lg:max-w-\[928px\]/);
   assert.doesNotMatch(results, /lg:max-w-\[1080px\]/);
 });
@@ -207,16 +203,15 @@ test("desktop and mobile Cars result cards use the same pure-white surface", () 
   );
 });
 
-test("desktop price alert retains blue styling while mobile tracking sits directly on the page", () => {
-  const section = alert.match(/data-cars-price-alert\s+className="([^"]+)"/)?.[1];
+test("desktop and mobile car rates share an inline tracking control inside rate details", () => {
+  const picker = readFileSync(new URL("./CarDealPicker.tsx", import.meta.url), "utf8");
+  const section = alert.match(/data-cars-price-alert className="([^"]+)"/)?.[1];
   assert.ok(section);
-  assert.match(section, /bg-transparent px-0 py-0/);
-  assert.match(section, /sm:rounded-2xl sm:border sm:border-blue-100 sm:bg-\[#EDF6FF\] sm:px-4 sm:py-1 sm:shadow-sm/);
-  assert.match(section, /lg:col-span-1 lg:w-full lg:max-w-none lg:justify-self-stretch/);
-  assert.match(section, /lg:rounded-xl lg:border-\[#CFE0F8\] lg:bg-\[#EEF6FF\] lg:px-2 lg:py-0/);
-  assert.doesNotMatch(section.split("sm:")[0], /border|rounded|shadow|bg-\[#/);
+  assert.match(section, /inline-flex min-w-0 shrink-0 items-center justify-end/);
+  assert.doesNotMatch(section, /sm:rounded-2xl|lg:bg-\[#EEF6FF\]/);
+  assert.match(picker, /data-car-rate-provider-alert-row/);
+  assert.match(picker, /<CarPriceAlertControl/);
   assert.match(results, /<main className="flex-1 bg-\[#F5F7FB\] sm:bg-\[#f6f8fb\] lg:bg-white pb-8 lg:pb-12 lg:pt-6">/);
-  assert.doesNotMatch(section, /(?:sm|lg):bg-white/);
 });
 
 test("KAYAK car cards and loading canvases stay inside the same standalone desktop surface contract", () => {

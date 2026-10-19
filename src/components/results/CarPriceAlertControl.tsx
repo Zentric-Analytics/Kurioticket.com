@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { createPortal } from "react-dom";
 import { Bell, CheckCircle2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { CarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
+import type { CarOffer, CarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
 import {
   buildAutomaticCarPriceAlertPayload,
   matchingAutomaticCarPriceAlert,
   type MatchableCarPriceAlert,
+  type CarPriceAlertOfferScope,
 } from "@/lib/price-alerts/carPriceAlerts";
 import { supportedCurrencies } from "@/lib/region/supportedRegions";
 import { useLocale } from "@/components/layout/LocaleProvider";
@@ -23,17 +23,20 @@ type WebCarPriceAlert = MatchableCarPriceAlert & { id: string };
 type SuccessFeedback = "active" | "inactive" | null;
 type PriceTrackingError = "start" | "stop" | null;
 
-export function CarPriceAlertControl({ search, results, desktopPortalTarget = null }: {
+export function CarPriceAlertControl({ search, car, offer }: {
   search: CarSearchParams;
-  results: NormalizedCarResult[];
-  desktopPortalTarget?: HTMLElement | null;
+  car: NormalizedCarResult;
+  offer: CarOffer;
 }) {
   const router = useRouter();
   const { t: dictionary } = useLocale();
   const t = useCallback((key: string) => dictionary[key] ?? en[key] ?? key, [dictionary]);
-  const baseline = useMemo(() => results.flatMap(({ offers }) => offers)
-    .filter(({ totalPrice, currency }) => Number.isFinite(totalPrice) && totalPrice > 0 && supported.has(currency.trim().toUpperCase()))
-    .sort((left, right) => left.totalPrice - right.totalPrice)[0], [results]);
+  const baseline = Number.isFinite(offer.totalPrice) && offer.totalPrice > 0 && supported.has(offer.currency.trim().toUpperCase()) ? offer : undefined;
+  const scope: CarPriceAlertOfferScope = useMemo(() => ({
+    resultId: car.id,
+    offerId: offer.id,
+    providerName: offer.bookingProviderName.trim() || offer.rentalCompanyName.trim(),
+  }), [car.id, offer.id, offer.bookingProviderName, offer.rentalCompanyName]);
   const [matchingAlert, setMatchingAlert] = useState<WebCarPriceAlert>();
   const [reconciled, setReconciled] = useState(false);
   const [pending, setPending] = useState(false);
@@ -41,7 +44,6 @@ export function CarPriceAlertControl({ search, results, desktopPortalTarget = nu
   const [feedback, setFeedback] = useState<SuccessFeedback>(null);
   const [error, setError] = useState<PriceTrackingError>(null);
   const [snackbarLeaving, setSnackbarLeaving] = useState(false);
-  const [desktopSidebarActive, setDesktopSidebarActive] = useState(false);
   const pendingRef = useRef(false);
   const requestRef = useRef(0);
   const switchRef = useRef<HTMLButtonElement>(null);
@@ -55,21 +57,14 @@ export function CarPriceAlertControl({ search, results, desktopPortalTarget = nu
       if (response.status === 401) { setMatchingAlert(undefined); setReconciled(true); return; }
       if (!response.ok) return;
       const data = await response.json() as { alerts?: WebCarPriceAlert[] };
-      setMatchingAlert(matchingAutomaticCarPriceAlert(data.alerts ?? [], search));
+      setMatchingAlert(matchingAutomaticCarPriceAlert(data.alerts ?? [], search, scope));
       setReconciled(true);
     } finally {
       if (request === requestRef.current) setReconciled(true);
     }
-  }, [search]);
+  }, [search, scope]);
 
   useEffect(() => { void reconcile(); return () => { requestRef.current += 1; }; }, [reconcile]);
-  useEffect(() => {
-    const desktopQuery = window.matchMedia("(min-width: 1024px)");
-    const syncDesktopPlacement = () => setDesktopSidebarActive(desktopQuery.matches);
-    syncDesktopPlacement();
-    desktopQuery.addEventListener("change", syncDesktopPlacement);
-    return () => desktopQuery.removeEventListener("change", syncDesktopPlacement);
-  }, []);
   useEffect(() => {
     if (!feedback) return;
     const leave = window.setTimeout(() => setSnackbarLeaving(true), CAR_PRICE_ALERT_SNACKBAR_DURATION_MS - 180);
@@ -107,11 +102,11 @@ export function CarPriceAlertControl({ search, results, desktopPortalTarget = nu
       if (!next) saved = matchingAlert ? await patchStatus(matchingAlert, "PAUSED") : undefined;
       else if (matchingAlert?.status === "PAUSED") saved = await patchStatus(matchingAlert, "ACTIVE");
       else {
-        const response = await fetch("/api/price-alerts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(buildAutomaticCarPriceAlertPayload(search, baseline.totalPrice, baseline.currency)) });
+        const response = await fetch("/api/price-alerts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(buildAutomaticCarPriceAlertPayload(search, baseline.totalPrice, baseline.currency, scope)) });
         if (response.status === 401) { signIn(); return; }
         if (response.status === 409) {
           const duplicate = ((await response.json()) as { alert?: WebCarPriceAlert }).alert;
-          const canonical = duplicate && matchingAutomaticCarPriceAlert([duplicate], search);
+          const canonical = duplicate && matchingAutomaticCarPriceAlert([duplicate], search, scope);
           saved = canonical?.status === "PAUSED" ? await patchStatus(canonical, "ACTIVE") : canonical;
         } else if (response.ok) saved = ((await response.json()) as { alert: WebCarPriceAlert }).alert;
       }
@@ -122,33 +117,22 @@ export function CarPriceAlertControl({ search, results, desktopPortalTarget = nu
     finally { pendingRef.current = false; setPending(false); setOptimisticTracking(null); }
   };
 
-  if (!baseline) return null;
+  if (!baseline || !scope.providerName) return null;
   const committedTracking = matchingAlert?.status === "ACTIVE";
   const tracking = optimisticTracking ?? committedTracking;
   const disabled = !reconciled;
-  const trackingControl = (
-    <section
-      aria-label={t("carsResults.priceTracking.title")}
-      data-cars-price-alert
-      className="col-start-2 row-start-1 mb-0 w-auto min-w-0 max-w-full justify-self-end bg-transparent px-0 py-0 sm:col-span-2 sm:col-start-1 sm:row-start-1 sm:w-full sm:justify-self-center sm:rounded-2xl sm:border sm:border-blue-100 sm:bg-[#EDF6FF] sm:px-4 sm:py-1 sm:shadow-sm lg:col-span-1 lg:w-full lg:max-w-none lg:justify-self-stretch lg:rounded-xl lg:border-[#CFE0F8] lg:bg-[#EEF6FF] lg:px-2 lg:py-0"
-    >
-      <div className="flex min-h-11 min-w-0 items-center justify-end gap-1.5 max-[359px]:gap-1 sm:min-h-[52px] sm:justify-start sm:gap-2.5 lg:min-h-9 lg:gap-1.5">
-        <span className="inline-flex shrink-0 items-center justify-center text-[#1769AA] sm:h-8 sm:w-8 sm:rounded-full sm:bg-blue-50 sm:text-[#004BB8] lg:h-6 lg:w-6"><Bell className="h-4 w-4 max-[359px]:h-[15px] max-[359px]:w-[15px] sm:h-[17px] sm:w-[17px] lg:h-4 lg:w-4" aria-hidden="true" /></span>
-        <h2 className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-[12px] font-semibold leading-[17px] text-[#07133B] max-[359px]:text-[10.5px] sm:flex-1 sm:overflow-visible sm:whitespace-normal sm:[overflow-wrap:anywhere] sm:text-sm sm:text-slate-950 lg:overflow-hidden lg:whitespace-nowrap lg:text-[13px] lg:font-semibold lg:leading-4 lg:tracking-[-0.002em] lg:text-slate-950">{t("carsResults.priceTracking.title")}</h2>
-        <span className="flex h-11 w-[51px] shrink-0 items-center justify-end lg:h-9 lg:w-12">
-          <button ref={switchRef} type="button" role="switch" aria-checked={tracking} aria-busy={pending} disabled={disabled} aria-label={t("carsResults.priceTracking.title")} onClick={() => void toggle(!tracking)} className="relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 sm:w-12 lg:h-9">
-            <span aria-hidden="true" className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors sm:h-7 sm:w-12 lg:h-6 lg:w-11 ${tracking ? "border-[#004BB8] bg-[#004BB8]" : "border-slate-300 bg-slate-200"}`}>
-              <span className={`h-[18px] w-[18px] rounded-full bg-white shadow transition-transform sm:h-5 sm:w-5 ${tracking ? "translate-x-[23px] rtl:-translate-x-[23px] sm:translate-x-[22px] sm:rtl:-translate-x-[22px] lg:translate-x-5 lg:rtl:-translate-x-5" : "translate-x-[3px] rtl:-translate-x-[3px] lg:translate-x-0.5 lg:rtl:-translate-x-0.5"}`} />
-            </span>
-          </button>
-        </span>
+  return <>
+    <section aria-label={t("carsResults.priceTracking.title")} data-cars-price-alert className="inline-flex min-w-0 shrink-0 items-center justify-end">
+      <div className="flex min-h-11 min-w-0 items-center justify-end gap-1.5">
+        <Bell className="h-3.5 w-3.5 shrink-0 text-[#1769AA]" aria-hidden="true" />
+        <span className="whitespace-nowrap text-[11px] font-semibold leading-4 text-[#07133B]">Track prices</span>
+        <button ref={switchRef} type="button" role="switch" aria-checked={tracking} aria-busy={pending} disabled={disabled} aria-label={`${t("carsResults.priceTracking.title")} for ${scope.providerName} offer`} onClick={() => void toggle(!tracking)} className="relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35">
+          <span aria-hidden="true" className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors ${tracking ? "border-[#004BB8] bg-[#004BB8]" : "border-slate-300 bg-slate-200"}`}>
+            <span className={`h-[18px] w-[18px] rounded-full bg-white shadow transition-transform ${tracking ? "translate-x-[23px] rtl:-translate-x-[23px]" : "translate-x-[3px] rtl:-translate-x-[3px]"}`} />
+          </span>
+        </button>
       </div>
     </section>
-  );
-  return <>
-    {desktopSidebarActive && desktopPortalTarget && typeof document !== "undefined"
-      ? createPortal(trackingControl, desktopPortalTarget)
-      : <div className="contents lg:hidden" data-cars-price-alert-inline>{trackingControl}</div>}
     {feedback ? <div role="status" aria-live="polite" className={`fixed bottom-[calc(max(env(safe-area-inset-bottom),12px)+12px)] left-4 right-4 z-[110] mx-auto flex max-w-md items-center gap-2.5 rounded-[14px] border-[0.5px] border-[#C8DFF7] bg-[#EDF6FF] px-[13px] py-[11px] shadow-[0_4px_16px_rgba(15,23,42,0.16)] ${snackbarLeaving ? "cars-price-alert-snackbar-leaving" : "cars-price-alert-snackbar-entering"}`}>
       <CheckCircle2 className="h-5 w-5 shrink-0 text-[#1769AA]" aria-hidden="true" />
       <span className="flex min-w-0 flex-1 flex-col gap-px"><strong className="block text-[14px] font-bold leading-[19px] text-slate-950 lg:text-[15px] lg:font-bold lg:leading-5">{t(feedback === "active" ? "carsResults.priceTracking.active" : "carsResults.priceTracking.inactive")}</strong><span className="block text-[12.5px] leading-[17px] text-slate-600 lg:text-[13px] lg:font-medium lg:leading-5 lg:text-[#475569]">{t(feedback === "active" ? "carsResults.priceTracking.activeBody" : "carsResults.priceTracking.inactiveBody")}</span></span>

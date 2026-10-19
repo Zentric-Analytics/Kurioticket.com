@@ -10,6 +10,14 @@ const date = z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/);
 const time = z.string().trim().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/);
 const driverAge = z.string().trim().refine((value) => value === "18-70" || (/^\d{2}$/.test(value) && Number(value) >= 18 && Number(value) <= 70), "Invalid driver age.");
 
+/** Stable offer identity: never fall back to a different seller or rate. */
+export const carPriceAlertOfferSchema = z.object({
+  resultId: z.string().trim().min(1).max(600),
+  offerId: z.string().trim().min(1).max(600),
+  providerName: z.string().trim().min(1).max(240),
+});
+export type CarPriceAlertOfferScope = z.infer<typeof carPriceAlertOfferSchema>;
+
 export const canonicalCarPriceAlertQuerySchema = z.object({
   pickupLocation: location,
   dropoffLocation: z.preprocess((value) => typeof value === "string" && !value.trim() ? undefined : value, location.optional()),
@@ -18,6 +26,7 @@ export const canonicalCarPriceAlertQuerySchema = z.object({
   dropoffDate: date,
   dropoffTime: time,
   driverAge,
+  offer: carPriceAlertOfferSchema.optional(),
 }).transform((value) => ({ ...value, dropoffLocation: value.dropoffLocation || value.pickupLocation })).superRefine((value, context) => {
   const pickup = new Date(`${value.pickupDate}T${value.pickupTime}:00Z`);
   const dropoff = new Date(`${value.dropoffDate}T${value.dropoffTime}:00Z`);
@@ -28,7 +37,7 @@ export const canonicalCarPriceAlertQuerySchema = z.object({
 
 export type CanonicalCarPriceAlertQuery = z.infer<typeof canonicalCarPriceAlertQuerySchema>;
 
-export function buildCarPriceAlertPayload(search: CarSearchParams, targetPrice: number, currency: string) {
+export function buildCarPriceAlertPayload(search: CarSearchParams & { offer?: CarPriceAlertOfferScope }, targetPrice: number, currency: string) {
   const query = canonicalCarPriceAlertQuerySchema.parse(search);
   const normalizedCurrency = currency.trim().toUpperCase();
   if (!currencies.has(normalizedCurrency)) throw new Error("Unsupported alert currency.");
@@ -43,8 +52,8 @@ export function buildCarPriceAlertPayload(search: CarSearchParams, targetPrice: 
   };
 }
 
-export function buildAutomaticCarPriceAlertPayload(search: CarSearchParams, baselinePrice: number, currency: string) {
-  const targetPayload = buildCarPriceAlertPayload(search, 1, currency);
+export function buildAutomaticCarPriceAlertPayload(search: CarSearchParams, baselinePrice: number, currency: string, offer?: CarPriceAlertOfferScope) {
+  const targetPayload = buildCarPriceAlertPayload(offer ? { ...search, offer } : search, 1, currency);
   if (!Number.isFinite(baselinePrice) || baselinePrice <= 0) throw new Error("A valid baseline price is required.");
   return { ...targetPayload, targetPrice: undefined, mode: "AUTOMATIC" as const, baselinePrice };
 }
@@ -60,16 +69,21 @@ export type MatchableCarPriceAlert = {
 };
 
 /** Canonical automatic-alert identity shared by Cars clients and duplicate handling. */
-export function carPriceAlertMatchesSearch(alert: MatchableCarPriceAlert, search: CarSearchParams) {
+export function carPriceAlertMatchesSearch(alert: MatchableCarPriceAlert, search: CarSearchParams, offer?: CarPriceAlertOfferScope) {
   if (alert.type !== "CAR" || alert.mode !== "AUTOMATIC") return false;
   const expected = canonicalCarPriceAlertQuerySchema.safeParse(search);
   const actual = canonicalCarPriceAlertQuerySchema.safeParse(alert.query);
-  return expected.success && actual.success && carAlertMatchFields.every((field) =>
+  if (!expected.success || !actual.success) return false;
+  const current = actual.data.offer;
+  if (Boolean(offer) !== Boolean(current)) return false;
+  if (offer && (!current || !["resultId", "offerId", "providerName"].every((field) =>
+    normalizedAlertText(current[field as keyof CarPriceAlertOfferScope]) === normalizedAlertText(offer[field as keyof CarPriceAlertOfferScope])))) return false;
+  return carAlertMatchFields.every((field) =>
     normalizedAlertText(actual.data[field]) === normalizedAlertText(expected.data[field]));
 }
 
-export function matchingAutomaticCarPriceAlert<T extends MatchableCarPriceAlert>(alerts: T[], search: CarSearchParams) {
-  const matches = alerts.filter((alert) => carPriceAlertMatchesSearch(alert, search));
+export function matchingAutomaticCarPriceAlert<T extends MatchableCarPriceAlert>(alerts: T[], search: CarSearchParams, offer?: CarPriceAlertOfferScope) {
+  const matches = alerts.filter((alert) => carPriceAlertMatchesSearch(alert, search, offer));
   return matches.find(({ status }) => status === "ACTIVE") ?? matches.find(({ status }) => status === "PAUSED");
 }
 
@@ -81,5 +95,7 @@ export function carPriceAlertDuplicateKey(input: { origin: string | null; destin
   const query = parsed.data;
   if (input.origin?.trim().toLowerCase() !== query.pickupLocation.toLowerCase() || input.destination.trim().toLowerCase() !== query.dropoffLocation.toLowerCase()) return null;
   return [query.pickupLocation, query.dropoffLocation, query.pickupDate, query.pickupTime, query.dropoffDate, query.dropoffTime, query.driverAge]
-    .map((value) => value.toLowerCase()).concat((input.currency || "").trim().toUpperCase(), mode, mode === "TARGET" ? target.toFixed(2) : "automatic").join("|");
+    .map((value) => value.toLowerCase())
+    .concat((input.currency || "").trim().toUpperCase(), mode, mode === "TARGET" ? target.toFixed(2) : "automatic",
+      ...(query.offer ? ["offer", query.offer.resultId.toLowerCase(), query.offer.offerId.toLowerCase(), query.offer.providerName.toLowerCase()] : ["search-wide"])).join("|");
 }

@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Image, Pressable, Share, StyleSheet, Text, View } from "react-native";
 import { Award, BriefcaseBusiness, CarFront, DoorOpen, MapPin, Share2, ShieldCheck, Star, Tag, Users } from "lucide-react-native";
 import type { CarResult } from "../../api/travelApi";
+import type { SearchPlan } from "../flow/travelSearchModel";
 import { FlowIcon } from "../flow/FlowIcon";
 import { ui } from "./SearchUi";
 import { useSavedCar } from "./carSavedState";
@@ -18,9 +19,10 @@ import type { CarResultBadge } from "../../../../../src/lib/cars/carResults";
 
 const carBadgeIcons = { "Best value": Award, Cheapest: Tag, "Top rated": Star } as const;
 
-export function CarResultCard({ result, rank, badge, imageUri, searchParams, resultBackgroundColor }: {
+export function CarResultCard({ result, rank, badge, imageUri, searchParams, resultBackgroundColor, plan, priceAlertsAvailable }: {
   result: CarResult; rank: number; badge?: CarResultBadge; imageUri?: string;
   searchParams: Record<string, unknown>; resultBackgroundColor: string;
+  plan?: SearchPlan; priceAlertsAvailable: boolean;
 }) {
   const [imageFailed, setImageFailed] = useState(false);
   useEffect(() => setImageFailed(false), [imageUri]);
@@ -83,7 +85,7 @@ export function CarResultCard({ result, rank, badge, imageUri, searchParams, res
     </View>
     <View style={[c.lowerBand,{backgroundColor:carInformationSurface,borderTopColor:carDividerColor}]}>
       <View style={c.detailsColumn}>
-        <NativeCarResultOfferPicker result={result} displayCurrency={displayCurrency} rates={rates}/>
+        <NativeCarResultOfferPicker result={result} displayCurrency={displayCurrency} rates={rates} plan={plan} priceAlertsAvailable={priceAlertsAvailable}/>
       </View>
     </View>
   </View>;

@@ -16,3 +16,26 @@ test("automatic Cars alerts retain total-price baselines and canonical matching"
   assert.equal(matchingAutomaticCarPriceAlert([paused, active], search)?.id, "active");
   assert.equal(matchingAutomaticCarPriceAlert([{ ...active, mode: "TARGET" }], search), undefined);
 });
+
+test("offer-specific automatic alerts retain the chosen car, seller and rate identity", () => {
+  const offer = { resultId: "kayak-sandbox:vehicle-1", offerId: "quote-a", providerName: "QEEQ.COM" };
+  const otherOffer = { ...offer, offerId: "quote-b" };
+  const scoped = buildAutomaticCarPriceAlertPayload(search, 222, "USD", offer);
+  const searchWide = buildAutomaticCarPriceAlertPayload(search, 222, "USD");
+  assert.deepEqual(scoped.query.offer, offer);
+  assert.deepEqual(canonicalCarPriceAlertQuerySchema.parse(scoped.query).offer, offer);
+  assert.notEqual(carPriceAlertDuplicateKey(scoped), carPriceAlertDuplicateKey(searchWide));
+  assert.notEqual(carPriceAlertDuplicateKey(scoped), carPriceAlertDuplicateKey(buildAutomaticCarPriceAlertPayload(search, 222, "USD", otherOffer)));
+  const current = { id: "scoped", ...scoped, status: "ACTIVE" };
+  const older = { id: "legacy", ...searchWide, status: "ACTIVE" };
+  assert.equal(matchingAutomaticCarPriceAlert([older, current], search, offer)?.id, "scoped");
+  assert.equal(matchingAutomaticCarPriceAlert([older, current], search)?.id, "legacy");
+  assert.equal(matchingAutomaticCarPriceAlert([older, current], search, otherOffer), undefined);
+  assert.equal(matchingAutomaticCarPriceAlert([current], search, { ...offer, providerName: "Another Seller" }), undefined);
+});
+
+test("invalid offer identities are rejected rather than silently becoming search-wide", () => {
+  const invalid = buildAutomaticCarPriceAlertPayload(search, 222, "USD");
+  assert.equal(canonicalCarPriceAlertQuerySchema.safeParse({ ...invalid.query, offer: { resultId: "", offerId: "a", providerName: "Seller" } }).success, false);
+  assert.equal(canonicalCarPriceAlertQuerySchema.safeParse({ ...invalid.query, offer: { resultId: "car", offerId: "a" } }).success, false);
+});

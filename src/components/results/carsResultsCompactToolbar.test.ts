@@ -86,7 +86,7 @@ test("source-contract: Cars count row omits the old pagination range", () => {
   assert.doesNotMatch(summaryRow, /resultsDisplayRange|Showing results .* through|data-cars-results-visible-range/);
 });
 
-test("source-contract: Cars keeps mobile alert inline while desktop count and Sort share a row", () => {
+test("source-contract: Cars removes tracking from results while desktop count and Sort share a row", () => {
   const resultsToolbar = source.slice(
     source.lastIndexOf("<div", source.indexOf("data-cars-results-toolbar")),
     source.indexOf("{resultsTransitioning ?"),
@@ -114,11 +114,9 @@ test("source-contract: Cars keeps mobile alert inline while desktop count and So
   assert.match(resultsToolbar, /new Intl\.NumberFormat\(intlLocale/);
   assert.match(resultsToolbar, /\.format\(visibleResults\.length\)/);
 
-  const alertPosition = summaryRow.indexOf("<CarPriceAlertControl");
-  assert.ok(alertPosition > summaryRow.indexOf("<h2"));
-  assert.equal((resultsToolbar.match(/<CarPriceAlertControl/g) ?? []).length, 1);
-  assert.match(source, /data-cars-price-alert-sidebar-slot/);
-  assert.match(resultsToolbar, /desktopPortalTarget=\{desktopCarPriceAlertTarget\}/);
+  assert.doesNotMatch(resultsToolbar, /<CarPriceAlertControl/);
+  assert.doesNotMatch(source, /data-cars-price-alert-sidebar-slot|desktopCarPriceAlertTarget/);
+  assert.ok(summaryRow.indexOf("<h2") < summaryRow.indexOf("ref={carsSortRef}"));
   assert.match(summaryRow, /className=\{cn\("col-start-2 row-start-1 hidden[^"]*sm:flex sm:gap-2", !embedded && "sm:row-start-2 lg:col-start-2 lg:row-start-1 lg:justify-self-end lg:min-w-max lg:max-w-none"\)\}/);
   assert.ok(summaryRow.indexOf("<h2") < summaryRow.indexOf("ref={carsSortRef}"));
   assert.match(summaryRow, /className="cars-results-desktop-sort-label shrink-0 whitespace-nowrap[^"\n]*"/);
