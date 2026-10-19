@@ -233,7 +233,7 @@ test("Cars Results places one compact price control alongside the count without 
   assert.doesNotMatch(carAlert, /Track rental car prices|<Switch\b/);
   assert.doesNotMatch(carAlert, /styles\.control, \{ backgroundColor: theme\.priceAlertSurface/);
   assert.match(carAlert, /control: \{ flexShrink: 1, minWidth: 0, minHeight: 44/);
-  assert.match(carAlert, /switchSlot: \{ width: 51, minHeight: 44, flexShrink: 0/);
+  assert.match(carAlert, /switchSlot: \{ width: 51, height: 44, flexShrink: 0, flexDirection: "row", alignItems: "center", justifyContent: "flex-end" \}/);
   assert.match(carAlert, /switchTouchTarget: \{ width: 44, height: 44/);
   assert.match(carAlert, /switchTrack: \{ width: 44, height: 24/);
   assert.match(carAlert, /travelApi\.priceAlerts\(\)/);
