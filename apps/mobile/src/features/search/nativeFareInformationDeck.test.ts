@@ -206,7 +206,7 @@ test("fare content uses category, primary, and supporting colors without duplica
   assert.match(surface,/s\.conditionPenalty,\{color:supportingColor\}/);
   assert.doesNotMatch(surface,/s\.conditionState,\{color:conditionColors\[semantic\]\}/);
   assert.doesNotMatch(surface,/s\.conditionPenalty,\{color:conditionColors\.penalty\}/);
-  assert.match(surface,/s\.dealProvider,\{color:theme\.dark\?theme\.textPrimary:FLIGHT_DETAILS_LIGHT_DEAL_TEXT\}/);
+  assert.match(surface,/s\.dealProvider,narrow&&s\.dealProviderNarrow,\{color:theme\.dark\?theme\.textPrimary:FLIGHT_DETAILS_LIGHT_DEAL_TEXT\}/);
   assert.match(surface,/s\.detailLabel[^\n]*color:supportingColor/);
   assert.match(surface,/s\.detailValue[^\n]*color:theme\.textPrimary/);
   assert.match(surface,/s\.serviceDescription,\{color:theme\.textPrimary\}/);
