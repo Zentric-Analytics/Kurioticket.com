@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Image, LayoutAnimation, Linking, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useRef, useState } from "react";
+import { Alert, Image, InteractionManager, LayoutAnimation, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { CarFront, ChevronRight, IdCard, Info, MapPin, ShieldCheck, Wallet, X } from "lucide-react-native";
 import { SvgUri } from "react-native-svg";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
@@ -74,6 +74,40 @@ export function NativeCarResultOfferPicker({
   const [expanded, setExpanded] = useState(false);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [priceAlertFeedback, setPriceAlertFeedback] = useState<CarPriceAlertFeedback>(null);
+  const dealOpeningRef = useRef(false);
+  const pendingRateDealRef = useRef<string | null>(null);
+
+  // Mirror native Hotels: present the seller inside the app instead of launching Safari.
+  const openProviderInApp = async (url: string) => {
+    if (dealOpeningRef.current) return;
+    dealOpeningRef.current = true;
+    try {
+      const WebBrowser = await import("expo-web-browser");
+      await WebBrowser.openBrowserAsync(url, { dismissButtonStyle: "close" });
+    } catch {
+      Alert.alert("Unable to open provider", "Please refresh and try again.");
+    } finally {
+      dealOpeningRef.current = false;
+    }
+  };
+
+  const openPendingRateDeal = () => {
+    const url = pendingRateDealRef.current;
+    pendingRateDealRef.current = null;
+    if (url) void openProviderInApp(url);
+  };
+
+  // The Rate details sheet is a full-screen native Modal on iOS. Dismiss it first
+  // so SafariViewController is not presented over an already-presented controller.
+  const continueRateDeal = (url: string) => {
+    if (dealOpeningRef.current || pendingRateDealRef.current) return;
+    pendingRateDealRef.current = url;
+    setSelectedKey(null);
+    if (Platform.OS !== "ios") {
+      // Android does not guarantee Modal.onDismiss; wait for the closing transition.
+      InteractionManager.runAfterInteractions(openPendingRateDeal);
+    }
+  };
   const choices = nativeCarResultDealChoices(result);
   const visibleChoices = expanded ? choices : choices.slice(0, INITIAL_VISIBLE_OFFER_COUNT);
   const hasMoreOffers = choices.length > INITIAL_VISIBLE_OFFER_COUNT;
@@ -125,7 +159,7 @@ export function NativeCarResultOfferPicker({
             accessibilityLabel={"View deal from " + providerName}
             accessibilityState={{ disabled: !bookingUrl }}
             disabled={!bookingUrl}
-            onPress={bookingUrl ? () => void Linking.openURL(bookingUrl) : undefined}
+            onPress={bookingUrl ? () => void openProviderInApp(bookingUrl) : undefined}
             style={styles.action}
           >
             <Text style={[styles.link, { color: actionColor }]}>View deal</Text>
@@ -157,6 +191,7 @@ export function NativeCarResultOfferPicker({
       presentationStyle="fullScreen"
       statusBarTranslucent={false}
       onRequestClose={() => setSelectedKey(null)}
+      onDismiss={openPendingRateDeal}
     >
       <SafeAreaProvider>
         <SafeAreaView edges={["top", "bottom", "left", "right"]} style={[styles.sheetScreen, { backgroundColor: theme.surface }]} accessibilityViewIsModal>
@@ -210,7 +245,7 @@ export function NativeCarResultOfferPicker({
               accessibilityLabel={selectedChoice ? "View deal from " + selectedChoice.providerName : "View deal"}
               accessibilityState={{ disabled: !selectedRateBookingUrl }}
               disabled={!selectedRateBookingUrl}
-              onPress={selectedRateBookingUrl ? () => void Linking.openURL(selectedRateBookingUrl) : undefined}
+              onPress={selectedRateBookingUrl ? () => continueRateDeal(selectedRateBookingUrl) : undefined}
               style={({ pressed }) => [
                 styles.sheetViewDeal,
                 !selectedRateBookingUrl && styles.sheetViewDealDisabled,
