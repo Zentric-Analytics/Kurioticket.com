@@ -4,7 +4,7 @@ import test from "node:test";
 
 const source=readFileSync("src/features/search/NativeFlightDetails.tsx","utf8");
 const between=(start:string,end:string)=>{const startIndex=source.indexOf(start);assert.notEqual(startIndex,-1,`missing ${start}`);const endIndex=source.indexOf(end,startIndex+start.length);assert.notEqual(endIndex,-1,`missing ${end}`);return source.slice(startIndex,endIndex);};
-const deck=between('<View testID="fare-information-deck"','</ScrollView><View style={[s.sticky');
+const deck=between('<View testID="fare-information-deck"','</ScrollView></SafeAreaView>;');
 const surface=between("function FareSurface", "const s=StyleSheet.create");
 
 test("fare categories and active content form one connected horizontally scrollable deck",()=>{
@@ -21,15 +21,15 @@ test("fare categories and active content form one connected horizontally scrolla
   assert.match(deck,/<View testID="fare-information-active-content" style=\{s\.fareInfoBody\}><FareSurface tab=\{tab\}/);
 });
 
-test("selection uses blue outlines and underlines without turning tab or fare-price text blue",()=>{
-  const fareRail=between('<Text style={[s.fareSectionTitle,{color:theme.textPrimary}]}>Pick your fare</Text>','<View testID="fare-information-deck"');
-  assert.match(deck,/style=\{\[s\.fareInfoTabText,\{color:tab===key\?fareHeadingTextColor:theme\.textSecondary\},tab===key&&s\.fareInfoTabTextActive\]\}/);
+test("selection uses blue outlines and underline-only fare tabs without changing surface fills",()=>{
+  const fareRail=between('<Text style={[s.fareSectionTitle,{color:fareHeadingTextColor}]}>Pick your fare</Text>','<View testID="fare-information-deck"');
+  assert.match(deck,/style=\{\[s\.fareInfoTabText,\{color:fareTabTextColor\}\]\}/);
   assert.match(deck,/tab===key\?<View style=\{s\.fareTabIndicator\}/);
   assert.match(source,/fareTabIndicator:\{[^}]*backgroundColor:ui\.blue/);
-  assert.doesNotMatch(deck,/fareTabActiveTextColor|color:tab===key\?ui\.blue/);
-  assert.match(fareRail,/borderColor:isSelected\?ui\.blue:surfaceBorderColor/);
-  assert.match(fareRail,/s\.farePrice,\{color:fareHeadingTextColor\}/);
-  assert.doesNotMatch(fareRail,/color:isSelected\?ui\.blue/);
+  assert.doesNotMatch(deck,/fareInfoTabTextActive|color:tab===key\?/);
+  assert.match(fareRail,/backgroundColor:theme\.surface,borderColor:isSelected\?ui\.blue:surfaceBorderColor/);
+  assert.match(fareRail,/s\.farePrice,\{color:farePriceTextColor\}/);
+  assert.doesNotMatch(fareRail,/FLIGHT_DETAILS_(?:LIGHT|DARK)_SELECTED/);
 });
 
 test("FareSurface renders only the selected category without a generic nested card",()=>{
@@ -41,18 +41,23 @@ test("FareSurface renders only the selected category without a generic nested ca
   assert.doesNotMatch(surface,/display:\s*"none"|opacity:\s*0/);
 });
 
-test("deal comparison presents authoritative provider data as selection-only cards",()=>{
+test("deal comparison presents provider cards with direct booking actions",()=>{
   const deals=between('if(tab==="deals")', 'if(tab==="details")');
-  assert.match(deals,/choice\.deals\.length\?choice\.deals\.map/);
+  assert.match(surface,/const displayedDeals=choice\.deals\.length/);
   assert.match(deals,/deal\.providerName/);
-  assert.match(deals,/const price=dealPrices\[`deal:\$\{deal\.key\}`\]/);
+  assert.match(deals,/dealPrices\[deal\.priceKey\]/);
+  assert.match(deals,/const canViewDeal=deal\.canContinue&&pricesReady&&Boolean\(price\)/);
   assert.match(deals,/accessibilityRole="radiogroup"/);
   assert.match(deals,/accessibilityRole="radio"/);
   assert.match(deals,/onSelectDeal\(deal\.offerId\)/);
-  assert.doesNotMatch(deals,/View deal|onDeal\(|fareReady/);
-  assert.match(deals,/No booking deals available/);
-  assert.match(deals,/No additional live provider deals were supplied for this fare\./);
-  assert.doesNotMatch(deals,/providerMark|providerMonogram|charAt\(0\)|Best deal|Good value|Recommended|logoUrl|seller ranking/i);
+  assert.match(deals,/accessibilityRole="button"/);
+  assert.match(deals,/View deal/);
+  assert.match(deals,/onViewDeal\(deal\.offerId\)/);
+  assert.match(deals,/ProviderLogo provider=\{deal\.providerName\} logoUrl=\{deal\.providerLogoUrl\}/);
+  assert.match(deals,/Trip total/);
+  assert.match(surface,/fallbackProviderName/);
+  assert.match(deals,/No fare price available/);
+  assert.doesNotMatch(deals,/dealRadio|dealRadioDot|Best deal|Good value|Recommended|seller ranking/i);
 });
 
 test("provider-authored money uses the same canonical symbols as Flight Results",()=>{
@@ -135,62 +140,47 @@ test("optional extras remain non-interactive provider-authored information",()=>
   assert.doesNotMatch(extras,/<Pressable|chevron/);
 });
 
-test("deck baseline adds a 12dp local inset to the unchanged content rhythm",()=>{
+test("deck baseline matches the mobile-web inset and spacing rhythm",()=>{
   const deckStyles=between("fareInfoDeck:", "notice:");
   assert.match(deckStyles,/fareInfoDeck:\{gap:0,marginTop:12\}/);
-  assert.match(deckStyles,/fareTabRail:\{flexGrow:0,borderBottomWidth:1,marginHorizontal:-10\}/);
+  assert.match(deckStyles,/fareTabRail:\{flexGrow:0,borderBottomWidth:1,marginHorizontal:-8\}/);
   assert.match(deckStyles,/fareTabRailContent:\{paddingHorizontal:0\}/);
-  assert.match(deckStyles,/fareInfoBody:\{paddingHorizontal:4,paddingTop:7,paddingBottom:4\}/);
+  assert.match(deckStyles,/fareInfoBody:\{paddingHorizontal:4,paddingTop:12,paddingBottom:4\}/);
   assert.doesNotMatch(deckStyles,/fareInfoBody:\{[^}]*(?:borderWidth|borderRadius|backgroundColor)/);
-  assert.match(deckStyles,/fareTabList:\{flexDirection:"row",gap:22\}/);
+  assert.match(deckStyles,/fareTabList:\{flexDirection:"row",gap:14\}/);
   assert.match(deckStyles,/fareInfoTab:\{minHeight:48,justifyContent:"center",position:"relative",paddingHorizontal:0\}/);
   assert.match(deckStyles,/fareTabIndicator:\{position:"absolute",height:3,borderRadius:2,backgroundColor:ui\.blue,left:2,right:2,bottom:-1\}/);
-  assert.match(deckStyles,/sectionDivider:\{borderTopWidth:StyleSheet\.hairlineWidth\}/);
-  assert.match(deckStyles,/fareGroupDivider:\{height:StyleSheet\.hairlineWidth,marginVertical:11\}/);
-  assert.match(deckStyles,/secondaryFacts:\{borderTopWidth:StyleSheet\.hairlineWidth,paddingVertical:11\}/);
-  assert.doesNotMatch(deckStyles,/fareInfoTab(?:Text)?:\{[^}]*(?:transform|position:"absolute")/);
   assert.match(source,/loadingTabRail:\{[^}]*marginHorizontal:-10\}/);
-  assert.match(deck,/borderBottomColor:surfaceBorderColor/);
-  assert.doesNotMatch(between("fareInfoDeck:", "dealList:"),/elevation|shadow/);
-  assert.match(source,/contentBody:\{paddingHorizontal:18,gap:14\}/);
-  assert.match(deckStyles,/fareInfoDeck:\{gap:0,marginTop:12\}/);
-  assert.doesNotMatch(deckStyles,/fareInfoDeck:\{[^}]*marginTop:24/);
-  assert.equal(14+12,26,"the content-body gap and local deck inset provide clearer section separation");
+  assert.match(source,/contentBody:\{paddingHorizontal:12,gap:12\}/);
   assert.match(source,/loadingInfoDeck:\{height:177,marginTop:12\}/);
-  assert.match(source,/card:\{borderWidth:1,borderRadius:14,padding:14,gap:7\}/);
-  assert.match(source,/fareCard:\{borderWidth:1\.5,borderRadius:15,minHeight:142,position:"relative",paddingHorizontal:12,paddingTop:6,paddingBottom:8,gap:4\}/);
-  assert.doesNotMatch(source,/fareCard:\{[^}]*marginHorizontal/);
-  assert.match(source,/fareCardSelected:\{zIndex:1\}/);
 });
 
-test("fare information typography strengthens state-driven navigation while preserving content metrics",()=>{
+test("fare information typography keeps neutral tabs with underline-only selection",()=>{
   const deckStyles=between("fareInfoDeck:", "notice:");
   assert.match(deckStyles,/fareInfoTabText:\{fontSize:14,lineHeight:20,fontWeight:"600"\}/);
-  assert.match(deckStyles,/fareInfoTabTextActive:\{fontWeight:"800"\}/);
-  assert.match(source,/const fareHeadingTextColor=theme\.dark\?theme\.textPrimary:"#1A1A1A"/);
-  assert.match(deck,/color:tab===key\?fareHeadingTextColor:theme\.textSecondary/);
-  assert.doesNotMatch(deck,/color:tab===key\?ui\.blue:/);
-  assert.doesNotMatch(source,/#3F506F|#D3DBEA|#2F466A|#D8E1F0/);
-  assert.doesNotMatch(deck,/Fare conditions[^\n]*color:ui\.blue/);
+  assert.doesNotMatch(deckStyles,/fareInfoTabTextActive/);
+  assert.match(source,/const fareTabTextColor=theme\.dark\?theme\.textSecondary:FLIGHT_DETAILS_LIGHT_SECONDARY/);
+  assert.match(deck,/color:fareTabTextColor/);
+  assert.doesNotMatch(deck,/color:tab===key\?|fontWeight:tab===key/);
   assert.match(deckStyles,/fareGroupLabel:\{fontSize:11,lineHeight:15,fontWeight:"700"/);
-  assert.match(deckStyles,/detailLabel:\{[^}]*fontWeight:"400"\}/);
-  assert.match(deckStyles,/detailValue:\{[^}]*fontWeight:"500"[^}]*\}/);
-  assert.match(deckStyles,/conditionState:\{[^}]*fontWeight:"600"\}/);
-  assert.match(deckStyles,/conditionScope:\{[^}]*fontWeight:"400"\}/);
-  assert.match(deckStyles,/serviceDescription:\{[^}]*fontWeight:"600"\}/);
-  assert.match(deckStyles,/serviceMeta:\{[^}]*fontWeight:"400"\}/);
-  assert.doesNotMatch(deckStyles,/detailValue:\{[^}]*fontWeight:"700"\}|emptyTitle:\{[^}]*fontWeight:"700"\}/);
 });
 
-test("selected deals gain restrained theme-aware depth without changing their card geometry",()=>{
+test("provider selection never highlights a seller that is not the active native deal",()=>{
+  assert.match(source,/const selectedDeal=selected\?\(nativeFlightDealSelection\(selectedDealOfferId,selected\)\?\?selected\.deals\[0\]\?\?null\):null/);
+  assert.match(source,/setSelectedDealOfferId\(\(current\)=>\(nativeFlightDealSelection\(current,selected\)\?\?selected\.deals\[0\]\?\?null\)\?\.offerId\?\?null\)/);
+  const deals=between('if(tab==="deals")', 'if(tab==="details")');
+  assert.match(deals,/const isSelected=deal\.offerId===selectedDealOfferId/);
+  assert.doesNotMatch(deals,/!selectedDealOfferId&&index===0/);
+});
+
+test("provider deal cards use neutral Hotel-style surfaces and direct actions",()=>{
   const deals=between('if(tab==="deals")', 'if(tab==="details")');
   const dealStyles=between("dealList:", "conditionGroup:");
-  assert.match(deals,/backgroundColor:isSelected\?\(theme\.dark\?FLIGHT_DETAILS_DARK_SELECTED:FLIGHT_DETAILS_LIGHT_SELECTED\):theme\.surface/);
-  assert.match(deals,/isSelected&&\(theme\.dark\?s\.dealCardSelectedDark:s\.dealCardSelectedLight\)/);
-  assert.match(dealStyles,/dealCard:\{[^}]*borderWidth:1[^}]*borderRadius:14/);
-  assert.doesNotMatch(dealStyles,/dealCardSelected(?:Light|Dark):\{[^}]*(?:borderWidth|borderRadius|padding|minHeight)/);
-  assert.match(dealStyles,/dealRadio:\{width:20,height:20,borderRadius:10,borderWidth:1\.5/);
-  assert.match(dealStyles,/dealRadioDot:\{width:8,height:8,borderRadius:4,backgroundColor:ui\.blue\}/);
+  assert.match(deals,/backgroundColor:theme\.surface,borderColor:theme\.dark\?theme\.border:FLIGHT_DETAILS_LIGHT_DEAL_BORDER/);
+  assert.match(deals,/style=\{\(\{pressed\}\)=>\[s\.viewDealButton/);
+  assert.match(dealStyles,/dealCard:\{minHeight:76,borderWidth:1,borderRadius:12,paddingHorizontal:12,paddingVertical:12,justifyContent:"center"\}/);
+  assert.match(dealStyles,/viewDealButton:\{minHeight:32,minWidth:76,paddingHorizontal:6,borderRadius:8/);
+  assert.doesNotMatch(dealStyles,/dealCardSelected|dealRadio/);
 });
 
 test("fare content uses category, primary, and supporting colors without duplicating icon semantics in text",()=>{
@@ -203,7 +193,7 @@ test("fare content uses category, primary, and supporting colors without duplica
   assert.match(surface,/s\.conditionPenalty,\{color:supportingColor\}/);
   assert.doesNotMatch(surface,/s\.conditionState,\{color:conditionColors\[semantic\]\}/);
   assert.doesNotMatch(surface,/s\.conditionPenalty,\{color:conditionColors\.penalty\}/);
-  assert.match(surface,/s\.dealProvider,\{color:theme\.textPrimary\}/);
+  assert.match(surface,/s\.dealProvider,\{color:theme\.dark\?theme\.textPrimary:FLIGHT_DETAILS_LIGHT_DEAL_TEXT\}/);
   assert.match(surface,/s\.detailLabel[^\n]*color:supportingColor/);
   assert.match(surface,/s\.detailValue[^\n]*color:theme\.textPrimary/);
   assert.match(surface,/s\.serviceDescription,\{color:theme\.textPrimary\}/);
