@@ -123,9 +123,9 @@ export function NativeCarPriceAlert({ plan, resultId, offer, available, onFeedba
   if (!baseline || !scope.providerName) return null;
   return <View style={[styles.control, { backgroundColor: theme.priceAlertSurface, borderColor: theme.priceAlertBorder }]}>
     <View style={[styles.iconBadge, { backgroundColor: theme.dark ? theme.surface : "#FFFFFF" }]}>
-      <Bell accessible={false} size={16} strokeWidth={2} color={theme.priceAlertAccent}/>
+      <Bell accessible={false} size={14} strokeWidth={2} color={theme.priceAlertAccent}/>
     </View>
-    <Text numberOfLines={2} style={[styles.title, { color: theme.dark ? theme.textPrimary : "#07133B" }]}>Track car prices</Text>
+    <Text numberOfLines={1} style={[styles.title, { color: theme.dark ? theme.textPrimary : "#07133B" }]}>Track car prices</Text>
     <View style={styles.switchSlot}>
       <Pressable accessibilityRole="switch" accessibilityLabel={`Track car prices for ${scope.providerName} offer`} accessibilityState={{ checked: tracking, disabled, busy: pending }} disabled={disabled} onPress={() => void toggle(!tracking)} style={styles.switchTouchTarget}>
         <View pointerEvents="none" style={[styles.switchTrack, { backgroundColor: tracking ? theme.switchTrackActive : theme.dark ? "#465269" : "#CBD5E1", borderColor: tracking ? theme.switchTrackActive : theme.dark ? "#465269" : "#CBD5E1" }]}>
@@ -168,9 +168,9 @@ export function CarPriceAlertSnackbar({ feedback, onDismiss }: { feedback: Exclu
 export const PriceTrackingSnackbar = CarPriceAlertSnackbar;
 
 const styles = StyleSheet.create({
-  control: { minWidth: 0, minHeight: 54, flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 10, paddingVertical: 3, borderWidth: 1, borderRadius: 12 },
-  iconBadge: { width: 32, height: 32, flexShrink: 0, borderRadius: 16, alignItems: "center", justifyContent: "center" },
-  title: { minWidth: 0, flex: 1, fontSize: 13, lineHeight: 18, fontWeight: "600", fontFamily: appFonts.semibold },
+  control: { flexShrink: 0, minHeight: 44, flexDirection: "row", alignItems: "center", gap: 3, paddingHorizontal: 4, borderWidth: 1, borderRadius: 10 },
+  iconBadge: { width: 20, height: 20, flexShrink: 0, borderRadius: 10, alignItems: "center", justifyContent: "center" },
+  title: { flexShrink: 0, fontSize: 11, lineHeight: 16, fontWeight: "600", fontFamily: appFonts.semibold },
   switchSlot: { width: 44, height: 44, flexShrink: 0, flexDirection: "row", alignItems: "center", justifyContent: "flex-end" },
   switchTouchTarget: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
   switchTrack: { width: 44, height: 24, borderRadius: 12, borderWidth: 1, justifyContent: "center" },

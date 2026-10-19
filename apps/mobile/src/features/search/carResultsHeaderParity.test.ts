@@ -205,19 +205,19 @@ test("native and web Cars keep compact result counts while tracking only the ope
   assert.match(cars, /viewportWidth < 360 && r\.carResultsSummaryRowNarrow/);
 });
 
-test("Cars offers render a separate tracking bar below provider while results stay count-only", () => {
+test("Cars offers align the compact tracking pill beside provider while results stay count-only", () => {
   const picker = readFileSync("src/features/search/NativeCarResultOfferPicker.tsx", "utf8");
   const summary = cars.slice(cars.indexOf("const listHeader="), cars.indexOf("const listEmpty="));
   assert.match(summary, /carResultCountLabel\(filtered\.length\)/);
   assert.doesNotMatch(summary, /NativeCarPriceAlert/);
   assert.match(picker, /sellerRow/);
-  assert.match(picker, /sellerRow: \{ marginTop: 6, minWidth: 0, alignItems: "stretch", gap: 5 \}/);
+  assert.match(picker, /sellerRow: \{ marginTop: 6, minWidth: 0, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 6 \}/);
   assert.match(picker, /Booking provider ·/);
   assert.match(picker, /<NativeCarPriceAlert key=\{result\.id \+ ":" \+ selectedChoice\.key\}/);
   assert.match(picker, /plan=\{plan\} resultId=\{result\.id\} offer=\{selectedChoice\.offer\}/);
   assert.match(picker, /<CarPriceAlertSnackbar/);
   assert.match(carAlert, />Track car prices<\/Text>/);
-  assert.match(carAlert, /<Bell accessible=\{false\} size=\{16\}/);
+  assert.match(carAlert, /<Bell accessible=\{false\} size=\{14\}/);
   assert.match(carAlert, /travelApi\.priceAlerts\(\)/);
   assert.match(carAlert, /updatePriceAlertStatus/);
   assert.match(carAlert, /createPriceAlert/);
