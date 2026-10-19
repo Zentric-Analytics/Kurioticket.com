@@ -166,7 +166,7 @@ export const PriceTrackingSnackbar = CarPriceAlertSnackbar;
 const styles = StyleSheet.create({
   control: { flexShrink: 1, minWidth: 0, minHeight: 44, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 6 },
   title: { minWidth: 0, flexShrink: 1, fontSize: 12, lineHeight: 17, fontWeight: "600", fontFamily: appFonts.semibold },
-  switchSlot: { width: 51, minHeight: 44, flexShrink: 0, alignItems: "flex-end", justifyContent: "center" },
+  switchSlot: { width: 51, height: 44, flexShrink: 0, flexDirection: "row", alignItems: "center", justifyContent: "flex-end" },
   switchTouchTarget: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
   switchTrack: { width: 44, height: 24, borderRadius: 12, borderWidth: 1, justifyContent: "center" },
   switchThumb: { position: "absolute", top: 3, width: 18, height: 18, borderRadius: 9, backgroundColor: "#FFFFFF", shadowColor: "#0F172A", shadowOpacity: 0.12, shadowRadius: 2, shadowOffset: { width: 0, height: 1 }, elevation: 1 },
