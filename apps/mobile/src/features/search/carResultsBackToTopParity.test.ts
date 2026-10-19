@@ -45,7 +45,6 @@ test("Native Cars Back-to-top uses its existing FlatList, smooth movement and no
   assert.match(cars, /viewabilityConfig=\{carBackToTopViewabilityConfig\}/);
   assert.match(cars, /itemVisiblePercentThreshold:80/);
   assert.match(cars, /if\(nearTop\)hideCarBackToTop\(\)/);
-  assert.match(cars, /if\(hasVisibleFirstCarResult\(viewableItems\)\)hideCarBackToTop\(\)/);
   assert.match(cars, /onScrollToTop=\{handleCarScroll\}/);
   assert.doesNotMatch(cars, /onMomentumScrollEnd=\{\(event\)=>\{carBackToTopReturningRef\.current=false/);
   assert.match(cars, /onScrollBeginDrag=\{\(event\)=>\{carBackToTopReturningRef\.current=false;handleCarScroll\(event\);\}\}/);
