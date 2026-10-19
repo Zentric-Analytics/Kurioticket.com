@@ -178,10 +178,10 @@ export function ApprovedCarResultsScreen() {
   </View>:null}</>;
   const listEmpty=status==="empty"?<Empty title="No rental cars found" body="Try changing your dates, pickup location, or filters." retry={clearFilters} retryLabel="Clear filters" edit={edit}/>:status==="error"?<Empty title="Car search could not be completed" body={message||"Check your connection and try again."} retry={()=>setRetry((value)=>value+1)} edit={edit}/>:status==="ready"&&carResultsApplying?<CarSkeletons/>:status==="ready"&&!filtered.length?<Empty title="No cars match these filters" body="Clear filters to see the available rental cars." retry={clearFilters} retryLabel="Clear filters" edit={edit}/>:null;
   if(status==="loading") return <NativeBrandedSearchLoading product="car"/>;
-  return <SafeAreaView style={[r.safe,{backgroundColor:carCanvasColor}]} edges={["top"]}>
+  return <SafeAreaView style={[r.safe,{backgroundColor:headerSurfaceColor}]} edges={["top"]}>
     <View style={[r.carHeaderBackdrop,{backgroundColor:carCanvasColor}]}>
       <View style={[r.carHeaderSurface,{backgroundColor:headerSurfaceColor,borderBottomColor:theme.dark?theme.border:"#D8E1EC"}]}>
-        <CarResultsHeader destination={carSummaryDestination} secondaryLine={carSummaryCompact} onEdit={edit} backgroundColor={carCanvasColor}/>
+        <CarResultsHeader destination={carSummaryDestination} secondaryLine={carSummaryCompact} onEdit={edit} backgroundColor={headerSurfaceColor}/>
         <View style={[r.carFilterSectionHeader,{backgroundColor:headerSurfaceColor}]}><ScrollView horizontal style={r.filterRail} showsHorizontalScrollIndicator={false} alwaysBounceHorizontal={false} bounces={false} overScrollMode="never" contentContainerStyle={r.filters}>
       <CarResultsShortcut label="Filter" accessibilityLabel="Filters" count={activeCarFilterCount(filters)||undefined} icon showChevron={false} expanded={filterSheetVisible} onPress={openAllFilters}/>
       <CarResultsShortcut label={sort === "recommended" ? "Sort" : sort === "lowestTotal" ? "Total price" : "Top rated"} accessibilityLabel={`Sort, ${sort === "recommended" ? "Recommended" : sort === "lowestTotal" ? "Total price" : "Top rated"}`} expanded={quickSheetKind === "sort"} onPress={()=>openQuickFilter("sort")}/>
