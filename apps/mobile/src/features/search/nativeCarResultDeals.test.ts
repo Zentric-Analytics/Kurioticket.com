@@ -352,11 +352,14 @@ test("native Cars prevents repeated provider launches and reports browser errors
   assert.match(picker, /if \(dealOpeningRef\.current \|\| pendingRateDealRef\.current\) return;/);
 });
 
-test("native Cars closes the full-screen Rate details modal before opening the provider browser", () => {
+test("native Cars safely sequences the full-screen Rate details modal and in-app provider browser", () => {
   const picker = readFileSync("src/features/search/NativeCarResultOfferPicker.tsx", "utf8");
+  assert.match(picker, /if \(Platform\.OS === "android"\)/);
   assert.match(picker, /pendingRateDealRef\.current = url;\s*setSelectedKey\(null\);/);
   assert.match(picker, /onDismiss=\{openPendingRateDeal\}/);
-  assert.match(picker, /if \(Platform\.OS !== "ios"\) \{[\s\S]*?InteractionManager\.runAfterInteractions\(openPendingRateDeal\);/);
+  assert.match(picker, /if \(Platform\.OS === "android"\) \{\s*void openProviderInApp\(url\)\.then\(opened => \{\s*if \(opened\) setSelectedKey\(null\);/);
+  assert.match(picker, /return Platform\.OS !== "android" \|\| response\.type === "opened";/);
+  assert.doesNotMatch(picker, /InteractionManager/);
   assert.match(picker, /const url = pendingRateDealRef\.current;\s*pendingRateDealRef\.current = null;\s*if \(url\) void openProviderInApp\(url\);/);
   assert.match(picker, /onRequestClose=\{\(\) => setSelectedKey\(null\)\}/);
   assert.match(picker, /presentationStyle="fullScreen"/);
