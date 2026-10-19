@@ -9,13 +9,15 @@ import {
   getCarDealPickerGroups,
   type CarProviderOfferGroup,
 } from "@/lib/cars/carResults";
-import type { CarOffer, NormalizedCarResult } from "@/lib/cars/types";
+import type { CarOffer, CarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
+import { CarPriceAlertControl } from "@/components/results/CarPriceAlertControl";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import { sandboxBookingUrl } from "@/services/travel/kayakSandboxPublic";
 import { getCarRateDisclosureSections, getCarRatePaymentLabel, type CarRateDisclosureSection } from "@/lib/cars/carRateDisclosure";
 
 type Props = {
   car: NormalizedCarResult;
+  search: CarSearchParams;
   selectedOfferId: string;
   onSelectOffer: (offer: CarOffer) => void;
   expanded: boolean;
@@ -100,6 +102,7 @@ function RateSectionIcon({ id }: { id: CarRateDisclosureSection["id"] }) {
 
 export function CarDealPicker({
   car,
+  search,
   compact = false,
   expanded,
   onExpandedChange,
@@ -289,7 +292,10 @@ export function CarDealPicker({
                   <X size={20} aria-hidden="true" />
                 </button>
               </div>
-              <p className="mt-1 break-words text-[13px] font-medium leading-5 text-[#475569]">Booking provider · {selectedGroup.providerName}</p>
+              <div data-car-rate-provider-alert-row className="mt-1 flex min-w-0 items-center justify-between gap-2">
+                <p className="min-w-0 flex-1 truncate text-[12px] font-medium leading-5 text-[#475569]" title={selectedGroup.providerName}>Booking provider · {selectedGroup.providerName}</p>
+                <CarPriceAlertControl key={car.id + ":" + selectedOffer.id} search={search} car={car} offer={selectedOffer} />
+              </div>
             </div>
             <div data-car-rate-scroll className="min-h-0 flex-1 touch-pan-y overflow-x-hidden overflow-y-auto overscroll-contain bg-white px-4 pb-[max(24px,env(safe-area-inset-bottom))] pt-4 [-webkit-overflow-scrolling:touch] md:px-5 md:pb-5">
               <div className="min-w-0" onClick={event => event.stopPropagation()}>
