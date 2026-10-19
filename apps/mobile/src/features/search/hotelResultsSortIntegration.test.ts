@@ -35,5 +35,5 @@ test("changed Sort Apply updates ordering state and resets scroll position witho
   assert.doesNotMatch(sheet, /setHotelPage|setHotelFilters|travelApi|retry|setResults/);
   const transition = source.slice(source.indexOf("const startHotelResultsTransition"), source.indexOf("const transitionHotelFilters"));
   assert.doesNotMatch(transition, /setHotelPage/);
-  assert.match(transition, /scrollToHotelResultsBeginning\(\)/);
+  assert.match(transition, /scrollToHotelResultsBeginning\(animated\)/);
 });
