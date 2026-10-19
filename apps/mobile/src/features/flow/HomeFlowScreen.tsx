@@ -1,9 +1,9 @@
+import { Text, HomePresentationProvider } from "../home/HomePresentation";
 import {
   Image,
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   useWindowDimensions,
   View,
 } from "react-native";
@@ -188,7 +188,7 @@ const products: {
   { id: "cars", label: "Cars", route: "/cars", icon: "car" },
   { id: "packages", label: "Packages", route: "/packages", icon: "packages" },
 ];
-export function SharedHomePage() {
+function HomePageContent() {
   const ft = useFlowTheme();
   const insets = useSafeAreaInsets();
   const { availability } = useFeatureAvailability();
@@ -242,16 +242,16 @@ export function SharedHomePage() {
                 onPress={() => setActiveProduct(product.id)}
                 style={({ pressed }) => [
                   styles.product,
-                  selected && [styles.productActive, { backgroundColor: ft.colors.selected }],
+                  selected && [styles.productActive, { backgroundColor: ft.colors.selected, borderBottomColor: ft.colors.blue }],
                   pressed && ft.styles.pressed,
                 ]}
               >
                 {product.icon === "packages" ? (
-                  <PackagesIcon color={selected ? flowColors.blue : ft.colors.icon} />
+                  <PackagesIcon color={selected ? ft.colors.selectedLabelText : ft.colors.icon} />
                 ) : (
                   <FlowIcon
                     name={product.icon}
-                    color={selected ? flowColors.blue : ft.colors.icon}
+                    color={selected ? ft.colors.selectedLabelText : ft.colors.icon}
                   />
                 )}
                 <Text
@@ -273,6 +273,10 @@ export function SharedHomePage() {
       </ScrollView>
     </View>
   );
+}
+
+export function SharedHomePage() {
+  return <HomePresentationProvider><HomePageContent /></HomePresentationProvider>;
 }
 
 export const HomeFlowScreen = SharedHomePage;

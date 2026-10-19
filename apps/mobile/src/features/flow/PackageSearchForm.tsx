@@ -1,5 +1,6 @@
+import { Text, TextInput } from "../home/HomePresentation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Animated, Keyboard, Modal, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View, type KeyboardEvent } from "react-native";
+import { Animated, Keyboard, Modal, Pressable, ScrollView, StyleSheet, Switch, View, type KeyboardEvent } from "react-native";
 import { router } from "expo-router";
 import { ArrowRightLeft, Baby, BedDouble, Minus, PersonStanding, Plus, UserRound, type LucideIcon } from "lucide-react-native";
 import { CompactSearchField, PickerSheetHeader, PrimaryButton } from "./FlowPrimitives";

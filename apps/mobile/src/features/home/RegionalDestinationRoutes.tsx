@@ -1,3 +1,4 @@
+import { Text } from "./HomePresentation";
 import { router } from "expo-router";
 import { useMemo, useState } from "react";
 import {
@@ -5,7 +6,6 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   useWindowDimensions,
   View,
 } from "react-native";
@@ -75,12 +75,12 @@ export function RegionalDestinationRoutes() {
 
 const styles = StyleSheet.create({
   section: { gap: 16, marginTop: 4 },
-  heading: { fontSize: 20, lineHeight: 26, fontWeight: "800", letterSpacing: -0.25 },
+  heading: { fontSize: 20, lineHeight: 26, fontWeight: "700", letterSpacing: -0.25 },
   carousel: { gap: 16, paddingBottom: 2, paddingRight: 40 },
   card: { borderRadius: 16, backgroundColor: "#0F172A", overflow: "hidden" },
   image: { width: "100%", height: "100%" },
   imageFallback: { flex: 1, alignItems: "center", justifyContent: "center", gap: 4 },
   fallbackLabel: { fontSize: 10, fontWeight: "600", letterSpacing: 1.4 },
   fallbackCode: { fontSize: 12, fontWeight: "900", letterSpacing: 1.4 },
-  routeLabel: { position: "absolute", left: 16, right: 16, bottom: 20, color: "white", fontSize: 16, lineHeight: 20, fontWeight: "600", textShadowColor: "rgba(0,0,0,0.55)", textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 8 },
+  routeLabel: { position: "absolute", left: 16, right: 16, bottom: 20, color: "white", fontSize: 15, lineHeight: 20, fontWeight: "600", textShadowColor: "rgba(0,0,0,0.55)", textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 8 },
 });

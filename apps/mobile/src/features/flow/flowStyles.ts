@@ -1,3 +1,5 @@
+import { useHomePresentation } from "../home/HomePresentation";
+import { homeHotelColors, resolveHomeTheme } from "../home/homeHotelPresentation";
 import { StyleSheet } from "react-native";
 import { useMemo } from "react";
 import { useFlightResultsTheme as useAppTheme } from "../search/FlightResultsPresentationContext";
@@ -9,9 +11,12 @@ export { flowColors } from "./flowThemeColors";
 import { flowColors } from "./flowThemeColors";
 
 export function useFlowTheme() {
-  const { theme, isFlightResults } = useAppTheme();
+  const { theme: parentTheme, isFlightResults } = useAppTheme();
+  const isHome = useHomePresentation();
+  const theme = useMemo(() => resolveHomeTheme(parentTheme, isHome), [parentTheme, isHome]);
   return useMemo(() => {
-    const baseColors = getFlowThemeColors(theme);
+    const resolvedColors = getFlowThemeColors(theme);
+    const baseColors = isHome ? { ...resolvedColors, blue: homeHotelColors.action, selectedBorder: theme.dark ? "#8FB5FF" : homeHotelColors.action, selectedLabelText: theme.dark ? "#8FB5FF" : homeHotelColors.action } : resolvedColors;
     const colors = isFlightResults && !theme.dark ? { ...baseColors, blue: flightResultsColors.action, selectedBorder: flightResultsColors.action, selectedLabelText: flightResultsColors.action } : baseColors;
     const styles = StyleSheet.create({
       safe: { flex: 1, backgroundColor: colors.page },
@@ -93,7 +98,7 @@ export function useFlowTheme() {
       pressed: { opacity: 0.68 },
     });
     return { theme, colors, styles };
-  }, [theme, isFlightResults]);
+  }, [theme, isFlightResults, isHome]);
 }
 
 export const flowStyles = StyleSheet.create({
