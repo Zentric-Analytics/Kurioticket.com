@@ -64,7 +64,7 @@ test("the route transitions directly to every authoritative leg card without an 
   assert.doesNotMatch(source,/>Flight itinerary<\/Text>/);
   assert.match(source,/<View testID="flight-details-itinerary-overlap"[^\n]*style=\{s\.itineraryStack\}>\{\(offer\.legs\?\.length\?offer\.legs:\[\]\)\.map\(\(leg,index\)=><Itinerary/);
   assert.doesNotMatch(source,/itinerarySectionLabel:/);
-  assert.match(source,/itineraryStack:\{gap:14,marginHorizontal:-10,marginTop:-104,zIndex:1\}/);
+  assert.match(source,/itineraryStack:\{gap:12,marginHorizontal:-8,marginTop:-104,zIndex:1\}/);
   assert.match(itinerary,/leg\.direction==="outbound"\?"Outbound":leg\.direction==="return"\?"Return":`Flight \$\{leg\.legIndex\?\?index\+1\}`/);
   assert.doesNotMatch(source,/Edit search/);
 });
@@ -135,7 +135,7 @@ test("journey times remain the visual anchor with tabular numerals and a restrai
 });
 
 test("itinerary surface pairs controlled depth with a light-only gloss finish shared by the loading card",()=>{
-  assert.match(source,/itineraryCardLight:\{shadowColor:ui\.navy,shadowOffset:\{width:0,height:6\},shadowOpacity:\.14,shadowRadius:18,elevation:4\}/);
+  assert.match(source,/itineraryCardLight:\{shadowColor:"#0F172A",shadowOffset:\{width:0,height:6\},shadowOpacity:\.12,shadowRadius:14,elevation:4\}/);
   assert.match(source,/itineraryCardDark:\{shadowColor:"#000000",shadowOffset:\{width:0,height:5\},shadowOpacity:\.32,shadowRadius:18,elevation:4\}/);
   assert.match(itinerary,/theme\.dark\?s\.itineraryCardDark:s\.itineraryCardLight/);
   assert.match(source,/testID="flight-details-loading-itinerary" style=\{\[s\.itineraryCard,s\.loadingItineraryCard,theme\.dark\?s\.itineraryCardDark:s\.itineraryCardLight/);
@@ -237,8 +237,8 @@ test("information progresses from journey summary to airports, segment details, 
 });
 
 test("itinerary breadth expands from 18dp to 8dp side gaps while preserving current fare-card geometry",()=>{
-  assert.match(source,/contentBody:\{paddingHorizontal:18,gap:14\}/);
-  assert.match(source,/itineraryStack:\{gap:14,marginHorizontal:-10,marginTop:-104,zIndex:1\}/);
+  assert.match(source,/contentBody:\{paddingHorizontal:12,gap:12\}/);
+  assert.match(source,/itineraryStack:\{gap:12,marginHorizontal:-8,marginTop:-104,zIndex:1\}/);
   assert.match(source,/itineraryCard:\{position:"relative",borderWidth:1,borderRadius:FLIGHT_DETAILS_ITINERARY_RADIUS,padding:15/);
   assert.match(source,/fareCard:\{borderWidth:1\.5,borderRadius:15,minHeight:142,position:"relative",paddingHorizontal:12,paddingTop:6,paddingBottom:8,gap:4\}/);
   assert.doesNotMatch(source,/fareCard:\{[^}]*marginHorizontal/);
