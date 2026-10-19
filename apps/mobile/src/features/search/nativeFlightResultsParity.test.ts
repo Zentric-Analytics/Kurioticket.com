@@ -12,10 +12,10 @@ test("one sticky rail precedes dates, Track Price, summary and virtualized cards
  assert.equal(screen.match(/<FlightResultsQuickControls/g)?.length,1);
  assert.doesNotMatch(screen,/Back.to.top|ArrowUp|scrollToTop/);
 });
-test("compact pressable summary retains native Back and Edit",()=>{
+test("native pressable summary retains Back and Edit with approved header sizing",()=>{
  const header=screen.slice(screen.indexOf("function FlightResultsHeader"),screen.indexOf("function HotelResultsHeader"));
  assert.match(header,/onPress=\{\(\) => router.back\(\)\}/);assert.match(header,/onPress=\{onEdit\}/);assert.match(header,/<SquarePen/);
- assert.match(screen,/flightRouteSummaryCard: \{[^\n]*minHeight: 44/);assert.match(screen,/flightRouteSummaryText: \{[^\n]*fontWeight: "600"/);
+ assert.match(screen,/flightRouteSummaryCard: \{[^\n]*minHeight: 62/);assert.match(screen,/flightRouteSummaryText: \{[^\n]*fontWeight: "700"/);
 });
 test("content shares 12px gutters and card rhythm while chips retain accessible compact targets",()=>{
  for(const style of ["flightCardItem","flightAlertOuter","flightResultsSummaryRow"])assert.match(screen,new RegExp(`${style}: \\{[^\\n]*(?:paddingHorizontal|marginHorizontal): 12`));
@@ -52,13 +52,13 @@ test("terminal Results states retain dates below the sticky rail", () => {
  assert.match(footer, /\{flightDateStrip\}[\s\S]*<FlightResultsState/);
 });
 
-test("light Flight Results keeps white chrome above the tinted results canvas", () => {
+test("light Flight Results uses tinted header canvas with a white summary and white sticky rail", () => {
  const header = screen.slice(screen.indexOf("function FlightResultsHeader"), screen.indexOf("function HotelResultsHeader"));
  const list = screen.slice(screen.indexOf("<Animated.SectionList"), screen.indexOf("<HotelResultsHeader", screen.indexOf("<Animated.SectionList")));
- assert.match(screen, /<FlightResultsHeader[\s\S]*?backgroundColor=\{theme\.dark \? flightCanvasColor : flightResultsColors\.surface\}/);
+ assert.match(screen, /<FlightResultsHeader[\s\S]*?backgroundColor=\{flightCanvasColor\}/);
  assert.match(list, /s0\.flightFilterSectionHeader, \{ backgroundColor: theme\.dark \? flightCanvasColor : flightResultsColors\.surface \}/);
- assert.match(header, /backgroundColor: theme\.dark \? theme\.surface : flightResultsColors\.canvas/);
- assert.match(header, /borderWidth: theme\.dark \? 1 : 0/);
+ assert.match(header, /backgroundColor: theme\.surface/);
+ assert.doesNotMatch(header, /borderWidth: theme\.dark \? 1 : 0/);
  assert.match(list, /s0\.flightResultsIntro, \{ backgroundColor: flightCanvasColor \}/);
 });
 
