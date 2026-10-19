@@ -3,11 +3,11 @@
  * Keep scroll visibility direction-independent. Only suppress events while
  * the list is genuinely animating back toward offset zero.
  */
-// Web measures 600px from the document start. The native FlatList starts after
-// the fixed search/filter chrome, so an identical 600px FlatList offset would
-// show the control noticeably later in the result cards. This threshold is
-// calibrated to the equivalent visible depth in the mobile-web results list.
-export const CAR_BACK_TO_TOP_SCROLL_THRESHOLD = 500;
+// The web threshold is measured from the document origin, while native
+// scrolls only its result list beneath persistent search and filter controls.
+// Retain the earlier result-relative activation, rather than making native
+// wait until more car cards have passed on screen.
+export const CAR_BACK_TO_TOP_SCROLL_THRESHOLD = 320;
 
 export type CarBackToTopScrollState = {
   offset: number;
