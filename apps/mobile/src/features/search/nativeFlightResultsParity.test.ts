@@ -73,3 +73,14 @@ test("date selection and journey label use their exact mobile Results accent rol
  assert.match(screen, /s0\.journeyLabel, \{ color: theme\.dark \? "#8FB5FF" : flightResultsColors\.journeyLabel \}/);
 });
 
+test("Flight filter rail finishes with the curved left edge and compact white breathing room", () => {
+ assert.match(
+  screen,
+  /flightFilterSectionHeader: \{ paddingTop: 8, paddingBottom: 8, borderBottomLeftRadius: 28, borderBottomRightRadius: 0, overflow: "hidden", borderBottomWidth: 1 \}/,
+ );
+ assert.match(
+  screen,
+  /s0\.flightFilterSectionHeader, \{ backgroundColor: theme\.dark \? flightCanvasColor : flightResultsColors\.surface, borderBottomColor: theme\.dark \? theme\.border : "#D8E1EC" \}/,
+ );
+});
+
