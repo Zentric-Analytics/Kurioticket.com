@@ -97,11 +97,11 @@ test("the active Flight results journey keeps its semantic surface and text hier
   assert.match(results, /const flightResultsLightCanvas = "#F5F7FB"/);
   assert.match(results, /const flightCanvasColor = theme\.dark \? theme\.background : flightResultsLightCanvas/);
   assert.match(results, /const hotelCanvasColor = theme\.dark \? theme\.background : flightResultsLightCanvas/);
-  assert.match(results, /s0\.safe, \{ backgroundColor: flightResults \? flightCanvasColor : hotelCanvasColor \}/);
+  assert.match(results, /s0\.safe, \{ backgroundColor: flightResults \? \(theme\.dark \? flightCanvasColor : flightResultsColors\.surface\) : hotelCanvasColor \}/);
   assert.match(results, /<HotelResultsHeader[^>]*backgroundColor=\{hotelCanvasColor\}/);
   assert.match(results, /s0\.resultsScroll, \{ backgroundColor: hotelCanvasColor \}/);
   assert.match(results, /s0\.hotelFilterSectionHeader, \{ backgroundColor: hotelCanvasColor \}/);
-  assert.match(results, /renderSectionHeader[\s\S]*?backgroundColor: flightCanvasColor[\s\S]*?\{filterRail\}/);
+  assert.match(results, /renderSectionHeader[\s\S]*?backgroundColor: theme\.dark \? flightCanvasColor : flightResultsColors\.surface[\s\S]*?\{filterRail\}/);
   assert.match(results, /s0\.card,[\s\S]*backgroundColor: theme\.surface/);
   assert.match(results, /s0\.airlineName, \{ color: theme\.textPrimary \}/);
   assert.match(results, /const flightSupportText = \{\s*light: "#64748B",\s*dark: "#B8C3D8"/);
