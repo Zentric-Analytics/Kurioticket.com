@@ -35,7 +35,7 @@ test("arrival and price terminate on the shared right edge", () => {
 
 test("View deals shares the Fare rules row geometry and price right edge", () => {
   assert.match(source, /flightMetadataItem: \{ width: "100%", minWidth: 0, minHeight: 16, flexDirection: "row", alignItems: "center", gap: 6 \}/);
-  assert.match(source, /flightDetailsAffordance: \{ width: "100%", minHeight: 16, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 4 \}/);
+  assert.match(source, /flightDetailsAffordance: \{ width: "100%", minHeight: 16, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 2 \}/);
   assert.match(card, /\{labels\.viewDeals\}\s*<\/Text>\s*<ChevronRight/);
 });
 
@@ -50,8 +50,8 @@ test("journeys follow the compact identity row at the full card content width", 
   assert.match(identityLayout, /airlineLogoColumn[\s\S]*?<AirlineLogo[\s\S]*?flightDetails[\s\S]*?airlineHeader/);
   assert.doesNotMatch(flightDetails, /journeyList|FlightJourneyRow/);
   assert.match(flightMain.slice(journeyStart), /journeyList[\s\S]*?journeys\.map[\s\S]*?<FlightJourneyRow/);
-  assert.match(source, /flightIdentityLayout: \{[^}]*flexDirection: "row"[^}]*gap: 8/);
-  assert.match(source, /airlineLogoColumn: \{ width: 38, flexShrink: 0/);
+  assert.match(source, /flightIdentityLayout: \{[^}]*flexDirection: "row"[^}]*gap: 10/);
+  assert.match(source, /airlineLogoColumn: \{ width: 36, flexShrink: 0/);
   assert.match(source, /flightDetails: \{ flex: 1, minWidth: 0 \}/);
   assert.match(source, /journeyList: \{ width: "100%", marginTop: 8, gap: 10 \}/);
 });
@@ -83,7 +83,7 @@ test("the coherent price column contains one fare and a bottom-aligned details a
   assert.match(fareRow, /s0\.bigPrice[^>]*numberOfLines=\{1\}/);
   assert.doesNotMatch(fareRow, /s0\.bigPrice[^>]*adjustsFontSizeToFit|s0\.bigPrice[^>]*minimumFontScale/);
   assert.match(source, /bigPrice: \{[^}]*fontSize: 19, lineHeight: 24[^}]*fontWeight: "700"[^}]*textAlign: "right"/);
-  assert.match(fareRow, /color: theme\.textPrimary/);
+  assert.match(fareRow, /color: priceColor/);
   assert.doesNotMatch(fareRow, /marginRight|position:/);
   assert.doesNotMatch(fareRow, /baggageSummary|fareRulesSummary|metadataItem/);
   assert.doesNotMatch(fareRow, /mainPriceBasis\.label|Provider price:|s0\.estimatedPrice|s0\.providerPrice/);
