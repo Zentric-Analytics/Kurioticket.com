@@ -206,3 +206,22 @@ test("Flight Details and result content remain present without a results-screen 
   assert.match(results, /<HotelCard/);
   assert.doesNotMatch(results.slice(results.indexOf("export function ApprovedResultsScreen"), results.indexOf("export function BottomNav")), /<BottomNav(?:\s|\/|>)/);
 });
+
+test("Flight Results header uses the approved native Results header treatment", () => {
+  const flightHeaderStyle = styles.slice(styles.indexOf("flightHeader:"), styles.indexOf("hotelHeader:"));
+  assert.match(flightHeaderStyle, /flightHeader: \{ paddingTop: 12, paddingBottom: 8 \}/);
+  assert.match(flightHeaderStyle, /flightHeaderBack: \{ width: 44, height: 44,[^\n]*shadowColor: "#0F172A"[^\n]*shadowOffset: \{ width: 0, height: 2 \}[^\n]*shadowOpacity: 0\.12[^\n]*shadowRadius: 6[^\n]*elevation: 6/);
+  assert.match(flightHeaderStyle, /flightRouteSummaryCard: \{ flex: 1, minWidth: 0, minHeight: 62, borderWidth: 1, borderRadius: 13, flexDirection: "row", alignItems: "center", overflow: "hidden" \}/);
+  assert.match(flightHeaderStyle, /flightRouteSummaryCopy: \{ flex: 1, minWidth: 0, justifyContent: "center", paddingLeft: 14, paddingVertical: 9 \}/);
+  assert.match(flightHeaderStyle, /flightRouteSummaryText: \{ fontSize: 14, lineHeight: 18, fontWeight: "700", fontFamily: appFonts\.bold \}/);
+  assert.match(flightHeaderStyle, /flightRouteSummarySecondary: \{ marginTop: 3, fontSize: 10\.5, lineHeight: 14, fontWeight: "500", fontFamily: appFonts\.medium \}/);
+  assert.match(flightHeaderStyle, /flightRouteSummaryEdit: \{ width: 44, height: 44, flexShrink: 0, alignItems: "center", justifyContent: "center" \}/);
+  assert.match(flightHeaderStyle, /flightRouteSummaryEditGlass: \{ position: "absolute", left: 4, right: 4, top: 4, bottom: 4, borderRadius: 18 \}/);
+
+  assert.match(header, /backgroundColor: theme\.surface/);
+  assert.match(header, /borderColor: theme\.dark \? theme\.border : "#D8E1EC"/);
+  assert.match(header, /<DetailGlassSurface dark=\{false\} variant="hotelLight" style=\{s0\.flightRouteSummaryEditGlass\} \/>/);
+  assert.match(header, /<SquarePen size=\{16\} strokeWidth=\{2\.2\} color="#0F172A" \/>/);
+  assert.match(header, /<ArrowLeft size=\{25\} strokeWidth=\{2\} color="#0F172A" \/>/);
+});
+
