@@ -18,17 +18,20 @@ test("Hotel Results owns no brand or legal footer", () => {
   assert.equal(existsSync(resolve("src/features/search/hotelResultsFooterCopy.ts")), false);
 });
 
-test("Hotel cards still end with conditional pagination and no replacement footer", () => {
+test("Hotel cards end with loading feedback only while more inventory is pending", () => {
   const cards = hotelList.indexOf("<HotelCard");
-  const pagination = hotelList.indexOf("<HotelResultsPagination");
-  const afterPagination = hotelList.slice(pagination);
+  const footer = hotelList.indexOf("ListFooterComponent");
+  const footerContent = hotelList.slice(footer, hotelList.indexOf("alwaysBounceVertical", footer));
 
-  assert.ok(cards >= 0 && cards < pagination);
+  assert.ok(cards >= 0 && cards < footer);
   assert.match(
-    hotelList,
-    /ListFooterComponent=\{status === "ready" && sorted\.length \? \([\s\S]*?<HotelResultsPagination page=\{clampedHotelPage\} pages=\{hotelPageCount\} disabled=\{hotelPageChanging \|\| hotelProgressivePending\} onPage=\{changeHotelPage\}\/>/,
+    footerContent,
+    /ListFooterComponent=\{status === "ready" && sorted\.length > 0 && hotelProgressivePending \? \(/,
   );
-  assert.doesNotMatch(afterPagination, /<Image|logo|tagline|Seller|copyright|Privacy|Terms|Cookies|footer|divider/i);
+  assert.match(footerContent, /accessibilityLiveRegion="polite"[\s\S]*ActivityIndicator[\s\S]*Loading more hotels…/);
+  assert.match(footerContent, /\) : null\}/);
+  assert.doesNotMatch(footerContent, /<Image|logo|tagline|Seller|copyright|Privacy|Terms|Cookies|divider/i);
+  assert.doesNotMatch(hotelList, /HotelResultsPagination|Previous hotel results page|Next hotel results page/);
 });
 
 test("the screen owns the measured hotel-card inset and compact safe-area end clearance", () => {

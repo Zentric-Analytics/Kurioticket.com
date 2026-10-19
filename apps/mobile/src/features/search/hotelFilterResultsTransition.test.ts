@@ -32,7 +32,7 @@ test("Hotel filter changes reuse the app's normal branded loading state", () => 
   assert.match(feedback, /setHotelFilterApplying\(false\)/);
   assert.match(feedback, /NATIVE_FILTER_RESULTS_TRANSITION_MS/);
   assert.doesNotMatch(feedback, /Animated\.timing|hotelFilterProgress/);
-  assert.match(helper, /setHotelPage\(1\)/);
+  assert.doesNotMatch(helper, /setHotelPage/);
   assert.match(helper, /scrollToHotelResultsBeginning\(\)/);
   assert.match(helper, /startHotelFilterFeedback\(\)/);
   assert.match(screen, /if \(status === "loading" \|\| hotelCurrencyPending\) return <NativeBrandedSearchLoading product=\{product\} \/>/);
@@ -40,7 +40,7 @@ test("Hotel filter changes reuse the app's normal branded loading state", () => 
   assert.doesNotMatch(screen, /hotelFilterRefreshSlot|hotelFilterRefreshTrack|hotelFilterRefreshProgress/);
 });
 
-test("changed Hotel Sort Apply updates ordering immediately and resets pagination", () => {
+test("changed Hotel Sort Apply updates ordering immediately and resets scroll position", () => {
   const sheet = screen.slice(screen.indexOf("<HotelResultsQuickFilterSheet"), screen.indexOf("/> : null", screen.indexOf("<HotelResultsQuickFilterSheet")));
   assert.match(sheet, /onSortChange=\{\(next\) => \{ if\(next===hotelSort\)return;setHotelSort\(next\);startHotelResultsTransition\(\); \}\}/);
   assert.doesNotMatch(sheet, /setHotelFilters|travelApi|setStatus|setRetry|router|load\(/);

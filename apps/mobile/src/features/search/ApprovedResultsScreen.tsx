@@ -147,9 +147,7 @@ import { HotelCardAmenityList } from "./HotelCardAmenityList";
 import { defaultHotelSort, hotelSortLabel, sortHotelsForResults, type HotelSortMode } from "./hotelSort";
 import { HotelResultsQuickFilterSheet, type HotelResultsQuickFilterKind } from "./HotelResultsQuickFilterSheet";
 import { getLowestPricedHotelId, hasHotelPrice } from "@/lib/hotels/hotelResultAvailability";
-import { clampHotelResultsPage, getHotelResultsPageCount, paginateHotelResults } from "@/lib/hotels/hotelResultsPagination";
 import { hasGoogleMapsDiscovery } from "./hotelResultsPresentation";
-import { HotelResultsPagination } from "./HotelResultsPagination";
 import { FlightPriceAlert } from "./HotelPriceAlert";
 import { PriceTrackingSnackbar, type CarPriceAlertFeedback } from "./NativeCarPriceAlert";
 import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
@@ -277,9 +275,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const [hotelFilterOpen, setHotelFilterOpen] = useState(false);
   const [hotelFilterSection, setHotelFilterSection] = useState<HotelFilterSectionName>("all");
   const [hotelQuickFilter, setHotelQuickFilter] = useState<HotelResultsQuickFilterKind | null>(null);
-  const [hotelPage, setHotelPage] = useState(1);
   const [hotelProgressivePending, setHotelProgressivePending] = useState(false);
-  const [hotelPageChanging, setHotelPageChanging] = useState(false);
   const [hotelFilterApplying, setHotelFilterApplying] = useState(false);
   const hotelFilterFeedbackTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const hotelFilterSessionDirtyRef = useRef(false);
@@ -330,7 +326,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       setHotelSort(defaultHotelSort);
       setHotelFilterOpen(false);
       setHotelQuickFilter(null);
-      setHotelPage(1);
     }
     previousHotelSearchKey.current = plan.plan.key;
   }, [flightResults, plan.plan?.key]);
@@ -652,7 +647,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     resultsRef.current = [];
     setMessage("");
     setHotelFilters(emptyHotelFilters());
-    setHotelPage(1);
     setStatus("loading");
     router.setParams(hotelSearchRouteParamPatch(nextParams));
   }, []);
@@ -775,11 +769,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     hotelFilters.roomTypes,
     hotelOptions.roomTypes,
   );
-  const hotelPageCount = getHotelResultsPageCount(product === "hotel" ? sorted.length : 0);
-  const clampedHotelPage = clampHotelResultsPage(hotelPage, hotelPageCount);
-  const hotelPageResults = product === "hotel" ? paginateHotelResults(sorted as HotelResult[], clampedHotelPage) : [];
-  useEffect(() => { if (product === "hotel") setHotelPage(1); }, [hotelFilters, plan.plan?.key, product]);
-  useEffect(() => { if (product === "hotel" && hotelPage !== clampedHotelPage) setHotelPage(clampedHotelPage); }, [clampedHotelPage, hotelPage, product]);
   const flightState = product === "flight" ? resolveFlightResultsState({
     status,
     rawResultCount: ownedFlightResults.length,
@@ -831,7 +820,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     if (hotelFilterFeedbackTimerRef.current) clearTimeout(hotelFilterFeedbackTimerRef.current);
   }, []);
   const startHotelResultsTransition = (withFilterFeedback = false) => {
-    setHotelPage(1);
     scrollToHotelResultsBeginning();
     if (withFilterFeedback) startHotelFilterFeedback();
   };
@@ -858,13 +846,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       next.roomTypes = [];
     }
     transitionHotelFilters(next);
-  };
-  const changeHotelPage = (page: number) => {
-    if (hotelPageChanging || page === clampedHotelPage) return;
-    setHotelPageChanging(true);
-    setHotelPage(clampHotelResultsPage(page, hotelPageCount));
-    scrollToHotelResultsBeginning();
-    requestAnimationFrame(() => setHotelPageChanging(false));
   };
   const handleFullFlightFiltersChange = useCallback((next: FlightFilters) => setFilters(next), []);
   const handleQuickFlightFiltersChange = useCallback((next: FlightFilters) => setFilters(next), []);
@@ -1115,9 +1096,9 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const hotelResultsListData = useMemo<HotelResultsListItem[]>(() => {
     if (product !== "hotel") return [];
     const data: HotelResultsListItem[] = [HOTEL_RESULTS_INTRO_ITEM];
-    if (status === "ready" && sorted.length > 0) data.push(HOTEL_RESULTS_SUMMARY_ITEM, ...hotelPageResults);
+    if (status === "ready" && sorted.length > 0) data.push(HOTEL_RESULTS_SUMMARY_ITEM, ...(sorted as HotelResult[]));
     return data;
-  }, [hotelPageResults, product, sorted.length, status]);
+  }, [product, sorted, status]);
   const hotelCurrencyPending = product === "hotel"
     && status === "ready"
     && (results as HotelResult[]).some(hasHotelPrice)
@@ -1242,10 +1223,9 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
               );
             }}
             ItemSeparatorComponent={() => <View style={s0.hotelResultsItemSeparator} />}
-            ListFooterComponent={status === "ready" && sorted.length ? (
+            ListFooterComponent={status === "ready" && sorted.length > 0 && hotelProgressivePending ? (
               <View style={[s0.hotelResultsBody, s0.hotelResultsFooter]}>
-                {hotelProgressivePending ? <View accessibilityLiveRegion="polite"><ActivityIndicator size="small" color={theme.textSecondary}/><Text style={{color: theme.textSecondary, textAlign: "center"}}>Loading more hotels…</Text></View> : null}
-                <HotelResultsPagination page={clampedHotelPage} pages={hotelPageCount} disabled={hotelPageChanging || hotelProgressivePending} onPage={changeHotelPage}/>
+                <View accessibilityLiveRegion="polite"><ActivityIndicator size="small" color={theme.textSecondary}/><Text style={{color: theme.textSecondary, textAlign: "center"}}>Loading more hotels…</Text></View>
               </View>
             ) : null}
             alwaysBounceVertical={false}
