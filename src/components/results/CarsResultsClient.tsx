@@ -2919,7 +2919,7 @@ export function CarsResultsExperience({
                   }
                   className={cn(
                     "w-full space-y-3.5 sm:space-y-4",
-                    !embedded && presentation === "standalone" ? "max-sm:!mt-0 lg:space-y-5" : "max-sm:!mt-1",
+                    !embedded && presentation === "standalone" ? "max-sm:!mt-2 lg:space-y-5" : "max-sm:!mt-1",
                     !guidedPlanning && "w-full",
                   )}
                 >
@@ -2946,7 +2946,7 @@ export function CarsResultsExperience({
                   aria-busy="false"
                   className={cn(
                     "w-full space-y-3.5 sm:space-y-4",
-                    !embedded && presentation === "standalone" ? "max-sm:!mt-0 lg:space-y-5" : "max-sm:!mt-1",
+                    !embedded && presentation === "standalone" ? "max-sm:!mt-2 lg:space-y-5" : "max-sm:!mt-1",
                     !guidedPlanning && "w-full",
                     filterTransitionPhase === "revealing" &&
                       filterTransitionMobile &&
