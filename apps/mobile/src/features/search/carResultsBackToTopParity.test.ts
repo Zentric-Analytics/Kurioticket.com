@@ -13,8 +13,9 @@ test("Native Cars Results exposes one floating Back-to-top after a meaningful sc
   assert.match(cars, /const handleCarScroll=useCallback\(/);
   assert.match(cars, /const next=updateCarBackToTopScroll\(\{/);
   assert.match(stateSource, /offset > CAR_BACK_TO_TOP_SCROLL_THRESHOLD/);
-  assert.match(cars, /if\(next\.visible!==carBackToTopVisibleRef\.current\)/);
-  assert.match(cars, /setCarBackToTopVisible\(next\.visible\)/);
+  assert.match(cars, /const visible=next\.visible && !carFirstResultNearTopRef\.current/);
+  assert.match(cars, /if\(visible!==carBackToTopVisibleRef\.current\)/);
+  assert.match(cars, /setCarBackToTopVisible\(visible\)/);
   assert.match(cars, /carBackToTopVisible && status==="ready" && !carResultsApplying/);
   assert.match(cars, /<Animated.View pointerEvents=/);
   assert.match(cars, /opacity:carBackToTopProgress,transform:/);
@@ -41,6 +42,9 @@ test("Native Cars Back-to-top uses its existing FlatList, smooth movement and no
   assert.match(stateSource, /returning: previous\.offset > 1/);
   assert.match(stateSource, /export function hasVisibleFirstCarResult\(/);
   assert.match(cars, /onViewableItemsChanged=\{handleCarViewableItemsChanged\}/);
+  assert.match(cars, /viewabilityConfig=\{carBackToTopViewabilityConfig\}/);
+  assert.match(cars, /itemVisiblePercentThreshold:80/);
+  assert.match(cars, /if\(nearTop\)hideCarBackToTop\(\)/);
   assert.match(cars, /if\(hasVisibleFirstCarResult\(viewableItems\)\)hideCarBackToTop\(\)/);
   assert.match(cars, /onScrollToTop=\{handleCarScroll\}/);
   assert.doesNotMatch(cars, /onMomentumScrollEnd=\{\(event\)=>\{carBackToTopReturningRef\.current=false/);
@@ -48,7 +52,7 @@ test("Native Cars Back-to-top uses its existing FlatList, smooth movement and no
   assert.match(cars, /onPress=\{scrollCarResultsToTop\}/);
   assert.match(cars, /startCarResultsTransition=\(\)=>\{[^}]*scrollCarResultsToTop\(\)/);
   assert.match(cars, /setCarBackToTopVisible\(false\)/);
-  assert.match(cars, /carBackToTopReturningRef\.current=false;carBackToTopOffsetRef\.current=0;setCarBackToTopVisible\(false\)/);
+  assert.match(cars, /carBackToTopReturningRef\.current=false;carBackToTopOffsetRef\.current=0;carFirstResultNearTopRef\.current=false;setCarBackToTopVisible\(false\)/);
 });
 
 test("Cars retains its scroll ref and legitimate transition positioning", () => {
