@@ -18,11 +18,11 @@ test("flight result tiles use bordered fare-calendar geometry without elevation"
   for (const expected of [/minWidth: 76/, /maxWidth: 96/, /height: 70/, /borderRadius: 8/, /borderWidth: 1/, /position: "relative"/, /overflow: "hidden"/]) assert.match(baseCard, expected);
   assert.doesNotMatch(baseCard, /shadow|elevation/);
   assert.match(component, /backgroundColor: theme\.surface,[\s\S]*?borderColor: theme\.border/);
-  assert.match(component, /backgroundColor: theme\.dark \? "#142B55" : "#F0F5FF",[\s\S]*?borderColor: ui\.blue/);
+  assert.match(component, /backgroundColor: theme\.dark \? "#142B55" : "#EEF6FF",[\s\S]*?borderColor: resultsUi\.blue/);
 });
 
 test("selected tiles have a decorative two-pixel top accent", () => {
-  assert.match(component, /flightResults && active \? <View accessible=\{false\} style=\{s\.flightDateSelectedAccent\}/);
+  assert.match(component, /flightResults && active \? <View accessible=\{false\} style=\{\[s\.flightDateSelectedAccent, \{ backgroundColor: resultsUi\.blue \}\]\}/);
   for (const expected of [/position: "absolute"/, /top: 0/, /left: 8/, /right: 8/, /height: 2/, /backgroundColor: ui\.blue/]) assert.match(accent, expected);
 });
 
@@ -55,13 +55,13 @@ test("horizontal rail remains swipeable with three full tiles and a fourth peek"
   assert.match(component, /ref=\{railRef\}/);
   const scrollViewOpeningTag = component.slice(component.indexOf("<ScrollView"), component.indexOf(">", component.indexOf("<ScrollView")) + 1);
   assert.doesNotMatch(scrollViewOpeningTag, /disabled=/);
-  assert.match(styles, /flightDateNavigator: \{ height: 82, paddingHorizontal: 0 \}/);
-  assert.match(styles, /flightDateRail: \{ height: 82 \}/);
-  assert.match(styles, /flightDates: \{ paddingHorizontal: 16, paddingVertical: 5 \}/);
+  assert.match(styles, /flightDateNavigator: \{ height: 80, paddingHorizontal: 0 \}/);
+  assert.match(styles, /flightDateRail: \{ height: 80 \}/);
+  assert.match(styles, /flightDates: \{ paddingHorizontal: 12, paddingVertical: 5, gap: 8 \}/);
   assert.match(component, /const flightDateWidth = Math\.min\(96, Math\.max\(76, \(windowWidth - 43\) \/ 3\.65\)\)/);
   for (const windowWidth of [320, 360, 375, 390, 412, 430, 480]) {
     const cardWidth = Math.min(96, Math.max(76, (windowWidth - 43) / 3.65));
-    const peek = windowWidth - 16 - cardWidth * 3 - 9 * 3;
+    const peek = windowWidth - 12 - cardWidth * 3 - 8 * 3;
     assert.ok(peek > 0, `${windowWidth}px fits three full cards`);
     if (windowWidth <= 390) assert.ok(peek < cardWidth, `${windowWidth}px exposes only part of card four`);
   }
@@ -78,7 +78,7 @@ test("optional cheaper-nearby insight stays compact, plain, and safely pressable
   assert.match(component, /nearbySuggestion && displayCurrency \? \(/);
   assert.match(component, /onPress=\{\(\) => onSelect\(nearbySuggestion\.date\)\}/);
   assert.match(component, /hitSlop=\{\{ top: 8, bottom: 8, left: 6, right: 6 \}\}/);
-  for (const expected of [/minHeight: 28/, /justifyContent: "center"/, /paddingHorizontal: 14/, /marginTop: -2/]) {
+  for (const expected of [/minHeight: 28/, /justifyContent: "center"/, /paddingHorizontal: 12/, /marginTop: -2/]) {
     assert.match(nearbyInsight, expected);
   }
   for (const expected of [/fontSize: 11/, /lineHeight: 15/, /fontWeight: "600"/]) {

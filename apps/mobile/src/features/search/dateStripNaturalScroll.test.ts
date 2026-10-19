@@ -6,8 +6,8 @@ import test from "node:test";
 const source = readFileSync(resolve("src/features/search/ApprovedResultsScreen.tsx"), "utf8");
 const list = source.slice(source.indexOf("<Animated.SectionList"), source.indexOf(") : (", source.indexOf("<Animated.SectionList")));
 
-test("the date strip stays fully opaque in normal list-header flow", () => {
-  assert.match(list, /ListHeaderComponent=\{flightDateStrip\}/);
+test("the date strip stays fully opaque in ordinary list-item flow", () => {
+  assert.match(list, /flightResultsIntro[\s\S]*?\{flightDateStrip\}/);
   assert.doesNotMatch(source, /flightDateStripScrollY|flightDateStripHeaderHeight|flightDateStripOpacity|animatedFlightDateStrip/);
   assert.doesNotMatch(list, /ListHeaderComponent=\{[^}]*Animated|position:\s*"absolute"|stickyHeaderIndices/);
 });

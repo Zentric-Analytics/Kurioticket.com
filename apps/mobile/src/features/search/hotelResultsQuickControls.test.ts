@@ -70,7 +70,7 @@ test("Hotel controls use the measured reference capsule geometry while keeping s
   assert.match(styles, /hotelShortcutLabel: \{ fontSize: 13, lineHeight: 16, fontWeight: "600", fontFamily: appFonts\.semibold \}/);
   assert.match(styles, /hotelShortcutCount: \{ minWidth: 20, height: 20, borderRadius: 10, paddingHorizontal: 6/);
   assert.match(styles, /hotelShortcutCountText: \{ fontSize: 11, lineHeight: 14, fontWeight: "600", fontFamily: appFonts\.semibold \}/);
-  for (const contract of [/rail: \{ height: 44/, /touchTarget: \{[\s\S]*?minHeight: 44/, /capsule: \{[\s\S]*?height: 36[\s\S]*?borderRadius: 9/, /label: \{[\s\S]*?fontSize: 13[\s\S]*?lineHeight: 16/, /count: \{[\s\S]*?minWidth: 20[\s\S]*?height: 20/]) assert.match(flight, contract);
+  for (const contract of [/rail: \{ height: 44/, /touchTarget: \{[\s\S]*?minHeight: 44/, /capsule: \{[^\n]*height: 36/, /capsuleSurface: \{[^\n]*borderRadius: 9/, /label: \{[\s\S]*?fontSize: 13[\s\S]*?lineHeight: 16/, /count: \{[\s\S]*?minWidth: 20[\s\S]*?height: 20/]) assert.match(flight, contract);
   assert.match(flight, /capsule: \{[\s\S]*?paddingHorizontal: 10/);
 });
 

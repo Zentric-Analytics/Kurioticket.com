@@ -24,7 +24,7 @@ import {
 import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
 import { travelAccountMessage } from "../../localization/travelAccountMessages";
 import { readSession } from "../../storage/sessionStorage";
-import { useAppTheme } from "../../theme/AppTheme";
+import { useFlightResultsTheme as useAppTheme, useFlightResultsUi } from "./FlightResultsPresentationContext";
 import { appFonts } from "../../theme/typography";
 import { signInHref } from "../auth/signInIntent";
 import { displayPrice, formatMarketCurrency, type ExchangeRates } from "../currency/displayCurrency";
@@ -45,7 +45,8 @@ import {
   hotelAlertDropPercentForTarget,
   hotelAlertPriceBasis,
 } from "./hotelPriceAlertSliderModel";
-import { ui } from "./SearchUi";
+import { ui as sharedUi } from "./SearchUi";
+const ui = sharedUi;
 
 type Props = {
   plan: SearchPlan;
@@ -84,6 +85,7 @@ export function HotelPriceAlert({
   const flight = product === "flight";
   const hotelId = flight ? undefined : hotel?.id;
   const { theme } = useAppTheme();
+  const ui = useFlightResultsUi(sharedUi);
   const insets = useSafeAreaInsets();
   const { locale, t } = useMobileLocalization();
   const message = useCallback(
@@ -483,7 +485,7 @@ export function HotelPriceAlert({
               <View style={styles.sliderBlock}>
                 <View style={styles.sliderHeading}>
                   <Text style={[styles.sliderLabel, { color: theme.textPrimary }]}>{message("priceDrop")}</Text>
-                  <Text style={styles.percent}>{formatDropPercent(dropPercent)}%</Text>
+                  <Text style={[styles.percent, { color: ui.blue }]}>{formatDropPercent(dropPercent)}%</Text>
                 </View>
                 <FlightRangeSlider
                   available={{ min: HOTEL_ALERT_MIN_DROP_PERCENT, max: HOTEL_ALERT_MAX_DROP_PERCENT }}
@@ -522,7 +524,7 @@ export function HotelPriceAlert({
                 accessibilityState={{ disabled: !readyToCreate, busy: pending }}
                 disabled={!readyToCreate}
                 onPress={() => void createAlert()}
-                style={({ pressed }) => [styles.create, !readyToCreate && styles.createDisabled, pressed && readyToCreate && styles.createPressed]}
+                style={({ pressed }) => [styles.create, { backgroundColor: ui.blue }, !readyToCreate && styles.createDisabled, pressed && readyToCreate && styles.createPressed]}
               >
                 {pending ? <ActivityIndicator accessible={false} size="small" color="white" /> : null}
                 <Text style={styles.createText}>{pending ? message("creating") : saveLabel}</Text>

@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Check } from "lucide-react-native";
-import { useAppTheme } from "../../theme/AppTheme";
+import { useFlightResultsTheme as useAppTheme, useFlightResultsUi } from "./FlightResultsPresentationContext";
 import { appFonts } from "../../theme/typography";
-import { ui } from "./SearchUi";
-import { FLIGHT_FILTER_LIGHT_OUTLINE, FlightResultsSheetShell } from "./FlightResultsSheetShell";
+import { ui as sharedUi } from "./SearchUi";
+const ui = sharedUi;
+import { FlightResultsSheetShell } from "./FlightResultsSheetShell";
 import type { FlightSort } from "./flightFilters";
 import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
 import { flightResultsUiCopy } from "./flightResultsSummary";
@@ -21,9 +22,10 @@ export function FlightSortSheet({
   onClose: () => void;
 }) {
   const { theme } = useAppTheme();
+  const ui = useFlightResultsUi(sharedUi);
   const { locale } = useMobileLocalization();
   const copy = flightResultsUiCopy(locale);
-  const filterOutline = theme.dark ? theme.border : FLIGHT_FILTER_LIGHT_OUTLINE;
+  const filterOutline = theme.border;
   const options: { value: FlightSort; label: string; description: string }[] = [
     { value: "best", label: copy.best, description: copy.bestHelp },
     { value: "price", label: copy.cheapest, description: copy.cheapestHelp },
@@ -34,11 +36,12 @@ export function FlightSortSheet({
   return (
     <FlightResultsSheetShell
       visible={visible}
+      flightResultsPresentation
       title={copy.sortFlights}
       insetFlightQuickSheet
       closeLabel={copy.closeSort}
       onClose={onClose}
-      footer={<View style={styles.actions}><Pressable accessibilityRole="button" onPress={() => setDraft("best")} style={[styles.reset, { borderColor: filterOutline }]}><Text style={[styles.buttonText, { color: theme.textPrimary }]}>{copy.reset}</Text></Pressable><Pressable accessibilityRole="button" onPress={() => onApply(draft)} style={styles.apply}><Text style={[styles.buttonText, styles.applyText]}>{copy.apply}</Text></Pressable></View>}
+      footer={<View style={styles.actions}><Pressable accessibilityRole="button" onPress={() => setDraft("best")} style={[styles.reset, { borderColor: filterOutline }]}><Text style={[styles.buttonText, { color: theme.textPrimary }]}>{copy.reset}</Text></Pressable><Pressable accessibilityRole="button" onPress={() => onApply(draft)} style={[styles.apply, { backgroundColor: ui.blue }]}><Text style={[styles.buttonText, styles.applyText]}>{copy.apply}</Text></Pressable></View>}
     >
       <View accessibilityRole="radiogroup" style={styles.options}>
         {options.map((option) => {
@@ -72,7 +75,7 @@ export function FlightSortSheet({
 const styles = StyleSheet.create({
   options: { padding: 16 },
   option: {
-    minHeight: 52,
+    minHeight: 48,
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
@@ -83,5 +86,5 @@ const styles = StyleSheet.create({
   copy: { flex: 1, minWidth: 0 },
   label: { fontSize: 14, lineHeight: 18, fontWeight: "600", fontFamily: appFonts.semibold },
   description: { marginTop: 1, fontSize: 10.5, lineHeight: 14, fontWeight: "500", fontFamily: appFonts.medium },
-  actions: { flexDirection: "row", gap: 10 }, reset: { minWidth: 116, height: 49, borderWidth: 1, borderRadius: 12, alignItems: "center", justifyContent: "center" }, apply: { flex: 1, height: 49, borderRadius: 12, backgroundColor: ui.blue, alignItems: "center", justifyContent: "center" }, buttonText: { fontSize: 15, fontFamily: appFonts.bold, fontWeight: "700" }, applyText: { color: "white" },
+  actions: { flexDirection: "row", gap: 10 }, reset: { minWidth: 116, height: 44, borderWidth: 1, borderRadius: 12, alignItems: "center", justifyContent: "center" }, apply: { flex: 1, height: 44, borderRadius: 12, backgroundColor: ui.blue, alignItems: "center", justifyContent: "center" }, buttonText: { fontSize: 15, fontFamily: appFonts.bold, fontWeight: "700" }, applyText: { color: "white" },
 });

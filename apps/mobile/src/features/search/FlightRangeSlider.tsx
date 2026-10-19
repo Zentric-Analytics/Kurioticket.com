@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PanResponder, StyleSheet, View } from "react-native";
-import { useAppTheme } from "../../theme/AppTheme";
-import { ui } from "./SearchUi";
+import { useFlightResultsTheme as useAppTheme, useFlightResultsUi } from "./FlightResultsPresentationContext";
+import { ui as sharedUi } from "./SearchUi";
 import type { NumericRange } from "./flightFilters";
 import { moveRangeEdge, positionForRangeValue, rangeValueForGesture } from "./flightRange";
 
@@ -18,6 +18,7 @@ type Props = {
 
 export function FlightRangeSlider({ available, selected, step, singleMaximum = false, formatValue, onChange, onDragStateChange, accessibilityLabel }: Props) {
   const { theme } = useAppTheme();
+  const ui = useFlightResultsUi(sharedUi);
   const [width, setWidth] = useState(0);
   const draggingEdgeRef = useRef<"min" | "max" | null>(null);
   const grantXRef = useRef(0);

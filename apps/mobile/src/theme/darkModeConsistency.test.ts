@@ -104,7 +104,7 @@ test("the active Flight results journey keeps its semantic surface and text hier
   assert.match(results, /renderSectionHeader[\s\S]*?backgroundColor: flightCanvasColor[\s\S]*?\{filterRail\}/);
   assert.match(results, /s0\.card,[\s\S]*backgroundColor: theme\.surface/);
   assert.match(results, /s0\.airlineName, \{ color: theme\.textPrimary \}/);
-  assert.match(results, /const flightSupportText = \{\s*light: "#465675",\s*dark: "#B8C3D8"/);
+  assert.match(results, /const flightSupportText = \{\s*light: "#64748B",\s*dark: "#B8C3D8"/);
   assert.match(results, /s0\.operatingCarrierText, \{ color: supportTextColor \}/);
   assert.match(results, /s0\.time, \{ color: theme\.textPrimary \}/);
   assert.match(results, /s0\.flightMetadataLabel, \{ color: supportTextColor \}/);
@@ -125,7 +125,7 @@ test("the active Flight results journey keeps its semantic surface and text hier
   assert.doesNotMatch(sortSheet, /#142B55|#F7FAFF/);
   assert.match(searchUi, /backgroundColor: flightResults \? theme\.background : theme\.surface/);
   assert.match(searchUi, /backgroundColor: theme\.surface/);
-  assert.match(searchUi, /theme\.dark \? "#142B55" : "#F0F5FF"/);
+  assert.match(searchUi, /theme\.dark \? "#142B55" : "#EEF6FF"/);
   assert.match(searchUi, /nearbyDateInsightText, \{ color: theme\.textSecondary, fontFamily: appFonts\.semibold \}/);
   assert.match(states, /backgroundColor: theme\.surface/);
   assert.match(states, /color: theme\.textPrimary/);
@@ -143,7 +143,7 @@ test("Flight filters, slider, and inline edit sheet have no implicit light text 
   assert.match(filter, /s\.rowText,[\s\S]*?theme\.textPrimary/);
   assert.match(filter, /s\.rowInsight,\{color:theme\.textSecondary\}/);
   assert.match(filter, /<FlightResultsSheetShell/);
-  assert.match(filter, /const filterOutline=theme\.dark\?theme\.border:FLIGHT_FILTER_LIGHT_OUTLINE/);
+  assert.match(filter, /const filterOutline=theme\.border/);
   assert.match(filter, /selected\?ui\.blue:filterOutline/);
   assert.match(slider, /backgroundColor: theme\.border/);
   assert.match(slider, /borderColor: theme\.surface/);
