@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   beginCarBackToTopReturn,
+  hasVisibleFirstCarResult,
   CAR_BACK_TO_TOP_SCROLL_THRESHOLD,
   INITIAL_CAR_BACK_TO_TOP_SCROLL_STATE,
   updateCarBackToTopScroll,
@@ -71,4 +72,27 @@ test("invalid and negative event offsets never create spurious visibility", () =
   assert.deepEqual(updateCarBackToTopScroll(initial, Number.NaN), initial);
   assert.deepEqual(updateCarBackToTopScroll(initial, -200), initial);
   assert.equal(updateCarBackToTopScroll(initial, Number.POSITIVE_INFINITY).visible, false);
+});
+
+test("native Cars reveal is calibrated to the mobile-web result-card depth", () => {
+  // The web scroll threshold is document-based (600), but native scrolls only
+  // the FlatList below its persistent search and filter controls.
+  assert.equal(CAR_BACK_TO_TOP_SCROLL_THRESHOLD, 500);
+  let state = updateCarBackToTopScroll(INITIAL_CAR_BACK_TO_TOP_SCROLL_STATE, 499);
+  assert.equal(state.visible, false);
+  state = updateCarBackToTopScroll(state, 500);
+  assert.equal(state.visible, false);
+  state = updateCarBackToTopScroll(state, 501);
+  assert.equal(state.visible, true);
+  state = updateCarBackToTopScroll(state, 500);
+  assert.equal(state.visible, false, "the same boundary hides the button when returning upward");
+});
+
+test("first-car viewability provides a hide-only fallback for coalesced native scroll events", () => {
+  assert.equal(hasVisibleFirstCarResult([]), false);
+  assert.equal(hasVisibleFirstCarResult([{index:0,isViewable:false}]), false);
+  assert.equal(hasVisibleFirstCarResult([{index:1,isViewable:true}]), false);
+  assert.equal(hasVisibleFirstCarResult([{index:null,isViewable:true}]), false);
+  assert.equal(hasVisibleFirstCarResult([{index:2,isViewable:true},{index:0,isViewable:true}]), true);
+  assert.equal(hasVisibleFirstCarResult([{index:0,isViewable:true}]), true);
 });
