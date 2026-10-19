@@ -57,7 +57,7 @@ test("Native Hotel Results has no floating Back-to-top affordance", () => {
 
   const owner = screen.match(/<SectionList\s+ref=\{hotelResultsListRef\}[\s\S]*?alwaysBounceVertical=\{false\}[\s\S]*?>/)?.[0];
   assert.ok(owner);
-  assert.match(owner, /onScroll=\{hotelScrolling\.onScroll\}/);
+  assert.doesNotMatch(owner, /onScroll=/);
 });
 
 test("Hotel scroll ref and result positioning remain available", () => {

@@ -1,32 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { HOTEL_RESULTS_REVEAL_COUNT, createHotelRevealGate, initialHotelFilterScrollState, nextHotelFilterScrollState, nextHotelRevealLimit } from "./hotelResultsScroll";
-
-test("filters hide downward and return upward without reacting to tiny direction jitter", () => {
-  let state = initialHotelFilterScrollState();
-  state = nextHotelFilterScrollState(state, 8, 1000);
-  assert.equal(state.hidden, false);
-  state = nextHotelFilterScrollState(state, 20, 1000);
-  assert.equal(state.hidden, true);
-  state = nextHotelFilterScrollState(state, 18, 1000);
-  assert.equal(state.hidden, true);
-  state = nextHotelFilterScrollState(state, 5, 1000);
-  assert.equal(state.hidden, false);
-});
-
-test("bottom overscroll does not show filters until the user actually scrolls upward", () => {
-  let state = nextHotelFilterScrollState(initialHotelFilterScrollState(), 1000, 1000);
-  state = nextHotelFilterScrollState(state, 1040, 1000);
-  state = nextHotelFilterScrollState(state, 1000, 1000);
-  assert.equal(state.hidden, true);
-  state = nextHotelFilterScrollState(state, 980, 1000);
-  assert.equal(state.hidden, false);
-  assert.deepEqual(nextHotelFilterScrollState(state, -20, 1000), initialHotelFilterScrollState());
-});
-
-test("small result sets retain filters and top overscroll cannot collapse them", () => {
-  assert.deepEqual(nextHotelFilterScrollState(initialHotelFilterScrollState(), 20, -100), initialHotelFilterScrollState());
-});
+import { readFileSync } from "node:fs";
+import { HOTEL_RESULTS_REVEAL_COUNT, createHotelRevealGate, nextHotelRevealLimit } from "./hotelResultsScroll";
 
 test("all 8547 results remain reachable through bounded append-only reveals", () => {
   let visible = HOTEL_RESULTS_REVEAL_COUNT;
@@ -37,14 +12,6 @@ test("all 8547 results remain reachable through bounded append-only reveals", ()
   }
   assert.equal(visible, 8547);
   assert.equal(nextHotelRevealLimit(visible, 8547), 8547);
-  assert.equal(nextHotelRevealLimit(HOTEL_RESULTS_REVEAL_COUNT, 3), 3);
-});
-
-test("filter collapse cannot look like an upward gesture at the end of the list", () => {
-  const hidden = { offset: 1000, travel: 0, hidden: true };
-  const resized = nextHotelFilterScrollState(hidden, 944, 944);
-  assert.equal(resized.hidden, true);
-  assert.equal(nextHotelFilterScrollState(resized, 920, 944).hidden, false);
 });
 
 function gateHarness() {
@@ -81,4 +48,15 @@ test("search/sort/filter reset invalidates even an uncancellable old reveal", ()
   assert.deepEqual(revealed, []);
   tasks.shift()!();
   assert.deepEqual(revealed, ["new-search"]);
+});
+
+test("Hotel filters stay visible above the list without direction tracking", () => {
+  const screen = readFileSync("src/features/search/ApprovedResultsScreen.tsx", "utf8");
+  const hook = readFileSync("src/features/search/useHotelResultsScrolling.ts", "utf8");
+  const hotel = screen.slice(screen.indexOf("<HotelResultsHeader"), screen.indexOf("<FlightSortSheet"));
+  assert.match(hotel, /<View style=\{\[s0\.hotelFilterSectionHeader[\s\S]*?\{filterRail\}[\s\S]*?<SectionList/);
+  assert.doesNotMatch(hotel, /filterHidden|filterTranslation|onScroll=|onFilterLayout/);
+  assert.doesNotMatch(hook, /Animated|nextHotelFilterScrollState|ignoreDirectionUntilGesture/);
+  assert.match(hotel, /showsVerticalScrollIndicator=\{true\}/);
+  assert.match(hotel, /onEndReached=\{hotelScrolling\.revealMore\}/);
 });
