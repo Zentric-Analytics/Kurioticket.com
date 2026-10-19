@@ -123,9 +123,9 @@ export function NativeCarPriceAlert({ plan, resultId, offer, available, onFeedba
   if (!baseline || !scope.providerName) return null;
   return <View style={styles.control}>
     <Bell accessible={false} size={14} strokeWidth={2} color={theme.priceAlertAccent}/>
-    <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.title, { color: theme.dark ? theme.textPrimary : "#07133B" }]}>Track prices</Text>
+    <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.title, { color: theme.dark ? theme.textPrimary : "#07133B" }]}>Track car prices</Text>
     <View style={styles.switchSlot}>
-      <Pressable accessibilityRole="switch" accessibilityLabel={`Track prices for ${scope.providerName} offer`} accessibilityState={{ checked: tracking, disabled, busy: pending }} disabled={disabled} onPress={() => void toggle(!tracking)} style={styles.switchTouchTarget}>
+      <Pressable accessibilityRole="switch" accessibilityLabel={`Track car prices for ${scope.providerName} offer`} accessibilityState={{ checked: tracking, disabled, busy: pending }} disabled={disabled} onPress={() => void toggle(!tracking)} style={styles.switchTouchTarget}>
         <View pointerEvents="none" style={[styles.switchTrack, { backgroundColor: tracking ? theme.switchTrackActive : theme.dark ? "#465269" : "#CBD5E1", borderColor: tracking ? theme.switchTrackActive : theme.dark ? "#465269" : "#CBD5E1" }]}>
           <Animated.View style={[styles.switchThumb, I18nManager.isRTL && !I18nManager.doLeftAndRightSwapInRTL ? styles.switchThumbRtl : styles.switchThumbLtr, { transform: [{ translateX: thumbTranslateX }] }]}/>
         </View>
