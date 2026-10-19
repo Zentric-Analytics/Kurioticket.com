@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Animated, InteractionManager, type LayoutChangeEvent, type NativeScrollEvent, type NativeSyntheticEvent } from "react-native";
-import { HOTEL_RESULTS_REVEAL_COUNT, initialHotelFilterScrollState, nextHotelFilterScrollState, nextHotelRevealLimit } from "./hotelResultsScroll";
+import { Animated, type LayoutChangeEvent, type NativeScrollEvent, type NativeSyntheticEvent } from "react-native";
+import { HOTEL_RESULTS_REVEAL_COUNT, createHotelRevealGate, initialHotelFilterScrollState, nextHotelFilterScrollState, nextHotelRevealLimit } from "./hotelResultsScroll";
 
 /** Hotel-only presentation window; the complete canonical inventory stays in the screen. */
 export function useHotelResultsScrolling(identity: string, total: number) {
@@ -13,22 +13,32 @@ export function useHotelResultsScrolling(identity: string, total: number) {
   currentIdentity.current = identity;
   const currentTotal = useRef(total);
   currentTotal.current = total;
-  const pendingReveal = useRef<ReturnType<typeof InteractionManager.runAfterInteractions> | null>(null);
+  const revealGate = useRef<ReturnType<typeof createHotelRevealGate> | null>(null);
+  if (!revealGate.current) {
+    revealGate.current = createHotelRevealGate(task => {
+      const frame = requestAnimationFrame(task);
+      return () => cancelAnimationFrame(frame);
+    }, owner => {
+      if (owner !== currentIdentity.current) return;
+      setWindow(previous => ({
+        identity: owner,
+        limit: nextHotelRevealLimit(previous.identity === owner ? previous.limit : HOTEL_RESULTS_REVEAL_COUNT, currentTotal.current),
+      }));
+    });
+  }
   const limit = window.identity === identity ? window.limit : HOTEL_RESULTS_REVEAL_COUNT;
   const hasMore = limit < total;
 
-  const interactionHandle = useRef<number | null>(null);
   const dragEndTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const endInteraction = useCallback(() => {
     if (dragEndTimer.current) clearTimeout(dragEndTimer.current);
     dragEndTimer.current = null;
-    if (interactionHandle.current !== null) InteractionManager.clearInteractionHandle(interactionHandle.current);
-    interactionHandle.current = null;
+    revealGate.current?.end();
   }, []);
   const beginInteraction = useCallback(() => {
     if (dragEndTimer.current) clearTimeout(dragEndTimer.current);
     dragEndTimer.current = null;
-    if (interactionHandle.current === null) interactionHandle.current = InteractionManager.createInteractionHandle();
+    revealGate.current?.begin();
   }, []);
   const endDrag = useCallback(() => {
     // A release may start native momentum. Keep the reveal gate until its end;
@@ -45,15 +55,13 @@ export function useHotelResultsScrolling(identity: string, total: number) {
   }, [filterTranslation]);
 
   useEffect(() => {
-    pendingReveal.current?.cancel();
-    pendingReveal.current = null;
+    revealGate.current?.reset();
     setWindow({ identity, limit: HOTEL_RESULTS_REVEAL_COUNT });
     resetFilters();
     endInteraction();
     return () => {
       endInteraction();
-      pendingReveal.current?.cancel();
-      pendingReveal.current = null;
+      revealGate.current?.reset();
       filterTranslation.stopAnimation();
     };
   }, [identity, resetFilters, filterTranslation, endInteraction]);
@@ -63,6 +71,7 @@ export function useHotelResultsScrolling(identity: string, total: number) {
       toValue: filterHidden ? -filterHeight : 0,
       duration: 160,
       useNativeDriver: false,
+      isInteraction: false,
     });
     animation.start();
     return () => animation.stop();
@@ -77,18 +86,7 @@ export function useHotelResultsScrolling(identity: string, total: number) {
   }, []);
 
   const revealMore = useCallback(() => {
-    if (!hasMore || pendingReveal.current) return;
-    const owner = identity;
-    // Keep the existing cards and footer while a gesture is active; append a
-    // bounded group once interaction work yields, without remounting the list.
-    pendingReveal.current = InteractionManager.runAfterInteractions(() => {
-      pendingReveal.current = null;
-      if (owner !== currentIdentity.current) return;
-      setWindow(previous => ({
-        identity: owner,
-        limit: nextHotelRevealLimit(previous.identity === owner ? previous.limit : HOTEL_RESULTS_REVEAL_COUNT, currentTotal.current),
-      }));
-    });
+    if (hasMore) revealGate.current?.request(identity);
   }, [hasMore, identity]);
 
   const onFilterLayout = useCallback((event: LayoutChangeEvent) => {

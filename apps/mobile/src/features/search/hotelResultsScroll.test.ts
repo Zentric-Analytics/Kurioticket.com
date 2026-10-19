@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { HOTEL_RESULTS_REVEAL_COUNT, initialHotelFilterScrollState, nextHotelFilterScrollState, nextHotelRevealLimit } from "./hotelResultsScroll";
+import { HOTEL_RESULTS_REVEAL_COUNT, createHotelRevealGate, initialHotelFilterScrollState, nextHotelFilterScrollState, nextHotelRevealLimit } from "./hotelResultsScroll";
 
 test("filters hide downward and return upward without reacting to tiny direction jitter", () => {
   let state = initialHotelFilterScrollState();
@@ -45,4 +45,40 @@ test("filter collapse cannot look like an upward gesture at the end of the list"
   const resized = nextHotelFilterScrollState(hidden, 944, 944);
   assert.equal(resized.hidden, true);
   assert.equal(nextHotelFilterScrollState(resized, 920, 944).hidden, false);
+});
+
+function gateHarness() {
+  const tasks: Array<() => void> = [];
+  const revealed: string[] = [];
+  const gate = createHotelRevealGate(task => { tasks.push(task); return () => {}; }, identity => revealed.push(identity));
+  return { gate, tasks, revealed };
+}
+
+test("repeated end events reveal once after both drag and momentum end", () => {
+  const { gate, tasks, revealed } = gateHarness();
+  gate.begin();
+  gate.request("search-a");
+  gate.request("search-a");
+  assert.equal(tasks.length, 0);
+  gate.end();
+  assert.equal(tasks.length, 1);
+  gate.begin(); // Native momentum starts before the scheduled frame.
+  tasks.shift()!();
+  assert.deepEqual(revealed, []);
+  gate.end();
+  tasks.shift()!();
+  assert.deepEqual(revealed, ["search-a"]);
+  gate.end();
+  assert.equal(tasks.length, 0);
+});
+
+test("search/sort/filter reset invalidates even an uncancellable old reveal", () => {
+  const { gate, tasks, revealed } = gateHarness();
+  gate.request("old-search");
+  gate.reset();
+  gate.request("new-search");
+  tasks.shift()!();
+  assert.deepEqual(revealed, []);
+  tasks.shift()!();
+  assert.deepEqual(revealed, ["new-search"]);
 });
