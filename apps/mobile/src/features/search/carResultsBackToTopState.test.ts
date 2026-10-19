@@ -77,14 +77,14 @@ test("invalid and negative event offsets never create spurious visibility", () =
 test("native Cars reveal is calibrated to the mobile-web result-card depth", () => {
   // The web scroll threshold is document-based (600), but native scrolls only
   // the FlatList below its persistent search and filter controls.
-  assert.equal(CAR_BACK_TO_TOP_SCROLL_THRESHOLD, 500);
-  let state = updateCarBackToTopScroll(INITIAL_CAR_BACK_TO_TOP_SCROLL_STATE, 499);
+  assert.equal(CAR_BACK_TO_TOP_SCROLL_THRESHOLD, 320);
+  let state = updateCarBackToTopScroll(INITIAL_CAR_BACK_TO_TOP_SCROLL_STATE, 319);
   assert.equal(state.visible, false);
-  state = updateCarBackToTopScroll(state, 500);
+  state = updateCarBackToTopScroll(state, 320);
   assert.equal(state.visible, false);
-  state = updateCarBackToTopScroll(state, 501);
+  state = updateCarBackToTopScroll(state, 321);
   assert.equal(state.visible, true);
-  state = updateCarBackToTopScroll(state, 500);
+  state = updateCarBackToTopScroll(state, 320);
   assert.equal(state.visible, false, "the same boundary hides the button when returning upward");
 });
 
