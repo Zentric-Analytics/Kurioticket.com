@@ -63,7 +63,7 @@ export type SecuritySession = { id:string; client:string; platform:string|null; 
 export type TwoFactorSetup = { otpauthUri:string; manualSetupKey:string; expiresAt:string };
 export type TwoFactorStatus = { enabled:boolean; method:string|null; enabledAt:string|null; disabledAt:string|null; recoveryCodesRemaining:number };
 export type AccountDeletionRequest = { id:string; status:string; requestedAt:string; deletionScheduledAt:string; cancelledAt:string|null; completedAt:string|null; canReactivate:boolean };
-export type HotelDestinationKind = "city" | "district" | "landmark" | "airport-area";
+export type HotelDestinationKind = "city" | "district" | "landmark" | "airport-area" | "custom";
 export type HotelDestinationSuggestion = {
   id: string;
   name: string;
