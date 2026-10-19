@@ -1,10 +1,12 @@
 /**
  * Pure scroll-state transitions for the native Cars result-list Back to top.
- * Keep scroll visibility direction-independent. Only suppress events while
- * the list is genuinely animating back toward offset zero.
+ * One scroll offset owns visibility in either direction. Suppress updates
+ * only while an explicit animated return to zero is still in progress.
  */
-// The native list begins below the persistent search/filter header, unlike the web page.
-// Reveal within the first result card instead of waiting for a second card.
+// The web threshold is measured from the document origin, while native
+// scrolls only its result list beneath persistent search and filter controls.
+// Retain the earlier result-relative activation, rather than making native
+// wait until more car cards have passed on screen.
 export const CAR_BACK_TO_TOP_SCROLL_THRESHOLD = 320;
 
 export type CarBackToTopScrollState = {

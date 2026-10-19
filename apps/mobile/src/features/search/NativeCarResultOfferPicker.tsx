@@ -165,7 +165,7 @@ export function NativeCarResultOfferPicker({
             </View>
             <Text numberOfLines={2} style={[styles.seller, { color: theme.textSecondary }]}>Booking provider · {selectedChoice?.providerName ?? ""}</Text>
           </View>
-          <ScrollView style={styles.sheetScroll} contentContainerStyle={styles.sheetBody} nestedScrollEnabled>
+          <ScrollView style={styles.sheetScroll} contentContainerStyle={styles.sheetBody} showsVerticalScrollIndicator={false} nestedScrollEnabled>
             {selectedPrice && selectedChoice ? (
               <>
                 <View style={[styles.paymentSection, { borderBottomColor: theme.border }]}>
