@@ -68,7 +68,7 @@ test("Cars tracking appears only inside Rate details on phone and desktop", () =
   assert.doesNotMatch(results, /<CarPriceAlertControl|data-cars-price-alert-sidebar-slot/);
   assert.doesNotMatch(source, /desktopPortalTarget|createPortal|matchMedia/);
   assert.match(source, /data-cars-price-alert/);
-  assert.match(source, /Track prices/);
+  assert.match(source, /\{t\("carsResults\.priceTracking\.title"\)\}<\/span>/);
   assert.equal((source.match(/role="switch"/g) ?? []).length, 1);
   assert.equal((source.match(/fetch\("\/api\/price-alerts"/g) ?? []).length, 2);
 });
@@ -90,10 +90,10 @@ test("mobile web and desktop share one compact offer-rate tracking style", () =>
   assert.doesNotMatch(source, /desktopPortalTarget|sm:rounded-2xl|lg:rounded-xl/);
 });
 
-test("Cars rate alerts keep a short visible label with an offer-specific accessible name", () => {
+test("Cars rate alerts display Track car prices with an offer-specific accessible name", () => {
   const english = readFileSync(new URL("../../lib/i18n/en.ts", import.meta.url), "utf8");
   assert.match(english, /"carsResults\.priceTracking\.title": "Track car prices"/);
-  assert.match(source, /<span className="whitespace-nowrap text-\[11px\][^>]*>Track prices<\/span>/);
+  assert.match(source, /<span className="whitespace-nowrap text-\[11px\][^>]*>\{t\("carsResults\.priceTracking\.title"\)\}<\/span>/);
   assert.match(source, /aria-label=\{`${t\("carsResults\.priceTracking\.title"\)\} for $\{scope\.providerName\} offer`\}/);
 });
 
