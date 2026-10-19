@@ -250,17 +250,17 @@ function HomePageContent() {
                 ]}
               >
                 {product.icon === "packages" ? (
-                  <PackagesIcon strokeWidth={1.3} color={selected ? ft.colors.selectedLabelText : ft.colors.icon} />
+                  <PackagesIcon strokeWidth={1.3} color={selected ? ft.colors.selectedLabelText : (ft.theme.dark ? ft.colors.icon : "#1A1A1A")} />
                 ) : (
                   <FlowIcon
                     name={product.icon}
                     strokeWidth={1.3}
-                    color={selected ? ft.colors.selectedLabelText : ft.colors.icon}
+                    color={selected ? ft.colors.selectedLabelText : (ft.theme.dark ? ft.colors.icon : "#1A1A1A")}
                   />
                 )}
                 <NativeText
                   style={[
-                    styles.productText, { color: ft.colors.text },
+                    styles.productText, { color: ft.theme.dark ? ft.colors.text : "#1A1A1A" },
                     selected && { color: ft.colors.selectedLabelText },
                   ]}
                 >

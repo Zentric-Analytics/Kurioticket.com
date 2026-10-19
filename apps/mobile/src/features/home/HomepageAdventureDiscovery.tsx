@@ -107,7 +107,7 @@ function AdventureCard({ item, width, fare, marketplace, imageFailed, saved, onI
 
 const styles = StyleSheet.create({
   section: { gap: 16, marginTop: 4 }, header: { gap: 6 }, heading: { fontSize: 20, lineHeight: 26, fontWeight: "700", letterSpacing: -0.25 }, subtitle: { fontSize: 14, lineHeight: 21 },
-  rowViewport: { marginHorizontal: -14 }, rowContent: { gap: ROW_GAP, paddingHorizontal: 14, paddingRight: 40 }, card: { borderRadius: 16, borderWidth: 1, overflow: "hidden" }, imageFrame: { width: "100%", aspectRatio: 4 / 3 }, image: { width: "100%", height: "100%" },
+  rowViewport: { marginHorizontal: -14 }, rowContent: { alignItems: "flex-start", gap: ROW_GAP, paddingHorizontal: 14, paddingRight: 40 }, card: { borderRadius: 16, borderWidth: 1, overflow: "hidden" }, imageFrame: { width: "100%", aspectRatio: 4 / 3 }, image: { width: "100%", height: "100%" },
   imageFallback: { flex: 1, alignItems: "center", justifyContent: "center", gap: 6 }, fallbackCode: { fontSize: 13, fontWeight: "900", letterSpacing: 1.4 }, heart: { position: "absolute", right: 8, top: 8 },
   copy: { padding: 8 }, title: { fontSize: 15, lineHeight: 20, fontWeight: "700" }, route: { marginTop: 6, fontSize: 12, lineHeight: 17, fontWeight: "600" }, meta: { marginTop: 5, fontSize: 11, lineHeight: 16, fontWeight: "500", letterSpacing: 0.35 }, fare: { marginTop: 12, flexDirection: "row", alignItems: "baseline", gap: 5 }, from: { fontSize: 12, fontWeight: "600" }, price: { flexShrink: 1, minWidth: 0, fontSize: 18, lineHeight: 24, fontWeight: "700" },
 });
