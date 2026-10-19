@@ -169,7 +169,7 @@ export function NativeCarResultOfferPicker({
               </Pressable>
             </View>
             <View style={styles.sellerRow}>
-              <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.seller, { color: theme.textSecondary }]}>Booking provider · {selectedChoice?.providerName ?? ""}</Text>
+              <Text numberOfLines={2} style={[styles.seller, { color: theme.textSecondary }]}>Booking provider · {selectedChoice?.providerName ?? ""}</Text>
               {selectedChoice && plan ? (
                 <NativeCarPriceAlert key={result.id + ":" + selectedChoice.key} plan={plan} resultId={result.id} offer={selectedChoice.offer} available={priceAlertsAvailable} onFeedback={setPriceAlertFeedback} />
               ) : null}
@@ -261,8 +261,8 @@ const styles = StyleSheet.create({
   sheetTitleRow: { flexDirection: "row", alignItems: "center", minHeight: 44 },
   sheetHeadingSpacer: { width: 44, height: 44 },
   sheetTitle: { flex: 1, minWidth: 0, textAlign: "center", fontSize: 18, lineHeight: 23, fontWeight: "700", fontFamily: appFonts.bold },
-  sellerRow: { marginTop: 3, minWidth: 0, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 6 },
-  seller: { flex: 1, minWidth: 0, fontSize: 12, lineHeight: 18, fontWeight: "600", fontFamily: appFonts.semibold },
+  sellerRow: { marginTop: 6, minWidth: 0, alignItems: "stretch", gap: 5 },
+  seller: { minWidth: 0, fontSize: 13, lineHeight: 19, fontWeight: "600", fontFamily: appFonts.semibold },
   closeButton: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
   sheetBody: { paddingTop: 16, paddingBottom: 24 },
   sheetPrice: { fontSize: 22, fontWeight: "700", fontFamily: appFonts.bold, fontVariant: ["tabular-nums"], lineHeight: 28 },
