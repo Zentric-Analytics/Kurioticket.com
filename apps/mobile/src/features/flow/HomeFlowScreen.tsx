@@ -259,7 +259,7 @@ function HomePageContent() {
                 <Text
                   style={[
                     styles.productText, { color: ft.colors.text },
-                    selected && styles.productTextActive,
+                    selected && { color: ft.colors.selectedLabelText },
                   ]}
                 >
                   {product.label}
@@ -365,5 +365,4 @@ const styles = StyleSheet.create({
     borderBottomWidth: 2,
   },
   productText: { color: flowColors.navy, fontSize: 11, fontWeight: "700" },
-  productTextActive: { color: flowColors.blue },
 });

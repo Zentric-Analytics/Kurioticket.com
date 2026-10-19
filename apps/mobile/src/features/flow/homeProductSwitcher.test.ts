@@ -19,6 +19,7 @@ test("Home product tabs expose one selected state driven by activeProduct", () =
   assert.match(home, /accessibilityState=\{\{ selected \}\}/);
   assert.match(home, /selected && \[styles\.productActive/);
   assert.match(home, /backgroundColor: ft\.colors\.selected, borderBottomColor: ft\.colors\.selectedBorder/);
+  assert.match(home, /selected && \{ color: ft\.colors\.selectedLabelText \}/);
   assert.doesNotMatch(home, /styles\.productIcon/);
   assert.doesNotMatch(home, /index === 0/);
 });
