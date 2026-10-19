@@ -122,10 +122,12 @@ export function CarPriceAlertControl({ search, car, offer }: {
   const tracking = optimisticTracking ?? committedTracking;
   const disabled = !reconciled;
   return <>
-    <section aria-label={t("carsResults.priceTracking.title")} data-cars-price-alert className="inline-flex min-w-0 shrink-0 items-center justify-end">
-      <div className="flex min-h-11 min-w-0 items-center justify-end gap-1.5">
-        <Bell className="h-3.5 w-3.5 shrink-0 text-[#1769AA]" aria-hidden="true" />
-        <span className="whitespace-nowrap text-[11px] font-semibold leading-4 text-[#07133B]">{t("carsResults.priceTracking.title")}</span>
+    <section aria-label={t("carsResults.priceTracking.title")} data-cars-price-alert className="mt-2 flex w-full min-w-0 items-center rounded-xl border border-[#CFE0F8] bg-[#EEF6FF] px-3 py-1 shadow-[0_1px_3px_rgba(15,23,42,0.05)]">
+      <div className="flex min-h-11 w-full min-w-0 items-center gap-2">
+        <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/85">
+          <Bell className="h-4 w-4 text-[#1769AA]" aria-hidden="true" />
+        </span>
+        <span className="min-w-0 flex-1 text-[13px] font-semibold leading-[18px] tracking-[-0.005em] text-[#07133B]">{t("carsResults.priceTracking.title")}</span>
         <button ref={switchRef} type="button" role="switch" aria-checked={tracking} aria-busy={pending} disabled={disabled} aria-label={`${t("carsResults.priceTracking.title")} for ${scope.providerName} offer`} onClick={() => void toggle(!tracking)} className="relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35">
           <span aria-hidden="true" className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors ${tracking ? "border-[#004BB8] bg-[#004BB8]" : "border-slate-300 bg-slate-200"}`}>
             <span className={`h-[18px] w-[18px] rounded-full bg-white shadow transition-transform ${tracking ? "translate-x-[23px] rtl:-translate-x-[23px]" : "translate-x-[3px] rtl:-translate-x-[3px]"}`} />

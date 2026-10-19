@@ -22,7 +22,7 @@ test("offer alert submits optimistically with accessible confirmation and no loa
   assert.doesNotMatch(source, /LoaderCircle|animate-spin|w-5 justify-center/);
   assert.match(source, /pendingRef\.current/);
   assert.match(source, /optimisticTracking/);
-  assert.match(source, /flex min-h-11 min-w-0 items-center justify-end gap-1\.5/);
+  assert.match(source, /flex min-h-11 w-full min-w-0 items-center gap-2/);
   assert.match(source, /CAR_PRICE_ALERT_SNACKBAR_DURATION_MS = 3_600/);
   assert.match(source, /window\.clearTimeout\(leave\)/);
   assert.match(source, /aria-live="polite"/);
@@ -83,9 +83,9 @@ test("Cars rate-details toggle preserves the accessible 44px touch target and 24
   assert.match(source, /onClick=\{\(\) => void toggle\(!tracking\)\}/);
 });
 
-test("mobile web and desktop share one compact offer-rate tracking style", () => {
-  assert.match(source, /inline-flex min-w-0 shrink-0 items-center justify-end/);
-  assert.match(source, /whitespace-nowrap text-\[11px\] font-semibold leading-4/);
+test("mobile web and desktop restore one softly tinted offer-rate tracking bar", () => {
+  assert.match(source, /mt-2 flex w-full min-w-0 items-center rounded-xl border border-\[#CFE0F8\] bg-\[#EEF6FF\]/);
+  assert.match(source, /min-w-0 flex-1 text-\[13px\] font-semibold leading-\[18px\]/);
   assert.match(source, /className="relative inline-flex h-11 w-11/);
   assert.doesNotMatch(source, /desktopPortalTarget|sm:rounded-2xl|lg:rounded-xl/);
 });
@@ -93,7 +93,7 @@ test("mobile web and desktop share one compact offer-rate tracking style", () =>
 test("Cars rate alerts display Track car prices with an offer-specific accessible name", () => {
   const english = readFileSync(new URL("../../lib/i18n/en.ts", import.meta.url), "utf8");
   assert.match(english, /"carsResults\.priceTracking\.title": "Track car prices"/);
-  assert.match(source, /<span className="whitespace-nowrap text-\[11px\][^>]*>\{t\("carsResults\.priceTracking\.title"\)\}<\/span>/);
+  assert.match(source, /<span className="min-w-0 flex-1 text-\[13px\][^>]*>\{t\("carsResults\.priceTracking\.title"\)\}<\/span>/);
   assert.match(source, /aria-label=\{`${t\("carsResults\.priceTracking\.title"\)\} for $\{scope\.providerName\} offer`\}/);
 });
 

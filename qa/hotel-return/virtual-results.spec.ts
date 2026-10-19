@@ -152,7 +152,7 @@ test("Cars cards omit the supplier-information bar and preserve View deal on mob
 });
 
 
-test("Cars rate details aligns offer-only tracking with the booking provider on mobile, tablet and desktop", async ({ page }) => {
+test("Cars rate details shows a separate tinted tracking bar beneath the booking provider on all viewports", async ({ page }) => {
   // Rate information is only exposed for KAYAK-sandbox inventory with supplier facts.
   // Do not use the static Kurioticket fixture source here: it intentionally hides the info action.
   const result = {
@@ -175,6 +175,17 @@ test("Cars rate details aligns offer-only tracking with the booking provider on 
     await expect(toolbar).toHaveCSS("padding-top", width < 640 ? "24px" : "4px");
     const summary = page.locator("[data-cars-results-summary-row]").first();
     await expect(summary.locator("h2")).toBeVisible();
+    if (width < 640) {
+      const firstCard = page.locator("[data-cars-results-card-list] [data-car-result-card-shell]").first();
+      await expect(firstCard).toBeVisible();
+      const countBox = await summary.locator("h2").boundingBox();
+      const cardBox = await firstCard.boundingBox();
+      expect(countBox).not.toBeNull();
+      expect(cardBox).not.toBeNull();
+      const countToCardGap = cardBox!.y - (countBox!.y + countBox!.height);
+      expect(countToCardGap).toBeGreaterThanOrEqual(6);
+      expect(countToCardGap).toBeLessThanOrEqual(28);
+    }
     await expect(page.locator("[data-cars-price-alert]")).toHaveCount(0);
     await expect(page.locator("[data-cars-price-alert-sidebar-slot]")).toHaveCount(0);
     const info = page.locator("[data-car-rate-info]").filter({ visible: true }).first();
@@ -189,15 +200,20 @@ test("Cars rate details aligns offer-only tracking with the booking provider on 
     await expect(provider).toContainText("Booking provider ·");
     await expect(alert).toBeVisible();
     await expect(alert).toContainText("Track car prices");
+    await expect(alert).toHaveCSS("background-color", "rgb(238, 246, 255)");
+    await expect(alert).toHaveCSS("border-radius", "12px");
     await expect(toggle).toHaveAttribute("aria-label", /Track car prices for .+ offer/);
     await expect(toggle).toBeVisible();
     await expect(dialog.locator("[data-cars-price-alert]")).toHaveCount(1);
     const track = toggle.locator('span[aria-hidden="true"]').first();
     const thumb = track.locator("span").first();
-    const [providerBox, alertBox, trackBox, thumbBox] = await Promise.all([provider, alert, track, thumb].map(el => el.boundingBox()));
-    for (const box of [providerBox, alertBox, trackBox, thumbBox]) expect(box).not.toBeNull();
-    expect(alertBox!.x).toBeGreaterThan(providerBox!.x);
-    expect(Math.abs((alertBox!.y + alertBox!.height / 2) - (providerBox!.y + providerBox!.height / 2))).toBeLessThanOrEqual(13);
+    const [providerBox, alertBox, trackBox, thumbBox, rowBox] = await Promise.all([provider, alert, track, thumb, row].map(el => el.boundingBox()));
+    for (const box of [providerBox, alertBox, trackBox, thumbBox, rowBox]) expect(box).not.toBeNull();
+    expect(Math.abs(alertBox!.x - providerBox!.x)).toBeLessThanOrEqual(2);
+    expect(alertBox!.width).toBeGreaterThanOrEqual(rowBox!.width - 2);
+    const providerToBarGap = alertBox!.y - (providerBox!.y + providerBox!.height);
+    expect(providerToBarGap).toBeGreaterThanOrEqual(6);
+    expect(providerToBarGap).toBeLessThanOrEqual(26);
     expect(Math.abs(trackBox!.width - 44)).toBeLessThanOrEqual(1);
     expect(Math.abs(trackBox!.height - 24)).toBeLessThanOrEqual(1);
     expect(Math.abs(thumbBox!.width - 18)).toBeLessThanOrEqual(1);

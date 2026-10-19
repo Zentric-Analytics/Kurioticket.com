@@ -292,8 +292,8 @@ export function CarDealPicker({
                   <X size={20} aria-hidden="true" />
                 </button>
               </div>
-              <div data-car-rate-provider-alert-row className="mt-1 flex min-w-0 items-center justify-between gap-2">
-                <p className="min-w-0 flex-1 truncate text-[12px] font-medium leading-5 text-[#475569]" title={selectedGroup.providerName}>Booking provider · {selectedGroup.providerName}</p>
+              <div data-car-rate-provider-alert-row className="mt-1 flex min-w-0 flex-col items-stretch gap-1">
+                <p className="min-w-0 break-words text-[13px] font-medium leading-5 text-[#475569]">Booking provider · {selectedGroup.providerName}</p>
                 <CarPriceAlertControl key={car.id + ":" + selectedOffer.id} search={search} car={car} offer={selectedOffer} />
               </div>
             </div>

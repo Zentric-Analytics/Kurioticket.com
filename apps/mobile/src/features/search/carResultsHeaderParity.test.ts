@@ -166,14 +166,14 @@ test("Cars result count preserves mobile-web type, inset and breathing space", (
   assert.match(cars, /const carResultCountLabel = \(count: number\) => `\$\{count\} \$\{count === 1 \? "result" : "results"\} found`/);
   assert.match(cars, /<Text accessibilityRole="header" numberOfLines=\{1\} style=\{\[r\.carResultCount,\{color:theme\.textPrimary\}\]\}>\{carResultCountLabel\(filtered\.length\)\}<\/Text>/);
   assert.match(cars, /carResultCount:\{fontSize:12,lineHeight:16,fontWeight:"600",fontFamily:appFonts\.semibold\}/);
-  assert.match(cars, /carResultsSummaryRow:\{marginTop:8,marginBottom:2,minHeight:44,paddingHorizontal:8,flexDirection:"row",alignItems:"center",justifyContent:"space-between",gap:8\},carResultsSummaryRowNarrow:\{paddingHorizontal:4\}/);
+  assert.match(cars, /carResultsSummaryRow:\{marginTop:8,marginBottom:2,minHeight:32,paddingHorizontal:8,flexDirection:"row",alignItems:"center",justifyContent:"space-between",gap:8\},carResultsSummaryRowNarrow:\{paddingHorizontal:4\}/);
   assert.doesNotMatch(cars, /carResultsSummaryRow:\{[^}]*minHeight:38/);
   assert.match(cars, /carResultsSummaryRow:\{[^}]*alignItems:"center"/);
   assert.doesNotMatch(cars, /carResultsSummaryRow:\{[^}]*margin(?:Top|Bottom):-/);
-  const previousHeight = 10 + 44 + 10;
-  const compactHeight = 8 + 44 + 2;
-  assert.equal(compactHeight, 54, "Cars summary reserves mobile-web 8-point breathing space above the 44-point row");
-  assert.equal(previousHeight - compactHeight, 10, "avoid restoring the previous oversized gaps below the filter rail");
+  const previousHeight = 8 + 44 + 2;
+  const compactHeight = 8 + 32 + 2;
+  assert.equal(compactHeight, 42, "Cars keeps the 8-point filter separation with a shorter result-count row");
+  assert.equal(previousHeight - compactHeight, 12, "reduce the native count-to-first-card gap by 12 points");
   assert.match(cars, /carResultCount:\{fontSize:12,lineHeight:16,fontWeight:"600",fontFamily:appFonts\.semibold\}/);
   assert.match(cars, /carHeaderSurface:\{borderBottomLeftRadius:28,borderBottomRightRadius:0/);
   assert.doesNotMatch(cars, /carResultsCountColumn/);
@@ -205,18 +205,19 @@ test("native and web Cars keep compact result counts while tracking only the ope
   assert.match(cars, /viewportWidth < 360 && r\.carResultsSummaryRowNarrow/);
 });
 
-test("Cars offers render per-rate tracking beside provider while results stay count-only", () => {
+test("Cars offers render a separate tracking bar below provider while results stay count-only", () => {
   const picker = readFileSync("src/features/search/NativeCarResultOfferPicker.tsx", "utf8");
   const summary = cars.slice(cars.indexOf("const listHeader="), cars.indexOf("const listEmpty="));
   assert.match(summary, /carResultCountLabel\(filtered\.length\)/);
   assert.doesNotMatch(summary, /NativeCarPriceAlert/);
   assert.match(picker, /sellerRow/);
+  assert.match(picker, /sellerRow: \{ marginTop: 6, minWidth: 0, alignItems: "stretch", gap: 5 \}/);
   assert.match(picker, /Booking provider ·/);
   assert.match(picker, /<NativeCarPriceAlert key=\{result\.id \+ ":" \+ selectedChoice\.key\}/);
   assert.match(picker, /plan=\{plan\} resultId=\{result\.id\} offer=\{selectedChoice\.offer\}/);
   assert.match(picker, /<CarPriceAlertSnackbar/);
   assert.match(carAlert, />Track car prices<\/Text>/);
-  assert.match(carAlert, /<Bell accessible=\{false\} size=\{14\}/);
+  assert.match(carAlert, /<Bell accessible=\{false\} size=\{16\}/);
   assert.match(carAlert, /travelApi\.priceAlerts\(\)/);
   assert.match(carAlert, /updatePriceAlertStatus/);
   assert.match(carAlert, /createPriceAlert/);

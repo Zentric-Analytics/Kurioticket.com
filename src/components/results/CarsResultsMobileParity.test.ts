@@ -194,16 +194,16 @@ test("mobile result rhythm no longer reserves space for the removed summary card
   assert.match(resultsSource, /!embedded && presentation === "standalone" && "max-sm:pt-6"/);
   assert.match(resultsSource, /min-w-0 space-y-0 sm:space-y-4/);
   assert.equal(
-    (resultsSource.match(/"w-full space-y-3\.5 sm:space-y-4",\s*!embedded && presentation === "standalone" \? "max-sm:!mt-0" : "max-sm:!mt-1"/g) ?? []).length,
+    (resultsSource.match(/"w-full space-y-3\.5 sm:space-y-4",\s*!embedded && presentation === "standalone" \? "max-sm:!mt-2" : "max-sm:!mt-1"/g) ?? []).length,
     2,
   );
 });
 
-test("Cars keeps a flat accessible tracking toggle inside rate details across breakpoints", () => {
+test("Cars restores tinted tracking bar in rate details across breakpoints", () => {
   const picker = readFileSync("src/components/results/CarDealPicker.tsx", "utf8");
-  assert.match(alertSource, /data-cars-price-alert className="inline-flex min-w-0 shrink-0 items-center justify-end"/);
+  assert.match(alertSource, /data-cars-price-alert className="mt-2 flex w-full min-w-0 items-center rounded-xl border border-\[#CFE0F8\] bg-\[#EEF6FF\]/);
   assert.match(alertSource, /text-\[#1769AA\]/);
-  assert.match(alertSource, /whitespace-nowrap text-\[11px\] font-semibold leading-4/);
+  assert.match(alertSource, /min-w-0 flex-1 text-\[13px\] font-semibold leading-\[18px\]/);
   assert.match(alertSource, /relative inline-flex h-11 w-11 shrink-0 items-center justify-center/);
   assert.match(alertSource, /relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors/);
   assert.match(picker, /data-car-rate-provider-alert-row/);
