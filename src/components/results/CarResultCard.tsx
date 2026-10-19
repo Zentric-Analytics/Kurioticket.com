@@ -468,6 +468,7 @@ export function CarResultCard({
               {!guidedPlanning ? (
                 <CarDealPicker
                   car={car}
+                  search={search}
                   selectedOfferId={offer.id}
                   onSelectOffer={selectDealOffer}
                   compact
@@ -741,6 +742,7 @@ export function CarResultCard({
           {!guidedPlanning ? (
             <CarDealPicker
               car={car}
+              search={search}
               selectedOfferId={offer.id}
               onSelectOffer={selectDealOffer}
               desktopPanelTarget={desktopDealPanelTarget}
