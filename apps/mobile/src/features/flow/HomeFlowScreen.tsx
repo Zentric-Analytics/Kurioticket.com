@@ -250,10 +250,11 @@ function HomePageContent() {
                 ]}
               >
                 {product.icon === "packages" ? (
-                  <PackagesIcon strokeWidth={1.3} color={selected ? ft.colors.selectedLabelText : (ft.theme.dark ? ft.colors.icon : "#1A1A1A")} />
+                  <PackagesIcon size={28} strokeWidth={1.3} color={selected ? ft.colors.selectedLabelText : (ft.theme.dark ? ft.colors.icon : "#1A1A1A")} />
                 ) : (
                   <FlowIcon
                     name={product.icon}
+                    size={28}
                     strokeWidth={1.3}
                     color={selected ? ft.colors.selectedLabelText : (ft.theme.dark ? ft.colors.icon : "#1A1A1A")}
                   />
@@ -366,5 +367,5 @@ const styles = StyleSheet.create({
     borderBottomColor: flowColors.blue,
     borderBottomWidth: 2,
   },
-  productText: { color: flowColors.navy, fontSize: 11, fontWeight: "500" },
+  productText: { color: flowColors.navy, fontSize: 14, lineHeight: 20, fontWeight: "500" },
 });
