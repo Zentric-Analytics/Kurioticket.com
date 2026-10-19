@@ -152,7 +152,7 @@ test("Cars cards omit the supplier-information bar and preserve View deal on mob
 });
 
 
-test("Cars Rate details keeps the compact tinted tracking pill on the provider row across viewports", async ({ page }) => {
+test("Cars rate details shows a separate tinted tracking bar beneath the booking provider on all viewports", async ({ page }) => {
   // Rate information is only exposed for KAYAK-sandbox inventory with supplier facts.
   // Do not use the static Kurioticket fixture source here: it intentionally hides the info action.
   const result = {
@@ -201,7 +201,7 @@ test("Cars Rate details keeps the compact tinted tracking pill on the provider r
     await expect(alert).toBeVisible();
     await expect(alert).toContainText("Track car prices");
     await expect(alert).toHaveCSS("background-color", "rgb(238, 246, 255)");
-    await expect(alert).toHaveCSS("border-radius", "10px");
+    await expect(alert).toHaveCSS("border-radius", "12px");
     await expect(toggle).toHaveAttribute("aria-label", /Track car prices for .+ offer/);
     await expect(toggle).toBeVisible();
     await expect(dialog.locator("[data-cars-price-alert]")).toHaveCount(1);
@@ -209,13 +209,11 @@ test("Cars Rate details keeps the compact tinted tracking pill on the provider r
     const thumb = track.locator("span").first();
     const [providerBox, alertBox, trackBox, thumbBox, rowBox] = await Promise.all([provider, alert, track, thumb, row].map(el => el.boundingBox()));
     for (const box of [providerBox, alertBox, trackBox, thumbBox, rowBox]) expect(box).not.toBeNull();
-    // The provider remains on the left, and the tinted pill is content-sized on the right.
-    // The row must never become a full-width stacked bar, including on narrow phones.
-    expect(providerBox!.x).toBeLessThan(alertBox!.x);
-    expect(providerBox!.x + providerBox!.width).toBeLessThanOrEqual(alertBox!.x - 2);
-    expect(alertBox!.x + alertBox!.width).toBeLessThanOrEqual(rowBox!.x + rowBox!.width + 2);
-    expect(alertBox!.width).toBeLessThan(rowBox!.width * 0.75);
-    expect(Math.abs((providerBox!.y + providerBox!.height / 2) - (alertBox!.y + alertBox!.height / 2))).toBeLessThanOrEqual(12);
+    expect(Math.abs(alertBox!.x - providerBox!.x)).toBeLessThanOrEqual(2);
+    expect(alertBox!.width).toBeGreaterThanOrEqual(rowBox!.width - 2);
+    const providerToBarGap = alertBox!.y - (providerBox!.y + providerBox!.height);
+    expect(providerToBarGap).toBeGreaterThanOrEqual(6);
+    expect(providerToBarGap).toBeLessThanOrEqual(26);
     expect(Math.abs(trackBox!.width - 44)).toBeLessThanOrEqual(1);
     expect(Math.abs(trackBox!.height - 24)).toBeLessThanOrEqual(1);
     expect(Math.abs(thumbBox!.width - 18)).toBeLessThanOrEqual(1);
