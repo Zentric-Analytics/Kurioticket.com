@@ -1,4 +1,4 @@
-import { Text } from "../home/HomePresentation";
+import { Text, useHomePresentation } from "../home/HomePresentation";
 import { useState, type ReactNode } from "react";
 import {
   Modal,
@@ -99,10 +99,11 @@ export function Segments<T extends string>({
   showBaseline?: boolean;
 }) {
   const ft = useFlowTheme();
+  const homeTabs = useHomePresentation() && appearance === "default";
   return (
     <View
       accessibilityRole="tablist"
-      style={[styles.segments, !showBaseline && styles.segmentsWithoutBaseline, { borderBottomColor: ft.colors.border }]}
+      style={[styles.segments, (!showBaseline || homeTabs) && styles.segmentsWithoutBaseline, { borderBottomColor: ft.colors.border }]}
     >
       {options.map((item) => {
         const selected = !item.disabled && value === item.value;
@@ -118,7 +119,7 @@ export function Segments<T extends string>({
               styles.segment,
               appearance === "filled" && styles.filledSegment,
               appearance === "filled" && item.disabled && styles.disabledSegment,
-              selected && (appearance === "filled" ? styles.filledSegmentActive : styles.segmentActive),
+              selected && !homeTabs && (appearance === "filled" ? styles.filledSegmentActive : styles.segmentActive),
               pressed && !item.disabled && ft.styles.pressed,
             ]}
           >
@@ -133,7 +134,8 @@ export function Segments<T extends string>({
               style={[
                 styles.segmentText,
                 { color: item.disabled ? ft.colors.secondaryText : ft.colors.text },
-                selected && (appearance === "filled" ? styles.filledSegmentTextActive : styles.segmentTextActive),
+                selected && !homeTabs && (appearance === "filled" ? styles.filledSegmentTextActive : styles.segmentTextActive),
+                homeTabs && { color: selected ? ft.colors.textPrimary : ft.colors.textSecondary, fontWeight: selected ? "700" : "400" },
               ]}
             >
               {item.label}

@@ -38,11 +38,14 @@ test("results modal uses underline tabs while dedicated edit keeps filled tabs",
   assert.match(panel, /showBaseline=\{!usesStructuredCards\}/);
 });
 
-test("only the results modal suppresses the neutral Segments baseline", () => {
+test("Home uses text-only selection while other default selectors retain underlines", () => {
   const primitives = read("FlowPrimitives.tsx");
   assert.match(primitives, /showBaseline = true/);
   assert.match(primitives, /showBaseline\?: boolean/);
-  assert.match(primitives, /!showBaseline && styles\.segmentsWithoutBaseline/);
+  assert.match(primitives, /const homeTabs = useHomePresentation\(\) && appearance === "default"/);
+  assert.match(primitives, /\(!showBaseline \|\| homeTabs\) && styles\.segmentsWithoutBaseline/);
+  assert.match(primitives, /selected && !homeTabs && \(appearance === "filled"/);
+  assert.match(primitives, /homeTabs && \{ color: selected \? ft\.colors\.textPrimary : ft\.colors\.textSecondary, fontWeight: selected \? "700" : "400" \}/);
   assert.match(primitives, /segmentsWithoutBaseline: \{ borderBottomWidth: 0 \}/);
   assert.match(primitives, /segmentActive: \{ borderBottomColor: flowColors\.blue, borderBottomWidth: 2 \}/);
 });
