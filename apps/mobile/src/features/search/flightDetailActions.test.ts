@@ -20,17 +20,17 @@ test("checkout never falls back to a serialized provider URL", () => {
   assert.match(native, /error\.status===409 && error\.details\?\.code==="offer_changed"/);
 });
 
-test("checkout dock keeps a responsive price and action hierarchy with theme-aware separation", () => {
-  assert.match(native, /style=\{\[s\.sticky,theme\.dark\?s\.stickyDark:s\.stickyLight,\{paddingBottom:Math\.max\(inset\.bottom,10\)/);
-  assert.match(native, /checkoutTotal:\{flex:1,minWidth:0,gap:1\}/);
-  assert.match(native, /checkoutAction:\{flex:\.78,minWidth:140,maxWidth:180\}/);
-  assert.match(native, /checkoutActionAndroid:\{flex:\.76,minWidth:132,maxWidth:176\}/);
-  assert.match(native, /checkoutLabel:\{flexShrink:1,minWidth:0,fontSize:11,lineHeight:16,fontWeight:"600",fontFamily:appFonts\.semibold\}/);
-  assert.match(native, /total:\{maxWidth:"100%",fontSize:19,lineHeight:22,fontWeight:"600",fontFamily:appFonts\.semibold[^}]*fontVariant:\["tabular-nums"\]/);
-  assert.match(native, /<Text numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.72\} style=\{\[s\.total/);
-  assert.match(native, /sticky:\{position:"absolute",left:0,right:0,bottom:0[^}]*borderTopWidth:StyleSheet\.hairlineWidth[^}]*elevation:7\}/);
-  assert.match(native, /stickyLight:\{[^}]*shadowOffset:\{width:0,height:-4\}[^}]*shadowOpacity:\.1/);
-  assert.match(native, /stickyDark:\{[^}]*shadowOffset:\{width:0,height:-4\}[^}]*shadowOpacity:\.28/);
+test("loaded booking lives in provider cards while loading keeps its inert checkout placeholder", () => {
+  const available = native.slice(native.indexOf('return <SafeAreaView edges={[]}'), native.indexOf("function FlightDetailsLoadingSkeleton"));
+  const loading = native.slice(native.indexOf("function FlightDetailsLoadingSkeleton"), native.indexOf("function HeroCurve"));
+  const deals = native.slice(native.indexOf('if(tab==="deals")'), native.indexOf('if(tab==="details")'));
+
+  assert.doesNotMatch(available, /s\.sticky|Continue deal|checkoutTotal|checkoutAction/);
+  assert.match(deals, /accessibilityRole="button"/);
+  assert.match(deals, />View deal<\/Text>/);
+  assert.match(deals, /onViewDeal\(deal\.offerId\)/);
+  assert.match(loading, /testID="flight-details-loading-checkout"/);
+  assert.match(loading, /style=\{\[s\.sticky,theme\.dark\?s\.stickyDark:s\.stickyLight/);
 });
 
 test("native actions and checkout meet accessibility requirements", () => {
@@ -103,13 +103,16 @@ test("hero controls preserve independent save and share targets in a smaller gla
   assert.doesNotMatch(native, /Kurioticket.*(?:logo|wordmark)|(?:logo|wordmark).*Kurioticket/i);
 });
 
-test("available Flight Details uses the Flight Results canvas without flattening hero or sticky surfaces", () => {
+test("available Flight Details uses the approved white canvas without changing the hero", () => {
   const available = native.slice(native.indexOf('return <SafeAreaView edges={[]}'), native.indexOf("function FlightDetailsLoadingSkeleton"));
-  assert.match(native, /const FLIGHT_DETAILS_LIGHT_CANVAS = "#F3F6FA"/);
+  const loading = native.slice(native.indexOf("function FlightDetailsLoadingSkeleton"), native.indexOf("function HeroCurve"));
+  assert.match(native, /const FLIGHT_DETAILS_LIGHT_CANVAS = "#FFFFFF"/);
+  assert.match(native, /const FLIGHT_DETAILS_LOADING_LIGHT_CANVAS = "#F3F6FA"/);
   assert.match(native, /const contentCanvasColor=theme\.dark\?theme\.background:FLIGHT_DETAILS_LIGHT_CANVAS/);
   assert.match(available, /style=\{\[s\.safe,\{backgroundColor:contentCanvasColor\}\]\}/);
   assert.match(available, /<ImageBackground testID="flight-details-hero"[^\n]*source=\{require\("\.\.\/\.\.\/\.\.\/assets\/heroes\/flight-details-hero\.webp"\)\}/);
-  assert.match(available, /s\.sticky,[^\]]*\{[^}]*backgroundColor:theme\.surface/);
+  assert.doesNotMatch(available, /s\.sticky/);
+  assert.match(loading, /const contentCanvasColor=theme\.dark\?theme\.background:FLIGHT_DETAILS_LOADING_LIGHT_CANVAS/);
   assert.match(resultsShell, /FLIGHT_RESULTS_LIGHT_CANVAS = "#F5F7FB"/);
 });
 
