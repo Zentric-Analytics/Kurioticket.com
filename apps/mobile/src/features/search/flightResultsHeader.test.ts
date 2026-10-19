@@ -81,7 +81,7 @@ test("Flight Results header keeps light glass on Back and the edit affordance", 
   assert.match(styles, /flightHeaderBackGlass: \{ position: "absolute", left: 2, right: 2, top: 2, bottom: 2, borderRadius: 20 \}/);
   assert.doesNotMatch(routeCard, /DetailGlassSurface|hotelLight/);
   assert.match(header, /style=\{s0\.flightRouteSummaryEdit\}[\s\S]*?<DetailGlassSurface dark=\{false\} variant="hotelLight" style=\{s0\.flightRouteSummaryEditGlass\} \/>/);
-  assert.match(header, /backgroundColor: theme\.surface/);
+  assert.match(header, /backgroundColor: theme\.dark \? theme\.surface : flightResultsColors\.canvas/);
 });
 
 test("Flight Results header separates Back from one Web-aligned editable summary", () => {
@@ -97,7 +97,7 @@ test("Flight Results header separates Back from one Web-aligned editable summary
   const flightEditStyle = styles.slice(styles.indexOf("flightRouteSummaryEdit:"), styles.indexOf("hotelHeader:"));
   assert.match(flightEditStyle, /flightRouteSummaryEditGlass: \{ position: "absolute", left: 4, right: 4, top: 4, bottom: 4, borderRadius: 18 \}/);
   assert.match(header, /flightRouteSummaryText[\s\S]*?\{route\}[\s\S]*?flightRouteSummarySecondary[\s\S]*?\{secondaryLine\}/);
-  assert.match(header, /backgroundColor: theme\.surface/);
+  assert.match(header, /backgroundColor: theme\.dark \? theme\.surface : flightResultsColors\.canvas/);
   assert.match(header, /borderColor: theme\.dark \? theme\.border : "#D8E1EC"/);
   assert.match(styles, /flightHeader: \{[\s\S]*?paddingTop: 12,[\s\S]*?paddingBottom: 8/);
   assert.match(header, /paddingLeft: Math\.max\(insets\.left \+ 6, 6\)/);
@@ -220,7 +220,7 @@ test("Flight Results header uses the approved native Results header treatment", 
   assert.match(flightHeaderStyle, /flightRouteSummaryEdit: \{ width: 44, height: 44, flexShrink: 0, alignItems: "center", justifyContent: "center" \}/);
   assert.match(flightHeaderStyle, /flightRouteSummaryEditGlass: \{ position: "absolute", left: 4, right: 4, top: 4, bottom: 4, borderRadius: 18 \}/);
 
-  assert.match(header, /backgroundColor: theme\.surface/);
+  assert.match(header, /backgroundColor: theme\.dark \? theme\.surface : flightResultsColors\.canvas/);
   assert.match(header, /borderColor: theme\.dark \? theme\.border : "#D8E1EC"/);
   assert.match(header, /<DetailGlassSurface dark=\{false\} variant="hotelLight" style=\{s0\.flightRouteSummaryEditGlass\} \/>/);
   assert.match(header, /<SquarePen size=\{16\} strokeWidth=\{2\.2\} color="#0F172A" \/>/);
