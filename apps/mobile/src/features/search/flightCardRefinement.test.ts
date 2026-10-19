@@ -8,7 +8,7 @@ const source = readFileSync(resolve("src/features/search/ApprovedResultsScreen.t
 const card = source.slice(source.indexOf("function FlightCard"), source.indexOf("function HotelCard"));
 
 test("Flight Results uses its narrow support palette only for approved supporting copy", () => {
-  assert.match(source, /const flightSupportText = \{\s*light: "#465675",\s*dark: "#B8C3D8",\s*\} as const/);
+  assert.match(source, /const flightSupportText = \{\s*light: "#64748B",\s*dark: "#B8C3D8",\s*\} as const/);
   assert.match(card, /const supportTextColor = theme\.dark \? flightSupportText\.dark : flightSupportText\.light/);
   for (const style of ["flightNumber", "operatingCarrierText", "stopLabel", "flightMetadataLabel"]) {
     assert.match(card, new RegExp(`s0\\.${style},\\s*\\{\\s*color:\\s*supportTextColor\\s*\\}`));
@@ -178,11 +178,11 @@ test("flight result cards use the responsive list width with a safe reduced oute
   assert.match(source, /renderItem=\{\(\{ item, index \}\) => item === null \? \(/);
   assert.match(source, /<View style=\{s0\.flightCardItem\}[^>]*>[\s\S]*?<FlightCard/);
   assert.match(source, /body: \{ paddingHorizontal: 18, paddingBottom: 92, gap: 14 \}/);
-  assert.match(source, /flightResultsBody: \{ paddingHorizontal: 14, gap: 8 \}/);
+  assert.match(source, /flightResultsBody: \{ paddingHorizontal: 12, gap: 12 \}/);
   assert.match(source, /card: \{[\s\S]*?width: "100%",[\s\S]*?paddingHorizontal: 12,[\s\S]*?paddingVertical: 9,/);
 
   for (const viewport of [320, 360, 375, 390, 412, 430, 480]) {
-    const outerInset = 14;
+    const outerInset = 12;
     const cardWidth = viewport - outerInset * 2;
     assert.equal(cardWidth + outerInset * 2, viewport, `${viewport}px card stays within the screen`);
     assert.ok(outerInset >= 12 && outerInset <= 16, `${viewport}px keeps the requested safe edge spacing`);

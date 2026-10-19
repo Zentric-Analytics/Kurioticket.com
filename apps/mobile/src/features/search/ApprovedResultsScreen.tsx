@@ -69,7 +69,7 @@ import {
   clock,
   money,
   s,
-  ui,
+  ui as sharedUi,
 } from "./SearchUi";
 import { visualFlights, visualHotels } from "./visualFixtures";
 import { useFeatureAvailability } from "../availability/FeatureAvailability";
@@ -79,6 +79,7 @@ import { FlightEditSearchModal } from "./FlightEditSearchModal";
 import { HotelEditSearchModal } from "./HotelEditSearchModal";
 import {
   activeFlightFilterCount,
+  clearFlightQuickFilterGroup,
   emptyFlightFilters,
   filterAndSortFlights,
   flightFilterOptions,
@@ -105,7 +106,8 @@ import { createHotelDisplayPrices, type HotelDisplayPriceSnapshot } from "./hote
 import { formatCabinClass, summarizeBaggage, summarizeFareRules } from "./flightCardSummaries";
 import { useCanonicalSaved } from "../../storage/useCanonicalSaved";
 import { AirlineLogo } from "./AirlineLogo";
-import { useAppTheme } from "../../theme/AppTheme";
+import { useFlightResultsTheme as useAppTheme, useFlightResultsUi, FlightResultsPresentationProvider } from "./FlightResultsPresentationContext";
+import { flightResultsColors } from "./flightResultsPresentation";
 import { NativeBrandedSearchLoading } from "./NativeBrandedSearchLoading";
 import { appFonts } from "../../theme/typography";
 import { colors } from "../../theme/tokens";
@@ -162,8 +164,9 @@ type Status = "loading" | "ready" | "empty" | "error";
 type HotelResultsListItem = HotelResult | "hotel-results-intro" | "hotel-results-summary";
 const HOTEL_RESULTS_INTRO_ITEM = "hotel-results-intro" as const;
 const HOTEL_RESULTS_SUMMARY_ITEM = "hotel-results-summary" as const;
+const ui = sharedUi;
 const flightSupportText = {
-  light: "#465675",
+  light: "#64748B",
   dark: "#B8C3D8",
 } as const;
 const flightResultsLightCanvas = "#F5F7FB";
@@ -232,6 +235,9 @@ const nativeHotelShortcutPrice = (
   }
 };
 export function ApprovedResultsScreen({ product }: { product: Product }) {
+  return product === "flight" ? <FlightResultsPresentationProvider><ResultsScreen product={product} /></FlightResultsPresentationProvider> : <ResultsScreen product={product} />;
+}
+function ResultsScreen({ product }: { product: Product }) {
   const { theme } = useAppTheme();
   const { locale } = useMobileLocalization();
   const insets = useSafeAreaInsets();
@@ -1040,6 +1046,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const filterRail = (product === "flight" ? (
     <FlightResultsQuickControls
       sort={sort}
+      clearGroup={(group) => setFilters((current) => clearFlightQuickFilterGroup(current, group))}
       activeFilterCount={activeFilterCount}
       airlineCount={filters.airlines.length}
       airportCount={filters.fromAirports.length + filters.toAirports.length}
@@ -1123,7 +1130,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           style={[s0.resultsScroll, { backgroundColor: flightCanvasColor }]}
           sections={[{ data: !flightState ? [null, ...(sorted as FlightResult[])] : [] }]}
           keyExtractor={(item, index) => item ? item.id : `flight-results-intro-${index}`}
-          ListHeaderComponent={flightDateStrip}
           renderSectionHeader={() => (
             <View
               style={[s0.flightFilterSectionHeader, { backgroundColor: flightCanvasColor }]}
@@ -1134,6 +1140,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           stickySectionHeadersEnabled
           renderItem={({ item, index }) => item === null ? (
             <View style={[s0.flightResultsIntro, { backgroundColor: flightCanvasColor }]}>
+              {flightDateStrip}
               {status === "ready" && plan.plan ? <View style={s0.flightAlertOuter}><FlightPriceAlert plan={plan.plan} flightResults={results as FlightResult[]} available={availability.priceAlerts} displayCurrency={currencyState?.resolution.resolvedCurrency ?? String(plan.plan.payload.currency ?? "USD")} rates={currencyState?.rates ?? {}} onFeedback={setFlightPriceAlertFeedback} /></View> : null}
               <FlightResultsSummaryRow count={sorted.length} />
             </View>
@@ -1152,15 +1159,18 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           )}
           ListEmptyComponent={null}
           ListFooterComponent={terminalFlightState ? (
-            <View style={[s0.body, s0.flightResultsBody]}>
-              <FlightResultsState
-                state={terminalFlightState}
-                onRetry={retrySearch}
-                onEditSearch={edit}
-                onClearFilters={clearFlightFilters}
-                onAdjustFilters={() => openFlightFilters("all")}
-              />
-            </View>
+            <>
+              {flightDateStrip}
+              <View style={[s0.body, s0.flightResultsBody]}>
+                <FlightResultsState
+                  state={terminalFlightState}
+                  onRetry={retrySearch}
+                  onEditSearch={edit}
+                  onClearFilters={clearFlightFilters}
+                  onAdjustFilters={() => openFlightFilters("all")}
+                />
+              </View>
+            </>
           ) : null}
           showsVerticalScrollIndicator={true}
           automaticallyAdjustsScrollIndicatorInsets={false}
@@ -1320,7 +1330,7 @@ function FlightResultsHeader({
             style={({ pressed }) => [s0.flightHeaderBack, pressed && s0.flightHeaderControlPressed]}
           >
             <DetailGlassSurface dark={false} variant="hotelLight" style={s0.flightHeaderBackGlass} />
-            <ArrowLeft size={25} strokeWidth={2} color="#0F172A" />
+            <ArrowLeft size={25} strokeWidth={2} color={theme.dark ? "#0F172A" : theme.icon} />
           </Pressable>
         </View>
         <Pressable
@@ -1330,12 +1340,12 @@ function FlightResultsHeader({
           style={[
             s0.flightRouteSummaryCard,
             {
-              backgroundColor: theme.surface,
+              backgroundColor: theme.dark ? theme.surface : flightResultsColors.canvas,
               borderColor: theme.dark ? theme.border : "#D8E1EC",
             },
           ]}
         >
-          <View style={s0.flightRouteSummaryCopy}><Text numberOfLines={1} style={[s0.flightRouteSummaryText, { color: theme.textPrimary }]}>{route}</Text><Text numberOfLines={1} ellipsizeMode="tail" style={[s0.flightRouteSummarySecondary, { color: theme.textSecondary }]}>{secondaryLine}</Text></View>
+          <View style={s0.flightRouteSummaryCopy}><Text numberOfLines={1} style={[s0.flightRouteSummaryText, { color: theme.textPrimary }]}>{route}</Text><Text numberOfLines={1} ellipsizeMode="tail" style={[s0.flightRouteSummarySecondary, { color: theme.dark ? theme.textSecondary : flightResultsColors.headerSecondary }]}>{secondaryLine}</Text></View>
           <View accessible={false} accessibilityElementsHidden style={s0.flightRouteSummaryEdit}><SquarePen size={16} strokeWidth={2.1} color={theme.icon} /></View>
         </Pressable>
       </View>
@@ -1479,6 +1489,7 @@ const HotelResultsShortcut = ({ label, accessibilityLabel, icon = false, showChe
 
 function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highlight, params, locale, logInitialMount }: { result: FlightResult; displayPrice?: DisplayPrice; displayCurrencyContext?: DisplayCurrencyResolution; highlight?: FlightResultHighlight; params: Record<string, string | string[]>; locale: MobileLocale; logInitialMount: boolean }) {
   const { theme } = useAppTheme();
+  const ui = useFlightResultsUi(sharedUi);
   const supportTextColor = theme.dark ? flightSupportText.dark : flightSupportText.light;
   useEffect(() => {
     if (logInitialMount) {
@@ -1624,6 +1635,7 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
 }
 function FlightJourneyRow({ label, leg, locale }: { label: string; leg: FlightCardLeg; locale: MobileLocale }) {
   const { theme } = useAppTheme();
+  const ui = useFlightResultsUi(sharedUi);
   const supportTextColor = theme.dark ? flightSupportText.dark : flightSupportText.light;
   const stopLabel = leg.stops
     ? `${leg.stops} stop${leg.stops === 1 ? "" : "s"}`
@@ -1901,16 +1913,16 @@ export function BottomNav({ flightResults = false }: { flightResults?: boolean }
 }
 const s0 = StyleSheet.create({
   safe: { flex: 1, backgroundColor: "white" },
-  flightHeader: { paddingTop: 12, paddingBottom: 8 },
+  flightHeader: { paddingTop: 4, paddingBottom: 4 },
   flightHeaderMainRow: { width: "100%", flexDirection: "row", alignItems: "center", gap: 6 },
   flightHeaderSide: { width: 44, flexShrink: 0 },
   flightHeaderBack: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
   flightHeaderBackGlass: { position: "absolute", left: 2, right: 2, top: 2, bottom: 2, borderRadius: 20 },
   flightHeaderControlPressed: { opacity: 0.55 },
-  flightRouteSummaryCard: { flex: 1, minWidth: 0, minHeight: 62, borderWidth: 1, borderRadius: 13, flexDirection: "row", alignItems: "center", overflow: "hidden" },
-  flightRouteSummaryCopy: { flex: 1, minWidth: 0, justifyContent: "center", paddingLeft: 14, paddingVertical: 9 },
-  flightRouteSummaryText: { fontSize: 14, lineHeight: 18, fontWeight: "700", fontFamily: appFonts.bold },
-  flightRouteSummarySecondary: { marginTop: 3, fontSize: 10.5, lineHeight: 14, fontWeight: "500", fontFamily: appFonts.medium },
+  flightRouteSummaryCard: { flex: 1, minWidth: 0, minHeight: 44, borderWidth: 1, borderRadius: 13, flexDirection: "row", alignItems: "center", overflow: "hidden" },
+  flightRouteSummaryCopy: { flex: 1, minWidth: 0, justifyContent: "center", paddingLeft: 10, paddingVertical: 4 },
+  flightRouteSummaryText: { fontSize: 14, lineHeight: 18, fontWeight: "600", fontFamily: appFonts.semibold },
+  flightRouteSummarySecondary: { marginTop: 2, fontSize: 11, lineHeight: 15, fontWeight: "500", fontFamily: appFonts.medium },
   flightRouteSummaryEdit: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
   hotelHeader: { paddingTop: 12, paddingBottom: 8 },
   hotelHeaderMainRow: { width: "100%", flexDirection: "row", alignItems: "center", gap: 6 },
@@ -1981,9 +1993,9 @@ const s0 = StyleSheet.create({
   hotelFilterChips:{gap:8,paddingVertical:6},
   hotelFilterChip:{minHeight:44,borderRadius:18,borderWidth:1,paddingHorizontal:12,alignItems:"center",justifyContent:"center"},
   hotelAttribution:{borderWidth:1,borderRadius:10,padding:10},
-  flightResultsBody: { paddingHorizontal: 14, gap: 8 },
-  flightCardItem: { paddingHorizontal: 14, paddingBottom: 8 },
-  flightResultsIntro: { paddingTop: 16, paddingBottom: 12 },
+  flightResultsBody: { paddingHorizontal: 12, gap: 12 },
+  flightCardItem: { paddingHorizontal: 12, paddingBottom: 12 },
+  flightResultsIntro: { paddingTop: 0, paddingBottom: 12 },
   notice: { backgroundColor: "#F2F6FF", color: ui.navy, padding: 10, borderRadius: 8 },
   foundTitle: { fontSize: 16, fontWeight: "800", color: ui.navy },
   hotelResultsSummaryRow: { minHeight: 38, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
@@ -1992,7 +2004,7 @@ const s0 = StyleSheet.create({
   hotelResultsSortText: { fontSize: 13, lineHeight: 17, fontWeight: "600", fontFamily: appFonts.semibold },
   hotelFilteredEmpty: { alignItems: "center", gap: 10, paddingVertical: 28 },
   hotelClearFilters: { color: ui.blue, fontSize: 15, fontWeight: "800" },
-  flightResultsSummaryRow: { paddingHorizontal: 14, paddingTop: 6, paddingBottom: 10, alignItems: "stretch" },
+  flightResultsSummaryRow: { paddingHorizontal: 12, paddingTop: 6, paddingBottom: 10, alignItems: "stretch" },
   flightResultsCountColumn: { minWidth: 0, flexDirection: "row", alignItems: "baseline", justifyContent: "space-between", gap: 8 },
   flightResultCount: { fontSize: 13, lineHeight: 17, fontWeight: "700", fontFamily: appFonts.bold },
   card: { width: "100%", borderWidth: 1, borderRadius: 16, paddingHorizontal: 12, paddingVertical: 9, gap: 5, shadowColor: "#18305B", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 10, elevation: 2 },
@@ -2141,7 +2153,7 @@ const s0 = StyleSheet.create({
   flightAlert: { borderRadius: 10, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 0, flexDirection: "row", alignItems: "center", gap: 4, overflow: "hidden" },
   compactPriceAlert: { width: "100%", minHeight: 52, borderRadius: 12, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 4, flexDirection: "row", alignItems: "center", gap: 8 },
   hotelCompactPriceAlert: { minHeight: 48, paddingVertical: 2 },
-  flightAlertOuter: { marginHorizontal: 14 },
+  flightAlertOuter: { marginHorizontal: 12 },
   flightAlertCopy: { flex: 1, minWidth: 0, gap: 1 },
   flightAlertCompactTitle: { fontSize: 12.5, lineHeight: 16, fontWeight: "700", fontFamily: appFonts.bold },
   flightAlertTitle: { fontSize: 14, lineHeight: 18, fontWeight: "700", fontFamily: appFonts.bold },

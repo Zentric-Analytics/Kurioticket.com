@@ -3,7 +3,7 @@ import { BlurView } from "expo-blur";
 import { Animated, KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { X } from "lucide-react-native";
-import { useAppTheme } from "../../theme/AppTheme";
+import { useFlightResultsTheme as useAppTheme } from "./FlightResultsPresentationContext";
 import { appFonts } from "../../theme/typography";
 
 type QuickBackdropVariant = "flight" | "legacy";
@@ -13,9 +13,9 @@ export const FLIGHT_RESULTS_LIGHT_CANVAS = "#F5F7FB";
 export const FLIGHT_FILTER_LIGHT_CANVAS = "#F2F4F8";
 export const FLIGHT_FILTER_LIGHT_OUTLINE = "#D8DEE8";
 
-export function FlightResultsSheetShell({ visible, title, closeLabel, onClose, children, footer, fullScreen = false, subtitle, headerAction, quickBackdropVariant = "flight", insetFlightQuickSheet = false, flightFilterAppearance = false }: {
+export function FlightResultsSheetShell({ visible, title, closeLabel, onClose, children, footer, fullScreen = false, subtitle, headerAction, quickBackdropVariant = "flight", insetFlightQuickSheet = false, flightFilterAppearance = false, flightResultsPresentation = false }: {
   visible: boolean; title: string; closeLabel: string; onClose: () => void; children: ReactNode; footer?: ReactNode;
-  fullScreen?: boolean; subtitle?: string; headerAction?: ReactNode; quickBackdropVariant?: QuickBackdropVariant; insetFlightQuickSheet?: boolean; flightFilterAppearance?: boolean;
+  fullScreen?: boolean; subtitle?: string; headerAction?: ReactNode; quickBackdropVariant?: QuickBackdropVariant; insetFlightQuickSheet?: boolean; flightFilterAppearance?: boolean; flightResultsPresentation?: boolean;
 }) {
   const { theme } = useAppTheme();
   const inset = useSafeAreaInsets();
@@ -62,7 +62,7 @@ export function FlightResultsSheetShell({ visible, title, closeLabel, onClose, c
 
   const sheet = (
     <View accessibilityLabel={title} style={[styles.sheet, insetFlightQuickSheet && styles.floatingFlightSheet, fullScreen ? styles.fullScreen : { maxHeight: Math.min(height * .76, 620) }, { backgroundColor: sheetBackground }]}>
-      <View style={[styles.header, flightQuickHeader && styles.quickHeader, flightFilterAppearance && styles.flightFilterHeader, { backgroundColor: usesFlightFilterCanvas ? flightFilterCanvas : theme.surface, borderBottomColor: theme.border }]}>
+      <View style={[styles.header, flightResultsPresentation && styles.flightPresentationHeader, flightQuickHeader && styles.quickHeader, flightFilterAppearance && styles.flightFilterHeader, { backgroundColor: usesFlightFilterCanvas ? flightFilterCanvas : theme.surface, borderBottomColor: theme.border }]}>
         {flightQuickHeader ? <>
           <View accessible={false} importantForAccessibility="no-hide-descendants" style={styles.headerSlot} />
           <View style={[styles.headerCopy, styles.quickHeaderCopy]}>
@@ -93,7 +93,7 @@ export function FlightResultsSheetShell({ visible, title, closeLabel, onClose, c
     {fullScreen ? <SafeAreaProvider><SafeAreaView edges={["top", "bottom", "left", "right"]} style={[styles.fullBackdrop, { backgroundColor: sheetBackground }]} onAccessibilityEscape={onClose}>{sheet}</SafeAreaView></SafeAreaProvider> :
       <View style={styles.overlay} onAccessibilityEscape={onClose}>
         <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { opacity: quickBackdropOpacity }]}>
-          {flightQuickBackdrop ? <View style={[StyleSheet.absoluteFill, styles.quickBackdropScrim]}/> : <BlurView intensity={12} tint="dark" experimentalBlurMethod={Platform.OS === "android" ? "dimezisBlurView" : undefined} style={StyleSheet.absoluteFill}/>}
+          {flightQuickBackdrop ? <View style={[StyleSheet.absoluteFill, styles.quickBackdropScrim, flightResultsPresentation && styles.flightPresentationScrim]}/> : <BlurView intensity={12} tint="dark" experimentalBlurMethod={Platform.OS === "android" ? "dimezisBlurView" : undefined} style={StyleSheet.absoluteFill}/>}
         </Animated.View>
         <Pressable accessible={false} onPress={onClose} style={StyleSheet.absoluteFill}/>
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.bottom} pointerEvents="box-none">
@@ -106,6 +106,8 @@ export function FlightResultsSheetShell({ visible, title, closeLabel, onClose, c
 const styles = StyleSheet.create({
   overlay: { flex: 1, justifyContent: "flex-end" },
   quickBackdropScrim: { backgroundColor: "rgba(15, 23, 42, 0.35)" },
+  flightPresentationScrim: { backgroundColor: "rgba(8, 18, 35, 0.52)" },
+  flightPresentationHeader: { minHeight: 56 },
   fullBackdrop: { flex: 1 }, bottom: { justifyContent: "flex-end" },
   quickSheetFrame: { width: "100%" },
   insetFlightQuickSheet: { width: "auto", marginHorizontal: FLIGHT_QUICK_SHEET_HORIZONTAL_INSET },

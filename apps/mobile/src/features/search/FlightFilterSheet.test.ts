@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";import{readFileSync}from"node:fs";import test from"node:test";
 const sheet=readFileSync("src/features/search/FlightFilterSheet.tsx","utf8");
 test("main Filter retains full-screen live editing and a localized live result action",()=>{assert.match(sheet,/fullScreen=\{full\}/);assert.match(sheet,/const working=full\?filters:draft/);assert.match(sheet,/matchingFlightCount\(results,working/);assert.match(sheet,/copy\.viewFlights\(count\)/);assert.match(sheet,/copy\.noFilterTitle/);assert.match(sheet,/emptyFlightFilters\(\)/);});
-test("quick filters use isolated drafts with Reset and a localized result action",()=>{assert.match(sheet,/setDraft\(filters\)/);assert.match(sheet,/full\?onChange\(next\):setDraft\(next\)/);assert.match(sheet,/onChange\(draft\);onClose\(\)/);assert.match(sheet,/resetQuick/);assert.match(sheet,/copy\.reset/);assert.match(sheet,/const footerLabel=count===0\?copy\.noFilterTitle:copy\.viewFlights\(count\)/);assert.match(sheet,/accessibilityState=\{\{disabled:count===0\}\} disabled=\{count===0\} onPress=\{\(\)=>\{onChange\(draft\);onClose\(\)\}\} style=\{\[s\.apply,count===0&&s\.viewButtonDisabled\]\}/);assert.match(sheet,/\{footerLabel\}<\/Text><\/Pressable><\/View>\}/);});
+test("quick filters use isolated drafts with Reset and a localized result action",()=>{assert.match(sheet,/setDraft\(filters\)/);assert.match(sheet,/full\?onChange\(next\):setDraft\(next\)/);assert.match(sheet,/onChange\(draft\);onClose\(\)/);assert.match(sheet,/resetQuick/);assert.match(sheet,/copy\.reset/);assert.match(sheet,/const footerLabel=count===0\?copy\.noFilterTitle:copy\.viewFlights\(count\)/);assert.match(sheet,/accessibilityState=\{\{disabled:count===0\}\} disabled=\{count===0\} onPress=\{\(\)=>\{onChange\(draft\);onClose\(\)\}\} style=\{\[s\.apply,\{backgroundColor:ui\.blue\},count===0&&s\.viewButtonDisabled\]\}/);assert.match(sheet,/\{footerLabel\}<\/Text><\/Pressable><\/View>\}/);});
 test("Airlines supports complete-list search and shortlist expansion",()=>{assert.match(sheet,/accessibilityLabel=\{copy\.searchAirlines\}/);assert.match(sheet,/slice\(0,5\)/);assert.match(sheet,/copy\.showLess/);assert.match(sheet,/copy\.showMore/);assert.match(sheet,/withAirlinePreview/);});
 test("Stops and airports retain authoritative distinct facets",()=>{for(const x of ["nonstop","oneStop","twoStops","from","to"])assert.match(sheet,new RegExp(`copy\\.${x}`));assert.match(sheet,/maxStops:null/);assert.match(sheet,/fromAirports/);assert.match(sheet,/toAirports/);assert.match(sheet,/withStopsPreview/);assert.match(sheet,/withAirportPreview/);});
 test("main hierarchy includes supported native sections but omits fake quality",()=>{const order=["price","flightTimes","duration","stops","airlines","airports","farePreferences"].map(x=>sheet.indexOf(`title={copy.${x}}`));assert.ok(order.every((x,i)=>x>=0&&(i===0||x>order[i-1])));assert.doesNotMatch(sheet,/title="Flight quality"/);});
@@ -12,9 +12,9 @@ test("full Flight CTA stays full width without filters and flexes beside Reset w
  assert.match(sheet,/footer=\{full\?\(activeCount>0\?<View style=\{s\.footerActions\}>/);
  assert.doesNotMatch(sheet,/footer=\{full\?<View style=\{s\.footerPrimary\}/);
  assert.doesNotMatch(sheet,/footerPrimary:\{flex:1\}/);
- assert.match(sheet,/viewButton:\{width:"100%",minHeight:50,borderRadius:10/);
+ assert.match(sheet,/viewButton:\{width:"100%",minHeight:44,borderRadius:10/);
  assert.match(sheet,/viewButtonFlexible:\{width:"auto",flex:1\}/);
- assert.match(sheet,/style=\{\[s\.viewButton,activeCount>0&&s\.viewButtonFlexible,count===0&&s\.viewButtonDisabled\]\}/);
+ assert.match(sheet,/style=\{\[s\.viewButton,\{backgroundColor:ui\.blue\},activeCount>0&&s\.viewButtonFlexible,count===0&&s\.viewButtonDisabled\]\}/);
 });
 test("active full Filters move localized Reset to the footer without closing the sheet",()=>{
  assert.match(sheet,/activeCount>0\?<View style=\{s\.footerActions\}><Pressable accessibilityRole="button" accessibilityLabel=\{copy\.reset\} onPress=\{\(\)=>onChange\(emptyFlightFilters\(\)\)\}/);
@@ -27,22 +27,22 @@ test("Web-style option rows put the checkbox before flexible copy and trailing d
  const check=sheet.slice(sheet.indexOf("function Check("),sheet.indexOf("const s=StyleSheet.create"));
  assert.ok(check.indexOf("s.box")<check.indexOf("s.rowCopy"));
  assert.ok(check.indexOf("s.rowCopy")<check.indexOf("s.rowTrailing"));
- assert.match(sheet,/row:\{minHeight:46,flexDirection:"row",alignItems:"center"/);
+ assert.match(sheet,/row:\{minHeight:44,flexDirection:"row",alignItems:"center"/);
  assert.match(sheet,/box:\{width:20,height:20,flexShrink:0/);
  assert.match(sheet,/rowCopy:\{flex:1,minWidth:0\}/);
  assert.match(sheet,/rowTrailing:\{flexShrink:0[\s\S]*?textAlign:"right"/);
 });
-test("quick Stops show direct safe prices while full Stops retain counts and From-price copy",()=>{
+test("quick Stops show matching counts while full Stops retain price intelligence",()=>{
  assert.match(sheet,/const priceLabel=.*formatCurrency\(insight\.lowestPrice,insightCurrency\)/);
  assert.match(sheet,/secondary=\{full&&insight\?countLabel\(insight\.count\):undefined\}/);
- assert.match(sheet,/trailing=\{full&&price\?copy\.fromPrice\(price\):price\}/);
- assert.match(sheet,/accessibilityDetail=\{full\?undefined:insightDetail\(insight,price\)\}/);
+ assert.match(sheet,/trailing=\{full&&price\?copy\.fromPrice\(price\):quickFilterCount\(insight\)\}/);
+ assert.match(sheet,/accessibilityDetail=\{full\?undefined:insightDetail\(insight,undefined\)\}/);
  assert.match(sheet,/flightFilterInsight\(results,candidate,insightPriceValue\)/);
  assert.match(sheet,/priceFilteringReady\?priceValue:undefined/);
 });
-test("quick airline and airport rows show safe prices while full rows retain visible counts",()=>{
- assert.match(sheet,/label=\{name\} trailing=\{full&&insight\?String\(insight\.count\):price\} accessibilityDetail=\{insightDetail\(insight,full\?undefined:price\)\}/);
- assert.match(sheet,/label=\{v\} trailing=\{full&&insight\?String\(insight\.count\):price\} accessibilityDetail=\{insightDetail\(insight,full\?undefined:price\)\}/);
+test("quick airline and airport rows show matching counts and retain full-row counts",()=>{
+ assert.match(sheet,/label=\{name\} trailing=\{full&&insight\?String\(insight\.count\):quickFilterCount\(insight\)\} accessibilityDetail=\{insightDetail\(insight,undefined\)\}/);
+ assert.match(sheet,/label=\{v\} trailing=\{full&&insight\?String\(insight\.count\):quickFilterCount\(insight\)\} accessibilityDetail=\{insightDetail\(insight,undefined\)\}/);
  assert.match(sheet,/const insightDetail=.*countLabel\(insight\.count\),price.*join\(", "\)/);
  assert.match(sheet,/const detail=accessibilityDetail\?\?\[secondary,trailing\]\.filter\(Boolean\)\.join\(", "\)/);
 });
@@ -72,18 +72,18 @@ test("quick rows use one neutral surface while checked controls and accessibilit
  assert.match(check,/backgroundColor:selected\?ui\.blue:"transparent"/);
  assert.match(check,/color:theme\.textPrimary/);
  assert.doesNotMatch(check,/#F7FAFF|#142B55|#8FB5FF|#004BB8|compact&&selected&&\{backgroundColor/);
- assert.match(sheet,/compactRow:\{minHeight:48/);
+ assert.match(sheet,/compactRow:\{minHeight:44/);
 });
 test("Flight filter outlines are stronger in light mode without changing border geometry",()=>{
  const sort=readFileSync("src/features/search/FlightSortSheet.tsx","utf8");
  const shell=readFileSync("src/features/search/FlightResultsSheetShell.tsx","utf8");
  assert.match(shell,/FLIGHT_FILTER_LIGHT_OUTLINE = "#D8DEE8"/);
- assert.match(sheet,/const filterOutline=theme\.dark\?theme\.border:FLIGHT_FILTER_LIGHT_OUTLINE/);
+ assert.match(sheet,/const filterOutline=theme\.border/);
  assert.match(sheet,/borderColor:selected\?ui\.blue:filterOutline/);
  assert.match(sheet,/box:\{[^}]*borderWidth:1\.5/);
  assert.match(sheet,/reset:\{[^}]*borderWidth:1/);
  assert.match(sheet,/accessibilityLabel=\{copy\.reset\} onPress=\{\(\)=>onChange\(emptyFlightFilters\(\)\)\} style=\{\[s\.reset,\{borderColor:filterOutline\}\]\}/);
- assert.match(sort,/const filterOutline = theme\.dark \? theme\.border : FLIGHT_FILTER_LIGHT_OUTLINE/);
+ assert.match(sort,/const filterOutline = theme\.border/);
  assert.match(sort,/reset: \{[^}]*borderWidth: 1/);
  assert.match(sort,/borderColor: filterOutline/);
 });

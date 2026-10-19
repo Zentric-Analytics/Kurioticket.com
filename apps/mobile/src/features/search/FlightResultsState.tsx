@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { AlertCircle, Search, SlidersHorizontal } from "lucide-react-native";
-import { useAppTheme } from "../../theme/AppTheme";
-import { ui } from "./SearchUi";
+import { useFlightResultsTheme as useAppTheme, useFlightResultsUi } from "./FlightResultsPresentationContext";
+import { ui as sharedUi } from "./SearchUi";
 import type { FlightResultsStateKind } from "./flightResultsStateModel";
 import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
 import { flightResultsUiCopy } from "./flightResultsSummary";
@@ -20,6 +20,7 @@ export function FlightResultsState({
   onAdjustFilters: () => void;
 }) {
   const { theme } = useAppTheme();
+  const ui = useFlightResultsUi(sharedUi);
   const { locale } = useMobileLocalization();
   const copy = flightResultsUiCopy(locale);
 
@@ -63,6 +64,7 @@ function StateAction({ accessibilityLabel, label, onPress, secondary = false }: 
   secondary?: boolean;
 }) {
   const { theme } = useAppTheme();
+  const ui = useFlightResultsUi(sharedUi);
   return (
     <Pressable
       accessibilityRole="button"

@@ -9,7 +9,7 @@ test("Flight quick filters use only the Hotel backdrop color while shared consum
   assert.match(shell,/type QuickBackdropVariant = "flight" \| "legacy"/);
   assert.match(shell,/quickBackdropVariant = "flight"/);
   assert.match(shell,/const flightQuickBackdrop = quickBackdropVariant === "flight"/);
-  assert.match(shell,/flightQuickBackdrop \? <View style=\{\[StyleSheet\.absoluteFill, styles\.quickBackdropScrim\]\}\/> : <BlurView intensity=\{12\} tint="dark"/);
+  assert.match(shell,/flightQuickBackdrop \? <View style=\{\[StyleSheet\.absoluteFill, styles\.quickBackdropScrim, flightResultsPresentation && styles\.flightPresentationScrim\]\}\/> : <BlurView intensity=\{12\} tint="dark"/);
   assert.match(shell,/quickBackdropScrim: \{ backgroundColor: "rgba\(15, 23, 42, 0\.35\)" \}/);
   assert.doesNotMatch(shell,/quickBackdropIntensity|quickBackdropTint|flightQuickBackdrop \? 4 : 12|intensity=\{4\}/);
   assert.match(shell,/Animated\.View/);

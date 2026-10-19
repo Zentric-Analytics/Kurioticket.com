@@ -33,7 +33,7 @@ test("ready Flight content retains dates, sticky filters, alert, count and cards
   const listStart = screen.indexOf("<Animated.SectionList");
   const list = screen.slice(listStart, screen.indexOf("<HotelResultsHeader", listStart));
   assert.match(list, /sections=\{\[\{ data: !flightState \? \[null, \.\.\.\(sorted as FlightResult\[\]\)\] : \[\] \}\]\}/);
-  assert.match(list, /ListHeaderComponent=\{flightDateStrip\}/);
+  assert.match(list, /flightResultsIntro[\s\S]*?\{flightDateStrip\}/);
   assert.match(list, /renderSectionHeader[\s\S]*?\{filterRail\}[\s\S]*?stickySectionHeadersEnabled/);
   assert.match(list, /renderItem=\{\(\{ item, index \}\) => item === null \? \([\s\S]*?<FlightPriceAlert[\s\S]*?<FlightResultsSummaryRow count=\{sorted\.length\} \/>[\s\S]*?\) : \([\s\S]*?<FlightCard/);
   assert.match(list, /logInitialMount=\{index === 1\}/);
