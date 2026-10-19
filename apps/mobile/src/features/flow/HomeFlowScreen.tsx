@@ -20,7 +20,6 @@ import { HotelSearchPanel } from "./HotelSearchPanel";
 import { CarSearchPanel } from "./CarSearchPanel";
 import { PackagesSearchPanel } from "./ProductScreens";
 import { flowColors, flowStyles, useFlowTheme } from "./flowStyles";
-import { HomepageDealPromos } from "../home/HomepageDealPromos";
 import { RegionalDestinationRoutes } from "../home/RegionalDestinationRoutes";
 import { HomepageAdventureDiscovery } from "../home/HomepageAdventureDiscovery";
 import { PopularDestinationStays } from "../home/PopularDestinationStays";
@@ -270,7 +269,6 @@ export function SharedHomePage() {
         {searchPanel[activeProduct]}
         <PopularDestinationStays compactTopSpacing={activeProduct === "flights"} />
         <HomepageAdventureDiscovery />
-        <HomepageDealPromos />
         <RegionalDestinationRoutes />
       </ScrollView>
     </View>
