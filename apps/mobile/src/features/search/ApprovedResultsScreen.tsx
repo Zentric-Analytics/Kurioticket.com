@@ -1124,7 +1124,7 @@ function ResultsScreen({ product }: { product: Product }) {
           route={flightSummary.route}
           secondaryLine={flightSummary.secondaryLine}
           onEdit={edit}
-          backgroundColor={theme.dark ? flightCanvasColor : flightResultsColors.surface}
+          backgroundColor={flightCanvasColor}
         />
       ) : null}
       {product === "flight" ? (
@@ -1356,24 +1356,24 @@ function FlightResultsHeader({
             style={({ pressed }) => [s0.flightHeaderBack, pressed && s0.flightHeaderControlPressed]}
           >
             <DetailGlassSurface dark={false} variant="hotelLight" style={s0.flightHeaderBackGlass} />
-            <ArrowLeft size={25} strokeWidth={2} color={theme.dark ? "#0F172A" : theme.icon} />
+            <ArrowLeft size={25} strokeWidth={2} color="#0F172A" />
           </Pressable>
         </View>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={`Edit flight search. ${route}. ${secondaryLine}`}
           onPress={onEdit}
-          style={[
+          style={({ pressed }) => [
             s0.flightRouteSummaryCard,
             {
-              backgroundColor: theme.dark ? theme.surface : flightResultsColors.canvas,
+              backgroundColor: theme.surface,
               borderColor: theme.dark ? theme.border : "#D8E1EC",
-              borderWidth: theme.dark ? 1 : 0,
             },
+            pressed && s0.flightRouteSummaryCardPressed,
           ]}
         >
           <View style={s0.flightRouteSummaryCopy}><Text numberOfLines={1} style={[s0.flightRouteSummaryText, { color: theme.textPrimary }]}>{route}</Text><Text numberOfLines={1} ellipsizeMode="tail" style={[s0.flightRouteSummarySecondary, { color: theme.dark ? theme.textSecondary : flightResultsColors.headerSecondary }]}>{secondaryLine}</Text></View>
-          <View accessible={false} accessibilityElementsHidden style={s0.flightRouteSummaryEdit}><SquarePen size={16} strokeWidth={2.1} color={theme.icon} /></View>
+          <View accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={s0.flightRouteSummaryEdit}><DetailGlassSurface dark={false} variant="hotelLight" style={s0.flightRouteSummaryEditGlass} /><SquarePen size={16} strokeWidth={2.2} color="#0F172A" /></View>
         </Pressable>
       </View>
     </View>
@@ -1940,17 +1940,19 @@ export function BottomNav({ flightResults = false }: { flightResults?: boolean }
 }
 const s0 = StyleSheet.create({
   safe: { flex: 1, backgroundColor: "white" },
-  flightHeader: { paddingTop: 4, paddingBottom: 4 },
+  flightHeader: { paddingTop: 12, paddingBottom: 8 },
   flightHeaderMainRow: { width: "100%", flexDirection: "row", alignItems: "center", gap: 6 },
   flightHeaderSide: { width: 44, flexShrink: 0 },
-  flightHeaderBack: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
+  flightHeaderBack: { width: 44, height: 44, alignItems: "center", justifyContent: "center", shadowColor: "#0F172A", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.12, shadowRadius: 6, elevation: 6 },
   flightHeaderBackGlass: { position: "absolute", left: 2, right: 2, top: 2, bottom: 2, borderRadius: 20 },
   flightHeaderControlPressed: { opacity: 0.55 },
-  flightRouteSummaryCard: { flex: 1, minWidth: 0, minHeight: 44, borderWidth: 1, borderRadius: 13, flexDirection: "row", alignItems: "center", overflow: "hidden" },
-  flightRouteSummaryCopy: { flex: 1, minWidth: 0, justifyContent: "center", paddingLeft: 10, paddingVertical: 4 },
-  flightRouteSummaryText: { fontSize: 14, lineHeight: 18, fontWeight: "600", fontFamily: appFonts.semibold },
-  flightRouteSummarySecondary: { marginTop: 2, fontSize: 11, lineHeight: 15, fontWeight: "500", fontFamily: appFonts.medium },
-  flightRouteSummaryEdit: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
+  flightRouteSummaryCard: { flex: 1, minWidth: 0, minHeight: 62, borderWidth: 1, borderRadius: 13, flexDirection: "row", alignItems: "center", overflow: "hidden" },
+  flightRouteSummaryCardPressed: { opacity: 0.76 },
+  flightRouteSummaryCopy: { flex: 1, minWidth: 0, justifyContent: "center", paddingLeft: 14, paddingVertical: 9 },
+  flightRouteSummaryText: { fontSize: 14, lineHeight: 18, fontWeight: "700", fontFamily: appFonts.bold },
+  flightRouteSummarySecondary: { marginTop: 3, fontSize: 10.5, lineHeight: 14, fontWeight: "500", fontFamily: appFonts.medium },
+  flightRouteSummaryEdit: { width: 44, height: 44, flexShrink: 0, alignItems: "center", justifyContent: "center" },
+  flightRouteSummaryEditGlass: { position: "absolute", left: 4, right: 4, top: 4, bottom: 4, borderRadius: 18 },
   hotelHeader: { paddingTop: 12, paddingBottom: 8 },
   hotelHeaderMainRow: { width: "100%", flexDirection: "row", alignItems: "center", gap: 6 },
   hotelHeaderSide: { width: 44, flexShrink: 0 },
