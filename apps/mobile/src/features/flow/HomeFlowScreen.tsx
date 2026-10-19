@@ -14,7 +14,7 @@ import { StatusBar } from "expo-status-bar";
 import { router, useFocusEffect } from "expo-router";
 import { travelApi } from "../../api/travelApi";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
-import { CarFront, Hotel, Luggage, Plane } from "lucide-react-native";
+import { HomeProductIcon, type HomeProductIconName } from "../home/HomeProductIcon";
 import { FlowIcon } from "./FlowIcon";
 import { FlightSearchPanel } from "./FlightSearchPanel";
 import { HotelSearchPanel } from "./HotelSearchPanel";
@@ -178,13 +178,11 @@ function HomeFlightSearchSurface({ children }: { children: React.ReactNode }) {
   );
 }
 
-const productIcons = { flight: Plane, hotel: Hotel, car: CarFront, packages: Luggage };
-
 const products: {
   id: HomeProduct;
   label: string;
   route: "/flights" | "/hotels" | "/cars" | "/packages";
-  icon: keyof typeof productIcons;
+  icon: HomeProductIconName;
 }[] = [
   { id: "flights", label: "Flights", route: "/flights", icon: "flight" },
   { id: "hotels", label: "Hotels", route: "/hotels", icon: "hotel" },
@@ -238,7 +236,6 @@ function HomePageContent() {
         <View style={[styles.products, { backgroundColor: ft.colors.card }, ft.styles.shadow]}>
           {products.map((product) => {
             const selected = activeProduct === product.id;
-            const ProductIcon = productIcons[product.icon];
             return (
               <Pressable
                 key={product.label}
@@ -252,12 +249,11 @@ function HomePageContent() {
                   pressed && ft.styles.pressed,
                 ]}
               >
-                <ProductIcon
-                  size={28}
-                  strokeWidth={1.3}
+                <HomeProductIcon
+                  name={product.icon}
+                  size={36}
+                  cutoutColor={selected ? ft.colors.selected : ft.colors.card}
                   color={selected ? ft.colors.selectedLabelText : (ft.theme.dark ? ft.colors.icon : "#1A1A1A")}
-                  accessibilityElementsHidden
-                  importantForAccessibility="no-hide-descendants"
                 />
                 <NativeText
                   style={[
