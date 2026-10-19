@@ -119,7 +119,7 @@ test("native inline provider card keeps logos, individual prices and disabled un
   assert.match(picker, /kurioticket-icon-blue\.png/);
   assert.match(picker, /resolveTravelProviderLogo\(logoUrl\)/);
   assert.match(picker, /presentCarOfferCurrency\(offer, displayCurrency, rates\)/);
-  assert.match(picker, /Linking\.openURL\(bookingUrl\)/);
+  assert.match(picker, /void openProviderInApp\(bookingUrl\)/);
   assert.match(picker, /disabled=\{!bookingUrl\}/);
   assert.match(picker, /provider: \{ minHeight: 36, minWidth: 0, flexDirection: "row", alignItems: "center"/);
   assert.match(picker, /providerNarrow: \{ flexDirection: "column"/);
@@ -174,7 +174,7 @@ test("native Cars keeps the 12pt View deal arrow visible for actionable offers a
 
   // Available offers display an arrow at all widths; unavailable ones still cannot navigate.
   assert.match(action, /disabled=\{!bookingUrl\}/);
-  assert.match(action, /onPress=\{bookingUrl \? \(\) => void Linking\.openURL\(bookingUrl\) : undefined\}/);
+  assert.match(action, /onPress=\{bookingUrl \? \(\) => void openProviderInApp\(bookingUrl\) : undefined\}/);
   assert.match(action, /\{bookingUrl \? <ChevronRight accessible=\{false\} size=\{12\} strokeWidth=\{2\} color=\{actionColor\} \/> : null\}/);
   assert.doesNotMatch(action, /hideActionChevron|rowWidth/);
 
@@ -294,7 +294,7 @@ test("native Cars rows keep logo, name, rate info, price and View deal in that e
   assert.ok(positions.every((position, index) => index === 0 || position > positions[index - 1]!));
   assert.match(rows, /<Info accessible=\{false\} size=\{18\} strokeWidth=\{1\.9\}/);
   assert.match(rows, /onPress=\{\(\) => setSelectedKey\(key\)\}/);
-  assert.match(rows, /onPress=\{bookingUrl \? \(\) => void Linking\.openURL\(bookingUrl\)/);
+  assert.match(rows, /onPress=\{bookingUrl \? \(\) => void openProviderInApp\(bookingUrl\)/);
   assert.match(picker, /infoAction: \{ width: 32, height: 36, flexShrink: 0/);
   assert.match(picker, /meta: \{ minWidth: 0, flexDirection: "row"/);
   assert.match(picker, /rowWidth \* 0\.68 \+ 20/);
@@ -327,4 +327,41 @@ test("native Cars fits 1-3 real offer rows and reserves overflow space only for 
   // The base offer list has no fixed minimum, and the empty disclosure is never mounted.
   assert.doesNotMatch(picker, /offerRows: \{ minWidth: 0, minHeight:/);
   assert.doesNotMatch(picker, /<View style=\{styles.moreSlot\}>\s*\{choices.length >/);
+});
+
+test("native Cars View deal opens the selected provider inside Kurioticket, like native Hotels", () => {
+  const picker = readFileSync("src/features/search/NativeCarResultOfferPicker.tsx", "utf8");
+  const hotels = readFileSync("src/features/search/HotelDetailsScreen.tsx", "utf8");
+  assert.match(hotels, /WebBrowser\.openBrowserAsync\(url, \{ dismissButtonStyle: "close" \}\)/);
+  assert.match(picker, /await import\("expo-web-browser"\)/);
+  assert.match(picker, /await WebBrowser\.openBrowserAsync\(url, \{ dismissButtonStyle: "close" \}\)/);
+  assert.match(picker, /onPress=\{bookingUrl \? \(\) => void openProviderInApp\(bookingUrl\) : undefined\}/);
+  assert.match(picker, /onPress=\{selectedRateBookingUrl \? \(\) => continueRateDeal\(selectedRateBookingUrl\) : undefined\}/);
+  assert.doesNotMatch(picker, /Linking\.openURL/);
+  assert.match(picker, /disabled=\{!bookingUrl\}/);
+  assert.match(picker, /disabled=\{!selectedRateBookingUrl\}/);
+  assert.match(picker, /nativeCarResultDealChoices\(result\)/);
+});
+
+test("native Cars prevents repeated provider launches and reports browser errors", () => {
+  const picker = readFileSync("src/features/search/NativeCarResultOfferPicker.tsx", "utf8");
+  assert.match(picker, /if \(dealOpeningRef\.current \|\| pendingRateDealRef\.current\) return false;/);
+  assert.match(picker, /if \(dealOpeningRef\.current \|\| pendingRateDealRef\.current\) return;/);
+  assert.match(picker, /dealOpeningRef\.current = true;/);
+  assert.match(picker, /dealOpeningRef\.current = false;/);
+  assert.match(picker, /Alert\.alert\("Unable to open provider", "Please refresh and try again\."\)/);
+  assert.match(picker, /if \(dealOpeningRef\.current \|\| pendingRateDealRef\.current\) return;/);
+});
+
+test("native Cars safely sequences the full-screen Rate details modal and in-app provider browser", () => {
+  const picker = readFileSync("src/features/search/NativeCarResultOfferPicker.tsx", "utf8");
+  assert.match(picker, /if \(Platform\.OS === "android"\)/);
+  assert.match(picker, /pendingRateDealRef\.current = url;\s*setSelectedKey\(null\);/);
+  assert.match(picker, /onDismiss=\{openPendingRateDeal\}/);
+  assert.match(picker, /if \(Platform\.OS === "android"\) \{\s*void openProviderInApp\(url\)\.then\(opened => \{\s*if \(opened\) setSelectedKey\(null\);/);
+  assert.match(picker, /return Platform\.OS !== "android" \|\| response\.type === "opened";/);
+  assert.doesNotMatch(picker, /InteractionManager\.runAfterInteractions\(/);
+  assert.match(picker, /const url = pendingRateDealRef\.current;\s*pendingRateDealRef\.current = null;\s*if \(url\) void openProviderInApp\(url\);/);
+  assert.match(picker, /onRequestClose=\{\(\) => setSelectedKey\(null\)\}/);
+  assert.match(picker, /presentationStyle="fullScreen"/);
 });

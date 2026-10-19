@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Image, LayoutAnimation, Linking, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useRef, useState } from "react";
+import { Alert, Image, LayoutAnimation, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { CarFront, ChevronRight, IdCard, Info, MapPin, ShieldCheck, Wallet, X } from "lucide-react-native";
 import { SvgUri } from "react-native-svg";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
@@ -74,6 +74,49 @@ export function NativeCarResultOfferPicker({
   const [expanded, setExpanded] = useState(false);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [priceAlertFeedback, setPriceAlertFeedback] = useState<CarPriceAlertFeedback>(null);
+  const dealOpeningRef = useRef(false);
+  const pendingRateDealRef = useRef<string | null>(null);
+
+  // Mirror native Hotels: present the seller inside the app instead of launching Safari.
+  const openProviderInApp = async (url: string): Promise<boolean> => {
+    if (dealOpeningRef.current || pendingRateDealRef.current) return false;
+    dealOpeningRef.current = true;
+    try {
+      const WebBrowser = await import("expo-web-browser");
+      const response = await WebBrowser.openBrowserAsync(url, { dismissButtonStyle: "close" });
+      // On Android, "opened" confirms the Custom Tab activity was launched.
+      // On iOS this promise completes when the in-app Safari sheet is dismissed.
+      return Platform.OS !== "android" || response.type === "opened";
+    } catch {
+      Alert.alert("Unable to open provider", "Please refresh and try again.");
+      return false;
+    } finally {
+      dealOpeningRef.current = false;
+    }
+  };
+
+  const openPendingRateDeal = () => {
+    const url = pendingRateDealRef.current;
+    pendingRateDealRef.current = null;
+    if (url) void openProviderInApp(url);
+  };
+
+  // iOS SafariViewController needs Rate details dismissed first. Android
+  // Chrome Custom Tabs starts a separate activity; launch it while Rate details
+  // is still mounted, then close the sheet only after the "opened" result.
+  // This avoids relying on Android's unsupported Modal.onDismiss callback or
+  // InteractionManager, which does not wait for native dialog animations.
+  const continueRateDeal = (url: string) => {
+    if (dealOpeningRef.current || pendingRateDealRef.current) return;
+    if (Platform.OS === "android") {
+      void openProviderInApp(url).then(opened => {
+        if (opened) setSelectedKey(null);
+      });
+      return;
+    }
+    pendingRateDealRef.current = url;
+    setSelectedKey(null);
+  };
   const choices = nativeCarResultDealChoices(result);
   const visibleChoices = expanded ? choices : choices.slice(0, INITIAL_VISIBLE_OFFER_COUNT);
   const hasMoreOffers = choices.length > INITIAL_VISIBLE_OFFER_COUNT;
@@ -125,7 +168,7 @@ export function NativeCarResultOfferPicker({
             accessibilityLabel={"View deal from " + providerName}
             accessibilityState={{ disabled: !bookingUrl }}
             disabled={!bookingUrl}
-            onPress={bookingUrl ? () => void Linking.openURL(bookingUrl) : undefined}
+            onPress={bookingUrl ? () => void openProviderInApp(bookingUrl) : undefined}
             style={styles.action}
           >
             <Text style={[styles.link, { color: actionColor }]}>View deal</Text>
@@ -157,6 +200,7 @@ export function NativeCarResultOfferPicker({
       presentationStyle="fullScreen"
       statusBarTranslucent={false}
       onRequestClose={() => setSelectedKey(null)}
+      onDismiss={openPendingRateDeal}
     >
       <SafeAreaProvider>
         <SafeAreaView edges={["top", "bottom", "left", "right"]} style={[styles.sheetScreen, { backgroundColor: theme.surface }]} accessibilityViewIsModal>
@@ -210,7 +254,7 @@ export function NativeCarResultOfferPicker({
               accessibilityLabel={selectedChoice ? "View deal from " + selectedChoice.providerName : "View deal"}
               accessibilityState={{ disabled: !selectedRateBookingUrl }}
               disabled={!selectedRateBookingUrl}
-              onPress={selectedRateBookingUrl ? () => void Linking.openURL(selectedRateBookingUrl) : undefined}
+              onPress={selectedRateBookingUrl ? () => continueRateDeal(selectedRateBookingUrl) : undefined}
               style={({ pressed }) => [
                 styles.sheetViewDeal,
                 !selectedRateBookingUrl && styles.sheetViewDealDisabled,
