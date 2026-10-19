@@ -191,7 +191,7 @@ test("mobile result rhythm no longer reserves space for the removed summary card
     /page-shell max-sm:w-\[calc\(100%_-_28px\)\] pb-6 pt-0 sm:pt-6/,
   );
   assert.match(resultsSource, /gap-2 pt-0 sm:gap-3 sm:pt-1 lg:py-1/);
-  assert.match(resultsSource, /!embedded && presentation === "standalone" && "max-sm:pt-2"/);
+  assert.match(resultsSource, /!embedded && presentation === "standalone" && "max-sm:pt-6"/);
   assert.match(resultsSource, /min-w-0 space-y-0 sm:space-y-4/);
   assert.equal(
     (resultsSource.match(/"w-full space-y-3\.5 sm:space-y-4",\s*!embedded && presentation === "standalone" \? "max-sm:!mt-0" : "max-sm:!mt-1"/g) ?? []).length,

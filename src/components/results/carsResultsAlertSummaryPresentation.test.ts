@@ -64,13 +64,15 @@ test("Cars count row preserves card separation after removing the tracking toggl
   assert.doesNotMatch(cars, /<CarPriceAlertControl/);
 });
 
-test("standalone mobile Cars redistributes space from the card gap to the filter separation", () => {
+test("standalone mobile Cars matches native filter-to-count spacing without increasing the first card gap", () => {
   const toolbar = cars.slice(cars.indexOf("data-cars-results-filter-origin"), cars.indexOf("data-cars-results-summary-row"));
-  assert.match(toolbar, /!embedded && presentation === "standalone" && "max-sm:pt-2"/);
+  assert.match(toolbar, /!embedded && presentation === "standalone" && "max-sm:pt-6"/);
   assert.doesNotMatch(toolbar, /sm:pt-2 lg:pt-2/);
   // Both loading and loaded lists have zero mobile top margin only for standalone Cars.
   assert.equal((cars.match(/!embedded && presentation === "standalone" \? "max-sm:!mt-0" : "max-sm:!mt-1"/g) ?? []).length, 2);
   assert.match(cars, /min-w-0 space-y-0 sm:space-y-4/);
+  assert.doesNotMatch(toolbar, /max-sm:pt-(?:0|1|2|3|4|5)\b/);
+  assert.match(cars, /!embedded && presentation === "standalone" \? "max-sm:!mt-0" : "max-sm:!mt-1"/);
 });
 
 test("Cars keeps the left-side result count while the offer alert lives in rate details", () => {
@@ -93,7 +95,7 @@ test("desktop Cars retains map width while tracking resides within each provider
 });
 
 test("Cars offer alert keeps the functional switch and accessible translated name", () => {
-  assert.match(alert, /Track prices<\/span>/);
+  assert.match(alert, /\{t\("carsResults\.priceTracking\.title"\)\}<\/span>/);
   assert.match(alert, /aria-label=\{`${t\("carsResults\.priceTracking\.title"\)\} for $\{scope\.providerName\} offer`\}/);
   assert.match(alert, /role="switch"/);
   assert.match(alert, /aria-checked=\{tracking\}/);

@@ -125,7 +125,7 @@ export function CarPriceAlertControl({ search, car, offer }: {
     <section aria-label={t("carsResults.priceTracking.title")} data-cars-price-alert className="inline-flex min-w-0 shrink-0 items-center justify-end">
       <div className="flex min-h-11 min-w-0 items-center justify-end gap-1.5">
         <Bell className="h-3.5 w-3.5 shrink-0 text-[#1769AA]" aria-hidden="true" />
-        <span className="whitespace-nowrap text-[11px] font-semibold leading-4 text-[#07133B]">Track prices</span>
+        <span className="whitespace-nowrap text-[11px] font-semibold leading-4 text-[#07133B]">{t("carsResults.priceTracking.title")}</span>
         <button ref={switchRef} type="button" role="switch" aria-checked={tracking} aria-busy={pending} disabled={disabled} aria-label={`${t("carsResults.priceTracking.title")} for ${scope.providerName} offer`} onClick={() => void toggle(!tracking)} className="relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35">
           <span aria-hidden="true" className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors ${tracking ? "border-[#004BB8] bg-[#004BB8]" : "border-slate-300 bg-slate-200"}`}>
             <span className={`h-[18px] w-[18px] rounded-full bg-white shadow transition-transform ${tracking ? "translate-x-[23px] rtl:-translate-x-[23px]" : "translate-x-[3px] rtl:-translate-x-[3px]"}`} />

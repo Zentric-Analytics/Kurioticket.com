@@ -191,7 +191,7 @@ test("native and web Cars keep compact result counts while tracking only the ope
   const webCars = readFileSync("../../src/components/results/CarsResultsClient.tsx", "utf8");
   const webAlert = readFileSync("../../src/components/results/CarPriceAlertControl.tsx", "utf8");
   const picker = readFileSync("src/features/search/NativeCarResultOfferPicker.tsx", "utf8");
-  assert.match(webCars, /"max-sm:pt-2"/);
+  assert.match(webCars, /"max-sm:pt-6"/);
   assert.match(webCars, /truncate whitespace-nowrap text-\[12px\] font-semibold leading-4/);
   assert.match(cars, /carResultCount:\{fontSize:12,lineHeight:16,fontWeight:"600"/);
   assert.doesNotMatch(webCars, /<CarPriceAlertControl|data-cars-price-alert-sidebar-slot/);
@@ -215,7 +215,7 @@ test("Cars offers render per-rate tracking beside provider while results stay co
   assert.match(picker, /<NativeCarPriceAlert key=\{result\.id \+ ":" \+ selectedChoice\.key\}/);
   assert.match(picker, /plan=\{plan\} resultId=\{result\.id\} offer=\{selectedChoice\.offer\}/);
   assert.match(picker, /<CarPriceAlertSnackbar/);
-  assert.match(carAlert, />Track prices<\/Text>/);
+  assert.match(carAlert, />Track car prices<\/Text>/);
   assert.match(carAlert, /<Bell accessible=\{false\} size=\{14\}/);
   assert.match(carAlert, /travelApi\.priceAlerts\(\)/);
   assert.match(carAlert, /updatePriceAlertStatus/);
