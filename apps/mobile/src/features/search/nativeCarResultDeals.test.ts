@@ -345,7 +345,7 @@ test("native Cars View deal opens the selected provider inside Kurioticket, like
 
 test("native Cars prevents repeated provider launches and reports browser errors", () => {
   const picker = readFileSync("src/features/search/NativeCarResultOfferPicker.tsx", "utf8");
-  assert.match(picker, /if \(dealOpeningRef\.current\) return;/);
+  assert.equal((picker.match(/if \(dealOpeningRef\.current \|\| pendingRateDealRef\.current\) return;/g) ?? []).length, 2);
   assert.match(picker, /dealOpeningRef\.current = true;/);
   assert.match(picker, /dealOpeningRef\.current = false;/);
   assert.match(picker, /Alert\.alert\("Unable to open provider", "Please refresh and try again\."\)/);
