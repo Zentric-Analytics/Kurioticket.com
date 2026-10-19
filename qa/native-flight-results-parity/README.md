@@ -3,6 +3,22 @@
 Starting dev: `0a9a4b9ab9c32de6e853dddc7cbf9d0867775910`  
 Branch: `fix/native-flight-results-parity`
 
+## Before and after images
+
+Preview assets branch: `docs/native-flight-results-visual-comparisons`, based on current dev `bc4332add366ea8c8ecf7c0385bb22664cae4c01` after PR #6359 merged. The implementation baseline and validation below remain the historical record for the original change.
+
+Browser-rendered previews of the native components using identical fixture data. **These are not native device screenshots.** The capture harness, platform adaptations and reproduction steps are documented [here](preview/README.md).
+
+![Main results before and after](images/results-comparison.png)
+
+| State | Comparison | Before | After |
+| --- | --- | --- | --- |
+| Results | [Side by side](images/results-comparison.png) | [Before](images/results-before.png) | [After](images/results-after.png) |
+| Selected filters | [Side by side](images/selected-filters-comparison.png) | [Before](images/selected-filters-before.png) | [After](images/selected-filters-after.png) |
+| Airlines quick sheet | [Side by side](images/airlines-sheet-comparison.png) | [Before](images/airlines-sheet-before.png) | [After](images/airlines-sheet-after.png) |
+| Full filters | [Side by side](images/full-filters-comparison.png) | [Before](images/full-filters-before.png) | [After](images/full-filters-after.png) |
+| Sort sheet | [Side by side](images/sort-sheet-comparison.png) | [Before](images/sort-sheet-before.png) | [After](images/sort-sheet-after.png) |
+
 ## Changes
 
 - Place the single sticky filter rail before naturally scrolling dates; retain dates for empty/error/filtered states.
