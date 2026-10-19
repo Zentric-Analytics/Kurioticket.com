@@ -244,7 +244,7 @@ function HomePageContent() {
                 onPress={() => setActiveProduct(product.id)}
                 style={({ pressed }) => [
                   styles.product,
-                  selected && [styles.productActive, { backgroundColor: ft.colors.selected, borderBottomColor: ft.colors.blue }],
+                  selected && [styles.productActive, { backgroundColor: ft.colors.selected, borderBottomColor: ft.colors.selectedBorder }],
                   pressed && ft.styles.pressed,
                 ]}
               >
