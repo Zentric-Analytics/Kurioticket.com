@@ -28,12 +28,12 @@ test("priced Hotel results wait for currency context before exposing their initi
   assert.match(source, /if \(status === "loading" \|\| hotelCurrencyPending\) return <NativeBrandedSearchLoading product=\{product\} \/>/);
 });
 
-test("changed Sort Apply updates ordering state and resets pagination without network work", () => {
+test("changed Sort Apply updates ordering state and resets scroll position without network work", () => {
   const sheet = source.slice(source.indexOf("<HotelResultsQuickFilterSheet"), source.indexOf("/> : null", source.indexOf("<HotelResultsQuickFilterSheet")));
   assert.match(sheet, /sort=\{hotelSort\}/);
   assert.match(sheet, /onSortChange=\{\(next\) => \{ if\(next===hotelSort\)return;setHotelSort\(next\);startHotelResultsTransition\(\); \}\}/);
   assert.doesNotMatch(sheet, /setHotelPage|setHotelFilters|travelApi|retry|setResults/);
   const transition = source.slice(source.indexOf("const startHotelResultsTransition"), source.indexOf("const transitionHotelFilters"));
-  assert.match(transition, /setHotelPage\(1\)/);
+  assert.doesNotMatch(transition, /setHotelPage/);
   assert.match(transition, /scrollToHotelResultsBeginning\(\)/);
 });
