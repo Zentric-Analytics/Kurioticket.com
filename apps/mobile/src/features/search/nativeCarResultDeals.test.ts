@@ -242,11 +242,11 @@ test("native Cars Rate details is full screen with safe insets, fixed header and
     'fontFamily: appFonts.semibold',
     'Close rate details',
   ]) assert.ok(sheet.includes(token), token);
-  const rateScroll = sheet.match(/<ScrollView[^>]*style=\\{styles\\.sheetScroll\\}[^>]*>/)?.[0];
+  const rateScroll = sheet.match(/<ScrollView[^>]*style=\{styles\.sheetScroll\}[^>]*>/)?.[0];
   assert.ok(rateScroll, "Rate details must retain its independent ScrollView");
-  assert.match(rateScroll, /showsVerticalScrollIndicator=\\{false\\}/, "hide only the visible native scroll thumb");
+  assert.match(rateScroll, /showsVerticalScrollIndicator=\{false\}/, "hide only the visible native scroll thumb");
   assert.match(rateScroll, /nestedScrollEnabled/, "keep Rate details swipe scrolling enabled");
-  assert.match(rateScroll, /contentContainerStyle=\\{styles\\.sheetBody\\}/, "preserve Rate details content layout");
+  assert.match(rateScroll, /contentContainerStyle=\{styles\.sheetBody\}/, "preserve Rate details content layout");
   assert.ok(sheet.indexOf('style={styles.sheetHeader}') === -1);
   assert.ok(sheet.indexOf('styles.sheetHeader') < sheet.indexOf('style={styles.sheetScroll}'));
   assert.doesNotMatch(sheet, /maxHeight: "82%"|textTransform: "uppercase"|styles\.modalRoot|styles\.backdrop/);
