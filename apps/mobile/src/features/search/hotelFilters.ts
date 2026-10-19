@@ -67,7 +67,30 @@ const buildPropertyTypeOptions = (hotels: readonly HotelResult[]) => {
   hotels.forEach(hotel=>{const raw=structuredText(hotel,"propertyTypes");if(raw?.trim()){const label=raw.trim().replace(/\s+/g," "),value=normalize(label),prior=found.get(value);if(prior)prior.count++;else found.set(value,{value,label,count:1});return;} for(const [value,label,terms] of termGroups.propertyTypes)if(includesTerms(legacyText(hotel,"propertyTypes"),terms)){const prior=found.get(value);if(prior)prior.count++;else found.set(value,{value,label,count:1});}});
   return [...found.values()].sort(optionSort);
 };
-const canonicalRoomOrBedOptions = (hotels: readonly HotelResult[], group: "roomTypes" | "bedTypes") => termGroups[group].map(([value,label,terms])=>({value,label,count:hotels.filter(h=>includesTerms(structuredText(h,group)??"",terms)).length})).filter(option=>option.count>0&&(group==="roomTypes"||option.count<hotels.length)).sort(optionSort);
+// Provider rates can carry a room name without a static catalogue profile.
+const providerRoomName = (hotel: HotelResult) => {
+  if (structuredText(hotel, "roomTypes")?.trim()) return "";
+  const label = hotel.roomType?.trim().replace(/\s+/g, " ") ?? "";
+  return /^(room|not supplied|room not supplied|not available)$/i.test(label) ? "" : label;
+};
+const roomOrBedText = (hotel: HotelResult, group: "roomTypes" | "bedTypes") =>
+  structuredText(hotel, group)?.trim() || (group === "bedTypes" ? hotel.roomType : "") || "";
+const canonicalRoomOrBedOptions = (hotels: readonly HotelResult[], group: "roomTypes" | "bedTypes") => {
+  const options: HotelFilterOption[] = termGroups[group].map(([value,label,terms])=>({value,label,count:hotels.filter(h=>includesTerms(roomOrBedText(h,group),terms)).length})).filter(option=>option.count>0&&(group==="roomTypes"||option.count<hotels.length));
+  if (group === "roomTypes") {
+    const providerOptions = new Map<string, HotelFilterOption>();
+    for (const hotel of hotels) {
+      const label = providerRoomName(hotel);
+      if (!label) continue;
+      const value = `provider-room:${normalize(label)}`;
+      const prior = providerOptions.get(value);
+      if (prior) prior.count++;
+      else providerOptions.set(value, { value, label, count: 1 });
+    }
+    options.push(...providerOptions.values());
+  }
+  return options.sort(optionSort);
+};
 
 export function resolveHotelPriceContext(hotels: readonly HotelResult[], rates: ExchangeRates): HotelPriceContext | null {
   const valueForResult = (hotel: HotelResult) => Number.isFinite(hotel.totalPrice) && hotel.totalPrice! > 0 && typeof hotel.currency === "string" ? convertAmount(hotel.totalPrice!, hotel.currency, "USD", rates) : null;
@@ -84,7 +107,14 @@ export function buildHotelFilterOptions(hotels: readonly HotelResult[], destinat
 }
 
 const matchesPropertyType = (hotel:HotelResult,selected:string[]) => {const structured=structuredText(hotel,"propertyTypes");if(structured?.trim())return selected.includes(normalize(structured));return selected.some(value=>{const term=termGroups.propertyTypes.find(x=>x[0]===value);return term?includesTerms(legacyText(hotel,"propertyTypes"),term[2]):false;});};
-const matchesCanonicalRoomOrBed = (hotel:HotelResult,group:"roomTypes"|"bedTypes",selected:string[]) => selected.some(value=>{const term=termGroups[group].find(x=>x[0]===value);return term?includesTerms(structuredText(hotel,group)??"",term[2]):false;});
+const matchesCanonicalRoomOrBed = (hotel:HotelResult,group:"roomTypes"|"bedTypes",selected:string[]) => selected.some(value=>{
+  if (group === "roomTypes" && value.startsWith("provider-room:")) {
+    const label = providerRoomName(hotel);
+    return !!label && value === `provider-room:${normalize(label)}`;
+  }
+  const term=termGroups[group].find(x=>x[0]===value);
+  return term?includesTerms(roomOrBedText(hotel,group),term[2]):false;
+});
 const matchesStructured = (values:readonly string[]|undefined,selected:string[]) => selected.some(value=>(values??[]).some(raw=>normalize(raw)===value));
 export function hotelMatchesFilters(hotel: HotelResult, filters: HotelFilters, options: HotelFilterOptions): boolean {
   if(filters.propertyNameQuery.trim()&&!normalize(hotel.name).includes(normalize(filters.propertyNameQuery)))return false;
