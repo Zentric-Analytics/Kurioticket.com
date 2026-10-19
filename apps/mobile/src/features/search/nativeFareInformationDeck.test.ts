@@ -46,14 +46,20 @@ test("deal comparison presents provider cards with direct booking actions",()=>{
   assert.match(surface,/const displayedDeals=choice\.deals\.length/);
   assert.match(deals,/deal\.providerName/);
   assert.match(deals,/dealPrices\[deal\.priceKey\]/);
-  assert.match(deals,/const canViewDeal=deal\.canContinue&&pricesReady&&Boolean\(price\)/);
+  assert.match(deals,/const sourcePrice=sourceMoney\(deal\.price,deal\.currency\)/);
+  assert.match(deals,/const visiblePrice=!pricesReady\?"Loading price…":price\?\.formatted\?\?sourcePrice/);
+  assert.match(deals,/const visiblePriceAccessibility=!pricesReady\?"Price loading":price\?\.accessibilityLabel\?\?\`\$\{sourcePrice\} in provider currency\`/);
+  assert.match(deals,/const canViewDeal=deal\.canContinue&&pricesReady&&Number\.isFinite\(deal\.price\)&&deal\.price>0/);
   assert.match(deals,/accessibilityRole="radiogroup"/);
   assert.match(deals,/accessibilityRole="radio"/);
   assert.match(deals,/onSelectDeal\(deal\.offerId\)/);
   assert.match(deals,/accessibilityRole="button"/);
   assert.match(deals,/View deal/);
   assert.match(deals,/onViewDeal\(deal\.offerId\)/);
-  assert.match(deals,/ProviderLogo provider=\{deal\.providerName\} logoUrl=\{deal\.providerLogoUrl\}/);
+  assert.match(deals,/ProviderLogo provider=\{deal\.providerName\} logoUrl=\{deal\.providerLogoUrl\} variant=\{narrow\?"deal-card-compact":"deal-card"\}/);
+  assert.match(deals,/resolveDealIdentityMark\(deal\)/);
+  assert.match(deals,/identityMark\.kind==="airline"&&identityMark\.logoUrl/);
+  assert.match(deals,/AirlineLogo airlineName=\{deal\.providerName\} logoUrl=\{identityMark\.logoUrl\}/);
   assert.match(deals,/Trip total/);
   assert.match(surface,/fallbackProviderName/);
   assert.match(deals,/No fare price available/);
@@ -173,14 +179,21 @@ test("provider selection never highlights a seller that is not the active native
   assert.doesNotMatch(deals,/!selectedDealOfferId&&index===0/);
 });
 
-test("provider deal cards use neutral Hotel-style surfaces and direct actions",()=>{
+test("provider deal cards use the balanced mobile-web three-column layout",()=>{
   const deals=between('if(tab==="deals")', 'if(tab==="details")');
   const dealStyles=between("dealList:", "conditionGroup:");
   assert.match(deals,/backgroundColor:theme\.surface,borderColor:theme\.dark\?theme\.border:FLIGHT_DETAILS_LIGHT_DEAL_BORDER/);
   assert.match(deals,/style=\{\(\{pressed\}\)=>\[s\.viewDealButton/);
   assert.match(dealStyles,/dealCard:\{minHeight:76,borderWidth:1,borderRadius:12,paddingHorizontal:12,paddingVertical:12,justifyContent:"center"\}/);
+  assert.match(dealStyles,/dealMain:\{flexDirection:"row",alignItems:"center",gap:4\}/);
+  assert.match(dealStyles,/dealProviderColumn:\{flex:1,minWidth:0,paddingRight:8,justifyContent:"center",borderRadius:8\}/);
+  assert.match(dealStyles,/dealPriceColumn:\{flexShrink:0,minWidth:0,flexDirection:"row",alignItems:"baseline",justifyContent:"center",gap:4,borderRadius:8\}/);
+  assert.match(dealStyles,/dealActionColumn:\{flex:1,minWidth:0,alignItems:"flex-end",justifyContent:"center"\}/);
+  assert.match(dealStyles,/dealProviderLogo:\{width:64,height:28/);
+  assert.match(dealStyles,/dealProviderLogoNarrow:\{width:48\}/);
+  assert.match(dealStyles,/dealProviderNarrow:\{fontSize:9,lineHeight:16\}/);
   assert.match(dealStyles,/viewDealButton:\{minHeight:32,minWidth:76,paddingHorizontal:6,borderRadius:8/);
-  assert.doesNotMatch(dealStyles,/dealCardSelected|dealRadio/);
+  assert.doesNotMatch(dealStyles,/dealCardSelected|dealRadio|dealSelection/);
 });
 
 test("fare content uses category, primary, and supporting colors without duplicating icon semantics in text",()=>{
