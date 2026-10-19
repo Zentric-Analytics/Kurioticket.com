@@ -6,7 +6,7 @@ const cars = readFileSync("src/features/search/ApprovedCarResultsScreen.tsx", "u
 const stateSource = readFileSync("src/features/search/carResultsBackToTopState.ts", "utf8");
 
 test("Native Cars Results exposes one floating Back-to-top after a meaningful scroll", () => {
-  assert.match(stateSource, /const CAR_BACK_TO_TOP_SCROLL_THRESHOLD = 320/);
+  assert.match(stateSource, /const CAR_BACK_TO_TOP_SCROLL_THRESHOLD = 500/);
   assert.match(cars, /carBackToTopOffsetRef=useRef\(0\)/);
   assert.match(cars, /carBackToTopVisibleRef=useRef\(false\)/);
   assert.match(cars, /carBackToTopReturningRef=useRef\(false\)/);
@@ -19,7 +19,9 @@ test("Native Cars Results exposes one floating Back-to-top after a meaningful sc
   assert.match(cars, /<Animated.View pointerEvents=/);
   assert.match(cars, /opacity:carBackToTopProgress,transform:/);
   assert.match(cars, /outputRange:\[8,0\]/);
-  assert.match(cars, /duration:carBackToTopReducedMotion\?0:200/);
+  assert.match(cars, /duration:carBackToTopReducedMotion\?0:150/);
+  assert.match(cars, /easing:Easing\.bezier\(0\.4,0,0\.2,1\)/);
+  assert.match(cars, /return \(\)=>animation\.stop\(\)/);
   assert.match(cars, /accessibilityElementsHidden=\{!carBackToTopVisible\}/);
   assert.equal((cars.match(/accessibilityLabel="Back to top"/g) ?? []).length, 1);
   assert.match(cars, /accessibilityRole="button" accessibilityLabel="Back to top"/);
@@ -37,7 +39,12 @@ test("Native Cars Back-to-top uses its existing FlatList, smooth movement and no
   assert.match(cars, /const next=beginCarBackToTopReturn\(\{[\s\S]*carBackToTopReturningRef\.current=next\.returning;[\s\S]*hideCarBackToTop\(\);[\s\S]*carScrollRef\.current\?\.scrollToOffset\(\{offset:0,animated:true\}\)/);
   assert.match(stateSource, /const returning = previous\.returning && offset > 1 && offset <= previous\.offset \+ 1/);
   assert.match(stateSource, /returning: previous\.offset > 1/);
-  assert.match(cars, /onScrollBeginDrag=\{\(\)=>\{carBackToTopReturningRef\.current=false;\}\}/);
+  assert.match(stateSource, /export function hasVisibleFirstCarResult\(/);
+  assert.match(cars, /onViewableItemsChanged=\{handleCarViewableItemsChanged\}/);
+  assert.match(cars, /if\(hasVisibleFirstCarResult\(viewableItems\)\)hideCarBackToTop\(\)/);
+  assert.match(cars, /onScrollToTop=\{handleCarScroll\}/);
+  assert.doesNotMatch(cars, /onMomentumScrollEnd=\{\(event\)=>\{carBackToTopReturningRef\.current=false/);
+  assert.match(cars, /onScrollBeginDrag=\{\(event\)=>\{carBackToTopReturningRef\.current=false;handleCarScroll\(event\);\}\}/);
   assert.match(cars, /onPress=\{scrollCarResultsToTop\}/);
   assert.match(cars, /startCarResultsTransition=\(\)=>\{[^}]*scrollCarResultsToTop\(\)/);
   assert.match(cars, /setCarBackToTopVisible\(false\)/);
@@ -62,8 +69,8 @@ test("Cars vertical owner is cross-platform stable, virtualized, and safe-area a
   assert.match(owner, /maxToRenderPerBatch=\{Math\.max\(results\.length,CAR_RESULT_RENDER_BATCH_SIZE\)\}/);
   assert.match(owner, /windowSize=\{CAR_RESULT_WINDOW_SIZE\}/);
   assert.match(owner, /onScroll=\{handleCarScroll\} scrollEventThrottle=\{16\}/);
-  assert.match(owner, /onScrollBeginDrag=\{\(\)=>\{carBackToTopReturningRef\.current=false;\}\}/);
-  assert.match(owner, /onMomentumScrollEnd=\{\(event\)=>\{carBackToTopReturningRef\.current=false;handleCarScroll\(event\);\}\}/);
+  assert.match(owner, /onScrollBeginDrag=\{\(event\)=>\{carBackToTopReturningRef\.current=false;handleCarScroll\(event\);\}\}/);
+  assert.match(owner, /onMomentumScrollEnd=\{handleCarScroll\}/);
   assert.match(owner, /contentContainerStyle=\{\[r\.body,\{paddingBottom:Math\.max\(insets\.bottom \+ 64,64\)\}\]\}/);
   assert.match(cars, /edges=\{\["top"\]\}/);
   const horizontal = cars.match(/<ScrollView horizontal[^>]*>/)?.[0];
