@@ -1,5 +1,7 @@
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
+import { HomePresentationProvider, Text, useHomePresentation } from "../home/HomePresentation";
+import { homeHotelColors, resolveHomeTheme } from "../home/homeHotelPresentation";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "../../theme/tokens";
 import { FlowIcon, type FlowIconName } from "../flow/FlowIcon";
@@ -8,9 +10,18 @@ import { useAppTheme } from "../../theme/AppTheme";
 const labels: Record<string, string> = { index: "Home", explore: "Explore", trips: "My Trips", profile: "Profile" };
 const icons: Record<string, FlowIconName> = { index: "home", trips: "trip", explore: "compass", profile: "person" };
 
-export function KurioticketTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+export function KurioticketTabBar(props: BottomTabBarProps) {
+  return props.state.routes[props.state.index]?.name === "index"
+    ? <HomePresentationProvider><TabBarContent {...props} /></HomePresentationProvider>
+    : <TabBarContent {...props} />;
+}
+
+function TabBarContent({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
-  const { theme } = useAppTheme();
+  const { theme: parentTheme } = useAppTheme();
+  const isHome = useHomePresentation();
+  const theme = resolveHomeTheme(parentTheme, isHome);
+  const activeColor = isHome ? (theme.dark ? "#8FB5FF" : homeHotelColors.action) : "#0754F7";
   return (
     <View style={[styles.shell, { paddingBottom: Math.max(insets.bottom, 10), backgroundColor: theme.surface, borderTopColor: theme.border }]} accessibilityRole="tablist">
       {state.routes.map((route, index) => {
@@ -30,8 +41,8 @@ export function KurioticketTabBar({ state, descriptors, navigation }: BottomTabB
             onLongPress={() => navigation.emit({ type: "tabLongPress", target: route.key })}
             style={({ pressed }) => [styles.item, focused && styles.itemSelected, pressed && styles.itemPressed]}
           >
-            <FlowIcon name={icons[route.name] ?? "home"} size={23} color={focused ? "#0754F7" : theme.muted} />
-            <Text numberOfLines={1} style={[styles.label, { color: theme.muted }, focused && styles.labelSelected]}>{label}</Text>
+            <FlowIcon name={icons[route.name] ?? "home"} size={23} color={focused ? activeColor : theme.muted} />
+            <Text numberOfLines={1} style={[styles.label, { color: theme.muted }, focused && styles.labelSelected, focused && { color: activeColor }]}>{label}</Text>
           </Pressable>
         );
       })}

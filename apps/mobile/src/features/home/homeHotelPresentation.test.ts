@@ -42,4 +42,7 @@ test("home presentation is mounted only by the native homepage", () => {
   for (const path of ["app/_layout.tsx", "src/features/search/ApprovedResultsScreen.tsx", "src/features/search/HotelDetailsScreen.tsx", "src/features/flow/ProductScreens.tsx"]) {
     assert.doesNotMatch(readFileSync(path, "utf8"), /<HomePresentationProvider/);
   }
+  const tabs = readFileSync("src/features/tabs/KurioticketTabBar.tsx", "utf8");
+  assert.match(tabs, /props\.state\.routes\[props\.state\.index\]\?\.name === "index"/);
+  assert.match(tabs, /: <TabBarContent \{\.\.\.props\} \/>/);
 });
