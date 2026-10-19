@@ -830,7 +830,6 @@ function ResultsScreen({ product }: { product: Product }) {
     if (hotelFilterFeedbackTimerRef.current) clearTimeout(hotelFilterFeedbackTimerRef.current);
   }, []);
   const startHotelResultsTransition = (withFilterFeedback = false) => {
-    hotelScrolling.resetFilters();
     scrollToHotelResultsBeginning();
     if (withFilterFeedback) startHotelFilterFeedback();
   };
@@ -1199,19 +1198,9 @@ function ResultsScreen({ product }: { product: Product }) {
         <>
           <HotelResultsHeader destination={hotelSummary.destination} secondaryLine={hotelSummary.secondaryLine} onEdit={edit} backgroundColor={hotelCanvasColor}/>
           <View style={s0.hotelResultsListContainer}>
-          <Animated.View
-            pointerEvents={hotelScrolling.filterHidden ? "none" : "auto"}
-            accessibilityElementsHidden={hotelScrolling.filterHidden}
-            importantForAccessibility={hotelScrolling.filterHidden ? "no-hide-descendants" : "auto"}
-            style={[s0.hotelFilterClip, { height: hotelScrolling.filterTranslation.interpolate({ inputRange: [-hotelScrolling.filterHeight, 0], outputRange: [0, hotelScrolling.filterHeight], extrapolate: "clamp" }) }]}
-          >
-            <Animated.View
-              onLayout={hotelScrolling.onFilterLayout}
-              style={[s0.hotelFilterSectionHeader, { backgroundColor: hotelCanvasColor }, { transform: [{ translateY: hotelScrolling.filterTranslation }] }]}
-            >
-              {filterRail}
-            </Animated.View>
-          </Animated.View>
+          <View style={[s0.hotelFilterSectionHeader, { backgroundColor: hotelCanvasColor }]}>
+            {filterRail}
+          </View>
           <SectionList
             ref={hotelResultsListRef}
             style={[s0.resultsScroll, { backgroundColor: hotelCanvasColor }]}
@@ -1257,12 +1246,10 @@ function ResultsScreen({ product }: { product: Product }) {
             contentContainerStyle={[s0.hotelResultsContent, { paddingBottom: Math.max(insets.bottom + 16, 16) }]}
             onEndReached={hotelScrolling.revealMore}
             onEndReachedThreshold={0.5}
-            onScroll={hotelScrolling.onScroll}
             onScrollBeginDrag={hotelScrolling.beginInteraction}
             onScrollEndDrag={hotelScrolling.endDrag}
             onMomentumScrollBegin={hotelScrolling.beginInteraction}
             onMomentumScrollEnd={hotelScrolling.endInteraction}
-            scrollEventThrottle={16}
             showsVerticalScrollIndicator={true}
             automaticallyAdjustsScrollIndicatorInsets={false}
             scrollIndicatorInsets={{ top: 4, right: 3, bottom: Math.max(insets.bottom, 8), left: 0 }}
@@ -1971,7 +1958,6 @@ const s0 = StyleSheet.create({
   hotelFilterContent: { paddingLeft: 12, paddingRight: 16, gap: 6, alignItems: "center", flexWrap: "nowrap" },
   hotelFilterSectionHeader: { paddingBottom: 12 },
   hotelResultsListContainer: { flex: 1, overflow: "hidden" },
-  hotelFilterClip: { overflow: "hidden", flexShrink: 0 },
   flightFilterSectionHeader: { paddingTop: 8 },
   resultsScroll: { flex: 1 },
   flightResultsListContainer: { flex: 1 },
