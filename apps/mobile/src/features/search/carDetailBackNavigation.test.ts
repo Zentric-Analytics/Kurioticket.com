@@ -22,7 +22,8 @@ test("Cars Results exposes provider links in cards without navigating to the det
   assert.match(picker, /disabled=\{!bookingUrl\}/);
   assert.match(picker, /onPress=\{bookingUrl \? \(\) => void openProviderInApp\(bookingUrl\) : undefined\}/);
   assert.match(picker, /onPress=\{selectedRateBookingUrl \? \(\) => continueRateDeal\(selectedRateBookingUrl\) : undefined\}/);
-  assert.match(picker, /onDismiss=\{openPendingRateDeal\}/);
+  assert.doesNotMatch(picker, /onDismiss=\{openPendingRateDeal\}/);
+  assert.match(picker, /const continueRateDeal = \(url: string\) => \{\s*if \(dealOpeningRef\.current\) return;\s*void openProviderInApp\(url\);/);
   assert.doesNotMatch(picker, /Linking\.openURL/);
 
   assert.match(dealActions, /getCarDealPickerGroups\(result\)/);
