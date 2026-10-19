@@ -22,7 +22,7 @@ test("offer alert submits optimistically with accessible confirmation and no loa
   assert.doesNotMatch(source, /LoaderCircle|animate-spin|w-5 justify-center/);
   assert.match(source, /pendingRef\.current/);
   assert.match(source, /optimisticTracking/);
-  assert.match(source, /flex min-h-11 min-w-0 items-center gap-1/);
+  assert.match(source, /flex min-h-11 min-w-0 items-center gap-0\.5/);
   assert.match(source, /CAR_PRICE_ALERT_SNACKBAR_DURATION_MS = 3_600/);
   assert.match(source, /window\.clearTimeout\(leave\)/);
   assert.match(source, /aria-live="polite"/);
