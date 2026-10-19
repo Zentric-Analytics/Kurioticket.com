@@ -46,6 +46,7 @@ test("Home uses text-only selection while other default selectors retain underli
   assert.match(primitives, /\(!showBaseline \|\| homeTabs\) && styles\.segmentsWithoutBaseline/);
   assert.match(primitives, /selected && !homeTabs && \(appearance === "filled"/);
   assert.match(primitives, /homeTabs && \{ color: selected \? ft\.colors\.textPrimary : ft\.colors\.textSecondary, fontWeight: selected \? "700" : "400" \}/);
+  assert.match(primitives, /homeSegmentText: \{ fontSize: 14, lineHeight: 20 \}/);
   assert.match(primitives, /segmentsWithoutBaseline: \{ borderBottomWidth: 0 \}/);
   assert.match(primitives, /segmentActive: \{ borderBottomColor: flowColors\.blue, borderBottomWidth: 2 \}/);
 });

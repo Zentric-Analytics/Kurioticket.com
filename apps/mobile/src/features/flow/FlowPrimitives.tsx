@@ -135,6 +135,7 @@ export function Segments<T extends string>({
                 styles.segmentText,
                 { color: item.disabled ? ft.colors.secondaryText : ft.colors.text },
                 selected && !homeTabs && (appearance === "filled" ? styles.filledSegmentTextActive : styles.segmentTextActive),
+                homeTabs && styles.homeSegmentText,
                 homeTabs && { color: selected ? ft.colors.textPrimary : ft.colors.textSecondary, fontWeight: selected ? "700" : "400" },
               ]}
             >
@@ -400,6 +401,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     textAlign: "center",
   },
+  homeSegmentText: { fontSize: 14, lineHeight: 20 },
   segmentTextActive: { color: flowColors.blue, fontWeight: "800" },
   field: {
     minHeight: 68,

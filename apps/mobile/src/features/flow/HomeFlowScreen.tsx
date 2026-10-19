@@ -211,7 +211,9 @@ function HomePageContent() {
         </HomeCarsSearchSurface>
       : <UnavailableNotice text="Car search is temporarily unavailable. Flights and hotels remain available." />,
     packages: availability.deals
-      ? <PackagesSearchPanel presentation="home" />
+      ? <HomeFlightSearchSurface>
+          <PackagesSearchPanel presentation="home" />
+        </HomeFlightSearchSurface>
       : <UnavailableNotice text="Packages are temporarily unavailable. You can still search available flights, hotels, and cars separately." />,
   } satisfies Record<HomeProduct, React.ReactNode>;
 
@@ -242,20 +244,22 @@ function HomePageContent() {
                 onPress={() => setActiveProduct(product.id)}
                 style={({ pressed }) => [
                   styles.product,
+                  selected && [styles.productActive, { backgroundColor: ft.colors.selected, borderBottomColor: ft.colors.selectedBorder }],
                   pressed && ft.styles.pressed,
                 ]}
               >
-                <View style={[styles.productIcon, selected && { backgroundColor: ft.colors.blue }]}>
-                  {product.icon === "packages" ? (
-                    <PackagesIcon color={selected ? "#FFFFFF" : ft.colors.icon} />
-                  ) : (
-                    <FlowIcon name={product.icon} color={selected ? "#FFFFFF" : ft.colors.icon} />
-                  )}
-                </View>
+                {product.icon === "packages" ? (
+                  <PackagesIcon color={selected ? ft.colors.selectedLabelText : ft.colors.icon} />
+                ) : (
+                  <FlowIcon
+                    name={product.icon}
+                    color={selected ? ft.colors.selectedLabelText : ft.colors.icon}
+                  />
+                )}
                 <Text
                   style={[
                     styles.productText, { color: ft.colors.text },
-                    selected && styles.productTextActive,
+                    selected && { color: ft.colors.selectedLabelText },
                   ]}
                 >
                   {product.label}
@@ -355,7 +359,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 6,
   },
-  productIcon: { width: 40, height: 40, borderRadius: 10, alignItems: "center", justifyContent: "center" },
-  productText: { color: flowColors.navy, fontSize: 11, fontWeight: "400" },
-  productTextActive: { fontWeight: "700" },
+  productActive: {
+    backgroundColor: "#F3F7FF",
+    borderBottomColor: flowColors.blue,
+    borderBottomWidth: 2,
+  },
+  productText: { color: flowColors.navy, fontSize: 11, fontWeight: "700" },
 });

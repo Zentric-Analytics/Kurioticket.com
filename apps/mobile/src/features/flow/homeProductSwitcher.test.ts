@@ -17,8 +17,10 @@ test("Home product tabs expose one selected state driven by activeProduct", () =
   assert.match(home, /const selected = activeProduct === product\.id/);
   assert.match(home, /accessibilityRole="tab"/);
   assert.match(home, /accessibilityState=\{\{ selected \}\}/);
-  assert.match(home, /styles\.productIcon, selected && \{ backgroundColor: ft\.colors\.blue \}/);
-  assert.doesNotMatch(home, /productActive|borderBottomWidth: 2/);
+  assert.match(home, /selected && \[styles\.productActive/);
+  assert.match(home, /backgroundColor: ft\.colors\.selected, borderBottomColor: ft\.colors\.selectedBorder/);
+  assert.match(home, /selected && \{ color: ft\.colors\.selectedLabelText \}/);
+  assert.doesNotMatch(home, /styles\.productIcon/);
   assert.doesNotMatch(home, /index === 0/);
 });
 

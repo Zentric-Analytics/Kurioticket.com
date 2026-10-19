@@ -320,16 +320,12 @@ type PackagesSearchPanelProps = {
 export function PackagesSearchPanel({
   presentation = "standalone",
 }: PackagesSearchPanelProps) {
-  const ft = useFlowTheme();
   const { availability, loading } = useFeatureAvailability();
   const availableDealTabs = useMemo(() => packageModes.filter(option => dealTabAvailable(option.value, availability)), [availability]);
-  const isHome = presentation === "home";
   if (loading) return <UnavailableNotice text="Checking package availability…" />;
   if (!availability.deals || availableDealTabs.length === 0) return <UnavailableNotice text="Packages are temporarily unavailable. You can still search available flights, hotels, and cars separately." />;
   const packageBuilder = <PackageSearchForm presentation={presentation} />;
-  return isHome ? (
-    <View style={[ft.styles.card, ft.styles.shadow]}>{packageBuilder}</View>
-  ) : packageBuilder;
+  return packageBuilder;
 }
 
 const styles = StyleSheet.create({
