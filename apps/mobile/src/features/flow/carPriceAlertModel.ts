@@ -1,7 +1,8 @@
 import type { CarResult, MobilePriceAlert } from "../../api/travelApi";
 import { supportedCurrencies } from "../../config/supportedCurrencies";
 import type { SearchPlan } from "./travelSearchModel";
-import type { CarPriceAlertOfferScope } from "../../../../../src/lib/price-alerts/carPriceAlerts";
+/** Mobile carries only offer identity, not the server-side Zod validation runtime. */
+export type CarPriceAlertOfferScope = { resultId: string; offerId: string; providerName: string };
 
 const supported = new Set(supportedCurrencies.map(({ code }) => code));
 const text = (value: unknown) => String(value ?? "").trim().toLowerCase();
