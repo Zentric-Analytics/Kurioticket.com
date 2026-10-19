@@ -143,11 +143,12 @@ test("canonical flight search data remains available after presentation metadata
   assert.equal(payload?.cabinClass, "premium-economy");
 });
 
-test("Hotel Results uses one stable summary header above a native sticky filter rail", () => {
+test("Hotel Results keeps its summary header above a directional filter rail", () => {
   const headerPosition = results.indexOf("<HotelResultsHeader");
   const listPosition = results.indexOf("<SectionList", headerPosition);
   assert.ok(headerPosition >= 0 && headerPosition < listPosition);
-  assert.match(results.slice(listPosition), /renderSectionHeader[\s\S]*?\{filterRail\}[\s\S]*?stickySectionHeadersEnabled/);
+  assert.match(results.slice(headerPosition, listPosition), /s0\.hotelFilterClip[\s\S]*?\{filterRail\}/);
+  assert.doesNotMatch(results.slice(listPosition), /renderSectionHeader/);
   assert.equal(results.match(/<HotelResultsHeader/g)?.length, 1);
   assert.doesNotMatch(results, /hotelCompactHeader|setHotelCompactHeader|hotelIntroBoundary/);
 });

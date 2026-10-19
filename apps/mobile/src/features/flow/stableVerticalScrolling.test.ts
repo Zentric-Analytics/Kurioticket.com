@@ -61,7 +61,8 @@ test("hotel results use one stable native scroll owner without native Back to to
   const hotelLayout = source.slice(hotelStart, hotelEnd);
   assert.equal(hotelLayout.match(/<SectionList/g)?.length, 1);
   assertStableOwner(hotelLayout, /<SectionList[\s\S]*?ref=\{hotelResultsListRef\}[\s\S]*?alwaysBounceVertical=\{false\}[\s\S]*?>/);
-  assert.match(hotelLayout, /renderSectionHeader[\s\S]*?\{filterRail\}[\s\S]*?stickySectionHeadersEnabled/);
+  assert.match(hotelLayout, /s0\.hotelFilterClip[\s\S]*?\{filterRail\}[\s\S]*?<SectionList/);
+  assert.doesNotMatch(hotelLayout, /renderSectionHeader/);
   assert.doesNotMatch(hotelLayout, /hotelCompactHeader|setHotelCompactHeader|hotelIntroBoundary/);
   assert.doesNotMatch(source, /handleHotelScroll|hotelBackToTop|accessibilityLabel="Back to top"/);
 });

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type SetStateAction } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState, type SetStateAction } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -150,6 +150,8 @@ import { defaultHotelSort, hotelSortLabel, sortHotelsForResults, type HotelSortM
 import { HotelResultsQuickFilterSheet, type HotelResultsQuickFilterKind } from "./HotelResultsQuickFilterSheet";
 import { getLowestPricedHotelId, hasHotelPrice } from "@/lib/hotels/hotelResultAvailability";
 import { hasGoogleMapsDiscovery } from "./hotelResultsPresentation";
+import { HOTEL_RESULTS_REVEAL_COUNT, HOTEL_RESULTS_RENDER_WINDOW, HOTEL_RESULTS_BATCH_PERIOD } from "./hotelResultsScroll";
+import { useHotelResultsScrolling } from "./useHotelResultsScrolling";
 import { FlightPriceAlert } from "./HotelPriceAlert";
 import { PriceTrackingSnackbar, type CarPriceAlertFeedback } from "./NativeCarPriceAlert";
 import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
@@ -700,6 +702,8 @@ function ResultsScreen({ product }: { product: Product }) {
     }
     return sortHotelsForResults(filteredHotelResults, hotelSort, currencyState?.rates);
   }, [filteredHotelResults, ownedFlightResults, filters, hotelSort, sort, product, flightPriceContext, normalizeFlightPrice, currencyState?.rates]);
+  const hotelScrollIdentity = JSON.stringify([plan.plan?.key, retry, hotelSort, hotelFilters]);
+  const hotelScrolling = useHotelResultsScrolling(hotelScrollIdentity, product === "hotel" ? sorted.length : 0);
   const cheapestHotelId = useMemo(() => product === "hotel"
     ? getLowestPricedHotelId(filteredHotelResults, currencyState?.rates)
     : null, [currencyState?.rates, filteredHotelResults, product]);
@@ -826,6 +830,7 @@ function ResultsScreen({ product }: { product: Product }) {
     if (hotelFilterFeedbackTimerRef.current) clearTimeout(hotelFilterFeedbackTimerRef.current);
   }, []);
   const startHotelResultsTransition = (withFilterFeedback = false) => {
+    hotelScrolling.resetFilters();
     scrollToHotelResultsBeginning();
     if (withFilterFeedback) startHotelFilterFeedback();
   };
@@ -1103,9 +1108,9 @@ function ResultsScreen({ product }: { product: Product }) {
   const hotelResultsListData = useMemo<HotelResultsListItem[]>(() => {
     if (product !== "hotel") return [];
     const data: HotelResultsListItem[] = [HOTEL_RESULTS_INTRO_ITEM];
-    if (status === "ready" && sorted.length > 0) data.push(HOTEL_RESULTS_SUMMARY_ITEM, ...(sorted as HotelResult[]));
+    if (status === "ready" && sorted.length > 0) data.push(HOTEL_RESULTS_SUMMARY_ITEM, ...(sorted as HotelResult[]).slice(0, hotelScrolling.limit));
     return data;
-  }, [product, sorted, status]);
+  }, [product, sorted, status, hotelScrolling.limit]);
   const hotelCurrencyPending = product === "hotel"
     && status === "ready"
     && (results as HotelResult[]).some(hasHotelPrice)
@@ -1193,17 +1198,25 @@ function ResultsScreen({ product }: { product: Product }) {
       ) : (
         <>
           <HotelResultsHeader destination={hotelSummary.destination} secondaryLine={hotelSummary.secondaryLine} onEdit={edit} backgroundColor={hotelCanvasColor}/>
+          <View style={s0.hotelResultsListContainer}>
+          <Animated.View
+            pointerEvents={hotelScrolling.filterHidden ? "none" : "auto"}
+            accessibilityElementsHidden={hotelScrolling.filterHidden}
+            importantForAccessibility={hotelScrolling.filterHidden ? "no-hide-descendants" : "auto"}
+            style={[s0.hotelFilterClip, { height: hotelScrolling.filterTranslation.interpolate({ inputRange: [-hotelScrolling.filterHeight, 0], outputRange: [0, hotelScrolling.filterHeight], extrapolate: "clamp" }) }]}
+          >
+            <Animated.View
+              onLayout={hotelScrolling.onFilterLayout}
+              style={[s0.hotelFilterSectionHeader, { backgroundColor: hotelCanvasColor }, { transform: [{ translateY: hotelScrolling.filterTranslation }] }]}
+            >
+              {filterRail}
+            </Animated.View>
+          </Animated.View>
           <SectionList
             ref={hotelResultsListRef}
             style={[s0.resultsScroll, { backgroundColor: hotelCanvasColor }]}
             sections={[{ data: hotelResultsListData }]}
             keyExtractor={(item) => typeof item === "string" ? item : item.id}
-            renderSectionHeader={() => (
-              <View style={[s0.hotelFilterSectionHeader, { backgroundColor: hotelCanvasColor }]}>
-                {filterRail}
-              </View>
-            )}
-            stickySectionHeadersEnabled
             renderItem={({ item }) => {
               if (item === HOTEL_RESULTS_INTRO_ITEM) {
                 return <View style={[s0.body, s0.hotelResultsBody, s0.hotelResultsIntro]}>{hotelIntroContent}</View>;
@@ -1233,7 +1246,7 @@ function ResultsScreen({ product }: { product: Product }) {
               );
             }}
             ItemSeparatorComponent={() => <View style={s0.hotelResultsItemSeparator} />}
-            ListFooterComponent={status === "ready" && sorted.length > 0 && hotelProgressivePending ? (
+            ListFooterComponent={status === "ready" && sorted.length > 0 && (hotelProgressivePending || hotelScrolling.hasMore) ? (
               <View style={[s0.hotelResultsBody, s0.hotelResultsFooter]}>
                 <View accessibilityLiveRegion="polite"><ActivityIndicator size="small" color={theme.textSecondary}/><Text style={{color: theme.textSecondary, textAlign: "center"}}>Loading more hotels…</Text></View>
               </View>
@@ -1242,12 +1255,25 @@ function ResultsScreen({ product }: { product: Product }) {
             bounces={false}
             overScrollMode="never"
             contentContainerStyle={[s0.hotelResultsContent, { paddingBottom: Math.max(insets.bottom + 16, 16) }]}
-            initialNumToRender={5}
-            maxToRenderPerBatch={4}
-            updateCellsBatchingPeriod={50}
-            windowSize={7}
-            removeClippedSubviews={Platform.OS === "android"}
+            onEndReached={hotelScrolling.revealMore}
+            onEndReachedThreshold={0.5}
+            onScroll={hotelScrolling.onScroll}
+            onScrollBeginDrag={hotelScrolling.beginInteraction}
+            onScrollEndDrag={hotelScrolling.endDrag}
+            onMomentumScrollBegin={hotelScrolling.beginInteraction}
+            onMomentumScrollEnd={hotelScrolling.endInteraction}
+            scrollEventThrottle={16}
+            showsVerticalScrollIndicator={true}
+            automaticallyAdjustsScrollIndicatorInsets={false}
+            scrollIndicatorInsets={{ top: 4, right: 3, bottom: Math.max(insets.bottom, 8), left: 0 }}
+            initialNumToRender={HOTEL_RESULTS_REVEAL_COUNT + 2}
+            maxToRenderPerBatch={HOTEL_RESULTS_REVEAL_COUNT}
+            updateCellsBatchingPeriod={HOTEL_RESULTS_BATCH_PERIOD}
+            windowSize={HOTEL_RESULTS_RENDER_WINDOW}
+            removeClippedSubviews={false}
           />
+
+          </View>
         </>
       )}
       {product === "flight" ? (
@@ -1691,7 +1717,7 @@ function FlightJourneyRow({ label, leg, locale }: { label: string; leg: FlightCa
     </View>
   );
 }
-function HotelCard({
+const HotelCard = memo(function HotelCard({
   result,
   showCheapestBadge,
   params,
@@ -1857,7 +1883,7 @@ function HotelCard({
       </View>
     </Pressable>
   );
-}
+});
 function FlightResultsSummaryRow({ count }: { count: number }) {
   const { theme } = useAppTheme();
   return <View accessibilityLabel="Flight results summary" style={s0.flightResultsSummaryRow}><Text accessibilityRole="header" style={[s0.flightResultCount, { color: theme.textPrimary }]}>{flightResultCountLabel(count)}</Text></View>;
@@ -1944,6 +1970,8 @@ const s0 = StyleSheet.create({
   hotelFilterRail: { height: 44, flexGrow: 0 },
   hotelFilterContent: { paddingLeft: 12, paddingRight: 16, gap: 6, alignItems: "center", flexWrap: "nowrap" },
   hotelFilterSectionHeader: { paddingBottom: 12 },
+  hotelResultsListContainer: { flex: 1, overflow: "hidden" },
+  hotelFilterClip: { overflow: "hidden", flexShrink: 0 },
   flightFilterSectionHeader: { paddingTop: 8 },
   resultsScroll: { flex: 1 },
   flightResultsListContainer: { flex: 1 },
