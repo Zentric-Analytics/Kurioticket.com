@@ -103,7 +103,7 @@ export function selectCarPriceAlertResult(cars: readonly NormalizedCarResult[], 
   const candidates = cars.flatMap((car) => car.offers.map((offer) => ({ car, offer })))
     .filter(({ car, offer }) => Number.isFinite(offer.totalPrice) && offer.totalPrice > 0 && offer.currency.trim().toUpperCase() === currency &&
       (!scopedOffer || (car.id === scopedOffer.resultId && offer.id === scopedOffer.offerId &&
-        offer.bookingProviderName.trim().toLowerCase() === scopedOffer.providerName.trim().toLowerCase())))
+        (offer.bookingProviderName.trim() || offer.rentalCompanyName.trim()).toLowerCase() === scopedOffer.providerName.trim().toLowerCase())))
     .sort((left, right) => left.offer.totalPrice - right.offer.totalPrice || left.car.id.localeCompare(right.car.id) || left.offer.id.localeCompare(right.offer.id));
   const selected = candidates[0];
   return selected ? { provider: selected.offer.bookingProviderName, price: selected.offer.totalPrice, currency, url: selected.offer.bookingUrl, payload: { resultId: selected.car.id, offerId: selected.offer.id } } : null;
