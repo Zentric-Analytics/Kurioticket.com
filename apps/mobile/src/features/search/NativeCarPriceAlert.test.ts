@@ -34,7 +34,7 @@ test("native Cars price tracking is an inline label with a compact accessible sw
   assert.doesNotMatch(source, /Track rental car prices/);
   assert.match(source, /control: \{ flexShrink: 1, minWidth: 0, minHeight: 44, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 6 \}/);
   assert.match(source, /title: \{ minWidth: 0, flexShrink: 1, fontSize: 12, lineHeight: 17, fontWeight: "600", fontFamily: appFonts\.semibold \}/);
-  assert.match(source, /switchSlot: \{ width: 51, minHeight: 44, flexShrink: 0, alignItems: "flex-end", justifyContent: "center" \}/);
+  assert.match(source, /switchSlot: \{ width: 51, height: 44, flexShrink: 0, flexDirection: "row", alignItems: "center", justifyContent: "flex-end" \}/);
   assert.doesNotMatch(source, /<Switch\b/);
 });
 
@@ -73,14 +73,16 @@ test("RTL thumb anchors exactly once with or without automatic React Native left
 
 test("native Cars keeps the result count readable alongside tracking at small phone widths", () => {
   const trackFixed = 16 + 6 + 51; // bell, minimum gap, trailing control slot
-  const outerGutters = 2 * (14 + 8);
   const rowGap = 8;
-  for (const width of [320, 360, 375, 390, 414, 480]) {
+  for (const width of [320, 359, 360, 375, 390, 414, 480]) {
+    const outerGutters = 2 * (14 + (width < 360 ? 4 : 8));
     const available = width - outerGutters - rowGap;
     assert.ok(available - trackFixed > 110, "count and title retain layout space");
   }
   assert.match(source, /minWidth: 0, flexShrink: 1, fontSize: 12/);
   assert.match(source, /numberOfLines=\{1\} ellipsizeMode="tail"/);
+  assert.equal(14 + 8, 22, "regular phones use the web 22-point tracking inset");
+  assert.equal(14 + 4, 18, "narrow phones use the web 18-point tracking inset");
 });
 
 test("Cars toggle preserves sign-in and explicit failure feedback", () => {
