@@ -1,7 +1,7 @@
 import { isProviderHotelResult } from "@/services/travel/hotelInventorySource";
 import { NextResponse } from "next/server";
 import { hotelOccupancy } from "@/lib/hotels/hotelOccupancy";
-import { getHotelDetailsCacheContext, getHotelFromCache, toPublicHotel } from "@/lib/searchCache";
+import { getHotelDetailsCacheContext, toPublicHotel } from "@/lib/searchCache";
 import { getHotelSearchCohort, getProviderResultWithContext } from "@/services/travel/providerResultCache";
 import type { HotelSearchParams, NormalizedHotelResult } from "@/lib/types";
 import type { PublicHotelProviderDetails } from "@/lib/hotels/hotelProviderDetails";
@@ -92,31 +92,34 @@ export async function GET(request: Request) {
     children: url.searchParams.has("children") ? Number(url.searchParams.get("children")) : undefined,
     rooms: Number(url.searchParams.get("rooms")) || 1,
   };
-  const memoryContext = search.destination
-    ? getHotelDetailsCacheContext(id, search)
-    : getHotelDetailsCacheContext(id);
-  const unscopedCached = !memoryContext
-    ? getHotelFromCache(id)
-    : null;
-  const providerContext = !memoryContext && !unscopedCached
+  // Resolve the selected offer's ORIGINAL search, including its destination ID
+  // and occupancy. Details links intentionally carry only a subset of those fields;
+  // rebuilding a cohort key from the link can hide other genuine rates.
+  const memoryContext = getHotelDetailsCacheContext(id);
+  const providerContext = !memoryContext
     ? await getProviderResultWithContext<NormalizedHotelResult>("hotel", id)
     : null;
-  const persistedSearch = search.destination
-    ? search
-    : hotelSearchContext(providerContext?.searchContext);
+  const originalSearch = memoryContext?.searchContext
+    ?? hotelSearchContext(providerContext?.searchContext);
+  const persistedSearch = originalSearch ?? (search.destination ? search : null);
   const persistedCohort = !memoryContext && persistedSearch
-    ? await getHotelSearchCohort(persistedSearch)
+    ? await getHotelSearchCohort(persistedSearch, undefined, id)
     : [];
-  const candidate = memoryContext?.hotel ?? unscopedCached ?? providerContext?.result
+  const candidate = memoryContext?.hotel ?? providerContext?.result
     ?? persistedCohort.find(hotel => hotel.id === id) ?? null;
   const cached = candidate && isProviderHotelResult(candidate) ? candidate : null;
-  const relatedSearchContext = memoryContext?.searchContext ?? persistedSearch;
+  const relatedSearchContext = originalSearch ?? persistedSearch;
+  // Only use sibling offers for the selected stay. Native links need not repeat
+  // the originally selected adults/children split, but explicitly supplied web
+  // occupancy must still match. PropertyGroupId + provider then isolate the hotel.
   const relatedStayMatches =
     relatedSearchContext?.checkIn === search.checkIn &&
     relatedSearchContext?.checkOut === search.checkOut &&
     relatedSearchContext?.guests === search.guests &&
-    (!relatedSearchContext || (hotelOccupancy(relatedSearchContext).children === hotelOccupancy(search).children &&
-      hotelOccupancy(relatedSearchContext).adults === hotelOccupancy(search).adults)) &&
+    (!url.searchParams.has("adults") ||
+      hotelOccupancy(relatedSearchContext).adults === hotelOccupancy(search).adults) &&
+    (!url.searchParams.has("children") ||
+      hotelOccupancy(relatedSearchContext).children === hotelOccupancy(search).children) &&
     relatedSearchContext?.rooms === search.rooms;
   const relatedSearchCohort = (relatedStayMatches
     ? memoryContext?.relatedHotels ?? persistedCohort
