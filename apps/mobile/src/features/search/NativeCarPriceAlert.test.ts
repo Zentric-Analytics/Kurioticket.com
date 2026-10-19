@@ -31,7 +31,7 @@ test("native car rate details uses a compact 44px inline offer-tracking switch",
   assert.match(picker, /<NativeCarPriceAlert/);
   assert.match(picker, /Booking provider ·/);
   assert.match(source, /<Bell accessible=\{false\} size=\{14\} strokeWidth=\{2\}/);
-  assert.match(source, />Track prices<\/Text>/);
+  assert.match(source, />Track car prices<\/Text>/);
   assert.doesNotMatch(source, /Track rental car prices/);
   assert.match(source, /control: \{ flexShrink: 0, minWidth: 0, minHeight: 44, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 4 \}/);
   assert.match(source, /title: \{ minWidth: 0, flexShrink: 1, fontSize: 11, lineHeight: 16/);
@@ -40,7 +40,7 @@ test("native car rate details uses a compact 44px inline offer-tracking switch",
 });
 
 test("native Cars compact switch uses a 44-by-24 track, 18px thumb and full 44px target", () => {
-  assert.match(source, /<Pressable accessibilityRole="switch" accessibilityLabel=\{\x60Track prices for \$\{scope\.providerName\} offer\x60\}/);
+  assert.match(source, /<Pressable accessibilityRole="switch" accessibilityLabel=\{\x60Track car prices for \$\{scope\.providerName\} offer\x60\}/);
   assert.match(source, /accessibilityState=\{\{ checked: tracking, disabled, busy: pending \}\} disabled=\{disabled\} onPress=\{\(\) => void toggle\(!tracking\)\}/);
   assert.match(source, /switchTouchTarget: \{ width: 44, height: 44, alignItems: "center", justifyContent: "center" \}/);
   assert.match(source, /switchTrack: \{ width: 44, height: 24, borderRadius: 12, borderWidth: 1/);

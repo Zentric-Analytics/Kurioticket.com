@@ -2802,7 +2802,7 @@ export function CarsResultsExperience({
               <div
                 className={cn(
                   "flex w-full min-w-0 flex-col items-start gap-2 pt-0 sm:gap-3 sm:pt-1 lg:py-1",
-                  !embedded && presentation === "standalone" && "max-sm:pt-2",
+                  !embedded && presentation === "standalone" && "max-sm:pt-6",
                 )}
                 data-cars-results-toolbar
               >

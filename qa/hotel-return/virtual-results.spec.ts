@@ -171,6 +171,8 @@ test("Cars rate details aligns offer-only tracking with the booking provider on 
   for (const width of [390, 820, 1024, 1365]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto(routes.cars);
+    const toolbar = page.locator("[data-cars-results-toolbar]").first();
+    await expect(toolbar).toHaveCSS("padding-top", width < 640 ? "24px" : "4px");
     const summary = page.locator("[data-cars-results-summary-row]").first();
     await expect(summary.locator("h2")).toBeVisible();
     await expect(page.locator("[data-cars-price-alert]")).toHaveCount(0);
@@ -186,6 +188,8 @@ test("Cars rate details aligns offer-only tracking with the booking provider on 
     const toggle = alert.getByRole("switch");
     await expect(provider).toContainText("Booking provider ·");
     await expect(alert).toBeVisible();
+    await expect(alert).toContainText("Track car prices");
+    await expect(toggle).toHaveAttribute("aria-label", /Track car prices for .+ offer/);
     await expect(toggle).toBeVisible();
     await expect(dialog.locator("[data-cars-price-alert]")).toHaveCount(1);
     const track = toggle.locator('span[aria-hidden="true"]').first();
