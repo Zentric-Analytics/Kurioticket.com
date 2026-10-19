@@ -2935,7 +2935,7 @@ export function DealsSearchForm({
                 </span>
                 {option.kind ? (
                   <span className="shrink-0 rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-bold text-slate-600">
-                    {t(`hotelDestinationKind.${option.kind}`)}
+                    {t(option.kind === "custom" ? "hotelSearchDestinationLabel" : `hotelDestinationKind.${option.kind}`)}
                   </span>
                 ) : null}
               </button>

@@ -38,13 +38,27 @@ const normalizePlace = (value: string) => value.trim().toLocaleLowerCase("en-US"
  * selects a matching identifier returned by the provider; it never invents an
  * identifier or treats the catalogue label as one.
  */
-function providerPlaceMatch(term: string, candidates: SandboxPlace[]) {
+function providerPlaceMatch(
+  term: string,
+  candidates: SandboxPlace[],
+  { preferExactName = false }: { preferExactName?: boolean } = {},
+) {
   const normalizedInput = normalizePlace(term);
+  const requestedName = normalizePlace(term.split(",")[0] || term);
   const catalogue = hotelDestinations.find(destination => {
-    const names = [destination.name, destination.searchValue, ...(destination.aliases || [])]
-      .map(normalizePlace);
+    // Match whole known city/geography labels even when commas are omitted.
+    // Extra city-name words must not be mistaken for a region or country.
+    const names = [
+      destination.name, destination.searchValue, ...(destination.aliases || []),
+      ...(preferExactName ? [
+        [destination.name, destination.country],
+        [destination.name, destination.region, destination.country],
+        [destination.searchValue, destination.country],
+      ].map(parts => parts.filter(Boolean).join(" ")) : []),
+    ].map(normalizePlace);
+    const catalogueName = normalizePlace(destination.name);
     return names.includes(normalizedInput)
-      || (normalizedInput.startsWith(`${normalizePlace(destination.name)} `)
+      || ((preferExactName ? requestedName === catalogueName : normalizedInput.startsWith(`${catalogueName} `))
         && normalizedInput.includes(normalizePlace(destination.country)));
   });
   const expectedName = normalizePlace(catalogue?.name || term.split(",")[0] || term);
@@ -71,11 +85,17 @@ function providerPlaceMatch(term: string, candidates: SandboxPlace[]) {
     if (expectedRegion && words.includes(` ${expectedRegion} `)) score += 30;
     if (catalogue?.kind === "city") score += kind === "city" ? 50 : kind.includes("airport") ? 15 : 0;
     if (catalogue?.kind === "airport-area") score += kind.includes("airport") ? 50 : 0;
-    return [{ candidate, score, length: label.length }];
+    return [{ candidate, score, length: label.length, name: firstPart }];
   }).sort((left, right) => right.score - left.score || left.length - right.length);
-  if (!ranked.length) return undefined;
-  if (ranked.length > 1 && ranked[0].score === ranked[1].score && ranked[0].candidate.value !== ranked[1].candidate.value) return undefined;
-  return ranked[0].candidate;
+  // Prefer the submitted city before a broader catalogue alias. Canonical aliases
+  // such as NYC still work when no provider city uses the submitted name.
+  const requestedMatches = preferExactName ? ranked.filter(match => match.name === requestedName) : [];
+  const exactMatches = requestedMatches.length ? requestedMatches
+    : preferExactName ? ranked.filter(match => match.name === expectedName) : [];
+  const matches = exactMatches.length ? exactMatches : ranked;
+  if (!matches.length) return undefined;
+  if (matches.length > 1 && matches[0].score === matches[1].score && matches[0].candidate.value !== matches[1].candidate.value) return undefined;
+  return matches[0].candidate;
 }
 
 /** Additive sandbox provider: never change the query used by the existing providers. */
@@ -163,7 +183,7 @@ export async function resolveRegularKayakSearch(
   // Validate dates/occupancy before spending an autocomplete request.
   const validation = adaptKayakHotelSearch({ ...input, destinationId: "kplace:1" });
   if (!validation.supported) return validation;
-  const match = providerPlaceMatch(term, await places(term, "hotels"));
+  const match = providerPlaceMatch(term, await places(term, "hotels"), { preferExactName: true });
   if (!match) return { supported: false,
     reason: "KAYAK has no verified binding for this destination. Other providers are unaffected." };
   return adaptKayakHotelSearch({ ...input, destinationId: match.value });

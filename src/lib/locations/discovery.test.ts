@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import test from "node:test";
 import { discoverLocations, providerLocation, type DiscoveryAdapter } from "./discovery";
-import { resolveProviderSelection } from "./selectionAuthority";
+import { LocationSelectionSizeError, publicLocationSelection, resolveProviderSelection } from "./selectionAuthority";
 import type { CanonicalLocation } from "./types";
 
 const place = (id: string, primaryLabel: string, kind: CanonicalLocation["kind"] = "city", country = "US"): CanonicalLocation => ({
@@ -116,4 +117,40 @@ test("provider cities with the same name keep their distinct destinations", asyn
   ]);
   assert.deepEqual(resolveProviderSelection(result.suggestions[0], "hotels", "kayak"), { ok: true, value: "kplace:60798" });
   assert.deepEqual(resolveProviderSelection(result.suggestions[1], "hotels", "kayak"), { ok: true, value: "kplace:2764694" });
+});
+
+test("an oversized hotel suggestion does not hide the next usable country match", async () => {
+  const longValue = Array.from({ length: 3 }, (_, index) => createHash("sha256").update(`provider-value-${index}`).digest("hex")).join("").slice(0, 180);
+  const oversized = providerLocation("kayak", longValue, place("too-large", "Nigeria"));
+  const usable = providerLocation("kayak", "kplace:2749971", {
+    ...place("mosque", "Nigerian National Mosque", "landmark"),
+    supportingLabel: "Abuja, Nigeria", submittedValue: "Nigerian National Mosque, Abuja, Nigeria",
+  });
+  assert.throws(() => publicLocationSelection(oversized, "hotels"), LocationSelectionSizeError);
+  const result = await discoverLocations({
+    query: "Nigeria", product: "hotels", catalog: [oversized, usable],
+    supportedByProviders: ["kayak"], limit: 1,
+  });
+  assert.equal(result.suggestions.length, 1);
+  assert.equal(result.suggestions[0].id, "mosque");
+  assert.deepEqual(result.suggestions[0].providerBindings, []);
+  assert.deepEqual(resolveProviderSelection(result.suggestions[0], "hotels", "kayak"), { ok: true, value: "kplace:2749971" });
+});
+
+test("hotel suggestion recovery does not hide missing authority configuration", async () => {
+  const previous = { NODE_ENV: process.env.NODE_ENV, AUTH_SECRET: process.env.AUTH_SECRET, NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET };
+  Object.assign(process.env, { NODE_ENV: "production" });
+  delete process.env.AUTH_SECRET;
+  delete process.env.NEXTAUTH_SECRET;
+  try {
+    await assert.rejects(discoverLocations({
+      query: "Paris", product: "hotels",
+      catalog: [providerLocation("kayak", "kplace:1", place("paris", "Paris"))],
+    }), /Location selection authority is not configured/);
+  } finally {
+    for (const [key, value] of Object.entries(previous)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  }
 });
