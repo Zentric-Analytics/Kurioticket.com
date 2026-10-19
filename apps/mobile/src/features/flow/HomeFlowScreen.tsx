@@ -4,6 +4,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  Text as NativeText,
   useWindowDimensions,
   View,
 } from "react-native";
@@ -249,21 +250,22 @@ function HomePageContent() {
                 ]}
               >
                 {product.icon === "packages" ? (
-                  <PackagesIcon color={selected ? ft.colors.selectedLabelText : ft.colors.icon} />
+                  <PackagesIcon strokeWidth={1.3} color={selected ? ft.colors.selectedLabelText : ft.colors.icon} />
                 ) : (
                   <FlowIcon
                     name={product.icon}
+                    strokeWidth={1.3}
                     color={selected ? ft.colors.selectedLabelText : ft.colors.icon}
                   />
                 )}
-                <Text
+                <NativeText
                   style={[
                     styles.productText, { color: ft.colors.text },
                     selected && { color: ft.colors.selectedLabelText },
                   ]}
                 >
                   {product.label}
-                </Text>
+                </NativeText>
               </Pressable>
             );
           })}
@@ -364,5 +366,5 @@ const styles = StyleSheet.create({
     borderBottomColor: flowColors.blue,
     borderBottomWidth: 2,
   },
-  productText: { color: flowColors.navy, fontSize: 11, fontWeight: "700" },
+  productText: { color: flowColors.navy, fontSize: 11, fontWeight: "500" },
 });
