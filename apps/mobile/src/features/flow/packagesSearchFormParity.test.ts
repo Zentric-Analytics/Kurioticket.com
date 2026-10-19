@@ -19,6 +19,10 @@ test("compact package selector is a horizontally scrolling accessible selection 
   assert.match(form, /<ScrollView horizontal showsHorizontalScrollIndicator=\{false\}/);
   assert.match(form, /accessibilityRole="radio" accessibilityState=\{\{ checked: selected, selected \}\}/);
   assert.match(form, /borderBottomColor/);
+  assert.match(form, /presentation === "home" && styles\.homeRail/);
+  assert.match(form, /presentation === "home" && styles\.homeMode/);
+  assert.match(form, /homeRail:\{borderBottomWidth:0\},homeMode:\{borderBottomWidth:0\}/);
+  assert.match(form, /presentation === "home" && \{ color: selected \? ft\.colors\.textPrimary : ft\.colors\.textSecondary, fontWeight: selected \? "700" : "400" \}/);
 });
 
 test("package fields expose one destination, date and coordinated party definition", () => {
