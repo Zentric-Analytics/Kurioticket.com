@@ -1,5 +1,6 @@
+import { Text } from "../home/HomePresentation";
 import { useLayoutEffect, useState } from "react";
-import { Animated, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Animated, Modal, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { FlowIcon } from "./FlowIcon";
 import { PickerSheetHeader, PrimaryButton } from "./FlowPrimitives";
 import { useFlowTheme } from "./flowStyles";

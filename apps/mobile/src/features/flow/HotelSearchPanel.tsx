@@ -1,5 +1,6 @@
+import { Text, TextInput } from "../home/HomePresentation";
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState } from "react";
-import { Animated, FlatList, Keyboard, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View, type KeyboardEvent } from "react-native";
+import { Animated, FlatList, Keyboard, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Switch, View, type KeyboardEvent } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Baby, BedDouble, Minus, PawPrint, Plus, UserRound, type LucideIcon } from "lucide-react-native";

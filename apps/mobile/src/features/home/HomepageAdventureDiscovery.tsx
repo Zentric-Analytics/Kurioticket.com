@@ -1,6 +1,7 @@
+import { Text } from "./HomePresentation";
 import { router } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
-import { Image, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import { Image, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from "react-native";
 import { getApiBaseUrl } from "../../config/apiUrl";
 import { useMobileMarketplace } from "../../localization/MobileLocalizationProvider";
 import { useSavedDestinations } from "../../storage/useSavedDestinations";
@@ -96,15 +97,15 @@ function AdventureCard({ item, width, fare, marketplace, imageFailed, saved, onI
         <Text numberOfLines={2} style={[styles.title, { color: ft.colors.textPrimary }]}>{item.title}</Text>
         <Text style={[styles.route, { color: ft.colors.textPrimary }]}>{item.originCode} → {item.destinationCode}</Text>
         <Text numberOfLines={2} style={[styles.meta, { color: ft.colors.textSecondary }]}>ONE WAY · ECONOMY · 1 TRAVELER</Text>
-        <View style={styles.fare}><Text style={[styles.from, { color: ft.colors.textSecondary }]}>From</Text>{formattedFare ? <Text style={[styles.price, { color: ft.colors.textPrimary }]}>{formattedFare}</Text> : null}</View>
+        <View style={styles.fare}><Text style={[styles.from, { color: ft.colors.textSecondary }]}>From</Text>{formattedFare ? <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={[styles.price, { color: ft.colors.textPrimary }]}>{formattedFare}</Text> : null}</View>
       </View>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  section: { gap: 16, marginTop: 4 }, header: { gap: 6 }, heading: { fontSize: 21, lineHeight: 27, fontWeight: "800", letterSpacing: -0.25 }, subtitle: { fontSize: 14, lineHeight: 21 },
+  section: { gap: 16, marginTop: 4 }, header: { gap: 6 }, heading: { fontSize: 20, lineHeight: 26, fontWeight: "700", letterSpacing: -0.25 }, subtitle: { fontSize: 14, lineHeight: 21 },
   rowViewport: { marginHorizontal: -14 }, rowContent: { gap: ROW_GAP, paddingHorizontal: 14, paddingRight: 40 }, card: { height: 292, borderRadius: 16, borderWidth: 1, overflow: "hidden" }, imageFrame: { height: 132 }, image: { width: "100%", height: "100%" },
   imageFallback: { flex: 1, alignItems: "center", justifyContent: "center", gap: 6 }, fallbackCode: { fontSize: 13, fontWeight: "900", letterSpacing: 1.4 }, heart: { position: "absolute", right: 8, top: 8 },
-  copy: { flex: 1, padding: 11 }, title: { minHeight: 38, fontSize: 14, lineHeight: 18, fontWeight: "700" }, route: { marginTop: 6, fontSize: 12, lineHeight: 17, fontWeight: "700" }, meta: { marginTop: 5, fontSize: 9, lineHeight: 13, fontWeight: "700", letterSpacing: 0.35 }, fare: { marginTop: "auto", flexDirection: "row", alignItems: "baseline", gap: 5 }, from: { fontSize: 12, fontWeight: "600" }, price: { fontSize: 15, fontWeight: "800" },
+  copy: { flex: 1, padding: 11 }, title: { minHeight: 40, fontSize: 15, lineHeight: 20, fontWeight: "700" }, route: { marginTop: 6, fontSize: 12, lineHeight: 17, fontWeight: "600" }, meta: { marginTop: 5, fontSize: 11, lineHeight: 16, fontWeight: "500", letterSpacing: 0.35 }, fare: { marginTop: "auto", flexDirection: "row", alignItems: "baseline", gap: 5 }, from: { fontSize: 12, fontWeight: "600" }, price: { flexShrink: 1, minWidth: 0, fontSize: 18, lineHeight: 24, fontWeight: "700" },
 });

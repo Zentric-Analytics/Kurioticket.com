@@ -1,10 +1,10 @@
+import { Text } from "../home/HomePresentation";
 import { useState, type ReactNode } from "react";
 import {
   Modal,
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   View,
 } from "react-native";
 import { router } from "expo-router";

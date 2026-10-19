@@ -1,5 +1,6 @@
+import { Text } from "../home/HomePresentation";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Animated, Modal, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { Animated, Modal, Platform, Pressable, StyleSheet, View } from "react-native";
 import { PickerSheetHeader, PrimaryButton } from "./FlowPrimitives";
 import { useFlowTheme } from "./flowStyles";
 import { localDateFromIso, localIsoDate } from "./localDateModel";
