@@ -5,7 +5,7 @@ import { Bell, CircleCheck } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { travelApi, TravelApiError, type MobilePriceAlert } from "../../api/travelApi";
 import type { CarOffer } from "../../../../../src/lib/cars/types";
-import type { CarPriceAlertOfferScope } from "../../../../../src/lib/price-alerts/carPriceAlerts";
+import type { CarPriceAlertOfferScope } from "../flow/carPriceAlertModel";
 import { readSession } from "../../storage/sessionStorage";
 import { useAppTheme } from "../../theme/AppTheme";
 import { appFonts } from "../../theme/typography";
