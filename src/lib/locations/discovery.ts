@@ -1,5 +1,5 @@
 import { searchLocations } from "./search";
-import { publicLocationSelection } from "./selectionAuthority";
+import { LocationSelectionSizeError, publicLocationSelection } from "./selectionAuthority";
 import type { CanonicalLocation, LocationProviderBinding, TravelProduct } from "./types";
 
 export type DiscoveryFailure = "TIMEOUT" | "PROVIDER_UNAVAILABLE" | "AUTH_CONFIGURATION" | "UNSUPPORTED_LOCATION";
@@ -10,9 +10,11 @@ export type DiscoveryAdapter = {
 };
 export type DiscoverySourceStatus = { provider: string; status: "success" | "failed" | "timeout"; count: number; failure?: DiscoveryFailure };
 
-const identity = (location: CanonicalLocation) => location.codes?.iata
-  ? `iata:${location.kind}:${location.codes.iata.toUpperCase()}`
-  : `${location.kind}:${location.primaryLabel.normalize("NFKD").replace(/\p{M}/gu, "").toLowerCase().replace(/[^a-z0-9]/g, "")}:${(location.country?.code || location.supportingLabel || location.submittedValue).normalize("NFKD").replace(/\p{M}/gu, "").toLowerCase().replace(/[^a-z0-9]/g, "")}`;
+const identity = (location: CanonicalLocation, product: TravelProduct) => product === "hotels" && location.kind === "custom"
+  ? `custom:${location.id}`
+  : location.codes?.iata
+    ? `iata:${location.kind}:${location.codes.iata.toUpperCase()}`
+    : `${location.kind}:${location.primaryLabel.normalize("NFKD").replace(/\p{M}/gu, "").toLowerCase().replace(/[^a-z0-9]/g, "")}:${(location.country?.code || location.supportingLabel || location.submittedValue).normalize("NFKD").replace(/\p{M}/gu, "").toLowerCase().replace(/[^a-z0-9]/g, "")}`;
 
 function merge(left: CanonicalLocation, right: CanonicalLocation): CanonicalLocation {
   const bindings = [...(left.providerBindings ?? []), ...(right.providerBindings ?? [])].filter((binding, index, all) =>
@@ -41,7 +43,7 @@ export async function discoverLocations(options: { query: string; product: Trave
   for (const location of [...outcomes.flatMap((outcome) => outcome.locations), ...options.catalog]) {
     const match = searchLocations([location], query, 1)[0];
     if (!match) continue;
-    const key = identity(location);
+    const key = identity(location, options.product);
     merged.set(key, merged.has(key) ? merge(merged.get(key)!, location) : location);
   }
   const eligibleLocations = options.supportedByProviders?.length
@@ -50,9 +52,21 @@ export async function discoverLocations(options: { query: string; product: Trave
       && binding.verification === "verified",
     ))
     : [...merged.values()];
-  const ranked = searchLocations(eligibleLocations, query, options.limit ?? 8).map(({ match }) => match.location);
+  const limit = Math.max(1, Math.min(25, Math.trunc(options.limit ?? 8)));
+  const ranked = searchLocations(eligibleLocations, query, options.product === "hotels" ? 25 : limit).map(({ match }) => match.location);
+  const suggestions: ReturnType<typeof publicLocationSelection>[] = [];
+  for (const location of ranked) {
+    if (suggestions.length >= limit) break;
+    try { suggestions.push(publicLocationSelection(location, options.product)); }
+    catch (error) {
+      // One oversized provider row must not hide every usable hotel choice.
+      // Configuration failures still surface instead of looking like no matches.
+      if (options.product === "hotels" && error instanceof LocationSelectionSizeError) continue;
+      throw error;
+    }
+  }
   return {
-    suggestions: ranked.map((location) => publicLocationSelection(location, options.product)),
+    suggestions,
     sources: adapters.map((adapter, index): DiscoverySourceStatus => ({ provider: adapter.provider, status: outcomes[index].status, count: outcomes[index].locations.length,
       failure: outcomes[index].status === "timeout" ? "TIMEOUT" : outcomes[index].status === "failed" ? "PROVIDER_UNAVAILABLE" : undefined })),
   };

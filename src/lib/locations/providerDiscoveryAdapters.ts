@@ -3,11 +3,18 @@ import { normalizeLocationText } from "./search";
 import { providerLocation, type DiscoveryAdapter } from "./discovery";
 import type { CanonicalLocation, TravelProduct } from "./types";
 import { searchDuffelPlaces } from "@/services/travel/providers/duffelProvider";
-import { isKayakSandboxEnabled, KayakSandboxClient, type KayakVertical } from "@/services/travel/kayakSandbox";
+import { isKayakSandboxEnabled, KayakSandboxClient, type KayakVertical, type SandboxPlace } from "@/services/travel/kayakSandbox";
 import { getKayakClientIp } from "@/lib/kayak-client-ip";
 import { timezones as airportTimeZones } from "@/services/travel/airportTimeZones";
 
 const emptyCoverage = { flights: "none", hotels: "none", cars: "none", packages: "none" } as const;
+const hotelProviderPlaceKinds = new Set(["city", "district", "landmark", "airport"]);
+const broadHotelPlaceLabels = new Map([
+  ["country", "Country"],
+  ["region", "Region"],
+  ["state", "State"],
+  ["touristregion", "Tourist region"],
+]);
 export const canonicalFromProvider = (provider: string, value: string, label: string, kind?: string): CanonicalLocation => {
   const iata = /^[A-Z]{3}$/.test(value) ? value : undefined;
   const providerKind = kind?.trim().toLowerCase() ?? "";
@@ -22,6 +29,27 @@ export const canonicalFromProvider = (provider: string, value: string, label: st
     staticCoverage: emptyCoverage, source: { catalog: "kurioticket", datasetVersion: "provider-discovery-v1" } };
   return providerLocation(provider, value, base);
 };
+
+function canonicalHotelLocation(place: SandboxPlace): CanonicalLocation | null {
+  const kind = place.kind?.trim().toLowerCase() ?? "";
+  const scope = broadHotelPlaceLabels.get(kind);
+  if (!scope && !hotelProviderPlaceKinds.has(kind)) return null;
+  const location = canonicalFromProvider("kayak", place.value, place.label, kind);
+  if (!scope) return location;
+
+  // Keep provider-recognized broad searches without merging their IDs into a
+  // same-name city. `custom` is already understood by installed native clients.
+  const country = kind === "country" ? location.primaryLabel : location.supportingLabel.split(",").at(-1)?.trim();
+  const qualifiedId = `${kind}-${normalizeLocationText(place.label).replaceAll(" ", "-")}`.slice(0, 120);
+  return providerLocation("kayak", place.value, {
+    ...location,
+    id: `place:${qualifiedId}`,
+    kind: "custom",
+    supportingLabel: [scope, location.supportingLabel].filter(Boolean).join(", "),
+    country: country ? { name: country } : undefined,
+    region: kind === "country" ? undefined : location.primaryLabel,
+  });
+}
 
 export function duffelDiscoveryAdapter(): DiscoveryAdapter {
   return { provider: "duffel", products: ["flights"], async discover(query, { signal }) {
@@ -40,7 +68,12 @@ export function kayakDiscoveryAdapter(request: Request): DiscoveryAdapter | null
   return { provider: "kayak", products: ["flights", "hotels", "cars"], async discover(query, { product, signal }) {
     const vertical = product as KayakVertical;
     const places = await client.places(vertical, query, crypto.randomUUID(), signal);
-    return places.map((place) => canonicalFromProvider("kayak", place.value, place.label, place.kind));
+    return places.flatMap((place) => {
+      const location = product === "hotels"
+        ? canonicalHotelLocation(place)
+        : canonicalFromProvider("kayak", place.value, place.label, place.kind);
+      return location ? [location] : [];
+    });
   } };
 }
 
