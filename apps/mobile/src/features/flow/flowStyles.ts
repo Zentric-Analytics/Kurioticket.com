@@ -1,6 +1,7 @@
 import { StyleSheet } from "react-native";
 import { useMemo } from "react";
-import { useAppTheme } from "../../theme/AppTheme";
+import { useFlightResultsTheme as useAppTheme } from "../search/FlightResultsPresentationContext";
+import { flightResultsColors } from "../search/flightResultsPresentation";
 import { getFlowThemeColors } from "./flowThemeColors";
 export { getFlowThemeColors } from "./flowThemeColors";
 
@@ -8,9 +9,10 @@ export { flowColors } from "./flowThemeColors";
 import { flowColors } from "./flowThemeColors";
 
 export function useFlowTheme() {
-  const { theme } = useAppTheme();
+  const { theme, isFlightResults } = useAppTheme();
   return useMemo(() => {
-    const colors = getFlowThemeColors(theme);
+    const baseColors = getFlowThemeColors(theme);
+    const colors = isFlightResults && !theme.dark ? { ...baseColors, blue: flightResultsColors.action, selectedBorder: flightResultsColors.action, selectedLabelText: flightResultsColors.action } : baseColors;
     const styles = StyleSheet.create({
       safe: { flex: 1, backgroundColor: colors.page },
       scroll: { paddingHorizontal: 14, paddingBottom: 26, gap: 14 },
@@ -91,7 +93,7 @@ export function useFlowTheme() {
       pressed: { opacity: 0.68 },
     });
     return { theme, colors, styles };
-  }, [theme]);
+  }, [theme, isFlightResults]);
 }
 
 export const flowStyles = StyleSheet.create({

@@ -29,7 +29,7 @@ test("independent accessible group clear actions preserve tap versus drag behavi
 test("clear only its group including legacy maxStops without mutating unrelated filters",()=>{
  const clear=(filters as unknown as {clearFlightQuickFilterGroup?:(f:filters.FlightFilters,g:"airlines"|"stops"|"airports")=>filters.FlightFilters}).clearFlightQuickFilterGroup;
  assert.equal(typeof clear,"function");
- const f={...filters.emptyFlightFilters(),airlines:["Air A"],stops:["one" as const],maxStops:1,fromAirports:["SFO"],toAirports:["LOS"],maximumPrice:400,baggageIncluded:true};
+ const f={...filters.emptyFlightFilters(),airlines:["Air A"],stops:["one" as const],maxStops:1 as const,fromAirports:["SFO"],toAirports:["LOS"],maximumPrice:400,baggageIncluded:true};
  assert.deepEqual(clear!(f,"airlines"),{...f,airlines:[]});assert.deepEqual(clear!(f,"stops"),{...f,stops:[],maxStops:null});assert.deepEqual(clear!(f,"airports"),{...f,fromAirports:[],toAirports:[]});assert.deepEqual(f.airlines,["Air A"]);
 });
 test("date geometry retains widths, 70px cells, nearby fetching and horizontal scrolling",()=>{
@@ -45,4 +45,9 @@ test("quick row counts retain full-filter price intelligence",()=>{assert.match(
 test("scoped palette does not migrate unrelated global native tokens",()=>{
  assert.match(screen,/product === "flight" \? <FlightResultsPresentationProvider>/);assert.match(read("FlightResultsState.tsx"),/useFlightResultsTheme/);assert.match(read("HotelPriceAlert.tsx"),/useFlightResultsTheme/);assert.match(read("FlightRangeSlider.tsx"),/useFlightResultsUi/);
  const theme=readFileSync("src/theme/AppTheme.tsx","utf8");assert.match(theme,/background: "#FAFBFF"/);assert.match(theme,/priceAlertSurface: "#EDF6FF"/);
+});
+
+test("terminal Results states retain dates below the sticky rail", () => {
+ const footer = screen.slice(screen.indexOf("ListFooterComponent={terminalFlightState"), screen.indexOf("showsVerticalScrollIndicator={true}", screen.indexOf("ListFooterComponent={terminalFlightState")));
+ assert.match(footer, /\{flightDateStrip\}[\s\S]*<FlightResultsState/);
 });

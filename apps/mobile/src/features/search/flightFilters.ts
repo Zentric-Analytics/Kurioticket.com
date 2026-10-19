@@ -179,3 +179,9 @@ export function filterAndSortFlights(results: readonly FlightResult[], filters: 
     if (sort === "duration") d = optional(flightFilterDurationMinutes(a.result), flightFilterDurationMinutes(b.result)); if (sort.startsWith("departure")) d = optional(finite(Date.parse(a.result.departureTime)), finite(Date.parse(b.result.departureTime)), sort === "departure-desc" ? -1 : 1); return d || a.originalIndex - b.originalIndex;
   }).map(({ result }) => result);
 }
+export type FlightQuickFilterGroup = "airlines" | "stops" | "airports";
+export function clearFlightQuickFilterGroup(filters: FlightFilters, group: FlightQuickFilterGroup): FlightFilters {
+  if (group === "airlines") return { ...filters, airlines: [] };
+  if (group === "stops") return { ...filters, stops: [], maxStops: null };
+  return { ...filters, fromAirports: [], toAirports: [] };
+}

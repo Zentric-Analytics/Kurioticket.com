@@ -77,10 +77,10 @@ test("Back retains navigation while Edit opens the local results overlay", () =>
 
 test("Flight Results Back reuses Hotel light glass without glassifying the route summary", () => {
   assert.match(results, /import \{ DetailGlassSurface \} from "\.\/DetailGlassSurface"/);
-  assert.match(header, /accessibilityLabel="Go back"[\s\S]*?<DetailGlassSurface dark=\{false\} variant="hotelLight" style=\{s0\.flightHeaderBackGlass\} \/>[\s\S]*?<ArrowLeft size=\{25\} strokeWidth=\{2\} color="#0F172A" \/>/);
+  assert.match(header, /accessibilityLabel="Go back"[\s\S]*?<DetailGlassSurface dark=\{false\} variant="hotelLight" style=\{s0\.flightHeaderBackGlass\} \/>[\s\S]*?<ArrowLeft size=\{25\} strokeWidth=\{2\} color=\{theme\.dark \? "#0F172A" : theme\.icon\} \/>/);
   assert.match(styles, /flightHeaderBackGlass: \{ position: "absolute", left: 2, right: 2, top: 2, bottom: 2, borderRadius: 20 \}/);
   assert.doesNotMatch(routeCard, /DetailGlassSurface|hotelLight/);
-  assert.match(header, /backgroundColor: theme\.surface/);
+  assert.match(header, /backgroundColor: theme\.dark \? theme\.surface : flightResultsColors\.canvas/);
 });
 
 test("Flight Results header separates Back from one Web-aligned editable summary", () => {
@@ -90,15 +90,15 @@ test("Flight Results header separates Back from one Web-aligned editable summary
   assert.match(header, /<View style=\{s0\.flightHeaderSide\}>[\s\S]*?accessibilityLabel="Go back"[\s\S]*?<Pressable[\s\S]*?s0\.flightRouteSummaryCard/);
   assert.match(routeCard, /\{route\}/);
   assert.match(header, /accessibilityLabel=\{`Edit flight search[\s\S]*?<SquarePen/);
-  assert.match(styles, /flightRouteSummaryCard: \{[\s\S]*?flex: 1,[\s\S]*?minWidth: 0,[\s\S]*?minHeight: 62,[\s\S]*?borderWidth: 1,[\s\S]*?borderRadius: 13,[\s\S]*?flexDirection: "row"/);
+  assert.match(styles, /flightRouteSummaryCard: \{[\s\S]*?flex: 1,[\s\S]*?minWidth: 0,[\s\S]*?minHeight: 44,[\s\S]*?borderWidth: 1,[\s\S]*?borderRadius: 13,[\s\S]*?flexDirection: "row"/);
   assert.match(styles, /flightHeaderBack: \{[\s\S]*?width: 44,[\s\S]*?height: 44/);
   assert.match(styles, /flightRouteSummaryEdit: \{[\s\S]*?width: 44,[\s\S]*?height: 44/);
   const flightEditStyle = styles.slice(styles.indexOf("flightRouteSummaryEdit:"), styles.indexOf("hotelHeader:"));
   assert.doesNotMatch(flightEditStyle, /position: "absolute"|right: 4|top: 4/);
   assert.match(header, /flightRouteSummaryText[\s\S]*?\{route\}[\s\S]*?flightRouteSummarySecondary[\s\S]*?\{secondaryLine\}/);
-  assert.match(header, /backgroundColor: theme\.surface/);
+  assert.match(header, /backgroundColor: theme\.dark \? theme\.surface : flightResultsColors\.canvas/);
   assert.match(header, /borderColor: theme\.dark \? theme\.border : "#D8E1EC"/);
-  assert.match(styles, /flightHeader: \{[\s\S]*?paddingTop: 12,[\s\S]*?paddingBottom: 8/);
+  assert.match(styles, /flightHeader: \{[\s\S]*?paddingTop: 4,[\s\S]*?paddingBottom: 4/);
   assert.match(header, /paddingLeft: Math\.max\(insets\.left \+ 6, 6\)/);
   assert.match(header, /paddingRight: Math\.max\(insets\.right \+ 10, 10\)/);
   assert.match(header, /color: theme\.textPrimary/);
@@ -108,9 +108,9 @@ test("Flight Results route uses the left-aligned two-line Web hierarchy", () => 
   const routeTextStyle = styles.slice(styles.indexOf("flightRouteSummaryText:"), styles.indexOf("flightRouteSummaryEdit:"));
   assert.match(routeTextStyle, /fontSize: 14/);
   assert.match(routeTextStyle, /lineHeight: 18/);
-  assert.match(routeTextStyle, /fontWeight: "700"/);
-  assert.match(routeTextStyle, /fontFamily: appFonts\.bold/);
-  assert.match(routeTextStyle, /flightRouteSummarySecondary: \{ marginTop: 3, fontSize: 10\.5, lineHeight: 14/);
+  assert.match(routeTextStyle, /fontWeight: "600"/);
+  assert.match(routeTextStyle, /fontFamily: appFonts\.semibold/);
+  assert.match(routeTextStyle, /flightRouteSummarySecondary: \{ marginTop: 2, fontSize: 11, lineHeight: 15/);
   assert.doesNotMatch(routeTextStyle, /textAlign: "center"/);
 });
 
@@ -128,10 +128,10 @@ test("header and date rail use the structured Flight Results fare-calendar shell
   );
   const railHeight = Number(searchUi.match(/flightDateRail: \{ height: (\d+)/)?.[1]);
 
-  assert.equal(headerBottom, 8, "header bottom padding separates the route summary and dates");
-  assert.equal(navigatorHeight, 82, "navigator fits the 70px tile and compact vertical padding");
+  assert.equal(headerBottom, 4, "header bottom padding separates the route summary and dates");
+  assert.equal(navigatorHeight, 80, "navigator fits the 70px tile and compact vertical padding");
   assert.equal(railHeight, navigatorHeight);
-  assert.equal(headerBottom + navigatorHeight, 90);
+  assert.equal(headerBottom + navigatorHeight, 84);
 });
 
 test("canonical flight search data remains available after presentation metadata removal", () => {
