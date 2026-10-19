@@ -97,7 +97,7 @@ test("Cars desktop Hotels-details-style column includes map, filters and cards; 
 });
 
 
-test("Cars reduced desktop column keeps full count and Sort while price tracking spans the sidebar map", async ({ page }) => {
+test("Cars reduced desktop column keeps count, Sort and map after moving tracking into rate details", async ({ page }) => {
   await page.route("**/api/cars/search", route =>
     route.fulfill({ json: { results: [carBase], status: "available" } }));
   for (const width of [1024, 1365, 1600]) {
@@ -110,30 +110,21 @@ test("Cars reduced desktop column keeps full count and Sort while price tracking
     const count = summary.locator("h2").first();
     const sortLabel = summary.locator(".cars-results-desktop-sort-label");
     const sortButton = summary.locator(".cars-results-desktop-sort-trigger");
-    const slot = column.locator("[data-cars-price-alert-sidebar-slot]");
-    const alert = slot.locator("[data-cars-price-alert]");
     const map = column.locator("[data-cars-results-map-preview]");
-    await expect(alert).toBeVisible();
     await expect(map).toBeVisible();
-    await expect(summary.locator("[data-cars-price-alert]")).toHaveCount(0);
-    await expect(page.locator("[data-cars-price-alert]")).toHaveCount(1);
+    await expect(page.locator("[data-cars-price-alert]")).toHaveCount(0);
+    await expect(column.locator("[data-cars-price-alert-sidebar-slot]")).toHaveCount(0);
     await expect(sortLabel).toHaveText("Sort by:");
     await expect(sortButton).toContainText("Recommended");
-    const nodes = [column, content, summary, card, count, sortLabel, sortButton, alert, map];
+    const nodes = [column, content, summary, card, count, sortLabel, sortButton, map];
     const boxes = await Promise.all(nodes.map(el => el.boundingBox()));
     for (const box of boxes) expect(box).not.toBeNull();
-    const [columnBox, contentBox, summaryBox, cardBox, countBox, sortLabelBox, sortBox, alertBox, mapBox] =
+    const [columnBox, contentBox, summaryBox, cardBox, countBox, sortLabelBox, sortBox] =
       boxes as Array<{ x: number; y: number; width: number; height: number }>;
     expect(columnBox.width).toBeLessThanOrEqual(930);
     expect(Math.abs(contentBox.width - cardBox.width)).toBeLessThanOrEqual(2);
     expect(Math.abs(summaryBox.width - cardBox.width)).toBeLessThanOrEqual(2);
     expect(Math.abs(summaryBox.x - cardBox.x)).toBeLessThanOrEqual(2);
-    // The entire desktop tracking bar, not merely the text, spans the exact map width.
-    expect(Math.abs(alertBox.x - mapBox.x)).toBeLessThanOrEqual(2);
-    expect(Math.abs(alertBox.width - mapBox.width)).toBeLessThanOrEqual(2);
-    const gap = mapBox.y - (alertBox.y + alertBox.height);
-    expect(gap).toBeGreaterThanOrEqual(11);
-    expect(gap).toBeLessThanOrEqual(14);
     for (const box of [countBox, sortLabelBox, sortBox]) {
       expect(box.x).toBeGreaterThanOrEqual(summaryBox.x - 2);
       expect(box.x + box.width).toBeLessThanOrEqual(summaryBox.x + summaryBox.width + 2);
@@ -161,75 +152,44 @@ test("Cars cards omit the supplier-information bar and preserve View deal on mob
 });
 
 
-test("Cars desktop tracking appears above the map while mobile and tablet keep their original inline switch", async ({ page }) => {
+test("Cars rate details aligns offer-only tracking with the booking provider on mobile, tablet and desktop", async ({ page }) => {
+  const result = { ...carBase, offers: carBase.offers.map(offer => ({ ...offer, suppliedFacts: [{ label: "Mileage", value: "Unlimited mileage" }] })) };
   await page.route("**/api/cars/search", route =>
-    route.fulfill({ json: { results: [carBase], status: "available" } }));
+    route.fulfill({ json: { results: [result], status: "available" } }));
 
   for (const width of [390, 820, 1024, 1365]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto(routes.cars);
     const summary = page.locator("[data-cars-results-summary-row]").first();
-    const sidebarSlot = page.locator("[data-cars-price-alert-sidebar-slot]");
-    const alert = width >= 1024
-      ? sidebarSlot.locator("[data-cars-price-alert]")
-      : summary.locator("[data-cars-price-alert]");
-    const count = summary.locator("h2").first();
-    const sort = summary.locator(".cars-results-desktop-sort-trigger");
-    const track = alert.locator('button[role="switch"] > span[aria-hidden="true"]');
-    const thumb = track.locator("span").first();
+    await expect(summary.locator("h2")).toBeVisible();
+    await expect(page.locator("[data-cars-price-alert]")).toHaveCount(0);
+    await expect(page.locator("[data-cars-price-alert-sidebar-slot]")).toHaveCount(0);
+    const info = page.locator("[data-car-rate-info]").filter({ visible: true }).first();
+    await expect(info).toBeVisible();
+    await info.click();
+    const dialog = page.locator("[data-car-rate-dialog]");
+    await expect(dialog).toBeVisible();
+    const row = dialog.locator("[data-car-rate-provider-alert-row]");
+    const provider = row.locator("p").first();
+    const alert = row.locator("[data-cars-price-alert]");
+    const toggle = alert.getByRole("switch");
+    await expect(provider).toContainText("Booking provider ·");
     await expect(alert).toBeVisible();
-    await expect(count).toBeVisible();
-    await expect(page.locator("[data-cars-price-alert]")).toHaveCount(1);
-    await expect(alert.getByRole("switch", { name: "Track car prices" })).toBeVisible();
-
-    const alertBox = (await alert.boundingBox())!;
-    const countBox = (await count.boundingBox())!;
-    const trackBox = (await track.boundingBox())!;
-    const thumbBox = (await thumb.boundingBox())!;
-    if (width >= 1024) {
-      await expect(sort).toBeVisible();
-      await expect(summary.locator("[data-cars-price-alert]")).toHaveCount(0);
-      const map = page.locator("[data-cars-results-map-preview]");
-      const mapBox = (await map.boundingBox())!;
-      expect(Math.abs(alertBox.x - mapBox.x)).toBeLessThanOrEqual(2);
-      expect(Math.abs(alertBox.width - mapBox.width)).toBeLessThanOrEqual(2);
-      expect(mapBox.y - (alertBox.y + alertBox.height)).toBeGreaterThanOrEqual(11);
-      expect(mapBox.y - (alertBox.y + alertBox.height)).toBeLessThanOrEqual(14);
-      expect(Math.abs(trackBox.width - 44)).toBeLessThanOrEqual(1);
-      expect(Math.abs(trackBox.height - 24)).toBeLessThanOrEqual(1);
-      expect(Math.abs(thumbBox.width - 20)).toBeLessThanOrEqual(1);
-      expect(Math.abs(thumbBox.height - 20)).toBeLessThanOrEqual(1);
-      await expect(alert).toHaveCSS("background-color", "rgb(238, 246, 255)");
-      await expect(alert).toHaveCSS("border-top-color", "rgb(207, 224, 248)");
-      const sortBox = (await sort.boundingBox())!;
-      expect(countBox.x + countBox.width + 12).toBeLessThanOrEqual(sortBox.x);
-    } else if (width >= 640) {
-      await expect(sidebarSlot.locator("[data-cars-price-alert]")).toHaveCount(0);
-      await expect(sort).toBeVisible();
-      const sortBox = (await sort.boundingBox())!;
-      expect(alertBox.width).toBeGreaterThan(400);
-      expect(Math.abs(trackBox.width - 48)).toBeLessThanOrEqual(1);
-      expect(Math.abs(trackBox.height - 28)).toBeLessThanOrEqual(1);
-      expect(alertBox.y + alertBox.height).toBeLessThanOrEqual(sortBox.y);
-    } else {
-      await expect(sidebarSlot.locator("[data-cars-price-alert]")).toHaveCount(0);
-      await expect(sort).not.toBeVisible();
-      expect(alertBox.width).toBeLessThan(280);
-      expect(Math.abs(trackBox.width - 44)).toBeLessThanOrEqual(1);
-      expect(Math.abs(trackBox.height - 24)).toBeLessThanOrEqual(1);
-      expect(Math.abs(thumbBox.width - 18)).toBeLessThanOrEqual(1);
-      expect(countBox.x + countBox.width).toBeLessThanOrEqual(alertBox.x + 2);
-    }
+    await expect(toggle).toBeVisible();
+    await expect(dialog.locator("[data-cars-price-alert]")).toHaveCount(1);
+    const track = toggle.locator('span[aria-hidden="true"]').first();
+    const thumb = track.locator("span").first();
+    const [providerBox, alertBox, trackBox, thumbBox] = await Promise.all([provider, alert, track, thumb].map(el => el.boundingBox()));
+    for (const box of [providerBox, alertBox, trackBox, thumbBox]) expect(box).not.toBeNull();
+    expect(alertBox!.x).toBeGreaterThan(providerBox!.x);
+    expect(Math.abs((alertBox!.y + alertBox!.height / 2) - (providerBox!.y + providerBox!.height / 2))).toBeLessThanOrEqual(13);
+    expect(Math.abs(trackBox!.width - 44)).toBeLessThanOrEqual(1);
+    expect(Math.abs(trackBox!.height - 24)).toBeLessThanOrEqual(1);
+    expect(Math.abs(thumbBox!.width - 18)).toBeLessThanOrEqual(1);
+    await dialog.getByRole("button", { name: "Close rate details" }).click();
+    await expect(dialog).not.toBeVisible();
+    await expect(page.locator("[data-cars-price-alert]")).toHaveCount(0);
   }
-
-  // Changing breakpoint without navigating should move the same tracking control,
-  // not mount a second independent switch with duplicate fetch/pending state.
-  await page.setViewportSize({ width: 1365, height: 900 });
-  await expect(page.locator("[data-cars-price-alert-sidebar-slot] [data-cars-price-alert]")).toBeVisible();
-  await expect(page.locator("[data-cars-price-alert]")).toHaveCount(1);
-  await page.setViewportSize({ width: 390, height: 900 });
-  await expect(page.locator("[data-cars-results-summary-row] [data-cars-price-alert]")).toBeVisible();
-  await expect(page.locator("[data-cars-price-alert]")).toHaveCount(1);
 });
 
 test("Cars mobile card balances category and moves four specifications underneath cancellation without crowding", async ({ page }) => {
