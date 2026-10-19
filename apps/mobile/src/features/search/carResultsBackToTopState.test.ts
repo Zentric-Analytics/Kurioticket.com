@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   beginCarBackToTopReturn,
-  hasVisibleFirstCarResult,
   CAR_BACK_TO_TOP_SCROLL_THRESHOLD,
   INITIAL_CAR_BACK_TO_TOP_SCROLL_STATE,
   updateCarBackToTopScroll,
@@ -88,11 +87,34 @@ test("native Cars reveal is calibrated to the mobile-web result-card depth", () 
   assert.equal(state.visible, false, "the same boundary hides the button when returning upward");
 });
 
-test("first-car viewability provides a hide-only fallback for coalesced native scroll events", () => {
-  assert.equal(hasVisibleFirstCarResult([]), false);
-  assert.equal(hasVisibleFirstCarResult([{index:0,isViewable:false}]), false);
-  assert.equal(hasVisibleFirstCarResult([{index:1,isViewable:true}]), false);
-  assert.equal(hasVisibleFirstCarResult([{index:null,isViewable:true}]), false);
-  assert.equal(hasVisibleFirstCarResult([{index:2,isViewable:true},{index:0,isViewable:true}]), true);
-  assert.equal(hasVisibleFirstCarResult([{index:0,isViewable:true}]), true);
+test("visibility has one offset threshold regardless of the first visible result", () => {
+  let state = INITIAL_CAR_BACK_TO_TOP_SCROLL_STATE;
+  // A large first card may still be partially visible at these offsets;
+  // neither card geometry nor viewability should override the scroll offset.
+  for (const offset of [100, 320, 360, 500, 450, 325, 321, 320, 319, 380]) {
+    state = updateCarBackToTopScroll(state, offset);
+    assert.equal(state.visible, offset > CAR_BACK_TO_TOP_SCROLL_THRESHOLD, `offset ${offset}`);
+  }
+});
+
+test("repeated downward and upward swipes do not leave visibility latched", () => {
+  let state = INITIAL_CAR_BACK_TO_TOP_SCROLL_STATE;
+  for (const offset of [0, 450, 75, 900, 330, 300, 750, 0, 321, 120, 320, 1000]) {
+    state = updateCarBackToTopScroll(state, offset);
+    assert.equal(state.visible, offset > CAR_BACK_TO_TOP_SCROLL_THRESHOLD, `offset ${offset}`);
+    assert.equal(state.returning, false);
+  }
+});
+
+test("interrupted animated return can settle above threshold and appear normally", () => {
+  let state = updateCarBackToTopScroll(INITIAL_CAR_BACK_TO_TOP_SCROLL_STATE, 1400);
+  state = beginCarBackToTopReturn(state);
+  assert.equal(state.visible, false);
+  state = updateCarBackToTopScroll(state, 1000);
+  assert.equal(state.returning, true);
+  state = updateCarBackToTopScroll(state, 1001 + 5);
+  assert.equal(state.returning, false);
+  assert.equal(state.visible, true);
+  state = updateCarBackToTopScroll(state, 220);
+  assert.equal(state.visible, false);
 });
