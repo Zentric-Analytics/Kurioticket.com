@@ -12,8 +12,8 @@ const driverAge = z.string().trim().refine((value) => value === "18-70" || (/^\d
 
 /** Stable offer identity: never fall back to a different seller or rate. */
 export const carPriceAlertOfferSchema = z.object({
-  resultId: z.string().trim().min(1).max(240),
-  offerId: z.string().trim().min(1).max(240),
+  resultId: z.string().trim().min(1).max(600),
+  offerId: z.string().trim().min(1).max(600),
   providerName: z.string().trim().min(1).max(240),
 });
 export type CarPriceAlertOfferScope = z.infer<typeof carPriceAlertOfferSchema>;
