@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState, type SetStateAction } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState, useTransition, type SetStateAction } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -143,7 +143,6 @@ import { FlightResultsState } from "./FlightResultsState";
 import { flightResultsOwnedBy, resolveFlightResultsState, resolveFlightSearchFailure } from "./flightResultsStateModel";
 import { flightInventoryCounts } from "./flightInventoryDiagnostics";
 import { HotelFilterSheet, type HotelFilterSectionName } from "./HotelFilterSheet";
-import { NATIVE_FILTER_RESULTS_TRANSITION_MS } from "./filterResultsTransition";
 import { activeHotelFilterCount, buildHotelFilterOptions, emptyHotelFilters, filterHotels, type HotelFilters } from "./hotelFilters";
 import { HotelCardAmenityList } from "./HotelCardAmenityList";
 import { defaultHotelSort, hotelSortLabel, sortHotelsForResults, type HotelSortMode } from "./hotelSort";
@@ -284,8 +283,7 @@ function ResultsScreen({ product }: { product: Product }) {
   const [hotelFilterSection, setHotelFilterSection] = useState<HotelFilterSectionName>("all");
   const [hotelQuickFilter, setHotelQuickFilter] = useState<HotelResultsQuickFilterKind | null>(null);
   const [hotelProgressivePending, setHotelProgressivePending] = useState(false);
-  const [hotelFilterApplying, setHotelFilterApplying] = useState(false);
-  const hotelFilterFeedbackTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const [hotelFilterPending, startHotelFilterTransition] = useTransition();
   const hotelFilterSessionDirtyRef = useRef(false);
   const hotelResultsListRef = useRef<SectionList<HotelResultsListItem>>(null);
   const flightResultsListRef = useRef<SectionList<FlightResult | null>>(null);
@@ -818,31 +816,25 @@ function ResultsScreen({ product }: { product: Product }) {
       }
     });
   }, []);
-  const startHotelFilterFeedback = useCallback(() => {
-    if (hotelFilterFeedbackTimerRef.current) clearTimeout(hotelFilterFeedbackTimerRef.current);
-    setHotelFilterApplying(true);
-    hotelFilterFeedbackTimerRef.current = setTimeout(() => {
-      setHotelFilterApplying(false);
-      hotelFilterFeedbackTimerRef.current = undefined;
-    }, NATIVE_FILTER_RESULTS_TRANSITION_MS);
-  }, []);
-  useEffect(() => () => {
-    if (hotelFilterFeedbackTimerRef.current) clearTimeout(hotelFilterFeedbackTimerRef.current);
-  }, []);
-  const startHotelResultsTransition = (withFilterFeedback = false) => {
-    scrollToHotelResultsBeginning();
-    if (withFilterFeedback) startHotelFilterFeedback();
+  const startHotelResultsTransition = (animated = true) => {
+    scrollToHotelResultsBeginning(animated);
   };
   const changeHotelFilters = (next: SetStateAction<HotelFilters>) => { hotelFilterSessionDirtyRef.current=true; setHotelFilters(next); };
-  const transitionHotelFilters = (next: HotelFilters) => { setHotelFilters(next); startHotelResultsTransition(true); };
-  const completeHotelFilterSession = () => { setHotelFilterOpen(false); if(hotelFilterSessionDirtyRef.current){hotelFilterSessionDirtyRef.current=false;startHotelResultsTransition(true);} };
+  const changeHotelQuickFilters = (next: SetStateAction<HotelFilters>) => {
+    hotelFilterSessionDirtyRef.current = true;
+    // Closing the quick sheet is urgent; deriving the filtered result list is
+    // a transition so it cannot hold the dismissal in the same render.
+    startHotelFilterTransition(() => setHotelFilters(next));
+  };
+  const transitionHotelFilters = (next: HotelFilters) => { startHotelFilterTransition(() => setHotelFilters(next)); startHotelResultsTransition(false); };
+  const completeHotelFilterSession = () => { setHotelFilterOpen(false); if(hotelFilterSessionDirtyRef.current){hotelFilterSessionDirtyRef.current=false;startHotelResultsTransition(false);} };
   const openHotelFilters = (section: HotelFilterSectionName) => {
     hotelFilterSessionDirtyRef.current=false;
     setHotelFilterSection(section);
     setHotelFilterOpen(true);
   };
   const openHotelQuickFilter = (kind: HotelResultsQuickFilterKind) => { hotelFilterSessionDirtyRef.current=false; setHotelQuickFilter(kind); };
-  const closeHotelQuickFilter = () => { setHotelQuickFilter(null); if(hotelFilterSessionDirtyRef.current){hotelFilterSessionDirtyRef.current=false;startHotelResultsTransition(true);} };
+  const closeHotelQuickFilter = () => { setHotelQuickFilter(null); if(hotelFilterSessionDirtyRef.current){hotelFilterSessionDirtyRef.current=false;startHotelResultsTransition(false);} };
   const clearHotelQuickFilter = (kind: Exclude<HotelResultsQuickFilterKind, "sort">) => {
     const next = { ...hotelFilters };
     if (kind === "price") {
@@ -1115,7 +1107,6 @@ function ResultsScreen({ product }: { product: Product }) {
     && (results as HotelResult[]).some(hasHotelPrice)
     && !currencyState;
   if (status === "loading" || hotelCurrencyPending) return <NativeBrandedSearchLoading product={product} />;
-  if (product === "hotel" && hotelFilterApplying) return <NativeBrandedSearchLoading product="hotel" />;
   return (
     <SafeAreaView style={[s0.safe, { backgroundColor: flightResults ? flightCanvasColor : hotelCanvasColor }]} edges={["top"]}>
       {flightResults ? (
@@ -1203,6 +1194,7 @@ function ResultsScreen({ product }: { product: Product }) {
           </View>
           <SectionList
             ref={hotelResultsListRef}
+            accessibilityState={{ busy: hotelFilterPending }}
             style={[s0.resultsScroll, { backgroundColor: hotelCanvasColor }]}
             sections={[{ data: hotelResultsListData }]}
             keyExtractor={(item) => typeof item === "string" ? item : item.id}
@@ -1215,6 +1207,7 @@ function ResultsScreen({ product }: { product: Product }) {
                   <View style={s0.hotelResultsBody}>
                     <HotelResultsSummaryRow
                       count={sorted.length}
+                      updating={hotelFilterPending}
                       sortLabel={hotelSortLabel(hotelSort)}
                       expanded={hotelQuickFilter === "sort"}
                       onSort={() => openHotelQuickFilter("sort")}
@@ -1283,7 +1276,7 @@ function ResultsScreen({ product }: { product: Product }) {
       ) : (
         <>
           <HotelFilterSheet visible={hotelFilterOpen} section={hotelFilterSection} filters={hotelFilters} options={hotelOptions} displayCurrency={currencyState?.resolution.resolvedCurrency ?? "USD"} rates={currencyState?.rates ?? {}} stayNights={hotelStayNightCount(one(params.checkIn),one(params.checkOut))} totalCount={results.length} matchingCount={sorted.length} onChange={changeHotelFilters} onClose={completeHotelFilterSession}/>
-          {hotelQuickFilter ? <HotelResultsQuickFilterSheet kind={hotelQuickFilter} sort={hotelSort} filters={hotelFilters} options={hotelOptions} displayCurrency={currencyState?.resolution.resolvedCurrency ?? "USD"} rates={currencyState?.rates ?? {}} stayNights={hotelStayNightCount(one(params.checkIn),one(params.checkOut))} onSortChange={(next) => { if(next===hotelSort)return;setHotelSort(next);startHotelResultsTransition(); }} onChange={changeHotelFilters} onClose={closeHotelQuickFilter} /> : null}
+          {hotelQuickFilter ? <HotelResultsQuickFilterSheet kind={hotelQuickFilter} sort={hotelSort} filters={hotelFilters} options={hotelOptions} displayCurrency={currencyState?.resolution.resolvedCurrency ?? "USD"} rates={currencyState?.rates ?? {}} stayNights={hotelStayNightCount(one(params.checkIn),one(params.checkOut))} onSortChange={(next) => { if(next===hotelSort)return;setHotelSort(next);startHotelResultsTransition(); }} onChange={changeHotelQuickFilters} onClose={closeHotelQuickFilter} /> : null}
         </>
       )}
       {!flightResults ? (
@@ -1878,8 +1871,9 @@ function FlightResultsSummaryRow({ count }: { count: number }) {
 
 const hotelResultCountLabel = (count: number) => `${count} ${count === 1 ? "Result" : "Results"} found`;
 
-function HotelResultsSummaryRow({ count, sortLabel, expanded, onSort }: {
+function HotelResultsSummaryRow({ count, updating, sortLabel, expanded, onSort }: {
   count: number;
+  updating: boolean;
   sortLabel: string;
   expanded: boolean;
   onSort: () => void;
@@ -1890,7 +1884,10 @@ function HotelResultsSummaryRow({ count, sortLabel, expanded, onSort }: {
   return (
     <View accessibilityLabel="Hotel results summary" style={s0.hotelResultsSummaryRow}>
       <View style={s0.hotelResultsCountColumn}>
-        <Text accessibilityRole="header" style={[s0.flightResultCount, { color: theme.textPrimary }]}>{hotelResultCountLabel(count)}</Text>
+        <View style={s0.hotelResultsCountValueRow}>
+          <Text accessibilityRole="header" style={[s0.flightResultCount, { color: theme.textPrimary }]}>{hotelResultCountLabel(count)}</Text>
+          {updating ? <ActivityIndicator size="small" color={theme.textSecondary} accessibilityLabel="Updating hotel results" /> : null}
+        </View>
       </View>
       <Pressable
         accessibilityRole="button"
@@ -2017,6 +2014,7 @@ const s0 = StyleSheet.create({
   foundTitle: { fontSize: 16, fontWeight: "800", color: ui.navy },
   hotelResultsSummaryRow: { minHeight: 38, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
   hotelResultsCountColumn: { flex: 1, minWidth: 0, justifyContent: "center" },
+  hotelResultsCountValueRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   hotelResultsSortButton: { minWidth: 116, height: 38, flexShrink: 0, borderWidth: 1, borderRadius: 10, paddingHorizontal: 10, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 5 },
   hotelResultsSortText: { fontSize: 13, lineHeight: 17, fontWeight: "600", fontFamily: appFonts.semibold },
   hotelFilteredEmpty: { alignItems: "center", gap: 10, paddingVertical: 28 },

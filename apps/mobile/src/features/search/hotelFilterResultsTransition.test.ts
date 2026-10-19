@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { NATIVE_FILTER_RESULTS_TRANSITION_MS } from "./filterResultsTransition";
 
 // Keep this coverage Hotel-only so shared Flight and Cars timing stays unchanged.
 const full = readFileSync("src/features/search/HotelFilterSheet.tsx", "utf8");
@@ -22,22 +21,24 @@ test("Hotel quick filters retain functional draft apply semantics", () => {
   assert.match(quick, /case "roomTypes":return/);
 });
 
-test("Hotel filter changes reuse the app's normal branded loading state", () => {
-  assert.equal(NATIVE_FILTER_RESULTS_TRANSITION_MS, 700);
-  const helper = screen.match(/const startHotelResultsTransition[\s\S]*?\n  };/)?.[0] ?? "";
-  const feedback = screen.match(/const startHotelFilterFeedback[\s\S]*?\n  }, \[\]\);/)?.[0] ?? "";
-  assert.match(screen, /hotelFilterSessionDirtyRef/);
-  assert.match(feedback, /setHotelFilterApplying\(true\)/);
-  assert.match(feedback, /setTimeout\(\(\) => \{/);
-  assert.match(feedback, /setHotelFilterApplying\(false\)/);
-  assert.match(feedback, /NATIVE_FILTER_RESULTS_TRANSITION_MS/);
-  assert.doesNotMatch(feedback, /Animated\.timing|hotelFilterProgress/);
-  assert.doesNotMatch(helper, /setHotelPage/);
-  assert.match(helper, /scrollToHotelResultsBeginning\(\)/);
-  assert.match(helper, /startHotelFilterFeedback\(\)/);
+test("Hotel filter Apply keeps the existing results shell mounted without a timed search loader", () => {
+  assert.doesNotMatch(screen, /hotelFilterApplying|hotelFilterFeedbackTimerRef|startHotelFilterFeedback|NATIVE_FILTER_RESULTS_TRANSITION_MS/);
   assert.match(screen, /if \(status === "loading" \|\| hotelCurrencyPending\) return <NativeBrandedSearchLoading product=\{product\} \/>/);
-  assert.match(screen, /if \(product === "hotel" && hotelFilterApplying\) return <NativeBrandedSearchLoading product="hotel" \/>/);
-  assert.doesNotMatch(screen, /hotelFilterRefreshSlot|hotelFilterRefreshTrack|hotelFilterRefreshProgress/);
+  assert.match(screen, /const \[hotelFilterPending, startHotelFilterTransition\] = useTransition\(\)/);
+  assert.match(screen, /accessibilityState=\{\{ busy: hotelFilterPending \}\}/);
+  assert.match(screen, /updating=\{hotelFilterPending\}/);
+  assert.match(screen, /accessibilityLabel="Updating hotel results"/);
+});
+
+test("quick Apply defers only filter derivation while dismissal stays urgent", () => {
+  const apply = screen.slice(screen.indexOf("const changeHotelQuickFilters"), screen.indexOf("const transitionHotelFilters"));
+  const close = screen.slice(screen.indexOf("const closeHotelQuickFilter"), screen.indexOf("const clearHotelQuickFilter"));
+  assert.match(apply, /startHotelFilterTransition\(\(\) => setHotelFilters\(next\)\)/);
+  assert.doesNotMatch(apply, /setHotelQuickFilter|setTimeout|travelApi|setStatus/);
+  assert.match(close, /setHotelQuickFilter\(null\)/);
+  assert.doesNotMatch(close, /startHotelFilterTransition|setTimeout|setStatus/);
+  assert.match(screen, /onChange=\{changeHotelQuickFilters\} onClose=\{closeHotelQuickFilter\}/);
+  assert.match(close, /startHotelResultsTransition\(false\)/);
 });
 
 test("changed Hotel Sort Apply updates ordering immediately and resets scroll position", () => {
