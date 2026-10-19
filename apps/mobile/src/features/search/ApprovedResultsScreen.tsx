@@ -1137,7 +1137,7 @@ function ResultsScreen({ product }: { product: Product }) {
           keyExtractor={(item, index) => item ? item.id : `flight-results-intro-${index}`}
           renderSectionHeader={() => (
             <View
-              style={[s0.flightFilterSectionHeader, { backgroundColor: theme.dark ? flightCanvasColor : flightResultsColors.surface }]}
+              style={[s0.flightFilterSectionHeader, { backgroundColor: flightCanvasColor }]}
             >
               {filterRail}
             </View>
