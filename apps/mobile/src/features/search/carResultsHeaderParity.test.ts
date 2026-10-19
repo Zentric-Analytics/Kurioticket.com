@@ -67,7 +67,7 @@ test("Cars header geometry and glass positions remain identical to Hotels", () =
 test("native Cars keeps the white filter rail and curved surface below its Hotel-style navbar", () => {
   assert.match(cars, /const CAR_RESULTS_LIGHT_CANVAS = "#F5F7FB"/);
   assert.match(cars, /const headerSurfaceColor = theme\.dark \? theme\.background : "#FFFFFF"/);
-  assert.match(cars, /<SafeAreaView style=\{\[r\.safe,\{backgroundColor:carCanvasColor\}\]\} edges=\{\["top"\]\}>/);
+  assert.match(cars, /<SafeAreaView style=\{\[r\.safe,\{backgroundColor:headerSurfaceColor\}\]\} edges=\{\["top"\]\}>/);
   assert.match(cars, /<View style=\{\[r\.carHeaderBackdrop,\{backgroundColor:carCanvasColor\}\]\}>/);
   assert.match(cars, /<View style=\{\[r\.carHeaderSurface,\{backgroundColor:headerSurfaceColor,borderBottomColor:theme\.dark\?theme\.border:"#D8E1EC"\}\]\}>/);
   assert.match(cars, /carHeaderSurface:\{borderBottomLeftRadius:28,borderBottomRightRadius:0,borderBottomWidth:StyleSheet\.hairlineWidth,overflow:"hidden"\}/);
@@ -76,10 +76,22 @@ test("native Cars keeps the white filter rail and curved surface below its Hotel
   const filters = cars.indexOf("<View style={[r.carFilterSectionHeader", search);
   const list = cars.indexOf("<FlatList ref={carScrollRef}", filters);
   assert.ok(search > 0 && filters > search && list > filters);
-  assert.match(cars, /<CarResultsHeader[^>]*backgroundColor=\{carCanvasColor\}/);
+  assert.match(cars, /<CarResultsHeader[^>]*backgroundColor=\{headerSurfaceColor\}/);
   assert.match(cars, /r\.carFilterSectionHeader,\{backgroundColor:headerSurfaceColor\}/);
   assert.match(cars, /<FlatList ref=\{carScrollRef\} style=\{\{backgroundColor:carCanvasColor\}\}/);
   assert.doesNotMatch(carHeader, /accessibilityLabel="Menu"/);
+});
+
+test("Cars navbar, status safe area, and filter rail share one white surface above muted results", () => {
+  assert.match(cars, /const headerSurfaceColor = theme\.dark \? theme\.background : "#FFFFFF"/);
+  assert.match(cars, /<SafeAreaView style=\{\[r\.safe,\{backgroundColor:headerSurfaceColor\}\]\} edges=\{\["top"\]\}>/);
+  assert.match(cars, /<CarResultsHeader[^>]*backgroundColor=\{headerSurfaceColor\}/);
+  assert.match(cars, /r\.carHeaderSurface,\{backgroundColor:headerSurfaceColor,/);
+  assert.match(cars, /r\.carFilterSectionHeader,\{backgroundColor:headerSurfaceColor\}/);
+  assert.match(cars, /r\.carHeaderBackdrop,\{backgroundColor:carCanvasColor\}/);
+  assert.match(cars, /<FlatList ref=\{carScrollRef\} style=\{\{backgroundColor:carCanvasColor\}\}/);
+  assert.doesNotMatch(cars, /r\.safe,\{backgroundColor:carCanvasColor\}/);
+  assert.doesNotMatch(cars, /<CarResultsHeader[^>]*backgroundColor=\{carCanvasColor\}/);
 });
 
 test("native Cars rail matches the mobile-web full-height spacing and 28px curve", () => {
@@ -283,8 +295,8 @@ test("Cars Results adopts Hotels navbar while preserving white filters and resul
   assert.match(cars, /const CAR_RESULTS_LIGHT_CANVAS = "#F5F7FB"/);
   assert.match(cars, /const carCanvasColor = theme\.dark \? theme\.background : CAR_RESULTS_LIGHT_CANVAS/);
   assert.match(cars, /const headerSurfaceColor = theme\.dark \? theme\.background : "#FFFFFF"/);
-  assert.match(cars, /r\.safe,\{backgroundColor:carCanvasColor\}/);
-  assert.match(cars, /<CarResultsHeader[^>]*backgroundColor=\{carCanvasColor\}/);
+  assert.match(cars, /r\.safe,\{backgroundColor:headerSurfaceColor\}/);
+  assert.match(cars, /<CarResultsHeader[^>]*backgroundColor=\{headerSurfaceColor\}/);
   assert.match(carHeader, /\{backgroundColor,paddingLeft:/);
   assert.match(cars, /r\.carFilterSectionHeader,\{backgroundColor:headerSurfaceColor\}/);
   assert.match(cars, /<FlatList ref=\{carScrollRef\} style=\{\{backgroundColor:carCanvasColor\}\}/);
