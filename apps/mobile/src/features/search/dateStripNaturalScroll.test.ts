@@ -14,5 +14,7 @@ test("the date strip stays fully opaque in ordinary list-item flow", () => {
 
 test("the filter rail remains sticky without pagination settlement plumbing", () => {
   assert.match(list, /renderSectionHeader[\s\S]*?\{filterRail\}[\s\S]*?stickySectionHeadersEnabled/);
-  assert.doesNotMatch(list, /flightPagination|onMomentumScrollEnd|onScrollEndDrag/);
+  assert.doesNotMatch(list, /flightPagination/);
+  assert.match(list, /onScrollEndDrag=\{hideFlightResultsScrollIndicator\}/);
+  assert.match(list, /onMomentumScrollEnd=\{hideFlightResultsScrollIndicator\}/);
 });
