@@ -4,7 +4,7 @@ test("Flight dates scroll naturally beneath the sticky rail",()=>{assert.match(s
 test("Track Price and count are ordinary virtualized list content",()=>{const x=s.slice(s.indexOf("renderItem={({ item, index })"),s.indexOf("ListEmptyComponent"));assert.match(x,/flightResultsIntro[\s\S]*PriceAlert[\s\S]*FlightResultsSummaryRow[\s\S]*FlightCard/);});
 test("Flight list clears the native safe area",()=>assert.match(s,/s0\.flightResultsContent,[\s\S]*paddingBottom: Math\.max\(insets\.bottom \+ 16, 16\)/));
 test("date changes reset the native Results list to its beginning like mobile web navigation",()=>{
-  const x=s.slice(s.indexOf("const selectNearbyDate"),s.indexOf("const flightDateStrip"));
+  const x=s.slice(s.indexOf("const selectNearbyDate"),s.indexOf("const flightDateStrip = ("));
   assert.match(x,/router\.setParams\(/);
   assert.match(x,/scrollToFlightResultsBeginning\(false\)/);
 });
