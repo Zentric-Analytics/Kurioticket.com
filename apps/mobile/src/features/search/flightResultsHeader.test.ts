@@ -48,10 +48,12 @@ test("Flight Results uses the Web route-and-metadata summary with accessible con
   assert.doesNotMatch(results, /flightResultsHeaderHeight|setFlightResultsHeaderHeight|LayoutChangeEvent/);
 });
 
-test("Flight Results header receives one derived secondary line instead of rebuilding business context", () => {
+test("Flight Results header receives one derived secondary line and the existing filter rail", () => {
   assert.match(header, /\{secondaryLine\}/);
   assert.doesNotMatch(header, /<ScrollView|horizontal|metadata/i);
-  assert.match(header, /route: string;[\s\S]*?secondaryLine: string;[\s\S]*?onEdit: \(\) => void;/);
+  assert.match(header, /route: string;[\s\S]*?secondaryLine: string;[\s\S]*?onEdit: \(\) => void;[\s\S]*?filterRail: ReactNode;/);
+  assert.match(invocation, /filterRail=\{filterRail\}/);
+  assert.match(header, /accessibilityLabel="Flight result filters"[\s\S]*?\{filterRail\}/);
 });
 
 test("obsolete Flight Results metadata styles are removed", () => {
@@ -99,7 +101,7 @@ test("Flight Results header separates Back from one Web-aligned editable summary
   assert.match(header, /flightRouteSummaryText[\s\S]*?\{route\}[\s\S]*?flightRouteSummarySecondary[\s\S]*?\{secondaryLine\}/);
   assert.match(header, /backgroundColor: theme\.dark \? theme\.surface : flightResultsColors\.canvas/);
   assert.match(header, /borderColor: theme\.dark \? theme\.border : "#D8E1EC"/);
-  assert.match(styles, /flightHeader: \{[\s\S]*?paddingTop: 12,[\s\S]*?paddingBottom: 8/);
+  assert.match(styles, /flightHeader: \{ paddingTop: 12 \}/); assert.match(styles, /flightHeaderMainRow: \{[^\n]*paddingBottom: 8 \}/);
   assert.match(header, /paddingLeft: Math\.max\(insets\.left \+ 6, 6\)/);
   assert.match(header, /paddingRight: Math\.max\(insets\.right \+ 10, 10\)/);
   assert.match(header, /color: theme\.textPrimary/);
@@ -122,17 +124,18 @@ test("visible Flight Results labels use scoped Inter families", () => {
   assert.match(searchUi, /pillText: \{ fontSize: 12, fontWeight: "700"/);
 });
 
-test("header and date rail use the structured Flight Results fare-calendar shell", () => {
-  const headerBottom = Number(styles.match(/flightHeader: \{[\s\S]*?paddingBottom: (\d+)/)?.[1]);
-  const navigatorHeight = Number(
-    searchUi.match(/flightDateNavigator: \{ height: (\d+)/)?.[1],
-  );
+test("header-owned filters keep the approved Results sizes before the fare-calendar shell", () => {
+  const headerMainBottom = Number(styles.match(/flightHeaderMainRow: \{[^\n]*paddingBottom: (\d+)/)?.[1]);
+  const filterTop = Number(styles.match(/flightHeaderFilterRail: \{ paddingTop: (\d+)/)?.[1]);
+  const filterBottom = Number(styles.match(/flightHeaderFilterRail: \{[^\n]*paddingBottom: (\d+)/)?.[1]);
+  const navigatorHeight = Number(searchUi.match(/flightDateNavigator: \{ height: (\d+)/)?.[1]);
   const railHeight = Number(searchUi.match(/flightDateRail: \{ height: (\d+)/)?.[1]);
 
-  assert.equal(headerBottom, 8, "header bottom padding follows the approved native Results header rhythm");
+  assert.equal(headerMainBottom, 8, "route row keeps its existing bottom breathing room");
+  assert.equal(filterTop, 8, "filter rail keeps its existing top breathing room");
+  assert.equal(filterBottom, 8, "filter rail keeps its existing bottom breathing room");
   assert.equal(navigatorHeight, 80, "navigator fits the 70px tile and compact vertical padding");
   assert.equal(railHeight, navigatorHeight);
-  assert.equal(headerBottom + navigatorHeight, 88);
 });
 
 test("canonical flight search data remains available after presentation metadata removal", () => {
@@ -211,7 +214,7 @@ test("Flight Details and result content remain present without a results-screen 
 
 test("Flight Results header uses the approved native Results header treatment", () => {
   const flightHeaderStyle = styles.slice(styles.indexOf("flightHeader:"), styles.indexOf("hotelHeader:"));
-  assert.match(flightHeaderStyle, /flightHeader: \{ paddingTop: 12, paddingBottom: 8 \}/);
+  assert.match(flightHeaderStyle, /flightHeader: \{ paddingTop: 12 \}/); assert.match(flightHeaderStyle, /flightHeaderMainRow: \{[^\n]*paddingBottom: 8 \}/); assert.match(flightHeaderStyle, /flightHeaderFilterRail: \{ paddingTop: 8, paddingBottom: 8, borderBottomWidth: 1 \}/);
   assert.match(flightHeaderStyle, /flightHeaderBack: \{ width: 44, height: 44,[^\n]*shadowColor: "#0F172A"[^\n]*shadowOffset: \{ width: 0, height: 2 \}[^\n]*shadowOpacity: 0\.12[^\n]*shadowRadius: 6[^\n]*elevation: 6/);
   assert.match(flightHeaderStyle, /flightRouteSummaryCard: \{ flex: 1, minWidth: 0, minHeight: 62, borderWidth: 1, borderRadius: 13, flexDirection: "row", alignItems: "center", overflow: "hidden" \}/);
   assert.match(flightHeaderStyle, /flightRouteSummaryCopy: \{ flex: 1, minWidth: 0, justifyContent: "center", paddingLeft: 14, paddingVertical: 9 \}/);
