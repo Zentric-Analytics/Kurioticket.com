@@ -93,7 +93,7 @@ test("stress inventory covers bounded result counts and itinerary pressure dimen
   }
 });
 
-test("production list keeps virtualization while settling enough content extent for a stable native scrollbar", () => {
+test("production list keeps virtualization while the custom indicator length stays independent of measured rows", () => {
   const screen = readFileSync("src/features/search/ApprovedResultsScreen.tsx", "utf8");
   const flightList = screen.slice(screen.indexOf("<Animated.SectionList"), screen.indexOf("/>\n", screen.indexOf("windowSize", screen.indexOf("<Animated.SectionList"))) + 2);
   assert.match(screen, /const FLIGHT_RESULT_INITIAL_RENDER_COUNT = 10/);
@@ -105,4 +105,9 @@ test("production list keeps virtualization while settling enough content extent 
   assert.match(flightList, /updateCellsBatchingPeriod=\{FLIGHT_RESULT_BATCHING_PERIOD_MS\}/);
   assert.match(flightList, /windowSize=\{FLIGHT_RESULT_WINDOW_SIZE\}/);
   assert.doesNotMatch(flightList, /disableVirtualization|removeClippedSubviews/);
+  assert.match(screen, /const FLIGHT_RESULTS_SCROLL_THUMB_HEIGHT = 32/);
+  assert.match(flightList, /showsVerticalScrollIndicator=\{false\}/);
+  assert.match(screen, /testID="flight-results-scroll-thumb"/);
+  assert.match(screen, /const thumbHeight = Math\.min\(FLIGHT_RESULTS_SCROLL_THUMB_HEIGHT, trackHeight\)/);
+  assert.doesNotMatch(screen, /const \[flightResults(?:ViewportHeight|ContentHeight|ScrollIndicatorVisible)/);
 });

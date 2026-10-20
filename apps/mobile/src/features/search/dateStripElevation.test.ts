@@ -67,6 +67,22 @@ test("horizontal rail remains swipeable with three full tiles and a fourth peek"
   }
 });
 
+
+test("Flight Results date rail revalidates selected-date visibility after layout, content, and app resume", () => {
+  assert.match(component, /const railViewportWidth = useRef\(0\)/);
+  assert.match(component, /const railContentWidth = useRef\(0\)/);
+  assert.match(component, /const railScrollX = useRef\(0\)/);
+  assert.match(component, /const centerSelectedDate = \(forceVisibilityCheck = false\)/);
+  assert.match(component, /const tileStride = flightDateWidth \+ 8/);
+  assert.match(component, /selectedLeft >= visibleLeft && selectedRight <= visibleRight/);
+  assert.match(component, /attemptsRemaining = 6/);
+  assert.match(component, /AppState\.addEventListener\("change"/);
+  assert.match(component, /onLayout=\{\(\{ nativeEvent \}\) => \{/);
+  assert.match(component, /onContentSizeChange=\{\(width\) => \{/);
+  assert.match(component, /onScroll=\{\(\{ nativeEvent \}\) => \{/);
+  assert.match(component, /scrollEventThrottle=\{16\}/);
+});
+
 test("long prices remain one shrinkable line", () => {
   assert.match(component, /numberOfLines=\{1\}/);
   assert.match(component, /adjustsFontSizeToFit/);

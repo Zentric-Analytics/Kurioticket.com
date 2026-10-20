@@ -48,8 +48,10 @@ test("flight results naturally scroll the date strip while keeping native sticky
   assert.match(source, /if \(status === "loading" \|\| hotelCurrencyPending\) return <NativeBrandedSearchLoading product=\{product\}/);
   assert.match(owner, /flightResultsIntro[\s\S]*?\{flightDateStrip\}/);
   assert.match(owner, /renderSectionHeader[\s\S]*?\{filterRail\}[\s\S]*?stickySectionHeadersEnabled/);
-  assert.doesNotMatch(owner, /flightPagination|onMomentumScrollEnd|onScrollEndDrag/);
-  assert.doesNotMatch(owner, /set[A-Z][A-Za-z]*\(/);
+  assert.doesNotMatch(owner, /flightPagination/);
+  assert.match(owner, /onScrollEndDrag=\{hideFlightResultsScrollIndicator\}/);
+  assert.match(owner, /onMomentumScrollEnd=\{hideFlightResultsScrollIndicator\}/);
+  assert.doesNotMatch(owner, /setFlightResults[A-Z][A-Za-z]*\(/);
   assert.doesNotMatch(source, /dateHeaderCollapsed|flightDateStripOpacity|flightDateStripHeaderHeight|flightDateStripScrollY/);
   assert.match(source, /const filterRail = \([\s\S]*?<ScrollView\s+horizontal/);
 });

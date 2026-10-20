@@ -7,14 +7,41 @@ const listStart = screen.indexOf("<Animated.SectionList");
 const listEnd = screen.indexOf("windowSize=", listStart);
 const list = screen.slice(listStart, screen.indexOf("/>", listEnd) + 2);
 
-test("Flight Results uses the native iOS scroll indicator with safe-area-aware insets", () => {
+test("Flight Results owns one fixed-length indicator instead of the virtualized native thumb", () => {
   assert.ok(listStart >= 0);
-  assert.match(screen, /const flightResultsScrollIndicatorInsets = Platform\.OS === "ios"/);
-  assert.match(screen, /\{ top: 4, right: 3, bottom: Math\.max\(insets\.bottom, 8\), left: 0 \}/);
-  assert.match(list, /showsVerticalScrollIndicator=\{true\}/);
-  assert.match(list, /automaticallyAdjustsScrollIndicatorInsets=\{false\}/);
-  assert.match(list, /scrollIndicatorInsets=\{flightResultsScrollIndicatorInsets\}/);
-  assert.doesNotMatch(screen, /Animated[^\n]*(?:scrollbar|scrollIndicator)|customThumb|PanResponder|thumbHeight/i);
+  assert.match(screen, /const FLIGHT_RESULTS_SCROLL_THUMB_HEIGHT = 32/);
+  assert.match(screen, /testID="flight-results-scroll-indicator"/);
+  assert.match(screen, /testID="flight-results-scroll-thumb"/);
+  assert.match(list, /showsVerticalScrollIndicator=\{false\}/);
+  assert.doesNotMatch(list, /scrollIndicatorInsets=/);
+  assert.match(screen, /flightResultsViewportHeightRef = useRef\(0\)/);
+  assert.match(screen, /flightResultsContentHeightRef = useRef\(0\)/);
+  assert.match(screen, /flightResultsScrollOffsetRef = useRef\(0\)/);
+  assert.match(screen, /flightResultsScrollThumbRef = useRef<View>\(null\)/);
+});
+
+test("Flight Results custom indicator length never depends on virtualized content measurement", () => {
+  const updater = screen.slice(
+    screen.indexOf("const updateFlightResultsScrollThumb"),
+    screen.indexOf("const showFlightResultsScrollIndicator"),
+  );
+  assert.match(updater, /const thumbHeight = Math\.min\(FLIGHT_RESULTS_SCROLL_THUMB_HEIGHT, trackHeight\)/);
+  assert.match(updater, /const maxScroll = Math\.max\(0, contentHeight - viewportHeight\)/);
+  assert.match(updater, /scrollOffset \/ maxScroll/);
+  assert.match(updater, /setNativeProps\(\{[\s\S]*height: thumbHeight,[\s\S]*translateY/);
+  assert.doesNotMatch(updater, /setFlightResults[A-Z][A-Za-z]*\(/);
+  assert.doesNotMatch(screen, /const \[flightResults(?:ViewportHeight|ContentHeight|ScrollIndicatorVisible)/);
+});
+
+test("Flight Results custom indicator stays safe-area-aware and fades after scrolling", () => {
+  assert.match(screen, /flightResultsScrollIndicatorBottomInset = Math\.max\(insets\.bottom, FLIGHT_RESULTS_SCROLL_INDICATOR_EDGE_INSET\)/);
+  assert.match(screen, /FLIGHT_RESULTS_SCROLL_INDICATOR_IDLE_MS = 650/);
+  assert.match(list, /onScrollBeginDrag=\{showFlightResultsScrollIndicator\}/);
+  assert.match(list, /onScrollEndDrag=\{hideFlightResultsScrollIndicator\}/);
+  assert.match(list, /onMomentumScrollBegin=\{showFlightResultsScrollIndicator\}/);
+  assert.match(list, /onMomentumScrollEnd=\{hideFlightResultsScrollIndicator\}/);
+  assert.match(screen, /opacity: scrollable \? 0\.55 : 0/);
+  assert.match(screen, /setNativeProps\(\{ style: \{ opacity: 0 \} \}\)/);
 });
 
 test("Flight Results settles a representative virtualized window before traversal", () => {
@@ -30,7 +57,8 @@ test("Flight Results settles a representative virtualized window before traversa
   assert.doesNotMatch(list, /maxToRenderPerBatch=\{(?:sorted|results)\.length\}/);
 });
 
-test("Flight Results keeps virtualization rather than replacing the native scrollbar", () => {
+test("Flight Results keeps virtualization and no scroll-driven React state updates", () => {
   assert.doesNotMatch(list, /disableVirtualization|getItemLayout/);
   assert.doesNotMatch(screen, /getItemLayout=/);
+  assert.doesNotMatch(list, /setFlightResults[A-Z][A-Za-z]*\(/);
 });

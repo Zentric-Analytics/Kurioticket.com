@@ -84,6 +84,7 @@ import {
   filterAndSortFlights,
   flightFilterOptions,
   resolveFlightPriceComparisonContext,
+  type FlightQuickFilterGroup,
   type FlightSort,
   type FlightFilters,
 } from "./flightFilters";
@@ -179,6 +180,9 @@ const FLIGHT_RESULT_INITIAL_RENDER_COUNT = 10;
 const FLIGHT_RESULT_RENDER_BATCH_SIZE = 10;
 const FLIGHT_RESULT_WINDOW_SIZE = 21;
 const FLIGHT_RESULT_BATCHING_PERIOD_MS = 16;
+const FLIGHT_RESULTS_SCROLL_THUMB_HEIGHT = 32;
+const FLIGHT_RESULTS_SCROLL_INDICATOR_EDGE_INSET = 8;
+const FLIGHT_RESULTS_SCROLL_INDICATOR_IDLE_MS = 650;
 const HOTEL_UTILITY_ICON_COLOR = "#334155";
 const HOTEL_GALLERY_CHEVRON_CONTRAST = "rgba(0,0,0,0.85)";
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
@@ -244,9 +248,7 @@ function ResultsScreen({ product }: { product: Product }) {
   const insets = useSafeAreaInsets();
   const flightResults = product === "flight";
   const flightCanvasColor = theme.dark ? theme.background : flightResultsLightCanvas;
-  const flightResultsScrollIndicatorInsets = Platform.OS === "ios"
-    ? { top: 4, right: 3, bottom: Math.max(insets.bottom, 8), left: 0 }
-    : undefined;
+  const flightResultsScrollIndicatorBottomInset = Math.max(insets.bottom, FLIGHT_RESULTS_SCROLL_INDICATOR_EDGE_INSET);
   const hotelCanvasColor = theme.dark ? theme.background : flightResultsLightCanvas;
   const { availability } = useFeatureAvailability();
   const params = useLocalSearchParams<Record<string, string | string[]>>();
@@ -287,6 +289,11 @@ function ResultsScreen({ product }: { product: Product }) {
   const hotelFilterSessionDirtyRef = useRef(false);
   const hotelResultsListRef = useRef<SectionList<HotelResultsListItem>>(null);
   const flightResultsListRef = useRef<SectionList<FlightResult | null>>(null);
+  const flightResultsScrollIndicatorTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const flightResultsViewportHeightRef = useRef(0);
+  const flightResultsContentHeightRef = useRef(0);
+  const flightResultsScrollOffsetRef = useRef(0);
+  const flightResultsScrollThumbRef = useRef<View>(null);
   const windowDimensions = useWindowDimensions();
   const previousHotelSearchKey = useRef<string | undefined>(undefined);
   const [currencyState, setCurrencyState] = useState<{ resolution: DisplayCurrencyResolution; rates: ExchangeRates } | null>(null);
@@ -324,6 +331,7 @@ function ResultsScreen({ product }: { product: Product }) {
   }, [flightResults, plan.plan?.key]);
   useEffect(() => () => {
     if (pendingDateStripSelectionTimer.current) clearTimeout(pendingDateStripSelectionTimer.current);
+    if (flightResultsScrollIndicatorTimer.current) clearTimeout(flightResultsScrollIndicatorTimer.current);
   }, []);
   useEffect(() => {
     if (flightResults || !plan.plan?.key) return;
@@ -853,21 +861,28 @@ function ResultsScreen({ product }: { product: Product }) {
   };
   const handleFullFlightFiltersChange = useCallback((next: FlightFilters) => setFilters(next), []);
   const handleQuickFlightFiltersChange = useCallback((next: FlightFilters) => setFilters(next), []);
-  const clearFlightFilters = useCallback(() => setFilters(emptyFlightFilters()), []);
-  const scrollToFlightResultsBeginning = useCallback(() => {
+  const scrollToFlightResultsBeginning = useCallback((animated = true) => {
     requestAnimationFrame(() => {
       try {
-        flightResultsListRef.current?.scrollToLocation({ sectionIndex: 0, itemIndex: 0, viewPosition: 0, animated: true });
+        flightResultsListRef.current?.scrollToLocation({ sectionIndex: 0, itemIndex: 0, viewPosition: 0, animated });
       } catch (error) {
-        if (__DEV__) console.warn("[flight-results:filter-complete-scroll]", error);
+        if (__DEV__) console.warn("[flight-results:scroll-to-start]", error);
         try {
           flightResultsListRef.current?.scrollToLocation({ sectionIndex: 0, itemIndex: 0, viewPosition: 0, animated: false });
         } catch (fallbackError) {
-          if (__DEV__) console.warn("[flight-results:filter-complete-scroll-fallback]", fallbackError);
+          if (__DEV__) console.warn("[flight-results:scroll-to-start-fallback]", fallbackError);
         }
       }
     });
   }, []);
+  const clearFlightFilters = useCallback(() => {
+    setFilters(emptyFlightFilters());
+    scrollToFlightResultsBeginning();
+  }, [scrollToFlightResultsBeginning]);
+  const clearFlightQuickFilterAndReset = useCallback((group: FlightQuickFilterGroup) => {
+    setFilters((current) => clearFlightQuickFilterGroup(current, group));
+    scrollToFlightResultsBeginning();
+  }, [scrollToFlightResultsBeginning]);
   const completeFullFlightFilters = useCallback(() => {
     setFilterOpen(false);
     scrollToFlightResultsBeginning();
@@ -1028,7 +1043,8 @@ function ResultsScreen({ product }: { product: Product }) {
       pendingDateStripSelectionTimer.current = undefined;
     }, 10_000);
     router.setParams({ departureDate: nextDepartureDate, ...(returnDate ? { returnDate } : {}) });
-  }, [flightDate, params, payload.returnDate, payload.tripType]);
+    scrollToFlightResultsBeginning(false);
+  }, [flightDate, params, payload.returnDate, payload.tripType, scrollToFlightResultsBeginning]);
   const flightDateStrip = (
     payload.tripType === "one-way" || payload.tripType === "round-trip" ? <DateStrip
             date={flightDate}
@@ -1044,7 +1060,7 @@ function ResultsScreen({ product }: { product: Product }) {
   const filterRail = (product === "flight" ? (
     <FlightResultsQuickControls
       sort={sort}
-      clearGroup={(group) => setFilters((current) => clearFlightQuickFilterGroup(current, group))}
+      clearGroup={clearFlightQuickFilterAndReset}
       activeFilterCount={activeFilterCount}
       airlineCount={filters.airlines.length}
       airportCount={filters.fromAirports.length + filters.toAirports.length}
@@ -1098,6 +1114,37 @@ function ResultsScreen({ product }: { product: Product }) {
       ) : null}
     </>
   );
+  const updateFlightResultsScrollThumb = useCallback((scrollOffset = flightResultsScrollOffsetRef.current) => {
+    const viewportHeight = flightResultsViewportHeightRef.current;
+    const contentHeight = flightResultsContentHeightRef.current;
+    const trackHeight = Math.max(
+      0,
+      viewportHeight - FLIGHT_RESULTS_SCROLL_INDICATOR_EDGE_INSET - flightResultsScrollIndicatorBottomInset,
+    );
+    const thumbHeight = Math.min(FLIGHT_RESULTS_SCROLL_THUMB_HEIGHT, trackHeight);
+    const maxScroll = Math.max(0, contentHeight - viewportHeight);
+    const thumbTravel = Math.max(0, trackHeight - thumbHeight);
+    const translateY = maxScroll > 0
+      ? Math.min(1, Math.max(0, scrollOffset / maxScroll)) * thumbTravel
+      : 0;
+    flightResultsScrollThumbRef.current?.setNativeProps({
+      style: { height: thumbHeight, transform: [{ translateY }] },
+    });
+    return maxScroll > 0 && thumbHeight > 0;
+  }, [flightResultsScrollIndicatorBottomInset]);
+  const showFlightResultsScrollIndicator = useCallback(() => {
+    if (flightResultsScrollIndicatorTimer.current) clearTimeout(flightResultsScrollIndicatorTimer.current);
+    const scrollable = updateFlightResultsScrollThumb();
+    flightResultsScrollThumbRef.current?.setNativeProps({ style: { opacity: scrollable ? 0.55 : 0 } });
+  }, [updateFlightResultsScrollThumb]);
+  const hideFlightResultsScrollIndicator = useCallback(() => {
+    if (flightResultsScrollIndicatorTimer.current) clearTimeout(flightResultsScrollIndicatorTimer.current);
+    flightResultsScrollIndicatorTimer.current = setTimeout(() => {
+      flightResultsScrollThumbRef.current?.setNativeProps({ style: { opacity: 0 } });
+      flightResultsScrollIndicatorTimer.current = undefined;
+    }, FLIGHT_RESULTS_SCROLL_INDICATOR_IDLE_MS);
+  }, []);
+
   const hotelResultsListData = useMemo<HotelResultsListItem[]>(() => {
     if (product !== "hotel") return [];
     const data: HotelResultsListItem[] = [HOTEL_RESULTS_INTRO_ITEM];
@@ -1125,6 +1172,22 @@ function ResultsScreen({ product }: { product: Product }) {
           ref={flightResultsListRef}
           keyboardShouldPersistTaps="handled"
           style={[s0.resultsScroll, { backgroundColor: flightCanvasColor }]}
+          onLayout={({ nativeEvent }) => {
+            flightResultsViewportHeightRef.current = nativeEvent.layout.height;
+            updateFlightResultsScrollThumb();
+          }}
+          onContentSizeChange={(_width, height) => {
+            flightResultsContentHeightRef.current = height;
+            updateFlightResultsScrollThumb();
+          }}
+          onScroll={({ nativeEvent }) => {
+            flightResultsScrollOffsetRef.current = nativeEvent.contentOffset.y;
+            updateFlightResultsScrollThumb(nativeEvent.contentOffset.y);
+          }}
+          onScrollBeginDrag={showFlightResultsScrollIndicator}
+          onScrollEndDrag={hideFlightResultsScrollIndicator}
+          onMomentumScrollBegin={showFlightResultsScrollIndicator}
+          onMomentumScrollEnd={hideFlightResultsScrollIndicator}
           sections={[{ data: !flightState ? [null, ...(sorted as FlightResult[])] : [] }]}
           keyExtractor={(item, index) => item ? item.id : `flight-results-intro-${index}`}
           renderSectionHeader={() => (
@@ -1169,9 +1232,8 @@ function ResultsScreen({ product }: { product: Product }) {
               </View>
             </>
           ) : null}
-          showsVerticalScrollIndicator={true}
+          showsVerticalScrollIndicator={false}
           automaticallyAdjustsScrollIndicatorInsets={false}
-          scrollIndicatorInsets={flightResultsScrollIndicatorInsets}
           alwaysBounceVertical={false}
           bounces={false}
           overScrollMode="never"
@@ -1185,6 +1247,24 @@ function ResultsScreen({ product }: { product: Product }) {
           updateCellsBatchingPeriod={FLIGHT_RESULT_BATCHING_PERIOD_MS}
           windowSize={FLIGHT_RESULT_WINDOW_SIZE}
         />
+        <View
+          pointerEvents="none"
+          testID="flight-results-scroll-indicator"
+          style={[s0.flightResultsScrollIndicator, { bottom: flightResultsScrollIndicatorBottomInset }]}
+        >
+          <View
+            ref={flightResultsScrollThumbRef}
+            testID="flight-results-scroll-thumb"
+            style={[
+              s0.flightResultsScrollThumb,
+              {
+                height: FLIGHT_RESULTS_SCROLL_THUMB_HEIGHT,
+                backgroundColor: theme.textSecondary,
+                opacity: 0,
+              },
+            ]}
+          />
+        </View>
 
         </View>
       ) : (
@@ -1260,7 +1340,7 @@ function ResultsScreen({ product }: { product: Product }) {
       )}
       {product === "flight" ? (
         <>
-          <FlightSortSheet visible={sortOpen} sort={sort} onApply={(next) => { setSort(next); setSortOpen(false); }} onClose={() => setSortOpen(false)} />
+          <FlightSortSheet visible={sortOpen} sort={sort} onApply={(next) => { setSort(next); setSortOpen(false); scrollToFlightResultsBeginning(); }} onClose={() => setSortOpen(false)} />
           <FlightFilterSheet
             visible={filterOpen}
             section={filterSection}
@@ -1962,7 +2042,9 @@ const s0 = StyleSheet.create({
   hotelResultsListContainer: { flex: 1, overflow: "hidden" },
   flightFilterSectionHeader: { paddingTop: 8, paddingBottom: 8, borderBottomLeftRadius: 28, borderBottomRightRadius: 0, overflow: "hidden", borderBottomWidth: 1 },
   resultsScroll: { flex: 1 },
-  flightResultsListContainer: { flex: 1 },
+  flightResultsListContainer: { flex: 1, position: "relative" },
+  flightResultsScrollIndicator: { position: "absolute", top: FLIGHT_RESULTS_SCROLL_INDICATOR_EDGE_INSET, right: 3, width: 3, zIndex: 20 },
+  flightResultsScrollThumb: { width: 3, borderRadius: 999 },
   flightResultsContent: { flexGrow: 1 },
   route: { fontSize: 20, lineHeight: 25, fontWeight: "900", color: ui.navy },
   sub: { fontSize: 12, color: ui.muted, lineHeight: 17 },

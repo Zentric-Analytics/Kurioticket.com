@@ -1,4 +1,5 @@
 import {
+  AppState,
   Image,
   Pressable,
   ScrollView,
@@ -237,6 +238,9 @@ export function DateStrip({
   const { width: windowWidth } = useWindowDimensions();
   const railRef = useRef<ScrollView>(null);
   const centeredIdentity = useRef<string | undefined>(undefined);
+  const railViewportWidth = useRef(0);
+  const railContentWidth = useRef(0);
+  const railScrollX = useRef(0);
   // Keep three dates fully visible while letting the narrower fourth tile peek into view.
   const flightDateWidth = Math.min(96, Math.max(76, (windowWidth - 43) / 3.65));
   const [visibleStart, setVisibleStart] = useState(() =>
@@ -253,21 +257,56 @@ export function DateStrip({
     : null;
   const moveWindow = (days: number) =>
     setVisibleStart((current) => shiftCalendarDate(current, days));
-  const centerSelectedDate = () => {
-    if (!flightResults || !searchIdentity || centeredIdentity.current === searchIdentity) return;
+  const centerSelectedDate = (forceVisibilityCheck = false) => {
+    if (!flightResults || !searchIdentity) return false;
+    if (!forceVisibilityCheck && centeredIdentity.current === searchIdentity) return true;
     const selectedIndex = visibleDates.indexOf(date);
-    if (selectedIndex < 0) return;
+    const viewportWidth = railViewportWidth.current;
+    const contentWidth = railContentWidth.current;
+    if (selectedIndex < 0 || viewportWidth <= 0 || contentWidth <= 0) return false;
+    const tileStride = flightDateWidth + 8;
+    const selectedLeft = 12 + selectedIndex * tileStride;
+    const selectedRight = selectedLeft + flightDateWidth;
+    const visibleLeft = railScrollX.current;
+    const visibleRight = visibleLeft + viewportWidth;
+    if (forceVisibilityCheck && selectedLeft >= visibleLeft && selectedRight <= visibleRight) {
+      centeredIdentity.current = searchIdentity;
+      return true;
+    }
+    const target = Math.max(
+      0,
+      Math.min(
+        Math.max(0, contentWidth - viewportWidth),
+        selectedLeft - (viewportWidth - flightDateWidth) / 2,
+      ),
+    );
+    railRef.current?.scrollTo({ x: target, animated: false });
+    railScrollX.current = target;
     centeredIdentity.current = searchIdentity;
-    const tileStride = flightDateWidth + 9;
-    railRef.current?.scrollTo({
-      x: Math.max(0, selectedIndex * tileStride - (windowWidth - flightDateWidth) / 2 + 16),
-      animated: false,
-    });
+    return true;
   };
   useEffect(() => {
     if (!flightResults || !searchIdentity) return;
-    const frame = requestAnimationFrame(centerSelectedDate);
-    return () => cancelAnimationFrame(frame);
+    let frame: number | null = null;
+    let attemptsRemaining = 6;
+    const attemptAlignment = () => {
+      if (centerSelectedDate()) return;
+      if (attemptsRemaining <= 0) return;
+      attemptsRemaining -= 1;
+      frame = requestAnimationFrame(attemptAlignment);
+    };
+    attemptAlignment();
+    return () => {
+      if (frame !== null) cancelAnimationFrame(frame);
+    };
+  }, [date, flightResults, searchIdentity, visibleStart, windowWidth]);
+  useEffect(() => {
+    if (!flightResults || !searchIdentity) return;
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state !== "active") return;
+      requestAnimationFrame(() => centerSelectedDate(true));
+    });
+    return () => subscription.remove();
   }, [date, flightResults, searchIdentity, visibleStart, windowWidth]);
 
   return (
@@ -289,7 +328,18 @@ export function DateStrip({
         style={[s.dateRail, flightResults && s.flightDateRail]}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={[s.dates, flightResults && s.flightDates]}
-        onContentSizeChange={centerSelectedDate}
+        onLayout={({ nativeEvent }) => {
+          railViewportWidth.current = nativeEvent.layout.width;
+          requestAnimationFrame(() => centerSelectedDate(true));
+        }}
+        onContentSizeChange={(width) => {
+          railContentWidth.current = width;
+          requestAnimationFrame(() => centerSelectedDate());
+        }}
+        onScroll={({ nativeEvent }) => {
+          railScrollX.current = nativeEvent.contentOffset.x;
+        }}
+        scrollEventThrottle={16}
       >
         {visibleDates.map((iso) => {
           const x = parseCalendarDate(iso);
