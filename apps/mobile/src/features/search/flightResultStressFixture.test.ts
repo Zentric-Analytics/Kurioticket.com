@@ -108,5 +108,6 @@ test("production list keeps virtualization while the custom indicator length sta
   assert.match(screen, /const FLIGHT_RESULTS_SCROLL_THUMB_HEIGHT = 32/);
   assert.match(flightList, /showsVerticalScrollIndicator=\{false\}/);
   assert.match(screen, /testID="flight-results-scroll-thumb"/);
-  assert.doesNotMatch(screen, /flightResultsScrollThumbHeight[\s\S]{0,180}flightResultsContentHeight/);
+  assert.match(screen, /const thumbHeight = Math\.min\(FLIGHT_RESULTS_SCROLL_THUMB_HEIGHT, trackHeight\)/);
+  assert.doesNotMatch(screen, /const \[flightResults(?:ViewportHeight|ContentHeight|ScrollIndicatorVisible)/);
 });
