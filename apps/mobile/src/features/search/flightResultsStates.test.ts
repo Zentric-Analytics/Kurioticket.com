@@ -17,11 +17,11 @@ test("state priority distinguishes async loading, failure, raw empty, filtered e
 test("local sort and filters only derive displayed results and never set request loading", () => {
   const sortedBlock = screen.slice(screen.indexOf("const sorted = useMemo"), screen.indexOf("const flightOptions"));
   const fullFilterChangeBlock = screen.slice(screen.indexOf("const handleFullFlightFiltersChange"), screen.indexOf("const handleQuickFlightFiltersChange"));
-  const quickFilterChangeBlock = screen.slice(screen.indexOf("const handleQuickFlightFiltersChange"), screen.indexOf("const clearFlightFilters"));
+  const quickFilterChangeBlock = screen.slice(screen.indexOf("const handleQuickFlightFiltersChange"), screen.indexOf("const scrollToFlightResultsBeginning"));
   const sortBinding = screen.slice(screen.indexOf("<FlightSortSheet"), screen.indexOf("<FlightFilterSheet"));
   assert.match(sortedBlock, /filterAndSortFlights/);
   assert.doesNotMatch(sortedBlock, /setStatus|setRetry|load\(/);
-  assert.match(sortBinding, /onApply=\{\(next\) => \{ setSort\(next\); setSortOpen\(false\); \}\}/);
+  assert.match(sortBinding, /onApply=\{\(next\) => \{ setSort\(next\); setSortOpen\(false\); scrollToFlightResultsBeginning\(\); \}\}/);
   assert.doesNotMatch(sortBinding, /setFlightPage\(1\)|setStatus|setRetry|load\(/);
   assert.match(screen, /onChange=\{filterSection === "all" \? handleFullFlightFiltersChange : handleQuickFlightFiltersChange\}/);
   assert.match(fullFilterChangeBlock, /setFilters\(next\)/);
@@ -31,7 +31,7 @@ test("local sort and filters only derive displayed results and never set request
 });
 
 test("filtered empty clears only filters while preserving sort and canonical search params", () => {
-  const clearFiltersBlock = screen.slice(screen.indexOf("const clearFlightFilters"), screen.indexOf("const scrollToFlightResultsBeginning"));
+  const clearFiltersBlock = screen.slice(screen.indexOf("const clearFlightFilters"), screen.indexOf("const clearFlightQuickFilterAndReset"));
   assert.match(screen, /onClearFilters=\{clearFlightFilters\}/);
   assert.match(clearFiltersBlock, /setFilters\(emptyFlightFilters\(\)\)/);
   assert.doesNotMatch(clearFiltersBlock, /setSort|router\.|setRetry|setStatus/);
