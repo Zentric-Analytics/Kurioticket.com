@@ -52,7 +52,7 @@ test("normal SVG and raster logos retain their native render paths and fallback"
 
 test("Flight Result structure and SectionList controls remain intact", () => {
   const header = screen.slice(screen.indexOf("function FlightResultsHeader"), screen.indexOf("function HotelResultsHeader"));
-  const list = screen.slice(screen.indexOf("<Animated.SectionList"), screen.indexOf(") : (", screen.indexOf("<Animated.SectionList")));
+  const list = screen.slice(screen.indexOf("<Animated.SectionList"), screen.indexOf('testID="flight-results-scroll-indicator"', screen.indexOf("<Animated.SectionList")));
   assert.match(screen, /function FlightCard/);
   assert.match(screen, /<Animated\.SectionList/);
   assert.match(header, /accessibilityLabel="Flight result filters"[\s\S]*?\{filterRail\}/);
