@@ -289,11 +289,11 @@ function ResultsScreen({ product }: { product: Product }) {
   const hotelFilterSessionDirtyRef = useRef(false);
   const hotelResultsListRef = useRef<SectionList<HotelResultsListItem>>(null);
   const flightResultsListRef = useRef<SectionList<FlightResult | null>>(null);
-  const flightResultsScrollY = useRef(new Animated.Value(0)).current;
   const flightResultsScrollIndicatorTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const [flightResultsViewportHeight, setFlightResultsViewportHeight] = useState(0);
-  const [flightResultsContentHeight, setFlightResultsContentHeight] = useState(0);
-  const [flightResultsScrollIndicatorVisible, setFlightResultsScrollIndicatorVisible] = useState(false);
+  const flightResultsViewportHeightRef = useRef(0);
+  const flightResultsContentHeightRef = useRef(0);
+  const flightResultsScrollOffsetRef = useRef(0);
+  const flightResultsScrollThumbRef = useRef<View>(null);
   const windowDimensions = useWindowDimensions();
   const previousHotelSearchKey = useRef<string | undefined>(undefined);
   const [currencyState, setCurrencyState] = useState<{ resolution: DisplayCurrencyResolution; rates: ExchangeRates } | null>(null);
@@ -1114,26 +1114,33 @@ function ResultsScreen({ product }: { product: Product }) {
       ) : null}
     </>
   );
-  const flightResultsScrollTrackHeight = Math.max(
-    0,
-    flightResultsViewportHeight - FLIGHT_RESULTS_SCROLL_INDICATOR_EDGE_INSET - flightResultsScrollIndicatorBottomInset,
-  );
-  const flightResultsMaxScroll = Math.max(0, flightResultsContentHeight - flightResultsViewportHeight);
-  const flightResultsScrollThumbHeight = Math.min(FLIGHT_RESULTS_SCROLL_THUMB_HEIGHT, flightResultsScrollTrackHeight);
-  const flightResultsScrollThumbTravel = Math.max(0, flightResultsScrollTrackHeight - flightResultsScrollThumbHeight);
-  const flightResultsScrollThumbTranslateY = flightResultsScrollY.interpolate({
-    inputRange: [0, Math.max(1, flightResultsMaxScroll)],
-    outputRange: [0, flightResultsScrollThumbTravel],
-    extrapolate: "clamp",
-  });
+  const updateFlightResultsScrollThumb = useCallback((scrollOffset = flightResultsScrollOffsetRef.current) => {
+    const viewportHeight = flightResultsViewportHeightRef.current;
+    const contentHeight = flightResultsContentHeightRef.current;
+    const trackHeight = Math.max(
+      0,
+      viewportHeight - FLIGHT_RESULTS_SCROLL_INDICATOR_EDGE_INSET - flightResultsScrollIndicatorBottomInset,
+    );
+    const thumbHeight = Math.min(FLIGHT_RESULTS_SCROLL_THUMB_HEIGHT, trackHeight);
+    const maxScroll = Math.max(0, contentHeight - viewportHeight);
+    const thumbTravel = Math.max(0, trackHeight - thumbHeight);
+    const translateY = maxScroll > 0
+      ? Math.min(1, Math.max(0, scrollOffset / maxScroll)) * thumbTravel
+      : 0;
+    flightResultsScrollThumbRef.current?.setNativeProps({
+      style: { height: thumbHeight, transform: [{ translateY }] },
+    });
+    return maxScroll > 0 && thumbHeight > 0;
+  }, [flightResultsScrollIndicatorBottomInset]);
   const showFlightResultsScrollIndicator = useCallback(() => {
     if (flightResultsScrollIndicatorTimer.current) clearTimeout(flightResultsScrollIndicatorTimer.current);
-    setFlightResultsScrollIndicatorVisible(true);
-  }, []);
+    const scrollable = updateFlightResultsScrollThumb();
+    flightResultsScrollThumbRef.current?.setNativeProps({ style: { opacity: scrollable ? 0.55 : 0 } });
+  }, [updateFlightResultsScrollThumb]);
   const hideFlightResultsScrollIndicator = useCallback(() => {
     if (flightResultsScrollIndicatorTimer.current) clearTimeout(flightResultsScrollIndicatorTimer.current);
     flightResultsScrollIndicatorTimer.current = setTimeout(() => {
-      setFlightResultsScrollIndicatorVisible(false);
+      flightResultsScrollThumbRef.current?.setNativeProps({ style: { opacity: 0 } });
       flightResultsScrollIndicatorTimer.current = undefined;
     }, FLIGHT_RESULTS_SCROLL_INDICATOR_IDLE_MS);
   }, []);
@@ -1165,12 +1172,18 @@ function ResultsScreen({ product }: { product: Product }) {
           ref={flightResultsListRef}
           keyboardShouldPersistTaps="handled"
           style={[s0.resultsScroll, { backgroundColor: flightCanvasColor }]}
-          onLayout={({ nativeEvent }) => setFlightResultsViewportHeight(nativeEvent.layout.height)}
-          onContentSizeChange={(_width, height) => setFlightResultsContentHeight(height)}
-          onScroll={Animated.event(
-            [{ nativeEvent: { contentOffset: { y: flightResultsScrollY } } }],
-            { useNativeDriver: true },
-          )}
+          onLayout={({ nativeEvent }) => {
+            flightResultsViewportHeightRef.current = nativeEvent.layout.height;
+            updateFlightResultsScrollThumb();
+          }}
+          onContentSizeChange={(_width, height) => {
+            flightResultsContentHeightRef.current = height;
+            updateFlightResultsScrollThumb();
+          }}
+          onScroll={({ nativeEvent }) => {
+            flightResultsScrollOffsetRef.current = nativeEvent.contentOffset.y;
+            updateFlightResultsScrollThumb(nativeEvent.contentOffset.y);
+          }}
           onScrollBeginDrag={showFlightResultsScrollIndicator}
           onScrollEndDrag={hideFlightResultsScrollIndicator}
           onMomentumScrollBegin={showFlightResultsScrollIndicator}
@@ -1234,26 +1247,24 @@ function ResultsScreen({ product }: { product: Product }) {
           updateCellsBatchingPeriod={FLIGHT_RESULT_BATCHING_PERIOD_MS}
           windowSize={FLIGHT_RESULT_WINDOW_SIZE}
         />
-        {flightResultsMaxScroll > 0 && flightResultsScrollThumbHeight > 0 ? (
+        <View
+          pointerEvents="none"
+          testID="flight-results-scroll-indicator"
+          style={[s0.flightResultsScrollIndicator, { bottom: flightResultsScrollIndicatorBottomInset }]}
+        >
           <View
-            pointerEvents="none"
-            testID="flight-results-scroll-indicator"
-            style={[s0.flightResultsScrollIndicator, { bottom: flightResultsScrollIndicatorBottomInset }]}
-          >
-            <Animated.View
-              testID="flight-results-scroll-thumb"
-              style={[
-                s0.flightResultsScrollThumb,
-                {
-                  height: flightResultsScrollThumbHeight,
-                  backgroundColor: theme.textSecondary,
-                  opacity: flightResultsScrollIndicatorVisible ? 0.55 : 0,
-                  transform: [{ translateY: flightResultsScrollThumbTranslateY }],
-                },
-              ]}
-            />
-          </View>
-        ) : null}
+            ref={flightResultsScrollThumbRef}
+            testID="flight-results-scroll-thumb"
+            style={[
+              s0.flightResultsScrollThumb,
+              {
+                height: FLIGHT_RESULTS_SCROLL_THUMB_HEIGHT,
+                backgroundColor: theme.textSecondary,
+                opacity: 0,
+              },
+            ]}
+          />
+        </View>
 
         </View>
       ) : (
