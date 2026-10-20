@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState, useTransition, type SetStateAction } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState, useTransition, type ReactNode, type SetStateAction } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -1164,6 +1164,7 @@ function ResultsScreen({ product }: { product: Product }) {
           secondaryLine={flightSummary.secondaryLine}
           onEdit={edit}
           backgroundColor={theme.dark ? flightCanvasColor : flightResultsColors.surface}
+          filterRail={filterRail}
         />
       ) : null}
       {product === "flight" ? (
@@ -1190,14 +1191,6 @@ function ResultsScreen({ product }: { product: Product }) {
           onMomentumScrollEnd={hideFlightResultsScrollIndicator}
           sections={[{ data: !flightState ? [null, ...(sorted as FlightResult[])] : [] }]}
           keyExtractor={(item, index) => item ? item.id : `flight-results-intro-${index}`}
-          renderSectionHeader={() => (
-            <View
-              style={[s0.flightFilterSectionHeader, { backgroundColor: theme.dark ? flightCanvasColor : flightResultsColors.surface, borderBottomColor: theme.dark ? theme.border : "#D8E1EC" }]}
-            >
-              {filterRail}
-            </View>
-          )}
-          stickySectionHeadersEnabled
           renderItem={({ item, index }) => item === null ? (
             <View style={[s0.flightResultsIntro, { backgroundColor: flightCanvasColor }]}>
               {flightDateStrip}
@@ -1389,27 +1382,31 @@ function FlightResultsHeader({
   secondaryLine,
   onEdit,
   backgroundColor,
+  filterRail,
 }: {
   route: string;
   secondaryLine: string;
   onEdit: () => void;
   backgroundColor: string;
+  filterRail: ReactNode;
 }) {
   const { theme } = useAppTheme();
   const insets = useSafeAreaInsets();
   return (
     <View
       accessibilityLabel="Flight search summary"
-      style={[
-        s0.flightHeader,
-        {
-          backgroundColor,
-          paddingLeft: Math.max(insets.left + 6, 6),
-          paddingRight: Math.max(insets.right + 10, 10),
-        },
-      ]}
+      style={[s0.flightHeader, { backgroundColor }]}
     >
-      <View accessibilityLabel="Flight route controls" style={s0.flightHeaderMainRow}>
+      <View
+        accessibilityLabel="Flight route controls"
+        style={[
+          s0.flightHeaderMainRow,
+          {
+            paddingLeft: Math.max(insets.left + 6, 6),
+            paddingRight: Math.max(insets.right + 10, 10),
+          },
+        ]}
+      >
         <View style={s0.flightHeaderSide}>
           <Pressable
             accessibilityRole="button"
@@ -1437,6 +1434,15 @@ function FlightResultsHeader({
           <View style={s0.flightRouteSummaryCopy}><Text numberOfLines={1} style={[s0.flightRouteSummaryText, { color: theme.textPrimary }]}>{route}</Text><Text numberOfLines={1} ellipsizeMode="tail" style={[s0.flightRouteSummarySecondary, { color: theme.dark ? theme.textSecondary : flightResultsColors.headerSecondary }]}>{secondaryLine}</Text></View>
           <View accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={s0.flightRouteSummaryEdit}><DetailGlassSurface dark={false} variant="hotelLight" style={s0.flightRouteSummaryEditGlass} /><SquarePen size={16} strokeWidth={2.2} color="#0F172A" /></View>
         </Pressable>
+      </View>
+      <View
+        accessibilityLabel="Flight result filters"
+        style={[
+          s0.flightHeaderFilterRail,
+          { borderBottomColor: theme.dark ? theme.border : "#D8E1EC" },
+        ]}
+      >
+        {filterRail}
       </View>
     </View>
   );
@@ -2009,8 +2015,9 @@ export function BottomNav({ flightResults = false }: { flightResults?: boolean }
 }
 const s0 = StyleSheet.create({
   safe: { flex: 1, backgroundColor: "white" },
-  flightHeader: { paddingTop: 12, paddingBottom: 8 },
-  flightHeaderMainRow: { width: "100%", flexDirection: "row", alignItems: "center", gap: 6 },
+  flightHeader: { paddingTop: 12 },
+  flightHeaderMainRow: { width: "100%", flexDirection: "row", alignItems: "center", gap: 6, paddingBottom: 8 },
+  flightHeaderFilterRail: { paddingTop: 8, paddingBottom: 8, borderBottomWidth: 1 },
   flightHeaderSide: { width: 44, flexShrink: 0 },
   flightHeaderBack: { width: 44, height: 44, alignItems: "center", justifyContent: "center", shadowColor: "#0F172A", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.12, shadowRadius: 6, elevation: 6 },
   flightHeaderBackGlass: { position: "absolute", left: 2, right: 2, top: 2, bottom: 2, borderRadius: 20 },
@@ -2040,7 +2047,6 @@ const s0 = StyleSheet.create({
   hotelFilterContent: { paddingLeft: 12, paddingRight: 16, gap: 6, alignItems: "center", flexWrap: "nowrap" },
   hotelFilterSectionHeader: { paddingBottom: 12 },
   hotelResultsListContainer: { flex: 1, overflow: "hidden" },
-  flightFilterSectionHeader: { paddingTop: 8, paddingBottom: 8, borderBottomLeftRadius: 28, borderBottomRightRadius: 0, overflow: "hidden", borderBottomWidth: 1 },
   resultsScroll: { flex: 1 },
   flightResultsListContainer: { flex: 1, position: "relative" },
   flightResultsScrollIndicator: { position: "absolute", top: FLIGHT_RESULTS_SCROLL_INDICATOR_EDGE_INSET, right: 3, width: 3, zIndex: 20 },

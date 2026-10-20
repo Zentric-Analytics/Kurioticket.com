@@ -29,12 +29,14 @@ test("results become ready without an artificial presentation delay", () => {
   assert.doesNotMatch(validationToReady, /setTimeout|sleep|minimum|waitForAnimation/);
 });
 
-test("ready Flight content retains dates, sticky filters, alert, count and cards", () => {
+test("ready Flight content retains header filters, dates, alert, count and cards", () => {
+  const header = screen.slice(screen.indexOf("function FlightResultsHeader"), screen.indexOf("function HotelResultsHeader"));
   const listStart = screen.indexOf("<Animated.SectionList");
   const list = screen.slice(listStart, screen.indexOf("<HotelResultsHeader", listStart));
+  assert.match(header, /accessibilityLabel="Flight result filters"[\s\S]*?\{filterRail\}/);
   assert.match(list, /sections=\{\[\{ data: !flightState \? \[null, \.\.\.\(sorted as FlightResult\[\]\)\] : \[\] \}\]\}/);
   assert.match(list, /flightResultsIntro[\s\S]*?\{flightDateStrip\}/);
-  assert.match(list, /renderSectionHeader[\s\S]*?\{filterRail\}[\s\S]*?stickySectionHeadersEnabled/);
+  assert.doesNotMatch(list, /renderSectionHeader|stickySectionHeadersEnabled|\{filterRail\}/);
   assert.match(list, /renderItem=\{\(\{ item, index \}\) => item === null \? \([\s\S]*?<FlightPriceAlert[\s\S]*?<FlightResultsSummaryRow count=\{sorted\.length\} \/>[\s\S]*?\) : \([\s\S]*?<FlightCard/);
   assert.match(list, /logInitialMount=\{index === 1\}/);
 });

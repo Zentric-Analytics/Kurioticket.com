@@ -4,10 +4,13 @@ import test from "node:test";
 import * as filters from "./flightFilters";
 const read = (name: string) => readFileSync(`src/features/search/${name}`, "utf8");
 const screen = read("ApprovedResultsScreen.tsx"), controls = read("FlightResultsQuickControls.tsx"), shell = read("FlightResultsSheetShell.tsx"), filter = read("FlightFilterSheet.tsx"), dates = read("SearchUi.tsx");
-test("one sticky rail precedes dates, Track Price, summary and virtualized cards", () => {
+test("one header-owned rail precedes dates, Track Price, summary and virtualized cards", () => {
+ const header=screen.slice(screen.indexOf("function FlightResultsHeader"),screen.indexOf("function HotelResultsHeader"));
  const list=screen.slice(screen.indexOf("<Animated.SectionList"),screen.indexOf("<HotelResultsHeader",screen.indexOf("<Animated.SectionList")));
  assert.doesNotMatch(list,/ListHeaderComponent=\{flightDateStrip\}/);
- assert.match(list,/renderSectionHeader[\s\S]*\{filterRail\}[\s\S]*stickySectionHeadersEnabled/);
+ assert.match(header,/accessibilityLabel="Flight result filters"[\s\S]*\{filterRail\}/);
+ assert.match(screen,/<FlightResultsHeader[\s\S]*filterRail=\{filterRail\}/);
+ assert.doesNotMatch(list,/renderSectionHeader|stickySectionHeadersEnabled|\{filterRail\}/);
  assert.match(list,/flightResultsIntro[\s\S]*\{flightDateStrip\}[\s\S]*PriceAlert[\s\S]*FlightResultsSummaryRow[\s\S]*FlightCard/);
  assert.equal(screen.match(/<FlightResultsQuickControls/g)?.length,1);
  assert.doesNotMatch(screen,/Back.to.top|ArrowUp|scrollToTop/);
@@ -51,17 +54,17 @@ test("scoped palette does not migrate unrelated global native tokens",()=>{
  const theme=readFileSync("src/theme/AppTheme.tsx","utf8");assert.match(theme,/background: "#FAFBFF"/);assert.match(theme,/priceAlertSurface: "#EDF6FF"/);
 });
 
-test("terminal Results states retain dates below the sticky rail", () => {
+test("terminal Results states retain dates below the header-owned filter rail", () => {
  const footer = screen.slice(screen.indexOf("ListFooterComponent={terminalFlightState"), screen.indexOf("showsVerticalScrollIndicator={true}", screen.indexOf("ListFooterComponent={terminalFlightState")));
  assert.match(footer, /\{flightDateStrip\}[\s\S]*<FlightResultsState/);
 });
 
-test("light Flight Results keeps safe area, header, and sticky filters white above the tinted Results canvas", () => {
+test("light Flight Results keeps safe area and one white header surface above the tinted Results canvas", () => {
  const header = screen.slice(screen.indexOf("function FlightResultsHeader"), screen.indexOf("function HotelResultsHeader"));
  const list = screen.slice(screen.indexOf("<Animated.SectionList"), screen.indexOf("<HotelResultsHeader", screen.indexOf("<Animated.SectionList")));
  assert.match(screen, /<SafeAreaView style=\{\[s0\.safe, \{ backgroundColor: flightResults \? \(theme\.dark \? flightCanvasColor : flightResultsColors\.surface\) : hotelCanvasColor \}\]\}/);
- assert.match(screen, /<FlightResultsHeader[\s\S]*?backgroundColor=\{theme\.dark \? flightCanvasColor : flightResultsColors\.surface\}/);
- assert.match(list, /s0\.flightFilterSectionHeader, \{ backgroundColor: theme\.dark \? flightCanvasColor : flightResultsColors\.surface, borderBottomColor: theme\.dark \? theme\.border : "#D8E1EC" \}/);
+ assert.match(screen, /<FlightResultsHeader[\s\S]*?backgroundColor=\{theme\.dark \? flightCanvasColor : flightResultsColors\.surface\}[\s\S]*?filterRail=\{filterRail\}/);
+ assert.match(header, /s0\.flightHeaderFilterRail[\s\S]*borderBottomColor: theme\.dark \? theme\.border : "#D8E1EC"/);
  assert.match(header, /backgroundColor: theme\.dark \? theme\.surface : flightResultsColors\.canvas/);
  assert.match(list, /s0\.flightResultsIntro, \{ backgroundColor: flightCanvasColor \}/);
 });
@@ -77,14 +80,12 @@ test("date selection and journey label use their exact mobile Results accent rol
  assert.match(screen, /s0\.journeyLabel, \{ color: theme\.dark \? "#8FB5FF" : flightResultsColors\.journeyLabel \}/);
 });
 
-test("Flight filter rail finishes with the curved left edge and compact white breathing room", () => {
- assert.match(
-  screen,
-  /flightFilterSectionHeader: \{ paddingTop: 8, paddingBottom: 8, borderBottomLeftRadius: 28, borderBottomRightRadius: 0, overflow: "hidden", borderBottomWidth: 1 \}/,
- );
- assert.match(
-  screen,
-  /s0\.flightFilterSectionHeader, \{ backgroundColor: theme\.dark \? flightCanvasColor : flightResultsColors\.surface, borderBottomColor: theme\.dark \? theme\.border : "#D8E1EC" \}/,
- );
+test("Flight filter rail keeps its full size while joining the header surface", () => {
+ assert.match(screen,/flightHeaderFilterRail: \{ paddingTop: 8, paddingBottom: 8, borderBottomWidth: 1 \}/);
+ assert.match(screen,/flightHeaderMainRow: \{[^\n]*paddingBottom: 8 \}/);
+ assert.doesNotMatch(screen,/flightFilterSectionHeader|borderBottomLeftRadius: 28/);
+ assert.match(screen,/accessibilityLabel="Flight result filters"[\s\S]*s0\.flightHeaderFilterRail[\s\S]*\{filterRail\}/);
+ assert.match(controls,/rail: \{ height: 44/);
+ assert.match(controls,/capsule: \{ height: 36/);
 });
 

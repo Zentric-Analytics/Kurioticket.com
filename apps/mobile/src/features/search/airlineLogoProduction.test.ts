@@ -51,12 +51,14 @@ test("normal SVG and raster logos retain their native render paths and fallback"
 });
 
 test("Flight Result structure and SectionList controls remain intact", () => {
+  const header = screen.slice(screen.indexOf("function FlightResultsHeader"), screen.indexOf("function HotelResultsHeader"));
+  const list = screen.slice(screen.indexOf("<Animated.SectionList"), screen.indexOf('testID="flight-results-scroll-indicator"', screen.indexOf("<Animated.SectionList")));
   assert.match(screen, /function FlightCard/);
   assert.match(screen, /<Animated\.SectionList/);
-  assert.match(screen, /<Animated\.SectionList[\s\S]*?renderSectionHeader[\s\S]*?\{filterRail\}/);
+  assert.match(header, /accessibilityLabel="Flight result filters"[\s\S]*?\{filterRail\}/);
   assert.match(screen, /if \(status === "loading" \|\| hotelCurrencyPending\) return <NativeBrandedSearchLoading product=\{product\}/);
-  assert.match(screen, /<Animated\.SectionList[\s\S]*?renderSectionHeader[\s\S]*?renderItem[\s\S]*?<FlightResultsSummaryRow[\s\S]*?<FlightCard/);
-  assert.match(screen, /renderSectionHeader[\s\S]*?stickySectionHeadersEnabled/);
+  assert.match(list, /renderItem[\s\S]*?<FlightResultsSummaryRow[\s\S]*?<FlightCard/);
+  assert.doesNotMatch(list, /renderSectionHeader|stickySectionHeadersEnabled|\{filterRail\}/);
   assert.match(screen, /<FlightPriceAlert/);
   assert.match(screen, /<FlightSortSheet/);
   assert.match(screen, /<FlightFilterSheet/);

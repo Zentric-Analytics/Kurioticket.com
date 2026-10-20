@@ -40,20 +40,22 @@ test("major vertical screens disable iOS bounce and Android overscroll", () => {
   for (const [path, owner] of screens) assertStableOwner(read(path), owner);
 });
 
-test("flight results naturally scroll the date strip while keeping native sticky filters", () => {
+test("flight results naturally scroll the date strip beneath header-owned filters", () => {
   const source = read("src/features/search/ApprovedResultsScreen.tsx");
+  const header = source.slice(source.indexOf("function FlightResultsHeader"), source.indexOf("function HotelResultsHeader"));
   const listStart = source.indexOf("<Animated.SectionList");
   const owner = source.slice(listStart, source.indexOf("/>", source.indexOf("windowSize", listStart)) + 2);
   for (const prop of verticalStableProps) assert.match(owner, prop);
   assert.match(source, /if \(status === "loading" \|\| hotelCurrencyPending\) return <NativeBrandedSearchLoading product=\{product\}/);
   assert.match(owner, /flightResultsIntro[\s\S]*?\{flightDateStrip\}/);
-  assert.match(owner, /renderSectionHeader[\s\S]*?\{filterRail\}[\s\S]*?stickySectionHeadersEnabled/);
+  assert.match(header, /accessibilityLabel="Flight result filters"[\s\S]*?\{filterRail\}/);
+  assert.doesNotMatch(owner, /renderSectionHeader|stickySectionHeadersEnabled|\{filterRail\}/);
   assert.doesNotMatch(owner, /flightPagination/);
   assert.match(owner, /onScrollEndDrag=\{hideFlightResultsScrollIndicator\}/);
   assert.match(owner, /onMomentumScrollEnd=\{hideFlightResultsScrollIndicator\}/);
   assert.doesNotMatch(owner, /setFlightResults[A-Z][A-Za-z]*\(/);
   assert.doesNotMatch(source, /dateHeaderCollapsed|flightDateStripOpacity|flightDateStripHeaderHeight|flightDateStripScrollY/);
-  assert.match(source, /const filterRail = \([\s\S]*?<ScrollView\s+horizontal/);
+  assert.match(source, /const filterRail = \([\s\S]*?<FlightResultsQuickControls/);
 });
 
 test("hotel results use one stable native scroll owner without native Back to top", () => {
