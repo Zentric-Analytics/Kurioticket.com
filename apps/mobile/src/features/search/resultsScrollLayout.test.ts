@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";import{readFileSync}from"node:fs";import test from"node:test";
 const s=readFileSync("src/features/search/ApprovedResultsScreen.tsx","utf8");
-test("Flight dates scroll naturally beneath the sticky rail",()=>{assert.match(s,/renderSectionHeader[\s\S]*\{filterRail\}[\s\S]*stickySectionHeadersEnabled/);});
+test("Flight dates scroll naturally beneath the header-owned rail",()=>{const h=s.slice(s.indexOf("function FlightResultsHeader"),s.indexOf("function HotelResultsHeader"));const l=s.slice(s.indexOf("<Animated.SectionList"),s.indexOf(") : (",s.indexOf("<Animated.SectionList")));assert.match(h,/accessibilityLabel="Flight result filters"[\s\S]*\{filterRail\}/);assert.doesNotMatch(l,/renderSectionHeader|stickySectionHeadersEnabled|\{filterRail\}/);});
 test("Track Price and count are ordinary virtualized list content",()=>{const x=s.slice(s.indexOf("renderItem={({ item, index })"),s.indexOf("ListEmptyComponent"));assert.match(x,/flightResultsIntro[\s\S]*PriceAlert[\s\S]*FlightResultsSummaryRow[\s\S]*FlightCard/);});
 test("Flight list clears the native safe area",()=>assert.match(s,/s0\.flightResultsContent,[\s\S]*paddingBottom: Math\.max\(insets\.bottom \+ 16, 16\)/));
 test("date changes reset the native Results list to its beginning like mobile web navigation",()=>{
