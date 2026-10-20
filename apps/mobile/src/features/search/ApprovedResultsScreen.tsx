@@ -248,9 +248,7 @@ function ResultsScreen({ product }: { product: Product }) {
   const insets = useSafeAreaInsets();
   const flightResults = product === "flight";
   const flightCanvasColor = theme.dark ? theme.background : flightResultsLightCanvas;
-  const flightResultsScrollIndicatorInsets = Platform.OS === "ios"
-    ? { top: 4, right: 3, bottom: Math.max(insets.bottom, 8), left: 0 }
-    : undefined;
+  const flightResultsScrollIndicatorBottomInset = Math.max(insets.bottom, FLIGHT_RESULTS_SCROLL_INDICATOR_EDGE_INSET);
   const hotelCanvasColor = theme.dark ? theme.background : flightResultsLightCanvas;
   const { availability } = useFeatureAvailability();
   const params = useLocalSearchParams<Record<string, string | string[]>>();
@@ -1116,7 +1114,10 @@ function ResultsScreen({ product }: { product: Product }) {
       ) : null}
     </>
   );
-  const flightResultsScrollTrackHeight = Math.max(0, flightResultsViewportHeight - FLIGHT_RESULTS_SCROLL_INDICATOR_EDGE_INSET * 2);
+  const flightResultsScrollTrackHeight = Math.max(
+    0,
+    flightResultsViewportHeight - FLIGHT_RESULTS_SCROLL_INDICATOR_EDGE_INSET - flightResultsScrollIndicatorBottomInset,
+  );
   const flightResultsMaxScroll = Math.max(0, flightResultsContentHeight - flightResultsViewportHeight);
   const flightResultsScrollThumbHeight = Math.min(FLIGHT_RESULTS_SCROLL_THUMB_HEIGHT, flightResultsScrollTrackHeight);
   const flightResultsScrollThumbTravel = Math.max(0, flightResultsScrollTrackHeight - flightResultsScrollThumbHeight);
@@ -1237,7 +1238,7 @@ function ResultsScreen({ product }: { product: Product }) {
           <View
             pointerEvents="none"
             testID="flight-results-scroll-indicator"
-            style={s0.flightResultsScrollIndicator}
+            style={[s0.flightResultsScrollIndicator, { bottom: flightResultsScrollIndicatorBottomInset }]}
           >
             <Animated.View
               testID="flight-results-scroll-thumb"
@@ -2031,7 +2032,7 @@ const s0 = StyleSheet.create({
   flightFilterSectionHeader: { paddingTop: 8, paddingBottom: 8, borderBottomLeftRadius: 28, borderBottomRightRadius: 0, overflow: "hidden", borderBottomWidth: 1 },
   resultsScroll: { flex: 1 },
   flightResultsListContainer: { flex: 1, position: "relative" },
-  flightResultsScrollIndicator: { position: "absolute", top: FLIGHT_RESULTS_SCROLL_INDICATOR_EDGE_INSET, right: 3, bottom: FLIGHT_RESULTS_SCROLL_INDICATOR_EDGE_INSET, width: 3, zIndex: 20 },
+  flightResultsScrollIndicator: { position: "absolute", top: FLIGHT_RESULTS_SCROLL_INDICATOR_EDGE_INSET, right: 3, width: 3, zIndex: 20 },
   flightResultsScrollThumb: { width: 3, borderRadius: 999 },
   flightResultsContent: { flexGrow: 1 },
   route: { fontSize: 20, lineHeight: 25, fontWeight: "900", color: ui.navy },
