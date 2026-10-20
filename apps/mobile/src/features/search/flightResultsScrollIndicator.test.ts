@@ -29,7 +29,7 @@ test("Flight Results custom indicator length never depends on virtualized conten
   assert.match(updater, /const maxScroll = Math\.max\(0, contentHeight - viewportHeight\)/);
   assert.match(updater, /scrollOffset \/ maxScroll/);
   assert.match(updater, /setNativeProps\(\{[\s\S]*height: thumbHeight,[\s\S]*translateY/);
-  assert.doesNotMatch(updater, /set[A-Z][A-Za-z]*\(/);
+  assert.doesNotMatch(updater, /setFlightResults[A-Z][A-Za-z]*\(/);
   assert.doesNotMatch(screen, /const \[flightResults(?:ViewportHeight|ContentHeight|ScrollIndicatorVisible)/);
 });
 
@@ -60,5 +60,5 @@ test("Flight Results settles a representative virtualized window before traversa
 test("Flight Results keeps virtualization and no scroll-driven React state updates", () => {
   assert.doesNotMatch(list, /disableVirtualization|getItemLayout/);
   assert.doesNotMatch(screen, /getItemLayout=/);
-  assert.doesNotMatch(list, /set[A-Z][A-Za-z]*\(/);
+  assert.doesNotMatch(list, /setFlightResults[A-Z][A-Za-z]*\(/);
 });
