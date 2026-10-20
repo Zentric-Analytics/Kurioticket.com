@@ -25,12 +25,14 @@ test("rail and result cards use a shared 12px inset with compact accessible cont
 test("full Filter launcher keeps its text, icon and accessible open action",()=>{
  assert.match(controls,/<SlidersHorizontal accessible=\{false\}/);assert.match(controls,/filterIcon \? <SlidersHorizontal[\s\S]*<Text numberOfLines=\{1\}[^>]*>\{label\}<\/Text>/);assert.match(controls,/label=\{copy\.filters\}/);assert.match(controls,/!filterIcon \? <ChevronDown/);assert.match(controls,/onPress=\{\(\) => openSheet\("all"\)\}/);
 });
-test("one sticky filter rail precedes naturally scrolling date content",()=>{
- assert.doesNotMatch(screen,/ListHeaderComponent=\{flightDateStrip\}/);assert.match(screen,/renderSectionHeader=\{\(\) => \([\s\S]*?\{filterRail\}/);assert.match(screen,/stickySectionHeadersEnabled/);assert.match(screen,/flightResultsIntro[\s\S]*\{flightDateStrip\}/);
+test("one header-owned filter rail precedes naturally scrolling date content",()=>{
+ const header=screen.slice(screen.indexOf("function FlightResultsHeader"),screen.indexOf("function HotelResultsHeader"));
+ const list=screen.slice(screen.indexOf("<Animated.SectionList"),screen.indexOf(") : (",screen.indexOf("<Animated.SectionList")));
+ assert.doesNotMatch(screen,/ListHeaderComponent=\{flightDateStrip\}/);assert.match(header,/accessibilityLabel="Flight result filters"[\s\S]*?\{filterRail\}/);assert.doesNotMatch(list,/renderSectionHeader|stickySectionHeadersEnabled|\{filterRail\}/);assert.match(screen,/flightResultsIntro[\s\S]*\{flightDateStrip\}/);
 });
-test("native sticky layout owns one rail without the Android pinned-copy workaround",()=>{
- assert.equal(screen.match(/<FlightResultsQuickControls/g)?.length,1);assert.doesNotMatch(screen,/flightFilterAnchor|flightScrollOffset|flightRailHorizontalOffset|inlineFlightRailRef|pinnedFlightRailRef|flightRailPinned|shouldPinFlightQuickControls|flightPinnedFilterRail/);assert.doesNotMatch(screen,/stickySectionHeadersEnabled=/);
- const list=screen.slice(screen.indexOf("<Animated.SectionList"),screen.indexOf(") : (",screen.indexOf("<Animated.SectionList")));assert.doesNotMatch(list,/pointerEvents=|importantForAccessibility=|accessibilityElementsHidden=/);
+test("native header owns one rail without a pinned-copy workaround",()=>{
+ assert.equal(screen.match(/<FlightResultsQuickControls/g)?.length,1);assert.doesNotMatch(screen,/flightFilterAnchor|flightScrollOffset|flightRailHorizontalOffset|inlineFlightRailRef|pinnedFlightRailRef|flightRailPinned|shouldPinFlightQuickControls|flightPinnedFilterRail|stickySectionHeadersEnabled/);
+ const list=screen.slice(screen.indexOf("<Animated.SectionList"),screen.indexOf(") : (",screen.indexOf("<Animated.SectionList")));assert.doesNotMatch(list,/pointerEvents=|importantForAccessibility=|accessibilityElementsHidden=|renderSectionHeader/);
 });
 test("Android main and clear controls use non-responder tap-versus-drag observation",()=>{
  const action=controls.slice(controls.indexOf("function RailAction"),controls.indexOf("function Control"));assert.match(action,/if \(Platform.OS === "android"\)[\s\S]*onTouchStart=[\s\S]*onTouchMove=[\s\S]*onTouchCancel=[\s\S]*onTouchEnd=/);
