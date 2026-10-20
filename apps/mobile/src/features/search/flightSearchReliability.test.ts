@@ -72,13 +72,15 @@ test("slow flight diagnostics measure processing and event-loop responsiveness",
   assert.match(screen, /\[flight-search:event-loop\]/);
 });
 
-test("flight results virtualize cards, keep controls persistent, and do not own saved-flight state", () => {
+test("flight results virtualize cards, keep header controls persistent, and do not own saved-flight state", () => {
   const card = screen.slice(screen.indexOf("function FlightCard"), screen.indexOf("function FlightJourneyRow"));
+  const header = screen.slice(screen.indexOf("function FlightResultsHeader"), screen.indexOf("function HotelResultsHeader"));
+  const list = screen.slice(screen.indexOf("<Animated.SectionList"), screen.indexOf(") : (", screen.indexOf("<Animated.SectionList")));
   assert.match(screen, /<Animated\.SectionList/);
   assert.match(screen, /if \(status === "loading" \|\| hotelCurrencyPending\) return <NativeBrandedSearchLoading product=\{product\}/);
-  assert.match(screen, /renderSectionHeader=\{\(\) => \([\s\S]*?\{filterRail\}/);
-  assert.match(screen, /<Animated\.SectionList[\s\S]*?flightResultsIntro[\s\S]*?\{flightDateStrip\}/);
-  assert.match(screen, /renderSectionHeader[\s\S]*?stickySectionHeadersEnabled/);
+  assert.match(header, /accessibilityLabel="Flight result filters"[\s\S]*?\{filterRail\}/);
+  assert.match(list, /flightResultsIntro[\s\S]*?\{flightDateStrip\}/);
+  assert.doesNotMatch(list, /renderSectionHeader|stickySectionHeadersEnabled|\{filterRail\}/);
   assert.match(screen, /initialNumToRender=\{FLIGHT_RESULT_INITIAL_RENDER_COUNT\}/);
   assert.doesNotMatch(screen, /sorted\.map\(\(x, i\) =>\s*product === "flight"/);
   assert.doesNotMatch(screen, /useSavedFlights\(\)|flightSavedSignature\(item\)|toggleSavedFlight\(item, params\)/);
