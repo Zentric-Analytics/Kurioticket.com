@@ -12,8 +12,10 @@ test("the date strip stays fully opaque in ordinary list-item flow", () => {
   assert.doesNotMatch(list, /ListHeaderComponent=\{[^}]*Animated|position:\s*"absolute"|stickyHeaderIndices/);
 });
 
-test("the filter rail remains sticky without pagination settlement plumbing", () => {
-  assert.match(list, /renderSectionHeader[\s\S]*?\{filterRail\}[\s\S]*?stickySectionHeadersEnabled/);
+test("the filter rail stays persistent because the header owns it, not the list", () => {
+  const header = source.slice(source.indexOf("function FlightResultsHeader"), source.indexOf("function HotelResultsHeader"));
+  assert.match(header, /accessibilityLabel="Flight result filters"[\s\S]*?\{filterRail\}/);
+  assert.doesNotMatch(list, /renderSectionHeader|stickySectionHeadersEnabled|\{filterRail\}/);
   assert.doesNotMatch(list, /flightPagination/);
   assert.match(list, /onScrollEndDrag=\{hideFlightResultsScrollIndicator\}/);
   assert.match(list, /onMomentumScrollEnd=\{hideFlightResultsScrollIndicator\}/);
