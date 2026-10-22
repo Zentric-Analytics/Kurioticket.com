@@ -1005,6 +1005,7 @@ model CmsContentItem {
   @@unique([type, key, market, locale])
   @@unique([type, key, publishedMarket, publishedLocale])
   @@index([type, status, market, locale, sortOrder])
+  @@index([type, publishedMarket, publishedLocale, publishedSortOrder])
   @@index([updatedAt])
 }
 
