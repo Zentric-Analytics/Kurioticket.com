@@ -38,6 +38,9 @@ export type CarResult = ContractResult<NormalizedCarResult>;
 export type PackageComponent = { status: "success" | "empty" | "unavailable"; results: (FlightResult | HotelResult | CarResult)[]; warnings: string[]; source: string; requestId: string };
 export type PackageSearchResponse = { mode: string; status: "success" | "partial" | "empty" | "unavailable"; components: Partial<Record<"flight" | "hotel" | "car", PackageComponent>>; packageOffers: unknown[] };
 export type MobileTrip = { id: string; providerConfirmationCode: string; providerName: string; tripType: string; status: "upcoming" | "past" | "cancelled"; origin: string | null; destination: string; departureDate: string; returnDate: string | null; travelerCount: number; currency: string; totalAmount: number | null; providerAction: { url: string; label: string; external: true } | null };
+export type MobileFlightStatus =
+  | { dataAvailable: false; providerName: string }
+  | { dataAvailable: true; providerName: string; status: "scheduled" | "delayed" | "departed" | "arrived" | "cancelled" | "unknown"; flight: { flightNumber: string; carrierCode: string; originAirport: string; destinationAirport: string; scheduledDepartureAt: string; scheduledArrivalAt: string | null }; timing: { estimatedDepartureAt: string | null; actualDepartureAt: string | null; estimatedArrivalAt: string | null; actualArrivalAt: string | null }; lastUpdatedAt: string; freshness: "current" | "stale" };
 export type MobileProfile = { fullName?: string | null; phoneNumber?: string | null; phoneCountryCode?: string | null; dateOfBirth?: string | null; gender?: string | null; nationality?: string | null; address?: string | null };
 export type MobilePriceAlertStatus = "ACTIVE" | "PAUSED" | "TRIGGERED" | "EXPIRED";
 export type MobilePriceAlert = { id: string; type: "FLIGHT" | "HOTEL" | "CAR"; origin: string | null; destination: string; targetPrice: string | null; mode?: "AUTOMATIC" | "TARGET"; currency: string | null; status: MobilePriceAlertStatus; createdAt: string; updatedAt: string; lastSeenPrice: string | null; lastCheckedAt: string | null; query: Record<string, unknown> };
@@ -228,6 +231,7 @@ export const travelApi = {
   searchCars: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string }) => request<TravelSearchResponse<NormalizedCarResult>>("/api/cars/search", { method: "POST", body: JSON.stringify(body) }, { ...options, timeoutMs: METASEARCH_REQUEST_TIMEOUT_MS }),
   searchPackages: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string }) => request<PackageSearchResponse>("/api/packages/search", { method: "POST", body: JSON.stringify(body) }, options),
   trips: (status?: "upcoming" | "past" | "cancelled") => request<{ trips: MobileTrip[]; summary: Record<string, number> }>(`/api/mobile/v1/trips${status ? `?status=${status}` : ""}`),
+  flightStatus: (tripId: string) => request<MobileFlightStatus>(`/api/mobile/v1/trips/${encodeURIComponent(tripId)}/flight-status`),
   profile: () => request<{ profile: MobileProfile | null; user: { id: string; email: string; name?: string | null } }>("/api/mobile/v1/profile"),
   securityOverview: () => request<{ overview: SecurityOverview }>("/api/mobile/v1/security/overview"),
   passkeys: () => request<{passkeys:MobilePasskey[]}>("/api/mobile/v1/security/passkeys"),
