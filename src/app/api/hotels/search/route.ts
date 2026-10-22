@@ -1,6 +1,5 @@
 import { after, NextResponse } from "next/server";
 import { createHash } from "node:crypto";
-import { resolveOptionalWebApiSession } from "@/lib/web-api-auth";
 import { getClientIp, checkRateLimit } from "@/lib/rate-limit";
 import { toPublicHotel } from "@/lib/searchCache";
 import { hotelSearchSchema } from "@/lib/validation";
@@ -12,14 +11,12 @@ import {
   type HotelProviderMode,
 } from "@/services/travel/hotelAggregator";
 import { isFeatureEnabled } from "@/lib/feature-controls/service";
-import { readVisitorToken } from "@/lib/visitor-identity";
-import { resolveConsentedVisitorId } from "@/services/visitorIdentityService";
+import { resolveRequestActivityIdentity } from "@/services/requestActivityIdentity";
 import { getKayakClientIp } from "@/lib/kayak-client-ip";
 import { isKayakSandboxEnabled } from "@/services/travel/kayakSandbox";
 
 export async function POST(request: Request) {
   const requestId = request.headers.get("x-search-request-id")?.trim() || crypto.randomUUID();
-  const visitorToken = readVisitorToken(request);
   if (!(await isFeatureEnabled("HOTEL_SEARCH_ENABLED"))) return NextResponse.json({ error: "Hotel search is temporarily unavailable.", code: "FEATURE_DISABLED", results: [], status: "unavailable", requestId }, { status: 503 });
   const ip = getClientIp(request);
   const rate = checkRateLimit(`hotel-search:${ip}`, 35, 60_000);
@@ -68,7 +65,6 @@ export async function POST(request: Request) {
     ? { ...parsed.data, destinationId: providerDestinationId }
     : parsed.data;
 
-  const session = (await resolveOptionalWebApiSession())?.session;
   const kayakContext = {
     clientIp: getKayakClientIp(request),
     userAgent: request.headers.get("user-agent") || undefined,
@@ -128,10 +124,10 @@ export async function POST(request: Request) {
       : "SUCCESS";
 
   after(async () => {
-    const visitorId = await resolveConsentedVisitorId(visitorToken);
+    const { userId, visitorId } = await resolveRequestActivityIdentity(request);
     await Promise.all([
     logSearchHistory({
-      userId: session?.user?.id,
+      userId,
       visitorId,
       requestId,
       type: "HOTEL",
@@ -144,7 +140,7 @@ export async function POST(request: Request) {
       status,
     }),
     trackAnalyticsEvent({
-      userId: session?.user?.id,
+      userId,
       visitorId,
       type: "SEARCH",
       name: "hotel_search",

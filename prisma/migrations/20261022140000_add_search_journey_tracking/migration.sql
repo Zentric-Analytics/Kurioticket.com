@@ -1,7 +1,6 @@
 CREATE TYPE "JourneyEventType" AS ENUM ('SEARCH_COMPLETED', 'RESULTS_VIEWED', 'OFFER_SELECTED', 'PROVIDER_HANDOFF_STARTED');
 
 ALTER TABLE "SearchHistory" ADD COLUMN "requestId" TEXT;
-ALTER TABLE "RedirectLog" ADD COLUMN "visitorId" TEXT;
 
 CREATE TABLE "SearchJourney" (
     "id" TEXT NOT NULL,
@@ -28,7 +27,6 @@ CREATE TABLE "JourneyEvent" (
 );
 
 CREATE UNIQUE INDEX "SearchHistory_requestId_key" ON "SearchHistory"("requestId");
-CREATE INDEX "RedirectLog_visitorId_idx" ON "RedirectLog"("visitorId");
 CREATE INDEX "SearchJourney_visitorId_lastActivityAt_idx" ON "SearchJourney"("visitorId", "lastActivityAt" DESC);
 CREATE INDEX "SearchJourney_lastActivityAt_idx" ON "SearchJourney"("lastActivityAt");
 CREATE UNIQUE INDEX "JourneyEvent_eventKey_key" ON "JourneyEvent"("eventKey");
@@ -37,8 +35,6 @@ CREATE INDEX "JourneyEvent_journeyId_createdAt_idx" ON "JourneyEvent"("journeyId
 CREATE INDEX "JourneyEvent_type_createdAt_idx" ON "JourneyEvent"("type", "createdAt");
 CREATE INDEX "JourneyEvent_searchHistoryId_idx" ON "JourneyEvent"("searchHistoryId");
 
-ALTER TABLE "RedirectLog" ADD CONSTRAINT "RedirectLog_visitorId_fkey"
-  FOREIGN KEY ("visitorId") REFERENCES "Visitor"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 ALTER TABLE "SearchJourney" ADD CONSTRAINT "SearchJourney_visitorId_fkey"
   FOREIGN KEY ("visitorId") REFERENCES "Visitor"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE "JourneyEvent" ADD CONSTRAINT "JourneyEvent_journeyId_fkey"

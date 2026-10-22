@@ -1,5 +1,3 @@
-import "server-only";
-
 import { getOptionalPrisma, withOptionalDb } from "@/lib/prisma";
 import {
   clientJourneyEventTypes,
@@ -23,7 +21,8 @@ export async function recordJourneyEvent(input: {
   redirectLogId?: string | null;
   metadata?: Record<string, unknown>;
 }) {
-  if (!input.visitorId) return null;
+  const visitorId = input.visitorId;
+  if (!visitorId) return null;
 
   return withOptionalDb(async (db) => {
     const now = new Date();
@@ -45,7 +44,7 @@ export async function recordJourneyEvent(input: {
 
       const activeJourney = await tx.searchJourney.findFirst({
         where: {
-          visitorId: input.visitorId,
+          visitorId,
           lastActivityAt: { gte: cutoff },
         },
         orderBy: { lastActivityAt: "desc" },
@@ -60,7 +59,7 @@ export async function recordJourneyEvent(input: {
           })
         : await tx.searchJourney.create({
             data: {
-              visitorId: input.visitorId,
+              visitorId,
               startedAt: now,
               lastActivityAt: now,
             },

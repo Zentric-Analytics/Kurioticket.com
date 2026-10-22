@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import { SessionProvider, signOut, useSession } from "next-auth/react";
 import { revokeCurrentAccountSession } from "@/lib/currentSessionRevocation";
+import { AnalyticsConsentBridge } from "@/components/privacy/AnalyticsConsentBridge";
 
 const inactivityTimeoutMs = 15 * 60 * 1000;
 const activityStorageKey = "kurioticket:last-authenticated-activity";
@@ -22,6 +23,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     <SessionProvider>
       <InactivitySignOut />
       {children}
+      <AnalyticsConsentBridge />
     </SessionProvider>
   );
 }

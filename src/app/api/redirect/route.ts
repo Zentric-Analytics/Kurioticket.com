@@ -1,13 +1,6 @@
 import { isProviderHotelResult } from "@/services/travel/hotelInventorySource";
-import { NextResponse } from "next/server";
-import { resolveOptionalWebApiSession } from "@/lib/web-api-auth";
-import { getMobileSession } from "@/lib/mobile-auth";
+import { after, NextResponse } from "next/server";
 import { getFlightFromCache, getHotelFromCache } from "@/lib/searchCache";
-import { withOptionalDb } from "@/lib/prisma";
-import { trackAnalyticsEvent } from "@/services/analyticsService";
-import { readVisitorToken } from "@/lib/visitor-identity";
-import { resolveConsentedVisitorId } from "@/services/visitorIdentityService";
-import { journeyEventKey, recordJourneyEvent } from "@/services/searchJourneyService";
 import { getHotelPriceDetails } from "@/lib/hotels/hotelResultAvailability";
 import type { NormalizedHotelResult } from "@/lib/types";
 import { isStagingEnvironment } from "@/lib/stagingSafety";
@@ -16,6 +9,7 @@ import type { FlightHandoff } from "@/services/travel/flightHandoff";
 import { revalidateFlightRedirectHandoff } from "@/services/travel/flightRedirectHandoff";
 import { sandboxBookingUrl } from "@/services/travel/kayakSandboxPublic";
 import { getProviderResult } from "@/services/travel/providerResultCache";
+import { recordProviderHandoffActivity } from "@/services/providerHandoffActivity";
 
 export function previewAllowsKayakSandboxHandoff(
   body: { id?: string; type?: "flight" | "hotel" },
@@ -119,12 +113,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unsafe redirect target." }, { status: 400 });
   }
 
-  // Preserve the web session boundary while allowing an optional, independently
-  // validated native bearer to attribute the same guest-capable handoff.
-  const webSession = (await resolveOptionalWebApiSession())?.session;
-  const mobileSession = request.headers.get("authorization") ? await getMobileSession(request) : null;
-  const user = webSession?.user ?? (mobileSession?.user.status === "ACTIVE" ? mobileSession.user : undefined);
-  const visitorId = await resolveConsentedVisitorId(readVisitorToken(request));
   const route =
     body.type === "flight" && "originAirport" in target
       ? `${target.originAirport}-${target.destinationAirport}`
@@ -132,46 +120,17 @@ export async function POST(request: Request) {
         ? target.location
         : undefined;
 
-  const redirectLogId = await withOptionalDb(
-      async (db) => {
-        const redirectLog = await db.redirectLog.create({
-          data: {
-            userId: user?.id,
-            visitorId: visitorId || undefined,
-            type: body.type === "flight" ? "FLIGHT" : "HOTEL",
-            provider: body.type === "flight" ? verifiedFlightHandoff!.providerName : target.provider,
-            route,
-            price: "price" in target ? target.price : hotelPriceDetails?.totalPrice,
-            currency: "price" in target ? target.currency : hotelPriceDetails?.currency,
-            destinationUrl: url.toString(),
-            userType: user ? "user" : "guest",
-            sourcePage: body.sourcePage || "unknown",
-            metadata: { resultId: body.id } as never,
-          },
-        });
-        return redirectLog.id;
-      },
-      null,
-    );
+  const provider = body.type === "flight" ? verifiedFlightHandoff!.providerName : target.provider;
+  const price = "price" in target ? target.price : hotelPriceDetails?.totalPrice;
+  const currency = "price" in target ? target.currency : hotelPriceDetails?.currency;
 
-  await Promise.all([
-    recordJourneyEvent({
-      visitorId,
-      type: "PROVIDER_HANDOFF_STARTED",
-      eventKey: journeyEventKey("redirect", redirectLogId || crypto.randomUUID()),
-      product: body.type === "flight" ? "FLIGHT" : "HOTEL",
-      provider: body.type === "flight" ? verifiedFlightHandoff!.providerName : target.provider,
-      redirectLogId,
-      metadata: { sourcePage: body.sourcePage || "unknown" },
-    }),
-    trackAnalyticsEvent({
-      userId: user?.id,
-      visitorId,
-      type: "REDIRECT",
-      name: `${body.type}_partner_redirect`,
-      metadata: { provider: body.type === "flight" ? verifiedFlightHandoff!.providerName : target.provider, route },
-    }),
-  ]);
+  // Return the verified provider URL immediately. Optional identity/analytics
+  // failures must never turn a valid View deal action into an error or delay.
+  const activity = {
+    type: body.type, provider, route, price, currency,
+    destinationUrl: url.toString(), sourcePage: body.sourcePage || "unknown", resultId: body.id,
+  };
+  after(() => recordProviderHandoffActivity(request, activity));
 
   return NextResponse.json({ url: url.toString() });
 }

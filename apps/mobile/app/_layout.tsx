@@ -19,6 +19,7 @@ import { AppState, View } from "react-native";
 import { FeatureAvailabilityProvider } from "../src/features/availability/FeatureAvailability";
 import { MobileLocalizationProvider } from "../src/localization/MobileLocalizationProvider";
 import { createForegroundUpdateHandler, ensureLatestUpdate } from "../src/updates/ensureLatestUpdate";
+import { startVisitorIdentity } from "../src/features/privacy/visitorIdentity";
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -33,6 +34,7 @@ export default function RootLayout() {
     Inter_900Black,
   });
   useEffect(() => { console.info(buildStartupLog(getRuntimeDiagnostics())); }, []);
+  useEffect(() => startVisitorIdentity(), []);
   useEffect(() => {
     const handleAppStateChange = createForegroundUpdateHandler(
       () => ensureLatestUpdate(Updates),
