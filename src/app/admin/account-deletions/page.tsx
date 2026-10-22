@@ -1,150 +1,83 @@
 import Link from "next/link";
 
-import { AdminDataTable, AdminEmptyState, AdminPageShell, AdminSectionCard, AdminStatusBadge } from "@/components/admin/AdminPageShell";
+import { AdminButton, AdminDataTable, AdminEmptyState, AdminFilterBar, AdminInput, AdminPageShell, AdminSelect, AdminStatusBadge } from "@/components/admin/AdminPageShell";
 import { formatDateTime } from "@/lib/admin-data";
-import { withOptionalDb } from "@/lib/prisma";
+import { adminOperationalReads } from "@/services/adminOperationalReadService";
 
 export const metadata = { title: "Admin Account Deletions" };
 
-type AccountDeletionFilter = "open" | "pending" | "cancelled" | "ready" | "completed" | "all";
+type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
-type DeletionRequestStatus = "PENDING" | "CANCELLED" | "READY_FOR_REVIEW" | "COMPLETED";
-
-const FILTERS: Array<{ key: AccountDeletionFilter; label: string; statuses?: DeletionRequestStatus[] }> = [
-  { key: "open", label: "Pending + review", statuses: ["PENDING", "READY_FOR_REVIEW"] },
-  { key: "pending", label: "Pending", statuses: ["PENDING"] },
-  { key: "cancelled", label: "Cancelled / Reactivated", statuses: ["CANCELLED"] },
-  { key: "ready", label: "Ready for review", statuses: ["READY_FOR_REVIEW"] },
-  { key: "completed", label: "Completed", statuses: ["COMPLETED"] },
-  { key: "all", label: "All" },
-];
-
-const statusPriority: Record<DeletionRequestStatus, number> = {
-  READY_FOR_REVIEW: 0,
-  PENDING: 1,
-  CANCELLED: 2,
-  COMPLETED: 3,
-};
-
-function getFilter(value: string | string[] | undefined): AccountDeletionFilter {
-  const filter = Array.isArray(value) ? value[0] : value;
-  return FILTERS.some((item) => item.key === filter) ? (filter as AccountDeletionFilter) : "open";
-}
-
-function getStatusLabel(status: DeletionRequestStatus, userStatus: string) {
-  if (status === "CANCELLED") return userStatus === "ACTIVE" ? "Reactivated" : "Cancelled";
-  if (status === "READY_FOR_REVIEW") return "Ready for review";
-  return status.charAt(0) + status.slice(1).toLowerCase();
-}
-
-function getStatusTone(status: DeletionRequestStatus) {
-  if (status === "PENDING") return "warn";
-  if (status === "CANCELLED") return "good";
-  if (status === "READY_FOR_REVIEW") return "bad";
-  return "neutral";
-}
-
-function getCancellationDetail(metadata: unknown) {
-  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) return null;
-  const source = "source" in metadata && typeof metadata.source === "string" ? metadata.source : null;
-  return source ? `Cancellation source: ${source.replaceAll("-", " ")}` : null;
-}
-
-export default async function AdminAccountDeletionsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}) {
-  const activeFilter = getFilter((await searchParams).status);
-  const requests = await withOptionalDb(
-    (db) => db.accountDeletionRequest.findMany({
-      orderBy: [{ requestedAt: "desc" }],
-      take: 200,
-      include: { user: { select: { email: true, role: true, status: true } } },
-    }),
-    [],
-  );
-
-  const sortedRequests = [...requests].sort((a, b) => {
-    const priorityDifference = statusPriority[a.status] - statusPriority[b.status];
-    if (priorityDifference !== 0) return priorityDifference;
-    return b.requestedAt.getTime() - a.requestedAt.getTime();
-  });
-  const filterDefinition = FILTERS.find((filter) => filter.key === activeFilter);
-  const visibleRequests = filterDefinition?.statuses
-    ? sortedRequests.filter((request) => filterDefinition.statuses?.includes(request.status))
-    : sortedRequests;
-  const counts = FILTERS.reduce<Record<AccountDeletionFilter, number>>((acc, filter) => {
-    acc[filter.key] = filter.statuses ? requests.filter((request) => filter.statuses?.includes(request.status)).length : requests.length;
-    return acc;
-  }, { open: 0, pending: 0, cancelled: 0, ready: 0, completed: 0, all: 0 });
+export default async function AdminAccountDeletionsPage({ searchParams }: { searchParams: SearchParams }) {
+  const raw = await searchParams;
+  const params = toParams(raw);
+  if (!params.has("limit")) params.set("limit", "50");
+  const result = await adminOperationalReads.deletions.list(params);
 
   return (
-    <AdminPageShell title="Account deletion requests" description="Review the full account deletion lifecycle, including pending, cancelled/reactivated, ready-for-review, and completed requests.">
-      {requests.length === 0 ? <AdminEmptyState title="No deletion requests" message="Account deletion requests will appear here after users submit them." /> : (
-        <div className="space-y-4">
-          <AdminSectionCard className="p-3">
-            <div className="flex flex-wrap gap-2" aria-label="Account deletion request filters">
-              {FILTERS.map((filter) => {
-                const active = filter.key === activeFilter;
-                return (
-                  <Link
-                    key={filter.key}
-                    href={filter.key === "open" ? "/admin/account-deletions" : `/admin/account-deletions?status=${filter.key}`}
-                    className={`rounded-full px-3 py-2 text-xs font-black transition ${
-                      active ? "bg-slate-950 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-950"
-                    }`}
-                    aria-current={active ? "page" : undefined}
-                  >
-                    {filter.label} <span className="opacity-75">({counts[filter.key]})</span>
-                  </Link>
-                );
-              })}
-            </div>
-          </AdminSectionCard>
+    <AdminPageShell title="Account deletion requests" description="Review the account-deletion lifecycle through the safe admin queue and open individual requests for audited actions.">
+      <div className="space-y-4">
+        <AdminFilterBar action="/admin/account-deletions">
+          <AdminInput name="q" defaultValue={one(raw.q)} placeholder="Email or account name" />
+          <AdminSelect name="status" defaultValue={one(raw.status)}>
+            <option value="">All statuses</option>
+            <option value="PENDING">Pending</option>
+            <option value="READY_FOR_REVIEW">Ready for review</option>
+            <option value="CANCELLED">Cancelled / reactivated</option>
+            <option value="COMPLETED">Completed</option>
+          </AdminSelect>
+          <AdminButton type="submit">Apply filters</AdminButton>
+        </AdminFilterBar>
 
-          {visibleRequests.length === 0 ? (
-            <AdminEmptyState title="No requests in this view" message="Try another status filter to review other deletion request lifecycle states." />
+        {result.status === "ok" ? (
+          result.data.items.length === 0 ? (
+            <AdminEmptyState title="No deletion requests" message="No account deletion requests match the selected filters." />
           ) : (
-            <AdminDataTable
-              columns={["Email", "User status", "Request status", "Requested", "Scheduled", "Cancelled / reactivated", "Completed", "Support / admin refs", "Notes", "Action"]}
-              rows={visibleRequests.map((request) => {
-                const cancellationDetail = getCancellationDetail(request.cancellationMetadata);
-                return {
+            <>
+              <AdminDataTable
+                columns={["Email", "User", "Request status", "Requested", "Scheduled", "Cancelled", "Completed", "Support / admin refs", "Review notes", "Action"]}
+                rows={result.data.items.map((request) => ({
                   id: request.id,
                   cells: [
-                    <span key="email" className="font-black text-slate-950">{request.email || request.user.email}</span>,
-                    <div key="user-status" className="space-y-1">
-                      <AdminStatusBadge tone={request.user.status === "ACTIVE" ? "good" : request.user.status === "PENDING_DELETION" ? "warn" : "neutral"}>{request.user.status}</AdminStatusBadge>
-                      <p className="text-xs font-semibold text-slate-500">Role: {request.user.role}</p>
-                    </div>,
-                    <div key="request-status" className="space-y-1">
-                      <AdminStatusBadge tone={getStatusTone(request.status)}>{getStatusLabel(request.status, request.user.status)}</AdminStatusBadge>
-                      {request.status === "CANCELLED" ? <p className="text-xs font-semibold text-emerald-700">Deletion request is no longer pending.</p> : null}
-                    </div>,
-                    formatDateTime(request.requestedAt),
-                    formatDateTime(request.deletionScheduledAt),
-                    request.cancelledAt ? formatDateTime(request.cancelledAt) : "—",
-                    request.completedAt ? formatDateTime(request.completedAt) : "—",
-                    <div key="refs" className="space-y-1 text-xs font-semibold text-slate-600">
-                      <p>Ticket: {request.supportTicketId || "—"}</p>
-                      <p>Admin ref: {request.adminNotificationId || "—"}</p>
-                    </div>,
-                    <div key="notes" className="max-w-xs space-y-1 text-xs leading-5 text-slate-600">
-                      {request.reviewNotes ? <p>{request.reviewNotes}</p> : null}
-                      {cancellationDetail ? <p>{cancellationDetail}</p> : null}
-                      {!request.reviewNotes && !cancellationDetail ? "—" : null}
-                    </div>,
-                    <Link key="action" href={`/admin/account-deletions/${request.id}`} className="inline-flex rounded-xl bg-indigo-700 px-3 py-2 text-xs font-black text-white transition hover:bg-indigo-800">
-                      Manage
-                    </Link>,
+                    <span key="email" className="font-black text-slate-950">{request.email || request.user.email || "—"}</span>,
+                    <div key="user"><p className="font-semibold text-slate-950">{request.user.name || request.userId}</p><p className="text-xs text-slate-500">{request.user.role} · {request.user.status}</p></div>,
+                    <AdminStatusBadge key="status" tone={request.status === "READY_FOR_REVIEW" ? "bad" : request.status === "PENDING" ? "warn" : request.status === "CANCELLED" ? "good" : "neutral"}>{request.status.replaceAll("_", " ")}</AdminStatusBadge>,
+                    formatDateTime(new Date(request.requestedAt)),
+                    formatDateTime(new Date(request.deletionScheduledAt)),
+                    request.cancelledAt ? formatDateTime(new Date(request.cancelledAt)) : "—",
+                    request.completedAt ? formatDateTime(new Date(request.completedAt)) : "—",
+                    <div key="refs" className="space-y-1 text-xs"><p>Ticket: {request.supportTicketId || "—"}</p><p>Admin: {request.adminReference || "—"}</p></div>,
+                    request.hasReviewNotes ? "Recorded" : "—",
+                    <Link key="action" href={"/admin/account-deletions/" + request.id} className="font-black text-indigo-700 hover:text-indigo-900">Manage</Link>,
                   ],
-                };
-              })}
-            />
-          )}
-        </div>
-      )}
+                }))}
+              />
+              {result.data.nextCursor ? <div className="flex justify-end"><Link href={cursorHref(raw, result.data.nextCursor)} className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">Next page</Link></div> : null}
+            </>
+          )
+        ) : (
+          <AdminEmptyState
+            title={result.status === "invalid" ? "Invalid deletion filters" : result.status === "forbidden" ? "Admin access required" : "Deletion queue unavailable"}
+            message={"issues" in result ? result.issues.map((issue) => issue.field + ": " + issue.message).join(" ") : "The safe deletion reader could not return queue data. An unavailable read is not shown as an empty queue."}
+          />
+        )}
+      </div>
     </AdminPageShell>
   );
+}
+
+function one(value: string | string[] | undefined) { return typeof value === "string" ? value : ""; }
+function toParams(raw: Record<string, string | string[] | undefined>) {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(raw)) {
+    if (Array.isArray(value)) value.forEach((item) => params.append(key, item));
+    else if (value) params.set(key, value);
+  }
+  return params;
+}
+function cursorHref(raw: Record<string, string | string[] | undefined>, cursor: string) {
+  const params = toParams(raw);
+  params.set("cursor", cursor);
+  params.set("limit", one(raw.limit) || "50");
+  return "/admin/account-deletions?" + params.toString();
 }
