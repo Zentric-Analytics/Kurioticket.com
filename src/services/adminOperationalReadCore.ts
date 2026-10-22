@@ -277,7 +277,7 @@ export function createAdminOperationalReadService(dependencies: Dependencies) {
         });
       },
       detail(id: string, params: URLSearchParams): Promise<AdminOperationalResult<AdminSearchRead>> {
-        return authorized(async db => {
+        return authorized<AdminSearchRead>(async db => {
           const parsedId = parseAdminOperationalId(id);
           if (parsedId.status !== "ok") return parsedId;
           const env = parseAdminOperationalEnvironment(params, dependencies.environment());
@@ -309,7 +309,7 @@ export function createAdminOperationalReadService(dependencies: Dependencies) {
         });
       },
       detail(id: string, params: URLSearchParams): Promise<AdminOperationalResult<AdminHandoffRead>> {
-        return authorized(async db => {
+        return authorized<AdminHandoffRead>(async db => {
           const parsedId = parseAdminOperationalId(id);
           if (parsedId.status !== "ok") return parsedId;
           const env = parseAdminOperationalEnvironment(params, dependencies.environment());
@@ -346,7 +346,7 @@ export function createAdminOperationalReadService(dependencies: Dependencies) {
         });
       },
       detail(id: string): Promise<AdminOperationalResult<AdminSupportDetail>> {
-        return authorized(async db => {
+        return authorized<AdminSupportDetail>(async db => {
           const parsedId = parseAdminOperationalId(id);
           if (parsedId.status !== "ok") return parsedId;
           const row = await db.supportTicket.findUnique({ where: { id: parsedId.data }, select: supportDetailSelect });
