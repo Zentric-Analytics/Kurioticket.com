@@ -35,6 +35,13 @@ export async function registerAnalyticsVisitor(input: {
         consentStatus: "GRANTED",
         lastSeenAt: now,
         trackingDisabledAt: null,
+        consentRecords: {
+          create: {
+            purpose: "ANALYTICS",
+            status: "GRANTED",
+            policyVersion: input.policyVersion,
+          },
+        },
       },
       select: { id: true },
     });
@@ -48,23 +55,28 @@ export async function resolveConsentedVisitorId(token: string | null | undefined
   const db = getOptionalPrisma();
   if (!db) return null;
 
-  const visitor = await db.visitor.findFirst({
-    where: {
-      tokenHash: hashVisitorToken(token),
-      consentStatus: "GRANTED",
-      trackingDisabledAt: null,
-    },
-    select: { id: true },
-  });
+  try {
+    const visitor = await db.visitor.findFirst({
+      where: {
+        tokenHash: hashVisitorToken(token),
+        consentStatus: "GRANTED",
+        trackingDisabledAt: null,
+      },
+      select: { id: true },
+    });
 
-  if (!visitor) return null;
+    if (!visitor) return null;
 
-  await db.visitor.update({
-    where: { id: visitor.id },
-    data: { lastSeenAt: new Date() },
-  });
+    await db.visitor.update({
+      where: { id: visitor.id },
+      data: { lastSeenAt: new Date() },
+    });
 
-  return visitor.id;
+    return visitor.id;
+  } catch (error) {
+    console.error("[visitor-identity:resolve]", error);
+    return null;
+  }
 }
 
 export async function linkVisitorToUser(input: {
