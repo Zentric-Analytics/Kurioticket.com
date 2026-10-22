@@ -98,6 +98,10 @@ Optional filters:
 - `status`
 - `market`
 - `locale`
+- `limit` (1–100, default 50)
+- `cursor`
+
+List responses include `nextCursor`. Cursors are opaque and bound to the original filters; changing filters requires starting a new first-page request.
 
 `POST /api/admin/content`
 
