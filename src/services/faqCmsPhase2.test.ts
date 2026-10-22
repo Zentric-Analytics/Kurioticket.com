@@ -25,7 +25,7 @@ test("FAQ CMS initialization is explicit, transactional, published and audited",
 });
 
 test("FAQ admin surface exposes the intended CMS lifecycle", () => {
-  assert.match(listPage, /Initialize FAQ CMS/);
+  assert.match(listPage, /Initialize English FAQ CMS/);
   assert.match(listPage, /Add FAQ/);
   assert.match(listPage, /FaqCmsListClient/);
   for (const action of ["Create draft", "Save draft", "Publish", "Hide", "Archive"]) {
