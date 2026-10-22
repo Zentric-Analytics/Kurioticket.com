@@ -29,3 +29,16 @@ test("My Trips has no planning or add-trip mutation", () => {
   assert.doesNotMatch(screen, /Add a trip|explore-trip|FlowIcon name="plus"/);
   assert.doesNotMatch(api, /createTrip|saveTrip|POST.*trips/);
 });
+
+
+test("mobile My Trips surfaces verified provider confirmations and reads live flight status only for flights", () => {
+  assert.match(api, /providerConfirmed: boolean/);
+  assert.match(api, /confirmationVerifiedAt: string \| null/);
+  assert.match(api, /flightStatus: \(tripId: string\)/);
+  assert.match(screen, /trip\.providerConfirmed/);
+  assert.match(screen, /trip\.tripType !== "flight"/);
+  assert.match(screen, /travelApi\.flightStatus\(trip\.id\)/);
+  assert.match(screen, /!flightStatus\.dataAvailable/);
+  assert.match(screen, /flightStatus\.freshness === "stale"/);
+  assert.doesNotMatch(screen, /On time/);
+});
