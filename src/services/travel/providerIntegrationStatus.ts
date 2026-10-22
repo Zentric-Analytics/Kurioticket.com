@@ -1,11 +1,9 @@
 import {
   getDuffelApiMode,
-  getTravelProviderMode,
   type DuffelApiMode,
-  type TravelProviderMode,
 } from "@/lib/env";
-import { getStagingProviderSafety } from "@/lib/stagingSafety";
 import { isKayakSandboxEnabled } from "./kayakSandbox";
+import { getDuffelProviderBlockReason } from "./providers/duffelProvider";
 
 export type ProviderIntegrationState =
   | "READY"
@@ -27,30 +25,25 @@ export type ProviderIntegrationStatus = {
 };
 
 export type ProviderIntegrationEnvironment = {
-  travelProviderMode: TravelProviderMode;
   duffelApiMode: DuffelApiMode;
   duffelConfigured: boolean;
-  duffelBookingEnabled: boolean;
-  duffelEnvironmentSafe: boolean;
+  duffelBlockReason: string | null;
   kayakConfigured: boolean;
   kayakRequested: boolean;
   kayakEnabled: boolean;
 };
 
 /**
- * Produces a secret-free readiness record. This deliberately evaluates
- * configuration and safety gates only; it does not spend provider quota or
- * claim that a network health check succeeded.
+ * Produces a secret-free readiness record. The caller supplies the exact
+ * side-effect-free Duffel gate used by the live provider path; this function
+ * does not spend provider quota or claim that a network health check succeeded.
  */
 export function evaluateProviderIntegrationStatuses(
   environment: ProviderIntegrationEnvironment,
 ): ProviderIntegrationStatus[] {
-  const duffelBlockedInProduction =
-    environment.travelProviderMode === "production" &&
-    environment.duffelApiMode !== "live";
   const duffelState: ProviderIntegrationState = !environment.duffelConfigured
     ? "NOT_CONFIGURED"
-    : duffelBlockedInProduction || !environment.duffelEnvironmentSafe
+    : environment.duffelBlockReason
       ? "ENVIRONMENT_BLOCKED"
       : "READY";
 
@@ -62,17 +55,13 @@ export function evaluateProviderIntegrationStatuses(
     configured: environment.duffelConfigured,
     searchEnabled: duffelState === "READY",
     externalHandoffEnabled: false,
-    bookingEnabled: duffelState === "READY" && environment.duffelBookingEnabled,
+    bookingEnabled: false,
     environment: environment.duffelApiMode === "test" ? "test" : "live",
     note: !environment.duffelConfigured
       ? "Flight provider credentials are not configured."
-      : duffelBlockedInProduction
-        ? "Duffel test mode is blocked in production."
-        : !environment.duffelEnvironmentSafe
-          ? "The staging provider safety requirements are not satisfied."
-          : environment.duffelBookingEnabled
-            ? "Flight search and the explicitly enabled booking workflow are ready."
-            : "Flight search is ready; booking remains disabled until an approved workflow is enabled.",
+      : environment.duffelBlockReason
+        ? "Duffel is configured but blocked by the current environment safety policy."
+        : "Flight search is ready. Direct Duffel booking is not implemented.",
   };
 
   const kayakState: ProviderIntegrationState = !environment.kayakConfigured
@@ -105,12 +94,14 @@ export function evaluateProviderIntegrationStatuses(
 }
 
 export function getProviderIntegrationStatuses(): ProviderIntegrationStatus[] {
+  const duffelApiKey = process.env.DUFFEL_API_KEY?.trim() || "";
+
   return evaluateProviderIntegrationStatuses({
-    travelProviderMode: getTravelProviderMode(),
     duffelApiMode: getDuffelApiMode(),
-    duffelConfigured: Boolean(process.env.DUFFEL_API_KEY?.trim()),
-    duffelBookingEnabled: process.env.DUFFEL_BOOKING_ENABLED === "true",
-    duffelEnvironmentSafe: getStagingProviderSafety().safe,
+    duffelConfigured: Boolean(duffelApiKey),
+    duffelBlockReason: duffelApiKey
+      ? getDuffelProviderBlockReason(duffelApiKey) || null
+      : null,
     kayakConfigured: Boolean(process.env.KAYAK_SANDBOX_API_KEY?.trim()),
     kayakRequested: process.env.KAYAK_SANDBOX_ENABLED === "true",
     kayakEnabled: isKayakSandboxEnabled(),
