@@ -125,7 +125,7 @@ export function UserStatusActions({
 
   return (
     <div className="grid gap-2">
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-nowrap items-center gap-2 whitespace-nowrap">
         {canChangeRole
           ? editableRoles.map((editableRole) => (
               <Button
