@@ -1,5 +1,5 @@
 import { generalFaqs, type FaqItem } from "@/content/faqs";
-import { getDefaultHomeDiscoveryPriceRoutes } from "@/data/homeDiscovery";
+import { getHomeDiscoveryByRegion } from "@/data/homeDiscovery";
 import { hotelDestinations } from "@/data/hotelDestinations";
 import { getPopularDestinationsByRegion } from "@/data/marketHomeContent";
 import { readPublishedCmsContent } from "@/services/cmsContentService";
@@ -62,7 +62,7 @@ export async function getPublishedFlightRoutes() {
   return readPublishedCmsContent<CmsFlightRoute>("FLIGHT_ROUTE", {
     market: "GLOBAL",
     locale: "en",
-    fallback: () => getDefaultHomeDiscoveryPriceRoutes().map((item) => ({
+    fallback: () => getHomeDiscoveryByRegion("US").map((item) => ({
       id: item.id,
       title: item.title,
       originCity: item.originCity,
