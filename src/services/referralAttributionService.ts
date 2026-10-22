@@ -11,12 +11,19 @@ type AttributionGroupRow = {
   sourcePage: string;
   _count: { _all: number };
 };
-type ReferralAttributionDatabase = {
+type ReferralAttributionTransaction = {
   redirectLog: {
     count(args: unknown): Promise<number>;
     groupBy(args: unknown): Promise<AttributionGroupRow[]>;
   };
   journeyEvent: { count(args: unknown): Promise<number> };
+};
+
+type ReferralAttributionDatabase = {
+  $transaction<T>(
+    operation: (tx: ReferralAttributionTransaction) => Promise<T>,
+    options?: { isolationLevel?: "RepeatableRead" },
+  ): Promise<T>;
 };
 
 export type ReferralAttributionSummary = {
@@ -106,22 +113,25 @@ export function createReferralAttributionService(
     };
 
     try {
-      const [total, linkedToSearch, groups] = await Promise.all([
-        db.redirectLog.count({ where: redirectWhere }),
-        db.journeyEvent.count({
-          where: {
-            type: "PROVIDER_HANDOFF_STARTED",
-            searchHistoryId: { not: null },
-            createdAt: { gte: start, lte: end },
-            redirectLog: { is: redirectWhere },
-          },
-        }),
-        db.redirectLog.groupBy({
-          by: ["provider", "type", "sourcePage"],
-          where: redirectWhere,
-          _count: { _all: true },
-        }),
-      ]);
+      const [total, linkedToSearch, groups] = await db.$transaction(
+        async tx => Promise.all([
+          tx.redirectLog.count({ where: redirectWhere }),
+          tx.journeyEvent.count({
+            where: {
+              type: "PROVIDER_HANDOFF_STARTED",
+              searchHistoryId: { not: null },
+              createdAt: { gte: start, lte: end },
+              redirectLog: { is: redirectWhere },
+            },
+          }),
+          tx.redirectLog.groupBy({
+            by: ["provider", "type", "sourcePage"],
+            where: redirectWhere,
+            _count: { _all: true },
+          }),
+        ]),
+        { isolationLevel: "RepeatableRead" },
+      );
 
       const summary = summarizeGroups(groups);
       const safelyLinked = Math.min(linkedToSearch, total);
