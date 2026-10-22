@@ -71,20 +71,46 @@ function encodeCursor(scope: AdminAuditScope, at: string, cursorId: string) {
   return Buffer.from(JSON.stringify({ v: 1, scope, at, id: cursorId }), "utf8").toString("base64url");
 }
 
-function decodeCursor(value: string | null, scope: AdminAuditScope): ParseResult<{ at: string; id: string } | null> {
+function decodeCursorEnvelope(value: string | null): ParseResult<{
+  scope: AdminAuditScope;
+  position: { at: string; id: string };
+} | null> {
   if (!value) return { status: "ok", data: null };
   try {
     const decoded = JSON.parse(Buffer.from(value, "base64url").toString("utf8")) as Record<string, unknown>;
+    const rawScope = decoded.scope as Partial<AdminAuditScope> | undefined;
     if (
       decoded.v !== 1 ||
-      JSON.stringify(decoded.scope) !== JSON.stringify(scope) ||
+      !rawScope ||
+      typeof rawScope.from !== "string" ||
+      typeof rawScope.to !== "string" ||
+      !iso.test(rawScope.from) ||
+      !iso.test(rawScope.to) ||
       typeof decoded.at !== "string" ||
       !iso.test(decoded.at) ||
       !Number.isFinite(Date.parse(decoded.at)) ||
       typeof decoded.id !== "string" ||
       !id.test(decoded.id)
-    ) return invalid("cursor", "Cursor does not match this query.");
-    return { status: "ok", data: { at: new Date(decoded.at).toISOString(), id: decoded.id } };
+    ) {
+      return invalid("cursor", "Cursor is malformed.");
+    }
+    return {
+      status: "ok",
+      data: {
+        scope: {
+          from: new Date(rawScope.from).toISOString(),
+          to: new Date(rawScope.to).toISOString(),
+          action: typeof rawScope.action === "string" ? rawScope.action : null,
+          adminEmail: typeof rawScope.adminEmail === "string" ? rawScope.adminEmail : null,
+          targetType: typeof rawScope.targetType === "string" ? rawScope.targetType : null,
+          targetEmail: typeof rawScope.targetEmail === "string" ? rawScope.targetEmail : null,
+        },
+        position: {
+          at: new Date(decoded.at).toISOString(),
+          id: decoded.id,
+        },
+      },
+    };
   } catch {
     return invalid("cursor", "Cursor is malformed.");
   }
@@ -113,8 +139,12 @@ export function parseAdminAuditQuery(params: URLSearchParams, now = new Date()):
   const targetEmail = text(params.get("targetEmail"), "targetEmail", 320);
   if (targetEmail.status !== "ok") return targetEmail;
 
-  const to = parsedTo.data ?? now.toISOString();
-  const from = parsedFrom.data ?? new Date(new Date(to).getTime() - 7 * dayMs).toISOString();
+  const cursorEnvelope = decodeCursorEnvelope(params.get("cursor"));
+  if (cursorEnvelope.status !== "ok") return cursorEnvelope;
+
+  const cursorScope = cursorEnvelope.data?.scope ?? null;
+  const to = parsedTo.data ?? cursorScope?.to ?? now.toISOString();
+  const from = parsedFrom.data ?? cursorScope?.from ?? new Date(new Date(to).getTime() - 7 * dayMs).toISOString();
   const start = Date.parse(from);
   const end = Date.parse(to);
   if (start >= end || end > now.getTime() || end - start > 90 * dayMs) {
@@ -133,7 +163,17 @@ export function parseAdminAuditQuery(params: URLSearchParams, now = new Date()):
     targetType: targetType.data,
     targetEmail: targetEmail.data,
   };
-  const cursor = decodeCursor(params.get("cursor"), scope);
-  if (cursor.status !== "ok") return cursor;
-  return { status: "ok", data: { scope, limit, cursor: cursor.data } };
+
+  if (cursorScope && JSON.stringify(cursorScope) !== JSON.stringify(scope)) {
+    return invalid("cursor", "Cursor does not match this query.");
+  }
+
+  return {
+    status: "ok",
+    data: {
+      scope,
+      limit,
+      cursor: cursorEnvelope.data?.position ?? null,
+    },
+  };
 }
