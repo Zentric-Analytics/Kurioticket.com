@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAdminApiSession } from "@/lib/admin";
 import { getDuffelAdminHealth, getSafeSystemStatus, pausedProviderRows } from "@/lib/admin-data";
+import { getProviderOperationalStatuses } from "@/services/providerOperationalStatus";
 import { getProviderIntegrationStatuses } from "@/services/travel/providerIntegrationStatus";
 
 export const runtime = "nodejs";
@@ -11,10 +12,9 @@ export async function GET() {
 
   return NextResponse.json({
     environment: await getSafeSystemStatus(),
-    providers: {
-      duffel: await getDuffelAdminHealth(),
-    },
+    providers: { duffel: await getDuffelAdminHealth() },
     integrations: getProviderIntegrationStatuses(),
+    operational: await getProviderOperationalStatuses(),
     pausedProviders: pausedProviderRows,
-  });
+  }, { headers: { "Cache-Control": "private, no-store", Vary: "Cookie, Authorization" } });
 }

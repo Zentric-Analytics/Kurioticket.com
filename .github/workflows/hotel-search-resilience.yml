@@ -8,7 +8,9 @@ jobs:
   hotel-resilience:
     name: Hotel PostgreSQL and return navigation
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # Allow Chromium system dependencies and both viewport journeys to complete.
+    # On GitHub-hosted runners the apt installation can take ~12 minutes alone.
+    timeout-minutes: 30
     services:
       postgres:
         image: postgres:18-alpine
@@ -53,6 +55,11 @@ jobs:
           DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/kurioticket_admin_journey_test
           JITI_TSCONFIG_PATHS: ./tsconfig.json
         run: node --input-type=module --import jiti/register -e 'await import("./scripts/admin-journey.integration.ts")'
+      - name: Account deletion PostgreSQL finalization
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/kurioticket_account_deletion_test
+          JITI_TSCONFIG_PATHS: ./tsconfig.json
+        run: node --input-type=module --import jiti/register -e 'await import("./scripts/account-deletion.integration.ts")'
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - name: Mobile and desktop return journey

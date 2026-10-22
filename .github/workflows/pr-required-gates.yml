@@ -54,6 +54,29 @@ jobs:
           await import("./src/services/providerHandoffActivity.test.ts");
           await import("./src/lib/providerHandoffClient.test.ts");
           await import("./src/app/api/flights/search/terminalHistory.test.ts");'
+      - name: Validate admin operational read contracts
+        env:
+          JITI_TSCONFIG_PATHS: ./tsconfig.json
+          JITI_JSX: "true"
+        run: >-
+          node --input-type=module --import jiti/register -e
+          'await import("./src/services/adminOperationalReadContract.test.ts");
+          await import("./src/services/adminOperationalReadCore.test.ts");'
+      - name: Validate account deletion lifecycle contract
+        env:
+          JITI_TSCONFIG_PATHS: ./tsconfig.json
+          JITI_JSX: "true"
+        run: >-
+          node --input-type=module --import jiti/register -e
+          'await import("./src/app/api/internal/cron/account-deletion-review/route.test.ts");'
+      - name: Validate admin handoff hardening contracts
+        env:
+          JITI_TSCONFIG_PATHS: ./tsconfig.json
+          JITI_JSX: "true"
+        run: >-
+          node --input-type=module --import jiti/register -e
+          'await import("./src/services/adminAuditReadContract.test.ts");
+          await import("./src/services/providerOperationalStatus.test.ts");'
       - name: Validate Render web build
         run: npm run build
       - name: Install native dependencies
