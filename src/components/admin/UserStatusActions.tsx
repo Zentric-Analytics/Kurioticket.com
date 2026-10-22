@@ -29,7 +29,8 @@ export function UserStatusActions({
   const [showPermanentDelete, setShowPermanentDelete] = useState(false);
   const [confirmation, setConfirmation] = useState("");
   const [menuPosition, setMenuPosition] = useState<{
-    top: number;
+    top?: number;
+    bottom?: number;
     right: number;
     maxHeight: number;
   } | null>(null);
@@ -51,10 +52,9 @@ export function UserStatusActions({
     const spaceBelow = window.innerHeight - bounds.bottom - 16;
     const height = Math.min(320, Math.max(spaceBelow, bounds.top - 16));
     setMenuPosition({
-      top:
-        spaceBelow >= height
-          ? bounds.bottom + 6
-          : Math.max(8, bounds.top - height - 6),
+      ...(spaceBelow >= height
+        ? { top: bounds.bottom + 6 }
+        : { bottom: window.innerHeight - bounds.top + 6 }),
       right: Math.max(
         8,
         Math.min(window.innerWidth - bounds.right, window.innerWidth - 248),

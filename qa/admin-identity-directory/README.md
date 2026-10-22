@@ -29,7 +29,7 @@ Checks cover:
 - Desktop 1280, 1366, 1440, and 1920px: all six columns fit with no table or document horizontal overflow.
 - Tablet 768px and mobile 390/320px: horizontal overflow stays inside the table.
 - Full user/guest ID clipboard copying; long names/emails/IDs; missing email.
-- Keyboard arrows, Home/End, Escape, Tab, focus restoration after menu dismissal/resize, and a touch menu inside the mobile viewport.
+- Keyboard arrows, Home/End, Escape, Tab, focus restoration after menu dismissal/resize, menu adjacency within 8px above or below its trigger, and a touch menu inside the mobile viewport.
 - Guest/self/protected-admin restrictions; administrator role-only actions.
 - Suspend and soft-delete confirmation cancellation and request payloads; reactivation; server/transport errors and retry availability.
 - Permanent deletion email and ID confirmation, disabled invalid submissions, server rejection, modal dismissal and restored focus.

@@ -97,9 +97,16 @@ fs.mkdirSync(output, { recursive: true });
         await page.getByRole("menu").evaluate((el) => el.parentElement.tagName),
         "BODY",
       );
+      const anchor = await trigger.boundingBox();
+      const menu = await page.getByRole("menu").boundingBox();
+      const gap = Math.min(
+        Math.abs(menu.y + menu.height - anchor.y),
+        Math.abs(menu.y - anchor.y - anchor.height),
+      );
+      assert.ok(gap <= 8, "Menu stays adjacent to its trigger in either direction");
       await page.screenshot({
         path: `${output}/after-menu-1280.png`,
-        fullPage: true,
+        fullPage: false,
       });
       await page.keyboard.press("Tab");
       await expect(page.getByRole("menu")).toHaveCount(0);
