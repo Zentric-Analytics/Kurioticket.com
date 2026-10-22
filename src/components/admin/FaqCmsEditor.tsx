@@ -62,6 +62,16 @@ export function FaqCmsEditor({ initialItem }: { initialItem?: FaqCmsItem }) {
     Number.isInteger(Number(sortOrder)) &&
     Number(sortOrder) >= 0;
 
+  const savedPayload = readPayload(item?.draftPayload);
+  const draftDirty = Boolean(
+    item &&
+    (
+      question.trim() !== savedPayload.question ||
+      answer.trim() !== savedPayload.answer ||
+      category.trim() !== savedPayload.category ||
+      Number(sortOrder) !== item.sortOrder
+    )
+  );
   const hasUnpublishedChanges =
     item?.publishedVersion !== null &&
     item?.publishedVersion !== undefined &&
@@ -87,7 +97,7 @@ export function FaqCmsEditor({ initialItem }: { initialItem?: FaqCmsItem }) {
           type: "FAQ",
           key: `faq-${crypto.randomUUID()}`,
           market: "GLOBAL",
-          locale: "en-us",
+          locale: "en",
           sortOrder: Number(sortOrder),
           payload: payload(),
         }),
@@ -111,7 +121,7 @@ export function FaqCmsEditor({ initialItem }: { initialItem?: FaqCmsItem }) {
   }
 
   function publish() {
-    if (!item || !validDraft) return;
+    if (!item || !validDraft || draftDirty) return;
     mutate("publish", {}, "FAQ published.");
   }
 
@@ -222,7 +232,7 @@ export function FaqCmsEditor({ initialItem }: { initialItem?: FaqCmsItem }) {
                 <AdminButton type="button" variant="secondary" onClick={saveDraft} loading={pending} disabled={!validDraft}>
                   Save draft
                 </AdminButton>
-                <AdminButton type="button" onClick={publish} loading={pending} disabled={!validDraft}>
+                <AdminButton type="button" onClick={publish} loading={pending} disabled={!validDraft || draftDirty}>
                   Publish
                 </AdminButton>
                 {item.status === "PUBLISHED" ? (
@@ -237,6 +247,11 @@ export function FaqCmsEditor({ initialItem }: { initialItem?: FaqCmsItem }) {
             ) : null}
           </div>
 
+          {item && draftDirty ? (
+            <p className="text-sm font-bold text-amber-700" role="status">
+              Save this draft before publishing the current edits.
+            </p>
+          ) : null}
           {message ? <p className="text-sm font-bold text-emerald-700" role="status">{message}</p> : null}
           {error ? <p className="rounded-xl bg-rose-50 px-3 py-2 text-sm font-bold text-rose-700" role="alert">{error}</p> : null}
         </AdminSectionCard>
