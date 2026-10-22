@@ -81,6 +81,17 @@ test("finalization anonymizes account data while preserving the deletion audit r
   const support = await db.supportTicket.create({
     data: { userId: user.id, email, subject: "Deletion", category: "account_deletion" },
   });
+  const priorRequest = await db.accountDeletionRequest.create({
+    data: {
+      userId: user.id,
+      email,
+      status: "CANCELLED",
+      deletionScheduledAt: new Date("2026-10-10T00:00:00Z"),
+      cancelledAt: new Date("2026-10-05T00:00:00Z"),
+      userReason: "older personal reason",
+      cancellationMetadata: { source: "self-service-reactivation", detail: "personal" },
+    },
+  });
   const request = await db.accountDeletionRequest.create({
     data: {
       userId: user.id,
@@ -127,6 +138,21 @@ test("finalization anonymizes account data while preserving the deletion audit r
       expires: new Date("2026-11-01T00:00:00Z"),
     },
   });
+  await db.verificationToken.create({
+    data: {
+      identifier: `email-change:${user.id}:new-address@example.test`,
+      token: randomUUID(),
+      expires: new Date("2026-11-01T00:00:00Z"),
+    },
+  });
+  const otherEmail = `prefix-${email.toLowerCase()}`;
+  await db.verificationToken.create({
+    data: {
+      identifier: `password-reset:${otherEmail}`,
+      token: randomUUID(),
+      expires: new Date("2026-11-01T00:00:00Z"),
+    },
+  });
   await db.newsletterSubscriber.create({
     data: { email: email.toLowerCase(), status: "SUBSCRIBED", source: "account" },
   });
@@ -155,13 +181,36 @@ test("finalization anonymizes account data while preserving the deletion audit r
   assert.equal(await db.userProfile.count({ where: { userId: user.id } }), 0);
   assert.equal(await db.savedSearch.count({ where: { userId: user.id } }), 0);
   assert.equal(await db.notification.count({ where: { userId: user.id } }), 0);
-  assert.equal(await db.verificationToken.count({ where: { identifier: { endsWith: email.toLowerCase() } } }), 0);
+  assert.equal(
+    await db.verificationToken.count({
+      where: {
+        OR: [
+          { identifier: `password-reset:${email.toLowerCase()}` },
+          { identifier: { startsWith: `email-change:${user.id}:` } },
+        ],
+      },
+    }),
+    0,
+  );
+  assert.equal(
+    await db.verificationToken.count({
+      where: { identifier: `password-reset:${otherEmail}` },
+    }),
+    1,
+  );
 
   const preservedRequest = await db.accountDeletionRequest.findUnique({ where: { id: request.id } });
   assert.ok(preservedRequest);
   assert.equal(preservedRequest.status, "COMPLETED");
   assert.equal(preservedRequest.userReason, null);
   assert.equal(preservedRequest.adminNotificationId, "CASE-123");
+
+  const redactedPriorRequest = await db.accountDeletionRequest.findUnique({ where: { id: priorRequest.id } });
+  assert.ok(redactedPriorRequest);
+  assert.equal(redactedPriorRequest.status, "CANCELLED");
+  assert.equal(redactedPriorRequest.email, redactedDeletionEmail(request.id));
+  assert.equal(redactedPriorRequest.userReason, null);
+  assert.equal(redactedPriorRequest.cancellationMetadata, null);
 
   const detachedSupport = await db.supportTicket.findUnique({ where: { id: support.id } });
   assert.equal(detachedSupport?.userId, null);
