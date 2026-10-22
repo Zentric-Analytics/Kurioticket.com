@@ -4,7 +4,7 @@ import { Prisma } from "@/generated/prisma/client";
 import { eligibleGuestVisitorWhere, eligibleLinkedVisitorWhere, mergeAdminActivity, toAdminJourneyActivity, type ActivityRow, type IdentityKind } from "@/lib/adminIdentityJourney";
 import {
   ACTIVITY_FETCH_LIMIT, ACTIVITY_PAGE_SIZE, activityWindow, allowedActivityStages,
-  decodeActivityCursor, encodeActivityCursor, sourceActivitySeek,
+  decodeActivityCursor, encodeActivityCursor, excludeCanonicalLegacyRows, sourceActivitySeek,
   type ActivityFilters, type JourneyStage,
 } from "@/lib/adminIdentityActivity";
 import { escapePrismaContainsQuery } from "@/lib/adminIdentityDirectory";
@@ -115,6 +115,7 @@ export async function loadAdminIdentityActivity(
       allowed.has("SEARCH_COMPLETED") ? db.searchHistory.findMany({
         where: { AND: [
           searchOwner, { createdAt: window }, sourceActivitySeek(cursor, "s"),
+          excludeCanonicalLegacyRows("SEARCH_COMPLETED", journeyOwner, window, productEventFilter, eventQ),
           ...(product ? [{ type: product }] : []),
           ...(q ? [{ OR: [
             { origin: ci(q) }, { destination: ci(q) },
@@ -129,6 +130,7 @@ export async function loadAdminIdentityActivity(
         ? db.redirectLog.findMany({
           where: { AND: [
             redirectOwner, { createdAt: window }, sourceActivitySeek(cursor, "r"),
+            excludeCanonicalLegacyRows("PROVIDER_HANDOFF_STARTED", journeyOwner, window, productEventFilter, eventQ),
             ...(product ? [{ type: product }] : []),
             ...(q ? [{ OR: [{ provider: ci(q) }, { route: ci(q) }] }] : []),
           ] },
