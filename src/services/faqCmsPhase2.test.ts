@@ -22,6 +22,8 @@ test("FAQ CMS initialization is explicit, transactional, published and audited",
   assert.match(initService, /CMS_FAQ_INITIALIZED/);
   assert.match(initService, /cmsContentRevision\.create/);
   assert.match(initService, /existingCount > 0/);
+  assert.match(initService, /const FAQ_LOCALE = "en"/);
+  assert.match(initService, /"en-us", "en-gb"/);
 });
 
 test("FAQ admin surface exposes the intended CMS lifecycle", () => {
@@ -33,6 +35,9 @@ test("FAQ admin surface exposes the intended CMS lifecycle", () => {
   }
   assert.match(editor, /Draft preview/);
   assert.match(editor, /Unpublished changes/);
+  assert.match(editor, /draftDirty/);
+  assert.match(editor, /Save this draft before publishing the current edits/);
+  assert.match(editor, /disabled=\{!validDraft \|\| draftDirty\}/);
   assert.match(detailPage, /Revision history/);
   assert.match(detailPage, /actorEmail/);
 });
@@ -40,6 +45,7 @@ test("FAQ admin surface exposes the intended CMS lifecycle", () => {
 test("public FAQ reads are locale aware and preserve code fallback", () => {
   assert.match(publicService, /getPublishedFaqs\(localeInput/);
   assert.match(publicService, /normalizeLanguage/);
+  assert.match(publicService, /locale\.startsWith\("en-"\) \? "en" : locale/);
   assert.match(publicService, /getGeneralFaqs/);
   assert.match(publicService, /readPublishedCmsContent<CmsFaq>\("FAQ"/);
   assert.match(publicRoute, /getPublishedFaqs\(locale\)/);
