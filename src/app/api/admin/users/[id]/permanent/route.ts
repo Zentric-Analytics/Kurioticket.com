@@ -61,7 +61,7 @@ export async function DELETE(request: Request, context: RouteContext) {
   }
 
   const deletionRequest = await db.accountDeletionRequest.findFirst({
-    where: { userId: target.id },
+    where: { userId: target.id, status: { not: "CANCELLED" } },
     select: { id: true, status: true },
     orderBy: { requestedAt: "desc" },
   });
