@@ -1,4 +1,4 @@
-import { spawn } from "node:child_process";
+import { spawn, execFileSync } from "node:child_process";
 import { mkdtemp, mkdir, readFile, symlink, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -29,6 +29,7 @@ await put("next.config.mjs",
   'export default {devIndicators:false,agentRules:false,experimental:{externalDir:true},webpack(config){\n' +
   'config.resolve.alias["@/lib/auth-guards"]=path.resolve("mocks/auth-guards.js");\n' +
   'config.resolve.alias["@/lib/stagingSafety"]=path.resolve("mocks/stagingSafety.js");\n' +
+  'config.resolve.alias["@/lib/prisma"]=path.resolve("mocks/prisma.js");\n' +
   'config.resolve.alias["@/services/adminIdentityActivityService"]=path.resolve("mocks/activity.js");\n' +
   'config.resolve.alias["@"]=' + JSON.stringify(source) + ';return config;}};');
 await put("postcss.config.mjs", 'export default {plugins:{"@tailwindcss/postcss":{}}};');
@@ -47,6 +48,27 @@ await put("app/admin/users/[kind]/[id]/activity/page.tsx",
 await put("mocks/auth-guards.js", 'export async function requireAdminSession(){return {user:{id:"qa-admin",role:"ADMIN"}};}');
 await put("mocks/stagingSafety.js", 'export function getPublicEnvironment(){return "staging";}');
 await put("mocks/activity.js", await readFile(path.join(qa, "activity-fixture.js"), "utf8"));
+await put("mocks/prisma.js", await readFile(path.join(qa, "old-drawer-fixture.js"), "utf8"));
+// Capture the *actual old drawer component* from dev before this feature branch.
+// The labelled synthetic fixture prevents screenshots from exposing real guest data.
+const oldDrawer = execFileSync("git", [
+  "show", "f25583a28a4ffc7a56f2a9c4367fc46c52a3bd19:src/components/admin/IdentityActivityPanel.tsx",
+], { cwd: repo, encoding: "utf8" });
+await put("app/before/IdentityActivityPanel.tsx", oldDrawer);
+await put("app/before/page.tsx", [
+  'import { IdentityActivityPanel } from "./IdentityActivityPanel";',
+  'export default function BeforeActivityPage() {',
+  '  return <div className="mx-auto max-w-7xl p-5">',
+  '    <h1 className="text-xl font-bold text-slate-900">Users</h1>',
+  '    <p className="mt-2 text-sm text-slate-500">QA identities directory, before full-page activity</p>',
+  '    <div className="mt-5 rounded-xl border border-slate-200 bg-white p-5">',
+  '      <p className="text-sm font-semibold">Identities (QA example)</p>',
+  '      <p className="mt-3 text-sm text-slate-600">Guest visitor — qa-guest-activity-0001</p>',
+  '    </div>',
+  '    <IdentityActivityPanel selection="guest:qa-guest-activity-0001" />',
+  '  </div>;',
+  '}',
+].join("\n"));
 
 const app = spawn(process.execPath,
   [path.join(repo, "node_modules/next/dist/bin/next"), "dev", "--webpack", "-p", port],
