@@ -65,39 +65,56 @@ export function createProviderOperationalStatusReader(dependencies: Dependencies
 
     return Promise.all(readiness.map(async integration => {
       const provider = providerNames[integration.id];
-      const rows = await db.apiProviderLog.findMany({
-        where: {
-          provider,
-          createdAt: { gte: since, lte: now },
-          metadata: { path: ["environment"], equals: environment },
-        },
-        select: { status: true, latencyMs: true, createdAt: true },
-        orderBy: { createdAt: "desc" },
-        take: 5000,
-      });
-      const success = rows.filter(row => row.status === "SUCCESS");
-      const degraded = rows.filter(row => row.status === "DEGRADED");
-      const failed = rows.filter(row => row.status === "FAILED");
-      const disabled = rows.filter(row => row.status === "DISABLED");
-      const latencies = rows.flatMap(row => row.latencyMs === null ? [] : [row.latencyMs]);
-      const counts = { total: rows.length, success: success.length, degraded: degraded.length, failed: failed.length };
+      const where = {
+        provider,
+        createdAt: { gte: since, lte: now },
+        metadata: { path: ["environment"], equals: environment },
+      } as const;
+      const [
+        totalCalls,
+        successCalls,
+        degradedCalls,
+        failedCalls,
+        disabledCalls,
+        latency,
+        lastActivity,
+        lastSuccess,
+        lastFailure,
+      ] = await Promise.all([
+        db.apiProviderLog.count({ where }),
+        db.apiProviderLog.count({ where: { ...where, status: "SUCCESS" } }),
+        db.apiProviderLog.count({ where: { ...where, status: "DEGRADED" } }),
+        db.apiProviderLog.count({ where: { ...where, status: "FAILED" } }),
+        db.apiProviderLog.count({ where: { ...where, status: "DISABLED" } }),
+        db.apiProviderLog.aggregate({ where, _avg: { latencyMs: true } }),
+        db.apiProviderLog.findFirst({ where, select: { createdAt: true }, orderBy: { createdAt: "desc" } }),
+        db.apiProviderLog.findFirst({ where: { ...where, status: "SUCCESS" }, select: { createdAt: true }, orderBy: { createdAt: "desc" } }),
+        db.apiProviderLog.findFirst({ where: { ...where, status: "FAILED" }, select: { createdAt: true }, orderBy: { createdAt: "desc" } }),
+      ]);
+      const observedCalls = successCalls + degradedCalls + failedCalls;
+      const counts = {
+        total: observedCalls,
+        success: successCalls,
+        degraded: degradedCalls,
+        failed: failedCalls,
+      };
       return {
         id: integration.id,
         provider,
         readinessState: integration.state,
         operationalState: state(integration, counts),
         windowHours: hours,
-        totalCalls: rows.length,
-        successCalls: success.length,
-        degradedCalls: degraded.length,
-        failedCalls: failed.length,
-        disabledCalls: disabled.length,
-        averageLatencyMs: latencies.length
-          ? Math.round(latencies.reduce((sum, value) => sum + value, 0) / latencies.length)
-          : null,
-        lastActivityAt: rows[0]?.createdAt.toISOString() ?? null,
-        lastSuccessAt: success[0]?.createdAt.toISOString() ?? null,
-        lastFailureAt: failed[0]?.createdAt.toISOString() ?? null,
+        totalCalls,
+        successCalls,
+        degradedCalls,
+        failedCalls,
+        disabledCalls,
+        averageLatencyMs: latency._avg.latencyMs === null
+          ? null
+          : Math.round(latency._avg.latencyMs),
+        lastActivityAt: lastActivity?.createdAt.toISOString() ?? null,
+        lastSuccessAt: lastSuccess?.createdAt.toISOString() ?? null,
+        lastFailureAt: lastFailure?.createdAt.toISOString() ?? null,
       };
     }));
   };
