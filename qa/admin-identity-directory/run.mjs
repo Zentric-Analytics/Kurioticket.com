@@ -62,7 +62,7 @@ await put(
 import {AdminHorizontalShell} from "@/components/admin/AdminHorizontalShell";
 export default function Layout({children}) {return <html lang="en"><body>
 <div style={{padding:"4px 16px",background:"#fff7ed",fontSize:12}}>QA fixtures only — no customer data or production statistics</div>
-<AdminHorizontalShell adminRole="ADMIN" adminEmail="qa-self@example.invalid" adminName="QA admin" showPreviewTesters={false}>{children}</AdminHorizontalShell>
+<AdminHorizontalShell adminRole="ADMIN" adminEmail="qa-self@example.invalid" adminName="QA admin" showPreviewTesters={${process.env.ADMIN_NAV_QA_SHOW_PREVIEW_TESTERS === "1"}}>{children}</AdminHorizontalShell>
 </body></html>;}`,
 );
 await put(
