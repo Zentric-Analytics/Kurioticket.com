@@ -99,7 +99,7 @@ function HeaderNavLink({ entry, pathname, mobile = false, close }: { entry: Head
 
   return (
     <div ref={anchorRef} className={"relative shrink-0 " + (mobile ? "w-full" : "")}>
-      <div className={'relative inline-flex w-full items-center whitespace-nowrap rounded-xl ' + style + underline}>
+      <div className={'relative inline-flex items-center whitespace-nowrap rounded-xl ' + (mobile ? "w-fit" : "w-full") + " " + style + underline}>
         <Link href={item.href} onClick={() => { setExpanded(false); close(); }}
           aria-current={isAdminNavItemActive(item.href, pathname) ? "page" : undefined}
           className="inline-flex h-10 min-w-0 items-center gap-1.5 whitespace-nowrap rounded-l-xl pl-1.5 pr-0.5 text-[12.5px] font-semibold min-[1600px]:gap-2 min-[1600px]:pl-2 min-[1600px]:text-[13px] min-[1800px]:pl-2.5 min-[1800px]:text-[13.5px]">
@@ -130,20 +130,7 @@ function HeaderNavLink({ entry, pathname, mobile = false, close }: { entry: Head
 function Navigation({ groups, pathname, mobile = false, close }: { groups: HeaderGroup[]; pathname: string; mobile?: boolean; close: () => void }) {
   return <nav aria-label="Admin navigation" className={mobile
     ? "flex flex-col gap-2 p-3"
-    : "flex w-full min-w-0 flex-nowrap items-center justify-between gap-2 whitespace-nowrap min-[1600px]:gap-3"}>
-    {!mobile ? (
-      <Link href="/admin" onClick={close} aria-label="Kurioticket Admin overview"
-        className="inline-flex h-10 shrink-0 items-center border-r border-slate-200 pr-2 min-[1600px]:pr-4">
-        {/* Use the actual public-site brand assets, never a recreated KT placeholder. */}
-        <span className="min-[1600px]:hidden">
-          <KurioticketLogo variant="mark" className="h-7 w-7" markClassName="h-7 w-7" />
-        </span>
-        <span className="hidden min-[1600px]:flex min-[1600px]:flex-col min-[1600px]:justify-center min-[1600px]:gap-0.5">
-          <KurioticketLogo variant="full" className="h-6 w-auto" />
-          <span className="text-[10px] font-medium leading-3 text-slate-500">Internal operations</span>
-        </span>
-      </Link>
-    ) : null}
+    : "flex min-w-max w-full flex-nowrap items-center justify-between gap-2 whitespace-nowrap min-[1600px]:gap-3"}>
     {groups.map((group, index) => (
       <div key={group.label} className={mobile
         ? "flex flex-col gap-1"
@@ -188,10 +175,17 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
 
   return <div className="min-h-screen bg-[#f1f5fb] text-slate-950">
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
-      <div className="mx-auto flex h-16 w-full max-w-[1920px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-10">
-        <div className="min-w-0">
-          <p className="truncate text-base font-extrabold tracking-tight text-slate-950">Kurioticket Admin</p>
-          <p className="truncate text-xs font-medium text-slate-500">Secure internal workspace</p>
+      <div className="mx-auto flex h-16 w-full max-w-[1920px] items-center justify-between gap-4 pl-2 pr-4 sm:pr-6 lg:pr-10">
+        <div className="flex min-w-0 items-center gap-2">
+          {/* Official Kurioticket mark stays in the top-left header beside the title at every width. */}
+          <Link href="/admin" aria-label="Kurioticket Admin overview"
+            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+            <KurioticketLogo variant="mark" className="h-11 w-11" markClassName="h-11 w-11" />
+          </Link>
+          <div className="min-w-0">
+            <p className="truncate text-base font-extrabold tracking-tight text-slate-950">Kurioticket Admin</p>
+            <p className="truncate text-xs font-medium text-slate-500">Secure internal workspace</p>
+          </div>
         </div>
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
           <button type="button" onClick={() => { setQuery(""); setSearchOpen(true); }} aria-label="Search admin pages"
@@ -211,15 +205,15 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
               {([{ href: "/admin/settings", label: "Admin settings", icon: Settings }, { href: "/admin/logs", label: "Audit logs", icon: ShieldCheck }, { href: "/", label: "Switch to public site", icon: Building2 }, { href: "/api/auth/signout", label: "Logout", icon: LogOut }]).map(({ href, label, icon: Icon }) => <Link key={href} href={href} onClick={() => setProfileOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"><Icon size={16} />{label}</Link>)}
             </div> : null}
           </div>
-          <button type="button" className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 min-[1440px]:hidden" onClick={() => setMobileOpen((value) => !value)} aria-label={mobileOpen ? "Close admin navigation" : "Open admin navigation"} aria-expanded={mobileOpen}>{mobileOpen ? <X size={19} /> : <Menu size={19} />}</button>
+          <button type="button" className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 min-[1100px]:hidden" onClick={() => setMobileOpen((value) => !value)} aria-label={mobileOpen ? "Close admin navigation" : "Open admin navigation"} aria-expanded={mobileOpen}>{mobileOpen ? <X size={19} /> : <Menu size={19} />}</button>
         </div>
       </div>
-      <div className="hidden border-t border-slate-100 min-[1440px]:block">
-        <div className="mx-auto max-w-[1920px] px-3 pb-2 pt-2 min-[1800px]:px-6">
+      <div className="hidden border-t border-slate-100 min-[1100px]:block">
+        <div className="mx-auto max-w-[1920px] overflow-x-auto overscroll-x-contain px-3 pb-2 pt-2 min-[1800px]:px-6">
           <Navigation groups={groups} pathname={pathname} close={() => {}} />
         </div>
       </div>
-      {mobileOpen ? <div className="max-h-[70vh] overflow-y-auto border-t border-slate-100 bg-white min-[1440px]:hidden"><Navigation groups={groups} pathname={pathname} mobile close={() => setMobileOpen(false)} /></div> : null}
+      {mobileOpen ? <div className="max-h-[70vh] overflow-y-auto border-t border-slate-100 bg-white min-[1100px]:hidden"><Navigation groups={groups} pathname={pathname} mobile close={() => setMobileOpen(false)} /></div> : null}
     </header>
     <main className="mx-auto w-full max-w-[1920px] px-4 py-5 sm:px-6 lg:px-10">{children}</main>
     {searchOpen ? <div className="fixed inset-0 z-[90] flex items-start justify-center bg-slate-950/30 px-4 pt-[12vh]" onMouseDown={(event) => { if (event.target === event.currentTarget) setSearchOpen(false); }}>
