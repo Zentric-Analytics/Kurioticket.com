@@ -8,7 +8,7 @@ import {
 } from "@/services/cmsContentService";
 
 const FAQ_MARKET = "GLOBAL";
-const FAQ_LOCALE = "en-us";
+const FAQ_LOCALE = "en";
 
 function normalizeActor(actor: CmsActor) {
   return { ...actor, email: actor.email.trim().toLowerCase() };
@@ -35,8 +35,8 @@ export async function initializeFaqCms(actorInput: CmsActor) {
           where: {
             type: "FAQ",
             OR: [
-              { market: FAQ_MARKET, locale: FAQ_LOCALE },
-              { publishedMarket: FAQ_MARKET, publishedLocale: FAQ_LOCALE },
+              { market: FAQ_MARKET, locale: { in: ["en", "en-us", "en-gb"] } },
+              { publishedMarket: FAQ_MARKET, publishedLocale: { in: ["en", "en-us", "en-gb"] } },
             ],
           },
         }),
