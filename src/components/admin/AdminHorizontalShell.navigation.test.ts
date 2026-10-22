@@ -6,11 +6,15 @@ import { getAdminHeaderGroups, isAdminNavItemActive } from "@/lib/adminNavigatio
 
 const shell = readFileSync("src/components/admin/AdminHorizontalShell.tsx", "utf8");
 
-test("admin navigation uses existing official brand assets, not a fabricated KT mark", () => {
+test("official logo stays beside Admin title at every width, never in the navigation row", () => {
   assert.match(shell, /import \{ KurioticketLogo \} from/);
-  assert.match(shell, /<KurioticketLogo variant="full"/);
-  assert.match(shell, /<KurioticketLogo variant="mark"/);
-  assert.match(shell, /href="\/admin" onClick=\{close\} aria-label="Kurioticket Admin overview"/);
+  assert.match(shell, /Official Kurioticket mark stays in the top-left header beside the title at every width/);
+  assert.match(shell, /<Link href="\/admin" aria-label="Kurioticket Admin overview"/);
+  assert.match(shell, /<KurioticketLogo variant="mark" className="h-11 w-11"/);
+  assert.match(shell, /pl-2 pr-4 sm:pr-6 lg:pr-10/);
+  const navigation = shell.slice(shell.indexOf("function Navigation("), shell.indexOf("export function AdminHorizontalShell("));
+  assert.doesNotMatch(navigation, /KurioticketLogo/);
+  assert.equal((shell.match(/<KurioticketLogo\b/g) || []).length, 1);
 });
 
 test("selected tabs change only the underline, without text, icon, weight, or background overrides", () => {
@@ -32,7 +36,7 @@ test("navigation keeps role-aware child pages and restores desktop tabs before 1
   assert.match(shell, /overflow-x-auto overscroll-x-contain/);
   assert.match(shell, /flex min-w-max w-full flex-nowrap/);
   assert.match(shell, /mobile \? "w-fit" : "w-full"/);
-  assert.match(shell, /Genuine brand mark stays visible/);
+  assert.match(shell, /Official Kurioticket mark stays in the top-left header beside the title at every width/);
   assert.doesNotMatch(shell, /min-\[1440px\]/);
   const groups = getAdminHeaderGroups("ADMIN", true);
   const entries = groups.flatMap(group => group.links);

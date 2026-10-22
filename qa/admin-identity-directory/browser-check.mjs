@@ -30,6 +30,20 @@ fs.mkdirSync(output, { recursive: true });
     await check(`layout ${width}px`, async () => {
       await page.setViewportSize({ width, height: 900 });
       await page.goto(url, { waitUntil: "networkidle" });
+      // Verify genuine branding is always next to the header title and never in the nav strip.
+      const brand = page.getByRole("link", { name: "Kurioticket Admin overview" });
+      await expect(brand).toHaveCount(1);
+      await expect(brand).toBeVisible();
+      const mark = brand.locator('img[src="/brand/kurioticket-icon-blue.svg"]');
+      await expect(mark).toBeVisible();
+      assert.equal(await mark.evaluate(img => img.complete && img.naturalWidth > 0), true, "Official logo loads");
+      const iconBox = await mark.boundingBox();
+      const titleBox = await page.getByText("Kurioticket Admin", { exact: true }).boundingBox();
+      assert.ok(iconBox && titleBox);
+      const gap = titleBox.x - iconBox.x - iconBox.width;
+      assert.ok(iconBox.x < titleBox.x && gap >= 4 && gap <= 20, "Logo sits immediately left of Admin title");
+      assert.ok(iconBox.x >= 0, "Logo remains inside the viewport");
+      await expect(page.locator('nav[aria-label="Admin navigation"] img')).toHaveCount(0);
       const metrics = await page.evaluate(() => {
         const region = document.querySelector('[role="region"]');
         return {

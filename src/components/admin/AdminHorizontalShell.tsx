@@ -131,19 +131,6 @@ function Navigation({ groups, pathname, mobile = false, close }: { groups: Heade
   return <nav aria-label="Admin navigation" className={mobile
     ? "flex flex-col gap-2 p-3"
     : "flex min-w-max w-full flex-nowrap items-center justify-between gap-2 whitespace-nowrap min-[1600px]:gap-3"}>
-    {!mobile ? (
-      <Link href="/admin" onClick={close} aria-label="Kurioticket Admin overview"
-        className="inline-flex h-10 shrink-0 items-center border-r border-slate-200 pr-2 min-[1600px]:pr-4">
-        {/* Use the actual public-site brand assets, never a recreated KT placeholder. */}
-        <span className="min-[1360px]:hidden">
-          <KurioticketLogo variant="mark" className="h-7 w-7" markClassName="h-7 w-7" />
-        </span>
-        <span className="hidden min-[1360px]:flex min-[1360px]:flex-col min-[1360px]:justify-center min-[1360px]:gap-0.5">
-          <KurioticketLogo variant="full" className="h-6 w-auto" />
-          <span className="text-[10px] font-medium leading-3 text-slate-500">Internal operations</span>
-        </span>
-      </Link>
-    ) : null}
     {groups.map((group, index) => (
       <div key={group.label} className={mobile
         ? "flex flex-col gap-1"
@@ -188,12 +175,13 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
 
   return <div className="min-h-screen bg-[#f1f5fb] text-slate-950">
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
-      <div className="mx-auto flex h-16 w-full max-w-[1920px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-10">
-        <div className="flex min-w-0 items-center gap-3">
-          {/* Genuine brand mark stays visible when the compact menu replaces the tab row. */}
-          <span className="shrink-0 min-[1100px]:hidden">
-            <KurioticketLogo variant="mark" className="h-9 w-9" markClassName="h-9 w-9" />
-          </span>
+      <div className="mx-auto flex h-16 w-full max-w-[1920px] items-center justify-between gap-4 pl-2 pr-4 sm:pr-6 lg:pr-10">
+        <div className="flex min-w-0 items-center gap-2">
+          {/* Official Kurioticket mark stays in the top-left header beside the title at every width. */}
+          <Link href="/admin" aria-label="Kurioticket Admin overview"
+            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+            <KurioticketLogo variant="mark" className="h-11 w-11" markClassName="h-11 w-11" />
+          </Link>
           <div className="min-w-0">
             <p className="truncate text-base font-extrabold tracking-tight text-slate-950">Kurioticket Admin</p>
             <p className="truncate text-xs font-medium text-slate-500">Secure internal workspace</p>
