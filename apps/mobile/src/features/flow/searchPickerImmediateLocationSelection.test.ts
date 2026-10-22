@@ -19,15 +19,17 @@ const locationSheets = [
 test("final searchable location suggestions commit directly without Done", () => {
   assert.match(locationSheets[0], /setDraftAirport\(airport\);setQuery\(value\)[\s\S]*?onChoose\(airport\)/);
   assert.match(locationSheets[1], /setDraft\(item\); setQuery\(item\.searchValue\)[\s\S]*?onChoose\(item\.searchValue\)/);
-  assert.match(locationSheets[2], /setDraft\(item\);setQuery\(item\.value\)[\s\S]*?onChoose\(item\.value\)/);
+  assert.match(locationSheets[2], /setDraft\(item\);setQuery\(item\.value\)[\s\S]*?onChoose\(item\)/);
   assert.match(locationSheets[3], /setDraft\(airport\);setQuery\(value\)[\s\S]*?onChoose\(airport\)/);
   for (const sheet of locationSheets) assert.doesNotMatch(sheet, /<PrimaryButton label="Done"/);
 });
 
 test("dismissal never commits typed TextInput values", () => {
-  for (const sheet of locationSheets) {
-    assert.match(sheet, /<PickerSheetHeader[^>]+onClose=\{on(?:Close|Cancel)\}/);
-    assert.match(sheet, /onRequestClose=\{on(?:Close|Cancel)\}/);
+  const closeHandlers = ["dismissAirportSheet", "dismissDestinationSheet", "dismissLocationSheet", "dismissAirportSheet"] as const;
+  for (const [index, sheet] of locationSheets.entries()) {
+    const close = closeHandlers[index];
+    assert.match(sheet, new RegExp(`<PickerSheetHeader[^>]+onClose=\\{${close}\\}`));
+    assert.match(sheet, new RegExp(`onRequestClose=\\{${close}\\}`));
     assert.doesNotMatch(sheet, /on(?:Choose|Done)\(query\)|on(?:Choose|Done)\(value\)/);
   }
 });

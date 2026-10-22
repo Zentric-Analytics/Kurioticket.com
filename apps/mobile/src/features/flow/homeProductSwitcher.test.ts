@@ -18,13 +18,16 @@ test("Home product tabs expose one selected state driven by activeProduct", () =
   assert.match(home, /accessibilityRole="tab"/);
   assert.match(home, /accessibilityState=\{\{ selected \}\}/);
   assert.match(home, /selected && \[styles\.productActive/);
+  assert.match(home, /backgroundColor: ft\.colors\.selected, borderBottomColor: ft\.colors\.selectedBorder/);
+  assert.match(home, /selected && \{ color: ft\.colors\.selectedLabelText \}/);
+  assert.doesNotMatch(home, /styles\.productIcon/);
   assert.doesNotMatch(home, /index === 0/);
 });
 
 test("Home switches the search area to reusable panels without route screens", () => {
-  assert.match(home, /flights: availability\.flightSearch[\s\S]*?<FlightSearchPanel compact enableHomepageDefaultOrigin homepageAirportPicker \/>/);
-  assert.match(home, /hotels: availability\.hotelSearch[\s\S]*?<HomeSearchSurface>\s*<HotelSearchPanel embedded params=\{\{\}\} \/>\s*<\/HomeSearchSurface>/);
-  assert.match(home, /cars: availability\.carSearch[\s\S]*?<HomeSearchSurface>\s*<CarSearchPanel embedded params=\{\{\}\} startWithEmptyRentalDates \/>\s*<\/HomeSearchSurface>/);
+  assert.match(home, /flights: availability\.flightSearch[\s\S]*?<FlightSearchPanel compact structuredSearchAppearance enableHomepageDefaultOrigin homepageAirportPicker \/>/);
+  assert.match(home, /hotels: availability\.hotelSearch[\s\S]*?<HomeHotelSearchSurface>\s*<HotelSearchPanel embedded params=\{\{\}\} \/>\s*<\/HomeHotelSearchSurface>/);
+  assert.match(home, /cars: availability\.carSearch[\s\S]*?<HomeCarsSearchSurface>\s*<CarSearchPanel embedded params=\{\{\}\} startWithEmptyRentalDates \/>\s*<\/HomeCarsSearchSurface>/);
   assert.match(home, /packages: availability\.deals[\s\S]*?<PackagesSearchPanel presentation="home" \/>/);
   assert.match(home, /\{searchPanel\[activeProduct\]\}/);
   assert.doesNotMatch(home, /<(?:Flights|Hotels|Cars|Deals)Screen/);
@@ -43,8 +46,8 @@ test("Home keeps its hero and surrounding discovery content around the switchabl
   const panel = home.indexOf("{searchPanel[activeProduct]}");
   assert.ok(home.indexOf("<HomeHero />") < selector);
   assert.ok(selector < panel);
-  for (const component of ["PopularDestinationStays", "HomepageAdventureDiscovery", "HomepageDealPromos", "RegionalDestinationRoutes"]) {
-    assert.ok(home.indexOf(`<${component} />`) > panel);
+  for (const component of ["PopularDestinationStays", "HomepageAdventureDiscovery", "RegionalDestinationRoutes"]) {
+    assert.ok(home.indexOf(`<${component}`) > panel);
   }
 });
 

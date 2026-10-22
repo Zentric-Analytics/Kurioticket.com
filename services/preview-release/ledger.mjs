@@ -1,6 +1,29 @@
 import pg from "pg";
 import { assertExactSha, PREVIEW_IDENTITY } from "./config.mjs";
 
+export function mergeOtaActionEvidence(existing = {}, incoming = {}) {
+  const base = existing && typeof existing === "object" && !Array.isArray(existing) ? existing : {};
+  const next = incoming && typeof incoming === "object" && !Array.isArray(incoming) ? incoming : {};
+  const updates = [];
+  const seen = new Set();
+  for (const update of [...(Array.isArray(base.updates) ? base.updates : []), ...(Array.isArray(next.updates) ? next.updates : [])]) {
+    if (!update || typeof update !== "object" || Array.isArray(update)) continue;
+    const platforms = (Array.isArray(update.platforms) ? update.platforms : [update.platform].filter(Boolean)).slice().sort();
+    const key = [update.group ?? update.id ?? "", update.runtimeVersion ?? "", platforms.join(",")].join("|");
+    if (seen.has(key)) continue;
+    seen.add(key);
+    updates.push(update);
+  }
+  const providerVerifiedPlatforms = [...new Set([
+    ...(Array.isArray(base.providerVerifiedPlatforms) ? base.providerVerifiedPlatforms : []),
+    ...(Array.isArray(next.providerVerifiedPlatforms) ? next.providerVerifiedPlatforms : []),
+  ].filter((platform) => platform === "ios" || platform === "android"))].sort();
+  const merged = { ...base, ...next };
+  if (updates.length) merged.updates = updates;
+  if (providerVerifiedPlatforms.length) merged.providerVerifiedPlatforms = providerVerifiedPlatforms;
+  return merged;
+}
+
 export class PreviewLedger {
   constructor(connectionString, { pool } = {}) {
     this.pool = pool ?? new pg.Pool({ connectionString, max: 5, ssl: connectionString.includes("localhost") ? false : { rejectUnauthorized: false } });
@@ -12,6 +35,31 @@ export class PreviewLedger {
     const result = await this.pool.query("SELECT current_database() AS database_name, 1 AS ok");
     if (result.rows[0]?.ok !== 1) throw new Error("Preview ledger database health check failed.");
     return { connected: true };
+  }
+
+  async ensureDetectedRelease({ sourceSha, mode }) {
+    assertExactSha(sourceSha);
+    if (!["dry-run", "active"].includes(mode)) throw new Error("Preview release mode is invalid.");
+    await this.pool.query(
+      `INSERT INTO preview_release (source_sha, previous_sha, mode, state)
+       VALUES (
+         $1,
+         (SELECT source_sha FROM preview_release
+          WHERE state='COMPLETE' AND progression_order IS NOT NULL
+          ORDER BY progression_order DESC LIMIT 1),
+         $2,
+         'DETECTED'
+       )
+       ON CONFLICT (source_sha) DO NOTHING`,
+      [sourceSha, mode],
+    );
+    const result = await this.pool.query(
+      "SELECT * FROM preview_release WHERE source_sha=$1 LIMIT 2",
+      [sourceSha],
+    );
+    if (result.rowCount !== 1) throw new Error("Preview recovery release anchor was not created uniquely.");
+    if (result.rows[0].mode !== mode) throw new Error("Preview recovery release anchor mode mismatch.");
+    return result.rows[0];
   }
 
   async claim({ sourceSha, previousSha, workerId, leaseMs, mode }) {
@@ -32,6 +80,14 @@ export class PreviewLedger {
          WHERE source_sha=$1
            AND state NOT IN ('COMPLETE','SUPERSEDED')
            AND (lock_expires_at IS NULL OR lock_expires_at < now() OR lock_owner=$2)
+           AND NOT EXISTS (
+             SELECT 1 FROM preview_release_action recovery
+             WHERE recovery.source_sha=preview_release.source_sha
+               AND recovery.kind IN ('IOS_BUILD','ANDROID_BUILD')
+               AND recovery.identity_key LIKE 'native-build-recovery:%'
+               AND recovery.remote_id IS NULL
+               AND recovery.state NOT IN ('ERRORED','FAILED','CANCELED','CANCELLED','REMOTE_OBJECT_UNAVAILABLE')
+           )
          RETURNING *`,
         [sourceSha, workerId, leaseMs],
       );
@@ -129,6 +185,39 @@ export class PreviewLedger {
   async lastSuccessful() {
     const result = await this.pool.query("SELECT * FROM preview_release WHERE state='COMPLETE' AND progression_order IS NOT NULL ORDER BY progression_order DESC LIMIT 1");
     return result.rows[0] ?? null;
+  }
+
+  async pendingPlatformOta() {
+    // Compare JS requirements with per-platform delivery, not aggregate COMPLETE.
+    // A web-only completion during a worker rollout must not erase an older gap.
+    const result = await this.pool.query(`
+      WITH requirement AS (
+        SELECT max(progression_order) AS position FROM preview_release
+        WHERE state='COMPLETE' AND jsonb_array_length(coalesce(evidence->'classification'->'otaCandidates','[]'::jsonb)) > 0
+      ), platforms AS (SELECT unnest(ARRAY['ios','android']) AS platform)
+      SELECT platform FROM platforms CROSS JOIN requirement
+      WHERE requirement.position IS NOT NULL AND requirement.position > coalesce((
+        SELECT max(r.progression_order) FROM preview_release r
+        WHERE r.state='COMPLETE' AND (
+          r.evidence->platform->>'buildId' IS NOT NULL OR EXISTS (
+            SELECT 1 FROM preview_release_action a,
+              jsonb_array_elements(coalesce(a.evidence->'updates','[]'::jsonb)) u
+            WHERE a.source_sha=r.source_sha AND a.kind='OTA' AND a.state='PUBLISHED'
+              AND coalesce(a.evidence->'providerVerifiedPlatforms','[]'::jsonb) ? platform
+              AND (u->>'platform'=platform OR coalesce(u->'platforms','[]'::jsonb) ? platform)
+          )
+        )
+      ), -1)
+      ORDER BY platform`);
+    return result.rows.map((row) => row.platform);
+  }
+
+  async claimOtaGap(args) {
+    const pending = await this.pendingPlatformOta();
+    if (!pending.length) return null;
+    // Reuse the same lease-protected completed-release transition as native
+    // reconciliation; publication still goes through durable OTA actions.
+    return await this.claimNativeDrift(args);
   }
 
   async completedCurrentDevProgressionCandidate(sourceSha) {
@@ -241,7 +330,7 @@ export class PreviewLedger {
     );
     const row = result.rows[0] ?? null;
     if (!row) return { eligible: operation === "CURRENT_RELEASE_EVALUATION", reason: "row-not-created" };
-    const stateEligible = operation === "CURRENT_NATIVE_RECONCILIATION"
+    const stateEligible = ["CURRENT_NATIVE_RECONCILIATION", "CURRENT_OTA_RECONCILIATION"].includes(operation)
       ? row.state === "COMPLETE"
       : operation === "IOS_DISTRIBUTION_RECONCILIATION"
         ? ["COMPLETE","FAILED","DETECTED","VALIDATING","PLANNED","DELIVERING"].includes(row.state)
@@ -349,6 +438,41 @@ export class PreviewLedger {
   }
 
   async recordAction({ sourceSha, kind, identityKey, remoteId, state, evidence = {} }) {
+    if (kind === "OTA") {
+      const client = await this.pool.connect();
+      try {
+        await client.query("BEGIN");
+        await client.query("SELECT pg_advisory_xact_lock(hashtext($1),hashtext($2))", [kind, identityKey]);
+        const currentResult = await client.query(
+          "SELECT * FROM preview_release_action WHERE kind=$1 AND identity_key=$2 FOR UPDATE",
+          [kind, identityKey],
+        );
+        const current = currentResult.rows[0] ?? null;
+        if (current && current.source_sha !== sourceSha) throw new Error(`Conflicting remote identity for ${kind}:${identityKey}.`);
+        if (current?.remote_id && remoteId && current.remote_id !== remoteId) throw new Error(`Conflicting remote identity for ${kind}:${identityKey}.`);
+        const mergedEvidence = mergeOtaActionEvidence(current?.evidence, evidence);
+        const result = current
+          ? await client.query(
+              `UPDATE preview_release_action
+               SET remote_id=coalesce(remote_id,$3), state=$4, evidence=$5::jsonb, updated_at=now()
+               WHERE kind=$1 AND identity_key=$2 RETURNING *`,
+              [kind, identityKey, remoteId, state, JSON.stringify(mergedEvidence)],
+            )
+          : await client.query(
+              `INSERT INTO preview_release_action (source_sha, kind, identity_key, remote_id, state, evidence)
+               VALUES ($1,$2,$3,$4,$5,$6::jsonb) RETURNING *`,
+              [sourceSha, kind, identityKey, remoteId, state, JSON.stringify(mergedEvidence)],
+            );
+        if (result.rowCount !== 1) throw new Error(`Conflicting remote identity for ${kind}:${identityKey}.`);
+        await client.query("COMMIT");
+        return result.rows[0];
+      } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
+      } finally {
+        client.release();
+      }
+    }
     const result = await this.pool.query(
       `INSERT INTO preview_release_action (source_sha, kind, identity_key, remote_id, state, evidence)
        VALUES ($1,$2,$3,$4,$5,$6::jsonb)
@@ -569,16 +693,38 @@ export class PreviewLedger {
     };
   }
 
-  async reserveNativeBuildRecovery({ sourceSha, platform, fingerprint, allowUnavailableDelivered = false }) {
+  async reserveNativeBuildRecovery({ sourceSha, platform, fingerprint, allowUnavailableDelivered = false, releaseMode = null }) {
     assertExactSha(sourceSha);
     const kind = platform === "ios" ? "IOS_BUILD" : platform === "android" ? "ANDROID_BUILD" : null;
     if (!kind || !/^[a-z0-9._-]{3,128}$/i.test(String(fingerprint ?? ""))) throw new Error("Native recovery identity is invalid.");
+    if (releaseMode !== null && !["dry-run", "active"].includes(releaseMode)) throw new Error("Preview recovery release mode is invalid.");
     const canonicalIdentity = `native-build:${platform}:${PREVIEW_IDENTITY.easProjectId}:${fingerprint}`;
     const recoveryPrefix = `native-build-recovery:${platform}:${PREVIEW_IDENTITY.easProjectId}:${fingerprint}:`;
     const client = await this.pool.connect();
     try {
       await client.query("BEGIN");
       await client.query("SELECT pg_advisory_xact_lock(hashtext($1), hashtext($2))", [kind, canonicalIdentity]);
+      if (releaseMode !== null) {
+        await client.query(
+          `INSERT INTO preview_release (source_sha, previous_sha, mode, state)
+           VALUES (
+             $1,
+             (SELECT source_sha FROM preview_release
+              WHERE state='COMPLETE' AND progression_order IS NOT NULL
+              ORDER BY progression_order DESC LIMIT 1),
+             $2,
+             'DETECTED'
+           )
+           ON CONFLICT (source_sha) DO NOTHING`,
+          [sourceSha, releaseMode],
+        );
+        const anchor = await client.query(
+          "SELECT mode FROM preview_release WHERE source_sha=$1 LIMIT 2",
+          [sourceSha],
+        );
+        if (anchor.rowCount !== 1) throw new Error("Preview recovery release anchor was not created uniquely.");
+        if (anchor.rows[0].mode !== releaseMode) throw new Error("Preview recovery release anchor mode mismatch.");
+      }
       const delivered = await client.query(
         "SELECT eas_build_id FROM preview_delivered_native_state WHERE platform=$1 AND fingerprint=$2 LIMIT 1",
         [platform, fingerprint],
@@ -698,15 +844,19 @@ export class PreviewLedger {
     assertExactSha(sourceSha);
     const kind = platform === "ios" ? "IOS_BUILD" : platform === "android" ? "ANDROID_BUILD" : null;
     if (!kind) throw new Error("Native build platform is invalid.");
+    const terminalStates = new Set(["ERRORED", "FAILED", "CANCELED", "CANCELLED", "REMOTE_OBJECT_UNAVAILABLE"]);
     const result = await this.pool.query(
       `SELECT * FROM preview_release_action
        WHERE source_sha=$1 AND kind=$2
          AND ($3::text IS NULL OR evidence->>'nativeFingerprint'=$3 OR identity_key LIKE $4)
-       ORDER BY created_at DESC LIMIT 2`,
+       ORDER BY CASE WHEN state IN ('ERRORED','FAILED','CANCELED','CANCELLED','REMOTE_OBJECT_UNAVAILABLE') THEN 1 ELSE 0 END,
+                created_at DESC, id DESC
+       LIMIT 2`,
       [sourceSha, kind, fingerprint, `%:${platform}:preview`],
     );
-    if (result.rowCount > 1) throw new Error(`Ambiguous ${platform} build action for release ${sourceSha}.`);
-    return result.rows[0] ?? null;
+    const active = result.rows.filter((row) => !terminalStates.has(String(row.state ?? "").toUpperCase()));
+    if (active.length > 1) throw new Error(`Ambiguous active ${platform} build action for release ${sourceSha}.`);
+    return active[0] ?? result.rows[0] ?? null;
   }
 
   async getAction(kind, identityKey) {

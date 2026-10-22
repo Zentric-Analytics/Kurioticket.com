@@ -112,6 +112,11 @@ const createAppConfig = ({ config }: ConfigContext): ExpoConfig => {
       },
     ],
   ];
+  if (environment.variant === "preview" && environment.buildMode === "release"
+      && environment.apiBaseUrl === "https://staging.kurioticket.com"
+      && easBuildPlatform === "android") {
+    plugins.push("./config-plugins/withPreviewAndroidCredentials.cjs");
+  }
   if (googleIosClientId && (!isEasBuild || easBuildPlatform === "ios")) {
     googleIosClientId = validateGoogleIosClientId(googleIosClientId, environment.variant);
     plugins.push(["react-native-nitro-google-signin", { iosUrlScheme: googleIosUrlScheme(googleIosClientId) }]);

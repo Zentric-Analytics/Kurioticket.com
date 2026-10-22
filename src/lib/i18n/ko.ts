@@ -2,8 +2,8 @@ import { translations as en } from "./en";
 import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
-  "accountDashboard.recently": "최근",
   ...en,
+  "accountDashboard.recently": "최근",
   "deals.mobileTravelersTitle": "여행자",
   "mobileTravelerCabin.title": "여행자 및 객실 등급",
   "mobileTravelerCabin.adultDescription": "18세 이상",
@@ -363,7 +363,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.preferences.customization.personalization.title": "개인화",
   "accountDashboard.preferences.customization.personalization.description": "Kurioticket이 추천을 개인화하는 방식을 관리하세요.",
   "accountDashboard.preferences.customization.personalizeSearches": "검색을 사용하여 추천을 개인화",
-  "accountDashboard.preferences.customization.personalizedTravel여행 패키지": "개인화된 여행 특가 표시",
+  "accountDashboard.preferences.customization.personalizedTravelDeals": "개인화된 여행 특가 표시",
   "accountDashboard.preferences.customization.rememberRecentSearches": "최근 검색 기억",
   "accountDashboard.preferences.customization.communicationStyle.title": "커뮤니케이션 방식",
   "accountDashboard.preferences.customization.communicationStyle.description": "Kurioticket이 내게 연락하는 방식을 선택하세요.",
@@ -1831,6 +1831,7 @@ export const translations: TranslationDictionary = {
   convertedDisplayEstimateProviderPrice:
     "변환된 표시 예상 금액입니다. 제공업체 요금: {{providerPrice}}. 최종 제공업체 요금은 다를 수 있습니다.",
   viewFlight: "항공편 보기",
+  viewDeal: "상품 보기",
   flightCardProviderHandoff:
     "최종 요금, 이용 가능 여부, 예약 및 운임 규정은 제공업체에서 확인합니다.",
   flightCardProviderHandoffConverted:
@@ -1838,6 +1839,7 @@ export const translations: TranslationDictionary = {
   providerNormalizedItineraryPrefix:
     "가는 편과 오는 편 세부 정보는 제공업체에서 정규화한 여정 데이터로 표시됩니다.",
   checkProvider: "제공업체 확인",
+  notSuppliedByProvider: "제공업체에서 제공하지 않음",
   carryOnIncluded: "기내 수하물 포함",
   flightLeg: "항공편 구간",
   layover: "환승",

@@ -2,8 +2,8 @@ import { translations as en } from "./en";
 import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
-  "accountDashboard.recently": "हाल ही में",
   ...en,
+  "accountDashboard.recently": "हाल ही में",
   "deals.mobileTravelersTitle": "यात्री",
   "mobileTravelerCabin.title": "यात्री और केबिन",
   "mobileTravelerCabin.adultDescription": "18 वर्ष और उससे अधिक",
@@ -199,7 +199,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.preferences.customization.personalization.title": "वैयक्तिकरण",
   "accountDashboard.preferences.customization.personalization.description": "नियंत्रित करें कि Kurioticket आपकी सिफ़ारिशों को कैसे वैयक्तिकृत करे।",
   "accountDashboard.preferences.customization.personalizeSearches": "मेरी खोजों का उपयोग सिफ़ारिशों को वैयक्तिकृत करने के लिए करें",
-  "accountDashboard.preferences.customization.personalizedTravelयात्रा पैकेज": "वैयक्तिकृत यात्रा डील्स दिखाएँ",
+  "accountDashboard.preferences.customization.personalizedTravelDeals": "वैयक्तिकृत यात्रा डील्स दिखाएँ",
   "accountDashboard.preferences.customization.rememberRecentSearches": "मेरी हाल की खोजें याद रखें",
   "accountDashboard.preferences.customization.communicationStyle.title": "संचार शैली",
   "accountDashboard.preferences.customization.communicationStyle.description": "चुनें कि आप Kurioticket से किस तरह संवाद पाना चाहते हैं।",
@@ -1063,6 +1063,7 @@ export const translations: TranslationDictionary = {
   convertedDisplayEstimateProviderPrice:
     "बदला हुआ प्रदर्शन अनुमान। प्रदाता कीमत: {{providerPrice}}. अंतिम प्रदाता कीमत अलग हो सकती है।",
   viewFlight: "उड़ान देखें",
+  viewDeal: "ऑफ़र देखें",
   flightCardProviderHandoff:
     "अंतिम कीमत, उपलब्धता, बुकिंग और किराया नियम प्रदाता द्वारा पुष्टि किए जाते हैं।",
   flightCardProviderHandoffConverted:
@@ -1070,6 +1071,7 @@ export const translations: TranslationDictionary = {
   providerNormalizedItineraryPrefix:
     "प्रस्थान और वापसी विवरण प्रदाता द्वारा सामान्यीकृत यात्रा कार्यक्रम डेटा से दिखाए जाते हैं।",
   checkProvider: "प्रदाता जाँचें",
+  notSuppliedByProvider: "प्रदाता द्वारा उपलब्ध नहीं कराया गया",
   carryOnIncluded: "कैरी-ऑन शामिल",
   flightLeg: "उड़ान लेग",
   layover: "लेओवर",

@@ -8,6 +8,8 @@ const destination = (id: string, relatedDestinationIds: string[] = []) => ({
   country: "Nigeria",
   countryCode: "NG",
   primaryAirportCode: "LOS",
+  latitude: 6.5774,
+  longitude: 3.3212,
   airportCodes: ["LOS"],
   airportNames: ["Murtala Muhammed International Airport"],
   searchAliases: [id],
@@ -58,5 +60,18 @@ test("Explore catalogue contract rejects related destination IDs outside the pub
 test("Explore catalogue contract rejects incomplete destination records", () => {
   const value = catalogue() as unknown as { regions: Array<{ destinations: Array<Record<string, unknown>> }> };
   delete value.regions[0]!.destinations[0]!.airportCodes;
+  assert.equal(parseMobileExploreCatalogue(value), null);
+});
+
+
+test("Explore catalogue contract rejects destinations without map coordinates", () => {
+  const value = catalogue() as unknown as { regions: Array<{ destinations: Array<Record<string, unknown>> }> };
+  delete value.regions[0]!.destinations[0]!.latitude;
+  assert.equal(parseMobileExploreCatalogue(value), null);
+});
+
+test("Explore catalogue contract rejects out-of-range map coordinates", () => {
+  const value = catalogue();
+  value.regions[0]!.destinations[0]!.latitude = 91;
   assert.equal(parseMobileExploreCatalogue(value), null);
 });

@@ -1,7 +1,8 @@
 export type RouteValue = string | string[] | undefined;
 import { addCalendarDays, localDateFromIso, localIsoDate } from "./localDateModel";
 export { addCalendarDays, localDateFromIso, localIsoDate } from "./localDateModel";
-export type HotelForm = { destination: string; checkIn: string; checkOut: string; guests: number; rooms: number };
+import type { HotelDestinationSuggestion } from "../../api/travelApi";
+export type HotelForm = { destination: string; destinationLocation?: string; checkIn: string; checkOut: string; guests: number; rooms: number };
 export type HotelFormErrors = Partial<Record<keyof HotelForm, string>>;
 
 export const HOTEL_LIMITS = { guests: { min: 1, max: 12 }, rooms: { min: 1, max: 6 } } as const;
@@ -33,8 +34,9 @@ export function initializeHotelForm(params: Record<string, RouteValue>, today = 
   const rooms = integer(params.rooms);
   const validCounts = guests !== undefined && rooms !== undefined && isValidHotelOccupancy(guests, rooms);
   const hadInvalid = Boolean((incomingCheckIn || incomingCheckOut) && !validDates) || Boolean((firstParam(params.guests) || firstParam(params.rooms)) && !validCounts);
+  const destinationLocation = firstParam(params.destinationLocation);
   return {
-    form: { destination: firstParam(params.destination), ...(validDates ? { checkIn: incomingCheckIn, checkOut: incomingCheckOut } : defaults), guests: validCounts ? guests! : 2, rooms: validCounts ? rooms! : 1 },
+    form: { destination: firstParam(params.destination), ...(destinationLocation ? { destinationLocation } : {}), ...(validDates ? { checkIn: incomingCheckIn, checkOut: incomingCheckOut } : defaults), guests: validCounts ? guests! : 2, rooms: validCounts ? rooms! : 1 },
     notice: hadInvalid ? "Some search details were invalid, so safe defaults were used." : undefined,
   };
 }
@@ -57,4 +59,25 @@ export const changeGuests = (form: HotelForm, delta: number): HotelForm => {
 };
 export const changeRooms = (form: HotelForm, delta: number): HotelForm => ({ ...form, rooms: Math.max(HOTEL_LIMITS.rooms.min, Math.min(HOTEL_LIMITS.rooms.max, form.rooms + delta)) });
 export const countLabel = (count: number, singular: string) => `${count} ${singular}${count === 1 ? "" : "s"}`;
-export const hotelSearchParams = (form: HotelForm) => ({ destination: form.destination.trim(), checkIn: form.checkIn, checkOut: form.checkOut, guests: String(form.guests), rooms: String(form.rooms) });
+export const hotelSearchParams = (form: HotelForm) => ({ destination: form.destination.trim(), ...(form.destinationLocation ? { destinationLocation: form.destinationLocation } : {}), checkIn: form.checkIn, checkOut: form.checkOut, guests: String(form.guests), rooms: String(form.rooms) });
+
+/** Clear stale provider destination IDs when replacing an edited Hotel Results search in place. */
+export function hotelSearchRouteParamPatch(next: Record<string, string | undefined>): Record<string, string | undefined> {
+  return { ...next, destinationId: undefined, destinationLocation: next.destinationLocation || undefined };
+}
+
+/** Keep the provider binding server-authenticated while carrying the selected place through native navigation. */
+export function hotelDestinationLocation(suggestion: HotelDestinationSuggestion, destination = suggestion.searchValue) {
+  const canonical = suggestion.canonical;
+  if (!canonical?.selectionToken || canonical.submittedValue.trim() !== destination.trim()) return undefined;
+  return JSON.stringify({
+    id: canonical.id,
+    kind: canonical.kind,
+    primaryLabel: canonical.primaryLabel || suggestion.name,
+    supportingLabel: canonical.supportingLabel || [suggestion.region, suggestion.country].filter(Boolean).join(", "),
+    submittedValue: canonical.submittedValue,
+    providerBindings: [],
+    verification: canonical.verification ?? "catalogue-only",
+    selectionToken: canonical.selectionToken,
+  });
+}

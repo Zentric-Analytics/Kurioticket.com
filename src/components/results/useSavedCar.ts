@@ -24,8 +24,7 @@ function loadSavedCars(owner: string) {
   if (savedCarsCache) return Promise.resolve(savedCarsCache);
   if (savedCarsRequest) return savedCarsRequest;
   const requestRevision = savedCarsRevision;
-  let request: Promise<SavedCarApiItem[]>;
-  request = fetchBackendSavedCars()
+  const request: Promise<SavedCarApiItem[]> = fetchBackendSavedCars()
     .then((response) => {
       if (response.ok && savedCarsRevision === requestRevision) savedCarsCache = response.items ?? [];
       return savedCarsCache ?? [];

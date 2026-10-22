@@ -3,6 +3,8 @@ import { destinations } from "../features/explore/destinationCatalogue";
 import { sanitizeSearchParams } from "../features/flow/savedSearchContext";
 import { canonicalSavedFlightDateTime } from "./savedFlightDateTime";
 
+export type SavableFlight = Omit<FlightResult, "bookingUrl" | "partnerRedirectUrl">;
+
 function stable(value: unknown): string {
   if (Array.isArray(value)) return `[${value.map(stable).join(",")}]`;
   if (value && typeof value === "object") {
@@ -24,7 +26,7 @@ const dateTime = (value: unknown) => {
 };
 
 /** Stable Saved identity for a normalized itinerary. Never includes offer ids or prices. */
-export function flightSavedSignature(flight: FlightResult): string {
+export function flightSavedSignature(flight: SavableFlight): string {
   const legs = Array.isArray(flight.legs) ? flight.legs : [];
   if (legs.length && legs.every(leg => Array.isArray(leg.segments) && leg.segments.length > 0)) {
     const identity = {
@@ -67,18 +69,18 @@ export function flightSavedSignature(flight: FlightResult): string {
   })}`;
 }
 
-function savedFlightResult(input: CreateMobileSavedItem | MobileSavedItem): FlightResult | null {
+function savedFlightResult(input: CreateMobileSavedItem | MobileSavedItem): SavableFlight | null {
   const payload = input.payload;
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) return null;
   const result = (payload as Record<string, unknown>).result;
-  return result && typeof result === "object" && !Array.isArray(result) ? result as FlightResult : null;
+  return result && typeof result === "object" && !Array.isArray(result) ? result as SavableFlight : null;
 }
 
 export function savedSignature(input: CreateMobileSavedItem | MobileSavedItem) {
   if (input.type === "flight") {
     const result = savedFlightResult(input);
     if (result) return flightSavedSignature(result);
-    return flightSavedSignature(input as unknown as FlightResult);
+    return flightSavedSignature(input as unknown as SavableFlight);
   }
   if (input.type === "hotel") return `hotel:${input.provider}:${input.hotelName}:${input.checkIn}:${input.checkOut}`;
   if (input.type === "car") {
@@ -90,13 +92,20 @@ export function savedSignature(input: CreateMobileSavedItem | MobileSavedItem) {
   return `search:${String(input.searchType).toLowerCase()}:${stable(input.query)}`;
 }
 
-export function mapFlightToSaved(f: FlightResult, params?: Record<string, unknown>): CreateMobileSavedItem {
+function urlFreeSavedFlight(flight: SavableFlight): SavableFlight {
+  const source = flight as SavableFlight & { bookingUrl?: unknown; partnerRedirectUrl?: unknown };
+  const { bookingUrl: _bookingUrl, partnerRedirectUrl: _partnerRedirectUrl, ...savedFlight } = source;
+  return savedFlight;
+}
+
+export function mapFlightToSaved(f: SavableFlight, params?: Record<string, unknown>): CreateMobileSavedItem {
+  const savedFlight = urlFreeSavedFlight(f);
   return {
     type: "flight", provider: f.provider, airlineName: f.airlineName, flightNumber: f.flightNumber ?? null,
     originAirport: f.originAirport, destinationAirport: f.destinationAirport,
     departureTime: canonicalSavedFlightDateTime(f.departureTime), arrivalTime: canonicalSavedFlightDateTime(f.arrivalTime),
     price: f.price, currency: f.currency,
-    payload: { nativeRoute: "/flight-details", result: f, ...(params ? { searchParams: sanitizeSearchParams("flight", params) } : {}) },
+    payload: { nativeRoute: "/flight-details", result: savedFlight, ...(params ? { searchParams: sanitizeSearchParams("flight", params) } : {}) },
   };
 }
 

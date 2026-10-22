@@ -30,7 +30,9 @@ import {
 
 import { AppHeader } from "@/components/layout/AppHeader";
 import { BrandedLoading } from "@/components/layout/BrandedLoading";
+import { CarsRouteLoadingOverlay } from "@/components/results/CarsRouteLoadingOverlay";
 import { CarLocationAutocomplete } from "@/components/search/CarLocationAutocomplete";
+import type { CarLocationSuggestion } from "@/lib/cars/carLocationSuggestions";
 import { MobileCarLocationPicker } from "@/components/search/MobileCarLocationPicker";
 import { openMobilePickerWithKeyboard } from "@/components/search/mobilePickerKeyboardFocus";
 import {
@@ -40,7 +42,6 @@ import {
   MobileCarDriverAgePickerDialog,
   MobileCarTimePickerDialog,
 } from "@/components/search/CarsPickerContent";
-import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
 import {
   carsDesktopPopoverClassName,
   useCarsDesktopPopover,
@@ -56,16 +57,16 @@ import { buildCarRecentSearch, syncBackendRecentSearch, upsertRecentSearch } fro
 import {
   addMonths,
   buildCarResultsHref,
-  buildMonthCells,
   buildPickupHref,
   defaultDriverAge,
   driverAgeOptions,
+  formatCarsCompactTimeRange,
   getDriverAgeOptionLabel,
   getInitialValues,
   isBeforeToday,
   parseIsoDate,
-  timeOptions,
   toIsoDate,
+  toTimeValue,
   validateCarsForm,
   type CarsFormErrors,
   type CarsFormValues,
@@ -78,6 +79,9 @@ import {
   type CarImageCard,
   type CarPickupCard,
 } from "@/data/carsLandingContent";
+
+const serializeCarLocationTarget = (suggestion?: CarLocationSuggestion) =>
+  suggestion?.canonical ? JSON.stringify(suggestion.canonical) : undefined;
 
 const getCarsIntlLocale = (locale: string) => {
   const normalizedLocale = locale.toLowerCase();
@@ -138,9 +142,20 @@ const formatTimeRangeSummary = (
     .replace("{returnTime}", returnTime);
 
 const formatCarTimeLabel = (time: string, locale: string) => {
+  if (!/^\\d{2}:\\d{2}$/.test(time)) {
+    return time;
+  }
+
   const [hourValue, minuteValue] = time.split(":").map(Number);
 
-  if (Number.isNaN(hourValue) || Number.isNaN(minuteValue)) {
+  if (
+    !Number.isFinite(hourValue) ||
+    !Number.isFinite(minuteValue) ||
+    hourValue < 0 ||
+    hourValue > 23 ||
+    minuteValue < 0 ||
+    minuteValue > 59
+  ) {
     return time;
   }
 
@@ -242,7 +257,6 @@ function CarsSearchPage() {
     () => getInitialValues(searchParams),
     [searchParams],
   );
-  const todayIso = useMemo(() => toIsoDate(new Date()), []);
   const [values, setValues] = useState<CarsFormValues>(initialValues);
   const [errors, setErrors] = useState<CarsFormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -253,8 +267,15 @@ function CarsSearchPage() {
     setValues((current) => {
       const next = { ...current, [key]: value };
 
+      if (key === "pickupLocation") {
+        next.pickupLocationTarget = undefined;
+      }
+      if (key === "dropoffLocation") {
+        next.dropoffLocationTarget = undefined;
+      }
       if (key === "returnToDifferentLocation" && value === false) {
         next.dropoffLocation = "";
+        next.dropoffLocationTarget = undefined;
       }
 
       return next;
@@ -277,7 +298,12 @@ function CarsSearchPage() {
       return;
     }
 
-    const nextErrors = validateCarsForm(values, todayIso);
+    const now = new Date();
+    const nextErrors = validateCarsForm(
+      values,
+      toIsoDate(now),
+      toTimeValue(now),
+    );
     setErrors(translateCarsFormErrors(nextErrors, t));
 
     if (Object.values(nextErrors).some(Boolean)) {
@@ -294,6 +320,18 @@ function CarsSearchPage() {
       driverAge: values.driverAge,
     });
 
+    const pickupLocationTarget = values.pickupLocationTarget?.trim();
+    const dropoffLocationTarget = (
+      values.returnToDifferentLocation
+        ? values.dropoffLocationTarget
+        : values.pickupLocationTarget
+    )?.trim();
+    if (pickupLocationTarget) {
+      params.set("pickupLocationTarget", pickupLocationTarget);
+    }
+    if (dropoffLocationTarget) {
+      params.set("dropoffLocationTarget", dropoffLocationTarget);
+    }
     if (values.returnToDifferentLocation) {
       params.set("dropoffLocation", values.dropoffLocation.trim());
       params.set("returnToDifferentLocation", "1");
@@ -320,28 +358,31 @@ function CarsSearchPage() {
   if (isSubmitting) {
     return (
       <>
-        <AppHeader
-          flushDesktopBottom
-          flushMobileBottom
-          hideDesktopTravelNav
-          hideMobileCategoryTabs
-        />
-        <main className="flex min-h-[calc(100svh-5rem)] flex-1 bg-white">
-          <BrandedLoading
-            variant="fullscreen"
-            visual="logoPulse"
-            showProgress={false}
-            className="min-h-[calc(100svh-5rem)] flex-1 bg-transparent px-5"
-            contentClassName="max-w-md text-center"
-            title={t("carsResults.loading.title")}
-            messages={[
-              t("carsResults.loading.checkingCarsAndRates"),
-              t("carsResults.loading.comparingVehiclesAndProviders"),
-              t("carsResults.loading.findingBestAvailableOptions"),
-              t("carsResults.loading.preparingResults"),
-            ]}
+        <CarsRouteLoadingOverlay active />
+        <div className="hidden lg:contents">
+          <AppHeader
+            flushDesktopBottom
+            flushMobileBottom
+            hideDesktopTravelNav
+            hideMobileCategoryTabs
           />
-        </main>
+          <main className="flex min-h-[calc(100svh-5rem)] flex-1 bg-white">
+            <BrandedLoading
+              variant="fullscreen"
+              visual="logoPulse"
+              showProgress={false}
+              className="min-h-[calc(100svh-5rem)] flex-1 bg-transparent px-5"
+              contentClassName="max-w-md text-center"
+              title={t("carsResults.loading.title")}
+              messages={[
+                t("carsResults.loading.checkingCarsAndRates"),
+                t("carsResults.loading.comparingVehiclesAndProviders"),
+                t("carsResults.loading.findingBestAvailableOptions"),
+                t("carsResults.loading.preparingResults"),
+              ]}
+            />
+          </main>
+        </div>
       </>
     );
   }
@@ -629,13 +670,9 @@ function CarsSearchBar({
   >(null);
   const [focusedDriverAgeIndex, setFocusedDriverAgeIndex] = useState(0);
 
-  useEffect(() => {
-    if (!values.returnToDifferentLocation) {
-      setOpenDesktopLocation((current) =>
-        current === "dropoff" ? null : current,
-      );
-    }
-  }, [values.returnToDifferentLocation]);
+  if (!values.returnToDifferentLocation && openDesktopLocation === "dropoff") {
+    setOpenDesktopLocation(null);
+  }
   const driverAgeOptionRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const [activeMobilePicker, setActiveMobilePicker] =
     useState<CarsMobilePicker>(null);
@@ -903,28 +940,28 @@ function CarsSearchBar({
               error={errors.pickupLocation || errors.dropoffLocation}
               className="sm:border-e sm:border-b sm:border-slate-200/80 lg:border-b-0"
             >
-              <div className="grid gap-2">
+              <div>
                 <div className="relative">
                   <button
                     ref={pickupLocationLauncherRef}
                     type="button"
                     onClick={() => openMobilePicker("pickupLocation")}
-                    className="flex h-7 w-full items-center border-none bg-transparent py-0 text-start text-[16px] font-semibold focus:outline-none sm:hidden"
+                    className="flex min-h-5 w-full items-center border-none bg-transparent py-0 text-start text-[15px] leading-5 focus:outline-none sm:hidden"
                   >
                     <span className="flex min-w-0 items-center gap-2">
                       <MapPin
                         aria-hidden="true"
-                        className="h-4 w-4 shrink-0 text-slate-500"
+                        className="h-[18px] w-[18px] shrink-0 text-slate-500"
                       />
                       <span
                         className={`min-w-0 ${
                           values.pickupLocation
-                            ? "text-slate-950"
-                            : "text-slate-400"
+                            ? "font-semibold text-slate-950"
+                            : "font-normal text-slate-500"
                         }`}
                       >
                         <span className="block truncate">{pickupDisplay.primary || t("carsSearch.pickupLocationPlaceholder")}</span>
-                        {pickupDisplay.secondary ? <span className="block truncate text-xs font-medium leading-4 text-slate-600">{pickupDisplay.secondary}</span> : null}
+                        {pickupDisplay.secondary ? <span className="block truncate text-[12px] font-medium leading-4 text-slate-600">{pickupDisplay.secondary}</span> : null}
                       </span>
                     </span>
                   </button>
@@ -941,6 +978,12 @@ function CarsSearchBar({
                         onValueChange={(nextValue) =>
                           updateValue("pickupLocation", nextValue)
                         }
+                        onSelect={(suggestion) =>
+                          updateValue(
+                            "pickupLocationTarget",
+                            serializeCarLocationTarget(suggestion),
+                          )
+                        }
                         placeholder={t("carsSearch.pickupLocationPlaceholder")}
                         inputRef={pickupLocationRef}
                         inputClassName="hidden h-7 w-full border-none bg-transparent py-0 ps-0 text-[16px] font-medium text-slate-950 placeholder:text-slate-400 focus:outline-none sm:block md:text-[15px] lg:h-8"
@@ -954,32 +997,6 @@ function CarsSearchBar({
                     </div>
                   </div>
                 </div>
-
-                {values.returnToDifferentLocation ? (
-                  <div className="relative sm:hidden">
-                    <button
-                      ref={dropoffLocationLauncherRef}
-                      type="button"
-                      onClick={() => openMobilePicker("dropoffLocation")}
-                      className={`flex h-7 w-full items-center border-t border-slate-100 bg-transparent py-0 pt-1.5 text-start text-[16px] font-semibold focus:outline-none sm:hidden ${
-                        values.dropoffLocation
-                          ? "text-slate-950"
-                          : "text-slate-400"
-                      }`}
-                    >
-                      <span className="flex min-w-0 items-center gap-2">
-                        <MapPin
-                          aria-hidden="true"
-                          className="h-4 w-4 shrink-0 text-slate-500"
-                        />
-                        <span className="truncate">
-                          {values.dropoffLocation ||
-                            t("carsSearch.returnLocationPlaceholder")}
-                        </span>
-                      </span>
-                    </button>
-                  </div>
-                ) : null}
               </div>
             </SearchCell>
 
@@ -988,9 +1005,26 @@ function CarsSearchBar({
                 divRef={dropoffFieldRef}
                 label={t("carsSearch.returnLocationLabel")}
                 error={errors.dropoffLocation}
-                className="hidden sm:block sm:border-e sm:border-b sm:border-slate-200/80 lg:border-b-0"
+                className="sm:border-e sm:border-b sm:border-slate-200/80 lg:border-b-0"
               >
                 <div className="relative">
+                  <button
+                    ref={dropoffLocationLauncherRef}
+                    type="button"
+                    onClick={() => openMobilePicker("dropoffLocation")}
+                    className={`flex min-h-5 w-full items-center border-none bg-transparent py-0 text-start text-[15px] leading-5 focus:outline-none sm:hidden ${
+                      values.dropoffLocation
+                        ? "font-semibold text-slate-950"
+                        : "font-medium text-slate-400"
+                    }`}
+                  >
+                    <span className="flex min-w-0 items-center gap-2">
+                      <MapPin aria-hidden="true" className="h-[18px] w-[18px] shrink-0 text-slate-500" />
+                      <span className="truncate">
+                        {values.dropoffLocation || t("carsSearch.returnLocationPlaceholder")}
+                      </span>
+                    </span>
+                  </button>
                   <div className="hidden min-w-0 items-center gap-2 sm:flex">
                     <MapPin
                       aria-hidden="true"
@@ -1003,6 +1037,12 @@ function CarsSearchBar({
                         value={values.dropoffLocation}
                         onValueChange={(nextValue) =>
                           updateValue("dropoffLocation", nextValue)
+                        }
+                        onSelect={(suggestion) =>
+                          updateValue(
+                            "dropoffLocationTarget",
+                            serializeCarLocationTarget(suggestion),
+                          )
                         }
                         placeholder={t("carsSearch.returnLocationPlaceholder")}
                         inputRef={dropoffLocationRef}
@@ -1081,16 +1121,16 @@ function CarsSearchBar({
                   ref={driverAgeLauncherRef}
                   type="button"
                   onClick={() => openMobilePicker("driverAge")}
-                  className="flex h-7 w-full items-center justify-between gap-2 border-none bg-transparent p-0 text-start text-[16px] font-semibold text-slate-950 focus:outline-none sm:hidden"
+                  className="flex min-h-5 w-full items-center justify-between gap-2 border-none bg-transparent p-0 text-start text-[15px] font-semibold leading-5 text-slate-950 focus:outline-none sm:hidden"
                 >
                   <span className="flex min-w-0 flex-1 items-center gap-2">
                     <UserRound
                       aria-hidden="true"
-                      className="h-4 w-4 shrink-0 text-slate-500"
+                      className="h-[18px] w-[18px] shrink-0 text-slate-500 sm:h-4 sm:w-4"
                     />
                     <span className="truncate">
                       {values.driverAge === defaultDriverAge
-                        ? t("carsSearch.driverAgeAnyAgeRange")
+                        ? "Select driver age"
                         : getDriverAgeOptionLabel(values.driverAge)}
                     </span>
                   </span>
@@ -1196,18 +1236,12 @@ function CarsSearchBar({
 
 function CarsMobilePickerDialogs({
   activeMobilePicker,
-  clearRentalDates,
   datesLauncherRef,
   driverAgeLauncherRef,
   dropoffLocationLauncherRef,
-  dropoffMobileInputRef,
   pickupLocationLauncherRef,
-  pickupMobileInputRef,
   timesLauncherRef,
   onClose,
-  onNextMonth,
-  onPreviousMonth,
-  onSelectDate,
   updateValue,
   values,
   visibleMonthDate,
@@ -1235,35 +1269,45 @@ function CarsMobilePickerDialogs({
   const { locale, t } = useCarsLandingTranslations();
   const intlLocale = getCarsIntlLocale(locale);
   const weekdays = useMemo(() => formatCarWeekdays(intlLocale), [intlLocale]);
-  const pickupParsed = parseIsoDate(values.pickupDate);
-  const dropoffParsed = parseIsoDate(values.dropoffDate);
-  const timeListClass =
-    "grid max-h-72 gap-2 overflow-y-auto rounded-2xl border border-slate-200 bg-white p-2";
-  const locationAutocompleteStrings = getCarLocationAutocompleteStrings(t);
 
   return (
     <>
       <MobileCarLocationPicker
+        presentation="carsMain"
         open={activeMobilePicker === "pickupLocation"}
         mode="pickup"
         inputId="cars-page-pickup-mobile-input"
         value={values.pickupLocation}
         launcherRef={pickupLocationLauncherRef}
         onClose={onClose}
-        onCommit={(nextValue) => updateValue("pickupLocation", nextValue)}
+        onCommit={(nextValue, suggestion) => {
+          updateValue("pickupLocation", nextValue);
+          updateValue(
+            "pickupLocationTarget",
+            serializeCarLocationTarget(suggestion),
+          );
+        }}
       />
 
       <MobileCarLocationPicker
+        presentation="carsMain"
         open={activeMobilePicker === "dropoffLocation"}
         mode="return"
         inputId="cars-page-return-mobile-input"
         value={values.dropoffLocation}
         launcherRef={dropoffLocationLauncherRef}
         onClose={onClose}
-        onCommit={(nextValue) => updateValue("dropoffLocation", nextValue)}
+        onCommit={(nextValue, suggestion) => {
+          updateValue("dropoffLocation", nextValue);
+          updateValue(
+            "dropoffLocationTarget",
+            serializeCarLocationTarget(suggestion),
+          );
+        }}
       />
 
       <MobileDatePickerDialog
+        presentation="carsMain"
         open={activeMobilePicker === "dates"}
         title={t("carsSearch.chooseRentalDates")}
         titleId="cars-mobile-rental-dates-title"
@@ -1291,6 +1335,7 @@ function CarsMobilePickerDialogs({
       />
 
       <MobileCarTimePickerDialog
+        presentation="carsMain"
         open={activeMobilePicker === "times"}
         launcherRef={timesLauncherRef}
         onClose={onClose}
@@ -1312,6 +1357,7 @@ function CarsMobilePickerDialogs({
       />
 
       <MobileCarDriverAgePickerDialog
+        presentation="carsMain"
         open={activeMobilePicker === "driverAge"}
         launcherRef={driverAgeLauncherRef}
         onClose={onClose}
@@ -1367,7 +1413,10 @@ function CarImageCardLink({ card }: { card: TranslatedCarImageCard }) {
       className="group flex h-full min-w-0 snap-start flex-col overflow-hidden rounded-[1.35rem] border border-slate-200/90 bg-white shadow-[0_16px_34px_-26px_rgba(15,23,42,0.42)] transition duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_14px_30px_-26px_rgba(15,23,42,0.38)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-4 focus-visible:ring-offset-white sm:rounded-2xl sm:border-slate-200 sm:shadow-[0_12px_28px_-26px_rgba(15,23,42,0.34)]"
     >
       <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100 sm:aspect-[4/3]">
-        <img
+        <Image
+          fill
+          unoptimized
+          sizes="(max-width: 640px) 85vw, 33vw"
           src={card.image}
           alt={card.imageAlt}
           className="h-full w-full object-cover saturate-[1.08] contrast-[1.02] transition duration-700 group-hover:scale-[1.03] group-hover:saturate-[1.12]"
@@ -1538,15 +1587,15 @@ function RentalDatesField({
         aria-haspopup="dialog"
         aria-controls="cars-desktop-rental-dates-dialog"
         aria-label={t("carsSearch.chooseRentalDatesAria")}
-        className="focus-ring flex h-7 w-full cursor-pointer items-center justify-start gap-2 rounded-md border-0 bg-transparent px-0 text-start text-[16px] font-semibold text-slate-950 outline-none transition-colors sm:h-10 sm:justify-between md:text-[15px]"
+        className="focus-ring flex min-h-5 w-full cursor-pointer items-center justify-start gap-2 rounded-md border-0 bg-transparent px-0 text-start text-[15px] leading-5 text-slate-950 outline-none transition-colors sm:h-10 sm:justify-between sm:text-[16px] sm:font-semibold sm:leading-normal md:text-[15px]"
       >
         <Calendar
-          className="h-4 w-4 shrink-0 text-slate-500"
+          className="h-[18px] w-[18px] shrink-0 text-slate-500 sm:h-4 sm:w-4"
           aria-hidden="true"
         />
         <span className="min-w-0">
           <span
-            className={`block truncate ${pickupDate ? "text-slate-950" : "text-slate-950 sm:text-slate-400"}`}
+            className={`block truncate ${pickupDate ? "font-semibold text-slate-950" : "font-normal text-slate-500"}`}
           >
             {dateSummary}
           </span>
@@ -1630,11 +1679,25 @@ function TimeRangeField({
 }) {
   const { locale, t } = useCarsLandingTranslations();
   const intlLocale = getCarsIntlLocale(locale);
-  const timeSummary = formatTimeRangeSummary(
-    t("carsSearch.pickupReturnTimeSummary"),
-    formatCarTimeLabel(pickupTime, intlLocale),
-    formatCarTimeLabel(returnTime, intlLocale),
-  );
+  const hasPickupTime = Boolean(pickupTime);
+  const hasReturnTime = Boolean(returnTime);
+  const hasCompleteTimeRange = hasPickupTime && hasReturnTime;
+  const pickupTimeText = hasPickupTime
+    ? formatCarTimeLabel(pickupTime, intlLocale)
+    : t("carsSearch.pickupTimeLabel");
+  const returnTimeText = hasReturnTime
+    ? formatCarTimeLabel(returnTime, intlLocale)
+    : t("carsSearch.returnTimeLabel");
+  const timeSummary = hasCompleteTimeRange
+    ? formatTimeRangeSummary(
+        t("carsSearch.pickupReturnTimeSummary"),
+        pickupTimeText,
+        returnTimeText,
+      )
+    : `${pickupTimeText} — ${returnTimeText}`;
+  const desktopTimeSummary = hasCompleteTimeRange
+    ? formatCarsCompactTimeRange(pickupTime, returnTime)
+    : timeSummary;
   const { placement, popoverRef, style } = useCarsDesktopPopover({
     open: isOpen,
     launcherRef,
@@ -1654,16 +1717,20 @@ function TimeRangeField({
         aria-haspopup="dialog"
         aria-controls="cars-desktop-time-range-dialog"
         aria-label={t("carsSearch.choosePickupReturnTimesAria")}
-        className="focus-ring flex h-7 w-full cursor-pointer items-center justify-between gap-2 rounded-md border-0 bg-transparent px-0 text-start text-[16px] font-semibold text-slate-950 outline-none transition-colors md:text-[15px] lg:h-8"
+        className="focus-ring flex min-h-5 w-full cursor-pointer items-center justify-between gap-2 rounded-md border-0 bg-transparent px-0 text-start text-[15px] leading-5 text-slate-950 outline-none transition-colors sm:h-7 sm:text-[16px] sm:font-semibold sm:leading-normal md:text-[15px] lg:h-8"
       >
         <span className="flex min-w-0 items-center gap-2">
           <Clock
             aria-hidden="true"
-            className="h-4 w-4 shrink-0 text-slate-500"
+            className="h-[18px] w-[18px] shrink-0 text-slate-500 sm:h-4 sm:w-4"
           />
-          <span className="truncate sm:hidden">{timeSummary}</span>
+          <span
+            className={`truncate sm:hidden ${hasCompleteTimeRange ? "font-semibold text-slate-950" : "font-normal text-slate-500"}`}
+          >
+            {timeSummary}
+          </span>
           <span className="hidden truncate sm:inline">
-            {formatCarTimeLabel(pickupTime, intlLocale)}
+            {desktopTimeSummary}
           </span>
         </span>
         <ChevronDown
@@ -1718,9 +1785,9 @@ function SearchCell({
   return (
     <div
       ref={divRef}
-      className={`min-h-[54px] rounded-xl border border-slate-300 bg-white px-3.5 py-1.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition hover:border-slate-400 focus-within:border-[#004BB8] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#004BB8]/25 sm:min-h-[58px] sm:rounded-none sm:border-0 sm:bg-transparent sm:px-4 sm:py-2 sm:shadow-none sm:hover:border-slate-200/80 sm:focus-within:bg-white sm:focus-within:ring-0 lg:px-4 lg:py-2 ${className}`}
+      className={`min-h-[66px] rounded-[15px] border border-slate-300 bg-white px-3 py-[9px] shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition hover:border-slate-400 focus-within:border-[#004BB8] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#004BB8]/25 sm:min-h-[58px] sm:rounded-none sm:border-0 sm:bg-transparent sm:px-4 sm:py-2 sm:shadow-none sm:hover:border-slate-200/80 sm:focus-within:bg-white sm:focus-within:ring-0 lg:px-4 lg:py-2 ${className}`}
     >
-      <label className="mb-1 flex items-center gap-1.5 text-xs font-bold uppercase leading-4 tracking-[0.12em] text-slate-600 sm:mb-1 sm:text-[0.66rem] sm:text-slate-700 lg:mb-1">
+      <label className="mb-1 flex items-center gap-1.5 text-[10px] font-extrabold uppercase leading-[13px] tracking-[0.5px] text-slate-600 sm:mb-1 sm:text-[0.66rem] sm:font-bold sm:leading-4 sm:tracking-[0.12em] sm:text-slate-700 lg:mb-1">
         <span>{label}</span>
       </label>
       {children}

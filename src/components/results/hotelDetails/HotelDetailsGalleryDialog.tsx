@@ -8,6 +8,7 @@ import { IconButton } from "@/components/ui/IconButton";
 import { getHotelGallerySwipeDirection } from "@/components/results/hotelGalleryPresentation";
 
 type GalleryDialogProps = {
+  desktop?: boolean;
   activeUrl: string;
   imageAlt: string;
   title: string;
@@ -30,6 +31,7 @@ const focusableSelector =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 export function HotelDetailsGalleryDialog({
+  desktop = false,
   activeUrl,
   imageAlt,
   title,
@@ -145,7 +147,7 @@ export function HotelDetailsGalleryDialog({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[1100] flex h-[100dvh] w-full items-stretch justify-center overflow-hidden bg-slate-950/90 p-[max(0.75rem,env(safe-area-inset-top))_max(0.75rem,env(safe-area-inset-right))_max(0.75rem,env(safe-area-inset-bottom))_max(0.75rem,env(safe-area-inset-left))]"
+      className={desktop ? "fixed inset-0 z-[1101] flex h-[100dvh] w-full overflow-hidden bg-[#101b27]" : "fixed inset-0 z-[1100] flex h-[100dvh] w-full items-stretch justify-center overflow-hidden bg-slate-950/90 p-[max(0.75rem,env(safe-area-inset-top))_max(0.75rem,env(safe-area-inset-right))_max(0.75rem,env(safe-area-inset-bottom))_max(0.75rem,env(safe-area-inset-left))]"}
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
@@ -156,16 +158,17 @@ export function HotelDetailsGalleryDialog({
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className="relative flex min-h-0 w-full max-w-7xl flex-col overflow-hidden rounded-2xl bg-slate-950 text-white shadow-2xl"
+        className={desktop ? "relative flex min-h-0 w-full flex-col overflow-hidden bg-[#101b27] text-white" : "relative flex min-h-0 w-full max-w-7xl flex-col overflow-hidden rounded-2xl bg-slate-950 text-white shadow-2xl"}
         onMouseDown={(event) => event.stopPropagation()}
       >
-        <header className="flex shrink-0 items-center justify-between gap-3 px-2 py-2 sm:px-4">
-          <h2 id={titleId} className="min-w-0 truncate text-sm font-semibold sm:text-base">
+        <header className={desktop ? "relative flex h-16 shrink-0 items-center px-5 sm:px-8" : "flex shrink-0 items-center justify-between gap-3 px-2 py-2 sm:px-4"}>
+          <h2 id={titleId} className={desktop ? "sr-only" : "min-w-0 truncate text-sm font-semibold sm:text-base"}>
             {title}
           </h2>
-          <button ref={closeButtonRef} type="button" className="focus-ring inline-flex size-12 shrink-0 items-center justify-center rounded-full border border-border bg-surface text-navy hover:bg-surface-subtle" aria-label={closeLabel} onClick={onClose}>
-            <X className="h-5 w-5" aria-hidden="true" />
+          <button ref={closeButtonRef} type="button" className={desktop ? "inline-flex size-9 shrink-0 items-center justify-center rounded-full text-white transition-colors hover:bg-white/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white" : "focus-ring inline-flex size-12 shrink-0 items-center justify-center rounded-full border border-border bg-surface text-navy hover:bg-surface-subtle"} aria-label={closeLabel} onClick={onClose}>
+            <X className={desktop ? "size-6" : "h-5 w-5"} aria-hidden="true" />
           </button>
+          {desktop ? <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 text-sm font-medium text-white">{photoCounter}</span> : null}
         </header>
 
         <div
@@ -184,21 +187,23 @@ export function HotelDetailsGalleryDialog({
           }}
           onPointerCancel={() => { pointerStartRef.current = null; }}
         >
-          <Image key={activeUrl} src={activeUrl} alt={imageAlt} fill className="select-none object-contain" sizes="100vw" onError={() => onImageError(activeUrl)} priority />
+          <div className={desktop ? "absolute inset-y-4 left-16 right-16 sm:left-24 sm:right-24" : "absolute inset-0"}>
+            <Image key={activeUrl} src={activeUrl} alt={imageAlt} fill className="select-none object-contain" sizes={desktop ? "(min-width: 1200px) 1000px, 85vw" : "100vw"} onError={() => onImageError(activeUrl)} priority />
+          </div>
           {usableIndices.length > 1 ? (
             <>
-              <IconButton variant="secondary" size="lg" className="absolute left-1 top-1/2 -translate-y-1/2 shadow-lg sm:left-4" aria-label={previousPhotoLabel} onClick={onPrevious}>
+              <IconButton variant="secondary" size="lg" className={desktop ? "absolute left-2 top-1/2 -translate-y-1/2 border-0 bg-transparent text-white hover:bg-white/15 hover:text-white sm:left-5" : "absolute left-1 top-1/2 -translate-y-1/2 shadow-lg sm:left-4"} aria-label={previousPhotoLabel} onClick={onPrevious}>
                 <ChevronLeft className="h-6 w-6" aria-hidden="true" />
               </IconButton>
-              <IconButton variant="secondary" size="lg" className="absolute right-1 top-1/2 -translate-y-1/2 shadow-lg sm:right-4" aria-label={nextPhotoLabel} onClick={onNext}>
+              <IconButton variant="secondary" size="lg" className={desktop ? "absolute right-2 top-1/2 -translate-y-1/2 border-0 bg-transparent text-white hover:bg-white/15 hover:text-white sm:right-5" : "absolute right-1 top-1/2 -translate-y-1/2 shadow-lg sm:right-4"} aria-label={nextPhotoLabel} onClick={onNext}>
                 <ChevronRight className="h-6 w-6" aria-hidden="true" />
               </IconButton>
             </>
           ) : null}
-          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-slate-950/80 px-3 py-1 text-xs font-semibold">{photoCounter}</div>
+          {!desktop ? <div className="absolute bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-slate-950/80 px-3 py-1 text-xs font-semibold">{photoCounter}</div> : null}
         </div>
 
-        {usableIndices.length > 1 ? (
+        {!desktop && usableIndices.length > 1 ? (
           <div ref={thumbnailStripRef} className="flex w-full shrink-0 gap-2 overflow-x-auto overscroll-x-contain px-2 py-3 sm:px-4">
             {usableIndices.map((imageIndex, visibleIndex) => {
               const url = displayCandidates[imageIndex];

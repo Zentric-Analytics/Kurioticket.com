@@ -35,7 +35,7 @@ test("availability and foreground transitions cannot own a travel search", () =>
 
 test("initial loaders return before filters, counts, cards, navigation, and price alerts", () => {
   assert.ok(approved.indexOf('if (status === "loading")') < approved.indexOf("<Animated.SectionList"));
-  assert.ok(cars.indexOf('if(status==="loading")') < cars.indexOf("<TopBar"));
+  assert.ok(cars.indexOf('if(status==="loading")') < cars.indexOf("<CarResultsHeader"));
 });
 
 test("car search uses canonical identity generations, abort, and stale-response guards", () => {

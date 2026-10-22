@@ -61,6 +61,7 @@ export type TranslationDictionary = {
   done: string;
   editSearch: string;
   viewDetails: string;
+  seeDetails: string;
   searchAgain: string;
   origin: string;
   destination: string;

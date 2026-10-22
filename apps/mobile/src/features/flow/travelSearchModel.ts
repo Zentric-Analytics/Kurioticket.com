@@ -11,6 +11,19 @@ const clockTime = (value: string) => /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(value);
 const httpsUrl = (value?: string | null) => Boolean(value && /^https:\/\/[^/\s]+(?:\/|$)/i.test(value));
 const safeImage = (value?: string | null) => !value || httpsUrl(value) || /^\/(?!\/)[^\s]+/.test(value);
 const safeFlightAirportCode = (value: unknown) => typeof value === "string" && /^[A-Z0-9]{3}$/.test(value);
+const parseLocationTarget = (value: string) => {
+  if (!value) return undefined;
+  try {
+    const parsed: unknown = JSON.parse(value);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return undefined;
+    const target = parsed as Record<string, unknown>;
+    return typeof target.id === "string" && typeof target.kind === "string" && typeof target.primaryLabel === "string" && typeof target.submittedValue === "string"
+      ? target
+      : undefined;
+  } catch {
+    return undefined;
+  }
+};
 const safeAction = (result: FlightResult | HotelResult | CarResult) => {
   const action = result.searchPolicy?.action;
   return Boolean(action && (!action.enabled || (action.kind === "internal-detail" ? /^\/(?:flights|hotels|cars)\/details\/[^/]/.test(action.href) : httpsUrl(action.href))));
@@ -40,7 +53,7 @@ export function buildSearchPlan(product: Product, params: Record<string, string 
       if (adults < 1 || adults > 9 || children < 0 || infants < 0 || adults + children + infants > 9) return { error: "Choose valid traveler counts." };
       if (!["economy", "premium-economy", "business", "first"].includes(cabinClass)) return { error: "Choose a supported cabin class." };
       const payload = { tripType, legs, origin: legs[0].origin, destination: legs.at(-1)!.destination, departureDate: legs[0].departureDate, adults, children, infants, travelers: adults + children + infants, cabinClass, currency };
-      return { plan: { payload, key: JSON.stringify(["flight", tripType, legs, adults, children, infants, cabinClass]), summary: `${legCount} flights · ${legs[0].origin} → ${legs.at(-1)!.destination} · ${legs[0].departureDate}` } };
+      return { plan: { payload, key: JSON.stringify(["flight", tripType, legs, adults, children, infants, cabinClass, currency]), summary: `${legCount} flights · ${legs[0].origin} → ${legs.at(-1)!.destination} · ${legs[0].departureDate}` } };
     }
     if (!/^[A-Z]{3}$/.test(origin) || !/^[A-Z]{3}$/.test(destination) || origin === destination) return { error: "Choose different valid origin and destination airports." };
     if (!future(departureDate, now)) return { error: "Choose a valid future departure date." };
@@ -52,6 +65,7 @@ export function buildSearchPlan(product: Product, params: Record<string, string 
   }
   if (product === "hotel") {
     const destinationId = text(params.destinationId);
+    const destinationLocation = parseLocationTarget(text(params.destinationLocation));
     const destination = text(params.destination);
     const checkIn = text(params.checkIn); const checkOut = text(params.checkOut);
     const guestsValue = text(params.guests); const roomsValue = text(params.rooms);
@@ -61,10 +75,12 @@ export function buildSearchPlan(product: Product, params: Record<string, string 
     const minimumLocalIso = localIsoDate(now);
     if (!isHotelTodayOrFutureLocalDate(checkIn, minimumLocalIso) || !isHotelTodayOrFutureLocalDate(checkOut, minimumLocalIso) || checkOut <= checkIn) return { error: "Choose valid check-in and check-out dates." };
     if (!isValidHotelOccupancy(guests, rooms)) return { error: "Choose valid guest and room counts." };
-    const payload = { ...(destinationId ? { destinationId } : {}), destination, checkIn, checkOut, guests, rooms };
+    const payload = { ...(destinationId ? { destinationId } : {}), ...(destinationLocation ? { destinationLocation } : {}), destination, checkIn, checkOut, guests, rooms };
     return { plan: { payload, key: JSON.stringify(["hotel", ...Object.values(payload)]), summary: `${destination} · ${checkIn} – ${checkOut}` } };
   }
   const pickupLocation = text(params.pickupLocation); const dropoffLocation = text(params.dropoffLocation) || pickupLocation;
+  const pickupLocationTarget = parseLocationTarget(text(params.pickupLocationTarget));
+  const dropoffLocationTarget = parseLocationTarget(text(params.dropoffLocationTarget)) || (dropoffLocation === pickupLocation ? pickupLocationTarget : undefined);
   const pickupDate = text(params.pickupDate); const dropoffDate = text(params.dropoffDate);
   const pickupTime = text(params.pickupTime) || "10:00"; const dropoffTime = text(params.dropoffTime) || "10:00";
   const driverAgeValue = text(params.driverAge);
@@ -73,15 +89,11 @@ export function buildSearchPlan(product: Product, params: Record<string, string 
   if (!pickupLocation || !dropoffLocation) return { error: "Enter valid pickup and drop-off locations." };
   if (!future(pickupDate, now) || !future(dropoffDate, now) || !clockTime(pickupTime) || !clockTime(dropoffTime) || `${dropoffDate}T${dropoffTime}` <= `${pickupDate}T${pickupTime}`) return { error: "Choose a return date and time after pickup." };
   if (driverAge < 18 || driverAge > 70) return { error: "Enter a valid driver age from 18 to 70." };
-  const payload = { pickupLocation, dropoffLocation, pickupDate, pickupTime, dropoffDate, dropoffTime, driverAge: anyDriverAge ? "18-70" : String(driverAge) };
+  const payload = { pickupLocation, dropoffLocation, ...(pickupLocationTarget ? { pickupLocationTarget } : {}), ...(dropoffLocationTarget ? { dropoffLocationTarget } : {}), pickupDate, pickupTime, dropoffDate, dropoffTime, driverAge: anyDriverAge ? "18-70" : String(driverAge) };
   return { plan: { payload, key: JSON.stringify(["car", ...Object.values(payload)]), summary: `${pickupLocation} · ${pickupDate}` } };
 }
 
 export function validFlight(result: FlightResult, plan: SearchPlan) {
-  // `plan` remains part of the contract because callers validate a response in
-  // the context of its request. Route/date eligibility is server-owned: the
-  // canonical aggregator may legitimately return city/airport projections that
-  // differ from the submitted endpoint while still being safe to present.
   void plan;
   return Boolean(
     result.id &&

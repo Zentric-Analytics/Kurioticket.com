@@ -1,12 +1,101 @@
-import type { CarOffer, CarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
+import type { CarOffer, LocationBoundCarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
 
 export type SelectedCarFilters = Record<string, string[]>;
 export type CarSort = "recommended" | "lowestTotal" | "topRated";
 export type CarResultBadge = "Best value" | "Cheapest" | "Top rated";
 
+/** Shared by server search and browser-loaded KAYAK inventory. */
+export function groupKayakCarResults(results: NormalizedCarResult[]): NormalizedCarResult[] {
+  const groups = new Map<string, NormalizedCarResult>();
+  for (const car of results) {
+    if (!car.offers.length) continue;
+    const existing = groups.get(car.id);
+    if (!existing) { groups.set(car.id, { ...car, offers: [...car.offers] }); continue; }
+    const offers = [...existing.offers, ...car.offers];
+    const representative = car.offers[0].totalPrice < existing.offers[0].totalPrice ? car : existing;
+    groups.set(car.id, { ...representative, offers: offers.sort((a, b) => a.totalPrice - b.totalPrice || a.id.localeCompare(b.id)) });
+  }
+  return [...groups.values()];
+}
+
 export const getPrimaryCarOffer = (car: NormalizedCarResult): CarOffer | undefined =>
   [...car.offers].filter((offer) => Number.isFinite(offer.totalPrice) && offer.totalPrice >= 0)
     .sort((a, b) => a.totalPrice - b.totalPrice || a.pricePerDay - b.pricePerDay || a.id.localeCompare(b.id))[0];
+
+export type CarProviderOfferGroup = {
+  key: string;
+  providerName: string;
+  logoUrl?: string;
+  offers: CarOffer[];
+  primaryOffer: CarOffer;
+};
+
+const carProviderIdentity = (offer: CarOffer) =>
+  (offer.bookingProviderName.trim() || offer.rentalCompanyName.trim() || "Provider")
+    .toLocaleLowerCase();
+
+export const getCarProviderOfferGroups = (
+  offers: CarOffer[],
+): CarProviderOfferGroup[] => {
+  const groups = new Map<string, CarOffer[]>();
+  for (const offer of sortCarOffers(offers)) {
+    const key = carProviderIdentity(offer);
+    const existing = groups.get(key);
+    if (existing) existing.push(offer);
+    else groups.set(key, [offer]);
+  }
+
+  return [...groups.entries()].flatMap(([key, providerOffers]) => {
+    const primaryOffer = providerOffers[0];
+    if (!primaryOffer) return [];
+    return [{
+      key,
+      providerName:
+        primaryOffer.bookingProviderName.trim() ||
+        primaryOffer.rentalCompanyName.trim() ||
+        "Provider",
+      logoUrl: primaryOffer.bookingProviderLogoUrl,
+      offers: providerOffers,
+      primaryOffer,
+    }];
+  });
+};
+
+/**
+ * Static Kurioticket inventory currently contains multiple real offers from the
+ * same seller. Split those offers into separate picker choices so Results can
+ * exercise the finished three-option layout before live multi-provider feeds
+ * arrive. Live/provider-fed inventory keeps provider grouping unchanged.
+ */
+export const getCarDealPickerGroups = (
+  car: Pick<NormalizedCarResult, "offers" | "inventorySource">,
+): CarProviderOfferGroup[] => {
+  const providerGroups = getCarProviderOfferGroups(car.offers);
+  // Preserve distinct rates/conditions even when the same seller supplies them.
+  if (car.inventorySource === "kayak-sandbox") {
+    return providerGroups.flatMap(group => group.offers.map(offer => ({
+      ...group, key: `${group.key}:${offer.id}`, primaryOffer: offer, offers: [offer],
+    })));
+  }
+  const onlyProvider = providerGroups[0];
+  const shouldPreviewStaticKurioticketOffers =
+    car.inventorySource === "kurioticket-static-cars" &&
+    providerGroups.length === 1 &&
+    Boolean(onlyProvider) &&
+    /kurioticket/i.test(onlyProvider?.providerName ?? "") &&
+    (onlyProvider?.offers.length ?? 0) > 1;
+
+  if (!shouldPreviewStaticKurioticketOffers || !onlyProvider) {
+    return providerGroups;
+  }
+
+  return onlyProvider.offers.map((offer) => ({
+    ...onlyProvider,
+    key: `${onlyProvider.key}:offer:${offer.id}`,
+    offers: [offer],
+    primaryOffer: offer,
+  }));
+};
 
 /** The details comparison intentionally has a simpler, stable price ordering. */
 export const sortCarOffers = (offers: CarOffer[]) =>
@@ -14,10 +103,52 @@ export const sortCarOffers = (offers: CarOffer[]) =>
     .filter((offer) => Number.isFinite(offer.totalPrice) && offer.totalPrice >= 0)
     .sort((a, b) => a.totalPrice - b.totalPrice || a.id.localeCompare(b.id));
 
+/** Mirrors the native details comparison: at most three real, distinct per-day offers. */
+export const getComparisonCarOffers = (offers: CarOffer[], limit = 3): CarOffer[] => {
+  const cappedLimit = Math.max(0, Math.floor(limit));
+  if (!cappedLimit) return [];
+  const seenPrices = new Set<string>();
+  const selected: CarOffer[] = [];
+  const sorted = [...offers]
+    .filter(
+      (offer) =>
+        Number.isFinite(offer.totalPrice) &&
+        offer.totalPrice >= 0 &&
+        Number.isFinite(offer.pricePerDay) &&
+        offer.pricePerDay >= 0,
+    )
+    .sort(
+      (a, b) =>
+        a.totalPrice - b.totalPrice ||
+        a.pricePerDay - b.pricePerDay ||
+        a.id.localeCompare(b.id),
+    );
+  for (const offer of sorted) {
+    const priceKey = `${offer.currency}:${offer.pricePerDay}`;
+    if (seenPrices.has(priceKey)) continue;
+    seenPrices.add(priceKey);
+    selected.push(offer);
+    if (selected.length >= cappedLimit) break;
+  }
+  return selected;
+};
+
+export type CarPricePerDayResolver = (car: NormalizedCarResult) => number | undefined;
+
+export const getPrimaryCarPricePerDay: CarPricePerDayResolver = (car) => {
+  const price = getPrimaryCarOffer(car)?.pricePerDay;
+  return typeof price === "number" && Number.isFinite(price) && price >= 0 ? price : undefined;
+};
+
+const dailyPriceOptionMatches: Record<string, (price: number) => boolean> = {
+  daily0To49: (price) => price >= 0 && price < 50,
+  daily50To99: (price) => price >= 50 && price < 100,
+  daily100To149: (price) => price >= 100 && price < 150,
+  daily150To199: (price) => price >= 150 && price < 200,
+  daily200Plus: (price) => price >= 200,
+};
+
 const optionMatches: Record<string, (car: NormalizedCarResult) => boolean> = {
-  totalUnder100: (car) => (getPrimaryCarOffer(car)?.totalPrice ?? Infinity) < 100,
-  total100To149: (car) => { const total = getPrimaryCarOffer(car)?.totalPrice ?? Infinity; return total >= 100 && total < 150; },
-  total150Plus: (car) => (getPrimaryCarOffer(car)?.totalPrice ?? -Infinity) >= 150,
   smallCars: (car) => ["mini", "economy", "compact"].includes(car.category),
   mediumCars: (car) => ["intermediate", "full-size"].includes(car.category),
   suvs: (car) => car.category === "suv",
@@ -42,20 +173,51 @@ const optionMatches: Record<string, (car: NormalizedCarResult) => boolean> = {
   cityLocation: (car) => car.pickupType === "city-location",
 };
 
-export const doesCarMatchFilterOption = (car: NormalizedCarResult, option: string) =>
-  optionMatches[option]?.(car) ?? false;
+const doesSingleCarMatchFilterOption = (car: NormalizedCarResult, option: string, resolvePricePerDay: CarPricePerDayResolver = getPrimaryCarPricePerDay) => {
+  const dailyPricePredicate = dailyPriceOptionMatches[option];
+  if (dailyPricePredicate) {
+    const price = resolvePricePerDay(car);
+    return typeof price === "number" && Number.isFinite(price) && price >= 0 && dailyPricePredicate(price);
+  }
+  // Legacy required defaults must never turn unknown supplier data into a match.
+  if (car.sandboxPresentation) {
+    return car.sandboxPresentation.filterOptions?.includes(option) ?? false;
+  }
+  return optionMatches[option]?.(car) ?? false;
+};
 
-export function filterCarResults<T extends NormalizedCarResult>(results: T[], filters: SelectedCarFilters): T[] {
+function withCarOffer<T extends NormalizedCarResult>(car: T, offer: CarOffer): T {
+  const presentation = offer.carPresentation;
+  return { ...car, offers: [offer], ...(presentation ? {
+    modelName: presentation.modelName, categoryLabel: presentation.categoryLabel,
+    imageUrl: presentation.imageUrl, imageAlt: presentation.imageAlt,
+    sandboxPresentation: { specs: presentation.specs, filterOptions: presentation.filterOptions, pickupLabel: car.sandboxPresentation?.pickupLabel ?? "Search pickup" },
+  } : {}) };
+}
+
+export const doesCarMatchFilterOption = (car: NormalizedCarResult, option: string, resolvePricePerDay: CarPricePerDayResolver = getPrimaryCarPricePerDay) =>
+  car.inventorySource === "kayak-sandbox" && car.offers.some(offer => offer.carPresentation)
+    ? car.offers.some(offer => doesSingleCarMatchFilterOption(withCarOffer(car, offer), option, resolvePricePerDay))
+    : doesSingleCarMatchFilterOption(car, option, resolvePricePerDay);
+
+export function filterCarResults<T extends NormalizedCarResult>(results: T[], filters: SelectedCarFilters, resolvePricePerDay: CarPricePerDayResolver = getPrimaryCarPricePerDay): T[] {
   const groups = Object.values(filters).filter((options) => options.length);
-  return results.filter((car) => groups.every((options) => options.some((option) => optionMatches[option]?.(car))));
+  if (!groups.length) return results;
+  return results.flatMap(car => {
+    if (car.inventorySource === "kayak-sandbox" && car.offers.some(offer => offer.carPresentation)) {
+      const offers = sortCarOffers(car.offers).filter(offer => groups.every(options => options.some(option =>
+        doesSingleCarMatchFilterOption(withCarOffer(car, offer), option, resolvePricePerDay))));
+      return offers.length ? [{ ...withCarOffer(car, offers[0]), offers }] : [];
+    }
+    return groups.every(options => options.some(option => doesCarMatchFilterOption(car, option, resolvePricePerDay))) ? [car] : [];
+  });
 }
 
 // Kurioticket's transparent recommendation tie-breaker rewards practical rental terms.
 function recommendedScore(car: NormalizedCarResult) {
-  const offer = getPrimaryCarOffer(car);
   return car.recommendationScore * 1000 + (car.supplierRating ?? 0) * 10 +
-    (offer?.freeCancellation ? 4 : 0) + (car.mileagePolicy === "unlimited" ? 3 : 0) +
-    (car.pickupType === "airport-counter" ? 2 : car.pickupType === "city-location" ? 1 : 0);
+    (doesCarMatchFilterOption(car, "freeCancellation") ? 4 : 0) + (doesCarMatchFilterOption(car, "unlimitedMileage") ? 3 : 0) +
+    (doesCarMatchFilterOption(car, "airportCounter") ? 2 : doesCarMatchFilterOption(car, "cityLocation") ? 1 : 0);
 }
 
 export function sortCarResults<T extends NormalizedCarResult>(results: T[], sort: CarSort): T[] {
@@ -71,10 +233,38 @@ export function sortCarResults<T extends NormalizedCarResult>(results: T[], sort
   }).map(({ car }) => car);
 }
 
-export function assignCarBadges(results: NormalizedCarResult[]) {
+/** Keep the strongest result from every successful provider visible before filling by rank. */
+export function ensureCarProviderCoverage<T extends NormalizedCarResult>(ranked: T[]): T[] {
+  const represented = new Set<T["inventorySource"]>();
+  const leaders: T[] = [];
+  const rest: T[] = [];
+  for (const car of ranked) {
+    if (!represented.has(car.inventorySource)) {
+      represented.add(car.inventorySource);
+      leaders.push(car);
+    } else rest.push(car);
+  }
+  return [...leaders, ...rest];
+}
+
+export function assignCarBadges(
+  results: NormalizedCarResult[],
+  resolveDisplayPricePerDay?: CarPricePerDayResolver,
+) {
   const assignments = new Map<string, CarResultBadge>();
   const candidates: Array<[CarResultBadge, NormalizedCarResult[]]> = [
-    ["Cheapest", sortCarResults(results, "lowestTotal")],
+    ["Cheapest", resolveDisplayPricePerDay
+      ? [...results].sort((a,b)=>{
+          const aPrice=resolveDisplayPricePerDay(a);
+          const bPrice=resolveDisplayPricePerDay(b);
+          const aValid=typeof aPrice==="number"&&Number.isFinite(aPrice)&&aPrice>=0;
+          const bValid=typeof bPrice==="number"&&Number.isFinite(bPrice)&&bPrice>=0;
+          return (aValid?aPrice:Infinity)-(bValid?bPrice:Infinity)||a.id.localeCompare(b.id);
+        }).filter(car=>{
+          const value=resolveDisplayPricePerDay(car);
+          return typeof value==="number"&&Number.isFinite(value)&&value>=0;
+        })
+      : sortCarResults(results, "lowestTotal")],
     ["Top rated", sortCarResults(results, "topRated")],
     ["Best value", [...results].sort((a, b) => b.recommendationScore - a.recommendationScore || a.id.localeCompare(b.id))],
   ];
@@ -85,6 +275,33 @@ export function assignCarBadges(results: NormalizedCarResult[]) {
   return assignments;
 }
 
+/**
+ * Recommended uses the same objective awards as mobile web and never
+ * manufactures a Best value badge for the first visible car.
+ * Price and rating sorts can highlight their visible leader without
+ * duplicating the active award; the source/mobile mapping stays immutable.
+ */
+export function assignVisibleCarSortBadges(
+  visibleResults: NormalizedCarResult[],
+  sort: CarSort,
+  sourceBadges: ReadonlyMap<string, CarResultBadge>,
+): Map<string, CarResultBadge> {
+  const badges = new Map(sourceBadges);
+  // Recommended is an ordering, not an automatic Best value award.
+  // Use the same objective badges already displayed on mobile web.
+  if (sort === "recommended") return badges;
+  const leader = visibleResults[0];
+  if (!leader) return badges;
+  const activeBadge: CarResultBadge = sort === "lowestTotal" ? "Cheapest" : "Top rated";
+  // Do not claim a supplier-rating award if no rating was supplied.
+  if (sort === "topRated" && !Number.isFinite(leader.supplierRating)) return badges;
+  for (const [id, badge] of badges) {
+    if (badge === activeBadge) badges.delete(id);
+  }
+  badges.set(leader.id, activeBadge);
+  return badges;
+}
+
 export function calculateRentalDays(pickupDate: string, dropoffDate: string) {
   const pickup = Date.parse(`${pickupDate}T00:00:00Z`);
   const dropoff = Date.parse(`${dropoffDate}T00:00:00Z`);
@@ -92,9 +309,33 @@ export function calculateRentalDays(pickupDate: string, dropoffDate: string) {
   return Math.max(Math.ceil((dropoff - pickup) / 86_400_000), 1);
 }
 
-export function buildCarDetailsHref(id: string, search: CarSearchParams) {
+export function carSearchUrlParams(search: LocationBoundCarSearchParams) {
   const params = new URLSearchParams();
-  Object.entries(search).forEach(([key, value]) => value && params.set(key, value));
-  const query = params.toString();
+  const scalarEntries = [
+    ["pickupLocation", search.pickupLocation],
+    ["dropoffLocation", search.dropoffLocation],
+    ["pickupDate", search.pickupDate],
+    ["pickupTime", search.pickupTime],
+    ["dropoffDate", search.dropoffDate],
+    ["dropoffTime", search.dropoffTime],
+    ["driverAge", search.driverAge],
+  ] as const;
+  for (const [key, value] of scalarEntries) {
+    if (value) params.set(key, value);
+  }
+  if (search.pickupLocationTarget) {
+    params.set("pickupLocationTarget", JSON.stringify(search.pickupLocationTarget));
+  }
+  if (search.dropoffLocationTarget) {
+    params.set("dropoffLocationTarget", JSON.stringify(search.dropoffLocationTarget));
+  }
+  return params;
+}
+
+export function buildCarDetailsHref(
+  id: string,
+  search: LocationBoundCarSearchParams,
+) {
+  const query = carSearchUrlParams(search).toString();
   return `/cars/details/${encodeURIComponent(id)}${query ? `?${query}` : ""}`;
 }

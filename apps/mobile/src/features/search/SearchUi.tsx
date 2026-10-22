@@ -1,4 +1,5 @@
 import {
+  AppState,
   Image,
   Pressable,
   ScrollView,
@@ -17,8 +18,9 @@ import {
 } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
 import { FlowIcon, type FlowIconName } from "../flow/FlowIcon";
-import { useAppTheme } from "../../theme/AppTheme";
+import { useFlightResultsTheme as useAppTheme, useFlightResultsUi } from "./FlightResultsPresentationContext";
 import { appFonts } from "../../theme/typography";
+import { flightResultsColors } from "./flightResultsPresentation";
 import {
   deriveNearbyDateSuggestion,
   getDateWindow,
@@ -161,11 +163,12 @@ export function Pill({
   onPress?: () => void;
 }) {
   const { theme } = useAppTheme();
+  const resultsUi = useFlightResultsUi(ui);
   const flightResults = Boolean(flightResultsIcon || flightResultsChevron);
-  const selectedColor = theme.dark ? "#8FB5FF" : ui.blue;
+  const selectedColor = theme.dark ? "#8FB5FF" : resultsUi.blue;
   const iconColor = flightResults
     ? active ? selectedColor : theme.textSecondary
-    : active ? ui.blue : ui.navy;
+    : active ? resultsUi.blue : resultsUi.navy;
   return (
     <Pressable
       accessibilityRole="button"
@@ -176,9 +179,9 @@ export function Pill({
       style={({ pressed }) => [
         s.pill,
         flightResults && s.flightPill,
-        flightResults && { backgroundColor: theme.dark ? theme.surface : ui.pale, borderColor: theme.border },
+        flightResults && { backgroundColor: theme.dark ? theme.surface : resultsUi.pale, borderColor: theme.border },
         active && !flightResults && s.pillActive,
-        flightResults && active && { backgroundColor: theme.dark ? "#142B55" : "#EEF4FF", borderColor: ui.blue },
+        flightResults && active && { backgroundColor: theme.dark ? "#142B55" : "#EEF4FF", borderColor: resultsUi.blue },
         flightResults && pressed && s.flightPillPressed,
       ]}
     >
@@ -196,7 +199,7 @@ export function Pill({
           flightResults && s.flightPillText,
           flightResults && { color: active ? selectedColor : theme.textPrimary },
           flightResults && active && s.flightPillTextActive,
-          active && !flightResults && { color: ui.blue },
+          active && !flightResults && { color: resultsUi.blue },
         ]}
       >
         {label}
@@ -231,9 +234,13 @@ export function DateStrip({
   onSelect: (v: string) => void;
 }) {
   const { theme } = useAppTheme();
+  const resultsUi = useFlightResultsUi(ui);
   const { width: windowWidth } = useWindowDimensions();
   const railRef = useRef<ScrollView>(null);
   const centeredIdentity = useRef<string | undefined>(undefined);
+  const railViewportWidth = useRef(0);
+  const railContentWidth = useRef(0);
+  const railScrollX = useRef(0);
   // Keep three dates fully visible while letting the narrower fourth tile peek into view.
   const flightDateWidth = Math.min(96, Math.max(76, (windowWidth - 43) / 3.65));
   const [visibleStart, setVisibleStart] = useState(() =>
@@ -250,21 +257,56 @@ export function DateStrip({
     : null;
   const moveWindow = (days: number) =>
     setVisibleStart((current) => shiftCalendarDate(current, days));
-  const centerSelectedDate = () => {
-    if (!flightResults || !searchIdentity || centeredIdentity.current === searchIdentity) return;
+  const centerSelectedDate = (forceVisibilityCheck = false) => {
+    if (!flightResults || !searchIdentity) return false;
+    if (!forceVisibilityCheck && centeredIdentity.current === searchIdentity) return true;
     const selectedIndex = visibleDates.indexOf(date);
-    if (selectedIndex < 0) return;
+    const viewportWidth = railViewportWidth.current;
+    const contentWidth = railContentWidth.current;
+    if (selectedIndex < 0 || viewportWidth <= 0 || contentWidth <= 0) return false;
+    const tileStride = flightDateWidth + 8;
+    const selectedLeft = 12 + selectedIndex * tileStride;
+    const selectedRight = selectedLeft + flightDateWidth;
+    const visibleLeft = railScrollX.current;
+    const visibleRight = visibleLeft + viewportWidth;
+    if (forceVisibilityCheck && selectedLeft >= visibleLeft && selectedRight <= visibleRight) {
+      centeredIdentity.current = searchIdentity;
+      return true;
+    }
+    const target = Math.max(
+      0,
+      Math.min(
+        Math.max(0, contentWidth - viewportWidth),
+        selectedLeft - (viewportWidth - flightDateWidth) / 2,
+      ),
+    );
+    railRef.current?.scrollTo({ x: target, animated: false });
+    railScrollX.current = target;
     centeredIdentity.current = searchIdentity;
-    const tileStride = flightDateWidth + 9;
-    railRef.current?.scrollTo({
-      x: Math.max(0, selectedIndex * tileStride - (windowWidth - flightDateWidth) / 2 + 16),
-      animated: false,
-    });
+    return true;
   };
   useEffect(() => {
     if (!flightResults || !searchIdentity) return;
-    const frame = requestAnimationFrame(centerSelectedDate);
-    return () => cancelAnimationFrame(frame);
+    let frame: number | null = null;
+    let attemptsRemaining = 6;
+    const attemptAlignment = () => {
+      if (centerSelectedDate()) return;
+      if (attemptsRemaining <= 0) return;
+      attemptsRemaining -= 1;
+      frame = requestAnimationFrame(attemptAlignment);
+    };
+    attemptAlignment();
+    return () => {
+      if (frame !== null) cancelAnimationFrame(frame);
+    };
+  }, [date, flightResults, searchIdentity, visibleStart, windowWidth]);
+  useEffect(() => {
+    if (!flightResults || !searchIdentity) return;
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state !== "active") return;
+      requestAnimationFrame(() => centerSelectedDate(true));
+    });
+    return () => subscription.remove();
   }, [date, flightResults, searchIdentity, visibleStart, windowWidth]);
 
   return (
@@ -286,7 +328,18 @@ export function DateStrip({
         style={[s.dateRail, flightResults && s.flightDateRail]}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={[s.dates, flightResults && s.flightDates]}
-        onContentSizeChange={centerSelectedDate}
+        onLayout={({ nativeEvent }) => {
+          railViewportWidth.current = nativeEvent.layout.width;
+          requestAnimationFrame(() => centerSelectedDate(true));
+        }}
+        onContentSizeChange={(width) => {
+          railContentWidth.current = width;
+          requestAnimationFrame(() => centerSelectedDate());
+        }}
+        onScroll={({ nativeEvent }) => {
+          railScrollX.current = nativeEvent.contentOffset.x;
+        }}
+        scrollEventThrottle={16}
       >
         {visibleDates.map((iso) => {
           const x = parseCalendarDate(iso);
@@ -321,19 +374,19 @@ export function DateStrip({
                 },
                 !flightResults && active && s.dateActive,
                 flightResults && active && {
-                  backgroundColor: theme.dark ? "#142B55" : "#F0F5FF",
-                  borderColor: ui.blue,
+                  backgroundColor: theme.dark ? "#142B55" : flightResultsColors.dateSelectedSurface,
+                  borderColor: theme.dark ? "#8FB5FF" : flightResultsColors.dateAccent,
                 },
                 pressed && s.datePressed,
               ]}
             >
-              {flightResults && active ? <View accessible={false} style={s.flightDateSelectedAccent} /> : null}
+              {flightResults && active ? <View accessible={false} style={[s.flightDateSelectedAccent, { backgroundColor: theme.dark ? "#8FB5FF" : flightResultsColors.dateAccent }]} /> : null}
               {flightResults ? (
                 <>
-                  <Text style={[s.day, s.flightDateLabel, { color: theme.textPrimary }, active && { color: theme.dark ? "#8FB5FF" : ui.blue }]}>
+                  <Text style={[s.day, s.flightDateLabel, { color: theme.textPrimary }, active && { color: theme.dark ? "#8FB5FF" : flightResultsColors.dateAccent }]}>
                     {shortDate(iso).toUpperCase()}
                   </Text>
-                  <Text style={[s.day, s.flightDateWeekday, { color: theme.textSecondary }, active && { color: theme.dark ? "#8FB5FF" : ui.blue }]}>
+                  <Text style={[s.day, s.flightDateWeekday, { color: theme.textSecondary }, active && { color: theme.dark ? "#8FB5FF" : flightResultsColors.dateAccent }]}>
                     {x.toLocaleDateString("en-US", { weekday: "short" }).toUpperCase()}
                   </Text>
                 </>
@@ -344,7 +397,7 @@ export function DateStrip({
                   s.day,
                   flightResults && s.flightDateWeekday,
                   flightResults && { color: theme.textSecondary },
-                  flightResults && active && { color: theme.dark ? "#A9C4FF" : "#5276C5" },
+                  flightResults && active && { color: theme.dark ? "#A9C4FF" : resultsUi.blue },
                 ]}
               >
                 {x.toLocaleDateString("en-US", { weekday: "short" })}
@@ -354,7 +407,7 @@ export function DateStrip({
                   s.day,
                   flightResults && s.flightDateLabel,
                   flightResults && { color: theme.textPrimary },
-                  active && { color: theme.dark ? "#8FB5FF" : ui.blue },
+                  active && { color: theme.dark ? "#8FB5FF" : flightResultsColors.dateAccent },
                 ]}
               >
                 {shortDate(iso)}
@@ -372,8 +425,8 @@ export function DateStrip({
                     s.datePrice,
                     flightResults && s.flightDatePrice,
                     flightResults && { color: theme.textPrimary },
-                    active && { color: theme.dark ? "#8FB5FF" : ui.blue },
-                    flightResults && nearbySuggestion?.date === iso && !active && { color: ui.green },
+                    active && { color: theme.dark ? "#8FB5FF" : flightResultsColors.dateAccent },
+                    flightResults && nearbySuggestion?.date === iso && !active && { color: resultsUi.green },
                   ]}
                 >
                   {hasPrice ? (price.formatted ?? money(currency, price.amount))
@@ -430,25 +483,26 @@ export function Button({
   flightResults?: boolean;
 }) {
   const { theme } = useAppTheme();
+  const resultsUi = useFlightResultsUi(ui);
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityState={{ disabled }}
       disabled={disabled}
       onPress={onPress}
-      style={[s.button, outline && s.outline, flightResults && outline && { backgroundColor: theme.surface }, disabled && { opacity: 0.45 }]}
+      style={[s.button, { backgroundColor: resultsUi.blue }, outline && [s.outline, { borderColor: resultsUi.blue }], flightResults && outline && { backgroundColor: theme.surface }, disabled && { opacity: 0.45 }]}
     >
       <View style={s.buttonContent}>
         <Text
           adjustsFontSizeToFit
           minimumFontScale={0.78}
           numberOfLines={1}
-          style={[s.buttonText, outline && { color: ui.blue }]}
+          style={[s.buttonText, outline && { color: resultsUi.blue }]}
         >
           {label}
         </Text>
         {external ? (
-          <FlowIcon name="external" size={16} color={outline ? ui.blue : "white"} />
+          <FlowIcon name="external" size={16} color={outline ? resultsUi.blue : "white"} />
         ) : null}
       </View>
     </Pressable>
@@ -464,9 +518,10 @@ export function Badge({
   flightResults?: boolean;
 }) {
   const { theme } = useAppTheme();
+  const resultsUi = useFlightResultsUi(ui);
   return (
     <View style={[s.badge, flightResults && theme.dark && { backgroundColor: "#173568" }, green && { backgroundColor: flightResults && theme.dark ? "#153B2B" : "#EAF8ED" }]}>
-      <Text style={[s.badgeText, flightResults && theme.dark && { color: "#8FB5FF" }, green && { color: flightResults && theme.dark ? "#72D69A" : ui.green }]}>
+      <Text style={[s.badgeText, flightResults && theme.dark && { color: "#8FB5FF" }, green && { color: flightResults && theme.dark ? "#72D69A" : resultsUi.green }]}>
         {children}
       </Text>
     </View>
@@ -488,9 +543,10 @@ export function Empty({
   flightResults?: boolean;
 }) {
   const { theme } = useAppTheme();
+  const resultsUi = useFlightResultsUi(ui);
   return (
     <View style={s.empty}>
-      <FlowIcon name="search" size={38} color={ui.blue} />
+      <FlowIcon name="search" size={38} color={resultsUi.blue} />
       <Text style={[s.h2, flightResults && { color: theme.textPrimary }]}>{title}</Text>
       <Text style={[s.meta, flightResults && { color: theme.textSecondary }]}>{body}</Text>
       {retry ? <Button label={retryLabel} onPress={retry} flightResults={flightResults} /> : null}
@@ -571,11 +627,11 @@ export const s = StyleSheet.create({
   },
   dateRail: { height: 80, flex: 1 },
   dates: { gap: 9, alignItems: "center" },
-  flightDateNavigator: { height: 82, paddingHorizontal: 0 },
-  nearbyDateInsight: { minHeight: 28, justifyContent: "center", paddingHorizontal: 14, marginTop: -2 },
+  flightDateNavigator: { height: 80, paddingHorizontal: 0 },
+  nearbyDateInsight: { minHeight: 28, justifyContent: "center", paddingHorizontal: 12, marginTop: -2 },
   nearbyDateInsightText: { minWidth: 0, flexShrink: 1, fontSize: 11, lineHeight: 15, fontWeight: "600" },
-  flightDateRail: { height: 82 },
-  flightDates: { paddingHorizontal: 16, paddingVertical: 5 },
+  flightDateRail: { height: 80 },
+  flightDates: { paddingHorizontal: 12, paddingVertical: 5, gap: 8 },
   arrow: {
     width: 40,
     height: 40,

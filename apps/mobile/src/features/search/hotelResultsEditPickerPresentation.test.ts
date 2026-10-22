@@ -8,12 +8,14 @@ const dates = read("src/features/flow/DateRangeSheet.tsx");
 const shell = read("src/features/flow/HotelResultsEditPickerShell.tsx");
 const outer = read("src/features/search/HotelEditSearchModal.tsx");
 
-test("Hotel Results Edit keeps its outer sheet and routes every field to the shared full-screen presentation", () => {
+test("Hotel Results Edit keeps its outer sheet and routes every field to normal popup sheets", () => {
   assert.match(outer, /<Modal transparent animationType="none"/);
   assert.match(outer, /<HotelSearchPanel[^>]+editAppearance/);
-  assert.match(panel, /<DateRangeSheet[^>]+presentation=\{editAppearance \? "resultsEditFullScreen" : "sheet"\}/);
-  assert.match(panel, /<HotelDestinationSheet[^>]+pickerPresentation=\{editAppearance \? "resultsEditFullScreen" : "sheet"\}/);
-  assert.match(panel, /<HotelGuestsRoomsSheet[^>]+presentation=\{editAppearance \? "resultsEditFullScreen" : "sheet"\}/);
+  assert.match(panel, /<DateRangeSheet[^>]+presentation="sheet"/);
+  assert.match(panel, /<HotelDestinationSheet[^>]+pickerPresentation="sheet"/);
+  assert.match(panel, /<HotelGuestsRoomsSheet[^>]+presentation="sheet"/);
+  const wiring = panel.slice(panel.indexOf("<DateRangeSheet visible={datesOpen}"), panel.indexOf("export function HotelDestinationSheet"));
+  assert.doesNotMatch(wiring, /resultsEditFullScreen/);
 });
 
 test("one opaque safe-area shell explicitly owns the three child editor safe-area insets", () => {
@@ -44,7 +46,7 @@ test("child headers are balanced and Android Back returns to Edit", () => {
   assert.match(shell, /minHeight:62/);
   assert.match(shell, /back:\{minWidth:44,minHeight:44/);
   assert.match(shell, /onRequestClose=\{onBack\}/);
-  assert.match(shell, /accessibilityLabel="Back to edit hotel search"/);
+  assert.match(shell, /backAccessibilityLabel = "Back to edit hotel search"/);
 });
 
 test("Results Edit destination retains current context and selection stays immediate", () => {
@@ -61,8 +63,8 @@ test("full-screen children use direct visibility while ordinary sheets keep thei
   assert.match(panel, /return <Modal transparent animationType="none" visible=\{motion\.rendered\}/);
   assert.match(panel, /motion\.backdropStyle[\s\S]*?motion\.sheetStyle/);
   assert.match(dates, /const sheetVisible = presentation === "sheet" \? visible : false;[\s\S]*?useSearchPickerMotion\(sheetVisible\)/);
-  assert.ok(dates.indexOf('presentation === "resultsEditFullScreen"') < dates.indexOf("if (!motion.rendered) return null"));
-  assert.match(dates, /if \(!motion\.rendered\) return null;[\s\S]*?motion\.backdropStyle[\s\S]*?motion\.sheetStyle/);
+  assert.ok(dates.indexOf('presentation === "resultsEditFullScreen"') < dates.indexOf('return <Modal transparent animationType="none" visible={motion.rendered}'));
+  assert.match(dates, /return <Modal transparent animationType="none" visible=\{motion\.rendered\}[\s\S]*?motion\.backdropStyle[\s\S]*?motion\.sheetStyle/);
 });
 
 test("full-screen draft state is synchronized before native presentation paints", () => {

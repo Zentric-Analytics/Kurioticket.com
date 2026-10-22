@@ -6,7 +6,7 @@ const source = readFileSync(new URL("./HotelResultsClient.tsx", import.meta.url)
 
 test("wide desktop uses a dedicated 288px rail and smaller screens use the filter dialog", () => {
   assert.match(source, /min-\[1200px\]:grid-cols-\[288px_minmax\(0,1fr\)\]/);
-  assert.match(source, /w-\[288px\][^\n]*min-\[1200px\]:block/);
+  assert.match(source, /w-\[260px\][^\n]*min-\[1200px\]:block/);
   assert.match(source, /sm:w-\[420px\][^\n]*min-\[1200px\]:hidden/);
   assert.match(source, /role="dialog"/);
   assert.match(source, /aria-modal="true"/);
@@ -14,14 +14,15 @@ test("wide desktop uses a dedicated 288px rail and smaller screens use the filte
 });
 
 test("facets follow the production hierarchy and omit cancellation claims", () => {
-  const price = source.indexOf('title={t("hotelResults.budgetPrice")}');
-  const hotelClass = source.indexOf('title="Hotel class"', price);
-  const area = source.indexOf('title={t("hotelResults.locationArea")}', hotelClass);
+  const price = source.indexOf('title={layout === "mobile" ? "Budget / Price"');
+  const hotelClass = source.indexOf('title={layout === "mobile" && locale.startsWith("en") ? "Hotel class"', price);
+  const area = source.indexOf('title={layout === "mobile" ? "Area"', hotelClass);
   const property = source.indexOf('title={t("hotelResults.propertyType")}', area);
   const amenities = source.indexOf('title={t("hotelResults.facilities")}', property);
-  const room = source.indexOf('title="Room & bed"', amenities);
+  const room = source.indexOf('title={locale.startsWith("en") ? "Room & bed"', amenities);
   assert.ok(price < hotelClass && hotelClass < area && area < property && property < amenities && amenities < room);
-  assert.match(source, /section\.id !== "cancellationPolicies"/);
+  const compactSections = source.slice(source.indexOf("const compactSections = ("), source.indexOf('if (layout === "compact")'));
+  assert.doesNotMatch(compactSections, /id: "cancellationPolicies"/);
 });
 
 test("hotel class is multi-select and empty selection means all", () => {
@@ -32,18 +33,32 @@ test("hotel class is multi-select and empty selection means all", () => {
 });
 
 test("price filters share the static estimated-total basis", () => {
-  assert.match(source, /Minimum estimated stay total/);
-  assert.match(source, /Maximum estimated stay total/);
-  assert.match(source, /Estimated total for \{stayNights\}/);
+  assert.match(source, /aria-label=\{minimumAriaLabel\}/);
+  assert.match(source, /aria-label=\{maximumAriaLabel\}/);
+  assert.match(source, /totalLabel = t\("hotelResults.estimatedStayTotal"\)/);
+  assert.match(source, /Intl.NumberFormat\(locale\).format\(stayNights\)/);
   assert.match(source, /total >= minPrice && total <= maxPrice/);
   assert.match(source, /kind: "priceRange"/);
 });
 
-test("filter sheet exposes clear and deterministic result apply feedback", () => {
+test("mobile Hotel filter sheet uses the Cars continuous #F2F4F8 surface", () => {
+  const sheetStart = source.indexOf('aria-label="Hotel filters"');
+  const sheetEnd = source.indexOf("</aside>", sheetStart);
+  const sheet = source.slice(sheetStart, sheetEnd);
+  assert.match(sheet, /bg-\[#F2F4F8\]/);
+  assert.match(sheet, /hotel-filter-scrollbar[^"]*bg-\[#F2F4F8\]/);
+  assert.match(sheet, /border-t border-\[#D8DEE8\] bg-\[#F2F4F8\]/);
+  assert.match(sheet, /Reset hotel filters"[^>]*className="[^"]*bg-\[#F2F4F8\]/);
+  assert.doesNotMatch(sheet, /bg-\[#F1F3F8\]|sm:bg-\[#F6F8FB\]/);
+});
+
+test("filter sheet applies local filters through the normal Hotel results loading branch", () => {
   assert.match(source, /activeFilterCount > 0 \?\s*\(?\s*<button/);
-  assert.match(source, /No matching stays/);
-  assert.match(source, /View \$\{sortedVisibleHotels\.length\} matching/);
-  assert.match(source, /disabled=\{filterApplying \|\| sortedVisibleHotels\.length === 0\}/);
+  assert.match(source, /t\("hotelResults.noStaysMatchFiltersTitle"\)/);
+  assert.match(source, /t\("deals.results.package.view.hotel"\)/);
+  assert.match(source, /Intl.NumberFormat\(locale\).format\(sortedVisibleHotels.length\)/);
+  assert.match(source, /disabled=\{sortedVisibleHotels\.length === 0\}/);
+  assert.doesNotMatch(source, /disabled=\{filterApplying \|\| sortedVisibleHotels\.length === 0\}/);
   assert.match(source, /event\.key === "Escape"/);
   assert.match(source, /event\.key === "Tab"/);
   assert.match(source, /kurioticketHotelFiltersOpen/);
@@ -51,8 +66,13 @@ test("filter sheet exposes clear and deterministic result apply feedback", () =>
   assert.match(source, /env\(safe-area-inset-top\)/);
   assert.match(source, /env\(safe-area-inset-bottom\)/);
   assert.match(source, /overflow-y-auto overflow-x-hidden overscroll-contain/);
-  assert.match(source, /filters"\} applied/);
-  assert.match(source, /bg-slate-950\/35 backdrop-blur-\[1px\]/);
+  assert.match(source, /hidden max-w-full overflow-x-clip sm:block/);
+  assert.match(source, /mobilePriceShortcutLabel/);
+  assert.match(source, /mobileFacilitiesShortcutLabel/);
+  assert.match(source, /mobileRoomTypesShortcutLabel/);
+  assert.match(source, /bg-slate-950\/35 sm:backdrop-blur-\[1px\]/);
+  assert.match(source, /if \(loading \|\| filterApplying\)/);
+  assert.match(source, /<SearchResultsLoadingTransition[\s\S]*searchType="hotel"/);
 });
 
 test("mobile results expose one filter toolbar and one in-sheet clear action", () => {
@@ -63,29 +83,29 @@ test("mobile results expose one filter toolbar and one in-sheet clear action", (
   assert.doesNotMatch(sheet, /disabled=\{activeFilterCount === 0\}/);
   assert.match(sheet, /bg-transparent px-0 text-slate-700/);
   assert.match(sheet, /items-center justify-center text-slate-700/);
-  assert.match(source, /desktopCompactFilterPlacement === "fixed"/);
-  assert.match(source, /Refine results[\s\S]*id="desktop-compact-hotel-filters"[\s\S]*aria-label="Refine hotel results"[\s\S]*<HotelFilters layout="compact"/);
-  assert.match(source, /role="region" aria-label="Refine hotel results"/);
-  assert.doesNotMatch(source, /aria-label="Close desktop filters"|aria-modal="true" aria-label="Desktop hotel filters"/);
-  assert.match(source, /document\.addEventListener\("pointerdown", handlePointerDown\)/);
+  assert.match(source, /<HotelFilters layout="desktop"/);
+  assert.doesNotMatch(source, /desktop-compact-hotel-filters/);
   assert.doesNotMatch(source, /onClearAll=\{resetFilters\}/);
   assert.doesNotMatch(source, /mobileQuickFacilities = \["wifi", "breakfast", "pool"\]/);
   assert.match(source, /overflow-x-auto overscroll-x-contain/);
   assert.match(source, /\[&::-webkit-scrollbar\]:hidden/);
-  assert.match(source, /<span>Filter<\/span>[\s\S]*trigger\("price", "Price"[\s\S]*trigger\(\s*"stars",\s*"Stars"[\s\S]*trigger\(\s*"amenities",\s*"Amenities"/);
+  assert.match(source, /<span>Filter<\/span>[\s\S]*trigger\("price", mobilePriceShortcutLabel[\s\S]*trigger\("stars", mobileStarsShortcutLabel[\s\S]*trigger\("amenities", mobileFacilitiesShortcutLabel/);
   assert.match(source, /type MobileHotelShortcutMenu = "price" \| "stars" \| "amenities"/);
-  assert.match(source, /trigger\("price", "Price", priceFilterActive \? 1 : 0\)/);
+  assert.match(source, /trigger\("price", mobilePriceShortcutLabel, priceFilterActive\)/);
+  assert.match(source, /trigger\("stars", mobileStarsShortcutLabel, selectedHotelClasses\.length > 0\)/);
+  assert.match(source, /trigger\("amenities", mobileFacilitiesShortcutLabel, selectedFilters\.facilities\.length > 0\)/);
   assert.match(source, /mobileShortcutDraftMinPrice/);
   assert.match(source, /setMinPrice\(mobileShortcutDraftMinPrice\)/);
   assert.match(source, /role="dialog"[\s\S]*mobile-hotel-\$\{mobileShortcutMenu\}-title/);
   assert.match(source, /mobileShortcutMenu === "stars"[\s\S]*setSelectedHotelClasses\(mobileShortcutDraftStars\)/);
   assert.match(source, /facilities: mobileShortcutDraftFacilities/);
-  assert.match(source, /fixed inset-y-0 right-0[^\n]*h-\[100dvh\][^\n]*w-full/);
-  assert.match(source, /!guided && showMobileCompactHotelSearch/);
-  assert.doesNotMatch(source, /openMobileShortcutMenu\("sort", event\.currentTarget\)/);
+  assert.match(source, /fixed inset-y-0 right-0[^\n]*h-\[95dvh\][^\n]*w-full/);
+  assert.doesNotMatch(source, /mobileResultsSearch=/);
+  assert.match(source, /data-hotel-results-mobile-nav-search-button[\s\S]*h-full w-full min-w-0/);
+  assert.doesNotMatch(source, /trigger\("sort",/);
   assert.doesNotMatch(source, /transition-all duration-200 sm:hidden/);
-  assert.match(source, /mt-10 bg-\[#f6f8fb\] px-1 pb-0 pt-1 sm:hidden/);
-  assert.match(source, /page-shell grid gap-y-5 pb-6 pt-3 sm:pt-6/);
+  assert.match(source, /data-hotel-results-toolbar[\s\S]*w-full py-2 sm:hidden/);
+  assert.match(source, /page-shell grid gap-y-3 pb-2 pt-0[\s\S]*sm:gap-y-5 sm:pb-6 sm:pt-6/);
 });
 
 test("results omit the superseded comparison disclosure", () => {
@@ -100,4 +120,36 @@ test("property search is shared, normalized and represented as an active filter"
   assert.match(source, /Clear property search/);
   assert.match(source, /title="Good for your trip"/);
   assert.doesNotMatch(source, /title="Popular"/);
+});
+
+
+test("mobile Hotel filter apply uses the normal page loader and compact selected-value chips", () => {
+  const cardRegion = source.slice(source.indexOf("ref={paginationListRef}"), source.indexOf("</section>", source.indexOf("ref={paginationListRef}")));
+  assert.doesNotMatch(cardRegion, /data-hotel-filter-refresh-progress/);
+  assert.match(cardRegion, /aria-busy=\{filterApplying\}/);
+  assert.match(cardRegion, /data-hotel-continuous-results/);
+  const quickApply = source.slice(source.indexOf('className="h-11 w-\[32%\] shrink-0 rounded-lg bg-[#004BB8]'), source.indexOf("</footer>", source.indexOf('className="h-11 w-\[32%\] shrink-0 rounded-lg bg-[#004BB8]')));
+  assert.match(quickApply, /triggerFilterApplying\(\)/);
+  assert.match(source, /if \(loading \|\| filterApplying\)/);
+  assert.match(source, /<SearchResultsLoadingTransition[\s\S]*searchType="hotel"/);
+  assert.match(source, /active[\s\S]{0,160}border-\[#142033\] bg-\[#142033\] text-white/);
+  assert.match(source, /active \? "pl-2 pr-6" : "px-2"/);
+  assert.match(source, /absolute right-0\.5 top-1\/2 inline-flex h-6 w-6/);
+  assert.match(source, /notation: "compact"/);
+  assert.match(source, /Under \$\{formatCompactHotelFilterPrice\(maxPrice\)\}/);
+  assert.match(source, /clearMobileShortcutFilter/);
+});
+
+
+test("failed edited Hotel searches clear filter loading before exposing the error state", () => {
+  const catchStart = source.indexOf(".catch((searchError) => {");
+  const catchEnd = source.indexOf("})", source.indexOf("setError(", catchStart));
+  const catchBlock = source.slice(catchStart, catchEnd);
+
+  assert.notEqual(catchStart, -1);
+  assert.match(catchBlock, /setSearchApplying\(false\)/);
+  assert.match(catchBlock, /setFilterApplying\(false\)/);
+  assert.match(catchBlock, /filterApplyingTimeoutRef\.current !== null/);
+  assert.match(catchBlock, /window\.clearTimeout\(filterApplyingTimeoutRef\.current\)/);
+  assert.match(catchBlock, /setError\(/);
 });

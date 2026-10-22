@@ -12,7 +12,7 @@ import {
 const passedNgnFare: DisplayPrice = {
   amount: 92_720,
   currency: "NGN",
-  formatted: "NGN 92,720",
+  formatted: "₦92,720",
   accessibilityLabel: "92,720 Nigerian nairas",
   providerAmount: 67,
   providerCurrency: "USD",
@@ -21,7 +21,6 @@ const passedNgnFare: DisplayPrice = {
 const rates = { USD: 1, NGN: 1383.8806, EUR: 0.9 };
 
 test("keeps the Results NGN snapshot when Details location fails with en-US locale", () => {
-  // Automatic location is deliberately absent. A new automatic resolution would be USD.
   const freshResolution = resolveDisplayCurrencyContext({
     preferredCurrency: null,
     ipCountryCode: null,
@@ -34,7 +33,7 @@ test("keeps the Results NGN snapshot when Details location fails with en-US loca
     providerCurrency: "USD",
     preferredCurrency: null,
   }), true);
-  assert.equal(passedNgnFare.formatted, "NGN 92,720");
+  assert.equal(passedNgnFare.formatted, "₦92,720");
   assert.notEqual(passedNgnFare.formatted, "$67");
 });
 
@@ -106,17 +105,8 @@ test("direct Saved-flight entry resolves Nigeria and explicit EUR normally", () 
   assert.equal(createFlightDetailFare(67, "USD", explicit.resolvedCurrency, rates)?.currency, "EUR");
 });
 
-test("both booking areas use the one shared formatted fare", () => {
-  const detailScreen = readFileSync(resolve("src/features/search/ApprovedDetailScreen.tsx"), "utf8");
-  const flightDetail = detailScreen.slice(
-    detailScreen.indexOf("function FlightDetail"),
-    detailScreen.indexOf("function HotelDetail"),
-  );
-  assert.equal(flightDetail.match(/\{formattedFare\}/g)?.length, 2);
-  assert.doesNotMatch(flightDetail, /money\(result\.currency, result\.price\)/);
-});
-
-test("Results uses the collision-safe navigation contract", () => {
+test("Results uses the authoritative ID-only navigation contract", () => {
   const resultsScreen = readFileSync(resolve("src/features/search/ApprovedResultsScreen.tsx"), "utf8");
-  assert.match(resultsScreen, /params: buildFlightDetailParams\(\{ searchParams: params, result, fare, displayCurrencyContext \}\)/);
+  assert.match(resultsScreen, /params: buildFlightDetailParams\(\{ searchParams: params, result \}\)/);
+  assert.doesNotMatch(resultsScreen, /buildFlightDetailParams\(\{ searchParams: params, result, fare, displayCurrencyContext \}\)/);
 });

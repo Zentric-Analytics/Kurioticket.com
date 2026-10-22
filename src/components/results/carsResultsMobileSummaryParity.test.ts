@@ -6,107 +6,83 @@ const source = readFileSync(
   new URL("./CarsResultsClient.tsx", import.meta.url),
   "utf8",
 );
-const hotelSource = readFileSync(
-  new URL("../search/HotelSearchBar.tsx", import.meta.url),
-  "utf8",
-);
-const summary = source.slice(
-  source.indexOf("const renderMobileControlsRow"),
+const headerSearch = source.slice(
+  source.indexOf("const renderMobileHeaderSearch"),
   source.indexOf("const renderCarsSearchForm"),
 );
-const mobileSummarySection = source.slice(
-  source.indexOf('aria-label={t("carsResults.carRentalSearch")}') - 200,
-  source.indexOf("<MobileDatePickerDialog"),
-);
 
-test("normal Cars mobile summary preserves Cars content and its actual Edit Search launcher", () => {
-  assert.match(summary, /locationPairSummary/);
-  assert.match(summary, /rentalDateSummary/);
-  assert.match(summary, /driverAgeSummary/);
+test("Cars mobile results exposes the real search values in the main header", () => {
+  assert.match(headerSearch, /locationPairSummary/);
+  assert.match(headerSearch, /mobileSearchSecondarySummary/);
+  assert.match(headerSearch, /data-cars-results-mobile-header-search/);
   assert.match(
-    summary,
-    /openMobileSearchDrawer\(event\.currentTarget, getOverlayActivationModality\(event\)\)/,
+    source,
+    /const mobileSearchSecondarySummary = `\$\{rentalDateSummary\} · \$\{timeSummary\} · \$\{driverAgeSummary\}`/,
   );
-  assert.match(summary, /<SquarePen size=\{16\} strokeWidth=\{2\.2\} \/>/);
   assert.match(
-    summary,
-    /inline-flex h-11 w-11 shrink-0 items-center justify-center[^\n]*bg-transparent text-slate-700/,
+    headerSearch,
+    /aria-label=\{\`\$\{t\("deals\.results\.modifySearch"\)\}: \$\{locationPairSummary\}, \$\{mobileSearchSecondarySummary\}\`\}/,
   );
-  assert.match(summary, /aria-hidden="true"/);
-  assert.doesNotMatch(
-    summary,
-    /PencilLine|bg-\[#004BB8\]\/8|border-\[#004BB8\]\/12/,
+  assert.match(
+    headerSearch,
+    /openMobileSearchDrawer\([\s\S]*?event\.currentTarget[\s\S]*?getOverlayActivationModality\(event\)/,
   );
-  assert.match(summary, /\[-webkit-tap-highlight-color:transparent\]/);
-  assert.match(summary, /focus-visible:ring-2 focus-visible:ring-\[#004BB8\]\/35/);
-  assert.doesNotMatch(summary, /group-active:bg-/);
+  assert.match(headerSearch, /data-cars-results-mobile-search-edit\s+aria-hidden="true"[\s\S]*?<SquarePen/);
+  assert.match(headerSearch, /\[-webkit-tap-highlight-color:transparent\]/);
+  assert.match(
+    headerSearch,
+    /focus-visible:ring-2 focus-visible:ring-\[#004BB8\]\/35/,
+  );
 });
 
-test("normal Cars summary pins the current Hotel edit affordance contract", () => {
-  for (const contract of [
-    /<SquarePen size=\{16\} strokeWidth=\{2\.2\}/,
-    /h-11 w-11/,
-    /bg-transparent/,
-    /text-slate-700/,
-  ]) {
-    assert.match(summary, contract);
-    assert.match(hotelSource, contract);
-  }
-  assert.doesNotMatch(summary, /SquarePen[\s\S]{0,300}bg-\[#004BB8\]\/8/);
-  assert.doesNotMatch(summary, /PencilLine|border-\[#004BB8\]\/12/);
+test("Cars no longer renders a second normal or scrolled search summary", () => {
+  assert.doesNotMatch(source, /renderMobileControlsRow/);
+  assert.doesNotMatch(source, /renderMobileCompactResultsHeader/);
+  assert.doesNotMatch(source, /mobileCompactHeaderVisible/);
+  assert.doesNotMatch(source, /mobileCompactHeaderHandoffRef/);
+  assert.doesNotMatch(source, /data-cars-mobile-compact-handoff/);
+  assert.equal(
+    (source.match(/data-cars-results-mobile-header-search/g) ?? []).length,
+    1,
+  );
 });
 
-test("normal Cars summary uses the Flights mobile presentation and remains mobile-only", () => {
-  assert.match(summary, /h-\[4\.25rem\]/);
-  assert.match(summary, /rounded-xl border border-slate-200\/80 bg-white/);
-  assert.match(summary, /max-w-\[30rem\]/);
-  assert.doesNotMatch(summary, /h-14[\s\S]*rounded-md/);
-  assert.match(mobileSummarySection, /bg-white pb-0 pt-0 sm:hidden/);
-  assert.match(mobileSummarySection, /relative translate-y-1\/2/);
-  assert.match(summary, /text-\[16px\] font-bold[^\"]*text-\[#07133B\]/);
-  assert.match(summary, /text-\[12\.5px\] font-medium[^\"]*text-\[#536B92\]/);
-  assert.doesNotMatch(summary, /font-extrabold/);
-});
-
-test("summary sentinel remains a non-visual one-pixel sticky threshold", () => {
-  assert.match(mobileSummarySection, /mobileSearchSummarySentinelRef/);
+test("the AppHeader owns the single mobile search while Edit Search keeps the existing drawer", () => {
   assert.match(
-    mobileSummarySection,
-    /className="pointer-events-none h-px w-full"/,
+    source,
+    /setMobileNavSearchTarget\([\s\S]*?\[data-cars-results-mobile-nav-search\]/,
   );
-  assert.match(source, /setMobileCompactHeaderVisible/);
+  assert.match(
+    source,
+    /mobileNavSearchTarget[\s\S]*?createPortal\(renderMobileHeaderSearch\(\), mobileNavSearchTarget\)/,
+  );
+  assert.match(
+    source,
+    /<MobileResultsEditSheet[\s\S]*?appearance="carsResultsEdit"/,
+  );
+  assert.match(source, /renderCarsSearchForm\("mobile"\)/);
 });
 
-test("compact Cars header keeps one accessible center control with an inward-facing inline Pencil", () => {
-  const compactStart = source.indexOf("const renderMobileCompactResultsHeader");
-  const compactHeader = source.slice(
-    compactStart,
-    source.indexOf("return (", compactStart + 2500),
-  );
-  const centerLabelIndex = compactHeader.indexOf(
-    "aria-label={modifySearchLabel}",
-  );
-  const centerButton = compactHeader.slice(
-    compactHeader.lastIndexOf("<button", centerLabelIndex),
-    compactHeader.indexOf("</button>", centerLabelIndex) + "</button>".length,
-  );
+test("the unified launcher uses the Hotels two-line hierarchy without cramped mini-fields", () => {
+  assert.match(headerSearch, /h-full w-full min-w-0/);
+  assert.match(headerSearch, /data-cars-results-mobile-search-summary/);
+  assert.match(headerSearch, /flex min-w-0 flex-1 flex-col justify-center/);
+  assert.match(headerSearch, /locationPairSummary/);
+  assert.match(headerSearch, /mobileSearchSecondarySummary/);
+  assert.match(headerSearch, /text-\[14px\] font-semibold leading-\[18px\]/);
+  assert.match(headerSearch, /text-\[11px\] font-medium leading-\[15px\]/);
+  assert.match(headerSearch, /data-cars-results-mobile-search-edit/);
+  assert.match(headerSearch, /<SquarePen size=\{15\} strokeWidth=\{2\}/);
+  assert.doesNotMatch(headerSearch, /data-cars-results-mobile-search-fields/);
+  assert.doesNotMatch(headerSearch, /data-cars-results-mobile-search-location/);
+  assert.doesNotMatch(headerSearch, /data-cars-results-mobile-search-dates/);
+  assert.doesNotMatch(headerSearch, /grid-cols-|gap-\[3px\]|<CalendarDays|<Car/);
+  assert.match(headerSearch, /bg-\[#F5F7FB\]/);
+  assert.match(headerSearch, /hover:bg-\[#EDF2FA\]/);
 
-  assert.match(compactHeader, /grid-cols-\[44px_minmax\(0,1fr\)_82px\]/);
-  assert.match(compactHeader, /<ArrowLeft[^>]*aria-hidden="true"/);
-  assert.match(compactHeader, /aria-label=\{modifySearchLabel\}/);
-  assert.match(compactHeader, /text-\[15px\] font-bold/);
-  assert.match(
-    compactHeader,
-    /<span>\{t\("deals\.results\.modifySearch"\)\}<\/span>[\s\S]*?<Pencil/,
+  const editForm = source.slice(
+    source.indexOf('appearance="carsResultsEdit"'),
+    source.indexOf("</MobileResultsEditSheet>"),
   );
-  assert.match(compactHeader, /data-cars-compact-edit-icon/);
-  assert.match(compactHeader, /className="h-3 w-3 shrink-0 text-\[#536B92\]"/);
-  assert.equal(centerButton.match(/<button/g)?.length, 1);
-  assert.match(centerButton, /data-cars-compact-edit-icon/);
-  assert.doesNotMatch(
-    centerButton,
-    /SquarePen|rounded[^\n]*data-cars-compact-edit-icon/,
-  );
-  assert.match(compactHeader, /openFiltersWithCount/);
-  assert.match(compactHeader, /<SlidersHorizontal/);
+  assert.match(editForm, /renderCarsSearchForm\("mobile"\)/);
 });

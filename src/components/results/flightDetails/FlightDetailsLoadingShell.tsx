@@ -1,27 +1,103 @@
-import { ArrowLeft } from "lucide-react";
+"use client";
+
+import { ArrowLeft, Heart, Share2 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
+
+import { MobileFlightDetailsActionBar, mobileFlightDetailsNavSurfaceClass } from "./MobileFlightDetailsActionBar";
+
+import flightDetailsHero from "../../../../apps/mobile/assets/heroes/flight-details-hero.webp";
 
 export function FlightDetailsLoadingShell({ resultsHref }: { resultsHref?: string }) {
   return (
-    <main className="flex-1 bg-white pb-[calc(2rem+env(safe-area-inset-bottom))] pt-[calc(1.75rem+env(safe-area-inset-top))] sm:bg-[#F7F9FC] sm:py-7 lg:pt-7">
-      <div className="mx-auto w-full max-w-[1500px] px-0 sm:px-6 lg:px-8">
-        {resultsHref ? (
-          <Link href={resultsHref} className="ml-4 inline-flex items-center gap-2 text-sm font-semibold text-[#075EE8] sm:ml-0">
-            <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back to results
+    <main className="flex-1 bg-white pb-[calc(1.75rem+env(safe-area-inset-bottom))] sm:bg-[#F7F9FC] sm:pb-7 sm:pt-7 lg:pt-7">
+      <MobileFlightDetailsActionBar
+        back={resultsHref ? (
+          <Link href={resultsHref} aria-label="Back to results" className={`${mobileFlightDetailsNavSurfaceClass} w-11 text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35`}>
+            <ArrowLeft className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
           </Link>
-        ) : null}
-        <div role="status" aria-label="Loading flight details" className={`${resultsHref ? "mt-4" : ""} grid gap-5 lg:grid-cols-[minmax(0,2.45fr)_minmax(310px,0.95fr)] lg:gap-7`}>
+        ) : (
+          <span aria-hidden="true" className={`${mobileFlightDetailsNavSurfaceClass} w-11 text-slate-400`}>
+            <ArrowLeft className="h-5 w-5" strokeWidth={2} />
+          </span>
+        )}
+        actions={(
+          <span aria-hidden="true" className="inline-flex gap-1">
+            <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center text-slate-400"><Heart className="h-5 w-5" strokeWidth={2} /></span>
+            <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center text-slate-400"><Share2 className="h-5 w-5" strokeWidth={2} /></span>
+
+          </span>
+        )}
+      />
+      <div className="mx-auto w-full max-w-[1080px] px-0 sm:px-6 lg:px-[30px]">
+        <div role="status" aria-label="Loading flight details" className="min-w-0">
           <span className="sr-only">Loading flight details</span>
-          <div className="border-y border-slate-200 bg-white p-4 sm:rounded-[15px] sm:border sm:p-6">
-            <div className="h-7 w-2/5 animate-pulse rounded bg-slate-200" />
-            <div className="mt-5 h-56 animate-pulse rounded-[10px] bg-slate-100" />
-            <div className="mt-7 h-6 w-36 animate-pulse rounded bg-slate-200" />
-            <div className="mt-3 h-40 w-[min(78vw,275px)] max-w-[275px] animate-pulse rounded-[10px] bg-slate-100" />
-            <div className="mt-6 h-44 animate-pulse rounded-[10px] bg-slate-100" />
+          <div className="overflow-hidden border-slate-200 bg-white sm:rounded-[15px] sm:border sm:bg-white">
+            <div className="relative flex min-h-[254px] flex-col justify-end overflow-hidden bg-[#E2E8F0] px-[18px] pb-[122px] pt-4 sm:min-h-[280px] sm:block sm:bg-transparent sm:px-6 sm:pb-16 sm:pt-5 lg:min-h-[300px]">
+              <Image src={flightDetailsHero} alt="" fill priority sizes="(min-width: 1024px) 68vw, 100vw" className="hidden object-cover sm:block" />
+              <div
+                data-flight-details-loading-desktop-navigation
+                className="pointer-events-none absolute inset-x-0 top-0 z-20 hidden items-start justify-between p-4 sm:flex lg:p-5"
+                aria-hidden="true"
+              >
+                <div className="size-11 rounded-full border border-white/55 bg-white/85 shadow-[0_2px_8px_rgba(15,23,42,0.12)] backdrop-blur-md" />
+                <div className="flex items-center gap-2">
+                  <div className="size-11 rounded-full border border-white/55 bg-white/85 shadow-[0_2px_8px_rgba(15,23,42,0.12)] backdrop-blur-md" />
+                  <div className="size-11 rounded-full border border-white/55 bg-white/85 shadow-[0_2px_8px_rgba(15,23,42,0.12)] backdrop-blur-md" />
+                </div>
+              </div>
+              <div className="absolute inset-0 hidden bg-slate-950/50 sm:block" aria-hidden="true" />
+              <div className="relative z-10 flex w-full flex-col gap-[3px] sm:absolute sm:inset-x-6 sm:bottom-16 sm:w-2/5">
+                <div className="h-8 w-[62%] animate-pulse rounded-lg bg-slate-300 sm:w-full sm:bg-white/35" />
+                <div className="h-4 w-[58%] animate-pulse rounded bg-slate-300 sm:hidden" />
+              </div>
+              <svg data-flight-details-loading-hero-curve aria-hidden="true" viewBox="0 0 100 64" preserveAspectRatio="none" className="pointer-events-none absolute inset-x-0 bottom-[-1px] h-[65px] w-full text-white sm:hidden"><path d="M0 12 Q50 64 100 12 L100 64 L0 64 Z" fill="currentColor" /></svg>
+            </div>
+            <div className="relative z-10 px-3 pb-4 pt-0 sm:-mt-7 sm:p-6 sm:pt-0">
+            <div data-mobile-native-itinerary-loading className="-mx-2 -mt-[104px] sm:mx-0 sm:mt-0">
+              <div className="relative h-[226px] overflow-hidden rounded-[15px] border border-[#E1E7EF] bg-white shadow-[0_10px_28px_-22px_rgba(15,23,42,0.5)] sm:rounded-[10px] sm:border-slate-200 sm:bg-slate-100 sm:shadow-lg">
+                <div className="pointer-events-none absolute inset-x-0 top-0 h-[52%] rounded-t-[15px] bg-[linear-gradient(135deg,rgba(255,255,255,0.78)_0%,rgba(255,255,255,0.18)_46%,rgba(255,255,255,0)_100%)] sm:hidden" aria-hidden="true" />
+                <div className="relative z-[1] p-[15px] sm:hidden">
+                  <div className="flex items-start justify-between"><div className="h-[10px] w-16 animate-pulse rounded bg-slate-200" /><div className="h-[10px] w-24 animate-pulse rounded bg-slate-200" /></div>
+                  <div className="mt-[18px] grid grid-cols-[1.1fr_.8fr_1.1fr] items-center gap-2">
+                    <div className="space-y-2"><div className="h-5 w-16 animate-pulse rounded bg-slate-200" /><div className="h-3 w-10 animate-pulse rounded bg-slate-200" /></div>
+                    <div className="space-y-2"><div className="mx-auto h-3 w-12 animate-pulse rounded bg-slate-200" /><div className="h-px w-full bg-slate-200" /></div>
+                    <div className="ml-auto space-y-2"><div className="ml-auto h-5 w-16 animate-pulse rounded bg-slate-200" /><div className="ml-auto h-3 w-10 animate-pulse rounded bg-slate-200" /></div>
+                  </div>
+                  <div className="mt-5 h-px bg-slate-200" />
+                  <div className="mt-4 flex items-start gap-3"><div className="h-8 w-8 animate-pulse rounded-lg bg-slate-200" /><div className="flex-1 space-y-2"><div className="h-3 w-2/3 animate-pulse rounded bg-slate-200" /><div className="h-3 w-1/2 animate-pulse rounded bg-slate-200" /><div className="h-3 w-3/4 animate-pulse rounded bg-slate-200" /></div></div>
+                </div>
+              </div>
+            </div>
+            <div className="mt-7 h-[23px] w-[136px] animate-pulse rounded bg-slate-200" />
+            <div data-mobile-native-fare-loading className="mt-3 flex gap-3 overflow-hidden pb-3 pr-[38px] sm:hidden">
+              {[0, 1].map((index) => (
+                <div key={index} className="relative h-[142px] w-[clamp(197px,calc(197px+(100vw-320px)*0.27),217px)] shrink-0 rounded-[15px] border-[1.5px] border-[#D7E0EC] bg-white px-3 pb-2 pt-1.5 shadow-[0_10px_28px_-22px_rgba(15,23,42,0.5)]">
+                  <div className="flex justify-center gap-[7px]"><div className="h-6 w-6 animate-pulse rounded-lg bg-slate-200" /><div className="mt-1.5 h-3 w-[72px] animate-pulse rounded bg-slate-200" /></div>
+                  <div className="mt-[5px] space-y-[5px]">
+                    {[0, 1, 2].map((row) => <div key={row} className="flex items-center gap-[7px]"><div className="h-[14px] w-[14px] shrink-0 animate-pulse rounded-full bg-slate-200" /><div className="h-[10px] flex-1 animate-pulse rounded bg-slate-200" /></div>)}
+                  </div>
+                  <div className="absolute inset-x-3 bottom-1.5 flex justify-center"><div className="h-4 w-[82px] animate-pulse rounded bg-slate-200" /></div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-3 hidden h-40 w-[275px] animate-pulse rounded-[10px] bg-slate-100 sm:block" />
+            <div data-mobile-native-info-loading className="mt-3 sm:hidden">
+              <div className="-mx-2 flex h-12 items-center gap-[22px] overflow-hidden border-b border-[#D8E1EC]">
+                {[110, 90, 120, 110].map((width) => <div key={width} className="h-[10px] shrink-0 animate-pulse rounded bg-slate-200" style={{ width }} />)}
+              </div>
+              <div className="space-y-[17px] px-1 py-[18px]">
+                <div className="h-[10px] w-[92%] animate-pulse rounded bg-slate-200" />
+                <div className="h-[10px] w-[68%] animate-pulse rounded bg-slate-200" />
+                <div className="h-[10px] w-[84%] animate-pulse rounded bg-slate-200" />
+              </div>
+            </div>
+            <div className="mt-6 hidden h-44 animate-pulse rounded-[10px] bg-slate-100 sm:block" />
+            </div>
           </div>
-          <div className="hidden h-[620px] animate-pulse rounded-[15px] border border-slate-200 bg-white lg:block" />
         </div>
       </div>
+
     </main>
   );
 }

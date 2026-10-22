@@ -25,6 +25,12 @@ const search = {
   rooms: 2,
 } as const;
 
+test("canonical autocomplete hotel IDs resolve the same catalogue as legacy IDs", () => {
+  const legacy = searchStaticHotelCatalogue("London", "gb-london");
+  assert.ok(legacy.length > 0);
+  assert.deepEqual(searchStaticHotelCatalogue("Selected destination", "hotel:gb-london"), legacy);
+});
+
 test("static hotel catalogue is authoritative and destination relevant", () => {
   assert.equal(staticHotelCatalogue.length, 111);
   assert.equal(supportedStaticHotelDestinations.length, 83);

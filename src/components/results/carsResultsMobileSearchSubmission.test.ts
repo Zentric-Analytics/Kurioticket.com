@@ -3,6 +3,8 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import { searchCars } from "@/services/travel/carAggregator";
+import { buildStaticCarResults } from "@/services/travel/staticCarResults";
+import type { CarSearchParams } from "@/lib/cars/types";
 
 const source = readFileSync(
   new URL("./CarsResultsClient.tsx", import.meta.url),
@@ -17,7 +19,7 @@ const mobileControls = source.slice(
 );
 const mobileSubmit = source.slice(
   source.indexOf("const submitMobileSearch"),
-  source.indexOf("useLayoutEffect", source.indexOf("const submitMobileSearch")),
+  source.indexOf("\n  useEffect", source.indexOf("const submitMobileSearch")),
 );
 
 function submittedLocations({
@@ -64,6 +66,15 @@ test("different-return Search serializes both current drafts exactly once", () =
   assert.deepEqual(data.getAll("returnToDifferentLocation"), ["1"]);
 });
 
+test("mobile Search carries canonical location targets into the next Results request", () => {
+  assert.match(source, /name="pickupLocationTarget"[\s\S]*value=\{pickupLocationTarget\}/);
+  assert.match(source, /name="dropoffLocationTarget"[\s\S]*value=\{dropoffLocationTarget\}/);
+  assert.match(source, /setPickupLocationTarget\([\s\S]*serializeSuggestionLocationTarget\(suggestion\)/);
+  assert.match(source, /setDropoffLocationTarget\([\s\S]*serializeSuggestionLocationTarget\(suggestion\)/);
+  assert.match(source, /setPickupLocationTarget\(""\)/);
+  assert.match(source, /setDropoffLocationTarget\(""\)/);
+});
+
 test("mobile Search captures the live form before submit-close and router navigation", () => {
   const submitHandler = mobileSubmit;
   const preventDefaultIndex = submitHandler.indexOf("event.preventDefault()");
@@ -75,9 +86,6 @@ test("mobile Search captures the live form before submit-close and router naviga
     "mobileSearchSnapshotRef.current = null",
   );
   const pendingIndex = submitHandler.indexOf("setIsSearchSubmitting(true)");
-  const releaseIndex = submitHandler.indexOf(
-    "releaseMobileSearchScrollLock({ restoreScroll: false })",
-  );
   const topIndex = submitHandler.indexOf(
     'window.scrollTo({ top: 0, left: 0, behavior: "auto" })',
   );
@@ -89,32 +97,31 @@ test("mobile Search captures the live form before submit-close and router naviga
   assert.ok(formDataIndex < hrefIndex);
   assert.ok(hrefIndex < closeIndex);
   assert.ok(closeIndex < pendingIndex);
-  assert.ok(pendingIndex < releaseIndex);
-  assert.ok(releaseIndex < topIndex);
+  assert.ok(pendingIndex < topIndex);
   assert.ok(topIndex < drawerCloseIndex);
   assert.ok(drawerCloseIndex < navigationIndex);
   assert.doesNotMatch(submitHandler, /mode: "cancel"/);
   assert.match(submitHandler, /router\.push\(href, \{ scroll: true \}\)/);
-  assert.match(
-    submitHandler,
-    /releaseMobileSearchScrollLock\(\{ restoreScroll: false \}\)/,
-  );
+  assert.match(source, /const shouldRestoreMobileSearchScroll = useCallback\(\s*\(\) => !isSearchSubmittingRef\.current/);
+  assert.match(source, /shouldRestoreScroll=\{shouldRestoreMobileSearchScroll\}/);
 });
 
-test("mobile Search replaces stale Cars results with localized branded loading", () => {
+test("mobile Search replaces stale Cars results with the shared delayed loading transition", () => {
   const pendingBranch = source.slice(
     source.indexOf("if (isSearchSubmitting) {"),
     source.indexOf(
-      'return (\n    <main className="flex-1 bg-[#f6f8fb] pb-8">',
+      '\n  return (',
       source.indexOf("if (isSearchSubmitting) {") + 1,
     ),
   );
 
   assert.match(source, /const \[isSearchSubmitting, setIsSearchSubmitting\]/);
-  assert.match(pendingBranch, /<BrandedLoading/);
-  assert.match(pendingBranch, /variant="fullscreen"/);
-  assert.match(pendingBranch, /visual="logoPulse"/);
-  assert.match(pendingBranch, /showProgress=\{false\}/);
+  assert.match(pendingBranch, /<SearchResultsLoadingTransition/);
+  assert.match(pendingBranch, /active=\{isSearchSubmitting\}/);
+  assert.match(pendingBranch, /searchType="car"/);
+  assert.match(pendingBranch, /desktopSearch=\{renderCarsSearchForm\("desktop-navbar"\)\}/);
+  assert.match(pendingBranch, /mobileSearch=\{renderMobileHeaderSearch\(\)\}/);
+  assert.match(pendingBranch, /\{mobileSearchOverlays\}/);
   assert.doesNotMatch(pendingBranch, /CarsResultsExperience|CarResultCard/);
 
   for (const key of [
@@ -157,6 +164,13 @@ test("Heathrow mobile draft produces one exact pickup query value", () => {
 });
 
 test("changed server search input replaces inventory search context", async () => {
+  // Explicit test provider: real searches no longer inject static inventory.
+  const options = { dependencies: {
+    searchKayak: async (search: CarSearchParams) => ({ provider: "test", status: "success" as const,
+      results: buildStaticCarResults(search).slice(0, 1), latencyMs: 0 }),
+    rememberResults: async () => {},
+    rememberCohort: async () => {},
+  } };
   const common = {
     pickupDate: "2026-09-10",
     dropoffDate: "2026-09-12",
@@ -168,12 +182,12 @@ test("changed server search input replaces inventory search context", async () =
     ...common,
     pickupLocation: "Old pickup location",
     dropoffLocation: "Old pickup location",
-  });
+  }, options);
   const newInventory = await searchCars({
     ...common,
     pickupLocation: "Heathrow Airport (LHR)",
     dropoffLocation: "Heathrow Airport (LHR)",
-  });
+  }, options);
 
   assert.equal(oldInventory.results[0]?.pickupLocation, "Old pickup location");
   assert.equal(

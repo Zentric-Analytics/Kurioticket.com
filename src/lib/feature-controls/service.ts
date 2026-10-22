@@ -57,7 +57,8 @@ export type FeatureMutationActor = { id: string; email: string; ipAddress?: stri
 export async function mutateFeatureControl(input: { key: FeatureControlKey; environment: FeatureControlEnvironment; enabled: boolean; reason?: string; actor: FeatureMutationActor }) {
   const definition = featureControlRegistry[input.key];
   const result = await getPrisma().$transaction(async (tx) => {
-    await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${`${input.environment}:${input.key}`}))`;
+    // Preserve the transaction lock without asking Prisma to decode PostgreSQL void.
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`${input.environment}:${input.key}`}))`;
     let row = await tx.featureFlag.findUnique({ where: { key_environment: { key: input.key, environment: input.environment } } });
     if (!row) row = await tx.featureFlag.create({ data: { key: input.key, environment: input.environment, name: definition.name, description: definition.description, enabled: input.environment === "STAGING" ? definition.defaultStaging : definition.defaultProduction } });
     if (row.enabled === input.enabled) return { changed: false as const, state: row };

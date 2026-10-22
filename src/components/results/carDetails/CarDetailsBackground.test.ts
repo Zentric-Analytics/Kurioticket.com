@@ -10,6 +10,10 @@ const routeSource = readFileSync(
   new URL("../../../app/cars/details/[id]/page.tsx", import.meta.url),
   "utf8",
 );
+const loadingSource = readFileSync(
+  new URL("../../../app/cars/details/[id]/loading.tsx", import.meta.url),
+  "utf8",
+);
 const flightSource = readFileSync(
   new URL("../FlightDetailsClient.tsx", import.meta.url),
   "utf8",
@@ -20,10 +24,11 @@ const hotelSource = readFileSync(
 );
 
 const mainWrapper = '<main className="flex-1 bg-surface-muted/40">';
-const successfulMainWrapper = '<main className="flex-1 bg-white pb-[calc(7.5rem+env(safe-area-inset-bottom))] sm:bg-surface-muted/40 lg:pb-0">';
+const successfulMainWrapper =
+  '<main className="flex-1 bg-white pb-[calc(7.5rem+env(safe-area-inset-bottom))] sm:bg-[#f8fafc] lg:bg-[#F7F9FC] lg:pb-0">';
 const whiteSection = '<section className="border-b border-border bg-white">';
 const successfulSection =
-  '<section className="bg-white lg:border-b lg:border-border lg:pb-14">';
+  '<section className="bg-transparent lg:pb-0" data-car-details-desktop-surface>';
 
 function assertOrdered(source: string, parts: string[]) {
   let previous = -1;
@@ -57,29 +62,39 @@ test("reference details pages retain the shared background architecture", () => 
   }
 });
 
-test("successful Cars Details uses a full-width white section inside the muted main", () => {
+test("successful Cars Details uses one continuous production surface", () => {
   assertOrdered(clientSource, [
     successfulMainWrapper,
     successfulSection,
-    '<div className="page-shell py-2 sm:py-7">',
+    '<div className="page-shell py-0 lg:py-6 lg:max-w-[1080px]" data-car-details-body-shell>',
   ]);
-  assert.doesNotMatch(
-    clientSource,
-    /<main className="[^"]*lg:pb-14[^"]*">/,
-  );
+  assert.doesNotMatch(clientSource, /<main className="[^"]*lg:pb-14[^"]*">/);
   assert.doesNotMatch(clientSource, /flex-1 bg-\[#f6f8fb\] lg:pb-14/);
-  assert.match(clientSource, /page-shell py-2 sm:py-7/);
+  assert.match(clientSource, /bg-white pb-\[calc\(7\.5rem\+env\(safe-area-inset-bottom\)\)\] sm:bg-\[#f8fafc\] lg:bg-\[#F7F9FC\]/);
+  assert.match(
+    hotelSource,
+    /<main className="flex-1 bg-white sm:bg-\[#f8fafc\] lg:bg-\[#F7F9FC\]">/,
+  );
+  assert.match(clientSource, /page-shell py-0 lg:py-6 lg:max-w-\[1080px\]/);
   assertNoForbiddenBackgroundTreatments(
     clientSource.slice(
       clientSource.indexOf(successfulMainWrapper),
-      clientSource.indexOf('<div className="page-shell py-2 sm:py-7">'),
+      clientSource.indexOf('<div className="page-shell py-0 lg:py-6 lg:max-w-[1080px]" data-car-details-body-shell>'),
     ),
   );
 });
 
+test("Cars Details loading state uses the same responsive Hotel Details canvas", () => {
+  assert.match(
+    loadingSource,
+    /className="flex-1 bg-white pb-24 sm:bg-\[#f8fafc\] lg:bg-\[#F7F9FC\]"/,
+  );
+  assert.doesNotMatch(loadingSource, /bg-\[#f6f8fb\]|lg:bg-\[#F8FAFC\]|lg:bg-\[#EEF2F7\]/);
+});
+
 test("successful Cars Details retains layout, content, and price contracts", () => {
   for (const contract of [
-    "DetailsBackLink",
+    "data-car-details-desktop-back-link",
     "resultsHref",
     "CarDetailsHero",
     "BookingSummary",
@@ -146,7 +161,13 @@ test("unavailable content and route behavior contracts remain present", () => {
   ]) {
     assert.ok(routeSource.includes(contract), `${contract} remains present`);
   }
-  assert.doesNotMatch(routeSource, /Footer|data-mobile-car-footer-clearance/);
+  assert.match(routeSource, /import \{ Footer \} from "@\/components\/layout\/Footer";/);
+  assert.match(
+    routeSource,
+    /data-car-details-desktop-footer>[\s\S]*?<Footer variant="brand-legal-only" \/>/,
+  );
+  assert.equal(routeSource.match(/<Footer\b/g)?.length, 1);
+  assert.doesNotMatch(routeSource, /data-mobile-car-footer-clearance/);
   assert.match(routeSource, /hidden lg:block/);
   assert.match(routeSource, /pt-\[env\(safe-area-inset-top\)\] lg:pt-0/);
 });

@@ -1,5 +1,4 @@
 import type { FlightResult } from "../../api/travelApi";
-import type { DisplayCurrencyResolution, DisplayPrice } from "../currency/displayCurrency";
 
 type RouteValue = string | string[] | undefined;
 
@@ -19,29 +18,36 @@ const inheritedFlightDetailKeys = [
   "to",
   "cabin",
   "cabinClass",
+  "currency",
+  "legCount",
 ] as const;
 
 export function buildFlightDetailParams({
   searchParams,
   result,
-  fare,
-  displayCurrencyContext,
 }: {
   searchParams: Record<string, RouteValue>;
   result: FlightResult;
-  fare?: DisplayPrice;
-  displayCurrencyContext?: DisplayCurrencyResolution;
-}) {
-  const safeSearchParams = Object.fromEntries(inheritedFlightDetailKeys.flatMap((key) => {
+}): Record<string, string> {
+  const safeSearchParams: Record<string, string> = Object.fromEntries(inheritedFlightDetailKeys.flatMap((key) => {
     const raw = searchParams[key];
     const value = Array.isArray(raw) ? raw[0] : raw;
     return value ? [[key, value]] : [];
   }));
 
+  const legCount = Number(Array.isArray(searchParams.legCount) ? searchParams.legCount[0] : searchParams.legCount);
+  if (Number.isInteger(legCount) && legCount > 0) {
+    for (let index = 1; index <= legCount; index += 1) {
+      for (const prefix of ["origin", "destination", "departureDate"] as const) {
+        const raw = searchParams[`${prefix}${index}`];
+        const value = Array.isArray(raw) ? raw[0] : raw;
+        if (value) safeSearchParams[`${prefix}${index}`] = value;
+      }
+    }
+  }
+
   return {
     ...safeSearchParams,
-    result: JSON.stringify(result),
-    ...(fare ? { displayFare: JSON.stringify(fare) } : {}),
-    ...(displayCurrencyContext ? { displayCurrencyContext: JSON.stringify(displayCurrencyContext) } : {}),
+    id: result.id,
   };
 }

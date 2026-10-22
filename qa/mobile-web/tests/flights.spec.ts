@@ -2,7 +2,79 @@ import { expect, test } from "@playwright/test";
 import { collectSafariDiagnostics } from "../helpers/safariDiagnostics";
 import { writeArtifact } from "../helpers/artifacts";
 
-const flightResults = process.env.QA_FLIGHT_RESULTS_PATH ?? "/flights/results?tripType=round-trip&origin=SFO&destination=LAX&departureDate=2026-09-10&returnDate=2026-09-12&adults=1&children=0&infants=0&travelers=1&cabinClass=economy";
+const flightResults = process.env.QA_FLIGHT_RESULTS_PATH ?? "/flights/results?tripType=round-trip&origin=SFO&destination=LAX&departureDate=2026-11-13&returnDate=2026-11-15&adults=1&children=0&infants=0&travelers=1&cabinClass=economy";
+
+for (const width of [320, 360, 390, 412]) {
+  test(`Flight Results contains horizontal rails without document overflow at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto(flightResults, { waitUntil: "domcontentloaded" });
+    await expect(page.locator("[data-flight-results-main]")).toBeVisible();
+    await expect(page.locator("[data-flight-mobile-results-shortcuts]")).toBeVisible();
+    await expect(page.locator('[data-nearby-fare-presentation="mobile"]')).toBeVisible();
+    await expect(page.locator("[data-flight-price-alert-row]")).toBeVisible();
+    const mobileResults = page.locator("[data-mobile-continuous-flight-results]");
+    await expect(mobileResults.locator("[data-flight-results-card-list]")).toBeVisible();
+    await expect(mobileResults.locator("[data-virtual-results]")).toHaveCount(1);
+    await expect(mobileResults.locator("[data-virtual-index]").first()).toBeVisible();
+    await expect(page.locator("footer")).toBeVisible();
+
+    const measurements = await page.evaluate(() => {
+      const dateRail = document.querySelector<HTMLElement>('[data-nearby-fare-presentation="mobile"] > div');
+      const quickRail = document.querySelector<HTMLElement>("[data-mobile-flight-shortcuts]");
+      const filterChip = quickRail?.querySelector<HTMLElement>("button");
+      const priceAlert = document.querySelector<HTMLElement>("[data-flight-price-alert-row]")?.firstElementChild;
+      const resultsFound = document.querySelector<HTMLElement>("[data-mobile-flight-results-summary-row]");
+      const mobileResults = document.querySelector<HTMLElement>("[data-mobile-continuous-flight-results]");
+      const virtualList = mobileResults?.querySelector<HTMLElement>("[data-virtual-results]");
+      const flightCard = virtualList?.querySelector<HTMLElement>("[data-virtual-index]")?.firstElementChild;
+      const pagination = mobileResults?.querySelector<HTMLElement>('[aria-label="Flight results pages"]');
+      const footer = document.querySelector<HTMLElement>("footer");
+      if (!dateRail || !quickRail || !filterChip || !(priceAlert instanceof HTMLElement) || !resultsFound || !(flightCard instanceof HTMLElement) || !footer) {
+        throw new Error("Expected mobile Flight Results rails and result geometry");
+      }
+      const scrollRail = (rail: HTMLElement) => {
+        rail.scrollLeft = 0;
+        const before = rail.scrollLeft;
+        rail.scrollLeft = Math.min(40, rail.scrollWidth - rail.clientWidth);
+        return { before, after: rail.scrollLeft, scrollWidth: rail.scrollWidth, clientWidth: rail.clientWidth };
+      };
+      return {
+        viewport: window.innerWidth,
+        document: document.documentElement.scrollWidth,
+        body: document.body.scrollWidth,
+        filterRail: quickRail.getBoundingClientRect().toJSON(),
+        dateRailBounds: dateRail.getBoundingClientRect().toJSON(),
+        filterChip: filterChip.getBoundingClientRect().toJSON(),
+        priceAlert: priceAlert.getBoundingClientRect().toJSON(),
+        resultsFound: resultsFound.getBoundingClientRect().toJSON(),
+        flightCard: flightCard.getBoundingClientRect().toJSON(),
+        paginationPresent: Boolean(pagination),
+        resultsToFooterGap:
+          footer.getBoundingClientRect().top -
+          (virtualList?.getBoundingClientRect().bottom ?? flightCard.getBoundingClientRect().bottom),
+        dateRail: scrollRail(dateRail),
+        quickRail: scrollRail(quickRail),
+      };
+    });
+
+    expect(measurements.paginationPresent).toBe(false);
+    expect(measurements.document).toBeLessThanOrEqual(measurements.viewport);
+    expect(measurements.body).toBeLessThanOrEqual(measurements.viewport);
+    expect(measurements.filterRail.bottom).toBeLessThanOrEqual(measurements.dateRailBounds.top);
+    expect(measurements.filterChip.left).toBeCloseTo(12, 0);
+    expect(measurements.priceAlert.left).toBeCloseTo(4, 0);
+    expect(measurements.priceAlert.right).toBeCloseTo(width - 4, 0);
+    expect(measurements.resultsFound.left).toBeCloseTo(12, 0);
+    expect(measurements.flightCard.left).toBeCloseTo(12, 0);
+    expect(measurements.flightCard.right).toBeCloseTo(width - 12, 0);
+    expect(measurements.resultsToFooterGap).toBeGreaterThanOrEqual(24);
+    expect(measurements.resultsToFooterGap).toBeLessThanOrEqual(32);
+    expect(measurements.dateRail.scrollWidth).toBeGreaterThan(measurements.dateRail.clientWidth);
+    expect(measurements.dateRail.after).toBeGreaterThan(measurements.dateRail.before);
+    expect(measurements.quickRail.scrollWidth).toBeGreaterThan(measurements.quickRail.clientWidth);
+    expect(measurements.quickRail.after).toBeGreaterThan(measurements.quickRail.before);
+  });
+}
 
 test("Flights Edit Search is stable on real iOS Safari", async ({ page }, testInfo) => {
   await page.goto(flightResults, { waitUntil: "domcontentloaded" });
@@ -10,7 +82,7 @@ test("Flights Edit Search is stable on real iOS Safari", async ({ page }, testIn
   await page.evaluate(() => window.scrollTo(0, Math.min(1800, document.body.scrollHeight - innerHeight)));
   await page.waitForTimeout(700);
   const before = await collectSafariDiagnostics(page, "flights-before");
-  const modifySearch = page.getByRole("button", { name: /modify flight search/i }).first();
+  const modifySearch = page.locator("[data-flight-mobile-summary-card]");
   await expect(modifySearch).toBeVisible();
   await modifySearch.click();
   await expect(page.locator("[data-mobile-results-overlay-root]")).toBeVisible();
@@ -19,6 +91,8 @@ test("Flights Edit Search is stable on real iOS Safari", async ({ page }, testIn
   await page.screenshot({ path: screenshot, fullPage: false });
   await testInfo.attach("Flights Edit Search", { path: screenshot, contentType: "image/png" });
   await page.getByRole("button", { name: /close edit search/i }).click();
+  await expect(page.locator("[data-mobile-results-overlay-root]")).toBeHidden();
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(before.viewport.scrollY);
   const after = await collectSafariDiagnostics(page, "flights-after-close");
   await writeArtifact("flights-smoke.json", { before, first, after });
   expect(after.viewport.scrollY).toBe(before.viewport.scrollY);

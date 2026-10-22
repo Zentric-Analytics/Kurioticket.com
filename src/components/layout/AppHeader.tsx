@@ -8,6 +8,7 @@ import {
   useRef,
   useState,
   type MouseEvent as ReactMouseEvent,
+  type ReactNode,
 } from "react";
 
 import { signOut, useSession } from "next-auth/react";
@@ -17,6 +18,7 @@ import { createPortal } from "react-dom";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import {
+  ArrowLeft,
   Bed,
   Car,
   Check,
@@ -39,6 +41,7 @@ import {
   X,
 } from "lucide-react";
 
+import { MobileSigninDialog } from "@/components/auth/MobileSigninDialog";
 import { PackagesIcon } from "@/components/icons/PackagesIcon";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { CountryCurrencySelector } from "@/components/region/CountryCurrencySelector";
@@ -73,6 +76,13 @@ function SavedHeartIcon({
 }
 
 type AppHeaderProps = {
+  mobileResultsSearch?: ReactNode;
+  mobileResultsFilters?: ReactNode;
+  mobileResultsLeadingAction?: ReactNode;
+  mobileResultsTrailingActions?: boolean;
+  mobileResultsSticky?: boolean;
+  hideMobileResultsNavbarDivider?: boolean;
+  carsResultsMobileInlineSearch?: boolean;
   hideMobileSecondaryNavLinks?: boolean;
   mobileHeroOverlay?: boolean;
   mobileHeroOverlayLowered?: boolean;
@@ -81,7 +91,13 @@ type AppHeaderProps = {
   hideDesktopTravelNav?: boolean;
   simpleHeader?: boolean;
   flushDesktopBottom?: boolean;
+  hotelDesktopBoundary?: boolean;
+  hotelResultsDesktopSticky?: boolean;
+  flightResultsDesktopSticky?: boolean;
+  carsResultsDesktopSticky?: boolean;
   flushMobileBottom?: boolean;
+  mobileSurface?: "white" | "muted";
+  stableMobileSafeAreaTop?: boolean;
 };
 
 const signedInAccountMenuItems = [
@@ -128,20 +144,37 @@ const mobileInfoLegalMenuItems = [
 ];
 
 export function AppHeader({
+  mobileResultsSearch,
+  mobileResultsFilters,
+  mobileResultsLeadingAction,
+  mobileResultsTrailingActions = false,
+  mobileResultsSticky = true,
+  hideMobileResultsNavbarDivider = false,
+  carsResultsMobileInlineSearch = false,
   hideMobileSecondaryNavLinks = false,
-  mobileHeroOverlay = false,
   hideMobileCategoryTabs = false,
   hideTravelNav = false,
   hideDesktopTravelNav = false,
   simpleHeader = false,
   flushDesktopBottom = false,
+  hotelDesktopBoundary = false,
+  hotelResultsDesktopSticky = false,
+  flightResultsDesktopSticky = false,
+  carsResultsDesktopSticky = false,
   flushMobileBottom = false,
+  mobileSurface = "white",
+  stableMobileSafeAreaTop = false,
 }: AppHeaderProps = {}) {
   const { data: session } = useSession();
 
   const isSignedIn = Boolean(session?.user);
+  const resultsDesktopSticky =
+    hotelResultsDesktopSticky || flightResultsDesktopSticky || carsResultsDesktopSticky;
+  const fullscreenHotelMobileMenu = Boolean(hotelResultsDesktopSticky && mobileResultsSearch);
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileSigninOpen, setMobileSigninOpen] = useState(false);
+  const closeMobileSignin = useCallback(() => setMobileSigninOpen(false), []);
   const [mobileAccountOpen, setMobileAccountOpen] = useState(false);
   const [languageOpen, setLanguageOpen] = useState(false);
   const [languageQuery, setLanguageQuery] = useState("");
@@ -696,6 +729,8 @@ export function AppHeader({
     try {
       await revokeCurrentAccountSession();
       await signOut({ redirect: false, callbackUrl: "/" });
+      // A full document load clears cached authenticated UI after logout.
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination
       window.location.assign("/");
     } catch {
       setIsSigningOut(false);
@@ -704,31 +739,150 @@ export function AppHeader({
 
   return (
     <>
+      {mobileSigninOpen ? <MobileSigninDialog callbackUrl={`${pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ""}`} onClose={closeMobileSignin} /> : null}
       <header
         data-app-header
+        data-hotel-results-desktop-header={hotelResultsDesktopSticky ? "" : undefined}
+        data-flight-results-desktop-header={flightResultsDesktopSticky ? "" : undefined}
+        data-cars-results-desktop-header={carsResultsDesktopSticky ? "" : undefined}
         className={cn(
-          "relative z-50 border-b border-[#D8E1EC] bg-white pt-[env(safe-area-inset-top)] text-[#021C2B] shadow-[0_8px_24px_rgba(2,28,43,0.05)]",
+          "relative z-50 border-b border-[#D8E1EC] bg-white text-[#021C2B] shadow-[0_8px_24px_rgba(2,28,43,0.05)]",
+          stableMobileSafeAreaTop
+            ? "pt-[var(--cars-results-safe-area-top)] sm:pt-[env(safe-area-inset-top)]"
+            : "pt-[env(safe-area-inset-top)]",
+          mobileSurface === "muted" && "max-sm:bg-[#F2F4F8]",
+          ((mobileResultsSearch && mobileResultsSticky) || carsResultsMobileInlineSearch) &&
+            "max-sm:sticky max-sm:top-0 max-sm:z-[950]",
           flushMobileBottom &&
             "border-b-0 shadow-none sm:border-b sm:shadow-[0_8px_24px_rgba(2,28,43,0.05)]",
           flushDesktopBottom && "sm:border-b-0 sm:shadow-none",
+          hotelDesktopBoundary && "lg:shadow-[0_2px_12px_rgba(12,14,28,0.08)]",
         )}
       >
-        <div className="page-shell flex flex-col gap-0.5 pb-1 pt-[5px] md:gap-0 md:pb-2.5 md:pt-3">
-          <div className="flex min-h-[52px] items-center justify-between gap-3 md:min-h-[48px] md:gap-8">
-            <Link
-              href="/"
-              aria-label="Kurioticket home"
-              onClick={(event) => handleRouteLinkClick(event, "/")}
-              className="shrink-0"
-            >
-              <RawImage
-                src="/brand/kurioticket-logo-primary-light-bg.svg"
-                alt="Kurioticket"
-                className="h-8 w-auto md:h-9 lg:h-9"
-              />
-            </Link>
+        {mobileResultsSearch ? <>
+        <div data-mobile-results-navbar className={cn(
+          "flex h-[72px] items-center bg-white sm:hidden",
+          !mobileResultsFilters && !hotelResultsDesktopSticky && "border-b border-slate-200",
+          hideMobileResultsNavbarDivider && "border-b-0 shadow-none",
+          mobileResultsTrailingActions ? "gap-1 px-1" : "gap-2 px-2",
+        )}>
+          {mobileResultsLeadingAction ?? (
+            mobileResultsTrailingActions ? (
+              hotelResultsDesktopSticky ? (
+                <Link
+                  href="/"
+                  aria-label="Kurioticket home"
+                  onClick={(event) => handleRouteLinkClick(event, "/")}
+                  className="focus-ring flex h-11 w-10 shrink-0 items-center justify-center rounded-lg text-[#142033] hover:bg-[#EEF6FC]"
+                  data-hotel-results-mobile-back
+                >
+                  <ArrowLeft size={24} strokeWidth={2.2} aria-hidden="true" />
+                </Link>
+              ) : flightResultsDesktopSticky ? (
+                <Link
+                  href="/"
+                  aria-label="Kurioticket home"
+                  onClick={(event) => handleRouteLinkClick(event, "/")}
+                  className="focus-ring flex h-11 w-10 shrink-0 items-center justify-center rounded-lg text-[#142033] hover:bg-[#EEF6FC]"
+                  data-flight-results-mobile-home
+                >
+                  <ArrowLeft size={24} strokeWidth={2.2} aria-hidden="true" />
+                </Link>
+              ) : (
+                <Link href="/" aria-label="Kurioticket home" onClick={(event) => handleRouteLinkClick(event, "/")} className="focus-ring flex h-11 w-10 shrink-0 items-center justify-center rounded-lg">
+                  <RawImage src="/brand/kurioticket-icon-blue.svg" alt="" className="h-7 w-7" />
+                </Link>
+              )
+            ) : (
+              <button type="button" aria-label={mobileMenuOpen ? t.closeMobileMenu : t.openMobileMenu} aria-expanded={mobileMenuOpen} aria-controls="mobile-menu-drawer" aria-haspopup="dialog" onClick={() => { setMobileAccountOpen(false); setMobileMenuOpen((value) => !value); }} className="focus-ring flex h-11 w-12 shrink-0 items-center justify-center gap-1 rounded-lg">
+                <RawImage src="/brand/kurioticket-icon-blue.svg" alt="Kurioticket" className="h-7 w-7" /><ChevronDown className={cn("h-3 w-3 text-slate-700", mobileMenuOpen && "rotate-180")} aria-hidden="true" />
+              </button>
+            )
+          )}
+          <div className="min-w-0 flex-1" onClickCapture={() => setMobileMenuOpen(false)}>{mobileResultsSearch}</div>
+          {mobileResultsTrailingActions ? (
+            <div className="flex shrink-0 items-center gap-0">
+              {isSignedIn ? (
+                <button type="button" aria-label={t.openAccountMenu} aria-expanded={mobileAccountOpen} aria-controls="mobile-account-drawer" aria-haspopup="dialog" onClick={() => { setMobileMenuOpen(false); setMobileAccountOpen((value) => !value); }} className="focus-ring flex h-11 w-11 items-center justify-center rounded-xl text-[#021C2B] hover:bg-[#EEF6FC]">
+                  <span className="inline-flex h-7 w-7 items-center justify-center overflow-hidden rounded-full text-[11px] font-black text-[#004BB8]">
+                    {session?.user?.image ? <RawImage src={session.user.image} alt="" className="h-full w-full object-cover" /> : accountInitials}
+                  </span>
+                </button>
+              ) : (
+                <Link href="/auth/signin" aria-label={t.signIn} onClick={(event) => handleRouteLinkClick(event, "/auth/signin")} className="focus-ring flex h-11 w-11 items-center justify-center rounded-xl text-[#021C2B] hover:bg-[#EEF6FC]">
+                  <UserCircle size={22} aria-hidden="true" />
+                </Link>
+              )}
+              <button type="button" aria-label={mobileMenuOpen ? t.closeMobileMenu : t.openMobileMenu} aria-expanded={mobileMenuOpen} aria-controls="mobile-menu-drawer" aria-haspopup="dialog" onClick={() => { setMobileAccountOpen(false); setMobileMenuOpen((value) => !value); }} className="focus-ring flex h-11 w-11 items-center justify-center rounded-xl text-[#021C2B] hover:bg-[#EEF6FC]">
+                {mobileMenuOpen ? <X size={23} aria-hidden="true" /> : <Menu size={23} aria-hidden="true" />}
+              </button>
+            </div>
+          ) : null}
+        </div>
+        {mobileResultsFilters && !mobileMenuOpen && !mobileAccountOpen ? (
+          <div data-mobile-results-filter-navbar className={cn("bg-white sm:hidden", hideMobileResultsNavbarDivider && "border-b-0 shadow-none")}>
+            {mobileResultsFilters}
+          </div>
+        ) : null}
+        </> : null}
+        <div className={cn("page-shell flex flex-col gap-0.5 pb-1 pt-[5px] md:gap-0 md:pb-2.5 md:pt-3", mobileResultsSearch && "max-sm:hidden", resultsDesktopSticky && "lg:py-[14px]")}>
+          <div className={cn("flex min-h-[52px] items-center justify-between gap-3 md:min-h-[48px] md:gap-8", resultsDesktopSticky && "lg:gap-4", carsResultsMobileInlineSearch && "max-sm:gap-2")}>
+            {carsResultsMobileInlineSearch ? (
+              <>
+                <button
+                  type="button"
+                  aria-label="Back"
+                  data-cars-results-mobile-back
+                  onClick={() => {
+                    if (window.history.length > 1) {
+                      router.back();
+                    } else {
+                      router.push("/cars");
+                    }
+                  }}
+                  className="focus-ring flex h-11 w-10 shrink-0 items-center justify-center rounded-lg text-[#142033] hover:bg-[#EEF6FC] sm:hidden"
+                >
+                  <ArrowLeft size={24} strokeWidth={2.2} aria-hidden="true" />
+                </button>
+                <Link
+                  href="/"
+                  aria-label="Kurioticket home"
+                  onClick={(event) => handleRouteLinkClick(event, "/")}
+                  className="hidden shrink-0 sm:block"
+                >
+                  <RawImage
+                    src="/brand/kurioticket-logo-primary-light-bg.svg"
+                    alt="Kurioticket"
+                    className="h-8 w-auto md:h-9 lg:h-9"
+                  />
+                </Link>
+              </>
+            ) : (
+              <Link
+                href="/"
+                aria-label="Kurioticket home"
+                onClick={(event) => handleRouteLinkClick(event, "/")}
+                className="shrink-0"
+              >
+                <RawImage
+                  src="/brand/kurioticket-logo-primary-light-bg.svg"
+                  alt="Kurioticket"
+                  className="h-8 w-auto md:h-9 lg:h-9"
+                />
+              </Link>
+            )}
 
-            <div className="hidden min-w-0 flex-1 items-center justify-end gap-3.5 md:flex lg:gap-4">
+            {carsResultsMobileInlineSearch ? (
+              <div
+                data-cars-results-mobile-nav-search
+                className="flex h-12 w-full min-w-0 flex-1 rounded-xl border border-[#D8E1EC] bg-[#F5F7FB] empty:hidden sm:hidden"
+              />
+            ) : null}
+            {hotelResultsDesktopSticky ? <div data-hotel-results-nav-search className="hidden min-w-0 flex-1 lg:mx-auto lg:block lg:max-w-[560px]" /> : null}
+            {flightResultsDesktopSticky ? <div data-flight-results-nav-search className="hidden min-w-0 flex-1 lg:mx-auto lg:block lg:max-w-[820px]" /> : null}
+            {carsResultsDesktopSticky ? <div data-cars-results-nav-search className="hidden min-w-0 flex-1 lg:mx-auto lg:block lg:max-w-[720px] xl:max-w-[820px]" /> : null}
+
+            <div className={cn("hidden min-w-0 flex-1 items-center justify-end gap-3.5 md:flex lg:gap-4", resultsDesktopSticky && "lg:flex-none", hotelResultsDesktopSticky && "lg:gap-[10px]")}>
               <div className="[&>button]:!h-10 [&>button]:!gap-1 [&>button]:!rounded-md [&>button]:!border-transparent [&>button]:!bg-transparent [&>button]:!px-2.5 [&>button]:!text-[15px] [&>button]:!font-semibold [&>button]:!text-[#021C2B]/85 [&>button]:!shadow-none [&>button]:!backdrop-blur-0 [&>button]:hover:!bg-[#F2F7FA] [&>button]:hover:!text-[#004BB8] [&>button>svg]:!text-[#334155] [&>button>svg]:!opacity-80">
                 <CountryCurrencySelector variant="header" grouped />
               </div>
@@ -758,7 +912,7 @@ export function AppHeader({
                 </button>
               </div>
 
-              <div className="flex shrink-0 items-center justify-end gap-2">
+              <div className={cn("flex shrink-0 items-center justify-end gap-2", hotelResultsDesktopSticky && "lg:gap-[10px]")}>
                 {isSignedIn ? (
                   <div className="relative" ref={accountRef}>
                     <button
@@ -874,7 +1028,7 @@ export function AppHeader({
               </div>
             </div>
 
-            <div className="flex items-center gap-0 md:hidden">
+            <div className={cn("flex items-center gap-0 md:hidden", carsResultsMobileInlineSearch && "shrink-0")}>
               {isSignedIn ? (
                 <button
                   type="button"
@@ -932,9 +1086,9 @@ export function AppHeader({
 
             {languageOpen && typeof document !== "undefined"
               ? createPortal(
-                  <>
+                  <div className="fixed inset-0 z-[1000] flex items-end justify-center md:items-start md:px-4 md:pt-[max(64px,6vh)]">
                     <div
-                      className="fixed inset-0 z-40 bg-slate-900/45"
+                      className="absolute inset-0 bg-slate-950/55 backdrop-blur-[2px]"
                       onClick={closeLanguageDialog}
                     />
 
@@ -944,140 +1098,145 @@ export function AppHeader({
                       role="dialog"
                       aria-modal="true"
                       aria-labelledby={languageTitleId}
-                      className="fixed inset-x-0 bottom-0 z-50 max-h-[88vh] overflow-auto rounded-none border border-slate-200 bg-white p-5 text-slate-900 shadow-2xl md:inset-x-0 md:bottom-auto md:top-[max(64px,6vh)] md:mx-auto md:w-[min(980px,96vw)] md:rounded-3xl md:p-7"
+                      data-mobile-language-dialog
+                      className="relative z-[1001] h-[100dvh] max-h-[100dvh] w-full max-w-full overflow-y-auto overscroll-contain rounded-none bg-white text-slate-900 shadow-2xl [-webkit-overflow-scrolling:touch] md:h-auto md:max-h-[88vh] md:w-[min(980px,96vw)] md:rounded-3xl md:border md:border-slate-200 md:p-7"
                     >
-                      <div className="mb-5 flex items-start justify-between gap-4">
-                        <div className="min-w-0">
-                          <p className="break-words text-xs font-black uppercase tracking-[0.2em] text-[#004BB8]">
-                            {t.globalLanguage}
-                          </p>
-                          <h2
-                            id={languageTitleId}
-                            className="mt-1 break-words text-xl font-black text-slate-950"
+                      <div className="shrink-0 border-b border-slate-200 px-5 pb-4 pt-5 md:mb-5 md:border-b-0 md:p-0">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="min-w-0">
+                            <p className="hidden break-words text-xs font-black uppercase tracking-[0.2em] text-[#004BB8] md:block">
+                              {t.globalLanguage}
+                            </p>
+                            <h2
+                              id={languageTitleId}
+                              className="break-words text-xl font-semibold tracking-tight text-slate-950 md:mt-1 md:font-black"
+                            >
+                              {t.websiteLanguageTitle}
+                            </h2>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={closeLanguageDialog}
+                            className="shrink-0 cursor-pointer rounded-none p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
+                            aria-label={t.closeLanguageSelector}
                           >
-                            {t.websiteLanguageTitle}
-                          </h2>
+                            <X size={18} aria-hidden="true" />
+                          </button>
                         </div>
 
-                        <button
-                          type="button"
-                          onClick={closeLanguageDialog}
-                          className="shrink-0 cursor-pointer rounded-none p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
-                          aria-label={t.closeLanguageSelector}
+                        <label
+                          htmlFor={languageSearchId}
+                          className="mt-5 block text-sm font-medium text-slate-800 md:font-bold md:text-slate-900"
                         >
-                          <X size={18} aria-hidden="true" />
-                        </button>
+                          {t.languageSearchLabel}
+                        </label>
+
+                        <div className="mt-2 flex items-center gap-2 rounded-none border border-slate-300 bg-white px-3.5 py-3 transition-colors focus-within:border-violet-500 focus-within:ring-2 focus-within:ring-violet-100 md:mb-4 md:border-slate-200 md:px-3 md:py-2 md:focus-within:border-[#004BB8]/25 md:focus-within:ring-[#004BB8]/20">
+                          <Search
+                            size={17}
+                            className="shrink-0 text-slate-500"
+                            aria-hidden="true"
+                          />
+
+                          <input
+                            ref={languageSearchInputRef}
+                            id={languageSearchId}
+                            value={languageQuery}
+                            onChange={(event) => {
+                              setLanguageQuery(event.target.value);
+                              setLanguageStatusMessage("");
+                            }}
+                            placeholder={t.languageSearchPlaceholder}
+                            className="h-6 w-full min-w-0 border-0 bg-transparent text-base font-medium text-slate-900 outline-none placeholder:font-normal placeholder:text-slate-400 md:text-sm"
+                          />
+                        </div>
+
+                        {languageStatusMessage ? (
+                          <p
+                            className="mt-4 rounded-none border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-900 md:mb-4 md:mt-0"
+                            role="status"
+                          >
+                            {languageStatusMessage}
+                          </p>
+                        ) : null}
                       </div>
 
-                      <label
-                        htmlFor={languageSearchId}
-                        className="mb-2 block text-sm font-bold text-slate-900"
-                      >
-                        {t.languageSearchLabel}
-                      </label>
-
-                      <div className="mb-4 flex items-center gap-2 rounded-none border border-slate-200 px-3 py-2 focus-within:border-[#004BB8]/25 focus-within:ring-2 focus-within:ring-[#004BB8]/20">
-                        <Search
-                          size={16}
-                          className="text-slate-500"
-                          aria-hidden="true"
-                        />
-
-                        <input
-                          ref={languageSearchInputRef}
-                          id={languageSearchId}
-                          value={languageQuery}
-                          onChange={(event) => {
-                            setLanguageQuery(event.target.value);
-                            setLanguageStatusMessage("");
-                          }}
-                          placeholder={t.languageSearchPlaceholder}
-                          className="min-w-0 w-full border-0 bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400"
-                        />
-                      </div>
-
-                      {languageStatusMessage ? (
-                        <p
-                          className="mb-4 rounded-none border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-900"
-                          role="status"
+                      <div className="px-5 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] md:p-0">
+                        <div
+                          role="radiogroup"
+                          aria-label={t.languageOptionsLabel}
+                          className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3"
                         >
-                          {languageStatusMessage}
-                        </p>
-                      ) : null}
+                          {filteredLanguages.map((option) => {
+                            const active = option.code === locale;
+                            const available = option.status === "available";
 
-                      <div
-                        role="radiogroup"
-                        aria-label={t.languageOptionsLabel}
-                        className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3"
-                      >
-                        {filteredLanguages.map((option) => {
-                          const active = option.code === locale;
-                          const available = option.status === "available";
+                            return (
+                              <button
+                                key={option.code}
+                                type="button"
+                                role="radio"
+                                aria-checked={active}
+                                aria-disabled={!available}
+                                aria-label={
+                                  available
+                                    ? t.selectLanguageOption.replace(
+                                        "{{language}}",
+                                        option.nativeLabel,
+                                      )
+                                    : t.languagePreparingAria.replace(
+                                        "{{language}}",
+                                        option.nativeLabel,
+                                      )
+                                }
+                                onClick={() => handleLanguageSelect(option)}
+                                className={`flex min-h-[4.25rem] cursor-pointer items-start justify-between gap-3 rounded-none border px-3 py-2.5 text-start transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 ${
+                                  active
+                                    ? "border-[#004BB8]/18 bg-[#004BB8]/6 ring-2 ring-[#004BB8]/8"
+                                    : available
+                                      ? "border-slate-200 hover:border-[#004BB8]/20 hover:bg-[#004BB8]/5"
+                                      : "border-slate-200 bg-slate-50 text-slate-500 hover:border-slate-300"
+                                }`}
+                              >
+                                <span className="flex min-w-0 items-start gap-2.5">
+                                  {renderFlag(
+                                    option.countryCode,
+                                    option.fallbackText,
+                                  )}
 
-                          return (
-                            <button
-                              key={option.code}
-                              type="button"
-                              role="radio"
-                              aria-checked={active}
-                              aria-disabled={!available}
-                              aria-label={
-                                available
-                                  ? t.selectLanguageOption.replace(
-                                      "{{language}}",
-                                      option.nativeLabel,
-                                    )
-                                  : t.languagePreparingAria.replace(
-                                      "{{language}}",
-                                      option.nativeLabel,
-                                    )
-                              }
-                              onClick={() => handleLanguageSelect(option)}
-                              className={`flex min-h-[4.25rem] cursor-pointer items-start justify-between gap-3 rounded-none border px-3 py-2.5 text-start transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 ${
-                                active
-                                  ? "border-[#004BB8]/18 bg-[#004BB8]/6 ring-2 ring-[#004BB8]/8"
-                                  : available
-                                    ? "border-slate-200 hover:border-[#004BB8]/20 hover:bg-[#004BB8]/5"
-                                    : "border-slate-200 bg-slate-50 text-slate-500 hover:border-slate-300"
-                              }`}
-                            >
-                              <span className="flex min-w-0 items-start gap-2.5">
-                                {renderFlag(
-                                  option.countryCode,
-                                  option.fallbackText,
-                                )}
-
-                                <span className="min-w-0">
-                                  <span
-                                    className="block truncate text-sm font-black text-slate-950"
-                                    dir={option.direction}
-                                  >
-                                    {option.nativeLabel}
-                                  </span>
-                                  <span className="mt-0.5 block truncate text-xs font-semibold text-slate-500">
-                                    {getLanguageDescriptionLabel(option)}
-                                  </span>
-                                  {!available ? (
-                                    <span className="mt-1 inline-flex rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[11px] font-bold text-slate-500">
-                                      {t.preparing}
+                                  <span className="min-w-0">
+                                    <span
+                                      className="block truncate text-sm font-black text-slate-950"
+                                      dir={option.direction}
+                                    >
+                                      {option.nativeLabel}
                                     </span>
-                                  ) : null}
+                                    <span className="mt-0.5 block truncate text-xs font-semibold text-slate-500">
+                                      {getLanguageDescriptionLabel(option)}
+                                    </span>
+                                    {!available ? (
+                                      <span className="mt-1 inline-flex rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[11px] font-bold text-slate-500">
+                                        {t.preparing}
+                                      </span>
+                                    ) : null}
+                                  </span>
                                 </span>
-                              </span>
 
-                              {active ? (
-                                <Check
-                                  size={16}
-                                  className="mt-0.5 shrink-0 text-[#004BB8]"
-                                  aria-hidden="true"
-                                />
-                              ) : null}
-                            </button>
-                          );
-                        })}
+                                {active ? (
+                                  <Check
+                                    size={16}
+                                    className="mt-0.5 shrink-0 text-[#004BB8]"
+                                    aria-hidden="true"
+                                  />
+                                ) : null}
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
                     </section>
-                  </>,
+                  </div>,
                   document.body,
                 )
               : null}
@@ -1167,7 +1326,7 @@ export function AppHeader({
         {mobileMenuOpen && typeof document !== "undefined"
           ? createPortal(
               <div
-                className="fixed inset-0 z-[70] md:hidden"
+                className={cn("fixed inset-0 z-[70] md:hidden", mobileResultsSearch && !fullscreenHotelMobileMenu && "max-sm:top-[calc(72px+env(safe-area-inset-top))] max-sm:z-[940]", fullscreenHotelMobileMenu && "max-sm:z-[1100]", carsResultsMobileInlineSearch && "max-sm:top-[calc(61px+var(--cars-results-safe-area-top))] max-sm:z-[940]")}
                 role="presentation"
               >
                 <button
@@ -1182,9 +1341,9 @@ export function AppHeader({
                   role="dialog"
                   aria-modal="true"
                   aria-label={t.menu}
-                  className="fixed inset-y-0 end-0 z-[80] flex h-[100dvh] max-h-[100dvh] w-full max-w-md flex-col overflow-hidden bg-white text-slate-900 shadow-2xl"
+                  className={cn("fixed inset-y-0 end-0 z-[80] flex h-[100dvh] max-h-[100dvh] w-full max-w-md flex-col overflow-hidden bg-white text-slate-900 shadow-2xl", mobileResultsSearch && !fullscreenHotelMobileMenu && "max-sm:top-[calc(72px+env(safe-area-inset-top))] max-sm:h-[calc(100dvh-72px-env(safe-area-inset-top))]", fullscreenHotelMobileMenu && "max-sm:inset-x-0 max-sm:top-0 max-sm:w-full max-sm:max-w-none", carsResultsMobileInlineSearch && "max-sm:top-[calc(61px+var(--cars-results-safe-area-top))] max-sm:h-[calc(100dvh-61px-var(--cars-results-safe-area-top))]")}
                 >
-                  <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
+                  <div className={cn("flex shrink-0 items-center justify-between gap-3 border-b border-slate-100 px-5 py-4", mobileResultsSearch && !fullscreenHotelMobileMenu && "max-sm:hidden", fullscreenHotelMobileMenu && "max-sm:pt-[calc(1rem+env(safe-area-inset-top))]")}>
                     <div className="min-w-0">
                       <h2 className="truncate text-xl font-semibold tracking-[-0.02em] text-slate-950">
                         {t.menu}
@@ -1202,6 +1361,8 @@ export function AppHeader({
                   </div>
 
                   <nav className="page-shell min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain py-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] [-webkit-overflow-scrolling:touch]">
+                    {mobileResultsSearch && !mobileResultsTrailingActions ? <button type="button" aria-haspopup="dialog" onClick={() => { setMobileMenuOpen(false); if (isSignedIn) { setMobileAccountOpen(true); } else setMobileSigninOpen(true); }} className="focus-ring mb-5 flex min-h-12 w-full items-center gap-3 rounded-lg bg-transparent px-3 text-left text-[15px] font-medium text-slate-900 active:bg-slate-100"><UserCircle size={22} /><span>{isSignedIn ? t["accountMenu.myAccount.label"] : t.signIn}</span></button> : null}
+
                     <section aria-labelledby="mobile-menu-preferences-heading">
                       <p
                         id="mobile-menu-preferences-heading"
@@ -1273,17 +1434,19 @@ export function AppHeader({
                         <div className="mt-1.5 grid">
                           {mobileTravelMenuNavItems.map((item) => {
                             const Icon = item.icon;
+                            const active = (mobileResultsSearch || carsResultsMobileInlineSearch) && isNavItemActive(item.href);
 
                             return (
                               <Link
                                 key={item.href}
                                 href={item.href}
+                                aria-current={active ? "page" : undefined}
                                 onClick={(event) =>
                                   handleRouteLinkClick(event, item.href, () =>
                                     setMobileMenuOpen(false),
                                   )
                                 }
-                                className="group inline-flex min-h-12 cursor-pointer items-center gap-3.5 px-2 py-2.5 text-[15px] font-semibold leading-5 text-slate-800 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
+                                className={cn("group inline-flex min-h-12 cursor-pointer items-center gap-3.5 px-2 py-2.5 text-[15px] font-semibold leading-5 text-slate-800 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25", active && "rounded-lg bg-slate-100 text-[#004BB8]")}
                               >
                                 {Icon ? (
                                   <span className="inline-flex w-6 shrink-0 items-center justify-center text-slate-500 transition-colors group-hover:text-[#004BB8]">
@@ -1382,7 +1545,12 @@ export function AppHeader({
         {isSignedIn && mobileAccountOpen && typeof document !== "undefined"
           ? createPortal(
               <div
-                className="fixed inset-0 z-[70] md:hidden"
+                className={cn(
+                  "fixed inset-0 z-[70] md:hidden",
+                  carsResultsMobileInlineSearch && "max-sm:top-[calc(61px+var(--cars-results-safe-area-top))] max-sm:z-[940]",
+                  mobileResultsSearch && mobileResultsTrailingActions && !fullscreenHotelMobileMenu && "max-sm:top-[calc(72px+env(safe-area-inset-top))] max-sm:z-[940]",
+                  fullscreenHotelMobileMenu && "max-sm:z-[1100]",
+                )}
                 role="presentation"
               >
                 <button
@@ -1397,9 +1565,19 @@ export function AppHeader({
                   role="dialog"
                   aria-modal="true"
                   aria-label={t.openAccountMenu}
-                  className="fixed inset-y-0 end-0 z-[80] flex h-[100dvh] max-h-[100dvh] w-full max-w-md flex-col overflow-hidden bg-white text-slate-900 shadow-2xl"
+                  className={cn(
+                    "fixed inset-y-0 end-0 z-[80] flex h-[100dvh] max-h-[100dvh] w-full max-w-md flex-col overflow-hidden bg-white text-slate-900 shadow-2xl",
+                    carsResultsMobileInlineSearch && "max-sm:top-[calc(61px+var(--cars-results-safe-area-top))] max-sm:h-[calc(100dvh-61px-var(--cars-results-safe-area-top))]",
+                    mobileResultsSearch && mobileResultsTrailingActions && !fullscreenHotelMobileMenu && "max-sm:top-[calc(72px+env(safe-area-inset-top))] max-sm:h-[calc(100dvh-72px-env(safe-area-inset-top))]",
+                    fullscreenHotelMobileMenu && "max-sm:inset-x-0 max-sm:top-0 max-sm:w-full max-sm:max-w-none",
+                  )}
                 >
-                  <nav className="page-shell min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain py-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] [-webkit-overflow-scrolling:touch]">
+                  <nav
+                    className={cn(
+                      "page-shell min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain py-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] [-webkit-overflow-scrolling:touch]",
+                      fullscreenHotelMobileMenu && "max-sm:pt-[calc(1.25rem+env(safe-area-inset-top))]",
+                    )}
+                  >
                     <section aria-label="Account">
                       <div className="flex items-center gap-3 px-2.5 pb-5">
                         <span className="relative inline-flex h-10 w-10 shrink-0 items-center overflow-visible">

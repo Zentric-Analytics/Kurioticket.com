@@ -8,7 +8,7 @@ type Props = {
   airlineName: string;
   logoUrl?: string | null;
   fallbackCharacters?: number;
-  variant?: "default" | "result-card";
+  variant?: "default" | "result-card" | "compact-result-card" | "provider-deal" | "provider-deal-compact";
   /** Diagnostic seam: false keeps layout identical without mounting remote SVG native views. */
   allowRemoteSvg?: boolean;
 };
@@ -26,7 +26,12 @@ export function AirlineLogo({
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
   const visibleUrl = resolveTravelProviderLogo(logoUrl);
   const failed = visibleUrl !== null && failedUrl === visibleUrl;
-  const isResultCard = variant === "result-card";
+  const isResultCard = variant === "result-card" || variant === "compact-result-card";
+  const isCompactResultCard = variant === "compact-result-card";
+  const isProviderDeal = variant === "provider-deal" || variant === "provider-deal-compact";
+  const isCompactProviderDeal = variant === "provider-deal-compact";
+  const resultCardTileStyle = isCompactResultCard ? styles.compactResultCardTile : styles.resultCardTile;
+  const providerDealStyle = isCompactProviderDeal ? styles.providerDealCompact : styles.providerDeal;
   const resultCardTileColors = {
     backgroundColor: theme.dark ? "#F8FAFC" : "#FFFFFF",
     borderColor: theme.dark ? theme.border : "#D8E1EC",
@@ -40,10 +45,12 @@ export function AirlineLogo({
     return (
       <View
         style={[
-          isResultCard ? styles.resultCardTile : styles.tile,
-          isResultCard
-            ? resultCardTileColors
-            : { backgroundColor: theme.background, borderColor: theme.border },
+          isProviderDeal ? providerDealStyle : isResultCard ? resultCardTileStyle : styles.tile,
+          isProviderDeal
+            ? styles.providerDealFallback
+            : isResultCard
+              ? resultCardTileColors
+              : { backgroundColor: theme.background, borderColor: theme.border },
         ]}
       >
         <Text style={[styles.initials, { color: isResultCard ? "#18305B" : theme.textPrimary }]}>
@@ -55,21 +62,21 @@ export function AirlineLogo({
 
   return (
     <View
-      style={isResultCard ? [styles.resultCardTile, resultCardTileColors] : styles.logo}
+      style={isProviderDeal ? providerDealStyle : isResultCard ? [resultCardTileStyle, resultCardTileColors] : styles.logo}
       accessibilityRole="image"
       accessibilityLabel={`${airlineName} logo`}
     >
       {isSvgUrl(visibleUrl) ? (
         <SvgUri
           uri={visibleUrl}
-          width={isResultCard ? 32 : "100%"}
-          height={isResultCard ? 32 : "100%"}
+          width={isProviderDeal ? "100%" : isResultCard ? 32 : "100%"}
+          height={isProviderDeal ? "100%" : isResultCard ? 32 : "100%"}
           onError={() => setFailedUrl(visibleUrl)}
         />
       ) : (
         <Image
           source={{ uri: visibleUrl }}
-          style={isResultCard ? styles.resultCardArtwork : styles.image}
+          style={isProviderDeal ? styles.image : isResultCard ? styles.resultCardArtwork : styles.image}
           resizeMode="contain"
           onError={() => setFailedUrl(visibleUrl)}
         />
@@ -105,6 +112,33 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  compactResultCardTile: {
+    width: 36,
+    height: 36,
+    flexShrink: 0,
+    borderRadius: 8,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   resultCardArtwork: { width: 32, height: 32 },
+  providerDeal: {
+    width: 64,
+    height: 28,
+    flexShrink: 0,
+    alignItems: "flex-start",
+    justifyContent: "center",
+  },
+  providerDealCompact: {
+    width: 48,
+    height: 28,
+    flexShrink: 0,
+    alignItems: "flex-start",
+    justifyContent: "center",
+  },
+  providerDealFallback: {
+    backgroundColor: "transparent",
+    borderColor: "transparent",
+  },
   initials: { fontSize: 12, fontWeight: "800" },
 });

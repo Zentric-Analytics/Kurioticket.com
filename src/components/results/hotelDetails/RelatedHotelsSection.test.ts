@@ -7,9 +7,10 @@ const source = readFileSync(
   "utf8",
 );
 
-test("renders seven hotels in a native mobile rail and a desktop grid", () => {
+test("renders up to twelve mobile related Hotels with a configurable desktop cap", () => {
   for (const contract of [
-    "hotels.slice(0, 7)",
+    "hotels.slice(0, limit)",
+    "limit = 12",
     "buildHotelDetailsHref(hotel.id, searchContext)",
     "getHotelPriceDetails(hotel)",
     "formatDisplayPrice({",
@@ -20,20 +21,24 @@ test("renders seven hotels in a native mobile rail and a desktop grid", () => {
     "overflow-y-hidden",
     "overscroll-x-contain",
     "snap-x snap-mandatory",
-    "px-5 lg:px-0",
+    "px-4 lg:mt-6 lg:px-0",
     "scroll-px-0",
     "snap-start",
-    "w-[82vw]",
-    "max-w-[300px]",
+    "w-[241px]",
+    "max-w-[78vw]",
     "shrink-0",
     "lg:grid-cols-4",
     "lg:grid",
     "lg:overflow-visible",
     "lg:w-full",
-    "aspect-video",
-    "(max-width: 1023px) min(82vw, 300px), 25vw",
+    "h-[150px]",
+    "lg:aspect-video",
+    "(max-width: 1023px) min(78vw, 241px), 25vw",
     "estimatedStayTotal",
     "priceUnavailable",
+    "desktopLimit = 7",
+    "desktopHidden={index >= desktopLimit}",
+    "lg:hidden",
   ])
     assert.ok(source.includes(contract), contract);
   assert.doesNotMatch(source, /grid-cols-1|sm:grid-cols-2|lg:grid-cols-3/);

@@ -2,294 +2,213 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-const standalone = readFileSync(
-  new URL("./StandaloneHotelDetails.tsx", import.meta.url),
-  "utf8",
-);
-const compare = readFileSync(
-  new URL("./HotelPriceComparisonSection.tsx", import.meta.url),
-  "utf8",
-);
-const about = readFileSync(
-  new URL("./HotelAboutSection.tsx", import.meta.url),
-  "utf8",
-);
-const location = readFileSync(
-  new URL("./HotelLocationSection.tsx", import.meta.url),
-  "utf8",
-);
-const navigator = readFileSync(
-  new URL("./HotelDetailsSectionNav.tsx", import.meta.url),
-  "utf8",
-);
-const reviews = readFileSync(
-  new URL("./HotelReviewsSection.tsx", import.meta.url),
-  "utf8",
-);
-const presentation = readFileSync(
-  new URL("./hotelDetailsPresentation.ts", import.meta.url),
-  "utf8",
-);
-const continuation = readFileSync(
-  new URL("./hotelBookingContinuation.ts", import.meta.url),
-  "utf8",
-);
+const read = (file: string) => readFileSync(new URL(file, import.meta.url), "utf8");
+const desktop = read("./DesktopHotelDetails.tsx");
+const mobile = read("./MobileHotelDetails.tsx");
+const compare = read("./HotelPriceComparisonSection.tsx");
+const location = read("./HotelLocationSection.tsx");
+const reviews = read("./HotelReviewsSection.tsx");
+const relatedHotels = read("./RelatedHotelsSection.tsx");
+const presentation = read("./hotelDetailsPresentation.ts");
+const continuation = read("./hotelBookingContinuation.ts");
 
-test("standalone decision sections render as four isolated content modes", () => {
-  assert.match(standalone, /<HotelDetailsSectionNav/);
-  assert.match(standalone, /useState<HotelDetailsTab>\("compare"\)/);
-  assert.match(standalone, /activeTab=\{activeTab\}/);
-  assert.match(standalone, /onTabChange=\{setActiveTab\}/);
-  assert.match(standalone, /role="tabpanel"/);
-  assert.match(standalone, /aria-labelledby=\{`hotel-\$\{activeTab\}-tab`\}/);
-  for (const tab of ["compare", "about", "location", "reviews"]) {
-    assert.match(standalone, new RegExp(`activeTab === "${tab}"`));
-  }
-  assert.equal(standalone.match(/<HotelPriceComparisonSection/g)?.length, 1);
-  assert.equal(standalone.match(/<HotelAboutSection/g)?.length, 1);
-  assert.equal(standalone.match(/<HotelLocationSection/g)?.length, 1);
-  assert.equal(standalone.match(/<HotelReviewsSection/g)?.length, 1);
-  assert.equal(standalone.match(/<RelatedHotelsSection/g)?.length, 1);
+test("desktop has exactly Rates, Overview and Review anchor links for continuous navigation", () => {
+  const declaration = desktop.slice(desktop.indexOf("const sections = ["), desktop.indexOf("] as const;"));
+  const sections = [...declaration.matchAll(/\{ id: "([^"]+)", label: "([^"]+)" \}/g)].map(([, id, label]) => ({ id, label }));
+  assert.deepEqual(sections, [{ id: "hotel-compare-prices", label: "Rates" }, { id: "hotel-overview", label: "Overview" }, { id: "hotel-reviews", label: "Review" }]);
+  const navigation = desktop.slice(desktop.indexOf("<nav"), desktop.indexOf("</nav>"));
+  assert.match(navigation, /aria-label="Hotel details sections"/);
+  assert.match(navigation, /<a\b[^>]*href=\{`#\$\{section\.id\}`\}/);
+  assert.match(navigation, /aria-current=\{activeSection === section\.id \? "location" : undefined\}/);
+  assert.match(navigation, /goToSection\(section\.id\)/);
+  assert.doesNotMatch(navigation, /tabIndex=|aria-selected=|aria-controls=/);
+  assert.doesNotMatch(desktop, /role="tab(?:list|panel)?"|activeTab|setActiveTab/);
+  for (const component of ["HotelPriceComparisonSection", "HotelReviewsSection", "HotelLocationSection", "RelatedHotelsSection"]) assert.equal(desktop.match(new RegExp(`<${component}\\b`, "g"))?.length, 1, component);
 });
 
-test("section navigator is a controlled four-tab interface", () => {
-  for (const label of ["Compare prices", "About", "Location", "Reviews"]) {
-    assert.equal(
-      navigator.match(new RegExp(`label: "${label}"`, "g"))?.length,
-      1,
-      label,
-    );
-  }
-  assert.match(navigator, /role="tablist"/);
-  assert.match(navigator, /role="tab"/);
-  assert.match(navigator, /aria-selected=\{selected\}/);
-  assert.match(navigator, /aria-controls=\{`hotel-\$\{tab\.id\}-panel`\}/);
-  assert.match(navigator, /tabIndex=\{selected \? 0 : -1\}/);
-  assert.match(navigator, /ArrowLeft/);
-  assert.match(navigator, /ArrowRight/);
-  assert.match(navigator, /sticky top-0/);
-  assert.doesNotMatch(
-    navigator,
-    /IntersectionObserver|scrollIntoView|aria-current|hotel-reviews.*about|href=/,
-  );
-  assert.doesNotMatch(navigator, /overflow-x|whitespace-normal/);
-  assert.match(navigator, /min-h-11/);
+test("desktop keeps complete Rate, Overview and Review visible before standalone recommendations", () => {
+  const rateStart = desktop.indexOf('<div data-desktop-section="rate">');
+  const overviewStart = desktop.indexOf('<div data-desktop-section="overview">');
+  const reviewStart = desktop.indexOf('data-desktop-section="review"');
+  const relatedStart = desktop.indexOf('id="hotel-related-hotels"');
+  assert.ok(rateStart >= 0 && overviewStart > rateStart && reviewStart > overviewStart && relatedStart > reviewStart);
+  const rate = desktop.slice(rateStart, overviewStart);
+  const overview = desktop.slice(overviewStart, reviewStart);
+  const review = desktop.slice(reviewStart, relatedStart);
+  const related = desktop.slice(relatedStart, desktop.indexOf('{overlay === "rooms" ?'));
+  assert.doesNotMatch(overview + rate + review + related, /\bhidden(?:=|\s|>)|aria-hidden=|display:\s*"none"|activeSection\s*===/);
+  for (const content of ["About this hotel", "<HotelLocationSection", "<HotelAmenityList", "Room &amp; comfort", "Accessibility"]) assert.ok(overview.includes(content), content);
+  assert.doesNotMatch(overview, /<HotelPriceComparisonSection|<HotelReviewsSection/);
+  assert.match(rate, /<HotelPriceComparisonSection/);
+  assert.match(rate, /stayEditor=\{<DesktopHotelStayEditor context=\{context\} \/>\}/);
+  assert.doesNotMatch(rate, /<HotelLocationSection|<HotelReviewsSection|<RelatedHotelsSection/);
+  assert.match(review, /<HotelReviewsSection/);
+  assert.doesNotMatch(review, /<HotelPriceComparisonSection|<HotelLocationSection|<RelatedHotelsSection/);
+  assert.match(related, /<RelatedHotelsSection hotels=\{props\.relatedHotels\}/);
 });
 
-test("each content component belongs only to its selected tab", () => {
-  const comparePanel = standalone.slice(
-    standalone.indexOf('{activeTab === "compare"'),
-    standalone.indexOf('{activeTab === "about"'),
-  );
-  assert.match(comparePanel, /<HotelPriceComparisonSection/);
-  assert.match(comparePanel, /<RelatedHotelsSection/);
-  assert.doesNotMatch(
-    comparePanel,
-    /<HotelAboutSection|<HotelLocationSection|<HotelReviewsSection/,
-  );
-
-  const aboutPanel = standalone.slice(
-    standalone.indexOf('{activeTab === "about"'),
-    standalone.indexOf('{activeTab === "reviews"'),
-  );
-  assert.match(aboutPanel, /<HotelAboutSection/);
-  assert.doesNotMatch(
-    aboutPanel,
-    /<HotelPriceComparisonSection|<RelatedHotelsSection|<HotelLocationSection|<HotelReviewsSection/,
-  );
-
-  const reviewsPanel = standalone.slice(
-    standalone.indexOf('{activeTab === "reviews"'),
-    standalone.indexOf('{activeTab === "location"'),
-  );
-  assert.match(reviewsPanel, /<HotelReviewsSection/);
-  assert.doesNotMatch(
-    reviewsPanel,
-    /<HotelPriceComparisonSection|<RelatedHotelsSection|<HotelAboutSection|<HotelLocationSection/,
-  );
-
-  const locationPanel = standalone.slice(
-    standalone.indexOf('{activeTab === "location"'),
-    standalone.indexOf("</div>\n          </article>"),
-  );
-  assert.match(locationPanel, /<HotelLocationSection/);
-  assert.match(locationPanel, /Verified location details are not available/);
-  assert.doesNotMatch(
-    locationPanel,
-    /<HotelPriceComparisonSection|<RelatedHotelsSection|<HotelAboutSection|<HotelReviewsSection/,
-  );
+test("desktop recommendations retain their original heading and have no active navigation item", () => {
+  assert.match(desktop, /props\.relatedHotels\.length \? <div id="hotel-related-hotels"/);
+  assert.match(desktop, /relatedCity = property\?\.city \|\| context\?\.destination \|\| ""/);
+  assert.match(desktop, /<RelatedHotelsSection[^>]*city=\{relatedCity\}[^>]*heading: props\.labels\.moreHotelsIn/);
+  assert.match(desktop, /const related = document\.getElementById\("hotel-related-hotels"\)/);
+  assert.match(desktop, /if \(related && related\.getBoundingClientRect\(\)\.top <= threshold\) current = null/);
+  assert.match(desktop, /if \(!related &&[^\n]+scrollHeight[^\n]+current = sections\[sections\.length - 1\]\.id/);
+  assert.match(desktop, /useState<DesktopHotelSection \| null>/);
 });
 
-test("comparison presents Kurioticket as a normalized provider without development placeholders", () => {
-  assert.doesNotMatch(standalone, /totalPrice=\{props\.totalDisplayPrice\}/);
-  assert.match(standalone, /stayContext=\{props\.staySummary/);
-  assert.match(standalone, /buildKurioticketHotelDetailsProviderOffer/);
+test("desktop navigation follows scrolling and layout changes with cleanup", () => {
+  assert.match(desktop, /window\.addEventListener\("scroll", schedule, \{ passive: true \}\)/);
+  assert.match(desktop, /window\.addEventListener\("resize", schedule\)/);
+  assert.match(desktop, /window\.requestAnimationFrame/);
+  assert.match(desktop, /const barBounds = sectionBarRef\.current\?\.getBoundingClientRect\(\)/);
+  assert.match(desktop, /const threshold = \(barBounds\?\.height \?\? 76\) \+ 24/);
+  assert.match(desktop, /document\.getElementById\(section\.id\)\?\.getBoundingClientRect\(\)\.top/);
+  assert.match(desktop, /setActiveSection\(current\)/);
+  assert.match(desktop, /document\.documentElement\.scrollHeight[^\n]+current = sections\[sections\.length - 1\]\.id/);
+  assert.match(desktop, /new ResizeObserver\(schedule\)/);
+  assert.match(desktop, /observer\.observe\(detailsRef\.current\)/);
+  for (const cleanup of ['window.removeEventListener("scroll", schedule)', 'window.removeEventListener("resize", schedule)', "window.cancelAnimationFrame(frame)", "observer.disconnect()"]) assert.ok(desktop.includes(cleanup), cleanup);
+});
+
+test("desktop section links and identity shortcuts scroll and focus with reduced-motion support", () => {
+  const navigate = desktop.slice(desktop.indexOf("function goToSection("), desktop.indexOf("async function sharePage("));
+  assert.match(navigate, /document\.getElementById\(id\)/);
+  assert.match(navigate, /scrollIntoView/);
+  assert.match(navigate, /prefers-reduced-motion: reduce/);
+  assert.match(navigate, /\? "instant" : "smooth"/);
+  assert.match(navigate, /const heading = target\?\.querySelector<HTMLElement>\("h2"\)/);
+  assert.match(navigate, /heading\.tabIndex = -1; heading\.focus\(\{ preventScroll: true \}\)/);
+  assert.match(desktop, /goToSection\("hotel-location"\)/);
+  assert.match(desktop, /goToSection\("hotel-reviews"\)/);
+  assert.match(desktop, /goToSection\("hotel-compare-prices"\)/);
+});
+
+test("mobile keeps independent keyboard-accessible rates, overview and reviews modes", () => {
+  assert.match(mobile, /\["rates", "overview", "reviews"\]/);
+  assert.match(mobile, /role="tablist"/);
+  assert.match(mobile, /role="tabpanel"/);
+  assert.match(mobile, /aria-selected=\{tab === item\}/);
+  assert.match(mobile, /aria-controls=\{`mobile-hotel-\$\{item\}-panel`\}/);
+  for (const key of ["ArrowLeft", "ArrowRight", "Home", "End"]) assert.ok(mobile.includes(`"${key}"`), key);
+  assert.match(mobile, /offsets\.current\[tab\] = window\.scrollY/);
+});
+
+test("desktop offers remain gated by genuine room choices and actionable provider data", () => {
+  assert.match(desktop, /internalRoomFlowAvailable = props\.roomChoices\.length > 0/);
+  assert.match(desktop, /internalRoomFlowAvailable \? \[internalOffer\] : \[\]/);
+  assert.match(desktop, /props\.onProviderOfferHandoff \? \(props\.providerOffers \?\? \[\]\)\.filter\(isActionableExternalHotelProviderOffer\)/);
+  assert.match(desktop, /buildKurioticketHotelDetailsProviderOffer/);
   assert.match(continuation, /kurioticket-logo-primary-light-bg\.svg/);
   assert.match(continuation, /action: \{ kind: "internal-room-flow" \}/);
-  assert.match(compare, />\s*Compare prices\s*<\/h2>/);
-  assert.match(compare, /\{stayContext\}/);
-  assert.doesNotMatch(compare, /totalPrice\.formatted|>total</);
-  assert.match(compare, /perNightText\.replace/);
-  assert.match(compare, /data-nightly-amount/);
-  assert.match(compare, /data-nightly-supporting-label/);
-  assert.match(compare, /role="radiogroup"/);
-  assert.match(compare, /type="radio"/);
-  assert.match(compare, /checked=\{selected\}/);
-  assert.match(compare, /onChange=\{\(\) => onSelect\(offer\.id\)\}/);
-  assert.doesNotMatch(
-    compare,
-    /View deal|viewDealText|onInternalRoomFlow|onProviderOfferHandoff/,
-  );
-  assert.match(standalone, /amenities: props\.amenityItems/);
-  assert.match(continuation, /amenities: amenities\.slice\(0, 3\)/);
-  assert.match(compare, /data-provider-brand/);
-  assert.match(compare, /data-provider-price/);
-  assert.doesNotMatch(
-    compare,
-    /role="separator"|data-provider-offer-divider|border-t/,
-  );
-  assert.match(compare, /data-provider-selector/);
-  assert.match(compare, /data-provider-bottom-row/);
-  assert.match(compare, /col-span-2 row-start-3 mt-0\.5 flex/);
-  assert.match(compare, /text-\[#075EE8\][^>]*data-nightly-supporting-label/);
-  assert.doesNotMatch(compare, /row-span-2|data-provider-price-action/);
-  assert.match(compare, /data-provider-amenities/);
-  assert.match(compare, /flex-nowrap/);
-  assert.match(compare, /gap-x-4/);
-  assert.doesNotMatch(compare, /\[&>li\]:text-\[11px\]/);
-  assert.match(compare, /whitespace-nowrap/);
-  assert.doesNotMatch(compare, /data-provider-action|<button/);
-  assert.ok(
-    compare.indexOf("data-provider-brand") <
-      compare.indexOf("data-provider-selector"),
-  );
-  assert.ok(
-    compare.indexOf("data-provider-selector") <
-      compare.indexOf("data-provider-price"),
-  );
-  assert.ok(
-    compare.indexOf("data-provider-price") <
-      compare.indexOf("data-provider-amenities"),
-  );
-  assert.ok(
-    compare.indexOf("data-provider-amenities") <
-      compare.indexOf("data-nightly-supporting-label"),
-  );
-  assert.match(compare, /<HotelAmenityList/);
-  assert.match(compare, /items=\{offer\.amenities \?\? \[\]\}/);
-  assert.equal(compare.match(/\{stayContext\}/g)?.length, 1);
-  assert.match(compare, /offers\.map/);
-  assert.doesNotMatch(
-    compare,
-    /stayFacts|nightText|Estimated stay price|Estimated for your selected stay|Planning estimate|Additional booking-site prices|Live booking-site rates are not connected yet|Comparable provider offers will appear here when available/,
-  );
-  assert.doesNotMatch(
-    compare,
-    /Booking\.com|Expedia|Hotels\.com|Agoda|Lowest price|Best deal|Compare 3 prices/,
-  );
-  assert.doesNotMatch(
-    compare,
-    /Free Wi|Restaurant|Workspaces|Breakfast available|Fitness centre/,
-  );
+  assert.doesNotMatch(desktop + compare, /Provider 2|Lowest price|Best deal|Compare 3 prices|1,248 reviews|Best price guarantee/);
 });
 
-test("mobile address uses the available header width and wraps only when needed", () => {
-  const addressRow = standalone.slice(
-    standalone.indexOf("data-mobile-hotel-address-row") - 300,
-    standalone.indexOf("data-mobile-hotel-classification-stars"),
-  );
-  assert.match(addressRow, /max-w-\[calc\(100vw-2rem\)\]/);
-  assert.doesNotMatch(
-    addressRow,
-    /truncate|text-ellipsis|whitespace-nowrap|break-words/,
-  );
-});
-
-test("future offers share the concise provider price and action presentation", () => {
-  assert.match(compare, /offers\.map\(\(offer\) =>/);
-  for (const field of ["providerName", "providerLogoUrl", "nightlyPrice"]) {
-    assert.ok(compare.includes(`offer.${field}`), field);
-  }
-  assert.match(compare, /type="radio"/);
+test("desktop rate actions route the clicked offer and guard duplicate handoffs", () => {
+  assert.match(desktop, /<HotelPriceComparisonSection variant="desktop"/);
+  assert.match(desktop, /onContinueOffer=\{\(id, trigger\) => void continueOffer\(id, trigger\)\}/);
+  assert.match(desktop, /resolveHotelBookingContinuation\(\{ selectedOfferId: offerId, offers, internalRoomFlowAvailable \}\)/);
+  assert.match(desktop, /if \(handoffPending\.current\) return/);
+  assert.match(desktop, /decision\.kind === "internal-room-flow"/);
+  assert.match(desktop, /decision\.kind !== "provider-handoff"/);
+  assert.match(desktop, /await props\.onProviderOfferHandoff\(decision\.providerOfferId, providerWindow\)/);
+  assert.match(desktop, /finally \{[\s\S]*?handoffPending\.current = false;[\s\S]*?setPendingProviderOfferId\(null\);[\s\S]*?\}/);
+  assert.match(desktop, /setProviderHandoffError/);
+  assert.match(compare, /role="alert"/);
   assert.doesNotMatch(compare, /href=\{offer\.|window\.location/);
   assert.doesNotMatch(presentation, /deepLink/);
-  assert.match(presentation, /providerOfferId: string/);
-  assert.match(presentation, /kind: "internal-room-flow"/);
-  assert.match(presentation, /kind: "provider-handoff"/);
-  assert.doesNotMatch(
-    compare,
-    /Cancellation terms unavailable|Meal plan unavailable|Provider 2/,
-  );
 });
 
-test("persistent continuation uses the selected provider decision", () => {
-  assert.match(standalone, /resolveHotelBookingContinuation/);
-  assert.match(
-    standalone,
-    /bookingContinuation\.kind === "internal-room-flow"/,
-  );
-  assert.match(standalone, /bookingContinuation\.kind === "provider-handoff"/);
-  assert.match(
-    standalone,
-    /bookingContinuation\.kind === "selection-required"/,
-  );
-  assert.match(standalone, /setActiveTab\("compare"\)/);
-  assert.match(standalone, /hotel-compare-heading/);
-  assert.match(standalone, /focus\(\{ preventScroll: true \}\)/);
-  assert.match(standalone, /providerHandoffPendingRef\.current/);
-  assert.match(compare, /role="alert"/);
+test("desktop rate section receives resolved selection and pending handoff state", () => {
+  assert.match(desktop, /resolveSelectedHotelProviderOfferId\(\{ selectedOfferId, offers, internalRoomFlowAvailable \}\)/);
+  assert.match(desktop, /offers=\{offers\} selectedOfferId=\{selectedId\}/);
+  assert.match(desktop, /selectableOfferIds=\{new Set\(offers\.map\(offer => offer\.id\)\)\}/);
+  assert.match(desktop, /onSelectOffer=\{setSelectedOfferId\}/);
+  assert.match(desktop, /pendingOfferId=\{pendingProviderOfferId\}/);
+  assert.match(desktop, /providerHandoffError=\{providerHandoffError\}/);
 });
 
-test("about exposes the full property information architecture without expansion controls", () => {
-  assert.match(standalone, /description=\{description\}/);
-  assert.match(standalone, /amenities=\{props\.amenityItems\}/);
-  assert.match(standalone, /propertyType=\{props\.propertyDetails\?\.propertyType\}/);
-  assert.match(
-    standalone,
-    /bedSummary=\{props\.propertyDetails\?\.bedSummary\}/,
-  );
-  for (const heading of [
-    "Property highlights",
-    "All amenities",
-    "Room &amp; comfort",
-    "Hotel information",
-    "Accessibility",
-  ])
-    assert.ok(about.includes(heading), heading);
-  assert.doesNotMatch(
-    about,
-    /line-clamp|descriptionExpanded|amenitiesExpanded|See all amenities|Show fewer|>More</,
-  );
-  assert.match(about, /remainingAmenities\.map/);
-  assert.match(about, /\{propertyType\}/);
-  assert.match(about, /\{starRating\}-star classification/);
+test("desktop overview and expanded amenities retain complete public property content", () => {
+  for (const contract of ["property?.roomSummary", "property?.bedSummary", "property?.accessibility?.length", "property.accessibility.map", "props.amenityItems", "props.starRating"]) assert.ok(desktop.includes(contract), contract);
+  assert.match(desktop, /mobileHotelAbout\(props\.hotelName, property, props\.starRating\)/);
+  assert.match(mobile, /mobileHotelAbout\(props\.hotelName, property, props\.starRating\)/);
+  assert.match(desktop, /<p>\{description\}<\/p>/);
+  assert.doesNotMatch(desktop, /descriptionExpanded|line-clamp/);
+  assert.match(desktop, /aria-expanded=\{allAmenities\}/);
+  assert.match(mobile, /mobileHotelAmenityGroups\(props\.amenityItems\)/);
+  assert.match(desktop, /Amenity details are not available yet/);
+  assert.match(desktop, /hotels=\{props\.relatedHotels\}/);
+  assert.match(desktop, /searchContext=\{props\.relatedSearchContext\}/);
 });
 
-test("guest reviews remains visible and never manufactures review values", () => {
-  assert.match(reviews, /Guest reviews/);
+test("desktop amenities expand as one continuous two-column list without changing the disclosure button", () => {
+  const amenityList = desktop.indexOf("items={allAmenities ? props.amenityItems : props.amenityItems.slice(0, 10)}");
+  const toggle = desktop.indexOf('Show fewer amenities');
+  assert.ok(amenityList >= 0 && toggle > amenityList);
+  assert.match(desktop, /allAmenities \? styles\.amenitiesExpanded/);
+  assert.doesNotMatch(desktop, /mobileHotelAmenityGroups\(props\.amenityItems\.slice\(10\)\)|group\.title|items=\{group\.items\}/);
+  assert.match(desktop, /className=\{styles\.secondaryButton\}/);
+  assert.match(desktop, /aria-expanded=\{allAmenities\}/);
+  assert.match(desktop, /props\.amenityItems\.length > 10/);
+});
+
+test("guest reviews use verified score, count, source and a missing-data state", () => {
+  assert.match(reviews, /Boolean\(score && countText\)/);
+  assert.match(reviews, /\{score\}/);
+  assert.match(reviews, /\{countText\}/);
+  assert.match(reviews, /Source: \{source\}/);
   assert.match(reviews, /Verified guest reviews are not connected/);
   assert.doesNotMatch(reviews, /8\.6|1,246|Excellent/);
+  assert.match(desktop, /desktopHotelReviewScore\(props\.reviewScore, props\.mobileReviewScale\)/);
 });
 
-test("location preserves map and Street View while facts use catalogue metadata", () => {
-  for (const field of [
-    "neighbourhood",
-    "businessSuitable",
-    "familySuitable",
-    "interestTags",
-    "accessibility",
-  ])
-    assert.ok(standalone.includes(`propertyDetails.${field}`), field);
-  for (const contract of [
-    "buildGoogleHotelMapEmbedUrl",
-    "buildGoogleHotelStreetViewEmbedUrl",
-    "Why this location works",
-  ])
-    assert.ok(location.includes(contract), contract);
-  assert.doesNotMatch(
-    standalone + location,
-    /\b\d+ min(?:ute)?s?\b|\b\d+ min walk\b/i,
-  );
-  assert.doesNotMatch(location, /\.slice\(|<details|<summary/);
-  assert.doesNotMatch(location, /Show directions|directionsUrl/);
+test("location and stay-fit facts use metadata without invented distances", () => {
+  for (const field of ["neighbourhood", "businessSuitable", "familySuitable", "interestTags", "accessibility"]) assert.ok(desktop.includes(`locationProperty.${field}`), field);
+  assert.match(desktop, /<HotelLocationSection variant="desktop"/);
+  assert.match(location, /buildHotelMapEmbedUrl/);
+  assert.match(location, /buildGoogleHotelStreetViewEmbedUrl/);
+  assert.match(location, /Map preview unavailable/);
+  assert.match(location, /stayFitFacts\.map/);
+  assert.match(location, /accessibilityDetails\.map/);
+  assert.match(location, /<iframe[\s\S]*?src=\{activeEmbedUrl\}[\s\S]*?loading="lazy"[\s\S]*?referrerPolicy="strict-origin-when-cross-origin"/);
+  assert.doesNotMatch(location, /target="_blank"/);
+  assert.doesNotMatch(desktop + location, /\b\d+ min(?:ute)?s?\b|\b\d+ min walk\b/i);
+});
+
+
+test("desktop guest reviews stay compact without an empty guest-summary column", () => {
+  assert.match(reviews, />Guest reviews<\/h2>/);
+  assert.match(reviews, /data-desktop-hotel-review-overview/);
+  assert.match(reviews, /max-w-\[520px\] items-center gap-5/);
+  assert.match(reviews, /h-12 w-px shrink-0 bg-\[#d9dfe2\]/);
+  assert.doesNotMatch(reviews, /Guests say|data-desktop-hotel-guests-say|Reviews of \$\{hotelName\}/);
+  const reviewSection = desktop.slice(desktop.indexOf("<HotelReviewsSection"), desktop.indexOf("/>", desktop.indexOf("<HotelReviewsSection")) + 2);
+  assert.doesNotMatch(reviewSection, /sentiment=|quotes=|hotelName=/);
+});
+
+test("desktop related hotels render four cards", () => {
+  assert.match(desktop, /desktopLimit=\{4\} limit=\{4\}/);
+  assert.match(relatedHotels, /const displayedHotels = hotels\.slice\(0, limit\)/);
+});
+
+
+test("desktop Hotel content from the hotel identity through recommendations sits on one white card", () => {
+  const cardStart = desktop.indexOf("data-desktop-hotel-content-card");
+  const identityStart = desktop.indexOf("<header className={styles.identity}>", cardStart);
+  const galleryStart = desktop.indexOf("<HotelDetailsGallery", cardStart);
+  const ratesStart = desktop.indexOf('data-desktop-section="rate"', cardStart);
+  const overviewStart = desktop.indexOf('data-desktop-section="overview"', cardStart);
+  const reviewStart = desktop.indexOf('data-desktop-section="review"', cardStart);
+  const relatedStart = desktop.indexOf('id="hotel-related-hotels"', cardStart);
+  const cardEnd = desktop.indexOf('{overlay === "rooms" ?', cardStart);
+
+  assert.ok(cardStart >= 0);
+  assert.ok(identityStart > cardStart);
+  assert.ok(galleryStart > identityStart);
+  assert.ok(ratesStart > galleryStart);
+  assert.ok(overviewStart > ratesStart);
+  assert.ok(reviewStart > overviewStart);
+  assert.ok(relatedStart > reviewStart);
+  assert.ok(cardEnd > relatedStart);
+  assert.match(desktop, /className=\{styles\.contentCard\} data-desktop-hotel-content-card/);
 });

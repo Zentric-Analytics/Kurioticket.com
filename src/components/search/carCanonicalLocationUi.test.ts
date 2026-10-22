@@ -16,6 +16,6 @@ test("mobile and desktop car pickers render canonical primary and supporting lab
 test("selection still auto-commits the unchanged submitted value", () => {
   const mobile = read("./MobileCarLocationPicker.tsx");
   const desktop = read("./CarLocationAutocomplete.tsx");
-  assert.match(mobile, /onCommit\(item\.value\);[\s\S]*?requestClose\(\)/);
+  assert.match(mobile, /onCommit\(item\.value, item\);[\s\S]*?requestClose\(\)/);
   assert.match(desktop, /onValueChange\(suggestion\.value\);[\s\S]*?close\(\)/);
 });

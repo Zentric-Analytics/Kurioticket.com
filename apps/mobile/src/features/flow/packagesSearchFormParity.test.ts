@@ -12,6 +12,10 @@ test("Packages is one owned form with one CTA and no embedded product stack", ()
   assert.doesNotMatch(screen, /<FlightSearchPanel embedded|<HotelSearchPanel embedded|<CarSearchPanel embedded/);
   assert.doesNotMatch(screen, />\s*(Flights|Hotels|Cars)\s*</);
   assert.match(screen, /<PackageSearchForm presentation=\{presentation\}/);
+  assert.equal((form.match(/styles\.homeFieldCard, /g) ?? []).length, 3);
+  assert.match(form, /homeFieldCard:\{borderWidth:1,borderRadius:13,overflow:"hidden",marginTop:10\}/);
+  assert.match(form, /const fieldAppearance = isHome \? "resultsModalCard" : "default"/);
+  assert.match(form, /isHome \? styles\.homeFields : \[styles\.fields/);
 });
 
 test("compact package selector is a horizontally scrolling accessible selection group", () => {
@@ -19,6 +23,11 @@ test("compact package selector is a horizontally scrolling accessible selection 
   assert.match(form, /<ScrollView horizontal showsHorizontalScrollIndicator=\{false\}/);
   assert.match(form, /accessibilityRole="radio" accessibilityState=\{\{ checked: selected, selected \}\}/);
   assert.match(form, /borderBottomColor/);
+  assert.match(form, /presentation === "home" && styles\.homeRail/);
+  assert.match(form, /presentation === "home" && styles\.homeMode/);
+  assert.match(form, /homeRail:\{borderBottomWidth:0\},homeMode:\{height:50,borderBottomWidth:0\}/);
+  assert.match(form, /homeModeText:\{fontSize:14,lineHeight:20\}/);
+  assert.match(form, /presentation === "home" && \{ color: selected \? ft\.colors\.textPrimary : ft\.colors\.textSecondary, fontWeight: selected \? "700" : "400" \}/);
 });
 
 test("package fields expose one destination, date and coordinated party definition", () => {

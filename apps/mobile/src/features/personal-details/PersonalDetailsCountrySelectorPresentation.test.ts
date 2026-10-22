@@ -7,7 +7,7 @@ const screen = readFileSync(
   "utf8",
 );
 
-test("country selector pushes horizontally like a native detail screen", () => {
+test("nationality slides from the bottom like the gender sheet", () => {
   const selector = screen.slice(
     screen.indexOf("function CountrySelector("),
     screen.indexOf("function CountryFlag("),
@@ -16,10 +16,10 @@ test("country selector pushes horizontally like a native detail screen", () => {
   assert.match(selector, /transparent/);
   assert.match(selector, /animationType="none"/);
   assert.match(selector, /presentationStyle="overFullScreen"/);
-  assert.match(selector, /const translateX = useRef\(new Animated\.Value\(width\)\)\.current/);
-  assert.match(selector, /Animated\.timing\(translateX,[\s\S]*?toValue: 0/);
-  assert.match(selector, /Animated\.timing\(translateX,[\s\S]*?toValue: width/);
-  assert.match(selector, /transform: \[\{ translateX \}\]/);
+  assert.match(selector, /const translateY = useRef\(new Animated\.Value\(height\)\)\.current/);
+  assert.match(selector, /Animated\.timing\(translateY,[\s\S]*?toValue: 0/);
+  assert.match(selector, /Animated\.timing\(translateY,[\s\S]*?toValue: height/);
+  assert.match(selector, /transform: \[\{ translateY \}\]/);
 });
 
 test("enter animation runs only for a closed-to-open transition", () => {
@@ -35,7 +35,7 @@ test("enter animation runs only for a closed-to-open transition", () => {
   );
   assert.ok(
     selector.indexOf("if (!isOpening) return") <
-      selector.indexOf("translateX.setValue(width)"),
+      selector.indexOf("translateY.setValue(height)"),
   );
 });
 
@@ -45,9 +45,9 @@ test("a selected prop update cannot restart enter or interrupt exit", () => {
     screen.indexOf("function CountryFlag("),
   );
 
-  assert.match(selector, /\[selected, selectorType, translateX, visible, width\]/);
-  assert.equal((selector.match(/translateX\.setValue\(width\)/g) ?? []).length, 1);
-  assert.match(selector, /if \(!isOpening\) return;[\s\S]*?translateX\.stopAnimation\(\)/);
+  assert.match(selector, /\[selected, selectorType, translateY, visible, height\]/);
+  assert.equal((selector.match(/translateY\.setValue\(height\)/g) ?? []).length, 1);
+  assert.match(selector, /if \(!isOpening\) return;[\s\S]*?translateY\.stopAnimation\(\)/);
 });
 
 test("country selector keeps first-open controls below the device status bar", () => {
@@ -58,7 +58,7 @@ test("country selector keeps first-open controls below the device status bar", (
 
   assert.match(screen, /useSafeAreaInsets/);
   assert.match(selector, /const insets = useSafeAreaInsets\(\)/);
-  assert.match(selector, /paddingTop: insets\.top/);
+  assert.match(selector, /height: height \* 0\.82/);
   assert.match(selector, /paddingBottom: insets\.bottom/);
 });
 
@@ -107,16 +107,33 @@ test("country selector hides its save action while the keyboard is visible", () 
   assert.match(selector, /!keyboardVisible \? \(/);
 });
 
-test("row selection updates the draft and dismisses only the keyboard", () => {
-  const selector = screen.slice(
-    screen.indexOf("function CountrySelector("),
-    screen.indexOf("function CountryFlag("),
-  );
-  const rowHandler = selector.slice(
-    selector.indexOf("onPress={() => {", selector.indexOf("renderItem=")),
-    selector.indexOf("style={[s.countryOption", selector.indexOf("renderItem=")),
-  );
+test("phone and address selects apply the draft immediately and close without picker actions", () => {
+  const dialog = screen.slice(screen.indexOf('  if (["phone", "addressCountry"].includes(kind)) {'), screen.indexOf('      animationType="none"', screen.indexOf('  if (["phone", "addressCountry"].includes(kind)) {')));
+  assert.match(dialog, /if \(onSave\(item.value\)\) onClose\(\)/);
+  assert.match(dialog, /initialScrollIndex/);
+  assert.match(dialog, /accessibilityRole="menuitem"/);
+  assert.doesNotMatch(dialog, /TextInput|selectorSave|name="close"/);
+});
 
-  assert.match(rowHandler, /Keyboard\.dismiss\(\);\s*setDraftSelection\(item\.value\)/);
-  assert.doesNotMatch(rowHandler, /onClose|closeWithPushAnimation|onSave/);
+test("Both platforms country menus anchor to the field and use leading checks without a dimmed dialog", () => {
+  const menu = screen.slice(screen.indexOf('  if (["phone", "addressCountry"].includes(kind))'), screen.indexOf('      animationType="none"', screen.indexOf('  if (["phone", "addressCountry"].includes(kind))')));
+  assert.match(menu, /anchor\?\.y/);
+  assert.match(menu, /anchor\?\.x/);
+  assert.match(menu, /s.floatingCountryCheck/);
+  assert.match(menu, /name="check"/);
+  assert.doesNotMatch(menu, /genderRadio|rgba\(|countrySelectTitle/);
+  assert.match(screen, /measureInWindow/);
+  assert.match(screen, /openSelector\("phone", anchor\)/);
+  assert.match(screen, /openSelector\("addressCountry", anchor\)/);
+});
+
+
+test("nationality waits for native presentation and fades the backdrop with its slide", () => {
+ const selector = screen.slice(screen.indexOf("function CountrySelector("), screen.indexOf("function CountryFlag("));
+ const preparation = selector.slice(selector.indexOf("const isOpening"), selector.indexOf("const showSheet"));
+ assert.doesNotMatch(preparation, /Animated.timing/);
+ assert.match(selector, /onShow=\{showSheet\}/);
+ assert.match(selector, /if \(!visibleRef.current\) return;\s*Animated.timing/);
+ assert.match(selector, /easing: Easing.out\(Easing.cubic\)/);
+ assert.match(selector, /opacity: translateY.interpolate/);
 });

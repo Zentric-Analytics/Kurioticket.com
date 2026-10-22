@@ -1,5 +1,7 @@
+import { isProviderHotelResult } from "@/services/travel/hotelInventorySource";
 import { NextResponse } from "next/server";
 import { resolveOptionalWebApiSession } from "@/lib/web-api-auth";
+import { getMobileSession } from "@/lib/mobile-auth";
 import { getFlightFromCache, getHotelFromCache } from "@/lib/searchCache";
 import { withOptionalDb } from "@/lib/prisma";
 import { trackAnalyticsEvent } from "@/services/analyticsService";
@@ -9,25 +11,44 @@ import { isStagingEnvironment } from "@/lib/stagingSafety";
 import type { NormalizedFlightResult } from "@/lib/types";
 import type { FlightHandoff } from "@/services/travel/flightHandoff";
 import { revalidateFlightRedirectHandoff } from "@/services/travel/flightRedirectHandoff";
+import { sandboxBookingUrl } from "@/services/travel/kayakSandboxPublic";
+import { getProviderResult } from "@/services/travel/providerResultCache";
+
+export function previewAllowsKayakSandboxHandoff(
+  body: { id?: string; type?: "flight" | "hotel" },
+  target?: (NormalizedFlightResult | NormalizedHotelResult) | null,
+) {
+  if (!((body.type === "flight" || body.type === "hotel") && body.id?.startsWith("kayak-sandbox:"))) return false;
+  return target === undefined || target?.provider === "KAYAK sandbox";
+}
 
 export async function POST(request: Request) {
-  if (isStagingEnvironment()) {
+  const staging = isStagingEnvironment();
+  const body = await request.json().catch(() => ({})) as { id?: string; type?: "flight" | "hotel"; sourcePage?: string };
+  if (staging && !previewAllowsKayakSandboxHandoff(body)) {
     return NextResponse.json(
       { error: "Provider checkout is disabled in Preview." },
       { status: 403 },
     );
   }
-
-  const body = (await request.json()) as { id?: string; type?: "flight" | "hotel"; sourcePage?: string };
   if (!body.id || !body.type) {
     return NextResponse.json({ error: "Redirect target is required." }, { status: 400 });
   }
 
-  let target = body.type === "flight" ? await getFlightFromCache(body.id) : getHotelFromCache(body.id);
+  let target = body.type === "flight"
+    ? await getFlightFromCache(body.id)
+    : getHotelFromCache(body.id) ?? await getProviderResult<NormalizedHotelResult>("hotel", body.id);
   if (!target) {
     return NextResponse.json(
       { error: "This partner link expired. Please search again for current prices." },
       { status: 404 },
+    );
+  }
+
+  if (staging && !previewAllowsKayakSandboxHandoff(body, target as NormalizedFlightResult)) {
+    return NextResponse.json(
+      { error: "Provider checkout is disabled in Preview." },
+      { status: 403 },
     );
   }
 
@@ -57,7 +78,7 @@ export async function POST(request: Request) {
   const hotelTarget = body.type === "hotel" ? (target as NormalizedHotelResult) : null;
   const hotelPriceDetails = hotelTarget ? getHotelPriceDetails(hotelTarget) : null;
 
-  if (body.type === "hotel" && "dataSource" in target && target.dataSource === "demo") {
+  if (hotelTarget && !isProviderHotelResult(hotelTarget)) {
     return NextResponse.json(
       {
         error:
@@ -83,14 +104,23 @@ export async function POST(request: Request) {
     );
   }
 
+  const providerUrl = hotelTarget?.provider === "KAYAK sandbox"
+    ? sandboxBookingUrl(target.partnerRedirectUrl || target.bookingUrl || "")
+    : target.partnerRedirectUrl || target.bookingUrl;
+  if (body.type === "hotel" && !providerUrl)
+    return NextResponse.json({ error: "Booking link currently unavailable." }, { status: 409 });
   const url = body.type === "flight"
     ? verifiedFlightHandoff!.url
-    : new URL(target.partnerRedirectUrl! || target.bookingUrl!);
+    : new URL(providerUrl!);
   if (!["http:", "https:"].includes(url.protocol)) {
     return NextResponse.json({ error: "Unsafe redirect target." }, { status: 400 });
   }
 
-  const session = (await resolveOptionalWebApiSession())?.session;
+  // Preserve the web session boundary while allowing an optional, independently
+  // validated native bearer to attribute the same guest-capable handoff.
+  const webSession = (await resolveOptionalWebApiSession())?.session;
+  const mobileSession = request.headers.get("authorization") ? await getMobileSession(request) : null;
+  const user = webSession?.user ?? (mobileSession?.user.status === "ACTIVE" ? mobileSession.user : undefined);
   const route =
     body.type === "flight" && "originAirport" in target
       ? `${target.originAirport}-${target.destinationAirport}`
@@ -103,14 +133,14 @@ export async function POST(request: Request) {
       async (db) => {
         await db.redirectLog.create({
           data: {
-            userId: session?.user?.id,
+            userId: user?.id,
             type: body.type === "flight" ? "FLIGHT" : "HOTEL",
             provider: body.type === "flight" ? verifiedFlightHandoff!.providerName : target.provider,
             route,
             price: "price" in target ? target.price : hotelPriceDetails?.totalPrice,
             currency: "price" in target ? target.currency : hotelPriceDetails?.currency,
             destinationUrl: url.toString(),
-            userType: session?.user ? "user" : "guest",
+            userType: user ? "user" : "guest",
             sourcePage: body.sourcePage || "unknown",
             metadata: { resultId: body.id } as never,
           },
@@ -120,7 +150,7 @@ export async function POST(request: Request) {
       false,
     ),
     trackAnalyticsEvent({
-      userId: session?.user?.id,
+      userId: user?.id,
       type: "REDIRECT",
       name: `${body.type}_partner_redirect`,
       metadata: { provider: body.type === "flight" ? verifiedFlightHandoff!.providerName : target.provider, route },

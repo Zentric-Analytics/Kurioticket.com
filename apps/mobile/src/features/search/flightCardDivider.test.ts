@@ -8,20 +8,21 @@ const flightCard = source.slice(source.indexOf("function FlightCard"), source.in
 const footerStyles = source.slice(source.indexOf("  flightCardFooter:"), source.indexOf("  hotelCard:"));
 
 test("the flight card has one subtle theme-aware horizontal metadata divider", () => {
-  assert.match(flightCard, /<View style=\{\[s0\.flightCardFooter, \{ borderTopColor: theme\.border \}\]\}>/);
+  assert.match(flightCard, /<View style=\{\[s0\.flightCardFooter, \{ borderTopColor: theme\.dark \? theme\.border : flightResultsColors\.cardDivider \}\]\}>/);
   assert.equal(flightCard.match(/s0\.flightCardFooter/g)?.length, 1);
-  assert.match(footerStyles, /flightCardFooter: \{[^\n]*borderTopWidth: StyleSheet\.hairlineWidth/);
+  assert.match(footerStyles, /flightCardFooter: \{[^\n]*borderTopWidth: 1[^\n]*borderTopColor: "#E2E8F0"/);
   assert.doesNotMatch(footerStyles, /borderLeftWidth|borderRightWidth/);
 });
 
 test("the whole flight card owns details navigation without a separate visual CTA", () => {
-  assert.match(flightCard, /const openDetails = \(\) => router\.push\(\{/);
+  assert.match(flightCard, /const openDetails = \(\) => router\.push\(\{ pathname: "\/flight-details"/);
+  assert.doesNotMatch(flightCard, /Linking\.openURL\(result\.searchPolicy\.action\.href\)/);
   assert.match(flightCard, /<Pressable[\s\S]*?accessibilityRole="button"[\s\S]*?onPress=\{openDetails\}/);
   assert.match(flightCard, /pathname: "\/flight-details"/);
   assert.match(flightCard, /accessibilityLabel=\{cardAccessibilityLabel\}/);
-  assert.match(flightCard, /returnLeg \? `, \$\{accessibleLeg\("return", returnLeg\)\}` : ""/);
-  assert.doesNotMatch(flightCard, /View deal|labels\.viewDeal|flightDealAction/);
-  assert.doesNotMatch(flightCard, /<PlaneTakeoff[^>]*>[\s\S]*?View deal/);
+  assert.match(flightCard, /journeys\.map\(\(journey\) => flightCardJourneyAccessibility\(journey, clock\)\)\.join\(", "\)/);
+  assert.doesNotMatch(flightCard, /View deal\b|labels\.viewDeal\b|flightDealAction/);
+  assert.doesNotMatch(flightCard, /<PlaneTakeoff[^>]*>[\s\S]*?View deal\b/);
   assert.doesNotMatch(flightCard, /labels\.viewFlight|viewFlightButton/);
   assert.doesNotMatch(flightCard, /detailsButton|detailsButtonText/);
   assert.equal((flightCard.match(/<Pressable/g) || []).length, 1);
@@ -46,6 +47,6 @@ test("the flight card retains its light and dark mode theming", () => {
   assert.match(flightCard, /color: highlightTextColor/);
   assert.match(flightCard, /color: theme\.textPrimary/);
   assert.match(flightCard, /supportTextColor = theme\.dark \? flightSupportText\.dark : flightSupportText\.light/);
-  assert.match(flightCard, /s0\.flightMetadataLabel, \{ color: supportTextColor \}/);
-  assert.match(flightCard, /borderTopColor: theme\.border/);
+  assert.match(flightCard, /s0\.flightMetadataLabel, \{ color: metadataTextColor \}/);
+  assert.match(flightCard, /borderTopColor: theme\.dark \? theme\.border : flightResultsColors\.cardDivider/);
 });

@@ -6,6 +6,9 @@ const source = readFileSync(
   new URL("./HotelLocationSection.tsx", import.meta.url),
   "utf8",
 );
+const defaultView = source.slice(
+  source.indexOf('\n  return (', source.indexOf('if (variant === "desktop")')),
+);
 
 test("renders a factual responsive hotel location card", () => {
   for (const contract of [
@@ -21,19 +24,20 @@ test("renders a factual responsive hotel location card", () => {
     'useState<"map" | "streetview">("map")',
     'loading="lazy"',
     'referrerPolicy="strict-origin-when-cross-origin"',
-    "h-[200px]",
+    "h-[216px]",
     "sm:h-[220px]",
     "lg:h-[240px]",
   ])
     assert.ok(source.includes(contract), contract);
 });
 
-test("keeps the stable in-page location anchor without an external directions link", () => {
-  assert.match(source, /id="hotel-location"/);
-  assert.doesNotMatch(source, /directionsUrl|Show directions|maps\/dir/);
+test("keeps the location anchor without an external Open in Maps text link", () => {
+  assert.match(defaultView, /id="hotel-location"/);
+  assert.doesNotMatch(source, /directionsUrl|Open in Maps|buildHotelDirectionsUrl|ArrowUpRight/);
 });
-test("never substitutes a non-Google map when Google configuration is absent", () => {
-  assert.doesNotMatch(source, /buildHotelMapEmbedUrl|OpenStreetMap|openstreetmap/i);
+test("enables the fallback map only for the desktop variant", () => {
+  assert.match(source, /variant = "default"/);
+  assert.match(source, /const mapUrl = variant === "desktop"\s*\? buildHotelMapEmbedUrl\([^;]+:\s*buildGoogleHotelMapEmbedUrl\(/);
 });
 test("keeps location-fit and accessibility details visibly expanded", () => {
   assert.match(source, /stayFitFacts\.map/);

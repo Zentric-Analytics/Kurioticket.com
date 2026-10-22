@@ -20,7 +20,7 @@ type Strings = {
 
 type Props = {
   adults: number;
-  children: number;
+  childCount: number;
   infants: number;
   rooms: number;
   petFriendly: boolean;
@@ -51,7 +51,7 @@ function Row({ icon, label, description, counter }: { icon: ReactNode; label: st
 }
 
 export function MobilePackageTravelersRoomsPicker(props: Props) {
-  const { adults, children, infants, rooms, petFriendly, includeFlight, includeHotel, strings } = props;
+  const { adults, childCount: children, infants, rooms, petFriendly, includeFlight, includeHotel, strings } = props;
   const total = adults + children + infants;
   const maximum = includeFlight ? 9 : 12;
   return <div className="mx-auto w-full max-w-xl pb-2" data-mobile-package-travelers-rooms>

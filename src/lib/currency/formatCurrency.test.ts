@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { formatDisplayPrice } from "./formatCurrency";
+import { formatCurrency, formatDisplayPrice, formatFlightResultCurrency } from "./formatCurrency";
 import type { ExchangeRates } from "./exchangeRates";
 
 const rates: ExchangeRates = {
@@ -9,6 +9,28 @@ const rates: ExchangeRates = {
   EUR: 0.8,
   NGN: 1500,
 };
+
+test("web currency formatting uses clean narrow symbols without country prefixes", () => {
+  const expected = new Map([
+    ["NGN", "₦"],
+    ["USD", "$"],
+    ["CAD", "$"],
+    ["AUD", "$"],
+    ["GBP", "£"],
+    ["EUR", "€"],
+    ["JPY", "¥"],
+    ["CNY", "¥"],
+    ["HKD", "$"],
+    ["SGD", "$"],
+    ["NZD", "$"],
+    ["MXN", "$"],
+  ]);
+  for (const [currency, symbol] of expected) {
+    const formatted = formatCurrency(420, currency);
+    assert.ok(formatted.startsWith(symbol), `${currency}: ${formatted}`);
+    assert.doesNotMatch(formatted, /^(?:US|CA|A|CN|HK|S|NZ|MX)[$¥]/, `${currency}: ${formatted}`);
+  }
+});
 
 test("formatDisplayPrice preserves existing convertUsdEstimate behavior", () => {
   const price = formatDisplayPrice({
@@ -20,7 +42,9 @@ test("formatDisplayPrice preserves existing convertUsdEstimate behavior", () => 
     isFallbackRate: false,
   });
 
-  assert.equal(price.formatted, "NGN 15,000.00");
+  assert.equal(price.amount, 15000);
+  assert.match(price.formatted, /^₦/);
+  assert.doesNotMatch(price.formatted, /\bNGN\b/);
   assert.equal(price.currency, "NGN");
   assert.equal(price.isConvertedEstimate, true);
 });
@@ -45,7 +69,9 @@ test("formatDisplayPrice converts non-USD sources only when explicitly requested
 
   assert.equal(unchanged.currency, "EUR");
   assert.equal(unchanged.isConvertedEstimate, false);
-  assert.equal(converted.formatted, "NGN 15,000.00");
+  assert.equal(converted.amount, 15000);
+  assert.match(converted.formatted, /^₦/);
+  assert.doesNotMatch(converted.formatted, /\bNGN\b/);
   assert.equal(converted.currency, "NGN");
   assert.equal(converted.isConvertedEstimate, true);
 });
@@ -110,4 +136,26 @@ test("formatDisplayPrice reflects fallback-rate state in explanatory metadata", 
   assert.equal(price.isFallbackRate, true);
   assert.match(price.title ?? "", /Emergency fallback rates/);
   assert.match(price.supportingText ?? "", /Emergency fallback rates/);
+});
+
+test("Flight Results uses the native canonical symbols", () => {
+  assert.match(formatFlightResultCurrency(10, "NGN", { maximumFractionDigits: 0 }), /^₦\s?10$/);
+  for (const currency of ["USD", "CAD", "AUD"]) {
+    assert.match(formatFlightResultCurrency(10, currency, { maximumFractionDigits: 0 }), /^\$\s?10$/);
+  }
+  assert.match(formatFlightResultCurrency(10, "GBP", { maximumFractionDigits: 0 }), /^£\s?10$/);
+  assert.match(formatFlightResultCurrency(10, "EUR", { maximumFractionDigits: 0 }), /^€\s?10$/);
+});
+
+test("Flight Results preserves provider truth while converting EUR and GBP to NGN", () => {
+  const withGbp = { ...rates, GBP: 0.5 };
+  for (const [sourceCurrency, amount] of [["EUR", 8], ["GBP", 5]] as const) {
+    const price = formatDisplayPrice({ amount, sourceCurrency, displayCurrency: "NGN", convertSourceEstimate: true, useFlightResultSymbols: true, rates: withGbp, isFallbackRate: true });
+    assert.equal(price.currency, "NGN");
+    assert.match(price.formatted, /^₦/);
+    assert.equal(price.sourceCurrency, sourceCurrency);
+    assert.equal(price.isConvertedEstimate, true);
+    assert.equal(price.isFallbackRate, true);
+    assert.match(price.ariaLabel, /Display estimate converted from/);
+  }
 });

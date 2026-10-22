@@ -1,44 +1,676 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Bell } from "lucide-react";
-import type { HotelSearchParams, PublicHotelResult } from "@/lib/types";
-import { buildHotelPriceAlertPayload } from "@/lib/price-alerts/hotelPriceAlerts";
-import { getHotelPriceDetails } from "@/lib/hotels/hotelResultAvailability";
-import { useLocale } from "@/components/layout/LocaleProvider";
-import { translations as en } from "@/lib/i18n/en";
+import { Bell, X } from "lucide-react";
 
-export function HotelPriceAlertControl({ search, results }: { search: HotelSearchParams; results: PublicHotelResult[] }) {
+import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
+import { useLocale } from "@/components/layout/LocaleProvider";
+import { useRegion } from "@/components/region/RegionProvider";
+import { formatCurrency, formatDisplayPrice } from "@/lib/currency/formatCurrency";
+import {
+  buildHotelPriceAlertPayload,
+  HOTEL_ALERT_DEFAULT_DROP_PERCENT,
+  HOTEL_ALERT_MAX_DROP_PERCENT,
+  HOTEL_ALERT_MIN_DROP_PERCENT,
+  hotelAlertDesiredTotal,
+  hotelAlertDropPercentForTarget,
+  hotelAlertPriceBasis,
+  hotelPriceAlertMatchesSearch,
+  matchingHotelPriceAlert,
+  type HotelPriceAlertRecord,
+} from "@/lib/price-alerts/hotelPriceAlerts";
+import { translations as en } from "@/lib/i18n/en";
+import type { HotelSearchParams, PublicHotelResult } from "@/lib/types";
+import { cn } from "@/lib/utils";
+
+type Status = "idle" | "saving" | "saved" | "duplicate" | "error";
+type PreservedPausedTarget = { id: string; target: number; currency: string };
+
+function replaceAlert(alerts: HotelPriceAlertRecord[], alert: HotelPriceAlertRecord) {
+  return [...alerts.filter((item) => item.id !== alert.id), alert];
+}
+
+function formatDropPercent(value: number) {
+  if (Number.isInteger(value)) return String(value);
+  return value.toFixed(2).replace(/0+$/, "").replace(/\.$/, "");
+}
+
+export function HotelPriceAlertControl({
+  search,
+  hotel,
+  compactDesktop = false,
+}: {
+  search: HotelSearchParams;
+  hotel: PublicHotelResult;
+  compactDesktop?: boolean;
+}) {
   const router = useRouter();
   const { t: dictionary } = useLocale();
-  const t = useCallback((key: string) => dictionary[key] ?? en[key] ?? key, [dictionary]);
-  const currencies = useMemo(() => [...new Set(results.map(getHotelPriceDetails).filter((value): value is NonNullable<typeof value> => value !== null).map(({ currency }) => currency))], [results]);
-  const [open, setOpen] = useState(false); const [target, setTarget] = useState("");
-  const [status, setStatus] = useState<"idle" | "saving" | "saved" | "duplicate" | "error">("idle");
-  const currency = currencies[0] ?? "";
-  if (!currency) return null;
-  const create = async () => {
-    const value = Number(target);
-    if (!/^\d+(?:\.\d{1,2})?$/.test(target.trim()) || !Number.isFinite(value) || value <= 0) { setStatus("error"); return; }
-    setStatus("saving");
-    const response = await fetch("/api/price-alerts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(buildHotelPriceAlertPayload(search, value, currency)) });
-    if (response.status === 401) { router.push(`/auth/signin?callbackUrl=${encodeURIComponent(location.pathname + location.search)}`); return; }
-    if (response.status === 409) { setStatus("duplicate"); return; }
-    if (!response.ok) { setStatus("error"); return; }
-    setStatus("saved"); setOpen(false);
+  const { selectedOption } = useRegion();
+  const currencyRates = useCurrencyRates();
+  const t = useCallback(
+    (key: string) => dictionary[key] ?? en[key] ?? key,
+    [dictionary],
+  );
+
+  const priceBasis = useMemo(
+    () =>
+      hotelAlertPriceBasis(
+        [hotel],
+        selectedOption.currency,
+        currencyRates.rates,
+        currencyRates.isFallback,
+      ),
+    [currencyRates.isFallback, currencyRates.rates, hotel, selectedOption.currency],
+  );
+
+  const currentTotal = priceBasis?.amount ?? null;
+  const displayCurrency = priceBasis?.currency ?? selectedOption.currency;
+  const providerCurrentTotal = priceBasis?.providerAmount ?? null;
+  const providerCurrency = priceBasis?.providerCurrency ?? null;
+
+  const [alerts, setAlerts] = useState<HotelPriceAlertRecord[]>([]);
+  const [alertKnown, setAlertKnown] = useState(false);
+  const [authenticated, setAuthenticated] = useState<boolean | null>(null);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [desktopOpen, setDesktopOpen] = useState(false);
+  const [dropPercent, setDropPercent] = useState(HOTEL_ALERT_DEFAULT_DROP_PERCENT);
+  const [preservedPausedTarget, setPreservedPausedTarget] =
+    useState<PreservedPausedTarget | null>(null);
+  const [pending, setPending] = useState(false);
+  const [status, setStatus] = useState<Status>("idle");
+  const desktopDialogRef = useRef<HTMLDialogElement>(null);
+  const desktopTriggerRef = useRef<HTMLButtonElement>(null);
+  const desktopDialogVisible =
+    desktopOpen &&
+    currentTotal !== null &&
+    providerCurrentTotal !== null &&
+    Boolean(providerCurrency);
+
+  const matchingAlert = useMemo(
+    () => matchingHotelPriceAlert(alerts, search, hotel.id),
+    [alerts, search, hotel.id],
+  );
+  const isTracking = matchingAlert?.status === "ACTIVE";
+  const lookupKey = JSON.stringify([hotel.id, search.checkIn, search.checkOut, search.destination, search.guests, search.rooms]);
+  const [previousLookupKey, setPreviousLookupKey] = useState(lookupKey);
+  if (previousLookupKey !== lookupKey) {
+    setPreviousLookupKey(lookupKey);
+    setAlerts([]);
+    setAlertKnown(false);
+    setAuthenticated(null);
+  }
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void fetch("/api/price-alerts", {
+      cache: "no-store",
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        if (controller.signal.aborted) return;
+        if (response.status === 401) {
+          setAlerts([]);
+          setAuthenticated(false);
+          setAlertKnown(true);
+          return;
+        }
+        if (!response.ok) throw new Error("load failed");
+        const body = (await response.json()) as {
+          alerts?: HotelPriceAlertRecord[];
+        };
+        if (controller.signal.aborted) return;
+        setAlerts(Array.isArray(body.alerts) ? body.alerts : []);
+        setAuthenticated(true);
+        setAlertKnown(true);
+      })
+      .catch((error) => {
+        if ((error as Error).name !== "AbortError") {
+          setAlertKnown(true);
+          setAuthenticated(null);
+        }
+      });
+    return () => controller.abort();
+  }, [
+    hotel.id,
+    search.checkIn,
+    search.checkOut,
+    search.destination,
+    search.guests,
+    search.rooms,
+  ]);
+
+  useEffect(() => {
+    if (!desktopDialogVisible) return;
+    const dialog = desktopDialogRef.current;
+    if (!dialog) return;
+    const trigger = desktopTriggerRef.current;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    dialog.showModal();
+    return () => {
+      dialog.close();
+      document.body.style.overflow = previousOverflow;
+      trigger?.focus({ preventScroll: true });
+    };
+  }, [desktopDialogVisible]);
+
+  if (
+    currentTotal === null ||
+    providerCurrentTotal === null ||
+    !providerCurrency
+  ) {
+    return null;
+  }
+
+  const requireSignIn = () => {
+    router.push(
+      `/auth/signin?callbackUrl=${encodeURIComponent(
+        location.pathname + location.search,
+      )}`,
+    );
   };
-  return <section aria-label={t("travel.account.hotelAlert.title")} className="mb-4 rounded-xl border border-blue-100 bg-white p-3 shadow-[0_8px_24px_-22px_rgba(15,23,42,0.5)] sm:mb-5 sm:rounded-2xl sm:p-4 sm:shadow-sm">
-    <div className="flex items-center justify-between gap-3">
-      <div className="flex min-w-0 items-center gap-2.5 sm:items-start sm:gap-3">
-        <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#004BB8] sm:h-9 sm:w-9"><Bell className="h-4 w-4" aria-hidden="true" /></span>
-        <div className="min-w-0"><h2 className="truncate text-sm font-bold text-slate-950 sm:text-base">{t("travel.account.hotelAlert.title")}</h2><p className="mt-1 hidden text-sm text-slate-600 sm:block">{t("travel.account.hotelAlert.body")}</p></div>
+
+  const updateStatus = async (
+    alert: HotelPriceAlertRecord,
+    nextStatus: "ACTIVE" | "PAUSED",
+  ) => {
+    const response = await fetch(
+      `/api/price-alerts/${encodeURIComponent(alert.id)}`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: nextStatus }),
+      },
+    );
+    if (response.status === 401) {
+      setAuthenticated(false);
+      requireSignIn();
+      return null;
+    }
+    if (!response.ok) throw new Error("update failed");
+    const body = (await response.json()) as { alert: HotelPriceAlertRecord };
+    setAlerts((current) => replaceAlert(current, body.alert));
+    return body.alert;
+  };
+
+  const openEditor = (surface: "mobile" | "desktop") => {
+    if (pending || !alertKnown) return;
+    if (authenticated === false) {
+      requireSignIn();
+      return;
+    }
+
+    const existingTarget =
+      matchingAlert?.targetPrice != null &&
+      matchingAlert.currency?.toUpperCase() === providerCurrency
+        ? Number(matchingAlert.targetPrice)
+        : null;
+    const existingDropPercent =
+      existingTarget !== null &&
+      Number.isFinite(existingTarget) &&
+      existingTarget > 0
+        ? (1 - existingTarget / providerCurrentTotal) * 100
+        : null;
+    const preserveExistingTarget =
+      matchingAlert?.status === "PAUSED" &&
+      existingTarget !== null &&
+      existingDropPercent !== null &&
+      existingDropPercent >= HOTEL_ALERT_MIN_DROP_PERCENT &&
+      existingDropPercent <= HOTEL_ALERT_MAX_DROP_PERCENT;
+
+    setPreservedPausedTarget(
+      preserveExistingTarget
+        ? {
+            id: matchingAlert.id,
+            target: existingTarget,
+            currency: providerCurrency,
+          }
+        : null,
+    );
+    setDropPercent(
+      preserveExistingTarget && existingDropPercent !== null
+        ? existingDropPercent
+        : existingTarget !== null && Number.isFinite(existingTarget)
+          ? hotelAlertDropPercentForTarget(
+              providerCurrentTotal,
+              existingTarget,
+            )
+          : HOTEL_ALERT_DEFAULT_DROP_PERCENT,
+    );
+    setStatus("idle");
+    if (surface === "mobile") setMobileOpen(true);
+    else setDesktopOpen(true);
+  };
+
+  const closeEditor = (surface: "mobile" | "desktop") => {
+    if (pending) return;
+    if (surface === "mobile") setMobileOpen(false);
+    else setDesktopOpen(false);
+    setPreservedPausedTarget(null);
+    setStatus("idle");
+  };
+
+  const sliderProviderTarget = hotelAlertDesiredTotal(
+    providerCurrentTotal,
+    dropPercent,
+    providerCurrency,
+  );
+  const alertTarget =
+    preservedPausedTarget?.currency === providerCurrency
+      ? preservedPausedTarget.target
+      : sliderProviderTarget;
+
+  const sliderDisplayTarget = hotelAlertDesiredTotal(
+    currentTotal,
+    dropPercent,
+    displayCurrency,
+  );
+  const preservedDisplayTarget =
+    preservedPausedTarget?.currency === providerCurrency
+      ? formatDisplayPrice({
+          amount: preservedPausedTarget.target,
+          sourceCurrency: providerCurrency,
+          displayCurrency,
+          convertSourceEstimate: true,
+          rates: currencyRates.rates,
+          isFallbackRate: currencyRates.isFallback,
+        }).amount
+      : null;
+  const desiredTotal =
+    preservedPausedTarget?.currency === providerCurrency
+      ? preservedDisplayTarget
+      : sliderDisplayTarget;
+  const dropAmount =
+    desiredTotal === null ? 0 : Math.max(0, currentTotal - desiredTotal);
+
+  const saveTarget = async (close: () => void) => {
+    if (
+      alertTarget === null ||
+      !Number.isFinite(alertTarget) ||
+      alertTarget <= 0 ||
+      pending
+    ) {
+      setStatus("error");
+      return;
+    }
+
+    setPending(true);
+    setStatus("saving");
+    try {
+      const samePausedTarget =
+        (preservedPausedTarget
+          ? alerts.find(
+              (alert) =>
+                alert.id === preservedPausedTarget.id &&
+                alert.status === "PAUSED" &&
+                hotelPriceAlertMatchesSearch(alert, search, hotel.id) &&
+                alert.currency?.toUpperCase() ===
+                  preservedPausedTarget.currency,
+            )
+          : undefined) ??
+        alerts.find(
+          (alert) =>
+            alert.status === "PAUSED" &&
+            hotelPriceAlertMatchesSearch(alert, search, hotel.id) &&
+            Number(alert.targetPrice) === alertTarget &&
+            alert.currency?.toUpperCase() === providerCurrency,
+        );
+
+      if (samePausedTarget) {
+        const activated = await updateStatus(samePausedTarget, "ACTIVE");
+        if (!activated) return;
+        setStatus("saved");
+        close();
+        return;
+      }
+
+      const response = await fetch("/api/price-alerts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(
+          buildHotelPriceAlertPayload(
+            search,
+            alertTarget,
+            providerCurrency,
+            { id: hotel.id, name: hotel.name },
+          ),
+        ),
+      });
+      if (response.status === 401) {
+        setAuthenticated(false);
+        requireSignIn();
+        return;
+      }
+      const body = (await response.json().catch(() => ({}))) as {
+        alert?: HotelPriceAlertRecord;
+      };
+      if (response.status === 409) {
+        if (body.alert) {
+          setAlerts((current) => replaceAlert(current, body.alert!));
+        }
+        setStatus("duplicate");
+        return;
+      }
+      if (!response.ok || !body.alert) {
+        setStatus("error");
+        return;
+      }
+      setAlerts((current) => replaceAlert(current, body.alert!));
+      setStatus("saved");
+      close();
+    } catch {
+      setStatus("error");
+    } finally {
+      setPending(false);
+    }
+  };
+
+  const handleToggle = async (
+    next: boolean,
+    surface: "mobile" | "desktop",
+  ) => {
+    if (pending || !alertKnown) return;
+    setStatus("idle");
+
+    if (next) {
+      if (isTracking) return;
+      openEditor(surface);
+      return;
+    }
+
+    if (!matchingAlert || matchingAlert.status !== "ACTIVE") return;
+    setPending(true);
+    try {
+      await updateStatus(matchingAlert, "PAUSED");
+    } catch {
+      setStatus("error");
+    } finally {
+      setPending(false);
+    }
+  };
+
+  const formatTotal = (amount: number) =>
+    formatCurrency(amount, displayCurrency);
+  const editor = (surface: "mobile" | "desktop") => (
+    <>
+      <div className="rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2">
+        <p className={cn("text-[12px] font-medium leading-4", surface === "desktop" ? "text-[#59636a]" : "text-slate-500")}>
+          Current total
+        </p>
+        <p className={cn("mt-0.5 text-[21px] font-bold leading-[26px] tabular-nums", surface === "desktop" ? "text-[#192024]" : "text-slate-950")}>
+          {formatTotal(currentTotal)}
+        </p>
       </div>
-      <button type="button" className="min-h-9 shrink-0 rounded-lg border border-[#004BB8]/20 bg-blue-50 px-3 text-sm font-bold text-[#004BB8] transition hover:border-[#004BB8]/35 hover:bg-blue-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 sm:min-h-11 sm:rounded-xl sm:border-transparent sm:bg-[#004BB8] sm:px-4 sm:text-white sm:hover:bg-[#003f9c]" onClick={() => { setStatus("idle"); setOpen(true); }}>{t("travel.account.hotelAlert.create")}</button>
-    </div>
-    {open ? <div className="mt-3 grid grid-cols-[minmax(0,1fr)_auto] items-end gap-2 border-t border-slate-100 pt-3 sm:mt-4 sm:flex sm:flex-wrap sm:gap-3 sm:pt-4"><label className="min-w-0 text-xs font-semibold text-slate-700 sm:text-sm">{t("travel.account.hotelAlert.target")} ({currency})<input autoFocus inputMode="decimal" value={target} onChange={(event) => { setTarget(event.target.value); setStatus("idle"); }} className="mt-1 block min-h-10 w-full rounded-lg border border-slate-300 px-3 sm:min-h-11" /></label><button disabled={status === "saving"} type="button" onClick={() => void create()} className="min-h-10 rounded-lg bg-[#004BB8] px-3 text-sm font-bold text-white sm:min-h-11 sm:px-4">{status === "saving" ? t("loading") : t("travel.account.hotelAlert.save")}</button><button type="button" onClick={() => setOpen(false)} className="min-h-9 justify-self-start px-1 text-sm font-semibold text-slate-700 sm:min-h-11 sm:px-3">{t("cancel")}</button></div> : null}
-    {status === "saved" ? <p role="status" className="mt-3 text-sm font-semibold text-emerald-700">{t("travel.account.hotelAlert.saved")}</p> : null}
-    {status === "duplicate" ? <p role="status" className="mt-3 text-sm font-semibold text-amber-800">{t("travel.account.hotelAlert.duplicate")}</p> : null}
-    {status === "error" ? <p role="alert" className="mt-3 text-sm font-semibold text-red-700">{t("travel.account.hotelAlert.error")}</p> : null}
-  </section>;
+
+      <div>
+        <div className="flex items-center justify-between gap-3">
+          <span className={cn("text-[15px] font-semibold leading-5", surface === "desktop" ? "text-[#192024]" : "text-slate-950")}>
+            Price drop
+          </span>
+          <strong className="text-[15px] font-bold leading-5 text-[#004BB8]">
+            {formatDropPercent(dropPercent)}%
+          </strong>
+        </div>
+        <input
+          type="range"
+          min={HOTEL_ALERT_MIN_DROP_PERCENT}
+          max={HOTEL_ALERT_MAX_DROP_PERCENT}
+          step={1}
+          value={dropPercent}
+          aria-label="Price drop"
+          onChange={(event) => {
+            setPreservedPausedTarget(null);
+            setDropPercent(Number(event.target.value));
+            setStatus("idle");
+          }}
+          className="mt-2 h-2 w-full cursor-pointer accent-[#004BB8]"
+        />
+        <div className={cn("mt-1 flex justify-between text-[11px] leading-[15px]", surface === "desktop" ? "text-[#59636a]" : "text-slate-500")}>
+          <span>1%</span>
+          <span>15%</span>
+        </div>
+      </div>
+
+      <div className="grid min-h-[58px] grid-cols-2 gap-3 border-y border-slate-200 py-2">
+        <div>
+          <p className={cn("text-[12px] font-medium leading-4", surface === "desktop" ? "text-[#59636a]" : "text-slate-500")}>
+            Drops by
+          </p>
+          <p className={cn("mt-0.5 text-[15px] font-bold leading-5 tabular-nums", surface === "desktop" ? "text-[#192024]" : "text-slate-950")}>
+            {formatTotal(dropAmount)}
+          </p>
+        </div>
+        <div className="text-right">
+          <p className={cn("text-[12px] font-medium leading-4", surface === "desktop" ? "text-[#59636a]" : "text-slate-500")}>
+            Target total
+          </p>
+          <p className={cn("mt-0.5 text-[15px] font-bold leading-5 tabular-nums", surface === "desktop" ? "text-[#192024]" : "text-slate-950")}>
+            {desiredTotal === null ? "—" : formatTotal(desiredTotal)}
+          </p>
+        </div>
+      </div>
+
+      {status === "duplicate" ? (
+        <p role="status" className="text-[12px] font-medium leading-[18px] text-amber-800">
+          {t("travel.account.hotelAlert.duplicate")}
+        </p>
+      ) : null}
+      {status === "error" ? (
+        <p role="alert" className="text-[12px] font-medium leading-[18px] text-red-700">
+          {t("travel.account.hotelAlert.error")}
+        </p>
+      ) : null}
+
+      <button
+        disabled={pending || alertTarget === null}
+        type="button"
+        onClick={() =>
+          void saveTarget(() => closeEditor(surface))
+        }
+        className="min-h-[46px] w-full cursor-pointer rounded-[10px] bg-[#004BB8] px-4 text-[15px] font-bold leading-5 text-white transition hover:bg-[#003B91] disabled:cursor-default disabled:opacity-45"
+      >
+        {pending ? "Creating…" : "Create alert"}
+      </button>
+    </>
+  );
+
+  const mobileEditor =
+    mobileOpen && typeof document !== "undefined"
+      ? createPortal(
+          <div
+            className="fixed inset-0 z-[10030] flex items-end bg-slate-950/45 sm:hidden"
+            role="presentation"
+          >
+            <button
+              type="button"
+              aria-label="Close price alert"
+              className="absolute inset-0"
+              onClick={() => closeEditor("mobile")}
+            />
+            <section
+              role="dialog"
+              aria-modal="true"
+              aria-label={t("travel.account.hotelAlert.title")}
+              className="relative z-10 max-h-[92svh] w-full overflow-y-auto rounded-t-[22px] border border-b-0 border-slate-200 bg-white px-5 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-12px_36px_rgba(15,23,42,0.18)]"
+            >
+              <header className="flex items-start gap-2.5">
+                <div className="min-w-0 flex-1 pt-0.5">
+                  <h2 className="text-[20px] font-bold leading-[26px] text-slate-950">
+                    {t("travel.account.hotelAlert.title")}
+                  </h2>
+                  <p className="mt-0.5 text-[13px] leading-[19px] text-slate-600">
+                    {t("travel.account.hotelAlert.body")}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  aria-label="Close price alert"
+                  disabled={pending}
+                  onClick={() => closeEditor("mobile")}
+                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+                >
+                  <X className="h-[21px] w-[21px]" strokeWidth={1.5} aria-hidden="true" />
+                </button>
+              </header>
+              <div className="mt-3 grid gap-[13px]">
+                {editor("mobile")}
+              </div>
+            </section>
+          </div>,
+          document.body,
+        )
+      : null;
+
+  const compactDisabled =
+    pending || !alertKnown || (authenticated === null && !alertKnown);
+
+  return (
+    <section
+      aria-label={t("travel.account.hotelAlert.title")}
+      className={cn("mb-3 sm:mb-5", compactDesktop && "sm:mb-0")}
+    >
+      <div className="w-full sm:hidden">
+        <div className="flex min-h-[58px] items-center gap-3 rounded-xl border border-[#D8E1EC] bg-white px-3 py-2">
+          <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#F5F7FB]">
+            <Bell
+              className="h-[18px] w-[18px] text-[#142033]"
+              strokeWidth={2}
+              aria-hidden="true"
+            />
+          </span>
+          <div className="min-w-0 flex-1">
+            <h2 className="text-[14px] font-semibold leading-5 text-[#1A1A1A]">
+              Track prices
+            </h2>
+            <p className="mt-0.5 text-[12px] leading-4 text-[#595959]">
+              Get automatic alerts when prices change.
+            </p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-label={t("travel.account.hotelAlert.title")}
+            aria-checked={Boolean(isTracking)}
+            aria-busy={pending || !alertKnown}
+            disabled={compactDisabled}
+            onClick={() =>
+              void handleToggle(!isTracking, "mobile")
+            }
+            className={cn(
+              "relative inline-flex h-[24px] w-[42px] shrink-0 items-center rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 disabled:opacity-55",
+              isTracking
+                ? "border-[#004BB8] bg-[#004BB8]"
+                : "border-slate-300 bg-slate-200",
+            )}
+          >
+            <span
+              className={cn(
+                "inline-block h-5 w-5 rounded-full bg-white shadow-sm transition-transform",
+                isTracking ? "translate-x-[19px]" : "translate-x-0.5",
+              )}
+            />
+          </button>
+        </div>
+      </div>
+
+      <div className={cn("hidden rounded-2xl border border-[#CFE0F8] bg-[#EEF6FF] px-4 py-2.5 shadow-[0_10px_26px_-24px_rgba(15,23,42,0.45)] sm:block", compactDesktop && "sm:inline-flex sm:h-8 sm:items-center sm:rounded-lg sm:border-[#9299A9] sm:bg-transparent sm:px-3 sm:py-0 sm:shadow-none")}>
+        <div className={cn("flex items-center justify-between gap-3", compactDesktop && "sm:justify-start sm:gap-1")}>
+          <div className={cn("flex min-w-0 items-center gap-3", compactDesktop && "sm:gap-1")}>
+            <span className={cn("inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#004BB8]", compactDesktop && "sm:h-6 sm:w-6 sm:bg-transparent sm:text-[#192024]")}>
+              <Bell className="h-4 w-4" aria-hidden="true" />
+            </span>
+            <div className="min-w-0">
+              <h2 className={cn("truncate text-base font-bold text-[#192024]", compactDesktop && "sm:text-sm")}>
+                {t("travel.account.hotelAlert.title")}
+              </h2>
+            </div>
+          </div>
+          <button
+            ref={desktopTriggerRef}
+            type="button"
+            role="switch"
+            aria-checked={Boolean(isTracking)}
+            disabled={pending || !alertKnown}
+            onClick={() =>
+              void handleToggle(!isTracking, "desktop")
+            }
+            className={cn(
+              "relative inline-flex h-7 w-12 shrink-0 cursor-pointer items-center rounded-full border transition-colors disabled:cursor-default",
+              compactDesktop && "sm:h-[18px] sm:w-8",
+              isTracking
+                ? "border-[#004BB8] bg-[#004BB8]"
+                : "border-slate-300 bg-slate-200",
+            )}
+          >
+            <span
+              className={cn(
+                "inline-block h-6 w-6 rounded-full bg-white shadow-sm transition-transform",
+                compactDesktop && "sm:h-3.5 sm:w-3.5",
+                isTracking ? "translate-x-5" : "translate-x-0.5",
+                compactDesktop && isTracking && "sm:translate-x-[14px]",
+              )}
+            />
+          </button>
+        </div>
+
+        {status === "saved" ? (
+          <p role="status" className="mt-3 text-sm font-semibold text-emerald-700">
+            {t("travel.account.hotelAlert.saved")}
+          </p>
+        ) : null}
+      </div>
+
+      {mobileEditor}
+      {desktopOpen && typeof document !== "undefined"
+        ? createPortal(
+            <dialog
+              ref={desktopDialogRef}
+              aria-modal="true"
+              aria-label={t("travel.account.hotelAlert.title")}
+              onCancel={(event) => {
+                event.preventDefault();
+                closeEditor("desktop");
+              }}
+              onMouseDown={(event) => {
+                const bounds = event.currentTarget.getBoundingClientRect();
+                if (
+                  event.clientX < bounds.left ||
+                  event.clientX > bounds.right ||
+                  event.clientY < bounds.top ||
+                  event.clientY > bounds.bottom
+                ) closeEditor("desktop");
+              }}
+              className="fixed inset-0 m-auto w-[min(29rem,calc(100vw-2rem))] max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-lg border border-slate-200 bg-white p-5 text-[#192024] shadow-2xl backdrop:bg-slate-950/50"
+            >
+              <header className="mb-4 flex items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-lg font-bold text-[#192024]">
+                    {t("travel.account.hotelAlert.title")}
+                  </h2>
+                  <p className="mt-0.5 text-xs font-medium leading-4 text-[#59636a]">
+                    {t("travel.account.hotelAlert.body")}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  aria-label="Close price alert"
+                  disabled={pending}
+                  onClick={() => closeEditor("desktop")}
+                  className="inline-flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full text-[#59636a] hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 disabled:cursor-default disabled:opacity-50"
+                >
+                  <X className="h-5 w-5" aria-hidden="true" />
+                </button>
+              </header>
+              <div className="grid gap-[13px]">
+                {editor("desktop")}
+              </div>
+            </dialog>,
+            document.body,
+          )
+        : null}
+    </section>
+  );
 }

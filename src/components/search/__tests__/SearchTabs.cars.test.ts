@@ -54,7 +54,7 @@ test("source contract: homepage Rental Dates alone uses a decorative Calendar an
     carsBranch.indexOf('<CarsSummaryField id="homepage-cars-rental-dates"'),
     carsBranch.indexOf("<CarsRentalDatePickerContent"),
   );
-  assert.match(rentalDatesLauncher, /leadingIcon=\{<Calendar aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-400" \/>\}/);
+  assert.match(rentalDatesLauncher, /leadingIcon=\{<Calendar aria-hidden="true" className="h-\[18px\] w-\[18px\] shrink-0 text-\[#334155\] sm:h-4 sm:w-4 sm:text-slate-500" \/>\}/);
   assert.match(rentalDatesLauncher, /showChevron=\{false\}/);
   assert.match(source, /showChevron = true/);
   assert.match(source, /\{showChevron \? <ChevronDown aria-hidden="true"/);
@@ -82,13 +82,29 @@ test("wide homepage Cars renders one conditional return-location field beside pi
   assert.match(carsBranch, /Different return location[\s\S]*?\{!compactHero \? carsReturnLocationField : null\}/);
   assert.match(carsBranch, /homepage-cars-driver-age[\s\S]*?Different return location/);
   assert.match(source, /if \(key === "returnToDifferentLocation" && value === false\) \{\s*next\.dropoffLocation = "";/);
-  assert.match(returnLocationField, /sm:!bg-white/);
+  assert.match(returnLocationField, /border-slate-300 bg-white/);
 });
 
-test("Cars autocomplete uses responsive presentation and input anchoring", () => {
+test("Cars CSS-hidden desktop autocompletes are logically closed on mobile", () => {
   assert.match(carsBranch, /ref=\{carsSearchSurfaceRef\} data-testid="cars-search-surface"/);
   const allCarsFields = carsBranch + returnLocationField;
-  assert.equal((allCarsFields.match(/presentation="responsive"/g) ?? []).length, 2);
+  assert.equal(
+    (allCarsFields.match(/presentation=\{mobileHomepage \? "desktop" : "responsive"\}/g) ?? []).length,
+    2,
+  );
+  assert.match(source, /const isSmCarsHomepageViewport = useSyncExternalStore/);
+  assert.match(allCarsFields, /hidden sm:block[\s\S]*?<CarLocationAutocomplete/);
+  assert.match(
+    allCarsFields,
+    /isOpen=\{\(!mobileHomepage \|\| isSmCarsHomepageViewport\) && carsOpenPicker === "pickup"\}/,
+  );
+  assert.match(
+    allCarsFields,
+    /isOpen=\{\(!mobileHomepage \|\| isSmCarsHomepageViewport\) && carsOpenPicker === "dropoff"\}/,
+  );
+  assert.ok(
+    (allCarsFields.match(/if \(mobileHomepage && !isSmCarsHomepageViewport\) return/g) ?? []).length >= 2,
+  );
   assert.doesNotMatch(allCarsFields, /fieldAnchorRef=|searchCardRef=/);
   assert.match(returnLocationField, /value=\{carsValues\.dropoffLocation\}/);
 });
@@ -116,7 +132,8 @@ test("homepage Cars picker source contracts use the shared experiences", () => {
 test("desktop Cars pickers stay open for selection and use viewport-safe homepage placement", () => {
   for (const id of ["homepage-cars-rental-dates", "homepage-cars-time-range", "homepage-cars-driver-age"]) {
     const start = carsBranch.indexOf(`<CarsSummaryField id="${id}"`);
-    const invocation = carsBranch.slice(start, carsBranch.indexOf("\n", start));
+    const invocation = carsBranch.slice(start, carsBranch.indexOf("</CarsSummaryField>", start));
+    assert.ok(start >= 0, id);
     assert.match(invocation, /desktopPlacement="auto"/, id);
   }
 
@@ -132,15 +149,14 @@ test("desktop Cars pickers stay open for selection and use viewport-safe homepag
   assert.doesNotMatch(agePicker, /setCarsOpenPicker\(null\)/);
 });
 
-test("mobile homepage Cars launches every picker in the shared full-screen shell", () => {
+test("mobile homepage Cars launches every picker in the carsMain full-screen shell", () => {
   assert.match(carsBranch, /mobilePresentation=\{mobileHomepage \? "shell" : "inline"\}/);
   assert.match(carsBranch, /mobileHomepage && tab === "cars"/);
-  assert.match(carsBranch, /<MobileCarLocationPicker/);
-  assert.match(carsBranch, /<MobileCarTimePickerDialog/);
-  assert.match(carsBranch, /<MobileCarDriverAgePickerDialog/);
+  assert.match(carsBranch, /<MobileCarLocationPicker[\s\S]*?presentation="carsMain"/);
+  assert.match(carsBranch, /<MobileDatePickerDialog[\s\S]*?presentation="carsMain"/);
+  assert.match(carsBranch, /<MobileCarTimePickerDialog presentation="carsMain"/);
+  assert.match(carsBranch, /<MobileCarDriverAgePickerDialog presentation="carsMain"/);
   assert.match(carsBranch, /\(\["pickup", "dropoff"\] as const\)\.map/);
-  assert.match(carsBranch, /<MobileCarLocationPicker/);
-  assert.match(carsBranch, /<MobileDatePickerDialog/);
 });
 
 test("mobile Cars fields stay launchers without inline panels or persistent open rings", () => {
@@ -186,6 +202,18 @@ test("Cars results URL retains every required parameter and validation", () => {
   assert.match(submit, /router\.push\(href\)/);
 });
 
+test("homepage Cars preserves canonical location targets into Results", () => {
+  const submit = source.slice(
+    source.indexOf("const onCarsSubmit"),
+    source.indexOf("const isCarsSearchDisabled"),
+  );
+  assert.match(submit, /carsValues\.pickupLocationTarget\?\.trim\(\)/);
+  assert.match(submit, /params\.set\("pickupLocationTarget", pickupLocationTarget\)/);
+  assert.match(submit, /params\.set\("dropoffLocationTarget", dropoffLocationTarget\)/);
+  assert.match(carsBranch, /onSelect=\{\(suggestion\) => updateCarsValue\("pickupLocationTarget", serializeCarLocationTarget\(suggestion\)\)\}/);
+  assert.match(carsBranch, /onCommit=\{\(value, suggestion\) => \{/);
+});
+
 test("valid Cars submission signals page pending only after validation and href construction", () => {
   const submit = source.slice(source.indexOf("const onCarsSubmit"), source.indexOf("const isCarsSearchDisabled"));
   const validationIndex = submit.indexOf("validateCarsForm");
@@ -203,4 +231,21 @@ test("valid Cars submission signals page pending only after validation and href 
   assert.ok(pendingIndex < progressIndex);
   assert.ok(progressIndex < navigationIndex);
   assert.doesNotMatch(submit, /setTimeout|sleep|delay\(/);
+});
+
+test("homepage Cars mobile-only age guard runs before URL, recent search, and navigation", () => {
+  const submit = source.slice(
+    source.indexOf("const onCarsSubmit"),
+    source.indexOf("const isCarsSearchDisabled"),
+  );
+  const ageGuard = submit.indexOf("mobileCarsDriverAgeMissing");
+  const href = submit.indexOf("const href = `/cars/results?");
+  const recentSearch = submit.indexOf("buildCarRecentSearch");
+  const navigation = submit.indexOf("router.push(href)");
+
+  assert.ok(ageGuard >= 0);
+  assert.ok(ageGuard < href);
+  assert.ok(ageGuard < recentSearch);
+  assert.ok(ageGuard < navigation);
+  assert.match(source, /const mobileCarsDriverAgeMissing = mobileHomepage && carsDriverAgeIsEmpty/);
 });

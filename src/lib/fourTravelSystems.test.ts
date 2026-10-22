@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
+import { authenticatedProfileSections } from "../../apps/mobile/src/features/profile/profileModel";
 
 const dashboard = readFileSync("src/components/dashboard/DashboardGrid.tsx", "utf8");
 const header = readFileSync("src/components/layout/AppHeader.tsx", "utf8");
@@ -15,10 +16,14 @@ test("web exposes only its three canonical travel destinations", () => {
   assert.doesNotMatch(header, /accountMenu\.notifications|href: "\/notifications"/);
 });
 
-test("mobile exposes all four canonical travel systems", () => {
-  for (const system of ["My Trips", "Saved & Recent", "Price Alerts", "Notifications"]) {
-    assert.match(mobileProfile, new RegExp(system.replace("&", "&")));
+test("mobile exposes travel destinations through its localized profile and Trips tab", () => {
+  const items = authenticatedProfileSections.flatMap(section => section.items);
+  for (const [label, href] of [["savedItems", "/saved"], ["recentSearches", "/recent"], ["priceAlerts", "/price-alerts"]]) {
+    assert.deepEqual(items.find(item => item.label === label)?.destination, { kind: "native", href });
   }
+  assert.match(mobileProfile, /authenticatedProfileSections/);
+  assert.match(mobileProfile, /accessibilityLabel=\{t\("notifications"\)\}/);
+  assert.match(mobileProfile, /router\.push\("\/notifications"\)/);
   assert.match(mobileTrips, /ScreenHeader title="My Trips"/);
   assert.doesNotMatch(`${mobileProfile}\n${mobileTrips}`, /Route Watch|Travel Watchlist|Saved Trips|Add a trip/);
 });

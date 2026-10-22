@@ -1,39 +1,50 @@
 "use client";
 
 import Image from "next/image";
+import { flightBaggageTerms, flightFareDetailCabins, flightOnboardFeatureLabel } from "@/lib/flights/flightFareInformation";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useSession } from "next-auth/react";
 import {
   ArrowLeft,
   Check,
-  LockKeyhole,
+  ExternalLink,
+  Clock3,
   Luggage,
   Leaf,
   Info,
+  Heart,
   MinusCircle,
-  Pencil,
   Plane,
+  Share2,
 } from "lucide-react";
 
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
-import { FlightEditSearchDrawer, type FlightEditSearchValue } from "@/components/search/FlightEditSearchDrawer";
+import { MobileFlightDetailsActionBar, mobileFlightDetailsNavSurfaceClass } from "./MobileFlightDetailsActionBar";
 import { FlightDetailsLoadingShell } from "@/components/results/flightDetails/FlightDetailsLoadingShell";
+import { FlightIdentityMark } from "@/components/results/flightDetails/FlightIdentityMark";
+import { MobileNativeFareRail } from "@/components/results/flightDetails/MobileNativeFareRail";
+import { MobileNativeFareInformationDeck, type MobileFareInfoTab } from "@/components/results/flightDetails/MobileNativeFareInformationDeck";
 import { useLocale } from "@/components/layout/LocaleProvider";
+import { translations as enTranslations } from "@/lib/i18n/en";
 import { useRegion } from "@/components/region/RegionProvider";
-import { canUseOfferAirlineLogo, compactFareTerms, formatItineraryDepartureDate, getCenteredFareScrollLeft, resolveSegmentCarrierName } from "@/components/results/flightDetails/flightDetailsPresentation";
-import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
+import { canUseOfferAirlineLogo, compactFareTerms, formatItineraryDepartureDate, resolveDealIdentityMark, resolveSegmentCarrierName } from "@/components/results/flightDetails/flightDetailsPresentation";
+import { formatDisplayPrice, formatFlightResultCurrency } from "@/lib/currency/formatCurrency";
 import type { ExchangeRates } from "@/lib/currency/exchangeRates";
 import type {
   FlightDetailsFareChoice,
   FlightDetailsOffer,
   FlightDetailsResponse,
 } from "@/lib/flights/flightDetailsContract";
-import { flightDetailsRouteLabel, flightDetailsTotalLabel } from "@/lib/flights/flightDetailsContract";
-import { appendFlightLegParams, projectSearchLegs } from "@/lib/flights/flightSearchJourney";
+import { flightDetailsRouteLabel } from "@/lib/flights/flightDetailsContract";
+import { nativeFlightDealSelection } from "@/lib/flights/nativeFlightDealSelection";
 import type { FlightLeg, FlightProviderCondition, FlightSegment } from "@/lib/types";
+import { readSavedItemIds, toggleSavedItemId, writeSavedItemIds } from "@/lib/saved-items-local";
+import { invalidateSavedFlightsClientCache } from "@/lib/saved-flight-events";
+import flightDetailsHero from "../../../../apps/mobile/assets/heroes/flight-details-hero.webp";
 
-type FareTab = "deals" | "details" | "conditions" | "extras";
+type FareTab = MobileFareInfoTab;
 const fareTabs: Array<{ id: FareTab; label: string }> = [
   { id: "deals", label: "Compare deals" },
   { id: "details", label: "Fare details" },
@@ -43,9 +54,10 @@ const fareTabs: Array<{ id: FareTab; label: string }> = [
 
 export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resultsHref: string }) {
   const searchParams = useSearchParams();
-  const router = useRouter();
+  const { status: sessionStatus } = useSession();
   const detailsQuery = searchParams.toString();
-  const { locale } = useLocale();
+  const { locale, t: dictionary } = useLocale();
+  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const { selectedOption } = useRegion();
   const currencyRates = useCurrencyRates();
   const [response, setResponse] = useState<FlightDetailsResponse | null>(null);
@@ -55,12 +67,15 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
   const [selectedFareKey, setSelectedFareKey] = useState("");
   const [reloadToken, setReloadToken] = useState(0);
   const [activeTab, setActiveTab] = useState<FareTab>("deals");
-  const [editSearchOpen, setEditSearchOpen] = useState(false);
+  const [selectedDealOfferId, setSelectedDealOfferId] = useState<string | null>(null);
+  const [localSavedFlightIds, setLocalSavedFlightIds] = useState<string[]>([]);
+  const [savedFlightBackendId, setSavedFlightBackendId] = useState<string | null>(null);
+  const [savedFlightPending, setSavedFlightPending] = useState(false);
+  const [shareFeedback, setShareFeedback] = useState("");
   const headingRef = useRef<HTMLHeadingElement>(null);
-  const fareRailRef = useRef<HTMLDivElement>(null);
   const fareButtonRefs = useRef<Array<HTMLButtonElement | null>>([]);
-  const initialFareAlignmentRef = useRef("");
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
+
 
   useEffect(() => {
     const controller = new AbortController();
@@ -89,40 +104,62 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
     return () => controller.abort();
   }, [detailsQuery, id, reloadToken]);
 
+  useEffect(() => {
+    if (sessionStatus === "authenticated" || typeof window === "undefined") return;
+    const syncSavedFlights = () => setLocalSavedFlightIds(readSavedItemIds());
+    const frame = window.requestAnimationFrame(syncSavedFlights);
+    window.addEventListener("storage", syncSavedFlights);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("storage", syncSavedFlights);
+    };
+  }, [sessionStatus]);
+
+
+
   const available = response?.status === "available" ? response : null;
   const fareChoices = useMemo(() => available?.fareChoices ?? [], [available]);
   const selectedFare = fareChoices.find((fare) => fare.key === selectedFareKey) ?? fareChoices[0];
   const selectedOffer = selectedFare?.offer ?? available?.flight;
-  const handoff = selectedFare?.handoff ?? available?.handoff ?? { available: false as const };
-  const canContinue = Boolean(selectedOffer && handoff.available);
+  const selectedDeal = selectedFare ? nativeFlightDealSelection(selectedDealOfferId, selectedFare) : null;
+  const activeOffer = selectedDeal?.offer ?? selectedOffer;
+  const savedFlightKey = selectedOffer?.id ?? id;
+  const savedLookupKey = `${sessionStatus}:${savedFlightKey}`;
+  const [previousSavedLookupKey, setPreviousSavedLookupKey] = useState(savedLookupKey);
+  if (previousSavedLookupKey !== savedLookupKey) {
+    setPreviousSavedLookupKey(savedLookupKey);
+    setSavedFlightBackendId(null);
+  }
+  const mobilePricesReady = !currencyRates.isLoading;
 
   useEffect(() => {
-    if (fareChoices.length < 2 || window.matchMedia("(min-width: 640px)").matches) return;
-    const initialSelectedFareKey = fareChoices.find((fare) => fare.selectedOffer)?.key ?? fareChoices[0]?.key;
-    if (!initialSelectedFareKey || selectedFareKey !== initialSelectedFareKey) return;
-    const alignmentKey = `${id}:${reloadToken}:${initialSelectedFareKey}:${fareChoices.map((fare) => fare.key).join("|")}`;
-    if (initialFareAlignmentRef.current === alignmentKey) return;
-    const rail = fareRailRef.current;
-    const selectedIndex = fareChoices.findIndex((fare) => fare.key === initialSelectedFareKey);
-    const selectedElement = fareButtonRefs.current[selectedIndex];
-    if (!rail || !selectedElement) return;
-    const railRect = rail.getBoundingClientRect();
-    const selectedRect = selectedElement.getBoundingClientRect();
-    const clampedLeft = getCenteredFareScrollLeft({
-      railLeft: railRect.left,
-      railScrollLeft: rail.scrollLeft,
-      railClientWidth: rail.clientWidth,
-      railScrollWidth: rail.scrollWidth,
-      selectedLeft: selectedRect.left,
-      selectedWidth: selectedElement.offsetWidth,
-    });
-    rail.scrollTo({ left: clampedLeft, behavior: "auto" });
-    initialFareAlignmentRef.current = alignmentKey;
-  }, [fareChoices, id, reloadToken, selectedFareKey]);
+    if (sessionStatus !== "authenticated" || !selectedOffer) {
+      return;
+    }
+
+    const controller = new AbortController();
+    fetch("/api/dashboard/saved?type=flight", {
+      headers: { Accept: "application/json" },
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        if (!response.ok) return null;
+        return response.json() as Promise<{ items?: Array<{ id: string; payload?: Record<string, unknown> }> }>;
+      })
+      .then((data) => {
+        if (controller.signal.aborted) return;
+        const matching = data?.items?.find((item) => item.payload?.flightResultId === selectedOffer.id);
+        setSavedFlightBackendId(matching?.id ?? null);
+      })
+      .catch(() => undefined);
+
+    return () => controller.abort();
+  }, [selectedOffer, sessionStatus]);
 
   function selectFare(index: number) {
     const fare = fareChoices[index];
     if (!fare) return;
+    setSelectedDealOfferId(null);
     setSelectedFareKey(fare.key);
   }
 
@@ -146,6 +183,16 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
 
   async function continueToOffer(offerId: string) {
     if (redirecting) return;
+    const providerWindow = window.open("about:blank", "_blank");
+    if (!providerWindow) {
+      setError("Allow pop-ups to open this provider link in a new tab.");
+      return;
+    }
+    providerWindow.opener = null;
+    const referrerPolicy = providerWindow.document.createElement("meta");
+    referrerPolicy.name = "referrer";
+    referrerPolicy.content = "no-referrer";
+    providerWindow.document.head.append(referrerPolicy);
     setRedirecting(true);
     setError("");
     try {
@@ -156,14 +203,17 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
       });
       const data = (await result.json()) as { url?: string; error?: string; code?: string };
       if (result.status === 409 && data.code === "offer_changed") {
+        if (!providerWindow.closed) providerWindow.close();
         setNotice("The provider updated this offer. Review the refreshed price and fare terms before continuing.");
         setReloadToken((value) => value + 1);
         setRedirecting(false);
         return;
       }
       if (!result.ok || !data.url) throw new Error(data.error || "This provider link is unavailable.");
-      window.location.href = data.url;
+      providerWindow.location.replace(data.url);
+      setRedirecting(false);
     } catch (redirectError) {
+      if (!providerWindow.closed) providerWindow.close();
       setError(redirectError instanceof Error ? redirectError.message : "This provider link is unavailable.");
       setRedirecting(false);
     }
@@ -180,25 +230,13 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
     flight.originAirport,
     flight.destinationAirport,
   );
-  const travelers = readTravelerSummary(available.search);
-  const tripType = available.search.tripType === "round-trip" ? "Round-trip" : available.search.tripType === "multi-city" ? `Multi-city • ${legs.length} flights` : "One-way";
-  const tripLine = `${tripType} • ${travelers.count} ${travelers.count === 1 ? "traveler" : "travelers"}`;
-  const date = available.search.tripType === "multi-city"
-    ? available.search.legs.map((leg) => formatTripDate(leg.departureDate, locale)).join(" • ")
-    : available.search.returnDate
-    ? `${formatTripDate(available.search.departureDate, locale)} – ${formatTripDate(available.search.returnDate, locale)}`
-    : formatTripDate(available.search.departureDate, locale);
-  const providerPrice = selectedOffer
-    ? formatDisplayPrice({
-        amount: selectedOffer.price,
-        sourceCurrency: selectedOffer.currency,
-        displayCurrency: selectedOption.currency,
-        convertUsdEstimate: true,
-        rates: currencyRates.rates,
-        isFallbackRate: currencyRates.isFallback,
-      })
-    : null;
-
+  const travelers = readTravelerSummary(available.search, locale, t);
+  const tripType = available.search.tripType === "multi-city"
+    ? `${t("multiCity")} • ${new Intl.NumberFormat(locale).format(legs.length)} ${t("flights")}`
+    : t(available.search.tripType === "round-trip" ? "roundTrip" : "oneWay");
+  const tripLine = `${tripType} • ${new Intl.NumberFormat(locale).format(travelers.count)} ${t(travelers.count === 1 ? "deals.travelerSingular" : "deals.travelerPlural")}`;
+  const nativeTripType = available.search.tripType === "round-trip" ? "Round-trip" : available.search.tripType === "multi-city" ? "Multi-city" : "One-way";
+  const nativeTripLine = `${nativeTripType} · ${available.search.travelers} traveler${available.search.travelers === 1 ? "" : "s"} · ${titleCase(available.search.cabinClass)}`;
   const handleTabKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
     const offset = event.key === "ArrowRight" ? 1 : event.key === "ArrowLeft" ? -1 : 0;
     if (!offset) return;
@@ -208,154 +246,1386 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
     tabRefs.current[next]?.focus();
   };
 
-  const submitEditedSearch = (value: FlightEditSearchValue) => {
-    const projected = projectSearchLegs(value.tripType, value.legs);
-    const params = new URLSearchParams({ tripType: value.tripType, origin: projected.origin, destination: projected.destination, departureDate: value.departureDate, adults: String(value.adults), children: String(value.children), infants: String(value.infants), travelers: String(value.adults + value.children + value.infants), cabinClass: value.cabinClass });
-    if (value.tripType === "round-trip" && value.returnDate) params.set("returnDate", value.returnDate);
-    if (value.tripType === "multi-city") appendFlightLegParams(params, value.legs);
-    setEditSearchOpen(false);
-    router.push(`/flights/results?${params.toString()}`);
-  };
+  async function toggleSavedFlight() {
+    if (!selectedOffer || savedFlightPending) return;
+    setSavedFlightPending(true);
+
+    try {
+      if (sessionStatus === "authenticated") {
+        if (savedFlightBackendId) {
+          const response = await fetch("/api/dashboard/saved", {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json", Accept: "application/json" },
+            body: JSON.stringify({ type: "flight", id: savedFlightBackendId }),
+          });
+          if (response.ok) { setSavedFlightBackendId(null); invalidateSavedFlightsClientCache(); }
+          return;
+        }
+
+        const response = await fetch("/api/dashboard/saved", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify({
+            type: "flight",
+            provider: selectedOffer.provider,
+            airlineName: selectedOffer.airlineName,
+            flightNumber: selectedOffer.flightNumber ?? null,
+            originAirport: selectedOffer.originAirport,
+            destinationAirport: selectedOffer.destinationAirport,
+            departureTime: selectedOffer.departureTime,
+            arrivalTime: selectedOffer.arrivalTime,
+            price: selectedOffer.price,
+            currency: selectedOffer.currency,
+            payload: {
+              flightResultId: selectedOffer.id,
+              detailsHref: window.location.pathname + window.location.search,
+            },
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json() as { item?: { id?: string } };
+          setSavedFlightBackendId(data.item?.id ?? selectedOffer.id);
+          invalidateSavedFlightsClientCache();
+        } else if (response.status === 409) {
+          const existing = await fetch("/api/dashboard/saved?type=flight", {
+            headers: { Accept: "application/json" },
+          });
+          if (existing.ok) {
+            const data = await existing.json() as { items?: Array<{ id: string; payload?: Record<string, unknown> }> };
+            const matching = data.items?.find((item) => item.payload?.flightResultId === selectedOffer.id);
+            if (matching) { setSavedFlightBackendId(matching.id); invalidateSavedFlightsClientCache(); }
+          }
+        }
+        return;
+      }
+
+      setLocalSavedFlightIds((current) => {
+        const next = toggleSavedItemId(current, savedFlightKey);
+        writeSavedItemIds(next);
+        return next;
+      });
+    } finally {
+      setSavedFlightPending(false);
+    }
+  }
+
+  async function shareFlight() {
+    const url = window.location.href;
+    const shareData = {
+      title: route,
+      text: `${route} · ${tripLine}`,
+      url,
+    };
+
+    try {
+      if (navigator.share) await navigator.share(shareData);
+      else {
+        await navigator.clipboard.writeText(url);
+        setShareFeedback("Flight link copied");
+        window.setTimeout(() => setShareFeedback(""), 1800);
+      }
+    } catch (shareError) {
+      if (shareError instanceof DOMException && shareError.name === "AbortError") return;
+      setShareFeedback("Unable to share this flight");
+      window.setTimeout(() => setShareFeedback(""), 1800);
+    }
+  }
+
+  const flightSaved = sessionStatus === "authenticated"
+    ? Boolean(savedFlightBackendId)
+    : localSavedFlightIds.includes(savedFlightKey);
 
   return (
-    <main className="flex-1 bg-white pb-[calc(6.75rem+env(safe-area-inset-bottom))] pt-2 text-[#142033] sm:bg-[#F7F9FC] sm:pt-4 lg:pb-16 lg:pt-3">
-      <div className="mx-auto w-full max-w-[1470px] px-0 sm:px-6 lg:px-[34px]">
-        <Link href={resultsHref} className="mb-3 ml-4 inline-flex min-h-10 items-center gap-2 text-[13px] font-semibold text-[#075EE8] hover:text-[#004BB8] focus-visible:rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 sm:ml-0">
-          <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back to results
-        </Link>
-        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,2.45fr)_minmax(310px,0.95fr)] lg:gap-7">
-          <section className="min-w-0 border-y border-[#E2E8F0] bg-white p-4 sm:rounded-[13px] sm:border sm:p-6 sm:shadow-[0_3px_15px_rgba(15,23,42,0.045)] lg:p-6" aria-labelledby="flight-details-heading">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <h1 ref={headingRef} id="flight-details-heading" tabIndex={-1} className="text-[22px] font-bold leading-tight tracking-[-0.025em] text-slate-950 outline-none sm:text-[26px]">{route}</h1>
-                <p className="mt-1.5 text-[13px] font-medium text-slate-600">{tripLine}</p>
+    <main className="flex-1 bg-white pb-[calc(1.75rem+env(safe-area-inset-bottom))] text-slate-900 sm:bg-[#F7F9FC] sm:text-[#142033] sm:pb-16 sm:pt-4 lg:pt-3">
+      <MobileFlightDetailsActionBar
+        back={(
+          <Link href={resultsHref} aria-label="Back to results" className={`${mobileFlightDetailsNavSurfaceClass} w-11 text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35`}>
+            <ArrowLeft className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
+          </Link>
+        )}
+        actions={(
+          <>
+            <button type="button" aria-label={flightSaved ? "Remove saved flight" : "Save flight"} aria-pressed={flightSaved} disabled={savedFlightPending} onClick={() => void toggleSavedFlight()} className="inline-flex h-11 w-11 items-center justify-center shrink-0 rounded-full text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#075EE8]/35 disabled:cursor-wait disabled:opacity-60">
+              <Heart className="h-5 w-5" strokeWidth={2} fill={flightSaved ? "currentColor" : "none"} aria-hidden="true" />
+            </button>
+            <button type="button" aria-label="Share flight" onClick={() => void shareFlight()} className="inline-flex h-11 w-11 items-center justify-center shrink-0 rounded-full text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#075EE8]/35">
+              <Share2 className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
+            </button>
+          </>
+        )}
+      />
+      <span className="sr-only" role="status" aria-live="polite">{shareFeedback}</span>
+      <div className="mx-auto w-full max-w-[1080px] px-0 sm:px-6 lg:px-[30px]">
+        <div className="min-w-0">
+          <section className="min-w-0 border-[#E2E8F0] bg-white sm:rounded-[13px] sm:border sm:bg-white sm:shadow-[0_3px_15px_rgba(15,23,42,0.045)]" aria-labelledby="flight-details-heading">
+            <div data-testid="flight-details-hero" className="relative flex min-h-[254px] flex-col justify-end overflow-hidden px-[18px] pb-[122px] pt-4 sm:min-h-[280px] sm:justify-end sm:rounded-t-[12px] sm:px-6 sm:pb-14 sm:pt-5 lg:min-h-[300px]">
+              <Image src={flightDetailsHero} alt="" fill priority sizes="(min-width: 1024px) 68vw, 100vw" className="object-cover" />
+              <div
+                data-flight-details-desktop-navigation
+                className="pointer-events-none absolute inset-x-0 top-0 z-20 hidden items-start justify-between p-4 sm:flex lg:p-5"
+              >
+                <Link
+                  href={resultsHref}
+                  aria-label="Back to flight results"
+                  className="pointer-events-auto inline-flex size-11 items-center justify-center rounded-full border border-white/55 bg-white/90 text-[#07133B] shadow-[0_2px_8px_rgba(15,23,42,0.14)] backdrop-blur-md transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
+                >
+                  <ArrowLeft className="h-[18px] w-[18px]" strokeWidth={2} aria-hidden="true" />
+                </Link>
+                <div data-flight-details-desktop-actions className="pointer-events-auto flex shrink-0 items-center gap-2">
+                  <button
+                    type="button"
+                    aria-label={flightSaved ? "Remove saved flight" : "Save flight"}
+                    aria-pressed={flightSaved}
+                    disabled={savedFlightPending}
+                    onClick={() => void toggleSavedFlight()}
+                    className={`inline-flex size-11 items-center justify-center rounded-full border border-white/55 bg-white/90 shadow-[0_2px_8px_rgba(15,23,42,0.14)] backdrop-blur-md transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 disabled:cursor-wait disabled:opacity-60 ${flightSaved ? "text-[#075EE8]" : "text-[#07133B]"}`}
+                  >
+                    <Heart className="h-5 w-5" strokeWidth={2} fill={flightSaved ? "currentColor" : "none"} aria-hidden="true" />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Share flight"
+                    onClick={() => void shareFlight()}
+                    className="inline-flex size-11 items-center justify-center rounded-full border border-white/55 bg-white/90 text-[#07133B] shadow-[0_2px_8px_rgba(15,23,42,0.14)] backdrop-blur-md transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
+                  >
+                    <Share2 className="h-[19px] w-[19px]" strokeWidth={2} aria-hidden="true" />
+                  </button>
+                </div>
               </div>
-              <button type="button" onClick={() => setEditSearchOpen(true)} className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg border border-[#075EE8] bg-white px-3 text-xs font-semibold text-[#075EE8] hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 sm:hidden"><Pencil className="h-4 w-4" aria-hidden="true" /> Edit search</button>
-              <Link href={resultsHref} className="hidden min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg border border-[#075EE8] bg-white px-4 text-sm font-semibold text-[#075EE8] hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 sm:inline-flex"><Pencil className="h-4 w-4" aria-hidden="true" /> Edit search</Link>
+              <div className="absolute inset-0 bg-[rgba(5,13,26,0.30)]" aria-hidden="true" />
+              <div className="absolute inset-x-0 bottom-[66px] h-[150px] bg-gradient-to-b from-transparent via-[rgba(5,13,26,0.18)] to-[rgba(5,13,26,0.42)] sm:bottom-0 sm:h-3/4 sm:bg-gradient-to-t sm:from-slate-950/80 sm:via-slate-950/35 sm:to-transparent" aria-hidden="true" />
+              <div className="relative z-10 min-w-0 text-white [text-shadow:0_2px_8px_rgba(0,0,0,0.55)]">
+                <h1 ref={headingRef} id="flight-details-heading" tabIndex={-1} className="text-[27px] font-extrabold leading-[1.12] tracking-[-0.025em] outline-none sm:text-[30px]">{route}</h1>
+                <p className="mt-[3px] text-[11px] font-bold uppercase leading-4 tracking-[0.55px] text-white/95 sm:mt-2 sm:text-[13px] sm:leading-normal sm:tracking-[0.08em]"><span className="sm:hidden">{nativeTripLine}</span><span className="hidden sm:inline">{tripLine}</span></p>
+              </div>
+              <svg data-flight-details-hero-curve aria-hidden="true" viewBox="0 0 100 64" preserveAspectRatio="none" className="pointer-events-none absolute inset-x-0 bottom-[-1px] h-[65px] w-full text-white sm:hidden"><path d="M0 12 Q50 64 100 12 L100 64 L0 64 Z" fill="currentColor" /></svg>
             </div>
-            <div className="mt-5 space-y-4">{legs.map((leg, index) => <ItineraryCard key={`${leg.direction}-${leg.originAirport}-${leg.destinationAirport}`} leg={leg} label={available.search.tripType === "multi-city" ? `FLIGHT ${index + 1}` : index === 0 ? "OUTBOUND" : "RETURN"} departureDate={available.search.legs[index]?.departureDate ?? leg.departureTime.slice(0, 10)} locale={locale} offerAirlineName={flight.airlineName} offerAirlineLogo={flight.airlineLogo} />)}</div>
+            <div className="relative z-10 px-3 pb-4 pt-0 sm:-mt-7 sm:p-6 sm:pt-0 lg:px-6 lg:pb-6">
+            <div data-mobile-native-itinerary-stack className="-mx-2 -mt-[104px] space-y-3 sm:mx-0 sm:mt-0 sm:space-y-4">{legs.map((leg, index) => <ItineraryCard key={`${leg.direction}-${leg.originAirport}-${leg.destinationAirport}`} leg={leg} label={available.search.tripType === "multi-city" ? `FLIGHT ${index + 1}` : index === 0 ? "OUTBOUND" : "RETURN"} departureDate={available.search.legs[index]?.departureDate ?? leg.departureTime.slice(0, 10)} locale={locale} offerAirlineName={flight.airlineName} offerAirlineLogo={flight.airlineLogo} />)}</div>
 
-            <h2 className="mb-3 mt-6 text-[18px] font-semibold leading-tight text-slate-950">Pick your fare</h2>
-            <div ref={fareRailRef} role="radiogroup" aria-label="Available fares" className={`min-w-0 ${fareChoices.length > 1 ? "flex snap-x snap-mandatory gap-3 overflow-x-auto overflow-y-hidden px-4 pb-2 [scroll-padding-inline:1rem] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:grid sm:snap-none sm:overflow-visible sm:px-0 sm:pb-0" : "grid gap-3"} ${fareChoices.length === 1 ? "max-w-[270px]" : fareChoices.length === 2 ? "sm:grid-cols-2 lg:max-w-[632px]" : fareChoices.length === 3 ? "sm:grid-cols-2 md:grid-cols-3 lg:max-w-[954px]" : "sm:grid-cols-2 xl:max-w-[1276px] xl:grid-cols-4"}`}>
+            <h2 className="mb-0 mt-6 text-[16px] font-medium leading-[21px] tracking-[-0.15px] text-slate-900 sm:mb-3 sm:text-[18px] sm:font-medium sm:leading-tight sm:tracking-normal sm:text-slate-950">Pick your fare</h2>
+            {mobilePricesReady ? <MobileNativeFareRail fares={fareChoices} selectedFareKey={selectedFare?.key ?? ""} tripType={available.search.tripType} selectedCurrency={selectedOption.currency} currencyRates={currencyRates.rates} isFallbackRate={currencyRates.isFallback} onSelect={selectFare} /> : <div data-mobile-native-fare-price-loading role="progressbar" aria-label="Loading fare prices" aria-busy="true" className="flex gap-3 overflow-hidden pb-3 pt-3 pr-[38px] sm:hidden">{fareChoices.slice(0,2).map((fare)=><div key={fare.key} className="relative h-[142px] w-[clamp(197px,calc(197px+(100vw-320px)*0.27),217px)] shrink-0 rounded-[15px] border-[1.5px] border-[#D7E0EC] bg-white px-3 pb-2 pt-1.5 shadow-[0_10px_28px_-22px_rgba(15,23,42,0.5)]"><div className="flex justify-center gap-[7px]"><div className="h-6 w-6 animate-pulse rounded-lg bg-slate-200"/><div className="mt-1.5 h-3 w-[72px] animate-pulse rounded bg-slate-200"/></div><div className="mt-[5px] space-y-[5px]">{[0,1,2].map((row)=><div key={row} className="flex items-center gap-[7px]"><div className="h-[14px] w-[14px] shrink-0 animate-pulse rounded-full bg-slate-200"/><div className="h-[10px] flex-1 animate-pulse rounded bg-slate-200"/></div>)}</div><div className="absolute inset-x-3 bottom-1.5 flex justify-center"><div className="h-4 w-[82px] animate-pulse rounded bg-slate-200"/></div></div>)}</div>}
+            {mobilePricesReady ? <div role="radiogroup" aria-label="Available fares" data-desktop-fare-rail className="hidden min-w-0 gap-3 overflow-x-auto overscroll-x-contain pb-3 pr-6 sm:flex sm:snap-x sm:snap-mandatory [scrollbar-width:thin]">
               {fareChoices.map((fare, index) => {
                 const selected = fare.key === selectedFare?.key;
-                const price = formatDisplayPrice({ amount: fare.offer.price, sourceCurrency: fare.offer.currency, displayCurrency: selectedOption.currency, convertUsdEstimate: true, rates: currencyRates.rates, isFallbackRate: currencyRates.isFallback });
-                const compactTerms = compactFareTerms(fare.distinguishingTerms, available.search.tripType);
-                return <button key={fare.key} ref={(element) => { fareButtonRefs.current[index] = element; }} type="button" role="radio" aria-checked={selected} tabIndex={selected ? 0 : -1} onClick={() => selectFare(index)} onKeyDown={(event) => handleFareKeyDown(event, index)} className={`min-w-0 rounded-[10px] border p-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/40 ${fareChoices.length > 1 ? "w-[min(78vw,275px)] max-w-[275px] shrink-0 snap-center sm:w-full sm:shrink" : "w-[min(100%,270px)] max-w-[270px]"} ${selected ? "border-[1.5px] border-[#075EE8] bg-[#075EE8]/[0.02]" : "border-[#E2E8F0] bg-white hover:border-slate-300"}`}>
-                  <div className="flex items-start gap-2.5"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-[#075EE8]"><Luggage className="h-4 w-4" aria-hidden="true" /></span><div className="min-w-0"><p className="text-[13px] font-semibold text-slate-950">{fare.label}</p><p className="text-[20px] font-bold leading-5 text-[#075EE8] lg:text-[19px]" aria-label={price.ariaLabel}>{price.formatted}</p></div></div>
-                  {compactTerms.length ? <ul className="mt-2 space-y-1">{compactTerms.map(({ term, text }, termIndex) => <FareTerm key={`${term.category}-${term.legDirection || "trip"}-${term.text}-${termIndex}`} term={term} text={text} compact />)}</ul> : null}
+                const price = formatDisplayPrice({ amount: fare.offer.price, sourceCurrency: fare.offer.currency, displayCurrency: selectedOption.currency, convertSourceEstimate: true, useFlightResultSymbols: true, maximumFractionDigits: 0, rates: currencyRates.rates, isFallbackRate: currencyRates.isFallback });
+                const compactTerms = compactFareTerms(fare.distinguishingTerms, available.search.tripType)
+                  .filter(({ text }) => !/^(?:base|total)\s+price\s*·\s*(?:display\s+)?price\s*:/i.test(text.trim()))
+                  .map((row) => ({ ...row, text: formatDesktopCompactFareBenefit(row.text) }));
+                return <button data-desktop-fare-card data-empty-benefits={!compactTerms.length || undefined} key={fare.key} ref={(element) => { fareButtonRefs.current[index] = element; }} type="button" role="radio" aria-checked={selected} tabIndex={selected ? 0 : -1} onClick={() => selectFare(index)} onKeyDown={(event) => handleFareKeyDown(event, index)} className={`relative h-[150px] w-[250px] min-w-[250px] shrink-0 snap-start rounded-[15px] border-[1.5px] bg-white px-3 pb-2 pt-2 text-left shadow-[0_2px_7px_rgba(7,19,59,0.07)] transition-[border-color,box-shadow] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/40 ${selected ? "border-[#075EE8]" : "border-[#D7E0EC] hover:border-[#B9C8DA] hover:shadow-[0_4px_11px_rgba(7,19,59,0.11)]"}`}>
+                  {compactTerms.length ? (
+                    <>
+                      <div data-desktop-fare-content className="min-w-0 pb-14">
+                        <div data-desktop-fare-identity className="mx-auto flex max-w-full items-center justify-center gap-[7px]"><span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border border-[#CFE3FA] bg-[#EAF3FF] text-[#075EE8]"><Luggage className="h-3.5 w-3.5" aria-hidden="true" /></span><p className="min-w-0 max-w-full line-clamp-2 text-[13px] font-bold leading-[17px] tracking-[0.1px] text-slate-950">{fare.label}</p></div>
+                        <ul data-desktop-fare-benefits className="mt-1 space-y-1">{compactTerms.map(({ term, text }, termIndex) => <FareTerm key={`${term.category}-${term.legDirection || "trip"}-${term.text}-${termIndex}`} term={term} text={text} compact />)}</ul>
+                      </div>
+                      <div data-desktop-fare-price className="absolute inset-x-3 bottom-2 flex min-h-12 min-w-0 items-end justify-center"><p className="max-w-full break-words text-center text-[19px] font-semibold leading-6 tabular-nums text-slate-950 [overflow-wrap:anywhere]" aria-label={price.ariaLabel}>{price.formatted}</p></div>
+                    </>
+                  ) : (
+                    <div data-desktop-fare-empty-benefits className="flex h-full min-w-0 flex-col items-center justify-center gap-5 pb-1">
+                      <div data-desktop-fare-identity className="flex max-w-full items-center justify-center gap-[7px]"><span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border border-[#CFE3FA] bg-[#EAF3FF] text-[#075EE8]"><Luggage className="h-3.5 w-3.5" aria-hidden="true" /></span><p className="min-w-0 max-w-full line-clamp-2 text-[13px] font-bold leading-[17px] tracking-[0.1px] text-slate-950">{fare.label}</p></div>
+                      <div data-desktop-fare-price className="flex min-w-0 justify-center"><p className="max-w-full break-words text-center text-[19px] font-semibold leading-6 tabular-nums text-slate-950 [overflow-wrap:anywhere]" aria-label={price.ariaLabel}>{price.formatted}</p></div>
+                    </div>
+                  )}
                 </button>;
               })}
-            </div>
+            </div> : <div data-desktop-fare-price-loading role="status" aria-label="Loading fare prices" aria-busy="true" className="hidden min-w-0 gap-3 overflow-hidden pb-3 pr-6 sm:flex">{fareChoices.map((fare)=><div data-desktop-fare-loading-card key={fare.key} className="relative h-[150px] w-[250px] min-w-[250px] shrink-0 rounded-[15px] border-[1.5px] border-[#D7E0EC] bg-white px-3 pb-2 pt-2 shadow-[0_2px_7px_rgba(7,19,59,0.07)]"><div className="min-w-0 pb-14"><div className="flex max-w-full items-center justify-center gap-[7px]"><div className="h-6 w-6 shrink-0 animate-pulse rounded-lg bg-slate-200 motion-reduce:animate-none" /><div className="h-3 w-[72px] max-w-[60%] animate-pulse rounded bg-slate-200 motion-reduce:animate-none" /></div><div className="mt-[5px] space-y-[5px]">{[0,1,2].map((row)=><div key={row} className="flex min-w-0 items-center gap-[7px]"><div className="h-[14px] w-[14px] shrink-0 animate-pulse rounded-full bg-slate-200 motion-reduce:animate-none" /><div className="h-[10px] flex-1 animate-pulse rounded bg-slate-100 motion-reduce:animate-none" /></div>)}</div></div><div data-desktop-fare-loading-price className="absolute inset-x-3 bottom-2 flex min-h-12 items-end justify-center"><div className="h-5 w-[82px] animate-pulse rounded bg-slate-200 motion-reduce:animate-none" /></div></div>)}</div>}
 
-            <div className="mt-5 flex min-w-0 flex-nowrap gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-0 sm:overflow-visible" role="tablist" aria-label="Fare information">{fareTabs.map((tab, index) => <button key={tab.id} ref={(element) => { tabRefs.current[index] = element; }} id={`fare-tab-${tab.id}`} type="button" role="tab" aria-selected={activeTab === tab.id} aria-controls={`fare-panel-${tab.id}`} tabIndex={activeTab === tab.id ? 0 : -1} onClick={() => setActiveTab(tab.id)} onKeyDown={(event) => handleTabKeyDown(event, index)} className={`min-h-11 w-auto shrink-0 whitespace-nowrap border-b-2 px-1 text-center text-[11px] font-semibold min-[390px]:text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#075EE8]/35 sm:flex-1 sm:text-sm ${activeTab === tab.id ? "border-[#075EE8] text-[#075EE8]" : "border-transparent text-slate-700 hover:text-slate-950"}`}>{tab.label}</button>)}</div>
-            <FarePanel activeTab={activeTab} fare={selectedFare} offer={selectedOffer} locale={locale} selectedCurrency={selectedOption.currency} currencyRates={currencyRates.rates} isFallbackRate={currencyRates.isFallback} redirecting={redirecting} onViewDeal={continueToOffer} />
-            <MobileCheckoutDock travelerCount={travelers.count} price={providerPrice} redirecting={redirecting} handoff={handoff} canContinue={canContinue} onContinue={() => continueToOffer(selectedOffer.id)} error={error || notice} />
+            {error || notice ? (
+              <p
+                role={error ? "alert" : "status"}
+                className={`mt-2 rounded-lg px-3 py-2 text-[12px] font-medium sm:hidden ${error ? "bg-red-50 text-red-700" : "bg-blue-50 text-[#075EE8]"}`}
+              >
+                {error || notice}
+              </p>
+            ) : null}
+            <MobileNativeFareInformationDeck
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              fare={selectedFare}
+              activeOffer={activeOffer}
+              selectedDealOfferId={selectedDeal?.offerId ?? null}
+              onSelectDeal={setSelectedDealOfferId}
+              selectedCurrency={selectedOption.currency}
+              currencyRates={currencyRates.rates}
+              isFallbackRate={currencyRates.isFallback}
+              locale={locale}
+              pricesReady={mobilePricesReady}
+              redirecting={redirecting}
+              onViewDeal={continueToOffer}
+            />
+            <div data-desktop-fare-information-tabs className="mt-5 hidden min-w-0 sm:flex lg:sticky lg:top-0 lg:z-40 lg:border-b lg:border-slate-200 lg:bg-white" role="tablist" aria-label="Fare information">{fareTabs.map((tab, index) => <button key={tab.id} ref={(element) => { tabRefs.current[index] = element; }} id={`fare-tab-${tab.id}`} type="button" role="tab" aria-selected={activeTab === tab.id} aria-controls={`fare-panel-${tab.id}`} tabIndex={activeTab === tab.id ? 0 : -1} onClick={() => setActiveTab(tab.id)} onKeyDown={(event) => handleTabKeyDown(event, index)} className={`min-h-11 flex-1 whitespace-nowrap border-b-[3px] px-1 text-center text-sm font-semibold text-[#536B92] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#075EE8]/35 ${activeTab === tab.id ? "border-[#075EE8]" : "border-transparent"}`}>{tab.label}</button>)}</div>
+            <div className="hidden sm:block">
+              {error || notice ? (
+                <p
+                  role={error ? "alert" : "status"}
+                  className={`mt-4 rounded-lg px-3 py-2 text-sm font-medium ${error ? "bg-red-50 text-red-700" : "bg-blue-50 text-[#075EE8]"}`}
+                >
+                  {error || notice}
+                </p>
+              ) : null}
+              <FarePanel activeTab={activeTab} fare={selectedFare} offer={activeOffer} locale={locale} selectedCurrency={selectedOption.currency} currencyRates={currencyRates.rates} isFallbackRate={currencyRates.isFallback} redirecting={redirecting} selectedDealOfferId={selectedDeal?.offerId ?? null} onSelectDeal={setSelectedDealOfferId} onViewDeal={continueToOffer} />
+            </div>
+            </div>
           </section>
-          <TripSidebar tripType={available.search.tripType} legs={legs} route={route} date={date} tripLine={tripLine} travelers={travelers.label} travelerCount={travelers.count} selectedFare={selectedFare?.label || selectedOffer.cabinClass || ""} fareTerms={selectedFare?.distinguishingTerms ?? []} price={providerPrice} locale={locale} redirecting={redirecting} handoff={handoff} canContinue={canContinue} onContinue={() => continueToOffer(selectedOffer.id)} error={error || notice} />
         </div>
       </div>
-      <FlightEditSearchDrawer open={editSearchOpen} presentation="bottom-sheet" initialValue={{ ...available.search, cabinClass: available.search.cabinClass }} onClose={() => setEditSearchOpen(false)} onSearch={submitEditedSearch} />
     </main>
   );
 }
 
-function ItineraryCard({ leg, label, departureDate, locale, offerAirlineName, offerAirlineLogo }: { leg: FlightLeg; label: string; departureDate: string; locale: string; offerAirlineName: string; offerAirlineLogo?: string | null }) {
-  return <section className="overflow-hidden rounded-[10px] border border-[#E2E8F0] bg-white" aria-labelledby={`${label.toLowerCase()}-heading`}>
-    <div className="flex items-center justify-between gap-3 px-3 pt-3 sm:px-4 sm:pt-4">
-      <h2 id={`${label.toLowerCase()}-heading`} className="inline-flex rounded-md bg-blue-50 px-2 py-1 text-[10px] font-bold tracking-[0.04em] text-[#075EE8]">{label}</h2>
-      <time dateTime={departureDate} className="whitespace-nowrap text-right text-[12px] font-semibold text-slate-600">{formatItineraryDepartureDate(departureDate, locale)}</time>
-    </div>
-    <div className="grid grid-cols-[minmax(0,1fr)_minmax(82px,1.1fr)_minmax(0,1fr)] items-center gap-2 px-3 pb-4 pt-3 sm:gap-5 sm:px-4 lg:px-5 lg:pb-5">
-      <AirportTime time={leg.departureTime} airport={leg.originAirport} city={leg.segments[0]?.originDetails?.cityName || ""} name={leg.segments[0]?.originDetails?.name} terminal={leg.segments[0]?.originDetails?.terminal} timeZone={leg.segments[0]?.originDetails?.timeZone} locale={locale} />
-      <div className="min-w-0 text-center"><p className="mb-2 text-[11px] font-medium text-slate-600">{leg.duration}</p><div className="flex items-center gap-1 text-[#075EE8]"><span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#075EE8]" /><span className="min-w-2 flex-1 border-t border-dashed border-[#075EE8]" /><Plane className="h-[18px] w-[18px] shrink-0 rotate-45" aria-hidden="true" /><span className="min-w-2 flex-1 border-t border-dashed border-[#075EE8]" /><span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#075EE8]" /></div><p className="mt-2 text-[11px] font-medium text-slate-600">{formatStops(leg.stops, technicalStopCount(leg))}</p></div>
-      <div className="text-right"><AirportTime time={leg.arrivalTime} airport={leg.destinationAirport} city={leg.segments.at(-1)?.destinationDetails?.cityName || ""} name={leg.segments.at(-1)?.destinationDetails?.name} terminal={leg.segments.at(-1)?.destinationDetails?.terminal} timeZone={leg.segments.at(-1)?.destinationDetails?.timeZone} locale={locale} /></div>
-    </div>
-    <div className="border-t border-[#E2E8F0] px-3 py-3.5 sm:px-4 lg:px-5">
-      <ol className="space-y-3">
-        {leg.segments.map((segment, index) => (
-          <li key={`${segment.originAirport}-${segment.destinationAirport}-${segment.departureTime}`}>
-            {index > 0 && leg.layovers[index - 1] ? <p className="mb-3 rounded-md bg-slate-50 px-3 py-2 text-xs font-medium text-slate-600">Connection at {leg.layovers[index - 1].airport} • {leg.layovers[index - 1].duration}</p> : null}
-            <div className="flex items-start gap-3">
-              <SegmentAirlineMark segment={segment} offerAirlineName={offerAirlineName} offerAirlineLogo={offerAirlineLogo} />
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center justify-between gap-3 text-sm"><p className="font-semibold text-slate-900">{segment.originAirport} → {segment.destinationAirport}</p><p className="text-xs text-slate-600">{formatTime(segment.departureTime, locale)} – {formatTime(segment.arrivalTime, locale)}</p></div>
-                <p className="mt-1 text-xs text-slate-600">{resolveSegmentCarrierName(segment, offerAirlineName)}{segment.flightNumber || segment.marketingFlightNumber ? ` • Flight ${segment.flightNumber || segment.marketingFlightNumber}` : ""}</p>
-                {segment.operatingCarrier && segment.marketingCarrier && (segment.operatingCarrier.name !== segment.marketingCarrier.name || segment.operatingFlightNumber !== segment.marketingFlightNumber) ? <p className="mt-1 text-xs text-slate-600">Operated by {segment.operatingCarrier.name}{segment.operatingFlightNumber ? ` • Flight ${segment.operatingFlightNumber}` : ""}</p> : null}
-                {segment.aircraft?.name || segment.aircraft?.iataCode ? <p className="mt-1 text-xs text-slate-600">Aircraft: {segment.aircraft.name || segment.aircraft.iataCode}{segment.aircraft.name && segment.aircraft.iataCode ? ` (${segment.aircraft.iataCode})` : ""}</p> : null}
-                {segment.distanceKm !== undefined ? <p className="mt-1 text-xs text-slate-600">Flight distance: {formatDistanceKm(segment.distanceKm, locale)}</p> : null}
-              </div>
-            </div>
-            {segment.technicalStops?.map((stop) => <div key={`${stop.airport.iataCode}-${stop.arrivalTime || "stop"}`} className="mt-2 rounded-md bg-amber-50 px-3 py-2 text-xs font-medium text-slate-700"><p>Technical stop at {stop.airport.iataCode}{stop.airport.name ? ` — ${stop.airport.name}` : ""}{stop.duration ? ` • ${stop.duration}` : ""}</p>{stop.arrivalTime || stop.departureTime ? <p className="mt-1 font-normal">{stop.arrivalTime ? `Arrives ${formatTime(stop.arrivalTime, locale)}` : ""}{stop.arrivalTime && stop.departureTime ? " • " : ""}{stop.departureTime ? `Departs ${formatTime(stop.departureTime, locale)}` : ""}</p> : null}</div>)}
-          </li>
-        ))}
-      </ol>
-    </div>
-  </section>;
+function formatDesktopCompactFareBenefit(text: string) {
+  const normalized = text.trim().replace(/\.$/, "");
+  const scoped = normalized.match(/^(Outbound|Return|Flight \d+):\s*(.+)$/i);
+  const scope = scoped?.[1];
+  const body = scoped?.[2] ?? normalized;
+  const withScope = (value: string) => (scope ? `${scope} · ${value}` : value);
+
+  if (/^baggage details not supplied by (?:the )?provider$/i.test(body)) {
+    return withScope("Baggage not provided");
+  }
+
+  if (/^baggage allowance not supplied for one or more passengers$/i.test(body)) {
+    return withScope("Baggage not provided");
+  }
+
+  if (/^no additional comparable fare benefits were supplied by (?:the )?provider$/i.test(body)) {
+    return withScope("No additional fare benefits");
+  }
+
+  const unavailableRules = body.match(
+    /^(Change(?:s)?(?: and refund)?|Refunds?) rules? not supplied by (?:the )?provider$/i,
+  );
+  if (unavailableRules) {
+    const ruleKind = unavailableRules[1].toLocaleLowerCase("en-US");
+    const label = /change(?:s)? and refund/.test(ruleKind)
+      ? "Change/refund rules unavailable"
+      : /refund/.test(ruleKind)
+        ? "Refund rules unavailable"
+        : "Change rules unavailable";
+    return withScope(label);
+  }
+
+  if (/^changes not supplied by (?:the )?provider$/i.test(body)) {
+    return withScope("Changes unavailable");
+  }
+
+  if (/^refunds? not supplied by (?:the )?provider$/i.test(body)) {
+    return withScope("Refunds unavailable");
+  }
+
+  if (/^changes not allowed(?: before departure)?$/i.test(body)) {
+    return withScope("Changes not allowed");
+  }
+
+  if (/^changes allowed(?: before departure)?$/i.test(body)) {
+    return withScope("Changes allowed");
+  }
+
+  const changeFee = body.match(
+    /^Changes allowed with\s+([A-Z]{3})\s+([\d,]+(?:\.\d+)?)\s+penalty$/i,
+  );
+  if (changeFee) {
+    return withScope(
+      `Changes · ${changeFee[1].toUpperCase()} ${compactFareFeeAmount(changeFee[2])} fee`,
+    );
+  }
+
+  if (/^not refundable(?: before departure)?$/i.test(body)) {
+    return withScope("Not refundable");
+  }
+
+  if (/^refundable(?: before departure)?$/i.test(body)) {
+    return withScope("Refundable");
+  }
+
+  const refundFee = body.match(
+    /^Refundable(?: before departure)? with\s+([A-Z]{3})\s+([\d,]+(?:\.\d+)?)\s+penalty$/i,
+  );
+  if (refundFee) {
+    return withScope(
+      `Refundable · ${refundFee[1].toUpperCase()} ${compactFareFeeAmount(refundFee[2])} fee`,
+    );
+  }
+
+  const baggage = body.match(
+    /^(\d+)\s+(carry-ons?|checked bags?)\s+included(?:\s+(each way))?$/i,
+  );
+  if (baggage) {
+    const count = Number(baggage[1]);
+    const kind = baggage[2].toLocaleLowerCase("en-US");
+    const eachWay = Boolean(baggage[3]);
+    const suffix = eachWay ? " each way" : "";
+
+    if (count === 1 && kind.startsWith("carry")) {
+      return withScope(`Carry-on included${suffix}`);
+    }
+    if (count === 1 && kind.startsWith("checked")) {
+      return withScope(`Checked bag included${suffix}`);
+    }
+    return withScope(`${count} ${kind} included${suffix}`);
+  }
+
+  return withScope(body);
 }
 
-function AirportTime({ time, airport, city, name, terminal, timeZone, locale }: { time: string; airport: string; city: string; name?: string; terminal?: string; timeZone?: string; locale: string }) { return <div className="min-w-0"><p className="text-[15px] font-bold sm:text-[17px]">{formatTime(time, locale)}</p><p className="mt-1 text-sm font-bold">{airport}</p>{name ? <p className="mt-1 break-words text-[10px] leading-4 text-slate-600 sm:text-xs">{name}</p> : null}{city && city !== airport ? <p className="mt-1 break-words text-[10px] leading-4 text-slate-600 sm:text-xs">{city}</p> : null}{terminal ? <p className="mt-1 text-[10px] font-medium leading-4 text-slate-600 sm:text-xs">Terminal {terminal}</p> : null}{timeZone ? <p className="mt-1 break-words text-[10px] leading-4 text-slate-600 sm:text-xs">Time zone: {timeZone}</p> : null}</div>; }
+function compactFareFeeAmount(value: string) {
+  const [whole, fraction] = value.split(".");
+  if (!fraction || /^0+$/.test(fraction)) return whole;
+  return `${whole}.${fraction.replace(/0+$/, "")}`;
+}
 
-function SegmentAirlineMark({ segment, offerAirlineName, offerAirlineLogo }: { segment: FlightSegment; offerAirlineName: string; offerAirlineLogo?: string | null }) {
-  const [logoFailed, setLogoFailed] = useState(false);
+const PROVIDER_LOCAL_ISO_DATETIME =
+  /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2})(?::(\d{2})(?:\.\d+)?)?(?:Z|[+-](\d{2}):(\d{2}))?)?$/;
+
+function providerLocalCalendarDay(value: string | null | undefined): number | null {
+  if (typeof value !== "string") return null;
+  const match = PROVIDER_LOCAL_ISO_DATETIME.exec(value.trim());
+  if (!match) return null;
+  const [, yearText, monthText, dayText, hourText, minuteText, secondText = "0", offsetHourText, offsetMinuteText] = match;
+  const year = Number(yearText);
+  const month = Number(monthText);
+  const day = Number(dayText);
+  const hour = Number(hourText ?? 0);
+  const minute = Number(minuteText ?? 0);
+  const second = Number(secondText);
+  const offsetHour = Number(offsetHourText ?? 0);
+  const offsetMinute = Number(offsetMinuteText ?? 0);
+  if (hour > 23 || minute > 59 || second > 59 || offsetHour > 23 || offsetMinute > 59) return null;
+  const calendarDay = Date.UTC(year, month - 1, day);
+  const validated = new Date(calendarDay);
+  if (validated.getUTCFullYear() !== year || validated.getUTCMonth() !== month - 1 || validated.getUTCDate() !== day) return null;
+  return calendarDay;
+}
+
+function providerLocalFlightDate(value: string | null | undefined, locale: string): string | null {
+  const calendarDay = providerLocalCalendarDay(value);
+  if (calendarDay === null) return null;
+  return new Intl.DateTimeFormat(locale, { month: "short", day: "numeric", timeZone: "UTC" }).format(new Date(calendarDay));
+}
+
+function providerLocalFlightDateLong(value: string | null | undefined, locale: string): string | null {
+  const calendarDay = providerLocalCalendarDay(value);
+  if (calendarDay === null) return null;
+  return new Intl.DateTimeFormat(locale, { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }).format(new Date(calendarDay));
+}
+
+function NativeFlightGlyph({ className = "" }: { className?: string }) {
+  return <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m3 13 7.5-2.5L8 4l2-1 5 6 5-1.5c1.5-.4 2.4.2 2.6 1 .2.9-.6 1.7-1.8 2.2L15 13l-2 7-2 .7.2-6L5 17l-2-4Z" /></svg>;
+}
+
+function ItineraryCard({ leg, label, departureDate, locale, offerAirlineName, offerAirlineLogo }: { leg: FlightLeg; label: string; departureDate: string; locale: string; offerAirlineName: string; offerAirlineLogo?: string | null }) {
+  const departurePoint = leg.segments[0]?.originDetails;
+  const arrivalPoint = leg.segments.at(-1)?.destinationDetails;
+  const airportName = (point: typeof departurePoint, fallback: string) => point?.name ?? point?.cityName ?? point?.iataCode ?? fallback;
+  const stopStatus = leg.stops === 0 ? "Non-stop" : `${leg.stops} ${leg.stops === 1 ? "stop" : "stops"}`;
+  const departureLongDate = providerLocalFlightDateLong(leg.departureTime, locale) ?? formatItineraryDepartureDate(departureDate, locale);
+  const departureShortDate = providerLocalFlightDate(leg.departureTime, locale);
+  const arrivalShortDate = providerLocalFlightDate(leg.arrivalTime, locale);
+  const departureTimeZone = departurePoint?.timeZone;
+  const arrivalTimeZone = arrivalPoint?.timeZone;
+  const hasFlightInfo = Boolean(departureTimeZone || arrivalTimeZone);
+  const layoverLabel = (airport: string) => {
+    const point = leg.segments
+      .flatMap((segment) => [segment.destinationDetails, segment.originDetails])
+      .find((candidate) => candidate?.iataCode === airport);
+    return point?.cityName && point.cityName !== airport ? `${point.cityName} • ${airport}` : airport;
+  };
+
+  return <>
+    <section
+      data-mobile-native-itinerary-card
+      className="relative overflow-hidden rounded-[15px] border border-[#E1E7EF] bg-white p-[15px] shadow-[0_10px_28px_-22px_rgba(15,23,42,0.5)] sm:hidden"
+      aria-labelledby={`${label.toLowerCase()}-mobile-heading`}
+    >
+      <div
+        data-flight-details-itinerary-gloss
+        className="pointer-events-none absolute inset-x-0 top-0 h-[52%] overflow-hidden rounded-t-[15px] bg-[linear-gradient(135deg,rgba(255,255,255,0.78)_0%,rgba(255,255,255,0.18)_46%,rgba(255,255,255,0)_100%)]"
+        aria-hidden="true"
+      />
+      <div className="relative z-[1]">
+        <div className="flex items-start justify-between gap-3">
+          <h2 id={`${label.toLowerCase()}-mobile-heading`} className="min-w-0 shrink text-[11px] font-extrabold uppercase leading-[15px] tracking-[0.5px] text-[#075EE8]">{label}</h2>
+          <time dateTime={leg.departureTime} className="shrink-0 whitespace-nowrap text-right text-[11px] font-medium leading-[15px] text-slate-500">{departureLongDate}</time>
+        </div>
+
+        <div className="mt-[14px] grid grid-cols-[1.1fr_.8fr_1.1fr] items-center gap-2">
+          <div className="min-w-0">
+            <p className="whitespace-nowrap text-[19px] font-extrabold leading-6 tabular-nums text-slate-950">{formatTime(leg.departureTime, locale)}</p>
+            <p className="mt-[3px] text-[13px] font-bold leading-[17px] text-slate-900">{leg.originAirport}</p>
+            {departureShortDate ? <p className="mt-px whitespace-nowrap text-[9.5px] font-medium leading-3 text-slate-500">{departureShortDate}</p> : null}
+          </div>
+
+          <div className="min-w-[72px] text-center">
+            <p className="text-[11px] font-semibold leading-4 text-slate-600">{leg.duration}</p>
+            <div className="mt-[5px] flex items-center" aria-hidden="true">
+              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#075EE8]" />
+              <span className="h-px min-w-1 flex-1 bg-[#94A3B8]/60" />
+              <NativeFlightGlyph className="h-4 w-4 shrink-0 text-[#075EE8]" />
+              <span className="h-px min-w-1 flex-1 bg-[#94A3B8]/60" />
+              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#075EE8]" />
+            </div>
+            <p className="mt-[5px] text-[10px] font-medium leading-[13px] text-slate-500">{stopStatus}</p>
+          </div>
+
+          <div className="min-w-0 text-right">
+            <p className="whitespace-nowrap text-[19px] font-extrabold leading-6 tabular-nums text-slate-950">{formatTime(leg.arrivalTime, locale)}</p>
+            <p className="mt-[3px] text-[13px] font-bold leading-[17px] text-slate-900">{leg.destinationAirport}</p>
+            {arrivalShortDate ? <p className="mt-px whitespace-nowrap text-[9.5px] font-medium leading-3 text-slate-500">{arrivalShortDate}</p> : null}
+          </div>
+        </div>
+
+        <div className="mt-[13px] grid grid-cols-2 items-start gap-5">
+          <div className="min-w-0">
+            <p className="text-[12px] font-medium leading-[17px] text-slate-900">{airportName(departurePoint, leg.originAirport)}</p>
+            {departurePoint?.terminal ? <p className="mt-[5px] text-[11px] font-normal leading-4 text-slate-500">Terminal {departurePoint.terminal}</p> : null}
+          </div>
+          <div className="min-w-0 text-right">
+            <p className="text-[12px] font-medium leading-[17px] text-slate-900">{airportName(arrivalPoint, leg.destinationAirport)}</p>
+            {arrivalPoint?.terminal ? <p className="mt-[5px] text-[11px] font-normal leading-4 text-slate-500">Terminal {arrivalPoint.terminal}</p> : null}
+          </div>
+        </div>
+
+        <div className="my-[13px] h-px bg-[#E2E8F0]" />
+
+        <ol>
+          {leg.segments.map((segment, index) => {
+            const carrier = resolveSegmentCarrierName(segment, offerAirlineName);
+            const flightNumber = segment.marketingFlightNumber ?? segment.flightNumber;
+            const operatingDiffers = Boolean(segment.operatingCarrier && (segment.operatingCarrier.name !== segment.marketingCarrier?.name || segment.operatingFlightNumber !== segment.marketingFlightNumber));
+            const aircraftName = segment.aircraft?.name?.trim() || segment.aircraft?.iataCode?.trim();
+            const aircraftSuffix = segment.aircraft?.name?.trim() && segment.aircraft?.iataCode?.trim() ? ` (${segment.aircraft.iataCode.trim()})` : "";
+            const layover = index > 0 ? leg.layovers[index - 1] : undefined;
+            return <li key={`${segment.originAirport}-${segment.destinationAirport}-${segment.departureTime}-${index}`}>
+              {layover ? (
+                <div data-flight-details-connection-row className="mb-0.5 flex items-center gap-[7px] rounded-[9px] border border-[#D6E2F0] bg-[#F3F7FC] px-[11px] py-2">
+                  <Clock3 className="h-[13px] w-[13px] shrink-0 text-[#5D7496]" strokeWidth={1.8} aria-hidden="true" />
+                  <p className="min-w-0 flex-1 truncate text-[11px] font-semibold leading-4 text-slate-900">
+                    Connection at {layoverLabel(layover.airport)}
+                    <span className="font-medium text-slate-500"> · {layover.duration}</span>
+                  </p>
+                </div>
+              ) : null}
+              <div className="flex items-start gap-[10px] py-[9px]">
+                <SegmentAirlineMark segment={segment} offerAirlineName={offerAirlineName} offerAirlineLogo={offerAirlineLogo} preferSegmentLogo />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-start justify-between gap-[10px]">
+                    <p className="min-w-0 shrink text-[13px] font-bold leading-[18px] text-slate-900">{segment.originAirport} → {segment.destinationAirport}</p>
+                    <p className="max-w-[48%] shrink-0 whitespace-nowrap text-right text-[11px] font-semibold leading-4 tabular-nums text-slate-950">{formatTime(segment.departureTime, locale)} – {formatTime(segment.arrivalTime, locale)}</p>
+                  </div>
+                  <p className="mt-0.5 text-[11px] font-medium leading-4 text-slate-500">{carrier || "Carrier not supplied"}{flightNumber ? ` · Flight ${flightNumber}` : ""}</p>
+                  {operatingDiffers ? <p className="mt-0.5 text-[11px] font-normal leading-4 text-slate-500">Operated by {segment.operatingCarrier?.name}{segment.operatingFlightNumber ? ` · Flight ${segment.operatingFlightNumber}` : ""}</p> : null}
+                  {aircraftName ? <p className="mt-0.5 text-[11px] font-normal leading-4 text-slate-500">Aircraft: {aircraftName}{aircraftSuffix}</p> : null}
+                  {segment.distanceKm !== undefined ? <p className="mt-0.5 text-[11px] font-normal leading-4 text-slate-500">Flight distance: {formatDistanceKm(segment.distanceKm, locale)}</p> : null}
+                </div>
+              </div>
+            </li>;
+          })}
+        </ol>
+
+        {hasFlightInfo ? <>
+          <div className="my-[13px] h-px bg-[#E2E8F0]" />
+          <div className="space-y-[7px]">
+            <p className="mb-0.5 text-[12px] font-bold uppercase leading-4 tracking-[0.65px] text-slate-900">Flight info</p>
+            {departureTimeZone && arrivalTimeZone && departureTimeZone === arrivalTimeZone ? (
+              <div className="flex items-start justify-between gap-3">
+                <span className="min-w-0 flex-1 text-[11px] font-semibold leading-4 text-slate-900">Time zone</span>
+                <span className="max-w-[52%] text-right text-[11px] font-normal leading-4 text-slate-500">{departureTimeZone}</span>
+              </div>
+            ) : <>
+              {departureTimeZone ? <div className="flex items-start justify-between gap-3"><span className="min-w-0 flex-1 text-[11px] font-semibold leading-4 text-slate-900">Departure time zone</span><span className="max-w-[52%] text-right text-[11px] font-normal leading-4 text-slate-500">{departureTimeZone}</span></div> : null}
+              {arrivalTimeZone ? <div className="flex items-start justify-between gap-3"><span className="min-w-0 flex-1 text-[11px] font-semibold leading-4 text-slate-900">Arrival time zone</span><span className="max-w-[52%] text-right text-[11px] font-normal leading-4 text-slate-500">{arrivalTimeZone}</span></div> : null}
+            </>}
+          </div>
+        </> : null}
+      </div>
+    </section>
+
+    <section data-desktop-itinerary-card className="hidden overflow-hidden rounded-[10px] border border-[#E2E8F0] bg-white sm:block sm:shadow-[0_6px_18px_rgba(7,19,59,0.10)]" aria-labelledby={`${label.toLowerCase()}-heading`}>
+      <div className="flex items-start justify-between gap-3 px-4 pt-4 lg:px-5">
+        <h2 id={`${label.toLowerCase()}-heading`} className="min-w-0 text-[11px] font-bold uppercase leading-4 tracking-[0.05em] text-[#075EE8]">{label}</h2>
+        <time dateTime={leg.departureTime} className="shrink-0 whitespace-nowrap text-right text-[11px] font-medium leading-4 text-slate-600">{departureLongDate}</time>
+      </div>
+      <div data-desktop-journey-summary className="grid grid-cols-[minmax(0,1fr)_minmax(120px,180px)_minmax(0,1fr)] items-center gap-6 px-4 pt-3 lg:px-5">
+        <AirportTime time={leg.departureTime} airport={leg.originAirport} date={departureShortDate} locale={locale} />
+        <div className="min-w-0 text-center">
+          <p className="text-[11px] font-semibold leading-4 text-slate-600">{leg.duration}</p>
+          <div className="mt-1 flex items-center text-[#075EE8]" aria-hidden="true"><span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#075EE8]" /><span className="min-w-2 flex-1 border-t border-dashed border-[#075EE8]" /><Plane className="h-4 w-4 shrink-0 rotate-45" /><span className="min-w-2 flex-1 border-t border-dashed border-[#075EE8]" /><span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#075EE8]" /></div>
+          <p className="mt-1 text-[10px] font-medium leading-[14px] text-slate-600">{formatStops(leg.stops, technicalStopCount(leg))}</p>
+        </div>
+        <div className="text-right"><AirportTime time={leg.arrivalTime} airport={leg.destinationAirport} date={arrivalShortDate} locale={locale} /></div>
+      </div>
+      <div data-desktop-airport-details className="mt-3 grid grid-cols-2 items-start gap-8 px-4 pb-3 lg:px-5">
+        <div className="min-w-0">
+          <p className="break-words text-[12px] font-medium leading-[17px] text-slate-800">{airportName(departurePoint, leg.originAirport)}</p>
+          {departurePoint?.terminal ? <p className="mt-1 text-[11px] font-normal leading-4 text-slate-600">Terminal {departurePoint.terminal}</p> : null}
+        </div>
+        <div className="min-w-0 text-right">
+          <p className="break-words text-[12px] font-medium leading-[17px] text-slate-800">{airportName(arrivalPoint, leg.destinationAirport)}</p>
+          {arrivalPoint?.terminal ? <p className="mt-1 text-[11px] font-normal leading-4 text-slate-600">Terminal {arrivalPoint.terminal}</p> : null}
+        </div>
+      </div>
+      <div data-desktop-segment-list className="border-t border-[#E2E8F0] px-4 py-3 lg:px-5">
+        <ol className="space-y-2.5">
+          {leg.segments.map((segment, index) => (
+            <li key={`${segment.originAirport}-${segment.destinationAirport}-${segment.departureTime}`}>
+              {index > 0 && leg.layovers[index - 1] ? <p className="mb-2.5 rounded-md bg-slate-50 px-3 py-2 text-xs font-medium text-slate-600">Connection at {leg.layovers[index - 1].airport} • {leg.layovers[index - 1].duration}</p> : null}
+              <div className="flex items-start gap-3">
+                <SegmentAirlineMark segment={segment} offerAirlineName={offerAirlineName} offerAirlineLogo={offerAirlineLogo} preferSegmentLogo />
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1"><p className="text-[13px] font-semibold leading-[18px] text-slate-900">{segment.originAirport} → {segment.destinationAirport}</p><p className="shrink-0 text-right text-[11px] font-medium leading-4 tabular-nums text-slate-600">{formatTime(segment.departureTime, locale)} – {formatTime(segment.arrivalTime, locale)}</p></div>
+                  <p className="mt-0.5 text-[11px] font-medium leading-4 text-slate-600">{resolveSegmentCarrierName(segment, offerAirlineName)}{segment.flightNumber || segment.marketingFlightNumber ? ` • Flight ${segment.flightNumber || segment.marketingFlightNumber}` : ""}</p>
+                  {segment.operatingCarrier && segment.marketingCarrier && (segment.operatingCarrier.name !== segment.marketingCarrier.name || segment.operatingFlightNumber !== segment.marketingFlightNumber) ? <p className="mt-0.5 text-[11px] leading-4 text-slate-600">Operated by {segment.operatingCarrier.name}{segment.operatingFlightNumber ? ` • Flight ${segment.operatingFlightNumber}` : ""}</p> : null}
+                  {segment.aircraft?.name || segment.aircraft?.iataCode ? <p className="mt-0.5 text-[11px] leading-4 text-slate-600">Aircraft: {segment.aircraft.name || segment.aircraft.iataCode}{segment.aircraft.name && segment.aircraft.iataCode ? ` (${segment.aircraft.iataCode})` : ""}</p> : null}
+                  {segment.distanceKm !== undefined ? <p className="mt-0.5 text-[11px] leading-4 text-slate-600">Flight distance: {formatDistanceKm(segment.distanceKm, locale)}</p> : null}
+                </div>
+              </div>
+              {segment.technicalStops?.map((stop) => <div key={`${stop.airport.iataCode}-${stop.arrivalTime || "stop"}`} className="mt-2 rounded-md bg-amber-50 px-3 py-2 text-xs font-medium text-slate-700"><p>Technical stop at {stop.airport.iataCode}{stop.airport.name ? ` — ${stop.airport.name}` : ""}{stop.duration ? ` • ${stop.duration}` : ""}</p>{stop.arrivalTime || stop.departureTime ? <p className="mt-1 font-normal">{stop.arrivalTime ? `Arrives ${formatTime(stop.arrivalTime, locale)}` : ""}{stop.arrivalTime && stop.departureTime ? " • " : ""}{stop.departureTime ? `Departs ${formatTime(stop.departureTime, locale)}` : ""}</p> : null}</div>)}
+            </li>
+          ))}
+        </ol>
+      </div>
+      {hasFlightInfo ? <div data-desktop-flight-info className="border-t border-[#E2E8F0] px-4 py-3 lg:px-5">
+        <h3 className="text-[11px] font-bold uppercase leading-4 tracking-[0.06em] text-slate-900">Flight info</h3>
+        <dl className="mt-1.5 space-y-1.5">
+          {departureTimeZone && arrivalTimeZone && departureTimeZone === arrivalTimeZone ? <div className="flex items-start justify-between gap-4"><dt className="min-w-0 flex-1 text-[11px] font-semibold leading-4 text-slate-800">Time zone</dt><dd className="max-w-[52%] break-words text-right text-[11px] leading-4 text-slate-600">{departureTimeZone}</dd></div> : <>
+            {departureTimeZone ? <div className="flex items-start justify-between gap-4"><dt className="min-w-0 flex-1 text-[11px] font-semibold leading-4 text-slate-800">Departure time zone</dt><dd className="max-w-[52%] break-words text-right text-[11px] leading-4 text-slate-600">{departureTimeZone}</dd></div> : null}
+            {arrivalTimeZone ? <div className="flex items-start justify-between gap-4"><dt className="min-w-0 flex-1 text-[11px] font-semibold leading-4 text-slate-800">Arrival time zone</dt><dd className="max-w-[52%] break-words text-right text-[11px] leading-4 text-slate-600">{arrivalTimeZone}</dd></div> : null}
+          </>}
+        </dl>
+      </div> : null}
+    </section>
+  </>;
+}
+
+function AirportTime({ time, airport, date, locale }: { time: string; airport: string; date: string | null; locale: string }) { return <div className="min-w-0"><p className="whitespace-nowrap text-[19px] font-bold leading-6 tabular-nums text-slate-900">{formatTime(time, locale)}</p><p className="mt-0.5 text-[13px] font-bold leading-[17px] text-slate-900">{airport}</p>{date ? <p className="mt-px whitespace-nowrap text-[10px] font-medium leading-[14px] text-slate-600">{date}</p> : null}</div>; }
+
+function SegmentAirlineMark({ segment, offerAirlineName, offerAirlineLogo, preferSegmentLogo = false }: { segment: FlightSegment; offerAirlineName: string; offerAirlineLogo?: string | null; preferSegmentLogo?: boolean }) {
   const carrierName = resolveSegmentCarrierName(segment, offerAirlineName);
   const canUseOfferLogo = canUseOfferAirlineLogo(segment, offerAirlineName, offerAirlineLogo);
-  return <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-[#075EE8]" aria-label={`${carrierName} airline mark`}>{canUseOfferLogo && !logoFailed ? <Image src={offerAirlineLogo!} alt="" width={24} height={24} className="h-6 w-6 object-contain" onError={() => setLogoFailed(true)} /> : <Plane className="h-4 w-4 rotate-45" aria-hidden="true" />}</span>;
+  const logoUrl = preferSegmentLogo ? segment.airlineLogo ?? (canUseOfferLogo ? offerAirlineLogo : null) : canUseOfferLogo ? offerAirlineLogo : null;
+  return <FlightIdentityMark logoUrl={logoUrl} label={`${carrierName} airline mark`} />;
 }
 
 function FareTerm({ term, text = term.text, compact = false }: { term: FlightDetailsFareChoice["distinguishingTerms"][number]; text?: string; compact?: boolean }) {
   const Icon = term.semantic === "positive" ? Check : term.semantic === "negative" ? MinusCircle : Info;
   const iconClass = term.semantic === "positive" ? "border-emerald-500 text-emerald-600" : "border-slate-300 text-slate-500";
-  return <li className={`flex min-w-0 items-start text-slate-700 ${compact ? "gap-1.5 text-[12px] leading-4" : "gap-2 text-[13px] leading-5"}`}><span className={`mt-0.5 flex shrink-0 items-center justify-center rounded-full border ${compact ? "h-4 w-4" : "h-4 w-4"} ${iconClass}`}><Icon className="h-2.5 w-2.5" aria-hidden="true" /></span><span className="min-w-0 whitespace-normal break-words [overflow-wrap:anywhere] [text-wrap:pretty] [word-break:normal]">{text}</span></li>;
+  return <li className={`flex min-w-0 items-start text-slate-700 ${compact ? "gap-[5px] text-[11px] leading-[15px]" : "gap-2 text-[13px] leading-5"}`}><span className={`flex shrink-0 items-center justify-center rounded-full border ${compact ? "mt-px h-3.5 w-3.5" : "mt-0.5 h-4 w-4"} ${iconClass}`}><Icon className={compact ? "h-[9px] w-[9px]" : "h-2.5 w-2.5"} aria-hidden="true" /></span><span className="min-w-0 whitespace-normal break-words [overflow-wrap:anywhere] [text-wrap:pretty] [word-break:normal]">{text}</span></li>;
 }
 
-function FarePanel({ activeTab, fare, offer, locale, selectedCurrency, currencyRates, isFallbackRate, redirecting, onViewDeal }: { activeTab: FareTab; fare?: FlightDetailsFareChoice; offer: FlightDetailsOffer; locale: string; selectedCurrency: string; currencyRates: ExchangeRates; isFallbackRate: boolean; redirecting: boolean; onViewDeal: (offerId: string) => void }) {
-  const details = offer.providerDetails;
-  const conditions = details?.conditions ?? [];
-  const optionalServices = details?.optionalServices ?? [];
-  const legalLinks = carrierConditionsLinks(offer);
-  if (activeTab === "deals") return <CompareDealsPanel fare={fare} selectedCurrency={selectedCurrency} currencyRates={currencyRates} isFallbackRate={isFallbackRate} redirecting={redirecting} onViewDeal={onViewDeal} />;
-  if (activeTab === "conditions") return <section id="fare-panel-conditions" role="tabpanel" aria-labelledby="fare-tab-conditions" className="rounded-[10px] border border-[#E2E8F0] p-4 sm:p-5"><h2 className="text-sm font-semibold text-slate-950">Fare conditions</h2>{conditions.length ? <ul className="mt-3 space-y-3">{conditions.map((condition, index) => <li key={`${condition.scope}-${condition.category}-${index}`} className="text-sm text-slate-700"><p>{conditionLabel(condition)}</p>{condition.penaltyAmount !== undefined && condition.penaltyCurrency ? <p className="mt-1 text-xs text-slate-500">Penalty: {formatSourceMoney(condition.penaltyAmount, condition.penaltyCurrency, locale)}</p> : null}</li>)}</ul> : <p className="mt-3 text-sm text-slate-600">Conditions not supplied by the provider.</p>}{details?.passengerIdentityDocumentsRequired ? <p className="mt-4 rounded-lg bg-blue-50 px-4 py-3 text-sm text-slate-700">Passport information is required by the airline to complete booking.</p> : null}{details?.supportedIdentityDocumentTypes?.length ? <p className="mt-4 text-sm text-slate-700"><span className="font-semibold">Supported identity documents:</span> {details.supportedIdentityDocumentTypes.map(titleCase).join(", ")}</p> : null}{details?.offerOwner ? <p className="mt-4 text-sm text-slate-700"><span className="font-semibold">Offer airline:</span> {details.offerOwner.name}{details.offerOwner.iataCode ? ` (${details.offerOwner.iataCode})` : ""}</p> : null}{legalLinks.length ? <div className="mt-4 text-sm"><p className="font-semibold text-slate-900">Airline conditions</p><ul className="mt-1 space-y-1">{legalLinks.map((link) => <li key={link.url}><a href={link.url} target="_blank" rel="noopener noreferrer" className="font-semibold text-[#075EE8] hover:underline">{link.name} conditions of carriage</a></li>)}</ul></div> : null}{details?.updatedAt ? <p className="mt-4 text-xs text-slate-500">Provider offer last updated {formatProviderTimestamp(details.updatedAt, locale)}</p> : null}</section>;
-  if (activeTab === "extras") return <section id="fare-panel-extras" role="tabpanel" aria-labelledby="fare-tab-extras" className="rounded-[10px] border border-[#E2E8F0] p-4 sm:p-5"><h2 className="text-sm font-semibold text-slate-950">Optional extras</h2>{optionalServices.length ? <ul className="mt-3 space-y-3">{optionalServices.map((service, index) => <li key={`${service.type}-${service.journeyContext || index}`} className="text-sm text-slate-700"><p className="font-medium">{service.description}</p><p>{formatSourceMoney(service.price, service.currency, locale)}{service.pricedPerTraveler ? " each" : ""}</p>{service.travelerCount ? <p className="text-xs text-slate-500">Available for {service.travelerCount} {service.travelerCount === 1 ? "traveler" : "travelers"}</p> : null}{service.maximumQuantity !== undefined ? <p className="text-xs text-slate-500">{service.pricedPerTraveler ? "Maximum quantity per traveler" : "Maximum quantity"}: {service.maximumQuantity}</p> : null}{service.journeyContext ? <p className="text-xs text-slate-500">{service.journeyContext}</p> : null}</li>)}</ul> : <p className="mt-3 text-sm text-slate-600">No optional services supplied by the provider.</p>}{details?.supportedLoyaltyProgrammes?.length ? <p className="mt-4 text-sm text-slate-700"><span className="font-semibold">Supported loyalty airline codes:</span> {details.supportedLoyaltyProgrammes.join(", ")}</p> : null}</section>;
+function FarePanel({
+  activeTab,
+  fare,
+  offer,
+  locale,
+  selectedCurrency,
+  currencyRates,
+  isFallbackRate,
+  redirecting,
+  selectedDealOfferId,
+  onSelectDeal,
+  onViewDeal,
+}: {
+  activeTab: FareTab;
+  fare?: FlightDetailsFareChoice;
+  offer: FlightDetailsOffer;
+  locale: string;
+  selectedCurrency: string;
+  currencyRates: ExchangeRates;
+  isFallbackRate: boolean;
+  redirecting: boolean;
+  selectedDealOfferId: string | null;
+  onSelectDeal: (offerId: string) => void;
+  onViewDeal: (offerId: string) => void;
+}) {
+  if (activeTab === "deals")
+    return (
+      <CompareDealsPanel
+        fare={fare}
+        selectedCurrency={selectedCurrency}
+        currencyRates={currencyRates}
+        isFallbackRate={isFallbackRate}
+        redirecting={redirecting}
+        selectedDealOfferId={selectedDealOfferId}
+        onSelectDeal={onSelectDeal}
+        onViewDeal={onViewDeal}
+      />
+    );
+  if (activeTab === "conditions")
+    return <FareConditions offer={offer} locale={locale} />;
+  if (activeTab === "extras")
+    return <OptionalExtras offer={offer} locale={locale} />;
   return <FareDetails offer={offer} locale={locale} />;
 }
 
-function CompareDealsPanel({ fare, selectedCurrency, currencyRates, isFallbackRate, redirecting, onViewDeal }: { fare?: FlightDetailsFareChoice; selectedCurrency: string; currencyRates: ExchangeRates; isFallbackRate: boolean; redirecting: boolean; onViewDeal: (offerId: string) => void }) {
+function CompareDealsPanel({
+  fare,
+  selectedCurrency,
+  currencyRates,
+  isFallbackRate,
+  redirecting,
+  selectedDealOfferId,
+  onSelectDeal,
+  onViewDeal,
+}: {
+  fare?: FlightDetailsFareChoice;
+  selectedCurrency: string;
+  currencyRates: ExchangeRates;
+  isFallbackRate: boolean;
+  redirecting: boolean;
+  selectedDealOfferId: string | null;
+  onSelectDeal: (offerId: string) => void;
+  onViewDeal: (offerId: string) => void;
+}) {
   const deals = fare?.deals ?? [];
-  if (deals.length === 0) return <section id="fare-panel-deals" role="tabpanel" aria-labelledby="fare-tab-deals" className="rounded-[10px] border border-[#E2E8F0] p-4 sm:p-5"><p className="text-sm text-slate-700">No live booking deals are available for this fare right now.</p></section>;
-  return <section id="fare-panel-deals" role="tabpanel" aria-labelledby="fare-tab-deals" className="rounded-[10px] border border-[#E2E8F0] p-4 sm:p-5">
-    <h2 className="text-sm font-semibold text-slate-950">Compare deals</h2>
-    <p className="mt-1 text-sm text-slate-600">Compare available booking options for this selected fare.</p>
-    <><p className="mt-3 text-xs font-medium text-slate-600">{deals.length} {deals.length === 1 ? "deal" : "deals"} available</p><ul className="mt-2 space-y-2">{deals.map((deal) => {
-      const price = formatDisplayPrice({ amount: deal.price, sourceCurrency: deal.currency, displayCurrency: selectedCurrency, convertUsdEstimate: true, rates: currencyRates, isFallbackRate });
-      return <li key={deal.key} className="flex min-h-11 min-w-0 items-center justify-between gap-3 rounded-[10px] border border-[#E2E8F0] bg-white px-3 py-2.5 sm:px-4"><p className="min-w-0 break-words text-sm font-semibold text-slate-950">{deal.providerName}</p><div className="flex shrink-0 items-center gap-2"><p className="text-sm font-bold text-slate-950" aria-label={price.ariaLabel}>{price.formatted}</p><button type="button" disabled={redirecting} onClick={() => onViewDeal(deal.offerId)} className="inline-flex min-h-11 items-center justify-center rounded-lg px-2 text-sm font-semibold text-[#075EE8] hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 disabled:opacity-50">View deal</button></div></li>;
-    })}</ul></>
-  </section>;
+  const fallbackOffer = fare?.offer;
+  const fallbackProviderName =
+    fallbackOffer?.bookingProviderName?.trim() ||
+    fallbackOffer?.provider?.trim() ||
+    fallbackOffer?.airlineName?.trim() ||
+    "";
+  const fallbackDeal =
+    !deals.length &&
+    fallbackOffer &&
+    fallbackProviderName &&
+    Number.isFinite(fallbackOffer.price) &&
+    fallbackOffer.price > 0
+      ? {
+          key: `desktop-source-${fare?.key ?? fallbackOffer.id}`,
+          offerId: fallbackOffer.id,
+          providerName: fallbackProviderName,
+          ...(fallbackOffer.bookingProviderLogoUrl ? { providerLogoUrl: fallbackOffer.bookingProviderLogoUrl } : {}),
+          price: fallbackOffer.price,
+          currency: fallbackOffer.currency,
+          offer: fallbackOffer,
+        }
+      : null;
+  const displayedDeals = deals.length
+    ? deals.map((deal) => ({ deal, canContinue: true }))
+    : fallbackDeal
+      ? [{ deal: fallbackDeal, canContinue: Boolean(fare?.handoff.available) }]
+      : [];
+
+  if (!displayedDeals.length)
+    return (
+      <DesktopFarePanel id="deals">
+        <DesktopEmptyState
+          title="No fare price available"
+          description="The provider did not supply a usable price for this fare."
+        />
+      </DesktopFarePanel>
+    );
+
+  return (
+    <DesktopFarePanel id="deals">
+      <div
+        role="radiogroup"
+        aria-label="Flight deal options"
+        className="max-w-[680px] space-y-2 py-1"
+        data-desktop-flight-deal-list
+      >
+        {displayedDeals.map(({ deal, canContinue }, index) => {
+          const selected =
+            deal.offerId === selectedDealOfferId ||
+            (!selectedDealOfferId && index === 0);
+          const identityMark = resolveDealIdentityMark(deal);
+          const price = formatDisplayPrice({
+            amount: deal.price,
+            sourceCurrency: deal.currency,
+            displayCurrency: selectedCurrency,
+            convertSourceEstimate: true,
+            useFlightResultSymbols: true,
+            maximumFractionDigits: 0,
+            rates: currencyRates,
+            isFallbackRate,
+          });
+          return (
+            <article
+              key={deal.key}
+              data-desktop-flight-deal-card
+              data-selected={selected || undefined}
+              data-provider-handoff-unavailable={!canContinue || undefined}
+              className="grid min-h-[88px] min-w-0 items-center gap-6 rounded-xl border border-[#D9E2E8] bg-white px-5 py-4"
+              style={{ gridTemplateColumns: "minmax(0, 1fr) auto minmax(0, 1fr)" }}
+            >
+              <button
+                type="button"
+                role="radio"
+                aria-checked={selected}
+                aria-label={`${deal.providerName}, Trip total: ${price.ariaLabel}, ${fare?.label ?? "fare"}`}
+                tabIndex={selected ? 0 : -1}
+                onClick={() => onSelectDeal(deal.offerId)}
+                onKeyDown={(event) => {
+                  const direction =
+                    event.key === "ArrowRight" || event.key === "ArrowDown"
+                      ? 1
+                      : event.key === "ArrowLeft" || event.key === "ArrowUp"
+                        ? -1
+                        : 0;
+                  const nextIndex =
+                    event.key === "Home"
+                      ? 0
+                      : event.key === "End"
+                        ? displayedDeals.length - 1
+                        : direction
+                          ? (index + direction + displayedDeals.length) %
+                            displayedDeals.length
+                          : -1;
+                  if (nextIndex < 0) return;
+                  event.preventDefault();
+                  onSelectDeal(displayedDeals[nextIndex].deal.offerId);
+                  event.currentTarget.parentElement?.parentElement
+                    ?.querySelectorAll<HTMLButtonElement>('[role="radio"]')
+                    [nextIndex]?.focus();
+                }}
+                className="col-span-2 grid grid-cols-subgrid items-center gap-6 min-w-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 focus-visible:ring-offset-2"
+              >
+                <span className="flex min-w-0 items-center gap-2" data-desktop-flight-deal-provider>
+                  {deal.providerLogoUrl ? (
+                    <BookingProviderLogo
+                      providerName={deal.providerName}
+                      logoUrl={deal.providerLogoUrl}
+                    />
+                  ) : identityMark.kind === "airline" ? (
+                    <span className="inline-flex min-w-0 items-center gap-2">
+                      <FlightIdentityMark
+                        logoUrl={identityMark.logoUrl}
+                        decorative
+                      />
+                      <strong className="min-w-0 truncate text-[14px] font-semibold text-[#1a1a1a]">
+                        {deal.providerName}
+                      </strong>
+                    </span>
+                  ) : (
+                    <strong className="min-w-0 truncate text-[14px] font-semibold text-[#1a1a1a]">
+                      {deal.providerName}
+                    </strong>
+                  )}
+                </span>
+
+                <span className="inline-flex items-baseline justify-center gap-1.5 whitespace-nowrap" data-desktop-flight-deal-price>
+                  <strong
+                    className="block whitespace-nowrap text-[18px] font-semibold leading-6 text-[#1a1a1a] tabular-nums"
+                    aria-label={`Trip total: ${price.ariaLabel}`}
+                  >
+                    {price.formatted}
+                  </strong>
+                  <span className="block text-[11px] font-normal leading-4 text-[#595959]">
+                    Trip total
+                  </span>
+                </span>
+              </button>
+
+              <button
+                type="button"
+                disabled={redirecting || !canContinue}
+                aria-busy={redirecting || undefined}
+                aria-label={`View deal with ${deal.providerName}${canContinue ? "" : ", checkout unavailable"}`}
+                onClick={() => {
+                  onSelectDeal(deal.offerId);
+                  onViewDeal(deal.offerId);
+                }}
+                className="focus-ring inline-flex h-9 w-[112px] justify-self-end items-center justify-center whitespace-nowrap rounded-lg bg-[#004BB8] px-4 text-[16px] font-semibold leading-5 text-white hover:bg-[#003B91] disabled:opacity-50"
+                data-desktop-flight-deal-action
+              >
+                View deal
+              </button>
+            </article>
+          );
+        })}
+      </div>
+    </DesktopFarePanel>
+  );
 }
 
-function FareDetails({ offer, locale }: { offer: FlightDetailsOffer; locale: string }) {
-  const details = offer.providerDetails;
-  const segmentCabins = (offer.legs ?? []).flatMap((leg) => leg.segments.flatMap((segment) =>
-    (segment.cabinDetails ?? []).map((cabin) => ({ segment, cabin })),
-  ));
-  return <section id="fare-panel-details" role="tabpanel" aria-labelledby="fare-tab-details" className="rounded-[10px] border border-[#E2E8F0] p-4 sm:p-5">
-    <div className="grid gap-6 lg:grid-cols-2 lg:divide-x lg:divide-[#E2E8F0]">
-      <DetailGroup title="Cabin and fare by flight">{segmentCabins.length ? <div className="space-y-4">{segmentCabins.map(({ segment, cabin }, index) => <div key={`${segment.departureTime}-${JSON.stringify(cabin)}-${index}`} className="space-y-1 text-sm text-slate-700"><p className="font-semibold text-slate-900">{segment.originAirport} → {segment.destinationAirport}{segment.marketingFlightNumber || segment.flightNumber ? ` • ${segment.marketingFlightNumber || segment.flightNumber}` : ""}</p><p>{[cabin.fareBrandName && `Fare: ${cabin.fareBrandName}`, cabin.cabinClass && `Cabin: ${titleCase(cabin.cabinClass)}`, cabin.cabinMarketingName && `Cabin product: ${cabin.cabinMarketingName}`, cabin.fareBasisCode && `Fare basis: ${cabin.fareBasisCode}`].filter(Boolean).join(" • ")}</p>{amenityLines(cabin).map((line) => <p key={line}>{line}</p>)}</div>)}</div> : <p className="text-sm text-slate-600">Additional cabin details not supplied by the provider.</p>}</DetailGroup>
-      <DetailGroup title="Provider source price breakdown">{details?.price ? <dl className="space-y-2 text-sm">{details.price.baseAmount !== undefined && details.price.baseCurrency ? <PriceRow label="Base fare" amount={details.price.baseAmount} currency={details.price.baseCurrency} locale={locale} /> : null}{details.price.taxAmount !== undefined && details.price.taxCurrency ? <PriceRow label="Taxes" amount={details.price.taxAmount} currency={details.price.taxCurrency} locale={locale} /> : null}<PriceRow label="Trip total" amount={details.price.totalAmount} currency={details.price.totalCurrency} locale={locale} /></dl> : <p className="text-sm text-slate-600">Price breakdown not supplied by the provider.</p>}</DetailGroup>
+function BookingProviderLogo({
+  providerName,
+  logoUrl,
+}: {
+  providerName: string;
+  logoUrl: string;
+}) {
+  return (
+    <span
+      data-desktop-flight-provider-logo
+      className="inline-flex min-w-0 items-center"
+    >
+      <Image
+        src={logoUrl}
+        alt=""
+        aria-hidden="true"
+        width={132}
+        height={30}
+        className="h-8 min-w-0 max-w-[132px] object-contain object-left"
+        title={providerName}
+      />
+    </span>
+  );
+}
+
+function FareDetails({
+  offer,
+  locale,
+}: {
+  offer: FlightDetailsOffer;
+  locale: string;
+}) {
+  const provider = offer.providerDetails;
+  const cabins = flightFareDetailCabins(offer);
+  return (
+    <DesktopFarePanel id="details">
+      <div className="divide-y divide-[#D8E1EC]">
+        <section className="py-4">
+          {cabins.length ? (
+            cabins.map(({ segment, cabin }, index) => {
+              const seat = [
+                cabin.amenities?.seat?.type &&
+                  titleCase(cabin.amenities.seat.type),
+                cabin.amenities?.seat?.pitch &&
+                  `${cabin.amenities.seat.pitch} in pitch`,
+                cabin.amenities?.seat?.legroom &&
+                  `${cabin.amenities.seat.legroom.toUpperCase() === "N/A" ? "N/A" : titleCase(cabin.amenities.seat.legroom)} legroom`,
+              ]
+                .filter(Boolean)
+                .join(" · ");
+              const wifi = cabin.amenities?.wifi;
+              const wifiValue = wifi
+                ? `${amenityState(wifi.state)}${wifi.state === "included" && wifi.cost ? ` (${titleCase(wifi.cost)})` : ""}`
+                : undefined;
+              const hasCabin = Boolean(
+                cabin.fareBrandName ||
+                cabin.cabinClass ||
+                cabin.cabinMarketingName ||
+                cabin.fareBasisCode || segment.aircraft,
+              );
+              const hasOnBoard = Boolean(
+                seat || cabin.amenities?.wifi || cabin.amenities?.power || cabin.onboardFeatures?.length,
+              );
+              return (
+                <div
+                  key={`${segment.departureTime}-${JSON.stringify(cabin)}-${index}`}
+                  className={index ? "border-t border-[#D8E1EC] py-4" : "pb-1"}
+                >
+                  <p className="mb-3 break-words text-sm font-semibold leading-5 text-slate-950">
+                    {segment.originAirport} → {segment.destinationAirport}
+                    {segment.marketingFlightNumber || segment.flightNumber
+                      ? ` · ${segment.marketingFlightNumber || segment.flightNumber}`
+                      : ""}
+                  </p>
+                  {hasCabin ? (
+                    <DesktopFareGroup label="Cabin">
+                      <dl className="grid gap-2 md:max-w-3xl">
+                        <DesktopDetailRow
+                          label="Fare brand"
+                          value={cabin.fareBrandName}
+                        />
+                        <DesktopDetailRow
+                          label="Cabin"
+                          value={
+                            cabin.cabinClass && titleCase(cabin.cabinClass)
+                          }
+                        />
+                        <DesktopDetailRow
+                          label="Cabin product"
+                          value={cabin.cabinMarketingName}
+                        />
+                        <DesktopDetailRow
+                          label="Fare basis"
+                          value={cabin.fareBasisCode}
+                        />
+                        <DesktopDetailRow label="Aircraft" value={segment.aircraft?.name || segment.aircraft?.iataCode} />
+                      </dl>
+                    </DesktopFareGroup>
+                  ) : null}
+                  {hasCabin && hasOnBoard ? (
+                    <div className="my-4 h-px bg-[#D8E1EC]" />
+                  ) : null}
+                  {hasOnBoard ? (
+                    <DesktopFareGroup label="On board">
+                      <dl className="grid gap-2 md:max-w-3xl">
+                        <DesktopDetailRow
+                          label="Seat"
+                          value={seat || undefined}
+                        />
+                        <DesktopDetailRow label="Wi-Fi" value={wifiValue} />
+                        <DesktopDetailRow
+                          label="Power"
+                          value={
+                            cabin.amenities?.power
+                              ? amenityState(cabin.amenities.power.state)
+                              : undefined
+                          }
+                        />
+                        {cabin.onboardFeatures?.map((feature, featureIndex) => <DesktopDetailRow key={`${feature.kind}-${featureIndex}`} label={flightOnboardFeatureLabel(feature.kind)} value={feature.description} />)}
+                      </dl>
+                    </DesktopFareGroup>
+                  ) : null}
+                </div>
+              );
+            })
+          ) : (
+            <DesktopQuietText>
+              Additional cabin details not supplied by the provider.
+            </DesktopQuietText>
+          )}
+        </section>
+        <section className="py-4">
+          <DesktopFareGroup label="Price breakdown">
+            {provider?.price ? (
+              <dl className="grid gap-2 md:max-w-3xl">
+                {provider.price.baseAmount !== undefined &&
+                provider.price.baseCurrency ? (
+                  <DesktopDetailRow
+                    label="Base fare"
+                    value={formatSourceMoney(
+                      provider.price.baseAmount,
+                      provider.price.baseCurrency,
+                      locale,
+                    )}
+                  />
+                ) : null}
+                {provider.price.taxAmount !== undefined &&
+                provider.price.taxCurrency ? (
+                  <DesktopDetailRow
+                    label="Taxes"
+                    value={formatSourceMoney(
+                      provider.price.taxAmount,
+                      provider.price.taxCurrency,
+                      locale,
+                    )}
+                  />
+                ) : null}
+                <DesktopDetailRow
+                  label="Trip total"
+                  value={formatSourceMoney(
+                    provider.price.totalAmount,
+                    provider.price.totalCurrency,
+                    locale,
+                  )}
+                  strong
+                />
+              </dl>
+            ) : (
+              <DesktopQuietText>
+                Price breakdown not supplied by the provider.
+              </DesktopQuietText>
+            )}
+          </DesktopFareGroup>
+        </section>
+        {provider?.totalEmissionsKg !== undefined ? (
+          <section className="py-4">
+            <EmissionsRow amount={provider.totalEmissionsKg} locale={locale} />
+          </section>
+        ) : null}
+        {provider?.updatedAt ? (
+          <DesktopProviderFreshness
+            value={provider.updatedAt}
+            locale={locale}
+          />
+        ) : null}
+      </div>
+    </DesktopFarePanel>
+  );
+}
+
+function FareConditions({
+  offer,
+  locale,
+}: {
+  offer: FlightDetailsOffer;
+  locale: string;
+}) {
+  const provider = offer.providerDetails;
+  const conditions = provider?.conditions ?? [];
+  const baggageTerms = flightBaggageTerms(offer);
+  const policies = provider?.airlineBaggagePolicies ?? [];
+  const groups = [
+    ...new Set(conditions.map((condition) => condition.category)),
+  ].map((category) => ({
+    category,
+    conditions: conditions.filter(
+      (condition) => condition.category === category,
+    ),
+  }));
+  const links = carrierConditionsLinks(offer);
+  return (
+    <DesktopFarePanel id="conditions">
+      <div className="divide-y divide-[#D8E1EC]">
+        {baggageTerms.length ? <section className="py-4"><DesktopGroupLabel>Baggage allowance</DesktopGroupLabel>
+          {baggageTerms.map((term, index) => <div key={index} className="flex items-start gap-3 py-2.5"><DesktopStatusIcon semantic={term.semantic} /><p className="text-[13px] leading-[19px] text-slate-950">{term.text}</p></div>)}
+        </section> : null}
+        {policies.length ? <section className="py-4"><DesktopFareGroup label="Airline baggage policy">
+          {policies.map((policy, index) => <div key={`${policy.carrierCode}-${index}`} className="grid gap-2 py-2.5 md:max-w-3xl">
+            <p className="text-[13px] font-semibold leading-[19px] text-slate-950">{policy.carrierName}{policy.carrierCode && policy.carrierName !== policy.carrierCode ? ` · ${policy.carrierCode}` : ""}</p>
+            {policy.carryOn?.map((value, i) => <DesktopDetailRow key={`carry-${i}`} label="Carry-on" value={value} />)}
+            {policy.checked?.map((value, i) => <DesktopDetailRow key={`checked-${i}`} label="Checked bag" value={value} />)}
+          </div>)}
+        </DesktopFareGroup></section> : null}
+        <section>
+          {groups.length ? (
+            groups.map((group, groupIndex) => (
+              <div
+                key={group.category}
+                className={`py-4 ${groupIndex ? "border-t border-[#D8E1EC]" : ""}`}
+              >
+                <DesktopGroupLabel>
+                  {conditionCategory(group.conditions[0])}
+                </DesktopGroupLabel>
+                <div className="grid gap-0 md:max-w-3xl">
+                  {group.conditions.map((condition, index) => {
+                    const semantic =
+                      condition.state === "allowed"
+                        ? "positive"
+                        : condition.state === "not-allowed"
+                          ? "negative"
+                          : "informational";
+                    const penalty =
+                      condition.penaltyAmount !== undefined &&
+                      condition.penaltyCurrency
+                        ? `${formatSourceMoney(condition.penaltyAmount, condition.penaltyCurrency, locale)} penalty`
+                        : null;
+                    return (
+                      <div
+                        key={`${condition.scope}-${condition.category}-${index}`}
+                        className={`flex items-start gap-3 py-2.5 ${index ? "border-t border-[#D8E1EC]" : ""}`}
+                      >
+                        <DesktopStatusIcon semantic={semantic} />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[13px] font-semibold leading-[18px] text-slate-950">
+                            {conditionState(condition)}
+                          </p>
+                          <p className="mt-0.5 text-xs leading-4 text-[#536B92]">
+                            {conditionScope(condition)}
+                          </p>
+                          {penalty ? (
+                            <p className="mt-0.5 text-xs font-medium leading-4 text-[#536B92]">
+                              {penalty}
+                            </p>
+                          ) : null}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))
+          ) : baggageTerms.length || policies.length ? null : (
+            <DesktopEmptyState
+              title="Fare conditions unavailable"
+              description="Conditions were not supplied by the provider."
+            />
+          )}
+        </section>
+        {provider?.passengerIdentityDocumentsRequired ||
+        provider?.supportedIdentityDocumentTypes?.length ? (
+          <section className="py-4">
+            <DesktopFareGroup label="Travel documents">
+              {provider.passengerIdentityDocumentsRequired ? (
+                <p className="mb-2 text-[13px] leading-[19px] text-slate-800">
+                  Passport or identity information is required to complete
+                  booking.
+                </p>
+              ) : null}
+              {provider.supportedIdentityDocumentTypes?.length ? (
+                <dl className="md:max-w-3xl">
+                  <DesktopDetailRow
+                    label="Supported documents"
+                    value={provider.supportedIdentityDocumentTypes
+                      .map(titleCase)
+                      .join(", ")}
+                  />
+                </dl>
+              ) : null}
+            </DesktopFareGroup>
+          </section>
+        ) : null}
+        {provider?.offerOwner || links.length ? (
+          <section className="py-4">
+            <DesktopFareGroup label="Airline">
+              {provider?.offerOwner ? (
+                <p className="mb-1 text-[13px] font-medium leading-[19px] text-slate-950">
+                  {provider.offerOwner.name}
+                  {provider.offerOwner.iataCode
+                    ? ` · ${provider.offerOwner.iataCode}`
+                    : ""}
+                </p>
+              ) : null}
+              <ul className="md:max-w-3xl">
+                {links.map((link) => (
+                  <li key={link.url}>
+                    <a
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex min-h-11 items-center justify-between gap-3 text-[13px] font-semibold leading-[18px] text-[#075EE8] hover:underline"
+                    >
+                      <span className="min-w-0 flex-1 break-words">
+                        {link.name} conditions of carriage
+                      </span>
+                      <ExternalLink
+                        className="h-[17px] w-[17px] shrink-0"
+                        aria-hidden="true"
+                      />
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </DesktopFareGroup>
+          </section>
+        ) : null}
+        {provider?.updatedAt ? (
+          <DesktopProviderFreshness
+            value={provider.updatedAt}
+            locale={locale}
+          />
+        ) : null}
+      </div>
+    </DesktopFarePanel>
+  );
+}
+
+function OptionalExtras({
+  offer,
+  locale,
+}: {
+  offer: FlightDetailsOffer;
+  locale: string;
+}) {
+  const provider = offer.providerDetails;
+  const services = provider?.optionalServices ?? [];
+  return (
+    <DesktopFarePanel id="extras">
+      <div className="divide-y divide-[#D8E1EC]">
+        <section className="py-4">
+          <DesktopGroupLabel>Optional services</DesktopGroupLabel>
+          {services.length ? (
+            <ul className="md:max-w-4xl">
+              {services.map((service, index) => (
+                <li
+                  key={`${service.type}-${service.description}-${index}`}
+                  className={`py-3 ${index ? "border-t border-[#D8E1EC]" : ""}`}
+                >
+                  <div className="flex items-start justify-between gap-5">
+                    <p className="min-w-0 flex-1 break-words text-[13px] font-semibold leading-[19px] text-slate-950">
+                      {service.description}
+                    </p>
+                    <p className="max-w-[42%] shrink-0 break-words text-right text-[13px] font-bold leading-[19px] tabular-nums text-slate-950">
+                      {service.pricing === "fee-unspecified" ? "Available for a fee" : `${formatSourceMoney(service.price, service.currency, locale)}${service.pricedPerTraveler ? " each" : ""}`}
+                    </p>
+                  </div>
+                  {service.travelerCount ? (
+                    <p className="mt-1 text-xs leading-[17px] text-[#536B92]">
+                      Available for {service.travelerCount} traveler
+                      {service.travelerCount === 1 ? "" : "s"}
+                    </p>
+                  ) : null}
+                  {service.maximumQuantity !== undefined ? (
+                    <p className="mt-1 text-xs leading-[17px] text-[#536B92]">
+                      {service.pricedPerTraveler
+                        ? "Maximum quantity per traveler"
+                        : "Maximum quantity"}
+                      : {service.maximumQuantity}
+                    </p>
+                  ) : null}
+                  {service.journeyContext ? (
+                    <p className="mt-1 text-xs leading-[17px] text-[#536B92]">
+                      {service.journeyContext}
+                    </p>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <DesktopQuietText>
+              No optional services were supplied by this provider.
+            </DesktopQuietText>
+          )}
+        </section>
+        {provider?.supportedLoyaltyProgrammes?.length ? (
+          <section className="py-4">
+            <DesktopFareGroup label="Loyalty programmes">
+              <p className="text-[13px] font-medium leading-[19px] text-slate-950">
+                {provider.supportedLoyaltyProgrammes.join(", ")}
+              </p>
+            </DesktopFareGroup>
+          </section>
+        ) : null}
+      </div>
+    </DesktopFarePanel>
+  );
+}
+
+function DesktopFarePanel({
+  id,
+  children,
+}: {
+  id: FareTab;
+  children: React.ReactNode;
+}) {
+  return (
+    <section
+      data-desktop-fare-panel
+      id={`fare-panel-${id}`}
+      role="tabpanel"
+      aria-labelledby={`fare-tab-${id}`}
+      className="py-4 sm:py-5"
+    >
+      {children}
+    </section>
+  );
+}
+function DesktopGroupLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <h3 className="mb-[9px] text-[11px] font-bold uppercase leading-[15px] tracking-[0.08em] text-[#536B92]">
+      {children}
+    </h3>
+  );
+}
+function DesktopFareGroup({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <DesktopGroupLabel>{label}</DesktopGroupLabel>
+      {children}
     </div>
-    {details?.totalEmissionsKg !== undefined ? <EmissionsRow amount={details.totalEmissionsKg} locale={locale} /> : null}
-    {details?.updatedAt ? <p className="mt-4 text-xs text-slate-500">Provider offer last updated {formatProviderTimestamp(details.updatedAt, locale)}</p> : null}
-  </section>;
+  );
 }
-
-function DetailGroup({ title, children }: { title: string; children: React.ReactNode }) {
-  const displayTitle = title === "Cabin and fare by flight" ? "Cabin & Flight" : title === "Provider source price breakdown" ? "Price breakdown" : title;
-  return <div className="lg:px-1"><h3 className="mb-2 text-sm font-semibold text-slate-950">{displayTitle}</h3>{children}</div>;
+function DesktopDetailRow({
+  label,
+  value,
+  strong = false,
+}: {
+  label: string;
+  value?: string | null;
+  strong?: boolean;
+}) {
+  if (!value) return null;
+  return (
+    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)] items-start gap-6">
+      <dt
+        className={`min-w-0 break-words text-[13px] leading-[19px] text-[#536B92] ${strong ? "font-bold" : "font-normal"}`}
+      >
+        {label}
+      </dt>
+      <dd
+        className={`min-w-0 break-words text-right text-[13px] leading-[19px] text-slate-950 [overflow-wrap:anywhere] ${strong ? "font-bold" : "font-medium"}`}
+      >
+        {value}
+      </dd>
+    </div>
+  );
 }
-function PriceRow({ label, amount, currency, locale }: { label: string; amount: number; currency: string; locale: string }) { return <div className="flex justify-between gap-3"><dt className="text-slate-600">{label}</dt><dd className="font-medium">{formatSourceMoney(amount, currency, locale)}</dd></div>; }
-function formatSourceMoney(amount: number, currency: string, locale: string) { try { return new Intl.NumberFormat(locale, { style: "currency", currency, currencyDisplay: "code" }).format(amount); } catch { return `${currency} ${amount.toFixed(2)}`; } }
-function amenityLines(cabin: NonNullable<FlightLeg["segments"][number]["cabinDetails"]>[number]) { const lines: string[] = []; if (cabin.amenities?.wifi) lines.push(`Wi-Fi: ${cabin.amenities.wifi.state === "included" ? cabin.amenities.wifi.cost ? `Available (${titleCase(cabin.amenities.wifi.cost)})` : "Available" : cabin.amenities.wifi.state === "not-included" ? "Not available" : "Not supplied by provider"}`); if (cabin.amenities?.power) lines.push(`Power: ${cabin.amenities.power.state === "included" ? "Available" : cabin.amenities.power.state === "not-included" ? "Not available" : "Not supplied by provider"}`); if (cabin.amenities?.seat) lines.push(`Seat: ${[cabin.amenities.seat.type && titleCase(cabin.amenities.seat.type), cabin.amenities.seat.pitch && `${cabin.amenities.seat.pitch} in pitch`, cabin.amenities.seat.legroom && `${cabin.amenities.seat.legroom.toUpperCase() === "N/A" ? "N/A" : titleCase(cabin.amenities.seat.legroom)} legroom`].filter(Boolean).join(", ")}`); return lines; }
-function conditionLabel(condition: FlightProviderCondition) { const scope = condition.scope === "trip" ? "Whole trip" : condition.legIndex !== undefined ? `Flight ${condition.legIndex + 1}` : condition.scope === "outbound" ? "Outbound only" : condition.scope === "return" ? "Return only" : "Leg"; const category = condition.category === "change" ? "Changes" : titleCase(condition.category); const permission = condition.category === "change" || condition.category === "refund"; const state = condition.state === "allowed" ? permission ? "Allowed" : "Included" : condition.state === "not-allowed" ? permission ? "Not allowed" : "Not included" : "Not supplied by provider"; return `${scope} • ${category}: ${state}`; }
+function DesktopQuietText({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="py-3 text-[13px] leading-[19px] text-[#536B92]">{children}</p>
+  );
+}
+function DesktopEmptyState({
+  title,
+  description,
+}: {
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="px-3 py-6 text-center">
+      <p className="text-sm font-semibold leading-5 text-slate-950">{title}</p>
+      <p className="mt-1 text-[13px] leading-[19px] text-[#536B92]">
+        {description}
+      </p>
+    </div>
+  );
+}
+function DesktopProviderFreshness({
+  value,
+  locale,
+}: {
+  value: string;
+  locale: string;
+}) {
+  return (
+    <section className="py-3">
+      <p className="text-[11px] font-medium leading-4 text-[#536B92]">
+        Provider offer last updated
+      </p>
+      <p className="text-[11px] leading-4 text-[#536B92]">
+        {formatProviderTimestamp(value, locale)}
+      </p>
+    </section>
+  );
+}
+function DesktopStatusIcon({
+  semantic,
+}: {
+  semantic: "positive" | "negative" | "informational";
+}) {
+  return (
+    <span
+      className={`mt-0.5 flex h-[14px] w-[14px] shrink-0 items-center justify-center rounded-full border ${semantic === "positive" ? "border-emerald-500" : "border-slate-400"}`}
+    >
+      {semantic === "positive" ? (
+        <Check
+          className="h-2.5 w-2.5 text-emerald-600"
+          strokeWidth={2.2}
+          aria-hidden="true"
+        />
+      ) : semantic === "negative" ? (
+        <span
+          className="h-[1.5px] w-[7px] rounded bg-slate-500"
+          aria-hidden="true"
+        />
+      ) : (
+        <span
+          className="h-[3px] w-[3px] rounded-full bg-slate-500"
+          aria-hidden="true"
+        />
+      )}
+    </span>
+  );
+}
+function amenityState(value: "included" | "not-included" | "unknown") {
+  return value === "included"
+    ? "Available"
+    : value === "not-included"
+      ? "Not available"
+      : "Not supplied by provider";
+}
+function conditionScope(condition: FlightProviderCondition) {
+  return condition.scope === "trip"
+    ? "Whole trip"
+    : condition.legIndex !== undefined
+      ? `Flight ${condition.legIndex + 1}`
+      : condition.scope === "outbound"
+        ? "Outbound only"
+        : condition.scope === "return"
+          ? "Return only"
+          : "Leg";
+}
+function conditionCategory(condition: FlightProviderCondition) {
+  return condition.category === "change"
+    ? "Changes"
+    : titleCase(condition.category);
+}
+function conditionState(condition: FlightProviderCondition) {
+  const permission =
+    condition.category === "change" || condition.category === "refund";
+  return condition.state === "allowed"
+    ? permission
+      ? "Allowed"
+      : "Included"
+    : condition.state === "not-allowed"
+      ? permission
+        ? "Not allowed"
+        : "Not included"
+      : "Not supplied by provider";
+}
+function formatSourceMoney(amount: number, currency: string, locale: string) { try { return formatFlightResultCurrency(amount, currency, { maximumFractionDigits: 0, locale }); } catch { return new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(amount); } }
 function formatProviderTimestamp(value: string, locale: string) { const timestamp = new Date(value); return Number.isNaN(timestamp.getTime()) ? value : new Intl.DateTimeFormat(locale, { year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short" }).format(timestamp); }
 function formatDistanceKm(distanceKm: number, locale: string) { return `${new Intl.NumberFormat(locale, { maximumFractionDigits: distanceKm >= 100 ? 0 : 1 }).format(distanceKm)} km`; }
 function carrierConditionsLinks(offer: FlightDetailsOffer) {
@@ -366,27 +1636,21 @@ function carrierConditionsLinks(offer: FlightDetailsOffer) {
 
 function EmissionsRow({ amount, locale }: { amount: number; locale: string }) { return <div className="mt-4 flex min-h-9 items-center justify-between gap-3 rounded-md bg-emerald-50/70 px-3 py-2 text-xs"><span className="inline-flex items-center gap-2 font-medium text-emerald-700"><Leaf className="h-4 w-4" aria-hidden="true" /> Estimated CO₂ emissions</span><span className="inline-flex items-center gap-2 text-right font-medium text-slate-800">{amount.toLocaleString(locale)} kg for this offer <Info className="h-3.5 w-3.5" aria-hidden="true" /></span></div>; }
 
-function CheckoutButton({ redirecting, handoff, canContinue, onContinue, dock = false }: { redirecting: boolean; handoff: FlightDetailsFareChoice["handoff"]; canContinue: boolean; onContinue: () => void; dock?: boolean }) { return <button type="button" aria-label={handoff.available ? "Continue booking" : "Booking currently unavailable"} aria-disabled={!canContinue || redirecting} disabled={!canContinue || redirecting} onClick={onContinue} className={`${dock ? "inline-flex min-h-[50px] min-w-[168px] flex-1 sm:max-w-[260px]" : "mt-4 inline-flex min-h-[50px] w-full"} items-center justify-center gap-2 whitespace-nowrap rounded-[8px] bg-[#075EE8] px-4 text-sm font-semibold text-white transition hover:bg-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/40 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50`}><LockKeyhole className="h-4 w-4" aria-hidden="true" />{redirecting ? "Opening booking…" : "Continue booking"}</button>; }
-
-function MobileCheckoutDock({ travelerCount, price, redirecting, handoff, canContinue, onContinue, error }: { travelerCount: number; price: ReturnType<typeof formatDisplayPrice> | null; redirecting: boolean; handoff: FlightDetailsFareChoice["handoff"]; canContinue: boolean; onContinue: () => void; error: string }) { return <section className="fixed inset-x-0 bottom-0 z-[90] border-t border-[#E2E8F0] bg-white px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-8px_24px_rgba(15,23,42,0.10)] lg:hidden" aria-labelledby="mobile-trip-total-heading"><div className="mx-auto max-w-3xl">{error ? <p role="alert" className="mb-2 line-clamp-2 text-xs font-medium leading-4 text-red-700">{error}</p> : null}<div className="flex items-center gap-3"><div className="min-w-0 flex-1"><h2 id="mobile-trip-total-heading" className="text-[11px] font-semibold leading-4 text-slate-600">{flightDetailsTotalLabel(travelerCount)}</h2>{price ? <p className="truncate text-[22px] font-bold leading-6 text-[#075EE8]" aria-label={price.ariaLabel}>{price.formatted}</p> : <p className="text-sm font-semibold text-slate-500">Price unavailable</p>}</div><CheckoutButton dock redirecting={redirecting} handoff={handoff} canContinue={canContinue} onContinue={onContinue} /></div></div></section>; }
-
-function TripSidebar({ tripType, legs, route, date, tripLine, travelers, travelerCount, selectedFare, fareTerms, price, locale, redirecting, handoff, canContinue, onContinue, error }: { tripType: "one-way" | "round-trip" | "multi-city"; legs: FlightLeg[]; route: string; date: string; tripLine: string; travelers: string; travelerCount: number; selectedFare: string; fareTerms: FlightDetailsFareChoice["distinguishingTerms"]; price: ReturnType<typeof formatDisplayPrice> | null; locale: string; redirecting: boolean; handoff: FlightDetailsFareChoice["handoff"]; canContinue: boolean; onContinue: () => void; error: string }) {
-  return <aside className="hidden self-start rounded-[13px] border border-[#E2E8F0] bg-white p-6 shadow-[0_4px_18px_rgba(15,23,42,0.05)] lg:block" aria-labelledby="your-trip-heading">
-    <h2 id="your-trip-heading" className="text-xl font-bold">Your trip</h2><p className="mt-4 text-base font-semibold">{route}</p><p className="mt-1 text-xs leading-5 text-slate-600">{date} • {tripLine}</p>
-    <div className="my-5 border-t border-[#E2E8F0]" />
-    <div className="space-y-5">{legs.map((leg, index) => <div key={`${leg.direction}-${leg.departureTime}`}><p className="text-xs font-bold tracking-[0.12em] text-[#075EE8]">{tripType === "multi-city" ? `FLIGHT ${index + 1}` : index === 0 ? "OUTBOUND" : "RETURN"}</p><p className="mt-1 text-sm font-semibold">{leg.originAirport} → {leg.destinationAirport}</p><div className="mt-2 flex items-center justify-between gap-3 text-xs text-slate-600"><span>{formatTime(leg.departureTime, locale)}</span><span>{leg.duration} • {formatStops(leg.stops, technicalStopCount(leg))}</span><span>{formatTime(leg.arrivalTime, locale)}</span></div></div>)}</div>
-    <div className="my-5 border-t border-[#E2E8F0]" /><dl className="space-y-3 text-sm"><div className="flex justify-between gap-4"><dt className="text-slate-600">Fare</dt><dd className="font-medium text-slate-800">{selectedFare}</dd></div>{fareTerms.length ? <div><dt className="text-slate-600">Fare terms</dt><dd className="mt-1 space-y-1 text-xs leading-5 text-slate-700">{fareTerms.map((term) => <p key={`${term.category}-${term.legDirection || "trip"}-${term.text}`}>{term.text}</p>)}</dd></div> : null}<div className="flex justify-between gap-4"><dt className="text-slate-600">Traveler</dt><dd className="font-medium text-slate-800">{travelers}</dd></div><div className="flex justify-between gap-4"><dt className="text-slate-600">Handoff provider</dt><dd className="max-w-[60%] text-right font-medium text-slate-800">{handoff.available ? handoff.providerName : "Unavailable"}</dd></div></dl>
-    <div className="my-5 border-t border-[#E2E8F0]" /><div className="flex items-end justify-between gap-4"><p className="text-sm font-semibold">{flightDetailsTotalLabel(travelerCount)}</p>{price ? <p className="text-[30px] font-bold leading-none text-[#075EE8]" aria-label={price.ariaLabel}>{price.formatted}</p> : null}</div>
-    <CheckoutButton redirecting={redirecting} handoff={handoff} canContinue={canContinue} onContinue={onContinue} />
-    {error ? <p role="alert" className="mt-4 text-sm font-medium text-red-700">{error}</p> : null}
-  </aside>;
-}
-
 function FlightDetailsSkeleton({ resultsHref }: { resultsHref: string }) { return <FlightDetailsLoadingShell resultsHref={resultsHref} />; }
-function FlightDetailsUnavailable({ resultsHref, message }: { resultsHref: string; message: string }) { return <main className="flex-1 bg-white py-10 sm:bg-[#F7F9FC]"><div className="mx-auto max-w-3xl px-0 sm:px-4"><Link href={resultsHref} className="ml-4 inline-flex items-center gap-2 text-sm font-semibold text-[#075EE8] sm:ml-0"><ArrowLeft className="h-4 w-4" /> Back to results</Link><section className="mt-4 border-y border-slate-200 bg-white p-6 sm:rounded-[15px] sm:border sm:p-8"><h1 className="text-xl font-bold">Flight quote unavailable</h1><p className="mt-2 text-sm text-slate-600">{message || "Please return to results and search again for current prices."}</p></section></div></main>; }
+function FlightDetailsUnavailable({ resultsHref, message }: { resultsHref: string; message: string }) { return <main className="flex-1 bg-white sm:bg-[#F7F9FC] sm:py-10"><div className="flex min-h-[52px] items-center px-4 pt-[env(safe-area-inset-top)] sm:hidden"><Link href={resultsHref} aria-label="Back to results" className="inline-flex min-h-11 items-center gap-2 text-sm font-extrabold text-[#075EE8]"><ArrowLeft className="h-[18px] w-[18px]" /><span>Back to results</span></Link></div><div className="mx-auto max-w-3xl px-0 sm:px-4"><Link href={resultsHref} className="ml-4 hidden items-center gap-2 text-sm font-semibold text-[#075EE8] sm:inline-flex sm:ml-0"><ArrowLeft className="h-4 w-4" /> Back to results</Link><section className="mt-4 border-y border-slate-200 bg-white p-6 sm:rounded-[15px] sm:border sm:p-8"><h1 className="text-xl font-bold">Flight quote unavailable</h1><p className="mt-2 text-sm text-slate-600">{message || "Please return to results and search again for current prices."}</p></section></div></main>; }
 
-function readTravelerSummary(search: { adults: number; children: number; infants: number; travelers: number }) { const { adults, children, infants } = search; const count = search.travelers; const parts = [adults ? `${adults} ${adults === 1 ? "adult" : "adults"}` : "", children ? `${children} ${children === 1 ? "child" : "children"}` : "", infants ? `${infants} ${infants === 1 ? "infant" : "infants"}` : ""].filter(Boolean); return { count, label: parts.join(", ") || "1 adult" }; }
-function formatTripDate(value: string, locale: string) { const date = new Date(value.includes("T") ? value : `${value}T12:00:00`); return Number.isNaN(date.getTime()) ? value : new Intl.DateTimeFormat(locale, { weekday: "short", month: "short", day: "numeric" }).format(date); }
+function readTravelerSummary(search: { adults: number; children: number; infants: number; travelers: number }, locale: string, t: (key: string) => string) {
+  const number = new Intl.NumberFormat(locale);
+  const parts = ([
+    [search.adults, "adultSingular", "adultPlural"],
+    [search.children, "childSingular", "childPlural"],
+    [search.infants, "infantSingular", "infantPlural"],
+  ] as const).filter(([count]) => count > 0).map(([count, singular, plural]) => `${number.format(count)} ${t(count === 1 ? singular : plural)}`);
+  return {
+    count: search.travelers,
+    label: parts.join(", ") || `${number.format(search.travelers)} ${t(search.travelers === 1 ? "deals.travelerSingular" : "deals.travelerPlural")}`,
+  };
+}
 function formatTime(value: string, locale: string) { return new Intl.DateTimeFormat(locale, { hour: "numeric", minute: "2-digit" }).format(new Date(value)); }
 function technicalStopCount(leg: FlightLeg) { return leg.segments.reduce((total, segment) => total + (segment.technicalStops?.length ?? 0), 0); }
 function formatStops(connections: number, technicalStops = 0) { const parts = []; if (connections) parts.push(`${connections} ${connections === 1 ? "connection" : "connections"}`); if (technicalStops) parts.push(`${technicalStops} technical ${technicalStops === 1 ? "stop" : "stops"}`); return parts.length ? parts.join(" • ") : "Non-stop"; }

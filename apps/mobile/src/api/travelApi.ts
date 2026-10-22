@@ -1,11 +1,14 @@
 import { getApiBaseUrl } from "../config/apiUrl";
 import { readSession } from "../storage/sessionStorage";
 import { Platform } from "react-native";
+import type { CanonicalLocation } from "@/lib/locations/types";
 import Constants from "expo-constants";
+import type { PublicHotelProviderDetails } from "../../../../src/lib/hotels/hotelProviderDetails";
 import type { NormalizedCarResult } from "../../../../src/lib/cars/types";
 import type { PublicFlightResult, PublicHotelPropertyDetails, PublicHotelResult } from "../../../../src/lib/types";
 import type { HotelRoomOption } from "../../../../src/lib/hotels/hotelRoomOptions";
 import type { ContractResult, TravelSearchResponse } from "../../../../src/lib/travel/searchContract";
+import type { FlightDetailsResponse } from "../../../../src/lib/flights/flightDetailsContract";
 import { parseMobileExploreCatalogue, type MobileExploreCatalogue } from "./exploreCatalogueContract";
 import { logFlightSearchCheckpoint } from "../features/search/flightSearchDiagnostics";
 
@@ -14,21 +17,28 @@ export class TravelApiError extends Error {
 }
 
 export type FlightResult = ContractResult<PublicFlightResult>;
+export type MobileFlightDetailsResponse = FlightDetailsResponse;
+export type FlightRedirectResponse = { url: string };
 export type HotelResult = ContractResult<PublicHotelResult>;
 export type HotelSearchResponse = TravelSearchResponse<PublicHotelResult> & {
   warningCategory?: "provider_unavailable" | string;
+  nextCursor?: string | null;
+  progressive?: boolean;
+  completed?: boolean;
+  estimatedTotal?: number;
 };
-export type MobileHotelDetailsResponse = { hotel: PublicHotelResult; propertyDetails: PublicHotelPropertyDetails | null; roomOptions: HotelRoomOption[]; relatedHotels: PublicHotelResult[] };
-export type MobileHotelDetailsRequest = { id: string; checkIn: string; checkOut: string; guests: number; rooms: number };
+export type MobileHotelDetailsResponse = { hotel: PublicHotelResult; propertyDetails: PublicHotelPropertyDetails | null; locationDetails?: PublicHotelPropertyDetails | null; providerDetails?: PublicHotelProviderDetails | null; propertyOffers?: Array<{ hotel: PublicHotelResult; providerDetails: PublicHotelProviderDetails | null }>; roomOptions: HotelRoomOption[]; relatedHotels: PublicHotelResult[]; relatedHotelsHasMore?: boolean };
+export type MobileHotelDetailsRequest = { id: string; destination: string; checkIn: string; checkOut: string; guests: number; rooms: number };
 export type CarResult = ContractResult<NormalizedCarResult>;
 export type PackageComponent = { status: "success" | "empty" | "unavailable"; results: (FlightResult | HotelResult | CarResult)[]; warnings: string[]; source: string; requestId: string };
 export type PackageSearchResponse = { mode: string; status: "success" | "partial" | "empty" | "unavailable"; components: Partial<Record<"flight" | "hotel" | "car", PackageComponent>>; packageOffers: unknown[] };
 export type MobileTrip = { id: string; providerConfirmationCode: string; providerName: string; tripType: string; status: "upcoming" | "past" | "cancelled"; origin: string | null; destination: string; departureDate: string; returnDate: string | null; travelerCount: number; currency: string; totalAmount: number | null; providerAction: { url: string; label: string; external: true } | null };
 export type MobileProfile = { fullName?: string | null; phoneNumber?: string | null; phoneCountryCode?: string | null; dateOfBirth?: string | null; gender?: string | null; nationality?: string | null; address?: string | null };
 export type MobilePriceAlertStatus = "ACTIVE" | "PAUSED" | "TRIGGERED" | "EXPIRED";
-export type MobilePriceAlert = { id: string; type: "FLIGHT" | "HOTEL"; origin: string | null; destination: string; targetPrice: string | null; currency: string | null; status: MobilePriceAlertStatus; createdAt: string; updatedAt: string; lastSeenPrice: string | null; lastCheckedAt: string | null; query: Record<string, unknown> };
-export type CreateFlightPriceAlert = { type: "FLIGHT"; origin: string; destination: string; targetPrice: number; currency: string; query: Record<string, unknown> };
+export type MobilePriceAlert = { id: string; type: "FLIGHT" | "HOTEL" | "CAR"; origin: string | null; destination: string; targetPrice: string | null; mode?: "AUTOMATIC" | "TARGET"; currency: string | null; status: MobilePriceAlertStatus; createdAt: string; updatedAt: string; lastSeenPrice: string | null; lastCheckedAt: string | null; query: Record<string, unknown> };
+export type CreateFlightPriceAlert = { type: "FLIGHT"; origin: string; destination: string; currency: string; query: Record<string, unknown> } & ({ mode: "AUTOMATIC"; baselinePrice: number } | { mode?: "TARGET"; targetPrice: number });
 export type CreateHotelPriceAlert = { type: "HOTEL"; destination: string; targetPrice: number; mode: "TARGET"; currency: string; query: Record<string, unknown> };
+export type CreateCarPriceAlert = { type: "CAR"; origin: string; destination: string; currency: string; query: Record<string, unknown> } & ({ mode: "AUTOMATIC"; baselinePrice: number } | { mode: "TARGET"; targetPrice: number });
 export type CurrencyRates = { base: string; rates: Record<string, number>; fetchedAt: string; source: string; stale?: boolean };
 export type MobileLocation = { source: "ipinfo-lite" | "fallback"; countryCode: string | null; country: string | null; continentCode: string | null; continent: string | null; ipDetected: boolean };
 export type MobileNotificationType = "PRICE_ALERT" | "SUPPORT_UPDATE" | "ACCOUNT_UPDATE" | "SECURITY_UPDATE" | "SYSTEM" | "TRAVEL_INSIGHT";
@@ -53,9 +63,20 @@ export type SecuritySession = { id:string; client:string; platform:string|null; 
 export type TwoFactorSetup = { otpauthUri:string; manualSetupKey:string; expiresAt:string };
 export type TwoFactorStatus = { enabled:boolean; method:string|null; enabledAt:string|null; disabledAt:string|null; recoveryCodesRemaining:number };
 export type AccountDeletionRequest = { id:string; status:string; requestedAt:string; deletionScheduledAt:string; cancelledAt:string|null; completedAt:string|null; canReactivate:boolean };
-export type HotelDestinationKind = "city" | "district" | "landmark" | "airport-area";
-export type HotelDestinationSuggestion = { id: string; name: string; country: string; countryCode: string; region?: string; kind: HotelDestinationKind; searchValue: string; aliases?: string[] };
-export const FLIGHT_SEARCH_REQUEST_TIMEOUT_MS = 14_000;
+export type HotelDestinationKind = "city" | "district" | "landmark" | "airport-area" | "custom";
+export type HotelDestinationSuggestion = {
+  id: string;
+  name: string;
+  country: string;
+  countryCode: string;
+  region?: string;
+  kind: HotelDestinationKind;
+  searchValue: string;
+  aliases?: string[];
+  canonical?: CanonicalLocation;
+};
+/** Allows the shared server orchestrator to finish polling slower providers. */
+export const METASEARCH_REQUEST_TIMEOUT_MS = 35_000;
 
 function apiErrorMessage(data: Record<string, unknown>) {
   if (typeof data.error === "string") return data.error;
@@ -159,10 +180,14 @@ async function fetchExploreCatalogue(): Promise<MobileExploreCatalogue> {
 
 export const travelApi = {
   featureAvailability: () => request<FeatureAvailability>("/api/feature-availability"),
-  searchFlights: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string }) => request<TravelSearchResponse<PublicFlightResult>>("/api/flights/search", { method: "POST", body: JSON.stringify(body) }, { ...options, timeoutMs: FLIGHT_SEARCH_REQUEST_TIMEOUT_MS }),
-  searchHotels: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string }) => request<HotelSearchResponse>("/api/hotels/search", { method: "POST", body: JSON.stringify(body) }, options),
+  searchFlights: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string }) => request<TravelSearchResponse<PublicFlightResult>>("/api/flights/search", { method: "POST", body: JSON.stringify(body) }, { ...options, timeoutMs: METASEARCH_REQUEST_TIMEOUT_MS }),
+  flightDetails: (id: string, options: { signal?: AbortSignal } = {}) => request<FlightDetailsResponse>(`/api/flights/details?id=${encodeURIComponent(id)}`, {}, options),
+  flightRedirect: (id: string, options: { signal?: AbortSignal; sourcePage?: string } = {}) => request<FlightRedirectResponse>("/api/redirect", { method: "POST", body: JSON.stringify({ id, type: "flight", sourcePage: options.sourcePage ?? "native_flight_details" }) }, { signal: options.signal }),
+  searchHotels: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string }) => request<HotelSearchResponse>("/api/hotels/search", { method: "POST", body: JSON.stringify(body) }, { ...options, timeoutMs: METASEARCH_REQUEST_TIMEOUT_MS }),
+  searchHotelsProgressive: (body: Record<string, unknown>, cursor: string | null, options?: { signal?: AbortSignal; requestId?: string }) => request<HotelSearchResponse>("/api/mobile/v1/hotels/progressive", { method: "POST", body: JSON.stringify(cursor ? { cursor } : { search: body }) }, { ...options, timeoutMs: METASEARCH_REQUEST_TIMEOUT_MS }),
+  hotelRedirect: (id: string) => request<FlightRedirectResponse>("/api/redirect", { method: "POST", body: JSON.stringify({ id, type: "hotel", sourcePage: "native_hotel_details" }) }),
   hotelDetails: (input: MobileHotelDetailsRequest, options: { signal?: AbortSignal } = {}) => {
-    const params = new URLSearchParams({ id: input.id, checkIn: input.checkIn, checkOut: input.checkOut, guests: String(input.guests), rooms: String(input.rooms) });
+    const params = new URLSearchParams({ id: input.id, destination: input.destination, checkIn: input.checkIn, checkOut: input.checkOut, guests: String(input.guests), rooms: String(input.rooms), relatedLimit: "12" });
     return request<MobileHotelDetailsResponse>(`/api/hotels/details?${params.toString()}`, {}, options);
   },
   searchHotelDestinations: (query: string, options: { signal?: AbortSignal; countryCode?: string; locale?: string; limit?: number } = {}) => {
@@ -171,7 +196,7 @@ export const travelApi = {
     if (options.locale) params.set("locale", options.locale);
     return request<{ suggestions?: HotelDestinationSuggestion[] }>(`/api/hotels/destinations?${params.toString()}`, {}, { signal: options.signal });
   },
-  searchCars: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string }) => request<TravelSearchResponse<NormalizedCarResult>>("/api/cars/search", { method: "POST", body: JSON.stringify(body) }, options),
+  searchCars: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string }) => request<TravelSearchResponse<NormalizedCarResult>>("/api/cars/search", { method: "POST", body: JSON.stringify(body) }, { ...options, timeoutMs: METASEARCH_REQUEST_TIMEOUT_MS }),
   searchPackages: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string }) => request<PackageSearchResponse>("/api/packages/search", { method: "POST", body: JSON.stringify(body) }, options),
   trips: (status?: "upcoming" | "past" | "cancelled") => request<{ trips: MobileTrip[]; summary: Record<string, number> }>(`/api/mobile/v1/trips${status ? `?status=${status}` : ""}`),
   profile: () => request<{ profile: MobileProfile | null; user: { id: string; email: string; name?: string | null } }>("/api/mobile/v1/profile"),
@@ -196,6 +221,10 @@ export const travelApi = {
   requestDeletion: () => request<{request:AccountDeletionRequest;created:boolean}>("/api/mobile/v1/security/deletion-request",{method:"POST",body:JSON.stringify({confirmed:true})}),
   reactivateDeletion: () => request<{success:true;request:{id:string;status:string;cancelledAt:string|null}}>("/api/mobile/v1/security/deletion-request/reactivate",{method:"POST"}),
   updateProfile: (profile: MobileProfile) => request<{ profile: MobileProfile }>("/api/mobile/v1/profile", { method: "PATCH", body: JSON.stringify(profile) }),
+  requestCurrentEmailCode: () => request<{ cooldownSeconds: number; resendLimitReached?: boolean }>("/api/mobile/v1/email-change/current-request", { method: "POST", body: JSON.stringify({}) }),
+  verifyCurrentEmailCode: (code: string) => request<{ ownershipProof: string }>("/api/mobile/v1/email-change/current-confirm", { method: "POST", body: JSON.stringify({ code }) }),
+  requestEmailChange: (newEmail: string, ownershipProof: string) => request<{ cooldownSeconds: number; resendLimitReached?: boolean }>("/api/mobile/v1/email-change/request", { method: "POST", body: JSON.stringify({ newEmail, ownershipProof }) }),
+  confirmEmailChange: (newEmail: string, code: string, ownershipProof: string) => request<{ email: string; userId: string }>("/api/mobile/v1/email-change/confirm", { method: "POST", body: JSON.stringify({ newEmail, code, ownershipProof }) }),
   customizationPreferences: () => request<{ hasPreferences: boolean; preferences: CustomizationPreferences }>("/api/mobile/v1/customization-preferences"),
   updateCustomizationPreferences: (preferences: Partial<CustomizationPreferences>) => request<{ preferences: CustomizationPreferences }>("/api/mobile/v1/customization-preferences", { method: "PATCH", body: JSON.stringify(preferences) }),
   createSupportTicket: (input: SupportTicketInput) => request<{ ticket: { id: string; subject: string } }>("/api/mobile/v1/support/tickets", { method: "POST", body: JSON.stringify(input) }),
@@ -211,7 +240,7 @@ export const travelApi = {
   deleteRecentSearch: (id: string) => request<{ success: true }>("/api/mobile/v1/recent-searches", { method: "DELETE", body: JSON.stringify({ id }) }),
   clearRecentSearches: () => request<{ success: true }>("/api/mobile/v1/recent-searches?clear=all", { method: "DELETE" }),
   priceAlerts: () => request<{ alerts: MobilePriceAlert[] }>("/api/mobile/v1/price-alerts"),
-  createPriceAlert: (body: CreateFlightPriceAlert | CreateHotelPriceAlert) => request<{ alert: MobilePriceAlert }>("/api/mobile/v1/price-alerts", { method: "POST", body: JSON.stringify(body) }),
+  createPriceAlert: (body: CreateFlightPriceAlert | CreateHotelPriceAlert | CreateCarPriceAlert) => request<{ alert: MobilePriceAlert }>("/api/mobile/v1/price-alerts", { method: "POST", body: JSON.stringify(body) }),
   updatePriceAlertStatus: (id: string, status: "ACTIVE" | "PAUSED") => request<{ alert: MobilePriceAlert }>(`/api/mobile/v1/price-alerts/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify({ status }) }),
   deletePriceAlert: (id: string) => request<{ deleted: true; id: string }>(`/api/mobile/v1/price-alerts/${encodeURIComponent(id)}`, { method: "DELETE" }),
   notifications: (cursor?: string) => request<MobileNotificationPage>(`/api/mobile/v1/notifications${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ""}`),

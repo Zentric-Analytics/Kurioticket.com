@@ -29,7 +29,10 @@ test("createSupportTicket creates guest SupportTicket and SupportMessage before 
   const sentEmails: Array<{ to: string; idempotencyKey?: string }> = [];
 
   __supportServiceTest.setPrismaClientForTesting({
+    supportMessage: { async create() { return assert.fail("Unexpected separate message write during ticket creation"); } },
     supportTicket: {
+      async findUnique() { return assert.fail("Unexpected ticket lookup during creation"); },
+      async update() { return assert.fail("Unexpected ticket update during creation"); },
       async create(args) {
         createCalls.push(args);
         return { id: "ticket-guest", subject: args.data.subject };
@@ -61,7 +64,10 @@ test("createSupportTicket attaches logged-in userId", async () => {
   const createCalls: CreateArgs[] = [];
 
   __supportServiceTest.setPrismaClientForTesting({
+    supportMessage: { async create() { return assert.fail("Unexpected separate message write during ticket creation"); } },
     supportTicket: {
+      async findUnique() { return assert.fail("Unexpected ticket lookup during creation"); },
+      async update() { return assert.fail("Unexpected ticket update during creation"); },
       async create(args) {
         createCalls.push(args);
         return { id: "ticket-user", subject: args.data.subject };
@@ -84,7 +90,10 @@ test("createSupportTicket attaches logged-in userId", async () => {
 
 test("createSupportTicket fails instead of returning a local ticket when database creation fails", async () => {
   __supportServiceTest.setPrismaClientForTesting({
+    supportMessage: { async create() { return assert.fail("Unexpected separate message write during ticket creation"); } },
     supportTicket: {
+      async findUnique() { return assert.fail("Unexpected ticket lookup during creation"); },
+      async update() { return assert.fail("Unexpected ticket update during creation"); },
       async create() {
         throw new Error("database unavailable");
       },
@@ -109,7 +118,10 @@ test("createSupportTicket returns saved ticket when confirmation email fails", a
   const createCalls: CreateArgs[] = [];
 
   __supportServiceTest.setPrismaClientForTesting({
+    supportMessage: { async create() { return assert.fail("Unexpected separate message write during ticket creation"); } },
     supportTicket: {
+      async findUnique() { return assert.fail("Unexpected ticket lookup during creation"); },
+      async update() { return assert.fail("Unexpected ticket update during creation"); },
       async create(args) {
         createCalls.push(args);
         return { id: "ticket-email-failed", subject: args.data.subject };

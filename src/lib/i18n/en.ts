@@ -1,6 +1,7 @@
 import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
+  "hotelResults.unsupportedSearch": "The available providers cannot search these options. Please change your destination, rooms or guests.",
   "accountDashboard.recently": "Recently",
   "metadata.root.title.default": "Kurioticket | Find Cheap Flights Fast",
   "metadata.root.description":
@@ -576,7 +577,7 @@ export const translations: TranslationDictionary = {
     "Control how Kurioticket personalizes your recommendations.",
   "accountDashboard.preferences.customization.personalizeSearches":
     "Use my searches to personalize recommendations",
-  "accountDashboard.preferences.customization.personalizedTravelPackages":
+  "accountDashboard.preferences.customization.personalizedTravelDeals":
     "Show personalized travel deals",
   "accountDashboard.preferences.customization.rememberRecentSearches":
     "Remember my recent searches",
@@ -1411,6 +1412,7 @@ export const translations: TranslationDictionary = {
   savedTripsCabinFirst: "first",
   editSearch: "Edit search",
   viewDetails: "View details",
+  seeDetails: "See details",
   searchAgain: "Search again",
   origin: "Origin",
   destination: "Destination",
@@ -1722,7 +1724,7 @@ export const translations: TranslationDictionary = {
   "carsSearch.returnLocationLabel": "Return location",
   "carsSearch.pickupLocationPlaceholder": "Airport, city, or address",
   "carsSearch.returnLocationPlaceholder": "Return city, airport, or address",
-  "carsSearch.choosePickupLocation": "Choose pickup location",
+  "carsSearch.choosePickupLocation": "Choose pick-up location",
   "carsSearch.chooseReturnLocation": "Choose return location",
   "carsSearch.returnToSameLocation": "Return to same location",
   "carsSearch.differentReturnLocation": "Different return location",
@@ -1732,7 +1734,7 @@ export const translations: TranslationDictionary = {
   "carsSearch.noMatchingLocations": "No matching locations found.",
   "carsSearch.suggestionsUnavailable":
     "Location suggestions are temporarily unavailable.",
-  "carsSearch.continueTypingManually": "You can continue typing manually.",
+  "carsSearch.continueTypingManually": "Try a nearby airport or provider-supported city.",
   "carsSearch.useTypedLocation": "Use typed location",
   "carsSearch.unverifiedTypedLocation": "Unverified typed location",
   "carsSearch.type.airport": "Airport",
@@ -1741,7 +1743,7 @@ export const translations: TranslationDictionary = {
   "carsSearch.type.customLocation": "Custom location",
   "carsSearch.rentalDatesLabel": "Rental dates",
   "carsSearch.rentalDatePlaceholder": "Pickup date — Return date",
-  "carsSearch.pickupReturnTimeLabel": "Pickup / return time",
+  "carsSearch.pickupReturnTimeLabel": "Pick-up / Return time",
   "carsSearch.mobileTimeIntro":
     "Select when you’ll pick up and return your car.",
   "carsSearch.pickupReturnTimeSummary":
@@ -1765,12 +1767,13 @@ export const translations: TranslationDictionary = {
   "carsSearch.startsNewPickupDate": "starts a new pickup date",
   "carsSearch.choosePickupReturnTimesAria": "Choose pickup and return times",
   "carsSearch.pickupReturnTimeSelectorAria": "Pickup and return time selector",
-  "carsSearch.pickupTimeLabel": "Pickup time",
+  "carsSearch.pickupTimeLabel": "Pick-up time",
   "carsSearch.returnTimeLabel": "Return time",
   "carsSearch.error.pickupLocationRequired": "Enter a pickup location.",
   "carsSearch.error.pickupDateRequired": "Select a pickup date.",
   "carsSearch.error.pickupDatePast": "Pickup date cannot be in the past.",
   "carsSearch.error.pickupTimeRequired": "Select a pickup time.",
+  "carsSearch.error.pickupTimePast": "Pickup time has already passed. Choose a later pickup time or date.",
   "carsSearch.error.dropoffDateRequired": "Select a drop-off date.",
   "carsSearch.error.dropoffDatePast": "Drop-off date cannot be in the past.",
   "carsSearch.error.dropoffTimeRequired": "Select a drop-off time.",
@@ -1829,6 +1832,19 @@ export const translations: TranslationDictionary = {
     "Live car inventory is not available to display for this search yet. Update the search details above or check again later.",
   "carsResults.enterPickupDetails":
     "Enter pickup details above to prepare a car search.",
+  "carsResults.pricePerDay": "Price (per day)",
+  "carsResults.priceTracking.title": "Track car prices",
+  "carsResults.priceTracking.active": "Price tracking is on",
+  "carsResults.priceTracking.activeBody": "We'll notify you if the price drops.",
+  "carsResults.priceTracking.inactive": "Price tracking is off",
+  "carsResults.priceTracking.inactiveBody": "You’ll no longer receive price-drop alerts for this rental.",
+  "carsResults.priceTracking.manage": "Manage",
+  "carsResults.priceTracking.errorStartTitle": "Couldn’t turn on price tracking",
+  "carsResults.priceTracking.errorStartBody": "There was a problem starting price tracking. Check your connection and try again.",
+  "carsResults.priceTracking.errorStopTitle": "Couldn’t turn off price tracking",
+  "carsResults.priceTracking.errorStopBody": "There was a problem turning off price tracking. Check your connection and try again.",
+  "carsResults.priceTracking.cancel": "Cancel",
+  "carsResults.priceTracking.retry": "Try again",
   "carsResults.vehicleType": "Vehicle type",
   "carsResults.smallCars": "Small cars",
   "carsResults.mediumCars": "Medium cars",
@@ -3640,7 +3656,7 @@ export const translations: TranslationDictionary = {
   "Live flight results are temporarily unavailable. Please try again shortly.":
     "Live flight results are temporarily unavailable. Please try again shortly.",
   limitedProviderChecks:
-    "Some provider checks may be limited for this search. Review final availability and fare details with the provider before booking.",
+    "Some providers couldn’t be checked. Showing available results.",
   closeFilters: "Close filters",
   editFlightSearch: "Edit flight search",
   travelersAndCabin: "Travelers and cabin",
@@ -3679,6 +3695,7 @@ export const translations: TranslationDictionary = {
   convertedDisplayEstimateProviderPrice:
     "Converted display estimate. Provider price: {{providerPrice}}. Final provider price may differ.",
   viewFlight: "View Flight",
+  viewDeal: "View deal",
   flightCardProviderHandoff:
     "Final price, availability, booking, and fare rules are confirmed by the provider.",
   flightCardProviderHandoffConverted:
@@ -3686,6 +3703,9 @@ export const translations: TranslationDictionary = {
   providerNormalizedItineraryPrefix:
     "Outbound and return details are shown from provider-normalized itinerary data.",
   checkProvider: "Check provider",
+  notSuppliedByProvider: "Not provided",
+  "flightCard.compactBagSingular": "bag",
+  "flightCard.compactBagPlural": "bags",
   carryOnIncluded: "carry-on included",
   flightLeg: "Flight leg",
   layover: "Layover",

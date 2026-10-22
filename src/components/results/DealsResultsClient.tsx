@@ -90,7 +90,8 @@ export function DealsResultsClient({ initialSearch: search, invalid, stagedReque
   const request = useCallback((_product?: "flight" | "hotel" | "car", signal?: AbortSignal) => {
     const requested = (["flight", "hotel", "car"] as const).filter((product) => included[product] && !(stagedHotelJourneyActive && product !== "hotel"));
     requested.forEach((product) => dispatch({ product, value: { ...empty(), status: "loading" } } as Action));
-    void fetch("/api/packages/search", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(search), signal }).then(async response => {
+    const requestBody = stagedHotelJourneyActive ? { ...search, journey: "staged" } : search;
+    void fetch("/api/packages/search", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(requestBody), signal }).then(async response => {
       const payload: unknown = await response.json();
       const record = payload && typeof payload === "object" ? payload as Record<string, unknown> : {};
       if (!response.ok) throw new Error(response.status === 429 ? "rate" : "provider");

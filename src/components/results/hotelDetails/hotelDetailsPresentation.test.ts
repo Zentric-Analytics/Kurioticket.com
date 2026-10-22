@@ -22,7 +22,7 @@ const t = (key: string) => ({
 }[key] || "");
 
 function hotel(overrides: Partial<PublicHotelResult> = {}): PublicHotelResult {
-  return {
+  const common = {
     id: "hotel-1",
     provider: "test",
     name: "Test Hotel",
@@ -30,20 +30,27 @@ function hotel(overrides: Partial<PublicHotelResult> = {}): PublicHotelResult {
     location: "Paris Center",
     neighbourhood: "Center",
     distanceFromCenter: "1 km from center",
-    pricePerNight: 100,
-    totalPrice: 200,
-    currency: "USD",
     amenities: [],
     roomType: "Standard room",
     cancellationInfo: "Flexible",
-    bookingUrl: "https://example.com/book",
-    partnerRedirectUrl: "https://example.com/redirect",
     valueScore: 80,
     travelConfidenceScore: 80,
     arrivalSuitabilityScore: 80,
     recommendationReasons: [],
     badges: [],
+  };
+  if (overrides.inventoryKind === "discovery") {
+    return { ...common, ...overrides, inventoryKind: "discovery" };
+  }
+  return {
+    ...common,
+    pricePerNight: 100,
+    totalPrice: 200,
+    currency: "USD",
+    bookingUrl: "https://example.com/book",
+    partnerRedirectUrl: "https://example.com/redirect",
     ...overrides,
+    inventoryKind: "bookable",
   };
 }
 
@@ -75,6 +82,18 @@ test("hotel details count parsing respects integer limits", () => {
 
 test("hotel details results links preserve only valid search context", () => {
   assert.equal(buildHotelDetailsResultsHref({ destination: "New York", checkIn: "2026-08-01", checkOut: "2026-08-03", guests: "2", rooms: "1" }), "/hotels/results?destination=New+York&checkIn=2026-08-01&checkOut=2026-08-03&guests=2&rooms=1");
+  assert.equal(
+    buildHotelDetailsResultsHref({
+      destinationId: "kplace:123",
+      destination: "Boston",
+      checkIn: "2026-08-01",
+      checkOut: "2026-08-03",
+      guests: "2",
+      rooms: "1",
+      provider: "kayak-sandbox",
+    }),
+    "/hotels/results?destinationId=kplace%3A123&destination=Boston&checkIn=2026-08-01&checkOut=2026-08-03&guests=2&rooms=1&provider=kayak-sandbox",
+  );
   assert.equal(buildHotelDetailsResultsHref({ checkIn: "2026-08-01", checkOut: "2026-08-03", guests: "2", rooms: "1" }), "/hotels");
   assert.equal(buildHotelDetailsResultsHref({ destination: "Paris", checkIn: "bad", checkOut: "2026-08-03", guests: "2", rooms: "1" }), "/hotels?destination=Paris");
   assert.equal(buildHotelDetailsResultsHref({ destination: "Paris", checkIn: "2026-08-03", checkOut: "2026-08-03", guests: "2", rooms: "1" }), "/hotels?destination=Paris");
@@ -112,6 +131,7 @@ test("hotel details provider eligibility preserves live price and safe URL rules
   assert.equal(canUseHotelDetailsProviderLink(hotel()), true);
   assert.equal(canUseHotelDetailsProviderLink(hotel({ partnerRedirectUrl: "", bookingUrl: "https://example.com/book" })), true);
   assert.equal(canUseHotelDetailsProviderLink(hotel({ dataSource: "demo" })), false);
+  assert.equal(canUseHotelDetailsProviderLink(hotel({ dataSource: "demo", provider: "KAYAK sandbox" })), true);
   assert.equal(canUseHotelDetailsProviderLink(hotel({ inventoryKind: "discovery" })), false);
   assert.equal(canUseHotelDetailsProviderLink(hotel({ totalPrice: 0 })), false);
   assert.equal(canUseHotelDetailsProviderLink(hotel({ partnerRedirectUrl: "", bookingUrl: "" })), false);

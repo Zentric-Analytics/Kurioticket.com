@@ -3,6 +3,7 @@ import { generateKeyPairSync, randomBytes, sign as signData } from "node:crypto"
 import { readFileSync } from "node:fs";
 import test, { afterEach } from "node:test";
 import type { getPrisma } from "@/lib/prisma";
+import { normalizePasskeyAssertion } from "../../apps/mobile/src/features/passkeys/passkeyAssertion";
 import { b64url, sha256, userHandle } from "@/lib/passkeys";
 import {
   createMobilePasskeyOptions,
@@ -111,7 +112,7 @@ function harness(
 
   const transactionClient = {
     webAuthnChallenge: {
-      updateMany: async (args: any) => {
+      updateMany: async (args: { where: { id: string; expiresAt: { gt: Date } }; data: { consumedAt: Date; userId: string } }) => {
         if (challenge.id !== args.where.id || challenge.consumedAt || challenge.expiresAt <= args.where.expiresAt.gt) return { count: 0 };
         challenge.consumedAt = args.data.consumedAt;
         challenge.userId = args.data.userId;
@@ -119,7 +120,7 @@ function harness(
       },
     },
     userPasskey: {
-      updateMany: async (args: any) => {
+      updateMany: async (args: { where: { id: string; counter: number }; data: { counter: number; lastUsedAt: Date } }) => {
         if (passkey.id !== args.where.id || passkey.revokedAt || passkey.counter !== args.where.counter) return { count: 0 };
         passkey.counter = args.data.counter;
         (passkey as typeof passkey & { lastUsedAt?: Date }).lastUsedAt = args.data.lastUsedAt;
@@ -129,10 +130,10 @@ function harness(
   };
   const prisma = {
     webAuthnChallenge: {
-      findUnique: async ({ where }: any) => where.challenge === challenge.challenge ? { ...challenge } : null,
+      findUnique: async ({ where }: { where: { challenge: string } }) => where.challenge === challenge.challenge ? { ...challenge } : null,
     },
     userPasskey: {
-      findUnique: async ({ where }: any) => where.credentialId === passkey.credentialId
+      findUnique: async ({ where }: { where: { credentialId: string } }) => where.credentialId === passkey.credentialId
         ? { ...passkey, user: { ...passkey.user } }
         : null,
     },
@@ -167,9 +168,10 @@ test("mobile passkey challenge and counter rules are strict", () => {
 
 test("options are username-less, short-lived, and reveal no account selector", async () => {
   configureRelyingParty();
-  const writes: any[] = [];
+  type ChallengeWrite = { data: { type: string; expiresAt: Date } };
+  const writes: ChallengeWrite[] = [];
   const prisma = {
-    webAuthnChallenge: { create: async (input: any) => { writes.push(input); return input.data; } },
+    webAuthnChallenge: { create: async (input: ChallengeWrite) => { writes.push(input); return input.data; } },
   } as unknown as PrismaClient;
   const options = await createMobilePasskeyOptions(NOW, prisma);
   assert.equal(options.rpId, RP_ID);
@@ -189,6 +191,20 @@ test("a valid signed assertion updates usage and creates a phishing-resistant pa
   assert.equal(state.challenge.consumedAt?.toISOString(), NOW.toISOString());
   assert.equal((state.passkey as typeof state.passkey & { lastUsedAt?: Date }).lastUsedAt?.toISOString(), NOW.toISOString());
   assert.deepEqual(state.issued, [{ userId: fixture.passkey.userId, method: "PASSKEY", assurance: "PHISHING_RESISTANT" }]);
+});
+
+test("Preview Fabric payload fails strict verification until event metadata is stripped without changing signed bytes", async () => {
+  const fixture = assertionFixture();
+  const state = harness(fixture);
+  const nativeEvent = { ...fixture.assertion, target: 73 };
+  await expectFailure(verifyMobilePasskeyAssertion(nativeEvent, state.overrides), "INVALID_ASSERTION");
+  assert.equal(state.issued.length, 0);
+  assert.equal(state.challenge.consumedAt, null);
+  const normalized = normalizePasskeyAssertion(nativeEvent);
+  assert.deepEqual(normalized, fixture.assertion);
+  const result = await verifyMobilePasskeyAssertion(JSON.parse(JSON.stringify(normalized)), state.overrides);
+  assert.equal(result.user.id, fixture.passkey.userId);
+  assert.equal(state.issued.length, 1);
 });
 
 test("valid zero counters and increasing non-zero counters succeed", async () => {

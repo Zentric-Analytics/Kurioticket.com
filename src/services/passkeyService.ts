@@ -16,9 +16,14 @@ export type PasskeyPrincipal = { userId: string; email: string; name?: string | 
 const label = (p: { deviceType: string | null; backedUp: boolean | null; transports: string | null }) => p.backedUp ? "Synced passkey" : p.transports?.includes("usb") || p.transports?.includes("nfc") ? "Security key" : p.deviceType === "platform" ? "This device" : "Device, password manager, or security key";
 export async function listPasskeys(userId: string) { const rows = await getPrisma().userPasskey.findMany({where:{userId,revokedAt:null},orderBy:{createdAt:"desc"},select:{id:true,name:true,createdAt:true,lastUsedAt:true,deviceType:true,backedUp:true,transports:true}}); return rows.map(({transports,...p})=>({...p,label:label({...p,transports})})); }
 export async function registrationOptions(p: PasskeyPrincipal, token: unknown) { const prisma=getPrisma(); const user=await prisma.user.findUnique({where:{id:p.userId},select:{status:true}}); if(user?.status!=="ACTIVE") throw new Error("inactive"); if(!await consumePasskeyReauthToken(p.userId,token,"setup")) throw new Error("reauth"); const challenge=newChallenge(); await prisma.webAuthnChallenge.create({data:{userId:p.userId,challenge,type:"registration",expiresAt:new Date(Date.now()+300000)}}); const existing=await prisma.userPasskey.findMany({where:{userId:p.userId,revokedAt:null},select:{credentialId:true,transports:true}}); const cfg=getWebAuthnConfig(); return {challenge,rp:{name:cfg.rpName,id:cfg.rpID},user:{id:userHandle(p.userId),name:p.email,displayName:p.name||p.email},pubKeyCredParams:[{type:"public-key" as const,alg:-7}],timeout:60000,attestation:"none",authenticatorSelection:{residentKey:"required",requireResidentKey:true,userVerification:"required"},excludeCredentials:existing.map(x=>({id:x.credentialId,type:"public-key" as const,transports:x.transports?.split(",")}))}; }
-export async function verifyRegistration(p: PasskeyPrincipal, body: any) {
-  const response = body?.response;
-  if (!response || typeof response !== "object" || typeof response.clientDataJSON !== "string") throw new Error("response");
+export async function verifyRegistration(p: PasskeyPrincipal, body: unknown) {
+  if (!body || typeof body !== "object" || Array.isArray(body)) throw new Error("response");
+  const payload = body as Record<string, unknown>;
+  if (!payload.response || typeof payload.response !== "object" || Array.isArray(payload.response)) throw new Error("response");
+  const response = payload.response as Record<string, unknown>;
+  if (typeof response.clientDataJSON !== "string") throw new Error("response");
+  if (response.authenticatorAttachment != null && typeof response.authenticatorAttachment !== "string") throw new Error("response");
+  if (response.transports != null && (!Array.isArray(response.transports) || !response.transports.every((transport: unknown) => typeof transport === "string"))) throw new Error("response");
   const authenticatorData = typeof response.authenticatorData === "string"
     ? response.authenticatorData
     : typeof response.attestationObject === "string"
@@ -35,7 +40,7 @@ export async function verifyRegistration(p: PasskeyPrincipal, body: any) {
   if (!auth.rpIdHash.equals(sha256(getWebAuthnConfig().rpID)) || !(auth.flags & 1) || !(auth.flags & 4)) throw new Error("verification");
   const mutation = await prisma.$transaction(async tx => {
     await tx.webAuthnChallenge.update({where:{id:challenge.id},data:{consumedAt:new Date()}});
-    const passkey = await tx.userPasskey.create({data:{userId:p.userId,credentialId:auth.credentialId,publicKey:auth.publicKey,counter:auth.counter,transports:Array.isArray(response.transports)?response.transports.join(","):null,deviceType:response.authenticatorAttachment||null,backedUp:Boolean(auth.flags&16),name:String(body.name||"Passkey").trim().slice(0,80)||"Passkey"},select:{id:true}});
+    const passkey = await tx.userPasskey.create({data:{userId:p.userId,credentialId:auth.credentialId,publicKey:auth.publicKey,counter:auth.counter,transports:Array.isArray(response.transports)?response.transports.join(","):null,deviceType:typeof response.authenticatorAttachment === "string" ? response.authenticatorAttachment : null,backedUp:Boolean(auth.flags&16),name:String(payload.name||"Passkey").trim().slice(0,80)||"Passkey"},select:{id:true}});
     const event = await tx.securityEvent.create({data:{userId:p.userId,accountSessionId:p.accountSessionId,type:"PASSKEY_ADDED",metadata:{passkeyId:passkey.id}}});
     return {passkey,event};
   });

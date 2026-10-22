@@ -1,10 +1,11 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { fileURLToPath, URL } from "node:url";
 import test from "node:test";
 import { getMobileFaqCopy } from "./mobileFaqCopy";
 
-const screenSource = readFileSync(new URL("./MobileFaqScreen.tsx", import.meta.url).pathname, "utf8");
-const routeSource = readFileSync(new URL("../../../app/faq.tsx", import.meta.url).pathname, "utf8");
+const screenSource = readFileSync(fileURLToPath(new URL("./MobileFaqScreen.tsx", import.meta.url)), "utf8");
+const routeSource = readFileSync(fileURLToPath(new URL("../../../app/faq.tsx", import.meta.url)), "utf8");
 
 test("FAQ route uses the dedicated native mobile FAQ screen", () => {
   assert.match(routeSource, /MobileFaqScreen/);
@@ -26,20 +27,19 @@ test("mobile FAQ mirrors the web hierarchy without web navigation chrome", () =>
   assert.match(screenSource, /expanded \? "−" : "\+"/);
 });
 
-test("FAQ keeps inline expansion and native support handoff", () => {
-  const english = getMobileFaqCopy("en-us");
-  assert.equal(english.needMoreHelp, "Need more help?");
-  assert.equal(english.supportPrompt, "Can’t find what you’re looking for?");
-  assert.equal(english.supportSuffix, " and we’ll help you.");
-
+test("FAQ keeps inline expansion and ends after the questions list", () => {
   assert.match(screenSource, /faqAccessibility\(open, item\.question\)/);
   assert.match(screenSource, /toggleExpanded\(current, item\.question\)/);
   assert.match(screenSource, /accessibilityHint=\{accessibilityState\.expanded \? t\("collapseAnswer"\) : t\("expandAnswer"\)\}/);
-  assert.match(screenSource, /presentation\.needMoreHelp/);
-  assert.match(screenSource, /presentation\.supportPrompt/);
-  assert.match(screenSource, /presentation\.supportSuffix/);
-  assert.match(screenSource, /router\.push\("\/support"\)/);
-  assert.match(screenSource, /accessibilityRole="link"/);
-  assert.match(screenSource, /t\("contactSupport"\)/);
-  assert.doesNotMatch(screenSource, /t\("helpSupport"\)/);
+  assert.doesNotMatch(screenSource, /supportCta/);
+  assert.doesNotMatch(screenSource, /router\.push\("\/support"\)/);
+  assert.doesNotMatch(screenSource, /t\("contactSupport"\)/);
+});
+
+test("FAQ scrolling stops at the content boundaries without overscroll", () => {
+  assert.match(screenSource, /alwaysBounceVertical=\{false\}/);
+  assert.match(screenSource, /bounces=\{false\}/);
+  assert.match(screenSource, /overScrollMode="never"/);
+  assert.match(screenSource, /paddingBottom: 20/);
+  assert.doesNotMatch(screenSource, /paddingBottom: 40/);
 });

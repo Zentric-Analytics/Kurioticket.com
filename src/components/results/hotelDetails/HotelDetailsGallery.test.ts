@@ -6,6 +6,10 @@ const gallerySource = readFileSync(
   new URL("./HotelDetailsGallery.tsx", import.meta.url),
   "utf8",
 );
+const mobileDetailsSource = readFileSync(
+  new URL("./MobileHotelDetails.tsx", import.meta.url),
+  "utf8",
+);
 
 test("mobile hero uses small visible arrows inside accessible targets without changing the desktop mosaic", () => {
   for (const contract of [
@@ -27,6 +31,7 @@ test("mobile hero uses small visible arrows inside accessible targets without ch
     "pe-2",
     "bg-transparent",
     "text-white",
+    "aspect-[2.32/1]",
     "aspect-[16/10]",
   ])
     assert.ok(gallerySource.includes(contract), contract);
@@ -35,24 +40,16 @@ test("mobile hero uses small visible arrows inside accessible targets without ch
   assert.doesNotMatch(gallerySource, /left-3 top-1\/2|right-3 top-1\/2/);
 });
 
-test("mobile hero and thumbnails share one balanced gallery gutter", () => {
-  const unit = gallerySource.slice(
-    gallerySource.indexOf('className="mx-3 lg:hidden"'),
-    gallerySource.indexOf(
-      "{mosaic}",
-      gallerySource.indexOf('className="mx-3 lg:hidden"'),
-    ),
-  );
+test("standalone mobile mosaic uses one full-bleed hero without an inline thumbnail strip", () => {
   for (const contract of [
-    "data-hotel-mobile-gallery-unit",
-    "{hero}",
-    "{mobileThumbnails}",
+    "data-mobile-hotel-hero",
+    "className={styles.hero}",
+    "gallery.usableIndices.map",
+    "gallery.onSelectImage(index)",
+    'setOverlay("gallery")',
   ])
-    assert.ok(unit.includes(contract), contract);
-  assert.equal(
-    gallerySource.match(/data-hotel-mobile-gallery-unit/g)?.length,
-    1,
-  );
+    assert.ok(mobileDetailsSource.includes(contract), contract);
+  assert.doesNotMatch(mobileDetailsSource, /data-hotel-mobile-thumbnail-strip/);
 });
 
 test("preserves pointer swipe and keyboard gallery navigation", () => {
@@ -79,13 +76,11 @@ test("preserves pointer swipe and keyboard gallery navigation", () => {
     assert.ok(gallerySource.includes(interactionContract), interactionContract);
 });
 
-test("preserves counter, viewer, thumbnails, and image behavior", () => {
+test("preserves counter, viewer, optional hero-layout thumbnails, and image behavior", () => {
   for (const galleryContract of [
     "photoCounter",
     "bottom-3",
     "right-3",
-    "Images",
-    "viewAllPhotosLabel",
     "openViewer",
     "left-0",
     "thumbnailStripRef",

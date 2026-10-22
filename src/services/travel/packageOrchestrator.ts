@@ -42,8 +42,14 @@ export async function searchPackage(
   query: DealsSearch,
   requestId = crypto.randomUUID(),
   overrides: Partial<Record<DealsProduct, () => Promise<PackageComponent>>> = {},
+  scope: "all" | "hotel-only" = "all",
 ): Promise<CanonicalPackageSearchResponse> {
   const included = getIncludedProducts(query.mode);
+  if (scope === "hotel-only") {
+    if (!included.hotel) throw new Error("Hotel-first search requires a hotel component.");
+    included.flight = false;
+    included.car = false;
+  }
   const tasks: Partial<Record<DealsProduct, Promise<PackageComponent>>> = {};
 
   if (included.flight) tasks.flight = overrides.flight?.() ?? isFeatureEnabled("FLIGHT_SEARCH_ENABLED").then((enabled) => enabled ? searchFlights(buildFlightApiPayload(query), { requestId: `${requestId}:flight` })

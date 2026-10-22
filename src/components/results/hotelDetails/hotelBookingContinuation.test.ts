@@ -27,11 +27,11 @@ test("a sole actionable Kurioticket offer is selected and continues internally",
   assert.deepEqual(resolveHotelBookingContinuation({ selectedOfferId, offers: [current], internalRoomFlowAvailable: true }), { kind: "internal-room-flow" });
 });
 
-test("multiple providers begin without a selection and require one", () => {
+test("multiple providers default to the first actionable rate", () => {
   const offers = [current, externalOffer("A")];
   const selectedOfferId = resolveSelectedHotelProviderOfferId({ selectedOfferId: null, offers, internalRoomFlowAvailable: true });
-  assert.equal(selectedOfferId, null);
-  assert.deepEqual(resolveHotelBookingContinuation({ selectedOfferId, offers, internalRoomFlowAvailable: true }), { kind: "selection-required" });
+  assert.equal(selectedOfferId, "kurioticket");
+  assert.deepEqual(resolveHotelBookingContinuation({ selectedOfferId, offers, internalRoomFlowAvailable: true }), { kind: "internal-room-flow" });
 });
 
 test("the selected offer alone controls continuation", () => {
@@ -40,10 +40,10 @@ test("the selected offer alone controls continuation", () => {
   assert.deepEqual(resolveHotelBookingContinuation({ selectedOfferId: "offer-B", offers, internalRoomFlowAvailable: true }), { kind: "provider-handoff", providerOfferId: "opaque-B" });
 });
 
-test("selection is preserved while actionable and cleared when it disappears among multiple offers", () => {
+test("selection is preserved while actionable and falls back to the first actionable offer", () => {
   const offers = [current, externalOffer("A")];
   assert.equal(resolveSelectedHotelProviderOfferId({ selectedOfferId: "offer-A", offers, internalRoomFlowAvailable: true }), "offer-A");
-  assert.equal(resolveSelectedHotelProviderOfferId({ selectedOfferId: "missing", offers, internalRoomFlowAvailable: true }), null);
+  assert.equal(resolveSelectedHotelProviderOfferId({ selectedOfferId: "missing", offers, internalRoomFlowAvailable: true }), "kurioticket");
 });
 
 test("a disappeared selection falls back to the sole remaining actionable offer", () => {

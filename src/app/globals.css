@@ -9,6 +9,24 @@
 }
 
 @font-face {
+  font-family: "Kurioticket Cars Sans";
+  src: url("/brand/fonts/manrope/Manrope-VariableFont.ttf") format("truetype");
+  font-display: swap;
+  font-style: normal;
+  font-weight: 200 800;
+}
+
+/* Exact static semibold face used by the native app through
+   @expo-google-fonts/inter@0.4.2. Keep this scoped to parity-critical labels. */
+@font-face {
+  font-family: "Kurioticket Inter Native Semibold";
+  src: url("/brand/fonts/inter/Inter_600SemiBold.ttf") format("truetype");
+  font-display: swap;
+  font-style: normal;
+  font-weight: 600;
+}
+
+@font-face {
   font-family: "Inter";
   src: url("/brand/fonts/inter/Inter-Italic-VariableFont.ttf")
     format("truetype");
@@ -18,6 +36,10 @@
 }
 
 :root {
+  --cars-results-safe-area-top: max(
+    env(safe-area-inset-top),
+    env(safe-area-max-inset-top, 0px)
+  );
   --mobile-results-overlay-canvas: #a6a8ae;
   --background: #f2f6fa;
   --foreground: #021c2b;
@@ -112,8 +134,290 @@ body {
   font-family: var(--font-sans);
 }
 
+/* Desktop Cars Results deliberately reuses the same Inter foundation as mobile.
+   The desktop route keeps its larger spatial scale, but letterforms and weight
+   perception stay consistent with the polished mobile Cars Results hierarchy. */
+@media (min-width: 1024px) {
+  .cars-results-desktop-typeface,
+  .cars-results-desktop-typeface button,
+  .cars-results-desktop-typeface input,
+  .cars-results-desktop-typeface select,
+  .cars-results-desktop-typeface textarea {
+    font-family: var(--font-sans);
+    font-synthesis: none;
+    font-kerning: normal;
+    text-rendering: optimizeLegibility;
+  }
+
+  .cars-results-desktop-filter-heading-type {
+    font-family: var(--font-sans) !important;
+    font-size: 15px !important;
+    line-height: 20px !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.003em !important;
+    color: #020617 !important;
+    font-variation-settings: "wght" 700;
+  }
+
+  .cars-results-desktop-filter-heading-type--active {
+    color: #004bb8 !important;
+  }
+
+  input.cars-results-desktop-filter-heading-type::placeholder {
+    font-weight: 500 !important;
+    color: #94a3b8 !important;
+    font-variation-settings: "wght" 500;
+    opacity: 1;
+  }
+
+  .car-details-desktop-selected-info-type {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 20px;
+    font-weight: 600;
+    letter-spacing: 0;
+    font-variation-settings: "wght" 600;
+    font-synthesis: none;
+    font-kerning: normal;
+    text-rendering: optimizeLegibility;
+  }
+
+  .car-details-standalone-typography .car-details-desktop-section-heading-type,
+  .car-details-standalone-typography .car-details-desktop-item-heading-type,
+  .car-details-standalone-typography .car-details-desktop-provider-type,
+  .car-details-standalone-typography .car-details-desktop-primary-copy-type,
+  .car-details-standalone-typography .car-details-desktop-secondary-copy-type,
+  .car-details-standalone-typography .car-details-desktop-strong-copy-type,
+  .car-details-standalone-typography .car-details-desktop-benefit-type,
+  .car-details-standalone-typography .car-details-desktop-amenity-type {
+    font-family: var(--font-sans) !important;
+    font-synthesis: none;
+    font-kerning: normal;
+    text-rendering: optimizeLegibility;
+  }
+
+  .car-details-standalone-typography .car-details-desktop-section-heading-type {
+    font-size: 16px !important;
+    line-height: 24px !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.006em !important;
+    color: #0f172a !important;
+    font-variation-settings: "wght" 700;
+  }
+
+  .car-details-standalone-typography .car-details-desktop-item-heading-type {
+    font-size: 14px !important;
+    line-height: 20px !important;
+    font-weight: 650 !important;
+    letter-spacing: -0.003em !important;
+    color: #1e293b !important;
+    font-variation-settings: "wght" 650;
+  }
+
+  .car-details-standalone-typography .car-details-desktop-provider-type {
+    font-size: 14px !important;
+    line-height: 19px !important;
+    font-weight: 650 !important;
+    letter-spacing: -0.002em !important;
+    color: #0f172a !important;
+    font-variation-settings: "wght" 650;
+  }
+
+  .car-details-standalone-typography .car-details-desktop-primary-copy-type {
+    font-size: 13px !important;
+    line-height: 20px !important;
+    font-weight: 500 !important;
+    letter-spacing: -0.001em !important;
+    color: #334155 !important;
+    font-variation-settings: "wght" 500;
+  }
+
+  .car-details-standalone-typography .car-details-desktop-secondary-copy-type {
+    font-size: 13px !important;
+    line-height: 20px !important;
+    font-weight: 450 !important;
+    letter-spacing: 0 !important;
+    color: #526174 !important;
+    font-variation-settings: "wght" 450;
+  }
+
+  .car-details-standalone-typography .car-details-desktop-strong-copy-type {
+    font-size: 13px !important;
+    line-height: 20px !important;
+    font-weight: 600 !important;
+    letter-spacing: -0.001em !important;
+    color: #1e293b !important;
+    font-variation-settings: "wght" 600;
+  }
+
+  .car-details-standalone-typography .car-details-desktop-benefit-type {
+    font-size: 12px !important;
+    line-height: 17px !important;
+    font-weight: 500 !important;
+    letter-spacing: 0 !important;
+    color: #526174 !important;
+    font-variation-settings: "wght" 500;
+  }
+
+  .car-details-standalone-typography .car-details-desktop-amenity-type {
+    font-size: 12.5px !important;
+    line-height: 18px !important;
+    font-weight: 550 !important;
+    letter-spacing: 0 !important;
+    color: #334155 !important;
+    font-variation-settings: "wght" 550;
+  }
+
+  .cars-results-desktop-sort-label {
+    font-family: var(--font-sans) !important;
+    font-size: 15px !important;
+    line-height: 20px !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.002em !important;
+    color: #334155 !important;
+    font-variation-settings: "wght" 700;
+  }
+
+  .cars-results-desktop-sort-trigger {
+    font-family: var(--font-sans) !important;
+    font-size: 15px !important;
+    line-height: 20px !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.003em !important;
+    color: #020617 !important;
+    font-variation-settings: "wght" 700;
+  }
+
+  .cars-results-desktop-sort-option {
+    font-family: var(--font-sans) !important;
+    font-size: 15px !important;
+    line-height: 20px !important;
+    font-weight: 600 !important;
+    letter-spacing: -0.002em !important;
+    color: #1e293b !important;
+    font-variation-settings: "wght" 600;
+  }
+
+  .cars-results-desktop-sort-option:hover {
+    background: #f8fafc;
+    color: #0f172a !important;
+  }
+
+  .cars-results-desktop-sort-option[data-selected="true"] {
+    background: #eef5ff;
+    color: #020617 !important;
+    font-weight: 700 !important;
+    font-variation-settings: "wght" 700;
+  }
+
+  .cars-results-footer-typography .cars-footer-confidence-tagline,
+  .cars-results-footer-typography .cars-footer-seller-notice,
+  .cars-results-footer-typography .cars-footer-legal-row {
+    font-size: 13px;
+    line-height: 20px;
+    font-weight: 500;
+    letter-spacing: -0.002em;
+  }
+
+  .cars-results-footer-typography .cars-footer-confidence-tagline {
+    color: #475569;
+  }
+
+  .cars-results-footer-typography .cars-footer-seller-notice,
+  .cars-results-footer-typography .cars-footer-legal-row {
+    color: #526174;
+  }
+}
+
+/* Cars, Hotels, and Flight Results paint compact presentation-only thumbs while
+   retaining the document as the sole mobile scroll owner. */
+@media (max-width: 639px) {
+  /* Let the results surface show through the header's rounded corner. */
+  html[data-flight-results-scroll-indicator],
+  html[data-flight-results-scroll-indicator] body {
+    background: #f5f7fb;
+  }
+
+  /* Keep the Cars mobile document/browser canvas on the same surface as
+     Hotel Results. This prevents the white root canvas from showing through
+     at overscroll edges or around the full-width results surface. */
+  html[data-cars-results-scroll-indicator],
+  html[data-cars-results-scroll-indicator] body {
+    background: #f5f7fb;
+  }
+
+  html[data-cars-results-scroll-indicator],
+  html[data-cars-results-scroll-indicator] body,
+  html[data-hotel-results-scroll-indicator],
+  html[data-hotel-results-scroll-indicator] body,
+  html[data-flight-results-scroll-indicator],
+  html[data-flight-results-scroll-indicator] body {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  html[data-cars-results-scroll-indicator]::-webkit-scrollbar,
+  html[data-cars-results-scroll-indicator] body::-webkit-scrollbar,
+  html[data-hotel-results-scroll-indicator]::-webkit-scrollbar,
+  html[data-hotel-results-scroll-indicator] body::-webkit-scrollbar,
+  html[data-flight-results-scroll-indicator]::-webkit-scrollbar,
+  html[data-flight-results-scroll-indicator] body::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+
+  div[data-cars-results-scroll-indicator],
+  div[data-hotel-results-scroll-indicator],
+  div[data-flight-results-scroll-indicator] {
+    display: block;
+  }
+}
+
 a {
   text-decoration: none;
+}
+
+/* Flight Results uses compact authored type on mobile. Keep Safari from
+   heuristically inflating those values beyond their CSS dimensions. */
+@media (max-width: 639px) {
+  [data-flight-results-main] {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+}
+
+/* Cars Details mobile-web typography is dimensioned to the native Inter scale.
+   Keep Safari at the authored CSS scale for the overall details surface.
+   The tab labels own explicit rendered font metrics here because the global
+   unlayered button { font: inherit } rule otherwise wins over Tailwind's
+   layered text-size and line-height utilities on real browser buttons. */
+@media (max-width: 1023px) {
+  [data-car-details-experience] {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  .car-details-native-tab-label {
+    font-family:
+      "Kurioticket Inter Native Semibold",
+      "Inter",
+      "Segoe UI",
+      Roboto,
+      "Helvetica Neue",
+      Arial,
+      sans-serif;
+    font-size: 12px;
+    line-height: normal;
+    font-weight: 600;
+    font-synthesis: none;
+  }
+}
+
+@media (min-width: 390px) and (max-width: 1023px) {
+  .car-details-native-tab-label {
+    font-size: 13px;
+  }
 }
 
 button,
@@ -121,6 +425,381 @@ input,
 select,
 textarea {
   font: inherit;
+}
+
+/* The unlayered button font reset above overrides Tailwind's layered text
+   utilities. Apply the desktop-only Cars disclosure sizing after the reset;
+   the compact mobile control keeps its existing inline 11px treatment. */
+@media (min-width: 1024px) {
+  [data-car-deal-picker]:not([data-car-deal-picker-compact]) [data-car-deal-more-offers] {
+    font-size: 12px;
+    line-height: 16px;
+    font-weight: 600;
+  }
+}
+
+@media (min-width: 1024px) {
+  .flight-results-nav-route-input {
+    font-family: var(--font-sans);
+    font-size: 12px;
+    line-height: 17px;
+    font-weight: 600;
+    color: #142033;
+    font-synthesis: none;
+    font-kerning: normal;
+    text-rendering: optimizeLegibility;
+  }
+}
+
+.hotel-results-sort-trigger {
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 16px;
+}
+
+.hotel-results-sort-option {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 18px;
+}
+
+@media (min-width: 1024px) {
+  [data-hotel-results-desktop-header],
+  [data-flight-results-desktop-header],
+  [data-cars-results-desktop-header] {
+    position: sticky;
+    top: 0;
+    z-index: 60;
+  }
+
+  [data-hotel-results-edit-card] {
+    max-width: 980px;
+  }
+
+  [data-hotel-results-edit-frame] {
+    border: 1px solid #c5cfda;
+    border-radius: 10px;
+    background: #ffffff;
+    box-shadow: 0 2px 8px rgba(20, 32, 51, 0.04);
+  }
+
+  [data-hotel-results-edit-frame] > div {
+    column-gap: 0;
+  }
+
+  [data-hotel-results-edit-field] {
+    min-height: 56px;
+    padding: 7px 12px 7px 48px;
+    border: 0;
+    border-right: 1px solid #d9e1e9;
+    border-radius: 0;
+    background: #ffffff;
+  }
+
+  [data-hotel-results-edit-field="destination"] {
+    border-radius: 9px 0 0 9px;
+  }
+
+  [data-hotel-results-edit-field="guests"] {
+    border-right: 0;
+  }
+
+  [data-hotel-results-edit-leading-icon] {
+    position: absolute;
+    top: 50%;
+    left: 17px;
+    display: block;
+    width: 19px;
+    height: 19px;
+    transform: translateY(-50%);
+    color: #142033;
+  }
+
+  [data-hotel-results-edit-inline-icon] {
+    display: none;
+  }
+
+  [data-hotel-results-edit-chevron] {
+    display: none;
+  }
+
+  [data-hotel-results-edit-field]:hover {
+    background: #f8fafc;
+  }
+
+  [data-hotel-results-edit-field]:focus-within {
+    background: #f8fafc;
+  }
+
+  [data-hotel-results-edit-label] {
+    color: #66758a;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0;
+    line-height: 14px;
+    text-transform: none;
+  }
+
+  [data-hotel-results-edit-value] {
+    color: #142033;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 20px;
+  }
+
+  [data-hotel-results-edit-action-cell] {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  [data-hotel-results-edit-action] {
+    display: flex;
+    width: 44px;
+    height: 44px;
+    min-height: 44px;
+    align-self: center;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 9999px;
+    background: #004bb8;
+    color: #fff;
+    box-shadow: none;
+  }
+
+  [data-hotel-results-edit-action]:hover {
+    background: #003f9c;
+    color: #fff;
+  }
+
+  [data-hotel-results-nav-search] [data-hotel-results-edit-card] {
+    max-width: none;
+  }
+
+  [data-hotel-results-nav-search] [data-hotel-results-edit-card] form {
+    margin: 0;
+  }
+
+  [data-hotel-results-nav-search] [data-hotel-results-edit-frame] {
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  [data-hotel-results-nav-search] [data-hotel-results-edit-frame] > div {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.125fr) minmax(0, 1.025fr) 44px;
+    column-gap: 4px;
+  }
+
+  [data-hotel-results-nav-search] [data-hotel-results-edit-field] {
+    min-height: 44px;
+    padding: 0 10px 0 34px;
+    border: 1px solid #d9e2e8;
+    border-radius: 8px;
+    background: #f0f3f5;
+  }
+
+  [data-hotel-results-nav-search] [data-hotel-results-edit-field]:hover,
+  [data-hotel-results-nav-search] [data-hotel-results-edit-field]:focus-within {
+    border-color: #b9c9d5;
+    background: #e8eef2;
+  }
+
+  [data-hotel-results-nav-search] [data-hotel-results-edit-field="dates"] {
+    padding: 0;
+  }
+
+  [data-hotel-results-nav-search] [data-hotel-results-edit-field="dates"] > [data-hotel-results-edit-leading-icon] {
+    display: none;
+  }
+
+  [data-hotel-results-nav-search] [data-hotel-results-edit-leading-icon] {
+    left: 11px;
+    width: 16px;
+    height: 16px;
+    color: #40536a;
+  }
+
+  [data-hotel-results-nav-search] [data-hotel-results-edit-label] {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+
+  [data-hotel-results-nav-search] [data-hotel-results-edit-value] {
+    height: 42px;
+    color: #142033;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 20px;
+  }
+
+  [data-hotel-results-nav-search] [data-hotel-results-nav-date] {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 0;
+    padding: 0;
+  }
+
+  [data-hotel-results-nav-search] [data-hotel-results-nav-date-part] {
+    display: flex;
+    min-width: 0;
+    height: 100%;
+    align-items: center;
+    gap: 5px;
+    padding: 0 8px;
+  }
+
+  [data-hotel-results-nav-search] [data-hotel-results-nav-date-part]:first-child {
+    border-right: 1px solid #d9e2e8;
+  }
+
+  [data-hotel-results-nav-search] [data-hotel-results-nav-date-part] svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    color: #40536a;
+  }
+
+  [data-hotel-results-nav-search] [data-hotel-results-edit-action-cell] {
+    min-height: 44px;
+  }
+
+  [data-hotel-results-nav-search] [data-hotel-results-edit-action] {
+    width: 44px;
+    height: 44px;
+    min-height: 44px;
+    border-radius: 8px;
+    box-shadow: none;
+  }
+
+  [data-hotel-results-nav-search] [data-hotel-results-edit-action]:hover {
+    box-shadow: none;
+  }
+
+  [data-cars-results-navbar-search] {
+    margin: 0;
+  }
+
+  [data-cars-results-navbar-search] > div {
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  [data-cars-results-navbar-grid] {
+    grid-template-columns: minmax(0, 1fr) 150px 140px 86px 46px !important;
+    column-gap: 4px !important;
+  }
+
+  [data-cars-results-navbar-grid][data-return-location-mode="different"] {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.1fr) 136px 120px 80px 46px !important;
+  }
+
+  [data-cars-results-navbar-search] [data-cars-results-navbar-field] {
+    min-height: 44px !important;
+    padding: 0 10px !important;
+    border: 1px solid #d9e2e8 !important;
+    border-radius: 8px !important;
+    background: #f0f3f5 !important;
+    box-shadow: none !important;
+  }
+
+  [data-cars-results-navbar-search] [data-cars-results-navbar-field]:hover,
+  [data-cars-results-navbar-search] [data-cars-results-navbar-field]:focus-within {
+    border-color: #b9c9d5 !important;
+    background: #e8eef2 !important;
+  }
+
+  [data-cars-results-navbar-search] [data-cars-results-navbar-label] {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+  }
+
+  [data-cars-results-navbar-search] .cars-results-navbar-location-value,
+  [data-cars-results-navbar-search] [data-cars-results-navbar-value] {
+    height: 42px !important;
+    font-size: 12px !important;
+    font-weight: 650 !important;
+    line-height: 20px !important;
+    letter-spacing: -0.005em !important;
+    color: #142033 !important;
+    font-variation-settings: "wght" 650;
+  }
+
+  [data-cars-results-navbar-search] .cars-results-navbar-leading-icon {
+    color: #40536a !important;
+  }
+
+  [data-cars-results-navbar-search] [data-cars-results-navbar-chevron] {
+    display: none !important;
+  }
+
+  [data-cars-results-navbar-submit] {
+    width: 44px !important;
+    min-width: 44px !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    align-self: center !important;
+    justify-self: center;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 8px !important;
+    background: #004bb8 !important;
+    box-shadow: none !important;
+    font-size: 0 !important;
+  }
+
+  [data-cars-results-navbar-submit]:hover {
+    background: #003f9c !important;
+  }
+}
+
+/* Mobile Flight Results nearby insight uses an explicit rendered-size rule so
+   browser button typography and mobile text inflation cannot override it. */
+@media (max-width: 639px) {
+  .flight-mobile-cheaper-nearby {
+    font-family:
+      "Kurioticket Inter Native Semibold",
+      "Inter",
+      "Segoe UI",
+      Roboto,
+      "Helvetica Neue",
+      Arial,
+      sans-serif;
+    font-size: 11px !important;
+    line-height: 15px !important;
+    font-weight: 600 !important;
+    font-synthesis: none;
+    -webkit-text-size-adjust: none;
+    text-size-adjust: none;
+  }
+}
+
+/* Mobile Flight Details fare-information tabs use a dedicated rendered scale.
+   Keep the blue underline as the only selected-state emphasis. */
+@media (max-width: 639px) {
+  .flight-mobile-fare-info-tab-label {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 14px !important;
+    line-height: 20px !important;
+    font-weight: 600 !important;
+    -webkit-text-size-adjust: none;
+    text-size-adjust: none;
+  }
 }
 
 ::selection {
@@ -232,7 +911,93 @@ textarea {
   to { transform: translate3d(0, 100%, 0); }
 }
 
+@keyframes cars-native-quick-scrim-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes cars-native-quick-sheet-in {
+  from { transform: translate3d(0, 28px, 0); }
+  to { transform: translate3d(0, 0, 0); }
+}
+
+.cars-native-quick-scrim { animation: cars-native-quick-scrim-in 160ms ease-out both; }
+.cars-native-quick-sheet { animation: cars-native-quick-sheet-in 220ms ease-out both; }
+
+@keyframes cars-filter-skeleton-shimmer {
+  from { background-position: 140% 0; }
+  to { background-position: -40% 0; }
+}
+
+.cars-filter-card-skeleton .animate-pulse {
+  animation: cars-filter-skeleton-shimmer 720ms ease-in-out infinite;
+  background-image: linear-gradient(
+    100deg,
+    rgb(226 232 240 / 0) 25%,
+    rgb(255 255 255 / 0.72) 48%,
+    rgb(226 232 240 / 0) 71%
+  );
+  background-size: 220% 100%;
+}
+
+@keyframes cars-filter-results-reveal {
+  from { opacity: 0.72; }
+  to { opacity: 1; }
+}
+
+.cars-filter-results-reveal {
+  animation: cars-filter-results-reveal 160ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cars-native-quick-scrim,
+  .cars-native-quick-sheet { animation: none; }
+
+  .cars-filter-card-skeleton .animate-pulse,
+  .cars-filter-results-reveal { animation: none; }
+}
+
+@keyframes cars-price-alert-snackbar-rise {
+  from { transform: translate3d(0, 10px, 0); }
+  to { transform: translate3d(0, 0, 0); }
+}
+
+@keyframes cars-price-alert-snackbar-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes cars-price-alert-snackbar-settle {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(0, 8px, 0); }
+}
+
+@keyframes cars-price-alert-snackbar-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+.cars-price-alert-snackbar-entering {
+  animation:
+    cars-price-alert-snackbar-rise 200ms cubic-bezier(0.33, 1, 0.68, 1) both,
+    cars-price-alert-snackbar-fade-in 160ms ease-out both;
+}
+
+.cars-price-alert-snackbar-leaving {
+  animation:
+    cars-price-alert-snackbar-settle 180ms ease-in both,
+    cars-price-alert-snackbar-fade-out 160ms ease-in both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cars-price-alert-snackbar-entering,
+  .cars-price-alert-snackbar-leaving { animation: none; }
+}
+
 .mobile-results-sheet-backdrop { animation: mobile-results-sheet-backdrop-in 180ms ease-out both; }
+.mobile-results-sheet-backdrop-layer {
+  animation: mobile-results-sheet-backdrop-in 180ms ease-out both;
+}
 .mobile-results-sheet-backdrop-clean {
   background-color: rgb(15 23 42 / 8%);
 }
@@ -243,7 +1008,20 @@ textarea {
   will-change: transform;
 }
 .mobile-results-sheet-surface-smooth { animation-duration: 320ms; }
+
+@keyframes cars-results-quick-sheet-surface-in {
+  from { transform: translate3d(0, 28px, 0); }
+  to { transform: translate3d(0, 0, 0); }
+}
+
+.cars-results-quick-sheet-surface {
+  animation: cars-results-quick-sheet-surface-in 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 .mobile-results-sheet-backdrop-closing { animation: mobile-results-sheet-backdrop-out 200ms ease-out both; }
+.mobile-results-sheet-backdrop-layer-closing {
+  animation: mobile-results-sheet-backdrop-out 280ms ease-out both;
+}
 .mobile-results-sheet-surface-closing {
   animation: mobile-results-sheet-surface-out 280ms cubic-bezier(0.4, 0, 0.8, 0.2) both;
   will-change: transform;
@@ -265,8 +1043,10 @@ textarea {
 
 @media (prefers-reduced-motion: reduce) {
   .mobile-results-sheet-backdrop,
+  .mobile-results-sheet-backdrop-layer,
   .mobile-results-sheet-surface,
   .mobile-results-sheet-backdrop-closing,
+  .mobile-results-sheet-backdrop-layer-closing,
   .mobile-results-sheet-surface-closing,
   .mobile-results-sheet-bottom-continuation-closing { animation: none; }
 }
@@ -280,6 +1060,27 @@ textarea {
   }
   100% {
     transform: translateX(210%);
+  }
+}
+
+.results-loading-reveal {
+  animation: results-loading-card-in 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes results-loading-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .results-loading-reveal {
+    animation: none;
   }
 }
 
@@ -518,9 +1319,32 @@ textarea {
     box-shadow: none;
   }
 
+  .desktop-filter-sidebar[data-flight-hotel-filter-visual-parity] {
+    border-color: #cfd9e5;
+    border-radius: 0.5rem;
+    background: #f2f4f8;
+    box-shadow: none;
+  }
+
+  /* Standalone Flight Results uses the same white filter surface as Hotels.
+     Keep the shared guided/compact filter surfaces and smaller widths unchanged. */
+  [data-flight-results-main]
+    .desktop-filter-sidebar[data-flight-hotel-filter-visual-parity] {
+    background: #ffffff;
+  }
+
   .desktop-filter-sidebar__header {
     border-bottom-color: rgba(226, 232, 240, 0.95);
     background: rgba(248, 250, 252, 0.72) !important;
+  }
+
+  .desktop-filter-sidebar.cars-desktop-filter-surface.cars-hotel-filter-surface {
+    background: #ffffff !important;
+  }
+
+  .desktop-filter-sidebar.cars-desktop-filter-surface.cars-hotel-filter-surface
+    .desktop-filter-sidebar__header {
+    background: #ffffff !important;
   }
 
   .desktop-filter-sidebar__title {
@@ -530,6 +1354,10 @@ textarea {
 
   .desktop-filter-sidebar__icon {
     color: #64748b !important;
+  }
+
+  .cars-desktop-filter-icon {
+    color: #07133b !important;
   }
 
   .desktop-filter-sidebar__count {
@@ -570,9 +1398,23 @@ textarea {
   gap: 0.75rem;
 }
 
+@media (min-width: 1024px) {
+  .flight-card-desktop-header {
+    padding-right: 196px;
+  }
+
+  .flight-card-header-actions {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 196px;
+  }
+
+}
+
 .flight-card-airline-name {
-  font-size: 0.9375rem;
-  line-height: 1.25rem;
+  font-size: 0.875rem;
+  line-height: 1.0625rem;
 }
 
 .flight-card-header-logo {
@@ -581,8 +1423,8 @@ textarea {
 
 .flight-card-flight-number {
   margin-top: 0.125rem;
-  font-size: 0.8125rem;
-  line-height: 1rem;
+  font-size: 0.6875rem;
+  line-height: 0.875rem;
 }
 
 .flight-card-logo-box {
@@ -602,7 +1444,7 @@ textarea {
 
 .flight-card-body {
   grid-template-columns: minmax(0, 1fr) 196px;
-  grid-template-areas: "legs fare" "details details";
+  grid-template-areas: "legs fare" "details fare";
   column-gap: 1rem;
   row-gap: 0.75rem;
   margin-top: 0;
@@ -616,18 +1458,18 @@ textarea {
 .flight-card-details { grid-area: details; }
 
 .flight-card-leg-grid {
-  grid-template-columns: minmax(112px, 0.8fr) minmax(180px, 1.5fr) minmax(
-      105px,
-      0.75fr
+  grid-template-columns: minmax(112px, 0.72fr) minmax(220px, 1.8fr) minmax(
+      92px,
+      0.6fr
     );
-  gap: 1.25rem;
+  gap: 1rem;
 }
 
 .flight-card-leg-label {
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.375rem;
   font-size: 0.625rem;
-  line-height: 0.875rem;
-  letter-spacing: 0.11em;
+  line-height: 0.75rem;
+  letter-spacing: 0.08em;
 }
 
 .flight-card-leg-endpoint,
@@ -643,23 +1485,27 @@ textarea {
 
 .flight-card-duration {
   gap: 0.375rem;
-  font-size: 0.75rem;
-  line-height: 1rem;
+  font-size: 0.6875rem;
+  line-height: 0.875rem;
 }
 
 .flight-card-path {
   align-self: center;
 }
 
-.flight-card-airport,
+.flight-card-airport {
+  font-size: 0.75rem;
+  line-height: 0.9375rem;
+}
+
 .flight-card-leg-meta {
-  font-size: 0.8125rem;
-  line-height: 1.125rem;
+  font-size: 0.6875rem;
+  line-height: 0.875rem;
 }
 
 .flight-card-time {
-  font-size: 1.125rem;
-  line-height: 1.5rem;
+  font-size: 1rem;
+  line-height: 1.125rem;
   white-space: nowrap;
 }
 
@@ -701,29 +1547,144 @@ textarea {
 
 .flight-card-fare-action {
   min-width: 0;
-  gap: 0.75rem;
   padding-left: 0.75rem;
+  padding-right: 0.125rem;
+  padding-bottom: 0.25rem;
 }
 
 .flight-card-view-button {
-  min-width: 114px;
-  padding-left: 1rem;
-  padding-right: 1rem;
+  width: 100%;
+  min-width: 0;
+  justify-content: flex-end;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.flight-card-fare-action .flight-card-price-value {
+  font-size: 1.1875rem;
+  line-height: 1.5rem;
+  text-align: right;
+}
+
+.flight-card-fare-action .flight-card-price-value[data-price-size="large"] {
+  font-size: 1.0625rem;
+  line-height: 1.375rem;
+}
+
+.flight-card-fare-action .flight-card-price-value[data-price-size="compact"] {
+  font-size: 0.9375rem;
+  line-height: 1.25rem;
 }
 
 .flight-card-details {
-  column-gap: 1rem;
+  grid-template-columns:
+    minmax(0, 1.3fr)
+    minmax(0, 0.9fr)
+    minmax(0, 1.2fr);
+  grid-auto-rows: minmax(min-content, max-content);
+  align-items: start;
+  column-gap: 0.75rem;
+  row-gap: 0.375rem;
   margin-top: 0.5rem;
   padding-top: 0.5rem;
 }
 
 .flight-card-detail-item {
-  padding-right: 1rem;
+  min-width: 0;
+  padding-right: 0.25rem;
+}
+
+.flight-card-detail-value {
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+  overflow: visible;
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+
+@media (min-width: 1024px) {
+  .flight-card-details {
+    display: grid;
+    width: 100%;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: center;
+    column-gap: 1.5rem;
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    margin-top: 0;
+    padding: 0.5rem 0;
+    transform: translateY(0.875rem);
+  }
+
+  .flight-card-detail-item {
+    position: relative;
+    grid-template-columns: 1rem max-content minmax(0, 1fr);
+    grid-template-rows: auto;
+    align-items: center;
+    column-gap: 0.5rem;
+    min-width: 0;
+    min-height: 1.5rem;
+    padding: 0;
+    border: 0;
+  }
+
+  .flight-card-detail-item:first-child,
+  .flight-card-detail-item:last-child {
+    padding: 0;
+    border: 0;
+  }
+
+  .flight-card-detail-item + .flight-card-detail-item::before {
+    content: none;
+  }
+
+  .flight-card-detail-icon {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: center;
+    box-sizing: border-box;
+    width: 1rem;
+    height: 1rem;
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+    color: #64748b;
+  }
+
+  .flight-card-detail-label {
+    grid-column: 2;
+    grid-row: 1;
+    line-height: 1rem;
+    white-space: nowrap;
+  }
+
+  .flight-card-detail-value {
+    grid-column: 3;
+    grid-row: 1;
+    line-height: 1rem;
+    white-space: nowrap;
+    overflow: visible;
+    overflow-wrap: normal;
+    word-break: normal;
+  }
 }
 
 @container (max-width: 759px) {
   .flight-card-desktop {
     padding: 0.875rem 1rem;
+  }
+
+  @media (min-width: 1024px) {
+    .flight-card-desktop-header {
+      padding-right: 180px;
+    }
+
+    .flight-card-header-actions {
+      width: 180px;
+    }
   }
 
   .flight-card-desktop-header {
@@ -735,7 +1696,8 @@ textarea {
   }
 
   .flight-card-airline-name {
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
+    line-height: 1.0625rem;
   }
 
   .flight-card-logo-box {
@@ -759,24 +1721,25 @@ textarea {
   }
 
   .flight-card-leg-grid {
-    grid-template-columns: minmax(106px, 0.8fr) minmax(142px, 1.35fr) minmax(
-        100px,
-        0.75fr
+    grid-template-columns: minmax(106px, 0.7fr) minmax(168px, 1.55fr) minmax(
+        92px,
+        0.6fr
       );
     gap: 0.75rem;
   }
 
   .flight-card-time {
-    font-size: 1.125rem;
+    font-size: 0.9375rem;
+    line-height: 1.125rem;
   }
 
   .flight-card-price {
-    font-size: clamp(1rem, 2cqi, 1.125rem);
+    font-size: 1.0625rem;
   }
 
   .flight-card-fare-action {
-    gap: 0.625rem;
     padding-left: 0.625rem;
+    padding-bottom: 0.25rem;
   }
 
   .flight-card-view-button {
@@ -785,12 +1748,24 @@ textarea {
     padding-right: 0.875rem;
   }
 
+  @media (min-width: 1024px) {
+    .flight-card-view-button {
+      padding-right: 0;
+    }
+  }
+
   .flight-card-details {
     column-gap: 0.75rem;
   }
 
   .flight-card-detail-item {
     padding-right: 0.75rem;
+  }
+
+  @media (min-width: 1024px) {
+    .flight-card-detail-item {
+      padding-inline: 0.375rem;
+    }
   }
 }
 
@@ -869,6 +1844,73 @@ textarea {
   }
 }
 
+/* Keep the desktop fare action beside the itinerary only. The metadata
+   footer spans the full card width below it, so the short divider separates
+   arrival/date from fare content without intruding into the footer summary. */
+@media (min-width: 1024px) {
+  .flight-card-body {
+    grid-template-columns: minmax(0, 1fr) 128px;
+    grid-template-areas:
+      "legs fare"
+      "details details";
+    row-gap: 0.5rem;
+  }
+
+  .flight-card-fare-action {
+    align-items: flex-end;
+    justify-content: flex-end;
+    margin-left: 0.5rem;
+    border-left: 1px solid #d8e1ec;
+    border-top: 0;
+    padding-left: 0.5rem;
+    padding-right: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    text-align: right;
+  }
+
+  .flight-card-fare-commerce,
+  .flight-card-price-frame {
+    width: auto;
+    margin-left: auto;
+    align-items: flex-end;
+    text-align: right;
+  }
+
+  .flight-card-view-button {
+    width: auto;
+    min-height: 1.5rem;
+    margin-top: 0.125rem;
+    align-self: flex-end;
+    justify-content: flex-end;
+    padding: 0;
+  }
+}
+
+@container (max-width: 759px) {
+  @media (min-width: 1024px) {
+    .flight-card-body {
+      grid-template-columns: minmax(0, 1fr) 128px;
+      grid-template-areas:
+        "legs fare"
+        "details details";
+      row-gap: 0.5rem;
+    }
+
+    .flight-card-fare-action {
+      align-items: flex-end;
+      justify-content: flex-end;
+      border-left: 1px solid #d8e1ec;
+      border-top: 0;
+      padding-left: 0.875rem;
+      padding-right: 0;
+      padding-top: 0;
+      padding-bottom: 0;
+      text-align: right;
+    }
+  }
+}
+
 /* The approved desktop FlightCard hierarchy compresses without changing
    products on phone and tablet widths. */
 @media (max-width: 1023px) {
@@ -894,7 +1936,15 @@ textarea {
   }
 
   .flight-card-airline-name {
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
+    line-height: 1.0625rem;
+    font-weight: 700;
+  }
+
+  .flight-card-flight-number {
+    font-size: 0.6875rem;
+    line-height: 0.875rem;
+    font-weight: 500;
   }
 
   .flight-card-logo-box {
@@ -931,8 +1981,9 @@ textarea {
   }
 
   .flight-card-time {
-    font-size: 0.9375rem;
-    line-height: 1.25rem;
+    font-size: 0.875rem;
+    line-height: 1.125rem;
+    font-weight: 800;
   }
 
   .flight-card-leg-label {
@@ -959,15 +2010,16 @@ textarea {
 
   .flight-card-airport {
     margin-top: 0.125rem;
-    font-size: 0.75rem;
-    line-height: 1rem;
+    font-size: 0.6875rem;
+    line-height: 0.875rem;
   }
 
   .flight-card-duration {
     margin-bottom: 0.375rem;
     gap: 0.5rem;
-    font-size: 0.625rem;
-    line-height: 1rem;
+    font-size: 0.6875rem;
+    line-height: 0.875rem;
+    font-weight: 600;
   }
 
   .flight-card-price {
@@ -976,21 +2028,22 @@ textarea {
 
   .flight-card-provider-price,
   .flight-card-details {
-    font-size: 0.75rem;
+    font-size: 0.65625rem;
+    line-height: 0.9375rem;
     margin-top: 1rem;
     padding-top: 0.75rem;
   }
 
   .flight-card-view-button {
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
   }
 
   .flight-card-departure-date,
   .flight-card-arrival-date {
     display: block;
     margin-top: 0.0625rem;
-    font-size: 0.6875rem;
-    line-height: 0.875rem;
+    font-size: 0.59375rem;
+    line-height: 0.75rem;
     color: #536b92;
   }
 
@@ -1036,7 +2089,17 @@ textarea {
   }
 
   .flight-card-price {
-    font-size: 1.25rem;
+    font-size: 1.1875rem;
+    line-height: 1.5rem;
+    font-weight: 700;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .flight-results-count {
+    font-size: 0.8125rem;
+    line-height: 1.0625rem;
+    font-weight: 700;
   }
 
   .flight-card-view-button {
@@ -1119,6 +2182,39 @@ textarea {
   width: min(100% - 32px, 1560px);
   margin-inline: auto;
   justify-content: center;
+}
+
+@media (max-width: 639px) {
+  .flight-results-grid {
+    width: calc(100% - 24px);
+  }
+
+  /* Keep Flight and Hotel Results filter rows on the same curved sticky header edge. */
+  [data-flight-results-desktop-header],
+  [data-hotel-results-desktop-header] {
+    border-bottom-left-radius: 28px;
+    box-shadow: 0 1px 0 #d8e1ec;
+  }
+
+  [data-flight-results-desktop-header] > [data-mobile-results-filter-navbar],
+  [data-hotel-results-desktop-header] > [data-mobile-results-filter-navbar] {
+    border-bottom-left-radius: inherit;
+    overflow: hidden;
+  }
+
+  /* Branded result loading should remain one clean canvas. The ready-state
+     hotel/flight header treatment adds a divider and curved edge for the
+     filter rail, which otherwise leaks into the white loading surface. */
+  body:has(.results-loading-surface) [data-flight-results-desktop-header],
+  body:has(.results-loading-surface) [data-hotel-results-desktop-header] {
+    border-bottom-left-radius: 0;
+    box-shadow: none;
+  }
+
+  body:has(.results-loading-surface) [data-hotel-results-page-surface] {
+    background-color: #ffffff;
+  }
+
 }
 
 .flight-results-right-rail {
@@ -1211,6 +2307,22 @@ textarea {
   letter-spacing: -0.045em;
 }
 
+[data-nearby-fare-presentation="mobile"] .flight-fare-strip-price {
+  font-size: 0.6875rem;
+  line-height: 0.875rem;
+  font-weight: 600;
+}
+
+[data-nearby-fare-presentation="mobile"] .flight-fare-strip-price[data-price-size="long"] {
+  font-size: 0.625rem;
+  letter-spacing: -0.025em;
+}
+
+[data-nearby-fare-presentation="mobile"] .flight-fare-strip-price[data-price-size="extra-long"] {
+  font-size: 0.5625rem;
+  letter-spacing: -0.045em;
+}
+
 .flight-card-price-frame {
   width: 100%;
   max-width: 100%;
@@ -1237,7 +2349,8 @@ textarea {
 }
 
 .flight-card-price-value[data-price-size="compact"] {
-  font-size: clamp(1rem, 5vw, 1.25rem);
+  font-size: clamp(0.875rem, 3.8vw, 1rem);
+  letter-spacing: -0.045em;
 }
 
 .flight-card-price-value.flight-card-price {
@@ -1247,15 +2360,35 @@ textarea {
 }
 
 .flight-card-price-value.flight-card-price[data-price-size="normal"] {
-  font-size: 1.25rem;
+  font-size: 1.1875rem;
+  line-height: 1.5rem;
 }
 
 .flight-card-price-value.flight-card-price[data-price-size="large"] {
-  font-size: clamp(0.9375rem, 4.4vw, 1.125rem);
+  font-size: 1.0625rem;
+  line-height: 1.375rem;
 }
 
 .flight-card-price-value.flight-card-price[data-price-size="compact"] {
-  font-size: clamp(1rem, 5vw, 1.25rem);
+  font-size: 0.9375rem;
+  line-height: 1.25rem;
+  letter-spacing: -0.045em;
+}
+
+@media (max-width: 1023px) {
+  .flight-card-price-value.flight-card-price[data-price-size="normal"] {
+    font-size: 1.1875rem;
+    line-height: 1.5rem;
+  }
+
+  .flight-card-price-value.flight-card-price[data-price-size="large"] {
+    font-size: clamp(0.9375rem, 4.1vw, 1.0625rem);
+  }
+
+  .flight-card-price-value.flight-card-price[data-price-size="compact"] {
+    font-size: clamp(0.8125rem, 3.6vw, 0.9375rem);
+    letter-spacing: -0.045em;
+  }
 }
 
 .flight-card-provider-price {
@@ -1288,8 +2421,8 @@ textarea {
 @media (min-width: 1024px) {
   .flight-results-grid .flight-card-desktop { padding: 0.75rem 1rem; }
   .flight-results-grid .flight-card-desktop-header { padding-bottom: 0.25rem; }
-  .flight-results-grid .flight-card-airline-name { font-size: 0.875rem; line-height: 1.125rem; }
-  .flight-results-grid .flight-card-flight-number { font-size: 0.75rem; line-height: 1rem; }
+  .flight-results-grid .flight-card-airline-name { font-size: 0.875rem; line-height: 1.0625rem; }
+  .flight-results-grid .flight-card-flight-number { font-size: 0.6875rem; line-height: 0.875rem; }
   .flight-results-grid .flight-card-logo-box { width: 2.5rem; height: 2.5rem; }
   .flight-results-grid .flight-card-logo-image { width: 2rem; height: 2rem; }
   .flight-results-grid .flight-card-body { row-gap: 0.5rem; }
@@ -1299,41 +2432,17 @@ textarea {
   .flight-results-grid .flight-card-leg-center {
     grid-template-rows: minmax(1.5rem, auto) minmax(1rem, auto) minmax(1rem, auto);
   }
-  .flight-results-grid .flight-card-time { font-size: 1.0625rem; line-height: 1.375rem; }
-  .flight-results-grid .flight-card-airport,
-  .flight-results-grid .flight-card-leg-meta { font-size: 0.75rem; line-height: 1rem; }
-  .flight-results-grid .flight-card-duration { font-size: 0.6875rem; line-height: 1rem; }
-  .flight-results-grid .flight-card-details { margin-top: 0; padding-top: 0.375rem; line-height: 1rem; }
+  .flight-results-grid .flight-card-time { font-size: 1rem; line-height: 1.125rem; }
+  .flight-results-grid .flight-card-airport { font-size: 0.75rem; line-height: 0.9375rem; }
+  .flight-results-grid .flight-card-leg-meta { font-size: 0.6875rem; line-height: 0.875rem; }
+  .flight-results-grid .flight-card-duration { font-size: 0.6875rem; line-height: 0.875rem; }
+  .flight-results-grid .flight-card-details { margin-top: 0; padding-top: 0.375rem; line-height: 0.9375rem; }
   .flight-results-grid .flight-card-fare-action { gap: 0.5rem; }
-  .flight-results-grid .flight-card-view-button { min-height: 44px; padding-block: 0.5rem; }
+  .flight-results-grid .flight-card-view-button {
+    min-height: 1.5rem;
+    padding-block: 0;
+  }
 
-  [data-desktop-nearby-fare-rail] {
-    grid-template-columns: 44px repeat(7, minmax(0, 1fr)) 44px;
-    gap: 0.25rem;
-    padding: 0.375rem;
-  }
-  [data-desktop-nearby-fare-rail] > button:not([data-fare-date-cell]) { width: 44px; height: 44px; }
-  [data-desktop-nearby-fare-rail] [data-fare-date-cell] {
-    container-type: inline-size;
-    min-height: 74px;
-    padding: 0.375rem 0.125rem;
-  }
-  [data-desktop-nearby-fare-rail] .flight-fare-strip-price { display: none; }
-  [data-desktop-nearby-fare-rail] [data-fare-date-cell] > .animate-pulse { max-width: 100%; }
-  [data-desktop-nearby-fare-rail] [data-fare-date-cell] > .animate-pulse + .animate-pulse { margin-top: 0.25rem; }
-  .desktop-flight-fare-price {
-    max-width: 100%;
-    min-width: 0;
-    margin-top: 0.25rem;
-    font-size: clamp(0.75rem, 18cqi, 0.875rem);
-    line-height: 1rem;
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
-    unicode-bidi: isolate;
-  }
-  .desktop-flight-fare-price[data-price-size="long"] { font-size: clamp(0.625rem, 15cqi, 0.8125rem); }
-  .desktop-flight-fare-price[data-price-size="extra-long"] { font-size: clamp(0.5625rem, 12cqi, 0.6875rem); letter-spacing: -0.025em; }
 }
 
 /* Cars desktop pickers share native, independently owned scrollbars. */
@@ -1403,6 +2512,53 @@ textarea {
   height: 0;
 }
 
+/* Desktop Cars Rate details alone: slim scrolling thumb and scaled-down arrow glyphs. */
+@media (min-width: 768px) {
+  /* Firefox uses the native thin rail. Chromium and WebKit use the exact custom rail below. */
+  @supports (-moz-appearance: none) {
+    [data-car-rate-dialog] [data-car-rate-scroll] {
+      scrollbar-width: thin;
+      scrollbar-color: #94a3b8 transparent;
+    }
+  }
+
+  [data-car-rate-dialog] [data-car-rate-scroll]::-webkit-scrollbar {
+    width: 7px;
+    height: 7px;
+  }
+
+  [data-car-rate-dialog] [data-car-rate-scroll]::-webkit-scrollbar-track,
+  [data-car-rate-dialog] [data-car-rate-scroll]::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  [data-car-rate-dialog] [data-car-rate-scroll]::-webkit-scrollbar-thumb {
+    background-color: #94a3b8;
+    border-radius: 999px;
+  }
+
+  [data-car-rate-dialog] [data-car-rate-scroll]::-webkit-scrollbar-thumb:hover {
+    background-color: #64748b;
+  }
+
+  [data-car-rate-dialog] [data-car-rate-scroll]::-webkit-scrollbar-button:vertical {
+    display: block;
+    height: 10px;
+    background-color: transparent;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: 6px 4px;
+  }
+
+  [data-car-rate-dialog] [data-car-rate-scroll]::-webkit-scrollbar-button:vertical:decrement {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='4' viewBox='0 0 6 4'%3E%3Cpath d='M1 3 3 1 5 3' fill='none' stroke='%2364748b' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  }
+
+  [data-car-rate-dialog] [data-car-rate-scroll]::-webkit-scrollbar-button:vertical:increment {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='4' viewBox='0 0 6 4'%3E%3Cpath d='M1 1 3 3 5 1' fill='none' stroke='%2364748b' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  }
+}
+
 @media (max-width: 639px) {
   .flight-results-grid {
     width: min(100% - 24px, 1560px);
@@ -1436,4 +2592,126 @@ textarea {
 
 @media (max-width: 420px) {
   .flight-results-pagination { gap: 0; padding-inline: 0.25rem; }
+}
+
+/* Native iPhone parity is opt-in: other Results sheets keep their defaults. */
+.mobile-results-sheet-cars-edit-backdrop {
+  background-color: rgba(8, 18, 35, 0.52);
+  animation-duration: 280ms;
+}
+.mobile-results-sheet-cars-edit-surface {
+  animation-duration: 280ms;
+}
+.mobile-results-sheet-cars-edit-surface.mobile-results-sheet-surface-closing,
+.mobile-results-sheet-cars-edit-backdrop.mobile-results-sheet-backdrop-layer-closing {
+  animation-duration: 240ms;
+}
+@media (max-width: 639px) {
+  .cars-results-edit-field {
+    background-color: #ffffff !important;
+    border-color: #e7ecf5 !important;
+    box-shadow: none !important;
+  }
+
+  .cars-results-edit-title {
+    font-family: inherit;
+    font-size: 19px !important;
+    font-weight: 600 !important;
+    line-height: 24px !important;
+    color: #1a1a1a !important;
+    -webkit-text-size-adjust: none;
+    text-size-adjust: none;
+  }
+
+  .cars-results-edit-label {
+    font-family: inherit;
+    font-size: 11px !important;
+    font-weight: 500 !important;
+    line-height: 14px !important;
+    color: #595959 !important;
+    text-transform: none !important;
+    letter-spacing: 0 !important;
+    -webkit-text-size-adjust: none;
+    text-size-adjust: none;
+  }
+
+  .cars-results-edit-value {
+    font-family: inherit;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    line-height: 20px !important;
+    color: #1a1a1a !important;
+    -webkit-text-size-adjust: none;
+    text-size-adjust: none;
+  }
+
+  .cars-results-edit-secondary {
+    display: none !important;
+    font-family: inherit;
+    font-size: 12px !important;
+    font-weight: 400 !important;
+    line-height: 16px !important;
+    color: #595959 !important;
+    -webkit-text-size-adjust: none;
+    text-size-adjust: none;
+  }
+
+  .cars-results-edit-submit {
+    font-family: inherit;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    color: #ffffff !important;
+    -webkit-text-size-adjust: none;
+    text-size-adjust: none;
+  }
+
+  .flight-results-edit-surface {
+    background-color: #ffffff !important;
+    border-color: #e7ecf5 !important;
+    box-shadow: none !important;
+  }
+
+  .flight-results-edit-field-surface {
+    background-color: #ffffff !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .flight-results-edit-value {
+    font-family: inherit;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    line-height: 20px !important;
+    color: rgb(2 6 23) !important;
+    -webkit-text-size-adjust: none;
+    text-size-adjust: none;
+  }
+
+  .flight-results-trip-tab {
+    font-size: 10px !important;
+    font-weight: 600 !important;
+    line-height: 14px !important;
+    -webkit-text-size-adjust: none;
+    text-size-adjust: none;
+  }
+
+  .flight-results-edit-title {
+    font-size: 17px !important;
+    font-weight: 600 !important;
+    line-height: 22px !important;
+    -webkit-text-size-adjust: none;
+    text-size-adjust: none;
+  }
+}
+
+@media (min-width: 640px) {
+  .flight-results-edit-value {
+    font-family: inherit;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    line-height: 20px !important;
+    color: rgb(2 6 23) !important;
+    -webkit-text-size-adjust: none;
+    text-size-adjust: none;
+  }
 }

@@ -60,40 +60,54 @@ test("hotel result cards retain image fallback and presentation contracts", () =
 test("hotel result cards use a horizontal image and details grid on mobile", () => {
   assert.match(
     source,
-    /data-hotel-card-mobile-grid[\s\S]*grid-cols-\[41%_minmax\(0,1fr\)\]/,
+    /data-hotel-card-mobile-grid[\s\S]*grid-cols-\[38%_minmax\(0,1fr\)\][\s\S]*min-\[430px\]:grid-cols-\[39%_minmax\(0,1fr\)\]/,
   );
   assert.match(
     source,
-    /data-hotel-card-image[\s\S]*h-full[\s\S]*min-h-\[260px\]/,
+    /data-hotel-card-image[\s\S]*min-h-\[calc\(\(100vw-2rem\)\*0\.7\)\][\s\S]*min-\[430px\]:min-h-\[260px\]/,
   );
   assert.match(source, /data-hotel-card-details/);
   assert.ok(!source.includes("h-[clamp(220px,58vw,250px)]"));
   assert.ok(!source.includes("h-[clamp(280px,78vw,340px)]"));
   assert.match(source, /md:grid-cols-\[40%_minmax\(0,1fr\)\]/);
-  assert.match(source, /lg:grid-cols-\[clamp\(280px,36%,340px\)_minmax\(0,1fr\)\]/);
+  assert.match(source, /lg:grid-cols-\[33\.333%_minmax\(0,1fr\)\]/);
   assert.match(source, /lg:max-w-none/);
 });
 
-test("desktop cards narrow only the details column and remain left aligned", () => {
+test("mobile Hotel cards use the native Hotel result size, surface, type and colour rhythm", () => {
+  assert.match(source, /rounded-\[13px\] border-\[#D8E1EC\] bg-white shadow-\[0_2px_10px/);
+  assert.match(source, /grid-cols-\[38%_minmax\(0,1fr\)\][\s\S]*min-\[430px\]:grid-cols-\[39%_minmax\(0,1fr\)\]/);
+  assert.match(source, /min-h-\[calc\(\(100vw-2rem\)\*0\.7\)\][\s\S]*min-\[430px\]:min-h-\[260px\]/);
+  assert.match(source, /text-\[15px\] font-bold leading-5 text-\[#071A48\]/);
+  assert.match(source, /text-\[12px\] font-semibold leading-4 text-\[#004BB8\]/);
+  assert.match(source, /text-\[18px\] font-bold leading-6 text-\[#071A48\]/);
+  assert.match(source, /text-\[12px\] font-medium leading-4 text-\[#56658E\]/);
+  assert.match(source, /h-9 min-h-9[\s\S]*text-\[13px\] font-semibold leading-4 text-\[#0754F7\]/);
+});
+
+test("desktop Hotel cards give the image one-third of the card", () => {
   assert.match(
     source,
     /max-w-\[800px\][\s\S]*lg:mx-0 lg:max-w-none/,
   );
   assert.match(
     source,
-    /md:grid-cols-\[40%_minmax\(0,1fr\)\][\s\S]*lg:grid-cols-\[clamp\(280px,36%,340px\)_minmax\(0,1fr\)\]/,
+    /md:grid-cols-\[40%_minmax\(0,1fr\)\][\s\S]*lg:grid-cols-\[33\.333%_minmax\(0,1fr\)\]/,
   );
-  assert.match(source, /sizes="\(min-width: 768px\) 320px, 41vw"/);
+  assert.match(
+    source,
+    /sizes="\(min-width: 1024px\) 252px, \(min-width: 768px\) 40vw, 38vw"/,
+  );
   assert.match(source, /className="bg-slate-200 object-cover"/);
 });
 
-test("desktop hotel headings reserve two-line space for card-edge actions", () => {
-  assert.match(source, /lg:pe-\[88px\]/);
+test("desktop hotel headings keep save and share beside the name", () => {
   assert.match(source, /lg:line-clamp-2/);
   assert.match(
     source,
-    /data-hotel-desktop-utility-actions[\s\S]*absolute -end-3 -top-2[\s\S]*lg:flex/,
+    /data-hotel-card-details[\s\S]*data-hotel-desktop-utility-actions[\s\S]*absolute -end-3 -top-2 z-20[\s\S]*lg:flex/,
   );
+  assert.match(source, /lg:pe-\[88px\]/);
 });
 
 test("hotel result cards retain saved-hotel controls", () => {
@@ -166,18 +180,21 @@ test("hotel result cards separate the nightly amount from its localized label", 
     source,
     /aria-hidden="true"[\s\S]*nightlyDisplayPrice\.formatted[\s\S]*aria-hidden="true"[\s\S]*perNightLabel/,
   );
-  assert.match(source, /text-lg font-bold[\s\S]*tabular-nums[\s\S]*sm:text-xl/);
+  assert.match(source, /text-\[18px\] font-bold leading-6[\s\S]*tabular-nums[\s\S]*sm:text-xl/);
   assert.match(source, /text-xs[\s\S]*text-slate-500/);
 });
 
-test("hotel result cards use a single mobile amenity column and bottom conversion cluster", () => {
+test("hotel result cards keep mobile amenities compact while desktop retains the fuller set", () => {
   assert.ok(source.includes("expandedAmenityItems.slice(0, 4)"));
+  assert.ok(source.includes("expandedAmenityItems.slice(0, 4)"));
+  assert.match(source, /max-sm:\[&>li\]:text-\[13px\]/);
   assert.ok(source.includes("items={collapsedAmenityItems}"));
   assert.match(
     source,
     /data-hotel-card-amenities[\s\S]*grid-cols-1[\s\S]*md:grid-cols-2[\s\S]*data-hotel-card-price[\s\S]*data-hotel-card-action[\s\S]*href=\{resolvedDetailsHref\}/,
   );
-  assert.match(source, /className="mt-auto pt-2 md:pt-3"/);
+  assert.match(source, /className="mt-auto pt-2 md:pt-3 lg:flex lg:items-end lg:justify-between/);
+  assert.match(source, /lg:grid-cols-\[33\.333%_minmax\(0,1fr\)\]/);
 
   for (const layoutHack of [
     "self-center -translate-y",
@@ -203,7 +220,7 @@ test("hotel result cards expose compact save and share actions with feedback", (
 test("mobile hotel utility actions sit at the card edge without entering the hotel name", () => {
   assert.match(
     source,
-    /className="relative min-w-0"[\s\S]*?pe-\[88px\][\s\S]*?data-hotel-utility-actions[\s\S]*?absolute -end-3 -top-2/,
+    /className="relative min-w-0"[\s\S]*?sm:pe-\[88px\][\s\S]*?data-hotel-utility-actions[\s\S]*?absolute -end-2\.5 -top-2/,
   );
   assert.match(
     source,
@@ -244,11 +261,52 @@ test("standalone Hotel actions and attribution retain their link fallbacks", () 
 });
 
 test("hotel galleries keep imagery edge-to-edge with unobtrusive edge controls", () => {
-  assert.match(source, /data-hotel-card-image[\s\S]*overflow-hidden bg-slate-200/);
+  assert.match(source, /data-hotel-card-image[\s\S]*overflow-hidden bg-\[#E9EDF3\][\s\S]*sm:bg-slate-200/);
   assert.match(source, /className="bg-slate-200 object-cover"/);
   assert.match(source, /Previous photo[\s\S]*absolute left-0[\s\S]*h-11 w-11[\s\S]*bg-transparent text-white/);
   assert.match(source, /Next photo[\s\S]*absolute right-0[\s\S]*h-11 w-11[\s\S]*bg-transparent text-white/);
-  assert.match(source, /ChevronLeft className="h-5 w-5 -translate-x-2\.5"/);
-  assert.match(source, /ChevronRight className="h-5 w-5 translate-x-2\.5"/);
-  assert.doesNotMatch(source, /bg-(?:white\/95|slate-950\/55)|rounded-full[^\n]*Previous photo/);
+  assert.match(source, /ChevronLeft className="h-5 w-5 -translate-x-2\.5 lg:translate-x-0"/);
+  assert.match(source, /ChevronRight className="h-5 w-5 translate-x-2\.5 lg:translate-x-0"/);
+  assert.match(source, /lg:rounded-full lg:bg-slate-950\/65/);
+});
+
+
+test("Hotel result cards use a full-card destination with independent utilities", () => {
+  assert.match(
+    source,
+    /<Link[\s\S]*?aria-hidden="true"[\s\S]*?tabIndex=\{-1\}[\s\S]*?absolute inset-0 z-10 cursor-pointer/,
+  );
+  assert.match(source, /data-hotel-utility-actions[\s\S]*?z-20/);
+  assert.match(source, /data-hotel-desktop-utility-actions[\s\S]*?z-20/);
+  assert.match(source, /Previous photo[\s\S]*?z-30/);
+  assert.match(source, /Next photo[\s\S]*?z-30/);
+});
+
+test("mobile Hotel cards keep provider provenance quiet and the View hotel action lightweight", () => {
+  assert.match(source, /data-hotel-provider-label[\s\S]*?sm:hidden/);
+  assert.match(source, /Source:[\s\S]*?sm:hidden/);
+  assert.match(source, /relative z-20 h-9 min-h-9[\s\S]*?text-\[#0754F7\]/);
+  assert.doesNotMatch(source, /sm:bg-\[#004BB8\]/);
+  assert.match(source, /sm:gap-1 sm:active:opacity-70/);
+  assert.match(source, /<ChevronRight className="h-4 w-4" strokeWidth=\{2\.2\}/);
+});
+
+
+test("desktop Hotel result reviews use Expedia-style score badge with stacked label and count", () => {
+  const desktopReviewStart = source.indexOf("if (desktop) {");
+  const desktopReviewEnd = source.indexOf("return (", desktopReviewStart + 20);
+  const desktopReview = source.slice(desktopReviewStart, source.indexOf("    return (", desktopReviewEnd + 10));
+
+  assert.match(source, /data-hotel-card-reviews-desktop/);
+  assert.match(source, /min-h-7 min-w-8 shrink-0 items-center justify-center rounded-md bg-slate-900/);
+  assert.match(source, /\{formattedReviewScore\}\s*<\/span>/);
+  assert.match(source, /text-\[13px\] font-semibold leading-4 text-slate-800[\s\S]*\{reviewLabel\}/);
+  assert.match(source, /mt-0\.5 text-\[12px\] font-normal leading-4 text-slate-500[\s\S]*\{reviewCountText\}/);
+  assert.doesNotMatch(desktopReview, /formattedReviewScore\} \/ \{reviewScale\}/);
+  assert.doesNotMatch(desktopReview, /rounded-full/);
+});
+
+test("mobile Hotel result review treatment remains unchanged", () => {
+  assert.match(source, /data-hotel-card-reviews className=/);
+  assert.match(source, /rounded-full bg-\[#0754F7\][\s\S]*\{formattedReviewScore\} \/ \{reviewScale\}[\s\S]*\{reviewLabel\}/);
 });

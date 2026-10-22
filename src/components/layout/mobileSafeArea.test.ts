@@ -41,10 +41,9 @@ test("standalone manifest keeps a white launch and browser theme", () => {
 });
 
 test("shared public chrome owns the mobile safe-area surfaces", () => {
-  assert.match(
-    headerSource,
-    /bg-white pt-\[env\(safe-area-inset-top\)\]/,
-  );
+  const header = headerSource.slice(headerSource.indexOf("<header"), headerSource.indexOf("</header>"));
+  assert.match(header, /bg-white/);
+  assert.match(header, /stableMobileSafeAreaTop\s*\? "pt-\[var\(--cars-results-safe-area-top\)\] sm:pt-\[env\(safe-area-inset-top\)\]"\s*: "pt-\[env\(safe-area-inset-top\)\]"/);
   assert.match(
     footerSource,
     /bg-white pb-\[env\(safe-area-inset-bottom\)\]/,

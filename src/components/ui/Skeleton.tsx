@@ -28,72 +28,123 @@ export function FlightCardSkeleton() {
 
 export function HotelCardSkeleton() {
   return (
-    <div
-      aria-hidden="true"
-      className="mx-auto w-full max-w-[800px] overflow-hidden rounded-lg border border-slate-200 bg-white shadow-[0_16px_38px_-26px_rgba(2,28,43,0.22)]"
-    >
-      <div className="grid min-h-[260px] grid-cols-[41%_minmax(0,1fr)] md:min-h-0 md:grid-cols-[40%_minmax(0,1fr)]">
-        <Skeleton className="h-full min-h-[260px] rounded-none bg-slate-200 md:min-h-[230px] lg:min-h-[240px]" />
-
-        <div className="flex min-h-[200px] flex-col px-3.5 py-3.5 md:min-h-0 md:px-3 md:py-3">
-          <div className="flex flex-1 flex-col">
-            <div className="min-w-0">
-              <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-                <Skeleton className="h-5 w-3/5 min-w-0" />
-                <Skeleton className="h-5 w-20 rounded-md" />
-              </div>
-
-              <div className="mt-1 flex items-center gap-1">
-                <Skeleton className="h-3.5 w-3.5 rounded-full" />
-                <Skeleton className="h-3.5 w-3.5 rounded-full" />
-                <Skeleton className="h-3.5 w-3.5 rounded-full" />
-                <Skeleton className="h-3.5 w-3.5 rounded-full" />
-              </div>
-
-              <div className="mt-2 flex min-w-0 items-center gap-2">
-                <Skeleton className="h-4 w-4 shrink-0 rounded-full" />
-                <Skeleton className="h-4 w-2/5" />
-                <Skeleton className="h-4 w-1/4" />
-              </div>
-
-              <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                <Skeleton className="h-5 w-24 rounded-full" />
-                <Skeleton className="h-5 w-20 rounded-full" />
+    <>
+      <div
+        aria-hidden="true"
+        data-hotel-card-skeleton-mobile
+        className="w-full overflow-hidden rounded-[13px] border border-slate-200 bg-white shadow-[0_10px_28px_-24px_rgba(2,28,43,0.30)] sm:hidden"
+      >
+        <div className="grid min-h-[244px] grid-cols-[39%_minmax(0,1fr)]">
+          <Skeleton className="h-full min-h-[244px] rounded-none bg-slate-200" />
+          <div className="flex min-w-0 flex-col px-2.5 py-2.5">
+            <div className="flex items-start justify-between gap-2">
+              <Skeleton className="h-5 w-[68%]" />
+              <div className="flex shrink-0">
+                <Skeleton className="h-8 w-8 rounded-full" />
+                <Skeleton className="h-8 w-8 rounded-full" />
               </div>
             </div>
+            <Skeleton className="mt-1.5 h-3.5 w-16" />
+            <div className="mt-1.5 flex items-center gap-1.5">
+              <Skeleton className="h-3.5 w-3.5 rounded-full" />
+              <Skeleton className="h-3.5 w-2/3" />
+            </div>
+            <div className="mt-2 flex gap-1">
+              <Skeleton className="h-5 w-20 rounded-full" />
+              <Skeleton className="h-5 w-16 rounded-full" />
+            </div>
+            <div className="mt-2 space-y-1.5">
+              <Skeleton className="h-3.5 w-4/5" />
+              <Skeleton className="h-3.5 w-3/5" />
+              <Skeleton className="h-3.5 w-2/3" />
+            </div>
+            <div className="mt-auto flex flex-col items-end pt-2">
+              <Skeleton className="h-5 w-24" />
+              <Skeleton className="mt-1 h-3 w-14" />
+              <Skeleton className="mt-2 h-4 w-20" />
+            </div>
+          </div>
+        </div>
+      </div>
 
-            <div className="mt-3 grid grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] border-t border-slate-200 pt-3">
-              <div className="min-w-0 space-y-2 pe-2.5 md:pe-3">
-                <Skeleton className="h-4 w-4/5" />
-                <Skeleton className="h-4 w-2/3" />
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  <Skeleton className="h-6 w-16 rounded-full" />
-                  <Skeleton className="h-6 w-20 rounded-full" />
+      <div
+        aria-hidden="true"
+        data-hotel-card-skeleton-desktop
+        className="mx-auto hidden w-full max-w-[800px] overflow-hidden rounded-lg border border-slate-200 bg-white shadow-[0_16px_38px_-26px_rgba(2,28,43,0.22)] sm:block lg:max-w-[756px]"
+      >
+        <div className="grid min-h-[260px] grid-cols-[41%_minmax(0,1fr)] md:min-h-0 md:grid-cols-[40%_minmax(0,1fr)] lg:grid-cols-[33.333%_minmax(0,1fr)]">
+          <Skeleton className="h-full min-h-[260px] rounded-none bg-slate-200 md:min-h-[230px] lg:min-h-[210px]" />
+
+          <div className="flex min-h-[200px] flex-col px-3.5 py-3.5 md:min-h-0 md:px-3 md:py-3">
+            <div className="flex flex-1 flex-col">
+              <div className="min-w-0">
+                <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                  <Skeleton className="h-5 w-3/5 min-w-0" />
+                  <Skeleton className="h-5 w-20 rounded-md" />
+                </div>
+
+                <div className="mt-1 flex items-center gap-1">
+                  <Skeleton className="h-3.5 w-3.5 rounded-full" />
+                  <Skeleton className="h-3.5 w-3.5 rounded-full" />
+                  <Skeleton className="h-3.5 w-3.5 rounded-full" />
+                  <Skeleton className="h-3.5 w-3.5 rounded-full" />
+                </div>
+
+                <div className="mt-2 flex min-w-0 items-center gap-2">
+                  <Skeleton className="h-4 w-4 shrink-0 rounded-full" />
+                  <Skeleton className="h-4 w-2/5" />
+                  <Skeleton className="h-4 w-1/4" />
+                </div>
+
+                <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                  <Skeleton className="h-5 w-24 rounded-full" />
+                  <Skeleton className="h-5 w-20 rounded-full" />
                 </div>
               </div>
 
-              <div className="flex min-w-0 flex-col border-s border-slate-200 ps-2.5 text-end md:ps-3">
-                <div className="flex flex-col items-end space-y-2">
-                  <Skeleton className="h-6 w-24" />
-                  <Skeleton className="h-4 w-20" />
-                  <Skeleton className="h-4 w-28" />
+              <div className="mt-3 grid grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] border-t border-slate-200 pt-3">
+                <div className="min-w-0 space-y-2 pe-2.5 md:pe-3">
+                  <Skeleton className="h-4 w-4/5" />
+                  <Skeleton className="h-4 w-2/3" />
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    <Skeleton className="h-6 w-16 rounded-full" />
+                    <Skeleton className="h-6 w-20 rounded-full" />
+                  </div>
                 </div>
-                <Skeleton className="mt-3 h-9 w-full rounded-lg" />
+
+                <div className="flex min-w-0 flex-col border-s border-slate-200 ps-2.5 text-end md:ps-3">
+                  <div className="flex flex-col items-end space-y-2">
+                    <Skeleton className="h-6 w-24" />
+                    <Skeleton className="h-4 w-20" />
+                    <Skeleton className="h-4 w-28" />
+                  </div>
+                  <Skeleton className="mt-3 h-9 w-full rounded-lg" />
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 
-export function CarCardSkeleton() {
+export function CarCardSkeleton({
+  transitionMotion = "pulse",
+  desktopSurfaceParity = false,
+}: {
+  transitionMotion?: "pulse" | "shimmer";
+  desktopSurfaceParity?: boolean;
+} = {}) {
   return (
     <div
       role="status"
       aria-label="Loading car result"
-      className="overflow-hidden rounded-[13px] border border-[#D8E1EC] bg-white md:rounded-2xl"
+      className={cn(
+        "overflow-hidden rounded-[13px] border border-[#D8E1EC] bg-white md:rounded-2xl",
+        desktopSurfaceParity && "md:bg-white",
+        transitionMotion === "shimmer" && "cars-filter-card-skeleton",
+      )}
     >
       <span className="sr-only">Loading car result</span>
       <div data-car-card-skeleton-mobile className="md:hidden">
@@ -124,10 +175,15 @@ export function CarCardSkeleton() {
       </div>
       <div
         data-car-card-skeleton-desktop
-        className="hidden md:grid md:grid-cols-[250px_minmax(0,1fr)] lg:grid-cols-[250px_minmax(0,1fr)_205px] xl:grid-cols-[270px_minmax(0,1fr)_205px]"
+        className={cn(
+          "hidden md:grid md:grid-cols-[250px_minmax(0,1fr)]",
+          desktopSurfaceParity
+            ? "lg:grid-cols-[192px_minmax(0,1fr)] xl:grid-cols-[200px_minmax(0,1fr)]"
+            : "lg:grid-cols-[192px_minmax(0,1fr)_152px] xl:grid-cols-[200px_minmax(0,1fr)_152px]",
+        )}
       >
-        <div className="flex items-center border-b border-[#E2E8F0] bg-slate-50 p-2.5 md:border-b-0 md:border-e">
-          <Skeleton className="aspect-[4/3] w-full rounded-xl" />
+        <div className={cn("flex items-center border-b border-[#E2E8F0] bg-slate-50 p-2.5 md:border-b-0 md:border-e lg:border-e-0 lg:p-0", desktopSurfaceParity && "md:bg-white")}>
+          <Skeleton className="aspect-[4/3] w-full rounded-xl lg:aspect-auto lg:h-[176px]" />
         </div>
         <div className="space-y-2.5 px-4 py-3">
           <Skeleton className="h-3 w-24" />
@@ -144,8 +200,12 @@ export function CarCardSkeleton() {
             <Skeleton className="h-6 w-32" />
           </div>
         </div>
-        <div className="col-span-full flex min-w-0 flex-col border-t border-slate-200 bg-slate-50/45 px-4 py-3 lg:col-span-1 lg:border-s lg:border-t-0 lg:bg-white">
-          <div className="space-y-2">
+        <div className={cn(
+          "col-span-full flex min-w-0 flex-col border-t border-slate-200 bg-slate-50/45 px-4 py-3",
+          desktopSurfaceParity ? "lg:col-span-2 lg:border-s-0 lg:border-t" : "lg:col-span-1 lg:border-s lg:border-t-0",
+          desktopSurfaceParity ? "md:bg-white lg:bg-white" : "lg:bg-white",
+        )}>
+          <div className={cn("space-y-2", desktopSurfaceParity && "lg:hidden")}>
             <div className="space-y-1">
               <Skeleton className="h-3 w-20" />
               <Skeleton className="h-5 w-24" />
@@ -155,8 +215,17 @@ export function CarCardSkeleton() {
               <Skeleton className="h-7 w-32" />
               <Skeleton className="h-3 w-32" />
             </div>
+            <Skeleton className="mt-3 h-10 w-full" />
           </div>
-          <Skeleton className="mt-3 h-10 w-full lg:mt-auto" />
+          <div className={cn("hidden w-full space-y-2", desktopSurfaceParity && "lg:block")}>
+            {[0, 1, 2].map((index) => (
+              <div key={index} className="flex h-[30px] items-center justify-between gap-4">
+                <Skeleton className="h-3 w-24" />
+                <Skeleton className="h-3 w-14" />
+                <Skeleton className="h-3 w-20" />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>

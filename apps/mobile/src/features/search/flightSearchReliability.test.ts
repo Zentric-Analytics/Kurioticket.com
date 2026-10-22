@@ -23,9 +23,12 @@ test("ready, empty, error, visible message, and clean retry remain terminal stat
   assert.match(screen, /const controller = new AbortController\(\)/);
 });
 
-test("request identity and the flight-specific hard timeout reach the backend", () => {
+test("request identity and the shared metasearch timeout reach the backend", () => {
   assert.match(api, /"X-Search-Request-Id": options\.requestId/);
-  assert.match(api, /FLIGHT_SEARCH_REQUEST_TIMEOUT_MS = 14_000/);
+  assert.match(api, /METASEARCH_REQUEST_TIMEOUT_MS = 35_000/);
+  assert.match(api, /searchFlights:[\s\S]*timeoutMs: METASEARCH_REQUEST_TIMEOUT_MS/);
+  assert.match(api, /searchHotels:[\s\S]*timeoutMs: METASEARCH_REQUEST_TIMEOUT_MS/);
+  assert.match(api, /searchCars:[\s\S]*timeoutMs: METASEARCH_REQUEST_TIMEOUT_MS/);
   assert.match(screen, /searchFlights\(plan\.plan\.payload, \{ signal: controller\.signal, requestId \}\)/);
   assert.match(screen, /controller\.abort\("ui-deadline"\)/);
   assert.match(screen, /deadlineExpired \|\|/);
@@ -35,7 +38,7 @@ test("request identity and the flight-specific hard timeout reach the backend", 
 
 test("deadline, supersession, cleanup, and retry preserve latest-request ownership", () => {
   assert.match(screen, /const sequence = \+\+searchSequence\.current/);
-  assert.match(screen, /if \(!isLatest\(\)\) return/);
+  assert.match(screen, /if \(!isLatest\(\) \|\| \(product === "flight" && currentFlightSearchKey\.current !== requestedSearchKey\)\) return/);
   assert.match(screen, /searchSequence\.current \+= 1/);
   assert.match(screen, /activeSearch\.current\?\.abort\("screen-cleanup"\)/);
   assert.match(screen, /activeExecutionKey\.current !== executionKey/);
@@ -45,7 +48,8 @@ test("deadline, supersession, cleanup, and retry preserve latest-request ownersh
 });
 
 test("loading decoration cannot intercept controls and route changes cannot loop requests", () => {
-  assert.match(screen, /<View pointerEvents="none" style=\{s0\.loadingState\}>/);
+  assert.match(screen, /<NativeBrandedSearchLoading product=\{product\}/);
+  assert.doesNotMatch(screen, /s0\.loadingState/);
   assert.doesNotMatch(screen, /\[product, JSON\.stringify\(params\)\]/);
   assert.match(screen, /\[product, plan\.plan\?\.key, retry, visualTest\]/);
   assert.doesNotMatch(screen, /activeSearch\.current\?\.abort\("edit-search"\)/);
@@ -68,14 +72,16 @@ test("slow flight diagnostics measure processing and event-loop responsiveness",
   assert.match(screen, /\[flight-search:event-loop\]/);
 });
 
-test("flight results virtualize cards, keep controls persistent, and do not own saved-flight state", () => {
+test("flight results virtualize cards, keep header controls persistent, and do not own saved-flight state", () => {
   const card = screen.slice(screen.indexOf("function FlightCard"), screen.indexOf("function FlightJourneyRow"));
+  const header = screen.slice(screen.indexOf("function FlightResultsHeader"), screen.indexOf("function HotelResultsHeader"));
+  const list = screen.slice(screen.indexOf("<Animated.SectionList"), screen.indexOf(") : (", screen.indexOf("<Animated.SectionList")));
   assert.match(screen, /<Animated\.SectionList/);
-  assert.match(screen, /if \(status === "loading"\) return <NativeBrandedSearchLoading product=\{product\}/);
-  assert.match(screen, /renderSectionHeader=\{\(\) => \([\s\S]*?\{filterRail\}/);
-  assert.match(screen, /<Animated\.SectionList[\s\S]*?ListHeaderComponent=\{flightDateStrip\}/);
-  assert.match(screen, /renderSectionHeader[\s\S]*?stickySectionHeadersEnabled/);
-  assert.match(screen, /initialNumToRender=\{6\}/);
+  assert.match(screen, /if \(status === "loading" \|\| hotelCurrencyPending\) return <NativeBrandedSearchLoading product=\{product\}/);
+  assert.match(header, /accessibilityLabel="Flight result filters"[\s\S]*?\{filterRail\}/);
+  assert.match(list, /flightResultsIntro[\s\S]*?\{flightDateStrip\}/);
+  assert.doesNotMatch(list, /renderSectionHeader|stickySectionHeadersEnabled|\{filterRail\}/);
+  assert.match(screen, /initialNumToRender=\{FLIGHT_RESULT_INITIAL_RENDER_COUNT\}/);
   assert.doesNotMatch(screen, /sorted\.map\(\(x, i\) =>\s*product === "flight"/);
   assert.doesNotMatch(screen, /useSavedFlights\(\)|flightSavedSignature\(item\)|toggleSavedFlight\(item, params\)/);
   assert.doesNotMatch(card, /savedRepository|readSession|SecureStore|saved: boolean|pending: boolean|onToggleSaved/);

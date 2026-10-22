@@ -2,6 +2,16 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 const source = readFileSync(new URL("./FlightResultsClient.tsx", import.meta.url), "utf8");
+
+test("standard mobile filters unmount when closed and wire existing focus management", () => {
+  const start = source.indexOf("function renderMobileFullFiltersSheet");
+  assert.ok(start > 0);
+  const drawer = source.slice(start, source.indexOf("if (guidedMode)", start));
+  assert.match(drawer, /if \(!filtersOpen\) return null/);
+  assert.match(drawer, /ref=\{mobileFiltersDialogRef\}/);
+  assert.match(drawer, /ref=\{mobileFiltersCloseButtonRef\}/);
+  assert.doesNotMatch(drawer, /translate-y-full/);
+});
 test("Results delegates mobile Edit Search to the shared drawer", () => {
   assert.match(source, /import \{ FlightEditSearchDrawer/);
   assert.match(source, /<FlightEditSearchDrawer/);
@@ -11,8 +21,8 @@ test("Results delegates mobile Edit Search to the shared drawer", () => {
 });
 
 test("Results launcher avoids Android tap flash while retaining focus-visible", () => {
-  const start = source.indexOf("function renderMobileControlsRow");
-  const end = source.indexOf("function renderDesktopSortControl", start);
+  const start = source.indexOf("function renderMobileRouteSummaryCard");
+  const end = source.indexOf("function renderMobileEditSearchDrawer", start);
   const launcher = source.slice(start, end);
   assert.match(launcher, /\[-webkit-tap-highlight-color:transparent\]/);
   assert.match(launcher, /focus-visible:ring-2 focus-visible:ring-\[#004BB8\]\/35/);
@@ -27,21 +37,10 @@ test("Results parent leaves Edit Search scroll locking to the drawer", () => {
   assert.match(source, /mobileFiltersScrollLockRef\.current \?\?= acquireMobileResultsScrollLock\(\)/);
 });
 
-test("opening Edit Search cannot select or hide a Results header state", () => {
-  const compactHeaderStart = source.indexOf(
-    "data-flight-results-compact-header",
-  );
-  const compactHeaderEnd = source.indexOf("</header>", compactHeaderStart);
-  const compactHeader = source.slice(compactHeaderStart, compactHeaderEnd);
-
-  assert.ok(compactHeaderStart >= 0);
-  assert.match(compactHeader, /inert=\{mobileSearchOpen \? true : undefined\}/);
-  assert.match(compactHeader, /aria-hidden=\{!mobileCompactHeaderVisible\}/);
-  assert.doesNotMatch(
-    compactHeader,
-    /mobileCompactHeaderVisible\s*&&\s*!mobileSearchOpen/,
-  );
-  assert.doesNotMatch(compactHeader, /aria-hidden=.*mobileSearchOpen/);
-  assert.match(source, /data-flight-results-top-summary/);
+test("Edit Search remains wired to the single mobile AppHeader capsule", () => {
+  assert.match(source, /mobileResultsSearch=\{renderMobileRouteSummaryCard\(\)\}/);
+  assert.match(source, /aria-expanded=\{mobileSearchOpen\}/);
   assert.match(source, /data-flight-results-main/);
+  assert.doesNotMatch(source, /renderMobileCompactResultsHeader|mobileCompactHeaderVisible/);
+  assert.match(source, /openMobileSearchDrawer\(event\.currentTarget/);
 });

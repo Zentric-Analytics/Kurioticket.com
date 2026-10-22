@@ -4,70 +4,89 @@ import test from "node:test";
 import { buildHotelAmenityPresentation } from "../../../../../src/components/results/hotelAmenityPresentation";
 import { nativeHotelAmenityLabel } from "./hotelAmenityLabel";
 
-const source = readFileSync("src/features/search/ApprovedDetailScreen.tsx", "utf8");
-const hotel = source.slice(source.indexOf("function HotelDetail"), source.indexOf("const detailIcons"));
-const about = hotel.slice(hotel.indexOf('activeHotelTab === "about"'), hotel.indexOf('activeHotelTab === "location"'));
+const details = readFileSync("src/features/search/NativeHotelBookingDetails.tsx", "utf8");
+const model = readFileSync("src/features/search/nativeHotelBookingDetailsModel.ts", "utf8");
 const web = readFileSync("../../src/components/results/hotelDetails/HotelAboutSection.tsx", "utf8");
 const amenityLabelSource = readFileSync("src/features/search/hotelAmenityLabel.ts", "utf8");
 
 function styleRule(name: string, nextName: string) {
-  const start = source.indexOf(`  ${name}:`);
-  const end = source.indexOf(`  ${nextName}:`, start);
+  const start = details.indexOf(`  ${name}:`);
+  const end = details.indexOf(`  ${nextName}:`, start);
   assert.notEqual(start, -1, `${name} style must exist`);
   assert.notEqual(end, -1, `${nextName} style must follow ${name}`);
-  return source.slice(start, end);
+  return details.slice(start, end);
 }
 
 const escaped = (copy: string) => new RegExp(copy.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
 
-test("native About derives the same semantic amenity presentation as web", () => {
-  assert.match(hotel, /buildHotelAmenityPresentation\([\s\S]*?result\.amenities,[\s\S]*?result\.amenities\.length/);
-  assert.doesNotMatch(hotel, /const highlights = result\.amenities\.slice/);
-  assert.doesNotMatch(about, /<Check\b/);
-  for (const icon of ["Wifi", "UtensilsCrossed", "Laptop", "Wine", "Bed", "Sparkles", "Award"]) {
-    assert.match(source, new RegExp(`\\b${icon}\\b`));
+test("active native Details derives the same semantic amenity presentation as web About", () => {
+  assert.match(details, /buildHotelAmenityPresentation\([\s\S]*?result\.amenities,[\s\S]*?result\.amenities\.length/);
+  assert.doesNotMatch(details, /const highlights = result\.amenities\.slice/);
+  assert.doesNotMatch(details, /<Check\b/);
+  for (const icon of ["Wifi", "UtensilsCrossed", "Laptop", "Wine", "Bed", "Sparkles"]) {
+    assert.match(details, new RegExp(`\\b${icon}\\b`));
     assert.match(web, new RegExp(`\\b${icon}\\b`));
   }
+  assert.doesNotMatch(details, /\bAward\b/);
+  assert.doesNotMatch(web, /\bAward\b/);
 
   const items = buildHotelAmenityPresentation(["Wi-Fi", "Restaurant", "Bar", "Workspaces"], 4)
     .map((item) => ({ ...item, label: nativeHotelAmenityLabel(item) }));
   assert.deepEqual(items.map(({ label }) => label), ["Free Wi-Fi", "Restaurant", "Bar", "Workspaces"]);
   assert.deepEqual(items.map(({ iconKey }) => iconKey), ["wifi", "restaurant", "bar", "generic"]);
   assert.match(amenityLabelSource, /translationKey === "hotelResults\.filter\.freeWifi"[\s\S]*?"Free Wi-Fi"/);
-  assert.match(source, /\/bar\|lounge\/i[\s\S]*?return Wine/);
-  assert.match(source, /return Sparkles/);
+  assert.match(details, /item\.iconKey === "bar" \|\| item\.iconKey === "lounge"/);
+  assert.match(details, /return Sparkles/);
 });
 
-test("native About preserves the exact web fallback copy and removes stale native copy", () => {
+test("active Details keeps truthful fallbacks while replacing the obsolete highlights fallback", () => {
   for (const copy of [
-    "A property description is not available yet.", "Property highlights are not available yet.",
-    "All available amenities are shown in Property highlights.", "Room details are confirmed when you choose a room.",
-    "Hotel classification is not available.", "Specific accessibility features should be confirmed before booking.",
-  ]) { assert.match(about, escaped(copy)); assert.match(web, escaped(copy)); }
-  for (const stale of ["No additional verified amenities are listed.", "Verified property highlights are not available yet.", "Property type and classification are not available."]) assert.doesNotMatch(about, escaped(stale));
+    "A property description is not available yet.",
+    "Property highlights are not available yet.",
+    "Room details are confirmed when you choose a room.",
+    "Specific accessibility features should be confirmed before booking.",
+  ]) assert.match(details, escaped(copy));
+  assert.doesNotMatch(details, /All available amenities are shown in Property highlights\./);
+  assert.doesNotMatch(details, /Hotel classification is not available\.|>Hotel information</);
+  assert.match(details, /See all amenities/);
 });
 
-test("native About renders room, hotel information, and accessibility row by row", () => {
-  assert.doesNotMatch(about, /\.join\(" · "\)/);
-  assert.match(about, /\[property\?\.roomSummary, property\?\.bedSummary\][\s\S]*?\.map[\s\S]*?<Bed accessible=\{false\} size=\{18\}/);
-  assert.match(about, /property\?\.propertyType[\s\S]*?<Award accessible=\{false\} size=\{18\}/);
-  assert.match(about, /classification \? `\$\{classification\}-star classification` : "Hotel classification is not available\."/);
-  assert.match(about, /property\.accessibility\.map\([\s\S]*?hotelAboutAccessibilityItem[\s\S]*?>•<\/Text>/);
+test("active Details renders room and accessibility information row by row without Hotel information", () => {
+  assert.doesNotMatch(details, /\.join\(" · "\)/);
+  assert.match(details, /const providerRoomName = providerDetails\?\.rate\?\.roomName\?\.trim\(\) \?\? ""/);
+  assert.match(details, /\[property\?\.roomSummary, property\?\.bedSummary, providerRoomName\][\s\S]*?\.map[\s\S]*?<Bed accessible=\{false\} size=\{18\}/);
+  assert.match(details, /property\.accessibility\.map\([\s\S]*?>•<\/Text>/);
+  assert.doesNotMatch(details, /property\?\.propertyType[\s\S]*?<Award|>Hotel information<|width: "48%"|flexWrap: "wrap"/);
 });
 
-test("native About owns web-aligned geometry, typography, rhythm, and dark-mode colors", () => {
-  const heading = styleRule("hotelAboutHeading", "hotelAboutDescription");
-  const description = styleRule("hotelAboutDescription", "hotelAboutSubheading");
-  const subheading = styleRule("hotelAboutSubheading", "hotelAboutFallback");
-  const highlight = styleRule("hotelAboutHighlight", "hotelAboutHighlightText");
-  const highlightText = styleRule("hotelAboutHighlightText", "hotelAboutList");
-  for (const rule of [/fontSize: 20/, /lineHeight: 28/, /appFonts\.extraBold/]) assert.match(heading, rule);
-  for (const rule of [/marginTop: 12/, /fontSize: 14/, /lineHeight: 24/, /appFonts\.regular/]) assert.match(description, rule);
-  for (const rule of [/marginTop: 28/, /fontSize: 16/, /lineHeight: 24/, /fontWeight: "700"/, /appFonts\.bold/]) assert.match(subheading, rule);
-  for (const rule of [/minHeight: 56/, /borderRadius: 12/, /paddingHorizontal: 12/, /paddingVertical: 10/, /gap: 12/]) assert.match(highlight, rule);
-  for (const rule of [/fontSize: 14/, /lineHeight: 20/, /fontWeight: "600"/, /appFonts\.semibold/]) assert.match(highlightText, rule);
-  assert.match(about, /size=\{18\}/);
-  for (const rule of [/theme\.dark \? theme\.surface : "#F8FAFC"/, /theme\.dark \? theme\.border : "#E2E8F0"/, /theme\.dark \? theme\.textPrimary/, /theme\.dark \? theme\.textSecondary/, /theme\.dark \? hotelAccent/]) assert.match(about, rule);
-  assert.match(styleRule("hotelSectionLead", "hotelFactGrid"), /fontSize: 12/);
-  assert.match(styleRule("hotelSubheading", "hotelOffer"), /fontSize: 15/);
+test("About copy is explanatory and built only from existing Hotel facts", () => {
+  assert.match(details, /buildNativeHotelAboutCopy/);
+  assert.match(model, /const intro = `\$\{name\} is/);
+  assert.match(model, /property\.description\.trim\(\)/);
+  assert.match(model, /property\.roomSummary\?\.trim\(\)/);
+  assert.match(model, /property\.bedSummary\?\.trim\(\)/);
+  assert.match(model, /property\.neighbourhood/);
+  assert.match(model, /property\.city/);
+  assert.doesNotMatch(model, /perfect|best hotel|guaranteed|luxury stay/i);
+});
+
+test("active Details uses the Profile-style hierarchy with a tightened divider-free single-column rhythm", () => {
+  const heading = styleRule("heading", "description");
+  const description = styleRule("description", "fallback");
+  const amenityRow = styleRule("amenityRow", "infoRow");
+  const rowText = styleRule("rowText", "seeAllLink");
+  for (const rule of [/fontSize: 16/, /lineHeight: 22/, /fontWeight: "700"/, /fontFamily: appFonts\.bold/]) assert.match(heading, rule);
+  for (const rule of [/marginTop: 3/, /fontSize: 14/, /lineHeight: 21/, /fontWeight: "400"/, /fontFamily: appFonts\.regular/]) assert.match(description, rule);
+  assert.match(amenityRow, /flexDirection: "row"/);
+  assert.doesNotMatch(amenityRow, /width: "48%"|borderWidth|borderRadius/);
+  for (const rule of [/fontSize: 14/, /lineHeight: 20/, /fontWeight: "400"/, /fontFamily: appFonts\.regular/]) assert.match(rowText, rule);
+  assert.match(details, /strokeWidth=\{1\.3\}/);
+  assert.match(details, /const iconColor = theme\.dark \? theme\.icon : "#1A1A1A"/);
+  assert.match(details, /section: \{ paddingVertical: 0 \}/);
+  assert.match(details, /sectionGap: \{ height: 8 \}/);
+  assert.match(details, /rowList: \{ marginTop: 4, gap: 3 \}/);
+  assert.match(details, /seeAllLink: \{ alignSelf: "flex-start", marginTop: 4, paddingVertical: 4 \}/);
+  assert.doesNotMatch(details, /function SectionDivider|divider: \{|seeAllRow|ChevronRight/);
+  assert.match(details, /accessibilityLabel="See all amenities"/);
+  assert.match(details, /<Modal[\s\S]*?visible=\{amenitiesOpen\}/);
 });

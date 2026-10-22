@@ -1,63 +1,15 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { carFilterGroups } from "../../../../../src/lib/cars/carFilterPresentation";
+import { carFilterGroups, carQuickFilterGroupIds } from "../../../../../src/lib/cars/carFilterPresentation";
 import { carFilterCopy } from "./carFilterCopy";
-
-const sheet = readFileSync("src/features/search/CarFilterSheet.tsx", "utf8");
-const screen = readFileSync("src/features/search/ApprovedCarResultsScreen.tsx", "utf8");
-const presentation = readFileSync("../../src/lib/cars/carFilterPresentation.ts", "utf8");
-const web = readFileSync("../../src/components/results/CarsResultsClient.tsx", "utf8");
-
-test("Web and Native consume one canonical Car filter presentation", () => {
-  assert.match(web, /import \{ carFilterGroups, carQuickFilterGroupIds/);
-  assert.match(sheet, /carFilterGroups/);
-  for (const id of ["totalPrice", "vehicleType", "transmission", "seats", "bags", "fuelPolicy", "mileagePolicy", "cancellation", "pickupLocationType"]) assert.ok(presentation.includes(`id: "${id}"`), id);
-  assert.match(presentation, /id: "luxuryCars", labelKey: "carsTripStyle\.luxury\.title"/);
-  assert.match(presentation, /id: "vans", labelKey: "carsTripStyle\.van\.title"/);
-});
-
-test("Native derives available options and result counts from canonical results", () => {
-  assert.match(sheet, /doesCarMatchFilterOption\(car, option\.id\)/);
-  assert.match(sheet, /filterCarResults\(results, filters\)\.length/);
-  assert.match(sheet, /filter\(\(option\) => option\.count > 0\)/);
-});
-
-test("main Car filters are full screen and quick filters are real scoped sheets", () => {
-  assert.match(sheet, /fullScreen=\{full\}/);
-  assert.match(screen, /setFilterSheet\("all"\)/);
-  assert.match(screen, /setFilterSheet\(group\.id\)/);
-  assert.doesNotMatch(screen, /cycle\(|Lower total|Rental company/);
-});
-
-test("Car filter edits are local, immediate, clearable and do not search again", () => {
-  assert.match(sheet, /onChange\(\{ \.\.\.filters, \[group\]: next \}\)/);
-  assert.match(sheet, /const clear = \(\) => onChange\(\{\}\)/);
-  assert.match(sheet, /label=\{`\$\{copy\.show\}/);
-  assert.doesNotMatch(sheet, /travelApi\.|searchCars|router\./);
-});
-
-test("filtered-empty remains distinct from canonical empty", () => {
-  assert.match(screen, /status==="empty"\?<Empty title="No rental cars found"/);
-  assert.match(screen, /<Empty title="No cars match these filters"/);
-  assert.match(screen, /retry=\{clearFilters\}/);
-});
-
-test("English, Spanish and Arabic filter copy and RTL context remain supported", () => {
-  const copy = readFileSync("src/features/search/carFilterCopy.ts", "utf8");
-  assert.match(copy, /const english/);
-  assert.match(copy, /es:/);
-  assert.match(copy, /ar:/);
-  assert.match(sheet, /useMobileLocalization\(\)/);
-});
-
-test("Spanish and Arabic localize every canonical Car option", () => {
-  const englishCopy = carFilterCopy("en-us");
-  for (const locale of ["es-es", "ar"] as const) {
-    const copy = carFilterCopy(locale);
-    for (const option of carFilterGroups.flatMap((group) => group.options)) {
-      assert.ok(copy.options[option.id]?.trim(), `${locale}: ${option.id}`);
-    }
-    assert.notEqual(copy.options.freeCancellation, englishCopy.options.freeCancellation, locale);
-  }
-});
+const full=readFileSync("src/features/search/CarFilterSheet.tsx","utf8"),quick=readFileSync("src/features/search/CarResultsQuickFilterSheet.tsx","utf8"),screen=readFileSync("src/features/search/ApprovedCarResultsScreen.tsx","utf8"),presentation=readFileSync("../../src/lib/cars/carFilterPresentation.ts","utf8"),web=readFileSync("../../src/components/results/CarsResultsClient.tsx","utf8");
+test("Web and Native consume one canonical Car filter presentation",()=>{assert.match(web,/import \{ carFilterGroups, carQuickFilterGroupIds/);assert.match(full,/carFilterGroups/);assert.deepEqual(carQuickFilterGroupIds,["pricePerDay","vehicleType","transmission","seats","cancellation","pickupLocationType"]);for(const id of ["pricePerDay","vehicleType","transmission","seats","bags","fuelPolicy","mileagePolicy","cancellation","pickupLocationType"])assert.ok(presentation.includes(`id: "${id}"`));});
+test("Native derives available options and counts using the displayed daily price",()=>{assert.match(full,/doesCarMatchFilterOption\(car, option\.id, pricePerDay\)/);assert.match(full,/filterCarResults\(results, filters, pricePerDay\)\.length/);assert.match(full,/group\.id === "pricePerDay" \|\| option\.count > 0/);assert.match(screen,/carDisplayPricePerDay\(car, displayCurrency, rates\)/);});
+test("daily price copy uses a concise localized title without changing the checkbox-label-count layout",()=>{const price=carFilterGroups[0];assert.equal(price.id,"pricePerDay");assert.equal(price.title,"Price");assert.deepEqual(price.options.map(option=>option.label),["$0 – $50","$50 – $100","$100 – $150","$150 – $200","$200+"]);assert.deepEqual(["en","es-es","ar"].map(locale=>carFilterCopy(locale).groups.pricePerDay),["Price","Precio","السعر"]);for(const locale of ["en","es-es","ar"]){const copy=carFilterCopy(locale);for(const option of price.options)assert.ok(copy.options[option.id]?.trim());}assert.match(full,/<View style=\{\[styles\.box,[\s\S]*?<Text style=\{\[styles\.rowLabel,[\s\S]*?<Text style=\{\[styles\.count,/);});
+test("Cars full filter body suppresses boundary bounce without disabling scrolling",()=>{const body=full.match(/<ScrollView[^>]*contentContainerStyle=\{styles\.content\}[^>]*>/)?.[0];assert.ok(body);for(const prop of [/alwaysBounceVertical=\{false\}/,/bounces=\{false\}/,/overScrollMode="never"/,/showsVerticalScrollIndicator=\{false\}/])assert.match(body,prop);assert.doesNotMatch(body,/scrollEnabled=\{false\}/)});
+test("Cars full filters match the Flight header, content, row, checkbox, and type geometry",()=>{assert.match(full,/presentationStyle="fullScreen"/);assert.match(full,/FLIGHT_FILTER_LIGHT_CANVAS/);assert.match(full,/FLIGHT_FILTER_LIGHT_OUTLINE/);for(const pattern of [/header:\{minHeight:76,paddingLeft:20,paddingRight:10/,/title:\{fontSize:18,lineHeight:23,fontWeight:"700",fontFamily:appFonts\.bold\}/,/close:\{width:44,height:44/,/<X size=\{22\}/,/content:\{paddingHorizontal:24,paddingTop:16,paddingBottom:32,gap:24\}/,/section:\{gap:5\}/,/sectionTitle:\{fontSize:15,fontWeight:"800"\}/,/row:\{minHeight:46,flexDirection:"row",alignItems:"center",gap:10\}/,/box:\{width:20,height:20,flexShrink:0,borderWidth:1\.5,borderRadius:4/,/rowLabel:\{flex:1,minWidth:0,fontSize:13,fontWeight:"500"\}/,/count:\{flexShrink:0,maxWidth:"42%",marginLeft:2,textAlign:"right",fontSize:12,lineHeight:16,fontVariant:\["tabular-nums"\]\}/])assert.match(full,pattern);assert.doesNotMatch(full,/ChevronDown|expanded|clearAll|allCars/);});
+test("Cars Reset appears immediately after a filter becomes active and disappears after all filters are cleared.",()=>{assert.match(full,/const toggle = .*markUpdating\(\); onChange\(/);assert.match(full,/active > 0 \? <View style=\{styles\.footerActions\}>[\s\S]*?Reset[\s\S]*?\{viewAction\}<\/View> : viewAction/);assert.match(full,/onPress=\{\(\) => \{ markUpdating\(\); onChange\(\{\}\); \}\}/);const reset=full.slice(full.indexOf('accessibilityLabel="Reset car filters"'),full.indexOf("{viewAction}</View> : viewAction"));assert.doesNotMatch(reset,/onClose/);assert.match(full,/view:\{width:"100%",minHeight:50,borderRadius:10/);assert.match(full,/flex:\{width:"auto",flex:1\}/);assert.match(full,/style=\{\[styles\.view, active > 0 && styles\.flex\]\}/);});
+test("scoped sheets own drafts and Flight floating geometry",()=>{assert.match(quick,/insetFlightQuickSheet flightFilterAppearance quickBackdropVariant="flight"/);assert.match(quick,/const \[draft,setDraft\]/);assert.match(quick,/const \[draftSort,setDraftSort\]/);assert.match(quick,/Reset/);assert.match(quick,/Apply/);assert.doesNotMatch(quick,/travelApi\.|searchCars\(/);assert.match(screen,/quickSheetKind/);});
+test("Car rail has Filter, Sort, then canonical quick groups",()=>{assert.ok(screen.indexOf('label="Filter"')<screen.indexOf('label={sort'));assert.match(screen,/carQuickFilterGroupIds\.flatMap/);assert.match(screen,/height:44/);assert.match(screen,/shortcutTouchTarget:\{minWidth:44,minHeight:44/);assert.match(screen,/shortcut:\{height:36/);const rail=screen.slice(screen.indexOf("<ScrollView horizontal"),screen.indexOf("</ScrollView>",screen.indexOf("<ScrollView horizontal")));assert.doesNotMatch(rail,/contentOffset|translateX|marginLeft:-/);});
+test("localized copy and RTL remain",()=>{for(const locale of ["es-es","ar"])for(const option of carFilterGroups.flatMap(group=>group.options))assert.ok(carFilterCopy(locale).options[option.id]?.trim());assert.match(full,/writingDirection: direction/);assert.match(quick,/writingDirection:direction/);});

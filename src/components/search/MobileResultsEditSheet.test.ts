@@ -27,11 +27,48 @@ test("mobile Results editor is an accessible rounded bottom sheet", () => {
   assert.match(source, /bottomSurfaceContinuationClassName\?: string/);
   assert.match(source, /smoothMotion\?: boolean/);
   assert.match(source, /closing\?: boolean/);
+  assert.match(source, /isolatedBackdrop\?: boolean/);
+  assert.match(source, /onCloseAnimationComplete\?: \(\) => void/);
   assert.match(source, /data-mobile-results-sheet-bottom-continuation/);
   assert.match(source, /mobile-results-sheet-bottom-continuation/);
   assert.match(
     source,
     /mobile-results-sheet-bottom-continuation[\s\S]*?bg-white[\s\S]*?bottomSurfaceContinuationClassName/,
+  );
+});
+
+test("Cars Edit Search keeps its bottom-sheet placement while centering only the title", () => {
+  assert.match(
+    source,
+    /mobile-results-overlay-root fixed inset-0[^"]*items-end/,
+  );
+  assert.match(
+    source,
+    /mobile-results-sheet-cars-edit-surface mx-3 mb-3 max-h-\[88dvh\] w-\[calc\(100%_-_24px\)\]/,
+  );
+  assert.match(
+    source,
+    /carsResultsEdit && "border-b-0 bg-\[#F5F7FB\] px-2 py-0"/,
+  );
+  assert.match(
+    source,
+    /carsResultsEdit && "relative min-h-\[52px\] justify-center"/,
+  );
+  assert.match(
+    source,
+    /carsResultsEdit && "cars-results-edit-title pointer-events-none absolute inset-x-12 top-1\/2 -translate-y-1\/2 text-center text-\[19px\] font-semibold leading-\[24px\] tracking-normal"/,
+  );
+  assert.match(source, /carsResultsEdit && "absolute right-0"/);
+});
+
+test("isolated backdrop animation never changes the sheet surface opacity", () => {
+  assert.match(
+    source,
+    /isolatedBackdrop \? \([\s\S]*?mobile-results-sheet-backdrop-layer[\s\S]*?pointer-events-none/,
+  );
+  assert.match(
+    source,
+    /event\.animationName === "mobile-results-sheet-surface-out"[\s\S]*?onCloseAnimationComplete\?\.\(\)/,
   );
 });
 
@@ -41,7 +78,12 @@ test("sheet owns internal focus but leaves launcher restoration to Results", () 
   assert.match(source, /nestedLayerOpen/);
   assert.doesNotMatch(source, /launcherRef/);
   assert.doesNotMatch(source, /launcher\?\.focus/);
-  assert.match(source, /acquireMobileResultsScrollLock\(\)/);
+  assert.match(source, /freezeBodyPosition\?: boolean/);
+  assert.match(source, /freezeBodyPosition = true/);
+  assert.match(
+    source,
+    /acquireMobileResultsScrollLock\(\{\s*freezeBodyPosition,\s*\}\)/,
+  );
   assert.match(source, /browserCanvasColor\?: string/);
   assert.match(source, /cleanBackdrop\?: boolean/);
   assert.match(
@@ -54,13 +96,31 @@ test("sheet owns internal focus but leaves launcher restoration to Results", () 
     source,
     /acquireMobileResultsOverlayCanvas\(\{\s*canvasColor: browserCanvasColor,\s*\}\)/,
   );
-  assert.match(source, /\[browserCanvasColor, open\]/);
+  assert.match(source, /\[browserCanvasColor, freezeBodyPosition, open, shouldRestoreScroll\]/);
   assert.doesNotMatch(source, /style\.position/);
-  assert.doesNotMatch(source, /window\.scrollTo/);
+  assert.match(source, /if \(!restoreScroll\) window\.scrollTo/);
   assert.match(source, /motion-reduce:transition-none/);
   assert.match(source, /closing && "mobile-results-sheet-surface-closing"/);
   assert.match(
     source,
     /closing && "mobile-results-sheet-bottom-continuation-closing"/,
   );
+});
+
+test("sheet cleanup restores cancelled searches but resets submitted searches after unlocking", () => {
+  const cleanup = source.match(/return \(\) => \{\s*(const restoreScroll = shouldRestoreScroll\?\.\(\)[\s\S]*?releaseCanvas\(\);)\s*\};/);
+  assert.ok(cleanup, "scroll cleanup must remain present");
+  for (const restore of [undefined, true, false]) {
+    const calls: unknown[] = [];
+    const run = new Function("shouldRestoreScroll", "releaseScrollLock", "releaseCanvas", "window", cleanup[1]);
+    run(
+      restore === undefined ? undefined : () => restore,
+      (options: unknown) => calls.push(options),
+      () => calls.push("canvas released"),
+      { scrollTo: (options: unknown) => calls.push(options) },
+    );
+    assert.deepEqual(calls, restore === false
+      ? [{ restoreScroll: false }, { top: 0, left: 0, behavior: "instant" }, "canvas released"]
+      : [{ restoreScroll: true }, "canvas released"]);
+  }
 });

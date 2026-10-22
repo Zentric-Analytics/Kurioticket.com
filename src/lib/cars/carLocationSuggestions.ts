@@ -18,8 +18,8 @@ export type CarLocationSuggestion = {
   airportCode?: string;
   providerPlaceId?: string;
   canonical?: CanonicalLocation;
-  validation?: "owned-catalog" | "unverified-text";
-  isProviderValidated?: false;
+  validation?: "owned-catalog" | "unverified-text" | "provider-verified" | "catalogue-airport-code";
+  isProviderValidated?: boolean;
 };
 
 type SearchOptions = { limit?: number; country?: string | null };
@@ -94,6 +94,10 @@ const areaCandidates: Candidate[] = carRentalAreas.map((area) => ({
 }));
 
 const allCandidates = [...airportCandidates, ...cityCandidates, ...areaCandidates];
+
+export function getCanonicalCarLocationCatalog() {
+  return allCandidates.map(canonicalCandidate);
+}
 
 const popularIds = [
   "city-ng-lagos", "airport-los", "area-ng-lagos-victoria-island", "area-ng-lagos-ikeja", "city-ng-abuja", "airport-abv", "area-ng-abuja-central-area",

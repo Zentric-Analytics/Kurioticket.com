@@ -25,7 +25,7 @@ test("translated Deals copy states the mixed live and planning inventory model",
     "Review separate trip steps",
     "Live items continue to their provider; planning-only items are reviewed on Kurioticket.",
   ]) assert.match(english, new RegExp(copy.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
-  assert.match(card, /packages\.results\.package\.bookingModel/);
+  assert.match(card, /deals\.results\.package\.bookingModel/);
   assert.doesNotMatch(results + card + pricePanel + tripPlanBar, /Choose package|Book package|Continue to provider/);
 });
 
@@ -98,8 +98,8 @@ test("the borderless results toolbar is anchored to the package list by shared s
 });
 
 test("the anchored toolbar retains its count, sort control, and mode-specific options", () => {
-  assert.match(toolbar, /packages\.results\.tripOptions\.count/);
-  assert.match(toolbar, /packages\.results\.tripOptions\.sort/);
+  assert.match(toolbar, /deals\.results\.tripOptions\.count/);
+  assert.match(toolbar, /deals\.results\.tripOptions\.sort/);
   assert.match(toolbar, /\{currentSortLabel\}/);
   assert.match(toolbar, /aria-haspopup="listbox"/);
   assert.match(toolbar, /aria-expanded=\{sortMenuOpen\}/);
@@ -178,7 +178,9 @@ test("combined cards disclose separate component prices and provider booking", (
   assert.match(pricePanel, /selected && <Check aria-hidden/);
   assert.match(pricePanel, /candidate\.priceBreakdown\.map/);
   assert.doesNotMatch(card + pricePanel, /candidate\.reasonKey|deals\.results\.package\.providedBy|provider\(view\./);
-  assert.doesNotMatch(card + pricePanel, /discount|saving|one checkout|one reservation/i);
+  const noDiscountDisclosure = "No combined package price or discount is claimed.";
+  assert.ok(pricePanel.includes(noDiscountDisclosure));
+  assert.doesNotMatch((card + pricePanel).replace(noDiscountDisclosure, ""), /discount|saving|one checkout|one reservation/i);
   assert.doesNotMatch(flightSummary, /segments/);
 });
 
@@ -280,7 +282,7 @@ test("package cards use compact, content-driven vertical spacing", () => {
   assert.match(carSummary, /className="py-4 xl:py-3"/);
   assert.match(pricePanel, /xl:self-start[^"]*xl:py-3/);
   assert.match(pricePanel, /\bmin-h-11\b/);
-  assert.match(pricePanel, /packages\.results\.package\.disclosure/);
+  assert.match(pricePanel, /deals\.results\.package\.disclosure/);
 
   assert.match(skeleton, /gap-1\.5 border-b px-4 py-2\.5/);
   assert.match(skeleton, /xl:gap-4 xl:px-4 xl:py-3/);

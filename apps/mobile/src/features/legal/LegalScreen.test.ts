@@ -8,12 +8,17 @@ const screen = source("src/features/legal/LegalScreen.tsx");
 const profile = source("src/features/profile/ProfileCardSection.tsx");
 const model = source("src/features/profile/profileModel.ts");
 
-test("legal routes live in the Profile stack so the real tab bar stays mounted", () => {
+test("Profile legal destinations use the Preview system browser while retaining non-Preview native routes", () => {
   const tabs = source("app/(tabs)/_layout.tsx");
   const profileLayout = source("app/(tabs)/profile/_layout.tsx");
-  assert.match(model, /href: "\/(?:\(tabs\))\/profile\/terms-of-service"/);
-  assert.match(model, /href: "\/(?:\(tabs\))\/profile\/privacy-policy"/);
-  assert.match(profile, /router\.push\(destination\.href\)/);
+  assert.match(model, /path: "\/mobile\/legal\/terms-of-service"[\s\S]*?productionHref: "\/(?:\(tabs\))\/profile\/terms-of-service"/);
+  assert.match(model, /path: "\/mobile\/legal\/privacy-policy"[\s\S]*?productionHref: "\/(?:\(tabs\))\/profile\/privacy-policy"/);
+  assert.doesNotMatch(model, /fallbackHref/);
+  assert.match(profile, /navigateProfileDestination\(destination, getRuntimeEnvironment\(\)/);
+  assert.doesNotMatch(profile, /^import .*expo-web-browser/m);
+  assert.match(profile, /await import\("expo-web-browser"\)/);
+  assert.match(profile, /openPreviewLegalBrowser\(url, Platform\.OS, WebBrowser\)/);
+  assert.match(profile, /openBrowser: openPreviewBrowser/);
   assert.match(tabs, /KurioticketTabBar/);
   assert.match(tabs, /<Tabs\.Screen name="profile"/);
   assert.doesNotMatch(tabs, /terms-of-service|privacy-policy/);
@@ -39,6 +44,20 @@ test("loading covers API and first WebView render, while render failure safely r
   assert.match(screen, /onError=\{handleWebViewError\}/);
   assert.match(screen, /StyleSheet\.absoluteFill/);
   assert.match(screen, /onRetry=\{loadInitial\}/);
+});
+
+test("Preview legal WebView stays on the expected legal route and treats main-document HTTP failures as retryable errors", () => {
+  assert.match(screen, /const previewAllowedNavigationUrls = useMemo/);
+  assert.match(screen, /if \(slug === "terms-of-service"\) urls\.push\(`\$\{previewWebOrigin\}\/legal\/terms-of-service`\)/);
+  assert.match(screen, /originWhitelist=\{\[previewWebOrigin\]\}/);
+  assert.doesNotMatch(screen, /originWhitelist=\{\[`\$\{previewWebOrigin\}\/\*`\]\}/);
+  assert.match(screen, /onShouldStartLoadWithRequest=\{\(\{ url \}\) => isAllowedPreviewNavigation\(url\)\}/);
+  assert.match(screen, /onHttpError=\{\(\{ nativeEvent \}\) => \{/);
+  assert.match(screen, /nativeEvent\.statusCode < 400/);
+  assert.match(screen, /!isAllowedPreviewNavigation\(nativeEvent\.url\)/);
+  assert.match(screen, /previewLoadFailed\.current = true/);
+  assert.match(screen, /if \(previewLoadFailed\.current\) return/);
+  assert.match(screen, /setLoadState\("error"\)/);
 });
 
 test("legal controls are icon-only, right aligned above the real Profile tab bar", () => {

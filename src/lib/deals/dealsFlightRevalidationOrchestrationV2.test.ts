@@ -63,7 +63,7 @@ const race = async (lateStatus: ResultStatus) => {
   await confirmation;
   assert.equal(selectedFare, "fare-b");
   assert.equal(pendingChange, null);
-  assert.deepEqual(transitions, []);
+  assert.equal(transitions.length, 0);
   assert.equal(networkError, false);
 
   const freshRequest = coordinator.request();

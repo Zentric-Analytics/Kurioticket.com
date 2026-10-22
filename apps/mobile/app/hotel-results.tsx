@@ -1,2 +1,10 @@
 import { TravelResultsScreen } from "../src/features/flow/TravelResultsScreen";
-export default function HotelResults() { return <TravelResultsScreen product="hotel" />; }
+import { ProfileThemeProvider } from "../src/theme/AppTheme";
+
+export default function HotelResults() {
+  return (
+    <ProfileThemeProvider>
+      <TravelResultsScreen product="hotel" />
+    </ProfileThemeProvider>
+  );
+}

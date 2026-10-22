@@ -2,8 +2,8 @@ import { translations as en } from "./en";
 import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
-  "accountDashboard.recently": "Kürzlich",
   ...en,
+  "accountDashboard.recently": "Kürzlich",
   "deals.mobileTravelersTitle": "Reisende",
   "mobileTravelerCabin.title": "Reisende & Kabine",
   "mobileTravelerCabin.adultDescription": "18 Jahre und älter",
@@ -157,6 +157,7 @@ export const translations: TranslationDictionary = {
   mobileTravelHeading: "Reisen",
   mobilePreferencesHeading: "Einstellungen",
   viewDetails: "Details anzeigen",
+  seeDetails: "Details anzeigen",
   manage: "Verwalten",
   deleteAccount: "Konto löschen",
   loadingResults: "Ergebnisse werden geladen",
@@ -331,7 +332,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.preferences.customization.personalization.title": "Personalisierung",
   "accountDashboard.preferences.customization.personalization.description": "Steuern Sie, wie Kurioticket Ihre Empfehlungen personalisiert.",
   "accountDashboard.preferences.customization.personalizeSearches": "Meine Suchen zur Personalisierung von Empfehlungen verwenden",
-  "accountDashboard.preferences.customization.personalizedTravelReisepakete": "Personalisierte Reiseangebote anzeigen",
+  "accountDashboard.preferences.customization.personalizedTravelDeals": "Personalisierte Reiseangebote anzeigen",
   "accountDashboard.preferences.customization.rememberRecentSearches": "Meine letzten Suchen merken",
   "accountDashboard.preferences.customization.communicationStyle.title": "Kommunikationsstil",
   "accountDashboard.preferences.customization.communicationStyle.description": "Wählen Sie aus, wie Kurioticket mit Ihnen kommunizieren soll.",
@@ -1031,6 +1032,7 @@ export const translations: TranslationDictionary = {
   "homePopularDestinationCountry.unitedStates": "Vereinigte Staaten",
   searchFlights: "Flüge suchen",
   viewFlight: "Flug ansehen",
+  viewDeal: "Angebot ansehen",
   continueToProvider: "Weiter zum Anbieter",
   selectedFlights: "Ausgewählte Flüge",
   compareMoreProviders: "Weitere Anbieter vergleichen",
@@ -2538,6 +2540,7 @@ flightLandingRouteAriaLabel:
   changesNotAllowedBeforeDeparture: "Änderungen vor Abflug nicht möglich",
   providerNormalizedItineraryPrefix: "Hin- und Rückflugdetails werden aus vom Anbieter normalisierten Reisedaten angezeigt.",
   checkProvider: "Beim Anbieter prüfen",
+  notSuppliedByProvider: "Nicht vom Anbieter angegeben",
   carryOnIncluded: "Handgepäck inbegriffen",
   flightLeg: "Flugabschnitt",
   layover: "Zwischenstopp",

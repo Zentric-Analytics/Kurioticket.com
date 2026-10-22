@@ -1,18 +1,11 @@
 import type { ReactNode } from "react";
-import Svg, { Circle, Line, Path, Rect } from "react-native-svg";
+import Svg, { Circle, Line, Path, Rect, Text as SvgText } from "react-native-svg";
 
-export type FlowIconName =
-  | "back" | "bell" | "calendar" | "car" | "card" | "check" | "chevron" | "chevronDown"
-  | "clock" | "close" | "compass" | "deal" | "flight" | "home" | "hotel" | "location" | "more"
-  | "person" | "plus" | "search" | "settings" | "share" | "swap" | "trip"
-  | "people" | "sliders" | "help" | "headset" | "document" | "shield"
-  | "globe" | "currency" | "moon" | "logout" | "briefcase" | "bookmark" | "mail" | "palette"
-  | "external" | "refresh" | "snow" | "gauge" | "trash"
-  | "heart" | "trending" | "map" | "beach" | "city" | "adventure"
-  | "nature" | "culture" | "family";
+import type { FlowIconName } from "./flowIconTypes";
+export type { FlowIconName } from "./flowIconTypes";
 
-export function FlowIcon({ name, size = 24, color = "#071A48", fill = "none" }: { name: FlowIconName; size?: number; color?: string; fill?: string }) {
-  const line = { fill: "none", stroke: color, strokeWidth: 2.1, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
+export function FlowIcon({ name, size = 24, color = "#071A48", fill = "none", strokeWidth = 2.1 }: { name: FlowIconName; size?: number; color?: string; fill?: string; strokeWidth?: number }) {
+  const line = { fill: "none", stroke: color, strokeWidth, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
   const filledLine = { ...line, fill };
   const icons: Record<FlowIconName, ReactNode> = {
     back: <Path {...line} d="m15 5-7 7 7 7M8 12h12" />,
@@ -48,6 +41,7 @@ export function FlowIcon({ name, size = 24, color = "#071A48", fill = "none" }: 
     help: <><Circle {...line} cx="12" cy="12" r="9" /><Path {...line} d="M9.7 9a2.4 2.4 0 1 1 3.1 2.3c-.8.3-.8 1-.8 1.7M12 17h.01" /></>,
     headset: <><Path {...line} d="M4 13v-1a8 8 0 0 1 16 0v1M4 13h3v6H5a1 1 0 0 1-1-1v-5ZM20 13h-3v6h2a1 1 0 0 0 1-1v-5ZM17 19c0 1.1-.9 2-2 2h-2" /></>,
     document: <><Path {...line} d="M6 3h8l4 4v14H6z" /><Path {...line} d="M14 3v5h4M9 12h6M9 16h6" /></>,
+    lock: <><Rect {...line} x="5" y="10" width="14" height="11" rx="2" /><Path {...line} d="M8 10V7a4 4 0 0 1 8 0v3M12 15v2" /></>,
     shield: <><Path {...line} d="M12 3 20 6v6c0 5-3.3 8-8 10-4.7-2-8-5-8-10V6l8-3Z" /><Path {...line} d="m8.5 12 2.2 2.2 4.8-5" /></>,
     globe: <><Circle {...line} cx="12" cy="12" r="9" /><Path {...line} d="M3 12h18M12 3c2.5 2.5 3.5 5.5 3.5 9S14.5 18.5 12 21M12 3C9.5 5.5 8.5 8.5 8.5 12s1 6.5 3.5 9" /></>,
     currency: <><Circle {...line} cx="12" cy="12" r="9" /><Path {...line} d="M15 8.5c-.7-.7-1.7-1-3-1-1.7 0-3 .8-3 2s1 1.8 3 2.3 3 1.1 3 2.4-1.3 2.3-3 2.3c-1.3 0-2.5-.4-3.2-1.2M12 5.5v13" /></>,
@@ -58,6 +52,8 @@ export function FlowIcon({ name, size = 24, color = "#071A48", fill = "none" }: 
     snow: <><Path {...line} d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9" /><Path {...line} d="m9 5 3 2 3-2M9 19l3-2 3 2M5.5 10.5l3-.2.7-2.8M18.5 13.5l-3 .2-.7 2.8M5.5 13.5l3 .2.7 2.8M18.5 10.5l-3-.2-.7-2.8" /></>,
     gauge: <><Path {...line} d="M4 17a8 8 0 1 1 16 0" /><Path {...line} d="m12 16 4-5M7 17h10" /></>,
     trash: <><Path {...line} d="M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14M10 11v6M14 11v6" /></>,
+    transmissionAutomatic: <><Path {...line} strokeWidth={1.7} d="M7 4.5h5.5v15H7zM9.75 6.5v10" /><Circle fill={color} cx="9.75" cy="14.5" r="1.25" /><SvgText x="15" y="7" fill={color} fontSize="4.2" fontWeight="600">P</SvgText><SvgText x="15" y="11.2" fill={color} fontSize="4.2" fontWeight="600">R</SvgText><SvgText x="15" y="15.4" fill={color} fontSize="4.2" fontWeight="600">N</SvgText><SvgText x="15" y="19.6" fill={color} fontSize="4.2" fontWeight="600">D</SvgText></>,
+    transmissionManual: <><Path {...line} strokeWidth={1.7} d="M6 8v8M12 8v8M18 8v8M6 12h12" /><Circle fill={color} cx="6" cy="12" r="1" /><SvgText x="4.6" y="6.5" fill={color} fontSize="4.2" fontWeight="600">R</SvgText><SvgText x="10.8" y="6.5" fill={color} fontSize="4.2" fontWeight="600">1</SvgText><SvgText x="16.8" y="6.5" fill={color} fontSize="4.2" fontWeight="600">3</SvgText><SvgText x="10.8" y="21" fill={color} fontSize="4.2" fontWeight="600">2</SvgText><SvgText x="16.8" y="21" fill={color} fontSize="4.2" fontWeight="600">4</SvgText></>,
     heart: <Path {...(fill === "none" ? line : filledLine)} d="M20.5 9c0 5-8.5 10-8.5 10S3.5 14 3.5 9A4.5 4.5 0 0 1 12 6.8 4.5 4.5 0 0 1 20.5 9Z" />,
     trending: <Path {...line} d="m4 17 5-5 4 4 7-8M15 8h5v5" />,
     map: <Path {...line} d="m4 6 5-2 6 2 5-2v14l-5 2-6-2-5 2V6Zm5-2v14M15 6v14" />,

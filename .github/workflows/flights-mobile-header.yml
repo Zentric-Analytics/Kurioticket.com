@@ -1,0 +1,34 @@
+name: Flights mobile header regression
+
+on:
+  pull_request:
+    branches: [dev]
+    paths:
+      - src/app/flights/results/page.tsx
+      - src/components/results/FlightResultsClient*
+      - src/components/layout/AppHeader*
+      - qa/mobile-web/tests/flights*.spec.ts
+      - qa/mobile-web/browserstack/flights-header.playwright.config.ts
+      - .github/workflows/flights-mobile-header.yml
+
+permissions:
+  contents: read
+
+jobs:
+  flight-mobile-header:
+    name: Flight mobile header browser regression
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test --config=qa/mobile-web/browserstack/flights-header.playwright.config.ts
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: flight-mobile-header-failures
+          path: test-results/

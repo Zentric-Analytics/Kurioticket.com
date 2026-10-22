@@ -1,10 +1,10 @@
+import { Text, useHomePresentation } from "../home/HomePresentation";
 import { useState, type ReactNode } from "react";
 import {
   Modal,
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   View,
 } from "react-native";
 import { router } from "expo-router";
@@ -84,6 +84,7 @@ export function Segments<T extends string>({
   options,
   onChange,
   appearance = "default",
+  showBaseline = true,
 }: {
   value: T;
   options: readonly {
@@ -95,12 +96,14 @@ export function Segments<T extends string>({
   }[];
   onChange: (value: T) => void;
   appearance?: "default" | "filled";
+  showBaseline?: boolean;
 }) {
   const ft = useFlowTheme();
+  const homeTabs = useHomePresentation() && appearance === "default";
   return (
     <View
       accessibilityRole="tablist"
-      style={[styles.segments, { borderBottomColor: ft.colors.border }]}
+      style={[styles.segments, (!showBaseline || homeTabs) && styles.segmentsWithoutBaseline, { borderBottomColor: ft.colors.border }]}
     >
       {options.map((item) => {
         const selected = !item.disabled && value === item.value;
@@ -116,7 +119,7 @@ export function Segments<T extends string>({
               styles.segment,
               appearance === "filled" && styles.filledSegment,
               appearance === "filled" && item.disabled && styles.disabledSegment,
-              selected && (appearance === "filled" ? styles.filledSegmentActive : styles.segmentActive),
+              selected && !homeTabs && (appearance === "filled" ? styles.filledSegmentActive : styles.segmentActive),
               pressed && !item.disabled && ft.styles.pressed,
             ]}
           >
@@ -131,7 +134,9 @@ export function Segments<T extends string>({
               style={[
                 styles.segmentText,
                 { color: item.disabled ? ft.colors.secondaryText : ft.colors.text },
-                selected && (appearance === "filled" ? styles.filledSegmentTextActive : styles.segmentTextActive),
+                selected && !homeTabs && (appearance === "filled" ? styles.filledSegmentTextActive : styles.segmentTextActive),
+                homeTabs && styles.homeSegmentText,
+                homeTabs && { color: selected ? ft.colors.textPrimary : ft.colors.textSecondary, fontWeight: selected ? "700" : "400" },
               ]}
             >
               {item.label}
@@ -212,6 +217,7 @@ export function CompactSearchField({
   valueNumberOfLines = 1,
   metaNumberOfLines,
   appearance = "default",
+  modalCardDivider = false,
 }: {
   label: string;
   value: string;
@@ -222,7 +228,8 @@ export function CompactSearchField({
   trailing?: ReactNode;
   valueNumberOfLines?: number;
   metaNumberOfLines?: number;
-  appearance?: "default" | "resultsEdit";
+  appearance?: "default" | "resultsEdit" | "resultsModalCard";
+  modalCardDivider?: boolean;
 }) {
   const ft = useFlowTheme();
   return (
@@ -235,6 +242,7 @@ export function CompactSearchField({
         appearance === "resultsEdit" && styles.resultsEditCompactField,
         { backgroundColor: ft.colors.input, borderBottomColor: ft.colors.border },
         appearance === "resultsEdit" && { backgroundColor: "transparent" },
+        appearance === "resultsModalCard" && { backgroundColor: "transparent", borderBottomWidth: modalCardDivider ? 1 : 0 },
         pressed && ft.styles.pressed,
       ]}
     >
@@ -373,6 +381,7 @@ const styles = StyleSheet.create({
     borderBottomColor: flowColors.border,
     borderBottomWidth: 1,
   },
+  segmentsWithoutBaseline: { borderBottomWidth: 0 },
   segment: {
     flex: 1,
     minHeight: 50,
@@ -392,6 +401,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     textAlign: "center",
   },
+  homeSegmentText: { fontSize: 14, lineHeight: 20 },
   segmentTextActive: { color: flowColors.blue, fontWeight: "800" },
   field: {
     minHeight: 68,

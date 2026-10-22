@@ -1,4 +1,5 @@
 import type { PublicHotelResult } from "@/lib/types";
+import { hotelPropertyKey } from "@/lib/hotels/groupHotelOffers";
 
 import { buildHotelAmenityPresentation } from "./hotelAmenityPresentation";
 
@@ -65,6 +66,7 @@ export function buildHotelFacilityFilterOptions(
 ): FilterOption[] {
   const optionCounts = new Map<string, number>();
   const optionLabels = new Map<string, string>();
+  const seen = new Map<string, Set<string>>();
 
   hotels.forEach((hotel) => {
     const hotelValues = new Set<string>();
@@ -78,6 +80,11 @@ export function buildHotelFacilityFilterOptions(
     });
 
     hotelValues.forEach((value) => {
+      const properties = seen.get(value) ?? new Set<string>();
+      const key = hotelPropertyKey(hotel);
+      if (properties.has(key)) return;
+      properties.add(key);
+      seen.set(value, properties);
       optionCounts.set(value, (optionCounts.get(value) ?? 0) + 1);
     });
   });

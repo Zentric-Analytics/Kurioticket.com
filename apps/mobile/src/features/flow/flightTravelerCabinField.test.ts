@@ -39,7 +39,7 @@ test("the disclosure chevron uses the right-facing decorative native SVG icon wi
   const icon = readFileSync("src/features/flow/FlowIcon.tsx", "utf8");
   const primitives = readFileSync("src/features/flow/FlowPrimitives.tsx", "utf8");
 
-  assert.match(icon, /\| "chevron"/);
+  assert.match(readFileSync("src/features/flow/flowIconTypes.ts", "utf8"), /\| "chevron"/);
   assert.match(icon, /chevron: <Path \{\.\.\.line\} d="m9 6 6 6-6 6" \/>/);
   assert.match(icon, /<Svg[\s\S]*accessibilityElementsHidden importantForAccessibility="no-hide-descendants"/);
   assert.match(primitives, /trailing \?\? <FlowIcon name="chevron"/);

@@ -93,11 +93,21 @@ test("stress inventory covers bounded result counts and itinerary pressure dimen
   }
 });
 
-test("production list keeps stress inventory behind a conservative virtualized window", () => {
+test("production list keeps virtualization while the custom indicator length stays independent of measured rows", () => {
   const screen = readFileSync("src/features/search/ApprovedResultsScreen.tsx", "utf8");
-  assert.match(screen, /<Animated\.SectionList/);
-  assert.match(screen, /initialNumToRender=\{6\}/);
-  assert.match(screen, /maxToRenderPerBatch=\{5\}/);
-  assert.match(screen, /windowSize=\{7\}/);
-  assert.doesNotMatch(screen, /removeClippedSubviews/);
+  const flightList = screen.slice(screen.indexOf("<Animated.SectionList"), screen.indexOf("/>\n", screen.indexOf("windowSize", screen.indexOf("<Animated.SectionList"))) + 2);
+  assert.match(screen, /const FLIGHT_RESULT_INITIAL_RENDER_COUNT = 10/);
+  assert.match(screen, /const FLIGHT_RESULT_RENDER_BATCH_SIZE = 10/);
+  assert.match(screen, /const FLIGHT_RESULT_WINDOW_SIZE = 21/);
+  assert.match(screen, /const FLIGHT_RESULT_BATCHING_PERIOD_MS = 16/);
+  assert.match(flightList, /initialNumToRender=\{FLIGHT_RESULT_INITIAL_RENDER_COUNT\}/);
+  assert.match(flightList, /maxToRenderPerBatch=\{FLIGHT_RESULT_RENDER_BATCH_SIZE\}/);
+  assert.match(flightList, /updateCellsBatchingPeriod=\{FLIGHT_RESULT_BATCHING_PERIOD_MS\}/);
+  assert.match(flightList, /windowSize=\{FLIGHT_RESULT_WINDOW_SIZE\}/);
+  assert.doesNotMatch(flightList, /disableVirtualization|removeClippedSubviews/);
+  assert.match(screen, /const FLIGHT_RESULTS_SCROLL_THUMB_HEIGHT = 32/);
+  assert.match(flightList, /showsVerticalScrollIndicator=\{false\}/);
+  assert.match(screen, /testID="flight-results-scroll-thumb"/);
+  assert.match(screen, /const thumbHeight = Math\.min\(FLIGHT_RESULTS_SCROLL_THUMB_HEIGHT, trackHeight\)/);
+  assert.doesNotMatch(screen, /const \[flightResults(?:ViewportHeight|ContentHeight|ScrollIndicatorVisible)/);
 });

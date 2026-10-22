@@ -42,7 +42,7 @@ test("equal side columns preserve centered flexible rows at every supported widt
   assert.match(source, /departureColumn: \{ flexBasis: 72, minWidth: 72, flexShrink: 0 \}/);
   assert.match(source, /arrivalColumn: \{ flexBasis: 72, minWidth: 72, flexShrink: 0 \}/);
   for (const viewport of [320, 360, 375, 390, 412, 430, 480]) {
-    const contentWidth = viewport - 28 - 24;
+    const contentWidth = viewport - 32 - 24;
     const timelineWidth = contentWidth - 72 - 72 - 12;
     assert.ok(timelineWidth >= 100, `${viewport}px leaves a readable timeline without overflow`);
     assert.equal(72, 72, `${viewport}px keeps equal side columns`);
@@ -52,6 +52,6 @@ test("equal side columns preserve centered flexible rows at every supported widt
 test("alignment is structural rather than absolute and shared by every leg", () => {
   assert.doesNotMatch(journey, /translateY|\btop:|position:\s*"absolute"/);
   assert.match(source, /rightColumnContract: \{ alignItems: "flex-end" \}/);
-  assert.match(card, /<FlightJourneyRow label="OUTBOUND" leg=\{outbound\} locale=\{locale\} \/>/);
-  assert.match(card, /\{returnLeg \? <FlightJourneyRow label="RETURN" leg=\{returnLeg\} locale=\{locale\} \/> : null\}/);
+  assert.match(card, /journeys\.map\(\(journey, index\) => \(/);
+  assert.match(card, /<FlightJourneyRow[^>]*label=\{journey\.label\} leg=\{journey\.leg\}/);
 });

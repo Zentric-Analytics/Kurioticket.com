@@ -25,6 +25,8 @@ export function buildBundledExploreCatalogue(): MobileExploreCatalogue {
         country: destination.country,
         countryCode: destination.countryCode,
         primaryAirportCode: destination.primaryAirportCode,
+        latitude: destination.latitude,
+        longitude: destination.longitude,
         airportCodes: [...destination.airportCodes],
         airportNames: [...destination.airportNames],
         searchAliases: [...destination.searchAliases],

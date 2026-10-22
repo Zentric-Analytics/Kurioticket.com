@@ -40,6 +40,38 @@ test("FlightCard shares one container-responsive hierarchy at every width", () =
   assert.notEqual(narrowQueryStart, -1, "narrow container query exists");
 });
 
+test("desktop badge actions do not increase the itinerary header height", () => {
+  assert.match(
+    flightCardSource,
+    /data-flight-card-header-actions[\s\S]*flight-card-header-actions/,
+  );
+  const flightCardDesktopMediaStart = globalsCss.indexOf(
+    "@media (min-width: 1024px)",
+    globalsCss.indexOf(".flight-card-desktop-brand"),
+  );
+  assert.notEqual(
+    flightCardDesktopMediaStart,
+    -1,
+    "desktop Flight card media block exists",
+  );
+  assert.match(
+    ruleBody(
+      globalsCss,
+      ".flight-card-header-actions",
+      flightCardDesktopMediaStart,
+    ),
+    /position:\s*absolute[\s\S]*top:\s*0[\s\S]*right:\s*0[\s\S]*width:\s*196px/,
+  );
+  assert.match(
+    ruleBody(
+      globalsCss,
+      ".flight-card-desktop-header",
+      flightCardDesktopMediaStart,
+    ),
+    /padding-right:\s*196px/,
+  );
+});
+
 test("shared card keeps airline, badge, itinerary, details, price, and action", () => {
   assert.match(flightCardSource, /<AirlineLogo flight={flight}/);
   assert.match(flightCardSource, /<ResultBadgePill badge={resultBadge}/);
@@ -50,28 +82,125 @@ test("shared card keeps airline, badge, itinerary, details, price, and action", 
   assert.doesNotMatch(flightCardSource, /seatSelection/);
 });
 
-test("mobile card navigation ignores nested controls and keeps canonical href", () => {
-  assert.match(flightCardSource, /max-width: 1023px/);
+test("the full Flight result card is clickable at every width without hijacking nested controls", () => {
   assert.match(flightCardSource, /closest\("a, button, input, select, textarea"\)/);
-  assert.match(flightCardSource, /router\.push\(resolvedDetailsHref\)/);
+  assert.match(flightCardSource, /if \(onAction\) \{\s*onAction\(flight\);\s*return;/);
+  assert.match(flightCardSource, /if \(resolvedDetailsHref\) \{\s*router\.push\(resolvedDetailsHref\);\s*\}/);
+  assert.match(flightCardSource, /\(resolvedDetailsHref \|\| onAction\) && "cursor-pointer"/);
+  assert.doesNotMatch(flightCardSource, /matchMedia\("\(max-width: 1023px\)"\)/);
   assert.match(
     flightCardSource,
     /`\/flights\/details\/\$\{encodeURIComponent\(flight\.id\)\}`/,
   );
 });
 
-test("wide and medium desktop cards retain their side fare columns", () => {
+test("desktop itinerary keeps the widened center route and right-aligned arrival endpoint", () => {
+  const gridRule = ruleBody(globalsCss, ".flight-card-leg-grid");
+  const legStart = flightCardSource.indexOf("function ResponsiveFlightLegRow");
+  const legEnd = flightCardSource.indexOf("function AirlineLogo", legStart);
+  const leg = flightCardSource.slice(legStart, legEnd);
+
   assert.match(
-    ruleBody(globalsCss, ".flight-card-body"),
+    gridRule,
+    /minmax\(112px, 0\.72fr\)[\s\S]*minmax\(220px, 1\.8fr\)[\s\S]*92px[\s\S]*0\.6fr/,
+  );
+  assert.match(gridRule, /gap:\s*1rem/);
+  assert.match(
+    leg,
+    /flight-card-leg-endpoint min-w-0 text-right[\s\S]*formatTime\(leg\.arrivalTime, locale\)[\s\S]*leg\.destinationAirport[\s\S]*flight-card-arrival-date/,
+  );
+});
+
+test("desktop fare stays beside the itinerary while the footer summary spans the card", () => {
+  const baseBodyStart = globalsCss.indexOf(".flight-card-body {");
+  assert.match(
+    ruleBody(globalsCss, ".flight-card-body", baseBodyStart),
     /grid-template-columns:\s*minmax\(0, 1fr\) 196px/,
   );
-  const mediumQueryStart = globalsCss.indexOf("@container (max-width: 759px)");
-  assert.match(
-    ruleBody(globalsCss, ".flight-card-body", mediumQueryStart),
-    /grid-template-columns:\s*minmax\(0, 1fr\) 180px/,
+
+  const finalDesktopStart = globalsCss.indexOf(
+    "@media (min-width: 1024px)",
+    globalsCss.indexOf("Keep the desktop fare action beside the itinerary only"),
   );
-  assert.match(globalsCss, /\.flight-card-details \{\r?\n  column-gap:\s*1rem/);
-  assert.match(flightCardSource, /flight-card-details[^\n]*grid-cols-3/);
+  assert.ok(finalDesktopStart > baseBodyStart);
+
+  const desktopBodyRule = ruleBody(
+    globalsCss,
+    ".flight-card-body",
+    finalDesktopStart,
+  );
+  const desktopFareRule = ruleBody(
+    globalsCss,
+    ".flight-card-fare-action",
+    finalDesktopStart,
+  );
+  assert.match(
+    desktopBodyRule,
+    /grid-template-areas:\s*"legs fare"\s*"details details"/,
+  );
+  assert.match(
+    desktopBodyRule,
+    /grid-template-columns:\s*minmax\(0, 1fr\) 128px/,
+  );
+  assert.match(desktopBodyRule, /row-gap:\s*0\.5rem/);
+  assert.match(desktopFareRule, /align-items:\s*flex-end/);
+  assert.match(desktopFareRule, /justify-content:\s*flex-end/);
+  assert.match(desktopFareRule, /border-left:\s*1px solid #d8e1ec/);
+  assert.match(desktopFareRule, /border-top:\s*0/);
+  assert.match(desktopFareRule, /padding-left:\s*0\.5rem/);
+  assert.match(desktopFareRule, /padding-bottom:\s*0/);
+  assert.match(desktopFareRule, /text-align:\s*right/);
+
+  const desktopCommerceRule = ruleBody(
+    globalsCss,
+    ".flight-card-fare-commerce",
+    finalDesktopStart,
+  );
+  const desktopPriceFrameRule = ruleBody(
+    globalsCss,
+    ".flight-card-price-frame",
+    finalDesktopStart,
+  );
+  const desktopViewRule = ruleBody(
+    globalsCss,
+    ".flight-card-view-button",
+    finalDesktopStart,
+  );
+  assert.match(desktopCommerceRule, /width:\s*auto/);
+  assert.match(desktopCommerceRule, /margin-left:\s*auto/);
+  assert.match(desktopCommerceRule, /align-items:\s*flex-end/);
+  assert.match(desktopPriceFrameRule, /width:\s*auto/);
+  assert.match(desktopPriceFrameRule, /margin-left:\s*auto/);
+  assert.match(desktopPriceFrameRule, /text-align:\s*right/);
+  assert.match(desktopViewRule, /width:\s*auto/);
+  assert.match(desktopViewRule, /min-height:\s*1\.5rem/);
+  assert.match(desktopViewRule, /margin-top:\s*0\.125rem/);
+  assert.match(desktopViewRule, /align-self:\s*flex-end/);
+  assert.match(globalsCss, /\.flight-results-grid \.flight-card-view-button \{[\s\S]*?min-height:\s*1\.5rem;[\s\S]*?padding-block:\s*0;[\s\S]*?\}/);
+  assert.doesNotMatch(globalsCss, /\.flight-results-grid \.flight-card-view-button \{[^}]*min-height:\s*44px/);
+
+  const mediumQueryStart = globalsCss.indexOf(
+    "@container (max-width: 759px)",
+    finalDesktopStart,
+  );
+  const mediumDesktopStart = globalsCss.indexOf(
+    "@media (min-width: 1024px)",
+    mediumQueryStart,
+  );
+  const mediumBodyRule = ruleBody(
+    globalsCss,
+    ".flight-card-body",
+    mediumDesktopStart,
+  );
+  assert.match(
+    mediumBodyRule,
+    /grid-template-columns:\s*minmax\(0, 1fr\) 128px/,
+  );
+  assert.match(
+    mediumBodyRule,
+    /grid-template-areas:\s*"legs fare"\s*"details details"/,
+  );
+  assert.doesNotMatch(flightCardSource, /flight-card-details[^\n]*grid-cols-3/);
 });
 
 test("phone and tablet lower card is a two-column decision area", () => {
@@ -123,6 +252,46 @@ test("phone and tablet lower card is a two-column decision area", () => {
   );
 });
 
+test("desktop utility actions occupy the top-right header without reserving a missing badge slot", () => {
+  const headerStart = flightCardSource.indexOf("data-flight-card-header-actions");
+  const bodyStart = flightCardSource.indexOf("flight-card-body", headerStart);
+  const header = flightCardSource.slice(headerStart, bodyStart);
+  const fareCallStart = flightCardSource.indexOf("<FlightFareAction", bodyStart);
+  const fareCallEnd = flightCardSource.indexOf("/>", fareCallStart);
+  const fareCall = flightCardSource.slice(fareCallStart, fareCallEnd);
+  const actionStart = flightCardSource.indexOf("function FlightFareAction");
+  const actionEnd = flightCardSource.indexOf("function FlightDetailLines", actionStart);
+  const fareAction = flightCardSource.slice(actionStart, actionEnd);
+
+  assert.match(header, /\{resultBadge \? <ResultBadgePill badge=\{resultBadge\} \/> : null\}/);
+  assert.match(header, /renderFlightUtilityActions\("hidden lg:flex"\)/);
+  assert.match(header, /flex shrink-0 items-center justify-end gap-1/);
+  assert.doesNotMatch(header, /\{resultBadge \? \(\s*<div[\s\S]*data-flight-card-header-actions/);
+
+  assert.match(fareCall, /actions=\{renderFlightUtilityActions\("lg:hidden"\)\}/);
+  assert.match(fareAction, /data-flight-card-fare-actions/);
+  assert.match(fareAction, /mb-1 flex w-full justify-end lg:hidden/);
+  assert.match(fareAction, /justify-start/);
+
+  const controls = fareAction.indexOf("{actions}");
+  const price = fareAction.indexOf("{formattedPrice}");
+  const viewDeal = fareAction.indexOf("{viewFlightLabel}");
+  assert.ok(controls >= 0 && controls < price, "tablet utility controls remain before the fare price");
+  assert.ok(price >= 0 && price < viewDeal, "Fare price renders before View deal");
+});
+
+test("desktop badge and utility actions share one Hotel-style horizontal row", () => {
+  const headerStart = flightCardSource.indexOf("flight-card-desktop-header");
+  const bodyStart = flightCardSource.indexOf("flight-card-body", headerStart);
+  const header = flightCardSource.slice(headerStart, bodyStart);
+
+  assert.match(header, /flight-card-header-actions flex shrink-0 items-center justify-end gap-1/);
+  assert.match(header, /\{resultBadge \? <ResultBadgePill badge=\{resultBadge\} \/> : null\}/);
+  assert.match(header, /renderFlightUtilityActions\("hidden lg:flex"\)/);
+  assert.doesNotMatch(header, /flex-col|lg:min-h-16/);
+});
+
+
 test("price and View Flight retain their semantic order without provider-price clutter", () => {
   const actionStart = flightCardSource.indexOf("function FlightFareAction");
   const action = flightCardSource.slice(actionStart, flightCardSource.indexOf("function FlightDetailLines", actionStart));
@@ -131,12 +300,12 @@ test("price and View Flight retain their semantic order without provider-price c
   assert.ok(price >= 0 && price < button);
   assert.doesNotMatch(action, /\{priceLabel\}/);
   assert.doesNotMatch(action, /flight-card-provider-price/);
-  assert.match(action, /min-h-11/);
+  assert.match(action, /min-h-9/);
   const priceRule = ruleBody(
     globalsCss,
     '.flight-card-price-value.flight-card-price[data-price-size="normal"]',
   );
-  assert.match(priceRule, /font-size:\s*1\.25rem/);
+  assert.match(priceRule, /font-size:\s*1\.1875rem/);
   assert.match(
     ruleBody(globalsCss, ".flight-card-price-value.flight-card-price"),
     /white-space:\s*nowrap/,
@@ -158,6 +327,81 @@ test("all three detail lines share the left-side details region", () => {
   assert.match(ruleBody(globalsCss, ".flight-card-details"), /grid-area:\s*details/);
 });
 
+test("desktop detail strip uses balanced transparent metadata columns with mobile icon parity", () => {
+  const detailsStart = flightCardSource.indexOf("function FlightDetailLines");
+  const details = flightCardSource.slice(detailsStart);
+  const desktopStart = globalsCss.indexOf(
+    "@media (min-width: 1024px)",
+    globalsCss.indexOf(".flight-card-detail-value"),
+  );
+  const desktopDetailsRule = ruleBody(
+    globalsCss,
+    ".flight-card-details",
+    desktopStart,
+  );
+  const desktopItemRule = ruleBody(
+    globalsCss,
+    ".flight-card-detail-item",
+    desktopStart,
+  );
+  const desktopDividerRule = ruleBody(
+    globalsCss,
+    ".flight-card-detail-item + .flight-card-detail-item::before",
+    desktopStart,
+  );
+  const desktopIconRule = ruleBody(
+    globalsCss,
+    ".flight-card-detail-icon",
+    desktopStart,
+  );
+  const desktopValueRule = ruleBody(
+    globalsCss,
+    ".flight-card-detail-value",
+    desktopStart,
+  );
+
+  assert.match(details, /flight-card-detail-value min-w-0/);
+  assert.doesNotMatch(details, /truncate|line-clamp|overflow-hidden/);
+  assert.match(desktopDetailsRule, /width:\s*100%/);
+  assert.match(
+    desktopDetailsRule,
+    /grid-template-columns:\s*repeat\(3, minmax\(0, 1fr\)\)/,
+  );
+  assert.match(desktopDetailsRule, /align-items:\s*center/);
+  assert.match(desktopDetailsRule, /border:\s*0/);
+  assert.match(desktopDetailsRule, /border-radius:\s*0/);
+  assert.match(desktopDetailsRule, /column-gap:\s*1\.5rem/);
+  assert.doesNotMatch(desktopDetailsRule, /justify-content:\s*start|space-between/);
+  assert.match(desktopDetailsRule, /background:\s*transparent/);
+  assert.match(desktopDetailsRule, /margin-top:\s*0/);
+  assert.match(desktopDetailsRule, /padding:\s*0\.5rem 0/);
+
+  assert.match(desktopItemRule, /grid-template-columns:\s*1rem max-content minmax\(0, 1fr\)/);
+  assert.match(desktopItemRule, /min-height:\s*1\.5rem/);
+  assert.match(desktopItemRule, /padding:\s*0/);
+  assert.match(desktopItemRule, /border:\s*0/);
+  assert.doesNotMatch(desktopItemRule, /border-inline-end/);
+  const edgeItemRule = ruleBody(
+    globalsCss,
+    ".flight-card-detail-item:first-child,",
+    desktopStart,
+  );
+  assert.match(edgeItemRule, /padding:\s*0/);
+  assert.match(edgeItemRule, /border:\s*0/);
+
+  assert.match(desktopDividerRule, /content:\s*none/);
+
+  assert.match(details, /flight-card-detail-icon h-3\.5 w-3\.5 shrink-0 text-slate-500/);
+  assert.match(desktopIconRule, /width:\s*1rem/);
+  assert.match(desktopIconRule, /height:\s*1rem/);
+  assert.match(desktopIconRule, /padding:\s*0/);
+  assert.match(desktopIconRule, /border-radius:\s*0/);
+  assert.match(desktopIconRule, /background:\s*transparent/);
+  assert.match(desktopIconRule, /color:\s*#64748b/);
+
+  assert.match(desktopValueRule, /white-space:\s*nowrap/);
+});
+
 test("result-card fare rule stays concise and leaves provider terms to details", () => {
   assert.match(
     flightCardSource,
@@ -167,14 +411,14 @@ test("result-card fare rule stays concise and leaves provider terms to details",
   assert.doesNotMatch(flightCardSource, /getFlightResultFareRule/);
 });
 
-test("FlightCard retains fare pricing inputs and LinkButton behavior", () => {
+test("FlightCard retains fare pricing inputs and Next Link behavior", () => {
   assert.match(flightCardSource, /FlightFareAction/);
   assert.match(flightCardSource, /detailsHref/);
   assert.match(flightCardSource, /viewFlightLabel/);
   assert.match(flightCardSource, /viewFlightAriaLabel/);
   assert.match(flightCardSource, /formattedPrice/);
   assert.match(flightCardSource, /providerPrice/);
-  assert.match(flightCardSource, /<LinkButton/);
+  assert.match(flightCardSource, /<Link[\s\S]*href=\{detailsHref\}/);
 });
 
 test("desktop fare action omits the visible provider price label", () => {
@@ -185,4 +429,32 @@ test("desktop fare action omits the visible provider price label", () => {
 
   assert.doesNotMatch(fareAction, /priceLabel|providerPriceLabel|showConvertedProviderPrice/);
   assert.doesNotMatch(fareAction, /<p[^>]*>\s*\{priceLabel\}\s*<\/p>/);
+});
+
+
+test("narrow desktop fare price and View deal share the same right edge", () => {
+  const narrowContainerStart = globalsCss.indexOf("@container (max-width: 759px)");
+  const baseViewButtonRule = ruleBody(
+    globalsCss,
+    ".flight-card-view-button",
+    narrowContainerStart,
+  );
+  const desktopOverrideStart = globalsCss.indexOf(
+    "@media (min-width: 1024px)",
+    globalsCss.indexOf(".flight-card-view-button", narrowContainerStart),
+  );
+  const desktopViewButtonRule = ruleBody(
+    globalsCss,
+    ".flight-card-view-button",
+    desktopOverrideStart,
+  );
+  const farePriceRule = ruleBody(
+    globalsCss,
+    ".flight-card-fare-action .flight-card-price-value",
+  );
+
+  assert.match(baseViewButtonRule, /padding-right:\s*0\.875rem/);
+  assert.match(baseViewButtonRule, /min-width:\s*108px/);
+  assert.match(desktopViewButtonRule, /padding-right:\s*0/);
+  assert.match(farePriceRule, /text-align:\s*right/);
 });

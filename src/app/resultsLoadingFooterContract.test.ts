@@ -19,6 +19,10 @@ const products = [
     loadingGuard: "if (isSearchSubmitting)",
   },
 ] as const;
+const resultsLoadingTransition = readFileSync(
+  new URL("../components/layout/SearchResultsLoadingTransition.tsx", import.meta.url),
+  "utf8",
+);
 
 for (const { route, client, loadingGuard } of products) {
   const page = readFileSync(
@@ -39,19 +43,22 @@ for (const { route, client, loadingGuard } of products) {
     assert.match(page, /<Suspense/);
     assert.doesNotMatch(page, /<Footer|brand-legal-only/);
     assert.match(loading, /<AppHeader/);
-    assert.match(loading, /min-h-\[calc\(100svh-5rem\)\]/);
+    assert.match(loading, /<SearchResultsLoadingTransition/);
+    assert.match(resultsLoadingTransition, /min-h-\[calc\(100svh-5rem\)\]/);
     assert.doesNotMatch(loading, /<Footer|brand-legal-only/);
   });
 
   test(`${route} standalone client excludes Footer from loading and owns one ready-state Footer`, () => {
     const loadingStart = clientSource.indexOf(loadingGuard);
-    const readyFooter = '<Footer variant="brand-legal-only" />';
+    const readyFooter = route === "cars"
+      ? '<Footer variant="brand-legal-only" className="cars-results-footer-typography" />'
+      : '<Footer variant="brand-legal-only" />';
     const footerIndex = clientSource.indexOf(readyFooter, loadingStart);
 
     assert.ok(loadingStart >= 0, `${loadingGuard} must remain explicit`);
     assert.match(
       clientSource.slice(loadingStart, footerIndex),
-      /<BrandedLoading/,
+      /<SearchResultsLoadingTransition/,
     );
     assert.doesNotMatch(
       clientSource.slice(loadingStart, footerIndex),
@@ -73,4 +80,66 @@ test("guided Flight and Hotel Results return before standalone Footer ownership"
 
     assert.match(guidedBranch, /if \(guided(?:Mode)?\)/);
   }
+});
+
+test("hotel page keeps one sticky results AppHeader mounted while inventory content loads", () => {
+  const source = readFileSync(new URL("../components/results/HotelResultsClient.tsx", import.meta.url), "utf8");
+  const page = readFileSync(new URL("./hotels/results/page.tsx", import.meta.url), "utf8");
+  const loading = readFileSync(new URL("./hotels/results/loading.tsx", import.meta.url), "utf8");
+
+  const pageHeader = page.indexOf("<AppHeader");
+  const suspense = page.indexOf("<Suspense", pageHeader);
+  assert.ok(pageHeader >= 0 && suspense > pageHeader);
+  assert.match(page, /data-hotel-results-mobile-nav-search/);
+  assert.match(page, /data-hotel-results-mobile-nav-filters/);
+  assert.match(page, /data-hotel-results-mobile-nav-filters[\s\S]*?empty:hidden/);
+  assert.match(source, /loadingContent = \([\s\S]*?<SearchResultsLoadingTransition/);
+  assert.match(source, /desktopSearch=\{renderDesktopHotelSearch\("hotel-results-nav-search"\)\}/);
+  assert.match(source, /mobileSearch=\{renderMobileHotelNavSearch\(\)\}/);
+  assert.match(source, /mobileFilters=\{mobileResultsFiltersContent\}/);
+  assert.match(source, /const mobileEditSearchSheet = !guided/);
+  assert.match(source, /\{mobileEditSearchSheet\}/);
+  assert.match(source, /results\.length > 0 \|\| loading/);
+  assert.match(source, /createPortal\(renderMobileHotelNavSearch\(\), mobileNavSearchTarget\)/);
+  assert.match(page, /hideMobileResultsNavbarDivider/);
+  assert.match(loading, /hideMobileResultsNavbarDivider/);
+  assert.match(source, /createPortal\(mobileResultsFiltersContent, mobileNavFiltersTarget\)/);
+  assert.doesNotMatch(page.slice(suspense), /fallback=\{[\s\S]*?<AppHeader/);
+});
+
+test("flight page keeps one results AppHeader mounted while inventory content loads", () => {
+  const source = readFileSync(new URL("../components/results/FlightResultsClient.tsx", import.meta.url), "utf8");
+  const page = readFileSync(new URL("./flights/results/page.tsx", import.meta.url), "utf8");
+  const loading = readFileSync(new URL("./flights/results/loading.tsx", import.meta.url), "utf8");
+
+  const pageHeader = page.indexOf("<AppHeader");
+  const suspense = page.indexOf("<Suspense", pageHeader);
+  assert.ok(pageHeader >= 0 && suspense > pageHeader);
+  assert.match(page, /data-flight-results-mobile-nav-summary/);
+  assert.match(page, /data-flight-results-mobile-nav-filters/);
+  assert.match(page, /<FlightResultsClient externalResultsHeader \/>/);
+  assert.doesNotMatch(page.slice(suspense), /fallback=\{[\s\S]*?<AppHeader/);
+
+  assert.match(source, /externalResultsHeader\?: boolean/);
+  assert.match(source, /guidedMode \|\| externalResultsHeader \? null : \([\s\S]*?<AppHeader/);
+  assert.match(page, /data-flight-results-mobile-nav-summary[\s\S]*?empty:hidden/);
+  assert.match(page, /data-flight-results-mobile-nav-filters[\s\S]*?empty:hidden/);
+  assert.match(page, /hideMobileResultsNavbarDivider/);
+  assert.match(loading, /hideMobileResultsNavbarDivider/);
+  assert.match(source, /const readyExternalMobileHeader =[\s\S]*?!resultsUiPreparing[\s\S]*?createPortal\(renderMobileRouteSummaryCard\(\), mobileNavSummaryTarget\)[\s\S]*?createPortal\(mobileResultsFiltersContent, mobileNavFiltersTarget\)/);
+  assert.match(source, /const readyDesktopNavbarSearch =[\s\S]*?!resultsUiPreparing[\s\S]*?createPortal\(renderDesktopHeaderSearchBar\(\), desktopNavSearchTarget\)/);
+
+  const loadingStart = source.indexOf("if (resultsUiPreparing) {");
+  const guidedStart = source.indexOf("if (guidedMode) return (", loadingStart);
+  const loadingBranch = source.slice(loadingStart, guidedStart);
+  assert.match(loadingBranch, /\{standaloneResultsHeader\}[\s\S]*?<SearchResultsLoadingTransition/);
+  assert.match(loadingBranch, /desktopSearch=\{renderDesktopHeaderSearchBar\(\)\}/);
+  assert.match(loadingBranch, /mobileSearch=\{renderMobileRouteSummaryCard\(\)\}/);
+  assert.match(loadingBranch, /mobileFilters=\{mobileResultsFiltersContent\}/);
+  assert.match(resultsLoadingTransition, /showProgress=\{false\}[\s\S]*searchType=\{searchType\}/);
+  assert.match(resultsLoadingTransition, /BRANDED_LOADING_DURATION_MS = 8_000/);
+  assert.doesNotMatch(loadingBranch, /accessibleProgress/);
+  assert.doesNotMatch(loadingBranch, /readyExternalMobileHeader|readyDesktopNavbarSearch|renderStickySearchPopoutOverlay\(\)/);
+
+  assert.match(source, /\{standaloneResultsHeader\}\s*\{readyExternalMobileHeader\}\s*\{readyDesktopNavbarSearch\}[\s\S]*?<main data-flight-results-main/);
 });

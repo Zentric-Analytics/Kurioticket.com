@@ -1,7 +1,9 @@
 import { z } from "zod";
-import { buildFlightPriceAlertPayload } from "@/lib/price-alerts/flightPriceAlerts";
+import { buildAutomaticFlightPriceAlertPayload, buildFlightPriceAlertPayload } from "@/lib/price-alerts/flightPriceAlerts";
 import { buildHotelPriceAlertPayload } from "@/lib/price-alerts/hotelPriceAlerts";
+import { buildAutomaticCarPriceAlertPayload, buildCarPriceAlertPayload } from "@/lib/price-alerts/carPriceAlerts";
 import { MULTI_CITY_MAX_LEGS, MULTI_CITY_MIN_LEGS, projectSearchLegs } from "@/lib/flights/flightSearchJourney";
+import { searchLocationSchema } from "@/lib/locations/searchTarget";
 
 const isoDatePattern = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -65,6 +67,8 @@ const flightLegSchema = z.object({
   origin: z.string().trim().toUpperCase().regex(/^[A-Z0-9]{3}$/, "Choose a valid departure airport."),
   destination: z.string().trim().toUpperCase().regex(/^[A-Z0-9]{3}$/, "Choose a valid arrival airport."),
   departureDate: futureDate,
+  originLocation: searchLocationSchema.optional(),
+  destinationLocation: searchLocationSchema.optional(),
 }).refine((leg) => leg.origin !== leg.destination, {
   message: "Departure and arrival airports must be different.",
   path: ["destination"],
@@ -88,6 +92,8 @@ export const flightSearchSchema = z
     cabinClass: z.enum(["economy", "premium-economy", "business", "first"]).default("economy"),
     sort: z.enum(["cheapest", "best", "fastest", "stops"]).optional(),
     currency: z.string().trim().toUpperCase().regex(/^[A-Z]{3}$/).catch("USD").default("USD"),
+    originLocation: searchLocationSchema.optional(),
+    destinationLocation: searchLocationSchema.optional(),
   })
   .transform((data) => {
     const adults = data.adults ?? data.travelers;
@@ -139,14 +145,28 @@ export const flightSearchSchema = z
 
 export const hotelSearchSchema = z
   .object({
-    destinationId: z.string().trim().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).max(80).optional(),
+    // Autocomplete emits canonical hotel/place/airport IDs as well as legacy slugs.
+    // Provider-specific kplace IDs remain gated by the sandbox route.
+    destinationId: z.union([
+      z.string().trim().regex(/^(?:hotel:)?[a-z0-9]+(?:-[a-z0-9]+)*$/).max(86),
+      z.string().trim().regex(/^place:[\p{L}\p{N}][\p{L}\p{N}-]*$/u).max(126),
+      z.string().trim().regex(/^airport:[A-Z]{3}$/),
+    ]).optional(),
     destination: z.string().trim().min(2, "Enter a destination.").max(120),
     checkIn: hotelFutureDate,
     checkOut: hotelFutureDate,
     guests: z.coerce.number().int().min(1).max(12).default(2),
+    adults: z.coerce.number().int().min(1).max(12).optional(),
+    children: z.coerce.number().int().min(0).max(11).optional(),
     rooms: z.coerce.number().int().min(1).max(6).default(1),
     sort: z.enum(["cheapest", "best", "rating", "location"]).optional(),
+    destinationLocation: searchLocationSchema.optional(),
   })
+  .refine((data) => {
+    const children = data.children ?? (data.adults === undefined ? 0 : data.guests - data.adults);
+    const adults = data.adults ?? data.guests - children;
+    return adults >= 1 && children >= 0 && adults + children === data.guests;
+  }, { message: "Guest total must match the adults and children selected.", path: ["guests"] })
   .refine((data) => data.checkOut > data.checkIn, {
     message: "Check-out must be after check-in.",
     path: ["checkOut"],
@@ -262,11 +282,14 @@ const hotelPriceAlertSchema = z.object({
 }).transform((value, context) => {
   const search = hotelSearchSchema.safeParse(value.query);
   const explicitOccupancy = Number.isInteger(value.query.guests) && Number.isInteger(value.query.rooms);
-  if (!search.success || !explicitOccupancy || value.mode !== "TARGET" || value.targetPrice === undefined || search.data.destination.toLowerCase() !== value.destination.toLowerCase()) {
+  const hotelId = typeof value.query.hotelId === "string" ? value.query.hotelId.trim() : "";
+  const hotelName = typeof value.query.hotelName === "string" ? value.query.hotelName.trim() : "";
+  const validHotel = (!hotelId && !hotelName) || (Boolean(hotelId) && Boolean(hotelName) && hotelId.length <= 240 && hotelName.length <= 200);
+  if (!search.success || !explicitOccupancy || !validHotel || value.mode !== "TARGET" || value.targetPrice === undefined || search.data.destination.toLowerCase() !== value.destination.toLowerCase()) {
     context.addIssue({ code: "custom", path: ["query"], message: "A complete matching Hotel search and target price are required." });
     return z.NEVER;
   }
-  return buildHotelPriceAlertPayload(search.data, value.targetPrice, value.currency);
+  return buildHotelPriceAlertPayload(search.data, value.targetPrice, value.currency, hotelId ? { id: hotelId, name: hotelName } : undefined);
 });
 
 const flightPriceAlertSchema = z.object({
@@ -274,6 +297,7 @@ const flightPriceAlertSchema = z.object({
   origin: z.string().trim().min(1),
   destination: z.string().trim().min(1),
   targetPrice: z.coerce.number().positive().optional(),
+  baselinePrice: z.coerce.number().positive().optional(),
   mode: z.enum(["AUTOMATIC", "TARGET"]).default("TARGET"),
   currency: z.string().trim().length(3),
   query: z.record(z.string(), z.unknown()),
@@ -283,8 +307,7 @@ const flightPriceAlertSchema = z.object({
       if (value.targetPrice === undefined) throw new Error("Target price is required for target alerts.");
       return { ...buildFlightPriceAlertPayload({ ...value, targetPrice: value.targetPrice }), mode: value.mode };
     }
-    const targetValidated = buildFlightPriceAlertPayload({ ...value, targetPrice: 1 });
-    return { ...targetValidated, targetPrice: undefined, mode: value.mode };
+    return buildAutomaticFlightPriceAlertPayload({ ...value, baselinePrice: value.baselinePrice ?? Number.NaN });
   } catch (error) {
     context.addIssue({
       code: "custom",
@@ -295,7 +318,26 @@ const flightPriceAlertSchema = z.object({
   }
 });
 
+const carPriceAlertSchema = z.object({
+  type: z.literal("CAR"), origin: z.string().trim().min(2), destination: z.string().trim().min(2),
+  targetPrice: z.coerce.number().positive().optional(), baselinePrice: z.coerce.number().positive().optional(), mode: z.enum(["AUTOMATIC", "TARGET"]).default("TARGET"),
+  currency: z.string().trim().length(3), query: z.record(z.string(), z.unknown()),
+}).transform((value, context) => {
+  try {
+    if (value.mode === "TARGET" && value.targetPrice === undefined) throw new Error("Target price is required for target alerts.");
+    const payload = value.mode === "AUTOMATIC"
+      ? buildAutomaticCarPriceAlertPayload(value.query as never, value.baselinePrice ?? Number.NaN, value.currency)
+      : buildCarPriceAlertPayload(value.query as never, value.targetPrice!, value.currency);
+    if (value.origin.toLowerCase() !== payload.origin.toLowerCase() || value.destination.toLowerCase() !== payload.destination.toLowerCase()) throw new Error("Locations must match the car search query.");
+    return payload;
+  } catch (error) {
+    context.addIssue({ code: "custom", path: ["query"], message: error instanceof Error ? error.message : "Invalid car price alert." });
+    return z.NEVER;
+  }
+});
+
 export const priceAlertSchema = z.discriminatedUnion("type", [
   flightPriceAlertSchema,
   hotelPriceAlertSchema,
+  carPriceAlertSchema,
 ]);

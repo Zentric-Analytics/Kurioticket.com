@@ -11,57 +11,52 @@ const cars = source("./CarsResultsClient.tsx");
 const hotelSearch = source("../search/HotelSearchBar.tsx");
 const hotelResults = source("./HotelResultsClient.tsx");
 
-function expectInteractionOnlyGating(region: string) {
-  assert.match(region, /inert=\{mobileSearchOpen \? true : undefined\}/);
-  assert.match(region, /aria-hidden=\{mobileSearchOpen \? true : undefined\}/);
-  assert.match(region, /mobileSearchOpen && "pointer-events-none"/);
-  assert.doesNotMatch(region, /mobileSearchOpen && "(?:hidden|invisible|h-0|max-h-0|absolute)"/);
-}
-
-test("flight mobile summary and shortcuts stay in normal flow beneath Edit Search", () => {
-  const start = flights.indexOf('<section\n        inert={mobileSearchOpen ? true : undefined}');
-  const end = flights.indexOf("<FlightEditSearchDrawer", start);
-  const underlyingControls = flights.slice(start, end);
-
-  assert.ok(start >= 0 && end > start);
-  assert.equal(underlyingControls.match(/inert=\{mobileSearchOpen \? true : undefined\}/g)?.length, 2);
-  expectInteractionOnlyGating(underlyingControls);
-  assert.doesNotMatch(underlyingControls, /\{!mobileSearchOpen \? \(/);
-  assert.match(underlyingControls, /renderMobileControlsRow\(\)/);
-  assert.match(underlyingControls, /renderMobileSortResultsRow\(\)/);
+test("flight navbar capsule remains mounted while Edit Search owns its overlay", () => {
+  assert.match(flights, /function renderMobileEditSearchDrawer\(\)[\s\S]*<FlightEditSearchDrawer/);
+  assert.match(flights, /mobileResultsSearch=\{renderMobileRouteSummaryCard\(\)\}/);
+  assert.match(flights, /data-flight-mobile-results-shortcuts[\s\S]*renderMobileSortResultsRow\(\)/);
+  assert.doesNotMatch(flights, /renderMobileCompactResultsHeader|mobileCompactHeaderVisible/);
 });
 
-test("hotel mobile results summary stays mounted beneath Edit Search", () => {
-  const start = hotelResults.indexOf('aria-label="Hotel search controls"');
-  const end = hotelResults.indexOf("<MobileResultsEditSheet", start);
-  const summaryWrapper = hotelResults.slice(start, end);
-
-  assert.ok(start >= 0 && end > start);
-  assert.match(summaryWrapper, /inert=\{mobileHotelSearchOpen \? true : undefined\}/);
-  assert.match(summaryWrapper, /aria-hidden=\{mobileHotelSearchOpen \? true : undefined\}/);
-  assert.match(summaryWrapper, /mobileHotelSearchOpen && "pointer-events-none"/);
-  assert.doesNotMatch(summaryWrapper, /mobileHotelSearchOpen && "hidden"/);
-  assert.doesNotMatch(summaryWrapper, /!mobileHotelSearchOpen \? \(/);
+test("hotel mobile results summary stays mounted beneath Edit Search like Cars", () => {
+  assert.doesNotMatch(hotelResults, /mobileResultsSearch=\{/);
+  assert.match(hotelResults, /inert=\{mobileHotelSearchOpen \? true : undefined\}/);
+  assert.match(hotelResults, /aria-hidden=\{mobileHotelSearchOpen \? true : undefined\}/);
+  assert.match(hotelResults, /mobileHotelSearchOpen && "pointer-events-none"/);
+  assert.match(hotelResults, /createPortal\(renderMobileHotelNavSearch\(\), mobileNavSearchTarget\)/);
+  assert.match(hotelResults, /<MobileResultsEditSheet/);
   assert.match(hotelSearch, /compact && !mobileResultsSheet \? \(/);
 });
 
-test("cars mobile results summary stays mounted beneath Edit Search", () => {
-  const start = cars.indexOf('<section\n        inert={mobileSearchOpen ? true : undefined}');
-  const end = cars.indexOf("<MobileDatePickerDialog", start);
-  const summary = cars.slice(start, end);
+test("cars keeps one main-header search launcher while Edit Search owns its overlay", () => {
+  const start = cars.indexOf("const renderMobileHeaderSearch");
+  const end = cars.indexOf("const renderCarsSearchForm", start);
+  const headerSearch = cars.slice(start, end);
 
   assert.ok(start >= 0 && end > start);
-  expectInteractionOnlyGating(summary);
-  assert.match(summary, /renderMobileControlsRow\(\)/);
+  assert.match(headerSearch, /data-cars-results-mobile-header-search/);
+  assert.match(headerSearch, /aria-expanded=\{mobileSearchOpen\}/);
+  assert.match(headerSearch, /openMobileSearchDrawer/);
+  assert.match(
+    cars,
+    /createPortal\(renderMobileHeaderSearch\(\), mobileNavSearchTarget\)/,
+  );
+  assert.match(
+    cars,
+    /<MobileResultsEditSheet[\s\S]*?appearance="carsResultsEdit"/,
+  );
+  assert.doesNotMatch(cars, /renderMobileControlsRow|renderMobileCompactResultsHeader|mobileCompactHeaderVisible/);
 });
 
-test("standalone flight cards own responsive list spacing and pagination follows the list", () => {
-  const start = flights.indexOf("<div data-flight-results-card-list");
-  const end = flights.indexOf("</div>", start);
-  const pagination = flights.indexOf("<FlightResultsPagination", end);
-
-  assert.ok(start >= 0 && end > start && pagination > end);
-  assert.match(flights.slice(start, end), /className="space-y-3 sm:space-y-4"/);
-  assert.match(flights.slice(start, end), /<FlightCard/);
-  assert.doesNotMatch(flights.slice(start, end), /<FlightResultsPagination/);
+test("mobile and desktop flights retain complete continuous lists", () => {
+  const mobileStart = flights.indexOf("data-mobile-continuous-flight-results");
+  const desktopStart = flights.indexOf('ref={paginationListRef}');
+  const mobileRegion = flights.slice(mobileStart, desktopStart);
+  const desktopList = flights.indexOf('<div data-flight-results-card-list className="space-y-3 sm:space-y-4">', desktopStart);
+  assert.ok(mobileStart >= 0 && desktopStart > mobileStart && desktopList > desktopStart);
+  assert.match(mobileRegion, /items=\{sortedResults\}/);
+  assert.doesNotMatch(mobileRegion, /<FlightResultsPagination/);
+  const desktopRegion = flights.slice(desktopList, flights.indexOf("{renderMobileFullFiltersSheet()}", desktopList));
+  assert.match(desktopRegion, /items=\{sortedResults\}/);
+  assert.doesNotMatch(desktopRegion, /<FlightResultsPagination|visibleResults\.map/);
 });

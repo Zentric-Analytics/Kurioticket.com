@@ -2,8 +2,8 @@ import { translations as en } from "./en";
 import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
-  "accountDashboard.recently": "最近",
   ...en,
+  "accountDashboard.recently": "最近",
   "deals.mobileTravelersTitle": "旅客",
   "mobileTravelerCabin.title": "旅客与舱位",
   "mobileTravelerCabin.adultDescription": "18岁及以上",
@@ -232,7 +232,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.preferences.customization.personalization.title": "个性化",
   "accountDashboard.preferences.customization.personalization.description": "控制 Kurioticket 如何个性化你的推荐。",
   "accountDashboard.preferences.customization.personalizeSearches": "使用我的搜索来个性化推荐",
-  "accountDashboard.preferences.customization.personalizedTravel旅行套餐": "显示个性化旅行优惠",
+  "accountDashboard.preferences.customization.personalizedTravelDeals": "显示个性化旅行优惠",
   "accountDashboard.preferences.customization.rememberRecentSearches": "记住我的最近搜索",
   "accountDashboard.preferences.customization.communicationStyle.title": "沟通方式",
   "accountDashboard.preferences.customization.communicationStyle.description": "选择你希望 Kurioticket 如何与你沟通。",
@@ -1759,10 +1759,12 @@ export const translations: TranslationDictionary = {
   displayEstimateConvertedFromProviderPrice: "{{formatted}}。由 {{providerPrice}} 换算的显示预估价。最终服务提供商价格可能不同。",
   convertedDisplayEstimateProviderPrice: "换算后的显示预估价。服务提供商价格：{{providerPrice}}。最终服务提供商价格可能不同。",
   viewFlight: "查看航班",
+  viewDeal: "查看优惠",
   flightCardProviderHandoff: "最终价格、可订情况、预订和票价规则由服务提供商确认。",
   flightCardProviderHandoffConverted: "最终价格、可订情况、预订和票价规则由服务提供商确认。最终服务提供商货币可能与你选择的显示货币不同。",
   providerNormalizedItineraryPrefix: "去程和返程详情来自服务提供商标准化后的行程数据。",
   checkProvider: "查看服务提供商",
+  notSuppliedByProvider: "服务提供商未提供",
   carryOnIncluded: "包含随身行李",
   flightLeg: "航段",
   layover: "中转",

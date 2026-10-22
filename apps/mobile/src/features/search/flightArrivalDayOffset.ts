@@ -1,5 +1,5 @@
 const LOCAL_ISO_DATETIME =
-  /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.\d+)?)?(?:Z|[+-](\d{2}):(\d{2}))?$/;
+  /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2})(?::(\d{2})(?:\.\d+)?)?(?:Z|[+-](\d{2}):(\d{2}))?)?$/;
 
 function localCalendarDay(value: string | null | undefined): number | null {
   if (typeof value !== "string") return null;
@@ -10,8 +10,8 @@ function localCalendarDay(value: string | null | undefined): number | null {
   const year = Number(yearText);
   const month = Number(monthText);
   const day = Number(dayText);
-  const hour = Number(hourText);
-  const minute = Number(minuteText);
+  const hour = Number(hourText ?? 0);
+  const minute = Number(minuteText ?? 0);
   const second = Number(secondText);
   const offsetHour = Number(offsetHourText ?? 0);
   const offsetMinute = Number(offsetMinuteText ?? 0);
@@ -37,6 +37,19 @@ export function providerLocalFlightDate(value: string | null | undefined, locale
   return new Intl.DateTimeFormat(locale, {
     month: "short",
     day: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(calendarDay));
+}
+
+/** Formats a provider/search local calendar date with its year, without a device-timezone conversion. */
+export function providerLocalFlightDateLong(value: string | null | undefined, locale?: string): string | null {
+  const calendarDay = localCalendarDay(value);
+  if (calendarDay === null) return null;
+
+  return new Intl.DateTimeFormat(locale, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
     timeZone: "UTC",
   }).format(new Date(calendarDay));
 }

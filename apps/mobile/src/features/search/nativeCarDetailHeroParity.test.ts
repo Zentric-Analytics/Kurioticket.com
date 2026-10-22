@@ -1,0 +1,111 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import test from "node:test";
+
+const native = readFileSync("src/features/search/ApprovedCarDetailScreen.tsx", "utf8");
+
+function styleRule(name: string, nextName: string): string {
+  const start = native.indexOf(`${name}:{`);
+  const end = native.indexOf(`${nextName}:{`, start);
+  assert.notEqual(start, -1, `${name} style must exist`);
+  assert.notEqual(end, -1, `${nextName} style must follow ${name}`);
+  return native.slice(start, end);
+}
+
+const heroStart = native.indexOf("<View style={[s.hero,");
+const imageStart = native.indexOf("<View style={[s.imageBox", heroStart);
+const identityStart = native.indexOf("<View style={s.identityBlock}>", imageStart);
+const specsStart = native.indexOf("<View style={s.specs}>", identityStart);
+const tabsStart = native.indexOf("s.carsTabsShell", specsStart);
+const scrollEnd = native.indexOf("</ScrollView>", tabsStart);
+const backStart = native.indexOf('accessibilityLabel="Back to Cars results"', scrollEnd);
+const actionsStart = native.indexOf("<View style={[s.heroActions", backStart);
+
+test("vehicle media leads the Hotel-style Cars hero before identity, specs, and tabs", () => {
+  assert.ok(heroStart >= 0);
+  assert.ok(imageStart > heroStart);
+  assert.ok(identityStart > imageStart);
+  assert.ok(specsStart > identityStart);
+  assert.ok(tabsStart > specsStart);
+  assert.match(native.slice(imageStart, identityStart), /accessibilityLabel=\{result\.imageAlt\}[^>]*resizeMode="contain"/);
+  assert.doesNotMatch(native.slice(heroStart, imageStart), /result\.modelName|result\.categoryLabel|heroHeader|titleCopy/);
+});
+
+test("vehicle identity remains the accessible name and category directly below the media", () => {
+  const identity = native.slice(identityStart, specsStart);
+  const title = identity.indexOf("{result.modelName}");
+  const similar = identity.indexOf('{"or\\u00A0similar"}');
+  const category = identity.indexOf("{result.categoryLabel.toUpperCase()}");
+  assert.ok(title >= 0 && similar > title && category > similar);
+  assert.match(identity, /<Text accessibilityRole="header"[^>]*>\{result\.modelName\}<Text style=\{\[s\.orSimilar,\{color:theme\.textSecondary\}\]\}> \{"or\\u00A0similar"\}<\/Text><\/Text>/);
+  assert.doesNotMatch(identity, /numberOfLines=\{?1\}?/);
+  assert.match(identity, /<Text style=\{s\.category\}>\{result\.categoryLabel\.toUpperCase\(\)\}<\/Text>/);
+  assert.match(styleRule("identityBlock", "category"), /paddingHorizontal:16[^}]*paddingTop:14/);
+
+  const categoryStyle = styleRule("category", "title");
+  for (const contract of ["fontSize:10", "lineHeight:14", 'fontWeight:"700"', "fontFamily:appFonts.bold", 'textTransform:"uppercase"', "letterSpacing:1.4", 'color:"#075EE8"']) {
+    assert.ok(categoryStyle.includes(contract), contract);
+  }
+
+  const titleStyle = styleRule("title", "orSimilar");
+  for (const contract of ["fontSize:22", "lineHeight:28", 'fontWeight:"800"', "fontFamily:appFonts.extraBold", "letterSpacing:-.5"]) assert.ok(titleStyle.includes(contract), contract);
+  const similarStyle = styleRule("orSimilar", "imageBox");
+  for (const contract of ["fontSize:14", "lineHeight:20", 'fontWeight:"600"', "fontFamily:appFonts.semibold", "letterSpacing:0"]) assert.ok(similarStyle.includes(contract), contract);
+});
+
+test("Back and Save Share controls use the shared Cars glass material outside scrolling content", () => {
+  assert.match(native, /import \{ DetailGlassSurface \} from "\.\/DetailGlassSurface"/);
+  assert.doesNotMatch(native, /carInformationSurface|#E7EBF1/);
+  assert.ok(scrollEnd >= 0 && backStart > scrollEnd && actionsStart > backStart);
+  assert.equal((native.match(/accessibilityLabel="Back to Cars results"/g) ?? []).length, 1);
+  assert.doesNotMatch(native, />Back to Cars results<\/Text>/);
+  assert.match(native, /accessibilityLabel="Back to Cars results" onPress=\{returnToCarResults\} style=\{\[s\.heroBack,\{top:inset\.top\+12\}\]\}/);
+  assert.match(native, /<View style=\{\[s\.heroActions,\{top:inset\.top\+12\}\]\}>/);
+  assert.equal((native.match(/<DetailGlassSurface /g) ?? []).length, 2);
+  assert.match(native, /<DetailGlassSurface dark=\{theme\.dark\} variant="carsOptical" style=\{s\.heroBackGlass\}/);
+  assert.match(native, /<DetailGlassSurface dark=\{theme\.dark\} variant="carsOptical" style=\{s\.heroActionsGlass\}/);
+
+  const back = styleRule("heroBack", "heroBackGlass");
+  for (const contract of ['position:"absolute"', "left:20", "width:44", "height:44", "borderRadius:22", 'alignItems:"center"', 'justifyContent:"center"', "zIndex:20", "elevation:7"]) {
+    assert.ok(back.includes(contract), contract);
+  }
+
+  const actions = styleRule("heroActions", "heroActionsGlass");
+  for (const contract of ['position:"absolute"', "right:20", "width:96", "height:44", "borderRadius:22", 'flexDirection:"row"', "zIndex:20", "elevation:7"]) {
+    assert.ok(actions.includes(contract), contract);
+  }
+  assert.doesNotMatch(actions, /overflow|opacity:/);
+  assert.doesNotMatch(back, /backgroundColor/);
+  assert.doesNotMatch(actions, /backgroundColor/);
+
+  const action = styleRule("heroAction", "hero");
+  for (const contract of ["width:48", "height:44", 'alignItems:"center"', 'justifyContent:"center"']) {
+    assert.ok(action.includes(contract), contract);
+  }
+});
+
+test("favorite and share behavior survive relocation into independent hero actions", () => {
+  const controls = native.slice(backStart, native.indexOf("{offer?<View style={[s.dock", actionsStart));
+  assert.match(controls, /accessibilityLabel=\{saved\.saved\?"Remove car from saved":"Save car"\}/);
+  assert.match(controls, /accessibilityState=\{\{selected:saved\.saved\}\} onPress=\{saved\.toggle\} style=\{s\.heroAction\}/);
+  assert.match(controls, /<Heart size=\{22\} strokeWidth=\{androidFavoriteColors\.strokeWidth\} color=\{saved\.saved\?androidFavoriteColors\.savedStroke:light\?androidFavoriteColors\.unsavedStroke:theme\.icon\} fill=\{saved\.saved\?androidFavoriteColors\.savedFill:androidFavoriteColors\.unsavedFill\}\/\>/);
+  assert.match(controls, /accessibilityLabel="Share car" onPress=\{\(\)=>void Share\.share\(\{message:`\$\{result\.modelName\} — \$\{result\.categoryLabel\}`\}\)\} style=\{s\.heroAction\}/);
+  assert.match(controls, /<Share2 size=\{21\} strokeWidth=\{androidFavoriteColors\.strokeWidth\} color=\{light\?androidFavoriteColors\.shareStroke:theme\.icon\}\/\>/);
+  assert.equal((controls.match(/style=\{s\.heroAction\}/g) ?? []).length, 2);
+});
+
+test("vehicle image well reserves a responsive control-safe zone and contains the full vehicle", () => {
+  assert.match(native, /const heroControlSafeZoneHeight = inset\.top \+ 12 \+ 44 \+ 14/);
+  assert.match(native, /const heroVehicleStageHeight = Math\.min\(224, Math\.max\(176, width \* 0\.5\)\)/);
+  assert.match(native, /const heroMediaHeight = heroControlSafeZoneHeight \+ heroVehicleStageHeight/);
+  assert.match(native, /s\.imageBox,\{height:heroMediaHeight,backgroundColor:theme\.surface\}/);
+  assert.match(native, /s\.mediaStage,\{marginTop:heroControlSafeZoneHeight\}/);
+  const imageBox = styleRule("imageBox", "mediaStage");
+  for (const contract of ['width:"100%"', 'overflow:"hidden"']) {
+    assert.ok(imageBox.includes(contract), contract);
+  }
+  assert.doesNotMatch(imageBox, /aspectRatio|marginHorizontal|borderRadius|backgroundColor/);
+  assert.match(styleRule("mediaStage", "image"), /flex:1[^}]*paddingBottom:12/);
+  assert.match(styleRule("image", "unavailable"), /width:"100%"[^}]*height:"100%"/);
+  assert.doesNotMatch(native.slice(imageStart, identityStart), /translateY|resizeMode="cover"/);
+});

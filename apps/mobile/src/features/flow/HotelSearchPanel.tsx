@@ -1,5 +1,6 @@
-import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState } from "react";
-import { Animated, FlatList, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from "react-native";
+import { Text, TextInput } from "../home/HomePresentation";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState } from "react";
+import { Animated, FlatList, Keyboard, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Switch, View, type KeyboardEvent } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Baby, BedDouble, Minus, PawPrint, Plus, UserRound, type LucideIcon } from "lucide-react-native";
@@ -8,7 +9,7 @@ import { FlowIcon } from "./FlowIcon";
 import { useFlowTheme } from "./flowStyles";
 import { DateRangeSheet } from "./DateRangeSheet";
 import { travelApi, TravelApiError, type HotelDestinationSuggestion } from "../../api/travelApi";
-import { HOTEL_LIMITS, countLabel, firstParam, hotelSearchParams, initializeHotelForm, localDateFromIso, localIsoDate, type HotelForm, type RouteValue, validateHotelForm } from "./hotelSearchModel";
+import { HOTEL_LIMITS, countLabel, firstParam, hotelDestinationLocation, hotelSearchParams, initializeHotelForm, localDateFromIso, localIsoDate, type HotelForm, type RouteValue, validateHotelForm } from "./hotelSearchModel";
 import { SEARCH_PICKER_BACKDROP_COLOR, useSearchPickerMotion } from "./searchPickerPresentation";
 import { useSearchPickerKeyboardPresentation } from "./searchPickerKeyboardPresentation";
 import { hasMinimumLocationSearchLetters } from "./locationSearchQuery";
@@ -30,10 +31,11 @@ type Props = {
   submitNavigation?: "push" | "replace";
   onBeforeNavigate?: () => void;
   editAppearance?: boolean;
+  onValidatedSubmit?: (params: ReturnType<typeof hotelSearchParams>) => void;
 };
 const displayDate = (iso: string) => localDateFromIso(iso)?.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric", year: "numeric" }) ?? iso;
 
-export const HotelSearchPanel = forwardRef<HotelSearchHandle, Props>(function HotelSearchPanel({ params, embedded = false, showSubmit = true, submitLabel = "Search hotels", submitNavigation = "push", onBeforeNavigate, editAppearance = false }, ref) {
+export const HotelSearchPanel = forwardRef<HotelSearchHandle, Props>(function HotelSearchPanel({ params, embedded = false, showSubmit = true, submitLabel = "Search hotels", submitNavigation = "push", onBeforeNavigate, editAppearance = false, onValidatedSubmit }, ref) {
   const ft = useFlowTheme();
   const { locale } = useMobileLocalization();
   const initial = useRef<ReturnType<typeof initializeHotelForm> | undefined>(undefined);
@@ -60,52 +62,68 @@ export const HotelSearchPanel = forwardRef<HotelSearchHandle, Props>(function Ho
   const [childCount, setChildCount] = useState(0);
   const [petFriendly, setPetFriendly] = useState(false);
   const explicitDestination = firstParam(params.destination);
+  const explicitDestinationLocation = firstParam(params.destinationLocation);
   const previousExplicitDestination = useRef(explicitDestination);
   useEffect(() => {
     if (explicitDestination && explicitDestination !== previousExplicitDestination.current) {
-      setForm((current) => ({ ...current, destination: explicitDestination }));
+      setForm((current) => ({ ...current, destination: explicitDestination, destinationLocation: explicitDestinationLocation || undefined }));
       setErrors((current) => ({ ...current, destination: undefined }));
     }
     previousExplicitDestination.current = explicitDestination;
-  }, [explicitDestination]);
+  }, [explicitDestination, explicitDestinationLocation]);
   const update = (next: HotelForm) => setForm(next);
-  const useDestination = (destination: string) => { setForm((current) => ({ ...current, destination })); setErrors((current) => ({ ...current, destination: undefined })); setNotice(`${destination} selected. Review your details, then search.`); };
+  const useDestination = (destination: string) => { setForm((current) => ({ ...current, destination, destinationLocation: undefined })); setErrors((current) => ({ ...current, destination: undefined })); setNotice(`${destination} selected. Review your details, then search.`); };
   useImperativeHandle(ref, () => ({ useDestination }), []);
   const submit = () => {
     const nextErrors = validateHotelForm(form);
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length) { setNotice("Please correct the highlighted search details."); if (nextErrors.destination) setDestinationOpen(true); else if (nextErrors.checkIn || nextErrors.checkOut) setDatesOpen(true); return; }
+    if (onValidatedSubmit) { onValidatedSubmit(hotelSearchParams(form)); return; }
     onBeforeNavigate?.();
     router[submitNavigation]({ pathname: "/hotel-results", params: hotelSearchParams(form) });
   };
   const datesValue = form.checkIn && form.checkOut ? `${displayDate(form.checkIn)} — ${displayDate(form.checkOut)}` : "Check-in — Check-out";
   const destinationDisplay = getHotelLocationFieldDisplay(form.destination, locale);
-  return <View style={[!embedded && ft.styles.card, !embedded && ft.styles.shadow, editAppearance && styles.resultsEditForm]}>
-    <View style={editAppearance ? [styles.resultsEditFields, { backgroundColor: ft.colors.surface, borderColor: ft.colors.border }] : undefined}>
-      <CompactSearchField label="Destination" value={destinationDisplay.primary || form.destination.trim() || "City or hotel"} meta={editAppearance ? undefined : destinationDisplay.secondary} metaNumberOfLines={1} muted={!form.destination} icon="location" trailing={false} appearance={editAppearance ? "resultsEdit" : "default"} onPress={() => setDestinationOpen(true)}/>
-      {errors.destination ? <Text accessibilityRole="alert" style={[styles.error, editAppearance && styles.resultsEditError]}>{errors.destination}</Text> : null}
-      {editAppearance ? <View testID="hotel-results-edit-divider" style={[styles.resultsEditDivider, { backgroundColor: ft.colors.border }]}/> : null}
-      <CompactSearchField label="Travel dates" value={datesValue} muted={!form.checkIn || !form.checkOut} icon="calendar" valueNumberOfLines={editAppearance ? 1 : 0} appearance={editAppearance ? "resultsEdit" : "default"} trailing={editAppearance ? <FlowIcon name="chevron" size={16} color={ft.colors.placeholder}/> : undefined} onPress={() => setDatesOpen(true)}/>
-      {errors.checkIn || errors.checkOut ? <Text accessibilityRole="alert" style={[styles.error, editAppearance && styles.resultsEditError]}>{errors.checkIn || errors.checkOut}</Text> : null}
-      {editAppearance ? <View testID="hotel-results-edit-divider" style={[styles.resultsEditDivider, { backgroundColor: ft.colors.border }]}/> : null}
-      <CompactSearchField label="Guests" value={`${countLabel(form.guests, "guest")}, ${countLabel(form.rooms, "room")}`} icon="person" appearance={editAppearance ? "resultsEdit" : "default"} trailing={editAppearance ? <FlowIcon name="chevron" size={16} color={ft.colors.placeholder}/> : undefined} onPress={() => setCountsOpen(true)}/>
-      {errors.guests || errors.rooms ? <Text accessibilityRole="alert" style={[styles.error, editAppearance && styles.resultsEditError]}>{errors.guests || errors.rooms}</Text> : null}
+  const fieldCardStyle = [editAppearance ? styles.resultsEditCard : styles.mainCard, { backgroundColor: ft.colors.card, borderColor: ft.colors.border }];
+  const fieldAppearance = editAppearance ? "resultsEdit" : "resultsModalCard";
+  return <View style={[!embedded && styles.standaloneForm, editAppearance && styles.resultsEditForm]}>
+    <View style={editAppearance ? styles.resultsEditStack : styles.mainStack}>
+      <View style={styles.fieldGroup}>
+        <View style={fieldCardStyle}>
+          <CompactSearchField label="Destination" value={destinationDisplay.primary || form.destination.trim() || "City or hotel"} meta={editAppearance ? undefined : destinationDisplay.secondary} metaNumberOfLines={1} muted={!form.destination} icon="location" trailing={false} appearance={fieldAppearance} onPress={() => setDestinationOpen(true)}/>
+        </View>
+        {errors.destination ? <Text accessibilityRole="alert" style={[styles.error, editAppearance && styles.resultsEditError]}>{errors.destination}</Text> : null}
+      </View>
+      <View style={styles.fieldGroup}>
+        <View style={fieldCardStyle}>
+          <CompactSearchField label="Travel dates" value={datesValue} muted={!form.checkIn || !form.checkOut} icon="calendar" valueNumberOfLines={editAppearance ? 1 : 0} appearance={fieldAppearance} trailing={editAppearance ? <FlowIcon name="chevron" size={16} color={ft.colors.placeholder}/> : undefined} onPress={() => setDatesOpen(true)}/>
+        </View>
+        {errors.checkIn || errors.checkOut ? <Text accessibilityRole="alert" style={[styles.error, editAppearance && styles.resultsEditError]}>{errors.checkIn || errors.checkOut}</Text> : null}
+      </View>
+      <View style={styles.fieldGroup}>
+        <View style={fieldCardStyle}>
+          <CompactSearchField label="Guests" value={`${countLabel(form.guests, "guest")}, ${countLabel(form.rooms, "room")}`} icon="person" appearance={fieldAppearance} trailing={editAppearance ? <FlowIcon name="chevron" size={16} color={ft.colors.placeholder}/> : undefined} onPress={() => setCountsOpen(true)}/>
+        </View>
+        {errors.guests || errors.rooms ? <Text accessibilityRole="alert" style={[styles.error, editAppearance && styles.resultsEditError]}>{errors.guests || errors.rooms}</Text> : null}
+      </View>
     </View>
     {notice ? <UnavailableNotice text={notice}/> : null}
-    {showSubmit ? editAppearance ? <PrimaryButton appearance="resultsEdit" label={submitLabel} icon={null} onPress={submit}/> : <View style={styles.pad}><PrimaryButton label={submitLabel} icon={null} onPress={submit}/></View> : null}
-    <DateRangeSheet visible={datesOpen} title="Travel dates" startLabel="Check-in date" endLabel="Check-out date" presentation={editAppearance ? "resultsEditFullScreen" : "sheet"} startDate={form.checkIn} endDate={form.checkOut} minimumStartDate={localIsoDate(new Date())} endMustBeAfterStart onDone={(checkIn, checkOut) => { update({ ...form, checkIn, checkOut }); setErrors(value => ({ ...value, checkIn: undefined, checkOut: undefined })); setDatesOpen(false); }} onCancel={() => setDatesOpen(false)}/>
-    <HotelDestinationSheet visible={destinationOpen} value={form.destination} pickerPresentation={editAppearance ? "resultsEditFullScreen" : "sheet"} onChoose={(destination) => { update({ ...form, destination }); if (destination.trim()) setErrors((current) => ({ ...current, destination: undefined })); setDestinationOpen(false); }} onCancel={() => setDestinationOpen(false)}/>
-    <HotelGuestsRoomsSheet visible={countsOpen} presentation={editAppearance ? "resultsEditFullScreen" : "sheet"} adults={adultCount} children={childCount} rooms={form.rooms} petFriendly={petFriendly} onDone={(draft) => { setAdultCount(draft.adults); setChildCount(draft.children); setPetFriendly(draft.petFriendly); update({ ...form, guests: draft.adults + draft.children, rooms: draft.rooms }); setErrors((value) => ({ ...value, guests: undefined, rooms: undefined })); setCountsOpen(false); }} onCancel={() => setCountsOpen(false)}/>
+    {showSubmit ? editAppearance ? <PrimaryButton appearance="resultsEdit" label={submitLabel} icon={null} onPress={submit}/> : <View style={styles.mainSubmit}><PrimaryButton label={submitLabel} icon={null} onPress={submit}/></View> : null}
+    <DateRangeSheet visible={datesOpen} title="Travel dates" startLabel="Check-in date" endLabel="Check-out date" presentation="sheet" startDate={form.checkIn} endDate={form.checkOut} minimumStartDate={localIsoDate(new Date())} endMustBeAfterStart onDone={(checkIn, checkOut) => { update({ ...form, checkIn, checkOut }); setErrors(value => ({ ...value, checkIn: undefined, checkOut: undefined })); setDatesOpen(false); }} onCancel={() => setDatesOpen(false)}/>
+    <HotelDestinationSheet visible={destinationOpen} value={form.destination} pickerPresentation="sheet" onChoose={(destination) => { update({ ...form, destination }); setForm((current) => ({ ...current, destinationLocation: undefined })); if (destination.trim()) setErrors((current) => ({ ...current, destination: undefined })); setDestinationOpen(false); }} onSelect={(suggestion) => setForm((current) => ({ ...current, destinationLocation: hotelDestinationLocation(suggestion, current.destination) }))} onCancel={() => setDestinationOpen(false)}/>
+    <HotelGuestsRoomsSheet visible={countsOpen} presentation="sheet" adults={adultCount} children={childCount} rooms={form.rooms} petFriendly={petFriendly} onDone={(draft) => { setAdultCount(draft.adults); setChildCount(draft.children); setPetFriendly(draft.petFriendly); update({ ...form, guests: draft.adults + draft.children, rooms: draft.rooms }); setErrors((value) => ({ ...value, guests: undefined, rooms: undefined })); setCountsOpen(false); }} onCancel={() => setCountsOpen(false)}/>
   </View>;
 });
 
-export function HotelDestinationSheet({ visible, value, pickerPresentation = "sheet", suggestionIcons = HOTEL_DESTINATION_SUGGESTION_ICONS, onChoose, onCancel }: { visible: boolean; value: string; pickerPresentation?: "sheet" | "resultsEditFullScreen"; suggestionIcons?: readonly SearchResultProductIconName[]; onChoose: (destination: string) => void; onCancel: () => void }) {
+export function HotelDestinationSheet({ visible, value, pickerPresentation = "sheet", suggestionIcons = HOTEL_DESTINATION_SUGGESTION_ICONS, onChoose, onSelect, onCancel }: { visible: boolean; value: string; pickerPresentation?: "sheet" | "resultsEditFullScreen"; suggestionIcons?: readonly SearchResultProductIconName[]; onChoose: (destination: string) => void; onSelect?: (suggestion: HotelDestinationSuggestion) => void; onCancel: () => void }) {
   const ft = useFlowTheme();
   const { locale } = useMobileLocalization();
   const sheetVisible = pickerPresentation === "sheet" ? visible : false;
-  const motion = useSearchPickerMotion(sheetVisible, { controlledOpening: true });
+  const motion = useSearchPickerMotion(sheetVisible, { controlledOpening: true, stationaryOpening: true });
   const presentation = useRetainedPickerContext(visible, { suggestionIcons });
   const inputRef = useRef<TextInput>(null);
+  const resultsViewportRef = useRef<View>(null);
+  const keyboardScreenYRef = useRef<number | undefined>(undefined);
   const requestSequence = useRef(0);
   const [query, setQuery] = useState(value);
   const [draft, setDraft] = useState<HotelDestinationSuggestion>();
@@ -113,14 +131,44 @@ export function HotelDestinationSheet({ visible, value, pickerPresentation = "sh
   const [suggestions, setSuggestions] = useState<HotelDestinationSuggestion[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
+  const [resultsKeyboardInset, setResultsKeyboardInset] = useState(0);
   const trimmedQuery = query.trim();
 
   useLayoutEffect(() => {
     if (!visible) return;
-    setQuery(pickerPresentation === "resultsEditFullScreen" ? value : ""); setDraft(undefined); setSuggestions([]); setLoading(false); setError(false); programmaticFilledQuery.current=undefined;
+    setQuery(pickerPresentation === "resultsEditFullScreen" ? value : ""); setDraft(undefined); setSuggestions([]); setLoading(false); setError(false); setResultsKeyboardInset(0); programmaticFilledQuery.current=undefined;
   }, [visible, value, pickerPresentation]);
 
-  const keyboardPresentation = useSearchPickerKeyboardPresentation(sheetVisible, motion.rendered, value, inputRef, motion);
+  const keyboardPresentation = useSearchPickerKeyboardPresentation(sheetVisible, motion.rendered, value, inputRef, motion, { focusOnPresentation: true });
+  const updateResultsKeyboardInset = useCallback((screenY?: number) => {
+    keyboardScreenYRef.current = screenY;
+    if (!sheetVisible || screenY === undefined) { setResultsKeyboardInset(0); return; }
+    resultsViewportRef.current?.measureInWindow((_x, y, _width, height) => {
+      if (!sheetVisible || keyboardScreenYRef.current !== screenY) return;
+      const inset = Math.min(height, Math.max(0, y + height - screenY));
+      setResultsKeyboardInset((current) => current === inset ? current : inset);
+    });
+  }, [sheetVisible]);
+  useEffect(() => {
+    if (!sheetVisible) { keyboardScreenYRef.current = undefined; setResultsKeyboardInset(0); return; }
+    const show = (event: KeyboardEvent) => updateResultsKeyboardInset(event.endCoordinates.screenY);
+    const hide = () => updateResultsKeyboardInset(undefined);
+    const subscriptions = [
+      Keyboard.addListener("keyboardWillChangeFrame", show),
+      Keyboard.addListener("keyboardDidShow", show),
+      Keyboard.addListener("keyboardWillHide", hide),
+      Keyboard.addListener("keyboardDidHide", hide),
+    ];
+    const metrics = Keyboard.metrics();
+    if (Keyboard.isVisible() && metrics) updateResultsKeyboardInset(metrics.screenY);
+    return () => subscriptions.forEach((subscription) => subscription.remove());
+  }, [sheetVisible, updateResultsKeyboardInset]);
+  const syncResultsViewportLayout = () => {
+    const metrics = Keyboard.metrics();
+    if (Keyboard.isVisible() && metrics) updateResultsKeyboardInset(metrics.screenY);
+    else if (keyboardScreenYRef.current !== undefined) updateResultsKeyboardInset(keyboardScreenYRef.current);
+  };
+  const dismissDestinationSheet = () => { Keyboard.dismiss(); onCancel(); };
 
   useEffect(() => {
     if (!visible) return;
@@ -149,23 +197,22 @@ export function HotelDestinationSheet({ visible, value, pickerPresentation = "sh
   if (pickerPresentation === "resultsEditFullScreen") return <HotelResultsEditPickerShell visible={visible} title="Choose destination" onBack={onCancel} onShow={() => inputRef.current?.focus()}>
     <KeyboardAvoidingView style={styles.resultsDestinationKeyboard} behavior={Platform.OS === "ios" ? "padding" : "height"}>
       <View style={styles.resultsDestinationContent}>
-<View style={[styles.destinationSearch,{backgroundColor:ft.colors.input,borderColor:ft.colors.border}]}><FlowIcon name="location" size={20} color={ft.colors.icon}/><TextInput ref={inputRef} accessibilityLabel="Search hotel destinations" placeholder="City, area, or hotel" placeholderTextColor={ft.colors.placeholder} value={query} onChangeText={changeQuery} returnKeyType="search" style={[styles.destinationSearchInput,{color:ft.colors.text}]}/></View>
-            {loading ? <Text style={[styles.destinationStatus,{color:ft.colors.secondaryText}]}>Finding destinations…</Text> : error ? <Text accessibilityRole="alert" style={[styles.destinationStatus,{color:ft.colors.secondaryText}]}>Couldn’t load destinations. Please try again.</Text> : <FlatList style={styles.destinationResults} keyboardShouldPersistTaps="handled" data={suggestions} keyExtractor={(item) => item.id} contentContainerStyle={styles.destinationList} renderItem={({item}) => { const selected = draft?.id === item.id; const name = getHotelDestinationPrimaryLabel(item, locale); const detail = getHotelDestinationSupportingLabel(item, locale); return <Pressable accessibilityRole="button" accessibilityLabel={`${name}, ${detail}`} accessibilityState={{selected}} onPress={() => { requestSequence.current+=1; programmaticFilledQuery.current=item.searchValue.trim(); setDraft(item); setQuery(item.searchValue); setLoading(false); setError(false); onChoose(item.searchValue); }} style={[styles.destinationChoice,{borderBottomColor:ft.colors.border},selected&&{backgroundColor:ft.colors.selected}]}><SearchResultProductIcons icons={presentation.suggestionIcons}/><View style={styles.rowCopy}><Text numberOfLines={1} style={[ft.styles.value,selected&&{color:ft.colors.selectedPrimaryText}]}>{name}</Text><Text numberOfLines={1} style={[ft.styles.meta,selected&&{color:ft.colors.selectedSecondaryText}]}>{detail}</Text></View></Pressable>; }} ListEmptyComponent={draft?null:trimmedQuery.length===0?<Text style={[styles.destinationStatus,{color:ft.colors.secondaryText}]}>Start typing to find a destination.</Text>:!hasMinimumLocationSearchLetters(query)?null:<Text style={[styles.destinationStatus,{color:ft.colors.secondaryText}]}>No matching destinations yet.</Text>} />}
+<View style={[styles.destinationSearch,{backgroundColor:ft.colors.input,borderColor:ft.colors.border}]}><FlowIcon name="location" size={20} color={ft.colors.icon}/><TextInput ref={inputRef} accessibilityLabel="Search hotel destinations" placeholder="City, area, or hotel" placeholderTextColor={ft.colors.placeholder} value={query} onChangeText={changeQuery} autoCorrect={false} spellCheck={false} returnKeyType="search" style={[styles.destinationSearchInput,{color:ft.colors.text}]}/></View>
+            {loading ? <Text style={[styles.destinationStatus,{color:ft.colors.secondaryText}]}>Finding destinations…</Text> : error ? <Text accessibilityRole="alert" style={[styles.destinationStatus,{color:ft.colors.secondaryText}]}>Couldn’t load destinations. Please try again.</Text> : <FlatList style={styles.destinationResults} keyboardShouldPersistTaps="handled" data={suggestions} keyExtractor={(item) => item.id} contentContainerStyle={styles.destinationList} renderItem={({item}) => { const selected = draft?.id === item.id; const name = getHotelDestinationPrimaryLabel(item, locale); const detail = getHotelDestinationSupportingLabel(item, locale); return <Pressable accessibilityRole="button" accessibilityLabel={`${name}, ${detail}`} accessibilityState={{selected}} onPress={() => { requestSequence.current+=1; programmaticFilledQuery.current=item.searchValue.trim(); setDraft(item); setQuery(item.searchValue); setLoading(false); setError(false); Keyboard.dismiss(); onChoose(item.searchValue); onSelect?.(item); }} style={[styles.destinationChoice,{borderBottomColor:ft.colors.border},selected&&{backgroundColor:ft.colors.selected}]}><SearchResultProductIcons icons={presentation.suggestionIcons}/><View style={styles.rowCopy}><Text numberOfLines={1} style={[ft.styles.value,selected&&{color:ft.colors.selectedPrimaryText}]}>{name}</Text><Text numberOfLines={1} style={[ft.styles.meta,selected&&{color:ft.colors.selectedSecondaryText}]}>{detail}</Text></View></Pressable>; }} ListEmptyComponent={draft?null:trimmedQuery.length===0?<Text style={[styles.destinationStatus,{color:ft.colors.secondaryText}]}>Start typing to find a destination.</Text>:!hasMinimumLocationSearchLetters(query)?null:<Text style={[styles.destinationStatus,{color:ft.colors.secondaryText}]}>No matching destinations yet.</Text>} />}
       </View>
     </KeyboardAvoidingView>
   </HotelResultsEditPickerShell>;
-  return <Modal transparent animationType="none" visible={motion.rendered} onShow={keyboardPresentation.onModalShow} onRequestClose={onCancel}>
-      <KeyboardAvoidingView pointerEvents={motion.pointerEvents} style={styles.keyboardViewport} behavior={Platform.OS === "ios" ? "padding" : "height"}>
-        <SafeAreaView edges={["top"]} style={styles.destinationOverlay}><Animated.View pointerEvents="none" accessible={false} style={[StyleSheet.absoluteFill,styles.scrim,motion.backdropStyle]}/>
-          <Pressable style={StyleSheet.absoluteFill} onPress={onCancel} accessibilityRole="button" accessibilityLabel="Close hotel destination picker"/>
+  return <Modal transparent animationType="none" visible={motion.rendered} onShow={keyboardPresentation.onModalShow} onRequestClose={dismissDestinationSheet}>
+        <SafeAreaView pointerEvents={motion.pointerEvents} edges={["top"]} style={styles.destinationOverlay}><Animated.View pointerEvents="none" accessible={false} style={[StyleSheet.absoluteFill,styles.scrim,motion.backdropStyle]}/>
+          <Pressable style={StyleSheet.absoluteFill} onPress={dismissDestinationSheet} accessibilityRole="button" accessibilityLabel="Close hotel destination picker"/>
           <Animated.View accessibilityViewIsModal onLayout={keyboardPresentation.onSheetLayout} style={[styles.destinationSheet,{backgroundColor:ft.colors.surface,paddingBottom:20+motion.bottomSafeAreaInset},motion.sheetStyle]}>
-            <PickerSheetHeader title="Choose destination" onClose={onCancel} closeLabel="Close hotel destination picker"/>
-            <View style={[styles.destinationSearch,{backgroundColor:ft.colors.input,borderColor:ft.colors.border}]}><FlowIcon name="location" size={20} color={ft.colors.icon}/><TextInput ref={inputRef} accessibilityLabel="Search hotel destinations" placeholder="City, area, or hotel" placeholderTextColor={ft.colors.placeholder} value={query} onChangeText={changeQuery} returnKeyType="search" style={[styles.destinationSearchInput,{color:ft.colors.text}]}/></View>
-            {loading ? <Text style={[styles.destinationStatus,{color:ft.colors.secondaryText}]}>Finding destinations…</Text> : error ? <Text accessibilityRole="alert" style={[styles.destinationStatus,{color:ft.colors.secondaryText}]}>Couldn’t load destinations. Please try again.</Text> : <FlatList style={styles.destinationResults} keyboardShouldPersistTaps="handled" data={suggestions} keyExtractor={(item) => item.id} contentContainerStyle={styles.destinationList} renderItem={({item}) => { const selected = draft?.id === item.id; const name = getHotelDestinationPrimaryLabel(item, locale); const detail = getHotelDestinationSupportingLabel(item, locale); return <Pressable accessibilityRole="button" accessibilityLabel={`${name}, ${detail}`} accessibilityState={{selected}} onPress={() => { requestSequence.current+=1; programmaticFilledQuery.current=item.searchValue.trim(); setDraft(item); setQuery(item.searchValue); setLoading(false); setError(false); onChoose(item.searchValue); }} style={[styles.destinationChoice,{borderBottomColor:ft.colors.border},selected&&{backgroundColor:ft.colors.selected}]}><SearchResultProductIcons icons={presentation.suggestionIcons}/><View style={styles.rowCopy}><Text numberOfLines={1} style={[ft.styles.value,selected&&{color:ft.colors.selectedPrimaryText}]}>{name}</Text><Text numberOfLines={1} style={[ft.styles.meta,selected&&{color:ft.colors.selectedSecondaryText}]}>{detail}</Text></View></Pressable>; }} ListEmptyComponent={draft?null:trimmedQuery.length===0?<Text style={[styles.destinationStatus,{color:ft.colors.secondaryText}]}>Start typing to find a destination.</Text>:!hasMinimumLocationSearchLetters(query)?null:<Text style={[styles.destinationStatus,{color:ft.colors.secondaryText}]}>No matching destinations yet.</Text>} />}
-
+            <PickerSheetHeader title="Choose destination" onClose={dismissDestinationSheet} closeLabel="Close hotel destination picker"/>
+            <View style={[styles.destinationSearch,{backgroundColor:ft.colors.input,borderColor:ft.colors.border}]}><FlowIcon name="location" size={20} color={ft.colors.icon}/><TextInput ref={inputRef} onFocus={keyboardPresentation.onInputFocus} accessibilityLabel="Search hotel destinations" placeholder="City, area, or hotel" placeholderTextColor={ft.colors.placeholder} value={query} onChangeText={changeQuery} autoCorrect={false} spellCheck={false} returnKeyType="search" style={[styles.destinationSearchInput,{color:ft.colors.text}]}/></View>
+            <View ref={resultsViewportRef} onLayout={syncResultsViewportLayout} style={styles.destinationResultsViewport}>
+              {loading ? <Text style={[styles.destinationStatus,{color:ft.colors.secondaryText}]}>Finding destinations…</Text> : error ? <Text accessibilityRole="alert" style={[styles.destinationStatus,{color:ft.colors.secondaryText}]}>Couldn’t load destinations. Please try again.</Text> : <FlatList style={styles.destinationResults} keyboardShouldPersistTaps="handled" data={suggestions} keyExtractor={(item) => item.id} contentContainerStyle={[styles.destinationList,{paddingBottom:resultsKeyboardInset}]} renderItem={({item}) => { const selected = draft?.id === item.id; const name = getHotelDestinationPrimaryLabel(item, locale); const detail = getHotelDestinationSupportingLabel(item, locale); return <Pressable accessibilityRole="button" accessibilityLabel={`${name}, ${detail}`} accessibilityState={{selected}} onPress={() => { requestSequence.current+=1; programmaticFilledQuery.current=item.searchValue.trim(); setDraft(item); setQuery(item.searchValue); setLoading(false); setError(false); Keyboard.dismiss(); onChoose(item.searchValue); onSelect?.(item); }} style={[styles.destinationChoice,{borderBottomColor:ft.colors.border},selected&&{backgroundColor:ft.colors.selected}]}><SearchResultProductIcons icons={presentation.suggestionIcons}/><View style={styles.rowCopy}><Text numberOfLines={1} style={[ft.styles.value,selected&&{color:ft.colors.selectedPrimaryText}]}>{name}</Text><Text numberOfLines={1} style={[ft.styles.meta,selected&&{color:ft.colors.selectedSecondaryText}]}>{detail}</Text></View></Pressable>; }} ListEmptyComponent={draft?null:trimmedQuery.length===0?<Text style={[styles.destinationStatus,{color:ft.colors.secondaryText}]}>Start typing to find a destination.</Text>:!hasMinimumLocationSearchLetters(query)?null:<Text style={[styles.destinationStatus,{color:ft.colors.secondaryText}]}>No matching destinations yet.</Text>} />}
+            </View>
           </Animated.View>
         </SafeAreaView>
-      </KeyboardAvoidingView>
   </Modal>;
 }
 
@@ -223,4 +270,4 @@ function HotelGuestsRoomsSheet({ visible, adults, children, rooms, petFriendly, 
 function PickerIcon({ icon: Icon }: { icon: LucideIcon }) { const ft = useFlowTheme(); return <View accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[styles.pickerIcon, { backgroundColor: ft.colors.selected }]}><Icon size={18} color={ft.colors.selectedBorder}/></View>; }
 function PickerRow({ icon, label, description, value, minimum, maximum, onChange }: { icon: LucideIcon; label: string; description: string; value: number; minimum: number; maximum: number; onChange: (value: number) => void }) { const ft = useFlowTheme(); const minusDisabled = value <= minimum; const plusDisabled = value >= maximum; return <View style={styles.pickerRow}><PickerIcon icon={icon}/><View style={styles.rowCopy}><Text style={ft.styles.value}>{label}</Text><Text style={ft.styles.meta}>{description}</Text></View><View style={styles.counterActions}><CounterButton label={`Decrease ${label.toLowerCase()}`} disabled={minusDisabled} icon={Minus} onPress={() => onChange(Math.max(minimum, value - 1))}/><Text accessibilityLabel={`${value} ${label.toLowerCase()}`} style={[styles.count, { color: ft.colors.text }]}>{value}</Text><CounterButton label={`Increase ${label.toLowerCase()}`} disabled={plusDisabled} icon={Plus} onPress={() => onChange(Math.min(maximum, value + 1))}/></View></View>; }
 function CounterButton({ label, disabled, icon: Icon, onPress }: { label: string; disabled: boolean; icon: LucideIcon; onPress: () => void }) { const ft = useFlowTheme(); const color = disabled ? ft.colors.secondaryText : ft.colors.selectedBorder; return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ disabled }} disabled={disabled} onPress={onPress} style={styles.controlTarget}><View style={[styles.control, { borderColor: disabled ? ft.colors.border : ft.colors.selectedBorder }, disabled && styles.disabled]}><Icon accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" size={16} color={color}/></View></Pressable>; }
-const styles = StyleSheet.create({ pad:{padding:8},resultsEditForm:{gap:12},resultsEditFields:{borderWidth:1,borderRadius:16,overflow:"hidden"},resultsEditDivider:{height:1},resultsEditError:{paddingHorizontal:16,paddingTop:0,paddingBottom:8},error:{color:"#A21D25",fontSize:12,lineHeight:18,paddingHorizontal:12,paddingVertical:5},modalRoot:{flex:1,justifyContent:"flex-end"},scrim:{backgroundColor:SEARCH_PICKER_BACKDROP_COLOR},keyboardViewport:{flex:1},resultsDestinationKeyboard:{flex:1},resultsDestinationContent:{flex:1,paddingHorizontal:16,paddingTop:16,gap:14},resultsGuestsContent:{flex:1,paddingHorizontal:16,paddingTop:16},destinationOverlay:{flex:1,justifyContent:"flex-end"},destinationSheet:{borderTopLeftRadius:24,borderTopRightRadius:24,padding:20,gap:14,maxHeight:"90%"},destinationSearch:{minHeight:52,borderWidth:1,borderRadius:10,paddingHorizontal:14,flexDirection:"row",alignItems:"center",gap:10},destinationSearchInput:{flex:1,minWidth:0,fontSize:15},destinationResults:{flexShrink:1,minHeight:0},destinationList:{flexGrow:1},destinationChoice:{minHeight:76,flexDirection:"row",alignItems:"center",gap:12,borderBottomWidth:1,paddingVertical:10,paddingHorizontal:8},destinationStatus:{minHeight:120,textAlign:"center",paddingVertical:36,fontSize:14},link:{fontSize:14,fontWeight:"700",paddingVertical:10},sheetPosition:{justifyContent:"flex-end",maxHeight:"64%"},sheet:{borderTopLeftRadius:24,borderTopRightRadius:24,paddingHorizontal:15,paddingVertical:13,gap:8,maxHeight:"100%"},partyTitle:{fontSize:18,lineHeight:24,fontWeight:"800"},partyScroll:{flexShrink:1,minHeight:0},sheetContent:{paddingBottom:2,gap:9},pickerSection:{gap:5},sectionLabel:{fontSize:10,lineHeight:14,fontWeight:"700",letterSpacing:1.5},pickerCard:{borderWidth:1,borderRadius:14,overflow:"hidden"},pickerDivider:{height:1,marginHorizontal:14},pickerRow:{minHeight:62,flexDirection:"row",alignItems:"center",gap:8,paddingHorizontal:10,paddingVertical:6},pickerIcon:{width:36,height:36,borderRadius:18,flexShrink:0,alignItems:"center",justifyContent:"center"},rowCopy:{flex:1,minWidth:0,gap:2},counterActions:{flexShrink:0,flexDirection:"row",alignItems:"center",gap:2},controlTarget:{width:44,height:44,alignItems:"center",justifyContent:"center"},control:{width:34,height:34,borderRadius:17,borderWidth:1,alignItems:"center",justifyContent:"center"},disabled:{opacity:.4},count:{minWidth:20,textAlign:"center",fontSize:15,fontWeight:"800"},petRow:{minHeight:62,flexDirection:"row",alignItems:"center",gap:8,paddingHorizontal:10,paddingVertical:6},petCopy:{flex:1,minWidth:0,gap:2},petSwitchSlot:{width:52,flexShrink:0,alignItems:"flex-end",justifyContent:"center"} });
+const styles = StyleSheet.create({ standaloneForm:{padding:8},mainStack:{width:"100%",gap:8},mainCard:{width:"100%",borderWidth:1,borderRadius:15,overflow:"hidden"},mainSubmit:{marginTop:12,paddingHorizontal:4},resultsEditForm:{gap:12},resultsEditStack:{width:"100%",gap:10},resultsEditCard:{width:"100%",borderWidth:1,borderRadius:13,overflow:"hidden"},fieldGroup:{width:"100%"},resultsEditError:{paddingHorizontal:12,paddingTop:5,paddingBottom:0},error:{color:"#A21D25",fontSize:12,lineHeight:18,paddingHorizontal:12,paddingVertical:5},modalRoot:{flex:1,justifyContent:"flex-end"},scrim:{backgroundColor:SEARCH_PICKER_BACKDROP_COLOR},keyboardViewport:{flex:1},resultsDestinationKeyboard:{flex:1},resultsDestinationContent:{flex:1,paddingHorizontal:16,paddingTop:16,gap:14},resultsGuestsContent:{flex:1,paddingHorizontal:16,paddingTop:16},destinationOverlay:{flex:1,justifyContent:"flex-end"},destinationSheet:{height:"82%",borderTopLeftRadius:24,borderTopRightRadius:24,padding:20,gap:14},destinationSearch:{minHeight:52,borderWidth:1,borderRadius:10,paddingHorizontal:14,flexDirection:"row",alignItems:"center",gap:10},destinationSearchInput:{flex:1,minWidth:0,fontSize:15},destinationResultsViewport:{flex:1,minHeight:0},destinationResults:{flex:1,minHeight:0},destinationList:{flexGrow:1},destinationChoice:{minHeight:76,flexDirection:"row",alignItems:"center",gap:12,borderBottomWidth:1,paddingVertical:10,paddingHorizontal:8},destinationStatus:{minHeight:120,textAlign:"center",paddingVertical:36,fontSize:14},link:{fontSize:14,fontWeight:"700",paddingVertical:10},sheetPosition:{justifyContent:"flex-end",maxHeight:"64%"},sheet:{borderTopLeftRadius:24,borderTopRightRadius:24,paddingHorizontal:15,paddingVertical:13,gap:8,maxHeight:"100%"},partyTitle:{fontSize:18,lineHeight:24,fontWeight:"800"},partyScroll:{flexShrink:1,minHeight:0},sheetContent:{paddingBottom:2,gap:9},pickerSection:{gap:5},sectionLabel:{fontSize:10,lineHeight:14,fontWeight:"700",letterSpacing:1.5},pickerCard:{borderWidth:1,borderRadius:14,overflow:"hidden"},pickerDivider:{height:1,marginHorizontal:14},pickerRow:{minHeight:62,flexDirection:"row",alignItems:"center",gap:8,paddingHorizontal:10,paddingVertical:6},pickerIcon:{width:36,height:36,borderRadius:18,flexShrink:0,alignItems:"center",justifyContent:"center"},rowCopy:{flex:1,minWidth:0,gap:2},counterActions:{flexShrink:0,flexDirection:"row",alignItems:"center",gap:2},controlTarget:{width:44,height:44,alignItems:"center",justifyContent:"center"},control:{width:34,height:34,borderRadius:17,borderWidth:1,alignItems:"center",justifyContent:"center"},disabled:{opacity:.4},count:{minWidth:20,textAlign:"center",fontSize:15,fontWeight:"800"},petRow:{minHeight:62,flexDirection:"row",alignItems:"center",gap:8,paddingHorizontal:10,paddingVertical:6},petCopy:{flex:1,minWidth:0,gap:2},petSwitchSlot:{width:52,flexShrink:0,alignItems:"flex-end",justifyContent:"center"} });

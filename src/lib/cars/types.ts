@@ -8,6 +8,11 @@ export type CarSearchParams = {
   driverAge: string;
 };
 
+export type LocationBoundCarSearchParams = CarSearchParams & {
+  pickupLocationTarget?: import("../locations/searchTarget").SearchLocation;
+  dropoffLocationTarget?: import("../locations/searchTarget").SearchLocation;
+};
+
 export type CarTransmission = "automatic" | "manual";
 export type CarFuelPolicy = "full-to-full" | "same-to-same" | "other";
 export type CarMileagePolicy = "unlimited" | "limited";
@@ -27,8 +32,14 @@ export type CarCategory =
   | "van";
 
 export type CarOffer = {
+  carPresentation?: {
+    modelName: string; categoryLabel: string; imageUrl?: string; imageAlt: string;
+    specs: string[]; filterOptions?: string[];
+  };
+  suppliedFacts?: Array<{ label: string; value: string }>;
   id: string;
   bookingProviderName: string;
+  bookingProviderLogoUrl?: string;
   rentalCompanyName: string;
   currency: string;
   pricePerDay: number;
@@ -72,7 +83,9 @@ export type NormalizedCarResult = {
   importantInformation: string[];
   pickupInstructions?: string;
   offers: CarOffer[];
-  inventorySource: "kurioticket-static-cars";
+  inventorySource: "kurioticket-static-cars" | "kayak-sandbox";
+  /** Sandbox display overrides prevent required legacy defaults becoming claims. */
+  sandboxPresentation?: { specs: string[]; pickupLabel: string; filterOptions?: string[] };
 };
 
 export type CarInventoryStatus = "available" | "unavailable" | "invalid-search";

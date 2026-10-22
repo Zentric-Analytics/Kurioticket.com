@@ -13,7 +13,7 @@ test("source-contract: Cars compact toolbar is transparent, shrink-safe, and fiv
   assert.doesNotMatch(source, /pointer-events-none fixed inset-x-0 top-3/);
   assert.match(
     source,
-    /h-\[58px\].*max-w-\[920px\].*grid-cols-\[minmax\(0,1\.7fr\)_minmax\(0,1fr\)_minmax\(0,1\.1fr\)_minmax\(0,0\.85fr\)_104px\]/s,
+    /h-\[58px\][\s\S]*max-w-\[920px\][\s\S]*grid-cols-\[minmax\(0,1\.7fr\)_minmax\(0,1fr\)_minmax\(0,1\.1fr\)_minmax\(0,0\.85fr\)_104px\]/,
   );
   for (const section of ["locations", "dates", "times", "driverAge"])
     assert.match(source, new RegExp(`(?:\\[|,)\\s*"${section}"`));
@@ -24,126 +24,134 @@ test("source-contract: Cars compact toolbar is transparent, shrink-safe, and fiv
   assert.match(source, /driverAgeSummary/);
   assert.match(
     source,
-    /<span\s+title=\{summary\}\s+className="min-w-0 truncate whitespace-nowrap text-\[0\.86rem\] font-medium leading-5 text-slate-800"\s*>\s*\{summary\}\s*<\/span>/,
+    /<span\s+title=\{summary\}\s+className="min-w-0 truncate whitespace-nowrap text-\[15px\] font-semibold leading-5 tracking-\[-0\.005em\] text-\[#142033\]"\s*>\s*\{summary\}\s*<\/span>/,
   );
 });
 
-test("source-contract: phone and tablet filter launchers remain responsive", () => {
+test("source-contract: phone Cars filters use the Hotels pinned rail without a header Filter launcher", () => {
   const mobileControls = source.slice(
     source.indexOf("export function CarsResultsExperience"),
     source.indexOf("function SearchInputCell"),
   );
-  assert.match(source, /backdrop-blur[^"\n]*sm:hidden/);
-  assert.match(
-    mobileControls,
-    /onClick=\{\(event\) => openMobileFiltersDrawer\(event\.currentTarget\)\}/,
+  const shortcuts = source.slice(
+    source.lastIndexOf("<div", source.indexOf("data-cars-results-filter-origin")),
+    source.indexOf("data-cars-results-toolbar"),
   );
 
-  const resultsToolbar = source.slice(
-    source.indexOf("data-cars-results-toolbar"),
-    source.indexOf("{resultsTransitioning ?"),
+  assert.match(shortcuts, /data-cars-results-scroll-filter-bar/);
+  assert.doesNotMatch(shortcuts, /mobileResultsStyles\.scrollFilterBarHidden|mobileResultsStyles\.scrollFilterBarAnimated/);
+  assert.doesNotMatch(mobileControls, /mobileFiltersVisible|mobileFiltersAnimated|nextDirection|scrollFilterBarHidden/);
+  assert.doesNotMatch(
+    mobileControls,
+    /data-cars-results-mobile-header-filter|mobileNavFilterTarget|showMobileHeaderFilter/,
   );
-  const tabletFilterClass = resultsToolbar.match(
-    /className="([^"]*inline-flex[^"]*lg:hidden[^"]*)"/,
-  )?.[1];
-  assert.ok(tabletFilterClass);
-  for (const token of ["inline-flex", "lg:hidden"])
-    assert.ok(tabletFilterClass.split(" ").includes(token));
-  assert.equal(tabletFilterClass.split(" ").includes("hidden"), false);
   assert.match(
-    resultsToolbar,
-    /onClick=\{\(event\) => openMobileFiltersDrawer\(event\.currentTarget\)\}/,
+    shortcuts,
+    /onClick=\{\(event\) => openMobileFiltersDrawer\(event\.currentTarget, getOverlayActivationModality\(event\)\)\}/,
   );
 });
 
-test("source-contract: mobile Cars typography uses a restrained primary-secondary hierarchy", () => {
-  const compactHeader = source.slice(
-    source.indexOf("const renderMobileCompactResultsHeader"),
-    source.indexOf("\n  return (", source.indexOf("const renderMobileCompactResultsHeader")),
+test("source-contract: mobile Cars search typography now mirrors Hotels", () => {
+  const headerSearch = source.slice(
+    source.indexOf("const renderMobileHeaderSearch"),
+    source.indexOf("const renderCarsSearchForm"),
   );
-  assert.match(compactHeader, /text-\[15px\] font-bold[^\"]*text-\[#07133B\]/);
-  assert.match(compactHeader, /text-\[11px\] font-medium[^\"]*text-\[#536B92\]/);
-  assert.match(compactHeader, /text-\[14px\] font-semibold text-\[#07133B\]/);
-  assert.doesNotMatch(compactHeader, /font-extrabold/);
+  assert.match(headerSearch, /text-\[14px\] font-semibold[^"]*text-\[#142033\]/);
+  assert.match(headerSearch, /text-\[11px\] font-medium[^"]*text-\[#536B92\]/);
+  assert.match(headerSearch, /data-cars-results-mobile-header-search/);
+  assert.match(headerSearch, /data-cars-results-mobile-search-summary/);
+  assert.match(headerSearch, /mobileSearchSecondarySummary/);
+  assert.match(headerSearch, /bg-\[#F5F7FB\]/);
+  assert.match(headerSearch, /<SquarePen size=\{15\} strokeWidth=\{2\}/);
+  assert.doesNotMatch(headerSearch, /data-cars-results-mobile-search-fields/);
+  assert.doesNotMatch(headerSearch, /data-cars-results-mobile-search-location/);
+  assert.doesNotMatch(headerSearch, /data-cars-results-mobile-search-dates/);
+  assert.doesNotMatch(headerSearch, /gap-\[3px\]|<CalendarDays|<Car/);
 
   const quickFilters = source.slice(
     source.indexOf("data-cars-results-quick-filters"),
-    source.indexOf("data-cars-results-summary-row"),
+    source.indexOf("data-cars-results-toolbar"),
   );
-  assert.match(quickFilters, /text-sm font-semibold text-\[#07133B\]/);
-  assert.match(quickFilters, /text-sm font-semibold transition/);
+  assert.match(quickFilters, /text-\[13px\] font-semibold leading-4/);
+  assert.match(quickFilters, /border-\[#142033\] bg-\[#142033\] text-white/);
+  assert.match(quickFilters, /clearQuickFilterSelection\(group\.id\)/);
 });
 
-test("source-contract: Cars result count and Sort share a shrink-safe row", () => {
+test("source-contract: Cars count row omits the old pagination range", () => {
+  const summaryRow = source.slice(
+    source.lastIndexOf("<div", source.indexOf("data-cars-results-summary-row")),
+    source.indexOf("{appliedCarFilters.length"),
+  );
+  assert.match(summaryRow, /\.format\(visibleResults\.length\)/);
+  assert.doesNotMatch(summaryRow, /resultsDisplayRange|Showing results .* through|data-cars-results-visible-range/);
+});
+
+test("source-contract: Cars removes tracking from results while desktop count and Sort share a row", () => {
   const resultsToolbar = source.slice(
     source.lastIndexOf("<div", source.indexOf("data-cars-results-toolbar")),
     source.indexOf("{resultsTransitioning ?"),
   );
   const summaryRow = resultsToolbar.slice(
-    resultsToolbar.lastIndexOf(
-      "<div",
-      resultsToolbar.indexOf("data-cars-results-summary-row"),
-    ),
-    resultsToolbar.length,
+    resultsToolbar.lastIndexOf("<div", resultsToolbar.indexOf("data-cars-results-summary-row")),
+    resultsToolbar.indexOf("{appliedCarFilters.length"),
   );
 
   assert.match(resultsToolbar, /flex w-full min-w-0 flex-col items-start/);
-  assert.doesNotMatch(resultsToolbar, /flex-wrap/);
-  assert.match(
-    summaryRow,
-    /flex w-full min-w-0 flex-nowrap items-center justify-between gap-2/,
-  );
+  const toolbarClass = resultsToolbar.match(/className=\{cn\(\s*"([^"]+)",\s*!embedded && presentation === "standalone" && "max-sm:pt-6",\s*\)\}\s+data-cars-results-toolbar/)?.[1];
+  assert.ok(toolbarClass);
+  assert.equal(toolbarClass.split(" ").includes("flex-wrap"), false);
 
-  assert.match(
-    summaryRow,
-    /<h2[^>]*className="[^"]*min-w-0[^"]*flex-1[^"]*truncate[^"]*whitespace-nowrap/,
-  );
-  assert.doesNotMatch(summaryRow, /sr-only/);
+  assert.match(summaryRow, /grid w-full min-w-0 grid-cols-\[minmax\(0,1fr\)_auto\] items-center gap-x-1\.5 gap-y-0 px-2 max-\[359px\]:px-1 sm:gap-x-2/);
+  assert.match(summaryRow, /className=\{cn\("col-start-1 row-start-1 min-w-0", !embedded && "sm:row-start-2 lg:row-start-1 lg:min-w-max"\)\}/);
+  assert.match(summaryRow, /!embedded && "lg:grid-cols-\[minmax\(0,1fr\)_auto\] lg:gap-x-3 lg:gap-y-0"/);
+  assert.match(summaryRow, /lg:col-start-2 lg:row-start-1 lg:justify-self-end/);
+  assert.match(summaryRow, /<h2[^>]*className="[^"]*truncate[^"]*whitespace-nowrap/);
+  assert.match(summaryRow, /max-\[359px\]:text-\[11px\]/);
+  assert.doesNotMatch(summaryRow, /sr-only|flex-nowrap items-center justify-between/);
+
   assert.match(resultsToolbar, /visibleResults\.length === 1/);
-  assert.match(resultsToolbar, /"resultFound"/);
-  assert.match(resultsToolbar, /"resultsFound"/);
+  assert.match(resultsToolbar, /"resultFound"|"resultsFound"/);
   assert.match(resultsToolbar, /new Intl\.NumberFormat\(intlLocale/);
   assert.match(resultsToolbar, /\.format\(visibleResults\.length\)/);
 
-  assert.match(
-    summaryRow,
-    /className="flex min-w-0 max-w-full[^"]*justify-end/,
-  );
-  assert.ok(
-    summaryRow.indexOf("<h2") < summaryRow.indexOf("ref={carsSortRef}"),
-    "the visible count precedes the end-aligned Sort control",
-  );
-  assert.match(summaryRow, /className="shrink-0 whitespace-nowrap[^"\n]*"/);
-  assert.match(
-    resultsToolbar,
-    /className="relative inline-flex min-w-0 max-w-full shrink/,
-  );
-  assert.match(resultsToolbar, /className="inline-flex h-9 min-w-0 max-w-full/);
-  assert.match(
-    resultsToolbar,
-    /<span className="min-w-0 truncate whitespace-nowrap">\s*\{selectedCarSortLabel\}/,
-  );
-  assert.match(resultsToolbar, /"shrink-0 transition-transform duration-150"/);
+  assert.doesNotMatch(resultsToolbar, /<CarPriceAlertControl/);
+  assert.doesNotMatch(source, /data-cars-price-alert-sidebar-slot|desktopCarPriceAlertTarget/);
+  assert.ok(summaryRow.indexOf("<h2") < summaryRow.indexOf("ref={carsSortRef}"));
+  assert.match(summaryRow, /className=\{cn\("col-start-2 row-start-1 hidden[^"]*sm:flex sm:gap-2", !embedded && "sm:row-start-2 lg:col-start-2 lg:row-start-1 lg:justify-self-end lg:min-w-max lg:max-w-none"\)\}/);
+  assert.ok(summaryRow.indexOf("<h2") < summaryRow.indexOf("ref={carsSortRef}"));
+  assert.match(summaryRow, /className="cars-results-desktop-sort-label shrink-0 whitespace-nowrap[^"\n]*"/);
+  assert.match(resultsToolbar, /className="relative inline-flex min-w-0 max-w-full shrink[^"]*lg:max-w-none lg:shrink-0/);
+  assert.match(resultsToolbar, /cars-results-desktop-sort-trigger[^"]*lg:max-w-none/);
+  assert.match(resultsToolbar, /lg:tracking-\[-0\.005em\] lg:overflow-visible/);
+  assert.match(resultsToolbar, /className="cars-results-desktop-sort-trigger inline-flex h-9 min-w-0 max-w-full/);
+  assert.match(resultsToolbar, /<span className="min-w-0 truncate whitespace-nowrap">\s*\{selectedCarSortLabel\}/);
+  assert.match(resultsToolbar, /"shrink-0 text-current transition-transform duration-150"/);
 });
 
-test("source-contract: mobile Filter precedes the final count and Sort row", () => {
+test("source-contract: Cars keeps the full filter rail pinned in both directions with mobile Sort inside it", () => {
+  const shortcutsStart = source.indexOf("data-cars-results-filter-origin");
+  const toolbarStart = source.indexOf("data-cars-results-toolbar", shortcutsStart);
+  const summaryStart = source.indexOf("data-cars-results-summary-row", toolbarStart);
+  const shortcuts = source.slice(shortcutsStart, toolbarStart);
   const resultsToolbar = source.slice(
-    source.lastIndexOf("<div", source.indexOf("data-cars-results-toolbar")),
+    source.lastIndexOf("<div", toolbarStart),
     source.indexOf("{resultsTransitioning ?"),
   );
-  const filterStart = resultsToolbar.indexOf("ref={filtersButtonRef}");
-  const summaryStart = resultsToolbar.indexOf("data-cars-results-summary-row");
 
-  assert.ok(filterStart < summaryStart);
-  assert.ok(summaryStart < resultsToolbar.indexOf("ref={carsSortRef}"));
+  assert.ok(shortcutsStart >= 0);
+  assert.ok(shortcutsStart < toolbarStart);
+  assert.ok(toolbarStart < summaryStart);
   assert.match(
-    resultsToolbar.slice(filterStart, summaryStart),
-    /lg:hidden[\s\S]*onClick=\{\(event\) => openMobileFiltersDrawer\(event\.currentTarget\)\}/,
+    shortcuts,
+    /ref=\{filtersButtonRef\}[\s\S]*onClick=\{\(event\) => openMobileFiltersDrawer\(event\.currentTarget, getOverlayActivationModality\(event\)\)\}/,
   );
-  assert.match(
-    resultsToolbar.slice(summaryStart),
-    /data-cars-results-summary-row[\s\S]*<h2[\s\S]*ref=\{carsSortRef\}[\s\S]*<\/div>\s*<\/div>\s*$/,
-  );
+  assert.doesNotMatch(shortcuts, /mobileResultsStyles\.scrollFilterBarHidden|mobileResultsStyles\.scrollFilterBarAnimated/);
+  assert.doesNotMatch(source, /data-cars-results-mobile-header-filter/);
+  assert.match(shortcuts, /data-cars-sort-trigger/);
+  assert.match(shortcuts, /<span className="max-w-\[11rem\] truncate">Sort<\/span>/);
+  assert.match(resultsToolbar, /data-cars-results-summary-row/);
+  assert.doesNotMatch(resultsToolbar, /data-cars-sort-trigger/);
+  assert.match(resultsToolbar, /ref=\{carsSortRef\}/);
 });
 
 test("source-contract: Cars Sort menu accessibility and desktop filters remain", () => {

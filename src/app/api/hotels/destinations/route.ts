@@ -1,9 +1,12 @@
 import { NextResponse } from "next/server";
 
-import { searchCanonicalHotelCatalog } from "@/lib/locations/hotelCatalogService";
 import { normalizeCountryCode } from "@/lib/geo/context";
 import { extractVisitorIp, resolveIpinfoLiteCountryContext } from "@/lib/geo/ipinfo";
 import { countryToRegion, normalizeRegion } from "@/lib/region/detectRegion";
+import { discoverLocations } from "@/lib/locations/discovery";
+import { availableDiscoveryAdapters } from "@/lib/locations/providerDiscoveryAdapters";
+import { hotelDestinations } from "@/data/hotelDestinations";
+import { fromHotelDestination } from "@/lib/locations/adapters";
 
 const MIN_QUERY_LENGTH = 0;
 const MAX_QUERY_LENGTH = 80;
@@ -11,7 +14,6 @@ const MAX_LIMIT = 10;
 const SAFE_LOCALE = /^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})?$/;
 const SAFE_QUERY = /^[\p{L}\p{N}\s'.,\-()]+$/u;
 
-type HotelDestinationSource = "curated-destinations";
 type CountryResolutionSource = "selected" | "detected-param" | "request-header" | "ipinfo-lite" | "none";
 
 const normalizeCountryHint = (value: string | null) => {
@@ -82,22 +84,49 @@ export async function GET(request: Request) {
     return NextResponse.json({ suggestions: [] });
   }
 
+  if (!query) {
+    return NextResponse.json({
+      suggestions: [],
+      canonicalLocations: [],
+      provenance: { source: "provider-query-required", isLiveAvailability: false },
+      source: "provider-query-required",
+      recovery: {
+        kind: "continue-typing",
+        coverage: "none",
+        canSubmit: false,
+        canSubmitQuery: false,
+        message: "Enter a destination to check whether the connected hotel provider supports it.",
+      },
+      isLiveAvailability: false,
+    }, { headers: { "Cache-Control": "private, no-store" } });
+  }
+
   const { countryCode, countrySource } = await resolveCountryContext(
     request,
     selectedCountryCode,
     detectedCountryCode,
   );
 
-  const catalogResult = searchCanonicalHotelCatalog({ query, countryCode, locale, limit });
-  const canonicalLocations = catalogResult.suggestions.map((suggestion) => suggestion.canonical);
-
-  return NextResponse.json({
-    ...catalogResult,
-    canonicalLocations,
-    source: "curated-destinations" satisfies HotelDestinationSource,
-    countryCode: countryCode || null,
-    countrySource,
-    locale,
-    isLiveAvailability: false,
-  });
+  {
+    const discovery = await discoverLocations({ query, product: "hotels", catalog: hotelDestinations.map(fromHotelDestination), adapters: availableDiscoveryAdapters(request, "hotels"), limit, timeoutMs: 900, supportedByProviders: ["kayak"] });
+    const suggestions = discovery.suggestions.map((canonical) => ({
+      id: canonical.id, name: canonical.primaryLabel, region: canonical.region || (canonical.kind === "custom" ? "" : canonical.supportingLabel.split(",")[0]) || "",
+      country: canonical.country?.name || (canonical.kind === "custom" ? "" : canonical.supportingLabel.split(",").at(-1)?.trim()) || "",
+      countryCode: canonical.country?.code, kind: canonical.kind === "airport" ? "airport-area" : ["district", "landmark", "custom"].includes(canonical.kind) ? canonical.kind : "city",
+      searchValue: canonical.submittedValue, canonical,
+    }));
+    const providerUnavailable = discovery.sources.length === 0 || discovery.sources.some((source) => source.status !== "success");
+    return NextResponse.json({ suggestions, canonicalLocations: discovery.suggestions,
+      provenance: { source: "provider-discovery", isLiveAvailability: false },
+      recovery: suggestions.length ? undefined : {
+        kind: providerUnavailable ? "provider-unavailable" : "unsupported-location",
+        coverage: "none",
+        canSubmit: false,
+        canSubmitQuery: false,
+        message: providerUnavailable
+          ? "Hotel destination suggestions are temporarily unavailable. Please try again shortly."
+          : "No connected hotel provider recognizes this destination yet. Try a nearby city or airport.",
+      }, discovery: discovery.sources, source: "provider-discovery", countryCode: countryCode || null, countrySource, locale, isLiveAvailability: false },
+      { headers: { "Cache-Control": "private, no-store" } });
+  }
 }

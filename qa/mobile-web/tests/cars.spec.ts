@@ -4,6 +4,16 @@ import { collectSafariDiagnostics, installViewportEventRecorder, readViewportEve
 
 const carsResults = "/cars/results?pickupLocation=LAX%20Airport&dropoffLocation=LAX%20Airport&pickupDate=2026-09-10&pickupTime=10%3A00&dropoffDate=2026-09-12&dropoffTime=10%3A00&driverAge=42";
 
+async function expectDocumentFrozen(page: import("@playwright/test").Page, expectedScrollY: number) {
+  await page.mouse.move(2, 2);
+  await page.mouse.wheel(0, 1200);
+  await page.waitForTimeout(100);
+  expect(await page.evaluate(() => window.scrollY)).toBeCloseTo(expectedScrollY, 0);
+  await page.mouse.wheel(0, -1200);
+  await page.waitForTimeout(100);
+  expect(await page.evaluate(() => window.scrollY)).toBeCloseTo(expectedScrollY, 0);
+}
+
 test("Cars Edit Search records first-open, reopen, and Safari viewport geometry", async ({ page }, testInfo) => {
   await page.goto(carsResults, { waitUntil: "domcontentloaded" });
   await installViewportEventRecorder(page);
@@ -13,19 +23,113 @@ test("Cars Edit Search records first-open, reopen, and Safari viewport geometry"
   const modify = page.getByRole("button", { name: /modify search/i }).first();
   await expect(modify).toBeVisible();
   const beforeFirst = await collectSafariDiagnostics(page, "before-first-open");
+  const beforeFirstBodyStyles = await page.evaluate(() => ({
+    position: document.body.style.position,
+    top: document.body.style.top,
+    left: document.body.style.left,
+    right: document.body.style.right,
+    width: document.body.style.width,
+  }));
+  const editResultsMarker = page.locator("[data-cars-results-card-list]").first();
+  const beforeFirstResultsTop = await editResultsMarker.evaluate(
+    (element) => element.getBoundingClientRect().top,
+  );
   await modify.click();
   const overlay = page.locator("[data-mobile-results-overlay-root]");
   await expect(overlay).toBeVisible();
+  const editDialog = page.locator("[data-mobile-results-edit-sheet] [role=dialog]");
+  const editTitle = editDialog.getByRole("heading", { name: /edit search/i });
+  await expect(editTitle).toBeVisible();
+  const editBackdrop = page.locator(".mobile-results-sheet-cars-edit-backdrop");
+  await expect(editBackdrop).toBeVisible();
+  const lockedBody = await page.evaluate(() => ({
+    position: document.body.style.position,
+    top: document.body.style.top,
+    left: document.body.style.left,
+    right: document.body.style.right,
+    width: document.body.style.width,
+  }));
+  expect(lockedBody.position).toBe("fixed");
+  expect(Number.parseFloat(lockedBody.top || "0")).toBeCloseTo(-beforeFirst.viewport.scrollY, 0);
+  expect(lockedBody.left).toBe("0px");
+  expect(lockedBody.right).toBe("0px");
+  expect(lockedBody.width).toBe("100%");
+  const backdropGeometry = await editBackdrop.evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    const style = getComputedStyle(element);
+    return {
+      left: rect.left,
+      top: rect.top,
+      rightGap: window.innerWidth - rect.right,
+      bottomGap: window.innerHeight - rect.bottom,
+      backgroundColor: style.backgroundColor,
+    };
+  });
+  expect(backdropGeometry.left).toBeCloseTo(0, 0);
+  expect(backdropGeometry.top).toBeCloseTo(0, 0);
+  expect(backdropGeometry.rightGap).toBeCloseTo(0, 0);
+  expect(backdropGeometry.bottomGap).toBeCloseTo(0, 0);
+  expect(backdropGeometry.backgroundColor).toBe("rgba(8, 18, 35, 0.52)");
+  const editGeometry = await editDialog.evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    const style = getComputedStyle(element);
+    const title = element.querySelector("h2")?.getBoundingClientRect();
+    return {
+      left: rect.left,
+      rightGap: window.innerWidth - rect.right,
+      bottomGap: window.innerHeight - rect.bottom,
+      topLeftRadius: style.borderTopLeftRadius,
+      bottomLeftRadius: style.borderBottomLeftRadius,
+      dialogCenterX: rect.left + rect.width / 2,
+      titleCenterX: title ? title.left + title.width / 2 : null,
+    };
+  });
+  expect(editGeometry.left).toBeCloseTo(12, 0);
+  expect(editGeometry.rightGap).toBeCloseTo(12, 0);
+  expect(editGeometry.bottomGap).toBeCloseTo(12, 0);
+  expect(editGeometry.topLeftRadius).toBe("24px");
+  expect(editGeometry.bottomLeftRadius).toBe("24px");
+  expect(editGeometry.titleCenterX).not.toBeNull();
+  expect(editGeometry.titleCenterX!).toBeCloseTo(editGeometry.dialogCenterX, 0);
+  expect(
+    await editResultsMarker.evaluate((element) => element.getBoundingClientRect().top),
+  ).toBeCloseTo(beforeFirstResultsTop, 0);
   const firstOpen = await collectSafariDiagnostics(page, "first-open");
+  expect(firstOpen.viewport.scrollY).toBeCloseTo(beforeFirst.viewport.scrollY, 0);
   const firstScreenshot = testInfo.outputPath("cars-first-open.png");
   await page.screenshot({ path: firstScreenshot, fullPage: false });
   await testInfo.attach("Cars first open", { path: firstScreenshot, contentType: "image/png" });
 
   await page.getByRole("button", { name: /close edit search/i }).click();
+  await expect(page.locator(".mobile-results-sheet-cars-edit-surface")).toHaveClass(/mobile-results-sheet-surface-closing/);
+  expect(await page.evaluate(() => document.body.style.position)).toBe("fixed");
   await expect(overlay).toBeHidden();
+  expect(
+    await page.evaluate(() => ({
+      position: document.body.style.position,
+      top: document.body.style.top,
+      left: document.body.style.left,
+      right: document.body.style.right,
+      width: document.body.style.width,
+    })),
+  ).toEqual(beforeFirstBodyStyles);
+  expect(
+    await editResultsMarker.evaluate((element) => element.getBoundingClientRect().top),
+  ).toBeCloseTo(beforeFirstResultsTop, 0);
   const afterFirstClose = await collectSafariDiagnostics(page, "after-first-close");
   await modify.click();
   await expect(overlay).toBeVisible();
+  expect(await page.evaluate(() => document.body.style.position)).toBe("fixed");
+  const secondTitleCenter = await editDialog.evaluate((element) => {
+    const dialog = element.getBoundingClientRect();
+    const title = element.querySelector("h2")?.getBoundingClientRect();
+    return {
+      dialog: dialog.left + dialog.width / 2,
+      title: title ? title.left + title.width / 2 : null,
+    };
+  });
+  expect(secondTitleCenter.title).not.toBeNull();
+  expect(secondTitleCenter.title!).toBeCloseTo(secondTitleCenter.dialog, 0);
   const secondOpen = await collectSafariDiagnostics(page, "second-open");
   const secondScreenshot = testInfo.outputPath("cars-second-open.png");
   await page.screenshot({ path: secondScreenshot, fullPage: false });
@@ -37,22 +141,54 @@ test("Cars Edit Search records first-open, reopen, and Safari viewport geometry"
     await groupedRows.nth(index).getByRole("button").first().click();
     const picker = page.locator("[data-flight-mobile-picker-shell]");
     await expect(picker).toBeVisible();
+    const pickerOpen = await collectSafariDiagnostics(page, `open-${name}`);
+    expect(pickerOpen.viewport.scrollY).toBeCloseTo(secondOpen.viewport.scrollY, 0);
     await page.getByRole("button", { name: /back/i }).first().click();
     await expect(picker).toBeHidden();
     const returned = await collectSafariDiagnostics(page, `returned-from-${name}`);
     expect(returned.rects.dialog.top).toBeCloseTo(secondOpen.rects.dialog.top, 0);
     expect(returned.rects.dialog.bottom).toBeCloseTo(secondOpen.rects.dialog.bottom, 0);
+    expect(returned.viewport.scrollY).toBeCloseTo(secondOpen.viewport.scrollY, 0);
     nestedPickerReturns.push({ name, returned });
   }
 
+  // Gesture on the backdrop, rather than the internally scrollable sheet.
+  await page.mouse.move(2, 2);
   await page.mouse.wheel(0, 900);
   await page.waitForTimeout(500);
   const afterDownwardGesture = await collectSafariDiagnostics(page, "after-downward-scroll-input");
+  expect(afterDownwardGesture.viewport.scrollY).toBeCloseTo(secondOpen.viewport.scrollY, 0);
   await page.mouse.wheel(0, -900);
   await page.waitForTimeout(500);
   const afterUpwardGesture = await collectSafariDiagnostics(page, "after-upward-scroll-input");
+  expect(afterUpwardGesture.viewport.scrollY).toBeCloseTo(secondOpen.viewport.scrollY, 0);
+
+  const sheetContent = page.locator(".mobile-results-sheet-content");
+  const internalScroll = await sheetContent.evaluate((element) => {
+    const before = element.scrollTop;
+    element.scrollTop = Math.min(before + 200, element.scrollHeight - element.clientHeight);
+    return { before, after: element.scrollTop, canScroll: element.scrollHeight > element.clientHeight };
+  });
+  if (internalScroll.canScroll) expect(internalScroll.after).toBeGreaterThan(internalScroll.before);
+  const afterInternalScroll = await collectSafariDiagnostics(page, "after-sheet-internal-scroll");
+  expect(afterInternalScroll.viewport.scrollY).toBeCloseTo(secondOpen.viewport.scrollY, 0);
 
   await page.getByRole("button", { name: /close edit search/i }).click();
+  await expect(page.locator(".mobile-results-sheet-cars-edit-surface")).toHaveClass(/mobile-results-sheet-surface-closing/);
+  expect(await page.evaluate(() => document.body.style.position)).toBe("fixed");
+  await expect(overlay).toBeHidden();
+  expect(
+    await page.evaluate(() => ({
+      position: document.body.style.position,
+      top: document.body.style.top,
+      left: document.body.style.left,
+      right: document.body.style.right,
+      width: document.body.style.width,
+    })),
+  ).toEqual(beforeFirstBodyStyles);
+  expect(
+    await editResultsMarker.evaluate((element) => element.getBoundingClientRect().top),
+  ).toBeCloseTo(beforeFirstResultsTop, 0);
   const afterSecondClose = await collectSafariDiagnostics(page, "after-second-close");
   const events = await readViewportEvents(page);
   await writeArtifact("cars-investigation.json", {
@@ -69,4 +205,166 @@ test("Cars Edit Search records first-open, reopen, and Safari viewport geometry"
 
   expect(afterFirstClose.viewport.scrollY).toBe(beforeFirst.viewport.scrollY);
   expect(afterSecondClose.viewport.scrollY).toBe(beforeFirst.viewport.scrollY);
+});
+
+test("Cars full Filters and representative quick sheets freeze the document while their content scrolls", async ({ page }) => {
+  await page.goto(carsResults, { waitUntil: "domcontentloaded" });
+  await page.evaluate(() => window.scrollTo(0, Math.min(1400, document.body.scrollHeight - window.innerHeight)));
+  await page.waitForTimeout(500);
+  const originalScrollY = await page.evaluate(() => window.scrollY);
+  expect(originalScrollY).toBeGreaterThan(0);
+
+  const resultsMarker = page.locator("[data-cars-results-card-list]").first();
+  const fullBeforeTop = await resultsMarker.evaluate((element) => element.getBoundingClientRect().top);
+  const fullBeforeBodyStyles = await page.evaluate(() => ({
+    position: document.body.style.position,
+    top: document.body.style.top,
+  }));
+  await page.getByRole("button", { name: /^filters?$/i }).first().click();
+  const fullFilters = page.locator("[data-cars-mobile-filter-shell]");
+  await expect(fullFilters).toBeVisible();
+  expect(
+    await page.evaluate(() => ({
+      position: document.body.style.position,
+      top: document.body.style.top,
+    })),
+  ).toEqual(fullBeforeBodyStyles);
+  expect(await page.evaluate(() => window.scrollY)).toBeCloseTo(originalScrollY, 0);
+  expect(await resultsMarker.evaluate((element) => element.getBoundingClientRect().top)).toBeCloseTo(fullBeforeTop, 0);
+  await expectDocumentFrozen(page, originalScrollY);
+  const filterScroller = fullFilters.locator(".overflow-y-auto");
+  const fullFilterScroll = await filterScroller.evaluate((element) => {
+    const before = element.scrollTop;
+    element.scrollTop = Math.min(before + 300, element.scrollHeight - element.clientHeight);
+    return { before, after: element.scrollTop, canScroll: element.scrollHeight > element.clientHeight };
+  });
+  expect(fullFilterScroll.canScroll).toBe(true);
+  expect(fullFilterScroll.after).toBeGreaterThan(fullFilterScroll.before);
+  expect(await page.evaluate(() => window.scrollY)).toBeCloseTo(originalScrollY, 0);
+  await fullFilters.getByRole("button", { name: /close filters/i }).click();
+  await expect(fullFilters).toBeHidden();
+  expect(await page.evaluate(() => window.scrollY)).toBeCloseTo(originalScrollY, 0);
+  expect(await resultsMarker.evaluate((element) => element.getBoundingClientRect().top)).toBeCloseTo(fullBeforeTop, 0);
+
+  for (const launcher of [/sort by/i, /^price/i, /^vehicle type/i, /^transmission/i]) {
+    const button = page.getByRole("button", { name: launcher }).first();
+    await button.scrollIntoViewIfNeeded();
+    const beforeQuickScrollY = await page.evaluate(() => window.scrollY);
+    const beforeQuickTop = await resultsMarker.evaluate((element) => element.getBoundingClientRect().top);
+    const beforeQuickBodyStyles = await page.evaluate(() => ({
+      position: document.body.style.position,
+      top: document.body.style.top,
+      left: document.body.style.left,
+      right: document.body.style.right,
+      width: document.body.style.width,
+    }));
+    const chevron = button.locator("svg").last();
+    await expect(chevron).not.toHaveClass(/rotate-180/);
+    await button.click();
+    const sheet = page.locator("[data-cars-quick-sheet]");
+    await expect(sheet).toBeVisible();
+    await expect(sheet).toHaveClass(/mobile-results-sheet-surface-smooth/);
+    await expect(sheet).toHaveClass(/cars-results-quick-sheet-surface/);
+    await expect(sheet).toHaveClass(/shadow-none/);
+    await expect(sheet).toBeFocused();
+    const lockedBody = await page.evaluate(() => ({
+      position: document.body.style.position,
+      top: document.body.style.top,
+      left: document.body.style.left,
+      right: document.body.style.right,
+      width: document.body.style.width,
+    }));
+    expect(lockedBody.position).toBe("fixed");
+    expect(Number.parseFloat(lockedBody.top || "0")).toBeCloseTo(-beforeQuickScrollY, 0);
+    expect(lockedBody.left).toBe("0px");
+    expect(lockedBody.right).toBe("0px");
+    expect(lockedBody.width).toBe("100%");
+    const closeButton = sheet.getByRole("button", { name: "Close" });
+    await expect(closeButton).not.toBeFocused();
+    await expect(chevron).toHaveClass(/rotate-180/);
+
+    const scrim = page.locator("[data-cars-quick-sheet-scrim]");
+    await expect(scrim).toBeVisible();
+    const scrimGeometry = await scrim.evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      const style = getComputedStyle(element);
+      return {
+        left: rect.left,
+        top: rect.top,
+        rightGap: window.innerWidth - rect.right,
+        bottomGap: window.innerHeight - rect.bottom,
+        computedTop: style.top,
+        backgroundColor: style.backgroundColor,
+      };
+    });
+    expect(scrimGeometry.left).toBeCloseTo(0, 0);
+    expect(scrimGeometry.top).toBeCloseTo(0, 0);
+    expect(scrimGeometry.computedTop).toBe("0px");
+    expect(scrimGeometry.backgroundColor).toBe("rgba(8, 18, 35, 0.52)");
+    expect(scrimGeometry.rightGap).toBeCloseTo(0, 0);
+    expect(scrimGeometry.bottomGap).toBeCloseTo(0, 0);
+
+    await expect(page.locator("[data-cars-quick-sheet-cutout]")).toHaveCount(0);
+    const activeShortcutOpacity = await button.evaluate((element) => {
+      const point = element.firstElementChild instanceof HTMLElement
+        ? element.firstElementChild.getBoundingClientRect()
+        : element.getBoundingClientRect();
+      const hit = document.elementFromPoint(
+        point.left + Math.min(8, Math.max(1, point.width / 2)),
+        point.top + Math.min(8, Math.max(1, point.height / 2)),
+      );
+      return hit?.closest("[data-cars-quick-sheet-backdrop]") !== null;
+    });
+    expect(activeShortcutOpacity).toBe(true);
+
+    const quickGeometry = await sheet.evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      const style = getComputedStyle(element);
+      const header = element.querySelector("header");
+      const content = header?.nextElementSibling;
+      const close = element.querySelector<HTMLButtonElement>('button[aria-label="Close"]');
+      return {
+        left: rect.left,
+        rightGap: window.innerWidth - rect.right,
+        bottomGap: window.innerHeight - rect.bottom,
+        topLeftRadius: style.borderTopLeftRadius,
+        bottomLeftRadius: style.borderBottomLeftRadius,
+        boxShadow: style.boxShadow,
+        backgroundColor: style.backgroundColor,
+        headerBackgroundColor: header ? getComputedStyle(header).backgroundColor : "",
+        contentBackgroundColor: content ? getComputedStyle(content).backgroundColor : "",
+        closeBoxShadow: close ? getComputedStyle(close).boxShadow : "",
+      };
+    });
+    expect(quickGeometry.left).toBeCloseTo(12, 0);
+    expect(quickGeometry.rightGap).toBeCloseTo(12, 0);
+    expect(quickGeometry.bottomGap).toBeCloseTo(12, 0);
+    expect(quickGeometry.topLeftRadius).toBe("24px");
+    expect(quickGeometry.bottomLeftRadius).toBe("24px");
+    expect(quickGeometry.boxShadow).toBe("none");
+    expect(quickGeometry.backgroundColor).toBe("rgb(242, 244, 248)");
+    expect(quickGeometry.headerBackgroundColor).toBe(quickGeometry.backgroundColor);
+    expect(quickGeometry.contentBackgroundColor).toBe(quickGeometry.backgroundColor);
+    expect(quickGeometry.closeBoxShadow).toBe("none");
+    expect(await page.evaluate(() => window.scrollY)).toBeCloseTo(beforeQuickScrollY, 0);
+    expect(await resultsMarker.evaluate((element) => element.getBoundingClientRect().top)).toBeCloseTo(beforeQuickTop, 0);
+    await expectDocumentFrozen(page, beforeQuickScrollY);
+    await closeButton.click();
+    await expect(sheet).toHaveClass(/mobile-results-sheet-surface-closing/);
+    await expect(scrim).toHaveClass(/mobile-results-sheet-backdrop-layer-closing/);
+    expect(await page.evaluate(() => document.body.style.position)).toBe("fixed");
+    await expect(sheet).toBeHidden();
+    await expect(chevron).not.toHaveClass(/rotate-180/);
+    expect(
+      await page.evaluate(() => ({
+        position: document.body.style.position,
+        top: document.body.style.top,
+        left: document.body.style.left,
+        right: document.body.style.right,
+        width: document.body.style.width,
+      })),
+    ).toEqual(beforeQuickBodyStyles);
+    expect(await page.evaluate(() => window.scrollY)).toBeCloseTo(beforeQuickScrollY, 0);
+    expect(await resultsMarker.evaluate((element) => element.getBoundingClientRect().top)).toBeCloseTo(beforeQuickTop, 0);
+  }
 });

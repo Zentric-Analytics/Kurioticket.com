@@ -62,6 +62,25 @@ test("complete curated exploration crosses the same strict results boundary", ()
   assert.equal(resolveHotelResultsRoute(search!).resultsReady, true);
 });
 
+test("selected autocomplete destinations pass both the results route and API schema", () => {
+  const base = { destination: "France", checkIn: "2030-10-01", checkOut: "2030-10-08", guests: "1", rooms: "1" };
+  for (const destinationId of ["place:france", "place:paris-ile-de-france-france", "place:東京", "hotel:gb-london", "airport:CDG", "gb-london"]) {
+    const input = { ...base, destinationId };
+    const route = resolveHotelResultsRoute(input);
+    assert.equal(route.resultsReady, true, destinationId);
+    const api = hotelSearchSchema.safeParse({ ...input, guests: 1, rooms: 1 });
+    assert.equal(api.success, true, destinationId);
+    if (api.success) assert.equal(api.data.destinationId, destinationId);
+  }
+});
+
+test("autocomplete ID support does not admit arbitrary or ungated provider IDs", () => {
+  const base = { destination: "France", checkIn: "2030-10-01", checkOut: "2030-10-08", guests: "1", rooms: "1" };
+  for (const destinationId of ["place:", "place:../france", "place:france?x=1", "unknown:france", "kplace:123", "airport:INVALID", `place:${"a".repeat(121)}`]) {
+    assert.equal(resolveHotelResultsRoute({ ...base, destinationId }).resultsReady, false, destinationId);
+  }
+});
+
 test("web Hotel results reject malformed and out-of-range explicit occupancy", () => {
   const base = { destination: "London", checkIn: "2030-04-01", checkOut: "2030-04-03", guests: "2", rooms: "1" };
   for (const occupancy of [
@@ -96,9 +115,24 @@ test("incomplete native Hotel results replace history before ApprovedResultsScre
 });
 
 test("discovery intent hydrates each Hotel form without issuing a search", () => {
-  assert.match(webHotelForm, /useState\(initialDestination \|\| searchParams\.get\("destination"\) \|\| ""\)/);
+  assert.match(webHotelForm, /const initial = initialDestination \|\| urlDestination/);
+  assert.match(webHotelForm, /readHotelDestinationSelection\(searchParams\.get\("destinationLocation"\), urlDestination\)/);
+  assert.match(webHotelForm, /\? selected\.submittedValue : initial/);
   assert.doesNotMatch(webHotelForm, /fetch\("\/api\/hotels\/search"/);
   assert.match(nativeHotelForm, /initializeHotelForm\(params\)/);
   assert.match(nativeHotelForm, /router\[submitNavigation\]\(\{ pathname: "\/hotel-results"/);
   assert.doesNotMatch(nativeHotelForm, /travelApi\.searchHotels/);
+});
+
+test("web Hotel form preserves the canonical destination selected by the user", () => {
+  assert.match(webHotelForm, /initialDestinationId \?\? searchParams\.get\("destinationId"\) \?\? ""/);
+  assert.match(webHotelForm, /setDestinationId\(suggestion\.id\)/);
+  assert.match(webHotelForm, /params\.set\("destinationId", destinationId\)/);
+  assert.match(webHotelForm, /setDestinationId\(""\)/);
+  assert.match(webHotelForm, /onSelect=\{\(suggestion\) => \{ setDestinationId\(suggestion\.id\); setSelectedDestination\(suggestion\); \}\}/);
+  assert.match(webHotelForm, /writeHotelDestinationSelection\(params, selectedDestination, trimmedDestination\)/);
+  assert.match(resultsClient, /destinationLocation: searchInput\.destinationLocation/);
+  assert.match(webHotelForm, /destinationId: destinationId \|\| undefined/);
+  assert.match(resultsClient, /initialDestinationId=\{activeDesktopHotelSearchDraft\.destinationId\}/);
+  assert.match(resultsClient, /initialDestinationId=\{activeMobileHotelSearchDraft\.destinationId\}/);
 });

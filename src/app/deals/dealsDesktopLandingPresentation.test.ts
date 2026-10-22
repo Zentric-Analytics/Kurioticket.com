@@ -28,7 +28,7 @@ test("Deals hero is a clean high-resolution image without marketing copy or read
     /object-cover[\s\S]*pathname === "\/packages" \? "object-\[center_66%\] sm:object-\[center_52%\] lg:object-\[center_62%\]" : "object-\[center_52%\] lg:object-\[center_48%\]"/,
   );
   assert.doesNotMatch(page, /linear-gradient|bg-gradient/);
-  assert.doesNotMatch(page, /packages\.heroTitle|deals\.heroSubtitle|<h1/);
+  assert.doesNotMatch(page, /deals\.heroTitle|deals\.heroSubtitle|<h1/);
   assert.match(
     page,
     /pathname === "\/packages"\s*\? "packages-landing"\s*: "desktop-landing"/,

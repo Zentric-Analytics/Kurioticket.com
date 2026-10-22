@@ -1,7 +1,19 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { imageRemotePatterns, matchesImagePattern } from "./imagePatterns";
+import { imageLocalPatterns, imageRemotePatterns, matchesImagePattern } from "./imagePatterns";
+import { resolveCarResultImageSource } from "../lib/cars/carResultImage";
+
+test("Next Image accepts the current curated car image version without allowing arbitrary queries", () => {
+  const source = resolveCarResultImageSource("/images/cars/results/toyota-yaris.webp");
+  assert.ok(source);
+  const allowed = (path: string) => imageLocalPatterns.some((pattern) =>
+    matchesImagePattern(new URL(path, "https://example.test"), pattern));
+  assert.equal(allowed(source), true);
+  assert.equal(allowed(`${source}&unexpected=1`), false);
+  assert.equal(allowed("/images/cars/results/toyota-yaris.webp?v=unknown"), false);
+  assert.equal(allowed(source.replace("/cars/results/", "/other/")), false);
+});
 
 function isAllowedRemoteImage(value: string) {
   const url = new URL(value);

@@ -11,6 +11,15 @@ export type LocationKind = (typeof locationKinds)[number];
 export type TravelProduct = "flights" | "hotels" | "cars" | "packages";
 export type StaticCoverageLevel = "exact" | "broader" | "reference-only" | "none";
 
+export type LocationProviderBinding = {
+  /** Provider names are namespaces. This value is meaningful only to `provider`. */
+  provider: string;
+  value: string;
+  kind?: string;
+  verification: "verified" | "unverified";
+  provenance: "provider-discovery" | "catalogue" | "operator";
+};
+
 export type CanonicalLocation = {
   /** Stable, Kurioticket-owned identity. Provider identifiers must never be used here. */
   id: string;
@@ -22,11 +31,17 @@ export type CanonicalLocation = {
   country?: { code?: string; name?: string };
   region?: string;
   coordinates?: { latitude: number; longitude: number };
+  /** IANA time zone for the selected place when server discovery can resolve it. */
+  timeZone?: string;
   codes?: { iata?: string; icao?: string };
   aliases?: readonly string[];
   localizedSearchTerms?: Readonly<Record<string, readonly string[]>>;
   staticCoverage: Readonly<Record<TravelProduct, StaticCoverageLevel>>;
   providerIds?: Readonly<Record<string, string>>;
+  providerBindings?: readonly LocationProviderBinding[];
+  verification?: "verified" | "catalogue-only";
+  /** Opaque server-side provider-resolution identity included only in discovery responses. */
+  selectionToken?: string;
   source: { catalog: "kurioticket"; datasetVersion: string };
 };
 

@@ -8,6 +8,7 @@ import { resolveMaxMindGeoIpLocationForRequest } from "@/lib/geo/maxmind";
 import { extractVisitorIp, resolveIpinfoLiteCountryContext } from "@/lib/geo/ipinfo";
 import { FLIGHT_LOCATION_CATALOG_VERSION, fromFlightPlaceSuggestion } from "@/lib/locations/flightDiscovery";
 import { recordFlightLocationDiscovery } from "@/lib/locations/flightDiscoveryObservability";
+import { publicLocationSelection } from "@/lib/locations/selectionAuthority";
 import { searchCuratedPlaceSuggestions, searchDuffelPlaces } from "@/services/travel/providers/duffelProvider";
 
 const MIN_QUERY_LENGTH = 1;
@@ -91,7 +92,7 @@ export async function GET(request: Request) {
       return NextResponse.json(
         {
           suggestions: orderedFallbackSuggestions,
-          canonicalLocations: orderedFallbackSuggestions.map(fromFlightPlaceSuggestion),
+          canonicalLocations: orderedFallbackSuggestions.map(fromFlightPlaceSuggestion).map((location) => publicLocationSelection(location, "flights")),
           fallback: true,
           discovery: {
             source: "owned-catalog",
@@ -115,7 +116,7 @@ export async function GET(request: Request) {
     return NextResponse.json(
       {
         suggestions,
-        canonicalLocations: suggestions.map(fromFlightPlaceSuggestion),
+        canonicalLocations: suggestions.map(fromFlightPlaceSuggestion).map((location) => publicLocationSelection(location, "flights")),
         discovery: {
           source: hasLiveProviderSuggestion ? "live-provider-with-owned-catalog-fallback" : "owned-catalog",
           catalogVersion: FLIGHT_LOCATION_CATALOG_VERSION,
@@ -142,7 +143,7 @@ export async function GET(request: Request) {
     return NextResponse.json(
       {
         suggestions,
-        canonicalLocations: suggestions.map(fromFlightPlaceSuggestion),
+        canonicalLocations: suggestions.map(fromFlightPlaceSuggestion).map((location) => publicLocationSelection(location, "flights")),
         defaultOriginAirport: context === "origin" ? defaultOrigin?.airport ?? null : undefined,
         source: "curated",
         discovery: {

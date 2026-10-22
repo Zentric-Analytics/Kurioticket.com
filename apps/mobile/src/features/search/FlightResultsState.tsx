@@ -1,8 +1,10 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { AlertCircle, Search, SlidersHorizontal } from "lucide-react-native";
-import { useAppTheme } from "../../theme/AppTheme";
-import { ui } from "./SearchUi";
+import { useFlightResultsTheme as useAppTheme, useFlightResultsUi } from "./FlightResultsPresentationContext";
+import { ui as sharedUi } from "./SearchUi";
 import type { FlightResultsStateKind } from "./flightResultsStateModel";
+import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
+import { flightResultsUiCopy } from "./flightResultsSummary";
 
 export function FlightResultsState({
   state,
@@ -18,16 +20,19 @@ export function FlightResultsState({
   onAdjustFilters: () => void;
 }) {
   const { theme } = useAppTheme();
+  const ui = useFlightResultsUi(sharedUi);
+  const { locale } = useMobileLocalization();
+  const copy = flightResultsUiCopy(locale);
 
   const filtered = state === "filtered-empty";
   const error = state === "error";
   const Icon = filtered ? SlidersHorizontal : error ? AlertCircle : Search;
-  const title = filtered ? "No flights match your filters" : error ? "Couldn't load flights" : "No flights found";
+  const title = filtered ? copy.noFilterTitle : error ? copy.loadErrorTitle : copy.noResultsTitle;
   const body = filtered
-    ? "Try adjusting or clearing your filters."
+    ? copy.noFilterBody
     : error
-      ? "Something went wrong while loading your results."
-      : "We couldn't find flights for this search.";
+      ? copy.loadErrorBody
+      : copy.noResultsBody;
 
   return (
     <View accessibilityLiveRegion="polite" style={styles.state}>
@@ -38,14 +43,14 @@ export function FlightResultsState({
       <Text style={[styles.body, { color: theme.textSecondary }]}>{body}</Text>
       <View style={styles.actions}>
         <StateAction
-          accessibilityLabel={filtered ? "Clear flight filters" : error ? "Retry loading flights" : "Edit flight search"}
-          label={filtered ? "Clear filters" : error ? "Try again" : "Edit search"}
+          accessibilityLabel={filtered ? copy.clearFilters : error ? copy.tryAgain : copy.editSearch}
+          label={filtered ? copy.clearFilters : error ? copy.tryAgain : copy.editSearch}
           onPress={filtered ? onClearFilters : error ? onRetry : onEditSearch}
         />
         {filtered ? (
-          <StateAction accessibilityLabel="Adjust flight filters" label="Adjust filters" onPress={onAdjustFilters} secondary />
+          <StateAction accessibilityLabel={copy.adjustFilters} label={copy.adjustFilters} onPress={onAdjustFilters} secondary />
         ) : error ? (
-          <StateAction accessibilityLabel="Edit flight search" label="Edit search" onPress={onEditSearch} secondary />
+          <StateAction accessibilityLabel={copy.editSearch} label={copy.editSearch} onPress={onEditSearch} secondary />
         ) : null}
       </View>
     </View>
@@ -59,6 +64,7 @@ function StateAction({ accessibilityLabel, label, onPress, secondary = false }: 
   secondary?: boolean;
 }) {
   const { theme } = useAppTheme();
+  const ui = useFlightResultsUi(sharedUi);
   return (
     <Pressable
       accessibilityRole="button"

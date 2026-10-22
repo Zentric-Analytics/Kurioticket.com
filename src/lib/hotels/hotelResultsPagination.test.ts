@@ -7,6 +7,10 @@ import {
   HOTEL_RESULTS_PAGE_SIZE,
   paginateHotelResults,
 } from "./hotelResultsPagination";
+import type { HotelPaginationItem } from "./hotelResultsPagination";
+
+const compactHotels: number[] = buildHotelResultsPaginationItems(7, 13, true);
+const desktopHotels: HotelPaginationItem[] = buildHotelResultsPaginationItems(7, 13);
 
 test("paginates hotel result boundaries after sorting and filtering", () => {
   assert.equal(HOTEL_RESULTS_PAGE_SIZE, 20);
@@ -25,4 +29,14 @@ test("builds complete and condensed numbered pagination", () => {
   assert.deepEqual(buildHotelResultsPaginationItems(1, 13), [1, 2, 3, 4, 5, "ellipsis", 13]);
   assert.deepEqual(buildHotelResultsPaginationItems(7, 13), [1, "ellipsis", 6, 7, 8, "ellipsis", 13]);
   assert.deepEqual(buildHotelResultsPaginationItems(13, 13), [1, "ellipsis", 9, 10, 11, 12, 13]);
+});
+
+test("builds a clamped three-page compact mobile window without ellipses", () => {
+  assert.deepEqual(compactHotels, [6, 7, 8]);
+  assert.deepEqual(desktopHotels, [1, "ellipsis", 6, 7, 8, "ellipsis", 13]);
+  assert.deepEqual(buildHotelResultsPaginationItems(2, 3, true), [1, 2, 3]);
+  assert.deepEqual(buildHotelResultsPaginationItems(1, 13, true), [1, 2, 3]);
+  assert.deepEqual(buildHotelResultsPaginationItems(7, 13, true), [6, 7, 8]);
+  assert.deepEqual(buildHotelResultsPaginationItems(13, 13, true), [11, 12, 13]);
+  assert.deepEqual(buildHotelResultsPaginationItems(99, 13, true), [11, 12, 13]);
 });

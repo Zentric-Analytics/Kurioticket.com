@@ -2,7 +2,7 @@
 
 import { ChangeEvent, KeyboardEvent, RefObject, useCallback, useEffect, useId, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
-import { Building2, LocateFixed, MapPin, Plane } from "lucide-react";
+import { Building2, CarFront, LocateFixed, MapPin, Plane } from "lucide-react";
 
 import type { CarLocationSuggestion, CarLocationSuggestionKind } from "@/lib/cars/carLocationSuggestions";
 import { carsDesktopPopoverClassName, useCarsDesktopPopover } from "./useCarsDesktopPopover";
@@ -40,9 +40,10 @@ type Props = {
   onOpenChange?: (open: boolean) => void;
   autoFocus?: boolean;
   mobileShell?: boolean;
+  desktopResultsPresentation?: boolean;
 };
 
-type ApiResponse = { suggestions?: CarLocationSuggestion[]; source?: "local-fallback" };
+type ApiResponse = { suggestions?: CarLocationSuggestion[]; recovery?: { message?: string } };
 
 const kindIcon: Record<CarLocationSuggestionKind, typeof MapPin> = {
   airport: Plane,
@@ -69,6 +70,7 @@ export function CarLocationAutocomplete({
   onOpenChange,
   autoFocus = false,
   mobileShell = false,
+  desktopResultsPresentation = false,
 }: Props) {
   const reactId = useId().replace(/:/g, "");
   const listboxId = `${id}-${reactId}-listbox`;
@@ -77,7 +79,6 @@ export function CarLocationAutocomplete({
   const panelRef = useRef<HTMLDivElement | null>(null);
   const activeInputRef = inputRef ?? fallbackRef;
   const [internalOpen, setInternalOpen] = useState(false);
-  const [hasUserEditedQuery, setHasUserEditedQuery] = useState(false);
   const [suggestions, setSuggestions] = useState<CarLocationSuggestion[]>([]);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const open = isOpen ?? internalOpen;
@@ -98,16 +99,27 @@ export function CarLocationAutocomplete({
   }, [isOpen, onOpenChange]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
+  const [recoveryMessage, setRecoveryMessage] = useState("");
   const requestIdRef = useRef(0);
   const abortRef = useRef<AbortController | null>(null);
   const trimmedQuery = value.trim();
-  const showPanel = usesDesktopPanel
-    ? open && hasUserEditedQuery && trimmedQuery.length > 0
-    : open;
+  const [previousQuery, setPreviousQuery] = useState(trimmedQuery);
+  if (previousQuery !== trimmedQuery) {
+    setPreviousQuery(trimmedQuery);
+    setSuggestions([]);
+    setLoading(false);
+    setError(false);
+    setRecoveryMessage("");
+    setHighlightedIndex(-1);
+  }
+  const showPanel =
+    usesDesktopPanel && desktopResultsPresentation
+      ? open && trimmedQuery.length >= 1
+      : open;
   const { placement, popoverRef, style } = useCarsDesktopPopover({
     open: showPanel && usesDesktopPanel,
     launcherRef: activeInputRef,
-    preferredWidth: 420,
+    preferredWidth: desktopResultsPresentation ? 340 : 420,
     desiredHeight: 320,
     maxHeight: 320,
     providedPopoverRef: panelRef,
@@ -121,15 +133,16 @@ export function CarLocationAutocomplete({
   }, [open]);
 
   useEffect(() => {
-    if (usesDesktopPanel && (!hasUserEditedQuery || !trimmedQuery)) {
+    if (
+      usesDesktopPanel &&
+      desktopResultsPresentation &&
+      trimmedQuery.length < 1
+    ) {
       requestIdRef.current += 1;
       abortRef.current?.abort();
       abortRef.current = null;
-      setSuggestions([]);
-      setLoading(false);
-      setError(false);
-      setHighlightedIndex(-1);
-      if (open) setOpen(false);
+      // Query changes already clear these states before rendering. This effect
+      // only owns request cancellation, not a second synchronous reset.
       return;
     }
     if (!open || disabled) return;
@@ -140,18 +153,24 @@ export function CarLocationAutocomplete({
     const timeout = window.setTimeout(() => {
       setLoading(true);
       setError(false);
-      const params = new URLSearchParams({ q: trimmedQuery, limit: "8" });
+      const params = new URLSearchParams({
+        q: trimmedQuery,
+        limit:
+          usesDesktopPanel && desktopResultsPresentation ? "6" : "8",
+      });
       if (countryHint && /^[A-Za-z]{2}$/.test(countryHint)) params.set("country", countryHint.toUpperCase());
       fetch(`/api/cars/locations?${params.toString()}`, { signal: controller.signal, cache: "no-store" })
         .then((response) => (response.ok ? response.json() : Promise.reject(new Error("Location suggestions unavailable"))))
         .then((data: ApiResponse) => {
           if (requestId !== requestIdRef.current) return;
           setSuggestions(Array.isArray(data.suggestions) ? data.suggestions : []);
+          setRecoveryMessage(typeof data.recovery?.message === "string" ? data.recovery.message : "");
           setHighlightedIndex(-1);
         })
         .catch((fetchError: unknown) => {
           if ((fetchError as { name?: string }).name === "AbortError" || requestId !== requestIdRef.current) return;
           setSuggestions([]);
+          setRecoveryMessage("");
           setError(true);
         })
         .finally(() => {
@@ -163,7 +182,14 @@ export function CarLocationAutocomplete({
       window.clearTimeout(timeout);
       controller.abort();
     };
-  }, [countryHint, disabled, hasUserEditedQuery, open, setOpen, trimmedQuery, usesDesktopPanel]);
+  }, [
+    countryHint,
+    desktopResultsPresentation,
+    disabled,
+    open,
+    trimmedQuery,
+    usesDesktopPanel,
+  ]);
 
   useEffect(() => {
     if (!open || !usesDesktopPanel) return;
@@ -187,40 +213,21 @@ export function CarLocationAutocomplete({
 
   const selectSuggestion = (suggestion: CarLocationSuggestion) => {
     onValueChange(suggestion.value);
-    setHasUserEditedQuery(false);
     onSelect?.(suggestion);
     close();
   };
 
   const onChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const nextValue = event.target.value;
-    const nextQuery = nextValue.trim();
-    onValueChange(nextValue);
-    if (usesDesktopPanel) {
-      setHasUserEditedQuery(nextQuery.length > 0);
-      if (!nextQuery) {
-        requestIdRef.current += 1;
-        abortRef.current?.abort();
-        abortRef.current = null;
-        setSuggestions([]);
-        setLoading(false);
-        setError(false);
-        setHighlightedIndex(-1);
-        setOpen(false);
-        return;
-      }
-    }
+    onValueChange(event.target.value);
     setOpen(true);
   };
 
   const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
     if (event.key === "ArrowDown") {
-      if (usesDesktopPanel && (!hasUserEditedQuery || !trimmedQuery)) return;
       event.preventDefault();
       setOpen(true);
       setHighlightedIndex((current) => Math.min(suggestions.length - 1, current + 1));
     } else if (event.key === "ArrowUp") {
-      if (usesDesktopPanel && (!hasUserEditedQuery || !trimmedQuery)) return;
       event.preventDefault();
       setOpen(true);
       setHighlightedIndex((current) => Math.max(0, current === -1 ? suggestions.length - 1 : current - 1));
@@ -247,7 +254,9 @@ export function CarLocationAutocomplete({
       ? strings.locationSuggestions
       : strings.popularLocations;
   const panelClass = usesDesktopPanel
-    ? `${carsDesktopPopoverClassName} overflow-y-auto overscroll-contain p-2`
+    ? desktopResultsPresentation
+      ? `${carsDesktopPopoverClassName} overflow-y-auto overscroll-contain p-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden`
+      : `${carsDesktopPopoverClassName} overflow-y-auto overscroll-contain p-2`
     : mobileShell
       ? "mt-4 overflow-y-auto border-t border-slate-200 bg-white pt-2"
       : "mt-4 max-h-[48vh] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-2 shadow-sm";
@@ -255,12 +264,57 @@ export function CarLocationAutocomplete({
   const panelContent = (
     <>
       {!usesDesktopPanel ? <div className="px-3 pb-2 pt-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">{label}</div> : null}
-      <p id={statusId} role="status" aria-live="polite" className={loading || error || suggestions.length === 0 ? "px-3 py-3 text-sm font-semibold text-slate-600" : "sr-only"}>{loading ? strings.loadingSuggestions : error ? `${strings.suggestionsUnavailable} ${strings.continueTypingManually}` : suggestions.length === 0 ? `${strings.noMatchingLocations} ${strings.continueTypingManually}` : `${suggestions.length} ${label}`}</p>
+      <p id={statusId} role="status" aria-live="polite" className={loading || error || suggestions.length === 0 ? "px-3 py-3 text-sm font-semibold text-slate-600" : "sr-only"}>{loading ? strings.loadingSuggestions : error ? `${strings.suggestionsUnavailable} ${strings.continueTypingManually}` : suggestions.length === 0 ? recoveryMessage || `${strings.noMatchingLocations} ${strings.continueTypingManually}` : `${suggestions.length} ${label}`}</p>
       <div role="listbox" id={listboxId} aria-label={label}>
         {suggestions.map((suggestion, index) => {
           const Icon = kindIcon[suggestion.kind];
           const selected = index === highlightedIndex;
           const typeLabel = suggestion.kind === "airport" ? strings.airport : suggestion.kind === "city" ? strings.city : suggestion.kind === "area" ? strings.area : strings.customLocation;
+          const primaryLabel =
+            suggestion.kind === "custom"
+              ? `${strings.useTypedLocation}: ${suggestion.value}`
+              : suggestion.canonical?.primaryLabel ?? suggestion.primaryText;
+          const supportingLabel =
+            suggestion.kind === "custom"
+              ? strings.unverifiedTypedLocation
+              : suggestion.canonical?.supportingLabel ?? suggestion.secondaryText;
+
+          if (usesDesktopPanel && desktopResultsPresentation) {
+            return (
+              <button
+                key={suggestion.id}
+                id={`${listboxId}-option-${index}`}
+                type="button"
+                role="option"
+                aria-selected={selected}
+                onMouseDown={(event) => event.preventDefault()}
+                onMouseEnter={() => setHighlightedIndex(index)}
+                onClick={() => selectSuggestion(suggestion)}
+                data-cars-results-location-option
+                className={`flex w-full cursor-pointer items-center gap-2.5 rounded-xl px-3 py-2.5 text-start transition-colors ${selected ? "bg-[#004BB8]/8" : "hover:bg-slate-50"}`}
+              >
+                <span
+                  aria-hidden="true"
+                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-50 text-slate-500"
+                  data-cars-results-location-icon
+                >
+                  <CarFront className="h-4 w-4" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-semibold text-slate-950">
+                    {primaryLabel}
+                  </span>
+                  <span className="mt-0.5 block truncate text-xs font-medium text-slate-600">
+                    {supportingLabel}
+                  </span>
+                </span>
+                <span className="shrink-0 rounded-full bg-slate-100 px-2 py-1 text-[11px] font-bold text-slate-600">
+                  {typeLabel}
+                </span>
+              </button>
+            );
+          }
+
           return (
             <button
               key={suggestion.id}
@@ -277,8 +331,8 @@ export function CarLocationAutocomplete({
                 <Icon className="h-4 w-4" aria-hidden="true" />
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-bold">{suggestion.kind === "custom" ? `${strings.useTypedLocation}: ${suggestion.value}` : suggestion.canonical?.primaryLabel ?? suggestion.primaryText}</span>
-                <span className="block truncate text-xs font-semibold text-slate-500">{suggestion.kind === "custom" ? strings.unverifiedTypedLocation : suggestion.canonical?.supportingLabel ?? suggestion.secondaryText}</span>
+                <span className="block truncate text-sm font-bold">{primaryLabel}</span>
+                <span className="block truncate text-xs font-semibold text-slate-500">{supportingLabel}</span>
               </span>
               {suggestion.airportCode ? <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-black text-slate-700">{suggestion.airportCode}</span> : null}
               <span className="shrink-0 rounded-full border border-slate-200 px-2 py-1 text-[11px] font-bold text-slate-500">{typeLabel}</span>
@@ -298,9 +352,8 @@ export function CarLocationAutocomplete({
         type="text"
         value={value}
         onChange={onChange}
-        onFocus={() => {
-          if (!usesDesktopPanel) setOpen(true);
-        }}
+        onFocus={() => setOpen(true)}
+        onClick={() => setOpen(true)}
         onBlur={(event) => {
           if (usesDesktopPanel && !panelRef.current?.contains(event.relatedTarget as Node | null)) close();
         }}

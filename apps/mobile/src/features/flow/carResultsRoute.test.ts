@@ -9,43 +9,64 @@ test("car results route mounts the active approved car results surface", () => {
   assert.match(travelResults, /product === "car".*ApprovedCarResultsScreen/);
 });
 
-test("approved car results use the live API contract and open the native detail route", () => {
+test("approved car results use live canonical inventory and inline safe provider offer handoffs", () => {
   const screen = readFileSync("src/features/search/ApprovedCarResultsScreen.tsx", "utf8");
+  const card = readFileSync("src/features/search/CarResultCard.tsx", "utf8");
+  const picker = readFileSync("src/features/search/NativeCarResultOfferPicker.tsx", "utf8");
+  const deals = readFileSync("src/features/search/nativeCarResultDeals.ts", "utf8");
   assert.match(screen, /travelApi\.searchCars/);
   assert.match(screen, /safeCanonicalCarResult/);
   assert.match(screen, /canonicalResultsWereSilentlyLost/);
-  assert.match(screen, /pathname:\s*"\/car-details"/);
-  assert.match(screen, /result:\s*JSON\.stringify\(result\)/);
-  assert.doesNotMatch(screen, /Linking\.openURL/);
-  assert.match(screen, /CarResultCard/);
+  assert.match(screen, /<CarResultCard result=\{item\}/);
+  assert.doesNotMatch(screen, /pathname:\s*"\/car-details"|carResultsStack|const openDeal=/);
+  assert.match(card, /<NativeCarResultOfferPicker result=\{result\}/);
+  assert.doesNotMatch(card, /nativeCarPrimaryBookingUrl\(result\)/);
+  assert.match(picker, /onPress=\{bookingUrl \? \(\) => void openProviderInApp\(bookingUrl\) : undefined\}/);
+  assert.match(picker, /WebBrowser\.openBrowserAsync\(url, \{ dismissButtonStyle: "close" \}\)/);
+  assert.doesNotMatch(picker, /Linking\.openURL/);
+  assert.match(deals, /getCarDealPickerGroups\(result\)/);
+  assert.match(deals, /validHttpsBookingUrl\(offer\.bookingUrl\)/);
   assert.doesNotMatch(screen, /Hertz|Enterprise|Toyota RAV4|Chevrolet Tahoe/);
 });
 
-test("car card matches the mobile Web identity, four-spec and conversion hierarchy", () => {
+test("car card preserves identity and four provider-aware specs while presenting only the converted daily price", () => {
   const card = readFileSync("src/features/search/CarResultCard.tsx", "utf8");
-  for (const field of ["modelName", "categoryLabel", "passengers", "bags", "doors", "transmission", "freeCancellation", "pickupLocation", "pricePerDay", "totalPrice"]) {
-    assert.match(card, new RegExp(`result\\.${field}|offer\\?\\.${field}|offer\\.${field}`));
-  }
-  assert.match(card, />View car<\/Text>/);
+  const picker = readFileSync("src/features/search/NativeCarResultOfferPicker.tsx", "utf8");
+  const providerPresentation = readFileSync("src/features/search/nativeCarProviderPresentation.ts", "utf8");
+  for (const field of ["modelName", "categoryLabel", "pickupLocation"]) assert.match(card, new RegExp(`result\\.${field}`));
+  assert.match(card, /offer\?\.freeCancellation/);
+  assert.match(picker, /displayed\.pricePerDay/);
+  assert.match(card, /nativeCarPrimarySpecLabels\(result\)/);
+  for (const field of ["passengers", "bags", "doors", "transmission"]) assert.match(providerPresentation, new RegExp(`result\\.${field}`));
+  assert.match(providerPresentation, /sandboxPresentation\?\.specs/);
+  assert.doesNotMatch(card, /offer\.totalPrice|offer\??\.taxesAndFeesIncluded|includes taxes & fees|taxes & fees shown where known/);
+  assert.match(picker, />View deal<\/Text>/);
+  assert.doesNotMatch(card, />View car<\/Text>/);
   assert.match(card, /Share\.share/);
   assert.match(card, /getPrimaryCarOffer\(result\)/);
   assert.doesNotMatch(card, /result\.offers\[0\]/);
   assert.doesNotMatch(card, /supplierRating|supplierReviewCount|Unlimited mileage|Pay at pickup/);
 });
 
-test("car results reproduce the rendered mobile Web summary, controls and count hierarchy", () => {
+test("car results preserve controls and count with one continuous virtualized list beneath the native header", () => {
   const screen = readFileSync("src/features/search/ApprovedCarResultsScreen.tsx", "utf8");
-  assert.match(screen, /accessibilityLabel="Edit car search"/);
+  assert.match(screen, /<CarResultsHeader/);
+  assert.match(screen, /accessibilityLabel=\{`Edit car search\./);
+  assert.doesNotMatch(screen, /\bTopBar\b/);
+  assert.doesNotMatch(screen, /\bBottomNav\b/);
   assert.match(screen, /<CarFilterSheet/);
   assert.match(screen, /carQuickFilterGroupIds/);
-  assert.match(screen, /filterCarResults\(results,filters\)/);
+  assert.match(screen, /filterCarResults\(results,filters,pricePerDay\)/);
   assert.match(screen, /sortCarResults\(/);
   assert.doesNotMatch(screen, /cycle\(|priceFilter|setCategory|setCompany|Rental company/);
-  assert.match(screen, /\{filtered\.length\} results found/);
-  assert.match(screen, /const pageSize=20/);
-  assert.match(screen, /const visible=filtered\.slice/);
-  assert.match(screen, /Page \{page\} of \{totalPages\}/);
-  assert.match(screen, /Sort by:/);
+  assert.match(screen, /carResultCountLabel\(filtered\.length\)/);
+  assert.doesNotMatch(screen, /style=\{r\.range\}|range:\{/);
+  assert.match(screen, /<FlatList ref=\{carScrollRef\}/);
+  assert.match(screen, /data=\{listData\}/);
+  assert.match(screen, /renderItem=\{\(\{item,index\}\)=>/);
+  assert.doesNotMatch(screen, /pageSize|totalPages|filtered\.slice|Page \{page\}/);
+  assert.match(screen, /<CarResultsShortcut label=\{sort/);
+  assert.doesNotMatch(screen, /Sort by:/);
   assert.doesNotMatch(screen, /<DateStrip/);
   assert.doesNotMatch(screen, /Prices include taxes & fees when reported/);
 });
@@ -60,21 +81,19 @@ test("car details retain selected result context and can truthfully recover it",
   assert.match(detail, /parseResult\(one\(params\.result\)\)/);
   assert.match(detail, /travelApi\.searchCars/);
   assert.match(detail, /item\.id===one\(params\.resultId\)/);
-  for (const field of ["pickupLocation", "returnLocation", "passengers", "bags", "transmission", "airConditioning", "mileagePolicy", "fuelPolicy", "minimumDriverAge", "offers"]) {
+  for (const field of ["pickupLocation", "returnLocation", "passengers", "bags", "transmission", "airConditioning", "fuelPolicy", "offers"]) {
     assert.match(detail, new RegExp(`result\\.${field}`));
   }
 });
 
-test("car details only enable external booking for a real HTTPS provider URL", () => {
+test("standalone car detail keeps provider URLs in state while matching the inert web CTA", () => {
   const detail = readFileSync("src/features/search/ApprovedCarDetailScreen.tsx", "utf8");
   const state = readFileSync("src/features/search/carDetailState.ts", "utf8");
-  assert.match(detail, /canBookCarOffer\(result\.searchPolicy\.bookable,selected\)/);
   assert.match(state, /url\.protocol === "https:"/);
   assert.match(state, /Boolean\(url\.hostname\)/);
-  assert.match(detail, /disabled=\{!bookable\}/);
-  assert.match(detail, /Linking\.openURL\(selected\.bookingUrl\)/);
-  assert.match(detail, /No live provider booking link is available/);
-  assert.match(detail, /Button external/);
+  assert.match(detail, /accessibilityState=\{\{disabled:true\}\}/);
+  assert.match(detail, /disabled style=\{s\.continue\}/);
+  assert.doesNotMatch(detail, /Linking\.openURL\(offer\.bookingUrl\)/);
 });
 
 test("car result and details share the account-backed canonical save store", () => {
@@ -82,7 +101,7 @@ test("car result and details share the account-backed canonical save store", () 
   const detail = readFileSync("src/features/search/ApprovedCarDetailScreen.tsx", "utf8");
   const store = readFileSync("src/features/search/carSavedState.ts", "utf8");
   assert.match(card, /useSavedCar\(result, searchParams\)/);
-  assert.match(detail, /useSavedCar\(result,params\)/);
+  assert.match(detail, /useSavedCar\(\s*result,\s*params\s*\)/);
   assert.match(store, /useCanonicalSaved/);
   assert.doesNotMatch(store, /new Set/);
 });
@@ -90,8 +109,8 @@ test("car result and details share the account-backed canonical save store", () 
 test("car details preserve geometry for loading and stale-result states", () => {
   const detail = readFileSync("src/features/search/ApprovedCarDetailScreen.tsx", "utf8");
   assert.match(detail, /CarDetailLoading/);
-  assert.match(detail, /gallerySkeleton/);
-  assert.match(detail, /provider-row skeleton|sectionSkeleton/);
+  assert.match(detail, /loadingHero/);
+  assert.match(detail, /loadingLine/);
   assert.match(detail, /This car is no longer available/);
   assert.match(detail, /Back to car results/);
 });

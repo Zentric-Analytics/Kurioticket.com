@@ -119,7 +119,7 @@ export function FlightDetailsExperience({ id, mode = "standalone", backHref, pri
   }
 
   const flight = currentFlight;
-  const displayPrice = formatDisplayPrice({ amount: flight.price, sourceCurrency: flight.currency, displayCurrency: selectedOption.currency, convertUsdEstimate: true, rates: currencyRates.rates, isFallbackRate: currencyRates.isFallback });
+  const displayPrice = formatDisplayPrice({ amount: flight.price, sourceCurrency: flight.currency, displayCurrency: selectedOption.currency, convertSourceEstimate: true, useFlightResultSymbols: true, maximumFractionDigits: 0, rates: currencyRates.rates, isFallbackRate: currencyRates.isFallback });
   const heroDetails = buildHeroDetails(flight, t);
   const routeHeading = buildRouteHeading(flight, t);
   const hasProviderLink = Boolean(flight.partnerRedirectUrl || flight.bookingUrl);
@@ -316,7 +316,7 @@ function ProviderComparisonPanel({
                       amount: offer.price,
                       sourceCurrency: offer.currency,
                       displayCurrency: selectedCurrency,
-                      convertUsdEstimate: true,
+                      convertSourceEstimate: true, useFlightResultSymbols: true, maximumFractionDigits: 0,
                       rates: currencyRates,
                       isFallbackRate,
                     })

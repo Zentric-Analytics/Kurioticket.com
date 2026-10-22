@@ -6,7 +6,7 @@ const source = readFileSync("src/features/search/ApprovedResultsScreen.tsx", "ut
 test("Hotel Results derives display prices once at screen level and threads snapshots", () => {
   assert.match(source, /const hotelDisplayPrices = useMemo/);
   assert.match(source, /createHotelDisplayPrices\(result\.pricePerNight!/);
-  assert.match(source, /displayPrices=\{hotelDisplayPrices\.get\(x\.id\)\}/);
+  assert.match(source, /displayPrices=\{hotelDisplayPrices\.get\(item\.id\)\}/);
   assert.doesNotMatch(source.slice(source.indexOf("function HotelCard")), /travelApi\.(location|currencyRates)/);
 });
 

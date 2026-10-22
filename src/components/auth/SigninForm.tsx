@@ -13,6 +13,7 @@ import { GoogleLogo } from "@/components/auth/GoogleLogo";
 import { signinSchema } from "@/lib/validation";
 
 type SigninFormProps = {
+  embedded?: boolean;
   callbackUrl?: string;
   googleEnabled?: boolean;
   initialErrorKey?: string;
@@ -39,6 +40,7 @@ type MessageState = {
 };
 
 export function SigninForm({
+  embedded = false,
   callbackUrl = "/",
   googleEnabled = false,
   initialErrorKey = "",
@@ -310,7 +312,7 @@ export function SigninForm({
   }
 
   return (
-    <Card className="mx-auto w-full max-w-md p-5">
+    <Card className={embedded ? "mx-auto w-full max-w-md rounded-none border-0 p-5 shadow-none" : "mx-auto w-full max-w-md p-5"}>
       <h1 className="text-2xl font-bold text-navy">{t.loginPageTitle}</h1>
 
       <p className="mt-2 text-sm text-muted">{t.loginPageSubtitle}</p>

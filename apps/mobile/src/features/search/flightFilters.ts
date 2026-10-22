@@ -26,13 +26,22 @@ export type FlightFilters = {
 export type FlightSort = "best" | "price" | "duration" | "departure-asc" | "departure-desc";
 export const flightSortOptions = [
   { value: "best", label: "Recommended", description: "Best overall option" }, { value: "price", label: "Cheapest", description: "Lowest total price" },
-  { value: "duration", label: "Fastest", description: "Shortest total journey" }, { value: "departure-asc", label: "Earliest departure", description: "Leaves earliest" },
+  { value: "duration", label: "Fastest", description: "Shortest journey time" }, { value: "departure-asc", label: "Earliest departure", description: "Leaves earliest" },
   { value: "departure-desc", label: "Latest departure", description: "Leaves latest" },
 ] as const;
 export function flightSortQuickLabel(sort: FlightSort) { return sort === "best" ? "Sort" : flightSortOptions.find((x) => x.value === sort)?.label ?? "Sort"; }
 export const emptyFlightFilters = (): FlightFilters => ({ maxStops: null, stops: [], airlines: [], journeyTimes: {}, journeyTimeMaximums: {}, maximumPrice: null, maximumDuration: null, maximumLayover: null, fromAirports: [], toAirports: [], baggageIncluded: false, refundable: false });
 const finite = (value: number | null | undefined) => typeof value === "number" && Number.isFinite(value) ? value : null;
 const authoritativeLegs = (result: FlightResult) => result.legs?.filter((leg) => leg && (leg.direction === "outbound" || leg.direction === "return" || leg.direction === "leg")) ?? [];
+export function flightAirportEndpoints(result: FlightResult) {
+  const multiCityLegs = result.legs?.filter((leg) => leg?.direction === "leg") ?? [];
+  return multiCityLegs.length
+    ? {
+        fromAirports: multiCityLegs.map((leg) => leg.originAirport).filter(Boolean),
+        toAirports: multiCityLegs.map((leg) => leg.destinationAirport).filter(Boolean),
+      }
+    : { fromAirports: [result.originAirport], toAirports: [result.destinationAirport] };
+}
 export const journeyKey = (leg: NonNullable<FlightResult["legs"]>[number], index: number) => leg.direction === "leg" ? `leg:${leg.legIndex ?? index}` : leg.direction;
 export function flightMaximumStops(result: FlightResult) {
   const values = authoritativeLegs(result).map((leg) => finite(leg.stops)).filter((x): x is number => x != null && x >= 0);
@@ -41,7 +50,8 @@ export function flightMaximumStops(result: FlightResult) {
 export const flightStopBucket = (result: FlightResult): StopBucket => flightMaximumStops(result) === 0 ? "nonstop" : flightMaximumStops(result) === 1 ? "one" : "twoPlus";
 export function flightFilterDurationMinutes(result: FlightResult): number | null {
   const values = authoritativeLegs(result).map((leg) => finite(leg.durationMinutes)).filter((x): x is number => x != null && x >= 0);
-  return values.length ? Math.max(...values) : finite(result.durationMinutes);
+  const fallback = finite(result.durationMinutes);
+  return values.length ? Math.max(...values) : fallback != null && fallback >= 0 ? fallback : null;
 }
 const durationTextMinutes = (value: unknown) => {
   if (typeof value !== "string") return null;
@@ -84,7 +94,23 @@ const matchesTimeMaximums = (result: FlightResult, selections: FlightFilters["jo
     return (maximum.departure == null || (departure != null && departure <= maximum.departure)) && (maximum.arrival == null || (arrival != null && arrival <= maximum.arrival));
   });
 };
-const hasPositiveTerm = (result: FlightResult, category: "baggage" | "refund") => result.fareTerms?.some((x) => x.category === category && x.semantic === "positive") === true;
+const hasPositiveBaggage = (result: FlightResult) => result.fareTerms?.some((term) => term.category === "baggage" && term.semantic === "positive") === true;
+const isPositiveFareFlexibilityTerm = (term: NonNullable<FlightResult["fareTerms"]>[number]) =>
+  (term.category === "refund" || term.category === "change") && term.semantic === "positive";
+export const hasPositiveFareFlexibility = (result: FlightResult) => {
+  const terms = result.fareTerms ?? [];
+  if (terms.some((term) => isPositiveFareFlexibilityTerm(term) && term.legDirection == null && term.legIndex == null)) return true;
+  const legs = authoritativeLegs(result);
+  if (!legs.length) return terms.some(isPositiveFareFlexibilityTerm);
+  return legs.every((leg, index) => {
+    const legIndex = leg.legIndex ?? index;
+    return terms.some((term) => {
+      if (!isPositiveFareFlexibilityTerm(term)) return false;
+      if (term.legIndex != null) return term.legIndex === legIndex;
+      return term.legDirection != null && term.legDirection !== "leg" && term.legDirection === leg.direction;
+    });
+  });
+};
 export function resolveFlightPriceComparisonContext(results: readonly FlightResult[], displayCurrency: string, normalizePrice: (result: FlightResult) => number | null): FlightPriceComparisonContext | null {
   const priced = results.filter((x) => finite(x.price) != null); if (!priced.length) return null;
   const currencies = new Set(priced.map((x) => x.currency?.trim().toUpperCase()).filter((x): x is string => Boolean(x && /^[A-Z]{3}$/.test(x))));
@@ -98,14 +124,15 @@ export function resolveFlightPriceComparisonContext(results: readonly FlightResu
 }
 export function flightMatchesFilters(result: FlightResult, filters: FlightFilters, priceValue?: (result: FlightResult) => number | null) {
   const price = finite(priceValue ? priceValue(result) : result.price); const duration = flightFilterDurationMinutes(result); const layover = flightMaximumLayoverMinutes(result);
+  const airportEndpoints = flightAirportEndpoints(result);
   const legacyTime = filters.times?.length ? timeBucket(filters.timeField === "landing" ? result.arrivalTime : result.departureTime) : undefined;
   const matchesStops = filters.stops?.length
     ? filters.stops.includes(flightStopBucket(result))
     : filters.maxStops == null || flightMaximumStops(result) <= filters.maxStops;
   return matchesStops && (!filters.airlines.length || filters.airlines.includes(result.airlineName)) && matchesTimes(result, filters.journeyTimes) && matchesTimeMaximums(result, filters.journeyTimeMaximums ?? {}) && (!filters.times?.length || Boolean(legacyTime && filters.times.includes(legacyTime))) &&
     (filters.maximumPrice == null || (price != null && price <= filters.maximumPrice)) && (!filters.price || (price != null && price >= filters.price.min && price <= filters.price.max)) && (filters.maximumDuration == null || (duration != null && duration <= filters.maximumDuration)) && (!filters.duration || (duration != null && duration >= filters.duration.min && duration <= filters.duration.max)) &&
-    (filters.maximumLayover == null || layover <= filters.maximumLayover) && (!filters.fromAirports.length || filters.fromAirports.includes(result.originAirport)) && (!filters.toAirports.length || filters.toAirports.includes(result.destinationAirport)) &&
-    (!filters.baggageIncluded || hasPositiveTerm(result, "baggage")) && (!filters.refundable || hasPositiveTerm(result, "refund"));
+    (filters.maximumLayover == null || layover <= filters.maximumLayover) && (!filters.fromAirports.length || filters.fromAirports.some((airport) => airportEndpoints.fromAirports.includes(airport))) && (!filters.toAirports.length || filters.toAirports.some((airport) => airportEndpoints.toAirports.includes(airport))) &&
+    (!filters.baggageIncluded || hasPositiveBaggage(result)) && (!filters.refundable || hasPositiveFareFlexibility(result));
 }
 export const matchingFlightCount = (results: readonly FlightResult[], filters: FlightFilters, priceValue?: (result: FlightResult) => number | null) => results.reduce((n, x) => n + Number(flightMatchesFilters(x, filters, priceValue)), 0);
 export type FlightFilterInsight = { count: number; lowestPrice: number | null };
@@ -128,10 +155,10 @@ export function withTimePreview(filters: FlightFilters, key: string, field: keyo
 }
 const extent = (values: (number | null)[]): NumericRange | null => { const valid = values.filter((x): x is number => x != null && Number.isFinite(x)); return valid.length ? { min: Math.floor(Math.min(...valid)), max: Math.ceil(Math.max(...valid)) } : null; };
 export function flightFilterOptions(results: readonly FlightResult[], priceContext?: FlightPriceComparisonContext | null) {
-  const fromAirports = [...new Set(results.map((x) => x.originAirport).filter(Boolean))].sort(); const toAirports = [...new Set(results.map((x) => x.destinationAirport).filter(Boolean))].sort();
+  const fromAirports = [...new Set(results.flatMap((result) => flightAirportEndpoints(result).fromAirports))].sort(); const toAirports = [...new Set(results.flatMap((result) => flightAirportEndpoints(result).toAirports))].sort();
   return { stops: [...new Set(results.map(flightStopBucket))], takeoffTimes: [...new Set(results.map(x=>timeBucket(x.departureTime)).filter((x):x is TimeBucket=>Boolean(x)))], landingTimes: [...new Set(results.map(x=>timeBucket(x.arrivalTime)).filter((x):x is TimeBucket=>Boolean(x)))], airlines: [...new Set(results.map((x) => x.airlineName).filter(Boolean))].sort(), price: priceContext ? extent(results.map((x) => finite(priceContext.valueForResult(x)))) : null, priceCurrency: priceContext?.currency || null,
     duration: extent(results.map(flightFilterDurationMinutes)), layover: extent(results.map(flightMaximumLayoverMinutes)), fromAirports, toAirports, showAirports: fromAirports.length > 1 || toAirports.length > 1,
-    baggage: results.some((x) => hasPositiveTerm(x, "baggage")), refundable: results.some((x) => hasPositiveTerm(x, "refund")) };
+    baggage: results.some(hasPositiveBaggage), refundable: results.some(hasPositiveFareFlexibility) };
 }
 export function flightFacetCounts(results: readonly FlightResult[], filters: FlightFilters, priceValue?: (result: FlightResult) => number | null) {
   const options=flightFilterOptions(results); const count=(next:FlightFilters)=>matchingFlightCount(results,next,priceValue);
@@ -149,6 +176,12 @@ export function filterAndSortFlights(results: readonly FlightResult[], filters: 
   const optional = (a: number | null, b: number | null, direction = 1) => a == null ? (b == null ? 0 : 1) : b == null ? -1 : (a - b) * direction;
   return results.map((result, originalIndex) => ({ result, originalIndex })).filter(({ result }) => flightMatchesFilters(result, filters, priceValue)).sort((a, b) => { let d = 0;
     if (sort === "best") d = optional(finite(a.result.valueScore), finite(b.result.valueScore), -1); if (sort === "price") d = optional(finite(sortPriceValue ? sortPriceValue(a.result) : a.result.price), finite(sortPriceValue ? sortPriceValue(b.result) : b.result.price));
-    if (sort === "duration") d = optional(finite(a.result.durationMinutes), finite(b.result.durationMinutes)); if (sort.startsWith("departure")) d = optional(finite(Date.parse(a.result.departureTime)), finite(Date.parse(b.result.departureTime)), sort === "departure-desc" ? -1 : 1); return d || a.originalIndex - b.originalIndex;
+    if (sort === "duration") d = optional(flightFilterDurationMinutes(a.result), flightFilterDurationMinutes(b.result)); if (sort.startsWith("departure")) d = optional(finite(Date.parse(a.result.departureTime)), finite(Date.parse(b.result.departureTime)), sort === "departure-desc" ? -1 : 1); return d || a.originalIndex - b.originalIndex;
   }).map(({ result }) => result);
+}
+export type FlightQuickFilterGroup = "airlines" | "stops" | "airports";
+export function clearFlightQuickFilterGroup(filters: FlightFilters, group: FlightQuickFilterGroup): FlightFilters {
+  if (group === "airlines") return { ...filters, airlines: [] };
+  if (group === "stops") return { ...filters, stops: [], maxStops: null };
+  return { ...filters, fromAirports: [], toAirports: [] };
 }

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { addCalendarDays, changeGuests, changeRooms, countLabel, defaultHotelDates, HOTEL_LIMITS, hotelSearchParams, initializeHotelForm, localDateFromIso, localIsoDate, validateHotelForm } from "./hotelSearchModel";
+import { addCalendarDays, changeGuests, changeRooms, countLabel, defaultHotelDates, HOTEL_LIMITS, hotelDestinationLocation, hotelSearchParams, initializeHotelForm, localDateFromIso, localIsoDate, validateHotelForm } from "./hotelSearchModel";
 import { buildSearchPlan } from "./travelSearchModel";
 
 const now = new Date(2028, 0, 10, 23, 30);
@@ -58,4 +58,15 @@ test("guest and room counters clamp independently to website limits", () => {
 test("labels pluralize and navigation serializes all current values", () => {
   assert.equal(countLabel(1, "room"), "1 room"); assert.equal(countLabel(2, "guest"), "2 guests");
   assert.deepEqual(hotelSearchParams({ destination: " Paris ", checkIn: "2028-02-01", checkOut: "2028-02-02", guests: 3, rooms: 2 }), { destination: "Paris", checkIn: "2028-02-01", checkOut: "2028-02-02", guests: "3", rooms: "2" });
+});
+test("selected provider destination survives native hotel navigation", () => {
+  const destinationLocation = JSON.stringify({ id: "hotel:tempe", kind: "city", primaryLabel: "Tempe", supportingLabel: "Arizona, United States", submittedValue: "Tempe, Arizona, United States", providerBindings: [], verification: "catalogue-only", selectionToken: "opaque-server-selection-token-123456789" });
+  const form = initializeHotelForm({ destination: "Tempe, Arizona, United States", destinationLocation, checkIn: "2028-02-01", checkOut: "2028-02-02", guests: "1", rooms: "1" }, now).form;
+  assert.equal(form.destinationLocation, destinationLocation);
+  assert.equal(hotelSearchParams(form).destinationLocation, destinationLocation);
+});
+test("hotel destination selection only serializes a signed canonical target", () => {
+  const suggestion = { id: "hotel:tempe", name: "Tempe", country: "United States", countryCode: "US", kind: "city" as const, searchValue: "Tempe, Arizona, United States", canonical: { id: "hotel:tempe", kind: "city" as const, primaryLabel: "Tempe", supportingLabel: "Arizona, United States", submittedValue: "Tempe, Arizona, United States", selectionToken: "opaque-server-selection-token-123456789", staticCoverage: { flights: "none", hotels: "exact", cars: "none", packages: "none" } as const, source: { catalog: "kurioticket" as const, datasetVersion: "test" } } };
+  assert.equal(JSON.parse(hotelDestinationLocation(suggestion)!).id, "hotel:tempe");
+  assert.equal(hotelDestinationLocation(suggestion, "Tempe"), undefined);
 });

@@ -5,6 +5,7 @@ import test from "node:test";
 import { priceAlertSchema } from "@/lib/validation";
 
 const routeSource = readFileSync("src/app/api/price-alerts/route.ts", "utf8");
+const statusRouteSource = readFileSync("src/app/api/price-alerts/[id]/route.ts", "utf8");
 const serviceSource = readFileSync("src/services/priceTrackingService.ts", "utf8");
 
 test("price alert API keeps auth, malformed JSON, validation and duplicate handling", () => {
@@ -64,13 +65,42 @@ test("flight price alert schema hardens canonical creation payload", () => {
   assert.equal(priceAlertSchema.safeParse({ ...parsed.data, query: { ...parsed.data.query, tripType: "multi-city" } }).success, false);
 });
 
+test("automatic Flight alerts require and preserve a current baseline while TARGET stays compatible", () => {
+  const common = { type: "FLIGHT" as const, origin: "JFK", destination: "LHR", currency: "EUR", query: { tripType: "one-way", origin: "JFK", destination: "LHR", departureDate: "2099-08-10", adults: 1, children: 0, infants: 0, travelers: 1, cabinClass: "economy", currency: "EUR" } };
+  const automatic = priceAlertSchema.safeParse({ ...common, mode: "AUTOMATIC", baselinePrice: 612.5 });
+  assert.ok(automatic.success);
+  assert.equal(automatic.data.type, "FLIGHT");
+  assert.equal(automatic.data.mode, "AUTOMATIC");
+  assert.ok("baselinePrice" in automatic.data);
+  assert.equal(automatic.data.baselinePrice, 612.5);
+  assert.equal(priceAlertSchema.safeParse({ ...common, mode: "AUTOMATIC" }).success, false);
+  assert.equal(priceAlertSchema.safeParse({ ...common, mode: "TARGET", targetPrice: 500 }).success, true);
+  assert.equal(priceAlertSchema.safeParse({ ...common, mode: "TARGET" }).success, false);
+});
+
 test("Hotel price alert schema requires and preserves complete matching stay context", () => {
-  const input = { type: "HOTEL", destination: "Paris", targetPrice: 800, mode: "TARGET", currency: "eur", query: { destination: "Paris", checkIn: "2099-04-01", checkOut: "2099-04-03", guests: 2, rooms: 1, unsafe: "ignored" } };
+  const input = { type: "HOTEL", destination: "Paris", targetPrice: 800, mode: "TARGET", currency: "eur", query: { destination: "Paris", checkIn: "2099-04-01", checkOut: "2099-04-03", guests: 2, rooms: 1, hotelId: "hotel-42", hotelName: "Hotel Paris", unsafe: "ignored" } };
   const parsed = priceAlertSchema.safeParse(input);
   assert.equal(parsed.success, true);
   if (!parsed.success) return;
-  assert.deepEqual(parsed.data.query, { destination: "Paris", checkIn: "2099-04-01", checkOut: "2099-04-03", guests: 2, rooms: 1 });
+  assert.deepEqual(parsed.data.query, { destination: "Paris", checkIn: "2099-04-01", checkOut: "2099-04-03", guests: 2, rooms: 1, hotelId: "hotel-42", hotelName: "Hotel Paris" });
   assert.equal(parsed.data.currency, "EUR");
   assert.equal(priceAlertSchema.safeParse({ ...input, query: { ...input.query, rooms: undefined } }).success, false);
   assert.equal(priceAlertSchema.safeParse({ ...input, destination: "London" }).success, false);
+  assert.equal(priceAlertSchema.safeParse({ ...input, query: { ...input.query, hotelId: undefined } }).success, false);
+  const native = priceAlertSchema.safeParse({ ...input, query: { destination: "Paris", checkIn: "2099-04-01", checkOut: "2099-04-03", guests: 2, rooms: 1 } });
+  assert.equal(native.success, true);
+  if (native.success) assert.deepEqual(native.data.query, { destination: "Paris", checkIn: "2099-04-01", checkOut: "2099-04-03", guests: 2, rooms: 1 });
+});
+
+
+test("web price alert status API supports authenticated pause and resume", () => {
+  assert.match(statusRouteSource, /requireWebApiSession\(\)/);
+  assert.match(statusRouteSource, /z\.enum\(\["ACTIVE", "PAUSED"\]\)/);
+  assert.match(statusRouteSource, /updateUserPriceAlertStatus/);
+  assert.match(statusRouteSource, /PriceAlertNotFoundError/);
+  assert.match(statusRouteSource, /InvalidPriceAlertTransitionError/);
+  assert.match(statusRouteSource, /status: 401/);
+  assert.match(statusRouteSource, /status: 404/);
+  assert.match(statusRouteSource, /status: 409/);
 });

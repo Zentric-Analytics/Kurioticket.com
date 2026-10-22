@@ -16,16 +16,9 @@ test("Results shared drawer uses production mobile picker components", () => {
   assert.match(drawer, /<MobileAirportPicker/);
 });
 
-test("compact Flight header matches the Cars inline Pencil contract", () => {
-  const start = results.indexOf("function renderMobileCompactResultsHeader");
-  const end = results.indexOf("function renderMobile", start + 20);
-  const header = results.slice(start, end);
-  assert.match(header, /<span>Modify search<\/span>[\s\S]*?<Pencil/);
-  assert.match(header, /data-flight-compact-edit-icon/);
-  assert.match(header, /className="h-3 w-3 shrink-0 text-\[#536B92\]"/);
-  assert.equal(header.match(/aria-label=\{modifySearchLabel\}/g)?.length, 1);
-  assert.doesNotMatch(
-    header,
-    /data-flight-compact-edit-icon[\s\S]{0,160}(?:SquarePen|PencilLine|bg-\[#004BB8\]\/8)/,
-  );
+test("Flight Results keeps Edit Search available in the persistent mobile capsule", () => {
+  assert.match(results, /mobileResultsSearch=\{renderMobileRouteSummaryCard\(\)\}/);
+  assert.match(results, /data-flight-mobile-summary-card/);
+  assert.doesNotMatch(results, /renderMobileCompactResultsHeader|data-flight-compact-edit-icon/);
+  assert.match(results, /openMobileSearchDrawer\(event\.currentTarget/);
 });

@@ -11,16 +11,20 @@ test("package airport backdrop is separate and keyboard behavior is preserved", 
   const sheet = airport.indexOf("<Animated.View accessibilityViewIsModal");
 
   assert.ok(backdrop >= 0 && sheet > backdrop);
-  assert.match(airport, /onRequestClose=\{onClose\}/);
-  assert.match(airport, /behavior=\{Platform\.OS === "ios" \? "padding" : "height"\}/);
+  assert.match(airport, /const dismissAirportSheet=\(\)=>\{Keyboard\.dismiss\(\);onClose\(\);\};/);
+  assert.match(airport, /onRequestClose=\{dismissAirportSheet\}/);
+  assert.match(airport, /<Pressable[^>]+accessibilityLabel="Close airport search" onPress=\{dismissAirportSheet\}\/>/);
+  assert.match(airport, /useSearchPickerMotion\(visible, \{ controlledOpening: true, stationaryOpening: true \}\)/);
+  assert.match(airport, /useSearchPickerKeyboardPresentation\([^;]+inputRef, motion, \{ focusOnPresentation: true \}\)/);
+  assert.match(airport, /contentContainerStyle=\{\{paddingBottom:resultsKeyboardInset\}\}/);
   assert.match(airport, /keyboardShouldPersistTaps="handled"/);
-  assert.doesNotMatch(airport.slice(airport.indexOf("<KeyboardAvoidingView"), sheet), /<Pressable[^>]*>\s*<Animated\.View accessibilityViewIsModal/);
+  assert.doesNotMatch(airport, /KeyboardAvoidingView/);
 });
 
 test("package airport uses retained title close header without a bottom action", () => {
-  assert.match(airport, /<PickerSheetHeader title=\{context\.title\} onClose=\{onClose\}[^>]+closeLabel=/);
+  assert.match(airport, /<PickerSheetHeader title=\{context\.title\} onClose=\{dismissAirportSheet\}[^>]+closeLabel=/);
   assert.doesNotMatch(airport, /<PrimaryButton label="Done"/);
-  assert.match(airport, /setDraft\(airport\);setQuery\(value\)[\s\S]*?onChoose\(airport\)/);
+  assert.match(airport, /setDraft\(airport\);setQuery\(value\)[\s\S]*?Keyboard\.dismiss\(\);onChoose\(airport\)/);
   assert.doesNotMatch(airport, />Cancel<|label="Cancel"/);
 });
 

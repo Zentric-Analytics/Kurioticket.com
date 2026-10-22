@@ -3,6 +3,9 @@ import { z } from "zod";
 import { supportedCurrencies } from "@/lib/region/supportedRegions";
 
 export const MAX_PRICE_ALERT_TARGET = 9999999999.99;
+export const FLIGHT_ALERT_MIN_DROP_PERCENT = 1;
+export const FLIGHT_ALERT_MAX_DROP_PERCENT = 50;
+export const FLIGHT_ALERT_DEFAULT_DROP_PERCENT = 10;
 
 const supportedCurrencyCodes = new Set(supportedCurrencies.map((currency) => currency.code));
 const airportCodeSchema = z.string().trim().toUpperCase().regex(/^[A-Z0-9]{3,8}$/);
@@ -140,17 +143,149 @@ export function buildFlightPriceAlertPayload(input: {
   };
 }
 
+export function buildAutomaticFlightPriceAlertPayload(input: {
+  origin: string;
+  destination: string;
+  baselinePrice: number;
+  currency: string;
+  query: unknown;
+}) {
+  const currency = normalizeCurrency(input.currency);
+  const rawQuery = input.query && typeof input.query === "object" && !Array.isArray(input.query)
+    ? input.query as Record<string, unknown>
+    : {};
+  const query = canonicalFlightPriceAlertQuerySchema.parse({ ...rawQuery, currency });
+  const baselinePrice = z.number().finite().positive().parse(input.baselinePrice);
+
+  if (input.origin.trim().toUpperCase() !== query.origin || input.destination.trim().toUpperCase() !== query.destination) {
+    throw new Error("Route must match the flight search query.");
+  }
+
+  return {
+    type: "FLIGHT" as const,
+    origin: query.origin,
+    destination: query.destination,
+    baselinePrice,
+    mode: "AUTOMATIC" as const,
+    currency,
+    query,
+  };
+}
+
+type FlightBaselineResult = { price: number; currency: string; provider?: string; searchPolicy?: { source?: string; bookable?: boolean } };
+
+/** Selects a real provider fare without comparing unlike currencies as raw numbers. */
+export function selectAutomaticFlightBaseline<T extends FlightBaselineResult>(results: readonly T[], preferredCurrency?: string) {
+  const eligible = results.filter((result) => Number.isFinite(result.price) && result.price > 0
+    && supportedCurrencyCodes.has(normalizeCurrency(result.currency))
+    && result.provider !== "KAYAK sandbox"
+    && result.searchPolicy?.source !== "kayak-sandbox"
+    && result.searchPolicy?.bookable !== false);
+  const preferred = preferredCurrency ? normalizeCurrency(preferredCurrency) : "";
+  const currency = eligible.find((result) => normalizeCurrency(result.currency) === preferred)?.currency
+    ?? eligible[0]?.currency;
+  if (!currency) return null;
+  const normalizedCurrency = normalizeCurrency(currency);
+  return eligible
+    .filter((result) => normalizeCurrency(result.currency) === normalizedCurrency)
+    .reduce<T | null>((lowest, result) => !lowest || result.price < lowest.price ? result : lowest, null);
+}
+
+/** Currency-aware target math for the fare selected by the Flight alert baseline rules. */
+export function roundFlightAlertCurrencyAmount(amount: number, currency: string) {
+  const digits = Math.min(2, new Intl.NumberFormat("en", {
+    style: "currency",
+    currency: normalizeCurrency(currency),
+  }).resolvedOptions().maximumFractionDigits ?? 2);
+  const factor = 10 ** digits;
+  return Math.round(amount * factor) / factor;
+}
+
+export function clampFlightAlertDropPercent(value: number) {
+  if (!Number.isFinite(value)) return FLIGHT_ALERT_DEFAULT_DROP_PERCENT;
+  return Math.min(FLIGHT_ALERT_MAX_DROP_PERCENT, Math.max(FLIGHT_ALERT_MIN_DROP_PERCENT, Math.round(value)));
+}
+
+export function flightAlertDesiredPrice(currentPrice: number, dropPercent: number, currency: string) {
+  if (!Number.isFinite(currentPrice) || currentPrice <= 0) return null;
+  const digits = Math.min(2, new Intl.NumberFormat("en", {
+    style: "currency",
+    currency: normalizeCurrency(currency),
+  }).resolvedOptions().maximumFractionDigits ?? 2);
+  return Math.max(
+    1 / 10 ** digits,
+    roundFlightAlertCurrencyAmount(currentPrice * (1 - clampFlightAlertDropPercent(dropPercent) / 100), currency),
+  );
+}
+
+export function flightAlertDropPercentForTarget(currentPrice: number, targetPrice: number) {
+  if (!Number.isFinite(currentPrice) || currentPrice <= 0 || !Number.isFinite(targetPrice) || targetPrice <= 0) {
+    return FLIGHT_ALERT_DEFAULT_DROP_PERCENT;
+  }
+  return clampFlightAlertDropPercent((1 - targetPrice / currentPrice) * 100);
+}
+
+export type MatchableFlightPriceAlert = {
+  type: string;
+  mode?: "AUTOMATIC" | "TARGET";
+  status: string;
+  query: unknown;
+};
+
+const flightSearchIdentityFields = ["origin", "destination", "departureDate", "returnDate", "tripType", "cabinClass", "adults", "children", "infants", "travelers"] as const;
+
+export function automaticFlightPriceAlertMatchesQuery(alert: MatchableFlightPriceAlert, query: unknown) {
+  if (alert.type !== "FLIGHT" || alert.mode !== "AUTOMATIC") return false;
+  const expected = canonicalFlightPriceAlertQuerySchema.safeParse(query);
+  const actual = canonicalFlightPriceAlertQuerySchema.safeParse(alert.query);
+  return expected.success && actual.success && flightSearchIdentityFields.every((field) =>
+    String(actual.data[field] ?? "").toLowerCase() === String(expected.data[field] ?? "").toLowerCase());
+}
+
+export function flightPriceAlertMatchesSearchIdentity(alert: MatchableFlightPriceAlert, query: unknown) {
+  if (alert.type !== "FLIGHT") return false;
+  const expected = canonicalFlightPriceAlertQuerySchema.safeParse(query);
+  const actual = canonicalFlightPriceAlertQuerySchema.safeParse(alert.query);
+  return expected.success && actual.success && flightSearchIdentityFields.every((field) =>
+    String(actual.data[field] ?? "").toLowerCase() === String(expected.data[field] ?? "").toLowerCase());
+}
+
+export function targetFlightPriceAlertMatchesQuery(alert: MatchableFlightPriceAlert, query: unknown) {
+  return alert.mode === "TARGET" && flightPriceAlertMatchesSearchIdentity(alert, query);
+}
+
+export function matchingTargetFlightPriceAlert<T extends MatchableFlightPriceAlert>(alerts: T[], query: unknown) {
+  const matches = alerts.filter((alert) => targetFlightPriceAlertMatchesQuery(alert, query));
+  return matches.find(({ status }) => status === "ACTIVE") ?? matches.find(({ status }) => status === "PAUSED");
+}
+
+/** TARGET records drive the new editor; a legacy active AUTOMATIC record remains controllable as a fallback. */
+export function matchingFlightPriceAlertForControl<T extends MatchableFlightPriceAlert>(alerts: T[], query: unknown) {
+  const identityMatches = alerts.filter((alert) => flightPriceAlertMatchesSearchIdentity(alert, query));
+  return identityMatches.find((alert) => alert.mode === "TARGET" && alert.status === "ACTIVE")
+    ?? identityMatches.find((alert) => alert.mode === "AUTOMATIC" && alert.status === "ACTIVE")
+    ?? identityMatches.find((alert) => alert.mode === "TARGET" && alert.status === "PAUSED")
+    ?? identityMatches.find((alert) => alert.mode === "AUTOMATIC" && alert.status === "PAUSED");
+}
+
+export function matchingAutomaticFlightPriceAlert<T extends MatchableFlightPriceAlert>(alerts: T[], query: unknown) {
+  const matches = alerts.filter((alert) => automaticFlightPriceAlertMatchesQuery(alert, query));
+  return matches.find(({ status }) => status === "ACTIVE") ?? matches.find(({ status }) => status === "PAUSED");
+}
+
 export function flightPriceAlertDuplicateKey(input: {
   origin: string | null;
   destination: string;
   targetPrice: { toString(): string } | string | number | null;
+  mode?: "AUTOMATIC" | "TARGET";
   currency: string | null;
   query: unknown;
 }) {
   const parsed = canonicalFlightPriceAlertQuerySchema.safeParse(input.query);
-  if (!parsed.success || input.targetPrice === null) return null;
-  const price = Number(input.targetPrice.toString());
-  if (!Number.isFinite(price)) return null;
+  const mode = input.mode ?? "TARGET";
+  if (!parsed.success || (mode === "TARGET" && input.targetPrice === null)) return null;
+  const price = input.targetPrice === null ? Number.NaN : Number(input.targetPrice.toString());
+  if (mode === "TARGET" && !Number.isFinite(price)) return null;
 
   return [
     parsed.data.origin,
@@ -164,6 +299,7 @@ export function flightPriceAlertDuplicateKey(input: {
     parsed.data.infants,
     parsed.data.travelers,
     (input.currency || parsed.data.currency).toUpperCase(),
-    price.toFixed(2),
+    mode,
+    mode === "TARGET" ? price.toFixed(2) : "automatic",
   ].join("|");
 }

@@ -17,7 +17,7 @@ test("admin navigation uses the exact original section labels and grouping", () 
     { label: "Website content", hrefs: ["/admin/content"] },
     { label: "System & security", hrefs: ["/admin/logs", "/admin/system", "/admin/settings"] },
   ]);
-  const visibleHrefs = adminNavigationGroups.flatMap((group) => group.hrefs);
+  const visibleHrefs: readonly string[] = adminNavigationGroups.flatMap((group) => group.hrefs);
   assert.equal(visibleHrefs.includes("/admin/account-deletions"), false);
   assert.equal(visibleHrefs.includes("/admin/redirects"), false);
 });

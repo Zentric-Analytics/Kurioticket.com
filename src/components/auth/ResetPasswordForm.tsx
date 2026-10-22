@@ -53,6 +53,8 @@ export function ResetPasswordForm({ token = "" }: { token?: string }) {
 
       setMessage(t.resetPasswordSuccessMessage);
       startTransition(() => {
+        // Password reset invalidates sessions; discard the old document's auth cache.
+        // eslint-disable-next-line @next/next/no-location-assign-relative-destination
         window.location.href = "/auth/signin?reset=success";
       });
     } catch {

@@ -106,6 +106,45 @@ test("all mobile trip options update canonical state including Multi-city", () =
   assert.match(source, /<MultiCityFlightEditor/);
 });
 
+test("desktop Round-trip and One-way resolve selected airports to City plus IATA while mobile keeps the canonical value", () => {
+  assert.match(source, /getAirportByCode/);
+  assert.match(
+    source,
+    /const desktopOriginLabel = useMemo\(\(\) => \{[\s\S]*?getAirportByCode\(originCode\)[\s\S]*?formatAirportLabel\(airport, locale\) : origin/,
+  );
+  assert.match(
+    source,
+    /const desktopDestinationLabel = useMemo\(\(\) => \{[\s\S]*?getAirportByCode\(destinationCode\)[\s\S]*?formatAirportLabel\(airport, locale\) : destination/,
+  );
+  assert.match(
+    source,
+    /label=\{t\("origin"\)\}[\s\S]*?value=\{origin\}[\s\S]*?desktopValue=\{desktopOriginLabel\}[\s\S]*?showDesktopSecondary=\{false\}/,
+  );
+  assert.match(
+    source,
+    /label=\{t\("destination"\)\}[\s\S]*?value=\{destination\}[\s\S]*?desktopValue=\{desktopDestinationLabel\}[\s\S]*?showDesktopSecondary=\{false\}/,
+  );
+});
+
+test("desktop Multi-city landing uses the dedicated aligned presentation and right-side traveler/search rail", () => {
+  assert.match(
+    source,
+    /<MultiCityFlightEditor[\s\S]*?presentation="landing"[\s\S]*?onAirportValidityChange=\{setMultiCityAirportsValid\}/,
+  );
+  assert.match(
+    source,
+    /tripType === "multi-city"[\s\S]*?lg:grid-cols-\[minmax\(0,4\.55fr\)_minmax\(164px,1\.05fr\)_136px\][\s\S]*?lg:ring-0/,
+  );
+  assert.match(
+    source,
+    /tripType === "multi-city" \? \([\s\S]*?<div aria-hidden="true" className="hidden lg:block" \/>/,
+  );
+  assert.match(
+    source,
+    /tripType === "multi-city" &&\s*"lg:rounded-s-2xl lg:border lg:border-e-0 lg:border-slate-200 lg:bg-white"/,
+  );
+});
+
 test("standalone Flights uses the canonical indexed Multi-city search contract", () => {
   assert.match(source, /sm:inline-flex sm:gap-1/);
   assert.match(

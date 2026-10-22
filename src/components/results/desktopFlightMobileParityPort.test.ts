@@ -1,0 +1,151 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import test from "node:test";
+
+const results = readFileSync(new URL("./FlightResultsClient.tsx", import.meta.url), "utf8");
+const filters = readFileSync(new URL("./DesktopFlightFilters.tsx", import.meta.url), "utf8");
+const alert = readFileSync(new URL("./FlightPriceAlertControl.tsx", import.meta.url), "utf8");
+const card = readFileSync(new URL("./FlightCard.tsx", import.meta.url), "utf8");
+const details = readFileSync(new URL("./flightDetails/StandaloneFlightDetails.tsx", import.meta.url), "utf8");
+const searchFields = readFileSync(new URL("../search/FlightSearchFieldPrimitives.tsx", import.meta.url), "utf8");
+const globals = readFileSync(new URL("../../app/globals.css", import.meta.url), "utf8");
+
+test("desktop Flight Results moves price tracking into the sidebar without replacing mobile contracts", () => {
+  assert.match(results, /data-flight-results-main className="max-sm:overflow-x-clip bg-\[#F5F7FB\][^"]*sm:bg-\[#F3F6FA\][^"]*lg:bg-white"/);
+  assert.doesNotMatch(results, /data-desktop-nearby-fare-rail|data-desktop-cheaper-nearby/);
+  assert.match(results, /data-nearby-fare-presentation="mobile"/);
+  assert.match(results, /className="max-sm:pt-2 max-sm:pb-1 sm:mb-4 lg:hidden"><div data-flight-price-alert-row className="max-sm:-mx-2 max-sm:w-\[calc\(100%\+16px\)\]"/);
+  assert.match(results, /data-flight-price-alert-sidebar-slot/);
+  assert.match(results, /desktopPortalTarget=\{desktopFlightPriceAlertTarget\}/);
+  assert.match(results, /data-flight-results-card-list className="space-y-3 sm:space-y-4"/);
+  assert.match(alert, /data-flight-price-alert-sidebar/);
+  assert.match(alert, /min-h-\[48px\]/);
+  assert.match(alert, />Track flight price</);
+  assert.match(alert, /window\.matchMedia\("\(min-width: 1024px\)"\)/);
+  assert.match(alert, /desktopSidebarActive && desktopPortalTarget[\s\S]*?createPortal\(desktopControl, desktopPortalTarget\)/);
+  assert.match(alert, /hidden sm:block lg:hidden/);
+});
+
+test("desktop Flight filters follow the approved section hierarchy and selected-state language", () => {
+  const primaryStart = filters.indexOf("data-flight-hotel-filter-visual-parity");
+  assert.ok(primaryStart >= 0);
+  const primaryFilters = filters.slice(primaryStart);
+  const order = [
+    '<HotelStyleFilterSection title={t("price")}>',
+    '<HotelStyleFilterSection title={`${t("takeoff")} / ${t("landing")}`}>',
+    '<HotelStyleFilterSection title={t("duration")}>',
+    '<OptionSection title={t("stops")}',
+    '<OptionSection title={t("airlines")}',
+    '<OptionSection title={t("airports")}',
+    '<HotelStyleFilterSection title={`${t("baggage")} / ${t("flexibleRefundable")}`}>',
+  ].map((marker) => primaryFilters.indexOf(marker));
+  assert.ok(order.every((position, index) => position >= 0 && (index === 0 || position > order[index - 1])));
+  assert.match(filters, /border-\[#0067DB\] bg-\[#0067DB\] text-white/);
+  assert.match(filters, /<Check className="h-2\.5 w-2\.5"/);
+  assert.match(filters, /data-flight-filter-price-summary/);
+  assert.match(filters, /formatFilterPrice\(Math\.min\(maxPrice, priceBounds\.max\)\)/);
+  assert.match(filters, /data-flight-filter-time-summary/);
+  assert.match(filters, /\{timeFilterMode === "takeoff" \? t\("takeoff"\) : t\("landing"\)\} · \{airportCode \|\| "—"\}/);
+  assert.match(filters, /data-flight-filter-duration-summary/);
+  assert.doesNotMatch(primaryFilters, /\{t\("price"\)\}: \{formatFilterPrice/);
+  assert.match(filters, /peer-focus-visible:ring-2/);
+});
+
+test("desktop Flight search airport values use the same medium typography as the unboxed date and traveler values", () => {
+  assert.match(searchFields, /flightSearchFieldValueButtonClassName[\s\S]*?sm:text-\[15px\] sm:font-medium/);
+  assert.match(searchFields, /className="h-6 w-full[^"]*text-\[15px\] font-medium/);
+  assert.doesNotMatch(searchFields, /className="h-6 w-full[^"]*text-\[15px\] font-semibold/);
+});
+
+test("compact Flight time-mode switch stays in the compact panel until the slider changes", () => {
+  const compactStart = filters.indexOf("data-flight-desktop-compact-filter-surface");
+  const primaryStart = filters.indexOf("data-flight-hotel-filter-visual-parity");
+  assert.ok(compactStart >= 0 && primaryStart > compactStart);
+  const compactFilters = filters.slice(compactStart, primaryStart);
+  const selectorStart = compactFilters.indexOf('{["takeoff", "landing"].map');
+  const selectorEnd = compactFilters.indexOf("</div>", selectorStart);
+  assert.ok(selectorStart >= 0 && selectorEnd > selectorStart);
+  const selector = compactFilters.slice(selectorStart, selectorEnd);
+  assert.match(selector, /onClick=\{\(\) => setTimeFilterMode\(mode as TimeFilterMode\)\}/);
+  assert.doesNotMatch(selector, /onFilterChange|onFilterCommit/);
+});
+
+test("standalone desktop Flight Results keeps the Hotel-style Popular filters card in the sidebar", () => {
+  assert.match(results, /function StickyFlightPopularFilters\(/);
+  assert.match(results, /data-flight-sticky-popular-filters/);
+  assert.match(results, /sticky top-\[88px\]/);
+  assert.match(results, /data-flight-price-alert-sidebar-slot[\s\S]*?<div>\{renderDesktopFlightFilters\(\)\}<\/div>[\s\S]*?<StickyFlightPopularFilters/);
+  assert.doesNotMatch(results, /showStickyFlightFilters|shouldShowFlightStickyPopularFilters/);
+  assert.doesNotMatch(results, /desktopCompactFilterRef|desktopFilterSentinelRef/);
+
+  // Keep the legacy compact branch available inside the shared filter component,
+  // but standalone Flight Results must not remount it during scrolling.
+  assert.match(filters, /data-flight-desktop-compact-filter-surface/);
+  assert.match(filters, /openCompactSection/);
+});
+
+
+test("desktop Flight Results remove nearby fares while preserving the mobile rail", () => {
+  assert.doesNotMatch(results, /data-desktop-nearby-fare-rail/);
+  assert.doesNotMatch(results, /data-desktop-cheaper-nearby/);
+  assert.doesNotMatch(results, /nearbyFareVisibleCount|nearbyFareVisibleStart|navigateNearbyFareWindow/);
+  assert.doesNotMatch(globals, /data-desktop-nearby-fare-rail|desktop-flight-fare-price|desktop-flight-cheaper-nearby/);
+  assert.match(results, /data-nearby-fare-presentation="mobile"/);
+  assert.match(results, /flight-mobile-cheaper-nearby/);
+  assert.match(results, /Cheaper nearby: \{formatFareStripDateLabel\(cheaperNearbyFare\.date, calendarLocale\)\} · Save \{cheaperNearbyFare\.savings\}/);
+});
+
+test("desktop Flight result cards use the lighter hierarchy without changing MobileFlightCard", () => {
+  assert.match(card, /flight-card-airline-name[^\n]*font-bold text-slate-900/);
+  assert.match(card, /flight-card-leg-label font-bold uppercase text-\[#0057E7\]/);
+  assert.match(card, /flight-card-time[^\n]*font-semibold[^\n]*tracking-\[-0\.02em\][^\n]*text-slate-950/);
+  assert.match(card, /flight-card-airport[^\n]*font-semibold text-slate-900/);
+  assert.match(card, /flight-card-leg-meta font-medium text-\[#536B92\]/);
+  assert.match(card, /flight-card-duration[^\n]*font-semibold text-slate-600/);
+  assert.match(card, /flight-card-price-value font-semibold[^\n]*tracking-\[-0\.02em\]/);
+  assert.match(card, /flight-card-detail-value[^\n]*font-medium text-\[#536B92\]/);
+  assert.match(card, /shrink-0 font-semibold text-\[#07133B\]/);
+  assert.match(card, /PlaneTakeoff className="mx-2 h-3\.5 w-3\.5 text-\[#004BB8\]"/);
+  assert.match(globals, /\.flight-card-airline-name \{[\s\S]*font-size: 0\.875rem;[\s\S]*line-height: 1\.0625rem;/);
+  assert.match(globals, /\.flight-card-flight-number \{[\s\S]*font-size: 0\.6875rem;[\s\S]*line-height: 0\.875rem;/);
+  assert.match(globals, /\.flight-card-time \{[\s\S]*font-size: 1rem;[\s\S]*line-height: 1\.125rem;/);
+  assert.match(globals, /\.flight-card-airport \{[\s\S]*font-size: 0\.75rem;/);
+  assert.match(globals, /\.flight-card-leg-meta \{[\s\S]*font-size: 0\.6875rem;/);
+  assert.match(globals, /\.flight-card-duration \{[\s\S]*font-size: 0\.6875rem;/);
+  assert.match(globals, /\.flight-card-fare-action \.flight-card-price-value \{[\s\S]*font-size: 1\.1875rem;[\s\S]*text-align: right;/);
+  assert.match(globals, /\.flight-card-price-value\.flight-card-price\[data-price-size="normal"\] \{[\s\S]*font-size: 1\.1875rem;/);
+  assert.match(globals, /\.flight-results-grid \.flight-card-flight-number \{ font-size: 0\.6875rem; line-height: 0\.875rem; \}/);
+  assert.match(globals, /\.flight-results-grid \.flight-card-time \{ font-size: 1rem; line-height: 1\.125rem; \}/);
+  assert.match(card, /flight-card-details mt-3 grid min-w-0 flex-1 items-start gap-3 px-3 py-2\.5/);
+  assert.match(card, /className="flight-card-detail-icon h-3\.5 w-3\.5 shrink-0 text-slate-500"/);
+  assert.match(globals, /grid-template-areas:\s*"legs fare"\s*"details details"/);
+  assert.match(card, /actionLabel \?\? t\("viewDeal"\)/);
+  assert.match(card, /flight-card-fare-action flex flex-col items-end/);
+  assert.match(card, /flight-card-fare-action flex flex-col items-end justify-start/);
+  assert.match(card, /flight-card-fare-commerce flex w-full flex-col items-end/);
+  assert.match(card, /flight-card-view-button mt-2/);
+  assert.match(globals, /\.flight-card-fare-action \{[\s\S]*padding-bottom: 0\.25rem;/);
+  assert.match(globals, /\.flight-card-fare-action \.flight-card-price-value \{[\s\S]*text-align: right;/);
+  assert.match(card, /<ChevronRight className="h-4 w-4"/);
+  assert.doesNotMatch(card, /flight-card-view-button[^\n]*bg-\[#004BB8\]/);
+  assert.match(globals, /\.flight-card-fare-action \{[\s\S]*padding-right: 0\.125rem;/);
+  assert.match(globals, /\.flight-card-view-button \{[\s\S]*width: 100%;[\s\S]*min-width: 0;[\s\S]*justify-content: flex-end;[\s\S]*padding-left: 0;[\s\S]*padding-right: 0;/);
+  assert.doesNotMatch(card, /flight-card-detail-item flex-nowrap whitespace-nowrap border-r/);
+  assert.match(card, /<MobileFlightCard/);
+  assert.match(card, /data-flight-card-actions/);
+  assert.match(card, /aria-pressed=\{isSaved\}/);
+  assert.match(card, /<Heart[\s\S]*fill=\{isSaved \? "currentColor" : "none"\}/);
+  assert.match(card, /<Share2 size=\{18\}/);
+  assert.match(card, /navigator\.share/);
+  assert.match(card, /navigator\.clipboard\.writeText/);
+});
+
+test("desktop Flight Details carries fare typography, underline-only tabs, and price readiness", () => {
+  assert.match(details, /data-desktop-fare-price-loading/);
+  assert.match(details, /data-desktop-flight-deal-list/);
+  assert.match(details, /pricesReady=\{mobilePricesReady\}/);
+  assert.match(details, /sm:text-\[18px\] sm:font-medium/);
+  assert.match(details, /text-\[18px\] font-semibold leading-6 text-\[#1a1a1a\] tabular-nums/);
+  assert.match(details, /activeTab === tab.id \? "border-\[#075EE8\]" : "border-transparent"/);
+  assert.match(details, /mobilePricesReady \? <div role="radiogroup"/);
+});

@@ -15,3 +15,11 @@ test("package search rejects malformed JSON", async () => {
   const response = await POST(new Request("http://local/api/packages/search", { method: "POST", body: "{" }));
   assert.equal(response.status, 400);
 });
+
+test("package search rejects unknown journey scopes and hotel-first flight-car requests", async () => {
+  for (const body of [{ mode: "hotel-flight", journey: "everything" }, { mode: "flight-car", journey: "staged" }]) {
+    const response = await POST(new Request("http://local/api/packages/search", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }));
+    assert.equal(response.status, 400);
+    assert.equal(response.headers.get("cache-control"), "no-store");
+  }
+});

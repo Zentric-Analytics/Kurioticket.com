@@ -1,3 +1,4 @@
+import { normalizePasskeyAssertion, type NormalizedPasskeyAssertion } from "./passkeyAssertion";
 import { Platform } from "react-native";
 import type { PasskeyRegistrationOptions } from "../../api/travelApi";
 import { normalizeNativePasskeyCreationError } from "./nativePasskeyDiagnostics";
@@ -55,14 +56,33 @@ export function normalizePasskeyRegistration(credential: NativeCreationResponse)
   };
 }
 
+function androidPlatformRegistrationOptions(options: PasskeyRegistrationOptions): PasskeyRegistrationOptions {
+  if (Platform.OS !== "android") return options;
+  const currentSelection = options.authenticatorSelection;
+  const authenticatorSelection = currentSelection && typeof currentSelection === "object" && !Array.isArray(currentSelection)
+    ? currentSelection as Record<string, unknown>
+    : {};
+  return {
+    ...options,
+    authenticatorSelection: {
+      ...authenticatorSelection,
+      // Android passkeys should be created with the platform credential provider.
+      // This avoids offering roaming USB/hybrid authenticators for this explicit
+      // in-app passkey setup flow and keeps Google Password Manager eligible.
+      authenticatorAttachment: "platform",
+    },
+  };
+}
+
 export async function createNativePasskey(
   options: PasskeyRegistrationOptions,
   signal?: AbortSignal,
 ): Promise<NormalizedPasskeyRegistration | null> {
   const module = await loadPasskeyModule();
   if (!module.isSupported()) return null;
+  const requestOptions = androidPlatformRegistrationOptions(options);
   const credential = await module.create({
-    ...(options as Parameters<PasskeyModule["create"]>[0]),
+    ...(requestOptions as Parameters<PasskeyModule["create"]>[0]),
     signal,
   });
   return credential ? normalizePasskeyRegistration(credential) : null;
@@ -77,53 +97,8 @@ export function defaultPasskeyName(copy: { ios: string; android: string }): stri
 }
 
 export type NativePasskeyAuthenticationOptions = Parameters<PasskeyModule["get"]>[0];
-export type NormalizedPasskeyAssertion = {
-  id: string;
-  rawId: string;
-  type: "public-key";
-  response: {
-    clientDataJSON: string;
-    authenticatorData: string;
-    signature: string;
-    userHandle: string | null;
-  };
-  authenticatorAttachment: string | null;
-  clientExtensionResults: Record<string, unknown>;
-};
-
-function requiredString(value: unknown, field: string): string {
-  if (typeof value !== "string" || !value) throw new Error(`Passkey authentication returned an invalid ${field}.`);
-  return value;
-}
-
-export function normalizePasskeyAssertion(credential: unknown): NormalizedPasskeyAssertion {
-  if (!credential || typeof credential !== "object") throw new Error("Passkey authentication returned an incomplete credential.");
-  const value = credential as Record<string, unknown>;
-  const response = value.response;
-  if (!response || typeof response !== "object") throw new Error("Passkey authentication returned an incomplete credential.");
-  const assertion = response as Record<string, unknown>;
-  const type = requiredString(value.type, "type");
-  if (type !== "public-key") throw new Error("Passkey authentication returned an invalid type.");
-  const userHandle = assertion.userHandle;
-  if (userHandle !== undefined && userHandle !== null && typeof userHandle !== "string") throw new Error("Passkey authentication returned an invalid user handle.");
-  const attachment = value.authenticatorAttachment;
-  if (attachment !== undefined && attachment !== null && typeof attachment !== "string") throw new Error("Passkey authentication returned an invalid attachment.");
-  const extensions = value.clientExtensionResults;
-  if (extensions !== undefined && extensions !== null && (typeof extensions !== "object" || Array.isArray(extensions))) {
-    throw new Error("Passkey authentication returned invalid extensions.");
-  }
-  return {
-    id: requiredString(value.id, "id"), rawId: requiredString(value.rawId, "rawId"), type,
-    response: {
-      clientDataJSON: requiredString(assertion.clientDataJSON, "client data"),
-      authenticatorData: requiredString(assertion.authenticatorData, "authenticator data"),
-      signature: requiredString(assertion.signature, "signature"),
-      userHandle: (userHandle as string | null | undefined) ?? null,
-    },
-    authenticatorAttachment: (attachment as string | null | undefined) ?? null,
-    clientExtensionResults: (extensions ?? {}) as Record<string, unknown>,
-  };
-}
+export { normalizePasskeyAssertion } from "./passkeyAssertion";
+export type { NormalizedPasskeyAssertion } from "./passkeyAssertion";
 
 export async function getNativePasskey(
   options: NativePasskeyAuthenticationOptions,

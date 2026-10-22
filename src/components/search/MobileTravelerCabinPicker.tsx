@@ -34,7 +34,7 @@ export type MobileTravelerCabinStrings = {
 
 type Props = {
   adults: number;
-  children: number;
+  childCount: number;
   infants: number;
   cabinClass: MobileCabinClass;
   maximumTravelers?: number;
@@ -58,7 +58,7 @@ function ChildOutlineIcon({ className }: { className?: string }) {
 
 export function MobileTravelerCabinPicker({
   adults,
-  children,
+  childCount: children,
   infants,
   cabinClass,
   maximumTravelers = 9,

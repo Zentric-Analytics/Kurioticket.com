@@ -85,7 +85,7 @@ function RegionBrowseDestinationCard({
           </Text>
         </View>
       </Pressable>
-      <AndroidFavoriteButton saved={saved} label={`${saved ? "Remove" : "Save"} ${destination.name}`} onPress={onToggle} style={s.browseHeart} />
+      <AndroidFavoriteButton saved={saved} label={`${saved ? "Remove" : "Save"} ${destination.name}`} onPress={onToggle} style={s.browseHeart} variant="webParity" />
     </View>
   );
 }

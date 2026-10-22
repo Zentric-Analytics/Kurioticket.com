@@ -2,12 +2,13 @@ import { getOptionalPrisma, getPrisma } from "@/lib/prisma";
 import { trackAnalyticsEvent } from "@/services/analyticsService";
 import { flightPriceAlertDuplicateKey } from "@/lib/price-alerts/flightPriceAlerts";
 import { hotelPriceAlertDuplicateKey } from "@/lib/price-alerts/hotelPriceAlerts";
+import { carPriceAlertDuplicateKey } from "@/lib/price-alerts/carPriceAlerts";
 import { isFeatureEnabled } from "@/lib/feature-controls/service";
 import type { SearchType } from "@/generated/prisma/enums";
 
 export type AccountPriceAlert = {
   id: string;
-  type: "FLIGHT" | "HOTEL";
+  type: "FLIGHT" | "HOTEL" | "CAR";
   origin: string | null;
   destination: string;
   targetPrice: string | null;
@@ -65,7 +66,7 @@ function serializePriceAlert(alert: {
   lastCheckedAt?: Date | null;
   query?: unknown;
 }): AccountPriceAlert {
-  if (alert.type !== "FLIGHT" && alert.type !== "HOTEL") {
+  if (alert.type !== "FLIGHT" && alert.type !== "HOTEL" && alert.type !== "CAR") {
     throw new PriceAlertUnavailableError("Unsupported price alert type.");
   }
   return {
@@ -129,10 +130,11 @@ export async function listUserPriceAlerts(userId: string): Promise<AccountPriceA
 
 export async function createPriceAlert(input: {
   userId: string;
-  type: "FLIGHT" | "HOTEL";
+  type: "FLIGHT" | "HOTEL" | "CAR";
   origin?: string;
   destination: string;
   targetPrice?: number;
+  baselinePrice?: number;
   mode?: "AUTOMATIC" | "TARGET";
   currency: string;
   query: Record<string, unknown>;
@@ -142,11 +144,12 @@ export async function createPriceAlert(input: {
     const db = getPrisma();
     const mode = input.mode ?? "TARGET";
     if (mode === "TARGET" && input.targetPrice === undefined) throw new PriceAlertUnavailableError("Target price is required for target alerts.");
-    if (input.type === "FLIGHT" && mode === "TARGET") {
+    if (input.type === "FLIGHT") {
       const requestedKey = flightPriceAlertDuplicateKey({
         origin: input.origin ?? null,
         destination: input.destination,
         targetPrice: input.targetPrice ?? null,
+        mode,
         currency: input.currency,
         query: input.query,
       });
@@ -156,6 +159,7 @@ export async function createPriceAlert(input: {
           where: {
             userId: input.userId,
             type: "FLIGHT",
+            mode,
             status: { in: ["ACTIVE", "PAUSED"] },
             origin: input.origin,
             destination: input.destination,
@@ -178,6 +182,15 @@ export async function createPriceAlert(input: {
       const duplicate = requestedKey && existingAlerts.find((alert) => hotelPriceAlertDuplicateKey(alert) === requestedKey);
       if (duplicate) throw new DuplicatePriceAlertError(serializePriceAlert(duplicate));
     }
+    if (input.type === "CAR") {
+      const requestedKey = carPriceAlertDuplicateKey({ ...input, origin: input.origin ?? null, targetPrice: input.targetPrice ?? null });
+      const existingAlerts = await db.priceAlert.findMany({
+        where: { userId: input.userId, type: "CAR", mode, status: { in: ["ACTIVE", "PAUSED"] }, origin: input.origin, destination: input.destination, currency: input.currency },
+        select: { id: true, type: true, origin: true, destination: true, targetPrice: true, mode: true, currency: true, status: true, query: true, createdAt: true, updatedAt: true },
+      });
+      const duplicate = requestedKey && existingAlerts.find((alert) => carPriceAlertDuplicateKey(alert) === requestedKey);
+      if (duplicate) throw new DuplicatePriceAlertError(serializePriceAlert(duplicate));
+    }
 
     const alert = await db.priceAlert.create({
       data: {
@@ -186,6 +199,7 @@ export async function createPriceAlert(input: {
         origin: input.origin,
         destination: input.destination,
         targetPrice: input.targetPrice,
+        baselinePrice: input.baselinePrice,
         mode,
         currency: input.currency,
         query: input.query as never,

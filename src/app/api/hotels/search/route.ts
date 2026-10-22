@@ -1,14 +1,21 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
+import { createHash } from "node:crypto";
 import { resolveOptionalWebApiSession } from "@/lib/web-api-auth";
 import { getClientIp, checkRateLimit } from "@/lib/rate-limit";
 import { toPublicHotel } from "@/lib/searchCache";
 import { hotelSearchSchema } from "@/lib/validation";
 import { classifyHotels } from "@/lib/travel/searchContract";
 import { logProviderCall, logSearchHistory, trackAnalyticsEvent } from "@/services/analyticsService";
-import { searchHotels } from "@/services/travel/hotelAggregator";
+import {
+  searchHotels,
+  searchHotelsByProvider,
+  type HotelProviderMode,
+} from "@/services/travel/hotelAggregator";
 import { isFeatureEnabled } from "@/lib/feature-controls/service";
 import { readVisitorToken } from "@/lib/visitor-identity";
 import { resolveConsentedVisitorId } from "@/services/visitorIdentityService";
+import { getKayakClientIp } from "@/lib/kayak-client-ip";
+import { isKayakSandboxEnabled } from "@/services/travel/kayakSandbox";
 
 export async function POST(request: Request) {
   const requestId = request.headers.get("x-search-request-id")?.trim() || crypto.randomUUID();
@@ -21,16 +28,57 @@ export async function POST(request: Request) {
   }
 
   const payload = await request.json();
-  const parsed = hotelSearchSchema.safeParse(payload);
-  if (!parsed.success) {
-    return NextResponse.json({ error: "Search needs a little more detail.", issues: parsed.error.flatten() }, { status: 400 });
+  const requestedProvider =
+    request.headers.get("x-hotel-provider-mode")?.trim() ||
+    new URL(request.url).searchParams.get("provider");
+  const providerMode: HotelProviderMode | null =
+    requestedProvider === "kayak-sandbox" ? requestedProvider : null;
+  if (requestedProvider && !providerMode) {
+    return NextResponse.json(
+      { error: "Unsupported Hotel provider mode." },
+      { status: 400 },
+    );
+  }
+  if (providerMode === "kayak-sandbox" && !isKayakSandboxEnabled()) {
+    return NextResponse.json(
+      { error: "Hotel provider mode is unavailable." },
+      { status: 404 },
+    );
   }
 
+  const rawDestinationId =
+    payload && typeof payload === "object" && "destinationId" in payload
+      ? String((payload as { destinationId?: unknown }).destinationId ?? "").trim()
+      : "";
+  const providerDestinationId =
+    providerMode === "kayak-sandbox" && /^kplace:\d+$/.test(rawDestinationId)
+      ? rawDestinationId
+      : undefined;
+  const validationPayload = providerDestinationId
+    ? { ...(payload as Record<string, unknown>), destinationId: undefined }
+    : payload;
+  const parsed = hotelSearchSchema.safeParse(validationPayload);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Search needs a little more detail.", issues: parsed.error.flatten() },
+      { status: 400 },
+    );
+  }
+  const search = providerDestinationId
+    ? { ...parsed.data, destinationId: providerDestinationId }
+    : parsed.data;
+
   const session = (await resolveOptionalWebApiSession())?.session;
-  const visitorId = await resolveConsentedVisitorId(visitorToken);
-  const aggregate = await searchHotels(parsed.data);
+  const kayakContext = {
+    clientIp: getKayakClientIp(request),
+    userAgent: request.headers.get("user-agent") || undefined,
+    signal: request.signal,
+  };
+  const aggregate = providerMode
+    ? await searchHotelsByProvider(search, providerMode, { kayak: kayakContext, defer: after })
+    : await searchHotels(search, { kayak: kayakContext, defer: after });
   if (aggregate.unavailableMessage) {
-    await Promise.all(
+    after(() => Promise.all(
       aggregate.providerStatuses.map((provider) =>
         logProviderCall({
           provider: provider.provider,
@@ -41,14 +89,14 @@ export async function POST(request: Request) {
           errorMessage: provider.error,
         }),
       ),
-    );
+    ).then(() => undefined));
 
     return NextResponse.json(
       {
         error: aggregate.unavailableMessage,
         results: [],
         status: "unavailable",
-        source: "kurioticket-static-hotels",
+        source: providerMode || "kayak-sandbox",
         warnings: aggregate.warnings,
         partial: false,
         requestId,
@@ -64,19 +112,32 @@ export async function POST(request: Request) {
   }
 
   const publicResults = aggregate.results.map(toPublicHotel);
+  console.info("[hotel-search-summary]", {
+    requestId,
+    searchFingerprint: createHash("sha256").update(JSON.stringify(search)).digest("hex"),
+    offerCount: publicResults.length,
+    propertyCount: new Set(publicResults.map(result => JSON.stringify([result.provider, result.propertyGroupId ?? result.id]))).size,
+    latencyMs: aggregate.latencyMs,
+    providers: aggregate.providerStatuses.map(provider => ({
+      provider: provider.provider, status: provider.status, offerCount: provider.results.length,
+      latencyMs: provider.latencyMs, error: sanitizeProviderError(provider.error),
+    })),
+  });
   const status = aggregate.providerStatuses.some((provider) => provider.status === "failed")
       ? "PARTIAL"
       : "SUCCESS";
 
-  await Promise.all([
+  after(async () => {
+    const visitorId = await resolveConsentedVisitorId(visitorToken);
+    await Promise.all([
     logSearchHistory({
       userId: session?.user?.id,
       visitorId,
       type: "HOTEL",
-      destination: parsed.data.destination,
-      checkIn: new Date(parsed.data.checkIn),
-      checkOut: new Date(parsed.data.checkOut),
-      query: parsed.data,
+      destination: search.destination,
+      checkIn: new Date(search.checkIn),
+      checkOut: new Date(search.checkOut),
+      query: search,
       resultCount: publicResults.length,
       latencyMs: aggregate.latencyMs,
       status,
@@ -87,7 +148,7 @@ export async function POST(request: Request) {
       type: "SEARCH",
       name: "hotel_search",
       metadata: {
-        destination: parsed.data.destination,
+        destination: search.destination,
         resultCount: publicResults.length,
       },
     }),
@@ -101,10 +162,13 @@ export async function POST(request: Request) {
         errorMessage: provider.error,
       }),
     ),
-  ]);
+    ]);
+  });
 
+  const classified = classifyHotels(publicResults, aggregate.warnings, requestId);
   return NextResponse.json({
-    ...classifyHotels(publicResults, aggregate.warnings, requestId),
+    ...classified,
+    source: providerMode || classified.source,
     providerStatuses: aggregate.providerStatuses.map(({ provider, status, latencyMs, error }) => ({
       provider,
       status,
@@ -122,7 +186,16 @@ function sanitizeProviderError(error?: string) {
   return "provider_unavailable";
 }
 
-function deriveHotelWarningCategory(aggregate: Awaited<ReturnType<typeof searchHotels>>) {
+function deriveHotelWarningCategory(
+  aggregate: Pick<
+    Awaited<ReturnType<typeof searchHotels>>,
+    "providerStatuses" | "results"
+  >,
+) {
+  if (!aggregate.results.length && aggregate.providerStatuses.every(provider => provider.status === "skipped") &&
+      aggregate.providerStatuses.some(provider => provider.errorReason === "unsupported_search" || provider.errorReason === "unsupported_location")) {
+    return "unsupported_search";
+  }
   if (aggregate.providerStatuses.some((provider) => provider.error === "unsupported_destination")) {
     return "unsupported_destination";
   }

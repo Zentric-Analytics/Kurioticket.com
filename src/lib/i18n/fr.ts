@@ -2,8 +2,8 @@ import { translations as en } from "./en";
 import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
-  "accountDashboard.recently": "Récemment",
   ...en,
+  "accountDashboard.recently": "Récemment",
   "deals.mobileTravelersTitle": "Voyageurs",
   "mobileTravelerCabin.title": "Voyageurs et cabine",
   "mobileTravelerCabin.adultDescription": "18 ans et plus",
@@ -154,6 +154,7 @@ export const translations: TranslationDictionary = {
   "travelersCabinDialogLabel": "Voyageurs et cabine",
   mobilePreferencesHeading: "Préférences",
   viewDetails: "Voir les détails",
+  seeDetails: "Voir les détails",
   tryAgain: "Réessayer",
   edit: "Modifier",
   manage: "Gérer",
@@ -537,7 +538,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.preferences.customization.personalization.title": "Personnalisation",
   "accountDashboard.preferences.customization.personalization.description": "Contrôlez comment Kurioticket personnalise vos recommandations.",
   "accountDashboard.preferences.customization.personalizeSearches": "Utiliser mes recherches pour personnaliser les recommandations",
-  "accountDashboard.preferences.customization.personalizedTravelForfaits": "Afficher des offres de voyage personnalisées",
+  "accountDashboard.preferences.customization.personalizedTravelDeals": "Afficher des offres de voyage personnalisées",
   "accountDashboard.preferences.customization.rememberRecentSearches": "Mémoriser mes recherches récentes",
   "accountDashboard.preferences.customization.communicationStyle.title": "Style de communication",
   "accountDashboard.preferences.customization.communicationStyle.description": "Choisissez comment Kurioticket doit communiquer avec vous.",
@@ -1779,6 +1780,7 @@ flightLandingRouteAriaLabel:
   displayEstimateConvertedFromProviderPrice: "{{formatted}}. Estimation affichée convertie depuis {{providerPrice}}. Le prix final du fournisseur peut varier.",
   convertedDisplayEstimateProviderPrice: "Estimation affichée convertie. Prix du fournisseur : {{providerPrice}}. Le prix final du fournisseur peut varier.",
   viewFlight: "Voir le vol",
+  viewDeal: "Voir l’offre",
   flightCardProviderHandoff: "Le prix final, la disponibilité, la réservation et les règles tarifaires sont confirmés par le fournisseur.",
   flightCardProviderHandoffConverted: "Le prix final, la disponibilité, la réservation et les règles tarifaires sont confirmés par le fournisseur. La devise finale du fournisseur peut différer de votre devise d’affichage sélectionnée.",
   flightDetailsLoading: "Chargement des détails du vol...",
@@ -1820,6 +1822,7 @@ flightLandingRouteAriaLabel:
   changesNotAllowedBeforeDeparture: "Modifications non autorisées avant le départ",
   providerNormalizedItineraryPrefix: "Les détails de l’aller et du retour sont affichés à partir des données d’itinéraire normalisées par le fournisseur.",
   checkProvider: "Vérifier auprès du fournisseur",
+  notSuppliedByProvider: "Non fourni par le fournisseur",
   carryOnIncluded: "bagage cabine inclus",
   baggage: "Bagages",
   cabin: "Cabine",

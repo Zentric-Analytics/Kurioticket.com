@@ -1,8 +1,10 @@
-import type { FlowIconName } from "../flow/FlowIcon";
+import type { FlowIconName } from "../flow/flowIconTypes";
 import type { MobileTranslationKey } from "../../localization/mobileLocalizationCatalog";
 
+export type ProfileNativeHref = "/personal-information" | "/security" | "/price-alerts" | "/settings" | "/saved" | "/recent" | "/faq" | "/support" | "/email-preferences" | "/travel-preferences" | "/(tabs)/profile/terms-of-service" | "/(tabs)/profile/privacy-policy";
 export type ProfileDestination =
-  { kind: "native"; href: "/personal-information" | "/security" | "/price-alerts" | "/settings" | "/saved" | "/recent" | "/faq" | "/support" | "/email-preferences" | "/travel-preferences" | "/(tabs)/profile/terms-of-service" | "/(tabs)/profile/privacy-policy" };
+  | { kind: "native"; href: ProfileNativeHref }
+  | { kind: "preview-browser"; path: "/mobile/legal/terms-of-service" | "/mobile/legal/privacy-policy"; productionHref: "/(tabs)/profile/terms-of-service" | "/(tabs)/profile/privacy-policy" };
 export type ProfileItem = { label: MobileTranslationKey; icon: FlowIconName; destination: ProfileDestination };
 export type ProfileSection = { title: MobileTranslationKey; items: ProfileItem[] };
 
@@ -15,16 +17,16 @@ export function profileFirstName(name?: string | null): string | null {
 export const authenticatedProfileSections: ProfileSection[] = [
   { title: "manageAccount", items: [
     { label: "personalDetails", icon: "person", destination: { kind: "native", href: "/personal-information" } },
-    { label: "securitySettings", icon: "shield", destination: { kind: "native", href: "/security" } },
+    { label: "securitySettings", icon: "lock", destination: { kind: "native", href: "/security" } },
   ] },
   { title: "travelActivity", items: [
-    { label: "savedItems", icon: "bookmark", destination: { kind: "native", href: "/saved" } },
+    { label: "savedItems", icon: "heart", destination: { kind: "native", href: "/saved" } },
     { label: "recentSearches", icon: "clock", destination: { kind: "native", href: "/recent" } },
     { label: "priceAlerts", icon: "bell", destination: { kind: "native", href: "/price-alerts" } },
   ] },
   { title: "preferences", items: [
     { label: "customizationPreferences", icon: "sliders", destination: { kind: "native", href: "/settings" } },
-    { label: "travelPreferences", icon: "settings", destination: { kind: "native", href: "/travel-preferences" } },
+    { label: "travelPreferences", icon: "flight", destination: { kind: "native", href: "/travel-preferences" } },
     { label: "emailPreferences", icon: "mail", destination: { kind: "native", href: "/email-preferences" } },
   ] },
   { title: "helpSupport", items: [
@@ -32,7 +34,7 @@ export const authenticatedProfileSections: ProfileSection[] = [
     { label: "faq", icon: "help", destination: { kind: "native", href: "/faq" } },
   ] },
   { title: "aboutLegal", items: [
-    { label: "terms", icon: "document", destination: { kind: "native", href: "/(tabs)/profile/terms-of-service" } },
-    { label: "privacy", icon: "shield", destination: { kind: "native", href: "/(tabs)/profile/privacy-policy" } },
+    { label: "terms", icon: "document", destination: { kind: "preview-browser", path: "/mobile/legal/terms-of-service", productionHref: "/(tabs)/profile/terms-of-service" } },
+    { label: "privacy", icon: "shield", destination: { kind: "preview-browser", path: "/mobile/legal/privacy-policy", productionHref: "/(tabs)/profile/privacy-policy" } },
   ] },
 ];

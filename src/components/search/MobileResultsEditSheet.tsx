@@ -16,6 +16,8 @@ import { acquireMobileResultsScrollLock } from "@/lib/search/mobileResultsScroll
 import { acquireMobileResultsOverlayCanvas } from "@/lib/search/mobileResultsOverlayCanvas";
 
 type Props = {
+  appearance?: "default" | "carsResultsEdit";
+  placement?: "top" | "bottom";
   open: boolean;
   title: string;
   children: ReactNode;
@@ -26,14 +28,21 @@ type Props = {
   contentClassName?: string;
   browserCanvasColor?: string;
   cleanBackdrop?: boolean;
+  backdropClassName?: string;
   bottomSurfaceContinuation?: boolean;
   bottomSurfaceContinuationClassName?: string;
   smoothMotion?: boolean;
   closing?: boolean;
+  isolatedBackdrop?: boolean;
+  onCloseAnimationComplete?: () => void;
+  freezeBodyPosition?: boolean;
+  shouldRestoreScroll?: () => boolean;
 };
 
 /** Presentation-only shell used by mobile search editors on Results pages. */
 export function MobileResultsEditSheet({
+  appearance = "default",
+  placement = "bottom",
   open,
   title,
   children,
@@ -44,11 +53,17 @@ export function MobileResultsEditSheet({
   contentClassName,
   browserCanvasColor,
   cleanBackdrop = false,
+  backdropClassName,
   bottomSurfaceContinuation = false,
   bottomSurfaceContinuationClassName,
   smoothMotion = false,
   closing = false,
+  isolatedBackdrop = false,
+  onCloseAnimationComplete,
+  freezeBodyPosition = true,
+  shouldRestoreScroll,
 }: Props) {
+  const carsResultsEdit = appearance === "carsResultsEdit";
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
 
@@ -99,12 +114,16 @@ export function MobileResultsEditSheet({
     const releaseCanvas = acquireMobileResultsOverlayCanvas({
       canvasColor: browserCanvasColor,
     });
-    const releaseScrollLock = acquireMobileResultsScrollLock();
+    const releaseScrollLock = acquireMobileResultsScrollLock({
+      freezeBodyPosition,
+    });
     return () => {
-      releaseScrollLock();
+      const restoreScroll = shouldRestoreScroll?.() ?? true;
+      releaseScrollLock({ restoreScroll });
+      if (!restoreScroll) window.scrollTo({ top: 0, left: 0, behavior: "instant" });
       releaseCanvas();
     };
-  }, [browserCanvasColor, open]);
+  }, [browserCanvasColor, freezeBodyPosition, open, shouldRestoreScroll]);
 
   if (!open || typeof document === "undefined") return null;
   return createPortal(
@@ -112,18 +131,46 @@ export function MobileResultsEditSheet({
       data-mobile-results-overlay-root
       data-mobile-results-edit-sheet
       className={cn(
-        "mobile-results-overlay-root mobile-results-sheet-backdrop fixed inset-0 z-[10000] flex min-h-0 w-screen items-end overflow-visible overscroll-none bg-slate-950/35 motion-reduce:transition-none sm:hidden",
-        cleanBackdrop && "mobile-results-sheet-backdrop-clean",
-        closing && "mobile-results-sheet-backdrop-closing",
+        "mobile-results-overlay-root fixed inset-0 z-[10000] flex min-h-0 w-screen items-end overflow-visible overscroll-none motion-reduce:transition-none sm:hidden",
+        !isolatedBackdrop && "mobile-results-sheet-backdrop bg-slate-950/35",
+        placement === "top" && "items-start",
+        !isolatedBackdrop && cleanBackdrop && "mobile-results-sheet-backdrop-clean",
+        !isolatedBackdrop && closing && "mobile-results-sheet-backdrop-closing",
+        carsResultsEdit && "mobile-results-sheet-cars-edit",
       )}
       onPointerDown={(event) => { if (event.target === event.currentTarget) close(); }}
     >
+      {isolatedBackdrop ? (
+        <div
+          aria-hidden="true"
+          className={cn(
+            "mobile-results-sheet-backdrop-layer pointer-events-none fixed inset-0 bg-slate-950/35",
+            cleanBackdrop && "mobile-results-sheet-backdrop-clean",
+            closing && "mobile-results-sheet-backdrop-layer-closing",
+            backdropClassName,
+            carsResultsEdit && "mobile-results-sheet-cars-edit-backdrop",
+          )}
+        />
+      ) : null}
       <div
         className={cn(
-          "mobile-results-sheet-surface relative flex max-h-[94dvh] min-h-0 w-full flex-col",
+          "mobile-results-sheet-surface relative flex min-h-0 flex-col",
+          carsResultsEdit
+            ? "mobile-results-sheet-cars-edit-surface mx-3 mb-3 max-h-[88dvh] w-[calc(100%_-_24px)]"
+            : "max-h-[94dvh] w-full",
+          placement === "top" && "origin-top [animation:none]",
           smoothMotion && "mobile-results-sheet-surface-smooth",
           closing && "mobile-results-sheet-surface-closing",
         )}
+        onAnimationEnd={(event) => {
+          if (
+            closing &&
+            event.target === event.currentTarget &&
+            event.animationName === "mobile-results-sheet-surface-out"
+          ) {
+            onCloseAnimationComplete?.();
+          }
+        }}
       >
         <div
           ref={dialogRef}
@@ -131,17 +178,37 @@ export function MobileResultsEditSheet({
           tabIndex={-1}
           aria-modal="true"
           aria-labelledby={titleId}
-          className={cn("relative z-10 flex min-h-0 w-full flex-col overflow-hidden rounded-t-[22px] border border-b-0 border-slate-200/80 bg-white shadow-[0_-12px_36px_rgba(15,23,42,0.18)] outline-none", className)}
+          className={cn(
+            "relative z-10 flex min-h-0 w-full flex-col overflow-hidden outline-none",
+            carsResultsEdit
+              ? "rounded-[24px] border-0 bg-[#F5F7FB] shadow-none"
+              : "rounded-t-[22px] border border-b-0 border-slate-200/80 bg-white shadow-[0_-12px_36px_rgba(15,23,42,0.18)]",
+            placement === "top" && !carsResultsEdit && "rounded-t-none rounded-b-[22px] border-t-0 border-b pt-[env(safe-area-inset-top)]",
+            className,
+          )}
         >
-          <div className="shrink-0 border-b border-slate-200/80 bg-white px-4 pb-2 pt-2">
-            <div className="mx-auto flex min-h-11 w-full max-w-xl items-center justify-between gap-3">
-              <h2 id={titleId} className="text-xl font-bold tracking-[-0.01em] text-slate-950">{title}</h2>
-              <button type="button" aria-label={`Close ${title.toLocaleLowerCase()}`} onClick={close} className="inline-flex h-11 w-11 items-center justify-center rounded-full text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35">
+          <div className={cn("shrink-0 border-b border-slate-200/80 bg-white px-4 pb-2 pt-2", carsResultsEdit && "border-b-0 bg-[#F5F7FB] px-2 py-0")}>
+            <div className={cn("mx-auto flex min-h-11 w-full max-w-xl items-center justify-between gap-3", carsResultsEdit && "relative min-h-[52px] justify-center")}>
+              <h2 id={titleId} className={cn("text-xl font-bold tracking-[-0.01em] text-slate-950", carsResultsEdit && "cars-results-edit-title pointer-events-none absolute inset-x-12 top-1/2 -translate-y-1/2 text-center text-[19px] font-semibold leading-[24px] tracking-normal")}>{title}</h2>
+              <button type="button" aria-label={`Close ${title.toLocaleLowerCase()}`} onClick={close} className={cn("inline-flex h-11 w-11 items-center justify-center rounded-full text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35", carsResultsEdit && "absolute right-0")}>
                 <X className="h-5 w-5" aria-hidden="true" />
               </button>
             </div>
           </div>
-          <div className={cn("mobile-results-sheet-content min-h-0 flex-1 overflow-y-auto overscroll-contain bg-inherit px-4 py-4", footer && "pb-2", contentClassName)}>{children}</div>
+          <div
+            className={cn(
+              "mobile-results-sheet-content min-h-0 flex-1 overflow-y-auto overscroll-contain bg-inherit px-4 py-4",
+              carsResultsEdit && "px-3 pt-2.5",
+              footer && "pb-2",
+              contentClassName,
+            )}
+            style={carsResultsEdit
+              ? { paddingBottom: "max(20px, env(safe-area-inset-bottom, 0px))" }
+              : undefined
+            }
+          >
+            {children}
+          </div>
           {footer ? <div className="shrink-0 border-t border-slate-200 bg-white px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3">{footer}</div> : null}
         </div>
       </div>

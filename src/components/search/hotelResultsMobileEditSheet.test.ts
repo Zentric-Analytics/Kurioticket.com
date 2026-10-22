@@ -7,12 +7,12 @@ const searchBar = read("./HotelSearchBar.tsx");
 const sheet = read("./MobileResultsEditSheet.tsx");
 const results = read("../results/HotelResultsClient.tsx");
 
-test("Hotel results editor groups three canonical rows with visible separators", () => {
+test("Hotel results editor keeps three canonical independent field cards", () => {
   assert.match(searchBar, /compact && !mobileResultsSheet \? \(/);
   assert.match(searchBar, /data-hotel-results-edit-fields=/);
-  assert.match(searchBar, /className=\{mobileResultsSheet \? "flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white divide-y divide-slate-200" : "contents"\}/);
+  assert.match(searchBar, /className=\{mobileResultsSheet \? "flex flex-col gap-2" : "contents"\}/);
   assert.equal(searchBar.match(/data-hotel-mobile-edit-row=/g)?.length, 3);
-  assert.equal(searchBar.match(/min-h-\[72px\] rounded-none border-0 px-4 py-3/g)?.length, 3);
+  assert.equal(searchBar.match(/min-h-16 rounded-\[12px\] border border-\[#D8E1EC\] bg-white px-4 py-2/g)?.length, 3);
   assert.doesNotMatch(searchBar, /mobileResultsEditGroupClass/);
 
   const fieldsStart = searchBar.indexOf("data-hotel-results-edit-fields");
@@ -39,20 +39,12 @@ test("Hotel Results keeps page summaries mounted but omits the sheet summary", (
   assert.doesNotMatch(searchBar.slice(form), /\{mobileSearchSummary\}/);
 });
 
-test("top and compact Hotel headers remain scroll-owned when Edit Search opens", () => {
-  const topHeader = results.slice(
-    results.indexOf('aria-label="Hotel search controls"') - 300,
-    results.indexOf('aria-label="Hotel search controls"') + 500,
-  );
-  const compactHeader = results.slice(
-    results.indexOf('fixed inset-x-0 top-0 z-[900]'),
-    results.indexOf('fixed inset-x-0 top-0 z-[900]') + 900,
-  );
-
-  assert.doesNotMatch(topHeader, /mobileHotelSearchOpen && "(?:hidden|opacity|translate|position|height|padding)/);
-  assert.doesNotMatch(compactHeader, /mobileHotelSearchOpen && "(?:opacity|translate|top-|h-)/);
-  assert.match(compactHeader, /mobileHotelSearchOpen && "pointer-events-none"/);
-  assert.match(compactHeader, /inert=\{mobileHotelSearchOpen \? true : undefined\}/);
+test("hotel editing retains its navbar launcher and floating bottom sheet", () => {
+  assert.doesNotMatch(results, /mobileResultsSearch=/);
+  assert.doesNotMatch(results, /placement="top"/);
+  assert.match(results, /createPortal\(renderMobileHotelNavSearch\(\), mobileNavSearchTarget\)/);
+  assert.match(results, /backdropClassName=\{mobileStyles.editBackdrop\}[\s\S]*smoothMotion[\s\S]*isolatedBackdrop/);
+  assert.match(results, /aria-expanded=\{mobileHotelSearchOpen\}/);
 });
 
 test("Hotel results cards place their icons and approved affordances in value rows", () => {
@@ -68,17 +60,18 @@ test("Hotel results cards place their icons and approved affordances in value ro
   assert.equal((searchBar.match(/<ChevronRight aria-hidden="true" className=/g) ?? []).length, 2);
 });
 
-test("Hotel results sheet matches the focused selector motion and backdrop", () => {
+test("Hotel results sheet uses the Cars bottom-sheet surface and motion contract", () => {
   assert.match(results, /browserCanvasColor="#ffffff"/);
-  assert.doesNotMatch(results, /<MobileResultsEditSheet[^>]*cleanBackdrop/);
-  assert.doesNotMatch(results, /<MobileResultsEditSheet[^>]*smoothMotion/);
+  assert.match(results, /className=\{mobileStyles.editSheet\}/);
+  assert.match(read("../results/HotelResultsMobile.module.css"), /padding: 10px 12px max\(20px, env\(safe-area-inset-bottom\)\)/);
   assert.match(results, /closing=\{mobileHotelSearchClosing\}/);
-  assert.match(results, /className="bg-white"/);
-  assert.match(results, /contentClassName="!pt-3 bg-white/);
-  assert.match(results, /bottomSurfaceContinuation/);
-  assert.doesNotMatch(results, /bottomSurfaceContinuationClassName="bg-slate-50"/);
-  assert.match(sheet, /mobile-results-sheet-content[\s\S]*?bg-inherit/);
-  assert.match(sheet, /border-b border-slate-200\/80 bg-white/);
+  assert.match(results, /onCloseAnimationComplete=\{finishMobileHotelSearchClose\}/);
+  assert.doesNotMatch(results, /mobileHotelSearchCloseTimerRef|mobileHotelSearchCloseMotionMs/);
+  assert.match(results, /prefers-reduced-motion: reduce/);
+  assert.match(results, /backdropClassName=\{mobileStyles.editBackdrop\}/);
+  assert.match(read("../results/HotelResultsMobile.module.css"), /\.editSheet \{[^}]*margin: 0 12px 12px/);
+  assert.doesNotMatch(results, /placement="top"/);
+  assert.match(sheet, /placement === "top"/);
 });
 
 test("Hotel results launcher avoids touch flash while retaining keyboard focus", () => {
@@ -100,7 +93,7 @@ test("the shared sheet exclusively owns locking while nested Hotel pickers are o
   );
   assert.doesNotMatch(results, /mobileHotelSearchScrollLockRef/);
   assert.equal(
-    results.match(/acquireMobileResultsScrollLock\(\)/g)?.length,
+    results.match(/acquireMobileResultsScrollLock\(/g)?.length,
     2,
     "the independent mobile Filters drawer and desktop compact panel own Results-level locking",
   );

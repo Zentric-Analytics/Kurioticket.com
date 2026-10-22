@@ -34,6 +34,28 @@ test("legacy hotel preserves legitimate stay context but requires form completio
   assert.equal(hasValidSearchPlan("hotel", params, now), false);
 });
 
+test("car context strips Results-stack provenance", () => {
+  const params = sanitizeSearchParams("car", {
+    pickupLocation: "JFK",
+    dropoffLocation: "LGA",
+    pickupDate: "2030-04-01",
+    pickupTime: "10:00",
+    dropoffDate: "2030-04-03",
+    dropoffTime: "11:00",
+    driverAge: "30",
+    carResultsStack: "1",
+  });
+  assert.deepEqual(params, {
+    pickupLocation: "JFK",
+    dropoffLocation: "LGA",
+    pickupDate: "2030-04-01",
+    pickupTime: "10:00",
+    dropoffDate: "2030-04-03",
+    dropoffTime: "11:00",
+    driverAge: "30",
+  });
+});
+
 test("incomplete Explore destination search cannot open flight results", () => {
   const params = sanitizeSearchParams("flight", { destination: "Abidjan", to: "ABJ", destinationId: "ci-abidjan" });
   assert.equal(hasValidSearchPlan("flight", params, now), false);

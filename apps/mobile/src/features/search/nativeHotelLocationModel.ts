@@ -5,6 +5,27 @@ type LocationParts = Pick<
   "streetAddress" | "neighbourhood" | "city" | "country"
 >;
 
+export type NativeHotelLocationView = "map" | "streetview";
+
+export function nativeHotelLocationPreviewUrl(
+  baseUrl: string,
+  hotelId: string,
+): string {
+  const url = new URL("/api/mobile/v1/hotels/location-preview", baseUrl);
+  url.search = new URLSearchParams({ id: hotelId }).toString();
+  return url.toString();
+}
+
+export function nativeHotelLocationEmbedUrl(
+  baseUrl: string,
+  hotelId: string,
+  view: NativeHotelLocationView,
+): string {
+  const url = new URL("/api/mobile/v1/hotels/location-embed", baseUrl);
+  url.search = new URLSearchParams({ id: hotelId, view }).toString();
+  return url.toString();
+}
+
 export function nativeHotelSecondaryLocation(details: LocationParts): string {
   const streetAddress = details.streetAddress.trim().toLocaleLowerCase();
   return [details.neighbourhood, details.city, details.country]

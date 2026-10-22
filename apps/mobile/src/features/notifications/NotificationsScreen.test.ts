@@ -142,7 +142,7 @@ test("routes remain distinct and Home badge remains backend-sourced", () => {
   const priceAlertsRoute = readFileSync(resolve("app/price-alerts.tsx"), "utf8");
   const home = readFileSync(resolve("src/features/flow/HomeFlowScreen.tsx"), "utf8");
   assert.match(notificationsRoute, /NotificationsScreen as default/);
-  assert.match(priceAlertsRoute, /PriceAlertsScreen as default/);
+  assert.match(priceAlertsRoute, /<ProfileThemeProvider><PriceAlertsScreen \/><\/ProfileThemeProvider>/);
   assert.match(home, /travelApi\.notificationUnreadCount\(\)/);
 });
 

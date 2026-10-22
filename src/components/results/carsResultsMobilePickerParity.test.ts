@@ -1,15 +1,30 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { variableInitializer } from "@/lib/testing/sourceContract";
 
 const source = readFileSync(
   new URL("./CarsResultsClient.tsx", import.meta.url),
   "utf8",
 );
+const pickerShell = readFileSync(
+  new URL("../search/FlightMobilePickerShell.tsx", import.meta.url),
+  "utf8",
+);
+const datePicker = readFileSync(
+  new URL("../search/MobileDateRangePicker.tsx", import.meta.url),
+  "utf8",
+);
+const locationPicker = readFileSync(
+  new URL("../search/MobileCarLocationPicker.tsx", import.meta.url),
+  "utf8",
+);
+const carsPickerContent = readFileSync(
+  new URL("../search/CarsPickerContent.tsx", import.meta.url),
+  "utf8",
+);
 
-const mobileForm = source.match(
-  /const renderCarsSearchForm = \([\s\S]*?\n  return \(\n    <main/,
-)?.[0];
+const mobileForm = variableInitializer(source, "renderCarsSearchForm");
 
 assert.ok(mobileForm, "the Cars Results search form should remain defined");
 
@@ -21,6 +36,73 @@ test("mobile Results uses the main Cars dedicated picker dialogs", () => {
   assert.match(
     source,
     /type CarsResultsMobilePicker =\s*\| "pickupLocation"\s*\| "returnLocation"\s*\| "dates"\s*\| "times"\s*\| "driverAge"\s*\| null/,
+  );
+});
+
+test("Cars Edit children preserve polished Cars content in the full-height mobile-web picker shell", () => {
+  assert.equal(
+    (source.match(/presentation="carsResultsEdit"/g) ?? []).length,
+    5,
+  );
+  assert.match(source, /nestedLayerOpen=\{mobilePicker !== null\}/);
+  assert.match(pickerShell, /data-cars-results-edit-picker/);
+  assert.match(
+    pickerShell,
+    /fixed inset-0 flex h-\[100dvh\] min-h-0 w-screen max-w-full flex-col overflow-hidden bg-white pt-\[env\(safe-area-inset-top\)\]/,
+  );
+  assert.match(
+    pickerShell,
+    /carsResultsEdit && !whiteSurface && "bg-\[#F5F7FB\]"/,
+  );
+  assert.match(pickerShell, /surfaceVariant = "default"/);
+  assert.doesNotMatch(pickerShell, /bg-\[rgba\(8,18,35,0\.20\)\]/);
+  assert.doesNotMatch(pickerShell, /max-h-\[82dvh\]/);
+  assert.doesNotMatch(carsPickerContent, /max-h-\[72dvh\]/);
+  assert.match(pickerShell, /presentation = "default"/);
+  assert.match(datePicker, /compactCars &&[\s\S]*?"h-8 w-8 rounded-lg text-xs/);
+  assert.match(datePicker, /text-\[16px\] font-semibold leading-5/);
+  assert.match(datePicker, /data-scroll-direction=\{compactCars \? "vertical"/);
+  assert.match(datePicker, /Array\.from\(\{ length: monthCount \}/);
+  assert.doesNotMatch(datePicker, /\[resultsMonth\]/);
+  assert.doesNotMatch(datePicker, /Previous month|Next month/);
+  assert.doesNotMatch(datePicker, /data-cars-results-date-range-header/);
+  assert.match(datePicker, /endpoint && !compactCars/);
+  assert.match(datePicker, /`\$\{fullDate\}, \$\{endpoint\}`/);
+  assert.match(locationPicker, /surfaceVariant=\{nativeCarsAppearance \? "white" : "default"\}/);
+  assert.match(locationPicker, /contentLayout=\{nativeCarsAppearance \? "contained" : "scroll"\}/);
+  assert.match(locationPicker, /nativeCarsAppearance && "bg-white px-5 py-3"/);
+  assert.match(locationPicker, /h-\[50px\].*rounded-\[10px\]/);
+  assert.match(carsPickerContent, /min-h-14/);
+  assert.match(
+    carsPickerContent,
+    /nativeCarsAppearance \? driverAgeOptions\.slice\(1\)/,
+  );
+  const resultsAgeDialog = carsPickerContent.slice(
+    carsPickerContent.indexOf("export function MobileCarDriverAgePickerDialog"),
+  );
+  assert.match(
+    resultsAgeDialog,
+    /presentation === "carsMain" && driverAge === defaultDriverAge/,
+  );
+  assert.doesNotMatch(
+    resultsAgeDialog,
+    /presentation === "carsResultsEdit" && driverAge === defaultDriverAge[\s\S]*?\? "30"/,
+  );
+  assert.match(resultsAgeDialog, /\? undefined\s*: driverAge;/);
+  assert.match(carsPickerContent, /`\$\{age\} years old`/);
+  assert.match(carsPickerContent, /!nativeCarsAppearance \? \(/);
+  assert.doesNotMatch(
+    carsPickerContent.slice(
+      carsPickerContent.indexOf("export function MobileCarDriverAgePickerDialog"),
+    ),
+    />Driver must be between 18 and 70 years old\.</,
+  );
+  assert.match(carsPickerContent, /h-\[22px\] w-\[22px\]/);
+  assert.match(carsPickerContent, /min-h-\[50px\] px-2/);
+  assert.match(carsPickerContent, /h-\[17px\] w-\[17px\] text-\[#075EE8\]/);
+  assert.match(
+    carsPickerContent,
+    /h-12 w-full rounded-\[10px\] bg-\[#004BB8\]/,
   );
 });
 
@@ -72,4 +154,58 @@ test("mobile Driver Age delegates numeric formatting to the shared picker", () =
     source.match(/<MobileCarDriverAgePickerDialog[\s\S]*?\/>/)?.[0] ?? "",
     /years old/,
   );
+});
+
+test("Results Edit time opens at the top without discarding selected draft values", () => {
+  assert.match(
+    source,
+    /<MobileCarTimePickerDialog[\s\S]*?presentation="carsResultsEdit"[\s\S]*?pickupTime=\{pickupTime\}[\s\S]*?returnTime=\{dropoffTime\}/,
+  );
+  assert.match(carsPickerContent, /autoRevealSelected=\{!nativeCarsAppearance\}/);
+  assert.match(
+    carsPickerContent,
+    /presentation === "carsResultsEdit" \|\| presentation === "carsMain"/,
+  );
+  assert.match(carsPickerContent, /open=\{open\}/);
+  assert.match(carsPickerContent, /pickupListRef\.current\.scrollTop = 0/);
+  assert.match(carsPickerContent, /returnListRef\.current\.scrollTop = 0/);
+  assert.match(carsPickerContent, /<CarsTimeOptionButton[\s\S]*?selected=\{selectedTime === time\}/);
+  assert.match(carsPickerContent, /role="option"\s+aria-selected=\{selected\}/);
+  assert.match(
+    carsPickerContent,
+    /mobileShell && selected[\s\S]*?data-selected-time-indicator/,
+  );
+  assert.match(
+    carsPickerContent,
+    /\}, \[autoRevealSelected, mobileShell, open\]\);/,
+  );
+});
+
+test("Results Edit preserves the Any Age sentinel without selecting a numeric row", () => {
+  const agePicker = carsPickerContent.slice(
+    carsPickerContent.indexOf("export function CarsDriverAgePickerContent"),
+    carsPickerContent.indexOf("export function MobileCarTimePickerDialog"),
+  );
+  const ageDialog = carsPickerContent.slice(
+    carsPickerContent.indexOf("export function MobileCarDriverAgePickerDialog"),
+  );
+
+  assert.match(
+    agePicker,
+    /nativeCarsAppearance \? driverAgeOptions\.slice\(1\) : driverAgeOptions/,
+  );
+  assert.match(
+    agePicker,
+    /const selectedIndex = selectedAge \? ageOptions\.indexOf\(selectedAge\) : -1/,
+  );
+  assert.match(agePicker, /selectedIndex < 0 \? 0 : selectedIndex/);
+  assert.match(agePicker, /const selected = selectedAge === age/);
+  assert.match(agePicker, /aria-selected=\{selected\}/);
+
+  assert.match(
+    ageDialog,
+    /presentation === "carsMain" && driverAge === defaultDriverAge[\s\S]*?\? undefined[\s\S]*?: driverAge/,
+  );
+  assert.match(ageDialog, /onCommit\(draftAge\)/);
+  assert.match(ageDialog, /onClose=\{onClose\}/);
 });

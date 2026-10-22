@@ -13,17 +13,21 @@ export const flightSearchFieldLabelClassName =
   "mb-1 block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600 sm:text-[10px] sm:font-semibold sm:tracking-[0.10em] sm:text-slate-700";
 export const flightSearchFieldValueButtonClassName =
   "focus-ring flex h-8 w-full items-center justify-between gap-2 rounded-md text-start text-[16px] font-medium text-slate-900 outline-none transition-colors sm:h-auto sm:min-h-7 sm:rounded-none sm:text-[15px] sm:font-medium sm:tracking-[-0.01em] sm:text-slate-950 sm:focus-visible:shadow-none";
+export const flightResultsEditValueClassName = "flight-results-edit-value";
 export const flightDesktopPopoverSelector =
   "[data-standalone-flight-desktop-popover]";
 
 type FlightAirportFieldControlProps = {
   label: string;
   value: string;
+  desktopValue?: string;
+  showDesktopSecondary?: boolean;
   placeholder: string;
   mobilePlaceholder: string;
   useMainFlightLandingMobilePresentation?: boolean;
   mobileLeadingIconClassName?: string;
   mobileValueRowClassName?: string;
+  mobileButtonClassName?: string;
   open: boolean;
   inputRef: React.RefObject<HTMLInputElement | null>;
   mobileLauncherRef: React.RefObject<HTMLButtonElement | null>;
@@ -43,11 +47,14 @@ export const FlightAirportFieldControl = React.forwardRef<
   {
     label,
     value,
+    desktopValue,
+    showDesktopSecondary = true,
     placeholder,
     mobilePlaceholder,
     useMainFlightLandingMobilePresentation = false,
     mobileLeadingIconClassName,
     mobileValueRowClassName,
+    mobileButtonClassName,
     open,
     inputRef,
     mobileLauncherRef,
@@ -73,7 +80,7 @@ export const FlightAirportFieldControl = React.forwardRef<
         aria-expanded={open}
         aria-haspopup="dialog"
         onClick={onMobileOpen}
-        className={cn(flightSearchFieldValueButtonClassName, "sm:hidden")}
+        className={cn(flightSearchFieldValueButtonClassName, "sm:hidden", mobileButtonClassName)}
       >
         {useMainFlightLandingMobilePresentation ? (
           <span className={cn("flex min-w-0 flex-1 items-center gap-2 sm:contents", mobileValueRowClassName)}>
@@ -107,15 +114,15 @@ export const FlightAirportFieldControl = React.forwardRef<
             aria-autocomplete="list"
             aria-controls={open ? suggestionsId : undefined}
             aria-expanded={open}
-            value={value}
+            value={desktopValue ?? value}
             onFocus={onDesktopFocus}
             onChange={(event) => onChange(event.target.value)}
             onKeyDown={onKeyDown}
             placeholder={placeholder}
             autoComplete="off"
-            className="h-6 w-full min-w-0 rounded-none border-0 bg-transparent pe-0 text-[15px] font-semibold tracking-[-0.01em] text-slate-950 outline-none placeholder:font-medium placeholder:text-slate-500"
+            className="h-6 w-full min-w-0 rounded-none border-0 bg-transparent pe-0 text-[15px] font-medium tracking-[-0.01em] text-slate-950 outline-none placeholder:font-medium placeholder:text-slate-500"
           />
-          {display.secondary ? <span className="block truncate text-[10px] font-medium leading-3 text-slate-600">{display.secondary}</span> : null}
+          {showDesktopSecondary && display.secondary ? <span className="block truncate text-[10px] font-medium leading-3 text-slate-600">{display.secondary}</span> : null}
         </span>
       </div>
       <div id={suggestionsId}>{desktopSuggestions}</div>

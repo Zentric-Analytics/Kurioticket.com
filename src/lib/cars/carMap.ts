@@ -23,6 +23,38 @@ export function buildGoogleCarMapEmbedUrl({
   return url.toString();
 }
 
+export function buildGoogleCarStreetViewEmbedUrl({
+  latitude,
+  longitude,
+  googleMapsEmbedApiKey,
+}: {
+  latitude: number;
+  longitude: number;
+  googleMapsEmbedApiKey?: string;
+}): string | null {
+  const apiKey = googleMapsEmbedApiKey?.trim();
+  if (
+    !apiKey ||
+    !Number.isFinite(latitude) ||
+    !Number.isFinite(longitude) ||
+    latitude < -90 ||
+    latitude > 90 ||
+    longitude < -180 ||
+    longitude > 180
+  ) return null;
+
+  const url = new URL("https://www.google.com/maps/embed/v1/streetview");
+  url.search = new URLSearchParams({
+    key: apiKey,
+    location: `${latitude},${longitude}`,
+    pitch: "0",
+    fov: "80",
+    radius: "250",
+    source: "outdoor",
+  }).toString();
+  return url.toString();
+}
+
 export function buildCarDirectionsUrl(pickupLocation: string): string | null {
   const destination = normalizeLocation(pickupLocation);
   if (!destination) return null;

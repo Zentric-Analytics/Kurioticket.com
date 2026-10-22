@@ -1,15 +1,27 @@
 import { Suspense } from "react";
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
-
 import { AppHeader } from "@/components/layout/AppHeader";
+import { cookies } from "next/headers";
+import { redirect, notFound } from "next/navigation";
+import { isKayakSandboxEnabled } from "@/services/travel/kayakSandbox";
+
+
 import { HotelResultsClient } from "@/components/results/HotelResultsClient";
 import { LocalizedLoadingLabel } from "@/components/layout/LocalizedLoadingLabel";
 import { getTranslations } from "@/lib/i18n";
 import { LOCALE_COOKIE_KEY } from "@/lib/preferences/preferences";
 import { resolveHotelResultsRoute } from "@/lib/hotels/hotelResultsRoute";
 
-export async function generateMetadata() {
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: HotelResultsSearchParams;
+}) {
+  if (first((await searchParams).provider) === "kayak-sandbox") {
+    return {
+      title: "KAYAK sandbox hotel results",
+      robots: { index: false, follow: false },
+    };
+  }
   const cookieStore = await cookies();
   const t = getTranslations(cookieStore.get(LOCALE_COOKIE_KEY)?.value);
 
@@ -19,20 +31,60 @@ export async function generateMetadata() {
   };
 }
 
-type HotelResultsSearchParams = Promise<Record<string, string | string[] | undefined>>;
-const first = (value: string | string[] | undefined) => Array.isArray(value) ? value[0] : value;
+type HotelResultsSearchParams = Promise<
+  Record<string, string | string[] | undefined>
+>;
+const first = (value: string | string[] | undefined) =>
+  Array.isArray(value) ? value[0] : value;
 
-export default async function HotelResultsPage({ searchParams }: { searchParams: HotelResultsSearchParams }) {
+export default async function HotelResultsPage({
+  searchParams,
+}: {
+  searchParams: HotelResultsSearchParams;
+}) {
   const query = await searchParams;
-  const route = resolveHotelResultsRoute({ destination: first(query.destination), destinationId: first(query.destinationId), checkIn: first(query.checkIn), checkOut: first(query.checkOut), guests: first(query.guests), rooms: first(query.rooms), sort: first(query.sort) });
+  const sandboxProviderMode = first(query.provider) === "kayak-sandbox";
+  if (sandboxProviderMode && !isKayakSandboxEnabled()) notFound();
+
+  const requestedDestinationId = first(query.destinationId);
+  const sandboxDestinationId =
+    sandboxProviderMode &&
+    requestedDestinationId &&
+    /^kplace:\d+$/.test(requestedDestinationId)
+      ? requestedDestinationId
+      : undefined;
+  const destination =
+    first(query.destination) ||
+    (sandboxDestinationId ? "KAYAK sandbox destination" : undefined);
+  const route = resolveHotelResultsRoute({
+    destination,
+    destinationId: sandboxDestinationId ? undefined : requestedDestinationId,
+    checkIn: first(query.checkIn),
+    checkOut: first(query.checkOut),
+    guests: first(query.guests),
+    adults: first(query.adults),
+    children: first(query.children),
+    rooms: first(query.rooms),
+    sort: first(query.sort),
+  });
   if (!route.resultsReady) redirect(route.recoveryHref);
+
   return (
-    <>
+    <div
+      data-hotel-results-page-surface
+      className="flex min-h-[100svh] flex-col bg-[#F5F7FB] sm:bg-transparent"
+    >
       <AppHeader
         flushDesktopBottom
+        hotelDesktopBoundary
+        hotelResultsDesktopSticky
         flushMobileBottom
         hideDesktopTravelNav
         hideMobileCategoryTabs
+        hideMobileResultsNavbarDivider
+        mobileResultsSearch={<div data-hotel-results-mobile-nav-search className="flex h-12 w-full min-w-0 rounded-xl border border-[#D8E1EC] bg-[#F5F7FB] empty:hidden" />}
+        mobileResultsFilters={<div data-hotel-results-mobile-nav-filters className="w-full overflow-hidden bg-white empty:hidden" />}
+        mobileResultsTrailingActions
       />
       <Suspense
         fallback={
@@ -45,6 +97,6 @@ export default async function HotelResultsPage({ searchParams }: { searchParams:
       >
         <HotelResultsClient />
       </Suspense>
-    </>
+    </div>
   );
 }

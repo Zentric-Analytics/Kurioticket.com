@@ -1,3 +1,4 @@
+import { Text } from "./HomePresentation";
 import { router } from "expo-router";
 import { useMemo, useState } from "react";
 import {
@@ -5,7 +6,6 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   useWindowDimensions,
   View,
 } from "react-native";
@@ -29,7 +29,11 @@ import {
 
 const { ctaHeight: CTA_HEIGHT } = POPULAR_STAY_LAYOUT;
 
-export function PopularDestinationStays() {
+export function PopularDestinationStays({
+  compactTopSpacing = false,
+}: {
+  compactTopSpacing?: boolean;
+}) {
   const ft = useFlowTheme();
   const { width } = useWindowDimensions();
   const { width: cardWidth, imageHeight } = popularStayCardLayout(width);
@@ -48,7 +52,7 @@ export function PopularDestinationStays() {
     <View
       collapsable={false}
       testID="popular-destination-stays"
-      style={styles.section}
+      style={[styles.section, compactTopSpacing && styles.compactTopSpacing]}
     >
       <Text
         accessibilityRole="header"
@@ -135,6 +139,7 @@ export function PopularDestinationStays() {
                 />
                 <AndroidFavoriteButton
                   saved={saved}
+                  variant="webParity"
                   label={`${saved ? "Remove" : "Add"} ${destination.city} ${saved ? "from" : "to"} favorites`}
                   onPress={(event) => {
                     event.stopPropagation();
@@ -199,10 +204,11 @@ export function PopularDestinationStays() {
 
 const styles = StyleSheet.create({
   section: { gap: 24, marginTop: 4 },
+  compactTopSpacing: { marginTop: -4 },
   heading: {
-    fontSize: 21,
-    lineHeight: 27,
-    fontWeight: "800",
+    fontSize: 20,
+    lineHeight: 26,
+    fontWeight: "700",
   },
   carousel: {
     gap: POPULAR_STAY_LAYOUT.gap,
@@ -248,9 +254,9 @@ const styles = StyleSheet.create({
   },
   city: {
     color: flowColors.white,
-    fontSize: 20,
-    lineHeight: 25,
-    fontWeight: "900",
+    fontSize: 18,
+    lineHeight: 24,
+    fontWeight: "700",
     letterSpacing: -0.25,
     textShadowColor: "rgba(15, 23, 42, 0.55)",
     textShadowOffset: { width: 0, height: 2 },
@@ -258,9 +264,9 @@ const styles = StyleSheet.create({
   },
   country: {
     color: flowColors.white,
-    fontSize: 14,
-    lineHeight: 19,
-    fontWeight: "600",
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: "500",
     opacity: 0.95,
     textShadowColor: "rgba(15, 23, 42, 0.55)",
     textShadowOffset: { width: 0, height: 2 },
@@ -288,8 +294,8 @@ const styles = StyleSheet.create({
   },
   ctaPressed: { transform: [{ scale: 0.98 }] },
   ctaText: {
-    fontSize: 15,
+    fontSize: 13,
     lineHeight: 18,
-    fontWeight: "700",
+    fontWeight: "600",
   },
 });

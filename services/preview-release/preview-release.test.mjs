@@ -6,13 +6,13 @@ import { copyFile, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { classifyChangeSet } from "./classifier.mjs";
-import { PREVIEW_IDENTITY, PREVIEW_WORKER_BUILD_PATHS, assertExactSha, assertPreviewIdentity, requirePreviewEnvironment } from "./config.mjs";
+import { PREVIEW_IDENTITY, PREVIEW_WORKER_BUILD_PATHS, assertPreviewIdentity, requirePreviewEnvironment } from "./config.mjs";
 import { reconcileBuilds, reconcileSubmission, reconcileSubmissionHistory } from "./eas-state.mjs";
-import { PreviewOrchestrator, applyCutoverBaseline, applyIosNativeBackfill, assertCoalescedOtaCompatibility, enforceDeliveredNativeBaseline, maintainLease, nativeBuildIdentityKey, nativeDriftTargets, retry, waitForOwnedNativeRemoteId } from "./orchestrator.mjs";
+import { PreviewOrchestrator, applyCutoverBaseline, applyIosNativeBackfill, assertCoalescedOtaCompatibility, enforceDeliveredNativeBaseline, nativeBuildIdentityKey, nativeDriftTargets, waitForOwnedNativeRemoteId } from "./orchestrator.mjs";
 import { createExactCheckoutDirectory, easCommandEnvironment, easCommandFailureMessage, EasClient, EasRemoteObjectUnavailableError, EasUpdateRuntimeMismatchError, isExactEasObjectMissing, RenderClient, gitAuthEnvironment, prepareCheckout } from "./remote-clients.mjs";
 import { redactPreflightError, runPreviewPreflight } from "./preflight.mjs";
 import { AppStoreConnectClient } from "./app-store-connect.mjs";
-import { PreviewLedger } from "./ledger.mjs";
+import { mergeOtaActionEvidence, PreviewLedger } from "./ledger.mjs";
 import { runWorkerCycle } from "./worker-cycle.mjs";
 import { fetchWithDeadline, withDeadline } from "./deadlines.mjs";
 import { normalizePreviewUpdatePage } from "../../apps/mobile/scripts/preview-ota-automation.mjs";
@@ -141,6 +141,31 @@ test("Render preflight rejects wrong identity, authentication failure, and malfo
   }
 });
 
+test("Render deploy creation rechecks ownership after history reconciliation and before POST", async () => {
+  let posts = 0;
+  const client = new RenderClient({
+    apiKey: "render-secret",
+    serviceId: PREVIEW_IDENTITY.renderStagingServiceId,
+    fetchImpl: async (url, options) => {
+      if (options.method === "POST") {
+        posts += 1;
+        return { ok: true, text: async () => JSON.stringify({ id: "unexpected", status: "build_in_progress", commit: { id: sha } }) };
+      }
+      if (url.endsWith(`/services/${PREVIEW_IDENTITY.renderStagingServiceId}`)) {
+        return { ok: true, text: async () => JSON.stringify({
+          id: PREVIEW_IDENTITY.renderStagingServiceId,
+          name: "Kurioticket-web-staging",
+          autoDeployTrigger: "checksPass",
+        }) };
+      }
+      return { ok: true, text: async () => "[]" };
+    },
+  });
+
+  await assert.rejects(client.createDeploy(sha), /staging auto-deploy must be Off/);
+  assert.equal(posts, 0);
+});
+
 test("Render deploy creation reconciles an accepted mutation after an empty response", async () => {
   let requests = 0;
   let historyReads = 0;
@@ -148,15 +173,22 @@ test("Render deploy creation reconciles an accepted mutation after an empty resp
   const client = new RenderClient({
     apiKey: "render-secret",
     serviceId: PREVIEW_IDENTITY.renderStagingServiceId,
-    fetchImpl: async (_url, options) => {
+    fetchImpl: async (url, options) => {
       requests += 1;
       if (options.method === "POST") return { ok: true, text: async () => "" };
+      if (url.endsWith(`/services/${PREVIEW_IDENTITY.renderStagingServiceId}`)) {
+        return { ok: true, text: async () => JSON.stringify({
+          id: PREVIEW_IDENTITY.renderStagingServiceId,
+          name: "Kurioticket-web-staging",
+          autoDeployTrigger: "off",
+        }) };
+      }
       historyReads += 1;
       return { ok: true, text: async () => JSON.stringify(historyReads === 1 ? [] : [{ deploy }]) };
     },
   });
   assert.equal((await client.createDeploy(sha, { sleep: async () => {} })).id, deploy.id);
-  assert.equal(requests, 3);
+  assert.equal(requests, 4);
 });
 
 test("Render deploy reconciliation excludes every deployment that existed before the POST", async () => {
@@ -166,8 +198,15 @@ test("Render deploy reconciliation excludes every deployment that existed before
   const client = new RenderClient({
     apiKey: "render-secret",
     serviceId: PREVIEW_IDENTITY.renderStagingServiceId,
-    fetchImpl: async (_url, options) => {
+    fetchImpl: async (url, options) => {
       if (options.method === "POST") return { ok: true, text: async () => "" };
+      if (url.endsWith(`/services/${PREVIEW_IDENTITY.renderStagingServiceId}`)) {
+        return { ok: true, text: async () => JSON.stringify({
+          id: PREVIEW_IDENTITY.renderStagingServiceId,
+          name: "Kurioticket-web-staging",
+          autoDeployTrigger: "off",
+        }) };
+      }
       historyReads += 1;
       const deploys = historyReads === 1 ? [terminal] : [replacement, terminal];
       return { ok: true, text: async () => JSON.stringify(deploys.map((deploy) => ({ deploy }))) };
@@ -1203,14 +1242,23 @@ test("submission completion alone cannot satisfy the iOS native baseline", () =>
 });
 
 test("exact-checkout preparation reuses the immutable build dependency trees", async () => {
-  const copies = [];
-  await prepareCheckout(repositoryRoot, {
-    dependencyRoot: repositoryRoot,
-    commandRunner: async (...args) => { copies.push(args); },
-  });
-  assert.deepEqual(copies.map(([command, args]) => [command, args]), [
-    ["cp", ["-al", "--", resolve(repositoryRoot, "apps/mobile/node_modules"), resolve(repositoryRoot, "apps/mobile/node_modules")]],
-  ]);
+  const temporary = await mkdtemp(resolve(tmpdir(), "preview-dependency-fixture-"));
+  try {
+    await mkdir(resolve(temporary, "apps/mobile/node_modules"), { recursive: true });
+    for (const manifest of ["package.json", "package-lock.json", "apps/mobile/package.json", "apps/mobile/package-lock.json"]) {
+      await copyFile(resolve(repositoryRoot, manifest), resolve(temporary, manifest));
+    }
+    const copies = [];
+    await prepareCheckout(repositoryRoot, {
+      dependencyRoot: temporary,
+      commandRunner: async (...args) => { copies.push(args); },
+    });
+    assert.deepEqual(copies.map(([command, args]) => [command, args]), [
+      ["cp", ["-al", "--", resolve(temporary, "apps/mobile/node_modules"), resolve(repositoryRoot, "apps/mobile/node_modules")]],
+    ]);
+  } finally {
+    await rm(temporary, { recursive: true, force: true });
+  }
 });
 
 test("exact checkouts are created on the selected worker artifact filesystem", async () => {
@@ -1246,6 +1294,61 @@ test("exact-checkout preparation fails closed when dependency manifests differ",
   } finally {
     await rm(temporary, { recursive: true, force: true });
   }
+});
+
+test("web delivery rechecks staging ownership before creating a deploy", async () => {
+  let creates = 0;
+  const orchestrator = new PreviewOrchestrator({
+    config: {},
+    ledger: {
+      getAction: async () => null,
+      recordAction: async (action) => action,
+    },
+    github: {},
+    render: {
+      findDeploysBySha: async () => [],
+      getService: async () => { throw new Error("Render Preview staging auto-deploy must be Off; the release worker is the exclusive deployment owner."); },
+      createDeploy: async () => { creates += 1; return { id: "unexpected", status: "live", commit: { id: sha } }; },
+    },
+    stagingWait: async ({ targetSha }) => ({ ready: true, commitSha: targetSha }),
+    sleep: async () => {},
+  });
+
+  await assert.rejects(
+    orchestrator.deliverWeb(sha, { checkpoint: async () => {} }),
+    /staging auto-deploy must be Off/,
+  );
+  assert.equal(creates, 0);
+});
+
+test("web recovery rechecks staging ownership before replacing a terminal deploy", async () => {
+  let creates = 0;
+  let replacements = 0;
+  const recorded = { id: "dep-failed", status: "build_failed", commit: { id: sha } };
+  const orchestrator = new PreviewOrchestrator({
+    config: {},
+    ledger: {
+      getAction: async () => ({ remote_id: recorded.id }),
+      recordAction: async (action) => action,
+      replaceTerminalAction: async (action) => { replacements += 1; return action; },
+    },
+    github: {},
+    render: {
+      getDeploy: async () => recorded,
+      findDeploysBySha: async () => [recorded],
+      getService: async () => { throw new Error("Render Preview staging auto-deploy must be Off; the release worker is the exclusive deployment owner."); },
+      createDeploy: async () => { creates += 1; return { id: "unexpected", status: "live", commit: { id: sha } }; },
+    },
+    stagingWait: async ({ targetSha }) => ({ ready: true, commitSha: targetSha }),
+    sleep: async () => {},
+  });
+
+  await assert.rejects(
+    orchestrator.deliverWeb(sha, { checkpoint: async () => {} }),
+    /staging auto-deploy must be Off/,
+  );
+  assert.equal(creates, 0);
+  assert.equal(replacements, 0);
 });
 
 test("web recovery adopts the recorded Render deploy without creating a duplicate", async () => {
@@ -1289,6 +1392,7 @@ test("web recovery replaces one terminal recorded deploy through an atomic ledge
     },
     github: {},
     render: {
+      getService: async () => ({ autoDeployOff: true }),
       createDeploy: async () => { creates += 1; return replacement; },
       findDeploysBySha: async () => [recorded],
       getDeploy: async (id) => id === recorded.id ? recorded : replacement,
@@ -1331,7 +1435,8 @@ test("ledger schema enforces per-SHA and per-remote-operation uniqueness", () =>
   assert.match(sql, /UNIQUE \(kind, identity_key\)/);
   assert.match(sql, /one_render_per_sha/);
   assert.match(sql, /one_ota_per_sha/);
-  assert.match(sql, /one_ios_build_per_sha/);
+  assert.match(sql, /one_canonical_ios_build_per_sha/);
+  assert.match(sql, /identity_key NOT LIKE 'native-build-recovery:ios:%'/);
   assert.match(sql, /one_submission_per_build/);
   assert.match(sql, /preview_release_progression_order_seq/);
   assert.match(sql, /progression_order_unique/);
@@ -1443,6 +1548,18 @@ test("missing EAS build classification survives the single-line failure envelope
   assert.equal(isExactEasObjectMissing(error, "build", "43f85cc7-4284-4d86-afed-0a9fe04884f1"), false);
 });
 
+test("OTA evidence merge preserves iOS while later Android reconciliation updates the same action", () => {
+  const ios = { group: "ios-group", runtimeVersion: "ios-runtime", platforms: ["ios"] };
+  const android = { group: "android-group", runtimeVersion: "android-runtime", platforms: ["android"] };
+  const merged = mergeOtaActionEvidence(
+    { updates: [ios], providerVerifiedPlatforms: ["ios"], runtimeContextVersion: "native-platform-v1" },
+    { updates: [android], providerVerifiedPlatforms: ["android"], runtimeContextVersion: "native-platform-v1" },
+  );
+  assert.deepEqual(merged.updates, [ios, android]);
+  assert.deepEqual(merged.providerVerifiedPlatforms, ["android", "ios"]);
+  assert.equal(mergeOtaActionEvidence(merged, { updates: [ios] }).updates.length, 2);
+});
+
 test("OTA delivery publishes platforms sequentially and resumes only a missing platform", async () => {
   const published = [];
   const actions = [];
@@ -1463,6 +1580,7 @@ test("OTA delivery publishes platforms sequentially and resumes only a missing p
   assert.deepEqual(published, ["android"]);
   assert.deepEqual(result.updateIds, ["ios-existing", "android-new"]);
   assert.equal(actions[0].state, "PUBLISHED");
+  assert.deepEqual(actions[0].evidence.providerVerifiedPlatforms, ["android", "ios"]);
   assert.equal(actions[0].remoteId, "ios=ios-existing,android=android-group");
 });
 
@@ -1763,19 +1881,65 @@ test("coalesced NO_DELIVERY overlay is accepted only with exact canonical finger
   }), /cannot advance the delivered-native baseline/);
 });
 
-test("OTA client rejects all-platform publication and uses bounded sequential export memory", async () => {
-  const client = new EasClient({ expoToken: "x", cwd: repositoryRoot, command: "unused" });
+test("OTA client verifies exact Preview identity even when EAS decorates the displayed message", async () => {
+  const runtime = "a".repeat(40);
+  const message = `Automatic Preview iOS OTA for ${sha}; audit run 0`;
+  const decoratedMessage = `"${message}" (14 minutes ago by GitHub App · @Zentric-Analytics (robot))`;
+  const client = new EasClient({ expoToken: "x", cwd: repositoryRoot, command: "unused", sleep: async () => {} });
   const calls = [];
   client.validateOtaStartup = async () => {};
-  client.run = async (args) => { calls.push(args); return [{ id: "update-id", runtimeVersion: "a".repeat(40) }]; };
-  await client.publishUpdate("message", "ios", "a".repeat(40));
+  client.run = async (args) => {
+    calls.push(args);
+    if (args[1] === "update") return [{ id: "update-id", group: "ios-group", branch: "preview", runtimeVersion: runtime, platforms: ["ios"], message }];
+    if (args[1] === "update:list") return [{ branch: "preview", runtimeVersion: runtime, group: "ios-group", platforms: ["ios"], message: decoratedMessage }];
+    return [];
+  };
+  const published = await client.publishUpdate(message, "ios", runtime, sha);
+  assert.equal(published[0].group, "ios-group");
+  assert.equal(published[0].message, decoratedMessage);
   assert.equal(calls[0][calls[0].indexOf("--platform") + 1], "ios");
   assert.equal(calls[0][calls[0].indexOf("--environment") + 1], "preview");
-  await assert.rejects(client.publishUpdate("message", "all", "a".repeat(40)), /platform is invalid/);
-  client.run = async () => [{ id: "wrong-runtime", runtimeVersion: "b".repeat(40) }];
-  await assert.rejects(client.publishUpdate("message", "ios", "a".repeat(40)), /runtime does not match/);
+  assert.ok(calls.some((args) => args[1] === "update:list"), "post-publish provider history must be checked");
+  await assert.rejects(client.publishUpdate(message, "all", runtime, sha), /platform is invalid/);
+  client.run = async () => [{ id: "wrong-runtime", group: "wrong-runtime-group", runtimeVersion: "b".repeat(40) }];
+  await assert.rejects(client.publishUpdate(message, "ios", runtime, sha), /runtime does not match/);
   const source = readFileSync(resolve(repositoryRoot, "services/preview-release/remote-clients.mjs"), "utf8");
   assert.match(source, /isUpdatePublish \? 1024 : 128/);
+});
+
+test("OTA post-publish verification still rejects a different EAS group", async () => {
+  const runtime = "a".repeat(40);
+  const message = `Automatic Preview iOS OTA for ${sha}; audit run 0`;
+  const decoratedMessage = `"${message}" (now by GitHub App · @Zentric-Analytics (robot))`;
+  const client = new EasClient({ expoToken: "x", cwd: repositoryRoot, command: "unused", sleep: async () => {} });
+  client.validateOtaStartup = async () => {};
+  client.run = async (args) => {
+    if (args[1] === "update") return [{ id: "update-id", group: "published-group", branch: "preview", runtimeVersion: runtime, platforms: ["ios"], message }];
+    if (args[1] === "update:list") return [{ branch: "preview", runtimeVersion: runtime, group: "different-group", platforms: ["ios"], message: decoratedMessage }];
+    return [];
+  };
+  await assert.rejects(
+    client.publishUpdate(message, "ios", runtime, sha),
+    /published group is not uniquely visible/,
+  );
+});
+
+test("OTA client fails closed when a successful publish is not observable in Preview history", async () => {
+  const runtime = "a".repeat(40);
+  const message = `Automatic Preview iOS OTA for ${sha}; audit run 0`;
+  const client = new EasClient({ expoToken: "x", cwd: repositoryRoot, command: "unused", sleep: async () => {} });
+  client.validateOtaStartup = async () => {};
+  let historyReads = 0;
+  client.run = async (args) => {
+    if (args[1] === "update") return [{ id: "update-id", group: "ios-group", branch: "preview", runtimeVersion: runtime, platforms: ["ios"], message }];
+    if (args[1] === "update:list") { historyReads += 1; return []; }
+    return [];
+  };
+  await assert.rejects(
+    client.publishUpdate(message, "ios", runtime, sha),
+    /was not observable in Preview history/,
+  );
+  assert.equal(historyReads, 6);
 });
 
 test("OTA publication fails closed before EAS mutation when startup validation fails", async () => {
@@ -1784,7 +1948,7 @@ test("OTA publication fails closed before EAS mutation when startup validation f
   client.validateOtaStartup = async () => { throw new Error("startup incompatible"); };
   client.run = async () => { mutations += 1; return []; };
 
-  await assert.rejects(client.publishUpdate("message", "ios", "a".repeat(40)), /startup incompatible/);
+  await assert.rejects(client.publishUpdate(`Automatic Preview iOS OTA for ${sha}; audit run 0`, "ios", "a".repeat(40), sha), /startup incompatible/);
   assert.equal(mutations, 0);
 });
 
@@ -1937,6 +2101,7 @@ test("web recovery replaces a terminal exact-SHA deploy discovered before the le
     },
     github: {},
     render: {
+      getService: async () => ({ autoDeployOff: true }),
       createDeploy: async () => { creates += 1; return replacement; },
       findDeploysBySha: async () => [deactivated],
       getDeploy: async (id) => id === deactivated.id ? deactivated : replacement,
@@ -1981,15 +2146,18 @@ test("canonical recovery may reuse dependencies when only root operator scripts 
   const temporary = await mkdtemp(resolve(tmpdir(), "preview-recovery-dependencies-"));
   try {
     await mkdir(resolve(temporary, "apps/mobile"), { recursive: true });
+    const dependencyRoot = resolve(temporary, "immutable-worker");
+    await mkdir(resolve(dependencyRoot, "apps/mobile/node_modules"), { recursive: true });
     for (const manifest of ["package.json", "package-lock.json", "apps/mobile/package.json", "apps/mobile/package-lock.json"]) {
       await copyFile(resolve(repositoryRoot, manifest), resolve(temporary, manifest));
+      await copyFile(resolve(repositoryRoot, manifest), resolve(dependencyRoot, manifest));
     }
     const rootPackagePath = resolve(temporary, "package.json");
     const rootPackage = JSON.parse(readFileSync(rootPackagePath, "utf8"));
     delete rootPackage.scripts["preview-release:recover-native"];
     await writeFile(rootPackagePath, `${JSON.stringify(rootPackage, null, 2)}\n`);
     await prepareCheckout(temporary, {
-      dependencyRoot: repositoryRoot,
+      dependencyRoot,
       allowRootScriptDrift: true,
       commandRunner: async () => {},
     });

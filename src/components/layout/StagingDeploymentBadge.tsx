@@ -7,7 +7,7 @@ export function StagingDeploymentBadge() {
   return (
     <aside
       aria-label="Staging deployment"
-      className="fixed bottom-3 right-3 z-50 max-w-[calc(100vw-1.5rem)] rounded-lg border border-violet-300 bg-violet-950/95 px-3 py-2 text-[11px] leading-4 text-violet-50 shadow-lg backdrop-blur"
+      hidden
       data-staging-build="current"
       data-staging-commit={release.commitSha}
     >

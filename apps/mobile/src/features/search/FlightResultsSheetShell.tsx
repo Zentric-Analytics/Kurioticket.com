@@ -1,48 +1,129 @@
-import type { ReactNode } from "react";
+import { type ReactNode, useEffect, useRef } from "react";
 import { BlurView } from "expo-blur";
-import { KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Animated, KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { X } from "lucide-react-native";
-import { useAppTheme } from "../../theme/AppTheme";
+import { useFlightResultsTheme as useAppTheme } from "./FlightResultsPresentationContext";
 import { appFonts } from "../../theme/typography";
 
-export function FlightResultsSheetShell({ visible, title, closeLabel, onClose, children, footer, fullScreen = false, subtitle, headerAction }: {
+type QuickBackdropVariant = "flight" | "legacy";
+export const FLIGHT_QUICK_SHEET_HORIZONTAL_INSET = 12;
+export const FLIGHT_FLOATING_SHEET_BOTTOM_GAP = 12;
+export const FLIGHT_RESULTS_LIGHT_CANVAS = "#F5F7FB";
+export const FLIGHT_FILTER_LIGHT_CANVAS = "#F2F4F8";
+export const FLIGHT_FILTER_LIGHT_OUTLINE = "#D8DEE8";
+
+export function FlightResultsSheetShell({ visible, title, closeLabel, onClose, children, footer, fullScreen = false, subtitle, headerAction, quickBackdropVariant = "flight", insetFlightQuickSheet = false, flightFilterAppearance = false, flightResultsPresentation = false }: {
   visible: boolean; title: string; closeLabel: string; onClose: () => void; children: ReactNode; footer?: ReactNode;
-  fullScreen?: boolean; subtitle?: string; headerAction?: ReactNode;
+  fullScreen?: boolean; subtitle?: string; headerAction?: ReactNode; quickBackdropVariant?: QuickBackdropVariant; insetFlightQuickSheet?: boolean; flightFilterAppearance?: boolean; flightResultsPresentation?: boolean;
 }) {
   const { theme } = useAppTheme();
   const inset = useSafeAreaInsets();
   const { height } = useWindowDimensions();
+  // Full-screen content is placed inside a native SafeAreaView below. Its
+  // footer padding is visual spacing *within* that safe area, not a guessed
+  // replacement for the device inset.
+  const floatingBottomGap = FLIGHT_FLOATING_SHEET_BOTTOM_GAP;
+  const footerBottomPadding = fullScreen
+    ? 12
+    : insetFlightQuickSheet
+      ? Math.max(12, inset.bottom - floatingBottomGap)
+      : Math.max(inset.bottom, 12);
+  const quickBackdropOpacity = useRef(new Animated.Value(0)).current;
+  const quickSheetTranslateY = useRef(new Animated.Value(28)).current;
+  const flightQuickBackdrop = quickBackdropVariant === "flight";
+  const flightQuickHeader = insetFlightQuickSheet;
+  const usesFlightFilterCanvas = insetFlightQuickSheet || flightFilterAppearance;
+  const flightFilterCanvas = theme.dark ? theme.background : FLIGHT_FILTER_LIGHT_CANVAS;
+  const sheetBackground = usesFlightFilterCanvas ? flightFilterCanvas : theme.background;
+
+  useEffect(() => {
+    if (!visible || fullScreen) {
+      quickBackdropOpacity.setValue(0);
+      quickSheetTranslateY.setValue(28);
+      return;
+    }
+
+    quickBackdropOpacity.setValue(0);
+    quickSheetTranslateY.setValue(28);
+    Animated.parallel([
+      Animated.timing(quickBackdropOpacity, {
+        toValue: 1,
+        duration: 160,
+        useNativeDriver: true,
+      }),
+      Animated.timing(quickSheetTranslateY, {
+        toValue: 0,
+        duration: 220,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [fullScreen, quickBackdropOpacity, quickSheetTranslateY, visible]);
+
   const sheet = (
-    <View accessibilityLabel={title} style={[styles.sheet, fullScreen && styles.fullScreen, { maxHeight: fullScreen ? "100%" : Math.min(height * .82, 680), backgroundColor: theme.background, paddingTop: fullScreen ? inset.top : 0 }]}>
-      <View style={[styles.header, { backgroundColor: theme.surface, borderBottomColor: theme.border }]}>
-        <View style={styles.headerCopy}>
-          <Text accessibilityRole="header" style={[styles.title, { color: theme.textPrimary }]}>{title}</Text>
-          {subtitle ? <Text style={[styles.subtitle, { color: theme.textSecondary }]}>{subtitle}</Text> : null}
-        </View>
-        {headerAction}
-        <Pressable accessibilityRole="button" accessibilityLabel={closeLabel} onPress={onClose} style={styles.close}>
-          <X accessible={false} size={22} color={theme.icon} />
-        </Pressable>
+    <View accessibilityLabel={title} style={[styles.sheet, insetFlightQuickSheet && styles.floatingFlightSheet, fullScreen ? styles.fullScreen : { maxHeight: Math.min(height * .76, 620) }, { backgroundColor: sheetBackground }]}>
+      <View style={[styles.header, flightResultsPresentation && styles.flightPresentationHeader, flightQuickHeader && styles.quickHeader, flightFilterAppearance && styles.flightFilterHeader, { backgroundColor: usesFlightFilterCanvas ? flightFilterCanvas : theme.surface, borderBottomColor: theme.border }]}>
+        {flightQuickHeader ? <>
+          <View accessible={false} importantForAccessibility="no-hide-descendants" style={styles.headerSlot} />
+          <View style={[styles.headerCopy, styles.quickHeaderCopy]}>
+            <Text accessibilityRole="header" style={[styles.title, styles.quickTitle, { color: theme.textPrimary }]}>{title}</Text>
+            {subtitle ? <Text style={[styles.subtitle, styles.quickSubtitle, { color: theme.textSecondary }]}>{subtitle}</Text> : null}
+          </View>
+          <Pressable accessibilityRole="button" accessibilityLabel={closeLabel} onPress={onClose} style={styles.headerSlot}>
+            <X accessible={false} size={22} color={theme.icon} />
+          </Pressable>
+        </> : <>
+          <View style={styles.headerCopy}>
+            <Text accessibilityRole="header" style={[styles.title, { color: theme.textPrimary }]}>{title}</Text>
+            {subtitle ? <Text style={[styles.subtitle, { color: theme.textSecondary }]}>{subtitle}</Text> : null}
+          </View>
+          {headerAction}
+          <Pressable accessibilityRole="button" accessibilityLabel={closeLabel} onPress={onClose} style={styles.close}>
+            <X accessible={false} size={22} color={theme.icon} />
+          </Pressable>
+        </>}
       </View>
-      <View style={styles.content}>{children}</View>
-      {footer ? <View style={[styles.footer, { backgroundColor: theme.surface, borderTopColor: theme.border, paddingBottom: Math.max(inset.bottom, 12) }]}>{footer}</View> : null}
+      <View style={fullScreen ? styles.fullScreenContent : styles.quickContent}>{children}</View>
+      {footer ? <View style={[styles.footer, insetFlightQuickSheet && styles.quickFooter, { backgroundColor: usesFlightFilterCanvas ? flightFilterCanvas : theme.surface, borderTopColor: theme.border, paddingBottom: footerBottomPadding }]}>{footer}</View> : null}
     </View>
   );
-  return <Modal visible={visible} transparent={!fullScreen} animationType="slide" presentationStyle={fullScreen ? "fullScreen" : "overFullScreen"} onRequestClose={onClose} accessibilityViewIsModal>
-    {fullScreen ? <View style={[styles.fullBackdrop, { backgroundColor: theme.background }]} onAccessibilityEscape={onClose}>{sheet}</View> :
+  const animatedQuickSheet = <Animated.View style={[styles.quickSheetFrame, insetFlightQuickSheet && styles.insetFlightQuickSheet, insetFlightQuickSheet && { marginBottom: floatingBottomGap }, { transform: [{ translateY: quickSheetTranslateY }] }]}>{sheet}</Animated.View>;
+
+  return <Modal visible={visible} transparent={!fullScreen} animationType={fullScreen ? "slide" : "none"} presentationStyle={fullScreen ? "fullScreen" : "overFullScreen"} onRequestClose={onClose} accessibilityViewIsModal>
+    {fullScreen ? <SafeAreaProvider><SafeAreaView edges={["top", "bottom", "left", "right"]} style={[styles.fullBackdrop, { backgroundColor: sheetBackground }]} onAccessibilityEscape={onClose}>{sheet}</SafeAreaView></SafeAreaProvider> :
       <View style={styles.overlay} onAccessibilityEscape={onClose}>
-        <BlurView pointerEvents="none" intensity={1} tint="default" experimentalBlurMethod={Platform.OS === "android" ? "dimezisBlurView" : undefined} style={StyleSheet.absoluteFill}/>
-        <Pressable accessible={false} onPress={onClose} style={[StyleSheet.absoluteFill, styles.scrim]}/>
-        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.bottom} pointerEvents="box-none">{sheet}</KeyboardAvoidingView>
+        <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { opacity: quickBackdropOpacity }]}>
+          {flightQuickBackdrop ? <View style={[StyleSheet.absoluteFill, styles.quickBackdropScrim, flightResultsPresentation && styles.flightPresentationScrim]}/> : <BlurView intensity={12} tint="dark" experimentalBlurMethod={Platform.OS === "android" ? "dimezisBlurView" : undefined} style={StyleSheet.absoluteFill}/>}
+        </Animated.View>
+        <Pressable accessible={false} onPress={onClose} style={StyleSheet.absoluteFill}/>
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.bottom} pointerEvents="box-none">
+          {insetFlightQuickSheet ? <SafeAreaView edges={["left", "right"]}>{animatedQuickSheet}</SafeAreaView> : animatedQuickSheet}
+        </KeyboardAvoidingView>
       </View>}
   </Modal>;
 }
 
 const styles = StyleSheet.create({
-  overlay: { flex: 1, justifyContent: "flex-end" }, fullBackdrop: { flex: 1 }, bottom: { justifyContent: "flex-end" }, scrim: { backgroundColor: "rgba(15, 23, 42, 0.35)" },
+  overlay: { flex: 1, justifyContent: "flex-end" },
+  quickBackdropScrim: { backgroundColor: "rgba(15, 23, 42, 0.35)" },
+  flightPresentationScrim: { backgroundColor: "rgba(8, 18, 35, 0.52)" },
+  flightPresentationHeader: { minHeight: 56 },
+  fullBackdrop: { flex: 1 }, bottom: { justifyContent: "flex-end" },
+  quickSheetFrame: { width: "100%" },
+  insetFlightQuickSheet: { width: "auto", marginHorizontal: FLIGHT_QUICK_SHEET_HORIZONTAL_INSET },
   sheet: { width: "100%", minHeight: 240, borderTopLeftRadius: 24, borderTopRightRadius: 24, overflow: "hidden", shadowColor: "#0F172A", shadowOpacity: .2, shadowRadius: 18, elevation: 16 },
-  fullScreen: { flex: 1, borderRadius: 0 }, header: { minHeight: 76, paddingLeft: 20, paddingRight: 10, flexDirection: "row", alignItems: "center", borderBottomWidth: StyleSheet.hairlineWidth },
+  floatingFlightSheet: { borderBottomLeftRadius: 24, borderBottomRightRadius: 24 },
+  fullScreen: { flex: 1, minHeight: 0, borderRadius: 0 }, header: { minHeight: 76, flexShrink: 0, paddingLeft: 20, paddingRight: 10, flexDirection: "row", alignItems: "center", borderBottomWidth: StyleSheet.hairlineWidth },
+  quickHeader: { paddingHorizontal: 10, borderBottomWidth: 0 },
+  flightFilterHeader: { borderBottomWidth: 0 },
   headerCopy: { flex: 1, minWidth: 0 }, title: { fontSize: 18, lineHeight: 23, fontWeight: "700", fontFamily: appFonts.bold }, subtitle: { fontSize: 12, lineHeight: 18, fontFamily: appFonts.medium },
-  close: { width: 44, height: 44, alignItems: "center", justifyContent: "center" }, content: { flex: 1, minHeight: 0 }, footer: { borderTopWidth: StyleSheet.hairlineWidth, paddingHorizontal: 16, paddingTop: 12 },
+  headerSlot: { width: 44, height: 44, flexShrink: 0, alignItems: "center", justifyContent: "center" },
+  quickHeaderCopy: { alignItems: "center" },
+  quickTitle: { textAlign: "center" },
+  quickSubtitle: { textAlign: "center" },
+  close: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
+  fullScreenContent: { flex: 1, minHeight: 0 },
+  quickContent: { flexShrink: 1, minHeight: 0 },
+  footer: { flexShrink: 0, borderTopWidth: StyleSheet.hairlineWidth, paddingHorizontal: 16, paddingTop: 12 },
+  quickFooter: { borderTopWidth: 0 },
 });

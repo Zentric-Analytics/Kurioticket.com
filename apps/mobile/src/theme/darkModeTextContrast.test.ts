@@ -27,7 +27,8 @@ test("bottom navigation inactive labels and promo cards keep readable themed con
   const promos = source("src/features/home/HomepageDealPromos.tsx");
 
   assert.match(tabs, /useAppTheme/);
-  assert.match(tabs, /\{ color: theme\.muted \}/);
+  assert.match(tabs, /const inactiveColor = theme\.dark \? parentTheme\.muted : "#1A1A1A"/);
+  assert.match(tabs, /\{ color: inactiveColor \}/);
   assert.match(promos, /useFlowTheme/);
   assert.match(
     promos,

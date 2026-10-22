@@ -22,7 +22,7 @@ export function isActionableHotelProviderOffer(offer: HotelDetailsProviderOffer,
 export function resolveSelectedHotelProviderOfferId({ selectedOfferId, offers, internalRoomFlowAvailable }: { selectedOfferId: string | null; offers: readonly HotelDetailsProviderOffer[]; internalRoomFlowAvailable: boolean }): string | null {
   const actionableOffers = offers.filter((offer) => isActionableHotelProviderOffer(offer, internalRoomFlowAvailable));
   if (selectedOfferId && actionableOffers.some((offer) => offer.id === selectedOfferId)) return selectedOfferId;
-  return actionableOffers.length === 1 ? actionableOffers[0].id : null;
+  return actionableOffers[0]?.id ?? null;
 }
 
 export function resolveHotelBookingContinuation({ selectedOfferId, offers, internalRoomFlowAvailable }: { selectedOfferId: string | null; offers: readonly HotelDetailsProviderOffer[]; internalRoomFlowAvailable: boolean }): HotelBookingContinuation {

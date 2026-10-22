@@ -34,3 +34,9 @@ export async function updateStoredSessionName(name: string | null, expectedUserI
   if (!session || session.user.id !== expectedUserId) return;
   await writeSession({ ...session, user: { ...session.user, name } });
 }
+
+export async function updateStoredSessionEmail(email: string, expectedUserId: string) {
+  const session = await readSession();
+  if (!session || session.user.id !== expectedUserId) return;
+  await writeSession({ ...session, user: { ...session.user, email } });
+}

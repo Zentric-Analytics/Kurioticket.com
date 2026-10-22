@@ -48,7 +48,7 @@ type TravelInspirationDb = {
   user: {
     findMany(args: unknown): Promise<UserRecord[]>;
   };
-  $queryRawUnsafe<T = unknown>(query: string, ...values: unknown[]): Promise<T>;
+  $queryRawUnsafe(query: string, ...values: unknown[]): Promise<Array<{ id: string }>>;
 };
 
 export type TravelInspirationEmailSender = typeof sendOptionalEmail;
@@ -140,7 +140,7 @@ export function buildTravelInspirationIdempotencyKey(campaignKey: string, userId
 }
 
 async function hasExistingSuccessfulDelivery(db: TravelInspirationDb, idempotencyKey: string) {
-  const rows = await db.$queryRawUnsafe<Array<{ id: string }>>(
+  const rows = await db.$queryRawUnsafe(
     "SELECT id FROM email_deliveries WHERE idempotency_key = $1 AND status IN ('SENT', 'DELIVERED', 'DELIVERY_DELAYED', 'OPENED', 'CLICKED') LIMIT 1",
     idempotencyKey,
   );
@@ -148,7 +148,7 @@ async function hasExistingSuccessfulDelivery(db: TravelInspirationDb, idempotenc
 }
 
 async function isSuppressed(db: TravelInspirationDb, email: string) {
-  const rows = await db.$queryRawUnsafe<Array<{ id: string }>>(
+  const rows = await db.$queryRawUnsafe(
     "SELECT id FROM email_suppressions WHERE email = $1 LIMIT 1",
     email.toLowerCase().trim(),
   );

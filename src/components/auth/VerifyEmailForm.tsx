@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { Button } from "@/components/ui/Button";
 import { MessageBanner } from "@/components/ui/MessageBanner";
@@ -9,6 +10,7 @@ import { Card } from "@/components/ui/Card";
 import { Field, Input } from "@/components/ui/Input";
 
 export function VerifyEmailForm({ email }: { email: string }) {
+  const router = useRouter();
   const { t } = useLocale();
   const [code, setCode] = useState("");
   const [message, setMessage] = useState("");
@@ -36,7 +38,7 @@ export function VerifyEmailForm({ email }: { email: string }) {
 
     setMessage(t.verifyEmailSuccess);
     window.setTimeout(() => {
-      window.location.href = "/auth/signin?callbackUrl=/onboarding/security";
+      router.push("/auth/signin?callbackUrl=/onboarding/security");
     }, 900);
   }
 

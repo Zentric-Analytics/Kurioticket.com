@@ -38,8 +38,90 @@ function testHotel(id: string, name: string): NormalizedHotelResult {
   };
 }
 
+test("details preserves every same-property rate without mixing providers or search snapshots", async () => {
+  const search = { destination: "Rate Test City", checkIn: "2026-12-01", checkOut: "2026-12-03", guests: 1, rooms: 1 };
+  const first = { ...testHotel("rate-a", "Hotel"), propertyGroupId: "snapshot:property" };
+  if (first.inventoryKind === "discovery") throw new Error("Expected a priced test offer");
+  const second = { ...first, id: "rate-b", roomType: "Suite", totalPrice: 300 };
+  const other = { ...first, id: "rate-other", propertyGroupId: "other-snapshot:property" };
+  const otherProvider = { ...first, id: "rate-provider", provider: "Different Provider" };
+  rememberHotels([first, second, other, otherProvider], search);
+  const query = new URLSearchParams({ id: first.id, ...search, guests: "1", rooms: "1", relatedLimit: "1" });
+  const response = await GET(new Request("https://kurioticket.test/api/hotels/details?" + query));
+  const payload = await response.json();
+  assert.deepEqual(payload.propertyOffers.map((offer: { hotel: { id: string } }) => offer.hotel.id), ["rate-a", "rate-b"]);
+  assert.equal(payload.propertyOffers[1].hotel.totalPrice, 300);
+  assert.equal(payload.propertyOffers[1].hotel.roomType, "Suite");
+  assert.ok(payload.propertyOffers.every((offer: { hotel: object }) => !Object.hasOwn(offer.hotel, "rawProviderReference")));
+  assert.ok(payload.relatedHotels.every((hotel: { id: string }) => hotel.id !== second.id));
+});
+
+test("details preserve separate rate cards when the original search had a destination ID", async () => {
+  const first = { ...testHotel("rate-canonical-one", "Canonical Hotel"), provider: "KAYAK sandbox", propertyGroupId: "snapshot:canonical" };
+  if (first.inventoryKind === "discovery") throw new Error("Expected a priced test offer");
+  const second = { ...first, id: "rate-canonical-two", totalPrice: 280, roomType: "Suite" };
+  const otherProperty = { ...first, id: "rate-other-property", propertyGroupId: "snapshot:other" };
+  const otherProvider = { ...first, id: "rate-other-provider", provider: "Other Provider" };
+  const search = {
+    destinationId: "place:nyc",
+    destination: "New York",
+    checkIn: "2027-11-10",
+    checkOut: "2027-11-13",
+    guests: 2,
+    adults: 1,
+    children: 1,
+    rooms: 1,
+  };
+  rememberHotels([first, second, otherProperty, otherProvider], search);
+  // Neither web nor native details links transmit the selected destination ID.
+  // Native also omits the original adults/children split.
+  const params = new URLSearchParams({
+    id: first.id, destination: search.destination,
+    checkIn: search.checkIn, checkOut: search.checkOut,
+    guests: String(search.guests), rooms: String(search.rooms),
+  });
+  const response = await GET(new Request(`https://kurioticket.test/api/hotels/details?${params}`));
+  const body = await response.json();
+  assert.equal(response.status, 200);
+  assert.deepEqual(body.propertyOffers.map((rate: { hotel: { id: string } }) => rate.hotel.id), [first.id, second.id]);
+  assert.equal(body.propertyOffers[1].hotel.totalPrice, 280);
+  assert.equal(body.propertyOffers[1].hotel.roomType, "Suite");
+  assert.deepEqual(body.relatedHotels.map((hotel: { id: string }) => hotel.id), [otherProperty.id]);
+});
+
+test("details retain the selected snapshot rates after an identical search runs again", async () => {
+  const search = { destination: "Repeat City", checkIn: "2027-12-01", checkOut: "2027-12-04", guests: 2, rooms: 1 };
+  const first = { ...testHotel("kayak-sandbox:old:one", "Hotel"), propertyGroupId: "old:hotel" };
+  if (first.inventoryKind === "discovery") throw new Error("Expected a priced test offer");
+  const second = { ...first, id: "kayak-sandbox:old:two", totalPrice: 280, roomType: "Suite" };
+  rememberHotels([first, second], search);
+  rememberHotels([{ ...first, id: "kayak-sandbox:new:one", propertyGroupId: "new:hotel" }], search);
+  const params = new URLSearchParams({ ...search, id: first.id, guests: "2", rooms: "1" });
+  const response = await GET(new Request(`https://kurioticket.test/api/hotels/details?${params}`));
+  const body = await response.json();
+  assert.equal(response.status, 200);
+  assert.deepEqual(body.propertyOffers.map((rate: { hotel: { id: string } }) => rate.hotel.id), [first.id, second.id]);
+  assert.equal(body.propertyOffers[1].hotel.totalPrice, 280);
+  assert.equal(body.propertyOffers[1].hotel.roomType, "Suite");
+});
+
+test("explicitly mismatched hotel stay never retrieves sibling rate cards", async () => {
+  const first = { ...testHotel("rate-stay-first", "Hotel"), propertyGroupId: "snapshot:rate-stay" };
+  const second = { ...first, id: "rate-stay-second" };
+  const search = { destinationId: "place:nyc", destination: "New York", checkIn: "2027-12-01", checkOut: "2027-12-04", guests: 2, adults: 1, children: 1, rooms: 1 };
+  rememberHotels([first, second], search);
+  const overrides: Record<string, string>[] = [{ checkOut: "2027-12-05" }, { guests: "3" }, { adults: "2" }, { children: "0" }, { rooms: "2" }];
+  for (const override of overrides) {
+    const params = new URLSearchParams({ id: first.id, destination: search.destination, checkIn: search.checkIn, checkOut: search.checkOut, guests: String(search.guests), rooms: String(search.rooms), ...override });
+    const response = await GET(new Request(`https://kurioticket.test/api/hotels/details?${params}`));
+    assert.equal(response.status, 200);
+    const body = await response.json();
+    assert.deepEqual(body.propertyOffers.map((rate: { hotel: { id: string } }) => rate.hotel.id), [first.id]);
+  }
+});
+
 test("hotel details returns 400 when id is missing", async () => {
-  const response = GET(
+  const response = await GET(
     new Request("https://kurioticket.test/api/hotels/details"),
   );
   const payload = (await response.json()) as { error?: string };
@@ -49,7 +131,7 @@ test("hotel details returns 400 when id is missing", async () => {
 });
 
 test("hotel details returns 404 for an unknown id", async () => {
-  const response = GET(
+  const response = await GET(
     new Request(
       "https://kurioticket.test/api/hotels/details?id=unknown-hotel-details-test",
     ),
@@ -68,7 +150,7 @@ test("hotel details returns the selected cached public hotel", async () => {
     testHotel(selectedId, "Selected Cached Hotel"),
   ]);
 
-  const response = GET(
+  const response = await GET(
     new Request(
       `https://kurioticket.test/api/hotels/details?id=${encodeURIComponent(selectedId)}`,
     ),
@@ -88,41 +170,70 @@ test("hotel details returns the selected cached public hotel", async () => {
   assert.deepEqual(payload.roomOptions, []);
 });
 
-test("static details include sanitized room options and requested stay totals", async () => {
-  const response = GET(
+test("provider hotel details keep property facts separate while exposing verified KAYAK location coordinates", async () => {
+  const id = `kayak-sandbox:location-${Date.now()}`;
+  const hotel = testHotel(id, "KAYAK Provider Hotel");
+  hotel.provider = "KAYAK sandbox";
+  hotel.dataSource = "demo";
+  hotel.location = "10 Test Street";
+  hotel.rawProviderReference = {
+    kind: "kayak-hotel-details",
+    details: {
+      source: "KAYAK",
+      overview: { address: "10 Test Street", countryCode: "US" },
+    },
+    location: {
+      address: "10 Test Street",
+      countryCode: "US",
+      latitude: 40.75,
+      longitude: -73.98,
+    },
+  };
+  rememberHotels([hotel]);
+
+  const response = await GET(
     new Request(
-      "https://kurioticket.test/api/hotels/details?id=hotel-le-six-paris&checkIn=2027-06-01&checkOut=2027-06-04&rooms=2&guests=4",
+      `https://kurioticket.test/api/hotels/details?id=${encodeURIComponent(id)}`,
     ),
   );
   const payload = (await response.json()) as {
     hotel: Record<string, unknown>;
-    propertyDetails: Record<string, unknown>;
-    roomOptions: Array<Record<string, unknown>>;
+    propertyDetails: unknown;
+    locationDetails: {
+      latitude: number;
+      longitude: number;
+      streetAddress: string;
+      country: string;
+    } | null;
+    providerDetails?: {
+      source?: string;
+      overview?: { address?: string; countryCode?: string };
+    } | null;
   };
+
   assert.equal(response.status, 200);
-  assert.equal(payload.hotel.id, "hotel-le-six-paris");
-  assert.equal(typeof payload.propertyDetails.description, "string");
-  assert.equal(typeof payload.propertyDetails.latitude, "number");
-  assert.equal(typeof payload.propertyDetails.longitude, "number");
-  assert.equal(payload.propertyDetails.city, "Paris");
-  assert.equal(
-    Object.hasOwn(payload.propertyDetails, "rawProviderReference"),
-    false,
-  );
-  assert.ok(payload.roomOptions.length >= 2);
-  for (const room of payload.roomOptions) {
-    assert.equal(room.hotelId, "hotel-le-six-paris");
-    assert.equal(room.totalPrice, Number(room.pricePerNight) * 3 * 2);
-    assert.equal(room.pricingKind, "indicative");
-    assert.equal(Object.hasOwn(room, "rawProviderReference"), false);
-  }
+  assert.equal(payload.propertyDetails, null);
+  assert.deepEqual(payload.locationDetails && {
+    latitude: payload.locationDetails.latitude,
+    longitude: payload.locationDetails.longitude,
+    streetAddress: payload.locationDetails.streetAddress,
+    country: payload.locationDetails.country,
+  }, {
+    latitude: 40.75,
+    longitude: -73.98,
+    streetAddress: "10 Test Street",
+    country: "US",
+  });
+  assert.equal(payload.providerDetails?.source, "KAYAK");
+  assert.equal(payload.providerDetails?.overview?.address, "10 Test Street");
+  assert.equal(Object.hasOwn(payload.hotel, "rawProviderReference"), false);
 });
 
 test("hotel details does not return a different cached hotel for an unknown id", async () => {
   const cachedId = `hotel-details-cached-${Date.now()}`;
   rememberHotels([testHotel(cachedId, "Cached Hotel Should Not Leak")]);
 
-  const response = GET(
+  const response = await GET(
     new Request(
       `https://kurioticket.test/api/hotels/details?id=${cachedId}-missing`,
     ),
@@ -137,92 +248,181 @@ test("hotel details does not return a different cached hotel for an unknown id",
   assert.equal(payload.error, "Hotel not found.");
 });
 
-test("Park Plaza details expose the matching Westminster address and coordinates", async () => {
-  const response = GET(
+test("Hotel details cap an 18-result New York related preview at twelve and signal more results", async () => {
+  const search = {
+    destination: "New York",
+    checkIn: "2027-10-17",
+    checkOut: "2027-10-24",
+    guests: 2,
+    rooms: 1,
+  };
+  const hotels = Array.from({ length: 18 }, (_, index) => {
+    const hotel = testHotel(
+      `kayak-sandbox:new-york-related-${index + 1}-${Date.now()}`,
+      `New York Hotel ${index + 1}`,
+    );
+    hotel.provider = "KAYAK sandbox";
+    hotel.dataSource = "demo";
+    hotel.location = "New York, United States";
+    hotel.pricePerNight = 100 + index;
+    hotel.totalPrice = (100 + index) * 7;
+    return hotel;
+  });
+  rememberHotels(hotels, search);
+
+  const selected = hotels[0]!;
+  const response = await GET(
     new Request(
-      "https://kurioticket.test/api/hotels/details?id=park-plaza-westminster-bridge",
+      `https://kurioticket.test/api/hotels/details?id=${encodeURIComponent(selected.id)}&destination=${encodeURIComponent(search.destination)}&checkIn=${search.checkIn}&checkOut=${search.checkOut}&rooms=${search.rooms}&guests=${search.guests}&relatedLimit=12`,
     ),
   );
   const payload = (await response.json()) as {
-    hotel: { name: string };
-    propertyDetails: {
-      latitude: number;
-      longitude: number;
-      streetAddress: string;
-    };
-    relatedHotels: Array<Record<string, unknown>>;
+    hotel: { id: string };
+    relatedHotels: Array<{ id: string; provider: string }>;
+    relatedHotelsHasMore?: boolean;
   };
 
   assert.equal(response.status, 200);
-  assert.equal(payload.hotel.name, "Park Plaza Westminster Bridge London");
-  assert.equal(payload.propertyDetails.latitude, 51.501);
-  assert.equal(payload.propertyDetails.longitude, -0.1167);
-  assert.match(
-    payload.propertyDetails.streetAddress,
-    /200 Westminster Bridge Rd/i,
+  assert.equal(payload.hotel.id, selected.id);
+  assert.equal(payload.relatedHotels.length, 12);
+  assert.equal(payload.relatedHotelsHasMore, true);
+  assert.equal(new Set(payload.relatedHotels.map((hotel) => hotel.id)).size, 12);
+  assert.equal(payload.relatedHotels.some((hotel) => hotel.id === selected.id), false);
+  assert.ok(payload.relatedHotels.some((hotel) => hotel.provider === "KAYAK sandbox"));
+  assert.ok(payload.relatedHotels.every((hotel) => hotel.provider === "KAYAK sandbox"));
+  assert.deepEqual(
+    payload.relatedHotels.map((hotel) => hotel.id),
+    hotels.slice(1, 13).map((hotel) => hotel.id),
   );
-  assert.match(payload.propertyDetails.streetAddress, /SE1 7UT/i);
-  assert.equal(payload.relatedHotels.length, 7);
-  assert.equal(new Set(payload.relatedHotels.map((hotel) => hotel.id)).size, 7);
-  assert.equal(
-    new Set(payload.relatedHotels.map((hotel) => hotel.name)).size,
-    7,
-  );
-  assert.equal(
-    payload.relatedHotels.some(
-      (hotel) => hotel.id === "park-plaza-westminster-bridge",
+
+  const fullResponse = await GET(
+    new Request(
+      `https://kurioticket.test/api/hotels/details?id=${encodeURIComponent(selected.id)}&destination=${encodeURIComponent(search.destination)}&checkIn=${search.checkIn}&checkOut=${search.checkOut}&rooms=${search.rooms}&guests=${search.guests}`,
     ),
-    false,
   );
-  assert.equal(
-    payload.relatedHotels.some((hotel) =>
-      Object.hasOwn(hotel, "rawProviderReference"),
-    ),
-    false,
-  );
+  const fullPayload = (await fullResponse.json()) as {
+    relatedHotels: Array<{ id: string }>;
+    relatedHotelsHasMore?: boolean;
+  };
+  assert.equal(fullResponse.status, 200);
+  assert.equal(fullPayload.relatedHotels.length, 17);
+  assert.equal(fullPayload.relatedHotelsHasMore, false);
 });
 
-test("static hotel details return only available sanitized same-city alternatives", async () => {
-  for (const selected of staticHotelCatalogue) {
-    const response = GET(
-      new Request(
-        `https://kurioticket.test/api/hotels/details?id=${encodeURIComponent(selected.id)}&checkIn=2027-06-01&checkOut=2027-06-04&rooms=1&guests=2`,
-      ),
-    );
-    const payload = (await response.json()) as {
-      hotel: { id: string };
-      propertyDetails: { city: string };
-      relatedHotels: Array<{
-        id: string;
-        location: string;
-        imageUrl: string;
-        rawProviderReference?: unknown;
-      }>;
+test("KAYAK Hotel details exclude retired catalogue hotels from a cached search cohort", async () => {
+  const selected = testHotel(`kayak-sandbox:selected-${Date.now()}`, "KAYAK New York Hotel");
+  selected.provider = "KAYAK sandbox";
+  selected.dataSource = "demo";
+  selected.location = "New York, United States";
+
+  const kurioticket = testHotel("hotel-le-six-paris", "Kurioticket Alternative");
+  kurioticket.provider = "Kurioticket static catalogue";
+  kurioticket.location = "New York, United States";
+
+  rememberHotels(
+    [selected, kurioticket],
+    {
+      destination: "New York",
+      checkIn: "2027-07-01",
+      checkOut: "2027-07-04",
+      guests: 2,
+      rooms: 1,
+    },
+  );
+
+  const response = await GET(
+    new Request(
+      `https://kurioticket.test/api/hotels/details?id=${encodeURIComponent(selected.id)}&destination=${encodeURIComponent("New York")}&checkIn=2027-07-01&checkOut=2027-07-04&rooms=1&guests=2`,
+    ),
+  );
+  const payload = (await response.json()) as {
+    hotel: { id: string };
+    relatedHotels: Array<{
+      id: string;
+      provider: string;
+      rawProviderReference?: unknown;
+    }>;
+  };
+
+  assert.equal(response.status, 200);
+  assert.equal(payload.hotel.id, selected.id);
+  assert.deepEqual(payload.relatedHotels, []);
+});
+
+test("KAYAK details without a destination recover related hotels from the original cached search", async () => {
+  const selected = testHotel("kayak-sandbox:original-search-selected", "Selected KAYAK Hotel");
+  selected.provider = "KAYAK sandbox";
+  const alternative = testHotel("kayak-sandbox:original-search-alternative", "Alternative KAYAK Hotel");
+  alternative.provider = "KAYAK sandbox";
+  const unrelated = testHotel("kayak-sandbox:unrelated-search", "Unrelated Hotel");
+  rememberHotels([selected, alternative], {
+    destinationId: "hotel:us-new-york",
+    destination: "New York",
+    checkIn: "2027-10-01",
+    checkOut: "2027-10-08",
+    guests: 1,
+    rooms: 1,
+  });
+  rememberHotels([unrelated], {
+    destination: "London",
+    checkIn: "2027-10-01",
+    checkOut: "2027-10-08",
+    guests: 1,
+    rooms: 1,
+  });
+
+  const response = await GET(new Request(
+    "https://kurioticket.test/api/hotels/details?id=kayak-sandbox%3Aoriginal-search-selected&checkIn=2027-10-01&checkOut=2027-10-08&guests=1&rooms=1&relatedLimit=12",
+  ));
+  const payload = await response.json();
+  assert.equal(response.status, 200);
+  assert.equal(payload.hotel.id, selected.id);
+  assert.deepEqual(payload.relatedHotels.map((hotel: { id: string }) => hotel.id), [alternative.id]);
+  assert.equal(Object.hasOwn(payload.relatedHotels[0], "rawProviderReference"), false);
+  assert.equal(payload.relatedHotelsHasMore, false);
+});
+
+for (const change of [
+  { checkIn: "2027-10-02" },
+  { checkOut: "2027-10-09" },
+  { guests: 2 },
+  { rooms: 2 },
+]) {
+  test(`KAYAK related hotels exclude an overwritten cohort with different ${Object.keys(change)[0]}`, async () => {
+    const selected = testHotel(`kayak-sandbox:stay-match-${Object.keys(change)[0]}`, "Selected Hotel");
+    const originalAlternative = testHotel(selected.id + "-original", "Original Alternative");
+    const laterAlternative = testHotel(selected.id + "-later", "Later Alternative");
+    const originalSearch = {
+      destination: "New York",
+      checkIn: "2027-10-01",
+      checkOut: "2027-10-08",
+      guests: 1,
+      rooms: 1,
     };
-    assert.equal(response.status, 200, selected.id);
-    assert.equal(payload.hotel.id, selected.id);
-    const expectedRelatedCount = selected.inventoryKind === "discovery" ? 0 : 7;
-    assert.equal(payload.relatedHotels.length, expectedRelatedCount, selected.id);
-    assert.equal(
-      new Set(payload.relatedHotels.map((hotel) => hotel.id)).size,
-      expectedRelatedCount,
-      selected.id,
-    );
-    assert.ok(
-      payload.relatedHotels.every((hotel) => hotel.id !== selected.id),
-      selected.id,
-    );
-    assert.ok(
-      payload.relatedHotels.every((hotel) =>
-        hotel.location.startsWith(payload.propertyDetails.city),
-      ),
-      selected.id,
-    );
-    assert.ok(
-      payload.relatedHotels.every(
-        (hotel) => hotel.imageUrl && !("rawProviderReference" in hotel),
-      ),
-      selected.id,
-    );
+    rememberHotels([selected, originalAlternative], originalSearch);
+    rememberHotels([selected, laterAlternative], { ...originalSearch, ...change });
+
+    const params = new URLSearchParams({
+      id: selected.id,
+      checkIn: originalSearch.checkIn,
+      checkOut: originalSearch.checkOut,
+      guests: String(originalSearch.guests),
+      rooms: String(originalSearch.rooms),
+      relatedLimit: "12",
+    });
+    const response = await GET(new Request(`https://kurioticket.test/api/hotels/details?${params}`));
+    const payload = await response.json();
+    assert.equal(response.status, 200);
+    assert.deepEqual(payload.relatedHotels, []);
+    assert.equal(payload.relatedHotelsHasMore, false);
+  });
+}
+
+test("all retired catalogue URLs return 404, including historical cached records", async () => {
+  for (const hotel of staticHotelCatalogue) {
+    rememberHotels([{ ...testHotel(hotel.id, hotel.name), provider: "Kurioticket catalogue" }]);
+    const response = await GET(new Request("https://kurioticket.test/api/hotels/details?id=" + encodeURIComponent(hotel.id)));
+    assert.equal(response.status, 404, hotel.id);
+    assert.deepEqual(await response.json(), { error: "Hotel not found." });
   }
 });

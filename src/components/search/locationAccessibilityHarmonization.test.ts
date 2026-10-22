@@ -36,7 +36,9 @@ test("mobile sheet shells restore focus to launchers and preserve Escape close",
   assert.match(flightShell, /launcherRef/);
   assert.match(flightShell, /focus\(/);
   assert.match(flightShell, /Escape/);
-  assert.match(read("./HotelMobilePickerShell.tsx"), /<FlightMobilePickerShell \{\.\.\.props\} \/>/);
+  const hotelShell = read("./HotelMobilePickerShell.tsx");
+  assert.match(hotelShell, /const \{ appearance, \.\.\.rest \} = props/);
+  assert.match(hotelShell, /<FlightMobilePickerShell \{\.\.\.rest\}/);
 });
 
 test("packages keep existing accessible flight combobox and listbox contract", () => {

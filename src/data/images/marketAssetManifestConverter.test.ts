@@ -79,10 +79,10 @@ describe("convertMarketAssetManifestToRegistryEntries", () => {
   });
 
   it("does not convert invalid manifests", () => {
-    const result = convertMarketAssetManifestToRegistryEntries({
-      ...manifest,
-      entries: [{ ...manifestEntry, market: "us" }],
-    });
+    const malformed = structuredClone(manifest);
+    // Exercise runtime validation of malformed external data.
+    Reflect.set(malformed.entries[0], "market", "us");
+    const result = convertMarketAssetManifestToRegistryEntries(malformed);
 
     assert.equal(result.valid, false);
     assert.equal(result.entries.length, 0);

@@ -1,8 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import type { SavedHotelSnapshot } from "@/components/results/hotelSavedStorage";
 import { useSavedHotel } from "@/components/results/useSavedHotel";
@@ -12,6 +10,7 @@ import { useRegion } from "@/components/region/RegionProvider";
 import { Card } from "@/components/ui/Card";
 import type { PublicHotelPropertyDetails, PublicHotelResult } from "@/lib/types";
 import type { HotelRoomOption } from "@/lib/hotels/hotelRoomOptions";
+import type { PublicHotelProviderDetails } from "@/lib/hotels/hotelProviderDetails";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import { getHotelPriceDetails } from "@/lib/hotels/hotelResultAvailability";
 import {
@@ -60,6 +59,7 @@ import {
   parseHotelDetailsSearchDate,
   toHotelDetailsTitleCase,
   translateKnownHotelDetailsLabel,
+  type HotelDetailsProviderOffer,
   type HotelDetailsSearchContext,
 } from "@/components/results/hotelDetails/hotelDetailsPresentation";
 import {
@@ -73,7 +73,6 @@ import type { DealsTripPlanHotel } from "@/lib/deals/dealsTripPlan";
 import {
   getHotelReviewBand,
   getHotelReviewCount,
-  type HotelReviewBand,
 } from "@/components/results/hotelReviewPresentation";
 
 export type { HotelDetailsSearchContext };
@@ -87,22 +86,6 @@ type HotelDetailsClientProps = {
   confirming?: boolean;
   confirmationError?: string;
   onGuidedSelection?: (selection: DealsTripPlanHotel) => void;
-};
-
-const reviewLabelKeys: Record<HotelReviewBand, string> = {
-  exceptional: "hotelResults.review.exceptional",
-  veryGood: "hotelResults.review.veryGood",
-  good: "hotelResults.review.good",
-  pleasant: "hotelResults.review.pleasant",
-  reviewScore: "hotelResults.review.score",
-};
-
-const reviewLabelFallbacks: Record<HotelReviewBand, string> = {
-  exceptional: "Exceptional",
-  veryGood: "Very good",
-  good: "Good",
-  pleasant: "Pleasant",
-  reviewScore: "Review score",
 };
 
 export function HotelDetailsClient({
@@ -121,6 +104,9 @@ export function HotelDetailsClient({
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const [hotel, setHotel] = useState<PublicHotelResult | null>(null);
   const [propertyDetails, setPropertyDetails] = useState<PublicHotelPropertyDetails | null>(null);
+  const [locationDetails, setLocationDetails] = useState<PublicHotelPropertyDetails | null>(null);
+  const [providerDetails, setProviderDetails] = useState<PublicHotelProviderDetails | null>(null);
+  const [propertyOffers, setPropertyOffers] = useState<Array<{ hotel: PublicHotelResult; providerDetails: PublicHotelProviderDetails | null }>>([]);
   const [roomOptions, setRoomOptions] = useState<HotelRoomOption[]>([]);
   const [relatedHotels, setRelatedHotels] = useState<PublicHotelResult[]>([]);
   const [selectedRoomId, setSelectedRoomId] = useState("");
@@ -150,6 +136,8 @@ export function HotelDetailsClient({
   const requestCheckOut = effectiveRequestContext.checkOut;
   const requestGuests = effectiveRequestContext.guests;
   const requestRooms = effectiveRequestContext.rooms;
+  const requestAdults = searchContext?.adults;
+  const requestChildren = searchContext?.children;
 
   useEffect(() => {
     let active = true;
@@ -163,6 +151,8 @@ export function HotelDetailsClient({
       setLoading(true);
       setHotel(null);
       setPropertyDetails(null);
+      setLocationDetails(null);
+      setProviderDetails(null);
       setRoomOptions([]);
       setRelatedHotels([]);
       setSelectedRoomId("");
@@ -174,14 +164,28 @@ export function HotelDetailsClient({
       setFailedImageUrls(new Set());
     });
 
+    const detailsParams = buildDealsHotelDetailsApiParams({
+      id: requestId,
+      checkIn: requestCheckIn,
+      checkOut: requestCheckOut,
+      guests: requestGuests,
+      rooms: requestRooms,
+    });
+    if (mode === "standalone") detailsParams.set("relatedLimit", "12");
+    if (requestAdults !== undefined) detailsParams.set("adults", requestAdults);
+    if (requestChildren !== undefined) detailsParams.set("children", requestChildren);
+
     fetch(
-      `/api/hotels/details?${buildDealsHotelDetailsApiParams({ id: requestId, checkIn: requestCheckIn, checkOut: requestCheckOut, guests: requestGuests, rooms: requestRooms }).toString()}`,
+      `/api/hotels/details?${detailsParams.toString()}`,
       { signal: controller.signal },
     )
       .then(async (response) => {
         const data = (await response.json().catch(() => ({}))) as {
           hotel?: PublicHotelResult;
           propertyDetails?: PublicHotelPropertyDetails | null;
+          locationDetails?: PublicHotelPropertyDetails | null;
+          providerDetails?: PublicHotelProviderDetails | null;
+          propertyOffers?: Array<{ hotel: PublicHotelResult; providerDetails: PublicHotelProviderDetails | null }>;
           roomOptions?: HotelRoomOption[];
           relatedHotels?: PublicHotelResult[];
           error?: string;
@@ -192,17 +196,23 @@ export function HotelDetailsClient({
           throw new Error(unavailableFallback);
         return {
           hotel: data.hotel,
+          propertyOffers: Array.isArray(data.propertyOffers) ? data.propertyOffers : [],
           propertyDetails: data.propertyDetails ?? null,
+          locationDetails: data.locationDetails ?? data.propertyDetails ?? null,
+          providerDetails: data.providerDetails ?? null,
           roomOptions: Array.isArray(data.roomOptions) ? data.roomOptions : [],
           relatedHotels: Array.isArray(data.relatedHotels)
             ? data.relatedHotels
             : [],
         };
       })
-      .then(({ hotel: nextHotel, propertyDetails: nextPropertyDetails, roomOptions: nextRoomOptions, relatedHotels: nextRelatedHotels }) => {
+      .then(({ propertyOffers: nextPropertyOffers, hotel: nextHotel, propertyDetails: nextPropertyDetails, locationDetails: nextLocationDetails, providerDetails: nextProviderDetails, roomOptions: nextRoomOptions, relatedHotels: nextRelatedHotels }) => {
         if (!active) return;
         setHotel(nextHotel);
+        setPropertyOffers(nextPropertyOffers);
         setPropertyDetails(nextPropertyDetails);
+        setLocationDetails(nextLocationDetails);
+        setProviderDetails(nextProviderDetails);
         setRoomOptions(nextRoomOptions);
         setRelatedHotels(nextRelatedHotels);
         setResultReceivedAt(Date.now());
@@ -230,11 +240,15 @@ export function HotelDetailsClient({
     requestCheckOut,
     requestGuests,
     requestRooms,
+    requestAdults,
+    requestChildren,
     loadAttempt,
+    mode,
   ]);
 
-  async function continueToProvider() {
+  async function runProviderRedirect(targetWindow?: Window | null, offerId = id) {
     if (!hotel || redirecting || !canUseHotelDetailsProviderLink(hotel)) return;
+    if (offerId !== hotel.id && !propertyOffers.some(offer => offer.hotel.id === offerId)) return;
     setRedirecting(true);
     setRedirectError("");
     try {
@@ -242,7 +256,7 @@ export function HotelDetailsClient({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          id,
+          id: offerId,
           type: "hotel",
           sourcePage: "hotel_details",
         }),
@@ -253,15 +267,30 @@ export function HotelDetailsClient({
       };
       if (!response.ok || !data.url)
         throw new Error(data.error || t("hotelDetails.redirectError"));
-      window.location.href = data.url;
+      if (targetWindow && !targetWindow.closed) {
+        targetWindow.location.replace(data.url);
+        setRedirecting(false);
+      } else {
+        window.location.href = data.url;
+      }
     } catch (error) {
-      setRedirectError(
+      if (targetWindow && !targetWindow.closed) targetWindow.close();
+      const message =
         error instanceof Error
           ? error.message
-          : t("hotelDetails.redirectError"),
-      );
+          : t("hotelDetails.redirectError");
+      setRedirectError(message);
       setRedirecting(false);
       setResultReceivedAt(null);
+      throw new Error(message);
+    }
+  }
+
+  async function continueToProvider() {
+    try {
+      await runProviderRedirect();
+    } catch {
+      // Existing booking panels read redirectError from state.
     }
   }
 
@@ -512,9 +541,7 @@ export function HotelDetailsClient({
   );
   const reviewBand = getHotelReviewBand(normalizedReviewScore, reviewScale);
   const reviewCount = getHotelReviewCount(hotel.reviewCount);
-  const reviewLabel = reviewBand
-    ? t(reviewLabelKeys[reviewBand]) || reviewLabelFallbacks[reviewBand]
-    : "";
+  const reviewLabel = providerDetails?.reviews?.sentiment?.trim() || hotel.reviewSentiment?.trim() || "";
   const reviewScore =
     reviewBand && reviewScale
       ? `${new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(normalizedReviewScore ?? 0)} / ${reviewScale}`
@@ -549,20 +576,44 @@ export function HotelDetailsClient({
   const providerEnabled = canUseHotelDetailsProviderLink(hotel);
   const providerText =
     hotel.provider &&
-    hotel.dataSource !== "demo" &&
+    (hotel.dataSource !== "demo" || hotel.provider === "KAYAK sandbox") &&
     hotel.provider !== "Kurioticket static catalogue"
       ? `${t("providedBy")} ${hotel.provider}`
       : "";
   const providerUnavailableText =
     hotel.provider === "Kurioticket static catalogue"
       ? "Prices shown are estimated for trip planning. Live booking availability will be introduced before launch."
-      : hotel.dataSource === "demo"
+      : hotel.dataSource === "demo" && hotel.provider !== "KAYAK sandbox"
         ? ""
         : hotel.inventoryKind === "discovery" || !hasValidPrice
           ? discoveryBookingUnavailableText
           : !providerEnabled
             ? t("hotelDetails.directLinkUnavailable")
             : "";
+
+  const standaloneProviderOffers: HotelDetailsProviderOffer[] = mode === "standalone"
+    ? (propertyOffers.length ? propertyOffers : [{ hotel, providerDetails }]).flatMap(({ hotel: offer, providerDetails: supplied }) => {
+        const price = getHotelPriceDetails(offer);
+        if (!price || !canUseHotelDetailsProviderLink(offer) || offer.provider === "Kurioticket static catalogue") return [];
+        const format = (amount: number) => formatDisplayPrice({
+          amount, sourceCurrency: price.currency, displayCurrency: selectedOption.currency,
+          convertSourceEstimate: true, rates: currencyRates.rates, isFallbackRate: currencyRates.isFallback,
+        });
+        const nightly = format(price.pricePerNight);
+        return [{
+          id: offer.id,
+          providerName: offer.bookingProviderName?.trim() || offer.provider,
+          providerLogoUrl: offer.providerLogoUrl,
+          roomName: supplied?.rate?.roomName || offer.roomType || undefined,
+          cancellationLabel: offer.cancellationInfo || undefined,
+          suppliedRateFacts: [...(supplied?.rate?.conditions ?? []), ...(supplied?.rate?.rateBreakdown ?? []), ...(supplied?.rate?.bundledRate === undefined ? [] : [{ label: "Bundled rate", value: supplied.rate.bundledRate ? "Yes" : "No" }])],
+          paymentLabel: supplied?.rate?.payLater === undefined ? undefined : supplied.rate.payLater ? "Pay later" : "Pay later not offered",
+          nightlyPrice: nightly.formatted, nightlyPriceTitle: nightly.title,
+          nightlyPriceAriaLabel: nightly.ariaLabel, totalPrice: format(price.totalPrice).formatted,
+          taxesAndFeesLabel: offer.taxesAndFeesIncluded === undefined ? undefined : t(offer.taxesAndFeesIncluded ? "hotelResults.taxesFeesIncluded" : "hotelResults.taxesFeesNotIncluded"),
+          action: { kind: "provider-handoff" as const, providerOfferId: offer.id },
+        }];
+      }) : [];
   const guidedSelection =
     mode === "guided" && guidedSearch && resultReceivedAt !== null
       ? buildDealsHotelDetailsSelection({
@@ -820,21 +871,12 @@ export function HotelDetailsClient({
     });
 
     return (
-      <main className="flex-1 bg-white sm:bg-[#f8fafc]">
-        <section className="py-2 lg:py-2">
-          <div className="mx-auto w-full max-w-[1400px] px-0 lg:px-7" data-hotel-details-page-shell>
-            <div className="px-4 lg:px-0">
-              <Link
-                href={resultsHref}
-                className="mb-3 inline-flex min-h-10 items-center gap-2 text-[13px] font-semibold text-[#075EE8] hover:text-[#004BB8] focus-visible:rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35"
-                data-standalone-hotel-back-link
-              >
-                <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-                {t("hotelDetails.backToHotelResults") || "Back to hotel results"}
-              </Link>
-            </div>
+      <main className="flex-1 bg-white sm:bg-[#f8fafc] lg:bg-[#F7F9FC]">
+        <section className="py-0 lg:py-2">
+          <div className="mx-auto w-full max-w-[1400px] px-0 lg:max-w-[1080px] lg:px-[30px]" data-hotel-details-page-shell>
             <div>
               <StandaloneHotelDetails
+                locationIsSimulated={hotel.provider === "KAYAK sandbox"}
                 hotelName={hotel.name}
                 starRating={starRating}
                 starRatingAriaLabel={starRating ? t("hotelResults.starHotelAria").replace("{{rating}}", formatHotelDetailsRating(starRating, locale)) : ""}
@@ -843,18 +885,38 @@ export function HotelDetailsClient({
                   propertyDetails.neighbourhood,
                 ].filter(Boolean) : locationParts}
                 propertyDetails={propertyDetails}
+                locationDetails={locationDetails}
+                providerDetails={providerDetails}
                 reviewScore={compactReviewScore}
+                mobileReviewScale={reviewScale}
                 reviewLabel={reviewLabel}
                 reviewCountText={reviewCountText}
                 reviewSource={hotel.reviewSource}
                 relatedHotels={relatedHotels}
                 relatedSearchContext={{
-                  destination: propertyDetails?.city || searchContext?.destination,
+                  destinationId: searchContext?.destinationId,
+                  destination: propertyDetails?.city || locationDetails?.city || searchContext?.destination,
                   checkIn: requestCheckIn,
                   checkOut: requestCheckOut,
                   guests: requestGuests,
+                  adults: requestAdults,
+                  children: requestChildren,
+                  destinationLocation: searchContext?.destinationLocation,
                   rooms: requestRooms,
+                  provider: searchContext?.provider,
                 }}
+                priceAlert={staySummary && hasValidPrice && searchContext?.destination?.trim() ? {
+                  hotel,
+                  search: {
+                    destination: searchContext.destination.trim(),
+                    checkIn: requestCheckIn,
+                    checkOut: requestCheckOut,
+                    guests: Number(requestGuests),
+                    adults: requestAdults === undefined ? undefined : Number(requestAdults),
+                    children: requestChildren === undefined ? undefined : Number(requestChildren),
+                    rooms: Number(requestRooms),
+                  },
+                } : undefined}
                 amenityItems={amenityItems}
                 isSaved={isSaved}
                 savedHotelLabel={savedHotelLabel}
@@ -869,6 +931,14 @@ export function HotelDetailsClient({
                 taxesText={taxesText}
                 planningPriceText={t("hotelDetails.planningPriceMayVary") || "Final taxes, availability, and terms may vary."}
                 roomChoices={roomChoices}
+                providerOffers={standaloneProviderOffers}
+                onProviderOfferHandoff={
+                  standaloneProviderOffers.length
+                    ? async (providerOfferId, targetWindow) => {
+                        await runProviderRedirect(targetWindow, providerOfferId);
+                      }
+                    : undefined
+                }
                 galleryProps={{
                   activeUrl,
                   hotelName: hotel.name,
@@ -895,6 +965,7 @@ export function HotelDetailsClient({
                   onImageError: markImageFailed,
                 }}
                 labels={{
+                  backToResults: t("hotelDetails.backToHotelResults") || "Back to hotel results",
                   share: t("hotelDetails.share") || "Share",
                   shared: t("hotelDetails.shared") || "Copied",
                   map: t("hotelDetails.map") || "Map",
@@ -902,6 +973,7 @@ export function HotelDetailsClient({
                   yourStay: t("hotelDetails.yourStay") || "Your stay",
                   edit: t("edit") || "Edit",
                   continueBooking: t("hotelDetails.continueBooking") || "Continue booking",
+                  viewDeal: t("hotelDetails.viewDeal") || "View deal",
                   roomTitle: t("hotelDetails.roomOptionsTitle") || "Room options",
                   closeRooms: t("hotelDetails.closeRoomOptions") || "Close room options",
                   roomTerms: t("hotelDetails.termsBody") || "Final room availability and terms must be confirmed.",

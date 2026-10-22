@@ -59,6 +59,8 @@ ALTER TABLE preview_release_action ADD CONSTRAINT preview_release_action_kind_ch
 
 CREATE UNIQUE INDEX IF NOT EXISTS preview_release_one_render_per_sha ON preview_release_action(source_sha) WHERE kind='WEB';
 CREATE UNIQUE INDEX IF NOT EXISTS preview_release_one_ota_per_sha ON preview_release_action(source_sha) WHERE kind='OTA';
-CREATE UNIQUE INDEX IF NOT EXISTS preview_release_one_ios_build_per_sha ON preview_release_action(source_sha) WHERE kind='IOS_BUILD';
+CREATE UNIQUE INDEX IF NOT EXISTS preview_release_one_canonical_ios_build_per_sha
+  ON preview_release_action(source_sha)
+  WHERE kind='IOS_BUILD' AND identity_key NOT LIKE 'native-build-recovery:ios:%';
 CREATE UNIQUE INDEX IF NOT EXISTS preview_release_one_submission_per_build ON preview_release_action(identity_key) WHERE kind='IOS_SUBMISSION';
 CREATE UNIQUE INDEX IF NOT EXISTS preview_release_one_testflight_distribution_per_build_group ON preview_release_action(identity_key) WHERE kind='IOS_TESTFLIGHT_DISTRIBUTION';

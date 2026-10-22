@@ -1,0 +1,89 @@
+import type { LocationBoundCarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
+import type { FlightSearchParams, HotelSearchParams, NormalizedFlightResult, PublicHotelResult, ProviderResult } from "@/lib/types";
+import { getLocationFieldDisplay } from "@/lib/search/locationFieldDisplay";
+import { kayakCarCardModel, kayakFlightCardModel, kayakHotelCardModel } from "@/components/results/kayakCardModels";
+import { groupKayakCarResults } from "@/lib/cars/carResults";
+import { isKayakSandboxEnabled, KayakError, KayakPartialSearchError, KayakSandboxClient, type KayakVertical } from "./kayakSandbox";
+import { resolveRegularKayakSearch } from "./kayakRegularSearch";
+
+export type KayakRequestContext = { clientIp: string; userAgent?: string; trackId?: string; signal?: AbortSignal };
+
+/** Provider row IDs can be positions reused by later searches. Cache and route
+ * identities must belong to one result snapshot, never to a global row number. */
+export function scopeKayakOfferIds<T extends { id: string; hotelPropertyKey?: string; carGroupKey?: string }>(offers: T[], snapshotId: string): T[] {
+  return offers.map((offer) => ({ ...offer, id: `${snapshotId}:${offer.id}`,
+    ...(offer.hotelPropertyKey !== undefined ? { hotelPropertyKey: `${snapshotId}:${offer.hotelPropertyKey}` } : {}),
+    ...(offer.carGroupKey !== undefined ? { carGroupKey: `${snapshotId}:${offer.carGroupKey}` } : {}),
+  }));
+}
+
+/** Android's OkHttp/Dalvik transport identifier is rejected by KAYAK's Hotel sandbox.
+ * Use KAYAK's established affiliate-app default for native Hotel requests while
+ * keeping real browser/iOS agents and all Flight/Car requests unchanged. */
+export function kayakProviderUserAgent(vertical: KayakVertical, incoming?: string): string | undefined {
+  const agent = incoming?.trim();
+  if (!agent) return undefined;
+  return vertical === "hotels" && /^(?:okhttp|dalvik)\//i.test(agent) ? undefined : agent;
+}
+
+async function search<T>(vertical: KayakVertical, criteria: Record<string, string>, context?: KayakRequestContext, map?: (offer: Parameters<typeof kayakFlightCardModel>[0]) => T | null): Promise<ProviderResult<T>> {
+  const startedAt = Date.now();
+  if (!isKayakSandboxEnabled() || !context?.clientIp) return { provider: "KAYAK sandbox", results: [], status: "skipped", latencyMs: Date.now() - startedAt };
+  const client = new KayakSandboxClient(process.env.KAYAK_SANDBOX_API_KEY!, undefined, undefined, kayakProviderUserAgent(vertical, context.userAgent), context.clientIp);
+  try {
+    const trackId = context.trackId || crypto.randomUUID();
+    const resolved = await resolveRegularKayakSearch(vertical, criteria, (term, requested = "hotels") => client.places(requested, term, trackId, context.signal));
+    if (!resolved.supported) {
+      const pickupTimePast = resolved.reasonCode === "pickup_time_past";
+      return {
+        provider: "KAYAK sandbox",
+        results: [],
+        status: "skipped",
+        latencyMs: Date.now() - startedAt,
+        error: resolved.reason,
+        errorCategory: pickupTimePast ? "invalid_search" : resolved.reasonCode === "unsupported_search" ? "unsupported_search" : "unsupported_location",
+        errorReason: pickupTimePast ? "pickup_time_past" : resolved.reasonCode === "unsupported_search" ? "unsupported_search" : "unsupported_location",
+      };
+    }
+    const offers = scopeKayakOfferIds(
+      await client.search(resolved.search, trackId, context.signal),
+      crypto.randomUUID(),
+    );
+    return { provider: "KAYAK sandbox", results: offers.flatMap(offer => { const value = map?.(offer); return value ? [value] : []; }), status: "success", latencyMs: Date.now() - startedAt };
+  } catch (error) {
+    const reason = error instanceof KayakError ? error.code : "unavailable";
+    const errorCategory = reason === "timeout" ? "timeout" : reason === "unauthorized" ? "auth" : reason === "invalid_response" ? "invalid_response" : reason === "unavailable" ? "network" : "server";
+    const errorReason = reason === "timeout" ? "provider_timeout" : reason === "unauthorized" ? "provider_auth_error" : reason === "invalid_response" ? "provider_invalid_response" : reason === "unavailable" ? "provider_network_error" : "provider_server_error";
+    const results = error instanceof KayakPartialSearchError
+      ? scopeKayakOfferIds(error.offers, crypto.randomUUID()).flatMap(offer => { const value = map?.(offer); return value ? [value] : []; })
+      : [];
+    return { provider: "KAYAK sandbox", results, status: "failed", latencyMs: Date.now() - startedAt, error: reason, errorCategory, errorReason };
+  }
+}
+
+/** The regular-search adapter accepts URL-shaped scalar criteria. Structured
+ * canonical fields (notably flight `legs`) must not be stringified into an
+ * invalid value that makes an otherwise valid search look unsupported. */
+export const kayakProviderCriteria = (value: Record<string, unknown>) => Object.fromEntries(
+  Object.entries(value).flatMap(([key, item]) =>
+    typeof item === "string" || typeof item === "number" || typeof item === "boolean"
+      ? [[key, String(item)]]
+      : key.endsWith("Location") || key.endsWith("LocationTarget")
+        ? [[key, JSON.stringify(item)]]
+      : [],
+  ),
+);
+export const searchKayakFlights = (criteria: FlightSearchParams, context?: KayakRequestContext) => search<NormalizedFlightResult>("flights", kayakProviderCriteria(criteria as unknown as Record<string, unknown>), context, offer => kayakFlightCardModel(offer, kayakProviderCriteria(criteria as unknown as Record<string, unknown>)));
+export const searchKayakHotels = (criteria: HotelSearchParams, context?: KayakRequestContext) => {
+  const nights = Math.max(1, Math.round((Date.parse(criteria.checkOut) - Date.parse(criteria.checkIn)) / 86_400_000));
+  return search<PublicHotelResult>("hotels", kayakProviderCriteria(criteria as unknown as Record<string, unknown>), context, offer => kayakHotelCardModel(offer, nights));
+};
+/** Only KAYAK's search-scoped result identity groups cars, never a model name. */
+export { groupKayakCarResults } from "@/lib/cars/carResults";
+
+export const searchKayakCars = async (criteria: LocationBoundCarSearchParams, context?: KayakRequestContext) => {
+  const days = Math.max(1, Math.ceil((Date.parse(`${criteria.dropoffDate}T${criteria.dropoffTime}:00`) - Date.parse(`${criteria.pickupDate}T${criteria.pickupTime}:00`)) / 86_400_000));
+  const pickup = getLocationFieldDisplay(criteria.pickupLocation).primary || criteria.pickupLocation;
+  const response = await search<NormalizedCarResult>("cars", kayakProviderCriteria(criteria as unknown as Record<string, unknown>), context, offer => kayakCarCardModel(offer, days, pickup));
+  return { ...response, results: groupKayakCarResults(response.results) };
+};

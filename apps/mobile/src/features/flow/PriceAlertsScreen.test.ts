@@ -14,7 +14,7 @@ test("available zero-alert landing uses price-tracking artwork and exact onboard
   assert.match(illustration, /accessibilityElementsHidden/);
   assert.match(illustration, /importantForAccessibility="no-hide-descendants"/);
   assert.match(screen, /"Track prices for your trip"/);
-  assert.match(screen, /"Create a price alert from a flight search and we’ll help you keep an eye on fare changes\."/);
+  assert.match(screen, /"Create a price alert from a flight, hotel, or car search and we’ll help you keep an eye on price changes\."/);
   assert.match(screen, /accessibilityLabel="Search flights"/);
   assert.match(screen, />Search flights<\/Text>/);
 });
@@ -73,7 +73,7 @@ test("populated card container does not group nested action buttons into one acc
 });
 
 test("populated cards use compact theme-aware icon, badge, hierarchy, and actions", () => {
-  assert.match(screen, /FlowIcon name=\{alert\.type === "FLIGHT" \? "flight" : "hotel"\}/);
+  assert.match(screen, /FlowIcon name=\{alert\.type === "FLIGHT" \? "flight" : alert\.type === "CAR" \? "car" : "hotel"\}/);
   assert.match(screen, /alertIconTile: \{ width: 40, height: 40, borderRadius: 11/);
   assert.match(screen, /backgroundColor: theme\.surface, borderColor: theme\.border/);
   assert.match(screen, /backgroundColor: theme\.priceAlertSurface, borderColor: theme\.priceAlertBorder/);

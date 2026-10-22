@@ -3,7 +3,10 @@
 import Image from "next/image";
 import { Car, Truck } from "lucide-react";
 import { useState } from "react";
-import { resolveCarResultImageSource } from "@/lib/cars/carResultImage";
+import {
+  isCuratedCarResultImage,
+  resolveCarResultImageSource,
+} from "@/lib/cars/carResultImage";
 import type { CarCategory } from "@/lib/cars/types";
 
 type CarResultImageProps = {
@@ -30,6 +33,7 @@ export function CarResultImage({
   const [failedUrl, setFailedUrl] = useState<string>();
   const resolvedImageUrl = resolveCarResultImageSource(imageUrl);
   const hasImage = Boolean(resolvedImageUrl && failedUrl !== resolvedImageUrl);
+  const effectiveFit = isCuratedCarResultImage(imageUrl) ? "contain" : fit;
   const FallbackIcon = category === "van" ? Truck : Car;
 
   if (!hasImage) {
@@ -67,7 +71,7 @@ export function CarResultImage({
       quality={92}
       className="h-full w-full"
       style={{
-        objectFit: fit,
+        objectFit: effectiveFit,
         objectPosition: position,
       }}
       onLoad={() =>

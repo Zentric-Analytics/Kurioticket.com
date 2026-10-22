@@ -2,12 +2,12 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-const pageSource = readFileSync(
-  new URL("../../app/hotels/results/page.tsx", import.meta.url),
-  "utf8",
-);
 const resultsSource = readFileSync(
   new URL("./HotelResultsClient.tsx", import.meta.url),
+  "utf8",
+);
+const resultsPageSource = readFileSync(
+  new URL("../../app/hotels/results/page.tsx", import.meta.url),
   "utf8",
 );
 const searchBarSource = readFileSync(
@@ -16,7 +16,7 @@ const searchBarSource = readFileSync(
 );
 
 test("Hotel Results hides only the mobile category tabs", () => {
-  const headerCall = pageSource.match(/<AppHeader[\s\S]*?\/>/)?.[0] ?? "";
+  const headerCall = resultsPageSource.match(/<AppHeader[\s\S]*?\/>/)?.[0] ?? "";
 
   assert.match(headerCall, /hideMobileCategoryTabs/);
   assert.match(headerCall, /hideDesktopTravelNav/);
@@ -24,36 +24,36 @@ test("Hotel Results hides only the mobile category tabs", () => {
   assert.doesNotMatch(headerCall, /hideTravelNav/);
 });
 
-test("mobile Hotel search uses the Flight-parity data-driven summary shell", () => {
-  const controlsStart = searchBarSource.indexOf(
-    '{onOpenFilters && mobileLayout !== "controls" ? (',
-  );
-  const controlsEnd = searchBarSource.indexOf("</div>", controlsStart);
-
-  assert.notEqual(controlsStart, -1);
+test("mobile Hotel search lives in the navbar and retains the existing edit sheet", () => {
+  assert.doesNotMatch(resultsSource, /mobileResultsSearch=\{/);
+  assert.match(resultsPageSource, /mobileResultsSearch=\{<div data-hotel-results-mobile-nav-search/);
+  assert.match(resultsSource, /document\.querySelector<HTMLElement>\("\[data-hotel-results-mobile-nav-search\]"\)/);
+  assert.match(resultsSource, /setMobileNavSearchTarget\(\(current\) => current === nextMobileSearchTarget \? current : nextMobileSearchTarget\)/);
+  assert.match(resultsSource, /createPortal\(renderMobileHotelNavSearch\(\), mobileNavSearchTarget\)/);
+  assert.match(resultsSource, /aria-expanded=\{mobileHotelSearchOpen\}/);
+  assert.match(resultsSource, /<MobileResultsEditSheet/);
   assert.match(searchBarSource, /mobileLayout === "controls"/);
-  assert.match(searchBarSource, /destination\.trim\(\) \|\| t\("destination"\)/);
-  assert.match(searchBarSource, /\{resultsSearchSummary\}/);
-  assert.match(searchBarSource, /<SquarePen size=\{16\} strokeWidth=\{2\.2\}/);
-  assert.match(searchBarSource, /onClick=\{openMobileSearchPanel\}/);
-  assert.match(searchBarSource, /h-16[\s\S]*?rounded-\[13px\][\s\S]*?border-\[#D8E1EC\]/);
-  assert.match(searchBarSource, /h-11 w-11[\s\S]*?bg-transparent[\s\S]*?text-slate-700/);
-  assert.match(
-    searchBarSource,
-    /import \{[\s\S]*?formatCompactHotelDateRange,[\s\S]*?\} from "@\/lib\/hotelsDateFormatting"/,
-  );
-  assert.match(
-    searchBarSource,
-    /formatCompactHotelDateRange\(checkIn, checkOut, calendarLocale\) \?\?\s+dateSummary/,
-  );
-  assert.doesNotMatch(searchBarSource, /SquarePen[\s\S]{0,300}bg-\[#004BB8\]\/8/);
-  assert.doesNotMatch(
-    searchBarSource.slice(controlsStart, controlsEnd),
-    /mobileLayout === "controls"[\s\S]*?w-\[72px\]/,
-  );
 });
 
-test("mobile Hotel shortcut rail reuses filter, price, stars, and amenities state", () => {
+test("Hotel mobile navbar shows the applied search without a scroll-swapped duplicate", () => {
+  assert.match(resultsSource, /\{body\.destination\}/);
+  assert.match(resultsSource, /mobileNavDateSummary/);
+  assert.match(resultsSource, /mobileNavGuestsSummary/);
+  assert.match(resultsSource, /data-hotel-results-mobile-nav-search-button/);
+  assert.doesNotMatch(resultsSource, /mobileSearchSummarySentinelRef|mobileCompactHeaderVisible/);
+});
+
+test("Hotel mobile filter and quick-filter surfaces match Cars background treatment", () => {
+  assert.match(resultsSource, /data-mobile-hotel-shortcuts[\s\S]*scrollbar-hide flex w-full min-w-0/);
+  assert.match(resultsSource, /border-\[#D8E1EC\] bg-white text-\[#142033\] group-hover:bg-slate-50/);
+  assert.match(resultsSource, /active[\s\S]{0,180}border-\[#142033\] bg-\[#142033\] text-white/);
+  assert.doesNotMatch(resultsSource, /active[\s\S]{0,180}border-\[#075EE8\] bg-\[#EAF2FF\] text-\[#004BB8\]/);
+  assert.match(resultsSource, /mobileShortcutMenuContentRef[\s\S]*?rounded-\[24px\] bg-\[#F2F4F8\]/);
+  assert.match(resultsSource, /aria-label="Hotel filters"[^\n]*bg-\[#F2F4F8\]/);
+  assert.match(resultsSource, /hotel-filter-scrollbar[^\n]*bg-\[#F2F4F8\]/);
+});
+
+test("mobile Hotel shortcut rail keeps Cars geometry while Sort stays with the results summary", () => {
   const toolbarStart = resultsSource.indexOf(
     "data-mobile-hotel-shortcuts",
   );
@@ -63,43 +63,182 @@ test("mobile Hotel shortcut rail reuses filter, price, stars, and amenities stat
   assert.notEqual(toolbarStart, -1);
   assert.match(resultsSource, /setFiltersOpen\(true\)/);
   assert.match(resultsSource, /activeFilterCount/);
-  assert.match(resultsSource, /trigger\("price", "Price"/);
-  assert.doesNotMatch(toolbar, /trigger\("sort"|>\s*Sort\s*</);
+  assert.match(resultsSource, /type MobileHotelShortcutMenu = "price" \| "stars" \| "amenities" \| "roomTypes" \| "sort"/);
+  assert.match(toolbar, /<span>Filter<\/span>[\s\S]*trigger\("price", mobilePriceShortcutLabel[\s\S]*trigger\("stars", mobileStarsShortcutLabel[\s\S]*trigger\("amenities", mobileFacilitiesShortcutLabel[\s\S]*trigger\("roomTypes", mobileRoomTypesShortcutLabel/);
+  assert.doesNotMatch(toolbar, /Sort hotels:|openMobileShortcutMenu\("sort"/);
+  assert.match(resultsSource, /handleMobileSortSelection/);
+  assert.match(resultsSource, /aria-pressed=\{mobileDraftSort === option.value\}/);
+  assert.match(resultsSource, /updateHotelSummarySortMode\(mobileDraftSort\)/);
+  assert.match(resultsSource, /closeMobileShortcutMenu\(true\)/);
+  assert.match(resultsSource, /openMobileShortcutMenu\("sort", event\.currentTarget\)/);
   assert.match(resultsSource, /selectedHotelClasses/);
-  assert.match(resultsSource, /toggleHotelClass/);
   assert.match(resultsSource, /selectedFilters\.facilities/);
-  assert.match(resultsSource, /toggleFilter\("facilities"/);
-  assert.match(toolbar, /overflow-x-auto/);
-  assert.match(toolbar, /flex min-w-max items-center gap-2/);
+  assert.match(resultsSource, /selectedFilters\.roomTypes/);
+  assert.match(resultsSource, /mobileShortcutDraftFacilities/);
+  assert.match(resultsSource, /mobileShortcutDraftRoomTypes/);
+  assert.match(toolbar, /scrollbar-hide flex w-full min-w-0 flex-nowrap gap-1\.5 overflow-x-auto overscroll-x-contain px-3/);
+  assert.match(resultsSource, /group inline-flex min-h-11 min-w-11 shrink-0 items-center/);
+  assert.match(resultsSource, /inline-flex h-9 items-center gap-1 rounded-\[9px\]/);
+  assert.match(resultsSource, /overflow-hidden p-0/);
+  assert.doesNotMatch(toolbar, /mobileShortcutRailRef|clampIosHotelShortcutRail|rail\.scrollLeft/);
   assert.doesNotMatch(toolbar, /<select/);
-  assert.match(resultsSource, /relative z-40 bg-white pb-0 pt-0 sm:hidden/);
-  assert.match(resultsSource, /relative translate-y-1\/2/);
-  assert.doesNotMatch(resultsSource, /absolute inset-x-0 top-1\/2[\s\S]*?bg-slate-300/);
-  assert.match(resultsSource, /hidden shrink-0 flex-nowrap[\s\S]*?sm:flex/);
+  assert.doesNotMatch(resultsSource, /mobileResultsSearch=/);
+  assert.match(resultsSource, /data-hotel-results-mobile-nav-search-button/);
+  assert.match(resultsSource, /data-hotel-results-toolbar/);
 });
 
-test("standalone mobile Hotel summary sits between the price alert and card list", () => {
+test("desktop and mobile Hotel result summaries keep their own count and sort controls", () => {
   const desktopSummary = resultsSource.indexOf('ref={standaloneResultsHeadingRef}');
-  const priceAlert = resultsSource.indexOf("<HotelPriceAlertControl", desktopSummary);
-  const mobileSummary = resultsSource.indexOf("data-mobile-hotel-results-summary", priceAlert);
+  const mobileSummary = resultsSource.indexOf("data-mobile-hotel-results-summary", desktopSummary);
   const cardList = resultsSource.indexOf("ref={paginationListRef}", mobileSummary);
   const mobileMarkup = resultsSource.slice(mobileSummary, cardList);
   const desktopGroupStart = resultsSource.lastIndexOf('<div role="group"', desktopSummary);
-  const desktopMarkup = resultsSource.slice(desktopGroupStart, priceAlert);
+  const desktopMarkup = resultsSource.slice(desktopGroupStart, mobileSummary);
 
-  assert.ok(desktopSummary >= 0 && desktopSummary < priceAlert);
-  assert.ok(priceAlert < mobileSummary && mobileSummary < cardList);
-  assert.match(desktopMarkup, /!guided && "hidden sm:flex"/);
+  assert.ok(desktopSummary >= 0 && desktopSummary < mobileSummary && mobileSummary < cardList);
+  assert.match(desktopMarkup, /data-hotel-results-sort-menu|hotel-results-sort-trigger/);
   assert.equal(resultsSource.match(/ref=\{standaloneResultsHeadingRef\}/g)?.length, 1);
-  assert.match(mobileMarkup, /className="sm:hidden"/);
-  assert.doesNotMatch(mobileMarkup, /standaloneResultsHeadingRef|guidedResultsHeadingRef|HotelPriceAlertControl/);
+  assert.match(mobileMarkup, /className="[^"]*sm:hidden"/);
+  assert.doesNotMatch(mobileMarkup, /standaloneResultsHeadingRef|guidedResultsHeadingRef/);
   assert.match(mobileMarkup, /\{resultsHeading\}/);
-  assert.match(mobileMarkup, /resultsDisplayRange\.start/);
-  assert.match(mobileMarkup, /resultsDisplayRange\.end/);
-  assert.match(mobileMarkup, /Showing results \$\{resultsDisplayRange\.start\} through \$\{resultsDisplayRange\.end\}/);
+  assert.match(mobileMarkup, /<span>Sort:<\/span>[\s\S]*currentSortLabel/);
+  assert.match(mobileMarkup, /openMobileShortcutMenu\("sort", event\.currentTarget\)/);
+  assert.doesNotMatch(mobileMarkup, /resultsDisplayRange|totalHotelResultPages/);
   assert.equal(resultsSource.match(/data-mobile-hotel-results-summary/g)?.length, 1);
 
   const guidedHeading = resultsSource.indexOf("ref={guidedResultsHeadingRef}");
   assert.ok(guidedHeading >= 0 && guidedHeading < desktopSummary);
   assert.match(resultsSource.slice(guidedHeading - 200, desktopSummary), /guided \? \([\s\S]*?deals-guided-hotel-results-heading/);
 });
+
+
+test("Hotel mobile Back-to-top sits near the bottom edge while desktop spacing stays unchanged", () => {
+  const start = resultsSource.indexOf('aria-label="Back to top"');
+  const end = resultsSource.indexOf("</button>", start);
+  const control = resultsSource.slice(start, end);
+
+  assert.notEqual(start, -1);
+  assert.match(control, /bottom-\[calc\(1rem\+env\(safe-area-inset-bottom\)\)\]/);
+  assert.match(control, /sm:bottom-6 sm:right-6/);
+  assert.match(control, /bg-\[#F8FAFC\]/);
+  assert.doesNotMatch(control, /bg-white/);
+  assert.doesNotMatch(control, /bottom-\[calc\(5rem\+env\(safe-area-inset-bottom\)\)\]/);
+});
+
+
+test("Hotel mobile shortcut labels replace per-chip count badges with the selected values", () => {
+  assert.match(resultsSource, /mobilePriceShortcutLabel/);
+  assert.match(resultsSource, /mobileStarsShortcutLabel/);
+  assert.match(resultsSource, /mobileFacilitiesShortcutLabel/);
+  assert.match(resultsSource, /mobileRoomTypesShortcutLabel/);
+  assert.match(resultsSource, /notation: "compact"/);
+  assert.match(resultsSource, /aria-pressed=\{active\}/);
+  assert.doesNotMatch(resultsSource, /\{count > 0 \? <span className="rounded-full bg-\[#004BB8\]/);
+  assert.match(resultsSource, /hidden max-w-full overflow-x-clip sm:block/);
+});
+
+
+test("active Hotel mobile shortcuts use the font-color fill, compact X, and normal Hotel loading state", () => {
+  assert.match(resultsSource, /clearMobileShortcutFilter/);
+  assert.match(resultsSource, /Clear \$\{label\} filter/);
+  assert.match(resultsSource, /<X className="h-3 w-3"/);
+  assert.match(resultsSource, /border-\[#142033\] bg-\[#142033\] text-white/);
+  assert.match(resultsSource, /bg-\[#F1F5F9\][^"]*text-\[#142033\]/);
+  assert.doesNotMatch(resultsSource, /border-\[#075EE8\] bg-\[#EAF2FF\] text-\[#004BB8\]/);
+  assert.doesNotMatch(resultsSource, /data-hotel-filter-refresh-progress/);
+  assert.match(resultsSource, /if \(loading \|\| filterApplying\)/);
+  assert.match(resultsSource, /<SearchResultsLoadingTransition[\s\S]*searchType="hotel"/);
+  assert.match(resultsSource, /active \? "pl-2 pr-6" : "px-2"/);
+  assert.match(resultsSource, /absolute right-0\.5 top-1\/2 inline-flex h-6 w-6/);
+});
+
+
+test("mobile Hotel Results navbar arrow leads directly to the homepage", () => {
+  const headerSource = readFileSync(
+    new URL("../layout/AppHeader.tsx", import.meta.url),
+    "utf8",
+  );
+  const marker = headerSource.indexOf("data-hotel-results-mobile-back");
+  assert.notEqual(marker, -1);
+  const linkStart = headerSource.lastIndexOf("<Link", marker);
+  const linkEnd = headerSource.indexOf("</Link>", marker);
+  assert.ok(linkStart >= 0 && linkEnd > marker);
+  const block = headerSource.slice(linkStart, linkEnd + "</Link>".length);
+  assert.ok(block.includes('href="/"'));
+  assert.match(block, /aria-label="Kurioticket home"/);
+  assert.match(block, /handleRouteLinkClick\(event, "\/"\)/);
+  assert.match(block, /<ArrowLeft size=\{24\} strokeWidth=\{2\.2\}/);
+  assert.doesNotMatch(block, /router\.back\(\)|router\.push\("\/hotels"\)/);
+});
+
+test("Hotel mobile menu covers the full viewport like Flight", () => {
+  const headerSource = readFileSync(
+    new URL("../layout/AppHeader.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(headerSource, /const fullscreenHotelMobileMenu = Boolean\(hotelResultsDesktopSticky && mobileResultsSearch\)/);
+  assert.match(headerSource, /fullscreenHotelMobileMenu && "max-sm:z-\[1100\]"/);
+  assert.match(headerSource, /fullscreenHotelMobileMenu && "max-sm:inset-x-0 max-sm:top-0 max-sm:w-full max-sm:max-w-none"/);
+});
+
+
+
+
+
+test("Hotel mobile filters use the same sticky AppHeader architecture over the results-colored page underlay", () => {
+  assert.match(resultsPageSource, /mobileResultsFilters=\{<div data-hotel-results-mobile-nav-filters[\s\S]*?empty:hidden/);
+  assert.match(resultsSource, /const \[mobileNavFiltersTarget, setMobileNavFiltersTarget\]/);
+  assert.match(resultsSource, /\[data-hotel-results-mobile-nav-filters\]/);
+  assert.match(resultsSource, /const syncResultsHeaderTargets = \(\) =>/);
+  assert.match(resultsSource, /new MutationObserver\(syncResultsHeaderTargets\)/);
+  assert.match(resultsSource, /createPortal\(mobileResultsFiltersContent, mobileNavFiltersTarget\)/);
+  assert.match(resultsSource, /data-hotel-results-toolbar[\s\S]*w-full py-2 sm:hidden/);
+  assert.match(
+    resultsPageSource,
+    /data-hotel-results-page-surface[\s\S]*className="flex min-h-\[100svh\] flex-col bg-\[#F5F7FB\] sm:bg-transparent"[\s\S]*<AppHeader/,
+  );
+  assert.doesNotMatch(resultsSource, /mobileFiltersPinned|mobileFiltersVisible|mobileFiltersAnimated|mobileFilterOriginRef|mobileFiltersPinnedRef/);
+  assert.doesNotMatch(resultsSource, /data-scroll-visible|data-scroll-pinned|scrollFilterBarPinned|scrollFilterBarHidden/);
+});
+
+
+test("Hotel mobile filter rail matches Flight horizontal padding instead of the old 4px alignment", () => {
+  assert.match(
+    resultsSource,
+    /data-mobile-hotel-shortcuts[\s\S]{0,260}scrollbar-hide flex w-full min-w-0 flex-nowrap gap-1\.5 overflow-x-auto overscroll-x-contain px-3/,
+  );
+  assert.doesNotMatch(
+    resultsSource,
+    /data-mobile-hotel-shortcuts[\s\S]{0,260}-me-4|data-mobile-hotel-shortcuts[\s\S]{0,260}w-\[calc\(100%\+1rem\)\]/,
+  );
+});
+
+
+test("Hotel mobile quick filter keeps the underlying results at the same scroll position", () => {
+  assert.match(
+    resultsSource,
+    /const releaseScrollLock = acquireMobileResultsScrollLock\(\{ freezeBodyPosition: false \}\);[\s\S]*mobileShortcutMenuContentRef/,
+  );
+});
+
+
+test("Hotel mobile sticky header inherits the exact Flight Results curve and clipping", () => {
+  const globalsSource = readFileSync(
+    new URL("../../app/globals.css", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(
+    globalsSource,
+    /\[data-flight-results-desktop-header\],[\s\S]*\[data-hotel-results-desktop-header\] \{[\s\S]*border-bottom-left-radius: 28px;[\s\S]*box-shadow: 0 1px 0 #d8e1ec;/,
+  );
+  assert.match(
+    globalsSource,
+    /\[data-flight-results-desktop-header\] > \[data-mobile-results-filter-navbar\],[\s\S]*\[data-hotel-results-desktop-header\] > \[data-mobile-results-filter-navbar\] \{[\s\S]*border-bottom-left-radius: inherit;[\s\S]*overflow: hidden;/,
+  );
+  assert.doesNotMatch(resultsSource, /hotelScrollFilterSlot|hotelNavbarFilterBar/);
+  assert.match(resultsSource, /<span>Sort:<\/span>[\s\S]*currentSortLabel/);
+});
+
+
+

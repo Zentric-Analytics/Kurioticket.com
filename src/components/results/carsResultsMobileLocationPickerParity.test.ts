@@ -66,10 +66,10 @@ test("picker query is isolated until an explicit candidate selection", () => {
     /onChange=\{\(event\) => \{[\s\S]*?setQuery\(event\.target\.value\)[\s\S]*?setDraft\(null\)/,
   );
   assert.doesNotMatch(pickerSource, /onChange=\{[^}]*onCommit/);
-  assert.match(pickerSource, /onCommit\(draft\.value\);\s*requestClose\(\)/);
+  assert.match(pickerSource, /onCommit\(draft\.value, draft\);\s*requestClose\(\)/);
   assert.match(
     pickerSource,
-    /if \(commitOnSelect\) \{\s*onCommit\(item\.value\);\s*requestClose\(\);/,
+    /if \(commitOnSelect\) \{\s*onCommit\(item\.value, item\);\s*requestClose\(\);/,
   );
 });
 
@@ -81,11 +81,11 @@ test("both Results location pickers opt into immediate canonical commit", () => 
   assert.equal((dialogs.match(/commitOnSelect/g) ?? []).length, 2);
   assert.match(
     dialogs,
-    /mode="pickup"[\s\S]*?commitOnSelect[\s\S]*?onCommit=\{setPickupLocation\}/,
+    /mode="pickup"[\s\S]*?commitOnSelect[\s\S]*?onCommit=\{\(nextValue, suggestion\) => \{[\s\S]*?setPickupLocation\(nextValue\)[\s\S]*?serializeSuggestionLocationTarget\(suggestion\)/,
   );
   assert.match(
     dialogs,
-    /mode="return"[\s\S]*?commitOnSelect[\s\S]*?onCommit=\{setDropoffLocation\}/,
+    /mode="return"[\s\S]*?commitOnSelect[\s\S]*?onCommit=\{\(nextValue, suggestion\) => \{[\s\S]*?setDropoffLocation\(nextValue\)[\s\S]*?serializeSuggestionLocationTarget\(suggestion\)/,
   );
 });
 
@@ -104,9 +104,10 @@ test("Back and Clear do not commit, and the shell restores launcher focus", () =
   assert.doesNotMatch(clear, /onCommit/);
 });
 
-test("Cars suggestion engine and typed custom values remain in the picker", () => {
-  assert.match(pickerSource, /searchCarLocationSuggestions/);
-  assert.match(pickerSource, /item\.kind === "custom"/);
+test("Cars picker uses provider-backed suggestions and never exposes free-text as a selectable result", () => {
+  assert.match(pickerSource, /fetch\(`\/api\/cars\/locations/);
+  assert.doesNotMatch(pickerSource, /searchCarLocationSuggestions/);
+  assert.match(pickerSource, /throw error;/);
   assert.match(pickerSource, /carsSearch\.loadingSuggestions/);
   assert.match(pickerSource, /carsSearch\.noMatchingLocations/);
   assert.match(pickerSource, /carsSearch\.suggestionsUnavailable/);

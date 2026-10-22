@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createDefaultDealsSearch, parseDealsSearchParams } from "./dealsSearchParams";
+import { createDefaultDealsSearch } from "./dealsSearchParams";
 import { buildDealsCarRequestIdentity, buildDealsCarRequestPayload, buildGuidedDealsCarActionHref } from "./dealsCarResults";
 import { buildDealsCarDetailsJourneyUrl, getRequiredDealsJourneyStage, normalizeDealsJourneyCarId } from "./dealsJourneyRoutes";
 
@@ -34,25 +34,20 @@ test("Car ID normalization matches shared transient product safety", () => {
   for (const value of ["", "   ", "bad\u0000id", "x".repeat(257), ["car"], { id: "car" }, 123, true]) assert.equal(normalizeDealsJourneyCarId(value), null);
 });
 
-test("guided Car details URL preserves canonical Deals search and appends exactly one safe carId", () => {
+test("retired guided Car details cannot be reopened by a transient Car ID", () => {
   const value = search();
-  const href = buildDealsCarDetailsJourneyUrl(value, " car/id & unit ");
-  assert.ok(href);
-  const url = new URL(href, "https://example.test");
-  assert.equal(url.pathname, "/packages/journey/car-details");
-  assert.deepEqual(url.searchParams.getAll("carId"), ["car/id & unit"]);
-  assert.equal(parseDealsSearchParams(url.searchParams).carPickupLocation, "LAX");
-  assert.equal(buildGuidedDealsCarActionHref(value, " car/id & unit "), href);
+  for (const mode of ["hotel-flight-car", "hotel-car", "flight-car", "hotel-flight"] as const) {
+    value.mode = mode;
+    assert.equal(buildDealsCarDetailsJourneyUrl(value, " car/id & unit "), null);
+    assert.equal(buildGuidedDealsCarActionHref(value, " car/id & unit "), null);
+  }
   assert.equal(buildDealsCarDetailsJourneyUrl(value, "\u001f"), null);
-  value.mode = "hotel-flight";
-  assert.equal(buildDealsCarDetailsJourneyUrl(value, "car"), null);
-  assert.doesNotMatch(href, /bookingUrl|offer|sourcePrice|displayPrice|sourceCurrency|searchPolicy|filter|sort/i);
 });
 
-test("route guard accepts transient Car details only and keeps prerequisites and Review strict", () => {
+test("route guard redirects retired Car details and keeps prerequisites and Review strict", () => {
   const hotel = { id: "h" }, flight = { id: "f" }, car = { id: "c" };
-  assert.equal(getRequiredDealsJourneyStage("car-details", "flight-car", { flight } as never, null, null, "car2"), "car-details");
-  assert.equal(getRequiredDealsJourneyStage("car-details", "flight-car", { flight, car } as never), "car-details");
+  assert.equal(getRequiredDealsJourneyStage("car-details", "flight-car", { flight } as never, null, null, "car2"), "car-results");
+  assert.equal(getRequiredDealsJourneyStage("car-details", "flight-car", { flight, car } as never), "car-results");
   assert.equal(getRequiredDealsJourneyStage("car-details", "flight-car", { flight } as never), "car-results");
   assert.equal(getRequiredDealsJourneyStage("review", "flight-car", { flight } as never, null, null, "car2"), "car-results");
   assert.equal(getRequiredDealsJourneyStage("car-results", "hotel-car", null), "hotel-results");

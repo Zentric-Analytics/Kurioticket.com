@@ -7,6 +7,8 @@ import { useLocale } from "@/components/layout/LocaleProvider";
 import { cn } from "@/lib/utils";
 import { searchLoadingPresentation } from "@/shared/presentation/searchLoadingPresentation";
 
+import styles from "./BrandedLoading.module.css";
+
 type BrandedLoadingProps = {
   title?: string;
   description?: string;
@@ -18,6 +20,8 @@ type BrandedLoadingProps = {
   contentClassName?: string;
   showLogo?: boolean;
   showProgress?: boolean;
+  showActivityDots?: boolean;
+  accessibleProgress?: boolean;
   visual?: "default" | "logoPulse";
 };
 
@@ -62,10 +66,13 @@ export function BrandedLoading({
   contentClassName,
   showLogo = true,
   showProgress = true,
+  showActivityDots = true,
+  accessibleProgress = false,
   visual = "default",
 }: BrandedLoadingProps) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const isFullscreen = variant === "fullscreen";
+  const whiteSearchBackground = isFullscreen && (searchType === "flight" || searchType === "hotel" || searchType === "car");
   const logoPulse = visual === "logoPulse";
   const hotelSearchCopy = useMemo(
     () => ({
@@ -82,14 +89,14 @@ export function BrandedLoading({
     if (!searchType) return undefined;
     if (searchType === "hotel") return hotelSearchCopy;
     if (searchType === "flight" || searchType === "car") {
-      const presentation = searchLoadingPresentation(searchType);
+      const presentation = searchLoadingPresentation(searchType, locale);
       return {
         title: presentation.title,
         messages: [...presentation.messages],
       };
     }
     return searchLoadingCopy[searchType];
-  }, [hotelSearchCopy, searchType]);
+  }, [hotelSearchCopy, locale, searchType]);
   const defaultLoadingMessages = useMemo(
     () => [t["brandedLoading.default.preparingExperience"]],
     [t],
@@ -121,16 +128,20 @@ export function BrandedLoading({
   return (
     <section
       className={cn(
-        "relative flex overflow-hidden bg-[linear-gradient(180deg,#F8FAFC_0%,#FFFFFF_100%)] text-[#021C2B]",
+        "relative flex overflow-hidden text-[#021C2B]",
+        whiteSearchBackground
+          ? "bg-white"
+          : "bg-[linear-gradient(180deg,#F8FAFC_0%,#FFFFFF_100%)]",
         variantClasses[variant],
         className,
       )}
-      role="status"
+      role={accessibleProgress ? "progressbar" : "status"}
+      aria-label={accessibleProgress ? `${resolvedTitle}. ${resolvedDescription}` : undefined}
       aria-live="polite"
       aria-busy="true"
     >
       <div
-        className="pointer-events-none absolute inset-0 opacity-70"
+        className={cn("pointer-events-none absolute inset-0 opacity-70", whiteSearchBackground && styles.hideDecoration)}
         aria-hidden="true"
       >
         <div className="absolute -left-20 top-12 h-44 w-44 rounded-full bg-[#5CB6B2]/[0.06] blur-3xl" />
@@ -190,7 +201,7 @@ export function BrandedLoading({
           ) : null}
         </div>
 
-        {showProgress ? (
+        {showProgress && showActivityDots ? (
           <div className="mt-5 flex gap-2" aria-hidden="true">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#004BB8]/80 motion-reduce:animate-none" />
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#5CB6B2]/80 delay-150 motion-reduce:animate-none" />

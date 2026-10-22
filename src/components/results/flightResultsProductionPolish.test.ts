@@ -8,42 +8,241 @@ test("mobile results rhythm has no decorative divider or oversized spacer", asyn
     "utf8",
   );
 
-  assert.match(source, /data-flight-mobile-results-summary/);
-  assert.match(source, /px-4 py-3/);
+  assert.match(source, /data-flight-mobile-summary-card/);
+  assert.match(source, /mobileResultsSearch=\{renderMobileRouteSummaryCard\(\)\}/);
+  assert.doesNotMatch(source, /relative translate-y-1\/2|renderMobileCompactResultsHeader/);
+  assert.match(source, /flight-results-grid page-shell grid[^\n]*pb-0 pt-0 sm:pb-5 sm:pt-5 lg:gap-x-9 lg:pt-4/);
+  assert.doesNotMatch(source, /aria-label="Breadcrumb"/);
+  assert.doesNotMatch(source, /flight-results-grid page-shell grid[^\n]*pt-12/);
   assert.match(source, /data-flight-mobile-results-shortcuts/);
   assert.match(source, /pt-2/);
   assert.doesNotMatch(source, /data-flight-mobile-results-shortcuts[\s\S]{0,300}pt-12/);
 });
 
-test("mobile filter sheet has one contextual reset and a result-count action", async () => {
+test("desktop search reserves space for its translated card before nearby fares", async () => {
   const source = await readFile(
     new URL("./FlightResultsClient.tsx", import.meta.url),
     "utf8",
   );
-  const start = source.lastIndexOf('id="flight-mobile-filters-dialog"');
-  const end = source.indexOf("</aside>", start);
-  const sheet = source.slice(start, end);
 
-  assert.match(sheet, /activeFilterCount > 0 \?/);
-  assert.match(sheet, /\{t\("clearAll"\)\}/);
-  assert.match(sheet, /formatResultsFound\(sortedResults\.length, t\)/);
-  assert.match(sheet, /env\(safe-area-inset-bottom\)/);
-  assert.match(sheet, /overflow-y-auto overscroll-contain/);
-  assert.match(source, /mb-2\.5 text-sm font-bold leading-5/);
-  assert.doesNotMatch(source, /font-extrabold uppercase leading-5 tracking-\[0\.14em\]/);
-  assert.match(source, /min-h-11 gap-3 px-1\.5/);
+  assert.match(
+    source,
+    /isSearchCollapsed[\s\S]*?bg-white pb-5 pt-7[\s\S]*?!isSearchCollapsed && "translate-y-5"/,
+  );
+  assert.match(
+    source,
+    /flight-results-grid page-shell grid[^\n]*sm:pt-5 lg:gap-x-9 lg:pt-4/,
+  );
 });
 
-test("pagination uses an occluding full-page transition with an accessible status", async () => {
+test("mobile nearby insight, quick filters, and price alert use compact native-like rhythm", async () => {
+  const source = await readFile(
+    new URL("./FlightResultsClient.tsx", import.meta.url),
+    "utf8",
+  );
+  const styles = await readFile(
+    new URL("../../app/globals.css", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(source, /cn\(resultStackClass, "space-y-1 sm:space-y-4 lg:space-y-3"\)/);
+  const nearbyInsight = source.match(/className="([^"]*)">Cheaper nearby:/)?.[1] ?? "";
+  assert.match(nearbyInsight, /min-h-\[28px\]/);
+  assert.match(nearbyInsight, /flight-mobile-cheaper-nearby/);
+  assert.match(nearbyInsight, /font-medium/);
+  assert.doesNotMatch(nearbyInsight, /text-\[\d+px\]|leading-\[\d+px\]/);
+  assert.match(
+    styles,
+    /@media \(max-width: 639px\) \{[\s\S]*?\.flight-mobile-cheaper-nearby \{[\s\S]*?font-size: 11px !important;[\s\S]*?line-height: 15px !important;[\s\S]*?-webkit-text-size-adjust: none;[\s\S]*?text-size-adjust: none;[\s\S]*?\}/,
+  );
+  assert.match(source, /const mobileResultsFiltersContent = \([\s\S]{0,500}data-flight-mobile-results-shortcuts/);
+  assert.match(source, /data-flight-mobile-results-intro[^\n]*space-y-3 pt-2/);
+});
+
+test("partial-provider warnings stay internal while genuine result failures remain visible", async () => {
+  const source = await readFile(
+    new URL("./FlightResultsClient.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.doesNotMatch(source, /FLIGHT_PROVIDER_WARNING_TOAST_MS/);
+  assert.doesNotMatch(source, /providerWarningVisible|setProviderWarningVisible/);
+  assert.doesNotMatch(source, /data-flight-provider-warning-toast/);
+  assert.doesNotMatch(source, /t\("limitedProviderChecks"\)/);
+  assert.match(source, /error && results\.length === 0/);
+  assert.match(source, /MobileFlightResultsState kind="error"/);
+  assert.match(source, /results\.length === 0[\s\S]*?MobileFlightResultsState kind="empty"/);
+});
+
+test("Flight navbar capsule uses light Hotel mobile typography", async () => {
+  const source = await readFile(new URL("./FlightResultsClient.tsx", import.meta.url), "utf8");
+  const start = source.indexOf("function renderMobileRouteSummaryCard()");
+  const capsule = source.slice(start, source.indexOf("function renderMobileEditSearchDrawer()", start));
+  assert.match(capsule, /bg-\[#F5F7FB\]/);
+  assert.match(capsule, /text-\[14px\] font-semibold/);
+  assert.match(capsule, /text-\[11px\] font-medium/);
+  assert.match(capsule, /SquarePen/);
+});
+
+test("mobile Flight Results contains the filter rail within its gutter and keeps result-card rhythm", async () => {
+  const source = await readFile(
+    new URL("./FlightResultsClient.tsx", import.meta.url),
+    "utf8",
+  );
+  const styles = await readFile(new URL("../../app/globals.css", import.meta.url), "utf8");
+  const card = await readFile(new URL("./MobileFlightCard.tsx", import.meta.url), "utf8");
+
+  assert.match(styles, /@media \(max-width: 639px\) \{\s*\.flight-results-grid \{\s*width: calc\(100% - 24px\);/);
+  assert.match(source, /min-h-\[28px\][^\n]*max-w-full[^\n]*px-0[^\n]*>Cheaper nearby:/);
+  assert.match(source, /data-flight-mobile-results-shortcuts[\s\S]{0,500}"w-full py-2 sm:hidden"/);
+  assert.doesNotMatch(source, /data-flight-mobile-results-shortcuts[\s\S]{0,350}-mx-3/);
+  assert.match(source, /data-mobile-flight-shortcuts[\s\S]{0,220}className="scrollbar-hide flex w-full min-w-0 flex-nowrap gap-1\.5 overflow-x-auto overscroll-x-contain px-3/);
+  assert.match(source, /data-flight-results-main className="max-sm:overflow-x-clip/);
+  assert.doesNotMatch(styles, /\.flight-mobile-scroll-filter-bar/);
+  assert.doesNotMatch(source, /data-mobile-flight-shortcuts[\s\S]{0,180}className="[^"]*ps-3|flex w-max flex-nowrap/);
+  assert.match(source, /data-flight-mobile-results-intro className="space-y-3 pt-2 sm:hidden"/);
+  assert.doesNotMatch(source, /data-flight-mobile-results-intro[^\n]*px-3/);
+  assert.match(source, /data-flight-price-alert-row className="max-sm:-mx-2 max-sm:w-\[calc\(100%\+16px\)\]"/);
+  assert.match(source, /data-mobile-flight-results-summary-row\s*className="flex w-full/);
+  assert.match(source, /data-flight-results-card-list className="space-y-3"/);
+  assert.match(source, /data-mobile-continuous-flight-results[\s\S]{0,220}"pt-3 pb-6"/);
+  assert.doesNotMatch(source, /data-flight-results-skeleton-card-list|FlightResultsPageTransitionSkeleton/);
+  assert.match(source, /ref=\{paginationListRef\}[\s\S]{0,180}aria-busy=\{filterApplying\}[\s\S]{0,180}className="hidden sm:block"/);
+  assert.match(card, /block w-full rounded-2xl/);
+});
+
+test("Flight Results Back-to-top matches responsive card surfaces with a rounded-square shape", async () => {
   const source = await readFile(
     new URL("./FlightResultsClient.tsx", import.meta.url),
     "utf8",
   );
 
-  assert.match(source, /data-flight-results-transition-cover/);
-  assert.match(source, /fixed inset-0 z-\[9990\]/);
-  assert.match(source, /className="sr-only" role="status" aria-live="polite"/);
-  assert.match(source, /motion-reduce:animate-none/);
+  assert.match(source, /export const FLIGHT_BACK_TO_TOP_SCROLL_THRESHOLD = 320/);
+  assert.match(source, /const \[showBackToTop, setShowBackToTop\] = useState\(false\)/);
+  assert.match(source, /setShowBackToTop\(window\.scrollY >= FLIGHT_BACK_TO_TOP_SCROLL_THRESHOLD\)/);
+  assert.match(source, /window\.addEventListener\("scroll", update, \{ passive: true \}\)/);
+  assert.match(source, /!guidedMode && showBackToTop && !filtersOpen/);
+  assert.match(source, /aria-label="Back to top"/);
+  assert.match(source, /window\.scrollTo\(\{ top: 0, left: 0, behavior: "auto" \}\)/);
+  assert.match(source, /bottom-\[calc\(1rem\+env\(safe-area-inset-bottom\)\)\]/);
+  assert.match(source, /end-4 z-40/);
+  assert.match(source, /sm:bottom-\[calc\(1rem\+env\(safe-area-inset-bottom\)\)\]/);
+  assert.match(source, /<ArrowUp className="h-\[18px\] w-\[18px\] sm:h-5 sm:w-5" aria-hidden="true"/);
+  const backToTopStart = source.indexOf('aria-label="Back to top"');
+  const backToTopEnd = source.indexOf("</button>", backToTopStart);
+  const backToTop = source.slice(backToTopStart, backToTopEnd);
+  assert.match(backToTop, /\brounded-xl\b/);
+  assert.doesNotMatch(backToTop, /sm:hidden|prefersReducedResultsMotion\(\) \? "auto" : "smooth"/);
+  assert.match(backToTop, /\bbg-white\b/);
+  assert.match(backToTop, /lg:bg-\[#FEFFFF\]/);
+  assert.doesNotMatch(backToTop, /rounded-full|F8FAFC|sm:bg-white/);
+  assert.match(backToTop, /text-\[#004BB8\] shadow-\[0_3px_10px_rgba\(15,23,42,0\.10\)\]/);
+  assert.doesNotMatch(backToTop, /\bshadow-md\b|sm:shadow-lg/);
+  assert.match(backToTop, /h-11 w-11 items-center justify-center/);
+  assert.match(backToTop, /max-sm:z-\[800\]/);
+  assert.doesNotMatch(source, /setShowBackToTop\(window\.scrollY > 600\)/);
+  assert.match(source, /<Footer variant="brand-legal-only" \/>/);
+});
+
+test("Flight Results supports a page-owned persistent header without changing fallback consumers", async () => {
+  const source = await readFile(
+    new URL("./FlightResultsClient.tsx", import.meta.url),
+    "utf8",
+  );
+  const page = await readFile(
+    new URL("../../app/flights/results/page.tsx", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(source, /externalResultsHeader\?: boolean/);
+  assert.match(
+    source,
+    /guidedMode \|\| externalResultsHeader \? null : \([\s\S]*?<AppHeader[\s\S]*?flightResultsDesktopSticky/,
+  );
+  assert.match(page, /<AppHeader[\s\S]*?flightResultsDesktopSticky[\s\S]*?data-flight-results-mobile-nav-summary[\s\S]*?data-flight-results-mobile-nav-filters/);
+  assert.match(page, /<FlightResultsClient externalResultsHeader \/>/);
+  const preparingStart = source.indexOf("if (resultsUiPreparing) {");
+  const guidedStart = source.indexOf("if (guidedMode) return (", preparingStart);
+  const preparing = source.slice(preparingStart, guidedStart);
+  assert.ok(preparingStart >= 0 && guidedStart > preparingStart);
+  assert.match(preparing, /\{standaloneResultsHeader\}/);
+  assert.match(preparing, /desktopSearch=\{renderDesktopHeaderSearchBar\(\)\}/);
+  assert.match(preparing, /mobileSearch=\{renderMobileRouteSummaryCard\(\)\}/);
+  assert.match(preparing, /mobileFilters=\{mobileResultsFiltersContent\}/);
+  assert.doesNotMatch(source, /renderMobileCompactResultsHeader|mobileCompactHeaderVisible/);
+});
+
+test("mobile Flight Results reuses the existing sticky AppHeader architecture", async () => {
+  const source = await readFile(new URL("./FlightResultsClient.tsx", import.meta.url), "utf8");
+  const appHeader = await readFile(new URL("../layout/AppHeader.tsx", import.meta.url), "utf8");
+  assert.match(appHeader, /mobileResultsSticky = true/);
+  assert.match(appHeader, /max-sm:sticky max-sm:top-0/);
+  assert.match(source, /mobileResultsSearch=\{renderMobileRouteSummaryCard\(\)\}/);
+  assert.match(source, /mobileResultsFilters=\{mobileResultsFiltersContent\}/);
+  assert.match(source, /mobileResultsTrailingActions/);
+  assert.match(appHeader, /data-flight-results-mobile-home/);
+  const flightHomeMarker = appHeader.indexOf("data-flight-results-mobile-home");
+  const flightHome = appHeader.slice(Math.max(0, flightHomeMarker - 650), flightHomeMarker + 260);
+  assert.match(flightHome, /href="\/"/);
+  assert.match(flightHome, /aria-label="Kurioticket home"/);
+  assert.match(flightHome, /handleRouteLinkClick\(event, "\/"\)/);
+  assert.match(flightHome, /<ArrowLeft size=\{24\} strokeWidth=\{2\.2\}/);
+  assert.doesNotMatch(source, /renderMobileCompactResultsHeader|mobileCompactHeaderVisible/);
+  assert.match(source, /openMobileSearchDrawer\(event\.currentTarget/);
+  assert.match(source, /openMobileFiltersDrawer\(event\.currentTarget/);
+});
+
+test("mobile Flight filter surfaces use Hotel visual contracts", async () => {
+  const source = await readFile(
+    new URL("./FlightResultsClient.tsx", import.meta.url),
+    "utf8",
+  );
+  const sheet = await readFile(
+    new URL("./MobileFlightFiltersSheet.tsx", import.meta.url),
+    "utf8",
+  );
+
+  const fullStart = source.indexOf("function renderMobileFullFiltersSheet()");
+  const fullEnd = source.indexOf("function renderDesktopSortControl()", fullStart);
+  const full = source.slice(fullStart, fullEnd);
+  assert.match(full, /fixed inset-0 z-\[9999\] bg-slate-950\/35/);
+  assert.match(full, /h-\[95dvh\][^"]*rounded-t-\[20px\][^"]*bg-\[#F2F4F8\]/);
+  assert.match(full, /relative flex h-16[^"]*bg-\[#F2F4F8\] px-5/);
+  assert.match(full, /text-base font-semibold text-slate-950/);
+  assert.match(full, /absolute right-3[^"]*h-11 w-11[^"]*rounded-lg text-slate-700/);
+  assert.match(full, /overflow-y-auto[^"]*bg-\[#F2F4F8\] px-6 py-4/);
+  assert.match(full, /gap-3 border-t border-\[#D8DEE8\][^"]*shadow-\[0_-10px_24px_rgba\(15,23,42,0\.08\)\]/);
+  assert.match(full, /h-11 w-\[30%\][^"]*rounded-lg[^"]*text-sm font-semibold text-slate-700/);
+  assert.match(full, /h-11 min-w-0 flex-1 rounded-lg bg-\[#004BB8\][^"]*text-sm font-semibold text-white/);
+
+  assert.match(sheet, /grid gap-6 bg-transparent/);
+  assert.match(sheet, /text-lg font-semibold leading-6 text-slate-950/);
+  assert.match(sheet, /min-h-11 w-full[^"]*text-sm font-normal text-slate-700/);
+  assert.match(sheet, /border-\[#0067DB\] bg-\[#0067DB\] text-white/);
+  assert.match(sheet, /border-slate-300 bg-white/);
+  assert.match(sheet, /#2F73C8/);
+
+  const filterSystemStart = source.indexOf("function renderMobileSortResultsRow()");
+  const filterSystemEnd = source.indexOf("function renderMobileRouteSummaryCard()", filterSystemStart);
+  const mobileFilterSystem = source.slice(filterSystemStart, filterSystemEnd);
+  const quickStart = source.indexOf("const renderSortChoice =", filterSystemStart);
+  const quickEnd = source.indexOf("function renderFloatingFilterButton", quickStart);
+  const quick = source.slice(quickStart, quickEnd);
+  assert.match(quick, /mobile-results-sheet-backdrop-layer/);
+  assert.match(quick, /bg-\[rgba\(8,18,35,0\.52\)\]/);
+  assert.match(quick, /max-h-\[min\(76dvh,620px\)\] mx-3 mb-3 w-\[calc\(100%-24px\)\]/);
+  assert.match(quick, /rounded-\[24px\] bg-\[#F2F4F8\] shadow-none mobile-results-sheet-surface mobile-results-sheet-surface-smooth/);
+  assert.match(quick, /relative flex min-h-16 items-center justify-center bg-\[#F2F4F8\] px-16 py-3/);
+  assert.match(quick, /text-base font-semibold text-slate-950/);
+  assert.match(quick, /h-11 w-\[32%\][^"]*rounded-lg/);
+  assert.match(mobileFilterSystem, /border-\[#142033\] bg-\[#142033\] text-white/);
+  assert.doesNotMatch(quick, /bg-\[#075EE8\]|bg-\[#EAF2FF\]/);
+});
+
+test("continuous flights retain accessible filter status without pagination overlays", async () => {
+  const source = await readFile(new URL("./FlightResultsClient.tsx", import.meta.url), "utf8");
+  assert.doesNotMatch(source, /FlightResultsPageTransitionSkeleton|data-flight-results-transition-cover/);
+  assert.match(source, /role="status" aria-live="polite"/);
+  assert.match(source, /aria-busy=\{filterApplying\}/);
 });
 
 test("desktop cards use one prominent stacked airline identity", async () => {
@@ -54,7 +253,7 @@ test("desktop cards use one prominent stacked airline identity", async () => {
   assert.match(source, /flight-card-flight-number[\s\S]*flight\.flightNumber/);
   assert.doesNotMatch(source, /flight-card-leg-logo|<AirlineLogo flight=\{flight\} inline/);
   assert.match(styles, /\.flight-card-header-logo \{\s*display: block;/);
-  assert.match(styles, /\.flight-card-time \{\s*font-size: 1\.375rem;[\s\S]*white-space: nowrap;/);
+  assert.match(styles, /\.flight-card-time \{\s*font-size: 1rem;[\s\S]*line-height: 1\.125rem;[\s\S]*white-space: nowrap;/);
 });
 
 test("desktop legs place factual departure and arrival dates beneath their airport codes", async () => {
@@ -65,7 +264,7 @@ test("desktop legs place factual departure and arrival dates beneath their airpo
   assert.match(leg, /\{leg\.originAirport\}[\s\S]*flight-card-departure-date[\s\S]*formatItineraryShortDate\(\{ value: leg\.departureTime, locale \}\)/);
   assert.match(leg, /\{leg\.destinationAirport\}[\s\S]*flight-card-arrival-date[\s\S]*formatItineraryShortDate\(\{ value: leg\.arrivalTime, locale \}\)/);
   assert.match(styles, /\.flight-card-route-codes \{\s*display: none;/);
-  assert.match(styles, /@media \(max-width: 1023px\)[\s\S]*\.flight-card-departure-date \{\s*display: none;[\s\S]*\.flight-card-route-codes \{\s*display: block;/);
+  assert.match(styles, /@media \(max-width: 1023px\)[\s\S]*\.flight-card-departure-date,\s*\.flight-card-arrival-date \{\s*display: block;[\s\S]*\.flight-card-route-codes \{\s*display: block;/);
 });
 
 test("desktop leg columns share strict time airport and date row tracks", async () => {
@@ -80,6 +279,32 @@ test("desktop leg columns share strict time airport and date row tracks", async 
   assert.match(styles, /@media \(max-width: 1023px\)[\s\S]*\.flight-card-leg-endpoint,[\s\S]*\.flight-card-leg-center \{\s*display: block;/);
 });
 
+test("desktop itinerary gives the route more room and moves arrival closer to the fare divider", async () => {
+  const styles = await readFile(new URL("../../app/globals.css", import.meta.url), "utf8");
+  const baseGrid = styles.slice(
+    styles.indexOf(".flight-card-leg-grid {"),
+    styles.indexOf(".flight-card-leg-label", styles.indexOf(".flight-card-leg-grid {")),
+  );
+  const mediumStart = styles.indexOf("@container (max-width: 759px)");
+  const mediumGridStart = styles.indexOf(".flight-card-leg-grid {", mediumStart);
+  const mediumGrid = styles.slice(
+    mediumGridStart,
+    styles.indexOf(".flight-card-time", mediumGridStart),
+  );
+
+  assert.match(
+    baseGrid,
+    /grid-template-columns:\s*minmax\(112px, 0\.72fr\) minmax\(220px, 1\.8fr\) minmax\(\s*92px,\s*0\.6fr\s*\)/,
+  );
+  assert.match(baseGrid, /gap:\s*1rem/);
+  assert.match(styles, /@media \(min-width: 1024px\)[\s\S]*\.flight-card-body \{[\s\S]*grid-template-columns: minmax\(0, 1fr\) 128px;/);
+  assert.match(
+    mediumGrid,
+    /grid-template-columns:\s*minmax\(106px, 0\.7fr\) minmax\(168px, 1\.55fr\) minmax\(\s*92px,\s*0\.6fr\s*\)/,
+  );
+  assert.match(mediumGrid, /gap:\s*0\.75rem/);
+});
+
 test("desktop departure metadata aligns directly beneath time with generous card rhythm", async () => {
   const styles = await readFile(new URL("../../app/globals.css", import.meta.url), "utf8");
 
@@ -87,17 +312,330 @@ test("desktop departure metadata aligns directly beneath time with generous card
   assert.match(styles, /\.flight-card-leg-time-row \{\s*gap: 0\.5rem;/);
   assert.match(styles, /\.flight-card-desktop-header \{[\s\S]*padding-bottom: 0\.75rem;/);
   assert.match(styles, /\.flight-card-legs \{\s*grid-area: legs;\s*gap: 0\.75rem;/);
-  assert.match(styles, /\.flight-card-details \{\s*column-gap: 1rem;\s*margin-top: 0\.5rem;\s*padding-top: 0\.5rem;/);
+  assert.match(
+    styles,
+    /\.flight-card-details \{[\s\S]*align-items: start;[\s\S]*margin-top: 0\.5rem;[\s\S]*padding-top: 0\.5rem;/,
+  );
   assert.match(styles, /@media \(max-width: 1023px\)[\s\S]*\.flight-card-departure-date \{\s*margin-inline-start: 0;/);
 });
 
-test("desktop nearby fares use a contained mobile-like hierarchy", async () => {
-  const source = await readFile(new URL("./FlightResultsClient.tsx", import.meta.url), "utf8");
-  const start = source.indexOf("data-desktop-nearby-fare-rail");
-  const strip = source.slice(start, source.indexOf("Next nearby fare date", start) + 300);
+test("desktop fare divider stops above the full-width footer summary", async () => {
+  const styles = await readFile(new URL("../../app/globals.css", import.meta.url), "utf8");
 
-  assert.match(strip, /rounded-xl border border-slate-200 bg-white/);
-  assert.match(strip, /min-h-\[86px\]/);
-  assert.match(strip, /rounded-xl border border-slate-200 bg-white/);
-  assert.match(strip, /selected && "border-\[#075EE8\] bg-blue-50\/80/);
+  const desktopOverrideStart = styles.indexOf(
+    "@media (min-width: 1024px)",
+    styles.indexOf("Keep the desktop fare action beside the itinerary only"),
+  );
+  const desktopOverrideEnd = styles.indexOf(
+    "@container (max-width: 759px)",
+    desktopOverrideStart,
+  );
+  const desktopOverride = styles.slice(desktopOverrideStart, desktopOverrideEnd);
+
+  assert.ok(desktopOverrideStart >= 0 && desktopOverrideEnd > desktopOverrideStart);
+  assert.match(
+    desktopOverride,
+    /grid-template-areas:\s*"legs fare"\s*"details details"/,
+  );
+  assert.match(
+    desktopOverride,
+    /\.flight-card-fare-action \{[\s\S]*?justify-content: flex-end;[\s\S]*?margin-left: 0\.5rem;[\s\S]*?border-left: 1px solid #d8e1ec;[\s\S]*?padding-left: 0\.5rem;/,
+  );
+  assert.match(
+    desktopOverride,
+    /\.flight-card-view-button \{[\s\S]*?align-self: flex-end;/,
+  );
+  assert.doesNotMatch(desktopOverride, /"details fare"/);
+  assert.doesNotMatch(styles, /\.flight-card-fare-action::before/);
 });
+
+test("desktop Flight metadata footer moves lower without changing card layout size", async () => {
+  const styles = await readFile(new URL("../../app/globals.css", import.meta.url), "utf8");
+  const desktopStart = styles.indexOf("@media (min-width: 1024px)", styles.indexOf(".flight-card-detail-value"));
+  const desktopEnd = styles.indexOf("@container (max-width: 759px)", desktopStart);
+  const desktopRules = styles.slice(desktopStart, desktopEnd);
+
+  assert.match(desktopRules, /\.flight-card-details \{[\s\S]*?transform: translateY\(0\.875rem\);/);
+  assert.match(styles, /\.flight-card-desktop \{\s*padding: 1\.25rem 1\.5rem 1rem;/);
+  assert.doesNotMatch(desktopRules, /height:\s*calc\(|min-height:\s*calc\(/);
+});
+test("desktop Flight footer summary balances three equal columns across the full width", async () => {
+  const styles = await readFile(new URL("../../app/globals.css", import.meta.url), "utf8");
+  const desktopStart = styles.indexOf(
+    "@media (min-width: 1024px)",
+    styles.indexOf(".flight-card-detail-value"),
+  );
+  const desktopEnd = styles.indexOf("@container (max-width: 759px)", desktopStart);
+  const desktopRules = styles.slice(desktopStart, desktopEnd);
+
+  assert.match(
+    desktopRules,
+    /\.flight-card-details \{[\s\S]*?width: 100%;[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\);[\s\S]*?column-gap: 1\.5rem;/,
+  );
+  assert.doesNotMatch(
+    desktopRules,
+    /\.flight-card-details \{[\s\S]*?grid-template-columns: repeat\(3, max-content\)|justify-content: start;/,
+  );
+});
+
+test("desktop detail panel keeps all values inline at every desktop card width", async () => {
+  const styles = await readFile(new URL("../../app/globals.css", import.meta.url), "utf8");
+  const desktopStart = styles.indexOf(
+    "@media (min-width: 1024px)",
+    styles.indexOf(".flight-card-detail-value"),
+  );
+  const desktopRules = styles.slice(
+    desktopStart,
+    styles.indexOf("@container (max-width: 759px)", desktopStart),
+  );
+
+  assert.match(
+    desktopRules,
+    /\.flight-card-detail-item \{[\s\S]*grid-template-columns: 1rem max-content minmax\(0, 1fr\);[\s\S]*grid-template-rows: auto;/,
+  );
+  assert.match(
+    desktopRules,
+    /\.flight-card-detail-value \{[\s\S]*grid-column: 3;[\s\S]*grid-row: 1;[\s\S]*white-space: nowrap;/,
+  );
+  assert.doesNotMatch(
+    desktopRules,
+    /grid-template-rows:\s*auto auto|overflow:\s*hidden|text-overflow:\s*ellipsis|overflow-wrap:\s*(?:anywhere|break-word)|word-break:\s*break-all/,
+  );
+});
+
+
+test("desktop Flight Results omit nearby-fare calendar and cheaper-nearby insight", async () => {
+  const source = await readFile(new URL("./FlightResultsClient.tsx", import.meta.url), "utf8");
+  const styles = await readFile(new URL("../../app/globals.css", import.meta.url), "utf8");
+
+  assert.doesNotMatch(source, /data-desktop-nearby-fare-rail/);
+  assert.doesNotMatch(source, /data-desktop-cheaper-nearby/);
+  assert.doesNotMatch(styles, /data-desktop-nearby-fare-rail|desktop-flight-fare-price|desktop-flight-cheaper-nearby/);
+  assert.match(source, /data-nearby-fare-presentation="mobile"/);
+  assert.match(source, /flight-mobile-cheaper-nearby/);
+});
+
+test("desktop Flight results summary uses the exact Hotel 12px gap before the first card", async () => {
+  const source = await readFile(
+    new URL("./FlightResultsClient.tsx", import.meta.url),
+    "utf8",
+  );
+  const hotels = await readFile(
+    new URL("./HotelResultsClient.tsx", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(
+    hotels,
+    /<div className="space-y-3">[\s\S]*?role="group"[\s\S]*?data-hotel-continuous-results/,
+  );
+  assert.match(
+    source,
+    /cn\(resultStackClass, "space-y-1 sm:space-y-4 lg:space-y-3"\)/,
+  );
+  assert.match(
+    source,
+    /data-flight-results-desktop-summary[\s\S]{0,180}className="hidden w-full items-center justify-between gap-4 px-1 py-2 sm:flex lg:py-0 lg:bg-transparent"/,
+  );
+});
+
+test("desktop Flight filters match Hotel desktop typography while keeping the Flight surface", async () => {
+  const filters = await readFile(
+    new URL("./DesktopFlightFilters.tsx", import.meta.url),
+    "utf8",
+  );
+  const hotels = await readFile(
+    new URL("./HotelResultsClient.tsx", import.meta.url),
+    "utf8",
+  );
+  const primaryFilters = filters.slice(
+    filters.indexOf("data-flight-hotel-filter-visual-parity"),
+    filters.indexOf("function CompactFilterSection"),
+  );
+  const facetRow = filters.slice(
+    filters.indexOf("function FacetRow"),
+  );
+
+  assert.match(
+    primaryFilters,
+    /overflow-hidden rounded-lg border border-\[#B8C6D6\] bg-\[#F2F4F8\] shadow-\[0_8px_22px_-18px_rgba\(15,23,42,0\.28\)\]/,
+  );
+  assert.doesNotMatch(primaryFilters, /border-\[#CFD9E5\]/);
+  assert.match(primaryFilters, /\{t\("hotelResults\.filterBy"\)\}/);
+  assert.match(primaryFilters, /text-\[14px\] font-bold tracking-\[-0\.01em\] text-slate-950/);
+
+  assert.match(hotels, /layout === "desktop" && "text-\[13px\]"/);
+  assert.match(hotels, /text-sm font-bold leading-5 text-slate-950/);
+  assert.match(filters, /text-\[13px\] font-bold leading-5 text-slate-950/);
+
+  assert.match(hotels, /text-\[12px\] font-medium leading-5 text-slate-700/);
+  assert.match(filters, /text-\[12px\] font-medium leading-5 text-slate-700/);
+
+  assert.match(hotels, /text-\[12px\] leading-5/);
+  assert.match(hotels, /font-medium tabular-nums text-slate-500/);
+  assert.match(
+    filters,
+    /text-\[12px\] font-medium leading-5 tabular-nums text-slate-500/,
+  );
+
+  assert.match(
+    primaryFilters,
+    /h-8 w-full rounded-md border border-slate-300 bg-white px-3 text-\[13px\] text-slate-950 placeholder:text-slate-500/,
+  );
+  assert.doesNotMatch(
+    primaryFilters,
+    /font-medium text-slate-900 placeholder:text-slate-600/,
+  );
+  assert.match(
+    hotels,
+    /layout === "desktop" && "h-9 rounded-md text-\[13px\]"/,
+  );
+  assert.match(hotels, /text-slate-950[^"]*placeholder:text-slate-500/);
+
+  assert.match(primaryFilters, /data-flight-filter-price-summary/);
+  assert.match(primaryFilters, /data-flight-filter-time-summary/);
+  assert.match(primaryFilters, /data-flight-filter-duration-summary/);
+  assert.match(
+    primaryFilters,
+    /text-\[12px\] font-medium leading-5(?: tabular-nums)? text-slate-600/,
+  );
+  assert.match(hotels, /text-xs font-medium text-slate-600/);
+
+  assert.match(facetRow, /h-\[14px\] w-\[14px\]/);
+  assert.match(facetRow, /border-\[#0067DB\] bg-\[#0067DB\] text-white/);
+  assert.match(facetRow, /<Check className="h-2\.5 w-2\.5"/);
+
+  assert.doesNotMatch(
+    primaryFilters,
+    /\{t\("price"\)\}: \{formatFilterPrice/,
+  );
+  assert.match(filters, /border-t border-slate-200\/60 px-3 py-2\.5 first:border-t-0/);
+  assert.match(primaryFilters, /flex min-h-9 items-center justify-between gap-3 px-3 py-1\.5/);
+  assert.match(primaryFilters, /mb-2 flex items-center gap-1\.5 text-\[12px\]/);
+  assert.match(primaryFilters, /min-h-8 rounded-lg px-2 py-1 text-\[12px\]/);
+  assert.match(primaryFilters, /mb-2 grid grid-cols-2 rounded-\[10px\]/);
+  assert.match(primaryFilters, /h-8 w-full rounded-md border border-slate-300/);
+  assert.match(facetRow, /min-h-\[28px\]/);
+  assert.doesNotMatch(filters, /border-t border-slate-200\/60 px-3 py-3 first:border-t-0/);
+  assert.doesNotMatch(primaryFilters, /min-h-10 items-center justify-between gap-3 px-3 py-2/);
+  assert.doesNotMatch(primaryFilters, /mb-2\.5 flex items-center/);
+  assert.doesNotMatch(primaryFilters, /min-h-9 rounded-lg px-2 py-1\.5 text-\[12px\]/);
+  assert.doesNotMatch(primaryFilters, /h-9 w-full rounded-md border border-slate-300/);
+  assert.doesNotMatch(facetRow, /min-h-\[30px\]/);
+  assert.doesNotMatch(filters, /data-flight-hotel-filter-visual-parity[\s\S]{0,300}bg-white/);
+});
+test("desktop Flight Stops filter shows labels and counts without fare hints", async () => {
+  const filters = await readFile(
+    new URL("./DesktopFlightFilters.tsx", import.meta.url),
+    "utf8",
+  );
+
+  const compactStopsStart = filters.indexOf('<CompactFilterSection id={`${idPrefix}-stops-panel`}');
+  const compactStopsEnd = filters.indexOf('<CompactFilterSection id={`${idPrefix}-airlines-panel`}', compactStopsStart);
+  const compactStops = filters.slice(compactStopsStart, compactStopsEnd);
+
+  const desktopStopsStart = filters.indexOf('<OptionSection title={t("stops")}');
+  const desktopStopsEnd = filters.indexOf('<OptionSection title={t("airlines")}', desktopStopsStart);
+  const desktopStops = filters.slice(desktopStopsStart, desktopStopsEnd);
+
+  assert.match(compactStops, /label={option\.label} count={option\.count}/);
+  assert.match(desktopStops, /label={option\.label} count={option\.count}/);
+  assert.doesNotMatch(compactStops, /secondaryLabel|option\.rightLabel|t\("from"\)/);
+  assert.doesNotMatch(desktopStops, /secondaryLabel|option\.rightLabel|t\("from"\)/);
+});
+
+test("desktop Flight renders the Hotel-style Popular filters card directly after the full sidebar", async () => {
+  const source = await readFile(
+    new URL("./FlightResultsClient.tsx", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(source, /function StickyFlightPopularFilters\(/);
+  assert.match(source, /data-flight-sticky-popular-filters/);
+  assert.match(source, /sticky top-\[88px\]/);
+  assert.match(source, /max-h-\[calc\(100vh-100px\)\]/);
+  assert.match(source, /data-flight-sticky-popular-filters[\s\S]*?bg-white/);
+  assert.match(source, /text-\[12px\] font-normal leading-4 text-\[#142033\]/);
+  assert.match(source, /shrink-0 tabular-nums text-slate-500/);
+  assert.doesNotMatch(source, /text-\[13px\] font-medium leading-5 text-\[#26354A\]/);
+  assert.doesNotMatch(source, /text-\[12px\] font-semibold leading-5 tabular-nums text-\[#526174\]/);
+  assert.match(source, /className="peer sr-only"/);
+  assert.match(
+    source,
+    /h-\[14px\] w-\[14px\][^"]*rounded-\[2px\][^"]*peer-focus-visible:ring-2/,
+  );
+  assert.match(
+    source,
+    /filter\.selected[\s\S]*?border-\[#0067DB\] bg-\[#0067DB\] text-white[\s\S]*?border-slate-300 bg-white group-hover:border-slate-400/,
+  );
+  assert.match(
+    source,
+    /<Check[\s\S]*?className="h-2\.5 w-2\.5"[\s\S]*?strokeWidth=\{3\}/,
+  );
+  assert.doesNotMatch(
+    source.slice(
+      source.indexOf("function StickyFlightPopularFilters"),
+      source.indexOf("type MobileShortcutSheet"),
+    ),
+    /accent-\[#004BB8\]|className="h-4 w-4 shrink-0 cursor-pointer/,
+  );
+  assert.match(source, /data-flight-price-alert-sidebar-slot[\s\S]*?<div>\{renderDesktopFlightFilters\(\)\}<\/div>[\s\S]*?<StickyFlightPopularFilters/);
+  assert.doesNotMatch(source, /showStickyFlightFilters/);
+  assert.doesNotMatch(source, /shouldShowFlightStickyPopularFilters/);
+  assert.doesNotMatch(source, /desktopFilterPanelRef|desktopResultsContentRef/);
+  assert.doesNotMatch(source, /desktopFilterSentinelRef|desktopCompactFilterRef/);
+  assert.doesNotMatch(source, /renderDesktopFlightFilters\(true\)/);
+});
+
+test("desktop Flight Popular filters reuse the authoritative Flight filter state", async () => {
+  const source = await readFile(
+    new URL("./FlightResultsClient.tsx", import.meta.url),
+    "utf8",
+  );
+
+  const start = source.indexOf("function StickyFlightPopularFilters");
+  const end = source.indexOf("type MobileShortcutSheet", start);
+  const popular = source.slice(start, end);
+
+  assert.match(popular, /stopOptions/);
+  assert.match(popular, /airlineOptions/);
+  assert.match(popular, /airportOptions/);
+  assert.match(popular, /flightQualityOptions/);
+  assert.match(popular, /selectedStops/);
+  assert.match(popular, /selectedAirlines/);
+  assert.match(popular, /selectedAirports/);
+  assert.match(popular, /selectedFlightQuality/);
+  assert.match(source, /onToggle=\{toggleStickyFlightPopularFilter\}/);
+});
+
+
+test("desktop Flight result summary keeps the premium hierarchy after nearby-fare removal", async () => {
+  const source = await readFile(
+    new URL("./FlightResultsClient.tsx", import.meta.url),
+    "utf8",
+  );
+  const styles = await readFile(
+    new URL("../../app/globals.css", import.meta.url),
+    "utf8",
+  );
+
+  assert.doesNotMatch(source, /data-desktop-cheaper-nearby|desktop-flight-cheaper-nearby/);
+
+  const summaryStart = source.indexOf(
+    'className="hidden w-full items-center justify-between gap-4 px-1 py-2 sm:flex lg:py-0 lg:bg-transparent"',
+  );
+  const summary = source.slice(summaryStart, summaryStart + 4200);
+  assert.match(summary, /text-\[12px\] font-semibold leading-4 text-\[#191E3B\]/);
+  assert.doesNotMatch(summary, /mt-0\.5 text-xs font-medium leading-4 text-slate-500|resultsDisplayRange\.start|resultsDisplayRange\.end/);
+  assert.match(summary, /hotel-results-sort-trigger/);
+  assert.match(summary, /rounded-full border border-\[#9299A9\] bg-white px-3 text-\[#191E3B\]/);
+  assert.match(styles, /\.hotel-results-sort-trigger \{[\s\S]*?font-size: 12px;[\s\S]*?font-weight: 700;[\s\S]*?line-height: 16px;/);
+  assert.match(summary, /Sort by \{selectedSortLabel\}/);
+  assert.match(summary, /role="listbox"/);
+  assert.match(summary, /role="option"/);
+  assert.match(summary, /<ChevronDown[\s\S]*h-3\.5 w-3\.5 transition-transform/);
+  assert.doesNotMatch(summary, /text-\[15px\] font-semibold leading-5 tracking-\[-0\.006em\]/);
+  assert.match(source, /data-flight-results-card-list className="space-y-3 sm:space-y-4"/);
+  assert.doesNotMatch(source, /data-flight-results-card-list className="space-y-3 sm:space-y-4 sm:pt-2 lg:pt-3"/);
+});
+

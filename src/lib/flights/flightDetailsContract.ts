@@ -9,8 +9,10 @@ export type FlightDetailsDeal = {
   key: string;
   offerId: string;
   providerName: string;
+  providerLogoUrl?: string;
   price: number;
   currency: string;
+  offer: FlightDetailsOffer;
 };
 
 export type FlightDetailsFareChoice = {

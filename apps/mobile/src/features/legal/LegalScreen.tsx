@@ -6,6 +6,7 @@ import Svg, { Path } from "react-native-svg";
 import { WebView } from "react-native-webview";
 import { fetchLegalDocument, type MobileLegalDocument } from "../../api/legalApi";
 import { PageContentState } from "../../components/PageContentState";
+import { getRuntimeEnvironment } from "../../config/environment";
 import { PRIVACY_URL, TERMS_URL } from "../../config/legalUrls";
 import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
 import { mobileLocales } from "../../localization/mobileLocalizationCatalog";
@@ -25,9 +26,16 @@ function LegalShareIcon({ color, size = 22 }: { color: string; size?: number }) 
   </Svg>;
 }
 
+function normalizePreviewNavigationUrl(url: string) {
+  return url.split("#", 1)[0].split("?", 1)[0].replace(/\/+$/, "");
+}
+
 export function LegalScreen({ slug }: LegalScreenProps) {
   const { theme } = useAppTheme();
   const { locale, t } = useMobileLocalization();
+  const runtimeEnvironment = getRuntimeEnvironment();
+  const previewWebMode = runtimeEnvironment.isPreview;
+  const previewWebOrigin = runtimeEnvironment.apiBaseUrl.replace(/\/$/, "");
   const [document, setDocument] = useState<MobileLegalDocument | null>(null);
   const [loadState, setLoadState] = useState<LoadState>("api-loading");
   const [refreshing, setRefreshing] = useState(false);
@@ -36,11 +44,27 @@ export function LegalScreen({ slug }: LegalScreenProps) {
   const [webViewRevision, setWebViewRevision] = useState(0);
   const refreshPreviousDocument = useRef<MobileLegalDocument | null>(null);
   const refreshRenderPending = useRef(false);
+  const previewLoadFailed = useRef(false);
   const title = t(slug === "terms-of-service" ? "terms" : "privacy");
   const pageName = slug === "terms-of-service" ? "terms of service" : "privacy policy";
-  const publicUrl = slug === "terms-of-service" ? TERMS_URL : PRIVACY_URL;
+  const productionPublicUrl = slug === "terms-of-service" ? TERMS_URL : PRIVACY_URL;
+  const previewPublicUrl = `${previewWebOrigin}${slug === "terms-of-service" ? "/terms" : "/privacy"}`;
+  const publicUrl = previewWebMode ? previewPublicUrl : productionPublicUrl;
+  const previewAllowedNavigationUrls = useMemo(() => {
+    const urls = [previewPublicUrl];
+    if (slug === "terms-of-service") urls.push(`${previewWebOrigin}/legal/terms-of-service`);
+    return urls.map(normalizePreviewNavigationUrl);
+  }, [previewPublicUrl, previewWebOrigin, slug]);
+  const isAllowedPreviewNavigation = useCallback((url: string) => {
+    if (url === "about:blank") return true;
+    return previewAllowedNavigationUrls.includes(normalizePreviewNavigationUrl(url));
+  }, [previewAllowedNavigationUrls]);
   const copy = legalScreenCopy[locale];
   const localePresentation = mobileLocales.find((option) => option.code === locale) ?? mobileLocales[0];
+  const previewLocaleBootstrap = useMemo(() => {
+    const serializedLocale = JSON.stringify(locale);
+    return `try{window.localStorage.setItem("kurioticket_locale",${serializedLocale});window.localStorage.setItem("ct_language",${serializedLocale});document.cookie="kurioticket_locale="+encodeURIComponent(${serializedLocale})+"; path=/; samesite=lax";}catch(_error){}true;`;
+  }, [locale]);
   const html = useMemo(() => document ? buildLegalHtml(document, {
     dark: theme.dark,
     lang: localePresentation.intl,
@@ -51,23 +75,38 @@ export function LegalScreen({ slug }: LegalScreenProps) {
   const loadInitial = useCallback(() => {
     refreshPreviousDocument.current = null;
     refreshRenderPending.current = false;
+    previewLoadFailed.current = false;
     setDocument(null);
     setRefreshing(false);
     setRefreshFailed(false);
     setActionMenuOpen(false);
+    if (previewWebMode) {
+      setLoadState("webview-loading");
+      return;
+    }
     setLoadState("api-loading");
     void fetchLegalDocument(slug, locale)
       .then((value) => { setDocument(value); setLoadState("webview-loading"); })
       .catch(() => setLoadState("error"));
-  }, [locale, slug]);
+  }, [locale, previewWebMode, slug]);
 
   const refresh = useCallback(() => {
-    if (refreshing || !document || loadState !== "ready") return;
-    refreshPreviousDocument.current = document;
-    refreshRenderPending.current = false;
+    if (refreshing || loadState !== "ready") return;
     setActionMenuOpen(false);
     setRefreshing(true);
     setRefreshFailed(false);
+    if (previewWebMode) {
+      previewLoadFailed.current = false;
+      setLoadState("webview-loading");
+      setWebViewRevision((revision) => revision + 1);
+      return;
+    }
+    if (!document) {
+      setRefreshing(false);
+      return;
+    }
+    refreshPreviousDocument.current = document;
+    refreshRenderPending.current = false;
     void fetchLegalDocument(slug, locale)
       .then((value) => {
         refreshRenderPending.current = true;
@@ -81,7 +120,7 @@ export function LegalScreen({ slug }: LegalScreenProps) {
         setRefreshFailed(true);
         setRefreshing(false);
       });
-  }, [document, loadState, locale, refreshing, slug]);
+  }, [document, loadState, locale, previewWebMode, refreshing, slug]);
 
   useEffect(loadInitial, [loadInitial]);
 
@@ -96,6 +135,13 @@ export function LegalScreen({ slug }: LegalScreenProps) {
   }, [publicUrl]);
 
   const handleWebViewLoad = useCallback(() => {
+    if (previewWebMode) {
+      if (previewLoadFailed.current) return;
+      setRefreshing(false);
+      setRefreshFailed(false);
+      setLoadState("ready");
+      return;
+    }
     if (refreshRenderPending.current) {
       refreshRenderPending.current = false;
       refreshPreviousDocument.current = null;
@@ -104,9 +150,15 @@ export function LegalScreen({ slug }: LegalScreenProps) {
       return;
     }
     setLoadState("ready");
-  }, []);
+  }, [previewWebMode]);
 
   const handleWebViewError = useCallback(() => {
+    if (previewWebMode) {
+      previewLoadFailed.current = true;
+      setRefreshing(false);
+      setLoadState("error");
+      return;
+    }
     if (refreshRenderPending.current && refreshPreviousDocument.current) {
       const previous = refreshPreviousDocument.current;
       refreshRenderPending.current = false;
@@ -119,7 +171,7 @@ export function LegalScreen({ slug }: LegalScreenProps) {
     }
     setDocument(null);
     setLoadState("error");
-  }, []);
+  }, [previewWebMode]);
 
   return <SafeAreaView style={[flowStyles.safe, { backgroundColor: theme.background }]} edges={["top"]}>
     <View testID="legal-native-header" style={[styles.header, { borderBottomColor: theme.border }]}>
@@ -131,7 +183,28 @@ export function LegalScreen({ slug }: LegalScreenProps) {
     </View>
 
     <View style={styles.documentArea}>
-      {html ? <WebView
+      {previewWebMode ? loadState !== "error" ? <WebView
+        key={`${slug}-preview-web-${locale}-${webViewRevision}`}
+        testID="legal-document-webview"
+        source={{ uri: publicUrl, headers: { Cookie: `kurioticket_locale=${encodeURIComponent(locale)}` } }}
+        javaScriptEnabled
+        domStorageEnabled
+        sharedCookiesEnabled={false}
+        thirdPartyCookiesEnabled={false}
+        incognito
+        injectedJavaScriptBeforeContentLoaded={previewLocaleBootstrap}
+        originWhitelist={[previewWebOrigin]}
+        onShouldStartLoadWithRequest={({ url }) => isAllowedPreviewNavigation(url)}
+        onLoad={handleWebViewLoad}
+        onError={handleWebViewError}
+        onHttpError={({ nativeEvent }) => {
+          if (nativeEvent.statusCode < 400 || !isAllowedPreviewNavigation(nativeEvent.url)) return;
+          previewLoadFailed.current = true;
+          setRefreshing(false);
+          setLoadState("error");
+        }}
+        style={{ backgroundColor: theme.background }}
+      /> : null : html ? <WebView
         key={`${slug}-${locale}-${webViewRevision}`}
         testID="legal-document-webview"
         source={{ html, baseUrl: "about:blank" }}
@@ -152,7 +225,7 @@ export function LegalScreen({ slug }: LegalScreenProps) {
       {loadState === "error" ? <PageContentState state="error" pageName={pageName} onRetry={loadInitial} /> : null}
     </View>
 
-    {document && loadState === "ready" ? <View testID="legal-action-dock" style={[styles.toolbarDock, { backgroundColor: theme.background }]}>
+    {(previewWebMode || document) && loadState === "ready" ? <View testID="legal-action-dock" style={[styles.toolbarDock, { backgroundColor: theme.background }]}>
       {actionMenuOpen ? <View testID="legal-action-menu" style={[styles.actionMenu, { backgroundColor: theme.surface, borderColor: theme.border }]}>
         <Pressable accessibilityRole="button" accessibilityLabel={copy.share} onPress={share} style={({ pressed }) => [styles.menuItem, pressed && styles.pressed]}>
           <Text style={[styles.menuText, { color: theme.text }]}>{copy.share}</Text>

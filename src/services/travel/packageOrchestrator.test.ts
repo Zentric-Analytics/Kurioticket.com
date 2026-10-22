@@ -46,3 +46,26 @@ test("a failed component produces a truthful partial response without discarding
   assert.equal(response.components.hotel?.status, "unavailable");
   assert.deepEqual(response.packageOffers, []);
 });
+
+test("hotel-first staged searches do not call future flight or car providers", async () => {
+  for (const mode of ["hotel-flight", "hotel-car", "hotel-flight-car"] as const) {
+    const called: DealsProduct[] = [];
+    const overrides = Object.fromEntries((["flight", "hotel", "car"] as const).map((product) => [product, async () => { called.push(product); return component(product); }]));
+    const query = complete(mode);
+    const response = await searchPackage(query, "staged", overrides, "hotel-only");
+    assert.deepEqual(called, ["hotel"]);
+    assert.deepEqual(Object.keys(response.components), ["hotel"]);
+    assert.deepEqual(response.query, query);
+    assert.equal(response.mode, mode);
+    assert.equal(response.status, "success");
+  }
+});
+
+test("a hotel-only scope cannot silently change a flight-car package", async () => {
+  let called = false;
+  await assert.rejects(searchPackage(complete("flight-car"), "staged", {
+    flight: async () => { called = true; return component("flight"); },
+    car: async () => { called = true; return component("car"); },
+  }, "hotel-only"), /requires a hotel component/);
+  assert.equal(called, false);
+});

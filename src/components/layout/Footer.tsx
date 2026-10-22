@@ -10,12 +10,19 @@ import {
   getCaliforniaSellerOfTravelNotice,
   legalProfile,
 } from "@/data/legalProfile";
+import { cn } from "@/lib/utils";
 
 export type FooterVariant = "full" | "brand-legal-only";
 
 type FooterSectionId = "contact" | "discover" | "terms-settings" | "about";
 
-export function Footer({ variant = "full" }: { variant?: FooterVariant }) {
+export function Footer({
+  variant = "full",
+  className,
+}: {
+  variant?: FooterVariant;
+  className?: string;
+}) {
   const { t } = useLocale();
   const currentYear = new Date().getFullYear();
   const [openMobileSection, setOpenMobileSection] =
@@ -112,7 +119,12 @@ export function Footer({ variant = "full" }: { variant?: FooterVariant }) {
   ];
 
   return (
-    <footer className="border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)] text-slate-700">
+    <footer
+      className={cn(
+        "border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)] text-slate-700",
+        className,
+      )}
+    >
       <div
         className={
           variant === "full"
@@ -217,19 +229,19 @@ export function Footer({ variant = "full" }: { variant?: FooterVariant }) {
                 className="h-7 w-auto lg:h-8"
               />
 
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="cars-footer-confidence-tagline mt-1 text-xs text-slate-500">
                 {t.footerConfidenceTagline}
               </p>
 
               <Link
                 href="/legal"
-                className="mt-2.5 block max-w-3xl text-xs leading-5 text-slate-500 transition-colors hover:text-[#004BB8] focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"
+                className="cars-footer-seller-notice mt-2.5 block max-w-3xl text-xs leading-5 text-slate-500 transition-colors hover:text-[#004BB8] focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"
               >
                 {sellerOfTravelNotice}
               </Link>
             </div>
 
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs leading-5">
+            <div className="cars-footer-legal-row flex flex-wrap items-center gap-x-4 gap-y-2 text-xs leading-5">
               <p className="basis-full md:basis-auto">
                 © {currentYear} Kurioticket LLC. {t.footerAllRightsReserved}
               </p>

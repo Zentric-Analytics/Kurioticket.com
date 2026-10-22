@@ -69,7 +69,7 @@ test("the location glyph stays decorative and precedes the compact field text", 
   const icon = read("FlowIcon.tsx");
   const primitives = read("FlowPrimitives.tsx");
 
-  assert.match(icon, /\| "location"/);
+  assert.match(read("flowIconTypes.ts"), /\| "location"/);
   assert.match(icon, /location: <>[\s\S]*?<Path[\s\S]*?<Circle/);
   assert.match(icon, /accessibilityElementsHidden importantForAccessibility="no-hide-descendants"/);
   assert.match(primitives, /<View style=\{styles\.compactValueRow\}>[\s\S]*?<FlowIcon name=\{icon\} size=\{18\}[\s\S]*?<View style=\{styles\.compactTextColumn\}>/);

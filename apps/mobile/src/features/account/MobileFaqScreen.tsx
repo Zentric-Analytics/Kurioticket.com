@@ -36,7 +36,12 @@ export function MobileFaqScreen() {
         <View style={s.headerHit} />
       </View>
 
-      <ScrollView contentContainerStyle={s.content}>
+      <ScrollView
+        alwaysBounceVertical={false}
+        bounces={false}
+        contentContainerStyle={s.content}
+        overScrollMode="never"
+      >
         <View style={s.hero}>
           <Text accessibilityRole="header" style={[s.heading, { color: theme.text }]}>
             {presentation.heading}
@@ -80,22 +85,6 @@ export function MobileFaqScreen() {
             })}
           </View>
         </View>
-
-        <View style={[s.supportCta, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-          <Text style={[s.supportHeading, { color: theme.text }]}>{presentation.needMoreHelp}</Text>
-          <Text style={[s.supportPrompt, { color: theme.muted }]}>{presentation.supportPrompt}</Text>
-          <View style={s.supportSentence}>
-            <Pressable
-              accessibilityRole="link"
-              accessibilityLabel={t("contactSupport")}
-              onPress={() => router.push("/support")}
-              style={s.supportLinkHit}
-            >
-              <Text style={s.supportLink}>{t("contactSupport")}</Text>
-            </Pressable>
-            <Text style={[s.supportSuffix, { color: theme.muted }]}>{presentation.supportSuffix}</Text>
-          </View>
-        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -106,7 +95,7 @@ const s = StyleSheet.create({
   header: { minHeight: 62, flexDirection: "row", alignItems: "center" },
   headerHit: { width: 52, minHeight: 52, alignItems: "center", justifyContent: "center" },
   headerTitle: { flex: 1, textAlign: "center", fontSize: 22, lineHeight: 28, fontWeight: "800" },
-  content: { paddingHorizontal: 18, paddingTop: 18, paddingBottom: 40 },
+  content: { paddingHorizontal: 18, paddingTop: 18, paddingBottom: 20 },
   hero: { maxWidth: 620 },
   heading: { fontSize: 28, lineHeight: 34, fontWeight: "700", letterSpacing: -0.4 },
   intro: { marginTop: 10, fontSize: 15, lineHeight: 23 },
@@ -118,11 +107,4 @@ const s = StyleSheet.create({
   question: { flex: 1, fontSize: 16, lineHeight: 23, fontWeight: "700" },
   expandIndicator: { width: 22, textAlign: "center", fontSize: 22, lineHeight: 24, fontWeight: "400" },
   answer: { marginTop: 8, paddingRight: 38, fontSize: 15, lineHeight: 22 },
-  supportCta: { marginTop: 28, borderWidth: StyleSheet.hairlineWidth, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 13 },
-  supportHeading: { fontSize: 15, lineHeight: 21, fontWeight: "800" },
-  supportPrompt: { marginTop: 4, fontSize: 14, lineHeight: 20 },
-  supportSentence: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", marginTop: 2 },
-  supportLinkHit: { minHeight: 36, justifyContent: "center" },
-  supportLink: { color: "#0754F7", fontSize: 14, lineHeight: 20, fontWeight: "800" },
-  supportSuffix: { fontSize: 14, lineHeight: 20 },
 });

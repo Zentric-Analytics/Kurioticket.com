@@ -1,12 +1,25 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { canonicalHotelAddress, hotelStaySummary, isSafeNativeHotelProviderUrl, meaningfulHotelCenterDistance, nativeHotelOffers, nativeHotelProviderUrl, reconcileNativeHotelOfferSelection } from "./nativeHotelDetailsModel";
+import { canonicalHotelAddress, hotelStaySummary, isSafeNativeHotelProviderUrl, meaningfulHotelCenterDistance, nativeHotelOffers, nativeHotelProviderUrl, nativeKurioticketHotelDetailsUrl, reconcileNativeHotelOfferSelection } from "./nativeHotelDetailsModel";
 
-test("stay summary uses full dates and correct count grammar", () => {
-  assert.match(hotelStaySummary("2026-09-04", "2026-09-05", 1, 1).dates!, /2026.*1 night/);
-  assert.equal(hotelStaySummary("2026-09-04", "2026-09-07", 2, 1).occupancy, "2 guests, 1 room");
-  assert.equal(hotelStaySummary("2026-09-04", "2026-09-07", 1, 2).occupancy, "1 guest, 2 rooms");
+test("stay summary keeps same-year dates compact and orders rooms before guests", () => {
+  assert.deepEqual(hotelStaySummary("2026-09-06", "2026-09-09", 1, 1), {
+    dateText: "6 Sep – 9 Sep",
+    nightText: "3 nights",
+    dates: "6 Sep – 9 Sep",
+    occupancy: "1 room, 1 guest",
+  });
+  assert.equal(hotelStaySummary("2026-09-04", "2026-09-07", 2, 1).occupancy, "1 room, 2 guests");
+  assert.equal(hotelStaySummary("2026-09-04", "2026-09-07", 1, 2).occupancy, "2 rooms, 1 guest");
+  assert.doesNotMatch(hotelStaySummary("2026-09-04", "2026-09-05", 1, 1).dates!, /2026|night/);
+});
+
+test("stay summary keeps years when the stay crosses a calendar year", () => {
+  const summary = hotelStaySummary("2026-12-30", "2027-01-02", 2, 1);
+  assert.match(summary.dateText!, /2026/);
+  assert.match(summary.dateText!, /2027/);
+  assert.equal(summary.occupancy, "1 room, 2 guests");
 });
 
 test("Hotel center distance accepts distances without treating addresses as distances", () => {
@@ -48,28 +61,82 @@ test("Hotel provider URL selects the first safe canonical candidate", () => {
   assert.equal(nativeHotelProviderUrl("http://partner.example/hotel"), "http://partner.example/hotel");
 });
 
-test("Hotel offer selection stays valid and deterministically reconciles enrichment", () => {
+test("Kurioticket Hotel handoff preserves the selected stay on the web route", () => {
+  assert.equal(
+    nativeKurioticketHotelDetailsUrl("https://staging.kurioticket.test", {
+      id: "hotel id",
+      destination: "Lagos, Nigeria",
+      checkIn: "2026-10-01",
+      checkOut: "2026-10-04",
+      guests: 2,
+      rooms: 1,
+    }),
+    "https://staging.kurioticket.test/hotels/details/hotel%20id?destination=Lagos%2C+Nigeria&checkIn=2026-10-01&checkOut=2026-10-04&guests=2&rooms=1",
+  );
+  assert.equal(nativeKurioticketHotelDetailsUrl("not-a-url", {
+    id: "hotel",
+    destination: "Lagos",
+    checkIn: "2026-10-01",
+    checkOut: "2026-10-02",
+    guests: 1,
+    rooms: 1,
+  }), "");
+});
+
+test("Hotel offer selection preserves explicit choices without freezing automatic enrichment", () => {
   const both = nativeHotelOffers(true, true);
+  assert.equal(reconcileNativeHotelOfferSelection(null, nativeHotelOffers(false, true)), null);
+  assert.equal(reconcileNativeHotelOfferSelection(null, both), null);
   assert.equal(reconcileNativeHotelOfferSelection("provider", both), "provider");
   assert.equal(reconcileNativeHotelOfferSelection("provider", nativeHotelOffers(true, false)), "internal-rooms");
   assert.equal(reconcileNativeHotelOfferSelection("internal-rooms", nativeHotelOffers(false, true)), "provider");
   assert.equal(reconcileNativeHotelOfferSelection("internal-rooms", []), null);
 });
+
 test("canonical Hotel address is enriched, deduplicated, and falls back", () => {
   assert.equal(canonicalHotelAddress(null, "Paris, France"), "Paris, France");
   assert.equal(canonicalHotelAddress({ description: "", latitude: 1, longitude: 2, streetAddress: "8 Rue van Gogh", city: "Paris", country: "France", neighbourhood: "" }, "fallback"), "8 Rue van Gogh, Paris, France");
   assert.equal(canonicalHotelAddress({ description: "", latitude: 1, longitude: 2, streetAddress: "Paris, France", city: "Paris", country: "France", neighbourhood: "" }, "fallback"), "Paris, France");
 });
 
-test("Hotel details enrichment encodes the complete identity and remains abortable and stale-safe", () => {
+test("active Hotel details enrichment is keyed, abortable, and does not expose false fallback state while loading", () => {
   const api = readFileSync("src/api/travelApi.ts", "utf8");
-  const screen = readFileSync("src/features/search/ApprovedDetailScreen.tsx", "utf8");
+  const screen = readFileSync("src/features/search/HotelDetailsScreen.tsx", "utf8");
+  const bookingDetails = readFileSync("src/features/search/NativeHotelBookingDetails.tsx", "utf8");
   assert.match(api, /`\/api\/hotels\/details\?\$\{params\.toString\(\)\}`/);
-  for (const field of ["id", "checkIn", "checkOut"]) assert.match(api, new RegExp(`${field}: input\\.${field}`));
+  for (const field of ["id", "destination", "checkIn", "checkOut"]) assert.match(api, new RegExp(`${field}: input\\.${field}`));
   for (const field of ["guests", "rooms"]) assert.match(api, new RegExp(`${field}: String\\(input\\.${field}\\)`));
+  assert.match(api, /relatedLimit: "12"/);
   assert.match(api, /options: \{ signal\?: AbortSignal \}/);
   assert.match(screen, /const enrichmentKey = `\$\{result\.id\}/);
-  assert.match(screen, /response\.hotel\?\.id === result\.id/);
+  assert.match(screen, /const destination = String\(params\.destination \|\| result\.location\)/);
+  assert.match(screen, /destination,/);
+  assert.match(screen, /detailsState\?\.key === enrichmentKey/);
+  assert.match(screen, /response\.hotel\?\.id !== result\.id/);
+  assert.match(screen, /status: "loading", response: null/);
+  assert.match(screen, /status: "ready", response/);
+  assert.match(screen, /!controller\.signal\.aborted/);
+  assert.match(screen, /status: "error", response: null/);
   assert.match(screen, /controller\.abort\(\)/);
-  assert.match(screen, /\.catch\(\(\) => undefined\)/);
+  assert.match(screen, /detailsStatus=\{detailsStatus\}/);
+  assert.match(bookingDetails, /detailsStatus === "loading"/);
+});
+
+test("active Hotel details prices have an immediate provider-currency fallback and are keyed per hotel", () => {
+  const screen = readFileSync("src/features/search/HotelDetailsScreen.tsx", "utf8");
+  assert.match(screen, /const providerDisplayPrices = hasPrice[\s\S]*result\.currency,[\s\S]*result\.currency,[\s\S]*\{\}/);
+  assert.match(screen, /const hotelPriceStateKey = `\$\{result\.id\}/);
+  assert.match(screen, /displayPriceState\.key === hotelPriceStateKey/);
+});
+
+test("active Hotel detail tabs preserve independent scroll state and reset for a different hotel", () => {
+  const screen = readFileSync("src/features/search/HotelDetailsScreen.tsx", "utf8");
+  assert.match(screen, /const hotelDetailScrollRef = useRef<ScrollView>/);
+  assert.match(screen, /hotelTabScrollOffsets/);
+  assert.match(screen, /const selectHotelTab = useCallback/);
+  assert.match(screen, /onPress=\{\(\) => selectHotelTab\(tab\)\}/);
+  assert.match(screen, /onScroll=\{\(\{ nativeEvent \}\) =>/);
+  assert.match(screen, /\[result\.id\]/);
+  assert.match(screen, /closeRateInfo\(\)/);
+  assert.doesNotMatch(screen, /setRoomsOpen\(|HotelRoomOptionsModal/);
 });

@@ -3,60 +3,212 @@ import test from "node:test";
 import fs from "node:fs";
 
 const source = fs.readFileSync(new URL("./CarsResultsClient.tsx", import.meta.url), "utf8");
+const editSheet = fs.readFileSync(
+  new URL("../search/MobileResultsEditSheet.tsx", import.meta.url),
+  "utf8",
+);
+const globals = fs.readFileSync(
+  new URL("../../app/globals.css", import.meta.url),
+  "utf8",
+);
 
-test("Cars mobile edit search is one grouped surface with an external CTA", () => {
-  assert.match(source, /rounded-\[14px\][^\n]*border border-\[#D8E1EC\][^\n]*divide-y/);
+function classConstant(name: string) {
+  const value = source.match(new RegExp(`const ${name} =\\s*\\n?\\s*"([^"]+)";`))?.[1];
+  assert.ok(value, `${name} should remain defined`);
+  return value;
+}
+
+test("Cars mobile edit search matches Hotels independent-card geometry with an external CTA", () => {
+  assert.match(source, /placement === "mobile" && "grid grid-cols-1 gap-\[10px\]"/);
+  assert.doesNotMatch(source, /placement === "mobile"[^\n]*divide-y/);
+  assert.match(source, /min-h-\[66px\][^"]*rounded-\[13px\][^"]*border border-\[#E7ECF5\] bg-white[^"]*px-3[^"]*py-\[10px\][^"]*shadow-none/);
   assert.match(source, /data-cars-mobile-grouped-row/);
   assert.match(source, /data-cars-mobile-search-submit/);
   assert.match(source, /placement === "mobile"[\s\S]*border-0 bg-transparent p-0 shadow-none ring-0/);
 });
 
-test("mobile pickup uses a leading MapPin without a disclosure arrow", () => {
+test("Cars mobile Edit car search title keeps the Hotels 19px semibold hierarchy", () => {
+  assert.match(source, /title=\{t\("carsResults\.editCarSearch"\)\}/);
+  assert.match(
+    editSheet,
+    /carsResultsEdit && "cars-results-edit-title pointer-events-none absolute inset-x-12 top-1\/2 -translate-y-1\/2 text-center text-\[19px\] font-semibold leading-\[24px\] tracking-normal"/,
+  );
+});
+
+test("mobile pickup keeps the car-specific leading MapPin without a disclosure arrow", () => {
   const launcher = source.slice(source.indexOf("function MobileLocationLauncher"), source.indexOf("function SearchInputCell"));
-  assert.match(launcher, /<Icon className="h-4 w-4 shrink-0 text-slate-700"/);
+  assert.match(launcher, /<Icon className="h-\[18px\] w-\[18px\] shrink-0 text-\[#334155\]"/);
   assert.doesNotMatch(launcher, /Chevron(?:Down|Right)/);
   assert.match(launcher, /onClick=\{onClick\}/);
 });
 
-test("grouped mobile leading field icons use one neutral color", () => {
-  const groupedLeadingIcons = [
-    /groupedMobile \? <Icon className="h-4 w-4 shrink-0 ([^"]+)"/,
-    /groupedMobile \? <CalendarDays className="h-4 w-4 shrink-0 ([^"]+)"/,
-    /groupedMobile \? <Clock3 className="h-4 w-4 shrink-0 ([^"]+)"/,
-    /groupedMobile \? <UserRound className="h-4 w-4 shrink-0 ([^"]+)"/,
-  ];
+test("grouped mobile leading field icons keep the neutral Hotel-compatible tone", () => {
+  const pickup = source.slice(
+    source.indexOf("function MobileLocationLauncher"),
+    source.indexOf("function SearchInputCell"),
+  );
+  const dates = source.slice(
+    source.indexOf("function SearchDateCell"),
+    source.indexOf("function SearchTimeCell"),
+  );
+  const times = source.slice(
+    source.indexOf("function SearchTimeCell"),
+    source.indexOf("function DriverAgeCell"),
+  );
+  const age = source.slice(
+    source.indexOf("function DriverAgeCell"),
+    source.indexOf("\nfunction ", source.indexOf("function DriverAgeCell") + 10),
+  );
 
-  for (const iconPattern of groupedLeadingIcons) {
-    const classes = source.match(iconPattern)?.[1];
-    assert.equal(classes, "text-slate-700");
-    assert.doesNotMatch(classes, /#004BB8/);
+  assert.match(pickup, /h-\[18px\] w-\[18px\] shrink-0 text-\[#334155\]/);
+  assert.match(dates, /h-\[18px\] w-\[18px\] shrink-0 text-\[#334155\]/);
+  assert.match(times, /h-\[18px\] w-\[18px\] shrink-0 text-\[#334155\]/);
+  assert.match(age, /h-\[18px\] w-\[18px\] shrink-0 text-\[#334155\]/);
+});
+
+test("grouped mobile rows use Hotels radius, border, padding, and flat surface", () => {
+  const shell = classConstant("carsMobileEditFieldShellClass");
+
+  assert.match(shell, /min-h-\[66px\]/);
+  assert.match(shell, /justify-center/);
+  assert.match(shell, /rounded-\[13px\]/);
+  assert.match(shell, /border-\[#E7ECF5\]/);
+  assert.match(shell, /px-3/);
+  assert.match(shell, /py-\[10px\]/);
+  assert.match(shell, /shadow-none/);
+  assert.doesNotMatch(shell, /rounded-\[15px\]|shadow-\[/);
+  assert.equal(source.match(/groupedMobile \? carsMobileEditFieldShellClass/g)?.length, 4);
+});
+
+test("Edit car search labels and values use the Hotels typography hierarchy", () => {
+  const pickupLabel = classConstant("carsMobileEditPickupLabelClass");
+  const summaryLabel = classConstant("carsMobileEditFieldLabelClass");
+  const summaryButton = classConstant("carsMobileEditSummaryButtonClass");
+  const pickupValue = classConstant("carsMobileEditPickupValueClass");
+  const valueGroup = classConstant("carsMobileEditValueGroupClass");
+
+  for (const label of [pickupLabel, summaryLabel]) {
+    assert.match(label, /mb-\[3px\]/);
+    assert.match(label, /text-\[11px\]/);
+    assert.match(label, /font-medium/);
+    assert.match(label, /normal-case/);
+    assert.match(label, /leading-\[14px\]/);
+    assert.match(label, /tracking-normal/);
+    assert.match(label, /text-\[#595959\]/);
+    assert.doesNotMatch(label, /uppercase|font-extrabold|text-\[10px\]/);
   }
-});
 
-test("grouped mobile rows stay compact without sacrificing their touch target", () => {
-  assert.equal(source.match(/min-h-16 flex-col justify-center px-4 py-2/g)?.length, 4);
-  assert.doesNotMatch(source, /data-cars-mobile-grouped-row[^\n]*min-h-\[70px\]/);
-});
-
-test("dates, time, and driver age retain disclosure chevrons", () => {
-  for (const name of ["SearchDateCell", "SearchTimeCell", "DriverAgeCell"]) {
-    const start = source.indexOf(`function ${name}`);
-    const next = source.indexOf("\nfunction ", start + 10);
-    const cell = source.slice(start, next < 0 ? undefined : next);
-    assert.match(
-      cell,
-      /<ChevronDown[\s\S]*?text-slate-500[\s\S]*?aria-hidden="true"/,
-    );
+  for (const value of [summaryButton, pickupValue]) {
+    assert.match(value, /h-auto/);
+    assert.match(value, /min-h-6/);
+    assert.match(value, /text-\[15px\]/);
+    assert.match(value, /font-semibold/);
+    assert.match(value, /leading-5/);
+    assert.match(value, /text-\[#1A1A1A\]/);
   }
+
+  assert.match(valueGroup, /gap-\[10px\]/);
 });
 
-test("grouped time and driver age values own the left-aligned flexible column", () => {
+test("grouped Pickup Location matches Hotels by suppressing the supporting destination line", () => {
+  const launcher = source.slice(
+    source.indexOf("function MobileLocationLauncher"),
+    source.indexOf("function SearchInputCell"),
+  );
+  const secondary = classConstant("carsMobileEditSecondaryValueClass");
+
+  assert.match(launcher, /groupedMobile \? carsMobileEditPickupLabelClass : fieldLabelClass/);
+  assert.match(launcher, /carsMobileEditPickupValueClass/);
+  assert.match(launcher, /carsMobileEditSecondaryValueClass/);
+  assert.match(secondary, /cars-results-edit-secondary/);
+  assert.match(
+    globals,
+    /\.cars-results-edit-secondary \{[\s\S]*?display: none !important;/,
+  );
+});
+
+test("Cars Results edit owns the same rendered font metrics as Hotels on mobile Safari", () => {
+  for (const selector of [
+    ".cars-results-edit-title",
+    ".cars-results-edit-label",
+    ".cars-results-edit-value",
+    ".cars-results-edit-submit",
+  ]) {
+    assert.match(globals, new RegExp(selector.replace(".", "\\.") + " \\{"));
+  }
+
+  assert.match(
+    globals,
+    /\.cars-results-edit-title \{[\s\S]*?font-size: 19px !important;[\s\S]*?font-weight: 600 !important;[\s\S]*?line-height: 24px !important;[\s\S]*?text-size-adjust: none;/,
+  );
+  assert.match(
+    globals,
+    /\.cars-results-edit-label \{[\s\S]*?font-size: 11px !important;[\s\S]*?font-weight: 500 !important;[\s\S]*?line-height: 14px !important;[\s\S]*?text-transform: none !important;[\s\S]*?letter-spacing: 0 !important;[\s\S]*?text-size-adjust: none;/,
+  );
+  assert.match(
+    globals,
+    /\.cars-results-edit-value \{[\s\S]*?font-size: 15px !important;[\s\S]*?font-weight: 600 !important;[\s\S]*?line-height: 20px !important;[\s\S]*?text-size-adjust: none;/,
+  );
+  assert.match(
+    globals,
+    /\.cars-results-edit-submit \{[\s\S]*?font-size: 16px !important;[\s\S]*?font-weight: 600 !important;[\s\S]*?text-size-adjust: none;/,
+  );
+  assert.match(source, /cars-results-edit-label/);
+  assert.match(source, /cars-results-edit-value/);
+  assert.match(source, /cars-results-edit-submit/);
+  assert.match(editSheet, /cars-results-edit-title/);
+});
+
+test("grouped Rental Dates retains the current Cars date value and Hotels text classes", () => {
+  const start = source.indexOf("function SearchDateCell");
+  const end = source.indexOf("function SearchTimeCell", start);
+  const cell = source.slice(start, end);
+
+  assert.match(cell, /formatTravelDateDisplay\(pickupDate, intlLocale\)/);
+  assert.match(cell, /formatTravelDateDisplay\(dropoffDate, intlLocale\)/);
+  assert.match(cell, /groupedMobile \? carsMobileEditFieldLabelClass : fieldLabelClass/);
+  assert.match(cell, /\? carsMobileEditSummaryButtonClass/);
+  assert.match(cell, /className=\{carsMobileEditValueGroupClass\}/);
+  assert.match(cell, /!groupedMobile \? \([\s\S]*?<ChevronDown/);
+});
+
+test("grouped Time and Driver Age retain Cars behavior with Hotels typography", () => {
   for (const name of ["SearchTimeCell", "DriverAgeCell"]) {
     const start = source.indexOf(`function ${name}`);
     const next = source.indexOf("\nfunction ", start + 10);
     const cell = source.slice(start, next < 0 ? undefined : next);
 
-    assert.match(cell, /groupedMobile && "min-w-0 flex-1 text-start"/);
-    assert.doesNotMatch(cell, /groupedMobile && "[^"]*(?:text-center|justify-center|mx-auto)/);
+    assert.match(cell, /groupedMobile \? carsMobileEditFieldLabelClass : fieldLabelClass/);
+    assert.match(cell, /\? carsMobileEditSummaryButtonClass/);
+    assert.match(cell, /className=\{carsMobileEditValueGroupClass\}/);
+    assert.match(cell, /min-w-0 flex-1 truncate text-start/);
   }
+});
+
+test("mobile Search CTA matches the Hotels Results editor", () => {
+  assert.match(
+    source,
+    /data-cars-mobile-search-submit[\s\S]*?mt-3 h-\[52px\] w-full rounded-\[12px\] bg-\[#064CF7\][^"]*text-\[16px\][^"]*font-semibold[^"]*shadow-none/,
+  );
+  assert.doesNotMatch(
+    source,
+    /data-cars-mobile-search-submit[\s\S]*?h-\[54px\][^"]*font-bold/,
+  );
+});
+
+test("time and driver age retain their existing disclosure behavior", () => {
+  for (const name of ["SearchTimeCell", "DriverAgeCell"]) {
+    const start = source.indexOf(`function ${name}`);
+    const next = source.indexOf("\nfunction ", start + 10);
+    const cell = source.slice(start, next < 0 ? undefined : next);
+    assert.match(
+      cell,
+      /<ChevronDown[\s\S]*?groupedMobile && "text-\[#334155\]"[\s\S]*?aria-hidden="true"/,
+    );
+  }
+
+  const datesStart = source.indexOf("function SearchDateCell");
+  const datesEnd = source.indexOf("function SearchTimeCell", datesStart);
+  const datesCell = source.slice(datesStart, datesEnd);
+  assert.match(datesCell, /!groupedMobile \? \([\s\S]*?<ChevronDown/);
 });

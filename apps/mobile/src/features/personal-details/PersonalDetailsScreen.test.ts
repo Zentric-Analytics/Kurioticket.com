@@ -4,7 +4,7 @@ import test from "node:test";
 const screen = readFileSync(
   "src/features/personal-details/PersonalDetailsScreen.tsx",
   "utf8",
-);
+).replace(/\r\n/g, "\n");
 test("screen opens read-only and Edit below the details switches the same screen to editing", () => {
   assert.match(screen, /!editing\s*\?\s*\(/);
   const header = screen.slice(screen.indexOf("<SafeAreaView"), screen.indexOf("{loading"));
@@ -28,7 +28,7 @@ test("Cancel restores authoritative saved values", () => {
   assert.match(screen, /setEditing\(false\)/);
 });
 test("Save is disabled until dirty and while saving", () =>
-  assert.match(screen, /disabled=\{!dirty\s*\|\|\s*saving\}/));
+  assert.match(screen, /disabled=\{!dirty\s*\|\|\s*saving\s*\|\|\s*emailBusy\s*\|\|\s*emailDirty\}/));
 test("duplicate submission is prevented and failed save retains draft", () => {
   assert.match(screen, /submitting\.current/);
   assert.doesNotMatch(screen, /catch\{[^}]*setDraft/s);
@@ -59,7 +59,7 @@ test("success toast is an overlay anchored inside the bottom safe area", () => {
   assert.ok(toast > contentScrollEnd);
   assert.match(screen, /toastPosition:\s*\{[\s\S]*?position:\s*"absolute"/);
   assert.match(screen, /bottom: insets\.bottom \+ 16/);
-  assert.doesNotMatch(screen, /measureInWindow|updateToastPosition/);
+  assert.doesNotMatch(screen.slice(screen.indexOf("export function PersonalDetailsScreen")), /measureInWindow|updateToastPosition/);
 });
 test("success toast clears after exactly 1500ms and Edit dismisses it", () => {
   assert.match(
@@ -68,7 +68,7 @@ test("success toast clears after exactly 1500ms and Edit dismisses it", () => {
   );
   const editAction = screen.slice(
     screen.indexOf("const beginEditing"),
-    screen.indexOf("const openWeb"),
+    screen.indexOf("const closeEmail"),
   );
   assert.match(editAction, /dismissSuccess\(\)/);
 });
@@ -97,9 +97,10 @@ test("failed and selector draft-only Saves never show the success toast", () => 
   assert.doesNotMatch(failedSave, /showSuccess|setSuccess/);
   assert.doesNotMatch(selectorSave, /showSuccess|setSuccess/);
 });
-test("email is read-only and external handoff is accessible", () => {
-  assert.match(screen, /editable=\{false\}/);
-  assert.match(screen, /accessibilityHint=\{c\.externalHint\}/);
+test("email stays read-only and opens an accessible in-app editor", () => {
+  assert.match(screen, /<Text numberOfLines=\{1\}[^\n]*>\{email\}<\/Text>/);
+  assert.match(screen, /accessibilityLabel=\{c\.changeEmail\}/);
+  assert.match(screen, /<PersonalDetailsEmailEditor/);
 });
 test("authentication expiry preserves protected return intent", () =>
   assert.match(screen, /signInHref\("\/personal-information"\)/));
@@ -148,7 +149,7 @@ test("country query stays stable through native dismissal and resets after dismi
   assert.match(selector, /const \[q, setQ\] = useState\(""\)/);
   assert.match(
     selector,
-    /useEffect\(\(\) => \{[\s\S]*?if \(!isOpening\) return;[\s\S]*?setQ\(""\)[\s\S]*?\[selected, selectorType, translateX, visible, width\]\)/,
+    /useEffect\(\(\) => \{[\s\S]*?if \(!isOpening\) return;[\s\S]*?setQ\(""\)[\s\S]*?\[selected, selectorType, translateY, visible, height\]\)/,
   );
   assert.match(
     selector,
@@ -167,7 +168,7 @@ test("phone, nationality, and address searches have independent aliases", () => 
     /NATIONALITY_OPTIONS\.map[\s\S]*?searchTerms: \[COUNTRY_OPTIONS\[index\]\.code\]/,
   );
 });
-test("country selector is full-screen, keyboard-aware, and only results virtualize", () => {
+test("country selector is a keyboard-aware bottom sheet and only results virtualize", () => {
   const selector = screen.slice(
     screen.indexOf("function CountrySelector("),
     screen.indexOf("function CountryFlag("),
@@ -179,9 +180,10 @@ test("country selector is full-screen, keyboard-aware, and only results virtuali
     selector,
     /<KeyboardAvoidingView[\s\S]*?behavior=\{Platform\.OS === "ios" \? "padding" : "height"\}/,
   );
-  assert.ok(selector.indexOf("{title}") < selector.indexOf("<FlatList"));
-  assert.ok(selector.indexOf("<TextInput") < selector.indexOf("<FlatList"));
-  assert.doesNotMatch(selector, /maxHeight|0\.82/);
+  assert.ok(selector.indexOf("{title}") < selector.lastIndexOf("<FlatList"));
+  assert.ok(selector.indexOf("<TextInput") < selector.lastIndexOf("<FlatList"));
+  assert.match(selector, /s.genderSheet/);
+  assert.match(selector, /height: height \* 0\.82/);
   assert.match(selector, /keyboardShouldPersistTaps="handled"/);
   assert.match(selector, /style=\{s\.countryResults\}/);
   assert.match(selector, /data=\{shown\}/);
@@ -212,7 +214,7 @@ test("all country-selector dismissal paths preserve visible content until onDism
   assert.match(selector, /onRequestClose=\{cancel\}/);
   assert.match(selector, /onDismiss=\{handleDismiss\}/);
   assert.ok((selector.match(/onPress=\{cancel\}/g) ?? []).length >= 2);
-  assert.match(selector, /closeWithPushAnimation\(onClose\)/);
+  assert.match(selector, /closeWithSheetAnimation\(onClose\)/);
   assert.match(
     selector,
     /const handleDismiss = \(\) => \{[\s\S]*?setDraftSelection\(selected\)[\s\S]*?onDismiss\(\)/,
@@ -264,9 +266,9 @@ test("country selection has an explicit committed-versus-draft lifecycle", () =>
   assert.match(selector, /setDraftSelection\(item\.value\)/);
   assert.match(selector, /onSave\(draftSelection\)/);
   assert.doesNotMatch(selector, /await onSave/);
-  assert.doesNotMatch(selector, /onSave\(item\.value\)/);
+  assert.match(selector, /if \(onSave\(item.value\)\) onClose\(\)/);
   assert.match(selector, /if \(committing\.current \|\| !draftSelection\) return/);
-  assert.match(selector, /accessibilityState=\{\{ selected: isSelected \}\}/);
+  assert.match(selector, /accessibilityState=\{\{ selected: isSelected, disabled: savingSelection/);
 });
 test("country selector Save applies only to the current local draft", () => {
   const saveSelector = screen.slice(
@@ -309,7 +311,7 @@ test("only country controls use the full-screen selector", () => {
     screen,
     /selectorVisible &&[\s\S]*?selector === "phone" \|\|\s*selector === "nationality" \|\|\s*selector === "addressCountry"/,
   );
-  assert.match(screen, /onPress=\{\(\) => openSelector\("day"\)\}/);
+  assert.match(screen, /onPress=\{\(anchor\) => openSelector\("day", anchor\)\}/);
   assert.match(screen, /onPress=\{\(\) => openSelector\("gender"\)\}/);
 });
 test("opening Address does not programmatically focus its fields", () => {
@@ -323,7 +325,7 @@ test("opening Address does not programmatically focus its fields", () => {
 });
 test("edit controls follow the web responsive alignment contract", () => {
   assert.match(screen, /testID="personal-details-phone-row"/);
-  assert.match(screen, /countrySegment:\s*\{\s*width:\s*82/);
+  assert.match(screen, /countrySegment:\s*\{\s*flexShrink:\s*0/);
   assert.match(screen, /phoneInput:\s*\{[\s\S]*?flex:\s*1/);
   assert.match(
     screen,
@@ -401,4 +403,22 @@ test("editable controls keep stable component identity across draft updates", ()
       `${component} must be module-scoped so draft updates do not remount focused inputs`,
     );
   }
+});
+
+test("nationality tap persists only nationality before closing and keeps other edits", () => {
+  assert.match(screen, /kind === "nationality"\) void selectNationality\(item.value\)/);
+  assert.match(screen, /kind !== "nationality" && !keyboardVisible/);
+  assert.match(screen, /kind === "nationality" \? <View style=\{s.iconButton\}/);
+  assert.match(screen, /await travelApi.updateProfile\(\{ nationality: value \}\)/);
+  assert.match(screen, /setDraft\(current => \(\{ \.\.\.current, nationality \}\)\)/);
+  assert.match(screen, /if \(succeeded\) closeWithSheetAnimation\(onClose\)/);
+  assert.match(screen, /setSelectionError\(c.saveFailure\)/);
+});
+
+
+test("phone country selector groups the smaller flag with its dial code", () => {
+ const phone = screen.slice(screen.indexOf("function PhoneControl("), screen.indexOf("export function PersonalDetailsScreen"));
+ assert.ok(phone.indexOf("{option?.dialCode}</Text>") < phone.indexOf("</Pressable>"));
+ assert.equal((phone.match(/\{option\?\.dialCode\}<\/Text>/g) ?? []).length, 1);
+ assert.match(screen, /flag: \{ width: 22, height: 15 \}/);
 });

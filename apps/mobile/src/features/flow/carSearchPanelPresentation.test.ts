@@ -6,69 +6,71 @@ import { formatTime, rentalTimesSummary, selectRentalRangeDate } from "./carSear
 const panel = readFileSync("src/features/flow/CarSearchPanel.tsx", "utf8");
 const pickers = readFileSync("src/features/flow/CarSearchPickers.tsx", "utf8");
 const dateRange = readFileSync("src/features/flow/DateRangeSheet.tsx", "utf8");
-const icons = readFileSync("src/features/flow/FlowIcon.tsx", "utf8");
+const icons = readFileSync("src/features/flow/FlowIcon.tsx", "utf8") + readFileSync("src/features/flow/flowIconTypes.ts", "utf8");
 
-test("Cars closed selectors share the compact field contract without custom chevrons", () => {
-  const closedForm = panel.slice(0, panel.indexOf("export function CarLocationSheet"));
+test("Cars main selectors use a polished independent-card treatment without changing Results Edit", () => {
+  const mainRows = panel.slice(panel.indexOf("const mainRows"), panel.indexOf("const editRows"));
   const fields = [
-    ["Pick-up location", "location"],
-    ["Drop-off location", "location"],
-    ["Rental dates", "calendar"],
-    ["Pick-up / Return time", "clock"],
-    ["Driver age", "person"],
+    ["PICKUP LOCATION", "location"],
+    ["DROP-OFF LOCATION", "location"],
+    ["RENTAL DATES", "calendar"],
+    ["PICK-UP / RETURN TIME", "clock"],
+    ["DRIVER AGE", "person"],
   ] as const;
 
-  assert.equal((closedForm.match(/<CompactSearchField /g) ?? []).length, fields.length);
+  assert.match(mainRows, /<View style=\{styles\.mainStack\}>/);
+  assert.equal((mainRows.match(/<View style=\{mainCardStyle\}>/g) ?? []).length, fields.length);
+  assert.equal((mainRows.match(/<ResultsEditRow /g) ?? []).length, fields.length);
   for (const [label, icon] of fields) {
-    assert.match(closedForm, new RegExp(`<CompactSearchField label="${label.replace("/", "\\/")}"[^\\n]*icon="${icon}"`));
+    assert.match(mainRows, new RegExp(`<ResultsEditRow label="${label.replace("/", "\\/")}" appearance="main"[^\n]*icon="${icon}"`));
   }
-  assert.match(closedForm, /label="Pick-up location"[^\n]*value=\{form\.pickupLocation \|\| "Airport, city, or address"\}/);
-  assert.match(closedForm, /label="Drop-off location"[^\n]*value=\{form\.dropoffLocation \|\| "Enter city or airport"\}/);
-  for (const copy of ["Pickup date", "Return date", "Select driver age", "Search cars"]) {
-    assert.match(closedForm, new RegExp(copy));
-  }
-  assert.doesNotMatch(closedForm, /<Field |LocationLauncher|name="chevron"/);
-  assert.equal((closedForm.match(/trailing=\{false\}/g) ?? []).length, 2);
+  assert.match(panel, /editCardStyle = \[styles\.resultsEditCard, \{ backgroundColor: ft\.colors\.card, borderColor: ft\.colors\.border \}\]/);
+  assert.match(panel, /mainCardStyle = \[styles\.mainCard, \{ backgroundColor: ft\.colors\.card, borderColor: ft\.colors\.border \}\]/);
+  assert.match(panel, /mainStack:\{width:"100%",gap:8\}/);
+  assert.match(panel, /mainCard:\{width:"100%",borderWidth:1,borderRadius:15,overflow:"hidden"\}/);
+  assert.match(panel, /mainRow:\{minHeight:66,paddingHorizontal:12,paddingVertical:9\}/);
+  assert.match(panel, /mainCopy:\{gap:4\}/);
+  assert.match(panel, /mainLabel:\{fontSize:10,lineHeight:13,fontWeight:"800",letterSpacing:0\.5\}/);
+  assert.match(panel, /mainValue:\{fontSize:15,lineHeight:20,fontWeight:"600"\}/);
+  assert.match(panel, /mainSecondary:\{fontSize:12,lineHeight:16\}/);
+  assert.match(panel, /mainIconSlot:\{width:18,alignItems:"center",justifyContent:"center"\}/);
+  assert.match(panel, /mainDisclosureSlot:\{width:16,alignItems:"center",justifyContent:"center"\}/);
+  assert.match(panel, /<FlowIcon name=\{icon\} size=\{mainAppearance \? 18 : 16\}/);
+  assert.match(panel, /<FlowIcon name="chevronDown" size=\{mainAppearance \? 16 : 18\}/);
+  assert.doesNotMatch(mainRows, /CompactSearchField|borderTopWidth|divider/);
 });
 
-test("Cars keeps the checkbox semantics, toggle, conditional drop-off, and selected check", () => {
+test("Cars keeps the checkbox semantics, toggle, conditional drop-off, selected check, and stale target clearing", () => {
+  const mainRows = panel.slice(panel.indexOf("const mainRows"), panel.indexOf("const editRows"));
   assert.match(panel, /accessibilityRole="checkbox"[^\n]*accessibilityState=\{\{ checked: form\.separateDropoff \}\}/);
-  assert.match(panel, /onPress=\{\(\) => setForm\(\{ \.\.\.form, separateDropoff: !form\.separateDropoff \}\)\}/);
-  assert.match(panel, /form\.separateDropoff \? <FieldError[^\n]*label="Drop-off location"/);
-  assert.match(panel, /form\.separateDropoff \? <FlowIcon name="check" color="white" size=\{15\}\/\> : null/);
-  assert.doesNotMatch(panel, /<CompactSearchField label="Return to a different location"/);
+  assert.match(panel, /onPress=\{\(\) => setForm\(\{ \.\.\.form, separateDropoff: !form\.separateDropoff,[^\n]*dropoffLocationTarget: undefined/);
+  assert.match(mainRows, /form\.separateDropoff \? <FieldError[^\n]*label="DROP-OFF LOCATION"/);
+  assert.match(panel, /form\.separateDropoff \? <FlowIcon name="check" color="white" size=\{15\}\/> : null/);
 });
 
 test("Cars presents one unified date field and one unified time field in form order", () => {
-  assert.equal((panel.match(/<CompactSearchField label="Rental dates"/g) ?? []).length, 1);
-  assert.equal((panel.match(/<CompactSearchField label="Pick-up \/ Return time"/g) ?? []).length, 1);
-  assert.doesNotMatch(panel, /<Field label="(?:Pick-up|Drop-off) (?:date|time)"/);
-  assert.match(panel, /label="Rental dates"[\s\S]*icon="calendar"/);
-  assert.match(panel, /label="Pick-up \/ Return time"[\s\S]*icon="clock"/);
-  const order = ["Pick-up location", "Drop-off location", "Rental dates", "Pick-up / Return time", "Driver age", "PrimaryButton", "Return to a different location"];
-  let cursor = -1; for (const marker of order) { const next=panel.indexOf(marker,cursor+1); assert.ok(next>cursor,`${marker} must follow the preceding control`); cursor=next; }
+  const mainRows = panel.slice(panel.indexOf("const mainRows"), panel.indexOf("const editRows"));
+  assert.equal((mainRows.match(/label="RENTAL DATES"/g) ?? []).length, 1);
+  assert.equal((mainRows.match(/label="PICK-UP \/ RETURN TIME"/g) ?? []).length, 1);
+  const order = ["PICKUP LOCATION", "DROP-OFF LOCATION", "RENTAL DATES", "PICK-UP / RETURN TIME", "DRIVER AGE"];
+  let cursor = -1; for (const marker of order) { const next=mainRows.indexOf(marker,cursor+1); assert.ok(next>cursor,`${marker} must follow the preceding control`); cursor=next; }
 });
 
 test("Cars keeps the return-location checkbox after and outside the optional submit CTA", () => {
-  const submitStart = panel.indexOf("{showSubmit ? <View style={styles.pad}>");
-  const submitEnd = panel.indexOf("</View> : null}", submitStart) + "</View> : null}".length;
-  const checkboxStart = panel.indexOf('<Pressable accessibilityRole="checkbox"');
-  const checkboxEnd = panel.indexOf("</Pressable>", checkboxStart) + "</Pressable>".length;
-  const dropoffField = panel.indexOf('label="Drop-off location"');
-  const rentalDatesField = panel.indexOf('label="Rental dates"');
-
+  const submitStart = panel.indexOf('<View style={styles.mainSubmit}><PrimaryButton');
+  const submitEnd = panel.indexOf("</View>", submitStart) + "</View>".length;
+  const checkboxStart = panel.indexOf('<Pressable accessibilityRole="checkbox"', submitEnd);
   assert.ok(submitStart >= 0 && submitEnd > submitStart, "the optional submit block must exist");
   assert.ok(checkboxStart > submitEnd, "the checkbox must follow and remain outside the showSubmit block");
-  assert.ok(checkboxEnd > checkboxStart, "the complete checkbox must remain independently rendered");
-  assert.ok(dropoffField > 0 && dropoffField < rentalDatesField, "conditional Drop-off location must precede Rental dates");
   assert.equal((panel.match(/<Pressable accessibilityRole="checkbox"/g) ?? []).length, 1);
-  assert.equal((panel.match(/accessibilityLabel="Return to a different location"/g) ?? []).length, 1);
 });
 
-test("Cars does not finitely cap paired date or time summaries", () => {
-  assert.match(panel, /label="Rental dates"[^\n]*valueNumberOfLines=\{0\}/);
-  assert.match(panel, /label="Pick-up \/ Return time"[^\n]*valueNumberOfLines=\{0\}/);
-  assert.doesNotMatch(panel, /label="(?:Rental dates|Pick-up \/ Return time)"[^\n]*valueNumberOfLines=\{[1-9]\d*\}/);
+test("Cars paired summaries are safely constrained inside flexible cards", () => {
+  const mainRows = panel.slice(panel.indexOf("const mainRows"), panel.indexOf("const editRows"));
+  assert.match(mainRows, /label="RENTAL DATES"[^\n]*disclosure/);
+  assert.match(mainRows, /label="PICK-UP \/ RETURN TIME"[^\n]*disclosure/);
+  assert.match(panel, /resultsEditText:\{flex:1,minWidth:0\}/);
+  assert.match(panel, /<Text numberOfLines=\{1\} style=\{\[styles\.resultsEditValue/);
 });
 
 test("Cars summaries cover empty, partial, and complete values with Return terminology", () => {
@@ -115,14 +117,12 @@ test("time rows keep horizontal separators and selected treatment without vertic
   assert.match(pickers, /chosen\?<FlowIcon name="check"/);
 });
 
-test("Cars uses the compact field person icon and shared default chevron", () => {
-  assert.match(panel, /<CompactSearchField label="Driver age"[^\n]*icon="person"[^\n]*onPress/);
-  assert.equal((panel.slice(0, panel.indexOf("export function CarLocationSheet")).match(/trailing=\{false\}/g) ?? []).length, 2);
-  assert.doesNotMatch(panel.slice(0, panel.indexOf("export function CarLocationSheet")), /name="chevron"/);
-  assert.match(icons, /\| "clock" \| "close"/);
-  assert.match(icons, /clock: <><Circle \{\.\.\.line\}[\s\S]*?<Path \{\.\.\.line\}/);
+test("Cars main fields use the Results Edit icon and disclosure contract", () => {
+  const mainRows = panel.slice(panel.indexOf("const mainRows"), panel.indexOf("const editRows"));
+  assert.match(mainRows, /label="PICKUP LOCATION"[^\n]*icon="location"[^\n]*onPress/);
+  assert.doesNotMatch(mainRows.match(/label="PICKUP LOCATION"[^\n]+/)?.[0] ?? "", /disclosure/);
+  for (const [label, icon] of [["RENTAL DATES", "calendar"], ["PICK-UP / RETURN TIME", "clock"], ["DRIVER AGE", "person"]]) assert.match(mainRows, new RegExp(`label="${label.replace("/", "\\/")}"[^\n]*icon="${icon}"[^\n]*disclosure`));
 });
-
 
 test("Cars Search and time Done CTAs are iconless while selection checks remain", () => {
   assert.match(panel, /<PrimaryButton label=\{submitLabel\} icon=\{null\} onPress=\{submit\}\/>/);
@@ -131,5 +131,14 @@ test("Cars Search and time Done CTAs are iconless while selection checks remain"
 });
 
 test("Cars keeps the separate-return checkbox selection check", () => {
-  assert.match(panel, /form\.separateDropoff \? <FlowIcon name="check" color="white" size=\{15\}\/> : null/);
+  assert.match(panel, /form\.separateDropoff \? <FlowIcon name="check" color="white" size=\{15\}\/\> : null/);
+});
+
+test("Cars Results edit behavior remains isolated while field visuals are shared", () => {
+  assert.match(panel, /editAppearance = false/);
+  assert.match(panel, /\{editAppearance \? editRows : <>/);
+  assert.match(panel, /\{!editAppearance \? <Pressable accessibilityRole="checkbox"/);
+  assert.match(panel, /editAppearance \? <Pressable[\s\S]*styles\.resultsEditSubmit/);
+  assert.match(panel, /const displayDate = [^\n]*weekday: "short"/);
+  assert.match(panel, /resultsEditRentalDatesSummary\(form\.pickupDate, form\.dropoffDate\)/);
 });

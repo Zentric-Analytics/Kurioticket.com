@@ -7,7 +7,7 @@ const loader = readFileSync("src/features/search/NativeTravelSearchLoadingScreen
 const stateUi = readFileSync("src/features/search/FlightResultsState.tsx", "utf8");
 
 test("initial Flight search uses the one full-screen branded loader", () => {
-  assert.match(screen, /if \(status === "loading"\) return <NativeBrandedSearchLoading product=\{product\}/);
+  assert.match(screen, /if \(status === "loading" \|\| hotelCurrencyPending\) return <NativeBrandedSearchLoading product=\{product\}/);
   assert.doesNotMatch(screen, /function FlightLoadingExperience|FLIGHT_LOADING_SKELETON_DELAY_MS/);
   assert.doesNotMatch(stateUi, /Searching the best flights for you/);
 });
@@ -25,14 +25,18 @@ test("the branded loader owns calm native progress and accessible rotating statu
 
 test("results become ready without an artificial presentation delay", () => {
   const validationToReady = screen.slice(screen.indexOf("const valid ="), screen.indexOf("setMessage(response.warnings"));
-  assert.match(validationToReady, /setResults\(valid\);\s*resultsRef\.current = valid;\s*setStatus\(valid\.length \? "ready" : "empty"\);/);
+  assert.match(validationToReady, /setResults\(valid\);\s*resultsRef\.current = valid;[\s\S]*setStatus\(valid\.length \? "ready" : "empty"\);/);
   assert.doesNotMatch(validationToReady, /setTimeout|sleep|minimum|waitForAnimation/);
 });
 
-test("ready Flight content retains dates, sticky filters, alert, count and cards", () => {
-  const list = screen.slice(screen.indexOf("<Animated.SectionList"), screen.indexOf(") : (", screen.indexOf("<Animated.SectionList")));
-  assert.match(list, /ListHeaderComponent=\{flightDateStrip\}/);
-  assert.match(list, /renderSectionHeader[\s\S]*?\{filterRail\}[\s\S]*?stickySectionHeadersEnabled/);
-  assert.match(list, /renderSectionHeader[\s\S]*?renderItem[\s\S]*?<FlightResultsSummaryRow[\s\S]*?count=\{sorted\.length\}[\s\S]*?<FlightCard/);
-  assert.match(list.slice(list.indexOf("renderItem=")), /PriceAlert[\s\S]*FlightResultsSummaryRow[\s\S]*FlightCard/);
+test("ready Flight content retains header filters, dates, alert, count and cards", () => {
+  const header = screen.slice(screen.indexOf("function FlightResultsHeader"), screen.indexOf("function HotelResultsHeader"));
+  const listStart = screen.indexOf("<Animated.SectionList");
+  const list = screen.slice(listStart, screen.indexOf("<HotelResultsHeader", listStart));
+  assert.match(header, /accessibilityLabel="Flight result filters"[\s\S]*?\{filterRail\}/);
+  assert.match(list, /sections=\{\[\{ data: !flightState \? \[null, \.\.\.\(sorted as FlightResult\[\]\)\] : \[\] \}\]\}/);
+  assert.match(list, /flightResultsIntro[\s\S]*?\{flightDateStrip\}/);
+  assert.doesNotMatch(list, /renderSectionHeader|stickySectionHeadersEnabled|\{filterRail\}/);
+  assert.match(list, /renderItem=\{\(\{ item, index \}\) => item === null \? \([\s\S]*?<FlightPriceAlert[\s\S]*?<FlightResultsSummaryRow count=\{sorted\.length\} \/>[\s\S]*?\) : \([\s\S]*?<FlightCard/);
+  assert.match(list, /logInitialMount=\{index === 1\}/);
 });

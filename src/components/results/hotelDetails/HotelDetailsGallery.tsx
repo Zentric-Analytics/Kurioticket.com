@@ -16,10 +16,11 @@ import {
   getHotelGallerySwipeDirection,
 } from "@/components/results/hotelGalleryPresentation";
 import { HotelDetailsGalleryDialog } from "@/components/results/hotelDetails/HotelDetailsGalleryDialog";
+import { HotelDetailsGalleryGridDialog } from "@/components/results/hotelDetails/HotelDetailsGalleryGridDialog";
 
 type HotelDetailsGalleryProps = {
   embedded?: boolean;
-  layout?: "hero" | "mosaic";
+  layout?: "hero" | "mosaic" | "desktop";
   remainingPhotosLabel?: string;
   activeUrl: string;
   imageAlt: string;
@@ -81,10 +82,16 @@ export function HotelDetailsGallery({
   onImageError,
 }: HotelDetailsGalleryProps) {
   const [viewerOpen, setViewerOpen] = useState(false);
+  const [gridOpen, setGridOpen] = useState(false);
   const openerRef = useRef<HTMLElement | null>(null);
+  const gridScrollTopRef = useRef(0);
   const restoreFocusFrameRef = useRef<number | null>(null);
   const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
   const thumbnailStripRef = useRef<HTMLDivElement>(null);
+  const getGridScrollTop = useCallback(() => gridScrollTopRef.current, []);
+  const updateGridScrollTop = useCallback((scrollTop: number) => {
+    gridScrollTopRef.current = scrollTop;
+  }, []);
 
   useEffect(() => {
     const strip = thumbnailStripRef.current;
@@ -101,6 +108,18 @@ export function HotelDetailsGallery({
 
   const closeViewer = useCallback(() => {
     setViewerOpen(false);
+    if (gridOpen) return;
+    if (restoreFocusFrameRef.current !== null)
+      window.cancelAnimationFrame(restoreFocusFrameRef.current);
+    restoreFocusFrameRef.current = window.requestAnimationFrame(() => {
+      openerRef.current?.focus();
+      restoreFocusFrameRef.current = null;
+    });
+  }, [gridOpen]);
+
+  const closeGrid = useCallback(() => {
+    setGridOpen(false);
+    gridScrollTopRef.current = 0;
     if (restoreFocusFrameRef.current !== null)
       window.cancelAnimationFrame(restoreFocusFrameRef.current);
     restoreFocusFrameRef.current = window.requestAnimationFrame(() => {
@@ -121,6 +140,12 @@ export function HotelDetailsGallery({
     if (!activeUrl) return;
     openerRef.current = opener;
     setViewerOpen(true);
+  }
+
+  function openGrid(opener: HTMLElement) {
+    openerRef.current = opener;
+    gridScrollTopRef.current = 0;
+    setGridOpen(true);
   }
 
   function handlePointerUp(event: PointerEvent<HTMLElement>) {
@@ -158,6 +183,80 @@ export function HotelDetailsGallery({
   const remainingPhotoCount = Math.max(
     usableIndices.length - visibleIndices.length,
     0,
+  );
+  const desktopIndices = getHotelGalleryMosaicIndices(
+    usableIndices,
+    activeIndex,
+    5,
+  );
+
+  const desktopGallery = (
+    <div
+      className="relative grid aspect-[2.32/1] max-h-[440px] min-w-0 grid-cols-4 grid-rows-2 gap-2 overflow-hidden rounded-xl bg-slate-100"
+      data-hotel-desktop-gallery
+    >
+      {desktopIndices.map((imageIndex, tileIndex) => {
+        const url = displayCandidates[imageIndex];
+        const tileLabel = openPhotoViewerLabel
+          .replace("{{current}}", String(usableIndices.indexOf(imageIndex) + 1))
+          .replace("{{total}}", String(usableIndices.length))
+          .replace("{{hotelName}}", hotelName);
+        const tileLayout =
+          desktopIndices.length === 1
+            ? "col-span-4 row-span-2"
+            : desktopIndices.length === 2 || tileIndex === 0
+              ? "col-span-2 row-span-2"
+              : desktopIndices.length === 3 ||
+                  (desktopIndices.length === 4 && tileIndex === 1)
+                ? "col-span-2"
+                : "";
+
+        return (
+          <button
+            key={url}
+            type="button"
+            className={`group relative min-h-0 min-w-0 cursor-zoom-in overflow-hidden focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[-3px] focus-visible:outline-blue ${tileLayout}`}
+            aria-label={tileLabel}
+            onClick={(event) => {
+              onSelectImage(imageIndex);
+              openViewer(event.currentTarget);
+            }}
+          >
+            <Image
+              src={url}
+              alt={tileIndex === 0 ? imageAlt : ""}
+              fill
+              className="object-cover transition-transform duration-200 group-hover:scale-[1.015]"
+              sizes={
+                desktopIndices.length === 1
+                  ? "(min-width: 1080px) 1020px, calc(100vw - 60px)"
+                  : tileLayout.includes("col-span-2")
+                    ? "(min-width: 1080px) 506px, calc(50vw - 34px)"
+                    : "(min-width: 1080px) 249px, calc(25vw - 21px)"
+              }
+              onError={() => onImageError(url)}
+              loading="eager"
+              fetchPriority={tileIndex === 0 ? "high" : "auto"}
+            />
+          </button>
+        );
+      })}
+      {!desktopIndices.length ? (
+        <div className="col-span-4 row-span-2 flex flex-col items-center justify-center gap-3 px-6 text-center text-[#192024]">
+          <Building2 className="h-11 w-11" aria-hidden="true" />
+          <span className="max-w-xs text-sm">{imageUnavailableText}</span>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={(event) => openGrid(event.currentTarget)}
+          className="focus-ring absolute bottom-4 right-4 inline-flex min-h-10 items-center gap-2 rounded-lg border border-[#d9e2e8] bg-white px-4 text-sm font-semibold text-[#192024] shadow-sm transition-colors hover:bg-[#f3f5f7]"
+        >
+          <Images className="h-4 w-4" aria-hidden="true" />
+          {viewAllPhotosLabel}
+        </button>
+      )}
+    </div>
   );
 
   const mosaic = (
@@ -364,7 +463,9 @@ export function HotelDetailsGallery({
 
   const content = (
     <>
-      {layout === "mosaic" ? (
+      {layout === "desktop" ? (
+        desktopGallery
+      ) : layout === "mosaic" ? (
         <>
           <div className="mx-3 lg:hidden" data-hotel-mobile-gallery-unit>
             {hero}
@@ -414,8 +515,28 @@ export function HotelDetailsGallery({
         {activeIndex >= 0 ? photoPositionAnnouncement : ""}
       </span>
 
+      {layout === "desktop" && gridOpen && !viewerOpen ? (
+        <HotelDetailsGalleryGridDialog
+          hotelName={hotelName}
+          closeLabel={closePhotoViewerLabel}
+          selectPhotoLabel={selectPhotoLabel}
+          usableIndices={usableIndices}
+          displayCandidates={displayCandidates}
+          activeIndex={activeIndex}
+          getInitialScrollTop={getGridScrollTop}
+          onScrollTopChange={updateGridScrollTop}
+          onClose={closeGrid}
+          onSelectImage={(imageIndex) => {
+            onSelectImage(imageIndex);
+            setViewerOpen(true);
+          }}
+          onImageError={onImageError}
+        />
+      ) : null}
+
       {viewerOpen && activeUrl ? (
         <HotelDetailsGalleryDialog
+          desktop={layout === "desktop"}
           activeUrl={activeUrl}
           imageAlt={imageAlt}
           title={photoViewerTitle}

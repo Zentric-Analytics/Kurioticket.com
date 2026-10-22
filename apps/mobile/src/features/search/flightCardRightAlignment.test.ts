@@ -6,9 +6,9 @@ import test from "node:test";
 const source = readFileSync(resolve("src/features/search/ApprovedResultsScreen.tsx"), "utf8");
 const card = source.slice(source.indexOf("function FlightCard"), source.indexOf("function HotelCard"));
 
-test("outbound and return share one structured journey component", () => {
-  assert.match(card, /<FlightJourneyRow label="OUTBOUND" leg=\{outbound\} locale=\{locale\} \/>/);
-  assert.match(card, /\{returnLeg \? <FlightJourneyRow label="RETURN" leg=\{returnLeg\} locale=\{locale\} \/> : null\}/);
+test("all descriptors share one structured journey component", () => {
+  assert.match(card, /journeys\.map\(\(journey, index\) => \(/);
+  assert.match(card, /<FlightJourneyRow[^>]*label=\{journey\.label\} leg=\{journey\.leg\}/);
   assert.equal(card.match(/<View style=\{\[s0\.arrivalColumn, s0\.rightColumnContract\]\}>/g)?.length, 2);
   assert.match(source, /journeyPrimaryRow: \{ width: "100%", flexDirection: "row", alignItems: "center", gap: 6, marginTop: 4 \}/);
   assert.match(source, /departureColumn: \{ flexBasis: 72, minWidth: 72, flexShrink: 0 \}/);
@@ -19,8 +19,8 @@ test("outbound and return share one structured journey component", () => {
 test("arrival and price terminate on the shared right edge", () => {
   assert.match(source, /rightColumnContract: \{ alignItems: "flex-end" \}/);
   assert.match(card, /<View style=\{s0\.flightCommercialRegion\}>\s*<Text[^>]*s0\.bigPrice/);
-  assert.match(card, /\{labels\.viewDetails\}[\s\S]*?<ChevronRight/);
-  assert.doesNotMatch(card, />\s*View details\s*</);
+  assert.match(card, /\{labels\.viewDeals\}[\s\S]*?<ChevronRight/);
+  assert.doesNotMatch(card, />\s*View deals\s*</);
   assert.doesNotMatch(card, />\{roundTrip \? "round trip" : "one way"\}<\/Text>/);
   assert.match(source, /flightMain: \{ width: "100%", alignItems: "stretch"/);
   assert.match(source, /flightDetails: \{ flex: 1, minWidth: 0 \}/);
@@ -33,6 +33,12 @@ test("arrival and price terminate on the shared right edge", () => {
   assert.doesNotMatch(fareRowStyle, /position|top|bottom|marginRight/);
 });
 
+test("View deals shares the Fare rules row geometry and price right edge", () => {
+  assert.match(source, /flightMetadataItem: \{ width: "100%", minWidth: 0, minHeight: 16, flexDirection: "row", alignItems: "center", gap: 6 \}/);
+  assert.match(source, /flightDetailsAffordance: \{ width: "100%", minHeight: 16, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 2 \}/);
+  assert.match(card, /\{labels\.viewDeals\}\s*<\/Text>\s*<ChevronRight/);
+});
+
 test("journeys follow the compact identity row at the full card content width", () => {
   const flightMain = card.slice(card.indexOf('<View style={s0.flightMain}>'), card.indexOf('<View style={[s0.flightCardFooter'));
   const identityStart = flightMain.indexOf('<View style={s0.flightIdentityLayout}>');
@@ -43,16 +49,16 @@ test("journeys follow the compact identity row at the full card content width", 
   assert.ok(identityStart >= 0 && journeyStart > identityStart, "journey list follows the identity row");
   assert.match(identityLayout, /airlineLogoColumn[\s\S]*?<AirlineLogo[\s\S]*?flightDetails[\s\S]*?airlineHeader/);
   assert.doesNotMatch(flightDetails, /journeyList|FlightJourneyRow/);
-  assert.match(flightMain.slice(journeyStart), /journeyList[\s\S]*?<FlightJourneyRow label="OUTBOUND"[\s\S]*?returnLeg \? <FlightJourneyRow label="RETURN"/);
-  assert.match(source, /flightIdentityLayout: \{[^}]*flexDirection: "row"[^}]*gap: 8/);
-  assert.match(source, /airlineLogoColumn: \{ width: 38, flexShrink: 0/);
+  assert.match(flightMain.slice(journeyStart), /journeyList[\s\S]*?journeys\.map[\s\S]*?<FlightJourneyRow/);
+  assert.match(source, /flightIdentityLayout: \{[^}]*flexDirection: "row"[^}]*gap: 10/);
+  assert.match(source, /airlineLogoColumn: \{ width: 36, flexShrink: 0/);
   assert.match(source, /flightDetails: \{ flex: 1, minWidth: 0 \}/);
   assert.match(source, /journeyList: \{ width: "100%", marginTop: 8, gap: 10 \}/);
 });
 
 test("one-way cards omit return while preserving the fare-action alignment", () => {
-  assert.match(card, /const roundTrip = one\(params\.tripType\) === "round-trip"/);
-  assert.match(card, /\{returnLeg \? <FlightJourneyRow[^\n]+ : null\}/);
+  assert.match(card, /const journeys = flightCardJourneys\(result, tripType\)/);
+  assert.match(card, /requestedTripType === "round-trip" \|\| requestedTripType === "multi-city"/);
   assert.doesNotMatch(card, /"round trip" : "one way"/);
   assert.match(card, /<View style=\{s0\.flightCommercialRegion\}>\s*<Text/);
 });
@@ -62,7 +68,8 @@ test("long fares stay readable without changing details navigation or theme beha
   assert.match(card, /s0\.bigPrice[^>]*numberOfLines=\{1\}/);
   assert.doesNotMatch(card, /s0\.bigPrice[^>]*adjustsFontSizeToFit|s0\.bigPrice[^>]*minimumFontScale/);
   assert.match(card, /pathname: "\/flight-details"/);
-  assert.match(card, /buildFlightDetailParams\(\{ searchParams: params, result, fare, displayCurrencyContext \}\)/);
+  assert.match(card, /buildFlightDetailParams\(\{ searchParams: params, result \}\)/);
+  assert.doesNotMatch(card, /buildFlightDetailParams\(\{ searchParams: params, result, fare, displayCurrencyContext \}\)/);
   assert.match(card, /backgroundColor: theme\.surface/);
   assert.match(card, /shadowColor: theme\.dark \?/);
 });
@@ -76,17 +83,18 @@ test("the coherent price column contains one fare and a bottom-aligned details a
   assert.match(fareRow, /s0\.bigPrice[^>]*numberOfLines=\{1\}/);
   assert.doesNotMatch(fareRow, /s0\.bigPrice[^>]*adjustsFontSizeToFit|s0\.bigPrice[^>]*minimumFontScale/);
   assert.match(source, /bigPrice: \{[^}]*fontSize: 19, lineHeight: 24[^}]*fontWeight: "700"[^}]*textAlign: "right"/);
-  assert.match(fareRow, /color: theme\.textPrimary/);
+  assert.match(fareRow, /color: priceColor/);
   assert.doesNotMatch(fareRow, /marginRight|position:/);
   assert.doesNotMatch(fareRow, /baggageSummary|fareRulesSummary|metadataItem/);
   assert.doesNotMatch(fareRow, /mainPriceBasis\.label|Provider price:|s0\.estimatedPrice|s0\.providerPrice/);
   assert.doesNotMatch(fareRow, /US\$|A\$|CA\$|Per traveler|Round trip|One way|Taxes included|From/);
   assert.match(card, /<Pressable[\s\S]*accessibilityLabel=\{cardAccessibilityLabel\}[\s\S]*onPress=\{openDetails\}/);
-  assert.doesNotMatch(fareRow, /View deal|labels\.viewDeal|flightDealAction/);
-  assert.match(fareRow, /<Text[^>]*flightDetailsAffordanceText[^>]*numberOfLines=\{1\}>\s*\{labels\.viewDetails\}\s*<\/Text>\s*<ChevronRight/);
-  assert.doesNotMatch(fareRow, />\s*View details\s*</);
+  assert.doesNotMatch(fareRow, /View deal\b|labels\.viewDeal\b|flightDealAction/);
+  assert.match(fareRow, /<Text[^>]*flightDetailsAffordanceText[^>]*numberOfLines=\{1\}>\s*\{labels\.viewDeals\}\s*<\/Text>\s*<ChevronRight/);
+  assert.doesNotMatch(fareRow, />\s*View deals\s*</);
   assert.ok(card.indexOf('<View style={s0.journeyList}>') < card.indexOf('<View style={s0.flightCommercialRegion}>'));
   assert.match(card, /provider price \$\{providerFare\.accessibilityLabel\}/);
   assert.match(card, /pathname: "\/flight-details"/);
-  assert.match(card, /buildFlightDetailParams\(\{ searchParams: params, result, fare, displayCurrencyContext \}\)/);
+  assert.match(card, /buildFlightDetailParams\(\{ searchParams: params, result \}\)/);
+  assert.doesNotMatch(card, /buildFlightDetailParams\(\{ searchParams: params, result, fare, displayCurrencyContext \}\)/);
 });

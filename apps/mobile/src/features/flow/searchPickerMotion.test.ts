@@ -25,7 +25,11 @@ test("shared native search picker motion has the approved contract", () => {
   assert.match(source, /toValue: currentTravelDistance\(\)/);
   assert.match(source, /useNativeDriver: true/g);
   assert.match(source, /backdropStyle: \{ opacity: backdropOpacity \}/);
-  assert.match(source, /sheetStyle: \{ transform: \[\{ translateY: sheetTranslateY \}\] \}/);
+  assert.match(source, /stationaryOpening && visible[\s\S]*?height: stableStationarySheetHeight\.current[\s\S]*?translateY: 0[\s\S]*?stationaryOpening[\s\S]*?height: stableStationarySheetHeight\.current[\s\S]*?translateY: sheetTranslateY/);
+  assert.match(source, /SEARCH_PICKER_STATIONARY_HEIGHT_RATIO = 0\.82/);
+  assert.match(source, /const \{ top: topSafeAreaInset, bottom: bottomSafeAreaInset \} = useSafeAreaInsets\(\)/);
+  assert.match(source, /Math\.max\(0, windowHeight - topSafeAreaInset\) \* SEARCH_PICKER_STATIONARY_HEIGHT_RATIO/);
+  assert.match(source, /if \(!renderedRef\.current\)[\s\S]*stableStationarySheetHeight\.current/);
   assert.match(source, /generation\.current/);
   assert.match(source, /stopAnimation\(\)/);
   assert.match(source, /setRendered\(false\)/);
@@ -98,14 +102,13 @@ test("every shared motion sheet reports its rendered height", () => {
 
 test("Flight Edit Search uses the shared bottom-sheet motion", () => {
   const editSearch = readFileSync("src/features/search/FlightEditSearchModal.tsx", "utf8");
-  assert.match(editSearch, /useSearchPickerMotion\(visible\)/);
+  assert.match(editSearch, /useSearchPickerMotion\(visible, \{ additionalTravelDistance: floatingBottomGap \}\)/);
   assert.match(editSearch, /motion\.sheetStyle/);
   assert.match(editSearch, /motion\.backdropStyle/);
   assert.match(editSearch, /onLayout=\{motion\.onSheetLayout\}/);
   assert.match(editSearch, /backdrop: \{ flex: 1, justifyContent: "flex-end" \}/);
-  assert.match(editSearch, /sheet: \{ maxHeight: "88%", borderTopLeftRadius: 24, borderTopRightRadius: 24/);
+  assert.match(editSearch, /sheet: \{ maxHeight: "88%", marginHorizontal: FLIGHT_QUICK_SHEET_HORIZONTAL_INSET, borderTopLeftRadius: 24, borderTopRightRadius: 24, borderBottomLeftRadius: 24, borderBottomRightRadius: 24/);
   assert.doesNotMatch(editSearch, /EDIT_SEARCH_REVEAL_OFFSET|useFlightEditSearchMotion|justifyContent: "flex-start"/);
-  assert.doesNotMatch(editSearch, /borderBottomLeftRadius|borderBottomRightRadius/);
 });
 
 test("open settling belongs only to a successfully finished current generation", () => {
@@ -119,7 +122,8 @@ test("open settling belongs only to a successfully finished current generation",
 test("searchable opening waits for measured layout and an explicit presentation start", () => {
   assert.match(source, /controlledOpening = false/);
   assert.match(source, /if \(\s*!visible \|\|\s+openingGeneration\.current !== currentGeneration \|\|\s+measuredSheetHeight\.current === undefined\s*\)\s+return false/);
-  assert.match(source, /openingGeneration\.current = undefined;\s+awaitingFreshOpenLayout\.current = false;\s+Animated\.parallel/s);
+  assert.match(source, /openingGeneration\.current = undefined;\s+awaitingFreshOpenLayout\.current = false;\s+const animations/s);
+  assert.match(source, /Animated\.parallel\(animations\)/);
   assert.match(source, /if \(controlledOpening\) return;\s+const frame = requestAnimationFrame/);
   assert.match(source, /openingGeneration\.current = undefined;\s+Animated\.parallel\(\[/);
 });

@@ -6,18 +6,22 @@ const source = readFileSync(
   new URL("./FlightEditSearchDrawer.tsx", import.meta.url),
   "utf8",
 );
+const styles = readFileSync(new URL("../../app/globals.css", import.meta.url), "utf8");
 
 test("shared mobile flight editor retains the approved drawer structure", () => {
   assert.match(source, /id="flight-mobile-search-title"/);
-  assert.match(source, />\s*Edit flight search\s*</);
-  assert.match(source, /aria-label="Close edit search"/);
+  assert.match(source, /resultsMode \? "Change your search" : t\("editFlightSearch"\)/);
+  assert.match(
+    source,
+    /aria-label=\{t\("closeEditSearch"\) \|\| "Close edit search"\}/,
+  );
   assert.match(source, /data-mobile-trip-type-grid/);
   assert.match(source, /grid-cols-3/);
-  assert.match(source, /role="radiogroup"[\s\S]*?aria-label="Trip type"/);
-  assert.match(source, /role="radio"[\s\S]*?aria-checked=/);
+  assert.match(source, /role=\{resultsMode \? "tablist" : "radiogroup"\}[\s\S]*?aria-label=\{t\("tripType"\)\}/);
+  assert.match(source, /role=\{resultsMode \? "tab" : "radio"\}[\s\S]*?aria-checked=/);
   assert.match(source, /whitespace-nowrap/);
-  for (const label of ["Round-trip", "One-way", "Multi-city"])
-    assert.match(source, new RegExp(label));
+  for (const key of ["roundTrip", "oneWay", "multiCity"])
+    assert.ok(source.includes(`t("${key}")`));
   assert.doesNotMatch(
     source,
     /data-mobile-trip-type-grid[^>]*(?:flex-col|grid-cols-1)/,
@@ -32,82 +36,51 @@ test("shared mobile flight editor retains the approved drawer structure", () => 
   assert.match(source, /overflow-x-hidden overflow-y-auto/);
 });
 
-test("shared editor supports a Details-only bottom sheet while fullscreen remains the default", () => {
+test("Results bottom sheet matches the native floating-sheet geometry", () => {
   assert.match(source, /import \{ createPortal \} from "react-dom"/);
   assert.match(source, /createPortal\(overlay, document\.body\)/);
-  assert.match(source, /mobile-results-overlay-root/);
   assert.match(source, /data-mobile-results-overlay-root/);
-  assert.match(source, /fixed inset-0/);
-  assert.match(source, /fixed inset-0[^\n]*?min-h-0/);
-  assert.doesNotMatch(
-    source.match(/bottomSheet \? "([^"]+)/)?.[1] ?? "",
-    /h-\[100dvh\]|min-h-\[100svh\]/,
-  );
-  assert.match(source, /presentation\?: "fullscreen" \| "bottom-sheet"/);
-  assert.match(source, /presentation = "fullscreen"/);
-  assert.match(source, /data-flight-edit-presentation=\{presentation\}/);
-  assert.match(source, /max-h-\[94dvh\]/);
-  assert.doesNotMatch(source, /(?:^|\s)h-\[94dvh\]/);
-  assert.match(source, /flex min-h-0 w-full min-w-0 flex-col/);
-  assert.match(source, /max-h-\[94dvh\]/);
-  assert.match(source, /overflow-hidden rounded-t-\[22px\]/);
-  assert.match(source, /rounded-t-\[22px\]/);
-  assert.match(source, /mobile-results-sheet-backdrop-clean/);
-  assert.match(source, /canvasColor: "#ffffff"/);
-  assert.match(source, /data-flight-edit-bottom-continuation/);
-  assert.match(source, /data-mobile-results-sheet-bottom-continuation/);
-  assert.match(
-    source,
-    /data-flight-edit-bottom-continuation[\s\S]*?mobile-results-sheet-bottom-continuation[\s\S]*?bg-white/,
-  );
+  assert.match(source, /style=\{bottomSheet \? \{ backgroundColor: "rgba\(8, 18, 35, 0\.52\)" \} : undefined\}/);
+  assert.match(source, /items-end/);
+  assert.match(source, /max-h-\[88dvh\]/);
+  assert.match(source, /mb-3 ml-3 mr-3 flex max-h-\[88dvh\]/);
+  assert.match(source, /w-\[calc\(100%_-_24px\)\]/);
+  assert.match(source, /overflow-hidden rounded-\[24px\]/);
+  assert.match(source, /rounded-\[24px\] bg-\[#F5F7FB\]/);
+  assert.match(source, /resultsMode \? "Change your search" : t\("editFlightSearch"\)/);
+  assert.match(source, /data-flight-results-edit-title/);
+  assert.match(source, /flight-results-edit-title pointer-events-none absolute inset-x-12 text-center/);
+  assert.match(source, /min-h-\[52px\]/);
+  assert.match(source, /h-\[23px\] w-\[23px\]/);
+  assert.doesNotMatch(source, /mobile-results-sheet-backdrop-clean/);
+  assert.doesNotMatch(source, /data-flight-edit-bottom-continuation|data-mobile-results-sheet-bottom-continuation/);
   assert.match(source, /mobile-results-sheet-backdrop/);
-  assert.match(source, /mobile-results-sheet-surface/);
   assert.match(source, /mobile-results-sheet-surface-smooth/);
   assert.match(source, /mobile-results-sheet-backdrop-closing/);
   assert.match(source, /mobile-results-sheet-surface-closing/);
   assert.doesNotMatch(source, /!hasEntered/);
 });
 
-test("bottom sheet uses the shared no-shake lock and delegates launcher focus", () => {
+test("bottom sheet keeps the shared lock through its closing animation", () => {
   assert.match(
     source,
     /useLayoutEffect\(\(\) => \{[\s\S]*?acquireMobileResultsScrollLock\(\)/,
-  );
-  assert.match(
-    source,
-    /openingScrollPositionRef\.current = \{ x: window\.scrollX, y: window\.scrollY \}/,
   );
   const closeHelper = source.slice(
     source.indexOf("const closeDrawer"),
     source.indexOf("useLayoutEffect", source.indexOf("const closeDrawer")),
   );
-  const releaseIndex = closeHelper.indexOf(
-    "scrollLockReleaseRef.current?.({ restoreScroll: false })",
-  );
-  const firstFrameIndex = closeHelper.indexOf("requestAnimationFrame");
-  const correctionIndex = closeHelper.indexOf(
-    "correctUnderlyingResultsScroll()",
-    firstFrameIndex,
-  );
   const closingIndex = closeHelper.indexOf("setIsClosing(true)");
-  const timerIndex = closeHelper.indexOf("window.setTimeout(finishClose, 280)");
-  assert.ok(releaseIndex >= 0 && releaseIndex < firstFrameIndex);
-  assert.ok(
-    firstFrameIndex < correctionIndex && correctionIndex < closingIndex,
-  );
-  assert.ok(closingIndex < timerIndex);
-  assert.equal(closeHelper.match(/restoreScroll: false/g)?.length, 1);
-  assert.match(
-    closeHelper,
-    /requestAnimationFrame\([\s\S]*?requestAnimationFrame\([\s\S]*?requestAnimationFrame\([\s\S]*?setIsClosing\(true\)/,
-  );
+  const timerIndex = closeHelper.indexOf("beginFlightEditSearchClose");
+  assert.ok(timerIndex >= 0 && closingIndex > timerIndex);
+  assert.doesNotMatch(closeHelper, /scrollLockReleaseRef|requestAnimationFrame|window\.scrollTo/);
   assert.match(
     source,
     /scrollLockReleaseRef\.current\?\.\(\{ restoreScroll: true \}\)/,
   );
-  assert.match(source, /isPreparingCloseRef\.current/);
+  assert.match(source, /closeStartedRef\.current/);
   assert.doesNotMatch(source, /position: "fixed"/);
-  assert.match(source, /window\.scrollTo\(\{[\s\S]*?behavior: "auto"/);
+  assert.doesNotMatch(source, /correctUnderlyingResultsScroll|openingScrollPositionRef/);
   assert.doesNotMatch(source, /touchAction:\s*"none"/);
   assert.match(source, /event\.target === event\.currentTarget/);
   assert.match(source, /event\.key === "Escape"/);
@@ -124,54 +97,59 @@ test("bottom sheet uses the shared no-shake lock and delegates launcher focus", 
   );
 });
 
-test("Results flight fields use compact grouped rows", () => {
-  assert.match(source, /data-mobile-results-edit-group/);
-  assert.match(source, /min-h-\[60px\]/);
-  assert.match(source, /rounded-\[14px\].*border border-slate-200/);
-  assert.doesNotMatch(source, /min-h-\[70px\]/);
-  assert.equal(source.match(/h-5 w-5 text-slate-700/g)?.length, 8);
+test("Results flight fields mirror native results-modal density", () => {
+  assert.match(source, /resultsMode[\s\S]*?min-h-\[66px\]/);
+  assert.match(source, /px-3 py-\[9px\]/);
+  assert.match(source, /text-\[10px\] font-extrabold uppercase leading-\[14px\] tracking-\[0\.5px\] text-\[#56658E\]/);
+  assert.match(source, /flightResultsEditValueClassName/);
+  assert.match(source, /grid-cols-\[18px_minmax\(0,1fr\)_16px\]/);
+  assert.match(source, /h-\[18px\] w-\[18px\] text-\[#071A48\]/);
+  assert.match(source, /rounded-\[13px\] border border-\[#E7ECF5\] bg-white/);
+  assert.match(source, /ChevronRight className="h-4 w-4 text-\[#071A48\]"/);
 });
 
-test("Results mode connects all non-multi-city fields while preserving route swap geometry", () => {
+test("Results mode copies native route/date/traveler grouping and trip tabs", () => {
   assert.match(source, /resultsMode\?: boolean/);
   assert.match(source, /resultsMode = false/);
   const groupStart = source.indexOf("data-flight-results-edit-fields");
-  const groupEnd = source.indexOf(
-    "</div>",
-    source.indexOf('data-mobile-field="travelers"', groupStart),
-  );
+  const groupEnd = source.indexOf("            ) : (", groupStart);
   const group = source.slice(groupStart, groupEnd);
-  assert.match(
-    group,
-    /min-w-0 overflow-hidden rounded-\[14px\] border border-slate-200 bg-white/,
-  );
   const fields = ["origin", "destination", "dates", "travelers"].map((field) =>
     group.indexOf(`data-mobile-field="${field}"`),
   );
   assert.ok(fields.every((index) => index >= 0));
-  assert.deepEqual(
-    fields,
-    [...fields].sort((a, b) => a - b),
-  );
+  assert.deepEqual(fields, [...fields].sort((a, b) => a - b));
+
   const routeStart = group.indexOf("data-mobile-route-fields");
-  const routeEnd = group.indexOf("</div>", routeStart);
-  const route = group.slice(routeStart, routeEnd);
-  assert.match(
-    route,
-    /data-mobile-field="origin"[\s\S]*data-mobile-swap-control[\s\S]*data-mobile-field="destination"/,
-  );
-  assert.match(
-    route,
-    /left-1\/2 top-1\/2[\s\S]*-translate-x-1\/2 -translate-y-1\/2/,
-  );
-  assert.doesNotMatch(
-    route,
-    /data-mobile-field="dates"|data-mobile-field="travelers"/,
-  );
+  const dateGroupStart = group.indexOf("data-mobile-results-edit-group", routeStart);
+  const route = group.slice(routeStart, dateGroupStart);
+  assert.match(route, /data-mobile-field="origin"[\s\S]*data-mobile-swap-control[\s\S]*data-mobile-field="destination"/);
+  assert.doesNotMatch(route, /data-mobile-field="dates"|data-mobile-field="travelers"/);
+  assert.match(group, /data-mobile-field="dates"[\s\S]*data-mobile-results-edit-group[\s\S]*data-mobile-field="travelers"/);
+  assert.equal((group.match(/data-mobile-results-edit-group/g) ?? []).length, 2);
+  assert.match(group, /rounded-\[13px\] border border-\[#E7ECF5\]/);
+  assert.match(group, /h-9 w-9[\s\S]*shadow-\[0_2px_4px_rgba\(24,48,91,0\.12\)\]/);
+  assert.match(group, /flight-results-edit-surface[^"]*bg-white/);
   assert.match(
     group,
-    /data-mobile-field="dates"[\s\S]*border-t border-slate-200[\s\S]*data-mobile-field="travelers"/,
+    /data-mobile-swap-control[\s\S]*?rounded-full !border-t-0 bg-white[\s\S]*?h-9 w-9/,
   );
+  assert.match(group, /data-mobile-swap-control[\s\S]*?!border-t-0/);
+
+  assert.match(source, /resultsMode \? "grid min-h-\[51px\]/);
+  assert.match(source, /min-h-\[50px\][\s\S]*border-b-2/);
+  assert.match(source, /role=\{resultsMode \? "tablist" : "radiogroup"\}/);
+  assert.match(source, /role=\{resultsMode \? "tab" : "radio"\}/);
+  assert.match(source, /aria-selected=\{resultsMode \? draft\.tripType === value : undefined\}/);
+  assert.match(source, /flight-results-trip-tab inline-flex min-h-\[50px\]/);
+  assert.match(source, /border-\[#064CF7\] text-\[#064CF7\]/);
+  assert.doesNotMatch(source, /border-\[#064CF7\] font-(?:bold|extrabold)/);
+  assert.match(source, /\{!resultsMode \? \([\s\S]*?h-\[18px\] w-\[18px\]/);
+  assert.match(source, /resultsMode \? t\("searchFlights"\) : t\("search"\)/);
+  assert.match(source, /min-h-\[54px\].*rounded-\[9px\].*bg-\[#064CF7\].*font-extrabold/);
+  assert.match(source, /className=\{resultsMode \? "p-2 pt-4" : undefined\}/);
+  assert.match(styles, /\.flight-results-trip-tab \{[\s\S]*?font-size: 10px !important;[\s\S]*?font-weight: 600 !important;[\s\S]*?text-size-adjust: none;/);
+  assert.match(styles, /\.flight-results-edit-title \{[\s\S]*?font-size: 17px !important;[\s\S]*?line-height: 22px !important;[\s\S]*?text-size-adjust: none;/);
 });
 
 test("Results airport pickers opt in without changing the shared default flow", () => {
@@ -188,6 +166,24 @@ test("shared editor uses canonical mobile pickers and multi-city editor", () => 
   assert.match(source, /MULTI_CITY_MAX_LEGS/);
 });
 
+test("Results Multi-city opts into its dedicated presentation inside the shared drawer", () => {
+  const multiCityBranch = source.slice(
+    source.indexOf('{draft.tripType === "multi-city" ? ('),
+    source.indexOf(") : resultsMode ? (", source.indexOf('{draft.tripType === "multi-city" ? (')),
+  );
+  assert.match(multiCityBranch, /<MultiCityFlightEditor/);
+  assert.match(multiCityBranch, /presentation=\{resultsMode \? "results" : "homepage"\}/);
+  assert.doesNotMatch(multiCityBranch, /presentation="homepage"/);
+  assert.match(source, /overflow-x-hidden overflow-y-auto/);
+});
+
+test("temporary trip-type changes preserve an existing multi-city itinerary", () => {
+  assert.match(source, /preservedMultiCityLegsRef = useRef<FlightSearchLeg\[]>/);
+  assert.match(source, /preservedMultiCityLegsRef\.current = current\.legs/);
+  assert.match(source, /hasPreservedMultiCityJourney/);
+  assert.match(source, /\? preservedLegs/);
+});
+
 test("traveler picker uses the canonical density and Done uses the local Kurioticket blue treatment", () => {
   assert.doesNotMatch(source, /travelerPickerDensity|density=/);
   assert.match(
@@ -200,7 +196,7 @@ test("traveler picker uses the canonical density and Done uses the local Kurioti
   );
   assert.match(
     source,
-    /onClick=\{\(\) => setTravelerPickerOpen\(false\)\}[\s\S]*?>\s*Done/,
+    /onClick=\{\(\) => setTravelerPickerOpen\(false\)\}[\s\S]*?>\s*\{t\("done"\)\}/,
   );
 });
 

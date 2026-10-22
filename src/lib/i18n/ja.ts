@@ -2,8 +2,8 @@ import { translations as en } from "./en";
 import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
-  "accountDashboard.recently": "最近",
   ...en,
+  "accountDashboard.recently": "最近",
   "deals.mobileTravelersTitle": "旅行者",
   "mobileTravelerCabin.title": "旅行者と座席クラス",
   "mobileTravelerCabin.adultDescription": "18歳以上",
@@ -739,10 +739,12 @@ export const translations: TranslationDictionary = {
   displayEstimateConvertedFromProviderPrice: "{{formatted}}。{{providerPrice}} から換算した表示見積もりです。最終的なプロバイダー料金は異なる場合があります。",
   convertedDisplayEstimateProviderPrice: "換算された表示見積もりです。プロバイダー料金：{{providerPrice}}。最終的なプロバイダー料金は異なる場合があります。",
   viewFlight: "航空券を見る",
+  viewDeal: "オファーを見る",
   flightCardProviderHandoff: "最終的な料金、空席状況、予約、運賃規則はプロバイダーで確認されます。",
   flightCardProviderHandoffConverted: "最終的な料金、空席状況、予約、運賃規則はプロバイダーで確認されます。最終的なプロバイダー通貨は選択した表示通貨と異なる場合があります。",
   providerNormalizedItineraryPrefix: "往路と復路の詳細は、プロバイダーで正規化された旅程データから表示されています。",
   checkProvider: "プロバイダーで確認",
+  notSuppliedByProvider: "プロバイダーから提供されていません",
   carryOnIncluded: "機内持ち込み手荷物込み",
   providerRulesApply: "プロバイダー規則が適用されます",
   fareRules: "運賃規則",
@@ -1807,7 +1809,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.preferences.customization.personalization.title": "パーソナライズ",
   "accountDashboard.preferences.customization.personalization.description": "Kurioticket がおすすめをパーソナライズする方法を管理します。",
   "accountDashboard.preferences.customization.personalizeSearches": "検索履歴を使っておすすめをパーソナライズする",
-  "accountDashboard.preferences.customization.personalizedTravel旅行パッケージ": "パーソナライズされた旅行セールを表示する",
+  "accountDashboard.preferences.customization.personalizedTravelDeals": "パーソナライズされた旅行セールを表示する",
   "accountDashboard.preferences.customization.rememberRecentSearches": "最近の検索を記憶する",
   "accountDashboard.preferences.customization.communicationStyle.title": "コミュニケーションスタイル",
   "accountDashboard.preferences.customization.communicationStyle.description": "Kurioticket からの連絡方法を選択します。",

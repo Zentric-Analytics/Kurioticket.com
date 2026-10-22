@@ -16,37 +16,48 @@ function desktopEditorSource() {
   return source.slice(start, end);
 }
 
-function fareStripSource() {
-  const start = source.indexOf("data-desktop-nearby-fare-rail");
-  const end = source.indexOf('className="hidden w-full items-center', start);
-  assert.notEqual(start, -1);
-  assert.notEqual(end, -1);
-  return source.slice(start, end);
-}
-
 test("desktop results editor uses one clean accessible trip-type radio row", () => {
   const editor = desktopEditorSource();
-  const roundTrip = editor.indexOf('label: "Round-trip"');
-  const oneWay = editor.indexOf('label: "One-way"');
-  const multiCity = editor.indexOf('label: "Multi-city"');
+  const roundTrip = editor.indexOf('label: t("roundTrip")');
+  const oneWay = editor.indexOf('label: t("oneWay")');
+  const multiCity = editor.indexOf('label: t("multiCity")');
 
   assert.ok(roundTrip >= 0 && roundTrip < oneWay && oneWay < multiCity);
   assert.match(editor, /role="radiogroup"/);
   assert.match(editor, /role="radio"/);
   assert.match(editor, /aria-checked={selected}/);
   assert.doesNotMatch(editor, /role="listbox"|role="option"|aria-haspopup/);
-  assert.doesNotMatch(editor, /label: t\("oneWay"\)/);
-  assert.doesNotMatch(editor, /label: t\("roundTrip"\)/);
+  assert.doesNotMatch(editor, /label: "(?:One-way|Round-trip|Multi-city)"/);
   assert.match(editor, /data-desktop-trip-selector/);
-  assert.match(editor, /items-center gap-8/);
-  assert.match(editor, /rounded-full border-2/);
+  assert.match(editor, /items-center gap-7/);
+  assert.match(editor, /rounded-full border-\[1\.5px\]/);
 });
 
-test("desktop populated airport inputs remain editable without clear controls", () => {
+test("desktop results keeps trip type inside the clicked edit-search state", () => {
+  assert.match(source, /const shouldRenderDesktopFullSearchForm = false;/);
+  assert.match(source, /const shouldShowDesktopCompactSummary = true;/);
+  assert.match(source, /const showFullSearchForm = isSearchExpandedWhileSticky;/);
+  assert.match(source, /const showCompactSearchSummary = !isSearchExpandedWhileSticky;/);
+  assert.match(
+    source,
+    /shouldShowDesktopCompactSummary &&\s*showCompactSearchSummary[\s\S]*?tripTypeInput === "multi-city"[\s\S]*?navigateDesktopMultiCityToHome\(\)[\s\S]*?expandStickySearch\(\)/,
+  );
+  assert.match(
+    source,
+    /placement === "desktop"[\s\S]*?!shouldRenderDesktopFullSearchForm[\s\S]*?!showFullSearchForm[\s\S]*?return null;/,
+  );
+  assert.match(
+    source,
+    /showFullSearchForm[\s\S]*?data-desktop-trip-selector/,
+  );
+});
+
+
+test("desktop populated airport inputs remain editable while compact header adds local clear controls", () => {
   assert.match(source, /id="results-origin"[\s\S]*?onChange=\{/);
   assert.match(source, /id="results-destination"[\s\S]*?onChange=\{/);
-  assert.doesNotMatch(source, /aria-label={t\("clearOrigin"\)}/);
-  assert.doesNotMatch(source, /aria-label={t\("clearDestination"\)}/);
+  assert.match(source, /data-flight-results-header-origin-clear[\s\S]*?aria-label={t\("clearOrigin"\)}/);
+  assert.match(source, /data-flight-results-header-destination-clear[\s\S]*?aria-label={t\("clearDestination"\)}/);
   assert.doesNotMatch(source, /function clearOriginField/);
   assert.doesNotMatch(source, /function clearDestinationField/);
 });
@@ -54,7 +65,7 @@ test("desktop populated airport inputs remain editable without clear controls", 
 test("desktop results fields lead values with neutral semantic icons", () => {
   assert.ok(
     (source.match(
-      /<MapPin[\s\S]*?aria-hidden="true"[\s\S]*?className="h-4 w-4 shrink-0 text-slate-500"/g,
+      /<MapPin[\s\S]*?aria-hidden="true"[\s\S]*?className="h-4 w-4 shrink-0 text-slate-700"/g,
     )?.length ?? 0) >= 2,
   );
   assert.match(
@@ -80,6 +91,8 @@ test("origin and destination share one bounded production-ready suggestion card"
   assert.match(suggestions, /overflow-hidden/);
   assert.match(suggestions, /min-h-\[58px\]/);
   assert.match(suggestions, /border-b border-slate-200\/75/);
+  assert.match(suggestions, /keyboardNavigation\?: boolean/);
+  assert.match(suggestions, /querySelectorAll<HTMLButtonElement>\(\s*'\[role="option"\]'/);
   assert.doesNotMatch(suggestions, /overflow-auto|max-h-\[/);
   assert.equal(source.match(/<SuggestionList/g)?.length, 6);
 });
@@ -96,28 +109,55 @@ test("desktop traveler picker uses clean traveler names and preserves counters",
   assert.match(popover, /max={adultCount}/);
 });
 
-test("fare strip is one bounded seven-date grid with adjacent week controls", () => {
-  const strip = fareStripSource();
-  assert.equal(source.match(/const nearbyFareVisibleCount = 7;/g)?.length, 1);
-  assert.match(strip, /data-desktop-nearby-fare-rail/);
-  assert.match(strip, /grid-cols-\[48px_repeat\(7,minmax\(0,1fr\)\)_48px\]/);
-  assert.match(strip, /aria-label="Previous nearby fare date"/);
-  assert.match(strip, /aria-label="Next nearby fare date"/);
-  assert.match(strip, /navigateNearbyFareWindow\("previous"\)/);
-  assert.match(strip, /navigateNearbyFareWindow\("next"\)/);
-  assert.match(strip, /displayPrice \?\? "Unavailable"/);
-  const desktopRail = strip.slice(
-    strip.indexOf("data-desktop-nearby-fare-rail"),
-  );
-  assert.doesNotMatch(desktopRail, /overflow-x-auto/);
-  assert.match(desktopRail, /rounded-xl border border-slate-200 bg-white/);
-  assert.match(desktopRail, /selected && "border-\[#075EE8\] bg-blue-50\/80/);
-  assert.equal(desktopRail.match(/h-10 w-10 place-self-center/g)?.length, 2);
+
+test("desktop results omit the nearby-fare calendar while mobile keeps its fare rail", () => {
+  assert.doesNotMatch(source, /data-desktop-nearby-fare-rail/);
+  assert.doesNotMatch(source, /aria-label="Previous nearby fare date"/);
+  assert.doesNotMatch(source, /aria-label="Next nearby fare date"/);
+  assert.doesNotMatch(source, /navigateNearbyFareWindow/);
+  assert.match(source, /data-nearby-fare-presentation="mobile"/);
+  assert.match(source, /flight-mobile-cheaper-nearby/);
 });
 
-test("fare windows are bounded and hidden for multi-city", () => {
-  assert.match(source, /nearbyFareRangeSize - nearbyFareVisibleCount/);
-  assert.match(source, /nearbyFareDaysBeforeAnchor - Math\.floor\(nearbyFareVisibleCount \/ 2\)/);
-  assert.match(source, /setNearbyFareVisibleStart\(nearbyFareCenteredVisibleStart\)/);
+
+test("nearby fare support is mobile-only and remains excluded from multi-city", () => {
+  assert.match(source, /const nearbyFareRangeSize = 10;/);
+  assert.doesNotMatch(source, /nearbyFareVisibleCount|nearbyFareVisibleStart|nearbyFareCenteredVisibleStart/);
+  assert.match(source, /mobileNearbyFaresEnabled/);
   assert.match(source, /body\?\.tripType !== "multi-city"/);
+});
+
+test("desktop Multi-city edits navigate to the homepage Flight form with Multi-city active", () => {
+  const navigationStart = source.indexOf("function buildDesktopMultiCityHomeHref");
+  const tripTypeStart = source.indexOf("function handleTripTypeChange");
+  const headerStart = source.indexOf("function renderDesktopHeaderSearchBar");
+  const headerEnd = source.indexOf("function renderStickySearchPopoutOverlay", headerStart);
+  const navigation = source.slice(navigationStart, tripTypeStart);
+  const header = source.slice(headerStart, headerEnd);
+
+  assert.notEqual(navigationStart, -1);
+  assert.match(navigation, /nextParams\.set\("tripType", "multi-city"\)/);
+  assert.match(navigation, /nextParams\.delete\("returnDate"\)/);
+  assert.match(navigation, /appendFlightLegParams\(nextParams, projection\.legs\)/);
+  assert.match(navigation, /return `\/\?\$\{nextParams\.toString\(\)\}`/);
+  assert.match(
+    navigation,
+    /router\.push\(buildDesktopMultiCityHomeHref\(\), \{ scroll: true \}\)/,
+  );
+  assert.match(
+    navigation,
+    /function openDesktopSearchEditor[\s\S]*?tripTypeInput === "multi-city"[\s\S]*?navigateDesktopMultiCityToHome\(\)[\s\S]*?return;/,
+  );
+  assert.match(
+    header,
+    /option\.value === "multi-city"[\s\S]*?navigateDesktopMultiCityToHome\(\)[\s\S]*?return;[\s\S]*?handleTripTypeChange\(option\.value\)/,
+  );
+  assert.doesNotMatch(
+    header,
+    /option\.value === "multi-city"[\s\S]{0,260}setIsSearchExpandedWhileSticky\(true\)/,
+  );
+  assert.match(
+    source,
+    /onClick=\{\(\) => \{[\s\S]*?tripTypeInput === "multi-city"[\s\S]*?navigateDesktopMultiCityToHome\(\)[\s\S]*?expandStickySearch\(\)/,
+  );
 });

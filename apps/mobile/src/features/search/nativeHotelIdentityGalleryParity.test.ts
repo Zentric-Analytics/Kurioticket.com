@@ -2,20 +2,10 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-const detailSource = readFileSync("src/features/search/ApprovedDetailScreen.tsx", "utf8");
-const hotel = detailSource.slice(
-  detailSource.indexOf("function HotelDetail"),
-  detailSource.indexOf("const detailIcons"),
-);
+const detailSource = readFileSync("src/features/search/HotelDetailsScreen.tsx", "utf8");
+const hotel = detailSource.slice(detailSource.indexOf("function HotelDetail"));
 const gallery = readFileSync("src/features/search/NativeHotelDetails.tsx", "utf8");
-const webIdentity = readFileSync(
-  "../../src/components/results/hotelDetails/StandaloneHotelDetails.tsx",
-  "utf8",
-);
-const webGallery = readFileSync(
-  "../../src/components/results/hotelDetails/HotelDetailsGallery.tsx",
-  "utf8",
-);
+const stayEditor = readFileSync("src/features/search/HotelStayEditor.tsx", "utf8");
 
 function styleRule(source: string, name: string, nextName: string) {
   const start = source.indexOf(`  ${name}:`);
@@ -25,85 +15,117 @@ function styleRule(source: string, name: string, nextName: string) {
   return source.slice(start, end);
 }
 
-test("mobile web retains the Hotel identity and inward action reference", () => {
-  assert.match(webIdentity, /text-\[22px\] font-extrabold leading-tight tracking-\[-0\.025em\]/);
-  assert.match(webIdentity, /className="mt-2 space-y-1 lg:hidden"/);
-  assert.match(webIdentity, /gap-1\.5 text-xs font-semibold leading-5/);
-  assert.match(webIdentity, /className="h-4 w-4 shrink-0"/);
-  assert.match(webIdentity, /className="flex shrink-0 gap-0 lg:gap-3"/);
-  assert.match(webIdentity, /size-11 items-center justify-end[^\"]*pe-1/);
-  assert.match(webIdentity, /size-11 items-center justify-start[^\"]*ps-1/);
+test("native hotel hero uses the measured full-bleed mobile geometry", () => {
+  assert.match(gallery, /const heroWidth = viewportWidth;/);
+  assert.match(gallery, /const heroHeight = Math\.round\(viewportWidth \* 0\.94\);/);
+  assert.match(gallery, /style=\{\[s\.hero, \{ width: heroWidth, height: heroHeight \}\]\}/);
+  assert.match(gallery, /style=\{\[s\.heroFrame, \{ height: heroHeight \}\]\}/);
+  assert.match(styleRule(gallery, "gallery", "heroFrame"), /width: "100%"[^}]*marginBottom: 0/);
+  assert.match(styleRule(gallery, "heroFrame", "hero"), /width: "100%"[^}]*overflow: "hidden"/);
+  assert.doesNotMatch(styleRule(gallery, "heroFrame", "hero"), /borderRadius|aspectRatio|marginHorizontal/);
 });
 
-test("native Hotel identity matches web typography without changing its facts", () => {
-  const name = styleRule(detailSource, "hotelName", "stars");
-  const fact = styleRule(detailSource, "hotelFact", "hotelClassificationStars");
-  const classification = styleRule(detailSource, "hotelClassificationStars", "hotelGallery");
-  const row = styleRule(detailSource, "hotelFactRow", "hotelDetailBody");
+test("active hotel keeps icon-only header controls fixed over the hero and scrolled content", () => {
+  const scrollEnd = hotel.indexOf("</ScrollView>");
+  const backControl = hotel.indexOf('accessibilityLabel="Back to hotel results"');
+  const identityIndex = hotel.indexOf("<View style={s.identity}>");
+  const heroBackStyle = styleRule(detailSource, "heroBack", "heroActions");
+  const heroActionsStyle = styleRule(detailSource, "heroActions", "heroAction");
 
-  assert.match(name, /fontSize: 22[^}]*lineHeight: 28[^}]*fontWeight: "800"[^}]*fontFamily: appFonts\.extraBold[^}]*letterSpacing: -0\.55/);
-  assert.doesNotMatch(name, /fontWeight: "900"/);
-  assert.match(detailSource, /hotelIdentity: \{[^}]*gap: 12/);
-  assert.match(detailSource, /hotelIdentityCopy: \{ flex: 1, minWidth: 0 \}/);
-  assert.match(detailSource, /hotelIdentityMeta: \{ marginTop: 8, gap: 4 \}/);
-  assert.match(fact, /fontSize: 12[^}]*lineHeight: 20[^}]*fontWeight: "600"[^}]*fontFamily: appFonts\.semibold/);
-  assert.match(row, /minHeight: 20[^}]*alignItems: "flex-start"[^}]*gap: 6/);
-  assert.match(hotel, /<Icon accessible=\{false\} size=\{16\} color=\{theme\.icon\} \/>/);
-  assert.match(hotel, /<Award accessible=\{false\} size=\{16\} color=\{theme\.icon\} \/>/);
-  assert.match(classification, /color: "#F59E0B"[^}]*fontSize: 15[^}]*lineHeight: 20[^}]*letterSpacing: 1\.2[^}]*fontWeight: "400"[^}]*fontFamily: appFonts\.regular/);
-  assert.match(hotel, /accessibilityLabel=\{`\$\{classification\} star hotel`\}/);
-  assert.match(hotel, /\{"★"\.repeat\(classification\)\}/);
-  assert.match(hotel, /\{result\.name\}/);
-  assert.doesNotMatch(hotel, /numberOfLines=\{1\}[\s\S]{0,80}\{result\.name\}/);
+  assert.ok(hotel.indexOf("<NativeHotelGallery") < identityIndex);
+  assert.ok(scrollEnd >= 0 && scrollEnd < backControl, "hotel header controls must remain outside the ScrollView");
+  assert.doesNotMatch(hotel, />Back to hotel results<\/Text>/);
+  assert.equal((hotel.match(/accessibilityLabel="Back to hotel results"/g) ?? []).length, 1);
+  assert.match(hotel, /accessibilityLabel="Back to hotel results"[\s\S]*?onPress=\{returnToHotelResults\}[\s\S]*?s\.heroBack/);
+  assert.match(hotel, /style=\{\[\s*s\.heroBack,\s*\{\s*top: inset\.top \+ 12,\s*zIndex: detailsStatus === "loading" \? 40 : 20,\s*\},\s*\]\}/);
+  assert.match(hotel, /style=\{\[s\.heroActions, \{ top: inset\.top \+ 12 \}\]\}/);
+  assert.match(detailSource, /import \{ DetailGlassSurface \} from "\.\/DetailGlassSurface"/);
+  assert.match(hotel, /<DetailGlassSurface dark=\{false\} variant="hotelLight" style=\{s\.heroBackGlass\} \/>/);
+  assert.match(hotel, /<DetailGlassSurface dark=\{false\} variant="hotelLight" style=\{s\.heroActionsGlass\} \/>/);
+  assert.match(heroBackStyle, /left: 20[^}]*width: 44[^}]*height: 44[^}]*borderRadius: 22[^}]*zIndex: 20/);
+  assert.doesNotMatch(heroBackStyle, /backgroundColor/);
+  assert.match(heroBackStyle, /elevation: 6/);
+  assert.match(heroActionsStyle, /right: 20[^}]*width: 96[^}]*height: 44[^}]*borderRadius: 22[^}]*flexDirection: "row"[^}]*zIndex: 20/);
+  assert.doesNotMatch(heroActionsStyle, /backgroundColor|overflow: "hidden"/);
+  assert.match(heroActionsStyle, /elevation: 6/);
+  assert.match(styleRule(detailSource, "heroAction", "identity"), /width: 48[^}]*height: 44/);
+  assert.match(detailSource, /heroBackGlass: \{ position: "absolute", left: 2, right: 2, top: 2, bottom: 2, borderRadius: 20 \}/);
+  assert.match(detailSource, /heroActionsGlass: \{ position: "absolute", left: 0, right: 0, top: 2, bottom: 2, borderRadius: 20 \}/);
 });
 
-test("native Save and Share move inward inside independent 44dp actions", () => {
-  const group = styleRule(detailSource, "hotelHeaderActions", "hotelHeaderAction");
-  const base = styleRule(detailSource, "hotelHeaderAction", "hotelHeaderActionSave");
-  const save = styleRule(detailSource, "hotelHeaderActionSave", "hotelHeaderActionShare");
-  const share = styleRule(detailSource, "hotelHeaderActionShare", "hotelFact");
-
-  assert.match(group, /flexDirection: "row"[^}]*flexShrink: 0[^}]*gap: 0/);
-  assert.doesNotMatch(group, /marginRight/);
-  assert.match(base, /width: 44[^}]*height: 44[^}]*justifyContent: "center"/);
-  assert.match(save, /alignItems: "flex-end"[^}]*paddingRight: 4/);
-  assert.match(share, /alignItems: "flex-start"[^}]*paddingLeft: 4/);
-  assert.match(hotel, /style=\{\[d\.hotelHeaderAction, d\.hotelHeaderActionSave\]\}/);
-  assert.match(hotel, /style=\{\[d\.hotelHeaderAction, d\.hotelHeaderActionShare\]\}/);
-  assert.equal((hotel.match(/<Pressable/g) ?? []).length > 1, true);
-  assert.match(hotel, /<Heart[\s\S]*?size=\{20\}[\s\S]*?strokeWidth=\{2\}/);
+test("save and share remain independent accessible actions inside one compact pill", () => {
+  assert.match(hotel, /accessibilityLabel=\{saved \? `Remove \$\{result\.name\} hotel from saved` : `Save \$\{result\.name\} hotel`\}/);
+  assert.match(hotel, /accessibilityState=\{\{ selected: saved \}\}/);
   assert.match(hotel, /onPress=\{\(\) => void canonical\.toggleHotel\(result, params\)\}/);
-  assert.match(hotel, /onPress=\{shareHotel\}/);
+  assert.match(hotel, /<Heart[\s\S]*?size=\{22\}[\s\S]*?strokeWidth=\{androidFavoriteColors\.strokeWidth\}/);
+  assert.match(hotel, /accessibilityLabel=\{`Share \$\{result\.name\}`\}[\s\S]*?onPress=\{shareHotel\}/);
+  assert.match(hotel, /<FlowIcon name="share" size=\{22\} strokeWidth=\{androidFavoriteColors\.strokeWidth\} color=\{androidFavoriteColors\.shareStroke\} \/>/);
 });
 
-test("web and native gallery controls remain transparent and accessible", () => {
-  const arrow = styleRule(gallery, "arrow", "left");
-  const left = styleRule(gallery, "left", "right");
-  const right = styleRule(gallery, "right", "counter");
-
-  assert.match(webGallery, /left-0[^\"]*size-11[^\"]*justify-start[^\"]*bg-transparent[^\"]*ps-1/);
-  assert.match(webGallery, /right-0[^\"]*size-11[^\"]*justify-end[^\"]*bg-transparent[^\"]*pe-1/);
-  assert.match(webGallery, /ChevronLeft className="h-5 w-5"/);
-  assert.match(webGallery, /ChevronRight className="h-5 w-5"/);
-  assert.match(arrow, /width: 44[^}]*height: 44[^}]*backgroundColor: "transparent"/);
-  assert.doesNotMatch(arrow, /rgba\(0,0,0,\.48\)|borderRadius: 22/);
-  assert.match(left, /left: 0[^}]*alignItems: "flex-start"[^}]*paddingLeft: 8/);
-  assert.match(right, /right: 0[^}]*alignItems: "flex-end"[^}]*paddingRight: 8/);
-  assert.match(gallery, /accessibilityLabel="Previous photo"[\s\S]*?move\(-1\)[\s\S]*?<ChevronLeft color="white" size=\{20\}/);
-  assert.match(gallery, /accessibilityLabel="Next photo"[\s\S]*?move\(1\)[\s\S]*?<ChevronRight color="white" size=\{20\}/);
+test("active identity, tabs, and editable stay summary follow the tightened hierarchy", () => {
+  const name = styleRule(detailSource, "hotelName", "hotelNamePhoneFit");
+  const identityIndex = hotel.indexOf("<View style={s.identity}>");
+  const tabsIndex = hotel.indexOf("s.tabsShell");
+  const stayIndex = hotel.indexOf("<HotelStayEditor");
+  const bodyIndex = hotel.indexOf("<View style={s.detailBody}>");
+  assert.ok(identityIndex < tabsIndex);
+  assert.ok(tabsIndex < stayIndex);
+  assert.ok(stayIndex < bodyIndex);
+  assert.match(detailSource, /identity: \{[^}]*paddingHorizontal: 16[^}]*paddingTop: 12[^}]*paddingBottom: 8/);
+  assert.match(name, /fontSize: 24[^}]*lineHeight: 30[^}]*fontWeight: "700"[^}]*fontFamily: appFonts\.bold/);
+  assert.match(styleRule(detailSource, "stars", "reviewSummary"), /marginTop: 4[^}]*fontSize: 20[^}]*lineHeight: 24/);
+  assert.match(styleRule(detailSource, "reviewSummary", "reviewText"), /marginTop: 5/);
+  assert.match(hotel, /const hotelReview = nativeHotelReviewPresentation\(result\);/);
+  assert.match(hotel, /hotelReview\?\.score\.split\(" \/ "\)\[0\]/);
+  assert.match(hotel, /\{hotelReview\.label\} \{hotelReviewScore\}/);
+  assert.match(hotel, /\{hotelReview\.count\}/);
+  assert.match(hotel, /<HotelStayEditor[\s\S]*?result=\{result\}[\s\S]*?checkIn=\{checkIn\}[\s\S]*?checkOut=\{checkOut\}[\s\S]*?guests=\{guestCount\}[\s\S]*?rooms=\{roomCount\}/);
+  assert.match(styleRule(stayEditor, "section", "card"), /paddingHorizontal: 10[^}]*paddingTop: 14/);
+  assert.match(styleRule(stayEditor, "card", "copy"), /minHeight: 60[^}]*borderWidth: 1[^}]*borderRadius: 12[^}]*paddingHorizontal: 14[^}]*paddingVertical: 4[^}]*gap: 10/);
+  assert.match(stayEditor, /\{summary\.occupancy\}/);
+  assert.doesNotMatch(stayEditor, /summary\.nightText/);
 });
 
-test("web and native fifth thumbnails show the Images icon with the truthful count", () => {
-  const remainingContent = styleRule(gallery, "remainingContent", "remainingText");
-  const remainingText = styleRule(gallery, "remainingText", "unavailable");
+test("compact stay card exposes full-size edit targets without shrinking the visual card", () => {
+  assert.match(stayEditor, /accessibilityLabel=\{`Edit stay\./);
+  assert.match(stayEditor, /const openEditor = \(\) => \{\s*setEditorView\("menu"\);\s*setEditorOpen\(true\);\s*\};/);
+  assert.match(stayEditor, /onPress=\{openEditor\}/);
+  assert.match(stayEditor, /<Modal[\s\S]*?visible=\{editorOpen\}[\s\S]*?animationType="slide"/);
+  assert.match(stayEditor, /accessibilityLabel=\{`Edit dates\./);
+  assert.match(stayEditor, /onPress=\{onEditDates\}/);
+  assert.match(stayEditor, /accessibilityLabel=\{`Edit rooms and guests\./);
+  assert.match(stayEditor, /onPress=\{onEditCounts\}/);
+  assert.match(styleRule(stayEditor, "editOption", "editOptionCopy"), /minHeight: 56[^}]*paddingVertical: 7/);
+  assert.match(stayEditor, /<DateRangeSheet[\s\S]*?presentation="embedded"/);
+  assert.match(stayEditor, /<HotelStayCountsEditor/);
+  assert.doesNotMatch(stayEditor, /<HotelStayEditSheet|<HotelStayCountsSheet/);
+  assert.match(stayEditor, /travelApi\.searchHotels\(/);
+  assert.match(stayEditor, /response\.results\.find\(\(hotel\) => hotel\.id === result\.id\)/);
+  assert.match(stayEditor, /rebuildHotelStayNavigationState\(/);
+  assert.match(stayEditor, /navigation\.dispatch\(\{ type: "RESET", payload: resetState \}\)/);
+  assert.match(stayEditor, /hotelDisplayPrices: ""/);
+  assert.match(stayEditor, /displayCurrencyContext: ""/);
+  assert.match(stayEditor, /hotelResultsStack: "1"/);
+  assert.match(stayEditor, /router\.setParams\(\{ \.\.\.detailParams, hotelResultsStack: "0" \}\)/);
+});
 
-  assert.match(webGallery, /bg-slate-950\/55 text-xs font-bold text-white/);
-  assert.match(webGallery, /<Images className="mr-1 h-4 w-4"/);
-  assert.match(gallery, /import \{ ChevronLeft, ChevronRight, Images, X \} from "lucide-react-native"/);
-  assert.match(gallery, /images\.slice\(0, 5\)/);
-  assert.match(gallery, /images\.length - 5/);
-  assert.match(gallery, /<Images accessible=\{false\} size=\{16\} color="white" \/>/);
-  assert.match(remainingContent, /flexDirection: "row"[^}]*alignItems: "center"[^}]*gap: 4/);
-  assert.match(remainingText, /fontSize: 12[^}]*lineHeight: 16[^}]*fontWeight: "700"[^}]*fontFamily: appFonts\.bold/);
-  assert.doesNotMatch(remainingText, /fontSize: 16|fontWeight: "900"/);
+test("inline gallery keeps swiping and uses a centered native glass image counter", () => {
+  assert.match(gallery, /horizontal\s*pagingEnabled[\s\S]*?data=\{images\}/);
+  assert.match(gallery, /accessibilityHint=\{images\.length > 1 \? "Swipe horizontally to preview photos, or tap to open all photos\." : "Tap to open all photos\."\}/);
+  assert.match(gallery, /import \{ DetailGlassSurface \} from "\.\/DetailGlassSurface"/);
+  assert.match(gallery, /<View pointerEvents="none" style=\{s\.counter\}>[\s\S]*?<DetailGlassSurface dark=\{false\} variant="hotelLight" style=\{s\.counterGlass\} \/>[\s\S]*?<Text style=\{s\.counterText\}>\{activeIndex \+ 1\} \/ \{images\.length\}<\/Text>/);
+  assert.match(styleRule(gallery, "counter", "counterGlass"), /left: "50%"[^}]*bottom: 15[^}]*minWidth: 52[^}]*minHeight: 30[^}]*translateX: -26/);
+  assert.match(styleRule(gallery, "counterGlass", "counterText"), /StyleSheet\.absoluteFillObject[^}]*borderRadius: 15/);
+  assert.match(styleRule(gallery, "counterText", "unavailable"), /color: "#0F172A"[^}]*fontSize: 13[^}]*fontWeight: "800"/);
+  const inline = gallery.slice(gallery.indexOf("return (", gallery.indexOf("export function NativeHotelGallery")), gallery.indexOf("<Modal"));
+  assert.doesNotMatch(inline, /images\.slice\(0, 5\)|s\.thumbnails|s\.thumbnailFrame|Previous photo|Next photo/);
+});
+
+test("expanded gallery uses a mosaic and swipe viewer without arrows or thumbnails", () => {
+  const modal = gallery.slice(gallery.indexOf("<Modal"), gallery.indexOf("export function HotelRoomOptionsModal"));
+  assert.match(modal, /galleryRows\.map/);
+  assert.match(modal, /\{viewerOpen \? \(/);
+  assert.match(modal, /ref=\{viewerScroll\}[\s\S]*?horizontal[\s\S]*?pagingEnabled/);
+  assert.match(modal, /accessibilityLabel="Back to photo gallery"/);
+  assert.doesNotMatch(modal, /Previous photo|Next photo|viewerThumbnail|accessibilityState=\{\{ selected: activeIndex === index \}\}/);
 });

@@ -36,7 +36,7 @@ export function prepareNativeRelatedHotels({
     if (!hotel.id || seen.has(hotel.id)) return false;
     seen.add(hotel.id);
     return true;
-  }).slice(0, 7).map((hotel) => {
+  }).map((hotel) => {
     const result = classifyHotels([hotel], [], "native-hotel-details-related").results[0];
     const validStars = Number.isInteger(hotel.classificationStars)
       && hotel.classificationStars! >= 1

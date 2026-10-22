@@ -1,22 +1,28 @@
 "use client";
 
-import type { ReactNode, Ref } from "react";
+import type { MouseEvent as ReactMouseEvent, ReactNode, Ref } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import {
+  ArrowLeft,
+  ArrowUpRight,
+  CarFront,
   Clock3,
   ExternalLink,
   Fuel,
   Gauge,
   Heart,
+  IdCard,
   MapPin,
   Share2,
   ShieldCheck,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useLocale } from "@/components/layout/LocaleProvider";
+import { useRouteProgress } from "@/components/layout/RouteProgress";
 import { useRegion } from "@/components/region/RegionProvider";
-import { DetailsBackLink } from "@/components/results/DetailsBackLink";
+import { CarsRouteLoadingOverlay } from "@/components/results/CarsRouteLoadingOverlay";
 import { CarDetailsHero } from "@/components/results/carDetails/CarDetailsHero";
 import {
   CarDetailsSectionNav,
@@ -30,19 +36,23 @@ import { useSavedCar } from "@/components/results/useSavedCar";
 import {
   buildCarDirectionsUrl,
   buildGoogleCarMapEmbedUrl,
+  buildGoogleCarStreetViewEmbedUrl,
 } from "@/lib/cars/carMap";
-import { calculateRentalDays, getPrimaryCarOffer } from "@/lib/cars/carResults";
+import { calculateRentalDays, getComparisonCarOffers, getPrimaryCarOffer, sortCarOffers } from "@/lib/cars/carResults";
 import type {
   CarOffer,
   CarSearchParams,
+  LocationBoundCarSearchParams,
   NormalizedCarResult,
 } from "@/lib/cars/types";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { getDealsGuidedConfirmationActionId } from "@/lib/deals/dealsConfirmationIds";
+import { sandboxBookingUrl } from "@/services/travel/kayakSandboxPublic";
 
 export type CarDetailsPrimaryAction =
   | { kind: "standalone-disabled-provider"; label: string }
+  | { kind: "sandbox-handoff"; label: string; href: string }
   | {
       kind: "guided-car";
       enabled: boolean;
@@ -59,6 +69,85 @@ type PriceFn = (
   amount: number,
   currency: string,
 ) => ReturnType<typeof formatDisplayPrice>;
+
+const providerValue = (value?: string) => {
+  const trimmed = value?.trim() || "";
+  return trimmed === "Supplier not supplied" || trimmed === "KAYAK sandbox"
+    ? ""
+    : trimmed;
+};
+
+const compactBookingProviderName = (offer: CarOffer) => {
+  const provider =
+    providerValue(offer.bookingProviderName) ||
+    providerValue(offer.rentalCompanyName);
+  return provider === "Kurioticket static fixture" ? "Kurioticket" : provider;
+};
+
+function CarOfferProviderBrand({
+  car,
+  offer,
+  providerName,
+  compact = false,
+}: {
+  car: NormalizedCarResult;
+  offer: CarOffer;
+  providerName: string;
+  compact?: boolean;
+}) {
+  const logoUrl =
+    offer.bookingProviderLogoUrl ||
+    (car.inventorySource === "kurioticket-static-cars"
+      ? "/brand/kurioticket-logo-primary-light-bg.svg"
+      : undefined);
+  if (logoUrl) {
+    const localBrandLogo = logoUrl.startsWith("/");
+    const width = compact ? 96 : 112;
+    const height = compact ? 20 : 24;
+    const imageClassName = `block h-auto w-auto object-contain object-left ${compact ? "max-h-5 max-w-[96px]" : "max-h-6 max-w-[112px]"}`;
+    return (
+      <span
+        className={`inline-flex shrink-0 items-center ${compact ? "h-5 w-[96px]" : "h-6 w-[112px]"}`}
+        data-car-offer-provider-brand
+      >
+        {localBrandLogo ? (
+          <Image
+            unoptimized
+            src={logoUrl}
+            alt={`${providerName || "Booking provider"} logo`}
+            width={width}
+            height={height}
+            loading="eager"
+            decoding="sync"
+            className={imageClassName}
+            data-car-offer-provider-brand-image="local"
+          />
+        ) : (
+          <Image
+            src={logoUrl}
+            alt={`${providerName || "Booking provider"} logo`}
+            width={width}
+            height={height}
+            className={imageClassName}
+            data-car-offer-provider-brand-image="remote"
+          />
+        )}
+      </span>
+    );
+  }
+  return (
+    <span
+      className={`car-details-desktop-provider-type min-w-0 truncate text-[#192024] ${compact ? "text-[12px] leading-4" : "text-[14px] leading-5"}`}
+      data-car-offer-provider-brand-fallback
+    >
+      {providerName || "Booking provider"}
+    </span>
+  );
+}
+
+const unavailableOfferLabel = "Offer currently unavailable";
+const unavailableBookingMessage =
+  "This offer is not currently available to book";
 
 const Heading = ({
   level,
@@ -93,9 +182,11 @@ export function CarDetailsExperience({
   sectionHeadingLevel = 2,
   itemHeadingLevel = 3,
   modelHeadingRef,
+  mobileBackControl,
+  desktopBackControl,
 }: {
   car: NormalizedCarResult;
-  search: CarSearchParams;
+  search: LocationBoundCarSearchParams;
   primaryAction: CarDetailsPrimaryAction;
   presentation: "standalone-content" | "guided-content";
   primaryOffer?: CarOffer | null;
@@ -103,13 +194,24 @@ export function CarDetailsExperience({
   sectionHeadingLevel?: HeadingLevel;
   itemHeadingLevel?: HeadingLevel;
   modelHeadingRef?: Ref<HTMLHeadingElement>;
+  mobileBackControl?: ReactNode;
+  desktopBackControl?: ReactNode;
 }) {
   const { locale, t } = useLocale();
   const { selectedOption } = useRegion();
   const rates = useCurrencyRates();
   const { isSaved, toggleSavedCar } = useSavedCar(car, search);
   const [activeTab, setActiveTab] = useState<CarDetailsTab>("compare");
+  const [desktopSectionBarStuck, setDesktopSectionBarStuck] = useState(false);
   const [shareConfirmation, setShareConfirmation] = useState("");
+  const mobileHeaderProtectedRef = useRef(false);
+  const mobileHeaderRef = useRef<HTMLDivElement>(null);
+  const heroImageStageRef = useRef<HTMLElement>(null);
+  const desktopSectionBarRef = useRef<HTMLDivElement>(null);
+  const compareSectionRef = useRef<HTMLElement>(null);
+  const pickupSectionRef = useRef<HTMLElement>(null);
+  const locationSectionRef = useRef<HTMLElement>(null);
+  const [mobileHeaderProtected, setMobileHeaderProtected] = useState(false);
   const copy = (key: string) => t[key] || enTranslations[key] || key;
   const text = {
     passengers: copy("carsResults.passengers").toLowerCase(),
@@ -125,7 +227,58 @@ export function CarDetailsExperience({
     includedShort: copy("carDetails.includedShort"),
     notIncluded: copy("carDetails.notIncluded"),
   };
-  const primaryOffer = suppliedPrimaryOffer ?? getPrimaryCarOffer(car);
+  const canonicalPrimaryOffer = suppliedPrimaryOffer ?? getPrimaryCarOffer(car);
+  const comparisonOffers = useMemo(
+    () => car.inventorySource === "kayak-sandbox" ? sortCarOffers(car.offers) : getComparisonCarOffers(car.offers),
+    [car.offers, car.inventorySource],
+  );
+  const [selectedOfferId, setSelectedOfferId] = useState<string | undefined>(
+    () => canonicalPrimaryOffer?.id,
+  );
+  const fallbackOffer =
+    (canonicalPrimaryOffer &&
+    comparisonOffers.some((candidate) => candidate.id === canonicalPrimaryOffer.id)
+      ? canonicalPrimaryOffer
+      : comparisonOffers[0]) ?? canonicalPrimaryOffer;
+  const primaryOffer =
+    presentation === "standalone-content"
+      ? comparisonOffers.find((candidate) => candidate.id === selectedOfferId) ??
+        fallbackOffer
+      : canonicalPrimaryOffer;
+  const standaloneSandbox =
+    presentation === "standalone-content" &&
+    car.inventorySource === "kayak-sandbox";
+  const selectedSandboxHref = standaloneSandbox
+    ? sandboxBookingUrl(primaryOffer?.bookingUrl)
+    : null;
+  const effectivePrimaryAction: CarDetailsPrimaryAction = standaloneSandbox
+    ? selectedSandboxHref
+      ? {
+          kind: "sandbox-handoff",
+          label: copy("carDetails.continueDeal"),
+          href: selectedSandboxHref,
+        }
+      : {
+          kind: "standalone-disabled-provider",
+          label: copy("carDetails.continueDeal"),
+        }
+    : primaryAction;
+  const actionForOffer = (offer: CarOffer): CarDetailsPrimaryAction => {
+    if (!standaloneSandbox) {
+      return effectivePrimaryAction;
+    }
+    const href = sandboxBookingUrl(offer.bookingUrl);
+    return href
+      ? {
+          kind: "sandbox-handoff",
+          label: copy("carDetails.continueDeal"),
+          href,
+        }
+      : {
+          kind: "standalone-disabled-provider",
+          label: copy("carDetails.continueDeal"),
+        };
+  };
   const days = calculateRentalDays(search.pickupDate, search.dropoffDate);
   const price = (amount: number, currency: string) =>
     formatDisplayPrice({
@@ -152,6 +305,141 @@ export function CarDetailsExperience({
       if (error instanceof DOMException && error.name === "AbortError") return;
     }
   }
+  useEffect(() => {
+    if (presentation !== "standalone-content") return;
+
+    let animationFrame = 0;
+    const protectionLead = 16;
+    const protectionHysteresis = 12;
+
+    const syncProtection = () => {
+      animationFrame = 0;
+      const imageStage = heroImageStageRef.current;
+      const protectedHeader = mobileHeaderRef.current;
+      if (!imageStage || !protectedHeader) return;
+
+      const headerBottom = protectedHeader.getBoundingClientRect().bottom;
+      const imageBottom = imageStage.getBoundingClientRect().bottom;
+      const threshold = mobileHeaderProtectedRef.current
+        ? headerBottom + protectionLead + protectionHysteresis
+        : headerBottom + protectionLead;
+      const nextProtected = imageBottom <= threshold;
+      if (nextProtected === mobileHeaderProtectedRef.current) return;
+      mobileHeaderProtectedRef.current = nextProtected;
+      setMobileHeaderProtected(nextProtected);
+    };
+    const scheduleProtectionSync = () => {
+      if (animationFrame) return;
+      animationFrame = window.requestAnimationFrame(syncProtection);
+    };
+
+    syncProtection();
+    window.addEventListener("scroll", scheduleProtectionSync, {
+      passive: true,
+    });
+    window.addEventListener("resize", scheduleProtectionSync);
+    return () => {
+      window.removeEventListener("scroll", scheduleProtectionSync);
+      window.removeEventListener("resize", scheduleProtectionSync);
+      if (animationFrame) window.cancelAnimationFrame(animationFrame);
+    };
+  }, [presentation]);
+
+  useEffect(() => {
+    if (presentation !== "standalone-content") return;
+
+    let animationFrame = 0;
+    const desktopQuery = window.matchMedia("(min-width: 1024px)");
+
+    const updateDesktopScrollState = () => {
+      animationFrame = 0;
+      if (!desktopQuery.matches) {
+        setDesktopSectionBarStuck(false);
+        return;
+      }
+
+      const barBounds = desktopSectionBarRef.current?.getBoundingClientRect();
+      const stuck = Boolean(barBounds && barBounds.top <= 0);
+      setDesktopSectionBarStuck(stuck);
+
+      const threshold = (barBounds?.height ?? 48) + 24;
+      const sections: Array<{ id: CarDetailsTab; element: HTMLElement | null }> = [
+        { id: "compare", element: compareSectionRef.current },
+        { id: "pickup", element: pickupSectionRef.current },
+        { id: "location", element: locationSectionRef.current },
+      ];
+
+      let current: CarDetailsTab = "compare";
+      for (const section of sections) {
+        if ((section.element?.getBoundingClientRect().top ?? Infinity) <= threshold) {
+          current = section.id;
+        }
+      }
+
+      if (
+        window.scrollY > 0 &&
+        Math.ceil(window.scrollY + window.innerHeight) >=
+          document.documentElement.scrollHeight - 2
+      ) {
+        current = "location";
+      }
+
+      setActiveTab(current);
+    };
+
+    const scheduleDesktopScrollState = () => {
+      if (animationFrame) return;
+      animationFrame = window.requestAnimationFrame(updateDesktopScrollState);
+    };
+
+    scheduleDesktopScrollState();
+    window.addEventListener("scroll", scheduleDesktopScrollState, { passive: true });
+    window.addEventListener("resize", scheduleDesktopScrollState);
+    desktopQuery.addEventListener("change", scheduleDesktopScrollState);
+
+    const observer = new ResizeObserver(scheduleDesktopScrollState);
+    for (const target of [
+      desktopSectionBarRef.current,
+      compareSectionRef.current,
+      pickupSectionRef.current,
+      locationSectionRef.current,
+    ]) {
+      if (target) observer.observe(target);
+    }
+
+    return () => {
+      window.removeEventListener("scroll", scheduleDesktopScrollState);
+      window.removeEventListener("resize", scheduleDesktopScrollState);
+      desktopQuery.removeEventListener("change", scheduleDesktopScrollState);
+      observer.disconnect();
+      if (animationFrame) window.cancelAnimationFrame(animationFrame);
+    };
+  }, [presentation]);
+
+  function handleSectionChange(tab: CarDetailsTab) {
+    setActiveTab(tab);
+    if (
+      presentation !== "standalone-content" ||
+      !window.matchMedia("(min-width: 1024px)").matches
+    ) {
+      return;
+    }
+
+    const target =
+      tab === "compare"
+        ? compareSectionRef.current
+        : tab === "pickup"
+          ? pickupSectionRef.current
+          : locationSectionRef.current;
+
+    target?.scrollIntoView({
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? "auto"
+        : "smooth",
+      block: "start",
+    });
+  }
+
   const pickupSection = (
     <PickupReturnSection
       car={car}
@@ -160,11 +448,12 @@ export function CarDetailsExperience({
       copy={copy}
       sectionHeadingLevel={sectionHeadingLevel}
       itemHeadingLevel={itemHeadingLevel}
+      showSectionHeading
     />
   );
   return (
     <div
-      className={presentation === "guided-content" ? "mt-6" : ""}
+      className={`${presentation === "guided-content" ? "mt-6" : "car-details-standalone-typography"} font-sans [--car-details-mobile-header-boundary:calc(env(safe-area-inset-top)+4.375rem)]`}
       data-car-details-experience
     >
       {shareConfirmation ? (
@@ -176,134 +465,286 @@ export function CarDetailsExperience({
           {shareConfirmation}
         </span>
       ) : null}
-      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
-        <div className="min-w-0 space-y-4 sm:space-y-5">
+      {presentation === "standalone-content" ? (
+        <div
+          ref={mobileHeaderRef}
+          className={`pointer-events-none fixed inset-x-0 top-0 z-40 h-[var(--car-details-mobile-header-boundary)] transition-colors duration-150 lg:hidden ${mobileHeaderProtected ? "bg-white" : "bg-transparent"}`}
+          data-car-details-mobile-controls
+          data-protected={mobileHeaderProtected ? "true" : "false"}
+        >
+          <div className="absolute inset-x-0 top-[calc(env(safe-area-inset-top)+0.75rem)] flex items-start justify-between pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))]">
+            <div className="pointer-events-auto">{mobileBackControl}</div>
+            <div className="pointer-events-auto">
+              <CarHeroActions
+                car={car}
+                isSaved={isSaved}
+                toggleSavedCar={toggleSavedCar}
+                shareCar={shareCar}
+                copy={copy}
+              />
+            </div>
+          </div>
+        </div>
+      ) : null}
+      <div
+        className={`grid items-start gap-5 ${presentation === "standalone-content" ? "lg:grid-cols-1 lg:gap-0" : "lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-6 xl:grid-cols-[minmax(0,1fr)_340px]"}`}
+        data-car-details-content-grid
+      >
+        <div
+          className={`min-w-0 ${presentation === "standalone-content" ? "space-y-0 lg:mx-auto lg:w-full lg:max-w-[900px] lg:rounded-[22px] lg:border lg:border-[#DFE6EF] lg:bg-[#F7F9FC] lg:pb-6 lg:shadow-[0_6px_18px_rgba(7,19,59,0.055)]" : "space-y-4 lg:space-y-5"}`}
+          data-car-details-primary-column
+          data-car-details-desktop-parent-card={presentation === "standalone-content" ? "true" : undefined}
+        >
           <CarDetailsHero
             car={car}
             text={text}
-            overlay={
-              <div className="flex min-w-0 items-start justify-between gap-3 text-slate-950 md:text-white">
-                <div className="min-w-0 pt-0.5">
-                  <p className="text-[10px] font-bold uppercase tracking-[.14em] text-[#075EE8] md:text-white/85">
-                    {car.categoryLabel}
-                  </p>
-                  <Heading
-                    level={modelHeadingLevel}
-                    headingRef={modelHeadingRef}
-                    className="mt-0.5 scroll-mt-24 text-xl font-extrabold leading-tight tracking-[-0.025em] text-slate-950 outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8] sm:text-3xl md:text-white md:focus-visible:ring-white"
-                  >
-                    {car.modelName}
-                  </Heading>
-                </div>
+            imageStageRef={heroImageStageRef}
+            reserveMobileControlSafeZone={presentation === "standalone-content"}
+            standaloneDesktopControls={
+              presentation === "standalone-content" ? (
                 <div
-                  className="flex shrink-0 items-center gap-0"
-                  data-car-details-actions
+                  className="flex w-full items-center justify-between"
+                  data-car-details-desktop-hero-controls
                 >
-                  <button
-                    type="button"
-                    aria-label={`${isSaved ? copy("carDetails.unsave") : copy("carDetails.save")} ${car.modelName}`}
-                    aria-pressed={isSaved}
-                    onClick={toggleSavedCar}
-                    className={`focus-ring flex size-11 items-center justify-center rounded-lg border-0 bg-transparent shadow-none transition hover:bg-slate-100 md:rounded-full md:border md:border-white/35 md:bg-slate-950/35 md:backdrop-blur-sm md:hover:bg-slate-950/55 ${isSaved ? "text-rose-500 md:text-rose-300" : "text-slate-700 md:text-white"}`}
+                  <div className="relative z-10">{desktopBackControl}</div>
+                  <div
+                    className="relative z-10 flex items-center gap-2"
+                    data-car-details-utility-placement="hero"
                   >
-                    <Heart
-                      size={20}
-                      className="translate-x-1.5"
-                      fill={isSaved ? "currentColor" : "none"}
-                      aria-hidden="true"
+                    <CarHeroActions
+                      car={car}
+                      isSaved={isSaved}
+                      toggleSavedCar={toggleSavedCar}
+                      shareCar={shareCar}
+                      copy={copy}
+                      desktop
                     />
-                  </button>
-                  <button
-                    type="button"
-                    aria-label={`${copy("carDetails.share")} ${car.modelName}`}
-                    onClick={() => void shareCar()}
-                    className="focus-ring flex size-11 items-center justify-center rounded-lg border-0 bg-transparent text-slate-700 shadow-none transition hover:bg-slate-100 md:rounded-full md:border md:border-white/35 md:bg-slate-950/35 md:text-white md:backdrop-blur-sm md:hover:bg-slate-950/55"
-                  >
-                    <Share2 size={19} className="-translate-x-1.5" aria-hidden="true" />
-                  </button>
+                  </div>
                 </div>
+              ) : undefined
+            }
+            identity={
+              <div className="min-w-0">
+                <Heading
+                  level={modelHeadingLevel}
+                  headingRef={modelHeadingRef}
+                  className={`scroll-mt-24 text-[22px] font-extrabold leading-7 tracking-[-0.5px] text-[#071A48] outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8] ${presentation === "standalone-content" ? "lg:text-[24px] lg:font-bold lg:leading-[30px] lg:tracking-[-0.35px] lg:text-[#192024]" : "lg:text-slate-950"}`}
+                >
+                  {car.modelName}
+                  {car.orSimilar ? (
+                    <span className={`ms-1.5 inline text-sm font-semibold leading-5 tracking-normal text-[#56658E] ${presentation === "standalone-content" ? "lg:text-[14px] lg:font-normal lg:leading-[22px] lg:text-[#59636A]" : "lg:text-slate-500"}`}>
+                      or similar
+                    </span>
+                  ) : null}
+                </Heading>
+                <p className={`mt-0.5 text-[10px] font-bold uppercase leading-[14px] tracking-[.14em] text-[#075EE8] ${presentation === "standalone-content" ? "lg:mt-1.5 lg:text-[11px] lg:leading-4 lg:tracking-[0.14em]" : ""}`}>
+                  {car.categoryLabel}
+                </p>
               </div>
+            }
+            desktopOverlay={
+              presentation === "guided-content" ? (
+                <div className="flex min-w-0 items-start justify-between gap-3 text-white">
+                  <div className="min-w-0 pt-0.5">
+                    <p className="text-[10px] font-bold uppercase tracking-[.14em] text-white/85">
+                      {car.categoryLabel}
+                    </p>
+                    <Heading
+                      level={modelHeadingLevel}
+                      headingRef={modelHeadingRef}
+                      className="mt-0.5 scroll-mt-24 text-3xl font-extrabold leading-tight tracking-[-0.025em] text-white outline-none focus-visible:ring-2 focus-visible:ring-white"
+                    >
+                      {car.modelName}
+                    </Heading>
+                  </div>
+                  <CarHeroActions
+                    car={car}
+                    isSaved={isSaved}
+                    toggleSavedCar={toggleSavedCar}
+                    shareCar={shareCar}
+                    copy={copy}
+                    desktop
+                  />
+                </div>
+              ) : undefined
+            }
+            guidedMobileActions={
+              presentation === "guided-content" ? (
+                <CarHeroActions
+                  car={car}
+                  isSaved={isSaved}
+                  toggleSavedCar={toggleSavedCar}
+                  shareCar={shareCar}
+                  copy={copy}
+                />
+              ) : undefined
             }
           />
           {presentation === "standalone-content" ? (
             <>
               <CarDetailsSectionNav
                 activeTab={activeTab}
-                onTabChange={setActiveTab}
+                onTabChange={handleSectionChange}
+                desktopBarRef={desktopSectionBarRef}
+                desktopStuck={desktopSectionBarStuck}
+                desktopBackControl={desktopBackControl}
+                desktopUtilityActions={
+                  <div
+                    className="flex items-center gap-2.5"
+                    data-car-details-utility-placement="tabs"
+                  >
+                    <CarHeroActions
+                      car={car}
+                      isSaved={isSaved}
+                      toggleSavedCar={toggleSavedCar}
+                      shareCar={shareCar}
+                      copy={copy}
+                      desktop
+                    />
+                  </div>
+                }
                 labels={{
                   navigation: copy("carDetails.title"),
-                  compare: copy("carDetails.comparePrices"),
+                  compare: "Compare deals",
+                  mobileCompare: "Compare deals",
                   pickup: copy("carDetails.pickupReturn"),
                   location: copy("carDetails.location"),
                 }}
               />
-              <div className="min-h-[240px]">
-                <section
-                  id="car-compare-panel"
-                  role="tabpanel"
-                  aria-labelledby="car-compare-tab"
-                  hidden={activeTab !== "compare"}
-                  className=""
-                >
-                  {primaryOffer ? (
-                    <CarPriceComparisonSection
+              <div className="min-h-[240px]" data-car-details-section-panels>
+                <div className="lg:hidden" data-car-details-mobile-section-panels>
+                  <section
+                    id="car-compare-panel"
+                    role="tabpanel"
+                    aria-labelledby="car-compare-tab"
+                    className={activeTab !== "compare" ? "hidden" : ""}
+                    data-car-details-scroll-section="compare"
+                  >
+                    {primaryOffer ? (
+                      <CarPriceComparisonSection
+                        car={car}
+                        search={search}
+                        offers={comparisonOffers.length ? comparisonOffers : [primaryOffer]}
+                        selectedOfferId={primaryOffer.id}
+                        onSelectOffer={setSelectedOfferId}
+                        days={days}
+                        price={price}
+                        copy={copy}
+                        locale={locale}
+                        headingLevel={sectionHeadingLevel}
+                        showSectionHeading
+                        actionForOffer={actionForOffer}
+                      />
+                    ) : null}
+                  </section>
+                  <div
+                    id="car-pickup-panel"
+                    role="tabpanel"
+                    aria-labelledby="car-pickup-tab"
+                    className={activeTab !== "pickup" ? "hidden" : ""}
+                    data-car-details-scroll-section="pickup"
+                  >
+                    {pickupSection}
+                  </div>
+                  <section
+                    id="car-location-panel"
+                    role="tabpanel"
+                    aria-labelledby="car-location-tab"
+                    className={activeTab !== "location" ? "hidden" : ""}
+                    data-car-details-scroll-section="location"
+                  >
+                    <CarLocationSection
                       car={car}
                       search={search}
-                      offer={primaryOffer}
-                      days={days}
-                      price={price}
-                      copy={copy}
                       locale={locale}
+                      copy={copy}
                       headingLevel={sectionHeadingLevel}
+                      showSectionHeading
                     />
-                  ) : null}
-                </section>
-                <div
-                  id="car-pickup-panel"
-                  role="tabpanel"
-                  aria-labelledby="car-pickup-tab"
-                  hidden={activeTab !== "pickup"}
-                >
-                  {pickupSection}
+                  </section>
                 </div>
-                <section
-                  id="car-location-panel"
-                  role="tabpanel"
-                  aria-labelledby="car-location-tab"
-                  hidden={activeTab !== "location"}
-                  className=""
+
+                <div
+                  className="hidden lg:block lg:space-y-4 lg:pb-8 lg:pt-4"
+                  data-car-details-desktop-linear-sections
                 >
-                  <CarLocationSection
-                    car={car}
-                    search={search}
-                    locale={locale}
-                    copy={copy}
-                    headingLevel={sectionHeadingLevel}
-                  />
-                </section>
+                  <section
+                    ref={compareSectionRef}
+                    className="lg:mx-auto lg:w-full lg:max-w-[680px] lg:rounded-[14px] lg:border lg:border-[#E0E7EF] lg:bg-white lg:shadow-[0_3px_12px_rgba(7,19,59,0.05)]"
+                    data-car-details-scroll-section="compare"
+                    data-car-details-desktop-section="compare"
+                    data-car-details-desktop-section-card="compare"
+                  >
+                    {primaryOffer ? (
+                      <CarPriceComparisonSection
+                        car={car}
+                        search={search}
+                        offers={comparisonOffers.length ? comparisonOffers : [primaryOffer]}
+                        selectedOfferId={primaryOffer.id}
+                        onSelectOffer={setSelectedOfferId}
+                        days={days}
+                        price={price}
+                        copy={copy}
+                        locale={locale}
+                        headingLevel={sectionHeadingLevel}
+                        showSectionHeading
+                        showDesktopOfferList
+                        actionForOffer={actionForOffer}
+                      />
+                    ) : null}
+                  </section>
+
+                  <section
+                    ref={pickupSectionRef}
+                    className="lg:mx-auto lg:w-full lg:max-w-[680px] lg:rounded-[14px] lg:border lg:border-[#E0E7EF] lg:bg-white lg:shadow-[0_3px_12px_rgba(7,19,59,0.05)]"
+                    data-car-details-scroll-section="pickup"
+                    data-car-details-desktop-section="pickup"
+                    data-car-details-desktop-section-card="pickup"
+                  >
+                    <DesktopPickupReturnOverview
+                      car={car}
+                      search={search}
+                      locale={locale}
+                      copy={copy}
+                    />
+                  </section>
+
+                  <section
+                    ref={locationSectionRef}
+                    className="lg:mx-auto lg:w-full lg:max-w-[680px] lg:rounded-[14px] lg:border lg:border-[#E0E7EF] lg:bg-white lg:shadow-[0_3px_12px_rgba(7,19,59,0.05)]"
+                    data-car-details-scroll-section="location"
+                    data-car-details-desktop-section="location"
+                    data-car-details-desktop-section-card="location"
+                  >
+                    <DesktopCarHireLocationOverview
+                      car={car}
+                      search={search}
+                      locale={locale}
+                      copy={copy}
+                    />
+                  </section>
+                </div>
               </div>
             </>
           ) : (
             pickupSection
           )}
         </div>
-        {primaryOffer && (
+        {primaryOffer && presentation !== "standalone-content" ? (
           <aside
-            className={
-              presentation === "standalone-content"
-                ? "hidden self-start lg:sticky lg:top-24 lg:block"
-                : "self-start lg:sticky lg:top-24"
-            }
+            className="self-start lg:sticky lg:top-24"
+            data-car-details-booking-rail
           >
             <BookingSummary
               offer={primaryOffer}
               days={days}
               price={price}
               copy={copy}
-              action={primaryAction}
+              action={effectivePrimaryAction}
+              showRentalBreakdown
             />
           </aside>
-        )}
+        ) : null}
       </div>
       {presentation === "standalone-content" && primaryOffer ? (
         <MobileBookingDock
@@ -311,9 +752,239 @@ export function CarDetailsExperience({
           days={days}
           price={price}
           copy={copy}
-          action={primaryAction}
+          action={effectivePrimaryAction}
         />
       ) : null}
+    </div>
+  );
+}
+
+function DesktopPickupReturnOverview({
+  car,
+  search,
+  locale,
+  copy,
+}: {
+  car: NormalizedCarResult;
+  search: CarSearchParams;
+  locale: string;
+  copy: (key: string) => string;
+}) {
+  return (
+    <div
+      className="mx-auto w-full max-w-[640px] py-5"
+      data-car-details-desktop-pickup-overview
+      data-car-details-flight-panel="pickup"
+    >
+      <h2 className="car-details-desktop-section-heading-type">Pickup and return</h2>
+      <div
+        className="mt-4 grid grid-cols-2 divide-x divide-[#D8E1EC] border-y border-[#D8E1EC] py-4"
+        data-car-details-desktop-pickup-columns
+      >
+        {[
+          [copy("carDetails.pickup"), car.pickupLocation, search.pickupDate, search.pickupTime],
+          [copy("carDetails.return"), car.returnLocation, search.dropoffDate, search.dropoffTime],
+        ].map(([label, location, date, time]) => (
+          <div
+            key={label}
+            className="min-w-0 px-5 py-2"
+          >
+            <p className="car-details-desktop-item-heading-type">{label}</p>
+            <p className="car-details-desktop-primary-copy-type mt-2 flex items-start gap-2">
+              <MapPin size={16} className="mt-0.5 shrink-0 text-[#075EE8]" aria-hidden="true" />
+              <span>{location || copy("carDetails.locationUnavailable")}</span>
+            </p>
+            <p className="car-details-desktop-secondary-copy-type mt-2 flex items-start gap-2">
+              <Clock3 size={16} className="mt-0.5 shrink-0" aria-hidden="true" />
+              <time dateTime={`${date}T${time}`}>
+                {formatCarDate(date, locale)}
+                {time ? ` · ${time}` : ""}
+              </time>
+            </p>
+          </div>
+        ))}
+      </div>
+      {car.shuttleRequired ? (
+        <p className="car-details-desktop-secondary-copy-type mt-3">
+          {copy("carDetails.shuttleRequired")}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+function DesktopCarHireLocationOverview({
+  car,
+  search,
+  copy,
+}: {
+  car: NormalizedCarResult;
+  search: LocationBoundCarSearchParams;
+  locale: string;
+  copy: (key: string) => string;
+}) {
+  const [view, setView] = useState<"map" | "streetview">("map");
+  const pickupLocation =
+    search.pickupLocation.trim() ||
+    car.pickupLocation ||
+    copy("carDetails.locationUnavailable");
+  const googleMapsEmbedApiKey =
+    process.env.NEXT_PUBLIC_GOOGLE_MAPS_EMBED_API_KEY;
+  const mapUrl = buildGoogleCarMapEmbedUrl({
+    pickupLocation: search.pickupLocation.trim() || car.pickupLocation,
+    googleMapsEmbedApiKey,
+  });
+  const coordinates = search.pickupLocationTarget?.coordinates;
+  const streetViewUrl = coordinates
+    ? buildGoogleCarStreetViewEmbedUrl({
+        latitude: coordinates.latitude,
+        longitude: coordinates.longitude,
+        googleMapsEmbedApiKey,
+      })
+    : null;
+  const activeEmbedUrl = view === "streetview" ? streetViewUrl : mapUrl;
+  const directionsUrl = buildCarDirectionsUrl(
+    search.pickupLocation.trim() || car.pickupLocation,
+  );
+
+  return (
+    <div
+      className="mx-auto w-full max-w-[640px] py-5"
+      data-car-details-desktop-location-overview
+      data-car-details-flight-panel="location"
+    >
+      <h2 className="car-details-desktop-section-heading-type">Location</h2>
+      <div
+        className="mt-4 flex flex-wrap items-start justify-between gap-x-8 gap-y-3 border-b border-[#D8E1EC] pb-4 text-sm leading-6"
+        data-car-details-location-identity
+      >
+        <div className="flex min-w-0 items-start gap-2">
+          <MapPin className="mt-1 h-4 w-4 shrink-0" aria-hidden="true" />
+          <span className="car-details-desktop-primary-copy-type min-w-0 break-words">
+            {pickupLocation}
+          </span>
+        </div>
+        {directionsUrl ? (
+          <a
+            href={directionsUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="focus-ring inline-flex shrink-0 items-center gap-1 rounded-sm font-semibold text-blue hover:underline"
+          >
+            Open in Maps
+            <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
+          </a>
+        ) : null}
+      </div>
+      <div
+        className="mt-4 flex min-h-10 items-center gap-1 border-b border-[#D6E0EB]"
+        role="tablist"
+        aria-label="Location views"
+      >
+        {(["map", "streetview"] as const).map((option) => (
+          <button
+            key={option}
+            type="button"
+            id={`car-desktop-location-${option}-tab`}
+            role="tab"
+            aria-selected={view === option}
+            aria-controls="car-desktop-location-panel"
+            onClick={() => setView(option)}
+            className={`focus-ring min-h-10 border-b-2 px-3 text-[13px] font-semibold transition-colors ${view === option ? "border-[#075EE8] text-[#075EE8]" : "border-transparent text-[#59636A] hover:text-[#192024]"}`}
+          >
+            {option === "map" ? "Map" : "Street View"}
+          </button>
+        ))}
+      </div>
+      <div
+        id="car-desktop-location-panel"
+        role="tabpanel"
+        aria-labelledby={`car-desktop-location-${view}-tab`}
+        className="mt-3 overflow-hidden rounded-[16px] border border-[#D6E0EB] bg-[#F3F5F7] shadow-[0_2px_8px_rgba(15,23,42,0.035)]"
+        data-car-details-desktop-location-map
+      >
+        {activeEmbedUrl ? (
+          <iframe
+            key={`${pickupLocation}:${view}`}
+            title={
+              view === "streetview"
+                ? `Street View near ${pickupLocation}`
+                : `${copy("carDetails.mapShowingPickup")} ${pickupLocation}`
+            }
+            src={activeEmbedUrl}
+            loading="lazy"
+            referrerPolicy="strict-origin-when-cross-origin"
+            className="block h-[250px] w-full border-0"
+          />
+        ) : (
+          <div className="flex h-[250px] flex-col items-center justify-center gap-3 text-sm text-[#59636a]">
+            <MapPin className="h-6 w-6" aria-hidden="true" />
+            <p>{view === "streetview" ? "Street View unavailable" : "Map preview unavailable"}</p>
+          </div>
+        )}
+      </div>
+      <div
+        className="mt-5 border-t border-[#D8E1EC] pb-1 pt-5"
+        data-car-details-desktop-location-details
+      >
+        <h3 className="car-details-desktop-item-heading-type">
+          {copy("carDetails.pickupLocationDetails")}
+        </h3>
+        <ul className="car-details-desktop-primary-copy-type mt-2 list-disc space-y-1.5 ps-5 marker:text-[#075EE8]">
+          {car.pickupInstructions ? <li>{car.pickupInstructions}</li> : null}
+          <li>{copy("carDetails.confirmPickupDetails")}</li>
+        </ul>
+      </div>
+    </div>
+  );
+}
+function CarHeroActions({
+  car,
+  isSaved,
+  toggleSavedCar,
+  shareCar,
+  copy,
+  desktop = false,
+}: {
+  car: NormalizedCarResult;
+  isSaved: boolean;
+  toggleSavedCar: () => void;
+  shareCar: () => Promise<void>;
+  copy: (key: string) => string;
+  desktop?: boolean;
+}) {
+  return (
+    <div
+      className={
+        desktop
+          ? "flex shrink-0 items-center gap-1.5"
+          : "flex h-11 shrink-0 items-center overflow-hidden rounded-full border border-white/70 bg-white/85 shadow-[0_2px_7px_rgba(15,23,42,0.08)] backdrop-blur-md"
+      }
+      data-car-details-actions
+    >
+      <button
+        type="button"
+        aria-label={`${isSaved ? copy("carDetails.unsave") : copy("carDetails.save")} ${car.modelName}`}
+        aria-pressed={isSaved}
+        data-car-details-utility-action="save"
+        onClick={toggleSavedCar}
+        className={`focus-ring flex items-center justify-center transition ${desktop ? "size-9 rounded-full border border-slate-300 bg-[#E7EBF1] shadow-[0_2px_7px_rgba(15,23,42,0.12)] hover:bg-[#DDE3EB]" : "size-11 bg-transparent hover:bg-white/70"} ${isSaved ? "text-rose-500" : desktop ? "text-[#07133B]" : "text-slate-700"}`}
+      >
+        <Heart
+          size={desktop ? 18 : 22}
+          fill={isSaved ? "currentColor" : "none"}
+          aria-hidden="true"
+        />
+      </button>
+      <button
+        type="button"
+        aria-label={`${copy("carDetails.share")} ${car.modelName}`}
+        data-car-details-utility-action="share"
+        onClick={() => void shareCar()}
+        className={`focus-ring flex items-center justify-center transition ${desktop ? "size-9 rounded-full border border-slate-300 bg-[#E7EBF1] text-[#07133B] shadow-[0_2px_7px_rgba(15,23,42,0.12)] hover:bg-[#DDE3EB]" : "size-11 bg-transparent text-slate-700 hover:bg-white/70"}`}
+      >
+        <Share2 size={desktop ? 17 : 21} aria-hidden="true" />
+      </button>
     </div>
   );
 }
@@ -324,30 +995,84 @@ export function CarDetailsClient({
   resultsHref,
 }: {
   car: NormalizedCarResult;
-  search: CarSearchParams;
+  search: LocationBoundCarSearchParams;
   resultsHref: string;
 }) {
   const { t } = useLocale();
+  const { start: startRouteProgress } = useRouteProgress();
+  const [mobileResultsPending, setMobileResultsPending] = useState(false);
   const copy = (key: string) => t[key] || enTranslations[key] || key;
+  const sandboxHref =
+    car.inventorySource === "kayak-sandbox"
+      ? sandboxBookingUrl(getPrimaryCarOffer(car)?.bookingUrl)
+      : null;
+  const handleMobileResultsNavigation = (
+    event: ReactMouseEvent<HTMLAnchorElement>,
+  ) => {
+    if (
+      event.defaultPrevented ||
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey
+    ) {
+      return;
+    }
+
+    if (mobileResultsPending) {
+      event.preventDefault();
+      return;
+    }
+
+    setMobileResultsPending(true);
+    startRouteProgress();
+  };
+
+  const primaryAction: CarDetailsPrimaryAction = sandboxHref
+    ? {
+        kind: "sandbox-handoff",
+        label: copy("carDetails.continueDeal"),
+        href: sandboxHref,
+      }
+    : {
+        kind: "standalone-disabled-provider",
+        label: copy("carDetails.continueDeal"),
+      };
   return (
-    <main className="flex-1 bg-white pb-[calc(7.5rem+env(safe-area-inset-bottom))] sm:bg-surface-muted/40 lg:pb-0">
-      <section className="bg-white lg:border-b lg:border-border lg:pb-14">
-        <div className="page-shell py-2 sm:py-7">
-          <DetailsBackLink
-            href={resultsHref}
-            className="text-[#075EE8] hover:text-[#004BB8]"
-          >
-            {copy("carDetails.backToResults")}
-          </DetailsBackLink>
-          <div className="mt-2 sm:mt-5">
+    <main className="flex-1 bg-white pb-[calc(7.5rem+env(safe-area-inset-bottom))] sm:bg-[#f8fafc] lg:bg-[#F7F9FC] lg:pb-0">
+      <CarsRouteLoadingOverlay active={mobileResultsPending} />
+      <section className="bg-transparent lg:pb-0" data-car-details-desktop-surface>
+        <div className="page-shell py-0 lg:py-6 lg:max-w-[1080px]" data-car-details-body-shell>
+          <div>
             <CarDetailsExperience
               car={car}
               search={search}
               presentation="standalone-content"
-              primaryAction={{
-                kind: "standalone-disabled-provider",
-                label: copy("carDetails.continueDeal"),
-              }}
+              primaryAction={primaryAction}
+              mobileBackControl={
+                <Link
+                  href={resultsHref}
+                  aria-label="Back to Cars results"
+                  aria-disabled={mobileResultsPending}
+                  onClick={handleMobileResultsNavigation}
+                  className="focus-ring flex size-11 shrink-0 items-center justify-center rounded-full border border-white/70 bg-white/85 text-slate-900 shadow-[0_2px_7px_rgba(15,23,42,0.08)] backdrop-blur-md"
+                  data-car-details-mobile-back
+                >
+                  <ArrowLeft size={25} strokeWidth={2.2} aria-hidden="true" />
+                </Link>
+              }
+              desktopBackControl={
+                <Link
+                  href={resultsHref}
+                  aria-label={copy("carDetails.backToResults")}
+                  title={copy("carDetails.backToResults")}
+                  className="focus-ring flex size-9 items-center justify-center rounded-full border border-slate-300 bg-[#E7EBF1] text-[#07133B] shadow-[0_2px_7px_rgba(15,23,42,0.12)] transition hover:bg-[#DDE3EB]"
+                  data-car-details-desktop-back-link
+                >
+                  <ArrowLeft size={18} aria-hidden="true" />
+                </Link>
+              }
             />
           </div>
         </div>
@@ -359,111 +1084,370 @@ export function CarDetailsClient({
 function CarPriceComparisonSection({
   car,
   search,
-  offer,
+  offers,
+  selectedOfferId,
+  onSelectOffer,
   days,
   price,
   copy,
   locale,
   headingLevel,
+  showSectionHeading = true,
+  showDesktopOfferList = false,
+  actionForOffer,
 }: {
   car: NormalizedCarResult;
   search: CarSearchParams;
-  offer: CarOffer;
+  offers: CarOffer[];
+  selectedOfferId?: string;
+  onSelectOffer: (id: string) => void;
   days: number;
   price: PriceFn;
   copy: (key: string) => string;
   locale: string;
   headingLevel: HeadingLevel;
+  showSectionHeading?: boolean;
+  showDesktopOfferList?: boolean;
+  actionForOffer: (offer: CarOffer) => CarDetailsPrimaryAction;
 }) {
-  const daily = price(offer.pricePerDay, offer.currency);
-  const facts = [
-    {
-      label: offer.freeCancellation
-        ? copy("carDetails.freeCancellation")
-        : copy("carDetails.nonRefundable"),
-      Icon: ShieldCheck,
-    },
-    {
-      label:
-        car.fuelPolicy === "full-to-full"
-          ? copy("carsResults.fullToFull")
-          : car.fuelPolicy === "same-to-same"
-            ? copy("carsResults.sameToSame")
-            : copy("carsResults.fuelPolicy"),
-      Icon: Fuel,
-    },
-    {
-      label:
-        car.mileagePolicy === "unlimited"
-          ? copy("carDetails.unlimitedMileage")
-          : `${car.limitedMileageKm ?? "—"} km ${copy("carDetails.includedShort")}`,
-      Icon: Gauge,
-    },
-  ];
+  const selectedOffer =
+    offers.find((candidate) => candidate.id === selectedOfferId) ?? offers[0];
+  const desktopOrderedOffers = selectedOffer
+    ? [
+        selectedOffer,
+        ...offers.filter((offer) => offer.id !== selectedOffer.id),
+      ]
+    : offers;
+  const factsForOffer = (offer: CarOffer) =>
+    car.sandboxPresentation
+      ? [
+          { label: unavailableOfferLabel, Icon: ShieldCheck },
+          { label: unavailableBookingMessage, Icon: Gauge },
+        ]
+      : [
+          {
+            label: offer.freeCancellation
+              ? copy("carDetails.freeCancellation")
+              : copy("carDetails.nonRefundable"),
+            Icon: ShieldCheck,
+          },
+          {
+            label:
+              car.fuelPolicy === "full-to-full"
+                ? copy("carsResults.fullToFull")
+                : car.fuelPolicy === "same-to-same"
+                  ? copy("carsResults.sameToSame")
+                  : copy("carsResults.fuelPolicy"),
+            Icon: Fuel,
+          },
+          {
+            label:
+              car.mileagePolicy === "unlimited"
+                ? copy("carDetails.unlimitedMileage")
+                : `${car.limitedMileageKm ?? "—"} km ${copy("carDetails.includedShort")}`,
+            Icon: Gauge,
+          },
+        ];
+  const providerFactsForOffer = (offer: CarOffer) => {
+    const facts: Array<{ label: string; Icon: typeof ShieldCheck }> = [];
+    if (offer.freeCancellation) {
+      facts.push({
+        label: copy("carDetails.freeCancellation"),
+        Icon: ShieldCheck,
+      });
+    }
+    if (offer.payAtPickup) {
+      facts.push({
+        label: copy("carsResults.payAtPickup"),
+        Icon: CarFront,
+      });
+    }
+    if (offer.taxesAndFeesIncluded) {
+      facts.push({
+        label: copy("carDetails.feesIncludedShort"),
+        Icon: ShieldCheck,
+      });
+    }
+    return facts.slice(0, 3);
+  };
   return (
     <div
-      className="border-b border-slate-200 pb-7 pt-3"
+      className={`border-b border-slate-200 bg-white pb-7 pt-3 sm:bg-[#f8fafc] lg:mx-auto lg:w-full ${showDesktopOfferList ? "lg:max-w-[640px] lg:border-0 lg:bg-transparent lg:px-0 lg:pb-5 lg:pt-5" : "lg:max-w-[820px] lg:bg-transparent lg:pb-[22px] lg:pt-2"}`}
       data-car-price-comparison
+      data-car-details-flight-panel={showDesktopOfferList ? "compare" : undefined}
     >
-      <Heading
-        level={headingLevel}
-        className="text-xl font-extrabold tracking-tight text-slate-950"
-      >
-        {copy("carDetails.comparePrices")}
-      </Heading>
-      <p className="mt-1 text-sm font-medium text-slate-600">
+      {showSectionHeading ? (
+        <Heading
+          level={headingLevel}
+          className="car-details-desktop-section-heading-type hidden lg:block lg:text-[16px] lg:font-semibold lg:leading-6 lg:tracking-[-0.1px] lg:text-[#192024]"
+        >
+          Compare deals
+        </Heading>
+      ) : null}
+      <p className={`car-details-desktop-primary-copy-type mt-1 text-[11px] font-medium leading-4 text-slate-600 lg:text-[14px] lg:font-normal lg:leading-[22px] lg:text-[#303B42] ${showSectionHeading ? "lg:mt-3" : "lg:mt-0"}`}>
         {formatCarDate(search.pickupDate, locale)} –{" "}
         {formatCarDate(search.dropoffDate, locale)} · {days}{" "}
         {days === 1 ? copy("carDetails.day") : copy("carDetails.days")}
       </p>
-      <div className="-mx-3 mt-5 rounded-[14px] border border-[#075EE8] bg-white px-2 py-4 ring-1 ring-[#075EE8]/10 sm:mx-0 sm:px-4">
-        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-x-3 sm:gap-x-6">
-          <Image
-            src="/brand/kurioticket-logo-primary-light-bg.svg"
-            alt="Kurioticket"
-            width={146}
-            height={32}
-            className="self-start object-contain object-left"
-          />
-          <span
-            className="flex size-[22px] items-center justify-center justify-self-end rounded-full border-2 border-[#075EE8] bg-white"
-            aria-hidden="true"
-          >
-            <span className="size-2.5 rounded-full bg-[#075EE8]" />
-          </span>
-          <div className="col-span-2 mt-5 flex min-w-0 items-end gap-x-4 overflow-visible">
-            <div className="flex min-w-0 flex-1 flex-nowrap items-end gap-x-4 overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {facts.map(({ label, Icon }) => (
+
+      <div
+        className="mt-5 space-y-2.5 lg:hidden"
+        role="radiogroup"
+        aria-label="Car deal options"
+        data-mobile-car-deal-list
+      >
+        {offers.map((offer) => {
+          const selected = offer.id === selectedOffer?.id;
+          const daily = price(offer.pricePerDay, offer.currency);
+          const facts = factsForOffer(offer);
+          const providerName =
+            compactBookingProviderName(offer) ||
+            providerValue(car.rentalCompanyName) ||
+            copy("carsResults.bookingProvider");
+          const sandboxSupplier = car.sandboxPresentation
+            ? providerValue(offer.rentalCompanyName) ||
+              providerValue(car.rentalCompanyName)
+            : "";
+          return (
+            <button
+              key={offer.id}
+              type="button"
+              role="radio"
+              aria-checked={selected}
+              aria-label={`${daily.ariaLabel} ${copy("carsResults.perDay")}`}
+              onClick={() => onSelectOffer(offer.id)}
+              className={`block w-full rounded-[14px] border bg-white px-2 py-3 text-start transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35 lg:rounded-[14px] lg:px-4 lg:py-3 lg:shadow-[0_2px_10px_rgba(15,23,42,0.025)] ${selected ? "border-[#075EE8] ring-1 ring-[#075EE8]/10 lg:shadow-[0_6px_18px_rgba(7,94,232,0.08)]" : "border-slate-200 lg:hover:border-slate-300"}`}
+            >
+              <span className="flex min-w-0 items-center justify-between gap-3">
+                <CarOfferProviderBrand
+                  car={car}
+                  offer={offer}
+                  providerName={providerName}
+                  compact
+                />
                 <span
-                  key={label}
-                  className="inline-flex shrink-0 items-center gap-0.5 whitespace-nowrap text-[11px] font-semibold text-slate-700 sm:gap-1.5 sm:text-xs"
+                  className={`flex size-4 shrink-0 items-center justify-center rounded-full border-[1.5px] bg-white ${selected ? "border-[#075EE8]" : "border-slate-400"}`}
+                  aria-hidden="true"
                 >
-                  <Icon
-                    size={14}
-                    strokeWidth={2}
-                    className="shrink-0 text-slate-600"
-                    aria-hidden="true"
-                  />
-                  {label}
+                  {selected ? <span className="size-1.5 rounded-full bg-[#075EE8]" /> : null}
                 </span>
-              ))}
-            </div>
-            <span className="ms-auto inline-flex min-h-9 shrink-0 flex-col items-end justify-end overflow-visible whitespace-nowrap text-right">
-              <strong
-                className="text-xl font-extrabold leading-5 tracking-tight text-slate-950 tabular-nums"
-                dir="ltr"
-                title={daily.title}
-                aria-label={daily.ariaLabel}
-              >
-                {daily.formatted}
-              </strong>
-              <span className="inline-flex min-h-4 items-center overflow-visible text-[11px] font-medium leading-4 text-[#075EE8] sm:text-xs">
-                {copy("carsResults.perDay")}
               </span>
+              <span className="mt-3 flex min-w-0 items-end gap-2.5 lg:mt-3 lg:gap-4">
+                <span className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2.5 gap-y-[7px]">
+                  {car.sandboxPresentation ? (
+                    sandboxSupplier ? (
+                      <span className="inline-flex min-w-0 shrink items-center gap-[3px] text-[10.5px] font-semibold leading-[15px] text-slate-700 lg:gap-1.5 lg:text-[14px] lg:font-normal lg:leading-[22px] lg:text-[#303B42]">
+                        <CarFront
+                          size={14}
+                          strokeWidth={2}
+                          className="shrink-0 text-slate-600"
+                          aria-hidden="true"
+                        />
+                        <span className="max-w-[150px] truncate">
+                          {sandboxSupplier}
+                        </span>
+                      </span>
+                    ) : null
+                  ) : (
+                    facts.map(({ label, Icon }) => (
+                      <span
+                        key={label}
+                        className="inline-flex shrink-0 items-center gap-[3px] whitespace-nowrap text-[10.5px] font-semibold leading-[15px] text-slate-700 lg:gap-1.5 lg:text-[14px] lg:font-normal lg:leading-[22px] lg:text-[#303B42]"
+                      >
+                        <Icon
+                          size={14}
+                          strokeWidth={2}
+                          className="shrink-0 text-slate-600"
+                          aria-hidden="true"
+                        />
+                        {label}
+                      </span>
+                    ))
+                  )}
+                </span>
+                <span className="flex min-w-[72px] max-w-[42%] shrink flex-col items-end">
+                  <strong
+                    className="max-w-full whitespace-nowrap text-[19px] font-semibold leading-[22px] tracking-[-0.015em] text-[#071A48] tabular-nums lg:text-slate-950"
+                    dir="ltr"
+                    title={daily.title}
+                    aria-label={daily.ariaLabel}
+                  >
+                    {daily.formatted}
+                  </strong>
+                  <span className="text-[10px] font-medium leading-[13px] text-[#075EE8]">
+                    {copy("carsResults.perDay")}
+                  </span>
+                </span>
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {showDesktopOfferList && desktopOrderedOffers.length ? (
+        <div
+          className="mt-4 hidden w-full max-w-[640px] space-y-2 lg:block"
+          data-desktop-car-deal-list
+        >
+          {desktopOrderedOffers.map((offer) => {
+            const selected = offer.id === selectedOffer?.id;
+            const total = price(offer.totalPrice, offer.currency);
+            const providerName =
+              compactBookingProviderName(offer) ||
+              providerValue(car.rentalCompanyName) ||
+              copy("carsResults.bookingProvider");
+            const providerFacts = providerFactsForOffer(offer);
+            const offerAction = actionForOffer(offer);
+            const actionClassName =
+              "focus-ring inline-flex min-h-9 min-w-[104px] shrink-0 items-center justify-center rounded-lg bg-[#075EE8] px-3 text-[12px] font-semibold leading-4 text-white shadow-[0_2px_7px_rgba(7,94,232,0.14)] transition hover:bg-[#004BB8]";
+            return (
+              <div
+                key={offer.id}
+                className={`grid min-h-[92px] min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-4 rounded-xl border bg-white px-4 py-3 transition ${selected ? "border-[#075EE8] shadow-[0_3px_10px_rgba(7,94,232,0.08)]" : "border-[#D9E2E8] hover:border-[#C7D3E1]"}`}
+                data-car-details-desktop-deal-row
+                data-selected={selected ? "true" : "false"}
+              >
+                <button
+                  type="button"
+                  aria-pressed={selected}
+                  onClick={() => onSelectOffer(offer.id)}
+                  className="focus-ring min-w-0 text-start"
+                  data-car-details-desktop-deal-summary
+                >
+                  <span data-car-details-desktop-deal-provider>
+                    <CarOfferProviderBrand
+                      car={car}
+                      offer={offer}
+                      providerName={providerName}
+                    />
+                  </span>
+                  <strong
+                    className="mt-1 block whitespace-nowrap text-[19px] font-bold leading-6 tracking-[-0.012em] text-[#07133B] tabular-nums"
+                    dir="ltr"
+                    title={total.title}
+                    aria-label={total.ariaLabel}
+                    data-car-details-desktop-deal-total
+                  >
+                    {total.formatted}
+                  </strong>
+                  {providerFacts.length ? (
+                    <span
+                      className="mt-1.5 flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1"
+                      data-car-details-desktop-deal-benefits
+                    >
+                      {providerFacts.map(({ label, Icon }) => (
+                        <span
+                          key={label}
+                          className="car-details-desktop-benefit-type inline-flex min-w-0 items-center gap-1.5 whitespace-nowrap text-[12px] leading-4 text-[#526174]"
+                        >
+                          <Icon
+                            size={13}
+                            strokeWidth={2}
+                            className="shrink-0 text-[#59636A]"
+                            aria-hidden="true"
+                          />
+                          {label}
+                        </span>
+                      ))}
+                    </span>
+                  ) : null}
+                </button>
+                <div className="flex shrink-0 items-center justify-end">
+                  {offerAction.kind === "sandbox-handoff" ? (
+                    <a
+                      href={offerAction.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      referrerPolicy="no-referrer"
+                      onClick={() => onSelectOffer(offer.id)}
+                      className={actionClassName}
+                      data-car-details-desktop-deal-cta
+                    >
+                      {copy("carDetails.continueDeal")}
+                    </a>
+                  ) : offerAction.kind === "standalone-disabled-provider" ? (
+                    <button
+                      type="button"
+                      disabled
+                      className={`${actionClassName} disabled:cursor-not-allowed disabled:opacity-100`}
+                      data-car-details-desktop-deal-cta
+                    >
+                      {copy("carDetails.continueDeal")}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={!offerAction.enabled || offerAction.pending}
+                      aria-label={offerAction.accessibleLabel}
+                      onClick={() => {
+                        onSelectOffer(offer.id);
+                        offerAction.onActivate();
+                      }}
+                      className={`${actionClassName} disabled:cursor-not-allowed disabled:opacity-60`}
+                      data-car-details-desktop-deal-cta
+                    >
+                      {offerAction.pending
+                        ? copy("deals.guided.carDetails.saving")
+                        : copy("carDetails.continueDeal")}
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : null}
+
+      {selectedOffer ? (
+        <div className={`mt-5 hidden rounded-[14px] border border-[#075EE8] bg-white px-4 py-4 ring-1 ring-[#075EE8]/10 ${showDesktopOfferList ? "lg:hidden" : "lg:block"}`}>
+          <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-x-6">
+            <Image
+              src="/brand/kurioticket-logo-primary-light-bg.svg"
+              alt="Kurioticket"
+              width={146}
+              height={32}
+              className="self-start object-contain object-left"
+            />
+            <span
+              className="flex size-[22px] items-center justify-center justify-self-end rounded-full border-2 border-[#075EE8] bg-white"
+              aria-hidden="true"
+            >
+              <span className="size-2.5 rounded-full bg-[#075EE8]" />
             </span>
+            <div className="col-span-2 mt-5 flex min-w-0 items-end gap-x-4 overflow-visible">
+              <div className="flex min-w-0 flex-1 flex-nowrap items-end gap-x-4 overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {factsForOffer(selectedOffer).map(({ label, Icon }) => (
+                  <span
+                    key={label}
+                    className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap text-xs font-semibold text-slate-700"
+                  >
+                    <Icon
+                      size={14}
+                      strokeWidth={2}
+                      className="shrink-0 text-slate-600"
+                      aria-hidden="true"
+                    />
+                    {label}
+                  </span>
+                ))}
+              </div>
+              <span className="ms-auto inline-flex min-h-9 shrink-0 flex-col items-end justify-end overflow-visible whitespace-nowrap text-right">
+                <strong
+                  className="text-xl font-extrabold leading-5 tracking-tight text-slate-950 tabular-nums"
+                  dir="ltr"
+                  title={price(selectedOffer.pricePerDay, selectedOffer.currency).title}
+                  aria-label={price(selectedOffer.pricePerDay, selectedOffer.currency).ariaLabel}
+                >
+                  {price(selectedOffer.pricePerDay, selectedOffer.currency).formatted}
+                </strong>
+                <span className="inline-flex min-h-4 items-center overflow-visible text-xs font-medium leading-4 text-[#075EE8]">
+                  {copy("carsResults.perDay")}
+                </span>
+              </span>
+            </div>
           </div>
         </div>
-      </div>
+      ) : null}
     </div>
   );
 }
@@ -474,12 +1458,14 @@ function CarLocationSection({
   locale,
   copy,
   headingLevel,
+  showSectionHeading = true,
 }: {
   car: NormalizedCarResult;
   search: CarSearchParams;
   locale: string;
   copy: (key: string) => string;
   headingLevel: HeadingLevel;
+  showSectionHeading?: boolean;
 }) {
   const searchedPickupLocation = search.pickupLocation.trim();
   const searchedReturnLocation = search.dropoffLocation.trim();
@@ -500,86 +1486,98 @@ function CarLocationSection({
   );
   return (
     <div
-      className="border-b border-slate-200 pb-7 pt-3"
+      className="border-b border-slate-200 bg-white pb-7 pt-3 sm:bg-[#f8fafc] lg:mx-auto lg:w-full lg:max-w-[820px] lg:bg-transparent lg:pb-[22px] lg:pt-5"
       data-car-location-section
     >
-      <Heading
-        level={headingLevel}
-        className="text-xl font-extrabold tracking-tight text-slate-950"
-      >
-        {copy("carDetails.location")}
-      </Heading>
-      <div className="mt-3 flex items-start gap-3">
+      {showSectionHeading ? (
+        <Heading
+          level={headingLevel}
+          className="car-details-desktop-section-heading-type hidden lg:block lg:text-[16px] lg:font-semibold lg:leading-6 lg:tracking-[-0.1px] lg:text-[#192024]"
+        >
+          {copy("carDetails.location")}
+        </Heading>
+      ) : null}
+      <div className={`mt-0 flex items-start gap-3 ${showSectionHeading ? "lg:mt-3" : "lg:mt-0"}`}>
         <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue">
           <MapPin size={18} aria-hidden="true" />
         </span>
         <div className="min-w-0 pt-0.5">
-          <p className="text-[13px] font-semibold leading-5 text-slate-800">
+          <p className="car-details-desktop-strong-copy-type text-[13px] font-semibold leading-5 text-slate-800 lg:text-[14px] lg:font-semibold lg:leading-[22px] lg:text-[#192024]">
             {pickupLocation}
           </p>
-          <p className="text-xs leading-5 text-slate-500">
-            {pickupTypeLabels[car.pickupType]}
+          <p className="car-details-desktop-secondary-copy-type text-xs leading-5 text-slate-500 lg:text-[14px] lg:leading-[22px] lg:text-[#59636A]">
+            {car.sandboxPresentation?.pickupLabel ??
+              pickupTypeLabels[car.pickupType]}
           </p>
         </div>
       </div>
       {mapUrl ? (
-        <div className="mt-4 overflow-hidden rounded-[14px] border border-slate-200 bg-white">
+        <div
+          className="mt-4 flex flex-col overflow-hidden rounded-[14px] border border-slate-200 bg-white lg:rounded-2xl lg:shadow-[0_4px_18px_rgba(15,23,42,0.04)]"
+          data-car-location-map-card
+        >
           <iframe
             title={`${copy("carDetails.mapShowingPickup")} ${pickupLocation}`}
             src={mapUrl}
             loading="lazy"
             referrerPolicy="strict-origin-when-cross-origin"
-            className="h-[200px] w-full border-0 sm:h-[220px] lg:h-[240px]"
+            className="block h-[216px] w-full shrink-0 border-0 sm:h-[220px] lg:h-[320px]"
           />
           {directionsUrl ? (
             <a
               href={directionsUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="focus-ring flex min-h-11 items-center justify-between border-t border-slate-200 px-4 text-sm font-bold text-blue hover:bg-slate-50"
+              className="focus-ring flex h-11 shrink-0 items-center justify-between border-t border-slate-200 px-4 text-sm font-bold leading-5 text-[#075EE8] hover:bg-slate-50 lg:text-blue"
             >
               {copy("carDetails.getDirections")}
-              <ExternalLink size={16} aria-hidden="true" />
+              <ExternalLink size={16} className="shrink-0" aria-hidden="true" />
             </a>
           ) : null}
         </div>
       ) : null}
-      <div className="mt-4 overflow-hidden rounded-[14px] border border-slate-200 bg-white">
-        <div className="p-4">
+      <div className="mt-4 overflow-hidden rounded-[14px] border border-slate-200 bg-white lg:overflow-visible lg:rounded-none lg:border-0 lg:bg-transparent">
+        <div className="p-4 lg:p-0" data-car-location-timeline>
           {[
             [
+              "Pick-up",
               copy("carDetails.pickup"),
               pickupLocation,
               search.pickupDate,
               search.pickupTime,
             ],
             [
+              "Return",
               copy("carDetails.return"),
               returnLocation,
               search.dropoffDate,
               search.dropoffTime,
             ],
-          ].map(([label, location, date, time], index) => (
+          ].map(([mobileLabel, label, location, date, time], index) => (
             <div
               key={label}
-              className={`relative flex gap-3 ${index === 0 ? "pb-6" : ""}`}
+              className={`relative border-s-2 border-blue-200 ps-5 ${index === 0 ? "pb-6" : ""}`}
             >
-              <div className="relative flex w-9 shrink-0 justify-center">
-                <span className="mt-1.5 size-3 rounded-full bg-[#075EE8]" />
-                {index === 0 ? (
-                  <span className="absolute bottom-[-6px] top-4 w-px bg-blue-200" />
-                ) : null}
-              </div>
-              <div>
-                <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
-                  {label}
-                </p>
-                <p className="mt-1 font-semibold text-slate-900">{location}</p>
-                <p className="mt-1 text-xs text-slate-600">
+              <span className="absolute -start-[7px] top-1 size-3 rounded-full bg-[#004BB8]" />
+              <p className="car-details-desktop-item-heading-type text-[15px] font-bold leading-[22px] text-[#071A48] lg:text-[14px] lg:font-semibold lg:leading-[22px] lg:tracking-normal lg:text-[#192024]">
+                <span className="lg:hidden">{mobileLabel}</span>
+                <span className="hidden lg:inline">{label}</span>
+              </p>
+              <p className="car-details-desktop-primary-copy-type mt-1 flex gap-2 text-[14px] font-medium leading-5 text-[#071A48] lg:text-[14px] lg:font-normal lg:leading-[22px] lg:text-[#303B42]">
+                <MapPin
+                  size={16}
+                  className="shrink-0 text-[#004BB8]"
+                  aria-hidden="true"
+                />
+                {location}
+              </p>
+              <p className="car-details-desktop-secondary-copy-type mt-1 flex gap-2 text-[13px] font-normal leading-5 text-[#56658E] lg:text-[14px] lg:leading-[22px] lg:text-[#59636A]">
+                <Clock3 size={16} className="shrink-0" aria-hidden="true" />
+                <time dateTime={`${date}T${time}`}>
                   {formatCarDate(date, locale)}
                   {time ? ` · ${time}` : ""}
-                </p>
-              </div>
+                </time>
+              </p>
             </div>
           ))}
         </div>
@@ -588,7 +1586,7 @@ function CarLocationSection({
             href={directionsUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="focus-ring flex min-h-11 items-center justify-between border-t border-slate-200 px-4 text-sm font-bold text-blue hover:bg-slate-50"
+            className="focus-ring flex min-h-11 items-center justify-between border-t border-slate-200 px-4 text-sm font-bold text-[#075EE8] hover:bg-slate-50 lg:border-0 lg:px-0 lg:text-blue"
           >
             {copy("carDetails.getDirections")}
             <ExternalLink size={16} aria-hidden="true" />
@@ -596,10 +1594,10 @@ function CarLocationSection({
         ) : null}
       </div>
       <div className="mt-7">
-        <h3 className="text-base font-bold text-slate-950">
+        <h3 className="car-details-desktop-item-heading-type text-[14px] font-bold leading-5 text-[#071A48] lg:text-[16px] lg:font-semibold lg:leading-[24px] lg:text-[#192024]">
           {copy("carDetails.pickupLocationDetails")}
         </h3>
-        <ul className="mt-3 list-disc space-y-2 ps-5 text-sm leading-6 text-slate-700">
+        <ul className="car-details-desktop-primary-copy-type mt-3 list-disc space-y-2 ps-5 text-[14px] font-normal leading-5 text-[#334155] marker:text-[#075EE8] lg:list-none lg:ps-0 lg:text-[14px] lg:leading-[22px] lg:text-[#303B42]">
           {car.pickupInstructions ? <li>{car.pickupInstructions}</li> : null}
           <li>{copy("carDetails.confirmPickupDetails")}</li>
         </ul>
@@ -614,15 +1612,19 @@ function BookingSummary({
   price,
   copy,
   action,
+  showRentalBreakdown = true,
 }: {
   offer: CarOffer;
   days: number;
   price: PriceFn;
   copy: (k: string) => string;
   action: CarDetailsPrimaryAction;
+  showRentalBreakdown?: boolean;
 }) {
-  const daily = price(offer.pricePerDay, offer.currency),
-    total = price(offer.totalPrice, offer.currency);
+  const total = price(offer.totalPrice, offer.currency);
+  const daily = showRentalBreakdown
+    ? price(offer.pricePerDay, offer.currency)
+    : null;
   return (
     <div className="w-full rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <p className="text-sm font-semibold text-slate-500">
@@ -636,18 +1638,32 @@ function BookingSummary({
       >
         {total.formatted}
       </p>
-      <p className="text-sm text-slate-500">
-        {days} {days === 1 ? copy("carDetails.day") : copy("carDetails.days")}
-      </p>
-      <p
-        className="mt-1 overflow-hidden text-ellipsis whitespace-nowrap text-sm tabular-nums text-slate-600"
-        dir="ltr"
-        title={daily.title}
-        aria-label={daily.ariaLabel}
-      >
-        {daily.formatted} {copy("carsResults.perDay")}
-      </p>
-      {action.kind === "standalone-disabled-provider" ? (
+      {showRentalBreakdown && daily ? (
+        <>
+          <p className="text-sm text-slate-500">
+            {days} {days === 1 ? copy("carDetails.day") : copy("carDetails.days")}
+          </p>
+          <p
+            className="mt-1 overflow-hidden text-ellipsis whitespace-nowrap text-sm tabular-nums text-slate-600"
+            dir="ltr"
+            title={daily.title}
+            aria-label={daily.ariaLabel}
+          >
+            {daily.formatted} {copy("carsResults.perDay")}
+          </p>
+        </>
+      ) : null}
+      {action.kind === "sandbox-handoff" ? (
+        <a
+          href={action.href}
+          target="_blank"
+          rel="noopener noreferrer"
+          referrerPolicy="no-referrer"
+          className="mt-5 block w-full rounded-lg bg-blue px-4 py-3 text-center font-bold text-white"
+        >
+          {action.label}
+        </a>
+      ) : action.kind === "standalone-disabled-provider" ? (
         <button
           disabled
           className="mt-5 w-full rounded-lg bg-blue px-4 py-3 font-bold text-white disabled:cursor-not-allowed disabled:opacity-100"
@@ -691,6 +1707,7 @@ function PickupReturnSection({
   copy,
   sectionHeadingLevel,
   itemHeadingLevel,
+  showSectionHeading = true,
 }: {
   car: NormalizedCarResult;
   search: CarSearchParams;
@@ -698,41 +1715,55 @@ function PickupReturnSection({
   copy: (key: string) => string;
   sectionHeadingLevel: HeadingLevel;
   itemHeadingLevel: HeadingLevel;
+  showSectionHeading?: boolean;
 }) {
+  const hasDriverLicenseRequirement = car.requiredDocuments.some((document) =>
+    /driv(?:ing|er'?s?)\s+licen[cs]e/i.test(document),
+  );
   return (
-    <section className="border-y border-slate-200 bg-white py-5 sm:rounded-[13px] sm:border sm:p-6 sm:shadow-[0_3px_15px_rgba(15,23,42,0.04)]">
-      <Heading
-        level={sectionHeadingLevel}
-        className="text-lg font-bold tracking-[-0.015em] text-[#102A43] sm:text-xl"
+    <section
+      className="-mx-4 border-y border-slate-200 bg-white px-4 py-5 sm:bg-[#f8fafc] lg:mx-auto lg:w-full lg:max-w-[820px] lg:rounded-none lg:border-x-0 lg:border-t-0 lg:border-b lg:border-slate-200 lg:bg-transparent lg:px-0 lg:pb-[22px] lg:pt-5 lg:shadow-none"
+      data-car-pickup-return-section
+    >
+      {showSectionHeading ? (
+        <Heading
+          level={sectionHeadingLevel}
+          className="car-details-desktop-section-heading-type hidden lg:block lg:text-[16px] lg:font-semibold lg:leading-6 lg:tracking-[-0.1px] lg:text-[#192024]"
+        >
+          {copy("carDetails.pickupReturn")}
+        </Heading>
+      ) : null}
+      <div
+        className={`relative mt-0 grid gap-5 md:grid-cols-2 md:gap-6 ${showSectionHeading ? "lg:mt-4" : "lg:mt-0"}`}
       >
-        {copy("carDetails.pickupReturn")}
-      </Heading>
-      <div className="relative mt-4 grid gap-5 md:grid-cols-2 md:gap-6">
         {[
           [
+            "Pick-up",
             copy("carDetails.pickup"),
             car.pickupLocation,
             search.pickupDate,
             search.pickupTime,
           ],
           [
+            "Return",
             copy("carDetails.return"),
             car.returnLocation,
             search.dropoffDate,
             search.dropoffTime,
           ],
-        ].map(([label, location, date, time]) => (
+        ].map(([mobileLabel, label, location, date, time]) => (
           <div key={label} className="relative border-s-2 border-blue-200 ps-5">
             <span className="absolute -start-[7px] top-1 size-3 rounded-full bg-[#004BB8]" />
-            <Heading level={itemHeadingLevel} className="font-bold">
-              {label}
+            <Heading level={itemHeadingLevel} className="car-details-desktop-item-heading-type text-[15px] font-bold leading-[22px] text-[#071A48] lg:text-[16px] lg:font-semibold lg:leading-[24px] lg:text-[#192024]">
+              <span className="lg:hidden">{mobileLabel}</span>
+              <span className="hidden lg:inline">{label}</span>
             </Heading>
-            <p className="mt-1 flex gap-2 text-sm">
-              <MapPin size={16} className="shrink-0 text-[#004BB8]" />
+            <p className="car-details-desktop-primary-copy-type mt-1 flex gap-2 text-[14px] font-medium leading-5 text-[#071A48] lg:text-[14px] lg:font-normal lg:leading-[22px] lg:text-[#303B42]">
+              <MapPin size={16} className="shrink-0 text-[#004BB8]" aria-hidden="true" />
               {location || copy("carDetails.locationUnavailable")}
             </p>
-            <p className="mt-1 flex gap-2 text-sm text-slate-600">
-              <Clock3 size={16} />
+            <p className="car-details-desktop-secondary-copy-type mt-1 flex gap-2 text-[13px] font-normal leading-5 text-[#56658E] lg:text-[14px] lg:leading-[22px] lg:text-[#59636A]">
+              <Clock3 size={16} className="shrink-0" aria-hidden="true" />
               <time dateTime={`${date}T${time}`}>
                 {formatCarDate(date, locale)}
                 {time ? ` · ${time}` : ""}
@@ -741,23 +1772,41 @@ function PickupReturnSection({
           </div>
         ))}
       </div>
-      <p className="mt-4 text-sm font-medium">
-        {pickupTypeLabels[car.pickupType]}
+      <p className="car-details-desktop-primary-copy-type mt-4 hidden text-sm font-medium leading-5 lg:block lg:text-[14px] lg:font-normal lg:leading-[22px] lg:text-[#303B42]">
+        {car.sandboxPresentation?.pickupLabel ??
+          pickupTypeLabels[car.pickupType]}
         {car.shuttleRequired ? ` · ${copy("carDetails.shuttleRequired")}` : ""}
       </p>
       {car.pickupInstructions && (
-        <p className="mt-2 text-sm">
+        <p className="car-details-desktop-primary-copy-type mt-2 hidden text-sm font-normal leading-5 lg:block lg:text-[14px] lg:leading-[22px] lg:text-[#303B42]">
           <strong>{copy("carDetails.pickupInstructions")}:</strong>{" "}
           {car.pickupInstructions}
         </p>
       )}
+      {hasDriverLicenseRequirement ? (
+        <div className="mt-5">
+          <Heading
+            level={itemHeadingLevel}
+            className="car-details-desktop-item-heading-type text-[14px] font-bold leading-5 text-[#071A48] lg:text-[16px] lg:font-semibold lg:leading-[24px] lg:text-[#192024]"
+          >
+            Pickup requirements
+          </Heading>
+          <p className="car-details-desktop-primary-copy-type mt-2.5 flex items-start gap-2.5 text-[14px] font-medium leading-5 text-[#071A48] lg:text-[14px] lg:font-normal lg:leading-[22px] lg:text-[#303B42]">
+            <IdCard
+              size={19}
+              className="mt-px shrink-0 text-slate-600"
+              aria-hidden="true"
+            />
+            Valid driver&apos;s license
+          </p>
+        </div>
+      ) : null}
     </section>
   );
 }
 
 function MobileBookingDock({
   offer,
-  days,
   price,
   copy,
   action,
@@ -768,48 +1817,57 @@ function MobileBookingDock({
   copy: (k: string) => string;
   action: CarDetailsPrimaryAction;
 }) {
-  const daily = price(offer.pricePerDay, offer.currency),
-    total = price(offer.totalPrice, offer.currency);
+  const total = price(offer.totalPrice, offer.currency);
   return (
     <section
       className="fixed inset-x-0 bottom-0 z-[90] rounded-t-[22px] border-t border-slate-200 bg-white px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-8px_28px_rgba(15,23,42,0.14)] lg:hidden"
       aria-labelledby="mobile-car-rental-total-heading"
       data-mobile-car-booking-dock
     >
-      <div className="mx-auto grid max-w-3xl grid-cols-[minmax(0,1fr)_minmax(132px,0.9fr)] items-center gap-3">
-        <div className="min-w-0">
-          <h2
-            id="mobile-car-rental-total-heading"
-            className="text-[11px] font-semibold leading-4 text-slate-600"
-          >
-            {copy("carDetails.bookingSummary")}
-          </h2>
+      <div className="mx-auto flex max-w-3xl items-center gap-3">
+        <div className="min-w-0 flex-1">
           <p
-            className="truncate text-[clamp(1.25rem,6vw,1.5rem)] font-extrabold leading-tight text-slate-950"
+            className="truncate text-[19px] font-semibold leading-[22px] tracking-[-0.25px] text-[#071A48] tabular-nums"
             dir="ltr"
             title={total.title}
             aria-label={total.ariaLabel}
           >
             {total.formatted}
           </p>
-          <p className="truncate text-[11px] text-slate-600">
-            <span>
-              {days}{" "}
-              {days === 1 ? copy("carDetails.day") : copy("carDetails.days")}
-            </span>
-            <span aria-hidden="true"> · </span>
-            <span dir="ltr" title={daily.title} aria-label={daily.ariaLabel}>
-              {daily.formatted} {copy("carsResults.perDay")}
-            </span>
-          </p>
-        </div>
-        {action.kind === "standalone-disabled-provider" ? (
-          <button
-            disabled
-            className="focus-ring min-h-12 w-full rounded-lg bg-blue px-3 text-xs font-bold leading-4 text-white disabled:cursor-not-allowed disabled:opacity-100"
+          <h2
+            id="mobile-car-rental-total-heading"
+            className="truncate text-[11px] font-semibold leading-4 text-[#56658E]"
           >
-            {action.label}
-          </button>
+            Estimated rental total
+          </h2>
+        </div>
+        {action.kind === "sandbox-handoff" ? (
+          <div
+            className="min-w-[140px] max-w-[180px] flex-[0.78]"
+            data-mobile-car-dock-action
+          >
+            <a
+              href={action.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              referrerPolicy="no-referrer"
+              className="focus-ring flex min-h-12 w-full items-center justify-center rounded-lg bg-blue px-3 text-xs font-bold leading-4 text-white"
+            >
+              {copy("carDetails.continueDeal")}
+            </a>
+          </div>
+        ) : action.kind === "standalone-disabled-provider" ? (
+          <div
+            className="min-w-[140px] max-w-[180px] flex-[0.78]"
+            data-mobile-car-dock-action
+          >
+            <button
+              disabled
+              className="focus-ring min-h-12 w-full rounded-lg bg-blue px-3 text-xs font-bold leading-4 text-white disabled:cursor-not-allowed disabled:opacity-100"
+            >
+              {action.label}
+            </button>
+          </div>
         ) : null}
       </div>
     </section>

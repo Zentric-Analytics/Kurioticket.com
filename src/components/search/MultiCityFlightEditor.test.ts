@@ -24,8 +24,8 @@ test("normal and multi-city flight searches share the production field primitive
 
 test("multi-city airport fields opt into the clean mobile value row with 20px MapPins", () => {
   assert.match(editor, /useMainFlightLandingMobilePresentation/);
-  assert.match(editor, /mobileLeadingIconClassName="h-5 w-5 shrink-0 text-slate-500 sm:hidden"/);
-  assert.match(editor, /mobileValueRowClassName="grid grid-cols-\[22px_minmax\(0,1fr\)\] items-center gap-2\.5 sm:contents"/);
+  assert.match(editor, /: "h-5 w-5 shrink-0 text-slate-500 sm:hidden"/);
+  assert.match(editor, /: "grid grid-cols-\[22px_minmax\(0,1fr\)\] items-center gap-2\.5 sm:contents"/);
 
   const cleanMobileBranch = primitives.slice(
     primitives.indexOf("{useMainFlightLandingMobilePresentation ? ("),
@@ -38,7 +38,7 @@ test("multi-city airport fields opt into the clean mobile value row with 20px Ma
 
 test("multi-city date fields use the aligned 20px mobile icon value row and shared picker", () => {
   assert.match(editor, /grid-cols-\[22px_minmax\(0,1fr\)\] items-center gap-2\.5 sm:flex sm:gap-2/);
-  assert.match(editor, /<Calendar className="h-5 w-5 shrink-0 text-slate-500 sm:h-4 sm:w-4"/);
+  assert.match(editor, /"h-5 w-5 shrink-0 text-slate-500 sm:h-4 sm:w-4"/);
   assert.match(editor, /<MobileDatePickerDialog/);
 });
 
@@ -74,4 +74,128 @@ test("each leg has an accessible route-boundary swap and canonical displayed dat
   );
   assert.doesNotMatch(editor, /inset-inline-start-1\/2|rtl:translate-x-1\/2/);
   assert.match(editor, /formatTravelDateDisplay\(value, locale\)/);
+});
+
+test("results presentation uses grouped Results route, date, and swap geometry", () => {
+  assert.match(editor, /presentation\?: "standalone" \| "homepage" \| "landing" \| "results"/);
+  assert.match(editor, /data-multi-city-presentation=\{presentation\}/);
+  assert.match(editor, /data-multi-city-results-route-card/);
+  assert.match(editor, /flight-results-edit-surface gap-0 overflow-hidden rounded-\[13px\] border border-\[#E7ECF5\] bg-white/);
+  assert.match(editor, /data-multi-city-results-route-divider/);
+  assert.match(editor, /absolute inset-x-0 top-1\/2 h-px -translate-y-1\/2 bg-\[#E7ECF5\]/);
+  assert.match(editor, /min-h-\[66px\][^\n]*px-3 py-\[9px\]/);
+  assert.match(editor, /data-multi-city-results-date-card/);
+  assert.match(editor, /flight-results-edit-field-surface min-h-\[66px\]/);
+  assert.match(editor, /flight-results-edit-surface min-h-\[66px\] rounded-\[13px\]/);
+  assert.match(editor, /h-9 w-9[^\n]*rounded-full border border-\[#E7ECF5\][^\n]*shadow-\[0_2px_4px_rgba\(24,48,91,0\.12\)\]/);
+  assert.match(editor, /h-\[17px\] w-\[17px\]/);
+});
+
+test("results multi-city values share the exact one-way rendered typography contract", () => {
+  const drawer = readFileSync("src/components/search/FlightEditSearchDrawer.tsx", "utf8");
+  const styles = readFileSync("src/app/globals.css", "utf8");
+  assert.match(primitives, /flightResultsEditValueClassName = "flight-results-edit-value"/);
+  assert.match(drawer, /`block truncate \$\{flightResultsEditValueClassName\}`/);
+  assert.match(editor, /mobileButtonClassName=\{resultsPresentation \? flightResultsEditValueClassName : undefined\}/);
+  assert.match(editor, /resultsPresentation && flightResultsEditValueClassName/);
+  assert.match(styles, /\.flight-results-edit-value \{[\s\S]*?font-family: inherit;[\s\S]*?font-size: 15px !important;[\s\S]*?font-weight: 600 !important;[\s\S]*?line-height: 20px !important;[\s\S]*?color: rgb\(2 6 23\) !important;[\s\S]*?text-size-adjust: none;/);
+  assert.match(styles, /\.flight-results-edit-surface \{[\s\S]*?background-color: #ffffff !important;[\s\S]*?border-color: #e7ecf5 !important;[\s\S]*?box-shadow: none !important;/);
+  assert.match(styles, /\.flight-results-edit-field-surface \{[\s\S]*?background-color: #ffffff !important;[\s\S]*?border-color: transparent !important;[\s\S]*?box-shadow: none !important;/);
+  assert.match(editor, /data-multi-city-results-route-card/);
+  assert.match(editor, /data-multi-city-results-date-card/);
+});
+
+test("results presentation removes the duplicate title while retaining an accessible name and leg count", () => {
+  assert.match(editor, /aria-label=\{resultsPresentation \? t\("multiCity"\) : undefined\}/);
+  assert.match(editor, /aria-labelledby=\{resultsPresentation \? undefined : "multi-city-flights-heading"\}/);
+  assert.match(editor, /\{!resultsPresentation \? \([\s\S]*?t\("flightMultiCity\.title"\)/);
+  assert.match(editor, /\{legs\.length\} of \{MULTI_CITY_MAX_LEGS\}/);
+});
+
+test("results airport values are code-only while placeholders and rich picker context remain", () => {
+  assert.match(editor, /value=\{resultsPresentation && draftQuery === null \? code : query\}/);
+  assert.match(editor, /placeholder=\{t\("cityOrAirport"\)\}/);
+  assert.match(editor, /mobilePlaceholder=\{t\("cityOrAirport"\)\}/);
+  assert.match(editor, /<MobileAirportPicker[\s\S]*?value=\{query\}/);
+  assert.match(editor, /getLocalizedCityName\(option\.city, locale\)/);
+  assert.match(editor, /\{option\.airport\}/);
+  assert.match(editor, /\{option\.code\}/);
+});
+
+test("desktop airport labels use one City plus IATA line without changing mobile or Results", () => {
+  assert.match(primitives, /desktopValue\?: string/);
+  assert.match(primitives, /showDesktopSecondary\?: boolean/);
+  assert.match(primitives, /showDesktopSecondary = true/);
+  assert.match(primitives, /value=\{desktopValue \?\? value\}/);
+  assert.match(
+    primitives,
+    /showDesktopSecondary && display\.secondary \? <span className="block truncate text-\[10px\]/,
+  );
+  assert.match(
+    editor,
+    /desktopValue=\{[\s\S]*?landingPresentation && selectedAirport && draftQuery === null[\s\S]*?formatAirportLabel\(selectedAirport, locale\)/,
+  );
+  assert.match(editor, /showDesktopSecondary=\{!landingPresentation\}/);
+  assert.match(editor, /<MobileAirportPicker[\s\S]*?value=\{query\}/);
+  assert.match(editor, /value=\{resultsPresentation && draftQuery === null \? code : query\}/);
+});
+
+test("results dates use canonical travel wording without changing standalone wording", () => {
+  assert.match(editor, /t\(resultsPresentation \? "travelDates" : "flightMultiCity\.departureDate"\)/);
+  assert.match(editor, /aria-label=\{`\$\{fieldLabel\}/);
+  assert.match(editor, /title=\{fieldLabel\}/);
+  assert.match(editor, /selectDates: fieldLabel/);
+});
+
+test("homepage and standalone retain their existing presentation path", () => {
+  assert.match(editor, /presentation = "standalone"/);
+  assert.match(editor, /const resultsPresentation = presentation === "results"/);
+  assert.match(editor, /const landingPresentation = presentation === "landing"/);
+  assert.match(editor, /resultsPresentation &&/);
+  assert.match(editor, /sm:min-h-\[58px\] sm:rounded-none sm:border-0/);
+  assert.match(editor, /\{resultsPresentation \? \([\s\S]*?data-multi-city-results-route-divider[\s\S]*?\) : null\}/);
+});
+
+test("landing presentation matches the round-trip desktop search geometry without changing mobile", () => {
+  assert.match(
+    editor,
+    /landingPresentation &&\s*"lg:grid-cols-\[minmax\(0,3\.35fr\)_minmax\(172px,1\.2fr\)_48px\][^"]*lg:rounded-2xl[^"]*lg:ring-1 lg:ring-slate-200"/,
+  );
+  assert.match(
+    editor,
+    /landingPresentation &&\s*"lg:grid-cols-\[minmax\(0,1fr\)_44px_minmax\(0,1fr\)\][^"]*lg:border-e lg:border-slate-200/,
+  );
+  assert.match(
+    editor,
+    /landingPresentation &&\s*"lg:static lg:col-start-2 lg:row-start-1 lg:h-8 lg:w-8/,
+  );
+  assert.match(
+    editor,
+    /landingPresentation &&\s*cn\([\s\S]*?lg:min-h-\[58px\][\s\S]*?field === "origin" \? "lg:col-start-1" : "lg:col-start-3"/,
+  );
+  assert.match(
+    editor,
+    /landingPresentation &&\s*"lg:min-h-\[58px\][^"]*lg:border-e lg:border-slate-200/,
+  );
+  assert.doesNotMatch(editor, /landingPresentation &&\s*"[^"]*sm:/);
+});
+
+
+test("results desktop multi-city reserves a dedicated swap column", () => {
+  assert.match(
+    editor,
+    /sm:grid-cols-\[minmax\(0,1fr\)_56px_minmax\(0,1fr\)\]/,
+  );
+  assert.match(
+    editor,
+    /field === "origin" \? "sm:col-start-1" : "sm:col-start-3"/,
+  );
+  assert.match(
+    editor,
+    /sm:static sm:col-start-2 sm:row-start-1 sm:self-center sm:justify-self-center sm:translate-x-0 sm:translate-y-0/,
+  );
+  assert.match(
+    editor,
+    /data-multi-city-results-route-divider[\s\S]*sm:hidden/,
+  );
 });

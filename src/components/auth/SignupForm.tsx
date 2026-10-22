@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 
 import { Button } from "@/components/ui/Button";
@@ -20,6 +21,7 @@ type MessageState = {
 };
 
 export function SignupForm({ googleEnabled = false }: SignupFormProps) {
+  const router = useRouter();
   const { t } = useLocale();
 
   useEffect(() => {
@@ -69,7 +71,7 @@ export function SignupForm({ googleEnabled = false }: SignupFormProps) {
     setMessage({ key: "signupVerificationRequiredRedirecting" });
 
     startTransition(() => {
-      window.location.href = `/auth/verify-email?email=${encodeURIComponent(email)}`;
+      router.push(`/auth/verify-email?email=${encodeURIComponent(email)}`);
     });
   }
 

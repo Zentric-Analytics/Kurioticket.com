@@ -4,11 +4,11 @@ const listenPort = Number(process.env.QA_FIXTURE_PROXY_PORT ?? 3011);
 const upstream = new URL(process.env.QA_FIXTURE_UPSTREAM ?? "http://127.0.0.1:3010");
 
 const leg = (index, returning = false) => {
-  const day = returning ? "12" : "10";
+  const day = returning ? "15" : "13";
   const origin = returning ? "LAX" : "SFO";
   const destination = returning ? "SFO" : "LAX";
-  const departureTime = `2026-09-${day}T${String(8 + index).padStart(2, "0")}:00:00.000Z`;
-  const arrivalTime = `2026-09-${day}T${String(10 + index).padStart(2, "0")}:00:00.000Z`;
+  const departureTime = `2026-11-${day}T${String(8 + index).padStart(2, "0")}:00:00.000Z`;
+  const arrivalTime = `2026-11-${day}T${String(10 + index).padStart(2, "0")}:00:00.000Z`;
   return {
     direction: returning ? "return" : "outbound",
     originAirport: origin,
@@ -30,8 +30,8 @@ const flightResults = Array.from({ length: 12 }, (_, index) => ({
   airlineCode: index % 2 ? "PA" : "KT",
   originAirport: "SFO",
   destinationAirport: "LAX",
-  departureTime: `2026-09-10T${String(8 + index).padStart(2, "0")}:00:00.000Z`,
-  arrivalTime: `2026-09-10T${String(10 + index).padStart(2, "0")}:00:00.000Z`,
+  departureTime: `2026-11-13T${String(8 + index).padStart(2, "0")}:00:00.000Z`,
+  arrivalTime: `2026-11-13T${String(10 + index).padStart(2, "0")}:00:00.000Z`,
   duration: "2h",
   durationMinutes: 120,
   stops: 0,

@@ -167,3 +167,30 @@ test("existing phone data initializes canonical country and preserves its local 
     "+1",
   );
 });
+
+
+test("saved international phones split into country and local number for editing", () => {
+ for (const [country, full, local] of [
+   ["US", "+13436827513", "3436827513"],
+   ["CA", "+1 4165550100", "4165550100"],
+   ["NG", "+234 7056890436", "7056890436"],
+   ["GB", "+44 2079460958", "2079460958"],
+ ]) {
+   const original = { phoneCountryCode: country, phoneNumber: full };
+   const normalized = normalizeProfile(original);
+   assert.equal(normalized.phoneCountryCode, country);
+   assert.equal(normalized.phoneNumber, local);
+   assert.deepEqual(normalizeProfile(normalized), normalized);
+   assert.equal(profilesDiffer(original, normalized), false);
+   assert.equal(displayPhone(normalized.phoneCountryCode!, normalized.phoneNumber!), displayPhone(country, full));
+ }
+});
+
+test("phone normalization preserves local digits and unrecognized international input", () => {
+ for (const phoneNumber of ["13436827513", "02079460958", "", "+999123456"]) {
+   assert.equal(normalizeProfile({ phoneCountryCode: "US", phoneNumber }).phoneNumber, phoneNumber);
+ }
+ const foreign = normalizeProfile({ phoneCountryCode: "US", phoneNumber: "+44 2079460958" });
+ assert.equal(foreign.phoneCountryCode, "GB");
+ assert.equal(foreign.phoneNumber, "2079460958");
+});
