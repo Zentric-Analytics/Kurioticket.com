@@ -27,7 +27,7 @@ export default async function AdminFaqDetailPage({ params }: PageProps) {
   if (
     result.item.type !== "FAQ" ||
     result.item.market !== "GLOBAL" ||
-    result.item.locale !== "en-us"
+    result.item.locale !== "en"
   ) {
     notFound();
   }
