@@ -19,6 +19,8 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v6
         with:
           node-version: 24
@@ -30,6 +32,7 @@ jobs:
         env:
           ADMIN_IDENTITY_QA_WORK: ${{ runner.temp }}/admin-navigation-qa
           ADMIN_IDENTITY_QA_OUTPUT: ${{ runner.temp }}/admin-navigation-screenshots
+          ADMIN_IDENTITY_QA_BASE: f0a5d0c0a6644887ed72935ce5503228d736bdb2
       - name: Upload Admin navigation evidence
         if: always()
         uses: actions/upload-artifact@v4
