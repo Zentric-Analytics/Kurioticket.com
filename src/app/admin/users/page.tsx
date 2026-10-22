@@ -69,8 +69,8 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
       <Card className="mt-4 overflow-hidden p-0">
         <div className="flex justify-between border-b border-slate-100 px-4 py-3"><h2 className="font-semibold text-slate-950">Identities ({count.toLocaleString()})</h2><span className="text-xs text-slate-500">Guest identities are not registered accounts</span></div>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1320px] table-fixed text-left text-[13px]">
-            <thead className="bg-slate-50 text-xs uppercase text-slate-500"><tr><th className="w-[18%] p-3">Identity</th><th className="w-[12%] p-3">Type</th><th className="w-[22%] p-3">Email / Guest ID</th><th className="w-[10%] p-3">Status</th><th className="w-[16%] p-3">Joined / First seen</th><th className="w-[10%] p-3">View</th><th className="w-[12%] p-3">Account actions</th></tr></thead>
+          <table className="w-full min-w-[1360px] table-fixed text-left text-[13px]">
+            <thead className="bg-slate-50 text-xs uppercase text-slate-500"><tr><th className="w-[16%] p-3">Identity</th><th className="w-[12%] p-3">Type</th><th className="w-[21%] p-3">Email / Guest ID</th><th className="w-[9%] p-3">Status</th><th className="w-[14%] p-3">Joined / First seen</th><th className="w-[10%] p-3">View</th><th className="w-[18%] p-3">Account actions</th></tr></thead>
             <tbody>
               {result.users.map(user => {
                 const isProtectedAdmin = Boolean(user.email && protectedEmails.has(user.email.toLowerCase().trim()));
