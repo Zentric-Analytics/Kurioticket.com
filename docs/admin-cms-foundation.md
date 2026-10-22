@@ -11,7 +11,7 @@ The first CMS schema supports:
 - `HOTEL_DESTINATION`
 - `FAQ`
 
-Each content type has a strict server-side payload schema. Arbitrary HTML, JavaScript, CSS, and unstructured executable content are not accepted.
+Each content type has a strict server-side payload schema. Arbitrary HTML, JavaScript, CSS, and unstructured executable content are not accepted. CMS market scopes use the same canonical market codes as the homepage resolver, including country scopes such as `US`/`NG`, regional scopes such as `EUROPE`/`AFRICA`, `CANADA`, and `GLOBAL`.
 
 ## Lifecycle
 
