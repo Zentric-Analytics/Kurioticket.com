@@ -85,6 +85,15 @@ export function decodeActivityCursor(input: string | undefined, kind: IdentityKi
     return { id: x.id, at: x.at };
   } catch { return null; }
 }
+/** Keep text searching consistent for modern stages and older activity rows. */
+export function legacyStageLabelMatchesQuery(
+  stage: "SEARCH_COMPLETED" | "PROVIDER_HANDOFF_STARTED",
+  query: string,
+) {
+  const label = stage === "SEARCH_COMPLETED" ? "Search completed" : "Provider handoff started";
+  return Boolean(query) && label.toLowerCase().includes(query.toLowerCase());
+}
+
 /**
  * Suppress a legacy search/handoff when its same-source journey stage is already
  * eligible for this view. Do not seek this exclusion using the page cursor:
