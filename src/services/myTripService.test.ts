@@ -32,7 +32,7 @@ test("listing is user-scoped, status-filtered, and serializes only safe provider
   assert.equal(upcoming.trips[0].providerAction?.external, true);
   assert.equal(upcoming.trips[0].providerAction?.url, "https://provider-a.test/manage");
   assert.equal(upcoming.trips[0].providerConfirmed, false);
-  assert.equal(upcoming.trips[0].confirmationVerifiedAt, null);
+  assert.equal(upcoming.trips[0].providerConfirmedAt, null);
   assert.deepEqual(past.trips.map((trip) => trip.id), ["a-legacy"]);
   assert.equal(past.trips[0].providerAction, null);
   assert.equal([...upcoming.trips, ...past.trips].some((trip) => trip.id === "b-private"), false);
@@ -47,7 +47,7 @@ test("trusted ingestion creates and retries idempotently for the same provider, 
   assert.equal(db.records.length, 1);
   assert.equal(retry.destination, "SFO");
   assert.equal(retry.providerConfirmed, true);
-  assert.equal(retry.confirmationVerifiedAt, "2026-09-02T00:00:00.000Z");
+  assert.equal(retry.providerConfirmedAt, "2026-09-02T00:00:00.000Z");
 });
 
 test("a composite collision from a different user fails closed without updating the winner", async () => {
@@ -79,6 +79,28 @@ test("a composite collision from the same user updates the canonical winning tri
   assert.equal(db.updateCalls, 1);
   assert.equal(db.records.length, 1);
   assert.equal(db.records[0].userId, "user-a");
+});
+
+
+test("signed partner confirmation upgrades an imported canonical trip to verified provenance", async () => {
+  const winner = record({
+    id: "canonical-trip",
+    userId: "user-a",
+    source: "CONFIRMATION_IMPORT",
+    partnerConversionId: "conversion-x",
+    partnerConfirmationOccurredAt: new Date("2026-08-31T00:00:00Z"),
+  });
+  const db = memoryClient([winner]);
+  db.collideNextCreate();
+  __myTripServiceTest.setPrismaClientForTesting(db.client);
+
+  const result = await upsertPartnerConfirmedMyTrip(confirmation({
+    source: "PARTNER_CONFIRMATION",
+    confirmationOccurredAt: new Date("2026-09-02T00:00:00Z"),
+  }));
+  assert.equal(result.providerConfirmed, true);
+  assert.equal(result.providerConfirmedAt, "2026-09-02T00:00:00.000Z");
+  assert.equal(db.records[0].source, "PARTNER_CONFIRMATION");
 });
 
 test("an older or equal provider event cannot overwrite a newer canonical trip", async () => {
