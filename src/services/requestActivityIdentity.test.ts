@@ -8,7 +8,7 @@ const webRequest = () => new Request("https://kurioticket.com/api/hotels/search"
 });
 
 test("consented guest searches and handoffs receive a visitor but no account identity", async () => {
-  for (const path of ["/api/flights/search", "/api/hotels/search", "/api/redirect"]) {
+  for (const path of ["/api/flights/search", "/api/hotels/search", "/api/cars/search", "/api/redirect"]) {
     const identity = await resolveRequestActivityIdentity(new Request(`https://kurioticket.com${path}`, {
       headers: { cookie: `kt_visitor=${token}` },
     }), {
