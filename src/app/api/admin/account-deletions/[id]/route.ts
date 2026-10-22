@@ -108,8 +108,19 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         request,
       });
 
+      const completedRequest = await getDeletionRequest(finalized.request.id);
+      if (!completedRequest) {
+        console.error("[admin-account-deletion:finalize-readback-missing]", {
+          requestId: finalized.request.id,
+        });
+        return NextResponse.json(
+          { error: "Account deletion completed but the retained audit record could not be read." },
+          { status: 500 },
+        );
+      }
+
       return NextResponse.json({
-        request: serializeRequest(finalized.request),
+        request: serializeRequest(completedRequest),
         cleanupCounts: finalized.cleanupCounts,
       });
     } catch (error) {
