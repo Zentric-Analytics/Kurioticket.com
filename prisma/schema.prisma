@@ -139,6 +139,21 @@ enum AnalyticsEventType {
   PROVIDER_FAILURE
 }
 
+enum VisitorConsentPurpose {
+  ANALYTICS
+}
+
+enum VisitorConsentStatus {
+  GRANTED
+  WITHDRAWN
+}
+
+enum VisitorIdentityLinkSource {
+  SIGN_IN
+  SIGN_UP
+  ACCOUNT_API
+}
+
 enum LegalDocumentStatus {
   DRAFT
   PUBLISHED
@@ -222,6 +237,8 @@ model User {
   supportTickets           SupportTicket[]
   redirectLogs             RedirectLog[]
   apiEvents                AnalyticsEvent[]
+  visitors                 Visitor[]                     @relation("VisitorCurrentUser")
+  visitorIdentityLinks     VisitorIdentityLink[]
   notifications            Notification[]
   profile                  UserProfile?
   securitySettings         UserSecuritySettings?
@@ -560,6 +577,7 @@ model RecentSearch {
 model SearchHistory {
   id          String       @id @default(cuid())
   userId      String?
+  visitorId   String?
   type        SearchType
   origin      String?
   destination String?
@@ -571,8 +589,10 @@ model SearchHistory {
   status      SearchStatus @default(SUCCESS)
   createdAt   DateTime     @default(now())
   user        User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  visitor     Visitor?     @relation(fields: [visitorId], references: [id], onDelete: SetNull)
 
   @@index([userId])
+  @@index([visitorId])
   @@index([type])
   @@index([origin, destination])
   @@index([createdAt])
@@ -938,16 +958,67 @@ model HomepageFareSnapshot {
   @@index([searchedAt])
 }
 
+/// A privacy-safe, first-party identity for a consenting anonymous visitor.
+/// The browser receives only a random opaque token; this table retains its hash.
+model Visitor {
+  id                 String                @id @default(cuid())
+  tokenHash          String                @unique
+  currentUserId      String?
+  consentStatus      VisitorConsentStatus  @default(GRANTED)
+  firstSeenAt        DateTime              @default(now())
+  lastSeenAt         DateTime              @default(now())
+  trackingDisabledAt DateTime?
+  currentUser        User?                 @relation("VisitorCurrentUser", fields: [currentUserId], references: [id], onDelete: SetNull)
+  consentRecords     VisitorConsent[]
+  identityLinks      VisitorIdentityLink[]
+  searchHistory      SearchHistory[]
+  analyticsEvents    AnalyticsEvent[]
+
+  @@index([currentUserId, lastSeenAt])
+  @@index([consentStatus, lastSeenAt])
+}
+
+/// Append-only evidence of analytics consent changes for an anonymous visitor.
+model VisitorConsent {
+  id            String                @id @default(cuid())
+  visitorId     String
+  purpose       VisitorConsentPurpose
+  status        VisitorConsentStatus
+  policyVersion String?
+  recordedAt    DateTime              @default(now())
+  visitor       Visitor               @relation(fields: [visitorId], references: [id], onDelete: Cascade)
+
+  @@index([visitorId, recordedAt])
+  @@index([purpose, status, recordedAt])
+}
+
+/// Records a deterministic link without treating browser/device fingerprints as identity.
+model VisitorIdentityLink {
+  id        String                    @id @default(cuid())
+  visitorId String
+  userId    String
+  source    VisitorIdentityLinkSource
+  linkedAt  DateTime                  @default(now())
+  visitor   Visitor                   @relation(fields: [visitorId], references: [id], onDelete: Cascade)
+  user      User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([visitorId, userId])
+  @@index([userId, linkedAt])
+}
+
 model AnalyticsEvent {
   id        String             @id @default(cuid())
   userId    String?
+  visitorId String?
   type      AnalyticsEventType
   name      String
   metadata  Json?
   createdAt DateTime           @default(now())
   user      User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
+  visitor   Visitor?           @relation(fields: [visitorId], references: [id], onDelete: SetNull)
 
   @@index([userId])
+  @@index([visitorId])
   @@index([type])
   @@index([name])
   @@index([createdAt])

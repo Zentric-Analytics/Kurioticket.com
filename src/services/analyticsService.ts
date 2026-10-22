@@ -3,6 +3,7 @@ import { withEnvironmentMetadata } from "@/lib/stagingSafety";
 
 export async function trackAnalyticsEvent(input: {
   userId?: string | null;
+  visitorId?: string | null;
   type:
     | "SEARCH"
     | "REDIRECT"
@@ -19,6 +20,7 @@ export async function trackAnalyticsEvent(input: {
       await db.analyticsEvent.create({
         data: {
           userId: input.userId || undefined,
+          visitorId: input.visitorId || undefined,
           type: input.type,
           name: input.name,
           metadata: withEnvironmentMetadata(input.metadata) as never,
@@ -55,6 +57,7 @@ export async function logProviderCall(input: {
 
 export async function logSearchHistory(input: {
   userId?: string | null;
+  visitorId?: string | null;
   type: "FLIGHT" | "HOTEL";
   origin?: string | null;
   destination?: string | null;
@@ -70,6 +73,7 @@ export async function logSearchHistory(input: {
       await db.searchHistory.create({
         data: {
           userId: input.userId || undefined,
+          visitorId: input.visitorId || undefined,
           type: input.type,
           origin: input.origin || undefined,
           destination: input.destination || undefined,

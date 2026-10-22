@@ -7,9 +7,12 @@ import { classifyHotels } from "@/lib/travel/searchContract";
 import { logProviderCall, logSearchHistory, trackAnalyticsEvent } from "@/services/analyticsService";
 import { searchHotels } from "@/services/travel/hotelAggregator";
 import { isFeatureEnabled } from "@/lib/feature-controls/service";
+import { readVisitorToken } from "@/lib/visitor-identity";
+import { resolveConsentedVisitorId } from "@/services/visitorIdentityService";
 
 export async function POST(request: Request) {
   const requestId = request.headers.get("x-search-request-id")?.trim() || crypto.randomUUID();
+  const visitorToken = readVisitorToken(request);
   if (!(await isFeatureEnabled("HOTEL_SEARCH_ENABLED"))) return NextResponse.json({ error: "Hotel search is temporarily unavailable.", code: "FEATURE_DISABLED", results: [], status: "unavailable", requestId }, { status: 503 });
   const ip = getClientIp(request);
   const rate = checkRateLimit(`hotel-search:${ip}`, 35, 60_000);
@@ -24,6 +27,7 @@ export async function POST(request: Request) {
   }
 
   const session = (await resolveOptionalWebApiSession())?.session;
+  const visitorId = await resolveConsentedVisitorId(visitorToken);
   const aggregate = await searchHotels(parsed.data);
   if (aggregate.unavailableMessage) {
     await Promise.all(
@@ -67,6 +71,7 @@ export async function POST(request: Request) {
   await Promise.all([
     logSearchHistory({
       userId: session?.user?.id,
+      visitorId,
       type: "HOTEL",
       destination: parsed.data.destination,
       checkIn: new Date(parsed.data.checkIn),
@@ -78,6 +83,7 @@ export async function POST(request: Request) {
     }),
     trackAnalyticsEvent({
       userId: session?.user?.id,
+      visitorId,
       type: "SEARCH",
       name: "hotel_search",
       metadata: {
