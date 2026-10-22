@@ -613,3 +613,61 @@ export async function readPublishedCmsContent<T>(
     return { source: "fallback", items: options.fallback() };
   }
 }
+
+
+export async function getCmsContentScopeSummary(
+  type: CmsContentType,
+  market: string,
+  locale: string,
+) {
+  const db = getOptionalPrisma();
+  if (!db) {
+    return {
+      available: false,
+      active: false,
+      total: 0,
+      draft: 0,
+      published: 0,
+      hidden: 0,
+      archived: 0,
+    };
+  }
+  const parsedMarket = marketSchema.safeParse(market);
+  const parsedLocale = localeSchema.safeParse(locale);
+  if (!parsedMarket.success || !parsedLocale.success) {
+    throw new CmsContentError("INVALID", "CMS scope is invalid.");
+  }
+  const [scope, groups] = await Promise.all([
+    db.cmsContentScope.findUnique({
+      where: {
+        type_market_locale: {
+          type,
+          market: parsedMarket.data,
+          locale: parsedLocale.data,
+        },
+      },
+      select: { id: true },
+    }),
+    db.cmsContentItem.groupBy({
+      by: ["status"],
+      where: {
+        type,
+        OR: [
+          { market: parsedMarket.data, locale: parsedLocale.data },
+          { publishedMarket: parsedMarket.data, publishedLocale: parsedLocale.data },
+        ],
+      },
+      _count: { _all: true },
+    }),
+  ]);
+  const counts = new Map(groups.map((group) => [group.status, group._count._all]));
+  return {
+    available: true,
+    active: Boolean(scope),
+    total: groups.reduce((sum, group) => sum + group._count._all, 0),
+    draft: counts.get("DRAFT") ?? 0,
+    published: counts.get("PUBLISHED") ?? 0,
+    hidden: counts.get("HIDDEN") ?? 0,
+    archived: counts.get("ARCHIVED") ?? 0,
+  };
+}
