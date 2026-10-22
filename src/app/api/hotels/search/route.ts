@@ -133,6 +133,7 @@ export async function POST(request: Request) {
     logSearchHistory({
       userId: session?.user?.id,
       visitorId,
+      requestId,
       type: "HOTEL",
       destination: search.destination,
       checkIn: new Date(search.checkIn),

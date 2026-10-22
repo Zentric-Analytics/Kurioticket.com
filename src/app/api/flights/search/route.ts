@@ -113,6 +113,7 @@ export async function POST(request: Request) {
     logSearchHistory({
       userId: session?.user?.id,
       visitorId,
+      requestId,
       type: "FLIGHT",
       origin: parsed.data.origin,
       destination: parsed.data.destination,

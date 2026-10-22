@@ -5,6 +5,9 @@ import { getMobileSession } from "@/lib/mobile-auth";
 import { getFlightFromCache, getHotelFromCache } from "@/lib/searchCache";
 import { withOptionalDb } from "@/lib/prisma";
 import { trackAnalyticsEvent } from "@/services/analyticsService";
+import { readVisitorToken } from "@/lib/visitor-identity";
+import { resolveConsentedVisitorId } from "@/services/visitorIdentityService";
+import { journeyEventKey, recordJourneyEvent } from "@/services/searchJourneyService";
 import { getHotelPriceDetails } from "@/lib/hotels/hotelResultAvailability";
 import type { NormalizedHotelResult } from "@/lib/types";
 import { isStagingEnvironment } from "@/lib/stagingSafety";
@@ -121,6 +124,7 @@ export async function POST(request: Request) {
   const webSession = (await resolveOptionalWebApiSession())?.session;
   const mobileSession = request.headers.get("authorization") ? await getMobileSession(request) : null;
   const user = webSession?.user ?? (mobileSession?.user.status === "ACTIVE" ? mobileSession.user : undefined);
+  const visitorId = await resolveConsentedVisitorId(readVisitorToken(request));
   const route =
     body.type === "flight" && "originAirport" in target
       ? `${target.originAirport}-${target.destinationAirport}`
@@ -128,12 +132,12 @@ export async function POST(request: Request) {
         ? target.location
         : undefined;
 
-  await Promise.all([
-    withOptionalDb(
+  const redirectLogId = await withOptionalDb(
       async (db) => {
-        await db.redirectLog.create({
+        const redirectLog = await db.redirectLog.create({
           data: {
             userId: user?.id,
+            visitorId: visitorId || undefined,
             type: body.type === "flight" ? "FLIGHT" : "HOTEL",
             provider: body.type === "flight" ? verifiedFlightHandoff!.providerName : target.provider,
             route,
@@ -145,12 +149,24 @@ export async function POST(request: Request) {
             metadata: { resultId: body.id } as never,
           },
         });
-        return true;
+        return redirectLog.id;
       },
-      false,
-    ),
+      null,
+    );
+
+  await Promise.all([
+    recordJourneyEvent({
+      visitorId,
+      type: "PROVIDER_HANDOFF_STARTED",
+      eventKey: journeyEventKey("redirect", redirectLogId || crypto.randomUUID()),
+      product: body.type === "flight" ? "FLIGHT" : "HOTEL",
+      provider: body.type === "flight" ? verifiedFlightHandoff!.providerName : target.provider,
+      redirectLogId,
+      metadata: { sourcePage: body.sourcePage || "unknown" },
+    }),
     trackAnalyticsEvent({
       userId: user?.id,
+      visitorId,
       type: "REDIRECT",
       name: `${body.type}_partner_redirect`,
       metadata: { provider: body.type === "flight" ? verifiedFlightHandoff!.providerName : target.provider, route },

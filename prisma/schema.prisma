@@ -154,6 +154,13 @@ enum VisitorIdentityLinkSource {
   ACCOUNT_API
 }
 
+enum JourneyEventType {
+  SEARCH_COMPLETED
+  RESULTS_VIEWED
+  OFFER_SELECTED
+  PROVIDER_HANDOFF_STARTED
+}
+
 enum LegalDocumentStatus {
   DRAFT
   PUBLISHED
@@ -578,6 +585,7 @@ model SearchHistory {
   id          String       @id @default(cuid())
   userId      String?
   visitorId   String?
+  requestId   String?      @unique
   type        SearchType
   origin      String?
   destination String?
@@ -590,6 +598,7 @@ model SearchHistory {
   createdAt   DateTime     @default(now())
   user        User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
   visitor     Visitor?     @relation(fields: [visitorId], references: [id], onDelete: SetNull)
+  journeyEvents JourneyEvent[]
 
   @@index([userId])
   @@index([visitorId])
@@ -728,6 +737,7 @@ model SupportMessage {
 model RedirectLog {
   id             String       @id @default(cuid())
   userId         String?
+  visitorId      String?
   type           RedirectType
   provider       String
   route          String?
@@ -739,8 +749,11 @@ model RedirectLog {
   metadata       Json?
   createdAt      DateTime     @default(now())
   user           User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  visitor        Visitor?     @relation(fields: [visitorId], references: [id], onDelete: SetNull)
+  journeyEvents  JourneyEvent[]
 
   @@index([userId])
+  @@index([visitorId])
   @@index([type])
   @@index([provider])
   @@index([createdAt])
@@ -973,9 +986,45 @@ model Visitor {
   identityLinks      VisitorIdentityLink[]
   searchHistory      SearchHistory[]
   analyticsEvents    AnalyticsEvent[]
+  journeys           SearchJourney[]
+  redirectLogs       RedirectLog[]
 
   @@index([currentUserId, lastSeenAt])
   @@index([consentStatus, lastSeenAt])
+}
+
+/// A short-lived, consented visitor session that groups search-funnel activity.
+model SearchJourney {
+  id             String         @id @default(cuid())
+  visitorId      String
+  startedAt      DateTime       @default(now())
+  lastActivityAt DateTime       @default(now())
+  visitor        Visitor        @relation(fields: [visitorId], references: [id], onDelete: Cascade)
+  events         JourneyEvent[]
+
+  @@index([visitorId, lastActivityAt(sort: Desc)])
+  @@index([lastActivityAt])
+}
+
+/// A deduplicated activity record in a consenting visitor's search journey.
+model JourneyEvent {
+  id              String           @id @default(cuid())
+  journeyId       String
+  type            JourneyEventType
+  eventKey        String           @unique
+  product         SearchType?
+  provider        String?
+  searchHistoryId String?
+  redirectLogId   String?          @unique
+  metadata        Json?
+  createdAt       DateTime         @default(now())
+  journey         SearchJourney    @relation(fields: [journeyId], references: [id], onDelete: Cascade)
+  searchHistory   SearchHistory?   @relation(fields: [searchHistoryId], references: [id], onDelete: SetNull)
+  redirectLog     RedirectLog?     @relation(fields: [redirectLogId], references: [id], onDelete: SetNull)
+
+  @@index([journeyId, createdAt])
+  @@index([type, createdAt])
+  @@index([searchHistoryId])
 }
 
 /// Append-only evidence of analytics consent changes for an anonymous visitor.
