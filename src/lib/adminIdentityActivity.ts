@@ -98,7 +98,7 @@ export function excludeCanonicalLegacyRows(
   createdAt: Prisma.DateTimeFilter,
   product: Prisma.JourneyEventWhereInput,
   query: Prisma.JourneyEventWhereInput,
-): Prisma.SearchHistoryWhereInput {
+): { journeyEvents: { none: Prisma.JourneyEventWhereInput } } {
   return {
     journeyEvents: {
       none: { AND: [owner, { type: stage }, { createdAt }, product, query] },
