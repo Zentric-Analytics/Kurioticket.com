@@ -240,8 +240,15 @@ export function createAdminOperationalReadService(dependencies: Dependencies) {
             ...(scope.status ? { status: scope.status } : {}),
             ...(dateRange(scope.from, scope.to) ? { createdAt: dateRange(scope.from, scope.to) } : {}),
             query: { path: ["environment"], equals: scope.environment },
-            ...(scope.provider ? { journeyEvents: { some: { provider: { equals: scope.provider, mode: "insensitive" } } } } : {}),
-            ...cursorWhere(cursor),
+            AND: [
+              ...(scope.provider ? [{
+                OR: [
+                  { query: { path: ["provider"], equals: scope.provider } },
+                  { journeyEvents: { some: { provider: { equals: scope.provider, mode: "insensitive" as const } } } },
+                ],
+              }] : []),
+              ...(cursor ? [{ OR: [{ createdAt: { lt: new Date(cursor.at) } }, { createdAt: new Date(cursor.at), id: { lt: cursor.id } }] }] : []),
+            ],
           };
           const records = await db.searchHistory.findMany({ where, select: searchSelect, orderBy: [{ createdAt: "desc" }, { id: "desc" }], take: limit + 1 });
           const page = nextCursor("searches", scope, records, limit);
@@ -302,13 +309,15 @@ export function createAdminOperationalReadService(dependencies: Dependencies) {
             ...(scope.priority ? { priority: scope.priority } : {}),
             ...(scope.category ? { category: { equals: scope.category, mode: "insensitive" } } : {}),
             ...(dateRange(scope.from, scope.to) ? { createdAt: dateRange(scope.from, scope.to) } : {}),
-            ...(scope.q ? { OR: [
-              { email: { contains: scope.q, mode: "insensitive" } },
-              { subject: { contains: scope.q, mode: "insensitive" } },
-              { user: { is: { email: { contains: scope.q, mode: "insensitive" } } } },
-              { user: { is: { name: { contains: scope.q, mode: "insensitive" } } } },
-            ] } : {}),
-            ...cursorWhere(cursor),
+            AND: [
+              ...(scope.q ? [{ OR: [
+                { email: { contains: scope.q, mode: "insensitive" as const } },
+                { subject: { contains: scope.q, mode: "insensitive" as const } },
+                { user: { is: { email: { contains: scope.q, mode: "insensitive" as const } } } },
+                { user: { is: { name: { contains: scope.q, mode: "insensitive" as const } } } },
+              ] }] : []),
+              ...(cursor ? [{ OR: [{ createdAt: { lt: new Date(cursor.at) } }, { createdAt: new Date(cursor.at), id: { lt: cursor.id } }] }] : []),
+            ],
           };
           const records = await db.supportTicket.findMany({ where, select: supportListSelect, orderBy: [{ createdAt: "desc" }, { id: "desc" }], take: limit + 1 });
           const page = nextCursor("support", scope, records, limit);
@@ -347,12 +356,14 @@ export function createAdminOperationalReadService(dependencies: Dependencies) {
           const where: Prisma.AccountDeletionRequestWhereInput = {
             ...(scope.status ? { status: scope.status } : {}),
             ...(requestedAt ? { requestedAt } : {}),
-            ...(scope.q ? { OR: [
-              { email: { contains: scope.q, mode: "insensitive" } },
-              { user: { is: { email: { contains: scope.q, mode: "insensitive" } } } },
-              { user: { is: { name: { contains: scope.q, mode: "insensitive" } } } },
-            ] } : {}),
-            ...(cursor ? { OR: [{ requestedAt: { lt: new Date(cursor.at) } }, { requestedAt: new Date(cursor.at), id: { lt: cursor.id } }] } : {}),
+            AND: [
+              ...(scope.q ? [{ OR: [
+                { email: { contains: scope.q, mode: "insensitive" as const } },
+                { user: { is: { email: { contains: scope.q, mode: "insensitive" as const } } } },
+                { user: { is: { name: { contains: scope.q, mode: "insensitive" as const } } } },
+              ] }] : []),
+              ...(cursor ? [{ OR: [{ requestedAt: { lt: new Date(cursor.at) } }, { requestedAt: new Date(cursor.at), id: { lt: cursor.id } }] }] : []),
+            ],
           };
           const records = await db.accountDeletionRequest.findMany({ where, select: deletionSelect, orderBy: [{ requestedAt: "desc" }, { id: "desc" }], take: limit + 1 });
           const page = deletionNextCursor(scope, records, limit);
