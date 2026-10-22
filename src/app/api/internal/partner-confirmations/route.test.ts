@@ -30,6 +30,33 @@ test("signature verification happens before payload parsing or trip ingestion", 
   assert.equal(ingested, false);
 });
 
+test("a chunked body exceeding 64 KiB is rejected before it is buffered or ingested", async () => {
+  let ingested = false;
+  const POST = createPartnerConfirmationHandler({
+    secret: () => secret,
+    now: () => now,
+    ingest: async () => { ingested = true; return { id: "trip-1" } as never; },
+  });
+  const stream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      controller.enqueue(new TextEncoder().encode("x".repeat(64 * 1024 + 1)));
+      controller.close();
+    },
+  });
+  const timestamp = String(Math.floor(now / 1_000));
+  const response = await POST(new Request("https://kurioticket.test/api/internal/partner-confirmations", {
+    method: "POST",
+    headers: {
+      "x-kt-confirmation-timestamp": timestamp,
+      "x-kt-confirmation-signature": `sha256=${"0".repeat(64)}`,
+    },
+    body: stream,
+    duplex: "half",
+  }));
+  assert.equal(response.status, 413);
+  assert.equal(ingested, false);
+});
+
 test("a valid signed confirmation is ingested and exposes only an acknowledgement", async () => {
   let received: unknown;
   const POST = createPartnerConfirmationHandler({
@@ -88,6 +115,7 @@ function request(rawBody: string) {
 function payload() {
   return {
     customer: { userId: "user-123" },
+    occurredAt: "2026-10-22T15:29:00.000Z",
     partnerConversionId: "partner-conversion-123",
     providerName: "Example Provider",
     providerConfirmationCode: "ABC-123",
@@ -111,7 +139,7 @@ function expectIngestion() {
     providerConfirmationCode: "ABC-123", providerTripId: "provider-trip-456", providerManageUrl: "https://provider.example/manage/ABC-123",
     tripType: "FLIGHT", status: "UPCOMING", source: "PARTNER_CONFIRMATION", origin: "LOS", destination: "LHR",
     departureDate: new Date("2026-11-01T09:00:00.000Z"), returnDate: new Date("2026-11-12T11:00:00.000Z"),
-    travelerCount: 2, currency: "USD", totalAmount: 425.5,
+    travelerCount: 2, currency: "USD", totalAmount: 425.5, confirmationOccurredAt: new Date("2026-10-22T15:29:00.000Z"),
   };
 }
 

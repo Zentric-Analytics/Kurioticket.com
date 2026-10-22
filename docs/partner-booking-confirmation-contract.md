@@ -17,13 +17,14 @@ The provider sends the raw JSON body with these headers:
 | `x-kt-confirmation-timestamp` | Unix timestamp in seconds, within five minutes of the request. |
 | `x-kt-confirmation-signature` | `sha256=<hex HMAC-SHA256(timestamp + "." + raw request body)>` using the configured secret. |
 
-The signature is checked before JSON is parsed. The endpoint accepts bodies of at most 64 KiB and returns `401` for missing, stale, or invalid signatures. It returns `503` until a sufficiently strong secret is configured.
+The signature envelope is checked before the body is read. The endpoint streams and bounds bodies to 64 KiB, returning `413` rather than buffering an oversized request. It returns `401` for missing, stale, or invalid signatures and `503` until a sufficiently strong secret is configured.
 
 ## Signed JSON payload
 
 ```json
 {
   "customer": { "userId": "kurioticket-account-id" },
+  "occurredAt": "2026-10-22T15:29:00.000Z",
   "partnerConversionId": "provider-idempotency-key",
   "providerName": "Approved Provider",
   "providerConfirmationCode": "ABC-123",
@@ -41,6 +42,6 @@ The signature is checked before JSON is parsed. The endpoint accepts bodies of a
 }
 ```
 
-`customer.userId` must be the opaque Kurioticket account reference agreed in the private partner integration; do not send an email address. `partnerConversionId` is idempotent per provider. Repeating the same confirmation for the same user updates the canonical trip. Reusing it for another user fails with `409` and does not modify the original trip.
+`customer.userId` must be the opaque Kurioticket account reference agreed in the private partner integration; do not send an email address. `occurredAt` is the provider event's UTC occurrence time and must be a valid ISO timestamp. `partnerConversionId` is idempotent per provider. Repeating a confirmation with a newer `occurredAt` updates the canonical trip; an equal or older event is acknowledged without overwriting newer state. Reusing the conversion identifier for another user fails with `409` and does not modify the original trip.
 
 The endpoint acknowledges only `{ "accepted": true, "tripId": "…" }`. It does not return trip, traveler, or payment details to the provider. Invalid payloads, unsafe provider manage URLs, and impossible travel dates are rejected. A successful callback creates or updates a provider-confirmed **My Trip**; it never creates a Kurioticket booking or payment record.

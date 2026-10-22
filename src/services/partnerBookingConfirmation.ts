@@ -7,7 +7,7 @@ import type { PartnerConfirmedMyTripInput } from "@/services/myTripService";
 const maximumPayloadBytes = 64 * 1024;
 const permittedClockSkewSeconds = 5 * 60;
 const signaturePattern = /^sha256=([a-f0-9]{64})$/i;
-const isoDatePattern = /^\d{4}-\d{2}-\d{2}T/;
+const isoDatePattern = /^\d{4}-\d{2}-\d{2}T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d{3})?Z$/;
 
 type ConfirmationObject = Record<string, unknown>;
 
@@ -43,7 +43,8 @@ function readDate(value: unknown) {
   const text = readString(value, 40);
   if (!isoDatePattern.test(text)) invalidPayload();
   const date = new Date(text);
-  if (Number.isNaN(date.getTime())) invalidPayload();
+  const normalized = text.includes(".") ? text : text.replace("Z", ".000Z");
+  if (Number.isNaN(date.getTime()) || date.toISOString() !== normalized) invalidPayload();
   return date;
 }
 
@@ -82,6 +83,7 @@ function readTripStatus(value: unknown): MyTripStatus {
 export function parsePartnerBookingConfirmation(value: unknown): PartnerConfirmedMyTripInput {
   const payload = readObject(value);
   const customer = readObject(payload.customer);
+  const confirmationOccurredAt = readDate(payload.occurredAt);
   const departureDate = readDate(payload.departureAt);
   const returnDate = readOptionalDate(payload.returnAt);
   if (returnDate && returnDate < departureDate) invalidPayload();
@@ -108,6 +110,7 @@ export function parsePartnerBookingConfirmation(value: unknown): PartnerConfirme
     travelerCount: readInteger(payload.travelerCount, 1, 99),
     currency,
     totalAmount: readAmount(payload.totalAmount),
+    confirmationOccurredAt,
   };
 }
 
@@ -120,6 +123,20 @@ export function isConfiguredPartnerConfirmationSecret(value: string | undefined)
  * `${timestamp}.${body}` bytes using HMAC-SHA256, which prevents the browser
  * from manufacturing a confirmation or changing an accepted payload.
  */
+export function hasFreshPartnerConfirmationEnvelope({
+  timestamp,
+  signature,
+  now = Date.now(),
+}: {
+  timestamp: string | null;
+  signature: string | null;
+  now?: number;
+}) {
+  if (!/^[0-9]{10}$/.test(timestamp || "") || !signaturePattern.test(signature || "")) return false;
+  const timestampMilliseconds = Number(timestamp) * 1_000;
+  return Number.isSafeInteger(timestampMilliseconds) && Math.abs(now - timestampMilliseconds) <= permittedClockSkewSeconds * 1_000;
+}
+
 export function verifiesPartnerConfirmationSignature({
   rawBody,
   timestamp,
@@ -133,9 +150,7 @@ export function verifiesPartnerConfirmationSignature({
   secret: string;
   now?: number;
 }) {
-  if (Buffer.byteLength(rawBody) > maximumPayloadBytes || !/^[0-9]{10}$/.test(timestamp || "")) return false;
-  const timestampMilliseconds = Number(timestamp) * 1_000;
-  if (!Number.isSafeInteger(timestampMilliseconds) || Math.abs(now - timestampMilliseconds) > permittedClockSkewSeconds * 1_000) return false;
+  if (Buffer.byteLength(rawBody) > maximumPayloadBytes || !hasFreshPartnerConfirmationEnvelope({ timestamp, signature, now })) return false;
 
   const match = signature?.match(signaturePattern);
   const receivedHex = match?.[1];

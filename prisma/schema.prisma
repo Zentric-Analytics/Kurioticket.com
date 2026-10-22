@@ -876,6 +876,7 @@ model MyTrip {
   providerManageUrl        String?
   source                   MyTripSource
   partnerConversionId      String?
+  partnerConfirmationOccurredAt DateTime?
   origin                   String?
   destination              String
   departureDate            DateTime

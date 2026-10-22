@@ -3,7 +3,9 @@ import { NextResponse } from "next/server";
 import { MyTripIngestionOwnershipError, upsertPartnerConfirmedMyTrip } from "@/services/myTripService";
 import {
   PartnerConfirmationPayloadError,
+  hasFreshPartnerConfirmationEnvelope,
   isConfiguredPartnerConfirmationSecret,
+  partnerConfirmationLimits,
   parsePartnerBookingConfirmation,
   verifiesPartnerConfirmationSignature,
 } from "@/services/partnerBookingConfirmation";
@@ -15,6 +17,47 @@ type Dependencies = {
   now: () => number;
   ingest: typeof upsertPartnerConfirmedMyTrip;
 };
+
+class PartnerConfirmationBodyTooLargeError extends Error {}
+
+async function readBoundedUtf8Body(request: Request) {
+  const declaredLength = request.headers.get("content-length");
+  if (declaredLength && (!/^\d+$/.test(declaredLength) || Number(declaredLength) > partnerConfirmationLimits.maximumPayloadBytes)) {
+    throw new PartnerConfirmationBodyTooLargeError();
+  }
+
+  if (!request.body) return "";
+  const reader = request.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let length = 0;
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (!value) continue;
+      length += value.byteLength;
+      if (length > partnerConfirmationLimits.maximumPayloadBytes) {
+        try {
+          await reader.cancel();
+        } finally {
+          throw new PartnerConfirmationBodyTooLargeError();
+        }
+      }
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+
+  const body = new Uint8Array(length);
+  let offset = 0;
+  for (const chunk of chunks) {
+    body.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return new TextDecoder("utf-8", { fatal: true }).decode(body);
+}
 
 /**
  * This is a server-to-server boundary for an approved partner callback. It is
@@ -30,11 +73,35 @@ export function createPartnerConfirmationHandler(dependencies: Dependencies) {
       );
     }
 
-    const rawBody = await request.text();
+    const timestamp = request.headers.get("x-kt-confirmation-timestamp");
+    const signature = request.headers.get("x-kt-confirmation-signature");
+    if (!hasFreshPartnerConfirmationEnvelope({ timestamp, signature, now: dependencies.now() })) {
+      return NextResponse.json(
+        { error: "Invalid partner confirmation signature.", errorCode: "partner_confirmation_unauthorized" },
+        { status: 401 },
+      );
+    }
+
+    let rawBody: string;
+    try {
+      rawBody = await readBoundedUtf8Body(request);
+    } catch (error) {
+      if (error instanceof PartnerConfirmationBodyTooLargeError) {
+        return NextResponse.json(
+          { error: "Partner confirmation payload is too large.", errorCode: "partner_confirmation_payload_too_large" },
+          { status: 413 },
+        );
+      }
+      return NextResponse.json(
+        { error: "Invalid partner confirmation payload.", errorCode: "partner_confirmation_invalid_payload" },
+        { status: 400 },
+      );
+    }
+
     if (!verifiesPartnerConfirmationSignature({
       rawBody,
-      timestamp: request.headers.get("x-kt-confirmation-timestamp"),
-      signature: request.headers.get("x-kt-confirmation-signature"),
+      timestamp,
+      signature,
       secret,
       now: dependencies.now(),
     })) {

@@ -30,6 +30,7 @@ test("a signed partner confirmation maps only the trusted My Trips fields", () =
     travelerCount: 2,
     currency: "USD",
     totalAmount: 425.5,
+    confirmationOccurredAt: new Date("2026-10-22T15:29:00.000Z"),
   });
 });
 
@@ -41,6 +42,8 @@ test("partner confirmations reject malformed, unsafe, and impossible itinerary d
     { ...payload(), currency: "US" },
     { ...payload(), customer: { userId: "user\u0000-123" } },
     { ...payload(), tripType: "train" },
+    { ...payload(), departureAt: "2026-02-30T09:00:00.000Z" },
+    { ...payload(), departureAt: "2026-11-01T24:00:00.000Z" },
   ]) {
     assert.throws(() => parsePartnerBookingConfirmation(invalid), PartnerConfirmationPayloadError);
   }
@@ -62,6 +65,7 @@ test("signature verification binds the exact body, timestamp, and configured sec
 function payload() {
   return {
     customer: { userId: "user-123" },
+    occurredAt: "2026-10-22T15:29:00.000Z",
     partnerConversionId: "partner-conversion-123",
     providerName: "Example Provider",
     providerConfirmationCode: "ABC-123",
