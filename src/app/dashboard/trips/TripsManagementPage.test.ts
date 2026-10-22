@@ -29,6 +29,6 @@ test("web My Trips surfaces verified partner confirmation and provider flight st
   assert.match(source, /!status\.dataAvailable/);
   assert.match(source, /status\.freshness === "stale"/);
   assert.match(source, /window\.setInterval\(\(\) => void refresh\(\), 60_000\)/);
-  assert.match(source, /live=\{trip\.status === "upcoming"\}/);
+  assert.match(source, /trip\.tripType === "flight" && trip\.status === "upcoming"/);
   assert.doesNotMatch(source, /On time/);
 });
