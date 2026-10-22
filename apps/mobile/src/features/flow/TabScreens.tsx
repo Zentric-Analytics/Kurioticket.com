@@ -11,7 +11,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { readSession } from "../../storage/sessionStorage";
-import { travelApi, type MobileTrip } from "../../api/travelApi";
+import { travelApi, type MobileFlightStatus, type MobileTrip } from "../../api/travelApi";
 import { locationImageByCity } from "./locationCatalogue";
 import { FlowIcon, type FlowIconName } from "./FlowIcon";
 import { ScreenHeader, Segments } from "./FlowPrimitives";
@@ -98,6 +98,20 @@ export function MyTripsFlowScreen() {
 function TripCard({ trip }: { trip: MobileTrip }) {
   const ft = useFlowTheme();
   const image = locationImageByCity(trip.destination);
+  const [flightStatus, setFlightStatus] = useState<MobileFlightStatus | null>(null);
+
+  useEffect(() => {
+    if (trip.tripType !== "flight") {
+      setFlightStatus(null);
+      return;
+    }
+    let active = true;
+    void travelApi.flightStatus(trip.id)
+      .then((status) => { if (active) setFlightStatus(status); })
+      .catch(() => { if (active) setFlightStatus(null); });
+    return () => { active = false; };
+  }, [trip.id, trip.tripType]);
+
   return (
     <View
       style={[
@@ -122,7 +136,17 @@ function TripCard({ trip }: { trip: MobileTrip }) {
           {trip.origin ? `${trip.origin} → ` : ""}
           {trip.destination}
         </Text>
-        <Text style={ft.styles.meta}>Provider: {trip.providerName}</Text>
+        <View style={styles.providerRow}>
+          <Text style={ft.styles.meta}>Provider: {trip.providerName}</Text>
+          {trip.providerConfirmed ? (
+            <View style={styles.providerConfirmed}>
+              <Text style={styles.providerConfirmedText}>Provider confirmed</Text>
+            </View>
+          ) : null}
+        </View>
+        {trip.providerConfirmed && trip.confirmationVerifiedAt ? (
+          <Text style={ft.styles.meta}>Verified {new Date(trip.confirmationVerifiedAt).toLocaleString()}</Text>
+        ) : null}
         <Text style={ft.styles.meta}>Confirmation: {trip.providerConfirmationCode}</Text>
         <Text style={ft.styles.meta}>{trip.travelerCount} traveler{trip.travelerCount === 1 ? "" : "s"}</Text>
         <Text style={ft.styles.meta}>
@@ -142,6 +166,29 @@ function TripCard({ trip }: { trip: MobileTrip }) {
             {trip.status[0].toUpperCase() + trip.status.slice(1)}
           </Text>
         </View>
+
+        {trip.tripType === "flight" && flightStatus ? (
+          <View style={[styles.flightStatus, { borderColor: ft.colors.border }]}>
+            <Text style={styles.flightStatusHeading}>Flight status</Text>
+            {!flightStatus.dataAvailable ? (
+              <Text style={ft.styles.meta}>Live flight status is not available from the provider yet.</Text>
+            ) : (
+              <>
+                <View style={styles.flightStatusHeader}>
+                  <Text style={ft.styles.value}>{flightStatus.flight.carrierCode} {flightStatus.flight.flightNumber}</Text>
+                  <Text style={styles.flightStatusValue}>{flightStatus.status[0].toUpperCase() + flightStatus.status.slice(1)}</Text>
+                </View>
+                <Text style={ft.styles.meta}>{flightStatus.flight.originAirport} → {flightStatus.flight.destinationAirport}</Text>
+                {flightStatus.timing.estimatedDepartureAt ? <Text style={ft.styles.meta}>Estimated departure: {new Date(flightStatus.timing.estimatedDepartureAt).toLocaleString()}</Text> : null}
+                {flightStatus.timing.actualDepartureAt ? <Text style={ft.styles.meta}>Actual departure: {new Date(flightStatus.timing.actualDepartureAt).toLocaleString()}</Text> : null}
+                {flightStatus.timing.estimatedArrivalAt ? <Text style={ft.styles.meta}>Estimated arrival: {new Date(flightStatus.timing.estimatedArrivalAt).toLocaleString()}</Text> : null}
+                {flightStatus.timing.actualArrivalAt ? <Text style={ft.styles.meta}>Actual arrival: {new Date(flightStatus.timing.actualArrivalAt).toLocaleString()}</Text> : null}
+                <Text style={ft.styles.meta}>Updated {new Date(flightStatus.lastUpdatedAt).toLocaleString()}</Text>
+                {flightStatus.freshness === "stale" ? <Text style={styles.staleStatus}>Last provider update may be stale.</Text> : null}
+              </>
+            )}
+          </View>
+        ) : null}
       </View>
       {trip.providerAction ? (
         <Pressable accessibilityRole="link" accessibilityLabel={`${trip.providerAction.label}, opens external website`} onPress={() => void Linking.openURL(trip.providerAction!.url)} style={flowStyles.primary}>
@@ -256,6 +303,14 @@ const styles = StyleSheet.create({
   },
   confirmed: { backgroundColor: flowColors.paleGreen },
   statusText: { color: flowColors.navy, fontSize: 9, fontWeight: "700" },
+  providerRow: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 6 },
+  providerConfirmed: { borderRadius: 8, backgroundColor: flowColors.paleGreen, paddingHorizontal: 7, paddingVertical: 2 },
+  providerConfirmedText: { color: flowColors.navy, fontSize: 9, fontWeight: "700" },
+  flightStatus: { marginTop: 8, borderWidth: 1, borderRadius: 10, padding: 9, gap: 3 },
+  flightStatusHeading: { color: flowColors.navy, fontSize: 9, fontWeight: "800", textTransform: "uppercase" },
+  flightStatusHeader: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 8 },
+  flightStatusValue: { color: flowColors.navy, fontSize: 10, fontWeight: "800" },
+  staleStatus: { color: "#8A5A00", fontSize: 10, fontWeight: "700" },
   destinations: { flexDirection: "row", gap: 7 },
   destination: {
     flex: 1,
