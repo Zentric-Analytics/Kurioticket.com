@@ -73,27 +73,32 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     if (existing.status !== "PENDING") return NextResponse.json({ error: "Only pending requests can be marked ready for review." }, { status: 400 });
     if (existing.deletionScheduledAt.getTime() > Date.now()) return NextResponse.json({ error: "The 7-day deadline has not passed yet." }, { status: 400 });
     data.status = "READY_FOR_REVIEW";
-  } else if (body.action === "mark_completed" || body.action === "finalize") {
+  } else if (body.action === "mark_completed") {
+    return NextResponse.json(
+      {
+        error: "Destructive completion requires explicit retention review and account-email confirmation.",
+        errorCode: "finalization_confirmation_required",
+      },
+      { status: 409 },
+    );
+  } else if (body.action === "finalize") {
     try {
-      const legacyCompletion = body.action === "mark_completed";
       const finalized = await finalizeAccountDeletionRequest({
         requestId: existing.id,
-        confirmedEmail: legacyCompletion
-          ? (existing.user.email || existing.email)
-          : (typeof body.confirmEmail === "string" ? body.confirmEmail : ""),
+        confirmedEmail: typeof body.confirmEmail === "string" ? body.confirmEmail : "",
         reviewNotes: typeof body.reviewNotes === "string"
           ? body.reviewNotes
           : (existing.reviewNotes || ""),
         adminReference: typeof body.adminReference === "string"
           ? body.adminReference
           : (existing.adminNotificationId || ""),
-        retentionReviewed: legacyCompletion || body.retentionReviewed === true,
+        retentionReviewed: body.retentionReviewed === true,
       });
 
       await writeAdminAuditLog({
         adminUserId: admin.session.user.id,
         adminEmail: admin.session.user.email,
-        action: `account_deletion.${body.action}`,
+        action: "account_deletion.finalize",
         targetType: "AccountDeletionRequest",
         targetId: finalized.request.id,
         targetEmail: finalized.request.email,
