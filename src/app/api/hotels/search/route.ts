@@ -12,11 +12,14 @@ import {
   type HotelProviderMode,
 } from "@/services/travel/hotelAggregator";
 import { isFeatureEnabled } from "@/lib/feature-controls/service";
+import { readVisitorToken } from "@/lib/visitor-identity";
+import { resolveConsentedVisitorId } from "@/services/visitorIdentityService";
 import { getKayakClientIp } from "@/lib/kayak-client-ip";
 import { isKayakSandboxEnabled } from "@/services/travel/kayakSandbox";
 
 export async function POST(request: Request) {
   const requestId = request.headers.get("x-search-request-id")?.trim() || crypto.randomUUID();
+  const visitorToken = readVisitorToken(request);
   if (!(await isFeatureEnabled("HOTEL_SEARCH_ENABLED"))) return NextResponse.json({ error: "Hotel search is temporarily unavailable.", code: "FEATURE_DISABLED", results: [], status: "unavailable", requestId }, { status: 503 });
   const ip = getClientIp(request);
   const rate = checkRateLimit(`hotel-search:${ip}`, 35, 60_000);
@@ -124,9 +127,12 @@ export async function POST(request: Request) {
       ? "PARTIAL"
       : "SUCCESS";
 
-  after(() => Promise.all([
+  after(async () => {
+    const visitorId = await resolveConsentedVisitorId(visitorToken);
+    await Promise.all([
     logSearchHistory({
       userId: session?.user?.id,
+      visitorId,
       type: "HOTEL",
       destination: search.destination,
       checkIn: new Date(search.checkIn),
@@ -138,6 +144,7 @@ export async function POST(request: Request) {
     }),
     trackAnalyticsEvent({
       userId: session?.user?.id,
+      visitorId,
       type: "SEARCH",
       name: "hotel_search",
       metadata: {
@@ -155,7 +162,8 @@ export async function POST(request: Request) {
         errorMessage: provider.error,
       }),
     ),
-  ]).then(() => undefined));
+    ]);
+  });
 
   const classified = classifyHotels(publicResults, aggregate.warnings, requestId);
   return NextResponse.json({
