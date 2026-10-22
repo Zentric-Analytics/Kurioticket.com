@@ -12,7 +12,7 @@ export async function GET(request: Request) {
     const result = await getPublishedFaqs(locale);
     return NextResponse.json(result, {
       headers: {
-        "Cache-Control": "public, max-age=60, stale-while-revalidate=300",
+        "Cache-Control": "no-store",
       },
     });
   } catch (error) {
