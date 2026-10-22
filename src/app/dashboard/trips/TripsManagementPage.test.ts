@@ -28,7 +28,9 @@ test("web My Trips surfaces verified partner confirmation and provider flight st
   assert.match(source, /\/api\/dashboard\/trips\/\$\{encodeURIComponent\(tripId\)\}\/flight-status/);
   assert.match(source, /!status\.dataAvailable/);
   assert.match(source, /status\.freshness === "stale"/);
-  assert.match(source, /window\.setInterval\(\(\) => void refresh\(\), 60_000\)/);
+  assert.match(source, /window\.setInterval\(refreshIfVisible, 60_000\)/);
+  assert.match(source, /document\.visibilityState === "visible"/);
+  assert.match(source, /visibilitychange/);
   assert.match(source, /trip\.tripType === "flight" && trip\.status === "upcoming"/);
   assert.doesNotMatch(source, /On time/);
 });
