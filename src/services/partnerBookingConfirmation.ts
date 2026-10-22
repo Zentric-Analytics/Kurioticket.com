@@ -18,6 +18,8 @@ export class PartnerConfirmationPayloadError extends Error {
   }
 }
 
+export class PartnerWebhookBodyTooLargeError extends Error {}
+
 function invalidPayload(): never {
   throw new PartnerConfirmationPayloadError();
 }
@@ -165,3 +167,42 @@ export const partnerConfirmationLimits = {
   maximumPayloadBytes,
   permittedClockSkewSeconds,
 };
+
+/** Reads only a bounded UTF-8 body after the caller has checked the webhook envelope. */
+export async function readBoundedPartnerWebhookBody(request: Request) {
+  const declaredLength = request.headers.get("content-length");
+  if (declaredLength && (!/^\d+$/.test(declaredLength) || Number(declaredLength) > maximumPayloadBytes)) {
+    throw new PartnerWebhookBodyTooLargeError();
+  }
+  if (!request.body) return "";
+
+  const reader = request.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let length = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (!value) continue;
+      length += value.byteLength;
+      if (length > maximumPayloadBytes) {
+        try {
+          await reader.cancel();
+        } finally {
+          throw new PartnerWebhookBodyTooLargeError();
+        }
+      }
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+
+  const body = new Uint8Array(length);
+  let offset = 0;
+  for (const chunk of chunks) {
+    body.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return new TextDecoder("utf-8", { fatal: true }).decode(body);
+}
