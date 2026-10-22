@@ -23,8 +23,7 @@ test("admin navigation uses the exact original section labels and grouping", () 
 });
 
 test("admin navigation preserves role restrictions", () => {
-  assert.deepEqual(getAdminNavForRole("SUPPORT").map((item) => item.label), ["Overview", "Users", "Searches", "Support"]);
-  assert.equal(getAdminNavForRole("SUPPORT").some((item) => item.parentHref), false);
+  assert.deepEqual(getAdminNavForRole("SUPPORT"), []);
   assert.deepEqual(getAdminNavForRole("ADMIN").filter((item) => item.parentHref).map((item) => [item.label, item.parentHref]), [["Journeys", "/admin/searches"], ["Provider Handoffs", "/admin/searches"], ["Referral Attribution", "/admin/searches"], ["Deletion Requests", "/admin/support"]]);
   assert.deepEqual(getAdminNavForRole("USER"), []);
 });

@@ -38,12 +38,16 @@ test("providers page filters provider sections by product query", () => {
   assert.deepEqual(filterProviderStatuses(providerStatuses, "cars").map((item) => item.product), ["Cars"]);
 });
 
-test("provider filter helpers remain available while the restored page shows all providers", () => {
+test("provider filter helpers drive the providers page", () => {
   assert.deepEqual(productFilters.map((filter) => filter.key), ["all", "flights", "hotels", "cars"]);
   assert.match(providerFiltersSource, /href: "\/admin\/providers\?product=flights"/);
   assert.match(providerFiltersSource, /href: "\/admin\/providers\?product=hotels"/);
   assert.match(providerFiltersSource, /href: "\/admin\/providers\?product=cars"/);
+  assert.match(providersPage, /normalizeProductFilter/);
+  assert.match(providersPage, /filterProviderStatuses/);
+  assert.match(providersPage, /productFilters\.map/);
   assert.match(providersPage, /getProviderStatuses\(\)/);
+  assert.match(providersPage, /getProviderOperationalStatuses\(\)/);
   assert.match(providersPage, /<AdminProviderStatusCard key=\{provider\.product\} \{\.\.\.provider\} \/>/);
 });
 
@@ -51,7 +55,7 @@ test("providers page preserves truthful provider data and the active retest cont
   assert.match(providersPage, /Provider health retest/);
   assert.match(providersPage, /<ProviderRetestButton \/>/);
   assert.match(providersPage, /Retesting records real provider health/);
-  assert.match(providersPage, /Cars pending unless configured/);
+  assert.match(providersPage, /Booking remains provider-owned/);
   assert.match(providersPage, /Secrets hidden/);
 });
 
@@ -74,7 +78,7 @@ test("product pages retain truthful metasearch readiness views", () => {
 });
 
 test("provider APIs, retest API, and unrelated admin pages are not edited by provider page consolidation", () => {
-  assert.match(providersApi, /return NextResponse\.json\(\{ active: \{ duffel: await getDuffelAdminHealth\(\) \}, paused: pausedProviderRows \}\)/);
+  assert.match(providersApi, /getProviderOperationalStatuses/);
   assert.match(providerRetestApi, /checkDuffelHealth\(\)/);
   assert.match(providerRetestApi, /writeAdminAuditLog/);
   assert.match(overviewPage, /Operations Dashboard/);

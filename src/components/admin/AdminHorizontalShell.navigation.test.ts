@@ -24,7 +24,7 @@ test("selected tabs change only the underline, without text, icon, weight, or ba
   assert.equal(isAdminNavItemActive("/admin", "/admin/users"), false);
 });
 
-test("navigation keeps the same role-aware subpages and uses a compact fallback before the desktop row overflows", () => {
+test("navigation keeps admin-only subpages and uses a compact fallback before the desktop row overflows", () => {
   assert.match(shell, /min-\[1440px\]:block/);
   assert.match(shell, /min-\[1440px\]:hidden/);
   assert.match(shell, /min-\[1600px\]:gap-2/);
@@ -38,8 +38,5 @@ test("navigation keeps the same role-aware subpages and uses a compact fallback 
   ]);
   assert.deepEqual(support?.children.map(child => child.href), ["/admin/account-deletions"]);
   assert.equal(entries.some(({ item }) => item.href === "/admin/preview-testers"), true);
-  const supportGroups = getAdminHeaderGroups("SUPPORT");
-  assert.deepEqual(supportGroups.flatMap(group => group.links).map(({ item }) => item.label), [
-    "Overview", "Users", "Searches", "Support",
-  ]);
+  assert.deepEqual(getAdminHeaderGroups("SUPPORT"), []);
 });

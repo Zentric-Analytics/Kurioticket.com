@@ -26,6 +26,7 @@ test("system page owns interactive authoritative feature controls", () => {
   assert.match(systemPage, /Feature Controls/);
   assert.match(systemPage, /FeatureControlsPanel/);
   assert.match(systemPage, /canControlProduction/);
+  assert.match(systemPage, /operationsAvailable/);
 });
 
 test("system page avoids duplicate admin email status rows", () => {
@@ -41,6 +42,7 @@ test("feature control query and production configuration are centralized", () =>
   assert.match(envSource, /process\.env\.ADMIN_EMAILS \|\| ""/);
   assert.match(adminDataSource, /export async function getSafeSystemStatus\(\)/);
   assert.match(adminDataSource, /adminEmailsConfigured: getAdminEmails\(\)\.length > 0/);
+  assert.match(systemPage, /featureControls\.dataAvailable && system\.databaseConnected/);
 });
 
 test("admin APIs and homepage fare refresh APIs are not modified by system consolidation", () => {

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { AdminPageShell, AdminSectionCard, AdminStatusBadge } from "@/components/admin/AdminPageShell";
 import { generalFaqs } from "@/content/faqs";
 import { getDefaultHomeDiscoveryPriceRoutes } from "@/data/homeDiscovery";
@@ -21,6 +22,7 @@ export default function AdminContentPage() {
     <AdminPageShell
       title="Public Content Management"
       description="Read-only visibility into the code-backed content currently used by the public website."
+      actions={<Link href="/admin/settings" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">Homepage fare operations</Link>}
     >
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {contentAreas.map((area) => (
