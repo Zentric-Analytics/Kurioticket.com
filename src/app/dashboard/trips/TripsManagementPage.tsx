@@ -10,7 +10,7 @@ type MyTrip = {
   origin: string | null; destination: string; departureDate: string; returnDate: string | null;
   travelerCount: number; currency: string; totalAmount: number | null;
   providerAction: { url: string; label: string; external: true } | null;
-  providerConfirmed: boolean; confirmationVerifiedAt: string | null;
+  providerConfirmed: boolean; providerConfirmedAt: string | null;
 };
 type FlightStatus =
   | { dataAvailable: false; providerName: string }
@@ -86,31 +86,36 @@ function TripCard({ trip, locale, t, format }: { trip: MyTrip; locale: string; t
         </div>
         <h2 className="mt-1 text-xl font-bold text-[#021c2b]">{route}</h2>
         <p className="text-sm text-slate-600">{dates}</p>
-        {trip.providerConfirmed && trip.confirmationVerifiedAt ? <p className="mt-1 text-xs font-medium text-emerald-700">{format("accountDashboard.trips.metasearch.confirmedAt", { date: new Date(trip.confirmationVerifiedAt).toLocaleString(locale) })}</p> : null}
+        {trip.providerConfirmed && trip.providerConfirmedAt ? <p className="mt-1 text-xs font-medium text-emerald-700">{format("accountDashboard.trips.metasearch.confirmedAt", { date: new Date(trip.providerConfirmedAt).toLocaleString(locale) })}</p> : null}
       </div>
       <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold">{t(`accountDashboard.trips.metasearch.tabs.${trip.status}`)}</span>
     </div>
     <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-3"><div><dt className="text-slate-500">{t("accountDashboard.trips.metasearch.providerConfirmation")}</dt><dd className="font-semibold">{trip.providerConfirmationCode}</dd></div><div><dt className="text-slate-500">{t("accountDashboard.trips.metasearch.travelers")}</dt><dd>{trip.travelerCount}</dd></div><div><dt className="text-slate-500">{t("accountDashboard.trips.metasearch.priceSnapshot")}</dt><dd>{trip.totalAmount === null ? t("accountDashboard.trips.metasearch.priceUnavailable") : `${trip.currency} ${trip.totalAmount.toFixed(2)}`}</dd></div></dl>
-    {trip.tripType === "flight" ? <FlightStatusPanel tripId={trip.id} locale={locale} t={t} format={format} /> : null}
+    {trip.tripType === "flight" ? <FlightStatusPanel tripId={trip.id} live={trip.status === "upcoming"} locale={locale} t={t} format={format} /> : null}
     <p className="mt-4 text-sm text-slate-600">{format("accountDashboard.trips.metasearch.disclaimer", { provider: trip.providerName })}</p>
     {trip.providerAction ? <a href={trip.providerAction.url} target="_blank" rel="noopener noreferrer external" className="mt-4 inline-flex rounded-lg bg-[#004bb8] px-4 py-2 text-sm font-semibold text-white" aria-label={format("accountDashboard.trips.metasearch.externalAriaLabel", { label: actionLabel })}>{actionLabel} ↗</a> : <p className="mt-4 text-sm font-medium text-slate-700">{t("accountDashboard.trips.metasearch.noProviderUrl")}</p>}
   </article>;
 }
 
-function FlightStatusPanel({ tripId, locale, t, format }: { tripId: string; locale: string; t: (key: string) => string; format: (key: string, values: Record<string, string | number>) => string }) {
+function FlightStatusPanel({ tripId, live, locale, t, format }: { tripId: string; live: boolean; locale: string; t: (key: string) => string; format: (key: string, values: Record<string, string | number>) => string }) {
   const [status, setStatus] = useState<FlightStatus | null>(null);
   useEffect(() => {
-    const controller = new AbortController();
-    void fetch(`/api/dashboard/trips/${encodeURIComponent(tripId)}/flight-status`, {
-      headers: { Accept: "application/json" },
-      signal: controller.signal,
-      cache: "no-store",
-    }).then(async (response) => {
-      if (!response.ok) return;
-      setStatus(await response.json() as FlightStatus);
-    }).catch(() => undefined);
-    return () => controller.abort();
-  }, [tripId]);
+    let disposed = false;
+    let controller: AbortController | null = null;
+    const refresh = async () => {
+      controller?.abort();
+      controller = new AbortController();
+      try {
+        const response = await fetch(`/api/dashboard/trips/${encodeURIComponent(tripId)}/flight-status`, {
+          headers: { Accept: "application/json" }, signal: controller.signal, cache: "no-store",
+        });
+        if (!disposed && response.ok) setStatus(await response.json() as FlightStatus);
+      } catch { /* keep the last verified provider snapshot visible */ }
+    };
+    void refresh();
+    const interval = live ? window.setInterval(() => void refresh(), 60_000) : null;
+    return () => { disposed = true; controller?.abort(); if (interval !== null) window.clearInterval(interval); };
+  }, [tripId, live]);
 
   if (!status) return null;
   if (!status.dataAvailable) {
