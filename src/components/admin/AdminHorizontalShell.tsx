@@ -55,7 +55,7 @@ function HeaderNavLink({ entry, pathname, mobile = false, close }: { entry: Head
 }
 
 function Navigation({ groups, pathname, mobile = false, close }: { groups: HeaderGroup[]; pathname: string; mobile?: boolean; close: () => void }) {
-  return <nav aria-label="Admin navigation" className={mobile ? "flex flex-col gap-2 p-3" : "flex w-full items-center justify-between gap-1"}>
+  return <nav aria-label="Admin navigation" className={mobile ? "flex flex-col gap-2 p-3" : "flex w-full flex-wrap items-center justify-center gap-x-1 gap-y-2 2xl:justify-between"}>
     {groups.map((group, index) => (
       <div key={group.label} className={mobile ? "flex flex-col gap-1" : "flex shrink-0 items-center gap-1"}>
         {!mobile && index > 0 ? <span className="mx-2 h-5 w-px bg-slate-200" aria-hidden="true" /> : null}
@@ -119,15 +119,15 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
               {([{ href: "/admin/settings", label: "Admin settings", icon: Settings }, { href: "/admin/logs", label: "Audit logs", icon: ShieldCheck }, { href: "/", label: "Switch to public site", icon: Building2 }, { href: "/api/auth/signout", label: "Logout", icon: LogOut }]).map(({ href, label, icon: Icon }) => <Link key={href} href={href} onClick={() => setProfileOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"><Icon size={16} />{label}</Link>)}
             </div> : null}
           </div>
-          <button type="button" className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 xl:hidden" onClick={() => setMobileOpen((value) => !value)} aria-label={mobileOpen ? "Close admin navigation" : "Open admin navigation"} aria-expanded={mobileOpen}>{mobileOpen ? <X size={19} /> : <Menu size={19} />}</button>
+          <button type="button" className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 lg:hidden" onClick={() => setMobileOpen((value) => !value)} aria-label={mobileOpen ? "Close admin navigation" : "Open admin navigation"} aria-expanded={mobileOpen}>{mobileOpen ? <X size={19} /> : <Menu size={19} />}</button>
         </div>
       </div>
-      <div className="hidden border-t border-slate-100 xl:block">
+      <div className="hidden border-t border-slate-100 lg:block">
         <div className="mx-auto max-w-[1920px] px-4 pb-2 pt-2 sm:px-6 lg:px-8">
           <Navigation groups={groups} pathname={pathname} close={() => {}} />
         </div>
       </div>
-      {mobileOpen ? <div className="max-h-[70vh] overflow-y-auto border-t border-slate-100 bg-white xl:hidden"><Navigation groups={groups} pathname={pathname} mobile close={() => setMobileOpen(false)} /></div> : null}
+      {mobileOpen ? <div className="max-h-[70vh] overflow-y-auto border-t border-slate-100 bg-white lg:hidden"><Navigation groups={groups} pathname={pathname} mobile close={() => setMobileOpen(false)} /></div> : null}
     </header>
     <main className="mx-auto w-full max-w-[1920px] px-4 py-5 sm:px-6 lg:px-10">{children}</main>
     {searchOpen ? <div className="fixed inset-0 z-[90] flex items-start justify-center bg-slate-950/30 px-4 pt-[12vh]" onMouseDown={(event) => { if (event.target === event.currentTarget) setSearchOpen(false); }}>
