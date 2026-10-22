@@ -6,6 +6,7 @@ import type { PartnerConfirmedMyTripInput } from "@/services/myTripService";
 
 const maximumPayloadBytes = 64 * 1024;
 const permittedClockSkewSeconds = 5 * 60;
+const maximumFutureOccurrenceSkewMs = permittedClockSkewSeconds * 1_000;
 const signaturePattern = /^sha256=([a-f0-9]{64})$/i;
 const isoDatePattern = /^\d{4}-\d{2}-\d{2}T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d{3})?Z$/;
 
@@ -82,10 +83,11 @@ function readTripStatus(value: unknown): MyTripStatus {
  * Translates the signed partner contract into the existing trusted My Trips
  * ingestion input. This is intentionally not a customer-facing import format.
  */
-export function parsePartnerBookingConfirmation(value: unknown): PartnerConfirmedMyTripInput {
+export function parsePartnerBookingConfirmation(value: unknown, now: Date = new Date()): PartnerConfirmedMyTripInput {
   const payload = readObject(value);
   const customer = readObject(payload.customer);
   const confirmationOccurredAt = readDate(payload.occurredAt);
+  if (confirmationOccurredAt.getTime() > now.getTime() + maximumFutureOccurrenceSkewMs) invalidPayload();
   const departureDate = readDate(payload.departureAt);
   const returnDate = readOptionalDate(payload.returnAt);
   if (returnDate && returnDate < departureDate) invalidPayload();
