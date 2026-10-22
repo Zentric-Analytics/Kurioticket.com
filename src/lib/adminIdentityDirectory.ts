@@ -1,6 +1,16 @@
 import { Prisma } from "@/generated/prisma/client";
 
 /** Identity types remain separate in storage; only their Admin listing is unified. */
+
+/**
+ * Prisma translates "contains" to SQL LIKE/ILIKE. Escape its metacharacters
+ * so count queries and record revalidation use the same literal substring
+ * semantics as the ordered directory's parameterized strpos predicate.
+ */
+export function escapePrismaContainsQuery(query: string) {
+  return query.replace(/[\\%_]/g, character => "\\" + character);
+}
+
 export type AdminIdentityReference = { kind: "user" | "guest"; id: string };
 
 export type AdminIdentityPageRequest = {

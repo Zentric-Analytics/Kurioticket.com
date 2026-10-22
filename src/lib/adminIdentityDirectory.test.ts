@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { adminIdentityPageSql } from "./adminIdentityDirectory";
+import { adminIdentityPageSql, escapePrismaContainsQuery } from "./adminIdentityDirectory";
 
 const base = { query: "", role: "ALL", status: "ALL", showUsers: true, showGuests: true, limit: 15, offset: 0 };
 
@@ -48,4 +48,19 @@ test("registered-only list never joins guests and empty selection is empty", () 
 test("invalid offsets and limits cannot run", () => {
   for (const offset of [-1, 1.2, Number.MAX_SAFE_INTEGER + 1]) assert.throws(() => adminIdentityPageSql({ ...base, offset }));
   assert.throws(() => adminIdentityPageSql({ ...base, limit: 10000 }));
+});
+
+
+test("count predicates escape wildcard and backslash characters to match literal SQL substring search", () => {
+  assert.equal(escapePrismaContainsQuery("%"), "\\%");
+  assert.equal(escapePrismaContainsQuery("_"), "\\_");
+  assert.equal(escapePrismaContainsQuery("\\"), "\\\\");
+  assert.equal(escapePrismaContainsQuery("a%_\\b"), "a\\%\\_\\\\b");
+  assert.equal(escapePrismaContainsQuery("LOS"), "LOS");
+
+  // The raw ordering query still binds the original literal term, not
+  // the Prisma LIKE-escaped representation or any interpolated SQL.
+  const raw = sql({ ...base, query: "a%_\\b" });
+  assert.ok(raw.values.includes("a%_\\b"));
+  assert.equal(raw.values.includes("a\\%\\_\\\\b"), false);
 });

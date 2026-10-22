@@ -8,7 +8,7 @@ import { withOptionalDb } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/auth-guards";
 import { getAdminEmails } from "@/lib/env";
 import { getAdminIdentityPagination } from "@/lib/adminIdentityPagination";
-import { adminIdentityPageSql, type AdminIdentityReference } from "@/lib/adminIdentityDirectory";
+import { adminIdentityPageSql, escapePrismaContainsQuery, type AdminIdentityReference } from "@/lib/adminIdentityDirectory";
 
 export const metadata = { title: "Admin Users" };
 type PageProps = { searchParams?: Promise<{ q?: string; role?: string; status?: string; identity?: string; activity?: string; page?: string }> };
@@ -22,17 +22,18 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
   const session = await requireAdminSession("/admin/users");
   const params = await searchParams;
   const q = (params?.q || "").trim().slice(0, 120);
+  const prismaQuery = escapePrismaContainsQuery(q);
   const role = ["ALL", "USER", "SUPPORT", "ADMIN"].includes(params?.role || "") ? params!.role! : "ALL";
   const status = ["ALL", "ACTIVE", "SUSPENDED", "DELETED", "PENDING_DELETION"].includes(params?.status || "") ? params!.status! : "ALL";
   const identity = ["ALL", "REGISTERED", "GUEST"].includes(params?.identity || "") ? params!.identity! : "ALL";
   const where = {
-    ...(q ? { OR: [{ email: { contains: q, mode: "insensitive" as const } }, { name: { contains: q, mode: "insensitive" as const } }, { id: { contains: q, mode: "insensitive" as const } }] } : {}),
+    ...(q ? { OR: [{ email: { contains: prismaQuery, mode: "insensitive" as const } }, { name: { contains: prismaQuery, mode: "insensitive" as const } }, { id: { contains: prismaQuery, mode: "insensitive" as const } }] } : {}),
     ...(role !== "ALL" ? { role: role as never } : {}),
     ...(status !== "ALL" ? { status: status as never } : {}),
   };
   // The existing User model remains the authority for registered accounts.
   // Guests remain distinct records and only consent-eligible, unlinked guests are listed.
-  const guestWhere = { consentStatus: "GRANTED" as const, trackingDisabledAt: null, currentUserId: null, identityLinks: { none: {} }, ...(q ? { id: { contains: q, mode: "insensitive" as const } } : {}) };
+  const guestWhere = { consentStatus: "GRANTED" as const, trackingDisabledAt: null, currentUserId: null, identityLinks: { none: {} }, ...(q ? { id: { contains: prismaQuery, mode: "insensitive" as const } } : {}) };
   const showUsers = identity !== "GUEST";
   const showGuests = identity !== "REGISTERED" && role === "ALL" && status === "ALL";
   const stats = await withOptionalDb(async db => {
