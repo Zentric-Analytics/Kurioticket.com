@@ -37,6 +37,7 @@ type Dependencies = {
 const searchSelect = {
   id: true, requestId: true, userId: true, visitorId: true, type: true, origin: true, destination: true,
   checkIn: true, checkOut: true, query: true, resultCount: true, latencyMs: true, status: true, createdAt: true,
+  visitor: { select: { consentStatus: true, trackingDisabledAt: true } },
   journeyEvents: { where: { provider: { not: null } }, select: { provider: true }, take: 20 },
 } satisfies Prisma.SearchHistorySelect;
 type SearchRow = Prisma.SearchHistoryGetPayload<{ select: typeof searchSelect }>;
@@ -44,6 +45,7 @@ type SearchRow = Prisma.SearchHistoryGetPayload<{ select: typeof searchSelect }>
 const handoffSelect = {
   id: true, userId: true, visitorId: true, type: true, provider: true, route: true, price: true, currency: true,
   sourcePage: true, destinationUrl: true, metadata: true, createdAt: true,
+  visitor: { select: { consentStatus: true, trackingDisabledAt: true } },
   journeyEvents: { where: { searchHistoryId: { not: null } }, select: { searchHistoryId: true }, take: 1 },
 } satisfies Prisma.RedirectLogSelect;
 type HandoffRow = Prisma.RedirectLogGetPayload<{ select: typeof handoffSelect }>;
@@ -110,12 +112,19 @@ function dateRange(from: string | null, to: string | null) {
 }
 
 function identityWhere(scope: { identity: "all" | "guest" | "registered" | "unattributed"; userId: string | null; visitorId: string | null }) {
+  const eligibleVisitor = { consentStatus: "GRANTED" as const, trackingDisabledAt: null };
   return {
     ...(scope.identity === "registered" ? { userId: { not: null } } : {}),
-    ...(scope.identity === "guest" ? { userId: null, visitorId: { not: null } } : {}),
-    ...(scope.identity === "unattributed" ? { userId: null, visitorId: null } : {}),
+    ...(scope.identity === "guest" ? { userId: null, visitor: { is: eligibleVisitor } } : {}),
+    ...(scope.identity === "unattributed" ? {
+      userId: null,
+      OR: [
+        { visitorId: null },
+        { visitor: { is: { NOT: eligibleVisitor } } },
+      ],
+    } : {}),
     ...(scope.userId ? { userId: scope.userId } : {}),
-    ...(scope.visitorId ? { visitorId: scope.visitorId } : {}),
+    ...(scope.visitorId ? { visitorId: scope.visitorId, visitor: { is: eligibleVisitor } } : {}),
   };
 }
 
@@ -127,11 +136,15 @@ function cursorWhere(cursor: { at: string; id: string } | null) {
 
 function searchDto(row: SearchRow, environment: PublicEnvironment): AdminSearchRead {
   const query = jsonRecord(row.query);
-  const providers = [...new Set(row.journeyEvents.map(event => text(event.provider, 100)).filter((value): value is string => Boolean(value)))].slice(0, 10);
+  const visitorId = row.visitor?.consentStatus === "GRANTED" && row.visitor.trackingDisabledAt === null ? row.visitorId : null;
+  const providers = [...new Set([
+    text(query.provider, 100),
+    ...row.journeyEvents.map(event => text(event.provider, 100)),
+  ].filter((value): value is string => Boolean(value)))].slice(0, 10);
   return {
     id: row.id,
     requestId: text(row.requestId, 128),
-    identity: identity(row.userId, row.visitorId),
+    identity: identity(row.userId, visitorId),
     product: row.type,
     origin: text(row.origin, 160),
     destination: text(row.destination, 160),
@@ -150,9 +163,10 @@ function searchDto(row: SearchRow, environment: PublicEnvironment): AdminSearchR
 
 function handoffDto(row: HandoffRow, environment: PublicEnvironment): AdminHandoffRead {
   const searchHistoryId = row.journeyEvents[0]?.searchHistoryId ?? null;
+  const visitorId = row.visitor?.consentStatus === "GRANTED" && row.visitor.trackingDisabledAt === null ? row.visitorId : null;
   return {
     id: row.id,
-    identity: identity(row.userId, row.visitorId),
+    identity: identity(row.userId, visitorId),
     product: row.type,
     provider: text(row.provider, 100) ?? "Unknown provider",
     route: text(row.route, 200),
