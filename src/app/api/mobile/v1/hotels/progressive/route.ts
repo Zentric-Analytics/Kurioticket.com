@@ -1,6 +1,6 @@
 import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 import { after, NextResponse } from "next/server";
-import { resolveOptionalWebApiSession } from "@/lib/web-api-auth";
+import { resolveRequestActivityIdentity } from "@/services/requestActivityIdentity";
 import { logProviderCall, logSearchHistory, trackAnalyticsEvent } from "@/services/analyticsService";
 import { hotelSearchSchema } from "@/lib/validation";
 import { getClientIp, checkRateLimit } from "@/lib/rate-limit";
@@ -79,12 +79,12 @@ export async function POST(request: Request) {
       (term, vertical = "hotels") => client.places(vertical, term, trackId, request.signal));
     if (!resolved.supported || resolved.search.vertical !== "hotels") {
       after(async () => {
-        const session = (await resolveOptionalWebApiSession())?.session;
+        const { userId, visitorId } = await resolveRequestActivityIdentity(request);
         await Promise.all([
-          logSearchHistory({ userId: session?.user?.id, type: "HOTEL", destination: search.destination,
+          logSearchHistory({ userId, visitorId, type: "HOTEL", destination: search.destination,
             checkIn: new Date(search.checkIn), checkOut: new Date(search.checkOut),
             query: search, resultCount: 0, latencyMs: Date.now() - startedAt, status: "FAILED" }),
-          trackAnalyticsEvent({ userId: session?.user?.id, type: "SEARCH",
+          trackAnalyticsEvent({ userId, visitorId, type: "SEARCH",
             name: "hotel_search", metadata: { destination: search.destination, resultCount: 0, progressive: true, unsupported: true, trackId } }),
           logProviderCall({ provider: "KAYAK sandbox", service: "hotel-search", status: "DISABLED",
             latencyMs: Date.now() - startedAt, errorMessage: "unsupported_search",
@@ -124,13 +124,13 @@ export async function POST(request: Request) {
     }, key) : null;
     if (!nextCursor) {
       after(async () => {
-        const session = (await resolveOptionalWebApiSession())?.session;
+        const { userId, visitorId } = await resolveRequestActivityIdentity(request);
         await Promise.all([
-          logSearchHistory({ userId: session?.user?.id, type: "HOTEL", destination: search.destination,
+          logSearchHistory({ userId, visitorId, type: "HOTEL", destination: search.destination,
             checkIn: new Date(search.checkIn), checkOut: new Date(search.checkOut),
             query: search, resultCount: cumulative.length, latencyMs: Date.now() - startedAt,
             status: "SUCCESS" }),
-          trackAnalyticsEvent({ userId: session?.user?.id, type: "SEARCH",
+          trackAnalyticsEvent({ userId, visitorId, type: "SEARCH",
             name: "hotel_search", metadata: { destination: search.destination, resultCount: cumulative.length, progressive: true, trackId } }),
           logProviderCall({ provider: "KAYAK sandbox", service: "hotel-search", status: "SUCCESS",
             latencyMs: Date.now() - startedAt, metadata: { progressive: true, trackId, resultCount: cumulative.length } }),
@@ -143,12 +143,12 @@ export async function POST(request: Request) {
   } catch (error) {
     const unavailable = error instanceof KayakError ? error.code : "unavailable";
     after(async () => {
-      const session = (await resolveOptionalWebApiSession())?.session;
+      const { userId, visitorId } = await resolveRequestActivityIdentity(request);
       await Promise.all([
-        logSearchHistory({ userId: session?.user?.id, type: "HOTEL", destination: search.destination,
+        logSearchHistory({ userId, visitorId, type: "HOTEL", destination: search.destination,
           checkIn: new Date(search.checkIn), checkOut: new Date(search.checkOut),
           query: search, resultCount: 0, latencyMs: Date.now() - startedAt, status: "FAILED" }),
-        trackAnalyticsEvent({ userId: session?.user?.id, type: "SEARCH",
+        trackAnalyticsEvent({ userId, visitorId, type: "SEARCH",
           name: "hotel_search", metadata: { destination: search.destination, resultCount: 0, progressive: true, failed: true, trackId } }),
         logProviderCall({ provider: "KAYAK sandbox", service: "hotel-search",
           status: "FAILED", latencyMs: Date.now() - startedAt, errorMessage: unavailable,

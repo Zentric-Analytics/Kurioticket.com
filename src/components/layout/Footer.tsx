@@ -6,6 +6,7 @@ import { useState } from "react";
 
 import { KurioticketLogo } from "@/components/brand/KurioticketLogo";
 import { useLocale } from "@/components/layout/LocaleProvider";
+import { PrivacySettingsButton } from "@/components/privacy/PrivacySettingsButton";
 import {
   getCaliforniaSellerOfTravelNotice,
   legalProfile,
@@ -266,6 +267,7 @@ export function Footer({
               >
                 {t.footerCookies}
               </Link>
+              <PrivacySettingsButton />
             </div>
           </div>
         </div>

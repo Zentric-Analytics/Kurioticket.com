@@ -1,5 +1,4 @@
 import { after, NextResponse } from "next/server";
-import { resolveOptionalWebApiSession } from "@/lib/web-api-auth";
 import { getClientIp, checkRateLimit } from "@/lib/rate-limit";
 import { toPublicFlight } from "@/lib/searchCache";
 import { flightSearchSchema } from "@/lib/validation";
@@ -7,8 +6,7 @@ import { classifyFlights } from "@/lib/travel/searchContract";
 import { logProviderCall, logSearchHistory, trackAnalyticsEvent } from "@/services/analyticsService";
 import { searchFlights } from "@/services/travel/flightAggregator";
 import { isFeatureEnabled } from "@/lib/feature-controls/service";
-import { readVisitorToken } from "@/lib/visitor-identity";
-import { resolveConsentedVisitorId } from "@/services/visitorIdentityService";
+import { resolveRequestActivityIdentity } from "@/services/requestActivityIdentity";
 import { getKayakClientIp } from "@/lib/kayak-client-ip";
 import { logNativeFlightProviderDiagnostics } from "./providerDiagnostics";
 
@@ -16,7 +14,6 @@ export async function POST(request: Request) {
   const routeStartedAt = performance.now();
   let providerStartedAt = routeStartedAt;
   const requestId = request.headers.get("x-search-request-id")?.trim() || crypto.randomUUID();
-  const visitorToken = readVisitorToken(request);
   if (!(await isFeatureEnabled("FLIGHT_SEARCH_ENABLED"))) return NextResponse.json({ error: "Flight search is temporarily unavailable.", code: "FEATURE_DISABLED", results: [], status: "unavailable", requestId }, { status: 503 });
   const ip = getClientIp(request);
   const rate = checkRateLimit(`flight-search:${ip}`, 35, 60_000);
@@ -107,11 +104,10 @@ export async function POST(request: Request) {
       : "SUCCESS";
 
   after(async () => {
-    const session = (await resolveOptionalWebApiSession())?.session;
-    const visitorId = await resolveConsentedVisitorId(visitorToken);
+    const { userId, visitorId } = await resolveRequestActivityIdentity(request);
     return Promise.all([
     logSearchHistory({
-      userId: session?.user?.id,
+      userId,
       visitorId,
       type: "FLIGHT",
       origin: parsed.data.origin,
@@ -122,7 +118,7 @@ export async function POST(request: Request) {
       status,
     }),
     trackAnalyticsEvent({
-      userId: session?.user?.id,
+      userId,
       visitorId,
       type: "SEARCH",
       name: "flight_search",
