@@ -974,6 +974,9 @@ model CmsContentItem {
   market               String           @default("GLOBAL")
   locale               String           @default("en")
   sortOrder            Int              @default(0)
+  publishedMarket      String?
+  publishedLocale      String?
+  publishedSortOrder   Int?
   draftPayload         Json
   publishedPayload     Json?
   version              Int              @default(1)
@@ -1001,6 +1004,9 @@ model CmsContentRevision {
   market       String
   locale       String
   sortOrder    Int
+  publishedMarket String?
+  publishedLocale String?
+  publishedSortOrder Int?
   draftPayload Json
   publishedPayload Json?
   actorUserId  String?
