@@ -83,6 +83,13 @@ function identity(userId: string | null, visitorId: string | null): AdminOperati
   return { kind: userId ? "registered" : visitorId ? "guest" : "unattributed", userId, visitorId };
 }
 
+function attributableVisitorId(
+  visitorId: string | null,
+  visitor: { consentStatus: string; trackingDisabledAt: Date | null } | null,
+) {
+  return visitorId && visitor?.consentStatus === "GRANTED" && visitor.trackingDisabledAt === null ? visitorId : null;
+}
+
 function safeDomain(value: string) {
   try {
     const url = new URL(value);
@@ -136,7 +143,7 @@ function cursorWhere(cursor: { at: string; id: string } | null) {
 
 function searchDto(row: SearchRow, environment: PublicEnvironment): AdminSearchRead {
   const query = jsonRecord(row.query);
-  const visitorId = row.visitor?.consentStatus === "GRANTED" && row.visitor.trackingDisabledAt === null ? row.visitorId : null;
+  const visitorId = attributableVisitorId(row.visitorId, row.visitor);
   const providers = [...new Set([
     text(query.provider, 100),
     ...row.journeyEvents.map(event => text(event.provider, 100)),
@@ -163,7 +170,7 @@ function searchDto(row: SearchRow, environment: PublicEnvironment): AdminSearchR
 
 function handoffDto(row: HandoffRow, environment: PublicEnvironment): AdminHandoffRead {
   const searchHistoryId = row.journeyEvents[0]?.searchHistoryId ?? null;
-  const visitorId = row.visitor?.consentStatus === "GRANTED" && row.visitor.trackingDisabledAt === null ? row.visitorId : null;
+  const visitorId = attributableVisitorId(row.visitorId, row.visitor);
   return {
     id: row.id,
     identity: identity(row.userId, visitorId),
@@ -294,7 +301,7 @@ export function createAdminOperationalReadService(dependencies: Dependencies) {
             metadata: { path: ["environment"], equals: scope.environment },
             ...(scope.correlation === "exact" ? { journeyEvents: { some: { searchHistoryId: { not: null } } } } : {}),
             ...(scope.correlation === "unavailable" ? { journeyEvents: { none: { searchHistoryId: { not: null } } } } : {}),
-            ...cursorWhere(cursor),
+            AND: cursor ? [{ OR: [{ createdAt: { lt: new Date(cursor.at) } }, { createdAt: new Date(cursor.at), id: { lt: cursor.id } }] }] : [],
           };
           const records = await db.redirectLog.findMany({ where, select: handoffSelect, orderBy: [{ createdAt: "desc" }, { id: "desc" }], take: limit + 1 });
           const page = nextCursor("handoffs", scope, records, limit);
@@ -390,4 +397,4 @@ export function createAdminOperationalReadService(dependencies: Dependencies) {
 
 export type AdminOperationalReadService = ReturnType<typeof createAdminOperationalReadService>;
 
-export const __adminOperationalReadCoreTest = { safeDomain, safePath, safeSource, identity };
+export const __adminOperationalReadCoreTest = { safeDomain, safePath, safeSource, identity, attributableVisitorId };
