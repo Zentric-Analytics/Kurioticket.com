@@ -10,6 +10,19 @@ const journeyEventSelect = {
   redirectLog: { select: { visitorId: true, userId: true, type: true, provider: true, route: true } },
 } as const;
 
+const safeAnalyticsLabels: Record<string, string> = {
+  SAVE: "Saved item",
+  ALERT_CREATED: "Price alert created",
+  SIGNUP: "Account signup",
+  SUPPORT_TICKET: "Support ticket",
+  PROVIDER_FAILURE: "Provider issue",
+};
+const toSafeAnalyticsRows = (events: Array<{ id: string; type: string; createdAt: Date }>): ActivityRow[] =>
+  events.flatMap(event => {
+    const label = safeAnalyticsLabels[event.type];
+    return label ? [{ id: "e-" + event.id, label, detail: "Recorded account activity", at: event.createdAt }] : [];
+  });
+
 const date = (at: Date) => new Intl.DateTimeFormat("en", { dateStyle: "medium", timeStyle: "short" }).format(at);
 
 /** Server-rendered, admin-only through the enclosing /admin layout. Never expose raw analytics metadata. */
@@ -37,12 +50,14 @@ export async function IdentityActivityPanel({ selection }: { selection: string }
           } } },
         ],
       };
-      const [searches, handoffs, journeyEvents] = await Promise.all([
+      const [searches, handoffs, journeyEvents, analytics] = await Promise.all([
         db.searchHistory.findMany({ where: activityWhere, select: { id: true, type: true, origin: true, destination: true, status: true, createdAt: true }, take: 30, orderBy: { createdAt: "desc" } }),
         db.redirectLog.findMany({ where: activityWhere, select: { id: true, provider: true, route: true, createdAt: true }, take: 30, orderBy: { createdAt: "desc" } }),
         db.journeyEvent.findMany({ where: { journey: { visitor: eligibleLinkedVisitorWhere(id) } }, orderBy: { createdAt: "desc" }, take: 60, select: journeyEventSelect }),
+        db.analyticsEvent.findMany({ where: { userId: id, type: { notIn: ["SEARCH", "REDIRECT"] } }, select: { id: true, type: true, createdAt: true }, take: 30, orderBy: { createdAt: "desc" } }),
       ]);
       const events: ActivityRow[] = [
+        ...toSafeAnalyticsRows(analytics),
         ...searches.map(s => ({ id: "s-" + s.id, dedupeKey: "search:" + s.id, label: s.type + " search", detail: [s.origin, s.destination].filter(Boolean).join(" → ") + " · " + s.status, at: s.createdAt })),
         ...handoffs.map(h => ({ id: "r-" + h.id, dedupeKey: "handoff:" + h.id, label: "Provider handoff", detail: [h.provider, h.route].filter(Boolean).join(" · "), at: h.createdAt })),
       ];
@@ -56,13 +71,13 @@ export async function IdentityActivityPanel({ selection }: { selection: string }
     const [searches, handoffs, analytics, journeyEvents] = await Promise.all([
       db.searchHistory.findMany({ where: { visitorId: id, userId: null }, select: { id: true, type: true, origin: true, destination: true, status: true, createdAt: true }, take: 30, orderBy: { createdAt: "desc" } }),
       db.redirectLog.findMany({ where: { visitorId: id, userId: null }, select: { id: true, provider: true, route: true, createdAt: true }, take: 30, orderBy: { createdAt: "desc" } }),
-      db.analyticsEvent.findMany({ where: { visitorId: id, userId: null, type: { notIn: ["SEARCH", "REDIRECT"] } }, select: { id: true, type: true, name: true, createdAt: true }, take: 30, orderBy: { createdAt: "desc" } }),
+      db.analyticsEvent.findMany({ where: { visitorId: id, userId: null, type: { notIn: ["SEARCH", "REDIRECT"] } }, select: { id: true, type: true, createdAt: true }, take: 30, orderBy: { createdAt: "desc" } }),
       db.journeyEvent.findMany({ where: { journey: { visitor: eligibleGuestVisitorWhere(id) } }, orderBy: { createdAt: "desc" }, take: 60, select: journeyEventSelect }),
     ]);
     const events: ActivityRow[] = [
       ...searches.map(s => ({ id: "s-" + s.id, dedupeKey: "search:" + s.id, label: s.type + " search", detail: [s.origin, s.destination].filter(Boolean).join(" → ") + " · " + s.status, at: s.createdAt })),
       ...handoffs.map(h => ({ id: "r-" + h.id, dedupeKey: "handoff:" + h.id, label: "Provider handoff", detail: [h.provider, h.route].filter(Boolean).join(" · "), at: h.createdAt })),
-      ...analytics.map(e => ({ id: "e-" + e.id, label: e.type.replaceAll("_", " "), detail: e.name, at: e.createdAt })),
+      ...toSafeAnalyticsRows(analytics),
     ];
     return { title: "Guest visitor", subtitle: "Guest ID: " + visitor.id, type: "Guest", status: "Anonymous", since: visitor.firstSeenAt, events: mergeAdminActivity(journeyEvents.flatMap(e => { const row = toAdminJourneyActivity(e, "guest", id); return row ? [row] : []; }), events) };
   }, null);
