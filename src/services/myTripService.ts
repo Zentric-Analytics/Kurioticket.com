@@ -11,6 +11,7 @@ export type PublicMyTrip = {
   providerName: string; providerConfirmationCode: string; origin: string | null; destination: string;
   departureDate: string; returnDate: string | null; travelerCount: number; currency: string;
   totalAmount: number | null; providerAction: { url: string; label: string; external: true } | null;
+  providerConfirmed: boolean; providerConfirmedAt: string | null;
 };
 
 type MyTripRecord = {
@@ -18,7 +19,7 @@ type MyTripRecord = {
   providerConfirmationCode: string; origin: string | null; destination: string; departureDate: Date;
   returnDate: Date | null; travelerCount: number; currency: string;
   totalAmount: { toString(): string } | number | string | null; providerManageUrl: string | null;
-  partnerConfirmationOccurredAt: Date | null;
+  source: MyTripSource; partnerConfirmationOccurredAt: Date | null;
 };
 
 type MyTripClient = {
@@ -35,7 +36,7 @@ let clientForTesting: MyTripClient | null = null;
 const statusToDb = { upcoming: "UPCOMING", past: "PAST", cancelled: "CANCELLED" } as const satisfies Record<PublicMyTripStatus, MyTripStatus>;
 const statusToPublic = { UPCOMING: "upcoming", PAST: "past", CANCELLED: "cancelled" } as const satisfies Record<MyTripStatus, PublicMyTripStatus>;
 const typeToPublic = { FLIGHT: "flight", HOTEL: "hotel", CAR: "car", PACKAGE: "package" } as const satisfies Record<MyTripType, PublicMyTrip["tripType"]>;
-const select = { id: true, tripType: true, status: true, providerName: true, providerConfirmationCode: true, origin: true, destination: true, departureDate: true, returnDate: true, travelerCount: true, currency: true, totalAmount: true, providerManageUrl: true, partnerConfirmationOccurredAt: true } as const;
+const select = { id: true, tripType: true, status: true, providerName: true, providerConfirmationCode: true, origin: true, destination: true, departureDate: true, returnDate: true, travelerCount: true, currency: true, totalAmount: true, providerManageUrl: true, source: true, partnerConfirmationOccurredAt: true } as const;
 
 export function isPublicMyTripStatus(value: string): value is PublicMyTripStatus {
   return publicMyTripStatuses.includes(value as PublicMyTripStatus);
@@ -102,7 +103,7 @@ export async function upsertPartnerConfirmedMyTrip(input: PartnerConfirmedMyTrip
         { partnerConfirmationOccurredAt: { lt: input.confirmationOccurredAt } },
       ],
     },
-    data: { providerName: input.providerName, providerConfirmationCode: input.providerConfirmationCode, providerTripId: input.providerTripId, providerManageUrl, tripType: input.tripType, status: input.status, origin: input.origin, destination: input.destination, departureDate: input.departureDate, returnDate: input.returnDate, travelerCount: input.travelerCount, currency: input.currency, totalAmount: input.totalAmount, partnerConfirmationOccurredAt: input.confirmationOccurredAt },
+    data: { providerName: input.providerName, providerConfirmationCode: input.providerConfirmationCode, providerTripId: input.providerTripId, providerManageUrl, tripType: input.tripType, status: input.status, source: input.source ?? "PARTNER_CONFIRMATION", origin: input.origin, destination: input.destination, departureDate: input.departureDate, returnDate: input.returnDate, travelerCount: input.travelerCount, currency: input.currency, totalAmount: input.totalAmount, partnerConfirmationOccurredAt: input.confirmationOccurredAt },
   });
   const trip = updated.count === 1
     ? await getClient().myTrip.findUnique({ where: { id: existing.id }, select })
@@ -127,7 +128,8 @@ export class MyTripIngestionOwnershipError extends Error {
 
 function serializeMyTrip(trip: MyTripRecord): PublicMyTrip {
   const url = trip.providerManageUrl ? validateProviderUrl(trip.providerManageUrl) : null;
-  return { id: trip.id, tripType: typeToPublic[trip.tripType], status: statusToPublic[trip.status], providerName: trip.providerName, providerConfirmationCode: trip.providerConfirmationCode, origin: trip.origin, destination: trip.destination, departureDate: trip.departureDate.toISOString(), returnDate: trip.returnDate?.toISOString() ?? null, travelerCount: trip.travelerCount, currency: trip.currency, totalAmount: trip.totalAmount === null ? null : Number(trip.totalAmount.toString()), providerAction: url ? { url, label: `Manage with ${trip.providerName}`, external: true } : null };
+  const providerConfirmed = trip.source === "PARTNER_CONFIRMATION" && trip.partnerConfirmationOccurredAt !== null;
+  return { id: trip.id, tripType: typeToPublic[trip.tripType], status: statusToPublic[trip.status], providerName: trip.providerName, providerConfirmationCode: trip.providerConfirmationCode, origin: trip.origin, destination: trip.destination, departureDate: trip.departureDate.toISOString(), returnDate: trip.returnDate?.toISOString() ?? null, travelerCount: trip.travelerCount, currency: trip.currency, totalAmount: trip.totalAmount === null ? null : Number(trip.totalAmount.toString()), providerAction: url ? { url, label: `Manage with ${trip.providerName}`, external: true } : null, providerConfirmed, providerConfirmedAt: providerConfirmed ? trip.partnerConfirmationOccurredAt!.toISOString() : null };
 }
 
 function getClient() { return clientForTesting ?? (getPrisma() as unknown as MyTripClient); }

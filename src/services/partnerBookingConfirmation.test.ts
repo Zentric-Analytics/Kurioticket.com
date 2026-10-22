@@ -62,6 +62,15 @@ test("signature verification binds the exact body, timestamp, and configured sec
   assert.equal(verifiesPartnerConfirmationSignature({ rawBody: oversizedBody, timestamp, signature: signed(timestamp, oversizedBody), secret, now }), false);
 });
 
+
+test("partner confirmation rejects occurredAt values beyond the request clock skew", () => {
+  const value = { ...payload(), occurredAt: "2026-10-22T16:06:00.000Z" };
+  assert.throws(
+    () => parsePartnerBookingConfirmation(value, new Date("2026-10-22T16:00:00.000Z")),
+    PartnerConfirmationPayloadError,
+  );
+});
+
 function payload() {
   return {
     customer: { userId: "user-123" },
