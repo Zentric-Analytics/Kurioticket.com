@@ -36,10 +36,12 @@ test("mobile My Trips surfaces verified provider confirmations and reads live fl
   assert.match(api, /providerConfirmedAt: string \| null/);
   assert.match(api, /flightStatus: \(tripId: string\)/);
   assert.match(screen, /trip\.providerConfirmed/);
-  assert.match(screen, /trip\.tripType !== "flight" \|\| trip\.status !== "upcoming"/);
+  assert.match(screen, /!active \|\| trip\.tripType !== "flight" \|\| trip\.status !== "upcoming"/);
   assert.match(screen, /travelApi\.flightStatus\(trip\.id\)/);
   assert.match(screen, /!flightStatus\.dataAvailable/);
   assert.match(screen, /flightStatus\.freshness === "stale"/);
+  assert.match(screen, /useFocusEffect/);
+  assert.match(screen, /active=\{focused\}/);
   assert.match(screen, /const interval = setInterval\(refresh, 60_000\)/);
   assert.doesNotMatch(screen, /On time/);
 });
