@@ -23,7 +23,7 @@ export function FaqCmsInitializeButton({ disabled = false }: { disabled?: boolea
         setError(typeof payload.error === "string" ? payload.error : "Unable to initialize FAQ CMS.");
         return;
       }
-      setMessage(`Imported ${payload.count ?? 0} published FAQs.`);
+      setMessage(`FAQ CMS ready: ${payload.seededCount ?? 0} seeded, ${payload.migratedCount ?? 0} existing records reconciled.`);
       router.refresh();
     });
   }
