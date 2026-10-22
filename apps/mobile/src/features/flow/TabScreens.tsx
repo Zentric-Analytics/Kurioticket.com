@@ -101,7 +101,7 @@ function TripCard({ trip }: { trip: MobileTrip }) {
   const [flightStatus, setFlightStatus] = useState<MobileFlightStatus | null>(null);
 
   useEffect(() => {
-    if (trip.tripType !== "flight") {
+    if (trip.tripType !== "flight" || trip.status !== "upcoming") {
       setFlightStatus(null);
       return;
     }
@@ -112,8 +112,8 @@ function TripCard({ trip }: { trip: MobileTrip }) {
         .catch(() => undefined);
     };
     refresh();
-    const interval = trip.status === "upcoming" ? setInterval(refresh, 60_000) : null;
-    return () => { active = false; if (interval !== null) clearInterval(interval); };
+    const interval = setInterval(refresh, 60_000);
+    return () => { active = false; clearInterval(interval); };
   }, [trip.id, trip.status, trip.tripType]);
 
   return (
@@ -171,7 +171,7 @@ function TripCard({ trip }: { trip: MobileTrip }) {
           </Text>
         </View>
 
-        {trip.tripType === "flight" && flightStatus ? (
+        {trip.tripType === "flight" && trip.status === "upcoming" && flightStatus ? (
           <View style={[styles.flightStatus, { borderColor: ft.colors.border }]}>
             <Text style={styles.flightStatusHeading}>Flight status</Text>
             {!flightStatus.dataAvailable ? (
