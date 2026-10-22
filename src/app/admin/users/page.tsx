@@ -14,6 +14,9 @@ export const metadata = { title: "Admin Users" };
 type PageProps = { searchParams?: Promise<{ q?: string; role?: string; status?: string; identity?: string; activity?: string; page?: string }> };
 const date = (at: Date) => new Intl.DateTimeFormat("en", { dateStyle: "medium", timeStyle: "short" }).format(at);
 const PAGE_SIZE = 15;
+type IdentityRow =
+  | { kind: "user"; record: { id: string; name: string | null; email: string | null; role: string; status: string; createdAt: Date } }
+  | { kind: "guest"; record: { id: string; firstSeenAt: Date; lastSeenAt: Date } };
 
 export default async function AdminUsersPage({ searchParams }: PageProps) {
   const session = await requireAdminSession("/admin/users");
@@ -50,10 +53,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
       query: q, role, status, showUsers, showGuests,
       limit: PAGE_SIZE, offset: (page - 1) * PAGE_SIZE,
     });
-    if (!sql) return { rows: [] as Array<
-      | { kind: "user"; record: { id: string; name: string | null; email: string | null; role: string; status: string; createdAt: Date } }
-      | { kind: "guest"; record: { id: string; firstSeenAt: Date; lastSeenAt: Date } }
-    > };
+    if (!sql) return { rows: [] as IdentityRow[] };
     const identities = await db.$queryRaw<AdminIdentityReference[]>(sql);
     const userIds = identities.filter(item => item.kind === "user").map(item => item.id);
     const guestIds = identities.filter(item => item.kind === "guest").map(item => item.id);
@@ -69,7 +69,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
     ]);
     const userMap = new Map(users.map(user => [user.id, user]));
     const guestMap = new Map(guests.map(guest => [guest.id, guest]));
-    const rows = identities.flatMap(identity => {
+    const rows = identities.flatMap<IdentityRow>(identity => {
       if (identity.kind === "user") {
         const record = userMap.get(identity.id);
         return record ? [{ kind: "user" as const, record }] : [];
@@ -81,10 +81,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
       return [];
     });
     return { rows };
-  }, { rows: [] as Array<
-    | { kind: "user"; record: { id: string; name: string | null; email: string | null; role: string; status: string; createdAt: Date } }
-    | { kind: "guest"; record: { id: string; firstSeenAt: Date; lastSeenAt: Date } }
-  > });
+  }, { rows: [] as IdentityRow[] });
   const protectedEmails = new Set(getAdminEmails());
   const link = (nextPage: number) => "/admin/users?" + new URLSearchParams({ ...(q ? { q } : {}), role, status, identity, page: String(nextPage) }).toString();
   return (
