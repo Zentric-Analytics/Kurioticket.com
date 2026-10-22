@@ -38,7 +38,7 @@ export type SearchHistoryInput = {
   userId?: string | null;
   visitorId?: string | null;
   requestId?: string | null;
-  type: "FLIGHT" | "HOTEL";
+  type: "FLIGHT" | "HOTEL" | "CAR";
   origin?: string | null;
   destination?: string | null;
   checkIn?: Date | null;
