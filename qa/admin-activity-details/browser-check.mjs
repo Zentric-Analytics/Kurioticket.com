@@ -55,7 +55,7 @@ try {
     await page.getByRole("link", { name: "Selections", exact: true }).click();
     await expect(page).toHaveURL(/tab=selections/);
     await expect(page.getByRole("heading", { name: "Activity timeline" })).toBeVisible();
-    await expect(page.getByText("Offer selected", { exact: true })).toHaveCount(1);
+    await expect(page.getByRole("region", { name: "Recorded journey qa-journey-flight" }).getByText("Offer selected", { exact: true })).toHaveCount(1);
     await page.getByRole("combobox", { name: "Activity product" }).selectOption("FLIGHT");
     await page.getByRole("button", { name: "Apply" }).click();
     await expect(page).toHaveURL(/product=FLIGHT/);
