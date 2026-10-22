@@ -113,8 +113,15 @@ function FlightStatusPanel({ tripId, locale, t, format }: { tripId: string; loca
       } catch { /* keep the last verified provider snapshot visible */ }
     };
     void refresh();
-    const interval = window.setInterval(() => void refresh(), 60_000);
-    return () => { disposed = true; controller?.abort(); window.clearInterval(interval); };
+    const refreshIfVisible = () => { if (document.visibilityState === "visible") void refresh(); };
+    const interval = window.setInterval(refreshIfVisible, 60_000);
+    document.addEventListener("visibilitychange", refreshIfVisible);
+    return () => {
+      disposed = true;
+      controller?.abort();
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", refreshIfVisible);
+    };
   }, [tripId]);
 
   if (!status) return null;
