@@ -73,7 +73,7 @@ export function createPartnerConfirmationHandler(dependencies: Dependencies) {
 
     let confirmation;
     try {
-      confirmation = parsePartnerBookingConfirmation(JSON.parse(rawBody));
+      confirmation = parsePartnerBookingConfirmation(JSON.parse(rawBody), new Date(dependencies.now()));
     } catch (error) {
       if (error instanceof SyntaxError || error instanceof PartnerConfirmationPayloadError) {
         return NextResponse.json(
