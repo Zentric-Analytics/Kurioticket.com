@@ -1,3 +1,5 @@
+import { createProviderHandoffMetadata } from "../../../../../src/lib/providerHandoffClient";
+
 export type JourneyEvent = {
   eventId: string;
   type: "RESULTS_VIEWED" | "OFFER_SELECTED";
@@ -85,6 +87,15 @@ export class JourneyEventCoordinator {
   offerSelected(requestId: string | undefined, offerId: string, provider: string | undefined, sourcePage: string) {
     if (!offerId) return;
     return this.enqueue("OFFER_SELECTED", requestId, sourcePage, offerId, provider);
+  }
+
+  prepareHandoff(requestId: string | undefined) {
+    const context = this.captureContext();
+    return createProviderHandoffMetadata(() => {
+      this.contextChanged();
+      return context !== null && context === this.context && validRequestId(requestId) && this.searches.has(requestId)
+        ? requestId : null;
+    }, this.dependencies.createId);
   }
 
   private enqueue(type: JourneyEvent["type"], requestId: string | undefined, sourcePage: string, offerId = "", provider?: string) {

@@ -72,18 +72,28 @@ export async function POST(request: Request) {
     routeDurationMs,
   });
   if (aggregate.unavailableMessage) {
-    after(() => Promise.all(
-      aggregate.providerStatuses.map((provider) =>
-        logProviderCall({
-          provider: provider.provider,
-          service: "flight-search",
-          status:
-            provider.status === "success" ? "SUCCESS" : provider.status === "skipped" ? "DISABLED" : "FAILED",
-          latencyMs: provider.latencyMs,
-          errorMessage: provider.error,
-        }),
-      ),
-    ).catch((error) => console.error("[flight-search:logging]", error)));
+    after(async () => {
+      try {
+        const { userId, visitorId } = await resolveRequestActivityIdentity(request);
+        await Promise.all([
+          logSearchHistory({
+            userId, visitorId, requestId, type: "FLIGHT",
+            origin: parsed.data.origin, destination: parsed.data.destination,
+            query: parsed.data, resultCount: 0, latencyMs: aggregate.latencyMs, status: "FAILED",
+          }),
+          ...aggregate.providerStatuses.map((provider) =>
+            logProviderCall({
+              provider: provider.provider,
+              service: "flight-search",
+              status:
+                provider.status === "success" ? "SUCCESS" : provider.status === "skipped" ? "DISABLED" : "FAILED",
+              latencyMs: provider.latencyMs,
+              errorMessage: provider.error,
+            }),
+          ),
+        ]);
+      } catch (error) { console.error("[flight-search:logging]", error); }
+    });
 
     return NextResponse.json(
       {

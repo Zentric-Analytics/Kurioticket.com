@@ -63,7 +63,7 @@ test("a consented handoff is appended to the search journey after its redirect l
     product: "HOTEL",
     provider: "Test provider",
     redirectLogId: "redirect-123",
-    metadata: { sourcePage: "/hotel-details" },
+    metadata: { sourcePage: "/hotel-details", resultId: "offer-123" },
   });
 });
 
@@ -86,8 +86,35 @@ test("signed-in handoff journeys carry authoritative accounts and discard page q
     journey: async (value) => {
       assert.equal(value.userId, "account-a");
       assert.equal(value.visitorId, "linked-visitor");
-      assert.deepEqual(value.metadata, { sourcePage: "/hotels/details" });
+      assert.deepEqual(value.metadata, { sourcePage: "/hotels/details", resultId: "offer-123" });
       return null;
     },
+  });
+});
+
+test("a validated handoff receipt carries exact search correlation and retries do not duplicate analytics", async () => {
+  let events = 0;
+  let journey: unknown;
+  await recordProviderHandoffActivity(request, handoff, {
+    identity: async () => ({ userId: "account-a", visitorId: "linked-visitor" }),
+    redirect: async () => ({ id: "redirect-123", created: false, visitorId: "linked-visitor", userId: "account-a", searchHistoryId: "search-123", correlation: "linked" }),
+    event: async () => { events += 1; },
+    journey: async value => { journey = value; return null; },
+  });
+  assert.equal(events, 0);
+  assert.deepEqual(journey, {
+    visitorId: "linked-visitor", userId: "account-a", type: "PROVIDER_HANDOFF_STARTED",
+    eventKey: "redirect:redirect-123", product: "HOTEL", provider: "Test provider",
+    redirectLogId: "redirect-123", searchHistoryId: "search-123",
+    metadata: { sourcePage: "/hotel-details", resultId: "offer-123" },
+  });
+});
+
+test("withdrawal during deferred correlation cannot restore stale visitor attribution", async () => {
+  await recordProviderHandoffActivity(request, handoff, {
+    identity: async () => ({ userId: "account-a", visitorId: "withdrawn-visitor" }),
+    redirect: async () => ({ id: "redirect-123", created: true, visitorId: null, userId: "account-a", searchHistoryId: null, correlation: "unavailable" }),
+    event: async value => { assert.equal(value.visitorId, null); assert.equal(value.userId, "account-a"); },
+    journey: async value => { assert.equal(value.visitorId, null); assert.equal(value.searchHistoryId, undefined); return null; },
   });
 });

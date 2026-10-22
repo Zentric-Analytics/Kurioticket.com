@@ -55,7 +55,7 @@ test("Native Hotel View deal uses unchanged label and never disables other valid
   assert.doesNotMatch(rates, /Opening…|pendingRateId/);
   assert.match(rates, /disabled=\{!row.actionable\}/);
   assert.match(rates, />View deal<\/Text>/);
-  assert.match(screen, /travelApi.hotelRedirect\(selected.offerId\)/);
+  assert.match(screen, /travelApi.hotelRedirect\(selected.offerId, \{ handoff: journeyEvents.prepareHandoff\(journeyRequestId\) \}\)/);
   assert.match(screen, /await openProviderInApp\(response.url\)/);
 });
 

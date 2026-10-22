@@ -11,7 +11,7 @@ test("flight details has one opaque-ID authoritative runtime", () => {
   assert.match(detail, /product === "flight" && params\.id[\s\S]*?<NativeFlightDetails/);
   assert.doesNotMatch(detail, /function FlightDetail|authoritativeProviderUrl/);
   assert.match(native, /travelApi\.flightDetails\(id/);
-  assert.match(native, /travelApi\.flightRedirect\(offerId\)/);
+  assert.match(native, /travelApi\.flightRedirect\(offerId, \{ handoff: journeyEvents.prepareHandoff\(journeyRequestId\) \}\)/);
 });
 
 test("checkout never falls back to a serialized provider URL", () => {

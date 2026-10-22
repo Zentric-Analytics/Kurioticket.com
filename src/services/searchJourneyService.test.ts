@@ -44,6 +44,10 @@ function fixture() {
     const lockedVisitors = new Set<string>();
     return {
       async $queryRaw(query: TemplateStringsArray, visitorId: string) {
+        if (query.join("?").includes('FROM "User"')) {
+          assert.match(query.join("?"), /FOR NO KEY UPDATE/);
+          return [{ id: visitorId, email: "test@example.test", role: "USER", status: "ACTIVE", emailVerified: new Date() }];
+        }
         assert.match(query.join("?"), /FOR UPDATE/);
         releases.push(await acquire(`visitor:${visitorId}`));
         lockedVisitors.add(visitorId);
