@@ -60,6 +60,9 @@ CREATE TABLE "CmsContentRevision" (
 CREATE UNIQUE INDEX "CmsContentItem_type_key_market_locale_key" ON "CmsContentItem"("type", "key", "market", "locale");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "CmsContentItem_type_key_publishedMarket_publishedLocale_key" ON "CmsContentItem"("type", "key", "publishedMarket", "publishedLocale");
+
+-- CreateIndex
 CREATE INDEX "CmsContentItem_type_status_market_locale_sortOrder_idx" ON "CmsContentItem"("type", "status", "market", "locale", "sortOrder");
 
 -- CreateIndex
