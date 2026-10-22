@@ -19,8 +19,8 @@ export async function GET(request: Request) {
   if (auth.response) return auth.response;
 
   const url = new URL(request.url);
-  const type = url.searchParams.get("type");
-  const status = url.searchParams.get("status");
+  const type = url.searchParams.get("type")?.trim() || null;
+  const status = url.searchParams.get("status")?.trim() || null;
   if (type && !types.has(type as CmsContentType)) {
     return NextResponse.json({ error: "Invalid content type." }, { status: 400 });
   }
@@ -32,8 +32,8 @@ export async function GET(request: Request) {
     const rawLimit = url.searchParams.get("limit");
     const limit = rawLimit === null ? undefined : Number(rawLimit);
     const result = await listAdminCmsContent({
-      type: type as CmsContentType | undefined,
-      status: status as CmsContentStatus | undefined,
+      type: type ? type as CmsContentType : undefined,
+      status: status ? status as CmsContentStatus : undefined,
       market: url.searchParams.get("market") || undefined,
       locale: url.searchParams.get("locale") || undefined,
       limit,
