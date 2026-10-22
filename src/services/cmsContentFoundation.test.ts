@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-import { cmsPayloadSchemas } from "./cmsContentService";
+import { cmsMarketCodes, cmsPayloadSchemas } from "./cmsContentService";
 
 const schema = readFileSync("prisma/schema.prisma", "utf8");
 const migration = readFileSync("prisma/migrations/20261022180000_add_cms_foundation/migration.sql", "utf8");
@@ -30,6 +30,16 @@ test("CMS payloads are structured and reject unsafe or malformed content", () =>
   assert.equal(cmsPayloadSchemas.HOMEPAGE_DESTINATION.safeParse({ city: "London", country: "United Kingdom", destinationCode: "LHR", originCode: "LOS", image: "/images/london.jpg", imageAlt: "London skyline" }).success, true);
   assert.equal(cmsPayloadSchemas.HOMEPAGE_DESTINATION.safeParse({ city: "London", country: "United Kingdom", destinationCode: "LHR", originCode: "LOS", image: "javascript:alert(1)", imageAlt: "London skyline" }).success, false);
   assert.equal(cmsPayloadSchemas.FLIGHT_ROUTE.safeParse({ title: "Lagos to London", originCity: "Lagos", originCode: "LOS", destinationCity: "London", destinationCode: "LOS", routeNote: "Route", image: "https://example.test/image.jpg", imageAlt: "Route" }).success, false);
+});
+
+
+test("CMS market scopes match the canonical homepage resolver domain", () => {
+  for (const market of ["CANADA", "EUROPE", "AFRICA", "MIDDLE_EAST", "ASIA", "LATIN_AMERICA", "GLOBAL"]) {
+    assert.equal(cmsMarketCodes.includes(market as never), true, market);
+  }
+  assert.equal(cmsMarketCodes.includes("RANDOM_REGION" as never), false);
+  assert.match(service, /HOMEPAGE_REFRESH_MARKET_CODES/);
+  assert.match(service, /cmsMarketCodeSet\.has\(value\)/);
 });
 
 test("admin CMS APIs require canonical admin access and expose explicit lifecycle actions", () => {
