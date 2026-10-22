@@ -107,15 +107,15 @@ function TripCard({ trip, active }: { trip: MobileTrip; active: boolean }) {
       setFlightStatus(null);
       return;
     }
-    let active = true;
+    let mounted = true;
     const refresh = () => {
       void travelApi.flightStatus(trip.id)
-        .then((status) => { if (active) setFlightStatus(status); })
+        .then((status) => { if (mounted) setFlightStatus(status); })
         .catch(() => undefined);
     };
     refresh();
     const interval = setInterval(refresh, 60_000);
-    return () => { active = false; clearInterval(interval); };
+    return () => { mounted = false; clearInterval(interval); };
   }, [active, trip.id, trip.status, trip.tripType]);
 
   return (
