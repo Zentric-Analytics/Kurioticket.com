@@ -1,0 +1,47 @@
+name: Admin customer activity visual QA
+
+on:
+  pull_request:
+    branches: [dev]
+    paths:
+      - src/app/admin/users/**
+      - src/components/admin/AdminIdentityTable.tsx
+      - src/lib/adminIdentityActivity*
+      - src/lib/adminIdentityJourney.ts
+      - src/services/adminIdentityActivityService.ts
+      - qa/admin-activity-details/**
+      - .github/workflows/admin-activity-details.yml
+
+permissions:
+  contents: read
+
+jobs:
+  customer-activity:
+    name: Validate customer activity page and capture real screenshots
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Validate activity paging, filters and consent ownership helpers
+        env:
+          JITI_TSCONFIG_PATHS: ./tsconfig.json
+          JITI_JSX: "true"
+        run: node --test --import jiti/register src/lib/adminIdentityActivity.test.ts src/lib/adminIdentityJourney.test.ts
+      - run: npx playwright install --with-deps chromium
+      - name: Render and test real Admin Activity component with labelled QA data
+        run: node qa/admin-activity-details/run.mjs
+        env:
+          ADMIN_ACTIVITY_QA_WORK: ${{ runner.temp }}
+          ADMIN_ACTIVITY_QA_OUTPUT: ${{ runner.temp }}/admin-customer-activity-screenshots
+      - name: Upload screenshots (fixture content only, not staging data)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: admin-customer-activity-visual-evidence
+          path: ${{ runner.temp }}/admin-customer-activity-screenshots/
+          if-no-files-found: warn
