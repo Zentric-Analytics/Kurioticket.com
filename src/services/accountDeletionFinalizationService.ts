@@ -49,6 +49,7 @@ export type AccountDeletionCleanupCounts = {
   analyticsEventsDetached: number;
   previewAdminReferencesCleared: number;
   identityLinksDeleted: number;
+  deletionRequestsRedacted: number;
 };
 
 export type FinalizeAccountDeletionInput = {
@@ -232,9 +233,29 @@ export function createAccountDeletionFinalizer(dependencies: FinalizerDependenci
       const verificationTokens = await tx.verificationToken.deleteMany({
         where: {
           OR: [
-            { identifier: { endsWith: normalized(originalEmail) } },
-            { identifier: { endsWith: request.userId } },
+            { identifier: `password-reset:${normalized(originalEmail)}` },
+            { identifier: `email-verification:${normalized(originalEmail)}` },
+            { identifier: `login-verification:${normalized(originalEmail)}` },
+            { identifier: `mobile-verified:${normalized(originalEmail)}` },
+            { identifier: `two-factor:totp-setup:${request.userId}` },
+            { identifier: `mobile-password-reset:${request.userId}` },
+            { identifier: `mobile-password-change-failure:${request.userId}` },
+            { identifier: `passkey-reauth:setup:${request.userId}` },
+            { identifier: `passkey-reauth:removal:${request.userId}` },
+            { identifier: { startsWith: `email-change:${request.userId}:` } },
+            { identifier: { startsWith: `mobile-password-reset:${request.userId}:` } },
+            { identifier: { startsWith: `mobile-password-reset-grant:${request.userId}:` } },
+            { identifier: { startsWith: `mobile-password-change:${request.userId}:` } },
           ],
+        },
+      });
+
+      const historicalRequests = await tx.accountDeletionRequest.updateMany({
+        where: { userId: request.userId },
+        data: {
+          email: redactedEmail,
+          userReason: null,
+          cancellationMetadata: Prisma.JsonNull,
         },
       });
 
@@ -243,9 +264,6 @@ export function createAccountDeletionFinalizer(dependencies: FinalizerDependenci
         data: {
           status: "COMPLETED",
           completedAt: now,
-          email: redactedEmail,
-          userReason: null,
-          cancellationMetadata: Prisma.JsonNull,
           reviewNotes: reviewNotes.slice(0, 5000),
           adminNotificationId: adminReference.slice(0, 255),
         },
@@ -281,6 +299,7 @@ export function createAccountDeletionFinalizer(dependencies: FinalizerDependenci
         analyticsEventsDetached: analyticsEvents.count,
         previewAdminReferencesCleared: previewApproved.count + previewSuspended.count + previewRevoked.count,
         identityLinksDeleted: identityLinks.count,
+        deletionRequestsRedacted: historicalRequests.count,
       };
 
       return { request: updated, cleanupCounts };
