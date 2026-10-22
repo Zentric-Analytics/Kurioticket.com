@@ -544,7 +544,14 @@ test("a foreign-key-restricted account deletion rolls visitor retirement and con
   await assert.rejects(db.$transaction(async tx => {
     assert.equal((await retireAccountVisitors(tx, owner.id)).visitorsRetired, 1);
     await tx.user.delete({ where: { id: owner.id } });
-  }), (error: unknown) => (error as { code?: string }).code === "P2003");
+  }), (error: unknown) => {
+    if ((error as { code?: string }).code === "P2003") return true;
+    // PostgreSQL 18 reports an immediate RESTRICT violation as SQLSTATE 23001.
+    // Prisma currently wraps that separately from its P2003 foreign-key error.
+    return error instanceof Error && error.name === "PrismaClientKnownRequestError"
+      && error.message.includes("Code: `23001`")
+      && error.message.includes('"AccountDeletionRequest_userId_fkey"');
+  });
   const saved = await db.visitor.findUniqueOrThrow({ where: { id: guest.id }, include: { identityLinks: true } });
   assert.equal(saved.consentStatus, "GRANTED");
   assert.equal(saved.trackingDisabledAt, null);
