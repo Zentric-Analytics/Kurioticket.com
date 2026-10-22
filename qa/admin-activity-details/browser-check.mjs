@@ -67,6 +67,15 @@ try {
     await expect(page.getByText("customer.qa@example.invalid", { exact: true })).toBeVisible();
     await page.screenshot({ path: output + "/after-registered-activity-1280.png", fullPage: true });
   });
+  await check("original pre-change drawer captured at the same 1280px viewport", async () => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto(base + "/before", { waitUntil: "networkidle" });
+    await expect(page.getByTestId("fixture-label")).toContainText("synthetic activity");
+    await expect(page.getByRole("dialog", { name: "Identity activity" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "User Activity" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Activity timeline" })).toBeVisible();
+    await page.screenshot({ path: output + "/before-original-drawer-1280.png", fullPage: true });
+  });
   assert.deepEqual(failures, [], "No uncaught browser errors");
   await writeFile(output + "/report.json", JSON.stringify({ checks, browserErrors: failures }, null, 2));
   console.log("PASS " + checks.length + " Admin Activity browser checks; fixture screenshots saved.");
