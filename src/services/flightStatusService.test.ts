@@ -88,7 +88,7 @@ test("future status events cannot poison ordering or appear current", async () =
   assert.equal(database.snapshot, null);
 
   await service.recordPartnerFlightStatus(parsePartnerFlightStatus(payload(), now));
-  if (database.snapshot) database.snapshot.observedAt = new Date("2026-10-22T16:01:00.000Z");
+  database.setObservedAt(new Date("2026-10-22T16:01:00.000Z"));
   const owner = await service.getUserFlightStatus("user-a", "trip-1");
   assert.equal(owner?.dataAvailable, true);
   if (owner?.dataAvailable) assert.equal(owner.freshness, "stale");
@@ -142,6 +142,6 @@ function memoryDatabase() {
       },
     },
   };
-  return { client: client as any, get snapshot() { return snapshot; } };
+  return { client: client as any, get snapshot() { return snapshot; }, setObservedAt(value: Date) { if (snapshot) snapshot.observedAt = value; } };
   /* eslint-enable @typescript-eslint/no-explicit-any */
 }
