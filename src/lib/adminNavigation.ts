@@ -79,7 +79,7 @@ export type AdminHeaderGroup = {
 export function getAdminHeaderGroups(role: AdminRole, includePreviewTesters = false): AdminHeaderGroup[] {
   const visible = getAdminNavForRole(role, includePreviewTesters);
   const byHref = new Map(visible.map((item) => [item.href, item]));
-  const groupedHrefs = new Set(adminNavigationGroups.flatMap((group) => group.hrefs));
+  const groupedHrefs = new Set<string>(adminNavigationGroups.flatMap((group) => group.hrefs));
   const extraTopLevel = visible.filter((item) => !groupedHrefs.has(item.href) && !item.parentHref);
 
   return adminNavigationGroups.map((group, index) => {
