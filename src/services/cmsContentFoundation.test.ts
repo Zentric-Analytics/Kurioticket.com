@@ -1,0 +1,67 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import test from "node:test";
+
+import { cmsPayloadSchemas } from "./cmsContentService";
+
+const schema = readFileSync("prisma/schema.prisma", "utf8");
+const migration = readFileSync("prisma/migrations/20261022180000_add_cms_foundation/migration.sql", "utf8");
+const service = readFileSync("src/services/cmsContentService.ts", "utf8");
+const collectionApi = readFileSync("src/app/api/admin/content/route.ts", "utf8");
+const itemApi = readFileSync("src/app/api/admin/content/[id]/route.ts", "utf8");
+const publicReaders = readFileSync("src/services/publicCmsContentService.ts", "utf8");
+const homepage = readFileSync("src/app/page.tsx", "utf8");
+const faqSource = readFileSync("src/content/faqs.ts", "utf8");
+
+test("CMS foundation has versioned draft/published storage and immutable revisions", () => {
+  for (const token of ["enum CmsContentType", "enum CmsContentStatus", "model CmsContentItem", "draftPayload", "publishedPayload", "publishedVersion", "model CmsContentRevision", "draftPayload", "publishedPayload", "@@unique([contentItemId, version])"]) {
+    assert.equal(schema.includes(token), true, token);
+  }
+  assert.match(migration, /CREATE TABLE "CmsContentItem"/);
+  assert.match(migration, /CREATE TABLE "CmsContentRevision"/);
+  assert.match(migration, /ON DELETE CASCADE/);
+});
+
+test("CMS payloads are structured and reject unsafe or malformed content", () => {
+  assert.equal(cmsPayloadSchemas.FAQ.safeParse({ question: "How does Kurioticket work?", answer: "Compare provider offers.", category: "General" }).success, true);
+  assert.equal(cmsPayloadSchemas.FAQ.safeParse({ question: "", answer: "x", category: "General" }).success, false);
+  assert.equal(cmsPayloadSchemas.HOMEPAGE_DESTINATION.safeParse({ city: "London", country: "United Kingdom", destinationCode: "LHR", originCode: "LOS", image: "/images/london.jpg", imageAlt: "London skyline" }).success, true);
+  assert.equal(cmsPayloadSchemas.HOMEPAGE_DESTINATION.safeParse({ city: "London", country: "United Kingdom", destinationCode: "LHR", originCode: "LOS", image: "javascript:alert(1)", imageAlt: "London skyline" }).success, false);
+  assert.equal(cmsPayloadSchemas.FLIGHT_ROUTE.safeParse({ title: "Lagos to London", originCity: "Lagos", originCode: "LOS", destinationCity: "London", destinationCode: "LOS", routeNote: "Route", image: "https://example.test/image.jpg", imageAlt: "Route" }).success, false);
+});
+
+test("admin CMS APIs require canonical admin access and expose explicit lifecycle actions", () => {
+  assert.match(collectionApi, /requireAdminApiSession\(\)/);
+  assert.match(itemApi, /requireAdminApiSession\(\)/);
+  assert.match(collectionApi, /createCmsContent/);
+  for (const action of ["save_draft", "publish", "hide", "archive"]) assert.equal(itemApi.includes(action), true, action);
+  assert.match(itemApi, /hasRecentReauthentication/);
+  assert.match(itemApi, /recent_reauthentication_required/);
+});
+
+test("CMS mutations use optimistic concurrency and transactional revision plus audit writes", () => {
+  assert.match(service, /expectedVersion/);
+  assert.match(service, /version: parsed\.data\.expectedVersion/);
+  assert.match(service, /version: \{ increment: 1 \}/);
+  assert.match(service, /TransactionIsolationLevel\.Serializable/);
+  assert.match(service, /cmsContentRevision\.create/);
+  assert.match(service, /adminAuditLog\.create/);
+  assert.match(service, /CMS_CONTENT_CREATED/);
+  assert.match(service, /CMS_CONTENT_UPDATED/);
+  assert.match(service, /publishedPayload: input\.publishedPayload/);
+});
+
+test("public CMS readers fail safely to the existing code-backed content", () => {
+  assert.match(service, /source: "fallback"/);
+  assert.match(publicReaders, /getPopularDestinationsByRegion/);
+  assert.match(publicReaders, /getDefaultHomeDiscoveryPriceRoutes/);
+  assert.match(publicReaders, /hotelDestinations/);
+  assert.match(publicReaders, /generalFaqs/);
+  assert.match(service, /cmsPayloadSchemas\[type\]\.safeParse/);
+  assert.match(service, /Prisma\.DbNull/);
+  assert.match(faqSource, /export const generalFaqs/);
+});
+
+test("Phase 1 does not prematurely switch the public homepage to CMS storage", () => {
+  assert.doesNotMatch(homepage, /publicCmsContentService/);
+});
