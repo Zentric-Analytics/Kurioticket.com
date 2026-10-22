@@ -27,7 +27,7 @@ Supported states are:
 - `HIDDEN`
 - `ARCHIVED`
 
-Saving a new draft never destroys the last published payload. Public readers continue to serve the last published payload until an explicit publish, unless the item is hidden or archived.
+Saving a new draft never destroys the last published payload or changes its published market, locale, order, or visibility. Draft scope fields are separate from the last published scope. Public readers continue to serve the last published payload in its last published scope until an explicit publish, unless the item is hidden or archived.
 
 Archive is intentionally terminal in this foundation. Restore/revision rollback can be added later using the revision snapshots.
 
@@ -45,8 +45,8 @@ Every successful mutation writes an immutable `CmsContentRevision` in the same t
 
 A revision snapshots both:
 
-- draft payload
-- published payload
+- draft payload and draft scope
+- published payload and published scope
 
 This preserves enough state for a future restore-version workflow, including the case where a published item has newer unpublished draft edits.
 
@@ -82,7 +82,7 @@ The public reader:
 2. excludes hidden and archived content,
 3. validates stored published payloads again before returning them,
 4. adds the stable CMS key as the public content id,
-5. falls back to the existing code-backed datasets if the CMS database is unavailable, no CMS content has been published for that scope, or stored published content fails validation.
+5. falls back to the existing code-backed datasets if the CMS database is unavailable, no CMS content has ever been published for that scope, or stored published content fails validation. Once a scope has published CMS ownership, hidden/archived rows keep that scope CMS-owned; if every item is hidden/archived, the public result is intentionally empty rather than resurrecting legacy fallback content.
 
 Phase 1 intentionally does not import this service into the live public homepage or FAQ screens. Surface-by-surface migration happens in later CMS phases after the foundation is proven.
 
