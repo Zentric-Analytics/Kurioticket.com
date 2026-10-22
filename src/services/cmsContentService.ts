@@ -3,6 +3,7 @@ import { z } from "zod";
 import { Prisma } from "@/generated/prisma/client";
 import type { CmsContentStatus, CmsContentType } from "@/generated/prisma/enums";
 import { getOptionalPrisma, getPrisma } from "@/lib/prisma";
+import { HOMEPAGE_REFRESH_MARKET_CODES } from "@/lib/market/resolveMarket";
 
 export const cmsContentTypes = [
   "HOMEPAGE_DESTINATION",
@@ -12,6 +13,8 @@ export const cmsContentTypes = [
 ] as const satisfies readonly CmsContentType[];
 
 const cmsContentStatuses = ["DRAFT", "PUBLISHED", "HIDDEN", "ARCHIVED"] as const satisfies readonly CmsContentStatus[];
+export const cmsMarketCodes = HOMEPAGE_REFRESH_MARKET_CODES;
+const cmsMarketCodeSet = new Set<string>(cmsMarketCodes);
 const cmsCursorId = /^[A-Za-z0-9_-]{6,128}$/;
 const cmsCursorIso = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d{1,3})?)?(?:Z|[+-]\d{2}:\d{2})$/;
 
@@ -41,7 +44,7 @@ function decodeCmsListCursor(value: string | undefined): { scope: CmsListScope; 
       !scope ||
       (type !== null && !cmsContentTypes.includes(type as CmsContentType)) ||
       (status !== null && !cmsContentStatuses.includes(status as CmsContentStatus)) ||
-      (market !== null && (typeof market !== "string" || !(market === "GLOBAL" || /^[A-Z]{2}$/.test(market)))) ||
+      (market !== null && (typeof market !== "string" || !cmsMarketCodeSet.has(market))) ||
       (locale !== null && (typeof locale !== "string" || !/^[a-z]{2}(?:-[a-z]{2})?$/.test(locale))) ||
       typeof decoded.updatedAt !== "string" ||
       !cmsCursorIso.test(decoded.updatedAt) ||
@@ -127,7 +130,10 @@ export const cmsPayloadSchemas = {
 } satisfies Record<CmsContentType, z.ZodTypeAny>;
 
 const keySchema = z.string().trim().toLowerCase().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).max(120);
-const marketSchema = z.string().trim().toUpperCase().refine((value) => value === "GLOBAL" || /^[A-Z]{2}$/.test(value), "Use GLOBAL or a two-letter market code.");
+const marketSchema = z.string().trim().toUpperCase().refine(
+  (value) => cmsMarketCodeSet.has(value),
+  "Use a supported Kurioticket content market code.",
+);
 const localeSchema = z.string().trim().toLowerCase().regex(/^[a-z]{2}(?:-[a-z]{2})?$/).max(10);
 const sortOrderSchema = z.number().int().min(0).max(100000);
 
