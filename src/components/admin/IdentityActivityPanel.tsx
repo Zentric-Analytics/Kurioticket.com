@@ -17,9 +17,22 @@ export async function IdentityActivityPanel({ selection }: { selection: string }
         select: { id: true, name: true, email: true, status: true, role: true, createdAt: true },
       });
       if (!user) return null;
+      // Explicit account attribution stays authoritative. Include anonymous
+      // activity only for a still-consenting visitor linked exclusively here.
+      const activityWhere = {
+        OR: [
+          { userId: id },
+          { userId: null, visitor: { is: {
+            currentUserId: id,
+            consentStatus: "GRANTED" as const,
+            trackingDisabledAt: null,
+            identityLinks: { some: { userId: id }, none: { userId: { not: id } } },
+          } } },
+        ],
+      };
       const [searches, handoffs] = await Promise.all([
-        db.searchHistory.findMany({ where: { userId: id }, select: { id: true, type: true, origin: true, destination: true, status: true, createdAt: true }, take: 25, orderBy: { createdAt: "desc" } }),
-        db.redirectLog.findMany({ where: { userId: id }, select: { id: true, provider: true, route: true, createdAt: true }, take: 25, orderBy: { createdAt: "desc" } }),
+        db.searchHistory.findMany({ where: activityWhere, select: { id: true, type: true, origin: true, destination: true, status: true, createdAt: true }, take: 30, orderBy: { createdAt: "desc" } }),
+        db.redirectLog.findMany({ where: activityWhere, select: { id: true, provider: true, route: true, createdAt: true }, take: 30, orderBy: { createdAt: "desc" } }),
       ]);
       const events: ActivityRow[] = [
         ...searches.map(s => ({ id: "s-" + s.id, label: s.type + " search", detail: [s.origin, s.destination].filter(Boolean).join(" → ") + " · " + s.status, at: s.createdAt })),
@@ -28,17 +41,19 @@ export async function IdentityActivityPanel({ selection }: { selection: string }
       return { title: user.name || user.email || "Registered user", subtitle: user.email || user.id, type: "Registered", status: user.status, since: user.createdAt, events: events.sort((a, b) => b.at.getTime() - a.at.getTime()).slice(0, 30) };
     }
     const visitor = await db.visitor.findFirst({
-      where: { id, consentStatus: "GRANTED", trackingDisabledAt: null, currentUserId: null },
+      where: { id, consentStatus: "GRANTED", trackingDisabledAt: null, currentUserId: null, identityLinks: { none: {} } },
       select: { id: true, firstSeenAt: true, lastSeenAt: true },
     });
     if (!visitor) return null;
-    const [searches, analytics] = await Promise.all([
-      db.searchHistory.findMany({ where: { visitorId: id }, select: { id: true, type: true, origin: true, destination: true, status: true, createdAt: true }, take: 25, orderBy: { createdAt: "desc" } }),
-      db.analyticsEvent.findMany({ where: { visitorId: id }, select: { id: true, type: true, name: true, createdAt: true }, take: 25, orderBy: { createdAt: "desc" } }),
+    const [searches, handoffs, analytics] = await Promise.all([
+      db.searchHistory.findMany({ where: { visitorId: id, userId: null }, select: { id: true, type: true, origin: true, destination: true, status: true, createdAt: true }, take: 30, orderBy: { createdAt: "desc" } }),
+      db.redirectLog.findMany({ where: { visitorId: id, userId: null }, select: { id: true, provider: true, route: true, createdAt: true }, take: 30, orderBy: { createdAt: "desc" } }),
+      db.analyticsEvent.findMany({ where: { visitorId: id, userId: null, type: { notIn: ["SEARCH", "REDIRECT"] } }, select: { id: true, type: true, name: true, createdAt: true }, take: 30, orderBy: { createdAt: "desc" } }),
     ]);
     const events: ActivityRow[] = [
       ...searches.map(s => ({ id: "s-" + s.id, label: s.type + " search", detail: [s.origin, s.destination].filter(Boolean).join(" → ") + " · " + s.status, at: s.createdAt })),
-      ...analytics.filter(e => e.type !== "SEARCH").map(e => ({ id: "e-" + e.id, label: e.type.replaceAll("_", " "), detail: e.name, at: e.createdAt })),
+      ...handoffs.map(h => ({ id: "r-" + h.id, label: "Provider handoff", detail: [h.provider, h.route].filter(Boolean).join(" · "), at: h.createdAt })),
+      ...analytics.map(e => ({ id: "e-" + e.id, label: e.type.replaceAll("_", " "), detail: e.name, at: e.createdAt })),
     ];
     return { title: "Guest visitor", subtitle: "Guest ID: " + visitor.id, type: "Guest", status: "Anonymous", since: visitor.firstSeenAt, events: events.sort((a, b) => b.at.getTime() - a.at.getTime()).slice(0, 30) };
   }, null);

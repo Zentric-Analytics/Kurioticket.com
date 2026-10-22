@@ -11,6 +11,7 @@ import type { ContractResult, TravelSearchResponse } from "../../../../src/lib/t
 import type { FlightDetailsResponse } from "../../../../src/lib/flights/flightDetailsContract";
 import { parseMobileExploreCatalogue, type MobileExploreCatalogue } from "./exploreCatalogueContract";
 import { logFlightSearchCheckpoint } from "../features/search/flightSearchDiagnostics";
+import { visitorIdentity } from "../features/privacy/visitorIdentity";
 
 export class TravelApiError extends Error {
   constructor(message: string, public status = 0, public code: "cancelled" | "timeout" | "configuration" | "validation" | "rate-limit" | "unavailable" | "server" | "network" | "invalid-response" = "network", public details?: Record<string, unknown>) { super(message); }
@@ -96,6 +97,7 @@ async function request<T>(path: string, init: RequestInit = {}, options: { signa
   const base = getApiBaseUrl(Platform.OS, __DEV__);
   if (!base.ok) throw new TravelApiError(base.message, 0, "configuration");
   const session = await readSession().catch(() => null);
+  const visitorHeaders = await visitorIdentity.headers(path, session).catch(() => ({}));
   const controller = new AbortController();
   const onAbort = () => controller.abort("cancelled");
   options.signal?.addEventListener("abort", onAbort, { once: true });
@@ -110,6 +112,7 @@ async function request<T>(path: string, init: RequestInit = {}, options: { signa
         "X-Mobile-Platform": Platform.OS,
         ...(Constants.expoConfig?.version ? { "X-Mobile-App-Version": Constants.expoConfig.version } : {}),
         ...(session?.token ? { Authorization: `Bearer ${session.token}` } : {}),
+        ...visitorHeaders,
         ...(options.requestId ? { "X-Search-Request-Id": options.requestId } : {}),
         ...init.headers,
       },

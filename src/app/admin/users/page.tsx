@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { withOptionalDb } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/auth-guards";
 import { getAdminEmails } from "@/lib/env";
+import { getAdminIdentityPagination } from "@/lib/adminIdentityPagination";
 
 export const metadata = { title: "Admin Users" };
 type PageProps = { searchParams?: Promise<{ q?: string; role?: string; status?: string; identity?: string; activity?: string; page?: string }> };
@@ -20,7 +21,6 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
   const role = ["ALL", "USER", "SUPPORT", "ADMIN"].includes(params?.role || "") ? params!.role! : "ALL";
   const status = ["ALL", "ACTIVE", "SUSPENDED", "DELETED", "PENDING_DELETION"].includes(params?.status || "") ? params!.status! : "ALL";
   const identity = ["ALL", "REGISTERED", "GUEST"].includes(params?.identity || "") ? params!.identity! : "ALL";
-  const page = Math.min(500, Math.max(1, Number.parseInt(params?.page || "1", 10) || 1));
   const where = {
     ...(q ? { OR: [{ email: { contains: q, mode: "insensitive" as const } }, { name: { contains: q, mode: "insensitive" as const } }, { id: { contains: q, mode: "insensitive" as const } }] } : {}),
     ...(role !== "ALL" ? { role: role as never } : {}),
@@ -28,22 +28,21 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
   };
   // The existing User model remains the authority for registered accounts.
   // Guests remain distinct records and only consent-eligible, unlinked guests are listed.
-  const guestWhere = { consentStatus: "GRANTED" as const, trackingDisabledAt: null, currentUserId: null, ...(q ? { id: { contains: q, mode: "insensitive" as const } } : {}) };
+  const guestWhere = { consentStatus: "GRANTED" as const, trackingDisabledAt: null, currentUserId: null, identityLinks: { none: {} }, ...(q ? { id: { contains: q, mode: "insensitive" as const } } : {}) };
   const showUsers = identity !== "GUEST";
   const showGuests = identity !== "REGISTERED" && role === "ALL" && status === "ALL";
   const stats = await withOptionalDb(async db => {
     const [totalUsers, activeUsers, suspendedUsers, guests, filteredUsers, filteredGuests] = await Promise.all([
       db.user.count(), db.user.count({ where: { status: "ACTIVE" } }), db.user.count({ where: { status: "SUSPENDED" } }),
-      db.visitor.count({ where: { consentStatus: "GRANTED", trackingDisabledAt: null, currentUserId: null } }),
+      db.visitor.count({ where: { consentStatus: "GRANTED", trackingDisabledAt: null, currentUserId: null, identityLinks: { none: {} } } }),
       showUsers ? db.user.count({ where }) : Promise.resolve(0),
       showGuests ? db.visitor.count({ where: guestWhere }) : Promise.resolve(0),
     ]);
     return { totalUsers, activeUsers, suspendedUsers, guests, filteredUsers, filteredGuests };
   }, { totalUsers: 0, activeUsers: 0, suspendedUsers: 0, guests: 0, filteredUsers: 0, filteredGuests: 0 });
-  const userOffset = Math.min(stats.filteredUsers, (page - 1) * PAGE_SIZE);
-  const guestOffset = Math.max(0, (page - 1) * PAGE_SIZE - stats.filteredUsers);
-  const userTake = Math.min(PAGE_SIZE, Math.max(0, stats.filteredUsers - userOffset));
-  const guestsTake = PAGE_SIZE - userTake;
+  const { page, count, userOffset, guestOffset, userTake, guestsTake } = getAdminIdentityPagination(
+    params?.page, stats.filteredUsers, stats.filteredGuests, PAGE_SIZE,
+  );
   const result = await withOptionalDb(async db => {
     const [users, guests] = await Promise.all([
       showUsers && userTake ? db.user.findMany({ where, orderBy: { createdAt: "desc" }, skip: userOffset, take: userTake, select: { id: true, name: true, email: true, role: true, status: true, createdAt: true } }) : Promise.resolve([]),
@@ -52,7 +51,6 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
     return { users, guests };
   }, { users: [], guests: [] });
   const protectedEmails = new Set(getAdminEmails());
-  const count = stats.filteredUsers + stats.filteredGuests;
   const link = (nextPage: number) => "/admin/users?" + new URLSearchParams({ ...(q ? { q } : {}), role, status, identity, page: String(nextPage) }).toString();
   return (
     <AdminPageShell title="Users" description="Review registered accounts and consent-eligible guest identities. Open recorded activity without changing account controls.">

@@ -728,6 +728,7 @@ model SupportMessage {
 model RedirectLog {
   id             String       @id @default(cuid())
   userId         String?
+  visitorId      String?
   type           RedirectType
   provider       String
   route          String?
@@ -739,8 +740,10 @@ model RedirectLog {
   metadata       Json?
   createdAt      DateTime     @default(now())
   user           User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  visitor        Visitor?     @relation(fields: [visitorId], references: [id], onDelete: SetNull)
 
   @@index([userId])
+  @@index([visitorId])
   @@index([type])
   @@index([provider])
   @@index([createdAt])
@@ -973,6 +976,7 @@ model Visitor {
   identityLinks      VisitorIdentityLink[]
   searchHistory      SearchHistory[]
   analyticsEvents    AnalyticsEvent[]
+  redirectLogs       RedirectLog[]
 
   @@index([currentUserId, lastSeenAt])
   @@index([consentStatus, lastSeenAt])
