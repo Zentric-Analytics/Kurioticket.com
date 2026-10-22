@@ -207,11 +207,12 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
     providerWindow.document.head.append(referrerPolicy);
     setRedirecting(true);
     setError("");
+    const handoff = journeyEvents.prepareHandoff("flight", id);
     try {
       const result = await fetch("/api/redirect", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: offerId, type: "flight", sourcePage: "flight_details" }),
+        body: JSON.stringify({ id: offerId, type: "flight", sourcePage: "flight_details", ...handoff() }),
       });
       const data = (await result.json()) as { url?: string; error?: string; code?: string };
       if (result.status === 409 && data.code === "offer_changed") {

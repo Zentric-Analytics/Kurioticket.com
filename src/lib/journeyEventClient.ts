@@ -91,6 +91,10 @@ export function createJourneyEventSender(dependencies: Dependencies) {
   }
 
   return {
+    /** Local generation only: never serialized or used as an identity credential. */
+    captureContext() {
+      return context && consent && dependencies.allowed() ? generation : null;
+    },
     setContext(next: string | null) {
       if (next === context) return;
       cancelPending();

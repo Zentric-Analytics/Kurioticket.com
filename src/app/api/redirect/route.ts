@@ -10,6 +10,7 @@ import { revalidateFlightRedirectHandoff } from "@/services/travel/flightRedirec
 import { sandboxBookingUrl } from "@/services/travel/kayakSandboxPublic";
 import { getProviderResult } from "@/services/travel/providerResultCache";
 import { recordProviderHandoffActivity } from "@/services/providerHandoffActivity";
+import { handoffTrackingId } from "@/services/providerHandoffStore";
 
 export function previewAllowsKayakSandboxHandoff(
   body: { id?: string; type?: "flight" | "hotel" },
@@ -21,7 +22,9 @@ export function previewAllowsKayakSandboxHandoff(
 
 export async function POST(request: Request) {
   const staging = isStagingEnvironment();
-  const body = await request.json().catch(() => ({})) as { id?: string; type?: "flight" | "hotel"; sourcePage?: string };
+  const body = await request.json().catch(() => ({})) as {
+    id?: string; type?: "flight" | "hotel"; sourcePage?: string; requestId?: unknown; handoffId?: unknown;
+  };
   if (staging && !previewAllowsKayakSandboxHandoff(body)) {
     return NextResponse.json(
       { error: "Provider checkout is disabled in Preview." },
@@ -129,6 +132,7 @@ export async function POST(request: Request) {
   const activity = {
     type: body.type, provider, route, price, currency,
     destinationUrl: url.toString(), sourcePage: body.sourcePage || "unknown", resultId: body.id,
+    requestId: handoffTrackingId(body.requestId), handoffId: handoffTrackingId(body.handoffId),
   };
   after(() => recordProviderHandoffActivity(request, activity));
 

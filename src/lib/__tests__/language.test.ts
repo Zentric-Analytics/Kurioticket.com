@@ -11360,7 +11360,7 @@ test("Thai Flights results and selected-flight detail render paths resolve visib
     assert.equal(th[providerValue], undefined, `${providerValue} must remain provider/search data, not Thai locale copy`);
   }
   assert.match(cardSource, /detailsHref === undefined\s*\? `\/flights\/details\/\$\{encodeURIComponent\(flight\.id\)\}`\s*: detailsHref/);
-  assert.ok(readFileSync("src/components/results/flightDetails/StandaloneFlightDetails.tsx", "utf8").includes('body: JSON.stringify({ id: offerId, type: "flight", sourcePage: "flight_details" })'));
+  assert.ok(readFileSync("src/components/results/flightDetails/StandaloneFlightDetails.tsx", "utf8").includes('body: JSON.stringify({ id: offerId, type: "flight", sourcePage: "flight_details", ...handoff() })'));
   assert.equal(availableLocaleOptions.find((option) => option.code === "th")?.direction, "ltr");
   assert.equal(availableLocaleOptions.find((option) => option.code === "ar")?.direction, "rtl");
 });

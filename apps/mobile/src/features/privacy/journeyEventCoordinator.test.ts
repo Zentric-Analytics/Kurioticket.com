@@ -40,6 +40,40 @@ function harness(initialContext: number | null = 1) {
   };
 }
 
+test("handoffs correlate only known consented search UUIDs and reuse their receipt during retries", () => {
+  const h = harness();
+  const requestId = h.remember("78e1de9e-6dfe-494f-9fdb-83726d83bf64");
+  const handoff = h.coordinator.prepareHandoff(requestId);
+  assert.equal(handoff().requestId, requestId);
+  assert.deepEqual(handoff(), handoff());
+  assert.equal(h.ids(), 1);
+  assert.equal(h.coordinator.prepareHandoff("d7f564ce-008f-409c-9a8c-304a7300c319")().requestId, undefined);
+  assert.equal(h.coordinator.prepareHandoff(h.remember("local-diagnostic-id"))().requestId, undefined);
+  assert.equal(h.calls.length, 0, "preparing metadata does not introduce another optional event request");
+});
+
+test("handoff metadata drops a stale account or withdrawn context without cancelling travel", () => {
+  const h = harness();
+  const requestId = h.remember("78e1de9e-6dfe-494f-9fdb-83726d83bf64");
+  const handoff = h.coordinator.prepareHandoff(requestId);
+  const receipt = handoff().handoffId;
+  h.setContext(2);
+  assert.deepEqual(handoff(), { handoffId: receipt });
+  assert.equal(h.coordinator.prepareHandoff(requestId)().requestId, undefined);
+  h.remember(requestId);
+  const beforeRefusal = h.coordinator.prepareHandoff(requestId);
+  h.setContext(null); h.setContext(3);
+  assert.equal(beforeRefusal().requestId, undefined);
+});
+
+test("context-free native handoffs never invent a search reference after a later grant", () => {
+  const h = harness(null);
+  const handoff = h.coordinator.prepareHandoff(undefined);
+  h.setContext(1);
+  assert.equal(handoff().requestId, undefined);
+  assert.match(handoff().handoffId!, /^[0-9a-f-]{36}$/);
+});
+
 test("unknown or declined consent creates no events, UUIDs, retries or retrospective search attribution", async () => {
   const h = harness(null);
   const requestId = h.remember();

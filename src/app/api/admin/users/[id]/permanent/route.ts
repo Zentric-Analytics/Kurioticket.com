@@ -6,6 +6,8 @@ import {
   writeAdminAuditLog,
 } from "@/lib/admin";
 import { getPrisma } from "@/lib/prisma";
+import { lockVisitorAccount } from "@/services/visitorActivityIdentity";
+import { retireAccountVisitors } from "@/services/visitorAccountRetirement";
 
 export const runtime = "nodejs";
 
@@ -79,6 +81,13 @@ export async function DELETE(request: Request, context: RouteContext) {
   }
 
   const cleanupCounts = await db.$transaction(async (tx) => {
+    // Recheck the account while holding the same lock used by visitor claims.
+    // A reactivation or account change after confirmation must not be deleted.
+    const lockedTarget = await lockVisitorAccount(tx, target.id);
+    if (!lockedTarget || lockedTarget.status !== "DELETED" || lockedTarget.role === "ADMIN"
+      || lockedTarget.email !== target.email || isProtectedAdminEmail(lockedTarget.email)) return null;
+
+    const { visitorsRetired } = await retireAccountVisitors(tx, target.id);
     const verificationTokenCounts = normalizedTargetEmail
       ? await Promise.all(
           [
@@ -94,12 +103,17 @@ export async function DELETE(request: Request, context: RouteContext) {
     await tx.user.delete({ where: { id: target.id } });
 
     return {
+      visitorsRetired,
       verificationTokensDeleted: verificationTokenCounts.reduce(
         (sum, result) => sum + result.count,
         0,
       ),
     };
   });
+
+  if (!cleanupCounts) {
+    return NextResponse.json({ error: "This account changed. Review it before retrying permanent deletion." }, { status: 409 });
+  }
 
   await writeAdminAuditLog({
     adminUserId: auth.session.user.id,

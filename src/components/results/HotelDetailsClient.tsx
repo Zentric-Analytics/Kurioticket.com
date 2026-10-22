@@ -256,6 +256,7 @@ export function HotelDetailsClient({
     journeyEvents.offerSelected("hotel", id, selectedOffer.provider);
     setRedirecting(true);
     setRedirectError("");
+    const handoff = journeyEvents.prepareHandoff("hotel", id);
     try {
       const response = await fetch("/api/redirect", {
         method: "POST",
@@ -264,6 +265,7 @@ export function HotelDetailsClient({
           id: offerId,
           type: "hotel",
           sourcePage: "hotel_details",
+          ...handoff(),
         }),
       });
       const data = (await response.json().catch(() => ({}))) as {

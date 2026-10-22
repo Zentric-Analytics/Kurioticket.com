@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState
 import { useSession } from "next-auth/react";
 import { analyticsConsentAccountKey, analyticsConsentChangedEvent, analyticsConsentStorageKey, hasAnalyticsDenial, parseAnalyticsConsent } from "@/lib/analyticsConsentClient";
 import { createJourneyEventSender, forgetJourneySelections, journeyRequestId, readJourneySelection, rememberJourneySelection } from "@/lib/journeyEventClient";
+import { createProviderHandoffMetadata, type ProviderHandoffMetadataReader } from "@/lib/providerHandoffClient";
 
 function browserAllowsAnalytics() {
   try { return !hasAnalyticsDenial(document.cookie) && parseAnalyticsConsent(window.localStorage.getItem(analyticsConsentStorageKey)) === "granted"; }
@@ -13,8 +14,10 @@ function browserAllowsAnalytics() {
 type Recorder = {
   resultsViewed: (requestId: string | null) => void;
   offerSelected: (product: "flight" | "hotel", resultId: string, provider?: string, requestId?: string | null) => void;
+  prepareHandoff: (product: "flight" | "hotel", resultId: string) => ProviderHandoffMetadataReader;
 };
-const quiet: Recorder = { resultsViewed: () => undefined, offerSelected: () => undefined };
+const browserActionId = () => crypto.randomUUID();
+const quiet: Recorder = { resultsViewed: () => undefined, offerSelected: () => undefined, prepareHandoff: () => createProviderHandoffMetadata(() => null, browserActionId) };
 const JourneyEventsContext = createContext<Recorder>(quiet);
 
 /** Keep valid user-action delivery alive across internal navigation, but never across an account/consent change. */
@@ -69,6 +72,11 @@ export function JourneyEventsProvider({ children }: { children: ReactNode }) {
   // Refresh observers after a consent change. The sender owns impression
   // deduplication and holds explicitly consented actions until confirmation.
   const recorder: Recorder = !actor ? quiet : {
+    prepareHandoff(product, resultId) {
+      const context = sender.captureContext();
+      return createProviderHandoffMetadata(() => context !== null && sender.captureContext() === context
+        ? readJourneySelection(product, resultId, actor, window.sessionStorage) : null, browserActionId);
+    },
     resultsViewed(requestId) {
       if (requestId) sender.send({ type: "RESULTS_VIEWED", requestId, sourcePage: window.location.pathname });
     },
