@@ -14,9 +14,10 @@ const homepage = readFileSync("src/app/page.tsx", "utf8");
 const faqSource = readFileSync("src/content/faqs.ts", "utf8");
 
 test("CMS foundation has versioned draft/published storage and immutable revisions", () => {
-  for (const token of ["enum CmsContentType", "enum CmsContentStatus", "model CmsContentItem", "draftPayload", "publishedPayload", "publishedMarket", "publishedLocale", "publishedSortOrder", "publishedVersion", "model CmsContentRevision", "@@unique([contentItemId, version])"]) {
+  for (const token of ["enum CmsContentType", "enum CmsContentStatus", "model CmsContentScope", "model CmsContentItem", "draftPayload", "publishedPayload", "publishedMarket", "publishedLocale", "publishedSortOrder", "publishedVersion", "model CmsContentRevision", "@@unique([contentItemId, version])"]) {
     assert.equal(schema.includes(token), true, token);
   }
+  assert.match(migration, /CREATE TABLE "CmsContentScope"/);
   assert.match(migration, /CREATE TABLE "CmsContentItem"/);
   assert.match(migration, /CREATE TABLE "CmsContentRevision"/);
   assert.match(migration, /ON DELETE CASCADE/);
@@ -64,6 +65,9 @@ test("public CMS readers fail safely to the existing code-backed content", () =>
   assert.match(service, /cmsPayloadSchemas\[type\]\.safeParse/);
   assert.match(service, /Prisma\.DbNull/);
   assert.match(service, /publishedMarket: market/);
+  assert.match(service, /cmsContentScope\.upsert/);
+  assert.match(service, /cmsContentScope\.findUnique/);
+  assert.match(service, /if \(!scope && !rows\.length\) return \{ source: "fallback"/);
   assert.match(service, /visibleRows = rows\.filter\(\(row\) => row\.status === "PUBLISHED"\)/);
   assert.match(service, /return \{ source: "cms", items \}/);
   assert.match(faqSource, /export const generalFaqs/);
