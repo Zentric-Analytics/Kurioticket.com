@@ -82,7 +82,6 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
   const allPages: AdminNavDefinition[] = groups.flatMap((group) => group.links.flatMap(({ item, children: subpages }) => [item, ...subpages]));
   const matches = allPages.filter((item) => (item.label + " " + item.description).toLowerCase().includes(query.trim().toLowerCase()));
 
-  useEffect(() => { setMobileOpen(false); setProfileOpen(false); setSearchOpen(false); }, [pathname]);
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
