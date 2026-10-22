@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   createVisitorConsentSynchronizer,
+  analyticsConsentAccountKey,
   analyticsDenialCookie,
   hasAnalyticsDenial,
   parseAnalyticsConsent,
@@ -19,6 +20,17 @@ test("consent parsing accepts only an explicit saved choice", () => {
   assert.equal(parseAnalyticsConsent("granted"), "granted");
   assert.equal(parseAnalyticsConsent("declined"), "declined");
   for (const input of [null, "true", "enabled", "{}", ""]) assert.equal(parseAnalyticsConsent(input), null);
+});
+
+test("consent and journey observers share the same verified-account boundary", () => {
+  const user = { id: "account-a", status: "ACTIVE", emailVerified: true, accountSessionId: "session-a" };
+  assert.equal(analyticsConsentAccountKey("loading", user), null);
+  assert.equal(analyticsConsentAccountKey("unauthenticated", null), "guest");
+  assert.equal(analyticsConsentAccountKey("authenticated", user), "account-a");
+  for (const incomplete of [{ ...user, status: "BLOCKED" }, { ...user, emailVerified: false }, { ...user, accountSessionId: undefined }, { ...user, twoFactorEnabled: true, twoFactorVerified: false }]) {
+    assert.equal(analyticsConsentAccountKey("authenticated", incomplete), "guest");
+  }
+  assert.equal(analyticsConsentAccountKey("authenticated", { ...user, twoFactorEnabled: true, twoFactorVerified: true }), "account-a");
 });
 
 test("failed preference storage cannot restore an older grant over a current refusal", async () => {

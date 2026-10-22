@@ -9,11 +9,12 @@ import { isFeatureEnabled } from "@/lib/feature-controls/service";
 import { resolveRequestActivityIdentity } from "@/services/requestActivityIdentity";
 import { getKayakClientIp } from "@/lib/kayak-client-ip";
 import { logNativeFlightProviderDiagnostics } from "./providerDiagnostics";
+import { resolveSearchRequestId } from "@/lib/search-journey";
 
 export async function POST(request: Request) {
   const routeStartedAt = performance.now();
   let providerStartedAt = routeStartedAt;
-  const requestId = request.headers.get("x-search-request-id")?.trim() || crypto.randomUUID();
+  const requestId = resolveSearchRequestId(request.headers.get("x-search-request-id"));
   if (!(await isFeatureEnabled("FLIGHT_SEARCH_ENABLED"))) return NextResponse.json({ error: "Flight search is temporarily unavailable.", code: "FEATURE_DISABLED", results: [], status: "unavailable", requestId }, { status: 503 });
   const ip = getClientIp(request);
   const rate = checkRateLimit(`flight-search:${ip}`, 35, 60_000);

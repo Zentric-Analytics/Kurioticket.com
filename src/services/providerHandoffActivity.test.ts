@@ -57,12 +57,13 @@ test("a consented handoff is appended to the search journey after its redirect l
 
   assert.deepEqual(journey, {
     visitorId: "guest-123",
+    userId: null,
     type: "PROVIDER_HANDOFF_STARTED",
     eventKey: "redirect:redirect-123",
     product: "HOTEL",
     provider: "Test provider",
     redirectLogId: "redirect-123",
-    metadata: { sourcePage: "hotel-details" },
+    metadata: { sourcePage: "/hotel-details" },
   });
 });
 
@@ -74,5 +75,19 @@ test("session lookup failure cannot manufacture account ownership", async () => 
       assert.equal(value.visitorId, null);
     },
     event: async () => {},
+  });
+});
+
+test("signed-in handoff journeys carry authoritative accounts and discard page query data", async () => {
+  await recordProviderHandoffActivity(request, { ...handoff, sourcePage: "/hotels/details?token=private#account" }, {
+    identity: async () => ({ userId: "account-a", visitorId: "linked-visitor" }),
+    redirect: async () => "redirect-123",
+    event: async () => {},
+    journey: async (value) => {
+      assert.equal(value.userId, "account-a");
+      assert.equal(value.visitorId, "linked-visitor");
+      assert.deepEqual(value.metadata, { sourcePage: "/hotels/details" });
+      return null;
+    },
   });
 });

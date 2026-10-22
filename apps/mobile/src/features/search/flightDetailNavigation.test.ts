@@ -60,3 +60,9 @@ test("multi-city handoff retains every structured edit-search leg without an off
   const params = buildFlightDetailParams({ searchParams: { tripType: "multi-city", legCount: "3", origin1: "LOS", destination1: "LHR", departureDate1: "2026-10-01", origin2: "LHR", destination2: "JFK", departureDate2: "2026-10-03", origin3: "JFK", destination3: "LAX", departureDate3: "2026-10-05" }, result });
   assert.equal(params.legCount, "3"); assert.equal(params.destination3, "LAX"); assert.equal(params.departureDate3, "2026-10-05"); assert.equal("result" in params, false);
 });
+
+test("detail navigation retains the actual response request ID without inheriting stale tracking or provider data", () => {
+  const params = buildFlightDetailParams({ searchParams: { journeyRequestId: "stale-search", visitorId: "private", token: "private" }, result, requestId: "server-response-request" });
+  assert.deepEqual(params, { id: result.id, journeyRequestId: "server-response-request" });
+  assert.deepEqual(buildFlightDetailParams({ searchParams: { journeyRequestId: "stale-search" }, result }), { id: result.id });
+});

@@ -42,7 +42,7 @@ export function MobileNativeFareInformationDeck({
   fare?: FlightDetailsFareChoice;
   activeOffer: FlightDetailsOffer;
   selectedDealOfferId: string | null;
-  onSelectDeal: (offerId: string) => void;
+  onSelectDeal: (offerId: string, forHandoff?: boolean) => void;
   selectedCurrency: string;
   currencyRates: ExchangeRates;
   isFallbackRate: boolean;
@@ -112,7 +112,7 @@ function DealsSurface({
 }: {
   fare?: FlightDetailsFareChoice;
   selectedDealOfferId: string | null;
-  onSelectDeal: (offerId: string) => void;
+  onSelectDeal: (offerId: string, forHandoff?: boolean) => void;
   selectedCurrency: string;
   currencyRates: ExchangeRates;
   isFallbackRate: boolean;
@@ -252,7 +252,7 @@ function DealsSurface({
               aria-busy={redirecting || !pricesReady || undefined}
               aria-label={`View deal with ${deal.providerName}${canViewDeal ? "" : pricesReady ? ", checkout unavailable" : ", checking price"}`}
               onClick={() => {
-                onSelectDeal(deal.offerId);
+                onSelectDeal(deal.offerId, true);
                 onViewDeal(deal.offerId);
               }}
               className="focus-ring inline-flex min-h-8 items-center justify-center justify-self-end whitespace-nowrap rounded-lg bg-[#004bb8] px-1.5 text-[12px] font-semibold leading-5 text-white disabled:opacity-50 max-[349px]:px-1 max-[349px]:text-[13px] max-[349px]:leading-4"

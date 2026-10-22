@@ -11,6 +11,7 @@ export type FlightResultsSessionSnapshot = {
   validUntil: number;
   results: PublicFlightResult[];
   warnings: string[];
+  requestId?: string;
 };
 
 export type FlightResultsSessionSnapshotState = {
@@ -151,6 +152,7 @@ export function writeFlightResultsSessionSnapshot(
   resultsCacheValidUntil: number,
   storage: StorageLike | null = browserSessionStorage(),
   now = Date.now(),
+  requestId?: string,
 ): void {
   if (!storage) return;
   if (!Number.isFinite(resultsCacheValidUntil) || resultsCacheValidUntil <= now) {
@@ -173,6 +175,7 @@ export function writeFlightResultsSessionSnapshot(
       validUntil: Math.min(now + FLIGHT_RESULTS_SESSION_CACHE_TTL_MS, resultsCacheValidUntil),
       results: publicResults,
       warnings: [...warnings],
+      ...(requestId ? { requestId } : {}),
     };
     storage.setItem(FLIGHT_RESULTS_SESSION_CACHE_KEY, JSON.stringify(snapshot));
   } catch {

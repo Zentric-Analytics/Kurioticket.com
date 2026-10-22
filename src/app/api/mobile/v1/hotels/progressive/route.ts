@@ -81,7 +81,7 @@ export async function POST(request: Request) {
       after(async () => {
         const { userId, visitorId } = await resolveRequestActivityIdentity(request);
         await Promise.all([
-          logSearchHistory({ userId, visitorId, type: "HOTEL", destination: search.destination,
+          logSearchHistory({ userId, visitorId, requestId: trackId, progressive: true, type: "HOTEL", destination: search.destination,
             checkIn: new Date(search.checkIn), checkOut: new Date(search.checkOut),
             query: search, resultCount: 0, latencyMs: Date.now() - startedAt, status: "FAILED" }),
           trackAnalyticsEvent({ userId, visitorId, type: "SEARCH",
@@ -122,21 +122,24 @@ export async function POST(request: Request) {
       search, trackId, snapshot, checkpoint: batch.checkpoint,
       startedAt, issuedAt: now, expiresAt: now + TTL_MS,
     }, key) : null;
-    if (!nextCursor) {
-      after(async () => {
-        const { userId, visitorId } = await resolveRequestActivityIdentity(request);
+    after(async () => {
+      const { userId, visitorId } = await resolveRequestActivityIdentity(request);
+      // Persist each displayed batch under the signed cursor's stable request ID.
+      // Early result/offer events can then resolve ownership before the last page.
+      await logSearchHistory({ userId, visitorId, requestId: trackId, progressive: true,
+        completed: nextCursor === null, type: "HOTEL", destination: search.destination,
+        checkIn: new Date(search.checkIn), checkOut: new Date(search.checkOut),
+        query: search, resultCount: cumulative.length, latencyMs: Date.now() - startedAt,
+        status: nextCursor ? "PARTIAL" : "SUCCESS" });
+      if (!nextCursor) {
         await Promise.all([
-          logSearchHistory({ userId, visitorId, type: "HOTEL", destination: search.destination,
-            checkIn: new Date(search.checkIn), checkOut: new Date(search.checkOut),
-            query: search, resultCount: cumulative.length, latencyMs: Date.now() - startedAt,
-            status: "SUCCESS" }),
           trackAnalyticsEvent({ userId, visitorId, type: "SEARCH",
             name: "hotel_search", metadata: { destination: search.destination, resultCount: cumulative.length, progressive: true, trackId } }),
           logProviderCall({ provider: "KAYAK sandbox", service: "hotel-search", status: "SUCCESS",
             latencyMs: Date.now() - startedAt, metadata: { progressive: true, trackId, resultCount: cumulative.length } }),
         ]);
-      });
-    }
+      }
+    });
     return NextResponse.json({ ...classified, nextCursor, progressive: true,
       completed: nextCursor === null, receivedCount: results.length,
       providerRowsSeen: batch.providerRows, estimatedTotal: batch.checkpoint?.total ?? batch.providerRows });
@@ -145,7 +148,7 @@ export async function POST(request: Request) {
     after(async () => {
       const { userId, visitorId } = await resolveRequestActivityIdentity(request);
       await Promise.all([
-        logSearchHistory({ userId, visitorId, type: "HOTEL", destination: search.destination,
+        logSearchHistory({ userId, visitorId, requestId: trackId, progressive: true, type: "HOTEL", destination: search.destination,
           checkIn: new Date(search.checkIn), checkOut: new Date(search.checkOut),
           query: search, resultCount: 0, latencyMs: Date.now() - startedAt, status: "FAILED" }),
         trackAnalyticsEvent({ userId, visitorId, type: "SEARCH",

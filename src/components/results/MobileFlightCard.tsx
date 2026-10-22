@@ -21,12 +21,14 @@ export function MobileFlightCard({
   detailsHref,
   providerLabel,
   onAction,
+  onSelect,
 }: {
   flight: PublicFlightResult;
   resultBadge?: ResultBadge;
   detailsHref: string | null;
   providerLabel?: string;
   onAction?: (flight: PublicFlightResult) => void;
+  onSelect?: () => void;
 }) {
   const router = useRouter();
   const { t: dictionary, locale } = useLocale();
@@ -82,8 +84,8 @@ export function MobileFlightCard({
   );
 
   const classes = "focus-ring block w-full rounded-2xl border border-[#D8E1EC] bg-white px-3 py-[9px] text-left shadow-[0_10px_28px_-24px_rgba(15,23,42,0.5)] transition-[opacity,transform] active:scale-[0.995] active:opacity-90 motion-reduce:transition-none sm:hidden";
-  if (onAction) return <button type="button" data-mobile-flight-card aria-label={accessibleName} className={classes} onClick={() => onAction(flight)}>{content}</button>;
-  if (detailsHref) return <a data-mobile-flight-card aria-label={accessibleName} href={detailsHref} className={classes} onClick={(event) => { event.preventDefault(); router.push(detailsHref); }}>{content}</a>;
+  if (onAction) return <button type="button" data-mobile-flight-card aria-label={accessibleName} className={classes} onClick={() => { onSelect?.(); onAction(flight); }}>{content}</button>;
+  if (detailsHref) return <a data-mobile-flight-card aria-label={accessibleName} href={detailsHref} className={classes} onClick={(event) => { event.preventDefault(); onSelect?.(); router.push(detailsHref); }}>{content}</a>;
   return <div data-mobile-flight-card aria-label={accessibleName} role="group" className={classes}>{content}</div>;
 }
 

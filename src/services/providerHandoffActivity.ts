@@ -2,6 +2,7 @@ import { withOptionalDb } from "@/lib/prisma";
 import { trackAnalyticsEvent } from "@/services/analyticsService";
 import { resolveRequestActivityIdentity } from "@/services/requestActivityIdentity";
 import { journeyEventKey, recordJourneyEvent } from "@/services/searchJourneyService";
+import { journeySourcePath } from "@/lib/search-journey";
 
 export type ProviderHandoffActivity = {
   type: "flight" | "hotel";
@@ -64,14 +65,16 @@ export async function recordProviderHandoffActivity(
     ? redirect.value
     : null;
   if (redirectLogId) {
+    const sourcePage = journeySourcePath(input.sourcePage);
     await record.journey?.({
       visitorId: identity.visitorId,
+      userId: identity.userId,
       type: "PROVIDER_HANDOFF_STARTED",
       eventKey: journeyEventKey("redirect", redirectLogId),
       product: input.type === "flight" ? "FLIGHT" : "HOTEL",
       provider: input.provider,
       redirectLogId,
-      metadata: { sourcePage: input.sourcePage },
+      metadata: sourcePage ? { sourcePage } : undefined,
     });
   }
 }

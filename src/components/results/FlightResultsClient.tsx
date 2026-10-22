@@ -1,4 +1,7 @@
 "use client";
+
+import { useJourneyEvents } from "@/components/privacy/JourneyEventsProvider";
+import { displayedJourneyRequest, journeyRequestId } from "@/lib/journeyEventClient";
 import { resultIdKey, ResultsViewport, VirtualResultsList } from "./VirtualResultsList";
 
 import Image from "next/image";
@@ -929,6 +932,8 @@ const searchInputToParams = (input: FlightResultsSearchInput) => {
 };
 
 export function FlightResultsClient({ presentationMode = "standalone", searchInput, buildDetailsHref, actionLabel, actionAriaLabel, onSelectFlight, externalResultsHeader = false }: FlightResultsClientProps = {}) {
+  const journeyEvents = useJourneyEvents();
+  const [journeyResponse, setJourneyResponse] = useState<{ searchKey: string; requestId: string | null } | null>(null);
   const { t: dictionary, locale } = useLocale();
   const t = useCallback(
     (key: string) => dictionary[key] ?? enTranslations[key] ?? "",
@@ -2600,6 +2605,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       activeFlightSearchKeyRef.current = "";
       const resetTimer = window.setTimeout(() => {
         setResults([]);
+        setJourneyResponse(null);
         setBackgroundRefreshing(false);
       }, 0);
       return () => window.clearTimeout(resetTimer);
@@ -2620,6 +2626,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         : readFlightResultsSessionSnapshotForRefresh(searchKey);
       const snapshot = snapshotState?.snapshot;
       const refreshingStaleSnapshot = Boolean(snapshot && !snapshotState?.isFresh);
+      setJourneyResponse(snapshot && !refreshingStaleSnapshot ? { searchKey, requestId: journeyRequestId(snapshot.requestId) } : null);
       if (snapshot) {
         if (!active || activeFlightSearchKeyRef.current !== searchKey) return;
         setResults(
@@ -2667,7 +2674,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
             );
           }
 
-          return data as { results: PublicFlightResult[]; warnings?: string[]; resultsCacheValidUntil?: number };
+          return data as { results: PublicFlightResult[]; warnings?: string[]; resultsCacheValidUntil?: number; requestId?: string };
         })
         .then((data) => {
           if (!active || activeFlightSearchKeyRef.current !== searchKey) return;
@@ -2683,9 +2690,13 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               filteredResults,
               warnings,
               data.resultsCacheValidUntil,
+              undefined,
+              undefined,
+              journeyRequestId(data.requestId) ?? undefined,
             );
           }
           setResults(filteredResults);
+          setJourneyResponse({ searchKey, requestId: journeyRequestId(data.requestId) });
         })
         .catch((searchError) => {
           if (controller?.signal.aborted || !active || activeFlightSearchKeyRef.current !== searchKey) return;
@@ -4222,6 +4233,9 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
     return nextResults;
   }, [currencyRates.rates, filtered, selectedCurrency, sortMode]);
+
+  const visibleJourneyRequestId = displayedJourneyRequest({ response: journeyResponse, currentSearchKey: currentFlightSearchKey, loading: loading || backgroundRefreshing || filterApplying, error, visibleCount: sortedResults.some(flight => providerResults.includes(flight)) ? 1 : 0 });
+  useEffect(() => { journeyEvents.resultsViewed(visibleJourneyRequestId); }, [journeyEvents, visibleJourneyRequestId]);
 
   const toggleStickyFlightPopularFilter = useCallback(
     (
@@ -7216,7 +7230,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         <aside className="relative hidden self-stretch lg:block"><DesktopFlightFilters presentationMode="deals-guided" activeFilterCount={activeFilterCount} maxPrice={maxPrice} setMaxPrice={setMaxPrice} priceBounds={priceBounds} priceLabelCurrency={priceLabelCurrency} selectedCurrency={selectedCurrency} timeFilterMode={timeFilterMode} setTimeFilterMode={setTimeFilterMode} timeBounds={timeBounds} maxTakeoffMinutes={maxTakeoffMinutes} setMaxTakeoffMinutes={setMaxTakeoffMinutes} maxLandingMinutes={maxLandingMinutes} setMaxLandingMinutes={setMaxLandingMinutes} durationBounds={durationBounds} maxDurationMinutes={maxDurationMinutes} setMaxDurationMinutes={setMaxDurationMinutes} stopOptions={stopOptions} selectedStops={selectedStops} setSelectedStops={setSelectedStops} airlineOptions={airlineOptions} selectedAirlines={selectedAirlines} setSelectedAirlines={setSelectedAirlines} airportOptions={airportOptions} selectedAirports={selectedAirports} setSelectedAirports={setSelectedAirports} flightQualityOptions={flightQualityOptions} renderFlightQualityFilter={renderFlightQualityFilter} selectedFlightQuality={selectedFlightQuality} setSelectedFlightQuality={setSelectedFlightQuality} baggageIncludedOnly={baggageIncludedOnly} setBaggageIncludedOnly={setBaggageIncludedOnly} flexibleOnly={flexibleOnly} setFlexibleOnly={setFlexibleOnly} onFilterChange={triggerFilterApplying} onFilterCommit={handleUserFilterCommit} onClear={clearFlightFilters} originCode={originCode} destinationCode={destinationCode} /></aside>
         <section className="min-w-0 space-y-4">
           <div className="flex w-full flex-col gap-3 py-1"><div className="flex items-center justify-between gap-4"><p className="text-[16px] font-semibold text-[#142033]">{formatResultsFound(sortedResults.length, t)}</p>{renderDesktopSortControl()}<Button variant="secondary" className="h-10 rounded-xl border-slate-300 text-sm font-bold lg:hidden" onClick={(event) => openMobileFiltersDrawer(event.currentTarget, getOverlayActivationModality(event))}>{activeFilterCount > 0 ? t("filtersWithCount").replace("{{count}}", String(activeFilterCount)) : t("filters")}</Button></div><div className="lg:hidden">{renderMobileSortResultsRow()}</div></div>
-          {error ? <div className="rounded-xl border border-danger/30 bg-red-50 p-5 text-danger" role="alert"><h2 ref={errorHeadingRef} tabIndex={-1} className="text-lg font-extrabold">{t("deals.guided.flightResults.errorTitle")}</h2><p className="mt-2">{error}</p><p className="mt-2">{t("deals.guided.flightResults.errorBody")}</p>{renderGuidedRetryButton()}</div> : filterApplying ? <div className="space-y-3"><div role="status" className="rounded-xl border border-[#004BB8]/10 bg-white p-4 text-sm font-semibold text-slate-600 shadow-sm">{t("updatingResults")}</div><FlightCardSkeleton /><FlightCardSkeleton /></div> : sortedResults.length ? <><div className="space-y-4">{sortedResults.map((flight, index) => <FlightCard key={flight.id} flight={flight} isAccented={index % 2 === 0} resultBadge={resultBadgeByFlightId.get(flight.id)} detailsHref={buildDetailsHref ? buildDetailsHref(flight) : undefined} actionLabel={actionLabel} actionAriaLabel={actionAriaLabel?.(flight)} onAction={onSelectFlight} />)}</div></> : <div className="rounded-xl border border-slate-200 bg-white p-5 text-sm font-semibold text-muted shadow-sm"><h2 ref={emptyHeadingRef} tabIndex={-1} className="text-lg font-extrabold text-slate-950">{t("deals.guided.flightResults.emptyTitle")}</h2><p className="mt-2">{t("deals.guided.flightResults.emptyBody")}</p>{renderGuidedRetryButton()}</div>}
+          {error ? <div className="rounded-xl border border-danger/30 bg-red-50 p-5 text-danger" role="alert"><h2 ref={errorHeadingRef} tabIndex={-1} className="text-lg font-extrabold">{t("deals.guided.flightResults.errorTitle")}</h2><p className="mt-2">{error}</p><p className="mt-2">{t("deals.guided.flightResults.errorBody")}</p>{renderGuidedRetryButton()}</div> : filterApplying ? <div className="space-y-3"><div role="status" className="rounded-xl border border-[#004BB8]/10 bg-white p-4 text-sm font-semibold text-slate-600 shadow-sm">{t("updatingResults")}</div><FlightCardSkeleton /><FlightCardSkeleton /></div> : sortedResults.length ? <><div className="space-y-4">{sortedResults.map((flight, index) => <FlightCard key={flight.id} flight={flight} isAccented={index % 2 === 0} resultBadge={resultBadgeByFlightId.get(flight.id)} detailsHref={buildDetailsHref ? buildDetailsHref(flight) : undefined} actionLabel={actionLabel} actionAriaLabel={actionAriaLabel?.(flight)} onAction={onSelectFlight} searchRequestId={visibleJourneyRequestId} />)}</div></> : <div className="rounded-xl border border-slate-200 bg-white p-5 text-sm font-semibold text-muted shadow-sm"><h2 ref={emptyHeadingRef} tabIndex={-1} className="text-lg font-extrabold text-slate-950">{t("deals.guided.flightResults.emptyTitle")}</h2><p className="mt-2">{t("deals.guided.flightResults.emptyBody")}</p>{renderGuidedRetryButton()}</div>}
         </section>
       </div>
       {renderMobileFullFiltersSheet()}
@@ -7368,7 +7382,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                         if (sandboxOffer && kayak) return <KayakResultCard key={flight.id} offer={sandboxOffer} vertical="flights" criteria={kayak.criteria} />;
                         const detailsQuery = params.toString();
                         const internalDetailsHref = `/flights/details/${encodeURIComponent(flight.id)}` + (detailsQuery ? `?${detailsQuery}` : "");
-                        return <FlightCard key={flight.id} flight={flight} isAccented={index % 2 === 0} resultBadge={resultBadgeByFlightId.get(flight.id)} detailsHref={resultActionHref(flight, internalDetailsHref)} />;
+                        return <FlightCard key={flight.id} flight={flight} isAccented={index % 2 === 0} resultBadge={resultBadgeByFlightId.get(flight.id)} detailsHref={resultActionHref(flight, internalDetailsHref)} searchRequestId={visibleJourneyRequestId} />;
                       }} />
                     </div>
                   </div>
@@ -7502,6 +7516,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                           isAccented={index % 2 === 0}
                           resultBadge={resultBadgeByFlightId.get(flight.id)}
                           detailsHref={detailsHref}
+                          searchRequestId={visibleJourneyRequestId}
                         />
                       );
                     }} />

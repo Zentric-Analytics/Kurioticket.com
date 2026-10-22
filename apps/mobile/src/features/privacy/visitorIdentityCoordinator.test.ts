@@ -72,10 +72,10 @@ test("explicit opt-in uses a stable token only on the first-party search and han
   await h.coordinator.transition(null);
   await h.coordinator.choose(true);
   const headers = { "x-kt-visitor": visitorToken(1) };
-  for (const path of ["/api/flights/search", "/api/hotels/search", "/api/mobile/v1/hotels/progressive", "/api/redirect"]) {
+  for (const path of ["/api/flights/search", "/api/hotels/search", "/api/mobile/v1/hotels/progressive", "/api/redirect", "/api/journey/events"]) {
     assert.deepEqual(await h.coordinator.headers(path, null), headers);
   }
-  for (const path of ["/api/mobile/v1/profile", "/api/mobile/v1/identity/visitor", "/api/hotels/details?id=x", "https://provider.example/api/redirect", "//provider.example/api/redirect"]) {
+  for (const path of ["/api/mobile/v1/profile", "/api/mobile/v1/identity/visitor", "/api/hotels/details?id=x", "https://provider.example/api/redirect", "//provider.example/api/redirect", "https://provider.example/api/journey/events", "/api/journey/events?provider=external"]) {
     assert.deepEqual(await h.coordinator.headers(path, null), {});
   }
   assert.equal(h.calls.filter(call => call.operation === "grant").length, 1);
@@ -90,6 +90,28 @@ test("anonymous searches remain associated when sign-in links the same visitor",
   assert.equal(h.records.get(visitorToken(1))?.userId, "a");
   await h.coordinator.transition(user("a", "refreshed-auth"));
   assert.equal(h.calls.filter(call => call.operation === "merge").length, 1);
+});
+
+test("optional event context changes on account or consent changes, but not a same-account session refresh", async () => {
+  const h = harness();
+  await h.coordinator.transition(null);
+  assert.equal(h.coordinator.trackingContext(), null);
+  await h.coordinator.choose(true);
+  const guestContext = h.coordinator.trackingContext();
+  assert.notEqual(guestContext, null);
+  await h.coordinator.transition(user("a"));
+  const accountContext = h.coordinator.trackingContext();
+  assert.notEqual(accountContext, guestContext);
+  await h.coordinator.transition(user("a", "refreshed-session"));
+  assert.equal(h.coordinator.trackingContext(), accountContext);
+  await h.coordinator.transition(null);
+  assert.notEqual(h.coordinator.trackingContext(), accountContext);
+  const signedOutContext = h.coordinator.trackingContext();
+  await h.coordinator.choose(false);
+  assert.equal(h.coordinator.trackingContext(), null);
+  assert.deepEqual(await h.coordinator.headers("/api/journey/events", null), {});
+  await h.coordinator.choose(true);
+  assert.notEqual(h.coordinator.trackingContext(), signedOutContext);
 });
 
 test("logout and switching accounts never reuse the former account's token", async () => {

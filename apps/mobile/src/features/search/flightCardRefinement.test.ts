@@ -70,7 +70,7 @@ test("flight card preserves display pricing while details navigation uses author
   assert.match(card, /fare\?\.formatted \?\? "—"/);
   assert.doesNotMatch(card, /money\(result\.currency, result\.price\)/);
   assert.match(card, /pathname: "\/flight-details"/);
-  assert.match(card, /buildFlightDetailParams\(\{ searchParams: params, result \}\)/);
+  assert.match(card, /buildFlightDetailParams\(\{ searchParams: params, result, requestId \}\)/);
   assert.doesNotMatch(card, /buildFlightDetailParams\(\{ searchParams: params, result, fare, displayCurrencyContext \}\)/);
 });
 
@@ -95,11 +95,11 @@ test("converted fares keep truthful accessibility context without visible second
 });
 
 test("the whole card remains the sole details action around a visible affordance", () => {
-  assert.match(card, /const openDetails = \(\) => router\.push\(\{ pathname: "\/flight-details"/);
+  assert.match(card, /const openDetails = \(\) => \{[\s\S]*?router\.push\(\{ pathname: "\/flight-details"/);
   assert.doesNotMatch(card, /Linking\.openURL\(result\.searchPolicy\.action\.href\)/);
   assert.match(card, /router\.push\(\{ pathname: "\/flight-details"/);
   assert.match(card, /return \(\s*<Pressable[\s\S]*accessibilityRole="button"[\s\S]*accessibilityLabel=\{cardAccessibilityLabel\}[\s\S]*onPress=\{openDetails\}/);
-  assert.match(card, /buildFlightDetailParams\(\{ searchParams: params, result \}\)/);
+  assert.match(card, /buildFlightDetailParams\(\{ searchParams: params, result, requestId \}\)/);
   assert.doesNotMatch(card, /buildFlightDetailParams\(\{ searchParams: params, result, fare, displayCurrencyContext \}\)/);
   const affordance = /<View accessible=\{false\} style=\{s0\.flightDetailsAffordance\}>[\s\S]*?<\/View>/.exec(card)?.[0] ?? "";
   assert.match(affordance, /<Text accessible=\{false\}[^>]*numberOfLines=\{1\}>\s*\{labels\.viewDeals\}\s*<\/Text>\s*<ChevronRight/);

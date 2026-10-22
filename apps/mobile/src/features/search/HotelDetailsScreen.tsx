@@ -25,6 +25,7 @@ import { HOTEL_LIMITS } from "../flow/hotelSearchModel";
 import { hotelAlertPresentation } from "../flow/hotelPriceAlertModel";
 import { buildSearchPlan } from "../flow/travelSearchModel";
 import { useFeatureAvailability } from "../availability/FeatureAvailability";
+import { journeyEvents } from "../privacy/journeyEvents";
 import {
   resolveDisplayCurrencyContext,
   type DisplayCurrencyResolution,
@@ -125,6 +126,7 @@ function HotelDetail({
   params: Record<string, string | string[]>;
 }) {
   const navigation = useNavigation();
+  const journeyRequestId = Array.isArray(params.journeyRequestId) ? params.journeyRequestId[0] : params.journeyRequestId;
   const { theme } = useAppTheme();
   const { availability } = useFeatureAvailability();
   const hotelCanvasColor = theme.dark ? theme.background : theme.surface;
@@ -410,6 +412,7 @@ function HotelDetail({
   });
 
   const viewRelatedHotel = (item: NativeRelatedHotel) => {
+    journeyEvents.offerSelected(journeyRequestId, `hotel:${item.result.id}`, item.result.provider, "/hotel-details");
     const snapshot = item.displayPrices;
     const consistentContext =
       snapshot?.nightly?.currency &&
@@ -426,6 +429,7 @@ function HotelDetail({
         checkOut,
         guests: String(guestCount),
         rooms: String(roomCount),
+        ...(journeyRequestId ? { journeyRequestId } : {}),
         ...(hotelResultsStack ? { hotelResultsStack: "1" } : {}),
         hotelDisplayPrices: snapshot ? JSON.stringify(snapshot) : "",
         displayCurrencyContext: consistentContext
@@ -456,6 +460,7 @@ function HotelDetail({
     if (dealsOpeningRef.current.has(rateId)) return;
     const selected = rateRows.find(row => row.id === rateId && row.actionable);
     if (!selected) return;
+    journeyEvents.offerSelected(journeyRequestId, `rate:${result.id}:${selected.offerId}`, selected.providerName, "/hotel-details");
     closeRateInfo();
     dealsOpeningRef.current.add(rateId);
     try {

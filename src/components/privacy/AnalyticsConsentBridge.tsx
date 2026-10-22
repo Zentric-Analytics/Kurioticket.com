@@ -8,6 +8,8 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import {
   analyticsConsentStorageKey,
+  analyticsConsentChangedEvent,
+  analyticsConsentAccountKey,
   analyticsDenialCookie,
   createVisitorConsentSynchronizer,
   hasAnalyticsDenial,
@@ -87,10 +89,7 @@ function WebsiteAnalyticsConsentBridge() {
   const returnFocusRef = useRef<HTMLElement | null>(null);
   const synchronizerRef = useRef<ReturnType<typeof createVisitorConsentSynchronizer> | null>(null);
 
-  const user = session?.user;
-  const verifiedAccount = status === "authenticated" && user?.status === "ACTIVE" && user.emailVerified
-    && (!user.twoFactorEnabled || user.twoFactorVerified) && user.accountSessionId;
-  const accountKey = status === "loading" ? null : verifiedAccount ? user.id : "guest";
+  const accountKey = analyticsConsentAccountKey(status, session?.user);
 
   useEffect(() => {
     activeRef.current = true;
@@ -107,6 +106,7 @@ function WebsiteAnalyticsConsentBridge() {
         },
         onState: (nextState) => { if (activeRef.current) setSyncState(nextState); },
         onSaved: (confirmed) => {
+          if (activeRef.current) window.dispatchEvent(new CustomEvent(analyticsConsentChangedEvent, { detail: { confirmed: confirmed.choice === "granted", accountKey: confirmed.accountKey } }));
           if (!activeRef.current || !decisionPendingRef.current || confirmed.choice !== choiceRef.current) return;
           decisionPendingRef.current = false;
           setEditing(false);
@@ -237,6 +237,7 @@ function WebsiteAnalyticsConsentBridge() {
     // This is the only place that clears a denial marker: an explicit Allow
     // click. Late network responses must never undo a newer refusal.
     setDenied(nextChoice !== "granted");
+    window.dispatchEvent(new CustomEvent(analyticsConsentChangedEvent, { detail: { confirmed: false } }));
     saveFailedRef.current = !saveChoice(nextChoice);
     setChoice(nextChoice);
     setDismissed(false);
