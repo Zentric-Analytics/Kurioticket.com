@@ -16,6 +16,9 @@ CREATE TABLE "CmsContentItem" (
     "market" TEXT NOT NULL DEFAULT 'GLOBAL',
     "locale" TEXT NOT NULL DEFAULT 'en',
     "sortOrder" INTEGER NOT NULL DEFAULT 0,
+    "publishedMarket" TEXT,
+    "publishedLocale" TEXT,
+    "publishedSortOrder" INTEGER,
     "draftPayload" JSONB NOT NULL,
     "publishedPayload" JSONB,
     "version" INTEGER NOT NULL DEFAULT 1,
@@ -41,6 +44,9 @@ CREATE TABLE "CmsContentRevision" (
     "market" TEXT NOT NULL,
     "locale" TEXT NOT NULL,
     "sortOrder" INTEGER NOT NULL,
+    "publishedMarket" TEXT,
+    "publishedLocale" TEXT,
+    "publishedSortOrder" INTEGER,
     "draftPayload" JSONB NOT NULL,
     "publishedPayload" JSONB,
     "actorUserId" TEXT,
@@ -55,6 +61,9 @@ CREATE UNIQUE INDEX "CmsContentItem_type_key_market_locale_key" ON "CmsContentIt
 
 -- CreateIndex
 CREATE INDEX "CmsContentItem_type_status_market_locale_sortOrder_idx" ON "CmsContentItem"("type", "status", "market", "locale", "sortOrder");
+
+-- CreateIndex
+CREATE INDEX "CmsContentItem_type_publishedMarket_publishedLocale_publishedSortOrder_idx" ON "CmsContentItem"("type", "publishedMarket", "publishedLocale", "publishedSortOrder");
 
 -- CreateIndex
 CREATE INDEX "CmsContentItem_updatedAt_idx" ON "CmsContentItem"("updatedAt");
