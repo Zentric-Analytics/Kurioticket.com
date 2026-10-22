@@ -351,6 +351,45 @@ async function transitionCmsContent(
             updatedByAdminUserId: actor.id,
           };
 
+    if (transition === "PUBLISHED") {
+      await tx.cmsContentScope.upsert({
+        where: {
+          type_market_locale: {
+            type: existing.type,
+            market: existing.market,
+            locale: existing.locale,
+          },
+        },
+        update: {},
+        create: {
+          type: existing.type,
+          market: existing.market,
+          locale: existing.locale,
+        },
+      });
+      if (
+        existing.publishedMarket &&
+        existing.publishedLocale &&
+        (existing.publishedMarket !== existing.market || existing.publishedLocale !== existing.locale)
+      ) {
+        await tx.cmsContentScope.upsert({
+          where: {
+            type_market_locale: {
+              type: existing.type,
+              market: existing.publishedMarket,
+              locale: existing.publishedLocale,
+            },
+          },
+          update: {},
+          create: {
+            type: existing.type,
+            market: existing.publishedMarket,
+            locale: existing.publishedLocale,
+          },
+        });
+      }
+    }
+
     const changed = await tx.cmsContentItem.updateMany({
       where: { id, version: parsed.data.expectedVersion, status: { not: "ARCHIVED" } },
       data,
@@ -442,7 +481,12 @@ export async function readPublishedCmsContent<T>(
   try {
     const market = marketSchema.parse(options.market ?? "GLOBAL");
     const locale = localeSchema.parse(options.locale ?? "en");
-    const rows = await db.cmsContentItem.findMany({
+    const [scope, rows] = await Promise.all([
+      db.cmsContentScope.findUnique({
+        where: { type_market_locale: { type, market, locale } },
+        select: { id: true },
+      }),
+      db.cmsContentItem.findMany({
       where: {
         type,
         publishedMarket: market,
@@ -451,8 +495,9 @@ export async function readPublishedCmsContent<T>(
       },
       orderBy: [{ publishedSortOrder: "asc" }, { key: "asc" }],
       select: { key: true, status: true, publishedPayload: true },
-    });
-    if (!rows.length) return { source: "fallback", items: options.fallback() };
+      }),
+    ]);
+    if (!scope && !rows.length) return { source: "fallback", items: options.fallback() };
     const visibleRows = rows.filter((row) => row.status === "PUBLISHED");
     const items: T[] = [];
     for (const row of visibleRows) {
