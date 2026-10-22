@@ -78,6 +78,14 @@ test("CMS mutations use optimistic concurrency and transactional revision plus a
   assert.match(service, /publishedPayload: input\.publishedPayload/);
 });
 
+
+test("CMS hide and archive do not depend on validating a stale draft payload", () => {
+  const transitionStart = service.indexOf("async function transitionCmsContent");
+  const transitionSource = service.slice(transitionStart);
+  assert.match(transitionSource, /transition === "PUBLISHED"[\s\S]*parsePayload\(existing\.type, existing\.draftPayload\)/);
+  assert.doesNotMatch(transitionSource, /const payload = parsePayload\(existing\.type, existing\.draftPayload\)/);
+});
+
 test("public CMS readers fail safely to the existing code-backed content", () => {
   assert.match(service, /source: "fallback"/);
   assert.match(publicReaders, /getPopularDestinationsByRegion/);
