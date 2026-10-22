@@ -317,7 +317,8 @@ async function transitionCmsContent(
   const parsed = transitionSchema.safeParse(raw);
   if (!parsed.success) throw new CmsContentError("INVALID", "Content transition is invalid.", parsed.error.flatten());
   const actor = normalizeActor(actorInput);
-  return getPrisma().$transaction(async (tx) => {
+  try {
+    return await getPrisma().$transaction(async (tx) => {
     const existing = await tx.cmsContentItem.findUnique({ where: { id } });
     if (!existing) throw new CmsContentError("NOT_FOUND", "Content item not found.");
     if (existing.status === "ARCHIVED") throw new CmsContentError("ARCHIVED", "Archived content cannot be changed.");
@@ -367,8 +368,15 @@ async function transitionCmsContent(
       publishedPayload: item.publishedPayload === null ? null : item.publishedPayload as Prisma.InputJsonValue,
       actor, auditAction: `CMS_CONTENT_${action}`, type: item.type, key: item.key,
     });
-    return serialize(item);
-  }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+      return serialize(item);
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+  } catch (error) {
+    if (error instanceof CmsContentError) throw error;
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      throw new CmsContentError("CONFLICT", "Another published content item already uses this type, key, market and locale.");
+    }
+    throw error;
+  }
 }
 
 export async function listAdminCmsContent(input: {
