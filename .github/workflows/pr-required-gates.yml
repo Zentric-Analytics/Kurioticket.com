@@ -41,6 +41,19 @@ jobs:
           await import("./src/lib/visitor-identity-route.test.ts");
           await import("./src/lib/analyticsConsentClient.test.ts");
           await import("./src/app/api/journey/events/handler.test.ts");'
+      - name: Validate visitor lifecycle and provider handoff recording
+        env:
+          JITI_TSCONFIG_PATHS: ./tsconfig.json
+          JITI_JSX: "true"
+        run: >-
+          node --input-type=module --import jiti/register -e
+          'await import("./src/services/visitorIdentityCore.test.ts");
+          await import("./src/services/analyticsService.test.ts");
+          await import("./src/services/searchJourneyService.test.ts");
+          await import("./src/services/providerHandoffStore.test.ts");
+          await import("./src/services/providerHandoffActivity.test.ts");
+          await import("./src/lib/providerHandoffClient.test.ts");
+          await import("./src/app/api/flights/search/terminalHistory.test.ts");'
       - name: Validate Render web build
         run: npm run build
       - name: Install native dependencies

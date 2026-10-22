@@ -8,6 +8,7 @@ import {
   type JourneyEventReceipt,
 } from "@/lib/search-journey";
 import { withEnvironmentMetadata } from "@/lib/stagingSafety";
+import { lockConsentedVisitor } from "@/services/visitorActivityIdentity";
 
 export { clientJourneyEventTypes, journeyEventKey, type ClientJourneyEventType };
 export type SearchJourneyDatabase = Pick<PrismaClient, "$transaction">;
@@ -55,20 +56,6 @@ function ownsActivity(activity: OwnedActivity, visitorId: string, userId: string
   return activity.visitorId === visitorId && (!activity.userId || activity.userId === userId);
 }
 
-async function lockConsentedVisitor(tx: Prisma.TransactionClient, visitorId: string, userId: string | null) {
-  // Identity linking and withdrawal update this same row. Holding its lock through
-  // the event write prevents stale consent and serialises first-journey creation.
-  await tx.$queryRaw`SELECT "id" FROM "Visitor" WHERE "id" = ${visitorId} FOR UPDATE`;
-  const visitor = await tx.visitor.findUnique({
-    where: { id: visitorId },
-    select: { currentUserId: true, consentStatus: true, trackingDisabledAt: true, identityLinks: { select: { userId: true } } },
-  });
-  return Boolean(visitor
-    && visitor.consentStatus === "GRANTED" && visitor.trackingDisabledAt === null
-    && (!visitor.currentUserId || visitor.currentUserId === userId)
-    && visitor.identityLinks.every(link => link.userId === userId));
-}
-
 async function appendEvent(tx: Prisma.TransactionClient, input: JourneyEventInput & { visitorId: string }, now: Date) {
   const existing = await tx.journeyEvent.findUnique({
     where: { eventKey: input.eventKey },
@@ -78,9 +65,15 @@ async function appendEvent(tx: Prisma.TransactionClient, input: JourneyEventInpu
     // A reused key is an acknowledgement only for the same owner and activity;
     // retries must never extend a session or touch another visitor's journey.
     if (existing.journey.visitorId !== input.visitorId || existing.type !== input.type
-      || existing.searchHistoryId !== (input.searchHistoryId ?? null)
       || existing.redirectLogId !== (input.redirectLogId ?? null)
       || existing.provider !== (input.provider ?? null)) return null;
+    if (existing.searchHistoryId !== (input.searchHistoryId ?? null)) {
+      // A deferred history row can enrich the same verified handoff on retry.
+      // It cannot replace a known search or move/extend the original journey.
+      if (input.type !== "PROVIDER_HANDOFF_STARTED" || !input.redirectLogId
+        || existing.searchHistoryId || !input.searchHistoryId) return null;
+      await tx.journeyEvent.update({ where: { eventKey: input.eventKey }, data: { searchHistoryId: input.searchHistoryId } });
+    }
     return { journeyId: existing.journeyId, created: false };
   }
 
@@ -101,7 +94,7 @@ async function appendEvent(tx: Prisma.TransactionClient, input: JourneyEventInpu
       provider: input.provider || undefined,
       searchHistoryId: input.searchHistoryId || undefined,
       redirectLogId: input.redirectLogId || undefined,
-      metadata: input.metadata ? (withEnvironmentMetadata(input.metadata) as Prisma.InputJsonValue) : undefined,
+      metadata: withEnvironmentMetadata(input.metadata) as Prisma.InputJsonValue,
     },
   });
   return { journeyId: journey.id, created: true };
@@ -117,13 +110,22 @@ export function createSearchJourneyService(getDatabase: () => SearchJourneyDatab
       if (!db) return null;
       return await db.$transaction(async tx => {
         if (!(await lockConsentedVisitor(tx, visitorId, input.userId ?? null))) return null;
+        let searchRequestId: string | null = null;
         if (input.searchHistoryId) {
-          const search = await tx.searchHistory.findUnique({ where: { id: input.searchHistoryId }, select: { visitorId: true, userId: true } });
+          const search = await tx.searchHistory.findUnique({ where: { id: input.searchHistoryId }, select: { visitorId: true, userId: true, requestId: true, type: true } });
           if (!search || !ownsActivity(search, visitorId, input.userId ?? null)) return null;
+          if (input.product && search.type !== input.product) return null;
+          searchRequestId = search.requestId;
         }
         if (input.redirectLogId) {
-          const redirect = await tx.redirectLog.findUnique({ where: { id: input.redirectLogId }, select: { visitorId: true, userId: true } });
+          const redirect = await tx.redirectLog.findUnique({ where: { id: input.redirectLogId }, select: { visitorId: true, userId: true, metadata: true, type: true, provider: true } });
           if (!redirect || !ownsActivity(redirect, visitorId, input.userId ?? null)) return null;
+          if ((input.product && redirect.type !== input.product) || redirect.provider !== input.provider) return null;
+          if (input.searchHistoryId) {
+            const metadata = redirect.metadata && typeof redirect.metadata === "object" && !Array.isArray(redirect.metadata)
+              ? redirect.metadata : {};
+            if (!searchRequestId || metadata.requestId !== searchRequestId) return null;
+          }
         }
         return appendEvent(tx, { ...input, visitorId }, now());
       });

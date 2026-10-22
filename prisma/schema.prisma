@@ -736,6 +736,7 @@ model SupportMessage {
 
 model RedirectLog {
   id             String       @id @default(cuid())
+  handoffKey     String?      @unique
   userId         String?
   visitorId      String?
   type           RedirectType
