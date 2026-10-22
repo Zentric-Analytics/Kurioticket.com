@@ -71,7 +71,7 @@ test("cross-source keyset keeps stable ties without repeating the cursor item", 
 });
 
 test("legacy searches and handoffs cannot repeat on later pages after matching canonical stages", () => {
-  const owner = { journey: { visitor: { consentStatus: "GRANTED", currentUserId: null } } };
+  const owner = { journey: { visitor: { consentStatus: "GRANTED", currentUserId: null } } } as const;
   const window = { gte: new Date("2026-10-01T00:00:00.000Z") };
   const product = { product: "FLIGHT" };
   const query = { provider: { contains: "Duffel" } };
