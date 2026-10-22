@@ -20,6 +20,7 @@ test("CMS foundation has versioned draft/published storage and immutable revisio
   assert.match(migration, /CREATE TABLE "CmsContentScope"/);
   assert.match(migration, /CREATE TABLE "CmsContentItem"/);
   assert.match(migration, /CREATE TABLE "CmsContentRevision"/);
+  assert.match(schema, /@@index\(\[type, publishedMarket, publishedLocale, publishedSortOrder\]\)/);
   assert.match(migration, /ON DELETE CASCADE/);
 });
 
@@ -35,6 +36,8 @@ test("admin CMS APIs require canonical admin access and expose explicit lifecycl
   assert.match(collectionApi, /requireAdminApiSession\(\)/);
   assert.match(itemApi, /requireAdminApiSession\(\)/);
   assert.match(collectionApi, /createCmsContent/);
+  assert.match(collectionApi, /url\.searchParams\.get\("type"\)\?\.trim\(\) \|\| null/);
+  assert.match(collectionApi, /url\.searchParams\.get\("status"\)\?\.trim\(\) \|\| null/);
   assert.match(collectionApi, /cursor: url\.searchParams\.get\("cursor"\)/);
   assert.match(collectionApi, /limit,/);
   for (const action of ["save_draft", "publish", "hide", "archive"]) assert.equal(itemApi.includes(action), true, action);
