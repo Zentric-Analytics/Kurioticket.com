@@ -1,4 +1,4 @@
-import type { PrismaClient } from "@/generated/prisma/client";
+import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import { isProtectedAdminEmail } from "@/lib/admin";
 import { getPrisma } from "@/lib/prisma";
 import { lockVisitorAccount } from "@/services/visitorActivityIdentity";
@@ -245,7 +245,7 @@ export function createAccountDeletionFinalizer(dependencies: FinalizerDependenci
           completedAt: now,
           email: redactedEmail,
           userReason: null,
-          cancellationMetadata: null,
+          cancellationMetadata: Prisma.JsonNull,
           reviewNotes: reviewNotes.slice(0, 5000),
           adminNotificationId: adminReference.slice(0, 255),
         },
