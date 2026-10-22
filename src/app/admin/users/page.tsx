@@ -69,22 +69,22 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
       <Card className="mt-4 overflow-hidden p-0">
         <div className="flex justify-between border-b border-slate-100 px-4 py-3"><h2 className="font-semibold text-slate-950">Identities ({count.toLocaleString()})</h2><span className="text-xs text-slate-500">Guest identities are not registered accounts</span></div>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[900px] text-left text-sm">
-            <thead className="bg-slate-50 text-xs uppercase text-slate-500"><tr><th className="p-3">Identity</th><th className="p-3">Type</th><th className="p-3">Email / Guest ID</th><th className="p-3">Status</th><th className="p-3">Joined / First seen</th><th className="p-3">View</th><th className="p-3">Account actions</th></tr></thead>
+          <table className="w-full min-w-[1320px] table-fixed text-left text-[13px]">
+            <thead className="bg-slate-50 text-xs uppercase text-slate-500"><tr><th className="w-[18%] p-3">Identity</th><th className="w-[12%] p-3">Type</th><th className="w-[22%] p-3">Email / Guest ID</th><th className="w-[10%] p-3">Status</th><th className="w-[16%] p-3">Joined / First seen</th><th className="w-[10%] p-3">View</th><th className="w-[12%] p-3">Account actions</th></tr></thead>
             <tbody>
               {result.users.map(user => {
                 const isProtectedAdmin = Boolean(user.email && protectedEmails.has(user.email.toLowerCase().trim()));
-                return <tr key={user.id} className="border-t border-slate-100 align-top">
-                  <td className="p-3"><p className="font-semibold text-slate-950">{user.name || "Unnamed user"}</p><p className="mt-1 max-w-[190px] truncate font-mono text-xs text-slate-500" title={user.id}>{user.id}</p></td>
-                  <td className="p-3"><span className="rounded-md bg-slate-100 px-2 py-1 text-xs">Registered · {user.role}</span></td>
-                  <td className="p-3 max-w-[230px] break-all text-slate-700">{user.email || "—"}</td>
+                return <tr key={user.id} className="border-t border-slate-100 align-middle">
+                  <td className="p-3"><p className="truncate font-semibold text-slate-950" title={user.name || "Unnamed user"}>{user.name || "Unnamed user"}</p><p className="mt-1 max-w-[190px] truncate font-mono text-xs text-slate-500" title={user.id}>{user.id}</p></td>
+                  <td className="p-3"><span className="whitespace-nowrap rounded-md bg-slate-100 px-2 py-1 text-xs">Registered · {user.role}</span></td>
+                  <td className="p-3 text-slate-700"><span className="block truncate" title={user.email || undefined}>{user.email || "—"}</span></td>
                   <td className="p-3"><StatusPill tone={user.status === "ACTIVE" ? "good" : user.status === "SUSPENDED" ? "warn" : "bad"}>{user.status}</StatusPill></td>
-                  <td className="p-3 text-slate-600">{date(user.createdAt)}</td>
-                  <td className="p-3"><Link className="whitespace-nowrap rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-indigo-700 hover:bg-slate-50" href={link(page) + "&activity=user:" + user.id}>View Activity</Link></td>
-                  <td className="p-3"><UserStatusActions userId={user.id} email={user.email} role={user.role} status={user.status} isSelf={user.id === session.user.id} isProtectedAdmin={isProtectedAdmin} /></td>
+                  <td className="whitespace-nowrap p-3 text-slate-600">{date(user.createdAt)}</td>
+                  <td className="whitespace-nowrap p-3"><Link className="inline-flex whitespace-nowrap rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-indigo-700 hover:bg-slate-50" href={link(page) + "&activity=user:" + user.id}>View Activity</Link></td>
+                  <td className="whitespace-nowrap p-3"><UserStatusActions userId={user.id} email={user.email} role={user.role} status={user.status} isSelf={user.id === session.user.id} isProtectedAdmin={isProtectedAdmin} /></td>
                 </tr>;
               })}
-              {result.guests.map(guest => <tr key={guest.id} className="border-t border-slate-100"><td className="p-3 font-semibold">Guest visitor</td><td className="p-3"><span className="rounded-md bg-slate-100 px-2 py-1 text-xs">Guest</span></td><td className="p-3 max-w-[230px] truncate font-mono text-xs text-slate-500" title={guest.id}>{guest.id}</td><td className="p-3 text-slate-500">Anonymous</td><td className="p-3 text-slate-600">{date(guest.firstSeenAt)}</td><td className="p-3"><Link className="whitespace-nowrap rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-indigo-700 hover:bg-slate-50" href={link(page) + "&activity=guest:" + guest.id}>View Activity</Link></td><td className="p-3 text-xs text-slate-500">Not an account</td></tr>)}
+              {result.guests.map(guest => <tr key={guest.id} className="border-t border-slate-100 align-middle"><td className="p-3 font-semibold">Guest visitor</td><td className="p-3"><span className="rounded-md bg-slate-100 px-2 py-1 text-xs">Guest</span></td><td className="max-w-[280px] truncate p-3 font-mono text-xs text-slate-500" title={guest.id}>{guest.id}</td><td className="p-3 text-slate-500">Anonymous</td><td className="whitespace-nowrap p-3 text-slate-600">{date(guest.firstSeenAt)}</td><td className="p-3"><Link className="whitespace-nowrap rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-indigo-700 hover:bg-slate-50" href={link(page) + "&activity=guest:" + guest.id}>View Activity</Link></td><td className="p-3 text-xs text-slate-500">Not an account</td></tr>)}
               {!result.users.length && !result.guests.length ? <tr><td colSpan={7} className="p-8 text-center text-slate-500">No identities match these filters.</td></tr> : null}
             </tbody>
           </table>
