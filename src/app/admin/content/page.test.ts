@@ -9,7 +9,7 @@ const refreshCard = readFileSync("src/components/admin/HomepageFaresRefreshCard.
 const statusApi = readFileSync("src/app/api/admin/homepage-fares/status/route.ts", "utf8");
 const refreshApi = readFileSync("src/app/api/admin/homepage-fares/refresh/route.ts", "utf8");
 
-test("public content management preserves the restored read-only inventory sections", () => {
+test("public content management keeps configuration areas read-only while FAQs are CMS managed", () => {
   assert.match(contentPage, /title="Public Content Management"/);
 
   for (const section of [
@@ -21,9 +21,13 @@ test("public content management preserves the restored read-only inventory secti
     assert.match(contentPage, new RegExp(section));
   }
 
+  assert.match(contentPage, /getCmsContentScopeSummary/);
+  assert.match(contentPage, /Manage FAQs/);
+  assert.match(contentPage, /CMS managed/);
+  assert.match(contentPage, /Setup required/);
+  assert.match(contentPage, /href: "\/admin\/content\/faqs"/);
   assert.doesNotMatch(contentPage, /HomepageFaresRefreshCard/);
-  assert.doesNotMatch(contentPage, /Create content|Edit content|Delete content|Upload image|Approve content/i);
-  assert.doesNotMatch(contentPage, /Not live yet|Placeholder|future/i);
+  assert.doesNotMatch(contentPage, /Upload image|Approve content/i);
 });
 
 test("system owns feature controls while settings retains homepage fares", () => {

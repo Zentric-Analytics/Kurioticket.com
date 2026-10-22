@@ -91,7 +91,7 @@ test("public CMS readers fail safely to the existing code-backed content", () =>
   assert.match(publicReaders, /getPopularDestinationsByRegion/);
   assert.match(publicReaders, /getHomeDiscoveryByRegion/);
   assert.match(publicReaders, /hotelDestinations/);
-  assert.match(publicReaders, /generalFaqs/);
+  assert.match(publicReaders, /getGeneralFaqs/);
   assert.match(service, /cmsPayloadSchemas\[type\]\.safeParse/);
   assert.match(service, /Prisma\.DbNull/);
   assert.match(service, /publishedMarket: market/);
