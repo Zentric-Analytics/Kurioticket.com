@@ -11,7 +11,7 @@ import {
 const now = new Date("2026-10-22T16:00:00.000Z");
 
 test("partner flight statuses parse into a safe primary-flight snapshot", () => {
-  const parsed = parsePartnerFlightStatus(payload());
+  const parsed = parsePartnerFlightStatus(payload(), now);
   assert.deepEqual(parsed, {
     providerName: "Example Provider",
     partnerConversionId: "conversion-123",
@@ -45,7 +45,7 @@ test("flight status parsing rejects impossible times and unsafe identifiers", ()
 test("newer provider status events replace a snapshot while stale events cannot", async () => {
   const database = memoryDatabase();
   const service = createFlightStatusService(() => database.client, () => now);
-  const first = parsePartnerFlightStatus(payload());
+  const first = parsePartnerFlightStatus(payload(), now);
   assert.deepEqual(await service.recordPartnerFlightStatus(first), { applied: true });
   assert.equal(database.snapshot?.status, "DELAYED");
 
@@ -62,7 +62,7 @@ test("flight status reads are trip-owner scoped and expose no status until an ap
   const database = memoryDatabase();
   const service = createFlightStatusService(() => database.client, () => now);
   assert.deepEqual(await service.getUserFlightStatus("user-a", "trip-1"), { dataAvailable: false, providerName: "Example Provider" });
-  await service.recordPartnerFlightStatus(parsePartnerFlightStatus(payload()));
+  await service.recordPartnerFlightStatus(parsePartnerFlightStatus(payload(), now));
   const owner = await service.getUserFlightStatus("user-a", "trip-1");
   assert.equal(owner?.dataAvailable, true);
   if (owner?.dataAvailable) {
