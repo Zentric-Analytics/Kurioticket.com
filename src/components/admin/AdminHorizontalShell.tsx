@@ -22,8 +22,8 @@ function HeaderNavLink({ entry, pathname, mobile = false, close }: { entry: Head
   const Icon = item.icon;
   const style = selected ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50 hover:text-slate-950";
 
-  // A scrolling navigation rail must never clip its submenus.
-  // Position desktop dropdowns in a viewport-level portal instead.
+  // Keep desktop submenus above surrounding content regardless of the
+  // navigation row and its responsive layout.
   useEffect(() => {
     if (!expanded || mobile) return;
 
@@ -68,8 +68,8 @@ function HeaderNavLink({ entry, pathname, mobile = false, close }: { entry: Head
 
   if (!children.length) return (
     <Link href={item.href} onClick={close} aria-current={isAdminNavItemActive(item.href, pathname) ? "page" : undefined}
-      className={'relative inline-flex h-10 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl px-2.5 text-[13px] font-semibold transition ' + style + (selected && !mobile ? " after:absolute after:-bottom-2 after:left-2 after:right-2 after:h-0.5 after:rounded-full after:bg-indigo-600" : "")}>
-      <Icon size={16} aria-hidden="true" /><span>{item.label}</span>
+      className={'relative inline-flex h-10 shrink-0 items-center gap-1 whitespace-nowrap rounded-xl px-1 text-[11px] font-semibold transition xl:gap-1.5 xl:px-1.5 xl:text-xs 2xl:gap-2 2xl:px-2 2xl:text-[13px] ' + style + (selected && !mobile ? " after:absolute after:-bottom-2 after:left-2 after:right-2 after:h-0.5 after:rounded-full after:bg-indigo-600" : "")}>
+      <Icon size={14} aria-hidden="true" className="h-[13px] w-[13px] shrink-0 xl:h-3.5 xl:w-3.5 2xl:h-4 2xl:w-4" /><span>{item.label}</span>
     </Link>
   );
 
@@ -96,13 +96,13 @@ function HeaderNavLink({ entry, pathname, mobile = false, close }: { entry: Head
       <div className={'relative inline-flex w-full items-center whitespace-nowrap rounded-xl ' + style + (selected && !mobile ? " after:absolute after:-bottom-2 after:left-2 after:right-2 after:h-0.5 after:rounded-full after:bg-indigo-600" : "")}>
         <Link href={item.href} onClick={() => { setExpanded(false); close(); }}
           aria-current={isAdminNavItemActive(item.href, pathname) ? "page" : undefined}
-          className="inline-flex h-10 min-w-0 items-center gap-1.5 whitespace-nowrap rounded-l-xl pl-2.5 pr-0.5 text-[13px] font-semibold">
-          <Icon size={16} aria-hidden="true" /><span>{item.label}</span>
+          className="inline-flex h-10 min-w-0 items-center gap-1 whitespace-nowrap rounded-l-xl pl-1 pr-0.5 text-[11px] font-semibold xl:gap-1.5 xl:pl-1.5 xl:text-xs 2xl:gap-2 2xl:pl-2 2xl:text-[13px]">
+          <Icon size={14} aria-hidden="true" className="h-[13px] w-[13px] shrink-0 xl:h-3.5 xl:w-3.5 2xl:h-4 2xl:w-4" /><span>{item.label}</span>
         </Link>
         <button ref={triggerRef} type="button" aria-expanded={expanded} aria-controls={expanded ? menuId : undefined}
           aria-label={'Show ' + item.label + ' subpages'} onClick={toggleSubmenu}
-          className="flex h-10 w-6 shrink-0 items-center justify-center rounded-r-xl hover:bg-indigo-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-          <ChevronDown size={14} aria-hidden="true" className={expanded ? "rotate-180 transition-transform" : "transition-transform"} />
+          className="flex h-10 w-5 shrink-0 items-center justify-center rounded-r-xl hover:bg-indigo-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 xl:w-6">
+          <ChevronDown size={12} aria-hidden="true" className={expanded ? "rotate-180 transition-transform xl:h-3.5 xl:w-3.5" : "transition-transform xl:h-3.5 xl:w-3.5"} />
         </button>
       </div>
       {expanded ? (
@@ -122,10 +122,10 @@ function HeaderNavLink({ entry, pathname, mobile = false, close }: { entry: Head
 }
 
 function Navigation({ groups, pathname, mobile = false, close }: { groups: HeaderGroup[]; pathname: string; mobile?: boolean; close: () => void }) {
-  return <nav aria-label="Admin navigation" className={mobile ? "flex flex-col gap-2 p-3" : "flex w-max min-w-full flex-nowrap items-center justify-between gap-1.5 whitespace-nowrap"}>
+  return <nav aria-label="Admin navigation" className={mobile ? "flex flex-col gap-2 p-3" : "flex w-full flex-nowrap items-center justify-between gap-0.5 whitespace-nowrap xl:gap-1"}>
     {groups.map((group, index) => (
-      <div key={group.label} className={mobile ? "flex flex-col gap-1" : "flex shrink-0 items-center gap-1"}>
-        {!mobile && index > 0 ? <span className="mx-1.5 h-5 w-px bg-slate-200" aria-hidden="true" /> : null}
+      <div key={group.label} className={mobile ? "flex flex-col gap-1" : "flex shrink-0 items-center gap-0.5 xl:gap-1"}>
+        {!mobile && index > 0 ? <span className="mx-0.5 h-5 w-px bg-slate-200 xl:mx-1 2xl:mx-1.5" aria-hidden="true" /> : null}
         {mobile ? <p className="px-3 pt-2 text-[11px] font-bold uppercase tracking-widest text-slate-400">{group.label}</p> : null}
         {group.links.map((entry) => <HeaderNavLink key={entry.item.href} entry={entry} pathname={pathname} mobile={mobile} close={close} />)}
       </div>
@@ -186,18 +186,15 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
               {([{ href: "/admin/settings", label: "Admin settings", icon: Settings }, { href: "/admin/logs", label: "Audit logs", icon: ShieldCheck }, { href: "/", label: "Switch to public site", icon: Building2 }, { href: "/api/auth/signout", label: "Logout", icon: LogOut }]).map(({ href, label, icon: Icon }) => <Link key={href} href={href} onClick={() => setProfileOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"><Icon size={16} />{label}</Link>)}
             </div> : null}
           </div>
-          <button type="button" className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 lg:hidden" onClick={() => setMobileOpen((value) => !value)} aria-label={mobileOpen ? "Close admin navigation" : "Open admin navigation"} aria-expanded={mobileOpen}>{mobileOpen ? <X size={19} /> : <Menu size={19} />}</button>
+          <button type="button" className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 min-[1080px]:hidden" onClick={() => setMobileOpen((value) => !value)} aria-label={mobileOpen ? "Close admin navigation" : "Open admin navigation"} aria-expanded={mobileOpen}>{mobileOpen ? <X size={19} /> : <Menu size={19} />}</button>
         </div>
       </div>
-      <div className="hidden border-t border-slate-100 lg:block">
-        <div className="mx-auto max-w-[1920px]">
-          <div role="region" aria-label="Scrollable admin navigation" tabIndex={0}
-            className="overflow-x-auto overscroll-x-contain px-4 pb-2 pt-2 sm:px-6 lg:px-8 [scrollbar-width:thin]">
-            <Navigation groups={groups} pathname={pathname} close={() => {}} />
-          </div>
+      <div className="hidden border-t border-slate-100 min-[1080px]:block">
+        <div className="mx-auto max-w-[1920px] px-3 pb-2 pt-2 xl:px-6 2xl:px-8">
+          <Navigation groups={groups} pathname={pathname} close={() => {}} />
         </div>
       </div>
-      {mobileOpen ? <div className="max-h-[70vh] overflow-y-auto border-t border-slate-100 bg-white lg:hidden"><Navigation groups={groups} pathname={pathname} mobile close={() => setMobileOpen(false)} /></div> : null}
+      {mobileOpen ? <div className="max-h-[70vh] overflow-y-auto border-t border-slate-100 bg-white min-[1080px]:hidden"><Navigation groups={groups} pathname={pathname} mobile close={() => setMobileOpen(false)} /></div> : null}
     </header>
     <main className="mx-auto w-full max-w-[1920px] px-4 py-5 sm:px-6 lg:px-10">{children}</main>
     {searchOpen ? <div className="fixed inset-0 z-[90] flex items-start justify-center bg-slate-950/30 px-4 pt-[12vh]" onMouseDown={(event) => { if (event.target === event.currentTarget) setSearchOpen(false); }}>
