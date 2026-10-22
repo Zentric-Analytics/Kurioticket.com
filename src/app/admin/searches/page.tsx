@@ -1,68 +1,89 @@
-import { AdminDataTable, AdminEmptyState, AdminPageShell, AdminStatusBadge } from "@/components/admin/AdminPageShell";
+import Link from "next/link";
+
+import { AdminButton, AdminDataTable, AdminEmptyState, AdminFilterBar, AdminInput, AdminPageShell, AdminSelect, AdminStatusBadge } from "@/components/admin/AdminPageShell";
 import { formatDateTime } from "@/lib/admin-data";
-import { withOptionalDb } from "@/lib/prisma";
+import { adminOperationalReads } from "@/services/adminOperationalReadService";
 
 export const metadata = { title: "Admin Searches" };
 
-export default async function AdminSearchesPage() {
-  const searches = await withOptionalDb(
-    (db) => db.searchHistory.findMany({ orderBy: { createdAt: "desc" }, take: 100 }),
-    [],
-  );
+type SearchParams = Promise<Record<string, string | string[] | undefined>>;
+
+export default async function AdminSearchesPage({ searchParams }: { searchParams: SearchParams }) {
+  const raw = await searchParams;
+  const params = toParams(raw);
+  if (!params.has("limit")) params.set("limit", "50");
+  const result = await adminOperationalReads.searches.list(params);
 
   return (
     <AdminPageShell
       title="Searches"
-      description="Review user search attempts, outcomes, providers, and latency."
+      description="Review recorded search activity through the safe admin read contract. Raw search JSON and private tracking tokens are never exposed."
+      actions={<Link href="/admin/journeys" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">View journeys</Link>}
     >
-      {searches.length === 0 ? (
-        <AdminEmptyState
-          title="No search logs available"
-          message="Search analytics will appear after search logging is enabled and real users run searches. No fake routes, destinations, providers, result counts, or statuses are displayed."
-        />
-      ) : (
-        <AdminDataTable
-          columns={["Created", "Type", "Route / stay", "Market", "Results", "Provider", "Status", "Latency"]}
-          rows={searches.map((search) => {
-            const query = normalizeQuery(search.query);
-            return {
-              id: search.id,
-              cells: [
-                formatDateTime(search.createdAt),
-                <AdminStatusBadge key="type" tone="info">{search.type}</AdminStatusBadge>,
-                <div key="query" className="min-w-0 space-y-1"><p className="truncate font-semibold text-slate-950">{query.route || `${search.origin || "—"}${search.destination ? ` → ${search.destination}` : ""}`}</p><p className="truncate text-xs text-slate-500">Raw query summarized for operations</p></div>,
-                `${query.country || "—"} / ${query.currency || "—"}`,
-                <span key="results" className="font-semibold text-slate-950">{search.resultCount}</span>,
-                query.provider || providerForProduct(search.type),
-                <AdminStatusBadge key="status" tone={search.status === "SUCCESS" ? "good" : search.status === "FAILED" ? "bad" : "warn"}>{search.status}</AdminStatusBadge>,
-                search.latencyMs ? `${search.latencyMs}ms` : "—",
-              ],
-            };
-          })}
-        />
-      )}
+      <div className="space-y-4">
+        <AdminFilterBar action="/admin/searches">
+          <AdminSelect name="product" defaultValue={one(raw.product)}>
+            <option value="">All products</option><option value="FLIGHT">Flights</option><option value="HOTEL">Hotels</option><option value="CAR">Cars</option><option value="PACKAGE">Packages</option>
+          </AdminSelect>
+          <AdminSelect name="status" defaultValue={one(raw.status)}>
+            <option value="">All outcomes</option><option value="SUCCESS">Success</option><option value="PARTIAL">Partial</option><option value="FAILED">Failed</option>
+          </AdminSelect>
+          <AdminSelect name="identity" defaultValue={one(raw.identity) || "all"}>
+            <option value="all">All identities</option><option value="registered">Registered</option><option value="guest">Guest</option><option value="unattributed">Unattributed</option>
+          </AdminSelect>
+          <AdminInput name="provider" defaultValue={one(raw.provider)} placeholder="Provider" />
+          <AdminSelect name="environment" defaultValue={one(raw.environment)}>
+            <option value="">Current environment</option><option value="staging">Staging</option><option value="production">Production</option>
+          </AdminSelect>
+          <AdminButton type="submit">Apply filters</AdminButton>
+        </AdminFilterBar>
+
+        {result.status === "ok" ? (
+          result.data.items.length === 0 ? (
+            <AdminEmptyState title="No searches found" message="No recorded searches match this environment and filter set." />
+          ) : (
+            <>
+              <AdminDataTable
+                columns={["Created", "Product", "Route / stay", "Market", "Results", "Providers", "Identity", "Status", "Action"]}
+                rows={result.data.items.map((search) => ({
+                  id: search.id,
+                  cells: [
+                    formatDateTime(new Date(search.createdAt)),
+                    <AdminStatusBadge key="product" tone="info">{search.product}</AdminStatusBadge>,
+                    <div key="route"><p className="font-semibold text-slate-950">{search.origin || "—"}{search.destination ? " → " + search.destination : ""}</p><p className="text-xs text-slate-500">{search.checkIn ? search.checkIn + (search.checkOut ? " → " + search.checkOut : "") : search.requestId || "No request ID"}</p></div>,
+                    (search.market || "—") + " / " + (search.currency || "—"),
+                    search.resultCount,
+                    search.providers.length ? search.providers.join(", ") : "—",
+                    <div key="identity"><p className="font-semibold">{search.identity.kind}</p><p className="max-w-40 truncate text-xs text-slate-500">{search.identity.userId || search.identity.visitorId || "—"}</p></div>,
+                    <AdminStatusBadge key="status" tone={search.status === "SUCCESS" ? "good" : search.status === "FAILED" ? "bad" : "warn"}>{search.status}</AdminStatusBadge>,
+                    <Link key="action" href={"/admin/searches/" + search.id + "?environment=" + search.environment} className="font-black text-indigo-700 hover:text-indigo-900">Open</Link>,
+                  ],
+                }))}
+              />
+              {result.data.nextCursor ? <div className="flex justify-end"><Link href={cursorHref("/admin/searches", raw, result.data.nextCursor)} className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">Next page</Link></div> : null}
+            </>
+          )
+        ) : (
+          <ReadError status={result.status} issues={"issues" in result ? result.issues : undefined} />
+        )}
+      </div>
     </AdminPageShell>
   );
 }
 
-function normalizeQuery(query: unknown) {
-  const data = query && typeof query === "object" ? (query as Record<string, unknown>) : {};
-  const origin = stringValue(data.origin) || stringValue(data.originAirport);
-  const destination = stringValue(data.destination) || stringValue(data.destinationAirport) || stringValue(data.destinationName);
-  return {
-    route: origin || destination ? `${origin || "—"} → ${destination || "—"}` : stringValue(data.label),
-    country: stringValue(data.country) || stringValue(data.market) || stringValue(data.region),
-    currency: stringValue(data.currency),
-    provider: stringValue(data.provider),
-  };
+function ReadError({ status, issues }: { status: string; issues?: Array<{ field: string; message: string }> }) {
+  return <AdminEmptyState title={status === "invalid" ? "Invalid filters" : status === "forbidden" ? "Admin access required" : "Search data unavailable"} message={issues?.map((issue) => issue.field + ": " + issue.message).join(" ") || "The safe admin reader could not return search data. No empty result was invented."} />;
 }
 
-function stringValue(value: unknown) {
-  return typeof value === "string" && value.trim() ? value.trim() : "";
+function one(value: string | string[] | undefined) { return typeof value === "string" ? value : ""; }
+function toParams(raw: Record<string, string | string[] | undefined>) {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(raw)) {
+    if (Array.isArray(value)) value.forEach((item) => params.append(key, item));
+    else if (value) params.set(key, value);
+  }
+  return params;
 }
-
-function providerForProduct(type: string) {
-  if (type === "FLIGHT") return "Configured flight provider";
-  if (type === "HOTEL") return "Configured hotel provider";
-  return "Unavailable";
+function cursorHref(path: string, raw: Record<string, string | string[] | undefined>, cursor: string) {
+  const params = toParams(raw); params.set("cursor", cursor); params.set("limit", "50"); return path + "?" + params.toString();
 }

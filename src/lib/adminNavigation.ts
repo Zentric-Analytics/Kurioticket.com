@@ -32,7 +32,7 @@ export type AdminNavDefinition = {
 };
 
 export const adminNavigationGroups = [
-  { label: "Operations", hrefs: ["/admin", "/admin/users", "/admin/searches", "/admin/redirects", "/admin/support", "/admin/account-deletions"] },
+  { label: "Operations", hrefs: ["/admin", "/admin/users", "/admin/searches", "/admin/journeys", "/admin/redirects", "/admin/referral-attribution", "/admin/support", "/admin/account-deletions"] },
   { label: "Provider readiness", hrefs: ["/admin/providers", "/admin/flights", "/admin/hotels", "/admin/cars"] },
   { label: "Website content", hrefs: ["/admin/content"] },
   { label: "System & security", hrefs: ["/admin/logs", "/admin/system", "/admin/settings"] },
@@ -42,8 +42,10 @@ export const adminNavigation: AdminNavDefinition[] = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard, roles: ["ADMIN", "SUPPORT"], section: "operations", description: "Operations dashboard and platform health." },
   { href: "/admin/users", label: "Users", icon: Users, roles: ["ADMIN", "SUPPORT"], section: "operations", description: "Manage customer accounts, roles and status." },
   { href: "/admin/providers", label: "Providers", icon: Activity, roles: ["ADMIN"], section: "readiness", description: "Monitor provider configuration and health." },
-  { href: "/admin/searches", label: "Searches", icon: Search, roles: ["ADMIN", "SUPPORT"], section: "operations", description: "Review recent search activity and request metadata." },
+  { href: "/admin/searches", label: "Searches", icon: Search, roles: ["ADMIN", "SUPPORT"], section: "operations", description: "Review safe operational search activity and request metadata." },
+  { href: "/admin/journeys", parentHref: "/admin/searches", label: "Journeys", icon: Activity, roles: ["ADMIN"], section: "operations", description: "Trace consented search-to-handoff journey events." },
   { href: "/admin/redirects", parentHref: "/admin/searches", label: "Provider Handoffs", icon: MousePointerClick, roles: ["ADMIN"], section: "operations", description: "Review recorded outbound provider handoffs." },
+  { href: "/admin/referral-attribution", parentHref: "/admin/searches", label: "Referral Attribution", icon: Activity, roles: ["ADMIN"], section: "operations", description: "Summarize verified provider referrals without inferring bookings." },
   { href: "/admin/content", label: "Content", icon: FileText, roles: ["ADMIN"], section: "content", description: "Review admin-managed site content." },
   { href: "/admin/flights", label: "Flights", icon: Plane, roles: ["ADMIN"], section: "readiness", description: "Review flight administration readiness." },
   { href: "/admin/hotels", label: "Hotels", icon: Hotel, roles: ["ADMIN"], section: "readiness", description: "Review hotel administration readiness." },
@@ -65,7 +67,6 @@ const previewTesterNavigation: AdminNavDefinition = { href: "/admin/preview-test
 export function getAdminNavForRole(role: AdminRole, includePreviewTesters = false) {
   return [...adminNavigation, ...(includePreviewTesters ? [previewTesterNavigation] : [])].filter((item) => item.roles.includes(role));
 }
-
 
 export type AdminHeaderGroup = {
   label: string;
