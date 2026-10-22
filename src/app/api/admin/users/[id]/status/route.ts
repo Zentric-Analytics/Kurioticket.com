@@ -6,6 +6,7 @@ import {
   writeAdminAuditLog,
 } from "@/lib/admin";
 import { getPrisma } from "@/lib/prisma";
+import { lockVisitorAccount } from "@/services/visitorActivityIdentity";
 
 export const runtime = "nodejs";
 
@@ -47,22 +48,6 @@ export async function PATCH(request: Request, context: RouteContext) {
     );
   }
 
-  if (target.status === "DELETED" && body.status !== "DELETED") {
-    const finalizedDeletion = await getPrisma().accountDeletionRequest.findFirst({
-      where: { userId: target.id, status: "COMPLETED", completedAt: { not: null } },
-      select: { id: true },
-    });
-    if (finalizedDeletion) {
-      return NextResponse.json(
-        {
-          error: "A finalized anonymized account cannot be reactivated or suspended.",
-          deletionRequestId: finalizedDeletion.id,
-        },
-        { status: 409 },
-      );
-    }
-  }
-
   if (target.role === "ADMIN" && body.status !== "ACTIVE") {
     const remainingAdmins = await countActiveAdminsExcluding(target.id);
     if (remainingAdmins === 0) {
@@ -78,17 +63,76 @@ export async function PATCH(request: Request, context: RouteContext) {
     );
   }
 
-  const user = await getPrisma().$transaction(async tx => {
-    const invalidating = body.status === "SUSPENDED" || body.status === "DELETED";
-    const updated = await tx.user.update({ where: { id }, data: { status: body.status as never, ...(invalidating ? { sessionVersion: { increment: 1 } } : {}) } });
-    if (invalidating) {
-      await tx.accountSession.updateMany({ where: { userId: id, revokedAt: null }, data: { revokedAt: new Date(), revokeReason: body.status === "DELETED" ? "account_deleted" : "account_suspended" } });
-      await tx.securityEvent.create({ data: { userId: id, type: "ACCOUNT_SUSPENDED", metadata: { nextStatus: body.status } } });
-    } else if (target.status !== "ACTIVE") {
-      await tx.securityEvent.create({ data: { userId: id, type: "ACCOUNT_REACTIVATED" } });
+  const statusResult = await getPrisma().$transaction(async tx => {
+    const lockedTarget = await lockVisitorAccount(tx, id);
+    if (!lockedTarget) return { kind: "missing" as const };
+
+    if (lockedTarget.status === "DELETED" && body.status !== "DELETED") {
+      const finalizedDeletion = await tx.accountDeletionRequest.findFirst({
+        where: {
+          userId: lockedTarget.id,
+          status: "COMPLETED",
+          completedAt: { not: null },
+        },
+        select: { id: true },
+      });
+      if (finalizedDeletion) {
+        return {
+          kind: "finalized" as const,
+          deletionRequestId: finalizedDeletion.id,
+        };
+      }
     }
-    return updated;
+
+    const invalidating = body.status === "SUSPENDED" || body.status === "DELETED";
+    const updated = await tx.user.update({
+      where: { id },
+      data: {
+        status: body.status as never,
+        ...(invalidating ? { sessionVersion: { increment: 1 } } : {}),
+      },
+    });
+    if (invalidating) {
+      await tx.accountSession.updateMany({
+        where: { userId: id, revokedAt: null },
+        data: {
+          revokedAt: new Date(),
+          revokeReason: body.status === "DELETED" ? "account_deleted" : "account_suspended",
+        },
+      });
+      await tx.securityEvent.create({
+        data: {
+          userId: id,
+          type: "ACCOUNT_SUSPENDED",
+          metadata: { nextStatus: body.status },
+        },
+      });
+    } else if (lockedTarget.status !== "ACTIVE") {
+      await tx.securityEvent.create({
+        data: { userId: id, type: "ACCOUNT_REACTIVATED" },
+      });
+    }
+    return {
+      kind: "updated" as const,
+      user: updated,
+      previousStatus: lockedTarget.status,
+    };
   });
+
+  if (statusResult.kind === "missing") {
+    return NextResponse.json({ error: "User not found." }, { status: 404 });
+  }
+  if (statusResult.kind === "finalized") {
+    return NextResponse.json(
+      {
+        error: "A finalized anonymized account cannot be reactivated or suspended.",
+        deletionRequestId: statusResult.deletionRequestId,
+      },
+      { status: 409 },
+    );
+  }
+
+  const user = statusResult.user;
   await writeAdminAuditLog({
     adminUserId: auth.session.user.id,
     adminEmail: auth.session.user.email,
@@ -101,7 +145,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     targetType: "User",
     targetId: user.id,
     targetEmail: user.email,
-    metadata: { previousStatus: target.status, nextStatus: user.status },
+    metadata: { previousStatus: statusResult.previousStatus, nextStatus: user.status },
     request,
   });
 
