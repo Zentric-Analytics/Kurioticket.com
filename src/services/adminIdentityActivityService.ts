@@ -49,10 +49,9 @@ export async function loadAdminIdentityActivity(
 ): Promise<ActivityReadResult> {
   const cursor = decodeActivityCursor(cursorInput, kind, id, filters);
   if (cursor === null) return { status: "invalid_cursor" };
-  const db = getOptionalPrisma();
-  if (!db) return { status: "unavailable" };
-
   try {
+    const db = getOptionalPrisma();
+    if (!db) return { status: "unavailable" };
     const account = kind === "user" ? await db.user.findUnique({
       where: { id },
       select: { id: true, name: true, email: true, role: true, status: true, createdAt: true },
@@ -184,7 +183,7 @@ export async function loadAdminIdentityActivity(
       status: "ok",
       data: {
         id, kind,
-        title: account?.name || account?.email || "Guest visitor",
+        title: kind === "guest" ? "Guest visitor" : account?.name || account?.email || "Registered user",
         email: account?.email ?? null,
         role: account?.role ?? null,
         status: account?.status ?? "Anonymous",
