@@ -4,6 +4,7 @@ import {
   getDuffelApiMode,
 } from "@/lib/env";
 import { getOptionalPrisma, isDatabaseConfigured, withOptionalDb } from "@/lib/prisma";
+import { getDuffelProviderBlockReason } from "@/services/travel/providers/duffelProvider";
 
 type ProviderStatus = {
   product: "Flights" | "Hotels" | "Cars";
@@ -120,7 +121,11 @@ export async function getProviderStatuses(): Promise<ProviderStatus[]> {
   ]);
 
   const flightPrimary = "duffel";
-  const flightCredentials = Boolean(process.env.DUFFEL_API_KEY);
+  const flightApiKey = process.env.DUFFEL_API_KEY?.trim() || "";
+  const flightCredentials = Boolean(flightApiKey);
+  const flightBlockReason = flightCredentials
+    ? getDuffelProviderBlockReason(flightApiKey)
+    : undefined;
   const flightEnvironment = getDuffelApiMode() === "test" ? "Test mode" : "Production";
 
   return [
@@ -129,13 +134,15 @@ export async function getProviderStatuses(): Promise<ProviderStatus[]> {
       providerName: flightPrimary === "duffel" ? "Duffel" : "Not connected",
       environment: flightCredentials ? flightEnvironment : "Unavailable",
       credentialsPresent: flightCredentials,
-      searchEnabled: flightCredentials,
-      bookingEnabled: process.env.DUFFEL_BOOKING_ENABLED === "true" && flightCredentials,
+      searchEnabled: flightCredentials && !flightBlockReason,
+      bookingEnabled: false,
       lastSuccessfulRequest: flightRequest,
       lastFailedRequest: flightFailure,
-      notes: flightCredentials
-        ? "Flight search can use configured Duffel credentials. Booking remains disabled unless a live booking workflow is explicitly enabled."
-        : "No flight provider credentials are connected for admin readiness checks.",
+      notes: !flightCredentials
+        ? "No flight provider credentials are connected for admin readiness checks."
+        : flightBlockReason
+          ? "Duffel credentials are configured, but the current environment safety policy blocks flight search."
+          : "Flight search is ready. Direct Duffel booking is not implemented.",
     },
     {
       product: "Hotels",
@@ -207,7 +214,10 @@ function unavailableMetrics(): AdminMetrics {
 }
 
 function hasAnyProviderCredentials() {
-  return Boolean(process.env.DUFFEL_API_KEY);
+  return Boolean(
+    process.env.DUFFEL_API_KEY?.trim() ||
+      process.env.KAYAK_SANDBOX_API_KEY?.trim(),
+  );
 }
 
 function safeAppEnvironment() {

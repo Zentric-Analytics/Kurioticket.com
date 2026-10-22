@@ -1,11 +1,16 @@
 import { NextResponse } from "next/server";
 import { requireAdminApiSession } from "@/lib/admin";
 import { getDuffelAdminHealth, pausedProviderRows } from "@/lib/admin-data";
+import { getProviderIntegrationStatuses } from "@/services/travel/providerIntegrationStatus";
 
 export const runtime = "nodejs";
 
 export async function GET() {
   const auth = await requireAdminApiSession();
   if (auth.response) return auth.response;
-  return NextResponse.json({ active: { duffel: await getDuffelAdminHealth() }, paused: pausedProviderRows });
+  return NextResponse.json({
+    active: { duffel: await getDuffelAdminHealth() },
+    integrations: getProviderIntegrationStatuses(),
+    paused: pausedProviderRows,
+  });
 }
