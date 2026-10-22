@@ -106,11 +106,15 @@ function TripCard({ trip }: { trip: MobileTrip }) {
       return;
     }
     let active = true;
-    void travelApi.flightStatus(trip.id)
-      .then((status) => { if (active) setFlightStatus(status); })
-      .catch(() => { if (active) setFlightStatus(null); });
-    return () => { active = false; };
-  }, [trip.id, trip.tripType]);
+    const refresh = () => {
+      void travelApi.flightStatus(trip.id)
+        .then((status) => { if (active) setFlightStatus(status); })
+        .catch(() => undefined);
+    };
+    refresh();
+    const interval = trip.status === "upcoming" ? setInterval(refresh, 60_000) : null;
+    return () => { active = false; if (interval !== null) clearInterval(interval); };
+  }, [trip.id, trip.status, trip.tripType]);
 
   return (
     <View
@@ -144,8 +148,8 @@ function TripCard({ trip }: { trip: MobileTrip }) {
             </View>
           ) : null}
         </View>
-        {trip.providerConfirmed && trip.confirmationVerifiedAt ? (
-          <Text style={ft.styles.meta}>Verified {new Date(trip.confirmationVerifiedAt).toLocaleString()}</Text>
+        {trip.providerConfirmed && trip.providerConfirmedAt ? (
+          <Text style={ft.styles.meta}>Verified {new Date(trip.providerConfirmedAt).toLocaleString()}</Text>
         ) : null}
         <Text style={ft.styles.meta}>Confirmation: {trip.providerConfirmationCode}</Text>
         <Text style={ft.styles.meta}>{trip.travelerCount} traveler{trip.travelerCount === 1 ? "" : "s"}</Text>
