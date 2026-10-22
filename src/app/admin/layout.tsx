@@ -1,4 +1,4 @@
-import { AdminShell } from "@/components/admin/AdminPageShell";
+import { AdminHorizontalShell } from "@/components/admin/AdminHorizontalShell";
 import { requireAdminSession } from "@/lib/auth-guards";
 import { isStagingEnvironment } from "@/lib/stagingSafety";
 
@@ -6,13 +6,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const session = await requireAdminSession("/admin");
 
   return (
-    <AdminShell
+    <AdminHorizontalShell
       adminEmail={session.user.email}
       adminName={session.user.name}
       adminRole={session.user.role}
       showPreviewTesters={isStagingEnvironment()}
     >
       {children}
-    </AdminShell>
+    </AdminHorizontalShell>
   );
 }
