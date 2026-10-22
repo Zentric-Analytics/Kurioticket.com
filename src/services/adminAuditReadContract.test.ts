@@ -33,3 +33,25 @@ test("audit queries reject repeated and unknown parameters", () => {
   assert.equal(parseAdminAuditQuery(new URLSearchParams("action=A&action=B"), now).status, "invalid");
   assert.equal(parseAdminAuditQuery(new URLSearchParams("metadata=secret"), now).status, "invalid");
 });
+
+test("audit pagination preserves the original default time window", () => {
+  const firstNow = new Date("2026-10-22T14:00:00Z");
+  const first = parseAdminAuditQuery(new URLSearchParams(), firstNow);
+  assert.equal(first.status, "ok");
+  if (first.status !== "ok") return;
+
+  const cursor = encodeAdminAuditCursor(
+    first.data.scope,
+    "2026-10-22T13:00:00.000Z",
+    "audit_456",
+  );
+
+  const later = parseAdminAuditQuery(
+    new URLSearchParams(`cursor=${cursor}`),
+    new Date("2026-10-22T14:10:00Z"),
+  );
+  assert.equal(later.status, "ok");
+  if (later.status === "ok") {
+    assert.deepEqual(later.data.scope, first.data.scope);
+  }
+});
