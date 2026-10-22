@@ -47,6 +47,22 @@ export async function PATCH(request: Request, context: RouteContext) {
     );
   }
 
+  if (target.status === "DELETED" && body.status !== "DELETED") {
+    const finalizedDeletion = await getPrisma().accountDeletionRequest.findFirst({
+      where: { userId: target.id, status: "COMPLETED", completedAt: { not: null } },
+      select: { id: true },
+    });
+    if (finalizedDeletion) {
+      return NextResponse.json(
+        {
+          error: "A finalized anonymized account cannot be reactivated or suspended.",
+          deletionRequestId: finalizedDeletion.id,
+        },
+        { status: 409 },
+      );
+    }
+  }
+
   if (target.role === "ADMIN" && body.status !== "ACTIVE") {
     const remainingAdmins = await countActiveAdminsExcluding(target.id);
     if (remainingAdmins === 0) {

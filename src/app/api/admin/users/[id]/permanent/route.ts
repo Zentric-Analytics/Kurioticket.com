@@ -60,6 +60,21 @@ export async function DELETE(request: Request, context: RouteContext) {
     );
   }
 
+  const deletionRequest = await db.accountDeletionRequest.findFirst({
+    where: { userId: target.id },
+    select: { id: true, status: true },
+    orderBy: { requestedAt: "desc" },
+  });
+  if (deletionRequest) {
+    return NextResponse.json(
+      {
+        error: "Accounts with a deletion request must use the audited account-deletion finalization flow.",
+        deletionRequestId: deletionRequest.id,
+      },
+      { status: 409 },
+    );
+  }
+
   const targetEmail = target.email?.trim() || null;
   const normalizedTargetEmail = targetEmail?.toLowerCase() || null;
 

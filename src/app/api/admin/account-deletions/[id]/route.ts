@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdminApiSession, writeAdminAuditLog } from "@/lib/admin";
 import { getPrisma } from "@/lib/prisma";
 import { recordAccountEventSafely } from "@/services/accountNotificationService";
+import { AccountDeletionFinalizationError, finalizeAccountDeletionRequest } from "@/services/accountDeletionFinalizationService";
 
 export const dynamic = "force-dynamic";
 
@@ -54,7 +55,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
   if (admin.response) return admin.response;
 
   const { id } = await context.params;
-  const body = await request.json().catch(() => null) as { action?: string; reviewNotes?: unknown; adminReference?: unknown } | null;
+  const body = await request.json().catch(() => null) as { action?: string; reviewNotes?: unknown; adminReference?: unknown; confirmEmail?: unknown; retentionReviewed?: unknown } | null;
   if (!body || typeof body.action !== "string") return NextResponse.json({ error: "Action is required." }, { status: 400 });
 
   const existing = await getDeletionRequest(id);
@@ -73,9 +74,62 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     if (existing.deletionScheduledAt.getTime() > Date.now()) return NextResponse.json({ error: "The 7-day deadline has not passed yet." }, { status: 400 });
     data.status = "READY_FOR_REVIEW";
   } else if (body.action === "mark_completed") {
-    if (existing.status !== "READY_FOR_REVIEW") return NextResponse.json({ error: "Only ready-for-review requests can be marked completed." }, { status: 400 });
-    data.status = "COMPLETED";
-    data.completedAt = new Date();
+    return NextResponse.json(
+      {
+        error: "Completion now requires explicit account finalization.",
+        errorCode: "finalization_confirmation_required",
+      },
+      { status: 409 },
+    );
+  } else if (body.action === "finalize") {
+    try {
+      const finalized = await finalizeAccountDeletionRequest({
+        requestId: existing.id,
+        confirmedEmail: typeof body.confirmEmail === "string" ? body.confirmEmail : "",
+        reviewNotes: typeof body.reviewNotes === "string" ? body.reviewNotes : "",
+        adminReference: typeof body.adminReference === "string" ? body.adminReference : "",
+        retentionReviewed: body.retentionReviewed === true,
+      });
+
+      await writeAdminAuditLog({
+        adminUserId: admin.session.user.id,
+        adminEmail: admin.session.user.email,
+        action: "account_deletion.finalize",
+        targetType: "AccountDeletionRequest",
+        targetId: finalized.request.id,
+        targetEmail: finalized.request.email,
+        metadata: {
+          previousStatus: existing.status,
+          nextStatus: finalized.request.status,
+          hardDeleteTriggered: false,
+          anonymizationCompleted: true,
+          cleanupCounts: finalized.cleanupCounts,
+        },
+        request,
+      });
+
+      return NextResponse.json({
+        request: serializeRequest(finalized.request),
+        cleanupCounts: finalized.cleanupCounts,
+      });
+    } catch (error) {
+      if (error instanceof AccountDeletionFinalizationError) {
+        const status =
+          error.code === "NOT_FOUND"
+            ? 404
+            : error.code === "ADMIN_BLOCKED"
+              ? 403
+              : error.code === "ACCOUNT_CHANGED"
+                ? 409
+                : 400;
+        return NextResponse.json(
+          { error: error.message, errorCode: error.code.toLowerCase() },
+          { status },
+        );
+      }
+      console.error("[admin-account-deletion:finalize]", error);
+      return NextResponse.json({ error: "Unable to finalize account deletion." }, { status: 500 });
+    }
   } else if (body.action !== "save_notes") {
     return NextResponse.json({ error: "Unsupported action." }, { status: 400 });
   }
@@ -86,9 +140,8 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     include: { user: { select: { id: true, email: true, role: true, status: true } } },
   });
 
-  if (updated.status !== existing.status && (updated.status === "READY_FOR_REVIEW" || updated.status === "COMPLETED")) {
-    const completed = updated.status === "COMPLETED";
-    await recordAccountEventSafely({ userId: updated.userId, email: updated.email || updated.user.email, eventKey: `account-deletion:${updated.id}:${completed ? "completed" : "ready-for-review"}`, type: "ACCOUNT_UPDATE", title: completed ? "Account deletion review completed" : "Account deletion under final review", body: completed ? "Your Kurioticket account deletion request was marked completed. Contact Support if you have questions." : "Your account deletion grace period ended and the request is under final review.", actionPath: "/security", metadata: { deletionRequestId: updated.id, status: updated.status } });
+  if (updated.status !== existing.status && updated.status === "READY_FOR_REVIEW") {
+    await recordAccountEventSafely({ userId: updated.userId, email: updated.email || updated.user.email, eventKey: `account-deletion:${updated.id}:ready-for-review`, type: "ACCOUNT_UPDATE", title: "Account deletion under final review", body: "Your account deletion grace period ended and the request is under final review.", actionPath: "/security", metadata: { deletionRequestId: updated.id, status: updated.status } });
   }
 
   await writeAdminAuditLog({
