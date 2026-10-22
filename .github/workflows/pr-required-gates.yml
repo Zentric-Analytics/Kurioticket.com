@@ -69,6 +69,14 @@ jobs:
         run: >-
           node --input-type=module --import jiti/register -e
           'await import("./src/app/api/internal/cron/account-deletion-review/route.test.ts");'
+      - name: Validate admin handoff hardening contracts
+        env:
+          JITI_TSCONFIG_PATHS: ./tsconfig.json
+          JITI_JSX: "true"
+        run: >-
+          node --input-type=module --import jiti/register -e
+          'await import("./src/services/adminAuditReadContract.test.ts");
+          await import("./src/services/providerOperationalStatus.test.ts");'
       - name: Validate Render web build
         run: npm run build
       - name: Install native dependencies
