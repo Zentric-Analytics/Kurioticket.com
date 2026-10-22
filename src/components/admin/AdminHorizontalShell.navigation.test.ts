@@ -24,11 +24,16 @@ test("selected tabs change only the underline, without text, icon, weight, or ba
   assert.equal(isAdminNavItemActive("/admin", "/admin/users"), false);
 });
 
-test("navigation keeps the same role-aware subpages and uses a compact fallback before the desktop row overflows", () => {
-  assert.match(shell, /min-\[1440px\]:block/);
-  assert.match(shell, /min-\[1440px\]:hidden/);
+test("navigation keeps role-aware child pages and restores desktop tabs before 1100px", () => {
+  assert.match(shell, /min-\[1100px\]:block/);
+  assert.match(shell, /min-\[1100px\]:hidden/);
   assert.match(shell, /min-\[1600px\]:gap-2/);
   assert.match(shell, /min-\[1800px\]:gap-3/);
+  assert.match(shell, /overflow-x-auto overscroll-x-contain/);
+  assert.match(shell, /flex min-w-max w-full flex-nowrap/);
+  assert.match(shell, /mobile \? "w-fit" : "w-full"/);
+  assert.match(shell, /Genuine brand mark stays visible/);
+  assert.doesNotMatch(shell, /min-\[1440px\]/);
   const groups = getAdminHeaderGroups("ADMIN", true);
   const entries = groups.flatMap(group => group.links);
   const searches = entries.find(({ item }) => item.href === "/admin/searches");
