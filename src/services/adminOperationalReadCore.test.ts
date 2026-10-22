@@ -30,6 +30,21 @@ test("support source context only returns allowlisted bounded text", () => {
   assert.deepEqual(source, { page: "mobile_support", platform: "ios", action: "ticket" });
 });
 
+test("withdrawn or disabled visitors are not exposed as attributed identities", () => {
+  assert.equal(
+    __adminOperationalReadCoreTest.attributableVisitorId("visitor_123", { consentStatus: "GRANTED", trackingDisabledAt: null }),
+    "visitor_123",
+  );
+  assert.equal(
+    __adminOperationalReadCoreTest.attributableVisitorId("visitor_123", { consentStatus: "WITHDRAWN", trackingDisabledAt: new Date() }),
+    null,
+  );
+  assert.equal(
+    __adminOperationalReadCoreTest.attributableVisitorId("visitor_123", { consentStatus: "GRANTED", trackingDisabledAt: new Date() }),
+    null,
+  );
+});
+
 test("identity classification distinguishes registered, guest and unattributed records", () => {
   assert.equal(__adminOperationalReadCoreTest.identity("user_123", "visitor_123").kind, "registered");
   assert.equal(__adminOperationalReadCoreTest.identity(null, "visitor_123").kind, "guest");
