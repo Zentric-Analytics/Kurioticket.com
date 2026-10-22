@@ -966,6 +966,18 @@ enum CmsContentRevisionAction {
   ARCHIVED
 }
 
+model CmsContentScope {
+  id          String         @id @default(cuid())
+  type        CmsContentType
+  market      String
+  locale      String
+  activatedAt DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@unique([type, market, locale])
+  @@index([updatedAt])
+}
+
 model CmsContentItem {
   id                   String           @id @default(cuid())
   type                 CmsContentType
