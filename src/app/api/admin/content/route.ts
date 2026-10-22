@@ -29,13 +29,17 @@ export async function GET(request: Request) {
   }
 
   try {
-    const items = await listAdminCmsContent({
+    const rawLimit = url.searchParams.get("limit");
+    const limit = rawLimit === null ? undefined : Number(rawLimit);
+    const result = await listAdminCmsContent({
       type: type as CmsContentType | undefined,
       status: status as CmsContentStatus | undefined,
       market: url.searchParams.get("market") || undefined,
       locale: url.searchParams.get("locale") || undefined,
+      limit,
+      cursor: url.searchParams.get("cursor") || undefined,
     });
-    return NextResponse.json({ items });
+    return NextResponse.json(result);
   } catch (error) {
     return cmsErrorResponse(error);
   }
