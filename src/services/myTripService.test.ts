@@ -31,6 +31,8 @@ test("listing is user-scoped, status-filtered, and serializes only safe provider
   assert.deepEqual(upcoming.trips.map((trip) => trip.id), ["a-safe"]);
   assert.equal(upcoming.trips[0].providerAction?.external, true);
   assert.equal(upcoming.trips[0].providerAction?.url, "https://provider-a.test/manage");
+  assert.equal(upcoming.trips[0].providerConfirmed, false);
+  assert.equal(upcoming.trips[0].confirmationVerifiedAt, null);
   assert.deepEqual(past.trips.map((trip) => trip.id), ["a-legacy"]);
   assert.equal(past.trips[0].providerAction, null);
   assert.equal([...upcoming.trips, ...past.trips].some((trip) => trip.id === "b-private"), false);
@@ -44,6 +46,8 @@ test("trusted ingestion creates and retries idempotently for the same provider, 
   assert.equal(first.id, retry.id);
   assert.equal(db.records.length, 1);
   assert.equal(retry.destination, "SFO");
+  assert.equal(retry.providerConfirmed, true);
+  assert.equal(retry.confirmationVerifiedAt, "2026-09-02T00:00:00.000Z");
 });
 
 test("a composite collision from a different user fails closed without updating the winner", async () => {
@@ -165,7 +169,7 @@ function confirmation(overrides: Record<string, unknown> = {}) {
 }
 
 function record(overrides: Record<string, unknown> = {}) {
-  return { id: "trip-1", userId: "user-a", tripType: "FLIGHT" as const, status: "UPCOMING" as const, providerName: "Provider A", providerConfirmationCode: "ABC123", partnerConversionId: null as string | null, partnerConfirmationOccurredAt: null as Date | null, origin: "LAX", destination: "JFK", departureDate: new Date("2026-09-01T00:00:00Z"), returnDate: null, travelerCount: 1, currency: "USD", totalAmount: 250, providerManageUrl: null as string | null, ...overrides };
+  return { id: "trip-1", userId: "user-a", tripType: "FLIGHT" as const, status: "UPCOMING" as const, providerName: "Provider A", providerConfirmationCode: "ABC123", source: "MIGRATED_LEGACY" as const, partnerConversionId: null as string | null, partnerConfirmationOccurredAt: null as Date | null, origin: "LAX", destination: "JFK", departureDate: new Date("2026-09-01T00:00:00Z"), returnDate: null, travelerCount: 1, currency: "USD", totalAmount: 250, providerManageUrl: null as string | null, ...overrides };
 }
 
 function memoryClient(seed: TripRecord[]) {
