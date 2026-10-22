@@ -218,6 +218,15 @@ enum MyTripSource {
   MIGRATED_LEGACY
 }
 
+enum FlightOperationalStatus {
+  SCHEDULED
+  DELAYED
+  DEPARTED
+  ARRIVED
+  CANCELLED
+  UNKNOWN
+}
+
 model User {
   id                       String                        @id @default(cuid())
   name                     String?
@@ -887,6 +896,7 @@ model MyTrip {
   createdAt                DateTime     @default(now())
   updatedAt                DateTime     @updatedAt
   user                     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  flightStatusSnapshot     FlightStatusSnapshot?
 
   @@unique([userId, providerName, providerConfirmationCode])
   @@unique([providerName, partnerConversionId])
@@ -894,6 +904,29 @@ model MyTrip {
   @@index([userId, status, departureDate])
   @@index([providerConfirmationCode])
   @@index([providerTripId])
+}
+
+model FlightStatusSnapshot {
+  id                   String                  @id @default(cuid())
+  myTripId             String                  @unique
+  status               FlightOperationalStatus
+  flightNumber         String
+  carrierCode          String
+  originAirport        String
+  destinationAirport   String
+  scheduledDepartureAt DateTime
+  scheduledArrivalAt   DateTime?
+  estimatedDepartureAt DateTime?
+  actualDepartureAt    DateTime?
+  estimatedArrivalAt   DateTime?
+  actualArrivalAt      DateTime?
+  observedAt           DateTime
+  createdAt            DateTime                @default(now())
+  updatedAt            DateTime                @updatedAt
+  myTrip               MyTrip                  @relation(fields: [myTripId], references: [id], onDelete: Cascade)
+
+  @@index([status, scheduledDepartureAt])
+  @@index([observedAt])
 }
 
 model LegalDocument {
