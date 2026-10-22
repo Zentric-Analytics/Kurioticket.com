@@ -33,7 +33,7 @@ jobs:
         env:
           JITI_TSCONFIG_PATHS: ./tsconfig.json
           JITI_JSX: "true"
-        run: node --test --import jiti/register src/lib/adminIdentityActivity.test.ts src/lib/adminIdentityJourney.test.ts
+        run: node --test --import jiti/register src/components/admin/AdminIdentityTable.test.ts src/lib/adminIdentityActivity.test.ts src/lib/adminIdentityJourney.test.ts
       - run: npx playwright install --with-deps chromium
       - name: Render and test real Admin Activity component with labelled QA data
         run: node qa/admin-activity-details/run.mjs
