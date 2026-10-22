@@ -17,7 +17,8 @@ test("authorization happens before query validation or storage", async () => {
 test("safe provider helpers remove URL details and unsafe source paths", () => {
   assert.equal(__adminOperationalReadCoreTest.safeDomain("https://provider.example/deal?secret=1#x"), "provider.example");
   assert.equal(__adminOperationalReadCoreTest.safeDomain("javascript:alert(1)"), null);
-  assert.equal(__adminOperationalReadCoreTest.safePath("https://staging.kurioticket.com/hotels/results?token=abc"), "/hotels/results");
+  assert.equal(__adminOperationalReadCoreTest.safePath("/hotels/results?token=abc"), "/hotels/results");
+  assert.equal(__adminOperationalReadCoreTest.safePath("https://staging.kurioticket.com/hotels/results?token=abc"), null);
 });
 
 test("support source context only returns allowlisted bounded text", () => {
