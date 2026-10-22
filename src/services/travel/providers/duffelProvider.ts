@@ -59,7 +59,7 @@ export type PlaceSearchContext = {
   locale?: string;
 };
 
-function getDuffelProviderBlockReason(apiKey: string) {
+export function getDuffelProviderBlockReason(apiKey: string) {
   const stagingSafety = getStagingProviderSafety();
   if (!stagingSafety.safe) return stagingSafety.reason;
 
