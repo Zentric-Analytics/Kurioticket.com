@@ -18,8 +18,8 @@ test("attribution summary reports handoffs by provider and safe source path with
       groupBy: async (args: unknown) => {
         groupByArgs = args;
         return [
-          { provider: "Duffel", type: "FLIGHT", sourcePage: "/flights/results?private=1", _count: { _all: 3 } },
-          { provider: "KAYAK sandbox", type: "HOTEL", sourcePage: "/hotels/details#rate", _count: { _all: 2 } },
+          { provider: "Duffel", type: "FLIGHT" as const, sourcePage: "/flights/results?private=1", _count: { _all: 3 } },
+          { provider: "KAYAK sandbox", type: "HOTEL" as const, sourcePage: "/hotels/details#rate", _count: { _all: 2 } },
         ];
       },
     },
