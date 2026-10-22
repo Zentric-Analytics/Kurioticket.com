@@ -11,13 +11,18 @@ import { translations as enTranslations } from "@/lib/i18n/en";
 
 type FaqContentProps = {
   showAccountLink: boolean;
+  initialFaqItems: FaqItem[];
+  initialFaqLocale: string;
 };
 
-export function FaqContent({ showAccountLink }: FaqContentProps) {
+export function FaqContent({ showAccountLink, initialFaqItems, initialFaqLocale }: FaqContentProps) {
   const { locale, t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const fallbackFaqItems = getGeneralFaqs(t);
-  const [cmsFaqState, setCmsFaqState] = useState<{ locale: string; items: FaqItem[] } | null>(null);
+  const [cmsFaqState, setCmsFaqState] = useState<{ locale: string; items: FaqItem[] } | null>({
+    locale: initialFaqLocale,
+    items: initialFaqItems,
+  });
   const faqItems = cmsFaqState?.locale === locale ? cmsFaqState.items : fallbackFaqItems;
 
   useEffect(() => {
