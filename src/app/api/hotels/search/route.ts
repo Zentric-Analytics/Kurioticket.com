@@ -75,18 +75,28 @@ export async function POST(request: Request) {
     ? await searchHotelsByProvider(search, providerMode, { kayak: kayakContext, defer: after })
     : await searchHotels(search, { kayak: kayakContext, defer: after });
   if (aggregate.unavailableMessage) {
-    after(() => Promise.all(
-      aggregate.providerStatuses.map((provider) =>
-        logProviderCall({
-          provider: provider.provider,
-          service: "hotel-search",
-          status:
-            provider.status === "success" ? "SUCCESS" : provider.status === "skipped" ? "DISABLED" : "FAILED",
-          latencyMs: provider.latencyMs,
-          errorMessage: provider.error,
-        }),
-      ),
-    ).then(() => undefined));
+    after(async () => {
+      try {
+        const { userId, visitorId } = await resolveRequestActivityIdentity(request);
+        await Promise.all([
+          logSearchHistory({
+            userId, visitorId, requestId, type: "HOTEL", destination: search.destination,
+            checkIn: new Date(search.checkIn), checkOut: new Date(search.checkOut),
+            query: search, resultCount: 0, latencyMs: aggregate.latencyMs, status: "FAILED",
+          }),
+          ...aggregate.providerStatuses.map((provider) =>
+            logProviderCall({
+              provider: provider.provider,
+              service: "hotel-search",
+              status:
+                provider.status === "success" ? "SUCCESS" : provider.status === "skipped" ? "DISABLED" : "FAILED",
+              latencyMs: provider.latencyMs,
+              errorMessage: provider.error,
+            }),
+          ),
+        ]);
+      } catch (error) { console.error("[hotel-search:logging]", error); }
+    });
 
     return NextResponse.json(
       {

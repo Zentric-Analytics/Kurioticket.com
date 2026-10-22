@@ -27,7 +27,7 @@ test("Compare deals owns the provider booking action", () => {
 
 test("provider booking keeps handoff readiness and offer-change recovery", () => {
   assert.match(source, /const handoff=async\(offerId:string\) => \{ if\(booking\|\|!displayPricesReady\)return;/);
-  assert.match(source, /travelApi\.flightRedirect\(offerId\)/);
+  assert.match(source, /travelApi\.flightRedirect\(offerId, \{ handoff: journeyEvents.prepareHandoff\(journeyRequestId\) \}\)/);
   assert.match(source, /Linking\.openURL\(response\.url\)/);
   assert.match(source, /error\.details\?\.code==="offer_changed"/);
 });

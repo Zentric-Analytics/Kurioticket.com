@@ -48,7 +48,7 @@ test("native Hotel rate cards replace the bottom dock on all tabs", () => {
   assert.doesNotMatch(detailSource, /bookingDock|NativeSupplierInformation|Property information supplied by KAYAK/);
   assert.ok(detailSource.includes('contentContainerStyle={{ paddingBottom: 24 + inset.bottom }}'));
   assert.ok(detailSource.includes('onViewDeal={(rateId) => void continueHotelRate(rateId)}'));
-  assert.ok(detailSource.includes('travelApi.hotelRedirect(selected.offerId)'));
+  assert.ok(detailSource.includes('travelApi.hotelRedirect(selected.offerId, { handoff: journeyEvents.prepareHandoff(journeyRequestId) })'));
   assert.ok(ratesSource.includes('onPress={() => onViewDeal(row.id)}'));
   assert.ok(ratesSource.includes('hotelSupplierFacts(providerDetails)'));
   assert.ok(ratesSource.includes('Bundled rate|Rate breakdown|Rate condition'));

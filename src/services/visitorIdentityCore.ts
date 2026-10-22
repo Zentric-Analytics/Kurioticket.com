@@ -1,5 +1,6 @@
 import type { Prisma, PrismaClient } from "@/generated/prisma/client";
 import { createVisitorToken, hashVisitorToken, isVisitorToken } from "@/lib/visitor-identity";
+import { isEligibleVisitorAccount, lockVisitorAccount, lockVisitorCredential } from "@/services/visitorActivityIdentity";
 
 export type IdentityLinkSource = "SIGN_IN" | "SIGN_UP" | "ACCOUNT_API";
 export type VisitorIdentityDatabase = Pick<PrismaClient, "$transaction" | "visitor">;
@@ -31,11 +32,6 @@ function contextWhere(userId: string | null): Prisma.VisitorWhereInput {
   return userId
     ? { OR: [{ currentUserId: null }, { currentUserId: userId }], identityLinks: { none: { userId: { not: userId } } } }
     : { currentUserId: null, identityLinks: { none: {} } };
-}
-
-async function lockVisitor(tx: Prisma.TransactionClient, tokenHash: string) {
-  // Serialise consent, claim and withdrawal for one identity. Only the hash reaches SQL.
-  await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('visitor-identity'), hashtext(${tokenHash}))`;
 }
 
 async function createVisitor(tx: Prisma.TransactionClient, policyVersion?: string) {
@@ -79,7 +75,7 @@ export function createVisitorIdentityService(getDatabase: () => VisitorIdentityD
     return db.$transaction(async tx => {
       if (isVisitorToken(input.token)) {
         const tokenHash = hashVisitorToken(input.token);
-        await lockVisitor(tx, tokenHash);
+        await lockVisitorCredential(tx, tokenHash);
         const visitor = await tx.visitor.findUnique({ where: { tokenHash }, select: identitySelect });
         if (visitor && hasConsent(visitor) && belongsToContext(visitor, input.userId ?? null)) {
           // Repeated synchronisation is not a new grant. Record only an explicit policy change.
@@ -121,8 +117,9 @@ export function createVisitorIdentityService(getDatabase: () => VisitorIdentityD
   async function linkVisitorToUser(input: { token: string | null | undefined; userId: string; source: IdentityLinkSource }) {
     if (!isVisitorToken(input.token) || !input.userId) return null;
     return requiredDatabase().$transaction(async tx => {
+      if (!isEligibleVisitorAccount(await lockVisitorAccount(tx, input.userId))) return null;
       const tokenHash = hashVisitorToken(input.token!);
-      await lockVisitor(tx, tokenHash);
+      await lockVisitorCredential(tx, tokenHash);
       const visitor = await tx.visitor.findUnique({ where: { tokenHash }, select: identitySelect });
       if (!visitor || !hasConsent(visitor) || !belongsToContext(visitor, input.userId)) return null;
       return await claimVisitor(tx, visitor.id, input.userId, input.source) ? visitor.id : null;
@@ -132,8 +129,9 @@ export function createVisitorIdentityService(getDatabase: () => VisitorIdentityD
   async function mergeAnalyticsVisitor(input: { token: string | null | undefined; userId: string; source: IdentityLinkSource }) {
     if (!isVisitorToken(input.token) || !input.userId) return null;
     return requiredDatabase().$transaction(async tx => {
+      if (!isEligibleVisitorAccount(await lockVisitorAccount(tx, input.userId))) return null;
       const tokenHash = hashVisitorToken(input.token!);
-      await lockVisitor(tx, tokenHash);
+      await lockVisitorCredential(tx, tokenHash);
       const visitor = await tx.visitor.findUnique({ where: { tokenHash }, select: identitySelect });
       if (!visitor || !hasConsent(visitor)) return null;
       // Carry the still-granted device choice to a fresh identity on an account switch.
@@ -149,7 +147,7 @@ export function createVisitorIdentityService(getDatabase: () => VisitorIdentityD
     if (!isVisitorToken(token)) return true;
     return requiredDatabase().$transaction(async tx => {
       const tokenHash = hashVisitorToken(token);
-      await lockVisitor(tx, tokenHash);
+      await lockVisitorCredential(tx, tokenHash);
       const visitor = await tx.visitor.findUnique({ where: { tokenHash }, select: identitySelect });
       if (!visitor || !hasConsent(visitor)) return true;
       await tx.visitor.update({

@@ -3,6 +3,7 @@ import { readSession } from "../storage/sessionStorage";
 import { Platform } from "react-native";
 import type { CanonicalLocation } from "@/lib/locations/types";
 import Constants from "expo-constants";
+import { randomUUID } from "expo-crypto";
 import type { PublicHotelProviderDetails } from "../../../../src/lib/hotels/hotelProviderDetails";
 import type { NormalizedCarResult } from "../../../../src/lib/cars/types";
 import type { PublicFlightResult, PublicHotelPropertyDetails, PublicHotelResult } from "../../../../src/lib/types";
@@ -14,6 +15,7 @@ import { logFlightSearchCheckpoint } from "../features/search/flightSearchDiagno
 import { visitorIdentity } from "../features/privacy/visitorIdentity";
 import type { JourneyEvent, JourneyEventResponse } from "../features/privacy/journeyEventCoordinator";
 import { rememberJourneyResponseContext } from "../features/privacy/journeyResponseContext";
+import { createProviderHandoffMetadata, type ProviderHandoffMetadataReader } from "../../../../src/lib/providerHandoffClient";
 
 export class TravelApiError extends Error {
   constructor(message: string, public status = 0, public code: "cancelled" | "timeout" | "configuration" | "validation" | "rate-limit" | "unavailable" | "server" | "network" | "invalid-response" = "network", public details?: Record<string, unknown>) { super(message); }
@@ -94,7 +96,7 @@ function apiErrorMessage(data: Record<string, unknown>) {
   return "Kurioticket could not complete this request.";
 }
 
-async function request<T>(path: string, init: RequestInit = {}, options: { signal?: AbortSignal; timeoutMs?: number; requestId?: string; visitorContext?: number } = {}) {
+async function request<T>(path: string, init: RequestInit = {}, options: { signal?: AbortSignal; timeoutMs?: number; requestId?: string; visitorContext?: number; body?: () => unknown } = {}) {
   const requestStartedAt = Date.now();
   const base = getApiBaseUrl(Platform.OS, __DEV__);
   if (!base.ok) throw new TravelApiError(base.message, 0, "configuration");
@@ -113,6 +115,7 @@ async function request<T>(path: string, init: RequestInit = {}, options: { signa
   try {
     const response = await fetch(`${base.baseUrl}${path}`, {
       ...init,
+      ...(options.body ? { body: JSON.stringify(options.body()) } : {}),
       signal: controller.signal,
       headers: {
         Accept: "application/json",
@@ -183,6 +186,17 @@ async function request<T>(path: string, init: RequestInit = {}, options: { signa
   } finally { clearTimeout(timeout); options.signal?.removeEventListener("abort", onAbort); }
 }
 
+type RedirectOptions = { signal?: AbortSignal; sourcePage?: string; handoff?: ProviderHandoffMetadataReader };
+
+function providerRedirect(id: string, type: "flight" | "hotel", options: RedirectOptions = {}) {
+  const handoff = options.handoff ?? createProviderHandoffMetadata(() => null, randomUUID);
+  return request<FlightRedirectResponse>("/api/redirect", { method: "POST" }, {
+    signal: options.signal,
+    // Resolve correlation after the transport restores/synchronizes its identity.
+    body: () => ({ id, type, sourcePage: options.sourcePage ?? `native_${type}_details`, ...handoff() }),
+  });
+}
+
 async function fetchExploreCatalogue(): Promise<MobileExploreCatalogue> {
   const response = await request<{ data?: unknown }>("/api/mobile/v1/explore/catalogue");
   const catalogue = parseMobileExploreCatalogue(response.data);
@@ -197,10 +211,10 @@ export const travelApi = {
   journeyEvent: (body: JourneyEvent, options: { signal: AbortSignal; visitorContext: number }) => request<JourneyEventResponse>("/api/journey/events", { method: "POST", body: JSON.stringify(body) }, { ...options, timeoutMs: 4000 }),
   searchFlights: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string }) => request<TravelSearchResponse<PublicFlightResult>>("/api/flights/search", { method: "POST", body: JSON.stringify(body) }, { ...options, timeoutMs: METASEARCH_REQUEST_TIMEOUT_MS }),
   flightDetails: (id: string, options: { signal?: AbortSignal } = {}) => request<FlightDetailsResponse>(`/api/flights/details?id=${encodeURIComponent(id)}`, {}, options),
-  flightRedirect: (id: string, options: { signal?: AbortSignal; sourcePage?: string } = {}) => request<FlightRedirectResponse>("/api/redirect", { method: "POST", body: JSON.stringify({ id, type: "flight", sourcePage: options.sourcePage ?? "native_flight_details" }) }, { signal: options.signal }),
+  flightRedirect: (id: string, options: RedirectOptions = {}) => providerRedirect(id, "flight", options),
   searchHotels: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string }) => request<HotelSearchResponse>("/api/hotels/search", { method: "POST", body: JSON.stringify(body) }, { ...options, timeoutMs: METASEARCH_REQUEST_TIMEOUT_MS }),
   searchHotelsProgressive: (body: Record<string, unknown>, cursor: string | null, options?: { signal?: AbortSignal; requestId?: string }) => request<HotelSearchResponse>("/api/mobile/v1/hotels/progressive", { method: "POST", body: JSON.stringify(cursor ? { cursor } : { search: body }) }, { ...options, timeoutMs: METASEARCH_REQUEST_TIMEOUT_MS }),
-  hotelRedirect: (id: string) => request<FlightRedirectResponse>("/api/redirect", { method: "POST", body: JSON.stringify({ id, type: "hotel", sourcePage: "native_hotel_details" }) }),
+  hotelRedirect: (id: string, options: RedirectOptions = {}) => providerRedirect(id, "hotel", options),
   hotelDetails: (input: MobileHotelDetailsRequest, options: { signal?: AbortSignal } = {}) => {
     const params = new URLSearchParams({ id: input.id, destination: input.destination, checkIn: input.checkIn, checkOut: input.checkOut, guests: String(input.guests), rooms: String(input.rooms), relatedLimit: "12" });
     return request<MobileHotelDetailsResponse>(`/api/hotels/details?${params.toString()}`, {}, options);
