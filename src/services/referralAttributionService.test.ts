@@ -11,10 +11,11 @@ const fixedNow = new Date("2026-10-22T12:00:00.000Z");
 test("attribution summary reports handoffs by provider and safe source path without claiming bookings", async () => {
   let groupByArgs: unknown;
   let eventCountArgs: unknown;
-  const service = createReferralAttributionService(() => ({
+  let isolationLevel: unknown;
+  const transaction = {
     redirectLog: {
       count: async () => 5,
-      groupBy: async (args) => {
+      groupBy: async (args: unknown) => {
         groupByArgs = args;
         return [
           { provider: "Duffel", type: "FLIGHT", sourcePage: "/flights/results?private=1", _count: { _all: 3 } },
@@ -23,7 +24,13 @@ test("attribution summary reports handoffs by provider and safe source path with
       },
     },
     journeyEvent: {
-      count: async (args) => { eventCountArgs = args; return 3; },
+      count: async (args: unknown) => { eventCountArgs = args; return 3; },
+    },
+  };
+  const service = createReferralAttributionService(() => ({
+    $transaction: async (operation, options) => {
+      isolationLevel = options?.isolationLevel;
+      return operation(transaction);
     },
   }), () => fixedNow);
 
@@ -53,6 +60,7 @@ test("attribution summary reports handoffs by provider and safe source path with
     },
   });
   assert.equal(JSON.stringify(summary).includes("private=1"), false);
+  assert.equal(isolationLevel, "RepeatableRead");
 });
 
 test("attribution defaults to unavailable rather than inventing zero-conversion data", async () => {
