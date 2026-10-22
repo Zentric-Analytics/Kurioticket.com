@@ -17,6 +17,7 @@ export const runtime = "nodejs";
 
 type Dependencies = {
   secret: () => string | undefined;
+  providerName: () => string | undefined;
   now: () => number;
   record: typeof recordPartnerFlightStatus;
 };
@@ -25,7 +26,8 @@ type Dependencies = {
 export function createFlightStatusUpdateHandler(dependencies: Dependencies) {
   return async function POST(request: Request) {
     const secret = dependencies.secret()?.trim();
-    if (!isConfiguredPartnerConfirmationSecret(secret)) {
+    const configuredProviderName = dependencies.providerName()?.trim();
+    if (!isConfiguredPartnerConfirmationSecret(secret) || !configuredProviderName) {
       return NextResponse.json(
         { error: "Flight status updates are not configured.", errorCode: "flight_status_not_configured" },
         { status: 503 },
@@ -65,7 +67,13 @@ export function createFlightStatusUpdateHandler(dependencies: Dependencies) {
     }
 
     try {
-      const input = parsePartnerFlightStatus(JSON.parse(rawBody));
+      const input = parsePartnerFlightStatus(JSON.parse(rawBody), new Date(dependencies.now()));
+      if (input.providerName !== configuredProviderName) {
+        return NextResponse.json(
+          { error: "Invalid flight status provider.", errorCode: "flight_status_provider_mismatch" },
+          { status: 403 },
+        );
+      }
       const result = await dependencies.record(input);
       return NextResponse.json({ accepted: true, applied: result.applied });
     } catch (error) {
@@ -86,6 +94,7 @@ export function createFlightStatusUpdateHandler(dependencies: Dependencies) {
 
 export const POST = createFlightStatusUpdateHandler({
   secret: () => process.env.FLIGHT_STATUS_WEBHOOK_SECRET,
+  providerName: () => process.env.FLIGHT_STATUS_PROVIDER_NAME,
   now: () => Date.now(),
   record: recordPartnerFlightStatus,
 });
