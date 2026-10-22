@@ -39,7 +39,7 @@ export async function getAdminOverview(params: URLSearchParams) {
   try {
     const [journeys, providers, users, support, deletions, adminActions] = await Promise.all([
       adminJourneys.summary({ from, to, environment }),
-      getProviderOperationalStatuses(24),
+      getProviderOperationalStatuses(24, environment),
       Promise.all([
         db.user.count(),
         db.user.count({ where: { status: "ACTIVE" } }),
