@@ -70,10 +70,22 @@ export function visitorCookieOptions() {
 export function isSameOriginRequest(request: Request) {
   if (request.headers.get("sec-fetch-site") === "cross-site") return false;
   const origin = request.headers.get("origin");
-  if (!origin) return true;
+  // Native clients and same-origin browser GETs can omit Origin entirely.
+  if (origin === null) return true;
 
   try {
-    return new URL(origin).origin === new URL(request.url).origin;
+    const source = new URL(origin);
+    // Only a serialized HTTP(S) origin is valid, not "null", a URL with a
+    // path/credentials, or multiple values joined into a single header.
+    if ((source.protocol !== "https:" && source.protocol !== "http:") || source.origin !== origin) return false;
+
+    // Next can expose an internal host/port behind Render's reverse proxy.
+    // Use the same trusted public URL precedence as getBaseUrl(); never let
+    // Host/Forwarded headers expand it or fall back from invalid configuration.
+    const publicUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL;
+    const target = new URL(publicUrl || request.url);
+    if ((target.protocol !== "https:" && target.protocol !== "http:") || target.username || target.password) return false;
+    return source.origin === target.origin;
   } catch {
     return false;
   }

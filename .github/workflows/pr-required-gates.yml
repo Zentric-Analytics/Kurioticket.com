@@ -31,6 +31,16 @@ jobs:
             apps/mobile/package-lock.json
       - name: Install web/server dependencies
         run: npm ci
+      - name: Validate privacy consent behind the reverse proxy
+        env:
+          JITI_TSCONFIG_PATHS: ./tsconfig.json
+          JITI_JSX: "true"
+        run: >-
+          node --input-type=module --import jiti/register -e
+          'await import("./src/lib/visitor-identity.test.ts");
+          await import("./src/lib/visitor-identity-route.test.ts");
+          await import("./src/lib/analyticsConsentClient.test.ts");
+          await import("./src/app/api/journey/events/handler.test.ts");'
       - name: Validate Render web build
         run: npm run build
       - name: Install native dependencies

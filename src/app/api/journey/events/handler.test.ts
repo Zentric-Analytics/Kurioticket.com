@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
-import test from "node:test";
+import { test as runTest } from "node:test";
 import { createJourneyEventHandler } from "./handler";
 import { resolveRequestActivityIdentity } from "@/services/requestActivityIdentity";
 import type { ClientJourneyEventInput } from "@/services/searchJourneyService";
@@ -9,6 +9,27 @@ import type { JourneyEventReceipt } from "@/lib/search-journey";
 const token = "a".repeat(43);
 const nativeToken = "b".repeat(43);
 const event = { eventId: randomUUID(), type: "RESULTS_VIEWED", requestId: randomUUID(), sourcePage: "/flights/search" };
+const publicOrigin = "https://staging.kurioticket.com";
+
+async function withOrigins(values: { app?: string; auth?: string }, work: () => Promise<void>) {
+  const previous = { app: process.env.NEXT_PUBLIC_APP_URL, auth: process.env.NEXTAUTH_URL };
+  try {
+    if (values.app === undefined) delete process.env.NEXT_PUBLIC_APP_URL;
+    else process.env.NEXT_PUBLIC_APP_URL = values.app;
+    if (values.auth === undefined) delete process.env.NEXTAUTH_URL;
+    else process.env.NEXTAUTH_URL = values.auth;
+    await work();
+  } finally {
+    if (previous.app === undefined) delete process.env.NEXT_PUBLIC_APP_URL;
+    else process.env.NEXT_PUBLIC_APP_URL = previous.app;
+    if (previous.auth === undefined) delete process.env.NEXTAUTH_URL;
+    else process.env.NEXTAUTH_URL = previous.auth;
+  }
+}
+
+function test(name: string, work: () => Promise<void>) {
+  return runTest(name, () => withOrigins({}, work));
+}
 function request(body: unknown = event, headers: Record<string, string> = {}) {
   return new Request("https://kurioticket.com/api/journey/events", {
     method: "POST", headers: { origin: "https://kurioticket.com", cookie: `kt_visitor=${token}`, ...headers }, body: JSON.stringify(body),
@@ -43,6 +64,81 @@ function fixture() {
     onPause: (value: () => Promise<void>) => { onPause = value; },
     respond: (value: typeof receipt) => { receipt = value; } };
 }
+
+test("browser journey events use the configured public origin behind an internal proxy URL", async () => {
+  await withOrigins({ app: publicOrigin }, async () => {
+    const f = fixture();
+    f.setUser("verified-account");
+    for (const type of ["RESULTS_VIEWED", "OFFER_SELECTED"] as const) {
+      const response = await f.handler(new Request("http://127.0.0.1:10000/api/journey/events", {
+        method: "POST",
+        headers: {
+          origin: publicOrigin, "sec-fetch-site": "same-origin", cookie: `kt_visitor=${token}`,
+          host: "internal-service:10000", "x-forwarded-host": "staging.kurioticket.com", "x-forwarded-proto": "https",
+        },
+        body: JSON.stringify({ ...event, type }),
+      }));
+      assert.equal(response.status, 202);
+      assert.deepEqual(await response.json(), { accepted: true });
+    }
+    assert.deepEqual(f.records.map(record => ({ type: record.type, userId: record.userId, visitorId: record.visitorId })), [
+      { type: "RESULTS_VIEWED", userId: "verified-account", visitorId: "web-visitor" },
+      { type: "OFFER_SELECTED", userId: "verified-account", visitorId: "web-visitor" },
+    ]);
+  });
+});
+
+test("canonical journey origin cannot be bypassed with attacker-controlled request or forwarding hosts", async () => {
+  await withOrigins({ app: publicOrigin }, async () => {
+    const f = fixture();
+    for (const [url, origin, site] of [
+      ["https://attacker.example/api/journey/events", "https://attacker.example", "same-origin"],
+      ["http://127.0.0.1:10000/api/journey/events", "http://127.0.0.1:10000", "same-origin"],
+      ["http://127.0.0.1:10000/api/journey/events", publicOrigin, "cross-site"],
+    ]) {
+      const response = await f.handler(new Request(url, {
+        method: "POST",
+        headers: { origin, "sec-fetch-site": site, cookie: `kt_visitor=${token}`, host: "attacker.example", "x-forwarded-host": "attacker.example", "x-forwarded-proto": "https", forwarded: "host=attacker.example;proto=https" },
+        body: JSON.stringify(event),
+      }));
+      assert.equal(response.status, 403);
+    }
+    assert.equal(f.visits(), 0);
+    assert.equal(f.records.length, 0);
+  });
+});
+
+test("malformed canonical origin prevents journey writes even when the request URL and auth URL match", async () => {
+  await withOrigins({ app: "not a valid URL", auth: "https://kurioticket.com" }, async () => {
+    const f = fixture();
+    assert.equal((await f.handler(request())).status, 403);
+    assert.equal(f.visits(), 0);
+    assert.equal(f.records.length, 0);
+  });
+});
+
+test("headerless-origin iOS and Android journey events remain valid while explicit foreign origins are rejected", async () => {
+  await withOrigins({ app: publicOrigin }, async () => {
+    for (const platform of ["ios", "android"]) {
+      const f = fixture();
+      f.setUser("native-account");
+      const headers = { "x-mobile-platform": platform, "x-kt-visitor": nativeToken, authorization: "Bearer validated" };
+      const response = await f.handler(new Request("http://127.0.0.1:10000/api/journey/events", {
+        method: "POST", credentials: "omit", headers, body: JSON.stringify(event),
+      }));
+      assert.equal(response.status, 202);
+      assert.deepEqual(await response.json(), { accepted: true });
+      assert.equal(f.records[0].visitorId, "native-visitor");
+      assert.equal(f.records[0].userId, "native-account");
+      const denied = await f.handler(new Request("http://127.0.0.1:10000/api/journey/events", {
+        method: "POST", headers: { ...headers, origin: "https://attacker.example" }, body: JSON.stringify(event),
+      }));
+      assert.equal(denied.status, 403);
+      assert.equal(f.visits(), 1);
+      assert.equal(f.records.length, 1);
+    }
+  });
+});
 
 test("declining stops journey events immediately while the HttpOnly withdrawal credential remains", async () => {
   const f = fixture();
