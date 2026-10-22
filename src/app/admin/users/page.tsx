@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AdminPageShell, StatusPill } from "@/components/admin/AdminPageShell";
+import { StatusPill } from "@/components/admin/AdminPageShell";
 import { IdentityActivityPanel } from "@/components/admin/IdentityActivityPanel";
 import { UserStatusActions } from "@/components/admin/UserStatusActions";
 import { Card } from "@/components/ui/Card";
@@ -36,15 +36,15 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
   const guestWhere = { consentStatus: "GRANTED" as const, trackingDisabledAt: null, currentUserId: null, identityLinks: { none: {} }, ...(q ? { id: { contains: prismaQuery, mode: "insensitive" as const } } : {}) };
   const showUsers = identity !== "GUEST";
   const showGuests = identity !== "REGISTERED" && role === "ALL" && status === "ALL";
+  // This is a directory, not a second Overview dashboard. Count only the
+  // identities needed for filtering and pagination; Overview owns the KPIs.
   const stats = await withOptionalDb(async db => {
-    const [totalUsers, activeUsers, suspendedUsers, guests, filteredUsers, filteredGuests] = await Promise.all([
-      db.user.count(), db.user.count({ where: { status: "ACTIVE" } }), db.user.count({ where: { status: "SUSPENDED" } }),
-      db.visitor.count({ where: { consentStatus: "GRANTED", trackingDisabledAt: null, currentUserId: null, identityLinks: { none: {} } } }),
+    const [filteredUsers, filteredGuests] = await Promise.all([
       showUsers ? db.user.count({ where }) : Promise.resolve(0),
       showGuests ? db.visitor.count({ where: guestWhere }) : Promise.resolve(0),
     ]);
-    return { totalUsers, activeUsers, suspendedUsers, guests, filteredUsers, filteredGuests };
-  }, { totalUsers: 0, activeUsers: 0, suspendedUsers: 0, guests: 0, filteredUsers: 0, filteredGuests: 0 });
+    return { filteredUsers, filteredGuests };
+  }, { filteredUsers: 0, filteredGuests: 0 });
   const { page, count } = getAdminIdentityPagination(
     params?.page, stats.filteredUsers, stats.filteredGuests, PAGE_SIZE,
   );
@@ -86,11 +86,9 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
   const protectedEmails = new Set(getAdminEmails());
   const link = (nextPage: number) => "/admin/users?" + new URLSearchParams({ ...(q ? { q } : {}), role, status, identity, page: String(nextPage) }).toString();
   return (
-    <AdminPageShell title="Users" description="Review registered accounts and consent-eligible guest identities. Open recorded activity without changing account controls.">
-      <div className="grid gap-3 md:grid-cols-3">
-        {[["Registered users", stats.totalUsers], ["Active accounts", stats.activeUsers], ["Guest identities", stats.guests]].map(([label, value]) => <Card key={String(label)} className="p-4"><p className="text-xs font-semibold text-slate-500">{label}</p><p className="mt-2 text-2xl font-bold text-slate-950">{Number(value).toLocaleString()}</p></Card>)}
-      </div>
-      <Card className="mt-4 p-4">
+    <div className="w-full min-w-0">
+      <h1 className="sr-only">Users</h1>
+      <Card className="p-4">
         <form action="/admin/users" className="grid gap-3 md:grid-cols-[minmax(0,1fr)_150px_140px_150px_auto]">
           <input name="q" defaultValue={q} placeholder="Name, email, user ID or guest ID" className="min-w-0 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm" />
           <select name="identity" defaultValue={identity} aria-label="Identity type" className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm"><option value="ALL">All identities</option><option value="REGISTERED">Registered</option><option value="GUEST">Guests</option></select>
@@ -129,6 +127,6 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
         <div className="flex items-center justify-between gap-3 border-t border-slate-100 p-4 text-sm"><span className="text-slate-500">Page {page} of {Math.max(1, Math.ceil(count / PAGE_SIZE))}</span><div className="flex gap-2">{page > 1 ? <Link className="rounded-lg border px-3 py-2" href={link(page - 1)}>Previous</Link> : null}{page * PAGE_SIZE < count ? <Link className="rounded-lg border px-3 py-2" href={link(page + 1)}>Next</Link> : null}</div></div>
       </Card>
       {params?.activity ? <IdentityActivityPanel selection={params.activity} /> : null}
-    </AdminPageShell>
+    </div>
   );
 }
