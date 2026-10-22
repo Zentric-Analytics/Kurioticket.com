@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Image,
   Linking,
@@ -9,7 +9,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { readSession } from "../../storage/sessionStorage";
 import { travelApi, type MobileFlightStatus, type MobileTrip } from "../../api/travelApi";
 import { locationImageByCity } from "./locationCatalogue";
@@ -25,6 +25,8 @@ export function MyTripsFlowScreen() {
   const [trips, setTrips] = useState<MobileTrip[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [focused, setFocused] = useState(false);
+  useFocusEffect(useCallback(() => { setFocused(true); return () => setFocused(false); }, []));
   useEffect(() => {
     let active = true;
     setLoading(true);
@@ -89,19 +91,19 @@ export function MyTripsFlowScreen() {
           </View>
         ) : null}
         {trips.map((trip) => (
-          <TripCard key={trip.id} trip={trip} />
+          <TripCard key={trip.id} trip={trip} active={focused} />
         ))}
       </ScrollView>
     </SafeAreaView>
   );
 }
-function TripCard({ trip }: { trip: MobileTrip }) {
+function TripCard({ trip, active }: { trip: MobileTrip; active: boolean }) {
   const ft = useFlowTheme();
   const image = locationImageByCity(trip.destination);
   const [flightStatus, setFlightStatus] = useState<MobileFlightStatus | null>(null);
 
   useEffect(() => {
-    if (trip.tripType !== "flight" || trip.status !== "upcoming") {
+    if (!active || trip.tripType !== "flight" || trip.status !== "upcoming") {
       setFlightStatus(null);
       return;
     }
@@ -114,7 +116,7 @@ function TripCard({ trip }: { trip: MobileTrip }) {
     refresh();
     const interval = setInterval(refresh, 60_000);
     return () => { active = false; clearInterval(interval); };
-  }, [trip.id, trip.status, trip.tripType]);
+  }, [active, trip.id, trip.status, trip.tripType]);
 
   return (
     <View
