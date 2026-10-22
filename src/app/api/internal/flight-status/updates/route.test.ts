@@ -9,7 +9,7 @@ const now = Date.parse("2026-10-22T16:00:00.000Z");
 
 test("flight status updates require a configured and valid provider signature", async () => {
   let recorded = false;
-  const POST = createFlightStatusUpdateHandler({ secret: () => secret, now: () => now, record: async () => { recorded = true; return { applied: true }; } });
+  const POST = createFlightStatusUpdateHandler({ secret: () => secret, providerName: () => "Example Provider", now: () => now, record: async () => { recorded = true; return { applied: true }; } });
   const response = await POST(new Request("https://kurioticket.test/api/internal/flight-status/updates", {
     method: "POST",
     headers: { "x-kt-flight-status-timestamp": String(Math.floor(now / 1_000)), "x-kt-flight-status-signature": `sha256=${"0".repeat(64)}` },
@@ -21,7 +21,7 @@ test("flight status updates require a configured and valid provider signature", 
 
 test("a signed update acknowledges only whether the status was applied", async () => {
   let received: unknown;
-  const POST = createFlightStatusUpdateHandler({ secret: () => secret, now: () => now, record: async input => { received = input; return { applied: true }; } });
+  const POST = createFlightStatusUpdateHandler({ secret: () => secret, providerName: () => "Example Provider", now: () => now, record: async input => { received = input; return { applied: true }; } });
   const rawBody = JSON.stringify(payload());
   const response = await POST(request(rawBody));
   assert.equal(response.status, 200);
@@ -32,6 +32,35 @@ test("a signed update acknowledges only whether the status was applied", async (
     scheduledDepartureAt: new Date("2026-11-01T09:00:00.000Z"), scheduledArrivalAt: null, estimatedDepartureAt: null,
     actualDepartureAt: null, estimatedArrivalAt: null, actualArrivalAt: null,
   });
+});
+
+
+test("flight status updates reject a signed payload for a different provider", async () => {
+  let recorded = false;
+  const POST = createFlightStatusUpdateHandler({
+    secret: () => secret,
+    providerName: () => "Example Provider",
+    now: () => now,
+    record: async () => { recorded = true; return { applied: true }; },
+  });
+  const rawBody = JSON.stringify({ ...payload(), providerName: "Other Provider" });
+  const response = await POST(request(rawBody));
+  assert.equal(response.status, 403);
+  assert.equal(recorded, false);
+});
+
+test("flight status updates reject future occurredAt values outside the allowed clock skew", async () => {
+  let recorded = false;
+  const POST = createFlightStatusUpdateHandler({
+    secret: () => secret,
+    providerName: () => "Example Provider",
+    now: () => now,
+    record: async () => { recorded = true; return { applied: true }; },
+  });
+  const rawBody = JSON.stringify({ ...payload(), occurredAt: "2026-10-22T16:06:00.000Z" });
+  const response = await POST(request(rawBody));
+  assert.equal(response.status, 400);
+  assert.equal(recorded, false);
 });
 
 function request(rawBody: string) {
