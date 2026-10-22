@@ -11,6 +11,66 @@ export const cmsContentTypes = [
   "FAQ",
 ] as const satisfies readonly CmsContentType[];
 
+const cmsContentStatuses = ["DRAFT", "PUBLISHED", "HIDDEN", "ARCHIVED"] as const satisfies readonly CmsContentStatus[];
+const cmsCursorId = /^[A-Za-z0-9_-]{6,128}$/;
+const cmsCursorIso = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d{1,3})?)?(?:Z|[+-]\d{2}:\d{2})$/;
+
+type CmsListScope = {
+  type: CmsContentType | null;
+  status: CmsContentStatus | null;
+  market: string | null;
+  locale: string | null;
+};
+
+function encodeCmsListCursor(scope: CmsListScope, updatedAt: string, id: string) {
+  return Buffer.from(JSON.stringify({ v: 1, scope, updatedAt, id }), "utf8").toString("base64url");
+}
+
+function decodeCmsListCursor(value: string | undefined): { scope: CmsListScope; updatedAt: string; id: string } | null {
+  if (!value) return null;
+  if (value.length > 2048) throw new CmsContentError("INVALID", "CMS cursor is malformed.", { field: "cursor" });
+  try {
+    const decoded = JSON.parse(Buffer.from(value, "base64url").toString("utf8")) as Record<string, unknown>;
+    const scope = decoded.scope as Partial<CmsListScope> | undefined;
+    const type = scope?.type ?? null;
+    const status = scope?.status ?? null;
+    const market = scope?.market ?? null;
+    const locale = scope?.locale ?? null;
+    if (
+      decoded.v !== 1 ||
+      !scope ||
+      (type !== null && !cmsContentTypes.includes(type as CmsContentType)) ||
+      (status !== null && !cmsContentStatuses.includes(status as CmsContentStatus)) ||
+      (market !== null && (typeof market !== "string" || !(market === "GLOBAL" || /^[A-Z]{2}$/.test(market)))) ||
+      (locale !== null && (typeof locale !== "string" || !/^[a-z]{2}(?:-[a-z]{2})?$/.test(locale))) ||
+      typeof decoded.updatedAt !== "string" ||
+      !cmsCursorIso.test(decoded.updatedAt) ||
+      !Number.isFinite(Date.parse(decoded.updatedAt)) ||
+      typeof decoded.id !== "string" ||
+      !cmsCursorId.test(decoded.id)
+    ) {
+      throw new Error("invalid");
+    }
+    return {
+      scope: { type: type as CmsContentType | null, status: status as CmsContentStatus | null, market, locale },
+      updatedAt: new Date(decoded.updatedAt).toISOString(),
+      id: decoded.id,
+    };
+  } catch (error) {
+    if (error instanceof CmsContentError) throw error;
+    throw new CmsContentError("INVALID", "CMS cursor is malformed.", { field: "cursor" });
+  }
+}
+
+function rethrowCmsWriteConflict(error: unknown, duplicateMessage: string, concurrencyMessage: string): never {
+  if (error instanceof CmsContentError) throw error;
+  if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (error.code === "P2002") throw new CmsContentError("CONFLICT", duplicateMessage);
+    if (error.code === "P2034") throw new CmsContentError("CONFLICT", concurrencyMessage);
+  }
+  throw error;
+}
+
 const printable = (max: number) =>
   z.string().trim().min(1).max(max).refine((value) => !/[\u0000-\u001f\u007f]/.test(value), "Control characters are not allowed.");
 
@@ -243,11 +303,11 @@ export async function createCmsContent(raw: unknown, actorInput: CmsActor) {
       return serialize(item);
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   } catch (error) {
-    if (error instanceof CmsContentError) throw error;
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
-      throw new CmsContentError("CONFLICT", "Content with this type, key, market and locale already exists.");
-    }
-    throw error;
+    rethrowCmsWriteConflict(
+      error,
+      "Content with this type, key, market and locale already exists.",
+      "Content changed concurrently. Refresh and try again.",
+    );
   }
 }
 
@@ -288,11 +348,11 @@ export async function updateCmsContentDraft(id: string, raw: unknown, actorInput
       return serialize(item);
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   } catch (error) {
-    if (error instanceof CmsContentError) throw error;
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
-      throw new CmsContentError("CONFLICT", "Another content item already uses this type, key, market and locale.");
-    }
-    throw error;
+    rethrowCmsWriteConflict(
+      error,
+      "Another content item already uses this type, key, market and locale.",
+      "Content changed concurrently. Refresh before saving.",
+    );
   }
 }
 
@@ -410,11 +470,11 @@ async function transitionCmsContent(
       return serialize(item);
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   } catch (error) {
-    if (error instanceof CmsContentError) throw error;
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
-      throw new CmsContentError("CONFLICT", "Another published content item already uses this type, key, market and locale.");
-    }
-    throw error;
+    rethrowCmsWriteConflict(
+      error,
+      "Another published content item already uses this type, key, market and locale.",
+      "Content changed concurrently. Refresh before publishing.",
+    );
   }
 }
 
@@ -423,24 +483,58 @@ export async function listAdminCmsContent(input: {
   status?: CmsContentStatus;
   market?: string;
   locale?: string;
+  limit?: number;
+  cursor?: string;
 } = {}) {
   const db = getOptionalPrisma();
   if (!db) throw new CmsContentError("UNAVAILABLE", "CMS storage is unavailable.");
+
+  const cursor = decodeCmsListCursor(input.cursor);
   const parsedMarket = input.market ? marketSchema.safeParse(input.market) : null;
   if (parsedMarket && !parsedMarket.success) throw new CmsContentError("INVALID", "Market filter is invalid.", parsedMarket.error.flatten());
   const parsedLocale = input.locale ? localeSchema.safeParse(input.locale) : null;
   if (parsedLocale && !parsedLocale.success) throw new CmsContentError("INVALID", "Locale filter is invalid.", parsedLocale.error.flatten());
-  const items = await db.cmsContentItem.findMany({
+  const limit = input.limit ?? 50;
+  if (!Number.isInteger(limit) || limit < 1 || limit > 100) {
+    throw new CmsContentError("INVALID", "Limit must be an integer from 1 to 100.", { field: "limit" });
+  }
+
+  const scope: CmsListScope = {
+    type: input.type ?? cursor?.scope.type ?? null,
+    status: input.status ?? cursor?.scope.status ?? null,
+    market: parsedMarket?.success ? parsedMarket.data : cursor?.scope.market ?? null,
+    locale: parsedLocale?.success ? parsedLocale.data : cursor?.scope.locale ?? null,
+  };
+  if (cursor && JSON.stringify(cursor.scope) !== JSON.stringify(scope)) {
+    throw new CmsContentError("INVALID", "CMS cursor does not match this query.", { field: "cursor" });
+  }
+
+  const rows = await db.cmsContentItem.findMany({
     where: {
-      ...(input.type ? { type: input.type } : {}),
-      ...(input.status ? { status: input.status } : {}),
-      ...(parsedMarket?.success ? { market: parsedMarket.data } : {}),
-      ...(parsedLocale?.success ? { locale: parsedLocale.data } : {}),
+      ...(scope.type ? { type: scope.type } : {}),
+      ...(scope.status ? { status: scope.status } : {}),
+      ...(scope.market ? { market: scope.market } : {}),
+      ...(scope.locale ? { locale: scope.locale } : {}),
+      ...(cursor
+        ? {
+            OR: [
+              { updatedAt: { lt: new Date(cursor.updatedAt) } },
+              { updatedAt: new Date(cursor.updatedAt), id: { lt: cursor.id } },
+            ],
+          }
+        : {}),
     },
-    orderBy: [{ type: "asc" }, { market: "asc" }, { locale: "asc" }, { sortOrder: "asc" }, { updatedAt: "desc" }],
-    take: 200,
+    orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
+    take: limit + 1,
   });
-  return items.map(serialize);
+
+  const page = rows.slice(0, limit);
+  const last = page.at(-1);
+  const nextCursor = rows.length > limit && last
+    ? encodeCmsListCursor(scope, last.updatedAt.toISOString(), last.id)
+    : null;
+
+  return { items: page.map(serialize), nextCursor };
 }
 
 export async function getAdminCmsContent(id: string) {
