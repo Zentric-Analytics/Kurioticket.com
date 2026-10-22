@@ -107,6 +107,6 @@ test("direct Saved-flight entry resolves Nigeria and explicit EUR normally", () 
 
 test("Results uses the authoritative ID-only navigation contract", () => {
   const resultsScreen = readFileSync(resolve("src/features/search/ApprovedResultsScreen.tsx"), "utf8");
-  assert.match(resultsScreen, /params: buildFlightDetailParams\(\{ searchParams: params, result \}\)/);
+  assert.match(resultsScreen, /params: buildFlightDetailParams\(\{ searchParams: params, result, requestId \}\)/);
   assert.doesNotMatch(resultsScreen, /buildFlightDetailParams\(\{ searchParams: params, result, fare, displayCurrencyContext \}\)/);
 });

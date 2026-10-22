@@ -1,5 +1,6 @@
 import { withOptionalDb } from "@/lib/prisma";
 import { withEnvironmentMetadata } from "@/lib/stagingSafety";
+export { recordSearchHistory as logSearchHistory } from "@/services/searchJourneyService";
 
 export async function trackAnalyticsEvent(input: {
   userId?: string | null;
@@ -47,42 +48,6 @@ export async function logProviderCall(input: {
         data: {
           ...input,
           metadata: withEnvironmentMetadata(input.metadata) as never,
-        },
-      });
-      return true;
-    },
-    false,
-  );
-}
-
-export async function logSearchHistory(input: {
-  userId?: string | null;
-  visitorId?: string | null;
-  type: "FLIGHT" | "HOTEL";
-  origin?: string | null;
-  destination?: string | null;
-  checkIn?: Date | null;
-  checkOut?: Date | null;
-  query: Record<string, unknown>;
-  resultCount: number;
-  latencyMs: number;
-  status: "SUCCESS" | "PARTIAL" | "FAILED";
-}) {
-  await withOptionalDb(
-    async (db) => {
-      await db.searchHistory.create({
-        data: {
-          userId: input.userId || undefined,
-          visitorId: input.visitorId || undefined,
-          type: input.type,
-          origin: input.origin || undefined,
-          destination: input.destination || undefined,
-          checkIn: input.checkIn || undefined,
-          checkOut: input.checkOut || undefined,
-          query: withEnvironmentMetadata(input.query) as never,
-          resultCount: input.resultCount,
-          latencyMs: input.latencyMs,
-          status: input.status,
         },
       });
       return true;

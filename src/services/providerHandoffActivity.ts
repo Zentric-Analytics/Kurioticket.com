@@ -1,6 +1,8 @@
 import { withOptionalDb } from "@/lib/prisma";
 import { trackAnalyticsEvent } from "@/services/analyticsService";
 import { resolveRequestActivityIdentity } from "@/services/requestActivityIdentity";
+import { journeyEventKey, recordJourneyEvent } from "@/services/searchJourneyService";
+import { journeySourcePath } from "@/lib/search-journey";
 
 export type ProviderHandoffActivity = {
   type: "flight" | "hotel";
@@ -17,12 +19,13 @@ type ActivityDependencies = {
   identity: typeof resolveRequestActivityIdentity;
   redirect: (input: AttributedHandoff) => Promise<unknown>;
   event: typeof trackAnalyticsEvent;
+  journey?: typeof recordJourneyEvent;
 };
 
 const dependencies: ActivityDependencies = {
   identity: resolveRequestActivityIdentity,
   redirect: (input) => withOptionalDb(async (db) => {
-    await db.redirectLog.create({ data: {
+    const redirectLog = await db.redirectLog.create({ data: {
       userId: input.userId,
       visitorId: input.visitorId,
       type: input.type === "flight" ? "FLIGHT" : "HOTEL",
@@ -35,9 +38,10 @@ const dependencies: ActivityDependencies = {
       sourcePage: input.sourcePage,
       metadata: { resultId: input.resultId },
     } });
-    return true;
-  }, false),
+    return redirectLog.id;
+  }, null),
   event: trackAnalyticsEvent,
+  journey: recordJourneyEvent,
 };
 
 /** Schedule only after a verified provider URL is ready; this does not confirm a booking. */
@@ -47,7 +51,7 @@ export async function recordProviderHandoffActivity(
   record: ActivityDependencies = dependencies,
 ) {
   const identity = await record.identity(request).catch(() => ({ userId: null, visitorId: null }));
-  await Promise.allSettled([
+  const [redirect] = await Promise.allSettled([
     record.redirect({ ...input, ...identity }),
     record.event({
       ...identity,
@@ -56,4 +60,21 @@ export async function recordProviderHandoffActivity(
       metadata: { provider: input.provider, route: input.route },
     }),
   ]);
+
+  const redirectLogId = redirect.status === "fulfilled" && typeof redirect.value === "string"
+    ? redirect.value
+    : null;
+  if (redirectLogId) {
+    const sourcePage = journeySourcePath(input.sourcePage);
+    await record.journey?.({
+      visitorId: identity.visitorId,
+      userId: identity.userId,
+      type: "PROVIDER_HANDOFF_STARTED",
+      eventKey: journeyEventKey("redirect", redirectLogId),
+      product: input.type === "flight" ? "FLIGHT" : "HOTEL",
+      provider: input.provider,
+      redirectLogId,
+      metadata: sourcePage ? { sourcePage } : undefined,
+    });
+  }
 }

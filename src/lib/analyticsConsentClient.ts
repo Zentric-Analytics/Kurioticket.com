@@ -5,6 +5,22 @@ export type AnalyticsConsentChoice = "granted" | "declined" | null;
 export const analyticsConsentStorageKey = "kurioticket:analytics-consent:v1";
 export const analyticsConsentPolicyVersion = "analytics-v1";
 export const openAnalyticsSettingsEvent = "kurioticket:open-privacy-settings";
+export const analyticsConsentChangedEvent = "kurioticket:analytics-consent-changed";
+
+/** Matches the consent bridge's verified account boundary; IDs remain local change signals. */
+export function analyticsConsentAccountKey(status: string, user?: {
+  id?: string;
+  status?: string;
+  emailVerified?: boolean;
+  twoFactorEnabled?: boolean;
+  twoFactorVerified?: boolean;
+  accountSessionId?: string;
+} | null): string | null {
+  if (status === "loading") return null;
+  const verified = status === "authenticated" && user?.status === "ACTIVE" && user.emailVerified
+    && (!user.twoFactorEnabled || user.twoFactorVerified) && user.accountSessionId;
+  return verified ? user.id ?? "guest" : "guest";
+}
 
 export function parseAnalyticsConsent(value: string | null): AnalyticsConsentChoice {
   return value === "granted" || value === "declined" ? value : null;
@@ -53,6 +69,7 @@ type Dependencies = {
 export function createVisitorConsentSynchronizer(dependencies: Dependencies) {
   let desired: VisitorConsentContext = { choice: null, accountKey: null };
   let revision = 0;
+  let confirmedRevision = -1;
   let appliedKey: string | null = null;
   let running: Promise<VisitorConsentSyncState> | null = null;
   let disposed = false;
@@ -97,6 +114,10 @@ export function createVisitorConsentSynchronizer(dependencies: Dependencies) {
       }
       if (appliedKey === key) {
         dependencies.onState?.("saved");
+        if (!disposed && revision === currentRevision && confirmedRevision !== currentRevision) {
+          confirmedRevision = currentRevision;
+          dependencies.onSaved?.(current);
+        }
         return "saved";
       }
 
@@ -138,7 +159,10 @@ export function createVisitorConsentSynchronizer(dependencies: Dependencies) {
       if (revision !== currentRevision) continue;
       appliedKey = key;
       dependencies.onState?.("saved");
-      if (!disposed && revision === currentRevision) dependencies.onSaved?.(current);
+      if (!disposed && revision === currentRevision) {
+        confirmedRevision = currentRevision;
+        dependencies.onSaved?.(current);
+      }
       return "saved";
     }
   }

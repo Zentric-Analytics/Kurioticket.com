@@ -1,5 +1,7 @@
 "use client";
 
+import { useJourneyEvents } from "@/components/privacy/JourneyEventsProvider";
+
 import Image from "next/image";
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
@@ -46,6 +48,7 @@ export function FlightCard({
   providerLabel,
   actionAriaLabel,
   onAction,
+  searchRequestId,
 }: {
   flight: PublicFlightResult;
   isAccented?: boolean;
@@ -55,7 +58,10 @@ export function FlightCard({
   providerLabel?: string;
   actionAriaLabel?: string;
   onAction?: (flight: PublicFlightResult) => void;
+  searchRequestId?: string | null;
 }) {
+  const journeyEvents = useJourneyEvents();
+  const recordSelection = () => { if (searchRequestId) journeyEvents.offerSelected("flight", flight.id, flight.provider, searchRequestId); };
   const { t: dictionary, locale } = useLocale();
   const router = useRouter();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
@@ -159,6 +165,7 @@ export function FlightCard({
         detailsHref={resolvedDetailsHref}
         providerLabel={providerLabel}
         onAction={onAction}
+        onSelect={recordSelection}
       />
     <Card
       data-flight-result-card
@@ -174,10 +181,12 @@ export function FlightCard({
           return;
         }
         if (onAction) {
+          recordSelection();
           onAction(flight);
           return;
         }
         if (resolvedDetailsHref) {
+          recordSelection();
           router.push(resolvedDetailsHref);
         }
       }}
@@ -243,6 +252,7 @@ export function FlightCard({
               viewFlightLabel={resolvedActionLabel}
               viewFlightAriaLabel={actionAriaLabel}
               onAction={onAction ? () => onAction(flight) : undefined}
+              onSelect={recordSelection}
               actions={renderFlightUtilityActions("lg:hidden")}
             />
           </div>
@@ -446,6 +456,7 @@ function FlightFareAction({
   viewFlightLabel,
   viewFlightAriaLabel,
   onAction,
+  onSelect,
   actions,
   className,
 }: {
@@ -457,6 +468,7 @@ function FlightFareAction({
   viewFlightLabel: string;
   viewFlightAriaLabel?: string;
   onAction?: () => void;
+  onSelect?: () => void;
   actions?: ReactNode;
   className?: string;
 }) {
@@ -498,7 +510,7 @@ function FlightFareAction({
         {onAction ? (
           <button
             type="button"
-            onClick={onAction}
+            onClick={() => { onSelect?.(); onAction(); }}
             aria-label={viewFlightAriaLabel}
             className="flight-card-view-button mt-2 inline-flex min-h-9 shrink-0 items-center justify-end gap-1 whitespace-nowrap text-sm font-semibold text-[#004BB8] transition hover:text-[#064CF7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"
           >
@@ -508,6 +520,7 @@ function FlightFareAction({
         ) : detailsHref ? (
           <Link
             href={detailsHref}
+            onClick={onSelect}
             aria-label={viewFlightAriaLabel}
             className="flight-card-view-button mt-2 inline-flex min-h-9 shrink-0 items-center justify-end gap-1 whitespace-nowrap text-sm font-semibold text-[#004BB8] transition hover:text-[#064CF7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30"
           >

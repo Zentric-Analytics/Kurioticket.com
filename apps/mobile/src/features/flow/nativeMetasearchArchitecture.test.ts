@@ -24,7 +24,7 @@ test("native keeps provider classification while result cards omit redundant san
   assert.doesNotMatch(results, /KAYAK sandbox · Simulated · Not bookable/);
   assert.doesNotMatch(hotelCard, /KAYAK sandbox · Simulated · Not bookable/);
   assert.match(results, /filterAndSortFlights\(/);
-  assert.match(results, /buildFlightDetailParams\(\{ searchParams: params, result \}\)/);
+  assert.match(results, /buildFlightDetailParams\(\{ searchParams: params, result, requestId \}\)/);
   assert.match(flightDetails, /source: offer\.provider === "KAYAK sandbox" \? "kayak-sandbox" : "duffel"/);
   assert.match(flightDetails, /bookable: offer\.provider === "KAYAK sandbox" \? false : choice\.handoff\.available/);
   assert.match(results, /filterHotels\(results as HotelResult\[\], hotelFilters/);

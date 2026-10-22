@@ -25,9 +25,11 @@ const inheritedFlightDetailKeys = [
 export function buildFlightDetailParams({
   searchParams,
   result,
+  requestId,
 }: {
   searchParams: Record<string, RouteValue>;
   result: FlightResult;
+  requestId?: string;
 }): Record<string, string> {
   const safeSearchParams: Record<string, string> = Object.fromEntries(inheritedFlightDetailKeys.flatMap((key) => {
     const raw = searchParams[key];
@@ -49,5 +51,6 @@ export function buildFlightDetailParams({
   return {
     ...safeSearchParams,
     id: result.id,
+    ...(requestId ? { journeyRequestId: requestId } : {}),
   };
 }

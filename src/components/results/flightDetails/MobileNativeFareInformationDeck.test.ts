@@ -70,7 +70,7 @@ test("mobile Compare deals keeps resilient provider identity, selection, price h
   assert.match(deck, /data-mobile-flight-deal-action/);
   assert.equal(deck.match(/data-mobile-flight-deal-action\s*>\s*([^<]+)<\/button>/)?.[1].trim(), "View deal");
   assert.match(deck, /disabled=\{redirecting \|\| !canViewDeal\}/);
-  assert.match(deck, /onSelectDeal\(deal\.offerId\);\s*onViewDeal\(deal\.offerId\)/);
+  assert.match(deck, /onSelectDeal\(deal\.offerId, true\);\s*onViewDeal\(deal\.offerId\)/);
   assert.doesNotMatch(deck, /No booking deals available|No additional live provider deals were supplied for this fare/);
 });
 

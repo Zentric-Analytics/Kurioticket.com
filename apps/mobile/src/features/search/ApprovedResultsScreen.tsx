@@ -73,6 +73,8 @@ import {
 } from "./SearchUi";
 import { visualFlights, visualHotels } from "./visualFixtures";
 import { useFeatureAvailability } from "../availability/FeatureAvailability";
+import { journeyEvents } from "../privacy/journeyEvents";
+import { journeyResponseContext } from "../privacy/journeyResponseContext";
 import { flightEditSearchParams, flightSearchRouteParamPatch } from "../flow/flightSearchModel";
 import { hotelSearchRouteParamPatch } from "../flow/hotelSearchModel";
 import { FlightEditSearchModal } from "./FlightEditSearchModal";
@@ -255,6 +257,7 @@ function ResultsScreen({ product }: { product: Product }) {
   const plan = buildSearchPlan(product, params);
   const payload = plan.plan?.payload || {};
   const [results, setResults] = useState<(FlightResult | HotelResult)[]>([]);
+  const [resultsRequestId, setResultsRequestId] = useState<string>();
   const [status, setStatus] = useState<Status>("loading");
   const [message, setMessage] = useState("");
   const [retry, setRetry] = useState(0);
@@ -389,6 +392,7 @@ function ResultsScreen({ product }: { product: Product }) {
     const searchKey = plan.plan.key;
     if (product === "flight" && flightResultsOwnerKey.current !== searchKey) {
       setResults([]);
+      setResultsRequestId(undefined);
       resultsRef.current = [];
       flightResultsOwnerKey.current = undefined;
       setFlightResultsOwner(undefined);
@@ -408,6 +412,7 @@ function ResultsScreen({ product }: { product: Product }) {
     setStatus("loading");
     setMessage("");
     if (visualTest) {
+      setResultsRequestId(undefined);
       setResults(product === "flight" ? visualFlights : visualHotels);
       resultsRef.current = product === "flight" ? visualFlights : visualHotels;
       if (product === "flight") {
@@ -494,6 +499,10 @@ function ResultsScreen({ product }: { product: Product }) {
       }
       setResults(valid);
       resultsRef.current = valid;
+      // Use the canonical response ID, including Android's stable progressive
+      // trackId. The local diagnostic request ID is not a history identifier.
+      journeyEvents.rememberSearch(response.requestId, journeyResponseContext(response));
+      setResultsRequestId(response.requestId);
       if (product === "flight") {
         flightResultsOwnerKey.current = searchKey;
         setFlightResultsOwner(searchKey);
@@ -708,6 +717,16 @@ function ResultsScreen({ product }: { product: Product }) {
     }
     return sortHotelsForResults(filteredHotelResults, hotelSort, currencyState?.rates);
   }, [filteredHotelResults, ownedFlightResults, filters, hotelSort, sort, product, flightPriceContext, normalizeFlightPrice, currencyState?.rates]);
+  useFocusEffect(useCallback(() => {
+    const recordDisplayedResults = () => {
+      if (!visualTest && status === "ready" && AppState.currentState === "active") {
+        journeyEvents.resultsViewed(resultsRequestId, product === "flight" ? "/flight-results" : "/hotel-results", sorted.length);
+      }
+    };
+    recordDisplayedResults();
+    const subscription = AppState.addEventListener("change", state => { if (state === "active") recordDisplayedResults(); });
+    return () => subscription.remove();
+  }, [product, resultsRequestId, sorted.length, status, visualTest]));
   const hotelScrollIdentity = JSON.stringify([plan.plan?.key, retry, hotelSort, hotelFilters]);
   const hotelScrolling = useHotelResultsScrolling(hotelScrollIdentity, product === "hotel" ? sorted.length : 0);
   const cheapestHotelId = useMemo(() => product === "hotel"
@@ -1201,6 +1220,7 @@ function ResultsScreen({ product }: { product: Product }) {
             <View style={s0.flightCardItem}>
               <FlightCard
                 result={item}
+                requestId={resultsRequestId}
                 displayPrice={flightDisplayPrices.get(item.id)}
                 displayCurrencyContext={currencyState?.resolution}
                 highlight={flightHighlights.get(item.id)}
@@ -1294,6 +1314,7 @@ function ResultsScreen({ product }: { product: Product }) {
                 <View style={s0.hotelResultsCardBody}>
                   <HotelCard
                     result={item}
+                    requestId={resultsRequestId}
                     showCheapestBadge={item.id === cheapestHotelId}
                     params={params}
                     displayPrices={hotelDisplayPrices.get(item.id)}
@@ -1582,7 +1603,7 @@ const HotelResultsShortcut = ({ label, accessibilityLabel, icon = false, showChe
   );
 };
 
-function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highlight, params, locale, logInitialMount }: { result: FlightResult; displayPrice?: DisplayPrice; displayCurrencyContext?: DisplayCurrencyResolution; highlight?: FlightResultHighlight; params: Record<string, string | string[]>; locale: MobileLocale; logInitialMount: boolean }) {
+function FlightCard({ result, requestId, displayPrice: fare, displayCurrencyContext, highlight, params, locale, logInitialMount }: { result: FlightResult; requestId?: string; displayPrice?: DisplayPrice; displayCurrencyContext?: DisplayCurrencyResolution; highlight?: FlightResultHighlight; params: Record<string, string | string[]>; locale: MobileLocale; logInitialMount: boolean }) {
   const { theme } = useAppTheme();
   const ui = useFlightResultsUi(sharedUi);
   const supportTextColor = theme.dark ? flightSupportText.dark : flightSupportText.light;
@@ -1618,7 +1639,10 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
   const labels = flightResultsCopy(locale);
   const mainPriceBasis = flightMainPriceBasis(fare, labels);
   const fareAccessibility = `${fare?.accessibilityLabel ?? "price unavailable"}${mainPriceBasis ? `, ${mainPriceBasis.accessibilityText}` : ""}${providerFare ? `, provider price ${providerFare.accessibilityLabel}` : ""}`;
-  const openDetails = () => router.push({ pathname: "/flight-details", params: buildFlightDetailParams({ searchParams: params, result }) });
+  const openDetails = () => {
+    journeyEvents.offerSelected(requestId, result.id, result.provider, "/flight-results");
+    router.push({ pathname: "/flight-details", params: buildFlightDetailParams({ searchParams: params, result, requestId }) });
+  };
   const cardAccessibilityLabel = `View flight details for ${result.airlineName}, ${journeys.map((journey) => flightCardJourneyAccessibility(journey, clock)).join(", ")}, ${fareAccessibility}`;
   return (
     <Pressable
@@ -1790,12 +1814,14 @@ function FlightJourneyRow({ label, leg, locale }: { label: string; leg: FlightCa
 }
 const HotelCard = memo(function HotelCard({
   result,
+  requestId,
   showCheapestBadge,
   params,
   displayPrices,
   displayCurrencyContext,
 }: {
   result: HotelResult;
+  requestId?: string;
   showCheapestBadge: boolean;
   params: Record<string, string | string[]>;
   displayPrices?: HotelDisplayPriceSnapshot;
@@ -1820,6 +1846,7 @@ const HotelCard = memo(function HotelCard({
   const mealPlan=result.catalogueProfile?.mealPlan?.trim();
   const policy=[result.catalogueProfile?.cancellationPolicy,result.catalogueProfile?.paymentPolicy].filter((value):value is string=>Boolean(value?.trim()));
   const openHotel = () => {
+    journeyEvents.offerSelected(requestId, result.id, result.provider, "/hotel-results");
     if (result.searchPolicy.action.kind === "provider") {
       void Linking.openURL(result.searchPolicy.action.href);
       return;
@@ -1831,6 +1858,7 @@ const HotelCard = memo(function HotelCard({
         ...Object.fromEntries(
           Object.entries(params).map(([k, v]) => [k, one(v) || ""]),
         ),
+        journeyRequestId: requestId ?? "",
         hotelResultsStack: "1",
         hotelDisplayPrices: displayPrices ? JSON.stringify(displayPrices) : "",
         displayCurrencyContext: displayCurrencyContext ? JSON.stringify(displayCurrencyContext) : "",

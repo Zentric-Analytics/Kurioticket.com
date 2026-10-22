@@ -1,4 +1,7 @@
 "use client";
+
+import { useJourneyEvents } from "@/components/privacy/JourneyEventsProvider";
+import { displayedJourneyRequest, journeyRequestId } from "@/lib/journeyEventClient";
 import { resultIdKey, VirtualResultsList } from "./VirtualResultsList";
 import { readHotelDestinationSelection } from "@/lib/hotels/destinationSelection";
 import { hotelOccupancy } from "@/lib/hotels/hotelOccupancy";
@@ -269,6 +272,8 @@ export function HotelResultsClient() {
   return <HotelResultsExperience searchInput={searchInput} />;
 }
 export function HotelResultsExperience({ searchInput, guided = false, buildDetailsHref }: { searchInput: HotelResultsSearchInput; guided?: boolean; buildDetailsHref?: (hotelId: string) => string | null }) {
+  const journeyEvents = useJourneyEvents();
+  const [journeyResponse, setJourneyResponse] = useState<{ searchKey: string; requestId: string | null } | null>(null);
   const { locale, t: dictionary } = useLocale();
   const { selectedOption } = useRegion();
   const currencyRates = useCurrencyRates();
@@ -595,7 +600,8 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
       ));
     request.then((data) => {
         if (!active) return;
-        if (!snapshot) rememberHotelReturnSnapshot(bodySearchKey, data.results);
+        if (!snapshot) rememberHotelReturnSnapshot(bodySearchKey, data.results, undefined, journeyRequestId(data.requestId) ?? undefined);
+        setJourneyResponse({ searchKey: bodySearchKey, requestId: journeyRequestId(data.requestId) });
         setError("");
         setResults(data.results);
         const upperBound = getResultMaxPrice(data.results, currencyRatesRef.current);
@@ -639,6 +645,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
           filterApplyingTimeoutRef.current = null;
         }
         setResults([]);
+        setJourneyResponse(null);
         setError(timedOut ? t("hotelResults.searchUnavailableDetailed") : searchError instanceof Error ? searchError.message : t("hotelResults.unableToSearchHotels"));
       })
       .finally(() => {
@@ -792,6 +799,8 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   const visibleFilteredHotels = resultsApplying ? visibleFiltered : filtered;
   const hotelOfferGroups = useMemo(() => groupHotelOffers(sortHotelSummaryResults(visibleFilteredHotels, "cheapest", currencyRates.rates)), [currencyRates.rates, visibleFilteredHotels]);
   const sortedVisibleHotels = useMemo(() => sortHotelSummaryResults(hotelOfferGroups.map(group => group[0]), hotelSummarySortMode, currencyRates.rates), [hotelOfferGroups, hotelSummarySortMode, currencyRates.rates]);
+  const visibleJourneyRequestId = displayedJourneyRequest({ response: journeyResponse, currentSearchKey: bodySearchKey, loading: loading || filterApplying || searchApplying, error, visibleCount: sortedVisibleHotels.length });
+  useEffect(() => { journeyEvents.resultsViewed(visibleJourneyRequestId); }, [journeyEvents, visibleJourneyRequestId]);
   const hotelSortOptions = useMemo(
     () =>
       [
@@ -1743,7 +1752,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
                       <VirtualResultsList items={sortedVisibleHotels} itemKey={resultIdKey} label="Hotel results" rowClassName="pb-2 sm:pb-4 lg:pb-3" estimateHeight={360} renderItem={(hotel, index) => {
                         const internalHref = guided ? (buildDetailsHref?.(hotel.id) ?? null) : `/hotels/details/${encodeURIComponent(hotel.id)}?${hotelDetailsSearchParams}`;
                         return <section key={hotel.id} aria-label={hotel.name}>
-                          <HotelCard hotel={hotel} detailsHref={resultActionHref(hotel, internalHref)} actionLabel={guided ? t("deals.guided.hotelResults.viewRooms") : undefined} actionAriaLabel={guided ? t("deals.guided.hotelResults.viewRoomsFor").replace("{{hotelName}}", hotel.name) : undefined} unavailableActionLabel={guided ? t("deals.guided.hotelResults.roomsUnavailable") : undefined} unavailableActionAriaLabel={guided ? t("deals.guided.hotelResults.roomsUnavailableFor").replace("{{hotelName}}", hotel.name) : undefined} allowExternalAttribution={!guided} allowSave={!guided} stayNights={stayNights} sortBadge={index === 0 ? hotelSummarySortMode : undefined} />
+                          <HotelCard hotel={hotel} searchRequestId={visibleJourneyRequestId} detailsHref={resultActionHref(hotel, internalHref)} actionLabel={guided ? t("deals.guided.hotelResults.viewRooms") : undefined} actionAriaLabel={guided ? t("deals.guided.hotelResults.viewRoomsFor").replace("{{hotelName}}", hotel.name) : undefined} unavailableActionLabel={guided ? t("deals.guided.hotelResults.roomsUnavailable") : undefined} unavailableActionAriaLabel={guided ? t("deals.guided.hotelResults.roomsUnavailableFor").replace("{{hotelName}}", hotel.name) : undefined} allowExternalAttribution={!guided} allowSave={!guided} stayNights={stayNights} sortBadge={index === 0 ? hotelSummarySortMode : undefined} />
                         </section>;
                       }} />
                     ) : (

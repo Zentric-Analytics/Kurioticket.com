@@ -1,5 +1,7 @@
 "use client";
 
+import { useJourneyEvents } from "@/components/privacy/JourneyEventsProvider";
+
 import { useEffect, useRef, useState } from "react";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import type { SavedHotelSnapshot } from "@/components/results/hotelSavedStorage";
@@ -98,6 +100,7 @@ export function HotelDetailsClient({
   confirmationError = "",
   onGuidedSelection,
 }: HotelDetailsClientProps) {
+  const journeyEvents = useJourneyEvents();
   const { locale, t: dictionary } = useLocale();
   const { selectedOption } = useRegion();
   const currencyRates = useCurrencyRates();
@@ -249,6 +252,8 @@ export function HotelDetailsClient({
   async function runProviderRedirect(targetWindow?: Window | null, offerId = id) {
     if (!hotel || redirecting || !canUseHotelDetailsProviderLink(hotel)) return;
     if (offerId !== hotel.id && !propertyOffers.some(offer => offer.hotel.id === offerId)) return;
+    const selectedOffer = propertyOffers.find(offer => offer.hotel.id === offerId)?.hotel ?? hotel;
+    journeyEvents.offerSelected("hotel", id, selectedOffer.provider);
     setRedirecting(true);
     setRedirectError("");
     try {

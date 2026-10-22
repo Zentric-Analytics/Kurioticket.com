@@ -1,5 +1,7 @@
 "use client";
 
+import { useJourneyEvents } from "@/components/privacy/JourneyEventsProvider";
+
 import Image from "next/image";
 import { flightBaggageTerms, flightFareDetailCabins, flightOnboardFeatureLabel } from "@/lib/flights/flightFareInformation";
 import Link from "next/link";
@@ -53,6 +55,7 @@ const fareTabs: Array<{ id: FareTab; label: string }> = [
 ];
 
 export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resultsHref: string }) {
+  const journeyEvents = useJourneyEvents();
   const searchParams = useSearchParams();
   const { status: sessionStatus } = useSession();
   const detailsQuery = searchParams.toString();
@@ -159,8 +162,15 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
   function selectFare(index: number) {
     const fare = fareChoices[index];
     if (!fare) return;
+    journeyEvents.offerSelected("flight", id, fare.offer.provider);
     setSelectedDealOfferId(null);
     setSelectedFareKey(fare.key);
+  }
+
+  function selectDeal(offerId: string, forHandoff = false) {
+    setSelectedDealOfferId(offerId);
+    const deal = fareChoices.flatMap(fare => fare.deals).find(candidate => candidate.offerId === offerId);
+    if (!forHandoff && deal) journeyEvents.offerSelected("flight", id, deal.providerName);
   }
 
   function handleFareKeyDown(
@@ -183,6 +193,8 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
 
   async function continueToOffer(offerId: string) {
     if (redirecting) return;
+    const deal = fareChoices.flatMap(fare => fare.deals).find(candidate => candidate.offerId === offerId);
+    journeyEvents.offerSelected("flight", id, deal?.providerName ?? activeOffer?.provider);
     const providerWindow = window.open("about:blank", "_blank");
     if (!providerWindow) {
       setError("Allow pop-ups to open this provider link in a new tab.");
@@ -446,7 +458,7 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
               fare={selectedFare}
               activeOffer={activeOffer}
               selectedDealOfferId={selectedDeal?.offerId ?? null}
-              onSelectDeal={setSelectedDealOfferId}
+              onSelectDeal={selectDeal}
               selectedCurrency={selectedOption.currency}
               currencyRates={currencyRates.rates}
               isFallbackRate={currencyRates.isFallback}
@@ -465,7 +477,7 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
                   {error || notice}
                 </p>
               ) : null}
-              <FarePanel activeTab={activeTab} fare={selectedFare} offer={activeOffer} locale={locale} selectedCurrency={selectedOption.currency} currencyRates={currencyRates.rates} isFallbackRate={currencyRates.isFallback} redirecting={redirecting} selectedDealOfferId={selectedDeal?.offerId ?? null} onSelectDeal={setSelectedDealOfferId} onViewDeal={continueToOffer} />
+              <FarePanel activeTab={activeTab} fare={selectedFare} offer={activeOffer} locale={locale} selectedCurrency={selectedOption.currency} currencyRates={currencyRates.rates} isFallbackRate={currencyRates.isFallback} redirecting={redirecting} selectedDealOfferId={selectedDeal?.offerId ?? null} onSelectDeal={selectDeal} onViewDeal={continueToOffer} />
             </div>
             </div>
           </section>
@@ -836,7 +848,7 @@ function FarePanel({
   isFallbackRate: boolean;
   redirecting: boolean;
   selectedDealOfferId: string | null;
-  onSelectDeal: (offerId: string) => void;
+  onSelectDeal: (offerId: string, forHandoff?: boolean) => void;
   onViewDeal: (offerId: string) => void;
 }) {
   if (activeTab === "deals")
@@ -875,7 +887,7 @@ function CompareDealsPanel({
   isFallbackRate: boolean;
   redirecting: boolean;
   selectedDealOfferId: string | null;
-  onSelectDeal: (offerId: string) => void;
+  onSelectDeal: (offerId: string, forHandoff?: boolean) => void;
   onViewDeal: (offerId: string) => void;
 }) {
   const deals = fare?.deals ?? [];
@@ -1023,7 +1035,7 @@ function CompareDealsPanel({
                 aria-busy={redirecting || undefined}
                 aria-label={`View deal with ${deal.providerName}${canContinue ? "" : ", checkout unavailable"}`}
                 onClick={() => {
-                  onSelectDeal(deal.offerId);
+                  onSelectDeal(deal.offerId, true);
                   onViewDeal(deal.offerId);
                 }}
                 className="focus-ring inline-flex h-9 w-[112px] justify-self-end items-center justify-center whitespace-nowrap rounded-lg bg-[#004BB8] px-4 text-[16px] font-semibold leading-5 text-white hover:bg-[#003B91] disabled:opacity-50"

@@ -26,5 +26,5 @@ export async function readHotelSearchResponse(
       (data as { warningCategory?: unknown }).warningCategory === "provider_unavailable") {
     throw new Error(unavailableMessage);
   }
-  return data as { results: PublicHotelResult[]; warnings?: string[] };
+  return data as { results: PublicHotelResult[]; warnings?: string[]; requestId?: string };
 }

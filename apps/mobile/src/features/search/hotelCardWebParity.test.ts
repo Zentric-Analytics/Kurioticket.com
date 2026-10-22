@@ -13,7 +13,11 @@ const searchUi = readFileSync(resolve("src/features/search/SearchUi.tsx"), "utf8
 const webHotelCard = readFileSync(resolve("../../src/components/results/HotelCard.tsx"), "utf8");
 
 test("hotel card keeps provider data but never prints its internal label", () => {
-  assert.doesNotMatch(card, /result\.provider|s0\.providers/);
+  // Provider metadata may be used by optional event handlers; the rendered
+  // card must continue to omit the internal provider label.
+  const renderedCard = card.slice(card.indexOf("  return ("));
+  assert.match(renderedCard, /^  return \(\s*<Pressable/);
+  assert.doesNotMatch(renderedCard, /result\.provider|s0\.providers/);
   assert.doesNotMatch(source, /providers:/);
   assert.match(api, /PublicHotelResult/);
 });

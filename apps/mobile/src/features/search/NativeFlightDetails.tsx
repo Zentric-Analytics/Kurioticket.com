@@ -10,6 +10,7 @@ import type { FlightDetailsFareChoice, FlightDetailsOffer, FlightDetailsSuccess 
 import { canUseOfferAirlineLogo, resolveDealIdentityMark, resolveSegmentCarrierName } from "../../../../../src/lib/flights/flightDetailsPresentation";
 import type { FlightFareTerm, FlightLeg, FlightProviderCondition } from "../../../../../src/lib/types";
 import { TravelApiError, travelApi, type FlightResult } from "../../api/travelApi";
+import { journeyEvents } from "../privacy/journeyEvents";
 import { useAppTheme } from "../../theme/AppTheme";
 import { appFonts } from "../../theme/typography";
 import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
@@ -161,6 +162,7 @@ function savedFlightOffer(details: FlightDetailsSuccess, choice: FlightDetailsFa
 
 export function NativeFlightDetails({ params }: { params: Params }) {
   const id = one(params.id) ?? "";
+  const journeyRequestId = one(params.journeyRequestId);
   const { theme } = useAppTheme();
   const { locale } = useMobileLocalization();
   const intlLocale = mobileLocales.find((option) => option.code === locale)?.intl ?? "en-US";
@@ -243,7 +245,13 @@ export function NativeFlightDetails({ params }: { params: Params }) {
   const savedOffer=savedFlightOffer(details, selected);
   const saved=savedFlights.savedFlights.has(flightSavedSignature(savedOffer));
   const tripMetadata=[FLIGHT_TRIP_TYPE_LABELS[details.search.tripType],`${details.search.travelers} traveler${details.search.travelers===1?"":"s"}`,titleCase(details.search.cabinClass)].join(" · ");
-  const handoff=async(offerId:string) => { if(booking||!displayPricesReady)return; setBooking(true); setMessage(""); try { const response=await travelApi.flightRedirect(offerId); await Linking.openURL(response.url); } catch(error) { if(error instanceof TravelApiError && error.status===409 && error.details?.code==="offer_changed") { preserveMessageOnReload.current=true; setMessage("The provider updated this offer. Review the refreshed price and terms before continuing."); reload(); } else setMessage(error instanceof Error?error.message:"Booking is currently unavailable."); } finally { setBooking(false); } };
+  const trackSelectedOffer = (offerId: string) => {
+    const deal = details.fareChoices.flatMap(choice => choice.deals).find(candidate => candidate.offerId === offerId);
+    const choice = details.fareChoices.find(candidate => candidate.offer.id === offerId);
+    if (deal || choice) journeyEvents.offerSelected(journeyRequestId, offerId, deal?.providerName ?? choice?.offer.provider, "/flight-details");
+  };
+  const selectDeal = (offerId: string) => { setSelectedDealOfferId(offerId); trackSelectedOffer(offerId); };
+  const handoff=async(offerId:string) => { if(booking||!displayPricesReady)return; trackSelectedOffer(offerId); setBooking(true); setMessage(""); try { const response=await travelApi.flightRedirect(offerId); await Linking.openURL(response.url); } catch(error) { if(error instanceof TravelApiError && error.status===409 && error.details?.code==="offer_changed") { preserveMessageOnReload.current=true; setMessage("The provider updated this offer. Review the refreshed price and terms before continuing."); reload(); } else setMessage(error instanceof Error?error.message:"Booking is currently unavailable."); } finally { setBooking(false); } };
   const share=async()=>{if(sharePending.current)return;sharePending.current=true;try{const outcome=await shareFlightForAuthenticatedSession({readSession,share:(message)=>Share.share({message}),message:flightShareMessage(activeOffer,activePrice?.formatted??"price unavailable")});if(outcome==="sign-in-required")Alert.alert("Sign in required","Sign in to share this flight.",[{text:"Sign in",onPress:()=>router.push("/email-auth")},{text:"Cancel",style:"cancel"}]);}finally{sharePending.current=false;}};
   return <SafeAreaView edges={[]} style={[s.safe,{backgroundColor:contentCanvasColor}]}><View testID="flight-details-protected-header" pointerEvents="none" style={[s.protectedHeader,Platform.OS==="android"&&s.androidFlatControlLayer,{height:protectedHeaderHeight,backgroundColor:headerProtected?contentCanvasColor:"transparent"}]}/><View testID="flight-details-back-control" style={[s.heroBackControl,{top:inset.top+8}]}><Pressable accessibilityRole="button" accessibilityLabel="Back to results" onPress={()=>router.back()} style={s.heroIconButton}><DetailGlassSurface dark={false} variant="hotelLight" style={s.heroIconGlass}/><ArrowLeft size={20} color={heroIconColor}/></Pressable></View><View testID="flight-details-floating-actions" style={[s.heroActions,s.floatingControl,{top:inset.top+8}]}><DetailGlassSurface dark={false} variant="hotelLight" style={s.heroActionsGlass}/><IconButton label={saved?"Remove saved flight":"Save flight"} onPress={()=>savedFlights.toggle(savedOffer,nativeFlightEditSearchParams(details,one(params.currency)))} iconStyle={s.heroHeartIcon}><Heart size={17} strokeWidth={androidFavoriteColors.strokeWidth} color={saved ? androidFavoriteColors.savedStroke : androidFavoriteColors.unsavedStroke} fill={saved?androidFavoriteColors.savedFill:androidFavoriteColors.unsavedFill}/></IconButton><IconButton label="Share flight" onPress={()=>void share()} iconStyle={s.heroShareIcon}><FlowIcon name="share" size={17} strokeWidth={androidFavoriteColors.strokeWidth} color={androidFavoriteColors.shareStroke}/></IconButton></View><ScrollView testID="flight-details-scroll-content" contentInsetAdjustmentBehavior="never" bounces={false} alwaysBounceVertical={false} overScrollMode="never" onScroll={({ nativeEvent })=>syncHeaderProtection(nativeEvent.contentOffset.y)} scrollEventThrottle={16} style={{backgroundColor:contentCanvasColor}} contentContainerStyle={[s.content,{width:windowWidth,maxWidth:windowWidth,paddingBottom:28+inset.bottom}]}>
     <ImageBackground testID="flight-details-hero" onLayout={({ nativeEvent })=>measureHeaderHero(nativeEvent.layout.height)} source={require("../../../assets/heroes/flight-details-hero.webp")} resizeMode="cover" style={[s.hero,{paddingTop:inset.top+64}]} imageStyle={s.heroImage}>
@@ -262,7 +270,7 @@ export function NativeFlightDetails({ params }: { params: Params }) {
         const isKayak=choice.offer.provider==="KAYAK sandbox";
         const fareTerms=nativeFareBenefitRows(choice.distinguishingTerms,details.search.tripType,3,isKayak?{ensureStandardRows:true,conditions:choice.offer.providerDetails?.conditions}:undefined);
         return <View key={choice.key} style={[s.fareCard,{width:loadedFareCardWidth,backgroundColor:theme.surface,borderColor:isSelected?ui.blue:surfaceBorderColor},isSelected?s.fareCardSelected:s.fareCardUnselected,theme.dark?s.fareCardDark:s.fareCardLight]}>
-          <Pressable accessibilityRole="radio" accessibilityState={{selected:isSelected}} accessibilityLabel={`${choice.label}, ${displayPrices[choice.key]?.accessibilityLabel??"price unavailable"}`} onPress={()=>{setSelectedKey(choice.key);setSelectedDealOfferId((nativeFlightDealSelection(null,choice)??choice.deals[0]??null)?.offerId??null);}} style={StyleSheet.absoluteFillObject}/>
+          <Pressable accessibilityRole="radio" accessibilityState={{selected:isSelected}} accessibilityLabel={`${choice.label}, ${displayPrices[choice.key]?.accessibilityLabel??"price unavailable"}`} onPress={()=>{setSelectedKey(choice.key);setSelectedDealOfferId((nativeFlightDealSelection(null,choice)??choice.deals[0]??null)?.offerId??null);trackSelectedOffer(choice.offer.id);}} style={StyleSheet.absoluteFillObject}/>
           <View pointerEvents="box-none" style={s.fareContent}>
             <View accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" pointerEvents="none" style={s.fareSelectionControl}>
               <View style={s.fareIdentity}><View style={[s.fareIconContainer,{backgroundColor:theme.dark?"#17365D":"#EAF3FF",borderColor:theme.dark?"#315A8F":"#CFE3FA"}]}><Luggage size={14} color={ui.blue}/></View><Text numberOfLines={2} ellipsizeMode="tail" style={[s.fareLabel,{color:theme.textPrimary}]}>{choice.label}</Text></View>
@@ -284,7 +292,7 @@ export function NativeFlightDetails({ params }: { params: Params }) {
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={[s.fareTabRail,{borderBottomColor:theme.dark?surfaceBorderColor:FLIGHT_DETAILS_LIGHT_TAB_BORDER}]} contentContainerStyle={s.fareTabRailContent}>
         <View accessibilityRole="tablist" accessibilityLabel="Fare information" style={s.fareTabList}>{([['deals','Compare deals'],['details','Fare details'],['conditions','Fare conditions'],['extras','Optional extras']] as const).map(([key,label])=><Pressable accessibilityRole="tab" accessibilityState={{selected:tab===key}} key={key} onPress={()=>setTab(key)} style={s.fareInfoTab}><Text numberOfLines={1} style={[s.fareInfoTabText,{color:fareTabTextColor}]}>{label}</Text>{tab===key?<View style={s.fareTabIndicator}/>:null}</Pressable>)}</View>
       </ScrollView>
-      <View testID="fare-information-active-content" style={s.fareInfoBody}><FareSurface tab={tab} choice={selected} dealPrices={displayPrices} selectedDealOfferId={selectedDeal?.offerId??null} onSelectDeal={setSelectedDealOfferId} activeOffer={activeOffer} pricesReady={displayPricesReady} booking={booking} onViewDeal={(offerId)=>void handoff(offerId)} theme={theme}/></View>
+      <View testID="fare-information-active-content" style={s.fareInfoBody}><FareSurface tab={tab} choice={selected} dealPrices={displayPrices} selectedDealOfferId={selectedDeal?.offerId??null} onSelectDeal={selectDeal} activeOffer={activeOffer} pricesReady={displayPricesReady} booking={booking} onViewDeal={(offerId)=>void handoff(offerId)} theme={theme}/></View>
     </View>
     </View>
   </ScrollView></SafeAreaView>;

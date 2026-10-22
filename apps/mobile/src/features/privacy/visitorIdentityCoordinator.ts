@@ -50,7 +50,7 @@ export function parseStoredVisitorIdentity(value: unknown): StoredVisitorIdentit
 
 /** Only these first-party producers receive the optional visitor reference. */
 export function isVisitorTrackedPath(path: string) {
-  return ["/api/flights/search", "/api/hotels/search", "/api/mobile/v1/hotels/progressive", "/api/redirect"].includes(path);
+  return ["/api/flights/search", "/api/hotels/search", "/api/mobile/v1/hotels/progressive", "/api/redirect", "/api/journey/events"].includes(path);
 }
 
 export class VisitorIdentityCoordinator {
@@ -79,6 +79,9 @@ export class VisitorIdentityCoordinator {
     pending: Boolean(this.task) || this.state.pendingWithdrawals.length > 0,
     error: this.failed,
   });
+
+  /** Local generation only; never an identity credential or a value sent to the server. */
+  trackingContext = () => this.snapshot().tracking ? this.revision : null;
 
   subscribe = (listener: () => void) => { this.listeners.add(listener); return () => { this.listeners.delete(listener); }; };
   private publish() { this.listeners.forEach(listener => listener()); }
