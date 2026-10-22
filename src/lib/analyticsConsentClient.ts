@@ -41,6 +41,7 @@ type Dependencies = {
   request: (url: string, init: RequestInit) => Promise<Response>;
   readChoice: () => AnalyticsConsentChoice;
   onState?: (state: VisitorConsentSyncState) => void;
+  onSaved?: (context: VisitorConsentContext) => void;
   exclusively?: <T>(work: () => Promise<T>) => Promise<T>;
 };
 
@@ -54,11 +55,14 @@ export function createVisitorConsentSynchronizer(dependencies: Dependencies) {
   let revision = 0;
   let appliedKey: string | null = null;
   let running: Promise<VisitorConsentSyncState> | null = null;
+  let disposed = false;
+  const controller = new AbortController();
   const exclusively = dependencies.exclusively ?? (async <T>(work: () => Promise<T>) => work());
 
   const contextKey = (context: VisitorConsentContext) => `${context.choice ?? "unknown"}:${context.accountKey ?? "loading"}`;
 
   function refreshChoice() {
+    if (disposed) return;
     const choice = dependencies.readChoice();
     if (choice !== desired.choice) {
       desired = { ...desired, choice };
@@ -72,6 +76,7 @@ export function createVisitorConsentSynchronizer(dependencies: Dependencies) {
       credentials: "same-origin",
       cache: "no-store",
       keepalive: true,
+      signal: controller.signal,
       headers: { Accept: "application/json", ...(body ? { "Content-Type": "application/json" } : {}) },
       ...(body ? { body: JSON.stringify(body) } : {}),
     });
@@ -81,6 +86,7 @@ export function createVisitorConsentSynchronizer(dependencies: Dependencies) {
 
   async function drain(): Promise<VisitorConsentSyncState> {
     while (true) {
+      if (disposed) return "idle";
       refreshChoice();
       const current = { ...desired };
       const currentRevision = revision;
@@ -98,7 +104,7 @@ export function createVisitorConsentSynchronizer(dependencies: Dependencies) {
       try {
         await exclusively(async () => {
           refreshChoice();
-          if (revision !== currentRevision) return;
+          if (disposed || revision !== currentRevision) return;
 
           if (current.choice === "declined") {
             const response = await mutate("/api/identity/visitor", "DELETE");
@@ -113,29 +119,37 @@ export function createVisitorConsentSynchronizer(dependencies: Dependencies) {
           if (response.analyticsTracking !== "enabled") throw new Error("Consent was not confirmed.");
 
           refreshChoice();
-          if (revision !== currentRevision) return;
+          if (disposed || revision !== currentRevision) return;
           if (current.accountKey !== "guest") {
             const merged = await mutate("/api/identity/merge", "POST");
             if (!merged.merged) throw new Error("Account connection was not confirmed.");
           }
         });
       } catch {
+        if (disposed) return "idle";
         refreshChoice();
         if (revision !== currentRevision) continue;
         dependencies.onState?.("error");
         return "error";
       }
 
+      if (disposed) return "idle";
       refreshChoice();
       if (revision !== currentRevision) continue;
       appliedKey = key;
       dependencies.onState?.("saved");
+      if (!disposed && revision === currentRevision) dependencies.onSaved?.(current);
       return "saved";
     }
   }
 
   return {
+    dispose() {
+      disposed = true;
+      controller.abort();
+    },
     sync(next: VisitorConsentContext, force = false) {
+      if (disposed) return Promise.resolve<VisitorConsentSyncState>("idle");
       if (contextKey(desired) !== contextKey(next)) {
         desired = { ...next };
         revision += 1;
@@ -148,7 +162,7 @@ export function createVisitorConsentSynchronizer(dependencies: Dependencies) {
           do {
             processedRevision = revision;
             state = await drain();
-          } while (processedRevision !== revision);
+          } while (!disposed && processedRevision !== revision);
           return state;
         }).finally(() => { running = null; });
       }

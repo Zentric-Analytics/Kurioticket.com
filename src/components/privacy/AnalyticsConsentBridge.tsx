@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { useSession } from "next-auth/react";
+import { usePathname } from "next/navigation";
 import { X } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
@@ -45,16 +46,31 @@ function setDenied(denied: boolean) {
 
 async function requestIdentity(url: string, init: RequestInit) {
   const controller = new AbortController();
+  const abort = () => controller.abort();
+  if (init.signal?.aborted) abort();
+  else init.signal?.addEventListener("abort", abort, { once: true });
   const timeout = window.setTimeout(() => controller.abort(), 8000);
   try {
     return await fetch(url, { ...init, signal: controller.signal });
   } finally {
     window.clearTimeout(timeout);
+    init.signal?.removeEventListener("abort", abort);
   }
 }
 
-/** Only the optional analytics flow depends on this component's network work. */
+/** Mobile preview documents deliberately omit all website consent lifecycle work. */
+export function AnalyticsConsentRouteBoundary({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+  if (!pathname || pathname === "/mobile/legal" || pathname.startsWith("/mobile/legal/")) return null;
+  return children;
+}
+
 export function AnalyticsConsentBridge() {
+  return <AnalyticsConsentRouteBoundary><WebsiteAnalyticsConsentBridge /></AnalyticsConsentRouteBoundary>;
+}
+
+/** Only the optional analytics flow depends on this component's network work. */
+function WebsiteAnalyticsConsentBridge() {
   const { data: session, status } = useSession();
   const [choice, setChoice] = useState<AnalyticsConsentChoice>(null);
   const [ready, setReady] = useState(false);
@@ -64,6 +80,7 @@ export function AnalyticsConsentBridge() {
   const [syncState, setSyncState] = useState<VisitorConsentSyncState>("idle");
   const choiceRef = useRef<AnalyticsConsentChoice>(null);
   const saveFailedRef = useRef(false);
+  const decisionPendingRef = useRef(false);
   const revisionRef = useRef(0);
   const activeRef = useRef(false);
   const titleRef = useRef<HTMLHeadingElement>(null);
@@ -89,6 +106,14 @@ export function AnalyticsConsentBridge() {
           return nextChoice;
         },
         onState: (nextState) => { if (activeRef.current) setSyncState(nextState); },
+        onSaved: (confirmed) => {
+          if (!activeRef.current || !decisionPendingRef.current || confirmed.choice !== choiceRef.current) return;
+          decisionPendingRef.current = false;
+          setEditing(false);
+          setDismissed(true);
+          setDecisionPending(false);
+          returnFocusRef.current?.focus();
+        },
         exclusively: async (work) => {
           // Web Locks serialise cookie changes across tabs where supported. The
           // synchronizer also rechecks storage after responses for other browsers.
@@ -158,6 +183,8 @@ export function AnalyticsConsentBridge() {
     return () => {
       cancelled = true;
       activeRef.current = false;
+      synchronizerRef.current?.dispose();
+      synchronizerRef.current = null;
       controller.abort();
       window.clearTimeout(timeout);
       window.removeEventListener("storage", handleStorage);
@@ -190,6 +217,7 @@ export function AnalyticsConsentBridge() {
   }, [editing, ready]);
 
   const close = useCallback(() => {
+    decisionPendingRef.current = false;
     setEditing(false);
     setDismissed(true);
     setDecisionPending(false);
@@ -212,15 +240,9 @@ export function AnalyticsConsentBridge() {
     saveFailedRef.current = !saveChoice(nextChoice);
     setChoice(nextChoice);
     setDismissed(false);
+    decisionPendingRef.current = true;
     setDecisionPending(true);
-    void synchronizerRef.current!.sync({ choice: nextChoice, accountKey }, true).then((state) => {
-      if (activeRef.current && state === "saved" && choiceRef.current === nextChoice) {
-        setEditing(false);
-        setDismissed(true);
-        setDecisionPending(false);
-        returnFocusRef.current?.focus();
-      }
-    });
+    void synchronizerRef.current!.sync({ choice: nextChoice, accountKey }, true);
   }
 
   if (!ready || (!editing && !(choice === null && !dismissed) && !decisionPending)) return null;

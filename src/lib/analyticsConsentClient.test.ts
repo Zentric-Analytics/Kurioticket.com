@@ -164,3 +164,130 @@ test("an unsuccessful account merge is not reported as a saved connection", asyn
   });
   assert.equal(await sync.sync({ choice: "granted", accountKey: "account-123" }), "error");
 });
+
+test("a deferred consent decision completes when the session becomes ready", async () => {
+  let decisionPending = true;
+  const confirmed: string[] = [];
+  const sync = createVisitorConsentSynchronizer({
+    readChoice: () => "granted",
+    onSaved: (context) => { confirmed.push(context.accountKey!); decisionPending = false; },
+    request: async (url) => url.endsWith("merge") ? merged() : enabled(),
+  });
+
+  assert.equal(await sync.sync({ choice: "granted", accountKey: null }, true), "idle");
+  assert.equal(decisionPending, true);
+  assert.deepEqual(confirmed, []);
+  await sync.sync({ choice: "granted", accountKey: "account-123" });
+  assert.equal(decisionPending, false);
+  assert.deepEqual(confirmed, ["account-123"]);
+});
+
+test("a successful retry completes the pending decision after its original promise failed", async () => {
+  let decisionPending = true;
+  let fails = true;
+  const sync = createVisitorConsentSynchronizer({
+    readChoice: () => "declined",
+    onSaved: () => { decisionPending = false; },
+    request: async () => {
+      if (fails) throw new Error("Offline");
+      return disabled();
+    },
+  });
+
+  assert.equal(await sync.sync({ choice: "declined", accountKey: "guest" }, true), "error");
+  assert.equal(decisionPending, true);
+  fails = false;
+  await sync.sync({ choice: "declined", accountKey: "guest" }, true);
+  assert.equal(decisionPending, false);
+});
+
+test("an older saved choice and a stale in-flight grant cannot complete a newer refusal", async () => {
+  let choice: AnalyticsConsentChoice = "granted";
+  let decisionPending = false;
+  let finishGrant!: (response: Response) => void;
+  let finishWithdrawal!: (response: Response) => void;
+  let holdRequests = false;
+  const confirmed: AnalyticsConsentChoice[] = [];
+  const sync = createVisitorConsentSynchronizer({
+    readChoice: () => choice,
+    onSaved: (context) => { confirmed.push(context.choice); decisionPending = false; },
+    request: async (_url, init) => {
+      if (!holdRequests) return enabled();
+      return new Promise<Response>((resolve) => {
+        if (init.method === "DELETE") finishWithdrawal = resolve;
+        else finishGrant = resolve;
+      });
+    },
+  });
+
+  await sync.sync({ choice, accountKey: "guest" });
+  holdRequests = true;
+  decisionPending = true;
+  const pending = sync.sync({ choice, accountKey: "guest" }, true);
+  await tick();
+  choice = "declined";
+  void sync.sync({ choice, accountKey: "guest" }, true);
+  finishGrant(enabled());
+  await tick();
+  assert.equal(decisionPending, true);
+  assert.deepEqual(confirmed, ["granted"]);
+  finishWithdrawal(disabled());
+  await pending;
+  assert.equal(decisionPending, false);
+  assert.deepEqual(confirmed, ["granted", "declined"]);
+});
+
+test("leaving the website disposes in-flight work without affecting a fresh mounted bridge", async () => {
+  let finishOldGrant!: (response: Response) => void;
+  let oldSignal: AbortSignal | null | undefined;
+  const oldCalls: string[] = [];
+  const oldStates: string[] = [];
+  const oldSaved: string[] = [];
+  const oldBridge = createVisitorConsentSynchronizer({
+    readChoice: () => "granted",
+    onState: (state) => oldStates.push(state),
+    onSaved: () => oldSaved.push("saved"),
+    request: async (url, init) => {
+      oldCalls.push(url);
+      oldSignal = init.signal;
+      return new Promise<Response>((resolve) => { finishOldGrant = resolve; });
+    },
+  });
+  const oldPending = oldBridge.sync({ choice: "granted", accountKey: "account-123" });
+  await tick();
+  oldBridge.dispose();
+  assert.equal(oldSignal?.aborted, true);
+
+  const newCalls: string[] = [];
+  const newBridge = createVisitorConsentSynchronizer({
+    readChoice: () => "declined",
+    request: async (_url, init) => { newCalls.push(init.method!); return disabled(); },
+  });
+  assert.equal(await newBridge.sync({ choice: "declined", accountKey: "guest" }), "saved");
+  finishOldGrant(enabled()); // A transport can still finish after cancellation.
+  assert.equal(await oldPending, "idle");
+  assert.equal(await oldBridge.sync({ choice: "granted", accountKey: "account-123" }), "idle");
+  assert.deepEqual(oldCalls, ["/api/identity/visitor"]);
+  assert.deepEqual(oldStates, ["saving"]);
+  assert.deepEqual(oldSaved, []);
+  assert.deepEqual(newCalls, ["DELETE"]);
+});
+
+test("a bridge removed while waiting for the browser lock starts no consent request", async () => {
+  let releaseLock!: () => void;
+  const lock = new Promise<void>((resolve) => { releaseLock = resolve; });
+  const states: string[] = [];
+  const sync = createVisitorConsentSynchronizer({
+    readChoice: () => "granted",
+    onState: (state) => states.push(state),
+    onSaved: () => assert.fail("A disposed bridge must not complete a decision"),
+    exclusively: async (work) => { await lock; return work(); },
+    request: async () => assert.fail("A disposed bridge must not send queued requests"),
+  });
+  const pending = sync.sync({ choice: "granted", accountKey: "account-123" });
+  await tick();
+  sync.dispose();
+  releaseLock();
+  assert.equal(await pending, "idle");
+  assert.deepEqual(states, ["saving"]);
+});
