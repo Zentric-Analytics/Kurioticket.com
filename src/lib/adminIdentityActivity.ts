@@ -1,3 +1,4 @@
+import type { Prisma } from "@/generated/prisma/client";
 import type { ActivityRow, IdentityKind } from "./adminIdentityJourney";
 
 export const ACTIVITY_PAGE_SIZE = 20;
@@ -84,6 +85,27 @@ export function decodeActivityCursor(input: string | undefined, kind: IdentityKi
     return { id: x.id, at: x.at };
   } catch { return null; }
 }
+/**
+ * Suppress a legacy search/handoff when its same-source journey stage is already
+ * eligible for this view. Do not seek this exclusion using the page cursor:
+ * canonical events on an earlier page must still prevent later duplicates.
+ * Reuse the same consent, ownership, date, product and text filters as the
+ * canonical query so hidden / out-of-scope events do not mask legacy history.
+ */
+export function excludeCanonicalLegacyRows(
+  stage: "SEARCH_COMPLETED" | "PROVIDER_HANDOFF_STARTED",
+  owner: Prisma.JourneyEventWhereInput,
+  createdAt: Prisma.DateTimeFilter,
+  product: Prisma.JourneyEventWhereInput,
+  query: Prisma.JourneyEventWhereInput,
+): Prisma.SearchHistoryWhereInput {
+  return {
+    journeyEvents: {
+      none: { AND: [owner, { type: stage }, { createdAt }, product, query] },
+    },
+  };
+}
+
 /** Stable cross-table (createdAt DESC, prefixed ID ASC) keyset. */
 export function sourceActivitySeek(cursor: ActivityCursor | undefined, prefix: "j" | "s" | "r" | "e") {
   if (!cursor) return {};
