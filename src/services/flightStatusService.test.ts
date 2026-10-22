@@ -76,6 +76,24 @@ test("flight status reads are trip-owner scoped and expose no status until an ap
   assert.equal(await service.getUserFlightStatus("user-b", "trip-1"), null);
 });
 
+
+test("future status events cannot poison ordering or appear current", async () => {
+  const database = memoryDatabase();
+  const service = createFlightStatusService(() => database.client, () => now);
+  const future = {
+    ...parsePartnerFlightStatus(payload(), now),
+    observedAt: new Date("2026-10-22T16:06:00.000Z"),
+  };
+  assert.deepEqual(await service.recordPartnerFlightStatus(future), { applied: false });
+  assert.equal(database.snapshot, null);
+
+  await service.recordPartnerFlightStatus(parsePartnerFlightStatus(payload(), now));
+  if (database.snapshot) database.snapshot.observedAt = new Date("2026-10-22T16:01:00.000Z");
+  const owner = await service.getUserFlightStatus("user-a", "trip-1");
+  assert.equal(owner?.dataAvailable, true);
+  if (owner?.dataAvailable) assert.equal(owner.freshness, "stale");
+});
+
 function payload() {
   return {
     providerName: "Example Provider",
