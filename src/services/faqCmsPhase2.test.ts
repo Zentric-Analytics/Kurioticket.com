@@ -5,6 +5,7 @@ import test from "node:test";
 const initService = readFileSync("src/services/faqCmsService.ts", "utf8");
 const initRoute = readFileSync("src/app/api/admin/content/faqs/initialize/route.ts", "utf8");
 const listPage = readFileSync("src/app/admin/content/faqs/page.tsx", "utf8");
+const newPage = readFileSync("src/app/admin/content/faqs/new/page.tsx", "utf8");
 const editor = readFileSync("src/components/admin/FaqCmsEditor.tsx", "utf8");
 const detailPage = readFileSync("src/app/admin/content/faqs/[id]/page.tsx", "utf8");
 const publicService = readFileSync("src/services/publicCmsContentService.ts", "utf8");
@@ -21,9 +22,12 @@ test("FAQ CMS initialization is explicit, transactional, published and audited",
   assert.match(initService, /status: "PUBLISHED"/);
   assert.match(initService, /CMS_FAQ_INITIALIZED/);
   assert.match(initService, /cmsContentRevision\.create/);
-  assert.match(initService, /existingCount > 0/);
   assert.match(initService, /const FAQ_LOCALE = "en"/);
-  assert.match(initService, /"en-us", "en-gb"/);
+  assert.match(initService, /FAQ_LEGACY_LOCALES = \["en-us", "en-gb"\]/);
+  assert.match(initService, /cmsContentItem\.updateMany/);
+  assert.match(initService, /cmsContentScope\.deleteMany/);
+  assert.match(initService, /preservedDraftCount/);
+  assert.match(initService, /migratedLegacyScopeCount/);
 });
 
 test("FAQ admin surface exposes the intended CMS lifecycle", () => {
@@ -40,6 +44,8 @@ test("FAQ admin surface exposes the intended CMS lifecycle", () => {
   assert.match(editor, /disabled=\{!validDraft \|\| draftDirty\}/);
   assert.match(detailPage, /Revision history/);
   assert.match(detailPage, /actorEmail/);
+  assert.match(newPage, /getCmsContentScopeSummary/);
+  assert.match(newPage, /redirect\("\/admin\/content\/faqs"\)/);
 });
 
 test("public FAQ reads are locale aware and preserve code fallback", () => {
