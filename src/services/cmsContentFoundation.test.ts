@@ -35,6 +35,8 @@ test("admin CMS APIs require canonical admin access and expose explicit lifecycl
   assert.match(collectionApi, /requireAdminApiSession\(\)/);
   assert.match(itemApi, /requireAdminApiSession\(\)/);
   assert.match(collectionApi, /createCmsContent/);
+  assert.match(collectionApi, /cursor: url\.searchParams\.get\("cursor"\)/);
+  assert.match(collectionApi, /limit,/);
   for (const action of ["save_draft", "publish", "hide", "archive"]) assert.equal(itemApi.includes(action), true, action);
   assert.match(itemApi, /hasRecentReauthentication/);
   assert.match(itemApi, /recent_reauthentication_required/);
@@ -49,6 +51,13 @@ test("CMS mutations use optimistic concurrency and transactional revision plus a
   assert.match(service, /adminAuditLog\.create/);
   assert.match(service, /CMS_CONTENT_CREATED/);
   assert.match(service, /CMS_CONTENT_UPDATED/);
+  assert.match(service, /error\.code === "P2034"/);
+  assert.match(service, /Content changed concurrently/);
+  assert.match(service, /encodeCmsListCursor/);
+  assert.match(service, /decodeCmsListCursor/);
+  assert.match(service, /take: limit \+ 1/);
+  assert.match(service, /nextCursor/);
+  assert.match(service, /CMS cursor does not match this query/);
   assert.doesNotMatch(service, /sortOrder: parsed\.data\.sortOrder \?\? existing\.sortOrder,\n\s*status: "DRAFT"/);
   assert.match(service, /publishedMarket: existing\.market/);
   assert.match(service, /publishedLocale: existing\.locale/);
