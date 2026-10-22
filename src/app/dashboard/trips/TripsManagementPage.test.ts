@@ -24,9 +24,11 @@ test("web My Trips has truthful external provider actions and no internal manage
 
 test("web My Trips surfaces verified partner confirmation and provider flight status without inventing availability", () => {
   assert.match(source, /trip\.providerConfirmed/);
-  assert.match(source, /confirmationVerifiedAt/);
+  assert.match(source, /providerConfirmedAt/);
   assert.match(source, /\/api\/dashboard\/trips\/\$\{encodeURIComponent\(tripId\)\}\/flight-status/);
   assert.match(source, /!status\.dataAvailable/);
   assert.match(source, /status\.freshness === "stale"/);
+  assert.match(source, /window\.setInterval\(\(\) => void refresh\(\), 60_000\)/);
+  assert.match(source, /live=\{trip\.status === "upcoming"\}/);
   assert.doesNotMatch(source, /On time/);
 });
