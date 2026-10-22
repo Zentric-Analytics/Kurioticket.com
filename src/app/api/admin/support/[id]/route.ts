@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { requireAdminApiSession, writeAdminAuditLog } from "@/lib/admin";
 import { adminSupportReplySchema, adminSupportStatusSchema } from "@/lib/validation";
-import { addAdminSupportReply, SupportTicketNotFoundError, updateSupportTicketStatus } from "@/services/supportService";
+import { addAdminSupportReply, SupportTicketNotFoundError, updateSupportTicketStatus } from "@/services/supportService";\nimport { adminOperationalReadResponse } from "@/services/adminOperationalReadHttp";\nimport { adminOperationalReads } from "@/services/adminOperationalReadService";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +25,7 @@ function getAdminSession(result: AdminSessionResult) {
   return { session: result.session };
 }
 
-export async function POST(request: NextRequest, context: RouteContext) {
+export async function GET(_request: NextRequest, context: RouteContext) {\n  const { id } = await context.params;\n  return adminOperationalReadResponse(await adminOperationalReads.support.detail(id));\n}\n\nexport async function POST(request: NextRequest, context: RouteContext) {
   const dependencies = getDependencies();
   const adminResult = getAdminSession(await dependencies.requireAdmin());
   if (adminResult.response) return adminResult.response;
