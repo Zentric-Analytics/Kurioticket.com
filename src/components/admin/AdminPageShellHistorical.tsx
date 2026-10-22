@@ -210,7 +210,7 @@ export function AdminPageShell({
   children: React.ReactNode;
 }) {
   return (
-    <div className="mx-auto max-w-7xl">
+    <div className="w-full min-w-0">
       <AdminPageHeader eyebrow={eyebrow} title={title} description={description} actions={actions} />
       <div className="mt-6">{children}</div>
     </div>
