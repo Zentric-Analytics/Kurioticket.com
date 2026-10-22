@@ -44,7 +44,7 @@ test("a chunked body exceeding 64 KiB is rejected before it is buffered or inges
     },
   });
   const timestamp = String(Math.floor(now / 1_000));
-  const response = await POST(new Request("https://kurioticket.test/api/internal/partner-confirmations", {
+  const init = {
     method: "POST",
     headers: {
       "x-kt-confirmation-timestamp": timestamp,
@@ -52,7 +52,8 @@ test("a chunked body exceeding 64 KiB is rejected before it is buffered or inges
     },
     body: stream,
     duplex: "half",
-  }));
+  } as RequestInit & { duplex: "half" };
+  const response = await POST(new Request("https://kurioticket.test/api/internal/partner-confirmations", init));
   assert.equal(response.status, 413);
   assert.equal(ingested, false);
 });
