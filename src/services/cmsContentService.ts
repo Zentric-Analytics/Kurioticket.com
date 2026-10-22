@@ -388,12 +388,11 @@ async function transitionCmsContent(
     const existing = await tx.cmsContentItem.findUnique({ where: { id } });
     if (!existing) throw new CmsContentError("NOT_FOUND", "Content item not found.");
     if (existing.status === "ARCHIVED") throw new CmsContentError("ARCHIVED", "Archived content cannot be changed.");
-    const payload = parsePayload(existing.type, existing.draftPayload);
     const nextVersion = parsed.data.expectedVersion + 1;
     const data = transition === "PUBLISHED"
       ? {
           status: "PUBLISHED" as const,
-          publishedPayload: payload,
+          publishedPayload: parsePayload(existing.type, existing.draftPayload),
           publishedMarket: existing.market,
           publishedLocale: existing.locale,
           publishedSortOrder: existing.sortOrder,
