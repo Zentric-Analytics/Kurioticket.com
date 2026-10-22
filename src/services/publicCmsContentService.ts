@@ -96,10 +96,11 @@ export async function getPublishedHotelDestinations() {
 
 export async function getPublishedFaqs(localeInput?: string | null) {
   const locale = normalizeLanguage(localeInput);
+  const cmsLocale = locale.startsWith("en-") ? "en" : locale;
   const dictionary = getTranslations(locale);
   return readPublishedCmsContent<CmsFaq>("FAQ", {
     market: "GLOBAL",
-    locale,
+    locale: cmsLocale,
     fallback: () => getGeneralFaqs((key) => dictionary[key] ?? key).map((item, index) => ({
       id: `fallback-faq-${index + 1}`,
       question: item.question,
