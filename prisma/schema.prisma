@@ -991,6 +991,7 @@ model CmsContentItem {
   revisions            CmsContentRevision[]
 
   @@unique([type, key, market, locale])
+  @@unique([type, key, publishedMarket, publishedLocale])
   @@index([type, status, market, locale, sortOrder])
   @@index([updatedAt])
 }
