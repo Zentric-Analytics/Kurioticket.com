@@ -1,58 +1,93 @@
-import { AdminDataTable, AdminEmptyState, AdminPageShell } from "@/components/admin/AdminPageShell";
-import { Button } from "@/components/ui/Button";
+import Link from "next/link";
+
+import { AdminButton, AdminDataTable, AdminEmptyState, AdminFilterBar, AdminInput, AdminPageShell } from "@/components/admin/AdminPageShell";
 import { formatDateTime } from "@/lib/admin-data";
-import { withOptionalDb } from "@/lib/prisma";
+import { adminAuditReads } from "@/services/adminAuditReadService";
 
 export const metadata = { title: "Admin Logs" };
 
-type PageProps = { searchParams?: Promise<{ action?: string; adminEmail?: string; targetEmail?: string }> };
+type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
-export default async function AdminLogsPage({ searchParams }: PageProps) {
-  const params = await searchParams;
-  const action = params?.action?.trim() || "";
-  const adminEmail = params?.adminEmail?.trim() || "";
-  const targetEmail = params?.targetEmail?.trim() || "";
-  const logs = await withOptionalDb(async (db) => db.adminAuditLog.findMany({
-    where: {
-      ...(action ? { action: { contains: action, mode: "insensitive" as const } } : {}),
-      ...(adminEmail ? { adminEmail: { contains: adminEmail, mode: "insensitive" as const } } : {}),
-      ...(targetEmail ? { targetEmail: { contains: targetEmail, mode: "insensitive" as const } } : {}),
-    },
-    orderBy: { createdAt: "desc" },
-    take: 100,
-  }), []);
+export default async function AdminLogsPage({ searchParams }: { searchParams: SearchParams }) {
+  const raw = await searchParams;
+  const params = toParams(raw);
+  if (!params.has("limit")) params.set("limit", "50");
+  const result = await adminAuditReads.list(params);
 
   return (
-    <AdminPageShell title="Audit Logs" description="Security audit trail for sensitive admin actions and platform operations.">
-      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-        <form className="grid gap-3 md:grid-cols-[1fr_1fr_1fr_auto]" action="/admin/logs">
-          <input name="action" defaultValue={action} placeholder="Action" className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm" />
-          <input name="adminEmail" defaultValue={adminEmail} placeholder="Admin email" className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm" />
-          <input name="targetEmail" defaultValue={targetEmail} placeholder="Target email" className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm" />
-          <Button type="submit">Filter</Button>
-        </form>
-      </div>
-      <div className="mt-4">
-        {logs.length === 0 ? (
-          <AdminEmptyState title="No admin audit logs found" message="Audit logs will appear after sensitive admin actions are recorded. TODO: expand this view when additional audit event types are added." />
+    <AdminPageShell
+      title="Audit Logs"
+      description="Security audit trail for sensitive admin actions. This view uses the safe audit contract and intentionally excludes raw metadata, IP addresses and user-agent values."
+    >
+      <div className="space-y-4">
+        <AdminFilterBar action="/admin/logs">
+          <AdminInput name="action" defaultValue={one(raw.action)} placeholder="Action" />
+          <AdminInput name="adminEmail" defaultValue={one(raw.adminEmail)} placeholder="Admin email" />
+          <AdminInput name="targetType" defaultValue={one(raw.targetType)} placeholder="Target type" />
+          <AdminInput name="targetEmail" defaultValue={one(raw.targetEmail)} placeholder="Target email" />
+          <AdminButton type="submit">Apply filters</AdminButton>
+        </AdminFilterBar>
+
+        {result.status === "ok" ? (
+          result.data.items.length === 0 ? (
+            <AdminEmptyState
+              title="No audit entries found"
+              message="No recorded admin actions match this filter set in the current audit window."
+            />
+          ) : (
+            <>
+              <AdminDataTable
+                columns={["Created", "Admin", "Action", "Target", "Target email"]}
+                rows={result.data.items.map((log) => ({
+                  id: log.id,
+                  cells: [
+                    formatDateTime(new Date(log.createdAt)),
+                    <div key="admin"><p className="font-semibold text-slate-950">{log.adminEmail}</p><p className="text-xs text-slate-500">{log.adminUserId || "No user id"}</p></div>,
+                    <span key="action" className="font-black text-slate-950">{log.action}</span>,
+                    <div key="target"><p className="font-semibold text-slate-950">{log.targetType}</p><p className="text-xs text-slate-500">{log.targetId || "—"}</p></div>,
+                    log.targetEmail || "—",
+                  ],
+                }))}
+              />
+              {result.data.nextCursor ? (
+                <div className="flex justify-end">
+                  <Link
+                    href={cursorHref(raw, result.data.nextCursor)}
+                    className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-700 hover:bg-slate-50"
+                  >
+                    Next page
+                  </Link>
+                </div>
+              ) : null}
+            </>
+          )
         ) : (
-          <AdminDataTable
-            columns={["Created", "Admin", "Action", "Target", "Target email", "IP", "Metadata"]}
-            rows={logs.map((log) => ({
-              id: log.id,
-              cells: [
-                formatDateTime(log.createdAt),
-                log.adminEmail,
-                <span key="action" className="font-black text-slate-950">{log.action}</span>,
-                `${log.targetType}${log.targetId ? ` / ${log.targetId}` : ""}`,
-                log.targetEmail || "—",
-                log.ipAddress || "—",
-                <span key="metadata" className="font-mono text-xs text-slate-500">{JSON.stringify(log.metadata || {})}</span>,
-              ],
-            }))}
+          <AdminEmptyState
+            title={result.status === "invalid" ? "Invalid audit filters" : result.status === "forbidden" ? "Admin access required" : "Audit log unavailable"}
+            message={"issues" in result ? result.issues.map((issue) => issue.field + ": " + issue.message).join(" ") : "The audit reader could not verify log data. An unavailable audit read is not shown as an empty history."}
           />
         )}
       </div>
     </AdminPageShell>
   );
+}
+
+function one(value: string | string[] | undefined) {
+  return typeof value === "string" ? value : "";
+}
+
+function toParams(raw: Record<string, string | string[] | undefined>) {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(raw)) {
+    if (Array.isArray(value)) value.forEach((item) => params.append(key, item));
+    else if (value) params.set(key, value);
+  }
+  return params;
+}
+
+function cursorHref(raw: Record<string, string | string[] | undefined>, cursor: string) {
+  const params = toParams(raw);
+  params.set("cursor", cursor);
+  params.set("limit", one(raw.limit) || "50");
+  return "/admin/logs?" + params.toString();
 }

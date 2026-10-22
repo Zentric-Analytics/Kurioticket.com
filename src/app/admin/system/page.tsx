@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { AdminPageShell, AdminSectionCard, AdminStatusBadge } from "@/components/admin/AdminPageShell";
 import { getSafeSystemStatus } from "@/lib/admin-data";
 import { getAdminEmails } from "@/lib/env";
@@ -26,7 +27,7 @@ export default async function AdminSystemPage() {
   ] as const;
 
   return (
-    <AdminPageShell title="System" description="Safe operational status only. Secret values, database URLs, API keys, tokens, and raw environment variables are never displayed.">
+    <AdminPageShell title="System" description="Safe operational status only. Secret values, database URLs, API keys, tokens, and raw environment variables are never displayed." actions={<Link href="/admin/logs" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">View audit logs</Link>}>
       <AdminSectionCard className="p-5">
         <h2 className="font-semibold text-slate-950">System Status</h2>
         <div className="mt-4 grid gap-3 md:grid-cols-2">
@@ -61,7 +62,7 @@ export default async function AdminSystemPage() {
       <AdminSectionCard className="p-5">
         <h2 className="font-semibold text-slate-950">Feature Controls — {featureControls.environment}</h2>
         <p className="mt-2 text-sm text-slate-600">Authoritative product availability and operational kill switches. Production changes require explicit controller permission and an audited reason.</p>
-        <div className="mt-5"><FeatureControlsPanel initialControls={featureControls.controls} environment={featureControls.environment} canControlProduction={getFeatureControlProductionAdmins().includes(session?.user?.email?.trim().toLowerCase() || "")} /></div>
+        <div className="mt-5"><FeatureControlsPanel initialControls={featureControls.controls} environment={featureControls.environment} canControlProduction={getFeatureControlProductionAdmins().includes(session?.user?.email?.trim().toLowerCase() || "")} operationsAvailable={featureControls.dataAvailable && system.databaseConnected} /></div>
       </AdminSectionCard>
     </AdminPageShell>
   );
