@@ -3,6 +3,7 @@ import type { FlightOperationalStatus, MyTripType } from "@/generated/prisma/enu
 import { getPrisma } from "@/lib/prisma";
 
 const freshnessWindowMs = 15 * 60_000;
+const maximumFutureEventSkewMs = 5 * 60_000;
 const timestampPattern = /^\d{4}-\d{2}-\d{2}T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d{3})?Z$/;
 
 type ObjectValue = Record<string, unknown>;
@@ -138,7 +139,7 @@ function flightStatus(value: unknown): FlightOperationalStatus {
 }
 
 /** Parses only the allowlisted values needed for a primary flight status snapshot. */
-export function parsePartnerFlightStatus(value: unknown): PartnerFlightStatusInput {
+export function parsePartnerFlightStatus(value: unknown, now: Date = new Date()): PartnerFlightStatusInput {
   const payload = object(value);
   const scheduledDepartureAt = timestamp(payload.scheduledDepartureAt);
   const scheduledArrivalAt = optionalTimestamp(payload.scheduledArrivalAt);
@@ -153,11 +154,13 @@ export function parsePartnerFlightStatus(value: unknown): PartnerFlightStatusInp
   const carrierCode = text(payload.carrierCode, 3).toUpperCase();
   const flightNumber = text(payload.flightNumber, 8).toUpperCase();
   if (!/^[A-Z0-9]{2,3}$/.test(carrierCode) || !/^[A-Z0-9]{1,8}$/.test(flightNumber)) invalidPayload();
+  const observedAt = timestamp(payload.occurredAt);
+  if (observedAt.getTime() > now.getTime() + maximumFutureEventSkewMs) invalidPayload();
 
   return {
     providerName: text(payload.providerName, 100),
     partnerConversionId: text(payload.partnerConversionId, 191),
-    observedAt: timestamp(payload.occurredAt),
+    observedAt,
     status: flightStatus(payload.status),
     flightNumber,
     carrierCode,
@@ -211,6 +214,8 @@ export function createFlightStatusService(
   now: () => Date = () => new Date(),
 ) {
   async function recordPartnerFlightStatus(input: PartnerFlightStatusInput) {
+    const currentTime = now();
+    if (input.observedAt.getTime() > currentTime.getTime() + maximumFutureEventSkewMs) return { applied: false };
     const database = getDatabase();
     const trip = await database.myTrip.findUnique({
       where: { providerName_partnerConversionId: { providerName: input.providerName, partnerConversionId: input.partnerConversionId } },
@@ -264,7 +269,7 @@ export function createFlightStatusService(
         actualArrivalAt: snapshot.actualArrivalAt?.toISOString() ?? null,
       },
       lastUpdatedAt: snapshot.observedAt.toISOString(),
-      freshness: age <= freshnessWindowMs ? "current" : "stale",
+      freshness: age >= 0 && age <= freshnessWindowMs ? "current" : "stale",
     };
   }
 
