@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { requireAdminApiSession, writeAdminAuditLog } from "@/lib/admin";
 import { adminSupportReplySchema, adminSupportStatusSchema } from "@/lib/validation";
-import { addAdminSupportReply, SupportTicketNotFoundError, updateSupportTicketStatus } from "@/services/supportService";\nimport { adminOperationalReadResponse } from "@/services/adminOperationalReadHttp";\nimport { adminOperationalReads } from "@/services/adminOperationalReadService";
+import { addAdminSupportReply, SupportTicketNotFoundError, updateSupportTicketStatus } from "@/services/supportService";
+import { adminOperationalReadResponse } from "@/services/adminOperationalReadHttp";
+import { adminOperationalReads } from "@/services/adminOperationalReadService";
 
 export const dynamic = "force-dynamic";
 
