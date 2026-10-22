@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { adminNavigation, adminNavigationGroups, getAdminNavForRole, isAdminNavItemActive } from "@/lib/adminNavigation";
+import { adminNavigation, adminNavigationGroups, getAdminNavForRole, getAdminHeaderGroups, isAdminNavItemActive } from "@/lib/adminNavigation";
 
 const originalLabels = ["Overview", "Users", "Providers", "Searches", "Provider Handoffs", "Content", "Flights", "Hotels", "Cars", "Support", "Deletion Requests", "Logs", "System", "Settings"];
 
@@ -34,4 +34,21 @@ test("admin navigation activates exact routes and their detail pages", () => {
   assert.equal(isAdminNavItemActive("/admin", "/admin/users"), false);
   assert.equal(isAdminNavItemActive("/admin/support", "/admin/support/123"), true);
   assert.equal(isAdminNavItemActive("/admin/support", "/admin/supportive"), false);
+});
+
+
+test("horizontal admin navigation groups preserve child routes and permissions", () => {
+  const adminGroups = getAdminHeaderGroups("ADMIN", true);
+  const entries = adminGroups.flatMap((group) => group.links);
+  const searches = entries.find(({ item }) => item.href === "/admin/searches");
+  const support = entries.find(({ item }) => item.href === "/admin/support");
+  assert.deepEqual(searches?.children.map((child) => child.href), ["/admin/redirects"]);
+  assert.deepEqual(support?.children.map((child) => child.href), ["/admin/account-deletions"]);
+  assert.equal(entries.some(({ item }) => item.href === "/admin/redirects"), false);
+  assert.equal(entries.some(({ item }) => item.href === "/admin/account-deletions"), false);
+  assert.equal(entries.some(({ item }) => item.href === "/admin/preview-testers"), true);
+  const supportEntries = getAdminHeaderGroups("SUPPORT").flatMap((group) => group.links);
+  assert.deepEqual(supportEntries.map(({ item }) => item.label), ["Overview", "Users", "Searches", "Support"]);
+  assert.equal(supportEntries.some(({ children }) => children.length > 0), false);
+  assert.deepEqual(getAdminHeaderGroups("USER"), []);
 });
