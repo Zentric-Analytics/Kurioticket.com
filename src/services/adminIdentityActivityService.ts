@@ -4,7 +4,7 @@ import { Prisma } from "@/generated/prisma/client";
 import { eligibleGuestVisitorWhere, eligibleLinkedVisitorWhere, mergeAdminActivity, toAdminJourneyActivity, type ActivityRow, type IdentityKind } from "@/lib/adminIdentityJourney";
 import {
   ACTIVITY_FETCH_LIMIT, ACTIVITY_PAGE_SIZE, activityWindow, allowedActivityStages,
-  decodeActivityCursor, encodeActivityCursor, excludeCanonicalLegacyRows, sourceActivitySeek,
+  decodeActivityCursor, encodeActivityCursor, excludeCanonicalLegacyRows, legacyStageLabelMatchesQuery, sourceActivitySeek,
   type ActivityFilters, type JourneyStage,
 } from "@/lib/adminIdentityActivity";
 import { escapePrismaContainsQuery } from "@/lib/adminIdentityDirectory";
@@ -117,7 +117,7 @@ export async function loadAdminIdentityActivity(
           searchOwner, { createdAt: window }, sourceActivitySeek(cursor, "s"),
           excludeCanonicalLegacyRows("SEARCH_COMPLETED", journeyOwner, window, productEventFilter, eventQ),
           ...(product ? [{ type: product }] : []),
-          ...(q ? [{ OR: [
+          ...(q && !legacyStageLabelMatchesQuery("SEARCH_COMPLETED", q) ? [{ OR: [
             { origin: ci(q) }, { destination: ci(q) },
             ...(product?.toLowerCase().includes(q.toLowerCase()) ? [{ type: product }] : []),
           ] }] : []),
@@ -132,7 +132,7 @@ export async function loadAdminIdentityActivity(
             redirectOwner, { createdAt: window }, sourceActivitySeek(cursor, "r"),
             excludeCanonicalLegacyRows("PROVIDER_HANDOFF_STARTED", journeyOwner, window, productEventFilter, eventQ),
             ...(product ? [{ type: product }] : []),
-            ...(q ? [{ OR: [{ provider: ci(q) }, { route: ci(q) }] }] : []),
+            ...(q && !legacyStageLabelMatchesQuery("PROVIDER_HANDOFF_STARTED", q) ? [{ OR: [{ provider: ci(q) }, { route: ci(q) }] }] : []),
           ] },
           orderBy: [{ createdAt: "desc" }, { id: "asc" }], take: ACTIVITY_FETCH_LIMIT,
           select: { id: true, type: true, provider: true, route: true, createdAt: true },
