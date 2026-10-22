@@ -1,11 +1,12 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AccountDetailShell } from "@/components/dashboard/AccountDetailShell";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
 import { useLocale } from "@/components/layout/LocaleProvider";
-import { getGeneralFaqs } from "@/content/faqs";
+import { getGeneralFaqs, type FaqItem } from "@/content/faqs";
 import { translations as enTranslations } from "@/lib/i18n/en";
 
 type FaqContentProps = {
@@ -13,9 +14,42 @@ type FaqContentProps = {
 };
 
 export function FaqContent({ showAccountLink }: FaqContentProps) {
-  const { t: dictionary } = useLocale();
+  const { locale, t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
-  const faqItems = getGeneralFaqs(t);
+  const fallbackFaqItems = getGeneralFaqs(t);
+  const [cmsFaqState, setCmsFaqState] = useState<{ locale: string; items: FaqItem[] } | null>(null);
+  const faqItems = cmsFaqState?.locale === locale ? cmsFaqState.items : fallbackFaqItems;
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    void fetch(`/api/content/faqs?locale=${encodeURIComponent(locale)}`, {
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        if (!response.ok) return null;
+        return response.json() as Promise<{ items?: unknown }>;
+      })
+      .then((payload) => {
+        if (!payload || !Array.isArray(payload.items)) return;
+        const items = payload.items.filter(
+          (item): item is FaqItem =>
+            Boolean(
+              item &&
+              typeof item === "object" &&
+              typeof (item as FaqItem).question === "string" &&
+              typeof (item as FaqItem).answer === "string",
+            ),
+        );
+        setCmsFaqState({ locale, items });
+      })
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+      });
+
+    return () => controller.abort();
+  }, [locale]);
+
   const supportCtaSuffix = t("faqNeedMoreHelpSuffix");
   const supportCtaSuffixSeparator = /^[,.;:!?]/.test(supportCtaSuffix)
     ? ""
