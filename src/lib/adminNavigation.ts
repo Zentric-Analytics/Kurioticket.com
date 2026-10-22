@@ -65,3 +65,33 @@ const previewTesterNavigation: AdminNavDefinition = { href: "/admin/preview-test
 export function getAdminNavForRole(role: AdminRole, includePreviewTesters = false) {
   return [...adminNavigation, ...(includePreviewTesters ? [previewTesterNavigation] : [])].filter((item) => item.roles.includes(role));
 }
+
+
+export type AdminHeaderGroup = {
+  label: string;
+  links: Array<{ item: AdminNavDefinition; children: AdminNavDefinition[] }>;
+};
+
+/**
+ * Keep the compact header in sync with the existing sidebar hierarchy and
+ * role-aware navigation. Secondary pages remain children of their parents.
+ */
+export function getAdminHeaderGroups(role: AdminRole, includePreviewTesters = false): AdminHeaderGroup[] {
+  const visible = getAdminNavForRole(role, includePreviewTesters);
+  const byHref = new Map(visible.map((item) => [item.href, item]));
+  const groupedHrefs = new Set<string>(adminNavigationGroups.flatMap((group) => group.hrefs));
+  const extraTopLevel = visible.filter((item) => !groupedHrefs.has(item.href) && !item.parentHref);
+
+  return adminNavigationGroups.map((group, index) => {
+    const hrefs: string[] = [...group.hrefs];
+    if (index === adminNavigationGroups.length - 1) {
+      hrefs.push(...extraTopLevel.map((item) => item.href));
+    }
+    const links = hrefs.flatMap((href) => {
+      const item = byHref.get(href);
+      if (!item || item.parentHref) return [];
+      return [{ item, children: visible.filter((child) => child.parentHref === item.href) }];
+    });
+    return { label: group.label, links };
+  }).filter((group) => group.links.length > 0);
+}

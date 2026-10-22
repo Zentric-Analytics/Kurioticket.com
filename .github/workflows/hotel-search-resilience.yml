@@ -39,6 +39,20 @@ jobs:
           DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/kurioticket_journey_test
           JITI_TSCONFIG_PATHS: ./tsconfig.json
         run: node --input-type=module --import jiti/register -e 'await import("./scripts/search-journey.integration.ts")'
+      - name: Admin journey read contract
+        env:
+          JITI_TSCONFIG_PATHS: ./tsconfig.json
+          JITI_JSX: "true"
+        run: >-
+          node --input-type=module --import jiti/register -e
+          'await import("./src/services/adminJourneyContract.test.ts");
+          await import("./src/services/adminJourneyCore.test.ts");
+          await import("./src/services/adminJourneyHttp.test.ts");'
+      - name: Admin journey PostgreSQL reads
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/kurioticket_admin_journey_test
+          JITI_TSCONFIG_PATHS: ./tsconfig.json
+        run: node --input-type=module --import jiti/register -e 'await import("./scripts/admin-journey.integration.ts")'
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - name: Mobile and desktop return journey
