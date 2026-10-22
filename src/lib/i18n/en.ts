@@ -357,7 +357,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.trips.metasearch.providerConfirmation":
     "Provider confirmation",
   "accountDashboard.trips.metasearch.providerConfirmed": "Provider confirmed",
-  "accountDashboard.trips.metasearch.confirmedAt": "Verified {{date}}",
+  "accountDashboard.trips.metasearch.confirmedAt": "Provider confirmed {{date}}",
   "accountDashboard.trips.metasearch.flightStatus": "Flight status",
   "accountDashboard.trips.metasearch.flightStatusUnavailable": "Live flight status is not available from the provider yet.",
   "accountDashboard.trips.metasearch.flightStatusStale": "Last provider update may be stale.",
