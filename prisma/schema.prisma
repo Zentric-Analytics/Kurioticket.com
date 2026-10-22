@@ -944,6 +944,95 @@ model LegalDocument {
   @@index([lastUpdatedAt])
 }
 
+enum CmsContentType {
+  HOMEPAGE_DESTINATION
+  FLIGHT_ROUTE
+  HOTEL_DESTINATION
+  FAQ
+}
+
+enum CmsContentStatus {
+  DRAFT
+  PUBLISHED
+  HIDDEN
+  ARCHIVED
+}
+
+enum CmsContentRevisionAction {
+  CREATED
+  UPDATED
+  PUBLISHED
+  HIDDEN
+  ARCHIVED
+}
+
+model CmsContentScope {
+  id          String         @id @default(cuid())
+  type        CmsContentType
+  market      String
+  locale      String
+  activatedAt DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@unique([type, market, locale])
+  @@index([updatedAt])
+}
+
+model CmsContentItem {
+  id                   String           @id @default(cuid())
+  type                 CmsContentType
+  key                  String
+  status               CmsContentStatus @default(DRAFT)
+  market               String           @default("GLOBAL")
+  locale               String           @default("en")
+  sortOrder            Int              @default(0)
+  publishedMarket      String?
+  publishedLocale      String?
+  publishedSortOrder   Int?
+  draftPayload         Json
+  publishedPayload     Json?
+  version              Int              @default(1)
+  publishedVersion     Int?
+  createdByAdminUserId String?
+  updatedByAdminUserId String?
+  publishedByAdminUserId String?
+  publishedAt          DateTime?
+  archivedAt           DateTime?
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+  revisions            CmsContentRevision[]
+
+  @@unique([type, key, market, locale])
+  @@unique([type, key, publishedMarket, publishedLocale])
+  @@index([type, status, market, locale, sortOrder])
+  @@index([type, publishedMarket, publishedLocale, publishedSortOrder])
+  @@index([updatedAt])
+}
+
+model CmsContentRevision {
+  id           String                   @id @default(cuid())
+  contentItemId String
+  version      Int
+  action       CmsContentRevisionAction
+  status       CmsContentStatus
+  market       String
+  locale       String
+  sortOrder    Int
+  publishedMarket String?
+  publishedLocale String?
+  publishedSortOrder Int?
+  draftPayload Json
+  publishedPayload Json?
+  actorUserId  String?
+  actorEmail   String
+  createdAt    DateTime                 @default(now())
+  contentItem  CmsContentItem           @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
+
+  @@unique([contentItemId, version])
+  @@index([contentItemId, createdAt(sort: Desc)])
+  @@index([action, createdAt])
+}
+
 model FeatureFlag {
   id          String                 @id @default(cuid())
   key         String
