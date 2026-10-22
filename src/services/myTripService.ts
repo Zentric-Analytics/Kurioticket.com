@@ -11,7 +11,7 @@ export type PublicMyTrip = {
   providerName: string; providerConfirmationCode: string; origin: string | null; destination: string;
   departureDate: string; returnDate: string | null; travelerCount: number; currency: string;
   totalAmount: number | null; providerAction: { url: string; label: string; external: true } | null;
-  providerConfirmed: boolean; confirmationVerifiedAt: string | null;
+  providerConfirmed: boolean; providerConfirmedAt: string | null;
 };
 
 type MyTripRecord = {
@@ -103,7 +103,7 @@ export async function upsertPartnerConfirmedMyTrip(input: PartnerConfirmedMyTrip
         { partnerConfirmationOccurredAt: { lt: input.confirmationOccurredAt } },
       ],
     },
-    data: { providerName: input.providerName, providerConfirmationCode: input.providerConfirmationCode, providerTripId: input.providerTripId, providerManageUrl, tripType: input.tripType, status: input.status, origin: input.origin, destination: input.destination, departureDate: input.departureDate, returnDate: input.returnDate, travelerCount: input.travelerCount, currency: input.currency, totalAmount: input.totalAmount, partnerConfirmationOccurredAt: input.confirmationOccurredAt },
+    data: { providerName: input.providerName, providerConfirmationCode: input.providerConfirmationCode, providerTripId: input.providerTripId, providerManageUrl, tripType: input.tripType, status: input.status, source: input.source ?? "PARTNER_CONFIRMATION", origin: input.origin, destination: input.destination, departureDate: input.departureDate, returnDate: input.returnDate, travelerCount: input.travelerCount, currency: input.currency, totalAmount: input.totalAmount, partnerConfirmationOccurredAt: input.confirmationOccurredAt },
   });
   const trip = updated.count === 1
     ? await getClient().myTrip.findUnique({ where: { id: existing.id }, select })
@@ -129,7 +129,7 @@ export class MyTripIngestionOwnershipError extends Error {
 function serializeMyTrip(trip: MyTripRecord): PublicMyTrip {
   const url = trip.providerManageUrl ? validateProviderUrl(trip.providerManageUrl) : null;
   const providerConfirmed = trip.source === "PARTNER_CONFIRMATION" && trip.partnerConfirmationOccurredAt !== null;
-  return { id: trip.id, tripType: typeToPublic[trip.tripType], status: statusToPublic[trip.status], providerName: trip.providerName, providerConfirmationCode: trip.providerConfirmationCode, origin: trip.origin, destination: trip.destination, departureDate: trip.departureDate.toISOString(), returnDate: trip.returnDate?.toISOString() ?? null, travelerCount: trip.travelerCount, currency: trip.currency, totalAmount: trip.totalAmount === null ? null : Number(trip.totalAmount.toString()), providerAction: url ? { url, label: `Manage with ${trip.providerName}`, external: true } : null, providerConfirmed, confirmationVerifiedAt: providerConfirmed ? trip.partnerConfirmationOccurredAt!.toISOString() : null };
+  return { id: trip.id, tripType: typeToPublic[trip.tripType], status: statusToPublic[trip.status], providerName: trip.providerName, providerConfirmationCode: trip.providerConfirmationCode, origin: trip.origin, destination: trip.destination, departureDate: trip.departureDate.toISOString(), returnDate: trip.returnDate?.toISOString() ?? null, travelerCount: trip.travelerCount, currency: trip.currency, totalAmount: trip.totalAmount === null ? null : Number(trip.totalAmount.toString()), providerAction: url ? { url, label: `Manage with ${trip.providerName}`, external: true } : null, providerConfirmed, providerConfirmedAt: providerConfirmed ? trip.partnerConfirmationOccurredAt!.toISOString() : null };
 }
 
 function getClient() { return clientForTesting ?? (getPrisma() as unknown as MyTripClient); }
