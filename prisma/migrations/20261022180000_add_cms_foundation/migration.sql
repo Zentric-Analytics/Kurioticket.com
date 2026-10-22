@@ -8,6 +8,18 @@ CREATE TYPE "CmsContentStatus" AS ENUM ('DRAFT', 'PUBLISHED', 'HIDDEN', 'ARCHIVE
 CREATE TYPE "CmsContentRevisionAction" AS ENUM ('CREATED', 'UPDATED', 'PUBLISHED', 'HIDDEN', 'ARCHIVED');
 
 -- CreateTable
+CREATE TABLE "CmsContentScope" (
+    "id" TEXT NOT NULL,
+    "type" "CmsContentType" NOT NULL,
+    "market" TEXT NOT NULL,
+    "locale" TEXT NOT NULL,
+    "activatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "CmsContentScope_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "CmsContentItem" (
     "id" TEXT NOT NULL,
     "type" "CmsContentType" NOT NULL,
@@ -55,6 +67,12 @@ CREATE TABLE "CmsContentRevision" (
 
     CONSTRAINT "CmsContentRevision_pkey" PRIMARY KEY ("id")
 );
+
+-- CreateIndex
+CREATE UNIQUE INDEX "CmsContentScope_type_market_locale_key" ON "CmsContentScope"("type", "market", "locale");
+
+-- CreateIndex
+CREATE INDEX "CmsContentScope_updatedAt_idx" ON "CmsContentScope"("updatedAt");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "CmsContentItem_type_key_market_locale_key" ON "CmsContentItem"("type", "key", "market", "locale");
