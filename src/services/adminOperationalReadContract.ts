@@ -156,7 +156,7 @@ function invalid(field: string, message: string): ParseResult<never> {
   return { status: "invalid", issues: [{ field, message }] };
 }
 
-function values(params: URLSearchParams, allowed: readonly string[]) {
+function values(params: URLSearchParams, allowed: readonly string[]): ParseResult<Record<string, string | null>> {
   for (const key of params.keys()) if (!allowed.includes(key)) return invalid(key, "Unknown query parameter.");
   const result: Record<string, string | null> = {};
   for (const key of allowed) {
@@ -167,37 +167,37 @@ function values(params: URLSearchParams, allowed: readonly string[]) {
   return { status: "ok" as const, data: result };
 }
 
-function optionalDate(value: string | null, field: string) {
+function optionalDate(value: string | null, field: string): ParseResult<string | null> {
   if (!value) return { status: "ok" as const, data: null as string | null };
   if (!ISO_WITH_ZONE.test(value) || !Number.isFinite(Date.parse(value))) return invalid(field, "Use an ISO timestamp with an explicit timezone.");
   return { status: "ok" as const, data: new Date(value).toISOString() };
 }
 
-function optionalText(value: string | null, field: string, max: number) {
+function optionalText(value: string | null, field: string, max: number): ParseResult<string | null> {
   if (value === null) return { status: "ok" as const, data: null as string | null };
   const trimmed = value.trim();
   if (!trimmed || trimmed.length > max || /[\u0000-\u001f\u007f]/.test(trimmed)) return invalid(field, `Use 1-${max} printable characters.`);
   return { status: "ok" as const, data: trimmed };
 }
 
-function optionalId(value: string | null, field: string) {
+function optionalId(value: string | null, field: string): ParseResult<string | null> {
   if (value === null) return { status: "ok" as const, data: null as string | null };
   return ID.test(value) ? { status: "ok" as const, data: value } : invalid(field, "Invalid identifier.");
 }
 
-function enumValue<T extends string>(value: string | null, field: string, allowed: readonly T[]) {
+function enumValue<T extends string>(value: string | null, field: string, allowed: readonly T[]): ParseResult<T | null> {
   if (value === null) return { status: "ok" as const, data: null as T | null };
   return allowed.includes(value as T) ? { status: "ok" as const, data: value as T } : invalid(field, "Invalid value.");
 }
 
-function limit(value: string | null) {
+function limit(value: string | null): ParseResult<number> {
   if (value === null) return { status: "ok" as const, data: 50 };
   if (!/^\d+$/.test(value)) return invalid("limit", "Limit must be an integer from 1 to 100.");
   const parsed = Number(value);
   return parsed >= 1 && parsed <= 100 ? { status: "ok" as const, data: parsed } : invalid("limit", "Limit must be an integer from 1 to 100.");
 }
 
-function baseScope(raw: Record<string, string | null>) {
+function baseScope(raw: Record<string, string | null>): ParseResult<ScopeBase> {
   const from = optionalDate(raw.from, "from");
   if (from.status !== "ok") return from;
   const to = optionalDate(raw.to, "to");
@@ -228,12 +228,12 @@ export function encodeAdminOperationalCursor(kind: AdminOperationalKind, scope: 
   return Buffer.from(JSON.stringify({ v: 1, kind, at: position.at, id: position.id, scope: scopeKey(scope) }), "utf8").toString("base64url");
 }
 
-function environment(value: string | null, fallback: PublicEnvironment) {
+function environment(value: string | null, fallback: PublicEnvironment): ParseResult<PublicEnvironment> {
   if (value === null) return { status: "ok" as const, data: fallback };
   return value === "staging" || value === "production" ? { status: "ok" as const, data: value } : invalid("environment", "Invalid environment.");
 }
 
-function identity(value: string | null) {
+function identity(value: string | null): ParseResult<AdminIdentityFilter> {
   if (value === null) return { status: "ok" as const, data: "all" as AdminIdentityFilter };
   return ["all", "guest", "registered", "unattributed"].includes(value)
     ? { status: "ok" as const, data: value as AdminIdentityFilter }
@@ -260,7 +260,13 @@ export function parseAdminSearchQuery(params: URLSearchParams, fallbackEnvironme
   const userId = optionalId(raw.data.userId, "userId");
   const visitorId = optionalId(raw.data.visitorId, "visitorId");
   const provider = optionalText(raw.data.provider, "provider", 100);
-  for (const parsed of [env, product, status, idFilter, userId, visitorId, provider]) if (parsed.status !== "ok") return parsed;
+  if (env.status !== "ok") return env;
+  if (product.status !== "ok") return product;
+  if (status.status !== "ok") return status;
+  if (idFilter.status !== "ok") return idFilter;
+  if (userId.status !== "ok") return userId;
+  if (visitorId.status !== "ok") return visitorId;
+  if (provider.status !== "ok") return provider;
   if ((idFilter.data === "guest" || idFilter.data === "unattributed") && userId.data) return invalid("userId", "userId conflicts with this identity filter.");
   if (idFilter.data === "unattributed" && visitorId.data) return invalid("visitorId", "visitorId conflicts with this identity filter.");
   const scope: AdminSearchScope = { ...base.data, environment: env.data, product: product.data, status: status.data, identity: idFilter.data, userId: userId.data, visitorId: visitorId.data, provider: provider.data };
@@ -279,7 +285,13 @@ export function parseAdminHandoffQuery(params: URLSearchParams, fallbackEnvironm
   const visitorId = optionalId(raw.data.visitorId, "visitorId");
   const provider = optionalText(raw.data.provider, "provider", 100);
   const correlation = enumValue(raw.data.correlation, "correlation", ["exact", "unavailable"] as const);
-  for (const parsed of [env, product, idFilter, userId, visitorId, provider, correlation]) if (parsed.status !== "ok") return parsed;
+  if (env.status !== "ok") return env;
+  if (product.status !== "ok") return product;
+  if (idFilter.status !== "ok") return idFilter;
+  if (userId.status !== "ok") return userId;
+  if (visitorId.status !== "ok") return visitorId;
+  if (provider.status !== "ok") return provider;
+  if (correlation.status !== "ok") return correlation;
   if ((idFilter.data === "guest" || idFilter.data === "unattributed") && userId.data) return invalid("userId", "userId conflicts with this identity filter.");
   if (idFilter.data === "unattributed" && visitorId.data) return invalid("visitorId", "visitorId conflicts with this identity filter.");
   const scope: AdminHandoffScope = { ...base.data, environment: env.data, product: product.data, identity: idFilter.data, userId: userId.data, visitorId: visitorId.data, provider: provider.data, correlation: correlation.data };
@@ -295,7 +307,10 @@ export function parseAdminSupportQuery(params: URLSearchParams): ParseResult<Adm
   const priority = enumValue(raw.data.priority, "priority", ["LOW", "NORMAL", "HIGH", "URGENT"] as const);
   const category = optionalText(raw.data.category, "category", 80);
   const q = optionalText(raw.data.q, "q", 160);
-  for (const parsed of [status, priority, category, q]) if (parsed.status !== "ok") return parsed;
+  if (status.status !== "ok") return status;
+  if (priority.status !== "ok") return priority;
+  if (category.status !== "ok") return category;
+  if (q.status !== "ok") return q;
   const scope: AdminSupportScope = { ...base.data, status: status.data, priority: priority.data, category: category.data, q: q.data };
   return finish("support", raw.data, { scope });
 }
@@ -307,7 +322,8 @@ export function parseAdminDeletionQuery(params: URLSearchParams): ParseResult<Ad
   if (base.status !== "ok") return base;
   const status = enumValue(raw.data.status, "status", ["PENDING", "CANCELLED", "READY_FOR_REVIEW", "COMPLETED"] as const);
   const q = optionalText(raw.data.q, "q", 160);
-  for (const parsed of [status, q]) if (parsed.status !== "ok") return parsed;
+  if (status.status !== "ok") return status;
+  if (q.status !== "ok") return q;
   const scope: AdminDeletionScope = { ...base.data, status: status.data, q: q.data };
   return finish("deletions", raw.data, { scope });
 }
