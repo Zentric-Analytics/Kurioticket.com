@@ -3,7 +3,7 @@ import test from "node:test";
 
 import { adminNavigation, adminNavigationGroups, getAdminNavForRole, isAdminNavItemActive } from "@/lib/adminNavigation";
 
-const originalLabels = ["Overview", "Users", "Providers", "Searches", "Content", "Flights", "Hotels", "Cars", "Support", "Logs", "System", "Settings"];
+const originalLabels = ["Overview", "Users", "Providers", "Searches", "Provider Handoffs", "Content", "Flights", "Hotels", "Cars", "Support", "Deletion Requests", "Logs", "System", "Settings"];
 
 test("admin navigation restores the original flat module order", () => {
   assert.deepEqual(adminNavigation.map((item) => item.label), originalLabels);
@@ -12,18 +12,20 @@ test("admin navigation restores the original flat module order", () => {
 
 test("admin navigation uses the exact original section labels and grouping", () => {
   assert.deepEqual(adminNavigationGroups, [
-    { label: "Operations", hrefs: ["/admin", "/admin/users", "/admin/searches", "/admin/support"] },
+    { label: "Operations", hrefs: ["/admin", "/admin/users", "/admin/searches", "/admin/redirects", "/admin/support", "/admin/account-deletions"] },
     { label: "Provider readiness", hrefs: ["/admin/providers", "/admin/flights", "/admin/hotels", "/admin/cars"] },
     { label: "Website content", hrefs: ["/admin/content"] },
     { label: "System & security", hrefs: ["/admin/logs", "/admin/system", "/admin/settings"] },
   ]);
   const visibleHrefs: readonly string[] = adminNavigationGroups.flatMap((group) => group.hrefs);
-  assert.equal(visibleHrefs.includes("/admin/account-deletions"), false);
-  assert.equal(visibleHrefs.includes("/admin/redirects"), false);
+  assert.equal(visibleHrefs.includes("/admin/account-deletions"), true);
+  assert.equal(visibleHrefs.includes("/admin/redirects"), true);
 });
 
 test("admin navigation preserves role restrictions", () => {
   assert.deepEqual(getAdminNavForRole("SUPPORT").map((item) => item.label), ["Overview", "Users", "Searches", "Support"]);
+  assert.equal(getAdminNavForRole("SUPPORT").some((item) => item.parentHref), false);
+  assert.deepEqual(getAdminNavForRole("ADMIN").filter((item) => item.parentHref).map((item) => [item.label, item.parentHref]), [["Provider Handoffs", "/admin/searches"], ["Deletion Requests", "/admin/support"]]);
   assert.deepEqual(getAdminNavForRole("USER"), []);
 });
 
