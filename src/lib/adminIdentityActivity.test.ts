@@ -3,7 +3,7 @@ import test from "node:test";
 
 import {
   ACTIVITY_PAGE_SIZE, allowedActivityStages, activityHref, activityWindow,
-  decodeActivityCursor, encodeActivityCursor, groupActivityRows,
+  decodeActivityCursor, encodeActivityCursor, excludeCanonicalLegacyRows, groupActivityRows,
   parseActivityFilters, sourceActivitySeek, validActivityIdentity,
   type ActivityFilters,
 } from "./adminIdentityActivity";
@@ -68,6 +68,25 @@ test("cross-source keyset keeps stable ties without repeating the cursor item", 
   });
   assert.deepEqual(sourceActivitySeek(undefined, "j"), {});
   assert.equal(ACTIVITY_PAGE_SIZE, 20);
+});
+
+test("legacy searches and handoffs cannot repeat on later pages after matching canonical stages", () => {
+  const owner = { journey: { visitor: { consentStatus: "GRANTED", currentUserId: null } } };
+  const window = { gte: new Date("2026-10-01T00:00:00.000Z") };
+  const product = { product: "FLIGHT" };
+  const query = { provider: { contains: "Duffel" } };
+  const searchExclusion = excludeCanonicalLegacyRows("SEARCH_COMPLETED", owner, window, product, query);
+  const handoffExclusion = excludeCanonicalLegacyRows("PROVIDER_HANDOFF_STARTED", owner, window, product, query);
+  assert.deepEqual(searchExclusion, { journeyEvents: { none: { AND: [
+    owner, { type: "SEARCH_COMPLETED" }, { createdAt: window }, product, query,
+  ] } } });
+  assert.deepEqual(handoffExclusion, { journeyEvents: { none: { AND: [
+    owner, { type: "PROVIDER_HANDOFF_STARTED" }, { createdAt: window }, product, query,
+  ] } } });
+  // A journey seen on an earlier page must still suppress its legacy duplicate.
+  const previousPage = { at: "2026-10-22T17:48:00.000Z", id: "j-cmvuevent104" };
+  assert.equal(JSON.stringify(searchExclusion).includes(previousPage.id), false);
+  assert.equal(JSON.stringify(handoffExclusion).includes(previousPage.at), false);
 });
 
 test("timeline groups a journey only once and keeps verified events in their original order", () => {
