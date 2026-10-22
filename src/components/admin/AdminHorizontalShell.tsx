@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Bell, ChevronDown, Command, LogOut, Menu, Search, Settings, ShieldCheck, X, Building2 } from "lucide-react";
 import { getAdminHeaderGroups, isAdminNavItemActive, type AdminNavDefinition, type AdminRole } from "@/lib/adminNavigation";
 
@@ -13,52 +14,118 @@ function HeaderNavLink({ entry, pathname, mobile = false, close }: { entry: Head
   const { item, children } = entry;
   const selected = isAdminNavItemActive(item.href, pathname) || children.some((child) => isAdminNavItemActive(child.href, pathname));
   const [expanded, setExpanded] = useState(false);
+  const [popupPosition, setPopupPosition] = useState({ top: 0, left: 0 });
+  const anchorRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const popupRef = useRef<HTMLDivElement>(null);
+  const menuId = useId();
   const Icon = item.icon;
   const style = selected ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50 hover:text-slate-950";
 
+  // A scrolling navigation rail must never clip its submenus.
+  // Position desktop dropdowns in a viewport-level portal instead.
+  useEffect(() => {
+    if (!expanded || mobile) return;
+
+    const dismissOnOutsidePress = (event: PointerEvent) => {
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+      if (!anchorRef.current?.contains(target) && !popupRef.current?.contains(target)) {
+        setExpanded(false);
+      }
+    };
+    const dismissOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setExpanded(false);
+        triggerRef.current?.focus();
+      }
+    };
+    const dismissOnScroll = () => setExpanded(false);
+
+    window.addEventListener("pointerdown", dismissOnOutsidePress);
+    window.addEventListener("keydown", dismissOnEscape);
+    window.addEventListener("scroll", dismissOnScroll, true);
+    window.addEventListener("resize", dismissOnScroll);
+    return () => {
+      window.removeEventListener("pointerdown", dismissOnOutsidePress);
+      window.removeEventListener("keydown", dismissOnEscape);
+      window.removeEventListener("scroll", dismissOnScroll, true);
+      window.removeEventListener("resize", dismissOnScroll);
+    };
+  }, [expanded, mobile]);
+
+  function toggleSubmenu() {
+    if (!expanded && !mobile && anchorRef.current) {
+      const rect = anchorRef.current.getBoundingClientRect();
+      const width = 240;
+      setPopupPosition({
+        top: rect.bottom + 8,
+        left: Math.max(8, Math.min(rect.left, window.innerWidth - width - 8)),
+      });
+    }
+    setExpanded((value) => !value);
+  }
+
   if (!children.length) return (
     <Link href={item.href} onClick={close} aria-current={isAdminNavItemActive(item.href, pathname) ? "page" : undefined}
-      className={'relative inline-flex h-10 shrink-0 items-center gap-2 rounded-xl px-3 text-xs font-semibold transition sm:text-sm ' + style + (selected && !mobile ? " after:absolute after:-bottom-2 after:left-2 after:right-2 after:h-0.5 after:rounded-full after:bg-indigo-600" : "")}>
-      <Icon size={17} aria-hidden="true" /><span>{item.label}</span>
+      className={'relative inline-flex h-10 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl px-2.5 text-[13px] font-semibold transition ' + style + (selected && !mobile ? " after:absolute after:-bottom-2 after:left-2 after:right-2 after:h-0.5 after:rounded-full after:bg-indigo-600" : "")}>
+      <Icon size={16} aria-hidden="true" /><span>{item.label}</span>
     </Link>
   );
 
+  const submenu = (
+    <>
+      <Link href={item.href} onClick={() => { setExpanded(false); close(); }}
+        className="flex items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-50">
+        <Icon size={16} aria-hidden="true" />{item.label}
+      </Link>
+      {children.map((child) => {
+        const ChildIcon = child.icon;
+        const active = isAdminNavItemActive(child.href, pathname);
+        return <Link key={child.href} href={child.href} onClick={() => { setExpanded(false); close(); }}
+          aria-current={active ? "page" : undefined}
+          className={'flex items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium ' + (active ? "bg-indigo-50 text-indigo-700" : "text-slate-700 hover:bg-slate-50")}>
+          <ChildIcon size={16} aria-hidden="true" />{child.label}
+        </Link>;
+      })}
+    </>
+  );
+
   return (
-    <div className={"relative shrink-0 " + (mobile ? "w-full" : "")}>
-      <div className={'relative inline-flex w-full items-center rounded-xl ' + style + (selected && !mobile ? " after:absolute after:-bottom-2 after:left-2 after:right-2 after:h-0.5 after:rounded-full after:bg-indigo-600" : "")}>
-        <Link href={item.href} onClick={close} aria-current={isAdminNavItemActive(item.href, pathname) ? "page" : undefined}
-          className="inline-flex h-10 min-w-0 items-center gap-2 rounded-l-xl pl-3 pr-1 text-xs font-semibold sm:text-sm">
-          <Icon size={17} aria-hidden="true" /><span>{item.label}</span>
+    <div ref={anchorRef} className={"relative shrink-0 " + (mobile ? "w-full" : "")}>
+      <div className={'relative inline-flex w-full items-center whitespace-nowrap rounded-xl ' + style + (selected && !mobile ? " after:absolute after:-bottom-2 after:left-2 after:right-2 after:h-0.5 after:rounded-full after:bg-indigo-600" : "")}>
+        <Link href={item.href} onClick={() => { setExpanded(false); close(); }}
+          aria-current={isAdminNavItemActive(item.href, pathname) ? "page" : undefined}
+          className="inline-flex h-10 min-w-0 items-center gap-1.5 whitespace-nowrap rounded-l-xl pl-2.5 pr-0.5 text-[13px] font-semibold">
+          <Icon size={16} aria-hidden="true" /><span>{item.label}</span>
         </Link>
-        <button type="button" aria-expanded={expanded} aria-label={'Show ' + item.label + ' subpages'}
-          onClick={() => setExpanded((value) => !value)} className="flex h-10 w-8 items-center justify-center rounded-r-xl hover:bg-indigo-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+        <button ref={triggerRef} type="button" aria-expanded={expanded} aria-controls={expanded ? menuId : undefined}
+          aria-label={'Show ' + item.label + ' subpages'} onClick={toggleSubmenu}
+          className="flex h-10 w-6 shrink-0 items-center justify-center rounded-r-xl hover:bg-indigo-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
           <ChevronDown size={14} aria-hidden="true" className={expanded ? "rotate-180 transition-transform" : "transition-transform"} />
         </button>
       </div>
       {expanded ? (
-        <div className={mobile ? "mt-1 space-y-1 pl-4" : "absolute left-0 top-full z-50 mt-2 w-60 rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl"}>
-          <Link href={item.href} onClick={() => { setExpanded(false); close(); }} className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-50">
-            <Icon size={16} aria-hidden="true" />{item.label}
-          </Link>
-          {children.map((child) => {
-            const ChildIcon = child.icon;
-            const active = isAdminNavItemActive(child.href, pathname);
-            return <Link key={child.href} href={child.href} onClick={() => { setExpanded(false); close(); }} aria-current={active ? "page" : undefined}
-              className={'flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium ' + (active ? "bg-indigo-50 text-indigo-700" : "text-slate-700 hover:bg-slate-50")}>
-              <ChildIcon size={16} aria-hidden="true" />{child.label}
-            </Link>;
-          })}
-        </div>
+        mobile ? (
+          <div id={menuId} className="mt-1 space-y-1 pl-4">{submenu}</div>
+        ) : createPortal(
+          <div id={menuId} ref={popupRef} aria-label={item.label + " subpages"}
+            style={{ top: popupPosition.top, left: popupPosition.left }}
+            className="fixed z-[70] w-60 rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl">
+            {submenu}
+          </div>,
+          document.body,
+        )
       ) : null}
     </div>
   );
 }
 
 function Navigation({ groups, pathname, mobile = false, close }: { groups: HeaderGroup[]; pathname: string; mobile?: boolean; close: () => void }) {
-  return <nav aria-label="Admin navigation" className={mobile ? "flex flex-col gap-2 p-3" : "flex w-full flex-wrap items-center justify-center gap-x-1 gap-y-2 2xl:justify-between"}>
+  return <nav aria-label="Admin navigation" className={mobile ? "flex flex-col gap-2 p-3" : "flex w-max min-w-full flex-nowrap items-center justify-between gap-1.5 whitespace-nowrap"}>
     {groups.map((group, index) => (
       <div key={group.label} className={mobile ? "flex flex-col gap-1" : "flex shrink-0 items-center gap-1"}>
-        {!mobile && index > 0 ? <span className="mx-2 h-5 w-px bg-slate-200" aria-hidden="true" /> : null}
+        {!mobile && index > 0 ? <span className="mx-1.5 h-5 w-px bg-slate-200" aria-hidden="true" /> : null}
         {mobile ? <p className="px-3 pt-2 text-[11px] font-bold uppercase tracking-widest text-slate-400">{group.label}</p> : null}
         {group.links.map((entry) => <HeaderNavLink key={entry.item.href} entry={entry} pathname={pathname} mobile={mobile} close={close} />)}
       </div>
@@ -123,8 +190,11 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
         </div>
       </div>
       <div className="hidden border-t border-slate-100 lg:block">
-        <div className="mx-auto max-w-[1920px] px-4 pb-2 pt-2 sm:px-6 lg:px-8">
-          <Navigation groups={groups} pathname={pathname} close={() => {}} />
+        <div className="mx-auto max-w-[1920px]">
+          <div role="region" aria-label="Scrollable admin navigation" tabIndex={0}
+            className="overflow-x-auto overscroll-x-contain px-4 pb-2 pt-2 sm:px-6 lg:px-8 [scrollbar-width:thin]">
+            <Navigation groups={groups} pathname={pathname} close={() => {}} />
+          </div>
         </div>
       </div>
       {mobileOpen ? <div className="max-h-[70vh] overflow-y-auto border-t border-slate-100 bg-white lg:hidden"><Navigation groups={groups} pathname={pathname} mobile close={() => setMobileOpen(false)} /></div> : null}
