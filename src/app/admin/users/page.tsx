@@ -1,4 +1,4 @@
-import { IdentityActivityPanel } from "@/components/admin/IdentityActivityPanel";
+import { redirect } from "next/navigation";
 import { AdminIdentityTable, type IdentityRow } from "@/components/admin/AdminIdentityTable";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -20,6 +20,16 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
   const role = ["ALL", "USER", "SUPPORT", "ADMIN"].includes(params?.role || "") ? params!.role! : "ALL";
   const status = ["ALL", "ACTIVE", "SUSPENDED", "DELETED", "PENDING_DELETION"].includes(params?.status || "") ? params!.status! : "ALL";
   const identity = ["ALL", "REGISTERED", "GUEST"].includes(params?.identity || "") ? params!.identity! : "ALL";
+  // Existing bookmarked drawer URLs remain functional; only the presentation changes.
+  const legacy = /^(user|guest):([a-z0-9_-]{6,80})$/i.exec(params?.activity || "");
+  if (legacy) {
+    const directory = new URLSearchParams({
+      ...(q ? { q } : {}), role, status, identity,
+      ...(params?.page && /^\d{1,7}$/.test(params.page) ? { page: params.page } : {}),
+    }).toString();
+    redirect("/admin/users/" + legacy[1].toLowerCase() + "/" + encodeURIComponent(legacy[2])
+      + "/activity?directory=" + encodeURIComponent(directory));
+  }
   const where = {
     ...(q ? { OR: [{ email: { contains: prismaQuery, mode: "insensitive" as const } }, { name: { contains: prismaQuery, mode: "insensitive" as const } }, { id: { contains: prismaQuery, mode: "insensitive" as const } }] } : {}),
     ...(role !== "ALL" ? { role: role as never } : {}),
@@ -93,7 +103,6 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
       </Card>
       <AdminIdentityTable rows={result.rows} page={page} count={count} pageSize={PAGE_SIZE}
         currentUserId={session.user.id} protectedEmails={[...protectedEmails]} pageHref={link(page)} />
-      {params?.activity ? <IdentityActivityPanel selection={params.activity} /> : null}
     </div>
   );
 }
