@@ -44,8 +44,9 @@ export async function isFeatureEnabledInEnvironment(key: FeatureControlKey, envi
 export async function listFeatureControls() {
   const environment = getRuntimeFeatureEnvironment();
   let rows: Array<{ id: string; key: string; enabled: boolean; updatedAt: Date }> = [];
-  try { await ensureInitialized(); rows = await getPrisma().featureFlag.findMany({ where: { environment, key: { in: [...featureControlKeys] } }, select: { id: true, key: true, enabled: true, updatedAt: true } }); } catch { /* defaults make the read-only UI safe */ }
-  return { environment, controls: featureControlKeys.map((key) => { const row = rows.find((candidate) => candidate.key === key); return { key, ...featureControlRegistry[key], state: { enabled: row?.enabled ?? (environment === "STAGING" ? featureControlRegistry[key].defaultStaging : featureControlRegistry[key].defaultProduction), updatedAt: row?.updatedAt?.toISOString() ?? null } }; }) };
+  let dataAvailable = true;
+  try { await ensureInitialized(); rows = await getPrisma().featureFlag.findMany({ where: { environment, key: { in: [...featureControlKeys] } }, select: { id: true, key: true, enabled: true, updatedAt: true } }); } catch { dataAvailable = false; /* registry defaults keep the read-only display safe */ }
+  return { environment, dataAvailable, controls: featureControlKeys.map((key) => { const row = rows.find((candidate) => candidate.key === key); return { key, ...featureControlRegistry[key], state: { enabled: row?.enabled ?? (environment === "STAGING" ? featureControlRegistry[key].defaultStaging : featureControlRegistry[key].defaultProduction), updatedAt: row?.updatedAt?.toISOString() ?? null } }; }) };
 }
 
 export async function getPublicFeatureAvailability() {
