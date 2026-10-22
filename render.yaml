@@ -153,6 +153,8 @@ services:
         sync: false
       - key: PRICE_ALERTS_CRON_SECRET
         sync: false
+      - key: ACCOUNT_DELETION_CRON_SECRET
+        sync: false
       # Return production to exact `live` when an approved Cars provider is connected.
 
   - type: web
@@ -202,6 +204,8 @@ services:
       - key: HOMEPAGE_FARES_CRON_SECRET
         sync: false
       - key: PRICE_ALERTS_CRON_SECRET
+        sync: false
+      - key: ACCOUNT_DELETION_CRON_SECRET
         sync: false
 
 databases:

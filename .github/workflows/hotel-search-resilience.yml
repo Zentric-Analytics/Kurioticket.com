@@ -53,6 +53,11 @@ jobs:
           DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/kurioticket_admin_journey_test
           JITI_TSCONFIG_PATHS: ./tsconfig.json
         run: node --input-type=module --import jiti/register -e 'await import("./scripts/admin-journey.integration.ts")'
+      - name: Account deletion PostgreSQL finalization
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/kurioticket_account_deletion_test
+          JITI_TSCONFIG_PATHS: ./tsconfig.json
+        run: node --input-type=module --import jiti/register -e 'await import("./scripts/account-deletion.integration.ts")'
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - name: Mobile and desktop return journey
