@@ -19,5 +19,11 @@ export async function GET(request: Request) {
 
   return NextResponse.json(
     await getReferralAttributionSummary(days, currentReferralAttributionEnvironment()),
+    {
+      headers: {
+        "Cache-Control": "private, no-store",
+        Vary: "Cookie, Authorization",
+      },
+    },
   );
 }
