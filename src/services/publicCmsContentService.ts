@@ -1,4 +1,6 @@
-import { generalFaqs, type FaqItem } from "@/content/faqs";
+import { getGeneralFaqs, type FaqItem } from "@/content/faqs";
+import { getTranslations } from "@/lib/i18n";
+import { normalizeLanguage } from "@/lib/language";
 import { getHomeDiscoveryByRegion } from "@/data/homeDiscovery";
 import { hotelDestinations } from "@/data/hotelDestinations";
 import { getPopularDestinationsByRegion } from "@/data/marketHomeContent";
@@ -92,11 +94,13 @@ export async function getPublishedHotelDestinations() {
   });
 }
 
-export async function getPublishedFaqs() {
+export async function getPublishedFaqs(localeInput?: string | null) {
+  const locale = normalizeLanguage(localeInput);
+  const dictionary = getTranslations(locale);
   return readPublishedCmsContent<CmsFaq>("FAQ", {
     market: "GLOBAL",
-    locale: "en",
-    fallback: () => generalFaqs.map((item, index) => ({
+    locale,
+    fallback: () => getGeneralFaqs((key) => dictionary[key] ?? key).map((item, index) => ({
       id: `fallback-faq-${index + 1}`,
       question: item.question,
       answer: item.answer,
