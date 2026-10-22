@@ -128,6 +128,9 @@ function serialize(item: {
   market: string;
   locale: string;
   sortOrder: number;
+  publishedMarket: string | null;
+  publishedLocale: string | null;
+  publishedSortOrder: number | null;
   draftPayload: unknown;
   publishedPayload: unknown;
   version: number;
@@ -156,6 +159,9 @@ async function createRevisionAndAudit(
     market: string;
     locale: string;
     sortOrder: number;
+    publishedMarket?: string | null;
+    publishedLocale?: string | null;
+    publishedSortOrder?: number | null;
     draftPayload: Prisma.InputJsonValue;
     publishedPayload?: Prisma.InputJsonValue | null;
     actor: CmsActor;
@@ -174,6 +180,9 @@ async function createRevisionAndAudit(
       market: input.market,
       locale: input.locale,
       sortOrder: input.sortOrder,
+      publishedMarket: input.publishedMarket,
+      publishedLocale: input.publishedLocale,
+      publishedSortOrder: input.publishedSortOrder,
       draftPayload: input.draftPayload,
       publishedPayload: input.publishedPayload === undefined
         ? undefined
@@ -227,6 +236,7 @@ export async function createCmsContent(raw: unknown, actorInput: CmsActor) {
       await createRevisionAndAudit(tx, {
         itemId: item.id, version: item.version, action: "CREATED", status: item.status,
         market: item.market, locale: item.locale, sortOrder: item.sortOrder,
+        publishedMarket: null, publishedLocale: null, publishedSortOrder: null,
         draftPayload: payload, publishedPayload: null,
         actor, auditAction: "CMS_CONTENT_CREATED", type: item.type, key: item.key,
       });
@@ -259,7 +269,6 @@ export async function updateCmsContentDraft(id: string, raw: unknown, actorInput
         market: parsed.data.market ?? existing.market,
         locale: parsed.data.locale ?? existing.locale,
         sortOrder: parsed.data.sortOrder ?? existing.sortOrder,
-        status: "DRAFT",
         version: { increment: 1 },
         updatedByAdminUserId: actor.id,
       },
@@ -269,6 +278,9 @@ export async function updateCmsContentDraft(id: string, raw: unknown, actorInput
     await createRevisionAndAudit(tx, {
       itemId: item.id, version: nextVersion, action: "UPDATED", status: item.status,
       market: item.market, locale: item.locale, sortOrder: item.sortOrder,
+      publishedMarket: item.publishedMarket,
+      publishedLocale: item.publishedLocale,
+      publishedSortOrder: item.publishedSortOrder,
       draftPayload: payload,
       publishedPayload: item.publishedPayload === null ? null : item.publishedPayload as Prisma.InputJsonValue,
       actor, auditAction: "CMS_CONTENT_UPDATED", type: item.type, key: item.key,
@@ -315,6 +327,9 @@ async function transitionCmsContent(
       ? {
           status: "PUBLISHED" as const,
           publishedPayload: payload,
+          publishedMarket: existing.market,
+          publishedLocale: existing.locale,
+          publishedSortOrder: existing.sortOrder,
           publishedVersion: nextVersion,
           publishedAt: new Date(),
           publishedByAdminUserId: actor.id,
@@ -345,6 +360,9 @@ async function transitionCmsContent(
     await createRevisionAndAudit(tx, {
       itemId: item.id, version: nextVersion, action, status: item.status,
       market: item.market, locale: item.locale, sortOrder: item.sortOrder,
+      publishedMarket: item.publishedMarket,
+      publishedLocale: item.publishedLocale,
+      publishedSortOrder: item.publishedSortOrder,
       draftPayload: item.draftPayload as Prisma.InputJsonValue,
       publishedPayload: item.publishedPayload === null ? null : item.publishedPayload as Prisma.InputJsonValue,
       actor, auditAction: `CMS_CONTENT_${action}`, type: item.type, key: item.key,
@@ -396,6 +414,9 @@ export async function getAdminCmsContent(id: string) {
       market: revision.market,
       locale: revision.locale,
       sortOrder: revision.sortOrder,
+      publishedMarket: revision.publishedMarket,
+      publishedLocale: revision.publishedLocale,
+      publishedSortOrder: revision.publishedSortOrder,
       draftPayload: revision.draftPayload,
       publishedPayload: revision.publishedPayload,
       actorEmail: revision.actorEmail,
@@ -416,17 +437,17 @@ export async function readPublishedCmsContent<T>(
     const rows = await db.cmsContentItem.findMany({
       where: {
         type,
-        market,
-        locale,
+        publishedMarket: market,
+        publishedLocale: locale,
         publishedPayload: { not: Prisma.DbNull },
-        status: { notIn: ["HIDDEN", "ARCHIVED"] },
       },
-      orderBy: [{ sortOrder: "asc" }, { key: "asc" }],
-      select: { key: true, publishedPayload: true },
+      orderBy: [{ publishedSortOrder: "asc" }, { key: "asc" }],
+      select: { key: true, status: true, publishedPayload: true },
     });
     if (!rows.length) return { source: "fallback", items: options.fallback() };
+    const visibleRows = rows.filter((row) => row.status === "PUBLISHED");
     const items: T[] = [];
-    for (const row of rows) {
+    for (const row of visibleRows) {
       const parsed = cmsPayloadSchemas[type].safeParse(row.publishedPayload);
       if (!parsed.success) {
         console.error("[cms:public-read-invalid-payload]", { type });
