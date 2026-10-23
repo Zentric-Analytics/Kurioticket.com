@@ -465,12 +465,16 @@ export function AdminOverviewDashboard({
         <SectionTitle title="Operations Snapshot" description="Account totals and action queues are current; journeys and admin actions use the selected reporting range." />
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
           <MetricCard label="Total users" value={data.users.total} hint="Current accounts" icon={Users} tone="info" />
-          <MetricCard label="Active users" value={data.users.active} hint="Currently active" icon={UserCheck} tone="good" />
+          <MetricCard label="Enabled accounts" value={data.users.active} hint="Registered accounts with ACTIVE status; not people online" icon={UserCheck} tone="good" />
           <MetricCard label="Support attention" value={supportAttention} hint="Tickets awaiting action" icon={Headphones} tone={supportAttention ? "warn" : "good"} />
           <MetricCard label="Deletion attention" value={deletionAttention} hint="Requests needing review" icon={Trash2} tone={deletionAttention ? "warn" : "good"} />
           <MetricCard label="Journeys" value={data.journeys.journeys} hint="Selected time window" icon={Route} tone="info" />
           <MetricCard label="Admin actions" value={data.adminActions} hint="Selected time window" icon={ShieldCheck} tone="neutral" />
         </div>
+        <p className="mt-3 text-xs leading-5 text-slate-600">
+          <strong>Recently observed visitors (5 min): {count(data.visitorActivity.observedVisitorIdentities)}</strong>
+          {" · Consented visitor identities with recorded activity, not a verified count of everyone currently online. One person can use multiple devices; unconsented visitors are excluded."}
+        </p>
       </section>
 
       <section className="mt-6" aria-label="Attention Required">

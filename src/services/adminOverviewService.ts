@@ -43,6 +43,8 @@ export async function getAdminOverview(params: URLSearchParams) {
     return { status: "invalid" as const, issues: [{ field: "from", message: "Use a past time range of more than zero and at most 90 days." }] };
   }
 
+  // This is an observation window, not the lifetime of an enabled account.
+  const recentVisitorCutoff = new Date(now.getTime() - 5 * 60 * 1000);
   const db = getOptionalPrisma();
   if (!db) return { status: "unavailable" as const };
 
@@ -51,7 +53,7 @@ export async function getAdminOverview(params: URLSearchParams) {
       adminJourneys.summary({ from, to, environment }),
       getProviderOperationalStatuses(24, environment),
       db.$transaction(async tx => {
-        const [userGroups, supportGroups, deletionGroups, adminActions] = await Promise.all([
+        const [userGroups, supportGroups, deletionGroups, adminActions, observedVisitorIdentities] = await Promise.all([
           tx.user.groupBy({
             by: ["status"],
             _count: { _all: true },
@@ -67,8 +69,17 @@ export async function getAdminOverview(params: URLSearchParams) {
           tx.adminAuditLog.count({
             where: { createdAt: { gte: new Date(from), lt: new Date(to) } },
           }),
+          // Only currently consented visitor identities observed during the last five minutes.
+          // A browser/device identity is not necessarily one unique human or every online visitor.
+          tx.visitor.count({
+            where: {
+              consentStatus: "GRANTED",
+              trackingDisabledAt: null,
+              lastSeenAt: { gte: recentVisitorCutoff, lte: now },
+            },
+          }),
         ]);
-        return { userGroups, supportGroups, deletionGroups, adminActions };
+        return { userGroups, supportGroups, deletionGroups, adminActions, observedVisitorIdentities };
       }, { isolationLevel: "RepeatableRead" }),
     ]);
 
@@ -83,6 +94,11 @@ export async function getAdminOverview(params: URLSearchParams) {
       status: "ok" as const,
       data: {
         scope: { from, to, environment },
+        visitorActivity: {
+          observedVisitorIdentities: lifecycle.observedVisitorIdentities,
+          windowMinutes: 5,
+          observedAt: now.toISOString(),
+        },
         users: {
           total: totalUsers,
           active: userCount.get("ACTIVE") ?? 0,
