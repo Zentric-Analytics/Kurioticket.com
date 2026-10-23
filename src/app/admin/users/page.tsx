@@ -123,7 +123,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
         </form>
       </Card>
       <AdminIdentityTable rows={result.rows} page={page} count={count} pageSize={PAGE_SIZE}
-        currentUserId={session.user.id} protectedEmails={[...protectedEmails]} pageHref={link(page)} />
+        sort={sort} currentUserId={session.user.id} protectedEmails={[...protectedEmails]} pageHref={link(page)} />
     </div>
   );
 }
