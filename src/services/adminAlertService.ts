@@ -26,6 +26,8 @@ const ACK_WINDOW_MS = 24 * 60 * 60 * 1_000;
 const CANDIDATE_CACHE_TTL_MS = 30_000;
 const TELEMETRY_STATE_ACTION = "ADMIN_ALERT_TELEMETRY_STATE";
 const TELEMETRY_STATE_TARGET_TYPE = "AdminOperationalTelemetry";
+const CMS_STATE_ACTION = "ADMIN_ALERT_CMS_STATE";
+const CMS_STATE_TARGET_TYPE = "AdminCmsIntegrity";
 
 let candidateCache:
   | { candidates: AdminAlertCandidate[]; expiresAt: number }
@@ -53,6 +55,34 @@ export type AdminAlertSnapshot = {
 };
 
 export type AdminAlertSummary = Omit<AdminAlertSnapshot, "alerts">;
+
+export function getDatabaseOutageAlertSnapshot(
+  now = new Date(),
+): AdminAlertSnapshot {
+  const alert: AdminOperationalAlert = {
+    id: "system.database.unavailable::database-outage",
+    key: "system.database.unavailable",
+    severity: "CRITICAL",
+    source: "SYSTEM",
+    title: "Database is unavailable",
+    message:
+      "The configured database did not respond to the admin health check. Only this outage status is available until canonical admin session validation can recover.",
+    actionHref: "/admin/notifications",
+    signalToken: "database-outage",
+    signalAt: now.toISOString(),
+    acknowledged: false,
+    acknowledgedAt: null,
+  };
+
+  return {
+    generatedAt: now.toISOString(),
+    activeCount: 1,
+    unreadCount: 1,
+    criticalCount: 1,
+    warningCount: 0,
+    alerts: [alert],
+  };
+}
 
 export async function getAdminAlertSnapshot(
   adminUserId?: string | null,
@@ -190,6 +220,11 @@ async function loadAdminAlertCandidates(now: Date): Promise<AdminAlertCandidate[
     now,
   );
 
+  const cmsFingerprint = cms ? cmsUnhealthyFingerprint(cms) : null;
+  const cmsOccurrenceToken = cms
+    ? await readCmsIntegrityOccurrenceToken(cms, cmsFingerprint!, now)
+    : "cms-unavailable";
+
   const signals: AdminAlertSignals = {
     system,
     providers,
@@ -197,7 +232,8 @@ async function loadAdminAlertCandidates(now: Date): Promise<AdminAlertCandidate[
     cms: cms
       ? {
           ...cms,
-          unhealthyFingerprint: cmsUnhealthyFingerprint(cms),
+          unhealthyFingerprint: cmsFingerprint!,
+          occurrenceToken: cmsOccurrenceToken,
         }
       : null,
     homepageFares,
@@ -337,6 +373,103 @@ async function readTelemetryOutageTokens(
   }
 
   return result;
+}
+
+type CmsStateMetadata = {
+  state?: unknown;
+  fingerprint?: unknown;
+  recoveryBoundary?: unknown;
+};
+
+async function readCmsIntegrityOccurrenceToken(
+  cms: Awaited<ReturnType<typeof getCmsHealthOverview>>,
+  fingerprint: string,
+  now: Date,
+) {
+  const db = getOptionalPrisma();
+  if (!db) return `cms-integrity:${fingerprint}`;
+
+  const unhealthy = cms.available && cms.totals.unhealthy > 0;
+
+  try {
+    const latest = await db.adminAuditLog.findFirst({
+      where: {
+        action: CMS_STATE_ACTION,
+        targetType: CMS_STATE_TARGET_TYPE,
+        targetId: "cms-integrity",
+      },
+      select: { metadata: true, createdAt: true },
+      orderBy: { createdAt: "desc" },
+    });
+
+    const metadata = (latest?.metadata ?? {}) as CmsStateMetadata;
+    const previousState =
+      metadata.state === "HEALTHY" || metadata.state === "UNHEALTHY"
+        ? metadata.state
+        : null;
+    const previousFingerprint =
+      typeof metadata.fingerprint === "string" ? metadata.fingerprint : null;
+    const previousRecoveryBoundary =
+      typeof metadata.recoveryBoundary === "string"
+        ? metadata.recoveryBoundary
+        : null;
+
+    if (!unhealthy) {
+      if (previousState === "UNHEALTHY") {
+        const recoveryBoundary = now.toISOString();
+        await db.adminAuditLog.create({
+          data: {
+            adminEmail: "system-alert-monitor",
+            action: CMS_STATE_ACTION,
+            targetType: CMS_STATE_TARGET_TYPE,
+            targetId: "cms-integrity",
+            metadata: {
+              state: "HEALTHY",
+              fingerprint,
+              recoveryBoundary,
+            },
+          },
+        });
+      }
+      return `cms-integrity:${fingerprint}:healthy`;
+    }
+
+    const recoveryBoundary =
+      previousState === "HEALTHY"
+        ? previousRecoveryBoundary ?? latest?.createdAt.toISOString() ?? "initial"
+        : previousState === "UNHEALTHY"
+          ? previousRecoveryBoundary ?? "initial"
+          : "initial";
+
+    const occurrenceToken = `cms-integrity:${fingerprint}:${createHash("sha256")
+      .update(`${fingerprint}:${recoveryBoundary}`)
+      .digest("hex")
+      .slice(0, 24)}`;
+
+    if (
+      previousState !== "UNHEALTHY" ||
+      previousFingerprint !== fingerprint
+    ) {
+      await db.adminAuditLog.create({
+        data: {
+          adminEmail: "system-alert-monitor",
+          action: CMS_STATE_ACTION,
+          targetType: CMS_STATE_TARGET_TYPE,
+          targetId: "cms-integrity",
+          metadata: {
+            state: "UNHEALTHY",
+            fingerprint,
+            recoveryBoundary,
+          },
+        },
+      });
+    }
+
+    return occurrenceToken;
+  } catch (error) {
+    console.error("[admin-alerts:cms-state]", error);
+    return `cms-integrity:${fingerprint}`;
+  }
 }
 
 function cmsUnhealthyFingerprint(
