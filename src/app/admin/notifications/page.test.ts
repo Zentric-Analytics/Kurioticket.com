@@ -25,6 +25,9 @@ test("admin alerts derive only from authoritative operational sources", () => {
   assert.match(core, /readinessState !== "READY"/);
   assert.match(core, /!signals\.flightStatus\.feedReady/);
   assert.match(core, /metrics\.missingSnapshots > 0/);
+  assert.match(core, /cms-integrity:\$\{signals\.cms\.unhealthyFingerprint\}/);
+  assert.match(service, /cmsUnhealthyFingerprint/);
+  assert.match(service, /createHash\("sha256"\)/);
   assert.doesNotMatch(core, /confirmedLast24h|booking confirmations recently/i);
 });
 
@@ -84,9 +87,12 @@ test("admin bell is live and reads only the summary endpoint", () => {
   assert.doesNotMatch(shell, /aria-label="Notifications unavailable"/);
 });
 
-test("notifications read API supports safe summary mode", () => {
+test("notifications read API supports cached safe summary mode", () => {
   assert.match(readApi, /requireAdminApiSession\(\)/);
   assert.match(readApi, /summaryOnly/);
-  assert.match(readApi, /unreadCount: snapshot\.unreadCount/);
+  assert.match(readApi, /getAdminAlertSummary/);
+  assert.match(service, /CANDIDATE_CACHE_TTL_MS = 30_000/);
+  assert.match(service, /candidateCache/);
+  assert.match(service, /forceRefreshCandidates: true/);
   assert.doesNotMatch(readApi, /process\.env|errorMessage|providerMessageId/);
 });
