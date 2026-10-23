@@ -9,7 +9,7 @@ export type ConfirmedTripsOperationsSnapshot = {
   environment: PublicEnvironment;
   readiness: {
     webhookCredentialConfigured: boolean;
-    providerIdentityBindingMode: "shared_secret_only";
+    credentialModel: "shared_secret_only";
     currentSearchProviderConfirmationFeed: "none";
   };
   metrics: {
@@ -126,7 +126,7 @@ export async function getConfirmedTripsOperationsSnapshot(
           webhookCredentialConfigured: isConfiguredPartnerConfirmationSecret(
             process.env.PARTNER_CONFIRMATION_WEBHOOK_SECRET,
           ),
-          providerIdentityBindingMode: "shared_secret_only",
+          credentialModel: "shared_secret_only",
           currentSearchProviderConfirmationFeed: "none",
         },
         metrics: {
