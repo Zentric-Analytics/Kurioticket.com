@@ -103,7 +103,7 @@ async function getAdminOperationalAlerts(
   const [candidates, acknowledgements] = await Promise.all([
     readAdminAlertCandidates(now, forceRefreshCandidates),
     adminUserId
-      ? readRecentAcknowledgements(adminUserId, now)
+      ? readRecentAcknowledgements(adminUserId, candidates, now)
       : Promise.resolve(new Map<string, string>()),
   ]);
 
@@ -393,12 +393,19 @@ export const adminAlertAcknowledgement = {
 
 async function readRecentAcknowledgements(
   adminUserId: string,
+  candidates: AdminAlertCandidate[],
   now: Date,
 ): Promise<Map<string, string>> {
   const db = getOptionalPrisma();
-  if (!db) return new Map();
+  if (!db || candidates.length === 0) return new Map();
 
   const since = new Date(now.getTime() - ACK_WINDOW_MS);
+  const activeAlertKeys = [...new Set(candidates.map((candidate) => candidate.key))];
+  const activeAcknowledgementKeys = new Set(
+    candidates.map((candidate) =>
+      acknowledgementKey(candidate.key, candidate.signalToken),
+    ),
+  );
 
   try {
     const rows = await db.adminAuditLog.findMany({
@@ -406,6 +413,7 @@ async function readRecentAcknowledgements(
         adminUserId,
         action: ACK_ACTION,
         targetType: ACK_TARGET_TYPE,
+        targetId: { in: activeAlertKeys },
         createdAt: { gte: since, lte: now },
       },
       select: {
@@ -413,7 +421,6 @@ async function readRecentAcknowledgements(
         createdAt: true,
       },
       orderBy: { createdAt: "desc" },
-      take: 500,
     });
 
     const result = new Map<string, string>();
@@ -428,7 +435,8 @@ async function readRecentAcknowledgements(
       if (!alertKey || !signalToken) continue;
 
       const key = acknowledgementKey(alertKey, signalToken);
-      if (!result.has(key)) result.set(key, row.createdAt.toISOString());
+      if (!activeAcknowledgementKeys.has(key) || result.has(key)) continue;
+      result.set(key, row.createdAt.toISOString());
     }
 
     return result;
