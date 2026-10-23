@@ -199,7 +199,7 @@ export async function getFlightStatusOperationsSnapshot(
           },
         }),
         tx.myTrip.findMany({
-          where: { ...monitoringFlightWhere, flightStatusSnapshot: { is: null } },
+          where: { ...feedEligibleWhere, flightStatusSnapshot: { is: null } },
           orderBy: [{ departureDate: "asc" }, { id: "asc" }],
           take: 20,
           select: {
