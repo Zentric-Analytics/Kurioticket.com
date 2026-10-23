@@ -18,30 +18,29 @@ const options = [
   { value: "GUEST", label: "Guests" },
 ] as const;
 
-test("accessible form-backed select keeps current value and desktop label", () => {
+test("server rendering preserves a usable native filter when JS is absent", () => {
   const html = renderToStaticMarkup(createElement(AdminDirectorySelect, {
     name: "identity", label: "Identity type", value: "GUEST", options,
   }));
-  assert.match(html, /type="hidden" name="identity" value="GUEST"/);
-  assert.match(html, /role="combobox"/);
-  assert.match(html, /aria-haspopup="listbox"/);
-  assert.match(html, /aria-expanded="false"/);
-  assert.match(html, /aria-label="Identity type"/);
-  assert.match(html, />Guests</);
+  assert.match(html, /<select[^>]*name="identity"/);
+  assert.match(html, /<option value="GUEST" selected=""/);
+  assert.match(html, /Identity type/);
+  assert.match(html, /Registered/);
   assert.match(html, /h-11/);
-  assert.doesNotMatch(html, /<select|<option/);
+  assert.doesNotMatch(html, /role="listbox"|role="combobox"|type="hidden"/);
 });
 
-test("compact automatic sort uses the same accessible combobox without an extra card", () => {
+test("server sort fallback provides explicit Apply sort without JavaScript", () => {
   const html = renderToStaticMarkup(createElement(AdminDirectorySelect, {
     name: "sort", label: "Sort by", value: "newest",
     options: [{ value: "newest", label: "Newest first" }, { value: "oldest", label: "Oldest first" }],
     compact: true,
     autoSubmit: true,
   }));
-  assert.match(html, /name="sort" value="newest"/);
-  assert.match(html, /aria-label="Sort by"/);
-  assert.match(html, />Newest first</);
+  assert.match(html, /<select[^>]*name="sort"/);
+  assert.match(html, /<option value="newest" selected=""/);
+  assert.match(html, /Sort by/);
+  assert.match(html, /Apply sort/);
   assert.match(html, /h-10/);
-  assert.doesNotMatch(html, /shadow-|rounded-2xl|role="listbox"/);
+  assert.doesNotMatch(html, /role="listbox"|type="hidden"/);
 });
