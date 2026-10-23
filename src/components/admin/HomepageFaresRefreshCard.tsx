@@ -373,6 +373,7 @@ type DisplayReadiness = HomepageFareHealth & {
 };
 
 type HomepageFareStatusPayload = {
+  dataAvailable: boolean;
   routes: HomepageFareStatusRoute[];
   summary: HomepageFareStatusSummary;
   health: HomepageFareHealth;
@@ -532,6 +533,7 @@ export function HomepageFaresRefreshCard() {
   }
 
   const statusPayload = statusState.data ?? {
+    dataAvailable: false,
     routes: [],
     summary: DEFAULT_STATUS_SUMMARY,
     health: DEFAULT_HEALTH,
@@ -568,7 +570,11 @@ export function HomepageFaresRefreshCard() {
   );
   const fallbackPools = statusPayload.marketReadinessSummary.filter(isFallbackMarket);
   const latestCounts = refreshState.counts;
-  const providerCallsUsed = latestCounts?.providerCalls ?? sumCountRecord(statusPayload.providerCallsByMarket);
+  const initialStatusLoading = statusState.loading && !statusState.data;
+  const telemetryUnavailable = !initialStatusLoading && !statusPayload.dataAvailable;
+  const providerCallsUsed = latestCounts
+    ? latestCounts.providerCalls
+    : "No manual run in this session";
   const replacementCandidatesUsed = latestCounts
     ? sumCountRecord(latestCounts.replacementCandidatesUsedByMarket)
     : sumCountRecord(statusPayload.replacementCandidatesUsedByMarket);
@@ -587,14 +593,24 @@ export function HomepageFaresRefreshCard() {
                 Homepage fare operations
               </p>
               <h2 className="mt-2 text-2xl font-extrabold text-navy">
-                Production readiness dashboard
+                Homepage fare readiness dashboard
               </h2>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">
                 Monitor provider-backed homepage fare coverage by public market, fallback pool,
                 route health, refresh state, and underfill cause without changing pricing logic.
               </p>
             </div>
-            <GlobalReadinessBadge status={statusPayload.displayReadiness.globalReadinessStatus} />
+            {initialStatusLoading ? (
+              <span className="inline-flex w-fit rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-extrabold text-navy">
+                Loading status…
+              </span>
+            ) : statusPayload.dataAvailable ? (
+              <GlobalReadinessBadge status={statusPayload.displayReadiness.globalReadinessStatus} />
+            ) : (
+              <span className="inline-flex w-fit rounded-full border border-red-100 bg-red-50 px-3 py-2 text-sm font-extrabold text-danger">
+                Telemetry unavailable
+              </span>
+            )}
           </div>
         </div>
 
@@ -604,27 +620,38 @@ export function HomepageFaresRefreshCard() {
               {statusState.error}
             </p>
           ) : null}
+          {telemetryUnavailable ? (
+            <p className="rounded-xl border border-red-100 bg-red-50 p-3 text-sm font-semibold text-danger">
+              Homepage fare telemetry is unavailable from the authoritative snapshot store. Coverage counts below are hidden rather than replaced with zeroes.
+            </p>
+          ) : null}
 
           <DashboardSection
             eyebrow="Homepage fare status summary"
             title="Global readiness at a glance"
             description="Public readiness excludes fallback-only regional and global pools, so internal 0/0 coverage rows do not make the homepage look ready."
           >
-            <DisplayReadinessSummary readiness={statusPayload.displayReadiness} />
+            {initialStatusLoading ? (
+              <p className="mt-4 rounded-xl border border-border bg-slate-50 p-4 text-sm font-semibold text-muted">
+                Loading homepage fare snapshot status…
+              </p>
+            ) : statusPayload.dataAvailable ? (
+              <DisplayReadinessSummary readiness={statusPayload.displayReadiness} />
+            ) : null}
             <dl className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
-              <SummaryMetricCard label="Global homepage readiness" value={formatGlobalReadinessStatus(statusPayload.displayReadiness.globalReadinessStatus)} tone={readinessTone(statusPayload.displayReadiness.globalReadinessStatus)} />
-              <SummaryMetricCard label="Fresh provider-backed fares" value={statusPayload.summary.fresh} tone="good" />
-              <SummaryMetricCard label="Last-known-good fares" value={statusPayload.summary.last_known_good} tone="info" />
-              <SummaryMetricCard label="Missing routes" value={statusPayload.summary.missing} tone={statusPayload.summary.missing ? "warning" : "neutral"} />
-              <SummaryMetricCard label="Failed routes" value={statusPayload.summary.failed} tone={statusPayload.summary.failed ? "danger" : "neutral"} />
-              <SummaryMetricCard label="Unavailable routes" value={statusPayload.summary.unavailable} tone={statusPayload.summary.unavailable ? "warning" : "neutral"} />
-              <SummaryMetricCard label="Timeout count" value={timeoutCount} tone={timeoutCount ? "warning" : "neutral"} />
-              <SummaryMetricCard label="Provider calls used" value={providerCallsUsed} />
+              <SummaryMetricCard label="Global homepage readiness" value={statusPayload.dataAvailable ? formatGlobalReadinessStatus(statusPayload.displayReadiness.globalReadinessStatus) : "Unavailable"} tone={statusPayload.dataAvailable ? readinessTone(statusPayload.displayReadiness.globalReadinessStatus) : "danger"} />
+              <SummaryMetricCard label="Fresh provider-backed fares" value={statusPayload.dataAvailable ? statusPayload.summary.fresh : "Unavailable"} tone={statusPayload.dataAvailable ? "good" : "danger"} />
+              <SummaryMetricCard label="Last-known-good fares" value={statusPayload.dataAvailable ? statusPayload.summary.last_known_good : "Unavailable"} tone={statusPayload.dataAvailable ? "info" : "danger"} />
+              <SummaryMetricCard label="Missing routes" value={statusPayload.dataAvailable ? statusPayload.summary.missing : "Unavailable"} tone={!statusPayload.dataAvailable ? "danger" : statusPayload.summary.missing ? "warning" : "neutral"} />
+              <SummaryMetricCard label="Failed routes" value={statusPayload.dataAvailable ? statusPayload.summary.failed : "Unavailable"} tone={!statusPayload.dataAvailable ? "danger" : statusPayload.summary.failed ? "danger" : "neutral"} />
+              <SummaryMetricCard label="Unavailable routes" value={statusPayload.dataAvailable ? statusPayload.summary.unavailable : "Unavailable"} tone={!statusPayload.dataAvailable ? "danger" : statusPayload.summary.unavailable ? "warning" : "neutral"} />
+              <SummaryMetricCard label="Timeout count" value={statusPayload.dataAvailable ? timeoutCount : "Unavailable"} tone={!statusPayload.dataAvailable ? "danger" : timeoutCount ? "warning" : "neutral"} />
+              <SummaryMetricCard label="Provider calls (manual run)" value={providerCallsUsed} />
               <SummaryMetricCard label="Stopped reason" value={latestCounts ? formatStoppedReason(latestCounts.stoppedReason) : "No manual run yet"} />
-              <SummaryMetricCard label="Replacement candidates used" value={replacementCandidatesUsed} />
-              <SummaryMetricCard label="Markets needing another run" value={marketsNeedingAnotherRun.filter((market) => market.needed).length} tone={marketsNeedingAnotherRun.some((market) => market.needed) ? "warning" : "good"} />
-              <SummaryMetricCard label="Last refresh time" value={formatSnapshotTime(statusPayload.lastRefreshAt)} />
-              <SummaryMetricCard label="Cron status" value={formatCronStatus(statusPayload)} tone={statusPayload.cronConfigured ? "good" : "warning"} />
+              <SummaryMetricCard label="Replacement candidates used" value={statusPayload.dataAvailable ? replacementCandidatesUsed : "Unavailable"} />
+              <SummaryMetricCard label="Markets needing another run" value={statusPayload.dataAvailable ? marketsNeedingAnotherRun.filter((market) => market.needed).length : "Unavailable"} tone={!statusPayload.dataAvailable ? "danger" : marketsNeedingAnotherRun.some((market) => market.needed) ? "warning" : "good"} />
+              <SummaryMetricCard label="Latest snapshot search" value={statusPayload.dataAvailable ? formatSnapshotTime(statusPayload.lastRefreshAt) : "Unavailable"} />
+              <SummaryMetricCard label="Cron credential" value={formatCronStatus(statusPayload)} tone={statusPayload.cronConfigured ? "info" : "warning"} />
             </dl>
           </DashboardSection>
 
@@ -633,46 +660,52 @@ export function HomepageFaresRefreshCard() {
             loading={statusState.loading}
             refreshState={refreshState}
             statusPayload={statusPayload}
+            operationsAvailable={statusPayload.dataAvailable}
+            initialStatusLoading={initialStatusLoading}
             onRefresh={refreshHomepageFares}
             onReload={() => void loadStatus()}
           />
 
-          <MarketReadinessDashboard
-            markets={publicMarkets}
-            selectedRouteScope={selectedRouteScope}
-            onInspectMarket={selectRouteScope}
-          />
+          {statusPayload.dataAvailable ? (
+            <>
+              <MarketReadinessDashboard
+                markets={publicMarkets}
+                selectedRouteScope={selectedRouteScope}
+                onInspectMarket={selectRouteScope}
+              />
 
-          <MarketRouteInspector
-            publicGroups={publicRouteGroups}
-            fallbackGroups={fallbackRouteGroups}
-            selectedRouteScope={selectedRouteScope}
-            selectedGroup={selectedRouteGroup}
-            filter={routeFilter}
-            loading={statusState.loading}
-            onSelectMarket={selectRouteScope}
-            routePage={routePage}
-            onPreviousPage={() => setRoutePage((page) => Math.max(1, page - 1))}
-            onNextPage={() => setRoutePage((page) => page + 1)}
-            onFilterChange={selectRouteFilter}
-            routeDetailsRef={routeDetailsRef}
-          />
+              <MarketRouteInspector
+                publicGroups={publicRouteGroups}
+                fallbackGroups={fallbackRouteGroups}
+                selectedRouteScope={selectedRouteScope}
+                selectedGroup={selectedRouteGroup}
+                filter={routeFilter}
+                loading={statusState.loading}
+                onSelectMarket={selectRouteScope}
+                routePage={routePage}
+                onPreviousPage={() => setRoutePage((page) => Math.max(1, page - 1))}
+                onNextPage={() => setRoutePage((page) => page + 1)}
+                onFilterChange={selectRouteFilter}
+                routeDetailsRef={routeDetailsRef}
+              />
 
-          <DiagnosticsPanel
-            markets={statusPayload.marketReadinessSummary}
-            marketsNeedingAnotherRun={marketsNeedingAnotherRun}
-            candidatePoolHealth={statusPayload.candidatePoolHealth}
-            publicPriceDiagnostics={statusPayload.publicPriceDiagnostics}
-            stoppedReason={latestCounts?.stoppedReason}
-          />
+              <DiagnosticsPanel
+                markets={statusPayload.marketReadinessSummary}
+                marketsNeedingAnotherRun={marketsNeedingAnotherRun}
+                candidatePoolHealth={statusPayload.candidatePoolHealth}
+                publicPriceDiagnostics={statusPayload.publicPriceDiagnostics}
+                stoppedReason={latestCounts?.stoppedReason}
+              />
 
-          <FallbackPoolsSection
-            pools={fallbackPools}
-            selectedRouteScope={selectedRouteScope}
-            onInspectMarket={selectRouteScope}
-          />
+              <FallbackPoolsSection
+                pools={fallbackPools}
+                selectedRouteScope={selectedRouteScope}
+                onInspectMarket={selectRouteScope}
+              />
 
-          <RawDebugDetails statusPayload={statusPayload} refreshCounts={latestCounts} />
+              <RawDebugDetails statusPayload={statusPayload} refreshCounts={latestCounts} />
+            </>
+          ) : null}
         </div>
       </Card>
     </section>
@@ -802,11 +835,6 @@ function formatGlobalReadinessStatus(status: GlobalReadinessStatus) {
   }
 }
 
-function formatNextExpectedCron(status: Pick<HomepageFareStatusPayload, "cronConfigured" | "nextExpectedCronRefresh">) {
-  if (status.nextExpectedCronRefresh) return status.nextExpectedCronRefresh;
-  return status.cronConfigured ? "Configured externally; cadence note not provided" : "Cron is not configured";
-}
-
 function buildDiagnostics(
   markets: MarketReadiness[],
   marketsNeedingAnotherRun: MarketNextRunNeed[],
@@ -867,6 +895,8 @@ function RefreshCronPanel({
   loading,
   refreshState,
   statusPayload,
+  operationsAvailable,
+  initialStatusLoading,
   onRefresh,
   onReload,
 }: {
@@ -874,6 +904,8 @@ function RefreshCronPanel({
   loading: boolean;
   refreshState: RefreshState;
   statusPayload: HomepageFareStatusPayload;
+  operationsAvailable: boolean;
+  initialStatusLoading: boolean;
   onRefresh: () => void;
   onReload: () => void;
 }) {
@@ -894,12 +926,18 @@ function RefreshCronPanel({
               type="button"
               variant="accent"
               onClick={onRefresh}
-              disabled={refreshing}
+              disabled={refreshing || !operationsAvailable}
               aria-busy={refreshing}
               className="w-full sm:w-auto"
             >
               <RefreshCcw className={refreshing ? "animate-spin" : ""} size={16} />
-              {refreshing ? "Refreshing…" : "Refresh homepage fares"}
+              {refreshing
+                ? "Refreshing…"
+                : initialStatusLoading
+                  ? "Loading status…"
+                  : operationsAvailable
+                    ? "Refresh homepage fares"
+                    : "Refresh unavailable"}
             </Button>
             <Button
               type="button"
@@ -938,16 +976,21 @@ function RefreshCronPanel({
         </div>
 
         <dl className="grid gap-2 rounded-xl border border-border bg-white p-4 sm:grid-cols-2 lg:grid-cols-1">
-          <CompactDetail label="Last refresh time" value={formatSnapshotTime(statusPayload.lastRefreshAt)} />
-          <CompactDetail label="Cron status" value={formatCronStatus(statusPayload)} />
-          <CompactDetail label="Cron cadence note" value={statusPayload.nextExpectedCronRefresh ?? "Not configured"} />
-          <CompactDetail label="Next expected refresh" value={formatNextExpectedCron(statusPayload)} />
+          <CompactDetail label="Latest snapshot search" value={statusPayload.dataAvailable ? formatSnapshotTime(statusPayload.lastRefreshAt) : "Unavailable"} />
+          <CompactDetail label="Cron credential" value={formatCronStatus(statusPayload)} />
+          <CompactDetail label="Scheduler cadence note" value={statusPayload.nextExpectedCronRefresh ?? "Not provided"} />
+          <CompactDetail label="Scheduler verification" value="Not observable from this service" />
           <CompactDetail label="Current stopped reason" value={stoppedReason} />
         </dl>
       </div>
+      {!initialStatusLoading && !operationsAvailable ? (
+        <p className="mt-3 rounded-xl border border-red-100 bg-red-50 p-3 text-sm font-semibold text-danger">
+          Manual refresh is disabled because the authoritative homepage fare snapshot store is unavailable.
+        </p>
+      ) : null}
       {!statusPayload.cronConfigured ? (
         <p className="mt-3 rounded-xl border border-amber/20 bg-amber/10 p-3 text-sm font-semibold text-amber">
-          Cron is not configured. Set HOMEPAGE_FARES_CRON_SECRET and schedule POST /api/internal/homepage-fares/refresh before relying on unattended production refreshes.
+          The cron credential is not configured. Set HOMEPAGE_FARES_CRON_SECRET before configuring an external scheduler for POST /api/internal/homepage-fares/refresh.
         </p>
       ) : null}
     </DashboardSection>
@@ -1731,6 +1774,7 @@ function normalizeRefreshCounts(payload: unknown): RefreshCounts {
 function normalizeStatusPayload(payload: unknown): HomepageFareStatusPayload {
   if (!payload || typeof payload !== "object") {
     return {
+      dataAvailable: false,
       routes: [],
       summary: DEFAULT_STATUS_SUMMARY,
       health: DEFAULT_HEALTH,
@@ -1743,6 +1787,7 @@ function normalizeStatusPayload(payload: unknown): HomepageFareStatusPayload {
   }
 
   const candidate = payload as {
+    dataAvailable?: unknown;
     routes?: unknown;
     summary?: unknown;
     health?: unknown;
@@ -1787,6 +1832,7 @@ function normalizeStatusPayload(payload: unknown): HomepageFareStatusPayload {
   const summary = normalizeStatusSummary(candidate.summary, routes.length);
 
   return {
+    dataAvailable: candidate.dataAvailable === true,
     routes,
     summary,
     health: normalizeHealth(candidate.health),
@@ -2459,6 +2505,6 @@ function formatDateTime(value: string) {
 }
 
 function formatCronStatus(status: Pick<HomepageFareStatusPayload, "cronConfigured" | "nextExpectedCronRefresh">) {
-  if (!status.cronConfigured) return "Not configured";
-  return status.nextExpectedCronRefresh ? "Configured" : "Configured (cadence note missing)";
+  if (!status.cronConfigured) return "Credential not configured";
+  return status.nextExpectedCronRefresh ? "Credential configured" : "Credential configured; cadence note missing";
 }

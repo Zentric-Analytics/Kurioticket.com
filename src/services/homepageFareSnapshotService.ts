@@ -12,7 +12,7 @@ import {
 } from "@/data/homeDiscovery";
 import { popularDestinationsByMarket } from "@/data/marketHomeContent";
 import { HOMEPAGE_REFRESH_MARKET_CODES } from "@/lib/market/resolveMarket";
-import { getOptionalPrisma } from "@/lib/prisma";
+import { DatabaseUnavailableError, getOptionalPrisma } from "@/lib/prisma";
 import { PUBLIC_HOMEPAGE_FARE_TTL_MS } from "@/lib/homepageFareDisplay";
 import type {
   FlightSearchParams,
@@ -21,6 +21,7 @@ import type {
 } from "@/lib/types";
 import { searchDuffelFlights } from "@/services/travel/providers/duffelProvider";
 import { getPublishedFlightRoutes } from "@/services/publicCmsContentService";
+import { withHomepageFareRefreshLock } from "@/services/homepageFareRefreshLock";
 
 const AIRPORT_OR_CITY_CODE_PATTERN = /^[A-Z]{3}$/;
 const CURRENCY_PATTERN = /^[A-Z]{3}$/;
@@ -185,6 +186,7 @@ export type HomepageFareRefreshBudget = {
 };
 
 export type HomepageFareSnapshotStatusResponse = {
+  dataAvailable: boolean;
   routes: HomepageFareSnapshotStatusRoute[];
   summary: HomepageFareSnapshotStatusSummary;
   health: HomepageFareSnapshotHealth;
@@ -1186,7 +1188,7 @@ function classifyHomepageFareMarketReadinessStatus({
   return "underfilled";
 }
 
-export async function refreshPhase3AHomepageFareSnapshots({
+async function runPhase3AHomepageFareRefresh({
   scope = "all-phase-3a",
   dateStrategy = getHomepageFareDateStrategy(),
 }: {
@@ -1528,6 +1530,16 @@ export async function refreshPhase3AHomepageFareSnapshots({
   updateHomepageFareUnderfillExecutionMetadata(counts);
 
   return counts;
+}
+
+
+export async function refreshPhase3AHomepageFareSnapshots(
+  input: {
+    scope?: HomepageFareRefreshScope;
+    dateStrategy?: HomepageFareDateStrategy;
+  } = {},
+): Promise<HomepageFareRefreshCounts> {
+  return withHomepageFareRefreshLock(() => runPhase3AHomepageFareRefresh(input));
 }
 
 
@@ -3008,6 +3020,8 @@ export async function readHomepageFareSnapshotStatus({
     .map((route) => normalizeRoute(route))
     .filter((route): route is HomepageFareRoute => Boolean(route));
   const summary = createEmptyHomepageFareSnapshotStatusSummary();
+  const db = getOptionalPrisma();
+  let dataAvailable = Boolean(db);
 
   if (!eligibleRoutes.length) {
     const refreshBudget = getHomepageFareSmartRefreshBudget();
@@ -3023,6 +3037,7 @@ export async function readHomepageFareSnapshotStatus({
     );
 
     return {
+      dataAvailable,
       routes: [],
       summary,
       health: displayReadiness,
@@ -3071,7 +3086,6 @@ export async function readHomepageFareSnapshotStatus({
       currency: normalizedCurrency,
     }),
   );
-  const db = getOptionalPrisma();
   const snapshotsByKey = new Map<string, HomepageFareSnapshotRecord>();
 
   if (db) {
@@ -3098,6 +3112,7 @@ export async function readHomepageFareSnapshotStatus({
         snapshotsByKey.set(snapshot.snapshotKey, snapshot);
       }
     } catch (error) {
+      dataAvailable = false;
       console.error("[homepage-fare-snapshots:status]", error);
     }
   }
@@ -3205,6 +3220,7 @@ export async function readHomepageFareSnapshotStatus({
     .map(([market, target]) => ({ market, ...target }));
 
   return {
+    dataAvailable,
     routes: statusRoutes,
     summary,
     health: displayReadiness,
@@ -3229,8 +3245,8 @@ export async function readHomepageFareSnapshotStatus({
     candidatePoolSizeByMarket,
     routeAttemptsByMarket: emptyMarketCounts,
     providerCallsByMarket: emptyMarketCounts,
-    failedByMarket: emptyMarketCounts,
-    unavailableByMarket: emptyMarketCounts,
+    failedByMarket,
+    unavailableByMarket,
     skippedCooldownByMarket: emptyMarketCounts,
     replacementCandidatesUsedByMarket,
     lastRefreshAt,
@@ -3998,6 +4014,10 @@ export function buildSafeHomepageFareRefreshErrorResponse(
 }
 
 function getSafeHomepageFareRefreshFailureReason(error: unknown) {
+  if (error instanceof DatabaseUnavailableError) {
+    return "Database is unavailable or misconfigured. Check DATABASE_URL and database connectivity.";
+  }
+
   if (isPrismaInitializationLikeError(error)) {
     return "Database is unavailable or misconfigured. Check DATABASE_URL and database connectivity.";
   }
