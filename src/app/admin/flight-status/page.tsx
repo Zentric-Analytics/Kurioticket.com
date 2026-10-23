@@ -39,9 +39,9 @@ export default async function AdminFlightStatusPage() {
         {operations ? (
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
             <AdminMetricCard label="Confirmed flights" value={operations.metrics.confirmedFlights} hint="Signed partner-confirmed flight trips in this database" tone="info" />
-            <AdminMetricCard label="Feed eligible" value={operations.metrics.feedEligibleFlights} hint="Confirmed flights matching the configured status provider" />
-            <AdminMetricCard label="Tracked" value={operations.metrics.trackedFlights} hint="Feed-eligible flights with a stored provider snapshot" tone={operations.metrics.trackedFlights > 0 ? "good" : "neutral"} />
-            <AdminMetricCard label="Missing status" value={operations.metrics.missingSnapshots} hint="Feed-eligible flights awaiting their first snapshot" tone={operations.metrics.missingSnapshots > 0 ? "warn" : "neutral"} />
+            <AdminMetricCard label="Provider matched" value={operations.metrics.feedEligibleFlights} hint="Confirmed flights matching the configured provider name" />
+            <AdminMetricCard label="Tracked" value={operations.metrics.trackedFlights} hint="Provider-matched confirmed flights with a stored snapshot" tone={operations.metrics.trackedFlights > 0 ? "good" : "neutral"} />
+            <AdminMetricCard label="Missing status" value={operations.metrics.missingSnapshots} hint="Provider-matched confirmed flights awaiting their first snapshot" tone={operations.metrics.missingSnapshots > 0 ? "warn" : "neutral"} />
             <AdminMetricCard label="Current" value={operations.metrics.currentSnapshots} hint="Provider snapshots no more than 15 minutes old" tone={operations.metrics.currentSnapshots > 0 ? "good" : "neutral"} />
             <AdminMetricCard label="Stale" value={operations.metrics.staleSnapshots} hint="Stored snapshots outside the current freshness window" tone={operations.metrics.staleSnapshots > 0 ? "warn" : "neutral"} />
           </div>
@@ -76,7 +76,7 @@ export default async function AdminFlightStatusPage() {
           <div className="grid gap-4 xl:grid-cols-2">
             <AdminSectionCard className="p-5">
               <h2 className="font-black text-slate-950">Latest status distribution</h2>
-              <p className="mt-1 text-sm leading-6 text-slate-600">Distribution of the latest stored provider snapshot for feed-eligible confirmed flights.</p>
+              <p className="mt-1 text-sm leading-6 text-slate-600">Distribution of the latest stored provider snapshot for confirmed flights matching the configured provider.</p>
               {operations.statusDistribution.length ? (
                 <div className="mt-4 divide-y divide-slate-100">
                   {operations.statusDistribution.map((item) => (
@@ -120,7 +120,7 @@ export default async function AdminFlightStatusPage() {
             <div>
               <div className="mb-3">
                 <h2 className="font-black text-slate-950">Awaiting first status snapshot</h2>
-                <p className="mt-1 text-sm text-slate-600">Feed-eligible confirmed flights that have not received a trusted status snapshot yet.</p>
+                <p className="mt-1 text-sm text-slate-600">Provider-matched confirmed flights that have not received a trusted status snapshot yet.</p>
               </div>
               <AdminDataTable
                 columns={["Departure", "Customer", "Route", "Provider", "Reference", "Confirmed"]}
@@ -138,7 +138,7 @@ export default async function AdminFlightStatusPage() {
               />
             </div>
           ) : (
-            <AdminEmptyState title="No flights awaiting a first snapshot" message={readiness.feedReady ? "Every feed-eligible confirmed flight currently has a stored status snapshot, or there are no eligible flights." : "No configured status provider is currently eligible to receive snapshots."} />
+            <AdminEmptyState title="No flights awaiting a first snapshot" message={readiness.feedReady ? "Every provider-matched confirmed flight currently has a stored status snapshot, or there are no matched flights." : "No configured status provider is currently eligible to receive snapshots."} />
           )
         ) : null}
 
