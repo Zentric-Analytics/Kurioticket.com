@@ -30,25 +30,29 @@ export function AdminAlertAcknowledgeButton({
     setError("");
 
     startTransition(async () => {
-      const response = await fetch("/api/admin/notifications/acknowledge", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ alertKey, signalToken }),
-      });
-      const body = await response.json().catch(() => ({}));
+      try {
+        const response = await fetch("/api/admin/notifications/acknowledge", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ alertKey, signalToken }),
+        });
+        const body = await response.json().catch(() => ({}));
 
-      if (!response.ok) {
-        setError(
-          typeof body.error === "string"
-            ? body.error
-            : "Unable to acknowledge this alert.",
-        );
-        return;
+        if (!response.ok) {
+          setError(
+            typeof body.error === "string"
+              ? body.error
+              : "Unable to acknowledge this alert.",
+          );
+          return;
+        }
+
+        window.dispatchEvent(new Event("admin-alerts-updated"));
+        router.refresh();
+      } catch {
+        setError("Unable to acknowledge this alert. Check your connection and try again.");
       }
-
-      window.dispatchEvent(new Event("admin-alerts-updated"));
-      router.refresh();
     });
   }
 
