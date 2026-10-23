@@ -13,6 +13,13 @@ export function escapePrismaContainsQuery(query: string) {
 
 export type AdminIdentityReference = { kind: "user" | "guest"; id: string };
 
+export const ADMIN_IDENTITY_SORTS = ["newest", "oldest", "name_asc", "name_desc"] as const;
+export type AdminIdentitySort = (typeof ADMIN_IDENTITY_SORTS)[number];
+
+export function parseAdminIdentitySort(value: string | undefined): AdminIdentitySort {
+  return ADMIN_IDENTITY_SORTS.includes(value as AdminIdentitySort) ? value as AdminIdentitySort : "newest";
+}
+
 export type AdminIdentityPageRequest = {
   query: string;
   role: string;
@@ -21,6 +28,7 @@ export type AdminIdentityPageRequest = {
   showGuests: boolean;
   limit: number;
   offset: number;
+  sort?: AdminIdentitySort;
 };
 
 /**
@@ -32,6 +40,14 @@ export type AdminIdentityPageRequest = {
  */
 export function adminIdentityPageSql(input: AdminIdentityPageRequest): Prisma.Sql | null {
   const { query, role, status, showUsers, showGuests, limit, offset } = input;
+  const sort = parseAdminIdentitySort(input.sort);
+  const order = sort === "oldest"
+    ? Prisma.sql`"joinedAt" ASC, "kind" ASC, "id" ASC`
+    : sort === "name_asc"
+      ? Prisma.sql`lower("displayName") ASC, "joinedAt" DESC, "kind" ASC, "id" DESC`
+      : sort === "name_desc"
+        ? Prisma.sql`lower("displayName") DESC, "joinedAt" DESC, "kind" ASC, "id" DESC`
+        : Prisma.sql`"joinedAt" DESC, "kind" ASC, "id" DESC`;
   if (!showUsers && !showGuests) return null;
   if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100
     || !Number.isSafeInteger(offset) || offset < 0) {
@@ -41,7 +57,8 @@ export function adminIdentityPageSql(input: AdminIdentityPageRequest): Prisma.Sq
   const sources: Prisma.Sql[] = [];
   if (showUsers) {
     sources.push(Prisma.sql`
-      SELECT 'user'::text AS "kind", u."id" AS "id", u."createdAt" AS "joinedAt"
+      SELECT 'user'::text AS "kind", u."id" AS "id", u."createdAt" AS "joinedAt",
+        COALESCE(NULLIF(BTRIM(u."name"), ''), 'Unnamed user') AS "displayName"
       FROM "User" u
       WHERE TRUE
         ${query ? Prisma.sql`AND (
@@ -56,7 +73,8 @@ export function adminIdentityPageSql(input: AdminIdentityPageRequest): Prisma.Sq
 
   if (showGuests) {
     sources.push(Prisma.sql`
-      SELECT 'guest'::text AS "kind", v."id" AS "id", v."firstSeenAt" AS "joinedAt"
+      SELECT 'guest'::text AS "kind", v."id" AS "id", v."firstSeenAt" AS "joinedAt",
+        'Guest visitor'::text AS "displayName"
       FROM "Visitor" v
       WHERE v."consentStatus" = 'GRANTED'
         AND v."trackingDisabledAt" IS NULL
@@ -68,12 +86,13 @@ export function adminIdentityPageSql(input: AdminIdentityPageRequest): Prisma.Sq
     `);
   }
 
-  // Sort all identities together. Kind + ID are stable tie-breakers for
-  // equal timestamps, so crossing page boundaries cannot skip tied rows.
+  // Sort the combined identity set in PostgreSQL *before* pagination.
+  // Name sorting follows the displayed name (including the guest label);
+  // timestamps, kind and ID break ties predictably across pages.
   return Prisma.sql`
     SELECT "kind", "id"
     FROM (${Prisma.join(sources, " UNION ALL ")}) AS identities
-    ORDER BY "joinedAt" DESC, "kind" ASC, "id" DESC
+    ORDER BY ${order}
     LIMIT ${limit} OFFSET ${offset}
   `;
 }
