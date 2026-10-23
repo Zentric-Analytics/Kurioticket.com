@@ -201,18 +201,23 @@ export function AdminPageShell({
   eyebrow = "Admin operations",
   description,
   actions,
+  hideHeader = false,
   children,
 }: {
   title: string;
   eyebrow?: string;
   description?: string;
   actions?: React.ReactNode;
+  /** Hide the visible heading only for layouts that start directly with their first section. */
+  hideHeader?: boolean;
   children: React.ReactNode;
 }) {
   return (
     <div className="w-full min-w-0">
-      <AdminPageHeader eyebrow={eyebrow} title={title} description={description} actions={actions} />
-      <div className="mt-6">{children}</div>
+      {hideHeader
+        ? <h1 className="sr-only">{title}</h1>
+        : <AdminPageHeader eyebrow={eyebrow} title={title} description={description} actions={actions} />}
+      <div className={hideHeader ? "" : "mt-6"}>{children}</div>
     </div>
   );
 }
