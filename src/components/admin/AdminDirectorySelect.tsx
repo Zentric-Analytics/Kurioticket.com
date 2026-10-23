@@ -1,9 +1,15 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useId, useRef, useState, useSyncExternalStore, type KeyboardEvent } from "react";
 import { Check, ChevronDown } from "lucide-react";
 
 export type AdminDirectoryOption = { value: string; label: string };
+
+// Render a real native select on the server and without JavaScript. Upgrade
+// after hydration without causing a server/client markup mismatch.
+const subscribe = () => () => {};
+const clientSnapshot = () => true;
+const serverSnapshot = () => false;
 
 type Props = {
   label: string;
@@ -28,6 +34,7 @@ export function AdminDirectorySelect({
   compact = false,
 }: Props) {
   const listboxId = useId();
+  const hydrated = useSyncExternalStore(subscribe, clientSnapshot, serverSnapshot);
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -119,6 +126,31 @@ export function AdminDirectorySelect({
       }
     }
   };
+
+  if (!hydrated) {
+    return (
+      <div className="min-w-0">
+        <label className="sr-only" htmlFor={listboxId + "-native"}>{label}</label>
+        <select
+          id={listboxId + "-native"}
+          name={name}
+          defaultValue={value}
+          className={`focus-ring w-full min-w-0 rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px] font-medium text-[#020617] ${compact ? "h-10" : "h-11"}`}
+        >
+          {options.map(option => (
+            <option key={option.value} value={option.value}>{option.label}</option>
+          ))}
+        </select>
+        {autoSubmit ? (
+          <noscript>
+            <button type="submit" className="mt-2 rounded-md border border-[#D8E1EC] px-3 py-2 text-[13px] font-medium text-[#020617]">
+              Apply sort
+            </button>
+          </noscript>
+        ) : null}
+      </div>
+    );
+  }
 
   return (
     <div ref={rootRef} className="relative min-w-0">
