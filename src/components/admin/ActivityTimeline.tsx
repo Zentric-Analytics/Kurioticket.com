@@ -84,7 +84,7 @@ export function ActivityTimeline({ events, nextHref, environment }: { events: Ac
                 ? <RecordedEvent key={item.row.id} row={item.row} environment={environment} now={now} />
                 : <li key={item.rows[0].id} className="py-2.5">
                     <details data-testid="selection-run" className="group min-w-0">
-                      <summary className="focus-ring flex cursor-pointer list-none items-center justify-between gap-3 rounded-sm px-1 py-2 text-[13px] font-medium text-[#020617] hover:bg-[#F8FAFC] [&::-webkit-details-marker]:hidden">
+                      <summary className="focus-ring flex flex-wrap cursor-pointer list-none items-center justify-between gap-2 rounded-sm px-1 py-2 text-[13px] font-medium text-[#020617] hover:bg-[#F8FAFC] [&::-webkit-details-marker]:hidden">
                         <span>Offer selected · {item.rows.length} events</span>
                         <span className="inline-flex shrink-0 items-center gap-1.5 text-[12px] font-medium text-[#004BB8]">
                           Show records <ChevronRight size={15} aria-hidden="true" className="transition-transform group-open:rotate-90" />
