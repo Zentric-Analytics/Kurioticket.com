@@ -29,7 +29,7 @@ test("confirmed trips service reads only genuine partner-confirmed My Trips", ()
 test("confirmed trips page does not invent an active confirmation provider feed", () => {
   assert.match(page, /Current Duffel search and KAYAK sandbox integrations do not send booking confirmations/);
   assert.match(page, /Current search-provider confirmation feed/);
-  assert.match(page, /value="None"/);
+  assert.match(page, /readiness\.currentSearchProviderConfirmationFeed === "none" \? "None" : "Configured"/);
   assert.match(page, /configured webhook secret means the signed callback boundary is ready; it does not mean a provider agreement or live confirmation feed is active/i);
   assert.match(page, /there is no separate provider-name allowlist in the current contract/i);
 });
@@ -80,4 +80,10 @@ test("confirmed-trip copy describes canonical confirmation state without oversta
   assert.match(page, /Kurioticket accepted a valid signed partner confirmation and stored it as trusted trip data/);
   assert.doesNotMatch(page, /approved external provider sent a valid signed confirmation/);
   assert.match(page, /no accepted signed partner callback has created a confirmed My Trip/i);
+});
+
+
+test("confirmed-trip readiness facts are rendered from authoritative readiness state", () => {
+  assert.match(page, /readiness\.credentialModel === "shared_secret_only" \? "One shared secret" : "Unknown"/);
+  assert.match(page, /readiness\.currentSearchProviderConfirmationFeed === "none" \? "None" : "Configured"/);
 });
