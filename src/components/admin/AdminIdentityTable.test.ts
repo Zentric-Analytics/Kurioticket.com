@@ -13,7 +13,7 @@ const { AdminIdentityTable } = jiti(
 ) as typeof import("./AdminIdentityTable");
 type IdentityRow = import("./AdminIdentityTable").IdentityRow;
 
-const props = {
+const props: Parameters<typeof AdminIdentityTable>[0] = {
   rows: [] as IdentityRow[],
   page: 2,
   count: 231,
