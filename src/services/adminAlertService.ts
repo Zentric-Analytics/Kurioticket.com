@@ -24,12 +24,13 @@ const ACK_ACTION = "ADMIN_ALERT_ACKNOWLEDGED";
 const ACK_TARGET_TYPE = "AdminOperationalAlert";
 const ACK_WINDOW_MS = 24 * 60 * 60 * 1_000;
 const CANDIDATE_CACHE_TTL_MS = 30_000;
+const TELEMETRY_STATE_ACTION = "ADMIN_ALERT_TELEMETRY_STATE";
+const TELEMETRY_STATE_TARGET_TYPE = "AdminOperationalTelemetry";
 
 let candidateCache:
   | { candidates: AdminAlertCandidate[]; expiresAt: number }
   | null = null;
 let candidateRefreshPromise: Promise<AdminAlertCandidate[]> | null = null;
-const telemetryOutageOccurrences = new Map<string, string>();
 
 type AckMetadata = {
   alertKey?: unknown;
@@ -175,6 +176,19 @@ async function loadAdminAlertCandidates(now: Date): Promise<AdminAlertCandidate[
         : Promise.resolve(null),
     ]);
 
+  const telemetryOutageTokens = await readTelemetryOutageTokens(
+    {
+      providers: providers === null,
+      email: email === null || !email.dataAvailable,
+      cms: cms === null,
+      "homepage-fares":
+        homepageFares === null || !homepageFares.dataAvailable,
+      "flight-status":
+        readiness.feedReady && flightStatusOperations === null,
+    },
+    now,
+  );
+
   const signals: AdminAlertSignals = {
     system,
     providers,
@@ -187,23 +201,11 @@ async function loadAdminAlertCandidates(now: Date): Promise<AdminAlertCandidate[
       : null,
     homepageFares,
     telemetryOutageTokens: {
-      providers: telemetryOutageToken("providers", providers === null, now),
-      email: telemetryOutageToken(
-        "email",
-        email === null || !email.dataAvailable,
-        now,
-      ),
-      cms: telemetryOutageToken("cms", cms === null, now),
-      homepageFares: telemetryOutageToken(
-        "homepage-fares",
-        homepageFares === null || !homepageFares.dataAvailable,
-        now,
-      ),
-      flightStatus: telemetryOutageToken(
-        "flight-status",
-        readiness.feedReady && flightStatusOperations === null,
-        now,
-      ),
+      providers: telemetryOutageTokens.providers,
+      email: telemetryOutageTokens.email,
+      cms: telemetryOutageTokens.cms,
+      homepageFares: telemetryOutageTokens["homepage-fares"],
+      flightStatus: telemetryOutageTokens["flight-status"],
     },
     flightStatus: {
       feedReady: readiness.feedReady,
@@ -214,22 +216,124 @@ async function loadAdminAlertCandidates(now: Date): Promise<AdminAlertCandidate[
   return deriveAdminAlertCandidates(signals);
 }
 
-function telemetryOutageToken(
-  source: string,
-  unavailable: boolean,
+type TelemetrySource =
+  | "providers"
+  | "email"
+  | "cms"
+  | "homepage-fares"
+  | "flight-status";
+
+type TelemetryStateMetadata = {
+  state?: unknown;
+  occurrenceToken?: unknown;
+};
+
+async function readTelemetryOutageTokens(
+  unavailableBySource: Record<TelemetrySource, boolean>,
   now: Date,
-) {
-  if (!unavailable) {
-    telemetryOutageOccurrences.delete(source);
-    return "available";
+): Promise<Record<TelemetrySource, string>> {
+  const db = getOptionalPrisma();
+  const sources = Object.keys(unavailableBySource) as TelemetrySource[];
+  const result = Object.fromEntries(
+    sources.map((source) => [source, unavailableBySource[source] ? `outage:${source}:ephemeral:${now.toISOString()}` : "available"]),
+  ) as Record<TelemetrySource, string>;
+
+  if (!db) return result;
+
+  try {
+    const rows = await db.adminAuditLog.findMany({
+      where: {
+        action: TELEMETRY_STATE_ACTION,
+        targetType: TELEMETRY_STATE_TARGET_TYPE,
+        targetId: { in: sources },
+      },
+      select: {
+        targetId: true,
+        metadata: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: "desc" },
+      take: 100,
+    });
+
+    const latest = new Map<
+      TelemetrySource,
+      { state: "AVAILABLE" | "OUTAGE"; occurrenceToken: string | null; createdAt: Date }
+    >();
+
+    for (const row of rows) {
+      const source = row.targetId as TelemetrySource | null;
+      if (!source || latest.has(source) || !sources.includes(source)) continue;
+      const metadata = (row.metadata ?? {}) as TelemetryStateMetadata;
+      const state =
+        metadata.state === "AVAILABLE" || metadata.state === "OUTAGE"
+          ? metadata.state
+          : null;
+      if (!state) continue;
+      latest.set(source, {
+        state,
+        occurrenceToken:
+          typeof metadata.occurrenceToken === "string"
+            ? metadata.occurrenceToken
+            : null,
+        createdAt: row.createdAt,
+      });
+    }
+
+    for (const source of sources) {
+      const unavailable = unavailableBySource[source];
+      const previous = latest.get(source);
+
+      if (!unavailable) {
+        result[source] = "available";
+        if (previous?.state === "OUTAGE") {
+          await db.adminAuditLog.create({
+            data: {
+              adminEmail: "system-alert-monitor",
+              action: TELEMETRY_STATE_ACTION,
+              targetType: TELEMETRY_STATE_TARGET_TYPE,
+              targetId: source,
+              metadata: { state: "AVAILABLE" },
+            },
+          });
+        }
+        continue;
+      }
+
+      if (previous?.state === "OUTAGE" && previous.occurrenceToken) {
+        result[source] = previous.occurrenceToken;
+        continue;
+      }
+
+      const recoveryBoundary =
+        previous?.state === "AVAILABLE"
+          ? previous.createdAt.toISOString()
+          : "initial";
+      const occurrenceToken =
+        `outage:${source}:${createHash("sha256")
+          .update(`${source}:${recoveryBoundary}`)
+          .digest("hex")
+          .slice(0, 24)}`;
+
+      result[source] = occurrenceToken;
+      await db.adminAuditLog.create({
+        data: {
+          adminEmail: "system-alert-monitor",
+          action: TELEMETRY_STATE_ACTION,
+          targetType: TELEMETRY_STATE_TARGET_TYPE,
+          targetId: source,
+          metadata: {
+            state: "OUTAGE",
+            occurrenceToken,
+          },
+        },
+      });
+    }
+  } catch (error) {
+    console.error("[admin-alerts:telemetry-state]", error);
   }
 
-  const existing = telemetryOutageOccurrences.get(source);
-  if (existing) return existing;
-
-  const token = `outage:${source}:${now.toISOString()}`;
-  telemetryOutageOccurrences.set(source, token);
-  return token;
+  return result;
 }
 
 function cmsUnhealthyFingerprint(
