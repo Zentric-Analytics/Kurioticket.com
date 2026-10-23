@@ -33,12 +33,17 @@ try {
     await check("refined directory layout at " + width + "px", async () => {
       await page.setViewportSize({ width, height: 900 });
       await page.goto(after, { waitUntil: "networkidle" });
-      await expect(page.getByRole("heading", { name: "Identities (30)" })).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Users: 30" })).toBeVisible();
       await expect(page.getByRole("button", { name: "Apply Filter" })).toBeVisible();
       await expect(page.locator("tbody tr")).toHaveCount(30);
+      await expect(page.getByText("2 registered · 28 guest")).toBeVisible();
+      // The Users route alone uses the pure-white Admin canvas and no nested cards.
+      const shellColor = await page.locator("main").evaluate(main => getComputedStyle(main.parentElement).backgroundColor);
+      assert.equal(shellColor, "rgb(255, 255, 255)");
+      assert.equal(await page.locator("main [class*='shadow-']").count(), 0);
       await expect(page.getByRole("navigation", { name: "Identity pagination" })).toContainText("Pg1 of 1");
       await expect(page.getByRole("combobox", { name: "Sort by" })).toBeVisible();
-      await expect(page.getByRole("region", { name: "Identities (30)" })).toBeVisible();
+      await expect(page.getByRole("region", { name: "Users: 30" })).toBeVisible();
       await expect(page.getByRole("link", { name: "Kurioticket Admin overview" })).toBeVisible();
       const metrics = await page.evaluate(() => ({
         document: document.documentElement.scrollWidth,
@@ -77,8 +82,9 @@ try {
     await page.getByRole("button", { name: "Apply Filter" }).click();
     await expect(page).toHaveURL(/identity=GUEST/);
     await expect(page).toHaveURL(/sort=newest/);
-    await expect(page.getByRole("heading", { name: "Identities (28)" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Users: 28" })).toBeVisible();
     await expect(page.locator("tbody tr")).toHaveCount(28);
+    await expect(page.getByText("0 registered · 28 guest")).toBeVisible();
     assert.equal(new URL(page.url()).searchParams.get("page"), null);
   });
   assert.deepEqual(errors, [], "No uncaught errors in the browser fixture");
