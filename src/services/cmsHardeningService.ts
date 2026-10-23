@@ -444,3 +444,56 @@ export async function setCmsLegacyFallbackRetired(
     throw error;
   }
 }
+
+
+export async function getCmsHealthOverview() {
+  const db = getOptionalPrisma();
+  if (!db) {
+    return {
+      available: false,
+      scopes: [],
+      totals: {
+        scopes: 0,
+        healthy: 0,
+        unhealthy: 0,
+        retiredFallback: 0,
+        unpublishedChanges: 0,
+      },
+    };
+  }
+
+  const scopes = await db.cmsContentScope.findMany({
+    orderBy: [{ type: "asc" }, { market: "asc" }, { locale: "asc" }],
+    select: {
+      type: true,
+      market: true,
+      locale: true,
+    },
+  });
+
+  const results = await Promise.all(
+    scopes.map(async (scope) => ({
+      type: scope.type,
+      market: scope.market,
+      locale: scope.locale,
+      integrity: await getCmsScopeIntegrity(scope),
+    })),
+  );
+
+  return {
+    available: true,
+    scopes: results,
+    totals: {
+      scopes: results.length,
+      healthy: results.filter((entry) => entry.integrity.healthy).length,
+      unhealthy: results.filter((entry) => !entry.integrity.healthy).length,
+      retiredFallback: results.filter(
+        (entry) => entry.integrity.legacyFallbackRetired,
+      ).length,
+      unpublishedChanges: results.reduce(
+        (sum, entry) => sum + entry.integrity.unpublishedChanges,
+        0,
+      ),
+    },
+  };
+}
