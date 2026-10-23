@@ -403,7 +403,7 @@ export function AdminOverviewDashboard({
           title="Operations Snapshot"
           action={<AdminOverviewRangeSelect range={range} />}
         />
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        <div className="grid gap-x-6 gap-y-0 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
           <MetricCard label="Total users" value={data.users.total} hint="Current accounts" icon={Users} tone="info" />
           <MetricCard label="Enabled accounts" value={data.users.active} hint="Registered accounts with ACTIVE status; not people online" icon={UserCheck} tone="good" />
           <MetricCard label="Support attention" value={supportAttention} hint="Tickets awaiting action" icon={Headphones} tone={supportAttention ? "warn" : "good"} />
@@ -418,9 +418,9 @@ export function AdminOverviewDashboard({
       </section>
 
       <section className="mt-6" aria-label="Attention Required">
-        <AdminSectionCard className="p-4 sm:p-5">
+        <div>
           <SectionTitle title="Attention Required" />
-          <div className="grid gap-3 lg:grid-cols-3">
+          <div className="grid gap-x-6 gap-y-0 lg:grid-cols-3">
             <AttentionCard href="/admin/providers" title="Provider performance" value={providerAttention} tone="bad"
               description={providerAttention ? "Provider operations are degraded or failing" : "No degraded or failing providers"} icon={Activity} />
             <AttentionCard href="/admin/support" title="Support queue" value={supportAttention} tone="warn"
@@ -428,17 +428,17 @@ export function AdminOverviewDashboard({
             <AttentionCard href="/admin/account-deletions" title="Deletion reviews" value={deletionAttention} tone="info"
               description={deletionAttention ? "Requests pending or ready for review" : "No deletion requests awaiting review"} icon={Trash2} />
           </div>
-        </AdminSectionCard>
+        </div>
       </section>
 
-      <div className="mt-6 grid items-start gap-4 xl:grid-cols-[0.85fr_1.15fr]">
+      <div className="mt-8 grid items-start gap-6 xl:grid-cols-[0.85fr_1.15fr]">
         <PlatformHealth system={system} />
         <section className="min-w-0" aria-label="Provider Operational Health">
           <SectionTitle title="Provider Operational Health"
             action={<Link href="/admin/providers" className="focus-ring inline-flex items-center gap-1 text-xs font-semibold text-indigo-700 hover:underline">View all providers <ArrowUpRight size={13} aria-hidden="true" /></Link>} />
-          <div className="grid gap-3 xl:grid-cols-2">
+          <div className="grid gap-x-6 gap-y-0 xl:grid-cols-2">
             {data.providers.map((provider) => <ProviderCard key={provider.id} provider={provider} />)}
-            {data.providers.length === 0 ? <AdminEmptyState title="No provider status available" message="The current deployment has no reported provider operational statuses." /> : null}
+            {data.providers.length === 0 ? <p className="border-t border-slate-200/90 py-4 text-sm text-slate-600">No provider status available. The current deployment has no reported provider operational statuses.</p> : null}
           </div>
         </section>
       </div>
@@ -451,37 +451,37 @@ export function AdminOverviewDashboard({
             <AdminStatusBadge>{count(data.journeys.identities.guests)} guest identities</AdminStatusBadge>
           </div>}
         />
-        <AdminSectionCard className="p-4">
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div>
+          <div className="grid gap-x-6 gap-y-0 sm:grid-cols-2 xl:grid-cols-4">
             <FunnelStep label="Search completed" journeys={funnel.SEARCH_COMPLETED.journeys} events={funnel.SEARCH_COMPLETED.events} icon={Search} />
             <FunnelStep label="Results viewed" journeys={funnel.RESULTS_VIEWED.journeys} events={funnel.RESULTS_VIEWED.events} icon={BookOpen} />
             <FunnelStep label="Offer selected" journeys={funnel.OFFER_SELECTED.journeys} events={funnel.OFFER_SELECTED.events} icon={MousePointerClick} />
             <FunnelStep label="Provider handoff" journeys={funnel.PROVIDER_HANDOFF_STARTED.journeys} events={funnel.PROVIDER_HANDOFF_STARTED.events} icon={ArrowUpRight} />
           </div>
           <p className="mt-3 text-xs leading-5 text-slate-500">Stage counts are distinct consented journeys, not percentages of all operational searches.</p>
-        </AdminSectionCard>
+        </div>
 
-        <div className="mt-4 grid gap-4 xl:grid-cols-2">
-          <AdminSectionCard className="p-4 sm:p-5">
+        <div className="mt-6 grid gap-6 xl:grid-cols-2">
+          <section className="min-w-0 border-t border-slate-200/90 py-4">
             <h3 className="flex items-center gap-2 text-sm font-bold text-slate-950"><Search size={17} className="text-indigo-700" aria-hidden="true" />Operational Search Health</h3>
             <div className="mt-3">
               <DetailRow label="Operational searches" value={data.journeys.operationalSearches.total} />
               <DetailRow label="Failed searches" value={data.journeys.operationalSearches.failed} />
               <DetailRow label="Partial results" value={data.journeys.operationalSearches.partial} />
             </div>
-          </AdminSectionCard>
-          <AdminSectionCard className="p-4 sm:p-5">
+          </section>
+          <section className="min-w-0 border-t border-slate-200/90 py-4">
             <h3 className="flex items-center gap-2 text-sm font-bold text-slate-950"><Route size={17} className="text-indigo-700" aria-hidden="true" />Handoff Correlation</h3>
             <div className="mt-3">
               <DetailRow label="Exact search ↔ handoff links" value={data.journeys.handoffCorrelation.exactEvents} />
               <DetailRow label="Uncorrelated handoffs" value={data.journeys.handoffCorrelation.uncorrelatedEvents} />
             </div>
             <p className="mt-2 text-xs text-slate-500">No nearest-by-time inference.</p>
-          </AdminSectionCard>
+          </section>
         </div>
       </section>
 
-      <div className="mt-6 grid items-start gap-4 xl:grid-cols-3">
+      <div className="mt-8 grid items-start gap-6 xl:grid-cols-3">
         <WorkloadCard title="Support Workload" href="/admin/support" icon={Headphones} rows={[
           { label: "Open", value: data.support.open, detail: "New / active tickets" },
           { label: "Waiting on team", value: data.support.waitingOnTeam, detail: "Needs internal action" },
