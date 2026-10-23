@@ -52,43 +52,6 @@ export default async function AdminCarsPage() {
         <AdminSectionCard className="p-5">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <h2 className="font-black text-slate-950">Car provider readiness</h2>
-              <p className="mt-1 text-sm leading-6 text-slate-600">
-                Secret-free configuration readiness for integrations that can serve car search. This does not claim provider uptime.
-              </p>
-            </div>
-            <AdminStatusBadge tone="info">Current environment</AdminStatusBadge>
-          </div>
-
-          <div className="mt-4 grid gap-3 lg:grid-cols-2">
-            {carIntegrations.length ? carIntegrations.map((integration) => (
-              <div key={integration.id} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="font-black text-slate-950">{integration.provider}</p>
-                    <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-slate-500">{integration.environment}</p>
-                  </div>
-                  <AdminStatusBadge tone={integration.state === "READY" ? "good" : integration.state === "ENVIRONMENT_BLOCKED" ? "warn" : "neutral"}>
-                    {integration.state.replaceAll("_", " ")}
-                  </AdminStatusBadge>
-                </div>
-                <div className="mt-4 grid gap-2 text-sm sm:grid-cols-2">
-                  <Stat label="Configured" value={integration.configured ? "Yes" : "No"} />
-                  <Stat label="Search" value={integration.searchEnabled ? "Enabled" : "Not enabled"} />
-                  <Stat label="Handoff" value={integration.externalHandoffEnabled ? "Enabled" : "Not enabled"} />
-                  <Stat label="Booking" value={integration.bookingEnabled ? "Enabled" : "Not enabled"} />
-                </div>
-                <p className="mt-3 text-xs leading-5 text-slate-500">{integration.note}</p>
-              </div>
-            )) : (
-              <p className="rounded-xl bg-slate-50 p-3 text-sm text-slate-600">No car-capable provider integrations are registered.</p>
-            )}
-          </div>
-        </AdminSectionCard>
-
-        <AdminSectionCard className="p-5">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-            <div>
               <h2 className="font-black text-slate-950">Car provider health</h2>
               <p className="mt-1 text-sm leading-6 text-slate-600">
                 Configuration readiness and car-search-only provider telemetry for integrations that can serve car search.
