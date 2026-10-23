@@ -86,6 +86,7 @@ export async function getCmsScopeIntegrity(input: ScopeInput) {
       select: {
         id: true,
         key: true,
+        type: true,
         status: true,
         market: true,
         locale: true,
