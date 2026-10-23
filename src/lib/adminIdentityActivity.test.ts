@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
-  ACTIVITY_PAGE_SIZE, allowedActivityStages, activityHref, activityWindow,
+  ACTIVITY_PAGE_SIZE, activityEnvironmentScope, allowedActivityStages, activityHref, activityWindow,
   decodeActivityCursor, encodeActivityCursor, excludeCanonicalLegacyRows, groupActivityRows,
   parseActivityFilters, sourceActivitySeek, validActivityIdentity,
   type ActivityFilters,
@@ -50,13 +50,14 @@ test("every tab exposes only its own recorded stages", () => {
 
 test("page cursor is bound to one identity and exact filters", () => {
   const row = { id: "j-cmvuevent104", at: new Date("2026-10-22T17:48:00.000Z") };
-  const token = encodeActivityCursor(row, "guest", id, filters);
-  assert.deepEqual(decodeActivityCursor(token, "guest", id, filters), { id: row.id, at: row.at.toISOString() });
-  assert.equal(decodeActivityCursor(token, "user", id, filters), null);
-  assert.equal(decodeActivityCursor(token, "guest", "different-visitor", filters), null);
-  assert.equal(decodeActivityCursor(token, "guest", id, { ...filters, product: "FLIGHT" }), null);
-  assert.equal(decodeActivityCursor("invalid?cursor", "guest", id, filters), null);
-  assert.equal(decodeActivityCursor(undefined, "guest", id, filters), undefined);
+  const token = encodeActivityCursor(row, "guest", id, filters, "production");
+  assert.deepEqual(decodeActivityCursor(token, "guest", id, filters, "production"), { id: row.id, at: row.at.toISOString() });
+  assert.equal(decodeActivityCursor(token, "user", id, filters, "production"), null);
+  assert.equal(decodeActivityCursor(token, "guest", id, filters, "staging"), null);
+  assert.equal(decodeActivityCursor(token, "guest", "different-visitor", filters, "production"), null);
+  assert.equal(decodeActivityCursor(token, "guest", id, { ...filters, product: "FLIGHT" }, "production"), null);
+  assert.equal(decodeActivityCursor("invalid?cursor", "guest", id, filters, "production"), null);
+  assert.equal(decodeActivityCursor(undefined, "guest", id, filters, "production"), undefined);
 });
 
 test("cross-source keyset keeps stable ties without repeating the cursor item", () => {
@@ -110,4 +111,28 @@ test("filter navigation preserves directory context but removes pagination when 
   assert.ok(href.includes("tab=searches"));
   assert.ok(href.includes("directory="));
   assert.ok(!href.includes("cursor="));
+});
+
+test("activity timeline filters every source by the same environment as its links", () => {
+  const staging = activityEnvironmentScope("staging");
+  assert.deepEqual(staging, {
+    journey: { AND: [
+      { metadata: { path: ["environment"], equals: "staging" } },
+      { OR: [
+        { searchHistoryId: null },
+        { searchHistory: { is: { query: { path: ["environment"], equals: "staging" } } } },
+      ] },
+      { OR: [
+        { redirectLogId: null },
+        { redirectLog: { is: { metadata: { path: ["environment"], equals: "staging" } } } },
+      ] },
+    ] },
+    search: { query: { path: ["environment"], equals: "staging" } },
+    handoff: { metadata: { path: ["environment"], equals: "staging" } },
+    analytics: { metadata: { path: ["environment"], equals: "staging" } },
+  });
+  const production = activityEnvironmentScope("production");
+  assert.notDeepEqual(staging, production);
+  assert.deepEqual(production.search, { query: { path: ["environment"], equals: "production" } });
+  assert.deepEqual(production.analytics, { metadata: { path: ["environment"], equals: "production" } });
 });
