@@ -407,3 +407,40 @@ test("disabled car provider diagnostics distinguish invalid pickup time from uns
   assert.equal(unsupported.reason, "Unsupported search / provider coverage");
   assert.equal(unsupported.retryable, false);
 });
+
+
+test("single-provider partial car results do not invent another successful provider", () => {
+  const row = {
+    id: "search_car_partial",
+    requestId: "request_car_partial",
+    userId: null,
+    visitorId: null,
+    type: "CAR",
+    origin: "LHR",
+    destination: "LHR",
+    checkIn: null,
+    checkOut: null,
+    query: {},
+    resultCount: 3,
+    latencyMs: 1400,
+    status: "PARTIAL",
+    createdAt: new Date("2026-10-23T09:40:00.000Z"),
+    visitor: null,
+    journeyEvents: [],
+  } as never;
+  const providers = [{
+    provider: "KAYAK sandbox",
+    status: "FAILED" as const,
+    reasonCode: "UPSTREAM_UNAVAILABLE",
+    reason: "Upstream unavailable",
+    retryable: true,
+    latencyMs: 1300,
+    observedAt: "2026-10-23T09:40:00.000Z",
+  }];
+
+  const diagnostic = __adminOperationalReadCoreTest.exactSearchDiagnostic(row, providers);
+  assert.equal(diagnostic.outcome, "PARTIAL");
+  assert.equal(diagnostic.reasonCode, "PROVIDER_PARTIAL_FAILURE");
+  assert.equal(diagnostic.reason, "KAYAK sandbox did not complete successfully, but partial results were returned.");
+  assert.equal(diagnostic.reason.includes("another provider"), false);
+});
