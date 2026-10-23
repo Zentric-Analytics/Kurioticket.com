@@ -5,13 +5,14 @@ import { getOptionalPrisma } from "@/lib/prisma";
 import { getPublicEnvironment, type PublicEnvironment } from "@/lib/stagingSafety";
 import { isConfiguredPartnerConfirmationSecret, partnerConfirmationLimits } from "@/services/partnerBookingConfirmation";
 
+export type ConfirmedTripsIntegrationReadiness = {
+  webhookCredentialConfigured: boolean;
+  credentialModel: "shared_secret_only";
+  currentSearchProviderConfirmationFeed: "none";
+};
+
 export type ConfirmedTripsOperationsSnapshot = {
   environment: PublicEnvironment;
-  readiness: {
-    webhookCredentialConfigured: boolean;
-    credentialModel: "shared_secret_only";
-    currentSearchProviderConfirmationFeed: "none";
-  };
   metrics: {
     total: number;
     confirmedLast24h: number;
@@ -43,6 +44,16 @@ export type ConfirmedTripsOperationsSnapshot = {
     confirmedAt: string;
   }>;
 };
+
+export function getConfirmedTripsIntegrationReadiness(): ConfirmedTripsIntegrationReadiness {
+  return {
+    webhookCredentialConfigured: isConfiguredPartnerConfirmationSecret(
+      process.env.PARTNER_CONFIRMATION_WEBHOOK_SECRET,
+    ),
+    credentialModel: "shared_secret_only",
+    currentSearchProviderConfirmationFeed: "none",
+  };
+}
 
 export async function getConfirmedTripsOperationsSnapshot(
   environment: PublicEnvironment = getPublicEnvironment(),
@@ -117,13 +128,6 @@ export async function getConfirmedTripsOperationsSnapshot(
 
       return {
         environment,
-        readiness: {
-          webhookCredentialConfigured: isConfiguredPartnerConfirmationSecret(
-            process.env.PARTNER_CONFIRMATION_WEBHOOK_SECRET,
-          ),
-          credentialModel: "shared_secret_only",
-          currentSearchProviderConfirmationFeed: "none",
-        },
         metrics: {
           total,
           confirmedLast24h,
