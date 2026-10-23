@@ -512,14 +512,22 @@ export async function restoreCmsContentRevision(
       });
       if (!revision) throw new CmsContentError("NOT_FOUND", "Content revision not found.");
 
+      const restoredMarket = marketSchema.safeParse(revision.market);
+      const restoredLocale = localeSchema.safeParse(revision.locale);
+      if (!restoredMarket.success || !restoredLocale.success) {
+        throw new CmsContentError(
+          "INVALID",
+          "This historical revision uses a CMS scope that is no longer supported.",
+        );
+      }
       const restoredPayload = parsePayload(existing.type, revision.draftPayload);
       const nextVersion = parsed.data.expectedVersion + 1;
       const changed = await tx.cmsContentItem.updateMany({
         where: { id, version: parsed.data.expectedVersion, status: { not: "ARCHIVED" } },
         data: {
           draftPayload: restoredPayload,
-          market: revision.market,
-          locale: revision.locale,
+          market: restoredMarket.data,
+          locale: restoredLocale.data,
           sortOrder: revision.sortOrder,
           version: { increment: 1 },
           updatedByAdminUserId: actor.id,
