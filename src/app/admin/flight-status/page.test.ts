@@ -49,7 +49,7 @@ test("flight status operations shares the canonical freshness rule", () => {
   assert.match(service, /flightStatusFreshness/);
   assert.match(service, /flightStatusLimits\.freshnessWindowMs/);
   assert.match(page, /Snapshots observed from now back through 15 minutes/);
-  assert.match(statusService, /return age >= 0 && age <= freshnessWindowMs \? "current" : "stale"/);
+  assert.match(statusService, /age >= -maximumFutureEventSkewMs && age <= freshnessWindowMs/);
 });
 
 test("flight status operations does not invent an event history or segment model", () => {
