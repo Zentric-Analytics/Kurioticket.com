@@ -35,7 +35,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const result = await sendTransactionalEmail({
+    await sendTransactionalEmail({
       to: email,
       subject: "Kurioticket production email test",
       html: `
@@ -59,7 +59,7 @@ export async function POST(request: Request) {
       request,
     });
 
-    return NextResponse.json({ ok: true, providerMessageId: result.id });
+    return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("[admin:email-health:test-failed]", error);
     return NextResponse.json({ error: "Unable to send test email." }, { status: 503 });
