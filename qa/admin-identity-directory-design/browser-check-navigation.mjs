@@ -21,7 +21,9 @@ try {
     await expect(logo).toHaveCount(1);
     await expect(logo).toBeVisible();
     await expect(logo.locator("img,svg").first()).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Users: 30" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Users directory" })).toHaveCount(1);
+    await expect(page.getByRole("region", { name: "Users directory" })).toBeVisible();
+    await expect(page.getByRole("navigation", { name: "User types" }).getByRole("link", { name: "All (30)" })).toBeVisible();
     if (width >= 1100) {
       await expect(page.getByRole("navigation", { name: "Admin navigation" })).toBeVisible();
       await expect(page.getByRole("link", { name: "Users", exact: true })).toBeVisible();
