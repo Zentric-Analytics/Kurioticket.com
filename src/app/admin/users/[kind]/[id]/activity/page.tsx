@@ -88,7 +88,13 @@ function ActivityTimeline({ events, nextHref, environment }: { events: ActivityR
       <h2 id="activity-timeline-title" className="text-base font-semibold text-slate-950">Activity timeline</h2>
       <span className="text-xs text-slate-500">Newest recorded first · {events.length} on this page</span>
     </div>
-    {!events.length ? <div className="px-5 py-14 text-center text-sm text-slate-600">No recorded activity matches these filters.</div> : (
+    {!events.length ? <div className="px-5 py-12 text-center text-sm text-slate-600">
+      <p className="font-medium text-slate-800">No recorded activity is linked to this identity here.</p>
+      <p className="mx-auto mt-2 max-w-lg text-xs leading-5 text-slate-500">
+        This view shows only records attributed to the identity in the {environment} environment that match the selected filters.
+        Searches without an eligible identity link, and searches made on another environment, will not appear here.
+      </p>
+    </div> : (
       <div className="space-y-5 p-4 sm:p-5">
         {groups.map(group => <section key={group.key} aria-label={group.journeyId ? "Recorded journey " + group.journeyId : "Other recorded activity"} className="overflow-hidden rounded-xl border border-slate-100">
           <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-50 px-4 py-3">
@@ -196,6 +202,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-xl font-bold tracking-tight text-slate-950">{data.title}</h1>
             <span className="rounded-lg bg-slate-100 px-2 py-1 text-xs text-slate-600">{kind === "guest" ? "Guest" : "Registered"}</span>
+            <span className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold capitalize text-slate-600">{environment} records</span>
           </div>
           <div className="mt-1 flex min-w-0 flex-wrap items-center gap-1 text-xs text-slate-500">
             <span className="break-all">{kind === "guest" ? "Guest ID: " : "User ID: "}{id}</span>
