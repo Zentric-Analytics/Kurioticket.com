@@ -1,7 +1,6 @@
 import Link from "next/link";
 import {
   Activity,
-  ArrowRight,
   ArrowUpRight,
   BookOpen,
   ChevronRight,
@@ -25,7 +24,6 @@ import {
   AdminStatusBadge,
 } from "@/components/admin/AdminPageShell";
 import { AdminOverviewAutoRefresh, AdminOverviewRangeSelect, type OverviewRange } from "@/components/admin/AdminOverviewControls";
-import type { AdminNavDefinition } from "@/lib/adminNavigation";
 import type { getRecentAdminActivity, getSafeSystemStatus } from "@/lib/admin-data";
 import { formatDateTime } from "@/lib/admin-data";
 import type { getAdminOverview } from "@/services/adminOverviewService";
@@ -38,14 +36,6 @@ type OverviewData = Extract<Awaited<ReturnType<typeof getAdminOverview>>, { stat
 type SystemStatus = Awaited<ReturnType<typeof getSafeSystemStatus>>;
 type AuditActivity = Awaited<ReturnType<typeof getRecentAdminActivity>>;
 type Tone = "neutral" | "good" | "warn" | "bad" | "info";
-
-const quickModulePaths = [
-  "/admin/users",
-  "/admin/searches",
-  "/admin/support",
-  "/admin/providers",
-  "/admin/logs",
-] as const;
 
 function count(value: number) {
   return value.toLocaleString("en-US");
@@ -378,55 +368,12 @@ function ActivityFeed({ activity }: { activity: AuditActivity }) {
   );
 }
 
-function QuickActions({ modules }: { modules: AdminNavDefinition[] }) {
-  const shortcuts = quickModulePaths.flatMap((path) => {
-    const module = modules.find((item) => item.href === path);
-    return module ? [module] : [];
-  });
-
-  return (
-    <section className="min-w-0" aria-label="Admin shortcuts and modules">
-      <SectionTitle title="Quick Actions" description="Open the most-used operations, or expand the complete module directory below." />
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-        {shortcuts.map((module) => (
-          <Link key={module.href} href={module.href} className="focus-ring group flex min-w-0 items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-3 shadow-sm transition hover:border-indigo-200 hover:shadow-md">
-            <module.icon size={19} className="shrink-0 text-indigo-700" aria-hidden="true" />
-            <span className="min-w-0 flex-1">
-              <span className="block text-sm font-semibold text-slate-950">{module.label}</span>
-              <span className="mt-0.5 block truncate text-xs text-slate-500">{module.description}</span>
-            </span>
-            <ArrowRight size={14} className="shrink-0 text-slate-400 group-hover:text-indigo-700" aria-hidden="true" />
-          </Link>
-        ))}
-      </div>
-      <details className="mt-3 rounded-xl border border-slate-200 bg-white">
-        <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-indigo-700 focus-visible:outline-2 focus-visible:outline-indigo-600">
-          All admin modules ({modules.length}) — show complete directory
-        </summary>
-        <div className="grid gap-2 border-t border-slate-100 p-3 sm:grid-cols-2 lg:grid-cols-3">
-          {modules.map((module) => (
-            <Link key={module.href} href={module.href} className="focus-ring group flex items-start gap-2 rounded-lg border border-slate-100 bg-slate-50 px-3 py-3 hover:border-indigo-200 hover:bg-indigo-50">
-              <module.icon size={17} className="mt-0.5 shrink-0 text-indigo-700" aria-hidden="true" />
-              <span className="min-w-0">
-                <span className="block text-sm font-semibold text-slate-900">{module.label}</span>
-                <span className="mt-1 block text-xs leading-5 text-slate-600">{module.description}</span>
-              </span>
-            </Link>
-          ))}
-        </div>
-      </details>
-    </section>
-  );
-}
-
 export function AdminOverviewSecondary({
   system,
   activity,
-  modules,
 }: {
   system: SystemStatus;
   activity: AuditActivity;
-  modules: AdminNavDefinition[];
 }) {
   return (
     <div className="mt-6 space-y-6">
@@ -434,7 +381,6 @@ export function AdminOverviewSecondary({
         <PlatformHealth system={system} />
         <ActivityFeed activity={activity} />
       </div>
-      <QuickActions modules={modules} />
     </div>
   );
 }
@@ -443,13 +389,11 @@ export function AdminOverviewDashboard({
   data,
   system,
   activity,
-  modules,
   range,
 }: {
   data: OverviewData;
   system: SystemStatus;
   activity: AuditActivity;
-  modules: AdminNavDefinition[];
   range: OverviewRange;
 }) {
   const funnel = data.journeys.stages;
@@ -464,7 +408,6 @@ export function AdminOverviewDashboard({
       <section aria-label="Operations Snapshot">
         <SectionTitle
           title="Operations Snapshot"
-          description="Account totals and action queues are current; journeys and admin actions use the selected reporting range."
           action={<AdminOverviewRangeSelect range={range} />}
         />
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
@@ -483,7 +426,7 @@ export function AdminOverviewDashboard({
 
       <section className="mt-6" aria-label="Attention Required">
         <AdminSectionCard className="p-4 sm:p-5">
-          <SectionTitle title="Attention Required" description="Items derived from current ticket, deletion and provider states." />
+          <SectionTitle title="Attention Required" />
           <div className="grid gap-3 lg:grid-cols-3">
             <AttentionCard href="/admin/providers" title="Provider performance" value={providerAttention} tone="bad"
               description={providerAttention ? "Provider operations are degraded or failing" : "No degraded or failing providers"} icon={Activity} />
@@ -499,7 +442,6 @@ export function AdminOverviewDashboard({
         <PlatformHealth system={system} />
         <section className="min-w-0" aria-label="Provider Operational Health">
           <SectionTitle title="Provider Operational Health"
-            description="Readiness shows whether a provider may run; operational health reflects its recorded traffic."
             action={<Link href="/admin/providers" className="focus-ring inline-flex items-center gap-1 text-xs font-semibold text-indigo-700 hover:underline">View all providers <ArrowUpRight size={13} aria-hidden="true" /></Link>} />
           <div className="grid gap-3 xl:grid-cols-2">
             {data.providers.map((provider) => <ProviderCard key={provider.id} provider={provider} />)}
@@ -511,7 +453,6 @@ export function AdminOverviewDashboard({
       <section className="mt-6" aria-label="Customer Journey Funnel">
         <SectionTitle
           title="Customer Journey Funnel"
-          description="Consented journey progression. Outbound provider handoffs do not prove completed bookings."
           action={<div className="flex flex-wrap gap-2">
             <AdminStatusBadge tone="info">{count(data.journeys.identities.registered)} registered identities</AdminStatusBadge>
             <AdminStatusBadge>{count(data.journeys.identities.guests)} guest identities</AdminStatusBadge>
@@ -530,7 +471,6 @@ export function AdminOverviewDashboard({
         <div className="mt-4 grid gap-4 xl:grid-cols-2">
           <AdminSectionCard className="p-4 sm:p-5">
             <h3 className="flex items-center gap-2 text-sm font-bold text-slate-950"><Search size={17} className="text-indigo-700" aria-hidden="true" />Operational Search Health</h3>
-            <p className="mt-1 text-xs leading-5 text-slate-500">Operational search records · Selected reporting range</p>
             <div className="mt-3">
               <DetailRow label="Operational searches" value={data.journeys.operationalSearches.total} />
               <DetailRow label="Failed searches" value={data.journeys.operationalSearches.failed} />
@@ -539,7 +479,6 @@ export function AdminOverviewDashboard({
           </AdminSectionCard>
           <AdminSectionCard className="p-4 sm:p-5">
             <h3 className="flex items-center gap-2 text-sm font-bold text-slate-950"><Route size={17} className="text-indigo-700" aria-hidden="true" />Handoff Correlation</h3>
-            <p className="mt-1 text-xs leading-5 text-slate-500">Only verifiable search-to-handoff associations</p>
             <div className="mt-3">
               <DetailRow label="Exact search ↔ handoff links" value={data.journeys.handoffCorrelation.exactEvents} />
               <DetailRow label="Uncorrelated handoffs" value={data.journeys.handoffCorrelation.uncorrelatedEvents} />
@@ -565,9 +504,6 @@ export function AdminOverviewDashboard({
         <ActivityFeed activity={activity} />
       </div>
 
-      <div className="mt-6">
-        <QuickActions modules={modules} />
-      </div>
     </div>
   );
 }

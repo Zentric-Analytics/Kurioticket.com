@@ -13,7 +13,7 @@ test("overview uses existing canonical services without mocked counts", () => {
   assert.match(page, /getRecentAdminActivity\(\)/);
   assert.match(page, /getAdminOverview[\s\S]*?AdminOverviewDashboard/);
   assert.match(page, /No fallback or mocked operational totals are shown/);
-  assert.match(page, /AdminOverviewSecondary system=\{system\} activity=\{activity\} modules=\{modules\}/);
+  assert.match(page, /AdminOverviewSecondary system=\{system\} activity=\{activity\}/);
 });
 
 test("six original KPIs and their sources are retained in the snapshot", () => {
@@ -41,7 +41,6 @@ test("admin overview sections prioritize action and health over deeper analytics
     'title="Support Workload"',
     'title="Account Deletion Workload"',
     "<ActivityFeed activity={activity} />",
-    "<QuickActions modules={modules} />",
   ];
   const indexes = sequence.map((label) => {
     const found = display.indexOf(label);
@@ -80,7 +79,7 @@ test("provider detailed information remains available for every provider", () =>
   assert.match(dashboard, /Full provider details/);
 });
 
-test("support, deletion, platform checks, audit activity, and all original module links remain", () => {
+test("support, deletion, health, and audit data survive the removal of shortcut cards", () => {
   for (const name of [
     "data.support.open", "data.support.waitingOnTeam", "data.support.waitingOnUser",
     "data.support.resolvedOrClosed", "data.deletions.pending", "data.deletions.readyForReview",
@@ -88,15 +87,39 @@ test("support, deletion, platform checks, audit activity, and all original modul
     "system.databaseConnected", "system.databaseConfigured", "system.authConfigured",
     "system.sessionConfigured", "system.emailConfigured", "system.providerCredentialsPresent",
   ]) assert.ok(dashboard.includes(name), name);
-
   assert.match(dashboard, /activity\.map\(\(item\) =>/);
-  assert.match(dashboard, /modules\.map\(\(module\) =>/);
-  assert.match(dashboard, /All admin modules \(\{modules.length\}\)/);
-  for (const route of [
-    "/admin/users", "/admin/providers", "/admin/searches", "/admin/redirects",
-    "/admin/support", "/admin/account-deletions", "/admin/content",
-    "/admin/logs", "/admin/system",
-  ]) assert.ok(page.includes('"' + route + '"'), route);
+  assert.doesNotMatch(dashboard, /QuickActions|All admin modules|Admin shortcuts and modules/);
+  assert.doesNotMatch(page, /adminNavigation\.filter|modules=\{modules\}/);
+  assert.match(dashboard, /href="\/admin\/support"/);
+  assert.match(dashboard, /href="\/admin\/providers"/);
+  assert.match(dashboard, /href="\/admin\/account-deletions"/);
+});
+
+test("only the Overview hides its visible page introduction", () => {
+  const shell = readFileSync("src/components/admin/AdminPageShellHistorical.tsx", "utf8");
+  assert.match(page, /title="Operations Dashboard"/);
+  assert.match(page, /hideHeader/);
+  assert.doesNotMatch(page, /Monitor Kurioticket operations, customer journeys/);
+  assert.match(shell, /hideHeader = false/);
+  assert.match(shell, /<h1 className="sr-only">\{title\}<\/h1>/);
+  assert.match(shell, /<AdminPageHeader eyebrow=\{eyebrow\} title=\{title\}/);
+});
+
+test("requested descriptions are removed without altering operational sources", () => {
+  for (const message of [
+    "Account totals and action queues are current;",
+    "Items derived from current ticket, deletion and provider states.",
+    "Readiness shows whether a provider may run;",
+    "Consented journey progression. Outbound provider handoffs",
+    "Operational search records · Selected reporting range",
+    "Only verifiable search-to-handoff associations",
+    "Open the most-used operations, or expand the complete module directory below.",
+  ]) assert.ok(!dashboard.includes(message), message);
+  assert.ok(display.includes("data.journeys.operationalSearches.total"));
+  assert.ok(display.includes("data.journeys.handoffCorrelation.exactEvents"));
+  assert.ok(display.includes("data.visitorActivity.observedVisitorIdentities"));
+  assert.ok(display.includes("AdminOverviewRangeSelect"));
+  assert.ok(display.includes("AdminOverviewAutoRefresh"));
 });
 
 test("compact range selector sits in Operations Snapshot and the top toolbar is gone", () => {
