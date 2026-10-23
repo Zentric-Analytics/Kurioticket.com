@@ -6,8 +6,10 @@ import {
   getHomeDiscoveryContentMarketCode,
   getHomeDiscoveryImageCardsByRegion,
   getHomepageRegionalRouteCards,
+  getHomeDiscoveryRouteAllowlist,
 } from "@/data/homeDiscovery";
 import { popularDestinationsByMarket } from "@/data/marketHomeContent";
+import { resolveHotelDiscoveryIntent } from "@/lib/hotels/hotelDiscoveryIntent";
 import { HOMEPAGE_REFRESH_MARKET_CODES } from "@/lib/market/resolveMarket";
 import { getPrisma } from "@/lib/prisma";
 import {
@@ -32,10 +34,21 @@ function normalizeActor(actor: CmsActor) {
 
 function buildSeedRows(): SeedRow[] {
   const rows: SeedRow[] = [];
+  const supportedFlightPairs = new Set(
+    [...getHomeDiscoveryRouteAllowlist().values()].map(
+      (route) => `${route.originCode}:${route.destinationCode}`,
+    ),
+  );
 
   for (const market of HOMEPAGE_REFRESH_MARKET_CODES) {
     const destinations = popularDestinationsByMarket[market] ?? [];
     destinations.forEach((destination, index) => {
+      const hotelIntent = resolveHotelDiscoveryIntent(
+        `${destination.city}, ${destination.country}`,
+        "home-popular-stays",
+      );
+      if (!hotelIntent) return;
+
       const payload = cmsPayloadSchemas.HOMEPAGE_DESTINATION.parse({
         city: destination.city,
         country: destination.country,
@@ -67,7 +80,9 @@ function buildSeedRows(): SeedRow[] {
       ...discoveryCards,
       ...regionalCards,
       ...getHomeDiscoveryByRegion(market),
-    ].filter((route, index, items) => items.findIndex((item) => item.id === route.id) === index);
+    ]
+      .filter((route, index, items) => items.findIndex((item) => item.id === route.id) === index)
+      .filter((route) => supportedFlightPairs.has(`${route.originCode}:${route.destinationCode}`));
 
     orderedRoutes.forEach((route, index) => {
       const payload = cmsPayloadSchemas.FLIGHT_ROUTE.parse({
