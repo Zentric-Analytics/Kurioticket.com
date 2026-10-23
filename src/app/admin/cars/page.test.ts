@@ -53,10 +53,10 @@ test("car telemetry boundary excludes only requests rejected before a valid sear
 
 test("car provider exceptions classify unsupported coverage separately from failures", () => {
   assert.match(service, /carProviderIssueCategory\(issue\.status, issue\.errorMessage\)/);
-  assert.match(service, /if \(status === "DISABLED"\)/);
-  assert.match(service, /Unsupported search \/ provider coverage/);
+  assert.match(service, /status === "DISABLED" && !message/);
+  assert.match(service, /issue\.code === "PROVIDER_ERROR"/);
   assert.match(service, /Provider disabled \/ skipped/);
-  assert.match(service, /classifyProviderIssue\(message\)\.label/);
+  assert.match(service, /classifyProviderIssue\(message\)/);
   assert.doesNotMatch(carsPage, /errorMessage/);
 });
 
@@ -65,4 +65,12 @@ test("car operations does not invent unavailable telemetry", () => {
   assert.match(carsPage, /No zero values were invented/);
   assert.match(service, /if \(!db\) return null/);
   assert.match(service, /catch \(error\)[\s\S]*return null/);
+});
+
+
+test("car provider exception classifier keeps invalid pickup time distinct from coverage", () => {
+  assert.match(service, /return status === "DISABLED" && issue\.code === "PROVIDER_ERROR" \? "Provider disabled \/ skipped" : issue\.label/);
+  const diagnostics = readFileSync("src/services/searchFailureDiagnostics.ts", "utf8");
+  assert.match(diagnostics, /pickup_time_past/);
+  assert.match(diagnostics, /code: "INVALID_SEARCH", label: "Invalid search"/);
 });
