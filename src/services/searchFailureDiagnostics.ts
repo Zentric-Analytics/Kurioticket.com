@@ -32,6 +32,7 @@ export function classifyProviderIssue(message: string | null): SafeProviderIssue
     || normalized.includes("forbidden")
     || normalized.includes("credential")
     || normalized.includes("api key")
+    || normalized.includes("provider_auth_error")
   ) {
     return { code: "AUTH_OR_CONFIG", label: "Authentication / configuration", retryable: false };
   }
@@ -42,6 +43,9 @@ export function classifyProviderIssue(message: string | null): SafeProviderIssue
     || normalized.includes("504")
     || normalized.includes("unavailable")
     || normalized.includes("upstream")
+    || normalized.includes("provider_network_error")
+    || normalized.includes("provider_server_error")
+    || normalized.includes("provider_invalid_response")
   ) {
     return { code: "UPSTREAM_UNAVAILABLE", label: "Upstream unavailable", retryable: true };
   }
