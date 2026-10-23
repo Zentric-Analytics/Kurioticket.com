@@ -2,15 +2,8 @@ import { NextResponse } from "next/server";
 
 import {
   DEFAULT_HOME_DISCOVERY_ELIGIBLE_FLIGHT_ROUTE_COUNT,
-  GLOBAL_HOME_DISCOVERY_REGION,
-  getGlobalHomeDiscoveryPriceRoutes,
-  getHomeDiscoveryFareCandidates,
   getHomeDiscoveryRouteAllowlist,
-  getRegionalHomeDiscoveryFareCandidates,
 } from "@/data/homeDiscovery";
-import {
-  getPopularDestinationFareCandidatesByRegion,
-} from "@/data/marketHomeContent";
 import {
   getPublishedFlightRoutes,
   getPublishedHomepageDestinations,
