@@ -21,6 +21,7 @@ import type {
 } from "@/lib/types";
 import { searchDuffelFlights } from "@/services/travel/providers/duffelProvider";
 import { getPublishedFlightRoutes } from "@/services/publicCmsContentService";
+import { withHomepageFareRefreshLock } from "@/services/homepageFareRefreshLock";
 
 const AIRPORT_OR_CITY_CODE_PATTERN = /^[A-Z]{3}$/;
 const CURRENCY_PATTERN = /^[A-Z]{3}$/;
@@ -1186,7 +1187,7 @@ function classifyHomepageFareMarketReadinessStatus({
   return "underfilled";
 }
 
-export async function refreshPhase3AHomepageFareSnapshots({
+async function runPhase3AHomepageFareRefresh({
   scope = "all-phase-3a",
   dateStrategy = getHomepageFareDateStrategy(),
 }: {
@@ -1528,6 +1529,16 @@ export async function refreshPhase3AHomepageFareSnapshots({
   updateHomepageFareUnderfillExecutionMetadata(counts);
 
   return counts;
+}
+
+
+export async function refreshPhase3AHomepageFareSnapshots(
+  input: {
+    scope?: HomepageFareRefreshScope;
+    dateStrategy?: HomepageFareDateStrategy;
+  } = {},
+): Promise<HomepageFareRefreshCounts> {
+  return withHomepageFareRefreshLock(() => runPhase3AHomepageFareRefresh(input));
 }
 
 
