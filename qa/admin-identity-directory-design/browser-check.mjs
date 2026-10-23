@@ -132,8 +132,10 @@ try {
   });
 
   await check("filters submit only on Apply Filter and preserve sorting", async () => {
+    const originalUrl = page.url();
     await chooseOption("Identity type", "Guests");
-    assert.equal(new URL(page.url()).searchParams.get("identity"), null);
+    assert.equal(page.url(), originalUrl, "Changing an unsubmitted filter must not navigate");
+    await expect(page.getByRole("combobox", { name: "Identity type" })).toContainText("Guests");
     await page.getByRole("button", { name: "Apply Filter" }).click();
     await expect(page).toHaveURL(/identity=GUEST/);
     await expect(page).toHaveURL(/sort=newest/);
