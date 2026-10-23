@@ -73,8 +73,11 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
   useEffect(() => { if (searchOpen) searchRef.current?.focus(); }, [searchOpen]);
   useEffect(() => {
     let cancelled = false;
+    let requestInFlight = false;
 
     async function loadAlertCount() {
+      if (requestInFlight) return;
+      requestInFlight = true;
       try {
         const response = await fetch("/api/admin/notifications?summary=1", {
           credentials: "include",
@@ -86,15 +89,28 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
         if (!cancelled) setUnreadAlertCount(count);
       } catch {
         if (!cancelled) setUnreadAlertCount(null);
+      } finally {
+        requestInFlight = false;
       }
     }
 
     void loadAlertCount();
     const refresh = () => void loadAlertCount();
+    const refreshIfVisible = () => {
+      if (document.visibilityState === "visible") void loadAlertCount();
+    };
+    const interval = window.setInterval(refreshIfVisible, 60_000);
+
     window.addEventListener("admin-alerts-updated", refresh);
+    window.addEventListener("focus", refreshIfVisible);
+    document.addEventListener("visibilitychange", refreshIfVisible);
+
     return () => {
       cancelled = true;
+      window.clearInterval(interval);
       window.removeEventListener("admin-alerts-updated", refresh);
+      window.removeEventListener("focus", refreshIfVisible);
+      document.removeEventListener("visibilitychange", refreshIfVisible);
     };
   }, [pathname]);
 
