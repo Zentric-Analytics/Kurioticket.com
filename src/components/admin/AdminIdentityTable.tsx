@@ -28,6 +28,7 @@ type Props = {
   count: number;
   registeredCount: number;
   guestCount: number;
+  identity: "ALL" | "REGISTERED" | "GUEST";
   pageSize: number;
   sort: IdentitySort;
   currentUserId: string;
@@ -47,7 +48,7 @@ function IdentityDate({ at }: { at: Date }) {
       className="block whitespace-nowrap text-[13px] font-medium text-[#020617]"
     >
       {new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(at)}
-      <span className="mt-0.5 block text-[12px] font-normal text-[#475569]">
+      <span className="mt-0.5 block text-[12px] font-normal text-[#64748B]">
         {new Intl.DateTimeFormat("en", { timeStyle: "short" }).format(at)}
       </span>
     </time>
@@ -60,6 +61,7 @@ export function AdminIdentityTable({
   count,
   registeredCount,
   guestCount,
+  identity,
   pageSize,
   sort,
   currentUserId,
@@ -84,16 +86,25 @@ export function AdminIdentityTable({
     "focus-ring inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[#D8E1EC] bg-white text-[#0F172A] transition hover:border-[#94A3B8] hover:bg-[#F8FAFC]";
   return (
     <section className="mt-3 min-w-0 bg-white">
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#D8E1EC] pb-3">
-        <div className="min-w-0">
-          <h2 id="identity-directory-title" className="text-[16px] font-semibold leading-6 tracking-tight text-[#020617]">
-            Users: {count.toLocaleString()}
-          </h2>
-          <p className="mt-0.5 text-[13px] leading-5 text-[#475569]">
-            {registeredCount.toLocaleString()} registered · {guestCount.toLocaleString()} guest
-          </p>
-        </div>
-        <AdminIdentitySort sort={sort} pageHref={pageHref} />
+      <h2 id="identity-directory-title" className="sr-only">Users directory</h2>
+      <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-5 gap-y-2 border-b border-[#D8E1EC]">
+        <nav aria-label="User types" className="flex min-w-0 max-w-full items-center gap-5 overflow-x-auto">
+          {([
+            { value: "ALL", label: "All", total: registeredCount + guestCount },
+            { value: "REGISTERED", label: "Registered", total: registeredCount },
+            { value: "GUEST", label: "Guests", total: guestCount },
+          ] as const).map((tab) => (
+            <Link
+              key={tab.value}
+              href={href({ identity: tab.value, page: "1" })}
+              aria-current={identity === tab.value ? "page" : undefined}
+              className={`focus-ring inline-flex h-11 shrink-0 items-center whitespace-nowrap border-b-2 px-1 text-[13px] font-normal text-[#020617] ${identity === tab.value ? "border-[#004BB8]" : "border-transparent"}`}
+            >
+              {tab.label} ({tab.total.toLocaleString()})
+            </Link>
+          ))}
+        </nav>
+        <div className="shrink-0 pb-1"><AdminIdentitySort sort={sort} pageHref={pageHref} /></div>
       </div>
       <div
         className="focus-ring overflow-x-auto"
@@ -101,17 +112,17 @@ export function AdminIdentityTable({
         aria-labelledby="identity-directory-title"
         tabIndex={0}
       >
-        <table className="w-full min-w-[920px] table-fixed text-left text-[13px]">
+        <table className="w-full min-w-[1080px] table-fixed text-left text-[13px]">
           <caption className="sr-only">
             Registered accounts and consent-eligible guest identities, sorted by {sort.replaceAll("_", " ")}
           </caption>
           <colgroup>
-            <col />
-            <col className="w-[160px]" />
-            <col className="w-[142px]" />
-            <col className="w-[154px]" />
-            <col className="w-[130px]" />
-            <col className="w-[132px]" />
+            <col className="w-[34%]" />
+            <col className="w-[14%]" />
+            <col className="w-[11%]" />
+            <col className="w-[17%]" />
+            <col className="w-[12%]" />
+            <col className="w-[12%]" />
           </colgroup>
           <thead className="border-b border-[#D8E1EC] bg-white text-[12px] text-[#475569]">
             <tr>
@@ -126,7 +137,7 @@ export function AdminIdentityTable({
                 <th
                   key={heading}
                   scope="col"
-                  className="px-4 py-3 font-semibold"
+                  className="px-3 py-3 font-medium"
                 >
                   {heading}
                 </th>
@@ -150,11 +161,11 @@ export function AdminIdentityTable({
                   key={`${row.kind}:${record.id}`}
                   className="group h-[64px] align-middle transition-colors hover:bg-[#F8FAFC]"
                 >
-                  <td className="px-4 py-2.5">
-                    <div className="flex min-w-0 items-center gap-3">
+                  <td className="px-3 py-1.5">
+                    <div className="flex min-w-0 items-center gap-2.5">
                       <span
                         aria-hidden="true"
-                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#F1F5F9] text-[12px] font-semibold text-[#0F172A]"
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#F1F5F9] text-[12px] font-medium text-[#334155]"
                       >
                         {user?.name?.trim() ? (
                           user.name
@@ -169,39 +180,39 @@ export function AdminIdentityTable({
                         )}
                       </span>
                       <div className="min-w-0 flex-1">
-                        <p
-                          className="truncate text-[13px] font-semibold text-[#020617]"
-                          title={name}
-                        >
+                        <p className="truncate text-[13px] font-semibold leading-5 text-[#020617]" title={name}>
                           {name}
                         </p>
-                        <p
-                          className="mt-0.5 truncate text-[12px] leading-[17px] text-[#475569]"
-                          title={secondary}
-                        >
-                          {secondary}
-                        </p>
+                        <div className="flex min-w-0 items-center gap-1">
+                          <span
+                            className="min-w-0 truncate text-[12px] font-normal text-[#64748B]"
+                            title={secondary}
+                            aria-label={row.kind === "guest" ? `Guest ID: ${record.id}` : undefined}
+                          >
+                            {secondary}
+                          </span>
+                          <CopyIdentityId id={record.id} kind={row.kind} />
+                        </div>
                       </div>
-                      <CopyIdentityId id={record.id} kind={row.kind} />
                     </div>
                   </td>
-                  <td className="px-4 py-2.5 text-[13px] font-medium text-[#475569]">
+                  <td className="px-3 py-1.5 text-[13px] font-normal text-[#334155]">
                     {user ? `Registered · ${label(user.role)}` : "Guest"}
                   </td>
-                  <td className="px-4 py-2.5">
+                  <td className="px-3 py-1.5">
                     {user ? (
-                      <span
-                        className={`inline-flex max-w-full rounded-md px-2 py-1 text-[12px] font-medium ${user.status === "ACTIVE" ? "bg-emerald-50 text-emerald-800" : user.status === "SUSPENDED" || user.status === "PENDING_DELETION" ? "bg-amber-50 text-amber-800" : "bg-slate-100 text-[#475569]"}`}
-                      >
+                      <span className={`text-[13px] font-medium ${
+                        user.status === "ACTIVE" ? "text-[#047857]"
+                        : user.status === "SUSPENDED" || user.status === "PENDING_DELETION" ? "text-[#92400E]"
+                        : "text-[#475569]"
+                      }`}>
                         {label(user.status)}
                       </span>
                     ) : (
-                      <span className="text-[12px] text-[#475569]">
-                        Not an account
-                      </span>
+                      <span aria-label="No account status for guest visitor" className="text-[13px] text-[#64748B]">—</span>
                     )}
                   </td>
-                  <td className="px-4 py-2.5">
+                  <td className="px-3 py-1.5">
                     <IdentityDate
                       at={
                         row.kind === "user"
@@ -210,7 +221,7 @@ export function AdminIdentityTable({
                       }
                     />
                   </td>
-                  <td className="px-4 py-2.5">
+                  <td className="px-3 py-1.5">
                     <Link
                       className={activityClass}
                       href={activityHref(row.kind, record.id)}
@@ -220,7 +231,7 @@ export function AdminIdentityTable({
                       <ChevronRight size={15} aria-hidden="true" />
                     </Link>
                   </td>
-                  <td className="px-4 py-2.5">
+                  <td className="px-3 py-1.5">
                     {user ? (
                       <UserStatusActions
                         userId={user.id}
@@ -248,7 +259,7 @@ export function AdminIdentityTable({
                   colSpan={6}
                   className="px-4 py-12 text-center text-[13px] text-[#475569]"
                 >
-                  No identities match these filters.
+                  No users match these filters.
                 </td>
               </tr>
             ) : null}
