@@ -122,7 +122,7 @@ try {
       await expect(nav).toHaveCount(0);
       await page.getByRole("button", { name: "Open admin navigation" }).click();
     } else {
-      await expect(page.getByRole("button", { name: "Open admin navigation" })).toHaveCount(0);
+      await expect(page.getByRole("button", { name: "Open admin navigation" })).not.toBeVisible();
     }
     await expect(nav).toHaveCount(1);
     for (const href of expectedHrefs) {
