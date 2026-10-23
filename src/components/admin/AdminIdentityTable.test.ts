@@ -75,9 +75,9 @@ test("single toolbar gives three stable counts with underline-only active tab an
   assert.match(html, /Guests \(214\)/);
   assert.equal((html.match(/aria-current="page"/g) || []).length, 1);
   assert.equal((html.match(/aria-labelledby="identity-directory-title"/g) || []).length, 1);
-  assert.match(html, /aria-current="page" class="[^"]*border-\[#004BB8\][^"]*">All \(231\)/);
-  assert.match(html, /class="[^"]*border-transparent[^"]*">Registered \(17\)/);
-  assert.match(html, /class="[^"]*border-transparent[^"]*">Guests \(214\)/);
+  assert.match(html, /aria-current="page" class="[^"]*border-\[#004BB8\][^"]*"[^>]*>All \(231\)/);
+  assert.match(html, /class="[^"]*border-transparent[^"]*"[^>]*>Registered \(17\)/);
+  assert.match(html, /class="[^"]*border-transparent[^"]*"[^>]*>Guests \(214\)/);
   // Unselected and selected text must keep the SAME #020617 and normal weight.
   const links = [...html.matchAll(/<a[^>]*class="([^"]*)"[^>]*>(All|Registered|Guests) \([\d,]+\)<\/a>/g)];
   assert.equal(links.length, 3);
@@ -98,11 +98,11 @@ test("tab navigation preserves applied search/role/status/sort, resets page 1, a
   const onlyRegistered = render({ identity: "REGISTERED", count: 17, page: 1, pageHref: "/admin/users?q=qa&role=ALL&status=ALL&identity=REGISTERED&sort=name_asc&page=1" });
   assert.match(onlyRegistered, /Registered \(17\)/);
   assert.match(onlyRegistered, /Guests \(214\)/); // tab counts do not depend on selected identity
-  assert.match(onlyRegistered, /aria-current="page" class="[^"]*border-\[#004BB8\][^"]*">Registered \(17\)/);
+  assert.match(onlyRegistered, /aria-current="page" class="[^"]*border-\[#004BB8\][^"]*"[^>]*>Registered \(17\)/);
   const onlyGuests = render({ identity: "GUEST", count: 214, page: 1, pageHref: "/admin/users?q=qa&role=ALL&status=ALL&identity=GUEST&sort=name_asc&page=1" });
   assert.match(onlyGuests, /All \(231\)/);
   assert.match(onlyGuests, /Registered \(17\)/);
-  assert.match(onlyGuests, /aria-current="page" class="[^"]*border-\[#004BB8\][^"]*">Guests \(214\)/);
+  assert.match(onlyGuests, /aria-current="page" class="[^"]*border-\[#004BB8\][^"]*"[^>]*>Guests \(214\)/);
 });
 
 test("pagination keeps 100 per page, filters and sorting, and compact arrow-only footer", () => {
