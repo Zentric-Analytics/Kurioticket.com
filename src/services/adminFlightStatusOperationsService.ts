@@ -22,13 +22,17 @@ export type FlightStatusOperationsSnapshot = {
   metrics: {
     confirmedFlights: number;
     feedEligibleFlights: number;
-    monitoringFlights: number;
     trackedFlights: number;
     missingSnapshots: number;
-    missingSnapshotFingerprint: string;
     currentSnapshots: number;
     staleSnapshots: number;
-    staleSnapshotFingerprint: string;
+    monitoringFlights: number;
+    monitoringTrackedFlights: number;
+    monitoringMissingSnapshots: number;
+    monitoringMissingSnapshotFingerprint: string;
+    monitoringCurrentSnapshots: number;
+    monitoringStaleSnapshots: number;
+    monitoringStaleSnapshotFingerprint: string;
   };
   statusDistribution: Array<{
     status: string;
@@ -129,10 +133,13 @@ export async function getFlightStatusOperationsSnapshot(
       const [
         confirmedFlights,
         feedEligibleFlights,
-        monitoringFlights,
         trackedFlights,
         missingSnapshots,
         currentSnapshots,
+        monitoringFlights,
+        monitoringTrackedFlights,
+        monitoringMissingSnapshots,
+        monitoringCurrentSnapshots,
         statusDistribution,
         missingSnapshotIdentities,
         staleSnapshotIdentities,
@@ -141,6 +148,18 @@ export async function getFlightStatusOperationsSnapshot(
       ] = await Promise.all([
         tx.myTrip.count({ where: confirmedFlightWhere }),
         tx.myTrip.count({ where: feedEligibleWhere }),
+        tx.myTrip.count({
+          where: { ...feedEligibleWhere, flightStatusSnapshot: { isNot: null } },
+        }),
+        tx.myTrip.count({
+          where: { ...feedEligibleWhere, flightStatusSnapshot: { is: null } },
+        }),
+        tx.flightStatusSnapshot.count({
+          where: {
+            observedAt: { gte: currentSince, lte: currentUntil },
+            myTrip: { is: feedEligibleWhere },
+          },
+        }),
         tx.myTrip.count({ where: monitoringFlightWhere }),
         tx.myTrip.count({
           where: { ...monitoringFlightWhere, flightStatusSnapshot: { isNot: null } },
@@ -230,18 +249,22 @@ export async function getFlightStatusOperationsSnapshot(
         metrics: {
           confirmedFlights,
           feedEligibleFlights,
-          monitoringFlights,
           trackedFlights,
           missingSnapshots,
-          missingSnapshotFingerprint: fingerprintFlightStatusIdentities(
+          currentSnapshots,
+          staleSnapshots: Math.max(0, trackedFlights - currentSnapshots),
+          monitoringFlights,
+          monitoringTrackedFlights,
+          monitoringMissingSnapshots,
+          monitoringMissingSnapshotFingerprint: fingerprintFlightStatusIdentities(
             missingSnapshotIdentities.map((trip) => [
               trip.id,
               trip.partnerConfirmationOccurredAt?.toISOString() ?? "none",
             ]),
           ),
-          currentSnapshots,
-          staleSnapshots: staleSnapshotIdentities.length,
-          staleSnapshotFingerprint: fingerprintFlightStatusIdentities(
+          monitoringCurrentSnapshots,
+          monitoringStaleSnapshots: staleSnapshotIdentities.length,
+          monitoringStaleSnapshotFingerprint: fingerprintFlightStatusIdentities(
             staleSnapshotIdentities.map((snapshot) => [
               snapshot.myTripId,
               snapshot.id,
