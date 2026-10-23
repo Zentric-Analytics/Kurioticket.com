@@ -248,24 +248,27 @@ export async function getEmailDeliveryHealthSnapshot() {
     }[]>`
       SELECT
         (SELECT COUNT(*) FROM email_deliveries WHERE created_at >= NOW() - INTERVAL '24 hours') AS last_24_hours,
-        (SELECT COUNT(*) FROM email_deliveries WHERE created_at >= NOW() - INTERVAL '24 hours' AND status IN ('FAILED', 'BOUNCED', 'COMPLAINED', 'SUPPRESSED')) AS failures,
-        (SELECT COUNT(*) FROM email_deliveries WHERE created_at >= NOW() - INTERVAL '24 hours' AND status = 'DELIVERY_DELAYED') AS delayed,
+        (SELECT COUNT(*) FROM email_deliveries
+          WHERE updated_at >= NOW() - INTERVAL '24 hours'
+            AND status IN ('FAILED', 'BOUNCED', 'COMPLAINED', 'SUPPRESSED')) AS failures,
+        (SELECT COUNT(*) FROM email_deliveries
+          WHERE updated_at >= NOW() - INTERVAL '24 hours'
+            AND status = 'DELIVERY_DELAYED') AS delayed,
         (SELECT COUNT(*) FROM email_suppressions) AS suppressed,
         (SELECT MAX(updated_at) FROM email_deliveries
-          WHERE created_at >= NOW() - INTERVAL '24 hours'
+          WHERE updated_at >= NOW() - INTERVAL '24 hours'
             AND status IN ('FAILED', 'BOUNCED', 'COMPLAINED', 'SUPPRESSED', 'DELIVERY_DELAYED')) AS latest_problem_at,
         (
           SELECT MAX(adverse_at)
           FROM (
             SELECT d.updated_at AS adverse_at
             FROM email_deliveries d
-            WHERE d.created_at >= NOW() - INTERVAL '24 hours'
+            WHERE d.updated_at >= NOW() - INTERVAL '24 hours'
               AND d.status IN ('FAILED', 'BOUNCED', 'COMPLAINED', 'SUPPRESSED')
             UNION ALL
             SELECT COALESCE(e.occurred_at, e.created_at) AS adverse_at
             FROM email_events e
-            INNER JOIN email_deliveries d ON d.id = e.delivery_id
-            WHERE d.created_at >= NOW() - INTERVAL '24 hours'
+            WHERE COALESCE(e.occurred_at, e.created_at) >= NOW() - INTERVAL '24 hours'
               AND e.type IN (
                 'email.failed',
                 'email.bounced',
