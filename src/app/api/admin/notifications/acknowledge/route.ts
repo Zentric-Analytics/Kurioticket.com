@@ -55,7 +55,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, alreadyAcknowledged: true });
   }
 
-  await writeAdminAuditLog({
+  const persisted = await writeAdminAuditLog({
     adminUserId: auth.session.user.id,
     adminEmail: auth.session.user.email,
     action: adminAlertAcknowledgement.action,
@@ -71,6 +71,13 @@ export async function POST(request: Request) {
     },
     request,
   });
+
+  if (!persisted) {
+    return NextResponse.json(
+      { error: "Unable to persist alert acknowledgement." },
+      { status: 503 },
+    );
+  }
 
   return NextResponse.json({ ok: true });
 }
