@@ -30,6 +30,8 @@ test("CMS payloads are structured and reject unsafe or malformed content", () =>
   assert.equal(cmsPayloadSchemas.HOMEPAGE_DESTINATION.safeParse({ city: "London", country: "United Kingdom", destinationCode: "LHR", originCode: "LOS", image: "/images/london.jpg", imageAlt: "London skyline" }).success, true);
   assert.equal(cmsPayloadSchemas.HOMEPAGE_DESTINATION.safeParse({ city: "London", country: "United Kingdom", destinationCode: "LHR", originCode: "LOS", image: "javascript:alert(1)", imageAlt: "London skyline" }).success, false);
   assert.equal(cmsPayloadSchemas.FLIGHT_ROUTE.safeParse({ title: "Lagos to London", originCity: "Lagos", originCode: "LOS", destinationCity: "London", destinationCode: "LOS", routeNote: "Route", image: "https://example.test/image.jpg", imageAlt: "Route" }).success, false);
+  assert.equal(cmsPayloadSchemas.HOTEL_DESTINATION.safeParse({ name: "London", country: "United Kingdom", countryCode: "GB", kind: "city", searchValue: "London, United Kingdom" }).success, false);
+  assert.equal(cmsPayloadSchemas.HOTEL_DESTINATION.safeParse({ name: "London", country: "United Kingdom", countryCode: "GB", kind: "city", searchValue: "London, United Kingdom", canonicalId: "hotel:gb-london" }).success, true);
 });
 
 
@@ -64,6 +66,10 @@ test("CMS mutations use optimistic concurrency and transactional revision plus a
   assert.match(service, /adminAuditLog\.create/);
   assert.match(service, /CMS_CONTENT_CREATED/);
   assert.match(service, /CMS_CONTENT_UPDATED/);
+  assert.match(service, /Initialize this CMS content scope before creating new records/);
+  assert.match(service, /getOwnedFlightLocationCatalog/);
+  assert.match(service, /canonicalHotelDestinationIds/);
+  assert.match(service, /resolveHotelDiscoveryIntent/);
   assert.match(service, /error\.code === "P2034"/);
   assert.match(service, /Content changed concurrently/);
   assert.match(service, /encodeCmsListCursor/);
@@ -103,6 +109,7 @@ test("public CMS readers fail safely to the existing code-backed content", () =>
   assert.match(faqSource, /export const generalFaqs/);
 });
 
-test("Phase 1 does not prematurely switch the public homepage to CMS storage", () => {
-  assert.doesNotMatch(homepage, /publicCmsContentService/);
+test("public homepage CMS integration stays behind the safe content endpoint", () => {
+  assert.match(homepage, /\/api\/content\/homepage\?market=/);
+  assert.doesNotMatch(homepage, /from "@\/services\/publicCmsContentService"/);
 });
