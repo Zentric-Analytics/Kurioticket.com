@@ -116,3 +116,13 @@ test("recent activity is disclosed as consented observation rather than a live-u
   assert.match(display, /not a verified count of everyone currently online/);
   assert.doesNotMatch(display, /hint="Currently active"/);
 });
+
+
+test("canonical overview reads consented recent visitor identities without overwriting account status", () => {
+  const service = readFileSync("src/services/adminOverviewService.ts", "utf8");
+  assert.match(service, /tx\\.visitor\\.count\\(/);
+  assert.match(service, /consentStatus: "GRANTED"/);
+  assert.match(service, /trackingDisabledAt: null/);
+  assert.match(service, /lastSeenAt: \\{ gte: recentVisitorCutoff, lte: now \\}/);
+  assert.match(service, /active: userCount\\.get\\("ACTIVE"\\)/);
+});
