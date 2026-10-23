@@ -67,6 +67,13 @@ export type AdminAlertSignals = {
         lastRefreshAt?: string;
       }
     | null;
+  telemetryOutageTokens: {
+    providers: string;
+    email: string;
+    cms: string;
+    homepageFares: string;
+    flightStatus: string;
+  };
   flightStatus: {
     feedReady: boolean;
     operations:
@@ -96,7 +103,7 @@ function providerAlerts(signals: AdminAlertSignals) {
         title: "Provider telemetry is unavailable",
         message: "Kurioticket could not read the authoritative provider operational snapshot.",
         actionHref: "/admin/providers",
-        signalToken: "unavailable",
+        signalToken: signals.telemetryOutageTokens.providers,
       },
     ] satisfies AdminAlertCandidate[];
   }
@@ -142,7 +149,7 @@ function emailAlerts(signals: AdminAlertSignals) {
         title: "Email delivery telemetry is unavailable",
         message: "Kurioticket could not read the authoritative email-delivery health snapshot.",
         actionHref: "/admin/email-delivery",
-        signalToken: "unavailable",
+        signalToken: signals.telemetryOutageTokens.email,
       },
     ] satisfies AdminAlertCandidate[];
   }
@@ -156,7 +163,7 @@ function emailAlerts(signals: AdminAlertSignals) {
         title: "Email delivery telemetry is unavailable",
         message: "Delivery counts are unavailable and are not being treated as zero.",
         actionHref: "/admin/email-delivery",
-        signalToken: "data-unavailable",
+        signalToken: signals.telemetryOutageTokens.email,
       },
     ] satisfies AdminAlertCandidate[];
   }
@@ -195,7 +202,7 @@ function cmsAlerts(signals: AdminAlertSignals) {
         title: "CMS health could not be verified",
         message: "The CMS integrity overview could not be read from the authoritative store.",
         actionHref: "/admin/content/health",
-        signalToken: "unavailable",
+        signalToken: signals.telemetryOutageTokens.cms,
       },
     ] satisfies AdminAlertCandidate[];
   }
@@ -228,7 +235,7 @@ function homepageFareAlerts(signals: AdminAlertSignals) {
         title: "Homepage fare telemetry is unavailable",
         message: "Homepage fare readiness could not be read from the authoritative snapshot store.",
         actionHref: "/admin/homepage-fares",
-        signalToken: "unavailable",
+        signalToken: signals.telemetryOutageTokens.homepageFares,
       },
     ] satisfies AdminAlertCandidate[];
   }
@@ -242,7 +249,7 @@ function homepageFareAlerts(signals: AdminAlertSignals) {
         title: "Homepage fare telemetry is unavailable",
         message: "Homepage fare coverage is unavailable and is not being treated as zero.",
         actionHref: "/admin/homepage-fares",
-        signalToken: "data-unavailable",
+        signalToken: signals.telemetryOutageTokens.homepageFares,
       },
     ] satisfies AdminAlertCandidate[];
   }
@@ -289,7 +296,7 @@ function flightStatusAlerts(signals: AdminAlertSignals) {
         title: "Flight-status telemetry is unavailable",
         message: "The configured flight-status feed is ready, but its operational snapshot could not be read.",
         actionHref: "/admin/flight-status",
-        signalToken: "unavailable",
+        signalToken: signals.telemetryOutageTokens.flightStatus,
       },
     ] satisfies AdminAlertCandidate[];
   }
