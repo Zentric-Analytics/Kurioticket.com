@@ -31,7 +31,7 @@ export type ConfirmedTripsOperationsSnapshot = {
   recentTrips: Array<{
     id: string;
     userId: string;
-    userEmail: string;
+    userEmail: string | null;
     tripType: string;
     status: string;
     providerName: string;
