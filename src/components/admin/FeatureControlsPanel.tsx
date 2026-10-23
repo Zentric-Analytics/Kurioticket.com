@@ -11,7 +11,7 @@ export function FeatureControlsPanel({ initialControls, environment, canControlP
   const [reason, setReason] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
-  const categories = ["Travel Search", "Travel Automation"];
+  const categories = Array.from(new Set(controls.map((control) => control.category)));
   async function submit() {
     if (!pending) return;
     setSaving(true); setError("");
