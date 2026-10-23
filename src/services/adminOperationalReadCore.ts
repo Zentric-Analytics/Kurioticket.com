@@ -262,7 +262,7 @@ function exactSearchDiagnostic(row: SearchRow, providers: AdminSearchProviderDia
       providers,
     };
   }
-  const issues = providers.filter((provider) => provider.status === "FAILED" || provider.status === "DEGRADED");
+  const issues = providers.filter((provider) => provider.status === "FAILED" || provider.status === "DEGRADED" || provider.status === "DISABLED");
   if (row.status === "PARTIAL") {
     return {
       outcome: "PARTIAL",
@@ -281,6 +281,16 @@ function exactSearchDiagnostic(row: SearchRow, providers: AdminSearchProviderDia
       reasonCode: issues[0].reasonCode ?? "PROVIDER_ERROR",
       reason: issues[0].reason,
       retryable: issues[0].retryable,
+      correlation: "exact",
+      providers,
+    };
+  }
+  if (!issues.length) {
+    return {
+      outcome: "FAILED",
+      reasonCode: "SEARCH_PROCESSING_FAILURE",
+      reason: "Providers responded, but the search could not complete during internal result processing.",
+      retryable: true,
       correlation: "exact",
       providers,
     };
