@@ -591,7 +591,7 @@ export function HomepageFaresRefreshCard() {
                 Homepage fare operations
               </p>
               <h2 className="mt-2 text-2xl font-extrabold text-navy">
-                Production readiness dashboard
+                Homepage fare readiness dashboard
               </h2>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">
                 Monitor provider-backed homepage fare coverage by public market, fallback pool,
@@ -822,11 +822,6 @@ function formatGlobalReadinessStatus(status: GlobalReadinessStatus) {
     case "not_ready":
       return "Not ready";
   }
-}
-
-function formatNextExpectedCron(status: Pick<HomepageFareStatusPayload, "cronConfigured" | "nextExpectedCronRefresh">) {
-  if (status.nextExpectedCronRefresh) return status.nextExpectedCronRefresh;
-  return status.cronConfigured ? "Configured externally; cadence note not provided" : "Cron is not configured";
 }
 
 function buildDiagnostics(
