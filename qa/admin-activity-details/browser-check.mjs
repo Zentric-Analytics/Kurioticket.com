@@ -15,7 +15,11 @@ const url = base + "/admin/users/guest/qa-guest-activity-0001/activity";
 const checks = [];
 async function check(name, task) { await task(); checks.push(name); console.log("PASS", name); }
 async function choose(label, item) {
-  await page.getByRole("combobox", { name: label }).click();
+  const combo = page.getByRole("combobox", { name: label });
+  // The server first renders a native fallback; wait for the progressive
+  // enhancement before exercising its styled listbox.
+  await expect(combo).toHaveAttribute("aria-haspopup", "listbox");
+  await combo.click();
   await page.getByRole("listbox", { name: label }).getByRole("option", { name: item, exact: true }).click();
 }
 
@@ -23,7 +27,7 @@ try {
   for (const width of [1280, 390]) {
     await check("baseline Activity page before design at " + width + "px", async () => {
       await page.setViewportSize({ width, height: 900 });
-      await page.goto(base + "/before", { waitUntil: "networkidle" });
+      await page.goto(base + "/before", { waitUntil: "domcontentloaded" });
       await expect(page.getByTestId("fixture-label")).toContainText("synthetic activity");
       await expect(page.getByRole("heading", { name: "Guest visitor" })).toBeVisible();
       await expect(page.getByRole("heading", { name: "Activity timeline" })).toBeVisible();
@@ -35,7 +39,7 @@ try {
   for (const width of [1280, 1440, 768, 390, 320]) {
     await check("flat Activity layout at " + width + "px", async () => {
       await page.setViewportSize({ width, height: 900 });
-      await page.goto(url, { waitUntil: "networkidle" });
+      await page.goto(url, { waitUntil: "domcontentloaded" });
       await expect(page.getByRole("heading", { name: "Guest visitor" })).toBeVisible();
       await expect(page.getByRole("heading", { name: "Activity timeline" })).toBeVisible();
       await expect(page.getByRole("heading", { name: "Identity details" })).toBeVisible();
@@ -57,7 +61,7 @@ try {
   }
 
   await page.setViewportSize({ width: 1280, height: 900 });
-  await page.goto(url + "?directory=sort%3Dname_asc%26identity%3DGUEST%26page%3D2", { waitUntil: "networkidle" });
+  await page.goto(url + "?directory=sort%3Dname_asc%26identity%3DGUEST%26page%3D2", { waitUntil: "domcontentloaded" });
   await check("same-journey grouping and full event disclosure", async () => {
     await expect(page.getByRole("region", { name: "Recorded journey qa-journey-flight" })).toHaveCount(1);
     await expect(page.getByRole("region", { name: "Recorded journey qa-journey-hotel" })).toHaveCount(1);
@@ -98,7 +102,7 @@ try {
   });
 
   await check("date, product, stage and text filtering preserve GET semantics", async () => {
-    await page.goto(url, { waitUntil: "networkidle" });
+    await page.goto(url, { waitUntil: "domcontentloaded" });
     await page.getByRole("navigation", { name: "Activity tabs" }).getByRole("link", { name: "Searches", exact: true }).click();
     await expect(page).toHaveURL(/tab=searches/);
     await expect(page.getByRole("navigation", { name: "Activity tabs" }).getByRole("link", { name: "Searches", exact: true })).toHaveAttribute("aria-current", "page");
@@ -122,7 +126,7 @@ try {
   });
 
   await check("older activity, tab switch and safe return context", async () => {
-    await page.goto(url + "?directory=sort%3Dname_asc%26page%3D2", { waitUntil: "networkidle" });
+    await page.goto(url + "?directory=sort%3Dname_asc%26page%3D2", { waitUntil: "domcontentloaded" });
     await page.getByRole("link", { name: "Older activity" }).click();
     await expect(page).toHaveURL(/cursor=older-qa-page/);
     await expect(page.locator("[data-activity-id]")).toHaveCount(1);
@@ -134,16 +138,16 @@ try {
   });
 
   await check("empty activity and invalid cursor are distinct states", async () => {
-    await page.goto(base + "/admin/users/guest/qa-no-events-0001/activity", { waitUntil: "networkidle" });
+    await page.goto(base + "/admin/users/guest/qa-no-events-0001/activity", { waitUntil: "domcontentloaded" });
     await expect(page.getByText("No recorded activity matches these filters.")).toBeVisible();
     await expect(page.getByRole("link", { name: "Older activity" })).toHaveCount(0);
-    await page.goto(url + "?cursor=bad", { waitUntil: "networkidle" });
+    await page.goto(url + "?cursor=bad", { waitUntil: "domcontentloaded" });
     await expect(page.getByText("Activity page link expired")).toBeVisible();
     await expect(page.getByRole("link", { name: "Return to newest activity" })).toBeVisible();
   });
 
   await check("registered customer retains title, email and same flat layout", async () => {
-    await page.goto(base + "/admin/users/user/qa-registered-0001/activity", { waitUntil: "networkidle" });
+    await page.goto(base + "/admin/users/user/qa-registered-0001/activity", { waitUntil: "domcontentloaded" });
     await expect(page.getByRole("heading", { name: "QA registered customer" })).toBeVisible();
     await expect(page.getByText("customer.qa@example.invalid", { exact: true })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Related records" })).toBeVisible();
