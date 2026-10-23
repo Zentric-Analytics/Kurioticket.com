@@ -98,6 +98,7 @@ export async function getFlightStatusOperationsSnapshot(
 
   const now = new Date();
   const currentSince = new Date(now.getTime() - flightStatusLimits.freshnessWindowMs);
+  const monitoringSince = new Date(now.getTime() - 24 * 60 * 60_000);
   const confirmedFlightWhere: Prisma.MyTripWhereInput = {
     tripType: "FLIGHT",
     source: "PARTNER_CONFIRMATION",
@@ -109,6 +110,7 @@ export async function getFlightStatusOperationsSnapshot(
   const monitoringFlightWhere: Prisma.MyTripWhereInput = {
     ...feedEligibleWhere,
     status: "UPCOMING",
+    departureDate: { gte: monitoringSince },
     OR: [
       { flightStatusSnapshot: { is: null } },
       {
