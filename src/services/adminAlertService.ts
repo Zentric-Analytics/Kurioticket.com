@@ -241,29 +241,31 @@ async function readTelemetryOutageTokens(
   if (!db) return result;
 
   try {
-    const rows = await db.adminAuditLog.findMany({
-      where: {
-        action: TELEMETRY_STATE_ACTION,
-        targetType: TELEMETRY_STATE_TARGET_TYPE,
-        targetId: { in: sources },
-      },
-      select: {
-        targetId: true,
-        metadata: true,
-        createdAt: true,
-      },
-      orderBy: { createdAt: "desc" },
-      take: 100,
-    });
+    const latestRows = await Promise.all(
+      sources.map(async (source) => ({
+        source,
+        row: await db.adminAuditLog.findFirst({
+          where: {
+            action: TELEMETRY_STATE_ACTION,
+            targetType: TELEMETRY_STATE_TARGET_TYPE,
+            targetId: source,
+          },
+          select: {
+            metadata: true,
+            createdAt: true,
+          },
+          orderBy: { createdAt: "desc" },
+        }),
+      })),
+    );
 
     const latest = new Map<
       TelemetrySource,
       { state: "AVAILABLE" | "OUTAGE"; occurrenceToken: string | null; createdAt: Date }
     >();
 
-    for (const row of rows) {
-      const source = row.targetId as TelemetrySource | null;
-      if (!source || latest.has(source) || !sources.includes(source)) continue;
+    for (const { source, row } of latestRows) {
+      if (!row) continue;
       const metadata = (row.metadata ?? {}) as TelemetryStateMetadata;
       const state =
         metadata.state === "AVAILABLE" || metadata.state === "OUTAGE"
