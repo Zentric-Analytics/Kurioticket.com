@@ -72,6 +72,9 @@ test("acknowledgements are per-admin, signal-specific, temporary, and must persi
   assert.match(service, /ADMIN_ALERT_ACKNOWLEDGED/);
   assert.match(service, /24 \* 60 \* 60 \* 1_000/);
   assert.match(service, /acknowledgementKey\(candidate\.key, candidate\.signalToken\)/);
+  assert.match(service, /targetId: \{ in: activeAlertKeys \}/);
+  assert.match(service, /activeAcknowledgementKeys/);
+  assert.doesNotMatch(service, /take: 500/);
   assert.match(ackApi, /getCurrentAdminAlertByKey/);
   assert.match(ackApi, /alert\.signalToken !== signalToken/);
   assert.match(acknowledgeButton, /JSON\.stringify\(\{ alertKey, signalToken \}\)/);
