@@ -86,7 +86,7 @@ export default async function AdminContentPage() {
           <Link href="/admin/content/homepage" className="rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm font-black text-indigo-800 hover:bg-indigo-100">
             Homepage CMS overview
           </Link>
-          <Link href="/admin/settings" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">
+          <Link href="/admin/homepage-fares" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">
             Homepage fare operations
           </Link>
         </div>

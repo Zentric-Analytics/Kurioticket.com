@@ -43,6 +43,8 @@ test("homepage fare operations are separated from content, system and settings",
   assert.match(homepageFarePage, /title="Homepage Fare Operations"/);
   assert.match(homepageFarePage, /HomepageFaresRefreshCard/);
   assert.match(homepageFarePage, /href="\/admin\/settings"/);
+  assert.match(contentPage, /href="\/admin\/homepage-fares"[\s\S]*Homepage fare operations/);
+  assert.doesNotMatch(contentPage, /href="\/admin\/settings"[\s\S]{0,300}Homepage fare operations/);
 });
 
 test("homepage fare refresh component keeps existing client APIs, scopes, and status messaging", () => {
