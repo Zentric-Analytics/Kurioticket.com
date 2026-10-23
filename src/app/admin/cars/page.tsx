@@ -87,18 +87,153 @@ export default async function AdminCarsPage() {
         </AdminSectionCard>
 
         <AdminSectionCard className="p-5">
-          <div className="flex items-start justify-between gap-3">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <h2 className="font-black text-slate-950">Provider-call telemetry</h2>
+              <h2 className="font-black text-slate-950">Car provider health</h2>
               <p className="mt-1 text-sm leading-6 text-slate-600">
-                Car search currently records completed/unavailable SearchHistory outcomes, but does not yet persist per-provider car-search calls in ApiProviderLog.
+                Configuration readiness and car-search-only provider telemetry for integrations that can serve car search.
               </p>
             </div>
-            <AdminStatusBadge tone="warn">Not recorded yet</AdminStatusBadge>
+            <AdminStatusBadge tone="info">Current environment</AdminStatusBadge>
           </div>
-          <p className="mt-3 text-sm leading-6 text-slate-600">
-            Until that telemetry exists, this page will not invent provider call counts, provider failure rates, or provider latency. Feature-disabled, invalid-request, and unsupported-coverage responses currently return before SearchHistory recording, so they are not included in these metrics. Search Detail can still show recorded car-search outcomes, but exact provider-level car diagnostics are unavailable.
-          </p>
+
+          <div className="mt-4 grid gap-3 lg:grid-cols-2">
+            {carIntegrations.map((integration) => {
+              const health = operations?.providerHealth.find((provider) => provider.id === integration.id);
+              return (
+                <div key={integration.id} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-black text-slate-950">{integration.provider}</p>
+                      <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-slate-500">{integration.environment}</p>
+                    </div>
+                    <AdminStatusBadge tone={integration.state === "READY" ? "good" : integration.state === "ENVIRONMENT_BLOCKED" ? "warn" : "neutral"}>
+                      {integration.state.replaceAll("_", " ")}
+                    </AdminStatusBadge>
+                  </div>
+                  <div className="mt-4 grid gap-2 text-sm sm:grid-cols-2">
+                    <Stat label="Search" value={integration.searchEnabled ? "Enabled" : "Not enabled"} />
+                    <Stat label="Handoff" value={integration.externalHandoffEnabled ? "Enabled" : "Not enabled"} />
+                    <Stat label="Calls (24h)" value={health ? String(health.attemptedCalls) : "—"} />
+                    <Stat label="Disabled (24h)" value={health ? String(health.disabledCalls) : "—"} />
+                    <Stat label="Failed (24h)" value={health ? String(health.failedCalls) : "—"} />
+                    <Stat label="Avg latency" value={health?.averageLatencyMs === null || health?.averageLatencyMs === undefined ? "—" : health.averageLatencyMs + " ms"} />
+                    <Stat label="Last issue" value={health?.lastIssueAt ? formatDateTime(new Date(health.lastIssueAt)) : "—"} />
+                    <Stat label="Booking" value={integration.bookingEnabled ? "Enabled" : "Not enabled"} />
+                  </div>
+                  <p className="mt-3 text-xs leading-5 text-slate-500">{integration.note}</p>
+                </div>
+              );
+            })}
+          </div>
+        </AdminSectionCard>
+
+        {operations ? (
+          <AdminSectionCard className="p-5">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+              <div>
+                <h2 className="font-black text-slate-950">Search exceptions</h2>
+                <p className="mt-1 text-sm leading-6 text-slate-600">
+                  Recent failed car searches, including unsupported provider coverage now recorded with exact provider correlation.
+                </p>
+              </div>
+              <Link href="/admin/searches?product=CAR&status=FAILED" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">
+                Failed searches
+              </Link>
+            </div>
+            <div className="mt-4">
+              {operations.exceptionSearches.length ? (
+                <AdminDataTable
+                  columns={["Observed", "Pick-up", "Drop-off", "Results", "Latency", "Action"]}
+                  rows={operations.exceptionSearches.map((search) => ({
+                    id: search.id,
+                    cells: [
+                      formatDateTime(new Date(search.createdAt)),
+                      <div key="origin"><p className="font-semibold text-slate-950">{search.origin || "—"}</p><p className="text-xs text-slate-500">{search.requestId || "No request ID"}</p></div>,
+                      search.destination || "—",
+                      search.resultCount,
+                      search.latencyMs === null ? "—" : search.latencyMs + " ms",
+                      <Link key="action" href={"/admin/searches/" + search.id + "?environment=" + operations.environment} className="font-black text-indigo-700 hover:text-indigo-900">Open</Link>,
+                    ],
+                  }))}
+                />
+              ) : (
+                <AdminEmptyState title="No recent car search exceptions" message="No failed car searches were recorded in the current 24-hour window." />
+              )}
+            </div>
+          </AdminSectionCard>
+        ) : null}
+
+        {operations ? (
+          <div className="grid gap-4 xl:grid-cols-2">
+            <AdminSectionCard className="p-5">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h2 className="font-black text-slate-950">Locations needing attention</h2>
+                  <p className="mt-1 text-sm leading-6 text-slate-600">Pick-up/drop-off pairs with the highest number of recorded failed searches.</p>
+                </div>
+                <AdminStatusBadge tone={operations.locationIssues.length ? "warn" : "good"}>{operations.locationIssues.length ? "Exceptions found" : "Clear"}</AdminStatusBadge>
+              </div>
+              {operations.locationIssues.length ? (
+                <div className="mt-4 divide-y divide-slate-100">
+                  {operations.locationIssues.map((location, index) => (
+                    <div key={(location.origin || "unknown") + "-" + (location.destination || "unknown") + "-" + index} className="flex items-center justify-between gap-4 py-3">
+                      <div>
+                        <p className="font-black text-slate-950">{location.origin || "—"} → {location.destination || "—"}</p>
+                        <p className="mt-1 text-xs font-semibold text-slate-500">{location.lastIssueAt ? "Last issue " + formatDateTime(new Date(location.lastIssueAt)) : "No timestamp"}</p>
+                      </div>
+                      <AdminStatusBadge tone="warn">{location.issueCount} {location.issueCount === 1 ? "exception" : "exceptions"}</AdminStatusBadge>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-4 rounded-xl bg-slate-50 p-3 text-sm text-slate-600">No location-level car search exceptions were recorded in this window.</p>
+              )}
+            </AdminSectionCard>
+
+            <AdminSectionCard className="p-5">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h2 className="font-black text-slate-950">Provider exceptions</h2>
+                  <p className="mt-1 text-sm leading-6 text-slate-600">Recent disabled, degraded or failed car-search provider observations. Raw provider errors are not exposed.</p>
+                </div>
+                <Link href="/admin/providers?product=cars" className="text-sm font-black text-indigo-700 hover:text-indigo-900">Providers</Link>
+              </div>
+              {operations.providerIssues.length ? (
+                <div className="mt-4 divide-y divide-slate-100">
+                  {operations.providerIssues.map((issue) => (
+                    <div key={issue.id} className="py-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="font-black text-slate-950">{issue.provider}</p>
+                          <p className="mt-1 text-xs font-semibold text-slate-500">{formatDateTime(new Date(issue.createdAt))}</p>
+                        </div>
+                        <AdminStatusBadge tone={issue.status === "FAILED" ? "bad" : "warn"}>{issue.status}</AdminStatusBadge>
+                      </div>
+                      <div className="mt-2 flex flex-wrap gap-2 text-xs font-semibold text-slate-600">
+                        <span className="rounded-lg bg-slate-50 px-2.5 py-1.5">{issue.category}</span>
+                        <span className="rounded-lg bg-slate-50 px-2.5 py-1.5">{issue.latencyMs === null ? "Latency unavailable" : issue.latencyMs + " ms"}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-4 rounded-xl bg-slate-50 p-3 text-sm text-slate-600">No disabled, degraded or failed car-search provider observations were recorded in this window.</p>
+              )}
+            </AdminSectionCard>
+          </div>
+        ) : null}
+
+        <AdminSectionCard className="p-5">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h2 className="font-black text-slate-950">Telemetry boundaries</h2>
+              <p className="mt-1 text-sm leading-6 text-slate-600">
+                Valid car searches now record exact provider telemetry. Feature-disabled and invalid-request responses still return before a valid SearchHistory record exists, so they are not included in these operational metrics.
+              </p>
+            </div>
+            <AdminStatusBadge tone="good">Provider telemetry live</AdminStatusBadge>
+          </div>
         </AdminSectionCard>
 
         <AdminSectionCard className="p-5">
