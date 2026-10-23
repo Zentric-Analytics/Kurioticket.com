@@ -28,8 +28,9 @@ test("confirmed trips service reads only genuine partner-confirmed My Trips", ()
 test("confirmed trips page does not invent an active confirmation provider feed", () => {
   assert.match(page, /Current Duffel search and KAYAK sandbox integrations do not send booking confirmations/);
   assert.match(page, /Current search-provider confirmation feed/);
-  assert.match(page, />None</);
-  assert.match(page, /configured webhook secret means the signed callback boundary is ready; it does not mean a provider agreement or live confirmation feed is active/i);\n  assert.match(page, /there is no separate provider-name allowlist in the current contract/i);
+  assert.match(page, /value="None"/);
+  assert.match(page, /configured webhook secret means the signed callback boundary is ready; it does not mean a provider agreement or live confirmation feed is active/i);
+  assert.match(page, /there is no separate provider-name allowlist in the current contract/i);
 });
 
 test("confirmed trips readiness exposes configuration state without exposing the secret", () => {
