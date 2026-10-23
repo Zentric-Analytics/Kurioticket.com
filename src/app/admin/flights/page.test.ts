@@ -31,5 +31,6 @@ test("flight operations snapshot is environment-scoped and real-data only", () =
   assert.match(service, /resultCount: 0/);
   assert.match(service, /_avg: \{ latencyMs: true \}/);
   assert.match(service, /take: 10/);
+  assert.match(service, /isolationLevel: "RepeatableRead"/);
   assert.match(service, /return null/);
 });
