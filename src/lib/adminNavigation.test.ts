@@ -3,7 +3,7 @@ import test from "node:test";
 
 import { adminNavigation, adminNavigationGroups, getAdminNavForRole, getAdminHeaderGroups, isAdminNavItemActive } from "@/lib/adminNavigation";
 
-const originalLabels = ["Overview", "Users", "Providers", "Searches", "Journeys", "Provider Handoffs", "Referral Attribution", "Content", "Flights", "Hotels", "Cars", "Support", "Deletion Requests", "Logs", "System", "Settings"];
+const originalLabels = ["Overview", "Users", "Providers", "Searches", "Journeys", "Provider Handoffs", "Referral Attribution", "Confirmed Trips", "Content", "Flights", "Hotels", "Cars", "Support", "Deletion Requests", "Logs", "System", "Settings"];
 
 test("admin navigation restores the original flat module order", () => {
   assert.deepEqual(adminNavigation.map((item) => item.label), originalLabels);
@@ -12,7 +12,7 @@ test("admin navigation restores the original flat module order", () => {
 
 test("admin navigation uses the exact original section labels and grouping", () => {
   assert.deepEqual(adminNavigationGroups, [
-    { label: "Operations", hrefs: ["/admin", "/admin/users", "/admin/searches", "/admin/journeys", "/admin/redirects", "/admin/referral-attribution", "/admin/support", "/admin/account-deletions"] },
+    { label: "Operations", hrefs: ["/admin", "/admin/users", "/admin/searches", "/admin/journeys", "/admin/redirects", "/admin/referral-attribution", "/admin/confirmed-trips", "/admin/support", "/admin/account-deletions"] },
     { label: "Provider readiness", hrefs: ["/admin/providers", "/admin/flights", "/admin/hotels", "/admin/cars"] },
     { label: "Website content", hrefs: ["/admin/content"] },
     { label: "System & security", hrefs: ["/admin/logs", "/admin/system", "/admin/settings"] },
@@ -20,6 +20,7 @@ test("admin navigation uses the exact original section labels and grouping", () 
   const visibleHrefs: readonly string[] = adminNavigationGroups.flatMap((group) => group.hrefs);
   assert.equal(visibleHrefs.includes("/admin/account-deletions"), true);
   assert.equal(visibleHrefs.includes("/admin/redirects"), true);
+  assert.equal(visibleHrefs.includes("/admin/confirmed-trips"), true);
 });
 
 test("admin navigation preserves role restrictions", () => {
