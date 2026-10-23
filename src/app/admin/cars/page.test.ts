@@ -62,3 +62,12 @@ test("car operations does not invent unavailable telemetry", () => {
   assert.match(service, /if \(!db\) return null/);
   assert.match(service, /catch \(error\)[\s\S]*return null/);
 });
+
+
+test("car provider exceptions classify unsupported coverage separately from failures", () => {
+  assert.match(service, /carProviderIssueCategory\(issue\.status, issue\.errorMessage\)/);
+  assert.match(service, /if \(status === "DISABLED"\)/);
+  assert.match(service, /Unsupported search \/ provider coverage/);
+  assert.match(service, /Provider disabled \/ skipped/);
+  assert.match(service, /classifyProviderIssue\(message\)\.label/);
+});
