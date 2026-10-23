@@ -3,7 +3,7 @@ import test from "node:test";
 
 import { adminNavigation, adminNavigationGroups, getAdminNavForRole, getAdminHeaderGroups, isAdminNavItemActive } from "@/lib/adminNavigation";
 
-const originalLabels = ["Overview", "Users", "Providers", "Searches", "Journeys", "Provider Handoffs", "Referral Attribution", "Confirmed Trips", "Flight Status", "Content", "Flights", "Hotels", "Cars", "Support", "Deletion Requests", "Logs", "System", "Settings", "Homepage Fare Operations"];
+const originalLabels = ["Overview", "Users", "Providers", "Searches", "Journeys", "Provider Handoffs", "Referral Attribution", "Confirmed Trips", "Flight Status", "Content", "Flights", "Hotels", "Cars", "Support", "Deletion Requests", "Logs", "System", "Email Delivery", "Settings", "Homepage Fare Operations"];
 
 test("admin navigation restores the original flat module order", () => {
   assert.deepEqual(adminNavigation.map((item) => item.label), originalLabels);
@@ -26,7 +26,7 @@ test("admin navigation uses the exact original section labels and grouping", () 
 
 test("admin navigation preserves role restrictions", () => {
   assert.deepEqual(getAdminNavForRole("SUPPORT"), []);
-  assert.deepEqual(getAdminNavForRole("ADMIN").filter((item) => item.parentHref).map((item) => [item.label, item.parentHref]), [["Journeys", "/admin/searches"], ["Provider Handoffs", "/admin/searches"], ["Referral Attribution", "/admin/searches"], ["Deletion Requests", "/admin/support"], ["Homepage Fare Operations", "/admin/settings"]]);
+  assert.deepEqual(getAdminNavForRole("ADMIN").filter((item) => item.parentHref).map((item) => [item.label, item.parentHref]), [["Journeys", "/admin/searches"], ["Provider Handoffs", "/admin/searches"], ["Referral Attribution", "/admin/searches"], ["Deletion Requests", "/admin/support"], ["Email Delivery", "/admin/system"], ["Homepage Fare Operations", "/admin/settings"]]);
   assert.deepEqual(getAdminNavForRole("USER"), []);
 });
 
@@ -50,6 +50,7 @@ test("horizontal admin navigation groups preserve child routes and permissions",
   assert.equal(entries.some(({ item }) => item.href === "/admin/redirects"), true);
   assert.equal(entries.some(({ item }) => item.href === "/admin/account-deletions"), true);
   assert.equal(entries.some(({ item }) => item.href === "/admin/homepage-fares"), true);
+  assert.equal(entries.some(({ item }) => item.href === "/admin/email-delivery"), true);
   assert.equal(entries.some(({ item }) => item.href === "/admin/preview-testers"), true);
   assert.deepEqual(new Set(entries.map(({ item }) => item.href)), new Set(getAdminNavForRole("ADMIN", true).map((item) => item.href)));
   assert.equal(entries.every(({ children }) => children.length === 0), true);
