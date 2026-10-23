@@ -623,10 +623,6 @@ export default function Home() {
     (key: string) => dictionary[key] ?? enTranslations[key] ?? "",
     [dictionary],
   );
-  const translateDiscoveryItemCopy = (
-    item: HomeDiscoveryCardItem,
-    field: "title" | "routeNote",
-  ) => translateHomeDiscoveryField(dictionary, item, field);
   const homepageHeroImage = useMemo(
     () => getHomepageHeroImageForMarket(regionCode),
     [regionCode],
@@ -643,6 +639,15 @@ export default function Home() {
   } = popularDestinationResolution;
   const cmsContentForMarket =
     homepageCmsContent?.market === regionCode ? homepageCmsContent : null;
+  const translateDiscoveryItemCopy = (
+    item: HomeDiscoveryCardItem,
+    field: "title" | "routeNote",
+  ) => {
+    if (cmsContentForMarket?.flightRoutes.source === "cms") {
+      return item[field];
+    }
+    return translateHomeDiscoveryField(dictionary, item, field);
+  };
   const popularDestinations = useMemo<HomepagePopularDestinationItem[]>(
     () =>
       cmsContentForMarket
