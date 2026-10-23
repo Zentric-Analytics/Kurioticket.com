@@ -46,6 +46,7 @@ export type AdminAlertSignals = {
         failures: number;
         delayed: number;
         latestProblemAt: string | Date | null;
+        latestAdverseAt: string | Date | null;
         latest: Array<{ status: string; createdAt: string | Date }>;
       }
     | null;
@@ -172,9 +173,11 @@ function emailAlerts(signals: AdminAlertSignals) {
     return [] satisfies AdminAlertCandidate[];
   }
 
-  const signalAt = signals.email.latestProblemAt
-    ? new Date(signals.email.latestProblemAt).toISOString()
-    : null;
+  const signalAt = signals.email.latestAdverseAt
+    ? new Date(signals.email.latestAdverseAt).toISOString()
+    : signals.email.latestProblemAt
+      ? new Date(signals.email.latestProblemAt).toISOString()
+      : null;
 
   return [
     {
@@ -184,7 +187,7 @@ function emailAlerts(signals: AdminAlertSignals) {
       title: "Email delivery needs attention",
       message: `${signals.email.failures} failed/problem delivery event(s) and ${signals.email.delayed} delayed delivery event(s) were recorded in the last 24 hours.`,
       actionHref: "/admin/email-delivery",
-      signalToken: [signals.email.failures, signals.email.delayed, signalAt ?? "none"].join(":"),
+      signalToken: `email-delivery:${signalAt ?? "problem-present"}`,
       signalAt,
     },
   ] satisfies AdminAlertCandidate[];
