@@ -51,3 +51,34 @@ test("identity classification distinguishes registered, guest and unattributed r
   assert.equal(__adminOperationalReadCoreTest.identity(null, "visitor_123").kind, "guest");
   assert.equal(__adminOperationalReadCoreTest.identity(null, null).kind, "unattributed");
 });
+
+test("registered customer drilldowns include only their direct and exclusively linked consented guest records", () => {
+  const { identityWhere } = __adminOperationalReadCoreTest;
+  assert.deepEqual(identityWhere({ identity: "registered", userId: "user_123", visitorId: null }), {
+    OR: [
+      { userId: "user_123" },
+      { userId: null, visitor: { is: {
+        currentUserId: "user_123",
+        consentStatus: "GRANTED",
+        trackingDisabledAt: null,
+        identityLinks: {
+          some: { userId: "user_123" },
+          none: { userId: { not: "user_123" } },
+        },
+      } } },
+    ],
+  });
+  // A general registered-identity filter still shows only directly registered records.
+  assert.deepEqual(identityWhere({ identity: "registered", userId: null, visitorId: null }),
+    { userId: { not: null } });
+  // Explicit visitor filters continue to require consent and that precise visitor.
+  assert.deepEqual(identityWhere({ identity: "registered", userId: "user_123", visitorId: "visitor_123" }), {
+    userId: "user_123",
+    visitorId: "visitor_123",
+    visitor: { is: { consentStatus: "GRANTED", trackingDisabledAt: null } },
+  });
+  assert.deepEqual(identityWhere({ identity: "guest", userId: null, visitorId: "visitor_123" }), {
+    userId: null, visitorId: "visitor_123",
+    visitor: { is: { consentStatus: "GRANTED", trackingDisabledAt: null } },
+  });
+});
