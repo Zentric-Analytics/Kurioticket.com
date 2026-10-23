@@ -570,6 +570,8 @@ export function HomepageFaresRefreshCard() {
   );
   const fallbackPools = statusPayload.marketReadinessSummary.filter(isFallbackMarket);
   const latestCounts = refreshState.counts;
+  const initialStatusLoading = statusState.loading && !statusState.data;
+  const telemetryUnavailable = !initialStatusLoading && !statusPayload.dataAvailable;
   const providerCallsUsed = latestCounts
     ? latestCounts.providerCalls
     : "No manual run in this session";
@@ -598,7 +600,11 @@ export function HomepageFaresRefreshCard() {
                 route health, refresh state, and underfill cause without changing pricing logic.
               </p>
             </div>
-            {statusPayload.dataAvailable ? (
+            {initialStatusLoading ? (
+              <span className="inline-flex w-fit rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-extrabold text-navy">
+                Loading status…
+              </span>
+            ) : statusPayload.dataAvailable ? (
               <GlobalReadinessBadge status={statusPayload.displayReadiness.globalReadinessStatus} />
             ) : (
               <span className="inline-flex w-fit rounded-full border border-red-100 bg-red-50 px-3 py-2 text-sm font-extrabold text-danger">
@@ -614,7 +620,7 @@ export function HomepageFaresRefreshCard() {
               {statusState.error}
             </p>
           ) : null}
-          {!statusPayload.dataAvailable ? (
+          {telemetryUnavailable ? (
             <p className="rounded-xl border border-red-100 bg-red-50 p-3 text-sm font-semibold text-danger">
               Homepage fare telemetry is unavailable from the authoritative snapshot store. Coverage counts below are hidden rather than replaced with zeroes.
             </p>
@@ -625,7 +631,11 @@ export function HomepageFaresRefreshCard() {
             title="Global readiness at a glance"
             description="Public readiness excludes fallback-only regional and global pools, so internal 0/0 coverage rows do not make the homepage look ready."
           >
-            {statusPayload.dataAvailable ? (
+            {initialStatusLoading ? (
+              <p className="mt-4 rounded-xl border border-border bg-slate-50 p-4 text-sm font-semibold text-muted">
+                Loading homepage fare snapshot status…
+              </p>
+            ) : statusPayload.dataAvailable ? (
               <DisplayReadinessSummary readiness={statusPayload.displayReadiness} />
             ) : null}
             <dl className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
@@ -651,6 +661,7 @@ export function HomepageFaresRefreshCard() {
             refreshState={refreshState}
             statusPayload={statusPayload}
             operationsAvailable={statusPayload.dataAvailable}
+            initialStatusLoading={initialStatusLoading}
             onRefresh={refreshHomepageFares}
             onReload={() => void loadStatus()}
           />
@@ -885,6 +896,7 @@ function RefreshCronPanel({
   refreshState,
   statusPayload,
   operationsAvailable,
+  initialStatusLoading,
   onRefresh,
   onReload,
 }: {
@@ -893,6 +905,7 @@ function RefreshCronPanel({
   refreshState: RefreshState;
   statusPayload: HomepageFareStatusPayload;
   operationsAvailable: boolean;
+  initialStatusLoading: boolean;
   onRefresh: () => void;
   onReload: () => void;
 }) {
@@ -918,7 +931,13 @@ function RefreshCronPanel({
               className="w-full sm:w-auto"
             >
               <RefreshCcw className={refreshing ? "animate-spin" : ""} size={16} />
-              {refreshing ? "Refreshing…" : operationsAvailable ? "Refresh homepage fares" : "Refresh unavailable"}
+              {refreshing
+                ? "Refreshing…"
+                : initialStatusLoading
+                  ? "Loading status…"
+                  : operationsAvailable
+                    ? "Refresh homepage fares"
+                    : "Refresh unavailable"}
             </Button>
             <Button
               type="button"
@@ -964,7 +983,7 @@ function RefreshCronPanel({
           <CompactDetail label="Current stopped reason" value={stoppedReason} />
         </dl>
       </div>
-      {!operationsAvailable ? (
+      {!initialStatusLoading && !operationsAvailable ? (
         <p className="mt-3 rounded-xl border border-red-100 bg-red-50 p-3 text-sm font-semibold text-danger">
           Manual refresh is disabled because the authoritative homepage fare snapshot store is unavailable.
         </p>
