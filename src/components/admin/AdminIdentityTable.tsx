@@ -83,7 +83,7 @@ export function AdminIdentityTable({
   const paginationClass =
     "focus-ring inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[#D8E1EC] bg-white text-[#0F172A] transition hover:border-[#94A3B8] hover:bg-[#F8FAFC]";
   return (
-    <section aria-labelledby="identity-directory-title" className="mt-5 min-w-0 bg-white">
+    <section className="mt-5 min-w-0 bg-white">
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#D8E1EC] pb-3">
         <div className="min-w-0">
           <h2 id="identity-directory-title" className="text-[16px] font-semibold leading-6 tracking-tight text-[#020617]">
