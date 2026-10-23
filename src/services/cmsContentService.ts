@@ -284,6 +284,7 @@ export function validateCmsPayloadIntegrity(type: CmsContentType, payload: unkno
     }
     throw error;
   }
+}
 
 function normalizeActor(actor: CmsActor) {
   return { ...actor, email: actor.email.trim().toLowerCase() };
