@@ -24,7 +24,7 @@ import {
   AdminSectionCard,
   AdminStatusBadge,
 } from "@/components/admin/AdminPageShell";
-import { AdminOverviewControls, type OverviewRange } from "@/components/admin/AdminOverviewControls";
+import { AdminOverviewAutoRefresh, AdminOverviewRangeSelect, type OverviewRange } from "@/components/admin/AdminOverviewControls";
 import type { AdminNavDefinition } from "@/lib/adminNavigation";
 import type { getRecentAdminActivity, getSafeSystemStatus } from "@/lib/admin-data";
 import { formatDateTime } from "@/lib/admin-data";
@@ -459,10 +459,14 @@ export function AdminOverviewDashboard({
 
   return (
     <div className="min-w-0">
-      <AdminOverviewControls environment={data.scope.environment} from={data.scope.from} to={data.scope.to} range={range} />
+      <AdminOverviewAutoRefresh />
 
       <section aria-label="Operations Snapshot">
-        <SectionTitle title="Operations Snapshot" description="Account totals and action queues are current; journeys and admin actions use the selected reporting range." />
+        <SectionTitle
+          title="Operations Snapshot"
+          description="Account totals and action queues are current; journeys and admin actions use the selected reporting range."
+          action={<AdminOverviewRangeSelect range={range} />}
+        />
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
           <MetricCard label="Total users" value={data.users.total} hint="Current accounts" icon={Users} tone="info" />
           <MetricCard label="Enabled accounts" value={data.users.active} hint="Registered accounts with ACTIVE status; not people online" icon={UserCheck} tone="good" />
