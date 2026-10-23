@@ -12,7 +12,7 @@ import {
 } from "@/data/homeDiscovery";
 import { popularDestinationsByMarket } from "@/data/marketHomeContent";
 import { HOMEPAGE_REFRESH_MARKET_CODES } from "@/lib/market/resolveMarket";
-import { getOptionalPrisma } from "@/lib/prisma";
+import { DatabaseUnavailableError, getOptionalPrisma } from "@/lib/prisma";
 import { PUBLIC_HOMEPAGE_FARE_TTL_MS } from "@/lib/homepageFareDisplay";
 import type {
   FlightSearchParams,
@@ -4014,6 +4014,10 @@ export function buildSafeHomepageFareRefreshErrorResponse(
 }
 
 function getSafeHomepageFareRefreshFailureReason(error: unknown) {
+  if (error instanceof DatabaseUnavailableError) {
+    return "Database is unavailable or misconfigured. Check DATABASE_URL and database connectivity.";
+  }
+
   if (isPrismaInitializationLikeError(error)) {
     return "Database is unavailable or misconfigured. Check DATABASE_URL and database connectivity.";
   }
