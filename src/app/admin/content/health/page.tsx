@@ -68,6 +68,7 @@ export default async function AdminCmsHealthPage() {
                       <p>{integrity.invalidDrafts.length} invalid draft</p>
                       <p>{integrity.invalidPublished.length} invalid published</p>
                       <p>{integrity.draftOrderCollisions.length} draft order collision</p>
+                      <p>{integrity.draftOrderNeedsNormalization ? "Draft order needs normalization" : "Draft order normalized"}</p>
                       <p>{integrity.publishedOrderCollisions.length} published order collision</p>
                     </div>,
                     <AdminStatusBadge key="fallback" tone={integrity.legacyFallbackRetired ? "neutral" : "info"}>
@@ -84,6 +85,7 @@ export default async function AdminCmsHealthPage() {
                         legacyFallbackRetired={integrity.legacyFallbackRetired}
                         fallbackRetirementEligible={integrity.fallbackRetirementEligible}
                         draftOrderCollisionCount={integrity.draftOrderCollisions.length}
+                        draftOrderNeedsNormalization={integrity.draftOrderNeedsNormalization}
                       />
                     ) : "—",
                   ],
