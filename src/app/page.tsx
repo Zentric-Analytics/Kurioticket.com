@@ -49,6 +49,7 @@ import { CountryFlag } from "@/components/home/CountryFlag";
 import {
   getPopularDestinationFareCandidatesByRegion,
   getPopularDestinationsByRegion,
+  type PopularDestination,
 } from "@/data/marketHomeContent";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import { buildHomepageRouteCardFlightHref } from "@/lib/home/homepageRouteCardLinks";
@@ -402,6 +403,11 @@ type HomepageCmsContentState = {
   flightRoutes: { source: "cms" | "fallback"; items: HomeDiscoveryCardItem[] };
 };
 
+type HomepagePopularDestinationItem = PopularDestination & {
+  canonicalDestinationId?: string;
+  destinationSearchValue?: string;
+};
+
 type HomepageFare = Omit<DestinationPrice, "id" | "code" | "unavailable">;
 
 type HomeDiscoveryFareCard = {
@@ -637,7 +643,7 @@ export default function Home() {
   } = popularDestinationResolution;
   const cmsContentForMarket =
     homepageCmsContent?.market === regionCode ? homepageCmsContent : null;
-  const popularDestinations = useMemo(
+  const popularDestinations = useMemo<HomepagePopularDestinationItem[]>(
     () =>
       cmsContentForMarket
         ? cmsContentForMarket.destinations.items.map((destination) => ({
