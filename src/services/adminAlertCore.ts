@@ -72,6 +72,7 @@ export type AdminAlertSignals = {
           metrics: {
             feedEligibleFlights: number;
             trackedFlights: number;
+            missingSnapshots: number;
             currentSnapshots: number;
             staleSnapshots: number;
           };
@@ -271,7 +272,6 @@ function homepageFareAlerts(signals: AdminAlertSignals) {
       signalToken: [
         signals.homepageFares.globalReadinessStatus,
         markets.join(","),
-        signals.homepageFares.lastRefreshAt ?? "none",
       ].join(":"),
       signalAt: signals.homepageFares.lastRefreshAt ?? null,
     },
@@ -298,15 +298,30 @@ function flightStatusAlerts(signals: AdminAlertSignals) {
   }
 
   const metrics = signals.flightStatus.operations.metrics;
-  if (metrics.staleSnapshots === 0) return [] satisfies AdminAlertCandidate[];
+  const alerts: AdminAlertCandidate[] = [];
 
-  const allTrackedStale =
-    metrics.trackedFlights > 0 &&
-    metrics.currentSnapshots === 0 &&
-    metrics.staleSnapshots >= metrics.trackedFlights;
+  if (metrics.missingSnapshots > 0) {
+    alerts.push({
+      key: "flight-status.missing",
+      severity: "WARNING",
+      source: "FLIGHT_STATUS",
+      title: "Some flight-status snapshots are missing",
+      message: `${metrics.missingSnapshots} of ${metrics.feedEligibleFlights} feed-eligible flight(s) are still awaiting their first status snapshot.`,
+      actionHref: "/admin/flight-status",
+      signalToken: [
+        metrics.feedEligibleFlights,
+        metrics.missingSnapshots,
+      ].join(":"),
+    });
+  }
 
-  return [
-    {
+  if (metrics.staleSnapshots > 0) {
+    const allTrackedStale =
+      metrics.trackedFlights > 0 &&
+      metrics.currentSnapshots === 0 &&
+      metrics.staleSnapshots >= metrics.trackedFlights;
+
+    alerts.push({
       key: "flight-status.stale",
       severity: allTrackedStale ? "CRITICAL" : "WARNING",
       source: "FLIGHT_STATUS",
@@ -321,8 +336,10 @@ function flightStatusAlerts(signals: AdminAlertSignals) {
         metrics.currentSnapshots,
         metrics.staleSnapshots,
       ].join(":"),
-    },
-  ] satisfies AdminAlertCandidate[];
+    });
+  }
+
+  return alerts;
 }
 
 export function deriveAdminAlertCandidates(signals: AdminAlertSignals): AdminAlertCandidate[] {
