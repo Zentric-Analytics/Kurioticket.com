@@ -270,6 +270,22 @@ function parsePayload(type: CmsContentType, payload: unknown) {
   return parsed.data as Prisma.InputJsonValue;
 }
 
+
+export function validateCmsPayloadIntegrity(type: CmsContentType, payload: unknown) {
+  try {
+    parsePayload(type, payload);
+    return { valid: true as const, issues: null };
+  } catch (error) {
+    if (error instanceof CmsContentError) {
+      return {
+        valid: false as const,
+        issues: error.issues ?? { message: error.message },
+      };
+    }
+    throw error;
+  }
+}
+
 function normalizeActor(actor: CmsActor) {
   return { ...actor, email: actor.email.trim().toLowerCase() };
 }
@@ -308,7 +324,7 @@ async function createRevisionAndAudit(
   input: {
     itemId: string;
     version: number;
-    action: "CREATED" | "UPDATED" | "PUBLISHED" | "HIDDEN" | "ARCHIVED";
+    action: "CREATED" | "UPDATED" | "PUBLISHED" | "HIDDEN" | "ARCHIVED" | "RESTORED" | "ORDER_NORMALIZED";
     status: CmsContentStatus;
     market: string;
     locale: string;
@@ -383,7 +399,12 @@ export async function createCmsContent(raw: unknown, actorInput: CmsActor) {
             locale: parsed.data.locale,
           },
         },
-        select: { id: true },
+        select: {
+        id: true,
+        version: true,
+        legacyFallbackRetiredAt: true,
+        legacyFallbackRetiredByAdminUserId: true,
+      },
       });
       if (!scope) {
         throw new CmsContentError(
@@ -463,6 +484,86 @@ export async function updateCmsContentDraft(id: string, raw: unknown, actorInput
       error,
       "Another content item already uses this type, key, market and locale.",
       "Content changed concurrently. Refresh before saving.",
+    );
+  }
+}
+
+const restoreSchema = z.object({
+  expectedVersion: z.number().int().min(1),
+  revisionId: z.string().trim().min(1).max(128),
+}).strict();
+
+export async function restoreCmsContentRevision(
+  id: string,
+  raw: unknown,
+  actorInput: CmsActor,
+) {
+  const parsed = restoreSchema.safeParse(raw);
+  if (!parsed.success) throw new CmsContentError("INVALID", "Restore request is invalid.", parsed.error.flatten());
+  const actor = normalizeActor(actorInput);
+
+  try {
+    return await getPrisma().$transaction(async (tx) => {
+      const existing = await tx.cmsContentItem.findUnique({ where: { id } });
+      if (!existing) throw new CmsContentError("NOT_FOUND", "Content item not found.");
+      if (existing.status === "ARCHIVED") throw new CmsContentError("ARCHIVED", "Archived content cannot be restored in place.");
+
+      const revision = await tx.cmsContentRevision.findFirst({
+        where: { id: parsed.data.revisionId, contentItemId: id },
+      });
+      if (!revision) throw new CmsContentError("NOT_FOUND", "Content revision not found.");
+
+      const restoredMarket = marketSchema.safeParse(revision.market);
+      const restoredLocale = localeSchema.safeParse(revision.locale);
+      if (!restoredMarket.success || !restoredLocale.success) {
+        throw new CmsContentError(
+          "INVALID",
+          "This historical revision uses a CMS scope that is no longer supported.",
+        );
+      }
+      const restoredPayload = parsePayload(existing.type, revision.draftPayload);
+      const nextVersion = parsed.data.expectedVersion + 1;
+      const changed = await tx.cmsContentItem.updateMany({
+        where: { id, version: parsed.data.expectedVersion, status: { not: "ARCHIVED" } },
+        data: {
+          draftPayload: restoredPayload,
+          market: restoredMarket.data,
+          locale: restoredLocale.data,
+          sortOrder: revision.sortOrder,
+          version: { increment: 1 },
+          updatedByAdminUserId: actor.id,
+        },
+      });
+      if (changed.count !== 1) {
+        throw new CmsContentError("CONFLICT", "Content changed since it was opened. Refresh before restoring.");
+      }
+
+      const item = await tx.cmsContentItem.findUniqueOrThrow({ where: { id } });
+      await createRevisionAndAudit(tx, {
+        itemId: item.id,
+        version: nextVersion,
+        action: "RESTORED",
+        status: item.status,
+        market: item.market,
+        locale: item.locale,
+        sortOrder: item.sortOrder,
+        publishedMarket: item.publishedMarket,
+        publishedLocale: item.publishedLocale,
+        publishedSortOrder: item.publishedSortOrder,
+        draftPayload: restoredPayload,
+        publishedPayload: item.publishedPayload === null ? null : item.publishedPayload as Prisma.InputJsonValue,
+        actor,
+        auditAction: "CMS_CONTENT_RESTORED",
+        type: item.type,
+        key: item.key,
+      });
+      return serialize(item);
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+  } catch (error) {
+    rethrowCmsWriteConflict(
+      error,
+      "Another content item already uses this restored scope identity.",
+      "Content changed concurrently. Refresh before restoring.",
     );
   }
 }
@@ -681,14 +782,20 @@ export async function readPublishedCmsContent<T>(
   options: { market?: string; locale?: string; fallback: () => T[] },
 ): Promise<{ source: "cms" | "fallback"; items: T[] }> {
   const db = getOptionalPrisma();
-  if (!db) return { source: "fallback", items: options.fallback() };
+  if (!db) {
+    console.warn("[cms:public-fallback]", { type, reason: "storage_unavailable" });
+    return { source: "fallback", items: options.fallback() };
+  }
   try {
     const market = marketSchema.parse(options.market ?? "GLOBAL");
     const locale = localeSchema.parse(options.locale ?? "en");
     const [scope, rows] = await Promise.all([
       db.cmsContentScope.findUnique({
         where: { type_market_locale: { type, market, locale } },
-        select: { id: true },
+        select: {
+          id: true,
+          legacyFallbackRetiredAt: true,
+        },
       }),
       db.cmsContentItem.findMany({
       where: {
@@ -701,13 +808,31 @@ export async function readPublishedCmsContent<T>(
       select: { key: true, status: true, publishedPayload: true },
       }),
     ]);
-    if (!scope && !rows.length) return { source: "fallback", items: options.fallback() };
+    if (!scope && !rows.length) {
+      console.warn("[cms:public-fallback]", {
+        type,
+        market,
+        locale,
+        reason: "scope_uninitialized",
+      });
+      return { source: "fallback", items: options.fallback() };
+    }
     const visibleRows = rows.filter((row) => row.status === "PUBLISHED");
     const items: T[] = [];
     for (const row of visibleRows) {
+      const integrity = validateCmsPayloadIntegrity(type, row.publishedPayload);
       const parsed = cmsPayloadSchemas[type].safeParse(row.publishedPayload);
-      if (!parsed.success) {
-        console.error("[cms:public-read-invalid-payload]", { type });
+      if (!integrity.valid || !parsed.success) {
+        console.error("[cms:public-read-invalid-payload]", { type, market, locale });
+        if (scope?.legacyFallbackRetiredAt) {
+          return { source: "cms", items: [] };
+        }
+        console.warn("[cms:public-fallback]", {
+          type,
+          market,
+          locale,
+          reason: "invalid_published_payload",
+        });
         return { source: "fallback", items: options.fallback() };
       }
       items.push({ id: row.key, ...(parsed.data as Record<string, unknown>) } as T);
@@ -715,6 +840,7 @@ export async function readPublishedCmsContent<T>(
     return { source: "cms", items };
   } catch (error) {
     console.error("[cms:public-read]", { type, errorName: error instanceof Error ? error.name : "unknown" });
+    console.warn("[cms:public-fallback]", { type, reason: "read_error" });
     return { source: "fallback", items: options.fallback() };
   }
 }
@@ -730,6 +856,9 @@ export async function getCmsContentScopeSummary(
     return {
       available: false,
       active: false,
+      scopeVersion: null,
+      legacyFallbackRetired: false,
+      legacyFallbackRetiredAt: null,
       total: 0,
       draft: 0,
       published: 0,
@@ -751,7 +880,12 @@ export async function getCmsContentScopeSummary(
           locale: parsedLocale.data,
         },
       },
-      select: { id: true },
+      select: {
+        id: true,
+        version: true,
+        legacyFallbackRetiredAt: true,
+        legacyFallbackRetiredByAdminUserId: true,
+      },
     }),
     db.cmsContentItem.groupBy({
       by: ["status"],
@@ -769,6 +903,9 @@ export async function getCmsContentScopeSummary(
   return {
     available: true,
     active: Boolean(scope),
+    scopeVersion: scope?.version ?? null,
+    legacyFallbackRetired: Boolean(scope?.legacyFallbackRetiredAt),
+    legacyFallbackRetiredAt: scope?.legacyFallbackRetiredAt?.toISOString() ?? null,
     total: groups.reduce((sum, group) => sum + group._count._all, 0),
     draft: counts.get("DRAFT") ?? 0,
     published: counts.get("PUBLISHED") ?? 0,

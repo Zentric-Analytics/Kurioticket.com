@@ -80,6 +80,7 @@ export function HomepageCmsEditor({
   const [fields, setFields] = useState<Record<string, string>>(() => initialFields(section, saved));
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [conflict, setConflict] = useState(false);
   const [pending, startTransition] = useTransition();
 
   const currentPayload = buildPayload(section, fields);
@@ -124,6 +125,7 @@ export function HomepageCmsEditor({
     if (!validDraft) return;
     setMessage(null);
     setError(null);
+    setConflict(false);
     startTransition(async () => {
       const response = await fetch("/api/admin/content", {
         method: "POST",
@@ -192,9 +194,15 @@ export function HomepageCmsEditor({
       });
       const body = await response.json().catch(() => ({}));
       if (!response.ok || !body.item) {
-        setError(typeof body.error === "string" ? body.error : "Unable to update content.");
+        if (response.status === 409) {
+          setConflict(true);
+          setError("This content changed in another admin session. Reload the latest version before making more edits.");
+        } else {
+          setError(typeof body.error === "string" ? body.error : "Unable to update content.");
+        }
         return;
       }
+      setConflict(false);
       setItem(body.item as CmsItem);
       setMarket(body.item.market ?? market);
       setSortOrder(String(body.item.sortOrder ?? Number(sortOrder)));
@@ -295,6 +303,11 @@ export function HomepageCmsEditor({
         {item && draftDirty ? <p className="text-sm font-bold text-amber-700">Save this draft before publishing the current edits.</p> : null}
         {message ? <p className="text-sm font-bold text-emerald-700" role="status">{message}</p> : null}
         {error ? <p className="rounded-xl bg-rose-50 px-3 py-2 text-sm font-bold text-rose-700" role="alert">{error}</p> : null}
+        {conflict ? (
+          <AdminButton type="button" variant="secondary" onClick={() => window.location.reload()}>
+            Reload latest
+          </AdminButton>
+        ) : null}
       </AdminSectionCard>
 
       <AdminSectionCard className="h-fit p-5 xl:sticky xl:top-24">

@@ -53,6 +53,7 @@ export function FaqCmsEditor({ initialItem }: { initialItem?: FaqCmsItem }) {
   const [sortOrder, setSortOrder] = useState(String(initialItem?.sortOrder ?? 0));
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [conflict, setConflict] = useState(false);
   const [pending, startTransition] = useTransition();
 
   const validDraft =
@@ -89,6 +90,7 @@ export function FaqCmsEditor({ initialItem }: { initialItem?: FaqCmsItem }) {
     if (!validDraft) return;
     setMessage(null);
     setError(null);
+    setConflict(false);
     startTransition(async () => {
       const response = await fetch("/api/admin/content", {
         method: "POST",
@@ -151,9 +153,15 @@ export function FaqCmsEditor({ initialItem }: { initialItem?: FaqCmsItem }) {
       });
       const body = await response.json().catch(() => ({}));
       if (!response.ok || !body.item) {
-        setError(typeof body.error === "string" ? body.error : "Unable to update FAQ.");
+        if (response.status === 409) {
+          setConflict(true);
+          setError("This FAQ changed in another admin session. Reload the latest version before making more edits.");
+        } else {
+          setError(typeof body.error === "string" ? body.error : "Unable to update FAQ.");
+        }
         return;
       }
+      setConflict(false);
       setItem(body.item as FaqCmsItem);
       setSortOrder(String(body.item.sortOrder ?? Number(sortOrder)));
       setMessage(success);
@@ -254,6 +262,11 @@ export function FaqCmsEditor({ initialItem }: { initialItem?: FaqCmsItem }) {
           ) : null}
           {message ? <p className="text-sm font-bold text-emerald-700" role="status">{message}</p> : null}
           {error ? <p className="rounded-xl bg-rose-50 px-3 py-2 text-sm font-bold text-rose-700" role="alert">{error}</p> : null}
+          {conflict ? (
+            <AdminButton type="button" variant="secondary" onClick={() => window.location.reload()}>
+              Reload latest
+            </AdminButton>
+          ) : null}
         </AdminSectionCard>
 
         {item ? (

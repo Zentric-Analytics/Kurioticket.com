@@ -9,6 +9,7 @@ import {
   getAdminCmsContent,
   hideCmsContent,
   publishCmsContent,
+  restoreCmsContentRevision,
   updateCmsContentDraft,
 } from "@/services/cmsContentService";
 
@@ -63,6 +64,7 @@ export async function PATCH(request: Request, context: Context) {
       action === "publish" ? await publishCmsContent(id, input, actor) :
       action === "hide" ? await hideCmsContent(id, input, actor) :
       action === "archive" ? await archiveCmsContent(id, input, actor) :
+      action === "restore_revision" ? await restoreCmsContentRevision(id, input, actor) :
       null;
     if (!item) return NextResponse.json({ error: "Unsupported CMS action." }, { status: 400 });
     return NextResponse.json({ item });
