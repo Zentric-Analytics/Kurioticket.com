@@ -11,7 +11,6 @@ import { Card } from "@/components/ui/Card";
 import { requireAdminSession } from "@/lib/auth-guards";
 import { activityHref, groupActivityRows, parseActivityFilters, validActivityIdentity, type ActivityFilters } from "@/lib/adminIdentityActivity";
 import type { ActivityRow } from "@/lib/adminIdentityJourney";
-import { getPublicEnvironment } from "@/lib/stagingSafety";
 import { loadAdminIdentityActivity } from "@/services/adminIdentityActivityService";
 
 export const metadata = { title: "Admin Customer Activity" };
@@ -161,7 +160,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
       action={<Link className={buttonClass} href={activityHref(basePath, queryParams, { cursor: null })}>Return to newest activity</Link>} />
   </div>;
   const data = result.data;
-  const environment = getPublicEnvironment();
+  const environment = data.environment;
   const searchParamsForLink = new URLSearchParams({
     ...(kind === "guest" ? { visitorId: id, identity: "guest" } : { userId: id, identity: "registered" }),
     environment,
@@ -286,7 +285,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
         </section>
         <section className="rounded-2xl border border-slate-200 bg-white p-4">
           <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-950"><CalendarDays size={16} /> About this activity</h2>
-          <p className="mt-2 text-xs leading-5 text-slate-600">Only recorded events are displayed. Guest activity requires ongoing analytics consent. Provider handoffs are not proof of a booking or payment.</p>
+          <p className="mt-2 text-xs leading-5 text-slate-600">Only recorded {environment} events are displayed. Guest activity requires ongoing analytics consent. Provider handoffs are not proof of a booking or payment.</p>
           <p className="mt-2 text-xs leading-5 text-slate-500">Unlinked historical records are shown separately; missing stages are not inferred. Internal notes have not been enabled.</p>
         </section>
       </aside>
