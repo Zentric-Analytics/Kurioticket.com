@@ -12,6 +12,7 @@ type Props = {
   legacyFallbackRetired: boolean;
   fallbackRetirementEligible: boolean;
   draftOrderCollisionCount: number;
+  draftOrderNeedsNormalization: boolean;
 };
 
 export function CmsScopeHardeningActions({
@@ -22,6 +23,7 @@ export function CmsScopeHardeningActions({
   legacyFallbackRetired,
   fallbackRetirementEligible,
   draftOrderCollisionCount,
+  draftOrderNeedsNormalization,
 }: Props) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -63,7 +65,7 @@ export function CmsScopeHardeningActions({
           variant="secondary"
           onClick={() => run("normalize_draft_order")}
           loading={pending}
-          disabled={pending || draftOrderCollisionCount === 0}
+          disabled={pending || (!draftOrderNeedsNormalization && draftOrderCollisionCount === 0)}
         >
           Normalize draft order
         </AdminButton>
