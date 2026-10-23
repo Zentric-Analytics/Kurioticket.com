@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 import { createPortal } from "react-dom";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, PauseCircle, RotateCcw, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 
 type UserStatusActionsProps = {
@@ -162,17 +162,10 @@ export function UserStatusActions({
     : confirmation === userId;
 
   async function updateStatus(nextStatus: "ACTIVE" | "SUSPENDED" | "DELETED") {
-    const actionLabel =
-      nextStatus === "ACTIVE"
-        ? "reactivate"
-        : nextStatus === "SUSPENDED"
-          ? "suspend"
-          : "soft delete";
-    if (
-      nextStatus !== "ACTIVE" &&
-      !window.confirm(`Confirm ${actionLabel} for this user?`)
-    )
-      return;
+    if (nextStatus === "SUSPENDED" && !window.confirm("Suspend this account? You can reactivate it later.")) return;
+    if (nextStatus === "DELETED" && !window.confirm(
+      "Delete this account? It will be marked as deleted and can be restored. This does not permanently erase the account."
+    )) return;
 
     setLoading(nextStatus);
     setMessage("");
@@ -264,7 +257,7 @@ export function UserStatusActions({
   }
 
   const menuItem =
-    "w-full rounded-md px-3 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50 focus:bg-slate-100 focus:outline-none disabled:opacity-50";
+    "focus-ring flex min-h-9 w-full items-center gap-2.5 rounded-md px-3 py-2.5 text-left text-[13px] font-medium text-[#020617] transition-colors hover:bg-[#F8FAFC] focus-visible:bg-[#F1F7FF] disabled:opacity-50";
   return (
     <div>
       <button
@@ -282,7 +275,7 @@ export function UserStatusActions({
             openMenu();
           }
         }}
-        className="focus-ring inline-flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+        className="focus-ring inline-flex h-9 items-center gap-1.5 rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px] font-medium text-[#020617] transition-colors hover:bg-[#F8FAFC] disabled:opacity-50"
       >
         {loading ? "Updating…" : "Manage"}
         <ChevronDown size={14} aria-hidden="true" />
@@ -303,7 +296,7 @@ export function UserStatusActions({
                   closeMenu(false);
               }}
               style={menuPosition}
-              className="fixed z-50 w-60 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg"
+              className="fixed z-50 w-56 overflow-y-auto rounded-lg border border-[#D8E1EC] bg-white p-1.5 shadow-[0_12px_28px_-18px_rgba(2,6,23,0.28)]"
             >
               {canChangeRole
                 ? editableRoles.map((editableRole) => (
@@ -335,6 +328,7 @@ export function UserStatusActions({
                     void updateStatus("ACTIVE");
                   }}
                 >
+                  <RotateCcw size={15} aria-hidden="true" className="shrink-0 text-[#475569]" />
                   Reactivate
                 </button>
               ) : null}
@@ -349,6 +343,7 @@ export function UserStatusActions({
                     void updateStatus("SUSPENDED");
                   }}
                 >
+                  <PauseCircle size={15} aria-hidden="true" className="shrink-0 text-[#475569]" />
                   Suspend
                 </button>
               ) : null}
@@ -356,14 +351,15 @@ export function UserStatusActions({
                 <button
                   role="menuitem"
                   type="button"
-                  className={menuItem}
+                  className={`${menuItem} text-[#B91C1C] hover:bg-[#FFF7F7]`}
                   disabled={Boolean(loading)}
                   onClick={() => {
                     closeMenu();
                     void updateStatus("DELETED");
                   }}
                 >
-                  Soft delete
+                  <Trash2 size={15} aria-hidden="true" className="shrink-0 text-[#B91C1C]" />
+                  Delete
                 </button>
               ) : null}
               {role === "ADMIN" ? (
