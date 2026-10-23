@@ -145,7 +145,8 @@ try {
 
   await check("empty activity and invalid cursor are distinct states", async () => {
     await page.goto(base + "/admin/users/guest/qa-no-events-0001/activity", { waitUntil: "domcontentloaded" });
-    await expect(page.getByText("No recorded activity matches these filters.")).toBeVisible();
+    await expect(page.getByText("No recorded activity is linked to this identity here.")).toBeVisible();
+    await expect(page.getByText(/recorded staging activity attributed to the identity/)).toBeVisible();
     await expect(page.getByRole("link", { name: "Older activity" })).toHaveCount(0);
     await page.goto(url + "?cursor=bad", { waitUntil: "domcontentloaded" });
     await expect(page.getByText("Activity page link expired")).toBeVisible();

@@ -45,7 +45,9 @@ test("one recorded event displays singular grammar and no unnecessary disclosure
 
 test("empty timeline remains readable without claiming no customer history", () => {
   const html = renderToStaticMarkup(createElement(ActivityTimeline, { events: [], nextHref: null, environment: "staging" }));
-  assert.match(html, /No recorded activity matches these filters/);
+  assert.match(html, /No recorded activity is linked to this identity here/);
+  assert.match(html, /recorded staging activity attributed to the identity/);
+  assert.match(html, /Searches without an eligible identity link/);
   assert.match(html, /0 on this page/);
   assert.doesNotMatch(html, /selection-run/);
 });

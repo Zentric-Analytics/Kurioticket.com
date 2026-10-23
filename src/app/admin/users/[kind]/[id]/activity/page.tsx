@@ -117,6 +117,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-[16px] font-semibold tracking-tight text-[#020617]">{data.title}</h1>
             <span className="text-[12px] font-medium text-[#475569]">{kind === "guest" ? "Guest" : "Registered"}</span>
+            <span className="text-[12px] font-semibold capitalize text-[#475569]">{environment} records</span>
           </div>
           <div className="mt-1 flex min-w-0 flex-wrap items-center gap-1 text-[12px] text-[#475569]">
             <span className="break-all">{kind === "guest" ? "Guest ID: " : "User ID: "}{id}</span>

@@ -223,3 +223,24 @@ test("UUID failure cannot interrupt the selected travel action", () => {
   coordinator.rememberSearch("search", coordinator.captureContext());
   assert.doesNotThrow(() => coordinator.offerSelected("search", "offer", "Provider", "/flight-results"));
 });
+
+
+test("consented native Car results are recorded once and cannot be replayed after account changes", async () => {
+  const h = harness(1);
+  const carResponse = { requestId: "9b54f962-3d08-4f82-a53d-829718142bd0", results: ["car-1"] };
+  rememberJourneyResponseContext(carResponse, h.coordinator.captureContext());
+  h.coordinator.rememberSearch(carResponse.requestId, journeyResponseContext(carResponse));
+  const first = h.coordinator.resultsViewed(carResponse.requestId, "/car-results", carResponse.results.length);
+  const duplicate = h.coordinator.resultsViewed(carResponse.requestId, "/car-results", 8);
+  await turn();
+  assert.equal(first, duplicate);
+  assert.equal(h.calls.length, 1);
+  assert.equal(h.calls[0].event.type, "RESULTS_VIEWED");
+  assert.equal(h.calls[0].event.sourcePage, "/car-results");
+  assert.equal(h.calls[0].event.requestId, carResponse.requestId);
+  h.setContext(2);
+  h.coordinator.rememberSearch(carResponse.requestId, journeyResponseContext(carResponse));
+  h.coordinator.resultsViewed(carResponse.requestId, "/car-results", 1);
+  await turn();
+  assert.equal(h.calls.length, 1, "old search cannot be attributed to the next signed-in user");
+});

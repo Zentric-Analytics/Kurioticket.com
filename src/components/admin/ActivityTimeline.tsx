@@ -60,7 +60,13 @@ export function ActivityTimeline({ events, nextHref, environment }: { events: Ac
       <h2 id="activity-timeline-title" className="text-[16px] font-semibold text-[#020617]">Activity timeline</h2>
       <span className="text-[12px] text-[#475569]">Newest recorded first · {events.length} on this page</span>
     </div>
-    {!events.length ? <p className="py-12 text-center text-[13px] text-[#475569]">No recorded activity matches these filters.</p> : (
+    {!events.length ? <div className="py-12 text-center text-[13px] text-[#475569]">
+      <p className="font-medium text-[#020617]">No recorded activity is linked to this identity here.</p>
+      <p className="mx-auto mt-2 max-w-lg text-[12px] leading-5 text-[#64748B]">
+        This view includes only recorded {environment} activity attributed to the identity that matches the selected filters.
+        Searches without an eligible identity link, or those made on a different environment, will not appear here.
+      </p>
+    </div> : (
       <div>
         {groups.map(group => <section key={group.key} aria-label={group.journeyId ? "Recorded journey " + group.journeyId : "Other recorded activity"} className="min-w-0 border-b border-[#D8E1EC] py-3">
           <div className="flex flex-wrap items-start justify-between gap-2 py-2">

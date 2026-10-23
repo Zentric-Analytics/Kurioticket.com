@@ -50,7 +50,7 @@ export function parseStoredVisitorIdentity(value: unknown): StoredVisitorIdentit
 
 /** Only these first-party producers receive the optional visitor reference. */
 export function isVisitorTrackedPath(path: string) {
-  return ["/api/flights/search", "/api/hotels/search", "/api/mobile/v1/hotels/progressive", "/api/redirect", "/api/journey/events"].includes(path);
+  return ["/api/flights/search", "/api/hotels/search", "/api/cars/search", "/api/mobile/v1/hotels/progressive", "/api/redirect", "/api/journey/events"].includes(path);
 }
 
 export class VisitorIdentityCoordinator {
