@@ -9,7 +9,7 @@ import { CopyIdentityId } from "@/components/admin/CopyIdentityId";
 import { AdminEmptyState } from "@/components/admin/AdminPageShell";
 import { Card } from "@/components/ui/Card";
 import { requireAdminSession } from "@/lib/auth-guards";
-import { activityHref, groupActivityRows, parseActivityFilters, validActivityIdentity, type ActivityFilters } from "@/lib/adminIdentityActivity";
+import { activityHref, groupActivityRows, parseActivityFilters, relatedJourneysWindow, validActivityIdentity, type ActivityFilters } from "@/lib/adminIdentityActivity";
 import type { ActivityRow } from "@/lib/adminIdentityJourney";
 import { loadAdminIdentityActivity } from "@/services/adminIdentityActivityService";
 
@@ -165,7 +165,13 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
     ...(kind === "guest" ? { visitorId: id, identity: "guest" } : { userId: id, identity: "registered" }),
     environment,
   });
-  const journeysHref = "/admin/journeys?" + searchParamsForLink.toString();
+  const journeysParams = new URLSearchParams(searchParamsForLink);
+  const visibleJourneyWindow = relatedJourneysWindow(data.events, new Date());
+  if (visibleJourneyWindow) {
+    journeysParams.set("from", visibleJourneyWindow.from);
+    journeysParams.set("to", visibleJourneyWindow.to);
+  }
+  const journeysHref = "/admin/journeys?" + journeysParams.toString();
   const searchesHref = "/admin/searches?" + searchParamsForLink.toString();
   const handoffsHref = "/admin/redirects?" + searchParamsForLink.toString();
   const nextHref = data.nextCursor ? activityHref(basePath, queryParams, { cursor: data.nextCursor }) : null;
