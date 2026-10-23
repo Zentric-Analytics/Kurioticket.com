@@ -5,6 +5,7 @@ import type { CmsContentStatus, CmsContentType } from "@/generated/prisma/enums"
 import { getOptionalPrisma, getPrisma } from "@/lib/prisma";
 import { getOwnedFlightLocationCatalog } from "@/lib/locations/flightDiscovery";
 import { hotelDestinations } from "@/data/hotelDestinations";
+import { resolveHotelDiscoveryIntent } from "@/lib/hotels/hotelDiscoveryIntent";
 import { HOMEPAGE_REFRESH_MARKET_CODES } from "@/lib/market/resolveMarket";
 
 export const cmsContentTypes = [
@@ -195,6 +196,16 @@ function parsePayload(type: CmsContentType, payload: unknown) {
     const route = parsed.data as { originCode: string; destinationCode: string };
     if (!ownedFlightAirportCodes.has(route.originCode) || !ownedFlightAirportCodes.has(route.destinationCode)) {
       throw new CmsContentError("INVALID", "Homepage flight content must use airport codes from the owned Kurioticket flight catalog.");
+    }
+  }
+
+  if (type === "HOMEPAGE_DESTINATION") {
+    const destination = parsed.data as { city: string; country: string };
+    if (!resolveHotelDiscoveryIntent(`${destination.city}, ${destination.country}`, "home-popular-stays")) {
+      throw new CmsContentError(
+        "INVALID",
+        "Homepage destination must resolve to a canonical Kurioticket hotel destination.",
+      );
     }
   }
 
