@@ -1,0 +1,50 @@
+name: Admin identity directory design QA
+
+on:
+  pull_request:
+    branches: [dev]
+    paths:
+      - src/app/admin/users/page.tsx
+      - src/components/admin/AdminIdentityTable.tsx
+      - src/components/admin/AdminIdentitySort.tsx
+      - src/components/admin/AdminIdentityTable.test.ts
+      - src/lib/adminIdentityDirectory*
+      - src/lib/adminIdentityPagination*
+      - qa/admin-identity-directory/**
+      - .github/workflows/admin-identity-directory-design.yml
+
+permissions:
+  contents: read
+
+jobs:
+  directory-design:
+    name: Verify directory sorting, pagination and before-after screenshots
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Test Admin directory SQL, pagination and component behavior
+        env:
+          JITI_TSCONFIG_PATHS: ./tsconfig.json
+          JITI_JSX: "true"
+        run: node --test --import jiti/register src/lib/adminIdentityDirectory.test.ts src/lib/adminIdentityPagination.test.ts src/components/admin/AdminIdentityTable.test.ts
+      - run: npx playwright install --with-deps chromium
+      - name: Verify real Admin directory components with synthetic before-and-after data
+        run: node qa/admin-identity-directory/run-polish.mjs
+        env:
+          ADMIN_DIRECTORY_QA_WORK: ${{ runner.temp }}
+          ADMIN_DIRECTORY_QA_OUTPUT: ${{ runner.temp }}/admin-identity-directory-evidence
+      - name: Upload synthetic before-and-after visuals
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: admin-identity-directory-before-after
+          path: ${{ runner.temp }}/admin-identity-directory-evidence/
+          if-no-files-found: warn
