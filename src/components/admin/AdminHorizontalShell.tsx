@@ -12,16 +12,18 @@ type HeaderEntry = HeaderGroup["links"][number];
 
 function HeaderNavLink({ entry, pathname, close }: { entry: HeaderEntry; pathname: string; mobile?: boolean; close: () => void }) {
   const { item } = entry;
-  const selected = isAdminNavItemActive(item.href, pathname);
+  const selected =
+    isAdminNavItemActive(item.href, pathname) ||
+    entry.children.some((child) => isAdminNavItemActive(child.href, pathname));
   const Icon = item.icon;
-  // Selected tabs differ only by their underline; typography and background remain unchanged.
-  const style = "text-slate-600 hover:bg-slate-50";
+  // Match the public Hotel navbar: white surface, compact semibold type and dark navy copy.
+  const style = "text-[#021C2B]/85 hover:bg-[#004BB8]/5 hover:text-[#021C2B]";
   const underline = selected
-    ? " after:absolute after:-bottom-1 after:left-1 after:right-1 after:h-0.5 after:rounded-full after:bg-indigo-600"
+    ? " after:absolute after:-bottom-1 after:left-1 after:right-1 after:h-0.5 after:rounded-full after:bg-[#004BB8]"
     : "";
   return (
     <Link href={item.href} onClick={close} aria-current={selected ? "page" : undefined}
-      className={"relative inline-flex h-10 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl px-1.5 text-[12.5px] font-semibold transition min-[1600px]:gap-2 min-[1600px]:px-2 min-[1600px]:text-[13px] min-[1800px]:px-2.5 min-[1800px]:text-[13.5px] " + style + underline}>
+      className={"relative inline-flex h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-xl px-2.5 text-[15px] font-semibold leading-none tracking-[-0.005em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 " + style + underline}>
       <Icon size={14} aria-hidden="true" className="h-[13px] w-[13px] shrink-0 xl:h-3.5 xl:w-3.5 2xl:h-4 2xl:w-4" />
       <span>{item.label}</span>
     </Link>
@@ -31,7 +33,7 @@ function HeaderNavLink({ entry, pathname, close }: { entry: HeaderEntry; pathnam
 function Navigation({ groups, pathname, mobile = false, close }: { groups: HeaderGroup[]; pathname: string; mobile?: boolean; close: () => void }) {
   return <nav aria-label="Admin navigation" className={mobile
     ? "flex flex-col gap-2 p-3"
-    : "flex w-full flex-wrap items-center justify-start gap-x-3 gap-y-2 min-[1600px]:gap-x-4"}>
+    : "flex w-full flex-wrap items-center justify-start gap-x-5 gap-y-2"}>
     {groups.map((group) => (
       <div key={group.label} className={mobile
         ? "flex flex-col gap-1"
@@ -128,13 +130,13 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
             <KurioticketLogo variant="mark" className="h-11 w-11" markClassName="h-11 w-11" />
           </Link>
           <div className="min-w-0">
-            <p className="truncate text-base font-extrabold tracking-tight text-slate-950">Kurioticket Admin</p>
-            <p className="truncate text-xs font-medium text-slate-500">Secure internal workspace</p>
+            <p className="truncate text-base font-semibold tracking-[-0.01em] text-[#021C2B]">Kurioticket Admin</p>
+            <p className="truncate text-xs font-medium text-[#475569]">Secure internal workspace</p>
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
           <button type="button" onClick={() => { setQuery(""); setSearchOpen(true); }} aria-label="Search admin pages"
-            className="inline-flex h-10 items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-600 hover:bg-slate-100 sm:w-52 sm:justify-between lg:w-60">
+            className="inline-flex h-10 items-center gap-3 rounded-xl border border-[#D8E1EC] bg-[#F5F7FB] px-3 text-sm font-medium text-[#475569] transition-colors hover:border-[#C4CFDC] hover:bg-[#F3F6FA] sm:w-52 sm:justify-between lg:w-60">
             <span className="inline-flex items-center gap-2"><Search size={17} /><span className="hidden sm:inline">Search</span></span>
             <kbd className="hidden rounded border border-slate-200 bg-white px-1.5 py-0.5 text-xs text-slate-500 sm:inline">Ctrl K</kbd>
           </button>
@@ -166,7 +168,7 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
         </div>
       </div>
       <div className="hidden border-t border-slate-100 min-[1100px]:block">
-        <div className="mx-auto max-w-[1920px] px-3 pb-2 pt-2 min-[1800px]:px-6">
+        <div className="mx-auto max-w-[1920px] px-4 pb-2 pt-2 sm:px-6 lg:px-10">
           <Navigation groups={groups} pathname={pathname} close={() => {}} />
         </div>
       </div>
