@@ -33,7 +33,7 @@ test("admin alerts derive only from authoritative operational sources", () => {
     /provider\.operationalState,\s*provider\.failedCalls,\s*provider\.degradedCalls/,
   );
   assert.match(core, /!signals\.flightStatus\.feedReady/);
-  assert.match(core, /metrics\.missingSnapshots > 0/);
+  assert.match(core, /metrics\.monitoringMissingSnapshots > 0/);
   assert.match(core, /signalToken: signals\.cms\.occurrenceToken/);
   assert.match(service, /cmsUnhealthyFingerprint/);
   assert.match(service, /CMS_STATE_ACTION/);
@@ -54,7 +54,7 @@ test("admin alerts derive only from authoritative operational sources", () => {
   assert.match(flightStatus, /monitoringSince/);
   assert.match(flightStatus, /currentUntil/);
   assert.match(flightStatus, /maximumFutureEventSkewMs/);
-  assert.match(flightStatus, /staleSnapshots: staleSnapshotIdentities\.length/);
+  assert.match(flightStatus, /monitoringStaleSnapshots: staleSnapshotIdentities\.length/);
   assert.match(flightStatus, /departureDate: \{ gte: monitoringSince \}/);
   assert.match(flightStatus, /status: "UPCOMING"/);
   assert.match(flightStatus, /notIn: \["ARRIVED", "CANCELLED"\]/);
