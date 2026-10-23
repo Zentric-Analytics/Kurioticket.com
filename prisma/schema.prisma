@@ -964,15 +964,20 @@ enum CmsContentRevisionAction {
   PUBLISHED
   HIDDEN
   ARCHIVED
+  RESTORED
+  ORDER_NORMALIZED
 }
 
 model CmsContentScope {
-  id          String         @id @default(cuid())
-  type        CmsContentType
-  market      String
-  locale      String
-  activatedAt DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  id                    String         @id @default(cuid())
+  type                  CmsContentType
+  market                String
+  locale                String
+  version               Int            @default(1)
+  legacyFallbackRetiredAt DateTime?
+  legacyFallbackRetiredByAdminUserId String?
+  activatedAt           DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
 
   @@unique([type, market, locale])
   @@index([updatedAt])
