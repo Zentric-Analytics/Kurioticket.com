@@ -33,6 +33,9 @@ test("admin alerts derive only from authoritative operational sources", () => {
   assert.match(emailDelivery, /MAX\(updated_at\)/);
   assert.match(emailDelivery, /latestProblemAt/);
   assert.match(core, /signals\.email\.latestProblemAt/);
+  assert.match(flightStatus, /monitoringFlightWhere/);
+  assert.match(flightStatus, /status: "UPCOMING"/);
+  assert.match(flightStatus, /notIn: \["ARRIVED", "CANCELLED"\]/);
   assert.match(flightStatus, /missingSnapshotFingerprint/);
   assert.match(flightStatus, /staleSnapshotFingerprint/);
   assert.match(core, /flight-status-missing:\$\{metrics\.missingSnapshotFingerprint\}/);
@@ -52,6 +55,9 @@ test("admin alerts distinguish telemetry outages from real healthy zeroes", () =
   assert.match(service, /state: "AVAILABLE"/);
   assert.match(service, /state: "OUTAGE"/);
   assert.match(service, /recoveryBoundary/);
+  assert.match(service, /sources\.map\(async \(source\)/);
+  assert.match(service, /findFirst/);
+  assert.doesNotMatch(service, /take: 100/);
   assert.match(core, /signals\.telemetryOutageTokens\.providers/);
   assert.match(core, /signals\.telemetryOutageTokens\.email/);
   assert.match(core, /signals\.telemetryOutageTokens\.cms/);
@@ -67,6 +73,7 @@ test("acknowledgements are per-admin, signal-specific, temporary, and must persi
   assert.match(ackApi, /getCurrentAdminAlertByKey/);
   assert.match(ackApi, /alert\.signalToken !== signalToken/);
   assert.match(acknowledgeButton, /JSON\.stringify\(\{ alertKey, signalToken \}\)/);
+  assert.match(acknowledgeButton, /Check your connection and try again/);
   assert.match(ackApi, /alert\.acknowledged/);
   assert.match(ackApi, /writeAdminAuditLog/);
   assert.match(ackApi, /if \(!persisted\)/);
