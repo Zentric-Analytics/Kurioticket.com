@@ -9,9 +9,12 @@ import {
   getRegionalHomeDiscoveryFareCandidates,
 } from "@/data/homeDiscovery";
 import {
-  getPopularDestinationAllowlist,
   getPopularDestinationFareCandidatesByRegion,
 } from "@/data/marketHomeContent";
+import {
+  getPublishedFlightRoutes,
+  getPublishedHomepageDestinations,
+} from "@/services/publicCmsContentService";
 import {
   getHomepageFareDateStrategy,
   HOMEPAGE_FARE_DEFAULT_CURRENCY,
@@ -31,7 +34,6 @@ const HOMEPAGE_DESTINATIONS = Object.fromEntries(
     },
   ]),
 ) as Record<string, { code: string; originCode: string }>;
-const MARKET_HOMEPAGE_DESTINATIONS = getPopularDestinationAllowlist();
 const MAX_POPULAR_DESTINATIONS = 32;
 const DISCOVER_PRICE_CAP = DEFAULT_HOME_DISCOVERY_ELIGIBLE_FLIGHT_ROUTE_COUNT;
 const HOME_DISCOVERY_ROUTES = getHomeDiscoveryRouteAllowlist();
@@ -73,7 +75,7 @@ export async function POST(request: Request) {
     readStringProperty(payload, "fallbackLevel"),
   );
   const fallbackUsed = readBooleanProperty(payload, "fallbackUsed");
-  const destinations = readDestinations(payload, origin, requestedRegionCode);
+  const destinations = await readDestinations(payload, origin, requestedRegionCode);
   const dateStrategy = getHomepageFareDateStrategy();
 
   if (!destinations.length) {
@@ -121,18 +123,34 @@ export async function POST(request: Request) {
   });
 }
 
-function readDestinations(
+async function readDestinations(
   payload: unknown,
   defaultOrigin: string,
   requestedRegionCode: string,
 ) {
   if (!isRecord(payload) || !Array.isArray(payload.destinations)) return [];
 
-  const allowedPopularDestinationIds = getMarketScopedPopularDestinationIds(
-    requestedRegionCode,
+  const [publishedPopular, publishedFlightRoutes] = await Promise.all([
+    getPublishedHomepageDestinations(requestedRegionCode),
+    getPublishedFlightRoutes(requestedRegionCode),
+  ]);
+  const allowedPopularDestinations = new Map(
+    publishedPopular.items.map((destination) => [
+      destination.id,
+      {
+        code: destination.destinationCode,
+        originCode: destination.originCode,
+      },
+    ]),
   );
-  const allowedDiscoveryRouteIds = getMarketScopedDiscoveryRouteIds(
-    requestedRegionCode,
+  const allowedDiscoveryRoutes = new Map(
+    publishedFlightRoutes.items.map((route) => [
+      route.id,
+      {
+        originCode: route.originCode,
+        destinationCode: route.destinationCode,
+      },
+    ]),
   );
   const seen = new Set<string>();
   const destinations: PriceDestination[] = [];
@@ -142,13 +160,12 @@ function readDestinations(
   for (const item of payload.destinations) {
     if (!isRecord(item)) continue;
 
-    const discoveryDestination = readDiscoveryDestination(item);
+    const discoveryDestination = readDiscoveryDestination(item, allowedDiscoveryRoutes);
 
     if (discoveryDestination) {
       if (
         discoveryCount >= DISCOVER_PRICE_CAP ||
         seen.has(discoveryDestination.id) ||
-        !allowedDiscoveryRouteIds.has(discoveryDestination.id) ||
         discoveryDestination.origin === discoveryDestination.code
       )
         continue;
@@ -159,13 +176,12 @@ function readDestinations(
       continue;
     }
 
-    const popularDestination = readPopularDestination(item, defaultOrigin);
+    const popularDestination = readPopularDestination(item, defaultOrigin, allowedPopularDestinations);
 
     if (!popularDestination) continue;
     if (
       popularCount >= MAX_POPULAR_DESTINATIONS ||
       seen.has(popularDestination.id) ||
-      !allowedPopularDestinationIds.has(popularDestination.id) ||
       popularDestination.origin === popularDestination.code
     )
       continue;
@@ -178,36 +194,18 @@ function readDestinations(
   return destinations;
 }
 
-function getMarketScopedPopularDestinationIds(regionCode: string) {
-  return new Set(
-    getPopularDestinationFareCandidatesByRegion(regionCode).items.map(
-      (destination) => destination.id,
-    ),
-  );
-}
-
-function getMarketScopedDiscoveryRouteIds(regionCode: string) {
-  const routes = [
-    ...getHomeDiscoveryFareCandidates(regionCode),
-    ...getRegionalHomeDiscoveryFareCandidates(regionCode),
-    ...(regionCode === GLOBAL_HOME_DISCOVERY_REGION
-      ? getGlobalHomeDiscoveryPriceRoutes()
-      : []),
-  ];
-
-  return new Set(routes.map((route) => route.id));
-}
-
 function readPopularDestination(
   item: Record<string, unknown>,
   defaultOrigin: string,
+  allowedPopularDestinations: Map<string, { code: string; originCode: string }>,
 ): PriceDestination | undefined {
   const id = typeof item.id === "string" ? item.id : "";
   const code = normalizeHomepageFareCode(
     typeof item.code === "string" ? item.code : undefined,
   );
 
-  const allowedDestination = getAllowedHomepageDestination(id);
+  const allowedDestination =
+    allowedPopularDestinations.get(id) ?? getAllowedHomepageDestination(id);
   const originCode = normalizeHomepageFareCode(
     typeof item.originCode === "string" ? item.originCode : undefined,
   );
@@ -226,6 +224,7 @@ function readPopularDestination(
 
 function readDiscoveryDestination(
   item: Record<string, unknown>,
+  allowedDiscoveryRoutes: Map<string, { originCode: string; destinationCode: string }>,
 ): PriceDestination | undefined {
   const id = typeof item.id === "string" ? item.id : "";
   const originCode = normalizeHomepageFareCode(
@@ -238,7 +237,7 @@ function readDiscoveryDestination(
         ? item.code
         : undefined,
   );
-  const allowedRoute = HOME_DISCOVERY_ROUTES.get(id);
+  const allowedRoute = allowedDiscoveryRoutes.get(id) ?? HOME_DISCOVERY_ROUTES.get(id);
 
   if (!allowedRoute || !originCode || !destinationCode) return undefined;
   if (
@@ -278,7 +277,7 @@ function readSafeFallbackLevel(value: string | undefined) {
 }
 
 function getAllowedHomepageDestination(value: string) {
-  return MARKET_HOMEPAGE_DESTINATIONS.get(value) ?? HOMEPAGE_DESTINATIONS[value];
+  return HOMEPAGE_DESTINATIONS[value];
 }
 
 function normalizeHomepageFareRegionCode(value: string | undefined) {
