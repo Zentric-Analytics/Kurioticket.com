@@ -29,7 +29,7 @@ export type FlightOperationsSnapshot = {
     origin: string | null;
     destination: string | null;
     resultCount: number;
-    latencyMs: number;
+    latencyMs: number | null;
     status: string;
     createdAt: string;
   }>;
