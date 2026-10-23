@@ -1,9 +1,10 @@
 import type { CarInventoryStatus, LocationBoundCarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
+import type { ProviderResult } from "@/lib/types";
 import { providerSearchWarnings } from "./providerSearchOutcome";
 import { searchKayakCars, type KayakRequestContext } from "./kayakMetasearchProvider";
 import { getCarSearchCohort, getProviderResult, rememberCarSearchCohort, rememberProviderResults } from "./providerResultCache";
 
-export type CarSearchResult={results:NormalizedCarResult[];status:CarInventoryStatus;warnings:string[];unsupported?:boolean};
+export type CarSearchResult={results:NormalizedCarResult[];status:CarInventoryStatus;warnings:string[];providerStatuses:ProviderResult<NormalizedCarResult>[];unsupported?:boolean};
 type CarSearchDependencies = {
   searchKayak: typeof searchKayakCars;
   rememberResults: typeof rememberProviderResults<NormalizedCarResult>;
@@ -15,7 +16,7 @@ const carSearchDependencies: CarSearchDependencies = {
   rememberCohort: rememberCarSearchCohort,
 };
 export async function searchCars(search:LocationBoundCarSearchParams,options:{kayak?:KayakRequestContext;requestId?:string;dependencies?:CarSearchDependencies}={}):Promise<CarSearchResult>{
-  if(!search.pickupLocation||!search.pickupDate||!search.dropoffDate)return{results:[],status:"invalid-search",warnings:[]};
+  if(!search.pickupLocation||!search.pickupDate||!search.dropoffDate)return{results:[],status:"invalid-search",warnings:[],providerStatuses:[]};
   const dependencies = options.dependencies ?? carSearchDependencies;
   const kayak = await dependencies.searchKayak(search, options.kayak);
   console.info("[car-search:provider-diagnostics]", {
@@ -38,7 +39,7 @@ export async function searchCars(search:LocationBoundCarSearchParams,options:{ka
     ? ["KAYAK could not search this pick-up time because it has already passed at the rental location. Choose a later pick-up time or date."]
     : providerSearchWarnings([kayak], kayak.results.length);
   // Static fixture prices must never become apparent rental availability.
-  return{results:kayak.results,status:!kayak.results.length && warnings.length ? "unavailable" : "available",warnings,
+  return{results:kayak.results,status:!kayak.results.length && warnings.length ? "unavailable" : "available",warnings,providerStatuses:[kayak],
     unsupported: !kayak.results.length && kayak.status === "skipped" && (kayak.errorReason === "unsupported_search" || kayak.errorReason === "unsupported_location")};
 }
 const KAYAK_CAR_ID_PREFIX = "kayak-sandbox:";

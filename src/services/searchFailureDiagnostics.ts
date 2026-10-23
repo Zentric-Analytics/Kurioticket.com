@@ -1,7 +1,7 @@
 export type SearchDiagnosticProduct = "FLIGHT" | "HOTEL" | "CAR" | "PACKAGE";
 
 export type SafeProviderIssue = {
-  code: "PROVIDER_TIMEOUT" | "RATE_LIMITED" | "AUTH_OR_CONFIG" | "UPSTREAM_UNAVAILABLE" | "UNSUPPORTED_SEARCH" | "PROVIDER_ERROR";
+  code: "PROVIDER_TIMEOUT" | "RATE_LIMITED" | "AUTH_OR_CONFIG" | "UPSTREAM_UNAVAILABLE" | "UNSUPPORTED_SEARCH" | "INVALID_SEARCH" | "PROVIDER_ERROR";
   label: string;
   retryable: boolean | null;
 };
@@ -19,6 +19,9 @@ export function classifyProviderIssue(message: string | null): SafeProviderIssue
   if (normalized.includes("unsupported_search") || normalized.includes("unsupported_location") || normalized.includes("unsupported_destination")) {
     return { code: "UNSUPPORTED_SEARCH", label: "Unsupported search / provider coverage", retryable: false };
   }
+  if (normalized.includes("pickup_time_past") || normalized.includes("invalid_search")) {
+    return { code: "INVALID_SEARCH", label: "Invalid search", retryable: false };
+  }
   if (normalized.includes("timeout") || normalized.includes("timed out") || normalized.includes("abort")) {
     return { code: "PROVIDER_TIMEOUT", label: "Provider timeout", retryable: true };
   }
@@ -32,6 +35,7 @@ export function classifyProviderIssue(message: string | null): SafeProviderIssue
     || normalized.includes("forbidden")
     || normalized.includes("credential")
     || normalized.includes("api key")
+    || normalized.includes("provider_auth_error")
   ) {
     return { code: "AUTH_OR_CONFIG", label: "Authentication / configuration", retryable: false };
   }
@@ -42,6 +46,9 @@ export function classifyProviderIssue(message: string | null): SafeProviderIssue
     || normalized.includes("504")
     || normalized.includes("unavailable")
     || normalized.includes("upstream")
+    || normalized.includes("provider_network_error")
+    || normalized.includes("provider_server_error")
+    || normalized.includes("provider_invalid_response")
   ) {
     return { code: "UPSTREAM_UNAVAILABLE", label: "Upstream unavailable", retryable: true };
   }

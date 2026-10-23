@@ -245,11 +245,13 @@ test("exact failed searches distinguish provider failure from internal processin
 });
 
 
-test("flight and hotel provider logs carry exact request correlation for future diagnostics", () => {
+test("flight, hotel, and car provider logs carry exact request correlation for future diagnostics", () => {
   const flightRoute = readFileSync("src/app/api/flights/search/route.ts", "utf8");
   const hotelRoute = readFileSync("src/app/api/hotels/search/route.ts", "utf8");
+  const carRoute = readFileSync("src/app/api/cars/search/route.ts", "utf8");
   assert.match(flightRoute, /service: "flight-search"[\s\S]*?metadata: \{ requestId \}/);
   assert.match(hotelRoute, /service: "hotel-search"[\s\S]*?metadata: \{ requestId \}/);
+  assert.match(carRoute, /service: "car-search"[\s\S]*?metadata: \{ requestId \}/);
 });
 
 test("search detail renders diagnostics without adding write actions", () => {
@@ -352,4 +354,93 @@ test("disabled unsupported searches preserve the safe unsupported reason", () =>
   assert.equal(diagnostic.reasonCode, "UNSUPPORTED_SEARCH");
   assert.equal(diagnostic.reason, "Unsupported search / provider coverage");
   assert.equal(diagnostic.retryable, false);
+});
+
+
+test("structured car provider errors map to safe diagnostic categories", () => {
+  const auth = __adminOperationalReadCoreTest.providerDiagnostic({
+    provider: "KAYAK sandbox",
+    status: "FAILED",
+    latencyMs: 20,
+    errorMessage: "provider_auth_error",
+    createdAt: new Date("2026-10-23T09:20:00.000Z"),
+  });
+  assert.equal(auth.reasonCode, "AUTH_OR_CONFIG");
+  assert.equal(auth.reason, "Authentication / configuration");
+  assert.equal(auth.retryable, false);
+
+  for (const code of ["provider_network_error", "provider_server_error", "provider_invalid_response"]) {
+    const diagnostic = __adminOperationalReadCoreTest.providerDiagnostic({
+      provider: "KAYAK sandbox",
+      status: "FAILED",
+      latencyMs: 30,
+      errorMessage: code,
+      createdAt: new Date("2026-10-23T09:21:00.000Z"),
+    });
+    assert.equal(diagnostic.reasonCode, "UPSTREAM_UNAVAILABLE");
+    assert.equal(diagnostic.reason, "Upstream unavailable");
+    assert.equal(diagnostic.retryable, true);
+  }
+});
+
+
+test("disabled car provider diagnostics distinguish invalid pickup time from unsupported coverage", () => {
+  const invalid = __adminOperationalReadCoreTest.providerDiagnostic({
+    provider: "KAYAK sandbox",
+    status: "DISABLED",
+    latencyMs: 5,
+    errorMessage: "pickup_time_past",
+    createdAt: new Date("2026-10-23T09:30:00.000Z"),
+  });
+  assert.equal(invalid.reasonCode, "INVALID_SEARCH");
+  assert.equal(invalid.reason, "Invalid search");
+  assert.equal(invalid.retryable, false);
+
+  const unsupported = __adminOperationalReadCoreTest.providerDiagnostic({
+    provider: "KAYAK sandbox",
+    status: "DISABLED",
+    latencyMs: 5,
+    errorMessage: "unsupported_location",
+    createdAt: new Date("2026-10-23T09:31:00.000Z"),
+  });
+  assert.equal(unsupported.reasonCode, "UNSUPPORTED_SEARCH");
+  assert.equal(unsupported.reason, "Unsupported search / provider coverage");
+  assert.equal(unsupported.retryable, false);
+});
+
+
+test("single-provider partial car results do not invent another successful provider", () => {
+  const row = {
+    id: "search_car_partial",
+    requestId: "request_car_partial",
+    userId: null,
+    visitorId: null,
+    type: "CAR",
+    origin: "LHR",
+    destination: "LHR",
+    checkIn: null,
+    checkOut: null,
+    query: {},
+    resultCount: 3,
+    latencyMs: 1400,
+    status: "PARTIAL",
+    createdAt: new Date("2026-10-23T09:40:00.000Z"),
+    visitor: null,
+    journeyEvents: [],
+  } as never;
+  const providers = [{
+    provider: "KAYAK sandbox",
+    status: "FAILED" as const,
+    reasonCode: "UPSTREAM_UNAVAILABLE",
+    reason: "Upstream unavailable",
+    retryable: true,
+    latencyMs: 1300,
+    observedAt: "2026-10-23T09:40:00.000Z",
+  }];
+
+  const diagnostic = __adminOperationalReadCoreTest.exactSearchDiagnostic(row, providers);
+  assert.equal(diagnostic.outcome, "PARTIAL");
+  assert.equal(diagnostic.reasonCode, "PROVIDER_PARTIAL_FAILURE");
+  assert.equal(diagnostic.reason, "KAYAK sandbox did not complete successfully, but partial results were returned.");
+  assert.equal(diagnostic.reason.includes("another provider"), false);
 });

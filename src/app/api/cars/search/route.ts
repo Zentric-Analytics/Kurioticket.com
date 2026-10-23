@@ -1,7 +1,7 @@
 import { after } from "next/server";
 import { resolveSearchRequestId } from "@/lib/search-journey";
 import { resolveRequestActivityIdentity } from "@/services/requestActivityIdentity";
-import { logSearchHistory, trackAnalyticsEvent } from "@/services/analyticsService";
+import { logProviderCall, logSearchHistory, trackAnalyticsEvent } from "@/services/analyticsService";
 import { validateCarsForm, type CarsFormValues } from "@/lib/cars/carsSearchUtils";
 import type { LocationBoundCarSearchParams } from "@/lib/cars/types";
 import { searchCars } from "@/services/travel/carAggregator";
@@ -43,7 +43,7 @@ export async function POST(request: Request) {
   const search = canonicalSearch(body);
   if (!search) return Response.json({ error: "Invalid car search parameters.", requestId }, { status: 400, headers: noStore });
   const started = performance.now();
-  const recordSearch = (resultCount: number, status: "SUCCESS" | "FAILED") => {
+  const recordSearch = (resultCount: number, status: "SUCCESS" | "PARTIAL" | "FAILED") => {
     after(async () => {
       try {
         const { userId, visitorId } = await resolveRequestActivityIdentity(request);
@@ -64,14 +64,66 @@ export async function POST(request: Request) {
     });
   };
   try {
-    const { results, status, warnings, unsupported } = await searchCars(search, { requestId, kayak: { clientIp: getKayakClientIp(request), userAgent: request.headers.get("user-agent") || undefined, signal: request.signal } });
+    const { results, status, warnings, providerStatuses, unsupported } = await searchCars(search, { requestId, kayak: { clientIp: getKayakClientIp(request), userAgent: request.headers.get("user-agent") || undefined, signal: request.signal } });
     const response = classifyCars(results, search, requestId, warnings);
-    if (unsupported) return Response.json({ ...response, code: "SEARCH_UNSUPPORTED", error: "The available providers cannot search these rental options. Please change your search." }, { status: 422, headers: noStore });
+    if (unsupported) {
+      recordSearch(0, "FAILED");
+      after(async () => {
+        try {
+          await Promise.all(providerStatuses.map((provider) =>
+            logProviderCall({
+              provider: provider.provider,
+              service: "car-search",
+              status: provider.status === "success" ? "SUCCESS" : provider.status === "skipped" ? "DISABLED" : "FAILED",
+              latencyMs: provider.latencyMs,
+              errorMessage: provider.errorReason || provider.error,
+              metadata: { requestId },
+            }),
+          ));
+        } catch {
+          // Provider diagnostics are optional and must not affect the search response.
+        }
+      });
+      return Response.json({ ...response, code: "SEARCH_UNSUPPORTED", error: "The available providers cannot search these rental options. Please change your search." }, { status: 422, headers: noStore });
+    }
     if (status === "unavailable") {
       recordSearch(0, "FAILED");
+      after(async () => {
+        try {
+          await Promise.all(providerStatuses.map((provider) =>
+            logProviderCall({
+              provider: provider.provider,
+              service: "car-search",
+              status: provider.status === "success" ? "SUCCESS" : provider.status === "skipped" ? "DISABLED" : "FAILED",
+              latencyMs: provider.latencyMs,
+              errorMessage: provider.errorReason || provider.error,
+              metadata: { requestId },
+            }),
+          ));
+        } catch {
+          // Provider diagnostics are optional and must not affect the search response.
+        }
+      });
       return Response.json({ ...response, error: "Car search is temporarily unavailable." }, { status: 503, headers: noStore });
     }
-    recordSearch(results.length, "SUCCESS");
+    const searchStatus = providerStatuses.some((provider) => provider.status === "failed") ? "PARTIAL" : "SUCCESS";
+    recordSearch(results.length, searchStatus);
+    after(async () => {
+      try {
+        await Promise.all(providerStatuses.map((provider) =>
+          logProviderCall({
+            provider: provider.provider,
+            service: "car-search",
+            status: provider.status === "success" ? "SUCCESS" : provider.status === "skipped" ? "DISABLED" : "FAILED",
+            latencyMs: provider.latencyMs,
+            errorMessage: provider.errorReason || provider.error,
+            metadata: { requestId },
+          }),
+        ));
+      } catch {
+        // Provider diagnostics are optional and must not affect the search response.
+      }
+    });
     return Response.json(response, { headers: noStore });
   } catch {
     recordSearch(0, "FAILED");

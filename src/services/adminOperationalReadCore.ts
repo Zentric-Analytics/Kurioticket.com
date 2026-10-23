@@ -266,13 +266,18 @@ function exactSearchDiagnostic(row: SearchRow, providers: AdminSearchProviderDia
   const issues = providers.filter((provider) => provider.status === "FAILED" || provider.status === "DEGRADED" || provider.status === "DISABLED");
   if (row.status === "PARTIAL") {
     const returnedResults = row.resultCount > 0;
+    const successfulProviders = providers.filter((provider) => provider.status === "SUCCESS");
     return {
       outcome: "PARTIAL",
       reasonCode: "PROVIDER_PARTIAL_FAILURE",
       reason: returnedResults
-        ? (issues.length === 1
-          ? issues[0].provider + " did not complete successfully while another provider returned results."
-          : "One or more providers did not complete successfully while another provider returned results.")
+        ? successfulProviders.length
+          ? (issues.length === 1
+            ? issues[0].provider + " did not complete successfully while another provider returned results."
+            : "One or more providers did not complete successfully while another provider returned results.")
+          : (issues.length === 1
+            ? issues[0].provider + " did not complete successfully, but partial results were returned."
+            : "One or more providers did not complete successfully, but partial results were returned.")
         : (issues.length === 1
           ? issues[0].provider + " did not complete successfully, and the search returned no matching results."
           : "One or more providers did not complete successfully, and the search returned no matching results."),
