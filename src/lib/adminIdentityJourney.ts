@@ -66,6 +66,16 @@ export function eligibleLinkedVisitorWhere(userId: string) {
   };
 }
 
+/** The journey details reader additionally requires a verified, active linked account.
+ * Keep this narrower scope for journey events without hiding direct legacy activity.
+ */
+export function eligibleJourneyLinkedVisitorWhere(userId: string) {
+  return {
+    ...eligibleLinkedVisitorWhere(userId),
+    currentUser: { is: { status: "ACTIVE" as const, emailVerified: { not: null } } },
+  };
+}
+
 function relatedRecordAllowed(
   record: { visitorId: string | null; userId: string | null } | null,
   journeyVisitorId: string,
