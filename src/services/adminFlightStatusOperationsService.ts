@@ -98,6 +98,9 @@ export async function getFlightStatusOperationsSnapshot(
 
   const now = new Date();
   const currentSince = new Date(now.getTime() - flightStatusLimits.freshnessWindowMs);
+  const currentUntil = new Date(
+    now.getTime() + flightStatusLimits.maximumFutureEventSkewMs,
+  );
   const monitoringSince = new Date(now.getTime() - 24 * 60 * 60_000);
   const confirmedFlightWhere: Prisma.MyTripWhereInput = {
     tripType: "FLIGHT",
@@ -147,7 +150,7 @@ export async function getFlightStatusOperationsSnapshot(
         }),
         tx.flightStatusSnapshot.count({
           where: {
-            observedAt: { gte: currentSince, lte: now },
+            observedAt: { gte: currentSince, lte: currentUntil },
             myTrip: { is: monitoringFlightWhere },
           },
         }),
@@ -237,7 +240,7 @@ export async function getFlightStatusOperationsSnapshot(
             ]),
           ),
           currentSnapshots,
-          staleSnapshots: Math.max(0, trackedFlights - currentSnapshots),
+          staleSnapshots: staleSnapshotIdentities.length,
           staleSnapshotFingerprint: fingerprintFlightStatusIdentities(
             staleSnapshotIdentities.map((snapshot) => [
               snapshot.myTripId,
