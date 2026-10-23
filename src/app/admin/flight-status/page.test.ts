@@ -39,13 +39,14 @@ test("flight status readiness is provider-bound and independent from database te
   assert.match(service, /credentialModel: "single_provider_bound_secret"/);
   assert.match(page, /readiness\.feedReady/);
   assert.match(page, /readiness\.providerName \|\| "None"/);
+  assert.match(page, /readiness\.webhookCredentialConfigured \? "Configured" : "Not configured"/);
   assert.match(page, /Single provider \+ dedicated secret/);
 });
 
 test("flight status operations shares the canonical freshness rule", () => {
   assert.match(service, /flightStatusFreshness/);
   assert.match(service, /flightStatusLimits\.freshnessWindowMs/);
-  assert.match(page, /Provider snapshots no more than 15 minutes old/);
+  assert.match(page, /Snapshots observed from now back through 15 minutes/);
   assert.match(statusService, /return age >= 0 && age <= freshnessWindowMs \? "current" : "stale"/);
 });
 
