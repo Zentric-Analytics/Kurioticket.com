@@ -2840,6 +2840,10 @@ function getHomeDiscoveryRouteKey(originCode: string, destinationCode: string) {
   return `${origin}-${destination}`;
 }
 
+export function getHomeDiscoveryContentMarketCode(regionCode?: string | null) {
+  return getHomeDiscoveryResolvedSourceCode(normalizeHomeDiscoveryRegionCode(regionCode));
+}
+
 function getHomeDiscoveryResolvedSourceCode(normalizedRegionCode: string) {
   if (homeDiscoveryByRegion[normalizedRegionCode]) return normalizedRegionCode;
 
