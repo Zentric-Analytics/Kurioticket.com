@@ -1,7 +1,7 @@
 import "server-only";
 
 import { Prisma } from "@/generated/prisma/client";
-import { eligibleGuestVisitorWhere, eligibleLinkedVisitorWhere, mergeAdminActivity, toAdminJourneyActivity, type ActivityRow, type IdentityKind } from "@/lib/adminIdentityJourney";
+import { eligibleGuestVisitorWhere, eligibleJourneyLinkedVisitorWhere, eligibleLinkedVisitorWhere, mergeAdminActivity, toAdminJourneyActivity, type ActivityRow, type IdentityKind } from "@/lib/adminIdentityJourney";
 import {
   ACTIVITY_FETCH_LIMIT, ACTIVITY_PAGE_SIZE, activityEnvironmentScope, activityWindow, allowedActivityStages,
   decodeActivityCursor, encodeActivityCursor, excludeCanonicalLegacyRows, legacyStageLabelMatchesQuery, sourceActivitySeek,
@@ -78,7 +78,7 @@ export async function loadAdminIdentityActivity(
       ? { userId: null, visitorId: id, visitor: { is: eligibleGuestVisitorWhere(id) } }
       : { userId: id };
     const journeyOwner: Prisma.JourneyEventWhereInput = {
-      journey: { visitor: kind === "guest" ? eligibleGuestVisitorWhere(id) : linked },
+      journey: { visitor: kind === "guest" ? eligibleGuestVisitorWhere(id) : eligibleJourneyLinkedVisitorWhere(id) },
     };
 
     const allowed = allowedActivityStages(filters);
