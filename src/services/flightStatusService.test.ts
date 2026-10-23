@@ -116,7 +116,15 @@ function payload() {
 function memoryDatabase() {
   /* eslint-disable @typescript-eslint/no-explicit-any -- deliberately small Prisma test double */
   let snapshot: any = null;
-  const trip = {
+  const trip: {
+    id: string;
+    userId: string;
+    tripType: "FLIGHT";
+    providerName: string;
+    partnerConversionId: string;
+    source: "PARTNER_CONFIRMATION" | "CONFIRMATION_IMPORT" | "MIGRATED_LEGACY";
+    partnerConfirmationOccurredAt: Date | null;
+  } = {
     id: "trip-1",
     userId: "user-a",
     tripType: "FLIGHT",
