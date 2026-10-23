@@ -12,6 +12,7 @@ test("flight admin is an operational overview rather than a readiness-only page"
   assert.match(flightsPage, /Recent flight searches/);
   assert.match(flightsPage, /View flight searches/);
   assert.match(flightsPage, /View flight journeys/);
+  assert.match(flightsPage, /search\.latencyMs === null \? "—"/);
   assert.doesNotMatch(flightsPage, /Flight Search Readiness/);
 });
 
