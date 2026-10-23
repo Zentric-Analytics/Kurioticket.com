@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { Search } from "lucide-react";
 import { AdminIdentityTable, type IdentityRow } from "@/components/admin/AdminIdentityTable";
+import { AdminDirectorySelect } from "@/components/admin/AdminDirectorySelect";
 import { Button } from "@/components/ui/Button";
 import { withOptionalDb } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/auth-guards";
@@ -12,6 +13,24 @@ export const metadata = { title: "Admin Users" };
 type PageProps = { searchParams?: Promise<{ q?: string; role?: string; status?: string; identity?: string; activity?: string; page?: string; sort?: string }> };
 // Fixed maximum per page; shorter results show every matching identity.
 const PAGE_SIZE = 100;
+const identityOptions = [
+  { value: "ALL", label: "All identities" },
+  { value: "REGISTERED", label: "Registered" },
+  { value: "GUEST", label: "Guests" },
+] as const;
+const roleOptions = [
+  { value: "ALL", label: "All roles" },
+  { value: "USER", label: "User" },
+  { value: "SUPPORT", label: "Support" },
+  { value: "ADMIN", label: "Admin" },
+] as const;
+const statusOptions = [
+  { value: "ALL", label: "All statuses" },
+  { value: "ACTIVE", label: "Active" },
+  { value: "SUSPENDED", label: "Suspended" },
+  { value: "PENDING_DELETION", label: "Pending deletion" },
+  { value: "DELETED", label: "Deleted" },
+] as const;
 
 export default async function AdminUsersPage({ searchParams }: PageProps) {
   const session = await requireAdminSession("/admin/users");
@@ -95,26 +114,17 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
     <div className="w-full min-w-0 bg-white">
       <h1 className="sr-only">Users</h1>
       <form action="/admin/users" method="get"
-        className="grid gap-3 border-b border-[#D8E1EC] pb-4 sm:grid-cols-2 lg:grid-cols-[minmax(230px,1fr)_166px_140px_166px_auto]">
+        className="grid gap-3 border-b border-[#D8E1EC] pb-3 sm:grid-cols-2 lg:grid-cols-[minmax(230px,1fr)_166px_140px_166px_auto]">
           <input type="hidden" name="sort" value={sort} />
           <div className="relative min-w-0 sm:col-span-2 lg:col-span-1">
-            <Search size={17} aria-hidden="true" className="pointer-events-none absolute left-3.5 top-3.5 text-[#475569]" />
+            <Search size={17} aria-hidden="true" className="pointer-events-none absolute left-3.5 top-3.5 text-[#94A3B8]" />
             <input name="q" aria-label="Search identities" maxLength={120} defaultValue={q}
               placeholder="Name, email, user ID or guest ID"
-              className="focus-ring h-11 w-full min-w-0 rounded-lg border border-[#D8E1EC] bg-white pl-10 pr-3 text-[13px] text-[#020617] placeholder:text-[#475569] transition hover:border-[#94A3B8]" />
+              className="focus-ring h-11 w-full min-w-0 rounded-lg border border-[#D8E1EC] bg-white pl-10 pr-3 text-[13px] text-[#020617] placeholder:font-normal placeholder:text-[#64748B] transition hover:border-[#94A3B8]" />
           </div>
-          <select name="identity" defaultValue={identity} aria-label="Identity type"
-            className="focus-ring h-11 min-w-0 cursor-pointer rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px] font-medium text-[#020617] transition hover:border-[#94A3B8]">
-            <option value="ALL">All identities</option><option value="REGISTERED">Registered</option><option value="GUEST">Guests</option>
-          </select>
-          <select name="role" defaultValue={role} aria-label="Account role"
-            className="focus-ring h-11 min-w-0 cursor-pointer rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px] font-medium text-[#020617] transition hover:border-[#94A3B8]">
-            <option value="ALL">All roles</option><option value="USER">User</option><option value="SUPPORT">Support</option><option value="ADMIN">Admin</option>
-          </select>
-          <select name="status" defaultValue={status} aria-label="Account status"
-            className="focus-ring h-11 min-w-0 cursor-pointer rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px] font-medium text-[#020617] transition hover:border-[#94A3B8]">
-            <option value="ALL">All statuses</option><option value="ACTIVE">Active</option><option value="SUSPENDED">Suspended</option><option value="PENDING_DELETION">Pending deletion</option><option value="DELETED">Deleted</option>
-          </select>
+          <AdminDirectorySelect key={`identity-${identity}`} name="identity" label="Identity type" value={identity} options={identityOptions} />
+          <AdminDirectorySelect key={`role-${role}`} name="role" label="Account role" value={role} options={roleOptions} />
+          <AdminDirectorySelect key={`status-${status}`} name="status" label="Account status" value={status} options={statusOptions} />
           <Button type="submit" className="h-11 whitespace-nowrap rounded-lg bg-[#004BB8] px-5 text-[13px] font-semibold hover:bg-[#004BB8]/90 sm:col-span-2 lg:col-span-1">Apply Filter</Button>
       </form>
       <AdminIdentityTable rows={result.rows} page={page} count={count} pageSize={PAGE_SIZE}

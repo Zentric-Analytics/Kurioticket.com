@@ -8,6 +8,9 @@ on:
       - src/components/admin/AdminIdentityTable.tsx
       - src/components/admin/AdminIdentitySort.tsx
       - src/components/admin/AdminIdentityTable.test.ts
+      - src/components/admin/AdminDirectorySelect.tsx
+      - src/components/admin/AdminDirectorySelect.test.ts
+      - src/components/admin/UserStatusActions.tsx
       - src/lib/adminIdentityDirectory*
       - src/lib/adminIdentityPagination*
       - qa/admin-identity-directory-design/**
@@ -34,7 +37,7 @@ jobs:
         env:
           JITI_TSCONFIG_PATHS: ./tsconfig.json
           JITI_JSX: "true"
-        run: node --test --import jiti/register src/lib/adminIdentityDirectory.test.ts src/lib/adminIdentityPagination.test.ts src/components/admin/AdminIdentityTable.test.ts
+        run: node --test --import jiti/register src/lib/adminIdentityDirectory.test.ts src/lib/adminIdentityPagination.test.ts src/components/admin/AdminIdentityTable.test.ts src/components/admin/AdminDirectorySelect.test.ts
       - run: npx playwright install --with-deps chromium
       - name: Verify real Admin directory components with synthetic before-and-after data
         run: node qa/admin-identity-directory-design/run.mjs
