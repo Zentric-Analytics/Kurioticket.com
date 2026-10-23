@@ -34,7 +34,8 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
   const prismaQuery = escapePrismaContainsQuery(q);
   const role = ["ALL", "USER", "SUPPORT", "ADMIN"].includes(params?.role || "") ? params!.role! : "ALL";
   const status = ["ALL", "ACTIVE", "SUSPENDED", "DELETED", "PENDING_DELETION"].includes(params?.status || "") ? params!.status! : "ALL";
-  const identity = ["ALL", "REGISTERED", "GUEST"].includes(params?.identity || "") ? params!.identity! : "ALL";
+  const identity: "ALL" | "REGISTERED" | "GUEST" =
+    params?.identity === "REGISTERED" || params?.identity === "GUEST" ? params.identity : "ALL";
   const sort = parseAdminIdentitySort(params?.sort);
   // Existing bookmarked drawer URLs remain functional; only the presentation changes.
   const legacy = /^(user|guest):([a-z0-9_-]{6,80})$/i.exec(params?.activity || "");
