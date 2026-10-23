@@ -82,6 +82,29 @@ export type AdminSearchRead = {
   createdAt: string;
 };
 
+export type AdminSearchProviderDiagnostic = {
+  provider: string;
+  status: "SUCCESS" | "DEGRADED" | "FAILED" | "DISABLED";
+  reasonCode: string | null;
+  reason: string;
+  retryable: boolean | null;
+  latencyMs: number | null;
+  observedAt: string;
+};
+
+export type AdminSearchDiagnostic = {
+  outcome: "SUCCESS" | "ZERO_RESULTS" | "PARTIAL" | "FAILED";
+  reasonCode: string;
+  reason: string;
+  retryable: boolean | null;
+  correlation: "exact" | "legacy_fallback";
+  providers: AdminSearchProviderDiagnostic[];
+};
+
+export type AdminSearchDetail = AdminSearchRead & {
+  diagnostic: AdminSearchDiagnostic;
+};
+
 export type AdminHandoffRead = {
   id: string;
   identity: AdminOperationalIdentity;
