@@ -6,9 +6,10 @@ import { getOptionalPrisma, getPrisma } from "@/lib/prisma";
 import { getOwnedFlightLocationCatalog } from "@/lib/locations/flightDiscovery";
 import { hotelDestinations } from "@/data/hotelDestinations";
 import { getHomeDiscoveryRouteAllowlist } from "@/data/homeDiscovery";
-import { getPopularDestinationAllowlist } from "@/data/marketHomeContent";
+import { getPopularDestinationAllowlist, popularDestinationsByMarket } from "@/data/marketHomeContent";
 import { resolveHotelDiscoveryIntent } from "@/lib/hotels/hotelDiscoveryIntent";
 import { HOMEPAGE_REFRESH_MARKET_CODES } from "@/lib/market/resolveMarket";
+import { imageRemotePatterns, matchesImagePattern } from "@/config/imagePatterns";
 
 export const cmsContentTypes = [
   "HOMEPAGE_DESTINATION",
@@ -88,11 +89,12 @@ const safeImage = z.string().trim().max(2000).refine((value) => {
   if (value.startsWith("/images/")) return true;
   try {
     const url = new URL(value);
-    return url.protocol === "https:";
+    return url.protocol === "https:"
+      && imageRemotePatterns.some((pattern) => matchesImagePattern(url, pattern));
   } catch {
     return false;
   }
-}, "Use an approved local image path or HTTPS image URL.");
+}, "Use an approved local image path or an image URL allowed by the application image configuration.");
 
 export const cmsPayloadSchemas = {
   HOMEPAGE_DESTINATION: z.object({
@@ -194,6 +196,16 @@ const supportedHomepageDestinationRoutes = new Set(
     (destination) => `${destination.originCode}:${destination.code}`,
   ),
 );
+const supportedHomepageDestinationEntries = new Set(
+  Object.values(popularDestinationsByMarket)
+    .flat()
+    .map((destination) => [
+      destination.city.trim().toLowerCase(),
+      destination.country.trim().toLowerCase(),
+      destination.originCode,
+      destination.code,
+    ].join("|")),
+);
 const supportedHomepageFlightRoutes = new Set(
   [...getHomeDiscoveryRouteAllowlist().values()].map(
     (route) => `${route.originCode}:${route.destinationCode}`,
@@ -222,7 +234,24 @@ function parsePayload(type: CmsContentType, payload: unknown) {
   }
 
   if (type === "HOMEPAGE_DESTINATION") {
-    const destination = parsed.data as { city: string; country: string };
+    const destination = parsed.data as {
+      city: string;
+      country: string;
+      originCode: string;
+      destinationCode: string;
+    };
+    const destinationKey = [
+      destination.city.trim().toLowerCase(),
+      destination.country.trim().toLowerCase(),
+      destination.originCode,
+      destination.destinationCode,
+    ].join("|");
+    if (!supportedHomepageDestinationEntries.has(destinationKey)) {
+      throw new CmsContentError(
+        "INVALID",
+        "Homepage destination label and fare route must match the same canonical Kurioticket destination entry.",
+      );
+    }
     if (!resolveHotelDiscoveryIntent(`${destination.city}, ${destination.country}`, "home-popular-stays")) {
       throw new CmsContentError(
         "INVALID",
