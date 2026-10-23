@@ -1,5 +1,7 @@
 import "server-only";
 
+import { createHash } from "node:crypto";
+
 import { getOptionalPrisma } from "@/lib/prisma";
 import { getSafeSystemStatus } from "@/lib/admin-data";
 import { getCmsHealthOverview } from "@/services/cmsHardeningService";
@@ -21,6 +23,12 @@ import {
 const ACK_ACTION = "ADMIN_ALERT_ACKNOWLEDGED";
 const ACK_TARGET_TYPE = "AdminOperationalAlert";
 const ACK_WINDOW_MS = 24 * 60 * 60 * 1_000;
+const CANDIDATE_CACHE_TTL_MS = 30_000;
+
+let candidateCache:
+  | { candidates: AdminAlertCandidate[]; expiresAt: number }
+  | null = null;
+let candidateRefreshPromise: Promise<AdminAlertCandidate[]> | null = null;
 
 type AckMetadata = {
   alertKey?: unknown;
@@ -42,10 +50,101 @@ export type AdminAlertSnapshot = {
   alerts: AdminOperationalAlert[];
 };
 
+export type AdminAlertSummary = Omit<AdminAlertSnapshot, "alerts">;
+
 export async function getAdminAlertSnapshot(
   adminUserId?: string | null,
   now = new Date(),
+  options: { forceRefreshCandidates?: boolean } = {},
 ): Promise<AdminAlertSnapshot> {
+  const alerts = await getAdminOperationalAlerts(
+    adminUserId,
+    now,
+    Boolean(options.forceRefreshCandidates),
+  );
+
+  return {
+    generatedAt: now.toISOString(),
+    activeCount: alerts.length,
+    unreadCount: alerts.filter((alert) => !alert.acknowledged).length,
+    criticalCount: alerts.filter((alert) => alert.severity === "CRITICAL").length,
+    warningCount: alerts.filter((alert) => alert.severity === "WARNING").length,
+    alerts,
+  };
+}
+
+export async function getAdminAlertSummary(
+  adminUserId?: string | null,
+  now = new Date(),
+): Promise<AdminAlertSummary> {
+  const alerts = await getAdminOperationalAlerts(adminUserId, now, false);
+  return {
+    generatedAt: now.toISOString(),
+    activeCount: alerts.length,
+    unreadCount: alerts.filter((alert) => !alert.acknowledged).length,
+    criticalCount: alerts.filter((alert) => alert.severity === "CRITICAL").length,
+    warningCount: alerts.filter((alert) => alert.severity === "WARNING").length,
+  };
+}
+
+export async function getAdminAlertUnreadCount(
+  adminUserId?: string | null,
+): Promise<number> {
+  return (await getAdminAlertSummary(adminUserId)).unreadCount;
+}
+
+async function getAdminOperationalAlerts(
+  adminUserId: string | null | undefined,
+  now: Date,
+  forceRefreshCandidates: boolean,
+): Promise<AdminOperationalAlert[]> {
+  const [candidates, acknowledgements] = await Promise.all([
+    readAdminAlertCandidates(now, forceRefreshCandidates),
+    adminUserId
+      ? readRecentAcknowledgements(adminUserId, now)
+      : Promise.resolve(new Map<string, string>()),
+  ]);
+
+  return candidates
+    .map((candidate) => {
+      const ackKey = acknowledgementKey(candidate.key, candidate.signalToken);
+      const acknowledgedAt = acknowledgements.get(ackKey) ?? null;
+      return {
+        ...candidate,
+        id: ackKey,
+        acknowledged: Boolean(acknowledgedAt),
+        acknowledgedAt,
+      };
+    })
+    .sort(compareAlerts);
+}
+
+async function readAdminAlertCandidates(
+  now: Date,
+  forceRefresh = false,
+): Promise<AdminAlertCandidate[]> {
+  if (!forceRefresh && candidateCache && candidateCache.expiresAt > now.getTime()) {
+    return candidateCache.candidates;
+  }
+
+  if (candidateRefreshPromise) return candidateRefreshPromise;
+
+  candidateRefreshPromise = loadAdminAlertCandidates()
+    .then((candidates) => {
+      candidateCache = {
+        candidates,
+        expiresAt: now.getTime() + CANDIDATE_CACHE_TTL_MS,
+      };
+      return candidates;
+    })
+    .finally(() => {
+      candidateRefreshPromise = null;
+    });
+
+  return candidateRefreshPromise;
+}
+
+async function loadAdminAlertCandidates(): Promise<AdminAlertCandidate[]> {
   const readiness = getFlightStatusIntegrationReadiness();
 
   const [system, providers, email, cms, homepageFares, flightStatusOperations] =
@@ -79,7 +178,12 @@ export async function getAdminAlertSnapshot(
     system,
     providers,
     email,
-    cms,
+    cms: cms
+      ? {
+          ...cms,
+          unhealthyFingerprint: cmsUnhealthyFingerprint(cms),
+        }
+      : null,
     homepageFares,
     flightStatus: {
       feedReady: readiness.feedReady,
@@ -87,38 +191,36 @@ export async function getAdminAlertSnapshot(
     },
   };
 
-  const candidates = deriveAdminAlertCandidates(signals);
-  const acknowledgements = adminUserId
-    ? await readRecentAcknowledgements(adminUserId, now)
-    : new Map<string, string>();
-
-  const alerts = candidates
-    .map((candidate) => {
-      const ackKey = acknowledgementKey(candidate.key, candidate.signalToken);
-      const acknowledgedAt = acknowledgements.get(ackKey) ?? null;
-      return {
-        ...candidate,
-        id: ackKey,
-        acknowledged: Boolean(acknowledgedAt),
-        acknowledgedAt,
-      };
-    })
-    .sort(compareAlerts);
-
-  return {
-    generatedAt: now.toISOString(),
-    activeCount: alerts.length,
-    unreadCount: alerts.filter((alert) => !alert.acknowledged).length,
-    criticalCount: alerts.filter((alert) => alert.severity === "CRITICAL").length,
-    warningCount: alerts.filter((alert) => alert.severity === "WARNING").length,
-    alerts,
-  };
+  return deriveAdminAlertCandidates(signals);
 }
 
-export async function getAdminAlertUnreadCount(
-  adminUserId?: string | null,
-): Promise<number> {
-  return (await getAdminAlertSnapshot(adminUserId)).unreadCount;
+function cmsUnhealthyFingerprint(
+  cms: Awaited<ReturnType<typeof getCmsHealthOverview>>,
+) {
+  const failures = cms.scopes
+    .filter((scope) => !scope.integrity.healthy)
+    .map((scope) => ({
+      scope: [scope.type, scope.market, scope.locale],
+      inactive: !scope.integrity.active,
+      invalidDrafts: scope.integrity.invalidDrafts
+        .map((item) => [item.id, item.key])
+        .sort(),
+      invalidPublished: scope.integrity.invalidPublished
+        .map((item) => [item.id, item.key])
+        .sort(),
+      orphanPublished: scope.integrity.orphanPublished
+        .map((item) => [item.id, item.key])
+        .sort(),
+      draftOrderCollisions: [...scope.integrity.draftOrderCollisions].sort(),
+      publishedOrderCollisions: [...scope.integrity.publishedOrderCollisions].sort(),
+      draftOrderNeedsNormalization: scope.integrity.draftOrderNeedsNormalization,
+    }))
+    .sort((a, b) => JSON.stringify(a.scope).localeCompare(JSON.stringify(b.scope)));
+
+  return createHash("sha256")
+    .update(JSON.stringify(failures))
+    .digest("hex")
+    .slice(0, 24);
 }
 
 export function acknowledgementKey(alertKey: string, signalToken: string) {
@@ -129,7 +231,9 @@ export async function getCurrentAdminAlertByKey(
   alertKey: string,
   adminUserId?: string | null,
 ) {
-  const snapshot = await getAdminAlertSnapshot(adminUserId);
+  const snapshot = await getAdminAlertSnapshot(adminUserId, new Date(), {
+    forceRefreshCandidates: true,
+  });
   return snapshot.alerts.find((alert) => alert.key === alertKey) ?? null;
 }
 
