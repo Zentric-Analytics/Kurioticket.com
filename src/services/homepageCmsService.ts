@@ -1,3 +1,5 @@
+import { randomUUID } from "node:crypto";
+
 import { Prisma } from "@/generated/prisma/client";
 
 import { hotelDestinations } from "@/data/hotelDestinations";
@@ -170,56 +172,62 @@ export async function initializeHomepageCms(actorInput: CmsActor) {
         type: "HOTEL_DESTINATION",
         market: "GLOBAL",
       });
-      let seededCount = 0;
-
       for (const row of seedRows) {
-        const item = await tx.cmsContentItem.create({
-          data: {
-            type: row.type,
-            key: row.key,
-            status: "PUBLISHED",
-            market: row.market,
-            locale: CONTENT_LOCALE,
-            sortOrder: row.sortOrder,
-            publishedMarket: row.market,
-            publishedLocale: CONTENT_LOCALE,
-            publishedSortOrder: row.sortOrder,
-            draftPayload: row.payload,
-            publishedPayload: row.payload,
-            version: 1,
-            publishedVersion: 1,
-            createdByAdminUserId: actor.id,
-            updatedByAdminUserId: actor.id,
-            publishedByAdminUserId: actor.id,
-            publishedAt: now,
-          },
-        });
-
-        await tx.cmsContentRevision.create({
-          data: {
-            contentItemId: item.id,
-            version: 1,
-            action: "PUBLISHED",
-            status: "PUBLISHED",
-            market: row.market,
-            locale: CONTENT_LOCALE,
-            sortOrder: row.sortOrder,
-            publishedMarket: row.market,
-            publishedLocale: CONTENT_LOCALE,
-            publishedSortOrder: row.sortOrder,
-            draftPayload: row.payload,
-            publishedPayload: row.payload,
-            actorUserId: actor.id,
-            actorEmail: actor.email,
-          },
-        });
-
         scopes.set(`${row.type}:${row.market}`, {
           type: row.type,
           market: row.market,
         });
-        seededCount += 1;
       }
+
+      const seededItems = seedRows.map((row) => ({
+        id: randomUUID(),
+        row,
+      }));
+
+      await tx.cmsContentItem.createMany({
+        data: seededItems.map(({ id, row }) => ({
+          id,
+          type: row.type,
+          key: row.key,
+          status: "PUBLISHED" as const,
+          market: row.market,
+          locale: CONTENT_LOCALE,
+          sortOrder: row.sortOrder,
+          publishedMarket: row.market,
+          publishedLocale: CONTENT_LOCALE,
+          publishedSortOrder: row.sortOrder,
+          draftPayload: row.payload,
+          publishedPayload: row.payload,
+          version: 1,
+          publishedVersion: 1,
+          createdByAdminUserId: actor.id,
+          updatedByAdminUserId: actor.id,
+          publishedByAdminUserId: actor.id,
+          publishedAt: now,
+        })),
+      });
+
+      await tx.cmsContentRevision.createMany({
+        data: seededItems.map(({ id: contentItemId, row }) => ({
+          id: randomUUID(),
+          contentItemId,
+          version: 1,
+          action: "PUBLISHED" as const,
+          status: "PUBLISHED" as const,
+          market: row.market,
+          locale: CONTENT_LOCALE,
+          sortOrder: row.sortOrder,
+          publishedMarket: row.market,
+          publishedLocale: CONTENT_LOCALE,
+          publishedSortOrder: row.sortOrder,
+          draftPayload: row.payload,
+          publishedPayload: row.payload,
+          actorUserId: actor.id,
+          actorEmail: actor.email,
+        })),
+      });
+
+      const seededCount = seededItems.length;
 
       await tx.cmsContentScope.createMany({
         data: [...scopes.values()].map((scope) => ({
