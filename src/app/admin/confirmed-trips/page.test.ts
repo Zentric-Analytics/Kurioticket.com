@@ -73,3 +73,11 @@ test("confirmation readiness remains available when database telemetry is unavai
   assert.match(page, /readiness\.webhookCredentialConfigured/);
   assert.doesNotMatch(page, /operations\?\.readiness\.webhookCredentialConfigured/);
 });
+
+
+test("confirmed-trip copy describes canonical confirmation state without overstating provider identity", () => {
+  assert.match(page, /Trips whose latest provider-confirmation timestamp is within 24h/);
+  assert.match(page, /Kurioticket accepted a valid signed partner confirmation and stored it as trusted trip data/);
+  assert.doesNotMatch(page, /approved external provider sent a valid signed confirmation/);
+  assert.match(page, /no accepted signed partner callback has created a confirmed My Trip/i);
+});
