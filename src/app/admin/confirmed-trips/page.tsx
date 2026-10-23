@@ -9,12 +9,12 @@ import {
   AdminStatusBadge,
 } from "@/components/admin/AdminPageShell";
 import { formatDateTime } from "@/lib/admin-data";
-import { getConfirmedTripsOperationsSnapshot } from "@/services/adminConfirmedTripsOperationsService";
+import { getConfirmedTripsIntegrationReadiness, getConfirmedTripsOperationsSnapshot } from "@/services/adminConfirmedTripsOperationsService";
 
 export const metadata = { title: "Admin Confirmed Trips" };
 
 export default async function AdminConfirmedTripsPage() {
-  const operations = await getConfirmedTripsOperationsSnapshot();
+  const [operations, readiness] = await Promise.all([getConfirmedTripsOperationsSnapshot(), Promise.resolve(getConfirmedTripsIntegrationReadiness())]);
 
   return (
     <AdminPageShell
@@ -52,8 +52,8 @@ export default async function AdminConfirmedTripsPage() {
                 The partner confirmation endpoint is server-to-server only. Current Duffel search and KAYAK sandbox integrations do not send booking confirmations.
               </p>
             </div>
-            <AdminStatusBadge tone={operations?.readiness.webhookCredentialConfigured ? "good" : "warn"}>
-              {operations?.readiness.webhookCredentialConfigured ? "Webhook credential configured" : "Webhook credential not configured"}
+            <AdminStatusBadge tone={readiness.webhookCredentialConfigured ? "good" : "warn"}>
+              {readiness.webhookCredentialConfigured ? "Webhook credential configured" : "Webhook credential not configured"}
             </AdminStatusBadge>
           </div>
           <div className="mt-4 grid gap-3 md:grid-cols-3">
