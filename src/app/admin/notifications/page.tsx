@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import {
   AdminEmptyState,
@@ -9,6 +10,7 @@ import {
 } from "@/components/admin/AdminPageShell";
 import { AdminAlertAcknowledgeButton } from "@/components/admin/AdminAlertAcknowledgeButton";
 import { requireAdminSession } from "@/lib/auth-guards";
+import { isProtectedAdminEmail } from "@/lib/admin";
 import { getAdminAlertSnapshot } from "@/services/adminAlertService";
 
 export const metadata = { title: "Admin Notifications & Alerts" };
@@ -33,6 +35,8 @@ function formatDateTime(value: string | null) {
 
 export default async function AdminNotificationsPage() {
   const session = await requireAdminSession("/admin/notifications");
+  if (!isProtectedAdminEmail(session.user.email)) redirect("/dashboard");
+
   const snapshot = await getAdminAlertSnapshot(session.user.id);
 
   return (
@@ -136,6 +140,7 @@ export default async function AdminNotificationsPage() {
                   </Link>
                   <AdminAlertAcknowledgeButton
                     alertKey={alert.key}
+                    signalToken={alert.signalToken}
                     acknowledged={alert.acknowledged}
                   />
                 </div>
