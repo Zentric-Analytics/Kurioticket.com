@@ -7,9 +7,11 @@ import { AdminButton } from "@/components/admin/AdminPageShell";
 
 export function AdminAlertAcknowledgeButton({
   alertKey,
+  signalToken,
   acknowledged,
 }: {
   alertKey: string;
+  signalToken: string;
   acknowledged: boolean;
 }) {
   const router = useRouter();
@@ -32,7 +34,7 @@ export function AdminAlertAcknowledgeButton({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ alertKey }),
+        body: JSON.stringify({ alertKey, signalToken }),
       });
       const body = await response.json().catch(() => ({}));
 
