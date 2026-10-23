@@ -86,6 +86,7 @@ jobs:
           'await import("./src/services/cmsContentFoundation.test.ts");
           await import("./src/services/faqCmsPhase2.test.ts");
           await import("./src/services/homepageCmsPhase3.test.ts");
+          await import("./src/services/homepageCmsInitializationFix.test.ts");
           await import("./src/services/cmsProductionHardening.test.ts");
           await import("./src/app/admin/content/page.test.ts");'
 
