@@ -270,6 +270,21 @@ function parsePayload(type: CmsContentType, payload: unknown) {
   return parsed.data as Prisma.InputJsonValue;
 }
 
+
+export function validateCmsPayloadIntegrity(type: CmsContentType, payload: unknown) {
+  try {
+    parsePayload(type, payload);
+    return { valid: true as const, issues: null };
+  } catch (error) {
+    if (error instanceof CmsContentError) {
+      return {
+        valid: false as const,
+        issues: error.issues ?? { message: error.message },
+      };
+    }
+    throw error;
+  }
+
 function normalizeActor(actor: CmsActor) {
   return { ...actor, email: actor.email.trim().toLowerCase() };
 }
@@ -765,7 +780,10 @@ export async function readPublishedCmsContent<T>(
     const [scope, rows] = await Promise.all([
       db.cmsContentScope.findUnique({
         where: { type_market_locale: { type, market, locale } },
-        select: { id: true },
+        select: {
+          id: true,
+          legacyFallbackRetiredAt: true,
+        },
       }),
       db.cmsContentItem.findMany({
       where: {
@@ -784,8 +802,10 @@ export async function readPublishedCmsContent<T>(
     for (const row of visibleRows) {
       const parsed = cmsPayloadSchemas[type].safeParse(row.publishedPayload);
       if (!parsed.success) {
-        console.error("[cms:public-read-invalid-payload]", { type });
-        return { source: "fallback", items: options.fallback() };
+        console.error("[cms:public-read-invalid-payload]", { type, market, locale });
+        return scope?.legacyFallbackRetiredAt
+          ? { source: "cms", items: [] }
+          : { source: "fallback", items: options.fallback() };
       }
       items.push({ id: row.key, ...(parsed.data as Record<string, unknown>) } as T);
     }
@@ -807,6 +827,9 @@ export async function getCmsContentScopeSummary(
     return {
       available: false,
       active: false,
+      scopeVersion: null,
+      legacyFallbackRetired: false,
+      legacyFallbackRetiredAt: null,
       total: 0,
       draft: 0,
       published: 0,
@@ -828,7 +851,12 @@ export async function getCmsContentScopeSummary(
           locale: parsedLocale.data,
         },
       },
-      select: { id: true },
+      select: {
+        id: true,
+        version: true,
+        legacyFallbackRetiredAt: true,
+        legacyFallbackRetiredByAdminUserId: true,
+      },
     }),
     db.cmsContentItem.groupBy({
       by: ["status"],
