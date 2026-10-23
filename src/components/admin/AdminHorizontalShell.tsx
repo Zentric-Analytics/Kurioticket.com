@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Bell, ChevronDown, LogOut, Menu, Search, Settings, ShieldCheck, X, Building2 } from "lucide-react";
+import { Bell, ChevronDown, LogOut, Menu, Settings, ShieldCheck, X, Building2 } from "lucide-react";
 import { getAdminHeaderGroups, isAdminNavItemActive, type AdminRole } from "@/lib/adminNavigation";
 import { KurioticketLogo } from "@/components/brand/KurioticketLogo";
+import { AdminWorkspaceSearchProvider, AdminSearchTrigger, AdminSearchHeader, AdminSearchContent } from "./AdminWorkspaceSearch";
 
 type HeaderGroup = ReturnType<typeof getAdminHeaderGroups>[number];
 type HeaderEntry = HeaderGroup["links"][number];
@@ -51,7 +52,6 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
   const role: AdminRole = adminRole === "SUPPORT" || adminRole === "USER" ? adminRole : "ADMIN";
   const groups = getAdminHeaderGroups(role, showPreviewTesters);
   const pathname = usePathname();
-  const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [unreadAlertCount, setUnreadAlertCount] = useState<number | null>(null);
@@ -59,14 +59,11 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
   const initial = name.slice(0, 1).toUpperCase();
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
-        event.preventDefault(); router.push("/admin/search");
-      }
       if (event.key === "Escape") { setProfileOpen(false); setMobileOpen(false); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [router]);
+  }, []);
   useEffect(() => {
     let cancelled = false;
     let requestInFlight = false;
@@ -114,8 +111,9 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
   // Keep other Admin routes, including Journeys and Search details, unchanged.
   const usersDirectory = pathname === "/admin/users" || pathname === "/admin/users/";
   const userActivity = /^\/admin\/users\/(?:user|guest)\/[a-z0-9_-]{6,80}\/activity\/?$/i.test(pathname);
-  return <div className={"min-h-screen text-slate-950 " + (usersDirectory || userActivity ? "bg-white" : "bg-[#f1f5fb]")}>
+  return <AdminWorkspaceSearchProvider account={adminEmail || "admin"}><div className={"min-h-screen text-slate-950 " + (usersDirectory || userActivity ? "bg-white" : "bg-[#f1f5fb]")}>
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
+      <AdminSearchHeader>
       <div className="mx-auto flex h-16 w-full max-w-[1920px] items-center justify-between gap-4 pl-2 pr-4 sm:pr-6 lg:pr-10">
         <div className="flex min-w-0 items-center gap-2">
           {/* Official Kurioticket mark stays in the top-left header beside the title at every width. */}
@@ -129,11 +127,7 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-          <Link href="/admin/search" aria-label="Search Kurioticket admin"
-            className="inline-flex h-10 items-center gap-3 rounded-xl border border-[#D8E1EC] bg-[#F5F7FB] px-3 text-sm font-medium text-[#475569] transition-colors hover:border-[#C4CFDC] hover:bg-[#F3F6FA] sm:w-52 sm:justify-between lg:w-60">
-            <span className="inline-flex items-center gap-2"><Search size={17} /><span className="hidden sm:inline">Search admin</span></span>
-            <kbd className="hidden rounded border border-slate-200 bg-white px-1.5 py-0.5 text-xs text-slate-500 sm:inline">Ctrl K</kbd>
-          </Link>
+          <AdminSearchTrigger />
           <Link
             href="/admin/notifications"
             aria-label={unreadAlertCount && unreadAlertCount > 0 ? `${unreadAlertCount} unread admin alerts` : "Admin notifications and alerts"}
@@ -167,8 +161,9 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
         </div>
       </div>
       {mobileOpen ? <div className="max-h-[70vh] overflow-y-auto border-t border-slate-100 bg-white min-[1100px]:hidden"><Navigation groups={groups} pathname={pathname} mobile close={() => setMobileOpen(false)} /></div> : null}
+      </AdminSearchHeader>
     </header>
-    <main className="mx-auto w-full max-w-[1920px] px-4 py-5 sm:px-6 lg:px-10">{children}</main>
+    <main className="mx-auto w-full max-w-[1920px] px-4 py-5 sm:px-6 lg:px-10"><AdminSearchContent>{children}</AdminSearchContent></main>
 
-  </div>;
+  </div></AdminWorkspaceSearchProvider>;
 }
