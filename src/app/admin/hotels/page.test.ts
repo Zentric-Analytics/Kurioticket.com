@@ -55,3 +55,32 @@ test("hotel operations does not invent unavailable telemetry", () => {
   assert.match(service, /if \(!db\) return null/);
   assert.match(service, /catch \(error\)[\s\S]*return null/);
 });
+
+
+test("hotel operations exposes focused search, destination, and provider exceptions", () => {
+  assert.match(hotelsPage, /Search exceptions/);
+  assert.match(hotelsPage, /Destinations needing attention/);
+  assert.match(hotelsPage, /Provider exceptions/);
+  assert.match(hotelsPage, /Failed searches/);
+  assert.match(hotelsPage, /Partial searches/);
+  assert.match(hotelsPage, /Raw provider error payloads are not exposed/);
+  assert.match(service, /exceptionSearches/);
+  assert.match(service, /destinationIssues/);
+  assert.match(service, /providerIssues/);
+  assert.match(service, /status: \{ in: \["FAILED", "DEGRADED", "DISABLED"\] \}/);
+});
+
+test("hotel exception diagnostics keep valid zero results distinct from failure", () => {
+  assert.match(service, /status: "SUCCESS", resultCount: 0/);
+  assert.match(service, /search\.status === "FAILED" \? "FAILED" : search\.status === "PARTIAL" \? "PARTIAL" : "ZERO_RESULTS"/);
+  assert.match(hotelsPage, /search\.kind\.replaceAll\("_", " "\)/);
+});
+
+test("hotel provider exceptions classify disabled coverage without exposing raw errors", () => {
+  assert.match(service, /hotelProviderIssueCategory\(issue\.status, issue\.errorMessage\)/);
+  assert.match(service, /if \(status === "DISABLED"\)/);
+  assert.match(service, /Unsupported search \/ provider coverage/);
+  assert.match(service, /Provider disabled \/ skipped/);
+  assert.match(service, /classifyProviderIssue\(message\)\.label/);
+  assert.doesNotMatch(hotelsPage, /errorMessage/);
+});
