@@ -92,6 +92,7 @@ export async function POST(request: Request) {
                 provider.status === "success" ? "SUCCESS" : provider.status === "skipped" ? "DISABLED" : "FAILED",
               latencyMs: provider.latencyMs,
               errorMessage: provider.error,
+              metadata: { requestId },
             }),
           ),
         ]);
@@ -168,6 +169,7 @@ export async function POST(request: Request) {
           provider.status === "success" ? "SUCCESS" : provider.status === "skipped" ? "DISABLED" : "FAILED",
         latencyMs: provider.latencyMs,
         errorMessage: provider.error,
+        metadata: { requestId },
       }),
     ),
     ]);
