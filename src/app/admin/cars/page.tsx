@@ -97,7 +97,7 @@ export default async function AdminCarsPage() {
             <AdminStatusBadge tone="warn">Not recorded yet</AdminStatusBadge>
           </div>
           <p className="mt-3 text-sm leading-6 text-slate-600">
-            Until that telemetry exists, this page will not invent provider call counts, provider failure rates, or provider latency. Pre-search rejections such as feature-disabled, invalid-request, and unsupported-coverage responses currently return before SearchHistory recording, so they are not included in these metrics. Search Detail can still show recorded car-search outcomes, but exact provider-level car diagnostics are unavailable.
+            Until that telemetry exists, this page will not invent provider call counts, provider failure rates, or provider latency. Feature-disabled, invalid-request, and unsupported-coverage responses currently return before SearchHistory recording, so they are not included in these metrics. Search Detail can still show recorded car-search outcomes, but exact provider-level car diagnostics are unavailable.
           </p>
         </AdminSectionCard>
 
