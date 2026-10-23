@@ -61,6 +61,10 @@ test("fallback retirement is guarded by production reauthentication and integrit
   assert.match(hardeningService, /Legacy fallback cannot be retired while published order collisions exist/);
   assert.match(contentService, /scope\?\.legacyFallbackRetiredAt/);
   assert.match(contentService, /\{ source: "cms", items: \[\] \}/);
+  assert.match(contentService, /reason: "storage_unavailable"/);
+  assert.match(contentService, /reason: "scope_uninitialized"/);
+  assert.match(contentService, /reason: "invalid_published_payload"/);
+  assert.match(contentService, /reason: "read_error"/);
 });
 
 test("CMS health reports integrity, ordering, fallback and unpublished changes", () => {
