@@ -188,3 +188,44 @@ export function groupActivityRows(rows: ActivityRow[]): ActivityGroup[] {
   }
   return [...groups.values()];
 }
+
+
+/**
+ * Visually fold a run of consecutive, identically described offer-selection
+ * events within a single recorded journey. This is PRESENTATION ONLY: each
+ * recorded row stays in order, with its own timestamp and deep link. Never
+ * combine events across journeys, providers, products or descriptions, and
+ * never collapse unlinked/unknown offers.
+ */
+export type ActivityDisplayItem =
+  | { kind: "event"; row: ActivityRow }
+  | { kind: "selection_run"; rows: ActivityRow[] };
+
+export function compactActivityDisplayRows(rows: ActivityRow[]): ActivityDisplayItem[] {
+  const result: ActivityDisplayItem[] = [];
+  for (let index = 0; index < rows.length;) {
+    const first = rows[index];
+    if (first.stage !== "OFFER_SELECTED" || !first.journeyId) {
+      result.push({ kind: "event", row: first });
+      index++;
+      continue;
+    }
+    const selected = [first];
+    let next = index + 1;
+    while (next < rows.length) {
+      const event = rows[next];
+      if (event.stage !== "OFFER_SELECTED" || event.journeyId !== first.journeyId
+        || event.product !== first.product || event.provider !== first.provider
+        || event.detail !== first.detail || event.label !== first.label) break;
+      selected.push(event);
+      next++;
+    }
+    if (selected.length >= 3) {
+      result.push({ kind: "selection_run", rows: selected });
+    } else {
+      for (const row of selected) result.push({ kind: "event", row });
+    }
+    index = next;
+  }
+  return result;
+}
