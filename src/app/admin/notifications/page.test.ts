@@ -37,9 +37,19 @@ test("admin alerts derive only from authoritative operational sources", () => {
   assert.match(service, /createHash\("sha256"\)/);
   assert.match(emailDelivery, /MAX\(updated_at\)/);
   assert.match(emailDelivery, /latestProblemAt/);
-  assert.match(core, /signals\.email\.latestProblemAt/);
+  assert.match(emailDelivery, /latestAdverseAt/);
+  assert.match(emailDelivery, /email_events/);
+  assert.match(core, /signals\.email\.latestAdverseAt/);
+  assert.match(core, /email-delivery:\$\{signalAt \?\? "problem-present"\}/);
+  assert.doesNotMatch(
+    core,
+    /signals\.email\.failures,\s*signals\.email\.delayed,\s*signalAt/,
+  );
   assert.match(flightStatus, /monitoringFlightWhere/);
   assert.match(flightStatus, /monitoringSince/);
+  assert.match(flightStatus, /currentUntil/);
+  assert.match(flightStatus, /maximumFutureEventSkewMs/);
+  assert.match(flightStatus, /staleSnapshots: staleSnapshotIdentities\.length/);
   assert.match(flightStatus, /departureDate: \{ gte: monitoringSince \}/);
   assert.match(flightStatus, /status: "UPCOMING"/);
   assert.match(flightStatus, /notIn: \["ARRIVED", "CANCELLED"\]/);
