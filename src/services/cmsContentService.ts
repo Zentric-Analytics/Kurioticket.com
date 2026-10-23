@@ -3,6 +3,8 @@ import { z } from "zod";
 import { Prisma } from "@/generated/prisma/client";
 import type { CmsContentStatus, CmsContentType } from "@/generated/prisma/enums";
 import { getOptionalPrisma, getPrisma } from "@/lib/prisma";
+import { getOwnedFlightLocationCatalog } from "@/lib/locations/flightDiscovery";
+import { hotelDestinations } from "@/data/hotelDestinations";
 import { HOMEPAGE_REFRESH_MARKET_CODES } from "@/lib/market/resolveMarket";
 
 export const cmsContentTypes = [
@@ -118,7 +120,7 @@ export const cmsPayloadSchemas = {
     countryCode,
     kind: z.enum(["city", "district", "landmark", "airport-area", "custom"]),
     searchValue: printable(160),
-    canonicalId: printable(160).optional(),
+    canonicalId: printable(160),
     image: safeImage.optional(),
     imageAlt: printable(240).optional(),
   }).strict(),
@@ -176,9 +178,33 @@ export class CmsContentError extends Error {
   }
 }
 
+const ownedFlightAirportCodes = new Set(
+  getOwnedFlightLocationCatalog()
+    .map((location) => location.codes?.iata)
+    .filter((code): code is string => Boolean(code)),
+);
+const canonicalHotelDestinationIds = new Set(
+  hotelDestinations.map((destination) => `hotel:${destination.id}`),
+);
+
 function parsePayload(type: CmsContentType, payload: unknown) {
   const parsed = cmsPayloadSchemas[type].safeParse(payload);
   if (!parsed.success) throw new CmsContentError("INVALID", "Content payload is invalid.", parsed.error.flatten());
+
+  if (type === "HOMEPAGE_DESTINATION" || type === "FLIGHT_ROUTE") {
+    const route = parsed.data as { originCode: string; destinationCode: string };
+    if (!ownedFlightAirportCodes.has(route.originCode) || !ownedFlightAirportCodes.has(route.destinationCode)) {
+      throw new CmsContentError("INVALID", "Homepage flight content must use airport codes from the owned Kurioticket flight catalog.");
+    }
+  }
+
+  if (type === "HOTEL_DESTINATION") {
+    const hotel = parsed.data as { canonicalId: string };
+    if (!canonicalHotelDestinationIds.has(hotel.canonicalId)) {
+      throw new CmsContentError("INVALID", "Hotel destination must use a canonical Kurioticket hotel destination id.");
+    }
+  }
+
   return parsed.data as Prisma.InputJsonValue;
 }
 
