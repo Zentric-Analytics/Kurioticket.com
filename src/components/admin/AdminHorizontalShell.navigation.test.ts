@@ -45,3 +45,12 @@ test("navigation keeps parent workspaces visible while child routes stay nested"
   // Current dev intentionally hides Admin navigation from support roles.
   assert.deepEqual(getAdminHeaderGroups("SUPPORT"), []);
 });
+
+
+test("navbar search opens the dedicated global-search workspace", () => {
+  assert.match(shell, /<Link href="\/admin\/search" aria-label="Search Kurioticket admin"/);
+  assert.match(shell, /router\.push\("\/admin\/search"\)/);
+  assert.doesNotMatch(shell, /Search navigation only/);
+  assert.doesNotMatch(shell, /aria-label="Search admin pages"/);
+  assert.doesNotMatch(shell, /searchOpen/);
+});
