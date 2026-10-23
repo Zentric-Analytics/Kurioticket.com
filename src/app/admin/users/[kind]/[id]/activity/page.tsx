@@ -10,6 +10,7 @@ import { AdminEmptyState } from "@/components/admin/AdminPageShell";
 import { Card } from "@/components/ui/Card";
 import { requireAdminSession } from "@/lib/auth-guards";
 import { activityHref, groupActivityRows, parseActivityFilters, relatedJourneysWindow, validActivityIdentity, type ActivityFilters } from "@/lib/adminIdentityActivity";
+import { ADMIN_IDENTITY_SORTS } from "@/lib/adminIdentityDirectory";
 import type { ActivityRow } from "@/lib/adminIdentityJourney";
 import { loadAdminIdentityActivity } from "@/services/adminIdentityActivityService";
 
@@ -48,11 +49,12 @@ function safeDirectoryHref(raw: RawQuery) {
   const candidates = new URLSearchParams(saved);
   const safe = new URLSearchParams();
   const allowed = {
-    q: 120, role: 30, status: 30, identity: 30, page: 8,
+    q: 120, role: 30, status: 30, identity: 30, sort: 20, page: 8,
   } as const;
   for (const [key, max] of Object.entries(allowed)) {
     const value = candidates.get(key);
-    if (value && value.length <= max && !/[\u0000-\u001f\u007f]/.test(value)) safe.set(key, value);
+    if (value && value.length <= max && !/[\u0000-\u001f\u007f]/.test(value)
+      && (key !== "sort" || ADMIN_IDENTITY_SORTS.includes(value as (typeof ADMIN_IDENTITY_SORTS)[number]))) safe.set(key, value);
   }
   return "/admin/users" + (safe.size ? "?" + safe.toString() : "");
 }
