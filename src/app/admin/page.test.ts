@@ -111,18 +111,17 @@ test("range controls remain bounded and refresh does not claim a live feed", () 
 
 
 test("recent activity is disclosed as consented observation rather than a live-user claim", () => {
-  assert.match(display, /data\\.visitorActivity\\.observedVisitorIdentities/);
-  assert.match(display, /Recently observed visitors \\(5 min\\)/);
-  assert.match(display, /not a verified count of everyone currently online/);
-  assert.doesNotMatch(display, /hint="Currently active"/);
+  assert.ok(display.includes("data.visitorActivity.observedVisitorIdentities"));
+  assert.ok(display.includes("Recently observed visitors (5 min)"));
+  assert.ok(display.includes("not a verified count of everyone currently online"));
+  assert.ok(!display.includes('hint="Currently active"'));
 });
-
 
 test("canonical overview reads consented recent visitor identities without overwriting account status", () => {
   const service = readFileSync("src/services/adminOverviewService.ts", "utf8");
-  assert.match(service, /tx\\.visitor\\.count\\(/);
-  assert.match(service, /consentStatus: "GRANTED"/);
-  assert.match(service, /trackingDisabledAt: null/);
-  assert.match(service, /lastSeenAt: \\{ gte: recentVisitorCutoff, lte: now \\}/);
-  assert.match(service, /active: userCount\\.get\\("ACTIVE"\\)/);
+  assert.ok(service.includes("tx.visitor.count("));
+  assert.ok(service.includes('consentStatus: "GRANTED"'));
+  assert.ok(service.includes("trackingDisabledAt: null"));
+  assert.ok(service.includes("lastSeenAt: { gte: recentVisitorCutoff, lte: now }"));
+  assert.ok(service.includes('active: userCount.get("ACTIVE")'));
 });
