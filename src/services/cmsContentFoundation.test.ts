@@ -70,6 +70,10 @@ test("CMS mutations use optimistic concurrency and transactional revision plus a
   assert.match(service, /getOwnedFlightLocationCatalog/);
   assert.match(service, /canonicalHotelDestinationIds/);
   assert.match(service, /resolveHotelDiscoveryIntent/);
+  assert.match(service, /imageRemotePatterns\.some/);
+  assert.match(service, /matchesImagePattern/);
+  assert.match(service, /supportedHomepageDestinationEntries/);
+  assert.match(service, /Homepage destination label and fare route must match/);
   assert.match(service, /error\.code === "P2034"/);
   assert.match(service, /Content changed concurrently/);
   assert.match(service, /encodeCmsListCursor/);
