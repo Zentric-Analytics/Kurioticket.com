@@ -77,24 +77,27 @@ export type AdminHeaderGroup = {
 };
 
 /**
- * Keep the compact header in sync with the existing sidebar hierarchy and
- * role-aware navigation. Secondary pages remain children of their parents.
+ * Render each permitted module as a direct header link, even where sidebar
+ * parentHref metadata is retained. Group unlisted pages beside their parent.
  */
 export function getAdminHeaderGroups(role: AdminRole, includePreviewTesters = false): AdminHeaderGroup[] {
   const visible = getAdminNavForRole(role, includePreviewTesters);
   const byHref = new Map(visible.map((item) => [item.href, item]));
   const groupedHrefs = new Set<string>(adminNavigationGroups.flatMap((group) => group.hrefs));
-  const extraTopLevel = visible.filter((item) => !groupedHrefs.has(item.href) && !item.parentHref);
+  const ungrouped = visible.filter((item) => !groupedHrefs.has(item.href));
 
   return adminNavigationGroups.map((group, index) => {
-    const hrefs: string[] = [...group.hrefs];
+    const hrefs: string[] = group.hrefs.flatMap((href) => [
+      href,
+      ...ungrouped.filter((item) => item.parentHref === href).map((item) => item.href),
+    ]);
     if (index === adminNavigationGroups.length - 1) {
-      hrefs.push(...extraTopLevel.map((item) => item.href));
+      hrefs.push(...ungrouped.filter((item) => !item.parentHref).map((item) => item.href));
     }
     const links = hrefs.flatMap((href) => {
       const item = byHref.get(href);
-      if (!item || item.parentHref) return [];
-      return [{ item, children: visible.filter((child) => child.parentHref === item.href) }];
+      if (!item) return [];
+      return [{ item, children: [] }];
     });
     return { label: group.label, links };
   }).filter((group) => group.links.length > 0);
