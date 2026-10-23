@@ -78,7 +78,7 @@ export default async function AdminHotelsPage() {
                     <div className="mt-4 grid gap-2 text-sm sm:grid-cols-2">
                       <Stat label="Search" value={integration.searchEnabled ? "Enabled" : "Not enabled"} />
                       <Stat label="Handoff" value={integration.externalHandoffEnabled ? "Enabled" : "Not enabled"} />
-                      <Stat label="Calls (24h)" value={health ? String(health.totalCalls) : "—"} />
+                      <Stat label="Calls (24h)" value={health ? String(health.attemptedCalls) : "—"} />
                       <Stat label="Disabled (24h)" value={health ? String(health.disabledCalls) : "—"} />
                       <Stat label="Degraded (24h)" value={health ? String(health.degradedCalls) : "—"} />
                       <Stat label="Failed (24h)" value={health ? String(health.failedCalls) : "—"} />
