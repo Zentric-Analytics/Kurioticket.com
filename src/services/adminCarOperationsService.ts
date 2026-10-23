@@ -129,7 +129,7 @@ export async function getCarOperationsSnapshot(
         }),
         tx.searchHistory.groupBy({
           by: ["origin", "destination"],
-          where: failedWhere,
+          where: exceptionWhere,
           _count: { _all: true },
           _max: { createdAt: true },
           orderBy: { _count: { id: "desc" } },
