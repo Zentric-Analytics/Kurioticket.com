@@ -34,6 +34,25 @@ function normalizeActor(actor: CmsActor) {
   return { ...actor, email: actor.email.trim().toLowerCase() };
 }
 
+function assertUniqueSeedRows(rows: SeedRow[]) {
+  const seen = new Set<string>();
+  const duplicates = new Set<string>();
+
+  for (const row of rows) {
+    const identity = `${row.type}|${row.key}|${row.market}|${CONTENT_LOCALE}`;
+    if (seen.has(identity)) duplicates.add(identity);
+    seen.add(identity);
+  }
+
+  if (duplicates.size > 0) {
+    throw new CmsContentError(
+      "INVALID",
+      "Homepage CMS seed contains duplicate content identities.",
+      { identities: [...duplicates].slice(0, 20) },
+    );
+  }
+}
+
 function buildSeedRows(): SeedRow[] {
   const rows: SeedRow[] = [];
   const supportedFlightPairs = new Set(
@@ -43,7 +62,11 @@ function buildSeedRows(): SeedRow[] {
   );
 
   for (const market of HOMEPAGE_REFRESH_MARKET_CODES) {
-    const destinations = popularDestinationsByMarket[market] ?? [];
+    const destinations = (popularDestinationsByMarket[market] ?? [])
+      .filter(
+        (destination, index, items) =>
+          items.findIndex((item) => item.id === destination.id) === index,
+      );
     destinations.forEach((destination, index) => {
       const hotelIntent = resolveHotelDiscoveryIntent(
         `${destination.city}, ${destination.country}`,
@@ -127,6 +150,7 @@ function buildSeedRows(): SeedRow[] {
     });
   });
 
+  assertUniqueSeedRows(rows);
   return rows;
 }
 
@@ -271,14 +295,23 @@ export async function initializeHomepageCms(actorInput: CmsActor) {
     });
   } catch (error) {
     if (error instanceof CmsContentError) throw error;
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      (error.code === "P2002" || error.code === "P2034")
-    ) {
-      throw new CmsContentError(
-        "CONFLICT",
-        "Homepage CMS changed while initialization was running. Refresh before retrying.",
-      );
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === "P2002") {
+        console.error("[admin-cms:homepage-initialize-unique-conflict]", {
+          target: error.meta?.target ?? null,
+        });
+        throw new CmsContentError(
+          "CONFLICT",
+          "Homepage CMS seed conflicted with an existing unique content identity.",
+        );
+      }
+      if (error.code === "P2034") {
+        console.error("[admin-cms:homepage-initialize-write-conflict]");
+        throw new CmsContentError(
+          "CONFLICT",
+          "Homepage CMS changed while initialization was running. Refresh before retrying.",
+        );
+      }
     }
     throw error;
   }
