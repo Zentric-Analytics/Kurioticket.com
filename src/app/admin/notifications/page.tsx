@@ -11,7 +11,12 @@ import {
 import { AdminAlertAcknowledgeButton } from "@/components/admin/AdminAlertAcknowledgeButton";
 import { requireAdminSession } from "@/lib/auth-guards";
 import { isProtectedAdminEmail } from "@/lib/admin";
-import { getAdminAlertSnapshot } from "@/services/adminAlertService";
+import { getSafeSystemStatus } from "@/lib/admin-data";
+import { getCurrentDatabaseOutageAdminToken } from "@/lib/adminDatabaseOutageAccess";
+import {
+  getAdminAlertSnapshot,
+  getDatabaseOutageAlertSnapshot,
+} from "@/services/adminAlertService";
 
 export const metadata = { title: "Admin Notifications & Alerts" };
 
@@ -34,10 +39,21 @@ function formatDateTime(value: string | null) {
 }
 
 export default async function AdminNotificationsPage() {
-  const session = await requireAdminSession("/admin/notifications");
-  if (!isProtectedAdminEmail(session.user.email)) redirect("/dashboard");
+  let snapshot;
 
-  const snapshot = await getAdminAlertSnapshot(session.user.id);
+  try {
+    const session = await requireAdminSession("/admin/notifications");
+    if (!isProtectedAdminEmail(session.user.email)) redirect("/dashboard");
+    snapshot = await getAdminAlertSnapshot(session.user.id);
+  } catch (error) {
+    const system = await getSafeSystemStatus();
+    if (!system.databaseConfigured || system.databaseConnected) throw error;
+
+    const token = await getCurrentDatabaseOutageAdminToken("/admin/notifications");
+    if (!token) throw error;
+
+    snapshot = getDatabaseOutageAlertSnapshot();
+  }
 
   return (
     <AdminPageShell
@@ -138,11 +154,13 @@ export default async function AdminNotificationsPage() {
                   >
                     Open source
                   </Link>
-                  <AdminAlertAcknowledgeButton
-                    alertKey={alert.key}
-                    signalToken={alert.signalToken}
-                    acknowledged={alert.acknowledged}
-                  />
+                  {alert.key === "system.database.unavailable" ? null : (
+                    <AdminAlertAcknowledgeButton
+                      alertKey={alert.key}
+                      signalToken={alert.signalToken}
+                      acknowledged={alert.acknowledged}
+                    />
+                  )}
                 </div>
               </div>
             </AdminSectionCard>
