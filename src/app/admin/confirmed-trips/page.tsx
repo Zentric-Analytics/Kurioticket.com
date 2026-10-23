@@ -35,7 +35,7 @@ export default async function AdminConfirmedTripsPage() {
         {operations ? (
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
             <AdminMetricCard label="Confirmed trips" value={operations.metrics.total} hint="Provider-confirmed My Trips in this database" tone="info" />
-            <AdminMetricCard label="Last 24h" value={operations.metrics.confirmedLast24h} hint="New or updated provider confirmations" tone={operations.metrics.confirmedLast24h > 0 ? "good" : "neutral"} />
+            <AdminMetricCard label="Last 24h" value={operations.metrics.confirmedLast24h} hint="Provider confirmation events dated in the last 24h" tone={operations.metrics.confirmedLast24h > 0 ? "good" : "neutral"} />
             <AdminMetricCard label="Upcoming" value={operations.metrics.upcoming} hint="Provider-confirmed upcoming trips" />
             <AdminMetricCard label="Past" value={operations.metrics.past} hint="Provider-confirmed past trips" />
             <AdminMetricCard label="Cancelled" value={operations.metrics.cancelled} hint="Provider-confirmed cancelled trips" tone={operations.metrics.cancelled > 0 ? "warn" : "neutral"} />
@@ -125,7 +125,7 @@ export default async function AdminConfirmedTripsPage() {
             <div>
               <div className="mb-3">
                 <h2 className="font-black text-slate-950">Recent provider-confirmed trips</h2>
-                <p className="mt-1 text-sm text-slate-600">Newest trusted partner confirmations in this database.</p>
+                <p className="mt-1 text-sm text-slate-600">Latest trusted partner-confirmed trip records in this database.</p>
               </div>
               <AdminDataTable
                 columns={["Confirmed", "Customer", "Product", "Route / destination", "Provider", "Reference", "Travel", "Status"]}
