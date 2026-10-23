@@ -27,7 +27,8 @@ export async function withHomepageFareRefreshLock<T>(
   clientFactory: RefreshLockClientFactory = (connectionString) =>
     new Client({ connectionString }) as unknown as RefreshLockClient,
 ): Promise<T> {
-  const connectionString = getDatabaseUrl();
+  const connectionString =
+    process.env.POSTGRES_URL_NON_POOLING?.trim() || getDatabaseUrl();
   if (!connectionString) {
     throw new DatabaseUnavailableError(
       "Homepage fare refresh requires an available database.",
