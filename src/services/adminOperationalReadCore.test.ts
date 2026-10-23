@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import { createAdminOperationalReadService, __adminOperationalReadCoreTest } from "./adminOperationalReadCore";
 
@@ -224,4 +225,21 @@ test("exact failed searches distinguish provider failure from internal processin
   assert.equal(diagnostic.reasonCode, "SEARCH_PROCESSING_FAILURE");
   assert.equal(diagnostic.reason, "Providers responded, but the search could not complete during internal result processing.");
   assert.equal(diagnostic.retryable, true);
+});
+
+
+test("flight and hotel provider logs carry exact request correlation for future diagnostics", () => {
+  const flightRoute = readFileSync("src/app/api/flights/search/route.ts", "utf8");
+  const hotelRoute = readFileSync("src/app/api/hotels/search/route.ts", "utf8");
+  assert.match(flightRoute, /service: "flight-search"[\s\S]*?metadata: \{ requestId \}/);
+  assert.match(hotelRoute, /service: "hotel-search"[\s\S]*?metadata: \{ requestId \}/);
+});
+
+test("search detail renders diagnostics without adding write actions", () => {
+  const page = readFileSync("src/app/admin/searches/[id]/page.tsx", "utf8");
+  assert.match(page, /Search outcome/);
+  assert.match(page, /Reason code/);
+  assert.match(page, /Retryable/);
+  assert.match(page, /Provider outcomes/);
+  assert.doesNotMatch(page, /fetch\(|method:\s*["'](?:POST|PATCH|DELETE)|<form/);
 });
