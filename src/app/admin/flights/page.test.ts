@@ -35,3 +35,33 @@ test("flight operations snapshot is environment-scoped and real-data only", () =
   assert.match(service, /isolationLevel: "RepeatableRead"/);
   assert.match(service, /return null/);
 });
+
+test("flight operations exposes focused search and provider exception diagnostics", () => {
+  assert.match(flightsPage, /Search exceptions/);
+  assert.match(flightsPage, /Routes needing attention/);
+  assert.match(flightsPage, /Provider exceptions/);
+  assert.match(flightsPage, /Failed searches/);
+  assert.match(flightsPage, /Partial searches/);
+  assert.match(flightsPage, /Raw provider error payloads are not exposed/);
+  assert.match(service, /exceptionSearches/);
+  assert.match(service, /routeIssues/);
+  assert.match(service, /providerIssues/);
+  assert.match(service, /service: "flight-search"/);
+  assert.match(service, /status: \{ in: \["FAILED", "DEGRADED"\] \}/);
+});
+
+test("provider diagnostics classify errors without returning raw provider messages", () => {
+  assert.match(service, /providerIssueCategory\(issue\.errorMessage\)/);
+  assert.match(service, /return "Timeout"/);
+  assert.match(service, /return "Rate limited"/);
+  assert.match(service, /return "Authentication \/ configuration"/);
+  assert.match(service, /return "Upstream unavailable"/);
+  assert.match(service, /return "Provider error"/);
+  assert.doesNotMatch(flightsPage, /errorMessage/);
+});
+
+test("zero-result success is treated as an operational exception, not a failed search", () => {
+  assert.match(service, /status: "SUCCESS", resultCount: 0/);
+  assert.match(service, /search\.status === "FAILED" \? "FAILED" : search\.status === "PARTIAL" \? "PARTIAL" : "ZERO_RESULTS"/);
+  assert.match(flightsPage, /ZERO_RESULTS/);
+});
