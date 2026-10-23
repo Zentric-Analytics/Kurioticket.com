@@ -39,10 +39,11 @@ export default async function AdminCarsPage() {
     >
       <div className="space-y-4">
         {operations ? (
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
             <AdminMetricCard label="Searches" value={operations.searches.total} hint={operations.windowHours + "-hour window"} tone="info" />
             <AdminMetricCard label="Successful" value={operations.searches.successful} hint="Recorded successful car searches" tone="good" />
-            <AdminMetricCard label="Failed" value={operations.searches.failed} hint="Recorded failed car searches" tone={operations.searches.failed > 0 ? "warn" : "neutral"} />
+            <AdminMetricCard label="Partial / failed" value={operations.searches.partial + operations.searches.failed} hint={operations.searches.partial + " partial · " + operations.searches.failed + " failed"} tone={operations.searches.partial + operations.searches.failed > 0 ? "warn" : "neutral"} />
+            <AdminMetricCard label="Zero results" value={operations.searches.successfulZeroResults} hint="Successful searches returning no car offers" tone={operations.searches.successfulZeroResults > 0 ? "warn" : "neutral"} />
             <AdminMetricCard label="Average latency" value={operations.searches.averageLatencyMs === null ? "—" : operations.searches.averageLatencyMs + " ms"} hint="Recorded car-search latency" />
           </div>
         ) : (
@@ -97,7 +98,7 @@ export default async function AdminCarsPage() {
               <div>
                 <h2 className="font-black text-slate-950">Search exceptions</h2>
                 <p className="mt-1 text-sm leading-6 text-slate-600">
-                  Recent failed car searches, including unsupported provider coverage now recorded with exact provider correlation.
+                  Recent failed, partial, and valid zero-result car searches, including unsupported provider coverage now recorded with exact provider correlation.
                 </p>
               </div>
               <Link href="/admin/searches?product=CAR&status=FAILED" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">
@@ -107,13 +108,14 @@ export default async function AdminCarsPage() {
             <div className="mt-4">
               {operations.exceptionSearches.length ? (
                 <AdminDataTable
-                  columns={["Observed", "Pick-up", "Drop-off", "Results", "Latency", "Action"]}
+                  columns={["Observed", "Pick-up", "Drop-off", "Exception", "Results", "Latency", "Action"]}
                   rows={operations.exceptionSearches.map((search) => ({
                     id: search.id,
                     cells: [
                       formatDateTime(new Date(search.createdAt)),
                       <div key="origin"><p className="font-semibold text-slate-950">{search.origin || "—"}</p><p className="text-xs text-slate-500">{search.requestId || "No request ID"}</p></div>,
                       search.destination || "—",
+                      <AdminStatusBadge key="kind" tone={search.kind === "FAILED" ? "bad" : "warn"}>{search.kind.replaceAll("_", " ")}</AdminStatusBadge>,
                       search.resultCount,
                       search.latencyMs === null ? "—" : search.latencyMs + " ms",
                       <Link key="action" href={"/admin/searches/" + search.id + "?environment=" + operations.environment} className="font-black text-indigo-700 hover:text-indigo-900">Open</Link>,
@@ -121,7 +123,7 @@ export default async function AdminCarsPage() {
                   }))}
                 />
               ) : (
-                <AdminEmptyState title="No recent car search exceptions" message="No failed car searches were recorded in the current 24-hour window." />
+                <AdminEmptyState title="No recent car search exceptions" message="No failed, partial, or zero-result car searches were recorded in the current 24-hour window." />
               )}
             </div>
           </AdminSectionCard>
@@ -133,7 +135,7 @@ export default async function AdminCarsPage() {
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <h2 className="font-black text-slate-950">Locations needing attention</h2>
-                  <p className="mt-1 text-sm leading-6 text-slate-600">Pick-up/drop-off pairs with the highest number of recorded failed searches.</p>
+                  <p className="mt-1 text-sm leading-6 text-slate-600">Pick-up/drop-off pairs with the highest number of failed, partial, or zero-result searches.</p>
                 </div>
                 <AdminStatusBadge tone={operations.locationIssues.length ? "warn" : "good"}>{operations.locationIssues.length ? "Exceptions found" : "Clear"}</AdminStatusBadge>
               </div>
