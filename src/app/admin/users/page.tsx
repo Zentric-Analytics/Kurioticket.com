@@ -120,7 +120,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
             <Search size={17} aria-hidden="true" className="pointer-events-none absolute left-3.5 top-3.5 text-[#94A3B8]" />
             <input name="q" aria-label="Search identities" maxLength={120} defaultValue={q}
               placeholder="Name, email, user ID or guest ID"
-              className="focus-ring h-11 w-full min-w-0 rounded-lg border border-[#D8E1EC] bg-white pl-10 pr-3 text-[13px] text-[#020617] placeholder:font-normal placeholder:text-[#94A3B8] transition hover:border-[#94A3B8]" />
+              className="focus-ring h-11 w-full min-w-0 rounded-lg border border-[#D8E1EC] bg-white pl-10 pr-3 text-[13px] text-[#020617] placeholder:font-normal placeholder:text-[#64748B] transition hover:border-[#94A3B8]" />
           </div>
           <AdminDirectorySelect key={`identity-${identity}`} name="identity" label="Identity type" value={identity} options={identityOptions} />
           <AdminDirectorySelect key={`role-${role}`} name="role" label="Account role" value={role} options={roleOptions} />
