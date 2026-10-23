@@ -1,5 +1,7 @@
 import "server-only";
 
+import { createHash } from "node:crypto";
+
 import type { Prisma } from "@/generated/prisma/client";
 import { getOptionalPrisma } from "@/lib/prisma";
 import { getPublicEnvironment, type PublicEnvironment } from "@/lib/stagingSafety";
@@ -22,8 +24,10 @@ export type FlightStatusOperationsSnapshot = {
     feedEligibleFlights: number;
     trackedFlights: number;
     missingSnapshots: number;
+    missingSnapshotFingerprint: string;
     currentSnapshots: number;
     staleSnapshots: number;
+    staleSnapshotFingerprint: string;
   };
   statusDistribution: Array<{
     status: string;
@@ -61,6 +65,13 @@ export type FlightStatusOperationsSnapshot = {
     observedAt: string;
   }>;
 };
+
+function fingerprintFlightStatusIdentities(values: string[][]) {
+  return createHash("sha256")
+    .update(JSON.stringify(values))
+    .digest("hex")
+    .slice(0, 24);
+}
 
 export function getFlightStatusIntegrationReadiness(): FlightStatusIntegrationReadiness {
   const providerName = process.env.FLIGHT_STATUS_PROVIDER_NAME?.trim() || null;
@@ -104,6 +115,8 @@ export async function getFlightStatusOperationsSnapshot(
         missingSnapshots,
         currentSnapshots,
         statusDistribution,
+        missingSnapshotIdentities,
+        staleSnapshotIdentities,
         awaitingFirstSnapshot,
         recentSnapshots,
       ] = await Promise.all([
@@ -125,6 +138,26 @@ export async function getFlightStatusOperationsSnapshot(
           by: ["status"],
           where: { myTrip: { is: feedEligibleWhere } },
           _count: { _all: true },
+        }),
+        tx.myTrip.findMany({
+          where: { ...feedEligibleWhere, flightStatusSnapshot: { is: null } },
+          orderBy: [{ id: "asc" }],
+          select: {
+            id: true,
+            partnerConfirmationOccurredAt: true,
+          },
+        }),
+        tx.flightStatusSnapshot.findMany({
+          where: {
+            observedAt: { lt: currentSince },
+            myTrip: { is: feedEligibleWhere },
+          },
+          orderBy: [{ myTripId: "asc" }, { observedAt: "asc" }, { id: "asc" }],
+          select: {
+            id: true,
+            myTripId: true,
+            observedAt: true,
+          },
         }),
         tx.myTrip.findMany({
           where: { ...feedEligibleWhere, flightStatusSnapshot: { is: null } },
@@ -179,8 +212,21 @@ export async function getFlightStatusOperationsSnapshot(
           feedEligibleFlights,
           trackedFlights,
           missingSnapshots,
+          missingSnapshotFingerprint: fingerprintFlightStatusIdentities(
+            missingSnapshotIdentities.map((trip) => [
+              trip.id,
+              trip.partnerConfirmationOccurredAt?.toISOString() ?? "none",
+            ]),
+          ),
           currentSnapshots,
           staleSnapshots: Math.max(0, trackedFlights - currentSnapshots),
+          staleSnapshotFingerprint: fingerprintFlightStatusIdentities(
+            staleSnapshotIdentities.map((snapshot) => [
+              snapshot.myTripId,
+              snapshot.id,
+              snapshot.observedAt.toISOString(),
+            ]),
+          ),
         },
         statusDistribution: statusDistribution
           .map((row) => ({ status: row.status, count: row._count._all }))
