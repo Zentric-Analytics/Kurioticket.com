@@ -2,111 +2,109 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-const adminOverviewPage = readFileSync("src/app/admin/page.tsx", "utf8");
+const page = readFileSync("src/app/admin/page.tsx", "utf8");
+const dashboard = readFileSync("src/components/admin/AdminOverviewDashboard.tsx", "utf8");
+const controls = readFileSync("src/components/admin/AdminOverviewControls.tsx", "utf8");
+const display = dashboard.slice(dashboard.indexOf("export function AdminOverviewDashboard("));
 
-
-function sectionClassNameBefore(heading: string): string {
-  const headingIndex = adminOverviewPage.indexOf(heading);
-  assert.notEqual(headingIndex, -1, `${heading} heading should exist`);
-
-  const prefix = adminOverviewPage.slice(0, headingIndex);
-  const sectionMatches = Array.from(prefix.matchAll(/<section className="([^"]+)"/g));
-  assert.ok(sectionMatches.length > 0, `${heading} wrapper section className should exist`);
-
-  return sectionMatches.at(-1)![1];
-}
-
-function blockBetween(start: string, end: string): string {
-  const startIndex = adminOverviewPage.indexOf(start);
-  assert.notEqual(startIndex, -1, `${start} should exist`);
-  const endIndex = adminOverviewPage.indexOf(end, startIndex);
-  assert.notEqual(endIndex, -1, `${end} should exist after ${start}`);
-
-  return adminOverviewPage.slice(startIndex, endIndex);
-}
-
-function classNameAfter(heading: string): string {
-  const headingIndex = adminOverviewPage.indexOf(heading);
-  assert.notEqual(headingIndex, -1, `${heading} heading should exist`);
-
-  const classNameMatch = adminOverviewPage.slice(headingIndex).match(/<div className="([^"]+)"/);
-  assert.ok(classNameMatch, `${heading} grid className should exist`);
-
-  return classNameMatch[1];
-}
-
-test("admin overview operations snapshot keeps the restored compact metric grid", () => {
-  const operationsGrid = classNameAfter("Operations Snapshot");
-
-  assert.match(operationsGrid, /\bsm:grid-cols-2\b/);
-  assert.match(operationsGrid, /\bxl:grid-cols-6\b/);
+test("overview uses existing canonical services without mocked counts", () => {
+  assert.match(page, /getAdminOverview\(query\)/);
+  assert.match(page, /getSafeSystemStatus\(\)/);
+  assert.match(page, /getRecentAdminActivity\(\)/);
+  assert.match(page, /getAdminOverview[\s\S]*?AdminOverviewDashboard/);
+  assert.match(page, /No fallback or mocked operational totals are shown/);
+  assert.match(page, /AdminOverviewSecondary system=\{system\} activity=\{activity\} modules=\{modules\}/);
 });
 
-test("admin overview operations snapshot preserves the six metric cards in order", () => {
-  const metricLabels = Array.from(
-    adminOverviewPage.matchAll(/<AdminMetricCard label="([^"]+)" value=\{metrics\.[^}]+\}/g),
-    (match) => match[1],
-  );
-
-  assert.deepEqual(metricLabels, [
-    "Total users",
-    "Active users",
-    "Suspended users",
-    "Admin users",
-    "Recent searches",
-    "Recent admin actions",
-  ]);
+test("six original KPIs and their sources are retained in the snapshot", () => {
+  for (const [label, expression] of [
+    ["Total users", "data.users.total"],
+    ["Active users", "data.users.active"],
+    ["Support attention", "supportAttention"],
+    ["Deletion attention", "deletionAttention"],
+    ["Journeys", "data.journeys.journeys"],
+    ["Admin actions", "data.adminActions"],
+  ]) {
+    assert.ok(display.includes('label="' + label + '" value={' + expression + "}"), label);
+  }
+  assert.match(display, /supportAttention = data\.support\.open \+ data\.support\.waitingOnTeam \+ data\.support\.waitingOnUser/);
+  assert.match(display, /deletionAttention = data\.deletions\.pending \+ data\.deletions\.readyForReview/);
 });
 
-test("admin overview provider readiness uses the restored wide-screen three column breakpoint", () => {
-  const providerGrid = classNameAfter("Provider Readiness");
-
-  assert.match(providerGrid, /\bxl:grid-cols-3\b/);
-  assert.match(adminOverviewPage, /providers\.map\(\(provider\) => <AdminProviderStatusCard key=\{provider\.product\} \{\.\.\.provider\} \/>\)/);
+test("admin overview sections prioritize action and health over deeper analytics", () => {
+  const sequence = [
+    'aria-label="Operations Snapshot"',
+    'aria-label="Attention Required"',
+    "<PlatformHealth system={system} />",
+    'aria-label="Provider Operational Health"',
+    'aria-label="Customer Journey Funnel"',
+    'title="Support Workload"',
+    'title="Account Deletion Workload"',
+    "<ActivityFeed activity={activity} />",
+    "<QuickActions modules={modules} />",
+  ];
+  const indexes = sequence.map((label) => {
+    const found = display.indexOf(label);
+    assert.ok(found > -1, "missing dashboard section: " + label);
+    return found;
+  });
+  assert.deepEqual(indexes, [...indexes].sort((a, b) => a - b));
 });
 
-test("admin overview search and platform health use the restored wide-screen wrapper", () => {
-  const healthWrapper = sectionClassNameBefore("Search Health");
-
-  assert.match(healthWrapper, /\bmt-8\b/);
-  assert.match(healthWrapper, /\bgrid\b/);
-  assert.match(healthWrapper, /\bgap-4\b/);
-  assert.match(healthWrapper, /\bxl:grid-cols-\[1\.2fr_0\.8fr\]/);
+test("journey funnel and both correlation metrics retain accurate source data", () => {
+  for (const key of ["SEARCH_COMPLETED", "RESULTS_VIEWED", "OFFER_SELECTED", "PROVIDER_HANDOFF_STARTED"]) {
+    assert.match(display, new RegExp("funnel\\." + key + "\\.journeys"));
+    assert.match(display, new RegExp("funnel\\." + key + "\\.events"));
+  }
+  for (const field of [
+    "data.journeys.identities.registered",
+    "data.journeys.identities.guests",
+    "data.journeys.operationalSearches.total",
+    "data.journeys.operationalSearches.failed",
+    "data.journeys.operationalSearches.partial",
+    "data.journeys.handoffCorrelation.exactEvents",
+    "data.journeys.handoffCorrelation.uncorrelatedEvents",
+  ]) assert.ok(display.includes(field), field);
+  assert.match(display, /Stage counts are distinct consented journeys, not percentages of all operational searches/);
+  assert.match(display, /No nearest-by-time inference/);
 });
 
-test("admin overview health columns retain both operational sections", () => {
-  assert.match(adminOverviewPage, /<div>\n          <h2 className="text-lg font-black text-slate-950">Search Health<\/h2>/);
-  assert.match(adminOverviewPage, /<div>\n          <h2 className="text-lg font-black text-slate-950">Platform Health<\/h2>/);
+test("provider detailed information remains available for every provider", () => {
+  assert.match(display, /data\.providers\.map\(\(provider\) => <ProviderCard key=\{provider.id\} provider=\{provider\} \/>/);
+  for (const field of [
+    "provider.id", "provider.provider", "provider.readinessState", "provider.operationalState",
+    "provider.windowHours", "provider.totalCalls", "provider.successCalls", "provider.degradedCalls",
+    "provider.failedCalls", "provider.disabledCalls", "provider.averageLatencyMs",
+    "provider.lastActivityAt", "provider.lastSuccessAt", "provider.lastFailureAt",
+  ]) assert.ok(dashboard.includes(field), field);
+  assert.match(dashboard, /Full provider details/);
 });
 
-test("admin overview search health content remains unchanged", () => {
-  const searchHealthBlock = blockBetween("Search Health", "Platform Health");
+test("support, deletion, platform checks, audit activity, and all original module links remain", () => {
+  for (const name of [
+    "data.support.open", "data.support.waitingOnTeam", "data.support.waitingOnUser",
+    "data.support.resolvedOrClosed", "data.deletions.pending", "data.deletions.readyForReview",
+    "data.deletions.cancelled", "data.deletions.completed",
+    "system.databaseConnected", "system.databaseConfigured", "system.authConfigured",
+    "system.sessionConfigured", "system.emailConfigured", "system.providerCredentialsPresent",
+  ]) assert.ok(dashboard.includes(name), name);
 
-  assert.match(searchHealthBlock, /<AdminMetricCard label="Total recent searches" value=\{searchHealth\.totalRecentSearches\} \/>/);
-  assert.match(searchHealthBlock, /<AdminMetricCard label="No-result searches" value=\{searchHealth\.noResultSearches\} tone="warn" \/>/);
-  assert.match(searchHealthBlock, /<AdminMetricCard label="Failed searches" value=\{searchHealth\.failedSearches\} tone="bad" \/>/);
-  assert.match(searchHealthBlock, /<div className="grid gap-4 sm:grid-cols-3">/);
-  assert.match(searchHealthBlock, /Top products searched/);
-  assert.match(searchHealthBlock, /AdminEmptyState title="Search analytics unavailable" message="Search analytics will appear after search logging records real user searches\. No search counts are mocked\."/);
+  assert.match(dashboard, /activity\.map\(\(item\) =>/);
+  assert.match(dashboard, /modules\.map\(\(module\) =>/);
+  assert.match(dashboard, /All admin modules \(\{modules.length\}\)/);
+  for (const route of [
+    "/admin/users", "/admin/providers", "/admin/searches", "/admin/redirects",
+    "/admin/support", "/admin/account-deletions", "/admin/content",
+    "/admin/logs", "/admin/system",
+  ]) assert.ok(page.includes('"' + route + '"'), route);
 });
 
-test("admin overview platform health content remains unchanged", () => {
-  const platformHealthBlock = blockBetween("Platform Health", "Admin Activity");
-
-  assert.match(platformHealthBlock, /<HealthRow label="Database" ok=\{system\.databaseConnected\} fallback=\{system\.databaseConfigured \? "Configured, not connected" : "Not configured"\} \/>/);
-  assert.match(platformHealthBlock, /<HealthRow label="Auth\/session" ok=\{system\.authConfigured && system\.sessionConfigured\} fallback="Not fully configured" \/>/);
-  assert.match(platformHealthBlock, /<HealthRow label="Email \/ Resend" ok=\{system\.emailConfigured\} fallback="Unavailable" \/>/);
-  assert.match(platformHealthBlock, /<HealthRow label="Provider credentials" ok=\{system\.providerCredentialsPresent\} fallback="Not present" \/>/);
-  assert.doesNotMatch(platformHealthBlock, /Webhooks|webhookConfigured/);
-});
-
-test("admin overview data helpers, queries, and other sections remain unchanged", () => {
-  assert.match(adminOverviewPage, /getAdminMetrics\(\)/);
-  assert.match(adminOverviewPage, /getProviderStatuses\(\)/);
-  assert.match(adminOverviewPage, /getSafeSystemStatus\(\)/);
-  assert.match(adminOverviewPage, /getSearchHealth\(\)/);
-  assert.match(adminOverviewPage, /getRecentAdminActivity\(\)/);
-  assert.match(adminOverviewPage, /<h2 className="text-lg font-black text-slate-950">Search Health<\/h2>/);
-  assert.match(adminOverviewPage, /<h2 className="text-lg font-black text-slate-950">Platform Health<\/h2>/);
-  assert.match(adminOverviewPage, /<h2 className="text-lg font-black text-slate-950">Admin Activity<\/h2>/);
+test("range controls remain bounded and refresh does not claim a live feed", () => {
+  assert.match(page, /selected === "24h" \|\| selected === "30d" \? selected : "7d"/);
+  assert.match(page, /24 \* 60 \* 60 \* 1000 : 30 \* 24 \* 60 \* 60 \* 1000/);
+  assert.match(controls, /router\.push\(/);
+  assert.match(controls, /router\.refresh\(\)/);
+  assert.match(controls, /Reporting range/);
+  assert.match(controls, /Snapshot checked/);
+  assert.doesNotMatch(dashboard, /vs last 7 days|\+12%|99\.2%/);
 });
