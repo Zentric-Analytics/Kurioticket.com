@@ -43,7 +43,7 @@ export async function POST(request: Request) {
   const search = canonicalSearch(body);
   if (!search) return Response.json({ error: "Invalid car search parameters.", requestId }, { status: 400, headers: noStore });
   const started = performance.now();
-  const recordSearch = (resultCount: number, status: "SUCCESS" | "FAILED") => {
+  const recordSearch = (resultCount: number, status: "SUCCESS" | "PARTIAL" | "FAILED") => {
     after(async () => {
       try {
         const { userId, visitorId } = await resolveRequestActivityIdentity(request);
@@ -106,7 +106,8 @@ export async function POST(request: Request) {
       });
       return Response.json({ ...response, error: "Car search is temporarily unavailable." }, { status: 503, headers: noStore });
     }
-    recordSearch(results.length, "SUCCESS");
+    const searchStatus = providerStatuses.some((provider) => provider.status === "failed") ? "PARTIAL" : "SUCCESS";
+    recordSearch(results.length, searchStatus);
     after(async () => {
       try {
         await Promise.all(providerStatuses.map((provider) =>
