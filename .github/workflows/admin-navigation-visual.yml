@@ -6,7 +6,8 @@ on:
     paths:
       - src/components/admin/AdminHorizontalShell.tsx
       - src/components/admin/AdminHorizontalShell.navigation.test.ts
-      - qa/admin-identity-directory/**
+      - qa/admin-identity-directory-design/run.mjs
+      - qa/admin-identity-directory-design/browser-check-navigation.mjs
       - .github/workflows/admin-navigation-visual.yml
 
 permissions:
@@ -27,13 +28,12 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
-      - name: Capture screenshots from the real Admin shell in isolated QA fixture
-        run: node qa/admin-identity-directory/run.mjs
+      - name: Capture current Admin navbar screenshots in isolated QA fixture
+        run: node qa/admin-identity-directory-design/run.mjs
         env:
-          ADMIN_IDENTITY_QA_WORK: ${{ runner.temp }}/admin-navigation-qa
-          ADMIN_IDENTITY_QA_OUTPUT: ${{ runner.temp }}/admin-navigation-screenshots
-          ADMIN_IDENTITY_QA_BASE: f0a5d0c0a6644887ed72935ce5503228d736bdb2
-          ADMIN_NAV_QA_SHOW_PREVIEW_TESTERS: "1"
+          ADMIN_DIRECTORY_QA_WORK: ${{ runner.temp }}
+          ADMIN_DIRECTORY_QA_OUTPUT: ${{ runner.temp }}/admin-navigation-screenshots
+          ADMIN_DIRECTORY_QA_BROWSER: navigation
       - name: Upload Admin navigation evidence
         if: always()
         uses: actions/upload-artifact@v4

@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { Search } from "lucide-react";
 import { AdminIdentityTable, type IdentityRow } from "@/components/admin/AdminIdentityTable";
-import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { withOptionalDb } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/auth-guards";
@@ -93,36 +92,33 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
   const protectedEmails = new Set(getAdminEmails());
   const link = (nextPage: number) => "/admin/users?" + new URLSearchParams({ ...(q ? { q } : {}), role, status, identity, sort, page: String(nextPage) }).toString();
   return (
-    <div className="w-full min-w-0">
+    <div className="w-full min-w-0 bg-white">
       <h1 className="sr-only">Users</h1>
-      <Card
-        variant="flat"
-        className="border-slate-200 bg-white p-4 shadow-[0_14px_38px_-30px_rgba(2,28,43,0.35)] sm:p-5"
-      >
-        <form action="/admin/users" method="get" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(230px,1fr)_166px_140px_166px_auto]">
+      <form action="/admin/users" method="get"
+        className="grid gap-3 border-b border-[#D8E1EC] pb-4 sm:grid-cols-2 lg:grid-cols-[minmax(230px,1fr)_166px_140px_166px_auto]">
           <input type="hidden" name="sort" value={sort} />
           <div className="relative min-w-0 sm:col-span-2 lg:col-span-1">
-            <Search size={17} aria-hidden="true" className="pointer-events-none absolute left-3.5 top-3.5 text-slate-400" />
+            <Search size={17} aria-hidden="true" className="pointer-events-none absolute left-3.5 top-3.5 text-[#475569]" />
             <input name="q" aria-label="Search identities" maxLength={120} defaultValue={q}
               placeholder="Name, email, user ID or guest ID"
-              className="focus-ring h-11 w-full min-w-0 rounded-xl border border-slate-200 bg-slate-50/80 pl-10 pr-3 text-sm text-slate-900 placeholder:text-slate-500 transition hover:border-slate-300 focus:bg-white" />
+              className="focus-ring h-11 w-full min-w-0 rounded-lg border border-[#D8E1EC] bg-white pl-10 pr-3 text-[13px] text-[#020617] placeholder:text-[#475569] transition hover:border-[#94A3B8]" />
           </div>
           <select name="identity" defaultValue={identity} aria-label="Identity type"
-            className="focus-ring h-11 min-w-0 cursor-pointer rounded-xl border border-slate-200 bg-slate-50/80 px-3 text-sm font-medium text-slate-800 transition hover:border-slate-300 focus:bg-white">
+            className="focus-ring h-11 min-w-0 cursor-pointer rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px] font-medium text-[#020617] transition hover:border-[#94A3B8]">
             <option value="ALL">All identities</option><option value="REGISTERED">Registered</option><option value="GUEST">Guests</option>
           </select>
           <select name="role" defaultValue={role} aria-label="Account role"
-            className="focus-ring h-11 min-w-0 cursor-pointer rounded-xl border border-slate-200 bg-slate-50/80 px-3 text-sm font-medium text-slate-800 transition hover:border-slate-300 focus:bg-white">
+            className="focus-ring h-11 min-w-0 cursor-pointer rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px] font-medium text-[#020617] transition hover:border-[#94A3B8]">
             <option value="ALL">All roles</option><option value="USER">User</option><option value="SUPPORT">Support</option><option value="ADMIN">Admin</option>
           </select>
           <select name="status" defaultValue={status} aria-label="Account status"
-            className="focus-ring h-11 min-w-0 cursor-pointer rounded-xl border border-slate-200 bg-slate-50/80 px-3 text-sm font-medium text-slate-800 transition hover:border-slate-300 focus:bg-white">
+            className="focus-ring h-11 min-w-0 cursor-pointer rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px] font-medium text-[#020617] transition hover:border-[#94A3B8]">
             <option value="ALL">All statuses</option><option value="ACTIVE">Active</option><option value="SUSPENDED">Suspended</option><option value="PENDING_DELETION">Pending deletion</option><option value="DELETED">Deleted</option>
           </select>
-          <Button type="submit" className="h-11 whitespace-nowrap rounded-xl px-5 shadow-sm sm:col-span-2 lg:col-span-1">Apply Filter</Button>
-        </form>
-      </Card>
+          <Button type="submit" className="h-11 whitespace-nowrap rounded-lg bg-[#004BB8] px-5 text-[13px] font-semibold hover:bg-[#004BB8]/90 sm:col-span-2 lg:col-span-1">Apply Filter</Button>
+      </form>
       <AdminIdentityTable rows={result.rows} page={page} count={count} pageSize={PAGE_SIZE}
+        registeredCount={stats.filteredUsers} guestCount={stats.filteredGuests}
         sort={sort} currentUserId={session.user.id} protectedEmails={[...protectedEmails]} pageHref={link(page)} />
     </div>
   );

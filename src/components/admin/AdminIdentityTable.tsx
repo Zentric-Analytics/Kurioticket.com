@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { ArrowUpRight, ChevronLeft, ChevronRight, UserRound, UsersRound } from "lucide-react";
-import { Card } from "@/components/ui/Card";
+import { ArrowUpRight, ChevronLeft, ChevronRight, UserRound } from "lucide-react";
 import { CopyIdentityId } from "./CopyIdentityId";
 import { AdminIdentitySort } from "./AdminIdentitySort";
 import type { AdminIdentitySort as IdentitySort } from "@/lib/adminIdentityDirectory";
@@ -27,6 +26,8 @@ type Props = {
   rows: IdentityRow[];
   page: number;
   count: number;
+  registeredCount: number;
+  guestCount: number;
   pageSize: number;
   sort: IdentitySort;
   currentUserId: string;
@@ -43,10 +44,10 @@ function IdentityDate({ at }: { at: Date }) {
   return (
     <time
       dateTime={at.toISOString()}
-      className="block whitespace-nowrap text-sm text-slate-700"
+      className="block whitespace-nowrap text-[13px] font-medium text-[#020617]"
     >
       {new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(at)}
-      <span className="mt-0.5 block text-xs text-slate-500">
+      <span className="mt-0.5 block text-[12px] font-normal text-[#475569]">
         {new Intl.DateTimeFormat("en", { timeStyle: "short" }).format(at)}
       </span>
     </time>
@@ -57,6 +58,8 @@ export function AdminIdentityTable({
   rows,
   page,
   count,
+  registeredCount,
+  guestCount,
   pageSize,
   sort,
   currentUserId,
@@ -72,36 +75,33 @@ export function AdminIdentityTable({
     return `${path}?${params}`;
   }
   const activityClass =
-    "focus-ring inline-flex h-9 items-center gap-1.5 whitespace-nowrap rounded-lg border border-indigo-100 bg-indigo-50/40 px-3 text-xs font-semibold text-indigo-700 transition hover:border-indigo-200 hover:bg-indigo-50";
+    "focus-ring inline-flex h-9 items-center gap-1.5 whitespace-nowrap rounded-lg border border-[#D8E1EC] bg-white px-3 text-[12px] font-semibold text-[#004BB8] transition hover:border-[#004BB8]/40 hover:bg-[#F8FAFC]";
   const directory = pageHref.split("?")[1] || "";
   const activityHref = (kind: "guest" | "user", id: string) =>
     "/admin/users/" + kind + "/" + encodeURIComponent(id) + "/activity" +
     (directory ? "?directory=" + encodeURIComponent(directory) : "");
   const paginationClass =
-    "focus-ring inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 transition hover:border-slate-300 hover:bg-slate-100";
+    "focus-ring inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[#D8E1EC] bg-white text-[#0F172A] transition hover:border-[#94A3B8] hover:bg-[#F8FAFC]";
   return (
-    <Card
-      variant="flat"
-      className="mt-4 min-w-0 overflow-hidden border-slate-200 bg-white p-0 shadow-[0_16px_44px_-34px_rgba(2,28,43,0.34)]"
-    >
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 px-5 py-4 sm:px-6">
-        <div className="flex min-w-0 items-center gap-3">
-          <span aria-hidden="true" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-700">
-            <UsersRound size={18} />
-          </span>
-          <h2 id="identity-directory-title" className="text-base font-semibold tracking-tight text-slate-950">
-            Identities ({count.toLocaleString()})
+    <section className="mt-5 min-w-0 bg-white">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#D8E1EC] pb-3">
+        <div className="min-w-0">
+          <h2 id="identity-directory-title" className="text-[16px] font-semibold leading-6 tracking-tight text-[#020617]">
+            Users: {count.toLocaleString()}
           </h2>
+          <p className="mt-0.5 text-[13px] leading-5 text-[#475569]">
+            {registeredCount.toLocaleString()} registered · {guestCount.toLocaleString()} guest
+          </p>
         </div>
         <AdminIdentitySort sort={sort} pageHref={pageHref} />
       </div>
       <div
-        className="overflow-x-auto"
+        className="focus-ring overflow-x-auto"
         role="region"
         aria-labelledby="identity-directory-title"
         tabIndex={0}
       >
-        <table className="w-full min-w-[920px] table-fixed text-left text-sm">
+        <table className="w-full min-w-[920px] table-fixed text-left text-[13px]">
           <caption className="sr-only">
             Registered accounts and consent-eligible guest identities, sorted by {sort.replaceAll("_", " ")}
           </caption>
@@ -113,7 +113,7 @@ export function AdminIdentityTable({
             <col className="w-[130px]" />
             <col className="w-[132px]" />
           </colgroup>
-          <thead className="border-b border-slate-200 bg-slate-50/90 text-xs text-slate-600">
+          <thead className="border-b border-[#D8E1EC] bg-white text-[12px] text-[#475569]">
             <tr>
               {[
                 "Identity",
@@ -126,14 +126,14 @@ export function AdminIdentityTable({
                 <th
                   key={heading}
                   scope="col"
-                  className="px-5 py-3.5 font-semibold tracking-wide"
+                  className="px-4 py-3 font-semibold"
                 >
                   {heading}
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100/90">
+          <tbody className="divide-y divide-[#E7ECF5]">
             {rows.map((row) => {
               const record = row.record;
               const user = row.kind === "user" ? row.record : null;
@@ -148,13 +148,13 @@ export function AdminIdentityTable({
               return (
                 <tr
                   key={`${row.kind}:${record.id}`}
-                  className="group h-[68px] align-middle transition-colors hover:bg-slate-50/80"
+                  className="group h-[64px] align-middle transition-colors hover:bg-[#F8FAFC]"
                 >
-                  <td className="px-5 py-3">
+                  <td className="px-4 py-2.5">
                     <div className="flex min-w-0 items-center gap-3">
                       <span
                         aria-hidden="true"
-                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-100 text-xs font-semibold text-slate-700"
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#F1F5F9] text-[12px] font-semibold text-[#0F172A]"
                       >
                         {user?.name?.trim() ? (
                           user.name
@@ -170,13 +170,13 @@ export function AdminIdentityTable({
                       </span>
                       <div className="min-w-0 flex-1">
                         <p
-                          className="truncate font-semibold text-slate-950"
+                          className="truncate text-[13px] font-semibold text-[#020617]"
                           title={name}
                         >
                           {name}
                         </p>
                         <p
-                          className={`mt-0.5 truncate text-xs text-slate-500 ${user ? "" : "font-mono"}`}
+                          className="mt-0.5 truncate text-[12px] leading-[17px] text-[#475569]"
                           title={secondary}
                         >
                           {secondary}
@@ -185,23 +185,23 @@ export function AdminIdentityTable({
                       <CopyIdentityId id={record.id} kind={row.kind} />
                     </div>
                   </td>
-                  <td className="px-5 py-3 text-xs font-medium text-slate-600">
+                  <td className="px-4 py-2.5 text-[13px] font-medium text-[#475569]">
                     {user ? `Registered · ${label(user.role)}` : "Guest"}
                   </td>
-                  <td className="px-5 py-3">
+                  <td className="px-4 py-2.5">
                     {user ? (
                       <span
-                        className={`inline-flex max-w-full rounded-md px-2 py-1 text-xs font-medium ${user.status === "ACTIVE" ? "bg-emerald-50 text-emerald-800" : user.status === "SUSPENDED" || user.status === "PENDING_DELETION" ? "bg-amber-50 text-amber-800" : "bg-slate-100 text-slate-600"}`}
+                        className={`inline-flex max-w-full rounded-md px-2 py-1 text-[12px] font-medium ${user.status === "ACTIVE" ? "bg-emerald-50 text-emerald-800" : user.status === "SUSPENDED" || user.status === "PENDING_DELETION" ? "bg-amber-50 text-amber-800" : "bg-slate-100 text-[#475569]"}`}
                       >
                         {label(user.status)}
                       </span>
                     ) : (
-                      <span className="text-xs text-slate-500">
+                      <span className="text-[12px] text-[#475569]">
                         Not an account
                       </span>
                     )}
                   </td>
-                  <td className="px-5 py-3">
+                  <td className="px-4 py-2.5">
                     <IdentityDate
                       at={
                         row.kind === "user"
@@ -210,7 +210,7 @@ export function AdminIdentityTable({
                       }
                     />
                   </td>
-                  <td className="px-5 py-3">
+                  <td className="px-4 py-2.5">
                     <Link
                       className={activityClass}
                       href={activityHref(row.kind, record.id)}
@@ -220,7 +220,7 @@ export function AdminIdentityTable({
                       <ArrowUpRight size={14} aria-hidden="true" />
                     </Link>
                   </td>
-                  <td className="px-5 py-3">
+                  <td className="px-4 py-2.5">
                     {user ? (
                       <UserStatusActions
                         userId={user.id}
@@ -233,7 +233,7 @@ export function AdminIdentityTable({
                     ) : (
                       <span
                         aria-label="No account actions for guests"
-                        className="text-slate-400"
+                        className="text-[#64748B]"
                       >
                         —
                       </span>
@@ -246,7 +246,7 @@ export function AdminIdentityTable({
               <tr>
                 <td
                   colSpan={6}
-                  className="px-4 py-12 text-center text-sm text-slate-500"
+                  className="px-4 py-12 text-center text-[13px] text-[#475569]"
                 >
                   No identities match these filters.
                 </td>
@@ -255,7 +255,7 @@ export function AdminIdentityTable({
           </tbody>
         </table>
       </div>
-      <div className="flex items-center justify-end border-t border-slate-200 bg-slate-50/50 px-5 py-3 sm:px-6">
+      <div className="flex items-center justify-end border-t border-[#D8E1EC] bg-white py-3">
         <nav aria-label="Identity pagination" className="ml-auto flex items-center gap-3">
           {page > 1 ? (
             <Link
@@ -268,11 +268,11 @@ export function AdminIdentityTable({
             </Link>
           ) : (
             <span aria-label="Previous page unavailable" aria-disabled="true"
-              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-400 opacity-60">
+              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[#D8E1EC] bg-white text-[#94A3B8] opacity-70">
               <ChevronLeft size={17} aria-hidden="true" />
             </span>
           )}
-          <span className="min-w-16 text-center text-sm font-semibold tabular-nums text-slate-700">
+          <span className="min-w-16 text-center text-[13px] font-medium tabular-nums text-[#020617]">
             Pg{page} of {totalPages}
           </span>
           {page < totalPages ? (
@@ -286,12 +286,12 @@ export function AdminIdentityTable({
             </Link>
           ) : (
             <span aria-label="Next page unavailable" aria-disabled="true"
-              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-400 opacity-60">
+              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[#D8E1EC] bg-white text-[#94A3B8] opacity-70">
               <ChevronRight size={17} aria-hidden="true" />
             </span>
           )}
         </nav>
       </div>
-    </Card>
+    </section>
   );
 }

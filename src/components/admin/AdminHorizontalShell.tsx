@@ -71,7 +71,9 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
   }, []);
   useEffect(() => { if (searchOpen) searchRef.current?.focus(); }, [searchOpen]);
 
-  return <div className="min-h-screen bg-[#f1f5fb] text-slate-950">
+  // Keep the Users directory canvas white without changing other Admin pages or the navbar.
+  const usersDirectory = pathname === "/admin/users" || pathname === "/admin/users/";
+  return <div className={"min-h-screen text-slate-950 " + (usersDirectory ? "bg-white" : "bg-[#f1f5fb]")}>
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
       <div className="mx-auto flex h-16 w-full max-w-[1920px] items-center justify-between gap-4 pl-2 pr-4 sm:pr-6 lg:pr-10">
         <div className="flex min-w-0 items-center gap-2">

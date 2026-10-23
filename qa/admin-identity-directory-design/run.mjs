@@ -71,7 +71,11 @@ try {
   }
   if (!ready) throw new Error("Directory fixture Next app did not start");
   const result = await new Promise(resolve => {
-    const child = spawn(process.execPath, [path.join(qa, "browser-check.mjs")], {
+    // The navigation workflow reuses the supported current directory fixture
+    // rather than the retired Activity-drawer fixture from earlier releases.
+    const browserCheck = process.env.ADMIN_DIRECTORY_QA_BROWSER === "navigation"
+      ? "browser-check-navigation.mjs" : "browser-check.mjs";
+    const child = spawn(process.execPath, [path.join(qa, browserCheck)], {
       cwd: repo, stdio: "inherit",
       env: { ...process.env, ADMIN_DIRECTORY_QA_URL: root, ADMIN_DIRECTORY_QA_OUTPUT: output },
     });

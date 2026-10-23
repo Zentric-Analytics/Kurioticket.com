@@ -16,6 +16,8 @@ const props = {
   rows: [],
   page: 2,
   count: 231,
+  registeredCount: 17,
+  guestCount: 214,
   pageSize: 100,
   sort: "name_asc" as const,
   currentUserId: "qa-self",
@@ -63,7 +65,12 @@ test("six-column directory groups real identity details and keeps full IDs acces
 
 test("arrow footer has no duplicate count and retains sorting and filters across page links", () => {
   const html = renderToStaticMarkup(createElement(AdminIdentityTable, props));
-  assert.match(html, /Identities \(231\)/);
+  assert.match(html, /Users: 231/);
+  assert.match(html, /17 registered · 214 guest/);
+  assert.doesNotMatch(html, /Identities \(231\)/);
+  assert.doesNotMatch(html, /shadow-|rounded-2xl|font-mono/);
+  assert.match(html, /<section class="mt-5 min-w-0 bg-white"/);
+  assert.equal((html.match(/aria-labelledby="identity-directory-title"/g) || []).length, 1);
   assert.match(html, /Pg2 of 3/);
   assert.doesNotMatch(html, /matching identities/i);
   assert.doesNotMatch(html, />Previous<|>Next</);
@@ -97,9 +104,11 @@ test("Sort by auto-submit form preserves filters, selected option and resets to 
 
 test("under 100 identities occupy one page with both arrows unavailable", () => {
   const html = renderToStaticMarkup(
-    createElement(AdminIdentityTable, { ...props, page: 1, count: 30, pageHref: "/admin/users?sort=name_asc&page=1" }),
+    createElement(AdminIdentityTable, { ...props, page: 1, count: 30, registeredCount: 12, guestCount: 18, pageHref: "/admin/users?sort=name_asc&page=1" }),
   );
   assert.match(html, /Pg1 of 1/);
+  assert.match(html, /Users: 30/);
+  assert.match(html, /12 registered · 18 guest/);
   assert.match(html, /aria-label="Previous page unavailable"/);
   assert.match(html, /aria-label="Next page unavailable"/);
   assert.doesNotMatch(html, /<a[^>]*aria-label="(?:Previous|Next) page"/);
@@ -107,7 +116,7 @@ test("under 100 identities occupy one page with both arrows unavailable", () => 
 
 test("a 125-identity directory has a second page but no configurable rows menu", () => {
   const html = renderToStaticMarkup(
-    createElement(AdminIdentityTable, { ...props, page: 1, count: 125, pageHref: "/admin/users?sort=newest&page=1" }),
+    createElement(AdminIdentityTable, { ...props, page: 1, count: 125, registeredCount: 25, guestCount: 100, pageHref: "/admin/users?sort=newest&page=1" }),
   );
   assert.match(html, /Pg1 of 2/);
   assert.match(html, /aria-label="Next page"/);
@@ -117,11 +126,25 @@ test("a 125-identity directory has a second page but no configurable rows menu",
 
 test("empty directory has an accessible empty state and disabled pagination", () => {
   const html = renderToStaticMarkup(
-    createElement(AdminIdentityTable, { ...props, page: 1, count: 0 }),
+    createElement(AdminIdentityTable, { ...props, page: 1, count: 0, registeredCount: 0, guestCount: 0 }),
   );
   assert.match(html, /No identities match these filters/);
   assert.match(html, /Pg1 of 1/);
   assert.doesNotMatch(html, /matching identities/i);
   assert.match(html, /aria-label="Previous page unavailable"/);
   assert.match(html, /aria-label="Next page unavailable"/);
+});
+
+test("registered-only and guest-only filters have accurate zero-valued counter labels", () => {
+  const registered = renderToStaticMarkup(
+    createElement(AdminIdentityTable, { ...props, page: 1, count: 12, registeredCount: 12, guestCount: 0 }),
+  );
+  assert.match(registered, /Users: 12/);
+  assert.match(registered, /12 registered · 0 guest/);
+
+  const guests = renderToStaticMarkup(
+    createElement(AdminIdentityTable, { ...props, page: 1, count: 16, registeredCount: 0, guestCount: 16 }),
+  );
+  assert.match(guests, /Users: 16/);
+  assert.match(guests, /0 registered · 16 guest/);
 });
