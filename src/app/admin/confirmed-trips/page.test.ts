@@ -58,3 +58,10 @@ test("confirmed trips declares the database-scoped environment limitation", () =
   assert.match(page, /reports the database connected to the current/);
   assert.doesNotMatch(service, /query: \{ path: \["environment"\]/);
 });
+
+
+test("confirmed-trip recency matches the signed webhook clock-skew allowance", () => {
+  assert.match(service, /partnerConfirmationLimits\.permittedClockSkewSeconds/);
+  assert.match(service, /acceptedFutureBoundary/);
+  assert.match(service, /partnerConfirmationOccurredAt: \{ gte: since, lte: acceptedFutureBoundary \}/);
+});
