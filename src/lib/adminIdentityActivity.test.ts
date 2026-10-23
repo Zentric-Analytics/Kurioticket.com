@@ -217,3 +217,16 @@ test("a different route, provider, product or stage interrupts selection folding
     assert.ok(display.every(x => x.kind === "event"));
   }
 });
+
+test("unknown-provider selections remain individually visible even if descriptions coincide", () => {
+  const at = new Date("2026-10-22T17:55:00.000Z");
+  const recorded: ActivityRow[] = [0, 1, 2].map(index => ({
+    id: "j-unknown-" + index, at: new Date(at.getTime() - index * 1000),
+    journeyId: "qa-same-journey", product: "HOTEL",
+    label: "Offer selected", stage: "OFFER_SELECTED", detail: "Hotel · London",
+    provider: null,
+  }));
+  assert.deepEqual(compactActivityDisplayRows(recorded).map(item => item.kind), ["event", "event", "event"]);
+  assert.deepEqual(compactActivityDisplayRows(recorded.map(row => ({ ...row, provider: " " }))).map(item => item.kind), ["event", "event", "event"]);
+  assert.deepEqual(compactActivityDisplayRows(recorded.map(row => ({ ...row, provider: "Known partner", detail: "" }))).map(item => item.kind), ["event", "event", "event"]);
+});
