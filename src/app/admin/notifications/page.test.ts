@@ -12,6 +12,8 @@ const ackApi = readFileSync("src/app/api/admin/notifications/acknowledge/route.t
 const acknowledgeButton = readFileSync("src/components/admin/AdminAlertAcknowledgeButton.tsx", "utf8");
 const shell = readFileSync("src/components/admin/AdminHorizontalShell.tsx", "utf8");
 const adminLib = readFileSync("src/lib/admin.ts", "utf8");
+const adminLayout = readFileSync("src/app/admin/layout.tsx", "utf8");
+const outageAccess = readFileSync("src/lib/adminDatabaseOutageAccess.ts", "utf8");
 
 test("admin alerts derive only from authoritative operational sources", () => {
   for (const source of [
@@ -32,8 +34,11 @@ test("admin alerts derive only from authoritative operational sources", () => {
   );
   assert.match(core, /!signals\.flightStatus\.feedReady/);
   assert.match(core, /metrics\.missingSnapshots > 0/);
-  assert.match(core, /cms-integrity:\$\{signals\.cms\.unhealthyFingerprint\}/);
+  assert.match(core, /signalToken: signals\.cms\.occurrenceToken/);
   assert.match(service, /cmsUnhealthyFingerprint/);
+  assert.match(service, /CMS_STATE_ACTION/);
+  assert.match(service, /readCmsIntegrityOccurrenceToken/);
+  assert.match(service, /recoveryBoundary/);
   assert.match(service, /createHash\("sha256"\)/);
   assert.match(emailDelivery, /MAX\(updated_at\)/);
   assert.match(emailDelivery, /latestProblemAt/);
@@ -100,6 +105,20 @@ test("acknowledgements are per-admin, signal-specific, temporary, and must persi
   assert.match(ackApi, /status: 503/);
   assert.match(adminLib, /return true/);
   assert.match(adminLib, /return false/);
+});
+
+test("database outage alert remains reachable through a read-only signed-admin fallback", () => {
+  assert.match(outageAccess, /getToken/);
+  assert.match(outageAccess, /token\?\.role !== "ADMIN"/);
+  assert.match(outageAccess, /token\?\.status !== "ACTIVE"/);
+  assert.match(outageAccess, /token\?\.emailVerified !== true/);
+  assert.match(outageAccess, /token\?\.accountSessionId/);
+  assert.match(outageAccess, /twoFactorEnabled/);
+  assert.match(adminLayout, /!system\.databaseConfigured \|\| system\.databaseConnected/);
+  assert.match(adminLayout, /restricted emergency view/);
+  assert.match(readApi, /getDatabaseOutageAdminToken/);
+  assert.match(readApi, /getDatabaseOutageAlertSnapshot/);
+  assert.doesNotMatch(ackApi, /DatabaseOutageAdminToken|adminDatabaseOutageAccess/);
 });
 
 test("acknowledgement mutation is authenticated, rate-limited, and safe", () => {
