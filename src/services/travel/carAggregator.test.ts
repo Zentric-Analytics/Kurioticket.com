@@ -35,6 +35,9 @@ test("successful KAYAK cars merge unchanged and persist through both details cac
   assert.deepEqual(result.results, [providerCar]);
   assert.equal(result.results.some((row) => row.inventorySource === "kurioticket-static-cars"), false);
   assert.deepEqual(result.warnings, []);
+  assert.equal(result.providerStatuses.length, 1);
+  assert.equal(result.providerStatuses[0].provider, "KAYAK sandbox");
+  assert.equal(result.providerStatuses[0].status, "success");
 });
 
 test("a failed provider call does not fabricate replacement rental availability", async () => {
@@ -50,6 +53,8 @@ test("a failed provider call does not fabricate replacement rental availability"
   assert.equal(persisted, 0);
   assert.equal(result.warnings.length, 1);
   assert.equal(result.results.length, 0);
+  assert.equal(result.providerStatuses[0].status, "failed");
+  assert.equal(result.providerStatuses[0].errorReason, "provider_network_error");
 });
 
 for (const status of ["success", "skipped"] as const) {
@@ -62,3 +67,25 @@ for (const status of ["success", "skipped"] as const) {
     assert.deepEqual(result.results, []);
   });
 }
+
+
+test("unsupported KAYAK coverage remains a disabled provider observation", async () => {
+  const result = await searchCars(search, { dependencies: {
+    searchKayak: async () => ({
+      provider: "KAYAK sandbox",
+      status: "skipped",
+      results: [],
+      latencyMs: 3,
+      error: "No verified provider binding for this location.",
+      errorCategory: "unsupported_location",
+      errorReason: "unsupported_location",
+    }),
+    rememberResults: async (_vertical, rows) => { assert.deepEqual(rows, []); },
+    rememberCohort: async (rows) => { assert.deepEqual(rows, []); },
+  } });
+
+  assert.equal(result.unsupported, true);
+  assert.equal(result.providerStatuses.length, 1);
+  assert.equal(result.providerStatuses[0].status, "skipped");
+  assert.equal(result.providerStatuses[0].errorReason, "unsupported_location");
+});
