@@ -660,7 +660,7 @@ export default function Home() {
         : popularDestinationResolution.items,
     [cmsContentForMarket, popularDestinationResolution.items],
   );
-  const popularDestinationFareCandidates = useMemo(
+  const popularDestinationFareCandidates = useMemo<HomepagePopularDestinationItem[]>(
     () =>
       cmsContentForMarket
         ? popularDestinations
