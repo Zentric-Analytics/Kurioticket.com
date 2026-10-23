@@ -8,10 +8,13 @@ const adminRefresh = readFileSync("src/app/api/admin/homepage-fares/refresh/rout
 const cronRefresh = readFileSync("src/app/api/internal/homepage-fares/refresh/route.ts", "utf8");
 const lockService = readFileSync("src/services/homepageFareRefreshLock.ts", "utf8");
 
-test("homepage fare status distinguishes telemetry outage from real missing fares", () => {
+test("homepage fare status distinguishes loading, telemetry outage, and real missing fares", () => {
   assert.match(service, /dataAvailable: boolean/);
   assert.match(service, /let dataAvailable = Boolean\(db\)/);
   assert.match(service, /dataAvailable = false/);
+  assert.match(component, /Loading status…/);
+  assert.match(component, /initialStatusLoading/);
+  assert.match(component, /telemetryUnavailable/);
   assert.match(component, /Telemetry unavailable/);
   assert.match(component, /Coverage counts below are hidden rather than replaced with zeroes/);
   assert.match(component, /operationsAvailable=\{statusPayload\.dataAvailable\}/);
