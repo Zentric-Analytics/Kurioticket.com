@@ -5,6 +5,8 @@ import type { CmsContentStatus, CmsContentType } from "@/generated/prisma/enums"
 import { getOptionalPrisma, getPrisma } from "@/lib/prisma";
 import { getOwnedFlightLocationCatalog } from "@/lib/locations/flightDiscovery";
 import { hotelDestinations } from "@/data/hotelDestinations";
+import { getHomeDiscoveryRouteAllowlist } from "@/data/homeDiscovery";
+import { getPopularDestinationAllowlist } from "@/data/marketHomeContent";
 import { resolveHotelDiscoveryIntent } from "@/lib/hotels/hotelDiscoveryIntent";
 import { HOMEPAGE_REFRESH_MARKET_CODES } from "@/lib/market/resolveMarket";
 
@@ -187,6 +189,16 @@ const ownedFlightAirportCodes = new Set(
 const canonicalHotelDestinationIds = new Set(
   hotelDestinations.map((destination) => `hotel:${destination.id}`),
 );
+const supportedHomepageDestinationRoutes = new Set(
+  [...getPopularDestinationAllowlist().values()].map(
+    (destination) => `${destination.originCode}:${destination.code}`,
+  ),
+);
+const supportedHomepageFlightRoutes = new Set(
+  [...getHomeDiscoveryRouteAllowlist().values()].map(
+    (route) => `${route.originCode}:${route.destinationCode}`,
+  ),
+);
 
 function parsePayload(type: CmsContentType, payload: unknown) {
   const parsed = cmsPayloadSchemas[type].safeParse(payload);
@@ -196,6 +208,16 @@ function parsePayload(type: CmsContentType, payload: unknown) {
     const route = parsed.data as { originCode: string; destinationCode: string };
     if (!ownedFlightAirportCodes.has(route.originCode) || !ownedFlightAirportCodes.has(route.destinationCode)) {
       throw new CmsContentError("INVALID", "Homepage flight content must use airport codes from the owned Kurioticket flight catalog.");
+    }
+    const routeKey = `${route.originCode}:${route.destinationCode}`;
+    const supported = type === "HOMEPAGE_DESTINATION"
+      ? supportedHomepageDestinationRoutes.has(routeKey)
+      : supportedHomepageFlightRoutes.has(routeKey);
+    if (!supported) {
+      throw new CmsContentError(
+        "INVALID",
+        "Homepage content must use an existing Kurioticket fare-supported route.",
+      );
     }
   }
 
