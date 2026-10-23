@@ -16,6 +16,7 @@ test("settings exposes real persisted controls rather than fake toggles", () => 
   assert.match(featureService, /featureFlag\.findMany/);
   assert.match(featureService, /featureFlag\.update/);
   assert.match(featurePanel, /fetch\("\/api\/admin\/feature-controls"/);
+  assert.match(featurePanel, /Array\.from\(new Set\(controls\.map\(\(control\) => control\.category\)\)\)/);
 });
 
 test("production feature-control changes keep strong authorization", () => {
