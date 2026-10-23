@@ -127,7 +127,7 @@ export default async function AdminFlightsPage() {
                     formatDateTime(new Date(search.createdAt)),
                     <div key="route"><p className="font-semibold text-slate-950">{search.origin || "—"}{search.destination ? " → " + search.destination : ""}</p><p className="text-xs text-slate-500">{search.requestId || "No request ID"}</p></div>,
                     search.resultCount,
-                    search.latencyMs + " ms",
+                    search.latencyMs === null ? "—" : search.latencyMs + " ms",
                     <AdminStatusBadge key="status" tone={search.status === "SUCCESS" ? "good" : search.status === "FAILED" ? "bad" : "warn"}>{search.status}</AdminStatusBadge>,
                     <Link key="action" href={"/admin/searches/" + search.id + "?environment=" + operations.environment} className="font-black text-indigo-700 hover:text-indigo-900">Open</Link>,
                   ],
