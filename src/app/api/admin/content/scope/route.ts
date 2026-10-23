@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { hasRecentReauthentication } from "@/lib/account-session";
 import { getRequestIp, requireAdminApiSession } from "@/lib/admin";
 import { isStagingEnvironment } from "@/lib/stagingSafety";
-import { CmsContentError } from "@/services/cmsContentService";
+import { CmsContentError, cmsContentTypes } from "@/services/cmsContentService";
 import {
   normalizeCmsDraftOrder,
   setCmsLegacyFallbackRetired,
@@ -29,7 +29,11 @@ export async function PATCH(request: Request) {
 
   const input = body as Record<string, unknown>;
   const action = typeof input.action === "string" ? input.action : "";
-  const type = typeof input.type === "string" ? input.type as CmsContentType : null;
+  const type =
+    typeof input.type === "string" &&
+    cmsContentTypes.includes(input.type as CmsContentType)
+      ? input.type as CmsContentType
+      : null;
   const market = typeof input.market === "string" ? input.market.trim().toUpperCase() : "";
   const locale = typeof input.locale === "string" ? input.locale.trim().toLowerCase() : "";
   const expectedScopeVersion = Number(input.expectedScopeVersion);
