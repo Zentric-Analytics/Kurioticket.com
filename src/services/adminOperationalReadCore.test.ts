@@ -107,7 +107,7 @@ test("search diagnostics keep zero results distinct from failure and never guess
   assert.deepEqual(__adminOperationalReadCoreTest.fallbackSearchDiagnostic(base), {
     outcome: "ZERO_RESULTS",
     reasonCode: "NO_MATCHING_RESULTS",
-    reason: "Providers responded successfully but returned no matching results.",
+    reason: "The search completed without a recorded provider failure but returned no matching results.",
     retryable: false,
     correlation: "legacy_fallback",
     providers: [],
@@ -242,4 +242,97 @@ test("search detail renders diagnostics without adding write actions", () => {
   assert.match(page, /Retryable/);
   assert.match(page, /Provider outcomes/);
   assert.doesNotMatch(page, /fetch\(|method:\s*["'](?:POST|PATCH|DELETE)|<form/);
+});
+
+
+test("partial searches with zero results do not claim that another provider returned results", () => {
+  const row = {
+    id: "search_partial_zero",
+    requestId: "request_partial_zero",
+    userId: null,
+    visitorId: null,
+    type: "HOTEL",
+    origin: null,
+    destination: "London",
+    checkIn: new Date("2026-11-01T00:00:00.000Z"),
+    checkOut: new Date("2026-11-03T00:00:00.000Z"),
+    query: {},
+    resultCount: 0,
+    latencyMs: 1500,
+    status: "PARTIAL",
+    createdAt: new Date("2026-10-23T09:00:00.000Z"),
+    visitor: null,
+    journeyEvents: [],
+  } as never;
+  const providers = [
+    {
+      provider: "KAYAK sandbox",
+      status: "FAILED" as const,
+      reasonCode: "UPSTREAM_UNAVAILABLE",
+      reason: "Upstream unavailable",
+      retryable: true,
+      latencyMs: 1400,
+      observedAt: "2026-10-23T09:00:00.000Z",
+    },
+  ];
+  const diagnostic = __adminOperationalReadCoreTest.exactSearchDiagnostic(row, providers);
+  assert.equal(diagnostic.reason.includes("another provider returned results"), false);
+  assert.match(diagnostic.reason, /returned no matching results/);
+});
+
+test("failed searches with a successful provider do not claim all providers failed", () => {
+  const row = {
+    id: "search_mixed_failure",
+    requestId: "request_mixed_failure",
+    userId: null,
+    visitorId: null,
+    type: "FLIGHT",
+    origin: "LOS",
+    destination: "LHR",
+    checkIn: null,
+    checkOut: null,
+    query: {},
+    resultCount: 0,
+    latencyMs: 1300,
+    status: "FAILED",
+    createdAt: new Date("2026-10-23T09:05:00.000Z"),
+    visitor: null,
+    journeyEvents: [],
+  } as never;
+  const providers = [
+    {
+      provider: "Duffel",
+      status: "SUCCESS" as const,
+      reasonCode: null,
+      reason: "Provider completed successfully.",
+      retryable: false,
+      latencyMs: 300,
+      observedAt: "2026-10-23T09:05:00.000Z",
+    },
+    {
+      provider: "KAYAK sandbox",
+      status: "FAILED" as const,
+      reasonCode: "PROVIDER_TIMEOUT",
+      reason: "Provider timeout",
+      retryable: true,
+      latencyMs: 1200,
+      observedAt: "2026-10-23T09:05:00.000Z",
+    },
+  ];
+  const diagnostic = __adminOperationalReadCoreTest.exactSearchDiagnostic(row, providers);
+  assert.equal(diagnostic.reasonCode, "PROVIDER_FAILURE_NO_USABLE_RESULTS");
+  assert.equal(diagnostic.reason.includes("All available providers failed"), false);
+});
+
+test("disabled unsupported searches preserve the safe unsupported reason", () => {
+  const diagnostic = __adminOperationalReadCoreTest.providerDiagnostic({
+    provider: "KAYAK sandbox",
+    status: "DISABLED",
+    latencyMs: 5,
+    errorMessage: "unsupported_destination",
+    createdAt: new Date("2026-10-23T09:10:00.000Z"),
+  });
+  assert.equal(diagnostic.reasonCode, "UNSUPPORTED_SEARCH");
+  assert.equal(diagnostic.reason, "Unsupported search / provider coverage");
+  assert.equal(diagnostic.retryable, false);
 });
