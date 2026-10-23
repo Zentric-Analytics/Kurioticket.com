@@ -80,6 +80,9 @@ export default async function AdminContentPage() {
       description="Manage CMS-backed public content with explicit draft and publishing controls. Homepage fare operations remain separate."
       actions={
         <div className="flex flex-wrap gap-2">
+          <Link href="/admin/content/health" className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-black text-emerald-800 hover:bg-emerald-100">
+            CMS Health
+          </Link>
           <Link href="/admin/content/homepage" className="rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm font-black text-indigo-800 hover:bg-indigo-100">
             Homepage CMS overview
           </Link>
