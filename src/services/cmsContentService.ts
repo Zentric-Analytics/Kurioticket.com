@@ -781,7 +781,10 @@ export async function readPublishedCmsContent<T>(
   options: { market?: string; locale?: string; fallback: () => T[] },
 ): Promise<{ source: "cms" | "fallback"; items: T[] }> {
   const db = getOptionalPrisma();
-  if (!db) return { source: "fallback", items: options.fallback() };
+  if (!db) {
+    console.warn("[cms:public-fallback]", { type, reason: "storage_unavailable" });
+    return { source: "fallback", items: options.fallback() };
+  }
   try {
     const market = marketSchema.parse(options.market ?? "GLOBAL");
     const locale = localeSchema.parse(options.locale ?? "en");
@@ -804,22 +807,38 @@ export async function readPublishedCmsContent<T>(
       select: { key: true, status: true, publishedPayload: true },
       }),
     ]);
-    if (!scope && !rows.length) return { source: "fallback", items: options.fallback() };
+    if (!scope && !rows.length) {
+      console.warn("[cms:public-fallback]", {
+        type,
+        market,
+        locale,
+        reason: "scope_uninitialized",
+      });
+      return { source: "fallback", items: options.fallback() };
+    }
     const visibleRows = rows.filter((row) => row.status === "PUBLISHED");
     const items: T[] = [];
     for (const row of visibleRows) {
       const parsed = cmsPayloadSchemas[type].safeParse(row.publishedPayload);
       if (!parsed.success) {
         console.error("[cms:public-read-invalid-payload]", { type, market, locale });
-        return scope?.legacyFallbackRetiredAt
-          ? { source: "cms", items: [] }
-          : { source: "fallback", items: options.fallback() };
+        if (scope?.legacyFallbackRetiredAt) {
+          return { source: "cms", items: [] };
+        }
+        console.warn("[cms:public-fallback]", {
+          type,
+          market,
+          locale,
+          reason: "invalid_published_payload",
+        });
+        return { source: "fallback", items: options.fallback() };
       }
       items.push({ id: row.key, ...(parsed.data as Record<string, unknown>) } as T);
     }
     return { source: "cms", items };
   } catch (error) {
     console.error("[cms:public-read]", { type, errorName: error instanceof Error ? error.name : "unknown" });
+    console.warn("[cms:public-fallback]", { type, reason: "read_error" });
     return { source: "fallback", items: options.fallback() };
   }
 }
