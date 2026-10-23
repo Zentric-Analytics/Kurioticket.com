@@ -255,21 +255,19 @@ export async function getEmailDeliveryHealthSnapshot() {
       id: string;
       template: string;
       to_email: string;
-      subject: string;
       status: EmailDeliveryStatus;
-      provider_message_id: string | null;
-      last_error: string | null;
       created_at: Date;
       sent_at: Date | null;
       delivered_at: Date | null;
     }>>`
-      SELECT id, template, to_email, subject, status, provider_message_id, last_error, created_at, sent_at, delivered_at
+      SELECT id, template, to_email, status, created_at, sent_at, delivered_at
       FROM email_deliveries
       ORDER BY created_at DESC
       LIMIT 10
     `;
 
     return {
+      dataAvailable: true,
       last24Hours: Number(summary?.last_24_hours || 0),
       failures: Number(summary?.failures || 0),
       delayed: Number(summary?.delayed || 0),
@@ -278,16 +276,14 @@ export async function getEmailDeliveryHealthSnapshot() {
         id: row.id,
         template: row.template,
         toEmail: maskEmail(row.to_email),
-        subject: row.subject,
         status: row.status,
-        providerMessageId: row.provider_message_id,
-        lastError: row.last_error,
         createdAt: row.created_at,
         sentAt: row.sent_at,
         deliveredAt: row.delivered_at,
       })),
     };
   }, {
+    dataAvailable: false,
     last24Hours: 0,
     failures: 0,
     delayed: 0,

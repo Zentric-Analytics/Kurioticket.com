@@ -10,6 +10,7 @@ import {
   Hotel,
   LayoutDashboard,
   LockKeyhole,
+  Mail,
   MousePointerClick,
   Plane,
   Search,
@@ -56,6 +57,7 @@ export const adminNavigation: AdminNavDefinition[] = [
   { href: "/admin/account-deletions", parentHref: "/admin/support", label: "Deletion Requests", icon: ClipboardList, roles: ["ADMIN"], section: "operations", description: "Review account deletion request lifecycles." },
   { href: "/admin/logs", label: "Logs", icon: BookOpen, roles: ["ADMIN"], section: "controls", description: "Review administrative and security-sensitive actions." },
   { href: "/admin/system", label: "System", icon: LockKeyhole, roles: ["ADMIN"], section: "controls", description: "Review safe runtime health and deployment configuration status." },
+  { href: "/admin/email-delivery", parentHref: "/admin/system", label: "Email Delivery", icon: Mail, roles: ["ADMIN"], section: "controls", description: "Monitor transactional email delivery health and test sending readiness." },
   { href: "/admin/settings", label: "Settings", icon: Settings, roles: ["ADMIN"], section: "controls", description: "Manage authoritative persisted platform controls." },
   { href: "/admin/homepage-fares", parentHref: "/admin/settings", label: "Homepage Fare Operations", icon: Activity, roles: ["ADMIN"], section: "controls", description: "Monitor and refresh provider-backed homepage fare readiness." },
 ];

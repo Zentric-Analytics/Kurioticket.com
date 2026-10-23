@@ -18,7 +18,12 @@ export default async function AdminSystemPage() {
   ] as const;
 
   return (
-    <AdminPageShell title="System" description="Safe operational status only. Secret values, database URLs, API keys, tokens, and raw environment variables are never displayed." actions={<Link href="/admin/logs" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">View audit logs</Link>}>
+    <AdminPageShell title="System" description="Safe operational status only. Secret values, database URLs, API keys, tokens, and raw environment variables are never displayed." actions={
+        <div className="flex flex-wrap gap-2">
+          <Link href="/admin/email-delivery" className="rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm font-black text-indigo-800 hover:bg-indigo-100">Email delivery</Link>
+          <Link href="/admin/logs" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">View audit logs</Link>
+        </div>
+      }>
       <AdminSectionCard className="p-5">
         <h2 className="font-semibold text-slate-950">System Status</h2>
         <div className="mt-4 grid gap-3 md:grid-cols-2">
