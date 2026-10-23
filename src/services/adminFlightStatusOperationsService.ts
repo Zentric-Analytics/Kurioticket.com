@@ -22,6 +22,7 @@ export type FlightStatusOperationsSnapshot = {
   metrics: {
     confirmedFlights: number;
     feedEligibleFlights: number;
+    monitoringFlights: number;
     trackedFlights: number;
     missingSnapshots: number;
     missingSnapshotFingerprint: string;
@@ -105,12 +106,25 @@ export async function getFlightStatusOperationsSnapshot(
   const feedEligibleWhere: Prisma.MyTripWhereInput = readiness.providerName
     ? { ...confirmedFlightWhere, providerName: readiness.providerName }
     : { ...confirmedFlightWhere, id: "__no_configured_flight_status_provider__" };
+  const monitoringFlightWhere: Prisma.MyTripWhereInput = {
+    ...feedEligibleWhere,
+    status: "UPCOMING",
+    OR: [
+      { flightStatusSnapshot: { is: null } },
+      {
+        flightStatusSnapshot: {
+          is: { status: { notIn: ["ARRIVED", "CANCELLED"] } },
+        },
+      },
+    ],
+  };
 
   try {
     return await db.$transaction(async (tx) => {
       const [
         confirmedFlights,
         feedEligibleFlights,
+        monitoringFlights,
         trackedFlights,
         missingSnapshots,
         currentSnapshots,
@@ -122,16 +136,17 @@ export async function getFlightStatusOperationsSnapshot(
       ] = await Promise.all([
         tx.myTrip.count({ where: confirmedFlightWhere }),
         tx.myTrip.count({ where: feedEligibleWhere }),
+        tx.myTrip.count({ where: monitoringFlightWhere }),
         tx.myTrip.count({
-          where: { ...feedEligibleWhere, flightStatusSnapshot: { isNot: null } },
+          where: { ...monitoringFlightWhere, flightStatusSnapshot: { isNot: null } },
         }),
         tx.myTrip.count({
-          where: { ...feedEligibleWhere, flightStatusSnapshot: { is: null } },
+          where: { ...monitoringFlightWhere, flightStatusSnapshot: { is: null } },
         }),
         tx.flightStatusSnapshot.count({
           where: {
             observedAt: { gte: currentSince, lte: now },
-            myTrip: { is: feedEligibleWhere },
+            myTrip: { is: monitoringFlightWhere },
           },
         }),
         tx.flightStatusSnapshot.groupBy({
@@ -140,7 +155,7 @@ export async function getFlightStatusOperationsSnapshot(
           _count: { _all: true },
         }),
         tx.myTrip.findMany({
-          where: { ...feedEligibleWhere, flightStatusSnapshot: { is: null } },
+          where: { ...monitoringFlightWhere, flightStatusSnapshot: { is: null } },
           orderBy: [{ id: "asc" }],
           select: {
             id: true,
@@ -150,7 +165,7 @@ export async function getFlightStatusOperationsSnapshot(
         tx.flightStatusSnapshot.findMany({
           where: {
             observedAt: { lt: currentSince },
-            myTrip: { is: feedEligibleWhere },
+            myTrip: { is: monitoringFlightWhere },
           },
           orderBy: [{ myTripId: "asc" }, { observedAt: "asc" }, { id: "asc" }],
           select: {
@@ -160,7 +175,7 @@ export async function getFlightStatusOperationsSnapshot(
           },
         }),
         tx.myTrip.findMany({
-          where: { ...feedEligibleWhere, flightStatusSnapshot: { is: null } },
+          where: { ...monitoringFlightWhere, flightStatusSnapshot: { is: null } },
           orderBy: [{ departureDate: "asc" }, { id: "asc" }],
           take: 20,
           select: {
@@ -210,6 +225,7 @@ export async function getFlightStatusOperationsSnapshot(
         metrics: {
           confirmedFlights,
           feedEligibleFlights,
+          monitoringFlights,
           trackedFlights,
           missingSnapshots,
           missingSnapshotFingerprint: fingerprintFlightStatusIdentities(
