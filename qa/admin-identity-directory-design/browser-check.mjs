@@ -112,7 +112,7 @@ try {
     await expect(registered.getByRole("button", { name: /Manage account/ })).toBeVisible();
     await expect(registered.getByRole("button", { name: "Copy user ID: qa-support-001" })).toBeVisible();
     const protectedAdmin = page.locator("tbody tr").filter({ hasText: "Alana Example" });
-    await expect(protectedAdmin).toContainText("Protected admin");
+    await expect(protectedAdmin).toContainText("Current admin");
     await expect(protectedAdmin.getByRole("button", { name: /Manage account/ })).toHaveCount(0);
     const date = await guest.locator("time").first().getAttribute("dateTime");
     assert.ok(date?.startsWith("2026-10-22T"), "Full date/time remains available in semantic time element");
