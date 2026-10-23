@@ -4,6 +4,8 @@ import { hotelDestinations } from "@/data/hotelDestinations";
 import {
   getHomeDiscoveryByRegion,
   getHomeDiscoveryContentMarketCode,
+  getHomeDiscoveryImageCardsByRegion,
+  getHomepageRegionalRouteCards,
 } from "@/data/homeDiscovery";
 import { popularDestinationsByMarket } from "@/data/marketHomeContent";
 import { HOMEPAGE_REFRESH_MARKET_CODES } from "@/lib/market/resolveMarket";
@@ -59,7 +61,15 @@ function buildSeedRows(): SeedRow[] {
     if (seededFlightMarkets.has(effectiveMarket)) continue;
     seededFlightMarkets.add(effectiveMarket);
 
-    getHomeDiscoveryByRegion(market).forEach((route, index) => {
+    const discoveryCards = getHomeDiscoveryImageCardsByRegion(market);
+    const regionalCards = getHomepageRegionalRouteCards(market, discoveryCards);
+    const orderedRoutes = [
+      ...discoveryCards,
+      ...regionalCards,
+      ...getHomeDiscoveryByRegion(market),
+    ].filter((route, index, items) => items.findIndex((item) => item.id === route.id) === index);
+
+    orderedRoutes.forEach((route, index) => {
       const payload = cmsPayloadSchemas.FLIGHT_ROUTE.parse({
         title: route.title,
         originCity: route.originCity,
