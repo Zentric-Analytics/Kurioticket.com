@@ -3,7 +3,7 @@ import test from "node:test";
 
 import {
   ACTIVITY_PAGE_SIZE, activityEnvironmentScope, allowedActivityStages, activityHref, activityWindow,
-  decodeActivityCursor, encodeActivityCursor, excludeCanonicalLegacyRows, groupActivityRows,
+  decodeActivityCursor, encodeActivityCursor, excludeCanonicalLegacyRows, groupActivityRows, relatedJourneysWindow,
   parseActivityFilters, sourceActivitySeek, validActivityIdentity,
   type ActivityFilters,
 } from "./adminIdentityActivity";
@@ -147,4 +147,33 @@ test("registered journey filters require the same verified active account as jou
   // Keep legacy search and handoff eligibility separate, so recorded history
   // is still readable when a registered account cannot open a journey.
   assert.equal(Object.hasOwn(base, "currentUser"), false);
+});
+
+test("related journeys use displayed historical activity, not an unrelated seven-day default", () => {
+  const now = new Date("2026-10-23T12:00:00.000Z");
+  const rows: ActivityRow[] = [
+    { id: "e-today", label: "Account signup", detail: "", at: new Date("2026-10-23T08:00:00.000Z") },
+    { id: "j-old", label: "Search completed", detail: "", journeyId: "old-journey", at: new Date("2026-04-12T12:00:00.000Z") },
+  ];
+  assert.deepEqual(relatedJourneysWindow(rows, now), {
+    from: "2026-04-11T12:00:00.000Z",
+    to: "2026-04-13T12:00:00.000Z",
+  });
+  assert.equal(relatedJourneysWindow([], now), null);
+});
+
+test("related journeys never exceed the ninety-day journey API window", () => {
+  const now = new Date("2026-10-23T12:00:00.000Z");
+  const rows: ActivityRow[] = [
+    { id: "j-recent", label: "Results viewed", detail: "", journeyId: "recent", at: new Date("2026-09-01T12:00:00.000Z") },
+    { id: "j-ancient", label: "Search completed", detail: "", journeyId: "ancient", at: new Date("2026-01-01T12:00:00.000Z") },
+  ];
+  const range = relatedJourneysWindow(rows, now);
+  assert.ok(range);
+  const start = Date.parse(range.from);
+  const end = Date.parse(range.to);
+  assert.ok(start < Date.parse(rows[0].at.toISOString()));
+  assert.ok(Date.parse(rows[0].at.toISOString()) < end);
+  assert.ok(end <= now.getTime());
+  assert.ok(end - start <= 90 * 86_400_000);
 });
