@@ -3,6 +3,8 @@ import "server-only";
 import type { Prisma } from "@/generated/prisma/client";
 import { getOptionalPrisma } from "@/lib/prisma";
 import { getPublicEnvironment, type PublicEnvironment } from "@/lib/stagingSafety";
+import { classifyProviderIssue } from "@/services/searchFailureDiagnostics";
+import { getProviderIntegrationStatuses } from "@/services/travel/providerIntegrationStatus";
 
 export type CarOperationsSnapshot = {
   environment: PublicEnvironment;
@@ -13,6 +15,39 @@ export type CarOperationsSnapshot = {
     failed: number;
     averageLatencyMs: number | null;
   };
+  providerHealth: Array<{
+    id: "duffel" | "kayak-sandbox";
+    provider: string;
+    attemptedCalls: number;
+    failedCalls: number;
+    disabledCalls: number;
+    averageLatencyMs: number | null;
+    lastIssueAt: string | null;
+  }>;
+  exceptionSearches: Array<{
+    id: string;
+    requestId: string | null;
+    origin: string | null;
+    destination: string | null;
+    resultCount: number;
+    latencyMs: number | null;
+    status: string;
+    createdAt: string;
+  }>;
+  locationIssues: Array<{
+    origin: string | null;
+    destination: string | null;
+    issueCount: number;
+    lastIssueAt: string | null;
+  }>;
+  providerIssues: Array<{
+    id: string;
+    provider: string;
+    status: string;
+    category: string;
+    latencyMs: number | null;
+    createdAt: string;
+  }>;
   recentSearches: Array<{
     id: string;
     requestId: string | null;
@@ -40,10 +75,13 @@ export async function getCarOperationsSnapshot(
     createdAt: { gte: since, lte: now },
     query: { path: ["environment"], equals: environment },
   };
+  const failedWhere: Prisma.SearchHistoryWhereInput = { ...searchWhere, status: "FAILED" };
+  const carProviders = getProviderIntegrationStatuses().filter((provider) => provider.products.includes("CARS"));
+  const carProviderNames = carProviders.map((provider) => provider.provider);
 
   try {
     return await db.$transaction(async (tx) => {
-      const [total, successful, failed, latency, recentSearches] = await Promise.all([
+      const [total, successful, failed, latency, recentSearches, exceptionSearches, locationIssues, providerIssues, providerHealth] = await Promise.all([
         tx.searchHistory.count({ where: searchWhere }),
         tx.searchHistory.count({ where: { ...searchWhere, status: "SUCCESS" } }),
         tx.searchHistory.count({ where: { ...searchWhere, status: "FAILED" } }),
@@ -63,6 +101,80 @@ export async function getCarOperationsSnapshot(
             createdAt: true,
           },
         }),
+        tx.searchHistory.findMany({
+          where: failedWhere,
+          orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+          take: 12,
+          select: {
+            id: true,
+            requestId: true,
+            origin: true,
+            destination: true,
+            resultCount: true,
+            latencyMs: true,
+            status: true,
+            createdAt: true,
+          },
+        }),
+        tx.searchHistory.groupBy({
+          by: ["origin", "destination"],
+          where: failedWhere,
+          _count: { _all: true },
+          _max: { createdAt: true },
+          orderBy: { _count: { id: "desc" } },
+          take: 8,
+        }),
+        tx.apiProviderLog.findMany({
+          where: {
+            provider: { in: carProviderNames },
+            service: "car-search",
+            status: { in: ["FAILED", "DEGRADED", "DISABLED"] },
+            createdAt: { gte: since, lte: now },
+            metadata: { path: ["environment"], equals: environment },
+          },
+          orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+          take: 12,
+          select: {
+            id: true,
+            provider: true,
+            status: true,
+            latencyMs: true,
+            errorMessage: true,
+            createdAt: true,
+          },
+        }),
+        Promise.all(carProviders.map(async (integration) => {
+          const providerWhere: Prisma.ApiProviderLogWhereInput = {
+            provider: integration.provider,
+            service: "car-search",
+            createdAt: { gte: since, lte: now },
+            metadata: { path: ["environment"], equals: environment },
+          };
+          const attemptedWhere: Prisma.ApiProviderLogWhereInput = {
+            ...providerWhere,
+            status: { in: ["SUCCESS", "DEGRADED", "FAILED"] },
+          };
+          const [attemptedCalls, failedCalls, disabledCalls, latency, lastIssue] = await Promise.all([
+            tx.apiProviderLog.count({ where: attemptedWhere }),
+            tx.apiProviderLog.count({ where: { ...providerWhere, status: "FAILED" } }),
+            tx.apiProviderLog.count({ where: { ...providerWhere, status: "DISABLED" } }),
+            tx.apiProviderLog.aggregate({ where: attemptedWhere, _avg: { latencyMs: true } }),
+            tx.apiProviderLog.findFirst({
+              where: { ...providerWhere, status: { in: ["FAILED", "DEGRADED", "DISABLED"] } },
+              orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+              select: { createdAt: true },
+            }),
+          ]);
+          return {
+            id: integration.id,
+            provider: integration.provider,
+            attemptedCalls,
+            failedCalls,
+            disabledCalls,
+            averageLatencyMs: latency._avg.latencyMs === null ? null : Math.round(latency._avg.latencyMs),
+            lastIssueAt: lastIssue?.createdAt.toISOString() ?? null,
+          };
+        })),
       ]);
 
       return {
@@ -74,6 +186,25 @@ export async function getCarOperationsSnapshot(
           failed,
           averageLatencyMs: latency._avg.latencyMs === null ? null : Math.round(latency._avg.latencyMs),
         },
+        providerHealth,
+        exceptionSearches: exceptionSearches.map((search) => ({
+          ...search,
+          createdAt: search.createdAt.toISOString(),
+        })),
+        locationIssues: locationIssues.map((location) => ({
+          origin: location.origin,
+          destination: location.destination,
+          issueCount: location._count._all,
+          lastIssueAt: location._max.createdAt?.toISOString() ?? null,
+        })),
+        providerIssues: providerIssues.map((issue) => ({
+          id: issue.id,
+          provider: issue.provider,
+          status: issue.status,
+          category: carProviderIssueCategory(issue.status, issue.errorMessage),
+          latencyMs: issue.latencyMs,
+          createdAt: issue.createdAt.toISOString(),
+        })),
         recentSearches: recentSearches.map((search) => ({
           ...search,
           createdAt: search.createdAt.toISOString(),
@@ -85,3 +216,13 @@ export async function getCarOperationsSnapshot(
     return null;
   }
 }
+
+
+function carProviderIssueCategory(status: string, message: string | null) {
+  if (status === "DISABLED") {
+    return message ? "Unsupported search / provider coverage" : "Provider disabled / skipped";
+  }
+  return classifyProviderIssue(message).label;
+}
+
+export const __adminCarOperationsTest = { carProviderIssueCategory };
