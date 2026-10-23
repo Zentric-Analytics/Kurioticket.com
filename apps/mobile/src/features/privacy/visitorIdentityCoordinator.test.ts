@@ -62,6 +62,7 @@ test("unknown and declined consent never create or attach a visitor", async () =
   assert.deepEqual(await h.coordinator.headers("/api/flights/search", null), {});
   await h.coordinator.choose(false);
   assert.deepEqual(await h.coordinator.headers("/api/redirect", user("a")), {});
+  assert.deepEqual(await h.coordinator.headers("/api/cars/search", user("a")), {});
   await h.coordinator.refresh();
   assert.deepEqual(h.calls, []);
   assert.equal(h.saved().choice, "declined");
