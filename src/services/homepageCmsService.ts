@@ -141,6 +141,20 @@ export async function initializeHomepageCms(actorInput: CmsActor) {
 
       const now = new Date();
       const scopes = new Map<string, { type: SeedRow["type"]; market: string }>();
+      for (const market of HOMEPAGE_REFRESH_MARKET_CODES) {
+        scopes.set(`HOMEPAGE_DESTINATION:${market}`, {
+          type: "HOMEPAGE_DESTINATION",
+          market,
+        });
+        scopes.set(`FLIGHT_ROUTE:${market}`, {
+          type: "FLIGHT_ROUTE",
+          market,
+        });
+      }
+      scopes.set("HOTEL_DESTINATION:GLOBAL", {
+        type: "HOTEL_DESTINATION",
+        market: "GLOBAL",
+      });
       let seededCount = 0;
 
       for (const row of seedRows) {
