@@ -74,3 +74,13 @@ test("car provider exception classifier keeps invalid pickup time distinct from 
   assert.match(diagnostics, /pickup_time_past/);
   assert.match(diagnostics, /code: "INVALID_SEARCH", label: "Invalid search"/);
 });
+
+
+test("car exceptions keep failed, partial, and valid zero-result outcomes distinct", () => {
+  assert.match(service, /status: \{ in: \["FAILED", "PARTIAL"\] \}/);
+  assert.match(service, /status: "SUCCESS", resultCount: 0/);
+  assert.match(service, /search\.status === "FAILED" \? "FAILED" : search\.status === "PARTIAL" \? "PARTIAL" : "ZERO_RESULTS"/);
+  assert.match(carsPage, /Partial \/ failed/);
+  assert.match(carsPage, /Zero results/);
+  assert.match(carsPage, /search\.kind\.replaceAll\("_", " "\)/);
+});
