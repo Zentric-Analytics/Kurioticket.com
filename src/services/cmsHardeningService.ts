@@ -30,6 +30,15 @@ function duplicateOrders(values: Array<{ id: string; order: number | null }>) {
     .map(([order, ids]) => ({ order, ids }));
 }
 
+
+
+function orderNeedsNormalization(values: Array<{ id: string; order: number | null }>) {
+  const ordered = [...values].sort(
+    (a, b) => (a.order ?? Number.MAX_SAFE_INTEGER) - (b.order ?? Number.MAX_SAFE_INTEGER) || a.id.localeCompare(b.id),
+  );
+  return ordered.some((entry, index) => entry.order !== index);
+}
+
 export async function getCmsScopeIntegrity(input: ScopeInput) {
   const db = getOptionalPrisma();
   if (!db) {
@@ -45,6 +54,7 @@ export async function getCmsScopeIntegrity(input: ScopeInput) {
       orphanPublished: [],
       draftOrderCollisions: [],
       publishedOrderCollisions: [],
+      draftOrderNeedsNormalization: false,
       unpublishedChanges: 0,
       fallbackRetirementEligible: false,
     };
@@ -144,12 +154,14 @@ export async function getCmsScopeIntegrity(input: ScopeInput) {
 
   const draftOrderCollisions = duplicateOrders(draftOrderEntries);
   const publishedOrderCollisions = duplicateOrders(publishedOrderEntries);
+  const draftOrderNeedsNormalization = orderNeedsNormalization(draftOrderEntries);
   const healthy =
     Boolean(scope) &&
     invalidDrafts.length === 0 &&
     invalidPublished.length === 0 &&
     orphanPublished.length === 0 &&
     draftOrderCollisions.length === 0 &&
+    !draftOrderNeedsNormalization &&
     publishedOrderCollisions.length === 0;
 
   return {
@@ -164,6 +176,7 @@ export async function getCmsScopeIntegrity(input: ScopeInput) {
     orphanPublished,
     draftOrderCollisions,
     publishedOrderCollisions,
+    draftOrderNeedsNormalization,
     unpublishedChanges,
     fallbackRetirementEligible:
       Boolean(scope) &&
