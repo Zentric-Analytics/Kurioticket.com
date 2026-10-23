@@ -19,7 +19,7 @@ test("overview uses existing canonical services without mocked counts", () => {
 test("six original KPIs and their sources are retained in the snapshot", () => {
   for (const [label, expression] of [
     ["Total users", "data.users.total"],
-    ["Active users", "data.users.active"],
+    ["Enabled accounts", "data.users.active"],
     ["Support attention", "supportAttention"],
     ["Deletion attention", "deletionAttention"],
     ["Journeys", "data.journeys.journeys"],
@@ -107,4 +107,12 @@ test("range controls remain bounded and refresh does not claim a live feed", () 
   assert.match(controls, /Reporting range/);
   assert.match(controls, /Snapshot checked/);
   assert.doesNotMatch(dashboard, /vs last 7 days|\+12%|99\.2%/);
+});
+
+
+test("recent activity is disclosed as consented observation rather than a live-user claim", () => {
+  assert.match(display, /data\\.visitorActivity\\.observedVisitorIdentities/);
+  assert.match(display, /Recently observed visitors \\(5 min\\)/);
+  assert.match(display, /not a verified count of everyone currently online/);
+  assert.doesNotMatch(display, /hint="Currently active"/);
 });
