@@ -244,6 +244,7 @@ export async function getEmailDeliveryHealthSnapshot() {
       delayed: bigint;
       suppressed: bigint;
       latest_problem_at: Date | null;
+      latest_adverse_at: Date | null;
     }[]>`
       SELECT
         (SELECT COUNT(*) FROM email_deliveries WHERE created_at >= NOW() - INTERVAL '24 hours') AS last_24_hours,
@@ -252,7 +253,28 @@ export async function getEmailDeliveryHealthSnapshot() {
         (SELECT COUNT(*) FROM email_suppressions) AS suppressed,
         (SELECT MAX(updated_at) FROM email_deliveries
           WHERE created_at >= NOW() - INTERVAL '24 hours'
-            AND status IN ('FAILED', 'BOUNCED', 'COMPLAINED', 'SUPPRESSED', 'DELIVERY_DELAYED')) AS latest_problem_at
+            AND status IN ('FAILED', 'BOUNCED', 'COMPLAINED', 'SUPPRESSED', 'DELIVERY_DELAYED')) AS latest_problem_at,
+        (
+          SELECT MAX(adverse_at)
+          FROM (
+            SELECT d.updated_at AS adverse_at
+            FROM email_deliveries d
+            WHERE d.created_at >= NOW() - INTERVAL '24 hours'
+              AND d.status IN ('FAILED', 'BOUNCED', 'COMPLAINED', 'SUPPRESSED')
+            UNION ALL
+            SELECT COALESCE(e.occurred_at, e.created_at) AS adverse_at
+            FROM email_events e
+            INNER JOIN email_deliveries d ON d.id = e.delivery_id
+            WHERE d.created_at >= NOW() - INTERVAL '24 hours'
+              AND e.type IN (
+                'email.failed',
+                'email.bounced',
+                'email.complained',
+                'email.suppressed',
+                'email.delivery_delayed'
+              )
+          ) adverse_events
+        ) AS latest_adverse_at
     `;
 
     const latest = await db.$queryRaw<Array<{
@@ -277,6 +299,7 @@ export async function getEmailDeliveryHealthSnapshot() {
       delayed: Number(summary?.delayed || 0),
       suppressed: Number(summary?.suppressed || 0),
       latestProblemAt: summary?.latest_problem_at ?? null,
+      latestAdverseAt: summary?.latest_adverse_at ?? null,
       latest: latest.map((row) => ({
         id: row.id,
         template: row.template,
@@ -294,6 +317,7 @@ export async function getEmailDeliveryHealthSnapshot() {
     delayed: 0,
     suppressed: 0,
     latestProblemAt: null,
+    latestAdverseAt: null,
     latest: [],
   });
 }
