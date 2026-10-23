@@ -308,7 +308,7 @@ async function createRevisionAndAudit(
   input: {
     itemId: string;
     version: number;
-    action: "CREATED" | "UPDATED" | "PUBLISHED" | "HIDDEN" | "ARCHIVED";
+    action: "CREATED" | "UPDATED" | "PUBLISHED" | "HIDDEN" | "ARCHIVED" | "RESTORED" | "ORDER_NORMALIZED";
     status: CmsContentStatus;
     market: string;
     locale: string;
@@ -383,7 +383,12 @@ export async function createCmsContent(raw: unknown, actorInput: CmsActor) {
             locale: parsed.data.locale,
           },
         },
-        select: { id: true },
+        select: {
+        id: true,
+        version: true,
+        legacyFallbackRetiredAt: true,
+        legacyFallbackRetiredByAdminUserId: true,
+      },
       });
       if (!scope) {
         throw new CmsContentError(
@@ -463,6 +468,78 @@ export async function updateCmsContentDraft(id: string, raw: unknown, actorInput
       error,
       "Another content item already uses this type, key, market and locale.",
       "Content changed concurrently. Refresh before saving.",
+    );
+  }
+}
+
+const restoreSchema = z.object({
+  expectedVersion: z.number().int().min(1),
+  revisionId: z.string().trim().min(1).max(128),
+}).strict();
+
+export async function restoreCmsContentRevision(
+  id: string,
+  raw: unknown,
+  actorInput: CmsActor,
+) {
+  const parsed = restoreSchema.safeParse(raw);
+  if (!parsed.success) throw new CmsContentError("INVALID", "Restore request is invalid.", parsed.error.flatten());
+  const actor = normalizeActor(actorInput);
+
+  try {
+    return await getPrisma().$transaction(async (tx) => {
+      const existing = await tx.cmsContentItem.findUnique({ where: { id } });
+      if (!existing) throw new CmsContentError("NOT_FOUND", "Content item not found.");
+      if (existing.status === "ARCHIVED") throw new CmsContentError("ARCHIVED", "Archived content cannot be restored in place.");
+
+      const revision = await tx.cmsContentRevision.findFirst({
+        where: { id: parsed.data.revisionId, contentItemId: id },
+      });
+      if (!revision) throw new CmsContentError("NOT_FOUND", "Content revision not found.");
+
+      const restoredPayload = parsePayload(existing.type, revision.draftPayload);
+      const nextVersion = parsed.data.expectedVersion + 1;
+      const changed = await tx.cmsContentItem.updateMany({
+        where: { id, version: parsed.data.expectedVersion, status: { not: "ARCHIVED" } },
+        data: {
+          draftPayload: restoredPayload,
+          market: revision.market,
+          locale: revision.locale,
+          sortOrder: revision.sortOrder,
+          version: { increment: 1 },
+          updatedByAdminUserId: actor.id,
+        },
+      });
+      if (changed.count !== 1) {
+        throw new CmsContentError("CONFLICT", "Content changed since it was opened. Refresh before restoring.");
+      }
+
+      const item = await tx.cmsContentItem.findUniqueOrThrow({ where: { id } });
+      await createRevisionAndAudit(tx, {
+        itemId: item.id,
+        version: nextVersion,
+        action: "RESTORED",
+        status: item.status,
+        market: item.market,
+        locale: item.locale,
+        sortOrder: item.sortOrder,
+        publishedMarket: item.publishedMarket,
+        publishedLocale: item.publishedLocale,
+        publishedSortOrder: item.publishedSortOrder,
+        draftPayload: restoredPayload,
+        publishedPayload: item.publishedPayload === null ? null : item.publishedPayload as Prisma.InputJsonValue,
+        actor,
+        auditAction: "CMS_CONTENT_RESTORED",
+        type: item.type,
+        key: item.key,
+      });
+      return serialize(item);
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+  } catch (error) {
+    rethrowCmsWriteConflict(
+      error,
+      "Another content item already uses this restored scope identity.",
+      "Content changed concurrently. Refresh before restoring.",
     );
   }
 }
@@ -769,6 +846,9 @@ export async function getCmsContentScopeSummary(
   return {
     available: true,
     active: Boolean(scope),
+    scopeVersion: scope?.version ?? null,
+    legacyFallbackRetired: Boolean(scope?.legacyFallbackRetiredAt),
+    legacyFallbackRetiredAt: scope?.legacyFallbackRetiredAt?.toISOString() ?? null,
     total: groups.reduce((sum, group) => sum + group._count._all, 0),
     draft: counts.get("DRAFT") ?? 0,
     published: counts.get("PUBLISHED") ?? 0,
