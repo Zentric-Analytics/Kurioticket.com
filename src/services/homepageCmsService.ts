@@ -1,0 +1,239 @@
+import { Prisma } from "@/generated/prisma/client";
+
+import { hotelDestinations } from "@/data/hotelDestinations";
+import {
+  getHomeDiscoveryByRegion,
+  getHomeDiscoveryContentMarketCode,
+} from "@/data/homeDiscovery";
+import { popularDestinationsByMarket } from "@/data/marketHomeContent";
+import { HOMEPAGE_REFRESH_MARKET_CODES } from "@/lib/market/resolveMarket";
+import { getPrisma } from "@/lib/prisma";
+import {
+  CmsContentError,
+  cmsPayloadSchemas,
+  type CmsActor,
+} from "@/services/cmsContentService";
+
+const CONTENT_LOCALE = "en";
+
+type SeedRow = {
+  type: "HOMEPAGE_DESTINATION" | "FLIGHT_ROUTE" | "HOTEL_DESTINATION";
+  key: string;
+  market: string;
+  sortOrder: number;
+  payload: Prisma.InputJsonValue;
+};
+
+function normalizeActor(actor: CmsActor) {
+  return { ...actor, email: actor.email.trim().toLowerCase() };
+}
+
+function buildSeedRows(): SeedRow[] {
+  const rows: SeedRow[] = [];
+
+  for (const market of HOMEPAGE_REFRESH_MARKET_CODES) {
+    const destinations = popularDestinationsByMarket[market] ?? [];
+    destinations.forEach((destination, index) => {
+      const payload = cmsPayloadSchemas.HOMEPAGE_DESTINATION.parse({
+        city: destination.city,
+        country: destination.country,
+        destinationCode: destination.code,
+        originCode: destination.originCode,
+        image: destination.image,
+        imageAlt: destination.imageAlt,
+      }) as Prisma.InputJsonValue;
+
+      rows.push({
+        type: "HOMEPAGE_DESTINATION",
+        key: destination.id,
+        market,
+        sortOrder: index,
+        payload,
+      });
+    });
+  }
+
+  const seededFlightMarkets = new Set<string>();
+  for (const market of HOMEPAGE_REFRESH_MARKET_CODES) {
+    const effectiveMarket = getHomeDiscoveryContentMarketCode(market);
+    if (seededFlightMarkets.has(effectiveMarket)) continue;
+    seededFlightMarkets.add(effectiveMarket);
+
+    getHomeDiscoveryByRegion(market).forEach((route, index) => {
+      const payload = cmsPayloadSchemas.FLIGHT_ROUTE.parse({
+        title: route.title,
+        originCity: route.originCity,
+        originCode: route.originCode,
+        destinationCity: route.destinationCity,
+        destinationCode: route.destinationCode,
+        routeNote: route.routeNote,
+        image: route.image,
+        imageAlt: route.imageAlt,
+      }) as Prisma.InputJsonValue;
+
+      rows.push({
+        type: "FLIGHT_ROUTE",
+        key: route.id,
+        market: effectiveMarket,
+        sortOrder: index,
+        payload,
+      });
+    });
+  }
+
+  hotelDestinations.forEach((destination, index) => {
+    const payload = cmsPayloadSchemas.HOTEL_DESTINATION.parse({
+      name: destination.name,
+      country: destination.country,
+      countryCode: destination.countryCode,
+      kind: destination.kind,
+      searchValue: destination.searchValue,
+      canonicalId: `hotel:${destination.id}`,
+    }) as Prisma.InputJsonValue;
+
+    rows.push({
+      type: "HOTEL_DESTINATION",
+      key: destination.id,
+      market: "GLOBAL",
+      sortOrder: index,
+      payload,
+    });
+  });
+
+  return rows;
+}
+
+export async function initializeHomepageCms(actorInput: CmsActor) {
+  const actor = normalizeActor(actorInput);
+  const db = getPrisma();
+  const seedRows = buildSeedRows();
+
+  try {
+    return await db.$transaction(async (tx) => {
+      const relevantTypes = ["HOMEPAGE_DESTINATION", "FLIGHT_ROUTE", "HOTEL_DESTINATION"] as const;
+      const [existingItems, existingScopes] = await Promise.all([
+        tx.cmsContentItem.findMany({
+          where: { type: { in: [...relevantTypes] } },
+          select: { id: true, type: true, key: true, market: true, locale: true },
+        }),
+        tx.cmsContentScope.findMany({
+          where: { type: { in: [...relevantTypes] } },
+          select: { type: true, market: true, locale: true },
+        }),
+      ]);
+
+      if (existingItems.length > 0 || existingScopes.length > 0) {
+        throw new CmsContentError(
+          "CONFLICT",
+          "Homepage CMS is already initialized or contains existing homepage content. Review the existing records instead of reseeding.",
+        );
+      }
+
+      const now = new Date();
+      const scopes = new Map<string, { type: SeedRow["type"]; market: string }>();
+      let seededCount = 0;
+
+      for (const row of seedRows) {
+        const item = await tx.cmsContentItem.create({
+          data: {
+            type: row.type,
+            key: row.key,
+            status: "PUBLISHED",
+            market: row.market,
+            locale: CONTENT_LOCALE,
+            sortOrder: row.sortOrder,
+            publishedMarket: row.market,
+            publishedLocale: CONTENT_LOCALE,
+            publishedSortOrder: row.sortOrder,
+            draftPayload: row.payload,
+            publishedPayload: row.payload,
+            version: 1,
+            publishedVersion: 1,
+            createdByAdminUserId: actor.id,
+            updatedByAdminUserId: actor.id,
+            publishedByAdminUserId: actor.id,
+            publishedAt: now,
+          },
+        });
+
+        await tx.cmsContentRevision.create({
+          data: {
+            contentItemId: item.id,
+            version: 1,
+            action: "PUBLISHED",
+            status: "PUBLISHED",
+            market: row.market,
+            locale: CONTENT_LOCALE,
+            sortOrder: row.sortOrder,
+            publishedMarket: row.market,
+            publishedLocale: CONTENT_LOCALE,
+            publishedSortOrder: row.sortOrder,
+            draftPayload: row.payload,
+            publishedPayload: row.payload,
+            actorUserId: actor.id,
+            actorEmail: actor.email,
+          },
+        });
+
+        scopes.set(`${row.type}:${row.market}`, {
+          type: row.type,
+          market: row.market,
+        });
+        seededCount += 1;
+      }
+
+      for (const scope of scopes.values()) {
+        await tx.cmsContentScope.create({
+          data: {
+            type: scope.type,
+            market: scope.market,
+            locale: CONTENT_LOCALE,
+          },
+        });
+      }
+
+      await tx.adminAuditLog.create({
+        data: {
+          adminUserId: actor.id,
+          adminEmail: actor.email,
+          action: "CMS_HOMEPAGE_INITIALIZED",
+          targetType: "CmsContentScope",
+          targetId: "HOMEPAGE_CONTENT",
+          metadata: {
+            locale: CONTENT_LOCALE,
+            seededCount,
+            scopeCount: scopes.size,
+            homepageDestinationCount: seedRows.filter((row) => row.type === "HOMEPAGE_DESTINATION").length,
+            flightRouteCount: seedRows.filter((row) => row.type === "FLIGHT_ROUTE").length,
+            hotelDestinationCount: seedRows.filter((row) => row.type === "HOTEL_DESTINATION").length,
+          } as Prisma.InputJsonValue,
+          ipAddress: actor.ipAddress,
+          userAgent: actor.userAgent,
+        },
+      });
+
+      return {
+        seededCount,
+        scopeCount: scopes.size,
+        homepageDestinationCount: seedRows.filter((row) => row.type === "HOMEPAGE_DESTINATION").length,
+        flightRouteCount: seedRows.filter((row) => row.type === "FLIGHT_ROUTE").length,
+        hotelDestinationCount: seedRows.filter((row) => row.type === "HOTEL_DESTINATION").length,
+      };
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+  } catch (error) {
+    if (error instanceof CmsContentError) throw error;
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      (error.code === "P2002" || error.code === "P2034")
+    ) {
+      throw new CmsContentError(
+        "CONFLICT",
+        "Homepage CMS changed while initialization was running. Refresh before retrying.",
+      );
+    }
+    throw error;
+  }
+}
+
+export const homepageCmsLocale = CONTENT_LOCALE;
+export const homepageCmsMarkets = HOMEPAGE_REFRESH_MARKET_CODES;
