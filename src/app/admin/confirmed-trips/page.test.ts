@@ -14,6 +14,7 @@ test("confirmed trips admin is a read-only provider-confirmation operations page
   assert.match(page, /Recent provider-confirmed trips/);
   assert.match(page, /Provider handoff ≠ confirmation/);
   assert.match(page, /No Kurioticket payment record/);
+  assert.match(page, /trip\.userEmail \|\| "Email unavailable"/);
   assert.doesNotMatch(page, /fetch\(|method:\s*["'](?:POST|PATCH|DELETE)|<form/);
 });
 
