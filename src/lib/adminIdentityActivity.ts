@@ -155,6 +155,24 @@ export function activityHref(path: string, params: Record<string, string>, updat
   const query = search.toString();
   return path + (query ? "?" + query : "");
 }
+/** Carry the current activity page into the journey drilldown instead of the
+ * unrelated seven-day default. The journey reader allows at most 90 days.
+ * Prefer displayed canonical journeys; historical pages remain navigable.
+ */
+export function relatedJourneysWindow(rows: ActivityRow[], now: Date): { from: string; to: string } | null {
+  const dayMs = 86_400_000;
+  const nowMs = now.getTime();
+  const recorded = rows.filter(row => Number.isFinite(row.at.getTime()) && row.at.getTime() < nowMs);
+  const canonical = recorded.filter(row => row.journeyId);
+  const focus = canonical.length ? canonical : recorded;
+  if (!focus.length) return null;
+  const latest = Math.max(...focus.map(row => row.at.getTime()));
+  const earliest = Math.min(...focus.map(row => row.at.getTime()));
+  const end = Math.min(nowMs, latest + dayMs);
+  const start = Math.max(earliest - dayMs, end - 89 * dayMs);
+  return start < end ? { from: new Date(start).toISOString(), to: new Date(end).toISOString() } : null;
+}
+
 export type ActivityGroup = { key: string; journeyId: string | null; startedAt: Date | null; events: ActivityRow[]; products: string[] };
 export function groupActivityRows(rows: ActivityRow[]): ActivityGroup[] {
   const groups = new Map<string, ActivityGroup>();
