@@ -127,9 +127,15 @@ try {
 
   await check("older activity, tab switch and safe return context", async () => {
     await page.goto(url + "?directory=sort%3Dname_asc%26page%3D2", { waitUntil: "domcontentloaded" });
+    const firstPageIds = await page.locator("[data-activity-id]").evaluateAll(nodes => nodes.map(node => node.getAttribute("data-activity-id")));
+    const firstPageTimes = await page.locator("time[dateTime]").evaluateAll(nodes => nodes.map(node => Date.parse(node.getAttribute("dateTime"))));
     await page.getByRole("link", { name: "Older activity" }).click();
     await expect(page).toHaveURL(/cursor=older-qa-page/);
     await expect(page.locator("[data-activity-id]")).toHaveCount(1);
+    const olderPageIds = await page.locator("[data-activity-id]").evaluateAll(nodes => nodes.map(node => node.getAttribute("data-activity-id")));
+    const olderPageTimes = await page.locator("time[dateTime]").evaluateAll(nodes => nodes.map(node => Date.parse(node.getAttribute("dateTime"))));
+    assert.ok(olderPageIds.every(id => !firstPageIds.includes(id)), "Cursor pages must never repeat recorded events");
+    assert.ok(olderPageTimes.every(at => at < Math.min(...firstPageTimes)), "Older cursor page must contain strictly earlier records");
     await expect(page.getByRole("link", { name: "Older activity" })).toHaveCount(0);
     await page.getByRole("navigation", { name: "Activity tabs" }).getByRole("link", { name: "Selections", exact: true }).click();
     await expect(page).toHaveURL(/tab=selections/);
