@@ -33,20 +33,22 @@ test("navigation keeps role-aware child pages and restores desktop tabs before 1
   assert.match(shell, /min-\[1100px\]:hidden/);
   assert.match(shell, /min-\[1600px\]:gap-2/);
   assert.match(shell, /min-\[1800px\]:gap-3/);
-  assert.match(shell, /overflow-x-auto overscroll-x-contain/);
-  assert.match(shell, /flex min-w-max w-full flex-nowrap/);
-  assert.match(shell, /mobile \? "w-fit" : "w-full"/);
+  assert.doesNotMatch(shell, /overflow-x-auto overscroll-x-contain/);
+  assert.match(shell, /flex w-full flex-wrap items-center/);
+  assert.doesNotMatch(shell, /flex min-w-max w-full flex-nowrap/);
+  assert.doesNotMatch(shell, /createPortal/);
   assert.match(shell, /Official Kurioticket mark stays in the top-left header beside the title at every width/);
   assert.doesNotMatch(shell, /min-\[1440px\]/);
   const groups = getAdminHeaderGroups("ADMIN", true);
   const entries = groups.flatMap(group => group.links);
   const searches = entries.find(({ item }) => item.href === "/admin/searches");
   const support = entries.find(({ item }) => item.href === "/admin/support");
-  assert.deepEqual(searches?.children.map(child => child.href), [
-    "/admin/journeys", "/admin/redirects", "/admin/referral-attribution",
-  ]);
-  assert.deepEqual(support?.children.map(child => child.href), ["/admin/account-deletions"]);
+  assert.deepEqual(searches?.children, []);
+  assert.deepEqual(support?.children, []);
   assert.equal(entries.some(({ item }) => item.href === "/admin/preview-testers"), true);
+  for (const href of ["/admin/journeys", "/admin/redirects", "/admin/referral-attribution", "/admin/account-deletions"]) {
+    assert.equal(entries.some(({ item }) => item.href === href), true);
+  }
   // Current dev intentionally hides Admin navigation from support roles.
   assert.deepEqual(getAdminHeaderGroups("SUPPORT"), []);
 });
