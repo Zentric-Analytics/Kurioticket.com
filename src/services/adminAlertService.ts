@@ -100,12 +100,13 @@ async function getAdminOperationalAlerts(
   now: Date,
   forceRefreshCandidates: boolean,
 ): Promise<AdminOperationalAlert[]> {
-  const [candidates, acknowledgements] = await Promise.all([
-    readAdminAlertCandidates(now, forceRefreshCandidates),
-    adminUserId
-      ? readRecentAcknowledgements(adminUserId, candidates, now)
-      : Promise.resolve(new Map<string, string>()),
-  ]);
+  const candidates = await readAdminAlertCandidates(
+    now,
+    forceRefreshCandidates,
+  );
+  const acknowledgements = adminUserId
+    ? await readRecentAcknowledgements(adminUserId, candidates, now)
+    : new Map<string, string>();
 
   return candidates
     .map((candidate) => {
