@@ -63,6 +63,10 @@ try {
     ]) {
       await page.getByRole("combobox", { name: "Sort by" }).selectOption(value);
       await expect(page).toHaveURL(new RegExp("sort=" + value));
+      // Wait for the new server-rendered directory and select to hydrate before
+      // changing the sort again, rather than racing a prior navigation.
+      await page.waitForLoadState("networkidle");
+      await expect(page.getByRole("combobox", { name: "Sort by" })).toHaveValue(value);
       await expect(page.locator("tbody tr").first()).toContainText(expected);
       assert.equal(new URL(page.url()).searchParams.get("page"), null);
     }
