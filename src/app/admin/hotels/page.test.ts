@@ -73,7 +73,7 @@ test("hotel operations exposes focused search, destination, and provider excepti
 test("hotel exception diagnostics keep valid zero results distinct from failure", () => {
   assert.match(service, /status: "SUCCESS", resultCount: 0/);
   assert.match(service, /search\.status === "FAILED" \? "FAILED" : search\.status === "PARTIAL" \? "PARTIAL" : "ZERO_RESULTS"/);
-  assert.match(hotelsPage, /ZERO_RESULTS/);
+  assert.match(hotelsPage, /search\.kind\.replaceAll\("_", " "\)/);
 });
 
 test("hotel provider exceptions classify disabled coverage without exposing raw errors", () => {
