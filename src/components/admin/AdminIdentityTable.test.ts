@@ -97,13 +97,15 @@ test("Sort by auto-submit form preserves filters, selected option and resets to 
   assert.match(sortForm, /name="role" value="ALL"/);
   assert.match(sortForm, /name="status" value="ALL"/);
   assert.match(sortForm, /name="identity" value="ALL"/);
-  assert.match(sortForm, /name="sort" value="name_asc"/);
-  assert.match(sortForm, /role="combobox"/);
-  assert.match(sortForm, /aria-haspopup="listbox"/);
-  assert.match(sortForm, /aria-label="Sort by"/);
-  assert.match(sortForm, /Name: A–Z/);
-  assert.doesNotMatch(sortForm, /<select|<option/);
+  // Server rendering and disabled JavaScript retain a real, usable native select.
+  assert.match(sortForm, /name="sort"/);
+  assert.match(sortForm, /<select/);
+  assert.match(sortForm, /<option value="name_asc" selected=""/);
+  assert.match(sortForm, /Apply sort/);
   assert.doesNotMatch(sortForm, /name="page"/);
+  for (const option of ["newest", "oldest", "name_asc", "name_desc"]) {
+    assert.match(sortForm, new RegExp(`value="${option}"`));
+  }
 });
 
 test("under 100 identities occupy one page with both arrows unavailable", () => {
