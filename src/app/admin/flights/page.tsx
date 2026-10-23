@@ -11,22 +11,19 @@ import {
 } from "@/components/admin/AdminPageShell";
 import { formatDateTime, getProviderStatuses } from "@/lib/admin-data";
 import { getFlightOperationsSnapshot } from "@/services/adminFlightOperationsService";
-import { getProviderOperationalStatuses } from "@/services/providerOperationalStatus";
 import { getProviderIntegrationStatuses } from "@/services/travel/providerIntegrationStatus";
 
 export const metadata = { title: "Admin Flight Operations" };
 
 export default async function AdminFlightsPage() {
-  const [providerStatuses, operations, operational, integrations] = await Promise.all([
+  const [providerStatuses, operations, integrations] = await Promise.all([
     getProviderStatuses(),
     getFlightOperationsSnapshot(),
-    getProviderOperationalStatuses(),
     Promise.resolve(getProviderIntegrationStatuses()),
   ]);
 
   const flight = providerStatuses.find((provider) => provider.product === "Flights");
   const flightIntegrations = integrations.filter((provider) => provider.products.includes("FLIGHTS"));
-  const flightOperational = operational?.filter((provider) => flightIntegrations.some((integration) => integration.id === provider.id)) ?? null;
 
   return (
     <AdminPageShell
@@ -72,7 +69,7 @@ export default async function AdminFlightsPage() {
 
             <div className="mt-4 grid gap-3 lg:grid-cols-2">
               {flightIntegrations.map((integration) => {
-                const health = flightOperational?.find((provider) => provider.id === integration.id);
+                const health = operations?.providerHealth.find((provider) => provider.id === integration.id);
                 return (
                   <div key={integration.id} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
                     <div className="flex items-start justify-between gap-3">
