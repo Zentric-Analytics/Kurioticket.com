@@ -434,22 +434,20 @@ async function readCmsIntegrityOccurrenceToken(
       return `cms-integrity:${fingerprint}:healthy`;
     }
 
-    const recoveryBoundary =
-      previousState === "HEALTHY"
-        ? previousRecoveryBoundary ?? latest?.createdAt.toISOString() ?? "initial"
-        : previousState === "UNHEALTHY"
-          ? previousRecoveryBoundary ?? "initial"
-          : "initial";
+    const sameContinuousIncident =
+      previousState === "UNHEALTHY" && previousFingerprint === fingerprint;
+    const recoveryBoundary = sameContinuousIncident
+      ? previousRecoveryBoundary ?? latest?.createdAt.toISOString() ?? "initial"
+      : previousState === "HEALTHY"
+        ? previousRecoveryBoundary ?? latest?.createdAt.toISOString() ?? now.toISOString()
+        : now.toISOString();
 
     const occurrenceToken = `cms-integrity:${fingerprint}:${createHash("sha256")
       .update(`${fingerprint}:${recoveryBoundary}`)
       .digest("hex")
       .slice(0, 24)}`;
 
-    if (
-      previousState !== "UNHEALTHY" ||
-      previousFingerprint !== fingerprint
-    ) {
+    if (!sameContinuousIncident) {
       await db.adminAuditLog.create({
         data: {
           adminEmail: "system-alert-monitor",
