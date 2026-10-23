@@ -1,5 +1,5 @@
 import { Prisma } from "@/generated/prisma/client";
-import type { FlightOperationalStatus, MyTripType } from "@/generated/prisma/enums";
+import type { FlightOperationalStatus, MyTripSource, MyTripType } from "@/generated/prisma/enums";
 import { getPrisma } from "@/lib/prisma";
 
 const freshnessWindowMs = 15 * 60_000;
@@ -29,13 +29,13 @@ type FlightStatusDatabase = {
     findUnique(args: unknown): Promise<{
       id: string;
       tripType: MyTripType;
-      source: "PARTNER_CONFIRMATION" | "CONFIRMATION_IMPORT" | "MIGRATED_LEGACY";
+      source: MyTripSource;
       partnerConfirmationOccurredAt: Date | null;
     } | null>;
     findFirst(args: unknown): Promise<{
       id: string;
       providerName: string;
-      source: "PARTNER_CONFIRMATION" | "CONFIRMATION_IMPORT" | "MIGRATED_LEGACY";
+      source: MyTripSource;
       partnerConfirmationOccurredAt: Date | null;
       flightStatusSnapshot: StatusSnapshotRecord | null;
     } | null>;
