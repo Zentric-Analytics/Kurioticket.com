@@ -392,6 +392,8 @@ type HomepageCmsDestinationItem = {
   originCode: string;
   image: string;
   imageAlt: string;
+  canonicalDestinationId?: string;
+  destinationSearchValue?: string;
 };
 
 type HomepageCmsContentState = {
@@ -646,6 +648,8 @@ export default function Home() {
             country: destination.country,
             image: destination.image,
             imageAlt: destination.imageAlt,
+            canonicalDestinationId: destination.canonicalDestinationId,
+            destinationSearchValue: destination.destinationSearchValue,
           }))
         : popularDestinationResolution.items,
     [cmsContentForMarket, popularDestinationResolution.items],
@@ -689,6 +693,13 @@ export default function Home() {
       (destination) => destination.id,
     )
       .flatMap((destination) => {
+        if (destination.canonicalDestinationId && destination.destinationSearchValue) {
+          return [{
+            ...destination,
+            canonicalDestinationId: destination.canonicalDestinationId,
+            destinationSearchValue: destination.destinationSearchValue,
+          } satisfies HomeHotelDestination];
+        }
         const resolved = resolveHomeHotelDestination(destination);
         return resolved ? [resolved] : [];
       })
