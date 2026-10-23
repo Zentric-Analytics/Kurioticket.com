@@ -80,6 +80,7 @@ export type AdminAlertSignals = {
       | {
           metrics: {
             feedEligibleFlights: number;
+            monitoringFlights: number;
             trackedFlights: number;
             missingSnapshots: number;
             missingSnapshotFingerprint: string;
@@ -310,7 +311,7 @@ function flightStatusAlerts(signals: AdminAlertSignals) {
       severity: "WARNING",
       source: "FLIGHT_STATUS",
       title: "Some flight-status snapshots are missing",
-      message: `${metrics.missingSnapshots} of ${metrics.feedEligibleFlights} feed-eligible flight(s) are still awaiting their first status snapshot.`,
+      message: `${metrics.missingSnapshots} of ${metrics.monitoringFlights} actively monitored flight(s) are still awaiting their first status snapshot.`,
       actionHref: "/admin/flight-status",
       signalToken: `flight-status-missing:${metrics.missingSnapshotFingerprint}`,
     });
