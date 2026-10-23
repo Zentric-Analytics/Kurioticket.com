@@ -135,6 +135,21 @@ test("compact range selector sits in Operations Snapshot and the top toolbar is 
   assert.doesNotMatch(dashboard, /vs last 7 days|\+12%|99\.2%/);
 });
 
+test("Overview information is presented without boxed white card containers", () => {
+  assert.doesNotMatch(dashboard, /AdminSectionCard|AdminEmptyState|<Card/);
+  assert.doesNotMatch(page, /AdminEmptyState/);
+  assert.match(display, /<MetricCard label="Total users"/);
+  assert.match(display, /<AttentionCard href="\/admin\/providers"/);
+  assert.match(display, /<PlatformHealth system=\{system\} \/>/);
+  assert.match(display, /<ProviderCard key=\{provider.id\}/);
+  assert.match(display, /<FunnelStep label="Search completed"/);
+  assert.match(display, /<WorkloadCard title="Support Workload"/);
+  assert.match(display, /<ActivityFeed activity=\{activity\} \/>/);
+  assert.match(dashboard, /border-b border-slate-200/);
+  assert.match(dashboard, /border-t border-slate-200/);
+  assert.match(dashboard, /<details className="mt-3 border-t border-slate-200\/80">/);
+});
+
 test("invisible automatic refresh retains its original one-minute visibility and cleanup behavior", () => {
   assert.match(controls, /export function AdminOverviewAutoRefresh/);
   assert.match(controls, /window\.setInterval\(\(\) => \{/);

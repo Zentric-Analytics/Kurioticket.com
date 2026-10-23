@@ -1,4 +1,4 @@
-import { AdminPageShell, AdminEmptyState } from "@/components/admin/AdminPageShell";
+import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import {
   AdminOverviewDashboard,
   AdminOverviewSecondary,
@@ -44,10 +44,12 @@ export default async function AdminPage({ searchParams }: PageProps) {
         />
       ) : (
         <>
-          <AdminEmptyState
-            title="Operational summary unavailable"
-            message="The canonical admin overview could not be loaded. No fallback or mocked operational totals are shown."
-          />
+          <section role="status" className="border-b border-slate-200/90 py-5">
+            <h2 className="text-base font-bold text-slate-950">Operational summary unavailable</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              The canonical admin overview could not be loaded. No fallback or mocked operational totals are shown.
+            </p>
+          </section>
           <AdminOverviewSecondary system={system} activity={activity} />
         </>
       )}
