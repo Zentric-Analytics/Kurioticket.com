@@ -169,7 +169,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
           <span className="relative block"><Search size={15} aria-hidden="true" className="pointer-events-none absolute left-3 top-3 text-[#94A3B8]" />
             <input name="q" defaultValue={filters.q} maxLength={80} placeholder="Route, destination, provider..." className={inputClass + " pl-9"} /></span>
         </label>
-        <button type="submit" className="focus-ring mt-auto h-10 whitespace-nowrap rounded-lg bg-[#004BB8] px-4 text-[13px] font-semibold text-white hover:bg-[#003B91]">Apply Filter</button>
+        <button type="submit" className="focus-ring mt-auto h-10 whitespace-nowrap rounded-lg bg-[#004BB8] px-4 text-[13px] font-semibold text-white hover:bg-[#004BB8]/90">Apply Filter</button>
       </form>
     </section>
 
