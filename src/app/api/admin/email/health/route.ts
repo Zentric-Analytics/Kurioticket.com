@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { requireAdminApiSession } from "@/lib/admin";
+import { requireAdminApiSession, writeAdminAuditLog } from "@/lib/admin";
 import { getEmailDeliveryHealthSnapshot } from "@/services/emailDeliveryService";
 import { sendTransactionalEmail } from "@/services/emailService";
 
@@ -25,7 +25,7 @@ export async function GET() {
   });
 }
 
-export async function POST() {
+export async function POST(request: Request) {
   const auth = await requireAdminApiSession();
   if (auth.response) return auth.response;
 
@@ -48,6 +48,15 @@ export async function POST() {
       idempotencyKey: `admin-email-test-${email}-${Date.now()}`,
       requireConfigured: true,
       metadata: { source: "admin-email-health" },
+    });
+
+    await writeAdminAuditLog({
+      adminUserId: auth.session.user.id,
+      adminEmail: auth.session.user.email,
+      action: "EMAIL_DELIVERY_TEST_SENT",
+      targetType: "EmailDelivery",
+      metadata: { template: "admin_test" },
+      request,
     });
 
     return NextResponse.json({ ok: true, providerMessageId: result.id });
