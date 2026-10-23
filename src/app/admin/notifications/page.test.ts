@@ -47,9 +47,11 @@ test("admin alerts distinguish telemetry outages from real healthy zeroes", () =
   assert.match(core, /Homepage fare telemetry is unavailable/);
   assert.match(core, /Flight-status telemetry is unavailable/);
   assert.match(core, /signals\.email\.failures === 0 && signals\.email\.delayed === 0/);
-  assert.match(service, /telemetryOutageOccurrences/);
-  assert.match(service, /telemetryOutageToken/);
-  assert.match(service, /telemetryOutageOccurrences\.delete\(source\)/);
+  assert.match(service, /TELEMETRY_STATE_ACTION/);
+  assert.match(service, /readTelemetryOutageTokens/);
+  assert.match(service, /state: "AVAILABLE"/);
+  assert.match(service, /state: "OUTAGE"/);
+  assert.match(service, /recoveryBoundary/);
   assert.match(core, /signals\.telemetryOutageTokens\.providers/);
   assert.match(core, /signals\.telemetryOutageTokens\.email/);
   assert.match(core, /signals\.telemetryOutageTokens\.cms/);
