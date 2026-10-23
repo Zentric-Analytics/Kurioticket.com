@@ -45,6 +45,7 @@ test("homepage fare snapshot timestamp is not mislabeled as a completed refresh 
 
 test("all homepage fare refresh callers share the distributed lock", () => {
   assert.match(service, /withHomepageFareRefreshLock\(\(\) => runPhase3AHomepageFareRefresh\(input\)\)/);
+  assert.match(lockService, /POSTGRES_URL_NON_POOLING/);
   assert.match(lockService, /pg_try_advisory_lock/);
   assert.match(lockService, /pg_advisory_unlock/);
   assert.doesNotMatch(cronRefresh, /refreshInProgress/);
