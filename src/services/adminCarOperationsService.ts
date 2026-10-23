@@ -11,7 +11,6 @@ export type CarOperationsSnapshot = {
     total: number;
     successful: number;
     failed: number;
-    successfulZeroResults: number;
     averageLatencyMs: number | null;
   };
   recentSearches: Array<{
@@ -44,11 +43,10 @@ export async function getCarOperationsSnapshot(
 
   try {
     return await db.$transaction(async (tx) => {
-      const [total, successful, failed, successfulZeroResults, latency, recentSearches] = await Promise.all([
+      const [total, successful, failed, latency, recentSearches] = await Promise.all([
         tx.searchHistory.count({ where: searchWhere }),
         tx.searchHistory.count({ where: { ...searchWhere, status: "SUCCESS" } }),
         tx.searchHistory.count({ where: { ...searchWhere, status: "FAILED" } }),
-        tx.searchHistory.count({ where: { ...searchWhere, status: "SUCCESS", resultCount: 0 } }),
         tx.searchHistory.aggregate({ where: searchWhere, _avg: { latencyMs: true } }),
         tx.searchHistory.findMany({
           where: searchWhere,
@@ -74,7 +72,6 @@ export async function getCarOperationsSnapshot(
           total,
           successful,
           failed,
-          successfulZeroResults,
           averageLatencyMs: latency._avg.latencyMs === null ? null : Math.round(latency._avg.latencyMs),
         },
         recentSearches: recentSearches.map((search) => ({
