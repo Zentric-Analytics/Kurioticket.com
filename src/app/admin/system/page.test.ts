@@ -7,49 +7,39 @@ const settingsPage = readFileSync("src/app/admin/settings/page.tsx", "utf8");
 const envSource = readFileSync("src/lib/env.ts", "utf8");
 const adminDataSource = readFileSync("src/lib/admin-data.ts", "utf8");
 const systemApi = readFileSync("src/app/api/admin/system/route.ts", "utf8");
-const homepageFareStatusApi = readFileSync("src/app/api/admin/homepage-fares/status/route.ts", "utf8");
-const homepageFareRefreshApi = readFileSync("src/app/api/admin/homepage-fares/refresh/route.ts", "utf8");
 
-test("settings remains the homepage fare workspace without duplicate feature controls", () => {
-  assert.match(settingsPage, /AdminPageShell title="Settings"/);
-  assert.match(settingsPage, /HomepageFaresRefreshCard/);
-  assert.doesNotMatch(settingsPage, /Feature flags/i);
-  assert.doesNotMatch(settingsPage, /redirect\(/);
-});
-
-test("system page owns interactive authoritative feature controls", () => {
+test("system is read-only safe runtime status", () => {
   assert.match(systemPage, /title="System"/);
+  assert.match(systemPage, /Safe operational status only/);
   assert.match(systemPage, /System Status/);
   assert.match(systemPage, /Admin Configuration/);
   assert.match(systemPage, /ADMIN_EMAILS configured/);
   assert.match(systemPage, /Configured admin count/);
-  assert.match(systemPage, /Feature Controls/);
-  assert.match(systemPage, /FeatureControlsPanel/);
-  assert.match(systemPage, /canControlProduction/);
-  assert.match(systemPage, /operationsAvailable/);
+  assert.doesNotMatch(systemPage, /FeatureControlsPanel|listFeatureControls|getServerSession/);
+  assert.doesNotMatch(systemPage, /HomepageFaresRefreshCard|homepage fare/i);
 });
 
-test("system page avoids duplicate admin email status rows", () => {
-  assert.equal((systemPage.match(/ADMIN_EMAILS configured/g) || []).length, 1);
-  assert.equal((systemPage.match(/Configured admin count/g) || []).length, 1);
-  assert.doesNotMatch(systemPage, /\["Admin emails configured"/);
+test("settings owns authoritative feature controls", () => {
+  assert.match(settingsPage, /title="Settings"/);
+  assert.match(settingsPage, /Feature Controls/);
+  assert.match(settingsPage, /FeatureControlsPanel/);
+  assert.match(settingsPage, /listFeatureControls/);
+  assert.match(settingsPage, /getFeatureControlProductionAdmins/);
+  assert.match(settingsPage, /canControlProduction/);
+  assert.match(settingsPage, /operationsAvailable=\{featureControls\.dataAvailable\}/);
+  assert.doesNotMatch(settingsPage, /HomepageFaresRefreshCard/);
 });
 
-test("feature control query and production configuration are centralized", () => {
-  assert.match(systemPage, /listFeatureControls\(\)/);
+test("deployment-owned configuration stays outside Settings mutations", () => {
+  assert.match(settingsPage, /Database URLs, API keys, session secrets, provider credentials and server environment variables are never editable here/);
+  assert.match(settingsPage, /ADMIN_EMAILS and production feature-controller permissions stay in server configuration/);
   assert.match(envSource, /getFeatureControlProductionAdmins/);
   assert.match(envSource, /export function getAdminEmails\(\)/);
   assert.match(envSource, /process\.env\.ADMIN_EMAILS \|\| ""/);
-  assert.match(adminDataSource, /export async function getSafeSystemStatus\(\)/);
   assert.match(adminDataSource, /adminEmailsConfigured: getAdminEmails\(\)\.length > 0/);
-  assert.match(systemPage, /featureControls\.dataAvailable && system\.databaseConnected/);
 });
 
-test("admin APIs and homepage fare refresh APIs are not modified by system consolidation", () => {
+test("system API remains read-only status", () => {
   assert.match(systemApi, /return NextResponse\.json\(\{ system: await getSafeSystemStatus\(\) \}\)/);
-  assert.match(homepageFareStatusApi, /readHomepageFareSnapshotStatus\(\)/);
-  assert.match(homepageFareRefreshApi, /refreshPhase3AHomepageFareSnapshots/);
-  assert.match(homepageFareRefreshApi, /writeAdminAuditLog/);
-  assert.doesNotMatch(systemPage, /HomepageFaresRefreshCard/);
-  assert.doesNotMatch(systemPage, /homepage fare/i);
+  assert.doesNotMatch(systemApi, /PATCH|POST|DELETE/);
 });

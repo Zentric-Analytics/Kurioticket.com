@@ -5,6 +5,7 @@ import test from "node:test";
 const contentPage = readFileSync("src/app/admin/content/page.tsx", "utf8");
 const systemPage = readFileSync("src/app/admin/system/page.tsx", "utf8");
 const settingsPage = readFileSync("src/app/admin/settings/page.tsx", "utf8");
+const homepageFarePage = readFileSync("src/app/admin/homepage-fares/page.tsx", "utf8");
 const refreshCard = readFileSync("src/components/admin/HomepageFaresRefreshCard.tsx", "utf8");
 const statusApi = readFileSync("src/app/api/admin/homepage-fares/status/route.ts", "utf8");
 const refreshApi = readFileSync("src/app/api/admin/homepage-fares/refresh/route.ts", "utf8");
@@ -34,14 +35,14 @@ test("public content management exposes homepage and FAQ CMS areas while fare op
   assert.doesNotMatch(contentPage, /Upload image|Approve content/i);
 });
 
-test("system owns feature controls while settings retains homepage fares", () => {
+test("homepage fare operations are separated from content, system and settings", () => {
+  assert.doesNotMatch(contentPage, /HomepageFaresRefreshCard/);
   assert.doesNotMatch(systemPage, /HomepageFaresRefreshCard/);
-  assert.match(systemPage, /Admin Configuration/);
-  assert.match(systemPage, /Feature Controls/);
-  assert.doesNotMatch(systemPage, /homepage fare/i);
-  assert.match(settingsPage, /title="Settings"/);
-  assert.match(settingsPage, /HomepageFaresRefreshCard/);
-  assert.doesNotMatch(settingsPage, /Feature flags/i);
+  assert.doesNotMatch(settingsPage, /HomepageFaresRefreshCard/);
+  assert.match(settingsPage, /Feature Controls/);
+  assert.match(homepageFarePage, /title="Homepage Fare Operations"/);
+  assert.match(homepageFarePage, /HomepageFaresRefreshCard/);
+  assert.match(homepageFarePage, /href="\/admin\/settings"/);
 });
 
 test("homepage fare refresh component keeps existing client APIs, scopes, and status messaging", () => {

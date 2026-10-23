@@ -55,8 +55,9 @@ export const adminNavigation: AdminNavDefinition[] = [
   { href: "/admin/support", label: "Support", icon: Headphones, roles: ["ADMIN"], section: "operations", description: "Review tickets and respond to customers." },
   { href: "/admin/account-deletions", parentHref: "/admin/support", label: "Deletion Requests", icon: ClipboardList, roles: ["ADMIN"], section: "operations", description: "Review account deletion request lifecycles." },
   { href: "/admin/logs", label: "Logs", icon: BookOpen, roles: ["ADMIN"], section: "controls", description: "Review administrative and security-sensitive actions." },
-  { href: "/admin/system", label: "System", icon: LockKeyhole, roles: ["ADMIN"], section: "controls", description: "Manage system-level administrative controls." },
-  { href: "/admin/settings", label: "Settings", icon: Settings, roles: ["ADMIN"], section: "controls", description: "Review administrative settings." },
+  { href: "/admin/system", label: "System", icon: LockKeyhole, roles: ["ADMIN"], section: "controls", description: "Review safe runtime health and deployment configuration status." },
+  { href: "/admin/settings", label: "Settings", icon: Settings, roles: ["ADMIN"], section: "controls", description: "Manage authoritative persisted platform controls." },
+  { href: "/admin/homepage-fares", parentHref: "/admin/settings", label: "Homepage Fare Operations", icon: Activity, roles: ["ADMIN"], section: "controls", description: "Monitor and refresh provider-backed homepage fare readiness." },
 ];
 
 export function isAdminNavItemActive(itemHref: string, pathname: string) {
@@ -76,19 +77,22 @@ export type AdminHeaderGroup = {
 };
 
 /**
- * Show every permitted Admin module directly in the horizontal header.
- * Keep parentHref metadata for the historical sidebar without nesting header links.
+ * Render each permitted module as a direct header link, even where sidebar
+ * parentHref metadata is retained. Group unlisted pages beside their parent.
  */
 export function getAdminHeaderGroups(role: AdminRole, includePreviewTesters = false): AdminHeaderGroup[] {
   const visible = getAdminNavForRole(role, includePreviewTesters);
   const byHref = new Map(visible.map((item) => [item.href, item]));
   const groupedHrefs = new Set<string>(adminNavigationGroups.flatMap((group) => group.hrefs));
-  const extraTopLevel = visible.filter((item) => !groupedHrefs.has(item.href) && !item.parentHref);
+  const ungrouped = visible.filter((item) => !groupedHrefs.has(item.href));
 
   return adminNavigationGroups.map((group, index) => {
-    const hrefs: string[] = [...group.hrefs];
+    const hrefs: string[] = group.hrefs.flatMap((href) => [
+      href,
+      ...ungrouped.filter((item) => item.parentHref === href).map((item) => item.href),
+    ]);
     if (index === adminNavigationGroups.length - 1) {
-      hrefs.push(...extraTopLevel.map((item) => item.href));
+      hrefs.push(...ungrouped.filter((item) => !item.parentHref).map((item) => item.href));
     }
     const links = hrefs.flatMap((href) => {
       const item = byHref.get(href);
