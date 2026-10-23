@@ -2,6 +2,7 @@ import type React from "react";
 
 import {
   Activity,
+  Bell,
   BookOpen,
   Car,
   ClipboardList,
@@ -58,6 +59,7 @@ export const adminNavigation: AdminNavDefinition[] = [
   { href: "/admin/logs", label: "Logs", icon: BookOpen, roles: ["ADMIN"], section: "controls", description: "Review administrative and security-sensitive actions." },
   { href: "/admin/system", label: "System", icon: LockKeyhole, roles: ["ADMIN"], section: "controls", description: "Review safe runtime health and deployment configuration status." },
   { href: "/admin/email-delivery", parentHref: "/admin/system", label: "Email Delivery", icon: Mail, roles: ["ADMIN"], section: "controls", description: "Monitor transactional email delivery health and test sending readiness." },
+  { href: "/admin/notifications", parentHref: "/admin/system", label: "Notifications & Alerts", icon: Bell, roles: ["ADMIN"], section: "controls", description: "Review active internal operational alerts and acknowledgement state." },
   { href: "/admin/settings", label: "Settings", icon: Settings, roles: ["ADMIN"], section: "controls", description: "Manage authoritative persisted platform controls." },
   { href: "/admin/homepage-fares", parentHref: "/admin/settings", label: "Homepage Fare Operations", icon: Activity, roles: ["ADMIN"], section: "controls", description: "Monitor and refresh provider-backed homepage fare readiness." },
 ];

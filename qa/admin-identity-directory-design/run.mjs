@@ -43,6 +43,13 @@ await put("app/layout.jsx", 'import "./globals.css";\n' +
   '<AdminHorizontalShell adminRole="ADMIN" adminEmail="alana@example.invalid" adminName="Alana QA">{children}</AdminHorizontalShell>\n' +
   '</body></html>;}');
 await put("app/page.jsx", 'export default function Home(){return <p>Isolated Admin directory browser QA.</p>;}');
+// The real Admin shell now loads the safe alert-count summary in the background.
+// Keep this isolated visual fixture self-contained so navbar QA does not depend on
+// production authentication or operational data.
+await put(
+  "app/api/admin/notifications/route.js",
+  'export async function GET(){return Response.json({generatedAt:"2026-01-01T00:00:00.000Z",activeCount:0,unreadCount:0,criticalCount:0,warningCount:0});}',
+);
 await put("app/admin/users/page.tsx", await readFile(path.join(source, "app/admin/users/page.tsx"), "utf8"));
 await put("mocks/auth-guards.js", 'export async function requireAdminSession(){return {user:{id:"qa-admin-001",role:"ADMIN"}};}');
 await put("mocks/env.js", 'export function getAdminEmails(){return ["alana@example.invalid"];}');

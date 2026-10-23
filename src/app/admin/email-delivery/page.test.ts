@@ -30,6 +30,8 @@ test("email delivery telemetry distinguishes unavailable storage from real zero 
   assert.doesNotMatch(service, /subject: row\.subject/);
   assert.doesNotMatch(service, /providerMessageId:/);
   assert.doesNotMatch(service, /lastError:/);
+  assert.match(service, /updated_at >= NOW\(\) - INTERVAL '24 hours'/);
+  assert.match(service, /COALESCE\(e\.occurred_at, e\.created_at\) >= NOW\(\) - INTERVAL '24 hours'/);
 });
 
 test("admin email test send is constrained, audited, and provider-neutral", () => {

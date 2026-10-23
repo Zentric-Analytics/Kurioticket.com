@@ -13,7 +13,9 @@ type AdminSessionResult = Awaited<ReturnType<typeof requireAdminApiSession>>;
 
 type AdminSupportMutationDependencies = {
   requireAdmin: typeof requireAdminApiSession;
-  writeAuditLog: typeof writeAdminAuditLog;
+  writeAuditLog: (
+    input: Parameters<typeof writeAdminAuditLog>[0],
+  ) => Promise<unknown>;
 };
 
 let dependenciesForTesting: AdminSupportMutationDependencies | null = null;

@@ -77,7 +77,7 @@ test("flight status reads are trip-owner scoped and expose no status until an ap
 });
 
 
-test("future status events cannot poison ordering or appear current", async () => {
+test("future status events beyond the accepted skew are rejected while accepted skew remains current", async () => {
   const database = memoryDatabase();
   const service = createFlightStatusService(() => database.client, () => now);
   const future = {
@@ -91,7 +91,7 @@ test("future status events cannot poison ordering or appear current", async () =
   database.setObservedAt(new Date("2026-10-22T16:01:00.000Z"));
   const owner = await service.getUserFlightStatus("user-a", "trip-1");
   assert.equal(owner?.dataAvailable, true);
-  if (owner?.dataAvailable) assert.equal(owner.freshness, "stale");
+  if (owner?.dataAvailable) assert.equal(owner.freshness, "current");
 });
 
 function payload() {

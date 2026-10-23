@@ -1,5 +1,7 @@
 import "server-only";
 
+import { createHash } from "node:crypto";
+
 import type { Prisma } from "@/generated/prisma/client";
 import { getOptionalPrisma } from "@/lib/prisma";
 import { getPublicEnvironment, type PublicEnvironment } from "@/lib/stagingSafety";
@@ -24,6 +26,13 @@ export type FlightStatusOperationsSnapshot = {
     missingSnapshots: number;
     currentSnapshots: number;
     staleSnapshots: number;
+    monitoringFlights: number;
+    monitoringTrackedFlights: number;
+    monitoringMissingSnapshots: number;
+    monitoringMissingSnapshotFingerprint: string;
+    monitoringCurrentSnapshots: number;
+    monitoringStaleSnapshots: number;
+    monitoringStaleSnapshotFingerprint: string;
   };
   statusDistribution: Array<{
     status: string;
@@ -62,6 +71,13 @@ export type FlightStatusOperationsSnapshot = {
   }>;
 };
 
+function fingerprintFlightStatusIdentities(values: string[][]) {
+  return createHash("sha256")
+    .update(JSON.stringify(values))
+    .digest("hex")
+    .slice(0, 24);
+}
+
 export function getFlightStatusIntegrationReadiness(): FlightStatusIntegrationReadiness {
   const providerName = process.env.FLIGHT_STATUS_PROVIDER_NAME?.trim() || null;
   const webhookCredentialConfigured = isConfiguredPartnerConfirmationSecret(
@@ -86,6 +102,10 @@ export async function getFlightStatusOperationsSnapshot(
 
   const now = new Date();
   const currentSince = new Date(now.getTime() - flightStatusLimits.freshnessWindowMs);
+  const currentUntil = new Date(
+    now.getTime() + flightStatusLimits.maximumFutureEventSkewMs,
+  );
+  const monitoringSince = new Date(now.getTime() - 24 * 60 * 60_000);
   const confirmedFlightWhere: Prisma.MyTripWhereInput = {
     tripType: "FLIGHT",
     source: "PARTNER_CONFIRMATION",
@@ -94,6 +114,19 @@ export async function getFlightStatusOperationsSnapshot(
   const feedEligibleWhere: Prisma.MyTripWhereInput = readiness.providerName
     ? { ...confirmedFlightWhere, providerName: readiness.providerName }
     : { ...confirmedFlightWhere, id: "__no_configured_flight_status_provider__" };
+  const monitoringFlightWhere: Prisma.MyTripWhereInput = {
+    ...feedEligibleWhere,
+    status: "UPCOMING",
+    departureDate: { gte: monitoringSince },
+    OR: [
+      { flightStatusSnapshot: { is: null } },
+      {
+        flightStatusSnapshot: {
+          is: { status: { notIn: ["ARRIVED", "CANCELLED"] } },
+        },
+      },
+    ],
+  };
 
   try {
     return await db.$transaction(async (tx) => {
@@ -103,7 +136,13 @@ export async function getFlightStatusOperationsSnapshot(
         trackedFlights,
         missingSnapshots,
         currentSnapshots,
+        monitoringFlights,
+        monitoringTrackedFlights,
+        monitoringMissingSnapshots,
+        monitoringCurrentSnapshots,
         statusDistribution,
+        missingSnapshotIdentities,
+        staleSnapshotIdentities,
         awaitingFirstSnapshot,
         recentSnapshots,
       ] = await Promise.all([
@@ -117,14 +156,47 @@ export async function getFlightStatusOperationsSnapshot(
         }),
         tx.flightStatusSnapshot.count({
           where: {
-            observedAt: { gte: currentSince, lte: now },
+            observedAt: { gte: currentSince, lte: currentUntil },
             myTrip: { is: feedEligibleWhere },
+          },
+        }),
+        tx.myTrip.count({ where: monitoringFlightWhere }),
+        tx.myTrip.count({
+          where: { ...monitoringFlightWhere, flightStatusSnapshot: { isNot: null } },
+        }),
+        tx.myTrip.count({
+          where: { ...monitoringFlightWhere, flightStatusSnapshot: { is: null } },
+        }),
+        tx.flightStatusSnapshot.count({
+          where: {
+            observedAt: { gte: currentSince, lte: currentUntil },
+            myTrip: { is: monitoringFlightWhere },
           },
         }),
         tx.flightStatusSnapshot.groupBy({
           by: ["status"],
           where: { myTrip: { is: feedEligibleWhere } },
           _count: { _all: true },
+        }),
+        tx.myTrip.findMany({
+          where: { ...monitoringFlightWhere, flightStatusSnapshot: { is: null } },
+          orderBy: [{ id: "asc" }],
+          select: {
+            id: true,
+            partnerConfirmationOccurredAt: true,
+          },
+        }),
+        tx.flightStatusSnapshot.findMany({
+          where: {
+            observedAt: { lt: currentSince },
+            myTrip: { is: monitoringFlightWhere },
+          },
+          orderBy: [{ myTripId: "asc" }, { observedAt: "asc" }, { id: "asc" }],
+          select: {
+            id: true,
+            myTripId: true,
+            observedAt: true,
+          },
         }),
         tx.myTrip.findMany({
           where: { ...feedEligibleWhere, flightStatusSnapshot: { is: null } },
@@ -181,6 +253,24 @@ export async function getFlightStatusOperationsSnapshot(
           missingSnapshots,
           currentSnapshots,
           staleSnapshots: Math.max(0, trackedFlights - currentSnapshots),
+          monitoringFlights,
+          monitoringTrackedFlights,
+          monitoringMissingSnapshots,
+          monitoringMissingSnapshotFingerprint: fingerprintFlightStatusIdentities(
+            missingSnapshotIdentities.map((trip) => [
+              trip.id,
+              trip.partnerConfirmationOccurredAt?.toISOString() ?? "none",
+            ]),
+          ),
+          monitoringCurrentSnapshots,
+          monitoringStaleSnapshots: staleSnapshotIdentities.length,
+          monitoringStaleSnapshotFingerprint: fingerprintFlightStatusIdentities(
+            staleSnapshotIdentities.map((snapshot) => [
+              snapshot.myTripId,
+              snapshot.id,
+              snapshot.observedAt.toISOString(),
+            ]),
+          ),
         },
         statusDistribution: statusDistribution
           .map((row) => ({ status: row.status, count: row._count._all }))

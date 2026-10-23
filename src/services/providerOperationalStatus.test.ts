@@ -28,10 +28,16 @@ function database(input: {
         return input.total;
       },
       aggregate: async () => ({ _avg: { latencyMs: input.averageLatencyMs } }),
-      findFirst: async ({ where }: { where: { status?: string } }) => {
+      findFirst: async ({ where }: { where: { status?: string | { in?: string[] } } }) => {
         if (input.total === 0) return null;
         if (where.status === "SUCCESS" && input.success === 0) return null;
         if (where.status === "FAILED" && input.failed === 0) return null;
+        if (
+          typeof where.status === "object" &&
+          where.status?.in?.includes("DEGRADED") &&
+          input.degraded === 0 &&
+          input.failed === 0
+        ) return null;
         return { createdAt: new Date("2026-10-22T13:00:00Z") };
       },
     },
@@ -56,6 +62,7 @@ test("provider operational health derives from recent logs without provider call
   assert.equal(result[0]?.operationalState, "DEGRADED");
   assert.equal(result[0]?.averageLatencyMs, 200);
   assert.equal(result[0]?.failedCalls, 1);
+  assert.equal(result[0]?.lastAdverseAt, "2026-10-22T13:00:00.000Z");
 });
 
 test("provider readiness remains distinct from recent activity", async () => {

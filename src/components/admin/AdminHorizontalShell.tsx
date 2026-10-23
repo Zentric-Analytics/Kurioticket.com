@@ -53,6 +53,7 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [profileOpen, setProfileOpen] = useState(false);
+  const [unreadAlertCount, setUnreadAlertCount] = useState<number | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const name = adminName || adminEmail || "Admin";
   const initial = name.slice(0, 1).toUpperCase();
@@ -70,6 +71,48 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
     return () => window.removeEventListener("keydown", onKey);
   }, []);
   useEffect(() => { if (searchOpen) searchRef.current?.focus(); }, [searchOpen]);
+  useEffect(() => {
+    let cancelled = false;
+    let requestInFlight = false;
+
+    async function loadAlertCount() {
+      if (requestInFlight) return;
+      requestInFlight = true;
+      try {
+        const response = await fetch("/api/admin/notifications?summary=1", {
+          credentials: "include",
+          cache: "no-store",
+        });
+        if (!response.ok) return;
+        const body = await response.json();
+        const count = typeof body.unreadCount === "number" ? body.unreadCount : 0;
+        if (!cancelled) setUnreadAlertCount(count);
+      } catch {
+        if (!cancelled) setUnreadAlertCount(null);
+      } finally {
+        requestInFlight = false;
+      }
+    }
+
+    void loadAlertCount();
+    const refresh = () => void loadAlertCount();
+    const refreshIfVisible = () => {
+      if (document.visibilityState === "visible") void loadAlertCount();
+    };
+    const interval = window.setInterval(refreshIfVisible, 60_000);
+
+    window.addEventListener("admin-alerts-updated", refresh);
+    window.addEventListener("focus", refreshIfVisible);
+    document.addEventListener("visibilitychange", refreshIfVisible);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+      window.removeEventListener("admin-alerts-updated", refresh);
+      window.removeEventListener("focus", refreshIfVisible);
+      document.removeEventListener("visibilitychange", refreshIfVisible);
+    };
+  }, [pathname]);
 
   // Keep the Users directory canvas white without changing other Admin pages or the navbar.
   const usersDirectory = pathname === "/admin/users" || pathname === "/admin/users/";
@@ -93,7 +136,19 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
             <span className="inline-flex items-center gap-2"><Search size={17} /><span className="hidden sm:inline">Search</span></span>
             <kbd className="hidden rounded border border-slate-200 bg-white px-1.5 py-0.5 text-xs text-slate-500 sm:inline">Ctrl K</kbd>
           </button>
-          <button type="button" aria-label="Notifications unavailable" title="Notifications are not live yet" disabled className="flex h-10 w-9 items-center justify-center text-slate-400"><Bell size={19} /></button>
+          <Link
+            href="/admin/notifications"
+            aria-label={unreadAlertCount && unreadAlertCount > 0 ? `${unreadAlertCount} unread admin alerts` : "Admin notifications and alerts"}
+            title="Admin notifications and alerts"
+            className="relative flex h-10 w-9 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-950"
+          >
+            <Bell size={19} />
+            {unreadAlertCount && unreadAlertCount > 0 ? (
+              <span className="absolute -right-1 -top-1 inline-flex min-w-5 items-center justify-center rounded-full bg-rose-600 px-1.5 py-0.5 text-[10px] font-black leading-none text-white">
+                {unreadAlertCount > 99 ? "99+" : unreadAlertCount}
+              </span>
+            ) : null}
+          </Link>
           <div className="relative">
             <button type="button" onClick={() => setProfileOpen((value) => !value)} aria-expanded={profileOpen} aria-label="Admin profile"
               className="flex items-center gap-2 rounded-xl p-1.5 hover:bg-slate-100">

@@ -28,6 +28,8 @@ test("flight status operations only treats signed provider-confirmed flights as 
 test("missing status is scoped to the configured provider rather than all confirmed flights", () => {
   assert.match(service, /providerName: readiness\.providerName/);
   assert.match(service, /feedEligibleFlights/);
+  assert.match(service, /monitoringTrackedFlights/);
+  assert.match(service, /monitoringStaleSnapshots/);
   assert.match(service, /flightStatusSnapshot: \{ is: null \}/);
   assert.match(page, /Provider-matched confirmed flights that have not received a trusted status snapshot yet/);
   assert.match(page, /Confirmed flights matching the configured provider name/);
@@ -47,7 +49,7 @@ test("flight status operations shares the canonical freshness rule", () => {
   assert.match(service, /flightStatusFreshness/);
   assert.match(service, /flightStatusLimits\.freshnessWindowMs/);
   assert.match(page, /Snapshots observed from now back through 15 minutes/);
-  assert.match(statusService, /return age >= 0 && age <= freshnessWindowMs \? "current" : "stale"/);
+  assert.match(statusService, /age >= -maximumFutureEventSkewMs && age <= freshnessWindowMs/);
 });
 
 test("flight status operations does not invent an event history or segment model", () => {

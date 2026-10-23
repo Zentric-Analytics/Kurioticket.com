@@ -184,7 +184,9 @@ export function parsePartnerFlightStatus(value: unknown, now: Date = new Date())
 
 export function flightStatusFreshness(observedAt: Date, currentTime: Date = new Date()): "current" | "stale" {
   const age = currentTime.getTime() - observedAt.getTime();
-  return age >= 0 && age <= freshnessWindowMs ? "current" : "stale";
+  return age >= -maximumFutureEventSkewMs && age <= freshnessWindowMs
+    ? "current"
+    : "stale";
 }
 
 export const flightStatusLimits = {
