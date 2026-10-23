@@ -39,10 +39,7 @@ export type ConfirmedTripsOperationsSnapshot = {
     origin: string | null;
     destination: string;
     departureDate: string;
-    returnDate: string | null;
     travelerCount: number;
-    currency: string;
-    totalAmount: number | null;
     confirmedAt: string;
   }>;
 };
@@ -111,10 +108,7 @@ export async function getConfirmedTripsOperationsSnapshot(
             origin: true,
             destination: true,
             departureDate: true,
-            returnDate: true,
             travelerCount: true,
-            currency: true,
-            totalAmount: true,
             partnerConfirmationOccurredAt: true,
           },
         }),
@@ -157,10 +151,7 @@ export async function getConfirmedTripsOperationsSnapshot(
           origin: trip.origin,
           destination: trip.destination,
           departureDate: trip.departureDate.toISOString(),
-          returnDate: trip.returnDate?.toISOString() ?? null,
           travelerCount: trip.travelerCount,
-          currency: trip.currency,
-          totalAmount: trip.totalAmount === null ? null : Number(trip.totalAmount.toString()),
           confirmedAt: trip.partnerConfirmationOccurredAt!.toISOString(),
         })),
       };
