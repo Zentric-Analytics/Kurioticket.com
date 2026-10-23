@@ -7,6 +7,7 @@ import {
   AdminStatusBadge,
 } from "@/components/admin/AdminPageShell";
 import { FaqCmsEditor } from "@/components/admin/FaqCmsEditor";
+import { CmsRevisionRestoreButton } from "@/components/admin/CmsRevisionRestoreButton";
 import { CmsContentError, getAdminCmsContent } from "@/services/cmsContentService";
 
 export const metadata = { title: "Edit Admin FAQ" };
@@ -55,7 +56,7 @@ export default async function AdminFaqDetailPage({ params }: PageProps) {
               {result.revisions.map((revision) => {
                 const payload = faqPayload(revision.draftPayload);
                 return (
-                  <div key={revision.id} className="grid gap-3 p-5 lg:grid-cols-[120px_140px_minmax(0,1fr)_220px] lg:items-start">
+                  <div key={revision.id} className="grid gap-3 p-5 lg:grid-cols-[100px_130px_minmax(0,1fr)_210px_150px] lg:items-start">
                     <div>
                       <p className="text-xs font-black uppercase tracking-wide text-slate-500">Version</p>
                       <p className="mt-1 font-black text-slate-950">v{revision.version}</p>
@@ -77,6 +78,15 @@ export default async function AdminFaqDetailPage({ params }: PageProps) {
                       <p className="text-xs font-black uppercase tracking-wide text-slate-500">Recorded</p>
                       <p className="mt-1 text-sm font-semibold text-slate-900">{new Date(revision.createdAt).toLocaleString()}</p>
                       <p className="mt-1 break-all text-xs text-slate-500">{revision.actorEmail}</p>
+                    </div>
+                    <div>
+                      {result.item.status !== "ARCHIVED" && revision.version < result.item.version ? (
+                        <CmsRevisionRestoreButton
+                          itemId={result.item.id}
+                          revisionId={revision.id}
+                          expectedVersion={result.item.version}
+                        />
+                      ) : null}
                     </div>
                   </div>
                 );
