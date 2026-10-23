@@ -25,7 +25,7 @@ export default async function AdminCarsPage() {
   return (
     <AdminPageShell
       title="Car Operations"
-      description="Monitor recorded completed/unavailable car-search outcomes and provider readiness without inventing provider-call health. Car checkout and reservation completion remain provider-owned."
+      description="Monitor car-search outcomes, provider readiness, exact provider telemetry, and operational exceptions. Car checkout and reservation completion remain provider-owned."
       actions={
         <div className="flex flex-wrap gap-2">
           <Link href="/admin/searches?product=CAR" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">
@@ -202,11 +202,11 @@ export default async function AdminCarsPage() {
         <AdminSectionCard className="p-5">
           <h2 className="font-black text-slate-950">Operational boundaries</h2>
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            Car Operations reports recorded search outcomes and configuration readiness only. Search success does not mean a rental was booked, and provider handoff is not a Kurioticket reservation confirmation.
+            Car Operations reports recorded search outcomes, provider telemetry, and configuration readiness. Search success does not mean a rental was booked, and provider handoff is not a Kurioticket reservation confirmation.
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
             <AdminStatusBadge tone="info">Search telemetry live</AdminStatusBadge>
-            <AdminStatusBadge>Provider-call telemetry pending</AdminStatusBadge>
+            <AdminStatusBadge tone="good">Provider telemetry live</AdminStatusBadge>
             <AdminStatusBadge>Provider-owned reservation</AdminStatusBadge>
           </div>
         </AdminSectionCard>
