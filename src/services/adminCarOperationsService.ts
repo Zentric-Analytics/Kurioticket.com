@@ -12,7 +12,9 @@ export type CarOperationsSnapshot = {
   searches: {
     total: number;
     successful: number;
+    partial: number;
     failed: number;
+    successfulZeroResults: number;
     averageLatencyMs: number | null;
   };
   providerHealth: Array<{
@@ -32,6 +34,7 @@ export type CarOperationsSnapshot = {
     resultCount: number;
     latencyMs: number | null;
     status: string;
+    kind: "FAILED" | "PARTIAL" | "ZERO_RESULTS";
     createdAt: string;
   }>;
   locationIssues: Array<{
@@ -75,16 +78,24 @@ export async function getCarOperationsSnapshot(
     createdAt: { gte: since, lte: now },
     query: { path: ["environment"], equals: environment },
   };
-  const failedWhere: Prisma.SearchHistoryWhereInput = { ...searchWhere, status: "FAILED" };
+  const exceptionWhere: Prisma.SearchHistoryWhereInput = {
+    ...searchWhere,
+    OR: [
+      { status: { in: ["FAILED", "PARTIAL"] } },
+      { status: "SUCCESS", resultCount: 0 },
+    ],
+  };
   const carProviders = getProviderIntegrationStatuses().filter((provider) => provider.products.includes("CARS"));
   const carProviderNames = carProviders.map((provider) => provider.provider);
 
   try {
     return await db.$transaction(async (tx) => {
-      const [total, successful, failed, latency, recentSearches, exceptionSearches, locationIssues, providerIssues, providerHealth] = await Promise.all([
+      const [total, successful, partial, failed, successfulZeroResults, latency, recentSearches, exceptionSearches, locationIssues, providerIssues, providerHealth] = await Promise.all([
         tx.searchHistory.count({ where: searchWhere }),
         tx.searchHistory.count({ where: { ...searchWhere, status: "SUCCESS" } }),
+        tx.searchHistory.count({ where: { ...searchWhere, status: "PARTIAL" } }),
         tx.searchHistory.count({ where: { ...searchWhere, status: "FAILED" } }),
+        tx.searchHistory.count({ where: { ...searchWhere, status: "SUCCESS", resultCount: 0 } }),
         tx.searchHistory.aggregate({ where: searchWhere, _avg: { latencyMs: true } }),
         tx.searchHistory.findMany({
           where: searchWhere,
@@ -102,7 +113,7 @@ export async function getCarOperationsSnapshot(
           },
         }),
         tx.searchHistory.findMany({
-          where: failedWhere,
+          where: exceptionWhere,
           orderBy: [{ createdAt: "desc" }, { id: "desc" }],
           take: 12,
           select: {
@@ -183,12 +194,15 @@ export async function getCarOperationsSnapshot(
         searches: {
           total,
           successful,
+          partial,
           failed,
+          successfulZeroResults,
           averageLatencyMs: latency._avg.latencyMs === null ? null : Math.round(latency._avg.latencyMs),
         },
         providerHealth,
         exceptionSearches: exceptionSearches.map((search) => ({
           ...search,
+          kind: search.status === "FAILED" ? "FAILED" : search.status === "PARTIAL" ? "PARTIAL" : "ZERO_RESULTS",
           createdAt: search.createdAt.toISOString(),
         })),
         locationIssues: locationIssues.map((location) => ({
