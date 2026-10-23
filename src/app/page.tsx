@@ -384,6 +384,22 @@ type HomeDiscoveryCardItem = {
   imageAlt: string;
 };
 
+type HomepageCmsDestinationItem = {
+  id: string;
+  city: string;
+  country: string;
+  destinationCode: string;
+  originCode: string;
+  image: string;
+  imageAlt: string;
+};
+
+type HomepageCmsContentState = {
+  market: string;
+  destinations: { source: "cms" | "fallback"; items: HomepageCmsDestinationItem[] };
+  flightRoutes: { source: "cms" | "fallback"; items: HomeDiscoveryCardItem[] };
+};
+
 type HomepageFare = Omit<DestinationPrice, "id" | "code" | "unavailable">;
 
 type HomeDiscoveryFareCard = {
@@ -432,6 +448,8 @@ export default function Home() {
     });
   const [homepageRecommendationOrder, setHomepageRecommendationOrder] =
     useState<HomepageRecommendationOrder>({});
+  const [homepageCmsContent, setHomepageCmsContent] =
+    useState<HomepageCmsContentState | null>(null);
   const effectiveHomepageRecommendationOrder =
     sessionStatus === "authenticated" ? homepageRecommendationOrder : {};
   const mobileSearchCardRef = useRef<HTMLDivElement>(null);
@@ -564,6 +582,35 @@ export default function Home() {
       );
   };
 
+  useEffect(() => {
+    const controller = new AbortController();
+
+    void fetch(`/api/content/homepage?market=${encodeURIComponent(regionCode)}`, {
+      cache: "no-store",
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        if (!response.ok) return null;
+        return response.json() as Promise<{
+          destinations?: HomepageCmsContentState["destinations"];
+          flightRoutes?: HomepageCmsContentState["flightRoutes"];
+        }>;
+      })
+      .then((payload) => {
+        if (!payload?.destinations || !payload.flightRoutes) return;
+        setHomepageCmsContent({
+          market: regionCode,
+          destinations: payload.destinations,
+          flightRoutes: payload.flightRoutes,
+        });
+      })
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+      });
+
+    return () => controller.abort();
+  }, [regionCode]);
+
   const t = useCallback(
     (key: string) => dictionary[key] ?? enTranslations[key] ?? "",
     [dictionary],
@@ -585,11 +632,30 @@ export default function Home() {
     effectiveMarketCode: popularDestinationMarket,
     fallbackLevel: popularDestinationFallbackLevel,
     fallbackUsed: popularDestinationFallbackUsed,
-    items: popularDestinations,
   } = popularDestinationResolution;
+  const cmsContentForMarket =
+    homepageCmsContent?.market === regionCode ? homepageCmsContent : null;
+  const popularDestinations = useMemo(
+    () =>
+      cmsContentForMarket
+        ? cmsContentForMarket.destinations.items.map((destination) => ({
+            id: destination.id,
+            code: destination.destinationCode,
+            originCode: destination.originCode,
+            city: destination.city,
+            country: destination.country,
+            image: destination.image,
+            imageAlt: destination.imageAlt,
+          }))
+        : popularDestinationResolution.items,
+    [cmsContentForMarket, popularDestinationResolution.items],
+  );
   const popularDestinationFareCandidates = useMemo(
-    () => getPopularDestinationFareCandidatesByRegion(regionCode).items,
-    [regionCode],
+    () =>
+      cmsContentForMarket
+        ? popularDestinations
+        : getPopularDestinationFareCandidatesByRegion(regionCode).items,
+    [cmsContentForMarket, popularDestinations, regionCode],
   );
   const visiblePopularDestinations = useMemo(() => {
     const replacementAwareDestinations = destinationPriceState.loading
@@ -635,9 +701,12 @@ export default function Home() {
     popularDestinations,
   ]);
 
-  const genericCuratedDiscoveryItems = useMemo(
-    () => getHomeDiscoveryImageCardsByRegion(regionCode),
-    [regionCode],
+  const genericCuratedDiscoveryItems = useMemo<HomeDiscoveryCardItem[]>(
+    () =>
+      cmsContentForMarket
+        ? cmsContentForMarket.flightRoutes.items.slice(0, HOME_DISCOVERY_IMAGE_CARD_COUNT)
+        : getHomeDiscoveryImageCardsByRegion(regionCode),
+    [cmsContentForMarket, regionCode],
   );
   const curatedDiscoveryItems = useMemo(
     () =>
@@ -696,9 +765,15 @@ export default function Home() {
     () => mobileDiscoveryCards.filter((_, index) => index % 2 === 1),
     [mobileDiscoveryCards],
   );
-  const genericRegionalRouteItems = useMemo(
-    () => getHomepageRegionalRouteCards(regionCode, genericCuratedDiscoveryItems),
-    [genericCuratedDiscoveryItems, regionCode],
+  const genericRegionalRouteItems = useMemo<HomeDiscoveryCardItem[]>(
+    () =>
+      cmsContentForMarket
+        ? cmsContentForMarket.flightRoutes.items.slice(
+            HOME_DISCOVERY_IMAGE_CARD_COUNT,
+            HOME_DISCOVERY_IMAGE_CARD_COUNT + 10,
+          )
+        : getHomepageRegionalRouteCards(regionCode, genericCuratedDiscoveryItems),
+    [cmsContentForMarket, genericCuratedDiscoveryItems, regionCode],
   );
   const regionalRouteItems = useMemo(
     () =>
