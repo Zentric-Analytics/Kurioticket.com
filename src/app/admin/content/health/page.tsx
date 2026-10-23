@@ -18,7 +18,12 @@ export default async function AdminCmsHealthPage() {
     <AdminPageShell
       title="CMS Health"
       description="Production integrity, fallback policy, ordering and unpublished-change diagnostics for every active CMS scope."
-      actions={<AdminLinkButton href="/admin/content">Back to content</AdminLinkButton>}
+      actions={
+        <div className="flex flex-wrap gap-2">
+          <AdminLinkButton href="/admin/content">Back to content</AdminLinkButton>
+          <AdminLinkButton href="/admin/logs">View audit logs</AdminLinkButton>
+        </div>
+      }
     >
       {!overview.available ? (
         <AdminEmptyState
@@ -50,7 +55,8 @@ export default async function AdminCmsHealthPage() {
                   integrity.invalidPublished.length +
                   integrity.orphanPublished.length +
                   integrity.draftOrderCollisions.length +
-                  integrity.publishedOrderCollisions.length;
+                  integrity.publishedOrderCollisions.length +
+                  (integrity.draftOrderNeedsNormalization ? 1 : 0);
 
                 return {
                   id: `${entry.type}:${entry.market}:${entry.locale}`,
