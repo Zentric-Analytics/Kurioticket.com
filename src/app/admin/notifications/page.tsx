@@ -16,6 +16,7 @@ import { getCurrentDatabaseOutageAdminToken } from "@/lib/adminDatabaseOutageAcc
 import {
   getAdminAlertSnapshot,
   getDatabaseOutageAlertSnapshot,
+  type AdminAlertSnapshot,
 } from "@/services/adminAlertService";
 
 export const metadata = { title: "Admin Notifications & Alerts" };
@@ -39,7 +40,7 @@ function formatDateTime(value: string | null) {
 }
 
 export default async function AdminNotificationsPage() {
-  let snapshot;
+  let snapshot: AdminAlertSnapshot;
 
   try {
     const session = await requireAdminSession("/admin/notifications");
