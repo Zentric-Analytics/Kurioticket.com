@@ -54,8 +54,9 @@ test("six-column directory groups real identity details and keeps full IDs acces
   assert.match(html, /Copy guest ID: qa-guest-long-id/);
   assert.match(html, /Registered · Support/);
   assert.match(html, /Not an account/);
-  assert.match(html, /activity=user%3Aqa-user-internal-id/);
-  assert.match(html, /activity=guest%3Aqa-guest-long-id/);
+  assert.match(html, /\/admin\/users\/user\/qa-user-internal-id\/activity\?directory=q%3Dqa%26role%3DALL%26status%3DALL%26identity%3DALL%26page%3D2/);
+  assert.match(html, /\/admin\/users\/guest\/qa-guest-long-id\/activity\?directory=q%3Dqa%26role%3DALL%26status%3DALL%26identity%3DALL%26page%3D2/);
+  assert.doesNotMatch(html, /activity=(?:user|guest)%3A/);
 });
 
 test("footer preserves filters and gives matching identity counts on both page links", () => {

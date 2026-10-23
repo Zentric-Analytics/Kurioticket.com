@@ -11,6 +11,11 @@ export type ActivityRow = {
   journeyId?: string;
   journeyStartedAt?: Date;
   dedupeKey?: string;
+  stage?: "SEARCH_COMPLETED" | "RESULTS_VIEWED" | "OFFER_SELECTED" | "PROVIDER_HANDOFF_STARTED" | "ACCOUNT_ACTIVITY";
+  product?: string | null;
+  provider?: string | null;
+  searchHistoryId?: string | null;
+  redirectLogId?: string | null;
 };
 
 export type JourneyEventRecord = {
@@ -58,6 +63,16 @@ export function eligibleLinkedVisitorWhere(userId: string) {
       some: { userId },
       none: { userId: { not: userId } },
     },
+  };
+}
+
+/** The journey details reader additionally requires a verified, active linked account.
+ * Keep this narrower scope for journey events without hiding direct legacy activity.
+ */
+export function eligibleJourneyLinkedVisitorWhere(userId: string) {
+  return {
+    ...eligibleLinkedVisitorWhere(userId),
+    currentUser: { is: { status: "ACTIVE" as const, emailVerified: { not: null } } },
   };
 }
 
@@ -113,6 +128,11 @@ export function toAdminJourneyActivity(event: JourneyEventRecord, kind: Identity
     at: event.createdAt,
     journeyId: event.journey.id,
     journeyStartedAt: event.journey.startedAt,
+    stage: event.type,
+    product: event.product ?? event.searchHistory?.type ?? event.redirectLog?.type ?? null,
+    provider,
+    searchHistoryId: event.searchHistoryId,
+    redirectLogId: event.redirectLogId,
     ...(event.type === "SEARCH_COMPLETED" && event.searchHistoryId
       ? { dedupeKey: "search:" + event.searchHistoryId }
       : {}),
