@@ -1,7 +1,7 @@
 export type SearchDiagnosticProduct = "FLIGHT" | "HOTEL" | "CAR" | "PACKAGE";
 
 export type SafeProviderIssue = {
-  code: "PROVIDER_TIMEOUT" | "RATE_LIMITED" | "AUTH_OR_CONFIG" | "UPSTREAM_UNAVAILABLE" | "PROVIDER_ERROR";
+  code: "PROVIDER_TIMEOUT" | "RATE_LIMITED" | "AUTH_OR_CONFIG" | "UPSTREAM_UNAVAILABLE" | "UNSUPPORTED_SEARCH" | "PROVIDER_ERROR";
   label: string;
   retryable: boolean | null;
 };
@@ -16,6 +16,9 @@ export function providerSearchService(product: SearchDiagnosticProduct) {
 export function classifyProviderIssue(message: string | null): SafeProviderIssue {
   if (!message) return { code: "PROVIDER_ERROR", label: "Provider error", retryable: null };
   const normalized = message.toLowerCase();
+  if (normalized.includes("unsupported_search") || normalized.includes("unsupported_location") || normalized.includes("unsupported_destination")) {
+    return { code: "UNSUPPORTED_SEARCH", label: "Unsupported search / provider coverage", retryable: false };
+  }
   if (normalized.includes("timeout") || normalized.includes("timed out") || normalized.includes("abort")) {
     return { code: "PROVIDER_TIMEOUT", label: "Provider timeout", retryable: true };
   }
