@@ -205,7 +205,8 @@ export function compactActivityDisplayRows(rows: ActivityRow[]): ActivityDisplay
   const result: ActivityDisplayItem[] = [];
   for (let index = 0; index < rows.length;) {
     const first = rows[index];
-    if (first.stage !== "OFFER_SELECTED" || !first.journeyId) {
+    if (first.stage !== "OFFER_SELECTED" || !first.journeyId || !first.provider?.trim()
+      || !first.product || !first.detail?.trim()) {
       result.push({ kind: "event", row: first });
       index++;
       continue;
