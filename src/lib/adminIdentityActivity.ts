@@ -21,13 +21,19 @@ export type ActivityFilters = {
 };
 export type ActivityCursor = { at: string; id: string };
 
-/** Align timeline eligibility with environment-scoped operational and journey readers. */
+/** Only show activity whose source records can be opened in the selected environment. */
 export function activityEnvironmentScope(environment: PublicEnvironment) {
   const journey: Prisma.JourneyEventWhereInput = {
-    metadata: { path: ["environment"], equals: environment },
-    OR: [
-      { searchHistoryId: null },
-      { searchHistory: { is: { query: { path: ["environment"], equals: environment } } } },
+    AND: [
+      { metadata: { path: ["environment"], equals: environment } },
+      { OR: [
+        { searchHistoryId: null },
+        { searchHistory: { is: { query: { path: ["environment"], equals: environment } } } },
+      ] },
+      { OR: [
+        { redirectLogId: null },
+        { redirectLog: { is: { metadata: { path: ["environment"], equals: environment } } } },
+      ] },
     ],
   };
   const search: Prisma.SearchHistoryWhereInput = { query: { path: ["environment"], equals: environment } };
