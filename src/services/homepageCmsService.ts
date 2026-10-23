@@ -221,15 +221,13 @@ export async function initializeHomepageCms(actorInput: CmsActor) {
         seededCount += 1;
       }
 
-      for (const scope of scopes.values()) {
-        await tx.cmsContentScope.create({
-          data: {
-            type: scope.type,
-            market: scope.market,
-            locale: CONTENT_LOCALE,
-          },
-        });
-      }
+      await tx.cmsContentScope.createMany({
+        data: [...scopes.values()].map((scope) => ({
+          type: scope.type,
+          market: scope.market,
+          locale: CONTENT_LOCALE,
+        })),
+      });
 
       await tx.adminAuditLog.create({
         data: {
@@ -258,7 +256,11 @@ export async function initializeHomepageCms(actorInput: CmsActor) {
         flightRouteCount: seedRows.filter((row) => row.type === "FLIGHT_ROUTE").length,
         hotelDestinationCount: seedRows.filter((row) => row.type === "HOTEL_DESTINATION").length,
       };
-    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+    }, {
+      isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+      maxWait: 10_000,
+      timeout: 30_000,
+    });
   } catch (error) {
     if (error instanceof CmsContentError) throw error;
     if (
