@@ -99,14 +99,26 @@ test("support, deletion, platform checks, audit activity, and all original modul
   ]) assert.ok(page.includes('"' + route + '"'), route);
 });
 
-test("range controls remain bounded and refresh does not claim a live feed", () => {
+test("compact range selector sits in Operations Snapshot and the top toolbar is gone", () => {
   assert.match(page, /selected === "24h" \|\| selected === "30d" \? selected : "7d"/);
   assert.match(page, /24 \* 60 \* 60 \* 1000 : 30 \* 24 \* 60 \* 60 \* 1000/);
+  assert.match(display, /<AdminOverviewAutoRefresh \/>/);
+  assert.match(display, /title="Operations Snapshot"[\s\S]*?action=\{<AdminOverviewRangeSelect range=\{range\} \/>\}/);
+  assert.match(controls, /export function AdminOverviewRangeSelect/);
   assert.match(controls, /router\.push\(/);
-  assert.match(controls, /router\.refresh\(\)/);
-  assert.match(controls, /Reporting range/);
-  assert.match(controls, /Snapshot checked/);
+  assert.match(controls, /Overview reporting range/);
+  assert.doesNotMatch(controls, /Snapshot checked|Environment|RefreshCw|>Refresh<|Refreshing…/);
+  assert.doesNotMatch(dashboard, /<AdminOverviewControls/);
   assert.doesNotMatch(dashboard, /vs last 7 days|\+12%|99\.2%/);
+});
+
+test("invisible automatic refresh retains its original one-minute visibility and cleanup behavior", () => {
+  assert.match(controls, /export function AdminOverviewAutoRefresh/);
+  assert.match(controls, /window\.setInterval\(\(\) => \{/);
+  assert.match(controls, /document\.visibilityState === "visible"\) router\.refresh\(\)/);
+  assert.match(controls, /60_000/);
+  assert.match(controls, /window\.clearInterval\(interval\)/);
+  assert.match(controls, /return null;/);
 });
 
 
