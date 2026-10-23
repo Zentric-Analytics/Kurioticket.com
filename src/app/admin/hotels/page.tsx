@@ -5,24 +5,21 @@ import {
   AdminEmptyState,
   AdminMetricCard,
   AdminPageShell,
-  AdminProviderStatusCard,
   AdminSectionCard,
   AdminStatusBadge,
 } from "@/components/admin/AdminPageShell";
-import { formatDateTime, getProviderStatuses } from "@/lib/admin-data";
+import { formatDateTime } from "@/lib/admin-data";
 import { getHotelOperationsSnapshot } from "@/services/adminHotelOperationsService";
 import { getProviderIntegrationStatuses } from "@/services/travel/providerIntegrationStatus";
 
 export const metadata = { title: "Admin Hotel Operations" };
 
 export default async function AdminHotelsPage() {
-  const [providerStatuses, operations, integrations] = await Promise.all([
-    getProviderStatuses(),
+  const [operations, integrations] = await Promise.all([
     getHotelOperationsSnapshot(),
     Promise.resolve(getProviderIntegrationStatuses()),
   ]);
 
-  const hotel = providerStatuses.find((provider) => provider.product === "Hotels");
   const hotelIntegrations = integrations.filter((provider) => provider.products.includes("HOTELS"));
 
   return (
@@ -53,10 +50,7 @@ export default async function AdminHotelsPage() {
           <AdminEmptyState title="Hotel telemetry unavailable" message="The current environment could not return hotel-search telemetry. No zero values were invented." />
         )}
 
-        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
-          {hotel ? <AdminProviderStatusCard {...hotel} /> : null}
-
-          <AdminSectionCard className="p-5">
+        <AdminSectionCard className="p-5">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <h2 className="font-black text-slate-950">Hotel provider health</h2>
@@ -97,7 +91,6 @@ export default async function AdminHotelsPage() {
               })}
             </div>
           </AdminSectionCard>
-        </div>
 
         <AdminSectionCard className="p-5">
           <h2 className="font-black text-slate-950">Operational boundaries</h2>
