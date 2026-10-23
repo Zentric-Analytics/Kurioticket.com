@@ -34,6 +34,8 @@ test("admin alerts derive only from authoritative operational sources", () => {
   assert.match(emailDelivery, /latestProblemAt/);
   assert.match(core, /signals\.email\.latestProblemAt/);
   assert.match(flightStatus, /monitoringFlightWhere/);
+  assert.match(flightStatus, /monitoringSince/);
+  assert.match(flightStatus, /departureDate: \{ gte: monitoringSince \}/);
   assert.match(flightStatus, /status: "UPCOMING"/);
   assert.match(flightStatus, /notIn: \["ARRIVED", "CANCELLED"\]/);
   assert.match(flightStatus, /missingSnapshotFingerprint/);
