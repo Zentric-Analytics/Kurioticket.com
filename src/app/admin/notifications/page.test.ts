@@ -25,6 +25,11 @@ test("admin alerts derive only from authoritative operational sources", () => {
     assert.match(service, new RegExp(source));
   }
   assert.match(core, /readinessState !== "READY"/);
+  assert.match(core, /provider\.lastAdverseAt/);
+  assert.doesNotMatch(
+    core,
+    /provider\.operationalState,\s*provider\.failedCalls,\s*provider\.degradedCalls/,
+  );
   assert.match(core, /!signals\.flightStatus\.feedReady/);
   assert.match(core, /metrics\.missingSnapshots > 0/);
   assert.match(core, /cms-integrity:\$\{signals\.cms\.unhealthyFingerprint\}/);
