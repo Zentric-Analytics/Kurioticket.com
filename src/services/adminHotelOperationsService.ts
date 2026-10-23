@@ -261,7 +261,9 @@ export async function getHotelOperationsSnapshot(
 
 
 function hotelProviderIssueCategory(status: string, message: string | null) {
-  if (status === "DISABLED" && !message) return "Provider disabled / skipped";
+  if (status === "DISABLED") {
+    return message ? "Unsupported search / provider coverage" : "Provider disabled / skipped";
+  }
   return classifyProviderIssue(message).label;
 }
 
