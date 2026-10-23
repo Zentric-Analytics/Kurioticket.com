@@ -25,7 +25,7 @@ test("consented guest searches and handoffs receive a visitor but no account ide
 });
 
 test("native identity uses the app token and validated bearer without borrowing a web account", async () => {
-  for (const path of ["/api/flights/search", "/api/hotels/search", "/api/mobile/v1/hotels/progressive", "/api/redirect"]) {
+  for (const path of ["/api/flights/search", "/api/hotels/search", "/api/cars/search", "/api/mobile/v1/hotels/progressive", "/api/redirect"]) {
     const identity = await resolveRequestActivityIdentity(new Request(`https://kurioticket.com${path}`, {
       headers: { "x-mobile-platform": "android", "x-kt-visitor": token, cookie: `kt_visitor=${"b".repeat(43)}` },
     }), {
@@ -92,4 +92,22 @@ test("a local web refusal stops visitor attribution even while durable withdrawa
     visitor: async () => { throw new Error("refused visitor identity must not be resolved"); },
   });
   assert.deepEqual(identity, { userId: "signed-in-user", visitorId: null });
+});
+
+
+test("verified registered website users retain their own identity for all three searches", async () => {
+  for (const path of ["/api/flights/search", "/api/hotels/search", "/api/cars/search"]) {
+    const identity = await resolveRequestActivityIdentity(new Request("https://staging.kurioticket.com" + path, {
+      headers: { cookie: "kt_visitor=" + token },
+    }), {
+      web: async () => ({ userId: "verified-user" }),
+      mobile: async () => { throw new Error("web requests cannot borrow native auth"); },
+      visitor: async (visitorToken, userId) => {
+        assert.equal(visitorToken, token);
+        assert.equal(userId, "verified-user");
+        return "linked-and-consented-visitor";
+      },
+    });
+    assert.deepEqual(identity, { userId: "verified-user", visitorId: "linked-and-consented-visitor" });
+  }
 });
