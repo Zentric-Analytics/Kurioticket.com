@@ -41,8 +41,8 @@ const db = {
   async $queryRaw(sql) {
     const statement = sql.strings.join("?");
     const all = [
-      ...filteredUsers.map(record => ({ kind: "user", record })),
-      ...filteredGuests.map(record => ({ kind: "guest", record })),
+      ...(statement.includes('FROM "User"') ? filteredUsers.map(record => ({ kind: "user", record })) : []),
+      ...(statement.includes('FROM "Visitor"') ? filteredGuests.map(record => ({ kind: "guest", record })) : []),
     ];
     const name = row => row.kind === "guest" ? "Guest visitor" : row.record.name || "Unnamed user";
     const created = row => +(row.kind === "guest" ? row.record.firstSeenAt : row.record.createdAt);
