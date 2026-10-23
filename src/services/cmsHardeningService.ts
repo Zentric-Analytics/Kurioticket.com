@@ -133,7 +133,11 @@ export async function getCmsScopeIntegrity(input: ScopeInput) {
       }
     }
 
-    if (inPublishedScope && item.publishedPayload !== null) {
+    if (
+      inPublishedScope &&
+      item.status === "PUBLISHED" &&
+      item.publishedPayload !== null
+    ) {
       publishedOrderEntries.push({
         id: item.id,
         order: item.publishedSortOrder,
@@ -359,6 +363,7 @@ export async function setCmsLegacyFallbackRetired(
         const published = await tx.cmsContentItem.findMany({
           where: {
             type: input.type,
+            status: "PUBLISHED",
             publishedMarket: input.market,
             publishedLocale: input.locale,
             publishedPayload: { not: Prisma.DbNull },
