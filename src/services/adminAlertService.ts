@@ -29,6 +29,7 @@ let candidateCache:
   | { candidates: AdminAlertCandidate[]; expiresAt: number }
   | null = null;
 let candidateRefreshPromise: Promise<AdminAlertCandidate[]> | null = null;
+const telemetryOutageOccurrences = new Map<string, string>();
 
 type AckMetadata = {
   alertKey?: unknown;
@@ -129,7 +130,7 @@ async function readAdminAlertCandidates(
 
   if (candidateRefreshPromise) return candidateRefreshPromise;
 
-  candidateRefreshPromise = loadAdminAlertCandidates()
+  candidateRefreshPromise = loadAdminAlertCandidates(now)
     .then((candidates) => {
       candidateCache = {
         candidates,
@@ -144,7 +145,7 @@ async function readAdminAlertCandidates(
   return candidateRefreshPromise;
 }
 
-async function loadAdminAlertCandidates(): Promise<AdminAlertCandidate[]> {
+async function loadAdminAlertCandidates(now: Date): Promise<AdminAlertCandidate[]> {
   const readiness = getFlightStatusIntegrationReadiness();
 
   const [system, providers, email, cms, homepageFares, flightStatusOperations] =
@@ -185,6 +186,25 @@ async function loadAdminAlertCandidates(): Promise<AdminAlertCandidate[]> {
         }
       : null,
     homepageFares,
+    telemetryOutageTokens: {
+      providers: telemetryOutageToken("providers", providers === null, now),
+      email: telemetryOutageToken(
+        "email",
+        email === null || !email.dataAvailable,
+        now,
+      ),
+      cms: telemetryOutageToken("cms", cms === null, now),
+      homepageFares: telemetryOutageToken(
+        "homepage-fares",
+        homepageFares === null || !homepageFares.dataAvailable,
+        now,
+      ),
+      flightStatus: telemetryOutageToken(
+        "flight-status",
+        readiness.feedReady && flightStatusOperations === null,
+        now,
+      ),
+    },
     flightStatus: {
       feedReady: readiness.feedReady,
       operations: flightStatusOperations,
@@ -192,6 +212,24 @@ async function loadAdminAlertCandidates(): Promise<AdminAlertCandidate[]> {
   };
 
   return deriveAdminAlertCandidates(signals);
+}
+
+function telemetryOutageToken(
+  source: string,
+  unavailable: boolean,
+  now: Date,
+) {
+  if (!unavailable) {
+    telemetryOutageOccurrences.delete(source);
+    return "available";
+  }
+
+  const existing = telemetryOutageOccurrences.get(source);
+  if (existing) return existing;
+
+  const token = `outage:${source}:${now.toISOString()}`;
+  telemetryOutageOccurrences.set(source, token);
+  return token;
 }
 
 function cmsUnhealthyFingerprint(
