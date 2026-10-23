@@ -58,11 +58,11 @@ export default async function AdminConfirmedTripsPage() {
           </div>
           <div className="mt-4 grid gap-3 md:grid-cols-3">
             <Fact label="Endpoint" value="POST /api/internal/partner-confirmations" />
-            <Fact label="Provider identity binding" value="Shared secret only" />
+            <Fact label="Webhook credential model" value="One shared secret" />
             <Fact label="Current search-provider confirmation feed" value="None" />
           </div>
           <p className="mt-4 text-sm leading-6 text-slate-600">
-            A configured webhook secret means the secure callback boundary is ready; it does not mean a provider agreement or live confirmation feed is active.
+            A configured webhook secret means the signed callback boundary is ready; it does not mean a provider agreement or live confirmation feed is active. Provider identity is supplied inside the signed payload; there is no separate provider-name allowlist in the current contract.
           </p>
         </AdminSectionCard>
 
