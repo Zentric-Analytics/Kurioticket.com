@@ -53,10 +53,10 @@ test("admin alerts derive only from authoritative operational sources", () => {
   assert.match(flightStatus, /departureDate: \{ gte: monitoringSince \}/);
   assert.match(flightStatus, /status: "UPCOMING"/);
   assert.match(flightStatus, /notIn: \["ARRIVED", "CANCELLED"\]/);
-  assert.match(flightStatus, /missingSnapshotFingerprint/);
-  assert.match(flightStatus, /staleSnapshotFingerprint/);
-  assert.match(core, /flight-status-missing:\$\{metrics\.missingSnapshotFingerprint\}/);
-  assert.match(core, /flight-status-stale:\$\{metrics\.staleSnapshotFingerprint\}/);
+  assert.match(flightStatus, /monitoringMissingSnapshotFingerprint/);
+  assert.match(flightStatus, /monitoringStaleSnapshotFingerprint/);
+  assert.match(core, /flight-status-missing:\$\{metrics\.monitoringMissingSnapshotFingerprint\}/);
+  assert.match(core, /flight-status-stale:\$\{metrics\.monitoringStaleSnapshotFingerprint\}/);
   assert.doesNotMatch(core, /confirmedLast24h|booking confirmations recently/i);
 });
 
