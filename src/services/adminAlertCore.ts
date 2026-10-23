@@ -59,6 +59,7 @@ export type AdminAlertSignals = {
           unpublishedChanges: number;
         };
         unhealthyFingerprint: string;
+        occurrenceToken: string;
       }
     | null;
   homepageFares:
@@ -225,7 +226,7 @@ function cmsAlerts(signals: AdminAlertSignals) {
       title: "CMS integrity needs attention",
       message: `${signals.cms.totals.unhealthy} of ${signals.cms.totals.scopes} managed CMS scope(s) currently fail integrity checks.`,
       actionHref: "/admin/content/health",
-      signalToken: `cms-integrity:${signals.cms.unhealthyFingerprint}`,
+      signalToken: signals.cms.occurrenceToken,
     },
   ] satisfies AdminAlertCandidate[];
 }
