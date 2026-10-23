@@ -233,10 +233,9 @@ export async function getCarOperationsSnapshot(
 
 
 function carProviderIssueCategory(status: string, message: string | null) {
-  if (status === "DISABLED") {
-    return message ? "Unsupported search / provider coverage" : "Provider disabled / skipped";
-  }
-  return classifyProviderIssue(message).label;
+  if (status === "DISABLED" && !message) return "Provider disabled / skipped";
+  const issue = classifyProviderIssue(message);
+  return status === "DISABLED" && issue.code === "PROVIDER_ERROR" ? "Provider disabled / skipped" : issue.label;
 }
 
 export const __adminCarOperationsTest = { carProviderIssueCategory };
