@@ -313,6 +313,23 @@ export async function createCmsContent(raw: unknown, actorInput: CmsActor) {
   const payload = parsePayload(parsed.data.type, parsed.data.payload);
   try {
     return await getPrisma().$transaction(async (tx) => {
+      const scope = await tx.cmsContentScope.findUnique({
+        where: {
+          type_market_locale: {
+            type: parsed.data.type,
+            market: parsed.data.market,
+            locale: parsed.data.locale,
+          },
+        },
+        select: { id: true },
+      });
+      if (!scope) {
+        throw new CmsContentError(
+          "CONFLICT",
+          "Initialize this CMS content scope before creating new records.",
+        );
+      }
+
       const item = await tx.cmsContentItem.create({
         data: {
           type: parsed.data.type,
