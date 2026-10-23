@@ -102,11 +102,11 @@ export default async function AdminEmailDeliveryOperationsPage() {
             </AdminStatusBadge>
           </div>
           <div className="mt-4 space-y-3">
-            {[
+            {([
               ["Resend API key", configured.resendApiKey],
               ["Sender address", configured.resendFromEmail],
               ["Webhook secret", configured.resendWebhookSecret],
-            ].map(([label, ready]) => (
+            ] as const).map(([label, ready]) => (
               <div key={String(label)} className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 p-3">
                 <span className="text-sm font-semibold text-slate-600">{String(label)}</span>
                 <AdminStatusBadge tone={ready ? "good" : "warn"}>{ready ? "Configured" : "Not configured"}</AdminStatusBadge>
