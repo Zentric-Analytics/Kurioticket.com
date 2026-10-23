@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { requireAdminApiSession, writeAdminAuditLog } from "@/lib/admin";
+import { AuthRateLimitError, checkAuthRateLimit } from "@/lib/auth-rate-limit";
 import { getEmailDeliveryHealthSnapshot } from "@/services/emailDeliveryService";
 import { sendTransactionalEmail } from "@/services/emailService";
 
@@ -35,9 +36,30 @@ export async function POST(request: Request) {
   }
 
   try {
+    checkAuthRateLimit({
+      action: "admin-email-delivery-test",
+      email,
+      request,
+      limit: 5,
+      windowMs: 15 * 60_000,
+    });
+  } catch (error) {
+    if (error instanceof AuthRateLimitError) {
+      return NextResponse.json(
+        { error: "Too many test emails. Try again later." },
+        {
+          status: 429,
+          headers: { "Retry-After": String(error.retryAfterSeconds) },
+        },
+      );
+    }
+    throw error;
+  }
+
+  try {
     await sendTransactionalEmail({
       to: email,
-      subject: "Kurioticket production email test",
+      subject: "Kurioticket transactional email test",
       html: `
         <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
           <h1 style="font-size:22px">Kurioticket email test</h1>
