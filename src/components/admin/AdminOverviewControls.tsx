@@ -34,6 +34,13 @@ export function AdminOverviewControls({
     minute: "2-digit",
     timeZone: "UTC",
   }).format(new Date(to));
+  const dateLabel = new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+  const periodLabel = dateLabel.format(new Date(from)) + " – " + dateLabel.format(new Date(to)) + " UTC";
 
   return (
     <div className="mb-6 flex w-full flex-wrap items-stretch justify-start gap-2 lg:justify-end" aria-label="Overview reporting controls">
@@ -72,6 +79,7 @@ export function AdminOverviewControls({
           <Clock3 size={14} className="text-indigo-600" aria-hidden="true" />
           {updated} UTC
         </time>
+        <span className="mt-1 text-[11px] text-slate-500">{periodLabel}</span>
       </div>
       <button
         type="button"
