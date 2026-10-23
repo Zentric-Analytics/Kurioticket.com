@@ -158,11 +158,13 @@ export async function writeAdminAuditLog(
         },
       },
     );
+    return true;
   } catch (error) {
     console.error(
       "[admin:audit-log]",
       error,
     );
+    return false;
   }
 }
 
