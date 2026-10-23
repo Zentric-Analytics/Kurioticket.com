@@ -49,7 +49,9 @@ try {
       await expect(page.getByRole("navigation", { name: "Identity pagination" })).toContainText("Pg1 of 1");
       await expect(page.getByRole("combobox", { name: "Sort by" })).toBeVisible();
       for (const label of ["Identity type", "Account role", "Account status"]) {
-        await expect(page.getByRole("combobox", { name: label })).toBeVisible();
+        const control = page.getByRole("combobox", { name: label });
+        await expect(control).toBeVisible();
+        await expect(control).toHaveAttribute("aria-haspopup", "listbox");
       }
       await expect(page.getByRole("region", { name: "Users: 30" })).toBeVisible();
       await expect(page.getByRole("link", { name: "Kurioticket Admin overview" })).toBeVisible();
@@ -163,6 +165,29 @@ try {
     await expect(page.getByText("1 registered · 0 guest")).toBeVisible();
     await expect(page.locator("tbody tr")).toHaveCount(1);
     await expect(page.locator("tbody tr").first()).toContainText("Zara Example");
+  });
+
+  await check("without JavaScript, native filters and manual sort still work", async () => {
+    const noJS = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 1280, height: 900 } });
+    try {
+      const fallback = await noJS.newPage();
+      await fallback.goto(after, { waitUntil: "domcontentloaded" });
+      const identity = fallback.getByRole("combobox", { name: "Identity type" });
+      await expect(identity).toBeVisible();
+      await identity.selectOption("GUEST");
+      await fallback.getByRole("button", { name: "Apply Filter" }).click();
+      await expect(fallback).toHaveURL(/identity=GUEST/);
+      await expect(fallback.getByRole("heading", { name: "Users: 28" })).toBeVisible();
+
+      await fallback.getByRole("combobox", { name: "Sort by" }).selectOption("oldest");
+      await fallback.getByRole("button", { name: "Apply sort" }).click();
+      await expect(fallback).toHaveURL(/sort=oldest/);
+      await expect(fallback).toHaveURL(/identity=GUEST/);
+      await expect(fallback.getByRole("heading", { name: "Users: 28" })).toBeVisible();
+      await fallback.screenshot({ path: output + "/after-native-fallback-no-js.png", fullPage: false });
+    } finally {
+      await noJS.close();
+    }
   });
 
   await check("Manage menu has Delete, no Soft delete, and recoverable confirmation", async () => {
