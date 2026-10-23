@@ -133,7 +133,7 @@ export default async function AdminConfirmedTripsPage() {
                   id: trip.id,
                   cells: [
                     formatDateTime(new Date(trip.confirmedAt)),
-                    <div key="customer"><p className="font-semibold text-slate-950">{trip.userEmail}</p><p className="text-xs text-slate-500">{trip.userId}</p></div>,
+                    <div key="customer"><p className="font-semibold text-slate-950">{trip.userEmail || "Email unavailable"}</p><p className="text-xs text-slate-500">{trip.userId}</p></div>,
                     trip.tripType,
                     trip.origin ? trip.origin + " → " + trip.destination : trip.destination,
                     trip.providerName,
