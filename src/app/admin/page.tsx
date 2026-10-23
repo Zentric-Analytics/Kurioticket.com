@@ -4,7 +4,6 @@ import {
   AdminOverviewSecondary,
 } from "@/components/admin/AdminOverviewDashboard";
 import type { OverviewRange } from "@/components/admin/AdminOverviewControls";
-import { adminNavigation } from "@/lib/adminNavigation";
 import { getRecentAdminActivity, getSafeSystemStatus } from "@/lib/admin-data";
 import { getAdminOverview } from "@/services/adminOverviewService";
 
@@ -31,33 +30,16 @@ export default async function AdminPage({ searchParams }: PageProps) {
     getRecentAdminActivity(),
   ]);
 
-  // All existing Admin Modules links remain available in the expanded
-  // directory; Quick Actions is an additional presentation, not a replacement.
-  const modules = adminNavigation.filter((item) =>
-    [
-      "/admin/users",
-      "/admin/providers",
-      "/admin/searches",
-      "/admin/redirects",
-      "/admin/support",
-      "/admin/account-deletions",
-      "/admin/content",
-      "/admin/logs",
-      "/admin/system",
-    ].includes(item.href),
-  );
-
   return (
     <AdminPageShell
       title="Operations Dashboard"
-      description="Monitor Kurioticket operations, customer journeys, provider health, support and recorded administrative activity."
+      hideHeader
     >
       {overview.status === "ok" ? (
         <AdminOverviewDashboard
           data={overview.data}
           system={system}
           activity={activity}
-          modules={modules}
           range={range}
         />
       ) : (
@@ -66,7 +48,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
             title="Operational summary unavailable"
             message="The canonical admin overview could not be loaded. No fallback or mocked operational totals are shown."
           />
-          <AdminOverviewSecondary system={system} activity={activity} modules={modules} />
+          <AdminOverviewSecondary system={system} activity={activity} />
         </>
       )}
     </AdminPageShell>
