@@ -82,13 +82,17 @@ export type AdminAlertSignals = {
       | {
           metrics: {
             feedEligibleFlights: number;
-            monitoringFlights: number;
             trackedFlights: number;
             missingSnapshots: number;
-            missingSnapshotFingerprint: string;
             currentSnapshots: number;
             staleSnapshots: number;
-            staleSnapshotFingerprint: string;
+            monitoringFlights: number;
+            monitoringTrackedFlights: number;
+            monitoringMissingSnapshots: number;
+            monitoringMissingSnapshotFingerprint: string;
+            monitoringCurrentSnapshots: number;
+            monitoringStaleSnapshots: number;
+            monitoringStaleSnapshotFingerprint: string;
           };
         }
       | null;
@@ -307,23 +311,23 @@ function flightStatusAlerts(signals: AdminAlertSignals) {
   const metrics = signals.flightStatus.operations.metrics;
   const alerts: AdminAlertCandidate[] = [];
 
-  if (metrics.missingSnapshots > 0) {
+  if (metrics.monitoringMissingSnapshots > 0) {
     alerts.push({
       key: "flight-status.missing",
       severity: "WARNING",
       source: "FLIGHT_STATUS",
       title: "Some flight-status snapshots are missing",
-      message: `${metrics.missingSnapshots} of ${metrics.monitoringFlights} actively monitored flight(s) are still awaiting their first status snapshot.`,
+      message: `${metrics.monitoringMissingSnapshots} of ${metrics.monitoringFlights} actively monitored flight(s) are still awaiting their first status snapshot.`,
       actionHref: "/admin/flight-status",
-      signalToken: `flight-status-missing:${metrics.missingSnapshotFingerprint}`,
+      signalToken: `flight-status-missing:${metrics.monitoringMissingSnapshotFingerprint}`,
     });
   }
 
-  if (metrics.staleSnapshots > 0) {
+  if (metrics.monitoringStaleSnapshots > 0) {
     const allTrackedStale =
-      metrics.trackedFlights > 0 &&
-      metrics.currentSnapshots === 0 &&
-      metrics.staleSnapshots >= metrics.trackedFlights;
+      metrics.monitoringTrackedFlights > 0 &&
+      metrics.monitoringCurrentSnapshots === 0 &&
+      metrics.monitoringStaleSnapshots >= metrics.monitoringTrackedFlights;
 
     alerts.push({
       key: "flight-status.stale",
@@ -332,9 +336,9 @@ function flightStatusAlerts(signals: AdminAlertSignals) {
       title: allTrackedStale
         ? "All tracked flight-status snapshots are stale"
         : "Some flight-status snapshots are stale",
-      message: `${metrics.staleSnapshots} stale snapshot(s) are recorded across ${metrics.trackedFlights} tracked provider-matched flight(s).`,
+      message: `${metrics.monitoringStaleSnapshots} stale snapshot(s) are recorded across ${metrics.monitoringTrackedFlights} tracked provider-matched flight(s).`,
       actionHref: "/admin/flight-status",
-      signalToken: `flight-status-stale:${metrics.staleSnapshotFingerprint}`,
+      signalToken: `flight-status-stale:${metrics.monitoringStaleSnapshotFingerprint}`,
     });
   }
 
