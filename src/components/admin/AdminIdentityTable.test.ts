@@ -56,6 +56,9 @@ test("six-column directory groups real identity details and keeps full IDs acces
   assert.match(identityCell, /qa@example.invalid/);
   assert.match(identityCell, /Copy user ID: qa-user-internal-id/);
   assert.match(html, /Copy guest ID: qa-guest-long-id/);
+  assert.match(html, /View Activity/);
+  assert.match(html, /rounded-sm px-0.5 text-\\[13px\\] font-medium text-\\[#004BB8\\] underline-offset-4/);
+  assert.doesNotMatch(html, /ArrowUpRight/);
   assert.match(html, /Registered · Support/);
   assert.match(html, /Not an account/);
   assert.match(html, /\/admin\/users\/user\/qa-user-internal-id\/activity\?directory=q%3Dqa%26role%3DALL%26status%3DALL%26identity%3DALL%26sort%3Dname_asc%26page%3D2/);
@@ -69,7 +72,7 @@ test("arrow footer has no duplicate count and retains sorting and filters across
   assert.match(html, /17 registered · 214 guest/);
   assert.doesNotMatch(html, /Identities \(231\)/);
   assert.doesNotMatch(html, /shadow-|rounded-2xl|font-mono/);
-  assert.match(html, /<section class="mt-5 min-w-0 bg-white"/);
+  assert.match(html, /<section class="mt-3 min-w-0 bg-white"/);
   assert.equal((html.match(/aria-labelledby="identity-directory-title"/g) || []).length, 1);
   assert.match(html, /Pg2 of 3/);
   assert.doesNotMatch(html, /matching identities/i);
@@ -94,12 +97,13 @@ test("Sort by auto-submit form preserves filters, selected option and resets to 
   assert.match(sortForm, /name="role" value="ALL"/);
   assert.match(sortForm, /name="status" value="ALL"/);
   assert.match(sortForm, /name="identity" value="ALL"/);
-  assert.match(sortForm, /name="sort"/);
-  assert.match(sortForm, /<option value="name_asc" selected=""/);
+  assert.match(sortForm, /name="sort" value="name_asc"/);
+  assert.match(sortForm, /role="combobox"/);
+  assert.match(sortForm, /aria-haspopup="listbox"/);
+  assert.match(sortForm, /aria-label="Sort by"/);
+  assert.match(sortForm, /Name: A–Z/);
+  assert.doesNotMatch(sortForm, /<select|<option/);
   assert.doesNotMatch(sortForm, /name="page"/);
-  for (const option of ["newest", "oldest", "name_asc", "name_desc"]) {
-    assert.match(sortForm, new RegExp(`value="${option}"`));
-  }
 });
 
 test("under 100 identities occupy one page with both arrows unavailable", () => {
