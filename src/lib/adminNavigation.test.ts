@@ -25,7 +25,7 @@ test("admin navigation exposes parent workspaces in the header", () => {
 
 test("admin navigation preserves role restrictions", () => {
   assert.deepEqual(getAdminNavForRole("SUPPORT"), []);
-  assert.deepEqual(getAdminNavForRole("ADMIN").filter((item) => item.parentHref).map((item) => [item.label, item.parentHref]), [["Journeys", "/admin/searches"], ["Provider Handoffs", "/admin/searches"], ["Referral Attribution", "/admin/searches"], ["Flight Status", "/admin/confirmed-trips"], ["Flights", "/admin/providers"], ["Hotels", "/admin/providers"], ["Cars", "/admin/providers"], ["Deletion Requests", "/admin/support"], ["Logs", "/admin/system"], ["Email Delivery", "/admin/system"], ["Notifications & Alerts", "/admin/system"], ["Homepage Fare Operations", "/admin/settings"]]);
+  assert.deepEqual(getAdminNavForRole("ADMIN").filter((item) => item.parentHref).map((item) => [item.label, item.parentHref]), [["Search Activity", "/admin/searches"], ["Journeys", "/admin/searches"], ["Provider Handoffs", "/admin/searches"], ["Referral Attribution", "/admin/searches"], ["Flight Status", "/admin/confirmed-trips"], ["Flights", "/admin/providers"], ["Hotels", "/admin/providers"], ["Cars", "/admin/providers"], ["Deletion Requests", "/admin/support"], ["Logs", "/admin/system"], ["Email Delivery", "/admin/system"], ["Notifications & Alerts", "/admin/system"], ["Homepage Fare Operations", "/admin/settings"]]);
   assert.deepEqual(getAdminNavForRole("USER"), []);
 });
 
