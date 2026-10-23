@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowUpRight, ChevronLeft, ChevronRight, UserRound } from "lucide-react";
+import { ChevronLeft, ChevronRight, UserRound } from "lucide-react";
 import { CopyIdentityId } from "./CopyIdentityId";
 import { AdminIdentitySort } from "./AdminIdentitySort";
 import type { AdminIdentitySort as IdentitySort } from "@/lib/adminIdentityDirectory";
@@ -75,7 +75,7 @@ export function AdminIdentityTable({
     return `${path}?${params}`;
   }
   const activityClass =
-    "focus-ring inline-flex h-9 items-center gap-1.5 whitespace-nowrap rounded-lg border border-[#D8E1EC] bg-white px-3 text-[12px] font-semibold text-[#004BB8] transition hover:border-[#004BB8]/40 hover:bg-[#F8FAFC]";
+    "focus-ring inline-flex h-9 items-center gap-1 whitespace-nowrap rounded-sm px-0.5 text-[13px] font-medium text-[#004BB8] underline-offset-4 transition-colors hover:underline";
   const directory = pageHref.split("?")[1] || "";
   const activityHref = (kind: "guest" | "user", id: string) =>
     "/admin/users/" + kind + "/" + encodeURIComponent(id) + "/activity" +
@@ -83,7 +83,7 @@ export function AdminIdentityTable({
   const paginationClass =
     "focus-ring inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[#D8E1EC] bg-white text-[#0F172A] transition hover:border-[#94A3B8] hover:bg-[#F8FAFC]";
   return (
-    <section className="mt-5 min-w-0 bg-white">
+    <section className="mt-3 min-w-0 bg-white">
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#D8E1EC] pb-3">
         <div className="min-w-0">
           <h2 id="identity-directory-title" className="text-[16px] font-semibold leading-6 tracking-tight text-[#020617]">
@@ -217,7 +217,7 @@ export function AdminIdentityTable({
                       aria-label={`View Activity for ${name} (${record.id})`}
                     >
                       View Activity
-                      <ArrowUpRight size={14} aria-hidden="true" />
+                      <ChevronRight size={15} aria-hidden="true" />
                     </Link>
                   </td>
                   <td className="px-4 py-2.5">
