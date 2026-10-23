@@ -69,8 +69,8 @@ test("arrow footer has no duplicate count and retains sorting and filters across
   assert.match(html, /17 registered · 214 guest/);
   assert.doesNotMatch(html, /Identities \(231\)/);
   assert.doesNotMatch(html, /shadow-|rounded-2xl|font-mono/);
-  assert.match(html, /<section[^>]*aria-labelledby="identity-directory-title"/);
-  assert.match(html, /aria-labelledby="identity-directory-title"/);
+  assert.match(html, /<section class="mt-5 min-w-0 bg-white"/);
+  assert.equal((html.match(/aria-labelledby="identity-directory-title"/g) || []).length, 1);
   assert.match(html, /Pg2 of 3/);
   assert.doesNotMatch(html, /matching identities/i);
   assert.doesNotMatch(html, />Previous<|>Next</);
