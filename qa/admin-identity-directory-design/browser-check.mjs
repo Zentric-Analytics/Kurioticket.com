@@ -57,7 +57,7 @@ try {
       assert.equal(shellColor, "rgb(255, 255, 255)");
       assert.equal(await page.locator("main [class*='shadow-']").count(), 0);
       const placeholderColor = await page.locator('input[name="q"]').evaluate(input => getComputedStyle(input, "::placeholder").color);
-      assert.equal(placeholderColor, "rgb(148, 163, 184)", "Placeholder should be muted, never the entered-text color");
+      assert.equal(placeholderColor, "rgb(100, 116, 139)", "Placeholder is muted and meets desktop text contrast");
       const metrics = await page.evaluate(() => ({
         document: document.documentElement.scrollWidth,
         viewport: window.innerWidth,
