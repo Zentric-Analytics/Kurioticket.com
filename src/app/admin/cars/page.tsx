@@ -43,7 +43,7 @@ export default async function AdminCarsPage() {
             <AdminMetricCard label="Searches" value={operations.searches.total} hint={operations.windowHours + "-hour window"} tone="info" />
             <AdminMetricCard label="Successful" value={operations.searches.successful} hint="Recorded successful car searches" tone="good" />
             <AdminMetricCard label="Failed" value={operations.searches.failed} hint="Recorded failed car searches" tone={operations.searches.failed > 0 ? "warn" : "neutral"} />
-            <AdminMetricCard label="Average latency" value={operations.searches.averageLatencyMs === null ? "—" : operations.searches.averageLatencyMs + " ms"} hint="Recorded end-to-end car-search latency" />
+            <AdminMetricCard label="Average latency" value={operations.searches.averageLatencyMs === null ? "—" : operations.searches.averageLatencyMs + " ms"} hint="Recorded car-search latency" />
           </div>
         ) : (
           <AdminEmptyState title="Car telemetry unavailable" message="The current environment could not return car-search telemetry. No zero values were invented." />
@@ -97,7 +97,7 @@ export default async function AdminCarsPage() {
             <AdminStatusBadge tone="warn">Not recorded yet</AdminStatusBadge>
           </div>
           <p className="mt-3 text-sm leading-6 text-slate-600">
-            Until that telemetry exists, this page will not invent provider call counts, provider failure rates, or provider latency. Unsupported coverage attempts currently return before SearchHistory recording, so they are not included in these metrics. Search Detail can still show recorded car-search outcomes, but exact provider-level car diagnostics are unavailable.
+            Until that telemetry exists, this page will not invent provider call counts, provider failure rates, or provider latency. Pre-search rejections such as feature-disabled, invalid-request, and unsupported-coverage responses currently return before SearchHistory recording, so they are not included in these metrics. Search Detail can still show recorded car-search outcomes, but exact provider-level car diagnostics are unavailable.
           </p>
         </AdminSectionCard>
 
