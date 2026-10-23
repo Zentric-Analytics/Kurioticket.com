@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { CalendarDays, Clock3, RefreshCw, Server } from "lucide-react";
 
@@ -25,6 +25,15 @@ export function AdminOverviewControls({
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
+
+  // Refresh the server-rendered snapshot periodically while this tab is visible.
+  // This does not turn historical aggregates into a continuous event stream.
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      if (document.visibilityState === "visible") router.refresh();
+    }, 60_000);
+    return () => window.clearInterval(interval);
+  }, [router]);
 
   const updated = new Intl.DateTimeFormat("en-US", {
     month: "short",
@@ -79,7 +88,7 @@ export function AdminOverviewControls({
           <Clock3 size={14} className="text-indigo-600" aria-hidden="true" />
           {updated} UTC
         </time>
-        <span className="mt-1 text-[11px] text-slate-500">{periodLabel}</span>
+        <span className="mt-1 text-[11px] text-slate-500">{periodLabel} · Refreshes every minute while visible</span>
       </div>
       <button
         type="button"
