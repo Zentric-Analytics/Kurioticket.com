@@ -116,18 +116,45 @@ function payload() {
 function memoryDatabase() {
   /* eslint-disable @typescript-eslint/no-explicit-any -- deliberately small Prisma test double */
   let snapshot: any = null;
-  const trip = { id: "trip-1", userId: "user-a", tripType: "FLIGHT", providerName: "Example Provider", partnerConversionId: "conversion-123" };
+  const trip: {
+    id: string;
+    userId: string;
+    tripType: "FLIGHT";
+    providerName: string;
+    partnerConversionId: string;
+    source: "PARTNER_CONFIRMATION" | "CONFIRMATION_IMPORT" | "MIGRATED_LEGACY";
+    partnerConfirmationOccurredAt: Date | null;
+  } = {
+    id: "trip-1",
+    userId: "user-a",
+    tripType: "FLIGHT",
+    providerName: "Example Provider",
+    partnerConversionId: "conversion-123",
+    source: "PARTNER_CONFIRMATION",
+    partnerConfirmationOccurredAt: new Date("2026-10-22T15:30:00.000Z"),
+  };
   const client = {
     myTrip: {
       async findUnique({ where }: any) {
         const identity = where.providerName_partnerConversionId;
         return identity?.providerName === trip.providerName && identity?.partnerConversionId === trip.partnerConversionId
-          ? { id: trip.id, tripType: trip.tripType }
+          ? {
+              id: trip.id,
+              tripType: trip.tripType,
+              source: trip.source,
+              partnerConfirmationOccurredAt: trip.partnerConfirmationOccurredAt,
+            }
           : null;
       },
       async findFirst({ where }: any) {
         if (where.id !== trip.id || where.userId !== trip.userId || where.tripType !== "FLIGHT") return null;
-        return { id: trip.id, providerName: trip.providerName, flightStatusSnapshot: snapshot };
+        return {
+          id: trip.id,
+          providerName: trip.providerName,
+          source: trip.source,
+          partnerConfirmationOccurredAt: trip.partnerConfirmationOccurredAt,
+          flightStatusSnapshot: snapshot,
+        };
       },
     },
     flightStatusSnapshot: {
@@ -142,6 +169,39 @@ function memoryDatabase() {
       },
     },
   };
-  return { client: client as any, get snapshot() { return snapshot; }, setObservedAt(value: Date) { if (snapshot) snapshot.observedAt = value; } };
+  return {
+    client: client as any,
+    get snapshot() { return snapshot; },
+    setObservedAt(value: Date) { if (snapshot) snapshot.observedAt = value; },
+    setTripSource(source: "PARTNER_CONFIRMATION" | "CONFIRMATION_IMPORT" | "MIGRATED_LEGACY", confirmedAt: Date | null) {
+      trip.source = source;
+      trip.partnerConfirmationOccurredAt = confirmedAt;
+    },
+  };
   /* eslint-enable @typescript-eslint/no-explicit-any */
 }
+
+
+test("flight status cannot attach to imported or legacy trips", async () => {
+  for (const source of ["CONFIRMATION_IMPORT", "MIGRATED_LEGACY"] as const) {
+    const database = memoryDatabase();
+    database.setTripSource(source, new Date("2026-10-22T15:30:00.000Z"));
+    const service = createFlightStatusService(() => database.client, () => now);
+    const input = parsePartnerFlightStatus(payload(), now);
+    assert.deepEqual(await service.recordPartnerFlightStatus(input), { applied: false });
+    assert.equal(database.snapshot, null);
+    assert.deepEqual(await service.getUserFlightStatus("user-a", "trip-1"), {
+      dataAvailable: false,
+      providerName: "Example Provider",
+    });
+  }
+});
+
+test("flight status requires a provider-confirmation timestamp even for partner-confirmation rows", async () => {
+  const database = memoryDatabase();
+  database.setTripSource("PARTNER_CONFIRMATION", null);
+  const service = createFlightStatusService(() => database.client, () => now);
+  const input = parsePartnerFlightStatus(payload(), now);
+  assert.deepEqual(await service.recordPartnerFlightStatus(input), { applied: false });
+  assert.equal(database.snapshot, null);
+});

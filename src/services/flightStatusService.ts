@@ -1,5 +1,5 @@
 import { Prisma } from "@/generated/prisma/client";
-import type { FlightOperationalStatus, MyTripType } from "@/generated/prisma/enums";
+import type { FlightOperationalStatus, MyTripSource, MyTripType } from "@/generated/prisma/enums";
 import { getPrisma } from "@/lib/prisma";
 
 const freshnessWindowMs = 15 * 60_000;
@@ -26,10 +26,17 @@ type StatusSnapshotRecord = {
 
 type FlightStatusDatabase = {
   myTrip: {
-    findUnique(args: unknown): Promise<{ id: string; tripType: MyTripType } | null>;
+    findUnique(args: unknown): Promise<{
+      id: string;
+      tripType: MyTripType;
+      source: MyTripSource;
+      partnerConfirmationOccurredAt: Date | null;
+    } | null>;
     findFirst(args: unknown): Promise<{
       id: string;
       providerName: string;
+      source: MyTripSource;
+      partnerConfirmationOccurredAt: Date | null;
       flightStatusSnapshot: StatusSnapshotRecord | null;
     } | null>;
   };
@@ -175,6 +182,16 @@ export function parsePartnerFlightStatus(value: unknown, now: Date = new Date())
   };
 }
 
+export function flightStatusFreshness(observedAt: Date, currentTime: Date = new Date()): "current" | "stale" {
+  const age = currentTime.getTime() - observedAt.getTime();
+  return age >= 0 && age <= freshnessWindowMs ? "current" : "stale";
+}
+
+export const flightStatusLimits = {
+  freshnessWindowMs,
+  maximumFutureEventSkewMs,
+};
+
 const publicStatus = {
   SCHEDULED: "scheduled",
   DELAYED: "delayed",
@@ -219,9 +236,12 @@ export function createFlightStatusService(
     const database = getDatabase();
     const trip = await database.myTrip.findUnique({
       where: { providerName_partnerConversionId: { providerName: input.providerName, partnerConversionId: input.partnerConversionId } },
-      select: { id: true, tripType: true },
+      select: { id: true, tripType: true, source: true, partnerConfirmationOccurredAt: true },
     });
-    if (!trip || trip.tripType !== "FLIGHT") return { applied: false };
+    if (!trip
+      || trip.tripType !== "FLIGHT"
+      || trip.source !== "PARTNER_CONFIRMATION"
+      || !trip.partnerConfirmationOccurredAt) return { applied: false };
 
     const data = snapshotData(input, trip.id);
     try {
@@ -244,12 +264,13 @@ export function createFlightStatusService(
     const database = getDatabase();
     const trip = await database.myTrip.findFirst({
       where: { id: myTripId, userId, tripType: "FLIGHT" },
-      select: { id: true, providerName: true, flightStatusSnapshot: true },
+      select: { id: true, providerName: true, source: true, partnerConfirmationOccurredAt: true, flightStatusSnapshot: true },
     });
     if (!trip) return null;
-    const snapshot = trip.flightStatusSnapshot;
+    const snapshot = trip.source === "PARTNER_CONFIRMATION" && trip.partnerConfirmationOccurredAt
+      ? trip.flightStatusSnapshot
+      : null;
     if (!snapshot) return { dataAvailable: false, providerName: trip.providerName };
-    const age = now().getTime() - snapshot.observedAt.getTime();
     return {
       dataAvailable: true,
       providerName: trip.providerName,
@@ -269,7 +290,7 @@ export function createFlightStatusService(
         actualArrivalAt: snapshot.actualArrivalAt?.toISOString() ?? null,
       },
       lastUpdatedAt: snapshot.observedAt.toISOString(),
-      freshness: age >= 0 && age <= freshnessWindowMs ? "current" : "stale",
+      freshness: flightStatusFreshness(snapshot.observedAt, now()),
     };
   }
 
