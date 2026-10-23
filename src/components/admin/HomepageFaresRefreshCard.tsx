@@ -655,42 +655,46 @@ export function HomepageFaresRefreshCard() {
             onReload={() => void loadStatus()}
           />
 
-          <MarketReadinessDashboard
-            markets={publicMarkets}
-            selectedRouteScope={selectedRouteScope}
-            onInspectMarket={selectRouteScope}
-          />
+          {statusPayload.dataAvailable ? (
+            <>
+              <MarketReadinessDashboard
+                markets={publicMarkets}
+                selectedRouteScope={selectedRouteScope}
+                onInspectMarket={selectRouteScope}
+              />
 
-          <MarketRouteInspector
-            publicGroups={publicRouteGroups}
-            fallbackGroups={fallbackRouteGroups}
-            selectedRouteScope={selectedRouteScope}
-            selectedGroup={selectedRouteGroup}
-            filter={routeFilter}
-            loading={statusState.loading}
-            onSelectMarket={selectRouteScope}
-            routePage={routePage}
-            onPreviousPage={() => setRoutePage((page) => Math.max(1, page - 1))}
-            onNextPage={() => setRoutePage((page) => page + 1)}
-            onFilterChange={selectRouteFilter}
-            routeDetailsRef={routeDetailsRef}
-          />
+              <MarketRouteInspector
+                publicGroups={publicRouteGroups}
+                fallbackGroups={fallbackRouteGroups}
+                selectedRouteScope={selectedRouteScope}
+                selectedGroup={selectedRouteGroup}
+                filter={routeFilter}
+                loading={statusState.loading}
+                onSelectMarket={selectRouteScope}
+                routePage={routePage}
+                onPreviousPage={() => setRoutePage((page) => Math.max(1, page - 1))}
+                onNextPage={() => setRoutePage((page) => page + 1)}
+                onFilterChange={selectRouteFilter}
+                routeDetailsRef={routeDetailsRef}
+              />
 
-          <DiagnosticsPanel
-            markets={statusPayload.marketReadinessSummary}
-            marketsNeedingAnotherRun={marketsNeedingAnotherRun}
-            candidatePoolHealth={statusPayload.candidatePoolHealth}
-            publicPriceDiagnostics={statusPayload.publicPriceDiagnostics}
-            stoppedReason={latestCounts?.stoppedReason}
-          />
+              <DiagnosticsPanel
+                markets={statusPayload.marketReadinessSummary}
+                marketsNeedingAnotherRun={marketsNeedingAnotherRun}
+                candidatePoolHealth={statusPayload.candidatePoolHealth}
+                publicPriceDiagnostics={statusPayload.publicPriceDiagnostics}
+                stoppedReason={latestCounts?.stoppedReason}
+              />
 
-          <FallbackPoolsSection
-            pools={fallbackPools}
-            selectedRouteScope={selectedRouteScope}
-            onInspectMarket={selectRouteScope}
-          />
+              <FallbackPoolsSection
+                pools={fallbackPools}
+                selectedRouteScope={selectedRouteScope}
+                onInspectMarket={selectRouteScope}
+              />
 
-          <RawDebugDetails statusPayload={statusPayload} refreshCounts={latestCounts} />
+              <RawDebugDetails statusPayload={statusPayload} refreshCounts={latestCounts} />
+            </>
+          ) : null}
         </div>
       </Card>
     </section>
