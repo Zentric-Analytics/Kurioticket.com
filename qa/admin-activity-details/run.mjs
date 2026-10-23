@@ -49,24 +49,17 @@ await put("mocks/auth-guards.js", 'export async function requireAdminSession(){r
 await put("mocks/stagingSafety.js", 'export function getPublicEnvironment(){return "staging";}');
 await put("mocks/activity.js", await readFile(path.join(qa, "activity-fixture.js"), "utf8"));
 await put("mocks/prisma.js", await readFile(path.join(qa, "old-drawer-fixture.js"), "utf8"));
-// Capture the *actual old drawer component* from dev before this feature branch.
-// The labelled synthetic fixture prevents screenshots from exposing real guest data.
-const oldDrawer = execFileSync("git", [
-  "show", "f25583a28a4ffc7a56f2a9c4367fc46c52a3bd19:src/components/admin/IdentityActivityPanel.tsx",
+// Before/after must compare the SAME full-page Activity UI. Capture the
+// pre-redesign implementation at the recorded dev SHA, never real customer data.
+const oldActivity = execFileSync("git", [
+  "show",
+  "4f2e71ff857cb2e96084c7d73868958749e2bc1c:src/app/admin/users/[kind]/[id]/activity/page.tsx",
 ], { cwd: repo, encoding: "utf8" });
-await put("app/before/IdentityActivityPanel.tsx", oldDrawer);
+await put("app/before/OldActivityPage.tsx", oldActivity);
 await put("app/before/page.tsx", [
-  'import { IdentityActivityPanel } from "./IdentityActivityPanel";',
-  'export default function BeforeActivityPage() {',
-  '  return <div className="mx-auto max-w-7xl p-5">',
-  '    <h1 className="text-xl font-bold text-slate-900">Users</h1>',
-  '    <p className="mt-2 text-sm text-slate-500">QA identities directory, before full-page activity</p>',
-  '    <div className="mt-5 rounded-xl border border-slate-200 bg-white p-5">',
-  '      <p className="text-sm font-semibold">Identities (QA example)</p>',
-  '      <p className="mt-3 text-sm text-slate-600">Guest visitor — qa-guest-activity-0001</p>',
-  '    </div>',
-  '    <IdentityActivityPanel selection="guest:qa-guest-activity-0001" />',
-  '  </div>;',
+  'import OldActivityPage from "./OldActivityPage";',
+  'export default function BeforeActivityPage(){',
+  '  return <OldActivityPage params={Promise.resolve({kind:"guest",id:"qa-guest-activity-0001"})} searchParams={Promise.resolve({})} />;',
   '}',
 ].join("\n"));
 

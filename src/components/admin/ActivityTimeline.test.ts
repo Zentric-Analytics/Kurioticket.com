@@ -1,0 +1,51 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { createJiti } from "jiti";
+import type { ActivityRow } from "@/lib/adminIdentityJourney";
+
+const jiti = createJiti(import.meta.url, { jsx: { runtime: "automatic" }, fsCache: false });
+const { ActivityTimeline } = jiti("./ActivityTimeline") as typeof import("./ActivityTimeline");
+
+const at = new Date("2026-10-22T17:56:00.000Z");
+const offer = (id: string, minute: number): ActivityRow => ({
+  id, at: new Date(at.getTime() - minute * 60_000),
+  stage: "OFFER_SELECTED", label: "Offer selected", detail: "Hotel · London · Provider A",
+  product: "HOTEL", provider: "Provider A", journeyId: "qa-journey-1", journeyStartedAt: at,
+});
+
+test("Activity timeline is card-free and discloses every repeated record with its own timestamp/link", () => {
+  const rows = [offer("j-a", 0), offer("j-b", 1), offer("j-c", 2), offer("j-d", 3)];
+  const html = renderToStaticMarkup(createElement(ActivityTimeline, {
+    events: rows, nextHref: "/admin/users/guest/qa-user-1/activity?cursor=older", environment: "staging",
+  }));
+  assert.match(html, /Activity timeline/);
+  assert.match(html, /4 recorded events/);
+  assert.match(html, /Offer selected · 4 events/);
+  assert.match(html, /<details[^>]*data-testid="selection-run"/);
+  assert.equal((html.match(/data-activity-id=/g) || []).length, rows.length);
+  assert.equal((html.match(/<time dateTime=/g) || []).length, rows.length);
+  for (const row of rows) assert.match(html, new RegExp("data-activity-id=\"" + row.id + "\""));
+  assert.equal((html.match(/Open journey/g) || []).length, rows.length);
+  assert.match(html, /environment=staging/);
+  assert.match(html, /cursor=older/);
+  assert.match(html, /Older activity/);
+  assert.doesNotMatch(html, /rounded-2xl|shadow-|rounded-xl|bg-slate-50/);
+});
+
+test("one recorded event displays singular grammar and no unnecessary disclosure", () => {
+  const row: ActivityRow = { id: "j-only", at, journeyId: "journey-single",
+    label: "Search completed", stage: "SEARCH_COMPLETED", detail: "Flight · LOS → DXB", product: "FLIGHT" };
+  const html = renderToStaticMarkup(createElement(ActivityTimeline, { events: [row], nextHref: null, environment: "staging" }));
+  assert.match(html, /1 recorded event/);
+  assert.doesNotMatch(html, /1 recorded events|selection-run|Older activity/);
+  assert.match(html, /Flight · LOS → DXB/);
+});
+
+test("empty timeline remains readable without claiming no customer history", () => {
+  const html = renderToStaticMarkup(createElement(ActivityTimeline, { events: [], nextHref: null, environment: "staging" }));
+  assert.match(html, /No recorded activity matches these filters/);
+  assert.match(html, /0 on this page/);
+  assert.doesNotMatch(html, /selection-run/);
+});
