@@ -245,11 +245,13 @@ test("exact failed searches distinguish provider failure from internal processin
 });
 
 
-test("flight and hotel provider logs carry exact request correlation for future diagnostics", () => {
+test("flight, hotel, and car provider logs carry exact request correlation for future diagnostics", () => {
   const flightRoute = readFileSync("src/app/api/flights/search/route.ts", "utf8");
   const hotelRoute = readFileSync("src/app/api/hotels/search/route.ts", "utf8");
+  const carRoute = readFileSync("src/app/api/cars/search/route.ts", "utf8");
   assert.match(flightRoute, /service: "flight-search"[\s\S]*?metadata: \{ requestId \}/);
   assert.match(hotelRoute, /service: "hotel-search"[\s\S]*?metadata: \{ requestId \}/);
+  assert.match(carRoute, /service: "car-search"[\s\S]*?metadata: \{ requestId \}/);
 });
 
 test("search detail renders diagnostics without adding write actions", () => {
@@ -352,4 +354,31 @@ test("disabled unsupported searches preserve the safe unsupported reason", () =>
   assert.equal(diagnostic.reasonCode, "UNSUPPORTED_SEARCH");
   assert.equal(diagnostic.reason, "Unsupported search / provider coverage");
   assert.equal(diagnostic.retryable, false);
+});
+
+
+test("structured car provider errors map to safe diagnostic categories", () => {
+  const auth = __adminOperationalReadCoreTest.providerDiagnostic({
+    provider: "KAYAK sandbox",
+    status: "FAILED",
+    latencyMs: 20,
+    errorMessage: "provider_auth_error",
+    createdAt: new Date("2026-10-23T09:20:00.000Z"),
+  });
+  assert.equal(auth.reasonCode, "AUTH_OR_CONFIG");
+  assert.equal(auth.reason, "Authentication / configuration");
+  assert.equal(auth.retryable, false);
+
+  for (const code of ["provider_network_error", "provider_server_error", "provider_invalid_response"]) {
+    const diagnostic = __adminOperationalReadCoreTest.providerDiagnostic({
+      provider: "KAYAK sandbox",
+      status: "FAILED",
+      latencyMs: 30,
+      errorMessage: code,
+      createdAt: new Date("2026-10-23T09:21:00.000Z"),
+    });
+    assert.equal(diagnostic.reasonCode, "UPSTREAM_UNAVAILABLE");
+    assert.equal(diagnostic.reason, "Upstream unavailable");
+    assert.equal(diagnostic.retryable, true);
+  }
 });
