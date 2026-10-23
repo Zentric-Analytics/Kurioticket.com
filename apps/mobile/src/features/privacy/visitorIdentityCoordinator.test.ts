@@ -62,6 +62,7 @@ test("unknown and declined consent never create or attach a visitor", async () =
   assert.deepEqual(await h.coordinator.headers("/api/flights/search", null), {});
   await h.coordinator.choose(false);
   assert.deepEqual(await h.coordinator.headers("/api/redirect", user("a")), {});
+  assert.deepEqual(await h.coordinator.headers("/api/cars/search", user("a")), {});
   await h.coordinator.refresh();
   assert.deepEqual(h.calls, []);
   assert.equal(h.saved().choice, "declined");
@@ -72,7 +73,7 @@ test("explicit opt-in uses a stable token only on the first-party search and han
   await h.coordinator.transition(null);
   await h.coordinator.choose(true);
   const headers = { "x-kt-visitor": visitorToken(1) };
-  for (const path of ["/api/flights/search", "/api/hotels/search", "/api/mobile/v1/hotels/progressive", "/api/redirect", "/api/journey/events"]) {
+  for (const path of ["/api/flights/search", "/api/hotels/search", "/api/cars/search", "/api/mobile/v1/hotels/progressive", "/api/redirect", "/api/journey/events"]) {
     assert.deepEqual(await h.coordinator.headers(path, null), headers);
   }
   for (const path of ["/api/mobile/v1/profile", "/api/mobile/v1/identity/visitor", "/api/hotels/details?id=x", "https://provider.example/api/redirect", "//provider.example/api/redirect", "https://provider.example/api/journey/events", "/api/journey/events?provider=external"]) {

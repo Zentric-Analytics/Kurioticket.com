@@ -2,6 +2,8 @@
 import { useEffect, useState, type ReactNode } from "react";
 import type { LocationBoundCarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
 import { CarsResultsClient } from "./CarsResultsClient";
+import { useJourneyEvents } from "@/components/privacy/JourneyEventsProvider";
+import { journeyRequestId } from "@/lib/journeyEventClient";
 
 /** Keep the document small; inventory arrives through the canonical JSON API. */
 export function CarInventoryLoader({ values, fallback }: {
@@ -9,6 +11,8 @@ export function CarInventoryLoader({ values, fallback }: {
   fallback: ReactNode;
 }) {
   const [results, setResults] = useState<NormalizedCarResult[] | null>(null);
+  const [requestId, setRequestId] = useState<string | null>(null);
+  const journeyEvents = useJourneyEvents();
   const [error, setError] = useState(false);
   const [invalidSearch, setInvalidSearch] = useState(false);
   const [unsupported, setUnsupported] = useState(false);
@@ -18,7 +22,7 @@ export function CarInventoryLoader({ values, fallback }: {
     let active = true;
     const timeout = window.setTimeout(() => controller.abort(), 60_000);
     fetch("/api/cars/search", {
-      method: "POST", headers: { "Content-Type": "application/json" },
+      method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" },
       body: JSON.stringify(values), signal: controller.signal,
     }).then(async response => {
       if (response.status === 422) {
@@ -32,11 +36,21 @@ export function CarInventoryLoader({ values, fallback }: {
       if (!response.ok) throw new Error("Car inventory unavailable");
       const data = await response.json();
       if (!Array.isArray(data.results)) throw new Error("Invalid car inventory");
-      if (active) setResults(data.results);
+      if (active) {
+        setRequestId(journeyRequestId(data.requestId));
+        setResults(data.results);
+      }
     }).catch(() => { if (active) setError(true); })
       .finally(() => window.clearTimeout(timeout));
     return () => { active = false; window.clearTimeout(timeout); controller.abort(); };
   }, [values, attempt]);
+  // A results-view event is emitted only for a visible, successful inventory
+  // response with its actual server request ID. Consent and ownership checks
+  // remain with the shared sender and the server; failed/empty searches do not
+  // invent view events.
+  useEffect(() => {
+    if (results?.length && requestId) journeyEvents.resultsViewed(requestId);
+  }, [results, requestId, journeyEvents]);
   if (invalidSearch) return <CarsResultsClient values={values} initialResults={[]} inventoryStatus="invalid-search" />;
   if (unsupported) return <main className="page-shell py-8">
     <p role="alert">The available providers cannot search these rental options. Please change your search.</p>

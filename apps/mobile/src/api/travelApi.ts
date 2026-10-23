@@ -175,7 +175,7 @@ async function request<T>(path: string, init: RequestInit = {}, options: { signa
         server: data.performance,
       });
     }
-    if (["/api/flights/search", "/api/hotels/search", "/api/mobile/v1/hotels/progressive"].includes(path)) {
+    if (["/api/flights/search", "/api/hotels/search", "/api/cars/search", "/api/mobile/v1/hotels/progressive"].includes(path)) {
       rememberJourneyResponseContext(data, requestVisitorContext);
     }
     return data as T;
