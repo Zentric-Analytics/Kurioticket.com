@@ -57,7 +57,7 @@ test("six-column directory groups real identity details and keeps full IDs acces
   assert.match(identityCell, /Copy user ID: qa-user-internal-id/);
   assert.match(html, /Copy guest ID: qa-guest-long-id/);
   assert.match(html, /View Activity/);
-  assert.match(html, /rounded-sm px-0.5 text-\\[13px\\] font-medium text-\\[#004BB8\\] underline-offset-4/);
+  assert.match(html, /rounded-sm px-0.5 text-\[13px\] font-medium text-\[#004BB8\] underline-offset-4/);
   assert.doesNotMatch(html, /ArrowUpRight/);
   assert.match(html, /Registered · Support/);
   assert.match(html, /Not an account/);
