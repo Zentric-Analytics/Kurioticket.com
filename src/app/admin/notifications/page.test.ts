@@ -7,6 +7,7 @@ const service = readFileSync("src/services/adminAlertService.ts", "utf8");
 const page = readFileSync("src/app/admin/notifications/page.tsx", "utf8");
 const readApi = readFileSync("src/app/api/admin/notifications/route.ts", "utf8");
 const ackApi = readFileSync("src/app/api/admin/notifications/acknowledge/route.ts", "utf8");
+const acknowledgeButton = readFileSync("src/components/admin/AdminAlertAcknowledgeButton.tsx", "utf8");
 const shell = readFileSync("src/components/admin/AdminHorizontalShell.tsx", "utf8");
 const adminLib = readFileSync("src/lib/admin.ts", "utf8");
 
@@ -23,6 +24,7 @@ test("admin alerts derive only from authoritative operational sources", () => {
   }
   assert.match(core, /readinessState !== "READY"/);
   assert.match(core, /!signals\.flightStatus\.feedReady/);
+  assert.match(core, /metrics\.missingSnapshots > 0/);
   assert.doesNotMatch(core, /confirmedLast24h|booking confirmations recently/i);
 });
 
@@ -41,6 +43,8 @@ test("acknowledgements are per-admin, signal-specific, temporary, and must persi
   assert.match(service, /24 \* 60 \* 60 \* 1_000/);
   assert.match(service, /acknowledgementKey\(candidate\.key, candidate\.signalToken\)/);
   assert.match(ackApi, /getCurrentAdminAlertByKey/);
+  assert.match(ackApi, /alert\.signalToken !== signalToken/);
+  assert.match(acknowledgeButton, /JSON\.stringify\(\{ alertKey, signalToken \}\)/);
   assert.match(ackApi, /alert\.acknowledged/);
   assert.match(ackApi, /writeAdminAuditLog/);
   assert.match(ackApi, /if \(!persisted\)/);
@@ -64,6 +68,12 @@ test("notifications page explains acknowledgement semantics and monitored bounda
   assert.match(page, /Phase 1 monitoring boundaries/);
   assert.match(page, /does not fabricate alerts/);
   assert.match(page, /AdminAlertAcknowledgeButton/);
+  assert.match(page, /isProtectedAdminEmail\(session\.user\.email\)/);
+  assert.match(page, /signalToken=\{alert\.signalToken\}/);
+  assert.doesNotMatch(
+    core,
+    /markets\.join\(","\),\s*signals\.homepageFares\.lastRefreshAt/,
+  );
 });
 
 test("admin bell is live and reads only the summary endpoint", () => {
