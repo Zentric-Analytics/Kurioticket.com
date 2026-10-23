@@ -113,7 +113,24 @@ test("search diagnostics keep zero results distinct from failure and never guess
     providers: [],
   });
 
-  const failed = { ...base, status: "FAILED", resultCount: 0 } as never;
+  const failed = {
+    id: "search_123",
+    requestId: "request_123",
+    userId: null,
+    visitorId: null,
+    type: "FLIGHT",
+    origin: "LOS",
+    destination: "LHR",
+    checkIn: null,
+    checkOut: null,
+    query: {},
+    resultCount: 0,
+    latencyMs: 1200,
+    status: "FAILED",
+    createdAt: new Date("2026-10-23T08:00:00.000Z"),
+    visitor: null,
+    journeyEvents: [],
+  } as never;
   const diagnostic = __adminOperationalReadCoreTest.fallbackSearchDiagnostic(failed);
   assert.equal(diagnostic.reasonCode, "FAILURE_REASON_UNAVAILABLE");
   assert.equal(diagnostic.correlation, "legacy_fallback");
