@@ -29,8 +29,8 @@ test("missing status is scoped to the configured provider rather than all confir
   assert.match(service, /providerName: readiness\.providerName/);
   assert.match(service, /feedEligibleFlights/);
   assert.match(service, /flightStatusSnapshot: \{ is: null \}/);
-  assert.match(page, /Feed-eligible flights awaiting their first snapshot/);
-  assert.match(page, /Confirmed flights matching the configured status provider/);
+  assert.match(page, /Provider-matched confirmed flights that have not received a trusted status snapshot yet/);
+  assert.match(page, /Confirmed flights matching the configured provider name/);
 });
 
 test("flight status readiness is provider-bound and independent from database telemetry", () => {
