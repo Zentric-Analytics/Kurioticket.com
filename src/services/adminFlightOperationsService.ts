@@ -2,6 +2,7 @@ import "server-only";
 
 import { getOptionalPrisma } from "@/lib/prisma";
 import { getPublicEnvironment, type PublicEnvironment } from "@/lib/stagingSafety";
+import { getProviderIntegrationStatuses } from "@/services/travel/providerIntegrationStatus";
 
 export type FlightOperationsSnapshot = {
   environment: PublicEnvironment;
@@ -14,6 +15,14 @@ export type FlightOperationsSnapshot = {
     successfulZeroResults: number;
     averageLatencyMs: number | null;
   };
+  providerHealth: Array<{
+    id: "duffel" | "kayak-sandbox";
+    provider: string;
+    totalCalls: number;
+    failedCalls: number;
+    averageLatencyMs: number | null;
+    lastFailureAt: string | null;
+  }>;
   recentSearches: Array<{
     id: string;
     requestId: string | null;
@@ -36,22 +45,23 @@ export async function getFlightOperationsSnapshot(
   const hours = Number.isInteger(windowHours) && windowHours >= 1 && windowHours <= 168 ? windowHours : 24;
   const now = new Date();
   const since = new Date(now.getTime() - hours * 60 * 60 * 1000);
-  const where = {
+  const searchWhere = {
     type: "FLIGHT" as const,
     createdAt: { gte: since, lte: now },
     query: { path: ["environment"], equals: environment },
   };
+  const flightProviders = getProviderIntegrationStatuses().filter((provider) => provider.products.includes("FLIGHTS"));
 
   try {
-    const [total, successful, partial, failed, successfulZeroResults, latency, recentSearches] = await Promise.all([
-      db.searchHistory.count({ where }),
-      db.searchHistory.count({ where: { ...where, status: "SUCCESS" } }),
-      db.searchHistory.count({ where: { ...where, status: "PARTIAL" } }),
-      db.searchHistory.count({ where: { ...where, status: "FAILED" } }),
-      db.searchHistory.count({ where: { ...where, status: "SUCCESS", resultCount: 0 } }),
-      db.searchHistory.aggregate({ where, _avg: { latencyMs: true } }),
+    const [total, successful, partial, failed, successfulZeroResults, latency, recentSearches, providerHealth] = await Promise.all([
+      db.searchHistory.count({ where: searchWhere }),
+      db.searchHistory.count({ where: { ...searchWhere, status: "SUCCESS" } }),
+      db.searchHistory.count({ where: { ...searchWhere, status: "PARTIAL" } }),
+      db.searchHistory.count({ where: { ...searchWhere, status: "FAILED" } }),
+      db.searchHistory.count({ where: { ...searchWhere, status: "SUCCESS", resultCount: 0 } }),
+      db.searchHistory.aggregate({ where: searchWhere, _avg: { latencyMs: true } }),
       db.searchHistory.findMany({
-        where,
+        where: searchWhere,
         orderBy: [{ createdAt: "desc" }, { id: "desc" }],
         take: 10,
         select: {
@@ -65,6 +75,32 @@ export async function getFlightOperationsSnapshot(
           createdAt: true,
         },
       }),
+      Promise.all(flightProviders.map(async (integration) => {
+        const providerWhere = {
+          provider: integration.provider,
+          service: "flight-search",
+          createdAt: { gte: since, lte: now },
+          metadata: { path: ["environment"], equals: environment },
+        };
+        const [totalCalls, failedCalls, providerLatency, lastFailure] = await Promise.all([
+          db.apiProviderLog.count({ where: providerWhere }),
+          db.apiProviderLog.count({ where: { ...providerWhere, status: "FAILED" } }),
+          db.apiProviderLog.aggregate({ where: providerWhere, _avg: { latencyMs: true } }),
+          db.apiProviderLog.findFirst({
+            where: { ...providerWhere, status: "FAILED" },
+            select: { createdAt: true },
+            orderBy: { createdAt: "desc" },
+          }),
+        ]);
+        return {
+          id: integration.id,
+          provider: integration.provider,
+          totalCalls,
+          failedCalls,
+          averageLatencyMs: providerLatency._avg.latencyMs === null ? null : Math.round(providerLatency._avg.latencyMs),
+          lastFailureAt: lastFailure?.createdAt.toISOString() ?? null,
+        };
+      })),
     ]);
 
     return {
@@ -78,6 +114,7 @@ export async function getFlightOperationsSnapshot(
         successfulZeroResults,
         averageLatencyMs: latency._avg.latencyMs === null ? null : Math.round(latency._avg.latencyMs),
       },
+      providerHealth,
       recentSearches: recentSearches.map((search) => ({
         ...search,
         createdAt: search.createdAt.toISOString(),
