@@ -76,8 +76,8 @@ export type AdminHeaderGroup = {
 };
 
 /**
- * Keep the compact header in sync with the existing sidebar hierarchy and
- * role-aware navigation. Secondary pages remain children of their parents.
+ * Show every permitted Admin module directly in the horizontal header.
+ * Keep parentHref metadata for the historical sidebar without nesting header links.
  */
 export function getAdminHeaderGroups(role: AdminRole, includePreviewTesters = false): AdminHeaderGroup[] {
   const visible = getAdminNavForRole(role, includePreviewTesters);
@@ -92,8 +92,8 @@ export function getAdminHeaderGroups(role: AdminRole, includePreviewTesters = fa
     }
     const links = hrefs.flatMap((href) => {
       const item = byHref.get(href);
-      if (!item || item.parentHref) return [];
-      return [{ item, children: visible.filter((child) => child.parentHref === item.href) }];
+      if (!item) return [];
+      return [{ item, children: [] }];
     });
     return { label: group.label, links };
   }).filter((group) => group.links.length > 0);
