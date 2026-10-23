@@ -3,13 +3,14 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const page = readFileSync(new URL("./page.tsx", import.meta.url), "utf8");
+const timeline = readFileSync(new URL("../../../../../../components/admin/ActivityTimeline.tsx", import.meta.url), "utf8");
 const reader = readFileSync(new URL("../../../../../../services/adminIdentityActivityService.ts", import.meta.url), "utf8");
 const filters = readFileSync(new URL("../../../../../../lib/adminIdentityActivity.ts", import.meta.url), "utf8");
 
 test("the customer timeline identifies its data environment near the account heading", () => {
   assert.match(page, /\{environment\} records<\/span>/);
-  assert.match(page, /No recorded activity is linked to this identity here/);
-  assert.match(page, /Searches without an eligible identity link, and searches made on another environment, will not appear here/);
+  assert.match(timeline, /No recorded activity is linked to this identity here/);
+  assert.match(timeline, /Searches without an eligible identity link, or those made on a different environment, will not appear here/);
   assert.match(page, /Only recorded \{environment\} events are displayed/);
 });
 

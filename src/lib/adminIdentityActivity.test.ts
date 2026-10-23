@@ -3,7 +3,7 @@ import test from "node:test";
 
 import {
   ACTIVITY_PAGE_SIZE, activityEnvironmentScope, allowedActivityStages, activityHref, activityWindow,
-  decodeActivityCursor, encodeActivityCursor, excludeCanonicalLegacyRows, groupActivityRows, relatedJourneysWindow,
+  compactActivityDisplayRows, decodeActivityCursor, encodeActivityCursor, excludeCanonicalLegacyRows, groupActivityRows, relatedJourneysWindow,
   parseActivityFilters, sourceActivitySeek, validActivityIdentity,
   type ActivityFilters,
 } from "./adminIdentityActivity";
@@ -176,4 +176,57 @@ test("related journeys never exceed the ninety-day journey API window", () => {
   assert.ok(Date.parse(rows[0].at.toISOString()) < end);
   assert.ok(end <= now.getTime());
   assert.ok(end - start <= 90 * 86_400_000);
+});
+
+
+test("selection disclosures keep every original recorded event and do not combine unrelated offers", () => {
+  const at = new Date("2026-10-22T17:56:00.000Z");
+  const row = (id: string, minute: number, options: Partial<ActivityRow> = {}): ActivityRow => ({
+    id, at: new Date(at.getTime() - minute * 60_000),
+    stage: "OFFER_SELECTED", label: "Offer selected", detail: "Hotel · London · Provider A",
+    journeyId: "qa-journey-1", product: "HOTEL", provider: "Provider A", ...options,
+  });
+  const events = [
+    row("j-one", 0), row("j-two", 1), row("j-three", 2), row("j-four", 3),
+    row("j-different-provider", 4, { provider: "Provider B" }),
+    row("j-other-journey", 5, { journeyId: "qa-journey-2" }),
+    row("e-unlinked", 6, { journeyId: undefined }),
+    row("j-search", 7, { stage: "SEARCH_COMPLETED", label: "Search completed" }),
+  ];
+  const display = compactActivityDisplayRows(events);
+  assert.deepEqual(display.map(x => x.kind), ["selection_run", "event", "event", "event", "event"]);
+  assert.deepEqual(display.flatMap(x => x.kind === "selection_run" ? x.rows : [x.row]).map(x => x.id), events.map(x => x.id));
+  assert.equal(display[0].kind, "selection_run");
+  if (display[0].kind === "selection_run") {
+    assert.deepEqual(display[0].rows.map(x => x.at.toISOString()), events.slice(0, 4).map(x => x.at.toISOString()));
+  }
+  assert.deepEqual(compactActivityDisplayRows(events.slice(0, 2)).map(x => x.kind), ["event", "event"]);
+});
+
+test("a different route, provider, product or stage interrupts selection folding", () => {
+  const at = new Date("2026-10-22T17:50:00.000Z");
+  const one: ActivityRow = {
+    id: "j-1", at, stage: "OFFER_SELECTED", label: "Offer selected",
+    detail: "Flight · LOS → DXB · Provider A", provider: "Provider A", product: "FLIGHT", journeyId: "journey-1",
+  };
+  for (const different of [
+    { detail: "Flight · LOS → LHR · Provider A" }, { provider: "Provider B" },
+    { product: "HOTEL" }, { stage: "RESULTS_VIEWED" as const },
+  ]) {
+    const display = compactActivityDisplayRows([one, { ...one, id: "j-2", ...different }, { ...one, id: "j-3" }]);
+    assert.ok(display.every(x => x.kind === "event"));
+  }
+});
+
+test("unknown-provider selections remain individually visible even if descriptions coincide", () => {
+  const at = new Date("2026-10-22T17:55:00.000Z");
+  const recorded: ActivityRow[] = [0, 1, 2].map(index => ({
+    id: "j-unknown-" + index, at: new Date(at.getTime() - index * 1000),
+    journeyId: "qa-same-journey", product: "HOTEL",
+    label: "Offer selected", stage: "OFFER_SELECTED", detail: "Hotel · London",
+    provider: null,
+  }));
+  assert.deepEqual(compactActivityDisplayRows(recorded).map(item => item.kind), ["event", "event", "event"]);
+  assert.deepEqual(compactActivityDisplayRows(recorded.map(row => ({ ...row, provider: " " }))).map(item => item.kind), ["event", "event", "event"]);
+  assert.deepEqual(compactActivityDisplayRows(recorded.map(row => ({ ...row, provider: "Known partner", detail: "" }))).map(item => item.kind), ["event", "event", "event"]);
 });

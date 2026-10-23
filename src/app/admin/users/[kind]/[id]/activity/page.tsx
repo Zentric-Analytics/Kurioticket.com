@@ -1,17 +1,16 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
-  ArrowLeft, ArrowUpRight, Building2, CalendarDays, CarFront, CircleDot, ExternalLink,
-  ListChecks, MousePointerClick, Plane, Search, UserRound,
+  ArrowLeft, Building2, CarFront, ChevronRight, CircleDot, Plane, Search, UserRound,
 } from "lucide-react";
 
 import { CopyIdentityId } from "@/components/admin/CopyIdentityId";
 import { AdminEmptyState } from "@/components/admin/AdminPageShell";
-import { Card } from "@/components/ui/Card";
+import { ActivityTimeline } from "@/components/admin/ActivityTimeline";
+import { AdminDirectorySelect } from "@/components/admin/AdminDirectorySelect";
 import { requireAdminSession } from "@/lib/auth-guards";
-import { activityHref, groupActivityRows, parseActivityFilters, relatedJourneysWindow, validActivityIdentity, type ActivityFilters } from "@/lib/adminIdentityActivity";
+import { activityHref, parseActivityFilters, relatedJourneysWindow, validActivityIdentity, type ActivityFilters } from "@/lib/adminIdentityActivity";
 import { ADMIN_IDENTITY_SORTS } from "@/lib/adminIdentityDirectory";
-import type { ActivityRow } from "@/lib/adminIdentityJourney";
 import { loadAdminIdentityActivity } from "@/services/adminIdentityActivityService";
 
 export const metadata = { title: "Admin Customer Activity" };
@@ -28,21 +27,14 @@ const tabs = [
 const format = (at: Date) => new Intl.DateTimeFormat("en", {
   dateStyle: "medium", timeStyle: "short", timeZone: "UTC",
 }).format(at) + " UTC";
-const buttonClass = "inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-indigo-600";
-const inputClass = "h-10 min-w-0 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-200";
+const buttonClass = "focus-ring inline-flex items-center gap-1.5 rounded-md border border-[#D8E1EC] bg-white px-3 py-2 text-[13px] font-medium text-[#004BB8] hover:bg-[#F8FAFC]";
+const inputClass = "focus-ring h-10 min-w-0 w-full rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px] font-normal text-[#020617] placeholder:text-[#64748B] hover:border-[#94A3B8]";
 
 function ProductIcon({ product }: { product: string | null | undefined }) {
   if (product === "FLIGHT") return <Plane size={16} aria-hidden="true" />;
   if (product === "HOTEL") return <Building2 size={16} aria-hidden="true" />;
   if (product === "CAR") return <CarFront size={16} aria-hidden="true" />;
   return <CircleDot size={16} aria-hidden="true" />;
-}
-function EventIcon({ stage }: { stage: ActivityRow["stage"] }) {
-  if (stage === "SEARCH_COMPLETED") return <Search size={17} aria-hidden="true" />;
-  if (stage === "RESULTS_VIEWED") return <ListChecks size={17} aria-hidden="true" />;
-  if (stage === "OFFER_SELECTED") return <MousePointerClick size={17} aria-hidden="true" />;
-  if (stage === "PROVIDER_HANDOFF_STARTED") return <ExternalLink size={17} aria-hidden="true" />;
-  return <CircleDot size={17} aria-hidden="true" />;
 }
 function safeDirectoryHref(raw: RawQuery) {
   const saved = typeof raw.directory === "string" && raw.directory.length <= 1000 ? raw.directory : "";
@@ -67,83 +59,8 @@ function activityParams(raw: RawQuery) {
   return result;
 }
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return <div className="min-w-0"><dt className="text-xs font-medium text-slate-500">{label}</dt><dd className="mt-1 min-w-0 break-words text-sm font-medium text-slate-900">{children}</dd></div>;
+  return <div className="min-w-0"><dt className="text-[12px] font-medium text-[#64748B]">{label}</dt><dd className="mt-1 min-w-0 break-words text-[13px] font-medium text-[#020617]">{children}</dd></div>;
 }
-function detailHref(row: ActivityRow, environment: string, now: Date) {
-  if (row.journeyId) {
-    const to = new Date(Math.min(now.getTime(), row.at.getTime() + 86_400_000)).toISOString();
-    const from = new Date(row.at.getTime() - 86_400_000).toISOString();
-    return "/admin/journeys/" + encodeURIComponent(row.journeyId)
-      + "?" + new URLSearchParams({ from, to, environment }).toString();
-  }
-  if (row.searchHistoryId) return "/admin/searches/" + encodeURIComponent(row.searchHistoryId)
-    + "?" + new URLSearchParams({ environment }).toString();
-  return null;
-}
-function ActivityTimeline({ events, nextHref, environment }: { events: ActivityRow[]; nextHref: string | null; environment: string }) {
-  const groups = groupActivityRows(events);
-  const now = new Date();
-  return <section aria-labelledby="activity-timeline-title" className="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white">
-    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-5 py-4">
-      <h2 id="activity-timeline-title" className="text-base font-semibold text-slate-950">Activity timeline</h2>
-      <span className="text-xs text-slate-500">Newest recorded first · {events.length} on this page</span>
-    </div>
-    {!events.length ? <div className="px-5 py-12 text-center text-sm text-slate-600">
-      <p className="font-medium text-slate-800">No recorded activity is linked to this identity here.</p>
-      <p className="mx-auto mt-2 max-w-lg text-xs leading-5 text-slate-500">
-        This view shows only records attributed to the identity in the {environment} environment that match the selected filters.
-        Searches without an eligible identity link, and searches made on another environment, will not appear here.
-      </p>
-    </div> : (
-      <div className="space-y-5 p-4 sm:p-5">
-        {groups.map(group => <section key={group.key} aria-label={group.journeyId ? "Recorded journey " + group.journeyId : "Other recorded activity"} className="overflow-hidden rounded-xl border border-slate-100">
-          <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-50 px-4 py-3">
-            <div className="flex min-w-0 items-center gap-2.5">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-slate-600 ring-1 ring-slate-200">
-                <ProductIcon product={group.products[0]} />
-              </span>
-              <div className="min-w-0">
-                <h3 className="text-sm font-semibold text-slate-900">
-                  {group.journeyId ? "Journey · " + (group.startedAt ? format(group.startedAt) : group.journeyId.slice(0, 10)) : "Other recorded activity"}
-                </h3>
-                <p className="mt-0.5 text-xs text-slate-500">
-                  {group.products.join(" · ") || "Other activity"}
-                  {group.journeyId ? " · " + group.journeyId.slice(0, 12) + "…" : " · Not linked to a journey"}
-                </p>
-              </div>
-            </div>
-            <span className="rounded-full bg-white px-2.5 py-1 text-xs text-slate-600 ring-1 ring-slate-200">{group.events.length} recorded events</span>
-          </div>
-          <ol className="divide-y divide-slate-100 px-4">
-            {group.events.map(row => {
-              const href = detailHref(row, environment, now);
-              return <li key={row.id} className="flex gap-3 py-3">
-                <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-50 text-slate-600">
-                  <EventIcon stage={row.stage} />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
-                    <p className="text-sm font-semibold text-slate-900">{row.label}</p>
-                    <time dateTime={row.at.toISOString()} className="text-xs text-slate-500">{format(row.at)}</time>
-                  </div>
-                  <p className="mt-1 break-words text-sm text-slate-600">{row.detail || "No additional details recorded"}</p>
-                  {href ? <Link href={href} className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-indigo-700 hover:underline">
-                    {row.journeyId ? "Open journey" : "Open search"} <ArrowUpRight size={12} aria-hidden="true" />
-                  </Link> : null}
-                </div>
-              </li>;
-            })}
-          </ol>
-        </section>)}
-      </div>
-    )}
-    <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 px-5 py-4">
-      <p className="text-xs text-slate-500">Only recorded events are shown. Older events are loaded on demand.</p>
-      {nextHref ? <Link className={buttonClass} href={nextHref}>Older activity <ArrowUpRight size={15} aria-hidden="true" /></Link> : null}
-    </div>
-  </section>;
-}
-
 export default async function AdminIdentityActivityPage({ params, searchParams }: PageProps) {
   const { kind, id } = await params;
   if (!validActivityIdentity(kind, id)) notFound();
@@ -185,123 +102,108 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
   const nextHref = data.nextCursor ? activityHref(basePath, queryParams, { cursor: data.nextCursor }) : null;
   const productsInPage = [...new Set(data.events.map(row => row.product).filter(Boolean))] as string[];
 
-  return <div className="min-w-0 space-y-4">
-    <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-2 text-sm text-slate-500">
-      <Link href={backHref} className="inline-flex items-center gap-2 hover:text-slate-900"><ArrowLeft size={15} aria-hidden="true" /> Users</Link>
+  return <div className="min-w-0 space-y-5 bg-white">
+    <nav aria-label="Breadcrumb" className="flex min-w-0 flex-wrap items-center gap-2 text-[13px] text-[#475569]">
+      <Link href={backHref} className="focus-ring inline-flex items-center gap-1.5 rounded-sm hover:text-[#004BB8]"><ArrowLeft size={15} aria-hidden="true" /> Users</Link>
       <span aria-hidden="true">/</span>
       <span className="max-w-56 truncate">{data.title}</span><span aria-hidden="true">/</span>
-      <span className="font-medium text-slate-900">Activity</span>
+      <span className="font-medium text-[#020617]">Activity</span>
     </nav>
 
-    <Card variant="flat" className="border-slate-200 bg-white p-4 sm:p-5">
-      <div className="flex flex-wrap items-start gap-4">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600">
-          <UserRound size={23} aria-hidden="true" />
-        </div>
+    <section aria-label="Customer identity" className="border-b border-[#D8E1EC] pb-4">
+      <div className="flex min-w-0 flex-wrap items-start gap-4">
+        <span aria-hidden="true" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#F1F5F9] text-[#475569]"><UserRound size={17} /></span>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-xl font-bold tracking-tight text-slate-950">{data.title}</h1>
-            <span className="rounded-lg bg-slate-100 px-2 py-1 text-xs text-slate-600">{kind === "guest" ? "Guest" : "Registered"}</span>
-            <span className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold capitalize text-slate-600">{environment} records</span>
+            <h1 className="text-[16px] font-semibold tracking-tight text-[#020617]">{data.title}</h1>
+            <span className="text-[12px] font-medium text-[#475569]">{kind === "guest" ? "Guest" : "Registered"}</span>
+            <span className="text-[12px] font-semibold capitalize text-[#475569]">{environment} records</span>
           </div>
-          <div className="mt-1 flex min-w-0 flex-wrap items-center gap-1 text-xs text-slate-500">
+          <div className="mt-1 flex min-w-0 flex-wrap items-center gap-1 text-[12px] text-[#475569]">
             <span className="break-all">{kind === "guest" ? "Guest ID: " : "User ID: "}{id}</span>
             <CopyIdentityId id={id} kind={kind} />
           </div>
-          {data.email ? <p className="mt-1 break-all text-xs text-slate-500">{data.email}</p>
-            : <p className="mt-1 text-xs text-slate-500">Unregistered visitor with active analytics consent</p>}
+          {data.email ? <p className="mt-1 break-all text-[12px] text-[#475569]">{data.email}</p>
+            : <p className="mt-1 text-[12px] text-[#475569]">Unregistered visitor with active analytics consent</p>}
         </div>
-        <dl className="grid w-full gap-4 border-t border-slate-100 pt-4 sm:grid-cols-3 xl:w-auto xl:min-w-[480px] xl:border-l xl:border-t-0 xl:pl-5 xl:pt-0">
+        <dl className="grid w-full gap-4 border-t border-[#E7ECF5] pt-3 sm:grid-cols-3 xl:w-auto xl:min-w-[480px] xl:border-l xl:border-t-0 xl:pl-4 xl:pt-0">
           <Field label={kind === "guest" ? "Identity" : "Account status"}>{kind === "guest" ? "Guest · Not an account" : data.status}</Field>
           <Field label={kind === "guest" ? "First seen" : "Joined"}>{format(data.firstSeenAt)}</Field>
           <Field label={kind === "guest" ? "Last seen" : "Latest matching activity"}>{data.lastSeenAt ? format(data.lastSeenAt) : "—"}</Field>
         </dl>
       </div>
-    </Card>
+    </section>
 
-    <section className="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white" aria-label="Activity filters">
-      <nav aria-label="Activity tabs" className="flex max-w-full gap-5 overflow-x-auto border-b border-slate-100 px-5">
+    <section className="min-w-0 border-b border-[#D8E1EC] pb-3" aria-label="Activity filters">
+      <nav aria-label="Activity tabs" className="flex max-w-full gap-5 overflow-x-auto border-b border-[#E7ECF5]">
         {tabs.map(tab => <Link key={tab.value}
           href={activityHref(basePath, queryParams, { tab: tab.value, cursor: null })}
           aria-current={filters.tab === tab.value ? "page" : undefined}
-          className={"relative shrink-0 whitespace-nowrap py-3.5 text-sm font-medium text-slate-600 hover:text-slate-900 " +
-            (filters.tab === tab.value ? "after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-indigo-600" : "")}>
+          className={"focus-ring relative shrink-0 whitespace-nowrap rounded-sm py-3 text-[13px] font-medium text-[#475569] hover:text-[#020617] " +
+            (filters.tab === tab.value ? "after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-[#004BB8]" : "")}>
           {tab.label}
         </Link>)}
       </nav>
-      <form action={basePath} method="get" className="grid gap-3 p-4 sm:grid-cols-2 xl:grid-cols-[170px_170px_170px_220px_minmax(120px,1fr)_auto]">
+      <form action={basePath} method="get" className="grid gap-3 py-3 sm:grid-cols-2 xl:grid-cols-[170px_170px_170px_220px_minmax(120px,1fr)_auto]">
         <input type="hidden" name="tab" value={filters.tab} />
         {typeof raw.directory === "string" ? <input type="hidden" name="directory" value={raw.directory.slice(0, 1000)} /> : null}
-        <label className="flex flex-col gap-1 text-xs font-medium text-slate-600">
+        <label className="flex min-w-0 flex-col gap-1 text-[12px] font-medium text-[#475569]">
           From (UTC)
           <input type="date" name="from" defaultValue={filters.from} className={inputClass} aria-label="Activity start date UTC" />
         </label>
-        <label className="flex flex-col gap-1 text-xs font-medium text-slate-600">
+        <label className="flex min-w-0 flex-col gap-1 text-[12px] font-medium text-[#475569]">
           To (UTC)
           <input type="date" name="to" defaultValue={filters.to} className={inputClass} aria-label="Activity end date UTC" />
         </label>
-        <label className="flex flex-col gap-1 text-xs font-medium text-slate-600">
-          Product
-          <select name="product" defaultValue={filters.product} className={inputClass} aria-label="Activity product">
-            <option value="all">All products</option><option value="FLIGHT">Flights</option><option value="HOTEL">Hotels</option>
-            <option value="CAR">Cars</option><option value="PACKAGE">Packages</option>
-          </select>
-        </label>
-        <label className="flex flex-col gap-1 text-xs font-medium text-slate-600">
-          Activity type
-          <select name="stage" defaultValue={filters.stage} className={inputClass} aria-label="Activity event type">
-            <option value="all">All activity types</option>
-            <option value="SEARCH_COMPLETED">Search completed</option>
-            <option value="RESULTS_VIEWED">Results viewed</option>
-            <option value="OFFER_SELECTED">Offer selected</option>
-            <option value="PROVIDER_HANDOFF_STARTED">Provider handoff</option>
-            <option value="ACCOUNT_ACTIVITY">Account activity</option>
-          </select>
-        </label>
-        <label className="flex flex-col gap-1 text-xs font-medium text-slate-600">
+        <div className="flex min-w-0 flex-col gap-1">
+          <span className="text-[12px] font-medium text-[#475569]">Product</span>
+          <AdminDirectorySelect name="product" label="Activity product" value={filters.product}
+            options={[{value:"all", label:"All products"}, {value:"FLIGHT", label:"Flights"}, {value:"HOTEL", label:"Hotels"}, {value:"CAR", label:"Cars"}, {value:"PACKAGE", label:"Packages"}]} compact />
+        </div>
+        <div className="flex min-w-0 flex-col gap-1">
+          <span className="text-[12px] font-medium text-[#475569]">Activity type</span>
+          <AdminDirectorySelect name="stage" label="Activity event type" value={filters.stage}
+            options={[{value:"all", label:"All activity types"}, {value:"SEARCH_COMPLETED", label:"Search completed"}, {value:"RESULTS_VIEWED", label:"Results viewed"}, {value:"OFFER_SELECTED", label:"Offer selected"}, {value:"PROVIDER_HANDOFF_STARTED", label:"Provider handoff"}, {value:"ACCOUNT_ACTIVITY", label:"Account activity"}]} compact />
+        </div>
+        <label className="flex min-w-0 flex-col gap-1 text-[12px] font-medium text-[#475569]">
           Search within activity
-          <span className="relative block"><Search size={15} aria-hidden="true" className="absolute left-3 top-3 text-slate-400" />
+          <span className="relative block"><Search size={15} aria-hidden="true" className="pointer-events-none absolute left-3 top-3 text-[#94A3B8]" />
             <input name="q" defaultValue={filters.q} maxLength={80} placeholder="Route, destination, provider..." className={inputClass + " pl-9"} /></span>
         </label>
-        <button type="submit" className="mt-auto h-10 rounded-lg bg-slate-950 px-4 text-sm font-medium text-white hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Apply</button>
+        <button type="submit" className="focus-ring mt-auto h-10 whitespace-nowrap rounded-lg bg-[#004BB8] px-4 text-[13px] font-semibold text-white hover:bg-[#004BB8]/90">Apply Filter</button>
       </form>
     </section>
 
-    <div className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_310px]">
+    <div className="grid min-w-0 items-start gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
       <ActivityTimeline events={data.events} nextHref={nextHref} environment={environment} />
-      <aside className="min-w-0 space-y-4" aria-label="Customer details">
-        <section className="rounded-2xl border border-slate-200 bg-white p-4">
-          <h2 className="border-b border-slate-100 pb-3 text-sm font-semibold text-slate-950">Identity details</h2>
-          <dl className="mt-4 grid gap-4">
-            <Field label="Identity type">{kind === "guest" ? "Guest visitor" : "Registered user"}</Field>
-            <Field label={kind === "guest" ? "Guest ID" : "User ID"}><span className="break-all font-mono text-xs">{id}</span></Field>
+      <aside className="min-w-0 space-y-5" aria-label="Customer details">
+        <section className="border-b border-[#D8E1EC] pb-4">
+          <h2 className="border-b border-[#E7ECF5] pb-3 text-[15px] font-semibold text-[#020617]">Identity details</h2>
+          <dl className="mt-3 grid gap-3">
             {data.role ? <Field label="Account role">{data.role}</Field> : null}
-            <Field label="Status">{data.status}</Field>
-            <Field label="First recorded">{format(data.firstSeenAt)}</Field>
-            <Field label={kind === "guest" ? "Last seen" : "Latest matching activity"}>{data.lastSeenAt ? format(data.lastSeenAt) : "—"}</Field>
             <Field label="Analytics consent">{kind === "guest" ? "Granted" : "Required for linked guest events"}</Field>
             <Field label="Products on this page">
-              {productsInPage.length ? <div className="flex flex-wrap gap-2">{productsInPage.map(product => <span key={product} className="inline-flex items-center gap-1 rounded-lg bg-slate-50 px-2 py-1 text-xs"><ProductIcon product={product} /> {product}</span>)}</div> : "—"}
+              {productsInPage.length ? <div className="flex flex-wrap gap-3">{productsInPage.map(product => <span key={product} className="inline-flex items-center gap-1 text-[12px] text-[#475569]"><ProductIcon product={product} /> {product}</span>)}</div> : "—"}
             </Field>
           </dl>
         </section>
-        <section className="rounded-2xl border border-slate-200 bg-white p-4">
-          <h2 className="border-b border-slate-100 pb-3 text-sm font-semibold text-slate-950">Related records</h2>
-          <div className="mt-2 divide-y divide-slate-100 text-sm">
+        <section className="border-b border-[#D8E1EC] pb-3">
+          <h2 className="border-b border-[#E7ECF5] pb-3 text-[15px] font-semibold text-[#020617]">Related records</h2>
+          <div className="divide-y divide-[#E7ECF5]">
             {[
               { label: "View all searches", href: searchesHref, help: "Searches attributed to this identity" },
               { label: "View journeys", href: journeysHref, help: "Consented journeys and recorded stages" },
               { label: "View provider handoffs", href: handoffsHref, help: "Outbound provider referral records" },
-            ].map(item => <Link key={item.href} href={item.href} className="flex items-center justify-between gap-2 py-3 hover:text-indigo-700">
-              <span className="min-w-0"><span className="block font-medium">{item.label}</span><span className="mt-0.5 block text-xs text-slate-500">{item.help}</span></span>
-              <ArrowUpRight size={16} aria-hidden="true" className="shrink-0" />
+            ].map(item => <Link key={item.href} href={item.href} className="focus-ring flex items-center justify-between gap-2 rounded-sm py-3 hover:text-[#004BB8]">
+              <span className="min-w-0"><span className="block text-[13px] font-medium text-[#020617]">{item.label}</span><span className="mt-1 block text-[12px] text-[#475569]">{item.help}</span></span>
+              <ChevronRight size={16} aria-hidden="true" className="shrink-0 text-[#004BB8]" />
             </Link>)}
           </div>
         </section>
-        <section className="rounded-2xl border border-slate-200 bg-white p-4">
-          <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-950"><CalendarDays size={16} /> About this activity</h2>
-          <p className="mt-2 text-xs leading-5 text-slate-600">Only recorded {environment} events are displayed. Guest activity requires ongoing analytics consent. Provider handoffs are not proof of a booking or payment.</p>
-          <p className="mt-2 text-xs leading-5 text-slate-500">Unlinked historical records are shown separately; missing stages are not inferred. Internal notes have not been enabled.</p>
+        <section>
+          <h2 className="text-[15px] font-semibold text-[#020617]">About this activity</h2>
+          <p className="mt-2 text-[12px] leading-5 text-[#475569]">Only recorded {environment} events are displayed. Guest activity requires ongoing analytics consent. Provider handoffs are not proof of a booking or payment.</p>
+          <p className="mt-2 text-[12px] leading-5 text-[#475569]">Unlinked historical records are shown separately; missing stages are not inferred. Internal notes have not been enabled.</p>
         </section>
       </aside>
     </div>
