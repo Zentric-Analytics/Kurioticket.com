@@ -270,6 +270,7 @@ export async function getEmailDeliveryHealthSnapshot() {
     `;
 
     return {
+      dataAvailable: true,
       last24Hours: Number(summary?.last_24_hours || 0),
       failures: Number(summary?.failures || 0),
       delayed: Number(summary?.delayed || 0),
@@ -288,6 +289,7 @@ export async function getEmailDeliveryHealthSnapshot() {
       })),
     };
   }, {
+    dataAvailable: false,
     last24Hours: 0,
     failures: 0,
     delayed: 0,
