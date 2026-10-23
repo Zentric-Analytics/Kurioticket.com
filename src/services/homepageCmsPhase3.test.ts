@@ -55,6 +55,9 @@ test("homepage CMS admin supports market targeting and explicit lifecycle", () =
 test("public homepage reads CMS through a no-store endpoint with static fallback", () => {
   assert.match(publicRoute, /getPublishedHomepageDestinations/);
   assert.match(publicRoute, /getPublishedFlightRoutes/);
+  assert.match(publicRoute, /getPublishedHotelDestinations/);
+  assert.match(publicRoute, /publishedHotels/);
+  assert.match(publicRoute, /canonicalDestinationId/);
   assert.match(publicRoute, /Cache-Control": "no-store"/);
   assert.match(publicService, /readPublishedCmsContent<CmsHomepageDestination>/);
   assert.match(publicService, /readPublishedCmsContent<CmsFlightRoute>/);
@@ -62,6 +65,8 @@ test("public homepage reads CMS through a no-store endpoint with static fallback
   assert.match(publicService, /getHomeDiscoveryByRegion/);
   assert.match(homepage, /\/api\/content\/homepage\?market=/);
   assert.match(homepage, /cmsContentForMarket/);
+  assert.match(homepage, /destination\.canonicalDestinationId/);
+  assert.match(homepage, /destination\.destinationSearchValue/);
 });
 
 test("homepage fare paths authorize and render published CMS routes", () => {
