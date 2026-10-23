@@ -1,5 +1,6 @@
 import type { Prisma } from "@/generated/prisma/client";
 import type { ActivityRow, IdentityKind } from "./adminIdentityJourney";
+import type { PublicEnvironment } from "./stagingSafety";
 
 export const ACTIVITY_PAGE_SIZE = 20;
 export const ACTIVITY_FETCH_LIMIT = ACTIVITY_PAGE_SIZE + 25;
@@ -19,6 +20,21 @@ export type ActivityFilters = {
   q: string;
 };
 export type ActivityCursor = { at: string; id: string };
+
+/** Align timeline eligibility with environment-scoped operational and journey readers. */
+export function activityEnvironmentScope(environment: PublicEnvironment) {
+  const journey: Prisma.JourneyEventWhereInput = {
+    metadata: { path: ["environment"], equals: environment },
+    OR: [
+      { searchHistoryId: null },
+      { searchHistory: { is: { query: { path: ["environment"], equals: environment } } } },
+    ],
+  };
+  const search: Prisma.SearchHistoryWhereInput = { query: { path: ["environment"], equals: environment } };
+  const handoff: Prisma.RedirectLogWhereInput = { metadata: { path: ["environment"], equals: environment } };
+  const analytics: Prisma.AnalyticsEventWhereInput = { metadata: { path: ["environment"], equals: environment } };
+  return { journey, search, handoff, analytics };
+}
 type Query = Record<string, string | string[] | undefined>;
 type ParseResult = { ok: true; filters: ActivityFilters } | { ok: false; error: string };
 
@@ -64,21 +80,21 @@ export function allowedActivityStages(filters: ActivityFilters): Set<ActivitySta
 }
 export const activitySource = (id: string) => id.startsWith("j-") ? "j" : id.startsWith("s-") ? "s"
   : id.startsWith("r-") ? "r" : "e";
-function scope(kind: IdentityKind, id: string, filters: ActivityFilters) {
-  return JSON.stringify([kind, id, filters.tab, filters.stage, filters.product, filters.from, filters.to, filters.q]);
+function scope(kind: IdentityKind, id: string, filters: ActivityFilters, environment: PublicEnvironment) {
+  return JSON.stringify([kind, id, environment, filters.tab, filters.stage, filters.product, filters.from, filters.to, filters.q]);
 }
-export function encodeActivityCursor(row: Pick<ActivityRow, "id" | "at">, kind: IdentityKind, id: string, filters: ActivityFilters) {
-  return Buffer.from(JSON.stringify({ v: 1, at: row.at.toISOString(), id: row.id, scope: scope(kind, id, filters) }), "utf8").toString("base64url");
+export function encodeActivityCursor(row: Pick<ActivityRow, "id" | "at">, kind: IdentityKind, id: string, filters: ActivityFilters, environment: PublicEnvironment) {
+  return Buffer.from(JSON.stringify({ v: 1, at: row.at.toISOString(), id: row.id, scope: scope(kind, id, filters, environment) }), "utf8").toString("base64url");
 }
 /** Bind cursor to the selected identity and every filter, never accept it as authorization. */
-export function decodeActivityCursor(input: string | undefined, kind: IdentityKind, id: string, filters: ActivityFilters): ActivityCursor | null | undefined {
+export function decodeActivityCursor(input: string | undefined, kind: IdentityKind, id: string, filters: ActivityFilters, environment: PublicEnvironment): ActivityCursor | null | undefined {
   if (!input) return undefined;
   if (input.length > 1100 || !/^[A-Za-z0-9_-]+$/.test(input)) return null;
   try {
     const item: unknown = JSON.parse(Buffer.from(input, "base64url").toString("utf8"));
     if (!item || typeof item !== "object") return null;
     const x = item as {v?: unknown; id?: unknown; at?: unknown; scope?: unknown};
-    if (x.v !== 1 || x.scope !== scope(kind, id, filters)
+    if (x.v !== 1 || x.scope !== scope(kind, id, filters, environment)
       || typeof x.id !== "string" || !/^[jesr]-[a-z0-9_-]{6,80}$/i.test(x.id)
       || typeof x.at !== "string" || !/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/.test(x.at)) return null;
     if (!Number.isFinite(new Date(x.at).getTime())) return null;
