@@ -3,7 +3,7 @@ import test from "node:test";
 
 import { adminNavigation, adminNavigationGroups, getAdminNavForRole, getAdminHeaderGroups, isAdminNavItemActive } from "@/lib/adminNavigation";
 
-const originalLabels = ["Overview", "Users", "Providers", "Searches", "Journeys", "Provider Handoffs", "Referral Attribution", "Trips", "Flight Status", "Content", "Flights", "Hotels", "Cars", "Support", "Deletion Requests", "Logs", "System", "Email Delivery", "Notifications & Alerts", "Settings", "Homepage Fare Operations"];
+const originalLabels = ["Overview", "Users", "Providers", "Searches", "Search Activity", "Journeys", "Provider Handoffs", "Referral Attribution", "Trips", "Flight Status", "Content", "Flights", "Hotels", "Cars", "Support", "Deletion Requests", "Logs", "System", "Email Delivery", "Notifications & Alerts", "Settings", "Homepage Fare Operations"];
 
 test("admin navigation restores the original flat module order", () => {
   assert.deepEqual(adminNavigation.map((item) => item.label), originalLabels);
@@ -25,7 +25,7 @@ test("admin navigation exposes parent workspaces in the header", () => {
 
 test("admin navigation preserves role restrictions", () => {
   assert.deepEqual(getAdminNavForRole("SUPPORT"), []);
-  assert.deepEqual(getAdminNavForRole("ADMIN").filter((item) => item.parentHref).map((item) => [item.label, item.parentHref]), [["Journeys", "/admin/searches"], ["Provider Handoffs", "/admin/searches"], ["Referral Attribution", "/admin/searches"], ["Flight Status", "/admin/confirmed-trips"], ["Flights", "/admin/providers"], ["Hotels", "/admin/providers"], ["Cars", "/admin/providers"], ["Deletion Requests", "/admin/support"], ["Logs", "/admin/system"], ["Email Delivery", "/admin/system"], ["Notifications & Alerts", "/admin/system"], ["Homepage Fare Operations", "/admin/settings"]]);
+  assert.deepEqual(getAdminNavForRole("ADMIN").filter((item) => item.parentHref).map((item) => [item.label, item.parentHref]), [["Search Activity", "/admin/searches"], ["Journeys", "/admin/searches"], ["Provider Handoffs", "/admin/searches"], ["Referral Attribution", "/admin/searches"], ["Flight Status", "/admin/confirmed-trips"], ["Flights", "/admin/providers"], ["Hotels", "/admin/providers"], ["Cars", "/admin/providers"], ["Deletion Requests", "/admin/support"], ["Logs", "/admin/system"], ["Email Delivery", "/admin/system"], ["Notifications & Alerts", "/admin/system"], ["Homepage Fare Operations", "/admin/settings"]]);
   assert.deepEqual(getAdminNavForRole("USER"), []);
 });
 
@@ -46,7 +46,7 @@ test("horizontal admin navigation keeps child routes under parent workspaces", (
   const support = entries.find(({ item }) => item.href === "/admin/support");
   const system = entries.find(({ item }) => item.href === "/admin/system");
   const settings = entries.find(({ item }) => item.href === "/admin/settings");
-  assert.deepEqual(searches?.children.map((item) => item.href), ["/admin/journeys", "/admin/redirects", "/admin/referral-attribution"]);
+  assert.deepEqual(searches?.children.map((item) => item.href), ["/admin/searches/activity", "/admin/journeys", "/admin/redirects", "/admin/referral-attribution"]);
   assert.deepEqual(providers?.children.map((item) => item.href), ["/admin/flights", "/admin/hotels", "/admin/cars"]);
   assert.deepEqual(trips?.children.map((item) => item.href), ["/admin/flight-status"]);
   assert.deepEqual(support?.children.map((item) => item.href), ["/admin/account-deletions"]);
