@@ -493,7 +493,7 @@ export function AdminOverviewDashboard({
           <SectionTitle title="Provider Operational Health"
             description="Readiness shows whether a provider may run; operational health reflects its recorded traffic."
             action={<Link href="/admin/providers" className="focus-ring inline-flex items-center gap-1 text-xs font-semibold text-indigo-700 hover:underline">View all providers <ArrowUpRight size={13} aria-hidden="true" /></Link>} />
-          <div className="grid gap-3 2xl:grid-cols-2">
+          <div className="grid gap-3 xl:grid-cols-2">
             {data.providers.map((provider) => <ProviderCard key={provider.id} provider={provider} />)}
             {data.providers.length === 0 ? <AdminEmptyState title="No provider status available" message="The current deployment has no reported provider operational statuses." /> : null}
           </div>
