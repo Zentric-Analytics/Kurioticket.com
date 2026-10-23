@@ -29,6 +29,7 @@ export type ProviderOperationalStatus = {
   lastActivityAt: string | null;
   lastSuccessAt: string | null;
   lastFailureAt: string | null;
+  lastAdverseAt: string | null;
 };
 
 export type ProviderOperationalDatabase = Pick<Prisma.TransactionClient, "apiProviderLog">;
@@ -83,6 +84,7 @@ export async function readProviderOperationalSnapshot(input: {
         lastActivity,
         lastSuccess,
         lastFailure,
+        lastAdverse,
       ] = await Promise.all([
         input.database.apiProviderLog.count({ where }),
         input.database.apiProviderLog.count({ where: { ...where, status: "SUCCESS" } }),
@@ -102,6 +104,11 @@ export async function readProviderOperationalSnapshot(input: {
         }),
         input.database.apiProviderLog.findFirst({
           where: { ...where, status: "FAILED" },
+          select: { createdAt: true },
+          orderBy: { createdAt: "desc" },
+        }),
+        input.database.apiProviderLog.findFirst({
+          where: { ...where, status: { in: ["FAILED", "DEGRADED"] } },
           select: { createdAt: true },
           orderBy: { createdAt: "desc" },
         }),
@@ -130,6 +137,7 @@ export async function readProviderOperationalSnapshot(input: {
         lastActivityAt: lastActivity?.createdAt.toISOString() ?? null,
         lastSuccessAt: lastSuccess?.createdAt.toISOString() ?? null,
         lastFailureAt: lastFailure?.createdAt.toISOString() ?? null,
+        lastAdverseAt: lastAdverse?.createdAt.toISOString() ?? null,
       };
     }),
   );
