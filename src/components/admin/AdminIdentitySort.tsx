@@ -24,6 +24,7 @@ export function AdminIdentitySort({ sort, pageHref }: Props) {
       </label>
       <span className="relative inline-flex min-w-0 items-center">
         <select
+          key={sort}
           id="admin-identity-sort"
           name="sort"
           defaultValue={sort}
