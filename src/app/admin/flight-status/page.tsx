@@ -42,7 +42,7 @@ export default async function AdminFlightStatusPage() {
             <AdminMetricCard label="Provider matched" value={operations.metrics.feedEligibleFlights} hint="Confirmed flights matching the configured provider name" />
             <AdminMetricCard label="Tracked" value={operations.metrics.trackedFlights} hint="Provider-matched confirmed flights with a stored snapshot" tone={operations.metrics.trackedFlights > 0 ? "good" : "neutral"} />
             <AdminMetricCard label="Missing status" value={operations.metrics.missingSnapshots} hint="Provider-matched confirmed flights awaiting their first snapshot" tone={operations.metrics.missingSnapshots > 0 ? "warn" : "neutral"} />
-            <AdminMetricCard label="Current" value={operations.metrics.currentSnapshots} hint="Provider snapshots no more than 15 minutes old" tone={operations.metrics.currentSnapshots > 0 ? "good" : "neutral"} />
+            <AdminMetricCard label="Current" value={operations.metrics.currentSnapshots} hint="Snapshots observed from now back through 15 minutes" tone={operations.metrics.currentSnapshots > 0 ? "good" : "neutral"} />
             <AdminMetricCard label="Stale" value={operations.metrics.staleSnapshots} hint="Stored snapshots outside the current freshness window" tone={operations.metrics.staleSnapshots > 0 ? "warn" : "neutral"} />
           </div>
         ) : (
@@ -61,9 +61,10 @@ export default async function AdminFlightStatusPage() {
               {readiness.feedReady ? "Status feed configured" : "Status feed not configured"}
             </AdminStatusBadge>
           </div>
-          <div className="mt-4 grid gap-3 md:grid-cols-4">
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
             <Fact label="Endpoint" value="POST /api/internal/flight-status/updates" />
             <Fact label="Configured provider" value={readiness.providerName || "None"} />
+            <Fact label="Webhook credential" value={readiness.webhookCredentialConfigured ? "Configured" : "Not configured"} />
             <Fact label="Provider binding" value={readiness.credentialModel === "single_provider_bound_secret" ? "Single provider + dedicated secret" : "Unknown"} />
             <Fact label="Current search-provider status feed" value={readiness.currentSearchProviderStatusFeed === "none" ? "None" : "Configured"} />
           </div>
