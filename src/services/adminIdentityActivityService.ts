@@ -3,12 +3,13 @@ import "server-only";
 import { Prisma } from "@/generated/prisma/client";
 import { eligibleGuestVisitorWhere, eligibleLinkedVisitorWhere, mergeAdminActivity, toAdminJourneyActivity, type ActivityRow, type IdentityKind } from "@/lib/adminIdentityJourney";
 import {
-  ACTIVITY_FETCH_LIMIT, ACTIVITY_PAGE_SIZE, activityWindow, allowedActivityStages,
+  ACTIVITY_FETCH_LIMIT, ACTIVITY_PAGE_SIZE, activityEnvironmentScope, activityWindow, allowedActivityStages,
   decodeActivityCursor, encodeActivityCursor, excludeCanonicalLegacyRows, legacyStageLabelMatchesQuery, sourceActivitySeek,
   type ActivityFilters, type JourneyStage,
 } from "@/lib/adminIdentityActivity";
 import { escapePrismaContainsQuery } from "@/lib/adminIdentityDirectory";
 import { getOptionalPrisma } from "@/lib/prisma";
+import { getPublicEnvironment, type PublicEnvironment } from "@/lib/stagingSafety";
 
 const journeySelect = {
   id: true, type: true, product: true, provider: true, createdAt: true,
@@ -38,6 +39,7 @@ export type IdentityActivityRecord = {
   lastSeenAt: Date | null;
   events: ActivityRow[];
   nextCursor: string | null;
+  environment: PublicEnvironment;
 };
 export type ActivityReadResult =
   | { status: "ok"; data: IdentityActivityRecord }
@@ -47,7 +49,8 @@ export type ActivityReadResult =
 export async function loadAdminIdentityActivity(
   kind: IdentityKind, id: string, filters: ActivityFilters, cursorInput?: string,
 ): Promise<ActivityReadResult> {
-  const cursor = decodeActivityCursor(cursorInput, kind, id, filters);
+  const environment = getPublicEnvironment();
+  const cursor = decodeActivityCursor(cursorInput, kind, id, filters, environment);
   if (cursor === null) return { status: "invalid_cursor" };
   try {
     const db = getOptionalPrisma();
@@ -84,6 +87,8 @@ export async function loadAdminIdentityActivity(
     const q = filters.q ? escapePrismaContainsQuery(filters.q) : "";
     const ci = (value: string) => ({ contains: value, mode: "insensitive" as const });
     const window = activityWindow(filters);
+    const environmentScope = activityEnvironmentScope(environment);
+    const scopedJourneyOwner: Prisma.JourneyEventWhereInput = { AND: [journeyOwner, environmentScope.journey] };
 
     const productEventFilter: Prisma.JourneyEventWhereInput = product
       ? { OR: [
@@ -108,14 +113,14 @@ export async function loadAdminIdentityActivity(
     // Bounded per-source reads prevent a busy visitor from loading their full history.
     const [journey, searches, handoffs, analytics] = await Promise.all([
       stages.length ? db.journeyEvent.findMany({
-        where: { AND: [journeyOwner, { type: { in: stages } }, { createdAt: window }, sourceActivitySeek(cursor, "j"), productEventFilter, eventQ] },
+        where: { AND: [scopedJourneyOwner, { type: { in: stages } }, { createdAt: window }, sourceActivitySeek(cursor, "j"), productEventFilter, eventQ] },
         orderBy: [{ createdAt: "desc" }, { id: "asc" }],
         take: ACTIVITY_FETCH_LIMIT, select: journeySelect,
       }) : Promise.resolve([]),
       allowed.has("SEARCH_COMPLETED") ? db.searchHistory.findMany({
         where: { AND: [
-          searchOwner, { createdAt: window }, sourceActivitySeek(cursor, "s"),
-          excludeCanonicalLegacyRows("SEARCH_COMPLETED", journeyOwner, window, productEventFilter, eventQ),
+          searchOwner, environmentScope.search, { createdAt: window }, sourceActivitySeek(cursor, "s"),
+          excludeCanonicalLegacyRows("SEARCH_COMPLETED", scopedJourneyOwner, window, productEventFilter, eventQ),
           ...(product ? [{ type: product }] : []),
           ...(q && !legacyStageLabelMatchesQuery("SEARCH_COMPLETED", q) ? [{ OR: [
             { origin: ci(q) }, { destination: ci(q) },
@@ -129,8 +134,8 @@ export async function loadAdminIdentityActivity(
       allowed.has("PROVIDER_HANDOFF_STARTED") && (!product || product === "FLIGHT" || product === "HOTEL")
         ? db.redirectLog.findMany({
           where: { AND: [
-            redirectOwner, { createdAt: window }, sourceActivitySeek(cursor, "r"),
-            excludeCanonicalLegacyRows("PROVIDER_HANDOFF_STARTED", journeyOwner, window, productEventFilter, eventQ),
+            redirectOwner, environmentScope.handoff, { createdAt: window }, sourceActivitySeek(cursor, "r"),
+            excludeCanonicalLegacyRows("PROVIDER_HANDOFF_STARTED", scopedJourneyOwner, window, productEventFilter, eventQ),
             ...(product ? [{ type: product }] : []),
             ...(q && !legacyStageLabelMatchesQuery("PROVIDER_HANDOFF_STARTED", q) ? [{ OR: [{ provider: ci(q) }, { route: ci(q) }] }] : []),
           ] },
@@ -139,7 +144,7 @@ export async function loadAdminIdentityActivity(
         }) : Promise.resolve([]),
       allowed.has("ACCOUNT_ACTIVITY") && !product ? db.analyticsEvent.findMany({
         where: { AND: [
-          analyticsOwner, { createdAt: window }, sourceActivitySeek(cursor, "e"),
+          analyticsOwner, environmentScope.analytics, { createdAt: window }, sourceActivitySeek(cursor, "e"),
           { type: { in: Object.keys(safeAnalyticsLabels) as SafeAnalyticsType[] } },
           ...(q ? [{ type: { in: (Object.keys(safeAnalyticsLabels) as SafeAnalyticsType[])
             .filter(type => safeAnalyticsLabels[type].toLowerCase().includes(q.toLowerCase())) } }] : []),
@@ -184,7 +189,7 @@ export async function loadAdminIdentityActivity(
     return {
       status: "ok",
       data: {
-        id, kind,
+        id, kind, environment,
         title: kind === "guest" ? "Guest visitor" : account?.name || account?.email || "Registered user",
         email: account?.email ?? null,
         role: account?.role ?? null,
@@ -192,7 +197,7 @@ export async function loadAdminIdentityActivity(
         firstSeenAt: account?.createdAt ?? visitor!.firstSeenAt,
         lastSeenAt: visitor?.lastSeenAt ?? (cursor ? null : page[0]?.at ?? null),
         events: page,
-        nextCursor: hasMore && last ? encodeActivityCursor(last, kind, id, filters) : null,
+        nextCursor: hasMore && last ? encodeActivityCursor(last, kind, id, filters, environment) : null,
       },
     };
   } catch (error) {
