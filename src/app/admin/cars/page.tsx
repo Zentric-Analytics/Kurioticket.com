@@ -25,7 +25,7 @@ export default async function AdminCarsPage() {
   return (
     <AdminPageShell
       title="Car Operations"
-      description="Monitor recorded car-search outcomes and provider readiness without inventing provider-call health. Car checkout and reservation completion remain provider-owned."
+      description="Monitor recorded completed/unavailable car-search outcomes and provider readiness without inventing provider-call health. Car checkout and reservation completion remain provider-owned."
       actions={
         <div className="flex flex-wrap gap-2">
           <Link href="/admin/searches?product=CAR" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">
@@ -91,13 +91,13 @@ export default async function AdminCarsPage() {
             <div>
               <h2 className="font-black text-slate-950">Provider-call telemetry</h2>
               <p className="mt-1 text-sm leading-6 text-slate-600">
-                Car search currently records search outcomes, but does not yet persist per-provider car-search calls in ApiProviderLog.
+                Car search currently records completed/unavailable SearchHistory outcomes, but does not yet persist per-provider car-search calls in ApiProviderLog.
               </p>
             </div>
             <AdminStatusBadge tone="warn">Not recorded yet</AdminStatusBadge>
           </div>
           <p className="mt-3 text-sm leading-6 text-slate-600">
-            Until that telemetry exists, this page will not invent provider call counts, provider failure rates, or provider latency. Search Detail can still show the recorded car-search outcome, but exact provider-level car diagnostics are unavailable.
+            Until that telemetry exists, this page will not invent provider call counts, provider failure rates, or provider latency. Unsupported coverage attempts currently return before SearchHistory recording, so they are not included in these metrics. Search Detail can still show recorded car-search outcomes, but exact provider-level car diagnostics are unavailable.
           </p>
         </AdminSectionCard>
 
