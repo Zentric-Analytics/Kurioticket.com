@@ -382,3 +382,28 @@ test("structured car provider errors map to safe diagnostic categories", () => {
     assert.equal(diagnostic.retryable, true);
   }
 });
+
+
+test("disabled car provider diagnostics distinguish invalid pickup time from unsupported coverage", () => {
+  const invalid = __adminOperationalReadCoreTest.providerDiagnostic({
+    provider: "KAYAK sandbox",
+    status: "DISABLED",
+    latencyMs: 5,
+    errorMessage: "pickup_time_past",
+    createdAt: new Date("2026-10-23T09:30:00.000Z"),
+  });
+  assert.equal(invalid.reasonCode, "INVALID_SEARCH");
+  assert.equal(invalid.reason, "Invalid search");
+  assert.equal(invalid.retryable, false);
+
+  const unsupported = __adminOperationalReadCoreTest.providerDiagnostic({
+    provider: "KAYAK sandbox",
+    status: "DISABLED",
+    latencyMs: 5,
+    errorMessage: "unsupported_location",
+    createdAt: new Date("2026-10-23T09:31:00.000Z"),
+  });
+  assert.equal(unsupported.reasonCode, "UNSUPPORTED_SEARCH");
+  assert.equal(unsupported.reason, "Unsupported search / provider coverage");
+  assert.equal(unsupported.retryable, false);
+});
