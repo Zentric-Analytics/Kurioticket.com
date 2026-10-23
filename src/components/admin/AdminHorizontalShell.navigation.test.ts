@@ -32,7 +32,7 @@ test("navigation keeps role-aware child pages and restores desktop tabs before 1
   assert.match(shell, /min-\[1100px\]:block/);
   assert.match(shell, /min-\[1100px\]:hidden/);
   assert.match(shell, /min-\[1600px\]:gap-2/);
-  assert.match(shell, /min-\[1800px\]:gap-3/);
+  assert.match(shell, /min-\[1800px\]:text-\[13\.5px\]/);
   assert.doesNotMatch(shell, /overflow-x-auto overscroll-x-contain/);
   assert.match(shell, /flex w-full flex-wrap items-center/);
   assert.doesNotMatch(shell, /flex min-w-max w-full flex-nowrap/);
