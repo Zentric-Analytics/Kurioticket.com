@@ -7,7 +7,7 @@ import {
   parseActivityFilters, sourceActivitySeek, validActivityIdentity,
   type ActivityFilters,
 } from "./adminIdentityActivity";
-import type { ActivityRow } from "./adminIdentityJourney";
+import { eligibleJourneyLinkedVisitorWhere, eligibleLinkedVisitorWhere, type ActivityRow } from "./adminIdentityJourney";
 
 const filters: ActivityFilters = {
   tab: "all", stage: "all", product: "all", from: "", to: "", q: "",
@@ -135,4 +135,16 @@ test("activity timeline filters every source by the same environment as its link
   assert.notDeepEqual(staging, production);
   assert.deepEqual(production.search, { query: { path: ["environment"], equals: "production" } });
   assert.deepEqual(production.analytics, { metadata: { path: ["environment"], equals: "production" } });
+});
+
+test("registered journey filters require the same verified active account as journey details", () => {
+  const base = eligibleLinkedVisitorWhere(id);
+  const scoped = eligibleJourneyLinkedVisitorWhere(id);
+  assert.deepEqual(scoped, {
+    ...base,
+    currentUser: { is: { status: "ACTIVE", emailVerified: { not: null } } },
+  });
+  // Keep legacy search and handoff eligibility separate, so recorded history
+  // is still readable when a registered account cannot open a journey.
+  assert.equal(Object.hasOwn(base, "currentUser"), false);
 });
