@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { Search } from "lucide-react";
 import { AdminIdentityTable, type IdentityRow } from "@/components/admin/AdminIdentityTable";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -6,11 +7,12 @@ import { withOptionalDb } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/auth-guards";
 import { getAdminEmails } from "@/lib/env";
 import { getAdminIdentityPagination } from "@/lib/adminIdentityPagination";
-import { adminIdentityPageSql, escapePrismaContainsQuery, type AdminIdentityReference } from "@/lib/adminIdentityDirectory";
+import { adminIdentityPageSql, escapePrismaContainsQuery, parseAdminIdentitySort, type AdminIdentityReference } from "@/lib/adminIdentityDirectory";
 
 export const metadata = { title: "Admin Users" };
-type PageProps = { searchParams?: Promise<{ q?: string; role?: string; status?: string; identity?: string; activity?: string; page?: string }> };
-const PAGE_SIZE = 15;
+type PageProps = { searchParams?: Promise<{ q?: string; role?: string; status?: string; identity?: string; activity?: string; page?: string; sort?: string }> };
+// Fixed maximum per page; shorter results show every matching identity.
+const PAGE_SIZE = 100;
 
 export default async function AdminUsersPage({ searchParams }: PageProps) {
   const session = await requireAdminSession("/admin/users");
@@ -20,11 +22,12 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
   const role = ["ALL", "USER", "SUPPORT", "ADMIN"].includes(params?.role || "") ? params!.role! : "ALL";
   const status = ["ALL", "ACTIVE", "SUSPENDED", "DELETED", "PENDING_DELETION"].includes(params?.status || "") ? params!.status! : "ALL";
   const identity = ["ALL", "REGISTERED", "GUEST"].includes(params?.identity || "") ? params!.identity! : "ALL";
+  const sort = parseAdminIdentitySort(params?.sort);
   // Existing bookmarked drawer URLs remain functional; only the presentation changes.
   const legacy = /^(user|guest):([a-z0-9_-]{6,80})$/i.exec(params?.activity || "");
   if (legacy) {
     const directory = new URLSearchParams({
-      ...(q ? { q } : {}), role, status, identity,
+      ...(q ? { q } : {}), role, status, identity, sort,
       ...(params?.page && /^\d{1,7}$/.test(params.page) ? { page: params.page } : {}),
     }).toString();
     redirect("/admin/users/" + legacy[1].toLowerCase() + "/" + encodeURIComponent(legacy[2])
@@ -55,7 +58,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
   // Paginate the *combined* chronological list; do not group users before guests.
   const result = await withOptionalDb(async db => {
     const sql = adminIdentityPageSql({
-      query: q, role, status, showUsers, showGuests,
+      query: q, role, status, showUsers, showGuests, sort,
       limit: PAGE_SIZE, offset: (page - 1) * PAGE_SIZE,
     });
     if (!sql) return { rows: [] as IdentityRow[] };
@@ -88,17 +91,35 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
     return { rows };
   }, { rows: [] as IdentityRow[] });
   const protectedEmails = new Set(getAdminEmails());
-  const link = (nextPage: number) => "/admin/users?" + new URLSearchParams({ ...(q ? { q } : {}), role, status, identity, page: String(nextPage) }).toString();
+  const link = (nextPage: number) => "/admin/users?" + new URLSearchParams({ ...(q ? { q } : {}), role, status, identity, sort, page: String(nextPage) }).toString();
   return (
     <div className="w-full min-w-0">
       <h1 className="sr-only">Users</h1>
-      <Card variant="flat" className="border-slate-200 bg-white p-4">
-        <form action="/admin/users" className="grid gap-3 md:grid-cols-[minmax(0,1fr)_150px_140px_150px_auto]">
-          <input name="q" aria-label="Search identities" defaultValue={q} placeholder="Name, email, user ID or guest ID" className="min-w-0 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm" />
-          <select name="identity" defaultValue={identity} aria-label="Identity type" className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm"><option value="ALL">All identities</option><option value="REGISTERED">Registered</option><option value="GUEST">Guests</option></select>
-          <select name="role" defaultValue={role} aria-label="Account role" className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm"><option value="ALL">All roles</option><option value="USER">User</option><option value="SUPPORT">Support</option><option value="ADMIN">Admin</option></select>
-          <select name="status" defaultValue={status} aria-label="Account status" className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm"><option value="ALL">All statuses</option><option value="ACTIVE">Active</option><option value="SUSPENDED">Suspended</option><option value="PENDING_DELETION">Pending deletion</option><option value="DELETED">Deleted</option></select>
-          <Button type="submit">Filter</Button>
+      <Card
+        variant="flat"
+        className="border-slate-200 bg-white p-4 shadow-[0_14px_38px_-30px_rgba(2,28,43,0.35)] sm:p-5"
+      >
+        <form action="/admin/users" method="get" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(230px,1fr)_166px_140px_166px_auto]">
+          <input type="hidden" name="sort" value={sort} />
+          <div className="relative min-w-0 sm:col-span-2 lg:col-span-1">
+            <Search size={17} aria-hidden="true" className="pointer-events-none absolute left-3.5 top-3.5 text-slate-400" />
+            <input name="q" aria-label="Search identities" maxLength={120} defaultValue={q}
+              placeholder="Name, email, user ID or guest ID"
+              className="focus-ring h-11 w-full min-w-0 rounded-xl border border-slate-200 bg-slate-50/80 pl-10 pr-3 text-sm text-slate-900 placeholder:text-slate-500 transition hover:border-slate-300 focus:bg-white" />
+          </div>
+          <select name="identity" defaultValue={identity} aria-label="Identity type"
+            className="focus-ring h-11 min-w-0 cursor-pointer rounded-xl border border-slate-200 bg-slate-50/80 px-3 text-sm font-medium text-slate-800 transition hover:border-slate-300 focus:bg-white">
+            <option value="ALL">All identities</option><option value="REGISTERED">Registered</option><option value="GUEST">Guests</option>
+          </select>
+          <select name="role" defaultValue={role} aria-label="Account role"
+            className="focus-ring h-11 min-w-0 cursor-pointer rounded-xl border border-slate-200 bg-slate-50/80 px-3 text-sm font-medium text-slate-800 transition hover:border-slate-300 focus:bg-white">
+            <option value="ALL">All roles</option><option value="USER">User</option><option value="SUPPORT">Support</option><option value="ADMIN">Admin</option>
+          </select>
+          <select name="status" defaultValue={status} aria-label="Account status"
+            className="focus-ring h-11 min-w-0 cursor-pointer rounded-xl border border-slate-200 bg-slate-50/80 px-3 text-sm font-medium text-slate-800 transition hover:border-slate-300 focus:bg-white">
+            <option value="ALL">All statuses</option><option value="ACTIVE">Active</option><option value="SUSPENDED">Suspended</option><option value="PENDING_DELETION">Pending deletion</option><option value="DELETED">Deleted</option>
+          </select>
+          <Button type="submit" className="h-11 whitespace-nowrap rounded-xl px-5 shadow-sm sm:col-span-2 lg:col-span-1">Apply Filter</Button>
         </form>
       </Card>
       <AdminIdentityTable rows={result.rows} page={page} count={count} pageSize={PAGE_SIZE}
