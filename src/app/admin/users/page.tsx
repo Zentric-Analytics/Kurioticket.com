@@ -13,11 +13,6 @@ export const metadata = { title: "Admin Users" };
 type PageProps = { searchParams?: Promise<{ q?: string; role?: string; status?: string; identity?: string; activity?: string; page?: string; sort?: string }> };
 // Fixed maximum per page; shorter results show every matching identity.
 const PAGE_SIZE = 100;
-const identityOptions = [
-  { value: "ALL", label: "All identities" },
-  { value: "REGISTERED", label: "Registered" },
-  { value: "GUEST", label: "Guests" },
-] as const;
 const roleOptions = [
   { value: "ALL", label: "All roles" },
   { value: "USER", label: "User" },
@@ -39,7 +34,8 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
   const prismaQuery = escapePrismaContainsQuery(q);
   const role = ["ALL", "USER", "SUPPORT", "ADMIN"].includes(params?.role || "") ? params!.role! : "ALL";
   const status = ["ALL", "ACTIVE", "SUSPENDED", "DELETED", "PENDING_DELETION"].includes(params?.status || "") ? params!.status! : "ALL";
-  const identity = ["ALL", "REGISTERED", "GUEST"].includes(params?.identity || "") ? params!.identity! : "ALL";
+  const identity: "ALL" | "REGISTERED" | "GUEST" =
+    params?.identity === "REGISTERED" || params?.identity === "GUEST" ? params.identity : "ALL";
   const sort = parseAdminIdentitySort(params?.sort);
   // Existing bookmarked drawer URLs remain functional; only the presentation changes.
   const legacy = /^(user|guest):([a-z0-9_-]{6,80})$/i.exec(params?.activity || "");
@@ -60,18 +56,24 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
   // Guests remain distinct records and only consent-eligible, unlinked guests are listed.
   const guestWhere = { consentStatus: "GRANTED" as const, trackingDisabledAt: null, currentUserId: null, identityLinks: { none: {} }, ...(q ? { id: { contains: prismaQuery, mode: "insensitive" as const } } : {}) };
   const showUsers = identity !== "GUEST";
-  const showGuests = identity !== "REGISTERED" && role === "ALL" && status === "ALL";
-  // This is a directory, not a second Overview dashboard. Count only the
-  // identities needed for filtering and pagination; Overview owns the KPIs.
+  // Role/status are account-only filters. Guest identities never have either.
+  const guestsEligibleForFilters = role === "ALL" && status === "ALL";
+  const showGuests = identity !== "REGISTERED" && guestsEligibleForFilters;
+  // Tab totals remain stable while moving between All, Registered, and Guests.
+  // Count filtered cohorts independent of the active tab; only the selected
+  // cohort determines the table and pagination totals.
   const stats = await withOptionalDb(async db => {
-    const [filteredUsers, filteredGuests] = await Promise.all([
-      showUsers ? db.user.count({ where }) : Promise.resolve(0),
-      showGuests ? db.visitor.count({ where: guestWhere }) : Promise.resolve(0),
+    const [registeredCount, guestCount] = await Promise.all([
+      db.user.count({ where }),
+      guestsEligibleForFilters ? db.visitor.count({ where: guestWhere }) : Promise.resolve(0),
     ]);
-    return { filteredUsers, filteredGuests };
-  }, { filteredUsers: 0, filteredGuests: 0 });
+    return { registeredCount, guestCount };
+  }, { registeredCount: 0, guestCount: 0 });
   const { page, count } = getAdminIdentityPagination(
-    params?.page, stats.filteredUsers, stats.filteredGuests, PAGE_SIZE,
+    params?.page,
+    showUsers ? stats.registeredCount : 0,
+    showGuests ? stats.guestCount : 0,
+    PAGE_SIZE,
   );
   // Paginate the *combined* chronological list; do not group users before guests.
   const result = await withOptionalDb(async db => {
@@ -114,22 +116,22 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
     <div className="w-full min-w-0 bg-white">
       <h1 className="sr-only">Users</h1>
       <form action="/admin/users" method="get"
-        className="grid gap-3 border-b border-[#D8E1EC] pb-3 sm:grid-cols-2 lg:grid-cols-[minmax(230px,1fr)_166px_140px_166px_auto]">
+        className="grid gap-3 border-b border-[#D8E1EC] pb-3 sm:grid-cols-2 lg:grid-cols-[minmax(260px,1fr)_150px_160px_auto]">
           <input type="hidden" name="sort" value={sort} />
+          <input type="hidden" name="identity" value={identity} />
           <div className="relative min-w-0 sm:col-span-2 lg:col-span-1">
             <Search size={17} aria-hidden="true" className="pointer-events-none absolute left-3.5 top-3.5 text-[#94A3B8]" />
             <input name="q" aria-label="Search identities" maxLength={120} defaultValue={q}
               placeholder="Name, email, user ID or guest ID"
               className="focus-ring h-11 w-full min-w-0 rounded-lg border border-[#D8E1EC] bg-white pl-10 pr-3 text-[13px] text-[#020617] placeholder:font-normal placeholder:text-[#64748B] transition hover:border-[#94A3B8]" />
           </div>
-          <AdminDirectorySelect key={`identity-${identity}`} name="identity" label="Identity type" value={identity} options={identityOptions} />
           <AdminDirectorySelect key={`role-${role}`} name="role" label="Account role" value={role} options={roleOptions} />
           <AdminDirectorySelect key={`status-${status}`} name="status" label="Account status" value={status} options={statusOptions} />
           <Button type="submit" className="h-11 whitespace-nowrap rounded-lg bg-[#004BB8] px-5 text-[13px] font-semibold hover:bg-[#004BB8]/90 sm:col-span-2 lg:col-span-1">Apply Filter</Button>
       </form>
       <AdminIdentityTable rows={result.rows} page={page} count={count} pageSize={PAGE_SIZE}
-        registeredCount={stats.filteredUsers} guestCount={stats.filteredGuests}
-        sort={sort} currentUserId={session.user.id} protectedEmails={[...protectedEmails]} pageHref={link(page)} />
+        registeredCount={stats.registeredCount} guestCount={stats.guestCount}
+        identity={identity} sort={sort} currentUserId={session.user.id} protectedEmails={[...protectedEmails]} pageHref={link(page)} />
     </div>
   );
 }
