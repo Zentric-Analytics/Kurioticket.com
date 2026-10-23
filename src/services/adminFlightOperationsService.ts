@@ -3,6 +3,7 @@ import "server-only";
 import type { Prisma } from "@/generated/prisma/client";
 import { getOptionalPrisma } from "@/lib/prisma";
 import { getPublicEnvironment, type PublicEnvironment } from "@/lib/stagingSafety";
+import { classifyProviderIssue } from "@/services/searchFailureDiagnostics";
 import { getProviderIntegrationStatuses } from "@/services/travel/providerIntegrationStatus";
 
 export type FlightOperationsSnapshot = {
@@ -229,7 +230,7 @@ export async function getFlightOperationsSnapshot(
           id: issue.id,
           provider: issue.provider,
           status: issue.status,
-          category: providerIssueCategory(issue.errorMessage),
+          category: classifyProviderIssue(issue.errorMessage).label,
           latencyMs: issue.latencyMs,
           createdAt: issue.createdAt.toISOString(),
         })),
@@ -245,28 +246,4 @@ export async function getFlightOperationsSnapshot(
   }
 }
 
-function providerIssueCategory(message: string | null) {
-  if (!message) return "Provider issue";
-  const normalized = message.toLowerCase();
-  if (normalized.includes("timeout") || normalized.includes("timed out") || normalized.includes("abort")) return "Timeout";
-  if (normalized.includes("429") || normalized.includes("rate limit") || normalized.includes("too many")) return "Rate limited";
-  if (
-    normalized.includes("401")
-    || normalized.includes("403")
-    || normalized.includes("unauthor")
-    || normalized.includes("forbidden")
-    || normalized.includes("credential")
-    || normalized.includes("api key")
-  ) return "Authentication / configuration";
-  if (
-    normalized.includes("500")
-    || normalized.includes("502")
-    || normalized.includes("503")
-    || normalized.includes("504")
-    || normalized.includes("unavailable")
-    || normalized.includes("upstream")
-  ) return "Upstream unavailable";
-  return "Provider error";
-}
-
-export const __adminFlightOperationsTest = { providerIssueCategory };
+export const __adminFlightOperationsTest = { classifyProviderIssue };

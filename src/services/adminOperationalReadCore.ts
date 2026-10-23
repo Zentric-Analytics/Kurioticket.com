@@ -2,6 +2,7 @@ import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import { eligibleLinkedVisitorWhere } from "@/lib/adminIdentityJourney";
 import { isJourneySourcePath, journeySourcePath } from "@/lib/search-journey";
 import type { PublicEnvironment } from "@/lib/stagingSafety";
+import { classifyProviderIssue, providerSearchService } from "@/services/searchFailureDiagnostics";
 import {
   encodeAdminOperationalCursor,
   parseAdminDeletionQuery,
@@ -19,6 +20,9 @@ import {
   type AdminOperationalIdentity,
   type AdminOperationalList,
   type AdminOperationalResult,
+  type AdminSearchDetail,
+  type AdminSearchDiagnostic,
+  type AdminSearchProviderDiagnostic,
   type AdminSearchQuery,
   type AdminSearchRead,
   type AdminSearchScope,
@@ -28,7 +32,7 @@ import {
   type AdminSupportScope,
 } from "./adminOperationalReadContract";
 
-export type AdminOperationalDatabase = Pick<PrismaClient, "searchHistory" | "redirectLog" | "supportTicket" | "accountDeletionRequest">;
+export type AdminOperationalDatabase = Pick<PrismaClient, "searchHistory" | "apiProviderLog" | "redirectLog" | "supportTicket" | "accountDeletionRequest">;
 type Dependencies = {
   authorize: () => Promise<boolean>;
   database: () => AdminOperationalDatabase | null;
@@ -152,6 +156,170 @@ function cursorWhere(cursor: { at: string; id: string } | null) {
   if (!cursor) return {};
   const at = new Date(cursor.at);
   return { OR: [{ createdAt: { lt: at } }, { createdAt: at, id: { lt: cursor.id } }] };
+}
+
+function fallbackSearchDiagnostic(row: SearchRow): AdminSearchDiagnostic {
+  if (row.status === "SUCCESS" && row.resultCount === 0) {
+    return {
+      outcome: "ZERO_RESULTS",
+      reasonCode: "NO_MATCHING_RESULTS",
+      reason: "The search completed without a recorded provider failure but returned no matching results.",
+      retryable: false,
+      correlation: "legacy_fallback",
+      providers: [],
+    };
+  }
+  if (row.status === "SUCCESS") {
+    return {
+      outcome: "SUCCESS",
+      reasonCode: "SEARCH_SUCCEEDED",
+      reason: "Search completed successfully.",
+      retryable: false,
+      correlation: "legacy_fallback",
+      providers: [],
+    };
+  }
+  if (row.status === "PARTIAL") {
+    return {
+      outcome: "PARTIAL",
+      reasonCode: "PARTIAL_REASON_UNAVAILABLE",
+      reason: "Some providers did not complete successfully, but an exact provider reason was not recorded for this search.",
+      retryable: null,
+      correlation: "legacy_fallback",
+      providers: [],
+    };
+  }
+  return {
+    outcome: "FAILED",
+    reasonCode: "FAILURE_REASON_UNAVAILABLE",
+    reason: "The search failed, but an exact provider reason was not recorded for this search.",
+    retryable: null,
+    correlation: "legacy_fallback",
+    providers: [],
+  };
+}
+
+function providerDiagnostic(row: {
+  provider: string;
+  status: string;
+  latencyMs: number | null;
+  errorMessage: string | null;
+  createdAt: Date;
+}): AdminSearchProviderDiagnostic {
+  if (row.status === "SUCCESS") {
+    return {
+      provider: text(row.provider, 100) ?? "Unknown provider",
+      status: "SUCCESS",
+      reasonCode: null,
+      reason: "Provider completed successfully.",
+      retryable: false,
+      latencyMs: row.latencyMs,
+      observedAt: row.createdAt.toISOString(),
+    };
+  }
+  if (row.status === "DISABLED") {
+    const issue = row.errorMessage ? classifyProviderIssue(row.errorMessage) : null;
+    return {
+      provider: text(row.provider, 100) ?? "Unknown provider",
+      status: "DISABLED",
+      reasonCode: issue?.code ?? "PROVIDER_DISABLED",
+      reason: issue?.label ?? "Provider was unavailable or disabled for this search.",
+      retryable: issue?.retryable ?? false,
+      latencyMs: row.latencyMs,
+      observedAt: row.createdAt.toISOString(),
+    };
+  }
+  const issue = classifyProviderIssue(row.errorMessage);
+  return {
+    provider: text(row.provider, 100) ?? "Unknown provider",
+    status: row.status === "DEGRADED" ? "DEGRADED" : "FAILED",
+    reasonCode: issue.code,
+    reason: issue.label,
+    retryable: issue.retryable,
+    latencyMs: row.latencyMs,
+    observedAt: row.createdAt.toISOString(),
+  };
+}
+
+function exactSearchDiagnostic(row: SearchRow, providers: AdminSearchProviderDiagnostic[]): AdminSearchDiagnostic {
+  if (!providers.length) return fallbackSearchDiagnostic(row);
+  if (row.status === "SUCCESS" && row.resultCount === 0) {
+    return {
+      outcome: "ZERO_RESULTS",
+      reasonCode: "NO_MATCHING_RESULTS",
+      reason: "The search completed without a recorded provider failure but returned no matching results.",
+      retryable: false,
+      correlation: "exact",
+      providers,
+    };
+  }
+  if (row.status === "SUCCESS") {
+    return {
+      outcome: "SUCCESS",
+      reasonCode: "SEARCH_SUCCEEDED",
+      reason: "Search completed successfully.",
+      retryable: false,
+      correlation: "exact",
+      providers,
+    };
+  }
+  const issues = providers.filter((provider) => provider.status === "FAILED" || provider.status === "DEGRADED" || provider.status === "DISABLED");
+  if (row.status === "PARTIAL") {
+    const returnedResults = row.resultCount > 0;
+    return {
+      outcome: "PARTIAL",
+      reasonCode: "PROVIDER_PARTIAL_FAILURE",
+      reason: returnedResults
+        ? (issues.length === 1
+          ? issues[0].provider + " did not complete successfully while another provider returned results."
+          : "One or more providers did not complete successfully while another provider returned results.")
+        : (issues.length === 1
+          ? issues[0].provider + " did not complete successfully, and the search returned no matching results."
+          : "One or more providers did not complete successfully, and the search returned no matching results."),
+      retryable: issues.some((issue) => issue.retryable === true) ? true : issues.every((issue) => issue.retryable === false) ? false : null,
+      correlation: "exact",
+      providers,
+    };
+  }
+  const successfulProviders = providers.filter((provider) => provider.status === "SUCCESS");
+  if (issues.length === 1 && !successfulProviders.length) {
+    return {
+      outcome: "FAILED",
+      reasonCode: issues[0].reasonCode ?? "PROVIDER_ERROR",
+      reason: issues[0].reason,
+      retryable: issues[0].retryable,
+      correlation: "exact",
+      providers,
+    };
+  }
+  if (!issues.length) {
+    return {
+      outcome: "FAILED",
+      reasonCode: "SEARCH_PROCESSING_FAILURE",
+      reason: "Providers responded, but the search could not complete during internal result processing.",
+      retryable: true,
+      correlation: "exact",
+      providers,
+    };
+  }
+  if (successfulProviders.length) {
+    return {
+      outcome: "FAILED",
+      reasonCode: "PROVIDER_FAILURE_NO_USABLE_RESULTS",
+      reason: "At least one provider responded successfully, but provider failures or unavailable coverage left the search without usable results.",
+      retryable: issues.some((issue) => issue.retryable === true) ? true : issues.every((issue) => issue.retryable === false) ? false : null,
+      correlation: "exact",
+      providers,
+    };
+  }
+  return {
+    outcome: "FAILED",
+    reasonCode: "ALL_PROVIDERS_UNAVAILABLE",
+    reason: "No available provider completed the search successfully.",
+    retryable: issues.some((issue) => issue.retryable === true) ? true : issues.every((issue) => issue.retryable === false) ? false : null,
+    correlation: "exact",
+    providers,
+  };
 }
 
 function searchDto(row: SearchRow, environment: PublicEnvironment): AdminSearchRead {
@@ -289,14 +457,43 @@ export function createAdminOperationalReadService(dependencies: Dependencies) {
           return { status: "ok", data: { scope, items: page.page.map(row => searchDto(row, scope.environment)), nextCursor: page.next } };
         });
       },
-      detail(id: string, params: URLSearchParams): Promise<AdminOperationalResult<AdminSearchRead>> {
-        return authorized<AdminSearchRead>(async db => {
+      detail(id: string, params: URLSearchParams): Promise<AdminOperationalResult<AdminSearchDetail>> {
+        return authorized<AdminSearchDetail>(async db => {
           const parsedId = parseAdminOperationalId(id);
           if (parsedId.status !== "ok") return parsedId;
           const env = parseAdminOperationalEnvironment(params, dependencies.environment());
           if (env.status !== "ok") return env;
           const row = await db.searchHistory.findFirst({ where: { id: parsedId.data, query: { path: ["environment"], equals: env.data } }, select: searchSelect });
-          return row ? { status: "ok", data: searchDto(row, env.data) } : { status: "not_found" };
+          if (!row) return { status: "not_found" };
+          let providers: AdminSearchProviderDiagnostic[] = [];
+          if (row.requestId) {
+            const logs = await db.apiProviderLog.findMany({
+              where: {
+                service: providerSearchService(row.type),
+                AND: [
+                  { metadata: { path: ["environment"], equals: env.data } },
+                  { metadata: { path: ["requestId"], equals: row.requestId } },
+                ],
+              },
+              select: {
+                provider: true,
+                status: true,
+                latencyMs: true,
+                errorMessage: true,
+                createdAt: true,
+              },
+              orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+              take: 20,
+            });
+            providers = logs.map(providerDiagnostic);
+          }
+          return {
+            status: "ok",
+            data: {
+              ...searchDto(row, env.data),
+              diagnostic: exactSearchDiagnostic(row, providers),
+            },
+          };
         });
       },
     },
@@ -410,4 +607,14 @@ export function createAdminOperationalReadService(dependencies: Dependencies) {
 
 export type AdminOperationalReadService = ReturnType<typeof createAdminOperationalReadService>;
 
-export const __adminOperationalReadCoreTest = { safeDomain, safePath, safeSource, identity, attributableVisitorId, identityWhere };
+export const __adminOperationalReadCoreTest = {
+  safeDomain,
+  safePath,
+  safeSource,
+  identity,
+  attributableVisitorId,
+  identityWhere,
+  fallbackSearchDiagnostic,
+  providerDiagnostic,
+  exactSearchDiagnostic,
+};

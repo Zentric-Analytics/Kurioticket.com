@@ -51,12 +51,7 @@ test("flight operations exposes focused search and provider exception diagnostic
 });
 
 test("provider diagnostics classify errors without returning raw provider messages", () => {
-  assert.match(service, /providerIssueCategory\(issue\.errorMessage\)/);
-  assert.match(service, /return "Timeout"/);
-  assert.match(service, /return "Rate limited"/);
-  assert.match(service, /return "Authentication \/ configuration"/);
-  assert.match(service, /return "Upstream unavailable"/);
-  assert.match(service, /return "Provider error"/);
+  assert.match(service, /classifyProviderIssue\(issue\.errorMessage\)\.label/);
   assert.doesNotMatch(flightsPage, /errorMessage/);
 });
 
