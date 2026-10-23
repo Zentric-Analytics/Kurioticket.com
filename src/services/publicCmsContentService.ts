@@ -36,7 +36,7 @@ export type CmsHotelDestination = {
   countryCode: string;
   kind: "city" | "district" | "landmark" | "airport-area" | "custom";
   searchValue: string;
-  canonicalId?: string;
+  canonicalId: string;
   image?: string;
   imageAlt?: string;
 };
@@ -90,7 +90,7 @@ export async function getPublishedHotelDestinations() {
       countryCode: item.countryCode,
       kind: item.kind,
       searchValue: item.searchValue,
-      canonicalId: item.canonical?.id,
+      canonicalId: `hotel:${item.id}`,
     })),
   });
 }
