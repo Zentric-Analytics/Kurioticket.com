@@ -254,12 +254,12 @@ export function UserStatusActions({
 
   if (isSelf)
     return (
-      <span className="text-xs font-semibold text-muted">Current admin</span>
+      <span className="text-[13px] font-semibold text-slate-600">Current admin</span>
     );
 
   if (isProtectedAdmin) {
     return (
-      <span className="text-xs font-semibold text-muted">Protected admin</span>
+      <span className="text-[13px] font-semibold text-slate-600">Protected admin</span>
     );
   }
 
@@ -282,7 +282,7 @@ export function UserStatusActions({
             openMenu();
           }
         }}
-        className="focus-ring inline-flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+        className="focus-ring inline-flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-[13px] font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
       >
         {loading ? "Updating…" : "Manage"}
         <ChevronDown size={14} aria-hidden="true" />
