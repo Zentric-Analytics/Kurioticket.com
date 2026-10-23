@@ -40,10 +40,10 @@ function IdentityDate({ at }: { at: Date }) {
   return (
     <time
       dateTime={at.toISOString()}
-      className="block whitespace-nowrap text-sm text-slate-700"
+      className="block whitespace-nowrap text-sm font-medium text-slate-800"
     >
       {new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(at)}
-      <span className="mt-0.5 block text-xs text-slate-500">
+      <span className="mt-0.5 block text-[13px] leading-5 text-slate-600">
         {new Intl.DateTimeFormat("en", { timeStyle: "short" }).format(at)}
       </span>
     </time>
@@ -67,7 +67,7 @@ export function AdminIdentityTable({
     return `${path}?${params}`;
   }
   const activityClass =
-    "focus-ring inline-flex h-9 items-center whitespace-nowrap rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-indigo-700 hover:bg-slate-50";
+    "focus-ring inline-flex h-9 items-center whitespace-nowrap rounded-lg border border-slate-200 bg-white px-3 text-[13px] font-semibold text-indigo-700 hover:bg-slate-50";
   const directory = pageHref.split("?")[1] || "";
   const activityHref = (kind: "guest" | "user", id: string) =>
     "/admin/users/" + kind + "/" + encodeURIComponent(id) + "/activity" +
@@ -82,11 +82,11 @@ export function AdminIdentityTable({
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-4 py-4">
         <h2
           id="identity-directory-title"
-          className="text-sm font-semibold text-slate-950"
+          className="text-[15px] font-semibold text-slate-950"
         >
           Identities ({count.toLocaleString()})
         </h2>
-        <span className="text-xs text-slate-500">Newest identities first</span>
+        <span className="text-[13px] text-slate-600">Newest identities first</span>
       </div>
       <div
         className="overflow-x-auto"
@@ -107,7 +107,7 @@ export function AdminIdentityTable({
             <col className="w-[130px]" />
             <col className="w-[132px]" />
           </colgroup>
-          <thead className="bg-slate-50/80 text-xs text-slate-500">
+          <thead className="bg-slate-50/80 text-[13px] text-slate-600">
             <tr>
               {[
                 "Identity",
@@ -164,7 +164,7 @@ export function AdminIdentityTable({
                       </span>
                       <div className="min-w-0 flex-1">
                         <p
-                          className="truncate font-semibold text-slate-950"
+                          className="truncate text-[15px] font-semibold leading-5 text-slate-950"
                           title={name}
                         >
                           {name}
@@ -179,18 +179,18 @@ export function AdminIdentityTable({
                       <CopyIdentityId id={record.id} kind={row.kind} />
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-xs text-slate-600">
+                  <td className="whitespace-nowrap px-4 py-3 text-[13px] font-medium text-slate-700">
                     {user ? `Registered · ${label(user.role)}` : "Guest"}
                   </td>
                   <td className="px-4 py-3">
                     {user ? (
                       <span
-                        className={`inline-flex max-w-full rounded-md px-2 py-1 text-xs font-medium ${user.status === "ACTIVE" ? "bg-emerald-50 text-emerald-800" : user.status === "SUSPENDED" || user.status === "PENDING_DELETION" ? "bg-amber-50 text-amber-800" : "bg-slate-100 text-slate-600"}`}
+                        className={`inline-flex max-w-full rounded-md px-2 py-1 text-[13px] font-semibold leading-5 ${user.status === "ACTIVE" ? "bg-emerald-50 text-emerald-800" : user.status === "SUSPENDED" || user.status === "PENDING_DELETION" ? "bg-amber-50 text-amber-800" : "bg-slate-100 text-slate-600"}`}
                       >
                         {label(user.status)}
                       </span>
                     ) : (
-                      <span className="text-xs text-slate-500">
+                      <span className="text-[13px] font-medium text-slate-600">
                         Not an account
                       </span>
                     )}
