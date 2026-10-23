@@ -2,9 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, Building2, ChevronDown, LogOut, Settings, ShieldCheck } from "lucide-react";
+import { Bell, Building2, ChevronDown, LogOut, Search, Settings, ShieldCheck } from "lucide-react";
 
-import { AdminWorkspaceSearchProvider, AdminSearchTrigger, AdminSearchHeader, AdminSearchContent } from "./AdminWorkspaceSearch";
 import { Card } from "@/components/ui/Card";
 import { getAdminNavForRole, type AdminNavDefinition, type AdminRole } from "@/lib/adminNavigation";
 
@@ -34,17 +33,15 @@ export function AdminShell({
   const navItems = getAdminNavForRole(safeRole, showPreviewTesters);
 
   return (
-    <AdminWorkspaceSearchProvider account={adminEmail || "admin"}>
     <div className="min-h-screen bg-slate-100 text-slate-950">
       <div className="mx-auto grid min-h-screen w-full max-w-[1600px] lg:grid-cols-[280px_1fr]">
         <AdminSidebar items={navItems} />
         <div className="min-w-0 border-l border-slate-200 bg-slate-100">
           <AdminTopbar adminEmail={adminEmail} adminName={adminName} adminRole={safeRole} />
-          <main className="px-4 py-5 sm:px-6 lg:px-8"><AdminSearchContent>{children}</AdminSearchContent></main>
+          <main className="px-4 py-5 sm:px-6 lg:px-8">{children}</main>
         </div>
       </div>
     </div>
-    </AdminWorkspaceSearchProvider>
   );
 }
 
@@ -121,7 +118,6 @@ export function AdminTopbar({
 
   return (
     <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur sm:px-6 lg:px-8">
-      <AdminSearchHeader>
       <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
         <div className="flex items-center justify-between gap-3">
           <div>
@@ -131,7 +127,14 @@ export function AdminTopbar({
           <AdminProfileMenu className="xl:hidden" adminEmail={adminEmail} displayName={displayName} />
         </div>
         <div className="flex flex-col gap-3 md:flex-row md:items-center xl:min-w-[760px] xl:justify-end">
-          <AdminSearchTrigger />
+          <label className="relative block md:flex-1 xl:max-w-xl">
+            <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+            <input
+              type="search"
+              placeholder="Search users, searches, providers..."
+              className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm font-medium outline-none transition placeholder:text-slate-400 focus:border-indigo-300 focus:bg-white focus:ring-4 focus:ring-indigo-100"
+            />
+          </label>
           <button
             type="button"
             disabled
@@ -148,7 +151,6 @@ export function AdminTopbar({
           </div>
         </div>
       </div>
-      </AdminSearchHeader>
     </header>
   );
 }
