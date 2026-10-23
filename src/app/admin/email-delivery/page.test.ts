@@ -39,7 +39,14 @@ test("admin email test send is constrained, audited, and provider-neutral", () =
   assert.doesNotMatch(button, /recipient|toEmail|email:/);
 
   assert.match(route, /requireAdminApiSession\(\)/);
+  assert.match(route, /checkAuthRateLimit/);
+  assert.match(route, /admin-email-delivery-test/);
+  assert.match(route, /limit: 5/);
+  assert.match(route, /status: 429/);
+  assert.match(route, /"Retry-After"/);
   assert.match(route, /sendTransactionalEmail/);
+  assert.match(route, /Kurioticket transactional email test/);
+  assert.doesNotMatch(route, /production email test/);
   assert.match(route, /to: email/);
   assert.match(route, /writeAdminAuditLog/);
   assert.match(route, /EMAIL_DELIVERY_TEST_SENT/);
