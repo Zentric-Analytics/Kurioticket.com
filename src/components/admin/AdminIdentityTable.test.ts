@@ -82,3 +82,23 @@ test("empty directory has an accessible empty state and no enabled pagination", 
   assert.match(html, /0 matching identities/);
   assert.doesNotMatch(html, /<a[^>]*>Previous|<a[^>]*>Next/);
 });
+
+
+test("typography polish preserves IDs, column layout and accessible actions", () => {
+  const html = renderToStaticMarkup(createElement(AdminIdentityTable, {
+    ...props,
+    rows: [
+      { kind: "user", record: { id: "qa-user-internal-id", name: "QA Fixture", email: "qa@example.invalid", role: "USER", status: "ACTIVE", createdAt: at } },
+      { kind: "guest", record: { id: "qa-guest-long-id", firstSeenAt: at, lastSeenAt: at } },
+    ],
+  }));
+  assert.match(html, /truncate text-\[15px\] font-semibold leading-5 text-slate-950/);
+  assert.match(html, /whitespace-nowrap px-4 py-3 text-\[13px\] font-medium text-slate-700/);
+  assert.match(html, /block whitespace-nowrap text-sm font-medium text-slate-800/);
+  assert.match(html, /text-\[13px\] font-semibold text-indigo-700/);
+  assert.match(html, /mt-0\.5 truncate text-xs text-slate-500 font-mono/);
+  assert.match(html, /Copy guest ID: qa-guest-long-id/);
+  assert.match(html, /Copy user ID: qa-user-internal-id/);
+  assert.match(html, /min-w-\[920px\] table-fixed/);
+  assert.equal((html.match(/<th /g) || []).length, 6);
+});
