@@ -163,7 +163,7 @@ function fallbackSearchDiagnostic(row: SearchRow): AdminSearchDiagnostic {
     return {
       outcome: "ZERO_RESULTS",
       reasonCode: "NO_MATCHING_RESULTS",
-      reason: "Providers responded successfully but returned no matching results.",
+      reason: "The search completed without a recorded provider failure but returned no matching results.",
       retryable: false,
       correlation: "legacy_fallback",
       providers: [],
@@ -218,12 +218,13 @@ function providerDiagnostic(row: {
     };
   }
   if (row.status === "DISABLED") {
+    const issue = row.errorMessage ? classifyProviderIssue(row.errorMessage) : null;
     return {
       provider: text(row.provider, 100) ?? "Unknown provider",
       status: "DISABLED",
-      reasonCode: "PROVIDER_DISABLED",
-      reason: "Provider was unavailable or disabled for this search.",
-      retryable: false,
+      reasonCode: issue?.code ?? "PROVIDER_DISABLED",
+      reason: issue?.label ?? "Provider was unavailable or disabled for this search.",
+      retryable: issue?.retryable ?? false,
       latencyMs: row.latencyMs,
       observedAt: row.createdAt.toISOString(),
     };
@@ -246,7 +247,7 @@ function exactSearchDiagnostic(row: SearchRow, providers: AdminSearchProviderDia
     return {
       outcome: "ZERO_RESULTS",
       reasonCode: "NO_MATCHING_RESULTS",
-      reason: "Providers completed successfully but returned no matching results.",
+      reason: "The search completed without a recorded provider failure but returned no matching results.",
       retryable: false,
       correlation: "exact",
       providers,
@@ -264,18 +265,24 @@ function exactSearchDiagnostic(row: SearchRow, providers: AdminSearchProviderDia
   }
   const issues = providers.filter((provider) => provider.status === "FAILED" || provider.status === "DEGRADED" || provider.status === "DISABLED");
   if (row.status === "PARTIAL") {
+    const returnedResults = row.resultCount > 0;
     return {
       outcome: "PARTIAL",
       reasonCode: "PROVIDER_PARTIAL_FAILURE",
-      reason: issues.length === 1
-        ? issues[0].provider + " did not complete successfully while another provider returned results."
-        : "One or more providers did not complete successfully while another provider returned results.",
+      reason: returnedResults
+        ? (issues.length === 1
+          ? issues[0].provider + " did not complete successfully while another provider returned results."
+          : "One or more providers did not complete successfully while another provider returned results.")
+        : (issues.length === 1
+          ? issues[0].provider + " did not complete successfully, and the search returned no matching results."
+          : "One or more providers did not complete successfully, and the search returned no matching results."),
       retryable: issues.some((issue) => issue.retryable === true) ? true : issues.every((issue) => issue.retryable === false) ? false : null,
       correlation: "exact",
       providers,
     };
   }
-  if (issues.length === 1) {
+  const successfulProviders = providers.filter((provider) => provider.status === "SUCCESS");
+  if (issues.length === 1 && !successfulProviders.length) {
     return {
       outcome: "FAILED",
       reasonCode: issues[0].reasonCode ?? "PROVIDER_ERROR",
@@ -295,10 +302,20 @@ function exactSearchDiagnostic(row: SearchRow, providers: AdminSearchProviderDia
       providers,
     };
   }
+  if (successfulProviders.length) {
+    return {
+      outcome: "FAILED",
+      reasonCode: "PROVIDER_FAILURE_NO_USABLE_RESULTS",
+      reason: "At least one provider responded successfully, but provider failures or unavailable coverage left the search without usable results.",
+      retryable: issues.some((issue) => issue.retryable === true) ? true : issues.every((issue) => issue.retryable === false) ? false : null,
+      correlation: "exact",
+      providers,
+    };
+  }
   return {
     outcome: "FAILED",
-    reasonCode: "ALL_PROVIDERS_FAILED",
-    reason: "All available providers failed to complete the search.",
+    reasonCode: "ALL_PROVIDERS_UNAVAILABLE",
+    reason: "No available provider completed the search successfully.",
     retryable: issues.some((issue) => issue.retryable === true) ? true : issues.every((issue) => issue.retryable === false) ? false : null,
     correlation: "exact",
     providers,
