@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Clock3, Search, X } from "lucide-react";
+import { Clock3, Search } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { getAdminNavForRole, type AdminRole } from "@/lib/adminNavigation";
