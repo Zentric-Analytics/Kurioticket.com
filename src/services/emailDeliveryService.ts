@@ -264,7 +264,7 @@ export async function getEmailDeliveryHealthSnapshot() {
             SELECT d.updated_at AS adverse_at
             FROM email_deliveries d
             WHERE d.updated_at >= NOW() - INTERVAL '24 hours'
-              AND d.status IN ('FAILED', 'BOUNCED', 'COMPLAINED', 'SUPPRESSED')
+              AND d.status IN ('FAILED', 'BOUNCED', 'COMPLAINED', 'SUPPRESSED', 'DELIVERY_DELAYED')
             UNION ALL
             SELECT COALESCE(e.occurred_at, e.created_at) AS adverse_at
             FROM email_events e
