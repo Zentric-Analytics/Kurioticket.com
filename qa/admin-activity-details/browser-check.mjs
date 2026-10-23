@@ -99,12 +99,12 @@ try {
 
   await check("date, product, stage and text filtering preserve GET semantics", async () => {
     await page.goto(url, { waitUntil: "networkidle" });
-    await page.getByRole("link", { name: "Searches", exact: true }).click();
+    await page.getByRole("navigation", { name: "Activity tabs" }).getByRole("link", { name: "Searches", exact: true }).click();
     await expect(page).toHaveURL(/tab=searches/);
-    await expect(page.getByRole("link", { name: "Searches", exact: true })).toHaveAttribute("aria-current", "page");
+    await expect(page.getByRole("navigation", { name: "Activity tabs" }).getByRole("link", { name: "Searches", exact: true })).toHaveAttribute("aria-current", "page");
     await page.getByRole("textbox", { name: "Search within activity" }).fill("LOS");
-    await page.getByRole("textbox", { name: "Activity start date UTC" }).fill("2026-10-22");
-    await page.getByRole("textbox", { name: "Activity end date UTC" }).fill("2026-10-22");
+    await page.getByLabel("Activity start date UTC").fill("2026-10-22");
+    await page.getByLabel("Activity end date UTC").fill("2026-10-22");
     await choose("Activity product", "Flights");
     await choose("Activity event type", "Search completed");
     const unsubmitted = page.url();
@@ -127,10 +127,10 @@ try {
     await expect(page).toHaveURL(/cursor=older-qa-page/);
     await expect(page.locator("[data-activity-id]")).toHaveCount(1);
     await expect(page.getByRole("link", { name: "Older activity" })).toHaveCount(0);
-    await page.getByRole("link", { name: "Selections", exact: true }).click();
+    await page.getByRole("navigation", { name: "Activity tabs" }).getByRole("link", { name: "Selections", exact: true }).click();
     await expect(page).toHaveURL(/tab=selections/);
     assert.equal(new URL(page.url()).searchParams.has("cursor"), false);
-    await expect(page.getByRole("link", { name: "Selections", exact: true })).toHaveAttribute("aria-current", "page");
+    await expect(page.getByRole("navigation", { name: "Activity tabs" }).getByRole("link", { name: "Selections", exact: true })).toHaveAttribute("aria-current", "page");
   });
 
   await check("empty activity and invalid cursor are distinct states", async () => {
