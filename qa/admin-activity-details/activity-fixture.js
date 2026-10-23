@@ -22,6 +22,14 @@ const recorded = [
   journey("qa-journey-single", time(35), { id: "j-qa-single", at: time(35), label: "Search completed",
     detail: "CAR · LAX → SFO · SUCCESS", stage: "SEARCH_COMPLETED", product: "CAR", searchHistoryId: "qa-car-search" }),
 ];
+// This earlier synthetic event must appear on the cursor page ONLY.
+const olderRecorded = [
+  journey("qa-journey-older", time(29), {
+    id: "j-qa-older-search", at: time(29), label: "Search completed",
+    detail: "HOTEL · Earlier recorded search · SUCCESS",
+    stage: "SEARCH_COMPLETED", product: "HOTEL", searchHistoryId: "qa-older-search",
+  }),
+];
 
 export async function loadAdminIdentityActivity(kind, id, filters, cursor) {
   if (!/^[a-z0-9_-]{6,80}$/i.test(id)) return { status: "not_found" };
@@ -30,17 +38,20 @@ export async function loadAdminIdentityActivity(kind, id, filters, cursor) {
     || (filters.tab === "searches" && ["SEARCH_COMPLETED", "RESULTS_VIEWED"].includes(stage))
     || (filters.tab === "selections" && stage === "OFFER_SELECTED")
     || (filters.tab === "handoffs" && stage === "PROVIDER_HANDOFF_STARTED");
-  const rows = (id === "qa-no-events-0001" ? [] : cursor === "older-qa-page" ? recorded.slice(-1) : recorded).filter(row => tabMatch(row.stage)
+  const matches = row => tabMatch(row.stage)
     && (filters.stage === "all" || row.stage === filters.stage)
     && (filters.product === "all" || row.product === filters.product)
     && (!filters.q || (row.detail + row.label).toLowerCase().includes(filters.q.toLowerCase()))
     && (!filters.from || row.at >= new Date(filters.from + "T00:00:00.000Z"))
-    && (!filters.to || row.at < new Date(new Date(filters.to + "T00:00:00.000Z").getTime() + 86400000)));
+    && (!filters.to || row.at < new Date(new Date(filters.to + "T00:00:00.000Z").getTime() + 86400000));
+  const currentRows = id === "qa-no-events-0001" ? [] : recorded.filter(matches);
+  const olderRows = id === "qa-no-events-0001" ? [] : olderRecorded.filter(matches);
+  const rows = cursor === "older-qa-page" ? olderRows : currentRows;
   return { status: "ok", data: {
     id, kind, title: kind === "guest" ? "Guest visitor" : "QA registered customer",
     email: kind === "guest" ? null : "customer.qa@example.invalid",
     role: kind === "guest" ? null : "USER",
     status: kind === "guest" ? "Anonymous" : "ACTIVE",
-    firstSeenAt: time(39), lastSeenAt: time(48), environment: "staging", events: rows, nextCursor: !cursor && rows.length ? "older-qa-page" : null,
+    firstSeenAt: time(39), lastSeenAt: time(48), environment: "staging", events: rows, nextCursor: !cursor && olderRows.length ? "older-qa-page" : null,
   } };
 }
