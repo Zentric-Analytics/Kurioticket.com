@@ -186,6 +186,7 @@ export type HomepageFareRefreshBudget = {
 };
 
 export type HomepageFareSnapshotStatusResponse = {
+  dataAvailable: boolean;
   routes: HomepageFareSnapshotStatusRoute[];
   summary: HomepageFareSnapshotStatusSummary;
   health: HomepageFareSnapshotHealth;
@@ -3019,6 +3020,8 @@ export async function readHomepageFareSnapshotStatus({
     .map((route) => normalizeRoute(route))
     .filter((route): route is HomepageFareRoute => Boolean(route));
   const summary = createEmptyHomepageFareSnapshotStatusSummary();
+  const db = getOptionalPrisma();
+  let dataAvailable = Boolean(db);
 
   if (!eligibleRoutes.length) {
     const refreshBudget = getHomepageFareSmartRefreshBudget();
@@ -3034,6 +3037,7 @@ export async function readHomepageFareSnapshotStatus({
     );
 
     return {
+      dataAvailable,
       routes: [],
       summary,
       health: displayReadiness,
@@ -3082,7 +3086,6 @@ export async function readHomepageFareSnapshotStatus({
       currency: normalizedCurrency,
     }),
   );
-  const db = getOptionalPrisma();
   const snapshotsByKey = new Map<string, HomepageFareSnapshotRecord>();
 
   if (db) {
@@ -3109,6 +3112,7 @@ export async function readHomepageFareSnapshotStatus({
         snapshotsByKey.set(snapshot.snapshotKey, snapshot);
       }
     } catch (error) {
+      dataAvailable = false;
       console.error("[homepage-fare-snapshots:status]", error);
     }
   }
@@ -3216,6 +3220,7 @@ export async function readHomepageFareSnapshotStatus({
     .map(([market, target]) => ({ market, ...target }));
 
   return {
+    dataAvailable,
     routes: statusRoutes,
     summary,
     health: displayReadiness,
@@ -3240,8 +3245,8 @@ export async function readHomepageFareSnapshotStatus({
     candidatePoolSizeByMarket,
     routeAttemptsByMarket: emptyMarketCounts,
     providerCallsByMarket: emptyMarketCounts,
-    failedByMarket: emptyMarketCounts,
-    unavailableByMarket: emptyMarketCounts,
+    failedByMarket,
+    unavailableByMarket,
     skippedCooldownByMarket: emptyMarketCounts,
     replacementCandidatesUsedByMarket,
     lastRefreshAt,
