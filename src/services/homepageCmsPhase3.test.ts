@@ -25,6 +25,9 @@ test("homepage CMS initialization is explicit, transactional, published and audi
   assert.match(initService, /getHomeDiscoveryImageCardsByRegion/);
   assert.match(initService, /getHomepageRegionalRouteCards/);
   assert.match(initService, /HOTEL_DESTINATION:GLOBAL/);
+  assert.match(initService, /cmsContentScope\.createMany/);
+  assert.match(initService, /maxWait: 10_000/);
+  assert.match(initService, /timeout: 30_000/);
 });
 
 test("homepage CMS initialization preserves existing flight surface ordering", () => {
