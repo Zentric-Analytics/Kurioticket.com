@@ -19,7 +19,7 @@ export type HotelOperationsSnapshot = {
   providerHealth: Array<{
     id: "duffel" | "kayak-sandbox";
     provider: string;
-    totalCalls: number;
+    attemptedCalls: number;
     degradedCalls: number;
     failedCalls: number;
     disabledCalls: number;
@@ -89,12 +89,16 @@ export async function getHotelOperationsSnapshot(
             createdAt: { gte: since, lte: now },
             metadata: { path: ["environment"], equals: environment },
           };
-          const [totalCalls, degradedCalls, failedCalls, disabledCalls, providerLatency, lastIssue, lastFailure] = await Promise.all([
-            tx.apiProviderLog.count({ where: providerWhere }),
+          const attemptedWhere: Prisma.ApiProviderLogWhereInput = {
+            ...providerWhere,
+            status: { in: ["SUCCESS", "DEGRADED", "FAILED"] },
+          };
+          const [attemptedCalls, degradedCalls, failedCalls, disabledCalls, providerLatency, lastIssue, lastFailure] = await Promise.all([
+            tx.apiProviderLog.count({ where: attemptedWhere }),
             tx.apiProviderLog.count({ where: { ...providerWhere, status: "DEGRADED" } }),
             tx.apiProviderLog.count({ where: { ...providerWhere, status: "FAILED" } }),
             tx.apiProviderLog.count({ where: { ...providerWhere, status: "DISABLED" } }),
-            tx.apiProviderLog.aggregate({ where: providerWhere, _avg: { latencyMs: true } }),
+            tx.apiProviderLog.aggregate({ where: attemptedWhere, _avg: { latencyMs: true } }),
             tx.apiProviderLog.findFirst({
               where: { ...providerWhere, status: { in: ["FAILED", "DEGRADED", "DISABLED"] } },
               select: { createdAt: true },
@@ -109,7 +113,7 @@ export async function getHotelOperationsSnapshot(
           return {
             id: integration.id,
             provider: integration.provider,
-            totalCalls,
+            attemptedCalls,
             degradedCalls,
             failedCalls,
             disabledCalls,
