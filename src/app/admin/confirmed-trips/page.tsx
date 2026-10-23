@@ -14,7 +14,8 @@ import { getConfirmedTripsIntegrationReadiness, getConfirmedTripsOperationsSnaps
 export const metadata = { title: "Admin Confirmed Trips" };
 
 export default async function AdminConfirmedTripsPage() {
-  const [operations, readiness] = await Promise.all([getConfirmedTripsOperationsSnapshot(), Promise.resolve(getConfirmedTripsIntegrationReadiness())]);
+  const readiness = getConfirmedTripsIntegrationReadiness();
+  const operations = await getConfirmedTripsOperationsSnapshot();
 
   return (
     <AdminPageShell
@@ -58,8 +59,8 @@ export default async function AdminConfirmedTripsPage() {
           </div>
           <div className="mt-4 grid gap-3 md:grid-cols-3">
             <Fact label="Endpoint" value="POST /api/internal/partner-confirmations" />
-            <Fact label="Webhook credential model" value="One shared secret" />
-            <Fact label="Current search-provider confirmation feed" value="None" />
+            <Fact label="Webhook credential model" value={readiness.credentialModel === "shared_secret_only" ? "One shared secret" : "Unknown"} />
+            <Fact label="Current search-provider confirmation feed" value={readiness.currentSearchProviderConfirmationFeed === "none" ? "None" : "Configured"} />
           </div>
           <p className="mt-4 text-sm leading-6 text-slate-600">
             A configured webhook secret means the signed callback boundary is ready; it does not mean a provider agreement or live confirmation feed is active. Provider identity is supplied inside the signed payload; there is no separate provider-name allowlist in the current contract.
