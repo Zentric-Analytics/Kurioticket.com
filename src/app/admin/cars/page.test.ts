@@ -6,63 +6,50 @@ const carsPage = readFileSync("src/app/admin/cars/page.tsx", "utf8");
 const service = readFileSync("src/services/adminCarOperationsService.ts", "utf8");
 const route = readFileSync("src/app/api/cars/search/route.ts", "utf8");
 
-test("car admin is an honest operational overview", () => {
+test("car admin is a provider-aware operational overview", () => {
   assert.match(carsPage, /title="Car Operations"/);
-  assert.match(carsPage, /getCarOperationsSnapshot/);
-  assert.match(carsPage, /getProviderIntegrationStatuses/);
-  assert.match(carsPage, /Car provider readiness/);
-  assert.match(carsPage, /Provider-call telemetry/);
+  assert.match(carsPage, /Car provider health/);
+  assert.match(carsPage, /Search exceptions/);
+  assert.match(carsPage, /Locations needing attention/);
+  assert.match(carsPage, /Provider exceptions/);
   assert.match(carsPage, /Recent car searches/);
   assert.doesNotMatch(carsPage, /Car Search Readiness/);
-  assert.doesNotMatch(carsPage, /Provider not configured/);
-  assert.doesNotMatch(carsPage, /Search disabled/);
+  assert.doesNotMatch(carsPage, /Provider-call telemetry pending/);
 });
 
 test("car operations snapshot is environment scoped and read-only", () => {
   assert.match(service, /type: "CAR"/);
   assert.match(service, /query: \{ path: \["environment"\], equals: environment \}/);
-  assert.match(service, /status: "SUCCESS"/);
-  assert.match(service, /status: "FAILED"/);
+  assert.match(service, /service: "car-search"/);
   assert.match(service, /isolationLevel: "RepeatableRead"/);
   assert.match(carsPage, /\/admin\/searches\?product=CAR/);
   assert.match(carsPage, /\/admin\/journeys\?product=CAR/);
   assert.doesNotMatch(carsPage, /fetch\(|method:\s*["'](?:POST|PATCH|DELETE)|<form/);
 });
 
-test("car operations does not invent provider-call telemetry", () => {
-  assert.match(carsPage, /does not yet persist per-provider car-search calls in ApiProviderLog/);
-  assert.match(carsPage, /will not invent provider call counts, provider failure rates, or provider latency/);
-  assert.match(carsPage, /Provider-call telemetry pending/);
-  assert.match(carsPage, /Feature-disabled, invalid-request, and unsupported-coverage responses currently return before SearchHistory recording/);
-  assert.doesNotMatch(service, /apiProviderLog/);
+test("car provider health separates attempted calls from disabled coverage", () => {
+  assert.match(service, /status: \{ in: \["SUCCESS", "DEGRADED", "FAILED"\] \}/);
+  assert.match(service, /attemptedCalls/);
+  assert.match(service, /disabledCalls/);
+  assert.match(service, /failedCalls/);
+  assert.match(carsPage, /Calls \(24h\)/);
+  assert.match(carsPage, /Disabled \(24h\)/);
+  assert.match(carsPage, /Failed \(24h\)/);
 });
 
-test("car provider readiness comes from the live integration registry", () => {
-  assert.match(carsPage, /products\.includes\("CARS"\)/);
-  assert.match(carsPage, /integration\.configured/);
-  assert.match(carsPage, /integration\.searchEnabled/);
-  assert.match(carsPage, /integration\.externalHandoffEnabled/);
-  assert.match(carsPage, /integration\.bookingEnabled/);
+test("car search route persists exact provider telemetry and unsupported searches", () => {
+  assert.match(route, /logProviderCall/);
+  assert.match(route, /service: "car-search"/);
+  assert.match(route, /metadata: \{ requestId \}/);
+  assert.match(route, /errorMessage: provider\.errorReason \|\| provider\.error/);
+  assert.match(route, /if \(unsupported\) \{[\s\S]*recordSearch\(0, "FAILED"\)/);
+  assert.match(route, /status: provider\.status === "success" \? "SUCCESS" : provider\.status === "skipped" \? "DISABLED" : "FAILED"/);
 });
 
-test("car search route records only aggregate search telemetry today", () => {
-  assert.match(route, /logSearchHistory/);
-  assert.match(route, /type: "CAR"/);
-  assert.doesNotMatch(route, /logProviderCall/);
-  assert.match(route, /recordSearch\(0, "FAILED"\)/);
-  assert.match(route, /recordSearch\(results\.length, "SUCCESS"\)/);
-  assert.match(route, /FEATURE_DISABLED/);
-  assert.match(route, /Invalid car search parameters/);
-  assert.match(route, /if \(unsupported\) return Response\.json/);
+test("car telemetry boundary excludes only requests rejected before a valid search record", () => {
+  assert.match(carsPage, /Feature-disabled and invalid-request responses still return before a valid SearchHistory record exists/);
+  assert.doesNotMatch(carsPage, /unsupported-coverage responses currently return before SearchHistory recording/);
 });
-
-test("car operations does not invent unavailable telemetry", () => {
-  assert.match(carsPage, /Car telemetry unavailable/);
-  assert.match(carsPage, /No zero values were invented/);
-  assert.match(service, /if \(!db\) return null/);
-  assert.match(service, /catch \(error\)[\s\S]*return null/);
-});
-
 
 test("car provider exceptions classify unsupported coverage separately from failures", () => {
   assert.match(service, /carProviderIssueCategory\(issue\.status, issue\.errorMessage\)/);
@@ -70,4 +57,12 @@ test("car provider exceptions classify unsupported coverage separately from fail
   assert.match(service, /Unsupported search \/ provider coverage/);
   assert.match(service, /Provider disabled \/ skipped/);
   assert.match(service, /classifyProviderIssue\(message\)\.label/);
+  assert.doesNotMatch(carsPage, /errorMessage/);
+});
+
+test("car operations does not invent unavailable telemetry", () => {
+  assert.match(carsPage, /Car telemetry unavailable/);
+  assert.match(carsPage, /No zero values were invented/);
+  assert.match(service, /if \(!db\) return null/);
+  assert.match(service, /catch \(error\)[\s\S]*return null/);
 });
