@@ -37,9 +37,14 @@ export async function POST(request: Request) {
   const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
   const alertKey =
     typeof body.alertKey === "string" ? body.alertKey.trim().slice(0, 160) : "";
+  const signalToken =
+    typeof body.signalToken === "string" ? body.signalToken.trim().slice(0, 2_000) : "";
 
-  if (!alertKey) {
-    return NextResponse.json({ error: "Alert key is required." }, { status: 400 });
+  if (!alertKey || !signalToken) {
+    return NextResponse.json(
+      { error: "Alert key and signal token are required." },
+      { status: 400 },
+    );
   }
 
   const alert = await getCurrentAdminAlertByKey(alertKey, auth.session.user.id);
@@ -47,6 +52,13 @@ export async function POST(request: Request) {
   if (!alert) {
     return NextResponse.json(
       { error: "That operational alert is no longer active." },
+      { status: 409 },
+    );
+  }
+
+  if (alert.signalToken !== signalToken) {
+    return NextResponse.json(
+      { error: "That operational alert changed. Refresh and review the current signal." },
       { status: 409 },
     );
   }
