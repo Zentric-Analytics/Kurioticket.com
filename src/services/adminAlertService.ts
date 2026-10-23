@@ -60,7 +60,7 @@ export async function getAdminAlertSnapshot(
   const alerts = await getAdminOperationalAlerts(
     adminUserId,
     now,
-    Boolean(options.forceRefreshCandidates),
+    options.forceRefreshCandidates !== false,
   );
 
   return {
@@ -211,8 +211,12 @@ function cmsUnhealthyFingerprint(
       orphanPublished: scope.integrity.orphanPublished
         .map((item) => [item.id, item.key])
         .sort(),
-      draftOrderCollisions: [...scope.integrity.draftOrderCollisions].sort(),
-      publishedOrderCollisions: [...scope.integrity.publishedOrderCollisions].sort(),
+      draftOrderCollisions: scope.integrity.draftOrderCollisions
+        .map((entry) => [entry.order, [...entry.ids].sort()] as const)
+        .sort((a, b) => a[0] - b[0]),
+      publishedOrderCollisions: scope.integrity.publishedOrderCollisions
+        .map((entry) => [entry.order, [...entry.ids].sort()] as const)
+        .sort((a, b) => a[0] - b[0]),
       draftOrderNeedsNormalization: scope.integrity.draftOrderNeedsNormalization,
     }))
     .sort((a, b) => JSON.stringify(a.scope).localeCompare(JSON.stringify(b.scope)));
