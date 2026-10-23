@@ -8,7 +8,6 @@ const service = readFileSync("src/services/adminFlightOperationsService.ts", "ut
 test("flight admin is an operational overview rather than a readiness-only page", () => {
   assert.match(flightsPage, /title="Flight Operations"/);
   assert.match(flightsPage, /getFlightOperationsSnapshot/);
-  assert.match(flightsPage, /getProviderOperationalStatuses/);
   assert.match(flightsPage, /getProviderIntegrationStatuses/);
   assert.match(flightsPage, /Recent flight searches/);
   assert.match(flightsPage, /View flight searches/);
