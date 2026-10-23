@@ -12,7 +12,7 @@ const source = path.join(repo, "src");
 const temp = await mkdtemp(path.join(process.env.ADMIN_DIRECTORY_QA_WORK || os.tmpdir(), "kt-directory-polish-"));
 const output = path.resolve(process.env.ADMIN_DIRECTORY_QA_OUTPUT || path.join(temp, "screenshots"));
 const port = process.env.ADMIN_DIRECTORY_QA_PORT || "3209";
-const baseline = "e5009cea40495ebfb8d45f8d0f51a201d72b7301";
+const baseline = "80ddd69f2d7c108cc0b13b20b6d8af02c159f140"; // Exact latest dev before this redesign
 await mkdir(output, { recursive: true });
 const put = async (file, contents) => {
   const target = path.join(temp, file);
@@ -61,6 +61,7 @@ const oldTable = before("src/components/admin/AdminIdentityTable.tsx");
 await put("app/before/page.tsx", oldPage.replace('from "@/components/admin/AdminIdentityTable"', 'from "./AdminIdentityTable"'));
 await put("app/before/AdminIdentityTable.tsx",
   oldTable.replace('from "./CopyIdentityId"', 'from "@/components/admin/CopyIdentityId"')
+    .replace('from "./AdminIdentitySort"', 'from "@/components/admin/AdminIdentitySort"')
     .replace('from "./UserStatusActions"', 'from "@/components/admin/UserStatusActions"'));
 
 const next = spawn(process.execPath,
