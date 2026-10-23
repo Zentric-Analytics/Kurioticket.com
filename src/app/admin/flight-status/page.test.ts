@@ -28,6 +28,8 @@ test("flight status operations only treats signed provider-confirmed flights as 
 test("missing status is scoped to the configured provider rather than all confirmed flights", () => {
   assert.match(service, /providerName: readiness\.providerName/);
   assert.match(service, /feedEligibleFlights/);
+  assert.match(service, /monitoringTrackedFlights/);
+  assert.match(service, /monitoringStaleSnapshots/);
   assert.match(service, /flightStatusSnapshot: \{ is: null \}/);
   assert.match(page, /Provider-matched confirmed flights that have not received a trusted status snapshot yet/);
   assert.match(page, /Confirmed flights matching the configured provider name/);
