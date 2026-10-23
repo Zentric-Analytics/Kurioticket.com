@@ -78,7 +78,9 @@ test("hotel exception diagnostics keep valid zero results distinct from failure"
 
 test("hotel provider exceptions classify disabled coverage without exposing raw errors", () => {
   assert.match(service, /hotelProviderIssueCategory\(issue\.status, issue\.errorMessage\)/);
-  assert.match(service, /status === "DISABLED" && !message/);
+  assert.match(service, /if \(status === "DISABLED"\)/);
+  assert.match(service, /Unsupported search \/ provider coverage/);
+  assert.match(service, /Provider disabled \/ skipped/);
   assert.match(service, /classifyProviderIssue\(message\)\.label/);
   assert.doesNotMatch(hotelsPage, /errorMessage/);
 });
