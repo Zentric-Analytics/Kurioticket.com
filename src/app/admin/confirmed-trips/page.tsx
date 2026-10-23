@@ -35,7 +35,7 @@ export default async function AdminConfirmedTripsPage() {
         {operations ? (
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
             <AdminMetricCard label="Confirmed trips" value={operations.metrics.total} hint="Provider-confirmed My Trips in this database" tone="info" />
-            <AdminMetricCard label="Last 24h" value={operations.metrics.confirmedLast24h} hint="Provider confirmation events dated in the last 24h" tone={operations.metrics.confirmedLast24h > 0 ? "good" : "neutral"} />
+            <AdminMetricCard label="Last 24h" value={operations.metrics.confirmedLast24h} hint="Trips whose latest provider-confirmation timestamp is within 24h" tone={operations.metrics.confirmedLast24h > 0 ? "good" : "neutral"} />
             <AdminMetricCard label="Upcoming" value={operations.metrics.upcoming} hint="Provider-confirmed upcoming trips" />
             <AdminMetricCard label="Past" value={operations.metrics.past} hint="Provider-confirmed past trips" />
             <AdminMetricCard label="Cancelled" value={operations.metrics.cancelled} hint="Provider-confirmed cancelled trips" tone={operations.metrics.cancelled > 0 ? "warn" : "neutral"} />
@@ -108,7 +108,7 @@ export default async function AdminConfirmedTripsPage() {
         <AdminSectionCard className="p-5">
           <h2 className="font-black text-slate-950">Operational boundaries</h2>
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            Kurioticket is a metasearch and referral platform. A confirmed My Trip means an approved external provider sent a valid signed confirmation. It does not create a Kurioticket booking, payment, refund, cancellation or ticketing record.
+            Kurioticket is a metasearch and referral platform. A confirmed My Trip means Kurioticket accepted a valid signed partner confirmation and stored it as trusted trip data. It does not create a Kurioticket booking, payment, refund, cancellation or ticketing record.
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
             <AdminStatusBadge tone="good">Signed confirmations only</AdminStatusBadge>
@@ -145,7 +145,7 @@ export default async function AdminConfirmedTripsPage() {
               />
             </div>
           ) : (
-            <AdminEmptyState title="No provider-confirmed trips yet" message="The confirmation contract is ready, but no approved provider callback has created a confirmed My Trip in this database." />
+            <AdminEmptyState title="No provider-confirmed trips yet" message="The confirmation contract is ready, but no accepted signed partner callback has created a confirmed My Trip in this database." />
           )
         ) : null}
       </div>
