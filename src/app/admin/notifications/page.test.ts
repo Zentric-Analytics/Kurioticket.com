@@ -47,6 +47,14 @@ test("admin alerts distinguish telemetry outages from real healthy zeroes", () =
   assert.match(core, /Homepage fare telemetry is unavailable/);
   assert.match(core, /Flight-status telemetry is unavailable/);
   assert.match(core, /signals\.email\.failures === 0 && signals\.email\.delayed === 0/);
+  assert.match(service, /telemetryOutageOccurrences/);
+  assert.match(service, /telemetryOutageToken/);
+  assert.match(service, /telemetryOutageOccurrences\.delete\(source\)/);
+  assert.match(core, /signals\.telemetryOutageTokens\.providers/);
+  assert.match(core, /signals\.telemetryOutageTokens\.email/);
+  assert.match(core, /signals\.telemetryOutageTokens\.cms/);
+  assert.match(core, /signals\.telemetryOutageTokens\.homepageFares/);
+  assert.match(core, /signals\.telemetryOutageTokens\.flightStatus/);
 });
 
 test("acknowledgements are per-admin, signal-specific, temporary, and must persist", () => {
@@ -93,6 +101,9 @@ test("admin bell is live and reads only the summary endpoint", () => {
   assert.match(shell, /href="\/admin\/notifications"/);
   assert.match(shell, /unreadAlertCount > 99 \? "99\+" : unreadAlertCount/);
   assert.match(shell, /admin-alerts-updated/);
+  assert.match(shell, /setInterval\(refreshIfVisible, 60_000\)/);
+  assert.match(shell, /addEventListener\("focus", refreshIfVisible\)/);
+  assert.match(shell, /addEventListener\("visibilitychange", refreshIfVisible\)/);
   assert.doesNotMatch(shell, /aria-label="Notifications unavailable"/);
 });
 
