@@ -107,7 +107,9 @@ test("public CMS readers fail safely to the existing code-backed content", () =>
   assert.match(service, /publishedMarket: market/);
   assert.match(service, /cmsContentScope\.upsert/);
   assert.match(service, /cmsContentScope\.findUnique/);
-  assert.match(service, /if \(!scope && !rows\.length\) return \{ source: "fallback"/);
+  assert.match(service, /if \(!scope && !rows\.length\)/);
+  assert.match(service, /reason: "scope_uninitialized"/);
+  assert.match(service, /return \{ source: "fallback", items: options\.fallback\(\) \}/);
   assert.match(service, /visibleRows = rows\.filter\(\(row\) => row\.status === "PUBLISHED"\)/);
   assert.match(service, /return \{ source: "cms", items \}/);
   assert.match(faqSource, /export const generalFaqs/);
