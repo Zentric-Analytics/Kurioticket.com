@@ -33,6 +33,7 @@ test("car operations does not invent provider-call telemetry", () => {
   assert.match(carsPage, /does not yet persist per-provider car-search calls in ApiProviderLog/);
   assert.match(carsPage, /will not invent provider call counts, provider failure rates, or provider latency/);
   assert.match(carsPage, /Provider-call telemetry pending/);
+  assert.match(carsPage, /Unsupported coverage attempts currently return before SearchHistory recording/);
   assert.doesNotMatch(service, /apiProviderLog/);
 });
 
@@ -50,6 +51,7 @@ test("car search route records only aggregate search telemetry today", () => {
   assert.doesNotMatch(route, /logProviderCall/);
   assert.match(route, /recordSearch\(0, "FAILED"\)/);
   assert.match(route, /recordSearch\(results\.length, "SUCCESS"\)/);
+  assert.match(route, /if \(unsupported\) return Response\.json/);
 });
 
 test("car operations does not invent unavailable telemetry", () => {
