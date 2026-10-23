@@ -10,7 +10,7 @@ on:
       - src/components/admin/AdminIdentityTable.test.ts
       - src/lib/adminIdentityDirectory*
       - src/lib/adminIdentityPagination*
-      - qa/admin-identity-directory/**
+      - qa/admin-identity-directory-design/**
       - .github/workflows/admin-identity-directory-design.yml
 
 permissions:
@@ -37,7 +37,7 @@ jobs:
         run: node --test --import jiti/register src/lib/adminIdentityDirectory.test.ts src/lib/adminIdentityPagination.test.ts src/components/admin/AdminIdentityTable.test.ts
       - run: npx playwright install --with-deps chromium
       - name: Verify real Admin directory components with synthetic before-and-after data
-        run: node qa/admin-identity-directory/run-polish.mjs
+        run: node qa/admin-identity-directory-design/run.mjs
         env:
           ADMIN_DIRECTORY_QA_WORK: ${{ runner.temp }}
           ADMIN_DIRECTORY_QA_OUTPUT: ${{ runner.temp }}/admin-identity-directory-evidence
