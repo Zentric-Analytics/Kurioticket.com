@@ -19,7 +19,51 @@ export default async function AdminSearchDetailPage({ params, searchParams }: { 
   return (
     <AdminPageShell title="Search detail" description="Safe operational search record. Raw search JSON is intentionally excluded." actions={<Link href="/admin/searches" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">Back to searches</Link>}>
       {result.status === "ok" ? (
-        <AdminSectionCard className="p-5">
+        <div className="space-y-4">
+          <AdminSectionCard className="p-5">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+              <div>
+                <h2 className="font-black text-slate-950">Search outcome</h2>
+                <p className="mt-1 text-sm leading-6 text-slate-600">Safe diagnostic summary derived from the recorded search and exactly correlated provider telemetry when available.</p>
+              </div>
+              <AdminStatusBadge tone={result.data.diagnostic.outcome === "SUCCESS" ? "good" : result.data.diagnostic.outcome === "FAILED" ? "bad" : "warn"}>
+                {result.data.diagnostic.outcome.replaceAll("_", " ")}
+              </AdminStatusBadge>
+            </div>
+            <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+              <Field label="Reason" value={result.data.diagnostic.reason} />
+              <Field label="Reason code" value={result.data.diagnostic.reasonCode} />
+              <Field label="Retryable" value={result.data.diagnostic.retryable === null ? "Unknown" : result.data.diagnostic.retryable ? "Yes" : "No"} />
+              <Field label="Correlation" value={result.data.diagnostic.correlation === "exact" ? "Exact provider telemetry" : "Legacy / general fallback"} />
+            </div>
+            {result.data.diagnostic.providers.length ? (
+              <div className="mt-4">
+                <h3 className="text-sm font-black text-slate-950">Provider outcomes</h3>
+                <div className="mt-2 divide-y divide-slate-100 rounded-xl border border-slate-200">
+                  {result.data.diagnostic.providers.map((provider, index) => (
+                    <div key={provider.provider + "-" + provider.observedAt + "-" + index} className="grid gap-2 p-3 md:grid-cols-[minmax(0,1.2fr)_auto_minmax(0,1.5fr)_auto] md:items-center">
+                      <div>
+                        <p className="font-black text-slate-950">{provider.provider}</p>
+                        <p className="text-xs text-slate-500">{formatDateTime(new Date(provider.observedAt))}</p>
+                      </div>
+                      <AdminStatusBadge tone={provider.status === "SUCCESS" ? "good" : provider.status === "FAILED" ? "bad" : "warn"}>{provider.status}</AdminStatusBadge>
+                      <div>
+                        <p className="text-sm font-semibold text-slate-900">{provider.reason}</p>
+                        <p className="text-xs text-slate-500">{provider.reasonCode || "No failure code"}</p>
+                      </div>
+                      <p className="text-sm font-semibold text-slate-600">{provider.latencyMs === null ? "—" : provider.latencyMs + " ms"}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <p className="mt-4 rounded-xl bg-slate-50 p-3 text-sm text-slate-600">
+                Exact provider-level diagnostics were not recorded for this search. The summary above does not guess a provider cause.
+              </p>
+            )}
+          </AdminSectionCard>
+
+          <AdminSectionCard className="p-5">
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             <Field label="Search ID" value={result.data.id} />
             <Field label="Request ID" value={result.data.requestId || "—"} />
@@ -38,7 +82,8 @@ export default async function AdminSearchDetailPage({ params, searchParams }: { 
             <Field label="Visitor ID" value={result.data.identity.visitorId || "—"} />
             <Field label="Environment" value={result.data.environment} />
           </div>
-        </AdminSectionCard>
+          </AdminSectionCard>
+        </div>
       ) : (
         <AdminSectionCard className="p-5 text-sm text-slate-600">This search record is unavailable for the requested admin scope.</AdminSectionCard>
       )}
