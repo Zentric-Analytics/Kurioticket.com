@@ -219,7 +219,7 @@ try {
     await manage.click();
     page.once("dialog", dialog => dialog.accept());
     await page.getByRole("menuitem", { name: "Delete", exact: true }).click();
-    await expect(row.getByRole("status")).toContainText("QA denied status change");
+    await expect(row.getByRole("status").last()).toContainText("QA denied status change");
     assert.deepEqual(requests, [{ status: "DELETED" }], "Delete retains recoverable status update, never permanent-delete endpoint");
     await page.unroute("**/api/admin/users/*/status");
   });
