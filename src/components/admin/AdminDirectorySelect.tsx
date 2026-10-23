@@ -71,8 +71,8 @@ export function AdminDirectorySelect({
   };
   const choose = (next: string) => {
     if (!options.some(option => option.value === next)) return;
-    // Update the actual GET form input *before* requestSubmit (React state
-    // updates are batched and are not guaranteed to flush first).
+    // The controlled hidden field remains in sync with selected state after
+    // React commits; write immediately as well for automatic sort submits.
     if (hiddenRef.current) hiddenRef.current.value = next;
     setSelected(next);
     close();
@@ -122,7 +122,7 @@ export function AdminDirectorySelect({
 
   return (
     <div ref={rootRef} className="relative min-w-0">
-      <input ref={hiddenRef} type="hidden" name={name} defaultValue={value} />
+      <input ref={hiddenRef} type="hidden" name={name} value={selected} readOnly />
       <button
         ref={triggerRef}
         type="button"
