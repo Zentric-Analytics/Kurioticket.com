@@ -36,3 +36,22 @@ test("out-of-range and malformed page values yield valid bounded database offset
   assert.equal(empty.userOffset, 0);
   assert.equal(empty.guestOffset, 0);
 });
+
+test("fixed 100-row pages show every identity when below capacity and paginate larger totals", () => {
+  const small = getAdminIdentityPagination("1", 12, 18, 100);
+  assert.equal(small.count, 30);
+  assert.equal(small.page, 1);
+  assert.equal(small.pageCount, 1);
+  assert.equal(small.userTake, 12);
+  assert.equal(small.guestsTake, 88);
+
+  const twoPages = getAdminIdentityPagination("2", 75, 50, 100);
+  assert.equal(twoPages.pageCount, 2);
+  assert.equal(twoPages.page, 2);
+  assert.equal(twoPages.guestOffset, 25);
+  assert.equal(twoPages.guestsTake, 100);
+
+  const exact = getAdminIdentityPagination("2", 100, 100, 100);
+  assert.equal(exact.pageCount, 2);
+  assert.equal(exact.page, 2);
+});
