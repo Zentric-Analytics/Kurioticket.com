@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Activity, MousePointerClick, Route, Search } from "lucide-react";
 
 export const metadata = { title: "Admin Searches" };
@@ -30,7 +31,15 @@ const cards = [
   },
 ] as const;
 
-export default function AdminSearchesWorkspacePage() {
+export default async function AdminSearchesWorkspacePage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const raw = await searchParams;
+  const legacy = new URLSearchParams();
+  for (const [key, value] of Object.entries(raw)) {
+    if (Array.isArray(value)) value.forEach((item) => legacy.append(key, item));
+    else if (value !== undefined) legacy.set(key, value);
+  }
+  if (legacy.size > 0) redirect("/admin/searches/activity?" + legacy.toString());
+
   return (
     <div className="mx-auto w-full max-w-[1180px]">
       <div className="grid grid-cols-2 gap-5">
