@@ -35,6 +35,7 @@ test("confirmed trips page does not invent an active confirmation provider feed"
 });
 
 test("confirmed trips readiness exposes configuration state without exposing the secret", () => {
+  assert.match(service, /getConfirmedTripsIntegrationReadiness/);
   assert.match(service, /isConfiguredPartnerConfirmationSecret/);
   assert.match(service, /process\.env\.PARTNER_CONFIRMATION_WEBHOOK_SECRET/);
   assert.doesNotMatch(page, /PARTNER_CONFIRMATION_WEBHOOK_SECRET/);
@@ -64,4 +65,11 @@ test("confirmed-trip recency matches the signed webhook clock-skew allowance", (
   assert.match(service, /partnerConfirmationLimits\.permittedClockSkewSeconds/);
   assert.match(service, /acceptedFutureBoundary/);
   assert.match(service, /partnerConfirmationOccurredAt: \{ gte: since, lte: acceptedFutureBoundary \}/);
+});
+
+
+test("confirmation readiness remains available when database telemetry is unavailable", () => {
+  assert.match(page, /getConfirmedTripsIntegrationReadiness/);
+  assert.match(page, /readiness\.webhookCredentialConfigured/);
+  assert.doesNotMatch(page, /operations\?\.readiness\.webhookCredentialConfigured/);
 });
