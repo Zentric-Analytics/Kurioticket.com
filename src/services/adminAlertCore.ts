@@ -44,6 +44,7 @@ export type AdminAlertSignals = {
         last24Hours: number;
         failures: number;
         delayed: number;
+        latestProblemAt: string | Date | null;
         latest: Array<{ status: string; createdAt: string | Date }>;
       }
     | null;
@@ -74,8 +75,10 @@ export type AdminAlertSignals = {
             feedEligibleFlights: number;
             trackedFlights: number;
             missingSnapshots: number;
+            missingSnapshotFingerprint: string;
             currentSnapshots: number;
             staleSnapshots: number;
+            staleSnapshotFingerprint: string;
           };
         }
       | null;
@@ -162,11 +165,8 @@ function emailAlerts(signals: AdminAlertSignals) {
     return [] satisfies AdminAlertCandidate[];
   }
 
-  const latestProblem = signals.email.latest.find((delivery) =>
-    ["FAILED", "BOUNCED", "COMPLAINED", "SUPPRESSED", "DELIVERY_DELAYED"].includes(delivery.status),
-  );
-  const signalAt = latestProblem
-    ? new Date(latestProblem.createdAt).toISOString()
+  const signalAt = signals.email.latestProblemAt
+    ? new Date(signals.email.latestProblemAt).toISOString()
     : null;
 
   return [
@@ -305,10 +305,7 @@ function flightStatusAlerts(signals: AdminAlertSignals) {
       title: "Some flight-status snapshots are missing",
       message: `${metrics.missingSnapshots} of ${metrics.feedEligibleFlights} feed-eligible flight(s) are still awaiting their first status snapshot.`,
       actionHref: "/admin/flight-status",
-      signalToken: [
-        metrics.feedEligibleFlights,
-        metrics.missingSnapshots,
-      ].join(":"),
+      signalToken: `flight-status-missing:${metrics.missingSnapshotFingerprint}`,
     });
   }
 
@@ -327,12 +324,7 @@ function flightStatusAlerts(signals: AdminAlertSignals) {
         : "Some flight-status snapshots are stale",
       message: `${metrics.staleSnapshots} stale snapshot(s) are recorded across ${metrics.trackedFlights} tracked provider-matched flight(s).`,
       actionHref: "/admin/flight-status",
-      signalToken: [
-        metrics.feedEligibleFlights,
-        metrics.trackedFlights,
-        metrics.currentSnapshots,
-        metrics.staleSnapshots,
-      ].join(":"),
+      signalToken: `flight-status-stale:${metrics.staleSnapshotFingerprint}`,
     });
   }
 
