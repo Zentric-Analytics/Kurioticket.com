@@ -20,3 +20,10 @@ test("Searches workspace cards use pointer affordance and purple hover border wi
   assert.doesNotMatch(workspace, /Admin operations/);
   assert.doesNotMatch(workspace, /Review recorded search activity through the safe admin read contract/);
 });
+
+
+test("legacy filtered Searches URLs forward into Search Activity", () => {
+  assert.match(workspace, /redirect\("\/admin\/searches\/activity\?" \+ legacy\.toString\(\)\)/);
+  assert.match(workspace, /new URLSearchParams\(\)/);
+  assert.match(workspace, /if \(legacy\.size > 0\)/);
+});
