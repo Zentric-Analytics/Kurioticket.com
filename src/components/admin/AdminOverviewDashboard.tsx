@@ -18,11 +18,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-import {
-  AdminEmptyState,
-  AdminSectionCard,
-  AdminStatusBadge,
-} from "@/components/admin/AdminPageShell";
+import { AdminStatusBadge } from "@/components/admin/AdminPageShell";
 import { AdminOverviewAutoRefresh, AdminOverviewRangeSelect, type OverviewRange } from "@/components/admin/AdminOverviewControls";
 import type { getRecentAdminActivity, getSafeSystemStatus } from "@/lib/admin-data";
 import { formatDateTime } from "@/lib/admin-data";
@@ -67,15 +63,20 @@ function SectionTitle({
   title,
   description,
   action,
+  icon: Icon,
 }: {
   title: string;
   description?: string;
   action?: React.ReactNode;
+  icon?: LucideIcon;
 }) {
   return (
-    <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
+    <div className="mb-2.5 flex flex-wrap items-start justify-between gap-3">
       <div className="min-w-0">
-        <h2 className="text-base font-bold tracking-tight text-slate-950 sm:text-lg">{title}</h2>
+        <h2 className="flex items-center gap-2 text-base font-bold tracking-tight text-slate-950 sm:text-lg">
+          {Icon ? <Icon size={17} className="shrink-0 text-indigo-700" aria-hidden="true" /> : null}
+          {title}
+        </h2>
         {description ? <p className="mt-1 text-xs leading-5 text-slate-600 sm:text-sm">{description}</p> : null}
       </div>
       {action}
@@ -104,7 +105,7 @@ function MetricCard({
     info: "text-indigo-700",
   };
   return (
-    <AdminSectionCard className="min-w-0 p-4">
+    <div className="min-w-0 border-b border-slate-200/90 py-4 pr-3 sm:pr-4">
       <div className="flex items-center justify-between gap-2">
         <Icon size={19} className={iconColor[tone]} aria-hidden="true" />
         <span className={"h-2 w-2 shrink-0 rounded-full " +
@@ -113,8 +114,8 @@ function MetricCard({
       </div>
       <p className="mt-3 text-[11px] font-bold uppercase tracking-wide text-slate-600">{label}</p>
       <p className="mt-1 text-2xl font-extrabold tabular-nums tracking-tight text-slate-950">{count(value)}</p>
-      <p className="mt-1 text-xs text-slate-500">{hint}</p>
-    </AdminSectionCard>
+      <p className="mt-1 text-xs leading-5 text-slate-600">{hint}</p>
+    </div>
   );
 }
 
@@ -134,39 +135,35 @@ function AttentionCard({
   tone: "bad" | "warn" | "info";
 }) {
   const active = value > 0;
-  const treatment = active
-    ? tone === "bad"
-      ? "border-rose-200 bg-rose-50/60 hover:bg-rose-50"
-      : tone === "warn"
-        ? "border-amber-200 bg-amber-50/60 hover:bg-amber-50"
-        : "border-indigo-200 bg-indigo-50/60 hover:bg-indigo-50"
-    : "border-slate-200 bg-slate-50/60 hover:bg-slate-100";
   const color = active
     ? tone === "bad" ? "text-rose-700" : tone === "warn" ? "text-amber-700" : "text-indigo-700"
     : "text-slate-500";
 
   return (
-    <Link href={href} className={"focus-ring group flex min-w-0 items-center gap-3 rounded-xl border px-4 py-3 transition " + treatment}>
-      <span className={"flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white " + color}>
-        <Icon size={18} aria-hidden="true" />
-      </span>
+    <Link
+      href={href}
+      className="focus-ring group flex min-w-0 items-start gap-3 border-b border-slate-200/90 py-4 pr-2 transition hover:border-indigo-200"
+    >
+      <Icon size={20} className={"mt-0.5 shrink-0 " + color} aria-hidden="true" />
       <span className="min-w-0 flex-1">
-        <span className="flex flex-wrap items-center gap-2 text-sm font-bold text-slate-950">
+        <span className="flex flex-wrap items-center gap-2 text-sm font-bold text-slate-950 group-hover:text-indigo-700">
           {title}
-          <span className="rounded-full bg-white px-2 py-0.5 text-xs font-bold tabular-nums text-slate-800">{count(value)}</span>
+          <span className={"text-xs font-bold tabular-nums " + color}>{count(value)}</span>
         </span>
         <span className="mt-1 block text-xs leading-5 text-slate-600">{description}</span>
       </span>
-      <ChevronRight size={16} className="shrink-0 text-slate-400 transition group-hover:translate-x-0.5" aria-hidden="true" />
+      <ChevronRight size={16} className="mt-1 shrink-0 text-slate-400 transition group-hover:translate-x-0.5" aria-hidden="true" />
     </Link>
   );
 }
 
 function DetailRow({ label, value, detail }: { label: string; value: string | number; detail?: string }) {
   return (
-    <div className="flex min-w-0 items-center justify-between gap-3 border-b border-slate-100 py-2 last:border-b-0">
-      <span className="min-w-0 text-xs text-slate-600">{label}</span>
-      <span className="shrink-0 text-right text-xs font-bold tabular-nums text-slate-900">{typeof value === "number" ? count(value) : value}</span>
+    <div className="flex min-w-0 items-start justify-between gap-3 border-b border-slate-200/75 py-2.5 last:border-b-0">
+      <span className="min-w-0 flex-1 text-xs leading-5 text-slate-600">{label}</span>
+      <span className="min-w-0 max-w-[55%] text-right text-xs font-bold tabular-nums leading-5 text-slate-900">
+        {typeof value === "number" ? count(value) : value}
+      </span>
       {detail ? <span className="sr-only">{detail}</span> : null}
     </div>
   );
@@ -201,34 +198,32 @@ function PlatformHealth({ system }: { system: SystemStatus }) {
   ] as const;
 
   return (
-    <section className="min-w-0" aria-labelledby="overview-platform-health">
+    <section className="min-w-0" aria-label="Platform Health">
       <SectionTitle title="Platform Health" />
-      <AdminSectionCard className="p-4">
-        <div className="space-y-1.5">
-          {rows.map(({ label, icon: Icon, status, ready }) => (
-            <div key={label} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-lg bg-slate-50 px-3 py-3">
-              <span className="flex items-center gap-2.5 text-sm font-medium text-slate-700">
-                <Icon size={16} className="text-indigo-600" aria-hidden="true" />
-                {label}
-              </span>
-              <span className={"inline-flex items-center gap-2 text-xs font-bold " + (ready ? "text-emerald-700" : "text-slate-600")}>
-                <span className={"h-2 w-2 rounded-full " + (ready ? "bg-emerald-500" : "bg-slate-300")} aria-hidden="true" />
-                {status}
-              </span>
-            </div>
-          ))}
-        </div>
-        <p className="mt-3 text-xs leading-5 text-slate-500">
-          Configuration indicators do not replace end-to-end service checks.
-        </p>
-      </AdminSectionCard>
+      <div className="border-t border-slate-200/90">
+        {rows.map(({ label, icon: Icon, status, ready }) => (
+          <div key={label} className="flex min-w-0 flex-wrap items-center justify-between gap-x-4 gap-y-1 border-b border-slate-200/80 py-3">
+            <span className="flex min-w-0 items-center gap-2.5 text-sm font-medium text-slate-700">
+              <Icon size={16} className="shrink-0 text-indigo-600" aria-hidden="true" />
+              {label}
+            </span>
+            <span className={"inline-flex items-center gap-2 text-xs font-bold " + (ready ? "text-emerald-700" : "text-slate-600")}>
+              <span className={"h-2 w-2 shrink-0 rounded-full " + (ready ? "bg-emerald-500" : "bg-slate-300")} aria-hidden="true" />
+              {status}
+            </span>
+          </div>
+        ))}
+      </div>
+      <p className="mt-3 text-xs leading-5 text-slate-600">
+        Configuration indicators do not replace end-to-end service checks.
+      </p>
     </section>
   );
 }
 
 function ProviderCard({ provider }: { provider: ProviderOperationalStatus }) {
   return (
-    <AdminSectionCard className="min-w-0 p-4">
+    <article className="min-w-0 border-t border-slate-200/90 py-4">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">{provider.id}</p>
@@ -239,29 +234,29 @@ function ProviderCard({ provider }: { provider: ProviderOperationalStatus }) {
           <AdminStatusBadge tone={providerTone(provider.operationalState)}>{humanize(provider.operationalState)}</AdminStatusBadge>
         </div>
       </div>
-      <p className="mt-2 text-xs text-slate-500">Observed provider traffic · Last {provider.windowHours} hours</p>
-      <div className="mt-3 grid grid-cols-2 gap-2">
-        <div className="rounded-lg bg-slate-50 px-3 py-2">
-          <p className="text-[11px] text-slate-500">Recent calls</p>
+      <p className="mt-2 text-xs text-slate-600">Observed provider traffic · Last {provider.windowHours} hours</p>
+      <div className="mt-4 grid grid-cols-2 gap-4">
+        <div className="min-w-0">
+          <p className="text-[11px] text-slate-600">Recent calls</p>
           <p className="mt-1 text-xl font-bold tabular-nums text-slate-950">{count(provider.totalCalls)}</p>
         </div>
-        <div className="rounded-lg bg-slate-50 px-3 py-2">
-          <p className="text-[11px] text-slate-500">Average latency</p>
-          <p className="mt-1 text-xl font-bold tabular-nums text-slate-950">
+        <div className="min-w-0">
+          <p className="text-[11px] text-slate-600">Average latency</p>
+          <p className="mt-1 break-words text-xl font-bold tabular-nums text-slate-950">
             {provider.averageLatencyMs === null ? "—" : provider.averageLatencyMs.toLocaleString("en-US") + "ms"}
           </p>
         </div>
       </div>
       <p className="mt-3 text-xs text-slate-700">
         <span className="font-bold tabular-nums text-emerald-700">{count(provider.successCalls)}</span> successful
-        <span className="mx-1.5 text-slate-300">·</span>
+        <span className="mx-1.5 text-slate-400">·</span>
         <span className="font-bold tabular-nums text-rose-700">{count(provider.failedCalls)}</span> failed
       </p>
-      <details className="mt-3 rounded-lg border border-slate-200 bg-slate-50/70">
-        <summary className="cursor-pointer px-3 py-2.5 text-xs font-semibold text-indigo-700 focus-visible:outline-2 focus-visible:outline-indigo-600">
+      <details className="mt-3 border-t border-slate-200/80">
+        <summary className="focus-ring cursor-pointer py-2.5 text-xs font-semibold text-indigo-700 hover:underline">
           Full provider details
         </summary>
-        <div className="border-t border-slate-200 bg-white px-3 py-1">
+        <div className="border-t border-slate-200/80 pt-1">
           <DetailRow label="Readiness" value={humanize(provider.readinessState)} />
           <DetailRow label="Operational health" value={humanize(provider.operationalState)} />
           <DetailRow label="Observation window" value={provider.windowHours + " hours"} />
@@ -276,7 +271,7 @@ function ProviderCard({ provider }: { provider: ProviderOperationalStatus }) {
           <DetailRow label="Last failure" value={provider.lastFailureAt ? formatDateTime(new Date(provider.lastFailureAt)) : "Unavailable"} />
         </div>
       </details>
-    </AdminSectionCard>
+    </article>
   );
 }
 
@@ -292,11 +287,11 @@ function FunnelStep({
   icon: LucideIcon;
 }) {
   return (
-    <div className="min-w-0 rounded-xl border border-slate-100 bg-slate-50/70 px-4 py-4">
+    <div className="min-w-0 border-b border-slate-200/90 py-4 pr-3">
       <Icon size={19} className="text-indigo-700" aria-hidden="true" />
       <p className="mt-3 text-xs font-semibold text-slate-600">{label}</p>
       <p className="mt-1 text-2xl font-bold tabular-nums tracking-tight text-slate-950">{count(journeys)}</p>
-      <p className="mt-1 text-xs text-slate-500">{count(events)} recorded events</p>
+      <p className="mt-1 text-xs text-slate-600">{count(events)} recorded events</p>
     </div>
   );
 }
@@ -316,24 +311,20 @@ function WorkloadCard({
     <section className="min-w-0">
       <SectionTitle
         title={title}
-        action={<Link href={href} className="focus-ring inline-flex items-center gap-1 rounded-full border border-indigo-100 bg-white px-3 py-1.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-50">View all <ArrowUpRight size={13} aria-hidden="true" /></Link>}
+        icon={Icon}
+        action={<Link href={href} className="focus-ring inline-flex items-center gap-1 text-xs font-semibold text-indigo-700 hover:underline">View all <ArrowUpRight size={13} aria-hidden="true" /></Link>}
       />
-      <AdminSectionCard className="p-4">
-        <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-50 text-indigo-700">
-          <Icon size={18} aria-hidden="true" />
-        </div>
-        <div className="divide-y divide-slate-100">
-          {rows.map((row) => (
-            <div key={row.label} className="flex items-start justify-between gap-3 py-2.5">
-              <div className="min-w-0">
-                <p className="text-xs font-medium text-slate-700">{row.label}</p>
-                <p className="mt-0.5 text-[11px] leading-4 text-slate-500">{row.detail}</p>
-              </div>
-              <span className="shrink-0 text-sm font-bold tabular-nums text-slate-950">{count(row.value)}</span>
+      <div className="border-t border-slate-200/90">
+        {rows.map((row) => (
+          <div key={row.label} className="flex min-w-0 items-start justify-between gap-3 border-b border-slate-200/75 py-3">
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-medium text-slate-800">{row.label}</p>
+              <p className="mt-1 text-[11px] leading-4 text-slate-600">{row.detail}</p>
             </div>
-          ))}
-        </div>
-      </AdminSectionCard>
+            <span className="shrink-0 text-sm font-bold tabular-nums text-slate-950">{count(row.value)}</span>
+          </div>
+        ))}
+      </div>
     </section>
   );
 }
@@ -343,26 +334,28 @@ function ActivityFeed({ activity }: { activity: AuditActivity }) {
     <section className="min-w-0">
       <SectionTitle
         title="Recent Admin Activity"
-        action={<Link href="/admin/logs" className="focus-ring inline-flex items-center gap-1 rounded-full border border-indigo-100 bg-white px-3 py-1.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-50">View all <ArrowUpRight size={13} aria-hidden="true" /></Link>}
+        action={<Link href="/admin/logs" className="focus-ring inline-flex items-center gap-1 text-xs font-semibold text-indigo-700 hover:underline">View all <ArrowUpRight size={13} aria-hidden="true" /></Link>}
       />
       {activity.length === 0 ? (
-        <AdminEmptyState title="No admin activity yet" message="Audit log entries will appear here after admin actions are recorded." />
+        <p className="border-t border-slate-200/90 py-6 text-sm text-slate-600">
+          No admin activity yet. Audit log entries will appear here after admin actions are recorded.
+        </p>
       ) : (
-        <AdminSectionCard className="divide-y divide-slate-100 p-0">
+        <div className="divide-y divide-slate-200/80 border-t border-slate-200/90">
           {activity.map((item) => (
-            <div key={item.id} className="flex items-start gap-3 px-4 py-3">
+            <div key={item.id} className="flex min-w-0 items-start gap-3 py-3">
               <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-indigo-500" aria-hidden="true" />
               <div className="min-w-0 flex-1">
                 <p className="text-xs font-bold text-slate-950">{humanize(item.title)}</p>
-                <p className="mt-0.5 break-words text-xs leading-5 text-slate-600">{item.detail}</p>
-                <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-slate-500">
+                <p className="mt-0.5 break-words text-xs leading-5 text-slate-700">{item.detail}</p>
+                <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-slate-600">
                   <span>{item.timestamp}</span>
-                  <span aria-label="Original audit action" className="font-mono">{item.title}</span>
+                  <span aria-label="Original audit action" className="break-all font-mono">{item.title}</span>
                 </div>
               </div>
             </div>
           ))}
-        </AdminSectionCard>
+        </div>
       )}
     </section>
   );
