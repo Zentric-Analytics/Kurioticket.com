@@ -820,8 +820,9 @@ export async function readPublishedCmsContent<T>(
     const visibleRows = rows.filter((row) => row.status === "PUBLISHED");
     const items: T[] = [];
     for (const row of visibleRows) {
+      const integrity = validateCmsPayloadIntegrity(type, row.publishedPayload);
       const parsed = cmsPayloadSchemas[type].safeParse(row.publishedPayload);
-      if (!parsed.success) {
+      if (!integrity.valid || !parsed.success) {
         console.error("[cms:public-read-invalid-payload]", { type, market, locale });
         if (scope?.legacyFallbackRetiredAt) {
           return { source: "cms", items: [] };
