@@ -11,9 +11,10 @@ const jiti = createJiti(import.meta.url, {
 const { AdminIdentityTable } = jiti(
   "./AdminIdentityTable",
 ) as typeof import("./AdminIdentityTable");
+type IdentityRow = import("./AdminIdentityTable").IdentityRow;
 
 const props = {
-  rows: [],
+  rows: [] as IdentityRow[],
   page: 2,
   count: 231,
   registeredCount: 17,
@@ -43,7 +44,7 @@ test("complete six-column table keeps identity, copy, role, status, dates, and a
         record: { id: "qa-guest-long-id", firstSeenAt: at, lastSeenAt: at },
       },
     ],
-  } as Parameters<typeof render>[0]);
+  });
   assert.equal((html.match(/<th /g) || []).length, 6);
   for (const column of ["Identity", "Type", "Status", "Joined / First Seen", "Activity", "Actions"]) {
     assert.match(html, new RegExp(column.replace("/", "\\/")));
