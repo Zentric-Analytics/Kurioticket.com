@@ -4,6 +4,8 @@ import test from "node:test";
 
 const core = readFileSync("src/services/adminAlertCore.ts", "utf8");
 const service = readFileSync("src/services/adminAlertService.ts", "utf8");
+const emailDelivery = readFileSync("src/services/emailDeliveryService.ts", "utf8");
+const flightStatus = readFileSync("src/services/adminFlightStatusOperationsService.ts", "utf8");
 const page = readFileSync("src/app/admin/notifications/page.tsx", "utf8");
 const readApi = readFileSync("src/app/api/admin/notifications/route.ts", "utf8");
 const ackApi = readFileSync("src/app/api/admin/notifications/acknowledge/route.ts", "utf8");
@@ -28,6 +30,13 @@ test("admin alerts derive only from authoritative operational sources", () => {
   assert.match(core, /cms-integrity:\$\{signals\.cms\.unhealthyFingerprint\}/);
   assert.match(service, /cmsUnhealthyFingerprint/);
   assert.match(service, /createHash\("sha256"\)/);
+  assert.match(emailDelivery, /MAX\(updated_at\)/);
+  assert.match(emailDelivery, /latestProblemAt/);
+  assert.match(core, /signals\.email\.latestProblemAt/);
+  assert.match(flightStatus, /missingSnapshotFingerprint/);
+  assert.match(flightStatus, /staleSnapshotFingerprint/);
+  assert.match(core, /flight-status-missing:\$\{metrics\.missingSnapshotFingerprint\}/);
+  assert.match(core, /flight-status-stale:\$\{metrics\.staleSnapshotFingerprint\}/);
   assert.doesNotMatch(core, /confirmedLast24h|booking confirmations recently/i);
 });
 
