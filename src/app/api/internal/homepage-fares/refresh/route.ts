@@ -3,6 +3,7 @@ import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 
 import { getHomepageFaresCronSecret } from "@/lib/env";
+import { HomepageFareRefreshInProgressError } from "@/services/homepageFareRefreshLock";
 import {
   buildSafeHomepageFareRefreshErrorResponse,
   refreshPhase3AHomepageFareSnapshots,
@@ -10,7 +11,6 @@ import {
 
 export const runtime = "nodejs";
 
-let refreshInProgress = false;
 
 export async function POST(request: Request) {
   const secret = getHomepageFaresCronSecret();
@@ -37,31 +37,26 @@ export async function POST(request: Request) {
     );
   }
 
-  if (refreshInProgress) {
-    return NextResponse.json(
-      {
-        error: "Homepage fare refresh is already running.",
-        errorCode: "homepage_fare_refresh_in_progress",
-        safeReason: "Wait for the active refresh to finish before starting another run.",
-      },
-      { status: 409 },
-    );
-  }
-
-  refreshInProgress = true;
-
   try {
     const counts = await refreshPhase3AHomepageFareSnapshots();
 
     return NextResponse.json(counts);
   } catch (error) {
+    if (error instanceof HomepageFareRefreshInProgressError) {
+      return NextResponse.json(
+        {
+          error: "Homepage fare refresh is already running.",
+          errorCode: "homepage_fare_refresh_in_progress",
+          safeReason: "Wait for the active refresh to finish before starting another run.",
+        },
+        { status: 409 },
+      );
+    }
     console.error("[homepage-fares:cron-refresh]", error);
     return NextResponse.json(
       buildSafeHomepageFareRefreshErrorResponse(error),
       { status: 500 },
     );
-  } finally {
-    refreshInProgress = false;
   }
 }
 
