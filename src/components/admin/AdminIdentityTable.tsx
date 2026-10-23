@@ -68,6 +68,10 @@ export function AdminIdentityTable({
   }
   const activityClass =
     "focus-ring inline-flex h-9 items-center whitespace-nowrap rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-indigo-700 hover:bg-slate-50";
+  const directory = pageHref.split("?")[1] || "";
+  const activityHref = (kind: "guest" | "user", id: string) =>
+    "/admin/users/" + kind + "/" + encodeURIComponent(id) + "/activity" +
+    (directory ? "?directory=" + encodeURIComponent(directory) : "");
   const paginationClass =
     "focus-ring inline-flex h-9 items-center rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 hover:bg-slate-50";
   return (
@@ -203,7 +207,7 @@ export function AdminIdentityTable({
                   <td className="px-4 py-3">
                     <Link
                       className={activityClass}
-                      href={href({ activity: `${row.kind}:${record.id}` })}
+                      href={activityHref(row.kind, record.id)}
                       aria-label={`View Activity for ${name} (${record.id})`}
                     >
                       View Activity

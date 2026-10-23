@@ -1,4 +1,5 @@
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
+import { eligibleLinkedVisitorWhere } from "@/lib/adminIdentityJourney";
 import { isJourneySourcePath, journeySourcePath } from "@/lib/search-journey";
 import type { PublicEnvironment } from "@/lib/stagingSafety";
 import {
@@ -120,6 +121,18 @@ function dateRange(from: string | null, to: string | null) {
 
 function identityWhere(scope: { identity: "all" | "guest" | "registered" | "unattributed"; userId: string | null; visitorId: string | null }) {
   const eligibleVisitor = { consentStatus: "GRANTED" as const, trackingDisabledAt: null };
+  // Registered-customer drilldowns must match the activity timeline: include
+  // direct records and pre-signup records only from consented, exclusively
+  // linked visitors. Leave general identity filters and explicit visitor
+  // filters unchanged.
+  if (scope.identity === "registered" && scope.userId && !scope.visitorId) {
+    return {
+      OR: [
+        { userId: scope.userId },
+        { userId: null, visitor: { is: eligibleLinkedVisitorWhere(scope.userId) } },
+      ],
+    };
+  }
   return {
     ...(scope.identity === "registered" ? { userId: { not: null } } : {}),
     ...(scope.identity === "guest" ? { userId: null, visitor: { is: eligibleVisitor } } : {}),
@@ -397,4 +410,4 @@ export function createAdminOperationalReadService(dependencies: Dependencies) {
 
 export type AdminOperationalReadService = ReturnType<typeof createAdminOperationalReadService>;
 
-export const __adminOperationalReadCoreTest = { safeDomain, safePath, safeSource, identity, attributableVisitorId };
+export const __adminOperationalReadCoreTest = { safeDomain, safePath, safeSource, identity, attributableVisitorId, identityWhere };
