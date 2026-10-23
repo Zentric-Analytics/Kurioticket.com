@@ -41,9 +41,11 @@ test("hotel provider health distinguishes disabled coverage from provider failur
   assert.match(hotelsPage, /Disabled \(24h\)/);
   assert.match(hotelsPage, /Degraded \(24h\)/);
   assert.match(hotelsPage, /Failed \(24h\)/);
+  assert.match(service, /attemptedCalls/);
   assert.match(service, /disabledCalls/);
   assert.match(service, /degradedCalls/);
   assert.match(service, /failedCalls/);
+  assert.match(service, /status: \{ in: \["SUCCESS", "DEGRADED", "FAILED"\] \}/);
   assert.match(service, /status: \{ in: \["FAILED", "DEGRADED", "DISABLED"\] \}/);
 });
 
