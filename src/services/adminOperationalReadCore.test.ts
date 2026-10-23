@@ -188,3 +188,40 @@ test("exact search diagnostics explain partial provider failure without exposing
   assert.equal(diagnostic.retryable, true);
   assert.equal(diagnostic.correlation, "exact");
 });
+
+
+test("exact failed searches distinguish provider failure from internal processing failure", () => {
+  const row = {
+    id: "search_456",
+    requestId: "request_456",
+    userId: null,
+    visitorId: null,
+    type: "FLIGHT",
+    origin: "LOS",
+    destination: "JFK",
+    checkIn: null,
+    checkOut: null,
+    query: {},
+    resultCount: 0,
+    latencyMs: 900,
+    status: "FAILED",
+    createdAt: new Date("2026-10-23T08:30:00.000Z"),
+    visitor: null,
+    journeyEvents: [],
+  } as never;
+  const providers = [
+    {
+      provider: "Duffel",
+      status: "SUCCESS" as const,
+      reasonCode: null,
+      reason: "Provider completed successfully.",
+      retryable: false,
+      latencyMs: 500,
+      observedAt: "2026-10-23T08:30:00.000Z",
+    },
+  ];
+  const diagnostic = __adminOperationalReadCoreTest.exactSearchDiagnostic(row, providers);
+  assert.equal(diagnostic.reasonCode, "SEARCH_PROCESSING_FAILURE");
+  assert.equal(diagnostic.reason, "Providers responded, but the search could not complete during internal result processing.");
+  assert.equal(diagnostic.retryable, true);
+});
