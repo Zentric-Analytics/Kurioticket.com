@@ -136,6 +136,7 @@ try {
     await chooseOption("Identity type", "Guests");
     assert.equal(page.url(), originalUrl, "Changing an unsubmitted filter must not navigate");
     await expect(page.getByRole("combobox", { name: "Identity type" })).toContainText("Guests");
+    await expect(page.locator('form').filter({ has: page.getByRole("button", { name: "Apply Filter" }) }).locator('input[name="identity"]')).toHaveValue("GUEST");
     await page.getByRole("button", { name: "Apply Filter" }).click();
     await expect(page).toHaveURL(/identity=GUEST/);
     await expect(page).toHaveURL(/sort=newest/);
@@ -150,6 +151,10 @@ try {
     await chooseOption("Identity type", "Registered");
     await chooseOption("Account role", "Support");
     await chooseOption("Account status", "Active");
+    const pending = page.locator("form").filter({ has: page.getByRole("button", { name: "Apply Filter" }) });
+    await expect(pending.locator('input[name="identity"]')).toHaveValue("REGISTERED");
+    await expect(pending.locator('input[name="role"]')).toHaveValue("SUPPORT");
+    await expect(pending.locator('input[name="status"]')).toHaveValue("ACTIVE");
     await page.getByRole("button", { name: "Apply Filter" }).click();
     await expect(page).toHaveURL(/identity=REGISTERED/);
     await expect(page).toHaveURL(/role=SUPPORT/);
