@@ -7,6 +7,7 @@ import {
   AdminStatusBadge,
 } from "@/components/admin/AdminPageShell";
 import { HomepageCmsEditor } from "@/components/admin/HomepageCmsEditor";
+import { CmsRevisionRestoreButton } from "@/components/admin/CmsRevisionRestoreButton";
 import { hotelDestinations } from "@/data/hotelDestinations";
 import { getHomepageCmsSection, homepageCmsSections } from "@/lib/adminHomepageCms";
 import { CmsContentError, getAdminCmsContent } from "@/services/cmsContentService";
@@ -52,7 +53,7 @@ export default async function HomepageCmsDetailPage({ params }: PageProps) {
           </div>
           <div className="divide-y divide-slate-100">
             {result.revisions.map((revision) => (
-              <div key={revision.id} className="grid gap-3 p-5 lg:grid-cols-[100px_140px_120px_minmax(0,1fr)_220px]">
+              <div key={revision.id} className="grid gap-3 p-5 lg:grid-cols-[90px_130px_100px_minmax(0,1fr)_200px_150px]">
                 <div>
                   <p className="text-xs font-black uppercase tracking-wide text-slate-500">Version</p>
                   <p className="mt-1 font-black text-slate-950">v{revision.version}</p>
@@ -73,6 +74,15 @@ export default async function HomepageCmsDetailPage({ params }: PageProps) {
                   <p className="text-xs font-black uppercase tracking-wide text-slate-500">Recorded</p>
                   <p className="mt-1 text-sm font-semibold text-slate-900">{new Date(revision.createdAt).toLocaleString()}</p>
                   <p className="mt-1 break-all text-xs text-slate-500">{revision.actorEmail}</p>
+                </div>
+                <div>
+                  {result.item.status !== "ARCHIVED" && revision.version < result.item.version ? (
+                    <CmsRevisionRestoreButton
+                      itemId={result.item.id}
+                      revisionId={revision.id}
+                      expectedVersion={result.item.version}
+                    />
+                  ) : null}
                 </div>
               </div>
             ))}
