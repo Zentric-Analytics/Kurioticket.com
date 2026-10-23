@@ -3,6 +3,7 @@ import "server-only";
 import type { Prisma } from "@/generated/prisma/client";
 import { getOptionalPrisma } from "@/lib/prisma";
 import { getPublicEnvironment, type PublicEnvironment } from "@/lib/stagingSafety";
+import { classifyProviderIssue } from "@/services/searchFailureDiagnostics";
 import { getProviderIntegrationStatuses } from "@/services/travel/providerIntegrationStatus";
 
 export type HotelOperationsSnapshot = {
@@ -26,6 +27,31 @@ export type HotelOperationsSnapshot = {
     averageLatencyMs: number | null;
     lastIssueAt: string | null;
     lastFailureAt: string | null;
+  }>;
+  exceptionSearches: Array<{
+    id: string;
+    requestId: string | null;
+    destination: string | null;
+    checkIn: string | null;
+    checkOut: string | null;
+    resultCount: number;
+    latencyMs: number | null;
+    status: string;
+    kind: "FAILED" | "PARTIAL" | "ZERO_RESULTS";
+    createdAt: string;
+  }>;
+  destinationIssues: Array<{
+    destination: string | null;
+    issueCount: number;
+    lastIssueAt: string | null;
+  }>;
+  providerIssues: Array<{
+    id: string;
+    provider: string;
+    status: string;
+    category: string;
+    latencyMs: number | null;
+    createdAt: string;
   }>;
   recentSearches: Array<{
     id: string;
@@ -55,11 +81,31 @@ export async function getHotelOperationsSnapshot(
     createdAt: { gte: since, lte: now },
     query: { path: ["environment"], equals: environment },
   };
+  const exceptionWhere: Prisma.SearchHistoryWhereInput = {
+    ...searchWhere,
+    OR: [
+      { status: { in: ["FAILED", "PARTIAL"] } },
+      { status: "SUCCESS", resultCount: 0 },
+    ],
+  };
   const hotelProviders = getProviderIntegrationStatuses().filter((provider) => provider.products.includes("HOTELS"));
+  const hotelProviderNames = hotelProviders.map((provider) => provider.provider);
 
   try {
     return await db.$transaction(async (tx) => {
-      const [total, successful, partial, failed, successfulZeroResults, latency, recentSearches, providerHealth] = await Promise.all([
+      const [
+        total,
+        successful,
+        partial,
+        failed,
+        successfulZeroResults,
+        latency,
+        recentSearches,
+        exceptionSearches,
+        destinationIssues,
+        providerIssues,
+        providerHealth,
+      ] = await Promise.all([
         tx.searchHistory.count({ where: searchWhere }),
         tx.searchHistory.count({ where: { ...searchWhere, status: "SUCCESS" } }),
         tx.searchHistory.count({ where: { ...searchWhere, status: "PARTIAL" } }),
@@ -79,6 +125,49 @@ export async function getHotelOperationsSnapshot(
             resultCount: true,
             latencyMs: true,
             status: true,
+            createdAt: true,
+          },
+        }),
+        tx.searchHistory.findMany({
+          where: exceptionWhere,
+          orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+          take: 12,
+          select: {
+            id: true,
+            requestId: true,
+            destination: true,
+            checkIn: true,
+            checkOut: true,
+            resultCount: true,
+            latencyMs: true,
+            status: true,
+            createdAt: true,
+          },
+        }),
+        tx.searchHistory.groupBy({
+          by: ["destination"],
+          where: exceptionWhere,
+          _count: { _all: true },
+          _max: { createdAt: true },
+          orderBy: { _count: { id: "desc" } },
+          take: 8,
+        }),
+        tx.apiProviderLog.findMany({
+          where: {
+            provider: { in: hotelProviderNames },
+            service: "hotel-search",
+            status: { in: ["FAILED", "DEGRADED", "DISABLED"] },
+            createdAt: { gte: since, lte: now },
+            metadata: { path: ["environment"], equals: environment },
+          },
+          orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+          take: 12,
+          select: {
+            id: true,
+            provider: true,
+            status: true,
+            latencyMs: true,
+            errorMessage: true,
             createdAt: true,
           },
         }),
@@ -136,6 +225,26 @@ export async function getHotelOperationsSnapshot(
           averageLatencyMs: latency._avg.latencyMs === null ? null : Math.round(latency._avg.latencyMs),
         },
         providerHealth,
+        exceptionSearches: exceptionSearches.map((search) => ({
+          ...search,
+          kind: search.status === "FAILED" ? "FAILED" : search.status === "PARTIAL" ? "PARTIAL" : "ZERO_RESULTS",
+          checkIn: search.checkIn?.toISOString() ?? null,
+          checkOut: search.checkOut?.toISOString() ?? null,
+          createdAt: search.createdAt.toISOString(),
+        })),
+        destinationIssues: destinationIssues.map((destination) => ({
+          destination: destination.destination,
+          issueCount: destination._count._all,
+          lastIssueAt: destination._max.createdAt?.toISOString() ?? null,
+        })),
+        providerIssues: providerIssues.map((issue) => ({
+          id: issue.id,
+          provider: issue.provider,
+          status: issue.status,
+          category: hotelProviderIssueCategory(issue.status, issue.errorMessage),
+          latencyMs: issue.latencyMs,
+          createdAt: issue.createdAt.toISOString(),
+        })),
         recentSearches: recentSearches.map((search) => ({
           ...search,
           checkIn: search.checkIn?.toISOString() ?? null,
@@ -149,3 +258,11 @@ export async function getHotelOperationsSnapshot(
     return null;
   }
 }
+
+
+function hotelProviderIssueCategory(status: string, message: string | null) {
+  if (status === "DISABLED" && !message) return "Provider disabled / skipped";
+  return classifyProviderIssue(message).label;
+}
+
+export const __adminHotelOperationsTest = { hotelProviderIssueCategory };
