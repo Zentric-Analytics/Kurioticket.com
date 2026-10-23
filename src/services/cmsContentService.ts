@@ -3,7 +3,13 @@ import { z } from "zod";
 import { Prisma } from "@/generated/prisma/client";
 import type { CmsContentStatus, CmsContentType } from "@/generated/prisma/enums";
 import { getOptionalPrisma, getPrisma } from "@/lib/prisma";
+import { getOwnedFlightLocationCatalog } from "@/lib/locations/flightDiscovery";
+import { hotelDestinations } from "@/data/hotelDestinations";
+import { getHomeDiscoveryRouteAllowlist } from "@/data/homeDiscovery";
+import { getPopularDestinationAllowlist, popularDestinationsByMarket } from "@/data/marketHomeContent";
+import { resolveHotelDiscoveryIntent } from "@/lib/hotels/hotelDiscoveryIntent";
 import { HOMEPAGE_REFRESH_MARKET_CODES } from "@/lib/market/resolveMarket";
+import { imageRemotePatterns, matchesImagePattern } from "@/config/imagePatterns";
 
 export const cmsContentTypes = [
   "HOMEPAGE_DESTINATION",
@@ -83,11 +89,12 @@ const safeImage = z.string().trim().max(2000).refine((value) => {
   if (value.startsWith("/images/")) return true;
   try {
     const url = new URL(value);
-    return url.protocol === "https:";
+    return url.protocol === "https:"
+      && imageRemotePatterns.some((pattern) => matchesImagePattern(url, pattern));
   } catch {
     return false;
   }
-}, "Use an approved local image path or HTTPS image URL.");
+}, "Use an approved local image path or an image URL allowed by the application image configuration.");
 
 export const cmsPayloadSchemas = {
   HOMEPAGE_DESTINATION: z.object({
@@ -118,7 +125,7 @@ export const cmsPayloadSchemas = {
     countryCode,
     kind: z.enum(["city", "district", "landmark", "airport-area", "custom"]),
     searchValue: printable(160),
-    canonicalId: printable(160).optional(),
+    canonicalId: printable(160),
     image: safeImage.optional(),
     imageAlt: printable(240).optional(),
   }).strict(),
@@ -176,9 +183,90 @@ export class CmsContentError extends Error {
   }
 }
 
+const ownedFlightAirportCodes = new Set(
+  getOwnedFlightLocationCatalog()
+    .map((location) => location.codes?.iata)
+    .filter((code): code is string => Boolean(code)),
+);
+const canonicalHotelDestinationIds = new Set(
+  hotelDestinations.map((destination) => `hotel:${destination.id}`),
+);
+const supportedHomepageDestinationRoutes = new Set(
+  [...getPopularDestinationAllowlist().values()].map(
+    (destination) => `${destination.originCode}:${destination.code}`,
+  ),
+);
+const supportedHomepageDestinationEntries = new Set(
+  Object.values(popularDestinationsByMarket)
+    .flat()
+    .map((destination) => [
+      destination.city.trim().toLowerCase(),
+      destination.country.trim().toLowerCase(),
+      destination.originCode,
+      destination.code,
+    ].join("|")),
+);
+const supportedHomepageFlightRoutes = new Set(
+  [...getHomeDiscoveryRouteAllowlist().values()].map(
+    (route) => `${route.originCode}:${route.destinationCode}`,
+  ),
+);
+
 function parsePayload(type: CmsContentType, payload: unknown) {
   const parsed = cmsPayloadSchemas[type].safeParse(payload);
   if (!parsed.success) throw new CmsContentError("INVALID", "Content payload is invalid.", parsed.error.flatten());
+
+  if (type === "HOMEPAGE_DESTINATION" || type === "FLIGHT_ROUTE") {
+    const route = parsed.data as { originCode: string; destinationCode: string };
+    if (!ownedFlightAirportCodes.has(route.originCode) || !ownedFlightAirportCodes.has(route.destinationCode)) {
+      throw new CmsContentError("INVALID", "Homepage flight content must use airport codes from the owned Kurioticket flight catalog.");
+    }
+    const routeKey = `${route.originCode}:${route.destinationCode}`;
+    const supported = type === "HOMEPAGE_DESTINATION"
+      ? supportedHomepageDestinationRoutes.has(routeKey)
+      : supportedHomepageFlightRoutes.has(routeKey);
+    if (!supported) {
+      throw new CmsContentError(
+        "INVALID",
+        "Homepage content must use an existing Kurioticket fare-supported route.",
+      );
+    }
+  }
+
+  if (type === "HOMEPAGE_DESTINATION") {
+    const destination = parsed.data as {
+      city: string;
+      country: string;
+      originCode: string;
+      destinationCode: string;
+    };
+    const destinationKey = [
+      destination.city.trim().toLowerCase(),
+      destination.country.trim().toLowerCase(),
+      destination.originCode,
+      destination.destinationCode,
+    ].join("|");
+    if (!supportedHomepageDestinationEntries.has(destinationKey)) {
+      throw new CmsContentError(
+        "INVALID",
+        "Homepage destination label and fare route must match the same canonical Kurioticket destination entry.",
+      );
+    }
+    if (!resolveHotelDiscoveryIntent(`${destination.city}, ${destination.country}`, "home-popular-stays")) {
+      throw new CmsContentError(
+        "INVALID",
+        "Homepage destination must resolve to a canonical Kurioticket hotel destination.",
+      );
+    }
+  }
+
+  if (type === "HOTEL_DESTINATION") {
+    const hotel = parsed.data as { canonicalId: string };
+    if (!canonicalHotelDestinationIds.has(hotel.canonicalId)) {
+      throw new CmsContentError("INVALID", "Hotel destination must use a canonical Kurioticket hotel destination id.");
+    }
+  }
+
   return parsed.data as Prisma.InputJsonValue;
 }
 
@@ -287,6 +375,23 @@ export async function createCmsContent(raw: unknown, actorInput: CmsActor) {
   const payload = parsePayload(parsed.data.type, parsed.data.payload);
   try {
     return await getPrisma().$transaction(async (tx) => {
+      const scope = await tx.cmsContentScope.findUnique({
+        where: {
+          type_market_locale: {
+            type: parsed.data.type,
+            market: parsed.data.market,
+            locale: parsed.data.locale,
+          },
+        },
+        select: { id: true },
+      });
+      if (!scope) {
+        throw new CmsContentError(
+          "CONFLICT",
+          "Initialize this CMS content scope before creating new records.",
+        );
+      }
+
       const item = await tx.cmsContentItem.create({
         data: {
           type: parsed.data.type,

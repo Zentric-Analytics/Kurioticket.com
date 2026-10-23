@@ -20,6 +20,7 @@ import type {
   ProviderResult,
 } from "@/lib/types";
 import { searchDuffelFlights } from "@/services/travel/providers/duffelProvider";
+import { getPublishedFlightRoutes } from "@/services/publicCmsContentService";
 
 const AIRPORT_OR_CITY_CODE_PATTERN = /^[A-Z]{3}$/;
 const CURRENCY_PATTERN = /^[A-Z]{3}$/;
@@ -2628,7 +2629,24 @@ export async function readHomepageDiscoveryFareCards({
   const normalizedCurrency =
     normalizeHomepageFareCurrency(currency) ?? DEFAULT_CURRENCY;
   const requestedRegionCode = normalizeHomepageDiscoveryRegionCode(regionCode);
-  const requestedCandidates = getHomeDiscoveryFareCandidates(requestedRegionCode);
+  const publishedFlightRoutes = await getPublishedFlightRoutes(requestedRegionCode);
+  const requestedCandidates = publishedFlightRoutes.items.map<HomeDiscoveryFareCandidate>(
+    (route, index) => ({
+      id: route.id,
+      regionCode: requestedRegionCode,
+      title: route.title,
+      originCity: route.originCity,
+      originCode: route.originCode,
+      destinationCity: route.destinationCity,
+      destinationCode: route.destinationCode,
+      routeNote: route.routeNote,
+      image: route.image,
+      imageAlt: route.imageAlt,
+      priority: index + 1,
+      enabled: true,
+    }),
+  );
+  const isCmsManaged = publishedFlightRoutes.source === "cms";
   const isNonUsRegion = requestedRegionCode !== DEFAULT_HOME_DISCOVERY_REGION;
 
   if (requested <= 0) {
@@ -2647,15 +2665,15 @@ export async function readHomepageDiscoveryFareCards({
     });
   }
 
-  const regionalCandidates = getRegionalHomeDiscoveryFareCandidates(
-    requestedRegionCode,
-  );
+  const regionalCandidates = isCmsManaged
+    ? []
+    : getRegionalHomeDiscoveryFareCandidates(requestedRegionCode);
   const shouldTryRegionalFallback =
     regionalCandidates.length > 0 &&
     !areSameCandidateSets(requestedCandidates, regionalCandidates);
-  const globalCandidates = getMarketScopedGlobalHomeDiscoveryFareCandidates(
-    requestedRegionCode,
-  );
+  const globalCandidates = isCmsManaged
+    ? []
+    : getMarketScopedGlobalHomeDiscoveryFareCandidates(requestedRegionCode);
   const shouldTryGlobalFallback =
     globalCandidates.length > 0 &&
     !areSameCandidateSets(requestedCandidates, globalCandidates) &&

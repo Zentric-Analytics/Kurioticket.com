@@ -9,7 +9,7 @@ const refreshCard = readFileSync("src/components/admin/HomepageFaresRefreshCard.
 const statusApi = readFileSync("src/app/api/admin/homepage-fares/status/route.ts", "utf8");
 const refreshApi = readFileSync("src/app/api/admin/homepage-fares/refresh/route.ts", "utf8");
 
-test("public content management keeps configuration areas read-only while FAQs are CMS managed", () => {
+test("public content management exposes homepage and FAQ CMS areas while fare operations stay separate", () => {
   assert.match(contentPage, /title="Public Content Management"/);
 
   for (const section of [
@@ -23,6 +23,10 @@ test("public content management keeps configuration areas read-only while FAQs a
 
   assert.match(contentPage, /getCmsContentScopeSummary/);
   assert.match(contentPage, /Manage FAQs/);
+  assert.match(contentPage, /Manage destinations/);
+  assert.match(contentPage, /Manage flight routes/);
+  assert.match(contentPage, /Manage hotel destinations/);
+  assert.match(contentPage, /Homepage CMS overview/);
   assert.match(contentPage, /CMS managed/);
   assert.match(contentPage, /Setup required/);
   assert.match(contentPage, /href: "\/admin\/content\/faqs"/);

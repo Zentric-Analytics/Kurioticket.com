@@ -11,6 +11,7 @@ import { hotelDestinations } from "@/data/hotelDestinations";
 import { popularDestinationsByMarket } from "@/data/marketHomeContent";
 import { getCmsContentScopeSummary } from "@/services/cmsContentService";
 import { faqCmsScope } from "@/services/faqCmsService";
+import { homepageCmsLocale } from "@/services/homepageCmsService";
 
 export const metadata = { title: "Admin Content" };
 
@@ -18,54 +19,75 @@ const homepageDestinationCount = Object.values(popularDestinationsByMarket).redu
 const flightRouteCount = getDefaultHomeDiscoveryPriceRoutes().length;
 
 export default async function AdminContentPage() {
-  const faqSummary = await getCmsContentScopeSummary("FAQ", faqCmsScope.market, faqCmsScope.locale)
-    .catch(() => ({
-      available: false,
-      active: false,
-      total: 0,
-      draft: 0,
-      published: 0,
-      hidden: 0,
-      archived: 0,
-    }));
+  const [faqSummary, destinationSummary, flightSummary, hotelSummary] = await Promise.all([
+    getCmsContentScopeSummary("FAQ", faqCmsScope.market, faqCmsScope.locale).catch(() => null),
+    getCmsContentScopeSummary("HOMEPAGE_DESTINATION", "US", homepageCmsLocale).catch(() => null),
+    getCmsContentScopeSummary("FLIGHT_ROUTE", "US", homepageCmsLocale).catch(() => null),
+    getCmsContentScopeSummary("HOTEL_DESTINATION", "GLOBAL", homepageCmsLocale).catch(() => null),
+  ]);
+
+  const homepageAvailable = Boolean(destinationSummary?.available && flightSummary?.available && hotelSummary?.available);
+  const homepageActive = Boolean(destinationSummary?.active && flightSummary?.active && hotelSummary?.active);
 
   const contentAreas = [
     {
       title: "Homepage destination cards",
-      status: "Read-only",
-      value: homepageDestinationCount,
-      note: "Existing market homepage content is available for review. CMS editing arrives in the homepage-content phase.",
+      status: !homepageAvailable ? "Unavailable" : homepageActive ? "CMS managed" : "Setup required",
+      value: homepageActive ? destinationSummary?.total ?? 0 : homepageDestinationCount,
+      note: homepageActive
+        ? "Market-scoped destination cards with draft, publish, hide, archive and ordering controls."
+        : "Initialize Homepage CMS to move market destination cards from code-backed content into managed publishing.",
+      href: "/admin/content/homepage/destinations",
+      actionLabel: "Manage destinations",
     },
     {
       title: "Flight route cards",
-      status: "Read-only",
-      value: flightRouteCount,
-      note: "Existing homepage flight route definitions remain configuration-backed until the homepage-content CMS phase.",
+      status: !homepageAvailable ? "Unavailable" : homepageActive ? "CMS managed" : "Setup required",
+      value: homepageActive ? flightSummary?.total ?? 0 : flightRouteCount,
+      note: homepageActive
+        ? "Market-scoped discovery and regional route cards backed by canonical Kurioticket airport codes."
+        : "Initialize Homepage CMS to migrate the current route-card order without changing fare operations.",
+      href: "/admin/content/homepage/flight-routes",
+      actionLabel: "Manage flight routes",
     },
     {
       title: "Hotel destination cards",
-      status: "Read-only",
-      value: hotelDestinations.length,
-      note: "Existing hotel destination definitions remain read-only until canonical destination editing is connected safely.",
+      status: !homepageAvailable ? "Unavailable" : homepageActive ? "CMS managed" : "Setup required",
+      value: homepageActive ? hotelSummary?.total ?? 0 : hotelDestinations.length,
+      note: homepageActive
+        ? "Canonical GLOBAL hotel destination records validated against the Kurioticket hotel catalog."
+        : "Initialize Homepage CMS to make canonical hotel destination content manageable.",
+      href: "/admin/content/homepage/hotel-destinations",
+      actionLabel: "Manage hotel destinations",
     },
     {
       title: "FAQs",
-      status: !faqSummary.available ? "Unavailable" : faqSummary.active ? "CMS managed" : "Setup required",
-      value: faqSummary.active ? faqSummary.total : generalFaqs.length,
-      note: !faqSummary.available
+      status: !faqSummary?.available ? "Unavailable" : faqSummary.active ? "CMS managed" : "Setup required",
+      value: faqSummary?.active ? faqSummary.total : generalFaqs.length,
+      note: !faqSummary?.available
         ? "CMS storage could not be verified. Public FAQs continue using the existing translated code-backed content."
         : faqSummary.active
           ? faqSummary.published + " published · " + faqSummary.draft + " draft · " + faqSummary.hidden + " hidden · " + faqSummary.archived + " archived"
           : "Initialize the current English FAQ set, then create drafts, preview, publish, hide and archive from admin.",
       href: "/admin/content/faqs",
+      actionLabel: "Manage FAQs",
     },
   ];
 
   return (
     <AdminPageShell
       title="Public Content Management"
-      description="Manage CMS-backed public content while configuration-backed areas remain read-only until their migration phases."
-      actions={<Link href="/admin/settings" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">Homepage fare operations</Link>}
+      description="Manage CMS-backed public content with explicit draft and publishing controls. Homepage fare operations remain separate."
+      actions={
+        <div className="flex flex-wrap gap-2">
+          <Link href="/admin/content/homepage" className="rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm font-black text-indigo-800 hover:bg-indigo-100">
+            Homepage CMS overview
+          </Link>
+          <Link href="/admin/settings" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">
+            Homepage fare operations
+          </Link>
+        </div>
+      }
     >
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {contentAreas.map((area) => (
@@ -78,11 +100,9 @@ export default async function AdminContentPage() {
             </div>
             <p className="mt-4 text-3xl font-black text-slate-950">{area.value}</p>
             <p className="mt-2 text-sm leading-6 text-slate-600">{area.note}</p>
-            {"href" in area && area.href ? (
-              <Link href={area.href} className="mt-4 inline-flex text-sm font-black text-indigo-700 hover:text-indigo-900">
-                Manage FAQs
-              </Link>
-            ) : null}
+            <Link href={area.href} className="mt-4 inline-flex text-sm font-black text-indigo-700 hover:text-indigo-900">
+              {area.actionLabel}
+            </Link>
           </AdminSectionCard>
         ))}
       </div>

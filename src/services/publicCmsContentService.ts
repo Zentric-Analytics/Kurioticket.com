@@ -1,7 +1,7 @@
 import { getGeneralFaqs, type FaqItem } from "@/content/faqs";
 import { getTranslations } from "@/lib/i18n";
 import { normalizeLanguage } from "@/lib/language";
-import { getHomeDiscoveryByRegion } from "@/data/homeDiscovery";
+import { getHomeDiscoveryByRegion, getHomeDiscoveryContentMarketCode } from "@/data/homeDiscovery";
 import { hotelDestinations } from "@/data/hotelDestinations";
 import { getPopularDestinationsByRegion } from "@/data/marketHomeContent";
 import { readPublishedCmsContent } from "@/services/cmsContentService";
@@ -36,7 +36,7 @@ export type CmsHotelDestination = {
   countryCode: string;
   kind: "city" | "district" | "landmark" | "airport-area" | "custom";
   searchValue: string;
-  canonicalId?: string;
+  canonicalId: string;
   image?: string;
   imageAlt?: string;
 };
@@ -60,11 +60,12 @@ export async function getPublishedHomepageDestinations(market: string) {
   });
 }
 
-export async function getPublishedFlightRoutes() {
+export async function getPublishedFlightRoutes(market: string) {
+  const effectiveMarket = getHomeDiscoveryContentMarketCode(market);
   return readPublishedCmsContent<CmsFlightRoute>("FLIGHT_ROUTE", {
-    market: "GLOBAL",
+    market: effectiveMarket,
     locale: "en",
-    fallback: () => getHomeDiscoveryByRegion("US").map((item) => ({
+    fallback: () => getHomeDiscoveryByRegion(market).map((item) => ({
       id: item.id,
       title: item.title,
       originCity: item.originCity,
@@ -89,7 +90,7 @@ export async function getPublishedHotelDestinations() {
       countryCode: item.countryCode,
       kind: item.kind,
       searchValue: item.searchValue,
-      canonicalId: item.canonical?.id,
+      canonicalId: `hotel:${item.id}`,
     })),
   });
 }
