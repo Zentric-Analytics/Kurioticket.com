@@ -25,7 +25,10 @@ test("homepage CMS initialization is explicit, transactional, published and audi
   assert.match(initService, /getHomeDiscoveryImageCardsByRegion/);
   assert.match(initService, /getHomepageRegionalRouteCards/);
   assert.match(initService, /HOTEL_DESTINATION:GLOBAL/);
+  assert.match(initService, /cmsContentItem\.createMany/);
+  assert.match(initService, /cmsContentRevision\.createMany/);
   assert.match(initService, /cmsContentScope\.createMany/);
+  assert.match(initService, /randomUUID/);
   assert.match(initService, /maxWait: 10_000/);
   assert.match(initService, /timeout: 30_000/);
 });
@@ -68,6 +71,8 @@ test("public homepage reads CMS through a no-store endpoint with static fallback
   assert.match(publicService, /getHomeDiscoveryByRegion/);
   assert.match(homepage, /\/api\/content\/homepage\?market=/);
   assert.match(homepage, /cmsContentForMarket/);
+  assert.match(homepage, /cmsContentForMarket\?\.flightRoutes\.source === "cms"/);
+  assert.match(homepage, /return item\[field\]/);
   assert.match(homepage, /destination\.canonicalDestinationId/);
   assert.match(homepage, /destination\.destinationSearchValue/);
 });
