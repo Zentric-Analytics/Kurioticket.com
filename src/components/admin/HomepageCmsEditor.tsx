@@ -311,7 +311,10 @@ export function HomepageCmsEditor({
   );
 }
 
-function initialFields(section: HomepageCmsSection, raw: Record<string, unknown>) {
+function initialFields(
+  section: HomepageCmsSection,
+  raw: Record<string, unknown>,
+): Record<string, string> {
   if (section === "destinations") {
     return {
       city: text(raw.city),
