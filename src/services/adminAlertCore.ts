@@ -36,6 +36,7 @@ export type AdminAlertSignals = {
         failedCalls: number;
         degradedCalls: number;
         lastFailureAt: string | null;
+        lastAdverseAt: string | null;
       }>
     | null;
   email:
@@ -128,11 +129,9 @@ function providerAlerts(signals: AdminAlertSignals) {
         actionHref: "/admin/providers",
         signalToken: [
           provider.operationalState,
-          provider.failedCalls,
-          provider.degradedCalls,
-          provider.lastFailureAt ?? "none",
+          provider.lastAdverseAt ?? "none",
         ].join(":"),
-        signalAt: provider.lastFailureAt,
+        signalAt: provider.lastAdverseAt,
       },
     ] satisfies AdminAlertCandidate[];
   });
