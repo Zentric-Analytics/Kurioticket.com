@@ -3,7 +3,7 @@ import "server-only";
 import type { Prisma } from "@/generated/prisma/client";
 import { getOptionalPrisma } from "@/lib/prisma";
 import { getPublicEnvironment, type PublicEnvironment } from "@/lib/stagingSafety";
-import { isConfiguredPartnerConfirmationSecret } from "@/services/partnerBookingConfirmation";
+import { isConfiguredPartnerConfirmationSecret, partnerConfirmationLimits } from "@/services/partnerBookingConfirmation";
 
 export type ConfirmedTripsOperationsSnapshot = {
   environment: PublicEnvironment;
@@ -52,6 +52,7 @@ export async function getConfirmedTripsOperationsSnapshot(
 
   const now = new Date();
   const since = new Date(now.getTime() - 24 * 60 * 60 * 1_000);
+  const acceptedFutureBoundary = new Date(now.getTime() + partnerConfirmationLimits.permittedClockSkewSeconds * 1_000);
   const confirmedWhere: Prisma.MyTripWhereInput = {
     source: "PARTNER_CONFIRMATION",
     partnerConfirmationOccurredAt: { not: null },
@@ -73,7 +74,7 @@ export async function getConfirmedTripsOperationsSnapshot(
         tx.myTrip.count({
           where: {
             ...confirmedWhere,
-            partnerConfirmationOccurredAt: { gte: since, lte: now },
+            partnerConfirmationOccurredAt: { gte: since, lte: acceptedFutureBoundary },
           },
         }),
         tx.myTrip.count({ where: { ...confirmedWhere, status: "UPCOMING" } }),
