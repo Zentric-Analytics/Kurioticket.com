@@ -26,8 +26,8 @@ export default async function AdminSearchesPage({ searchParams }: { searchParams
 
   return (
     <AdminPageShell title="Searches" hideHeader>
-      <div className="mx-auto w-full max-w-[1400px]">
-        <nav aria-label="Search workspace" className="grid grid-cols-1 gap-3 md:grid-cols-2">
+      <div className="flex min-h-[calc(100vh-190px)] w-full items-center justify-center">
+        <nav aria-label="Search workspace" className="grid w-full max-w-[1120px] grid-cols-1 gap-3 md:grid-cols-2">
           {workspaceLinks.map((item) => (
             <Link
               key={item.title}
