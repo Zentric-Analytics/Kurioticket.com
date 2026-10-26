@@ -16,7 +16,7 @@ test("overview uses existing canonical services without mocked counts", () => {
   assert.match(page, /AdminOverviewSecondary system=\{system\} activity=\{activity\}/);
 });
 
-test("six original KPIs and their sources are retained in the snapshot", () => {
+test("ten genuine operational KPIs are retained and shown in a balanced snapshot", () => {
   for (const [label, expression] of [
     ["Total accounts", "data.users.total"],
     ["Enabled accounts", "data.users.active"],
@@ -32,6 +32,10 @@ test("six original KPIs and their sources are retained in the snapshot", () => {
   }
   assert.match(display, /supportAttention = data\.support\.open \+ data\.support\.waitingOnTeam \+ data\.support\.waitingOnUser/);
   assert.match(display, /deletionAttention = data\.deletions\.pending \+ data\.deletions\.readyForReview/);
+  const snapshot = display.slice(display.indexOf('aria-label="Operations Snapshot"'), display.indexOf('aria-label="Attention Required"'));
+  assert.match(snapshot, /Online website visitors \(observed\)/);
+  assert.match(snapshot, /data\.websitePresence\.status === "ok"/);
+  assert.equal((snapshot.match(/<MetricCard label=/g) ?? []).length, 9, "9 shared metric cards plus 1 observed online metric");
 });
 
 test("admin overview sections prioritize action and health over deeper analytics", () => {
@@ -120,7 +124,7 @@ test("requested descriptions are removed without altering operational sources", 
   ]) assert.ok(!dashboard.includes(message), message);
   assert.ok(display.includes("data.journeys.operationalSearches.total"));
   assert.ok(display.includes("data.journeys.handoffCorrelation.exactEvents"));
-  assert.ok(display.includes("data.visitorActivity.observedVisitorIdentities"));
+  assert.ok(display.includes("data.websitePresence.observedAt"));
   assert.ok(display.includes("AdminOverviewRangeSelect"));
   assert.ok(display.includes("AdminOverviewAutoRefresh"));
 });
@@ -198,10 +202,20 @@ test("invisible automatic refresh retains its original one-minute visibility and
 });
 
 
-test("recent activity is disclosed as consented observation rather than a live-user claim", () => {
-  assert.ok(display.includes("data.visitorActivity.observedVisitorIdentities"));
-  assert.ok(display.includes("Recently observed visitors (5 min)"));
-  assert.ok(display.includes("not a verified count of everyone currently online"));
+test("duplicate account and five-minute visitor panels are removed from the Overview only", () => {
+  const snapshot = display.slice(display.indexOf('aria-label="Operations Snapshot"'), display.indexOf('aria-label="Attention Required"'));
+  for (const duplicate of [
+    "Account status breakdown", "Enabled customer accounts", "Enabled admin accounts",
+    "Enabled support accounts", "Pending-deletion accounts", "Recently observed visitors (5 min)",
+    "data.visitorActivity.observedVisitorIdentities",
+  ]) assert.ok(!snapshot.includes(duplicate), duplicate);
+  assert.match(snapshot, /How it's counted/);
+  assert.match(snapshot, /<details className="mt-2 text-\[12px\] leading-5 text-slate-600">/);
+  assert.match(snapshot, /consented visitors with a visible website tab/);
+  assert.match(snapshot, /excluding native app activity and visitors who decline analytics/);
+  assert.match(snapshot, /not every person online/);
+  assert.match(snapshot, /data\.websitePresence\.registeredAccounts/);
+  assert.match(snapshot, /data\.websitePresence\.guestIdentities/);
   assert.ok(!display.includes('hint="Currently active"'));
 });
 
@@ -216,7 +230,8 @@ test("canonical overview reads consented recent visitor identities without overw
 
 
 test("production layout uses balanced desktop columns and keeps the activity feed full width", () => {
-  assert.match(display, /grid gap-x-6 gap-y-0 sm:grid-cols-2 lg:grid-cols-3/);
+  assert.match(display, /grid gap-x-6 gap-y-0 sm:grid-cols-2 xl:grid-cols-5/);
+  assert.doesNotMatch(display, /grid gap-x-6 gap-y-0 sm:grid-cols-2 lg:grid-cols-3/);
   assert.match(display, /lg:grid-cols-\[0\.85fr_1\.15fr\]/);
   assert.match(display, /<div className="grid gap-y-0">\s*\{data\.providers\.map/);
   assert.match(display, /sm:grid-cols-2 lg:grid-cols-4/);
@@ -283,7 +298,7 @@ test("Overview typography maintains readable hierarchy without heavy global badg
   assert.match(dashboard, /text-\[13px\] leading-5 text-slate-700/);
   assert.match(dashboard, /font-mono text-xs/);
   assert.match(display, /data\.users\.total/);
-  assert.match(display, /data\.visitorActivity\.observedVisitorIdentities/);
+  assert.match(display, /data\.websitePresence\.observedAt/);
   assert.match(display, /getAdminOverview|AdminOverviewAutoRefresh/);
 });
 
@@ -293,11 +308,11 @@ test("Phase 1 uses validated account roles and human audit counts", () => {
  assert.match(service, /by: \["status", "role"\]/);
  assert.match(service, /adminUserId: \{ not: null \}/);
  assert.match(service, /summarizeAccountStatusRows\(lifecycle.userGroups\)/);
- assert.match(display, /Account status breakdown/);
- assert.match(display, /data.users.activeCustomers/);
- assert.match(display, /data.users.activeAdmins/);
- assert.match(display, /data.users.activeSupport/);
- assert.match(display, /data.users.pendingDeletion/);
+ for (const backendField of ["activeCustomers", "activeAdmins", "activeSupport", "pendingDeletion"]) {
+   assert.match(service, /\busers\b/);
+   assert.ok(!display.includes("data.users." + backendField), backendField + " should not repeat in the Overview");
+ }
+ assert.doesNotMatch(display, /Account status breakdown/);
  assert.match(display, /Staging data/);
  assert.match(display, /Production data/);
  assert.match(adminData, /source: log.adminUserId \? "human" as const : "system" as const/);
