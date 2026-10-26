@@ -1,4 +1,4 @@
-import { AdminPageShell } from "@/components/admin/AdminPageShell";
+import { AdminPageShell, AdminSectionCard } from "@/components/admin/AdminPageShell";
 import {
   AdminOverviewDashboard,
   AdminOverviewSecondary,
@@ -35,8 +35,9 @@ export default async function AdminPage({ searchParams }: PageProps) {
       title="Operations Dashboard"
       hideHeader
     >
-      {overview.status === "ok" ? (
-        <AdminOverviewDashboard
+      <AdminSectionCard className="min-w-0 p-4 sm:p-6 lg:p-7">
+        {overview.status === "ok" ? (
+          <AdminOverviewDashboard
           data={overview.data}
           system={system}
           activity={activity}
@@ -52,7 +53,8 @@ export default async function AdminPage({ searchParams }: PageProps) {
           </section>
           <AdminOverviewSecondary system={system} activity={activity} />
         </>
-      )}
+        )}
+      </AdminSectionCard>
     </AdminPageShell>
   );
 }
