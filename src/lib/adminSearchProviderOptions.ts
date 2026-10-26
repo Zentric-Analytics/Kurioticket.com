@@ -17,7 +17,6 @@ export function buildAdminSearchProviderOptions(
   for (const name of [
     ...integrations.map((integration) => integration.provider),
     OWNED_CATALOGUE_PROVIDER,
-    selectedProvider,
   ]) {
     const clean = name?.trim();
     if (!clean || clean.length > 100 || /[\u0000-\u001f\u007f]/.test(clean)) continue;
@@ -27,9 +26,22 @@ export function buildAdminSearchProviderOptions(
     names.push(clean);
   }
 
-  names.sort((a, b) => a.localeCompare(b, "en"));
-  return [
-    { value: "", label: "All providers" },
-    ...names.map((name) => ({ value: name, label: name })),
-  ];
+  const options = names.map((name) => ({ value: name, label: name }));
+  const cleanSelected = selectedProvider?.trim();
+  if (cleanSelected && cleanSelected.length <= 100 && !/[\u0000-\u001f\u007f]/.test(cleanSelected)) {
+    const selectedKey = cleanSelected.toLocaleLowerCase("en");
+    const matchingIndex = options.findIndex(({ label }) => label.toLocaleLowerCase("en") === selectedKey);
+    if (matchingIndex >= 0) {
+      // Keep the canonical display label, but the exact selected value must
+      // exist in options: SearchMonitorSelect compares values case-sensitively.
+      options[matchingIndex] = { ...options[matchingIndex], value: selectedProvider };
+    } else {
+      // Historical provider names can remain selected even if not in the
+      // current integration registry.
+      options.push({ value: selectedProvider, label: cleanSelected });
+    }
+  }
+
+  options.sort((a, b) => a.label.localeCompare(b.label, "en"));
+  return [{ value: "", label: "All providers" }, ...options];
 }
