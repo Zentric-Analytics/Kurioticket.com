@@ -505,3 +505,15 @@ test("provider filter SQL uses exact correlated request IDs before cursor and su
   assert.match(page.sql, /"createdAt"/);
   assert.equal(page.values.includes("search-1"), true);
 });
+
+test("search monitor provider lookup uses bounded set-based SQL instead of many JSON OR predicates", () => {
+  const sql = __adminOperationalReadCoreTest.providerLogsForPageSql(
+    ["request-1", "request-2", "request-1"], ["flight-search", "hotel-search"], "staging",
+  );
+  assert.match(sql.sql, /"ApiProviderLog"/);
+  assert.match(sql.sql, /'requestId'/);
+  assert.match(sql.sql, /'trackId'/);
+  assert.match(sql.sql, /LIMIT 2001/);
+  assert.equal(sql.values.filter(value => value === "request-1").length, 2);
+  assert.equal(sql.values.includes("staging"), true);
+});
