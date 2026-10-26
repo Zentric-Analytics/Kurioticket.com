@@ -218,8 +218,8 @@ test("production layout uses balanced desktop columns and keeps the activity fee
   assert.match(display, /<div className="grid gap-y-0">\s*\{data\.providers\.map/);
   assert.match(display, /sm:grid-cols-2 lg:grid-cols-4/);
   assert.match(display, /lg:grid-cols-2/);
-  assert.match(display, /<WorkloadCard title="Account Deletion Workload"[\s\S]*?<\/div>\s*<div className="mt-7">\s*<ActivityFeed activity=\{activity\} \/>/);
-  assert.match(dashboard, /lg:grid-cols-\[8px_minmax\(125px,0\.75fr\)_minmax\(0,2fr\)_minmax\(150px,0\.9fr\)_minmax\(135px,1fr\)\]/);
+  assert.match(display, /<WorkloadCard title="Account Deletion Workload"[\s\S]*?<\/div>\s*<div className="mt-7 min-w-0">\s*<ActivityFeed activity=\{activity\} \/>/);
+  assert.match(dashboard, /lg:grid-cols-\[8px_minmax\(140px,0\.75fr\)_minmax\(0,2\.4fr\)_minmax\(145px,0\.9fr\)_minmax\(130px,0\.9fr\)\]/);
 });
 
 test("production layout preserves original page and status backgrounds", () => {
@@ -245,4 +245,29 @@ test("Overview has one Searches-style white parent surface around all sections",
   assert.match(shared, /border-slate-200 bg-white shadow-sm/);
   assert.match(display, /<AdminOverviewAutoRefresh \/>/);
   assert.match(display, /<AdminOverviewRangeSelect range=\{range\} \/>/);
+});
+
+
+test("Recent Admin Activity is outside the two-column workload grid and uses the whole parent width", () => {
+  const section = display.slice(display.indexOf('      <div className="mt-7 grid items-start gap-8 lg:grid-cols-2">'));
+  const twoColumnEnd = section.indexOf('      </div>\n\n      <div className="mt-7 min-w-0">');
+  const feed = section.indexOf('<ActivityFeed activity={activity} />');
+  assert.ok(twoColumnEnd > 0, "the two-column workload grid must end before the audit feed");
+  assert.ok(feed > twoColumnEnd, "activity must be a separate full-width sibling");
+  assert.equal((display.match(/<ActivityFeed activity=\{activity\} \/>/g) || []).length, 1, "only one feed in the normal Overview");
+  assert.match(dashboard, /activity\.map\(\(item\) =>/);
+  for (const value of ["humanize(item.title)", "item.detail", "item.timestamp", "item.title"]) {
+    assert.ok(dashboard.includes(value), value);
+  }
+  assert.match(dashboard, /lg:col-start-auto lg:whitespace-nowrap/);
+  assert.match(dashboard, /min-w-0 break-words font-mono/);
+  assert.doesNotMatch(dashboard, /truncate|line-clamp/);
+});
+
+test("Activity layout retains the existing white parent and does not change Overview backgrounds or actions", () => {
+  assert.match(page, /<AdminSectionCard className="min-w-0 p-4 sm:p-6 lg:p-7">/);
+  assert.doesNotMatch(dashboard, /bg-white|bg-slate-50|bg-indigo-50|bg-\[#/);
+  assert.match(dashboard, /<Link href="\/admin\/logs"/);
+  assert.match(display, /<WorkloadCard title="Support Workload"/);
+  assert.match(display, /<WorkloadCard title="Account Deletion Workload"/);
 });
