@@ -113,7 +113,7 @@ export function AdminOverviewRangeSelect({ range }: { range: OverviewRange }) {
             openMenu();
           }
         }}
-        className="inline-flex h-9 min-w-[145px] items-center gap-1.5 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-2.5 text-[12px] font-medium leading-none text-slate-700 shadow-sm transition-colors hover:border-slate-300 hover:bg-slate-50 focus-visible:border-slate-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-300 disabled:cursor-wait disabled:opacity-60"
+        className="inline-flex h-9 min-w-[145px] items-center gap-1.5 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-2.5 text-[11px] font-medium leading-none text-slate-700 shadow-sm transition-colors hover:border-slate-300 hover:bg-slate-50 focus-visible:border-slate-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-300 disabled:cursor-wait disabled:opacity-60"
       >
         <CalendarDays size={14} className="shrink-0 text-indigo-600" aria-hidden="true" />
         <span className="min-w-0 flex-1 text-left">{rangeLabels[range]}</span>
@@ -139,7 +139,7 @@ export function AdminOverviewRangeSelect({ range }: { range: OverviewRange }) {
                 tabIndex={-1}
                 onClick={() => selectRange(option)}
                 onKeyDown={(event) => handleOptionKeyDown(event, index)}
-                className={"flex h-9 w-full items-center justify-between gap-2 rounded-lg px-2.5 text-left text-[12px] font-medium transition-colors focus:bg-slate-100 focus:outline-none " +
+                className={"flex h-9 w-full items-center justify-between gap-2 rounded-lg px-2.5 text-left text-[11px] font-medium transition-colors focus:bg-slate-100 focus:outline-none " +
                   (selected ? "bg-indigo-50 text-indigo-700" : "text-slate-700 hover:bg-slate-50")}
               >
                 <span>{rangeLabels[option]}</span>
