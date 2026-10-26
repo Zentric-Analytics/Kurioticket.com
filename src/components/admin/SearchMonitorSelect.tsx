@@ -13,6 +13,7 @@ export function SearchMonitorSelect({
   appearance = "underlined",
   align = "start",
   autoSubmit = false,
+  clearFieldNamesOnChange = [],
 }: {
   label: string;
   name: string;
@@ -21,6 +22,8 @@ export function SearchMonitorSelect({
   appearance?: "underlined" | "plain";
   align?: "start" | "end";
   autoSubmit?: boolean;
+  /** Omit a stale scoped field from submission when this filter changes. */
+  clearFieldNamesOnChange?: readonly string[];
 }) {
   const id = useId();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -71,9 +74,22 @@ export function SearchMonitorSelect({
   };
   const choose = (next: string) => {
     if (!options.some((option) => option.value === next)) return;
+    const changed = next !== selected;
+    if (changed) {
+      // A different identity must not carry the former customer's userId or
+      // visitorId into a new query. Disabling these existing hidden fields
+      // removes them from FormData immediately, before React commits state.
+      const form = triggerRef.current?.form;
+      for (const fieldName of clearFieldNamesOnChange) {
+        const field = form?.elements.namedItem(fieldName);
+        if (field instanceof HTMLInputElement && field.type === "hidden") {
+          field.disabled = true;
+        }
+      }
+    }
     setSelected(next);
     close();
-    if (autoSubmit && next !== selected) {
+    if (autoSubmit && changed) {
       // Request submission only after writing the selected value into the real
       // hidden form control: React state does not commit synchronously.
       if (hiddenRef.current) {
