@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
+import { SearchMonitorTable } from "@/components/admin/SearchMonitorTable";
 import { adminOperationalReads } from "@/services/adminOperationalReadService";
 
 export const metadata = { title: "Admin Searches" };
@@ -15,7 +16,12 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
   const raw = await searchParams;
   const range = resolveRange(raw);
   const params = toBackendParams(raw, range);
-  const result = await loadAllSearches(params);
+  const listParams = new URLSearchParams(params);
+  listParams.set("limit", "100");
+  const [result, summary] = await Promise.all([
+    adminOperationalReads.searches.list(listParams),
+    adminOperationalReads.searches.summary(params),
+  ]);
 
   return (
     <AdminPageShell title="Searches" hideHeader>
@@ -36,13 +42,13 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
           </Link>
         </div>
 
-        {result.status === "ok" ? (
+        {result.status === "ok" && summary.status === "ok" ? (
           <>
             <div className="grid grid-cols-2 border-b border-[#D7DCE3] md:grid-cols-4">
-              <Metric label="All searches" value={result.data.items.length} tone="all" />
-              <Metric label="Complete" value={result.data.items.filter((item) => item.status === "SUCCESS").length} tone="complete" />
-              <Metric label="Partial" value={result.data.items.filter((item) => item.status === "PARTIAL").length} tone="partial" />
-              <Metric label="Failed" value={result.data.items.filter((item) => item.status === "FAILED").length} tone="failed" />
+              <Metric label="All searches" value={summary.data.total} tone="all" />
+              <Metric label="Complete" value={summary.data.success} tone="complete" />
+              <Metric label="Partial" value={summary.data.partial} tone="partial" />
+              <Metric label="Failed" value={summary.data.failed} tone="failed" />
             </div>
 
             <form action="/admin/searches/activity" className="border-b border-[#D7DCE3]">
@@ -61,6 +67,7 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
                     { label: "Flights", value: "FLIGHT" },
                     { label: "Hotels", value: "HOTEL" },
                     { label: "Cars", value: "CAR" },
+                    { label: "Packages", value: "PACKAGE" },
                   ].map((item) => {
                     const active = one(raw.product) === item.value;
                     return (
@@ -82,11 +89,12 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
 
                 <div className="flex items-center gap-5">
                   <label className="sr-only" htmlFor="search-range">Date range</label>
-                  <select id="search-range" name="range" defaultValue={range === "custom" ? "all" : range} className={filterControl + " w-[86px]"}>
+                  <select id="search-range" name="range" defaultValue={range} className={filterControl + " w-[86px]"}>
                     <option value="today">Today</option>
                     <option value="7d">Last 7 days</option>
                     <option value="30d">Last 30 days</option>
                     <option value="all">All time</option>
+                    {range === "custom" ? <option value="custom">Custom</option> : null}
                   </select>
 
                   <label className="sr-only" htmlFor="search-environment">Environment</label>
@@ -142,59 +150,17 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
               </div>
             </form>
 
-            {result.data.items.length ? (
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[1120px] border-collapse text-left">
-                  <thead>
-                    <tr className="border-b border-[#D7DCE3] text-[10px] uppercase tracking-[0.12em] text-[#6B7280]">
-                      <th className="px-2 py-3 font-semibold">Created</th>
-                      <th className="px-2 py-3 font-semibold">Product</th>
-                      <th className="px-2 py-3 font-semibold">Route / stay</th>
-                      <th className="px-2 py-3 font-semibold">Market</th>
-                      <th className="px-2 py-3 font-semibold">Results</th>
-                      <th className="px-2 py-3 font-semibold">Providers</th>
-                      <th className="px-2 py-3 font-semibold">Time</th>
-                      <th className="px-2 py-3 font-semibold">Identity</th>
-                      <th className="px-2 py-3 font-semibold">Status</th>
-                      <th className="px-2 py-3 font-semibold"><span className="sr-only">Action</span></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {result.data.items.map((search) => (
-                      <tr key={search.id} className="border-b border-[#E5E7EB] text-[12px] text-[#374151] hover:bg-[#FAFAFA]">
-                        <td className="whitespace-nowrap px-2 py-3 align-top">{formatCreated(search.createdAt)}</td>
-                        <td className="px-2 py-3 align-top font-semibold text-[#111827]">{productLabel(search.product)}</td>
-                        <td className="max-w-[260px] px-2 py-3 align-top">
-                          <p className="font-semibold text-[#111827]">{routeLabel(search.origin, search.destination)}</p>
-                          {formatSearchDates(search.checkIn, search.checkOut) ? (
-                            <p className="mt-0.5 text-[10px] leading-4 text-[#9CA3AF]">{formatSearchDates(search.checkIn, search.checkOut)}</p>
-                          ) : null}
-                        </td>
-                        <td className="whitespace-nowrap px-2 py-3 align-top">{search.currency || search.market || "—"}</td>
-                        <td className="px-2 py-3 align-top">{search.resultCount.toLocaleString()}</td>
-                        <td className="px-2 py-3 align-top">{search.providers.length ? search.providers.length : "—"}</td>
-                        <td className="whitespace-nowrap px-2 py-3 align-top">{formatLatency(search.latencyMs)}</td>
-                        <td className="px-2 py-3 align-top">{identityLabel(search.identity.kind)}</td>
-                        <td className="px-2 py-3 align-top"><MonitorStatus status={search.status} /></td>
-                        <td className="whitespace-nowrap px-2 py-3 text-right align-top">
-                          <Link
-                            href={"/admin/searches/" + search.id + "?environment=" + search.environment}
-                            className="font-semibold text-emerald-700 hover:text-emerald-900 hover:underline"
-                          >
-                            Open
-                          </Link>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <SearchState title="No searches found" message="No recorded searches match these filters." />
-            )}
+            <SearchMonitorTable
+              initialItems={result.data.items}
+              initialCursor={result.data.nextCursor}
+              query={params.toString()}
+            />
           </>
         ) : (
-          <ReadError status={result.status} issues={"issues" in result ? result.issues : undefined} />
+          <ReadError
+            status={result.status !== "ok" ? result.status : summary.status}
+            issues={result.status === "invalid" ? result.issues : summary.status === "invalid" ? summary.issues : undefined}
+          />
         )}
       </div>
     </AdminPageShell>
@@ -220,53 +186,6 @@ function Metric({ label, value, tone }: { label: string; value: number; tone: "a
   );
 }
 
-function MonitorStatus({ status }: { status: "SUCCESS" | "PARTIAL" | "FAILED" }) {
-  const value = {
-    SUCCESS: { label: "Complete", dot: "bg-emerald-500", text: "text-emerald-700" },
-    PARTIAL: { label: "Partial", dot: "bg-amber-400", text: "text-amber-700" },
-    FAILED: { label: "Failed", dot: "bg-rose-500", text: "text-rose-700" },
-  }[status];
-
-  return (
-    <span className={"inline-flex items-center gap-1.5 font-semibold " + value.text}>
-      <span className={"h-1.5 w-1.5 rounded-full " + value.dot} />
-      {value.label}
-    </span>
-  );
-}
-
-async function loadAllSearches(params: URLSearchParams) {
-  const query = new URLSearchParams(params);
-  query.delete("cursor");
-  query.set("limit", "100");
-
-  const first = await adminOperationalReads.searches.list(query);
-  if (first.status !== "ok") return first;
-
-  const items = [...first.data.items];
-  let nextCursor = first.data.nextCursor;
-  const seen = new Set<string>();
-
-  while (nextCursor && !seen.has(nextCursor)) {
-    seen.add(nextCursor);
-    const nextQuery = new URLSearchParams(query);
-    nextQuery.set("cursor", nextCursor);
-    const next = await adminOperationalReads.searches.list(nextQuery);
-    if (next.status !== "ok") return next;
-    items.push(...next.data.items);
-    nextCursor = next.data.nextCursor;
-  }
-
-  return {
-    status: "ok" as const,
-    data: {
-      scope: first.data.scope,
-      items,
-      nextCursor: null,
-    },
-  };
-}
-
 function resolveRange(raw: Record<string, string | string[] | undefined>): RangeKey {
   const requested = one(raw.range);
   if (requested === "today" || requested === "7d" || requested === "30d" || requested === "all") return requested;
@@ -283,7 +202,12 @@ function toBackendParams(raw: Record<string, string | string[] | undefined>, ran
     else if (value) params.set(key, value);
   }
 
-  if (!params.has("from") && !params.has("to") && range !== "all" && range !== "custom") {
+  if (range !== "custom") {
+    params.delete("from");
+    params.delete("to");
+  }
+
+  if (range !== "all" && range !== "custom") {
     const now = new Date();
     const from = new Date(now);
     if (range === "today") from.setHours(0, 0, 0, 0);
@@ -299,6 +223,7 @@ function productHref(raw: Record<string, string | string[] | undefined>, product
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(raw)) {
     if (key === "cursor" || key === "limit" || key === "product") continue;
+    if (range !== "custom" && (key === "from" || key === "to")) continue;
     if (Array.isArray(value)) value.forEach((item) => params.append(key, item));
     else if (value) params.set(key, value);
   }
