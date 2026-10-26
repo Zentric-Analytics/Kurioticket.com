@@ -608,6 +608,7 @@ function compareAlerts(a: AdminOperationalAlert, b: AdminOperationalAlert) {
     CMS: 3,
     HOMEPAGE_FARES: 4,
     FLIGHT_STATUS: 5,
+    CONFIRMED_TRIPS: 6,
   };
   return sourceRank[a.source] - sourceRank[b.source] || a.title.localeCompare(b.title);
 }
