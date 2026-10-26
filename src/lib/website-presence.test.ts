@@ -29,8 +29,8 @@ test("public website presence excludes mobile preview, admin and APIs", () => {
 
 test("heartbeat frequency is below expiration time and counts reject bad data", () => {
   assert.ok(websitePresenceHeartbeatMs < websitePresenceWindowSeconds * 1000);
-  assert.equal(checkedPresenceCount(0n), 0);
-  assert.equal(checkedPresenceCount(42n), 42);
+  assert.equal(checkedPresenceCount(BigInt(0)), 0);
+  assert.equal(checkedPresenceCount(BigInt(42)), 42);
   for (const invalid of [Number.NaN, -1, 1.5, Number.MAX_SAFE_INTEGER + 1]) {
     assert.throws(() => checkedPresenceCount(invalid));
   }
