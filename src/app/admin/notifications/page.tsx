@@ -170,9 +170,9 @@ export default async function AdminNotificationsPage() {
       </div>
 
       <AdminSectionCard className="mt-4 p-5">
-        <h2 className="font-black text-slate-950">Phase 1 monitoring boundaries</h2>
+        <h2 className="font-black text-slate-950">Monitoring boundaries</h2>
         <p className="mt-2 text-sm leading-6 text-slate-600">
-          Alerts are currently derived from System/database health, ready provider operational health, Email Delivery, CMS integrity, Homepage Fare readiness, and configured Flight Status telemetry. Kurioticket does not fabricate alerts for integrations that are intentionally not configured or for booking-confirmation volume where no trustworthy expected cadence exists.
+          Alerts are derived from authoritative System/database health, ready provider operational health, Email Delivery, CMS integrity, Homepage Fare readiness, configured Flight Status telemetry, and authenticated Confirmed Trips delivery failures when a provider is explicitly configured. Kurioticket does not fabricate alerts for inactive integrations or for booking-confirmation volume where no trustworthy expected cadence exists.
         </p>
       </AdminSectionCard>
     </AdminPageShell>
