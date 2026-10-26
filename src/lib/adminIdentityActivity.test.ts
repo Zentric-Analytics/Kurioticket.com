@@ -3,11 +3,11 @@ import test from "node:test";
 
 import {
   ACTIVITY_PAGE_SIZE, activityEnvironmentScope, allowedActivityStages, activityHref, activityWindow,
-  compactActivityDisplayRows, decodeActivityCursor, encodeActivityCursor, excludeCanonicalLegacyRows, groupActivityRows, relatedJourneysWindow,
+  compactActivityDisplayRows, decodeActivityCursor, encodeActivityCursor, excludeCanonicalLegacyRows, groupActivityRows, groupContiguousActivityRows, latestVisibleActivityAt, relatedJourneysWindow,
   parseActivityFilters, sourceActivitySeek, validActivityIdentity,
   type ActivityFilters,
 } from "./adminIdentityActivity";
-import { eligibleJourneyLinkedVisitorWhere, eligibleLinkedVisitorWhere, type ActivityRow } from "./adminIdentityJourney";
+import { eligibleJourneyLinkedVisitorWhere, eligibleLinkedVisitorWhere, mergeAdminActivity, type ActivityRow } from "./adminIdentityJourney";
 
 const filters: ActivityFilters = {
   tab: "all", stage: "all", product: "all", from: "", to: "", q: "",
@@ -229,4 +229,69 @@ test("unknown-provider selections remain individually visible even if descriptio
   assert.deepEqual(compactActivityDisplayRows(recorded).map(item => item.kind), ["event", "event", "event"]);
   assert.deepEqual(compactActivityDisplayRows(recorded.map(row => ({ ...row, provider: " " }))).map(item => item.kind), ["event", "event", "event"]);
   assert.deepEqual(compactActivityDisplayRows(recorded.map(row => ({ ...row, provider: "Known partner", detail: "" }))).map(item => item.kind), ["event", "event", "event"]);
+});
+
+test("Activity Explorer allows only supported sort values and binds cursor to the order", () => {
+  const newest = parseActivityFilters({});
+  const oldest = parseActivityFilters({ order: "oldest" });
+  assert.equal(newest.ok, true);
+  assert.equal(oldest.ok, true);
+  if (!newest.ok || !oldest.ok) return;
+  assert.equal(newest.filters.order, "newest");
+  assert.equal(oldest.filters.order, "oldest");
+  assert.equal(parseActivityFilters({ order: "random" }).ok, false);
+  const row = { id: "j-qaevent104", at: new Date("2026-10-22T12:00:00Z") };
+  const oldestToken = encodeActivityCursor(row, "guest", id, oldest.filters, "staging");
+  assert.deepEqual(decodeActivityCursor(oldestToken, "guest", id, oldest.filters, "staging"), {
+    id: row.id, at: row.at.toISOString(),
+  });
+  assert.equal(decodeActivityCursor(oldestToken, "guest", id, newest.filters, "staging"), null);
+  const classicToken = encodeActivityCursor(row, "guest", id, filters, "staging");
+  assert.deepEqual(decodeActivityCursor(classicToken, "guest", id, newest.filters, "staging"), {
+    id: row.id, at: row.at.toISOString(),
+  }); // Existing newest-first cursor links stay valid.
+});
+
+test("oldest-first keyset and merged sources retain stable ties without repeating page boundaries", () => {
+  const at = new Date("2026-10-22T17:48:00.000Z");
+  const cursor = { at: at.toISOString(), id: "j-cmvuevent104" };
+  assert.deepEqual(sourceActivitySeek(cursor, "e", "oldest"), { createdAt: { gt: at } });
+  assert.deepEqual(sourceActivitySeek(cursor, "s", "oldest"), { createdAt: { gte: at } });
+  assert.deepEqual(sourceActivitySeek(cursor, "j", "oldest"), {
+    OR: [{ createdAt: { gt: at } }, { createdAt: at, id: { gt: "cmvuevent104" } }],
+  });
+  const previous = { id: "s-older", label: "Search completed", detail: "Old activity", at: new Date(at.getTime() - 3000) };
+  const newer = { id: "j-newer", label: "Results viewed", detail: "Later activity", at: new Date(at.getTime() + 3000) };
+  const sameAtA = { id: "j-a", label: "Offer selected", detail: "Same time", at };
+  const sameAtB = { id: "j-b", label: "Offer selected", detail: "Same time", at };
+  const ordered = mergeAdminActivity([newer, sameAtB, sameAtA], [previous], 10, "oldest");
+  assert.deepEqual(ordered.map(x => x.id), ["s-older", "j-a", "j-b", "j-newer"]);
+  assert.deepEqual(mergeAdminActivity([newer, sameAtB, sameAtA], [previous], 10).map(x => x.id),
+    ["j-newer", "j-a", "j-b", "s-older"]);
+});
+
+test("visible activity header uses maximum timestamp regardless of newest/oldest sorting", () => {
+  const at = ["2026-10-22T09:00:00Z", "2026-10-22T13:00:00Z", "2026-10-22T11:00:00Z"];
+  const events: ActivityRow[] = at.map((stamp, i) => ({
+    id: "j-qa-" + i, at: new Date(stamp), label: "Search completed", detail: "Flight",
+  }));
+  const latest = "2026-10-22T13:00:00.000Z";
+  assert.equal(latestVisibleActivityAt(events)?.toISOString(), latest);
+  assert.equal(latestVisibleActivityAt([...events].reverse())?.toISOString(), latest);
+  assert.equal(latestVisibleActivityAt([]), null);
+});
+
+test("contiguous journey grouping preserves interleaved event chronology", () => {
+  const at = new Date("2026-10-22T10:00:00Z");
+  const events: ActivityRow[] = [
+    { id: "j-a10", at, journeyId: "journey-a", label: "A 10", detail: "Flight", product: "FLIGHT" },
+    { id: "j-b09", at: new Date(at.getTime() - 3600000), journeyId: "journey-b", label: "B 09", detail: "Hotel", product: "HOTEL" },
+    { id: "j-a08", at: new Date(at.getTime() - 7200000), journeyId: "journey-a", label: "A 08", detail: "Flight", product: "FLIGHT" },
+  ];
+  const groups = groupContiguousActivityRows(events);
+  assert.deepEqual(groups.map(group => group.journeyId), ["journey-a", "journey-b", "journey-a"]);
+  assert.deepEqual(groups.flatMap(group => group.events.map(row => row.id)), events.map(row => row.id));
+  assert.equal(new Set(groups.map(group => group.key)).size, 3);
+  const adjacent = groupContiguousActivityRows([events[0], { ...events[0], id: "j-a0959" }, events[1]]);
+  assert.deepEqual(adjacent.map(group => group.events.length), [2, 1]);
 });

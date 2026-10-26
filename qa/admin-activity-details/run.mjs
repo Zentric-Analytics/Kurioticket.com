@@ -49,12 +49,17 @@ await put("mocks/auth-guards.js", 'export async function requireAdminSession(){r
 await put("mocks/stagingSafety.js", 'export function getPublicEnvironment(){return "staging";}');
 await put("mocks/activity.js", await readFile(path.join(qa, "activity-fixture.js"), "utf8"));
 await put("mocks/prisma.js", await readFile(path.join(qa, "old-drawer-fixture.js"), "utf8"));
-// Before/after must compare the SAME full-page Activity UI. Capture the
-// pre-redesign implementation at the recorded dev SHA, never real customer data.
-const oldActivity = execFileSync("git", [
-  "show",
-  "d3c81bac7176fedef72785623f98a4e20c67c7ee:src/app/admin/users/[kind]/[id]/activity/page.tsx",
+// Compare actual, unmodified Activity page AND timeline from the latest
+// dev before this PR, with the same fictional identity and events.
+const baseline = "094079a9e16159518bac91e4d01a2dddfd886189";
+const oldTimeline = execFileSync("git", [
+  "show", baseline + ":src/components/admin/ActivityTimeline.tsx",
 ], { cwd: repo, encoding: "utf8" });
+await put("app/before/BeforeActivityTimeline.tsx", oldTimeline);
+const oldActivity = execFileSync("git", [
+  "show", baseline + ":src/app/admin/users/[kind]/[id]/activity/page.tsx",
+], { cwd: repo, encoding: "utf8" })
+  .replace('from "@/components/admin/ActivityTimeline"', 'from "./BeforeActivityTimeline"');
 await put("app/before/OldActivityPage.tsx", oldActivity);
 await put("app/before/page.tsx", [
   'import OldActivityPage from "./OldActivityPage";',

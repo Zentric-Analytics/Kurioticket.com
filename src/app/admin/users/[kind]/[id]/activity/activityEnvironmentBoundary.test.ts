@@ -7,11 +7,14 @@ const timeline = readFileSync(new URL("../../../../../../components/admin/Activi
 const reader = readFileSync(new URL("../../../../../../services/adminIdentityActivityService.ts", import.meta.url), "utf8");
 const filters = readFileSync(new URL("../../../../../../lib/adminIdentityActivity.ts", import.meta.url), "utf8");
 
-test("the customer timeline identifies its data environment near the account heading", () => {
-  assert.match(page, /\{environment\} records<\/span>/);
-  assert.match(timeline, /No recorded activity is linked to this identity here/);
-  assert.match(timeline, /Searches without an eligible identity link, or those made on a different environment, will not appear here/);
-  assert.match(page, /Only recorded \{environment\} events are displayed/);
+test("Activity Explorer identifies its environment without repeating the visitor type or inventing history", () => {
+  assert.match(page, /kind === "guest" \? "Visitor" : data.title/);
+  assert.match(page, /Analytics consent/);
+  assert.doesNotMatch(page, /Guest · Not an account|Unregistered visitor with active analytics consent/);
+  assert.match(timeline, /No activity recorded in this view/);
+  assert.match(timeline, /No matching recorded activity is currently linked to this identity in \{environment\}/);
+  assert.match(page, /Only recorded, consented \{environment\} activity is displayed/);
+  assert.match(page, /Missing records do not establish that no visit occurred/);
 });
 
 test("the activity reader never includes cross-environment or unowned history in an identity timeline", () => {
