@@ -31,7 +31,7 @@ test("confirmed trips page does not invent an active confirmation provider feed"
   assert.match(page, /Current search-provider confirmation feed/);
   assert.match(page, /readiness\.currentSearchProviderConfirmationFeed === "none" \? "None" : "Configured"/);
   assert.match(page, /configured webhook secret means the signed callback boundary is ready; it does not mean a provider agreement or live confirmation feed is active/i);
-  assert.match(page, /there is no separate provider-name allowlist in the current contract/i);
+  assert.match(page, /binds the signing secret to a single configured provider/i);
 });
 
 test("confirmed trips readiness exposes configuration state without exposing the secret", () => {
@@ -84,7 +84,7 @@ test("confirmed-trip copy describes canonical confirmation state without oversta
 
 
 test("confirmed-trip readiness facts are rendered from authoritative readiness state", () => {
-  assert.match(page, /readiness\.credentialModel === "shared_secret_only" \? "One shared secret" : "Unknown"/);
+  assert.match(page, /readiness\.credentialModel === "single_provider_bound_secret" \? "Single provider \+ dedicated secret" : "Unknown"/);
   assert.match(page, /readiness\.currentSearchProviderConfirmationFeed === "none" \? "None" : "Configured"/);
 });
 
@@ -166,4 +166,16 @@ test("Previously conditional trip records remain truthful and read-only", () => 
   assert.match(page, /No providers or counts are assumed/);
   assert.match(page, /Provider handoff ≠ confirmation/);
   assert.doesNotMatch(page, /<form|method:\s*["'](?:POST|PATCH|DELETE)/);
+});
+
+
+test("confirmation delivery health is read-only, provider-bound and truthful", () => {
+  assert.match(page, /getConfirmationDeliveryHealth/);
+  assert.match(page, /Confirmation delivery health/);
+  assert.match(page, /!readiness.feedReady/);
+  assert.match(page, /Delivery telemetry is unavailable/);
+  assert.match(page, /No delivery counts have been assumed/);
+  assert.match(page, /deliveryHealth.rejectedLast24h/);
+  assert.match(page, /Authenticated provider callback receipts/);
+  assert.doesNotMatch(page, /Cancel booking|Refund trip|Create confirmed trip/);
 });
