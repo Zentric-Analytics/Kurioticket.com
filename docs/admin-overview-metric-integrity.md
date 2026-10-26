@@ -22,7 +22,7 @@ The overview refreshes its server snapshot every minute while the admin tab is v
 
 Add privacy-reviewed, cross-platform presence heartbeats with explicit foreground/background behavior and server-side deduplication, an environment dimension, and coverage indicators. Validate consent withdrawal, expiry, sign-out, and multiple tabs/devices. Only then rename the observed metric to a carefully scoped live-presence measure. Do not treat AccountSession.lastSeenAt or Visitor.lastSeenAt as a perfect proof of a browser currently open.
 
-## Concented website presence (rolling 90 seconds)
+## Consented website presence (rolling 90 seconds)
 
 The **Online website visitors (observed)** card is based on explicit foreground website heartbeats, not the previous `Visitor.lastSeenAt` or customer account lifecycle counts. The website sends POST `/api/identity/presence` every 25 seconds while the public page is visible and the existing optional analytics consent has been confirmed. The endpoint checks a valid HttpOnly visitor cookie, a valid same-origin browser POST, the current consent record, and the authenticated account when applicable. It does not accept browser-supplied user IDs.
 
