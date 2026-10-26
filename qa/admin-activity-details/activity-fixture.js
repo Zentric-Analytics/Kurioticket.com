@@ -30,11 +30,18 @@ const olderRecorded = [
     stage: "SEARCH_COMPLETED", product: "HOTEL", searchHistoryId: "qa-older-search",
   }),
 ];
+const newerRecorded = [
+  journey("qa-journey-newer", new Date("2026-10-23T08:00:00Z"), {
+    id: "j-qa-newer-search", at: new Date("2026-10-23T08:00:00Z"),
+    label: "Search completed", detail: "FLIGHT · Recent recorded search · SUCCESS",
+    stage: "SEARCH_COMPLETED", product: "FLIGHT", searchHistoryId: "qa-newer-search",
+  }),
+];
 
 export async function loadAdminIdentityActivity(kind, id, filters, cursor) {
   if (!/^[a-z0-9_-]{6,80}$/i.test(id)) return { status: "not_found" };
   if (kind === "user" && id === "qa-registered-unavailable-0001") return { status: "unavailable" };
-  if (cursor && cursor !== "older-qa-page") return { status: "invalid_cursor" };
+  if (cursor && !["older-qa-page", "newer-qa-page"].includes(cursor)) return { status: "invalid_cursor" };
   const tabMatch = stage => filters.tab === "all"
     || (filters.tab === "searches" && ["SEARCH_COMPLETED", "RESULTS_VIEWED"].includes(stage))
     || (filters.tab === "selections" && stage === "OFFER_SELECTED")
@@ -47,12 +54,19 @@ export async function loadAdminIdentityActivity(kind, id, filters, cursor) {
     && (!filters.to || row.at < new Date(new Date(filters.to + "T00:00:00.000Z").getTime() + 86400000));
   const currentRows = id === "qa-no-events-0001" ? [] : recorded.filter(matches);
   const olderRows = id === "qa-no-events-0001" ? [] : olderRecorded.filter(matches);
-  const rows = cursor === "older-qa-page" ? olderRows : currentRows;
+  const newerRows = id === "qa-no-events-0001" ? [] : newerRecorded.filter(matches);
+  const rows = cursor === "older-qa-page" ? olderRows
+    : cursor === "newer-qa-page" ? newerRows
+    : filters.order === "oldest" ? [...currentRows].reverse() : currentRows;
   return { status: "ok", data: {
     id, kind, title: kind === "guest" ? "Guest visitor" : "QA registered customer",
     email: kind === "guest" ? null : "customer.qa@example.invalid",
     role: kind === "guest" ? null : "USER",
     status: kind === "guest" ? "Anonymous" : "ACTIVE",
-    firstSeenAt: time(39), lastSeenAt: time(48), environment: "staging", events: rows, nextCursor: !cursor && olderRows.length ? "older-qa-page" : null,
+    firstSeenAt: time(39), lastSeenAt: time(48), environment: "staging",
+    events: rows,
+    nextCursor: !cursor
+      ? (filters.order === "oldest" ? (newerRows.length ? "newer-qa-page" : null) : (olderRows.length ? "older-qa-page" : null))
+      : null,
   } };
 }
