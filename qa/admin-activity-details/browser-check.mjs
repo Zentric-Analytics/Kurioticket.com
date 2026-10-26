@@ -30,7 +30,7 @@ try {
       await page.goto(base + "/before", { waitUntil: "domcontentloaded" });
       await expect(page.getByTestId("fixture-label")).toContainText("synthetic activity");
       await expect(page.getByRole("heading", { name: "Guest visitor" })).toBeVisible();
-      await expect(page.getByRole("heading", { name: "Activity history" })).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Activity timeline" })).toBeVisible();
       await expect(page.getByRole("button", { name: "Manage guest qa-guest-activity-0001" })).toBeVisible();
       await page.screenshot({ path: output + "/before-view-activity-" + width + ".png", fullPage: true });
     });
