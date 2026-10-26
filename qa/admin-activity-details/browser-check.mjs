@@ -142,7 +142,7 @@ try {
     await expect(page).toHaveURL(/q=LOS/);
     await expect(page).toHaveURL(/from=2026-10-22/);
     await expect(page).toHaveURL(/to=2026-10-22/);
-    await expect(page.getByRole("heading", { name: "Activity timeline" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Activity history" })).toBeVisible();
     await expect(page.locator("[data-activity-id]")).toHaveCount(1);
     await page.screenshot({ path: output + "/after-filtered-activity-1280.png", fullPage: true });
   });
