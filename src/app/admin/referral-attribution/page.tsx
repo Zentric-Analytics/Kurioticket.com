@@ -1,6 +1,5 @@
-import Link from "next/link";
-
 import { AdminButton, AdminDataTable, AdminEmptyState, AdminFilterBar, AdminMetricCard, AdminPageShell, AdminSelect, AdminStatusBadge } from "@/components/admin/AdminPageShell";
+import { SearchWorkspaceBackLink } from "@/components/admin/SearchWorkspaceBackLink";
 import { requireAdminApiSession } from "@/lib/admin";
 import { currentReferralAttributionEnvironment, getReferralAttributionSummary, parseAttributionDays } from "@/services/referralAttributionService";
 
@@ -23,11 +22,12 @@ export default async function AdminReferralAttributionPage({ searchParams }: { s
   const summary = await getReferralAttributionSummary(days, environment);
 
   return (
-    <AdminPageShell
-      title="Referral Attribution"
-      description="Measure verified provider handoffs by provider and source page. These figures describe outbound referrals only; they do not claim bookings, payments or revenue."
-      actions={<Link href="/admin/redirects" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">Back to handoffs</Link>}
-    >
+    <>
+      <SearchWorkspaceBackLink />
+      <AdminPageShell
+        title="Referral Attribution"
+        description="Measure verified provider handoffs by provider and source page. These figures describe outbound referrals only; they do not claim bookings, payments or revenue."
+      >
       <div className="space-y-4">
         <AdminFilterBar action="/admin/referral-attribution">
           <AdminSelect name="days" defaultValue={String(days)}>
@@ -82,6 +82,7 @@ export default async function AdminReferralAttributionPage({ searchParams }: { s
           </div>
         )}
       </div>
-    </AdminPageShell>
+      </AdminPageShell>
+    </>
   );
 }
