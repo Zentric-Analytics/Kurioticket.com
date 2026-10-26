@@ -3,7 +3,7 @@ import test from "node:test";
 
 import {
   ACTIVITY_PAGE_SIZE, activityEnvironmentScope, allowedActivityStages, activityHref, activityWindow,
-  compactActivityDisplayRows, decodeActivityCursor, encodeActivityCursor, excludeCanonicalLegacyRows, groupActivityRows, latestVisibleActivityAt, relatedJourneysWindow,
+  compactActivityDisplayRows, decodeActivityCursor, encodeActivityCursor, excludeCanonicalLegacyRows, groupActivityRows, groupContiguousActivityRows, latestVisibleActivityAt, relatedJourneysWindow,
   parseActivityFilters, sourceActivitySeek, validActivityIdentity,
   type ActivityFilters,
 } from "./adminIdentityActivity";
@@ -279,4 +279,19 @@ test("visible activity header uses maximum timestamp regardless of newest/oldest
   assert.equal(latestVisibleActivityAt(events)?.toISOString(), latest);
   assert.equal(latestVisibleActivityAt([...events].reverse())?.toISOString(), latest);
   assert.equal(latestVisibleActivityAt([]), null);
+});
+
+test("contiguous journey grouping preserves interleaved event chronology", () => {
+  const at = new Date("2026-10-22T10:00:00Z");
+  const events: ActivityRow[] = [
+    { id: "j-a10", at, journeyId: "journey-a", label: "A 10", detail: "Flight", product: "FLIGHT" },
+    { id: "j-b09", at: new Date(at.getTime() - 3600000), journeyId: "journey-b", label: "B 09", detail: "Hotel", product: "HOTEL" },
+    { id: "j-a08", at: new Date(at.getTime() - 7200000), journeyId: "journey-a", label: "A 08", detail: "Flight", product: "FLIGHT" },
+  ];
+  const groups = groupContiguousActivityRows(events);
+  assert.deepEqual(groups.map(group => group.journeyId), ["journey-a", "journey-b", "journey-a"]);
+  assert.deepEqual(groups.flatMap(group => group.events.map(row => row.id)), events.map(row => row.id));
+  assert.equal(new Set(groups.map(group => group.key)).size, 3);
+  const adjacent = groupContiguousActivityRows([events[0], { ...events[0], id: "j-a0959" }, events[1]]);
+  assert.deepEqual(adjacent.map(group => group.events.length), [2, 1]);
 });
