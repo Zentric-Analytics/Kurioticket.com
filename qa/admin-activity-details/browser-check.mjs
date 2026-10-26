@@ -184,6 +184,7 @@ try {
     await page.goto(url + "?directory=identity%3DGUEST%26sort%3Doldest", { waitUntil: "domcontentloaded" });
     const manage = page.getByRole("button", { name: "Manage guest qa-guest-activity-0001" });
     await expect(manage).toBeVisible();
+    await expect(page.getByRole("combobox", { name: "Activity product" })).toHaveAttribute("aria-haspopup", "listbox");
     await manage.click();
     const menu = page.getByRole("menu", { name: "Guest management" });
     await expect(menu.getByRole("menuitem", { name: "Disable tracking" })).toBeVisible();
