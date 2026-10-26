@@ -9,10 +9,12 @@ export function SearchMonitorTable({
   initialItems,
   initialCursor,
   query,
+  referenceNow,
 }: {
   initialItems: AdminSearchRead[];
   initialCursor: string | null;
   query: string;
+  referenceNow: string;
 }) {
   const [items, setItems] = useState(initialItems);
   const [cursor, setCursor] = useState(initialCursor);
@@ -85,7 +87,6 @@ export function SearchMonitorTable({
       } catch {
         if (controller.signal.aborted || generationRef.current !== generation) return;
         setLoadError(true);
-        setCursor(null);
       } finally {
         if (generationRef.current === generation && !controller.signal.aborted) {
           setLoading(false);
@@ -125,7 +126,7 @@ export function SearchMonitorTable({
           <tbody>
             {items.map((search) => (
               <tr key={search.id} className="border-b border-[#E5E7EB] text-[12px] text-[#374151] hover:bg-[#FAFAFA]">
-                <td className="whitespace-nowrap px-2 py-3 align-top">{formatCreated(search.createdAt)}</td>
+                <td className="whitespace-nowrap px-2 py-3 align-top">{formatCreated(search.createdAt, referenceNow)}</td>
                 <td className="px-2 py-3 align-top font-semibold text-[#111827]">{productLabel(search.product)}</td>
                 <td className="max-w-[260px] px-2 py-3 align-top">
                   <p className="font-semibold text-[#111827]">{routeLabel(search.origin, search.destination)}</p>
@@ -134,7 +135,7 @@ export function SearchMonitorTable({
                   ) : null}
                 </td>
                 <td className="whitespace-nowrap px-2 py-3 align-top">{search.currency || search.market || "—"}</td>
-                <td className="px-2 py-3 align-top">{search.resultCount.toLocaleString()}</td>
+                <td className="px-2 py-3 align-top">{formatNumber(search.resultCount)}</td>
                 <td className="px-2 py-3 align-top">{search.providers.length ? search.providers.length : "—"}</td>
                 <td className="whitespace-nowrap px-2 py-3 align-top">{formatLatency(search.latencyMs)}</td>
                 <td className="px-2 py-3 align-top">{identityLabel(search.identity.kind)}</td>
@@ -154,7 +155,18 @@ export function SearchMonitorTable({
       </div>
       {cursor ? <div ref={sentinelRef} className="h-px" aria-hidden="true" /> : null}
       {loading ? <p className="py-3 text-center text-[11px] text-[#9CA3AF]">Loading more searches…</p> : null}
-      {loadError ? <p className="py-3 text-center text-[11px] text-rose-600">Unable to load more searches.</p> : null}
+      {loadError ? (
+        <div className="flex items-center justify-center gap-2 py-3 text-[11px] text-rose-600">
+          <span>Unable to load more searches.</span>
+          <button
+            type="button"
+            onClick={() => setLoadError(false)}
+            className="cursor-pointer font-semibold text-[#111827] underline underline-offset-2 hover:text-violet-700"
+          >
+            Retry
+          </button>
+        </div>
+      ) : null}
     </>
   );
 }
@@ -174,9 +186,9 @@ function MonitorStatus({ status }: { status: "SUCCESS" | "PARTIAL" | "FAILED" })
   );
 }
 
-function formatCreated(value: string) {
+function formatCreated(value: string, referenceNow: string) {
   const date = new Date(value);
-  const now = new Date();
+  const now = new Date(referenceNow);
   const sameDay =
     date.getUTCFullYear() === now.getUTCFullYear() &&
     date.getUTCMonth() === now.getUTCMonth() &&
@@ -190,8 +202,13 @@ function formatCreated(value: string) {
   return new Intl.DateTimeFormat("en", {
     month: "short",
     day: "numeric",
+    year: "numeric",
     timeZone: "UTC",
   }).format(date) + ", " + time;
+}
+
+function formatNumber(value: number) {
+  return new Intl.NumberFormat("en").format(value);
 }
 
 function formatLatency(value: number | null) {
