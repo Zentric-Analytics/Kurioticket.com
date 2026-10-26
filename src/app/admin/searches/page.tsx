@@ -1,8 +1,11 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
 
 export const metadata = { title: "Admin Searches" };
+
+type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
 const workspaceLinks = [
   { href: "/admin/searches/activity", title: "Search activity", description: "Recorded searches and outcomes" },
@@ -11,7 +14,16 @@ const workspaceLinks = [
   { href: "/admin/referral-attribution", title: "Referral attribution", description: "Verified provider referral performance" },
 ];
 
-export default function AdminSearchesPage() {
+export default async function AdminSearchesPage({ searchParams }: { searchParams: SearchParams }) {
+  const raw = await searchParams;
+  const forwarded = new URLSearchParams();
+  for (const [key, value] of Object.entries(raw)) {
+    if (Array.isArray(value)) value.forEach((item) => forwarded.append(key, item));
+    else if (value !== undefined) forwarded.set(key, value);
+  }
+  const query = forwarded.toString();
+  if (query) redirect("/admin/searches/activity?" + query);
+
   return (
     <AdminPageShell title="Searches" hideHeader>
       <div className="mx-auto w-full max-w-[1400px]">
