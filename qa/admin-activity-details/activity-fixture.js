@@ -41,7 +41,7 @@ const newerRecorded = [
 export async function loadAdminIdentityActivity(kind, id, filters, cursor) {
   if (!/^[a-z0-9_-]{6,80}$/i.test(id)) return { status: "not_found" };
   if (kind === "user" && id === "qa-registered-unavailable-0001") return { status: "unavailable" };
-  if (cursor && !["older-qa-page", "newer-qa-page"].includes(cursor)) return { status: "invalid_cursor" };
+  if (cursor && !["older-qa-page", "oldest-current-qa-page", "newer-qa-page"].includes(cursor)) return { status: "invalid_cursor" };
   const tabMatch = stage => filters.tab === "all"
     || (filters.tab === "searches" && ["SEARCH_COMPLETED", "RESULTS_VIEWED"].includes(stage))
     || (filters.tab === "selections" && stage === "OFFER_SELECTED")
@@ -55,9 +55,20 @@ export async function loadAdminIdentityActivity(kind, id, filters, cursor) {
   const currentRows = id === "qa-no-events-0001" ? [] : recorded.filter(matches);
   const olderRows = id === "qa-no-events-0001" ? [] : olderRecorded.filter(matches);
   const newerRows = id === "qa-no-events-0001" ? [] : newerRecorded.filter(matches);
-  const rows = cursor === "older-qa-page" ? olderRows
-    : cursor === "newer-qa-page" ? newerRows
-    : filters.order === "oldest" ? [...currentRows].reverse() : currentRows;
+  // Ascending cursor must traverse the EARLIEST fixture before the current
+  // page and only then the newer records, without omissions or overlap.
+  const ascendingPages = [
+    { cursor: null, rows: olderRows },
+    { cursor: "oldest-current-qa-page", rows: [...currentRows].reverse() },
+    { cursor: "newer-qa-page", rows: newerRows },
+  ].filter(page => page.rows.length);
+  const selected = cursor ? ascendingPages.findIndex(page => page.cursor === cursor) : 0;
+  const rows = filters.order === "oldest"
+    ? (selected < 0 ? [] : ascendingPages[selected]?.rows ?? [])
+    : (cursor === "older-qa-page" ? olderRows : currentRows);
+  const nextCursor = filters.order === "oldest"
+    ? (selected >= 0 ? ascendingPages[selected + 1]?.cursor ?? null : null)
+    : (!cursor && olderRows.length ? "older-qa-page" : null);
   return { status: "ok", data: {
     id, kind, title: kind === "guest" ? "Guest visitor" : "QA registered customer",
     email: kind === "guest" ? null : "customer.qa@example.invalid",
@@ -65,8 +76,6 @@ export async function loadAdminIdentityActivity(kind, id, filters, cursor) {
     status: kind === "guest" ? "Anonymous" : "ACTIVE",
     firstSeenAt: time(39), lastSeenAt: time(48), environment: "staging",
     events: rows,
-    nextCursor: !cursor
-      ? (filters.order === "oldest" ? (newerRows.length ? "newer-qa-page" : null) : (olderRows.length ? "older-qa-page" : null))
-      : null,
+    nextCursor,
   } };
 }
