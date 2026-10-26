@@ -18,7 +18,6 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-import { AdminStatusBadge } from "@/components/admin/AdminPageShell";
 import { AdminOverviewAutoRefresh, AdminOverviewRangeSelect, type OverviewRange } from "@/components/admin/AdminOverviewControls";
 import type { getRecentAdminActivity, getSafeSystemStatus } from "@/lib/admin-data";
 import { formatDateTime } from "@/lib/admin-data";
@@ -57,6 +56,18 @@ function readinessTone(value: ProviderOperationalStatus["readinessState"]): Tone
   if (value === "READY") return "good";
   if (value === "ENVIRONMENT_BLOCKED") return "warn";
   return "neutral";
+}
+
+// Preserve status colors but reduce badge weight only on this dense Overview.
+function OverviewStatusBadge({ children, tone = "neutral" }: { children: React.ReactNode; tone?: Tone }) {
+  const colors: Record<Tone, string> = {
+    neutral: "bg-slate-100 text-slate-600 ring-slate-200",
+    good: "bg-emerald-50 text-emerald-700 ring-emerald-200",
+    warn: "bg-amber-50 text-amber-700 ring-amber-200",
+    bad: "bg-rose-50 text-rose-700 ring-rose-200",
+    info: "bg-indigo-50 text-indigo-700 ring-indigo-200",
+  };
+  return <span className={"inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold leading-4 ring-1 " + colors[tone]}>{children}</span>;
 }
 
 function SectionTitle({
@@ -230,8 +241,8 @@ function ProviderCard({ provider }: { provider: ProviderOperationalStatus }) {
           <h3 className="mt-1 text-base font-bold text-slate-950">{provider.provider}</h3>
         </div>
         <div className="flex flex-wrap gap-1.5">
-          <AdminStatusBadge tone={readinessTone(provider.readinessState)}>{humanize(provider.readinessState)}</AdminStatusBadge>
-          <AdminStatusBadge tone={providerTone(provider.operationalState)}>{humanize(provider.operationalState)}</AdminStatusBadge>
+          <OverviewStatusBadge tone={readinessTone(provider.readinessState)}>{humanize(provider.readinessState)}</OverviewStatusBadge>
+          <OverviewStatusBadge tone={providerTone(provider.operationalState)}>{humanize(provider.operationalState)}</OverviewStatusBadge>
         </div>
       </div>
       <p className="mt-2 text-xs text-slate-600">Observed provider traffic · Last {provider.windowHours} hours</p>
@@ -445,8 +456,8 @@ export function AdminOverviewDashboard({
         <SectionTitle
           title="Customer Journey Funnel"
           action={<div className="flex flex-wrap gap-2">
-            <AdminStatusBadge tone="info">{count(data.journeys.identities.registered)} registered identities</AdminStatusBadge>
-            <AdminStatusBadge>{count(data.journeys.identities.guests)} guest identities</AdminStatusBadge>
+            <OverviewStatusBadge tone="info">{count(data.journeys.identities.registered)} registered identities</OverviewStatusBadge>
+            <OverviewStatusBadge>{count(data.journeys.identities.guests)} guest identities</OverviewStatusBadge>
           </div>}
         />
         <div>
