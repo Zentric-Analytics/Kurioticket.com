@@ -223,3 +223,22 @@ test("bad signatures are rejected before any receipt is written", async () => {
   assert.equal(response.status, 401);
   assert.equal(receipts.length, 0);
 });
+
+
+test("receipt persistence failure is retriable and never falsely acknowledged", async () => {
+  let ingested = 0;
+  const POST = createPartnerConfirmationHandler({
+    secret: () => secret,
+    providerName: () => "Example Provider",
+    now: () => now,
+    ingest: async () => { ingested++; return { id: "trip-saved" } as never; },
+    recordDelivery: async () => false,
+  });
+  const response = await POST(request(JSON.stringify(payload())));
+  assert.equal(ingested, 1);
+  assert.equal(response.status, 503);
+  assert.deepEqual(await response.json(), {
+    error: "Confirmation receipt is temporarily unavailable; retry this idempotent callback.",
+    errorCode: "partner_confirmation_receipt_unavailable",
+  });
+});
