@@ -186,7 +186,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
         </div>
         <dl className="contents">
           <Fact label={kind === "guest" ? "First seen" : "Joined"}>{format(data.firstSeenAt)}</Fact>
-          <Fact label={kind === "guest" ? "Last seen" : "Latest matching activity"}>{data.lastSeenAt ? format(data.lastSeenAt) : "—"}</Fact>
+          <Fact label={kind === "guest" ? "Last seen" : "Latest on this page"}>{data.lastSeenAt ? format(data.lastSeenAt) : "—"}</Fact>
           <Fact label={kind === "guest" ? "Analytics consent" : "Account status"}>
             {kind === "guest" ? <span className="inline-flex items-center gap-2">
               <span aria-hidden="true" className="h-2 w-2 rounded-full bg-[#16A34A]" /> Granted
