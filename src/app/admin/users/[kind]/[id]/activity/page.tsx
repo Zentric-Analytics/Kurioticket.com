@@ -144,33 +144,33 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
           {tab.label}
         </Link>)}
       </nav>
-      <form action={basePath} method="get" className="grid gap-3 py-3 sm:grid-cols-2 xl:grid-cols-[170px_170px_170px_220px_minmax(120px,1fr)_auto]">
+      <form action={basePath} method="get" className="flex min-w-0 flex-wrap items-end gap-3 py-3 lg:flex-nowrap lg:gap-2 xl:gap-3">
         <input type="hidden" name="tab" value={filters.tab} />
         {typeof raw.directory === "string" ? <input type="hidden" name="directory" value={raw.directory.slice(0, 1000)} /> : null}
-        <label className="flex min-w-0 flex-col gap-1 text-[12px] font-medium text-[#475569]">
+        <label className="flex w-full min-w-0 flex-col gap-1 text-[12px] font-medium text-[#475569] sm:w-[calc(50%_-_6px)] lg:w-[150px] lg:shrink-0 xl:w-[165px]">
           From (UTC)
           <input type="date" name="from" defaultValue={filters.from} className={inputClass} aria-label="Activity start date UTC" />
         </label>
-        <label className="flex min-w-0 flex-col gap-1 text-[12px] font-medium text-[#475569]">
+        <label className="flex w-full min-w-0 flex-col gap-1 text-[12px] font-medium text-[#475569] sm:w-[calc(50%_-_6px)] lg:w-[150px] lg:shrink-0 xl:w-[165px]">
           To (UTC)
           <input type="date" name="to" defaultValue={filters.to} className={inputClass} aria-label="Activity end date UTC" />
         </label>
-        <div className="flex min-w-0 flex-col gap-1">
+        <div className="flex w-full min-w-0 flex-col gap-1 sm:w-[calc(50%_-_6px)] lg:w-[155px] lg:shrink-0 xl:w-[170px]">
           <span className="text-[12px] font-medium text-[#475569]">Product</span>
           <AdminDirectorySelect name="product" label="Activity product" value={filters.product}
             options={[{value:"all", label:"All products"}, {value:"FLIGHT", label:"Flights"}, {value:"HOTEL", label:"Hotels"}, {value:"CAR", label:"Cars"}, {value:"PACKAGE", label:"Packages"}]} compact />
         </div>
-        <div className="flex min-w-0 flex-col gap-1">
+        <div className="flex w-full min-w-0 flex-col gap-1 sm:w-[calc(50%_-_6px)] lg:w-[175px] lg:shrink-0 xl:w-[205px]">
           <span className="text-[12px] font-medium text-[#475569]">Activity type</span>
           <AdminDirectorySelect name="stage" label="Activity event type" value={filters.stage}
             options={[{value:"all", label:"All activity types"}, {value:"SEARCH_COMPLETED", label:"Search completed"}, {value:"RESULTS_VIEWED", label:"Results viewed"}, {value:"OFFER_SELECTED", label:"Offer selected"}, {value:"PROVIDER_HANDOFF_STARTED", label:"Provider handoff"}, {value:"ACCOUNT_ACTIVITY", label:"Account activity"}]} compact />
         </div>
-        <label className="flex min-w-0 flex-col gap-1 text-[12px] font-medium text-[#475569]">
+        <label className="flex w-full min-w-0 flex-col gap-1 text-[12px] font-medium text-[#475569] sm:flex-1 lg:min-w-[150px] xl:min-w-[170px]">
           Search within activity
           <span className="relative block"><Search size={15} aria-hidden="true" className="pointer-events-none absolute left-3 top-3 text-[#94A3B8]" />
             <input name="q" defaultValue={filters.q} maxLength={80} placeholder="Route, destination, provider..." className={inputClass + " pl-9"} /></span>
         </label>
-        <button type="submit" className="focus-ring mt-auto h-10 whitespace-nowrap rounded-lg bg-[#004BB8] px-4 text-[13px] font-semibold text-white hover:bg-[#004BB8]/90">Apply Filter</button>
+        <button type="submit" className="focus-ring h-10 w-full shrink-0 whitespace-nowrap rounded-lg bg-[#004BB8] px-4 text-[13px] font-semibold text-white hover:bg-[#004BB8]/90 sm:w-auto">Apply Filter</button>
       </form>
     </section>
 

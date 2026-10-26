@@ -45,6 +45,23 @@ try {
       await expect(page.getByRole("heading", { name: "Identity details" })).toBeVisible();
       await expect(page.getByRole("link", { name: "View all searches" })).toBeVisible();
       await expect(page.getByRole("button", { name: "Apply Filter" })).toBeVisible();
+      if (width >= 1280) {
+        const bounds = await Promise.all([
+          page.getByLabel("Activity start date UTC").boundingBox(),
+          page.getByLabel("Activity end date UTC").boundingBox(),
+          page.getByRole("combobox", { name: "Activity product" }).boundingBox(),
+          page.getByRole("combobox", { name: "Activity event type" }).boundingBox(),
+          page.getByRole("textbox", { name: "Search within activity" }).boundingBox(),
+          page.getByRole("button", { name: "Apply Filter" }).boundingBox(),
+        ]);
+        assert.ok(bounds.every(Boolean), "All six filter controls must render");
+        const top = bounds.map(box => box.y);
+        assert.ok(Math.max(...top) - Math.min(...top) <= 2, "All filter controls align horizontally at desktop width");
+        for (let i = 1; i < bounds.length; i++) {
+          assert.ok(bounds[i].x >= bounds[i - 1].x + bounds[i - 1].width - 1,
+            "Adjacent desktop filters must not overlap");
+        }
+      }
       await expect(page.getByRole("navigation", { name: "Activity tabs" })).toBeVisible();
       await expect(page.getByRole("region", { name: "Recorded journey qa-journey-repeated" })).toBeVisible();
       assert.equal(await page.locator('main [class*="rounded-2xl"], main [class*="shadow-"]').count(), 0, "No nested card/shadow styling");
