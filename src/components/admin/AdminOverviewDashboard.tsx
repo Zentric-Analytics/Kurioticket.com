@@ -420,7 +420,7 @@ export function AdminOverviewDashboard({
           <MetricCard label="Total accounts" value={data.users.total} hint="All account records, including deleted" icon={Users} tone="info" />
           <MetricCard label="Enabled accounts" value={data.users.active} hint="ACTIVE accounts, including staff · not online" icon={UserCheck} tone="good" />
           <div className="min-w-0 border-b border-slate-200/90 py-3.5 pr-3 sm:pr-4">
-            <div className="flex items-center justify-between"><Activity size={19} className="text-emerald-700" aria-hidden="true" /><span className="h-2 w-2 rounded-full bg-emerald-400" aria-hidden="true" /></div>
+            <div className="flex items-center justify-between"><Activity size={19} className={data.websitePresence.status === "ok" ? "text-emerald-700" : "text-slate-500"} aria-hidden="true" /><span className={"h-2 w-2 rounded-full " + (data.websitePresence.status === "ok" ? "bg-emerald-400" : "bg-slate-300")} aria-hidden="true" /></div>
             <p className="mt-2 text-xs font-medium uppercase tracking-wide text-slate-700">Active users</p>
             <p className="mt-1 text-[22px] font-semibold tabular-nums tracking-tight text-slate-950">{data.websitePresence.status === "ok" ? count(data.websitePresence.total) : "Unavailable"}</p>
             <p className="mt-1 text-[13px] leading-5 text-slate-700">{data.websitePresence.status === "ok" ? "Last " + data.websitePresence.windowSeconds + "s · " + count(data.websitePresence.registeredAccounts) + " accounts · " + count(data.websitePresence.guestIdentities) + " guests" : "Live website activity could not be verified"}</p>
