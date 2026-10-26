@@ -90,7 +90,8 @@ function serialize(row: TripRow, now: Date) {
 export type AdminConfirmedTripRow = ReturnType<typeof serialize>;
 export type AdminConfirmedTripDirectoryResult =
   | { status: "ok"; rows: AdminConfirmedTripRow[]; nextCursor: string | null; totalMatching: number }
-  | { status: "invalid_cursor" | "unavailable" };
+  | { status: "invalid_cursor" }
+  | { status: "unavailable" };
 
 export async function listAdminConfirmedTrips(
   filters: AdminTripFilters,
@@ -133,7 +134,8 @@ export async function listAdminConfirmedTrips(
 
 export type AdminConfirmedTripDetailsResult =
   | { status: "ok"; trip: AdminConfirmedTripRow }
-  | { status: "not_found" | "unavailable" };
+  | { status: "not_found" }
+  | { status: "unavailable" };
 
 export async function getAdminConfirmedTripDetails(id: string): Promise<AdminConfirmedTripDetailsResult> {
   if (!isValidAdminTripId(id)) return { status: "not_found" };
