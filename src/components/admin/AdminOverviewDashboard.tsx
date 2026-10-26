@@ -71,9 +71,9 @@ function SectionTitle({
   icon?: LucideIcon;
 }) {
   return (
-    <div className="mb-2.5 flex flex-wrap items-start justify-between gap-3">
+    <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
       <div className="min-w-0">
-        <h2 className="flex items-center gap-2 text-base font-bold tracking-tight text-slate-950 sm:text-lg">
+        <h2 className="flex items-center gap-2 text-base font-bold tracking-tight text-slate-950">
           {Icon ? <Icon size={17} className="shrink-0 text-indigo-700" aria-hidden="true" /> : null}
           {title}
         </h2>
@@ -105,14 +105,14 @@ function MetricCard({
     info: "text-indigo-700",
   };
   return (
-    <div className="min-w-0 border-b border-slate-200/90 py-4 pr-3 sm:pr-4">
+    <div className="min-w-0 border-b border-slate-200/90 py-3.5 pr-3 sm:pr-4">
       <div className="flex items-center justify-between gap-2">
         <Icon size={19} className={iconColor[tone]} aria-hidden="true" />
         <span className={"h-2 w-2 shrink-0 rounded-full " +
           (tone === "good" ? "bg-emerald-400" : tone === "warn" ? "bg-amber-400" : tone === "bad" ? "bg-rose-400" : tone === "info" ? "bg-indigo-400" : "bg-slate-300")}
           aria-hidden="true" />
       </div>
-      <p className="mt-3 text-[11px] font-bold uppercase tracking-wide text-slate-600">{label}</p>
+      <p className="mt-2 text-[11px] font-bold uppercase tracking-wide text-slate-600">{label}</p>
       <p className="mt-1 text-2xl font-extrabold tabular-nums tracking-tight text-slate-950">{count(value)}</p>
       <p className="mt-1 text-xs leading-5 text-slate-600">{hint}</p>
     </div>
@@ -142,7 +142,7 @@ function AttentionCard({
   return (
     <Link
       href={href}
-      className="focus-ring group flex min-w-0 items-start gap-3 border-b border-slate-200/90 py-4 pr-2 transition hover:border-indigo-200"
+      className="focus-ring group flex min-w-0 items-start gap-3 border-b border-slate-200/90 py-3.5 pr-2 transition hover:border-indigo-200"
     >
       <Icon size={20} className={"mt-0.5 shrink-0 " + color} aria-hidden="true" />
       <span className="min-w-0 flex-1">
@@ -235,7 +235,7 @@ function ProviderCard({ provider }: { provider: ProviderOperationalStatus }) {
         </div>
       </div>
       <p className="mt-2 text-xs text-slate-600">Observed provider traffic · Last {provider.windowHours} hours</p>
-      <div className="mt-4 grid grid-cols-2 gap-4">
+      <div className="mt-3 grid grid-cols-2 gap-4">
         <div className="min-w-0">
           <p className="text-[11px] text-slate-600">Recent calls</p>
           <p className="mt-1 text-xl font-bold tabular-nums text-slate-950">{count(provider.totalCalls)}</p>
@@ -287,7 +287,7 @@ function FunnelStep({
   icon: LucideIcon;
 }) {
   return (
-    <div className="min-w-0 border-b border-slate-200/90 py-4 pr-3">
+    <div className="min-w-0 border-b border-slate-200/90 py-3.5 pr-3">
       <Icon size={19} className="text-indigo-700" aria-hidden="true" />
       <p className="mt-3 text-xs font-semibold text-slate-600">{label}</p>
       <p className="mt-1 text-2xl font-bold tabular-nums tracking-tight text-slate-950">{count(journeys)}</p>
@@ -343,16 +343,12 @@ function ActivityFeed({ activity }: { activity: AuditActivity }) {
       ) : (
         <div className="divide-y divide-slate-200/80 border-t border-slate-200/90">
           {activity.map((item) => (
-            <div key={item.id} className="flex min-w-0 items-start gap-3 py-3">
+            <div key={item.id} className="grid min-w-0 grid-cols-[8px_minmax(0,1fr)] items-start gap-x-3 gap-y-1 py-3 lg:grid-cols-[8px_minmax(125px,0.75fr)_minmax(0,2fr)_minmax(150px,0.9fr)_minmax(135px,1fr)]">
               <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-indigo-500" aria-hidden="true" />
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-bold text-slate-950">{humanize(item.title)}</p>
-                <p className="mt-0.5 break-words text-xs leading-5 text-slate-700">{item.detail}</p>
-                <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-slate-600">
-                  <span>{item.timestamp}</span>
-                  <span aria-label="Original audit action" className="break-all font-mono">{item.title}</span>
-                </div>
-              </div>
+              <p className="min-w-0 text-xs font-bold leading-5 text-slate-950">{humanize(item.title)}</p>
+              <p className="col-start-2 min-w-0 break-words text-xs leading-5 text-slate-700 lg:col-start-auto">{item.detail}</p>
+              <span className="col-start-2 text-[11px] leading-5 text-slate-600 lg:col-start-auto">{item.timestamp}</span>
+              <span aria-label="Original audit action" className="col-start-2 min-w-0 break-all font-mono text-[11px] leading-5 text-slate-600 lg:col-start-auto">{item.title}</span>
             </div>
           ))}
         </div>
@@ -372,6 +368,8 @@ export function AdminOverviewSecondary({
     <div className="mt-6 space-y-6">
       <div className="grid items-start gap-4 xl:grid-cols-2">
         <PlatformHealth system={system} />
+      </div>
+      <div className="mt-7">
         <ActivityFeed activity={activity} />
       </div>
     </div>
@@ -403,7 +401,7 @@ export function AdminOverviewDashboard({
           title="Operations Snapshot"
           action={<AdminOverviewRangeSelect range={range} />}
         />
-        <div className="grid gap-x-6 gap-y-0 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        <div className="grid gap-x-6 gap-y-0 sm:grid-cols-2 lg:grid-cols-3">
           <MetricCard label="Total users" value={data.users.total} hint="Current accounts" icon={Users} tone="info" />
           <MetricCard label="Enabled accounts" value={data.users.active} hint="Registered accounts with ACTIVE status; not people online" icon={UserCheck} tone="good" />
           <MetricCard label="Support attention" value={supportAttention} hint="Tickets awaiting action" icon={Headphones} tone={supportAttention ? "warn" : "good"} />
@@ -431,12 +429,12 @@ export function AdminOverviewDashboard({
         </div>
       </section>
 
-      <div className="mt-8 grid items-start gap-6 xl:grid-cols-[0.85fr_1.15fr]">
+      <div className="mt-7 grid items-start gap-8 lg:grid-cols-[0.85fr_1.15fr]">
         <PlatformHealth system={system} />
         <section className="min-w-0" aria-label="Provider Operational Health">
           <SectionTitle title="Provider Operational Health"
             action={<Link href="/admin/providers" className="focus-ring inline-flex items-center gap-1 text-xs font-semibold text-indigo-700 hover:underline">View all providers <ArrowUpRight size={13} aria-hidden="true" /></Link>} />
-          <div className="grid gap-x-6 gap-y-0 xl:grid-cols-2">
+          <div className="grid gap-y-0">
             {data.providers.map((provider) => <ProviderCard key={provider.id} provider={provider} />)}
             {data.providers.length === 0 ? <p className="border-t border-slate-200/90 py-4 text-sm text-slate-600">No provider status available. The current deployment has no reported provider operational statuses.</p> : null}
           </div>
@@ -452,7 +450,7 @@ export function AdminOverviewDashboard({
           </div>}
         />
         <div>
-          <div className="grid gap-x-6 gap-y-0 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-x-6 gap-y-0 sm:grid-cols-2 lg:grid-cols-4">
             <FunnelStep label="Search completed" journeys={funnel.SEARCH_COMPLETED.journeys} events={funnel.SEARCH_COMPLETED.events} icon={Search} />
             <FunnelStep label="Results viewed" journeys={funnel.RESULTS_VIEWED.journeys} events={funnel.RESULTS_VIEWED.events} icon={BookOpen} />
             <FunnelStep label="Offer selected" journeys={funnel.OFFER_SELECTED.journeys} events={funnel.OFFER_SELECTED.events} icon={MousePointerClick} />
@@ -461,7 +459,7 @@ export function AdminOverviewDashboard({
           <p className="mt-3 text-xs leading-5 text-slate-500">Stage counts are distinct consented journeys, not percentages of all operational searches.</p>
         </div>
 
-        <div className="mt-6 grid gap-6 xl:grid-cols-2">
+        <div className="mt-5 grid gap-8 lg:grid-cols-2">
           <section className="min-w-0 border-t border-slate-200/90 py-4">
             <h3 className="flex items-center gap-2 text-sm font-bold text-slate-950"><Search size={17} className="text-indigo-700" aria-hidden="true" />Operational Search Health</h3>
             <div className="mt-3">
@@ -481,7 +479,7 @@ export function AdminOverviewDashboard({
         </div>
       </section>
 
-      <div className="mt-8 grid items-start gap-6 xl:grid-cols-3">
+      <div className="mt-7 grid items-start gap-8 lg:grid-cols-2">
         <WorkloadCard title="Support Workload" href="/admin/support" icon={Headphones} rows={[
           { label: "Open", value: data.support.open, detail: "New / active tickets" },
           { label: "Waiting on team", value: data.support.waitingOnTeam, detail: "Needs internal action" },
