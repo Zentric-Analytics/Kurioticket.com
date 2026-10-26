@@ -233,47 +233,6 @@ function productHref(raw: Record<string, string | string[] | undefined>, product
   return "/admin/searches/activity" + (query ? "?" + query : "");
 }
 
-function formatCreated(value: string) {
-  const date = new Date(value);
-  const now = new Date();
-  const sameDay =
-    date.getFullYear() === now.getFullYear() &&
-    date.getMonth() === now.getMonth() &&
-    date.getDate() === now.getDate();
-  const time = new Intl.DateTimeFormat("en", { hour: "numeric", minute: "2-digit" }).format(date);
-  if (sameDay) return "Today, " + time;
-  return new Intl.DateTimeFormat("en", { month: "short", day: "numeric" }).format(date) + ", " + time;
-}
-
-function formatLatency(value: number | null) {
-  if (value === null) return "—";
-  return (value / 1000).toFixed(1) + "s";
-}
-
-function productLabel(product: string) {
-  return product === "FLIGHT" ? "Flight" : product === "HOTEL" ? "Hotel" : product === "CAR" ? "Car" : product === "PACKAGE" ? "Package" : product;
-}
-
-function routeLabel(origin: string | null, destination: string | null) {
-  if (origin && destination) return origin + " → " + destination;
-  return destination || origin || "Search request";
-}
-
-function formatSearchDates(checkIn: string | null, checkOut: string | null) {
-  if (!checkIn) return "";
-  const format = (value: string) => {
-    const date = new Date(value);
-    return Number.isNaN(date.getTime())
-      ? value
-      : new Intl.DateTimeFormat("en", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }).format(date);
-  };
-  return format(checkIn) + (checkOut ? " → " + format(checkOut) : "");
-}
-
-function identityLabel(kind: "registered" | "guest" | "unattributed") {
-  return kind === "registered" ? "Registered" : kind === "guest" ? "Guest" : "Unattributed";
-}
-
 function SearchState({ title, message }: { title: string; message: string }) {
   return (
     <div className="border-b border-[#D7DCE3] py-10 text-center">
