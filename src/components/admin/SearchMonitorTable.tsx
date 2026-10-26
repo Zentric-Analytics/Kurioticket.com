@@ -117,7 +117,7 @@ export function SearchMonitorTable({
               <th className="px-2 py-3 font-semibold">Market</th>
               <th className="px-2 py-3 font-semibold">Results</th>
               <th className="px-2 py-3 font-semibold">Providers</th>
-              <th className="px-2 py-3 font-semibold">Time</th>
+              <th className="px-2 py-3 font-semibold">Duration</th>
               <th className="px-2 py-3 font-semibold">Identity</th>
               <th className="px-2 py-3 font-semibold">Status</th>
               <th className="px-2 py-3 font-semibold"><span className="sr-only">Action</span></th>
@@ -136,7 +136,7 @@ export function SearchMonitorTable({
                 </td>
                 <td className="whitespace-nowrap px-2 py-3 align-top">{search.currency || search.market || "—"}</td>
                 <td className="px-2 py-3 align-top">{formatNumber(search.resultCount)}</td>
-                <td className="px-2 py-3 align-top">{search.providers.length ? search.providers.length : "—"}</td>
+                <td className="px-2 py-3 align-top" title={search.providerTelemetry ? [search.providers.join(", "), search.providerTelemetry.successful + " successful", search.providerTelemetry.failed + " failed", search.providerTelemetry.degraded + " degraded", search.providerTelemetry.disabled + " disabled"].filter(Boolean).join(" · ") : "No exact provider telemetry recorded"}>{search.providerTelemetry ? search.providerTelemetry.total : "—"}</td>
                 <td className="whitespace-nowrap px-2 py-3 align-top">{formatLatency(search.latencyMs)}</td>
                 <td className="px-2 py-3 align-top">{identityLabel(search.identity.kind)}</td>
                 <td className="px-2 py-3 align-top"><MonitorStatus status={search.status} /></td>
