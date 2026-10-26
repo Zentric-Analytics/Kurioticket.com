@@ -11,6 +11,7 @@ import {
   getFlightStatusOperationsSnapshot,
 } from "@/services/adminFlightStatusOperationsService";
 import { readHomepageFareSnapshotStatus } from "@/services/homepageFareSnapshotService";
+import { getPartnerConfirmationBinding, getConfirmationDeliveryHealth } from "@/services/partnerConfirmationDeliveryService";
 import { getProviderOperationalStatuses } from "@/services/providerOperationalStatus";
 import {
   deriveAdminAlertCandidates,
@@ -179,8 +180,9 @@ async function readAdminAlertCandidates(
 
 async function loadAdminAlertCandidates(now: Date): Promise<AdminAlertCandidate[]> {
   const readiness = getFlightStatusIntegrationReadiness();
+  const confirmationBinding = getPartnerConfirmationBinding();
 
-  const [system, providers, email, cms, homepageFares, flightStatusOperations] =
+  const [system, providers, email, cms, homepageFares, flightStatusOperations, confirmationHealth] =
     await Promise.all([
       getSafeSystemStatus(),
       getProviderOperationalStatuses().catch((error) => {
@@ -202,6 +204,12 @@ async function loadAdminAlertCandidates(now: Date): Promise<AdminAlertCandidate[
       readiness.feedReady
         ? getFlightStatusOperationsSnapshot().catch((error) => {
             console.error("[admin-alerts:flight-status]", error);
+            return null;
+          })
+        : Promise.resolve(null),
+      confirmationBinding.configured
+        ? getConfirmationDeliveryHealth().catch((error) => {
+            console.error("[admin-alerts:confirmation-deliveries]", error);
             return null;
           })
         : Promise.resolve(null),
@@ -243,6 +251,10 @@ async function loadAdminAlertCandidates(now: Date): Promise<AdminAlertCandidate[
       cms: telemetryOutageTokens.cms,
       homepageFares: telemetryOutageTokens["homepage-fares"],
       flightStatus: telemetryOutageTokens["flight-status"],
+    },
+    confirmedTrips: {
+      feedReady: confirmationBinding.configured,
+      health: confirmationHealth,
     },
     flightStatus: {
       feedReady: readiness.feedReady,
