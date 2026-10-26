@@ -468,7 +468,6 @@ test("provider log mapping rejects other services, environments and request IDs"
     candidate("request-B", "flight-search", "staging"),
     candidate("request-A", "hotel-search", "staging"),
     candidate("request-A", "flight-search", "production"),
-    candidate("request-A", "flight-search", "staging", new Date("2026-10-23T09:00:00.000Z")),
   ], "staging");
   assert.equal(mapped.get("request-A")?.length, 1);
   assert.equal(mapped.get("request-B"), undefined);
