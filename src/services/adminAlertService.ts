@@ -11,6 +11,7 @@ import {
   getFlightStatusOperationsSnapshot,
 } from "@/services/adminFlightStatusOperationsService";
 import { readHomepageFareSnapshotStatus } from "@/services/homepageFareSnapshotService";
+import { getPartnerConfirmationBinding, getConfirmationDeliveryHealth } from "@/services/partnerConfirmationDeliveryService";
 import { getProviderOperationalStatuses } from "@/services/providerOperationalStatus";
 import {
   deriveAdminAlertCandidates,
@@ -179,8 +180,9 @@ async function readAdminAlertCandidates(
 
 async function loadAdminAlertCandidates(now: Date): Promise<AdminAlertCandidate[]> {
   const readiness = getFlightStatusIntegrationReadiness();
+  const confirmationBinding = getPartnerConfirmationBinding();
 
-  const [system, providers, email, cms, homepageFares, flightStatusOperations] =
+  const [system, providers, email, cms, homepageFares, flightStatusOperations, confirmationHealth] =
     await Promise.all([
       getSafeSystemStatus(),
       getProviderOperationalStatuses().catch((error) => {
@@ -205,6 +207,12 @@ async function loadAdminAlertCandidates(now: Date): Promise<AdminAlertCandidate[
             return null;
           })
         : Promise.resolve(null),
+      confirmationBinding.configured
+        ? getConfirmationDeliveryHealth().catch((error) => {
+            console.error("[admin-alerts:confirmation-deliveries]", error);
+            return null;
+          })
+        : Promise.resolve(null),
     ]);
 
   const telemetryOutageTokens = await readTelemetryOutageTokens(
@@ -216,6 +224,8 @@ async function loadAdminAlertCandidates(now: Date): Promise<AdminAlertCandidate[
         homepageFares === null || !homepageFares.dataAvailable,
       "flight-status":
         readiness.feedReady && flightStatusOperations === null,
+      "confirmed-trips":
+        confirmationBinding.configured && confirmationHealth === null,
     },
     now,
   );
@@ -243,6 +253,11 @@ async function loadAdminAlertCandidates(now: Date): Promise<AdminAlertCandidate[
       cms: telemetryOutageTokens.cms,
       homepageFares: telemetryOutageTokens["homepage-fares"],
       flightStatus: telemetryOutageTokens["flight-status"],
+      confirmedTrips: telemetryOutageTokens["confirmed-trips"],
+    },
+    confirmedTrips: {
+      feedReady: confirmationBinding.configured,
+      health: confirmationHealth,
     },
     flightStatus: {
       feedReady: readiness.feedReady,
@@ -258,7 +273,8 @@ type TelemetrySource =
   | "email"
   | "cms"
   | "homepage-fares"
-  | "flight-status";
+  | "flight-status"
+  | "confirmed-trips";
 
 type TelemetryStateMetadata = {
   state?: unknown;
@@ -596,6 +612,7 @@ function compareAlerts(a: AdminOperationalAlert, b: AdminOperationalAlert) {
     CMS: 3,
     HOMEPAGE_FARES: 4,
     FLIGHT_STATUS: 5,
+    CONFIRMED_TRIPS: 6,
   };
   return sourceRank[a.source] - sourceRank[b.source] || a.title.localeCompare(b.title);
 }

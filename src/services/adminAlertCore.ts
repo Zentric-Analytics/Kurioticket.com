@@ -6,7 +6,8 @@ export type AdminAlertSource =
   | "EMAIL"
   | "CMS"
   | "HOMEPAGE_FARES"
-  | "FLIGHT_STATUS";
+  | "FLIGHT_STATUS"
+  | "CONFIRMED_TRIPS";
 
 export type AdminAlertCandidate = {
   key: string;
@@ -76,6 +77,14 @@ export type AdminAlertSignals = {
     cms: string;
     homepageFares: string;
     flightStatus: string;
+    confirmedTrips?: string;
+  };
+  confirmedTrips?: {
+    feedReady: boolean;
+    health: null | {
+      rejectedLast24h: number;
+      lastRejectedAt: string | null;
+    };
   };
   flightStatus: {
     feedReady: boolean;
@@ -346,6 +355,26 @@ function flightStatusAlerts(signals: AdminAlertSignals) {
   return alerts;
 }
 
+function confirmedTripAlerts(signals: AdminAlertSignals): AdminAlertCandidate[] {
+  if (!signals.system.databaseConnected || !signals.confirmedTrips?.feedReady) return [];
+  const health = signals.confirmedTrips.health;
+  if (!health) return [{
+    key: "confirmed-trips.telemetry.unavailable", severity: "WARNING", source: "CONFIRMED_TRIPS",
+    title: "Confirmation delivery telemetry unavailable",
+    message: "An authenticated confirmation provider is configured, but delivery receipts could not be queried.",
+    actionHref: "/admin/confirmed-trips", signalToken: signals.telemetryOutageTokens.confirmedTrips ?? "confirmation-telemetry-unavailable",
+  }];
+  if (health.rejectedLast24h <= 0) return [];
+  return [{
+    key: "confirmed-trips.deliveries.rejected", severity: "WARNING", source: "CONFIRMED_TRIPS",
+    title: "Partner confirmation deliveries were rejected",
+    message: `${health.rejectedLast24h} authenticated confirmation callback(s) were rejected in the last 24 hours. Review the provider delivery receipts.`,
+    actionHref: "/admin/confirmed-trips",
+    signalToken: `confirmation-rejected:${health.lastRejectedAt ?? "unknown"}`,
+    signalAt: health.lastRejectedAt,
+  }];
+}
+
 export function deriveAdminAlertCandidates(signals: AdminAlertSignals): AdminAlertCandidate[] {
   const alerts: AdminAlertCandidate[] = [];
 
@@ -404,6 +433,7 @@ export function deriveAdminAlertCandidates(signals: AdminAlertSignals): AdminAle
     ...cmsAlerts(signals),
     ...homepageFareAlerts(signals),
     ...flightStatusAlerts(signals),
+    ...confirmedTripAlerts(signals),
   );
 
   return alerts;

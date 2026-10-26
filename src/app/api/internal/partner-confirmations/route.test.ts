@@ -9,7 +9,7 @@ const secret = "this-is-a-test-only-partner-confirmation-secret";
 const now = Date.parse("2026-10-22T15:30:00.000Z");
 
 test("partner confirmation requires an explicitly configured shared secret", async () => {
-  const POST = createPartnerConfirmationHandler({ secret: () => "", now: () => now, ingest: async () => neverIngested() });
+  const POST = createPartnerConfirmationHandler({ secret: () => "", providerName: () => "Example Provider", now: () => now, ingest: async () => neverIngested() });
   const response = await POST(new Request("https://kurioticket.test/api/internal/partner-confirmations", { method: "POST" }));
   assert.equal(response.status, 503);
 });
@@ -18,6 +18,7 @@ test("signature verification happens before payload parsing or trip ingestion", 
   let ingested = false;
   const POST = createPartnerConfirmationHandler({
     secret: () => secret,
+    providerName: () => "Example Provider",
     now: () => now,
     ingest: async () => { ingested = true; return { id: "trip-1" } as never; },
   });
@@ -34,6 +35,7 @@ test("a chunked body exceeding 64 KiB is rejected before it is buffered or inges
   let ingested = false;
   const POST = createPartnerConfirmationHandler({
     secret: () => secret,
+    providerName: () => "Example Provider",
     now: () => now,
     ingest: async () => { ingested = true; return { id: "trip-1" } as never; },
   });
@@ -62,8 +64,10 @@ test("a valid signed confirmation is ingested and exposes only an acknowledgemen
   let received: unknown;
   const POST = createPartnerConfirmationHandler({
     secret: () => secret,
+    providerName: () => "Example Provider",
     now: () => now,
     ingest: async input => { received = input; return { id: "trip-accepted" } as never; },
+    recordDelivery: async () => true,
   });
   const rawBody = JSON.stringify(payload());
   const response = await POST(request(rawBody));
@@ -76,6 +80,7 @@ test("a signed malformed payload is rejected without trip ingestion", async () =
   let ingested = false;
   const POST = createPartnerConfirmationHandler({
     secret: () => secret,
+    providerName: () => "Example Provider",
     now: () => now,
     ingest: async () => { ingested = true; return { id: "trip-1" } as never; },
   });
@@ -88,6 +93,7 @@ test("a signed malformed payload is rejected without trip ingestion", async () =
 test("a partner conversion linked to another account fails closed", async () => {
   const POST = createPartnerConfirmationHandler({
     secret: () => secret,
+    providerName: () => "Example Provider",
     now: () => now,
     ingest: async () => { throw new MyTripIngestionOwnershipError(); },
   });
@@ -145,3 +151,94 @@ function expectIngestion() {
 }
 
 function neverIngested(): never { throw new Error("The test should not ingest a trip."); }
+
+
+test("confirmation fails closed when the configured provider is absent", async () => {
+  const POST = createPartnerConfirmationHandler({
+    secret: () => secret,
+    providerName: () => "",
+    now: () => now,
+    ingest: async () => neverIngested(),
+  });
+  const response = await POST(request(JSON.stringify(payload())));
+  assert.equal(response.status, 503);
+});
+
+test("signed provider impersonation fails closed before trip ingestion", async () => {
+  let ingested = false;
+  const receipts: unknown[] = [];
+  const POST = createPartnerConfirmationHandler({
+    secret: () => secret,
+    providerName: () => "Authorized Provider",
+    now: () => now,
+    ingest: async () => { ingested = true; return { id: "wrong" } as never; },
+    recordDelivery: async event => { receipts.push(event); return true; },
+  });
+  const response = await POST(request(JSON.stringify(payload())));
+  assert.equal(response.status, 403);
+  assert.equal(ingested, false);
+  assert.equal(receipts.length, 1);
+  assert.deepEqual(receipts[0], { providerName: "Authorized Provider", outcome: "REJECTED", reason: "provider_mismatch" });
+});
+
+test("accepted callbacks write safe delivery receipts without exposing customer information", async () => {
+  const receipts: unknown[] = [];
+  const POST = createPartnerConfirmationHandler({
+    secret: () => secret,
+    providerName: () => "Example Provider",
+    now: () => now,
+    ingest: async () => ({ id: "trip-accepted" } as never),
+    recordDelivery: async event => { receipts.push(event); return true; },
+  });
+  const response = await POST(request(JSON.stringify(payload())));
+  assert.equal(response.status, 200);
+  assert.deepEqual(receipts, [{
+    providerName: "Example Provider",
+    myTripId: "trip-accepted",
+    outcome: "ACCEPTED",
+    reason: "accepted",
+    eventOccurredAt: new Date("2026-10-22T15:29:00.000Z"),
+    reportedStatus: "UPCOMING",
+  }]);
+  assert.equal(JSON.stringify(receipts).includes("user-123"), false);
+  assert.equal(JSON.stringify(receipts).includes("ABC-123"), false);
+});
+
+test("bad signatures are rejected before any receipt is written", async () => {
+  const receipts: unknown[] = [];
+  const POST = createPartnerConfirmationHandler({
+    secret: () => secret,
+    providerName: () => "Example Provider",
+    now: () => now,
+    ingest: async () => neverIngested(),
+    recordDelivery: async event => { receipts.push(event); return true; },
+  });
+  const response = await POST(new Request("https://kurioticket.test/api/internal/partner-confirmations", {
+    method: "POST", headers: {
+      "x-kt-confirmation-timestamp": String(Math.floor(now / 1000)),
+      "x-kt-confirmation-signature": "sha256=00",
+    },
+    body: JSON.stringify(payload()),
+  }));
+  assert.equal(response.status, 401);
+  assert.equal(receipts.length, 0);
+});
+
+
+test("receipt persistence failure is retriable and never falsely acknowledged", async () => {
+  let ingested = 0;
+  const POST = createPartnerConfirmationHandler({
+    secret: () => secret,
+    providerName: () => "Example Provider",
+    now: () => now,
+    ingest: async () => { ingested++; return { id: "trip-saved" } as never; },
+    recordDelivery: async () => false,
+  });
+  const response = await POST(request(JSON.stringify(payload())));
+  assert.equal(ingested, 1);
+  assert.equal(response.status, 503);
+  assert.deepEqual(await response.json(), {
+    error: "Confirmation receipt is temporarily unavailable; retry this idempotent callback.",
+    errorCode: "partner_confirmation_receipt_unavailable",
+  });
+});

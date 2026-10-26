@@ -31,7 +31,7 @@ test("confirmed trips page does not invent an active confirmation provider feed"
   assert.match(page, /Current search-provider confirmation feed/);
   assert.match(page, /readiness\.currentSearchProviderConfirmationFeed === "none" \? "None" : "Configured"/);
   assert.match(page, /configured webhook secret means the signed callback boundary is ready; it does not mean a provider agreement or live confirmation feed is active/i);
-  assert.match(page, /there is no separate provider-name allowlist in the current contract/i);
+  assert.match(page, /binds the signing secret to a single configured provider/i);
 });
 
 test("confirmed trips readiness exposes configuration state without exposing the secret", () => {
@@ -84,7 +84,7 @@ test("confirmed-trip copy describes canonical confirmation state without oversta
 
 
 test("confirmed-trip readiness facts are rendered from authoritative readiness state", () => {
-  assert.match(page, /readiness\.credentialModel === "shared_secret_only" \? "One shared secret" : "Unknown"/);
+  assert.match(page, /readiness\.credentialModel === "single_provider_bound_secret" \? "Single provider \+ dedicated secret" : "Unknown"/);
   assert.match(page, /readiness\.currentSearchProviderConfirmationFeed === "none" \? "None" : "Configured"/);
 });
 
@@ -130,7 +130,7 @@ test("Confirmed Trips UI retains shell background and navigation while limiting 
   assert.match(page, /<Link href="#confirmation-integration-title"/);
   assert.match(page, /<Link href="#recent-confirmed-trips-title"/);
   assert.doesNotMatch(page, /<Link href="\/admin\/(?:redirects|searches)"/);
-  assert.match(page, /<AdminStatusBadge tone=\{readiness.webhookCredentialConfigured/);
+  assert.match(page, /<AdminStatusBadge tone=\{readiness.feedReady/);
 });
 
 
@@ -154,7 +154,14 @@ test("Confirmed Trips exposes all operational sections regardless of available t
   assert.match(page, /<section aria-labelledby="confirmed-trips-overview"/);
   assert.match(page, /<section aria-labelledby="confirmation-integration-title"/);
   assert.match(page, /<section aria-labelledby="recent-confirmed-trips-title"/);
-  assert.doesNotMatch(page, /className="[^"]*(?:\bhidden\b|\binvisible\b|\bopacity-0\b)/);
+  for (const match of page.matchAll(/className="([^"]*)"/g)) {
+    const classes = match[1].split(/\s+/);
+    assert.equal(
+      classes.some(token => /^(?:[a-z0-9-]+:)*(?:hidden|invisible|opacity-0)$/.test(token)),
+      false,
+      "Confirmed Trips sections must not use a visibility-hiding utility",
+    );
+  }
 });
 
 test("Previously conditional trip records remain truthful and read-only", () => {
@@ -167,4 +174,16 @@ test("Previously conditional trip records remain truthful and read-only", () => 
   assert.match(page, /No providers or counts are assumed/);
   assert.match(page, /Provider handoff ≠ confirmation/);
   assert.doesNotMatch(page, /<form|method:\s*["'](?:POST|PATCH|DELETE)/);
+});
+
+
+test("confirmation delivery health is read-only, provider-bound and truthful", () => {
+  assert.match(page, /getConfirmationDeliveryHealth/);
+  assert.match(page, /Confirmation delivery health/);
+  assert.match(page, /!readiness.feedReady/);
+  assert.match(page, /Delivery telemetry is unavailable/);
+  assert.match(page, /No delivery counts have been assumed/);
+  assert.match(page, /deliveryHealth.rejectedLast24h/);
+  assert.match(page, /Authenticated provider callback receipts/);
+  assert.doesNotMatch(page, /Cancel booking|Refund trip|Create confirmed trip/);
 });
