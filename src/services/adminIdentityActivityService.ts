@@ -4,7 +4,7 @@ import { Prisma } from "@/generated/prisma/client";
 import { eligibleGuestVisitorWhere, eligibleJourneyLinkedVisitorWhere, eligibleLinkedVisitorWhere, mergeAdminActivity, toAdminJourneyActivity, type ActivityRow, type IdentityKind } from "@/lib/adminIdentityJourney";
 import {
   ACTIVITY_FETCH_LIMIT, ACTIVITY_PAGE_SIZE, activityEnvironmentScope, activityWindow, allowedActivityStages,
-  decodeActivityCursor, encodeActivityCursor, excludeCanonicalLegacyRows, legacyStageLabelMatchesQuery, sourceActivitySeek,
+  decodeActivityCursor, encodeActivityCursor, excludeCanonicalLegacyRows, latestVisibleActivityAt, legacyStageLabelMatchesQuery, sourceActivitySeek,
   type ActivityFilters, type JourneyStage,
 } from "@/lib/adminIdentityActivity";
 import { escapePrismaContainsQuery } from "@/lib/adminIdentityDirectory";
@@ -87,6 +87,8 @@ export async function loadAdminIdentityActivity(
     const q = filters.q ? escapePrismaContainsQuery(filters.q) : "";
     const ci = (value: string) => ({ contains: value, mode: "insensitive" as const });
     const window = activityWindow(filters);
+    const order = filters.order === "oldest" ? "oldest" : "newest";
+    const createdAtDirection = order === "oldest" ? "asc" : "desc";
     const environmentScope = activityEnvironmentScope(environment);
     const scopedJourneyOwner: Prisma.JourneyEventWhereInput = { AND: [journeyOwner, environmentScope.journey] };
 
@@ -113,13 +115,13 @@ export async function loadAdminIdentityActivity(
     // Bounded per-source reads prevent a busy visitor from loading their full history.
     const [journey, searches, handoffs, analytics] = await Promise.all([
       stages.length ? db.journeyEvent.findMany({
-        where: { AND: [scopedJourneyOwner, { type: { in: stages } }, { createdAt: window }, sourceActivitySeek(cursor, "j"), productEventFilter, eventQ] },
-        orderBy: [{ createdAt: "desc" }, { id: "asc" }],
+        where: { AND: [scopedJourneyOwner, { type: { in: stages } }, { createdAt: window }, sourceActivitySeek(cursor, "j", order), productEventFilter, eventQ] },
+        orderBy: [{ createdAt: createdAtDirection }, { id: "asc" }],
         take: ACTIVITY_FETCH_LIMIT, select: journeySelect,
       }) : Promise.resolve([]),
       allowed.has("SEARCH_COMPLETED") ? db.searchHistory.findMany({
         where: { AND: [
-          searchOwner, environmentScope.search, { createdAt: window }, sourceActivitySeek(cursor, "s"),
+          searchOwner, environmentScope.search, { createdAt: window }, sourceActivitySeek(cursor, "s", order),
           excludeCanonicalLegacyRows("SEARCH_COMPLETED", scopedJourneyOwner, window, productEventFilter, eventQ),
           ...(product ? [{ type: product }] : []),
           ...(q && !legacyStageLabelMatchesQuery("SEARCH_COMPLETED", q) ? [{ OR: [
@@ -127,29 +129,29 @@ export async function loadAdminIdentityActivity(
             ...(product?.toLowerCase().includes(q.toLowerCase()) ? [{ type: product }] : []),
           ] }] : []),
         ] },
-        orderBy: [{ createdAt: "desc" }, { id: "asc" }],
+        orderBy: [{ createdAt: createdAtDirection }, { id: "asc" }],
         take: ACTIVITY_FETCH_LIMIT,
         select: { id: true, type: true, origin: true, destination: true, status: true, createdAt: true },
       }) : Promise.resolve([]),
       allowed.has("PROVIDER_HANDOFF_STARTED") && (!product || product === "FLIGHT" || product === "HOTEL")
         ? db.redirectLog.findMany({
           where: { AND: [
-            redirectOwner, environmentScope.handoff, { createdAt: window }, sourceActivitySeek(cursor, "r"),
+            redirectOwner, environmentScope.handoff, { createdAt: window }, sourceActivitySeek(cursor, "r", order),
             excludeCanonicalLegacyRows("PROVIDER_HANDOFF_STARTED", scopedJourneyOwner, window, productEventFilter, eventQ),
             ...(product ? [{ type: product }] : []),
             ...(q && !legacyStageLabelMatchesQuery("PROVIDER_HANDOFF_STARTED", q) ? [{ OR: [{ provider: ci(q) }, { route: ci(q) }] }] : []),
           ] },
-          orderBy: [{ createdAt: "desc" }, { id: "asc" }], take: ACTIVITY_FETCH_LIMIT,
+          orderBy: [{ createdAt: createdAtDirection }, { id: "asc" }], take: ACTIVITY_FETCH_LIMIT,
           select: { id: true, type: true, provider: true, route: true, createdAt: true },
         }) : Promise.resolve([]),
       allowed.has("ACCOUNT_ACTIVITY") && !product ? db.analyticsEvent.findMany({
         where: { AND: [
-          analyticsOwner, environmentScope.analytics, { createdAt: window }, sourceActivitySeek(cursor, "e"),
+          analyticsOwner, environmentScope.analytics, { createdAt: window }, sourceActivitySeek(cursor, "e", order),
           { type: { in: Object.keys(safeAnalyticsLabels) as SafeAnalyticsType[] } },
           ...(q ? [{ type: { in: (Object.keys(safeAnalyticsLabels) as SafeAnalyticsType[])
             .filter(type => safeAnalyticsLabels[type].toLowerCase().includes(q.toLowerCase())) } }] : []),
         ] },
-        orderBy: [{ createdAt: "desc" }, { id: "asc" }], take: ACTIVITY_FETCH_LIMIT,
+        orderBy: [{ createdAt: createdAtDirection }, { id: "asc" }], take: ACTIVITY_FETCH_LIMIT,
         select: { id: true, type: true, createdAt: true },
       }) : Promise.resolve([]),
     ]);
@@ -179,7 +181,7 @@ export async function loadAdminIdentityActivity(
         }] : [];
       }),
     ];
-    const sorted = mergeAdminActivity(canonical, legacy, ACTIVITY_FETCH_LIMIT * 4);
+    const sorted = mergeAdminActivity(canonical, legacy, ACTIVITY_FETCH_LIMIT * 4, order);
     const page = sorted.slice(0, ACTIVITY_PAGE_SIZE);
     const last = page.at(-1);
     const hasMore = sorted.length > ACTIVITY_PAGE_SIZE
@@ -195,7 +197,7 @@ export async function loadAdminIdentityActivity(
         role: account?.role ?? null,
         status: account?.status ?? "Anonymous",
         firstSeenAt: account?.createdAt ?? visitor!.firstSeenAt,
-        lastSeenAt: visitor?.lastSeenAt ?? (cursor ? null : page[0]?.at ?? null),
+        lastSeenAt: visitor?.lastSeenAt ?? latestVisibleActivityAt(page),
         events: page,
         nextCursor: hasMore && last ? encodeActivityCursor(last, kind, id, filters, environment) : null,
       },

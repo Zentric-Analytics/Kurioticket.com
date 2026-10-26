@@ -11,6 +11,7 @@ export const activityProducts = ["all", "FLIGHT", "HOTEL", "CAR", "PACKAGE"] as 
 export type ActivityTab = (typeof activityTabs)[number];
 export type ActivityStage = (typeof activityStages)[number];
 export type ActivityProduct = (typeof activityProducts)[number];
+export type ActivityOrder = "newest" | "oldest";
 export type ActivityFilters = {
   tab: ActivityTab;
   stage: ActivityStage;
@@ -18,8 +19,14 @@ export type ActivityFilters = {
   from: string;
   to: string;
   q: string;
+  order?: ActivityOrder;
 };
 export type ActivityCursor = { at: string; id: string };
+/** Latest recorded timestamp among visible events, independent of sort direction. */
+export function latestVisibleActivityAt(rows: ActivityRow[]): Date | null {
+  const timestamps = rows.map(row => row.at.getTime()).filter(Number.isFinite);
+  return timestamps.length ? new Date(Math.max(...timestamps)) : null;
+}
 
 /** Only show activity whose source records can be opened in the selected environment. */
 export function activityEnvironmentScope(environment: PublicEnvironment) {
@@ -62,12 +69,14 @@ export function parseActivityFilters(raw: Query): ParseResult {
   const from = one(raw.from);
   const to = one(raw.to);
   const q = one(raw.q).trim();
+  const order = one(raw.order) || "newest";
   if (!activityTabs.includes(tab as ActivityTab) || !activityStages.includes(stage as ActivityStage)
-    || !activityProducts.includes(product as ActivityProduct)) return { ok: false, error: "Unsupported activity filter." };
+    || !activityProducts.includes(product as ActivityProduct)
+    || !["newest", "oldest"].includes(order)) return { ok: false, error: "Unsupported activity filter." };
   if ((from && !validDay(from)) || (to && !validDay(to))
     || (from && to && from > to)) return { ok: false, error: "Enter a valid UTC date range." };
   if (q.length > 80 || /[\u0000-\u001f\u007f]/.test(q)) return { ok: false, error: "Search text must contain at most 80 ordinary characters." };
-  return { ok: true, filters: { tab: tab as ActivityTab, stage: stage as ActivityStage, product: product as ActivityProduct, from, to, q } };
+  return { ok: true, filters: { tab: tab as ActivityTab, stage: stage as ActivityStage, product: product as ActivityProduct, from, to, q, order: order as ActivityOrder } };
 }
 export function activityWindow(filters: ActivityFilters) {
   return {
@@ -87,7 +96,9 @@ export function allowedActivityStages(filters: ActivityFilters): Set<ActivitySta
 export const activitySource = (id: string) => id.startsWith("j-") ? "j" : id.startsWith("s-") ? "s"
   : id.startsWith("r-") ? "r" : "e";
 function scope(kind: IdentityKind, id: string, filters: ActivityFilters, environment: PublicEnvironment) {
-  return JSON.stringify([kind, id, environment, filters.tab, filters.stage, filters.product, filters.from, filters.to, filters.q]);
+  // Preserve existing newest-first cursors; bind oldest-first tokens to their own order.
+  return JSON.stringify([kind, id, environment, filters.tab, filters.stage, filters.product, filters.from, filters.to, filters.q,
+    ...(filters.order === "oldest" ? ["oldest"] : [])]);
 }
 export function encodeActivityCursor(row: Pick<ActivityRow, "id" | "at">, kind: IdentityKind, id: string, filters: ActivityFilters, environment: PublicEnvironment) {
   return Buffer.from(JSON.stringify({ v: 1, at: row.at.toISOString(), id: row.id, scope: scope(kind, id, filters, environment) }), "utf8").toString("base64url");
@@ -138,10 +149,15 @@ export function excludeCanonicalLegacyRows(
 }
 
 /** Stable cross-table (createdAt DESC, prefixed ID ASC) keyset. */
-export function sourceActivitySeek(cursor: ActivityCursor | undefined, prefix: "j" | "s" | "r" | "e") {
+export function sourceActivitySeek(cursor: ActivityCursor | undefined, prefix: "j" | "s" | "r" | "e", order: ActivityOrder = "newest") {
   if (!cursor) return {};
   const at = new Date(cursor.at);
   const priorPrefix = activitySource(cursor.id);
+  if (order === "oldest") {
+    if (prefix < priorPrefix) return { createdAt: { gt: at } };
+    if (prefix > priorPrefix) return { createdAt: { gte: at } };
+    return { OR: [{ createdAt: { gt: at } }, { createdAt: at, id: { gt: cursor.id.slice(2) } }] };
+  }
   if (prefix < priorPrefix) return { createdAt: { lt: at } };
   if (prefix > priorPrefix) return { createdAt: { lte: at } };
   return { OR: [{ createdAt: { lt: at } }, { createdAt: at, id: { gt: cursor.id.slice(2) } }] };
@@ -174,6 +190,30 @@ export function relatedJourneysWindow(rows: ActivityRow[], now: Date): { from: s
 }
 
 export type ActivityGroup = { key: string; journeyId: string | null; startedAt: Date | null; events: ActivityRow[]; products: string[] };
+/** Group only adjacent matching journey records. Grouping all events by journey
+ * would change chronology when different journeys have interleaved events.
+ */
+export function groupContiguousActivityRows(rows: ActivityRow[]): ActivityGroup[] {
+  const result: ActivityGroup[] = [];
+  rows.forEach((event, index) => {
+    const journeyId = event.journeyId ?? null;
+    const last = result.at(-1);
+    if (last && last.journeyId === journeyId) {
+      last.events.push(event);
+      if (event.product && !last.products.includes(event.product)) last.products.push(event.product);
+    } else {
+      result.push({
+        key: (journeyId ?? "other") + ":" + index,
+        journeyId,
+        startedAt: event.journeyStartedAt ?? null,
+        events: [event],
+        products: event.product ? [event.product] : [],
+      });
+    }
+  });
+  return result;
+}
+
 export function groupActivityRows(rows: ActivityRow[]): ActivityGroup[] {
   const groups = new Map<string, ActivityGroup>();
   for (const event of rows) {
