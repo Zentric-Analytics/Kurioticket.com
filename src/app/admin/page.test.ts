@@ -150,6 +150,39 @@ test("Overview information is presented without boxed white card containers", ()
   assert.match(dashboard, /<details className="mt-3 border-t border-slate-200\/80">/);
 });
 
+test("Overview range dropdown uses compact typography and neutral, accessible focus styling", () => {
+  assert.match(controls, /text-\[12px\] font-medium/);
+  assert.match(controls, /focus-visible:ring-1 focus-visible:ring-slate-300/);
+  assert.doesNotMatch(controls, /focus-within:ring-2|focus-visible:ring-indigo-500|<select/);
+  assert.match(controls, /role="listbox"/);
+  assert.match(controls, /role="option"/);
+  assert.match(controls, /aria-haspopup="listbox"/);
+  assert.match(controls, /aria-expanded=\{open\}/);
+  assert.match(controls, /aria-selected=\{selected\}/);
+  assert.match(controls, /Last 24 hours/);
+  assert.match(controls, /Last 7 days/);
+  assert.match(controls, /Last 30 days/);
+  assert.match(controls, /rounded-xl border border-slate-200 bg-white/);
+  assert.match(controls, /selected \? "bg-indigo-50 text-indigo-700"/);
+  assert.match(controls, /<Check size=\{14\}/);
+});
+
+test("Overview range interactions preserve navigation and accessible keyboard/close behaviors", () => {
+  assert.match(controls, /router\.push\(nextRange === "7d" \? "\/admin" : "\/admin\?range=" \+ encodeURIComponent\(nextRange\)\)/);
+  assert.match(controls, /if \(nextRange === range\) return/);
+  assert.match(controls, /if \(event\.key === "Escape"\)/);
+  assert.match(controls, /if \(event\.key === "ArrowDown"\)/);
+  assert.match(controls, /if \(event\.key === "ArrowUp"\)/);
+  assert.match(controls, /event\.key === "Home"/);
+  assert.match(controls, /event\.key === "End"/);
+  assert.match(controls, /if \(event\.key === "Tab"\) setOpen\(false\)/);
+  assert.match(controls, /document\.addEventListener\("pointerdown", onPointerDown\)/);
+  assert.match(controls, /document\.removeEventListener\("pointerdown", onPointerDown\)/);
+  assert.match(controls, /document\.addEventListener\("focusin", onFocusIn\)/);
+  assert.match(controls, /document\.removeEventListener\("focusin", onFocusIn\)/);
+  assert.match(controls, /triggerRef\.current\?\.focus\(\)/);
+});
+
 test("invisible automatic refresh retains its original one-minute visibility and cleanup behavior", () => {
   assert.match(controls, /export function AdminOverviewAutoRefresh/);
   assert.match(controls, /window\.setInterval\(\(\) => \{/);
