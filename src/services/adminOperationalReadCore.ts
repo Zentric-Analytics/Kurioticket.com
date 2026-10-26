@@ -387,6 +387,28 @@ function providerLogWhere(requestIds: readonly string[], services: readonly stri
   };
 }
 
+function providerLogsForPageSql(requestIds: readonly string[], services: readonly string[], environment: PublicEnvironment): Prisma.Sql {
+  const ids = [...new Set(requestIds)];
+  if (!ids.length || !services.length) throw new Error("Provider log read requires a nonempty page");
+  return Prisma.sql`
+    SELECT p."provider", p."status", p."service", p."metadata", p."createdAt"
+    FROM "ApiProviderLog" p
+    WHERE p."service" IN (${Prisma.join([...new Set(services)])})
+      AND p."metadata"->>'environment' = ${environment}
+      AND (
+        p."metadata"->>'requestId' IN (${Prisma.join(ids)})
+        OR (
+          p."service" = 'hotel-search'
+          AND p."metadata"->>'requestId' IS NULL
+          AND p."metadata"->>'progressive' = 'true'
+          AND p."metadata"->>'trackId' IN (${Prisma.join(ids)})
+        )
+      )
+    ORDER BY p."createdAt" ASC, p."id" ASC
+    LIMIT 2001
+  `;
+}
+
 // Prisma cannot correlate SearchHistory and ApiProviderLog across the JSON
 // request keys in its model where API. For provider-filtered lists and KPI
 // totals, use the same parameterized EXISTS predicate before keyset paging.
@@ -633,12 +655,7 @@ export function createAdminOperationalReadService(dependencies: Dependencies) {
           const requestIds = page.page.map(row => row.requestId).filter((id): id is string => Boolean(id));
           const services = [...new Set(page.page.map(row => providerSearchService(row.type)))];
           const logs = requestIds.length
-            ? await db.apiProviderLog.findMany({
-              where: providerLogWhere(requestIds, services, scope.environment),
-              select: { provider: true, status: true, service: true, metadata: true, createdAt: true },
-              orderBy: [{ createdAt: "asc" }, { id: "asc" }],
-              take: 2001,
-            })
+            ? await db.$queryRaw<ProviderExecutionLog[]>(providerLogsForPageSql(requestIds, services, scope.environment))
             : [];
           // Never present a partial query result as an exact provider count.
           // Keep the record visible but mark telemetry unavailable if the cap is hit.
@@ -850,4 +867,5 @@ export const __adminOperationalReadCoreTest = {
   correlatedProviderLogs,
   exactProviderFilteredSearchSql,
   providerLogWhere,
+  providerLogsForPageSql,
 };
