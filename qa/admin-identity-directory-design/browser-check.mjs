@@ -185,6 +185,7 @@ try {
 
   await check("custom dropdown keyboard and focus behaviors remain accessible", async () => {
     const status = page.getByRole("combobox", { name: "Account status" });
+    await expect(status).toHaveAttribute("aria-haspopup", "listbox");
     await status.focus();
     await page.keyboard.press("ArrowDown");
     const list = page.getByRole("listbox", { name: "Account status" });
