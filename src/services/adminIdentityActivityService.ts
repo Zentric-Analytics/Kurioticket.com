@@ -197,7 +197,7 @@ export async function loadAdminIdentityActivity(
         role: account?.role ?? null,
         status: account?.status ?? "Anonymous",
         firstSeenAt: account?.createdAt ?? visitor!.firstSeenAt,
-        lastSeenAt: visitor?.lastSeenAt ?? (cursor ? null : page[0]?.at ?? null),
+        lastSeenAt: visitor?.lastSeenAt ?? latestVisibleActivityAt(page),
         events: page,
         nextCursor: hasMore && last ? encodeActivityCursor(last, kind, id, filters, environment) : null,
       },
