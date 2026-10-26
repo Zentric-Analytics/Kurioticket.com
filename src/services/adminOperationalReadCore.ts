@@ -380,7 +380,6 @@ function providerLogWhere(requestIds: readonly string[], services: readonly stri
             { service: "hotel-search" },
             { metadata: { path: ["trackId"], equals: id } },
             { metadata: { path: ["progressive"], equals: true } },
-            { metadata: { path: ["requestId"], equals: Prisma.DbNull } },
           ],
         }))
         : []),
