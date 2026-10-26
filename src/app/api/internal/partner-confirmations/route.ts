@@ -104,7 +104,14 @@ export function createPartnerConfirmationHandler(dependencies: Dependencies) {
     const receipt = { providerName: configuredProvider, eventOccurredAt: confirmation.confirmationOccurredAt, reportedStatus: confirmation.status };
     try {
       const trip = await dependencies.ingest(confirmation);
-      await audit({ ...receipt, myTripId: trip.id, outcome: "ACCEPTED", reason: "accepted" });
+      const receiptStored = await audit({ ...receipt, myTripId: trip.id, outcome: "ACCEPTED", reason: "accepted" });
+      if (!receiptStored) {
+        console.error("[partner-confirmation]", { outcome: "receipt_unavailable" });
+        return NextResponse.json(
+          { error: "Confirmation receipt is temporarily unavailable; retry this idempotent callback.", errorCode: "partner_confirmation_receipt_unavailable" },
+          { status: 503 },
+        );
+      }
       return NextResponse.json({ accepted: true, tripId: trip.id });
     } catch (error) {
       if (error instanceof MyTripIngestionOwnershipError) {
