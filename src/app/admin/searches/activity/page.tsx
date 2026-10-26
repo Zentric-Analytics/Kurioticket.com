@@ -124,6 +124,7 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
                     label="Identity"
                     name="identity"
                     value={one(raw.identity) || "all"}
+                    clearFieldNamesOnChange={["userId", "visitorId"]}
                     options={[
                       { value: "all", label: "All identities" },
                       { value: "registered", label: "Registered" },
