@@ -3,7 +3,6 @@ import { ChevronLeft, ChevronRight, UserRound } from "lucide-react";
 import { CopyIdentityId } from "./CopyIdentityId";
 import { AdminIdentitySort } from "./AdminIdentitySort";
 import type { AdminIdentitySort as IdentitySort } from "@/lib/adminIdentityDirectory";
-import { UserStatusActions } from "./UserStatusActions";
 
 export type IdentityRow =
   | {
@@ -31,8 +30,6 @@ type Props = {
   identity: "ALL" | "REGISTERED" | "GUEST";
   pageSize: number;
   sort: IdentitySort;
-  currentUserId: string;
-  protectedEmails: string[];
   pageHref: string;
 };
 
@@ -64,11 +61,8 @@ export function AdminIdentityTable({
   identity,
   pageSize,
   sort,
-  currentUserId,
-  protectedEmails,
   pageHref,
 }: Props) {
-  const protectedSet = new Set(protectedEmails);
   const totalPages = Math.max(1, Math.ceil(count / pageSize));
   function href(values: Record<string, string>) {
     const [path, query] = pageHref.split("?");
@@ -112,16 +106,15 @@ export function AdminIdentityTable({
         aria-labelledby="identity-directory-title"
         tabIndex={0}
       >
-        <table className="w-full min-w-[1080px] table-fixed text-left text-[13px]">
+        <table className="w-full min-w-[900px] table-fixed text-left text-[13px]">
           <caption className="sr-only">
             Registered accounts and consent-eligible guest identities, sorted by {sort.replaceAll("_", " ")}
           </caption>
           <colgroup>
-            <col className="w-[34%]" />
-            <col className="w-[14%]" />
-            <col className="w-[11%]" />
+            <col className="w-[40%]" />
             <col className="w-[17%]" />
-            <col className="w-[12%]" />
+            <col className="w-[13%]" />
+            <col className="w-[18%]" />
             <col className="w-[12%]" />
           </colgroup>
           <thead className="border-b border-[#D8E1EC] bg-white text-[12px] text-[#475569]">
@@ -132,7 +125,6 @@ export function AdminIdentityTable({
                 "Status",
                 "Joined / First Seen",
                 "Activity",
-                "Actions",
               ].map((heading) => (
                 <th
                   key={heading}
@@ -152,10 +144,6 @@ export function AdminIdentityTable({
               const secondary = user
                 ? user.email || "No email recorded"
                 : record.id;
-              const isProtectedAdmin = Boolean(
-                user?.email &&
-                  protectedSet.has(user.email.toLowerCase().trim()),
-              );
               return (
                 <tr
                   key={`${row.kind}:${record.id}`}
@@ -231,32 +219,14 @@ export function AdminIdentityTable({
                       <ChevronRight size={15} aria-hidden="true" />
                     </Link>
                   </td>
-                  <td className="px-3 py-1.5">
-                    {user ? (
-                      <UserStatusActions
-                        userId={user.id}
-                        email={user.email}
-                        role={user.role}
-                        status={user.status}
-                        isSelf={user.id === currentUserId}
-                        isProtectedAdmin={isProtectedAdmin}
-                      />
-                    ) : (
-                      <span
-                        aria-label="No account actions for guests"
-                        className="text-[#64748B]"
-                      >
-                        —
-                      </span>
-                    )}
-                  </td>
+
                 </tr>
               );
             })}
             {!rows.length ? (
               <tr>
                 <td
-                  colSpan={6}
+                  colSpan={5}
                   className="px-4 py-12 text-center text-[13px] text-[#475569]"
                 >
                   No users match these filters.
