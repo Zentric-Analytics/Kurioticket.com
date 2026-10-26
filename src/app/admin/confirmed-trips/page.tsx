@@ -37,11 +37,11 @@ export default async function AdminConfirmedTripsPage() {
           <Link href="/admin/flight-status" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
             Flight status
           </Link>
-          <Link href="/admin/redirects" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
-            Provider handoffs
+          <Link href="#confirmation-integration-title" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+            Confirmation readiness
           </Link>
-          <Link href="/admin/searches" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
-            Search operations
+          <Link href="#recent-confirmed-trips-title" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+            Recent confirmed trips
           </Link>
         </div>
       }
