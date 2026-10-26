@@ -151,7 +151,9 @@ test("Overview information is presented without boxed white card containers", ()
 });
 
 test("Overview range dropdown uses compact typography and neutral, accessible focus styling", () => {
-  assert.match(controls, /text-\[12px\] font-medium/);
+  assert.match(controls, /px-2\.5 text-\[11px\] font-medium leading-none/);
+  assert.match(controls, /px-2\.5 text-left text-\[11px\] font-medium transition-colors/);
+  assert.doesNotMatch(controls, /text-\[12px\]/);
   assert.match(controls, /focus-visible:ring-1 focus-visible:ring-slate-300/);
   assert.doesNotMatch(controls, /focus-within:ring-2|focus-visible:ring-indigo-500|<select/);
   assert.match(controls, /role="listbox"/);
