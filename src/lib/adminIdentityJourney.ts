@@ -141,10 +141,11 @@ export function toAdminJourneyActivity(event: JourneyEventRecord, kind: Identity
 }
 
 /** Prefer canonical journey records; keep older activity where no journey stage was recorded. */
-export function mergeAdminActivity(journey: ActivityRow[], legacy: ActivityRow[], limit = 30) {
+export function mergeAdminActivity(journey: ActivityRow[], legacy: ActivityRow[], limit = 30, order: "newest" | "oldest" = "newest") {
   const recorded = new Set(journey.map(row => row.dedupeKey).filter(Boolean));
   return [
     ...journey,
     ...legacy.filter(row => !row.dedupeKey || !recorded.has(row.dedupeKey)),
-  ].sort((a, b) => b.at.getTime() - a.at.getTime() || a.id.localeCompare(b.id)).slice(0, limit);
+  ].sort((a, b) => (order === "oldest" ? a.at.getTime() - b.at.getTime() : b.at.getTime() - a.at.getTime())
+    || a.id.localeCompare(b.id)).slice(0, limit);
 }
