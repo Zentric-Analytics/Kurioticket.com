@@ -444,3 +444,32 @@ test("single-provider partial car results do not invent another successful provi
   assert.equal(diagnostic.reason, "KAYAK sandbox did not complete successfully, but partial results were returned.");
   assert.equal(diagnostic.reason.includes("another provider"), false);
 });
+
+test("provider count is based only on exact execution evidence, deduplicated by provider", () => {
+  const { exactProviderSummary } = __adminOperationalReadCoreTest;
+  assert.equal(exactProviderSummary([]), null);
+  assert.deepEqual(exactProviderSummary([
+    { provider: "Duffel", status: "SUCCESS" },
+    { provider: "duffel", status: "FAILED" },
+    { provider: "KAYAK sandbox", status: "DISABLED" },
+  ]), { total: 2, successful: 0, failed: 1, degraded: 0, disabled: 1 });
+});
+
+test("provider log mapping rejects other services, environments and request IDs", () => {
+  const { correlatedProviderLogs } = __adminOperationalReadCoreTest;
+  const timestamp = new Date("2026-10-23T10:00:00.000Z");
+  const rows = [{ requestId: "request-A", type: "FLIGHT", createdAt: timestamp }] as never;
+  const candidate = (requestId: string, service: string, environment: string, at = timestamp) => ({
+    provider: "Duffel", status: "SUCCESS" as const, service,
+    metadata: { requestId, environment }, createdAt: at,
+  });
+  const mapped = correlatedProviderLogs(rows, [
+    candidate("request-A", "flight-search", "staging"),
+    candidate("request-B", "flight-search", "staging"),
+    candidate("request-A", "hotel-search", "staging"),
+    candidate("request-A", "flight-search", "production"),
+    candidate("request-A", "flight-search", "staging", new Date("2026-10-23T09:00:00.000Z")),
+  ], "staging");
+  assert.equal(mapped.get("request-A")?.length, 1);
+  assert.equal(mapped.get("request-B"), undefined);
+});
