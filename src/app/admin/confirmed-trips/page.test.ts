@@ -87,3 +87,47 @@ test("confirmed-trip readiness facts are rendered from authoritative readiness s
   assert.match(page, /readiness\.credentialModel === "shared_secret_only" \? "One shared secret" : "Unknown"/);
   assert.match(page, /readiness\.currentSearchProviderConfirmationFeed === "none" \? "None" : "Configured"/);
 });
+
+
+test("Confirmed Trips UI uses one existing white parent with responsive summary and balanced breakdowns", () => {
+  assert.match(page, /<AdminSectionCard className="min-w-0 p-4 sm:p-6 lg:p-7">/);
+  assert.equal((page.match(/<AdminSectionCard/g) || []).length, 1);
+  assert.match(page, /grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5/);
+  assert.match(page, /grid items-stretch gap-4 lg:grid-cols-2/);
+  assert.match(page, /<TripMetric label="Confirmed trips"/);
+  assert.match(page, /<TripMetric label="Last 24h"/);
+  assert.match(page, /<TripMetric label="Upcoming"/);
+  assert.match(page, /<TripMetric label="Past"/);
+  assert.match(page, /<TripMetric label="Cancelled"/);
+  assert.match(page, /<section aria-labelledby="recent-confirmed-trips-title"/);
+  assert.match(page, /min-w-\[1000px\]/);
+  assert.match(page, /overflow-x-auto/);
+});
+
+test("Confirmed Trips UI preserves honest data, alerts and no-booking boundaries", () => {
+  assert.match(page, /getConfirmedTripsOperationsSnapshot\(\)/);
+  assert.match(page, /getConfirmedTripsIntegrationReadiness\(\)/);
+  for (const property of [
+    "operations.metrics.total", "operations.metrics.confirmedLast24h",
+    "operations.metrics.upcoming", "operations.metrics.past",
+    "operations.metrics.cancelled", "operations.byProduct.map",
+    "operations.byProvider.map", "operations.recentTrips.map",
+    "trip.userEmail", "trip.userId", "trip.providerConfirmationCode",
+    "trip.origin", "trip.destination", "trip.departureDate",
+    "trip.travelerCount", "trip.status",
+  ]) assert.ok(page.includes(property), property);
+  assert.match(page, /No zero values were invented/);
+  assert.match(page, /no accepted signed partner callback has created a confirmed My Trip/i);
+  assert.match(page, /readiness.webhookCredentialConfigured/);
+  assert.match(page, /readiness.currentSearchProviderConfirmationFeed === "none"/);
+  assert.match(page, /Provider handoff ≠ confirmation/);
+  assert.doesNotMatch(page, /<form|method:\s*["'](?:POST|PATCH|DELETE)/);
+});
+
+test("Confirmed Trips UI retains shell background and navigation while limiting changes to the page", () => {
+  const shell = readFileSync("src/components/admin/AdminPageShellHistorical.tsx", "utf8");
+  assert.match(shell, /border-slate-200 bg-white shadow-sm/);
+  assert.match(page, /<Link href="\/admin\/redirects"/);
+  assert.match(page, /<Link href="\/admin\/searches"/);
+  assert.match(page, /<AdminStatusBadge tone=\{readiness.webhookCredentialConfigured/);
+});
