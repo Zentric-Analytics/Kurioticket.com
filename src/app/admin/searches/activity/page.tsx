@@ -131,7 +131,7 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
                   />
                 </div>
                 <div className="w-[220px] max-w-full">
-                  <SearchMonitorSelect label="Provider" name="provider" value={one(raw.provider)} options={providerOptions} />
+                  <SearchMonitorSelect label="Provider" name="provider" value={one(raw.provider)} options={providerOptions} truncateLabel />
                 </div>
                 <button
                   type="submit"
