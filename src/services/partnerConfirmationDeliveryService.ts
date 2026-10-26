@@ -55,6 +55,7 @@ export type ConfirmationDeliveryHealth = {
   rejectedLast24h: number;
   lastReceivedAt: string | null;
   lastAcceptedAt: string | null;
+  lastRejectedAt: string | null;
   recent: Array<{
     id: string;
     outcome: "ACCEPTED" | "REJECTED";
@@ -75,12 +76,13 @@ export async function getConfirmationDeliveryHealth(): Promise<ConfirmationDeliv
   const since = new Date(now.getTime() - 24 * 60 * 60_000);
   try {
     const where = { providerName: binding.providerName };
-    const [receivedLast24h, acceptedLast24h, rejectedLast24h, latest, lastAccepted, recent] = await db.$transaction([
+    const [receivedLast24h, acceptedLast24h, rejectedLast24h, latest, lastAccepted, lastRejected, recent] = await db.$transaction([
       db.partnerConfirmationDelivery.count({ where: { ...where, receivedAt: { gte: since, lte: now } } }),
       db.partnerConfirmationDelivery.count({ where: { ...where, outcome: "ACCEPTED", receivedAt: { gte: since, lte: now } } }),
       db.partnerConfirmationDelivery.count({ where: { ...where, outcome: "REJECTED", receivedAt: { gte: since, lte: now } } }),
       db.partnerConfirmationDelivery.findFirst({ where, orderBy: { receivedAt: "desc" }, select: { receivedAt: true } }),
       db.partnerConfirmationDelivery.findFirst({ where: { ...where, outcome: "ACCEPTED" }, orderBy: { receivedAt: "desc" }, select: { receivedAt: true } }),
+      db.partnerConfirmationDelivery.findFirst({ where: { ...where, outcome: "REJECTED", receivedAt: { gte: since, lte: now } }, orderBy: { receivedAt: "desc" }, select: { receivedAt: true } }),
       db.partnerConfirmationDelivery.findMany({
         where,
         take: 20,
@@ -93,6 +95,7 @@ export async function getConfirmationDeliveryHealth(): Promise<ConfirmationDeliv
       receivedLast24h, acceptedLast24h, rejectedLast24h,
       lastReceivedAt: latest?.receivedAt.toISOString() ?? null,
       lastAcceptedAt: lastAccepted?.receivedAt.toISOString() ?? null,
+      lastRejectedAt: lastRejected?.receivedAt.toISOString() ?? null,
       recent: recent.map(row => ({
         id: row.id, outcome: row.outcome, reason: row.reason,
         receivedAt: row.receivedAt.toISOString(),
@@ -104,5 +107,36 @@ export async function getConfirmationDeliveryHealth(): Promise<ConfirmationDeliv
   } catch (error) {
     console.error("[admin:confirmation-deliveries] telemetry unavailable", error instanceof Error ? error.name : "unknown");
     return null;
+  }
+}
+
+
+export async function getAdminConfirmationDeliveryHistory(myTripId: string) {
+  const db = getOptionalPrisma();
+  if (!db) return { status: "unavailable" as const };
+  try {
+    const rows = await db.partnerConfirmationDelivery.findMany({
+      where: { myTripId },
+      orderBy: [{ receivedAt: "desc" }, { id: "desc" }],
+      take: 50,
+      select: {
+        id: true, outcome: true, reason: true, receivedAt: true,
+        eventOccurredAt: true, reportedStatus: true,
+      },
+    });
+    return {
+      status: "ok" as const,
+      rows: rows.map(row => ({
+        id: row.id,
+        outcome: row.outcome,
+        reason: row.reason,
+        receivedAt: row.receivedAt.toISOString(),
+        eventOccurredAt: row.eventOccurredAt?.toISOString() ?? null,
+        reportedStatus: row.reportedStatus,
+      })),
+    };
+  } catch (error) {
+    console.error("[admin:confirmation-history] history unavailable", error instanceof Error ? error.name : "unknown");
+    return { status: "unavailable" as const };
   }
 }
