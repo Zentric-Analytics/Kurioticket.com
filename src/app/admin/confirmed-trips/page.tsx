@@ -101,10 +101,11 @@ export default async function AdminConfirmedTripsPage() {
                 </AdminStatusBadge>
               </div>
             </div>
-            <div className="mt-4 grid gap-3 md:grid-cols-4">
+            <div className="mt-4 grid gap-3 md:grid-cols-5">
               <Fact label="Endpoint" value="POST /api/internal/partner-confirmations" />
               <Fact label="Webhook credential model" value={readiness.credentialModel === "single_provider_bound_secret" ? "Single provider + dedicated secret" : "Unknown"} />
               <Fact label="Configured provider" value={readiness.providerName || "None"} />
+              <Fact label="Webhook credential" value={readiness.webhookCredentialConfigured ? "Configured" : "Not configured"} />
               <Fact label="Current search-provider confirmation feed" value={readiness.currentSearchProviderConfirmationFeed === "none" ? "None" : "Configured"} />
             </div>
             <p className="mt-4 text-xs leading-5 text-slate-600">
