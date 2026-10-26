@@ -356,8 +356,6 @@ function correlatedProviderLogs(rows: readonly SearchRow[], logs: readonly Provi
     if (!requestId || meta.environment !== environment) continue;
     const row = requests.get(requestId);
     if (!row || log.service !== providerSearchService(row.product)) continue;
-    // Reject unrelated logs without a trustworthy shared request context.
-    if (log.createdAt.getTime() < row.createdAt.getTime() - 120_000) continue;
     const entries = correlated.get(requestId) ?? [];
     entries.push(log);
     correlated.set(requestId, entries);
@@ -509,10 +507,14 @@ export function createAdminOperationalReadService(dependencies: Dependencies) {
               },
               select: { provider: true, status: true, service: true, metadata: true, createdAt: true },
               orderBy: [{ createdAt: "asc" }, { id: "asc" }],
-              take: 2000,
+              take: 2001,
             })
             : [];
-          const byRequest = correlatedProviderLogs(page.page, logs, scope.environment);
+          // Never present a partial query result as an exact provider count.
+          // Keep the record visible but mark telemetry unavailable if the cap is hit.
+          const byRequest = logs.length <= 2000
+            ? correlatedProviderLogs(page.page, logs, scope.environment)
+            : new Map<string, ProviderExecutionLog[]>();
           return { status: "ok", data: { scope, items: page.page.map(row => searchDto(row, scope.environment, row.requestId ? byRequest.get(row.requestId) ?? [] : [])), nextCursor: page.next } };
         });
       },
