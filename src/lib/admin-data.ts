@@ -103,15 +103,20 @@ export async function getSearchHealth(): Promise<SearchHealth> {
 }
 
 export async function getRecentAdminActivity(limit = 6) {
-  return withOptionalDb(async (db) => {
+  const db = getOptionalPrisma();
+  if (!db) return { status: "unavailable" as const };
+  try {
     const logs = await db.adminAuditLog.findMany({ orderBy: { createdAt: "desc" }, take: limit });
-    return logs.map((log) => ({
+    return { status: "ok" as const, items: logs.map((log) => ({
       id: log.id,
       title: log.action,
       detail: `${log.adminEmail} ${log.targetType ? `on ${log.targetType}` : ""}${log.targetEmail ? ` (${log.targetEmail})` : ""}`,
-      timestamp: formatDateTime(log.createdAt),
-    }));
-  }, []);
+      source: log.adminUserId ? "human" as const : "system" as const,
+      timestamp: new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" }).format(log.createdAt) + " UTC",
+    })) };
+  } catch {
+    return { status: "unavailable" as const };
+  }
 }
 
 export async function getProviderStatuses(): Promise<ProviderStatus[]> {

@@ -18,12 +18,15 @@ test("overview uses existing canonical services without mocked counts", () => {
 
 test("six original KPIs and their sources are retained in the snapshot", () => {
   for (const [label, expression] of [
-    ["Total users", "data.users.total"],
+    ["Total accounts", "data.users.total"],
     ["Enabled accounts", "data.users.active"],
+    ["Active users (observed)", "data.journeys.identities.registeredAccounts"],
+    ["Suspended accounts", "data.users.suspended"],
+    ["Deleted accounts", "data.users.deleted"],
     ["Support attention", "supportAttention"],
     ["Deletion attention", "deletionAttention"],
     ["Journeys", "data.journeys.journeys"],
-    ["Admin actions", "data.adminActions"],
+    ["Human admin actions", "data.audit.human"],
   ]) {
     assert.ok(display.includes('label="' + label + '" value={' + expression + "}"), label);
   }
@@ -87,7 +90,7 @@ test("support, deletion, health, and audit data survive the removal of shortcut 
     "system.databaseConnected", "system.databaseConfigured", "system.authConfigured",
     "system.sessionConfigured", "system.emailConfigured", "system.providerCredentialsPresent",
   ]) assert.ok(dashboard.includes(name), name);
-  assert.match(dashboard, /activity\.map\(\(item\) =>/);
+  assert.match(dashboard, /activity\.items\.map\(\(item\) =>/);
   assert.doesNotMatch(dashboard, /QuickActions|All admin modules|Admin shortcuts and modules/);
   assert.doesNotMatch(page, /adminNavigation\.filter|modules=\{modules\}/);
   assert.match(dashboard, /href="\/admin\/support"/);
@@ -126,7 +129,7 @@ test("compact range selector sits in Operations Snapshot and the top toolbar is 
   assert.match(page, /selected === "24h" \|\| selected === "30d" \? selected : "7d"/);
   assert.match(page, /24 \* 60 \* 60 \* 1000 : 30 \* 24 \* 60 \* 60 \* 1000/);
   assert.match(display, /<AdminOverviewAutoRefresh \/>/);
-  assert.match(display, /title="Operations Snapshot"[\s\S]*?action=\{<AdminOverviewRangeSelect range=\{range\} \/>\}/);
+  assert.match(display, /title="Operations Snapshot"[\s\S]*?<AdminOverviewRangeSelect range=\{range\} \/>/);
   assert.match(controls, /export function AdminOverviewRangeSelect/);
   assert.match(controls, /router\.push\(/);
   assert.match(controls, /Overview reporting range/);
@@ -138,7 +141,7 @@ test("compact range selector sits in Operations Snapshot and the top toolbar is 
 test("Overview information is presented without boxed white card containers", () => {
   assert.doesNotMatch(dashboard, /AdminSectionCard|AdminEmptyState|<Card/);
   assert.doesNotMatch(page, /AdminEmptyState/);
-  assert.match(display, /<MetricCard label="Total users"/);
+  assert.match(display, /<MetricCard label="Total accounts"/);
   assert.match(display, /<AttentionCard href="\/admin\/providers"/);
   assert.match(display, /<PlatformHealth system=\{system\} \/>/);
   assert.match(display, /<ProviderCard key=\{provider.id\}/);
@@ -208,7 +211,7 @@ test("canonical overview reads consented recent visitor identities without overw
   assert.ok(service.includes('consentStatus: "GRANTED"'));
   assert.ok(service.includes("trackingDisabledAt: null"));
   assert.ok(service.includes("lastSeenAt: { gte: recentVisitorCutoff, lte: now }"));
-  assert.ok(service.includes('active: userCount.get("ACTIVE")'));
+  assert.ok(service.includes("summarizeAccountStatusRows(lifecycle.userGroups)"));
 });
 
 
@@ -255,7 +258,7 @@ test("Recent Admin Activity is outside the two-column workload grid and uses the
   assert.ok(twoColumnEnd > 0, "the two-column workload grid must end before the audit feed");
   assert.ok(feed > twoColumnEnd, "activity must be a separate full-width sibling");
   assert.equal((display.match(/<ActivityFeed activity=\{activity\} \/>/g) || []).length, 1, "only one feed in the normal Overview");
-  assert.match(dashboard, /activity\.map\(\(item\) =>/);
+  assert.match(dashboard, /activity\.items\.map\(\(item\) =>/);
   for (const value of ["humanize(item.title)", "item.detail", "item.timestamp", "item.title"]) {
     assert.ok(dashboard.includes(value), value);
   }
@@ -282,4 +285,23 @@ test("Overview typography maintains readable hierarchy without heavy global badg
   assert.match(display, /data\.users\.total/);
   assert.match(display, /data\.visitorActivity\.observedVisitorIdentities/);
   assert.match(display, /getAdminOverview|AdminOverviewAutoRefresh/);
+});
+
+test("Phase 1 uses validated account roles and human audit counts", () => {
+ const service = readFileSync("src/services/adminOverviewService.ts","utf8");
+ const adminData = readFileSync("src/lib/admin-data.ts","utf8");
+ assert.match(service, /by: \["status", "role"\]/);
+ assert.match(service, /adminUserId: \{ not: null \}/);
+ assert.match(service, /summarizeAccountStatusRows\(lifecycle.userGroups\)/);
+ assert.match(display, /Account status breakdown/);
+ assert.match(display, /data.users.activeCustomers/);
+ assert.match(display, /data.users.activeAdmins/);
+ assert.match(display, /data.users.activeSupport/);
+ assert.match(display, /data.users.pendingDeletion/);
+ assert.match(display, /Staging data/);
+ assert.match(display, /Production data/);
+ assert.match(adminData, /source: log.adminUserId \? "human" as const : "system" as const/);
+ assert.match(dashboard, /activity.status === "unavailable"/);
+ assert.match(dashboard, /activity.items.length === 0/);
+ assert.match(adminData, /timeZone: "UTC"/);
 });
