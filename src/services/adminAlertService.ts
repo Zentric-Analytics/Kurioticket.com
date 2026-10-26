@@ -224,6 +224,8 @@ async function loadAdminAlertCandidates(now: Date): Promise<AdminAlertCandidate[
         homepageFares === null || !homepageFares.dataAvailable,
       "flight-status":
         readiness.feedReady && flightStatusOperations === null,
+      "confirmed-trips":
+        confirmationBinding.configured && confirmationHealth === null,
     },
     now,
   );
@@ -251,6 +253,7 @@ async function loadAdminAlertCandidates(now: Date): Promise<AdminAlertCandidate[
       cms: telemetryOutageTokens.cms,
       homepageFares: telemetryOutageTokens["homepage-fares"],
       flightStatus: telemetryOutageTokens["flight-status"],
+      confirmedTrips: telemetryOutageTokens["confirmed-trips"],
     },
     confirmedTrips: {
       feedReady: confirmationBinding.configured,
@@ -270,7 +273,8 @@ type TelemetrySource =
   | "email"
   | "cms"
   | "homepage-fares"
-  | "flight-status";
+  | "flight-status"
+  | "confirmed-trips";
 
 type TelemetryStateMetadata = {
   state?: unknown;
