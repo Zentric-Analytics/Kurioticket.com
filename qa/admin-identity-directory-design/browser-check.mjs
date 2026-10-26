@@ -30,22 +30,22 @@ async function chooseOption(label, optionName) {
 }
 const tabs = () => page.getByRole("navigation", { name: "User types" });
 const filterForm = () => page.locator("form").filter({ has: page.getByRole("button", { name: "Apply Filter" }) });
-const expectedLabels = ["Identity", "Type", "Status", "Joined / First Seen", "Activity", "Actions"];
+const expectedLabels = ["Identity", "Type", "Status", "Joined / First Seen", "Activity"];
 
 try {
   for (const width of [1280, 390]) {
     await check("capture unmodified latest-dev Users page at " + width + "px", async () => {
       await page.setViewportSize({ width, height: 900 });
       await page.goto(base + "/before", { waitUntil: "domcontentloaded" });
-      await expect(page.getByRole("heading", { name: "Users: 30" })).toBeVisible();
-      await expect(page.getByRole("combobox", { name: "Identity type" })).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Users directory" })).toHaveCount(1);
+      await expect(page.getByRole("navigation", { name: "User types" }).getByRole("link", { name: "All (30)" })).toBeVisible();
       await expect(page.locator("tbody tr")).toHaveCount(30);
       await page.screenshot({ path: output + "/before-users-directory-" + width + ".png", fullPage: true });
     });
   }
 
   for (const width of [1280, 1366, 390, 320]) {
-    await check("six-column flat directory and underline-only tab hierarchy at " + width + "px", async () => {
+    await check("five-column flat directory and underline-only tab hierarchy at " + width + "px", async () => {
       await page.setViewportSize({ width, height: 900 });
       await page.goto(after, { waitUntil: "domcontentloaded" });
       await expect(tabs().getByRole("link", { name: "All (30)" })).toBeVisible();
@@ -89,7 +89,7 @@ try {
           regionWidth: region?.clientWidth, tableWidth: region?.scrollWidth };
       });
       assert.ok(metrics.document <= metrics.viewport + 1, "No horizontal page drift: " + JSON.stringify(metrics));
-      if (width >= 1280) assert.ok(metrics.tableWidth <= metrics.regionWidth + 1, "All six columns fit on desktop: " + JSON.stringify(metrics));
+      if (width >= 1280) assert.ok(metrics.tableWidth <= metrics.regionWidth + 1, "All five columns fit on desktop: " + JSON.stringify(metrics));
       if (width <= 390) assert.ok(metrics.tableWidth > metrics.regionWidth, "Only table scrolls horizontally on narrow viewports");
       await expect(page.getByRole("link", { name: "Kurioticket Admin overview" })).toBeVisible();
       await page.screenshot({ path: output + "/after-users-directory-" + width + ".png", fullPage: true });
@@ -104,15 +104,15 @@ try {
     await expect(guest).toContainText("Guest visitor");
     await expect(guest).toContainText("Guest");
     await expect(guest.getByLabel("No account status for guest visitor")).toBeVisible();
-    await expect(guest.getByLabel("No account actions for guests")).toBeVisible();
+    await expect(guest.getByRole("button", { name: /Manage/ })).toHaveCount(0);
     await expect(guest.getByRole("button", { name: "Copy guest ID: qa-guest-001" })).toBeVisible();
     await expect(guest.getByRole("link", { name: /View Activity for Guest visitor/ })).toBeVisible();
     await expect(registered).toContainText("Registered · Support");
     await expect(registered).toContainText("Active");
-    await expect(registered.getByRole("button", { name: /Manage account/ })).toBeVisible();
+    await expect(registered.getByRole("button", { name: /Manage account/ })).toHaveCount(0);
     await expect(registered.getByRole("button", { name: "Copy user ID: qa-support-001" })).toBeVisible();
     const protectedAdmin = page.locator("tbody tr").filter({ hasText: "Alana Example" });
-    await expect(protectedAdmin).toContainText("Current admin");
+    await expect(protectedAdmin).toContainText("Registered · Admin");
     await expect(protectedAdmin.getByRole("button", { name: /Manage account/ })).toHaveCount(0);
     const date = await guest.locator("time").first().getAttribute("dateTime");
     assert.ok(date?.startsWith("2026-10-22T"), "Full date/time remains available in semantic time element");
@@ -185,6 +185,7 @@ try {
 
   await check("custom dropdown keyboard and focus behaviors remain accessible", async () => {
     const status = page.getByRole("combobox", { name: "Account status" });
+    await expect(status).toHaveAttribute("aria-haspopup", "listbox");
     await status.focus();
     await page.keyboard.press("ArrowDown");
     const list = page.getByRole("listbox", { name: "Account status" });
@@ -222,40 +223,20 @@ try {
     }
   });
 
-  await check("Manage still requires confirmation and never invokes permanent deletion", async () => {
-    await page.goto(after, { waitUntil: "domcontentloaded" });
-    const row = page.getByRole("row").filter({ hasText: "Zara Example" });
-    const manage = row.getByRole("button", { name: /Manage account/ });
-    await manage.click();
-    const menu = page.getByRole("menu");
-    await expect(menu.getByRole("menuitem", { name: "Suspend" })).toBeVisible();
-    await expect(menu.getByRole("menuitem", { name: "Delete", exact: true })).toBeVisible();
-    await expect(menu).not.toContainText("Soft delete");
-    await page.screenshot({ path: output + "/after-users-manage-1280.png", fullPage: false });
-    const requests = [];
-    await page.route("**/api/admin/users/*/status", async route => {
-      requests.push(route.request().postDataJSON());
-      await route.fulfill({ status: 403, contentType: "application/json", body: JSON.stringify({ error: "QA denied status change" }) });
-    });
-    let confirmation = "";
-    page.once("dialog", async dialog => {
-      confirmation = dialog.message();
-      await dialog.dismiss();
-    });
-    await menu.getByRole("menuitem", { name: "Delete", exact: true }).click();
-    assert.match(confirmation, /can be restored/);
-    assert.deepEqual(requests, [], "Cancelling never mutates a user");
-    await manage.click();
-    page.once("dialog", dialog => dialog.accept());
-    await page.getByRole("menuitem", { name: "Delete", exact: true }).click();
-    await expect(row.getByRole("status").last()).toContainText("QA denied status change");
-    assert.deepEqual(requests, [{ status: "DELETED" }], "Only the recoverable DELETED status was attempted");
-    await page.unroute("**/api/admin/users/*/status");
+  await check("directory exposes no account actions but links preserve detail context", async () => {
+    await page.goto(after + "?identity=REGISTERED&sort=oldest&page=1", { waitUntil: "domcontentloaded" });
+    await expect(page.getByRole("columnheader", { name: "Actions" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: /Manage account/ })).toHaveCount(0);
+    await expect(page.locator("thead th")).toHaveCount(5);
+    const link = page.getByRole("row").filter({ hasText: "Zara Example" }).getByRole("link", { name: /View Activity/ });
+    const href = await link.getAttribute("href");
+    assert.ok(href?.includes("identity%3DREGISTERED") && href?.includes("sort%3Doldest"));
+    await page.screenshot({ path: output + "/after-users-five-columns-1280.png", fullPage: true });
   });
 
   assert.deepEqual(errors, [], "No uncaught browser errors");
   await writeFile(output + "/browser-results.json", JSON.stringify({
-    checks, errors, baseline: "80ddd69f2d7c108cc0b13b20b6d8af02c159f140", synthetic: true,
+    checks, errors, baseline: "d3c81bac7176fedef72785623f98a4e20c67c7ee", synthetic: true,
   }, null, 2));
   console.log("PASS " + checks.length + " Users directory regression and visual checks.");
 } finally {

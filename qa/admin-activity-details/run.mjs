@@ -53,7 +53,7 @@ await put("mocks/prisma.js", await readFile(path.join(qa, "old-drawer-fixture.js
 // pre-redesign implementation at the recorded dev SHA, never real customer data.
 const oldActivity = execFileSync("git", [
   "show",
-  "4f2e71ff857cb2e96084c7d73868958749e2bc1c:src/app/admin/users/[kind]/[id]/activity/page.tsx",
+  "d3c81bac7176fedef72785623f98a4e20c67c7ee:src/app/admin/users/[kind]/[id]/activity/page.tsx",
 ], { cwd: repo, encoding: "utf8" });
 await put("app/before/OldActivityPage.tsx", oldActivity);
 await put("app/before/page.tsx", [

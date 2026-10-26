@@ -5,7 +5,6 @@ import { AdminDirectorySelect } from "@/components/admin/AdminDirectorySelect";
 import { Button } from "@/components/ui/Button";
 import { withOptionalDb } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/auth-guards";
-import { getAdminEmails } from "@/lib/env";
 import { getAdminIdentityPagination } from "@/lib/adminIdentityPagination";
 import { adminIdentityPageSql, escapePrismaContainsQuery, parseAdminIdentitySort, type AdminIdentityReference } from "@/lib/adminIdentityDirectory";
 
@@ -28,7 +27,7 @@ const statusOptions = [
 ] as const;
 
 export default async function AdminUsersPage({ searchParams }: PageProps) {
-  const session = await requireAdminSession("/admin/users");
+  await requireAdminSession("/admin/users");
   const params = await searchParams;
   const q = (params?.q || "").trim().slice(0, 120);
   const prismaQuery = escapePrismaContainsQuery(q);
@@ -110,7 +109,6 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
     });
     return { rows };
   }, { rows: [] as IdentityRow[] });
-  const protectedEmails = new Set(getAdminEmails());
   const link = (nextPage: number) => "/admin/users?" + new URLSearchParams({ ...(q ? { q } : {}), role, status, identity, sort, page: String(nextPage) }).toString();
   return (
     <div className="w-full min-w-0 bg-white">
@@ -131,7 +129,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
       </form>
       <AdminIdentityTable rows={result.rows} page={page} count={count} pageSize={PAGE_SIZE}
         registeredCount={stats.registeredCount} guestCount={stats.guestCount}
-        identity={identity} sort={sort} currentUserId={session.user.id} protectedEmails={[...protectedEmails]} pageHref={link(page)} />
+        identity={identity} sort={sort} pageHref={link(page)} />
     </div>
   );
 }

@@ -5,10 +5,15 @@ import {
 } from "lucide-react";
 
 import { CopyIdentityId } from "@/components/admin/CopyIdentityId";
+import { UserStatusActions } from "@/components/admin/UserStatusActions";
+import { GuestTrackingActions } from "@/components/admin/GuestTrackingActions";
 import { AdminEmptyState } from "@/components/admin/AdminPageShell";
 import { ActivityTimeline } from "@/components/admin/ActivityTimeline";
 import { AdminDirectorySelect } from "@/components/admin/AdminDirectorySelect";
 import { requireAdminSession } from "@/lib/auth-guards";
+import { getAdminEmails } from "@/lib/env";
+import { withOptionalDb } from "@/lib/prisma";
+import { eligibleGuestVisitorWhere } from "@/lib/adminIdentityJourney";
 import { activityHref, parseActivityFilters, relatedJourneysWindow, validActivityIdentity, type ActivityFilters } from "@/lib/adminIdentityActivity";
 import { ADMIN_IDENTITY_SORTS } from "@/lib/adminIdentityDirectory";
 import { loadAdminIdentityActivity } from "@/services/adminIdentityActivityService";
@@ -61,17 +66,58 @@ function activityParams(raw: RawQuery) {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return <div className="min-w-0"><dt className="text-[12px] font-medium text-[#64748B]">{label}</dt><dd className="mt-1 min-w-0 break-words text-[13px] font-medium text-[#020617]">{children}</dd></div>;
 }
+function RegisteredManage({ id, email, role, status, actorId }: {
+  id: string; email: string | null; role: string; status: string; actorId: string;
+}) {
+  const protectedAccount = Boolean(email && getAdminEmails().some(
+    adminEmail => adminEmail.toLowerCase().trim() === email.toLowerCase().trim()
+  ));
+  return <UserStatusActions
+    userId={id} email={email} role={role} status={status}
+    isSelf={actorId === id} isProtectedAdmin={protectedAccount}
+  />;
+}
+
+/**
+ * Activity history may fail independently of the identity database.
+ * Keep existing account administration reachable on an Activity error page
+ * without bypassing its separate API authorization, roles or account guards.
+ */
+async function fallbackManage(kind: string, id: string, actorId: string, backHref: string): Promise<React.ReactNode> {
+  return withOptionalDb<React.ReactNode>(async db => {
+    if (kind === "user") {
+      const account = await db.user.findUnique({
+        where: { id }, select: { id: true, email: true, role: true, status: true },
+      });
+      return account ? <RegisteredManage
+        id={account.id} email={account.email} role={account.role}
+        status={account.status} actorId={actorId}
+      /> : null;
+    }
+    if (kind === "guest") {
+      const visitor = await db.visitor.findFirst({
+        where: eligibleGuestVisitorWhere(id), select: { id: true },
+      });
+      return visitor ? <GuestTrackingActions visitorId={id} backHref={backHref} /> : null;
+    }
+    return null;
+  }, null);
+}
+
 export default async function AdminIdentityActivityPage({ params, searchParams }: PageProps) {
   const { kind, id } = await params;
   if (!validActivityIdentity(kind, id)) notFound();
-  await requireAdminSession("/admin/users/" + kind + "/" + id + "/activity");
+  const session = await requireAdminSession("/admin/users/" + kind + "/" + id + "/activity");
   const raw = await searchParams;
   const filtersResult = parseActivityFilters(raw);
   const basePath = "/admin/users/" + kind + "/" + encodeURIComponent(id) + "/activity";
   const backHref = safeDirectoryHref(raw);
   const queryParams = activityParams(raw);
   if (!filtersResult.ok) return <div className="space-y-4">
-    <Link href={backHref} className={buttonClass}><ArrowLeft size={16} /> Back to Users</Link>
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <Link href={backHref} className={buttonClass}><ArrowLeft size={16} /> Back to Users</Link>
+      <div aria-label="Identity management">{await fallbackManage(kind, id, session.user.id, backHref)}</div>
+    </div>
     <AdminEmptyState title="Invalid activity filters" message={filtersResult.error}
       action={<Link className={buttonClass} href={basePath}>Reset activity filters</Link>} />
   </div>;
@@ -79,7 +125,10 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
   const result = await loadAdminIdentityActivity(kind, id, filters, typeof raw.cursor === "string" ? raw.cursor : undefined);
   if (result.status === "not_found") notFound();
   if (result.status !== "ok") return <div className="space-y-4">
-    <Link href={backHref} className={buttonClass}><ArrowLeft size={16} /> Back to Users</Link>
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <Link href={backHref} className={buttonClass}><ArrowLeft size={16} /> Back to Users</Link>
+      <div aria-label="Identity management">{await fallbackManage(kind, id, session.user.id, backHref)}</div>
+    </div>
     <AdminEmptyState title={result.status === "invalid_cursor" ? "Activity page link expired" : "Activity data unavailable"}
       message={result.status === "invalid_cursor" ? "The pagination link does not match this customer or the selected filters." : "The activity reader is temporarily unavailable. This does not mean there is no customer history."}
       action={<Link className={buttonClass} href={activityHref(basePath, queryParams, { cursor: null })}>Return to newest activity</Link>} />
@@ -126,12 +175,18 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
           {data.email ? <p className="mt-1 break-all text-[12px] text-[#475569]">{data.email}</p>
             : <p className="mt-1 text-[12px] text-[#475569]">Unregistered visitor with active analytics consent</p>}
         </div>
-        <dl className="grid w-full gap-4 border-t border-[#E7ECF5] pt-3 sm:grid-cols-3 xl:w-auto xl:min-w-[480px] xl:border-l xl:border-t-0 xl:pl-4 xl:pt-0">
-          <Field label={kind === "guest" ? "Identity" : "Account status"}>{kind === "guest" ? "Guest · Not an account" : data.status}</Field>
-          <Field label={kind === "guest" ? "First seen" : "Joined"}>{format(data.firstSeenAt)}</Field>
-          <Field label={kind === "guest" ? "Last seen" : "Latest matching activity"}>{data.lastSeenAt ? format(data.lastSeenAt) : "—"}</Field>
-        </dl>
+        <div className="ml-auto shrink-0 self-start" aria-label="Identity management">
+          {kind === "user"
+            ? <RegisteredManage id={id} email={data.email} role={data.role || "USER"}
+                status={data.status} actorId={session.user.id} />
+            : <GuestTrackingActions visitorId={id} backHref={backHref} />}
+        </div>
       </div>
+      <dl className="mt-4 grid gap-4 border-t border-[#E7ECF5] pt-3 sm:grid-cols-3">
+        <Field label={kind === "guest" ? "Identity" : "Account status"}>{kind === "guest" ? "Guest · Not an account" : data.status}</Field>
+        <Field label={kind === "guest" ? "First seen" : "Joined"}>{format(data.firstSeenAt)}</Field>
+        <Field label={kind === "guest" ? "Last seen" : "Latest matching activity"}>{data.lastSeenAt ? format(data.lastSeenAt) : "—"}</Field>
+      </dl>
     </section>
 
     <section className="min-w-0 border-b border-[#D8E1EC] pb-3" aria-label="Activity filters">

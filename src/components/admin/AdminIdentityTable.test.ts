@@ -22,8 +22,6 @@ const props: Parameters<typeof AdminIdentityTable>[0] = {
   identity: "ALL" as const,
   pageSize: 100,
   sort: "name_asc" as const,
-  currentUserId: "qa-self",
-  protectedEmails: [],
   pageHref: "/admin/users?q=qa&role=ALL&status=ALL&identity=ALL&sort=name_asc&page=2",
 };
 const at = new Date("2026-10-20T12:34:00Z");
@@ -31,7 +29,7 @@ const at = new Date("2026-10-20T12:34:00Z");
 const render = (overrides: Partial<typeof props> = {}) =>
   renderToStaticMarkup(createElement(AdminIdentityTable, { ...props, ...overrides }));
 
-test("complete six-column table keeps identity, copy, role, status, dates, and activity links accessible", () => {
+test("five-column table preserves identity, copy, role, status, dates, and activity links", () => {
   const html = render({
     rows: [
       {
@@ -45,8 +43,8 @@ test("complete six-column table keeps identity, copy, role, status, dates, and a
       },
     ],
   });
-  assert.equal((html.match(/<th /g) || []).length, 6);
-  for (const column of ["Identity", "Type", "Status", "Joined / First Seen", "Activity", "Actions"]) {
+  assert.equal((html.match(/<th /g) || []).length, 5);
+  for (const column of ["Identity", "Type", "Status", "Joined / First Seen", "Activity"]) {
     assert.match(html, new RegExp(column.replace("/", "\\/")));
   }
   assert.match(html, /QA fixture/);
@@ -58,6 +56,7 @@ test("complete six-column table keeps identity, copy, role, status, dates, and a
   assert.match(html, /Guest/);
   assert.match(html, /aria-label="No account status for guest visitor"/);
   assert.doesNotMatch(html, /Not an account/);
+  assert.doesNotMatch(html, /<th[^>]*>Actions<\/th>|Manage account|Protected admin|Current admin|No account actions for guests/);
   assert.match(html, /text-\[#047857\]/);
   assert.match(html, /<time dateTime=/);
   assert.match(html, /\/admin\/users\/user\/qa-user-internal-id\/activity\?directory=q%3Dqa%26role%3DALL%26status%3DALL%26identity%3DALL%26sort%3Dname_asc%26page%3D2/);
@@ -115,7 +114,7 @@ test("pagination keeps 100 per page, filters and sorting, and compact arrow-only
   for (const page of [1, 3]) {
     assert.ok(html.includes(`q=qa&amp;role=ALL&amp;status=ALL&amp;identity=ALL&amp;sort=name_asc&amp;page=${page}`));
   }
-  assert.match(html, /colSpan="6"/i);
+  assert.match(html, /colSpan="5"/i);
 });
 
 test("sort auto-submit form preserves query and selected cohort, resets the page", () => {
