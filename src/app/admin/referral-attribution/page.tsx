@@ -8,14 +8,14 @@ export const metadata = { title: "Admin Referral Attribution" };
 export default async function AdminReferralAttributionPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const auth = await requireAdminApiSession();
   if (auth.response) {
-    return <AdminPageShell title="Referral Attribution" description="ADMIN-only provider handoff attribution."><AdminEmptyState title="Admin access required" message="Referral attribution is restricted to configured ADMIN accounts." /></AdminPageShell>;
+    return <><SearchWorkspaceBackLink /><AdminPageShell title="Referral Attribution" description="ADMIN-only provider handoff attribution."><AdminEmptyState title="Admin access required" message="Referral attribution is restricted to configured ADMIN accounts." /></AdminPageShell></>;
   }
 
   const raw = await searchParams;
   const daysValue = typeof raw.days === "string" ? raw.days : null;
   const days = parseAttributionDays(daysValue);
   if (days === null) {
-    return <AdminPageShell title="Referral Attribution" description="ADMIN-only provider handoff attribution."><AdminEmptyState title="Invalid date window" message="Choose a reporting window from 1 to 90 days." /></AdminPageShell>;
+    return <><SearchWorkspaceBackLink /><AdminPageShell title="Referral Attribution" description="ADMIN-only provider handoff attribution."><AdminEmptyState title="Invalid date window" message="Choose a reporting window from 1 to 90 days." /></AdminPageShell></>;
   }
 
   const environment = currentReferralAttributionEnvironment();
