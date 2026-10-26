@@ -444,3 +444,64 @@ test("single-provider partial car results do not invent another successful provi
   assert.equal(diagnostic.reason, "KAYAK sandbox did not complete successfully, but partial results were returned.");
   assert.equal(diagnostic.reason.includes("another provider"), false);
 });
+
+test("provider count is based only on exact execution evidence, deduplicated by provider", () => {
+  const { exactProviderSummary } = __adminOperationalReadCoreTest;
+  assert.equal(exactProviderSummary([]), null);
+  assert.deepEqual(exactProviderSummary([
+    { provider: "Duffel", status: "SUCCESS" },
+    { provider: "duffel", status: "FAILED" },
+    { provider: "KAYAK sandbox", status: "DISABLED" },
+  ]), { total: 2, successful: 0, failed: 1, degraded: 0, disabled: 1 });
+});
+
+test("provider log mapping rejects other services, environments and request IDs", () => {
+  const { correlatedProviderLogs } = __adminOperationalReadCoreTest;
+  const timestamp = new Date("2026-10-23T10:00:00.000Z");
+  const rows = [{ requestId: "request-A", type: "FLIGHT", createdAt: timestamp }] as never;
+  const candidate = (requestId: string, service: string, environment: string, at = timestamp) => ({
+    provider: "Duffel", status: "SUCCESS" as const, service,
+    metadata: { requestId, environment }, createdAt: at,
+  });
+  const mapped = correlatedProviderLogs(rows, [
+    candidate("request-A", "flight-search", "staging"),
+    candidate("request-B", "flight-search", "staging"),
+    candidate("request-A", "hotel-search", "staging"),
+    candidate("request-A", "flight-search", "production"),
+  ], "staging");
+  assert.equal(mapped.get("request-A")?.length, 1);
+  assert.equal(mapped.get("request-B"), undefined);
+});
+
+test("progressive hotel telemetry uses trackId only with progressive flag and matching environment", () => {
+  const { correlatedProviderLogs } = __adminOperationalReadCoreTest;
+  const rows = [{ requestId: "track-1", type: "HOTEL", createdAt: new Date("2026-10-23T10:00:00Z") }] as never;
+  const log = (metadata: Record<string, string | boolean>, service = "hotel-search") => ({
+    provider: "KAYAK sandbox", status: "SUCCESS" as const, service, metadata, createdAt: new Date("2026-10-23T10:01:00Z"),
+  });
+  const result = correlatedProviderLogs(rows, [
+    log({ trackId: "track-1", progressive: true, environment: "staging" }),
+    log({ trackId: "track-1", environment: "staging" }),
+    log({ trackId: "track-1", progressive: true, environment: "production" }),
+    log({ requestId: "track-1", environment: "staging" }, "flight-search"),
+  ], "staging");
+  assert.equal(result.get("track-1")?.length, 1);
+  assert.equal(result.get("track-1")?.[0].provider, "KAYAK sandbox");
+});
+
+test("provider filter SQL uses exact correlated request IDs before cursor and summary", () => {
+  const scope = {
+    environment: "staging", provider: "Duffel", identity: "all",
+    userId: null, visitorId: null, status: null, product: null,
+    from: null, to: null,
+  } as never;
+  const sql = __adminOperationalReadCoreTest.exactProviderFilteredSearchSql(scope);
+  assert.match(sql.sql, /EXISTS/);
+  assert.match(sql.sql, /"requestId"/);
+  assert.match(sql.sql, /'trackId'/);
+  assert.match(sql.sql, /lower/);
+  assert.equal(sql.values.includes("Duffel"), true);
+  const page = __adminOperationalReadCoreTest.exactProviderFilteredSearchSql(scope, { at: "2026-10-23T10:00:00Z", id: "search-1" });
+  assert.match(page.sql, /"createdAt"/);
+  assert.equal(page.values.includes("search-1"), true);
+});
