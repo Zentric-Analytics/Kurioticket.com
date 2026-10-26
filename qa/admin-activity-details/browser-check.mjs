@@ -25,13 +25,13 @@ async function choose(label, item) {
 
 try {
   for (const width of [1280, 390]) {
-    await check("baseline Activity page before design at " + width + "px", async () => {
+    await check("baseline Activity page before moving Manage at " + width + "px", async () => {
       await page.setViewportSize({ width, height: 900 });
       await page.goto(base + "/before", { waitUntil: "domcontentloaded" });
       await expect(page.getByTestId("fixture-label")).toContainText("synthetic activity");
       await expect(page.getByRole("heading", { name: "Guest visitor" })).toBeVisible();
       await expect(page.getByRole("heading", { name: "Activity timeline" })).toBeVisible();
-      await expect(page.locator("main .rounded-2xl").first()).toBeVisible();
+      await expect(page.getByRole("button", { name: /Manage (guest|account)/ })).toHaveCount(0);
       await page.screenshot({ path: output + "/before-view-activity-" + width + ".png", fullPage: true });
     });
   }
@@ -42,6 +42,7 @@ try {
       await page.goto(url, { waitUntil: "domcontentloaded" });
       await expect(page.getByRole("heading", { name: "Guest visitor" })).toBeVisible();
       await expect(page.getByRole("heading", { name: "Activity timeline" })).toBeVisible();
+      await expect(page.getByRole("button", { name: "Manage guest qa-guest-activity-0001" })).toBeVisible();
       await expect(page.getByRole("heading", { name: "Identity details" })).toBeVisible();
       await expect(page.getByRole("link", { name: "View all searches" })).toBeVisible();
       await expect(page.getByRole("button", { name: "Apply Filter" })).toBeVisible();
@@ -175,7 +176,71 @@ try {
     await expect(page.getByRole("heading", { name: "QA registered customer" })).toBeVisible();
     await expect(page.getByText("customer.qa@example.invalid", { exact: true })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Related records" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Manage account for customer.qa@example.invalid" })).toBeVisible();
     await page.screenshot({ path: output + "/after-registered-activity-1280.png", fullPage: true });
+  });
+
+  await check("guest management is in the header, not a destructive guest Delete flow", async () => {
+    await page.goto(url + "?directory=identity%3DGUEST%26sort%3Doldest", { waitUntil: "domcontentloaded" });
+    const manage = page.getByRole("button", { name: "Manage guest qa-guest-activity-0001" });
+    await expect(manage).toBeVisible();
+    await manage.click();
+    const menu = page.getByRole("menu", { name: "Guest management" });
+    await expect(menu.getByRole("menuitem", { name: "Disable tracking" })).toBeVisible();
+    await expect(menu).not.toContainText("Delete guest data");
+    await expect(menu).not.toContainText("Suspend");
+    await page.screenshot({ path: output + "/after-guest-manage-open-1280.png", fullPage: false });
+    await page.keyboard.press("Escape");
+    await expect(manage).toBeFocused();
+    await expect(menu).toHaveCount(0);
+    const requests = [];
+    await page.route("**/api/admin/guests/*/tracking", async route => {
+      requests.push({ method: route.request().method(), url: route.request().url() });
+      await route.fulfill({ status: 403, contentType: "application/json", body: JSON.stringify({ error: "QA denied tracking update" }) });
+    });
+    await manage.click();
+    let confirmation = "";
+    page.once("dialog", async dialog => { confirmation = dialog.message(); await dialog.dismiss(); });
+    await menu.getByRole("menuitem", { name: "Disable tracking" }).click();
+    assert.match(confirmation, /Historical records remain/);
+    assert.deepEqual(requests, [], "Cancel sends no guest mutation");
+    await manage.click();
+    page.once("dialog", dialog => dialog.accept());
+    await menu.getByRole("menuitem", { name: "Disable tracking" }).click();
+    await expect(page.getByRole("status").last()).toContainText("QA denied tracking update");
+    assert.deepEqual(requests.map(r => r.method), ["PATCH"], "Guest uses scoped PATCH, never account/delete");
+    assert.ok(requests[0].url.endsWith("/api/admin/guests/qa-guest-activity-0001/tracking"));
+    await page.unroute("**/api/admin/guests/*/tracking");
+  });
+
+  await check("registered Manage retains role/status options and recoverable deletion safeguards", async () => {
+    await page.goto(base + "/admin/users/user/qa-registered-0001/activity", { waitUntil: "domcontentloaded" });
+    const manage = page.getByRole("button", { name: "Manage account for customer.qa@example.invalid" });
+    await manage.click();
+    const menu = page.getByRole("menu", { name: "Account actions for customer.qa@example.invalid" });
+    await expect(menu.getByRole("menuitem", { name: "Suspend" })).toBeVisible();
+    await expect(menu.getByRole("menuitem", { name: "Delete", exact: true })).toBeVisible();
+    await expect(menu).not.toContainText("Soft delete");
+    await page.screenshot({ path: output + "/after-registered-manage-open-1280.png", fullPage: false });
+    const requests = [];
+    await page.route("**/api/admin/users/*/status", async route => {
+      requests.push(route.request().postDataJSON());
+      await route.fulfill({ status: 403, contentType: "application/json", body: JSON.stringify({ error: "QA denied account status change" }) });
+    });
+    let confirmation = "";
+    page.once("dialog", async dialog => { confirmation = dialog.message(); await dialog.dismiss(); });
+    await menu.getByRole("menuitem", { name: "Delete", exact: true }).click();
+    assert.match(confirmation, /can be restored/);
+    assert.deepEqual(requests, [], "Cancel sends no account mutation");
+    await manage.click();
+    page.once("dialog", dialog => dialog.accept());
+    await menu.getByRole("menuitem", { name: "Delete", exact: true }).click();
+    await expect(page.getByRole("status").last()).toContainText("QA denied account status change");
+    assert.deepEqual(requests, [{ status: "DELETED" }], "Only recoverable account Delete attempted");
+    await page.unroute("**/api/admin/users/*/status");
+    await page.goto(base + "/admin/users/user/qa-admin/activity", { waitUntil: "domcontentloaded" });
+    await expect(page.getByText("Current admin", { exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Manage account/ })).toHaveCount(0);
   });
 
   await check("filters and sorting work without JavaScript", async () => {
