@@ -61,9 +61,12 @@ inserting a receipt.
   represent an idempotent retry, **not a new booking** or a changed trip.
 - `REJECTED` covers authenticated payload validation, provider mismatch,
   ownership mismatch, or an ingestion failure.
-- Receipt monitoring is best-effort: a database outage can prevent recording
-  a receipt; this is displayed as **telemetry unavailable**, never zero.
-  An accepted response still reflects the canonical ingestion result.
+- Successful canonical ingestion must also persist an accepted delivery
+  receipt before responding with `200`. If receipt persistence fails after the
+  canonical upsert, the endpoint responds with retryable `503`; the existing
+  idempotent conversion ID makes a retry safe and avoids a second My Trip.
+  Rejected-request receipt writes are best-effort, and missing telemetry is
+  never presented as a genuine zero count.
 - The latest 50 receipts linked to a trip appear in the read-only admin trip
   details. This is callback history, not an authoritative history of every
   provider booking change; rejected untrusted callbacks are not linked to a
