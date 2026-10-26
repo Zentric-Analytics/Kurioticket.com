@@ -213,8 +213,8 @@ function toBackendParams(raw: Record<string, string | string[] | undefined>, ran
     const now = new Date();
     const from = new Date(now);
     if (range === "today") from.setUTCHours(0, 0, 0, 0);
-    if (range === "7d") from.setDate(from.getDate() - 7);
-    if (range === "30d") from.setDate(from.getDate() - 30);
+    if (range === "7d") from.setUTCDate(from.getUTCDate() - 7);
+    if (range === "30d") from.setUTCDate(from.getUTCDate() - 30);
     params.set("from", from.toISOString());
   }
 
