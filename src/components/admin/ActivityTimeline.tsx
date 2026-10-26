@@ -3,7 +3,7 @@ import {
   Building2, CarFront, ChevronRight, CircleDot, Clock3, ExternalLink,
   ListChecks, MousePointerClick, Plane, Search,
 } from "lucide-react";
-import { compactActivityDisplayRows, groupActivityRows } from "@/lib/adminIdentityActivity";
+import { compactActivityDisplayRows, groupContiguousActivityRows } from "@/lib/adminIdentityActivity";
 import type { ActivityRow } from "@/lib/adminIdentityJourney";
 
 const dayLabel = (at: Date) => new Intl.DateTimeFormat("en", {
@@ -62,7 +62,7 @@ function dayGroups(events: ActivityRow[]) {
     byDate.set(date, rows);
   }
   return [...byDate].map(([date, rows]) => ({
-    date, rows, journeys: groupActivityRows(rows),
+    date, rows, journeys: groupContiguousActivityRows(rows),
   }));
 }
 function journalTitle(rows: ActivityRow[]) {
