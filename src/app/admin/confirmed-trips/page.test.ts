@@ -127,8 +127,9 @@ test("Confirmed Trips UI preserves honest data, alerts and no-booking boundaries
 test("Confirmed Trips UI retains shell background and navigation while limiting changes to the page", () => {
   const shell = readFileSync("src/components/admin/AdminPageShellHistorical.tsx", "utf8");
   assert.match(shell, /border-slate-200 bg-white shadow-sm/);
-  assert.match(page, /<Link href="\/admin\/redirects"/);
-  assert.match(page, /<Link href="\/admin\/searches"/);
+  assert.match(page, /<Link href="#confirmation-integration-title"/);
+  assert.match(page, /<Link href="#recent-confirmed-trips-title"/);
+  assert.doesNotMatch(page, /<Link href="\/admin\/(?:redirects|searches)"/);
   assert.match(page, /<AdminStatusBadge tone=\{readiness.webhookCredentialConfigured/);
 });
 
