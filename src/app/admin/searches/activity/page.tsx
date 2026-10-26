@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { searchActivityDetailQuery } from "@/lib/adminSearchActivityNavigation";
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { SearchMonitorSelect, SearchMonitorProviderInput } from "@/components/admin/SearchMonitorSelect";
 import { SearchMonitorTable } from "@/components/admin/SearchMonitorTable";
@@ -150,6 +151,7 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
               initialCursor={result.data.nextCursor}
               query={params.toString()}
               referenceNow={referenceNow}
+              detailQuery={searchActivityDetailQuery(raw, range)}
             />
           </>
         ) : (

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 
 import { AdminPageShell, AdminSectionCard, AdminStatusBadge } from "@/components/admin/AdminPageShell";
 import { SearchWorkspaceBackLink } from "@/components/admin/SearchWorkspaceBackLink";
+import { searchActivityReturnHref } from "@/lib/adminSearchActivityNavigation";
 import { formatDateTime } from "@/lib/admin-data";
 import { adminOperationalReads } from "@/services/adminOperationalReadService";
 
@@ -18,7 +19,7 @@ export default async function AdminSearchDetailPage({ params, searchParams }: { 
 
   return (
     <>
-      <SearchWorkspaceBackLink href="/admin/searches/activity" label="Search activity" />
+      <SearchWorkspaceBackLink href={searchActivityReturnHref(raw)} label="Search activity" />
       <AdminPageShell title="Search detail" description="Safe operational search record. Raw search JSON is intentionally excluded.">
       {result.status === "ok" ? (
         <div className="space-y-4">

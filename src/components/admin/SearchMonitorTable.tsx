@@ -10,11 +10,13 @@ export function SearchMonitorTable({
   initialCursor,
   query,
   referenceNow,
+  detailQuery,
 }: {
   initialItems: AdminSearchRead[];
   initialCursor: string | null;
   query: string;
   referenceNow: string;
+  detailQuery: string;
 }) {
   const [items, setItems] = useState(initialItems);
   const [cursor, setCursor] = useState(initialCursor);
@@ -142,7 +144,7 @@ export function SearchMonitorTable({
                 <td className="px-2 py-3 align-top"><MonitorStatus status={search.status} /></td>
                 <td className="whitespace-nowrap px-2 py-3 text-right align-top">
                   <Link
-                    href={"/admin/searches/" + search.id + "?environment=" + search.environment}
+                    href={"/admin/searches/" + search.id + "?" + (detailQuery ? detailQuery + "&" : "") + "environment=" + encodeURIComponent(search.environment)}
                     className="font-semibold text-emerald-700 hover:text-emerald-900 hover:underline"
                   >
                     Open
