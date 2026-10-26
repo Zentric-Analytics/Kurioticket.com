@@ -59,7 +59,7 @@ export async function disableGuestTrackingAsAdmin(
       currentUserId: null,
       identityLinks: { none: {} },
     },
-    data: { consentStatus: "WITHDRAWN", trackingDisabledAt: now },
+    data: { consentStatus: "WITHDRAWN", trackingDisabledAt: now, websitePresenceAt: null, websitePresenceEnvironment: null },
   });
   if (changed.count !== 1) return "not_eligible";
 
