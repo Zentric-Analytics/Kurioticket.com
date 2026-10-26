@@ -129,7 +129,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
     </div>
     <AdminEmptyState title={result.status === "invalid_cursor" ? "Activity page link expired" : "Activity data unavailable"}
       message={result.status === "invalid_cursor" ? "The pagination link does not match this customer or the selected filters." : "The activity reader is temporarily unavailable. This does not mean there is no customer history."}
-      action={<Link className={buttonClass} href={activityHref(basePath, queryParams, { cursor: null })}>Return to newest activity</Link>} />
+      action={<Link className={buttonClass} href={activityHref(basePath, queryParams, { cursor: null, order: null })}>Return to newest activity</Link>} />
   </div>;
   const data = result.data;
   const environment = data.environment;
@@ -282,8 +282,12 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
 
     <p className="flex min-w-0 items-start gap-2.5 rounded-lg bg-[#EFF6FF] px-4 py-3 text-[12px] leading-5 text-[#475569]">
       <Info size={17} aria-hidden="true" className="mt-0.5 shrink-0 text-[#004BB8]" />
-      <span>Only recorded, consented {environment} activity is displayed. Missing records do not establish that no visit occurred.
-        Provider handoffs are not proof of a booking or payment.</span>
+      <span>
+        {kind === "guest"
+          ? <>Only recorded, consented {environment} activity is displayed. </>
+          : <>Only recorded {environment} account activity is displayed; linked visitor activity requires analytics consent. </>}
+        Missing records do not establish that no visit occurred. Provider handoffs are not proof of a booking or payment.
+      </span>
     </p>
   </div>;
 }
