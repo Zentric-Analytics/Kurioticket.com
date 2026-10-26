@@ -62,6 +62,16 @@ jobs:
           node --input-type=module --import jiti/register -e
           'await import("./src/services/adminOperationalReadContract.test.ts");
           await import("./src/services/adminOperationalReadCore.test.ts");'
+      - name: Validate provider-bound Confirmed Trips and delivery history
+        env:
+          JITI_TSCONFIG_PATHS: ./tsconfig.json
+          JITI_JSX: "true"
+        run: >-
+          node --input-type=module --import jiti/register -e
+          'await import("./src/app/api/internal/partner-confirmations/route.test.ts");
+          await import("./src/services/partnerConfirmationDeliveryService.test.ts");
+          await import("./src/services/partnerBookingConfirmation.test.ts");
+          await import("./src/app/admin/confirmed-trips/page.test.ts");'
       - name: Validate account deletion lifecycle contract
         env:
           JITI_TSCONFIG_PATHS: ./tsconfig.json

@@ -897,6 +897,7 @@ model MyTrip {
   updatedAt                DateTime     @updatedAt
   user                     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   flightStatusSnapshot     FlightStatusSnapshot?
+  confirmationDeliveries   PartnerConfirmationDelivery[]
 
   @@unique([userId, providerName, providerConfirmationCode])
   @@unique([providerName, partnerConversionId])
@@ -904,6 +905,29 @@ model MyTrip {
   @@index([userId, status, departureDate])
   @@index([providerConfirmationCode])
   @@index([providerTripId])
+}
+
+// Append-only receipts for authenticated callback attempts. This is not a booking
+// ledger: an accepted callback can be an idempotent retry of an existing My Trip.
+enum PartnerConfirmationDeliveryOutcome {
+  ACCEPTED
+  REJECTED
+}
+
+model PartnerConfirmationDelivery {
+  id              String                             @id @default(cuid())
+  providerName    String
+  myTripId        String?
+  outcome         PartnerConfirmationDeliveryOutcome
+  reason          String
+  eventOccurredAt DateTime?
+  reportedStatus  MyTripStatus?
+  receivedAt      DateTime                           @default(now())
+  myTrip          MyTrip?                            @relation(fields: [myTripId], references: [id], onDelete: SetNull)
+
+  @@index([providerName, receivedAt])
+  @@index([outcome, receivedAt])
+  @@index([myTripId, receivedAt])
 }
 
 model FlightStatusSnapshot {
