@@ -19,16 +19,27 @@ export function SearchMonitorTable({
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
+  const generationRef = useRef(0);
 
   useEffect(() => {
+    generationRef.current += 1;
+    abortRef.current?.abort();
+    abortRef.current = null;
     setItems(initialItems);
     setCursor(initialCursor);
+    setLoading(false);
     setLoadError(false);
+    return () => {
+      generationRef.current += 1;
+      abortRef.current?.abort();
+      abortRef.current = null;
+    };
   }, [initialItems, initialCursor, query]);
 
   useEffect(() => {
     const node = sentinelRef.current;
-    if (!node || !cursor || loading) return;
+    if (!node || !cursor || loading || loadError) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -42,6 +53,10 @@ export function SearchMonitorTable({
     return () => observer.disconnect();
 
     async function loadMore() {
+      const generation = generationRef.current;
+      const controller = new AbortController();
+      abortRef.current?.abort();
+      abortRef.current = controller;
       setLoading(true);
       setLoadError(false);
       try {
@@ -51,6 +66,7 @@ export function SearchMonitorTable({
         const response = await fetch("/api/admin/searches?" + params.toString(), {
           credentials: "include",
           cache: "no-store",
+          signal: controller.signal,
         });
         if (!response.ok) throw new Error("Unable to load more searches");
         const body = await response.json() as {
@@ -60,18 +76,24 @@ export function SearchMonitorTable({
         if (body.status !== "ok" || !body.data || !Array.isArray(body.data.items)) {
           throw new Error("Invalid search response");
         }
+        if (generationRef.current !== generation || controller.signal.aborted) return;
         setItems((current) => {
           const seen = new Set(current.map((item) => item.id));
           return [...current, ...body.data!.items!.filter((item) => !seen.has(item.id))];
         });
         setCursor(body.data.nextCursor ?? null);
       } catch {
+        if (controller.signal.aborted || generationRef.current !== generation) return;
         setLoadError(true);
+        setCursor(null);
       } finally {
-        setLoading(false);
+        if (generationRef.current === generation && !controller.signal.aborted) {
+          setLoading(false);
+          if (abortRef.current === controller) abortRef.current = null;
+        }
       }
     }
-  }, [cursor, loading, query]);
+  }, [cursor, loading, loadError, query]);
 
   if (!items.length) {
     return (
@@ -156,12 +178,20 @@ function formatCreated(value: string) {
   const date = new Date(value);
   const now = new Date();
   const sameDay =
-    date.getFullYear() === now.getFullYear() &&
-    date.getMonth() === now.getMonth() &&
-    date.getDate() === now.getDate();
-  const time = new Intl.DateTimeFormat("en", { hour: "numeric", minute: "2-digit" }).format(date);
+    date.getUTCFullYear() === now.getUTCFullYear() &&
+    date.getUTCMonth() === now.getUTCMonth() &&
+    date.getUTCDate() === now.getUTCDate();
+  const time = new Intl.DateTimeFormat("en", {
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: "UTC",
+  }).format(date);
   if (sameDay) return "Today, " + time;
-  return new Intl.DateTimeFormat("en", { month: "short", day: "numeric" }).format(date) + ", " + time;
+  return new Intl.DateTimeFormat("en", {
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  }).format(date) + ", " + time;
 }
 
 function formatLatency(value: number | null) {
