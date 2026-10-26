@@ -87,6 +87,8 @@ export async function loadAdminIdentityActivity(
     const q = filters.q ? escapePrismaContainsQuery(filters.q) : "";
     const ci = (value: string) => ({ contains: value, mode: "insensitive" as const });
     const window = activityWindow(filters);
+    const order = filters.order === "oldest" ? "oldest" : "newest";
+    const createdAtDirection = order === "oldest" ? "asc" : "desc";
     const environmentScope = activityEnvironmentScope(environment);
     const scopedJourneyOwner: Prisma.JourneyEventWhereInput = { AND: [journeyOwner, environmentScope.journey] };
 
