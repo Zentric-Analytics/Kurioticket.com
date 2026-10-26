@@ -1,8 +1,11 @@
 import Link from "next/link";
 
 import { searchActivityDetailQuery } from "@/lib/adminSearchActivityNavigation";
+import { buildAdminSearchProviderOptions } from "@/lib/adminSearchProviderOptions";
+import { getProviderIntegrationStatuses } from "@/services/travel/providerIntegrationStatus";
+import { getPublicEnvironment } from "@/lib/stagingSafety";
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
-import { SearchMonitorSelect, SearchMonitorProviderInput } from "@/components/admin/SearchMonitorSelect";
+import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
 import { SearchMonitorTable } from "@/components/admin/SearchMonitorTable";
 import { SearchWorkspaceBackLink } from "@/components/admin/SearchWorkspaceBackLink";
 import { adminOperationalReads } from "@/services/adminOperationalReadService";
@@ -13,10 +16,14 @@ type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 type RangeKey = "today" | "7d" | "30d" | "all" | "custom";
 
 export default async function AdminSearchActivityPage({ searchParams }: { searchParams: SearchParams }) {
-  const raw = await searchParams;
+  const incoming = await searchParams;
+  const { environment: _ignoredEnvironment, ...raw } = incoming;
+  const currentEnvironment = getPublicEnvironment();
+  const providerOptions = buildAdminSearchProviderOptions(getProviderIntegrationStatuses(), one(raw.provider) || null);
   const referenceNow = new Date().toISOString();
   const range = resolveRange(raw);
   const params = toBackendParams(raw, range);
+  params.set("environment", currentEnvironment);
   const listParams = new URLSearchParams(params);
   listParams.set("limit", "100");
   const [result, summary] = await Promise.all([
@@ -91,18 +98,7 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
                       ...(range === "custom" ? [{ value: "custom", label: "Custom" }] : []),
                     ]}
                   />
-                  <SearchMonitorSelect
-                    label="Environment"
-                    name="environment"
-                    value={one(raw.environment) || result.data.scope.environment}
-                    appearance="plain"
-                    align="end"
-                    autoSubmit
-                    options={[
-                      { value: "staging", label: "Staging" },
-                      { value: "production", label: "Production" },
-                    ]}
-                  />
+
                 </div>
               </div>
 
@@ -135,7 +131,7 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
                   />
                 </div>
                 <div className="w-[170px] max-w-full">
-                  <SearchMonitorProviderInput value={one(raw.provider)} />
+                  <SearchMonitorSelect label="Provider" name="provider" value={one(raw.provider)} options={providerOptions} />
                 </div>
                 <button
                   type="submit"
@@ -151,7 +147,7 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
               initialCursor={result.data.nextCursor}
               query={params.toString()}
               referenceNow={referenceNow}
-              detailQuery={searchActivityDetailQuery(raw, range)}
+              detailQuery={searchActivityDetailQuery({ ...raw, environment: currentEnvironment }, range)}
             />
           </>
         ) : (
