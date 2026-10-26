@@ -418,6 +418,12 @@ export function AdminOverviewDashboard({
         <div className="grid gap-x-6 gap-y-0 sm:grid-cols-2 lg:grid-cols-3">
           <MetricCard label="Total accounts" value={data.users.total} hint="All account records, including deleted status" icon={Users} tone="info" />
           <MetricCard label="Enabled accounts" value={data.users.active} hint="Accounts marked ACTIVE, including staff; not people online" icon={UserCheck} tone="good" />
+          <div className="min-w-0 border-b border-slate-200/90 py-3.5 pr-3 sm:pr-4">
+            <div className="flex items-center justify-between"><Activity size={19} className="text-emerald-700" aria-hidden="true" /><span className="h-2 w-2 rounded-full bg-emerald-400" aria-hidden="true" /></div>
+            <p className="mt-2 text-xs font-medium uppercase tracking-wide text-slate-700">Online website visitors (observed)</p>
+            <p className="mt-1 text-[22px] font-semibold tabular-nums tracking-tight text-slate-950">{data.websitePresence.status === "ok" ? count(data.websitePresence.total) : "Unavailable"}</p>
+            <p className="mt-1 text-[13px] leading-5 text-slate-700">{data.websitePresence.status === "ok" ? count(data.websitePresence.registeredAccounts) + " accounts · " + count(data.websitePresence.guestIdentities) + " guest identities · last " + data.websitePresence.windowSeconds + "s" : "Presence data cannot be verified"}</p>
+          </div>
           <MetricCard label="Active users (observed)" value={data.journeys.identities.registeredAccounts} hint="Distinct verified accounts with consented journey activity in selected range; not everyone online" icon={Activity} tone="info" />
           <MetricCard label="Suspended accounts" value={data.users.suspended} hint="Current SUSPENDED account records" icon={UserX} tone="warn" />
           <MetricCard label="Deleted accounts" value={data.users.deleted} hint="Retained records marked DELETED; not permanently erased accounts" icon={Trash2} tone="neutral" />
@@ -426,6 +432,7 @@ export function AdminOverviewDashboard({
           <MetricCard label="Journeys" value={data.journeys.journeys} hint="Selected time window" icon={Route} tone="info" />
           <MetricCard label="Human admin actions" value={data.audit.human} hint={count(data.audit.automated) + " system audit entries excluded · selected time window"} icon={ShieldCheck} tone="neutral" />
         </div>
+        <p className="mt-2 text-xs leading-5 text-slate-600">Online website visitors reflects consented, visible website tabs with a recent heartbeat, excluding native app activity and visitors who decline analytics. It is an estimate, not a complete live people count.</p>
         <div className="mt-4 border-t border-slate-200/90 pt-3">
           <h3 className="text-sm font-semibold text-slate-900">Account status breakdown</h3>
           <div className="mt-1 grid gap-x-6 sm:grid-cols-2 lg:grid-cols-4">

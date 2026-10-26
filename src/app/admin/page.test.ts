@@ -305,3 +305,17 @@ test("Phase 1 uses validated account roles and human audit counts", () => {
  assert.match(dashboard, /activity.items.length === 0/);
  assert.match(adminData, /timeZone: "UTC"/);
 });
+
+test("website live presence stays separate from observed historical activity and renders unavailable explicitly", () => {
+ const service = readFileSync("src/services/adminOverviewService.ts","utf8");
+ const consent = readFileSync("src/components/privacy/AnalyticsConsentBridge.tsx","utf8");
+ assert.match(service, /getWebsitePresenceSnapshot\(environment, now\)/);
+ assert.match(dashboard, /Online website visitors \(observed\)/);
+ assert.match(dashboard, /data.websitePresence.status === "ok"/);
+ assert.match(dashboard, /"Unavailable"/);
+ assert.match(dashboard, /excludes? native app activity|excluding native app activity/);
+ assert.match(consent, /websitePresenceHeartbeatMs/);
+ assert.match(consent, /consentConfirmed/);
+ assert.match(consent, /visibilitychange/);
+ assert.match(consent, /controller.abort\(\)/);
+});
