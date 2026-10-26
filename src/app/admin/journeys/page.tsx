@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { AdminButton, AdminDataTable, AdminEmptyState, AdminFilterBar, AdminInput, AdminMetricCard, AdminPageShell, AdminSelect, AdminStatusBadge } from "@/components/admin/AdminPageShell";
+import { SearchWorkspaceBackLink } from "@/components/admin/SearchWorkspaceBackLink";
 import { formatDateTime } from "@/lib/admin-data";
 import { adminJourneys } from "@/services/adminJourneyService";
 import type { AdminJourneyStage } from "@/services/adminJourneyContract";
@@ -24,11 +25,12 @@ export default async function AdminJourneysPage({ searchParams }: { searchParams
   ]);
 
   return (
-    <AdminPageShell
-      title="Journeys"
-      description="Trace consented user journeys across recorded search, result-view, offer-selection and provider-handoff events. Observed stages are evidence of activity, not proof of booking completion."
-      actions={<Link href="/admin/searches" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">Back to searches</Link>}
-    >
+    <>
+      <SearchWorkspaceBackLink />
+      <AdminPageShell
+        title="Journeys"
+        description="Trace consented user journeys across recorded search, result-view, offer-selection and provider-handoff events. Observed stages are evidence of activity, not proof of booking completion."
+      >
       <div className="space-y-4">
         <AdminFilterBar action="/admin/journeys">
           <AdminSelect name="product" defaultValue={one(raw.product)}>
@@ -86,7 +88,8 @@ export default async function AdminJourneysPage({ searchParams }: { searchParams
           <AdminEmptyState title={list.status === "invalid" ? "Invalid journey filters" : list.status === "forbidden" ? "Admin access required" : "Journey data unavailable"} message={"issues" in list ? list.issues.map((issue) => issue.field + ": " + issue.message).join(" ") : "The journey reader could not return data. An unavailable read is not shown as a false zero."} />
         )}
       </div>
-    </AdminPageShell>
+      </AdminPageShell>
+    </>
   );
 }
 
