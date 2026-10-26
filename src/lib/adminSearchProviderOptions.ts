@@ -28,7 +28,7 @@ export function buildAdminSearchProviderOptions(
 
   const options = names.map((name) => ({ value: name, label: name }));
   const cleanSelected = selectedProvider?.trim();
-  if (cleanSelected && cleanSelected.length <= 100 && !/[\u0000-\u001f\u007f]/.test(cleanSelected)) {
+  if (selectedProvider !== null && cleanSelected && cleanSelected.length <= 100 && !/[\u0000-\u001f\u007f]/.test(cleanSelected)) {
     const selectedKey = cleanSelected.toLocaleLowerCase("en");
     const matchingIndex = options.findIndex(({ label }) => label.toLocaleLowerCase("en") === selectedKey);
     if (matchingIndex >= 0) {
