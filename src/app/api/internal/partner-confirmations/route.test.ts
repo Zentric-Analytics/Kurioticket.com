@@ -67,6 +67,7 @@ test("a valid signed confirmation is ingested and exposes only an acknowledgemen
     providerName: () => "Example Provider",
     now: () => now,
     ingest: async input => { received = input; return { id: "trip-accepted" } as never; },
+    recordDelivery: async () => true,
   });
   const rawBody = JSON.stringify(payload());
   const response = await POST(request(rawBody));
