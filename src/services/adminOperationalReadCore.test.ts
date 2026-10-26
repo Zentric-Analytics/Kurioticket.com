@@ -476,7 +476,7 @@ test("provider log mapping rejects other services, environments and request IDs"
 test("progressive hotel telemetry uses trackId only with progressive flag and matching environment", () => {
   const { correlatedProviderLogs } = __adminOperationalReadCoreTest;
   const rows = [{ requestId: "track-1", type: "HOTEL", createdAt: new Date("2026-10-23T10:00:00Z") }] as never;
-  const log = (metadata: Record<string, unknown>, service = "hotel-search") => ({
+  const log = (metadata: Record<string, string | boolean>, service = "hotel-search") => ({
     provider: "KAYAK sandbox", status: "SUCCESS" as const, service, metadata, createdAt: new Date("2026-10-23T10:01:00Z"),
   });
   const result = correlatedProviderLogs(rows, [
@@ -498,7 +498,7 @@ test("provider filter SQL uses exact correlated request IDs before cursor and su
   const sql = __adminOperationalReadCoreTest.exactProviderFilteredSearchSql(scope);
   assert.match(sql.sql, /EXISTS/);
   assert.match(sql.sql, /"requestId"/);
-  assert.match(sql.sql, /"trackId"/);
+  assert.match(sql.sql, /'trackId'/);
   assert.match(sql.sql, /lower/);
   assert.equal(sql.values.includes("Duffel"), true);
   const page = __adminOperationalReadCoreTest.exactProviderFilteredSearchSql(scope, { at: "2026-10-23T10:00:00Z", id: "search-1" });
