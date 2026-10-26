@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, useTransition, type KeyboardEvent } from "react";
+import { useEffect, useId, useRef, useState, useTransition, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { useRouter } from "next/navigation";
 import { CalendarDays, Check, ChevronDown } from "lucide-react";
 
@@ -83,7 +83,7 @@ export function AdminOverviewRangeSelect({ range }: { range: OverviewRange }) {
     });
   };
 
-  const handleOptionKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
+  const handleOptionKeyDown = (event: ReactKeyboardEvent<HTMLButtonElement>, index: number) => {
     let targetIndex: number | null = null;
     if (event.key === "ArrowDown") targetIndex = (index + 1) % rangeOptions.length;
     if (event.key === "ArrowUp") targetIndex = (index + rangeOptions.length - 1) % rangeOptions.length;
