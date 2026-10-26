@@ -1,5 +1,3 @@
-import "server-only";
-
 import { getOptionalPrisma } from "@/lib/prisma";
 import { isConfiguredPartnerConfirmationSecret } from "@/services/partnerBookingConfirmation";
 
