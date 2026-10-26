@@ -31,6 +31,9 @@ export default async function AdminConfirmedTripsPage() {
       description="Monitor provider-confirmed My Trips created by signed partner callbacks. Provider handoffs, searches and payments are not treated as booking confirmations."
       actions={
         <div className="flex flex-wrap gap-2">
+          <Link href="/admin/confirmed-trips/records" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+            Browse confirmed trips
+          </Link>
           <Link href="/admin/flight-status" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
             Flight status
           </Link>
