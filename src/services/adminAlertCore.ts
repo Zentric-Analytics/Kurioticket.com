@@ -77,6 +77,7 @@ export type AdminAlertSignals = {
     cms: string;
     homepageFares: string;
     flightStatus: string;
+    confirmedTrips?: string;
   };
   confirmedTrips?: {
     feedReady: boolean;
@@ -361,7 +362,7 @@ function confirmedTripAlerts(signals: AdminAlertSignals): AdminAlertCandidate[] 
     key: "confirmed-trips.telemetry.unavailable", severity: "WARNING", source: "CONFIRMED_TRIPS",
     title: "Confirmation delivery telemetry unavailable",
     message: "An authenticated confirmation provider is configured, but delivery receipts could not be queried.",
-    actionHref: "/admin/confirmed-trips", signalToken: "confirmation-telemetry-unavailable",
+    actionHref: "/admin/confirmed-trips", signalToken: signals.telemetryOutageTokens.confirmedTrips ?? "confirmation-telemetry-unavailable",
   }];
   if (health.rejectedLast24h <= 0) return [];
   return [{
