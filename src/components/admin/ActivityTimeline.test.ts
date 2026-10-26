@@ -73,3 +73,22 @@ test("Activity Explorer organizes dates chronologically and retains every indivi
   assert.match(oldest, /Newer activity/);
   assert.equal((oldest.match(/data-activity-id=/g) || []).length, 2);
 });
+
+test("date journal preserves interleaved journeys in both chronological orders", () => {
+  const start = new Date("2026-10-22T10:00:00.000Z");
+  const rows: ActivityRow[] = [
+    { id: "j-a10", journeyId: "journey-a", label: "Results viewed", detail: "Flight · Lagos", at: start, product: "FLIGHT" },
+    { id: "j-b09", journeyId: "journey-b", label: "Results viewed", detail: "Hotel · Accra", at: new Date(start.getTime() - 3600000), product: "HOTEL" },
+    { id: "j-a08", journeyId: "journey-a", label: "Search completed", detail: "Flight · Lagos", at: new Date(start.getTime() - 7200000), product: "FLIGHT" },
+  ];
+  const render = (events: ActivityRow[], order: "newest" | "oldest") =>
+    renderToStaticMarkup(createElement(ActivityTimeline, { events, nextHref: null, environment: "staging", order }));
+  const newest = render(rows, "newest");
+  assert.ok(newest.indexOf('data-activity-id="j-a10"') < newest.indexOf('data-activity-id="j-b09"'));
+  assert.ok(newest.indexOf('data-activity-id="j-b09"') < newest.indexOf('data-activity-id="j-a08"'));
+  assert.equal((newest.match(/data-activity-id=/g) || []).length, 3);
+  const oldest = render([...rows].reverse(), "oldest");
+  assert.ok(oldest.indexOf('data-activity-id="j-a08"') < oldest.indexOf('data-activity-id="j-b09"'));
+  assert.ok(oldest.indexOf('data-activity-id="j-b09"') < oldest.indexOf('data-activity-id="j-a10"'));
+  assert.equal((oldest.match(/data-activity-id=/g) || []).length, 3);
+});
