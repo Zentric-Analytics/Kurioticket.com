@@ -472,3 +472,36 @@ test("provider log mapping rejects other services, environments and request IDs"
   assert.equal(mapped.get("request-A")?.length, 1);
   assert.equal(mapped.get("request-B"), undefined);
 });
+
+test("progressive hotel telemetry uses trackId only with progressive flag and matching environment", () => {
+  const { correlatedProviderLogs } = __adminOperationalReadCoreTest;
+  const rows = [{ requestId: "track-1", type: "HOTEL", createdAt: new Date("2026-10-23T10:00:00Z") }] as never;
+  const log = (metadata: Record<string, unknown>, service = "hotel-search") => ({
+    provider: "KAYAK sandbox", status: "SUCCESS" as const, service, metadata, createdAt: new Date("2026-10-23T10:01:00Z"),
+  });
+  const result = correlatedProviderLogs(rows, [
+    log({ trackId: "track-1", progressive: true, environment: "staging" }),
+    log({ trackId: "track-1", environment: "staging" }),
+    log({ trackId: "track-1", progressive: true, environment: "production" }),
+    log({ requestId: "track-1", environment: "staging" }, "flight-search"),
+  ], "staging");
+  assert.equal(result.get("track-1")?.length, 1);
+  assert.equal(result.get("track-1")?.[0].provider, "KAYAK sandbox");
+});
+
+test("provider filter SQL uses exact correlated request IDs before cursor and summary", () => {
+  const scope = {
+    environment: "staging", provider: "Duffel", identity: "all",
+    userId: null, visitorId: null, status: null, product: null,
+    from: null, to: null,
+  } as never;
+  const sql = __adminOperationalReadCoreTest.exactProviderFilteredSearchSql(scope);
+  assert.match(sql.sql, /EXISTS/);
+  assert.match(sql.sql, /"requestId"/);
+  assert.match(sql.sql, /"trackId"/);
+  assert.match(sql.sql, /lower/);
+  assert.equal(sql.values.includes("Duffel"), true);
+  const page = __adminOperationalReadCoreTest.exactProviderFilteredSearchSql(scope, { at: "2026-10-23T10:00:00Z", id: "search-1" });
+  assert.match(page.sql, /"createdAt"/);
+  assert.equal(page.values.includes("search-1"), true);
+});
