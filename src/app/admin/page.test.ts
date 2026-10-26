@@ -229,7 +229,7 @@ test("production layout preserves original page and status backgrounds", () => {
     "bg-slate-300", "bg-emerald-500", "bg-indigo-500",
   ];
   for (const token of existingBackgrounds) assert.ok(dashboard.includes(token), token);
-  assert.doesNotMatch(dashboard, /bg-white|bg-slate-50|bg-indigo-50|bg-\[#/);
+  assert.doesNotMatch(dashboard, /(?:bg-white|bg-slate-50|bg-indigo-50)(?![\w-])|bg-\[#/);
   assert.ok(shell.includes("bg-slate-100") || shell.includes("bg-[#"));
   assert.match(display, /<AdminOverviewAutoRefresh \/>/);
   assert.match(display, /<AdminOverviewRangeSelect range=\{range\} \/>/);
@@ -266,7 +266,7 @@ test("Recent Admin Activity is outside the two-column workload grid and uses the
 
 test("Activity layout retains the existing white parent and does not change Overview backgrounds or actions", () => {
   assert.match(page, /<AdminSectionCard className="min-w-0 p-4 sm:p-6 lg:p-7">/);
-  assert.doesNotMatch(dashboard, /bg-white|bg-slate-50|bg-indigo-50|bg-\[#/);
+  assert.doesNotMatch(dashboard, /(?:bg-white|bg-slate-50|bg-indigo-50)(?![\w-])|bg-\[#/);
   assert.match(dashboard, /<Link href="\/admin\/logs"/);
   assert.match(display, /<WorkloadCard title="Support Workload"/);
   assert.match(display, /<WorkloadCard title="Account Deletion Workload"/);
