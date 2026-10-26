@@ -131,3 +131,39 @@ test("Confirmed Trips UI retains shell background and navigation while limiting 
   assert.match(page, /<Link href="\/admin\/searches"/);
   assert.match(page, /<AdminStatusBadge tone=\{readiness.webhookCredentialConfigured/);
 });
+
+
+test("Confirmed Trips exposes all operational sections regardless of available trip telemetry", () => {
+  const flightStatusPage = readFileSync("src/app/admin/flight-status/page.tsx", "utf8");
+  assert.match(navigation, /href: "\/admin\/flight-status", parentHref: "\/admin\/confirmed-trips"/);
+  assert.match(page, /<Link href="\/admin\/flight-status"/);
+  assert.match(flightStatusPage, /getFlightStatusOperationsSnapshot/);
+
+  const start = page.indexOf('<div className="grid items-stretch gap-4 lg:grid-cols-2">');
+  const end = page.indexOf('<section aria-labelledby="trips-operational-boundaries"', start);
+  assert.ok(start >= 0 && end > start, "product and provider panels must remain present");
+  const breakdowns = page.slice(start, end);
+  assert.match(breakdowns, /<section aria-labelledby="trips-by-product-title"/);
+  assert.match(breakdowns, /<section aria-labelledby="trips-by-provider-title"/);
+  assert.match(breakdowns, /Product breakdown unavailable/);
+  assert.match(breakdowns, /Provider breakdown unavailable/);
+  assert.equal((breakdowns.match(/!operations \? \(/g) || []).length, 2,
+    "both breakdowns must show honest unavailable-data states");
+  assert.doesNotMatch(page, /\{operations \? \(\s*<div className="grid items-stretch/);
+  assert.match(page, /<section aria-labelledby="confirmed-trips-overview"/);
+  assert.match(page, /<section aria-labelledby="confirmation-integration-title"/);
+  assert.match(page, /<section aria-labelledby="recent-confirmed-trips-title"/);
+  assert.doesNotMatch(page, /className="[^"]*(?:\bhidden\b|\binvisible\b|\bopacity-0\b)/);
+});
+
+test("Previously conditional trip records remain truthful and read-only", () => {
+  assert.match(page, /operations\.byProduct\.map/);
+  assert.match(page, /operations\.byProvider\.map/);
+  assert.match(page, /operations\.recentTrips\.map/);
+  assert.match(page, /No provider-confirmed trips yet/);
+  assert.match(page, /Recent trip records are unavailable because the confirmed-trip database query could not be completed/);
+  assert.match(page, /No counts are assumed/);
+  assert.match(page, /No providers or counts are assumed/);
+  assert.match(page, /Provider handoff ≠ confirmation/);
+  assert.doesNotMatch(page, /<form|method:\s*["'](?:POST|PATCH|DELETE)/);
+});
