@@ -188,6 +188,7 @@ try {
     assert.ok(newerIds.every(id => !earliestIds.includes(id) && !middleIds.includes(id)), "Every ascending cursor page is disjoint");
     assert.equal(new Set([...earliestIds, ...middleIds, ...newerIds]).size, 14, "All 14 fixture records must be reachable in oldest-first order");
     await page.getByRole("navigation", { name: "Activity tabs" }).getByRole("link", { name: "Searches", exact: true }).click();
+    await expect(page).toHaveURL(/tab=searches/);
     await expect(page).toHaveURL(/order=oldest/);
     assert.equal(new URL(page.url()).searchParams.has("cursor"), false);
   });
