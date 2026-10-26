@@ -82,6 +82,14 @@ export type AdminSearchRead = {
   createdAt: string;
 };
 
+export type AdminSearchSummary = {
+  scope: AdminSearchScope;
+  total: number;
+  success: number;
+  partial: number;
+  failed: number;
+};
+
 export type AdminSearchProviderDiagnostic = {
   provider: string;
   status: "SUCCESS" | "DEGRADED" | "FAILED" | "DISABLED";
