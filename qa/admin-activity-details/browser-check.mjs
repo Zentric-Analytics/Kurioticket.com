@@ -295,6 +295,11 @@ try {
       await expect(tab).toHaveURL(/product=HOTEL/);
       await expect(tab).toHaveURL(/stage=OFFER_SELECTED/);
       await expect(tab.getByRole("heading", { name: "Activity history" })).toBeVisible();
+      await tab.getByRole("combobox", { name: "Activity order" }).selectOption("oldest");
+      await tab.getByRole("button", { name: "Apply sort" }).click();
+      await expect(tab).toHaveURL(/order=oldest/);
+      await expect(tab).toHaveURL(/product=HOTEL/);
+      await expect(tab).toHaveURL(/stage=OFFER_SELECTED/);
     } finally {
       await noJs.close();
     }
