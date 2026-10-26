@@ -22,6 +22,11 @@ export type ActivityFilters = {
   order?: ActivityOrder;
 };
 export type ActivityCursor = { at: string; id: string };
+/** Latest recorded timestamp among visible events, independent of sort direction. */
+export function latestVisibleActivityAt(rows: ActivityRow[]): Date | null {
+  const timestamps = rows.map(row => row.at.getTime()).filter(Number.isFinite);
+  return timestamps.length ? new Date(Math.max(...timestamps)) : null;
+}
 
 /** Only show activity whose source records can be opened in the selected environment. */
 export function activityEnvironmentScope(environment: PublicEnvironment) {
