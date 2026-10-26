@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { X } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
+import { isPublicWebsitePresenceRoute, websitePresenceHeartbeatMs } from "@/lib/website-presence";
 import {
   analyticsConsentStorageKey,
   analyticsConsentChangedEvent,
@@ -90,6 +91,8 @@ function WebsiteAnalyticsConsentBridge() {
   const synchronizerRef = useRef<ReturnType<typeof createVisitorConsentSynchronizer> | null>(null);
 
   const accountKey = analyticsConsentAccountKey(status, session?.user);
+  const pathname = usePathname();
+  const consentConfirmed = syncState === "saved" && choice === "granted" && !decisionPending;
 
   useEffect(() => {
     activeRef.current = true;
@@ -196,6 +199,35 @@ function WebsiteAnalyticsConsentBridge() {
     if (!ready) return;
     void synchronizerRef.current!.sync({ choice, accountKey });
   }, [ready, choice, accountKey]);
+
+  // Send presence only from a visible, consent-confirmed public website tab.
+  // Stops immediately on consent withdrawal, sign-out, or route changes.
+  useEffect(() => {
+    if (!ready || !consentConfirmed || !accountKey || !isPublicWebsitePresenceRoute(pathname)) return;
+    let active = true;
+    const controller = new AbortController();
+    const send = () => {
+      if (!active || document.visibilityState !== "visible" || isDenied() ||
+          readSavedChoice() !== "granted" || choiceRef.current !== "granted") return;
+      void fetch("/api/identity/presence", {
+        method: "POST",
+        credentials: "same-origin",
+        cache: "no-store",
+        signal: controller.signal,
+        headers: { Accept: "application/json" },
+      }).catch(() => { /* Optional telemetry; no user-facing navigation failure. */ });
+    };
+    send();
+    const timer = window.setInterval(send, websitePresenceHeartbeatMs);
+    const onVisible = () => { if (document.visibilityState === "visible") send(); };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      active = false;
+      controller.abort();
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [ready, consentConfirmed, accountKey, pathname]);
 
   const retry = useCallback(() => {
     if (choiceRef.current) saveFailedRef.current = !saveChoice(choiceRef.current);

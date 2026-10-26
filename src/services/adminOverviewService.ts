@@ -5,6 +5,8 @@ import { getOptionalPrisma } from "@/lib/prisma";
 import { getPublicEnvironment } from "@/lib/stagingSafety";
 import { adminJourneys } from "@/services/adminJourneyService";
 import { getProviderOperationalStatuses } from "@/services/providerOperationalStatus";
+import { getWebsitePresenceSnapshot } from "@/services/websitePresenceService";
+import { summarizeAccountStatusRows, summarizeAuditEvents } from "@/services/adminOverviewMetrics";
 
 function invalidDate(value: string | null) {
   return value !== null && (!Number.isFinite(Date.parse(value)) || !/(Z|[+-]\d{2}:\d{2})$/.test(value));
@@ -49,13 +51,14 @@ export async function getAdminOverview(params: URLSearchParams) {
   if (!db) return { status: "unavailable" as const };
 
   try {
-    const [journeys, providers, lifecycle] = await Promise.all([
+    const [journeys, providers, websitePresence, lifecycle] = await Promise.all([
       adminJourneys.summary({ from, to, environment }),
       getProviderOperationalStatuses(24, environment),
+      getWebsitePresenceSnapshot(environment, now),
       db.$transaction(async tx => {
-        const [userGroups, supportGroups, deletionGroups, adminActions, observedVisitorIdentities] = await Promise.all([
+        const [userGroups, supportGroups, deletionGroups, adminActions, humanAdminActions, observedVisitorIdentities] = await Promise.all([
           tx.user.groupBy({
-            by: ["status"],
+            by: ["status", "role"],
             _count: { _all: true },
           }),
           tx.supportTicket.groupBy({
@@ -69,6 +72,7 @@ export async function getAdminOverview(params: URLSearchParams) {
           tx.adminAuditLog.count({
             where: { createdAt: { gte: new Date(from), lt: new Date(to) } },
           }),
+          tx.adminAuditLog.count({ where: { createdAt: { gte: new Date(from), lt: new Date(to) }, adminUserId: { not: null } } }),
           // Only currently consented visitor identities observed during the last five minutes.
           // A browser/device identity is not necessarily one unique human or every online visitor.
           tx.visitor.count({
@@ -79,33 +83,29 @@ export async function getAdminOverview(params: URLSearchParams) {
             },
           }),
         ]);
-        return { userGroups, supportGroups, deletionGroups, adminActions, observedVisitorIdentities };
+        return { userGroups, supportGroups, deletionGroups, adminActions, humanAdminActions, observedVisitorIdentities };
       }, { isolationLevel: "RepeatableRead" }),
     ]);
 
     if (journeys.status !== "ok" || !providers) return { status: "unavailable" as const };
 
-    const userCount = new Map(lifecycle.userGroups.map(row => [row.status, row._count._all]));
+    const users = summarizeAccountStatusRows(lifecycle.userGroups);
+    const audit = summarizeAuditEvents(lifecycle.adminActions, lifecycle.humanAdminActions);
     const supportCount = new Map(lifecycle.supportGroups.map(row => [row.status, row._count._all]));
     const deletionCount = new Map(lifecycle.deletionGroups.map(row => [row.status, row._count._all]));
-    const totalUsers = lifecycle.userGroups.reduce((sum, row) => sum + row._count._all, 0);
+
 
     return {
       status: "ok" as const,
       data: {
         scope: { from, to, environment },
+        websitePresence,
         visitorActivity: {
           observedVisitorIdentities: lifecycle.observedVisitorIdentities,
           windowMinutes: 5,
           observedAt: now.toISOString(),
         },
-        users: {
-          total: totalUsers,
-          active: userCount.get("ACTIVE") ?? 0,
-          suspended: userCount.get("SUSPENDED") ?? 0,
-          pendingDeletion: userCount.get("PENDING_DELETION") ?? 0,
-          deleted: userCount.get("DELETED") ?? 0,
-        },
+        users,
         support: {
           open: supportCount.get("OPEN") ?? 0,
           waitingOnUser: supportCount.get("WAITING_ON_USER") ?? 0,
@@ -122,6 +122,7 @@ export async function getAdminOverview(params: URLSearchParams) {
         journeys: journeys.data,
         providers,
         adminActions: lifecycle.adminActions,
+        audit,
       },
     };
   } catch {

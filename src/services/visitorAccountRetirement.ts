@@ -43,6 +43,8 @@ export async function retireAccountVisitors(tx: Prisma.TransactionClient, userId
         consentStatus: "WITHDRAWN",
         trackingDisabledAt: visitor.trackingDisabledAt ?? now,
         currentUserId: null,
+        websitePresenceAt: null,
+        websitePresenceEnvironment: null,
       },
     });
     await tx.visitorIdentityLink.deleteMany({ where: { visitorId: associatedVisitor.id } });

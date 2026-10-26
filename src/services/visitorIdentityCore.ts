@@ -152,7 +152,7 @@ export function createVisitorIdentityService(getDatabase: () => VisitorIdentityD
       if (!visitor || !hasConsent(visitor)) return true;
       await tx.visitor.update({
         where: { id: visitor.id },
-        data: { consentStatus: "WITHDRAWN", trackingDisabledAt: new Date(), currentUserId: null },
+        data: { consentStatus: "WITHDRAWN", trackingDisabledAt: new Date(), currentUserId: null, websitePresenceAt: null, websitePresenceEnvironment: null },
       });
       await tx.visitorIdentityLink.deleteMany({ where: { visitorId: visitor.id } });
       await tx.visitorConsent.create({ data: { visitorId: visitor.id, purpose: "ANALYTICS", status: "WITHDRAWN" } });

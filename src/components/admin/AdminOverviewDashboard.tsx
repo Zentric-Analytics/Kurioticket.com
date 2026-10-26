@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   Trash2,
   UserCheck,
+  UserX,
   Users,
   type LucideIcon,
 } from "lucide-react";
@@ -347,16 +348,18 @@ function ActivityFeed({ activity }: { activity: AuditActivity }) {
         title="Recent Admin Activity"
         action={<Link href="/admin/logs" className="focus-ring inline-flex items-center gap-1 text-[13px] font-medium text-indigo-700 hover:underline">View all <ArrowUpRight size={13} aria-hidden="true" /></Link>}
       />
-      {activity.length === 0 ? (
+      {activity.status === "unavailable" ? (
+        <p role="status" className="border-t border-slate-200/90 py-6 text-sm text-slate-600">Recent admin activity is unavailable.</p>
+      ) : activity.items.length === 0 ? (
         <p className="border-t border-slate-200/90 py-6 text-sm text-slate-600">
           No admin activity yet. Audit log entries will appear here after admin actions are recorded.
         </p>
       ) : (
         <div className="divide-y divide-slate-200/80 border-t border-slate-200/90">
-          {activity.map((item) => (
+          {activity.items.map((item) => (
             <div key={item.id} className="grid min-w-0 grid-cols-[8px_minmax(0,1fr)] items-start gap-x-3 gap-y-1 py-3 lg:grid-cols-[8px_minmax(140px,0.75fr)_minmax(0,2.4fr)_minmax(145px,0.9fr)_minmax(130px,0.9fr)]">
               <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-indigo-500" aria-hidden="true" />
-              <p className="min-w-0 text-xs font-semibold leading-5 text-slate-950">{humanize(item.title)}</p>
+              <p className="min-w-0 text-xs font-semibold leading-5 text-slate-950">{humanize(item.title)}{item.source === "system" ? " (System)" : ""}</p>
               <p className="col-start-2 min-w-0 break-words text-[13px] leading-5 text-slate-700 lg:col-start-auto">{item.detail}</p>
               <span className="col-start-2 text-[13px] leading-5 text-slate-700 lg:col-start-auto lg:whitespace-nowrap">{item.timestamp}</span>
               <span aria-label="Original audit action" className="col-start-2 min-w-0 break-words font-mono text-[13px] leading-5 text-slate-700 lg:col-start-auto">{item.title}</span>
@@ -410,15 +413,35 @@ export function AdminOverviewDashboard({
       <section aria-label="Operations Snapshot">
         <SectionTitle
           title="Operations Snapshot"
-          action={<AdminOverviewRangeSelect range={range} />}
+          action={<div className="flex flex-wrap items-center gap-2"><span className="text-xs font-medium text-slate-700">{data.scope.environment === "staging" ? "Staging data" : "Production data"}</span><span className="text-xs text-slate-600">Checked {new Date(data.visitorActivity.observedAt).toLocaleTimeString("en-US", { timeZone: "UTC", hour: "2-digit", minute: "2-digit" })} UTC</span><AdminOverviewRangeSelect range={range} /></div>}
         />
         <div className="grid gap-x-6 gap-y-0 sm:grid-cols-2 lg:grid-cols-3">
-          <MetricCard label="Total users" value={data.users.total} hint="Current accounts" icon={Users} tone="info" />
-          <MetricCard label="Enabled accounts" value={data.users.active} hint="Registered accounts with ACTIVE status; not people online" icon={UserCheck} tone="good" />
+          <MetricCard label="Total accounts" value={data.users.total} hint="All account records, including deleted status" icon={Users} tone="info" />
+          <MetricCard label="Enabled accounts" value={data.users.active} hint="Accounts marked ACTIVE, including staff; not people online" icon={UserCheck} tone="good" />
+          <div className="min-w-0 border-b border-slate-200/90 py-3.5 pr-3 sm:pr-4">
+            <div className="flex items-center justify-between"><Activity size={19} className="text-emerald-700" aria-hidden="true" /><span className="h-2 w-2 rounded-full bg-emerald-400" aria-hidden="true" /></div>
+            <p className="mt-2 text-xs font-medium uppercase tracking-wide text-slate-700">Online website visitors (observed)</p>
+            <p className="mt-1 text-[22px] font-semibold tabular-nums tracking-tight text-slate-950">{data.websitePresence.status === "ok" ? count(data.websitePresence.total) : "Unavailable"}</p>
+            <p className="mt-1 text-[13px] leading-5 text-slate-700">{data.websitePresence.status === "ok" ? count(data.websitePresence.registeredAccounts) + " accounts · " + count(data.websitePresence.guestIdentities) + " guest identities · last " + data.websitePresence.windowSeconds + "s" : "Presence data cannot be verified"}</p>
+          </div>
+          <MetricCard label="Active users (observed)" value={data.journeys.identities.registeredAccounts} hint="Distinct verified accounts with consented journey activity in selected range; not everyone online" icon={Activity} tone="info" />
+          <MetricCard label="Suspended accounts" value={data.users.suspended} hint="Current SUSPENDED account records" icon={UserX} tone="warn" />
+          <MetricCard label="Deleted accounts" value={data.users.deleted} hint="Retained records marked DELETED; not permanently erased accounts" icon={Trash2} tone="neutral" />
           <MetricCard label="Support attention" value={supportAttention} hint="Tickets awaiting action" icon={Headphones} tone={supportAttention ? "warn" : "good"} />
           <MetricCard label="Deletion attention" value={deletionAttention} hint="Requests needing review" icon={Trash2} tone={deletionAttention ? "warn" : "good"} />
           <MetricCard label="Journeys" value={data.journeys.journeys} hint="Selected time window" icon={Route} tone="info" />
-          <MetricCard label="Admin actions" value={data.adminActions} hint="Selected time window" icon={ShieldCheck} tone="neutral" />
+          <MetricCard label="Human admin actions" value={data.audit.human} hint={count(data.audit.automated) + " system audit entries excluded · selected time window"} icon={ShieldCheck} tone="neutral" />
+        </div>
+        <p className="mt-2 text-xs leading-5 text-slate-600">Online website visitors reflects consented, visible website tabs with a recent heartbeat, excluding native app activity and visitors who decline analytics. It is an estimate, not a complete live people count.</p>
+        <div className="mt-4 border-t border-slate-200/90 pt-3">
+          <h3 className="text-sm font-semibold text-slate-900">Account status breakdown</h3>
+          <div className="mt-1 grid gap-x-6 sm:grid-cols-2 lg:grid-cols-4">
+            <DetailRow label="Enabled customer accounts" value={data.users.activeCustomers} />
+            <DetailRow label="Enabled admin accounts" value={data.users.activeAdmins} />
+            <DetailRow label="Enabled support accounts" value={data.users.activeSupport} />
+            <DetailRow label="Pending-deletion accounts" value={data.users.pendingDeletion} />
+          </div>
+          <p className="mt-2 text-xs leading-5 text-slate-600">Account statuses are current database records, not the selected date range. Account deletion requests are counted separately.</p>
         </div>
         <p className="mt-3 text-[13px] leading-5 text-slate-700">
           <span className="font-medium text-slate-800">Recently observed visitors (5 min): {count(data.visitorActivity.observedVisitorIdentities)}</span>

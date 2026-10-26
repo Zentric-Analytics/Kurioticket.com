@@ -1134,6 +1134,9 @@ model Visitor {
   firstSeenAt        DateTime              @default(now())
   lastSeenAt         DateTime              @default(now())
   trackingDisabledAt DateTime?
+  // Optional, consent-gated foreground website heartbeat; separate from general activity and native traffic.
+  websitePresenceAt DateTime?
+  websitePresenceEnvironment String?
   currentUser        User?                 @relation("VisitorCurrentUser", fields: [currentUserId], references: [id], onDelete: SetNull)
   consentRecords     VisitorConsent[]
   identityLinks      VisitorIdentityLink[]
@@ -1144,6 +1147,7 @@ model Visitor {
 
   @@index([currentUserId, lastSeenAt])
   @@index([consentStatus, lastSeenAt])
+  @@index([websitePresenceEnvironment, websitePresenceAt])
 }
 
 /// A short-lived, consented visitor session that groups search-funnel activity.
