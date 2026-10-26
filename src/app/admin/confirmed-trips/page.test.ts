@@ -154,7 +154,14 @@ test("Confirmed Trips exposes all operational sections regardless of available t
   assert.match(page, /<section aria-labelledby="confirmed-trips-overview"/);
   assert.match(page, /<section aria-labelledby="confirmation-integration-title"/);
   assert.match(page, /<section aria-labelledby="recent-confirmed-trips-title"/);
-  assert.doesNotMatch(page, /className="[^"]*(?:\bhidden\b|\binvisible\b|\bopacity-0\b)/);
+  for (const match of page.matchAll(/className="([^"]*)"/g)) {
+    const classes = match[1].split(/\s+/);
+    assert.equal(
+      classes.some(token => /^(?:[a-z0-9-]+:)*(?:hidden|invisible|opacity-0)$/.test(token)),
+      false,
+      "Confirmed Trips sections must not use a visibility-hiding utility",
+    );
+  }
 });
 
 test("Previously conditional trip records remain truthful and read-only", () => {
