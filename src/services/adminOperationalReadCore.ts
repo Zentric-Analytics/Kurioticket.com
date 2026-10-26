@@ -33,7 +33,7 @@ import {
   type AdminSupportScope,
 } from "./adminOperationalReadContract";
 
-export type AdminOperationalDatabase = Pick<PrismaClient, "searchHistory" | "apiProviderLog" | "redirectLog" | "supportTicket" | "accountDeletionRequest">;
+export type AdminOperationalDatabase = Pick<PrismaClient, "searchHistory" | "apiProviderLog" | "redirectLog" | "supportTicket" | "accountDeletionRequest" | "$queryRaw">;
 type Dependencies = {
   authorize: () => Promise<boolean>;
   database: () => AdminOperationalDatabase | null;
@@ -328,13 +328,167 @@ function exactSearchDiagnostic(row: SearchRow, providers: AdminSearchProviderDia
   };
 }
 
-function searchDto(row: SearchRow, environment: PublicEnvironment): AdminSearchRead {
+type ProviderExecution = { provider: string; status: "SUCCESS" | "DEGRADED" | "FAILED" | "DISABLED" };
+type ProviderExecutionLog = ProviderExecution & { service: string; metadata: Prisma.JsonValue | null; createdAt: Date };
+function exactProviderSummary(logs: readonly ProviderExecution[]): NonNullable<AdminSearchRead["providerTelemetry"]> | null {
+  const latest = new Map<string, ProviderExecution["status"]>();
+  for (const log of logs) {
+    const name = text(log.provider, 100);
+    if (name) latest.set(name.toLowerCase(), log.status);
+  }
+  if (!latest.size) return null;
+  const statuses = [...latest.values()];
+  return {
+    total: statuses.length,
+    successful: statuses.filter(status => status === "SUCCESS").length,
+    failed: statuses.filter(status => status === "FAILED").length,
+    degraded: statuses.filter(status => status === "DEGRADED").length,
+    disabled: statuses.filter(status => status === "DISABLED").length,
+  };
+}
+function correlatedProviderLogs(rows: readonly SearchRow[], logs: readonly ProviderExecutionLog[], environment: PublicEnvironment) {
+  const requests = new Map<string, { product: SearchRow["type"]; createdAt: Date }>();
+  for (const row of rows) if (row.requestId) requests.set(row.requestId, { product: row.type, createdAt: row.createdAt });
+  const correlated = new Map<string, ProviderExecutionLog[]>();
+  for (const log of logs) {
+    const meta = jsonRecord(log.metadata);
+    const requestId = typeof meta.requestId === "string"
+      ? meta.requestId
+      : meta.progressive === true && typeof meta.trackId === "string" ? meta.trackId : null;
+    if (!requestId || meta.environment !== environment) continue;
+    const row = requests.get(requestId);
+    if (!row || log.service !== providerSearchService(row.product)) continue;
+    if (meta.requestId === undefined && (row.product !== "HOTEL" || meta.progressive !== true)) continue;
+    const entries = correlated.get(requestId) ?? [];
+    entries.push(log);
+    correlated.set(requestId, entries);
+  }
+  return correlated;
+}
+
+// Only exact, environment-scoped execution records count; progressive Android
+// hotels store the same search request ID under metadata.trackId.
+function providerLogWhere(requestIds: readonly string[], services: readonly string[], environment: PublicEnvironment): Prisma.ApiProviderLogWhereInput {
+  return {
+    service: { in: [...services] },
+    metadata: { path: ["environment"], equals: environment },
+    OR: [
+      ...requestIds.map(id => ({ metadata: { path: ["requestId"], equals: id } })),
+      ...(services.includes("hotel-search")
+        ? requestIds.map(id => ({
+          AND: [
+            { service: "hotel-search" },
+            { metadata: { path: ["trackId"], equals: id } },
+            { metadata: { path: ["progressive"], equals: true } },
+          ],
+        }))
+        : []),
+    ],
+  };
+}
+
+// Prisma cannot correlate SearchHistory and ApiProviderLog across the JSON
+// request keys in its model where API. For provider-filtered lists and KPI
+// totals, use the same parameterized EXISTS predicate before keyset paging.
+// Identity, consent, date and environment scope must match searchWhere().
+function exactProviderFilteredSearchSql(scope: AdminSearchScope, cursor: { at: string; id: string } | null = null): Prisma.Sql {
+  if (!scope.provider) throw new Error("An exact provider is required");
+  const clauses: Prisma.Sql[] = [
+    Prisma.sql`s."query"->>'environment' = ${scope.environment}`,
+    Prisma.sql`s."requestId" IS NOT NULL`,
+    Prisma.sql`EXISTS (
+      SELECT 1 FROM "ApiProviderLog" p
+      WHERE p."service" = CASE s."type"::text
+        WHEN 'FLIGHT' THEN 'flight-search'
+        WHEN 'HOTEL' THEN 'hotel-search'
+        WHEN 'CAR' THEN 'car-search'
+        WHEN 'PACKAGE' THEN 'package-search'
+      END
+        AND p."metadata"->>'environment' = ${scope.environment}
+        AND lower(p."provider") = lower(${scope.provider})
+        AND (
+          p."metadata"->>'requestId' = s."requestId"
+          OR (
+            s."type"::text = 'HOTEL'
+            AND p."metadata"->>'requestId' IS NULL
+            AND p."metadata"->>'progressive' = 'true'
+            AND p."metadata"->>'trackId' = s."requestId"
+          )
+        )
+    )`,
+  ];
+  if (scope.product) clauses.push(Prisma.sql`s."type"::text = ${scope.product}`);
+  if (scope.status) clauses.push(Prisma.sql`s."status"::text = ${scope.status}`);
+  if (scope.from) clauses.push(Prisma.sql`s."createdAt" >= ${new Date(scope.from)}`);
+  if (scope.to) clauses.push(Prisma.sql`s."createdAt" < ${new Date(scope.to)}`);
+
+  const eligible = Prisma.sql`EXISTS (
+    SELECT 1 FROM "Visitor" v
+    WHERE v."id" = s."visitorId"
+      AND v."consentStatus"::text = 'GRANTED'
+      AND v."trackingDisabledAt" IS NULL
+  )`;
+  if (scope.identity === "registered" && scope.userId && !scope.visitorId) {
+    const userId = scope.userId;
+    clauses.push(Prisma.sql`(
+      s."userId" = ${userId}
+      OR (
+        s."userId" IS NULL
+        AND EXISTS (
+          SELECT 1 FROM "Visitor" v
+          WHERE v."id" = s."visitorId"
+            AND v."currentUserId" = ${userId}
+            AND v."consentStatus"::text = 'GRANTED'
+            AND v."trackingDisabledAt" IS NULL
+            AND EXISTS (
+              SELECT 1 FROM "VisitorIdentityLink" link
+              WHERE link."visitorId" = v."id" AND link."userId" = ${userId}
+            )
+            AND NOT EXISTS (
+              SELECT 1 FROM "VisitorIdentityLink" link
+              WHERE link."visitorId" = v."id" AND link."userId" <> ${userId}
+            )
+        )
+      )
+    )`);
+  } else {
+    if (scope.identity === "registered") clauses.push(Prisma.sql`s."userId" IS NOT NULL`);
+    if (scope.identity === "guest") {
+      clauses.push(Prisma.sql`s."userId" IS NULL`);
+      clauses.push(eligible);
+    }
+    if (scope.identity === "unattributed") {
+      clauses.push(Prisma.sql`s."userId" IS NULL`);
+      clauses.push(Prisma.sql`(
+        s."visitorId" IS NULL
+        OR EXISTS (
+          SELECT 1 FROM "Visitor" v
+          WHERE v."id" = s."visitorId"
+            AND (v."consentStatus"::text <> 'GRANTED' OR v."trackingDisabledAt" IS NOT NULL)
+        )
+      )`);
+    }
+    if (scope.userId) clauses.push(Prisma.sql`s."userId" = ${scope.userId}`);
+    if (scope.visitorId) {
+      clauses.push(Prisma.sql`s."visitorId" = ${scope.visitorId}`);
+      clauses.push(eligible);
+    }
+  }
+
+  if (cursor) {
+    const at = new Date(cursor.at);
+    clauses.push(Prisma.sql`(
+      s."createdAt" < ${at}
+      OR (s."createdAt" = ${at} AND s."id" < ${cursor.id})
+    )`);
+  }
+  return Prisma.sql`WHERE ${Prisma.join(clauses, " AND ")}`;
+}
+
+function searchDto(row: SearchRow, environment: PublicEnvironment, exactLogs: readonly ProviderExecution[] = []): AdminSearchRead {
   const query = jsonRecord(row.query);
   const visitorId = attributableVisitorId(row.visitorId, row.visitor);
-  const providers = [...new Set([
-    text(query.provider, 100),
-    ...row.journeyEvents.map(event => text(event.provider, 100)),
-  ].filter((value): value is string => Boolean(value)))].slice(0, 10);
+  const providers = [...new Set(exactLogs.map(log => text(log.provider, 100)).filter((value): value is string => Boolean(value)))].slice(0, 10);
   return {
     id: row.id,
     requestId: text(row.requestId, 128),
@@ -348,6 +502,7 @@ function searchDto(row: SearchRow, environment: PublicEnvironment): AdminSearchR
     latencyMs: row.latencyMs,
     status: row.status,
     providers,
+    providerTelemetry: exactProviderSummary(exactLogs),
     market: text(query.market ?? query.country ?? query.region, 80),
     currency: text(query.currency, 12),
     environment,
@@ -419,12 +574,6 @@ function searchWhere(scope: AdminSearchScope, cursor?: { at: string; id: string 
     ...(dateRange(scope.from, scope.to) ? { createdAt: dateRange(scope.from, scope.to) } : {}),
     query: { path: ["environment"], equals: scope.environment },
     AND: [
-      ...(scope.provider ? [{
-        OR: [
-          { query: { path: ["provider"], equals: scope.provider } },
-          { journeyEvents: { some: { provider: { equals: scope.provider, mode: "insensitive" as const } } } },
-        ],
-      }] : []),
       ...(cursor ? [{ OR: [{ createdAt: { lt: new Date(cursor.at) } }, { createdAt: new Date(cursor.at), id: { lt: cursor.id } }] }] : []),
     ],
   };
@@ -461,9 +610,42 @@ export function createAdminOperationalReadService(dependencies: Dependencies) {
           const parsed = parseAdminSearchQuery(params, dependencies.environment());
           if (parsed.status !== "ok") return parsed;
           const { scope, cursor, limit } = parsed.data;
-          const records = await db.searchHistory.findMany({ where: searchWhere(scope, cursor), select: searchSelect, orderBy: [{ createdAt: "desc" }, { id: "desc" }], take: limit + 1 });
+          const providerIds = scope.provider
+            ? (await db.$queryRaw<Array<{ id: string }>>(Prisma.sql`
+                SELECT s."id" FROM "SearchHistory" s
+                ${exactProviderFilteredSearchSql(scope, cursor)}
+                ORDER BY s."createdAt" DESC, s."id" DESC
+                LIMIT ${limit + 1}
+              `)).map(row => row.id)
+            : null;
+          const records = providerIds !== null && !providerIds.length
+            ? []
+            : await db.searchHistory.findMany({
+              where: {
+                ...searchWhere(scope, cursor),
+                ...(providerIds !== null ? { id: { in: providerIds } } : {}),
+              },
+              select: searchSelect,
+              orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+              take: limit + 1,
+            });
           const page = nextCursor("searches", scope, records, limit);
-          return { status: "ok", data: { scope, items: page.page.map(row => searchDto(row, scope.environment)), nextCursor: page.next } };
+          const requestIds = page.page.map(row => row.requestId).filter((id): id is string => Boolean(id));
+          const services = [...new Set(page.page.map(row => providerSearchService(row.type)))];
+          const logs = requestIds.length
+            ? await db.apiProviderLog.findMany({
+              where: providerLogWhere(requestIds, services, scope.environment),
+              select: { provider: true, status: true, service: true, metadata: true, createdAt: true },
+              orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+              take: 2001,
+            })
+            : [];
+          // Never present a partial query result as an exact provider count.
+          // Keep the record visible but mark telemetry unavailable if the cap is hit.
+          const byRequest = logs.length <= 2000
+            ? correlatedProviderLogs(page.page, logs, scope.environment)
+            : new Map<string, ProviderExecutionLog[]>();
+          return { status: "ok", data: { scope, items: page.page.map(row => searchDto(row, scope.environment, row.requestId ? byRequest.get(row.requestId) ?? [] : [])), nextCursor: page.next } };
         });
       },
       summary(params: URLSearchParams): Promise<AdminOperationalResult<AdminSearchSummary>> {
@@ -475,18 +657,34 @@ export function createAdminOperationalReadService(dependencies: Dependencies) {
           const parsed = parseAdminSearchQuery(sanitized, dependencies.environment());
           if (parsed.status !== "ok") return parsed;
           const { scope } = parsed.data;
-          const groups = await db.searchHistory.groupBy({
-            by: ["status"],
-            where: searchWhere(scope),
-            _count: { _all: true },
-          });
           const counts = { total: 0, success: 0, partial: 0, failed: 0 };
-          for (const group of groups) {
-            const count = group._count._all;
-            counts.total += count;
-            if (group.status === "SUCCESS") counts.success += count;
-            else if (group.status === "PARTIAL") counts.partial += count;
-            else if (group.status === "FAILED") counts.failed += count;
+          if (scope.provider) {
+            const groups = await db.$queryRaw<Array<{ status: string; count: bigint }>>(Prisma.sql`
+              SELECT s."status"::text AS "status", COUNT(*) AS "count"
+              FROM "SearchHistory" s
+              ${exactProviderFilteredSearchSql(scope)}
+              GROUP BY s."status"
+            `);
+            for (const group of groups) {
+              const count = Number(group.count);
+              counts.total += count;
+              if (group.status === "SUCCESS") counts.success += count;
+              else if (group.status === "PARTIAL") counts.partial += count;
+              else if (group.status === "FAILED") counts.failed += count;
+            }
+          } else {
+            const groups = await db.searchHistory.groupBy({
+              by: ["status"],
+              where: searchWhere(scope),
+              _count: { _all: true },
+            });
+            for (const group of groups) {
+              const count = group._count._all;
+              counts.total += count;
+              if (group.status === "SUCCESS") counts.success += count;
+              else if (group.status === "PARTIAL") counts.partial += count;
+              else if (group.status === "FAILED") counts.failed += count;
+            }
           }
           return { status: "ok", data: { scope, ...counts } };
         });
@@ -504,10 +702,7 @@ export function createAdminOperationalReadService(dependencies: Dependencies) {
             const logs = await db.apiProviderLog.findMany({
               where: {
                 service: providerSearchService(row.type),
-                AND: [
-                  { metadata: { path: ["environment"], equals: env.data } },
-                  { metadata: { path: ["requestId"], equals: row.requestId } },
-                ],
+                ...providerLogWhere([row.requestId], [providerSearchService(row.type)], env.data),
               },
               select: {
                 provider: true,
@@ -524,7 +719,7 @@ export function createAdminOperationalReadService(dependencies: Dependencies) {
           return {
             status: "ok",
             data: {
-              ...searchDto(row, env.data),
+              ...searchDto(row, env.data, providers),
               diagnostic: exactSearchDiagnostic(row, providers),
             },
           };
@@ -651,4 +846,8 @@ export const __adminOperationalReadCoreTest = {
   fallbackSearchDiagnostic,
   providerDiagnostic,
   exactSearchDiagnostic,
+  exactProviderSummary,
+  correlatedProviderLogs,
+  exactProviderFilteredSearchSql,
+  providerLogWhere,
 };

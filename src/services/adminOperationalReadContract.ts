@@ -76,6 +76,14 @@ export type AdminSearchRead = {
   latencyMs: number | null;
   status: AdminSearchStatus;
   providers: string[];
+  /** Exact provider execution evidence, not inferred from search results or later handoffs. */
+  providerTelemetry: {
+    successful: number;
+    total: number;
+    failed: number;
+    degraded: number;
+    disabled: number;
+  } | null;
   market: string | null;
   currency: string | null;
   environment: PublicEnvironment;
