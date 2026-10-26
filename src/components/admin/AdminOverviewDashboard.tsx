@@ -84,11 +84,11 @@ function SectionTitle({
   return (
     <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
       <div className="min-w-0">
-        <h2 className="flex items-center gap-2 text-base font-bold tracking-tight text-slate-950">
+        <h2 className="flex items-center gap-2 text-[15px] font-semibold tracking-tight text-slate-900">
           {Icon ? <Icon size={17} className="shrink-0 text-indigo-700" aria-hidden="true" /> : null}
           {title}
         </h2>
-        {description ? <p className="mt-1 text-xs leading-5 text-slate-600 sm:text-sm">{description}</p> : null}
+        {description ? <p className="mt-1 text-[13px] leading-5 text-slate-700 sm:text-sm">{description}</p> : null}
       </div>
       {action}
     </div>
@@ -123,9 +123,9 @@ function MetricCard({
           (tone === "good" ? "bg-emerald-400" : tone === "warn" ? "bg-amber-400" : tone === "bad" ? "bg-rose-400" : tone === "info" ? "bg-indigo-400" : "bg-slate-300")}
           aria-hidden="true" />
       </div>
-      <p className="mt-2 text-[11px] font-bold uppercase tracking-wide text-slate-600">{label}</p>
-      <p className="mt-1 text-2xl font-extrabold tabular-nums tracking-tight text-slate-950">{count(value)}</p>
-      <p className="mt-1 text-xs leading-5 text-slate-600">{hint}</p>
+      <p className="mt-2 text-xs font-medium uppercase tracking-wide text-slate-700">{label}</p>
+      <p className="mt-1 text-[22px] font-semibold tabular-nums tracking-tight text-slate-950">{count(value)}</p>
+      <p className="mt-1 text-[13px] leading-5 text-slate-700">{hint}</p>
     </div>
   );
 }
@@ -157,11 +157,11 @@ function AttentionCard({
     >
       <Icon size={20} className={"mt-0.5 shrink-0 " + color} aria-hidden="true" />
       <span className="min-w-0 flex-1">
-        <span className="flex flex-wrap items-center gap-2 text-sm font-bold text-slate-950 group-hover:text-indigo-700">
+        <span className="flex flex-wrap items-center gap-2 text-sm font-semibold text-slate-900 group-hover:text-indigo-700">
           {title}
-          <span className={"text-xs font-bold tabular-nums " + color}>{count(value)}</span>
+          <span className={"text-xs font-semibold tabular-nums " + color}>{count(value)}</span>
         </span>
-        <span className="mt-1 block text-xs leading-5 text-slate-600">{description}</span>
+        <span className="mt-1 block text-[13px] leading-5 text-slate-700">{description}</span>
       </span>
       <ChevronRight size={16} className="mt-1 shrink-0 text-slate-400 transition group-hover:translate-x-0.5" aria-hidden="true" />
     </Link>
@@ -171,8 +171,8 @@ function AttentionCard({
 function DetailRow({ label, value, detail }: { label: string; value: string | number; detail?: string }) {
   return (
     <div className="flex min-w-0 items-start justify-between gap-3 border-b border-slate-200/75 py-2.5 last:border-b-0">
-      <span className="min-w-0 flex-1 text-xs leading-5 text-slate-600">{label}</span>
-      <span className="min-w-0 max-w-[55%] text-right text-xs font-bold tabular-nums leading-5 text-slate-900">
+      <span className="min-w-0 flex-1 text-[13px] leading-5 text-slate-700">{label}</span>
+      <span className="min-w-0 max-w-[55%] text-right text-xs font-semibold tabular-nums leading-5 text-slate-900">
         {typeof value === "number" ? count(value) : value}
       </span>
       {detail ? <span className="sr-only">{detail}</span> : null}
@@ -218,14 +218,14 @@ function PlatformHealth({ system }: { system: SystemStatus }) {
               <Icon size={16} className="shrink-0 text-indigo-600" aria-hidden="true" />
               {label}
             </span>
-            <span className={"inline-flex items-center gap-2 text-xs font-bold " + (ready ? "text-emerald-700" : "text-slate-600")}>
+            <span className={"inline-flex items-center gap-2 text-xs font-semibold " + (ready ? "text-emerald-700" : "text-slate-600")}>
               <span className={"h-2 w-2 shrink-0 rounded-full " + (ready ? "bg-emerald-500" : "bg-slate-300")} aria-hidden="true" />
               {status}
             </span>
           </div>
         ))}
       </div>
-      <p className="mt-3 text-xs leading-5 text-slate-600">
+      <p className="mt-3 text-[13px] leading-5 text-slate-700">
         Configuration indicators do not replace end-to-end service checks.
       </p>
     </section>
@@ -237,34 +237,34 @@ function ProviderCard({ provider }: { provider: ProviderOperationalStatus }) {
     <article className="min-w-0 border-t border-slate-200/90 py-4">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">{provider.id}</p>
-          <h3 className="mt-1 text-base font-bold text-slate-950">{provider.provider}</h3>
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-600">{provider.id}</p>
+          <h3 className="mt-1 text-[15px] font-semibold text-slate-900">{provider.provider}</h3>
         </div>
         <div className="flex flex-wrap gap-1.5">
           <OverviewStatusBadge tone={readinessTone(provider.readinessState)}>{humanize(provider.readinessState)}</OverviewStatusBadge>
           <OverviewStatusBadge tone={providerTone(provider.operationalState)}>{humanize(provider.operationalState)}</OverviewStatusBadge>
         </div>
       </div>
-      <p className="mt-2 text-xs text-slate-600">Observed provider traffic · Last {provider.windowHours} hours</p>
+      <p className="mt-2 text-[13px] text-slate-700">Observed provider traffic · Last {provider.windowHours} hours</p>
       <div className="mt-3 grid grid-cols-2 gap-4">
         <div className="min-w-0">
-          <p className="text-[11px] text-slate-600">Recent calls</p>
-          <p className="mt-1 text-xl font-bold tabular-nums text-slate-950">{count(provider.totalCalls)}</p>
+          <p className="text-xs font-medium text-slate-700">Recent calls</p>
+          <p className="mt-1 text-lg font-semibold tabular-nums text-slate-950">{count(provider.totalCalls)}</p>
         </div>
         <div className="min-w-0">
-          <p className="text-[11px] text-slate-600">Average latency</p>
-          <p className="mt-1 break-words text-xl font-bold tabular-nums text-slate-950">
+          <p className="text-xs font-medium text-slate-700">Average latency</p>
+          <p className="mt-1 break-words text-lg font-semibold tabular-nums text-slate-950">
             {provider.averageLatencyMs === null ? "—" : provider.averageLatencyMs.toLocaleString("en-US") + "ms"}
           </p>
         </div>
       </div>
       <p className="mt-3 text-xs text-slate-700">
-        <span className="font-bold tabular-nums text-emerald-700">{count(provider.successCalls)}</span> successful
+        <span className="font-semibold tabular-nums text-emerald-700">{count(provider.successCalls)}</span> successful
         <span className="mx-1.5 text-slate-400">·</span>
-        <span className="font-bold tabular-nums text-rose-700">{count(provider.failedCalls)}</span> failed
+        <span className="font-semibold tabular-nums text-rose-700">{count(provider.failedCalls)}</span> failed
       </p>
       <details className="mt-3 border-t border-slate-200/80">
-        <summary className="focus-ring cursor-pointer py-2.5 text-xs font-semibold text-indigo-700 hover:underline">
+        <summary className="focus-ring cursor-pointer py-2.5 text-[13px] font-medium text-indigo-700 hover:underline">
           Full provider details
         </summary>
         <div className="border-t border-slate-200/80 pt-1">
@@ -300,9 +300,9 @@ function FunnelStep({
   return (
     <div className="min-w-0 border-b border-slate-200/90 py-3.5 pr-3">
       <Icon size={19} className="text-indigo-700" aria-hidden="true" />
-      <p className="mt-3 text-xs font-semibold text-slate-600">{label}</p>
-      <p className="mt-1 text-2xl font-bold tabular-nums tracking-tight text-slate-950">{count(journeys)}</p>
-      <p className="mt-1 text-xs text-slate-600">{count(events)} recorded events</p>
+      <p className="mt-3 text-sm font-medium text-slate-700">{label}</p>
+      <p className="mt-1 text-[22px] font-semibold tabular-nums tracking-tight text-slate-950">{count(journeys)}</p>
+      <p className="mt-1 text-[13px] text-slate-700">{count(events)} recorded events</p>
     </div>
   );
 }
@@ -323,16 +323,16 @@ function WorkloadCard({
       <SectionTitle
         title={title}
         icon={Icon}
-        action={<Link href={href} className="focus-ring inline-flex items-center gap-1 text-xs font-semibold text-indigo-700 hover:underline">View all <ArrowUpRight size={13} aria-hidden="true" /></Link>}
+        action={<Link href={href} className="focus-ring inline-flex items-center gap-1 text-[13px] font-medium text-indigo-700 hover:underline">View all <ArrowUpRight size={13} aria-hidden="true" /></Link>}
       />
       <div className="border-t border-slate-200/90">
         {rows.map((row) => (
           <div key={row.label} className="flex min-w-0 items-start justify-between gap-3 border-b border-slate-200/75 py-3">
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-medium text-slate-800">{row.label}</p>
-              <p className="mt-1 text-[11px] leading-4 text-slate-600">{row.detail}</p>
+              <p className="text-sm font-medium text-slate-800">{row.label}</p>
+              <p className="mt-1 text-[13px] leading-5 text-slate-600">{row.detail}</p>
             </div>
-            <span className="shrink-0 text-sm font-bold tabular-nums text-slate-950">{count(row.value)}</span>
+            <span className="shrink-0 text-sm font-semibold tabular-nums text-slate-900">{count(row.value)}</span>
           </div>
         ))}
       </div>
@@ -345,7 +345,7 @@ function ActivityFeed({ activity }: { activity: AuditActivity }) {
     <section className="min-w-0">
       <SectionTitle
         title="Recent Admin Activity"
-        action={<Link href="/admin/logs" className="focus-ring inline-flex items-center gap-1 text-xs font-semibold text-indigo-700 hover:underline">View all <ArrowUpRight size={13} aria-hidden="true" /></Link>}
+        action={<Link href="/admin/logs" className="focus-ring inline-flex items-center gap-1 text-[13px] font-medium text-indigo-700 hover:underline">View all <ArrowUpRight size={13} aria-hidden="true" /></Link>}
       />
       {activity.length === 0 ? (
         <p className="border-t border-slate-200/90 py-6 text-sm text-slate-600">
@@ -356,10 +356,10 @@ function ActivityFeed({ activity }: { activity: AuditActivity }) {
           {activity.map((item) => (
             <div key={item.id} className="grid min-w-0 grid-cols-[8px_minmax(0,1fr)] items-start gap-x-3 gap-y-1 py-3 lg:grid-cols-[8px_minmax(140px,0.75fr)_minmax(0,2.4fr)_minmax(145px,0.9fr)_minmax(130px,0.9fr)]">
               <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-indigo-500" aria-hidden="true" />
-              <p className="min-w-0 text-xs font-bold leading-5 text-slate-950">{humanize(item.title)}</p>
-              <p className="col-start-2 min-w-0 break-words text-xs leading-5 text-slate-700 lg:col-start-auto">{item.detail}</p>
-              <span className="col-start-2 text-[11px] leading-5 text-slate-600 lg:col-start-auto lg:whitespace-nowrap">{item.timestamp}</span>
-              <span aria-label="Original audit action" className="col-start-2 min-w-0 break-words font-mono text-[11px] leading-5 text-slate-600 lg:col-start-auto">{item.title}</span>
+              <p className="min-w-0 text-xs font-semibold leading-5 text-slate-950">{humanize(item.title)}</p>
+              <p className="col-start-2 min-w-0 break-words text-[13px] leading-5 text-slate-700 lg:col-start-auto">{item.detail}</p>
+              <span className="col-start-2 text-[13px] leading-5 text-slate-700 lg:col-start-auto lg:whitespace-nowrap">{item.timestamp}</span>
+              <span aria-label="Original audit action" className="col-start-2 min-w-0 break-words font-mono text-[13px] leading-5 text-slate-700 lg:col-start-auto">{item.title}</span>
             </div>
           ))}
         </div>
@@ -420,8 +420,8 @@ export function AdminOverviewDashboard({
           <MetricCard label="Journeys" value={data.journeys.journeys} hint="Selected time window" icon={Route} tone="info" />
           <MetricCard label="Admin actions" value={data.adminActions} hint="Selected time window" icon={ShieldCheck} tone="neutral" />
         </div>
-        <p className="mt-3 text-xs leading-5 text-slate-600">
-          <strong>Recently observed visitors (5 min): {count(data.visitorActivity.observedVisitorIdentities)}</strong>
+        <p className="mt-3 text-[13px] leading-5 text-slate-700">
+          <span className="font-medium text-slate-800">Recently observed visitors (5 min): {count(data.visitorActivity.observedVisitorIdentities)}</span>
           {" · Consented visitor identities with recorded activity, not a verified count of everyone currently online. One person can use multiple devices; unconsented visitors are excluded."}
         </p>
       </section>
@@ -444,7 +444,7 @@ export function AdminOverviewDashboard({
         <PlatformHealth system={system} />
         <section className="min-w-0" aria-label="Provider Operational Health">
           <SectionTitle title="Provider Operational Health"
-            action={<Link href="/admin/providers" className="focus-ring inline-flex items-center gap-1 text-xs font-semibold text-indigo-700 hover:underline">View all providers <ArrowUpRight size={13} aria-hidden="true" /></Link>} />
+            action={<Link href="/admin/providers" className="focus-ring inline-flex items-center gap-1 text-[13px] font-medium text-indigo-700 hover:underline">View all providers <ArrowUpRight size={13} aria-hidden="true" /></Link>} />
           <div className="grid gap-y-0">
             {data.providers.map((provider) => <ProviderCard key={provider.id} provider={provider} />)}
             {data.providers.length === 0 ? <p className="border-t border-slate-200/90 py-4 text-sm text-slate-600">No provider status available. The current deployment has no reported provider operational statuses.</p> : null}
@@ -472,7 +472,7 @@ export function AdminOverviewDashboard({
 
         <div className="mt-5 grid gap-8 lg:grid-cols-2">
           <section className="min-w-0 border-t border-slate-200/90 py-4">
-            <h3 className="flex items-center gap-2 text-sm font-bold text-slate-950"><Search size={17} className="text-indigo-700" aria-hidden="true" />Operational Search Health</h3>
+            <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-900"><Search size={17} className="text-indigo-700" aria-hidden="true" />Operational Search Health</h3>
             <div className="mt-3">
               <DetailRow label="Operational searches" value={data.journeys.operationalSearches.total} />
               <DetailRow label="Failed searches" value={data.journeys.operationalSearches.failed} />
@@ -480,12 +480,12 @@ export function AdminOverviewDashboard({
             </div>
           </section>
           <section className="min-w-0 border-t border-slate-200/90 py-4">
-            <h3 className="flex items-center gap-2 text-sm font-bold text-slate-950"><Route size={17} className="text-indigo-700" aria-hidden="true" />Handoff Correlation</h3>
+            <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-900"><Route size={17} className="text-indigo-700" aria-hidden="true" />Handoff Correlation</h3>
             <div className="mt-3">
               <DetailRow label="Exact search ↔ handoff links" value={data.journeys.handoffCorrelation.exactEvents} />
               <DetailRow label="Uncorrelated handoffs" value={data.journeys.handoffCorrelation.uncorrelatedEvents} />
             </div>
-            <p className="mt-2 text-xs text-slate-500">No nearest-by-time inference.</p>
+            <p className="mt-2 text-[13px] text-slate-600">No nearest-by-time inference.</p>
           </section>
         </div>
       </section>
