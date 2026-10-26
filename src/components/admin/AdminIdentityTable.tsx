@@ -106,16 +106,16 @@ export function AdminIdentityTable({
         aria-labelledby="identity-directory-title"
         tabIndex={0}
       >
-        <table className="w-full min-w-[900px] table-fixed text-left text-[13px]">
+        <table className="w-full min-w-[960px] table-fixed text-left text-[13px]">
           <caption className="sr-only">
             Registered accounts and consent-eligible guest identities, sorted by {sort.replaceAll("_", " ")}
           </caption>
           <colgroup>
-            <col className="w-[40%]" />
-            <col className="w-[17%]" />
-            <col className="w-[13%]" />
-            <col className="w-[18%]" />
+            <col className="w-[38%]" />
+            <col className="w-[16%]" />
             <col className="w-[12%]" />
+            <col className="w-[19%]" />
+            <col className="w-[15%]" />
           </colgroup>
           <thead className="border-b border-[#D8E1EC] bg-white text-[12px] text-[#475569]">
             <tr>
