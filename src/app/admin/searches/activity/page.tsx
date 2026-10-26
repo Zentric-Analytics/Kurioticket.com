@@ -14,6 +14,7 @@ const filterControl =
 
 export default async function AdminSearchActivityPage({ searchParams }: { searchParams: SearchParams }) {
   const raw = await searchParams;
+  const referenceNow = new Date().toISOString();
   const range = resolveRange(raw);
   const params = toBackendParams(raw, range);
   const listParams = new URLSearchParams(params);
@@ -154,6 +155,7 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
               initialItems={result.data.items}
               initialCursor={result.data.nextCursor}
               query={params.toString()}
+              referenceNow={referenceNow}
             />
           </>
         ) : (
@@ -210,7 +212,7 @@ function toBackendParams(raw: Record<string, string | string[] | undefined>, ran
   if (range !== "all" && range !== "custom") {
     const now = new Date();
     const from = new Date(now);
-    if (range === "today") from.setHours(0, 0, 0, 0);
+    if (range === "today") from.setUTCHours(0, 0, 0, 0);
     if (range === "7d") from.setDate(from.getDate() - 7);
     if (range === "30d") from.setDate(from.getDate() - 30);
     params.set("from", from.toISOString());
