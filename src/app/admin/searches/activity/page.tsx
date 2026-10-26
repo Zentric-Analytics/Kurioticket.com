@@ -1,16 +1,15 @@
 import Link from "next/link";
 
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
+import { SearchMonitorSelect, SearchMonitorProviderInput } from "@/components/admin/SearchMonitorSelect";
 import { SearchMonitorTable } from "@/components/admin/SearchMonitorTable";
+import { SearchWorkspaceBackLink } from "@/components/admin/SearchWorkspaceBackLink";
 import { adminOperationalReads } from "@/services/adminOperationalReadService";
 
 export const metadata = { title: "Admin Searches" };
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 type RangeKey = "today" | "7d" | "30d" | "all" | "custom";
-
-const filterControl =
-  "h-9 min-w-0 border-0 border-b border-[#CAD3DF] bg-transparent px-0 text-[13px] font-medium text-[#475569] outline-none focus:border-[#021C2B] focus:ring-0";
 
 export default async function AdminSearchActivityPage({ searchParams }: { searchParams: SearchParams }) {
   const raw = await searchParams;
@@ -25,27 +24,13 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
   ]);
 
   return (
-    <AdminPageShell title="Searches" hideHeader>
-      <div className="mx-auto w-full max-w-[1500px]">
-        <div className="flex items-start justify-between gap-6 border-b border-[#C7CDD6] pb-4">
-          <div>
-            <h1 className="text-[34px] font-medium leading-none tracking-[-0.035em] text-[#111827]">Searches</h1>
-            <p className="mt-2 max-w-[600px] text-[12px] leading-[1.45] text-[#6B7280]">
-              Every recorded search, read through the admin search monitor. Private raw search payloads are not shown here.
-            </p>
-          </div>
-          <Link
-            href="/admin/searches"
-            className="mt-1 inline-flex items-center gap-1.5 border-b border-[#9CA3AF] pb-1 text-[12px] font-semibold text-[#111827] transition-colors hover:border-violet-600 hover:text-violet-700"
-          >
-            <span aria-hidden="true">←</span>
-            Searches
-          </Link>
-        </div>
-
+    <>
+      <SearchWorkspaceBackLink />
+      <AdminPageShell title="Search activity" hideHeader>
+        <div className="mx-auto w-full max-w-[1500px]">
         {result.status === "ok" && summary.status === "ok" ? (
           <>
-            <div className="grid grid-cols-2 border-b border-[#D7DCE3] md:grid-cols-4">
+            <div className="grid grid-cols-2 border-y border-[#D7DCE3] md:grid-cols-4">
               <Metric label="All searches" value={summary.data.total} tone="all" />
               <Metric label="Complete" value={summary.data.success} tone="complete" />
               <Metric label="Partial" value={summary.data.partial} tone="partial" />
@@ -53,7 +38,9 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
             </div>
 
             <form action="/admin/searches/activity" className="border-b border-[#D7DCE3]">
-              <input type="hidden" name="product" value={one(raw.product)} />
+              {one(raw.product) ? <input type="hidden" name="product" value={one(raw.product)} /> : null}
+              {one(raw.userId) ? <input type="hidden" name="userId" value={one(raw.userId)} /> : null}
+              {one(raw.visitorId) ? <input type="hidden" name="visitorId" value={one(raw.visitorId)} /> : null}
               {range === "custom" ? (
                 <>
                   {one(raw.from) ? <input type="hidden" name="from" value={one(raw.from)} /> : null}
@@ -61,8 +48,8 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
                 </>
               ) : null}
 
-              <div className="flex flex-col gap-4 border-b border-[#E5E7EB] py-3 lg:flex-row lg:items-end lg:justify-between">
-                <nav aria-label="Search products" className="flex items-center gap-5">
+              <div className="flex flex-col gap-3 border-b border-[#E5E7EB] py-3 lg:flex-row lg:items-center lg:justify-between">
+                <nav aria-label="Search products" className="flex flex-wrap items-center gap-x-5 gap-y-2">
                   {[
                     { label: "All", value: "" },
                     { label: "Flights", value: "FLIGHT" },
@@ -87,64 +74,71 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
                     );
                   })}
                 </nav>
-
-                <div className="flex items-center gap-5">
-                  <label className="sr-only" htmlFor="search-range">Date range</label>
-                  <select id="search-range" name="range" defaultValue={range} className={filterControl + " w-[86px]"}>
-                    <option value="today">Today</option>
-                    <option value="7d">Last 7 days</option>
-                    <option value="30d">Last 30 days</option>
-                    <option value="all">All time</option>
-                    {range === "custom" ? <option value="custom">Custom</option> : null}
-                  </select>
-
-                  <label className="sr-only" htmlFor="search-environment">Environment</label>
-                  <select
-                    id="search-environment"
+                <div className="flex shrink-0 items-center gap-5 lg:self-center">
+                  <SearchMonitorSelect
+                    label="Date range"
+                    name="range"
+                    value={range}
+                    appearance="plain"
+                    align="end"
+                    autoSubmit
+                    options={[
+                      { value: "today", label: "Today" },
+                      { value: "7d", label: "Last 7 days" },
+                      { value: "30d", label: "Last 30 days" },
+                      { value: "all", label: "All time" },
+                      ...(range === "custom" ? [{ value: "custom", label: "Custom" }] : []),
+                    ]}
+                  />
+                  <SearchMonitorSelect
+                    label="Environment"
                     name="environment"
-                    defaultValue={one(raw.environment) || result.data.scope.environment}
-                    className={filterControl + " w-[92px]"}
-                  >
-                    <option value="staging">Staging</option>
-                    <option value="production">Production</option>
-                  </select>
+                    value={one(raw.environment) || result.data.scope.environment}
+                    appearance="plain"
+                    align="end"
+                    autoSubmit
+                    options={[
+                      { value: "staging", label: "Staging" },
+                      { value: "production", label: "Production" },
+                    ]}
+                  />
                 </div>
               </div>
 
-              <div className="grid gap-x-7 gap-y-3 py-3 sm:grid-cols-2 lg:grid-cols-[150px_150px_minmax(180px,1fr)_auto] lg:items-end">
-                <label>
-                  <span className="sr-only">Outcome</span>
-                  <select name="status" defaultValue={one(raw.status)} className={filterControl + " w-full"}>
-                    <option value="">All outcomes</option>
-                    <option value="SUCCESS">Complete</option>
-                    <option value="PARTIAL">Partial</option>
-                    <option value="FAILED">Failed</option>
-                  </select>
-                </label>
-
-                <label>
-                  <span className="sr-only">Identity</span>
-                  <select name="identity" defaultValue={one(raw.identity) || "all"} className={filterControl + " w-full"}>
-                    <option value="all">All identities</option>
-                    <option value="registered">Registered</option>
-                    <option value="guest">Guest</option>
-                    <option value="unattributed">Unattributed</option>
-                  </select>
-                </label>
-
-                <label>
-                  <span className="sr-only">Provider</span>
-                  <input
-                    name="provider"
-                    defaultValue={one(raw.provider)}
-                    placeholder="Provider"
-                    className={filterControl + " w-full placeholder:text-[#9CA3AF]"}
+              <div className="flex flex-wrap items-end gap-x-6 gap-y-3 py-3">
+                <div className="w-[170px] max-w-full">
+                  <SearchMonitorSelect
+                    label="Outcome"
+                    name="status"
+                    value={one(raw.status)}
+                    options={[
+                      { value: "", label: "All outcomes" },
+                      { value: "SUCCESS", label: "Complete" },
+                      { value: "PARTIAL", label: "Partial" },
+                      { value: "FAILED", label: "Failed" },
+                    ]}
                   />
-                </label>
-
+                </div>
+                <div className="w-[170px] max-w-full">
+                  <SearchMonitorSelect
+                    label="Identity"
+                    name="identity"
+                    value={one(raw.identity) || "all"}
+                    clearFieldNamesOnChange={["userId", "visitorId"]}
+                    options={[
+                      { value: "all", label: "All identities" },
+                      { value: "registered", label: "Registered" },
+                      { value: "guest", label: "Guest" },
+                      { value: "unattributed", label: "Unattributed" },
+                    ]}
+                  />
+                </div>
+                <div className="w-[170px] max-w-full">
+                  <SearchMonitorProviderInput value={one(raw.provider)} />
+                </div>
                 <button
                   type="submit"
-                  className="h-9 cursor-pointer bg-[#111827] px-6 text-[12px] font-semibold text-white transition-colors hover:bg-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-200"
+                  className="h-9 w-[146px] cursor-pointer bg-[#111827] px-4 text-[12px] font-semibold text-white transition-colors hover:bg-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-200"
                 >
                   Apply filters
                 </button>
@@ -164,8 +158,9 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
             issues={result.status === "invalid" ? result.issues : summary.status === "invalid" ? summary.issues : undefined}
           />
         )}
-      </div>
-    </AdminPageShell>
+        </div>
+      </AdminPageShell>
+    </>
   );
 }
 
