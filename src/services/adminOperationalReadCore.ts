@@ -26,6 +26,7 @@ import {
   type AdminSearchQuery,
   type AdminSearchRead,
   type AdminSearchScope,
+  type AdminSearchSummary,
   type AdminSupportDetail,
   type AdminSupportListItem,
   type AdminSupportQuery,
@@ -410,6 +411,25 @@ function deletionDto(row: DeletionRow): AdminDeletionListItem {
   };
 }
 
+function searchWhere(scope: AdminSearchScope, cursor?: { at: string; id: string } | null): Prisma.SearchHistoryWhereInput {
+  return {
+    ...identityWhere(scope),
+    ...(scope.product ? { type: scope.product } : {}),
+    ...(scope.status ? { status: scope.status } : {}),
+    ...(dateRange(scope.from, scope.to) ? { createdAt: dateRange(scope.from, scope.to) } : {}),
+    query: { path: ["environment"], equals: scope.environment },
+    AND: [
+      ...(scope.provider ? [{
+        OR: [
+          { query: { path: ["provider"], equals: scope.provider } },
+          { journeyEvents: { some: { provider: { equals: scope.provider, mode: "insensitive" as const } } } },
+        ],
+      }] : []),
+      ...(cursor ? [{ OR: [{ createdAt: { lt: new Date(cursor.at) } }, { createdAt: new Date(cursor.at), id: { lt: cursor.id } }] }] : []),
+    ],
+  };
+}
+
 function nextCursor<T extends { id: string; createdAt: Date }>(kind: "searches" | "handoffs" | "support", scope: object, records: T[], limit: number) {
   const page = records.slice(0, limit);
   const last = page.at(-1);
@@ -441,25 +461,34 @@ export function createAdminOperationalReadService(dependencies: Dependencies) {
           const parsed = parseAdminSearchQuery(params, dependencies.environment());
           if (parsed.status !== "ok") return parsed;
           const { scope, cursor, limit } = parsed.data;
-          const where: Prisma.SearchHistoryWhereInput = {
-            ...identityWhere(scope),
-            ...(scope.product ? { type: scope.product } : {}),
-            ...(scope.status ? { status: scope.status } : {}),
-            ...(dateRange(scope.from, scope.to) ? { createdAt: dateRange(scope.from, scope.to) } : {}),
-            query: { path: ["environment"], equals: scope.environment },
-            AND: [
-              ...(scope.provider ? [{
-                OR: [
-                  { query: { path: ["provider"], equals: scope.provider } },
-                  { journeyEvents: { some: { provider: { equals: scope.provider, mode: "insensitive" as const } } } },
-                ],
-              }] : []),
-              ...(cursor ? [{ OR: [{ createdAt: { lt: new Date(cursor.at) } }, { createdAt: new Date(cursor.at), id: { lt: cursor.id } }] }] : []),
-            ],
-          };
-          const records = await db.searchHistory.findMany({ where, select: searchSelect, orderBy: [{ createdAt: "desc" }, { id: "desc" }], take: limit + 1 });
+          const records = await db.searchHistory.findMany({ where: searchWhere(scope, cursor), select: searchSelect, orderBy: [{ createdAt: "desc" }, { id: "desc" }], take: limit + 1 });
           const page = nextCursor("searches", scope, records, limit);
           return { status: "ok", data: { scope, items: page.page.map(row => searchDto(row, scope.environment)), nextCursor: page.next } };
+        });
+      },
+      summary(params: URLSearchParams): Promise<AdminOperationalResult<AdminSearchSummary>> {
+        return authorized(async db => {
+          const sanitized = new URLSearchParams(params);
+          sanitized.delete("cursor");
+          sanitized.delete("limit");
+          sanitized.set("limit", "1");
+          const parsed = parseAdminSearchQuery(sanitized, dependencies.environment());
+          if (parsed.status !== "ok") return parsed;
+          const { scope } = parsed.data;
+          const groups = await db.searchHistory.groupBy({
+            by: ["status"],
+            where: searchWhere(scope),
+            _count: { _all: true },
+          });
+          const counts = { total: 0, success: 0, partial: 0, failed: 0 };
+          for (const group of groups) {
+            const count = group._count._all;
+            counts.total += count;
+            if (group.status === "SUCCESS") counts.success += count;
+            else if (group.status === "PARTIAL") counts.partial += count;
+            else if (group.status === "FAILED") counts.failed += count;
+          }
+          return { status: "ok", data: { scope, ...counts } };
         });
       },
       detail(id: string, params: URLSearchParams): Promise<AdminOperationalResult<AdminSearchDetail>> {
