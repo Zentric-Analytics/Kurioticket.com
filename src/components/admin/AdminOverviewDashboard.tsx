@@ -125,7 +125,7 @@ function MetricCard({
           (tone === "good" ? "bg-emerald-400" : tone === "warn" ? "bg-amber-400" : tone === "bad" ? "bg-rose-400" : tone === "info" ? "bg-indigo-400" : "bg-slate-300")}
           aria-hidden="true" />
       </div>
-      <p className="mt-2 text-xs font-medium uppercase tracking-wide text-slate-700 xl:min-h-10">{label}</p>
+      <p className="mt-2 text-xs font-medium uppercase tracking-wide text-slate-700">{label}</p>
       <p className="mt-1 text-[22px] font-semibold tabular-nums tracking-tight text-slate-950">{count(value)}</p>
       <p className="mt-1 text-[13px] leading-5 text-slate-700">{hint}</p>
     </div>
@@ -414,27 +414,26 @@ export function AdminOverviewDashboard({
       <section aria-label="Operations Snapshot">
         <SectionTitle
           title="Operations Snapshot"
-          action={<div className="flex flex-wrap items-center gap-2"><span className="text-xs font-medium text-slate-700">{data.scope.environment === "staging" ? "Staging data" : "Production data"}</span><span className="text-xs text-slate-600">Checked {new Date(data.websitePresence.observedAt).toLocaleTimeString("en-US", { timeZone: "UTC", hour: "2-digit", minute: "2-digit" })} UTC</span><AdminOverviewRangeSelect range={range} /></div>}
+          action={<AdminOverviewRangeSelect range={range} />}
         />
-        <div className="grid gap-x-6 gap-y-0 sm:grid-cols-2 xl:grid-cols-5">
+        <div className="grid gap-x-6 gap-y-0 sm:grid-cols-2 lg:grid-cols-3">
           <MetricCard label="Total accounts" value={data.users.total} hint="All account records, including deleted" icon={Users} tone="info" />
           <MetricCard label="Enabled accounts" value={data.users.active} hint="ACTIVE accounts, including staff · not online" icon={UserCheck} tone="good" />
           <div className="min-w-0 border-b border-slate-200/90 py-3.5 pr-3 sm:pr-4">
             <div className="flex items-center justify-between"><Activity size={19} className="text-emerald-700" aria-hidden="true" /><span className="h-2 w-2 rounded-full bg-emerald-400" aria-hidden="true" /></div>
-            <p className="mt-2 text-xs font-medium uppercase tracking-wide text-slate-700 xl:min-h-10">Online website visitors (observed)</p>
+            <p className="mt-2 text-xs font-medium uppercase tracking-wide text-slate-700">Active users</p>
             <p className="mt-1 text-[22px] font-semibold tabular-nums tracking-tight text-slate-950">{data.websitePresence.status === "ok" ? count(data.websitePresence.total) : "Unavailable"}</p>
-            <p className="mt-1 text-[13px] leading-5 text-slate-700">{data.websitePresence.status === "ok" ? count(data.websitePresence.registeredAccounts) + " accounts · " + count(data.websitePresence.guestIdentities) + " guests · last " + data.websitePresence.windowSeconds + "s" : "Presence data cannot be verified"}</p>
+            <p className="mt-1 text-[13px] leading-5 text-slate-700">{data.websitePresence.status === "ok" ? "Last " + data.websitePresence.windowSeconds + "s · " + count(data.websitePresence.registeredAccounts) + " accounts · " + count(data.websitePresence.guestIdentities) + " guests" : "Live website activity could not be verified"}</p>
             <details className="mt-2 text-[12px] leading-5 text-slate-600">
               <summary className="focus-ring inline-flex cursor-pointer list-none items-center gap-1 font-medium text-indigo-700 [&::-webkit-details-marker]:hidden">
                 <Info size={13} aria-hidden="true" />
                 How it's counted
               </summary>
               <p className="mt-1.5">
-                Only consented visitors with a visible website tab and a recent heartbeat are included, excluding native app activity and visitors who decline analytics. This is an observed browser/account count, not every person online.
+                Only consented visitors with a visible website tab and a recent heartbeat are included, excluding native app activity and visitors who decline analytics. This estimates active browser/account identities, not every person online. The 90-second window is independent of the reporting-range selector.
               </p>
             </details>
           </div>
-          <MetricCard label="Active users (observed)" value={data.journeys.identities.registeredAccounts} hint="Verified accounts with consented journeys · selected range" icon={Activity} tone="info" />
           <MetricCard label="Suspended accounts" value={data.users.suspended} hint="Current SUSPENDED status" icon={UserX} tone="warn" />
           <MetricCard label="Deleted accounts" value={data.users.deleted} hint="Retained DELETED status records" icon={Trash2} tone="neutral" />
           <MetricCard label="Support attention" value={supportAttention} hint="Tickets awaiting action" icon={Headphones} tone={supportAttention ? "warn" : "good"} />
