@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, useTransition } from "react";
+import { useEffect, useId, useRef, useState, useTransition, type KeyboardEvent } from "react";
 import { useRouter } from "next/navigation";
 import { CalendarDays, Check, ChevronDown } from "lucide-react";
 
@@ -83,7 +83,7 @@ export function AdminOverviewRangeSelect({ range }: { range: OverviewRange }) {
     });
   };
 
-  const handleOptionKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
+  const handleOptionKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
     let targetIndex: number | null = null;
     if (event.key === "ArrowDown") targetIndex = (index + 1) % rangeOptions.length;
     if (event.key === "ArrowUp") targetIndex = (index + rangeOptions.length - 1) % rangeOptions.length;
@@ -113,10 +113,10 @@ export function AdminOverviewRangeSelect({ range }: { range: OverviewRange }) {
             openMenu();
           }
         }}
-        className="inline-flex h-9 items-center gap-1.5 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-2.5 text-[12px] font-medium leading-none text-slate-700 shadow-sm transition-colors hover:border-slate-300 hover:bg-slate-50 focus-visible:border-slate-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-300 disabled:cursor-wait disabled:opacity-60"
+        className="inline-flex h-9 min-w-[145px] items-center gap-1.5 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-2.5 text-[12px] font-medium leading-none text-slate-700 shadow-sm transition-colors hover:border-slate-300 hover:bg-slate-50 focus-visible:border-slate-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-300 disabled:cursor-wait disabled:opacity-60"
       >
         <CalendarDays size={14} className="shrink-0 text-indigo-600" aria-hidden="true" />
-        <span>{rangeLabels[range]}</span>
+        <span className="min-w-0 flex-1 text-left">{rangeLabels[range]}</span>
         <ChevronDown size={13} className={"ml-1 shrink-0 text-slate-500 transition-transform " + (open ? "rotate-180" : "")} aria-hidden="true" />
       </button>
 
