@@ -21,3 +21,19 @@ test("historical deep-linked provider remains selectable without injecting unsaf
   assert.ok(options.some(option => option.value === "Legacy supplier"));
   assert.ok(!buildAdminSearchProviderOptions([], "unsafe\nprovider").some(option => option.value === "unsafe\nprovider"));
 });
+
+test("case-insensitive historical provider links preserve exact value with canonical display", () => {
+  const options = buildAdminSearchProviderOptions([{ provider: "Duffel" }], "duffel");
+  assert.deepEqual(options.find(option => option.label === "Duffel"), { value: "duffel", label: "Duffel" });
+  assert.equal(options.filter(option => option.label.toLowerCase() === "duffel").length, 1);
+});
+
+test("whitespace in historical provider link preserves exact selection", () => {
+  const options = buildAdminSearchProviderOptions([{ provider: "Duffel" }], "  duffel  ");
+  assert.deepEqual(options.find(option => option.label === "Duffel"), { value: "  duffel  ", label: "Duffel" });
+});
+
+test("unknown historical provider keeps exact query value with trimmed label", () => {
+  const options = buildAdminSearchProviderOptions([{ provider: "Duffel" }], "  Old supplier  ");
+  assert.deepEqual(options.find(option => option.label === "Old supplier"), { value: "  Old supplier  ", label: "Old supplier" });
+});
