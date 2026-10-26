@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { AdminPageShell, AdminSectionCard, AdminStatusBadge } from "@/components/admin/AdminPageShell";
+import { SearchWorkspaceBackLink } from "@/components/admin/SearchWorkspaceBackLink";
 import { formatDateTime } from "@/lib/admin-data";
 import { adminOperationalReads } from "@/services/adminOperationalReadService";
 
@@ -17,7 +17,9 @@ export default async function AdminSearchDetailPage({ params, searchParams }: { 
   if (result.status === "not_found") notFound();
 
   return (
-    <AdminPageShell title="Search detail" description="Safe operational search record. Raw search JSON is intentionally excluded." actions={<Link href="/admin/searches" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">Back to searches</Link>}>
+    <>
+      <SearchWorkspaceBackLink href="/admin/searches/activity" label="Search activity" />
+      <AdminPageShell title="Search detail" description="Safe operational search record. Raw search JSON is intentionally excluded.">
       {result.status === "ok" ? (
         <div className="space-y-4">
           <AdminSectionCard className="p-5">
@@ -73,7 +75,7 @@ export default async function AdminSearchDetailPage({ params, searchParams }: { 
             <Field label="Results" value={String(result.data.resultCount)} />
             <Field label="Origin" value={result.data.origin || "—"} />
             <Field label="Destination" value={result.data.destination || "—"} />
-            <Field label="Stay dates" value={result.data.checkIn ? result.data.checkIn + (result.data.checkOut ? " → " + result.data.checkOut : "") : "—"} />
+            <Field label="Stay dates" value={formatStayDates(result.data.checkIn, result.data.checkOut)} />
             <Field label="Providers" value={result.data.providers.length ? result.data.providers.join(", ") : "—"} />
             <Field label="Market / currency" value={(result.data.market || "—") + " / " + (result.data.currency || "—")} />
             <Field label="Latency" value={result.data.latencyMs !== null ? result.data.latencyMs + "ms" : "—"} />
@@ -87,10 +89,20 @@ export default async function AdminSearchDetailPage({ params, searchParams }: { 
       ) : (
         <AdminSectionCard className="p-5 text-sm text-slate-600">This search record is unavailable for the requested admin scope.</AdminSectionCard>
       )}
-    </AdminPageShell>
+      </AdminPageShell>
+    </>
   );
 }
 
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
   return <div className="rounded-xl bg-slate-50 p-3"><p className="text-xs font-black uppercase tracking-wide text-slate-500">{label}</p><div className="mt-1 break-words text-sm font-semibold text-slate-900">{value}</div></div>;
+}
+
+function formatStayDates(checkIn: string | null, checkOut: string | null) {
+  if (!checkIn) return "—";
+  const format = (value: string) => {
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? value : new Intl.DateTimeFormat("en", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }).format(date);
+  };
+  return format(checkIn) + (checkOut ? " → " + format(checkOut) : "");
 }
