@@ -328,13 +328,47 @@ function exactSearchDiagnostic(row: SearchRow, providers: AdminSearchProviderDia
   };
 }
 
-function searchDto(row: SearchRow, environment: PublicEnvironment): AdminSearchRead {
+type ProviderExecution = { provider: string; status: "SUCCESS" | "DEGRADED" | "FAILED" | "DISABLED" };
+type ProviderExecutionLog = ProviderExecution & { service: string; metadata: Prisma.JsonValue | null; createdAt: Date };
+function exactProviderSummary(logs: readonly ProviderExecution[]): NonNullable<AdminSearchRead["providerTelemetry"]> | null {
+  const latest = new Map<string, ProviderExecution["status"]>();
+  for (const log of logs) {
+    const name = text(log.provider, 100);
+    if (name) latest.set(name.toLowerCase(), log.status);
+  }
+  if (!latest.size) return null;
+  const statuses = [...latest.values()];
+  return {
+    total: statuses.length,
+    successful: statuses.filter(status => status === "SUCCESS").length,
+    failed: statuses.filter(status => status === "FAILED").length,
+    degraded: statuses.filter(status => status === "DEGRADED").length,
+    disabled: statuses.filter(status => status === "DISABLED").length,
+  };
+}
+function correlatedProviderLogs(rows: readonly SearchRow[], logs: readonly ProviderExecutionLog[], environment: PublicEnvironment) {
+  const requests = new Map<string, { product: SearchRow["type"]; createdAt: Date }>();
+  for (const row of rows) if (row.requestId) requests.set(row.requestId, { product: row.type, createdAt: row.createdAt });
+  const correlated = new Map<string, ProviderExecutionLog[]>();
+  for (const log of logs) {
+    const meta = jsonRecord(log.metadata);
+    const requestId = typeof meta.requestId === "string" ? meta.requestId : null;
+    if (!requestId || meta.environment !== environment) continue;
+    const row = requests.get(requestId);
+    if (!row || log.service !== providerSearchService(row.product)) continue;
+    // Reject unrelated logs without a trustworthy shared request context.
+    if (log.createdAt.getTime() < row.createdAt.getTime() - 120_000) continue;
+    const entries = correlated.get(requestId) ?? [];
+    entries.push(log);
+    correlated.set(requestId, entries);
+  }
+  return correlated;
+}
+
+function searchDto(row: SearchRow, environment: PublicEnvironment, exactLogs: readonly ProviderExecution[] = []): AdminSearchRead {
   const query = jsonRecord(row.query);
   const visitorId = attributableVisitorId(row.visitorId, row.visitor);
-  const providers = [...new Set([
-    text(query.provider, 100),
-    ...row.journeyEvents.map(event => text(event.provider, 100)),
-  ].filter((value): value is string => Boolean(value)))].slice(0, 10);
+  const providers = [...new Set(exactLogs.map(log => text(log.provider, 100)).filter((value): value is string => Boolean(value)))].slice(0, 10);
   return {
     id: row.id,
     requestId: text(row.requestId, 128),
@@ -348,6 +382,7 @@ function searchDto(row: SearchRow, environment: PublicEnvironment): AdminSearchR
     latencyMs: row.latencyMs,
     status: row.status,
     providers,
+    providerTelemetry: exactProviderSummary(exactLogs),
     market: text(query.market ?? query.country ?? query.region, 80),
     currency: text(query.currency, 12),
     environment,
@@ -463,7 +498,22 @@ export function createAdminOperationalReadService(dependencies: Dependencies) {
           const { scope, cursor, limit } = parsed.data;
           const records = await db.searchHistory.findMany({ where: searchWhere(scope, cursor), select: searchSelect, orderBy: [{ createdAt: "desc" }, { id: "desc" }], take: limit + 1 });
           const page = nextCursor("searches", scope, records, limit);
-          return { status: "ok", data: { scope, items: page.page.map(row => searchDto(row, scope.environment)), nextCursor: page.next } };
+          const requestIds = page.page.map(row => row.requestId).filter((id): id is string => Boolean(id));
+          const services = [...new Set(page.page.map(row => providerSearchService(row.type)))];
+          const logs = requestIds.length
+            ? await db.apiProviderLog.findMany({
+              where: {
+                service: { in: services },
+                metadata: { path: ["environment"], equals: scope.environment },
+                OR: requestIds.map(id => ({ metadata: { path: ["requestId"], equals: id } })),
+              },
+              select: { provider: true, status: true, service: true, metadata: true, createdAt: true },
+              orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+              take: 2000,
+            })
+            : [];
+          const byRequest = correlatedProviderLogs(page.page, logs, scope.environment);
+          return { status: "ok", data: { scope, items: page.page.map(row => searchDto(row, scope.environment, row.requestId ? byRequest.get(row.requestId) ?? [] : [])), nextCursor: page.next } };
         });
       },
       summary(params: URLSearchParams): Promise<AdminOperationalResult<AdminSearchSummary>> {
@@ -524,7 +574,7 @@ export function createAdminOperationalReadService(dependencies: Dependencies) {
           return {
             status: "ok",
             data: {
-              ...searchDto(row, env.data),
+              ...searchDto(row, env.data, providers),
               diagnostic: exactSearchDiagnostic(row, providers),
             },
           };
@@ -651,4 +701,6 @@ export const __adminOperationalReadCoreTest = {
   fallbackSearchDiagnostic,
   providerDiagnostic,
   exactSearchDiagnostic,
+  exactProviderSummary,
+  correlatedProviderLogs,
 };
