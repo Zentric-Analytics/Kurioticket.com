@@ -210,3 +210,27 @@ test("canonical overview reads consented recent visitor identities without overw
   assert.ok(service.includes("lastSeenAt: { gte: recentVisitorCutoff, lte: now }"));
   assert.ok(service.includes('active: userCount.get("ACTIVE")'));
 });
+
+
+test("production layout uses balanced desktop columns and keeps the activity feed full width", () => {
+  assert.match(display, /grid gap-x-6 gap-y-0 sm:grid-cols-2 lg:grid-cols-3/);
+  assert.match(display, /lg:grid-cols-\[0\.85fr_1\.15fr\]/);
+  assert.match(display, /<div className="grid gap-y-0">\s*\{data\.providers\.map/);
+  assert.match(display, /sm:grid-cols-2 lg:grid-cols-4/);
+  assert.match(display, /lg:grid-cols-2/);
+  assert.match(display, /<WorkloadCard title="Account Deletion Workload"[\s\S]*?<\/div>\s*<div className="mt-7">\s*<ActivityFeed activity=\{activity\} \/>/);
+  assert.match(dashboard, /lg:grid-cols-\[8px_minmax\(125px,0\.75fr\)_minmax\(0,2fr\)_minmax\(150px,0\.9fr\)_minmax\(135px,1fr\)\]/);
+});
+
+test("production layout preserves original page and status backgrounds", () => {
+  const shell = readFileSync("src/components/admin/AdminHorizontalShell.tsx", "utf8");
+  const existingBackgrounds = [
+    "bg-emerald-400", "bg-amber-400", "bg-rose-400", "bg-indigo-400",
+    "bg-slate-300", "bg-emerald-500", "bg-indigo-500",
+  ];
+  for (const token of existingBackgrounds) assert.ok(dashboard.includes(token), token);
+  assert.doesNotMatch(dashboard, /bg-white|bg-slate-50|bg-indigo-50|bg-\[#/);
+  assert.ok(shell.includes("bg-slate-100") || shell.includes("bg-[#"));
+  assert.match(display, /<AdminOverviewAutoRefresh \/>/);
+  assert.match(display, /<AdminOverviewRangeSelect range=\{range\} \/>/);
+});
