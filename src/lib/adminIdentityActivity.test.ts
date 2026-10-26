@@ -3,7 +3,7 @@ import test from "node:test";
 
 import {
   ACTIVITY_PAGE_SIZE, activityEnvironmentScope, allowedActivityStages, activityHref, activityWindow,
-  compactActivityDisplayRows, decodeActivityCursor, encodeActivityCursor, excludeCanonicalLegacyRows, groupActivityRows, relatedJourneysWindow,
+  compactActivityDisplayRows, decodeActivityCursor, encodeActivityCursor, excludeCanonicalLegacyRows, groupActivityRows, latestVisibleActivityAt, relatedJourneysWindow,
   parseActivityFilters, sourceActivitySeek, validActivityIdentity,
   type ActivityFilters,
 } from "./adminIdentityActivity";
@@ -268,4 +268,15 @@ test("oldest-first keyset and merged sources retain stable ties without repeatin
   assert.deepEqual(ordered.map(x => x.id), ["s-older", "j-a", "j-b", "j-newer"]);
   assert.deepEqual(mergeAdminActivity([newer, sameAtB, sameAtA], [previous], 10).map(x => x.id),
     ["j-newer", "j-a", "j-b", "s-older"]);
+});
+
+test("visible activity header uses maximum timestamp regardless of newest/oldest sorting", () => {
+  const at = ["2026-10-22T09:00:00Z", "2026-10-22T13:00:00Z", "2026-10-22T11:00:00Z"];
+  const events: ActivityRow[] = at.map((stamp, i) => ({
+    id: "j-qa-" + i, at: new Date(stamp), label: "Search completed", detail: "Flight",
+  }));
+  const latest = "2026-10-22T13:00:00.000Z";
+  assert.equal(latestVisibleActivityAt(events)?.toISOString(), latest);
+  assert.equal(latestVisibleActivityAt([...events].reverse())?.toISOString(), latest);
+  assert.equal(latestVisibleActivityAt([]), null);
 });
