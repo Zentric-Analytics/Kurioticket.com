@@ -169,16 +169,24 @@ try {
     await page.goto(url, { waitUntil: "domcontentloaded" });
     await choose("Activity order", "Oldest first");
     await expect(page).toHaveURL(/order=oldest/);
-    const oldestIds = await page.locator("[data-activity-id]").evaluateAll(nodes => nodes.map(node => node.getAttribute("data-activity-id")));
-    assert.equal(oldestIds[0], "j-qa-single");
-    assert.equal(oldestIds.at(-1), "j-qa-selection-59");
+    const earliestIds = await page.locator("[data-activity-id]").evaluateAll(nodes => nodes.map(node => node.getAttribute("data-activity-id")));
+    assert.deepEqual(earliestIds, ["j-qa-older-search"], "Oldest-first starts with the genuinely earliest fixture record");
     await expect(page.getByRole("link", { name: "Newer activity" })).toBeVisible();
     await page.screenshot({ path: output + "/after-oldest-journal-1280.png", fullPage: true });
+    await page.getByRole("link", { name: "Newer activity" }).click();
+    await expect(page).toHaveURL(/cursor=oldest-current-qa-page/);
+    await expect(page.locator("[data-activity-id]")).toHaveCount(12);
+    const middleIds = await page.locator("[data-activity-id]").evaluateAll(nodes => nodes.map(node => node.getAttribute("data-activity-id")));
+    assert.equal(middleIds[0], "j-qa-single");
+    assert.equal(middleIds.at(-1), "j-qa-selection-59");
+    assert.ok(middleIds.every(id => !earliestIds.includes(id)), "Ascending current page cannot duplicate earliest records");
     await page.getByRole("link", { name: "Newer activity" }).click();
     await expect(page).toHaveURL(/cursor=newer-qa-page/);
     await expect(page.locator("[data-activity-id]")).toHaveCount(1);
     const newerIds = await page.locator("[data-activity-id]").evaluateAll(nodes => nodes.map(node => node.getAttribute("data-activity-id")));
-    assert.ok(newerIds.every(id => !oldestIds.includes(id)), "Ascending activity cursor must not duplicate records");
+    assert.deepEqual(newerIds, ["j-qa-newer-search"]);
+    assert.ok(newerIds.every(id => !earliestIds.includes(id) && !middleIds.includes(id)), "Every ascending cursor page is disjoint");
+    assert.equal(new Set([...earliestIds, ...middleIds, ...newerIds]).size, 14, "All 14 fixture records must be reachable in oldest-first order");
     await page.getByRole("navigation", { name: "Activity tabs" }).getByRole("link", { name: "Searches", exact: true }).click();
     await expect(page).toHaveURL(/order=oldest/);
     assert.equal(new URL(page.url()).searchParams.has("cursor"), false);
@@ -199,6 +207,10 @@ try {
     await expect(page.getByText("Activity page link expired")).toBeVisible();
     await expect(page.getByRole("link", { name: "Return to newest activity" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Manage guest qa-guest-activity-0001" })).toBeVisible();
+    await page.goto(url + "?order=oldest&cursor=bad", { waitUntil: "domcontentloaded" });
+    await page.getByRole("link", { name: "Return to newest activity" }).click();
+    assert.equal(new URL(page.url()).searchParams.has("order"), false, "Recovery must reset oldest sort");
+    assert.equal(new URL(page.url()).searchParams.has("cursor"), false, "Recovery removes the invalid cursor");
   });
 
   await check("account management stays reachable when Activity data is unavailable", async () => {
@@ -216,6 +228,8 @@ try {
     await expect(page.getByText("customer.qa@example.invalid", { exact: true })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Explore related records" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Manage account for customer.qa@example.invalid" })).toBeVisible();
+    await expect(page.getByText(/Only recorded staging account activity is displayed/)).toBeVisible();
+    await expect(page.getByText(/linked visitor activity requires analytics consent/)).toBeVisible();
     await page.screenshot({ path: output + "/after-registered-activity-1280.png", fullPage: true });
   });
 
