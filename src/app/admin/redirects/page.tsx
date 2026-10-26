@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { AdminButton, AdminDataTable, AdminEmptyState, AdminFilterBar, AdminInput, AdminPageShell, AdminSelect, AdminStatusBadge } from "@/components/admin/AdminPageShell";
+import { SearchWorkspaceBackLink } from "@/components/admin/SearchWorkspaceBackLink";
 import { formatDateTime } from "@/lib/admin-data";
 import { adminOperationalReads } from "@/services/adminOperationalReadService";
 
@@ -15,11 +16,12 @@ export default async function AdminRedirectsPage({ searchParams }: { searchParam
   const result = await adminOperationalReads.handoffs.list(params);
 
   return (
-    <AdminPageShell
-      title="Provider Handoffs"
-      description="Review verified outbound provider handoffs. A handoff records leaving Kurioticket for a provider; it is not proof of a completed booking or payment."
-      actions={<Link href="/admin/referral-attribution" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">Referral attribution</Link>}
-    >
+    <>
+      <SearchWorkspaceBackLink />
+      <AdminPageShell
+        title="Provider Handoffs"
+        description="Review verified outbound provider handoffs. A handoff records leaving Kurioticket for a provider; it is not proof of a completed booking or payment."
+      >
       <div className="space-y-4">
         <AdminFilterBar action="/admin/redirects">
           <AdminSelect name="product" defaultValue={one(raw.product)}>
@@ -68,7 +70,8 @@ export default async function AdminRedirectsPage({ searchParams }: { searchParam
           <AdminEmptyState title={result.status === "invalid" ? "Invalid filters" : result.status === "forbidden" ? "Admin access required" : "Handoff data unavailable"} message={"issues" in result ? result.issues.map((issue) => issue.field + ": " + issue.message).join(" ") : "The safe admin reader could not return handoff data. No empty result was invented."} />
         )}
       </div>
-    </AdminPageShell>
+      </AdminPageShell>
+    </>
   );
 }
 
