@@ -18,12 +18,16 @@ import {
 } from "@/components/admin/AdminPageShell";
 import { formatDateTime } from "@/lib/admin-data";
 import { getConfirmedTripsIntegrationReadiness, getConfirmedTripsOperationsSnapshot } from "@/services/adminConfirmedTripsOperationsService";
+import { getConfirmationDeliveryHealth } from "@/services/partnerConfirmationDeliveryService";
 
 export const metadata = { title: "Admin Confirmed Trips" };
 
 export default async function AdminConfirmedTripsPage() {
   const readiness = getConfirmedTripsIntegrationReadiness();
-  const operations = await getConfirmedTripsOperationsSnapshot();
+  const [operations, deliveryHealth] = await Promise.all([
+    getConfirmedTripsOperationsSnapshot(),
+    getConfirmationDeliveryHealth(),
+  ]);
 
   return (
     <AdminPageShell
@@ -92,18 +96,19 @@ export default async function AdminConfirmedTripsPage() {
                 </div>
               </div>
               <div className="shrink-0 self-start">
-                <AdminStatusBadge tone={readiness.webhookCredentialConfigured ? "good" : "warn"}>
-                  {readiness.webhookCredentialConfigured ? "Webhook credential configured" : "Webhook credential not configured"}
+                <AdminStatusBadge tone={readiness.feedReady ? "good" : "warn"}>
+                  {readiness.feedReady ? "Provider-bound webhook configured" : "Provider-bound webhook not configured"}
                 </AdminStatusBadge>
               </div>
             </div>
-            <div className="mt-4 grid gap-3 md:grid-cols-3">
+            <div className="mt-4 grid gap-3 md:grid-cols-4">
               <Fact label="Endpoint" value="POST /api/internal/partner-confirmations" />
-              <Fact label="Webhook credential model" value={readiness.credentialModel === "shared_secret_only" ? "One shared secret" : "Unknown"} />
+              <Fact label="Webhook credential model" value={readiness.credentialModel === "single_provider_bound_secret" ? "Single provider + dedicated secret" : "Unknown"} />
+              <Fact label="Configured provider" value={readiness.providerName || "None"} />
               <Fact label="Current search-provider confirmation feed" value={readiness.currentSearchProviderConfirmationFeed === "none" ? "None" : "Configured"} />
             </div>
             <p className="mt-4 text-xs leading-5 text-slate-600">
-              A configured webhook secret means the signed callback boundary is ready; it does not mean a provider agreement or live confirmation feed is active. Provider identity is supplied inside the signed payload; there is no separate provider-name allowlist in the current contract.
+              A configured webhook secret means the signed callback boundary is ready; it does not mean a provider agreement or live confirmation feed is active. The server now binds the signing secret to a single configured provider, and rejects a signed payload naming a different provider.
             </p>
           </section>
 
@@ -173,6 +178,52 @@ export default async function AdminConfirmedTripsPage() {
                 )}
               </section>
             </div>
+
+          <section aria-labelledby="confirmation-delivery-health-title" className="min-w-0 rounded-xl border border-slate-200 p-4 sm:p-5">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h2 id="confirmation-delivery-health-title" className="text-base font-bold text-slate-950">Confirmation delivery health</h2>
+                <p className="mt-1 text-sm leading-6 text-slate-600">Authenticated provider callback receipts. Accepted deliveries may be retries; these are not additional bookings or unique trips.</p>
+              </div>
+              <Link href="/admin/notifications" className="text-sm font-semibold text-indigo-700 hover:underline">Operational alerts</Link>
+            </div>
+            {!readiness.feedReady ? (
+              <p role="status" className="mt-4 rounded-lg bg-slate-50 p-4 text-sm text-slate-600">No provider-bound confirmation feed is configured. Delivery monitoring remains inactive.</p>
+            ) : !deliveryHealth ? (
+              <p role="status" className="mt-4 rounded-lg bg-slate-50 p-4 text-sm text-slate-600">Delivery telemetry is unavailable. No delivery counts have been assumed.</p>
+            ) : (
+              <>
+                <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  <Fact label="Authenticated deliveries · last 24h" value={String(deliveryHealth.receivedLast24h)} />
+                  <Fact label="Accepted · last 24h" value={String(deliveryHealth.acceptedLast24h)} />
+                  <Fact label="Rejected · last 24h" value={String(deliveryHealth.rejectedLast24h)} />
+                  <Fact label="Latest authenticated delivery" value={deliveryHealth.lastReceivedAt ? formatDateTime(new Date(deliveryHealth.lastReceivedAt)) : "None recorded"} />
+                  <Fact label="Last accepted delivery" value={deliveryHealth.lastAcceptedAt ? formatDateTime(new Date(deliveryHealth.lastAcceptedAt)) : "None recorded"} />
+                  <Fact label="Configured provider" value={deliveryHealth.providerName} />
+                </div>
+                <h3 className="mt-5 text-sm font-bold text-slate-950">Recent authenticated delivery receipts</h3>
+                {deliveryHealth.recent.length ? (
+                  <div className="mt-2 max-w-full overflow-x-auto rounded-lg border border-slate-200">
+                    <table className="w-full min-w-[640px] text-left text-xs">
+                      <thead className="bg-slate-50 font-semibold text-slate-600">
+                        <tr><th className="px-3 py-3">Received</th><th className="px-3 py-3">Outcome</th><th className="px-3 py-3">Reason</th><th className="px-3 py-3">Reported status</th></tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {deliveryHealth.recent.map(item => (
+                          <tr key={item.id}>
+                            <td className="whitespace-nowrap px-3 py-3">{formatDateTime(new Date(item.receivedAt))}</td>
+                            <td className="px-3 py-3"><AdminStatusBadge tone={item.outcome === "ACCEPTED" ? "good" : "warn"}>{item.outcome}</AdminStatusBadge></td>
+                            <td className="px-3 py-3">{item.reason.replaceAll("_", " ")}</td>
+                            <td className="px-3 py-3">{item.reportedStatus || "Unavailable"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : <p role="status" className="mt-2 rounded-lg bg-slate-50 p-4 text-sm text-slate-600">No authenticated partner confirmation deliveries have been recorded yet.</p>}
+              </>
+            )}
+          </section>
 
           <section aria-labelledby="trips-operational-boundaries" className="min-w-0 rounded-xl border border-slate-200 p-4 sm:p-5">
             <div className="flex items-start gap-3">
