@@ -217,6 +217,7 @@ try {
   await check("registered Manage retains role/status options and recoverable deletion safeguards", async () => {
     await page.goto(base + "/admin/users/user/qa-registered-0001/activity", { waitUntil: "domcontentloaded" });
     const manage = page.getByRole("button", { name: "Manage account for customer.qa@example.invalid" });
+    await expect(page.getByRole("combobox", { name: "Activity product" })).toHaveAttribute("aria-haspopup", "listbox");
     await manage.click();
     const menu = page.getByRole("menu", { name: "Account actions for customer.qa@example.invalid" });
     await expect(menu.getByRole("menuitem", { name: "Suspend" })).toBeVisible();
