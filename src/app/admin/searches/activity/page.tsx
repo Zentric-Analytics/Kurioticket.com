@@ -82,7 +82,7 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
                     );
                   })}
                 </nav>
-                <div className="flex shrink-0 items-center gap-5 lg:self-center">
+                <div className="flex shrink-0 items-center gap-5 pr-6 lg:self-center">
                   <SearchMonitorSelect
                     label="Date range"
                     name="range"
@@ -130,8 +130,8 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
                     ]}
                   />
                 </div>
-                <div className="w-[170px] max-w-full">
-                  <SearchMonitorSelect label="Provider" name="provider" value={one(raw.provider)} options={providerOptions} />
+                <div className="w-[220px] max-w-full">
+                  <SearchMonitorSelect label="Provider" name="provider" value={one(raw.provider)} options={providerOptions} truncateLabel />
                 </div>
                 <button
                   type="submit"

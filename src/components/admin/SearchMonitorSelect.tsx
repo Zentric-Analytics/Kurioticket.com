@@ -14,6 +14,7 @@ export function SearchMonitorSelect({
   align = "start",
   autoSubmit = false,
   clearFieldNamesOnChange = [],
+  truncateLabel = false,
 }: {
   label: string;
   name: string;
@@ -24,6 +25,7 @@ export function SearchMonitorSelect({
   autoSubmit?: boolean;
   /** Omit a stale scoped field from submission when this filter changes. */
   clearFieldNamesOnChange?: readonly string[];
+  truncateLabel?: boolean;
 }) {
   const id = useId();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -153,6 +155,7 @@ export function SearchMonitorSelect({
         ref={triggerRef}
         type="button"
         aria-label={label + ": " + selectedLabel}
+        title={truncateLabel ? selectedLabel : undefined}
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-controls={open ? id : undefined}
@@ -164,13 +167,13 @@ export function SearchMonitorSelect({
           }
         }}
         className={
-          "inline-flex h-9 cursor-pointer items-center justify-start gap-[5px] whitespace-nowrap bg-transparent text-left text-[12px] font-semibold text-[#475569] transition-colors hover:text-[#111827] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 " +
+          "inline-flex h-9 min-w-0 cursor-pointer items-center justify-start gap-[5px] whitespace-nowrap bg-transparent text-left text-[12px] font-semibold text-[#475569] transition-colors hover:text-[#111827] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 " +
           (appearance === "plain"
             ? "px-0"
             : "w-full border-b border-[#AEB8C6] px-0 focus-visible:border-[#004BB8]")
         }
       >
-        <span className="whitespace-nowrap">{selectedLabel}</span>
+        <span className={truncateLabel ? "min-w-0 truncate" : "whitespace-nowrap"}>{selectedLabel}</span>
         <svg aria-hidden="true" viewBox="0 0 8 5" className="mt-px h-[5px] w-[8px] shrink-0" fill="currentColor">
           <path d="M0 0h8L4 5z" />
         </svg>
@@ -205,7 +208,7 @@ export function SearchMonitorSelect({
                 (selected === option.value ? " font-semibold text-[#004BB8]" : " font-normal text-[#1A1A1A]")
               }
             >
-              <span className="whitespace-nowrap">{option.label}</span>
+              <span className={truncateLabel ? "min-w-0 whitespace-normal break-words" : "whitespace-nowrap"}>{option.label}</span>
               {selected === option.value ? <Check aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-[#004BB8]" /> : null}
             </button>
           ))}
