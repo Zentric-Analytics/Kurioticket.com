@@ -5,10 +5,13 @@ import {
 } from "lucide-react";
 
 import { CopyIdentityId } from "@/components/admin/CopyIdentityId";
+import { UserStatusActions } from "@/components/admin/UserStatusActions";
+import { GuestTrackingActions } from "@/components/admin/GuestTrackingActions";
 import { AdminEmptyState } from "@/components/admin/AdminPageShell";
 import { ActivityTimeline } from "@/components/admin/ActivityTimeline";
 import { AdminDirectorySelect } from "@/components/admin/AdminDirectorySelect";
 import { requireAdminSession } from "@/lib/auth-guards";
+import { getAdminEmails } from "@/lib/env";
 import { activityHref, parseActivityFilters, relatedJourneysWindow, validActivityIdentity, type ActivityFilters } from "@/lib/adminIdentityActivity";
 import { ADMIN_IDENTITY_SORTS } from "@/lib/adminIdentityDirectory";
 import { loadAdminIdentityActivity } from "@/services/adminIdentityActivityService";
@@ -64,7 +67,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 export default async function AdminIdentityActivityPage({ params, searchParams }: PageProps) {
   const { kind, id } = await params;
   if (!validActivityIdentity(kind, id)) notFound();
-  await requireAdminSession("/admin/users/" + kind + "/" + id + "/activity");
+  const session = await requireAdminSession("/admin/users/" + kind + "/" + id + "/activity");
   const raw = await searchParams;
   const filtersResult = parseActivityFilters(raw);
   const basePath = "/admin/users/" + kind + "/" + encodeURIComponent(id) + "/activity";
@@ -126,12 +129,26 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
           {data.email ? <p className="mt-1 break-all text-[12px] text-[#475569]">{data.email}</p>
             : <p className="mt-1 text-[12px] text-[#475569]">Unregistered visitor with active analytics consent</p>}
         </div>
-        <dl className="grid w-full gap-4 border-t border-[#E7ECF5] pt-3 sm:grid-cols-3 xl:w-auto xl:min-w-[480px] xl:border-l xl:border-t-0 xl:pl-4 xl:pt-0">
-          <Field label={kind === "guest" ? "Identity" : "Account status"}>{kind === "guest" ? "Guest · Not an account" : data.status}</Field>
-          <Field label={kind === "guest" ? "First seen" : "Joined"}>{format(data.firstSeenAt)}</Field>
-          <Field label={kind === "guest" ? "Last seen" : "Latest matching activity"}>{data.lastSeenAt ? format(data.lastSeenAt) : "—"}</Field>
-        </dl>
+        <div className="ml-auto shrink-0 self-start" aria-label="Identity management">
+          {kind === "user" ? (
+            <UserStatusActions
+              userId={id}
+              email={data.email}
+              role={data.role || "USER"}
+              status={data.status}
+              isSelf={session.user.id === id}
+              isProtectedAdmin={Boolean(data.email && getAdminEmails().some(
+                email => email.toLowerCase().trim() === data.email?.toLowerCase().trim()
+              ))}
+            />
+          ) : <GuestTrackingActions visitorId={id} backHref={backHref} />}
+        </div>
       </div>
+      <dl className="mt-4 grid gap-4 border-t border-[#E7ECF5] pt-3 sm:grid-cols-3">
+        <Field label={kind === "guest" ? "Identity" : "Account status"}>{kind === "guest" ? "Guest · Not an account" : data.status}</Field>
+        <Field label={kind === "guest" ? "First seen" : "Joined"}>{format(data.firstSeenAt)}</Field>
+        <Field label={kind === "guest" ? "Last seen" : "Latest matching activity"}>{data.lastSeenAt ? format(data.lastSeenAt) : "—"}</Field>
+      </dl>
     </section>
 
     <section className="min-w-0 border-b border-[#D8E1EC] pb-3" aria-label="Activity filters">
