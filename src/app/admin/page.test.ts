@@ -271,3 +271,15 @@ test("Activity layout retains the existing white parent and does not change Over
   assert.match(display, /<WorkloadCard title="Support Workload"/);
   assert.match(display, /<WorkloadCard title="Account Deletion Workload"/);
 });
+
+test("Overview typography maintains readable hierarchy without heavy global badges", () => {
+  assert.match(dashboard, /function OverviewStatusBadge/);
+  assert.doesNotMatch(dashboard, /AdminStatusBadge|font-black|font-extrabold/);
+  assert.match(dashboard, /text-\[22px\] font-semibold tabular-nums/);
+  assert.match(dashboard, /text-\[15px\] font-semibold tracking-tight/);
+  assert.match(dashboard, /text-\[13px\] leading-5 text-slate-700/);
+  assert.match(dashboard, /font-mono text-xs/);
+  assert.match(display, /data\.users\.total/);
+  assert.match(display, /data\.visitorActivity\.observedVisitorIdentities/);
+  assert.match(display, /getAdminOverview|AdminOverviewAutoRefresh/);
+});
