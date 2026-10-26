@@ -31,6 +31,9 @@ export default async function AdminConfirmedTripsPage() {
       description="Monitor provider-confirmed My Trips created by signed partner callbacks. Provider handoffs, searches and payments are not treated as booking confirmations."
       actions={
         <div className="flex flex-wrap gap-2">
+          <Link href="/admin/flight-status" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+            Flight status
+          </Link>
           <Link href="/admin/redirects" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
             Provider handoffs
           </Link>
@@ -101,8 +104,7 @@ export default async function AdminConfirmedTripsPage() {
             </p>
           </section>
 
-          {operations ? (
-            <div className="grid items-stretch gap-4 lg:grid-cols-2">
+          <div className="grid items-stretch gap-4 lg:grid-cols-2">
               <section aria-labelledby="trips-by-product-title" className="min-w-0 rounded-xl border border-slate-200 p-4 sm:p-5">
                 <div className="flex items-start gap-2.5">
                   <Package size={20} className="mt-0.5 shrink-0 text-indigo-600" aria-hidden="true" />
@@ -111,7 +113,12 @@ export default async function AdminConfirmedTripsPage() {
                     <p className="mt-1 text-xs leading-5 text-slate-600">Provider-confirmed trips grouped by product.</p>
                   </div>
                 </div>
-                {operations.byProduct.length ? (
+                {!operations ? (
+                  <div role="status" className="mt-4 flex min-h-36 flex-col items-center justify-center rounded-xl bg-slate-50 px-4 py-6 text-center">
+                    <p className="text-sm font-semibold text-slate-800">Product breakdown unavailable</p>
+                    <p className="mt-1 max-w-sm text-xs leading-5 text-slate-600">Confirmed-trip records could not be loaded from the connected database. No counts are assumed.</p>
+                  </div>
+                ) : operations.byProduct.length ? (
                   <div className="mt-4 divide-y divide-slate-100">
                     {operations.byProduct.map((item) => (
                       <div key={item.tripType} className="flex min-w-0 items-center justify-between gap-3 py-3">
@@ -137,7 +144,12 @@ export default async function AdminConfirmedTripsPage() {
                     <p className="mt-1 text-xs leading-5 text-slate-600">Provider-confirmed trips grouped by provider.</p>
                   </div>
                 </div>
-                {operations.byProvider.length ? (
+                {!operations ? (
+                  <div role="status" className="mt-4 flex min-h-36 flex-col items-center justify-center rounded-xl bg-slate-50 px-4 py-6 text-center">
+                    <p className="text-sm font-semibold text-slate-800">Provider breakdown unavailable</p>
+                    <p className="mt-1 max-w-sm text-xs leading-5 text-slate-600">Confirmed-trip records could not be loaded from the connected database. No providers or counts are assumed.</p>
+                  </div>
+                ) : operations.byProvider.length ? (
                   <div className="mt-4 divide-y divide-slate-100">
                     {operations.byProvider.map((item) => (
                       <div key={item.provider} className="flex min-w-0 items-center justify-between gap-3 py-3">
@@ -158,7 +170,6 @@ export default async function AdminConfirmedTripsPage() {
                 )}
               </section>
             </div>
-          ) : null}
 
           <section aria-labelledby="trips-operational-boundaries" className="min-w-0 rounded-xl border border-slate-200 p-4 sm:p-5">
             <div className="flex items-start gap-3">
