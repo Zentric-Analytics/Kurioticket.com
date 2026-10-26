@@ -4,10 +4,14 @@ import type { Prisma } from "@/generated/prisma/client";
 import { getOptionalPrisma } from "@/lib/prisma";
 import { getPublicEnvironment, type PublicEnvironment } from "@/lib/stagingSafety";
 import { isConfiguredPartnerConfirmationSecret, partnerConfirmationLimits } from "@/services/partnerBookingConfirmation";
+import { getPartnerConfirmationBinding } from "@/services/partnerConfirmationDeliveryService";
 
 export type ConfirmedTripsIntegrationReadiness = {
   webhookCredentialConfigured: boolean;
-  credentialModel: "shared_secret_only";
+  credentialModel: "single_provider_bound_secret";
+  providerName: string | null;
+  providerConfigured: boolean;
+  feedReady: boolean;
   currentSearchProviderConfirmationFeed: "none";
 };
 
@@ -46,11 +50,15 @@ export type ConfirmedTripsOperationsSnapshot = {
 };
 
 export function getConfirmedTripsIntegrationReadiness(): ConfirmedTripsIntegrationReadiness {
+  const binding = getPartnerConfirmationBinding();
   return {
     webhookCredentialConfigured: isConfiguredPartnerConfirmationSecret(
       process.env.PARTNER_CONFIRMATION_WEBHOOK_SECRET,
     ),
-    credentialModel: "shared_secret_only",
+    credentialModel: "single_provider_bound_secret",
+    providerName: binding.providerName,
+    providerConfigured: Boolean(binding.providerName),
+    feedReady: binding.configured,
     currentSearchProviderConfirmationFeed: "none",
   };
 }
