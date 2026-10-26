@@ -16,8 +16,8 @@ type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 type RangeKey = "today" | "7d" | "30d" | "all" | "custom";
 
 export default async function AdminSearchActivityPage({ searchParams }: { searchParams: SearchParams }) {
-  const incoming = await searchParams;
-  const { environment: _ignoredEnvironment, ...raw } = incoming;
+  const raw = { ...(await searchParams) };
+  delete raw.environment;
   const currentEnvironment = getPublicEnvironment();
   const providerOptions = buildAdminSearchProviderOptions(getProviderIntegrationStatuses(), one(raw.provider) || null);
   const referenceNow = new Date().toISOString();
