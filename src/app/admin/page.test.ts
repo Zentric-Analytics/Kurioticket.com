@@ -234,3 +234,15 @@ test("production layout preserves original page and status backgrounds", () => {
   assert.match(display, /<AdminOverviewAutoRefresh \/>/);
   assert.match(display, /<AdminOverviewRangeSelect range=\{range\} \/>/);
 });
+
+test("Overview has one Searches-style white parent surface around all sections", () => {
+  const shared = readFileSync("src/components/admin/AdminPageShellHistorical.tsx", "utf8");
+  assert.match(page, /import \{ AdminPageShell, AdminSectionCard \}/);
+  assert.equal((page.match(/<AdminSectionCard /g) || []).length, 1);
+  assert.match(page, /<AdminSectionCard className="min-w-0 p-4 sm:p-6 lg:p-7">/);
+  assert.ok(page.indexOf("<AdminSectionCard") < page.indexOf("<AdminOverviewDashboard"));
+  assert.ok(page.indexOf("</AdminSectionCard>") > page.indexOf("<AdminOverviewSecondary"));
+  assert.match(shared, /border-slate-200 bg-white shadow-sm/);
+  assert.match(display, /<AdminOverviewAutoRefresh \/>/);
+  assert.match(display, /<AdminOverviewRangeSelect range=\{range\} \/>/);
+});
