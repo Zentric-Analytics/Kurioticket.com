@@ -130,7 +130,7 @@ test("Confirmed Trips UI retains shell background and navigation while limiting 
   assert.match(page, /<Link href="#confirmation-integration-title"/);
   assert.match(page, /<Link href="#recent-confirmed-trips-title"/);
   assert.doesNotMatch(page, /<Link href="\/admin\/(?:redirects|searches)"/);
-  assert.match(page, /<AdminStatusBadge tone=\{readiness.webhookCredentialConfigured/);
+  assert.match(page, /<AdminStatusBadge tone=\{readiness.feedReady/);
 });
 
 
