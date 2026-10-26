@@ -169,6 +169,16 @@ try {
     await page.goto(url + "?cursor=bad", { waitUntil: "domcontentloaded" });
     await expect(page.getByText("Activity page link expired")).toBeVisible();
     await expect(page.getByRole("link", { name: "Return to newest activity" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Manage guest qa-guest-activity-0001" })).toBeVisible();
+  });
+
+  await check("account management stays reachable when Activity data is unavailable", async () => {
+    await page.goto(base + "/admin/users/user/qa-registered-unavailable-0001/activity", { waitUntil: "domcontentloaded" });
+    await expect(page.getByText("Activity data unavailable", { exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Manage account for customer.qa@example.invalid" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Return to newest activity" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Activity timeline" })).toHaveCount(0);
+    await page.screenshot({ path: output + "/after-activity-unavailable-manage-1280.png", fullPage: false });
   });
 
   await check("registered customer retains title, email and same flat layout", async () => {
