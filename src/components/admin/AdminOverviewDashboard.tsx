@@ -343,12 +343,12 @@ function ActivityFeed({ activity }: { activity: AuditActivity }) {
       ) : (
         <div className="divide-y divide-slate-200/80 border-t border-slate-200/90">
           {activity.map((item) => (
-            <div key={item.id} className="grid min-w-0 grid-cols-[8px_minmax(0,1fr)] items-start gap-x-3 gap-y-1 py-3 lg:grid-cols-[8px_minmax(125px,0.75fr)_minmax(0,2fr)_minmax(150px,0.9fr)_minmax(135px,1fr)]">
+            <div key={item.id} className="grid min-w-0 grid-cols-[8px_minmax(0,1fr)] items-start gap-x-3 gap-y-1 py-3 lg:grid-cols-[8px_minmax(140px,0.75fr)_minmax(0,2.4fr)_minmax(145px,0.9fr)_minmax(130px,0.9fr)]">
               <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-indigo-500" aria-hidden="true" />
               <p className="min-w-0 text-xs font-bold leading-5 text-slate-950">{humanize(item.title)}</p>
               <p className="col-start-2 min-w-0 break-words text-xs leading-5 text-slate-700 lg:col-start-auto">{item.detail}</p>
-              <span className="col-start-2 text-[11px] leading-5 text-slate-600 lg:col-start-auto">{item.timestamp}</span>
-              <span aria-label="Original audit action" className="col-start-2 min-w-0 break-all font-mono text-[11px] leading-5 text-slate-600 lg:col-start-auto">{item.title}</span>
+              <span className="col-start-2 text-[11px] leading-5 text-slate-600 lg:col-start-auto lg:whitespace-nowrap">{item.timestamp}</span>
+              <span aria-label="Original audit action" className="col-start-2 min-w-0 break-words font-mono text-[11px] leading-5 text-slate-600 lg:col-start-auto">{item.title}</span>
             </div>
           ))}
         </div>
@@ -492,9 +492,11 @@ export function AdminOverviewDashboard({
           { label: "Cancelled", value: data.deletions.cancelled, detail: "Deletion stopped" },
           { label: "Completed", value: data.deletions.completed, detail: "Finalized lifecycle" },
         ]} />
-        <ActivityFeed activity={activity} />
       </div>
 
+      <div className="mt-7 min-w-0">
+        <ActivityFeed activity={activity} />
+      </div>
     </div>
   );
 }
