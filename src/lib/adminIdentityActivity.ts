@@ -190,6 +190,30 @@ export function relatedJourneysWindow(rows: ActivityRow[], now: Date): { from: s
 }
 
 export type ActivityGroup = { key: string; journeyId: string | null; startedAt: Date | null; events: ActivityRow[]; products: string[] };
+/** Group only adjacent matching journey records. Grouping all events by journey
+ * would change chronology when different journeys have interleaved events.
+ */
+export function groupContiguousActivityRows(rows: ActivityRow[]): ActivityGroup[] {
+  const result: ActivityGroup[] = [];
+  rows.forEach((event, index) => {
+    const journeyId = event.journeyId ?? null;
+    const last = result.at(-1);
+    if (last && last.journeyId === journeyId) {
+      last.events.push(event);
+      if (event.product && !last.products.includes(event.product)) last.products.push(event.product);
+    } else {
+      result.push({
+        key: (journeyId ?? "other") + ":" + index,
+        journeyId,
+        startedAt: event.journeyStartedAt ?? null,
+        events: [event],
+        products: event.product ? [event.product] : [],
+      });
+    }
+  });
+  return result;
+}
+
 export function groupActivityRows(rows: ActivityRow[]): ActivityGroup[] {
   const groups = new Map<string, ActivityGroup>();
   for (const event of rows) {
