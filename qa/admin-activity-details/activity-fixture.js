@@ -33,6 +33,7 @@ const olderRecorded = [
 
 export async function loadAdminIdentityActivity(kind, id, filters, cursor) {
   if (!/^[a-z0-9_-]{6,80}$/i.test(id)) return { status: "not_found" };
+  if (kind === "user" && id === "qa-registered-unavailable-0001") return { status: "unavailable" };
   if (cursor && cursor !== "older-qa-page") return { status: "invalid_cursor" };
   const tabMatch = stage => filters.tab === "all"
     || (filters.tab === "searches" && ["SEARCH_COMPLETED", "RESULTS_VIEWED"].includes(stage))

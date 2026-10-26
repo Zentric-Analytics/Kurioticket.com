@@ -19,7 +19,10 @@ const journeyEvents = [
 ];
 const db = {
   visitor: { findFirst: async () => ({ id, firstSeenAt: since, lastSeenAt: new Date("2026-10-22T17:48:00.000Z") }) },
-  user: { findUnique: async () => null },
+  user: { findUnique: async ({ where }) =>
+    ["qa-registered-0001", "qa-registered-unavailable-0001", "qa-admin"].includes(where.id)
+      ? { id: where.id, email: "customer.qa@example.invalid", role: "USER", status: "ACTIVE" }
+      : null },
   searchHistory: { findMany: async () => events },
   redirectLog: { findMany: async () => handoffs },
   analyticsEvent: { findMany: async () => [] },
