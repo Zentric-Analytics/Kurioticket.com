@@ -147,17 +147,7 @@ export function adminIdentityPageSql(input: AdminIdentityPageRequest): Prisma.Sq
           AND r."metadata"->>'environment' = ${environment}
           AND r."metadata"->>'operationalSessionId' IS NOT NULL
       ) a
-      WHERE a."sessionId" ~ '^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}
-  // Name sorting follows the displayed name (including the guest label);
-  // timestamps, kind and ID break ties predictably across pages.
-  return Prisma.sql`
-    SELECT "kind", "id"
-    FROM (${Prisma.join(sources, " UNION ALL ")}) AS identities
-    ORDER BY ${order}
-    LIMIT ${limit} OFFSET ${offset}
-  `;
-}
-
+      WHERE a."sessionId" ~ '^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
         ${query ? Prisma.sql`AND strpos(lower(a."sessionId"), lower(${query})) > 0` : Prisma.empty}
       GROUP BY a."sessionId"
       ${bounds ? Prisma.sql`HAVING MIN(a."createdAt") >= ${bounds.from}
