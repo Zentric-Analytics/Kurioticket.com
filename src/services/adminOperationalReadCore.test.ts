@@ -260,8 +260,8 @@ test("search detail renders the reorganized read-only diagnostics without the vi
   assert.match(page, /Search overview/);
   assert.match(page, /Search information/);
   assert.match(page, /Provider outcomes/);
-  assert.match(page, /What happened/);
-  assert.match(page, /AUTH_OR_CONFIG/);
+  assert.doesNotMatch(page, /What happened/);
+  assert.match(page, /What to check/);
   assert.match(page, /Search diagnosis/);
   assert.match(page, /Technical details/);
   assert.match(page, /StatusDot/);
