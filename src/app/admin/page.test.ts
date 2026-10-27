@@ -212,7 +212,7 @@ test("no fake totals, old full-report panels, or hidden full diagnostics remain 
   assert.doesNotMatch(dashboard, /<details|display:\s*none|hidden\s+aria-label/);
   assert.doesNotMatch(dashboard, /QuickActions|All admin modules|Admin shortcuts and modules/);
   assert.doesNotMatch(page, /adminNavigation\.filter|modules=\{modules\}/);
-  assert.match(display, /<AdminOverviewSecondary system=\{system\} activity=\{activity\} \/>/);
+  assert.match(page, /<AdminOverviewSecondary system=\{system\} activity=\{activity\} \/>/);
 });
 
 test("the compact grid remains responsive without horizontal scrolling or cramped desktop cards", () => {
