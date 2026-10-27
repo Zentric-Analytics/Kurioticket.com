@@ -46,3 +46,9 @@ The Operational Search Health section separately reports `PARTIAL` SearchHistory
 ### Staging diagnosis observed October 27, 2026
 
 In the inspected rolling 24-hour staging logs, KAYAK sandbox reported 111 authorization-related FAILED calls (110 flight, 1 hotel) and 1 successful flight call. The service returns sanitized `unauthorized` for 401/403 provider responses. **Root cause not yet confirmed:** credentials, provider authorization/entitlements, gateway policy, and account permissions require verification with the provider. Do not change keys or silently bypass these errors; never publish raw credentials or upstream responses. Duffel separately recorded 111 successful flight calls in that observation window. These figures are historical observations, not hardcoded dashboard values.
+
+## Phase 3 — Provider handoff coverage and consent integrity
+
+The Handoff Correlation area reports both environment-scoped provider redirects and their **separately validated** consented journey coverage. `operationalHandoffs.total` includes every explicitly environment-tagged redirect in the selected date window, including records without a visitor ID. `inConsentedJourneys` and `outsideConsentedJourneys` reconcile to that total. Eligible handoffs are validated against the existing journey consent, current-account eligibility, source ownership and environment predicates; `exactSearchLinks` requires an explicit verified search. A legacy handoff outside that set is never guessed into a funnel. `withoutVisitorIdentity` means no visitor attribution was stored, not necessarily that someone declined consent. Untagged legacy records remain outside an environment-specific total. The field definitions and time-window caveats are in `docs/admin-journey-data.md`.
+
+This is a read-only reporting improvement: it creates no synthetic events, changes no visitor consent or database records, and does not claim a provider handoff is a completed booking.

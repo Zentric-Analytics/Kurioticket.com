@@ -73,7 +73,7 @@ async function search(visitorId: string | null, at: Date, data: Partial<Prisma.S
     resultCount: 3, status: "SUCCESS", createdAt: at, ...data,
   } });
 }
-async function redirect(visitorId: string, at: Date, data: Partial<Prisma.RedirectLogUncheckedCreateInput> = {}) {
+async function redirect(visitorId: string | null, at: Date, data: Partial<Prisma.RedirectLogUncheckedCreateInput> = {}) {
   return db.redirectLog.create({ data: {
     visitorId, type: "HOTEL", provider: "Example provider", sourcePage: "/hotels/details/example?private=value",
     destinationUrl: "https://private:password@provider.example/book?secret=value", userType: "guest", createdAt: at, ...data,
@@ -250,6 +250,18 @@ test("observed stage metrics handle progressive ordering, repeated selections, m
   await event(j.id, time(8, 63), "SEARCH_COMPLETED", { searchHistoryId: success.id });
   const exact = await redirect(first.id, time(8, 64), { userId: owner.id, metadata: { environment: "staging", requestId: success.requestId } });
   const legacy = await redirect(first.id, time(8, 65), { userId: owner.id });
+  // A tagged redirect without a visitor must still count operationally, but
+  // must never be invented into a consented journey.
+  await redirect(null, time(8, 70), { metadata: { environment: "staging" } });
+  await redirect(guest.id, time(8, 71), { metadata: { environment: "staging", requestId: randomUUID() } });
+  // Previously recorded events disappear from the eligible cohort after consent
+  // withdrawal, but their environment-tagged redirects remain operational rows.
+  const withdrawn = await visitor();
+  const withdrawnJourney = await journey(withdrawn.id, time(8, 74));
+  const withdrawnRedirect = await redirect(withdrawn.id, time(8, 75), { metadata: { environment: "staging" } });
+  await event(withdrawnJourney.id, time(8, 75), "PROVIDER_HANDOFF_STARTED",
+    { redirectLogId: withdrawnRedirect.id, provider: "Example provider" });
+  await db.visitor.update({ where: { id: withdrawn.id }, data: { consentStatus: "WITHDRAWN", trackingDisabledAt: time(8, 76) } });
   await event(j.id, time(8, 64), "PROVIDER_HANDOFF_STARTED", { searchHistoryId: success.id, redirectLogId: exact.id });
   await event(j.id, time(8, 65), "PROVIDER_HANDOFF_STARTED", { redirectLogId: legacy.id });
   const failed = await search(first.id, time(8, 66), { userId: owner.id, status: "FAILED", resultCount: 0 });
@@ -274,12 +286,21 @@ test("observed stage metrics handle progressive ordering, repeated selections, m
   assert.deepEqual(result.stages.PROVIDER_HANDOFF_STARTED, { identities: 1, journeys: 1, events: 2 });
   assert.deepEqual(result.recordedSearches, { total: 6, success: 3, partial: 2, failed: 1 });
   assert.deepEqual(result.handoffCorrelation, { exactEvents: 1, uncorrelatedEvents: 1 });
+  assert.deepEqual(result.operationalHandoffs, {
+    scope: "environment_and_date_only", total: 4,
+    withVisitorIdentity: 3, withoutVisitorIdentity: 1,
+    inConsentedJourneys: 1, outsideConsentedJourneys: 3,
+    exactSearchLinks: 1, eligibleWithoutExactSearch: 0, withRequestId: 2,
+  });
   assert.deepEqual(result.operationalSearches, { scope: "environment_and_date_only", total: 8, success: 4, partial: 2, failed: 2, partialWithResults: 2, partialWithoutResults: 0 });
   const detail = ok(await service.detail(j.id, window(8)));
   assert.equal(detail.events[0].type, "RESULTS_VIEWED");
   assert.deepEqual(detail.events.filter(e => e.handoff).map(e => e.handoff!.searchCorrelation), ["exact", "unavailable"]);
   assert.doesNotMatch(JSON.stringify(detail), /never-return-this|password|secret|private=value|destinationUrl|tokenHash|metadata/);
-  assert.equal(ok(await service.summary({ ...window(8), identity: "guest" })).operationalSearches.total, 8);
+  const guestScope = ok(await service.summary({ ...window(8), identity: "guest" }));
+  assert.equal(guestScope.operationalSearches.total, 8);
+  assert.deepEqual(guestScope.operationalHandoffs, result.operationalHandoffs);
+  assert.doesNotMatch(JSON.stringify(result.operationalHandoffs), /password|secret|token|destinationUrl|visitorId/);
 });
 
 test("environment tags isolate staging, production and unlabelled records including linked search mismatches", async () => {

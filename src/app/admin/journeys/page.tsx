@@ -55,9 +55,18 @@ export default async function AdminJourneysPage({ searchParams }: { searchParams
             <AdminMetricCard label="Journeys" value={summary.data.journeys} hint="Matched consented journeys" tone="info" />
             <AdminMetricCard label="Identities" value={summary.data.identities.total} hint={summary.data.identities.registered + " registered · " + summary.data.identities.guests + " guest"} />
             <AdminMetricCard label="Recorded searches" value={summary.data.recordedSearches.total} hint={summary.data.recordedSearches.failed + " failed"} tone={summary.data.recordedSearches.failed ? "warn" : "neutral"} />
-            <AdminMetricCard label="Exact handoffs" value={summary.data.handoffCorrelation.exactEvents} hint="Explicitly linked to a search" tone="good" />
-            <AdminMetricCard label="Uncorrelated handoffs" value={summary.data.handoffCorrelation.uncorrelatedEvents} hint="No exact originating search link" tone="neutral" />
+            <AdminMetricCard label="Exact handoffs" value={summary.data.handoffCorrelation.exactEvents} hint="Eligible journey events with an exact search link" tone="good" />
+            <AdminMetricCard label="Uncorrelated handoffs" value={summary.data.handoffCorrelation.uncorrelatedEvents} hint="Eligible journey events without an exact search link" tone="neutral" />
           </div>
+        ) : null}
+        {summary.status === "ok" ? (
+          <p className="mt-3 text-xs leading-5 text-slate-600">
+            These handoff cards count consented journey events, not all provider redirects.
+            {" "}In the selected environment and date window, {summary.data.operationalHandoffs.total} redirect records were stored,
+            {" "}{summary.data.operationalHandoffs.inConsentedJourneys} appear in eligible journeys and
+            {" "}{summary.data.operationalHandoffs.outsideConsentedJourneys} are outside eligible journeys.
+            Missing identity or consent is never reconstructed from timing.
+          </p>
         ) : null}
 
         {list.status === "ok" ? (
