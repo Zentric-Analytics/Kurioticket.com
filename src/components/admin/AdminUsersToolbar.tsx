@@ -109,7 +109,11 @@ export function AdminUsersToolbar({
 
   useEffect(() => {
     const nextQuery = searchText.trim().slice(0, 120);
-    if (!editingRef.current || nextQuery === query || nextQuery === lastSubmittedRef.current) return;
+    if (nextQuery === query) {
+      editingRef.current = false;
+      return;
+    }
+    if (!editingRef.current || nextQuery === lastSubmittedRef.current) return;
     // Enter and other immediate actions may have committed this value while
     // the debounce was pending. Never issue a second navigation for it.
     const timer = window.setTimeout(() => {
