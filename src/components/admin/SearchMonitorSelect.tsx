@@ -64,8 +64,14 @@ export function SearchMonitorSelect({
 
   useEffect(() => {
     if (!open) return;
-    listRef.current?.querySelectorAll<HTMLElement>('[role="option"]')[activeIndex]
-      ?.scrollIntoView({ block: "nearest" });
+    // Scroll only within the popup. scrollIntoView also scrolls ancestor containers,
+    // which can horizontally shift the entire admin page on open.
+    const list = listRef.current;
+    const option = list?.querySelectorAll<HTMLElement>('[role="option"]')[activeIndex];
+    if (!list || !option) return;
+    if (option.offsetTop < list.scrollTop) list.scrollTop = option.offsetTop;
+    else if (option.offsetTop + option.offsetHeight > list.scrollTop + list.clientHeight)
+      list.scrollTop = option.offsetTop + option.offsetHeight - list.clientHeight;
   }, [activeIndex, open]);
 
   const close = (restoreFocus = true) => {

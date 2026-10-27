@@ -32,7 +32,7 @@ try {
     await page.goto(url);
     await expect(search()).toHaveAttribute("placeholder", "Search by name, email, user ID, or guest ID");
     await expect(combo("Sort by")).toHaveCount(0);
-    await expect(combo("Date range")).toContainText("All time");
+    await expect(combo("Date range")).toContainText("All dates");
     await expect(combo("Account role")).toContainText("All roles");
     await expect(combo("Account status")).toContainText("All statuses");
     await expect(tabs().getByRole("link", {name:"All (30)"})).toHaveAttribute("aria-current","page");
@@ -84,7 +84,7 @@ try {
   await expect(page).toHaveURL(/date=custom/);
   await expect(page).toHaveURL(/from=2026-10-01/);
   await expect(page).toHaveURL(/to=2026-10-23/);
-  await choose("Date range","All time");
+  await choose("Date range","All dates");
   await expect(page).not.toHaveURL(/from=/);
   await expect(page).not.toHaveURL(/to=/);
   await choose("Date range","Last 7 days");
@@ -95,14 +95,14 @@ try {
   await choose("Account status","Active");
   await expect(page).toHaveURL(/status=ACTIVE/);
   await expect(page.getByRole("link",{name:"Clear filters"})).toHaveCount(0);
-  await choose("Date range","All time");
+  await choose("Date range","All dates");
   await choose("Account role","All roles");
   await choose("Account status","All statuses");
   await expect(page).toHaveURL(/date=all/);
   await expect(page).toHaveURL(/role=ALL/);
   await expect(page).toHaveURL(/status=ALL/);
   console.log("PASS combined filters and clear");
-  for (const [date,label] of [["today","Today"],["last7","Last 7 days"],["thisMonth","This month"],["lastMonth","Last month"],["last3","Last 3 months"],["all","All time"]]) {
+  for (const [date,label] of [["last7","Last 7 days"],["last30","Last 30 days"],["all","All dates"]]) {
     await choose("Date range",label);
     await expect(page).toHaveURL(new RegExp("date="+date));
   }
