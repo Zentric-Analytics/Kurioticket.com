@@ -27,7 +27,7 @@ test("five existing data columns and user/guest activity links retain all record
     { kind: "guest", record: { id: "qa-guest-long-id", firstSeenAt: at, lastSeenAt: at } },
   ]});
   assert.equal((html.match(/<th /g) || []).length, 5);
-  for (const column of ["Identity", "Type", "Status", "Joined / First Seen", "Activity"]) {
+  for (const column of ["IDENTITY", "TYPE", "STATUS", "JOINED / FIRST SEEN", "ACTIVITY"]) {
     assert.match(html, new RegExp(column.replace("/", "\\/")));
   }
   assert.match(html, /QA fixture/);
