@@ -210,9 +210,8 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
     <div className="grid min-w-0 gap-8 lg:grid-cols-[minmax(0,1fr)_260px]">
       <ActivityTimeline events={data.events} nextHref={nextHref} environment={environment} order={order}
         clearHref={activityHref(basePath, queryParams, {q:null,from:null,to:null,range:null,product:null,stage:null,order:null,cursor:null})}/>
-      <aside className="min-w-0">
-        <div className="rounded-lg border border-[#D8E1EC] bg-white p-4">
-          <section aria-label="Activity summary">
+      <aside className="min-w-0 space-y-4">
+          <section aria-label="Activity summary" className="pb-3">
             <div className="mb-3 flex items-center gap-2">
               <h2 className="text-sm font-semibold">Activity summary</h2>
               <div className="group relative inline-flex">
@@ -238,14 +237,13 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
             </div>)}
             <p className="mt-2 text-xs text-[var(--muted-foreground)]">Counts reflect loaded events only.</p>
           </section>
-          <section aria-labelledby="activity-related-title" className="mt-6">
+          <section aria-labelledby="activity-related-title" className="pb-3">
             <h2 id="activity-related-title" className="mb-2 text-sm font-semibold">Related records</h2>
             {related.map(({href,title}) => <Link key={href} href={href}
               className="focus-ring flex items-center justify-between rounded-sm border-b border-[var(--border)] py-3 text-sm last:border-0 hover:underline">
               {title}<ChevronRight size={16}/>
             </Link>)}
           </section>
-        </div>
       </aside>
     </div>
   </div>;
