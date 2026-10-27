@@ -254,13 +254,17 @@ test("flight, hotel, and car provider logs carry exact request correlation for f
   assert.match(carRoute, /service: "car-search"[\s\S]*?metadata: \{ requestId \}/);
 });
 
-test("search detail renders diagnostics without adding write actions", () => {
+test("search detail renders the reorganized read-only diagnostics without the visible admin header", () => {
   const page = readFileSync("src/app/admin/searches/[id]/page.tsx", "utf8");
-  assert.match(page, /Search outcome/);
+  assert.match(page, /<AdminPageShell title="Search detail" hideHeader>/);
+  assert.match(page, /Search overview/);
+  assert.match(page, /Search information/);
+  assert.match(page, /Provider outcomes/);
+  assert.match(page, /Search diagnosis/);
+  assert.match(page, /Technical details/);
   assert.match(page, /Reason code/);
   assert.match(page, /Retryable/);
-  assert.match(page, /Provider outcomes/);
-  assert.doesNotMatch(page, /fetch\(|method:\s*["'](?:POST|PATCH|DELETE)|<form/);
+  assert.doesNotMatch(page, /Safe operational search record|Raw search JSON is intentionally excluded|<form|fetch\(|method:\s*["'](?:POST|PATCH|DELETE)/);
 });
 
 
