@@ -356,8 +356,9 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
       children: searchInput.children,
       rooms: searchInput.rooms,
       sort: searchInput.sort || "cheapest",
+      currency: selectedOption.currency,
     }),
-    [searchInput],
+    [searchInput, selectedOption.currency],
   );
   const hotelDetailsSearchParams = useMemo(() => {
     return new URLSearchParams({
