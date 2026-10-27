@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { readProviderOperationalSnapshot } from "./providerOperationalStatusCore";
+import { formatProviderFailureRatePct, providerFailureRatePct, readProviderOperationalSnapshot } from "./providerOperationalStatusCore";
 
 const ready = [
   {
@@ -114,7 +114,7 @@ test("high KAYAK sandbox failure volume is FAILING despite isolated successes", 
     now: new Date("2026-10-22T14:00:00Z"),
   });
   assert.equal(result[0]?.operationalState, "FAILING");
-  assert.equal(result[0]?.failureRatePct, 99);
+  assert.equal(result[0]?.failureRatePct, 99.1);
   assert.equal(result[0]?.attemptedCalls, 111);
   assert.deepEqual(result[0]?.serviceBreakdown.find(service => service.service === "flight-search")?.failureReasons, [
     { code: "AUTH_OR_CONFIG", label: "Authentication / configuration", calls: 110 },
@@ -132,4 +132,20 @@ test("per-service health separates missing coverage from failed attempts", async
   assert.equal(result[0]?.failureRatePct, null);
   assert.equal(result[0]?.attemptedCalls, 0);
   assert.equal(result[0]?.serviceBreakdown.find(service => service.service === "flight-search")?.disabledCalls, 3);
+});
+
+
+test("provider percentages preserve small observed failures without inventing calls", () => {
+  assert.equal(providerFailureRatePct({ success: 372, failed: 1, degraded: 0, disabled: 0 }), 0.3);
+  assert.equal(formatProviderFailureRatePct(0.3, 1), "0.3%");
+  assert.equal(providerFailureRatePct({ success: 0, failed: 0, degraded: 0, disabled: 7 }), null);
+  assert.equal(formatProviderFailureRatePct(null, 0), "No attempts");
+  assert.equal(providerFailureRatePct({ success: 0, failed: 0, degraded: 0, disabled: 0 }), null);
+  assert.equal(formatProviderFailureRatePct(0, 0), "0.0%");
+  // Extremely rare failures must never appear as 0% merely due to rounding.
+  const tinyRate = providerFailureRatePct({ success: 9999, failed: 1, degraded: 0, disabled: 0 });
+  assert.equal(tinyRate, 0);
+  assert.equal(formatProviderFailureRatePct(tinyRate, 1), "<0.1%");
+  assert.equal(providerFailureRatePct({ success: 15, failed: 374, degraded: 0, disabled: 2 }), 96.1);
+  assert.equal(formatProviderFailureRatePct(96.1, 374), "96.1%");
 });
