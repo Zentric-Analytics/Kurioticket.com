@@ -55,9 +55,22 @@ function providerTone(value: ProviderOperationalState): Tone {
 }
 
 function readinessTone(value: ProviderOperationalStatus["readinessState"]): Tone {
-  if (value === "READY") return "good";
+  if (value === "READY") return "info";
   if (value === "ENVIRONMENT_BLOCKED") return "warn";
   return "neutral";
+}
+
+// A configured provider may still fail real requests.
+function readinessLabel(value: ProviderOperationalStatus["readinessState"]) {
+  return value === "READY" ? "Configured for calls" : humanize(value);
+}
+
+function operationalLabel(value: ProviderOperationalState) {
+  if (value === "HEALTHY") return "Calls healthy";
+  if (value === "DEGRADED") return "Calls degraded";
+  if (value === "FAILING") return "Requests failing";
+  if (value === "NO_RECENT_ACTIVITY") return "No recent calls";
+  return "Not ready";
 }
 
 // Preserve status colors but reduce badge weight only on this dense Overview.
@@ -86,7 +99,7 @@ function SectionTitle({
   return (
     <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
       <div className="min-w-0">
-        <h2 className="flex items-center gap-2 text-[15px] font-semibold tracking-tight text-slate-900">
+        <h2 className="flex items-center gap-2 text-base font-semibold tracking-tight text-slate-900">
           {Icon ? <Icon size={17} className="shrink-0 text-indigo-700" aria-hidden="true" /> : null}
           {title}
         </h2>
@@ -126,9 +139,9 @@ function MetricCard({
           (tone === "good" ? "bg-emerald-400" : tone === "warn" ? "bg-amber-400" : tone === "bad" ? "bg-rose-400" : tone === "info" ? "bg-indigo-400" : "bg-slate-300")}
           aria-hidden="true" />
       </div>
-      <p className="mt-3 text-[11px] font-medium uppercase tracking-wide text-slate-600">{label}</p>
+      <p className="mt-3 text-xs font-medium uppercase tracking-wide text-slate-600">{label}</p>
       <p className="mt-1 text-[23px] font-semibold tabular-nums tracking-tight text-slate-950">{count(value)}</p>
-      <p className="mt-1 text-xs leading-5 text-slate-600">{hint}</p>
+      <p className="mt-1 text-[13px] leading-5 text-slate-600">{hint}</p>
     </div>
   );
 }
@@ -175,7 +188,7 @@ function DetailRow({ label, value, detail }: { label: string; value: string | nu
   return (
     <div className="flex min-w-0 items-start justify-between gap-3 border-b border-slate-200/75 py-2.5 last:border-b-0">
       <span className="min-w-0 flex-1 text-[13px] leading-5 text-slate-700">{label}</span>
-      <span className="min-w-0 max-w-[55%] text-right text-xs font-semibold tabular-nums leading-5 text-slate-900">
+      <span className="min-w-0 max-w-[55%] text-right text-[13px] font-semibold tabular-nums leading-5 text-slate-900">
         {typeof value === "number" ? count(value) : value}
       </span>
       {detail ? <span className="sr-only">{detail}</span> : null}
@@ -217,10 +230,7 @@ function PlatformHealth({ system }: { system: SystemStatus }) {
   ] as const;
   return (
     <section className="min-w-0" aria-label="Platform Health">
-      <SectionTitle
-        title="Platform Health"
-        description="Current configuration and database connectivity. Not end-to-end service availability."
-      />
+      <SectionTitle title="Platform Health" description="Database connectivity and configuration—not proof that integrations work." />
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {rows.map(({ label, icon: Icon, status, ready, confirmed }) => (
           <div key={label} className="min-w-0 rounded-xl border border-slate-200 bg-slate-50/50 p-3.5 sm:p-4">
@@ -236,9 +246,6 @@ function PlatformHealth({ system }: { system: SystemStatus }) {
           </div>
         ))}
       </div>
-      <p className="mt-3 text-xs leading-5 text-slate-600">
-        Settings and database connectivity do not establish successful sign-in, email delivery, provider authorization or completed bookings.
-      </p>
     </section>
   );
 }
@@ -255,13 +262,13 @@ function ProviderCard({ provider }: { provider: ProviderOperationalStatus }) {
     <article className="min-w-0 rounded-xl border border-slate-200 p-4 sm:p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">{provider.id}</p>
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{provider.id}</p>
           <h3 className="mt-1 text-base font-semibold text-slate-950">{provider.provider}</h3>
-          <p className="mt-1 text-xs text-slate-600">Observed provider calls · Last {provider.windowHours} hours</p>
+          <p className="mt-1 text-xs text-slate-600">Recorded provider calls · Last {provider.windowHours} hours</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <OverviewStatusBadge tone={readinessTone(provider.readinessState)}>{humanize(provider.readinessState)}</OverviewStatusBadge>
-          <OverviewStatusBadge tone={providerTone(provider.operationalState)}>{humanize(provider.operationalState)}</OverviewStatusBadge>
+          <OverviewStatusBadge tone={readinessTone(provider.readinessState)}>{readinessLabel(provider.readinessState)}</OverviewStatusBadge>
+          <OverviewStatusBadge tone={providerTone(provider.operationalState)}>{operationalLabel(provider.operationalState)}</OverviewStatusBadge>
         </div>
       </div>
       <div className="mt-4 grid grid-cols-2 gap-3 border-y border-slate-200 py-3 lg:grid-cols-4 lg:gap-5">
@@ -284,13 +291,12 @@ function ProviderCard({ provider }: { provider: ProviderOperationalStatus }) {
       </div>
       <div className="mt-4 min-w-0" aria-label={provider.provider + " full provider details"}>
         <h4 className="text-[13px] font-semibold text-slate-900">Full provider details</h4>
-        <p className="mt-1 text-xs leading-5 text-slate-600">All service breakdowns, error categories and recorded timings are visible below.</p>
-        <div className={"mt-3 grid gap-3 " + serviceGridColumns}>
+                <div className={"mt-3 grid gap-3 " + serviceGridColumns}>
           {provider.serviceBreakdown.map(service => (
             <section key={service.service} className="min-w-0 rounded-lg border border-slate-200 bg-slate-50/50 p-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <h5 className="text-xs font-semibold capitalize text-slate-900">{service.service.replaceAll("-", " ")}</h5>
-                <OverviewStatusBadge tone={providerTone(service.operationalState)}>{humanize(service.operationalState)}</OverviewStatusBadge>
+                <OverviewStatusBadge tone={providerTone(service.operationalState)}>{operationalLabel(service.operationalState)}</OverviewStatusBadge>
               </div>
               <p className="mt-2 text-xs leading-5 text-slate-700">{count(service.successCalls)} successful · {count(service.failedCalls)} failed · {count(service.disabledCalls)} disabled</p>
               <p className="mt-1 text-xs leading-5 text-slate-600">Failure rate: {service.failureRatePct === null ? "No attempts" : service.failureRatePct + "%"}</p>
@@ -300,13 +306,9 @@ function ProviderCard({ provider }: { provider: ProviderOperationalStatus }) {
             </section>
           ))}
         </div>
-        <div className="mt-3 grid gap-x-6 sm:grid-cols-2">
+        <div className="mt-3 grid gap-x-6 md:grid-cols-2">
           <div>
-            <DetailRow label="Readiness" value={humanize(provider.readinessState)} />
-            <DetailRow label="Operational health" value={humanize(provider.operationalState)} />
-            <DetailRow label="Observation window" value={provider.windowHours + " hours"} />
             <DetailRow label="Attempted calls (excludes disabled)" value={provider.attemptedCalls} />
-            <DetailRow label="Failure rate" value={provider.failureRatePct === null ? "No attempted calls" : provider.failureRatePct + "%"} />
             <DetailRow label="Degraded calls" value={provider.degradedCalls} />
             <DetailRow label="Disabled calls" value={provider.disabledCalls} />
           </div>
@@ -315,9 +317,6 @@ function ProviderCard({ provider }: { provider: ProviderOperationalStatus }) {
             <DetailRow label="Last activity" value={provider.lastActivityAt ? formatDateTime(new Date(provider.lastActivityAt)) : "No recent activity"} />
             <DetailRow label="Last success" value={provider.lastSuccessAt ? formatDateTime(new Date(provider.lastSuccessAt)) : "None recorded in window"} />
             <DetailRow label="Last failure" value={provider.lastFailureAt ? formatDateTime(new Date(provider.lastFailureAt)) : "None recorded in window"} />
-            <DetailRow label="Total calls" value={provider.totalCalls} />
-            <DetailRow label="Successful calls" value={provider.successCalls} />
-            <DetailRow label="Failed calls" value={provider.failedCalls} />
           </div>
         </div>
       </div>
@@ -394,6 +393,13 @@ function ActivityFeed({ activity }: { activity: AuditActivity }) {
         </p>
       ) : (
         <div className="divide-y divide-slate-200/80 border-t border-slate-200/90">
+          <div className="hidden min-w-0 grid-cols-[8px_minmax(140px,0.75fr)_minmax(0,2.4fr)_minmax(145px,0.9fr)_minmax(130px,0.9fr)] gap-x-3 bg-slate-50/70 px-1 py-2 text-xs font-medium text-slate-600 lg:grid">
+            <span aria-hidden="true" />
+            <span>Action</span>
+            <span>Details</span>
+            <span>Time (UTC)</span>
+            <span>Audit code</span>
+          </div>
           {activity.items.map((item) => (
             <div key={item.id} className="grid min-w-0 grid-cols-[8px_minmax(0,1fr)] items-start gap-x-3 gap-y-1 py-3 lg:grid-cols-[8px_minmax(140px,0.75fr)_minmax(0,2.4fr)_minmax(145px,0.9fr)_minmax(130px,0.9fr)]">
               <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-indigo-500" aria-hidden="true" />
