@@ -80,7 +80,7 @@ export type AdminJourneySummary = {
   stages: Record<AdminJourneyStage, { identities: number; journeys: number; events: number }>;
   recordedSearches: AdminJourneySearchCounts;
   handoffCorrelation: { exactEvents: number; uncorrelatedEvents: number };
-  operationalSearches: AdminJourneySearchCounts & { scope: "environment_and_date_only" };
+  operationalSearches: AdminJourneySearchCounts & { scope: "environment_and_date_only"; partialWithResults: number; partialWithoutResults: number };
 };
 
 export type AdminJourneyQueryInput = URLSearchParams | Record<string, unknown>;
