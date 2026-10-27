@@ -69,7 +69,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
       limit: Math.max(1, countBeforeOperational), offset: 0, allIdentities: true,
     });
     const fetched: AdminIdentityDirectoryRow[] = sql ? await db.$queryRaw<AdminIdentityDirectoryRow[]>(sql) : [];
-    const operationalGuestCount = Number(fetched[0]?.operationalGuestCount ?? 0n);
+    const operationalGuestCount = Number(fetched[0]?.operationalGuestCount ?? BigInt(0));
     const identities = fetched.filter((item): item is AdminIdentityDirectoryRow & { kind: "user" | "guest"; id: string } =>
       item.kind !== null && item.id !== null);
     const userIds = identities.filter(item => item.kind === "user").map(item => item.id);
