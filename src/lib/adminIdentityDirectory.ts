@@ -11,6 +11,22 @@ export function escapePrismaContainsQuery(query: string) {
   return query.replace(/[\\%_]/g, character => "\\" + character);
 }
 
+export const ADMIN_IDENTITY_DATES = ["all", "today", "last7", "thisMonth", "lastMonth", "last3"] as const;
+export type AdminIdentityDate = (typeof ADMIN_IDENTITY_DATES)[number];
+export function parseAdminIdentityDate(value?: string): AdminIdentityDate {
+  return ADMIN_IDENTITY_DATES.includes(value as AdminIdentityDate) ? value as AdminIdentityDate : "all";
+}
+export function adminIdentityDateBounds(date: AdminIdentityDate, now = new Date()) {
+  if (date === "all") return null;
+  const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const month = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  if (date === "today") return { from: today, to: null };
+  if (date === "last7") return { from: new Date(today.getTime() - 6 * 86400000), to: null };
+  if (date === "thisMonth") return { from: month, to: null };
+  if (date === "lastMonth") return { from: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1)), to: month };
+  return { from: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 3, 1)), to: null };
+}
+
 export type AdminIdentityReference = { kind: "user" | "guest"; id: string };
 
 export const ADMIN_IDENTITY_SORTS = ["newest", "oldest", "name_asc", "name_desc"] as const;
@@ -29,6 +45,8 @@ export type AdminIdentityPageRequest = {
   limit: number;
   offset: number;
   sort?: AdminIdentitySort;
+  date?: AdminIdentityDate;
+  now?: Date;
 };
 
 /**
@@ -41,6 +59,7 @@ export type AdminIdentityPageRequest = {
 export function adminIdentityPageSql(input: AdminIdentityPageRequest): Prisma.Sql | null {
   const { query, role, status, showUsers, showGuests, limit, offset } = input;
   const sort = parseAdminIdentitySort(input.sort);
+  const bounds = adminIdentityDateBounds(input.date ?? "all", input.now);
   const order = sort === "oldest"
     ? Prisma.sql`"joinedAt" ASC, "kind" ASC, "id" ASC`
     : sort === "name_asc"
@@ -61,6 +80,8 @@ export function adminIdentityPageSql(input: AdminIdentityPageRequest): Prisma.Sq
         COALESCE(NULLIF(BTRIM(u."name"), ''), 'Unnamed user') AS "displayName"
       FROM "User" u
       WHERE TRUE
+        ${bounds ? Prisma.sql`AND u."createdAt" >= ${bounds.from}` : Prisma.empty}
+        ${bounds?.to ? Prisma.sql`AND u."createdAt" < ${bounds.to}` : Prisma.empty}
         ${query ? Prisma.sql`AND (
           strpos(lower(COALESCE(u."name", '')), lower(${query})) > 0
           OR strpos(lower(COALESCE(u."email", '')), lower(${query})) > 0
@@ -77,6 +98,8 @@ export function adminIdentityPageSql(input: AdminIdentityPageRequest): Prisma.Sq
         'Guest visitor'::text AS "displayName"
       FROM "Visitor" v
       WHERE v."consentStatus" = 'GRANTED'
+        ${bounds ? Prisma.sql`AND v."firstSeenAt" >= ${bounds.from}` : Prisma.empty}
+        ${bounds?.to ? Prisma.sql`AND v."firstSeenAt" < ${bounds.to}` : Prisma.empty}
         AND v."trackingDisabledAt" IS NULL
         AND v."currentUserId" IS NULL
         AND NOT EXISTS (
