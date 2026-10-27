@@ -299,7 +299,7 @@ function WebsiteAnalyticsConsentBridge() {
         </div>
         <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-4">
           <p className="text-sm leading-6 text-slate-600">
-            Essential cookies support secure sign-in and necessary website functions. Optional analytics help us understand searches and improve Kurioticket. You can update your preferences at any time.
+            Essential cookies are always active for security, requested searches, operational search records and provider handoff continuity. Optional analytics measures engagement and usage patterns across visits and can be switched off.
           </p>
           <Button type="button" variant="primary" size="sm" className="w-full" onClick={() => choose("granted")}>Accept all optional cookies</Button>
           <h3 className="text-sm font-semibold">Manage consent preferences</h3>
@@ -309,7 +309,7 @@ function WebsiteAnalyticsConsentBridge() {
               <span className="text-xs font-medium text-slate-500">Always active</span>
             </summary>
             <p className="pt-2 text-sm leading-5 text-slate-600">
-              Necessary for authentication, security, and the operation of requested search features. They are not optional analytics tracking.
+              Always active for secure sign-in, requested flight, hotel and car searches, operational search records, troubleshooting and the necessary connection between a search and a provider handoff. The operational credential is short-lived; retained records follow our data-retention policy. This does not enable optional behavioural analytics.
             </p>
           </details>
           <details className="border-b border-slate-200 pb-3">
@@ -318,7 +318,7 @@ function WebsiteAnalyticsConsentBridge() {
               <span className="text-xs font-medium text-slate-500">Optional</span>
             </summary>
             <p className="pt-2 text-sm leading-5 text-slate-600">
-              With your permission, helps us measure search and provider handoff behaviour across visits. This is separate from necessary search-session continuity.
+              With your permission, measures visitor engagement, browsing patterns and feature usage across visits to improve Kurioticket. Turning this off does not stop necessary searches or operational records.
             </p>
           </details>
           <label className="flex cursor-pointer items-center justify-between gap-3 text-sm font-medium">

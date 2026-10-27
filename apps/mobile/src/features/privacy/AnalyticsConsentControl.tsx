@@ -25,7 +25,7 @@ export function AnalyticsConsentControl() {
       <Text style={[styles.label, { color: theme.dark ? theme.text : "#1A1A1A" }]}>Essential app functions</Text>
       <Text style={{ color: theme.muted, fontSize: 12 }}>Always active</Text>
     </View>
-    <Text style={[styles.description, { color: theme.muted }]}>Security, authentication, and necessary search functionality operate independently of optional analytics.</Text>
+    <Text style={[styles.description, { color: theme.muted }]}>Security, authentication, requested searches and essential search-to-provider handoff records are active independently of optional analytics.</Text>
     <View style={styles.row}>
       <FlowIcon strokeWidth={1.3} name="shield" color={theme.dark ? theme.icon : "#1A1A1A"} />
       <Text style={[styles.label, { color: theme.dark ? theme.text : "#1A1A1A" }]}>Analytics sharing</Text>
@@ -39,7 +39,7 @@ export function AnalyticsConsentControl() {
         onValueChange={value => { void visitorIdentity.choose(value).catch(() => undefined); }}
       />
     </View>
-    <Text style={[styles.description, { color: theme.muted }]}>Allow Kurioticket to connect your searches and provider handoffs on this device to help improve the service. This activity can be linked to your account when you sign in. You can turn this off at any time.</Text>
+    <Text style={[styles.description, { color: theme.muted }]}>Allow optional measurement of app engagement and usage patterns to improve Kurioticket. Search and handoff operational records work even when this is off. You can change this preference at any time.</Text>
     {status ? <Text accessibilityRole={state.error ? "alert" : undefined} accessibilityLiveRegion="polite" style={[styles.status, { color: theme.muted }]}>{status}</Text> : null}
     {state.error ? <Pressable accessibilityRole="button" accessibilityLabel="Retry analytics connection" onPress={() => { void visitorIdentity.refresh(); }} style={styles.retry}><Text style={{ color: theme.text, fontWeight: "700" }}>Try again</Text></Pressable> : null}
   </View>;

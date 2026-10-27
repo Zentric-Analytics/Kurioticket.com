@@ -139,7 +139,7 @@ export const legalDocuments: LegalDocument[] = [
         title: "How Cookies Are Used",
         paragraphs: [
           "Kurioticket may use cookies for authentication sessions, security, fraud prevention, preference storage, analytics, performance monitoring, and feature experiments.",
-          "Some cookies are necessary for login, dashboard access, support tickets, saved travel features, security, and preferences. A short-lived operational search session may be used when needed to maintain a requested search-to-provider journey, independently of optional analytics consent.",
+          "Some cookies are necessary for login, dashboard access, support tickets, saved travel features, security, and preferences. A short-lived operational search credential may be used for requested search-to-provider continuity independently of optional analytics consent. Necessary search and handoff records may be retained separately from that credential for troubleshooting, support and security in accordance with our retention policy.",
         ],
       },
       {

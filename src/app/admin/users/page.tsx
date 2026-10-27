@@ -1,14 +1,14 @@
 import { redirect } from "next/navigation";
+import { getPublicEnvironment } from "@/lib/stagingSafety";
 import { AdminIdentityTable, type IdentityRow } from "@/components/admin/AdminIdentityTable";
 import { AdminUsersToolbar } from "@/components/admin/AdminUsersToolbar";
 import { withOptionalDb } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/auth-guards";
-import { adminIdentityPageSql, escapePrismaContainsQuery, parseAdminIdentitySort, parseAdminIdentityDate, adminIdentityDateBounds, validAdminIdentityCustomDates, type AdminIdentityReference } from "@/lib/adminIdentityDirectory";
+import { adminIdentityPageSql, escapePrismaContainsQuery, parseAdminIdentitySort, parseAdminIdentityDate, adminIdentityDateBounds, validAdminIdentityCustomDates, type AdminIdentityDirectoryRow } from "@/lib/adminIdentityDirectory";
 
 export const metadata = { title: "Admin Users" };
 type PageProps = { searchParams?: Promise<{ q?: string; role?: string; status?: string; tab?: string; identity?: string; activity?: string; page?: string; sort?: string; date?: string; from?: string; to?: string }> };
 // Keep each SQL query bounded; fetch all matches in chunks for a continuous directory.
-const BATCH_SIZE = 100;
 export default async function AdminUsersPage({ searchParams }: PageProps) {
   await requireAdminSession("/admin/users");
   const params = await searchParams;
@@ -52,30 +52,26 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
   // Role/status are account-only filters. Guest identities never have either.
   const guestsEligibleForFilters = role === "ALL" && status === "ALL";
   const showGuests = tab !== "REGISTERED" && guestsEligibleForFilters;
-  // Tab totals remain stable while moving between All, Registered, and Guests.
-  // Count filtered cohorts independent of the active tab; only the selected
-  // cohort determines the table and pagination totals.
-  const stats = await withOptionalDb(async db => {
-    const [registeredCount, guestCount] = await Promise.all([
+  const environment = getPublicEnvironment();
+  // Operational sessions are not accounts or analytics visitor identities.
+  // A single identity query supplies the operational guest cohort, timestamps,
+  // and total. Account and consented visitor counts remain independent of tab.
+  const result = await withOptionalDb(async db => {
+    const [registeredCount, consentedGuestCount] = await Promise.all([
       db.user.count({ where }),
       guestsEligibleForFilters ? db.visitor.count({ where: guestWhere }) : Promise.resolve(0),
     ]);
-    return { registeredCount, guestCount };
-  }, { registeredCount: 0, guestCount: 0 });
-  const count = (showUsers ? stats.registeredCount : 0) + (showGuests ? stats.guestCount : 0);
-  // Retain the combined ordering across chunks; no page controls or 100-row cutoff.
-  const result = await withOptionalDb(async db => {
-    const identities: AdminIdentityReference[] = [];
-    for (let offset = 0; offset < count; offset += BATCH_SIZE) {
-      const sql = adminIdentityPageSql({
-        query: q, role, status, showUsers, showGuests, sort, date, from, to, now,
-        limit: BATCH_SIZE, offset,
-      });
-      if (!sql) break;
-      const batch = await db.$queryRaw<AdminIdentityReference[]>(sql);
-      identities.push(...batch);
-      if (batch.length < BATCH_SIZE) break;
-    }
+    const countBeforeOperational = (showUsers ? registeredCount : 0) + (showGuests ? consentedGuestCount : 0);
+    const sql = adminIdentityPageSql({
+      query: q, role, status, showUsers, showGuests,
+      showOperationalGuests: showGuests, withOperationalSummary: guestsEligibleForFilters,
+      environment, sort, date, from, to, now,
+      limit: Math.max(1, countBeforeOperational), offset: 0, allIdentities: true,
+    });
+    const fetched: AdminIdentityDirectoryRow[] = sql ? await db.$queryRaw<AdminIdentityDirectoryRow[]>(sql) : [];
+    const operationalGuestCount = Number(fetched[0]?.operationalGuestCount ?? BigInt(0));
+    const identities = fetched.filter((item): item is AdminIdentityDirectoryRow & { kind: "user" | "guest"; id: string } =>
+      item.kind !== null && item.id !== null);
     const userIds = identities.filter(item => item.kind === "user").map(item => item.id);
     const guestIds = identities.filter(item => item.kind === "guest").map(item => item.id);
     const [users, guests] = await Promise.all([
@@ -89,26 +85,27 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
       }) : Promise.resolve([]),
     ]);
     const userMap = new Map(users.map(user => [user.id, user]));
-    const guestMap = new Map(guests.map(guest => [guest.id, guest]));
+    const guestMap = new Map([
+      ...identities.filter(item => item.kind === "guest" && item.firstSeenAt && item.lastSeenAt)
+        .map(item => [item.id, { id: item.id, firstSeenAt: item.firstSeenAt!, lastSeenAt: item.lastSeenAt! }] as const),
+      ...guests.map(guest => [guest.id, guest] as const),
+    ]);
     const rows = identities.flatMap<IdentityRow>(identity => {
       if (identity.kind === "user") {
         const record = userMap.get(identity.id);
         return record ? [{ kind: "user" as const, record }] : [];
       }
-      if (identity.kind === "guest") {
-        const record = guestMap.get(identity.id);
-        return record ? [{ kind: "guest" as const, record }] : [];
-      }
-      return [];
+      const record = guestMap.get(identity.id);
+      return record ? [{ kind: "guest" as const, record }] : [];
     });
-    return { rows };
-  }, { rows: [] as IdentityRow[] });
+    return { rows, registeredCount, guestCount: consentedGuestCount + operationalGuestCount };
+  }, { rows: [] as IdentityRow[], registeredCount: 0, guestCount: 0 });
   const link = "/admin/users?" + new URLSearchParams({ ...(q ? { q } : {}), role, status, tab, sort, date, ...(from && to ? {from,to} : {}) }).toString();
   return (
     <div className="w-full min-w-0 bg-white">
       <h1 className="sr-only">Users</h1>
       <AdminUsersToolbar query={q} role={role} status={status} tab={tab} sort={sort} date={date} from={from || ""} to={to || ""}
-        registeredCount={stats.registeredCount} guestCount={stats.guestCount} pageHref={link}>
+        registeredCount={result.registeredCount} guestCount={result.guestCount} pageHref={link}>
         <AdminIdentityTable rows={result.rows} pageHref={link} sort={sort} />
       </AdminUsersToolbar>
     </div>
