@@ -220,7 +220,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
                   <Info size={16} aria-hidden="true" />
                 </button>
                 <div id="activity-data-explanation" role="tooltip"
-                  className="pointer-events-none invisible absolute right-0 top-full z-20 mt-2 w-64 max-w-[calc(100vw-3rem)] rounded-lg border border-[#D8E1EC] bg-white p-3 text-xs font-normal leading-5 text-[#334155] opacity-0 shadow-lg transition-opacity group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
+                  className="invisible absolute left-0 top-full z-20 mt-2 w-64 max-w-[calc(100vw-3rem)] rounded-lg border border-[#D8E1EC] bg-white p-3 text-xs font-normal leading-5 text-[#334155] opacity-0 shadow-lg transition-opacity group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100 lg:left-auto lg:right-0">
                   {kind === "guest"
                     ? <>Only recorded, consented {environment} activity is displayed. </>
                     : <>Only recorded {environment} account activity is displayed; linked visitor activity requires analytics consent. </>}
