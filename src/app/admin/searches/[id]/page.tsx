@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import { notFound } from "next/navigation";
 
@@ -89,7 +90,30 @@ function SearchDetailContent({ search }: { search: AdminSearchDetail }) {
           ) : null}
           {search.market ? <Field label="Market" value={search.market} /> : null}
           {search.currency ? <Field label="Currency" value={search.currency} /> : null}
-          <Field label="Identity" value={searchDetailIdentityLabel(search.identity.kind)} />
+        </div>
+        <div className="mt-4 border-t border-[#E5E7EB] pt-3">
+          <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-[#6B7280]">Searched by</p>
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[13px] font-semibold text-[#111827]">
+                {search.identity.kind === "registered"
+                  ? search.searcher.name || search.searcher.email || "Registered account"
+                  : search.identity.kind === "guest" ? "Guest visitor" : "Unidentified visitor"}
+              </p>
+              {search.identity.kind === "registered" && search.searcher.name && search.searcher.email ? (
+                <p className="mt-0.5 break-words text-[12px] text-[#6B7280]">{search.searcher.email}</p>
+              ) : null}
+              <p className="mt-0.5 text-[12px] text-[#6B7280]">{searchDetailIdentityLabel(search.identity.kind)}</p>
+            </div>
+            {search.searcher.activity ? (
+              <Link
+                href={"/admin/users/" + search.searcher.activity.kind + "/" + encodeURIComponent(search.searcher.activity.id) + "/activity"}
+                className="inline-flex items-center text-[13px] font-semibold text-[#004BB8] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
+              >
+                View activity
+              </Link>
+            ) : null}
+          </div>
         </div>
       </section>
 
