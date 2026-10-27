@@ -41,6 +41,14 @@ export function adminIdentityDateBounds(date: AdminIdentityDate, now = new Date(
 }
 
 export type AdminIdentityReference = { kind: "user" | "guest"; id: string };
+/** One directory read carries operational guest totals and recorded timestamps. */
+export type AdminIdentityDirectoryRow = {
+  kind: "user" | "guest" | null;
+  id: string | null;
+  firstSeenAt: Date | null;
+  lastSeenAt: Date | null;
+  operationalGuestCount: bigint;
+};
 
 export const ADMIN_IDENTITY_SORTS = ["newest", "oldest", "name_asc", "name_desc"] as const;
 export type AdminIdentitySort = (typeof ADMIN_IDENTITY_SORTS)[number];
@@ -59,6 +67,8 @@ export type AdminIdentityPageRequest = {
   environment?: "staging" | "production";
   /** Used only by the existing full-directory view, to avoid repeating JSON-log aggregation per batch. */
   allIdentities?: boolean;
+  /** Include the operational guest count in this same read, even on Registered tab. */
+  withOperationalSummary?: boolean;
   limit: number;
   offset: number;
   sort?: AdminIdentitySort;
@@ -73,7 +83,8 @@ export type AdminIdentityPageRequest = {
  * registered accounts before guests or loading every record into memory.
  *
  * Filters intentionally mirror Admin Users' Prisma count queries. In
- * particular, only unlinked guests with active consent may be returned.
+ * particular, analytics visitor records must be consented and unlinked;
+ * essential-only guests are represented by their operational session ID.
  */
 export function adminIdentityPageSql(input: AdminIdentityPageRequest): Prisma.Sql | null {
   const { query, role, status, showUsers, showGuests, limit, offset } = input;
@@ -94,49 +105,14 @@ export function adminIdentityPageSql(input: AdminIdentityPageRequest): Prisma.Sq
     throw new Error("Invalid Admin identity page bounds");
   }
 
-  const sources: Prisma.Sql[] = [];
-  if (showUsers) {
-    sources.push(Prisma.sql`
-      SELECT 'user'::text AS "kind", u."id" AS "id", u."createdAt" AS "joinedAt",
-        COALESCE(NULLIF(BTRIM(u."name"), ''), 'Unnamed user') AS "displayName"
-      FROM "User" u
-      WHERE TRUE
-        ${bounds ? Prisma.sql`AND u."createdAt" >= ${bounds.from}` : Prisma.empty}
-        ${bounds?.to ? Prisma.sql`AND u."createdAt" < ${bounds.to}` : Prisma.empty}
-        ${query ? Prisma.sql`AND (
-          strpos(lower(COALESCE(u."name", '')), lower(${query})) > 0
-          OR strpos(lower(COALESCE(u."email", '')), lower(${query})) > 0
-          OR strpos(lower(u."id"), lower(${query})) > 0
-        )` : Prisma.empty}
-        ${role !== "ALL" ? Prisma.sql`AND u."role"::text = ${role}` : Prisma.empty}
-        ${status !== "ALL" ? Prisma.sql`AND u."status"::text = ${status}` : Prisma.empty}
-    `);
-  }
-
-  if (showGuests) {
-    sources.push(Prisma.sql`
-      SELECT 'guest'::text AS "kind", v."id" AS "id", v."firstSeenAt" AS "joinedAt",
-        'Guest visitor'::text AS "displayName"
-      FROM "Visitor" v
-      WHERE v."consentStatus" = 'GRANTED'
-        ${bounds ? Prisma.sql`AND v."firstSeenAt" >= ${bounds.from}` : Prisma.empty}
-        ${bounds?.to ? Prisma.sql`AND v."firstSeenAt" < ${bounds.to}` : Prisma.empty}
-        AND v."trackingDisabledAt" IS NULL
-        AND v."currentUserId" IS NULL
-        AND NOT EXISTS (
-          SELECT 1 FROM "VisitorIdentityLink" l WHERE l."visitorId" = v."id"
-        )
-        ${query ? Prisma.sql`AND strpos(lower(v."id"), lower(${query})) > 0` : Prisma.empty}
-    `);
-  }
-
-  if (showOperationalGuests) {
-    // Essential records without analytics attribution remain inspectable
-    // after the operational session credential expires.
-    sources.push(Prisma.sql`
-      SELECT 'guest'::text AS "kind", a."sessionId" AS "id",
-        MIN(a."createdAt") AS "joinedAt",
-        'Guest visitor'::text AS "displayName"
+  const includeOperational = showOperationalGuests || input.withOperationalSummary === true;
+  // Materialize the scoped session cohort once. Both directory rows and the
+  // count read from this same grouped result, never rescanning the JSON logs.
+  const operationalCte = includeOperational ? Prisma.sql`
+    WITH operational_sessions AS MATERIALIZED (
+      SELECT a."sessionId" AS "id",
+        MIN(a."createdAt") AS "firstSeenAt",
+        MAX(a."createdAt") AS "lastSeenAt"
       FROM (
         SELECT s."query"->>'operationalSessionId' AS "sessionId", s."createdAt"
         FROM "SearchHistory" s
@@ -155,6 +131,53 @@ export function adminIdentityPageSql(input: AdminIdentityPageRequest): Prisma.Sq
       GROUP BY a."sessionId"
       ${bounds ? Prisma.sql`HAVING MIN(a."createdAt") >= ${bounds.from}
         ${bounds.to ? Prisma.sql`AND MIN(a."createdAt") < ${bounds.to}` : Prisma.empty}` : Prisma.empty}
+    )
+  ` : Prisma.empty;
+
+  const sources: Prisma.Sql[] = [];
+  if (showUsers) {
+    sources.push(Prisma.sql`
+      SELECT 'user'::text AS "kind", u."id" AS "id", u."createdAt" AS "joinedAt",
+        COALESCE(NULLIF(BTRIM(u."name"), ''), 'Unnamed user') AS "displayName",
+        NULL::timestamp AS "firstSeenAt", NULL::timestamp AS "lastSeenAt"
+      FROM "User" u
+      WHERE TRUE
+        ${bounds ? Prisma.sql`AND u."createdAt" >= ${bounds.from}` : Prisma.empty}
+        ${bounds?.to ? Prisma.sql`AND u."createdAt" < ${bounds.to}` : Prisma.empty}
+        ${query ? Prisma.sql`AND (
+          strpos(lower(COALESCE(u."name", '')), lower(${query})) > 0
+          OR strpos(lower(COALESCE(u."email", '')), lower(${query})) > 0
+          OR strpos(lower(u."id"), lower(${query})) > 0
+        )` : Prisma.empty}
+        ${role !== "ALL" ? Prisma.sql`AND u."role"::text = ${role}` : Prisma.empty}
+        ${status !== "ALL" ? Prisma.sql`AND u."status"::text = ${status}` : Prisma.empty}
+    `);
+  }
+
+  if (showGuests) {
+    sources.push(Prisma.sql`
+      SELECT 'guest'::text AS "kind", v."id" AS "id", v."firstSeenAt" AS "joinedAt",
+        'Guest visitor'::text AS "displayName",
+        NULL::timestamp AS "firstSeenAt", NULL::timestamp AS "lastSeenAt"
+      FROM "Visitor" v
+      WHERE v."consentStatus" = 'GRANTED'
+        ${bounds ? Prisma.sql`AND v."firstSeenAt" >= ${bounds.from}` : Prisma.empty}
+        ${bounds?.to ? Prisma.sql`AND v."firstSeenAt" < ${bounds.to}` : Prisma.empty}
+        AND v."trackingDisabledAt" IS NULL
+        AND v."currentUserId" IS NULL
+        AND NOT EXISTS (
+          SELECT 1 FROM "VisitorIdentityLink" l WHERE l."visitorId" = v."id"
+        )
+        ${query ? Prisma.sql`AND strpos(lower(v."id"), lower(${query})) > 0` : Prisma.empty}
+    `);
+  }
+
+  if (showOperationalGuests) {
+    sources.push(Prisma.sql`
+      SELECT 'guest'::text AS "kind", o."id", o."firstSeenAt" AS "joinedAt",
+        'Guest visitor'::text AS "displayName",
+        o."firstSeenAt", o."lastSeenAt"
+      FROM operational_sessions o
     `);
   }
 
@@ -162,9 +185,17 @@ export function adminIdentityPageSql(input: AdminIdentityPageRequest): Prisma.Sq
   // Name sorting follows the displayed name (including the guest label);
   // timestamps, kind and ID break ties predictably across pages.
   return Prisma.sql`
-    SELECT "kind", "id"
+    ${operationalCte}
+    SELECT identities."kind", identities."id", identities."firstSeenAt",
+      identities."lastSeenAt",
+      ${input.withOperationalSummary
+        ? Prisma.sql`totals."operationalGuestCount"`
+        : Prisma.sql`0::bigint AS "operationalGuestCount"`}
     FROM (${Prisma.join(sources, " UNION ALL ")}) AS identities
+    ${input.withOperationalSummary ? Prisma.sql`
+      RIGHT JOIN (SELECT COUNT(*)::bigint AS "operationalGuestCount" FROM operational_sessions) totals ON TRUE
+    ` : Prisma.empty}
     ORDER BY ${order}
-    LIMIT ${limit} OFFSET ${offset}
+    ${input.allIdentities ? Prisma.empty : Prisma.sql`LIMIT ${limit} OFFSET ${offset}`}
   `;
 }
