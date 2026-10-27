@@ -66,6 +66,9 @@ export async function POST(request: Request) {
   const search = providerDestinationId
     ? { ...parsed.data, destinationId: providerDestinationId }
     : parsed.data;
+  // Display currency is analytics-only. KAYAK's hotel provider criteria
+  // require USD and must not depend on the customer's display preference.
+  const { currency: _displayCurrency, ...providerSearch } = search;
 
   const kayakContext = {
     clientIp: getKayakClientIp(request),
@@ -73,8 +76,8 @@ export async function POST(request: Request) {
     signal: request.signal,
   };
   const aggregate = providerMode
-    ? await searchHotelsByProvider(search, providerMode, { kayak: kayakContext, defer: after })
-    : await searchHotels(search, { kayak: kayakContext, defer: after });
+    ? await searchHotelsByProvider(providerSearch, providerMode, { kayak: kayakContext, defer: after })
+    : await searchHotels(providerSearch, { kayak: kayakContext, defer: after });
   if (aggregate.unavailableMessage) {
     after(async () => {
       try {
@@ -123,7 +126,7 @@ export async function POST(request: Request) {
   const publicResults = aggregate.results.map(toPublicHotel);
   console.info("[hotel-search-summary]", {
     requestId,
-    searchFingerprint: createHash("sha256").update(JSON.stringify(search)).digest("hex"),
+    searchFingerprint: createHash("sha256").update(JSON.stringify(providerSearch)).digest("hex"),
     offerCount: publicResults.length,
     propertyCount: new Set(publicResults.map(result => JSON.stringify([result.provider, result.propertyGroupId ?? result.id]))).size,
     latencyMs: aggregate.latencyMs,

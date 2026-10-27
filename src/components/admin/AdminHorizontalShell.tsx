@@ -115,7 +115,7 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
   const searchDetail = /^\/admin\/searches\/[a-z0-9_-]{6,128}\/?$/i.test(pathname);
   const searchesWorkspace = pathname === "/admin/searches" || pathname === "/admin/searches/" || pathname === "/admin/searches/activity" || pathname === "/admin/searches/activity/" || searchDetail;
   return <AdminWorkspaceSearchProvider account={adminEmail || "admin"}><div className={"min-h-screen text-slate-950 " + (usersDirectory || userActivity || searchesWorkspace ? "bg-white" : "bg-[#f1f5fb]")}>
-    <header className={"sticky top-0 z-40 border-b bg-white " + (searchesWorkspace ? "border-[#E5E7EB]" : "border-slate-200 shadow-sm backdrop-blur")}>
+    <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
       <AdminSearchHeader>
       <div className="mx-auto flex h-16 w-full max-w-[1920px] items-center justify-between gap-4 pl-2 pr-4 sm:pr-6 lg:pr-10">
         <div className="flex min-w-0 items-center gap-2">
@@ -130,7 +130,7 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-          <AdminSearchTrigger flat={searchesWorkspace} />
+          <AdminSearchTrigger />
           <Link
             href="/admin/notifications"
             aria-label={unreadAlertCount && unreadAlertCount > 0 ? `${unreadAlertCount} unread admin alerts` : "Admin notifications and alerts"}
@@ -158,7 +158,7 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
           <button type="button" className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 min-[1100px]:hidden" onClick={() => setMobileOpen((value) => !value)} aria-label={mobileOpen ? "Close admin navigation" : "Open admin navigation"} aria-expanded={mobileOpen}>{mobileOpen ? <X size={19} /> : <Menu size={19} />}</button>
         </div>
       </div>
-      <div className={"hidden border-t min-[1100px]:block " + (searchesWorkspace ? "border-[#E5E7EB]" : "border-slate-100")}>
+      <div className="hidden border-t border-slate-100 min-[1100px]:block">
         <div className="mx-auto max-w-[1920px] px-4 pb-2 pt-2 sm:px-6 lg:px-10">
           <Navigation groups={groups} pathname={pathname} close={() => {}} />
         </div>
