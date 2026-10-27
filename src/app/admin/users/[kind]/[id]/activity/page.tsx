@@ -220,12 +220,9 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
           <section aria-label="Activity summary" className="pb-3">
             <div className="mb-3 flex items-center gap-2">
               <h2 className="text-sm font-semibold">Activity summary</h2>
-              <ActivityDataInfo>
-                {kind === "guest"
-                  ? <>Only recorded, consented {environment} activity is displayed. </>
-                  : <>Only recorded {environment} account activity is displayed; linked visitor activity requires analytics consent. </>}
-                Missing records do not establish that no visit occurred. Provider handoffs are not proof of a booking or payment.
-              </ActivityDataInfo>
+              {kind === "guest" ? <ActivityDataInfo>
+                Only recorded visitor activity is shown. Some visits may not appear due to tracking limitations or analytics consent. Provider redirects do not confirm completed bookings.
+              </ActivityDataInfo> : null}
             </div>
             {[
               ["Searches", data.events.filter(e => e.stage === "SEARCH_COMPLETED").length],
