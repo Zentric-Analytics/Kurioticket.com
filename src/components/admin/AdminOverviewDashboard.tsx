@@ -97,6 +97,7 @@ function SectionTitle({
   );
 }
 
+
 function MetricCard({
   label,
   value,
@@ -118,19 +119,20 @@ function MetricCard({
     info: "text-indigo-700",
   };
   return (
-    <div className="min-w-0 border-b border-slate-200/90 py-3.5 pr-3 sm:pr-4">
+    <div className="min-w-0 border-b border-r border-slate-200/85 p-3 sm:p-4 lg:min-h-32">
       <div className="flex items-center justify-between gap-2">
-        <Icon size={19} className={iconColor[tone]} aria-hidden="true" />
-        <span className={"h-2 w-2 shrink-0 rounded-full " +
+        <Icon size={17} className={iconColor[tone]} aria-hidden="true" />
+        <span className={"h-1.5 w-1.5 shrink-0 rounded-full " +
           (tone === "good" ? "bg-emerald-400" : tone === "warn" ? "bg-amber-400" : tone === "bad" ? "bg-rose-400" : tone === "info" ? "bg-indigo-400" : "bg-slate-300")}
           aria-hidden="true" />
       </div>
-      <p className="mt-2 text-xs font-medium uppercase tracking-wide text-slate-700">{label}</p>
-      <p className="mt-1 text-[22px] font-semibold tabular-nums tracking-tight text-slate-950">{count(value)}</p>
-      <p className="mt-1 text-[13px] leading-5 text-slate-700">{hint}</p>
+      <p className="mt-3 text-[11px] font-medium uppercase tracking-wide text-slate-600">{label}</p>
+      <p className="mt-1 text-[23px] font-semibold tabular-nums tracking-tight text-slate-950">{count(value)}</p>
+      <p className="mt-1 text-xs leading-5 text-slate-600">{hint}</p>
     </div>
   );
 }
+
 
 function AttentionCard({
   href,
@@ -151,21 +153,20 @@ function AttentionCard({
   const color = active
     ? tone === "bad" ? "text-rose-700" : tone === "warn" ? "text-amber-700" : "text-indigo-700"
     : "text-slate-500";
-
   return (
     <Link
       href={href}
-      className="focus-ring group flex min-w-0 items-start gap-3 border-b border-slate-200/90 py-3.5 pr-2 transition hover:border-indigo-200"
+      className="focus-ring group flex h-full min-w-0 flex-col rounded-xl border border-slate-200 p-3.5 transition hover:border-indigo-200 hover:bg-slate-50/60 sm:p-4"
     >
-      <Icon size={20} className={"mt-0.5 shrink-0 " + color} aria-hidden="true" />
-      <span className="min-w-0 flex-1">
-        <span className="flex flex-wrap items-center gap-2 text-sm font-semibold text-slate-900 group-hover:text-indigo-700">
+      <span className="flex w-full items-center justify-between gap-2">
+        <span className="flex min-w-0 items-center gap-2 text-[13px] font-semibold text-slate-900 group-hover:text-indigo-700">
+          <Icon size={17} className={"shrink-0 " + color} aria-hidden="true" />
           {title}
-          <span className={"text-xs font-semibold tabular-nums " + color}>{count(value)}</span>
         </span>
-        <span className="mt-1 block text-[13px] leading-5 text-slate-700">{description}</span>
+        <ChevronRight size={16} className="shrink-0 text-slate-400 transition group-hover:translate-x-0.5" aria-hidden="true" />
       </span>
-      <ChevronRight size={16} className="mt-1 shrink-0 text-slate-400 transition group-hover:translate-x-0.5" aria-hidden="true" />
+      <span className={"mt-3 text-2xl font-semibold tabular-nums tracking-tight " + color}>{count(value)}</span>
+      <span className="mt-1 text-xs leading-5 text-slate-600">{description}</span>
     </Link>
   );
 }
@@ -182,6 +183,7 @@ function DetailRow({ label, value, detail }: { label: string; value: string | nu
   );
 }
 
+
 function PlatformHealth({ system }: { system: SystemStatus }) {
   const rows = [
     {
@@ -189,113 +191,136 @@ function PlatformHealth({ system }: { system: SystemStatus }) {
       icon: HeartPulse,
       status: system.databaseConnected ? "Connected" : system.databaseConfigured ? "Configured, not connected" : "Not configured",
       ready: system.databaseConnected,
+      confirmed: system.databaseConnected,
     },
     {
       label: "Auth / session",
       icon: KeyRound,
       status: system.authConfigured && system.sessionConfigured ? "Secrets configured (not tested)" : "Secrets incomplete",
       ready: system.authConfigured && system.sessionConfigured,
+      confirmed: false,
     },
     {
       label: "Email / Resend",
       icon: Mail,
       status: system.emailConfigured ? "Credentials configured (not tested)" : "Credentials incomplete",
       ready: system.emailConfigured,
+      confirmed: false,
     },
     {
       label: "Provider credentials",
       icon: ShieldCheck,
       status: system.providerCredentialsPresent ? "At least one key present" : "No keys configured",
       ready: system.providerCredentialsPresent,
+      confirmed: false,
     },
   ] as const;
-
   return (
     <section className="min-w-0" aria-label="Platform Health">
-      <SectionTitle title="Platform Health" />
-      <div className="border-t border-slate-200/90">
-        {rows.map(({ label, icon: Icon, status, ready }) => (
-          <div key={label} className="flex min-w-0 flex-wrap items-center justify-between gap-x-4 gap-y-1 border-b border-slate-200/80 py-3">
-            <span className="flex min-w-0 items-center gap-2.5 text-sm font-medium text-slate-700">
-              <Icon size={16} className="shrink-0 text-indigo-600" aria-hidden="true" />
+      <SectionTitle
+        title="Platform Health"
+        description="Current configuration and database connectivity. Not end-to-end service availability."
+      />
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {rows.map(({ label, icon: Icon, status, ready, confirmed }) => (
+          <div key={label} className="min-w-0 rounded-xl border border-slate-200 bg-slate-50/50 p-3.5 sm:p-4">
+            <div className="flex items-center gap-2.5 text-[13px] font-semibold text-slate-800">
+              <Icon size={17} className="shrink-0 text-indigo-600" aria-hidden="true" />
               {label}
-            </span>
-            <span className={"inline-flex items-center gap-2 text-xs font-semibold " + (ready ? "text-emerald-700" : "text-slate-600")}>
-              <span className={"h-2 w-2 shrink-0 rounded-full " + (ready ? "bg-emerald-500" : "bg-slate-300")} aria-hidden="true" />
-              {status}
-            </span>
+            </div>
+            <div className="mt-3 flex items-start gap-2 text-xs font-medium leading-5 text-slate-700">
+              <span className={"mt-1.5 h-2 w-2 shrink-0 rounded-full " +
+                (confirmed ? "bg-emerald-500" : ready ? "bg-indigo-400" : "bg-slate-300")} aria-hidden="true" />
+              <span>{status}</span>
+            </div>
           </div>
         ))}
       </div>
-      <p className="mt-3 text-[13px] leading-5 text-slate-700">
+      <p className="mt-3 text-xs leading-5 text-slate-600">
         Settings and database connectivity do not establish successful sign-in, email delivery, provider authorization or completed bookings.
       </p>
     </section>
   );
 }
 
+
 function ProviderCard({ provider }: { provider: ProviderOperationalStatus }) {
+  const serviceGridColumns = provider.serviceBreakdown.length >= 3
+    ? "lg:grid-cols-3"
+    : provider.serviceBreakdown.length === 2
+      ? "sm:grid-cols-2"
+      : "grid-cols-1";
+
   return (
-    <article className="min-w-0 border-t border-slate-200/90 py-4">
-      <div className="flex flex-wrap items-start justify-between gap-2">
+    <article className="min-w-0 rounded-xl border border-slate-200 p-4 sm:p-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-600">{provider.id}</p>
-          <h3 className="mt-1 text-[15px] font-semibold text-slate-900">{provider.provider}</h3>
+          <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">{provider.id}</p>
+          <h3 className="mt-1 text-base font-semibold text-slate-950">{provider.provider}</h3>
+          <p className="mt-1 text-xs text-slate-600">Observed provider calls · Last {provider.windowHours} hours</p>
         </div>
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap items-center gap-2">
           <OverviewStatusBadge tone={readinessTone(provider.readinessState)}>{humanize(provider.readinessState)}</OverviewStatusBadge>
           <OverviewStatusBadge tone={providerTone(provider.operationalState)}>{humanize(provider.operationalState)}</OverviewStatusBadge>
         </div>
       </div>
-      <p className="mt-2 text-[13px] text-slate-700">Observed provider traffic · Last {provider.windowHours} hours</p>
-      <div className="mt-3 grid grid-cols-2 gap-4">
+      <div className="mt-4 grid grid-cols-2 gap-3 border-y border-slate-200 py-3 lg:grid-cols-4 lg:gap-5">
         <div className="min-w-0">
-          <p className="text-xs font-medium text-slate-700">Recent calls</p>
-          <p className="mt-1 text-lg font-semibold tabular-nums text-slate-950">{count(provider.totalCalls)}</p>
+          <p className="text-[11px] text-slate-600">Total calls</p>
+          <p className="mt-1 text-xl font-semibold tabular-nums tracking-tight text-slate-950">{count(provider.totalCalls)}</p>
         </div>
         <div className="min-w-0">
-          <p className="text-xs font-medium text-slate-700">Avg. attempted-call latency</p>
-          <p className="mt-1 break-words text-lg font-semibold tabular-nums text-slate-950">
-            {provider.averageLatencyMs === null ? "No timing recorded" : provider.averageLatencyMs.toLocaleString("en-US") + "ms"}
-          </p>
+          <p className="text-[11px] text-slate-600">Successful</p>
+          <p className="mt-1 text-xl font-semibold tabular-nums tracking-tight text-emerald-700">{count(provider.successCalls)}</p>
+        </div>
+        <div className="min-w-0">
+          <p className="text-[11px] text-slate-600">Failed</p>
+          <p className="mt-1 text-xl font-semibold tabular-nums tracking-tight text-rose-700">{count(provider.failedCalls)}</p>
+        </div>
+        <div className="min-w-0">
+          <p className="text-[11px] text-slate-600">Failure rate</p>
+          <p className="mt-1 text-xl font-semibold tabular-nums tracking-tight text-slate-950">{provider.failureRatePct === null ? "No attempts" : provider.failureRatePct + "%"}</p>
         </div>
       </div>
-      <p className="mt-2 text-xs text-slate-700">
-        Attempted calls: {count(provider.attemptedCalls)} · Failure rate: {provider.failureRatePct === null ? "No attempts" : provider.failureRatePct + "%"}
-      </p>
-      <p className="mt-3 text-xs text-slate-700">
-        <span className="font-semibold tabular-nums text-emerald-700">{count(provider.successCalls)}</span> successful
-        <span className="mx-1.5 text-slate-400">·</span>
-        <span className="font-semibold tabular-nums text-rose-700">{count(provider.failedCalls)}</span> failed
-      </p>
-      <details open className="mt-3 border-t border-slate-200/80">
-        <summary className="focus-ring cursor-pointer py-2.5 text-[13px] font-medium text-indigo-700 hover:underline">
-          Full provider details
-        </summary>
-        <div className="border-t border-slate-200/80 pt-1">
-          <DetailRow label="Readiness" value={humanize(provider.readinessState)} />
-          <DetailRow label="Operational health" value={humanize(provider.operationalState)} />
-          <DetailRow label="Observation window" value={provider.windowHours + " hours"} />
-          <DetailRow label="Attempted calls (excludes disabled)" value={provider.attemptedCalls} />
-          <DetailRow label="Failure rate" value={provider.failureRatePct === null ? "No attempted calls" : provider.failureRatePct + "%"} />
+      <div className="mt-4 min-w-0" aria-label={provider.provider + " full provider details"}>
+        <h4 className="text-[13px] font-semibold text-slate-900">Full provider details</h4>
+        <p className="mt-1 text-xs leading-5 text-slate-600">All service breakdowns, error categories and recorded timings are visible below.</p>
+        <div className={"mt-3 grid gap-3 " + serviceGridColumns}>
           {provider.serviceBreakdown.map(service => (
-            <div key={service.service} className="border-t border-slate-200/80 py-2">
-              <p className="text-xs font-semibold text-slate-900">{service.service.replaceAll("-", " ")} · {humanize(service.operationalState)}</p>
-              <p className="mt-1 text-xs text-slate-700">{count(service.successCalls)} successful · {count(service.failedCalls)} failed · {count(service.disabledCalls)} disabled · {service.failureRatePct === null ? "no attempts" : service.failureRatePct + "% failed"}</p>
-              {service.failureReasons.map(issue => <p key={issue.code} className="mt-1 text-xs text-slate-600">{issue.label}: {count(issue.calls)}</p>)}
-            </div>
+            <section key={service.service} className="min-w-0 rounded-lg border border-slate-200 bg-slate-50/50 p-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h5 className="text-xs font-semibold capitalize text-slate-900">{service.service.replaceAll("-", " ")}</h5>
+                <OverviewStatusBadge tone={providerTone(service.operationalState)}>{humanize(service.operationalState)}</OverviewStatusBadge>
+              </div>
+              <p className="mt-2 text-xs leading-5 text-slate-700">{count(service.successCalls)} successful · {count(service.failedCalls)} failed · {count(service.disabledCalls)} disabled</p>
+              <p className="mt-1 text-xs leading-5 text-slate-600">Failure rate: {service.failureRatePct === null ? "No attempts" : service.failureRatePct + "%"}</p>
+              {service.failureReasons.map(issue => (
+                <p key={issue.code} className="mt-1.5 text-xs leading-5 text-slate-700">{issue.label}: <span className="font-semibold tabular-nums">{count(issue.calls)}</span></p>
+              ))}
+            </section>
           ))}
-          <DetailRow label="Total calls" value={provider.totalCalls} />
-          <DetailRow label="Successful calls" value={provider.successCalls} />
-          <DetailRow label="Failed calls" value={provider.failedCalls} />
-          <DetailRow label="Degraded calls" value={provider.degradedCalls} />
-          <DetailRow label="Disabled calls" value={provider.disabledCalls} />
-          <DetailRow label="Avg. attempted-call latency" value={provider.averageLatencyMs === null ? "No timing recorded" : provider.averageLatencyMs + "ms"} />
-          <DetailRow label="Last activity" value={provider.lastActivityAt ? formatDateTime(new Date(provider.lastActivityAt)) : "No recent activity"} />
-          <DetailRow label="Last success" value={provider.lastSuccessAt ? formatDateTime(new Date(provider.lastSuccessAt)) : "None recorded in window"} />
-          <DetailRow label="Last failure" value={provider.lastFailureAt ? formatDateTime(new Date(provider.lastFailureAt)) : "None recorded in window"} />
         </div>
-      </details>
+        <div className="mt-3 grid gap-x-6 sm:grid-cols-2">
+          <div>
+            <DetailRow label="Readiness" value={humanize(provider.readinessState)} />
+            <DetailRow label="Operational health" value={humanize(provider.operationalState)} />
+            <DetailRow label="Observation window" value={provider.windowHours + " hours"} />
+            <DetailRow label="Attempted calls (excludes disabled)" value={provider.attemptedCalls} />
+            <DetailRow label="Failure rate" value={provider.failureRatePct === null ? "No attempted calls" : provider.failureRatePct + "%"} />
+            <DetailRow label="Degraded calls" value={provider.degradedCalls} />
+            <DetailRow label="Disabled calls" value={provider.disabledCalls} />
+          </div>
+          <div>
+            <DetailRow label="Avg. attempted-call latency" value={provider.averageLatencyMs === null ? "No timing recorded" : provider.averageLatencyMs + "ms"} />
+            <DetailRow label="Last activity" value={provider.lastActivityAt ? formatDateTime(new Date(provider.lastActivityAt)) : "No recent activity"} />
+            <DetailRow label="Last success" value={provider.lastSuccessAt ? formatDateTime(new Date(provider.lastSuccessAt)) : "None recorded in window"} />
+            <DetailRow label="Last failure" value={provider.lastFailureAt ? formatDateTime(new Date(provider.lastFailureAt)) : "None recorded in window"} />
+            <DetailRow label="Total calls" value={provider.totalCalls} />
+            <DetailRow label="Successful calls" value={provider.successCalls} />
+            <DetailRow label="Failed calls" value={provider.failedCalls} />
+          </div>
+        </div>
+      </div>
     </article>
   );
 }
