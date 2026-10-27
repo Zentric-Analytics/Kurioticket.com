@@ -76,7 +76,8 @@ test("journey funnel and both correlation metrics retain accurate source data", 
     "data.journeys.operationalHandoffs.withoutVisitorIdentity",
     "data.journeys.operationalHandoffs.exactSearchLinks",
   ]) assert.ok(display.includes(field), field);
-  assert.match(display, /Stage counts are distinct consented journeys, not percentages of all operational searches/);
+  assert.match(display, /stages count distinct eligible consented journeys/);
+  assert.match(display, /stages can occur out of order and are not a conversion percentage or confirmed booking/);
   assert.match(display, /No nearest-by-time inference/);
 });
 
