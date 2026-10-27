@@ -119,6 +119,13 @@ export type AdminSearchDiagnostic = {
 
 export type AdminSearchDetail = AdminSearchRead & {
   diagnostic: AdminSearchDiagnostic;
+  /** Resolved only for an authorized detail read. Never infer a person from a visitor ID. */
+  searcher: {
+    name: string | null;
+    email: string | null;
+    /** Link only when the existing Users activity reader can open this identity. */
+    activity: { kind: "user" | "guest"; id: string } | null;
+  };
 };
 
 export type AdminHandoffRead = {
