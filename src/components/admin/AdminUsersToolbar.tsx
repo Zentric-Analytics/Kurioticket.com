@@ -83,6 +83,16 @@ export function AdminUsersToolbar({
     paramsRef.current = new URLSearchParams(pageHref.split("?")[1] || "");
   }, [pageHref]);
 
+  useEffect(() => {
+    const onHistoryNavigation = () => {
+      // Back/Forward is authoritative, even if a local draft or search is pending.
+      editingRef.current = false;
+      lastSubmittedRef.current = null;
+    };
+    window.addEventListener("popstate", onHistoryNavigation);
+    return () => window.removeEventListener("popstate", onHistoryNavigation);
+  }, []);
+
   // When navigating Back/Forward, reflect the URL in the input. Do not
   // overwrite an in-progress keystroke with an earlier response.
   useEffect(() => {
