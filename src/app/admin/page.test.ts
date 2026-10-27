@@ -85,8 +85,8 @@ test("journey funnel and both correlation metrics retain accurate source data", 
     "data.journeys.operationalHandoffs.withoutVisitorIdentity",
     "data.journeys.operationalHandoffs.exactSearchLinks",
   ]) assert.ok(display.includes(field), field);
-  assert.match(display, /stages count distinct eligible consented journeys/);
-  assert.match(display, /stages can occur out of order and are not a conversion percentage or confirmed booking/);
+  assert.match(display, /headline figures count consented events; captions show distinct journeys/);
+  assert.match(display, /These are not conversion rates or confirmed bookings/);
   assert.match(display, /No nearest-by-time inference/);
 });
 
@@ -395,7 +395,8 @@ test("Phase 4 clarifies time windows, provider readiness, and absent observation
   assert.match(display, /inactivity may remain/);
   assert.match(display, /Success means the operation completed, not that offers were returned/);
   assert.match(display, /Partial may contain zero offers/);
-  assert.match(display, /stages can occur out of order and are not a conversion percentage or confirmed booking/);
+  assert.match(display, /Events can repeat or arrive out of order, including failed or empty searches/);
+  assert.match(display, /These are not conversion rates or confirmed bookings/);
   assert.match(dashboard, /"None recorded in window"/);
   assert.match(dashboard, /Secrets configured \(not tested\)/);
   assert.match(dashboard, /Credentials configured \(not tested\)/);
@@ -462,4 +463,23 @@ test("final Overview polish keeps real data bindings, correct health semantics a
   assert.match(display, /data\.websitePresence\.total/);
   assert.match(display, /data\.journeys\.operationalHandoffs\.exactSearchLinks/);
   assert.match(display, /data\.audit\.human/);
+});
+
+test("journey activity cards show real event counts first and journeys as secondary context", () => {
+  const component = dashboard.slice(dashboard.indexOf("function FunnelStep("), dashboard.indexOf("function WorkloadCard("));
+  assert.match(component, />\{count\(events\)\}<\/p>/);
+  assert.match(component, /journeys === 1 \? "Within 1 journey"/);
+  assert.match(component, /Across \$\{count\(journeys\)\} journeys/);
+  assert.ok(component.indexOf(">{count(events)}</p>") < component.indexOf("Within 1 journey"));
+  assert.doesNotMatch(component, />\{count\(journeys\)\}<\/p>/);
+  for (const [label, stage] of [
+    ["Tracked searches", "SEARCH_COMPLETED"],
+    ["Results views", "RESULTS_VIEWED"],
+    ["Offer selection events", "OFFER_SELECTED"],
+    ["Provider handoffs", "PROVIDER_HANDOFF_STARTED"],
+  ]) {
+    assert.ok(display.includes('<FunnelStep label="' + label + '" journeys={funnel.' + stage + '.journeys} events={funnel.' + stage + '.events}'), label);
+  }
+  assert.equal((display.match(/<FunnelStep label=/g) ?? []).length, 4);
+  assert.match(display, /operationalSearches\.total/);
 });
