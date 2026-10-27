@@ -56,6 +56,8 @@ export type AdminIdentityPageRequest = {
   showGuests: boolean;
   showOperationalGuests?: boolean;
   environment?: "staging" | "production";
+  /** Used only by the existing full-directory view, to avoid repeating JSON-log aggregation per batch. */
+  allIdentities?: boolean;
   limit: number;
   offset: number;
   sort?: AdminIdentitySort;
@@ -86,7 +88,7 @@ export function adminIdentityPageSql(input: AdminIdentityPageRequest): Prisma.Sq
         ? Prisma.sql`lower("displayName") DESC, "joinedAt" DESC, "kind" ASC, "id" DESC`
         : Prisma.sql`"joinedAt" DESC, "kind" ASC, "id" DESC`;
   if (!showUsers && !showGuests && !showOperationalGuests) return null;
-  if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100
+  if (!Number.isSafeInteger(limit) || limit < 1 || (!input.allIdentities && limit > 100)
     || !Number.isSafeInteger(offset) || offset < 0) {
     throw new Error("Invalid Admin identity page bounds");
   }
