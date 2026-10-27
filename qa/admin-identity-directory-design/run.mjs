@@ -12,7 +12,7 @@ const source = path.join(repo, "src");
 const temp = await mkdtemp(path.join(process.env.ADMIN_DIRECTORY_QA_WORK || os.tmpdir(), "kt-directory-polish-"));
 const output = path.resolve(process.env.ADMIN_DIRECTORY_QA_OUTPUT || path.join(temp, "screenshots"));
 const port = process.env.ADMIN_DIRECTORY_QA_PORT || "3209";
-const baseline = "d3c81bac7176fedef72785623f98a4e20c67c7ee"; // Prior merged Users design on dev
+const baseline = "2634e1234a5b31f1eca518a7720763772af6ecf1"; // Exact current dev before toolbar refactor
 await mkdir(output, { recursive: true });
 const put = async (file, contents) => {
   const target = path.join(temp, file);
