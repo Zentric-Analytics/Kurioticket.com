@@ -26,7 +26,6 @@ test("Activity timeline groups repeated records in an accessible expandable card
   assert.match(html, /Show all/);
   assert.equal((html.match(/data-activity-id=/g) || []).length, 0);
   assert.equal((html.match(/<time dateTime=/g) || []).length, 0);
-  for (const row of rows) assert.match(html, new RegExp("data-activity-id=\"" + row.id + "\""));
   assert.equal((html.match(/Open journey/g) || []).length, 1);
   assert.match(html, /environment=staging/);
   assert.match(html, /cursor=older/);
