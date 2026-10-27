@@ -88,7 +88,8 @@ export function AdminUsersToolbar({
       // Back/Forward is authoritative, even if a local draft or search is pending.
       editingRef.current = false;
       lastSubmittedRef.current = null;
-      const restoredQuery = (new URLSearchParams(window.location.search).get("q") ?? "").trim().slice(0, 120);
+      paramsRef.current = new URLSearchParams(window.location.search);
+      const restoredQuery = (paramsRef.current.get("q") ?? "").trim().slice(0, 120);
       textRef.current = restoredQuery;
       setSearchText(restoredQuery);
     };
