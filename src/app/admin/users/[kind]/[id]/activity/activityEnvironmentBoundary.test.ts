@@ -7,13 +7,16 @@ const timeline = readFileSync(new URL("../../../../../../components/admin/Activi
 const reader = readFileSync(new URL("../../../../../../services/adminIdentityActivityService.ts", import.meta.url), "utf8");
 const filters = readFileSync(new URL("../../../../../../lib/adminIdentityActivity.ts", import.meta.url), "utf8");
 
-test("Activity Explorer identifies its environment without repeating the visitor type or inventing history", () => {
-  assert.match(page, /kind === "guest" \? "Visitor" : data.title/);
-  assert.match(page, /Analytics consent/);
+test("Activity Explorer distinguishes consented visitors and operational guests without inventing identity", () => {
+  assert.match(page, /operational \? "Guest session" : "Visitor"/);
+  assert.match(page, /data\.source === "operational"/);
+  assert.match(page, /Essential operational activity/);
+  assert.match(page, /Only recorded, necessary \{environment\} search and provider-handoff activity is displayed/);
+  assert.match(page, /Only recorded, consented \{environment\} guest activity is displayed/);
+  assert.match(page, /This ID does not identify a person/);
   assert.doesNotMatch(page, /Guest · Not an account|Unregistered visitor with active analytics consent/);
   assert.match(timeline, /No activity recorded in this view/);
-  assert.match(timeline, /No matching recorded activity is currently linked to this identity in \{environment\}/);
-  assert.match(page, /Only recorded, consented \{environment\} activity is displayed/);
+  assert.match(timeline, /No activity matches your filters/);
   assert.match(page, /Missing records do not establish that no visit occurred/);
 });
 
