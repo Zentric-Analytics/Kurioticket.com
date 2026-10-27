@@ -109,6 +109,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
   const session = await requireAdminSession("/admin/users/" + kind + "/" + id + "/activity");
   const raw = { ...(await searchParams) };
   // The activity toolbar intentionally has no sort control; never retain a hidden oldest-first state.
+  if (raw.order === "oldest" || raw.sort === "oldest") delete raw.cursor;
   delete raw.order;
   delete raw.sort;
   const filtersResult = parseActivityFilters(raw);
