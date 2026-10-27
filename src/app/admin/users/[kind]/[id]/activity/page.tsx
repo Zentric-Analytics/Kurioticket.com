@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
-  ArrowLeft, ChevronRight, ExternalLink, Info, Route, Search, UserRound,
+  ArrowLeft, ChevronRight, ExternalLink, Route, Search, UserRound,
 } from "lucide-react";
 
 import { CopyIdentityId } from "@/components/admin/CopyIdentityId";
@@ -10,6 +10,7 @@ import { GuestTrackingActions } from "@/components/admin/GuestTrackingActions";
 import { AdminEmptyState } from "@/components/admin/AdminPageShell";
 import { ActivityTimeline } from "@/components/admin/ActivityTimeline";
 import { ActivityFiltersBar } from "@/components/admin/ActivityFiltersBar";
+import { ActivityDataInfo } from "@/components/admin/ActivityDataInfo";
 import { requireAdminSession } from "@/lib/auth-guards";
 import { getAdminEmails } from "@/lib/env";
 import { withOptionalDb } from "@/lib/prisma";
@@ -214,19 +215,12 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
           <section aria-label="Activity summary" className="pb-3">
             <div className="mb-3 flex items-center gap-2">
               <h2 className="text-sm font-semibold">Activity summary</h2>
-              <div className="group relative inline-flex">
-                <button type="button" aria-label="About activity data" aria-describedby="activity-data-explanation"
-                  className="focus-ring inline-flex h-6 w-6 items-center justify-center rounded-full text-[#475569] hover:text-[#004BB8]">
-                  <Info size={16} aria-hidden="true" />
-                </button>
-                <div id="activity-data-explanation" role="tooltip"
-                  className="invisible absolute left-0 top-full z-20 mt-2 w-64 max-w-[calc(100vw-3rem)] rounded-lg border border-[#D8E1EC] bg-white p-3 text-xs font-normal leading-5 text-[#334155] opacity-0 shadow-lg transition-opacity group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100 lg:left-auto lg:right-0">
-                  {kind === "guest"
-                    ? <>Only recorded, consented {environment} activity is displayed. </>
-                    : <>Only recorded {environment} account activity is displayed; linked visitor activity requires analytics consent. </>}
-                  Missing records do not establish that no visit occurred. Provider handoffs are not proof of a booking or payment.
-                </div>
-              </div>
+              <ActivityDataInfo>
+                {kind === "guest"
+                  ? <>Only recorded, consented {environment} activity is displayed. </>
+                  : <>Only recorded {environment} account activity is displayed; linked visitor activity requires analytics consent. </>}
+                Missing records do not establish that no visit occurred. Provider handoffs are not proof of a booking or payment.
+              </ActivityDataInfo>
             </div>
             {[
               ["Searches", data.events.filter(e => e.stage === "SEARCH_COMPLETED").length],
