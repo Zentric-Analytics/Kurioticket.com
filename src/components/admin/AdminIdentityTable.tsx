@@ -67,10 +67,7 @@ export function AdminIdentityTable({
     "focus-ring inline-flex h-9 items-center gap-1 whitespace-nowrap rounded-sm px-0.5 text-[13px] font-medium text-[#004BB8] underline-offset-4 transition-colors hover:underline";
   const directory = pageHref.split("?")[1] || "";
   const active = new URLSearchParams(directory);
-  const hasRoleOrStatus = (active.get("role") || "ALL") !== "ALL"
-    || (active.get("status") || "ALL") !== "ALL";
   const hasSearch = Boolean(active.get("q"));
-  const hasDate = (active.get("date") || "all") !== "all";
   const currentTab = active.get("tab") || active.get("identity") || "ALL";
   const activityHref = (kind: "guest" | "user", id: string) =>
     "/admin/users/" + kind + "/" + encodeURIComponent(id) + "/activity" +
@@ -211,11 +208,9 @@ export function AdminIdentityTable({
                 >
                   <p className="font-medium text-foreground">No users match your filters</p>
                   <div className="mt-2 flex items-center justify-center gap-4">
-                    {hasRoleOrStatus || hasDate ? <Link href={href({ role: "ALL", status: "ALL", date: "all", page: "1" })}
-                      className="focus-ring rounded-sm font-medium text-blue hover:underline">Clear filters</Link> : null}
                     {hasSearch ? <Link href={href({ q: "", page: "1" })}
                       className="focus-ring rounded-sm font-medium text-blue hover:underline">Clear search</Link> : null}
-                    {!hasRoleOrStatus && !hasDate && !hasSearch && currentTab !== "ALL"
+                    {!hasSearch && currentTab !== "ALL"
                       ? <Link href={href({ tab: "ALL", page: "1" })}
                         className="focus-ring rounded-sm font-medium text-blue hover:underline">View all users</Link>
                       : null}

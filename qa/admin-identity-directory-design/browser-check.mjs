@@ -14,7 +14,11 @@ const url = base + "/admin/users";
 const tabs = () => page.getByRole("navigation", { name: "User types" });
 const search = () => page.getByRole("searchbox", { name: "Search users" });
 const combo = name => page.getByRole("combobox", { name });
-const q = name => new URL(page.url()).searchParams.get(name);
+const choose = async (label, value) => {
+  await combo(label).click();
+  await expect(page.getByRole("listbox",{name:label})).toBeVisible();
+  await page.getByRole("listbox",{name:label}).getByRole("option",{name:value,exact:true}).click();
+};
 
 try {
   for (const width of [1280, 390]) {
@@ -28,17 +32,17 @@ try {
     await page.goto(url);
     await expect(search()).toHaveAttribute("placeholder", "Search by name, email, user ID, or guest ID");
     await expect(combo("Sort by")).toHaveCount(0);
-    await expect(combo("Date range")).toHaveValue("all");
-    await expect(combo("Account role")).toHaveValue("ALL");
-    await expect(combo("Account status")).toHaveValue("ALL");
+    await expect(combo("Date range")).toContainText("All time");
+    await expect(combo("Account role")).toContainText("All roles");
+    await expect(combo("Account status")).toContainText("All statuses");
     await expect(tabs().getByRole("link", {name:"All (30)"})).toHaveAttribute("aria-current","page");
     assert.deepEqual((await page.locator("thead th").allTextContents()).map(x=>x.trim()),
       ["IDENTITY","TYPE","STATUS","JOINED / FIRST SEEN","ACTIVITY"]);
     const geometry = await page.evaluate(() => {
       const search = document.getElementById("admin-user-search").getBoundingClientRect();
-      const controls = [...document.querySelectorAll('form[aria-label="Filter users"] select')].map(node => {
+      const controls = [...document.querySelectorAll('form[aria-label="Filter users"] button[role="combobox"]')].map(node => {
         const rect=node.getBoundingClientRect();
-        return { top: rect.top, bottom:rect.bottom, border: getComputedStyle(node.parentElement).borderBottomWidth };
+        return { top: rect.top, bottom:rect.bottom, border: getComputedStyle(node).borderBottomWidth };
       });
       return { searchWidth:search.width, viewport:innerWidth, doc:document.documentElement.scrollWidth,
         controls, tabs:document.querySelector('nav[aria-label="User types"]').getBoundingClientRect().top,
@@ -48,6 +52,10 @@ try {
     assert.ok(geometry.searchWidth > geometry.viewport * 0.65, "Full-width search input");
     assert.ok(geometry.controls.every(x=>x.border==="1px"), "Permanently underlined filters");
     assert.ok(geometry.tabs > geometry.searchTop, "Tabs follow full-width search");
+    await expect(page.getByRole("link",{name:"Clear filters"})).toHaveCount(0);
+    await combo("Date range").click();
+    await expect(page.getByRole("listbox",{name:"Date range"})).toBeVisible();
+    await page.keyboard.press("Escape");
     await page.screenshot({path: output + "/after-search-filter-" + width + ".png", fullPage:true});
     console.log("PASS responsive premium users toolbar",width);
   }
@@ -63,20 +71,23 @@ try {
   await search().press("Enter");
   await expect(page.locator("tbody tr")).toHaveCount(30);
   console.log("PASS search and Enter");
-  await combo("Date range").selectOption("last7");
+  await choose("Date range","Last 7 days");
   await expect(page).toHaveURL(/date=last7/);
-  await combo("Account role").selectOption("SUPPORT");
+  await choose("Account role","Support");
   await expect(page).toHaveURL(/role=SUPPORT/);
   await expect(page).toHaveURL(/date=last7/);
-  await combo("Account status").selectOption("ACTIVE");
+  await choose("Account status","Active");
   await expect(page).toHaveURL(/status=ACTIVE/);
-  await page.getByRole("link",{name:"Clear filters"}).first().click();
+  await expect(page.getByRole("link",{name:"Clear filters"})).toHaveCount(0);
+  await choose("Date range","All time");
+  await choose("Account role","All roles");
+  await choose("Account status","All statuses");
   await expect(page).toHaveURL(/date=all/);
   await expect(page).toHaveURL(/role=ALL/);
   await expect(page).toHaveURL(/status=ALL/);
   console.log("PASS combined filters and clear");
-  for (const date of ["today","last7","thisMonth","lastMonth","last3","all"]) {
-    await combo("Date range").selectOption(date);
+  for (const [date,label] of [["today","Today"],["last7","Last 7 days"],["thisMonth","This month"],["lastMonth","Last month"],["last3","Last 3 months"],["all","All time"]]) {
+    await choose("Date range",label);
     await expect(page).toHaveURL(new RegExp("date="+date));
   }
   await tabs().getByRole("link",{name:/Guests/}).click();
