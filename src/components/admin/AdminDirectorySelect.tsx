@@ -18,6 +18,7 @@ type Props = {
   options: readonly AdminDirectoryOption[];
   autoSubmit?: boolean;
   compact?: boolean;
+  onValueChange?: (next: string) => void;
 };
 
 /**
@@ -32,6 +33,7 @@ export function AdminDirectorySelect({
   options,
   autoSubmit = false,
   compact = false,
+  onValueChange,
 }: Props) {
   const listboxId = useId();
   const hydrated = useSyncExternalStore(subscribe, clientSnapshot, serverSnapshot);
@@ -83,7 +85,10 @@ export function AdminDirectorySelect({
     if (hiddenRef.current) hiddenRef.current.value = next;
     setSelected(next);
     close();
-    if (autoSubmit && next !== selected) hiddenRef.current?.form?.requestSubmit();
+    if (next !== selected) {
+      if (onValueChange) onValueChange(next);
+      else if (autoSubmit) hiddenRef.current?.form?.requestSubmit();
+    }
   };
   const onListKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     switch (event.key) {
