@@ -262,6 +262,9 @@ test("search detail renders the reorganized read-only diagnostics without the vi
   assert.match(page, /Provider outcomes/);
   assert.match(page, /Search diagnosis/);
   assert.match(page, /Technical details/);
+  assert.match(page, /StatusDot/);
+  assert.match(page, /<table className=/);
+  assert.doesNotMatch(page, /AdminSectionCard|AdminStatusBadge|rounded-xl bg-slate-50/);
   assert.match(page, /Reason code/);
   assert.match(page, /Retryable/);
   assert.doesNotMatch(page, /Safe operational search record|Raw search JSON is intentionally excluded|<form|fetch\(|method:\s*["'](?:POST|PATCH|DELETE)/);
