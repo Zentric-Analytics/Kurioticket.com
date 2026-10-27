@@ -98,12 +98,12 @@ function SearchDetailContent({ search }: { search: AdminSearchDetail }) {
               <p className="text-[13px] font-semibold text-[#111827]">
                 {search.identity.kind === "registered"
                   ? search.searcher.name || search.searcher.email || "Registered account"
-                  : search.identity.kind === "guest" ? "Guest visitor" : "Unidentified visitor"}
+                  : search.identity.kind === "guest" ? "Guest visitor" : search.operationalSessionId ? "Guest search session" : "Unidentified visitor"}
               </p>
               {search.identity.kind === "registered" && search.searcher.name && search.searcher.email ? (
                 <p className="mt-0.5 break-words text-[12px] text-[#6B7280]">{search.searcher.email}</p>
               ) : null}
-              <p className="mt-0.5 text-[12px] text-[#6B7280]">{searchDetailIdentityLabel(search.identity.kind)}</p>
+              <p className="mt-0.5 text-[12px] text-[#6B7280]">{search.operationalSessionId && search.identity.kind === "unattributed" ? "Operational session (no account linked)" : searchDetailIdentityLabel(search.identity.kind)}</p>
             </div>
             {search.searcher.activity ? (
               <Link
@@ -190,6 +190,7 @@ function SearchDetailContent({ search }: { search: AdminSearchDetail }) {
             <Field label="Environment" value={search.environment} />
             {search.identity.userId ? <Field label="User ID" value={search.identity.userId} /> : null}
             {search.identity.visitorId ? <Field label="Visitor ID" value={search.identity.visitorId} /> : null}
+            {search.operationalSessionId ? <Field label="Operational session ID" value={search.operationalSessionId} /> : null}
             {providerReasonCodes.length ? <Field label="Provider reason codes" value={providerReasonCodes.join("; ")} /> : null}
             {diagnostic.providers.some(provider => Math.abs(Date.parse(provider.observedAt) - Date.parse(search.createdAt)) > 60_000) ? (
               <Field label="Provider observation times" value={diagnostic.providers.map(provider => provider.provider + ": " + formatDateTime(new Date(provider.observedAt))).join("; ")} />
