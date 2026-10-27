@@ -339,8 +339,8 @@ function FunnelStep({
     <div className="min-w-0 border-b border-r border-slate-200/90 p-3.5">
       <Icon size={19} className="text-indigo-700" aria-hidden="true" />
       <p className="mt-3 text-sm font-medium text-slate-700">{label}</p>
-      <p className="mt-1 text-[22px] font-semibold tabular-nums tracking-tight text-slate-950">{count(journeys)}</p>
-      <p className="mt-1 text-[13px] text-slate-700">{count(events)} recorded events</p>
+      <p className="mt-1 text-[22px] font-semibold tabular-nums tracking-tight text-slate-950">{count(events)}</p>
+      <p className="mt-1 text-[13px] text-slate-700">{journeys === 1 ? "Within 1 journey" : `Across ${count(journeys)} journeys`}</p>
     </div>
   );
 }
@@ -508,11 +508,11 @@ export function AdminOverviewDashboard({
         <div>
           <div className="grid overflow-hidden rounded-lg border-l border-t border-slate-200 sm:grid-cols-2 lg:grid-cols-4">
             <FunnelStep label="Tracked searches" journeys={funnel.SEARCH_COMPLETED.journeys} events={funnel.SEARCH_COMPLETED.events} icon={Search} />
-            <FunnelStep label="Results viewed" journeys={funnel.RESULTS_VIEWED.journeys} events={funnel.RESULTS_VIEWED.events} icon={BookOpen} />
-            <FunnelStep label="Offer selected" journeys={funnel.OFFER_SELECTED.journeys} events={funnel.OFFER_SELECTED.events} icon={MousePointerClick} />
-            <FunnelStep label="Tracked handoffs" journeys={funnel.PROVIDER_HANDOFF_STARTED.journeys} events={funnel.PROVIDER_HANDOFF_STARTED.events} icon={ArrowUpRight} />
+            <FunnelStep label="Results views" journeys={funnel.RESULTS_VIEWED.journeys} events={funnel.RESULTS_VIEWED.events} icon={BookOpen} />
+            <FunnelStep label="Offer selection events" journeys={funnel.OFFER_SELECTED.journeys} events={funnel.OFFER_SELECTED.events} icon={MousePointerClick} />
+            <FunnelStep label="Provider handoffs" journeys={funnel.PROVIDER_HANDOFF_STARTED.journeys} events={funnel.PROVIDER_HANDOFF_STARTED.events} icon={ArrowUpRight} />
           </div>
-          <p className="mt-3 text-xs leading-5 text-slate-600">Selected reporting range · stages count distinct eligible consented journeys. A search-completed event also includes failed or empty searches; stages can occur out of order and are not a conversion percentage or confirmed booking.</p>
+          <p className="mt-3 text-xs leading-5 text-slate-600">Selected range · headline figures count consented events; captions show distinct journeys. Events can repeat or arrive out of order, including failed or empty searches. These are not conversion rates or confirmed bookings.</p>
         </div>
 
         <div className="mt-6 grid gap-4 lg:grid-cols-2">
