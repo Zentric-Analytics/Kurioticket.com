@@ -268,7 +268,7 @@ function ProviderCard({ provider }: { provider: ProviderOperationalStatus }) {
         <span className="mx-1.5 text-slate-400">·</span>
         <span className="font-semibold tabular-nums text-rose-700">{count(provider.failedCalls)}</span> failed
       </p>
-      <details className="mt-3 border-t border-slate-200/80">
+      <details open className="mt-3 border-t border-slate-200/80">
         <summary className="focus-ring cursor-pointer py-2.5 text-[13px] font-medium text-indigo-700 hover:underline">
           Full provider details
         </summary>
@@ -437,7 +437,7 @@ export function AdminOverviewDashboard({
             <p className="mt-2 text-xs font-medium uppercase tracking-wide text-slate-700">Active users</p>
             <p className="mt-1 text-[22px] font-semibold tabular-nums tracking-tight text-slate-950">{data.websitePresence.status === "ok" ? count(data.websitePresence.total) : "Unavailable"}</p>
             <p className="mt-1 text-[13px] leading-5 text-slate-700">{data.websitePresence.status === "ok" ? "Last " + data.websitePresence.windowSeconds + "s · " + count(data.websitePresence.registeredAccounts) + " accounts · " + count(data.websitePresence.guestIdentities) + " guests" : "Live website activity could not be verified"}</p>
-            <details className="mt-2 text-[12px] leading-5 text-slate-600">
+            <details open className="mt-2 text-[12px] leading-5 text-slate-600">
               <summary className="focus-ring inline-flex cursor-pointer list-none items-center gap-1 font-medium text-indigo-700 [&::-webkit-details-marker]:hidden">
                 <Info size={13} aria-hidden="true" />
                 How it's counted
