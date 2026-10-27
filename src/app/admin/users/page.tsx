@@ -23,7 +23,8 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
     selectedTab === "REGISTERED" || selectedTab === "GUEST" ? selectedTab : "ALL";
   const sort = parseAdminIdentitySort(params?.sort);
   const date = parseAdminIdentityDate(params?.date);
-  const bounds = adminIdentityDateBounds(date);
+  const now = new Date();
+  const bounds = adminIdentityDateBounds(date, now);
   const dateWhere = bounds ? { gte: bounds.from, ...(bounds.to ? { lt: bounds.to } : {}) } : undefined;
   // Existing bookmarked drawer URLs remain functional; only the presentation changes.
   const legacy = /^(user|guest):([a-z0-9_-]{6,80})$/i.exec(params?.activity || "");
@@ -67,7 +68,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
   // Paginate the *combined* chronological list; do not group users before guests.
   const result = await withOptionalDb(async db => {
     const sql = adminIdentityPageSql({
-      query: q, role, status, showUsers, showGuests, sort, date,
+      query: q, role, status, showUsers, showGuests, sort, date, now,
       limit: PAGE_SIZE, offset: (page - 1) * PAGE_SIZE,
     });
     if (!sql) return { rows: [] as IdentityRow[] };
