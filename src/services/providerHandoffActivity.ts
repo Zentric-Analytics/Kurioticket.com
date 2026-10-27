@@ -28,7 +28,7 @@ export async function recordProviderHandoffActivity(
 ) {
   const identity = await record.identity(request).catch(() => ({ userId: null, visitorId: null }));
   const operationalSession = readOperationalSearchSession(request);
-  const redirect = await record.redirect({ ...input, ...identity, operationalSessionId: operationalSession?.id ?? null }).catch(() => null);
+  const redirect = await record.redirect({ ...input, ...identity, ...(operationalSession ? { operationalSessionId: operationalSession.id } : {}) }).catch(() => null);
   // A rejected/reused key or unavailable durable write must not create a
   // second, independent redirect count in the legacy analytics table.
   if (redirect === null) return;
