@@ -113,6 +113,8 @@ export function AdminUsersToolbar({
       if (lastSubmittedRef.current !== null && lastSubmittedRef.current !== nextQuery) {
         // A different search is in flight: explicitly restore this input.
         navigate({ q: nextQuery }, true);
+        // Restoration is an explicit committed navigation, not a continuing edit.
+        editingRef.current = false;
       } else if (lastSubmittedRef.current === null) {
         editingRef.current = false;
       }
