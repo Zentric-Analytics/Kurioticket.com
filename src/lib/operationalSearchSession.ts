@@ -55,7 +55,13 @@ function readCookie(request: Request) {
 /** Do not issue an operational session to cron, server-side requests or cross-site callers. */
 function transport(request: Request): "web" | "native" | null {
   const platform = request.headers.get("x-mobile-platform")?.trim().toLowerCase();
-  if (platform === "ios" || platform === "android") return "native";
+  if (platform === "ios" || platform === "android") {
+    // Browser scripts can spoof the mobile platform header. Never expose the
+    // operational credential in a readable header to browser requests.
+    if (request.headers.has("origin") || request.headers.has("sec-fetch-site")
+        || request.headers.has("sec-fetch-mode") || request.headers.has("sec-fetch-dest")) return null;
+    return "native";
+  }
   const origin = request.headers.get("origin");
   const fetchSite = request.headers.get("sec-fetch-site");
   if (!isSameOriginRequest(request) || (!origin && fetchSite !== "same-origin")) return null;
