@@ -111,7 +111,7 @@ export function AdminIdentityTable({
                   scope="col"
                   className="px-3 py-3 font-medium"
                 >
-                  {heading}
+                  {heading.toUpperCase()}
                 </th>
               ))}
             </tr>
