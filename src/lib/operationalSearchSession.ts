@@ -32,7 +32,7 @@ function mac(payload: string, key: string) {
 function verify(credential: string | null, environment: PublicEnvironment, now: number, key: string): OperationalSessionReference | null {
   if (!credential || credential.length > 250) return null;
   const parts = credential.split(".");
-  if (parts.length !== 5 || parts[0] !== "v1" || !tokenId.test(parts[1]) || !/^\\d{10,13}$/.test(parts[2])
+  if (parts.length !== 5 || parts[0] !== "v1" || !tokenId.test(parts[1]) || !/^\d{10,13}$/.test(parts[2])
       || !["staging", "production"].includes(parts[3]) || !signature.test(parts[4])) return null;
   const timestamp = Number(parts[2]);
   if (!Number.isSafeInteger(timestamp) || timestamp <= now || timestamp > now + operationalSessionTtlSeconds * 1000
