@@ -88,17 +88,29 @@ export async function loadAdminIdentityActivity(
     let operationalFirstSeen: Date | null = null;
     let operationalLastSeen: Date | null = null;
     if (isOperationalGuest) {
-      const [firstSearch, firstHandoff, lastSearch, lastHandoff] = await Promise.all([
-        db.searchHistory.findFirst({ where: operationalSearchOwner, orderBy: { createdAt: "asc" }, select: { createdAt: true } }),
-        db.redirectLog.findFirst({ where: operationalRedirectOwner, orderBy: { createdAt: "asc" }, select: { createdAt: true } }),
-        db.searchHistory.findFirst({ where: operationalSearchOwner, orderBy: { createdAt: "desc" }, select: { createdAt: true } }),
-        db.redirectLog.findFirst({ where: operationalRedirectOwner, orderBy: { createdAt: "desc" }, select: { createdAt: true } }),
-      ]);
-      const first = [firstSearch?.createdAt, firstHandoff?.createdAt].filter((at): at is Date => Boolean(at));
-      const last = [lastSearch?.createdAt, lastHandoff?.createdAt].filter((at): at is Date => Boolean(at));
-      if (!first.length || !last.length) return { status: "not_found" };
-      operationalFirstSeen = new Date(Math.min(...first.map(at => at.getTime())));
-      operationalLastSeen = new Date(Math.max(...last.map(at => at.getTime())));
+      // One aggregate reads each source once, rather than scanning the two
+      // operational JSON keys four times for separate first/last timestamps.
+      // Retained rows remain readable after the 30-minute credential expires.
+      const [times] = await db.$queryRaw<Array<{ firstSeenAt: Date | null; lastSeenAt: Date | null }>>(Prisma.sql`
+        SELECT MIN(activity."createdAt") AS "firstSeenAt",
+          MAX(activity."createdAt") AS "lastSeenAt"
+        FROM (
+          SELECT s."createdAt"
+          FROM "SearchHistory" s
+          WHERE s."userId" IS NULL AND s."visitorId" IS NULL
+            AND s."query"->>'operationalSessionId' = ${id}
+            AND s."query"->>'environment' = ${environment}
+          UNION ALL
+          SELECT r."createdAt"
+          FROM "RedirectLog" r
+          WHERE r."userId" IS NULL AND r."visitorId" IS NULL
+            AND r."metadata"->>'operationalSessionId' = ${id}
+            AND r."metadata"->>'environment' = ${environment}
+        ) activity
+      `);
+      if (!times?.firstSeenAt || !times.lastSeenAt) return { status: "not_found" };
+      operationalFirstSeen = times.firstSeenAt;
+      operationalLastSeen = times.lastSeenAt;
     }
 
     // Account-owned history is explicit. Formerly anonymous records are visible only if
