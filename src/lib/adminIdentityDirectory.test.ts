@@ -98,3 +98,24 @@ test("count predicates escape wildcard and backslash characters to match literal
   assert.ok(raw.values.includes("a%_\\b"));
   assert.equal(raw.values.includes("a\\%\\_\\\\b"), false);
 });
+
+
+test("non-consented guest sessions join the Users directory without depending on analytics consent", () => {
+  const result = sql({ ...base, showUsers: false, showGuests: false, showOperationalGuests: true, environment: "staging" });
+  assert.match(result.text, /FROM "SearchHistory"/);
+  assert.match(result.text, /FROM "RedirectLog"/);
+  assert.match(result.text, /"visitorId" IS NULL/);
+  assert.match(result.text, /"userId" IS NULL/);
+  assert.match(result.text, /GROUP BY a\."sessionId"/);
+  assert.equal(result.values.includes("staging"), true);
+  assert.doesNotMatch(result.text, /"consentStatus" = 'GRANTED'/);
+});
+
+test("operational session lookup and date limits remain parameterized", () => {
+  const result = sql({ ...base, query: "session-id", showUsers: false, showGuests: false,
+    showOperationalGuests: true, environment: "production", date: "last7" });
+  assert.ok(result.values.includes("session-id"));
+  assert.ok(result.values.includes("production"));
+  assert.equal(result.text.includes("session-id"), false);
+  assert.match(result.text, /HAVING MIN\(a\."createdAt"\)/);
+});
