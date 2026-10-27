@@ -53,9 +53,8 @@ test("table remains a scrollable, accessible region with five columns and no pag
   assert.doesNotMatch(html, /Rows per page|15 rows|matching identities/);
 });
 
-test("empty results omit Clear filters but retain search and pagination actions", () => {
+test("empty results omit Clear filters but retain search actions", () => {
   const html = render({
-    
     pageHref: "/admin/users?q=qa&role=SUPPORT&status=ACTIVE&tab=GUEST&sort=oldest&page=1",
   });
   assert.match(html, /No users match your filters/);
@@ -65,13 +64,13 @@ test("empty results omit Clear filters but retain search and pagination actions"
 });
 
 test("Clear filters is not shown for query-only empty results", () => {
-  const html = render({  pageHref: "/admin/users?q=missing&role=ALL&status=ALL&tab=ALL&sort=newest&page=1" });
+  const html = render({ pageHref: "/admin/users?q=missing&role=ALL&status=ALL&tab=ALL&sort=newest&page=1" });
   assert.match(html, /Clear search/);
   assert.doesNotMatch(html, />Clear filters<\/a>/);
 });
 
 test("empty Guest tab with no search or account filters offers to return to all users", () => {
-  const html = render({ count: 0, page: 1, pageHref: "/admin/users?role=ALL&status=ALL&tab=GUEST&sort=newest&page=1" });
+  const html = render({ pageHref: "/admin/users?role=ALL&status=ALL&tab=GUEST&sort=newest&page=1" });
   assert.match(html, /View all users/);
   assert.match(html, /tab=ALL&amp;sort=newest&amp;page=1/);
 });
