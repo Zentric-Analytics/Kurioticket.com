@@ -50,7 +50,6 @@ export default async function AdminSearchDetailPage({
 
 function SearchDetailContent({ search }: { search: AdminSearchDetail }) {
   const diagnostic = search.diagnostic;
-  
   const providerReasonCodes = diagnostic.providers
     .filter(provider => provider.reasonCode)
     .map(provider => provider.provider + ": " + provider.reasonCode);
@@ -78,7 +77,7 @@ function SearchDetailContent({ search }: { search: AdminSearchDetail }) {
       </section>
 
       <section className="border-b border-[#D7DCE3] px-2 py-5">
-        <h2 className="text-sm font-bold text-slate-950">Search information</h2>
+        <h2 className="text-[13px] font-semibold text-[#111827]">Search information</h2>
         <div className="mt-3 grid grid-cols-2 gap-x-5 gap-y-3 lg:grid-cols-3">
           <Field label="Product" value={searchDetailProductLabel(search.product)} />
           {search.origin ? <Field label={search.product === "CAR" ? "Pickup location" : "Origin"} value={search.origin} /> : null}
@@ -96,7 +95,7 @@ function SearchDetailContent({ search }: { search: AdminSearchDetail }) {
       </section>
 
       <section className="border-b border-[#D7DCE3] px-2 py-5">
-        <h2 className="text-sm font-bold text-slate-950">Provider outcomes</h2>
+        <h2 className="text-[13px] font-semibold text-[#111827]">Provider outcomes</h2>
         {diagnostic.providers.length ? (
           <div className="mt-3 overflow-x-auto">
             <table className="w-full min-w-[740px] border-collapse text-left text-[12px]">
@@ -119,7 +118,8 @@ function SearchDetailContent({ search }: { search: AdminSearchDetail }) {
                   </tr>
                 ))}
               </tbody>
-            </table>         </div>
+            </table>
+          </div>
         ) : (
           <p className="mt-3 text-[12px] leading-5 text-[#6B7280]">
             No exact provider execution records are available for this search. A provider cause cannot be confirmed.
@@ -129,7 +129,7 @@ function SearchDetailContent({ search }: { search: AdminSearchDetail }) {
 
       {diagnostic.outcome !== "SUCCESS" ? (
         <section className="border-b border-[#D7DCE3] px-2 py-5">
-          <h2 className="text-sm font-bold text-slate-950">Search diagnosis</h2>
+          <h2 className="text-[13px] font-semibold text-[#111827]">Search diagnosis</h2>
           <p className="mt-2 text-[12px] leading-5 text-[#374151]">{diagnostic.reason}</p>
           <div className="mt-3 grid grid-cols-2 gap-x-5 gap-y-3">
             <Field
@@ -147,7 +147,7 @@ function SearchDetailContent({ search }: { search: AdminSearchDetail }) {
       <section className="border-b border-[#D7DCE3] px-2 py-5">
         <details className="group">
           <summary className="flex cursor-pointer list-none items-center justify-between gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-200 [&::-webkit-details-marker]:hidden">
-            <h2 className="text-sm font-bold text-slate-950">Technical details</h2>
+            <h2 className="text-[13px] font-semibold text-[#111827]">Technical details</h2>
             <ChevronDown size={17} className="shrink-0 text-slate-500 transition-transform group-open:rotate-180" aria-hidden="true" />
           </summary>
           <div className="mt-4 grid grid-cols-2 gap-x-5 gap-y-3 border-t border-[#D7DCE3] pt-4 lg:grid-cols-3">
