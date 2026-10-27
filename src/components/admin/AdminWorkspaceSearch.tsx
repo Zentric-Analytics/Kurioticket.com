@@ -55,9 +55,9 @@ export function AdminWorkspaceSearchProvider({ children, account }: { children: 
   return <SearchContext.Provider value={{ open, query, setQuery, show, close, recent, remember, clearRecent }}>{children}</SearchContext.Provider>;
 }
 
-export function AdminSearchTrigger() {
+export function AdminSearchTrigger({ flat = false }: { flat?: boolean }) {
   const { show } = useSearch();
-  return <button data-admin-search-trigger type="button" onClick={show} aria-label="Search Kurioticket admin" aria-keyshortcuts="Control+k Meta+k" className="focus-ring inline-flex h-10 items-center gap-3 rounded-xl border border-[#D8E1EC] bg-[#F5F7FB] px-3 text-sm font-medium text-[#475569] transition-colors hover:border-[#C4CFDC] hover:bg-[#F3F6FA] sm:w-52 sm:justify-between lg:w-60"><span className="inline-flex items-center gap-2"><Search size={17} /><span className="hidden sm:inline">Search admin</span></span><kbd className="hidden rounded border border-slate-200 bg-white px-1.5 py-0.5 text-xs text-slate-500 sm:inline">Ctrl K</kbd></button>;
+  return <button data-admin-search-trigger type="button" onClick={show} aria-label="Search Kurioticket admin" aria-keyshortcuts="Control+k Meta+k" className={"focus-ring inline-flex h-10 items-center gap-3 px-3 text-sm font-medium text-[#475569] transition-colors sm:w-52 sm:justify-between lg:w-60 " + (flat ? "rounded-none border-b border-[#E5E7EB] bg-transparent hover:border-violet-600 hover:text-[#111827]" : "rounded-xl border border-[#D8E1EC] bg-[#F5F7FB] hover:border-[#C4CFDC] hover:bg-[#F3F6FA]")}><span className="inline-flex items-center gap-2"><Search size={17} /><span className="hidden sm:inline">Search admin</span></span><kbd className="hidden rounded border border-slate-200 bg-white px-1.5 py-0.5 text-xs text-slate-500 sm:inline">Ctrl K</kbd></button>;
 }
 
 export function AdminSearchHeader({ children }: { children: React.ReactNode }) {
