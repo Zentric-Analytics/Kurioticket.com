@@ -83,10 +83,10 @@ try {
   console.log("PASS immediate URL filters");
 
   await page.goto(url+"?order=oldest");
-  await expect(page).toHaveURL(/order=oldest/);
-  await page.getByRole("link",{name:"Load newer activity"}).click();
-  await expect(page).toHaveURL(/cursor=/);
-  console.log("PASS sort and paging");
+  await expect(page.getByRole("button",{name:/Sort activity/})).toHaveCount(0);
+  await page.getByRole("navigation",{name:"Activity tabs"}).getByRole("link",{name:"Searches",exact:true}).click();
+  await expect(page).not.toHaveURL(/order=oldest/);
+  console.log("PASS hidden sort normalizes to newest");
 
   await page.goto(base+"/admin/users/guest/qa-no-events-0001/activity");
   await expect(page.getByText("No activity matches your filters")).toBeVisible();
