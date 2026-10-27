@@ -59,6 +59,8 @@ export function ActivityFiltersBar({ path, initial, directory, tabs }: { path: s
   const setRange = (range: string) => {
     if (range === "custom") {
       if (timeout.current) clearTimeout(timeout.current);
+      // A debounced search was not applied; restore the URL-backed query before starting a date draft.
+      setValues(current => ({...current, q: initial.q}));
       setDraftDates({ from: values.range === "custom" ? values.from : "", to: values.range === "custom" ? values.to : "" });
       setEditingCustom(true);
       return;
