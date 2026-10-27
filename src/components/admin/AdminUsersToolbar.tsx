@@ -266,12 +266,12 @@ export function AdminUsersToolbar({
     {(customOpen || date === "custom") ? <div className="flex flex-wrap items-end gap-3 py-3">
       <label className="text-xs text-[#475569]">From (UTC)
         <input type="date" aria-label="Custom start date UTC" value={draftDates.from}
-          max={draftDates.to || undefined} onChange={event => setDraftDates(current => ({...current,from:event.target.value}))}
+          max={draftDates.to || undefined} onChange={event => { setCustomOpen(true); setDraftDates(current => ({...current,from:event.target.value})); }}
           className="mt-1 block h-11 min-w-0 rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px] text-[#020617]"/>
       </label>
       <label className="text-xs text-[#475569]">To (UTC)
         <input type="date" aria-label="Custom end date UTC" value={draftDates.to}
-          min={draftDates.from || undefined} onChange={event => setDraftDates(current => ({...current,to:event.target.value}))}
+          min={draftDates.from || undefined} onChange={event => { setCustomOpen(true); setDraftDates(current => ({...current,to:event.target.value})); }}
           className="mt-1 block h-11 min-w-0 rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px] text-[#020617]"/>
       </label>
       <button type="button" disabled={!validCustom || isPending}
