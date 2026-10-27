@@ -221,11 +221,11 @@ export function AdminUsersToolbar({
         {tab === "GUEST" ? <input type="hidden" name="status" value={status} readOnly /> : null}
 
         <AdminDirectorySelect key={"date-" + date} name="date" label="Date range" value={date} options={dateOptions}
-          underlined align="end" onValueChange={next => navigate({ date: next })} />
+          plain align="end" onValueChange={next => navigate({ date: next })} />
         <AdminDirectorySelect key={"role-" + role} name="role" label="Account role" value={role} options={roles}
-          underlined align="end" onValueChange={next => navigate({ role: next })} />
+          plain align="end" onValueChange={next => navigate({ role: next })} />
         {tab !== "GUEST" ? <AdminDirectorySelect key={"status-" + status} name="status" label="Account status"
-          value={status} options={statuses} underlined align="end" onValueChange={next => navigate({ status: next })} /> : null}
+          value={status} options={statuses} plain align="end" onValueChange={next => navigate({ status: next })} /> : null}
         <noscript>
           <button type="submit" className="focus-ring col-span-2 rounded-lg border border-border px-3 py-2 text-[13px] font-medium text-foreground">
             Update filters

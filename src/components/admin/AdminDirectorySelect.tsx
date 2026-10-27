@@ -19,6 +19,7 @@ type Props = {
   autoSubmit?: boolean;
   compact?: boolean;
   underlined?: boolean;
+  plain?: boolean;
   align?: "start" | "end";
   onValueChange?: (next: string) => void;
 };
@@ -36,6 +37,7 @@ export function AdminDirectorySelect({
   autoSubmit = false,
   compact = false,
   underlined = false,
+  plain = false,
   align = "start",
   onValueChange,
 }: Props) {
@@ -149,7 +151,7 @@ export function AdminDirectorySelect({
           id={listboxId + "-native"}
           name={name}
           defaultValue={value}
-          className={underlined ? "h-10 w-auto max-w-full border-0 border-b border-[#CAD3DF] bg-transparent px-0 pr-1 text-[13px] font-medium text-[#334155] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#64748B]" : `focus-ring w-full min-w-0 rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px] font-medium text-[#020617] ${compact ? "h-10" : "h-11"}`}
+          className={plain ? "h-10 w-auto max-w-full border-0 bg-transparent px-0 text-[13px] font-medium text-[#334155] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#64748B]" : underlined ? "h-10 w-auto max-w-full border-0 border-b border-[#CAD3DF] bg-transparent px-0 pr-1 text-[13px] font-medium text-[#334155] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#64748B]" : `focus-ring w-full min-w-0 rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px] font-medium text-[#020617] ${compact ? "h-10" : "h-11"}`}
         >
           {options.map(option => (
             <option key={option.value} value={option.value}>{option.label}</option>
@@ -167,7 +169,7 @@ export function AdminDirectorySelect({
   }
 
   return (
-    <div ref={rootRef} className={underlined ? "relative inline-flex max-w-full shrink-0" : "relative min-w-0"}>
+    <div ref={rootRef} className={underlined || plain ? "relative inline-flex max-w-full shrink-0" : "relative min-w-0"}>
       <input ref={hiddenRef} type="hidden" name={name} value={selected} readOnly />
       <button
         ref={triggerRef}
@@ -187,10 +189,10 @@ export function AdminDirectorySelect({
             show(event.key === "Home" ? 0 : options.length - 1);
           }
         }}
-        className={underlined ? "inline-flex h-10 max-w-full min-w-0 cursor-pointer items-center justify-start gap-[7px] whitespace-nowrap border-b border-[#CAD3DF] bg-transparent px-0 text-left text-[13px] font-medium text-[#334155] transition-colors hover:border-[#64748B] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#64748B]" : `focus-ring flex w-full min-w-0 items-center justify-between gap-2 rounded-lg border border-[#D8E1EC] bg-white px-3 text-left text-[13px] font-medium text-[#020617] transition-colors hover:border-[#94A3B8] ${compact ? "h-10" : "h-11"}`}
+        className={plain ? "inline-flex h-10 max-w-full min-w-0 cursor-pointer items-center justify-start gap-[5px] whitespace-nowrap border-0 bg-transparent px-0 text-left text-[13px] font-medium text-[#334155] transition-colors hover:text-[#111827] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#64748B]" : underlined ? "inline-flex h-10 max-w-full min-w-0 cursor-pointer items-center justify-start gap-[7px] whitespace-nowrap border-b border-[#CAD3DF] bg-transparent px-0 text-left text-[13px] font-medium text-[#334155] transition-colors hover:border-[#64748B] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#64748B]" : `focus-ring flex w-full min-w-0 items-center justify-between gap-2 rounded-lg border border-[#D8E1EC] bg-white px-3 text-left text-[13px] font-medium text-[#020617] transition-colors hover:border-[#94A3B8] ${compact ? "h-10" : "h-11"}`}
       >
-        <span className={underlined ? "whitespace-nowrap" : "truncate"}>{selectedLabel}</span>
-        <ChevronDown size={15} aria-hidden="true" className={`shrink-0 text-[#475569] transition-transform ${open ? "rotate-180" : ""}`} />
+        <span className={underlined || plain ? "whitespace-nowrap" : "truncate"}>{selectedLabel}</span>
+        {plain ? <svg aria-hidden="true" viewBox="0 0 8 5" className="mt-px h-[5px] w-[8px] shrink-0 text-[#475569]" fill="currentColor"><path d="M0 0h8L4 5z" /></svg> : <ChevronDown size={15} aria-hidden="true" className={`shrink-0 text-[#475569] transition-transform ${open ? "rotate-180" : ""}`} />}
       </button>
       {open ? (
         <div
@@ -201,7 +203,7 @@ export function AdminDirectorySelect({
           aria-activedescendant={`${listboxId}-option-${activeIndex}`}
           tabIndex={-1}
           onKeyDown={onListKeyDown}
-          className={`absolute top-full z-50 mt-1.5 max-h-64 min-w-[170px] max-w-[min(90vw,280px)] overflow-y-auto rounded-lg border border-[#D8E1EC] bg-white p-1.5 shadow-[0_10px_28px_-12px_rgba(2,6,23,0.25)] outline-none ${underlined && align === "end" ? "left-0 lg:left-auto lg:right-0" : "left-0"} ${underlined ? "" : "w-full"}`}
+          className={`absolute top-full z-50 mt-1.5 max-h-64 min-w-[170px] max-w-[min(90vw,280px)] overflow-y-auto rounded-lg border border-[#D8E1EC] bg-white p-1.5 shadow-[0_10px_28px_-12px_rgba(2,6,23,0.25)] outline-none ${(underlined || plain) && align === "end" ? "left-0 lg:left-auto lg:right-0" : "left-0"} ${underlined || plain ? "" : "w-full"}`}
         >
           {options.map((option, index) => (
             <button
