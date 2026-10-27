@@ -104,7 +104,7 @@ export function AdminUsersToolbar({
       editingRef.current = false;
       lastSubmittedRef.current = null;
     }
-  }, [query]);
+  }, [query, pageHref]);
 
   const navigate = useCallback((values: Record<string, string>, replace = false) => {
     const nextQuery = textRef.current.trim().slice(0, 120);
