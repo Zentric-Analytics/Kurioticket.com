@@ -197,7 +197,8 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
           {kind === "guest" ? <ActivityDataInfo>
             {operational
               ? <>Only recorded, necessary {environment} search and provider-handoff activity is displayed. The session credential expires, but retained records remain available. This ID does not identify a person. </>
-              : <>Only recorded visitor activity is shown. Some visits may not appear due to tracking limitations or analytics consent. Provider redirects do not confirm completed bookings. </>}
+              : <>Only recorded, consented {environment} guest activity is displayed. </>}
+            Missing records do not establish that no visit occurred. Provider handoffs are not proof of a booking or payment.
           </ActivityDataInfo> : null}
         </div>
         <div className="grid min-w-0 flex-1 grid-cols-3 gap-2 sm:gap-4">
