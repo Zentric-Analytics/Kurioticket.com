@@ -24,7 +24,7 @@ test("nine genuine operational KPIs are retained with one live Active users card
     ["Deleted accounts", "data.users.deleted"],
     ["Support attention", "supportAttention"],
     ["Deletion attention", "deletionAttention"],
-    ["Journeys", "data.journeys.journeys"],
+    ["Customer journeys", "data.journeys.journeys"],
     ["Human admin actions", "data.audit.human"],
   ]) {
     assert.ok(display.includes('label="' + label + '" value={' + expression + "}"), label);
@@ -32,7 +32,7 @@ test("nine genuine operational KPIs are retained with one live Active users card
   assert.match(display, /supportAttention = data\.support\.open \+ data\.support\.waitingOnTeam \+ data\.support\.waitingOnUser/);
   assert.match(display, /deletionAttention = data\.deletions\.pending \+ data\.deletions\.readyForReview/);
   const snapshot = display.slice(display.indexOf('aria-label="Operations Snapshot"'), display.indexOf('aria-label="Attention Required"'));
-  assert.match(snapshot, />Active users<\/p>/);
+  assert.match(snapshot, />Active website users<\/p>/);
   assert.match(snapshot, /data\.websitePresence\.status === "ok"/);
   assert.match(snapshot, /data\.websitePresence\.total/);
   assert.equal((snapshot.match(/<MetricCard label=/g) ?? []).length, 8, "8 standard metric cards and 1 live Active users card");
@@ -40,15 +40,16 @@ test("nine genuine operational KPIs are retained with one live Active users card
   assert.doesNotMatch(snapshot, /data\.journeys\.identities\.registeredAccounts/);
 });
 
-test("admin overview sections prioritize action and health over deeper analytics", () => {
+test("overview prioritizes action and visitor activity before diagnostics", () => {
   const sequence = [
     'aria-label="Operations Snapshot"',
     'aria-label="Attention Required"',
-    "<PlatformHealth system={system} />",
+    'aria-label="Visitor Activity & Search Performance"',
     'aria-label="Provider Operational Health"',
-    'aria-label="Customer Journey Funnel"',
+    'aria-label="Operational Workloads"',
     'title="Support Workload"',
     'title="Account Deletion Workload"',
+    "<PlatformHealth system={system} />",
     "<ActivityFeed activity={activity} />",
   ];
   const indexes = sequence.map((label) => {
@@ -57,6 +58,14 @@ test("admin overview sections prioritize action and health over deeper analytics
     return found;
   });
   assert.deepEqual(indexes, [...indexes].sort((a, b) => a - b));
+  // Both workload cards must remain inside the grouped section, before
+  // configuration-only Platform Health and the full-width audit feed.
+  const workloads = display.slice(
+    display.indexOf('aria-label="Operational Workloads"'),
+    display.indexOf("<PlatformHealth system={system} />"),
+  );
+  assert.match(workloads, /title="Support Workload"/);
+  assert.match(workloads, /title="Account Deletion Workload"/);
 });
 
 test("journey funnel and both correlation metrics retain accurate source data", () => {
@@ -155,7 +164,7 @@ test("Overview information is presented without boxed white card containers", ()
   assert.match(display, /<AttentionCard href="\/admin\/providers"/);
   assert.match(display, /<PlatformHealth system=\{system\} \/>/);
   assert.match(display, /<ProviderCard key=\{provider.id\}/);
-  assert.match(display, /<FunnelStep label="Search completed"/);
+  assert.match(display, /<FunnelStep label="Tracked searches"/);
   assert.match(display, /<WorkloadCard title="Support Workload"/);
   assert.match(display, /<ActivityFeed activity=\{activity\} \/>/);
   assert.match(dashboard, /border-b border-slate-200/);
@@ -240,7 +249,7 @@ test("redesigned layout uses balanced responsive sections and a full-width activ
   assert.match(display, /grid overflow-hidden rounded-lg border-l border-t border-slate-200 sm:grid-cols-2 lg:grid-cols-3/);
   assert.match(display, /grid gap-3 md:grid-cols-3/);
   assert.match(display, /grid overflow-hidden rounded-lg border-l border-t border-slate-200 sm:grid-cols-2 lg:grid-cols-4/);
-  assert.match(display, /grid items-start gap-4 border-t border-slate-200 pt-6 lg:grid-cols-2/);
+  assert.match(display, /grid items-start gap-4 lg:grid-cols-2/);
   assert.match(display, /mt-7 min-w-0 border-t border-slate-200 pt-6/);
   assert.match(dashboard, /lg:grid-cols-\[8px_minmax\(140px,0\.75fr\)_minmax\(0,2\.4fr\)_minmax\(145px,0\.9fr\)_minmax\(130px,0\.9fr\)\]/);
   assert.doesNotMatch(display, /lg:grid-cols-\[0\.85fr_1\.15fr\]/);
@@ -272,7 +281,7 @@ test("Overview has one Searches-style white parent surface around all sections",
 
 
 test("Recent Admin Activity is outside the workload grid and remains full-width", () => {
-  const workloadGrid = display.indexOf("mt-7 grid items-start gap-4 border-t border-slate-200 pt-6 lg:grid-cols-2");
+  const workloadGrid = display.indexOf('aria-label="Operational Workloads"');
   const activityContainer = display.indexOf("mt-7 min-w-0 border-t border-slate-200 pt-6");
   assert.ok(workloadGrid > 0);
   assert.ok(activityContainer > workloadGrid);
@@ -294,7 +303,7 @@ test("Overview typography maintains readable hierarchy without heavy global badg
   assert.match(dashboard, /function OverviewStatusBadge/);
   assert.doesNotMatch(dashboard, /AdminStatusBadge|font-black|font-extrabold/);
   assert.match(dashboard, /text-\[23px\] font-semibold tabular-nums/);
-  assert.match(dashboard, /text-\[15px\] font-semibold tracking-tight/);
+  assert.match(dashboard, /text-base font-semibold tracking-tight/);
   assert.match(dashboard, /text-\[13px\] leading-5 text-slate-700/);
   assert.match(dashboard, /font-mono text-\[13px\]/);
   assert.match(display, /data\.users\.total/);
@@ -327,7 +336,7 @@ test("single live Active users card preserves consent and unavailable semantics 
  const snapshot = display.slice(display.indexOf('aria-label="Operations Snapshot"'), display.indexOf('aria-label="Attention Required"'));
  assert.match(service, /getWebsitePresenceSnapshot\(environment, now\)/);
  assert.match(service, /journeys: journeys.data/);
- assert.match(snapshot, />Active users<\/p>/);
+ assert.match(snapshot, />Active website users<\/p>/);
  assert.match(snapshot, /data.websitePresence.status === "ok"/);
  assert.match(snapshot, /data.websitePresence.total/);
  assert.match(snapshot, /"Unavailable"/);
@@ -381,7 +390,7 @@ test("Phase 4 clarifies time windows, provider readiness, and absent observation
   assert.match(display, /Current account and workflow totals/);
   assert.match(display, /live website activity from the last 90 seconds/);
   assert.match(display, /journeys and human actions use the selected reporting range/);
-  assert.match(display, /Degraded, failing or not-ready integrations/);
+  assert.match(display, /Providers failing, degraded or not ready|Degraded, failing or not-ready integrations/);
   assert.match(display, /p\.operationalState === "NOT_READY"/);
   assert.match(display, /inactivity may remain/);
   assert.match(display, /Success means the operation completed, not that offers were returned/);
@@ -392,7 +401,7 @@ test("Phase 4 clarifies time windows, provider readiness, and absent observation
   assert.match(dashboard, /Credentials configured \(not tested\)/);
   assert.match(dashboard, /No keys configured/);
   assert.match(dashboard, /No timing recorded/);
-  assert.match(display, /Human-attributed audit rows/);
+  assert.match(display, /data\.audit\.human/);
 });
 
 test("Phase 5 required-gate verification guards against fabricated or silently lost Overview counts", () => {
@@ -430,4 +439,27 @@ test("all Overview diagnostic details remain visible with no disclosure controls
   assert.match(page, /<AdminOverviewSecondary system=\{system\} activity=\{activity\} \/>/);
   assert.match(page, /hideHeader/);
 
+});
+
+test("final Overview polish keeps real data bindings, correct health semantics and visitor-first layout", () => {
+  const order = [
+    'aria-label="Operations Snapshot"',
+    'aria-label="Attention Required"',
+    'aria-label="Visitor Activity & Search Performance"',
+    'aria-label="Provider Operational Health"',
+    'aria-label="Operational Workloads"',
+    "<PlatformHealth system={system} />",
+    "<ActivityFeed activity={activity} />",
+  ].map(label => display.indexOf(label));
+  assert.ok(order.every(index => index > -1));
+  assert.deepEqual(order, [...order].sort((a, b) => a - b));
+  assert.match(dashboard, /readinessLabel\(provider\.readinessState\)/);
+  assert.match(dashboard, /operationalLabel\(provider\.operationalState\)/);
+  assert.match(dashboard, /value === "READY" \? "Configured for calls"/);
+  assert.match(dashboard, /value === "FAILING"\) return "Requests failing"/);
+  assert.match(dashboard, /provider\.serviceBreakdown\.map/);
+  assert.match(dashboard, /provider\.averageLatencyMs/);
+  assert.match(display, /data\.websitePresence\.total/);
+  assert.match(display, /data\.journeys\.operationalHandoffs\.exactSearchLinks/);
+  assert.match(display, /data\.audit\.human/);
 });
