@@ -98,12 +98,13 @@ function SearchDetailContent({ search }: { search: AdminSearchDetail }) {
               <p className="text-[13px] font-semibold text-[#111827]">
                 {search.identity.kind === "registered"
                   ? search.searcher.name || search.searcher.email || "Registered account"
-                  : search.identity.kind === "guest" ? "Guest visitor" : search.operationalSessionId ? "Guest search session" : "Unidentified visitor"}
+                  : search.identity.kind === "guest" && !search.identity.visitorId && search.operationalSessionId ? "Guest search session"
+                  : search.identity.kind === "guest" ? "Guest visitor" : "Unidentified visitor"}
               </p>
               {search.identity.kind === "registered" && search.searcher.name && search.searcher.email ? (
                 <p className="mt-0.5 break-words text-[12px] text-[#6B7280]">{search.searcher.email}</p>
               ) : null}
-              <p className="mt-0.5 text-[12px] text-[#6B7280]">{search.operationalSessionId && search.identity.kind === "unattributed" ? "Operational session (no account linked)" : searchDetailIdentityLabel(search.identity.kind)}</p>
+              <p className="mt-0.5 text-[12px] text-[#6B7280]">{search.operationalSessionId && search.identity.kind === "guest" && !search.identity.visitorId ? "Operational session (no account linked)" : searchDetailIdentityLabel(search.identity.kind)}</p>
             </div>
             {search.searcher.activity ? (
               <Link
