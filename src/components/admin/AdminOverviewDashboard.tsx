@@ -505,7 +505,9 @@ export function AdminOverviewDashboard({
             <div className="mt-3">
               <DetailRow label="Operational searches" value={data.journeys.operationalSearches.total} />
               <DetailRow label="Failed searches" value={data.journeys.operationalSearches.failed} />
-              <DetailRow label="Partial results" value={data.journeys.operationalSearches.partial} />
+              <DetailRow label="Partial searches" value={data.journeys.operationalSearches.partial} />
+              <DetailRow label="Partial with offers" value={data.journeys.operationalSearches.partialWithResults} />
+              <DetailRow label="Partial without offers" value={data.journeys.operationalSearches.partialWithoutResults} />
             </div>
           </section>
           <section className="min-w-0 border-t border-slate-200/90 py-4">
