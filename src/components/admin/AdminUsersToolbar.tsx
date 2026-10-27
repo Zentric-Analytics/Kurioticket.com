@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, useTransition, type FormEvent, type MouseEvent, type ReactNode } from "react";
 import { LoaderCircle, Search } from "lucide-react";
 import { AdminDirectorySelect } from "./AdminDirectorySelect";
-import { SearchMonitorSelect } from "./SearchMonitorSelect";
 import { useRouter } from "next/navigation";
 import type { AdminIdentityDate, AdminIdentitySort } from "@/lib/adminIdentityDirectory";
 
@@ -248,8 +247,8 @@ export function AdminUsersToolbar({
         <input type="hidden" name="tab" value={tab} readOnly />
         {tab === "GUEST" ? <input type="hidden" name="status" value={status} readOnly /> : null}
 
-        <SearchMonitorSelect key={"date-" + date + "-" + selectorVersion} name="date" label="Date range"
-          value={customOpen ? "custom" : date} options={dateOptions} appearance="plain" align="end" onValueChange={changeDate} />
+        <AdminDirectorySelect key={"date-" + date + "-" + selectorVersion} name="date" label="Date range" nativeExcludeValues={["custom"]}
+          value={customOpen ? "custom" : date} options={dateOptions} plain align="end" onValueChange={changeDate} />
         <AdminDirectorySelect key={"role-" + role} name="role" label="Account role" value={role} options={roles}
           plain align="end" onValueChange={next => navigate({ role: next })} />
         {tab !== "GUEST" ? <AdminDirectorySelect key={"status-" + status} name="status" label="Account status"
