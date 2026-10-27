@@ -99,12 +99,15 @@ try {
       if (width >= 768) {
         assert.ok(Math.abs(fields.input.y - fields.sort.y) <= 2, "Search and Sort share the first desktop row");
         assert.ok(fields.sort.x > fields.input.x + fields.input.w - 2, "Sort stays to search's right");
+      } else {
+        assert.ok(fields.sort.y > fields.input.y, "Sort moves below search on small viewports");
+      }
+      if (width >= 1024) {
         assert.ok(Math.abs(fields.tabs.bottom - (fields.role.y + fields.role.h)) < 10, "Filter controls align with tab bottom");
         assert.ok(fields.tableScrollWidth <= fields.tableClientWidth + 1, "Desktop table fits");
       } else {
-        assert.ok(fields.sort.y > fields.input.y, "Sort moves below search on small viewports");
-        assert.ok(Math.abs(fields.role.y - fields.status.y) <= 2, "Role and Status share the mobile row");
-        assert.ok(Math.abs(fields.role.w - fields.status.w) <= 4, "Mobile filters get equal widths");
+        assert.ok(Math.abs(fields.role.y - fields.status.y) <= 2, "Role and Status share the narrow-viewport row");
+        assert.ok(Math.abs(fields.role.w - fields.status.w) <= 4, "Narrow-viewport filters get equal widths");
         assert.ok(fields.tableScrollWidth > fields.tableClientWidth, "Only the table can scroll horizontally");
       }
       const selected = tabs().getByRole("link", { name: "All (30)" });
