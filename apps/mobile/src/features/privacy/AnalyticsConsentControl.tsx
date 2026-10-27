@@ -22,6 +22,12 @@ export function AnalyticsConsentControl() {
   return <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
     <View style={styles.row}>
       <FlowIcon strokeWidth={1.3} name="shield" color={theme.dark ? theme.icon : "#1A1A1A"} />
+      <Text style={[styles.label, { color: theme.dark ? theme.text : "#1A1A1A" }]}>Essential app functions</Text>
+      <Text style={{ color: theme.muted, fontSize: 12 }}>Always active</Text>
+    </View>
+    <Text style={[styles.description, { color: theme.muted }]}>Security, authentication, and necessary search functionality operate independently of optional analytics.</Text>
+    <View style={styles.row}>
+      <FlowIcon strokeWidth={1.3} name="shield" color={theme.dark ? theme.icon : "#1A1A1A"} />
       <Text style={[styles.label, { color: theme.dark ? theme.text : "#1A1A1A" }]}>Analytics sharing</Text>
       <Switch
         accessibilityLabel="Analytics sharing"

@@ -76,6 +76,7 @@ export function AnalyticsConsentBridge() {
 function WebsiteAnalyticsConsentBridge() {
   const { data: session, status } = useSession();
   const [choice, setChoice] = useState<AnalyticsConsentChoice>(null);
+  const [draftAnalytics, setDraftAnalytics] = useState(false);
   const [ready, setReady] = useState(false);
   const [editing, setEditing] = useState(false);
   const [dismissed, setDismissed] = useState(false);
@@ -159,6 +160,7 @@ function WebsiteAnalyticsConsentBridge() {
         choiceRef.current = initialChoice;
         if (initialChoice) saveFailedRef.current = !saveChoice(initialChoice);
         setChoice(initialChoice);
+        setDraftAnalytics(initialChoice === "granted");
       }
       setReady(true);
     }
@@ -174,11 +176,13 @@ function WebsiteAnalyticsConsentBridge() {
       choiceRef.current = nextChoice;
       saveFailedRef.current = false;
       setChoice(nextChoice);
+      setDraftAnalytics(nextChoice === "granted");
       setDismissed(false);
     }
     function openSettings() {
       returnFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
       if (isDenied()) { choiceRef.current = "declined"; setChoice("declined"); }
+      setDraftAnalytics(choiceRef.current === "granted");
       setEditing(true);
     }
     window.addEventListener("storage", handleStorage);
@@ -272,6 +276,7 @@ function WebsiteAnalyticsConsentBridge() {
     window.dispatchEvent(new CustomEvent(analyticsConsentChangedEvent, { detail: { confirmed: false } }));
     saveFailedRef.current = !saveChoice(nextChoice);
     setChoice(nextChoice);
+    setDraftAnalytics(nextChoice === "granted");
     setDismissed(false);
     decisionPendingRef.current = true;
     setDecisionPending(true);
@@ -281,28 +286,63 @@ function WebsiteAnalyticsConsentBridge() {
   if (!ready || (!editing && !(choice === null && !dismissed) && !decisionPending)) return null;
 
   return (
-    <section
-      role={editing ? "dialog" : "region"}
-      aria-modal={editing ? false : undefined}
-      aria-labelledby="analytics-consent-title"
-      className="fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-[80] max-h-[80dvh] overflow-y-auto rounded-xl border border-border bg-surface p-4 text-navy shadow-lg sm:left-4 sm:right-auto sm:w-[420px]"
-    >
-      <div className="flex items-start justify-between gap-3">
-        <h2 id="analytics-consent-title" ref={titleRef} tabIndex={-1} className="text-base font-semibold outline-none">Privacy choices</h2>
-        <button type="button" aria-label="Close privacy choices" onClick={close} className="focus-ring -mr-1 -mt-1 rounded-md p-1.5"><X className="size-4" aria-hidden="true" /></button>
-      </div>
-      <p className="mt-2 text-sm leading-5 text-slate-600">
-        Allow optional analytics to help us understand searches and provider handoffs. If you sign in, this activity can be linked to your account. You can change your choice in Privacy settings.
-      </p>
-      {editing && syncState === "saved" ? <p className="mt-2 text-sm">Analytics: {choice === "granted" ? "allowed" : "declined"}.</p> : null}
-      <p role="status" aria-live="polite" className="mt-2 text-sm text-slate-600">
-        {syncState === "saving" ? "Saving your choice…" : syncState === "error" ? "We could not update analytics yet. Please retry." : null}
-      </p>
-      <div className="mt-3 flex flex-wrap gap-2">
-        <Button type="button" variant="secondary" size="sm" className="flex-1" onClick={() => choose("declined")}>Decline</Button>
-        <Button type="button" variant="primary" size="sm" className="flex-1" onClick={() => choose("granted")}>Allow analytics</Button>
-        {syncState === "error" ? <Button type="button" variant="ghost" size="sm" onClick={retry}>Retry</Button> : null}
-      </div>
-    </section>
+    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/30 p-3 sm:p-6">
+      <section
+        role="dialog"
+        aria-modal="false"
+        aria-labelledby="analytics-consent-title"
+        className="flex max-h-[min(86dvh,670px)] w-full max-w-[520px] flex-col overflow-hidden rounded-xl border border-border bg-surface text-navy shadow-xl"
+      >
+        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+          <h2 id="analytics-consent-title" ref={titleRef} tabIndex={-1} className="text-lg font-semibold outline-none">Cookie preferences</h2>
+          <button type="button" aria-label="Close cookie preferences" onClick={close} className="focus-ring rounded-md p-1.5"><X className="size-4" aria-hidden="true" /></button>
+        </div>
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-4">
+          <p className="text-sm leading-6 text-slate-600">
+            Essential cookies support secure sign-in and necessary website functions. Optional analytics help us understand searches and improve Kurioticket. You can update your preferences at any time.
+          </p>
+          <Button type="button" variant="primary" size="sm" className="w-full" onClick={() => choose("granted")}>Accept all optional cookies</Button>
+          <h3 className="text-sm font-semibold">Manage consent preferences</h3>
+          <details className="border-b border-slate-200 pb-3">
+            <summary className="flex cursor-pointer items-center justify-between gap-3 py-2 text-sm font-semibold">
+              <span>Essential cookies</span>
+              <span className="text-xs font-medium text-slate-500">Always active</span>
+            </summary>
+            <p className="pt-2 text-sm leading-5 text-slate-600">
+              Necessary for authentication, security, and the operation of requested search features. They are not optional analytics tracking.
+            </p>
+          </details>
+          <details className="border-b border-slate-200 pb-3">
+            <summary className="flex cursor-pointer items-center justify-between gap-3 py-2 text-sm font-semibold">
+              <span>Analytics cookies</span>
+              <span className="text-xs font-medium text-slate-500">Optional</span>
+            </summary>
+            <p className="pt-2 text-sm leading-5 text-slate-600">
+              With your permission, helps us measure search and provider handoff behaviour across visits. This is separate from necessary search-session continuity.
+            </p>
+          </details>
+          <label className="flex cursor-pointer items-center justify-between gap-3 text-sm font-medium">
+            <span>Allow optional analytics</span>
+            <input
+              type="checkbox"
+              checked={draftAnalytics}
+              onChange={event => setDraftAnalytics(event.target.checked)}
+              className="h-5 w-5 accent-violet-700"
+            />
+          </label>
+          {editing && syncState === "saved" ? <p className="text-xs text-slate-600">Analytics: {choice === "granted" ? "allowed" : "disabled"}.</p> : null}
+          <p role="status" aria-live="polite" className="text-sm text-slate-600">
+            {syncState === "saving" ? "Saving your choice…" : syncState === "error" ? "We could not update your preferences. Please retry." : null}
+          </p>
+        </div>
+        <div className="flex items-center justify-between gap-3 border-t border-slate-200 px-5 py-4">
+          <a href="/legal/cookie-policy" className="text-xs font-medium text-violet-700 underline underline-offset-2">Cookie policy</a>
+          <div className="flex gap-2">
+            {syncState === "error" ? <Button type="button" variant="secondary" size="sm" onClick={retry}>Retry</Button> : null}
+            <Button type="button" variant="primary" size="sm" onClick={() => choose(draftAnalytics ? "granted" : "declined")}>Save preferences</Button>
+          </div>
+        </div>
+      </section>
+    </div>
   );
 }

@@ -66,6 +66,8 @@ export type AdminOperationalIdentity = {
 export type AdminSearchRead = {
   id: string;
   requestId: string | null;
+  /** Internal search-continuity reference, not an analytics visitor identity. */
+  operationalSessionId: string | null;
   identity: AdminOperationalIdentity;
   product: AdminSearchProduct;
   origin: string | null;

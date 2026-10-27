@@ -1,4 +1,5 @@
 import { after } from "next/server";
+import { attachOperationalSearchSession, prepareOperationalSearchSession } from "@/lib/operationalSearchSession";
 import { resolveSearchRequestId } from "@/lib/search-journey";
 import { resolveRequestActivityIdentity } from "@/services/requestActivityIdentity";
 import { logProviderCall, logSearchHistory, trackAnalyticsEvent } from "@/services/analyticsService";
@@ -42,6 +43,8 @@ export async function POST(request: Request) {
   try { body = await request.json(); } catch { return Response.json({ error: "Invalid JSON request body.", requestId }, { status: 400, headers: noStore }); }
   const search = canonicalSearch(body);
   if (!search) return Response.json({ error: "Invalid car search parameters.", requestId }, { status: 400, headers: noStore });
+  const operationalSession = prepareOperationalSearchSession(request);
+  const recordedSearch = { ...search, ...(operationalSession ? { operationalSessionId: operationalSession.reference.id } : {}) };
   const started = performance.now();
   const recordSearch = (resultCount: number, status: "SUCCESS" | "PARTIAL" | "FAILED") => {
     after(async () => {
@@ -51,7 +54,7 @@ export async function POST(request: Request) {
           logSearchHistory({
             userId, visitorId, requestId, type: "CAR",
             origin: search.pickupLocation, destination: search.dropoffLocation,
-            query: search, resultCount, latencyMs: Math.max(0, Math.round(performance.now() - started)), status,
+            query: recordedSearch, resultCount, latencyMs: Math.max(0, Math.round(performance.now() - started)), status,
           }),
           trackAnalyticsEvent({
             userId, visitorId, type: "SEARCH", name: "car_search",
@@ -84,7 +87,7 @@ export async function POST(request: Request) {
           // Provider diagnostics are optional and must not affect the search response.
         }
       });
-      return Response.json({ ...response, code: "SEARCH_UNSUPPORTED", error: "The available providers cannot search these rental options. Please change your search." }, { status: 422, headers: noStore });
+      return attachOperationalSearchSession(Response.json({ ...response, code: "SEARCH_UNSUPPORTED", error: "The available providers cannot search these rental options. Please change your search." }, { status: 422, headers: noStore }), operationalSession);
     }
     if (status === "unavailable") {
       recordSearch(0, "FAILED");
@@ -104,7 +107,7 @@ export async function POST(request: Request) {
           // Provider diagnostics are optional and must not affect the search response.
         }
       });
-      return Response.json({ ...response, error: "Car search is temporarily unavailable." }, { status: 503, headers: noStore });
+      return attachOperationalSearchSession(Response.json({ ...response, error: "Car search is temporarily unavailable." }, { status: 503, headers: noStore }), operationalSession);
     }
     const searchStatus = providerStatuses.some((provider) => provider.status === "failed") ? "PARTIAL" : "SUCCESS";
     recordSearch(results.length, searchStatus);
@@ -124,9 +127,9 @@ export async function POST(request: Request) {
         // Provider diagnostics are optional and must not affect the search response.
       }
     });
-    return Response.json(response, { headers: noStore });
+    return attachOperationalSearchSession(Response.json(response, { headers: noStore }), operationalSession);
   } catch {
     recordSearch(0, "FAILED");
-    return Response.json({ error: "Car search is temporarily unavailable.", requestId }, { status: 500, headers: noStore });
+    return attachOperationalSearchSession(Response.json({ error: "Car search is temporarily unavailable.", requestId }, { status: 500, headers: noStore }), operationalSession);
   }
 }

@@ -1,4 +1,5 @@
 import { after, NextResponse } from "next/server";
+import { attachOperationalSearchSession, prepareOperationalSearchSession } from "@/lib/operationalSearchSession";
 import { getClientIp, checkRateLimit } from "@/lib/rate-limit";
 import { toPublicFlight } from "@/lib/searchCache";
 import { flightSearchSchema } from "@/lib/validation";
@@ -28,6 +29,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Search needs a little more detail.", issues: parsed.error.flatten() }, { status: 400 });
   }
 
+  const operationalSession = prepareOperationalSearchSession(request);
+  const operationalQuery = (query: Record<string, unknown>) => ({ ...query, ...(operationalSession ? { operationalSessionId: operationalSession.reference.id } : {}) });
   const mobilePlatformHeader = request.headers.get("x-mobile-platform")?.trim().toLowerCase();
   const mobilePlatform = mobilePlatformHeader === "android" || mobilePlatformHeader === "ios"
     ? mobilePlatformHeader
@@ -79,7 +82,7 @@ export async function POST(request: Request) {
           logSearchHistory({
             userId, visitorId, requestId, type: "FLIGHT",
             origin: parsed.data.origin, destination: parsed.data.destination,
-            query: parsed.data, resultCount: 0, latencyMs: aggregate.latencyMs, status: "FAILED",
+            query: operationalQuery(parsed.data), resultCount: 0, latencyMs: aggregate.latencyMs, status: "FAILED",
           }),
           ...aggregate.providerStatuses.map((provider) =>
             logProviderCall({
@@ -96,7 +99,7 @@ export async function POST(request: Request) {
       } catch (error) { console.error("[flight-search:logging]", error); }
     });
 
-    return NextResponse.json(
+    return attachOperationalSearchSession(NextResponse.json(
       {
         error: aggregate.unavailableMessage,
         results: [],
@@ -107,7 +110,7 @@ export async function POST(request: Request) {
         requestId,
       },
       { status: 503, headers: { "Server-Timing": serverTiming } },
-    );
+    ), operationalSession);
   }
 
   const publicResults = aggregate.results.map(toPublicFlight);
@@ -125,7 +128,7 @@ export async function POST(request: Request) {
       type: "FLIGHT",
       origin: parsed.data.origin,
       destination: parsed.data.destination,
-      query: parsed.data,
+      query: operationalQuery(parsed.data),
       resultCount: publicResults.length,
       latencyMs: aggregate.latencyMs,
       status,
@@ -178,11 +181,11 @@ export async function POST(request: Request) {
     legCount,
     segmentCount,
   });
-  return new Response(serializedResponse, {
+  return attachOperationalSearchSession(new Response(serializedResponse, {
     headers: {
       "Content-Type": "application/json; charset=utf-8",
       "Content-Length": String(responseBytes),
       "Server-Timing": serverTiming,
     },
-  });
+  }), operationalSession);
 }
