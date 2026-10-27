@@ -93,7 +93,7 @@ export function AdminUsersToolbar({
     if (customOpen) return;
     setCustomOpen(false);
     setDraftDates({from,to});
-  }, [pageHref, from, to]);
+  }, [pageHref, from, to, customOpen]);
 
   useEffect(() => {
     const onHistoryNavigation = () => {
@@ -275,7 +275,7 @@ export function AdminUsersToolbar({
           className="mt-1 block h-11 min-w-0 rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px] text-[#020617]"/>
       </label>
       <button type="button" disabled={!validCustom || isPending}
-        onClick={() => navigate({date:"custom",from:draftDates.from,to:draftDates.to})}
+        onClick={() => { setCustomOpen(false); navigate({date:"custom",from:draftDates.from,to:draftDates.to}); }}
         className="h-11 rounded-lg bg-[#004BB8] px-4 text-[13px] font-medium text-white disabled:cursor-not-allowed disabled:opacity-40">Apply dates</button>
       <button type="button" onClick={() => { setCustomOpen(false); setDraftDates({from,to}); setSelectorVersion(version => version + 1); }}
         className="h-11 px-2 text-[13px] font-medium text-[#475569] hover:underline">Cancel</button>
