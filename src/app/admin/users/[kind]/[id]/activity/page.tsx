@@ -165,8 +165,8 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
       <span className="font-medium text-[#020617]">Activity</span>
     </nav>
 
-    <section aria-label="Customer identity" className="rounded-lg border border-[var(--border)] p-5">
-      <div className="flex flex-wrap items-center justify-between gap-5">
+    <section aria-label="Customer identity" className="py-3 sm:py-4">
+      <div className="flex flex-wrap items-center justify-between gap-x-8 gap-y-5">
         <div className="flex min-w-0 items-center gap-4">
           <span aria-hidden="true" className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[var(--muted)] text-xl font-semibold">{(kind === "guest" ? "G" : (data.title || "U").slice(0,1)).toUpperCase()}</span>
           <div className="min-w-0">
@@ -176,19 +176,19 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
             <div className="mt-1 flex items-center gap-2"><code className="max-w-[240px] truncate text-xs" title={id}>{id}</code><CopyIdentityId id={id} kind={kind}/></div>
           </div>
         </div>
-        <dl className="grid w-full grid-cols-2 gap-3 sm:w-auto sm:grid-cols-4">
+        <dl className="grid w-full grid-cols-2 gap-x-3 gap-y-4 sm:w-auto sm:grid-cols-4 sm:gap-x-5">
           <Fact label={kind === "guest" ? "First seen" : "Joined"}>{format(data.firstSeenAt)}</Fact>
           <Fact label="Last active">{data.lastSeenAt ? format(data.lastSeenAt) : "—"}</Fact>
           <Fact label="Events">{data.events.length}{data.nextCursor ? "+" : ""}</Fact>
           <Fact label="Journeys">{new Set(data.events.filter(e => e.journeyId).map(e => e.journeyId)).size}{data.nextCursor ? "+" : ""}</Fact>
         </dl>
       </div>
-      <div className="mt-4 flex justify-end" aria-label="Identity management">{kind === "user"
+      <div className="mt-2 flex justify-end" aria-label="Identity management">{kind === "user"
         ? <RegisteredManage id={id} email={data.email} role={data.role || "USER"} status={data.status} actorId={session.user.id}/>
         : <GuestTrackingActions visitorId={id} backHref={backHref}/>}</div>
     </section>
 
-    <section aria-label="Activity filters" className="min-w-0 space-y-4">
+    <section aria-label="Activity filters" className="min-w-0 space-y-7 border-t border-[var(--border)] pt-5 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
       <nav aria-label="Activity tabs" className="flex max-w-full gap-7 overflow-x-auto border-b border-[#D8E1EC]">
         {tabs.map(tab => <Link key={tab.value}
           href={activityHref(basePath, queryParams, { tab: tab.value, cursor: null })}
@@ -203,11 +203,11 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
           from:filters.from,to:filters.to,range:typeof raw.range === "string" && ["7d","30d","custom"].includes(raw.range) ? raw.range : (filters.from || filters.to ? "custom" : "all")}}/>
     </section>
 
-    <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_260px]">
+    <div className="grid min-w-0 gap-8 lg:grid-cols-[minmax(0,1fr)_260px]">
       <ActivityTimeline events={data.events} nextHref={nextHref} environment={environment} order={order}
         clearHref={activityHref(basePath, queryParams, {q:null,from:null,to:null,range:null,product:null,stage:null,order:null,cursor:null})}/>
       <aside className="min-w-0 space-y-4">
-        <section aria-label="Activity summary" className="rounded-lg border border-[var(--border)] p-4">
+        <section aria-label="Activity summary" className="pb-3">
           <h2 className="mb-3 text-sm font-semibold">Activity summary</h2>
           {[
             ["Searches", data.events.filter(e => e.stage === "SEARCH_COMPLETED").length],
@@ -218,11 +218,11 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
           </div>)}
           <p className="mt-2 text-xs text-[var(--muted-foreground)]">Counts reflect loaded events only.</p>
         </section>
-        <section aria-labelledby="activity-related-title" className="rounded-lg border border-[var(--border)] p-4">
+        <section aria-labelledby="activity-related-title" className="pb-3">
           <h2 id="activity-related-title" className="mb-2 text-sm font-semibold">Related records</h2>
           {related.map(({href,title}) => <Link key={href} href={href} className="focus-ring flex items-center justify-between rounded-sm border-b border-[var(--border)] py-3 text-sm last:border-0 hover:underline">{title}<ChevronRight size={16}/></Link>)}
         </section>
-        <p className="flex items-start gap-2 rounded-lg border border-[var(--border)] bg-[var(--muted)] p-3 text-xs leading-5 text-[var(--muted-foreground)]">
+        <p className="flex items-start gap-2 border-t border-[var(--border)] pt-5 text-xs leading-5 text-[var(--muted-foreground)]">
           <Info size={16} className="mt-0.5 shrink-0" aria-hidden="true"/>
           <span>{kind === "guest" ? <>Only recorded, consented {environment} activity is displayed. </> : <>Only recorded {environment} account activity is displayed; linked visitor activity requires analytics consent. </>}
             Missing records do not establish that no visit occurred. Provider handoffs are not proof of a booking or payment.</span>
