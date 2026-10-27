@@ -22,7 +22,7 @@ export function ActivityFiltersBar({ path, initial, directory }: { path: string;
   const [pending, startTransition] = useTransition();
   const timeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const submitted = useRef("");
-  useEffect(() => { setValues(initial); }, [initial.tab, initial.q, initial.product, initial.stage, initial.order, initial.from, initial.to, initial.range]);
+  useEffect(() => { if (timeout.current) clearTimeout(timeout.current); submitted.current = ""; setValues(initial); }, [initial.tab, initial.q, initial.product, initial.stage, initial.order, initial.from, initial.to, initial.range]);
   useEffect(() => () => { if (timeout.current) clearTimeout(timeout.current); }, []);
   const navigate = (next: Values) => {
     const params = new URLSearchParams();
