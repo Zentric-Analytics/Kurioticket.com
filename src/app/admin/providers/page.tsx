@@ -5,6 +5,7 @@ import { ProviderRetestButton } from "@/components/admin/ProviderRetestButton";
 import { formatDateTime, getProviderStatuses } from "@/lib/admin-data";
 import { filterProviderStatuses, normalizeProductFilter, productFilters } from "@/lib/adminProviderFilters";
 import { getProviderOperationalStatuses } from "@/services/providerOperationalStatus";
+import { formatProviderFailureRatePct } from "@/services/providerOperationalStatusCore";
 
 export const metadata = { title: "Admin Providers" };
 
@@ -80,7 +81,7 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
                   <Stat label="Readiness" value={provider.readinessState.replaceAll("_", " ")} />
                   <Stat label="Total calls" value={String(provider.totalCalls)} />
                   <Stat label="Attempted calls" value={String(provider.attemptedCalls)} />
-                  <Stat label="Failure rate" value={provider.failureRatePct === null ? "No attempts" : provider.failureRatePct + "%"} />
+                  <Stat label="Failure rate" value={formatProviderFailureRatePct(provider.failureRatePct, provider.failedCalls)} />
                   <Stat label="Success" value={String(provider.successCalls)} />
                   <Stat label="Failed" value={String(provider.failedCalls)} />
                   <Stat label="Degraded" value={String(provider.degradedCalls)} />
@@ -93,7 +94,7 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
                   {provider.serviceBreakdown.map(service => (
                     <div key={service.service} className="border-b border-slate-200 py-2 text-xs text-slate-700">
                       <p className="font-semibold">{service.service.replaceAll("-", " ")} · {service.operationalState.replaceAll("_", " ")}</p>
-                      <p className="mt-1">{service.attemptedCalls} attempts · {service.successCalls} successful · {service.failedCalls} failed · {service.disabledCalls} disabled · {service.failureRatePct === null ? "No attempts" : service.failureRatePct + "% failed"}</p>
+                      <p className="mt-1">{service.attemptedCalls} attempts · {service.successCalls} successful · {service.failedCalls} failed · {service.disabledCalls} disabled · {formatProviderFailureRatePct(service.failureRatePct, service.failedCalls)} failed</p>
                       {service.failureReasons.map(reason => <p key={reason.code} className="mt-1 text-slate-600">{reason.label}: {reason.calls}</p>)}
                     </div>
                   ))}

@@ -89,9 +89,17 @@ function validCount(value: number) {
   return value;
 }
 
+/** Preserve tenths so a real failure does not appear as a misleading 0%. */
 export function providerFailureRatePct(counts: CallCounts): number | null {
   const n = attempted(counts);
-  return n === 0 ? null : Math.round(100 * counts.failed / n);
+  return n === 0 ? null : Math.round(1000 * counts.failed / n) / 10;
+}
+
+/** Share the same honest percentage display across Overview and Providers. */
+export function formatProviderFailureRatePct(rate: number | null, failedCalls: number): string {
+  if (rate === null) return "No attempts";
+  if (failedCalls > 0 && rate === 0) return "<0.1%";
+  return rate.toFixed(1) + "%";
 }
 
 /**
