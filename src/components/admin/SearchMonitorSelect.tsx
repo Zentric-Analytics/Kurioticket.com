@@ -167,7 +167,7 @@ export function SearchMonitorSelect({
           }
         }}
         className={
-          "inline-flex h-9 min-w-0 cursor-pointer items-center justify-start gap-[5px] whitespace-nowrap bg-transparent text-left text-[12px] font-semibold text-[#475569] transition-colors hover:text-[#111827] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 " +
+          "inline-flex h-9 min-w-0 cursor-pointer items-center justify-start gap-[5px] whitespace-nowrap bg-transparent text-left text-[13px] font-semibold text-[#475569] transition-colors hover:text-[#111827] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 " +
           (appearance === "plain"
             ? "px-0"
             : "w-full border-b border-[#AEB8C6] px-0 focus-visible:border-[#004BB8]")
