@@ -3,13 +3,12 @@ import { AdminIdentityTable, type IdentityRow } from "@/components/admin/AdminId
 import { AdminUsersToolbar } from "@/components/admin/AdminUsersToolbar";
 import { withOptionalDb } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/auth-guards";
-import { getAdminIdentityPagination } from "@/lib/adminIdentityPagination";
 import { adminIdentityPageSql, escapePrismaContainsQuery, parseAdminIdentitySort, parseAdminIdentityDate, adminIdentityDateBounds, type AdminIdentityReference } from "@/lib/adminIdentityDirectory";
 
 export const metadata = { title: "Admin Users" };
 type PageProps = { searchParams?: Promise<{ q?: string; role?: string; status?: string; tab?: string; identity?: string; activity?: string; page?: string; sort?: string; date?: string }> };
-// Fixed maximum per page; shorter results show every matching identity.
-const PAGE_SIZE = 100;
+// Keep each SQL query bounded; fetch all matches in chunks for a continuous directory.
+const BATCH_SIZE = 100;
 export default async function AdminUsersPage({ searchParams }: PageProps) {
   await requireAdminSession("/admin/users");
   const params = await searchParams;
@@ -59,20 +58,20 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
     ]);
     return { registeredCount, guestCount };
   }, { registeredCount: 0, guestCount: 0 });
-  const { page, count } = getAdminIdentityPagination(
-    params?.page,
-    showUsers ? stats.registeredCount : 0,
-    showGuests ? stats.guestCount : 0,
-    PAGE_SIZE,
-  );
-  // Paginate the *combined* chronological list; do not group users before guests.
+  const count = (showUsers ? stats.registeredCount : 0) + (showGuests ? stats.guestCount : 0);
+  // Retain the combined ordering across chunks; no page controls or 100-row cutoff.
   const result = await withOptionalDb(async db => {
-    const sql = adminIdentityPageSql({
-      query: q, role, status, showUsers, showGuests, sort, date, now,
-      limit: PAGE_SIZE, offset: (page - 1) * PAGE_SIZE,
-    });
-    if (!sql) return { rows: [] as IdentityRow[] };
-    const identities = await db.$queryRaw<AdminIdentityReference[]>(sql);
+    const identities: AdminIdentityReference[] = [];
+    for (let offset = 0; offset < count; offset += BATCH_SIZE) {
+      const sql = adminIdentityPageSql({
+        query: q, role, status, showUsers, showGuests, sort, date, now,
+        limit: BATCH_SIZE, offset,
+      });
+      if (!sql) break;
+      const batch = await db.$queryRaw<AdminIdentityReference[]>(sql);
+      identities.push(...batch);
+      if (batch.length < BATCH_SIZE) break;
+    }
     const userIds = identities.filter(item => item.kind === "user").map(item => item.id);
     const guestIds = identities.filter(item => item.kind === "guest").map(item => item.id);
     const [users, guests] = await Promise.all([
@@ -100,12 +99,12 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
     });
     return { rows };
   }, { rows: [] as IdentityRow[] });
-  const link = (nextPage: number) => "/admin/users?" + new URLSearchParams({ ...(q ? { q } : {}), role, status, tab, sort, date, page: String(nextPage) }).toString();
+  const link = "/admin/users?" + new URLSearchParams({ ...(q ? { q } : {}), role, status, tab, sort, date }).toString();
   return (
     <div className="w-full min-w-0 bg-white">
       <h1 className="sr-only">Users</h1>
       <AdminUsersToolbar query={q} role={role} status={status} tab={tab} sort={sort} date={date}
-        registeredCount={stats.registeredCount} guestCount={stats.guestCount} pageHref={link(page)}>
+        registeredCount={stats.registeredCount} guestCount={stats.guestCount} pageHref={link}>
         <AdminIdentityTable rows={result.rows} page={page} count={count} pageSize={PAGE_SIZE}
           pageHref={link(page)} sort={sort} />
       </AdminUsersToolbar>
