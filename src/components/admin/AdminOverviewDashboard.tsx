@@ -337,7 +337,7 @@ function FunnelStep({
   icon: LucideIcon;
 }) {
   return (
-    <div className="min-w-0 border-b border-slate-200/90 py-3.5 pr-3">
+    <div className="min-w-0 border-b border-r border-slate-200/90 p-3.5">
       <Icon size={19} className="text-indigo-700" aria-hidden="true" />
       <p className="mt-3 text-sm font-medium text-slate-700">{label}</p>
       <p className="mt-1 text-[22px] font-semibold tabular-nums tracking-tight text-slate-950">{count(journeys)}</p>
@@ -358,7 +358,7 @@ function WorkloadCard({
   rows: Array<{ label: string; value: number; detail: string }>;
 }) {
   return (
-    <section className="min-w-0">
+    <section className="min-w-0 rounded-xl border border-slate-200 p-4 sm:p-5">
       <SectionTitle
         title={title}
         icon={Icon}
@@ -454,23 +454,14 @@ export function AdminOverviewDashboard({
           action={<AdminOverviewRangeSelect range={range} />}
         />
         <p className="text-xs leading-5 text-slate-600">Current account and workflow totals · live website activity from the last 90 seconds · journeys and human actions use the selected reporting range.</p>
-        <div className="grid gap-x-6 gap-y-0 sm:grid-cols-2 lg:grid-cols-3">
-          <MetricCard label="Total accounts" value={data.users.total} hint="Current database records, including retained deleted status" icon={Users} tone="info" />
-          <MetricCard label="Enabled accounts" value={data.users.active} hint="Current ACTIVE status, including staff · not online" icon={UserCheck} tone="good" />
+        <div className="mt-4 grid overflow-hidden rounded-lg border-l border-t border-slate-200 sm:grid-cols-2 lg:grid-cols-3">
+          <MetricCard label="Total accounts" value={data.users.total} hint="Current account records, including retained deleted status" icon={Users} tone="info" />
+          <MetricCard label="Enabled accounts" value={data.users.active} hint="ACTIVE account status · not people online" icon={UserCheck} tone="good" />
           <div className="min-w-0 border-b border-slate-200/90 py-3.5 pr-3 sm:pr-4">
             <div className="flex items-center justify-between"><Activity size={19} className={data.websitePresence.status === "ok" ? "text-emerald-700" : "text-slate-500"} aria-hidden="true" /><span className={"h-2 w-2 rounded-full " + (data.websitePresence.status === "ok" ? "bg-emerald-400" : "bg-slate-300")} aria-hidden="true" /></div>
             <p className="mt-2 text-xs font-medium uppercase tracking-wide text-slate-700">Active users</p>
             <p className="mt-1 text-[22px] font-semibold tabular-nums tracking-tight text-slate-950">{data.websitePresence.status === "ok" ? count(data.websitePresence.total) : "Unavailable"}</p>
             <p className="mt-1 text-[13px] leading-5 text-slate-700">{data.websitePresence.status === "ok" ? "Last " + data.websitePresence.windowSeconds + "s · " + count(data.websitePresence.registeredAccounts) + " accounts · " + count(data.websitePresence.guestIdentities) + " guests" : "Live website activity could not be verified"}</p>
-            <details open className="mt-2 text-[12px] leading-5 text-slate-600">
-              <summary className="focus-ring inline-flex cursor-pointer list-none items-center gap-1 font-medium text-indigo-700 [&::-webkit-details-marker]:hidden">
-                <Info size={13} aria-hidden="true" />
-                How it's counted
-              </summary>
-              <p className="mt-1.5">
-                Only consented visitors with a visible website tab and a recent heartbeat are included, excluding native app activity and visitors who decline analytics. This estimates active browser/account identities, not every person online. The 90-second window is independent of the reporting-range selector.
-              </p>
-            </details>
           </div>
           <MetricCard label="Suspended accounts" value={data.users.suspended} hint="Current SUSPENDED account records" icon={UserX} tone="warn" />
           <MetricCard label="Deleted accounts" value={data.users.deleted} hint="Retained DELETED records · excludes permanently erased" icon={Trash2} tone="neutral" />
@@ -479,12 +470,16 @@ export function AdminOverviewDashboard({
           <MetricCard label="Journeys" value={data.journeys.journeys} hint="Distinct consented journeys · selected range" icon={Route} tone="info" />
           <MetricCard label="Human admin actions" value={data.audit.human} hint={"Human-attributed audit rows · selected range · " + count(data.audit.automated) + " system entries excluded"} icon={ShieldCheck} tone="neutral" />
         </div>
+        <div className="mt-3 flex items-start gap-2 rounded-lg border border-indigo-100 bg-indigo-50/50 p-3 text-xs leading-5 text-slate-700" role="note">
+          <Info size={16} className="mt-0.5 shrink-0 text-indigo-700" aria-hidden="true" />
+          <p><span className="font-semibold text-indigo-800">How it's counted:</span> Only consented visitors with a visible website tab and a recent heartbeat are included, excluding native app activity and visitors who decline analytics. This estimates active browser/account identities, not every person online. The 90-second window is independent of the reporting-range selector.</p>
+        </div>
       </section>
 
-      <section className="mt-6" aria-label="Attention Required">
+      <section className="mt-7 border-t border-slate-200 pt-6" aria-label="Attention Required">
         <div>
-          <SectionTitle title="Attention Required" description="Current support and deletion queues · provider performance uses the last 24 hours and includes not-ready integrations." />
-          <div className="grid gap-x-6 gap-y-0 lg:grid-cols-3">
+          <SectionTitle title="Attention Required" description="Current support and deletion queues · provider performance over the last 24 hours." />
+          <div className="grid gap-3 md:grid-cols-3">
             <AttentionCard href="/admin/providers" title="Provider performance" value={providerAttention} tone="bad"
               description={providerAttention ? "Degraded, failing or not-ready integrations" : "No degraded, failing or not-ready integrations · inactivity may remain"} icon={Activity} />
             <AttentionCard href="/admin/support" title="Support queue" value={supportAttention} tone="warn"
@@ -495,8 +490,11 @@ export function AdminOverviewDashboard({
         </div>
       </section>
 
-      <div className="mt-7 grid items-start gap-8 lg:grid-cols-[0.85fr_1.15fr]">
+      <div className="mt-7 border-t border-slate-200 pt-6">
         <PlatformHealth system={system} />
+      </div>
+
+      <div className="mt-7 border-t border-slate-200 pt-6">
         <section className="min-w-0" aria-label="Provider Operational Health">
           <SectionTitle title="Provider Operational Health"
             action={<Link href="/admin/providers" className="focus-ring inline-flex items-center gap-1 text-[13px] font-medium text-indigo-700 hover:underline">View all providers <ArrowUpRight size={13} aria-hidden="true" /></Link>} />
@@ -507,7 +505,7 @@ export function AdminOverviewDashboard({
         </section>
       </div>
 
-      <section className="mt-6" aria-label="Customer Journey Funnel">
+      <section className="mt-7 border-t border-slate-200 pt-6" aria-label="Customer Journey Funnel">
         <SectionTitle
           title="Customer Journey Funnel"
           action={<div className="flex flex-wrap gap-2">
@@ -516,7 +514,7 @@ export function AdminOverviewDashboard({
           </div>}
         />
         <div>
-          <div className="grid gap-x-6 gap-y-0 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid overflow-hidden rounded-lg border-l border-t border-slate-200 sm:grid-cols-2 lg:grid-cols-4">
             <FunnelStep label="Search completed" journeys={funnel.SEARCH_COMPLETED.journeys} events={funnel.SEARCH_COMPLETED.events} icon={Search} />
             <FunnelStep label="Results viewed" journeys={funnel.RESULTS_VIEWED.journeys} events={funnel.RESULTS_VIEWED.events} icon={BookOpen} />
             <FunnelStep label="Offer selected" journeys={funnel.OFFER_SELECTED.journeys} events={funnel.OFFER_SELECTED.events} icon={MousePointerClick} />
@@ -525,8 +523,8 @@ export function AdminOverviewDashboard({
           <p className="mt-3 text-xs leading-5 text-slate-600">Selected reporting range · stages count distinct eligible consented journeys. A search-completed event also includes failed or empty searches; stages can occur out of order and are not a conversion percentage or confirmed booking.</p>
         </div>
 
-        <div className="mt-5 grid gap-8 lg:grid-cols-2">
-          <section className="min-w-0 border-t border-slate-200/90 py-4">
+        <div className="mt-6 grid gap-4 lg:grid-cols-2">
+          <section className="min-w-0 rounded-xl border border-slate-200 p-4 sm:p-5">
             <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-900"><Search size={17} className="text-indigo-700" aria-hidden="true" />Operational Search Health</h3>
             <div className="mt-3">
               <DetailRow label="Operational searches" value={data.journeys.operationalSearches.total} />
@@ -538,7 +536,7 @@ export function AdminOverviewDashboard({
               <p className="mt-2 text-xs leading-5 text-slate-600">Selected range · database search outcomes, including searches without consented journeys. Success means the operation completed, not that offers were returned. Partial may contain zero offers.</p>
             </div>
           </section>
-          <section className="min-w-0 border-t border-slate-200/90 py-4">
+          <section className="min-w-0 rounded-xl border border-slate-200 p-4 sm:p-5">
             <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-900"><Route size={17} className="text-indigo-700" aria-hidden="true" />Handoff Correlation</h3>
             <div className="mt-3">
               <DetailRow label="Recorded provider redirects" value={data.journeys.operationalHandoffs.total} />
@@ -553,7 +551,7 @@ export function AdminOverviewDashboard({
         </div>
       </section>
 
-      <div className="mt-7 grid items-start gap-8 lg:grid-cols-2">
+      <div className="mt-7 grid items-start gap-4 border-t border-slate-200 pt-6 lg:grid-cols-2">
         <WorkloadCard title="Support Workload" href="/admin/support" icon={Headphones} rows={[
           { label: "Open", value: data.support.open, detail: "New / active tickets" },
           { label: "Waiting on team", value: data.support.waitingOnTeam, detail: "Needs internal action" },
@@ -568,7 +566,7 @@ export function AdminOverviewDashboard({
         ]} />
       </div>
 
-      <div className="mt-7 min-w-0">
+      <div className="mt-7 min-w-0 border-t border-slate-200 pt-6">
         <ActivityFeed activity={activity} />
       </div>
     </div>
