@@ -4,6 +4,7 @@ import { getClientIp, checkRateLimit } from "@/lib/rate-limit";
 import { toPublicHotel } from "@/lib/searchCache";
 import { hotelSearchSchema } from "@/lib/validation";
 import { classifyHotels } from "@/lib/travel/searchContract";
+import { hotelSearchRecordedStatus } from "@/lib/hotelSearchRecordedStatus";
 import { logProviderCall, logSearchHistory, trackAnalyticsEvent } from "@/services/analyticsService";
 import {
   searchHotels,
@@ -131,9 +132,7 @@ export async function POST(request: Request) {
       latencyMs: provider.latencyMs, error: sanitizeProviderError(provider.error),
     })),
   });
-  const status = aggregate.providerStatuses.some((provider) => provider.status === "failed")
-      ? "PARTIAL"
-      : "SUCCESS";
+  const status = hotelSearchRecordedStatus(aggregate.providerStatuses, publicResults.length);
 
   after(async () => {
     const { userId, visitorId } = await resolveRequestActivityIdentity(request);
