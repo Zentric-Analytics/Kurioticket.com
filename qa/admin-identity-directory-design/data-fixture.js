@@ -40,8 +40,8 @@ const db = {
   },
   async $queryRaw(sql) {
     const statement = sql.strings.join("?");
-    // The fixture has no essential-only sessions. Model the new count and
-    // detail probes separately from the combined directory reference query.
+    // The isolated fixture has no essential-only operational sessions.
+    // The production directory returns counts and timestamps in one read.
     if (statement.includes('COUNT(*)::bigint AS "count"')) return [{ count: 0n }];
     if (statement.includes('AS "firstSeenAt", MAX(a."createdAt") AS "lastSeenAt"')) return [];
     const all = [
@@ -60,9 +60,13 @@ const db = {
       if (statement.includes('ORDER BY "joinedAt" ASC')) return created(a) - created(b) || a.record.id.localeCompare(b.record.id);
       return created(b) - created(a) || a.record.id.localeCompare(b.record.id);
     });
-    const limit = sql.values.at(-2);
-    const offset = sql.values.at(-1);
-    return all.slice(offset, offset + limit).map(item => ({ id: item.record.id, kind: item.kind }));
+    const hasPage = statement.includes("LIMIT");
+    const limit = hasPage ? sql.values.at(-2) : all.length;
+    const offset = hasPage ? sql.values.at(-1) : 0;
+    return all.slice(offset, offset + limit).map(item => ({
+      id: item.record.id, kind: item.kind,
+      firstSeenAt: null, lastSeenAt: null, operationalGuestCount: 0n,
+    }));
   },
 };
 export async function withOptionalDb(callback) {
