@@ -69,6 +69,20 @@ function SearchDetailContent({ search }: { search: AdminSearchDetail }) {
           </div>
           <StatusDot status={diagnostic.outcome === "ZERO_RESULTS" ? "ZERO_RESULTS" : search.status} label={searchDetailOutcomeLabel(diagnostic.outcome)} />
         </div>
+        {diagnostic.outcome !== "SUCCESS" ? (
+          <div className="mt-3 border-t border-[#D7DCE3] pt-3 text-[12px] leading-5 text-[#374151]">
+            <p className="font-semibold text-[#111827]">What happened</p>
+            <p className="mt-1">{diagnostic.reason}</p>
+            {diagnostic.providers.filter(provider => provider.status === "FAILED" || provider.status === "DEGRADED" || provider.status === "DISABLED").map((provider, index) => (
+              <p key={provider.provider + index} className="mt-1">
+                <span className="font-semibold">{provider.provider}:</span> {provider.reason}
+              </p>
+            ))}
+            {diagnostic.correlation === "legacy_fallback" ? (
+              <p className="mt-1 text-[#6B7280]">No exact provider failure was recorded. The cause cannot be verified.</p>
+            ) : null}
+          </div>
+        ) : null}
         <div className="mt-4 grid grid-cols-2 border-t border-[#D7DCE3] pt-3 sm:grid-cols-3">
           <Metric label="Results found" value={search.resultCount.toLocaleString()} />
           <Metric label="Duration" value={searchDetailDuration(search.latencyMs)} />
@@ -130,7 +144,7 @@ function SearchDetailContent({ search }: { search: AdminSearchDetail }) {
       {diagnostic.outcome !== "SUCCESS" ? (
         <section className="border-b border-[#D7DCE3] px-2 py-5">
           <h2 className="text-[13px] font-semibold text-[#111827]">Search diagnosis</h2>
-          <p className="mt-2 text-[12px] leading-5 text-[#374151]">{diagnostic.reason}</p>
+          <p className="mt-2 text-[12px] leading-5 text-[#374151]">The outcome and provider reasons appear above. These are based on recorded evidence, not a reconstructed error message.</p>
           <div className="mt-3 grid grid-cols-2 gap-x-5 gap-y-3">
             <Field
               label="Retryable"
