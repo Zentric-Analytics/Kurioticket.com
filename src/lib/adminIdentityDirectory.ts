@@ -25,7 +25,7 @@ export function adminIdentityDateBounds(date: AdminIdentityDate, now = new Date(
   if (date === "last7") return { from: new Date(today.getTime() - 6 * 86400000), to: tomorrow };
   if (date === "thisMonth") return { from: month, to: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1)) };
   if (date === "lastMonth") return { from: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1)), to: month };
-  return { from: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 3, 1)), to: tomorrow };
+  return { from: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 2, 1)), to: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1)) };
 }
 
 export type AdminIdentityReference = { kind: "user" | "guest"; id: string };
