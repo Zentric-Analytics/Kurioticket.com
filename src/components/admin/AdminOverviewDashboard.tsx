@@ -343,7 +343,7 @@ export function AdminOverviewDashboard({
 
       <div className="mt-3">
         <Panel title="Recent Admin Activity" icon={BookOpen} href="/admin/logs"
-          description="Latest three recorded actions across all dates; human admin actions in the selected range: " + count(data.audit.human)}>
+          description={"Latest three recorded actions across all dates; human admin actions in the selected range: " + count(data.audit.human)}>
           <ActivitySummary activity={activity} />
         </Panel>
       </div>
