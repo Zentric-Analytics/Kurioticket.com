@@ -530,3 +530,12 @@ test("search monitor provider lookup uses bounded set-based SQL instead of many 
   assert.equal(sql.values.filter(value => value === "request-1").length, 2);
   assert.equal(sql.values.includes("staging"), true);
 });
+
+test("hotel display currency changes cannot restart inventory searches", () => {
+  const client = readFileSync("src/components/results/HotelResultsClient.tsx", "utf8");
+  assert.match(client, /const displayCurrencyRef = useRef\(selectedOption\.currency\)/);
+  assert.match(client, /displayCurrencyRef\.current = selectedOption\.currency/);
+  assert.match(client, /body: JSON\.stringify\(\{ \.\.\.body, currency: displayCurrencyRef\.current \}\)/);
+  assert.doesNotMatch(client, /\[searchInput, selectedOption\.currency\]/);
+  assert.match(client, /sort: searchInput\.sort \|\| "cheapest",\s*\}\),\s*\[searchInput\]/);
+});

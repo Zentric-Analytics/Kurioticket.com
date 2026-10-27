@@ -10,12 +10,13 @@ import { hotelSearchRecordedStatus } from "@/lib/hotelSearchRecordedStatus";
 const requestId = "78e1de9e-6dfe-494f-9fdb-83726d83bf64";
 type History = { requestId: string; type: string; status: string; userId: string | null; visitorId: string | null; resultCount: number; query: unknown; latencyMs: number };
 
-function routeFixture(product: "flight" | "hotel", options: { anonymous?: boolean; loggingFails?: boolean; available?: boolean; providerFailed?: boolean } = {}) {
+function routeFixture(product: "flight" | "hotel", options: { anonymous?: boolean; loggingFails?: boolean; available?: boolean; providerFailed?: boolean; currency?: string } = {}) {
   const deferred: Array<() => Promise<unknown>> = [];
   const histories: History[] = [];
   const providerCalls: unknown[] = [];
   const errors: unknown[] = [];
   let identityLookups = 0;
+  const providerCriteria: unknown[] = [];
   const aggregate = {
     results: [], warnings: ["Provider temporarily unavailable"], latencyMs: 42,
     ...(options.available ? {} : { unavailableMessage: "Provider temporarily unavailable" }),
@@ -36,7 +37,7 @@ function routeFixture(product: "flight" | "hotel", options: { anonymous?: boolea
       trackAnalyticsEvent: async () => undefined,
     },
     "@/services/travel/flightAggregator": { searchFlights: async () => aggregate },
-    "@/services/travel/hotelAggregator": { searchHotels: async () => aggregate, searchHotelsByProvider: async () => aggregate },
+    "@/services/travel/hotelAggregator": { searchHotels: async (criteria: unknown) => { providerCriteria.push(criteria); return aggregate; }, searchHotelsByProvider: async (criteria: unknown) => { providerCriteria.push(criteria); return aggregate; } },
     "@/lib/feature-controls/service": { isFeatureEnabled: async () => true },
     "@/services/requestActivityIdentity": { resolveRequestActivityIdentity: async () => {
       identityLookups += 1;
@@ -60,8 +61,9 @@ function routeFixture(product: "flight" | "hotel", options: { anonymous?: boolea
   const criteria = product === "flight"
     ? { origin: "BOS", destination: "JFK", departureDate: "2099-05-01", tripType: "one-way", adults: 1 }
     : { destination: "London", checkIn: "2099-05-01", checkOut: "2099-05-02", rooms: 1, guests: 1 };
+  if (product === "hotel" && options.currency) Object.assign(criteria, { currency: options.currency });
   return {
-    deferred, histories, providerCalls, errors, criteria,
+    deferred, histories, providerCalls, providerCriteria, errors, criteria,
     lookups: () => identityLookups,
     post: () => exported.POST!(new Request(`https://staging.kurioticket.com/api/${product}s/search`, {
       method: "POST", headers: { "content-type": "application/json", "x-search-request-id": requestId }, body: JSON.stringify(criteria),
@@ -122,4 +124,22 @@ test("hotel provider failure with zero offers is FAILED even without an unavaila
   assert.equal(fixture.histories[0].status, "FAILED");
   assert.equal(fixture.histories[0].resultCount, 0);
   assert.equal(fixture.providerCalls.length, 1);
+});
+
+test("hotel display currency is recorded but never reaches provider criteria on success", async () => {
+  const fixture = routeFixture("hotel", { available: true, currency: "NGN" });
+  assert.equal((await fixture.post()).status, 200);
+  assert.equal(fixture.providerCriteria.length, 1);
+  assert.equal((fixture.providerCriteria[0] as { currency?: string }).currency, undefined);
+  await fixture.deferred[0]();
+  assert.equal((fixture.histories[0].query as { currency?: string }).currency, "NGN");
+});
+
+test("hotel display currency is recorded but never reaches provider criteria on failure", async () => {
+  const fixture = routeFixture("hotel", { currency: "EUR" });
+  assert.equal((await fixture.post()).status, 503);
+  assert.equal(fixture.providerCriteria.length, 1);
+  assert.equal((fixture.providerCriteria[0] as { currency?: string }).currency, undefined);
+  await fixture.deferred[0]();
+  assert.equal((fixture.histories[0].query as { currency?: string }).currency, "EUR");
 });
