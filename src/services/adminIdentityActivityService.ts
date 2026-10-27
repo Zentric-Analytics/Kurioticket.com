@@ -73,14 +73,14 @@ export async function loadAdminIdentityActivity(
     // after the signed credential expires. Never interpret either as a person.
     const operationalSearchOwner: Prisma.SearchHistoryWhereInput = {
       AND: [
-        { userId: null },
+        { userId: null, visitorId: null },
         { query: { path: ["operationalSessionId"], equals: id } },
         environmentScope.search,
       ],
     };
     const operationalRedirectOwner: Prisma.RedirectLogWhereInput = {
       AND: [
-        { userId: null },
+        { userId: null, visitorId: null },
         { metadata: { path: ["operationalSessionId"], equals: id } },
         environmentScope.handoff,
       ],
