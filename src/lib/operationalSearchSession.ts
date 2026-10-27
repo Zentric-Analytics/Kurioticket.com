@@ -94,7 +94,7 @@ export function attachOperationalSearchSession<T extends Response>(response: T, 
   else {
     const secure = process.env.NODE_ENV === "production" ? "; Secure" : "";
     response.headers.append("Set-Cookie",
-      operationalSessionCookieName + "=" + prepared.credential + "; Path=/; Max-Age=" + operationalSessionTtlSeconds + "; HttpOnly; SameSite=Lax" + secure);
+      operationalSessionCookieName + "=" + prepared.credential + "; Path=/api; Max-Age=" + operationalSessionTtlSeconds + "; HttpOnly; SameSite=Lax" + secure);
   }
   response.headers.set("Cache-Control", "private, no-store");
   response.headers.append("Vary", prepared.transport === "native" ? "X-Kt-Search-Session" : "Cookie");
