@@ -122,7 +122,9 @@ export function AdminUsersToolbar({
   function onSearchSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const nextQuery = textRef.current.trim().slice(0, 120);
-    if (nextQuery !== query || isPending) navigate({ q: nextQuery }, true);
+    if (nextQuery !== query && nextQuery !== lastSubmittedRef.current) {
+      navigate({ q: nextQuery }, true);
+    }
   }
 
   const base = new URLSearchParams(pageHref.split("?")[1] || "");
