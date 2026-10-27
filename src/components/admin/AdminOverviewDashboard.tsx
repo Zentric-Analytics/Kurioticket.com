@@ -465,7 +465,7 @@ export function AdminOverviewDashboard({
           <MetricCard label="Enabled accounts" value={data.users.active} hint="ACTIVE account status · not people online" icon={UserCheck} tone="good" />
           <div className="min-w-0 border-b border-r border-slate-200/85 p-3 sm:p-4 lg:min-h-32">
             <div className="flex items-center justify-between"><Activity size={19} className={data.websitePresence.status === "ok" ? "text-emerald-700" : "text-slate-500"} aria-hidden="true" /><span className={"h-2 w-2 rounded-full " + (data.websitePresence.status === "ok" ? "bg-emerald-400" : "bg-slate-300")} aria-hidden="true" /></div>
-            <p className="mt-2 text-xs font-medium uppercase tracking-wide text-slate-700">Active users</p>
+            <p className="mt-2 text-xs font-medium uppercase tracking-wide text-slate-700">Active website users</p>
             <p className="mt-1 text-[22px] font-semibold tabular-nums tracking-tight text-slate-950">{data.websitePresence.status === "ok" ? count(data.websitePresence.total) : "Unavailable"}</p>
             <p className="mt-1 text-[13px] leading-5 text-slate-700">{data.websitePresence.status === "ok" ? "Last " + data.websitePresence.windowSeconds + "s · " + count(data.websitePresence.registeredAccounts) + " accounts · " + count(data.websitePresence.guestIdentities) + " guests" : "Live website activity could not be verified"}</p>
           </div>
@@ -473,7 +473,7 @@ export function AdminOverviewDashboard({
           <MetricCard label="Deleted accounts" value={data.users.deleted} hint="Retained DELETED records · excludes permanently erased" icon={Trash2} tone="neutral" />
           <MetricCard label="Support attention" value={supportAttention} hint="Current open and waiting support tickets" icon={Headphones} tone={supportAttention ? "warn" : "good"} />
           <MetricCard label="Deletion attention" value={deletionAttention} hint="Current pending and ready-for-review requests" icon={Trash2} tone={deletionAttention ? "warn" : "good"} />
-          <MetricCard label="Journeys" value={data.journeys.journeys} hint="Distinct consented journeys · selected range" icon={Route} tone="info" />
+          <MetricCard label="Customer journeys" value={data.journeys.journeys} hint="Distinct consented journeys · selected range" icon={Route} tone="info" />
           <MetricCard label="Human admin actions" value={data.audit.human} hint={"Human-attributed audit rows · selected range · " + count(data.audit.automated) + " system entries excluded"} icon={ShieldCheck} tone="neutral" />
         </div>
         <div className="mt-3 flex items-start gap-2 rounded-lg border border-indigo-100 bg-indigo-50/50 p-3 text-xs leading-5 text-slate-700" role="note">
@@ -496,24 +496,10 @@ export function AdminOverviewDashboard({
         </div>
       </section>
 
-      <div className="mt-7 border-t border-slate-200 pt-6">
-        <PlatformHealth system={system} />
-      </div>
-
-      <div className="mt-7 border-t border-slate-200 pt-6">
-        <section className="min-w-0" aria-label="Provider Operational Health">
-          <SectionTitle title="Provider Operational Health"
-            action={<Link href="/admin/providers" className="focus-ring inline-flex items-center gap-1 text-[13px] font-medium text-indigo-700 hover:underline">View all providers <ArrowUpRight size={13} aria-hidden="true" /></Link>} />
-          <div className="grid gap-4">
-            {data.providers.map((provider) => <ProviderCard key={provider.id} provider={provider} />)}
-            {data.providers.length === 0 ? <p className="border-t border-slate-200/90 py-4 text-sm text-slate-600">No provider status available. The current deployment has no reported provider operational statuses.</p> : null}
-          </div>
-        </section>
-      </div>
-
-      <section className="mt-7 border-t border-slate-200 pt-6" aria-label="Customer Journey Funnel">
+      <section className="mt-7 border-t border-slate-200 pt-6" aria-label="Visitor Activity & Search Performance">
         <SectionTitle
-          title="Customer Journey Funnel"
+          title="Visitor Activity & Search Performance"
+          description="Consented journey events and recorded search and redirect outcomes."
           action={<div className="flex flex-wrap gap-2">
             <OverviewStatusBadge tone="info">{count(data.journeys.identities.registered)} registered identities</OverviewStatusBadge>
             <OverviewStatusBadge>{count(data.journeys.identities.guests)} guest identities</OverviewStatusBadge>
@@ -521,17 +507,17 @@ export function AdminOverviewDashboard({
         />
         <div>
           <div className="grid overflow-hidden rounded-lg border-l border-t border-slate-200 sm:grid-cols-2 lg:grid-cols-4">
-            <FunnelStep label="Search completed" journeys={funnel.SEARCH_COMPLETED.journeys} events={funnel.SEARCH_COMPLETED.events} icon={Search} />
+            <FunnelStep label="Tracked searches" journeys={funnel.SEARCH_COMPLETED.journeys} events={funnel.SEARCH_COMPLETED.events} icon={Search} />
             <FunnelStep label="Results viewed" journeys={funnel.RESULTS_VIEWED.journeys} events={funnel.RESULTS_VIEWED.events} icon={BookOpen} />
             <FunnelStep label="Offer selected" journeys={funnel.OFFER_SELECTED.journeys} events={funnel.OFFER_SELECTED.events} icon={MousePointerClick} />
-            <FunnelStep label="Provider handoff" journeys={funnel.PROVIDER_HANDOFF_STARTED.journeys} events={funnel.PROVIDER_HANDOFF_STARTED.events} icon={ArrowUpRight} />
+            <FunnelStep label="Tracked handoffs" journeys={funnel.PROVIDER_HANDOFF_STARTED.journeys} events={funnel.PROVIDER_HANDOFF_STARTED.events} icon={ArrowUpRight} />
           </div>
           <p className="mt-3 text-xs leading-5 text-slate-600">Selected reporting range · stages count distinct eligible consented journeys. A search-completed event also includes failed or empty searches; stages can occur out of order and are not a conversion percentage or confirmed booking.</p>
         </div>
 
         <div className="mt-6 grid gap-4 lg:grid-cols-2">
           <section className="min-w-0 rounded-xl border border-slate-200 p-4 sm:p-5">
-            <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-900"><Search size={17} className="text-indigo-700" aria-hidden="true" />Operational Search Health</h3>
+            <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-900"><Search size={17} className="text-indigo-700" aria-hidden="true" />Search Performance</h3>
             <div className="mt-3">
               <DetailRow label="Operational searches" value={data.journeys.operationalSearches.total} />
               <DetailRow label="Successful search operations" value={data.journeys.operationalSearches.success} />
@@ -543,7 +529,7 @@ export function AdminOverviewDashboard({
             </div>
           </section>
           <section className="min-w-0 rounded-xl border border-slate-200 p-4 sm:p-5">
-            <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-900"><Route size={17} className="text-indigo-700" aria-hidden="true" />Handoff Correlation</h3>
+            <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-900"><Route size={17} className="text-indigo-700" aria-hidden="true" />Provider Redirects</h3>
             <div className="mt-3">
               <DetailRow label="Recorded provider redirects" value={data.journeys.operationalHandoffs.total} />
               <DetailRow label="In consented journeys" value={data.journeys.operationalHandoffs.inConsentedJourneys} />
@@ -552,12 +538,26 @@ export function AdminOverviewDashboard({
               <DetailRow label="Exact search links (eligible redirects)" value={data.journeys.operationalHandoffs.exactSearchLinks} />
               <DetailRow label="Eligible redirects without exact links" value={data.journeys.operationalHandoffs.eligibleWithoutExactSearch} />
             </div>
-            <p className="mt-2 text-xs leading-5 text-slate-600">Selected reporting range · redirects use the deployment environment, including unattributed activity. Consent, ownership and valid event links determine journey inclusion. Missing attribution does not establish that someone declined consent. No nearest-by-time inference.</p>
+            <p className="mt-2 text-xs leading-5 text-slate-600">Selected range and environment. Provider redirects are not confirmed bookings. Missing attribution does not establish that someone declined consent. No nearest-by-time inference.</p>
           </section>
         </div>
       </section>
 
-      <div className="mt-7 grid items-start gap-4 border-t border-slate-200 pt-6 lg:grid-cols-2">
+      <div className="mt-7 border-t border-slate-200 pt-6">
+        <section className="min-w-0" aria-label="Provider Operational Health">
+          <SectionTitle title="Provider Operational Health"
+            description="Recorded provider calls. Configured does not mean healthy."
+            action={<Link href="/admin/providers" className="focus-ring inline-flex items-center gap-1 text-[13px] font-medium text-indigo-700 hover:underline">View all providers <ArrowUpRight size={13} aria-hidden="true" /></Link>} />
+          <div className="grid gap-4">
+            {data.providers.map((provider) => <ProviderCard key={provider.id} provider={provider} />)}
+            {data.providers.length === 0 ? <p className="border-t border-slate-200/90 py-4 text-sm text-slate-600">No provider status available. The current deployment has no reported provider operational statuses.</p> : null}
+          </div>
+        </section>
+      </div>
+
+      <section className="mt-7 border-t border-slate-200 pt-6" aria-label="Operational Workloads">
+        <SectionTitle title="Operational Workloads" />
+        <div className="grid items-start gap-4 lg:grid-cols-2">
         <WorkloadCard title="Support Workload" href="/admin/support" icon={Headphones} rows={[
           { label: "Open", value: data.support.open, detail: "New / active tickets" },
           { label: "Waiting on team", value: data.support.waitingOnTeam, detail: "Needs internal action" },
@@ -570,6 +570,11 @@ export function AdminOverviewDashboard({
           { label: "Cancelled", value: data.deletions.cancelled, detail: "Deletion stopped" },
           { label: "Completed", value: data.deletions.completed, detail: "Finalized lifecycle" },
         ]} />
+        </div>
+      </section>
+
+      <div className="mt-7 border-t border-slate-200 pt-6">
+        <PlatformHealth system={system} />
       </div>
 
       <div className="mt-7 min-w-0 border-t border-slate-200 pt-6">
