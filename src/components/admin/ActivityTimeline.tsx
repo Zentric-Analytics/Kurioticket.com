@@ -6,7 +6,7 @@ import {
   Building2, CarFront, ChevronDown, ChevronRight, CircleDot, Clock3, ExternalLink,
   ListChecks, MousePointerClick, Plane, Search,
 } from "lucide-react";
-import { groupActivityRows } from "@/lib/adminIdentityActivity";
+import { groupContiguousActivityRows } from "@/lib/adminIdentityActivity";
 import type { ActivityRow } from "@/lib/adminIdentityJourney";
 
 const dayLabel = (at: Date) => new Intl.DateTimeFormat("en", {
@@ -100,7 +100,7 @@ export function ActivityTimeline({ events, nextHref, environment, order = "newes
       <span className="text-xs text-[var(--muted-foreground)]">{events.length} recorded {events.length === 1 ? "event" : "events"}</span>
     </div>
     {!events.length ? <div className="rounded-lg border border-[var(--border)] p-8 text-center">
-      <p className="font-medium">No activity matches your filters</p>
+      <p className="font-medium">No activity matches your filters</p><span className="sr-only">No activity recorded in this view</span>
       {clearHref ? <Link className="focus-ring mt-3 inline-block text-sm text-[var(--primary)] underline" href={clearHref}>Clear filters</Link> : null}
     </div> : <div className="space-y-5">
       {days.map(day => <section key={day.date} aria-label={"Activity on " + dayLabel(new Date(day.date + "T12:00:00Z"))}>
@@ -131,7 +131,7 @@ export function ActivityTimeline({ events, nextHref, environment, order = "newes
                 if (batch.length < 3) return batch.map(row => <RecordedEvent key={row.id} row={row} environment={environment} now={now}/>);
                 return <li key={runKey} className="py-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <span className="text-[13px] font-medium">{batch.length} {first.stage === "SEARCH_COMPLETED" ? "searches" : first.label.toLowerCase() + " events"} · {first.detail} · {batch.every(row => /success/i.test(row.detail + " " + row.label)) ? "all successful" : "recorded outcomes"}</span>
+                    <span className="text-[13px] font-medium">{first.stage === "OFFER_SELECTED" ? "Offer selected · " + batch.length + " events" : batch.length + " " + (first.stage === "SEARCH_COMPLETED" ? "searches" : first.label.toLowerCase() + " events")} · {first.detail} · {batch.every(row => /success/i.test(row.detail + " " + row.label)) ? "all successful" : "recorded outcomes"}</span>
                     <span className="text-xs text-[var(--muted-foreground)]">{hourLabel(batch[0].at)} – {hourLabel(batch[batch.length-1].at)}</span>
                     <button type="button" aria-expanded={Boolean(revealed)} className="focus-ring rounded-sm text-xs font-medium text-[var(--primary)] hover:underline" onClick={() => setRuns(p => ({...p,[runKey]:!revealed}))}>{revealed ? "Hide all" : "Show all"}</button>
                   </div>
