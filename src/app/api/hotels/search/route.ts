@@ -1,4 +1,5 @@
 import { after, NextResponse } from "next/server";
+import { attachOperationalSearchSession, prepareOperationalSearchSession } from "@/lib/operationalSearchSession";
 import { createHash } from "node:crypto";
 import { getClientIp, checkRateLimit } from "@/lib/rate-limit";
 import { toPublicHotel } from "@/lib/searchCache";
@@ -69,6 +70,8 @@ export async function POST(request: Request) {
   // Display currency is analytics-only. KAYAK's hotel provider criteria
   // require USD and must not depend on the customer's display preference.
   const { currency: _displayCurrency, ...providerSearch } = search;
+  const operationalSession = prepareOperationalSearchSession(request);
+  const recordedSearch = { ...search, ...(operationalSession ? { operationalSessionId: operationalSession.reference.id } : {}) };
 
   const kayakContext = {
     clientIp: getKayakClientIp(request),
@@ -86,7 +89,7 @@ export async function POST(request: Request) {
           logSearchHistory({
             userId, visitorId, requestId, type: "HOTEL", destination: search.destination,
             checkIn: new Date(search.checkIn), checkOut: new Date(search.checkOut),
-            query: search, resultCount: 0, latencyMs: aggregate.latencyMs, status: "FAILED",
+            query: recordedSearch, resultCount: 0, latencyMs: aggregate.latencyMs, status: "FAILED",
           }),
           ...aggregate.providerStatuses.map((provider) =>
             logProviderCall({
@@ -103,7 +106,7 @@ export async function POST(request: Request) {
       } catch (error) { console.error("[hotel-search:logging]", error); }
     });
 
-    return NextResponse.json(
+    return attachOperationalSearchSession(NextResponse.json(
       {
         error: aggregate.unavailableMessage,
         results: [],
@@ -120,7 +123,7 @@ export async function POST(request: Request) {
         })),
       },
       { status: 503 },
-    );
+    ), operationalSession);
   }
 
   const publicResults = aggregate.results.map(toPublicHotel);
@@ -148,7 +151,7 @@ export async function POST(request: Request) {
       destination: search.destination,
       checkIn: new Date(search.checkIn),
       checkOut: new Date(search.checkOut),
-      query: search,
+      query: recordedSearch,
       resultCount: publicResults.length,
       latencyMs: aggregate.latencyMs,
       status,
@@ -178,7 +181,7 @@ export async function POST(request: Request) {
   });
 
   const classified = classifyHotels(publicResults, aggregate.warnings, requestId);
-  return NextResponse.json({
+  return attachOperationalSearchSession(NextResponse.json({
     ...classified,
     source: providerMode || classified.source,
     providerStatuses: aggregate.providerStatuses.map(({ provider, status, latencyMs, error }) => ({
@@ -189,7 +192,7 @@ export async function POST(request: Request) {
     })),
     warningCategory: deriveHotelWarningCategory(aggregate),
     latencyMs: aggregate.latencyMs,
-  });
+  }), operationalSession);
 }
 
 function sanitizeProviderError(error?: string) {

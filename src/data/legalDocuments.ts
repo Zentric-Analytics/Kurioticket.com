@@ -139,7 +139,7 @@ export const legalDocuments: LegalDocument[] = [
         title: "How Cookies Are Used",
         paragraphs: [
           "Kurioticket may use cookies for authentication sessions, security, fraud prevention, preference storage, analytics, performance monitoring, and feature experiments.",
-          "Some cookies are necessary for login, dashboard access, support tickets, saved travel features, security, and preferences.",
+          "Some cookies are necessary for login, dashboard access, support tickets, saved travel features, security, and preferences. A short-lived operational search session may be used when needed to maintain a requested search-to-provider journey, independently of optional analytics consent.",
         ],
       },
       {
@@ -154,7 +154,7 @@ export const legalDocuments: LegalDocument[] = [
         id: "controls",
         title: "Controls",
         paragraphs: [
-          "You can control cookies through your browser settings. Blocking necessary cookies may prevent login, dashboards, saved items, preferences, and support tools from working correctly.",
+          "Essential cookies support requested functionality and security. Optional analytics requires your choice and can be enabled or disabled in Cookie preferences, available from the website footer. Blocking essential cookies in the browser may prevent login, dashboards, saved items, preferences, and support tools from working correctly.",
         ],
       },
     ],

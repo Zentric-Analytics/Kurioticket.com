@@ -99,11 +99,22 @@ function apiErrorMessage(data: Record<string, unknown>) {
   return "Kurioticket could not complete this request.";
 }
 
+// Ephemeral operational search continuity; never persisted as analytics tracking.
+let operationalSearchCredential: string | null = null;
+let operationalSearchActor: string | null = null;
+const operationalPaths = new Set(["/api/flights/search", "/api/hotels/search", "/api/cars/search", "/api/mobile/v1/hotels/progressive", "/api/redirect"]);
+const operationalCredentialPattern = /^v1\.[0-9a-f-]{36}\.[0-9]{10,13}\.(?:staging|production)\.[A-Za-z0-9_-]{43}$/;
+
 async function request<T>(path: string, init: RequestInit = {}, options: { signal?: AbortSignal; timeoutMs?: number; requestId?: string; visitorContext?: number; body?: () => unknown } = {}) {
   const requestStartedAt = Date.now();
   const base = getApiBaseUrl(Platform.OS, __DEV__);
   if (!base.ok) throw new TravelApiError(base.message, 0, "configuration");
   const session = await readSession().catch(() => null);
+  const actor = session?.user?.id ?? null;
+  if (operationalSearchActor !== actor) {
+    operationalSearchCredential = null;
+    operationalSearchActor = actor;
+  }
   const visitorHeaders = await visitorIdentity.headers(path, session).catch(() => ({}));
   const requestVisitorContext = "x-kt-visitor" in visitorHeaders ? visitorIdentity.trackingContext() : null;
   // Session/storage work may have changed consent or account ownership since an
@@ -127,10 +138,15 @@ async function request<T>(path: string, init: RequestInit = {}, options: { signa
         ...(Constants.expoConfig?.version ? { "X-Mobile-App-Version": Constants.expoConfig.version } : {}),
         ...(session?.token ? { Authorization: `Bearer ${session.token}` } : {}),
         ...visitorHeaders,
+        ...(operationalPaths.has(path) && operationalSearchCredential ? { "X-Kt-Search-Session": operationalSearchCredential } : {}),
         ...(options.requestId ? { "X-Search-Request-Id": options.requestId } : {}),
         ...init.headers,
       },
     });
+    if (operationalPaths.has(path) && (session?.user?.id ?? null) === operationalSearchActor) {
+      const credential = response.headers.get("X-Kt-Search-Session");
+      if (credential && operationalCredentialPattern.test(credential)) operationalSearchCredential = credential;
+    }
     if (path === "/api/flights/search") {
       logFlightSearchCheckpoint("flight-search:response-received", {
         requestId: options.requestId,
