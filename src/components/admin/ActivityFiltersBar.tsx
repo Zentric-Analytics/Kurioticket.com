@@ -93,7 +93,7 @@ export function ActivityFiltersBar({ path, initial, directory, tabs }: { path: s
     <div className="flex min-w-0 flex-col gap-x-5 gap-y-2 border-b border-[#D8E1EC] lg:flex-row lg:items-end lg:justify-between">
       {tabs}
       <div className="flex min-w-0 flex-wrap items-center gap-x-6 gap-y-2 pb-2 lg:pb-1">
-        <SearchMonitorSelect label="Date range" name="range" value={values.range} options={rangeOptions}
+        <SearchMonitorSelect label="Date range" name="range" value={editingCustom ? "custom" : values.range} options={rangeOptions}
           appearance="plain" onValueChange={setRange} />
         <SearchMonitorSelect label="Activity product" name="product" value={values.product}
           options={options.product.map(([value,label])=>({value,label}))} appearance="plain"
