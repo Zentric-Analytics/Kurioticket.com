@@ -80,6 +80,17 @@ export type AdminJourneySummary = {
   stages: Record<AdminJourneyStage, { identities: number; journeys: number; events: number }>;
   recordedSearches: AdminJourneySearchCounts;
   handoffCorrelation: { exactEvents: number; uncorrelatedEvents: number };
+  operationalHandoffs: {
+    scope: "environment_and_date_only";
+    total: number;
+    withVisitorIdentity: number;
+    withoutVisitorIdentity: number;
+    inConsentedJourneys: number;
+    outsideConsentedJourneys: number;
+    exactSearchLinks: number;
+    eligibleWithoutExactSearch: number;
+    withRequestId: number;
+  };
   operationalSearches: AdminJourneySearchCounts & { scope: "environment_and_date_only"; partialWithResults: number; partialWithoutResults: number };
 };
 

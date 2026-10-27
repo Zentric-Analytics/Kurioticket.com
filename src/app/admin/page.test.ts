@@ -70,8 +70,11 @@ test("journey funnel and both correlation metrics retain accurate source data", 
     "data.journeys.operationalSearches.total",
     "data.journeys.operationalSearches.failed",
     "data.journeys.operationalSearches.partial",
-    "data.journeys.handoffCorrelation.exactEvents",
-    "data.journeys.handoffCorrelation.uncorrelatedEvents",
+    "data.journeys.operationalHandoffs.total",
+    "data.journeys.operationalHandoffs.inConsentedJourneys",
+    "data.journeys.operationalHandoffs.outsideConsentedJourneys",
+    "data.journeys.operationalHandoffs.withoutVisitorIdentity",
+    "data.journeys.operationalHandoffs.exactSearchLinks",
   ]) assert.ok(display.includes(field), field);
   assert.match(display, /Stage counts are distinct consented journeys, not percentages of all operational searches/);
   assert.match(display, /No nearest-by-time inference/);
@@ -125,7 +128,7 @@ test("requested descriptions are removed without altering operational sources", 
     "Open the most-used operations, or expand the complete module directory below.",
   ]) assert.ok(!dashboard.includes(message), message);
   assert.ok(display.includes("data.journeys.operationalSearches.total"));
-  assert.ok(display.includes("data.journeys.handoffCorrelation.exactEvents"));
+  assert.ok(display.includes("data.journeys.operationalHandoffs.exactSearchLinks"));
   assert.ok(display.includes("data.websitePresence.total"));
   assert.ok(display.includes("AdminOverviewRangeSelect"));
   assert.ok(display.includes("AdminOverviewAutoRefresh"));
@@ -360,4 +363,22 @@ test("Phase 2 splits partial searches and exposes provider failure rates without
   assert.match(journeys, /"resultCount" > 0/);
   assert.match(journeys, /"resultCount" <= 0/);
   assert.doesNotMatch(dashboard, /errorMessage/);
+});
+
+test("Phase 3 separately reconciles operational redirects and consented handoffs", () => {
+  const core = readFileSync("src/services/adminJourneyCore.ts", "utf8");
+  const contract = readFileSync("src/services/adminJourneyContract.ts", "utf8");
+  const journeysPage = readFileSync("src/app/admin/journeys/page.tsx", "utf8");
+  assert.match(core, /operationalHandoffsSql\(query.scope\)/);
+  assert.match(core, /scopedEvents\(unfiltered\)/);
+  assert.match(core, /eligible_handoff_redirects/);
+  assert.match(core, /r\."metadata"->>'environment' =/);
+  assert.match(core, /"redirectLogId" IS NOT NULL/);
+  assert.match(core, /totalRedirects !== inConsentedJourneys \+ outsideConsentedJourneys/);
+  assert.match(contract, /operationalHandoffs/);
+  assert.match(display, /data\.journeys\.operationalHandoffs\.total/);
+  assert.match(display, /data\.journeys\.operationalHandoffs\.withoutVisitorIdentity/);
+  assert.match(display, /Missing attribution does not establish that someone declined consent/);
+  assert.match(journeysPage, /not all provider redirects/);
+  assert.doesNotMatch(display, /nearest search by time/);
 });

@@ -513,10 +513,14 @@ export function AdminOverviewDashboard({
           <section className="min-w-0 border-t border-slate-200/90 py-4">
             <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-900"><Route size={17} className="text-indigo-700" aria-hidden="true" />Handoff Correlation</h3>
             <div className="mt-3">
-              <DetailRow label="Exact search ↔ handoff links" value={data.journeys.handoffCorrelation.exactEvents} />
-              <DetailRow label="Uncorrelated handoffs" value={data.journeys.handoffCorrelation.uncorrelatedEvents} />
+              <DetailRow label="Recorded provider redirects" value={data.journeys.operationalHandoffs.total} />
+              <DetailRow label="In consented journeys" value={data.journeys.operationalHandoffs.inConsentedJourneys} />
+              <DetailRow label="Outside consented journeys" value={data.journeys.operationalHandoffs.outsideConsentedJourneys} />
+              <DetailRow label="Without visitor attribution" value={data.journeys.operationalHandoffs.withoutVisitorIdentity} />
+              <DetailRow label="Exact search links (eligible redirects)" value={data.journeys.operationalHandoffs.exactSearchLinks} />
+              <DetailRow label="Eligible redirects without exact links" value={data.journeys.operationalHandoffs.eligibleWithoutExactSearch} />
             </div>
-            <p className="mt-2 text-[13px] text-slate-600">No nearest-by-time inference.</p>
+            <p className="mt-2 text-xs leading-5 text-slate-600">Redirects use the selected window and deployment environment, including unattributed activity. Consent, ownership and valid event links determine journey inclusion. Missing attribution does not establish that someone declined consent. No nearest-by-time inference.</p>
           </section>
         </div>
       </section>
