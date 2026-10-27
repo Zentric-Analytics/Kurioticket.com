@@ -1,4 +1,5 @@
 import { trackAnalyticsEvent } from "@/services/analyticsService";
+import { readOperationalSearchSession } from "@/lib/operationalSearchSession";
 import { resolveRequestActivityIdentity } from "@/services/requestActivityIdentity";
 import { journeyEventKey, recordJourneyEvent } from "@/services/searchJourneyService";
 import { journeySourcePath } from "@/lib/search-journey";
@@ -26,7 +27,8 @@ export async function recordProviderHandoffActivity(
   record: ActivityDependencies = dependencies,
 ) {
   const identity = await record.identity(request).catch(() => ({ userId: null, visitorId: null }));
-  const redirect = await record.redirect({ ...input, ...identity }).catch(() => null);
+  const operationalSession = readOperationalSearchSession(request);
+  const redirect = await record.redirect({ ...input, ...identity, operationalSessionId: operationalSession?.id ?? null }).catch(() => null);
   // A rejected/reused key or unavailable durable write must not create a
   // second, independent redirect count in the legacy analytics table.
   if (redirect === null) return;
