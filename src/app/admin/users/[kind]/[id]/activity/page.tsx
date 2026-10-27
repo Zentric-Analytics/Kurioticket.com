@@ -51,7 +51,7 @@ function safeDirectoryHref(raw: RawQuery) {
 }
 function activityParams(raw: RawQuery) {
   const result: Record<string, string> = {};
-  for (const key of ["tab", "stage", "product", "from", "to", "q", "order", "cursor", "directory"]) {
+  for (const key of ["tab", "range", "stage", "product", "from", "to", "q", "order", "cursor", "directory"]) {
     const value = raw[key];
     if (typeof value === "string" && value.length <= 1100) result[key] = value;
   }
