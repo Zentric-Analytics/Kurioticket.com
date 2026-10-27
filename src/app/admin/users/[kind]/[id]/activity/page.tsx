@@ -107,7 +107,10 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
   const { kind, id } = await params;
   if (!validActivityIdentity(kind, id)) notFound();
   const session = await requireAdminSession("/admin/users/" + kind + "/" + id + "/activity");
-  const raw = await searchParams;
+  const raw = { ...(await searchParams) };
+  // The activity toolbar intentionally has no sort control; never retain a hidden oldest-first state.
+  delete raw.order;
+  delete raw.sort;
   const filtersResult = parseActivityFilters(raw);
   const basePath = "/admin/users/" + kind + "/" + encodeURIComponent(id) + "/activity";
   const backHref = safeDirectoryHref(raw);
