@@ -9,7 +9,7 @@ export function searchDetailProductLabel(product: AdminSearchRead["product"]) {
 export function searchDetailHeadline(search: SearchLocation): string {
   const { origin, destination, product } = search;
   if (product === "HOTEL") return destination || origin ? "Hotels in " + (destination || origin) : "Hotel search";
-  if (origin && destination) return origin + " → " + destination;
+  if (origin && destination) return searchDetailProductLabel(product) + " · " + origin + " → " + destination;
   if (product === "CAR") return origin || destination ? "Cars in " + (origin || destination) : "Car search";
   if (destination) return (product === "FLIGHT" ? "Flights" : "Packages") + " to " + destination;
   if (origin) return (product === "FLIGHT" ? "Flights" : "Packages") + " from " + origin;
