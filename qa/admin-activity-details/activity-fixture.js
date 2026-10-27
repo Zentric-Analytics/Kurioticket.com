@@ -75,6 +75,7 @@ export async function loadAdminIdentityActivity(kind, id, filters, cursor) {
     role: kind === "guest" ? null : "USER",
     status: kind === "guest" ? "Anonymous" : "ACTIVE",
     firstSeenAt: time(39), lastSeenAt: time(48), environment: "staging",
+    source: kind === "guest" ? "visitor" : "account",
     events: rows,
     nextCursor,
   } };

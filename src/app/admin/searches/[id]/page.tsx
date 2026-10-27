@@ -109,10 +109,10 @@ function SearchDetailContent({ search }: { search: AdminSearchDetail }) {
             </div>
             {search.operationalSessionId && search.environment === getPublicEnvironment() && !search.identity.userId && !search.identity.visitorId ? (
               <Link
-                href={"/admin/searches/sessions/" + encodeURIComponent(search.operationalSessionId)}
+                href={"/admin/users/guest/" + encodeURIComponent(search.operationalSessionId) + "/activity"}
                 className="inline-flex items-center text-[13px] font-semibold text-[#004BB8] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
               >
-                View session activity
+                View activity
               </Link>
             ) : null}
             {search.searcher.activity ? (
