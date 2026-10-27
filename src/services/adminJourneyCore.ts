@@ -53,6 +53,16 @@ type SummaryRecord = {
   exactHandoffs: Count; uncorrelatedHandoffs: Count;
 };
 type OperationalRecord = { total: Count; success: Count; partial: Count; failed: Count; partialWithResults: Count; partialWithoutResults: Count };
+type OperationalHandoffRecord = {
+  total: Count;
+  withVisitorIdentity: Count;
+  withoutVisitorIdentity: Count;
+  inConsentedJourneys: Count;
+  outsideConsentedJourneys: Count;
+  exactSearchLinks: Count;
+  eligibleWithoutExactSearch: Count;
+  withRequestId: Count;
+};
 
 /** Shared SQL scope keeps every view on the same consent, ownership, date and environment rules. */
 function scopedEvents(scope: AdminJourneyScope, journeyId?: string) {
@@ -186,6 +196,43 @@ function operationalSql(scope: AdminJourneyScope) {
       AND "query"->>'environment' = ${scope.environment}`;
 }
 
+/**
+ * Count all environment-tagged redirect records independently of consented
+ * journey cohorts. A separately aggregated set of *eligible* events uses
+ * the exact same consent, ownership and environment rules as journey reads.
+ * Never infer a missing search by time or associate an anonymous redirect
+ * with a visitor who has not consented.
+ *
+ * A redirect is counted once even if historical stage rows repeat it.
+ * Redirects use their own createdAt window; eligible events use theirs.
+ */
+function operationalHandoffsSql(scope: AdminJourneyScope) {
+  const unfiltered: AdminJourneyScope = {
+    from: scope.from, to: scope.to, environment: scope.environment, identity: "all",
+  };
+  return Prisma.sql`${scopedEvents(unfiltered)},
+    eligible_handoff_redirects AS (
+      SELECT "redirectLogId", bool_or("searchHistoryId" IS NOT NULL) AS "exactSearch"
+      FROM eligible_events
+      WHERE "type" = 'PROVIDER_HANDOFF_STARTED' AND "redirectLogId" IS NOT NULL
+      GROUP BY "redirectLogId"
+    )
+    SELECT
+      count(*) AS "total",
+      count(*) FILTER (WHERE r."visitorId" IS NOT NULL) AS "withVisitorIdentity",
+      count(*) FILTER (WHERE r."visitorId" IS NULL) AS "withoutVisitorIdentity",
+      count(*) FILTER (WHERE h."redirectLogId" IS NOT NULL) AS "inConsentedJourneys",
+      count(*) FILTER (WHERE h."redirectLogId" IS NULL) AS "outsideConsentedJourneys",
+      count(*) FILTER (WHERE h."exactSearch" = TRUE) AS "exactSearchLinks",
+      count(*) FILTER (WHERE h."redirectLogId" IS NOT NULL AND h."exactSearch" = FALSE) AS "eligibleWithoutExactSearch",
+      count(*) FILTER (WHERE nullif(r."metadata"->>'requestId', '') IS NOT NULL) AS "withRequestId"
+    FROM "RedirectLog" r
+    LEFT JOIN eligible_handoff_redirects h ON h."redirectLogId" = r."id"
+    WHERE r."createdAt" >= ${new Date(scope.from)}
+      AND r."createdAt" < ${new Date(scope.to)}
+      AND r."metadata"->>'environment' = ${scope.environment}`;
+}
+
 function count(value: Count) {
   const result = Number(value);
   if (!Number.isSafeInteger(result) || result < 0) throw new Error("Invalid admin aggregate.");
@@ -232,17 +279,49 @@ function eventDto(row: EventRecord): AdminJourneyEvent {
     } : null,
   };
 }
-function summaryDto(scope: AdminJourneyScope, row: SummaryRecord, operational: OperationalRecord): AdminJourneySummary {
+function summaryDto(
+  scope: AdminJourneyScope,
+  row: SummaryRecord,
+  operational: OperationalRecord,
+  handoffs: OperationalHandoffRecord,
+): AdminJourneySummary {
   const prefixes = ["searchCompleted", "resultsViewed", "offerSelected", "handoffStarted"] as const;
   const stages = Object.fromEntries(adminJourneyStages.map((stage, index) => {
     const prefix = prefixes[index];
     return [stage, { identities: count(row[`${prefix}Identities`]), journeys: count(row[`${prefix}Journeys`]), events: count(row[`${prefix}Events`]) }];
   })) as AdminJourneySummary["stages"];
   const searches: AdminJourneySearchCounts = { total: count(row.searches), success: count(row.successfulSearches), partial: count(row.partialSearches), failed: count(row.failedSearches) };
+  const totalRedirects = count(handoffs.total);
+  const withVisitorIdentity = count(handoffs.withVisitorIdentity);
+  const withoutVisitorIdentity = count(handoffs.withoutVisitorIdentity);
+  const inConsentedJourneys = count(handoffs.inConsentedJourneys);
+  const outsideConsentedJourneys = count(handoffs.outsideConsentedJourneys);
+  const exactSearchLinks = count(handoffs.exactSearchLinks);
+  const eligibleWithoutExactSearch = count(handoffs.eligibleWithoutExactSearch);
+  const withRequestId = count(handoffs.withRequestId);
+  // A broken aggregate must not turn missing data into a convincing zero.
+  if (
+    totalRedirects !== withVisitorIdentity + withoutVisitorIdentity ||
+    totalRedirects !== inConsentedJourneys + outsideConsentedJourneys ||
+    inConsentedJourneys !== exactSearchLinks + eligibleWithoutExactSearch ||
+    withRequestId > totalRedirects ||
+    inConsentedJourneys > withVisitorIdentity
+  ) throw new Error("Inconsistent operational handoff coverage.");
   return {
     scope, identities: { total: count(row.identities), guests: count(row.guests), registered: count(row.registered), registeredAccounts: count(row.registeredAccounts) },
     journeys: count(row.journeys), rawEvents: count(row.rawEvents), stages, recordedSearches: searches,
     handoffCorrelation: { exactEvents: count(row.exactHandoffs), uncorrelatedEvents: count(row.uncorrelatedHandoffs) },
+    operationalHandoffs: {
+      scope: "environment_and_date_only",
+      total: totalRedirects,
+      withVisitorIdentity,
+      withoutVisitorIdentity,
+      inConsentedJourneys,
+      outsideConsentedJourneys,
+      exactSearchLinks,
+      eligibleWithoutExactSearch,
+      withRequestId,
+    },
     operationalSearches: { scope: "environment_and_date_only", total: count(operational.total), success: count(operational.success), partial: count(operational.partial), failed: count(operational.failed), partialWithResults: count(operational.partialWithResults ?? 0), partialWithoutResults: count(operational.partialWithoutResults ?? 0) },
   };
 }
@@ -288,7 +367,9 @@ export function createAdminJourneyService(dependencies: Dependencies) {
       return read<AdminJourneySummary>("summary", input, async (tx, query) => {
         const [row] = await tx.$queryRaw<SummaryRecord[]>(summarySql(query.scope));
         const [operational] = await tx.$queryRaw<OperationalRecord[]>(operationalSql(query.scope));
-        return { status: "ok", data: summaryDto(query.scope, row, operational) };
+        const [handoffs] = await tx.$queryRaw<OperationalHandoffRecord[]>(operationalHandoffsSql(query.scope));
+        if (!row || !operational || !handoffs) throw new Error("Missing journey summary aggregates.");
+        return { status: "ok", data: summaryDto(query.scope, row, operational, handoffs) };
       });
     },
   };

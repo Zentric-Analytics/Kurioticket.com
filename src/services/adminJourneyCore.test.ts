@@ -32,6 +32,15 @@ function summary() {
     searches: BigInt(5), successfulSearches: BigInt(3), partialSearches: BigInt(1), failedSearches: BigInt(1), exactHandoffs: BigInt(1), uncorrelatedHandoffs: BigInt(1),
   };
 }
+function coverage(overrides: Record<string, bigint> = {}) {
+  return {
+    total: BigInt(0), withVisitorIdentity: BigInt(0), withoutVisitorIdentity: BigInt(0),
+    inConsentedJourneys: BigInt(0), outsideConsentedJourneys: BigInt(0),
+    exactSearchLinks: BigInt(0), eligibleWithoutExactSearch: BigInt(0),
+    withRequestId: BigInt(0), ...overrides,
+  };
+}
+
 function fixture(batches: unknown[][] = []) {
   let authorized = true;
   let available = true;
@@ -143,7 +152,10 @@ test("detail continuation uses event timestamp and ID and is bound to the reques
 });
 
 test("summary keeps distinct identities, stage observations, search outcomes and operational totals separate", async () => {
-  const f = fixture([[summary()], [{ total: BigInt(20), success: BigInt(15), partial: BigInt(3), failed: BigInt(2), partialWithResults: BigInt(1), partialWithoutResults: BigInt(2) }]]);
+  const f = fixture([[summary()], [{ total: BigInt(20), success: BigInt(15), partial: BigInt(3), failed: BigInt(2), partialWithResults: BigInt(1), partialWithoutResults: BigInt(2) }],
+    [coverage({ total: BigInt(9), withVisitorIdentity: BigInt(5), withoutVisitorIdentity: BigInt(4),
+      inConsentedJourneys: BigInt(5), outsideConsentedJourneys: BigInt(4),
+      exactSearchLinks: BigInt(5), withRequestId: BigInt(5) })]]);
   const result = await f.service.summary({ product: "FLIGHT" });
   assert.equal(result.status, "ok");
   if (result.status !== "ok") return;
@@ -153,6 +165,12 @@ test("summary keeps distinct identities, stage observations, search outcomes and
   assert.deepEqual(result.data.stages.OFFER_SELECTED, { identities: 1, journeys: 1, events: 2 });
   assert.deepEqual(result.data.recordedSearches, { total: 5, success: 3, partial: 1, failed: 1 });
   assert.deepEqual(result.data.handoffCorrelation, { exactEvents: 1, uncorrelatedEvents: 1 });
+  assert.deepEqual(result.data.operationalHandoffs, {
+    scope: "environment_and_date_only", total: 9,
+    withVisitorIdentity: 5, withoutVisitorIdentity: 4,
+    inConsentedJourneys: 5, outsideConsentedJourneys: 4,
+    exactSearchLinks: 5, eligibleWithoutExactSearch: 0, withRequestId: 5,
+  });
   assert.deepEqual(result.data.operationalSearches, { scope: "environment_and_date_only", total: 20, success: 15, partial: 3, failed: 2, partialWithResults: 1, partialWithoutResults: 2 });
   assert.doesNotThrow(() => JSON.stringify(result));
 });
@@ -164,7 +182,7 @@ test("unsafe numeric aggregates fail as unavailable instead of returning rounded
 
 test("user-controlled provider text stays a SQL parameter across list, detail and summary", async () => {
   const provider = "x' OR TRUE; --";
-  const f = fixture([[], [], [summary()], [{ total: BigInt(0), success: BigInt(0), partial: BigInt(0), failed: BigInt(0) }]]);
+  const f = fixture([[], [], [summary()], [{ total: BigInt(0), success: BigInt(0), partial: BigInt(0), failed: BigInt(0) }], [coverage()]]);
   await f.service.list({ provider });
   await f.service.detail("journey-001", { provider });
   await f.service.summary({ provider });
@@ -172,4 +190,27 @@ test("user-controlled provider text stays a SQL parameter across list, detail an
     assert.equal(query.values.includes(provider), true);
     assert.equal(query.sql.includes(provider), false);
   }
+  const operationalHandoffQuery = f.queries.find(query => query.sql.includes("eligible_handoff_redirects"));
+  assert.ok(operationalHandoffQuery);
+  // Operational provider redirect coverage must not be narrowed by a journey-cohort filter.
+  assert.equal(operationalHandoffQuery.values.includes(provider), false);
+  assert.equal(operationalHandoffQuery.sql.includes(provider), false);
+});
+
+test("handoff coverage fails closed on missing or irreconcilable aggregates", async () => {
+  const cases = [
+    coverage({ total: BigInt(2), withVisitorIdentity: BigInt(1), withoutVisitorIdentity: BigInt(0),
+      inConsentedJourneys: BigInt(1), outsideConsentedJourneys: BigInt(1),
+      exactSearchLinks: BigInt(1) }),
+    coverage({ total: BigInt(1), withVisitorIdentity: BigInt(1),
+      inConsentedJourneys: BigInt(1), exactSearchLinks: BigInt(2) }),
+    coverage({ total: BigInt(1), withoutVisitorIdentity: BigInt(1),
+      inConsentedJourneys: BigInt(1), exactSearchLinks: BigInt(1) }),
+  ];
+  for (const bad of cases) {
+    const f = fixture([[summary()], [{ total: BigInt(0), success: BigInt(0), partial: BigInt(0), failed: BigInt(0) }], [bad]]);
+    assert.deepEqual(await f.service.summary(), { status: "unavailable" });
+  }
+  const missing = fixture([[summary()], [{ total: BigInt(0), success: BigInt(0), partial: BigInt(0), failed: BigInt(0) }]]);
+  assert.deepEqual(await missing.service.summary(), { status: "unavailable" });
 });
