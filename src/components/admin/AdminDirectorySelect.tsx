@@ -18,6 +18,8 @@ type Props = {
   options: readonly AdminDirectoryOption[];
   autoSubmit?: boolean;
   compact?: boolean;
+  underlined?: boolean;
+  align?: "start" | "end";
   onValueChange?: (next: string) => void;
 };
 
@@ -33,6 +35,8 @@ export function AdminDirectorySelect({
   options,
   autoSubmit = false,
   compact = false,
+  underlined = false,
+  align = "start",
   onValueChange,
 }: Props) {
   const listboxId = useId();
@@ -66,8 +70,13 @@ export function AdminDirectorySelect({
 
   useEffect(() => {
     if (!open) return;
-    listRef.current?.querySelectorAll<HTMLElement>('[role="option"]')[activeIndex]
-      ?.scrollIntoView({ block: "nearest" });
+    // Scroll only the popup, not the document or neighboring toolbar.
+    const list = listRef.current;
+    const option = list?.querySelectorAll<HTMLElement>('[role="option"]')[activeIndex];
+    if (!list || !option) return;
+    if (option.offsetTop < list.scrollTop) list.scrollTop = option.offsetTop;
+    else if (option.offsetTop + option.offsetHeight > list.scrollTop + list.clientHeight)
+      list.scrollTop = option.offsetTop + option.offsetHeight - list.clientHeight;
   }, [activeIndex, open]);
 
   const show = (index: number) => {
@@ -140,7 +149,7 @@ export function AdminDirectorySelect({
           id={listboxId + "-native"}
           name={name}
           defaultValue={value}
-          className={`focus-ring w-full min-w-0 rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px] font-medium text-[#020617] ${compact ? "h-10" : "h-11"}`}
+          className={underlined ? "h-10 w-auto max-w-full border-0 border-b border-[#CAD3DF] bg-transparent px-0 pr-1 text-[13px] font-medium text-[#334155] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#64748B]" : `focus-ring w-full min-w-0 rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px] font-medium text-[#020617] ${compact ? "h-10" : "h-11"}`}
         >
           {options.map(option => (
             <option key={option.value} value={option.value}>{option.label}</option>
@@ -158,7 +167,7 @@ export function AdminDirectorySelect({
   }
 
   return (
-    <div ref={rootRef} className="relative min-w-0">
+    <div ref={rootRef} className={underlined ? "relative inline-flex max-w-full shrink-0" : "relative min-w-0"}>
       <input ref={hiddenRef} type="hidden" name={name} value={selected} readOnly />
       <button
         ref={triggerRef}
@@ -178,10 +187,10 @@ export function AdminDirectorySelect({
             show(event.key === "Home" ? 0 : options.length - 1);
           }
         }}
-        className={`focus-ring flex w-full min-w-0 items-center justify-between gap-2 rounded-lg border border-[#D8E1EC] bg-white px-3 text-left text-[13px] font-medium text-[#020617] transition-colors hover:border-[#94A3B8] ${compact ? "h-10" : "h-11"}`}
+        className={underlined ? "inline-flex h-10 max-w-full min-w-0 cursor-pointer items-center justify-start gap-[7px] whitespace-nowrap border-b border-[#CAD3DF] bg-transparent px-0 text-left text-[13px] font-medium text-[#334155] transition-colors hover:border-[#64748B] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#64748B]" : `focus-ring flex w-full min-w-0 items-center justify-between gap-2 rounded-lg border border-[#D8E1EC] bg-white px-3 text-left text-[13px] font-medium text-[#020617] transition-colors hover:border-[#94A3B8] ${compact ? "h-10" : "h-11"}`}
       >
-        <span className="truncate">{selectedLabel}</span>
-        <ChevronDown size={15} aria-hidden="true" className={`shrink-0 text-[#0F172A] transition-transform ${open ? "rotate-180" : ""}`} />
+        <span className={underlined ? "whitespace-nowrap" : "truncate"}>{selectedLabel}</span>
+        <ChevronDown size={15} aria-hidden="true" className={`shrink-0 text-[#475569] transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
       {open ? (
         <div
@@ -192,7 +201,7 @@ export function AdminDirectorySelect({
           aria-activedescendant={`${listboxId}-option-${activeIndex}`}
           tabIndex={-1}
           onKeyDown={onListKeyDown}
-          className="absolute left-0 top-full z-50 mt-1 max-h-64 w-full min-w-[170px] overflow-y-auto rounded-lg border border-[#D8E1EC] bg-white p-1.5 shadow-[0_8px_24px_-12px_rgba(2,6,23,0.25)] outline-none"
+          className={`absolute top-full z-50 mt-1.5 max-h-64 min-w-[170px] max-w-[min(90vw,280px)] overflow-y-auto rounded-lg border border-[#D8E1EC] bg-white p-1.5 shadow-[0_10px_28px_-12px_rgba(2,6,23,0.25)] outline-none ${underlined && align === "end" ? "left-0 lg:left-auto lg:right-0" : "left-0"} ${underlined ? "" : "w-full"}`}
         >
           {options.map((option, index) => (
             <button
