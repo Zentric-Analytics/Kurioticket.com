@@ -110,7 +110,12 @@ export function AdminUsersToolbar({
   useEffect(() => {
     const nextQuery = searchText.trim().slice(0, 120);
     if (nextQuery === query) {
-      editingRef.current = false;
+      if (lastSubmittedRef.current !== null && lastSubmittedRef.current !== nextQuery) {
+        // A different search is in flight: explicitly restore this input.
+        navigate({ q: nextQuery }, true);
+      } else if (lastSubmittedRef.current === null) {
+        editingRef.current = false;
+      }
       return;
     }
     if (!editingRef.current || nextQuery === lastSubmittedRef.current) return;
@@ -163,7 +168,7 @@ export function AdminUsersToolbar({
           onChange={event => {
             textRef.current = event.target.value;
             editingRef.current = true;
-            lastSubmittedRef.current = null;
+            // Retain the pending navigation to detect when an edit restores the previous query.
             setSearchText(event.target.value);
           }}
           placeholder="Search by name, email, user ID, or guest ID"
