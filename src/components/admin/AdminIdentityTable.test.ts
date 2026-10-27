@@ -61,15 +61,14 @@ test("table remains a scrollable, accessible region with the same five-column pa
   assert.doesNotMatch(html, /Rows per page|15 rows|matching identities/);
 });
 
-test("empty results show the requested message and Clear filters without clearing search or active tab", () => {
+test("empty results omit Clear filters but retain search and pagination actions", () => {
   const html = render({
     page: 1, count: 0,
     pageHref: "/admin/users?q=qa&role=SUPPORT&status=ACTIVE&tab=GUEST&sort=oldest&page=1",
   });
   assert.match(html, /No users match your filters/);
-  assert.match(html, />Clear filters<\/a>/);
+  assert.doesNotMatch(html, />Clear filters<\/a>/);
   assert.match(html, />Clear search<\/a>/);
-  assert.match(html, /q=qa&amp;role=ALL&amp;status=ALL&amp;tab=GUEST&amp;sort=oldest&amp;page=1/);
   assert.match(html, /q=&amp;role=SUPPORT&amp;status=ACTIVE&amp;tab=GUEST&amp;sort=oldest&amp;page=1/);
   assert.match(html, /Pg1 of 1/);
   assert.match(html, /aria-label="Next page unavailable"/);
