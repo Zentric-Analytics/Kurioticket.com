@@ -67,3 +67,21 @@ The selected window applies to historical journeys, search outcomes, redirect at
 
 ## Final Overview accuracy and readability polish (October 27, 2026)
 Provider failure rates now display one decimal place and extremely small nonzero failures as `<0.1%`. Disabled calls remain excluded from the attempted denominator. The Overview and Providers screens share formatting. Contributed consented events remain distinct from all operational searches. Recent Admin Activity is explicitly the latest six audit records regardless of selected range. Compactness and typography are improved while keeping diagnostics visible. No recorded data or reporting windows change.
+
+
+## Compact, summary-first Overview (October 27, 2026)
+
+The administrator-approved Overview is now an **index of real operational summaries with working shortcuts**, not a full replica of each destination's report. This is a deliberate replacement for the former always-expanded Overview diagnostics. The full provider status, service breakdown, safe failure categories, latency, and timestamps are retained at `/admin/providers`. Search records, consented journey events, exact provider handoff links, support tickets, account deletion requests, system checks, and full audit records continue to live at their dedicated admin pages. None of those underlying database fields, services, retention rules, consent checks, or access controls were removed.
+
+The compact page contains:
+
+- **Operations Snapshot**: four headline figures (retained account records; independently observed, consented active website identities; recorded search operations; consented customer journeys). Website presence has its own 90-second observation window. The selected reporting period defaults to 24 hours and controls historical searches, journeys, redirects and human admin actions, not current account status, provider 24-hour health, or live website presence.
+- **Attention Required**: three individually linked counts (degraded/failing/not-ready integrations, open/waiting support tickets, pending/review deletion requests).
+- **Visitor Activity**, **Search Performance**, **Provider Handoffs**: four consented journey/event measures, four all-search operational measures, and three redirect measures respectively. These have intentionally different populations and must not be added to infer bookings or unique people.
+- **Provider Health**: one compact status per configured/instrumented provider, showing readiness as configuration separately from observed call status, 24-hour calls/failed calls/failure rate, and a link to the complete Providers page. An empty provider list is not shown as healthy.
+- **Operational Workloads**, **Platform Health**: short supported workflow/status summaries. The System panel reports credentials as configured but **not tested**, not confirmed end-to-end function.
+- **Recent Admin Activity**: the latest three records across all dates, showing action and UTC time only, with a link to Logs. Human-admin-action count follows the selected period and excludes system/unattributed audit rows. Raw audit identifiers, email/target details, and full history remain available in the authorized Logs page.
+
+All Overview summary shortcuts point to **existing authorized routes**: `/admin/users`, `/admin/journeys`, `/admin/searches/activity`, `/admin/redirects`, `/admin/providers`, `/admin/support`, `/admin/account-deletions`, `/admin/system`, and `/admin/logs`. Regression tests verify those pages exist, every summary is computed from the canonical data object, and the Dashboard keeps the original unavailable-data fallback.
+
+An unavailable verified value must remain **Unavailable** rather than being replaced by `0` or invented metrics. All examples used in illustrative design mockups are non-authoritative.
