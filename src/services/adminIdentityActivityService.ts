@@ -40,6 +40,8 @@ export type IdentityActivityRecord = {
   events: ActivityRow[];
   nextCursor: string | null;
   environment: PublicEnvironment;
+  /** Operational search records do not imply a consented analytics identity. */
+  source: "account" | "visitor" | "operational";
 };
 export type ActivityReadResult =
   | { status: "ok"; data: IdentityActivityRecord }
@@ -55,6 +57,7 @@ export async function loadAdminIdentityActivity(
   try {
     const db = getOptionalPrisma();
     if (!db) return { status: "unavailable" };
+    const environmentScope = activityEnvironmentScope(environment);
     const account = kind === "user" ? await db.user.findUnique({
       where: { id },
       select: { id: true, name: true, email: true, role: true, status: true, createdAt: true },
@@ -63,15 +66,48 @@ export async function loadAdminIdentityActivity(
       where: eligibleGuestVisitorWhere(id),
       select: { id: true, firstSeenAt: true, lastSeenAt: true },
     }) : null;
-    if (kind === "user" ? !account : !visitor) return { status: "not_found" };
+    if (kind === "user" && !account) return { status: "not_found" };
+    const isOperationalGuest = kind === "guest" && !visitor;
+    // One guest activity reader serves both consented visitor IDs and the
+    // short-lived operational session IDs. The history rows themselves persist
+    // after the signed credential expires. Never interpret either as a person.
+    const operationalSearchOwner: Prisma.SearchHistoryWhereInput = {
+      AND: [
+        { userId: null },
+        { query: { path: ["operationalSessionId"], equals: id } },
+        environmentScope.search,
+      ],
+    };
+    const operationalRedirectOwner: Prisma.RedirectLogWhereInput = {
+      AND: [
+        { userId: null },
+        { metadata: { path: ["operationalSessionId"], equals: id } },
+        environmentScope.handoff,
+      ],
+    };
+    let operationalFirstSeen: Date | null = null;
+    let operationalLastSeen: Date | null = null;
+    if (isOperationalGuest) {
+      const [firstSearch, firstHandoff, lastSearch, lastHandoff] = await Promise.all([
+        db.searchHistory.findFirst({ where: operationalSearchOwner, orderBy: { createdAt: "asc" }, select: { createdAt: true } }),
+        db.redirectLog.findFirst({ where: operationalRedirectOwner, orderBy: { createdAt: "asc" }, select: { createdAt: true } }),
+        db.searchHistory.findFirst({ where: operationalSearchOwner, orderBy: { createdAt: "desc" }, select: { createdAt: true } }),
+        db.redirectLog.findFirst({ where: operationalRedirectOwner, orderBy: { createdAt: "desc" }, select: { createdAt: true } }),
+      ]);
+      const first = [firstSearch?.createdAt, firstHandoff?.createdAt].filter((at): at is Date => Boolean(at));
+      const last = [lastSearch?.createdAt, lastHandoff?.createdAt].filter((at): at is Date => Boolean(at));
+      if (!first.length || !last.length) return { status: "not_found" };
+      operationalFirstSeen = new Date(Math.min(...first.map(at => at.getTime())));
+      operationalLastSeen = new Date(Math.max(...last.map(at => at.getTime())));
+    }
 
     // Account-owned history is explicit. Formerly anonymous records are visible only if
     // the visitor has ongoing consent and an exclusive link to this verified identity.
     const linked = eligibleLinkedVisitorWhere(id);
-    const searchOwner: Prisma.SearchHistoryWhereInput = kind === "guest"
+    const searchOwner: Prisma.SearchHistoryWhereInput = isOperationalGuest ? operationalSearchOwner : kind === "guest"
       ? { userId: null, visitorId: id, visitor: { is: eligibleGuestVisitorWhere(id) } }
       : { OR: [{ userId: id }, { userId: null, visitor: { is: linked } }] };
-    const redirectOwner: Prisma.RedirectLogWhereInput = kind === "guest"
+    const redirectOwner: Prisma.RedirectLogWhereInput = isOperationalGuest ? operationalRedirectOwner : kind === "guest"
       ? { userId: null, visitorId: id, visitor: { is: eligibleGuestVisitorWhere(id) } }
       : { OR: [{ userId: id }, { userId: null, visitor: { is: linked } }] };
     const analyticsOwner: Prisma.AnalyticsEventWhereInput = kind === "guest"
@@ -89,7 +125,6 @@ export async function loadAdminIdentityActivity(
     const window = activityWindow(filters);
     const order = filters.order === "oldest" ? "oldest" : "newest";
     const createdAtDirection = order === "oldest" ? "asc" : "desc";
-    const environmentScope = activityEnvironmentScope(environment);
     const scopedJourneyOwner: Prisma.JourneyEventWhereInput = { AND: [journeyOwner, environmentScope.journey] };
 
     const productEventFilter: Prisma.JourneyEventWhereInput = product
@@ -114,7 +149,7 @@ export async function loadAdminIdentityActivity(
     // Each source is separately seek-paginated in its own existing index.
     // Bounded per-source reads prevent a busy visitor from loading their full history.
     const [journey, searches, handoffs, analytics] = await Promise.all([
-      stages.length ? db.journeyEvent.findMany({
+      stages.length && !isOperationalGuest ? db.journeyEvent.findMany({
         where: { AND: [scopedJourneyOwner, { type: { in: stages } }, { createdAt: window }, sourceActivitySeek(cursor, "j", order), productEventFilter, eventQ] },
         orderBy: [{ createdAt: createdAtDirection }, { id: "asc" }],
         take: ACTIVITY_FETCH_LIMIT, select: journeySelect,
@@ -122,7 +157,7 @@ export async function loadAdminIdentityActivity(
       allowed.has("SEARCH_COMPLETED") ? db.searchHistory.findMany({
         where: { AND: [
           searchOwner, environmentScope.search, { createdAt: window }, sourceActivitySeek(cursor, "s", order),
-          excludeCanonicalLegacyRows("SEARCH_COMPLETED", scopedJourneyOwner, window, productEventFilter, eventQ),
+          ...(isOperationalGuest ? [] : [excludeCanonicalLegacyRows("SEARCH_COMPLETED", scopedJourneyOwner, window, productEventFilter, eventQ)]),
           ...(product ? [{ type: product }] : []),
           ...(q && !legacyStageLabelMatchesQuery("SEARCH_COMPLETED", q) ? [{ OR: [
             { origin: ci(q) }, { destination: ci(q) },
@@ -137,14 +172,14 @@ export async function loadAdminIdentityActivity(
         ? db.redirectLog.findMany({
           where: { AND: [
             redirectOwner, environmentScope.handoff, { createdAt: window }, sourceActivitySeek(cursor, "r", order),
-            excludeCanonicalLegacyRows("PROVIDER_HANDOFF_STARTED", scopedJourneyOwner, window, productEventFilter, eventQ),
+            ...(isOperationalGuest ? [] : [excludeCanonicalLegacyRows("PROVIDER_HANDOFF_STARTED", scopedJourneyOwner, window, productEventFilter, eventQ)]),
             ...(product ? [{ type: product }] : []),
             ...(q && !legacyStageLabelMatchesQuery("PROVIDER_HANDOFF_STARTED", q) ? [{ OR: [{ provider: ci(q) }, { route: ci(q) }] }] : []),
           ] },
           orderBy: [{ createdAt: createdAtDirection }, { id: "asc" }], take: ACTIVITY_FETCH_LIMIT,
           select: { id: true, type: true, provider: true, route: true, createdAt: true },
         }) : Promise.resolve([]),
-      allowed.has("ACCOUNT_ACTIVITY") && !product ? db.analyticsEvent.findMany({
+      allowed.has("ACCOUNT_ACTIVITY") && !product && !isOperationalGuest ? db.analyticsEvent.findMany({
         where: { AND: [
           analyticsOwner, environmentScope.analytics, { createdAt: window }, sourceActivitySeek(cursor, "e", order),
           { type: { in: Object.keys(safeAnalyticsLabels) as SafeAnalyticsType[] } },
@@ -192,12 +227,13 @@ export async function loadAdminIdentityActivity(
       status: "ok",
       data: {
         id, kind, environment,
-        title: kind === "guest" ? "Guest visitor" : account?.name || account?.email || "Registered user",
+        title: isOperationalGuest ? "Guest session" : kind === "guest" ? "Guest visitor" : account?.name || account?.email || "Registered user",
         email: account?.email ?? null,
         role: account?.role ?? null,
         status: account?.status ?? "Anonymous",
-        firstSeenAt: account?.createdAt ?? visitor!.firstSeenAt,
-        lastSeenAt: visitor?.lastSeenAt ?? latestVisibleActivityAt(page),
+        firstSeenAt: account?.createdAt ?? visitor?.firstSeenAt ?? operationalFirstSeen!,
+        lastSeenAt: visitor?.lastSeenAt ?? operationalLastSeen ?? latestVisibleActivityAt(page),
+        source: kind === "user" ? "account" : isOperationalGuest ? "operational" : "visitor",
         events: page,
         nextCursor: hasMore && last ? encodeActivityCursor(last, kind, id, filters, environment) : null,
       },
