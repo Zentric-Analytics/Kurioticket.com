@@ -165,8 +165,8 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
       <span className="font-medium text-[#020617]">Activity</span>
     </nav>
 
-    <section aria-label="Customer identity" className="py-3 sm:py-4">
-      <div className="flex flex-wrap items-center justify-between gap-x-8 gap-y-5">
+    <section aria-label="Customer identity" className="py-2 sm:py-3">
+      <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between xl:gap-8">
         <div className="flex min-w-0 items-center gap-4">
           <span aria-hidden="true" className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[var(--muted)] text-xl font-semibold">{(kind === "guest" ? "G" : (data.title || "U").slice(0,1)).toUpperCase()}</span>
           <div className="min-w-0">
@@ -176,7 +176,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
             <div className="mt-1 flex items-center gap-2"><code className="max-w-[240px] truncate text-xs" title={id}>{id}</code><CopyIdentityId id={id} kind={kind}/></div>
           </div>
         </div>
-        <dl className="grid w-full grid-cols-2 gap-x-3 gap-y-4 sm:w-auto sm:grid-cols-4 sm:gap-x-5">
+        <dl className="grid w-full grid-cols-2 gap-x-3 gap-y-4 sm:grid-cols-4 sm:gap-x-5 xl:w-auto xl:shrink-0">
           <Fact label={kind === "guest" ? "First seen" : "Joined"}>{format(data.firstSeenAt)}</Fact>
           <Fact label="Last active">{data.lastSeenAt ? format(data.lastSeenAt) : "—"}</Fact>
           <Fact label="Events">{data.events.length}{data.nextCursor ? "+" : ""}</Fact>
@@ -188,8 +188,11 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
         : <GuestTrackingActions visitorId={id} backHref={backHref}/>}</div>
     </section>
 
-    <section aria-label="Activity filters" className="min-w-0 space-y-7 border-t border-[var(--border)] pt-5 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
-      <nav aria-label="Activity tabs" className="flex max-w-full gap-7 overflow-x-auto border-b border-[#D8E1EC]">
+    <section aria-label="Activity filters" className="min-w-0">
+      <ActivityFiltersBar path={basePath} directory={typeof raw.directory === "string" && raw.directory.length <= 1000 ? raw.directory : ""}
+        initial={{tab:filters.tab,q:filters.q,product:filters.product,stage:filters.stage,order,
+          from:filters.from,to:filters.to,range:typeof raw.range === "string" && ["7d","30d","custom"].includes(raw.range) ? raw.range : (filters.from || filters.to ? "custom" : "all")}}
+        tabs={<nav aria-label="Activity tabs" className="flex max-w-full shrink-0 gap-7 overflow-x-auto">
         {tabs.map(tab => <Link key={tab.value}
           href={activityHref(basePath, queryParams, { tab: tab.value, cursor: null })}
           aria-current={filters.tab === tab.value ? "page" : undefined}
@@ -197,10 +200,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
             (filters.tab === tab.value ? "after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-[#004BB8]" : "")}>
           {tab.label}
         </Link>)}
-      </nav>
-      <ActivityFiltersBar path={basePath} directory={typeof raw.directory === "string" && raw.directory.length <= 1000 ? raw.directory : ""}
-        initial={{tab:filters.tab,q:filters.q,product:filters.product,stage:filters.stage,order,
-          from:filters.from,to:filters.to,range:typeof raw.range === "string" && ["7d","30d","custom"].includes(raw.range) ? raw.range : (filters.from || filters.to ? "custom" : "all")}}/>
+      </nav>} />
     </section>
 
     <div className="grid min-w-0 gap-8 lg:grid-cols-[minmax(0,1fr)_260px]">
