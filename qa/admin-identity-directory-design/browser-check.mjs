@@ -42,7 +42,7 @@ try {
       const search = document.getElementById("admin-user-search").getBoundingClientRect();
       const controls = [...document.querySelectorAll('form[aria-label="Filter users"] button[role="combobox"]')].map(node => {
         const rect=node.getBoundingClientRect();
-        return { top: rect.top, bottom:rect.bottom, border: getComputedStyle(node).borderBottomWidth };
+        return { top: rect.top, bottom:rect.bottom, border: getComputedStyle(node).borderBottomWidth, triangle: Boolean(node.querySelector('svg path[d="M0 0h8L4 5z"]')) };
       });
       return { searchWidth:search.width, viewport:innerWidth, doc:document.documentElement.scrollWidth,
         controls, tabs:document.querySelector('nav[aria-label="User types"]').getBoundingClientRect().top,
@@ -50,7 +50,7 @@ try {
     });
     assert.ok(geometry.doc <= geometry.viewport + 1, "No horizontal document overflow");
     assert.ok(geometry.searchWidth > geometry.viewport * 0.65, "Full-width search input");
-    assert.ok(geometry.controls.every(x=>x.border==="1px"), "Permanently underlined filters");
+    assert.ok(geometry.controls.every(x=>x.border==="0px" && x.triangle), "Text-only filters use solid triangle arrows");
     assert.ok(geometry.tabs > geometry.searchTop, "Tabs follow full-width search");
     await expect(page.getByRole("link",{name:"Clear filters"})).toHaveCount(0);
     await expect(page.getByRole("navigation",{name:"Identity pagination"})).toHaveCount(0);
