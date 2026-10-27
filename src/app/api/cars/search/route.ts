@@ -87,7 +87,7 @@ export async function POST(request: Request) {
           // Provider diagnostics are optional and must not affect the search response.
         }
       });
-      return Response.json({ ...response, code: "SEARCH_UNSUPPORTED", error: "The available providers cannot search these rental options. Please change your search." }, { status: 422, headers: noStore });
+      return attachOperationalSearchSession(Response.json({ ...response, code: "SEARCH_UNSUPPORTED", error: "The available providers cannot search these rental options. Please change your search." }, { status: 422, headers: noStore }), operationalSession);
     }
     if (status === "unavailable") {
       recordSearch(0, "FAILED");
