@@ -79,6 +79,7 @@ export function AdminUsersToolbar({
   const router = useRouter();
   const [searchText, setSearchText] = useState(query);
   const [customOpen, setCustomOpen] = useState(false);
+  const [selectorVersion, setSelectorVersion] = useState(0);
   const [draftDates, setDraftDates] = useState({ from, to });
   const [isPending, startTransition] = useTransition();
   const textRef = useRef(query);
@@ -160,7 +161,15 @@ export function AdminUsersToolbar({
     && !Number.isNaN(Date.parse(draftDates.from)) && !Number.isNaN(Date.parse(draftDates.to))
     && draftDates.from <= draftDates.to;
   function changeDate(next: string) {
-    if (next === "custom") { setDraftDates({from,to}); setCustomOpen(true); return; }
+    if (next === "custom") {
+      editingRef.current = false;
+      textRef.current = query;
+      setSearchText(query);
+      lastSubmittedRef.current = null;
+      setDraftDates({from,to});
+      setCustomOpen(true);
+      return;
+    }
     setCustomOpen(false);
     navigate({date:next});
   }
@@ -239,7 +248,7 @@ export function AdminUsersToolbar({
         <input type="hidden" name="tab" value={tab} readOnly />
         {tab === "GUEST" ? <input type="hidden" name="status" value={status} readOnly /> : null}
 
-        <AdminDirectorySelect key={"date-" + date} name="date" label="Date range" value={customOpen ? "custom" : date} options={dateOptions}
+        <AdminDirectorySelect key={"date-" + date + "-" + selectorVersion} name="date" label="Date range" nativeExcludeValues={["custom"]} value={customOpen ? "custom" : date} options={dateOptions}
           plain align="end" onValueChange={changeDate} />
         <AdminDirectorySelect key={"role-" + role} name="role" label="Account role" value={role} options={roles}
           plain align="end" onValueChange={next => navigate({ role: next })} />
@@ -266,7 +275,7 @@ export function AdminUsersToolbar({
       <button type="button" disabled={!validCustom || isPending}
         onClick={() => navigate({date:"custom",from:draftDates.from,to:draftDates.to})}
         className="h-11 rounded-lg bg-[#004BB8] px-4 text-[13px] font-medium text-white disabled:cursor-not-allowed disabled:opacity-40">Apply dates</button>
-      <button type="button" onClick={() => { setCustomOpen(false); setDraftDates({from,to}); }}
+      <button type="button" onClick={() => { setCustomOpen(false); setDraftDates({from,to}); setSelectorVersion(version => version + 1); }}
         className="h-11 px-2 text-[13px] font-medium text-[#475569] hover:underline">Cancel</button>
     </div> : null}
 
