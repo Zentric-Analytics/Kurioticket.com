@@ -210,27 +210,42 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
     <div className="grid min-w-0 gap-8 lg:grid-cols-[minmax(0,1fr)_260px]">
       <ActivityTimeline events={data.events} nextHref={nextHref} environment={environment} order={order}
         clearHref={activityHref(basePath, queryParams, {q:null,from:null,to:null,range:null,product:null,stage:null,order:null,cursor:null})}/>
-      <aside className="min-w-0 space-y-4">
-        <section aria-label="Activity summary" className="pb-3">
-          <h2 className="mb-3 text-sm font-semibold">Activity summary</h2>
-          {[
-            ["Searches", data.events.filter(e => e.stage === "SEARCH_COMPLETED").length],
-            ["Results viewed", data.events.filter(e => e.stage === "RESULTS_VIEWED").length],
-            ["Provider handoffs", data.events.filter(e => e.stage === "PROVIDER_HANDOFF_STARTED").length],
-          ].map(([label,count]) => <div key={label} className="flex justify-between border-b border-[var(--border)] py-2 text-sm last:border-0">
-            <span className="text-[var(--muted-foreground)]">{label}</span><strong>{count}</strong>
-          </div>)}
-          <p className="mt-2 text-xs text-[var(--muted-foreground)]">Counts reflect loaded events only.</p>
-        </section>
-        <section aria-labelledby="activity-related-title" className="pb-3">
-          <h2 id="activity-related-title" className="mb-2 text-sm font-semibold">Related records</h2>
-          {related.map(({href,title}) => <Link key={href} href={href} className="focus-ring flex items-center justify-between rounded-sm border-b border-[var(--border)] py-3 text-sm last:border-0 hover:underline">{title}<ChevronRight size={16}/></Link>)}
-        </section>
-        <p className="flex items-start gap-2 border-t border-[var(--border)] pt-5 text-xs leading-5 text-[var(--muted-foreground)]">
-          <Info size={16} className="mt-0.5 shrink-0" aria-hidden="true"/>
-          <span>{kind === "guest" ? <>Only recorded, consented {environment} activity is displayed. </> : <>Only recorded {environment} account activity is displayed; linked visitor activity requires analytics consent. </>}
-            Missing records do not establish that no visit occurred. Provider handoffs are not proof of a booking or payment.</span>
-        </p>
+      <aside className="min-w-0">
+        <div className="rounded-lg border border-[#D8E1EC] bg-white p-4">
+          <section aria-label="Activity summary">
+            <div className="mb-3 flex items-center gap-2">
+              <h2 className="text-sm font-semibold">Activity summary</h2>
+              <div className="group relative inline-flex">
+                <button type="button" aria-label="About activity data" aria-describedby="activity-data-explanation"
+                  className="focus-ring inline-flex h-6 w-6 items-center justify-center rounded-full text-[#475569] hover:text-[#004BB8]">
+                  <Info size={16} aria-hidden="true" />
+                </button>
+                <div id="activity-data-explanation" role="tooltip"
+                  className="pointer-events-none invisible absolute right-0 top-full z-20 mt-2 w-64 max-w-[calc(100vw-3rem)] rounded-lg border border-[#D8E1EC] bg-white p-3 text-xs font-normal leading-5 text-[#334155] opacity-0 shadow-lg transition-opacity group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
+                  {kind === "guest"
+                    ? <>Only recorded, consented {environment} activity is displayed. </>
+                    : <>Only recorded {environment} account activity is displayed; linked visitor activity requires analytics consent. </>}
+                  Missing records do not establish that no visit occurred. Provider handoffs are not proof of a booking or payment.
+                </div>
+              </div>
+            </div>
+            {[
+              ["Searches", data.events.filter(e => e.stage === "SEARCH_COMPLETED").length],
+              ["Results viewed", data.events.filter(e => e.stage === "RESULTS_VIEWED").length],
+              ["Provider handoffs", data.events.filter(e => e.stage === "PROVIDER_HANDOFF_STARTED").length],
+            ].map(([label,count]) => <div key={label} className="flex justify-between border-b border-[var(--border)] py-2 text-sm last:border-0">
+              <span className="text-[var(--muted-foreground)]">{label}</span><strong>{count}</strong>
+            </div>)}
+            <p className="mt-2 text-xs text-[var(--muted-foreground)]">Counts reflect loaded events only.</p>
+          </section>
+          <section aria-labelledby="activity-related-title" className="mt-6">
+            <h2 id="activity-related-title" className="mb-2 text-sm font-semibold">Related records</h2>
+            {related.map(({href,title}) => <Link key={href} href={href}
+              className="focus-ring flex items-center justify-between rounded-sm border-b border-[var(--border)] py-3 text-sm last:border-0 hover:underline">
+              {title}<ChevronRight size={16}/>
+            </Link>)}
+          </section>
+        </div>
       </aside>
     </div>
   </div>;
