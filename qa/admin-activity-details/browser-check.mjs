@@ -28,6 +28,11 @@ try {
     await expect(page.getByRole("heading",{name:"Activity history"})).toBeVisible();
     await expect(page.getByRole("heading",{name:"Activity summary"})).toBeVisible();
     await expect(page.getByRole("heading",{name:"Related records"})).toBeVisible();
+    await expect(page.getByRole("button",{name:"About activity data"})).toBeVisible();
+    await expect(page.getByRole("tooltip")).toBeHidden();
+    await page.getByRole("button",{name:"About activity data"}).focus();
+    await expect(page.getByRole("tooltip")).toBeVisible();
+    await page.keyboard.press("Tab");
     await expect(page.getByRole("button",{name:"Manage guest qa-guest-activity-0001"})).toBeVisible();
     await expect(page.getByRole("button",{name:"Apply Filter"})).toHaveCount(0);
     await expect(page.getByRole("button",{name:"Date range: All dates"})).toBeVisible();
