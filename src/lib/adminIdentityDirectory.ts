@@ -43,6 +43,8 @@ export type AdminIdentityPageRequest = {
   status: string;
   showUsers: boolean;
   showGuests: boolean;
+  showOperationalGuests?: boolean;
+  environment?: "staging" | "production";
   limit: number;
   offset: number;
   sort?: AdminIdentitySort;
@@ -59,6 +61,8 @@ export type AdminIdentityPageRequest = {
  */
 export function adminIdentityPageSql(input: AdminIdentityPageRequest): Prisma.Sql | null {
   const { query, role, status, showUsers, showGuests, limit, offset } = input;
+  const showOperationalGuests = input.showOperationalGuests ?? false;
+  const environment = input.environment ?? "production";
   const sort = parseAdminIdentitySort(input.sort);
   const bounds = adminIdentityDateBounds(input.date ?? "all", input.now);
   const order = sort === "oldest"
@@ -68,7 +72,7 @@ export function adminIdentityPageSql(input: AdminIdentityPageRequest): Prisma.Sq
       : sort === "name_desc"
         ? Prisma.sql`lower("displayName") DESC, "joinedAt" DESC, "kind" ASC, "id" DESC`
         : Prisma.sql`"joinedAt" DESC, "kind" ASC, "id" DESC`;
-  if (!showUsers && !showGuests) return null;
+  if (!showUsers && !showGuests && !showOperationalGuests) return null;
   if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100
     || !Number.isSafeInteger(offset) || offset < 0) {
     throw new Error("Invalid Admin identity page bounds");
@@ -107,6 +111,44 @@ export function adminIdentityPageSql(input: AdminIdentityPageRequest): Prisma.Sq
           SELECT 1 FROM "VisitorIdentityLink" l WHERE l."visitorId" = v."id"
         )
         ${query ? Prisma.sql`AND strpos(lower(v."id"), lower(${query})) > 0` : Prisma.empty}
+    `);
+  }
+
+  if (showOperationalGuests) {
+    // Essential records without analytics attribution remain inspectable
+    // after the operational session credential expires.
+    sources.push(Prisma.sql`
+      SELECT 'guest'::text AS "kind", a."sessionId" AS "id",
+        MIN(a."createdAt") AS "joinedAt",
+        'Guest visitor'::text AS "displayName"
+      FROM (
+        SELECT s."query"->>'operationalSessionId' AS "sessionId", s."createdAt"
+        FROM "SearchHistory" s
+        WHERE s."userId" IS NULL AND s."visitorId" IS NULL
+          AND s."query"->>'environment' = ${environment}
+          AND s."query"->>'operationalSessionId' IS NOT NULL
+        UNION ALL
+        SELECT r."metadata"->>'operationalSessionId' AS "sessionId", r."createdAt"
+        FROM "RedirectLog" r
+        WHERE r."userId" IS NULL AND r."visitorId" IS NULL
+          AND r."metadata"->>'environment' = ${environment}
+          AND r."metadata"->>'operationalSessionId' IS NOT NULL
+      ) a
+      WHERE a."sessionId" ~ '^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}
+  // Name sorting follows the displayed name (including the guest label);
+  // timestamps, kind and ID break ties predictably across pages.
+  return Prisma.sql`
+    SELECT "kind", "id"
+    FROM (${Prisma.join(sources, " UNION ALL ")}) AS identities
+    ORDER BY ${order}
+    LIMIT ${limit} OFFSET ${offset}
+  `;
+}
+
+        ${query ? Prisma.sql`AND strpos(lower(a."sessionId"), lower(${query})) > 0` : Prisma.empty}
+      GROUP BY a."sessionId"
+      ${bounds ? Prisma.sql`HAVING MIN(a."createdAt") >= ${bounds.from}
+        ${bounds.to ? Prisma.sql`AND MIN(a."createdAt") < ${bounds.to}` : Prisma.empty}` : Prisma.empty}
     `);
   }
 
