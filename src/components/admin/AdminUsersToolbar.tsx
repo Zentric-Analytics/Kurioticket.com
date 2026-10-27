@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, useTransition, type FormEvent, type MouseEvent, type ReactNode } from "react";
-import { ChevronDown, LoaderCircle, Search } from "lucide-react";
+import { LoaderCircle, Search } from "lucide-react";
+import { AdminDirectorySelect } from "./AdminDirectorySelect";
 import { useRouter } from "next/navigation";
 import type { AdminIdentityDate, AdminIdentitySort } from "@/lib/adminIdentityDirectory";
 
@@ -156,8 +157,6 @@ export function AdminUsersToolbar({
 
   const base = new URLSearchParams(pageHref.split("?")[1] || "");
   const href = (values: Record<string, string>) => urlWith(base, values);
-  const filterActive = role !== "ALL" || status !== "ALL" || date !== "all";
-  const clearHref = href({ role: "ALL", status: "ALL", date: "all" });
   const counts: Record<UserTab, number> = {
     ALL: registeredCount + guestCount, REGISTERED: registeredCount, GUEST: guestCount,
   };
@@ -167,17 +166,6 @@ export function AdminUsersToolbar({
     event.preventDefault();
     navigate(values);
   }
-
-  const textSelect = (name: string, label: string, value: string, options: readonly { value: string; label: string }[]) => (
-    <label className="relative block min-w-0 border-b border-[#CAD3DF] transition-colors hover:border-[#64748B] focus-within:border-[#475569]">
-      <span className="sr-only">{label}</span>
-      <select name={name} value={value} onChange={event => navigate({ [name]: event.target.value })}
-        className="h-10 w-full min-w-0 appearance-none bg-transparent pl-1 pr-6 text-[13px] font-medium text-[#334155] outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#64748B]">
-        {options.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
-      </select>
-      <ChevronDown aria-hidden="true" size={14} className="pointer-events-none absolute right-0 top-3 text-[#475569]" />
-    </label>
-  );
 
   return <div className="min-w-0">
     <div className="pb-3">
@@ -226,22 +214,18 @@ export function AdminUsersToolbar({
 
       <form action="/admin/users" method="get"
         aria-label="Filter users"
-        className="grid min-w-0 grid-cols-2 items-end gap-x-5 gap-y-2 sm:grid-cols-3 lg:flex lg:shrink-0 lg:items-end lg:gap-6">
+        className="flex min-w-0 flex-wrap items-end gap-x-6 gap-y-2 lg:shrink-0 lg:justify-end">
         <input type="hidden" name="q" value={query} readOnly />
         <input type="hidden" name="sort" value={sort} readOnly />
         <input type="hidden" name="tab" value={tab} readOnly />
         {tab === "GUEST" ? <input type="hidden" name="status" value={status} readOnly /> : null}
 
-        {filterActive ? <Link
-          href={clearHref}
-          onClick={event => navigateLink(event, { role: "ALL", status: "ALL", date: "all" })}
-          className="focus-ring col-span-2 inline-flex h-11 w-fit items-center rounded-sm text-[13px] font-medium text-blue hover:underline lg:order-first"
-        >
-          Clear filters
-        </Link> : null}
-        <div className="min-w-0 lg:w-[145px]">{textSelect("date", "Date range", date, dateOptions)}</div>
-        <div className="min-w-0 lg:w-[135px]">{textSelect("role", "Account role", role, roles)}</div>
-        {tab !== "GUEST" ? <div className="min-w-0 lg:w-[145px]">{textSelect("status", "Account status", status, statuses)}</div> : null}
+        <AdminDirectorySelect key={"date-" + date} name="date" label="Date range" value={date} options={dateOptions}
+          underlined align="end" onValueChange={next => navigate({ date: next })} />
+        <AdminDirectorySelect key={"role-" + role} name="role" label="Account role" value={role} options={roles}
+          underlined align="end" onValueChange={next => navigate({ role: next })} />
+        {tab !== "GUEST" ? <AdminDirectorySelect key={"status-" + status} name="status" label="Account status"
+          value={status} options={statuses} underlined align="end" onValueChange={next => navigate({ status: next })} /> : null}
         <noscript>
           <button type="submit" className="focus-ring col-span-2 rounded-lg border border-border px-3 py-2 text-[13px] font-medium text-foreground">
             Update filters
