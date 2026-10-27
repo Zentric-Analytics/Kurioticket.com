@@ -17,7 +17,7 @@ export type ProviderHandoffActivity = {
   requestId?: string;
   handoffId?: string;
 };
-export type AttributedHandoff = ProviderHandoffActivity & { userId: string | null; visitorId: string | null };
+export type AttributedHandoff = ProviderHandoffActivity & { userId: string | null; visitorId: string | null; operationalSessionId?: string | null };
 export type HandoffReceipt = {
   id: string;
   created: boolean;
@@ -47,12 +47,16 @@ function metadataObject(value: Prisma.JsonValue | null): Record<string, unknown>
 
 async function correlate(tx: Prisma.TransactionClient, input: AttributedHandoff, visitorId: string | null) {
   const requestId = handoffTrackingId(input.requestId);
-  if (!requestId || !visitorId) return { searchHistoryId: null, correlation: "unavailable" as const };
+  if (!requestId || (!visitorId && !input.operationalSessionId)) return { searchHistoryId: null, correlation: "unavailable" as const };
   const search = await tx.searchHistory.findUnique({
-    where: { requestId }, select: { id: true, visitorId: true, userId: true, type: true },
+    where: { requestId }, select: { id: true, visitorId: true, userId: true, type: true, query: true },
   });
   if (!search) return { searchHistoryId: null, correlation: "pending" as const };
-  if (search.visitorId !== visitorId || (search.userId && search.userId !== input.userId)
+  const searchQuery = metadataObject(search.query);
+  const sameOperationalSession = Boolean(input.operationalSessionId && searchQuery.operationalSessionId === input.operationalSessionId);
+  const sameConsentedVisitor = Boolean(visitorId && search.visitorId === visitorId);
+  if ((!sameOperationalSession && !sameConsentedVisitor)
+    || (search.userId && search.userId !== input.userId)
     || search.type !== (input.type === "flight" ? "FLIGHT" : "HOTEL")) {
     return { searchHistoryId: null, correlation: "rejected" as const };
   }
@@ -96,7 +100,7 @@ export function createProviderHandoffStore(
           provider: input.provider, route: input.route, price: input.price, currency: input.currency,
           destinationUrl: input.destinationUrl, userType: input.userId ? "user" : "guest",
           sourcePage: journeySourcePath(input.sourcePage) ?? "unknown",
-          metadata: withEnvironmentMetadata({ resultId: input.resultId, ...(requestId && visitorId ? { requestId } : {}) }),
+          metadata: withEnvironmentMetadata({ resultId: input.resultId, ...(requestId && (visitorId || input.operationalSessionId) ? { requestId } : {}), ...(input.operationalSessionId ? { operationalSessionId: input.operationalSessionId } : {}) }),
         }, select: { id: true } });
         return { id: redirect.id, created: true, visitorId, userId: input.userId,
           ...await correlate(tx, input, visitorId) };
@@ -109,7 +113,10 @@ export function createProviderHandoffStore(
         await pause(delay);
         const previous: HandoffReceipt = receipt;
         receipt = await db.$transaction(async tx => {
-          if (!previous.visitorId || !(await lockConsentedVisitor(tx, previous.visitorId, input.userId))) {
+          if (!previous.visitorId && !input.operationalSessionId) {
+            return { ...previous, searchHistoryId: null, correlation: "unavailable" as const };
+          }
+          if (previous.visitorId && !(await lockConsentedVisitor(tx, previous.visitorId, input.userId))) {
             return { ...previous, visitorId: null, searchHistoryId: null, correlation: "unavailable" as const };
           }
           const saved = await tx.redirectLog.findUnique({ where: { id: previous.id }, select: { visitorId: true, userId: true } });
