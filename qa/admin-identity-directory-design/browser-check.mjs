@@ -127,6 +127,7 @@ try {
   await check("search debounces and Enter commits immediately without Apply Filter", async () => {
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto(after, { waitUntil: "domcontentloaded" });
+    await expect(page.getByRole("combobox", { name: "Sort by" })).toHaveAttribute("aria-haspopup", "listbox");
     await search().fill("Zara");
     await page.waitForTimeout(120);
     assert.equal(query("q"), null, "Search waits before debounce threshold");
