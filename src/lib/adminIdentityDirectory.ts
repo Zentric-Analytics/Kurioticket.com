@@ -11,7 +11,7 @@ export function escapePrismaContainsQuery(query: string) {
   return query.replace(/[\\%_]/g, character => "\\" + character);
 }
 
-export const ADMIN_IDENTITY_DATES = ["all", "today", "last7", "thisMonth", "lastMonth", "last3", "custom"] as const;
+export const ADMIN_IDENTITY_DATES = ["all", "today", "last7", "last30", "thisMonth", "lastMonth", "last3", "custom"] as const;
 export type AdminIdentityDate = (typeof ADMIN_IDENTITY_DATES)[number];
 export function parseAdminIdentityDate(value?: string): AdminIdentityDate {
   return ADMIN_IDENTITY_DATES.includes(value as AdminIdentityDate) ? value as AdminIdentityDate : "all";
@@ -33,6 +33,7 @@ export function adminIdentityDateBounds(date: AdminIdentityDate, now = new Date(
   const month = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
   const tomorrow = new Date(today.getTime() + 86400000);
   if (date === "today") return { from: today, to: tomorrow };
+  if (date === "last30") return { from: new Date(today.getTime() - 29 * 86400000), to: tomorrow };
   if (date === "last7") return { from: new Date(today.getTime() - 6 * 86400000), to: tomorrow };
   if (date === "thisMonth") return { from: month, to: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1)) };
   if (date === "lastMonth") return { from: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1)), to: month };
