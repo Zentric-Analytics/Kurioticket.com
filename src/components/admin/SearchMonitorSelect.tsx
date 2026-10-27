@@ -15,6 +15,7 @@ export function SearchMonitorSelect({
   autoSubmit = false,
   clearFieldNamesOnChange = [],
   truncateLabel = false,
+  onValueChange,
 }: {
   label: string;
   name: string;
@@ -26,6 +27,7 @@ export function SearchMonitorSelect({
   /** Omit a stale scoped field from submission when this filter changes. */
   clearFieldNamesOnChange?: readonly string[];
   truncateLabel?: boolean;
+  onValueChange?: (value: string) => void;
 }) {
   const id = useId();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -91,6 +93,7 @@ export function SearchMonitorSelect({
     }
     setSelected(next);
     close();
+    if (changed && onValueChange) onValueChange(next);
     if (autoSubmit && changed) {
       // Request submission only after writing the selected value into the real
       // hidden form control: React state does not commit synchronously.
