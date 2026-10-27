@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, UserRound } from "lucide-react";
 import { CopyIdentityId } from "./CopyIdentityId";
-import { AdminIdentitySort } from "./AdminIdentitySort";
 import type { AdminIdentitySort as IdentitySort } from "@/lib/adminIdentityDirectory";
 
 export type IdentityRow =
@@ -25,9 +24,6 @@ type Props = {
   rows: IdentityRow[];
   page: number;
   count: number;
-  registeredCount: number;
-  guestCount: number;
-  identity: "ALL" | "REGISTERED" | "GUEST";
   pageSize: number;
   sort: IdentitySort;
   pageHref: string;
@@ -56,9 +52,6 @@ export function AdminIdentityTable({
   rows,
   page,
   count,
-  registeredCount,
-  guestCount,
-  identity,
   pageSize,
   sort,
   pageHref,
@@ -73,6 +66,11 @@ export function AdminIdentityTable({
   const activityClass =
     "focus-ring inline-flex h-9 items-center gap-1 whitespace-nowrap rounded-sm px-0.5 text-[13px] font-medium text-[#004BB8] underline-offset-4 transition-colors hover:underline";
   const directory = pageHref.split("?")[1] || "";
+  const active = new URLSearchParams(directory);
+  const hasRoleOrStatus = (active.get("role") || "ALL") !== "ALL"
+    || (active.get("status") || "ALL") !== "ALL";
+  const hasSearch = Boolean(active.get("q"));
+  const currentTab = active.get("tab") || active.get("identity") || "ALL";
   const activityHref = (kind: "guest" | "user", id: string) =>
     "/admin/users/" + kind + "/" + encodeURIComponent(id) + "/activity" +
     (directory ? "?directory=" + encodeURIComponent(directory) : "");
@@ -81,25 +79,6 @@ export function AdminIdentityTable({
   return (
     <section className="mt-3 min-w-0 bg-white">
       <h2 id="identity-directory-title" className="sr-only">Users directory</h2>
-      <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-5 gap-y-2 border-b border-[#D8E1EC]">
-        <nav aria-label="User types" className="flex min-w-0 max-w-full items-center gap-5 overflow-x-auto">
-          {([
-            { value: "ALL", label: "All", total: registeredCount + guestCount },
-            { value: "REGISTERED", label: "Registered", total: registeredCount },
-            { value: "GUEST", label: "Guests", total: guestCount },
-          ] as const).map((tab) => (
-            <Link
-              key={tab.value}
-              href={href({ identity: tab.value, page: "1" })}
-              aria-current={identity === tab.value ? "page" : undefined}
-              className={`focus-ring inline-flex h-11 shrink-0 items-center whitespace-nowrap border-b-2 px-1 text-[13px] font-normal text-[#020617] ${identity === tab.value ? "border-[#004BB8]" : "border-transparent"}`}
-            >
-              {tab.label} ({tab.total.toLocaleString()})
-            </Link>
-          ))}
-        </nav>
-        <div className="shrink-0 pb-1"><AdminIdentitySort sort={sort} pageHref={pageHref} /></div>
-      </div>
       <div
         className="focus-ring overflow-x-auto"
         role="region"
@@ -229,7 +208,17 @@ export function AdminIdentityTable({
                   colSpan={5}
                   className="px-4 py-12 text-center text-[13px] text-[#475569]"
                 >
-                  No users match these filters.
+                  <p className="font-medium text-foreground">No users match your filters</p>
+                  <div className="mt-2 flex items-center justify-center gap-4">
+                    {hasRoleOrStatus ? <Link href={href({ role: "ALL", status: "ALL", page: "1" })}
+                      className="focus-ring rounded-sm font-medium text-blue hover:underline">Clear filters</Link> : null}
+                    {hasSearch ? <Link href={href({ q: "", page: "1" })}
+                      className="focus-ring rounded-sm font-medium text-blue hover:underline">Clear search</Link> : null}
+                    {!hasRoleOrStatus && !hasSearch && currentTab !== "ALL"
+                      ? <Link href={href({ tab: "ALL", page: "1" })}
+                        className="focus-ring rounded-sm font-medium text-blue hover:underline">View all users</Link>
+                      : null}
+                  </div>
                 </td>
               </tr>
             ) : null}

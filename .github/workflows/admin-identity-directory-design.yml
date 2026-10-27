@@ -6,6 +6,7 @@ on:
     paths:
       - src/app/admin/users/page.tsx
       - src/components/admin/AdminIdentityTable.tsx
+      - src/components/admin/AdminUsersToolbar.tsx
       - src/components/admin/AdminIdentitySort.tsx
       - src/components/admin/AdminIdentityTable.test.ts
       - src/components/admin/AdminDirectorySelect.tsx
