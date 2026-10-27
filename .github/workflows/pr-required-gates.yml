@@ -79,6 +79,15 @@ jobs:
         run: >-
           node --input-type=module --import jiti/register -e
           'await import("./src/app/api/internal/cron/account-deletion-review/route.test.ts");'
+      - name: Validate Admin Overview metrics and consented presence
+        env:
+          JITI_TSCONFIG_PATHS: ./tsconfig.json
+          JITI_JSX: "true"
+        run: >-
+          node --input-type=module --import jiti/register -e
+          'await import("./src/services/adminOverviewMetrics.test.ts");
+          await import("./src/lib/website-presence.test.ts");
+          await import("./src/app/admin/page.test.ts");'
       - name: Validate admin handoff hardening contracts
         env:
           JITI_TSCONFIG_PATHS: ./tsconfig.json

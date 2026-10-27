@@ -57,6 +57,31 @@ export function summarizeAccountStatusRows(rows: readonly AccountStatusGroup[]) 
   return users;
 }
 
+export type WorkflowStatusGroup = {
+  status: string;
+  _count: { _all: number };
+};
+
+/**
+ * Status groups are current-state database rows, not historical events.
+ * Unexpected statuses and unsafe aggregate values must not silently vanish
+ * from the Overview as zero or be folded into an unrelated workflow state.
+ */
+export function summarizeWorkflowStatusRows<const T extends string>(
+  rows: readonly WorkflowStatusGroup[],
+  statuses: readonly T[],
+): Record<T, number> {
+  const values = Object.fromEntries(statuses.map(status => [status, 0])) as Record<T, number>;
+  const allowed = new Set<string>(statuses);
+  if (allowed.size !== statuses.length) throw new Error("Duplicate admin Overview workflow status.");
+  for (const row of rows) {
+    if (!allowed.has(row.status)) throw new Error("Unknown admin Overview workflow status.");
+    const status = row.status as T;
+    values[status] = checked(values[status] + checked(row._count._all));
+  }
+  return values;
+}
+
 export function summarizeAuditEvents(total: number, human: number) {
   const checkedTotal = checked(total);
   const checkedHuman = checked(human);

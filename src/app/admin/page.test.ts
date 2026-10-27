@@ -254,7 +254,11 @@ test("production layout preserves original page and status backgrounds", () => {
     "bg-slate-300", "bg-emerald-500", "bg-indigo-500",
   ];
   for (const token of existingBackgrounds) assert.ok(dashboard.includes(token), token);
-  assert.doesNotMatch(dashboard, /(?:bg-white|bg-slate-50|bg-indigo-50)(?![\w-])|bg-\[#/);
+  // The existing status badge intentionally uses a pale indigo background;
+  // only the section surfaces themselves must remain unboxed.
+  const layoutSource = dashboard.slice(dashboard.indexOf("function SectionTitle("));
+  assert.match(dashboard, /info: "bg-indigo-50 text-indigo-700 ring-indigo-200"/);
+  assert.doesNotMatch(layoutSource, /(?:bg-white|bg-slate-50|bg-indigo-50)(?![\w-])|bg-\[#/);
   assert.ok(shell.includes("bg-slate-100") || shell.includes("bg-[#"));
   assert.match(display, /<AdminOverviewAutoRefresh \/>/);
   assert.match(display, /<AdminOverviewRangeSelect range=\{range\} \/>/);
@@ -291,7 +295,11 @@ test("Recent Admin Activity is outside the two-column workload grid and uses the
 
 test("Activity layout retains the existing white parent and does not change Overview backgrounds or actions", () => {
   assert.match(page, /<AdminSectionCard className="min-w-0 p-4 sm:p-6 lg:p-7">/);
-  assert.doesNotMatch(dashboard, /(?:bg-white|bg-slate-50|bg-indigo-50)(?![\w-])|bg-\[#/);
+  // The existing status badge intentionally uses a pale indigo background;
+  // only the section surfaces themselves must remain unboxed.
+  const layoutSource = dashboard.slice(dashboard.indexOf("function SectionTitle("));
+  assert.match(dashboard, /info: "bg-indigo-50 text-indigo-700 ring-indigo-200"/);
+  assert.doesNotMatch(layoutSource, /(?:bg-white|bg-slate-50|bg-indigo-50)(?![\w-])|bg-\[#/);
   assert.match(dashboard, /<Link href="\/admin\/logs"/);
   assert.match(display, /<WorkloadCard title="Support Workload"/);
   assert.match(display, /<WorkloadCard title="Account Deletion Workload"/);
@@ -303,7 +311,7 @@ test("Overview typography maintains readable hierarchy without heavy global badg
   assert.match(dashboard, /text-\[22px\] font-semibold tabular-nums/);
   assert.match(dashboard, /text-\[15px\] font-semibold tracking-tight/);
   assert.match(dashboard, /text-\[13px\] leading-5 text-slate-700/);
-  assert.match(dashboard, /font-mono text-xs/);
+  assert.match(dashboard, /font-mono text-\[13px\]/);
   assert.match(display, /data\.users\.total/);
   assert.match(display, /data\.websitePresence\.total/);
   assert.match(display, /getAdminOverview|AdminOverviewAutoRefresh/);
@@ -394,10 +402,33 @@ test("Phase 4 clarifies time windows, provider readiness, and absent observation
   assert.match(display, /Success means the operation completed, not that offers were returned/);
   assert.match(display, /Partial may contain zero offers/);
   assert.match(display, /stages can occur out of order and are not a conversion percentage or confirmed booking/);
-  assert.match(display, /"None recorded in window"/);
+  assert.match(dashboard, /"None recorded in window"/);
   assert.match(dashboard, /Secrets configured \(not tested\)/);
   assert.match(dashboard, /Credentials configured \(not tested\)/);
   assert.match(dashboard, /No keys configured/);
-  assert.match(display, /No timing recorded/);
+  assert.match(dashboard, /No timing recorded/);
   assert.match(display, /Human-attributed audit rows/);
+});
+
+test("Phase 5 required-gate verification guards against fabricated or silently lost Overview counts", () => {
+  const service = readFileSync("src/services/adminOverviewService.ts", "utf8");
+  const metrics = readFileSync("src/services/adminOverviewMetrics.ts", "utf8");
+  const workflow = readFileSync(".github/workflows/pr-required-gates.yml", "utf8");
+  const presence = readFileSync("src/services/websitePresenceService.ts", "utf8");
+  const journeys = readFileSync("src/services/adminJourneyCore.ts", "utf8");
+  assert.match(workflow, /Validate Admin Overview metrics and consented presence/);
+  for (const source of [
+    "src/services/adminOverviewMetrics.test.ts",
+    "src/lib/website-presence.test.ts",
+    "src/app/admin/page.test.ts",
+  ]) assert.ok(workflow.includes(source), source);
+  assert.match(metrics, /Unknown admin Overview workflow status/);
+  assert.match(service, /summarizeWorkflowStatusRows\(/);
+  assert.match(service, /supportCount\.OPEN/);
+  assert.match(service, /deletionCount\.PENDING/);
+  assert.match(service, /journeys\.status !== "ok" \|\| !providers/);
+  assert.match(service, /environment !== hostEnvironment/);
+  assert.match(presence, /if \(!row\) return unavailable\(\)/);
+  assert.match(presence, /checkedPresenceCount\(registeredAccounts \+ guestIdentities\)/);
+  assert.match(journeys, /totalRedirects !== inConsentedJourneys \+ outsideConsentedJourneys/);
 });

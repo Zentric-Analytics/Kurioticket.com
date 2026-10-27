@@ -6,7 +6,7 @@ import { getPublicEnvironment } from "@/lib/stagingSafety";
 import { adminJourneys } from "@/services/adminJourneyService";
 import { getProviderOperationalStatuses } from "@/services/providerOperationalStatus";
 import { getWebsitePresenceSnapshot } from "@/services/websitePresenceService";
-import { summarizeAccountStatusRows, summarizeAuditEvents } from "@/services/adminOverviewMetrics";
+import { summarizeAccountStatusRows, summarizeAuditEvents, summarizeWorkflowStatusRows } from "@/services/adminOverviewMetrics";
 
 function invalidDate(value: string | null) {
   return value !== null && (!Number.isFinite(Date.parse(value)) || !/(Z|[+-]\d{2}:\d{2})$/.test(value));
@@ -91,8 +91,14 @@ export async function getAdminOverview(params: URLSearchParams) {
 
     const users = summarizeAccountStatusRows(lifecycle.userGroups);
     const audit = summarizeAuditEvents(lifecycle.adminActions, lifecycle.humanAdminActions);
-    const supportCount = new Map(lifecycle.supportGroups.map(row => [row.status, row._count._all]));
-    const deletionCount = new Map(lifecycle.deletionGroups.map(row => [row.status, row._count._all]));
+    const supportCount = summarizeWorkflowStatusRows(
+      lifecycle.supportGroups,
+      ["OPEN", "WAITING_ON_USER", "WAITING_ON_TEAM", "RESOLVED", "CLOSED"] as const,
+    );
+    const deletionCount = summarizeWorkflowStatusRows(
+      lifecycle.deletionGroups,
+      ["PENDING", "READY_FOR_REVIEW", "CANCELLED", "COMPLETED"] as const,
+    );
 
 
     return {
@@ -107,17 +113,17 @@ export async function getAdminOverview(params: URLSearchParams) {
         },
         users,
         support: {
-          open: supportCount.get("OPEN") ?? 0,
-          waitingOnUser: supportCount.get("WAITING_ON_USER") ?? 0,
-          waitingOnTeam: supportCount.get("WAITING_ON_TEAM") ?? 0,
+          open: supportCount.OPEN,
+          waitingOnUser: supportCount.WAITING_ON_USER,
+          waitingOnTeam: supportCount.WAITING_ON_TEAM,
           resolvedOrClosed:
-            (supportCount.get("RESOLVED") ?? 0) + (supportCount.get("CLOSED") ?? 0),
+            supportCount.RESOLVED + supportCount.CLOSED,
         },
         deletions: {
-          pending: deletionCount.get("PENDING") ?? 0,
-          readyForReview: deletionCount.get("READY_FOR_REVIEW") ?? 0,
-          cancelled: deletionCount.get("CANCELLED") ?? 0,
-          completed: deletionCount.get("COMPLETED") ?? 0,
+          pending: deletionCount.PENDING,
+          readyForReview: deletionCount.READY_FOR_REVIEW,
+          cancelled: deletionCount.CANCELLED,
+          completed: deletionCount.COMPLETED,
         },
         journeys: journeys.data,
         providers,
