@@ -145,8 +145,11 @@ test("requested descriptions are removed without altering operational sources", 
 });
 
 test("compact range selector sits in Operations Snapshot and the top toolbar is gone", () => {
-  assert.match(page, /selected === "24h" \|\| selected === "30d" \? selected : "7d"/);
-  assert.match(page, /24 \* 60 \* 60 \* 1000 : 30 \* 24 \* 60 \* 60 \* 1000/);
+  assert.match(page, /selected === "7d" \|\| selected === "30d" \? selected : "24h"/);
+  assert.match(page, /const dayMs = 24 \* 60 \* 60 \* 1000/);
+  assert.match(page, /range === "30d" \? 30 \* dayMs : range === "7d" \? 7 \* dayMs : dayMs/);
+  assert.match(page, /query\.set\("from"/);
+  assert.match(page, /query\.set\("to"/);
   assert.match(display, /<AdminOverviewAutoRefresh \/>/);
   assert.match(display, /title="Operations Snapshot"[\s\S]*?<AdminOverviewRangeSelect range=\{range\} \/>/);
   assert.match(controls, /export function AdminOverviewRangeSelect/);
@@ -192,7 +195,7 @@ test("Overview range dropdown uses compact typography and neutral, accessible fo
 });
 
 test("Overview range interactions preserve navigation and accessible keyboard/close behaviors", () => {
-  assert.match(controls, /router\.push\(nextRange === "7d" \? "\/admin" : "\/admin\?range=" \+ encodeURIComponent\(nextRange\)\)/);
+  assert.match(controls, /router\.push\(nextRange === "24h" \? "\/admin" : "\/admin\?range=" \+ encodeURIComponent\(nextRange\)\)/);
   assert.match(controls, /if \(nextRange === range\) return/);
   assert.match(controls, /if \(event\.key === "Escape"\)/);
   assert.match(controls, /if \(event\.key === "ArrowDown"\)/);
@@ -482,4 +485,26 @@ test("journey activity cards show real event counts first and journeys as second
   }
   assert.equal((display.match(/<FunnelStep label=/g) ?? []).length, 4);
   assert.match(display, /operationalSearches\.total/);
+});
+
+
+test("Overview default and explicit range selections remain consistent across page, picker and API", () => {
+  const service = readFileSync("src/services/adminOverviewService.ts", "utf8");
+  // /admin and unexpected range inputs are a rolling 24h view, never 7 days.
+  assert.match(page, /selected === "7d" \|\| selected === "30d" \? selected : "24h"/);
+  assert.doesNotMatch(page, /selected === "24h" \|\| selected === "30d" \? selected : "7d"/);
+  // All three options emit explicit from/to timestamps, including a selected 7d.
+  assert.match(page, /range === "30d" \? 30 \* dayMs : range === "7d" \? 7 \* dayMs : dayMs/);
+  assert.match(page, /query\.set\("from", new Date\(to\.getTime\(\) - durationMs\)\.toISOString\(\)\)/);
+  assert.match(page, /query\.set\("to", to\.toISOString\(\)\)/);
+  assert.doesNotMatch(page, /if \(range !== "7d"\)/);
+  // The URL without a range selects 24h; explicit older ranges survive refresh.
+  assert.match(controls, /router\.push\(nextRange === "24h" \? "\/admin" : "\/admin\?range=" \+ encodeURIComponent\(nextRange\)\)/);
+  assert.match(controls, /const rangeOptions: OverviewRange\[\] = \["24h", "7d", "30d"\]/);
+  assert.match(controls, /document\.visibilityState === "visible"\) router\.refresh\(\)/);
+  // Direct API calls without date parameters must not unexpectedly report 7 days.
+  assert.match(service, /params\.get\("from"\) \?\? new Date\(new Date\(to\)\.getTime\(\) - 24 \* 60 \* 60 \* 1000\)/);
+  // Fixed provider and consented live presence windows do not follow the range picker.
+  assert.match(service, /getProviderOperationalStatuses\(24, environment\)/);
+  assert.match(service, /getWebsitePresenceSnapshot\(environment, now\)/);
 });

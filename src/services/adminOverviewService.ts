@@ -40,7 +40,8 @@ export async function getAdminOverview(params: URLSearchParams) {
     };
   }
   const to = new Date(params.get("to") ?? now).toISOString();
-  const from = new Date(params.get("from") ?? new Date(new Date(to).getTime() - 7 * 24 * 60 * 60 * 1000)).toISOString();
+  // Match the default Overview picker when the API is called without dates.
+  const from = new Date(params.get("from") ?? new Date(new Date(to).getTime() - 24 * 60 * 60 * 1000)).toISOString();
   if (Date.parse(from) >= Date.parse(to) || Date.parse(to) > now.getTime() || Date.parse(to) - Date.parse(from) > 90 * 24 * 60 * 60 * 1000) {
     return { status: "invalid" as const, issues: [{ field: "from", message: "Use a past time range of more than zero and at most 90 days." }] };
   }
