@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { SearchWorkspaceBackLink } from "@/components/admin/SearchWorkspaceBackLink";
 import { searchActivityReturnHref } from "@/lib/adminSearchActivityNavigation";
+import { getPublicEnvironment } from "@/lib/stagingSafety";
 import {
   searchDetailDuration,
   searchDetailHeadline,
