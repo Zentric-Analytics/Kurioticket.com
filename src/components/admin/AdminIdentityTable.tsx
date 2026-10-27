@@ -70,6 +70,7 @@ export function AdminIdentityTable({
   const hasRoleOrStatus = (active.get("role") || "ALL") !== "ALL"
     || (active.get("status") || "ALL") !== "ALL";
   const hasSearch = Boolean(active.get("q"));
+  const hasDate = (active.get("date") || "all") !== "all";
   const currentTab = active.get("tab") || active.get("identity") || "ALL";
   const activityHref = (kind: "guest" | "user", id: string) =>
     "/admin/users/" + kind + "/" + encodeURIComponent(id) + "/activity" +
@@ -106,11 +107,11 @@ export function AdminIdentityTable({
                 "Activity",
               ].map((heading) => (
                 <th
-                  key={heading}
+                  key={heading.toUpperCase()}
                   scope="col"
                   className="px-3 py-3 font-medium"
                 >
-                  {heading}
+                  {heading.toUpperCase()}
                 </th>
               ))}
             </tr>
@@ -210,11 +211,11 @@ export function AdminIdentityTable({
                 >
                   <p className="font-medium text-foreground">No users match your filters</p>
                   <div className="mt-2 flex items-center justify-center gap-4">
-                    {hasRoleOrStatus ? <Link href={href({ role: "ALL", status: "ALL", page: "1" })}
+                    {hasRoleOrStatus || hasDate ? <Link href={href({ role: "ALL", status: "ALL", date: "all", page: "1" })}
                       className="focus-ring rounded-sm font-medium text-blue hover:underline">Clear filters</Link> : null}
                     {hasSearch ? <Link href={href({ q: "", page: "1" })}
                       className="focus-ring rounded-sm font-medium text-blue hover:underline">Clear search</Link> : null}
-                    {!hasRoleOrStatus && !hasSearch && currentTab !== "ALL"
+                    {!hasRoleOrStatus && !hasDate && !hasSearch && currentTab !== "ALL"
                       ? <Link href={href({ tab: "ALL", page: "1" })}
                         className="focus-ring rounded-sm font-medium text-blue hover:underline">View all users</Link>
                       : null}
