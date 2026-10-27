@@ -107,7 +107,7 @@ function SearchDetailContent({ search }: { search: AdminSearchDetail }) {
               ) : null}
               <p className="mt-0.5 text-[12px] text-[#6B7280]">{search.operationalSessionId && search.identity.kind === "guest" && !search.identity.visitorId ? "Operational session (no account linked)" : searchDetailIdentityLabel(search.identity.kind)}</p>
             </div>
-            {search.operationalSessionId && !search.identity.userId && !search.identity.visitorId ? (
+            {search.operationalSessionId && search.environment === getPublicEnvironment() && !search.identity.userId && !search.identity.visitorId ? (
               <Link
                 href={"/admin/searches/sessions/" + encodeURIComponent(search.operationalSessionId)}
                 className="inline-flex items-center text-[13px] font-semibold text-[#004BB8] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
