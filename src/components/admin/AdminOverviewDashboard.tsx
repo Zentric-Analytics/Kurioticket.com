@@ -260,6 +260,9 @@ function ProviderCard({ provider }: { provider: ProviderOperationalStatus }) {
           </p>
         </div>
       </div>
+      <p className="mt-2 text-xs text-slate-700">
+        Attempted calls: {count(provider.attemptedCalls)} · Failure rate: {provider.failureRatePct === null ? "No attempts" : provider.failureRatePct + "%"}
+      </p>
       <p className="mt-3 text-xs text-slate-700">
         <span className="font-semibold tabular-nums text-emerald-700">{count(provider.successCalls)}</span> successful
         <span className="mx-1.5 text-slate-400">·</span>
@@ -273,6 +276,15 @@ function ProviderCard({ provider }: { provider: ProviderOperationalStatus }) {
           <DetailRow label="Readiness" value={humanize(provider.readinessState)} />
           <DetailRow label="Operational health" value={humanize(provider.operationalState)} />
           <DetailRow label="Observation window" value={provider.windowHours + " hours"} />
+          <DetailRow label="Attempted calls (excludes disabled)" value={provider.attemptedCalls} />
+          <DetailRow label="Failure rate" value={provider.failureRatePct === null ? "No attempted calls" : provider.failureRatePct + "%"} />
+          {provider.serviceBreakdown.map(service => (
+            <div key={service.service} className="border-t border-slate-200/80 py-2">
+              <p className="text-xs font-semibold text-slate-900">{service.service.replaceAll("-", " ")} · {humanize(service.operationalState)}</p>
+              <p className="mt-1 text-xs text-slate-700">{count(service.successCalls)} successful · {count(service.failedCalls)} failed · {count(service.disabledCalls)} disabled · {service.failureRatePct === null ? "no attempts" : service.failureRatePct + "% failed"}</p>
+              {service.failureReasons.map(issue => <p key={issue.code} className="mt-1 text-xs text-slate-600">{issue.label}: {count(issue.calls)}</p>)}
+            </div>
+          ))}
           <DetailRow label="Total calls" value={provider.totalCalls} />
           <DetailRow label="Successful calls" value={provider.successCalls} />
           <DetailRow label="Failed calls" value={provider.failedCalls} />
