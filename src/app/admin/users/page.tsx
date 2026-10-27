@@ -5,7 +5,7 @@ import { AdminIdentityTable, type IdentityRow } from "@/components/admin/AdminId
 import { AdminUsersToolbar } from "@/components/admin/AdminUsersToolbar";
 import { withOptionalDb } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/auth-guards";
-import { adminIdentityPageSql, escapePrismaContainsQuery, parseAdminIdentitySort, parseAdminIdentityDate, adminIdentityDateBounds, validAdminIdentityCustomDates, type AdminIdentityReference } from "@/lib/adminIdentityDirectory";
+import { adminIdentityPageSql, escapePrismaContainsQuery, parseAdminIdentitySort, parseAdminIdentityDate, adminIdentityDateBounds, validAdminIdentityCustomDates, type AdminIdentityDirectoryRow } from "@/lib/adminIdentityDirectory";
 
 export const metadata = { title: "Admin Users" };
 type PageProps = { searchParams?: Promise<{ q?: string; role?: string; status?: string; tab?: string; identity?: string; activity?: string; page?: string; sort?: string; date?: string; from?: string; to?: string }> };
@@ -55,48 +55,27 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
   const showGuests = tab !== "REGISTERED" && guestsEligibleForFilters;
   const environment = getPublicEnvironment();
   // Operational sessions are not accounts or analytics visitor identities.
-  const operationalSources = Prisma.sql`(
-    SELECT s."userId", s."visitorId", s."createdAt", s."query"->>'environment' AS "environment",
-      s."query"->>'operationalSessionId' AS "sessionId" FROM "SearchHistory" s
-    UNION ALL
-    SELECT r."userId", r."visitorId", r."createdAt", r."metadata"->>'environment' AS "environment",
-      r."metadata"->>'operationalSessionId' AS "sessionId" FROM "RedirectLog" r
-  ) a`;
-  const operationalWhere = Prisma.sql`WHERE a."userId" IS NULL AND a."visitorId" IS NULL AND a."environment" = ${environment}`;
-  // Tab totals remain stable while moving between All, Registered, and Guests.
-  // Count filtered cohorts independent of the active tab; only the selected
-  // cohort determines the table and pagination totals.
-  const stats = await withOptionalDb(async db => {
-    const [registeredCount, consentedGuestCount, operationalRows] = await Promise.all([
+  // A single identity query supplies the operational guest cohort, timestamps,
+  // and total. Account and consented visitor counts remain independent of tab.
+  const result = await withOptionalDb(async db => {
+    const [registeredCount, consentedGuestCount] = await Promise.all([
       db.user.count({ where }),
       guestsEligibleForFilters ? db.visitor.count({ where: guestWhere }) : Promise.resolve(0),
-      // Totals remain stable on All, Registered and Guests tabs.
-      guestsEligibleForFilters ? db.$queryRaw<Array<{ count: bigint }>>(Prisma.sql`
-        SELECT COUNT(*)::bigint AS "count" FROM (
-          SELECT a."sessionId" FROM ${operationalSources} ${operationalWhere}
-            AND a."sessionId" ~ '^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
-            ${q ? Prisma.sql`AND strpos(lower(a."sessionId"), lower(${q})) > 0` : Prisma.empty}
-          GROUP BY a."sessionId"
-          ${bounds ? Prisma.sql`HAVING MIN(a."createdAt") >= ${bounds.from}
-            ${bounds.to ? Prisma.sql`AND MIN(a."createdAt") < ${bounds.to}` : Prisma.empty}` : Prisma.empty}
-        ) sessions
-      `) : Promise.resolve([]),
     ]);
-    return { registeredCount, guestCount: consentedGuestCount + Number(operationalRows[0]?.count ?? 0) };
-  }, { registeredCount: 0, guestCount: 0 });
-  const count = (showUsers ? stats.registeredCount : 0) + (showGuests ? stats.guestCount : 0);
-  // The existing directory displays the full identity cohort. Fetch it in
-  // one ordered query so session log aggregation is not repeated per batch.
-  const result = await withOptionalDb(async db => {
-    const sql = count > 0 ? adminIdentityPageSql({
+    const countBeforeOperational = (showUsers ? registeredCount : 0) + (showGuests ? consentedGuestCount : 0);
+    const sql = adminIdentityPageSql({
       query: q, role, status, showUsers, showGuests,
-      showOperationalGuests: showGuests, environment, sort, date, from, to, now,
-      limit: count, offset: 0, allIdentities: true,
-    }) : null;
-    const identities: AdminIdentityReference[] = sql ? await db.$queryRaw<AdminIdentityReference[]>(sql) : [];
+      showOperationalGuests: showGuests, withOperationalSummary: guestsEligibleForFilters,
+      environment, sort, date, from, to, now,
+      limit: Math.max(1, countBeforeOperational), offset: 0, allIdentities: true,
+    });
+    const fetched: AdminIdentityDirectoryRow[] = sql ? await db.$queryRaw<AdminIdentityDirectoryRow[]>(sql) : [];
+    const operationalGuestCount = Number(fetched[0]?.operationalGuestCount ?? 0n);
+    const identities = fetched.filter((item): item is AdminIdentityDirectoryRow & { kind: "user" | "guest"; id: string } =>
+      item.kind !== null && item.id !== null);
     const userIds = identities.filter(item => item.kind === "user").map(item => item.id);
     const guestIds = identities.filter(item => item.kind === "guest").map(item => item.id);
-    const [users, guests, operationalRows] = await Promise.all([
+    const [users, guests] = await Promise.all([
       userIds.length ? db.user.findMany({
         where: { ...where, id: { in: userIds } },
         select: { id: true, name: true, email: true, role: true, status: true, createdAt: true },
@@ -105,34 +84,29 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
         where: { ...guestWhere, id: { in: guestIds } },
         select: { id: true, firstSeenAt: true, lastSeenAt: true },
       }) : Promise.resolve([]),
-      guestIds.length && showGuests ? db.$queryRaw<Array<{ id: string; firstSeenAt: Date; lastSeenAt: Date }>>(Prisma.sql`
-        SELECT a."sessionId" AS "id", MIN(a."createdAt") AS "firstSeenAt", MAX(a."createdAt") AS "lastSeenAt"
-        FROM ${operationalSources} ${operationalWhere}
-          AND a."sessionId" IN (${Prisma.join(guestIds)})
-        GROUP BY a."sessionId"
-      `) : Promise.resolve([]),
     ]);
     const userMap = new Map(users.map(user => [user.id, user]));
-    const guestMap = new Map([...operationalRows, ...guests].map(guest => [guest.id, guest]));
+    const guestMap = new Map([
+      ...identities.filter(item => item.kind === "guest" && item.firstSeenAt && item.lastSeenAt)
+        .map(item => [item.id, { id: item.id, firstSeenAt: item.firstSeenAt!, lastSeenAt: item.lastSeenAt! }] as const),
+      ...guests.map(guest => [guest.id, guest] as const),
+    ]);
     const rows = identities.flatMap<IdentityRow>(identity => {
       if (identity.kind === "user") {
         const record = userMap.get(identity.id);
         return record ? [{ kind: "user" as const, record }] : [];
       }
-      if (identity.kind === "guest") {
-        const record = guestMap.get(identity.id);
-        return record ? [{ kind: "guest" as const, record }] : [];
-      }
-      return [];
+      const record = guestMap.get(identity.id);
+      return record ? [{ kind: "guest" as const, record }] : [];
     });
-    return { rows };
-  }, { rows: [] as IdentityRow[] });
+    return { rows, registeredCount, guestCount: consentedGuestCount + operationalGuestCount };
+  }, { rows: [] as IdentityRow[], registeredCount: 0, guestCount: 0 });
   const link = "/admin/users?" + new URLSearchParams({ ...(q ? { q } : {}), role, status, tab, sort, date, ...(from && to ? {from,to} : {}) }).toString();
   return (
     <div className="w-full min-w-0 bg-white">
       <h1 className="sr-only">Users</h1>
       <AdminUsersToolbar query={q} role={role} status={status} tab={tab} sort={sort} date={date} from={from || ""} to={to || ""}
-        registeredCount={stats.registeredCount} guestCount={stats.guestCount} pageHref={link}>
+        registeredCount={result.registeredCount} guestCount={result.guestCount} pageHref={link}>
         <AdminIdentityTable rows={result.rows} pageHref={link} sort={sort} />
       </AdminUsersToolbar>
     </div>
