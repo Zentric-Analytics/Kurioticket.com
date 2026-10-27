@@ -514,6 +514,7 @@ function searchDto(row: SearchRow, environment: PublicEnvironment, exactLogs: re
   return {
     id: row.id,
     requestId: text(row.requestId, 128),
+    operationalSessionId: text(query.operationalSessionId, 64),
     identity: identity(row.userId, visitorId),
     product: row.type,
     origin: text(row.origin, 160),
