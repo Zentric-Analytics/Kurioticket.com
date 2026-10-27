@@ -27,6 +27,12 @@ function database(input: {
         if (where.status === "DISABLED") return input.disabled;
         return input.total;
       },
+      groupBy: async () => [
+        ...(["SUCCESS", "DEGRADED", "FAILED", "DISABLED"] as const).flatMap(status => {
+          const n = status === "SUCCESS" ? input.success : status === "DEGRADED" ? input.degraded : status === "FAILED" ? input.failed : input.disabled;
+          return n ? [{ service: "flight-search", status, errorMessage: status === "FAILED" ? "unauthorized" : null, _count: { _all: n } }] : [];
+        }),
+      ],
       aggregate: async () => ({ _avg: { latencyMs: input.averageLatencyMs } }),
       findFirst: async ({ where }: { where: { status?: string | { in?: string[] } } }) => {
         if (input.total === 0) return null;
@@ -98,4 +104,32 @@ test("disabled-only provider calls do not pretend a ready integration is healthy
   });
   assert.equal(result[0]?.operationalState, "NO_RECENT_ACTIVITY");
   assert.equal(result[0]?.disabledCalls, 3);
+});
+
+test("high KAYAK sandbox failure volume is FAILING despite isolated successes", async () => {
+  const result = await readProviderOperationalSnapshot({
+    database: database({ total: 111, success: 1, degraded: 0, failed: 110, disabled: 0, averageLatencyMs: 250 }),
+    readiness: [{ id: "kayak-sandbox", provider: "KAYAK sandbox", state: "READY" }],
+    environment: "staging",
+    now: new Date("2026-10-22T14:00:00Z"),
+  });
+  assert.equal(result[0]?.operationalState, "FAILING");
+  assert.equal(result[0]?.failureRatePct, 99);
+  assert.equal(result[0]?.attemptedCalls, 111);
+  assert.deepEqual(result[0]?.serviceBreakdown.find(service => service.service === "flight-search")?.failureReasons, [
+    { code: "AUTH_OR_CONFIG", label: "Authentication / configuration", calls: 110 },
+  ]);
+  assert.equal(result[0]?.serviceBreakdown.find(service => service.service === "car-search")?.operationalState, "NO_RECENT_ACTIVITY");
+});
+
+test("per-service health separates missing coverage from failed attempts", async () => {
+  const result = await readProviderOperationalSnapshot({
+    database: database({ total: 3, success: 0, degraded: 0, failed: 0, disabled: 3, averageLatencyMs: null }),
+    readiness: [{ id: "kayak-sandbox", provider: "KAYAK sandbox", state: "READY" }],
+    environment: "staging",
+    now: new Date("2026-10-22T14:00:00Z"),
+  });
+  assert.equal(result[0]?.failureRatePct, null);
+  assert.equal(result[0]?.attemptedCalls, 0);
+  assert.equal(result[0]?.serviceBreakdown.find(service => service.service === "flight-search")?.disabledCalls, 3);
 });
