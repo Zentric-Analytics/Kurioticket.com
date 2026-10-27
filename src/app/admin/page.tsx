@@ -15,14 +15,15 @@ type PageProps = { searchParams?: Promise<{ range?: string }> };
 // authority for environment scope, date validation and database totals.
 export default async function AdminPage({ searchParams }: PageProps) {
   const selected = (await searchParams)?.range;
-  const range: OverviewRange = selected === "24h" || selected === "30d" ? selected : "7d";
+  // An unfiltered Overview shows the last 24 hours. Seven- and 30-day
+  // windows are explicit choices preserved by the URL when selected.
+  const range: OverviewRange = selected === "7d" || selected === "30d" ? selected : "24h";
   const query = new URLSearchParams();
-  if (range !== "7d") {
-    const to = new Date();
-    const durationMs = range === "24h" ? 24 * 60 * 60 * 1000 : 30 * 24 * 60 * 60 * 1000;
-    query.set("from", new Date(to.getTime() - durationMs).toISOString());
-    query.set("to", to.toISOString());
-  }
+  const to = new Date();
+  const dayMs = 24 * 60 * 60 * 1000;
+  const durationMs = range === "30d" ? 30 * dayMs : range === "7d" ? 7 * dayMs : dayMs;
+  query.set("from", new Date(to.getTime() - durationMs).toISOString());
+  query.set("to", to.toISOString());
 
   const [overview, system, activity] = await Promise.all([
     getAdminOverview(query),
