@@ -131,7 +131,7 @@ export function ActivityTimeline({ events, nextHref, environment, order = "newes
                 if (batch.length < 3) return batch.map(row => <RecordedEvent key={row.id} row={row} environment={environment} now={now}/>);
                 return <li key={runKey} className="py-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <span className="text-[13px] font-medium">{batch.length} {first.stage === "SEARCH_COMPLETED" ? "searches" : first.label.toLowerCase() + " events"} · {first.detail} · {batch.every(row => row.status === "SUCCESS") ? "all successful" : "recorded outcomes"}</span>
+                    <span className="text-[13px] font-medium">{batch.length} {first.stage === "SEARCH_COMPLETED" ? "searches" : first.label.toLowerCase() + " events"} · {first.detail} · {batch.every(row => /success/i.test(row.detail + " " + row.label)) ? "all successful" : "recorded outcomes"}</span>
                     <span className="text-xs text-[var(--muted-foreground)]">{hourLabel(batch[0].at)} – {hourLabel(batch[batch.length-1].at)}</span>
                     <button type="button" aria-expanded={Boolean(revealed)} className="focus-ring rounded-sm text-xs font-medium text-[var(--primary)] hover:underline" onClick={() => setRuns(p => ({...p,[runKey]:!revealed}))}>{revealed ? "Hide all" : "Show all"}</button>
                   </div>
