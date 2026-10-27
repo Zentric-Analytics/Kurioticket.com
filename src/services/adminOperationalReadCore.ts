@@ -85,8 +85,8 @@ function jsonRecord(value: Prisma.JsonValue | null | undefined): Record<string, 
   return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
 }
 
-function identity(userId: string | null, visitorId: string | null): AdminOperationalIdentity {
-  return { kind: userId ? "registered" : visitorId ? "guest" : "unattributed", userId, visitorId };
+function identity(userId: string | null, visitorId: string | null, operationalSessionId?: string | null): AdminOperationalIdentity {
+  return { kind: userId ? "registered" : visitorId || operationalSessionId ? "guest" : "unattributed", userId, visitorId };
 }
 
 function attributableVisitorId(
@@ -477,10 +477,11 @@ function exactProviderFilteredSearchSql(scope: AdminSearchScope, cursor: { at: s
     if (scope.identity === "registered") clauses.push(Prisma.sql`s."userId" IS NOT NULL`);
     if (scope.identity === "guest") {
       clauses.push(Prisma.sql`s."userId" IS NULL`);
-      clauses.push(eligible);
+      clauses.push(Prisma.sql`(${eligible} OR s."query"->>'operationalSessionId' IS NOT NULL)`);
     }
     if (scope.identity === "unattributed") {
       clauses.push(Prisma.sql`s."userId" IS NULL`);
+      clauses.push(Prisma.sql`s."query"->>'operationalSessionId' IS NULL`);
       clauses.push(Prisma.sql`(
         s."visitorId" IS NULL
         OR EXISTS (
@@ -515,7 +516,7 @@ function searchDto(row: SearchRow, environment: PublicEnvironment, exactLogs: re
     id: row.id,
     requestId: text(row.requestId, 128),
     operationalSessionId: text(query.operationalSessionId, 64),
-    identity: identity(row.userId, visitorId),
+    identity: identity(row.userId, visitorId, text(query.operationalSessionId, 64)),
     product: row.type,
     origin: text(row.origin, 160),
     destination: text(row.destination, 160),
@@ -591,12 +592,22 @@ function deletionDto(row: DeletionRow): AdminDeletionListItem {
 
 function searchWhere(scope: AdminSearchScope, cursor?: { at: string; id: string } | null): Prisma.SearchHistoryWhereInput {
   return {
-    ...identityWhere(scope),
+    ...identityWhere({ ...scope, identity: scope.identity === "guest" ? "all" : scope.identity }),
     ...(scope.product ? { type: scope.product } : {}),
     ...(scope.status ? { status: scope.status } : {}),
     ...(dateRange(scope.from, scope.to) ? { createdAt: dateRange(scope.from, scope.to) } : {}),
     query: { path: ["environment"], equals: scope.environment },
     AND: [
+      ...(scope.identity === "guest" ? [{
+        userId: null,
+        OR: [
+          { visitor: { is: { consentStatus: "GRANTED" as const, trackingDisabledAt: null } } },
+          { query: { path: ["operationalSessionId"], not: Prisma.DbNull } },
+        ],
+      }] : []),
+      ...(scope.identity === "unattributed" ? [{
+        query: { path: ["operationalSessionId"], equals: Prisma.DbNull },
+      }] : []),
       ...(cursor ? [{ OR: [{ createdAt: { lt: new Date(cursor.at) } }, { createdAt: new Date(cursor.at), id: { lt: cursor.id } }] }] : []),
     ],
   };
