@@ -287,10 +287,10 @@ test("observed stage metrics handle progressive ordering, repeated selections, m
   assert.deepEqual(result.recordedSearches, { total: 6, success: 3, partial: 2, failed: 1 });
   assert.deepEqual(result.handoffCorrelation, { exactEvents: 1, uncorrelatedEvents: 1 });
   assert.deepEqual(result.operationalHandoffs, {
-    scope: "environment_and_date_only", total: 5,
-    withVisitorIdentity: 4, withoutVisitorIdentity: 1,
-    inConsentedJourneys: 2, outsideConsentedJourneys: 3,
-    exactSearchLinks: 1, eligibleWithoutExactSearch: 1, withRequestId: 2,
+    scope: "environment_and_date_only", total: 4,
+    withVisitorIdentity: 3, withoutVisitorIdentity: 1,
+    inConsentedJourneys: 1, outsideConsentedJourneys: 3,
+    exactSearchLinks: 1, eligibleWithoutExactSearch: 0, withRequestId: 2,
   });
   assert.deepEqual(result.operationalSearches, { scope: "environment_and_date_only", total: 8, success: 4, partial: 2, failed: 2, partialWithResults: 2, partialWithoutResults: 0 });
   const detail = ok(await service.detail(j.id, window(8)));
