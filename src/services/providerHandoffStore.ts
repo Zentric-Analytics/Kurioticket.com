@@ -56,6 +56,7 @@ async function correlate(tx: Prisma.TransactionClient, input: AttributedHandoff,
   const sameOperationalSession = Boolean(input.operationalSessionId && searchQuery.operationalSessionId === input.operationalSessionId);
   const sameConsentedVisitor = Boolean(visitorId && search.visitorId === visitorId);
   if ((!sameOperationalSession && !sameConsentedVisitor)
+    || (sameOperationalSession && search.userId !== input.userId)
     || (search.userId && search.userId !== input.userId)
     || search.type !== (input.type === "flight" ? "FLIGHT" : "HOTEL")) {
     return { searchHistoryId: null, correlation: "rejected" as const };
