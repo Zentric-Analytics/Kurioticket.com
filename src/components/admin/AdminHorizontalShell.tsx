@@ -108,10 +108,12 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
   }, [pathname]);
 
   // Flat directory/workspace pages borrow the public site's clean white canvas.
-  // Keep deeper operational detail routes on the existing Admin surface.
+  // Keep unrelated operational detail routes on the existing Admin surface.
+  // Search detail is part of the white Searches workspace, just like activity.
   const usersDirectory = pathname === "/admin/users" || pathname === "/admin/users/";
   const userActivity = /^\/admin\/users\/(?:user|guest)\/[a-z0-9_-]{6,80}\/activity\/?$/i.test(pathname);
-  const searchesWorkspace = pathname === "/admin/searches" || pathname === "/admin/searches/" || pathname === "/admin/searches/activity" || pathname === "/admin/searches/activity/";
+  const searchDetail = /^\/admin\/searches\/[a-z0-9_-]{6,128}\/?$/i.test(pathname);
+  const searchesWorkspace = pathname === "/admin/searches" || pathname === "/admin/searches/" || pathname === "/admin/searches/activity" || pathname === "/admin/searches/activity/" || searchDetail;
   return <AdminWorkspaceSearchProvider account={adminEmail || "admin"}><div className={"min-h-screen text-slate-950 " + (usersDirectory || userActivity || searchesWorkspace ? "bg-white" : "bg-[#f1f5fb]")}>
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
       <AdminSearchHeader>
