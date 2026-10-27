@@ -395,7 +395,8 @@ test("Phase 4 clarifies time windows, provider readiness, and absent observation
   assert.match(display, /inactivity may remain/);
   assert.match(display, /Success means the operation completed, not that offers were returned/);
   assert.match(display, /Partial may contain zero offers/);
-  assert.match(display, /stages can occur out of order and are not a conversion percentage or confirmed booking/);
+  assert.match(display, /Events can repeat or arrive out of order, including failed or empty searches/);
+  assert.match(display, /These are not conversion rates or confirmed bookings/);
   assert.match(dashboard, /"None recorded in window"/);
   assert.match(dashboard, /Secrets configured \(not tested\)/);
   assert.match(dashboard, /Credentials configured \(not tested\)/);
