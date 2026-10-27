@@ -457,7 +457,7 @@ export function AdminOverviewDashboard({
         <div className="mt-4 grid overflow-hidden rounded-lg border-l border-t border-slate-200 sm:grid-cols-2 lg:grid-cols-3">
           <MetricCard label="Total accounts" value={data.users.total} hint="Current account records, including retained deleted status" icon={Users} tone="info" />
           <MetricCard label="Enabled accounts" value={data.users.active} hint="ACTIVE account status · not people online" icon={UserCheck} tone="good" />
-          <div className="min-w-0 border-b border-slate-200/90 py-3.5 pr-3 sm:pr-4">
+          <div className="min-w-0 border-b border-r border-slate-200/85 p-3 sm:p-4 lg:min-h-32">
             <div className="flex items-center justify-between"><Activity size={19} className={data.websitePresence.status === "ok" ? "text-emerald-700" : "text-slate-500"} aria-hidden="true" /><span className={"h-2 w-2 rounded-full " + (data.websitePresence.status === "ok" ? "bg-emerald-400" : "bg-slate-300")} aria-hidden="true" /></div>
             <p className="mt-2 text-xs font-medium uppercase tracking-wide text-slate-700">Active users</p>
             <p className="mt-1 text-[22px] font-semibold tabular-nums tracking-tight text-slate-950">{data.websitePresence.status === "ok" ? count(data.websitePresence.total) : "Unavailable"}</p>
@@ -498,7 +498,7 @@ export function AdminOverviewDashboard({
         <section className="min-w-0" aria-label="Provider Operational Health">
           <SectionTitle title="Provider Operational Health"
             action={<Link href="/admin/providers" className="focus-ring inline-flex items-center gap-1 text-[13px] font-medium text-indigo-700 hover:underline">View all providers <ArrowUpRight size={13} aria-hidden="true" /></Link>} />
-          <div className="grid gap-y-0">
+          <div className="grid gap-4">
             {data.providers.map((provider) => <ProviderCard key={provider.id} provider={provider} />)}
             {data.providers.length === 0 ? <p className="border-t border-slate-200/90 py-4 text-sm text-slate-600">No provider status available. The current deployment has no reported provider operational statuses.</p> : null}
           </div>
