@@ -100,7 +100,7 @@ export function SearchMonitorTable({
 
   if (!items.length) {
     return (
-      <div className="border-b border-[#D7DCE3] py-10 text-center">
+      <div className="border-b border-[#E5E7EB] py-10 text-center">
         <p className="text-[14px] font-semibold text-[#111827]">No searches found</p>
         <p className="mt-1 text-[12px] text-[#6B7280]">No recorded searches match these filters.</p>
       </div>
@@ -112,7 +112,7 @@ export function SearchMonitorTable({
       <div className="overflow-x-auto">
         <table className="w-full min-w-[1120px] border-collapse text-left">
           <thead>
-            <tr className="border-b border-[#D7DCE3] text-[10px] uppercase tracking-[0.12em] text-[#6B7280]">
+            <tr className="border-b border-[#E5E7EB] text-[11px] uppercase tracking-[0.08em] text-[#6B7280]">
               <th className="px-2 py-3 font-semibold">Created</th>
               <th className="px-2 py-3 font-semibold">Product</th>
               <th className="px-2 py-3 font-semibold">Route / stay</th>
@@ -127,13 +127,13 @@ export function SearchMonitorTable({
           </thead>
           <tbody>
             {items.map((search) => (
-              <tr key={search.id} className="border-b border-[#E5E7EB] text-[12px] text-[#374151] hover:bg-[#FAFAFA]">
+              <tr key={search.id} className="border-b border-[#E5E7EB] text-[13px] text-[#374151] hover:bg-[#FAFAFA]">
                 <td className="whitespace-nowrap px-2 py-3 align-top">{formatCreated(search.createdAt, referenceNow)}</td>
                 <td className="px-2 py-3 align-top font-semibold text-[#111827]">{productLabel(search.product)}</td>
                 <td className="max-w-[260px] px-2 py-3 align-top">
                   <p className="font-semibold text-[#111827]">{routeLabel(search.origin, search.destination)}</p>
                   {formatSearchDates(search.checkIn, search.checkOut) ? (
-                    <p className="mt-0.5 text-[10px] leading-4 text-[#9CA3AF]">{formatSearchDates(search.checkIn, search.checkOut)}</p>
+                    <p className="mt-0.5 text-[11px] leading-4 text-[#6B7280]">{formatSearchDates(search.checkIn, search.checkOut)}</p>
                   ) : null}
                 </td>
                 <td className="whitespace-nowrap px-2 py-3 align-top">{search.currency || search.market || "—"}</td>
@@ -145,7 +145,7 @@ export function SearchMonitorTable({
                 <td className="whitespace-nowrap px-2 py-3 text-right align-top">
                   <Link
                     href={"/admin/searches/" + search.id + "?" + (detailQuery ? detailQuery + "&" : "") + "environment=" + encodeURIComponent(search.environment)}
-                    className="font-semibold text-emerald-700 hover:text-emerald-900 hover:underline"
+                    className="font-semibold text-[#004BB8] hover:text-violet-700 hover:underline"
                   >
                     Open
                   </Link>

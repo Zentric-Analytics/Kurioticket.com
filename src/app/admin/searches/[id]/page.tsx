@@ -40,7 +40,7 @@ export default async function AdminSearchDetailPage({
         {result.status === "ok" ? (
           <SearchDetailContent search={result.data} />
         ) : (
-          <div className="border-y border-[#D7DCE3] py-8 text-[12px] text-[#6B7280]">
+          <div className="border-y border-[#E5E7EB] py-8 text-[12px] text-[#6B7280]">
             This search record is unavailable for the requested admin scope.
           </div>
         )}
@@ -57,28 +57,28 @@ function SearchDetailContent({ search }: { search: AdminSearchDetail }) {
 
   return (
     <div className="mx-auto w-full max-w-[1500px] text-[#374151]">
-      <section className="border-b border-[#D7DCE3] px-2 py-5">
+      <section className="border-b border-[#E5E7EB] px-2 py-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
-            <h2 className="text-[13px] font-semibold text-[#111827]">Search overview</h2>
-            <p className="mt-2 text-[16px] font-semibold tracking-tight text-[#111827]">
+            <h2 className="text-[14px] font-semibold text-[#111827]">Search overview</h2>
+            <p className="mt-2 text-[18px] font-semibold tracking-tight text-[#111827]">
               {searchDetailHeadline(search)}
             </p>
-            <p className="mt-1 text-[11px] font-medium text-[#6B7280]">
+            <p className="mt-1 text-[12px] font-medium text-[#6B7280]">
               Searched {formatDateTime(new Date(search.createdAt))}
             </p>
           </div>
           <StatusDot status={diagnostic.outcome === "ZERO_RESULTS" ? "ZERO_RESULTS" : search.status} label={searchDetailOutcomeLabel(diagnostic.outcome)} />
         </div>
-        <div className="mt-4 grid grid-cols-2 border-t border-[#D7DCE3] pt-3 sm:grid-cols-3">
+        <div className="mt-4 grid grid-cols-2 border-t border-[#E5E7EB] pt-3 sm:grid-cols-3">
           <Metric label="Results found" value={search.resultCount.toLocaleString()} />
           <Metric label="Duration" value={searchDetailDuration(search.latencyMs)} />
           <Metric label="Providers" value={search.providerTelemetry ? String(search.providerTelemetry.total) : "—"} />
         </div>
       </section>
 
-      <section className="border-b border-[#D7DCE3] px-2 py-5">
-        <h2 className="text-[13px] font-semibold text-[#111827]">Search information</h2>
+      <section className="border-b border-[#E5E7EB] px-2 py-5">
+        <h2 className="text-[14px] font-semibold text-[#111827]">Search information</h2>
         <div className="mt-3 grid grid-cols-2 gap-x-5 gap-y-3 lg:grid-cols-3">
           {/* Product and locations are already identifiable in the Search overview headline. */}
           {search.checkIn || search.checkOut ? (
@@ -93,12 +93,12 @@ function SearchDetailContent({ search }: { search: AdminSearchDetail }) {
         </div>
       </section>
 
-      <section className="border-b border-[#D7DCE3] px-2 py-5">
-        <h2 className="text-[13px] font-semibold text-[#111827]">Provider outcomes</h2>
+      <section className="border-b border-[#E5E7EB] px-2 py-5">
+        <h2 className="text-[14px] font-semibold text-[#111827]">Provider outcomes</h2>
         {diagnostic.providers.length ? (
           <div className="mt-3 overflow-x-auto">
-            <table className="w-full min-w-[740px] border-collapse text-left text-[12px]">
-              <thead><tr className="border-b border-[#D7DCE3] text-[10px] uppercase tracking-[0.12em] text-[#6B7280]">
+            <table className="w-full min-w-[740px] border-collapse text-left text-[13px]">
+              <thead><tr className="border-b border-[#E5E7EB] text-[11px] uppercase tracking-[0.08em] text-[#6B7280]">
                 <th className="px-2 py-3 font-semibold">Provider</th>
                 <th className="px-2 py-3 font-semibold">Status</th>
                 <th className="px-2 py-3 font-semibold">Reason</th>
@@ -119,20 +119,20 @@ function SearchDetailContent({ search }: { search: AdminSearchDetail }) {
             </table>
           </div>
         ) : (
-          <p className="mt-3 text-[12px] leading-5 text-[#6B7280]">
+          <p className="mt-3 text-[13px] leading-5 text-[#6B7280]">
             No exact provider execution records are available for this search. A provider cause cannot be confirmed.
           </p>
         )}
       </section>
 
       {diagnostic.outcome !== "SUCCESS" ? (
-        <section className="border-b border-[#D7DCE3] px-2 py-5">
-          <h2 className="text-[13px] font-semibold text-[#111827]">Search diagnosis</h2>
+        <section className="border-b border-[#E5E7EB] px-2 py-5">
+          <h2 className="text-[14px] font-semibold text-[#111827]">Search diagnosis</h2>
           {searchDetailDiagnosisSummary(diagnostic) ? (
-            <p className="mt-2 text-[12px] leading-5 text-[#374151]">{searchDetailDiagnosisSummary(diagnostic)}</p>
+            <p className="mt-2 text-[13px] leading-5 text-[#374151]">{searchDetailDiagnosisSummary(diagnostic)}</p>
           ) : null}
           {searchDetailNextChecks(diagnostic.providers).length ? (
-            <div className="mt-3 text-[12px] leading-5 text-[#374151]">
+            <div className="mt-3 text-[13px] leading-5 text-[#374151]">
               <p className="font-semibold text-[#111827]">What to check</p>
               {searchDetailNextChecks(diagnostic.providers).map((check, index) => (
                 <p key={check.provider + "-" + index} className="mt-1">
@@ -148,13 +148,13 @@ function SearchDetailContent({ search }: { search: AdminSearchDetail }) {
         </section>
       ) : null}
 
-      <section className="border-b border-[#D7DCE3] px-2 py-5">
+      <section className="border-b border-[#E5E7EB] px-2 py-5">
         <details className="group">
           <summary className="flex cursor-pointer list-none items-center justify-between gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-200 [&::-webkit-details-marker]:hidden">
-            <h2 className="text-[13px] font-semibold text-[#111827]">Technical details</h2>
+            <h2 className="text-[14px] font-semibold text-[#111827]">Technical details</h2>
             <ChevronDown size={17} className="shrink-0 text-slate-500 transition-transform group-open:rotate-180" aria-hidden="true" />
           </summary>
-          <div className="mt-4 grid grid-cols-2 gap-x-5 gap-y-3 border-t border-[#D7DCE3] pt-4 lg:grid-cols-3">
+          <div className="mt-4 grid grid-cols-2 gap-x-5 gap-y-3 border-t border-[#E5E7EB] pt-4 lg:grid-cols-3">
             <Field label="Search ID" value={search.id} />
             {search.requestId ? <Field label="Request ID" value={search.requestId} /> : null}
             <Field label="Recorded status" value={search.status} />
@@ -186,7 +186,7 @@ function StatusDot({ status, label }: { status: "SUCCESS" | "PARTIAL" | "FAILED"
     DISABLED: { label: "Disabled", dot: "bg-slate-400", text: "text-slate-600" },
     ZERO_RESULTS: { label: "No results", dot: "bg-amber-400", text: "text-amber-700" },
   }[status];
-  return <span className={"inline-flex items-center gap-1.5 text-[12px] font-semibold " + state.text}>
+  return <span className={"inline-flex items-center gap-1.5 text-[13px] font-semibold " + state.text}>
     <span className={"h-1.5 w-1.5 shrink-0 rounded-full " + state.dot} />
     {label ?? state.label}
   </span>;
@@ -195,8 +195,8 @@ function StatusDot({ status, label }: { status: "SUCCESS" | "PARTIAL" | "FAILED"
 function Metric({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0">
-      <p className="text-[10px] font-medium text-[#6B7280]">{label}</p>
-      <p className="mt-1 break-words text-[22px] font-medium tabular-nums text-[#111827]">{value}</p>
+      <p className="text-[11px] font-medium text-[#6B7280]">{label}</p>
+      <p className="mt-1 break-words text-[24px] font-medium tabular-nums text-[#111827]">{value}</p>
     </div>
   );
 }
@@ -204,8 +204,8 @@ function Metric({ label, value }: { label: string; value: string }) {
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="min-w-0 border-b border-[#E5E7EB] py-2">
-      <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#6B7280]">{label}</p>
-      <div className="mt-1 break-words text-[12px] font-semibold text-[#111827]">{value}</div>
+      <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-[#6B7280]">{label}</p>
+      <div className="mt-1 break-words text-[13px] font-medium text-[#111827]">{value}</div>
     </div>
   );
 }

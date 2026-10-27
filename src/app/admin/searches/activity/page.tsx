@@ -38,14 +38,14 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
         <div className="mx-auto w-full max-w-[1500px]">
         {result.status === "ok" && summary.status === "ok" ? (
           <>
-            <div className="grid grid-cols-2 border-y border-[#D7DCE3] md:grid-cols-4">
+            <div className="grid grid-cols-2 border-y border-[#E5E7EB] md:grid-cols-4">
               <Metric label="All searches" value={summary.data.total} tone="all" />
               <Metric label="Complete" value={summary.data.success} tone="complete" />
               <Metric label="Partial" value={summary.data.partial} tone="partial" />
               <Metric label="Failed" value={summary.data.failed} tone="failed" />
             </div>
 
-            <form action="/admin/searches/activity" className="border-b border-[#D7DCE3]">
+            <form action="/admin/searches/activity" className="border-b border-[#E5E7EB]">
               {one(raw.product) ? <input type="hidden" name="product" value={one(raw.product)} /> : null}
               {one(raw.userId) ? <input type="hidden" name="userId" value={one(raw.userId)} /> : null}
               {one(raw.visitorId) ? <input type="hidden" name="visitorId" value={one(raw.visitorId)} /> : null}
@@ -71,7 +71,7 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
                         key={item.label}
                         href={productHref(raw, item.value, range)}
                         className={
-                          "relative pb-2 text-[12px] font-semibold transition-colors " +
+                          "relative pb-2 text-[13px] font-semibold transition-colors " +
                           (active
                             ? "text-[#004BB8] after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:bg-[#004BB8]"
                             : "text-[#475569] hover:text-[#111827]")
@@ -135,7 +135,7 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
                 </div>
                 <button
                   type="submit"
-                  className="h-9 w-[146px] cursor-pointer bg-[#111827] px-4 text-[12px] font-semibold text-white transition-colors hover:bg-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-200"
+                  className="h-9 w-[146px] cursor-pointer bg-[#111827] px-4 text-[13px] font-semibold text-white transition-colors hover:bg-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-200"
                 >
                   Apply filters
                 </button>
@@ -172,11 +172,11 @@ function Metric({ label, value, tone }: { label: string; value: number; tone: "a
 
   return (
     <div className="min-h-[84px] border-r border-[#E5E7EB] px-3 py-3 last:border-r-0 md:px-5">
-      <p className="flex items-center gap-1.5 text-[10px] font-medium text-[#6B7280]">
+      <p className="flex items-center gap-1.5 text-[11px] font-medium text-[#6B7280]">
         <span className={"h-1.5 w-1.5 rounded-full " + dot} />
         {label}
       </p>
-      <p className="mt-1 text-[26px] font-medium leading-none tracking-[-0.035em] text-[#111827]">{value.toLocaleString()}</p>
+      <p className="mt-1 text-[24px] font-medium leading-none tracking-[-0.035em] text-[#111827]">{value.toLocaleString()}</p>
     </div>
   );
 }
@@ -230,7 +230,7 @@ function productHref(raw: Record<string, string | string[] | undefined>, product
 
 function SearchState({ title, message }: { title: string; message: string }) {
   return (
-    <div className="border-b border-[#D7DCE3] py-10 text-center">
+    <div className="border-b border-[#E5E7EB] py-10 text-center">
       <p className="text-[14px] font-semibold text-[#111827]">{title}</p>
       <p className="mt-1 text-[12px] text-[#6B7280]">{message}</p>
     </div>
