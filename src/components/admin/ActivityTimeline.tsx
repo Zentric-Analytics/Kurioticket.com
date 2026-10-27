@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import {
-  Building2, CarFront, ChevronDown, ChevronRight, CircleDot, Clock3, ExternalLink,
+  Building2, CarFront, ChevronDown, ChevronRight, CircleDot, ExternalLink,
   ListChecks, MousePointerClick, Plane, Search,
 } from "lucide-react";
 import { groupContiguousActivityRows } from "@/lib/adminIdentityActivity";
@@ -62,7 +62,7 @@ function dayGroups(events: ActivityRow[]) {
     const date = row.at.toISOString().slice(0,10);
     byDate.set(date, [...(byDate.get(date) ?? []), row]);
   }
-  return [...byDate].map(([date,rows]) => ({date,rows,journeys:groupActivityRows(rows)}));
+  return [...byDate].map(([date,rows]) => ({date,rows,journeys:groupContiguousActivityRows(rows)}));
 }
 function compactRuns(rows: ActivityRow[]) {
   const output: ActivityRow[][] = [];
