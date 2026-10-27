@@ -85,7 +85,19 @@ try {
   await page.getByRole("listbox",{name:"Date range"}).getByRole("option",{name:"Custom range"}).click();
   await expect(page.getByLabel("Custom start date UTC")).toBeVisible();
   await expect(page.getByLabel("Custom end date UTC")).toBeVisible();
-  console.log("PASS immediate URL filters");
+  await expect(page.getByRole("button",{name:"Apply dates"})).toBeDisabled();
+  await page.getByLabel("Custom start date UTC").fill("2026-10-01");
+  await page.getByLabel("Custom end date UTC").fill("2026-10-23");
+  await expect(page).not.toHaveURL(/range=custom/);
+  await expect(page.getByRole("button",{name:"Apply dates"})).toBeEnabled();
+  await page.getByRole("button",{name:"Apply dates"}).click();
+  await expect(page).toHaveURL(/range=custom/);
+  await expect(page).toHaveURL(/from=2026-10-01/);
+  await expect(page).toHaveURL(/to=2026-10-23/);
+  await page.getByRole("button",{name:/Date range:/}).click();
+  await page.getByRole("listbox",{name:"Date range"}).getByRole("option",{name:"Last 7 days"}).click();
+  await expect(page).toHaveURL(/range=7d/);
+  console.log("PASS custom date confirmation and automatic presets");
 
   await page.goto(url+"?order=oldest");
   await expect(page.getByRole("button",{name:/Sort activity/})).toHaveCount(0);

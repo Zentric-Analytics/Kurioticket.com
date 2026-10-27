@@ -20,10 +20,12 @@ function utcWindow(days: number) {
 export function ActivityFiltersBar({ path, initial, directory, tabs }: { path: string; initial: Values; directory: string; tabs: ReactNode }) {
   const router = useRouter();
   const [values, setValues] = useState(initial);
+  const [draftDates, setDraftDates] = useState({ from: initial.from, to: initial.to });
+  const [editingCustom, setEditingCustom] = useState(false);
   const [pending, startTransition] = useTransition();
   const timeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const submitted = useRef("");
-  useEffect(() => { if (timeout.current) clearTimeout(timeout.current); submitted.current = ""; setValues(initial); }, [initial.tab, initial.q, initial.product, initial.stage, initial.order, initial.from, initial.to, initial.range]);
+  useEffect(() => { if (timeout.current) clearTimeout(timeout.current); submitted.current = ""; setValues(initial); setDraftDates({from: initial.from, to: initial.to}); setEditingCustom(false); }, [initial.tab, initial.q, initial.product, initial.stage, initial.order, initial.from, initial.to, initial.range]);
   useEffect(() => () => { if (timeout.current) clearTimeout(timeout.current); }, []);
   const navigate = (next: Values) => {
     const params = new URLSearchParams();
@@ -55,8 +57,31 @@ export function ActivityFiltersBar({ path, initial, directory, tabs }: { path: s
     { value: "custom", label: "Custom range" },
   ];
   const setRange = (range: string) => {
-    const dates = range === "7d" ? utcWindow(7) : range === "30d" ? utcWindow(30) : range === "all" ? {from:"",to:""} : {from:values.from,to:values.to};
+    if (range === "custom") {
+      if (timeout.current) clearTimeout(timeout.current);
+      // A debounced search was not applied; restore the URL-backed query before starting a date draft.
+      setValues(current => ({...current, q: initial.q}));
+      setDraftDates({ from: values.range === "custom" ? values.from : "", to: values.range === "custom" ? values.to : "" });
+      setEditingCustom(true);
+      return;
+    }
+    setEditingCustom(false);
+    const dates = range === "7d" ? utcWindow(7) : range === "30d" ? utcWindow(30) : {from:"",to:""};
     update({range, ...dates});
+  };
+  const validCustom = /^\d{4}-\d{2}-\d{2}$/.test(draftDates.from)
+    && /^\d{4}-\d{2}-\d{2}$/.test(draftDates.to)
+    && !Number.isNaN(Date.parse(draftDates.from)) && !Number.isNaN(Date.parse(draftDates.to))
+    && draftDates.from <= draftDates.to;
+  const applyDates = () => {
+    if (!validCustom) return;
+    setEditingCustom(false);
+    update({ range: "custom", ...draftDates });
+  };
+  const cancelDates = () => {
+    setEditingCustom(false);
+    setValues(current => ({...current, range: initial.range, from: initial.from, to: initial.to}));
+    setDraftDates({from: initial.from,to: initial.to});
   };
   return <div className="min-w-0 space-y-3">
     <label className="relative block min-w-0">
@@ -70,7 +95,7 @@ export function ActivityFiltersBar({ path, initial, directory, tabs }: { path: s
     <div className="flex min-w-0 flex-col gap-x-5 gap-y-2 border-b border-[#D8E1EC] lg:flex-row lg:items-end lg:justify-between">
       {tabs}
       <div className="flex min-w-0 flex-wrap items-center gap-x-6 gap-y-2 pb-2 lg:pb-1">
-        <SearchMonitorSelect label="Date range" name="range" value={values.range} options={rangeOptions}
+        <SearchMonitorSelect label="Date range" name="range" value={editingCustom ? "custom" : values.range} options={rangeOptions}
           appearance="plain" onValueChange={setRange} />
         <SearchMonitorSelect label="Activity product" name="product" value={values.product}
           options={options.product.map(([value,label])=>({value,label}))} appearance="plain"
@@ -80,9 +105,18 @@ export function ActivityFiltersBar({ path, initial, directory, tabs }: { path: s
           onValueChange={stage=>update({stage})} />
       </div>
     </div>
-    {values.range === "custom" ? <div className="flex flex-wrap gap-2">
-      <label className="text-xs text-[var(--muted-foreground)]">From (UTC)<input type="date" aria-label="Custom start date UTC" value={values.from} max={values.to || undefined} onChange={e => update({from:e.target.value})} className={control}/></label>
-      <label className="text-xs text-[var(--muted-foreground)]">To (UTC)<input type="date" aria-label="Custom end date UTC" value={values.to} min={values.from || undefined} onChange={e => update({to:e.target.value})} className={control}/></label>
+    {(editingCustom || values.range === "custom") ? <div className="flex flex-wrap items-end gap-3">
+      <label className="text-xs text-[var(--muted-foreground)]">From (UTC)
+        <input type="date" aria-label="Custom start date UTC" value={draftDates.from}
+          max={draftDates.to || undefined} onChange={e => setDraftDates(current => ({...current, from:e.target.value}))} className={control}/>
+      </label>
+      <label className="text-xs text-[var(--muted-foreground)]">To (UTC)
+        <input type="date" aria-label="Custom end date UTC" value={draftDates.to}
+          min={draftDates.from || undefined} onChange={e => setDraftDates(current => ({...current, to:e.target.value}))} className={control}/>
+      </label>
+      <button type="button" onClick={applyDates} disabled={!validCustom || pending}
+        className="h-11 rounded-lg bg-[#004BB8] px-4 text-[13px] font-medium text-white disabled:cursor-not-allowed disabled:opacity-40">Apply dates</button>
+      <button type="button" onClick={cancelDates} className="h-11 px-2 text-[13px] font-medium text-[#475569] hover:underline">Cancel</button>
     </div> : null}
     <span aria-live="polite" className="sr-only">{pending ? "Refreshing activity…" : ""}</span>
   </div>;
