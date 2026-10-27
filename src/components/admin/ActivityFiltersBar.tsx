@@ -61,7 +61,6 @@ export function ActivityFiltersBar({ path, initial, directory, tabs }: { path: s
       setValues(current => ({...current, range: "custom"}));
       return;
     }
-    setEditingCustom(false);
     const dates = range === "7d" ? utcWindow(7) : range === "30d" ? utcWindow(30) : {from:"",to:""};
     update({range, ...dates});
   };
@@ -71,11 +70,9 @@ export function ActivityFiltersBar({ path, initial, directory, tabs }: { path: s
     && draftDates.from <= draftDates.to;
   const applyDates = () => {
     if (!validCustom) return;
-    setEditingCustom(false);
     update({ range: "custom", ...draftDates });
   };
   const cancelDates = () => {
-    setEditingCustom(false);
     setValues(current => ({...current, range: initial.range, from: initial.from, to: initial.to}));
     setDraftDates({from: initial.from,to: initial.to});
   };
