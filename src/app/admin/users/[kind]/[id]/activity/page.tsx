@@ -176,26 +176,46 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
     </nav>
 
     <section aria-label="Customer identity" className="py-2 sm:py-3">
-      <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between xl:gap-8">
-        <div className="flex min-w-0 items-center gap-4">
-          <span aria-hidden="true" className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[var(--muted)] text-xl font-semibold">{(kind === "guest" ? "G" : (data.title || "U").slice(0,1)).toUpperCase()}</span>
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2"><h1 className="truncate text-xl font-semibold">{kind === "guest" ? operational ? "Guest session" : "Visitor" : data.title}</h1>
-              <span className="rounded-full border border-[var(--border)] px-2 py-0.5 text-xs">{kind === "guest" ? operational ? "Essential operational activity" : "Consented guest" : data.status === "ACTIVE" ? "Active" : data.status}</span></div>
-            {data.email ? <p className="mt-1 truncate text-sm text-[var(--muted-foreground)]">{data.email}</p> : null}
-            <div className="mt-1 flex items-center gap-2"><code className="max-w-[240px] truncate text-xs" title={id}>{id}</code><CopyIdentityId id={id} kind={kind}/></div>
-          </div>
+      <div className="flex min-w-0 items-center gap-4">
+        <span aria-hidden="true" className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[var(--muted)] text-xl font-semibold">{(kind === "guest" ? "G" : (data.title || "U").slice(0,1)).toUpperCase()}</span>
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2"><h1 className="truncate text-xl font-semibold">{kind === "guest" ? operational ? "Guest session" : "Visitor" : data.title}</h1>
+            <span className="rounded-full border border-[var(--border)] px-2 py-0.5 text-xs">{kind === "guest" ? operational ? "Essential operational activity" : "Consented guest" : data.status === "ACTIVE" ? "Active" : data.status}</span></div>
+          {data.email ? <p className="mt-1 truncate text-sm text-[var(--muted-foreground)]">{data.email}</p> : null}
+          <div className="mt-1 flex items-center gap-2"><code className="max-w-[240px] truncate text-xs" title={id}>{id}</code><CopyIdentityId id={id} kind={kind}/></div>
         </div>
-        <dl className="grid w-full grid-cols-2 gap-x-3 gap-y-4 sm:grid-cols-4 sm:gap-x-5 xl:w-auto xl:shrink-0">
-          <Fact label={kind === "guest" ? "First seen" : "Joined"}>{format(data.firstSeenAt)}</Fact>
-          <Fact label="Last active">{data.lastSeenAt ? format(data.lastSeenAt) : "—"}</Fact>
-          <Fact label="Events">{data.events.length}{data.nextCursor ? "+" : ""}</Fact>
-          <Fact label="Journeys">{new Set(data.events.filter(e => e.journeyId).map(e => e.journeyId)).size}{data.nextCursor ? "+" : ""}</Fact>
-        </dl>
       </div>
-      <div className="mt-2 flex justify-end" aria-label="Identity management">{kind === "user"
-        ? <RegisteredManage id={id} email={data.email} role={data.role || "USER"} status={data.status} actorId={session.user.id}/>
-        : operational ? null : <GuestTrackingActions visitorId={id} backHref={backHref}/>}</div>
+      <dl className="mt-5 grid min-w-0 grid-cols-4 gap-x-2 sm:gap-x-4">
+        <Fact label={kind === "guest" ? "First seen" : "Joined"}>{format(data.firstSeenAt)}</Fact>
+        <Fact label="Last active">{data.lastSeenAt ? format(data.lastSeenAt) : "—"}</Fact>
+        <Fact label="Events">{data.events.length}{data.nextCursor ? "+" : ""}</Fact>
+        <Fact label="Journeys">{new Set(data.events.filter(e => e.journeyId).map(e => e.journeyId)).size}{data.nextCursor ? "+" : ""}</Fact>
+      </dl>
+      <section aria-label="Activity summary" className="mt-5 flex min-w-0 flex-col gap-3 border-y border-[#D8E1EC] py-4 lg:flex-row lg:items-center lg:gap-6">
+        <div className="flex shrink-0 items-center gap-2 lg:w-56">
+          <h2 className="text-base font-semibold">Activity summary</h2>
+          {kind === "guest" ? <ActivityDataInfo>
+            {operational
+              ? <>Only recorded, necessary {environment} search and provider-handoff activity is displayed. The session credential expires, but retained records remain available. This ID does not identify a person. </>
+              : <>Only recorded, consented {environment} guest activity is displayed. </>}
+            Missing records do not establish that no visit occurred. Provider handoffs are not proof of a booking or payment.
+          </ActivityDataInfo> : null}
+        </div>
+        <div className="grid min-w-0 flex-1 grid-cols-3 gap-2 sm:gap-4">
+          {[
+            ["Searches", data.events.filter(e => e.stage === "SEARCH_COMPLETED").length],
+            ["Results viewed", data.events.filter(e => e.stage === "RESULTS_VIEWED").length],
+            ["Provider handoffs", data.events.filter(e => e.stage === "PROVIDER_HANDOFF_STARTED").length],
+          ].map(([label,count]) => <div key={label} className="min-w-0 border-l border-[#D8E1EC] pl-3 sm:pl-4">
+            <strong className="block text-lg font-semibold tabular-nums">{count}</strong>
+            <span className="block text-[12px] text-[var(--muted-foreground)]">{label}</span>
+          </div>)}
+        </div>
+        <div className="flex shrink-0 justify-end" aria-label="Identity management">{kind === "user"
+          ? <RegisteredManage id={id} email={data.email} role={data.role || "USER"} status={data.status} actorId={session.user.id}/>
+          : operational ? null : <GuestTrackingActions visitorId={id} backHref={backHref}/>}</div>
+      </section>
+      <p className="mt-1 text-right text-xs text-[var(--muted-foreground)]">Counts reflect loaded events only.</p>
     </section>
 
     <section aria-label="Activity filters" className="min-w-0">
@@ -217,25 +237,6 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
       <ActivityTimeline events={data.events} nextHref={nextHref} environment={environment} order={order}
         clearHref={activityHref(basePath, queryParams, {q:null,from:null,to:null,range:null,product:null,stage:null,order:null,cursor:null})}/>
       <aside className="min-w-0 space-y-4">
-          <section aria-label="Activity summary" className="pb-3">
-            <div className="mb-3 flex items-center gap-2">
-              <h2 className="text-sm font-semibold">Activity summary</h2>
-              {kind === "guest" ? <ActivityDataInfo>
-                {operational
-                  ? <>Only recorded, necessary {environment} search and provider-handoff activity is displayed. The session credential expires, but retained records remain available. This ID does not identify a person. </>
-                  : <>Only recorded, consented {environment} guest activity is displayed. </>}
-                Missing records do not establish that no visit occurred. Provider handoffs are not proof of a booking or payment.
-              </ActivityDataInfo> : null}
-            </div>
-            {[
-              ["Searches", data.events.filter(e => e.stage === "SEARCH_COMPLETED").length],
-              ["Results viewed", data.events.filter(e => e.stage === "RESULTS_VIEWED").length],
-              ["Provider handoffs", data.events.filter(e => e.stage === "PROVIDER_HANDOFF_STARTED").length],
-            ].map(([label,count]) => <div key={label} className="flex justify-between border-b border-[var(--border)] py-2 text-sm last:border-0">
-              <span className="text-[var(--muted-foreground)]">{label}</span><strong>{count}</strong>
-            </div>)}
-            <p className="mt-2 text-xs text-[var(--muted-foreground)]">Counts reflect loaded events only.</p>
-          </section>
           <section aria-labelledby="activity-related-title" className="pb-3">
             <h2 id="activity-related-title" className="mb-2 text-sm font-semibold">Related records</h2>
             {related.map(({href,title}) => <Link key={href} href={href}
