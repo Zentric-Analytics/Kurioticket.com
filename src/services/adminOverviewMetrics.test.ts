@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { summarizeAccountStatusRows, summarizeAuditEvents } from "./adminOverviewMetrics";
+import { summarizeAccountStatusRows, summarizeAuditEvents, summarizeWorkflowStatusRows } from "./adminOverviewMetrics";
 
 test("account lifecycle groups count each role and status without dropping deleted tombstones", () => {
   assert.deepEqual(summarizeAccountStatusRows([
@@ -35,4 +35,35 @@ test("human and automated audit counts reconcile", () => {
   assert.deepEqual(summarizeAuditEvents(0, 0), { total: 0, human: 0, automated: 0 });
   assert.throws(() => summarizeAuditEvents(1, 2));
   assert.throws(() => summarizeAuditEvents(5, -1));
+});
+
+test("support and deletion status rows reconcile with current workflow counts", () => {
+  const support = summarizeWorkflowStatusRows([
+    { status: "OPEN", _count: { _all: 4 } },
+    { status: "CLOSED", _count: { _all: 1 } },
+    { status: "RESOLVED", _count: { _all: 1 } },
+  ], ["OPEN", "WAITING_ON_USER", "WAITING_ON_TEAM", "RESOLVED", "CLOSED"] as const);
+  assert.deepEqual(support, {
+    OPEN: 4, WAITING_ON_USER: 0, WAITING_ON_TEAM: 0, RESOLVED: 1, CLOSED: 1,
+  });
+  const deletion = summarizeWorkflowStatusRows([
+    { status: "CANCELLED", _count: { _all: 2 } },
+  ], ["PENDING", "READY_FOR_REVIEW", "CANCELLED", "COMPLETED"] as const);
+  assert.deepEqual(deletion, { PENDING: 0, READY_FOR_REVIEW: 0, CANCELLED: 2, COMPLETED: 0 });
+  assert.deepEqual(summarizeWorkflowStatusRows([], ["OPEN", "CLOSED"] as const), { OPEN: 0, CLOSED: 0 });
+});
+
+test("workflow counts fail closed instead of silently discarding unknown or invalid rows", () => {
+  const statuses = ["OPEN", "WAITING_ON_USER"] as const;
+  for (const invalid of [
+    [{ status: "UNKNOWN", _count: { _all: 5 } }],
+    [{ status: "OPEN", _count: { _all: -1 } }],
+    [{ status: "OPEN", _count: { _all: 1.25 } }],
+    [{ status: "OPEN", _count: { _all: Number.NaN } }],
+    [{ status: "OPEN", _count: { _all: Number.MAX_SAFE_INTEGER } },
+      { status: "OPEN", _count: { _all: 1 } }],
+  ]) {
+    assert.throws(() => summarizeWorkflowStatusRows(invalid, statuses));
+  }
+  assert.throws(() => summarizeWorkflowStatusRows([], ["OPEN", "OPEN"] as const));
 });

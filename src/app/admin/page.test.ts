@@ -401,3 +401,26 @@ test("Phase 4 clarifies time windows, provider readiness, and absent observation
   assert.match(display, /No timing recorded/);
   assert.match(display, /Human-attributed audit rows/);
 });
+
+test("Phase 5 required-gate verification guards against fabricated or silently lost Overview counts", () => {
+  const service = readFileSync("src/services/adminOverviewService.ts", "utf8");
+  const metrics = readFileSync("src/services/adminOverviewMetrics.ts", "utf8");
+  const workflow = readFileSync(".github/workflows/pr-required-gates.yml", "utf8");
+  const presence = readFileSync("src/services/websitePresenceService.ts", "utf8");
+  const journeys = readFileSync("src/services/adminJourneyCore.ts", "utf8");
+  assert.match(workflow, /Validate Admin Overview metrics and consented presence/);
+  for (const source of [
+    "src/services/adminOverviewMetrics.test.ts",
+    "src/lib/website-presence.test.ts",
+    "src/app/admin/page.test.ts",
+  ]) assert.ok(workflow.includes(source), source);
+  assert.match(metrics, /Unknown admin Overview workflow status/);
+  assert.match(service, /summarizeWorkflowStatusRows\(/);
+  assert.match(service, /supportCount\.OPEN/);
+  assert.match(service, /deletionCount\.PENDING/);
+  assert.match(service, /journeys\.status !== "ok" \|\| !providers/);
+  assert.match(service, /environment !== hostEnvironment/);
+  assert.match(presence, /if \(!row\) return unavailable\(\)/);
+  assert.match(presence, /checkedPresenceCount\(registeredAccounts \+ guestIdentities\)/);
+  assert.match(journeys, /totalRedirects !== inConsentedJourneys \+ outsideConsentedJourneys/);
+});
