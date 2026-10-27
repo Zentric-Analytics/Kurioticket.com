@@ -2,10 +2,9 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, useTransition, type FormEvent, type MouseEvent, type ReactNode } from "react";
-import { LoaderCircle, Search } from "lucide-react";
+import { ChevronDown, LoaderCircle, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { AdminDirectorySelect } from "./AdminDirectorySelect";
-import type { AdminIdentitySort } from "@/lib/adminIdentityDirectory";
+import type { AdminIdentityDate, AdminIdentitySort } from "@/lib/adminIdentityDirectory";
 
 export type UserTab = "ALL" | "REGISTERED" | "GUEST";
 
@@ -15,6 +14,7 @@ type Props = {
   status: string;
   tab: UserTab;
   sort: AdminIdentitySort;
+  date: AdminIdentityDate;
   registeredCount: number;
   guestCount: number;
   pageHref: string;
@@ -36,13 +36,13 @@ const statuses = [
   { value: "DELETED", label: "Deleted" },
 ] as const;
 
-// Preserve the existing alphabetical sorts for previously shared links, while
-// leading with the requested chronological options.
-const sortOptions = [
-  { value: "newest", label: "Newest first" },
-  { value: "oldest", label: "Oldest first" },
-  { value: "name_asc", label: "Name: A–Z" },
-  { value: "name_desc", label: "Name: Z–A" },
+const dateOptions = [
+  { value: "all", label: "All time" },
+  { value: "today", label: "Today" },
+  { value: "last7", label: "Last 7 days" },
+  { value: "thisMonth", label: "This month" },
+  { value: "lastMonth", label: "Last month" },
+  { value: "last3", label: "Last 3 months" },
 ] as const;
 
 const tabs: { value: UserTab; label: string }[] = [
@@ -69,7 +69,7 @@ function urlWith(base: URLSearchParams, values: Record<string, string>) {
  * the table always comes from the authorized server component.
  */
 export function AdminUsersToolbar({
-  query, role, status, tab, sort, registeredCount, guestCount, pageHref, children,
+  query, role, status, tab, sort, date, registeredCount, guestCount, pageHref, children,
 }: Props) {
   const router = useRouter();
   const [searchText, setSearchText] = useState(query);
@@ -156,8 +156,8 @@ export function AdminUsersToolbar({
 
   const base = new URLSearchParams(pageHref.split("?")[1] || "");
   const href = (values: Record<string, string>) => urlWith(base, values);
-  const filterActive = role !== "ALL" || status !== "ALL";
-  const clearHref = href({ role: "ALL", status: "ALL" });
+  const filterActive = role !== "ALL" || status !== "ALL" || date !== "all";
+  const clearHref = href({ role: "ALL", status: "ALL", date: "all" });
   const counts: Record<UserTab, number> = {
     ALL: registeredCount + guestCount, REGISTERED: registeredCount, GUEST: guestCount,
   };
@@ -168,12 +168,24 @@ export function AdminUsersToolbar({
     navigate(values);
   }
 
+  const textSelect = (name: string, label: string, value: string, options: readonly { value: string; label: string }[]) => (
+    <label className="relative block min-w-0 border-b border-[#CAD3DF] transition-colors hover:border-[#64748B] focus-within:border-[#475569]">
+      <span className="sr-only">{label}</span>
+      <select name={name} value={value} onChange={event => navigate({ [name]: event.target.value })}
+        className="h-10 w-full min-w-0 appearance-none bg-transparent pl-1 pr-6 text-[13px] font-medium text-[#334155] outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#64748B]">
+        {options.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+      </select>
+      <ChevronDown aria-hidden="true" size={14} className="pointer-events-none absolute right-0 top-3 text-[#475569]" />
+    </label>
+  );
+
   return <div className="min-w-0">
-    <div className="grid gap-3 pb-3 md:grid-cols-[minmax(0,1fr)_150px] md:items-center">
+    <div className="pb-3">
       <form action="/admin/users" method="get" onSubmit={onSearchSubmit} role="search" className="relative min-w-0">
         <input type="hidden" name="role" value={role} readOnly />
         <input type="hidden" name="status" value={status} readOnly />
         <input type="hidden" name="sort" value={sort} readOnly />
+        <input type="hidden" name="date" value={date} readOnly />
         <input type="hidden" name="tab" value={tab} readOnly />
         <Search size={17} aria-hidden="true" className="pointer-events-none absolute left-3.5 top-3.5 text-muted"/>
         <label className="sr-only" htmlFor="admin-user-search">Search users</label>
@@ -190,21 +202,10 @@ export function AdminUsersToolbar({
             setSearchText(event.target.value);
           }}
           placeholder="Search by name, email, user ID, or guest ID"
-          className="focus-ring h-11 w-full min-w-0 rounded-lg border border-[#D8E1EC] bg-white pl-10 pr-3 text-[13px] text-foreground placeholder:text-muted transition hover:border-border-strong"
+          className="h-11 w-full min-w-0 rounded-lg border border-[#D8E1EC] bg-white pl-10 pr-3 text-[13px] text-foreground placeholder:text-muted outline-none transition-colors hover:border-[#D8E1EC] focus:border-[#94A3B8] focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
         />
       </form>
 
-      <form action="/admin/users" method="get" className="w-full min-w-0" aria-label="Sort users">
-        <input type="hidden" name="q" value={query} readOnly />
-        <input type="hidden" name="role" value={role} readOnly />
-        <input type="hidden" name="status" value={status} readOnly />
-        <input type="hidden" name="tab" value={tab} readOnly />
-        <AdminDirectorySelect
-          key={"sort-" + sort}
-          name="sort" label="Sort by" value={sort} options={sortOptions} autoSubmit
-          onValueChange={next => navigate({ sort: next })}
-        />
-      </form>
     </div>
 
     <div className="flex min-w-0 flex-col gap-x-4 gap-y-2 border-b border-border lg:flex-row lg:items-end lg:justify-between">
@@ -225,7 +226,7 @@ export function AdminUsersToolbar({
 
       <form action="/admin/users" method="get"
         aria-label="Filter users"
-        className="grid min-w-0 grid-cols-2 items-end gap-2 lg:flex lg:shrink-0 lg:items-end lg:gap-3">
+        className="grid min-w-0 grid-cols-2 items-end gap-x-5 gap-y-2 sm:grid-cols-3 lg:flex lg:shrink-0 lg:items-end lg:gap-6">
         <input type="hidden" name="q" value={query} readOnly />
         <input type="hidden" name="sort" value={sort} readOnly />
         <input type="hidden" name="tab" value={tab} readOnly />
@@ -233,19 +234,14 @@ export function AdminUsersToolbar({
 
         {filterActive ? <Link
           href={clearHref}
-          onClick={event => navigateLink(event, { role: "ALL", status: "ALL" })}
+          onClick={event => navigateLink(event, { role: "ALL", status: "ALL", date: "all" })}
           className="focus-ring col-span-2 inline-flex h-11 w-fit items-center rounded-sm text-[13px] font-medium text-blue hover:underline lg:order-first"
         >
           Clear filters
         </Link> : null}
-        <div className="min-w-0 lg:w-[140px]">
-          <AdminDirectorySelect key={"role-" + role} name="role" label="Account role" value={role} options={roles}
-            onValueChange={next => navigate({ role: next })} />
-        </div>
-        {tab !== "GUEST" ? <div className="min-w-0 lg:w-[150px]">
-          <AdminDirectorySelect key={"status-" + status} name="status" label="Account status" value={status} options={statuses}
-            onValueChange={next => navigate({ status: next })} />
-        </div> : null}
+        <div className="min-w-0 lg:w-[145px]">{textSelect("date", "Date range", date, dateOptions)}</div>
+        <div className="min-w-0 lg:w-[135px]">{textSelect("role", "Account role", role, roles)}</div>
+        {tab !== "GUEST" ? <div className="min-w-0 lg:w-[145px]">{textSelect("status", "Account status", status, statuses)}</div> : null}
         <noscript>
           <button type="submit" className="focus-ring col-span-2 rounded-lg border border-border px-3 py-2 text-[13px] font-medium text-foreground">
             Update filters
