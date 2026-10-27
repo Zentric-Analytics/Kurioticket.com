@@ -1,7 +1,7 @@
 import { ChevronDown } from "lucide-react";
 import { notFound } from "next/navigation";
 
-import { AdminPageShell, AdminSectionCard, AdminStatusBadge } from "@/components/admin/AdminPageShell";
+import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { SearchWorkspaceBackLink } from "@/components/admin/SearchWorkspaceBackLink";
 import { searchActivityReturnHref } from "@/lib/adminSearchActivityNavigation";
 import {
@@ -39,9 +39,9 @@ export default async function AdminSearchDetailPage({
         {result.status === "ok" ? (
           <SearchDetailContent search={result.data} />
         ) : (
-          <AdminSectionCard className="p-5 text-sm text-slate-600">
+          <div className="border-y border-[#D7DCE3] py-8 text-[12px] text-[#6B7280]">
             This search record is unavailable for the requested admin scope.
-          </AdminSectionCard>
+          </div>
         )}
       </AdminPageShell>
     </>
@@ -50,36 +50,36 @@ export default async function AdminSearchDetailPage({
 
 function SearchDetailContent({ search }: { search: AdminSearchDetail }) {
   const diagnostic = search.diagnostic;
-  const outcomeTone = diagnostic.outcome === "SUCCESS" ? "good" : diagnostic.outcome === "FAILED" ? "bad" : "warn";
+  
   const providerReasonCodes = diagnostic.providers
     .filter(provider => provider.reasonCode)
     .map(provider => provider.provider + ": " + provider.reasonCode);
 
   return (
-    <div className="mx-auto w-full max-w-[1500px] space-y-4">
-      <AdminSectionCard className="p-4 sm:p-5">
+    <div className="mx-auto w-full max-w-[1500px] text-[#374151]">
+      <section className="border-b border-[#D7DCE3] px-2 py-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
-            <h2 className="text-sm font-bold text-slate-950">Search overview</h2>
-            <p className="mt-2 text-lg font-semibold tracking-tight text-slate-950 sm:text-xl">
+            <h2 className="text-[13px] font-semibold text-[#111827]">Search overview</h2>
+            <p className="mt-2 text-[16px] font-semibold tracking-tight text-[#111827]">
               {searchDetailHeadline(search)}
             </p>
-            <p className="mt-1 text-xs font-medium text-slate-500">
+            <p className="mt-1 text-[11px] font-medium text-[#6B7280]">
               {searchDetailProductLabel(search.product)} search · {formatDateTime(new Date(search.createdAt))}
             </p>
           </div>
-          <AdminStatusBadge tone={outcomeTone}>{searchDetailOutcomeLabel(diagnostic.outcome)}</AdminStatusBadge>
+          <StatusDot status={diagnostic.outcome === "ZERO_RESULTS" ? "ZERO_RESULTS" : search.status} label={searchDetailOutcomeLabel(diagnostic.outcome)} />
         </div>
-        <div className="mt-4 grid grid-cols-2 gap-x-5 gap-y-4 border-t border-slate-200 pt-4 sm:grid-cols-3">
+        <div className="mt-4 grid grid-cols-2 border-t border-[#D7DCE3] pt-3 sm:grid-cols-3">
           <Metric label="Results found" value={search.resultCount.toLocaleString()} />
           <Metric label="Duration" value={searchDetailDuration(search.latencyMs)} />
           <Metric label="Providers" value={search.providerTelemetry ? String(search.providerTelemetry.total) : "—"} />
         </div>
-      </AdminSectionCard>
+      </section>
 
-      <AdminSectionCard className="p-4 sm:p-5">
+      <section className="border-b border-[#D7DCE3] px-2 py-5">
         <h2 className="text-sm font-bold text-slate-950">Search information</h2>
-        <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="mt-3 grid grid-cols-2 gap-x-5 gap-y-3 lg:grid-cols-3">
           <Field label="Product" value={searchDetailProductLabel(search.product)} />
           {search.origin ? <Field label={search.product === "CAR" ? "Pickup location" : "Origin"} value={search.origin} /> : null}
           {search.destination ? <Field label={search.product === "CAR" ? "Drop-off location" : "Destination"} value={search.destination} /> : null}
@@ -93,45 +93,45 @@ function SearchDetailContent({ search }: { search: AdminSearchDetail }) {
           {search.currency ? <Field label="Currency" value={search.currency} /> : null}
           <Field label="Identity" value={searchDetailIdentityLabel(search.identity.kind)} />
         </div>
-      </AdminSectionCard>
+      </section>
 
-      <AdminSectionCard className="p-4 sm:p-5">
+      <section className="border-b border-[#D7DCE3] px-2 py-5">
         <h2 className="text-sm font-bold text-slate-950">Provider outcomes</h2>
         {diagnostic.providers.length ? (
-          <div className="mt-3 divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200">
-            {diagnostic.providers.map((provider, index) => (
-              <div
-                key={provider.provider + "-" + provider.observedAt + "-" + index}
-                className="grid min-w-0 gap-3 p-3 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1.25fr)_auto] md:items-center"
-              >
-                <div className="min-w-0">
-                  <p className="break-words text-sm font-semibold text-slate-950">{provider.provider}</p>
-                  <p className="mt-1 text-xs text-slate-500">{formatDateTime(new Date(provider.observedAt))}</p>
-                </div>
-                <div>
-                  <AdminStatusBadge tone={provider.status === "SUCCESS" ? "good" : provider.status === "FAILED" ? "bad" : "warn"}>
-                    {provider.status === "SUCCESS" ? "Complete" : provider.status === "DEGRADED" ? "Degraded" : provider.status === "DISABLED" ? "Disabled" : "Failed"}
-                  </AdminStatusBadge>
-                </div>
-                <p className="break-words text-sm text-slate-700">{provider.reason}</p>
-                <p className="whitespace-nowrap text-xs font-semibold text-slate-600">
-                  {provider.latencyMs === null ? "—" : provider.latencyMs + " ms"}
-                </p>
-              </div>
-            ))}
-          </div>
+          <div className="mt-3 overflow-x-auto">
+            <table className="w-full min-w-[740px] border-collapse text-left text-[12px]">
+              <thead><tr className="border-b border-[#D7DCE3] text-[10px] uppercase tracking-[0.12em] text-[#6B7280]">
+                <th className="px-2 py-3 font-semibold">Provider</th>
+                <th className="px-2 py-3 font-semibold">Status</th>
+                <th className="px-2 py-3 font-semibold">Reason</th>
+                <th className="px-2 py-3 text-right font-semibold">Duration</th>
+              </tr></thead>
+              <tbody>
+                {diagnostic.providers.map((provider, index) => (
+                  <tr key={provider.provider + "-" + provider.observedAt + "-" + index} className="border-b border-[#E5E7EB] text-[#374151] last:border-b-0">
+                    <td className="px-2 py-3 align-top">
+                      <p className="font-semibold text-[#111827]">{provider.provider}</p>
+                      <p className="mt-0.5 text-[10px] text-[#9CA3AF]">{formatDateTime(new Date(provider.observedAt))}</p>
+                    </td>
+                    <td className="px-2 py-3 align-top"><StatusDot status={provider.status} /></td>
+                    <td className="px-2 py-3 align-top">{provider.reason}</td>
+                    <td className="whitespace-nowrap px-2 py-3 text-right align-top">{searchDetailDuration(provider.latencyMs)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>         </div>
         ) : (
-          <p className="mt-3 text-sm leading-6 text-slate-600">
+          <p className="mt-3 text-[12px] leading-5 text-[#6B7280]">
             No exact provider execution records are available for this search. A provider cause cannot be confirmed.
           </p>
         )}
-      </AdminSectionCard>
+      </section>
 
       {diagnostic.outcome !== "SUCCESS" ? (
-        <AdminSectionCard className="p-4 sm:p-5">
+        <section className="border-b border-[#D7DCE3] px-2 py-5">
           <h2 className="text-sm font-bold text-slate-950">Search diagnosis</h2>
-          <p className="mt-2 text-sm leading-6 text-slate-700">{diagnostic.reason}</p>
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <p className="mt-2 text-[12px] leading-5 text-[#374151]">{diagnostic.reason}</p>
+          <div className="mt-3 grid grid-cols-2 gap-x-5 gap-y-3">
             <Field
               label="Retryable"
               value={diagnostic.retryable === null ? "Unknown" : diagnostic.retryable ? "Yes" : "No"}
@@ -141,16 +141,16 @@ function SearchDetailContent({ search }: { search: AdminSearchDetail }) {
               value={diagnostic.correlation === "exact" ? "Exact provider records available" : "Exact provider records unavailable"}
             />
           </div>
-        </AdminSectionCard>
+        </section>
       ) : null}
 
-      <AdminSectionCard className="p-4 sm:p-5">
+      <section className="border-b border-[#D7DCE3] px-2 py-5">
         <details className="group">
           <summary className="flex cursor-pointer list-none items-center justify-between gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-200 [&::-webkit-details-marker]:hidden">
             <h2 className="text-sm font-bold text-slate-950">Technical details</h2>
             <ChevronDown size={17} className="shrink-0 text-slate-500 transition-transform group-open:rotate-180" aria-hidden="true" />
           </summary>
-          <div className="mt-4 grid gap-3 border-t border-slate-200 pt-4 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="mt-4 grid grid-cols-2 gap-x-5 gap-y-3 border-t border-[#D7DCE3] pt-4 lg:grid-cols-3">
             <Field label="Search ID" value={search.id} />
             {search.requestId ? <Field label="Request ID" value={search.requestId} /> : null}
             <Field label="Recorded status" value={search.status} />
@@ -165,25 +165,40 @@ function SearchDetailContent({ search }: { search: AdminSearchDetail }) {
             {providerReasonCodes.length ? <Field label="Provider reason codes" value={providerReasonCodes.join("; ")} /> : null}
           </div>
         </details>
-      </AdminSectionCard>
+      </section>
     </div>
   );
+}
+
+function StatusDot({ status, label }: { status: "SUCCESS" | "PARTIAL" | "FAILED" | "DEGRADED" | "DISABLED" | "ZERO_RESULTS"; label?: string }) {
+  const state = {
+    SUCCESS: { label: "Complete", dot: "bg-emerald-500", text: "text-emerald-700" },
+    PARTIAL: { label: "Partial", dot: "bg-amber-400", text: "text-amber-700" },
+    FAILED: { label: "Failed", dot: "bg-rose-500", text: "text-rose-700" },
+    DEGRADED: { label: "Degraded", dot: "bg-amber-400", text: "text-amber-700" },
+    DISABLED: { label: "Disabled", dot: "bg-slate-400", text: "text-slate-600" },
+    ZERO_RESULTS: { label: "No results", dot: "bg-amber-400", text: "text-amber-700" },
+  }[status];
+  return <span className={"inline-flex items-center gap-1.5 text-[12px] font-semibold " + state.text}>
+    <span className={"h-1.5 w-1.5 shrink-0 rounded-full " + state.dot} />
+    {label ?? state.label}
+  </span>;
 }
 
 function Metric({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0">
-      <p className="text-xs font-medium text-slate-500">{label}</p>
-      <p className="mt-1 break-words text-xl font-semibold tabular-nums text-slate-950">{value}</p>
+      <p className="text-[10px] font-medium text-[#6B7280]">{label}</p>
+      <p className="mt-1 break-words text-[22px] font-medium tabular-nums text-[#111827]">{value}</p>
     </div>
   );
 }
 
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="min-w-0 rounded-xl bg-slate-50 p-3">
-      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p>
-      <div className="mt-1 break-words text-sm font-semibold text-slate-900">{value}</div>
+    <div className="min-w-0 border-b border-[#E5E7EB] py-2">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#6B7280]">{label}</p>
+      <div className="mt-1 break-words text-[12px] font-semibold text-[#111827]">{value}</div>
     </div>
   );
 }
