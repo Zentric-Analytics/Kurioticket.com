@@ -9,7 +9,7 @@ import { UserStatusActions } from "@/components/admin/UserStatusActions";
 import { GuestTrackingActions } from "@/components/admin/GuestTrackingActions";
 import { AdminEmptyState } from "@/components/admin/AdminPageShell";
 import { ActivityTimeline } from "@/components/admin/ActivityTimeline";
-import { AdminDirectorySelect } from "@/components/admin/AdminDirectorySelect";
+import { ActivityFiltersBar } from "@/components/admin/ActivityFiltersBar";
 import { requireAdminSession } from "@/lib/auth-guards";
 import { getAdminEmails } from "@/lib/env";
 import { withOptionalDb } from "@/lib/prisma";
@@ -51,7 +51,7 @@ function safeDirectoryHref(raw: RawQuery) {
 }
 function activityParams(raw: RawQuery) {
   const result: Record<string, string> = {};
-  for (const key of ["tab", "stage", "product", "from", "to", "q", "order", "cursor", "directory"]) {
+  for (const key of ["tab", "range", "stage", "product", "from", "to", "q", "order", "cursor", "directory"]) {
     const value = raw[key];
     if (typeof value === "string" && value.length <= 1100) result[key] = value;
   }
@@ -149,9 +149,6 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
   const nextHref = data.nextCursor ? activityHref(basePath, queryParams, { cursor: data.nextCursor }) : null;
 
   const order = filters.order === "oldest" ? "oldest" : "newest";
-  const sortParams = { tab: filters.tab, product: filters.product, stage: filters.stage,
-    from: filters.from, to: filters.to, q: filters.q,
-    ...(typeof raw.directory === "string" && raw.directory.length <= 1000 ? { directory: raw.directory } : {}) };
   const related = [
     { href: searchesHref, icon: Search, title: "Searches", subtitle: "View all searches from this identity" },
     { href: journeysHref, icon: Route, title: "Journeys", subtitle: "View consented journeys and stages" },
@@ -167,39 +164,27 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
       <span className="font-medium text-[#020617]">Activity</span>
     </nav>
 
-    <section aria-label="Customer identity" className="border-b border-[#E2E8F0] pb-5">
-      <div className="grid min-w-0 items-center gap-x-5 gap-y-5 lg:grid-cols-[minmax(280px,1.5fr)_repeat(3,minmax(125px,0.65fr))_auto]">
+    <section aria-label="Customer identity" className="rounded-lg border border-[var(--border)] p-5">
+      <div className="flex flex-wrap items-center justify-between gap-5">
         <div className="flex min-w-0 items-center gap-4">
-          <span aria-hidden="true" className="flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-full bg-[#F1F5F9] text-[#64748B]">
-            <UserRound size={31} strokeWidth={1.8} />
-          </span>
+          <span aria-hidden="true" className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[var(--muted)] text-xl font-semibold">{(kind === "guest" ? "G" : (data.title || "U").slice(0,1)).toUpperCase()}</span>
           <div className="min-w-0">
-            <h1 className="truncate text-[20px] font-semibold tracking-[-0.02em] text-[#020617]">
-              {kind === "guest" ? "Visitor" : data.title}
-            </h1>
-            <div className="mt-1 flex min-w-0 items-center gap-2">
-              <span className="min-w-0 truncate text-[13px] text-[#64748B]" title={id}>{id}</span>
-              <CopyIdentityId id={id} kind={kind} />
-            </div>
-            {data.email ? <p className="mt-1 truncate text-[12px] text-[#64748B]" title={data.email}>{data.email}</p> : null}
+            <div className="flex flex-wrap items-center gap-2"><h1 className="truncate text-xl font-semibold">{kind === "guest" ? "Visitor" : data.title}</h1>
+              <span className="rounded-full border border-[var(--border)] px-2 py-0.5 text-xs">{kind === "guest" ? "Consented guest" : data.status === "ACTIVE" ? "Active" : data.status}</span></div>
+            {data.email ? <p className="mt-1 truncate text-sm text-[var(--muted-foreground)]">{data.email}</p> : null}
+            <div className="mt-1 flex items-center gap-2"><code className="max-w-[240px] truncate text-xs" title={id}>{id}</code><CopyIdentityId id={id} kind={kind}/></div>
           </div>
         </div>
-        <dl className="contents">
+        <dl className="grid w-full grid-cols-2 gap-3 sm:w-auto sm:grid-cols-4">
           <Fact label={kind === "guest" ? "First seen" : "Joined"}>{format(data.firstSeenAt)}</Fact>
-          <Fact label={kind === "guest" ? "Last seen" : "Latest on this page"}>{data.lastSeenAt ? format(data.lastSeenAt) : "—"}</Fact>
-          <Fact label={kind === "guest" ? "Analytics consent" : "Account status"}>
-            {kind === "guest" ? <span className="inline-flex items-center gap-2">
-              <span aria-hidden="true" className="h-2 w-2 rounded-full bg-[#16A34A]" /> Granted
-            </span> : data.status}
-          </Fact>
+          <Fact label="Last active">{data.lastSeenAt ? format(data.lastSeenAt) : "—"}</Fact>
+          <Fact label="Events">{data.events.length}{data.nextCursor ? "+" : ""}</Fact>
+          <Fact label="Journeys">{new Set(data.events.filter(e => e.journeyId).map(e => e.journeyId)).size}{data.nextCursor ? "+" : ""}</Fact>
         </dl>
-        <div className="justify-self-start lg:justify-self-end" aria-label="Identity management">
-          {kind === "user"
-            ? <RegisteredManage id={id} email={data.email} role={data.role || "USER"}
-                status={data.status} actorId={session.user.id} />
-            : <GuestTrackingActions visitorId={id} backHref={backHref} />}
-        </div>
       </div>
+      <div className="mt-4 flex justify-end" aria-label="Identity management">{kind === "user"
+        ? <RegisteredManage id={id} email={data.email} role={data.role || "USER"} status={data.status} actorId={session.user.id}/>
+        : <GuestTrackingActions visitorId={id} backHref={backHref}/>}</div>
     </section>
 
     <section aria-label="Activity filters" className="min-w-0 space-y-4">
@@ -212,82 +197,36 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
           {tab.label}
         </Link>)}
       </nav>
-      <form action={basePath} method="get"
-        className="grid min-w-0 gap-3 rounded-lg border border-[#E7EDF5] bg-[#F8FAFC] p-3 sm:grid-cols-2 lg:grid-cols-[minmax(110px,1fr)_minmax(110px,1fr)_minmax(130px,0.9fr)_minmax(145px,1fr)_minmax(175px,1.8fr)_auto] lg:items-end lg:gap-3 lg:p-4">
-        <input type="hidden" name="tab" value={filters.tab} />
-        <input type="hidden" name="order" value={order} />
-        {typeof raw.directory === "string" && raw.directory.length <= 1000
-          ? <input type="hidden" name="directory" value={raw.directory} /> : null}
-        <label className="flex min-w-0 flex-col gap-1.5 text-[12px] font-medium text-[#475569]">
-          From
-          <input type="date" name="from" defaultValue={filters.from} className={inputClass} aria-label="Activity start date UTC" />
-        </label>
-        <label className="flex min-w-0 flex-col gap-1.5 text-[12px] font-medium text-[#475569]">
-          To
-          <input type="date" name="to" defaultValue={filters.to} className={inputClass} aria-label="Activity end date UTC" />
-        </label>
-        <div className="flex min-w-0 flex-col gap-1.5">
-          <span className="text-[12px] font-medium text-[#475569]">Product</span>
-          <AdminDirectorySelect name="product" label="Activity product" value={filters.product}
-            options={[{value:"all", label:"All products"}, {value:"FLIGHT", label:"Flights"}, {value:"HOTEL", label:"Hotels"}, {value:"CAR", label:"Cars"}, {value:"PACKAGE", label:"Packages"}]} compact />
-        </div>
-        <div className="flex min-w-0 flex-col gap-1.5">
-          <span className="text-[12px] font-medium text-[#475569]">Activity type</span>
-          <AdminDirectorySelect name="stage" label="Activity event type" value={filters.stage}
-            options={[{value:"all", label:"All activity types"}, {value:"SEARCH_COMPLETED", label:"Search completed"}, {value:"RESULTS_VIEWED", label:"Results viewed"}, {value:"OFFER_SELECTED", label:"Offer selected"}, {value:"PROVIDER_HANDOFF_STARTED", label:"Provider handoff"}, {value:"ACCOUNT_ACTIVITY", label:"Account activity"}]} compact />
-        </div>
-        <label className="flex min-w-0 flex-col gap-1.5 text-[12px] font-medium text-[#475569] sm:col-span-2 lg:col-span-1">
-          <span className="sr-only">Search within activity</span>
-          <span className="relative block">
-            <Search size={16} aria-hidden="true" className="pointer-events-none absolute left-3 top-[13px] text-[#94A3B8]" />
-            <input name="q" defaultValue={filters.q} maxLength={80}
-              placeholder="Route, destination, provider..." className={inputClass + " pl-9"} />
-          </span>
-        </label>
-        <button type="submit"
-          className="focus-ring h-11 whitespace-nowrap rounded-lg bg-[#004BB8] px-4 text-[13px] font-semibold text-white hover:bg-[#004BB8]/90">
-          Apply Filter
-        </button>
-      </form>
+      <ActivityFiltersBar path={basePath} directory={typeof raw.directory === "string" && raw.directory.length <= 1000 ? raw.directory : ""}
+        initial={{tab:filters.tab,q:filters.q,product:filters.product,stage:filters.stage,order,
+          from:filters.from,to:filters.to,range:typeof raw.range === "string" && ["7d","30d","custom"].includes(raw.range) ? raw.range : (filters.from || filters.to ? "custom" : "all")}}/>
     </section>
 
-    <ActivityTimeline events={data.events} nextHref={nextHref} environment={environment} order={order}
-      sortControl={
-        <form action={basePath} method="get" className="min-w-[132px]">
-          {Object.entries(sortParams).map(([key,value]) => <input key={key} type="hidden" name={key} value={value}/>)}
-          <AdminDirectorySelect name="order" label="Activity order" value={order}
-            options={[{value:"newest",label:"Newest first"},{value:"oldest",label:"Oldest first"}]} compact autoSubmit />
-        </form>
-      }
-    />
-
-    <section aria-labelledby="activity-related-title" className="min-w-0 space-y-3">
-      <h2 id="activity-related-title" className="text-[15px] font-semibold text-[#020617]">Explore related records</h2>
-      <div className="grid gap-3 md:grid-cols-3">
-        {related.map(({href,icon:Icon,title,subtitle}) =>
-          <Link key={href} href={href}
-            className="focus-ring group flex min-w-0 items-center gap-3 rounded-lg border border-[#D8E1EC] bg-white px-4 py-4 hover:border-[#94A3B8] hover:bg-[#F8FAFC]">
-            <span aria-hidden="true" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#EFF6FF] text-[#004BB8]">
-              <Icon size={17} />
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block text-[13px] font-semibold text-[#004BB8]">{title}</span>
-              <span className="mt-1 block text-[12px] leading-5 text-[#64748B]">{subtitle}</span>
-            </span>
-            <ChevronRight size={17} aria-hidden="true" className="shrink-0 text-[#004BB8]" />
-          </Link>
-        )}
-      </div>
-    </section>
-
-    <p className="flex min-w-0 items-start gap-2.5 rounded-lg bg-[#EFF6FF] px-4 py-3 text-[12px] leading-5 text-[#475569]">
-      <Info size={17} aria-hidden="true" className="mt-0.5 shrink-0 text-[#004BB8]" />
-      <span>
-        {kind === "guest"
-          ? <>Only recorded, consented {environment} activity is displayed. </>
-          : <>Only recorded {environment} account activity is displayed; linked visitor activity requires analytics consent. </>}
-        Missing records do not establish that no visit occurred. Provider handoffs are not proof of a booking or payment.
-      </span>
-    </p>
+    <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_260px]">
+      <ActivityTimeline events={data.events} nextHref={nextHref} environment={environment} order={order}
+        clearHref={activityHref(basePath, queryParams, {q:null,from:null,to:null,range:null,product:null,stage:null,order:null,cursor:null})}/>
+      <aside className="min-w-0 space-y-4">
+        <section aria-label="Activity summary" className="rounded-lg border border-[var(--border)] p-4">
+          <h2 className="mb-3 text-sm font-semibold">Activity summary</h2>
+          {[
+            ["Searches", data.events.filter(e => e.stage === "SEARCH_COMPLETED").length],
+            ["Results viewed", data.events.filter(e => e.stage === "RESULTS_VIEWED").length],
+            ["Provider handoffs", data.events.filter(e => e.stage === "PROVIDER_HANDOFF_STARTED").length],
+          ].map(([label,count]) => <div key={label} className="flex justify-between border-b border-[var(--border)] py-2 text-sm last:border-0">
+            <span className="text-[var(--muted-foreground)]">{label}</span><strong>{count}</strong>
+          </div>)}
+          <p className="mt-2 text-xs text-[var(--muted-foreground)]">Counts reflect loaded events only.</p>
+        </section>
+        <section aria-labelledby="activity-related-title" className="rounded-lg border border-[var(--border)] p-4">
+          <h2 id="activity-related-title" className="mb-2 text-sm font-semibold">Related records</h2>
+          {related.map(({href,title}) => <Link key={href} href={href} className="focus-ring flex items-center justify-between rounded-sm border-b border-[var(--border)] py-3 text-sm last:border-0 hover:underline">{title}<ChevronRight size={16}/></Link>)}
+        </section>
+        <p className="flex items-start gap-2 rounded-lg border border-[var(--border)] bg-[var(--muted)] p-3 text-xs leading-5 text-[var(--muted-foreground)]">
+          <Info size={16} className="mt-0.5 shrink-0" aria-hidden="true"/>
+          <span>{kind === "guest" ? <>Only recorded, consented {environment} activity is displayed. </> : <>Only recorded {environment} account activity is displayed; linked visitor activity requires analytics consent. </>}
+            Missing records do not establish that no visit occurred. Provider handoffs are not proof of a booking or payment.</span>
+        </p>
+      </aside>
+    </div>
   </div>;
 }
