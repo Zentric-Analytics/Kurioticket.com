@@ -100,12 +100,13 @@ export function AdminUsersToolbar({
     const nextQuery = textRef.current.trim().slice(0, 120);
     const url = urlWith(paramsRef.current, { q: nextQuery, ...values });
     paramsRef.current = new URLSearchParams(url.split("?")[1] || "");
-    lastSubmittedRef.current = nextQuery;
+    // Only search changes participate in search debounce deduplication.
+    lastSubmittedRef.current = ("q" in values || nextQuery !== query) ? nextQuery : null;
     startTransition(() => {
       if (replace) router.replace(url, { scroll: false });
       else router.push(url, { scroll: false });
     });
-  }, [router]);
+  }, [router, query]);
 
   useEffect(() => {
     const nextQuery = searchText.trim().slice(0, 120);
@@ -115,8 +116,9 @@ export function AdminUsersToolbar({
         navigate({ q: nextQuery }, true);
         // Restoration is an explicit committed navigation, not a continuing edit.
         editingRef.current = false;
-      } else if (lastSubmittedRef.current === null) {
+      } else {
         editingRef.current = false;
+        lastSubmittedRef.current = null;
       }
       return;
     }
