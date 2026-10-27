@@ -201,7 +201,7 @@ export function AdminDirectorySelect({
           aria-activedescendant={`${listboxId}-option-${activeIndex}`}
           tabIndex={-1}
           onKeyDown={onListKeyDown}
-          className={`absolute top-full z-50 mt-1.5 max-h-64 min-w-[170px] max-w-[min(90vw,280px)] overflow-y-auto rounded-lg border border-[#D8E1EC] bg-white p-1.5 shadow-[0_10px_28px_-12px_rgba(2,6,23,0.25)] outline-none ${underlined && align === "end" ? "right-0" : "left-0"} ${underlined ? "" : "w-full"}`}
+          className={`absolute top-full z-50 mt-1.5 max-h-64 min-w-[170px] max-w-[min(90vw,280px)] overflow-y-auto rounded-lg border border-[#D8E1EC] bg-white p-1.5 shadow-[0_10px_28px_-12px_rgba(2,6,23,0.25)] outline-none ${underlined && align === "end" ? "left-0 lg:left-auto lg:right-0" : "left-0"} ${underlined ? "" : "w-full"}`}
         >
           {options.map((option, index) => (
             <button
