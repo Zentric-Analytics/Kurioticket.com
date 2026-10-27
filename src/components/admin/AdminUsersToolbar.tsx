@@ -89,6 +89,8 @@ export function AdminUsersToolbar({
 
   useEffect(() => {
     paramsRef.current = new URLSearchParams(pageHref.split("?")[1] || "");
+    // An older in-flight response must not discard a date draft being edited.
+    if (customOpen) return;
     setCustomOpen(false);
     setDraftDates({from,to});
   }, [pageHref, from, to]);
