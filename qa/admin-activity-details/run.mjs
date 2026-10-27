@@ -82,6 +82,25 @@ try {
     await new Promise(resolve => setTimeout(resolve, 500));
   }
   if (!running) throw new Error("QA Next app did not start");
+  // Next dev starts accepting requests before the complex baseline route is
+  // compiled. Warm and verify it before Playwright navigates: otherwise a
+  // transient first compile can yield an incomplete RSC response and cause a
+  // client-side JSON.parse error during the screenshot comparison.
+  for (const route of ["/before", "/admin/users/guest/qa-guest-activity-0001/activity"]) {
+    let ready = false;
+    for (let attempt = 0; attempt < 12; attempt++) {
+      try {
+        const response = await fetch(root + route, { signal: AbortSignal.timeout(12000) });
+        if (response.ok && (await response.text()).includes("synthetic activity")) {
+          ready = true;
+          break;
+        }
+      } catch { /* Next is compiling the fixture route */ }
+      if (app.exitCode !== null) throw new Error("QA fixture app exited while compiling " + route);
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+    if (!ready) throw new Error("QA fixture route did not compile successfully: " + route);
+  }
   const result = await new Promise(resolve => {
     const child = spawn(process.execPath, [path.join(qa, "browser-check.mjs")], {
       cwd: repo, stdio: "inherit",
