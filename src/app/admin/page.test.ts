@@ -85,9 +85,9 @@ test("journey funnel and both correlation metrics retain accurate source data", 
     "data.journeys.operationalHandoffs.withoutVisitorIdentity",
     "data.journeys.operationalHandoffs.exactSearchLinks",
   ]) assert.ok(display.includes(field), field);
-  assert.match(display, /headline figures count consented events; captions show distinct journeys/);
-  assert.match(display, /These are not conversion rates or confirmed bookings/);
-  assert.match(display, /No nearest-by-time inference/);
+  assert.match(display, /consented event counts, including repeats; captions show distinct journeys/);
+  assert.match(display, /Not conversions or confirmed bookings/);
+  assert.match(display, /no inferred links/);
 });
 
 test("provider detailed information remains available for every provider", () => {
@@ -167,7 +167,7 @@ test("Overview information is presented without boxed white card containers", ()
   assert.match(display, /<AttentionCard href="\/admin\/providers"/);
   assert.match(display, /<PlatformHealth system=\{system\} \/>/);
   assert.match(display, /<ProviderCard key=\{provider.id\}/);
-  assert.match(display, /<FunnelStep label="Tracked searches"/);
+  assert.match(display, /<FunnelStep label="Consented search events"/);
   assert.match(display, /<WorkloadCard title="Support Workload"/);
   assert.match(display, /<ActivityFeed activity=\{activity\} \/>/);
   assert.match(dashboard, /border-b border-slate-200/);
@@ -384,7 +384,7 @@ test("Phase 3 separately reconciles operational redirects and consented handoffs
   assert.match(contract, /operationalHandoffs/);
   assert.match(display, /data\.journeys\.operationalHandoffs\.total/);
   assert.match(display, /data\.journeys\.operationalHandoffs\.withoutVisitorIdentity/);
-  assert.match(display, /Missing attribution does not establish that someone declined consent/);
+  assert.match(display, /Missing attribution does not prove declined consent/);
   assert.match(journeysPage, /not all provider redirects/);
   assert.doesNotMatch(display, /nearest search by time/);
 });
@@ -396,10 +396,10 @@ test("Phase 4 clarifies time windows, provider readiness, and absent observation
   assert.match(display, /Providers failing, degraded or not ready|Degraded, failing or not-ready integrations/);
   assert.match(display, /p\.operationalState === "NOT_READY"/);
   assert.match(display, /inactivity may remain/);
-  assert.match(display, /Success means the operation completed, not that offers were returned/);
-  assert.match(display, /Partial may contain zero offers/);
-  assert.match(display, /Events can repeat or arrive out of order, including failed or empty searches/);
-  assert.match(display, /These are not conversion rates or confirmed bookings/);
+  assert.match(display, /Success does not guarantee offers/);
+  assert.match(display, /Success does not guarantee offers/);
+  assert.match(display, /consented event counts, including repeats/);
+  assert.match(display, /Not conversions or confirmed bookings/);
   assert.match(dashboard, /"None recorded in window"/);
   assert.match(dashboard, /Secrets configured \(not tested\)/);
   assert.match(dashboard, /Credentials configured \(not tested\)/);
@@ -476,7 +476,7 @@ test("journey activity cards show real event counts first and journeys as second
   assert.ok(component.indexOf(">{count(events)}</p>") < component.indexOf("Within 1 journey"));
   assert.doesNotMatch(component, />\{count\(journeys\)\}<\/p>/);
   for (const [label, stage] of [
-    ["Tracked searches", "SEARCH_COMPLETED"],
+    ["Consented search events", "SEARCH_COMPLETED"],
     ["Results views", "RESULTS_VIEWED"],
     ["Offer selection events", "OFFER_SELECTED"],
     ["Provider handoffs", "PROVIDER_HANDOFF_STARTED"],
@@ -507,4 +507,17 @@ test("Overview default and explicit range selections remain consistent across pa
   // Fixed provider and consented live presence windows do not follow the range picker.
   assert.match(service, /getProviderOperationalStatuses\(24, environment\)/);
   assert.match(service, /getWebsitePresenceSnapshot\(environment, now\)/);
+});
+
+test("final Overview polish preserves real rates and distinct reporting scopes", () => {
+  const core = readFileSync("src/services/providerOperationalStatusCore.ts", "utf8");
+  const providers = readFileSync("src/app/admin/providers/page.tsx", "utf8");
+  assert.match(dashboard, /formatProviderFailureRatePct\(provider\.failureRatePct, provider\.failedCalls\)/);
+  assert.match(dashboard, /formatProviderFailureRatePct\(service\.failureRatePct, service\.failedCalls\)/);
+  assert.match(providers, /formatProviderFailureRatePct\(provider\.failureRatePct, provider\.failedCalls\)/);
+  assert.match(core, /Math\.round\(1000 \* counts\.failed \/ n\) \/ 10/);
+  assert.match(display, /Consented search events/);
+  assert.match(display, /All recorded searches/);
+  assert.match(dashboard, /Latest six recorded actions across all dates/);
+  assert.match(display, /data\.journeys\.operationalSearches\.total/);
 });

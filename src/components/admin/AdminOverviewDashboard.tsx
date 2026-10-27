@@ -24,6 +24,7 @@ import { AdminOverviewAutoRefresh, AdminOverviewRangeSelect, type OverviewRange 
 import type { getRecentAdminActivity, getSafeSystemStatus } from "@/lib/admin-data";
 import { formatDateTime } from "@/lib/admin-data";
 import type { getAdminOverview } from "@/services/adminOverviewService";
+import { formatProviderFailureRatePct } from "@/services/providerOperationalStatusCore";
 import type {
   ProviderOperationalState,
   ProviderOperationalStatus,
@@ -186,7 +187,7 @@ function AttentionCard({
 
 function DetailRow({ label, value, detail }: { label: string; value: string | number; detail?: string }) {
   return (
-    <div className="flex min-w-0 items-start justify-between gap-3 border-b border-slate-200/75 py-2.5 last:border-b-0">
+    <div className="flex min-w-0 items-start justify-between gap-3 border-b border-slate-200/75 py-2 last:border-b-0">
       <span className="min-w-0 flex-1 text-[13px] leading-5 text-slate-700">{label}</span>
       <span className="min-w-0 max-w-[55%] text-right text-[13px] font-semibold tabular-nums leading-5 text-slate-900">
         {typeof value === "number" ? count(value) : value}
@@ -273,40 +274,40 @@ function ProviderCard({ provider }: { provider: ProviderOperationalStatus }) {
       </div>
       <div className="mt-4 grid grid-cols-2 gap-3 border-y border-slate-200 py-3 lg:grid-cols-4 lg:gap-5">
         <div className="min-w-0">
-          <p className="text-[11px] text-slate-600">Total calls</p>
+          <p className="text-xs text-slate-600">Total calls</p>
           <p className="mt-1 text-xl font-semibold tabular-nums tracking-tight text-slate-950">{count(provider.totalCalls)}</p>
         </div>
         <div className="min-w-0">
-          <p className="text-[11px] text-slate-600">Successful</p>
+          <p className="text-xs text-slate-600">Successful</p>
           <p className="mt-1 text-xl font-semibold tabular-nums tracking-tight text-emerald-700">{count(provider.successCalls)}</p>
         </div>
         <div className="min-w-0">
-          <p className="text-[11px] text-slate-600">Failed</p>
+          <p className="text-xs text-slate-600">Failed</p>
           <p className="mt-1 text-xl font-semibold tabular-nums tracking-tight text-rose-700">{count(provider.failedCalls)}</p>
         </div>
         <div className="min-w-0">
-          <p className="text-[11px] text-slate-600">Failure rate</p>
-          <p className="mt-1 text-xl font-semibold tabular-nums tracking-tight text-slate-950">{provider.failureRatePct === null ? "No attempts" : provider.failureRatePct + "%"}</p>
+          <p className="text-xs text-slate-600">Failure rate</p>
+          <p className="mt-1 text-xl font-semibold tabular-nums tracking-tight text-slate-950">{formatProviderFailureRatePct(provider.failureRatePct, provider.failedCalls)}</p>
         </div>
       </div>
       <div className="mt-4 min-w-0" aria-label={provider.provider + " full provider details"}>
         <h4 className="text-[13px] font-semibold text-slate-900">Full provider details</h4>
-                <div className={"mt-3 grid gap-3 " + serviceGridColumns}>
+                <div className={"mt-2 grid gap-2 " + serviceGridColumns}>
           {provider.serviceBreakdown.map(service => (
             <section key={service.service} className="min-w-0 rounded-lg border border-slate-200 bg-slate-50/50 p-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <h5 className="text-xs font-semibold capitalize text-slate-900">{service.service.replaceAll("-", " ")}</h5>
+                <h5 className="text-[13px] font-semibold capitalize text-slate-900">{service.service.replaceAll("-", " ")}</h5>
                 <OverviewStatusBadge tone={providerTone(service.operationalState)}>{operationalLabel(service.operationalState)}</OverviewStatusBadge>
               </div>
               <p className="mt-2 text-xs leading-5 text-slate-700">{count(service.successCalls)} successful · {count(service.failedCalls)} failed · {count(service.disabledCalls)} disabled</p>
-              <p className="mt-1 text-xs leading-5 text-slate-600">Failure rate: {service.failureRatePct === null ? "No attempts" : service.failureRatePct + "%"}</p>
+              <p className="mt-1 text-xs leading-5 text-slate-600">Failure rate: {formatProviderFailureRatePct(service.failureRatePct, service.failedCalls)}</p>
               {service.failureReasons.map(issue => (
                 <p key={issue.code} className="mt-1.5 text-xs leading-5 text-slate-700">{issue.label}: <span className="font-semibold tabular-nums">{count(issue.calls)}</span></p>
               ))}
             </section>
           ))}
         </div>
-        <div className="mt-3 grid gap-x-6 md:grid-cols-2">
+        <div className="mt-2 grid gap-x-6 md:grid-cols-2">
           <div>
             <DetailRow label="Attempted calls (excludes disabled)" value={provider.attemptedCalls} />
             <DetailRow label="Degraded calls" value={provider.degradedCalls} />
@@ -383,6 +384,7 @@ function ActivityFeed({ activity }: { activity: AuditActivity }) {
     <section className="min-w-0">
       <SectionTitle
         title="Recent Admin Activity"
+        description="Latest six recorded actions across all dates · independent of the reporting-range picker."
         action={<Link href="/admin/logs" className="focus-ring inline-flex items-center gap-1 text-[13px] font-medium text-indigo-700 hover:underline">View all <ArrowUpRight size={13} aria-hidden="true" /></Link>}
       />
       {activity.status === "unavailable" ? (
@@ -499,7 +501,7 @@ export function AdminOverviewDashboard({
       <section className="mt-7 border-t border-slate-200 pt-6" aria-label="Visitor Activity & Search Performance">
         <SectionTitle
           title="Visitor Activity & Search Performance"
-          description="Consented journey events and recorded search and redirect outcomes."
+          description="Consented activity and all recorded searches are separate counts."
           action={<div className="flex flex-wrap gap-2">
             <OverviewStatusBadge tone="info">{count(data.journeys.identities.registered)} registered identities</OverviewStatusBadge>
             <OverviewStatusBadge>{count(data.journeys.identities.guests)} guest identities</OverviewStatusBadge>
@@ -507,25 +509,25 @@ export function AdminOverviewDashboard({
         />
         <div>
           <div className="grid overflow-hidden rounded-lg border-l border-t border-slate-200 sm:grid-cols-2 lg:grid-cols-4">
-            <FunnelStep label="Tracked searches" journeys={funnel.SEARCH_COMPLETED.journeys} events={funnel.SEARCH_COMPLETED.events} icon={Search} />
+            <FunnelStep label="Consented search events" journeys={funnel.SEARCH_COMPLETED.journeys} events={funnel.SEARCH_COMPLETED.events} icon={Search} />
             <FunnelStep label="Results views" journeys={funnel.RESULTS_VIEWED.journeys} events={funnel.RESULTS_VIEWED.events} icon={BookOpen} />
             <FunnelStep label="Offer selection events" journeys={funnel.OFFER_SELECTED.journeys} events={funnel.OFFER_SELECTED.events} icon={MousePointerClick} />
             <FunnelStep label="Provider handoffs" journeys={funnel.PROVIDER_HANDOFF_STARTED.journeys} events={funnel.PROVIDER_HANDOFF_STARTED.events} icon={ArrowUpRight} />
           </div>
-          <p className="mt-3 text-xs leading-5 text-slate-600">Selected range · headline figures count consented events; captions show distinct journeys. Events can repeat or arrive out of order, including failed or empty searches. These are not conversion rates or confirmed bookings.</p>
+          <p className="mt-3 text-xs leading-5 text-slate-600">Selected range · consented event counts, including repeats; captions show distinct journeys. Not conversions or confirmed bookings.</p>
         </div>
 
         <div className="mt-6 grid gap-4 lg:grid-cols-2">
           <section className="min-w-0 rounded-xl border border-slate-200 p-4 sm:p-5">
             <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-900"><Search size={17} className="text-indigo-700" aria-hidden="true" />Search Performance</h3>
             <div className="mt-3">
-              <DetailRow label="Operational searches" value={data.journeys.operationalSearches.total} />
+              <DetailRow label="All recorded searches" value={data.journeys.operationalSearches.total} />
               <DetailRow label="Successful search operations" value={data.journeys.operationalSearches.success} />
               <DetailRow label="Failed searches" value={data.journeys.operationalSearches.failed} />
               <DetailRow label="Partial searches" value={data.journeys.operationalSearches.partial} />
               <DetailRow label="Partial with offers" value={data.journeys.operationalSearches.partialWithResults} />
               <DetailRow label="Partial without offers" value={data.journeys.operationalSearches.partialWithoutResults} />
-              <p className="mt-2 text-xs leading-5 text-slate-600">Selected range · database search outcomes, including searches without consented journeys. Success means the operation completed, not that offers were returned. Partial may contain zero offers.</p>
+              <p className="mt-2 text-xs leading-5 text-slate-600">Selected range · all logged search outcomes, including unattributed searches. Success does not guarantee offers.</p>
             </div>
           </section>
           <section className="min-w-0 rounded-xl border border-slate-200 p-4 sm:p-5">
@@ -538,7 +540,7 @@ export function AdminOverviewDashboard({
               <DetailRow label="Exact search links (eligible redirects)" value={data.journeys.operationalHandoffs.exactSearchLinks} />
               <DetailRow label="Eligible redirects without exact links" value={data.journeys.operationalHandoffs.eligibleWithoutExactSearch} />
             </div>
-            <p className="mt-2 text-xs leading-5 text-slate-600">Selected range and environment. Provider redirects are not confirmed bookings. Missing attribution does not establish that someone declined consent. No nearest-by-time inference.</p>
+            <p className="mt-2 text-xs leading-5 text-slate-600">Selected range · redirects are not bookings. Missing attribution does not prove declined consent; no inferred links.</p>
           </section>
         </div>
       </section>
