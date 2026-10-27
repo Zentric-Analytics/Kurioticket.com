@@ -76,6 +76,11 @@ function SearchDetailContent({ search }: { search: AdminSearchDetail }) {
             {diagnostic.providers.filter(provider => provider.status === "FAILED" || provider.status === "DEGRADED" || provider.status === "DISABLED").map((provider, index) => (
               <p key={provider.provider + index} className="mt-1">
                 <span className="font-semibold">{provider.provider}:</span> {provider.reason}
+                {provider.reasonCode === "AUTH_OR_CONFIG" ? " — Check the provider integration's authentication and configuration; this is not proof that the destination has no hotels." : null}
+                {provider.reasonCode === "PROVIDER_TIMEOUT" ? " — Check the provider's response time and connectivity." : null}
+                {provider.reasonCode === "RATE_LIMITED" ? " — Check provider rate limits before retrying." : null}
+                {provider.reasonCode === "UPSTREAM_UNAVAILABLE" ? " — Check provider availability and retry when service recovers." : null}
+                {provider.reasonCode === "UNSUPPORTED_SEARCH" ? " — The provider does not support this request or destination." : null}
               </p>
             ))}
             {diagnostic.correlation === "legacy_fallback" ? (
