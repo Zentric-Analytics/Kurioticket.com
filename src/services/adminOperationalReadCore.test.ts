@@ -539,3 +539,18 @@ test("hotel display currency changes cannot restart inventory searches", () => {
   assert.doesNotMatch(client, /\[searchInput, selectedOption\.currency\]/);
   assert.match(client, /sort: searchInput\.sort \|\| "cheapest",\s*\}\),\s*\[searchInput\]/);
 });
+
+test("search detail identifies the searcher without guessing from guest IDs", () => {
+  const core = readFileSync("src/services/adminOperationalReadCore.ts", "utf8");
+  const page = readFileSync("src/app/admin/searches/[id]/page.tsx", "utf8");
+  assert.match(core, /row\.userId\s*\?\s*await db\.user\.findUnique/);
+  assert.match(core, /eligibleGuestVisitorWhere\(eligibleVisitorId\)/);
+  assert.match(core, /!row\.userId && eligibleVisitorId/);
+  assert.match(core, /name: account \? text\(account\.name, 160\) : null/);
+  assert.match(core, /email: account \? text\(account\.email, 320\) : null/);
+  assert.match(page, /Searched by/);
+  assert.match(page, /search\.searcher\.activity/);
+  assert.match(page, /Unidentified visitor/);
+  assert.match(page, /<Field label="User ID"/);
+  assert.match(page, /<Field label="Visitor ID"/);
+});
