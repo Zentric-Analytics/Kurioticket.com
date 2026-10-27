@@ -79,7 +79,7 @@ export function AdminOverviewRangeSelect({ range }: { range: OverviewRange }) {
     triggerRef.current?.focus();
     if (nextRange === range) return;
     startTransition(() => {
-      router.push(nextRange === "7d" ? "/admin" : "/admin?range=" + encodeURIComponent(nextRange));
+      router.push(nextRange === "24h" ? "/admin" : "/admin?range=" + encodeURIComponent(nextRange));
     });
   };
 
