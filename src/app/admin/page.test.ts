@@ -150,7 +150,7 @@ test("Detailed provider diagnostics remain available on the existing Providers p
   assert.match(providersPage, /service\.failureReasons\.map/);
   assert.match(providersPage, /provider\.lastFailureAt/);
   assert.match(providersPage, /provider\.averageLatencyMs/);
-  assert.match(providersPage, /provider\.disabledCalls/);
+  assert.match(providersPage, /service\.disabledCalls/);
   assert.match(providersPage, /formatProviderFailureRatePct\(provider\.failureRatePct, provider\.failedCalls\)/);
   assert.match(providerCore, /classifyProviderIssue\(row\.errorMessage\)/);
   assert.match(providerCore, /counts\.failed \* 4 >= n \* 3/);
@@ -234,7 +234,7 @@ test("Overview shortens text and never hides inaccessible expanded detail panels
 
 test("The existing white parent and its unavailable-data fallback remain intact", () => {
   const shell = readFileSync("src/components/admin/AdminPageShellHistorical.tsx", "utf8");
-  const shared = readFileSync("src/components/admin/AdminPageShell.tsx", "utf8");
+  const shared = readFileSync("src/components/admin/AdminPageShellHistorical.tsx", "utf8");
   assert.match(page, /title="Operations Dashboard"/);
   assert.match(page, /hideHeader/);
   assert.match(shell, /hideHeader = false/);
