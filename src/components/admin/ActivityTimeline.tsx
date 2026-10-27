@@ -99,22 +99,22 @@ export function ActivityTimeline({ events, nextHref, environment, order = "newes
       <h2 id="activity-history-title" className="text-[17px] font-semibold text-[var(--foreground)]">Activity history</h2>
       <span className="text-xs text-[var(--muted-foreground)]">{events.length} recorded {events.length === 1 ? "event" : "events"}</span>
     </div>
-    {!events.length ? <div className="rounded-lg border border-[var(--border)] p-8 text-center">
+    {!events.length ? <div className="flex min-h-48 flex-col items-center justify-center px-6 py-10 text-center">
       <p className="font-medium">No activity matches your filters</p><span className="sr-only">No activity recorded in this view</span>
       {clearHref ? <Link className="focus-ring mt-3 inline-block text-sm text-[var(--primary)] underline" href={clearHref}>Clear filters</Link> : null}
-    </div> : <div className="space-y-5">
+    </div> : <div className="space-y-6">
       {days.map(day => <section key={day.date} aria-label={"Activity on " + dayLabel(new Date(day.date + "T12:00:00Z"))}>
-        <div className="mb-3 flex items-center justify-between gap-2">
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
           <h3 className="text-sm font-semibold">{dayLabel(new Date(day.date + "T12:00:00Z"))} <span className="ml-1 text-xs font-normal text-[var(--muted-foreground)]">UTC</span></h3>
           <span className="text-xs text-[var(--muted-foreground)]">{day.journeys.filter(group => group.journeyId).length} journeys · {day.rows.length} events</span>
         </div>
-        <div className="space-y-3">{day.journeys.map(group => {
+        <div className="divide-y divide-[var(--border)] border-y border-[var(--border)]">{day.journeys.map(group => {
           const key = day.date + ":" + group.key;
           const open = expanded[key] ?? (day.date === newestDay && Boolean(group.journeyId));
           const first = group.events[0];
           const href = detailHref(first,environment,now);
-          return <div key={key} className="min-w-0 rounded-lg border border-[var(--border)] bg-[var(--background)]">
-            {group.journeyId ? <div className="flex min-w-0 items-center justify-between gap-2 px-4 py-3">
+          return <div key={key} className="min-w-0 bg-transparent">
+            {group.journeyId ? <div className="flex min-w-0 items-center justify-between gap-2 py-3">
               <button type="button" aria-expanded={open} aria-controls={"journey-" + key.replace(/[^a-zA-Z0-9_-]/g,"-")}
                 onClick={() => setExpanded(previous => ({...previous,[key]:!open}))}
                 className="focus-ring flex min-w-0 flex-1 items-center gap-2 rounded-sm text-left text-sm font-medium">
@@ -123,8 +123,8 @@ export function ActivityTimeline({ events, nextHref, environment, order = "newes
                 <ChevronDown size={16} className={"shrink-0 transition-transform " + (open ? "rotate-180" : "")} aria-hidden="true"/>
               </button>
               {href ? <Link href={href} className="focus-ring shrink-0 text-xs text-[var(--primary)] hover:underline">Open journey</Link> : null}
-            </div> : <h4 className="px-4 py-3 text-sm font-medium">Not linked to a journey</h4>}
-            {(!group.journeyId || open) ? <ol id={"journey-" + key.replace(/[^a-zA-Z0-9_-]/g,"-")} className="divide-y divide-[var(--border)] border-t border-[var(--border)] px-4">
+            </div> : <h4 className="py-3 text-sm font-medium">Not linked to a journey</h4>}
+            {(!group.journeyId || open) ? <ol id={"journey-" + key.replace(/[^a-zA-Z0-9_-]/g,"-")} className="divide-y divide-[var(--border)] border-t border-[var(--border)] pl-5 sm:pl-8">
               {compactRuns(group.events).map(batch => {
                 const first = batch[0], runKey = key + ":" + first.id;
                 const revealed = runs[runKey];
