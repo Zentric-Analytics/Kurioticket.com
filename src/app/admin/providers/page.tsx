@@ -79,12 +79,24 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
                 <div className="mt-4 grid gap-2 text-sm sm:grid-cols-2">
                   <Stat label="Readiness" value={provider.readinessState.replaceAll("_", " ")} />
                   <Stat label="Total calls" value={String(provider.totalCalls)} />
+                  <Stat label="Attempted calls" value={String(provider.attemptedCalls)} />
+                  <Stat label="Failure rate" value={provider.failureRatePct === null ? "No attempts" : provider.failureRatePct + "%"} />
                   <Stat label="Success" value={String(provider.successCalls)} />
                   <Stat label="Failed" value={String(provider.failedCalls)} />
                   <Stat label="Degraded" value={String(provider.degradedCalls)} />
                   <Stat label="Average latency" value={provider.averageLatencyMs === null ? "—" : provider.averageLatencyMs + " ms"} />
                   <Stat label="Last success" value={provider.lastSuccessAt ? formatDateTime(new Date(provider.lastSuccessAt)) : "—"} />
                   <Stat label="Last failure" value={provider.lastFailureAt ? formatDateTime(new Date(provider.lastFailureAt)) : "—"} />
+                </div>
+                <div className="mt-4 border-t border-slate-200 pt-3">
+                  <p className="text-xs font-semibold text-slate-800">Search service breakdown</p>
+                  {provider.serviceBreakdown.map(service => (
+                    <div key={service.service} className="border-b border-slate-200 py-2 text-xs text-slate-700">
+                      <p className="font-semibold">{service.service.replaceAll("-", " ")} · {service.operationalState.replaceAll("_", " ")}</p>
+                      <p className="mt-1">{service.attemptedCalls} attempts · {service.successCalls} successful · {service.failedCalls} failed · {service.disabledCalls} disabled · {service.failureRatePct === null ? "No attempts" : service.failureRatePct + "% failed"}</p>
+                      {service.failureReasons.map(reason => <p key={reason.code} className="mt-1 text-slate-600">{reason.label}: {reason.calls}</p>)}
+                    </div>
+                  ))}
                 </div>
               </div>
             ))}

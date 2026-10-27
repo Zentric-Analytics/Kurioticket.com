@@ -52,7 +52,7 @@ type SummaryRecord = {
   searches: Count; successfulSearches: Count; partialSearches: Count; failedSearches: Count;
   exactHandoffs: Count; uncorrelatedHandoffs: Count;
 };
-type OperationalRecord = { total: Count; success: Count; partial: Count; failed: Count };
+type OperationalRecord = { total: Count; success: Count; partial: Count; failed: Count; partialWithResults: Count; partialWithoutResults: Count };
 
 /** Shared SQL scope keeps every view on the same consent, ownership, date and environment rules. */
 function scopedEvents(scope: AdminJourneyScope, journeyId?: string) {
@@ -179,6 +179,8 @@ function operationalSql(scope: AdminJourneyScope) {
   return Prisma.sql`SELECT count(*) AS "total",
     count(*) FILTER (WHERE "status" = 'SUCCESS') AS "success",
     count(*) FILTER (WHERE "status" = 'PARTIAL') AS "partial",
+    count(*) FILTER (WHERE "status" = 'PARTIAL' AND "resultCount" > 0) AS "partialWithResults",
+    count(*) FILTER (WHERE "status" = 'PARTIAL' AND "resultCount" <= 0) AS "partialWithoutResults",
     count(*) FILTER (WHERE "status" = 'FAILED') AS "failed"
     FROM "SearchHistory" WHERE "createdAt" >= ${new Date(scope.from)} AND "createdAt" < ${new Date(scope.to)}
       AND "query"->>'environment' = ${scope.environment}`;
@@ -241,7 +243,7 @@ function summaryDto(scope: AdminJourneyScope, row: SummaryRecord, operational: O
     scope, identities: { total: count(row.identities), guests: count(row.guests), registered: count(row.registered), registeredAccounts: count(row.registeredAccounts) },
     journeys: count(row.journeys), rawEvents: count(row.rawEvents), stages, recordedSearches: searches,
     handoffCorrelation: { exactEvents: count(row.exactHandoffs), uncorrelatedEvents: count(row.uncorrelatedHandoffs) },
-    operationalSearches: { scope: "environment_and_date_only", total: count(operational.total), success: count(operational.success), partial: count(operational.partial), failed: count(operational.failed) },
+    operationalSearches: { scope: "environment_and_date_only", total: count(operational.total), success: count(operational.success), partial: count(operational.partial), failed: count(operational.failed), partialWithResults: count(operational.partialWithResults ?? 0), partialWithoutResults: count(operational.partialWithoutResults ?? 0) },
   };
 }
 

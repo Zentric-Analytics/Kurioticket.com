@@ -34,3 +34,15 @@ Each eligible visitor has a nullable last website-presence timestamp and its dep
 Operations Snapshot remains the single concise location for nine headline metrics. On desktop it uses three balanced rows of three; smaller widths use a two-column responsive grid. Detailed enabled-account role totals and the older five-minute observed-visitor count are **not repeated below the Snapshot**. They remain computed in the canonical service response for other administrative consumers and auditing; no statuses, user records, attribution rules, or data collection have been removed.
 
 The single Active users card shows the live 90-second consenting website-presence estimate, including registered accounts and guest browser identities. Its explanation of consent, coverage, and independence from the reporting-range selector remains behind the keyboard-operable "How it's counted" disclosure. The historical journey account count remains in the backend analytics response and is no longer displayed as a duplicate card.
+
+## Phase 2 — Provider operational integrity
+
+Readiness means provider configuration permits requests; it never guarantees successful upstream responses or real booking availability. Operational health uses the last 24 hours of environment-scoped `ApiProviderLog` records, independently of the Overview reporting-range selector.
+
+Each provider reports successful, degraded, failed and disabled calls. **Attempted calls** exclude disabled requests. Failure rate is failed/attempted, or unavailable when no calls were attempted. A ready provider is classified **FAILING** when there are failures but no successes, or when at least ten attempts have a failure rate of 75% or more; otherwise adverse calls classify it **DEGRADED**. A ready provider with only disabled calls has **NO_RECENT_ACTIVITY**, never HEALTHY. The separate flight/hotel/car service breakdown includes zero-traffic services and safe, aggregated failure categories (no raw provider responses). These read-only changes do not overwrite historic logs or attempt live provider retests.
+
+The Operational Search Health section separately reports `PARTIAL` SearchHistory outcomes that returned at least one offer and those that returned no offers. Partial is an operational processing state, not a guarantee that usable inventory reached the customer. Both subcounts come from the same environment and reporting-range filter and must add up to all partial searches.
+
+### Staging diagnosis observed October 27, 2026
+
+In the inspected rolling 24-hour staging logs, KAYAK sandbox reported 111 authorization-related FAILED calls (110 flight, 1 hotel) and 1 successful flight call. The service returns sanitized `unauthorized` for 401/403 provider responses. **Root cause not yet confirmed:** credentials, provider authorization/entitlements, gateway policy, and account permissions require verification with the provider. Do not change keys or silently bypass these errors; never publish raw credentials or upstream responses. Duffel separately recorded 111 successful flight calls in that observation window. These figures are historical observations, not hardcoded dashboard values.

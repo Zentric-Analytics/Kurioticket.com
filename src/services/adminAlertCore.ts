@@ -139,7 +139,7 @@ function providerAlerts(signals: AdminAlertSignals) {
           ? `${provider.provider} provider is failing`
           : `${provider.provider} provider is degraded`,
         message: failing
-          ? `${provider.failedCalls} failed provider call(s) and no successful observed calls were recorded in the operational window.`
+          ? `${provider.failedCalls} failed provider call(s) were recorded in the operational window; the provider meets the failing-health threshold.`
           : `${provider.failedCalls} failed and ${provider.degradedCalls} degraded provider call(s) were recorded in the operational window.`,
         actionHref: "/admin/providers",
         signalToken: [

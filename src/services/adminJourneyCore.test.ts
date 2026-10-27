@@ -143,7 +143,7 @@ test("detail continuation uses event timestamp and ID and is bound to the reques
 });
 
 test("summary keeps distinct identities, stage observations, search outcomes and operational totals separate", async () => {
-  const f = fixture([[summary()], [{ total: BigInt(20), success: BigInt(15), partial: BigInt(3), failed: BigInt(2) }]]);
+  const f = fixture([[summary()], [{ total: BigInt(20), success: BigInt(15), partial: BigInt(3), failed: BigInt(2), partialWithResults: BigInt(1), partialWithoutResults: BigInt(2) }]]);
   const result = await f.service.summary({ product: "FLIGHT" });
   assert.equal(result.status, "ok");
   if (result.status !== "ok") return;
@@ -153,7 +153,7 @@ test("summary keeps distinct identities, stage observations, search outcomes and
   assert.deepEqual(result.data.stages.OFFER_SELECTED, { identities: 1, journeys: 1, events: 2 });
   assert.deepEqual(result.data.recordedSearches, { total: 5, success: 3, partial: 1, failed: 1 });
   assert.deepEqual(result.data.handoffCorrelation, { exactEvents: 1, uncorrelatedEvents: 1 });
-  assert.deepEqual(result.data.operationalSearches, { scope: "environment_and_date_only", total: 20, success: 15, partial: 3, failed: 2 });
+  assert.deepEqual(result.data.operationalSearches, { scope: "environment_and_date_only", total: 20, success: 15, partial: 3, failed: 2, partialWithResults: 1, partialWithoutResults: 2 });
   assert.doesNotThrow(() => JSON.stringify(result));
 });
 

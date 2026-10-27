@@ -345,3 +345,19 @@ test("single live Active users card preserves consent and unavailable semantics 
  assert.match(consent, /visibilitychange/);
  assert.match(consent, /controller.abort\(\)/);
 });
+
+test("Phase 2 splits partial searches and exposes provider failure rates without raw upstream errors", () => {
+  const core = readFileSync("src/services/providerOperationalStatusCore.ts", "utf8");
+  const journeys = readFileSync("src/services/adminJourneyCore.ts", "utf8");
+  const providersPage = readFileSync("src/app/admin/providers/page.tsx", "utf8");
+  assert.match(display, /data\.journeys\.operationalSearches\.partialWithResults/);
+  assert.match(display, /data\.journeys\.operationalSearches\.partialWithoutResults/);
+  assert.match(dashboard, /provider\.serviceBreakdown\.map/);
+  assert.match(dashboard, /provider\.failureRatePct/);
+  assert.match(providersPage, /provider\.serviceBreakdown\.map/);
+  assert.match(core, /classifyProviderIssue\(row\.errorMessage\)/);
+  assert.match(core, /counts\.failed \* 4 >= n \* 3/);
+  assert.match(journeys, /"resultCount" > 0/);
+  assert.match(journeys, /"resultCount" <= 0/);
+  assert.doesNotMatch(dashboard, /errorMessage/);
+});
