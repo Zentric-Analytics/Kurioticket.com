@@ -87,7 +87,8 @@ export function createProviderHandoffStore(
           if (existing.visitorId !== visitorId || (existing.userId && existing.userId !== input.userId)
             || existing.type !== (input.type === "flight" ? "FLIGHT" : "HOTEL")
             || existing.provider !== input.provider || metadata.resultId !== input.resultId
-            || (visitorId && requestId && metadata.requestId !== requestId)) return null;
+            || (visitorId && requestId && metadata.requestId !== requestId)
+            || (input.operationalSessionId && metadata.operationalSessionId !== input.operationalSessionId)) return null;
           // Context changes may omit optional correlation on a retry. Preserve
           // the original attempt's reference, then recheck its current owner.
           correlationInput = { ...input, requestId: handoffTrackingId(metadata.requestId) };
