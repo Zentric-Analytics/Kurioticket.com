@@ -110,7 +110,7 @@ async function request<T>(path: string, init: RequestInit = {}, options: { signa
   const base = getApiBaseUrl(Platform.OS, __DEV__);
   if (!base.ok) throw new TravelApiError(base.message, 0, "configuration");
   const session = await readSession().catch(() => null);
-  const actor = session?.user.id ?? null;
+  const actor = session?.user?.id ?? null;
   if (operationalSearchActor !== actor) {
     operationalSearchCredential = null;
     operationalSearchActor = actor;
@@ -143,7 +143,7 @@ async function request<T>(path: string, init: RequestInit = {}, options: { signa
         ...init.headers,
       },
     });
-    if (operationalPaths.has(path) && (session?.user.id ?? null) === operationalSearchActor) {
+    if (operationalPaths.has(path) && (session?.user?.id ?? null) === operationalSearchActor) {
       const credential = response.headers.get("X-Kt-Search-Session");
       if (credential && operationalCredentialPattern.test(credential)) operationalSearchCredential = credential;
     }
