@@ -7,7 +7,7 @@ import {
 
 import { AdminOverviewAutoRefresh, AdminOverviewRangeSelect, type OverviewRange } from "@/components/admin/AdminOverviewControls";
 import { formatProviderFailureRatePct } from "@/services/providerOperationalStatusCore";
-import { formatDateTime, type getRecentAdminActivity, type getSafeSystemStatus } from "@/lib/admin-data";
+import type { getRecentAdminActivity, getSafeSystemStatus } from "@/lib/admin-data";
 import type { getAdminOverview } from "@/services/adminOverviewService";
 import type { ProviderOperationalStatus } from "@/services/providerOperationalStatus";
 
