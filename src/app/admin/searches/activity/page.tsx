@@ -106,6 +106,7 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
                 <div className="w-[170px] max-w-full">
                   <SearchMonitorSelect
                     label="Outcome"
+                    appearance="plain"
                     name="status"
                     value={one(raw.status)}
                     options={[
@@ -119,6 +120,7 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
                 <div className="w-[170px] max-w-full">
                   <SearchMonitorSelect
                     label="Identity"
+                    appearance="plain"
                     name="identity"
                     value={one(raw.identity) || "all"}
                     clearFieldNamesOnChange={["userId", "visitorId"]}
@@ -131,7 +133,8 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
                   />
                 </div>
                 <div className="w-[220px] max-w-full">
-                  <SearchMonitorSelect label="Provider" name="provider" value={one(raw.provider)} options={providerOptions} truncateLabel />
+                  <SearchMonitorSelect label="Provider"
+                    appearance="plain" name="provider" value={one(raw.provider)} options={providerOptions} truncateLabel />
                 </div>
                 <button
                   type="submit"

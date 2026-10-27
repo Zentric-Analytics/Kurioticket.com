@@ -122,7 +122,6 @@ export function SearchMonitorTable({
               <th className="px-2 py-3 font-semibold">Duration</th>
               <th className="px-2 py-3 font-semibold">Identity</th>
               <th className="px-2 py-3 font-semibold">Status</th>
-              <th className="px-2 py-3 font-semibold"><span className="sr-only">Action</span></th>
             </tr>
           </thead>
           <tbody>
@@ -142,14 +141,6 @@ export function SearchMonitorTable({
                 <td className="whitespace-nowrap px-2 py-3 align-top">{formatLatency(search.latencyMs)}</td>
                 <td className="px-2 py-3 align-top">{identityLabel(search.identity.kind)}</td>
                 <td className="px-2 py-3 align-top"><MonitorStatus status={search.status} /></td>
-                <td className="whitespace-nowrap px-2 py-3 text-right align-top">
-                  <Link
-                    href={detailHref(search, detailQuery)}
-                    className="relative z-10 font-semibold text-[#004BB8] hover:text-violet-700 hover:underline"
-                  >
-                    Open
-                  </Link>
-                </td>
               </tr>
             ))}
           </tbody>
