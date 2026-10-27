@@ -9,7 +9,6 @@ import {
   searchDetailHeadline,
   searchDetailIdentityLabel,
   searchDetailOutcomeLabel,
-  searchDetailProductLabel,
   searchDetailDiagnosisSummary,
   searchDetailNextChecks,
 } from "@/lib/adminSearchDetailPresentation";
@@ -66,7 +65,7 @@ function SearchDetailContent({ search }: { search: AdminSearchDetail }) {
               {searchDetailHeadline(search)}
             </p>
             <p className="mt-1 text-[11px] font-medium text-[#6B7280]">
-              {searchDetailProductLabel(search.product)} search · {formatDateTime(new Date(search.createdAt))}
+              Searched {formatDateTime(new Date(search.createdAt))}
             </p>
           </div>
           <StatusDot status={diagnostic.outcome === "ZERO_RESULTS" ? "ZERO_RESULTS" : search.status} label={searchDetailOutcomeLabel(diagnostic.outcome)} />
@@ -81,9 +80,7 @@ function SearchDetailContent({ search }: { search: AdminSearchDetail }) {
       <section className="border-b border-[#D7DCE3] px-2 py-5">
         <h2 className="text-[13px] font-semibold text-[#111827]">Search information</h2>
         <div className="mt-3 grid grid-cols-2 gap-x-5 gap-y-3 lg:grid-cols-3">
-          <Field label="Product" value={searchDetailProductLabel(search.product)} />
-          {search.origin ? <Field label={search.product === "CAR" ? "Pickup location" : "Origin"} value={search.origin} /> : null}
-          {search.destination ? <Field label={search.product === "CAR" ? "Drop-off location" : "Destination"} value={search.destination} /> : null}
+          {/* Product and locations are already identifiable in the Search overview headline. */}
           {search.checkIn || search.checkOut ? (
             <Field
               label={search.product === "HOTEL" ? "Stay dates" : search.product === "CAR" ? "Rental dates" : "Travel dates"}
@@ -112,7 +109,6 @@ function SearchDetailContent({ search }: { search: AdminSearchDetail }) {
                   <tr key={provider.provider + "-" + provider.observedAt + "-" + index} className="border-b border-[#E5E7EB] text-[#374151] last:border-b-0">
                     <td className="px-2 py-3 align-top">
                       <p className="font-semibold text-[#111827]">{provider.provider}</p>
-                      <p className="mt-0.5 text-[10px] text-[#9CA3AF]">{formatDateTime(new Date(provider.observedAt))}</p>
                     </td>
                     <td className="px-2 py-3 align-top"><StatusDot status={provider.status} /></td>
                     <td className="px-2 py-3 align-top">{provider.reason}</td>
@@ -171,6 +167,9 @@ function SearchDetailContent({ search }: { search: AdminSearchDetail }) {
             {search.identity.userId ? <Field label="User ID" value={search.identity.userId} /> : null}
             {search.identity.visitorId ? <Field label="Visitor ID" value={search.identity.visitorId} /> : null}
             {providerReasonCodes.length ? <Field label="Provider reason codes" value={providerReasonCodes.join("; ")} /> : null}
+            {diagnostic.providers.some(provider => Math.abs(Date.parse(provider.observedAt) - Date.parse(search.createdAt)) > 60_000) ? (
+              <Field label="Provider observation times" value={diagnostic.providers.map(provider => provider.provider + ": " + formatDateTime(new Date(provider.observedAt))).join("; ")} />
+            ) : null}
           </div>
         </details>
       </section>
