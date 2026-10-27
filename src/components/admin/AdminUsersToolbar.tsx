@@ -202,7 +202,7 @@ export function AdminUsersToolbar({
             setSearchText(event.target.value);
           }}
           placeholder="Search by name, email, user ID, or guest ID"
-          className="h-11 w-full min-w-0 rounded-lg border border-[#D8E1EC] bg-white pl-10 pr-3 text-[13px] text-foreground placeholder:text-muted outline-none transition-colors hover:border-[#D8E1EC] focus:border-[#94A3B8] focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
+          className="h-11 w-full min-w-0 rounded-lg border border-[#D8E1EC] bg-white pl-10 pr-3 text-[13px] text-foreground placeholder:text-muted outline-none transition-colors hover:border-[#D8E1EC] focus:border-[#94A3B8] focus:outline-none focus:ring-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#64748B] focus-visible:ring-0"
         />
       </form>
 
