@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { Prisma } from "@/generated/prisma/client";
 import { getPublicEnvironment } from "@/lib/stagingSafety";
 import { AdminIdentityTable, type IdentityRow } from "@/components/admin/AdminIdentityTable";
 import { AdminUsersToolbar } from "@/components/admin/AdminUsersToolbar";
