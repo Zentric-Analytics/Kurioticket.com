@@ -53,6 +53,9 @@ try {
       await expect(page.getByRole("combobox", { name: "Sort by" })).toBeVisible();
       await expect(page.getByRole("combobox", { name: "Account role" })).toBeVisible();
       await expect(page.getByRole("combobox", { name: "Account status" })).toBeVisible();
+      for (const name of ["Sort by", "Account role", "Account status"]) {
+        await expect(page.getByRole("combobox", { name })).toHaveAttribute("aria-haspopup", "listbox");
+      }
       await expect(page.getByRole("button", { name: "Apply Filter" })).toHaveCount(0);
       await expect(page.getByRole("link", { name: "Clear filters" })).toHaveCount(0);
       await expect(tabs().getByRole("link", { name: "All (30)" })).toHaveAttribute("aria-current", "page");
