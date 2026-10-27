@@ -69,7 +69,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
     const [registeredCount, consentedGuestCount, operationalRows] = await Promise.all([
       db.user.count({ where }),
       guestsEligibleForFilters ? db.visitor.count({ where: guestWhere }) : Promise.resolve(0),
-      showOperationalGuests ? db.$queryRaw<Array<{ count: bigint }>>(Prisma.sql`
+      guestsEligibleForFilters ? db.$queryRaw<Array<{ count: bigint }>>(Prisma.sql`
         SELECT COUNT(*)::bigint AS "count" FROM (
           SELECT a."sessionId" FROM ${operationalSources} ${operationalWhere}
             AND a."sessionId" ~ '^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}
@@ -80,7 +80,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
     const identities: AdminIdentityReference[] = [];
     for (let offset = 0; offset < count; offset += BATCH_SIZE) {
       const sql = adminIdentityPageSql({
-        query: q, role, status, showUsers, showGuests, showOperationalGuests, environment, sort, date, now,
+        query: q, role, status, showUsers, showGuests, showOperationalGuests, environment, sort, date, from, to, now,
         limit: BATCH_SIZE, offset,
       });
       if (!sql) break;
@@ -121,11 +121,11 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
     });
     return { rows };
   }, { rows: [] as IdentityRow[] });
-  const link = "/admin/users?" + new URLSearchParams({ ...(q ? { q } : {}), role, status, tab, sort, date }).toString();
+  const link = "/admin/users?" + new URLSearchParams({ ...(q ? { q } : {}), role, status, tab, sort, date, ...(from && to ? {from,to} : {}) }).toString();
   return (
     <div className="w-full min-w-0 bg-white">
       <h1 className="sr-only">Users</h1>
-      <AdminUsersToolbar query={q} role={role} status={status} tab={tab} sort={sort} date={date}
+      <AdminUsersToolbar query={q} role={role} status={status} tab={tab} sort={sort} date={date} from={from || ""} to={to || ""}
         registeredCount={stats.registeredCount} guestCount={stats.guestCount} pageHref={link}>
         <AdminIdentityTable rows={result.rows} pageHref={link} sort={sort} />
       </AdminUsersToolbar>
