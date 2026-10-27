@@ -190,7 +190,7 @@ test("user-controlled provider text stays a SQL parameter across list, detail an
     assert.equal(query.values.includes(provider), true);
     assert.equal(query.sql.includes(provider), false);
   }
-  const operationalHandoffQuery = f.queries.find(query => query.sql.includes("eligible_handoff_redirects"));
+  const operationalHandoffQuery = f.queries.find(query => query.sql.join(" ").includes("eligible_handoff_redirects"));
   assert.ok(operationalHandoffQuery);
   // Operational provider redirect coverage must not be narrowed by a journey-cohort filter.
   assert.equal(operationalHandoffQuery.values.includes(provider), false);
