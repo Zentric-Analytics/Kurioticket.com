@@ -3,7 +3,9 @@ import test from "node:test";
 import { searchDetailDuration, searchDetailHeadline, searchDetailIdentityLabel, searchDetailOutcomeLabel, searchDetailDiagnosisSummary, searchDetailNextChecks } from "./adminSearchDetailPresentation";
 
 test("search detail titles reflect product and available locations", () => {
-  assert.equal(searchDetailHeadline({ product: "FLIGHT", origin: "LOS", destination: "LHR" }), "LOS → LHR");
+  assert.equal(searchDetailHeadline({ product: "FLIGHT", origin: "LOS", destination: "LHR" }), "Flight · LOS → LHR");
+  assert.equal(searchDetailHeadline({ product: "PACKAGE", origin: "LOS", destination: "LHR" }), "Package · LOS → LHR");
+  assert.equal(searchDetailHeadline({ product: "CAR", origin: "Ibadan", destination: "Lagos" }), "Car · Ibadan → Lagos");
   assert.equal(searchDetailHeadline({ product: "HOTEL", origin: null, destination: "London" }), "Hotels in London");
   assert.equal(searchDetailHeadline({ product: "CAR", origin: "Ibadan", destination: null }), "Cars in Ibadan");
   assert.equal(searchDetailHeadline({ product: "PACKAGE", origin: null, destination: null }), "Package search");
