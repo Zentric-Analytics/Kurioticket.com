@@ -160,7 +160,7 @@ test("Overview information is presented without boxed white card containers", ()
   assert.match(display, /<ActivityFeed activity=\{activity\} \/>/);
   assert.match(dashboard, /border-b border-slate-200/);
   assert.match(dashboard, /border-t border-slate-200/);
-  assert.match(dashboard, /<details open className="mt-3 border-t border-slate-200\/80">/);
+  assert.match(dashboard, /aria-label=\{provider.provider \+ " full provider details"\}/);
 });
 
 test("Overview range dropdown uses compact typography and neutral, accessible focus styling", () => {
@@ -216,7 +216,7 @@ test("duplicate account and five-minute visitor panels are removed from the Over
     "data.visitorActivity.observedVisitorIdentities",
   ]) assert.ok(!snapshot.includes(duplicate), duplicate);
   assert.match(snapshot, /How it's counted/);
-  assert.match(snapshot, /<details open className="mt-2 text-\[12px\] leading-5 text-slate-600">/);
+  assert.match(snapshot, /role="note"/);
   assert.match(snapshot, /consented visitors with a visible website tab/);
   assert.match(snapshot, /excluding native app activity and visitors who decline analytics/);
   assert.match(snapshot, /not every person online/);
@@ -236,30 +236,24 @@ test("canonical overview reads consented recent visitor identities without overw
 });
 
 
-test("production layout uses balanced desktop columns and keeps the activity feed full width", () => {
-  assert.match(display, /grid gap-x-6 gap-y-0 sm:grid-cols-2 lg:grid-cols-3/);
-  assert.doesNotMatch(display, /grid gap-x-6 gap-y-0 sm:grid-cols-2 xl:grid-cols-5/);
-  assert.match(display, /lg:grid-cols-\[0\.85fr_1\.15fr\]/);
-  assert.match(display, /<div className="grid gap-y-0">\s*\{data\.providers\.map/);
-  assert.match(display, /sm:grid-cols-2 lg:grid-cols-4/);
-  assert.match(display, /lg:grid-cols-2/);
-  assert.match(display, /<WorkloadCard title="Account Deletion Workload"[\s\S]*?<\/div>\s*<div className="mt-7 min-w-0">\s*<ActivityFeed activity=\{activity\} \/>/);
+test("redesigned layout uses balanced responsive sections and a full-width activity feed", () => {
+  assert.match(display, /grid overflow-hidden rounded-lg border-l border-t border-slate-200 sm:grid-cols-2 lg:grid-cols-3/);
+  assert.match(display, /grid gap-3 md:grid-cols-3/);
+  assert.match(display, /grid overflow-hidden rounded-lg border-l border-t border-slate-200 sm:grid-cols-2 lg:grid-cols-4/);
+  assert.match(display, /grid items-start gap-4 border-t border-slate-200 pt-6 lg:grid-cols-2/);
+  assert.match(display, /mt-7 min-w-0 border-t border-slate-200 pt-6/);
   assert.match(dashboard, /lg:grid-cols-\[8px_minmax\(140px,0\.75fr\)_minmax\(0,2\.4fr\)_minmax\(145px,0\.9fr\)_minmax\(130px,0\.9fr\)\]/);
+  assert.doesNotMatch(display, /lg:grid-cols-\[0\.85fr_1\.15fr\]/);
 });
 
-test("production layout preserves original page and status backgrounds", () => {
+test("redesign retains the existing outer page and status colors", () => {
   const shell = readFileSync("src/components/admin/AdminHorizontalShell.tsx", "utf8");
-  const existingBackgrounds = [
-    "bg-emerald-400", "bg-amber-400", "bg-rose-400", "bg-indigo-400",
-    "bg-slate-300", "bg-emerald-500", "bg-indigo-500",
-  ];
-  for (const token of existingBackgrounds) assert.ok(dashboard.includes(token), token);
-  // The existing status badge intentionally uses a pale indigo background;
-  // only the section surfaces themselves must remain unboxed.
-  const layoutSource = dashboard.slice(dashboard.indexOf("function SectionTitle("));
   assert.match(dashboard, /info: "bg-indigo-50 text-indigo-700 ring-indigo-200"/);
-  assert.doesNotMatch(layoutSource, /(?:bg-white|bg-slate-50|bg-indigo-50)(?![\w-])|bg-\[#/);
-  assert.ok(shell.includes("bg-slate-100") || shell.includes("bg-[#"));
+  assert.match(dashboard, /bg-emerald-400/);
+  assert.match(dashboard, /bg-slate-300/);
+  assert.match(dashboard, /bg-slate-50\/50/);
+  assert.match(dashboard, /rounded-xl border border-slate-200/);
+  assert.match(shell, /bg-\[#f1f5fb\]/);
   assert.match(display, /<AdminOverviewAutoRefresh \/>/);
   assert.match(display, /<AdminOverviewRangeSelect range=\{range\} \/>/);
 });
@@ -277,29 +271,20 @@ test("Overview has one Searches-style white parent surface around all sections",
 });
 
 
-test("Recent Admin Activity is outside the two-column workload grid and uses the whole parent width", () => {
-  const section = display.slice(display.indexOf('      <div className="mt-7 grid items-start gap-8 lg:grid-cols-2">'));
-  const twoColumnEnd = section.indexOf('      </div>\n\n      <div className="mt-7 min-w-0">');
-  const feed = section.indexOf('<ActivityFeed activity={activity} />');
-  assert.ok(twoColumnEnd > 0, "the two-column workload grid must end before the audit feed");
-  assert.ok(feed > twoColumnEnd, "activity must be a separate full-width sibling");
-  assert.equal((display.match(/<ActivityFeed activity=\{activity\} \/>/g) || []).length, 1, "only one feed in the normal Overview");
-  assert.match(dashboard, /activity\.items\.map\(\(item\) =>/);
-  for (const value of ["humanize(item.title)", "item.detail", "item.timestamp", "item.title"]) {
-    assert.ok(dashboard.includes(value), value);
+test("Recent Admin Activity is outside the workload grid and remains full-width", () => {
+  const workloadGrid = display.indexOf("mt-7 grid items-start gap-4 border-t border-slate-200 pt-6 lg:grid-cols-2");
+  const activityContainer = display.indexOf("mt-7 min-w-0 border-t border-slate-200 pt-6");
+  assert.ok(workloadGrid > 0);
+  assert.ok(activityContainer > workloadGrid);
+  assert.equal((display.match(/<ActivityFeed activity=\{activity\} \/>/g) || []).length, 1);
+  for (const field of ["humanize(item.title)", "item.detail", "item.timestamp", "item.title"]) {
+    assert.ok(dashboard.includes(field), field);
   }
-  assert.match(dashboard, /lg:col-start-auto lg:whitespace-nowrap/);
-  assert.match(dashboard, /min-w-0 break-words font-mono/);
-  assert.doesNotMatch(dashboard, /truncate|line-clamp/);
+  assert.doesNotMatch(dashboard, /line-clamp/);
 });
 
-test("Activity layout retains the existing white parent and does not change Overview backgrounds or actions", () => {
+test("redesign retains the original white page parent and linked admin actions", () => {
   assert.match(page, /<AdminSectionCard className="min-w-0 p-4 sm:p-6 lg:p-7">/);
-  // The existing status badge intentionally uses a pale indigo background;
-  // only the section surfaces themselves must remain unboxed.
-  const layoutSource = dashboard.slice(dashboard.indexOf("function SectionTitle("));
-  assert.match(dashboard, /info: "bg-indigo-50 text-indigo-700 ring-indigo-200"/);
-  assert.doesNotMatch(layoutSource, /(?:bg-white|bg-slate-50|bg-indigo-50)(?![\w-])|bg-\[#/);
   assert.match(dashboard, /<Link href="\/admin\/logs"/);
   assert.match(display, /<WorkloadCard title="Support Workload"/);
   assert.match(display, /<WorkloadCard title="Account Deletion Workload"/);
@@ -308,7 +293,7 @@ test("Activity layout retains the existing white parent and does not change Over
 test("Overview typography maintains readable hierarchy without heavy global badges", () => {
   assert.match(dashboard, /function OverviewStatusBadge/);
   assert.doesNotMatch(dashboard, /AdminStatusBadge|font-black|font-extrabold/);
-  assert.match(dashboard, /text-\[22px\] font-semibold tabular-nums/);
+  assert.match(dashboard, /text-\[23px\] font-semibold tabular-nums/);
   assert.match(dashboard, /text-\[15px\] font-semibold tracking-tight/);
   assert.match(dashboard, /text-\[13px\] leading-5 text-slate-700/);
   assert.match(dashboard, /font-mono text-\[13px\]/);
@@ -433,14 +418,16 @@ test("Phase 5 required-gate verification guards against fabricated or silently l
   assert.match(journeys, /totalRedirects !== inConsentedJourneys \+ outsideConsentedJourneys/);
 });
 
-test("all Overview detail disclosures are expanded by default and main sections remain intact", () => {
-  const opened = dashboard.match(/<details open className=/g) ?? [];
-  assert.equal(opened.length, 2, "provider diagnostics and active-user counting disclosure");
-  assert.doesNotMatch(dashboard, /<details className=/);
+test("all Overview diagnostic details remain visible with no disclosure controls", () => {
+  assert.doesNotMatch(dashboard, /<details/);
   assert.match(dashboard, /Full provider details/);
-  assert.match(dashboard, /How it's counted/);
-  assert.match(dashboard, /<PlatformHealth system=\{system\} \/>/);
+  assert.match(dashboard, /How it's counted:/);
+  assert.match(dashboard, /serviceBreakdown\.map/);
+  assert.match(dashboard, /service\.failureReasons\.map/);
+  assert.match(dashboard, /provider\.lastFailureAt/);
+  assert.match(dashboard, /role="note"/);
   assert.match(page, /overview.status === "ok"/);
   assert.match(page, /<AdminOverviewSecondary system=\{system\} activity=\{activity\} \/>/);
   assert.match(page, /hideHeader/);
+
 });
