@@ -10,9 +10,6 @@ const { AdminIdentityTable } = jiti("./AdminIdentityTable") as typeof import("./
 type Props = Parameters<typeof AdminIdentityTable>[0];
 const props: Props = {
   rows: [],
-  page: 2,
-  count: 231,
-  pageSize: 100,
   sort: "name_asc",
   pageHref: "/admin/users?q=qa&role=ALL&status=ALL&tab=ALL&sort=name_asc&page=2",
 };
@@ -46,42 +43,34 @@ test("five existing data columns and user/guest activity links retain all record
   assert.doesNotMatch(html, /aria-label="User types"|aria-label="Sort by"|Apply Filter/);
 });
 
-test("table remains a scrollable, accessible region with the same five-column pagination", () => {
+test("table remains a scrollable, accessible region with five columns and no pagination", () => {
   const html = render();
   assert.match(html, /<h2 id="identity-directory-title" class="sr-only">Users directory<\/h2>/);
   assert.equal((html.match(/aria-labelledby="identity-directory-title"/g) || []).length, 1);
   assert.match(html, /min-w-\[960px\]/);
-  assert.match(html, /Pg2 of 3/);
-  assert.match(html, /aria-label="Previous page"/);
-  assert.match(html, /aria-label="Next page"/);
-  for (const page of [1, 3]) {
-    assert.ok(html.includes(`q=qa&amp;role=ALL&amp;status=ALL&amp;tab=ALL&amp;sort=name_asc&amp;page=${page}`));
-  }
+  assert.doesNotMatch(html, /Pg\\d|Identity pagination|Previous page|Next page/);
   assert.match(html, /colSpan="5"/i);
   assert.doesNotMatch(html, /Rows per page|15 rows|matching identities/);
 });
 
-test("empty results omit Clear filters but retain search and pagination actions", () => {
+test("empty results omit Clear filters but retain search actions", () => {
   const html = render({
-    page: 1, count: 0,
     pageHref: "/admin/users?q=qa&role=SUPPORT&status=ACTIVE&tab=GUEST&sort=oldest&page=1",
   });
   assert.match(html, /No users match your filters/);
   assert.doesNotMatch(html, />Clear filters<\/a>/);
   assert.match(html, />Clear search<\/a>/);
   assert.match(html, /q=&amp;role=SUPPORT&amp;status=ACTIVE&amp;tab=GUEST&amp;sort=oldest&amp;page=1/);
-  assert.match(html, /Pg1 of 1/);
-  assert.match(html, /aria-label="Next page unavailable"/);
 });
 
 test("Clear filters is not shown for query-only empty results", () => {
-  const html = render({ count: 0, page: 1, pageHref: "/admin/users?q=missing&role=ALL&status=ALL&tab=ALL&sort=newest&page=1" });
+  const html = render({ pageHref: "/admin/users?q=missing&role=ALL&status=ALL&tab=ALL&sort=newest&page=1" });
   assert.match(html, /Clear search/);
   assert.doesNotMatch(html, />Clear filters<\/a>/);
 });
 
 test("empty Guest tab with no search or account filters offers to return to all users", () => {
-  const html = render({ count: 0, page: 1, pageHref: "/admin/users?role=ALL&status=ALL&tab=GUEST&sort=newest&page=1" });
+  const html = render({ pageHref: "/admin/users?role=ALL&status=ALL&tab=GUEST&sort=newest&page=1" });
   assert.match(html, /View all users/);
   assert.match(html, /tab=ALL&amp;sort=newest&amp;page=1/);
 });
