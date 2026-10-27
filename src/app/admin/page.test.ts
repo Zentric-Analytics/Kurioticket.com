@@ -1,523 +1,285 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
 
 const page = readFileSync("src/app/admin/page.tsx", "utf8");
 const dashboard = readFileSync("src/components/admin/AdminOverviewDashboard.tsx", "utf8");
 const controls = readFileSync("src/components/admin/AdminOverviewControls.tsx", "utf8");
+const service = readFileSync("src/services/adminOverviewService.ts", "utf8");
+const providersPage = readFileSync("src/app/admin/providers/page.tsx", "utf8");
+const core = readFileSync("src/services/providerOperationalStatusCore.ts", "utf8");
+const adminData = readFileSync("src/lib/admin-data.ts", "utf8");
 const display = dashboard.slice(dashboard.indexOf("export function AdminOverviewDashboard("));
 
-test("overview uses existing canonical services without mocked counts", () => {
+test("Overview continues to use canonical authenticated, real data services", () => {
   assert.match(page, /getAdminOverview\(query\)/);
   assert.match(page, /getSafeSystemStatus\(\)/);
   assert.match(page, /getRecentAdminActivity\(\)/);
-  assert.match(page, /getAdminOverview[\s\S]*?AdminOverviewDashboard/);
+  assert.match(page, /overview\.status === "ok"/);
   assert.match(page, /No fallback or mocked operational totals are shown/);
-  assert.match(page, /AdminOverviewSecondary system=\{system\} activity=\{activity\}/);
+  assert.match(page, /<AdminOverviewSecondary system=\{system\} activity=\{activity\} \/>/);
+  assert.match(service, /requireAdminApiSession\(\)/);
+  assert.match(service, /getPublicEnvironment\(\)/);
+  assert.match(service, /environment !== hostEnvironment/);
+  assert.match(service, /journeys\.status !== "ok" \|\| !providers/);
 });
 
-test("nine genuine operational KPIs are retained with one live Active users card", () => {
-  for (const [label, expression] of [
+test("compact Operations Snapshot has exactly four genuine primary metrics", () => {
+  const snapshot = display.slice(display.indexOf('aria-label="Operations Snapshot"'), display.indexOf('aria-label="Attention Required"'));
+  for (const [label, value] of [
     ["Total accounts", "data.users.total"],
-    ["Enabled accounts", "data.users.active"],
-    ["Suspended accounts", "data.users.suspended"],
-    ["Deleted accounts", "data.users.deleted"],
-    ["Support attention", "supportAttention"],
-    ["Deletion attention", "deletionAttention"],
+    ["Active website users", "websiteActive"],
+    ["Recorded searches", "data.journeys.operationalSearches.total"],
     ["Customer journeys", "data.journeys.journeys"],
-    ["Human admin actions", "data.audit.human"],
   ]) {
-    assert.ok(display.includes('label="' + label + '" value={' + expression + "}"), label);
+    assert.ok(snapshot.includes('label="' + label + '" value={' + value + "}"), label);
   }
+  assert.equal((snapshot.match(/<SnapshotLink /g) ?? []).length, 4);
+  assert.match(snapshot, /xl:grid-cols-4/);
+  assert.match(snapshot, /sm:grid-cols-2/);
+  assert.match(snapshot, /<AdminOverviewRangeSelect range=\{range\} \/>/);
+  assert.doesNotMatch(snapshot, /data\.users\.(?:active|suspended|deleted)/);
+  assert.doesNotMatch(snapshot, /data\.audit\.human/);
+});
+
+test("live presence keeps consent, 90-second window, and explicit unavailable state", () => {
+  assert.match(display, /data\.websitePresence\.status === "ok"/);
+  assert.match(display, /data\.websitePresence\.total/);
+  assert.match(display, /"Unavailable"/);
+  assert.match(display, /Consented website identities · last 90s/);
+  assert.match(display, /excludes native-app activity and visitors who decline analytics/);
+  assert.match(display, /does not count every person online/);
+  assert.match(service, /getWebsitePresenceSnapshot\(environment, now\)/);
+  assert.match(readFileSync("src/components/privacy/AnalyticsConsentBridge.tsx", "utf8"), /websitePresenceHeartbeatMs/);
+  assert.doesNotMatch(display, /visitorActivity\.observedVisitorIdentities/);
+});
+
+test("Attention Required remains three compact, actionable live queues", () => {
   assert.match(display, /supportAttention = data\.support\.open \+ data\.support\.waitingOnTeam \+ data\.support\.waitingOnUser/);
   assert.match(display, /deletionAttention = data\.deletions\.pending \+ data\.deletions\.readyForReview/);
-  const snapshot = display.slice(display.indexOf('aria-label="Operations Snapshot"'), display.indexOf('aria-label="Attention Required"'));
-  assert.match(snapshot, />Active website users<\/p>/);
-  assert.match(snapshot, /data\.websitePresence\.status === "ok"/);
-  assert.match(snapshot, /data\.websitePresence\.total/);
-  assert.equal((snapshot.match(/<MetricCard label=/g) ?? []).length, 8, "8 standard metric cards and 1 live Active users card");
-  assert.doesNotMatch(snapshot, /Online website visitors|Active users \(observed\)/);
-  assert.doesNotMatch(snapshot, /data\.journeys\.identities\.registeredAccounts/);
-});
-
-test("overview prioritizes action and visitor activity before diagnostics", () => {
-  const sequence = [
-    'aria-label="Operations Snapshot"',
-    'aria-label="Attention Required"',
-    'aria-label="Visitor Activity & Search Performance"',
-    'aria-label="Provider Operational Health"',
-    'aria-label="Operational Workloads"',
-    'title="Support Workload"',
-    'title="Account Deletion Workload"',
-    "<PlatformHealth system={system} />",
-    "<ActivityFeed activity={activity} />",
-  ];
-  const indexes = sequence.map((label) => {
-    const found = display.indexOf(label);
-    assert.ok(found > -1, "missing dashboard section: " + label);
-    return found;
-  });
-  assert.deepEqual(indexes, [...indexes].sort((a, b) => a - b));
-  // Both workload cards must remain inside the grouped section, before
-  // configuration-only Platform Health and the full-width audit feed.
-  const workloads = display.slice(
-    display.indexOf('aria-label="Operational Workloads"'),
-    display.indexOf("<PlatformHealth system={system} />"),
-  );
-  assert.match(workloads, /title="Support Workload"/);
-  assert.match(workloads, /title="Account Deletion Workload"/);
-});
-
-test("journey funnel and both correlation metrics retain accurate source data", () => {
-  for (const key of ["SEARCH_COMPLETED", "RESULTS_VIEWED", "OFFER_SELECTED", "PROVIDER_HANDOFF_STARTED"]) {
-    assert.match(display, new RegExp("funnel\\." + key + "\\.journeys"));
-    assert.match(display, new RegExp("funnel\\." + key + "\\.events"));
+  assert.match(display, /p\.operationalState === "DEGRADED"/);
+  assert.match(display, /p\.operationalState === "FAILING"/);
+  assert.match(display, /p\.operationalState === "NOT_READY"/);
+  for (const [label, link] of [
+    ["Provider issues", "/admin/providers"],
+    ["Support queue", "/admin/support"],
+    ["Deletion reviews", "/admin/account-deletions"],
+  ]) {
+    assert.ok(display.includes('href="' + link + '" label="' + label + '"'), label);
   }
-  for (const field of [
-    "data.journeys.identities.registered",
-    "data.journeys.identities.guests",
-    "data.journeys.operationalSearches.total",
-    "data.journeys.operationalSearches.failed",
-    "data.journeys.operationalSearches.partial",
-    "data.journeys.operationalHandoffs.total",
-    "data.journeys.operationalHandoffs.inConsentedJourneys",
-    "data.journeys.operationalHandoffs.outsideConsentedJourneys",
-    "data.journeys.operationalHandoffs.withoutVisitorIdentity",
-    "data.journeys.operationalHandoffs.exactSearchLinks",
-  ]) assert.ok(display.includes(field), field);
-  assert.match(display, /consented event counts, including repeats; captions show distinct journeys/);
-  assert.match(display, /Not conversions or confirmed bookings/);
-  assert.match(display, /no inferred links/);
+  assert.equal((display.match(/<AttentionLink /g) ?? []).length, 3);
+  assert.match(display, /Provider health: last 24 hours. Support and deletion queues: current/);
 });
 
-test("provider detailed information remains available for every provider", () => {
-  assert.match(display, /data\.providers\.map\(\(provider\) => <ProviderCard key=\{provider.id\} provider=\{provider\} \/>/);
-  for (const field of [
-    "provider.id", "provider.provider", "provider.readinessState", "provider.operationalState",
-    "provider.windowHours", "provider.totalCalls", "provider.successCalls", "provider.degradedCalls",
-    "provider.failedCalls", "provider.disabledCalls", "provider.averageLatencyMs",
-    "provider.lastActivityAt", "provider.lastSuccessAt", "provider.lastFailureAt",
-  ]) assert.ok(dashboard.includes(field), field);
-  assert.match(dashboard, /Full provider details/);
+test("visitor cards display exactly four real consented action-event counts", () => {
+  const start = display.indexOf('<Section title="Visitor Activity"');
+  const end = display.indexOf('<Section title="Search Performance"');
+  const visitor = display.slice(start, end);
+  assert.ok(start > -1 && end > start);
+  for (const stage of ["SEARCH_COMPLETED", "RESULTS_VIEWED", "OFFER_SELECTED", "PROVIDER_HANDOFF_STARTED"]) {
+    assert.match(visitor, new RegExp("stages\\." + stage + "\\.events"));
+  }
+  assert.equal((visitor.match(/<MiniMetric /g) ?? []).length, 4);
+  assert.match(visitor, /Events can repeat/);
+  assert.match(visitor, /Handoffs are not confirmed bookings/);
+  assert.doesNotMatch(visitor, /\.journeys\}/);
+  assert.match(visitor, /href="\/admin\/journeys"/);
 });
 
-test("support, deletion, health, and audit data survive the removal of shortcut cards", () => {
-  for (const name of [
-    "data.support.open", "data.support.waitingOnTeam", "data.support.waitingOnUser",
-    "data.support.resolvedOrClosed", "data.deletions.pending", "data.deletions.readyForReview",
-    "data.deletions.cancelled", "data.deletions.completed",
-    "system.databaseConnected", "system.databaseConfigured", "system.authConfigured",
-    "system.sessionConfigured", "system.emailConfigured", "system.providerCredentialsPresent",
-  ]) assert.ok(dashboard.includes(name), name);
-  assert.match(dashboard, /activity\.items\.map\(\(item\) =>/);
+test("all recorded searches are separate from consented search events", () => {
+  const start = display.indexOf('<Section title="Search Performance"');
+  const end = display.indexOf('<Section title="Provider Handoffs"');
+  const search = display.slice(start, end);
+  assert.ok(start > -1 && end > start);
+  for (const [label, key] of [
+    ["Total", "total"], ["Successful", "success"], ["Failed", "failed"], ["Partial", "partial"],
+  ]) {
+    assert.ok(search.includes('label="' + label + '" value={data.journeys.operationalSearches.' + key + "}"), label);
+  }
+  assert.equal((search.match(/<MiniMetric /g) ?? []).length, 4);
+  assert.match(search, /Includes unattributed searches/);
+  assert.match(search, /success does not guarantee offers/);
+  assert.match(search, /href="\/admin\/searches\/activity"/);
+  assert.doesNotMatch(search, /partialWithResults|partialWithoutResults/);
+  assert.match(readFileSync("src/app/admin/searches/activity/page.tsx", "utf8"), /AdminPageShell/);
+});
+
+test("provider handoffs remain recorded redirects, never confirmed bookings", () => {
+  const handoffs = display.slice(display.indexOf('<Section title="Provider Handoffs"'), display.indexOf('<Section title="Provider Health"'));
+  assert.match(handoffs, /operationalHandoffs\.total/);
+  assert.match(handoffs, /operationalHandoffs\.inConsentedJourneys/);
+  assert.match(handoffs, /operationalHandoffs\.withoutVisitorIdentity/);
+  assert.match(handoffs, /Redirects are not bookings/);
+  assert.match(handoffs, /Missing attribution does not prove declined consent/);
+  assert.match(handoffs, /href="\/admin\/redirects"/);
+  assert.equal((handoffs.match(/<MiniMetric /g) ?? []).length, 3);
+  const contract = readFileSync("src/services/adminJourneyCore.ts", "utf8");
+  assert.match(contract, /totalRedirects !== inConsentedJourneys \+ outsideConsentedJourneys/);
+});
+
+test("provider overview is compact but preserves truthful status and call calculations", () => {
+  const provider = display.slice(display.indexOf('<Section title="Provider Health"'), display.indexOf('<Section title="Support Workload"'));
+  assert.match(provider, /data\.providers\.map\(\(provider\) => <ProviderSummary key=\{provider.id\} provider=\{provider\} \/>/);
+  assert.match(provider, /href="\/admin\/providers"/);
+  const card = dashboard.slice(dashboard.indexOf("function ProviderSummary("), dashboard.indexOf("function PlatformSummary("));
+  assert.equal((card.match(/<MiniMetric /g) ?? []).length, 3);
+  assert.match(card, /provider\.attemptedCalls/);
+  assert.match(card, /provider\.failedCalls/);
+  assert.match(card, /formatProviderFailureRatePct\(provider\.failureRatePct, provider\.failedCalls\)/);
+  assert.match(card, /provider\.readinessState === "READY"/);
+  assert.match(dashboard, /state === "FAILING"\) return "Requests failing"/);
+  assert.match(core, /Math\.round\(1000 \* counts\.failed \/ n\) \/ 10/);
+  assert.match(core, /if \(failedCalls > 0 && rate === 0\) return "<0\.1%"/);
+  assert.doesNotMatch(card, /serviceBreakdown|failureReasons|lastFailureAt|averageLatencyMs/);
+});
+
+test("complete provider diagnostics remain on the linked Providers page", () => {
+  assert.match(providersPage, /getProviderOperationalStatuses\(\)/);
+  assert.match(providersPage, /provider\.serviceBreakdown\.map/);
+  assert.match(providersPage, /service\.failureReasons\.map/);
+  assert.match(providersPage, /provider\.averageLatencyMs/);
+  assert.match(providersPage, /provider\.lastSuccessAt/);
+  assert.match(providersPage, /provider\.lastFailureAt/);
+  assert.match(providersPage, /formatProviderFailureRatePct\(provider\.failureRatePct, provider\.failedCalls\)/);
+  assert.doesNotMatch(dashboard, /errorMessage/);
+});
+
+test("operational workloads each show only three counts with dedicated destination links", () => {
+  const support = display.slice(display.indexOf('<Section title="Support Workload"'), display.indexOf('<Section title="Deletion Workload"'));
+  const deletion = display.slice(display.indexOf('<Section title="Deletion Workload"'), display.indexOf("<AdminOverviewSecondary system={system} activity={activity} />"));
+  for (const key of ["open", "waitingOnTeam", "waitingOnUser"]) {
+    assert.match(support, new RegExp("data\\.support\\." + key));
+  }
+  for (const key of ["pending", "readyForReview", "completed"]) {
+    assert.match(deletion, new RegExp("data\\.deletions\\." + key));
+  }
+  assert.equal((support.match(/<MiniMetric /g) ?? []).length, 3);
+  assert.equal((deletion.match(/<MiniMetric /g) ?? []).length, 3);
+  assert.match(support, /href="\/admin\/support"/);
+  assert.match(deletion, /href="\/admin\/account-deletions"/);
+});
+
+test("platform readiness shows four concise indicators without claiming auth or email works", () => {
+  const health = dashboard.slice(dashboard.indexOf("function PlatformSummary("), dashboard.indexOf("function RecentActivity("));
+  for (const field of ["system.databaseConnected", "system.databaseConfigured", "system.authConfigured", "system.sessionConfigured", "system.emailConfigured", "system.providerCredentialsPresent"]) {
+    assert.ok(health.includes(field), field);
+  }
+  assert.match(health, /Configured, not tested/);
+  assert.match(health, /Key present, not tested/);
+  assert.match(health, /Not connected/);
+  assert.match(health, /items\.map/);
+  assert.match(dashboard, /<Section title="Platform Health" href="\/admin\/system"/);
+});
+
+test("audit summary limits display to three latest actions, retaining full records in Logs", () => {
+  const audit = dashboard.slice(dashboard.indexOf("function RecentActivity("), dashboard.indexOf("export function AdminOverviewSecondary("));
+  assert.match(audit, /activity\.items\.slice\(0, 3\)/);
+  assert.match(audit, /humanize\(item\.title\)/);
+  assert.match(audit, /item\.detail/);
+  assert.match(audit, /item\.timestamp/);
+  assert.match(audit, /activity\.status === "unavailable"/);
+  assert.match(audit, /recent\.length === 0/);
+  assert.match(dashboard, /Latest three actions across all dates/);
+  assert.match(dashboard, /href="\/admin\/logs"/);
+  assert.match(adminData, /take: limit/);
+  assert.match(adminData, /timeZone: "UTC"/);
+});
+
+test("all summary destinations have actual administrator pages", () => {
+  const destinations = [
+    "/admin/users",
+    "/admin/searches/activity",
+    "/admin/journeys",
+    "/admin/redirects",
+    "/admin/providers",
+    "/admin/support",
+    "/admin/account-deletions",
+    "/admin/system",
+    "/admin/logs",
+  ];
+  for (const href of destinations) {
+    assert.ok(existsSync("src/app" + href + "/page.tsx"), href + " destination must exist");
+    assert.ok(dashboard.includes('href="' + href + '"'), href + " must be linked from Overview");
+  }
+  assert.match(dashboard, /aria-label=\{"View " \+ title \+ " details"\}/);
+  assert.match(dashboard, /focus-ring/);
+});
+
+test("no fake totals, old full-report panels, or hidden full diagnostics remain on Overview", () => {
+  assert.doesNotMatch(dashboard, /Full provider details|<FunnelStep|<DetailRow|<WorkloadCard|<ActivityFeed/);
+  assert.doesNotMatch(dashboard, /provider\.serviceBreakdown\.map|service\.failureReasons\.map/);
+  assert.doesNotMatch(dashboard, /AdminSectionCard|AdminEmptyState|<Card/);
+  assert.doesNotMatch(dashboard, /<details|display:\s*none|hidden\s+aria-label/);
   assert.doesNotMatch(dashboard, /QuickActions|All admin modules|Admin shortcuts and modules/);
   assert.doesNotMatch(page, /adminNavigation\.filter|modules=\{modules\}/);
-  assert.match(dashboard, /href="\/admin\/support"/);
-  assert.match(dashboard, /href="\/admin\/providers"/);
-  assert.match(dashboard, /href="\/admin\/account-deletions"/);
+  assert.match(display, /<AdminOverviewSecondary system=\{system\} activity=\{activity\} \/>/);
 });
 
-test("only the Overview hides its visible page introduction", () => {
+test("the compact grid remains responsive without horizontal scrolling or cramped desktop cards", () => {
+  assert.match(display, /grid gap-2 sm:grid-cols-2 xl:grid-cols-4/);
+  assert.match(display, /grid gap-2 md:grid-cols-3/);
+  assert.match(display, /grid min-w-0 gap-4 lg:grid-cols-2/);
+  assert.match(dashboard, /grid grid-cols-2 gap-2/);
+  assert.match(dashboard, /grid grid-cols-3 gap-2/);
+  assert.match(dashboard, /flex flex-wrap items-center justify-between gap-3/);
+  assert.doesNotMatch(dashboard, /overflow-x-auto|overflow-x-scroll|whitespace-nowrap/);
+});
+
+test("the white parent container, original admin header, and automatic refresh remain", () => {
   const shell = readFileSync("src/components/admin/AdminPageShellHistorical.tsx", "utf8");
+  const horizontalShell = readFileSync("src/components/admin/AdminHorizontalShell.tsx", "utf8");
   assert.match(page, /title="Operations Dashboard"/);
   assert.match(page, /hideHeader/);
-  assert.doesNotMatch(page, /Monitor Kurioticket operations, customer journeys/);
   assert.match(shell, /hideHeader = false/);
   assert.match(shell, /<h1 className="sr-only">\{title\}<\/h1>/);
-  assert.match(shell, /<AdminPageHeader eyebrow=\{eyebrow\} title=\{title\}/);
-});
-
-test("requested descriptions are removed without altering operational sources", () => {
-  for (const message of [
-    "Account totals and action queues are current;",
-    "Items derived from current ticket, deletion and provider states.",
-    "Readiness shows whether a provider may run;",
-    "Consented journey progression. Outbound provider handoffs",
-    "Operational search records · Selected reporting range",
-    "Only verifiable search-to-handoff associations",
-    "Open the most-used operations, or expand the complete module directory below.",
-  ]) assert.ok(!dashboard.includes(message), message);
-  assert.ok(display.includes("data.journeys.operationalSearches.total"));
-  assert.ok(display.includes("data.journeys.operationalHandoffs.exactSearchLinks"));
-  assert.ok(display.includes("data.websitePresence.total"));
-  assert.ok(display.includes("AdminOverviewRangeSelect"));
-  assert.ok(display.includes("AdminOverviewAutoRefresh"));
-});
-
-test("compact range selector sits in Operations Snapshot and the top toolbar is gone", () => {
-  assert.match(page, /selected === "7d" \|\| selected === "30d" \? selected : "24h"/);
-  assert.match(page, /const dayMs = 24 \* 60 \* 60 \* 1000/);
-  assert.match(page, /range === "30d" \? 30 \* dayMs : range === "7d" \? 7 \* dayMs : dayMs/);
-  assert.match(page, /query\.set\("from"/);
-  assert.match(page, /query\.set\("to"/);
+  assert.match(page, /<AdminSectionCard className="min-w-0 p-4 sm:p-6 lg:p-7">/);
+  assert.equal((page.match(/<AdminSectionCard /g) ?? []).length, 1);
+  assert.match(horizontalShell, /bg-\[#f1f5fb\]/);
   assert.match(display, /<AdminOverviewAutoRefresh \/>/);
-  assert.match(display, /title="Operations Snapshot"[\s\S]*?<AdminOverviewRangeSelect range=\{range\} \/>/);
-  assert.match(controls, /export function AdminOverviewRangeSelect/);
-  assert.match(controls, /router\.push\(/);
-  assert.match(controls, /Overview reporting range/);
-  assert.doesNotMatch(controls, /Snapshot checked|Environment|RefreshCw|>Refresh<|Refreshing…/);
-  assert.doesNotMatch(dashboard, /<AdminOverviewControls/);
-  assert.doesNotMatch(dashboard, /vs last 7 days|\+12%|99\.2%/);
-});
-
-test("Overview information is presented without boxed white card containers", () => {
-  assert.doesNotMatch(dashboard, /AdminSectionCard|AdminEmptyState|<Card/);
-  assert.doesNotMatch(page, /AdminEmptyState/);
-  assert.match(display, /<MetricCard label="Total accounts"/);
-  assert.match(display, /<AttentionCard href="\/admin\/providers"/);
-  assert.match(display, /<PlatformHealth system=\{system\} \/>/);
-  assert.match(display, /<ProviderCard key=\{provider.id\}/);
-  assert.match(display, /<FunnelStep label="Consented search events"/);
-  assert.match(display, /<WorkloadCard title="Support Workload"/);
-  assert.match(display, /<ActivityFeed activity=\{activity\} \/>/);
-  assert.match(dashboard, /border-b border-slate-200/);
-  assert.match(dashboard, /border-t border-slate-200/);
-  assert.match(dashboard, /aria-label=\{provider.provider \+ " full provider details"\}/);
-});
-
-test("Overview range dropdown uses compact typography and neutral, accessible focus styling", () => {
-  assert.match(controls, /px-2\.5 text-\[11px\] font-medium leading-none/);
-  assert.match(controls, /px-2\.5 text-left text-\[11px\] font-medium transition-colors/);
-  assert.doesNotMatch(controls, /text-\[12px\]/);
-  assert.match(controls, /focus-visible:ring-1 focus-visible:ring-slate-300/);
-  assert.doesNotMatch(controls, /focus-within:ring-2|focus-visible:ring-indigo-500|<select/);
-  assert.match(controls, /role="listbox"/);
-  assert.match(controls, /role="option"/);
-  assert.match(controls, /aria-haspopup="listbox"/);
-  assert.match(controls, /aria-expanded=\{open\}/);
-  assert.match(controls, /aria-selected=\{selected\}/);
-  assert.match(controls, /Last 24 hours/);
-  assert.match(controls, /Last 7 days/);
-  assert.match(controls, /Last 30 days/);
-  assert.match(controls, /rounded-xl border border-slate-200 bg-white/);
-  assert.match(controls, /selected \? "bg-indigo-50 text-indigo-700"/);
-  assert.match(controls, /<Check size=\{14\}/);
-});
-
-test("Overview range interactions preserve navigation and accessible keyboard/close behaviors", () => {
-  assert.match(controls, /router\.push\(nextRange === "24h" \? "\/admin" : "\/admin\?range=" \+ encodeURIComponent\(nextRange\)\)/);
-  assert.match(controls, /if \(nextRange === range\) return/);
-  assert.match(controls, /if \(event\.key === "Escape"\)/);
-  assert.match(controls, /if \(event\.key === "ArrowDown"\)/);
-  assert.match(controls, /if \(event\.key === "ArrowUp"\)/);
-  assert.match(controls, /event\.key === "Home"/);
-  assert.match(controls, /event\.key === "End"/);
-  assert.match(controls, /if \(event\.key === "Tab"\) setOpen\(false\)/);
-  assert.match(controls, /document\.addEventListener\("pointerdown", onPointerDown\)/);
-  assert.match(controls, /document\.removeEventListener\("pointerdown", onPointerDown\)/);
-  assert.match(controls, /document\.addEventListener\("focusin", onFocusIn\)/);
-  assert.match(controls, /document\.removeEventListener\("focusin", onFocusIn\)/);
-  assert.match(controls, /triggerRef\.current\?\.focus\(\)/);
-});
-
-test("invisible automatic refresh retains its original one-minute visibility and cleanup behavior", () => {
-  assert.match(controls, /export function AdminOverviewAutoRefresh/);
   assert.match(controls, /window\.setInterval\(\(\) => \{/);
   assert.match(controls, /document\.visibilityState === "visible"\) router\.refresh\(\)/);
   assert.match(controls, /60_000/);
   assert.match(controls, /window\.clearInterval\(interval\)/);
-  assert.match(controls, /return null;/);
 });
 
-
-test("duplicate account and five-minute visitor panels are removed from the Overview only", () => {
-  const snapshot = display.slice(display.indexOf('aria-label="Operations Snapshot"'), display.indexOf('aria-label="Attention Required"'));
-  for (const duplicate of [
-    "Account status breakdown", "Enabled customer accounts", "Enabled admin accounts",
-    "Enabled support accounts", "Pending-deletion accounts", "Recently observed visitors (5 min)",
-    "data.visitorActivity.observedVisitorIdentities",
-  ]) assert.ok(!snapshot.includes(duplicate), duplicate);
-  assert.match(snapshot, /How it's counted/);
-  assert.match(snapshot, /role="note"/);
-  assert.match(snapshot, /consented visitors with a visible website tab/);
-  assert.match(snapshot, /excluding native app activity and visitors who decline analytics/);
-  assert.match(snapshot, /not every person online/);
-  assert.match(snapshot, /The 90-second window is independent of the reporting-range selector/);
-  assert.match(snapshot, /data\.websitePresence\.registeredAccounts/);
-  assert.match(snapshot, /data\.websitePresence\.guestIdentities/);
-  assert.ok(!display.includes('hint="Currently active"'));
-});
-
-test("canonical overview reads consented recent visitor identities without overwriting account status", () => {
-  const service = readFileSync("src/services/adminOverviewService.ts", "utf8");
-  assert.ok(service.includes("tx.visitor.count("));
-  assert.ok(service.includes('consentStatus: "GRANTED"'));
-  assert.ok(service.includes("trackingDisabledAt: null"));
-  assert.ok(service.includes("lastSeenAt: { gte: recentVisitorCutoff, lte: now }"));
-  assert.ok(service.includes("summarizeAccountStatusRows(lifecycle.userGroups)"));
-});
-
-
-test("redesigned layout uses balanced responsive sections and a full-width activity feed", () => {
-  assert.match(display, /grid overflow-hidden rounded-lg border-l border-t border-slate-200 sm:grid-cols-2 lg:grid-cols-3/);
-  assert.match(display, /grid gap-3 md:grid-cols-3/);
-  assert.match(display, /grid overflow-hidden rounded-lg border-l border-t border-slate-200 sm:grid-cols-2 lg:grid-cols-4/);
-  assert.match(display, /grid items-start gap-4 lg:grid-cols-2/);
-  assert.match(display, /mt-7 min-w-0 border-t border-slate-200 pt-6/);
-  assert.match(dashboard, /lg:grid-cols-\[8px_minmax\(140px,0\.75fr\)_minmax\(0,2\.4fr\)_minmax\(145px,0\.9fr\)_minmax\(130px,0\.9fr\)\]/);
-  assert.doesNotMatch(display, /lg:grid-cols-\[0\.85fr_1\.15fr\]/);
-});
-
-test("redesign retains the existing outer page and status colors", () => {
-  const shell = readFileSync("src/components/admin/AdminHorizontalShell.tsx", "utf8");
-  assert.match(dashboard, /info: "bg-indigo-50 text-indigo-700 ring-indigo-200"/);
-  assert.match(dashboard, /bg-emerald-400/);
-  assert.match(dashboard, /bg-slate-300/);
-  assert.match(dashboard, /bg-slate-50\/50/);
-  assert.match(dashboard, /rounded-xl border border-slate-200/);
-  assert.match(shell, /bg-\[#f1f5fb\]/);
-  assert.match(display, /<AdminOverviewAutoRefresh \/>/);
-  assert.match(display, /<AdminOverviewRangeSelect range=\{range\} \/>/);
-});
-
-test("Overview has one Searches-style white parent surface around all sections", () => {
-  const shared = readFileSync("src/components/admin/AdminPageShellHistorical.tsx", "utf8");
-  assert.match(page, /import \{ AdminPageShell, AdminSectionCard \}/);
-  assert.equal((page.match(/<AdminSectionCard /g) || []).length, 1);
-  assert.match(page, /<AdminSectionCard className="min-w-0 p-4 sm:p-6 lg:p-7">/);
-  assert.ok(page.indexOf("<AdminSectionCard") < page.indexOf("<AdminOverviewDashboard"));
-  assert.ok(page.indexOf("</AdminSectionCard>") > page.indexOf("<AdminOverviewSecondary"));
-  assert.match(shared, /border-slate-200 bg-white shadow-sm/);
-  assert.match(display, /<AdminOverviewAutoRefresh \/>/);
-  assert.match(display, /<AdminOverviewRangeSelect range=\{range\} \/>/);
-});
-
-
-test("Recent Admin Activity is outside the workload grid and remains full-width", () => {
-  const workloadGrid = display.indexOf('aria-label="Operational Workloads"');
-  const activityContainer = display.indexOf("mt-7 min-w-0 border-t border-slate-200 pt-6");
-  assert.ok(workloadGrid > 0);
-  assert.ok(activityContainer > workloadGrid);
-  assert.equal((display.match(/<ActivityFeed activity=\{activity\} \/>/g) || []).length, 1);
-  for (const field of ["humanize(item.title)", "item.detail", "item.timestamp", "item.title"]) {
-    assert.ok(dashboard.includes(field), field);
-  }
-  assert.doesNotMatch(dashboard, /line-clamp/);
-});
-
-test("redesign retains the original white page parent and linked admin actions", () => {
-  assert.match(page, /<AdminSectionCard className="min-w-0 p-4 sm:p-6 lg:p-7">/);
-  assert.match(dashboard, /<Link href="\/admin\/logs"/);
-  assert.match(display, /<WorkloadCard title="Support Workload"/);
-  assert.match(display, /<WorkloadCard title="Account Deletion Workload"/);
-});
-
-test("Overview typography maintains readable hierarchy without heavy global badges", () => {
-  assert.match(dashboard, /function OverviewStatusBadge/);
-  assert.doesNotMatch(dashboard, /AdminStatusBadge|font-black|font-extrabold/);
-  assert.match(dashboard, /text-\[23px\] font-semibold tabular-nums/);
-  assert.match(dashboard, /text-base font-semibold tracking-tight/);
-  assert.match(dashboard, /text-\[13px\] leading-5 text-slate-700/);
-  assert.match(dashboard, /font-mono text-\[13px\]/);
-  assert.match(display, /data\.users\.total/);
-  assert.match(display, /data\.websitePresence\.total/);
-  assert.match(display, /getAdminOverview|AdminOverviewAutoRefresh/);
-});
-
-test("Phase 1 uses validated account roles and human audit counts", () => {
- const service = readFileSync("src/services/adminOverviewService.ts","utf8");
- const adminData = readFileSync("src/lib/admin-data.ts","utf8");
- assert.match(service, /by: \["status", "role"\]/);
- assert.match(service, /adminUserId: \{ not: null \}/);
- assert.match(service, /summarizeAccountStatusRows\(lifecycle.userGroups\)/);
- for (const backendField of ["activeCustomers", "activeAdmins", "activeSupport", "pendingDeletion"]) {
-   assert.match(service, /\busers\b/);
-   assert.ok(!display.includes("data.users." + backendField), backendField + " should not repeat in the Overview");
- }
- assert.doesNotMatch(display, /Account status breakdown/);
- assert.doesNotMatch(display, /Staging data|Production data|Checked \{/);
- assert.match(service, /getPublicEnvironment/);
- assert.match(adminData, /source: log.adminUserId \? "human" as const : "system" as const/);
- assert.match(dashboard, /activity.status === "unavailable"/);
- assert.match(dashboard, /activity.items.length === 0/);
- assert.match(adminData, /timeZone: "UTC"/);
-});
-
-test("single live Active users card preserves consent and unavailable semantics without the historical duplicate", () => {
- const service = readFileSync("src/services/adminOverviewService.ts","utf8");
- const consent = readFileSync("src/components/privacy/AnalyticsConsentBridge.tsx","utf8");
- const snapshot = display.slice(display.indexOf('aria-label="Operations Snapshot"'), display.indexOf('aria-label="Attention Required"'));
- assert.match(service, /getWebsitePresenceSnapshot\(environment, now\)/);
- assert.match(service, /journeys: journeys.data/);
- assert.match(snapshot, />Active website users<\/p>/);
- assert.match(snapshot, /data.websitePresence.status === "ok"/);
- assert.match(snapshot, /data.websitePresence.total/);
- assert.match(snapshot, /"Unavailable"/);
- assert.match(snapshot, /excluding native app activity and visitors who decline analytics/);
- assert.match(snapshot, /"Last " \+ data.websitePresence.windowSeconds/);
- assert.match(snapshot, /The 90-second window is independent of the reporting-range selector/);
- assert.doesNotMatch(snapshot, /data.journeys.identities.registeredAccounts/);
- assert.doesNotMatch(snapshot, /Online website visitors|Active users \(observed\)/);
- assert.doesNotMatch(snapshot, /Staging data|Production data|Checked /);
- assert.match(consent, /websitePresenceHeartbeatMs/);
- assert.match(consent, /consentConfirmed/);
- assert.match(consent, /visibilitychange/);
- assert.match(consent, /controller.abort\(\)/);
-});
-
-test("Phase 2 splits partial searches and exposes provider failure rates without raw upstream errors", () => {
-  const core = readFileSync("src/services/providerOperationalStatusCore.ts", "utf8");
-  const journeys = readFileSync("src/services/adminJourneyCore.ts", "utf8");
-  const providersPage = readFileSync("src/app/admin/providers/page.tsx", "utf8");
-  assert.match(display, /data\.journeys\.operationalSearches\.partialWithResults/);
-  assert.match(display, /data\.journeys\.operationalSearches\.partialWithoutResults/);
-  assert.match(dashboard, /provider\.serviceBreakdown\.map/);
-  assert.match(dashboard, /provider\.failureRatePct/);
-  assert.match(providersPage, /provider\.serviceBreakdown\.map/);
-  assert.match(core, /classifyProviderIssue\(row\.errorMessage\)/);
-  assert.match(core, /counts\.failed \* 4 >= n \* 3/);
-  assert.match(journeys, /"resultCount" > 0/);
-  assert.match(journeys, /"resultCount" <= 0/);
-  assert.doesNotMatch(dashboard, /errorMessage/);
-});
-
-test("Phase 3 separately reconciles operational redirects and consented handoffs", () => {
-  const core = readFileSync("src/services/adminJourneyCore.ts", "utf8");
-  const contract = readFileSync("src/services/adminJourneyContract.ts", "utf8");
-  const journeysPage = readFileSync("src/app/admin/journeys/page.tsx", "utf8");
-  assert.match(core, /operationalHandoffsSql\(query.scope\)/);
-  assert.match(core, /scopedEvents\(unfiltered\)/);
-  assert.match(core, /eligible_handoff_redirects/);
-  assert.match(core, /r\."metadata"->>'environment' =/);
-  assert.match(core, /"redirectLogId" IS NOT NULL/);
-  assert.match(core, /totalRedirects !== inConsentedJourneys \+ outsideConsentedJourneys/);
-  assert.match(contract, /operationalHandoffs/);
-  assert.match(display, /data\.journeys\.operationalHandoffs\.total/);
-  assert.match(display, /data\.journeys\.operationalHandoffs\.withoutVisitorIdentity/);
-  assert.match(display, /Missing attribution does not prove declined consent/);
-  assert.match(journeysPage, /not all provider redirects/);
-  assert.doesNotMatch(display, /nearest search by time/);
-});
-
-test("Phase 4 clarifies time windows, provider readiness, and absent observations", () => {
-  assert.match(display, /Current account and workflow totals/);
-  assert.match(display, /live website activity from the last 90 seconds/);
-  assert.match(display, /journeys and human actions use the selected reporting range/);
-  assert.match(display, /Providers failing, degraded or not ready|Degraded, failing or not-ready integrations/);
-  assert.match(display, /p\.operationalState === "NOT_READY"/);
-  assert.match(display, /inactivity may remain/);
-  assert.match(display, /Success does not guarantee offers/);
-  assert.match(display, /Success does not guarantee offers/);
-  assert.match(display, /consented event counts, including repeats/);
-  assert.match(display, /Not conversions or confirmed bookings/);
-  assert.match(dashboard, /"None recorded in window"/);
-  assert.match(dashboard, /Secrets configured \(not tested\)/);
-  assert.match(dashboard, /Credentials configured \(not tested\)/);
-  assert.match(dashboard, /No keys configured/);
-  assert.match(dashboard, /No timing recorded/);
-  assert.match(display, /data\.audit\.human/);
-});
-
-test("Phase 5 required-gate verification guards against fabricated or silently lost Overview counts", () => {
-  const service = readFileSync("src/services/adminOverviewService.ts", "utf8");
-  const metrics = readFileSync("src/services/adminOverviewMetrics.ts", "utf8");
-  const workflow = readFileSync(".github/workflows/pr-required-gates.yml", "utf8");
-  const presence = readFileSync("src/services/websitePresenceService.ts", "utf8");
-  const journeys = readFileSync("src/services/adminJourneyCore.ts", "utf8");
-  assert.match(workflow, /Validate Admin Overview metrics and consented presence/);
-  for (const source of [
-    "src/services/adminOverviewMetrics.test.ts",
-    "src/lib/website-presence.test.ts",
-    "src/app/admin/page.test.ts",
-  ]) assert.ok(workflow.includes(source), source);
-  assert.match(metrics, /Unknown admin Overview workflow status/);
-  assert.match(service, /summarizeWorkflowStatusRows\(/);
-  assert.match(service, /supportCount\.OPEN/);
-  assert.match(service, /deletionCount\.PENDING/);
-  assert.match(service, /journeys\.status !== "ok" \|\| !providers/);
-  assert.match(service, /environment !== hostEnvironment/);
-  assert.match(presence, /if \(!row\) return unavailable\(\)/);
-  assert.match(presence, /checkedPresenceCount\(registeredAccounts \+ guestIdentities\)/);
-  assert.match(journeys, /totalRedirects !== inConsentedJourneys \+ outsideConsentedJourneys/);
-});
-
-test("all Overview diagnostic details remain visible with no disclosure controls", () => {
-  assert.doesNotMatch(dashboard, /<details/);
-  assert.match(dashboard, /Full provider details/);
-  assert.match(dashboard, /How it's counted:/);
-  assert.match(dashboard, /serviceBreakdown\.map/);
-  assert.match(dashboard, /service\.failureReasons\.map/);
-  assert.match(dashboard, /provider\.lastFailureAt/);
-  assert.match(dashboard, /role="note"/);
-  assert.match(page, /overview.status === "ok"/);
-  assert.match(page, /<AdminOverviewSecondary system=\{system\} activity=\{activity\} \/>/);
-  assert.match(page, /hideHeader/);
-
-});
-
-test("final Overview polish keeps real data bindings, correct health semantics and visitor-first layout", () => {
-  const order = [
-    'aria-label="Operations Snapshot"',
-    'aria-label="Attention Required"',
-    'aria-label="Visitor Activity & Search Performance"',
-    'aria-label="Provider Operational Health"',
-    'aria-label="Operational Workloads"',
-    "<PlatformHealth system={system} />",
-    "<ActivityFeed activity={activity} />",
-  ].map(label => display.indexOf(label));
-  assert.ok(order.every(index => index > -1));
-  assert.deepEqual(order, [...order].sort((a, b) => a - b));
-  assert.match(dashboard, /readinessLabel\(provider\.readinessState\)/);
-  assert.match(dashboard, /operationalLabel\(provider\.operationalState\)/);
-  assert.match(dashboard, /value === "READY" \? "Configured for calls"/);
-  assert.match(dashboard, /value === "FAILING"\) return "Requests failing"/);
-  assert.match(dashboard, /provider\.serviceBreakdown\.map/);
-  assert.match(dashboard, /provider\.averageLatencyMs/);
-  assert.match(display, /data\.websitePresence\.total/);
-  assert.match(display, /data\.journeys\.operationalHandoffs\.exactSearchLinks/);
-  assert.match(display, /data\.audit\.human/);
-});
-
-test("journey activity cards show real event counts first and journeys as secondary context", () => {
-  const component = dashboard.slice(dashboard.indexOf("function FunnelStep("), dashboard.indexOf("function WorkloadCard("));
-  assert.match(component, />\{count\(events\)\}<\/p>/);
-  assert.match(component, /journeys === 1 \? "Within 1 journey"/);
-  assert.match(component, /Across \$\{count\(journeys\)\} journeys/);
-  assert.ok(component.indexOf(">{count(events)}</p>") < component.indexOf("Within 1 journey"));
-  assert.doesNotMatch(component, />\{count\(journeys\)\}<\/p>/);
-  for (const [label, stage] of [
-    ["Consented search events", "SEARCH_COMPLETED"],
-    ["Results views", "RESULTS_VIEWED"],
-    ["Offer selection events", "OFFER_SELECTED"],
-    ["Provider handoffs", "PROVIDER_HANDOFF_STARTED"],
-  ]) {
-    assert.ok(display.includes('<FunnelStep label="' + label + '" journeys={funnel.' + stage + '.journeys} events={funnel.' + stage + '.events}'), label);
-  }
-  assert.equal((display.match(/<FunnelStep label=/g) ?? []).length, 4);
-  assert.match(display, /operationalSearches\.total/);
-});
-
-
-test("Overview default and explicit range selections remain consistent across page, picker and API", () => {
-  const service = readFileSync("src/services/adminOverviewService.ts", "utf8");
-  // /admin and unexpected range inputs are a rolling 24h view, never 7 days.
+test("the 24-hour default and other historical range selections remain intact", () => {
   assert.match(page, /selected === "7d" \|\| selected === "30d" \? selected : "24h"/);
-  assert.doesNotMatch(page, /selected === "24h" \|\| selected === "30d" \? selected : "7d"/);
-  // All three options emit explicit from/to timestamps, including a selected 7d.
   assert.match(page, /range === "30d" \? 30 \* dayMs : range === "7d" \? 7 \* dayMs : dayMs/);
-  assert.match(page, /query\.set\("from", new Date\(to\.getTime\(\) - durationMs\)\.toISOString\(\)\)/);
-  assert.match(page, /query\.set\("to", to\.toISOString\(\)\)/);
-  assert.doesNotMatch(page, /if \(range !== "7d"\)/);
-  // The URL without a range selects 24h; explicit older ranges survive refresh.
-  assert.match(controls, /router\.push\(nextRange === "24h" \? "\/admin" : "\/admin\?range=" \+ encodeURIComponent\(nextRange\)\)/);
+  assert.match(page, /query\.set\("from"/);
+  assert.match(page, /query\.set\("to"/);
   assert.match(controls, /const rangeOptions: OverviewRange\[\] = \["24h", "7d", "30d"\]/);
-  assert.match(controls, /document\.visibilityState === "visible"\) router\.refresh\(\)/);
-  // Direct API calls without date parameters must not unexpectedly report 7 days.
-  assert.match(service, /params\.get\("from"\) \?\? new Date\(new Date\(to\)\.getTime\(\) - 24 \* 60 \* 60 \* 1000\)/);
-  // Fixed provider and consented live presence windows do not follow the range picker.
+  assert.match(controls, /router\.push\(nextRange === "24h" \? "\/admin" : "\/admin\?range=" \+ encodeURIComponent\(nextRange\)\)/);
+  assert.match(controls, /role="listbox"/);
+  assert.match(controls, /aria-haspopup="listbox"/);
+  assert.match(controls, /aria-expanded=\{open\}/);
   assert.match(service, /getProviderOperationalStatuses\(24, environment\)/);
   assert.match(service, /getWebsitePresenceSnapshot\(environment, now\)/);
 });
 
-test("final Overview polish preserves real rates and distinct reporting scopes", () => {
-  const core = readFileSync("src/services/providerOperationalStatusCore.ts", "utf8");
-  const providers = readFileSync("src/app/admin/providers/page.tsx", "utf8");
-  assert.match(dashboard, /formatProviderFailureRatePct\(provider\.failureRatePct, provider\.failedCalls\)/);
-  assert.match(dashboard, /formatProviderFailureRatePct\(service\.failureRatePct, service\.failedCalls\)/);
-  assert.match(providers, /formatProviderFailureRatePct\(provider\.failureRatePct, provider\.failedCalls\)/);
-  assert.match(core, /Math\.round\(1000 \* counts\.failed \/ n\) \/ 10/);
-  assert.match(display, /Consented search events/);
-  assert.match(display, /All recorded searches/);
-  assert.match(dashboard, /Latest six recorded actions across all dates/);
-  assert.match(display, /data\.journeys\.operationalSearches\.total/);
+test("backend metrics retain strict account, audit, queue and environment validation", () => {
+  assert.match(service, /by: \["status", "role"\]/);
+  assert.match(service, /adminUserId: \{ not: null \}/);
+  assert.match(service, /summarizeAccountStatusRows\(lifecycle.userGroups\)/);
+  assert.match(service, /summarizeWorkflowStatusRows\(/);
+  assert.match(service, /supportCount\.OPEN/);
+  assert.match(service, /deletionCount\.PENDING/);
+  assert.match(service, /getPublicEnvironment/);
+  assert.match(adminData, /source: log\.adminUserId \? "human" as const : "system" as const/);
+  const journeyCore = readFileSync("src/services/adminJourneyCore.ts", "utf8");
+  assert.match(journeyCore, /totalRedirects !== inConsentedJourneys \+ outsideConsentedJourneys/);
+  assert.match(journeyCore, /"resultCount" > 0/);
+  assert.match(journeyCore, /"resultCount" <= 0/);
+});
+
+test("the required CI gate still validates overview integrity and consented presence", () => {
+  const workflow = readFileSync(".github/workflows/pr-required-gates.yml", "utf8");
+  const metrics = readFileSync("src/services/adminOverviewMetrics.ts", "utf8");
+  const presence = readFileSync("src/services/websitePresenceService.ts", "utf8");
+  assert.match(workflow, /Validate Admin Overview metrics and consented presence/);
+  for (const path of ["src/services/adminOverviewMetrics.test.ts", "src/lib/website-presence.test.ts", "src/app/admin/page.test.ts"]) {
+    assert.ok(workflow.includes(path), path);
+  }
+  assert.match(metrics, /Unknown admin Overview workflow status/);
+  assert.match(presence, /if \(!row\) return unavailable\(\)/);
+  assert.match(presence, /checkedPresenceCount\(registeredAccounts \+ guestIdentities\)/);
 });
