@@ -5,11 +5,12 @@ import { runInNewContext } from "node:vm";
 import test from "node:test";
 import ts from "typescript";
 import { resolveSearchRequestId } from "@/lib/search-journey";
+import { hotelSearchRecordedStatus } from "@/lib/hotelSearchRecordedStatus";
 
 const requestId = "78e1de9e-6dfe-494f-9fdb-83726d83bf64";
 type History = { requestId: string; type: string; status: string; userId: string | null; visitorId: string | null; resultCount: number; query: unknown; latencyMs: number };
 
-function routeFixture(product: "flight" | "hotel", options: { anonymous?: boolean; loggingFails?: boolean; available?: boolean } = {}) {
+function routeFixture(product: "flight" | "hotel", options: { anonymous?: boolean; loggingFails?: boolean; available?: boolean; providerFailed?: boolean } = {}) {
   const deferred: Array<() => Promise<unknown>> = [];
   const histories: History[] = [];
   const providerCalls: unknown[] = [];
@@ -18,7 +19,7 @@ function routeFixture(product: "flight" | "hotel", options: { anonymous?: boolea
   const aggregate = {
     results: [], warnings: ["Provider temporarily unavailable"], latencyMs: 42,
     ...(options.available ? {} : { unavailableMessage: "Provider temporarily unavailable" }),
-    providerStatuses: [{ provider: "provider", status: options.available ? "success" : "failed", latencyMs: 40, results: [], error: options.available ? undefined : "upstream failure" }],
+    providerStatuses: [{ provider: "provider", status: options.available && !options.providerFailed ? "success" : "failed", latencyMs: 40, results: [], error: options.available && !options.providerFailed ? undefined : "upstream failure" }],
     performance: { supplierMs: 40, normalizationMs: 0, deduplicationMs: 0, aggregationMs: 2, offerCount: 0, connectingOfferCount: 0 },
   };
   const schema = { safeParse: (data: unknown) => ({ success: true, data }) };
@@ -45,6 +46,7 @@ function routeFixture(product: "flight" | "hotel", options: { anonymous?: boolea
     "./providerDiagnostics": { logNativeFlightProviderDiagnostics: () => undefined },
     "@/services/travel/kayakSandbox": { isKayakSandboxEnabled: () => false },
     "@/lib/search-journey": { resolveSearchRequestId },
+    "@/lib/hotelSearchRecordedStatus": { hotelSearchRecordedStatus },
   };
   const route = new URL(product === "flight" ? "./route.ts" : "../../hotels/search/route.ts", import.meta.url);
   const compiled = ts.transpileModule(readFileSync(route, "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
@@ -110,3 +112,14 @@ for (const product of ["flight", "hotel"] as const) {
     assert.equal(fixture.histories[0].status, "SUCCESS");
   });
 }
+
+test("hotel provider failure with zero offers is FAILED even without an unavailable response", async () => {
+  const fixture = routeFixture("hotel", { available: true, providerFailed: true });
+  const response = await fixture.post();
+  assert.equal(response.status, 200);
+  assert.equal(fixture.histories.length, 0, "search history still records after the response");
+  await fixture.deferred[0]();
+  assert.equal(fixture.histories[0].status, "FAILED");
+  assert.equal(fixture.histories[0].resultCount, 0);
+  assert.equal(fixture.providerCalls.length, 1);
+});
