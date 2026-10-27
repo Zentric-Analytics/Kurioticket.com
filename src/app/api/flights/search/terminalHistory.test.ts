@@ -39,6 +39,7 @@ function routeFixture(product: "flight" | "hotel", options: { anonymous?: boolea
     "@/services/travel/flightAggregator": { searchFlights: async () => aggregate },
     "@/services/travel/hotelAggregator": { searchHotels: async (criteria: unknown) => { providerCriteria.push(criteria); return aggregate; }, searchHotelsByProvider: async (criteria: unknown) => { providerCriteria.push(criteria); return aggregate; } },
     "@/lib/feature-controls/service": { isFeatureEnabled: async () => true },
+    "@/lib/operationalSearchSession": { prepareOperationalSearchSession: () => null, attachOperationalSearchSession: (response: Response) => response },
     "@/services/requestActivityIdentity": { resolveRequestActivityIdentity: async () => {
       identityLookups += 1;
       return options.anonymous ? { userId: null, visitorId: null } : { userId: "verified-account", visitorId: "consented-visitor" };
