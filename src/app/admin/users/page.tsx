@@ -105,8 +105,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
       <h1 className="sr-only">Users</h1>
       <AdminUsersToolbar query={q} role={role} status={status} tab={tab} sort={sort} date={date}
         registeredCount={stats.registeredCount} guestCount={stats.guestCount} pageHref={link}>
-        <AdminIdentityTable rows={result.rows} page={page} count={count} pageSize={PAGE_SIZE}
-          pageHref={link(page)} sort={sort} />
+        <AdminIdentityTable rows={result.rows} pageHref={link} sort={sort} />
       </AdminUsersToolbar>
     </div>
   );
