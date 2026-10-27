@@ -715,12 +715,15 @@ export function createAdminOperationalReadService(dependencies: Dependencies) {
           const row = await db.searchHistory.findFirst({ where: { id: parsedId.data, query: { path: ["environment"], equals: env.data } }, select: searchSelect });
           if (!row) return { status: "not_found" };
           const eligibleVisitorId = attributableVisitorId(row.visitorId, row.visitor);
+          // The Users activity reader is scoped to this deployment's environment.
+          // Never offer a link that would silently show activity from another environment.
+          const activityInCurrentEnvironment = env.data === dependencies.environment();
           // A direct userId is the only authority for a registered search.
           // Never attach a guest search to a later-linked account by inference.
           const account = row.userId
             ? await db.user.findUnique({ where: { id: row.userId }, select: { id: true, name: true, email: true } })
             : null;
-          const guest = !row.userId && eligibleVisitorId
+          const guest = activityInCurrentEnvironment && !row.userId && eligibleVisitorId
             ? await db.visitor.findFirst({
                 where: eligibleGuestVisitorWhere(eligibleVisitorId),
                 select: { id: true },
@@ -729,9 +732,10 @@ export function createAdminOperationalReadService(dependencies: Dependencies) {
           const searcher: AdminSearchDetail["searcher"] = {
             name: account ? text(account.name, 160) : null,
             email: account ? text(account.email, 320) : null,
-            activity: account
-              ? { kind: "user", id: account.id }
-              : guest ? { kind: "guest", id: guest.id } : null,
+            activity: activityInCurrentEnvironment
+              ? account ? { kind: "user", id: account.id }
+                : guest ? { kind: "guest", id: guest.id } : null
+              : null,
           };
           let providers: AdminSearchProviderDiagnostic[] = [];
           if (row.requestId) {
