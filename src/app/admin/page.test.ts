@@ -160,7 +160,7 @@ test("Overview information is presented without boxed white card containers", ()
   assert.match(display, /<ActivityFeed activity=\{activity\} \/>/);
   assert.match(dashboard, /border-b border-slate-200/);
   assert.match(dashboard, /border-t border-slate-200/);
-  assert.match(dashboard, /<details className="mt-3 border-t border-slate-200\/80">/);
+  assert.match(dashboard, /<details open className="mt-3 border-t border-slate-200\/80">/);
 });
 
 test("Overview range dropdown uses compact typography and neutral, accessible focus styling", () => {
@@ -216,7 +216,7 @@ test("duplicate account and five-minute visitor panels are removed from the Over
     "data.visitorActivity.observedVisitorIdentities",
   ]) assert.ok(!snapshot.includes(duplicate), duplicate);
   assert.match(snapshot, /How it's counted/);
-  assert.match(snapshot, /<details className="mt-2 text-\[12px\] leading-5 text-slate-600">/);
+  assert.match(snapshot, /<details open className="mt-2 text-\[12px\] leading-5 text-slate-600">/);
   assert.match(snapshot, /consented visitors with a visible website tab/);
   assert.match(snapshot, /excluding native app activity and visitors who decline analytics/);
   assert.match(snapshot, /not every person online/);
@@ -431,4 +431,16 @@ test("Phase 5 required-gate verification guards against fabricated or silently l
   assert.match(presence, /if \(!row\) return unavailable\(\)/);
   assert.match(presence, /checkedPresenceCount\(registeredAccounts \+ guestIdentities\)/);
   assert.match(journeys, /totalRedirects !== inConsentedJourneys \+ outsideConsentedJourneys/);
+});
+
+test("all Overview detail disclosures are expanded by default and main sections remain intact", () => {
+  const opened = dashboard.match(/<details open className=/g) ?? [];
+  assert.equal(opened.length, 2, "provider diagnostics and active-user counting disclosure");
+  assert.doesNotMatch(dashboard, /<details className=/);
+  assert.match(dashboard, /Full provider details/);
+  assert.match(dashboard, /How it's counted/);
+  assert.match(dashboard, /<PlatformHealth system=\{system\} \/>/);
+  assert.match(page, /overview.status === "ok"/);
+  assert.match(page, /<AdminOverviewSecondary system=\{system\} activity=\{activity\} \/>/);
+  assert.match(page, /hideHeader/);
 });
