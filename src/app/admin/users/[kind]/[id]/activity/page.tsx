@@ -180,7 +180,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
         <div className="flex min-w-0 items-center gap-4">
           <span aria-hidden="true" className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[var(--muted)] text-xl font-semibold">{(kind === "guest" ? "G" : (data.title || "U").slice(0,1)).toUpperCase()}</span>
           <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2"><h1 className="truncate text-xl font-semibold">{kind === "guest" ? operational ? "Guest session" : "Guest visitor" : data.title}</h1>
+            <div className="flex flex-wrap items-center gap-2"><h1 className="truncate text-xl font-semibold">{kind === "guest" ? operational ? "Guest session" : "Visitor" : data.title}</h1>
               <span className="rounded-full border border-[var(--border)] px-2 py-0.5 text-xs">{kind === "guest" ? operational ? "Essential operational activity" : "Guest visitor" : data.status === "ACTIVE" ? "Active" : data.status}</span></div>
             {data.email ? <p className="mt-1 truncate text-sm text-[var(--muted-foreground)]">{data.email}</p> : null}
             <div className="mt-1 flex items-center gap-2"><code className="max-w-[240px] truncate text-xs" title={id}>{id}</code><CopyIdentityId id={id} kind={kind}/></div>
