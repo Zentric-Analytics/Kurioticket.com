@@ -1,5 +1,5 @@
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
-import { eligibleLinkedVisitorWhere } from "@/lib/adminIdentityJourney";
+import { eligibleGuestVisitorWhere, eligibleLinkedVisitorWhere } from "@/lib/adminIdentityJourney";
 import { isJourneySourcePath, journeySourcePath } from "@/lib/search-journey";
 import type { PublicEnvironment } from "@/lib/stagingSafety";
 import { classifyProviderIssue, providerSearchService } from "@/services/searchFailureDiagnostics";
@@ -33,7 +33,7 @@ import {
   type AdminSupportScope,
 } from "./adminOperationalReadContract";
 
-export type AdminOperationalDatabase = Pick<PrismaClient, "searchHistory" | "apiProviderLog" | "redirectLog" | "supportTicket" | "accountDeletionRequest" | "$queryRaw">;
+export type AdminOperationalDatabase = Pick<PrismaClient, "searchHistory" | "apiProviderLog" | "redirectLog" | "supportTicket" | "accountDeletionRequest" | "user" | "visitor" | "$queryRaw">;
 type Dependencies = {
   authorize: () => Promise<boolean>;
   database: () => AdminOperationalDatabase | null;
@@ -714,6 +714,25 @@ export function createAdminOperationalReadService(dependencies: Dependencies) {
           if (env.status !== "ok") return env;
           const row = await db.searchHistory.findFirst({ where: { id: parsedId.data, query: { path: ["environment"], equals: env.data } }, select: searchSelect });
           if (!row) return { status: "not_found" };
+          const eligibleVisitorId = attributableVisitorId(row.visitorId, row.visitor);
+          // A direct userId is the only authority for a registered search.
+          // Never attach a guest search to a later-linked account by inference.
+          const account = row.userId
+            ? await db.user.findUnique({ where: { id: row.userId }, select: { id: true, name: true, email: true } })
+            : null;
+          const guest = !row.userId && eligibleVisitorId
+            ? await db.visitor.findFirst({
+                where: eligibleGuestVisitorWhere(eligibleVisitorId),
+                select: { id: true },
+              })
+            : null;
+          const searcher: AdminSearchDetail["searcher"] = {
+            name: account ? text(account.name, 160) : null,
+            email: account ? text(account.email, 320) : null,
+            activity: account
+              ? { kind: "user", id: account.id }
+              : guest ? { kind: "guest", id: guest.id } : null,
+          };
           let providers: AdminSearchProviderDiagnostic[] = [];
           if (row.requestId) {
             const logs = await db.apiProviderLog.findMany({
@@ -738,6 +757,7 @@ export function createAdminOperationalReadService(dependencies: Dependencies) {
             data: {
               ...searchDto(row, env.data, providers),
               diagnostic: exactSearchDiagnostic(row, providers),
+              searcher,
             },
           };
         });
