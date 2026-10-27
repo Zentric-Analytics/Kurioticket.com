@@ -173,7 +173,7 @@ export function AdminUsersToolbar({
       </form>
     </div>
 
-    <div className="flex min-w-0 flex-col gap-x-4 gap-y-2 border-b border-border md:flex-row md:items-end md:justify-between">
+    <div className="flex min-w-0 flex-col gap-x-4 gap-y-2 border-b border-border lg:flex-row lg:items-end lg:justify-between">
       <nav aria-label="User types" className="flex min-w-0 max-w-full shrink-0 items-center gap-5 overflow-x-auto">
         {tabs.map(item => <Link
           key={item.value}
@@ -191,7 +191,7 @@ export function AdminUsersToolbar({
 
       <form action="/admin/users" method="get"
         aria-label="Filter users"
-        className="grid min-w-0 grid-cols-2 items-end gap-2 md:flex md:shrink-0 md:items-end md:gap-3">
+        className="grid min-w-0 grid-cols-2 items-end gap-2 lg:flex lg:shrink-0 lg:items-end lg:gap-3">
         <input type="hidden" name="q" value={query} readOnly />
         <input type="hidden" name="sort" value={sort} readOnly />
         <input type="hidden" name="tab" value={tab} readOnly />
@@ -200,15 +200,15 @@ export function AdminUsersToolbar({
         {filterActive ? <Link
           href={clearHref}
           onClick={event => navigateLink(event, { role: "ALL", status: "ALL" })}
-          className="focus-ring col-span-2 inline-flex h-11 w-fit items-center rounded-sm text-[13px] font-medium text-blue hover:underline md:order-first"
+          className="focus-ring col-span-2 inline-flex h-11 w-fit items-center rounded-sm text-[13px] font-medium text-blue hover:underline lg:order-first"
         >
           Clear filters
         </Link> : null}
-        <div className="min-w-0 md:w-[140px]">
+        <div className="min-w-0 lg:w-[140px]">
           <AdminDirectorySelect key={"role-" + role} name="role" label="Account role" value={role} options={roles}
             onValueChange={next => navigate({ role: next })} />
         </div>
-        {tab !== "GUEST" ? <div className="min-w-0 md:w-[150px]">
+        {tab !== "GUEST" ? <div className="min-w-0 lg:w-[150px]">
           <AdminDirectorySelect key={"status-" + status} name="status" label="Account status" value={status} options={statuses}
             onValueChange={next => navigate({ status: next })} />
         </div> : null}
