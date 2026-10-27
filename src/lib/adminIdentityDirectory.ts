@@ -11,13 +11,24 @@ export function escapePrismaContainsQuery(query: string) {
   return query.replace(/[\\%_]/g, character => "\\" + character);
 }
 
-export const ADMIN_IDENTITY_DATES = ["all", "today", "last7", "thisMonth", "lastMonth", "last3"] as const;
+export const ADMIN_IDENTITY_DATES = ["all", "today", "last7", "thisMonth", "lastMonth", "last3", "custom"] as const;
 export type AdminIdentityDate = (typeof ADMIN_IDENTITY_DATES)[number];
 export function parseAdminIdentityDate(value?: string): AdminIdentityDate {
   return ADMIN_IDENTITY_DATES.includes(value as AdminIdentityDate) ? value as AdminIdentityDate : "all";
 }
-export function adminIdentityDateBounds(date: AdminIdentityDate, now = new Date()) {
+export function validAdminIdentityCustomDates(from?: string, to?: string) {
+  const parse = (value?: string) => {
+    if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+    const result = new Date(value + "T00:00:00.000Z");
+    return !Number.isNaN(result.getTime()) && result.toISOString().slice(0, 10) === value ? result : null;
+  };
+  const start = parse(from);
+  const end = parse(to);
+  return start && end && start <= end ? { from: start, to: new Date(end.getTime() + 86400000) } : null;
+}
+export function adminIdentityDateBounds(date: AdminIdentityDate, now = new Date(), from?: string, to?: string) {
   if (date === "all") return null;
+  if (date === "custom") return validAdminIdentityCustomDates(from, to);
   const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
   const month = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
   const tomorrow = new Date(today.getTime() + 86400000);
@@ -49,6 +60,8 @@ export type AdminIdentityPageRequest = {
   offset: number;
   sort?: AdminIdentitySort;
   date?: AdminIdentityDate;
+  from?: string;
+  to?: string;
   now?: Date;
 };
 
@@ -64,7 +77,7 @@ export function adminIdentityPageSql(input: AdminIdentityPageRequest): Prisma.Sq
   const showOperationalGuests = input.showOperationalGuests ?? false;
   const environment = input.environment ?? "production";
   const sort = parseAdminIdentitySort(input.sort);
-  const bounds = adminIdentityDateBounds(input.date ?? "all", input.now);
+  const bounds = adminIdentityDateBounds(input.date ?? "all", input.now, input.from, input.to);
   const order = sort === "oldest"
     ? Prisma.sql`"joinedAt" ASC, "kind" ASC, "id" ASC`
     : sort === "name_asc"

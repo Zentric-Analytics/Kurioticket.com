@@ -5,10 +5,10 @@ import { AdminIdentityTable, type IdentityRow } from "@/components/admin/AdminId
 import { AdminUsersToolbar } from "@/components/admin/AdminUsersToolbar";
 import { withOptionalDb } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/auth-guards";
-import { adminIdentityPageSql, escapePrismaContainsQuery, parseAdminIdentitySort, parseAdminIdentityDate, adminIdentityDateBounds, type AdminIdentityReference } from "@/lib/adminIdentityDirectory";
+import { adminIdentityPageSql, escapePrismaContainsQuery, parseAdminIdentitySort, parseAdminIdentityDate, adminIdentityDateBounds, validAdminIdentityCustomDates, type AdminIdentityReference } from "@/lib/adminIdentityDirectory";
 
 export const metadata = { title: "Admin Users" };
-type PageProps = { searchParams?: Promise<{ q?: string; role?: string; status?: string; tab?: string; identity?: string; activity?: string; page?: string; sort?: string; date?: string }> };
+type PageProps = { searchParams?: Promise<{ q?: string; role?: string; status?: string; tab?: string; identity?: string; activity?: string; page?: string; sort?: string; date?: string; from?: string; to?: string }> };
 // Keep each SQL query bounded; fetch all matches in chunks for a continuous directory.
 const BATCH_SIZE = 100;
 export default async function AdminUsersPage({ searchParams }: PageProps) {
@@ -23,15 +23,19 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
   const tab: "ALL" | "REGISTERED" | "GUEST" =
     selectedTab === "REGISTERED" || selectedTab === "GUEST" ? selectedTab : "ALL";
   const sort = parseAdminIdentitySort(params?.sort);
-  const date = parseAdminIdentityDate(params?.date);
+  const requestedDate = parseAdminIdentityDate(params?.date);
+  const custom = validAdminIdentityCustomDates(params?.from, params?.to);
+  const date = requestedDate === "custom" && !custom ? "all" : requestedDate;
+  const from = date === "custom" ? params?.from : undefined;
+  const to = date === "custom" ? params?.to : undefined;
   const now = new Date();
-  const bounds = adminIdentityDateBounds(date, now);
+  const bounds = adminIdentityDateBounds(date, now, from, to);
   const dateWhere = bounds ? { gte: bounds.from, ...(bounds.to ? { lt: bounds.to } : {}) } : undefined;
   // Existing bookmarked drawer URLs remain functional; only the presentation changes.
   const legacy = /^(user|guest):([a-z0-9_-]{6,80})$/i.exec(params?.activity || "");
   if (legacy) {
     const directory = new URLSearchParams({
-      ...(q ? { q } : {}), role, status, tab, sort, date,
+      ...(q ? { q } : {}), role, status, tab, sort, date, ...(from && to ? {from,to} : {}),
       ...(params?.page && /^\d{1,7}$/.test(params.page) ? { page: params.page } : {}),
     }).toString();
     redirect("/admin/users/" + legacy[1].toLowerCase() + "/" + encodeURIComponent(legacy[2])
@@ -144,7 +148,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
     const identities: AdminIdentityReference[] = [];
     for (let offset = 0; offset < count; offset += BATCH_SIZE) {
       const sql = adminIdentityPageSql({
-        query: q, role, status, showUsers, showGuests, sort, date, now,
+        query: q, role, status, showUsers, showGuests, sort, date, from, to, now,
         limit: BATCH_SIZE, offset,
       });
       if (!sql) break;
@@ -179,11 +183,11 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
     });
     return { rows };
   }, { rows: [] as IdentityRow[] });
-  const link = "/admin/users?" + new URLSearchParams({ ...(q ? { q } : {}), role, status, tab, sort, date }).toString();
+  const link = "/admin/users?" + new URLSearchParams({ ...(q ? { q } : {}), role, status, tab, sort, date, ...(from && to ? {from,to} : {}) }).toString();
   return (
     <div className="w-full min-w-0 bg-white">
       <h1 className="sr-only">Users</h1>
-      <AdminUsersToolbar query={q} role={role} status={status} tab={tab} sort={sort} date={date}
+      <AdminUsersToolbar query={q} role={role} status={status} tab={tab} sort={sort} date={date} from={from || ""} to={to || ""}
         registeredCount={stats.registeredCount} guestCount={stats.guestCount} pageHref={link}>
         <AdminIdentityTable rows={result.rows} pageHref={link} sort={sort} />
       </AdminUsersToolbar>

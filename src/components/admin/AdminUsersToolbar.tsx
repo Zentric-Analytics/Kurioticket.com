@@ -16,6 +16,8 @@ type Props = {
   tab: UserTab;
   sort: AdminIdentitySort;
   date: AdminIdentityDate;
+  from: string;
+  to: string;
   registeredCount: number;
   guestCount: number;
   pageHref: string;
@@ -44,6 +46,7 @@ const dateOptions = [
   { value: "thisMonth", label: "This month" },
   { value: "lastMonth", label: "Last month" },
   { value: "last3", label: "Last 3 months" },
+  { value: "custom", label: "Custom range" },
 ] as const;
 
 const tabs: { value: UserTab; label: string }[] = [
@@ -57,6 +60,7 @@ function urlWith(base: URLSearchParams, values: Record<string, string>) {
   params.delete("identity"); // Old bookmarks remain valid; new URLs use tab=.
   params.delete("activity");
   params.delete("page");
+  if ("date" in values && values.date !== "custom") { params.delete("from"); params.delete("to"); }
   for (const [key, value] of Object.entries(values)) {
     if (key === "q" && !value) params.delete("q");
     else params.set(key, value);
@@ -70,10 +74,13 @@ function urlWith(base: URLSearchParams, values: Record<string, string>) {
  * the table always comes from the authorized server component.
  */
 export function AdminUsersToolbar({
-  query, role, status, tab, sort, date, registeredCount, guestCount, pageHref, children,
+  query, role, status, tab, sort, date, from, to, registeredCount, guestCount, pageHref, children,
 }: Props) {
   const router = useRouter();
   const [searchText, setSearchText] = useState(query);
+  const [customOpen, setCustomOpen] = useState(false);
+  const [selectorVersion, setSelectorVersion] = useState(0);
+  const [draftDates, setDraftDates] = useState({ from, to });
   const [isPending, startTransition] = useTransition();
   const textRef = useRef(query);
   const editingRef = useRef(false);
@@ -82,7 +89,11 @@ export function AdminUsersToolbar({
 
   useEffect(() => {
     paramsRef.current = new URLSearchParams(pageHref.split("?")[1] || "");
-  }, [pageHref]);
+    // An older in-flight response must not discard a date draft being edited.
+    if (customOpen) return;
+    setCustomOpen(false);
+    setDraftDates({from,to});
+  }, [pageHref, from, to, customOpen]);
 
   useEffect(() => {
     const onHistoryNavigation = () => {
@@ -90,6 +101,7 @@ export function AdminUsersToolbar({
       editingRef.current = false;
       lastSubmittedRef.current = null;
       paramsRef.current = new URLSearchParams(window.location.search);
+      setCustomOpen(false);
       const restoredQuery = (paramsRef.current.get("q") ?? "").trim().slice(0, 120);
       textRef.current = restoredQuery;
       setSearchText(restoredQuery);
@@ -147,6 +159,22 @@ export function AdminUsersToolbar({
     return () => window.clearTimeout(timer);
   }, [searchText, query, navigate]);
 
+  const validCustom = /^\d{4}-\d{2}-\d{2}$/.test(draftDates.from) && /^\d{4}-\d{2}-\d{2}$/.test(draftDates.to)
+    && !Number.isNaN(Date.parse(draftDates.from)) && !Number.isNaN(Date.parse(draftDates.to))
+    && draftDates.from <= draftDates.to;
+  function changeDate(next: string) {
+    if (next === "custom") {
+      editingRef.current = false;
+      textRef.current = query;
+      setSearchText(query);
+      lastSubmittedRef.current = null;
+      setDraftDates({from,to});
+      setCustomOpen(true);
+      return;
+    }
+    setCustomOpen(false);
+    navigate({date:next});
+  }
   function onSearchSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const nextQuery = textRef.current.trim().slice(0, 120);
@@ -174,6 +202,8 @@ export function AdminUsersToolbar({
         <input type="hidden" name="status" value={status} readOnly />
         <input type="hidden" name="sort" value={sort} readOnly />
         <input type="hidden" name="date" value={date} readOnly />
+        {from ? <input type="hidden" name="from" value={from} readOnly /> : null}
+        {to ? <input type="hidden" name="to" value={to} readOnly /> : null}
         <input type="hidden" name="tab" value={tab} readOnly />
         <Search size={17} aria-hidden="true" className="pointer-events-none absolute left-3.5 top-3.5 text-muted"/>
         <label className="sr-only" htmlFor="admin-user-search">Search users</label>
@@ -220,8 +250,8 @@ export function AdminUsersToolbar({
         <input type="hidden" name="tab" value={tab} readOnly />
         {tab === "GUEST" ? <input type="hidden" name="status" value={status} readOnly /> : null}
 
-        <AdminDirectorySelect key={"date-" + date} name="date" label="Date range" value={date} options={dateOptions}
-          plain align="end" onValueChange={next => navigate({ date: next })} />
+        <AdminDirectorySelect key={"date-" + date + "-" + selectorVersion} name="date" label="Date range" nativeExcludeValues={["custom"]} value={customOpen ? "custom" : date} options={dateOptions}
+          plain align="end" onValueChange={changeDate} />
         <AdminDirectorySelect key={"role-" + role} name="role" label="Account role" value={role} options={roles}
           plain align="end" onValueChange={next => navigate({ role: next })} />
         {tab !== "GUEST" ? <AdminDirectorySelect key={"status-" + status} name="status" label="Account status"
@@ -233,6 +263,23 @@ export function AdminUsersToolbar({
         </noscript>
       </form>
     </div>
+    {(customOpen || date === "custom") ? <div className="flex flex-wrap items-end gap-3 py-3">
+      <label className="text-xs text-[#475569]">From (UTC)
+        <input type="date" aria-label="Custom start date UTC" value={draftDates.from}
+          max={draftDates.to || undefined} onChange={event => { setCustomOpen(true); setDraftDates(current => ({...current,from:event.target.value})); }}
+          className="mt-1 block h-11 min-w-0 rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px] text-[#020617]"/>
+      </label>
+      <label className="text-xs text-[#475569]">To (UTC)
+        <input type="date" aria-label="Custom end date UTC" value={draftDates.to}
+          min={draftDates.from || undefined} onChange={event => { setCustomOpen(true); setDraftDates(current => ({...current,to:event.target.value})); }}
+          className="mt-1 block h-11 min-w-0 rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px] text-[#020617]"/>
+      </label>
+      <button type="button" disabled={!validCustom || isPending}
+        onClick={() => { setCustomOpen(false); navigate({date:"custom",from:draftDates.from,to:draftDates.to}); }}
+        className="h-11 rounded-lg bg-[#004BB8] px-4 text-[13px] font-medium text-white disabled:cursor-not-allowed disabled:opacity-40">Apply dates</button>
+      <button type="button" onClick={() => { setCustomOpen(false); setDraftDates({from,to}); setSelectorVersion(version => version + 1); }}
+        className="h-11 px-2 text-[13px] font-medium text-[#475569] hover:underline">Cancel</button>
+    </div> : null}
 
     <div aria-busy={isPending} className="relative min-w-0">
       {isPending ? <div role="status" aria-live="polite"

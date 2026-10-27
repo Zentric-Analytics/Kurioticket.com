@@ -16,6 +16,7 @@ type Props = {
   name: string;
   value: string;
   options: readonly AdminDirectoryOption[];
+  nativeExcludeValues?: readonly string[];
   autoSubmit?: boolean;
   compact?: boolean;
   underlined?: boolean;
@@ -34,6 +35,7 @@ export function AdminDirectorySelect({
   name,
   value,
   options,
+  nativeExcludeValues = [],
   autoSubmit = false,
   compact = false,
   underlined = false,
@@ -153,7 +155,7 @@ export function AdminDirectorySelect({
           defaultValue={value}
           className={plain ? "h-10 w-auto max-w-full border-0 bg-transparent px-0 text-[13px] font-medium text-[#334155] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#64748B]" : underlined ? "h-10 w-auto max-w-full border-0 border-b border-[#CAD3DF] bg-transparent px-0 pr-1 text-[13px] font-medium text-[#334155] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#64748B]" : `focus-ring w-full min-w-0 rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px] font-medium text-[#020617] ${compact ? "h-10" : "h-11"}`}
         >
-          {options.map(option => (
+          {options.filter(option => !nativeExcludeValues.includes(option.value)).map(option => (
             <option key={option.value} value={option.value}>{option.label}</option>
           ))}
         </select>

@@ -16,7 +16,7 @@ import { getAdminEmails } from "@/lib/env";
 import { withOptionalDb } from "@/lib/prisma";
 import { eligibleGuestVisitorWhere } from "@/lib/adminIdentityJourney";
 import { activityHref, parseActivityFilters, relatedJourneysWindow, validActivityIdentity, type ActivityFilters } from "@/lib/adminIdentityActivity";
-import { ADMIN_IDENTITY_SORTS, ADMIN_IDENTITY_DATES } from "@/lib/adminIdentityDirectory";
+import { ADMIN_IDENTITY_SORTS, ADMIN_IDENTITY_DATES, validAdminIdentityCustomDates } from "@/lib/adminIdentityDirectory";
 import { loadAdminIdentityActivity } from "@/services/adminIdentityActivityService";
 
 export const metadata = { title: "Admin Customer Activity" };
@@ -41,13 +41,18 @@ function safeDirectoryHref(raw: RawQuery) {
   const candidates = new URLSearchParams(saved);
   const safe = new URLSearchParams();
   const allowed = {
-    q: 120, role: 30, status: 30, tab: 30, identity: 30, sort: 20, date: 20, page: 8,
+    q: 120, role: 30, status: 30, tab: 30, identity: 30, sort: 20, date: 20, from: 10, to: 10, page: 8,
   } as const;
   for (const [key, max] of Object.entries(allowed)) {
     const value = candidates.get(key);
     if (value && value.length <= max && !/[\u0000-\u001f\u007f]/.test(value)
       && (key !== "sort" || ADMIN_IDENTITY_SORTS.includes(value as (typeof ADMIN_IDENTITY_SORTS)[number]))
       && (key !== "date" || ADMIN_IDENTITY_DATES.includes(value as (typeof ADMIN_IDENTITY_DATES)[number]))) safe.set(key, value);
+  }
+  if (safe.get("date") !== "custom" || !validAdminIdentityCustomDates(safe.get("from") || undefined, safe.get("to") || undefined)) {
+    safe.delete("from");
+    safe.delete("to");
+    if (safe.get("date") === "custom") safe.set("date", "all");
   }
   return "/admin/users" + (safe.size ? "?" + safe.toString() : "");
 }
