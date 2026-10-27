@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, UserRound } from "lucide-react";
+import { ChevronRight, UserRound } from "lucide-react";
 import { CopyIdentityId } from "./CopyIdentityId";
 import type { AdminIdentitySort as IdentitySort } from "@/lib/adminIdentityDirectory";
 
@@ -22,9 +22,6 @@ export type IdentityRow =
 
 type Props = {
   rows: IdentityRow[];
-  page: number;
-  count: number;
-  pageSize: number;
   sort: IdentitySort;
   pageHref: string;
 };
@@ -50,13 +47,9 @@ function IdentityDate({ at }: { at: Date }) {
 
 export function AdminIdentityTable({
   rows,
-  page,
-  count,
-  pageSize,
   sort,
   pageHref,
 }: Props) {
-  const totalPages = Math.max(1, Math.ceil(count / pageSize));
   function href(values: Record<string, string>) {
     const [path, query] = pageHref.split("?");
     const params = new URLSearchParams(query);
@@ -72,8 +65,6 @@ export function AdminIdentityTable({
   const activityHref = (kind: "guest" | "user", id: string) =>
     "/admin/users/" + kind + "/" + encodeURIComponent(id) + "/activity" +
     (directory ? "?directory=" + encodeURIComponent(directory) : "");
-  const paginationClass =
-    "focus-ring inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[#D8E1EC] bg-white text-[#0F172A] transition hover:border-[#94A3B8] hover:bg-[#F8FAFC]";
   return (
     <section className="mt-3 min-w-0 bg-white">
       <h2 id="identity-directory-title" className="sr-only">Users directory</h2>
@@ -208,10 +199,10 @@ export function AdminIdentityTable({
                 >
                   <p className="font-medium text-foreground">No users match your filters</p>
                   <div className="mt-2 flex items-center justify-center gap-4">
-                    {hasSearch ? <Link href={href({ q: "", page: "1" })}
+                    {hasSearch ? <Link href={href({ q: "" })}
                       className="focus-ring rounded-sm font-medium text-blue hover:underline">Clear search</Link> : null}
                     {!hasSearch && currentTab !== "ALL"
-                      ? <Link href={href({ tab: "ALL", page: "1" })}
+                      ? <Link href={href({ tab: "ALL" })}
                         className="focus-ring rounded-sm font-medium text-blue hover:underline">View all users</Link>
                       : null}
                   </div>
@@ -220,43 +211,6 @@ export function AdminIdentityTable({
             ) : null}
           </tbody>
         </table>
-      </div>
-      <div className="flex items-center justify-end border-t border-[#D8E1EC] bg-white py-3">
-        <nav aria-label="Identity pagination" className="ml-auto flex items-center gap-3">
-          {page > 1 ? (
-            <Link
-              aria-label="Previous page"
-              title="Previous page"
-              className={paginationClass}
-              href={href({ page: String(page - 1) })}
-            >
-              <ChevronLeft size={17} aria-hidden="true" />
-            </Link>
-          ) : (
-            <span aria-label="Previous page unavailable" aria-disabled="true"
-              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[#D8E1EC] bg-white text-[#94A3B8] opacity-70">
-              <ChevronLeft size={17} aria-hidden="true" />
-            </span>
-          )}
-          <span className="min-w-16 text-center text-[13px] font-medium tabular-nums text-[#020617]">
-            Pg{page} of {totalPages}
-          </span>
-          {page < totalPages ? (
-            <Link
-              aria-label="Next page"
-              title="Next page"
-              className={paginationClass}
-              href={href({ page: String(page + 1) })}
-            >
-              <ChevronRight size={17} aria-hidden="true" />
-            </Link>
-          ) : (
-            <span aria-label="Next page unavailable" aria-disabled="true"
-              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[#D8E1EC] bg-white text-[#94A3B8] opacity-70">
-              <ChevronRight size={17} aria-hidden="true" />
-            </span>
-          )}
-        </nav>
       </div>
     </section>
   );
