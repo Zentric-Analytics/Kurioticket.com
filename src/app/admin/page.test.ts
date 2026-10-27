@@ -47,9 +47,9 @@ test("overview prioritizes action and visitor activity before diagnostics", () =
     'aria-label="Visitor Activity & Search Performance"',
     'aria-label="Provider Operational Health"',
     'aria-label="Operational Workloads"',
-    "<PlatformHealth system={system} />",
     'title="Support Workload"',
     'title="Account Deletion Workload"',
+    "<PlatformHealth system={system} />",
     "<ActivityFeed activity={activity} />",
   ];
   const indexes = sequence.map((label) => {
@@ -58,6 +58,14 @@ test("overview prioritizes action and visitor activity before diagnostics", () =
     return found;
   });
   assert.deepEqual(indexes, [...indexes].sort((a, b) => a - b));
+  // Both workload cards must remain inside the grouped section, before
+  // configuration-only Platform Health and the full-width audit feed.
+  const workloads = display.slice(
+    display.indexOf('aria-label="Operational Workloads"'),
+    display.indexOf("<PlatformHealth system={system} />"),
+  );
+  assert.match(workloads, /title="Support Workload"/);
+  assert.match(workloads, /title="Account Deletion Workload"/);
 });
 
 test("journey funnel and both correlation metrics retain accurate source data", () => {
