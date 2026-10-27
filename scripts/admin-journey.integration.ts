@@ -274,7 +274,7 @@ test("observed stage metrics handle progressive ordering, repeated selections, m
   assert.deepEqual(result.stages.PROVIDER_HANDOFF_STARTED, { identities: 1, journeys: 1, events: 2 });
   assert.deepEqual(result.recordedSearches, { total: 6, success: 3, partial: 2, failed: 1 });
   assert.deepEqual(result.handoffCorrelation, { exactEvents: 1, uncorrelatedEvents: 1 });
-  assert.deepEqual(result.operationalSearches, { scope: "environment_and_date_only", total: 8, success: 4, partial: 2, failed: 2 });
+  assert.deepEqual(result.operationalSearches, { scope: "environment_and_date_only", total: 8, success: 4, partial: 2, failed: 2, partialWithResults: 2, partialWithoutResults: 0 });
   const detail = ok(await service.detail(j.id, window(8)));
   assert.equal(detail.events[0].type, "RESULTS_VIEWED");
   assert.deepEqual(detail.events.filter(e => e.handoff).map(e => e.handoff!.searchCorrelation), ["exact", "unavailable"]);
