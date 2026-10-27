@@ -40,6 +40,10 @@ const db = {
   },
   async $queryRaw(sql) {
     const statement = sql.strings.join("?");
+    // The fixture has no essential-only sessions. Model the new count and
+    // detail probes separately from the combined directory reference query.
+    if (statement.includes('COUNT(*)::bigint AS "count"')) return [{ count: 0n }];
+    if (statement.includes('AS "firstSeenAt", MAX(a."createdAt") AS "lastSeenAt"')) return [];
     const all = [
       ...(statement.includes('FROM "User"') ? filteredUsers.map(record => ({ kind: "user", record })) : []),
       ...(statement.includes('FROM "Visitor"') ? filteredGuests.map(record => ({ kind: "guest", record })) : []),
