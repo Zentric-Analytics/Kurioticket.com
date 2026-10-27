@@ -382,3 +382,21 @@ test("Phase 3 separately reconciles operational redirects and consented handoffs
   assert.match(journeysPage, /not all provider redirects/);
   assert.doesNotMatch(display, /nearest search by time/);
 });
+
+test("Phase 4 clarifies time windows, provider readiness, and absent observations", () => {
+  assert.match(display, /Current account and workflow totals/);
+  assert.match(display, /live website activity from the last 90 seconds/);
+  assert.match(display, /journeys and human actions use the selected reporting range/);
+  assert.match(display, /Degraded, failing or not-ready integrations/);
+  assert.match(display, /p\.operationalState === "NOT_READY"/);
+  assert.match(display, /inactivity may remain/);
+  assert.match(display, /Success means the operation completed, not that offers were returned/);
+  assert.match(display, /Partial may contain zero offers/);
+  assert.match(display, /stages can occur out of order and are not a conversion percentage or confirmed booking/);
+  assert.match(display, /"None recorded in window"/);
+  assert.match(dashboard, /Secrets configured \(not tested\)/);
+  assert.match(dashboard, /Credentials configured \(not tested\)/);
+  assert.match(dashboard, /No keys configured/);
+  assert.match(display, /No timing recorded/);
+  assert.match(display, /Human-attributed audit rows/);
+});
