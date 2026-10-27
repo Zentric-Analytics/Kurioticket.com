@@ -116,7 +116,7 @@ export function SearchMonitorTable({
               <th className="px-2 py-3 font-semibold">Created</th>
               <th className="px-2 py-3 font-semibold">Product</th>
               <th className="px-2 py-3 font-semibold">Route / stay</th>
-              <th className="px-2 py-3 font-semibold">Market</th>
+              <th className="px-2 py-3 font-semibold">Currency</th>
               <th className="px-2 py-3 font-semibold">Results</th>
               <th className="px-2 py-3 font-semibold">Providers</th>
               <th className="px-2 py-3 font-semibold">Duration</th>
@@ -127,8 +127,8 @@ export function SearchMonitorTable({
           </thead>
           <tbody>
             {items.map((search) => (
-              <tr key={search.id} className="border-b border-[#E5E7EB] text-[13px] text-[#374151] hover:bg-[#FAFAFA]">
-                <td className="whitespace-nowrap px-2 py-3 align-top">{formatCreated(search.createdAt, referenceNow)}</td>
+              <tr key={search.id} className="group relative cursor-pointer border-b border-[#E5E7EB] text-[13px] text-[#374151] hover:bg-[#FAFAFA] focus-within:bg-[#F8FAFC]">
+                <td className="whitespace-nowrap px-2 py-3 align-top"><Link href={detailHref(search, detailQuery)} aria-label={"View details for " + productLabel(search.product) + " search " + routeLabel(search.origin, search.destination)} className="absolute inset-0 z-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#004BB8]" tabIndex={0} /><span className="relative pointer-events-none">{formatCreated(search.createdAt, referenceNow)}</span></td>
                 <td className="px-2 py-3 align-top font-semibold text-[#111827]">{productLabel(search.product)}</td>
                 <td className="max-w-[260px] px-2 py-3 align-top">
                   <p className="font-semibold text-[#111827]">{routeLabel(search.origin, search.destination)}</p>
@@ -136,7 +136,7 @@ export function SearchMonitorTable({
                     <p className="mt-0.5 text-[11px] leading-4 text-[#6B7280]">{formatSearchDates(search.checkIn, search.checkOut)}</p>
                   ) : null}
                 </td>
-                <td className="whitespace-nowrap px-2 py-3 align-top">{search.currency || search.market || "—"}</td>
+                <td className="whitespace-nowrap px-2 py-3 align-top">{search.currency || "—"}</td>
                 <td className="px-2 py-3 align-top">{formatNumber(search.resultCount)}</td>
                 <td className="px-2 py-3 align-top" title={search.providerTelemetry ? [search.providers.join(", "), search.providerTelemetry.successful + " successful", search.providerTelemetry.failed + " failed", search.providerTelemetry.degraded + " degraded", search.providerTelemetry.disabled + " disabled"].filter(Boolean).join(" · ") : "No exact provider telemetry recorded"}>{search.providerTelemetry ? search.providerTelemetry.total : "—"}</td>
                 <td className="whitespace-nowrap px-2 py-3 align-top">{formatLatency(search.latencyMs)}</td>
@@ -144,8 +144,8 @@ export function SearchMonitorTable({
                 <td className="px-2 py-3 align-top"><MonitorStatus status={search.status} /></td>
                 <td className="whitespace-nowrap px-2 py-3 text-right align-top">
                   <Link
-                    href={"/admin/searches/" + search.id + "?" + (detailQuery ? detailQuery + "&" : "") + "environment=" + encodeURIComponent(search.environment)}
-                    className="font-semibold text-[#004BB8] hover:text-violet-700 hover:underline"
+                    href={detailHref(search, detailQuery)}
+                    className="relative z-10 font-semibold text-[#004BB8] hover:text-violet-700 hover:underline"
                   >
                     Open
                   </Link>
@@ -240,4 +240,8 @@ function formatSearchDates(checkIn: string | null, checkOut: string | null) {
 
 function identityLabel(kind: "registered" | "guest" | "unattributed") {
   return kind === "registered" ? "Registered" : kind === "guest" ? "Guest" : "Unattributed";
+}
+
+function detailHref(search: AdminSearchRead, detailQuery: string) {
+  return "/admin/searches/" + search.id + "?" + (detailQuery ? detailQuery + "&" : "") + "environment=" + encodeURIComponent(search.environment);
 }

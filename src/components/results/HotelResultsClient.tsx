@@ -277,6 +277,12 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
   const { locale, t: dictionary } = useLocale();
   const { selectedOption } = useRegion();
   const currencyRates = useCurrencyRates();
+  // Record the selected display currency only when an inventory request starts.
+  // A currency selector change must not trigger another provider search.
+  const displayCurrencyRef = useRef(selectedOption.currency);
+  useEffect(() => {
+    displayCurrencyRef.current = selectedOption.currency;
+  }, [selectedOption.currency]);
   const t = useCallback((key: string) => dictionary[key] ?? enTranslations[key] ?? "", [dictionary]);
 
   const [results, setResults] = useState<PublicHotelResult[]>([]);
@@ -591,7 +597,7 @@ export function HotelResultsExperience({ searchInput, guided = false, buildDetai
         "Content-Type": "application/json",
         ...(providerMode ? { "x-hotel-provider-mode": providerMode } : {}),
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify({ ...body, currency: displayCurrencyRef.current }),
       signal: controller.signal,
     })
       .then((response) => readHotelSearchResponse(response, t("hotelResults.searchUnavailableDetailed"), (data) =>

@@ -160,6 +160,7 @@ export const hotelSearchSchema = z
     children: z.coerce.number().int().min(0).max(11).optional(),
     rooms: z.coerce.number().int().min(1).max(6).default(1),
     sort: z.enum(["cheapest", "best", "rating", "location"]).optional(),
+    currency: z.string().trim().toUpperCase().regex(/^[A-Z]{3}$/).optional(),
     destinationLocation: searchLocationSchema.optional(),
   })
   .refine((data) => {
