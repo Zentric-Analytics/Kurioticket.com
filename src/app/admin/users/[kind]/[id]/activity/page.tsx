@@ -40,7 +40,7 @@ function safeDirectoryHref(raw: RawQuery) {
   const candidates = new URLSearchParams(saved);
   const safe = new URLSearchParams();
   const allowed = {
-    q: 120, role: 30, status: 30, identity: 30, sort: 20, page: 8,
+    q: 120, role: 30, status: 30, tab: 30, identity: 30, sort: 20, page: 8,
   } as const;
   for (const [key, max] of Object.entries(allowed)) {
     const value = candidates.get(key);
