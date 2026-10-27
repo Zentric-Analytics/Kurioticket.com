@@ -53,6 +53,7 @@ try {
     assert.ok(geometry.controls.every(x=>x.border==="1px"), "Permanently underlined filters");
     assert.ok(geometry.tabs > geometry.searchTop, "Tabs follow full-width search");
     await expect(page.getByRole("link",{name:"Clear filters"})).toHaveCount(0);
+    await expect(page.getByRole("navigation",{name:"Identity pagination"})).toHaveCount(0);
     await combo("Date range").click();
     await expect(page.getByRole("listbox",{name:"Date range"})).toBeVisible();
     await page.keyboard.press("Escape");
@@ -61,6 +62,8 @@ try {
   }
   await page.setViewportSize({width:1280,height:900});
   await page.goto(url);
+  await expect(page.getByRole("navigation",{name:"Identity pagination"})).toHaveCount(0);
+  await expect(page.locator("tbody tr")).toHaveCount(30);
   await search().fill("Zara");
   await expect(page).toHaveURL(/q=Zara/);
   await expect(page.locator("tbody tr")).toHaveCount(1);
