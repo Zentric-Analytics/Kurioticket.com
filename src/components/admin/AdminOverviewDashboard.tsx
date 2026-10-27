@@ -193,19 +193,19 @@ function PlatformHealth({ system }: { system: SystemStatus }) {
     {
       label: "Auth / session",
       icon: KeyRound,
-      status: system.authConfigured && system.sessionConfigured ? "Configured" : "Not fully configured",
+      status: system.authConfigured && system.sessionConfigured ? "Secrets configured (not tested)" : "Secrets incomplete",
       ready: system.authConfigured && system.sessionConfigured,
     },
     {
       label: "Email / Resend",
       icon: Mail,
-      status: system.emailConfigured ? "Configured" : "Unavailable",
+      status: system.emailConfigured ? "Credentials configured (not tested)" : "Credentials incomplete",
       ready: system.emailConfigured,
     },
     {
       label: "Provider credentials",
       icon: ShieldCheck,
-      status: system.providerCredentialsPresent ? "Present" : "Not present",
+      status: system.providerCredentialsPresent ? "At least one key present" : "No keys configured",
       ready: system.providerCredentialsPresent,
     },
   ] as const;
@@ -228,7 +228,7 @@ function PlatformHealth({ system }: { system: SystemStatus }) {
         ))}
       </div>
       <p className="mt-3 text-[13px] leading-5 text-slate-700">
-        Configuration indicators do not replace end-to-end service checks.
+        Settings and database connectivity do not establish successful sign-in, email delivery, provider authorization or completed bookings.
       </p>
     </section>
   );
@@ -254,9 +254,9 @@ function ProviderCard({ provider }: { provider: ProviderOperationalStatus }) {
           <p className="mt-1 text-lg font-semibold tabular-nums text-slate-950">{count(provider.totalCalls)}</p>
         </div>
         <div className="min-w-0">
-          <p className="text-xs font-medium text-slate-700">Average latency</p>
+          <p className="text-xs font-medium text-slate-700">Avg. attempted-call latency</p>
           <p className="mt-1 break-words text-lg font-semibold tabular-nums text-slate-950">
-            {provider.averageLatencyMs === null ? "—" : provider.averageLatencyMs.toLocaleString("en-US") + "ms"}
+            {provider.averageLatencyMs === null ? "No timing recorded" : provider.averageLatencyMs.toLocaleString("en-US") + "ms"}
           </p>
         </div>
       </div>
@@ -290,10 +290,10 @@ function ProviderCard({ provider }: { provider: ProviderOperationalStatus }) {
           <DetailRow label="Failed calls" value={provider.failedCalls} />
           <DetailRow label="Degraded calls" value={provider.degradedCalls} />
           <DetailRow label="Disabled calls" value={provider.disabledCalls} />
-          <DetailRow label="Average latency" value={provider.averageLatencyMs === null ? "—" : provider.averageLatencyMs + "ms"} />
+          <DetailRow label="Avg. attempted-call latency" value={provider.averageLatencyMs === null ? "No timing recorded" : provider.averageLatencyMs + "ms"} />
           <DetailRow label="Last activity" value={provider.lastActivityAt ? formatDateTime(new Date(provider.lastActivityAt)) : "No recent activity"} />
-          <DetailRow label="Last success" value={provider.lastSuccessAt ? formatDateTime(new Date(provider.lastSuccessAt)) : "Unavailable"} />
-          <DetailRow label="Last failure" value={provider.lastFailureAt ? formatDateTime(new Date(provider.lastFailureAt)) : "Unavailable"} />
+          <DetailRow label="Last success" value={provider.lastSuccessAt ? formatDateTime(new Date(provider.lastSuccessAt)) : "None recorded in window"} />
+          <DetailRow label="Last failure" value={provider.lastFailureAt ? formatDateTime(new Date(provider.lastFailureAt)) : "None recorded in window"} />
         </div>
       </details>
     </article>
@@ -417,7 +417,7 @@ export function AdminOverviewDashboard({
   const funnel = data.journeys.stages;
   const supportAttention = data.support.open + data.support.waitingOnTeam + data.support.waitingOnUser;
   const deletionAttention = data.deletions.pending + data.deletions.readyForReview;
-  const providerAttention = data.providers.filter((p) => p.operationalState === "DEGRADED" || p.operationalState === "FAILING").length;
+  const providerAttention = data.providers.filter((p) => p.operationalState === "DEGRADED" || p.operationalState === "FAILING" || p.operationalState === "NOT_READY").length;
 
   return (
     <div className="min-w-0">
@@ -428,9 +428,10 @@ export function AdminOverviewDashboard({
           title="Operations Snapshot"
           action={<AdminOverviewRangeSelect range={range} />}
         />
+        <p className="text-xs leading-5 text-slate-600">Current account and workflow totals · live website activity from the last 90 seconds · journeys and human actions use the selected reporting range.</p>
         <div className="grid gap-x-6 gap-y-0 sm:grid-cols-2 lg:grid-cols-3">
-          <MetricCard label="Total accounts" value={data.users.total} hint="All account records, including deleted" icon={Users} tone="info" />
-          <MetricCard label="Enabled accounts" value={data.users.active} hint="ACTIVE accounts, including staff · not online" icon={UserCheck} tone="good" />
+          <MetricCard label="Total accounts" value={data.users.total} hint="Current database records, including retained deleted status" icon={Users} tone="info" />
+          <MetricCard label="Enabled accounts" value={data.users.active} hint="Current ACTIVE status, including staff · not online" icon={UserCheck} tone="good" />
           <div className="min-w-0 border-b border-slate-200/90 py-3.5 pr-3 sm:pr-4">
             <div className="flex items-center justify-between"><Activity size={19} className={data.websitePresence.status === "ok" ? "text-emerald-700" : "text-slate-500"} aria-hidden="true" /><span className={"h-2 w-2 rounded-full " + (data.websitePresence.status === "ok" ? "bg-emerald-400" : "bg-slate-300")} aria-hidden="true" /></div>
             <p className="mt-2 text-xs font-medium uppercase tracking-wide text-slate-700">Active users</p>
@@ -446,21 +447,21 @@ export function AdminOverviewDashboard({
               </p>
             </details>
           </div>
-          <MetricCard label="Suspended accounts" value={data.users.suspended} hint="Current SUSPENDED status" icon={UserX} tone="warn" />
-          <MetricCard label="Deleted accounts" value={data.users.deleted} hint="Retained DELETED status records" icon={Trash2} tone="neutral" />
-          <MetricCard label="Support attention" value={supportAttention} hint="Tickets awaiting action" icon={Headphones} tone={supportAttention ? "warn" : "good"} />
-          <MetricCard label="Deletion attention" value={deletionAttention} hint="Requests needing review" icon={Trash2} tone={deletionAttention ? "warn" : "good"} />
-          <MetricCard label="Journeys" value={data.journeys.journeys} hint="Consented · selected range" icon={Route} tone="info" />
-          <MetricCard label="Human admin actions" value={data.audit.human} hint={"Selected range · " + count(data.audit.automated) + " automated excluded"} icon={ShieldCheck} tone="neutral" />
+          <MetricCard label="Suspended accounts" value={data.users.suspended} hint="Current SUSPENDED account records" icon={UserX} tone="warn" />
+          <MetricCard label="Deleted accounts" value={data.users.deleted} hint="Retained DELETED records · excludes permanently erased" icon={Trash2} tone="neutral" />
+          <MetricCard label="Support attention" value={supportAttention} hint="Current open and waiting support tickets" icon={Headphones} tone={supportAttention ? "warn" : "good"} />
+          <MetricCard label="Deletion attention" value={deletionAttention} hint="Current pending and ready-for-review requests" icon={Trash2} tone={deletionAttention ? "warn" : "good"} />
+          <MetricCard label="Journeys" value={data.journeys.journeys} hint="Distinct consented journeys · selected range" icon={Route} tone="info" />
+          <MetricCard label="Human admin actions" value={data.audit.human} hint={"Human-attributed audit rows · selected range · " + count(data.audit.automated) + " system entries excluded"} icon={ShieldCheck} tone="neutral" />
         </div>
       </section>
 
       <section className="mt-6" aria-label="Attention Required">
         <div>
-          <SectionTitle title="Attention Required" />
+          <SectionTitle title="Attention Required" description="Current support and deletion queues · provider performance uses the last 24 hours and includes not-ready integrations." />
           <div className="grid gap-x-6 gap-y-0 lg:grid-cols-3">
             <AttentionCard href="/admin/providers" title="Provider performance" value={providerAttention} tone="bad"
-              description={providerAttention ? "Provider operations are degraded or failing" : "No degraded or failing providers"} icon={Activity} />
+              description={providerAttention ? "Degraded, failing or not-ready integrations" : "No degraded, failing or not-ready integrations · inactivity may remain"} icon={Activity} />
             <AttentionCard href="/admin/support" title="Support queue" value={supportAttention} tone="warn"
               description={supportAttention ? "Tickets need a response or follow-up" : "No outstanding support attention"} icon={Headphones} />
             <AttentionCard href="/admin/account-deletions" title="Deletion reviews" value={deletionAttention} tone="info"
@@ -496,7 +497,7 @@ export function AdminOverviewDashboard({
             <FunnelStep label="Offer selected" journeys={funnel.OFFER_SELECTED.journeys} events={funnel.OFFER_SELECTED.events} icon={MousePointerClick} />
             <FunnelStep label="Provider handoff" journeys={funnel.PROVIDER_HANDOFF_STARTED.journeys} events={funnel.PROVIDER_HANDOFF_STARTED.events} icon={ArrowUpRight} />
           </div>
-          <p className="mt-3 text-xs leading-5 text-slate-500">Stage counts are distinct consented journeys, not percentages of all operational searches.</p>
+          <p className="mt-3 text-xs leading-5 text-slate-600">Selected reporting range · stages count distinct eligible consented journeys. A search-completed event also includes failed or empty searches; stages can occur out of order and are not a conversion percentage or confirmed booking.</p>
         </div>
 
         <div className="mt-5 grid gap-8 lg:grid-cols-2">
@@ -504,10 +505,12 @@ export function AdminOverviewDashboard({
             <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-900"><Search size={17} className="text-indigo-700" aria-hidden="true" />Operational Search Health</h3>
             <div className="mt-3">
               <DetailRow label="Operational searches" value={data.journeys.operationalSearches.total} />
+              <DetailRow label="Successful search operations" value={data.journeys.operationalSearches.success} />
               <DetailRow label="Failed searches" value={data.journeys.operationalSearches.failed} />
               <DetailRow label="Partial searches" value={data.journeys.operationalSearches.partial} />
               <DetailRow label="Partial with offers" value={data.journeys.operationalSearches.partialWithResults} />
               <DetailRow label="Partial without offers" value={data.journeys.operationalSearches.partialWithoutResults} />
+              <p className="mt-2 text-xs leading-5 text-slate-600">Selected range · database search outcomes, including searches without consented journeys. Success means the operation completed, not that offers were returned. Partial may contain zero offers.</p>
             </div>
           </section>
           <section className="min-w-0 border-t border-slate-200/90 py-4">
@@ -520,7 +523,7 @@ export function AdminOverviewDashboard({
               <DetailRow label="Exact search links (eligible redirects)" value={data.journeys.operationalHandoffs.exactSearchLinks} />
               <DetailRow label="Eligible redirects without exact links" value={data.journeys.operationalHandoffs.eligibleWithoutExactSearch} />
             </div>
-            <p className="mt-2 text-xs leading-5 text-slate-600">Redirects use the selected window and deployment environment, including unattributed activity. Consent, ownership and valid event links determine journey inclusion. Missing attribution does not establish that someone declined consent. No nearest-by-time inference.</p>
+            <p className="mt-2 text-xs leading-5 text-slate-600">Selected reporting range · redirects use the deployment environment, including unattributed activity. Consent, ownership and valid event links determine journey inclusion. Missing attribution does not establish that someone declined consent. No nearest-by-time inference.</p>
           </section>
         </div>
       </section>
