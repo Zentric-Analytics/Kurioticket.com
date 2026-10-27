@@ -15,7 +15,7 @@ export function ActivityDataInfo({ children }: { children: React.ReactNode }) {
     return () => document.removeEventListener("pointerdown", dismiss);
   }, [open]);
   return <div ref={root} className="relative inline-flex"
-    onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}
+    onMouseEnter={() => setOpen(true)} onMouseLeave={() => { if (!root.current?.contains(document.activeElement)) setOpen(false); }}
     onFocus={() => setOpen(true)} onBlur={(event) => {
       if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false);
     }}
@@ -26,7 +26,7 @@ export function ActivityDataInfo({ children }: { children: React.ReactNode }) {
       <Info size={16} aria-hidden="true" />
     </button>
     <div id="activity-data-explanation" role="tooltip" hidden={!open}
-      className="absolute left-0 top-full z-20 w-64 max-w-[calc(100vw-3rem)] rounded-lg border border-[#D8E1EC] bg-white p-3 text-xs font-normal leading-5 text-[#334155] shadow-lg lg:left-auto lg:right-0">
+      className="fixed inset-x-4 top-1/3 z-20 mx-auto w-auto max-w-80 lg:absolute lg:inset-x-auto lg:right-0 lg:top-full lg:mx-0 lg:w-64 rounded-lg border border-[#D8E1EC] bg-white p-3 text-xs font-normal leading-5 text-[#334155] shadow-lg lg:left-auto lg:right-0">
       {children}
     </div>
   </div>;
