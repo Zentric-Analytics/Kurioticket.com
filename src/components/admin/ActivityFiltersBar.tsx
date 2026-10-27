@@ -21,10 +21,11 @@ export function ActivityFiltersBar({ path, initial, directory, tabs }: { path: s
   const router = useRouter();
   const [values, setValues] = useState(initial);
   const [draftDates, setDraftDates] = useState({ from: initial.from, to: initial.to });
+  const [editingCustom, setEditingCustom] = useState(false);
   const [pending, startTransition] = useTransition();
   const timeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const submitted = useRef("");
-  useEffect(() => { if (timeout.current) clearTimeout(timeout.current); submitted.current = ""; setValues(initial); setDraftDates({from: initial.from, to: initial.to}); }, [initial.tab, initial.q, initial.product, initial.stage, initial.order, initial.from, initial.to, initial.range]);
+  useEffect(() => { if (timeout.current) clearTimeout(timeout.current); submitted.current = ""; setValues(initial); setDraftDates({from: initial.from, to: initial.to}); setEditingCustom(false); }, [initial.tab, initial.q, initial.product, initial.stage, initial.order, initial.from, initial.to, initial.range]);
   useEffect(() => () => { if (timeout.current) clearTimeout(timeout.current); }, []);
   const navigate = (next: Values) => {
     const params = new URLSearchParams();
@@ -57,10 +58,12 @@ export function ActivityFiltersBar({ path, initial, directory, tabs }: { path: s
   ];
   const setRange = (range: string) => {
     if (range === "custom") {
-      setDraftDates({ from: values.from, to: values.to });
-      setValues(current => ({...current, range: "custom"}));
+      if (timeout.current) clearTimeout(timeout.current);
+      setDraftDates({ from: values.range === "custom" ? values.from : "", to: values.range === "custom" ? values.to : "" });
+      setEditingCustom(true);
       return;
     }
+    setEditingCustom(false);
     const dates = range === "7d" ? utcWindow(7) : range === "30d" ? utcWindow(30) : {from:"",to:""};
     update({range, ...dates});
   };
@@ -70,9 +73,11 @@ export function ActivityFiltersBar({ path, initial, directory, tabs }: { path: s
     && draftDates.from <= draftDates.to;
   const applyDates = () => {
     if (!validCustom) return;
+    setEditingCustom(false);
     update({ range: "custom", ...draftDates });
   };
   const cancelDates = () => {
+    setEditingCustom(false);
     setValues(current => ({...current, range: initial.range, from: initial.from, to: initial.to}));
     setDraftDates({from: initial.from,to: initial.to});
   };
@@ -98,7 +103,7 @@ export function ActivityFiltersBar({ path, initial, directory, tabs }: { path: s
           onValueChange={stage=>update({stage})} />
       </div>
     </div>
-    {values.range === "custom" ? <div className="flex flex-wrap items-end gap-3">
+    {(editingCustom || values.range === "custom") ? <div className="flex flex-wrap items-end gap-3">
       <label className="text-xs text-[var(--muted-foreground)]">From (UTC)
         <input type="date" aria-label="Custom start date UTC" value={draftDates.from}
           max={draftDates.to || undefined} onChange={e => setDraftDates(current => ({...current, from:e.target.value}))} className={control}/>
