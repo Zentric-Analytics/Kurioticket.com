@@ -4,6 +4,7 @@ import { AdminButton, AdminDataTable, AdminEmptyState, AdminFilterBar, AdminInpu
 import { JourneyDateRangeFields } from "@/components/admin/JourneyDateRangeFields";
 import { journeyWindow, selectedJourneyRange } from "@/lib/adminJourneyDateRange";
 import { SearchWorkspaceBackLink } from "@/components/admin/SearchWorkspaceBackLink";
+import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
 import { SearchWorkspacePanelFrame } from "@/components/admin/SearchWorkspacePanelFrame";
 import { formatDateTime } from "@/lib/admin-data";
 import { adminJourneys } from "@/services/adminJourneyService";
@@ -60,9 +61,18 @@ export default async function AdminJourneysPage({ searchParams, embedded = false
           <AdminSelect name="product" defaultValue={one(raw.product)}>
             <option value="">All products</option><option value="FLIGHT">Flights</option><option value="HOTEL">Hotels</option><option value="CAR">Cars</option><option value="PACKAGE">Packages</option>
           </AdminSelect>
-          <AdminSelect name="identity" defaultValue={one(raw.identity) || "all"}>
-            <option value="all">All identities</option><option value="registered">Registered</option><option value="guest">Guest</option>
-          </AdminSelect>
+          <SearchMonitorSelect
+            label="Identity"
+            name="identity"
+            value={one(raw.identity) || "all"}
+            appearance="plain"
+            clearFieldNamesOnChange={["userId", "visitorId"]}
+            options={[
+              { value: "all", label: "All identities" },
+              { value: "registered", label: "Registered" },
+              { value: "guest", label: "Guest" },
+            ]}
+          />
           <AdminSelect name="stage" defaultValue={one(raw.stage)}>
             <option value="">All observed stages</option>
             {stages.map((stage) => <option key={stage.value} value={stage.value}>{stage.label}</option>)}
