@@ -4,6 +4,8 @@ import test from "node:test";
 
 const list = readFileSync("src/app/admin/journeys/page.tsx", "utf8");
 const detail = readFileSync("src/app/admin/journeys/[id]/page.tsx", "utf8");
+const dates = readFileSync("src/lib/adminJourneyDateRange.ts", "utf8");
+const controls = readFileSync("src/components/admin/JourneyDateRangeFields.tsx", "utf8");
 
 test("journey metrics are scoped to one returned list reporting window", () => {
   assert.match(list, /adminJourneys\.summary\(\{ \.\.\.withoutPagination\(raw\), \.\.\.list\.data\.scope \}\)/);
@@ -30,6 +32,15 @@ test("journey detail is valid JSX and strips view-only range from backend input"
 });
 test("journey date presets are passed to detail and single-ended historical bounds survive", () => {
   assert.match(list, /p\.set\("range", range\)/);
-  assert.match(list, /if \(one\(raw\.cursor\) \|\| one\(raw\.from\) \|\| one\(raw\.to\)\) return \{\}/);
-  assert.match(list, /"custom",label:"Custom dates"/);
+  assert.match(dates, /if \(one\(raw\.cursor\) \|\| one\(raw\.from\) \|\| one\(raw\.to\)\) return \{\}/);
+  assert.match(controls, /value: "custom", label: "Custom dates"/);
+});
+
+test("custom dates are editable and preset selection does not submit stale bounds", () => {
+  assert.match(controls, /type="datetime-local"/);
+  assert.match(controls, /name="from"/);
+  assert.match(controls, /name="to"/);
+  assert.match(controls, /\{custom \? \(/);
+  assert.match(controls, /onValueChange=/);
+  assert.match(list, /<JourneyDateRangeFields/);
 });
