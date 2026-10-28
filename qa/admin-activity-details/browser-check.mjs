@@ -151,7 +151,7 @@ try {
     if (width === 1280) await expectIdentityDatesOnOneLine(page, "Guest desktop");
     if (width === 768 || width === 1024)
       await expectEventsFactNearRightEdge(page, "Guest " + width + "px");
-    if([1536,1280,390,320].includes(width))
+    if([1536,1280,1024,768,390,320].includes(width))
       await page.screenshot({path:output+"/after-view-activity-"+width+".png",fullPage:true});
     console.log("PASS responsive activity page",width);
   }
@@ -160,6 +160,7 @@ try {
   await page.setViewportSize({width:1024,height:900});
   await page.goto(base + "/admin/users/user/qa-registered-0001/activity");
   await expectEventsFactNearRightEdge(page, "Registered 1024px");
+  await page.screenshot({path:output+"/after-registered-activity-1024.png",fullPage:true});
 
   // Every fixture event is available upfront, including the formerly separate pages.
   await page.goto(url);
