@@ -28,8 +28,8 @@ type SupportPrismaClient = {
     }): Promise<{ id: string; userId?: string | null; email: string; subject: string; status: SupportTicketStatusValue; messages?: Array<{ id: string; createdAt: Date }> } | null>;
     update(args: {
       where: { id: string };
-      data: { status: SupportTicketStatusValue };
-    }): Promise<{ id: string; email: string; subject: string; status: SupportTicketStatusValue }>;
+      data: { status?: SupportTicketStatusValue; priority?: "LOW" | "NORMAL" | "HIGH" | "URGENT"; updatedAt?: Date };
+    }): Promise<{ id: string; email: string; subject: string; status: SupportTicketStatusValue; priority?: "LOW" | "NORMAL" | "HIGH" | "URGENT" }>;
   };
   supportMessage: {
     create(args: {
@@ -110,10 +110,14 @@ export async function addAdminSupportReply(input: { ticketId: string; body: stri
     },
   });
 
+  // Keep the inbox ordered by the latest conversation activity, not ticket creation.
+  await db.supportTicket.update({ where: { id: ticket.id }, data: { updatedAt: message.createdAt } });
+
   if (ticket.userId && !prismaClientForTesting) {
     await createNotificationEvent({ userId: ticket.userId, eventKey: `support-reply:${message.id}`, type: "SUPPORT_UPDATE", title: "Kurioticket Support replied", body: `There is a new reply to “${ticket.subject}”.`, actionPath: "/support", metadata: { ticketId: ticket.id, supportMessageId: message.id } }).catch((error) => console.error("[support] Failed to persist support reply notification", { ticketId: ticket.id, messageId: message.id, message: error instanceof Error ? error.message : "notification_failed" }));
   }
 
+  let emailStatus: "sent" | "failed" = "sent";
   try {
     await getSendSupportEmail()({
       to: ticket.email,
@@ -123,10 +127,11 @@ export async function addAdminSupportReply(input: { ticketId: string; body: stri
       idempotencyKey: `support-ticket-reply-${message.id}`,
     });
   } catch (error) {
+    emailStatus = "failed";
     console.error("[support] Failed to send support ticket reply email", error);
   }
 
-  return { ticket, message };
+  return { ticket, message, emailStatus };
 }
 
 export async function updateSupportTicketStatus(input: { ticketId: string; status: SupportTicketStatusValue }) {
