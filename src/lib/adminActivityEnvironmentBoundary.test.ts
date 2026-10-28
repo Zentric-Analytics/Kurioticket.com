@@ -30,3 +30,17 @@ test("the activity reader never includes cross-environment or unowned history in
   assert.match(filters, /metadata: \{ path: \["environment"\], equals: environment \}/);
   assert.match(filters, /query: \{ path: \["environment"\], equals: environment \}/);
 });
+
+test("Activity summary counts filter-wide records instead of paginated timeline rows", () => {
+  assert.match(reader, /tx\.journeyEvent\.groupBy\(/);
+  assert.match(reader, /tx\.searchHistory\.count\(\{ where: searchWhere \}\)/);
+  assert.match(reader, /tx\.redirectLog\.count\(\{ where: handoffWhere \}\)/);
+  assert.match(reader, /Prisma\.TransactionIsolationLevel\.RepeatableRead/);
+  assert.match(reader, /canonicalForVisitor\(visitorId\)/);
+  assert.match(reader, /visitorIds\.map\(visitorId => canonicalForVisitor\(visitorId\)\)/);
+  assert.match(reader, /const summary: IdentityActivitySummary/);
+  assert.match(page, /data\.summary\.searches/);
+  assert.match(page, /data\.summary\.resultsViewed/);
+  assert.match(page, /data\.summary\.providerHandoffs/);
+  assert.doesNotMatch(page, /Counts reflect loaded events only\./);
+});

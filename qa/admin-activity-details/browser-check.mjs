@@ -33,7 +33,7 @@ try {
     await page.getByRole("button",{name:"About activity data"}).focus();
     await expect(page.getByRole("tooltip")).toBeVisible();
     await page.keyboard.press("Tab");
-    await expect(page.getByRole("button",{name:"Manage guest qa-guest-activity-0001"})).toBeVisible();
+    await expect(page.getByRole("button",{name:/Manage guest/})).toHaveCount(0);
     await expect(page.getByRole("button",{name:"Apply Filter"})).toHaveCount(0);
     await expect(page.getByRole("button",{name:"Date range: All dates"})).toBeVisible();
     await expect(page.getByRole("button",{name:"Activity product: All products"})).toBeVisible();
@@ -47,6 +47,29 @@ try {
       await page.screenshot({path:output+"/after-view-activity-"+width+".png",fullPage:true});
     console.log("PASS responsive activity page",width);
   }
+
+  // The initial page has 3 searches, but two more are on separate cursor pages.
+  // Summary totals must include all five and remain stable when the cursor moves.
+  await page.goto(url);
+  let totals = page.getByRole("region",{name:"Activity summary"});
+  await expect(totals.getByText("5",{exact:true})).toBeVisible();
+  await expect(totals.getByText("2",{exact:true})).toBeVisible();
+  await expect(totals.getByText("1",{exact:true})).toBeVisible();
+  await expect(page.getByText("Counts reflect loaded events only.")).toHaveCount(0);
+  await page.goto(url+"?cursor=older-qa-page");
+  totals = page.getByRole("region",{name:"Activity summary"});
+  await expect(totals.getByText("5",{exact:true})).toBeVisible();
+  await expect(totals.getByText("2",{exact:true})).toBeVisible();
+  await expect(totals.getByText("1",{exact:true})).toBeVisible();
+  await page.goto(url+"?tab=searches&stage=SEARCH_COMPLETED&product=FLIGHT&q=LOS");
+  totals = page.getByRole("region",{name:"Activity summary"});
+  await expect(totals.getByText("1",{exact:true})).toHaveCount(1);
+  await expect(totals.getByText("0",{exact:true})).toHaveCount(2);
+  await page.goto(url+"?tab=handoffs");
+  totals = page.getByRole("region",{name:"Activity summary"});
+  await expect(totals.getByText("1",{exact:true})).toHaveCount(1);
+  await expect(totals.getByText("0",{exact:true})).toHaveCount(2);
+  console.log("PASS summary counts all matching events independently of cursor");
 
   await page.setViewportSize({width:1280,height:900});
   await page.goto(url+"?directory=sort%3Dname_asc%26identity%3DGUEST%26page%3D2");
