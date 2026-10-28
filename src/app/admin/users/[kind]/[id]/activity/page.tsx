@@ -14,7 +14,6 @@ import { ActivityDataInfo } from "@/components/admin/ActivityDataInfo";
 import { requireAdminSession } from "@/lib/auth-guards";
 import { getAdminEmails } from "@/lib/env";
 import { withOptionalDb } from "@/lib/prisma";
-import { eligibleGuestVisitorWhere } from "@/lib/adminIdentityJourney";
 import { activityHref, parseActivityFilters, relatedJourneysWindow, validActivityIdentity, type ActivityFilters } from "@/lib/adminIdentityActivity";
 import { ADMIN_IDENTITY_SORTS, ADMIN_IDENTITY_DATES, validAdminIdentityCustomDates } from "@/lib/adminIdentityDirectory";
 import { loadAdminIdentityActivity } from "@/services/adminIdentityActivityService";
