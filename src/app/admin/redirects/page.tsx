@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { AdminButton, AdminDataTable, AdminEmptyState, AdminFilterBar, AdminInput, AdminPageShell, AdminSelect, AdminStatusBadge } from "@/components/admin/AdminPageShell";
 import { SearchWorkspaceBackLink } from "@/components/admin/SearchWorkspaceBackLink";
+import { SearchWorkspacePanelFrame } from "@/components/admin/SearchWorkspacePanelFrame";
 import { formatDateTime } from "@/lib/admin-data";
 import { adminOperationalReads } from "@/services/adminOperationalReadService";
 
@@ -18,7 +19,7 @@ export default async function AdminRedirectsPage({ searchParams, embedded = fals
   return (
     <>
       {!embedded ? <SearchWorkspaceBackLink /> : null}
-      <AdminPageShell
+      <SearchWorkspacePanelFrame embedded={embedded}
         title="Provider Handoffs"
         description="Review verified outbound provider handoffs. A handoff records leaving Kurioticket for a provider; it is not proof of a completed booking or payment."
       >
@@ -71,7 +72,7 @@ export default async function AdminRedirectsPage({ searchParams, embedded = fals
           <AdminEmptyState title={result.status === "invalid" ? "Invalid filters" : result.status === "forbidden" ? "Admin access required" : "Handoff data unavailable"} message={"issues" in result ? result.issues.map((issue) => issue.field + ": " + issue.message).join(" ") : "The safe admin reader could not return handoff data. No empty result was invented."} />
         )}
       </div>
-      </AdminPageShell>
+      </SearchWorkspacePanelFrame>
     </>
   );
 }
