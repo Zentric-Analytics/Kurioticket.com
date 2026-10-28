@@ -36,7 +36,7 @@ export default async function AdminJourneysPage({ searchParams, embedded = false
 
   return (
     <>
-      {!embedded ? <SearchWorkspaceBackLink /> : null}
+      {!embedded ? <SearchWorkspaceBackLink href="/admin/users" label="Users" /> : null}
       <SearchWorkspacePanelFrame embedded={embedded}
         title="Journeys"
         hideHeader
