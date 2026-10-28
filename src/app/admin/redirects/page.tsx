@@ -9,7 +9,7 @@ export const metadata = { title: "Admin Provider Handoffs" };
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
-export default async function AdminRedirectsPage({ searchParams }: { searchParams: SearchParams }) {
+export default async function AdminRedirectsPage({ searchParams, embedded = false }: { embedded?: boolean; searchParams: SearchParams }) {
   const raw = await searchParams;
   const params = toParams(raw);
   if (!params.has("limit")) params.set("limit", "50");
@@ -17,13 +17,14 @@ export default async function AdminRedirectsPage({ searchParams }: { searchParam
 
   return (
     <>
-      <SearchWorkspaceBackLink />
+      {!embedded ? <SearchWorkspaceBackLink /> : null}
       <AdminPageShell
         title="Provider Handoffs"
         description="Review verified outbound provider handoffs. A handoff records leaving Kurioticket for a provider; it is not proof of a completed booking or payment."
       >
       <div className="space-y-4">
-        <AdminFilterBar action="/admin/redirects">
+        <AdminFilterBar action={embedded ? "/admin/searches/activity" : "/admin/redirects"}>
+          {embedded ? <input type="hidden" name="tab" value="handoffs" /> : null}
           <AdminSelect name="product" defaultValue={one(raw.product)}>
             <option value="">All products</option><option value="FLIGHT">Flights</option><option value="HOTEL">Hotels</option>
           </AdminSelect>
@@ -63,7 +64,7 @@ export default async function AdminRedirectsPage({ searchParams }: { searchParam
                   ],
                 }))}
               />
-              {result.data.nextCursor ? <div className="flex justify-end"><Link href={cursorHref("/admin/redirects", raw, result.data.nextCursor)} className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">Next page</Link></div> : null}
+              {result.data.nextCursor ? <div className="flex justify-end"><Link href={cursorHref(embedded ? "/admin/searches/activity" : "/admin/redirects", embedded ? { ...raw, tab: "handoffs" } : raw, result.data.nextCursor)} className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">Next page</Link></div> : null}
             </>
           )
         ) : (
