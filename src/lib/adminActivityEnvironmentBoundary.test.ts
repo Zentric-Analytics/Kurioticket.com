@@ -58,3 +58,25 @@ test("Activity uses its approved colors and shared metric sizes without changing
   assert.doesNotMatch(page, /Related records|const related =|label="Journeys"|value: "journeys"/);
   assert.doesNotMatch(timeline, /Show all|Hide all|Not linked to a journey/);
 });
+
+test("User Activity renders exactly two nested white workspace cards with a flat summary", () => {
+  const breadcrumb = page.indexOf('<nav aria-label="Breadcrumb"');
+  const mainCard = page.indexOf('data-testid="activity-page-card"');
+  const identity = page.indexOf('aria-label="Customer identity"');
+  const summary = page.indexOf('aria-label="Activity summary"');
+  const body = page.indexOf('data-testid="activity-body-card"');
+  const history = page.indexOf('<ActivityTimeline');
+  assert.ok(breadcrumb !== -1 && breadcrumb < mainCard, "breadcrumb stays outside the page card");
+  assert.ok(mainCard < identity && identity < summary && summary < body && body < history,
+    "identity, flat summary and activity body stay in order inside the main card");
+  assert.equal((page.match(/data-testid="activity-page-card"/g) ?? []).length, 1);
+  assert.equal((page.match(/data-testid="activity-body-card"/g) ?? []).length, 1);
+  const mainCardMarkup = page.slice(mainCard, identity);
+  assert.match(mainCardMarkup, /rounded-xl border border-\\[#E2E8F0\\] bg-white/);
+  const summaryMarkup = page.slice(summary, body);
+  assert.doesNotMatch(summaryMarkup, /bg-(?:blue|sky|emerald|amber|\\[#)/,
+    "Activity summary uses no colored background or metric dots");
+  assert.match(summaryMarkup, /data\\.summary\\.searches/);
+  assert.match(summaryMarkup, /data\\.summary\\.resultsViewed/);
+  assert.match(summaryMarkup, /data\\.summary\\.providerHandoffs/);
+});
