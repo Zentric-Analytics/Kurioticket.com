@@ -72,12 +72,17 @@ export async function createSupportTicket(input: {
     },
   });
 
-  await trackAnalyticsEvent({
-    userId: input.userId,
-    type: "SUPPORT_TICKET",
-    name: "support_ticket_created",
-    metadata: { category: input.category },
-  });
+  try {
+    await trackAnalyticsEvent({
+      userId: input.userId,
+      type: "SUPPORT_TICKET",
+      name: "support_ticket_created",
+      metadata: { category: input.category },
+    });
+  } catch (error) {
+    // A saved ticket must never appear to have failed because optional analytics failed.
+    console.error("[support] Failed to record optional ticket analytics", error);
+  }
 
   try {
     await getSendSupportEmail()({
@@ -119,13 +124,14 @@ export async function addAdminSupportReply(input: { ticketId: string; body: stri
 
   let emailStatus: "sent" | "failed" = "sent";
   try {
-    await getSendSupportEmail()({
+    const email = await getSendSupportEmail()({
       to: ticket.email,
       subject: "Re: Your Kurioticket support request",
       html: supportTicketReplyEmail({ ticketId: ticket.id, subject: ticket.subject, body: input.body }),
       template: "support_ticket",
       idempotencyKey: `support-ticket-reply-${message.id}`,
     });
+    if (email.id === "resend-not-configured") emailStatus = "failed";
   } catch (error) {
     emailStatus = "failed";
     console.error("[support] Failed to send support ticket reply email", error);
