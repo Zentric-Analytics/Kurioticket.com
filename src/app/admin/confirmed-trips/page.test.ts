@@ -249,6 +249,51 @@ test("Previously conditional trip records remain truthful and read-only", () => 
 });
 
 
+test("Phase 4 readiness is compact, truthful, and exposes all five configuration facts", () => {
+  const start = page.indexOf('<section aria-labelledby="confirmation-integration-title"');
+  const end = page.indexOf('<section aria-labelledby="confirmation-delivery-health-title"', start);
+  const section = page.slice(start, end);
+  assert.ok(start >= 0 && end > start);
+  assert.match(section, /px-4 py-3 sm:px-5 sm:py-4/);
+  assert.match(section, /<dl className="mt-3 grid gap-x-5 gap-y-2 border-y/);
+  assert.match(section, /<dl className="mt-2 grid gap-x-5 gap-y-2 sm:grid-cols-2"/);
+  for (const label of ["Endpoint", "Webhook credential model", "Configured provider", "Webhook credential", "Current search-provider confirmation feed"]) {
+    assert.ok(section.includes('label="' + label + '"'), "Readiness fact must stay visible: " + label);
+  }
+  assert.match(section, /readiness\.providerName \|\| "None"/);
+  assert.match(section, /readiness\.webhookCredentialConfigured \? "Configured" : "Not configured"/);
+  assert.match(section, /readiness\.currentSearchProviderConfirmationFeed === "none" \? "None" : "Configured"/);
+  assert.match(section, /readiness\.feedReady \? "info" : "warn"/);
+  assert.match(section, /does not mean a provider agreement or live confirmation feed is active/);
+  assert.doesNotMatch(section, /<details|aria-hidden="true" className=.*(?:facts|details)|md:grid-cols-5/);
+});
+
+test("Phase 4 delivery health keeps distinct inactive, unavailable, and genuine receipt states", () => {
+  const start = page.indexOf('<section aria-labelledby="confirmation-delivery-health-title"');
+  const end = page.indexOf('<div className="grid items-stretch gap-4 lg:grid-cols-2">', start);
+  const section = page.slice(start, end);
+  assert.ok(start >= 0 && end > start);
+  assert.match(section, /!readiness\.feedReady \? \(/);
+  assert.match(section, /: !deliveryHealth \? \(/);
+  assert.match(section, /No provider-bound confirmation feed is configured/);
+  assert.match(section, /Delivery telemetry is unavailable/);
+  assert.match(section, /No delivery counts have been assumed/);
+  assert.match(section, /deliveryHealth\.receivedLast24h/);
+  assert.match(section, /deliveryHealth\.acceptedLast24h/);
+  assert.match(section, /deliveryHealth\.rejectedLast24h/);
+  assert.match(section, /deliveryHealth\.lastReceivedAt/);
+  assert.match(section, /deliveryHealth\.lastAcceptedAt/);
+  assert.match(section, /deliveryHealth\.lastRejectedAt/);
+  assert.match(section, /deliveryHealth\.providerName/);
+  assert.match(section, /deliveryHealth\.recent\.length/);
+  assert.match(section, /deliveryHealth\.recent\.map/);
+  assert.match(section, /No authenticated partner confirmation deliveries have been recorded yet/);
+  assert.match(section, /aria-label="Recent authenticated delivery receipts" tabIndex=\{0\}/);
+  assert.match(section, /href="\/admin\/notifications"/);
+  assert.match(section, /Receipts may include retries/);
+  assert.doesNotMatch(section, /Cancel booking|Refund|Create confirmed trip/);
+});
+
 test("confirmation delivery health is read-only, provider-bound and truthful", () => {
   assert.match(page, /getConfirmationDeliveryHealth/);
   assert.match(page, /Confirmation delivery health/);

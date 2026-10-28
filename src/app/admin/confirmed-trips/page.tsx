@@ -115,79 +115,102 @@ export default async function AdminConfirmedTripsPage() {
               </div>
             )}
           </section>
-          <section aria-labelledby="confirmation-integration-title" className="min-w-0 rounded-xl border border-slate-200 p-4 sm:p-5">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-              <div className="flex min-w-0 items-start gap-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-700">
-                  <ShieldCheck size={19} aria-hidden="true" />
-                </div>
+          <section aria-labelledby="confirmation-integration-title" className="min-w-0 rounded-xl border border-slate-200 px-4 py-3 sm:px-5 sm:py-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="flex min-w-0 flex-1 items-start gap-2.5">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-700">
+                  <ShieldCheck size={17} aria-hidden="true" />
+                </span>
                 <div className="min-w-0">
-                  <h2 id="confirmation-integration-title" className="scroll-mt-28 min-[1100px]:scroll-mt-44 text-base font-semibold text-slate-950">Confirmation integration readiness</h2>
-                  <p className="mt-1 text-sm leading-6 text-slate-600">
+                  <h2 id="confirmation-integration-title" className="scroll-mt-28 min-[1100px]:scroll-mt-44 text-base font-semibold leading-6 text-slate-950">Confirmation integration readiness</h2>
+                  <p className="mt-1 text-xs leading-5 text-slate-600">
                     The partner confirmation endpoint is server-to-server only. Current Duffel search and KAYAK sandbox integrations do not send booking confirmations.
                   </p>
                 </div>
               </div>
-              <div className="shrink-0 self-start">
-                <AdminStatusBadge tone={readiness.feedReady ? "good" : "warn"}>
+              <div className="max-w-full shrink-0">
+                <AdminStatusBadge tone={readiness.feedReady ? "info" : "warn"}>
                   {readiness.feedReady ? "Provider-bound webhook configured" : "Provider-bound webhook not configured"}
                 </AdminStatusBadge>
               </div>
             </div>
-            <div className="mt-4 grid gap-3 md:grid-cols-5">
-              <Fact label="Endpoint" value="POST /api/internal/partner-confirmations" />
-              <Fact label="Webhook credential model" value={readiness.credentialModel === "single_provider_bound_secret" ? "Single provider + dedicated secret" : "Unknown"} />
-              <Fact label="Configured provider" value={readiness.providerName || "None"} />
-              <Fact label="Webhook credential" value={readiness.webhookCredentialConfigured ? "Configured" : "Not configured"} />
-              <Fact label="Current search-provider confirmation feed" value={readiness.currentSearchProviderConfirmationFeed === "none" ? "None" : "Configured"} />
-            </div>
-            <p className="mt-4 text-xs leading-5 text-slate-600">
+            <dl className="mt-3 grid gap-x-5 gap-y-2 border-y border-slate-100 py-2.5 sm:grid-cols-3">
+              <InlineFact label="Configured provider" value={readiness.providerName || "None"} />
+              <InlineFact label="Webhook credential" value={readiness.webhookCredentialConfigured ? "Configured" : "Not configured"} />
+              <InlineFact label="Current search-provider confirmation feed" value={readiness.currentSearchProviderConfirmationFeed === "none" ? "None" : "Configured"} />
+            </dl>
+            <dl className="mt-2 grid gap-x-5 gap-y-2 sm:grid-cols-2">
+              <InlineFact label="Endpoint" value="POST /api/internal/partner-confirmations" />
+              <InlineFact label="Webhook credential model" value={readiness.credentialModel === "single_provider_bound_secret" ? "Single provider + dedicated secret" : "Unknown"} />
+            </dl>
+            <p className="mt-2.5 text-xs leading-5 text-slate-600">
               A configured webhook secret means the signed callback boundary is ready; it does not mean a provider agreement or live confirmation feed is active. The server now binds the signing secret to a single configured provider, and rejects a signed payload naming a different provider.
             </p>
           </section>
 
-          <section aria-labelledby="confirmation-delivery-health-title" className="min-w-0 rounded-xl border border-slate-200 p-4 sm:p-5">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <h2 id="confirmation-delivery-health-title" className="text-base font-bold text-slate-950">Confirmation delivery health</h2>
-                <p className="mt-1 text-sm leading-6 text-slate-600">Authenticated provider callback receipts. Accepted deliveries may be retries; these are not additional bookings or unique trips.</p>
+          <section aria-labelledby="confirmation-delivery-health-title" className="min-w-0 rounded-xl border border-slate-200 px-4 py-3 sm:px-5 sm:py-4">
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <div className="min-w-0">
+                <h2 id="confirmation-delivery-health-title" className="text-base font-semibold leading-6 text-slate-950">Confirmation delivery health</h2>
+                <p className="mt-1 text-xs leading-5 text-slate-600">Authenticated provider callback receipts. Accepted deliveries may be retries; these are not additional bookings or unique trips.</p>
               </div>
-              <Link href="/admin/notifications" className="text-sm font-semibold text-indigo-700 hover:underline">Operational alerts</Link>
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                <AdminStatusBadge tone={!readiness.feedReady ? "neutral" : !deliveryHealth ? "warn" : deliveryHealth.rejectedLast24h > 0 ? "warn" : "info"}>
+                  {!readiness.feedReady ? "Monitoring inactive" : !deliveryHealth ? "Telemetry unavailable" : deliveryHealth.rejectedLast24h > 0 ? "Rejected deliveries · last 24h" : "Receipt telemetry available"}
+                </AdminStatusBadge>
+                <Link href="/admin/notifications" className="text-xs font-semibold text-indigo-700 underline-offset-4 hover:underline">Operational alerts</Link>
+              </div>
             </div>
             {!readiness.feedReady ? (
-              <p role="status" className="mt-4 rounded-lg bg-slate-50 p-4 text-sm text-slate-600">No provider-bound confirmation feed is configured. Delivery monitoring remains inactive.</p>
+              <p role="status" className="mt-3 flex items-start gap-2 rounded-lg bg-slate-50 px-3 py-2.5 text-xs leading-5 text-slate-700">
+                <Info size={16} className="mt-0.5 shrink-0 text-slate-500" aria-hidden="true" />
+                <span>No provider-bound confirmation feed is configured. Delivery monitoring remains inactive.</span>
+              </p>
             ) : !deliveryHealth ? (
-              <p role="status" className="mt-4 rounded-lg bg-slate-50 p-4 text-sm text-slate-600">Delivery telemetry is unavailable. No delivery counts have been assumed.</p>
+              <p role="status" className="mt-3 flex items-start gap-2 rounded-lg bg-slate-50 px-3 py-2.5 text-xs leading-5 text-slate-700">
+                <Info size={16} className="mt-0.5 shrink-0 text-slate-500" aria-hidden="true" />
+                <span>Delivery telemetry is unavailable. No delivery counts have been assumed.</span>
+              </p>
             ) : (
               <>
-                <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="mt-3 grid gap-2 sm:grid-cols-3">
                   <Fact label="Authenticated deliveries · last 24h" value={String(deliveryHealth.receivedLast24h)} />
                   <Fact label="Accepted · last 24h" value={String(deliveryHealth.acceptedLast24h)} />
                   <Fact label="Rejected · last 24h" value={String(deliveryHealth.rejectedLast24h)} />
-                  <Fact label="Latest authenticated delivery" value={deliveryHealth.lastReceivedAt ? formatDateTime(new Date(deliveryHealth.lastReceivedAt)) : "None recorded"} />
-                  <Fact label="Last accepted delivery" value={deliveryHealth.lastAcceptedAt ? formatDateTime(new Date(deliveryHealth.lastAcceptedAt)) : "None recorded"} />
-                  <Fact label="Configured provider" value={deliveryHealth.providerName} />
                 </div>
-                <h3 className="mt-5 text-sm font-bold text-slate-950">Recent authenticated delivery receipts</h3>
+                <dl className="mt-3 grid gap-x-5 gap-y-2 border-t border-slate-100 pt-3 sm:grid-cols-2 lg:grid-cols-4">
+                  <InlineFact label="Latest authenticated delivery" value={deliveryHealth.lastReceivedAt ? formatDateTime(new Date(deliveryHealth.lastReceivedAt)) : "None recorded"} />
+                  <InlineFact label="Last accepted delivery" value={deliveryHealth.lastAcceptedAt ? formatDateTime(new Date(deliveryHealth.lastAcceptedAt)) : "None recorded"} />
+                  <InlineFact label="Latest rejected delivery · last 24h" value={deliveryHealth.lastRejectedAt ? formatDateTime(new Date(deliveryHealth.lastRejectedAt)) : "None in last 24h"} />
+                  <InlineFact label="Configured provider" value={deliveryHealth.providerName} />
+                </dl>
+                <h3 className="mt-3 text-sm font-semibold text-slate-900">Recent authenticated delivery receipts</h3>
                 {deliveryHealth.recent.length ? (
-                  <div className="mt-2 max-w-full overflow-x-auto rounded-lg border border-slate-200">
+                  <div role="region" aria-label="Recent authenticated delivery receipts" tabIndex={0} className="mt-2 max-w-full overflow-x-auto rounded-lg border border-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
                     <table className="w-full min-w-[640px] text-left text-xs">
-                      <thead className="bg-slate-50 font-semibold text-slate-600">
-                        <tr><th className="px-3 py-3">Received</th><th className="px-3 py-3">Outcome</th><th className="px-3 py-3">Reason</th><th className="px-3 py-3">Reported status</th></tr>
+                      <caption className="sr-only">Recent authenticated callback receipts for the configured provider. Receipts may include retries.</caption>
+                      <thead className="bg-slate-50 font-medium text-slate-700">
+                        <tr>
+                          {["Received", "Outcome", "Reason", "Reported status"].map((heading) => (
+                            <th key={heading} scope="col" className="px-3 py-2.5 font-semibold">{heading}</th>
+                          ))}
+                        </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
                         {deliveryHealth.recent.map(item => (
-                          <tr key={item.id}>
-                            <td className="whitespace-nowrap px-3 py-3">{formatDateTime(new Date(item.receivedAt))}</td>
-                            <td className="px-3 py-3"><AdminStatusBadge tone={item.outcome === "ACCEPTED" ? "good" : "warn"}>{item.outcome}</AdminStatusBadge></td>
-                            <td className="px-3 py-3">{item.reason.replaceAll("_", " ")}</td>
-                            <td className="px-3 py-3">{item.reportedStatus || "Unavailable"}</td>
+                          <tr key={item.id} className="align-top hover:bg-slate-50/60">
+                            <td className="whitespace-nowrap px-3 py-2.5 text-slate-800">{formatDateTime(new Date(item.receivedAt))}</td>
+                            <td className="px-3 py-2.5"><AdminStatusBadge tone={item.outcome === "ACCEPTED" ? "good" : "warn"}>{item.outcome}</AdminStatusBadge></td>
+                            <td className="break-words px-3 py-2.5 text-slate-700">{item.reason.replaceAll("_", " ")}</td>
+                            <td className="px-3 py-2.5 text-slate-700">{item.reportedStatus || "Unavailable"}</td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
                   </div>
-                ) : <p role="status" className="mt-2 rounded-lg bg-slate-50 p-4 text-sm text-slate-600">No authenticated partner confirmation deliveries have been recorded yet.</p>}
+                ) : (
+                  <p role="status" className="mt-2 rounded-lg bg-slate-50 px-3 py-2.5 text-xs leading-5 text-slate-700">No authenticated partner confirmation deliveries have been recorded yet.</p>
+                )}
               </>
             )}
           </section>
@@ -321,11 +344,20 @@ function TripMetric({
   );
 }
 
+function InlineFact({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0">
+      <dt className="text-[11px] font-medium leading-4 text-slate-600">{label}</dt>
+      <dd className="mt-0.5 break-words text-xs font-semibold leading-5 text-slate-900">{value}</dd>
+    </div>
+  );
+}
+
 function Fact({ label, value }: { label: string; value: string }) {
   return (
-    <div className="min-w-0 rounded-xl bg-slate-50 p-3">
-      <p className="text-[11px] font-bold uppercase tracking-wide text-slate-600">{label}</p>
-      <p className="mt-1 break-words text-sm font-semibold leading-5 text-slate-900">{value}</p>
+    <div className="min-w-0 rounded-lg bg-slate-50 px-3 py-2.5">
+      <p className="text-[11px] font-medium leading-4 text-slate-600">{label}</p>
+      <p className="mt-1 break-words text-lg font-semibold leading-6 tabular-nums text-slate-900">{value}</p>
     </div>
   );
 }
