@@ -187,7 +187,7 @@ export async function loadAdminIdentityActivity(
       AND: [
         redirectOwner, environmentScope.handoff, { createdAt: window },
         ...(isOperationalGuest ? [] : [excludeCanonicalLegacyRows("PROVIDER_HANDOFF_STARTED", scopedJourneyOwner, window, productEventFilter, eventQ)]),
-        ...(product ? [{ type: product }] : []),
+        ...(product === "FLIGHT" || product === "HOTEL" ? [{ type: product }] : []),
         ...(q && !legacyStageLabelMatchesQuery("PROVIDER_HANDOFF_STARTED", q)
           ? [{ OR: [{ provider: ci(q) }, { route: ci(q) }] }] : []),
       ],
