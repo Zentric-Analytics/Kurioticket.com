@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const page = readFileSync("src/app/admin/confirmed-trips/page.tsx", "utf8");
+const recent = readFileSync("src/components/admin/RecentConfirmedTripTable.tsx", "utf8");
 const service = readFileSync("src/services/adminConfirmedTripsOperationsService.ts", "utf8");
 const navigation = readFileSync("src/lib/adminNavigation.ts", "utf8");
 const architecture = readFileSync("src/lib/my-trips-architecture.test.ts", "utf8");
@@ -14,7 +15,7 @@ test("confirmed trips admin is a read-only provider-confirmation operations page
   assert.match(page, /Recent provider-confirmed trips/);
   assert.match(page, /Provider handoff ≠ confirmation/);
   assert.match(page, /No Kurioticket payment record/);
-  assert.match(page, /trip\.userEmail \|\| "Email unavailable"/);
+  assert.match(recent, /trip\.userEmail \|\| "Email unavailable"/);
   assert.doesNotMatch(page, /fetch\(|method:\s*["'](?:POST|PATCH|DELETE)|<form/);
 });
 
@@ -79,7 +80,7 @@ test("confirmed-trip copy describes canonical confirmation state without oversta
   assert.match(page, /Trips whose latest provider-confirmation timestamp is within 24h/);
   assert.match(page, /Kurioticket accepted a valid signed partner confirmation and stored it as trusted trip data/);
   assert.doesNotMatch(page, /approved external provider sent a valid signed confirmation/);
-  assert.match(page, /no accepted signed partner callback has created a confirmed My Trip/i);
+  assert.match(recent, /no accepted signed partner callback has created a confirmed My Trip/i);
 });
 
 
@@ -100,8 +101,9 @@ test("Confirmed Trips UI uses one existing white parent with responsive summary 
   assert.match(page, /<TripMetric label="Past"/);
   assert.match(page, /<TripMetric label="Cancelled"/);
   assert.match(page, /<section aria-labelledby="recent-confirmed-trips-title"/);
-  assert.match(page, /min-w-\[1000px\]/);
-  assert.match(page, /overflow-x-auto/);
+  assert.match(page, /<RecentConfirmedTripTable trips=\{operations\.recentTrips\}/);
+  assert.match(recent, /min-w-\[880px\]/);
+  assert.match(recent, /overflow-x-auto/);
 });
 
 
@@ -129,7 +131,7 @@ test("Phase 1 prioritizes trip records and preserves the two in-page shortcuts",
   assert.match(page, /href="#confirmation-integration-title"/);
   assert.match(page, /id="recent-confirmed-trips-title" className="scroll-mt-28 min-\[1100px\]:scroll-mt-44/);
   assert.match(page, /id="confirmation-integration-title" className="scroll-mt-28 min-\[1100px\]:scroll-mt-44/);
-  assert.match(page, /operations\.recentTrips\.length > 0/);
+  assert.match(page, /<RecentConfirmedTripTable trips=\{operations\.recentTrips\}/);
 });
 
 
@@ -176,13 +178,18 @@ test("Confirmed Trips UI preserves honest data, alerts and no-booking boundaries
     "operations.metrics.total", "operations.metrics.confirmedLast24h",
     "operations.metrics.upcoming", "operations.metrics.past",
     "operations.metrics.cancelled", "operations.byProduct.map",
-    "operations.byProvider.map", "operations.recentTrips.map",
+    "operations.byProvider.map",
+  ]) assert.ok(page.includes(property), property);
+  assert.match(page, /<RecentConfirmedTripTable trips=\{operations\.recentTrips\}/);
+  assert.match(recent, /trips\.map\(\(trip\) =>/);
+  for (const property of [
     "trip.userEmail", "trip.userId", "trip.providerConfirmationCode",
     "trip.origin", "trip.destination", "trip.departureDate",
-    "trip.travelerCount", "trip.status",
-  ]) assert.ok(page.includes(property), property);
+    "trip.travelerCount", "trip.status", "trip.confirmedAt",
+    "trip.providerName", "trip.tripType",
+  ]) assert.ok(recent.includes(property), property);
   assert.match(page, /No zero values were invented/);
-  assert.match(page, /no accepted signed partner callback has created a confirmed My Trip/i);
+  assert.match(recent, /no accepted signed partner callback has created a confirmed My Trip/i);
   assert.match(page, /readiness.webhookCredentialConfigured/);
   assert.match(page, /readiness.currentSearchProviderConfirmationFeed === "none"/);
   assert.match(page, /Provider handoff ≠ confirmation/);
@@ -232,8 +239,8 @@ test("Confirmed Trips exposes all operational sections regardless of available t
 test("Previously conditional trip records remain truthful and read-only", () => {
   assert.match(page, /operations\.byProduct\.map/);
   assert.match(page, /operations\.byProvider\.map/);
-  assert.match(page, /operations\.recentTrips\.map/);
-  assert.match(page, /No provider-confirmed trips yet/);
+  assert.match(recent, /trips\.map\(\(trip\) =>/);
+  assert.match(recent, /No provider-confirmed trips yet/);
   assert.match(page, /Recent trip records are unavailable because the confirmed-trip database query could not be completed/);
   assert.match(page, /No counts are assumed/);
   assert.match(page, /No providers or counts are assumed/);
