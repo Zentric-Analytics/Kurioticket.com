@@ -12,16 +12,18 @@ page.setDefaultTimeout(25000);
 const errors = [];
 page.on("pageerror", error => errors.push(error.message));
 
-async function revealRecordedEvents() {
+async function revealBaselineEvents() {
   const collapsed = page.locator('button[aria-controls^="journey-"][aria-expanded="false"]');
   while (await collapsed.count()) await collapsed.first().click();
   const runs = page.getByRole("button", { name: "Show all", exact: true });
   while (await runs.count()) await runs.first().click();
 }
 
-async function headingDestinations() {
-  return page.locator('button[aria-controls^="journey-"]').evaluateAll(buttons =>
+async function headingDestinations(baseline = false) {
+  if (baseline) return page.locator('button[aria-controls^="journey-"]').evaluateAll(buttons =>
     buttons.map(button => button.parentElement.querySelector("a")?.getAttribute("href")));
+  return page.getByRole("link", {name:/^View activity for /}).evaluateAll(links =>
+    links.map(link => link.getAttribute("href")));
 }
 
 async function capture(filename) {
@@ -39,17 +41,18 @@ try {
     await page.setViewportSize({ width, height: 900 });
     await page.goto(base + "/before");
     await expect(page.getByTestId("fixture-label")).toContainText("synthetic activity");
-    await revealRecordedEvents();
-    originalDestinations = await headingDestinations();
+    await revealBaselineEvents();
+    originalDestinations = await headingDestinations(true);
     assert.equal(originalDestinations.length, 6);
     await capture("actions-before-guest-" + width + ".png");
 
     for (const kind of ["guest", "user"]) {
       const id = kind === "guest" ? "qa-guest-activity-0001" : "qa-registered-0001";
       await page.goto(base + "/admin/users/" + kind + "/" + id + "/activity");
-      await revealRecordedEvents();
       const history = page.getByRole("region", { name: "Activity history", exact: true });
       await expect(history.locator("[data-activity-id]")).toHaveCount(14);
+      await expect(page.getByRole("button", {name:"Show all"})).toHaveCount(0);
+      await expect(page.getByTestId("activity-body-card")).toBeVisible();
       await expect(history.getByRole("link", { name: /Open search|Open journey/ })).toHaveCount(0);
       await expect(history.locator('[data-activity-id] a, [data-activity-id] [role="link"]')).toHaveCount(0);
       const views = history.getByRole("link", { name: /^View activity for / });

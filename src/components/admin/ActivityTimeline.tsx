@@ -1,9 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
 import {
-  Building2, CarFront, ChevronDown, ChevronRight, CircleDot, ExternalLink,
+  Building2, CarFront, ChevronRight, CircleDot, ExternalLink,
   ListChecks, MousePointerClick, Plane, Search,
 } from "lucide-react";
 import { groupContiguousActivityRows } from "@/lib/adminIdentityActivity";
@@ -80,17 +79,6 @@ function dayGroups(events: ActivityRow[]) {
   }
   return [...byDate].map(([date,rows]) => ({date,rows,journeys:groupContiguousActivityRows(rows)}));
 }
-function compactRuns(rows: ActivityRow[]) {
-  const output: ActivityRow[][] = [];
-  for (const row of rows) {
-    const last = output.at(-1);
-    if (last && last[0].stage === row.stage && last[0].product === row.product &&
-      last[0].detail === row.detail && last[0].label === row.label &&
-      last[0].provider === row.provider && last[0].journeyId === row.journeyId) last.push(row);
-    else output.push([row]);
-  }
-  return output;
-}
 function journalTitle(rows: ActivityRow[]) {
   const summary = rows.find(row => row.stage === "SEARCH_COMPLETED")
     ?? rows.find(row => row.stage === "RESULTS_VIEWED") ?? rows[0];
@@ -100,15 +88,14 @@ function journalTitle(rows: ActivityRow[]) {
   return parts.slice(0, 2).join(" · ");
 }
 
-/** Presentation-only grouping; original event records and timestamps are retained. */
+/** Every eligible event is visible immediately, including repeated searches.
+ * Preserve optional journey context and one View action without collapse controls.
+ */
 export function ActivityTimeline({ events, nextHref, environment, order = "newest", clearHref }: {
   events: ActivityRow[]; nextHref: string | null; environment: string;
   order?: "newest" | "oldest"; clearHref?: string;
 }) {
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
-  const [runs, setRuns] = useState<Record<string, boolean>>({});
   const days = dayGroups(events);
-  const newestDay = events.reduce((max,row) => row.at.toISOString().slice(0,10) > max ? row.at.toISOString().slice(0,10) : max, "");
   const now = new Date();
   return <section aria-labelledby="activity-history-title" className="min-w-0">
     <div className="flex items-center justify-between gap-3 pb-3">
@@ -122,42 +109,28 @@ export function ActivityTimeline({ events, nextHref, environment, order = "newes
       {days.map(day => <section key={day.date} aria-label={"Activity on " + dayLabel(new Date(day.date + "T12:00:00Z"))}>
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
           <h3 className="text-sm font-semibold">{dayLabel(new Date(day.date + "T12:00:00Z"))} <span className="ml-1 text-xs font-normal text-[#475569]">UTC</span></h3>
-          <span className="text-xs text-[#475569]">{day.journeys.filter(group => group.journeyId).length} journeys · {day.rows.length} events</span>
+          <span className="text-xs text-[#475569]">{day.rows.length} {day.rows.length === 1 ? "event" : "events"}</span>
         </div>
-        <div className="divide-y divide-[#E2E8F0] border-y border-[#E2E8F0]">{day.journeys.map(group => {
-          const key = day.date + ":" + group.key;
-          const open = expanded[key] ?? (day.date === newestDay && Boolean(group.journeyId));
-          const first = group.events[0];
-          const href = detailHref(first,environment,now);
-          const title = journalTitle(group.events);
-          return <div key={key} className="min-w-0 bg-transparent">
-            {group.journeyId ? <div className="flex min-w-0 items-center justify-between gap-2 py-3">
-              <button type="button" aria-expanded={open} aria-controls={"journey-" + key.replace(/[^a-zA-Z0-9_-]/g,"-")}
-                onClick={() => setExpanded(previous => ({...previous,[key]:!open}))}
-                className="focus-ring flex min-w-0 flex-1 items-center gap-2 rounded-sm text-left text-sm font-medium">
-                <ProductIcon product={group.products[0]}/><span className="min-w-0 truncate">{title}</span>
-                <span className="shrink-0 text-xs font-normal text-[#475569]">{group.events.length} events</span>
-                <ChevronDown size={16} className={"shrink-0 transition-transform " + (open ? "rotate-180" : "")} aria-hidden="true"/>
-              </button>
-              {href ? <Link href={href} aria-label={"View activity for " + title} className="focus-ring shrink-0 text-xs text-[var(--primary)] hover:underline">View</Link> : null}
-            </div> : <h4 className="py-3 text-sm font-medium">Not linked to a journey</h4>}
-            {(!group.journeyId || open) ? <ol id={"journey-" + key.replace(/[^a-zA-Z0-9_-]/g,"-")} className="divide-y divide-[#E2E8F0] border-t border-[#E2E8F0] pl-5 sm:pl-8">
-              {compactRuns(group.events).map(batch => {
-                const first = batch[0], runKey = key + ":" + first.id;
-                const revealed = runs[runKey];
-                if (batch.length < 3) return batch.map(row => <RecordedEvent key={row.id} row={row}/>);
-                return <li key={runKey} className="py-3">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <span className="text-[13px] font-medium">{first.stage === "OFFER_SELECTED" ? "Offer selected · " + batch.length + " events" : batch.length + " " + (first.stage === "SEARCH_COMPLETED" ? "searches" : first.label.toLowerCase() + " events")} · {activityDetail(first)} · {batch.every(row => /success/i.test(row.detail + " " + row.label)) ? "all successful" : "recorded outcomes"}</span>
-                    <span className="text-xs text-[#475569]">{hourLabel(batch[0].at)} – {hourLabel(batch[batch.length-1].at)}</span>
-                    <button type="button" aria-expanded={Boolean(revealed)} className="focus-ring rounded-sm text-xs font-medium text-[var(--primary)] hover:underline" onClick={() => setRuns(p => ({...p,[runKey]:!revealed}))}>{revealed ? "Hide all" : "Show all"}</button>
-                  </div>
-                  {revealed ? <ol className="mt-2 divide-y divide-[#E2E8F0] border-t border-[#E2E8F0]">{batch.map(row => <RecordedEvent key={row.id} row={row}/>)}</ol> : null}
-                </li>;
-              })}
-            </ol> : null}
-          </div>;
-        })}</div>
+        <div className="divide-y divide-[#E2E8F0] border-y border-[#E2E8F0]">
+          {day.journeys.map(group => {
+            const first = group.events[0];
+            const href = detailHref(first, environment, now);
+            const title = journalTitle(group.events);
+            return <div key={day.date + ":" + group.key} className="min-w-0">
+              {group.journeyId ? <div className="flex min-w-0 items-center justify-between gap-2 py-3">
+                <div className="flex min-w-0 items-center gap-2 text-sm font-medium">
+                  <ProductIcon product={group.products[0]}/>
+                  <span className="min-w-0 truncate">{title}</span>
+                  <span className="shrink-0 text-xs font-normal text-[#475569]">{group.events.length} events</span>
+                </div>
+                {href ? <Link href={href} aria-label={"View activity for " + title} className="focus-ring shrink-0 text-xs text-[var(--primary)] hover:underline">View</Link> : null}
+              </div> : null}
+              <ol className={"divide-y divide-[#E2E8F0] pl-3 sm:pl-8 " + (group.journeyId ? "border-t border-[#E2E8F0]" : "")}>
+                {group.events.map(row => <RecordedEvent key={row.id} row={row}/>)}
+              </ol>
+            </div>;
+          })}
+        </div>
       </section>)}
     </div>}
     {nextHref ? <div className="pt-4"><Link className="focus-ring text-sm font-medium text-[var(--primary)] hover:underline" href={nextHref}>{order === "oldest" ? "Load newer activity" : "Load older activity"} <ChevronRight size={15} className="inline" aria-hidden="true"/></Link></div> : null}

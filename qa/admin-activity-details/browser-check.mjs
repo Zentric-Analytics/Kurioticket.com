@@ -13,12 +13,6 @@ const errors=[];
 page.on("pageerror",error=>errors.push(error.message));
 const url=base+"/admin/users/guest/qa-guest-activity-0001/activity";
 
-// Group disclosures are unchanged; opening a group never fetches another page.
-async function expandJourneyGroups() {
-  const collapsed = page.locator('button[aria-controls^="journey-"][aria-expanded="false"]');
-  while (await collapsed.count()) await collapsed.first().click();
-}
-
 async function inspectActivityTypography(page) {
   return page.evaluate(() => {
     const identity = document.querySelector('section[aria-label="Customer identity"]');
@@ -27,8 +21,8 @@ async function inspectActivityTypography(page) {
     const shell = document.querySelector("main")?.parentElement;
     const factLabel = identity?.querySelector("dt");
     const factValue = identity?.querySelector("dd");
-    const summaryValue = summary?.querySelector(".tabular-nums");
-    const summaryLabel = summaryValue?.nextElementSibling;
+    const summaryValue = summary?.querySelector('[data-testid="activity-metric-value"]');
+    const summaryLabel = summary?.querySelector('[data-testid="activity-metric-label"]');
     const searchInput = document.querySelector('input[aria-label="Search activity"]');
     if (!root || !shell || !summary || !factLabel || !factValue || !summaryValue || !summaryLabel || !searchInput)
       throw new Error("Activity typography anchors missing");
@@ -64,7 +58,7 @@ const approvedActivityTypography = {
   factLabelSize: "12px",
   factLabelWeight: "400",
   factLabelColor: "rgb(100, 116, 139)",
-  summaryValueSize: "14px",
+  summaryValueSize: "22px",
   summaryValueWeight: "500",
   summaryValueColor: "rgb(15, 23, 42)",
   summaryLabelSize: "12px",
@@ -88,7 +82,9 @@ try {
     await expect(page.getByRole("heading",{name:"Visitor",exact:true})).toBeVisible();
     await expect(page.getByRole("heading",{name:"Activity history"})).toBeVisible();
     await expect(page.getByRole("heading",{name:"Activity summary"})).toBeVisible();
-    await expect(page.getByRole("heading",{name:"Related records"})).toBeVisible();
+    await expect(page.getByRole("heading",{name:"Related records"})).toHaveCount(0);
+    await expect(page.getByTestId("activity-body-card")).toBeVisible();
+    await expect(page.getByRole("navigation",{name:"Activity tabs"}).getByRole("link",{name:"Journeys"})).toHaveCount(0);
     await expect(page.getByRole("button",{name:"About activity data"})).toBeVisible();
     await expect(page.getByRole("tooltip")).toBeHidden();
     await page.getByRole("button",{name:"About activity data"}).focus();
@@ -103,8 +99,9 @@ try {
     await expect(page.getByRole("textbox",{name:"Search activity"})).toBeVisible();
     await expect(page.getByRole("link",{name:/Load (older|newer) activity/})).toHaveCount(0);
     await expect(page.getByText("14 recorded events",{exact:true})).toBeVisible();
-    await expandJourneyGroups();
-    await expect(page.getByRole("button",{name:"Show all"})).toBeVisible();
+    await expect(page.locator("[data-activity-id]")).toHaveCount(14);
+    await expect(page.getByRole("button",{name:"Show all"})).toHaveCount(0);
+    await expect(page.getByRole("button",{name:"Hide all"})).toHaveCount(0);
     const widths=await page.evaluate(()=>({document:document.documentElement.scrollWidth,viewport:window.innerWidth}));
     assert.ok(widths.document <= widths.viewport+1, "No horizontal drift "+JSON.stringify(widths));
     assert.deepEqual(await inspectActivityTypography(page), approvedActivityTypography, "Guest Activity typography and palette "+width);
@@ -116,29 +113,25 @@ try {
   // Every fixture event is available upfront, including the formerly separate pages.
   await page.goto(url);
   let totals = page.getByRole("region",{name:"Activity summary"});
-  await expect(totals.getByText("5",{exact:true})).toBeVisible();
-  await expect(totals.getByText("2",{exact:true})).toBeVisible();
-  await expect(totals.getByText("1",{exact:true})).toBeVisible();
+  await expect(totals.locator('[data-testid="activity-metric-value"]')).toHaveText(["5","2","1"]);
   await expect(page.getByText("Counts reflect loaded events only.")).toHaveCount(0);
-  await expandJourneyGroups();
-  await page.getByRole("button",{name:"Show all"}).click();
   await expect(page.locator("[data-activity-id]")).toHaveCount(14);
   await expect(page.locator('[data-activity-id="j-qa-older-search"]')).toBeVisible();
   await expect(page.locator('[data-activity-id="j-qa-newer-search"]')).toBeVisible();
   await page.goto(url+"?cursor=older-qa-page");
   await expect(page.getByText("14 recorded events",{exact:true})).toBeVisible();
   totals = page.getByRole("region",{name:"Activity summary"});
-  await expect(totals.getByText("5",{exact:true})).toBeVisible();
-  await expect(totals.getByText("2",{exact:true})).toBeVisible();
-  await expect(totals.getByText("1",{exact:true})).toBeVisible();
+  await expect(totals.locator('[data-testid="activity-metric-value"]')).toHaveText(["5","2","1"]);
   await page.goto(url+"?tab=searches&stage=SEARCH_COMPLETED&product=FLIGHT&q=LOS");
   totals = page.getByRole("region",{name:"Activity summary"});
-  await expect(totals.getByText("1",{exact:true})).toHaveCount(1);
-  await expect(totals.getByText("0",{exact:true})).toHaveCount(2);
+  await expect(totals.locator('[data-testid="activity-metric-value"]')).toHaveText(["1","0","0"]);
   await page.goto(url+"?tab=handoffs");
   totals = page.getByRole("region",{name:"Activity summary"});
-  await expect(totals.getByText("1",{exact:true})).toHaveCount(1);
-  await expect(totals.getByText("0",{exact:true})).toHaveCount(2);
+  await expect(totals.locator('[data-testid="activity-metric-value"]')).toHaveText(["0","0","1"]);
+  await page.goto(url+"?tab=journeys&q=LOS");
+  await expect(page.getByRole("navigation",{name:"Activity tabs"}).getByRole("link",{name:"All activity"})).toHaveAttribute("aria-current","page");
+  await expect(page.getByRole("navigation",{name:"Activity tabs"}).getByRole("link",{name:"Journeys"})).toHaveCount(0);
+  await expect(page.getByRole("navigation",{name:"Activity tabs"}).getByRole("link",{name:"Searches"})).not.toHaveAttribute("href",/tab=journeys/);
   console.log("PASS complete timeline, summary and legacy cursor recovery");
 
   // No scrolling, load-more click or additional page request is needed for any row.
@@ -155,26 +148,21 @@ try {
     assert.equal(ids.at(-1),"s-qa-complete-1004");
     await page.goto(fullUrl+"?product=FLIGHT&from=2026-10-22&to=2026-10-22");
     await expect(page.locator("[data-activity-id]")).toHaveCount(503);
-    await expect(page.getByRole("region",{name:"Activity summary"}).getByText("503",{exact:true})).toBeVisible();
+    await expect(page.getByRole("region",{name:"Activity summary"}).locator('[data-testid="activity-metric-value"]').first()).toHaveText("503");
   }
   console.log("PASS 1005 events upfront for guests and registered users with complete filters");
 
   await page.setViewportSize({width:1280,height:900});
   await page.goto(url+"?directory=sort%3Dname_asc%26identity%3DGUEST%26page%3D2");
-  await expandJourneyGroups();
-  const show=page.getByRole("button",{name:"Show all"}).first();
-  await show.click();
-  await expect(page.getByRole("button",{name:"Hide all"})).toBeVisible();
+  await expect(page.locator("[data-activity-id]")).toHaveCount(14);
   for(const stamp of ["5:59","5:58","5:57","5:56"]) await expect(page.getByRole("main")).toContainText(stamp);
-  await page.screenshot({path:output+"/after-expanded-selections-1280.png",fullPage:true});
-  await page.getByRole("button",{name:"Hide all"}).first().focus();
-  await page.keyboard.press("Enter");
-  await expect(page.getByRole("button",{name:"Show all"})).toBeVisible();
+  await page.screenshot({path:output+"/after-all-selections-visible-1280.png",fullPage:true});
+  await expect(page.getByRole("button",{name:"Show all"})).toHaveCount(0);
   const back=await page.getByRole("link",{name:"Users",exact:true}).last().getAttribute("href");
   assert.ok(back.includes("sort=name_asc") && back.includes("identity=GUEST") && back.includes("page=2"));
   await page.getByRole("button",{name:/Copy guest ID:/}).click();
   assert.equal(await page.evaluate(()=>navigator.clipboard.readText()),"qa-guest-activity-0001");
-  console.log("PASS disclosure and identity");
+  console.log("PASS every record visible and identity");
 
   await page.goto(url);
   await page.getByRole("navigation",{name:"Activity tabs"}).getByRole("link",{name:"Searches",exact:true}).click();
@@ -229,7 +217,7 @@ try {
   await page.goto(base+"/admin/users/user/qa-registered-0001/activity");
   await expect(page.getByRole("heading",{name:"QA registered customer"})).toBeVisible();
   await expect(page.getByText("customer.qa@example.invalid",{exact:true})).toBeVisible();
-  await expect(page.getByRole("heading",{name:"Related records"})).toBeVisible();
+  await expect(page.getByRole("heading",{name:"Related records"})).toHaveCount(0);
   await expect(page.getByRole("button",{name:"Manage account for customer.qa@example.invalid"})).toBeVisible();
   assert.deepEqual(await inspectActivityTypography(page), approvedActivityTypography, "Registered Activity typography and palette");
   await page.screenshot({path:output+"/after-registered-activity-1280.png",fullPage:true});

@@ -24,17 +24,16 @@ function eventMarkup(html: string, id: string) {
   return match[0];
 }
 
-test("Activity timeline groups repeated records in an accessible expandable card", () => {
+test("Activity timeline shows repeated records individually and keeps one journey View", () => {
   const rows = [offer("j-a", 0), offer("j-b", 1), offer("j-c", 2), offer("j-d", 3)];
   const html = renderToStaticMarkup(createElement(ActivityTimeline, {
     events: rows, nextHref: "/admin/users/guest/qa-user-1/activity?cursor=older", environment: "staging",
   }));
   assert.match(html, /Activity history/);
   assert.match(html, /4 recorded events/);
-  assert.match(html, /Offer selected · 4 events/);
-  assert.match(html, /Show all/);
-  assert.equal((html.match(/data-activity-id=/g) || []).length, 0);
-  assert.equal((html.match(/<time dateTime=/g) || []).length, 0);
+  assert.equal((html.match(/data-activity-id=/g) || []).length, 4);
+  assert.equal((html.match(/<time dateTime=/g) || []).length, 4);
+  assert.doesNotMatch(html, /Show all|Hide all|aria-expanded=/);
   assert.equal((html.match(/>View<\/a>/g) || []).length, 1);
   assert.doesNotMatch(html, /Open journey|Open search/);
   assert.match(html, /environment=staging/);
@@ -73,7 +72,7 @@ test("Activity Explorer organizes dates chronologically and retains every indivi
   assert.match(html, /aria-label="Activity on Oct 21, 2026"/);
   assert.match(html, /Flight · ABV → ACC/);
   assert.match(html, /Hotel · Lagos/);
-  assert.match(html, /aria-expanded="true"/);
+  assert.doesNotMatch(html, /aria-expanded=|Show all|Hide all/);
   const oldest = renderToStaticMarkup(createElement(ActivityTimeline, { events: rows.slice().reverse(),
     nextHref: "/admin/users/guest/qa/activity?cursor=newer", environment: "staging", order: "oldest" }));
   assert.ok(oldest.indexOf("Oct 21, 2026") < oldest.indexOf("Oct 22, 2026"));
@@ -146,16 +145,33 @@ test("known product and search-outcome labels are readable without rewriting ide
   assert.match(brandNamedLikeStatus, /Hotel · Paris · SUCCESS/);
 });
 
-test("compact repeated-search summaries use readable case without changing grouping", () => {
+test("repeated searches on the same route remain individually visible with their own timestamps", () => {
   const rows: ActivityRow[] = Array.from({ length: 4 }, (_, index) => ({
     id: "s-compact-" + index, at: new Date(at.getTime() - index * 60000),
     stage: "SEARCH_COMPLETED", label: "Search completed", product: "FLIGHT", detail: "FLIGHT · JFK → MIA · PARTIAL",
   }));
   const html = render(rows);
-  assert.match(html, /4 searches · Flight · JFK → MIA · Partial/);
-  assert.match(html, /Show all/);
   assert.match(html, /4 recorded events/);
-  assert.doesNotMatch(html, /Open search|Open journey/);
+  assert.equal((html.match(/data-activity-id=/g) || []).length, 4);
+  for (const row of rows) {
+    const markup = eventMarkup(html, row.id);
+    assert.match(markup, /Flight · JFK → MIA · Partial/);
+    assert.match(markup, new RegExp(row.at.toISOString().replaceAll(".", "\\.")));
+  }
+  assert.doesNotMatch(html, /Show all|Hide all|Open search|Open journey|Not linked to a journey/);
+});
+
+test("older linked searches are visible on initial render without expanding a journey", () => {
+  const old = new Date("2026-10-15T14:00:00.000Z");
+  const rows: ActivityRow[] = Array.from({ length: 3 }, (_, index) => ({
+    id: "j-older-" + index, at: new Date(old.getTime() - index * 60000),
+    journeyId: "one-old-journey", stage: "SEARCH_COMPLETED", label: "Search completed",
+    product: "FLIGHT", detail: "FLIGHT · LOS → LHR · SUCCESS",
+  }));
+  const html = render(rows);
+  for (const row of rows) assert.ok(eventMarkup(html, row.id).includes("Flight · LOS → LHR · Success"));
+  assert.equal((html.match(/>View<\/a>/g) || []).length, 1);
+  assert.doesNotMatch(html, /Show all|Hide all|aria-expanded=/);
 });
 
 test("unknown details and account activity are not indiscriminately title-cased", () => {
