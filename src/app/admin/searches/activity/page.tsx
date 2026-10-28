@@ -1,9 +1,6 @@
 import Link from "next/link";
-import { SearchWorkspaceTabs } from "@/components/admin/SearchWorkspaceTabs";
+import { redirect } from "next/navigation";
 import { searchWorkspaceTab } from "@/lib/adminSearchWorkspace";
-import AdminJourneysPage from "@/app/admin/journeys/page";
-import AdminRedirectsPage from "@/app/admin/redirects/page";
-import AdminReferralAttributionPage from "@/app/admin/referral-attribution/page";
 
 import { searchActivityDetailQuery } from "@/lib/adminSearchActivityNavigation";
 import { buildAdminSearchProviderOptions } from "@/lib/adminSearchProviderOptions";
@@ -22,15 +19,18 @@ type RangeKey = "today" | "7d" | "30d" | "all" | "custom";
 
 export default async function AdminSearchActivityPage({ searchParams }: { searchParams: SearchParams }) {
   const supplied = await searchParams;
+  // Preserve bookmarks to former workspace tabs without duplicating the
+  // individual customer views or provider business reporting here.
   const tab = searchWorkspaceTab(supplied.tab);
   if (tab !== "searches") {
-    const { tab: _tab, ...sectionParams } = supplied;
-    const content = tab === "journeys"
-      ? await AdminJourneysPage({ searchParams: Promise.resolve(sectionParams), embedded: true })
-      : tab === "handoffs"
-        ? await AdminRedirectsPage({ searchParams: Promise.resolve(sectionParams), embedded: true })
-        : await AdminReferralAttributionPage({ searchParams: Promise.resolve(sectionParams), embedded: true });
-    return <><SearchWorkspaceTabs active={tab} />{content}</>;
+    const { tab: _tab, ...old } = supplied;
+    const target = tab === "attribution" ? "/admin/providers?view=attribution" : tab === "journeys" ? "/admin/journeys" : "/admin/redirects";
+    const keys = tab === "attribution" ? ["days"] : tab === "journeys"
+      ? ["range","environment","product","identity","userId","visitorId","provider","stage","from","to"]
+      : ["environment","product","identity","userId","visitorId","provider","correlation","from","to"];
+    const params = new URLSearchParams();
+    for (const key of keys) if (typeof old[key] === "string" && old[key].length <= 200) params.set(key, old[key]);
+    redirect(target + (params.size ? (target.includes("?") ? "&" : "?") + params.toString() : ""));
   }
   const { tab: _tab, ...suppliedSearch } = supplied;
   const raw = { ...suppliedSearch };
@@ -50,7 +50,6 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
 
   return (
     <>
-      <SearchWorkspaceTabs active="searches" />
       <AdminPageShell title="Search activity" hideHeader>
         <div className="mx-auto w-full max-w-[1500px]">
         {result.status === "ok" && summary.status === "ok" ? (
