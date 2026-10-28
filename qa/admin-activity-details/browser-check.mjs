@@ -53,6 +53,21 @@ async function inspectActivityTypography(page) {
     };
   });
 }
+async function expectIdentityDatesOnOneLine(page, context) {
+  const dates = await page.locator('section[aria-label="Customer identity"] dd').evaluateAll(
+    nodes => nodes.slice(0, 2).map(el => ({
+      height: el.getBoundingClientRect().height,
+      fontSize: Number.parseFloat(getComputedStyle(el).fontSize),
+      text: el.textContent?.trim(),
+    }))
+  );
+  assert.equal(dates.length, 2, context + ": Joined/First seen and Last active facts are present");
+  for (const date of dates) {
+    assert.ok(date.height <= date.fontSize * 1.9,
+      context + ": date unexpectedly wraps: " + JSON.stringify(date));
+  }
+}
+
 const approvedActivityTypography = {
   rootBackground: "rgb(255, 255, 255)",
   shellBackground: "rgb(248, 250, 252)",
@@ -122,6 +137,7 @@ try {
     const widths=await page.evaluate(()=>({document:document.documentElement.scrollWidth,viewport:window.innerWidth}));
     assert.ok(widths.document <= widths.viewport+1, "No horizontal drift "+JSON.stringify(widths));
     assert.deepEqual(await inspectActivityTypography(page), approvedActivityTypography, "Guest Activity typography and palette "+width);
+    if (width === 1280) await expectIdentityDatesOnOneLine(page, "Guest desktop");
     if([1536,1280,390,320].includes(width))
       await page.screenshot({path:output+"/after-view-activity-"+width+".png",fullPage:true});
     console.log("PASS responsive activity page",width);
@@ -239,6 +255,7 @@ try {
   await expect(accountCard.getByRole("button",{name:"Manage account for customer.qa@example.invalid"})).toBeVisible();
   await expect(accountCard.getByTestId("activity-body-card")).toBeVisible();
   assert.deepEqual(await inspectActivityTypography(page), approvedActivityTypography, "Registered Activity typography and palette");
+  await expectIdentityDatesOnOneLine(page, "Registered desktop");
   await page.screenshot({path:output+"/after-registered-activity-1280.png",fullPage:true});
   assert.deepEqual(errors,[],"No browser exceptions");
   console.log("PASS registered identity and browser errors");
