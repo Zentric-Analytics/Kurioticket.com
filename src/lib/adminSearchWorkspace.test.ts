@@ -51,3 +51,12 @@ test("registered account searches link to journeys and filter forms retain scope
   assert.match(redirects, /name="userId" value=\{one\(raw\.userId\)\}/);
   assert.match(redirects, /name="visitorId" value=\{one\(raw\.visitorId\)\}/);
 });
+
+test("changing identity clears stale deep-linked customer IDs without dropping them on other filter changes", () => {
+  for (const source of [journeys, redirects]) {
+    assert.match(source, /clearFieldNamesOnChange=\{\["userId", "visitorId"\]\}/);
+    assert.match(source, /name="identity"/);
+    assert.match(source, /name="userId" value=\{one\(raw\.userId\)\}/);
+    assert.match(source, /name="visitorId" value=\{one\(raw\.visitorId\)\}/);
+  }
+});
