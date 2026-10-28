@@ -11,7 +11,8 @@ export const metadata = { title: "Admin Journey Detail" };
 export default async function AdminJourneyDetailPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { id } = await params;
   const raw = await searchParams;
-  const input: Record<string, unknown> = { ...raw, limit: one(raw.limit) || "50" };
+  const { range: _range, ...backendRaw } = raw;
+  const input: Record<string, unknown> = { ...backendRaw, limit: one(raw.limit) || "50" };
   const result = await adminJourneys.detail(id, input);
   if (result.status === "not_found") notFound();
 
@@ -68,7 +69,7 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
 function one(value: string | string[] | undefined) { return typeof value === "string" ? value : ""; }
 function cursorHref(id: string, raw: Record<string, string | string[] | undefined>, cursor: string) {
   const p = new URLSearchParams();
-  for (const [key, value] of Object.entries(raw)) if (typeof value === "string" && value && key !== "cursor") p.set(key, value);
+  for (const [key, value] of Object.entries(raw)) if (typeof value === "string" && value && key !== "cursor" && key !== "range") p.set(key, value);
   p.set("cursor", cursor); p.set("limit", one(raw.limit) || "50");
   return "/admin/journeys/" + id + "?" + p.toString();
 }
@@ -76,7 +77,7 @@ function cursorHref(id: string, raw: Record<string, string | string[] | undefine
 function returnHref(raw: Record<string, string | string[] | undefined>) {
   // Always return to the filtered cohort, never to an arbitrary supplied URL.
   const p = new URLSearchParams();
-  for (const key of ["from", "to", "environment", "identity", "product", "provider", "stage", "userId", "visitorId"]) {
+  for (const key of ["range", "from", "to", "environment", "identity", "product", "provider", "stage", "userId", "visitorId"]) {
     const value = raw[key];
     if (typeof value === "string" && value.length <= 256 && value) p.set(key, value);
   }
