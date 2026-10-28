@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { RecentConfirmedTripTable } from "@/components/admin/RecentConfirmedTripTable";
+import { ConfirmedTripsBreakdowns } from "@/components/admin/ConfirmedTripsBreakdowns";
 import {
   ArrowDown,
   CalendarCheck,
@@ -8,9 +9,7 @@ import {
   Clock3,
   FileCheck2,
   Info,
-  Package,
   ShieldCheck,
-  Users,
   type LucideIcon,
 } from "lucide-react";
 
@@ -215,89 +214,26 @@ export default async function AdminConfirmedTripsPage() {
             )}
           </section>
 
-          <div className="grid items-stretch gap-4 lg:grid-cols-2">
-              <section aria-labelledby="trips-by-product-title" className="min-w-0 rounded-xl border border-slate-200 p-4 sm:p-5">
-                <div className="flex items-start gap-2.5">
-                  <Package size={20} className="mt-0.5 shrink-0 text-indigo-600" aria-hidden="true" />
-                  <div>
-                    <h2 id="trips-by-product-title" className="text-base font-bold text-slate-950">Confirmed trips by product</h2>
-                    <p className="mt-1 text-xs leading-5 text-slate-600">Provider-confirmed trips grouped by product.</p>
-                  </div>
-                </div>
-                {!operations ? (
-                  <div role="status" className="mt-4 flex min-h-36 flex-col items-center justify-center rounded-xl bg-slate-50 px-4 py-6 text-center">
-                    <p className="text-sm font-semibold text-slate-800">Product breakdown unavailable</p>
-                    <p className="mt-1 max-w-sm text-xs leading-5 text-slate-600">Confirmed-trip records could not be loaded from the connected database. No counts are assumed.</p>
-                  </div>
-                ) : operations.byProduct.length ? (
-                  <div className="mt-4 divide-y divide-slate-100">
-                    {operations.byProduct.map((item) => (
-                      <div key={item.tripType} className="flex min-w-0 items-center justify-between gap-3 py-3">
-                        <span className="break-words text-sm font-semibold text-slate-900">{item.tripType}</span>
-                        <AdminStatusBadge tone="info">{item.count}</AdminStatusBadge>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="mt-4 flex min-h-36 flex-col items-center justify-center rounded-xl bg-slate-50 px-4 py-6 text-center">
-                    <Package size={25} className="text-slate-400" aria-hidden="true" />
-                    <p className="mt-3 text-sm font-semibold text-slate-800">No provider-confirmed trips are recorded yet.</p>
-                    <p className="mt-1 max-w-sm text-xs leading-5 text-slate-600">A product breakdown will appear after accepted signed confirmations are recorded.</p>
-                  </div>
-                )}
-              </section>
+          <ConfirmedTripsBreakdowns operations={operations} />
 
-              <section aria-labelledby="trips-by-provider-title" className="min-w-0 rounded-xl border border-slate-200 p-4 sm:p-5">
-                <div className="flex items-start gap-2.5">
-                  <Users size={20} className="mt-0.5 shrink-0 text-indigo-600" aria-hidden="true" />
-                  <div>
-                    <h2 id="trips-by-provider-title" className="text-base font-bold text-slate-950">Confirmed trips by provider</h2>
-                    <p className="mt-1 text-xs leading-5 text-slate-600">Provider-confirmed trips grouped by provider.</p>
-                  </div>
-                </div>
-                {!operations ? (
-                  <div role="status" className="mt-4 flex min-h-36 flex-col items-center justify-center rounded-xl bg-slate-50 px-4 py-6 text-center">
-                    <p className="text-sm font-semibold text-slate-800">Provider breakdown unavailable</p>
-                    <p className="mt-1 max-w-sm text-xs leading-5 text-slate-600">Confirmed-trip records could not be loaded from the connected database. No providers or counts are assumed.</p>
-                  </div>
-                ) : operations.byProvider.length ? (
-                  <div className="mt-4 divide-y divide-slate-100">
-                    {operations.byProvider.map((item) => (
-                      <div key={item.provider} className="flex min-w-0 items-center justify-between gap-3 py-3">
-                        <div className="min-w-0">
-                          <p className="break-words text-sm font-semibold text-slate-900">{item.provider}</p>
-                          <p className="mt-1 text-xs leading-5 text-slate-500">{item.lastConfirmationAt ? "Last confirmation " + formatDateTime(new Date(item.lastConfirmationAt)) : "No timestamp"}</p>
-                        </div>
-                        <AdminStatusBadge tone="info">{item.count}</AdminStatusBadge>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="mt-4 flex min-h-36 flex-col items-center justify-center rounded-xl bg-slate-50 px-4 py-6 text-center">
-                    <Users size={25} className="text-slate-400" aria-hidden="true" />
-                    <p className="mt-3 text-sm font-semibold text-slate-800">No provider confirmation feed has produced a confirmed trip yet.</p>
-                    <p className="mt-1 max-w-sm text-xs leading-5 text-slate-600">A provider breakdown will appear after genuine signed confirmations are accepted.</p>
-                  </div>
-                )}
-              </section>
-            </div>
-
-          <section aria-labelledby="trips-operational-boundaries" className="min-w-0 rounded-xl border border-slate-200 p-4 sm:p-5">
-            <div className="flex items-start gap-3">
-              <ShieldCheck size={20} className="mt-0.5 shrink-0 text-indigo-600" aria-hidden="true" />
-              <div className="min-w-0">
-                <h2 id="trips-operational-boundaries" className="text-base font-bold text-slate-950">Operational boundaries</h2>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
+          <section aria-labelledby="trips-operational-boundaries" className="min-w-0 rounded-xl border border-slate-200 px-4 py-3 sm:px-5 sm:py-4">
+            <div className="flex min-w-0 items-start gap-2.5">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-700">
+                <ShieldCheck size={17} aria-hidden="true" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <h2 id="trips-operational-boundaries" className="text-base font-semibold leading-6 text-slate-950">Operational boundaries</h2>
+                <p className="mt-1 text-[13px] leading-5 text-slate-700">
                   Kurioticket is a metasearch and referral platform. A confirmed My Trip means Kurioticket accepted a valid signed partner confirmation and stored it as trusted trip data. It does not create a Kurioticket booking, payment, refund, cancellation or ticketing record.
                 </p>
               </div>
             </div>
-            <div className="mt-4 flex flex-wrap gap-2">
+            <div className="mt-3 flex flex-wrap gap-1.5 sm:pl-10">
               <AdminStatusBadge tone="good">Signed confirmations only</AdminStatusBadge>
               <AdminStatusBadge>Provider handoff ≠ confirmation</AdminStatusBadge>
               <AdminStatusBadge>No Kurioticket payment record</AdminStatusBadge>
             </div>
-            <p className="mt-4 text-xs leading-5 text-slate-500">
+            <p className="mt-2 text-xs leading-5 text-slate-600 sm:pl-10">
               MyTrip rows do not carry an environment column. This page therefore reports the database connected to the current {operations?.environment ?? "application"} environment rather than applying a per-row environment filter.
             </p>
           </section>
