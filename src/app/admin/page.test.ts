@@ -351,9 +351,43 @@ test("the white parent container, original admin header, and automatic refresh r
   assert.match(horizontalShell, /bg-\[#f1f5fb\]/);
   assert.match(display, /<AdminOverviewAutoRefresh \/>/);
   assert.match(controls, /window\.setInterval\(\(\) => \{/);
-  assert.match(controls, /document\.visibilityState === "visible"\) router\.refresh\(\)/);
+  assert.match(controls, /!isUpdating && document\.visibilityState === "visible"\) router\.refresh\(\)/);
   assert.match(controls, /60_000/);
   assert.match(controls, /window\.clearInterval\(interval\)/);
+});
+
+test("changing reporting ranges consistently exposes a shared loading indicator", () => {
+  assert.match(page, /<AdminOverviewRangeTransitionProvider range=\{range\}>/);
+  assert.match(controls, /const RangeTransitionContext = createContext/);
+  assert.match(controls, /setRequestedRange\(nextRange\)/);
+  assert.match(controls, /router\.push\(nextRange === "24h"/);
+  assert.match(controls, /transition\.selectRange\(nextRange\)/);
+  assert.match(controls, /if \(isUpdating \|\| isPending \|\| nextRange === range\) return/);
+  assert.match(controls, /disabled=\{pending\}/);
+  assert.match(controls, /aria-busy=\{pending \|\| undefined\}/);
+  assert.match(controls, /LoaderCircle size=\{14\}/);
+  assert.match(controls, /role="status" aria-live="polite"/);
+  assert.match(controls, /role="alert"/);
+  assert.match(controls, /setFailedRange\(requestedRange\)/);
+  assert.match(controls, /!isUpdating && document\.visibilityState === "visible"/);
+});
+
+test("loading state applies only to time-filtered summaries and keeps the page stable", () => {
+  assert.match(controls, /export function AdminOverviewRangeSensitive/);
+  assert.match(controls, /data-range-updating=\{updating \? "true" : "false"\}/);
+  assert.match(controls, /inert=\{updating\}/);
+  assert.match(controls, /motion-safe:animate-pulse/);
+  assert.equal((display.match(/<AdminOverviewRangeSensitive(?: fill)?>/g) ?? []).length, 5);
+  for (const label of ["Recorded searches", "Customer journeys"]) {
+    assert.match(display, new RegExp('<AdminOverviewRangeSensitive fill>\\s*<SnapshotLink[^>]+label="' + label + '"'));
+  }
+  for (const title of ["Search Performance", "Visitor Activity", "Provider Handoffs"]) {
+    assert.match(display, new RegExp('<AdminOverviewRangeSensitive>\\s*<Section title="' + title + '"'));
+  }
+  assert.doesNotMatch(display, /<AdminOverviewRangeSensitive fill>\s*<SnapshotLink[^>]+label="(?:Total accounts|Active website users)"/);
+  for (const title of ["Support Workload", "Deletion Workload"]) {
+    assert.doesNotMatch(display, new RegExp('<AdminOverviewRangeSensitive>\\s*<Section title="' + title + '"'));
+  }
 });
 
 test("the 24-hour default and other historical range selections remain intact", () => {
