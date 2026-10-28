@@ -42,6 +42,7 @@ test("every tab exposes only its own recorded stages", () => {
     [...allowedActivityStages({ ...filters, tab, stage })];
   assert.deepEqual(stages("searches"), ["SEARCH_COMPLETED", "RESULTS_VIEWED"]);
   assert.deepEqual(stages("selections"), ["OFFER_SELECTED"]);
+  assert.deepEqual(stages("journeys"), ["SEARCH_COMPLETED", "RESULTS_VIEWED", "OFFER_SELECTED", "PROVIDER_HANDOFF_STARTED"]);
   assert.deepEqual(stages("handoffs"), ["PROVIDER_HANDOFF_STARTED"]);
   assert.deepEqual(stages("searches", "OFFER_SELECTED"), []);
   assert.ok(stages("all").includes("ACCOUNT_ACTIVITY"));
