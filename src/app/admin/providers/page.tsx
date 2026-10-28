@@ -1,3 +1,4 @@
+import AdminReferralAttributionPage from "@/app/admin/referral-attribution/page";
 import Link from "next/link";
 
 import { AdminPageShell, AdminProviderStatusCard, AdminSectionCard, AdminStatusBadge } from "@/components/admin/AdminPageShell";
@@ -14,6 +15,7 @@ type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 export default async function AdminProvidersPage({ searchParams }: { searchParams: SearchParams }) {
   const raw = await searchParams;
   const filter = normalizeProductFilter(raw.product);
+  const attribution = raw.view === "attribution";
   const [allProviders, operational] = await Promise.all([
     getProviderStatuses(),
     getProviderOperationalStatuses(),
@@ -25,6 +27,11 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
       title="Provider Readiness"
       description="Configuration, search readiness and recent provider-call health. Credentials are shown only as yes/no; secret values are never exposed."
     >
+      <nav aria-label="Provider reporting sections" className="mb-5 flex flex-wrap gap-5 border-b border-[#E5E7EB] text-[13px] font-semibold">
+        <Link href="/admin/providers" aria-current={!attribution ? "page" : undefined} className={attribution ? "pb-3 text-[#475569]" : "border-b-2 border-[#004BB8] pb-3 text-[#004BB8]"}>Provider readiness</Link>
+        <Link href="/admin/providers?view=attribution" aria-current={attribution ? "page" : undefined} className={attribution ? "border-b-2 border-[#004BB8] pb-3 text-[#004BB8]" : "pb-3 text-[#475569]"}>Referral Attribution</Link>
+      </nav>
+      {attribution ? <AdminReferralAttributionPage embedded searchParams={Promise.resolve(raw)} /> : <>
       <div className="mb-4 flex flex-wrap gap-2">
         {productFilters.map((item) => (
           <Link
@@ -104,6 +111,7 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
           </div>
         )}
       </AdminSectionCard>
+      </>}
     </AdminPageShell>
   );
 }
