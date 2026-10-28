@@ -6,6 +6,7 @@ import type { SupportTicketStatusValue } from "@/lib/supportTickets";
 
 type SupportPrismaClient = {
   supportTicket: {
+    updateMany(args: { where: { id: string; updatedAt: { lt: Date } }; data: { updatedAt: Date } }): Promise<{ count: number }>;
     create(args: {
       data: {
         userId?: string;
@@ -117,7 +118,7 @@ export async function addAdminSupportReply(input: { ticketId: string; body: stri
 
   // Keep the inbox ordered by the latest conversation activity, not ticket creation.
   try {
-    await db.supportTicket.update({ where: { id: ticket.id }, data: { updatedAt: message.createdAt } });
+    await db.supportTicket.updateMany({ where: { id: ticket.id, updatedAt: { lt: message.createdAt } }, data: { updatedAt: message.createdAt } });
   } catch (error) {
     // The reply is already saved; do not invite the admin to retry and duplicate it.
     console.error("[support] Failed to refresh ticket activity timestamp", error);
