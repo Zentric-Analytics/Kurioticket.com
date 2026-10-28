@@ -49,9 +49,9 @@ await put("mocks/auth-guards.js", 'export async function requireAdminSession(){r
 await put("mocks/stagingSafety.js", 'export function getPublicEnvironment(){return "staging";}');
 await put("mocks/activity.js", await readFile(path.join(qa, "activity-fixture.js"), "utf8"));
 await put("mocks/prisma.js", await readFile(path.join(qa, "old-drawer-fixture.js"), "utf8"));
-// Compare actual, unmodified Activity page AND timeline from the latest
-// dev before this PR, with the same fictional identity and events.
-const baseline = "094079a9e16159518bac91e4d01a2dddfd886189";
+// Compare the unmodified Activity page and timeline at this change's dev base,
+// using the same fictional identity and complete event history.
+const baseline = "9a97c268bd02bfb45ecdea9bf5057fac131f9363";
 const oldTimeline = execFileSync("git", [
   "show", baseline + ":src/components/admin/ActivityTimeline.tsx",
 ], { cwd: repo, encoding: "utf8" });
@@ -82,10 +82,7 @@ try {
     await new Promise(resolve => setTimeout(resolve, 500));
   }
   if (!running) throw new Error("QA Next app did not start");
-  // Next dev starts accepting requests before the complex baseline route is
-  // compiled. Warm and verify it before Playwright navigates: otherwise a
-  // transient first compile can yield an incomplete RSC response and cause a
-  // client-side JSON.parse error during the screenshot comparison.
+  // Warm compiled fixture routes before Playwright inspects the real components.
   for (const route of ["/before", "/admin/users/guest/qa-guest-activity-0001/activity"]) {
     let ready = false;
     for (let attempt = 0; attempt < 12; attempt++) {
@@ -101,15 +98,21 @@ try {
     }
     if (!ready) throw new Error("QA fixture route did not compile successfully: " + route);
   }
-  const result = await new Promise(resolve => {
-    const child = spawn(process.execPath, [path.join(qa, "browser-check.mjs")], {
-      cwd: repo, stdio: "inherit",
-      env: { ...process.env, ADMIN_ACTIVITY_QA_URL: root, ADMIN_ACTIVITY_QA_OUTPUT: output },
+  for (const check of ["browser-check.mjs", "actions-check.mjs"]) {
+    const result = await new Promise((resolve, reject) => {
+      const child = spawn(process.execPath, [path.join(qa, check)], {
+        cwd: repo, stdio: "inherit",
+        env: { ...process.env, ADMIN_ACTIVITY_QA_URL: root, ADMIN_ACTIVITY_QA_OUTPUT: output },
+      });
+      child.on("error", reject);
+      child.on("exit", resolve);
     });
-    child.on("exit", resolve);
-  });
+    if (result !== 0) {
+      process.exitCode = result ?? 1;
+      break;
+    }
+  }
   console.log("Customer activity screenshots:", output);
-  process.exitCode = result ?? 1;
 } finally {
   app.kill("SIGTERM");
 }
