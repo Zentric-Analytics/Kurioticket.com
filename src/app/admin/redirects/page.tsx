@@ -26,10 +26,14 @@ export default async function AdminRedirectsPage({ searchParams, embedded = fals
       <div className="space-y-4">
         <AdminFilterBar action={embedded ? "/admin/searches/activity" : "/admin/redirects"}>
           {embedded ? <input type="hidden" name="tab" value="handoffs" /> : null}
+          {one(raw.userId) ? <input type="hidden" name="userId" value={one(raw.userId)} /> : null}
+          {one(raw.visitorId) ? <input type="hidden" name="visitorId" value={one(raw.visitorId)} /> : null}
+          {one(raw.from) && true ? <input type="hidden" name="from" value={one(raw.from)} /> : null}
+          {one(raw.to) && true ? <input type="hidden" name="to" value={one(raw.to)} /> : null}
           <AdminSelect name="product" defaultValue={one(raw.product)}>
             <option value="">All products</option><option value="FLIGHT">Flights</option><option value="HOTEL">Hotels</option>
           </AdminSelect>
-          <AdminSelect name="identity" defaultValue={one(raw.identity) || "all"}>
+          <AdminSelect name="identity" defaultValue={one(raw.identity) || "all"} onChangeCapture={undefined}>
             <option value="all">All identities</option><option value="registered">Registered</option><option value="guest">Guest</option><option value="unattributed">Unattributed</option>
           </AdminSelect>
           <AdminSelect name="correlation" defaultValue={one(raw.correlation)}>
