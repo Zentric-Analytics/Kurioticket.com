@@ -24,9 +24,9 @@ type SupportPrismaClient = {
     }): Promise<{ id: string; subject: string }>;
     findUnique(args: {
       where: { id: string };
-      select?: { id?: boolean; userId?: boolean; email?: boolean; subject?: boolean; status?: boolean };
+      select?: { id?: boolean; userId?: boolean; email?: boolean; subject?: boolean; status?: boolean; priority?: boolean };
       include?: { messages?: { orderBy: { createdAt: "asc" } } };
-    }): Promise<{ id: string; userId?: string | null; email: string; subject: string; status: SupportTicketStatusValue; messages?: Array<{ id: string; createdAt: Date }> } | null>;
+    }): Promise<{ id: string; userId?: string | null; email: string; subject: string; status: SupportTicketStatusValue; priority?: "LOW" | "NORMAL" | "HIGH" | "URGENT"; messages?: Array<{ id: string; createdAt: Date }> } | null>;
     update(args: {
       where: { id: string };
       data: { status?: SupportTicketStatusValue; priority?: "LOW" | "NORMAL" | "HIGH" | "URGENT"; updatedAt?: Date };
@@ -150,7 +150,7 @@ export async function updateSupportTicketStatus(input: { ticketId: string; statu
   const db = getSupportPrisma();
   const existing = await db.supportTicket.findUnique({
     where: { id: input.ticketId },
-    select: { id: true, email: true, subject: true, status: true },
+    select: { id: true, email: true, subject: true, status: true, priority: true },
   });
   if (!existing) throw new SupportTicketNotFoundError();
 
@@ -159,7 +159,7 @@ export async function updateSupportTicketStatus(input: { ticketId: string; statu
     data: { ...(input.status ? { status: input.status } : {}), ...(input.priority ? { priority: input.priority } : {}) },
   });
 
-  return { previousStatus: existing.status, ticket };
+  return { previousStatus: existing.status, previousPriority: existing.priority, ticket };
 }
 
 export class SupportTicketNotFoundError extends Error {
