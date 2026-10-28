@@ -60,8 +60,10 @@ function activityParams(raw: RawQuery) {
   }
   return result;
 }
-function Fact({ label, children }: { label: string; children: React.ReactNode }) {
-  return <div className="min-w-0 border-l border-[#E2E8F0] pl-4 sm:pl-5">
+function Fact({ label, children, className = "", testId }: {
+  label: string; children: React.ReactNode; className?: string; testId?: string;
+}) {
+  return <div data-testid={testId} className={"min-w-0 border-l border-[#E2E8F0] pl-4 sm:pl-5 " + className}>
     <dt className="text-[12px] font-normal text-[#64748B]">{label}</dt>
     <dd className="mt-1 break-words text-[14px] font-medium text-[#0F172A]">{children}</dd>
   </div>;
@@ -181,9 +183,8 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
           <dl className="grid min-w-0 grid-cols-1 gap-4 min-[420px]:grid-cols-2 sm:grid-cols-3 xl:gap-x-3">
             <Fact label={kind === "guest" ? "First seen" : "Joined"}>{format(data.firstSeenAt)}</Fact>
             <Fact label="Last active">{data.lastSeenAt ? format(data.lastSeenAt) : "—"}</Fact>
-            <div data-testid="activity-events-fact" className="min-w-0 sm:justify-self-end xl:justify-self-start">
-              <Fact label="Events">{data.events.length}</Fact>
-            </div>
+            <Fact label="Events" testId="activity-events-fact"
+              className="sm:justify-self-end xl:justify-self-start">{data.events.length}</Fact>
           </dl>
 
           {kind === "user" ? <div className="flex min-w-0 justify-start xl:justify-end" aria-label="Identity management">
