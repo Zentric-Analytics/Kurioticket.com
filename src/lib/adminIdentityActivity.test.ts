@@ -298,10 +298,10 @@ test("contiguous journey grouping preserves interleaved event chronology", () =>
   assert.deepEqual(adjacent.map(group => group.events.length), [2, 1]);
 });
 
-test("user details host observed journeys and handoffs without sending operational guests to broad searches", () => {
+test("User Activity removes redundant journey navigation and related records but keeps handoff filters", () => {
   const source = readFileSync("src/app/admin/users/[kind]/[id]/activity/page.tsx","utf8");
-  assert.match(source, /value: "journeys", label: "Journeys"/);
-  assert.match(source, /activityHref\(basePath, queryParams, \{ tab: "journeys", cursor: null \}\)/);
-  assert.match(source, /activityHref\(basePath, queryParams, \{ tab: "handoffs", cursor: null \}\)/);
-  assert.match(source, /!operational \? \[\{ href: searchesHref/);
+  assert.match(source, /value: "handoffs", label: "Provider handoffs"/);
+  assert.match(source, /if \(raw\.tab === "journeys"\) delete raw\.tab/);
+  assert.match(source, /data-testid="activity-body-card"/);
+  assert.doesNotMatch(source, /value: "journeys", label: "Journeys"|Related records|const related =|searchesHref|journeysHref/);
 });

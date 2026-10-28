@@ -1,12 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import {
-  ArrowLeft, ChevronRight, ExternalLink, Route, Search, UserRound,
-} from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
 import { CopyIdentityId } from "@/components/admin/CopyIdentityId";
 import { UserStatusActions } from "@/components/admin/UserStatusActions";
-import { GuestTrackingActions } from "@/components/admin/GuestTrackingActions";
 import { AdminEmptyState } from "@/components/admin/AdminPageShell";
 import { ActivityTimeline } from "@/components/admin/ActivityTimeline";
 import { ActivityFiltersBar } from "@/components/admin/ActivityFiltersBar";
@@ -14,7 +11,7 @@ import { ActivityDataInfo } from "@/components/admin/ActivityDataInfo";
 import { requireAdminSession } from "@/lib/auth-guards";
 import { getAdminEmails } from "@/lib/env";
 import { withOptionalDb } from "@/lib/prisma";
-import { activityHref, parseActivityFilters, relatedJourneysWindow, validActivityIdentity, type ActivityFilters } from "@/lib/adminIdentityActivity";
+import { activityHref, parseActivityFilters, validActivityIdentity, type ActivityFilters } from "@/lib/adminIdentityActivity";
 import { ADMIN_IDENTITY_SORTS, ADMIN_IDENTITY_DATES, validAdminIdentityCustomDates } from "@/lib/adminIdentityDirectory";
 import { loadAdminIdentityActivity } from "@/services/adminIdentityActivityService";
 
@@ -26,7 +23,6 @@ type PageProps = { params: Promise<Params>; searchParams: Promise<RawQuery> };
 const tabs = [
   { value: "all", label: "All activity" },
   { value: "searches", label: "Searches" },
-  { value: "journeys", label: "Journeys" },
   { value: "selections", label: "Selections" },
   { value: "handoffs", label: "Provider handoffs" },
 ] as const;
@@ -108,6 +104,9 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
   if (!validActivityIdentity(kind, id)) notFound();
   const session = await requireAdminSession("/admin/users/" + kind + "/" + id + "/activity");
   const raw = { ...(await searchParams) };
+  // Existing Journeys bookmarks now display the unfiltered activity tab.
+  // Preserve their other filters without leaving an invisible selected tab.
+  if (raw.tab === "journeys") delete raw.tab;
   // Old paginated bookmarks now open the complete newest-first history.
   delete raw.cursor;
   delete raw.order;
@@ -139,26 +138,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
   const data = result.data;
   const environment = data.environment;
   const operational = data.source === "operational";
-  const searchParamsForLink = new URLSearchParams({
-    ...(kind === "guest" ? operational ? { identity: "guest" } : { visitorId: id, identity: "guest" } : { userId: id, identity: "registered" }),
-    environment,
-  });
-  const journeysParams = new URLSearchParams(searchParamsForLink);
-  const visibleJourneyWindow = relatedJourneysWindow(data.events, new Date());
-  if (visibleJourneyWindow) {
-    journeysParams.set("from", visibleJourneyWindow.from);
-    journeysParams.set("to", visibleJourneyWindow.to);
-  }
-  const journeysHref = activityHref(basePath, queryParams, { tab: "journeys", cursor: null });
-  const searchesHref = "/admin/searches?" + searchParamsForLink.toString();
-  const handoffsHref = activityHref(basePath, queryParams, { tab: "handoffs", cursor: null });
-
   const order = filters.order === "oldest" ? "oldest" : "newest";
-  const related = [
-    ...(!operational ? [{ href: searchesHref, icon: Search, title: "Search records", subtitle: "View searches for this verified identity" }] : []),
-    { href: journeysHref, icon: Route, title: "Journeys", subtitle: operational ? "Operational sessions contain searches and handoffs; consented journey stages may be unavailable" : "View recorded journey stages for this identity" },
-    { href: handoffsHref, icon: ExternalLink, title: "Provider handoffs", subtitle: "View recorded outbound handoffs for this identity" },
-  ];
 
   return <div className="min-w-0 space-y-6 bg-[#F8FAFC] pb-2 text-[#0F172A]">
     <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-2 text-[13px] text-[#475569]">
@@ -179,30 +159,35 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
           <div className="mt-1 flex items-center gap-2"><code className="max-w-[240px] truncate text-xs" title={id}>{id}</code><CopyIdentityId id={id} kind={kind}/></div>
         </div>
       </div>
-      <dl className="mt-5 grid min-w-0 grid-cols-4 gap-x-2 sm:gap-x-4">
-        <Fact label={kind === "guest" ? "First seen" : "Joined"}>{format(data.firstSeenAt)}</Fact>
-        <Fact label="Last active">{data.lastSeenAt ? format(data.lastSeenAt) : "—"}</Fact>
-        <Fact label="Events">{data.events.length}</Fact>
-        <Fact label="Journeys">{new Set(data.events.filter(e => e.journeyId).map(e => e.journeyId)).size}</Fact>
-      </dl>
-      <section aria-label="Activity summary" className="mt-5 grid min-w-0 grid-cols-4 items-center gap-x-2 border-y border-[#E2E8F0] py-4 sm:gap-x-4">
-        <div className="flex min-w-0 flex-wrap items-center gap-2">
-          <h2 className="text-base font-semibold">Activity summary</h2>
-          {kind === "guest" ? <ActivityDataInfo>
-            {operational
-              ? <>Only recorded, necessary {environment} search and provider-handoff activity is displayed. The session credential expires, but retained records remain available. This ID does not identify a person. </>
-              : <>Only recorded, consented {environment} guest activity is displayed. </>}
-            Missing records do not establish that no visit occurred. Provider handoffs are not proof of a booking or payment.
-          </ActivityDataInfo> : null}
+      <section aria-label="Activity summary" className="mt-5 min-w-0 border-y border-[#E2E8F0]">
+        <div className="grid min-w-0 gap-y-4 py-4 sm:grid-cols-4 sm:gap-x-4">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <h2 className="text-base font-semibold">Activity summary</h2>
+            {kind === "guest" ? <ActivityDataInfo>
+              {operational
+                ? <>Only recorded, necessary {environment} search and provider-handoff activity is displayed. The session credential expires, but retained records remain available. This ID does not identify a person. </>
+                : <>Only recorded, consented {environment} guest activity is displayed. </>}
+              Missing records do not establish that no visit occurred. Provider handoffs are not proof of a booking or payment.
+            </ActivityDataInfo> : null}
+          </div>
+          <dl className="contents">
+            <Fact label={kind === "guest" ? "First seen" : "Joined"}>{format(data.firstSeenAt)}</Fact>
+            <Fact label="Last active">{data.lastSeenAt ? format(data.lastSeenAt) : "—"}</Fact>
+            <Fact label="Events">{data.events.length}</Fact>
+          </dl>
         </div>
-        <div className="col-span-3 grid min-w-0 grid-cols-3 gap-2 sm:gap-4">
-          {[
-            ["Searches", data.summary.searches],
-            ["Results viewed", data.summary.resultsViewed],
-            ["Provider handoffs", data.summary.providerHandoffs],
-          ].map(([label,count]) => <div key={label} className="min-w-0 border-l border-[#E2E8F0] pl-3 sm:pl-4">
-            <span className="block text-[14px] font-medium tabular-nums text-[#0F172A]">{count}</span>
-            <span className="block text-[12px] font-normal text-[#64748B]">{label}</span>
+        <div className="grid min-w-0 gap-y-4 border-t border-[#E2E8F0] py-4 sm:grid-cols-4 sm:gap-x-4">
+          <span aria-hidden="true" className="hidden sm:block" />
+          {([
+            { label: "Searches", count: data.summary.searches, dot: "bg-[#004BB8]" },
+            { label: "Results viewed", count: data.summary.resultsViewed, dot: "bg-emerald-500" },
+            { label: "Provider handoffs", count: data.summary.providerHandoffs, dot: "bg-amber-400" },
+          ]).map(({label,count,dot}) => <div key={label} className="min-w-0 border-l border-[#E2E8F0] pl-4 sm:pl-5">
+            <div className="flex min-w-0 items-center gap-2">
+              <span aria-hidden="true" className={"h-2 w-2 shrink-0 rounded-full " + dot} />
+              <span data-testid="activity-metric-label" className="block text-[12px] font-normal text-[#64748B]">{label}</span>
+            </div>
+            <span data-testid="activity-metric-value" className="mt-1 block text-[22px] font-medium leading-tight tabular-nums text-[#0F172A]">{count}</span>
           </div>)}
         </div>
       </section>
@@ -211,7 +196,8 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
       </div> : null}
     </section>
 
-    <section aria-label="Activity filters" className="min-w-0">
+    <div data-testid="activity-body-card" className="min-w-0 space-y-6 rounded-xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
+      <section aria-label="Activity filters" className="min-w-0">
       <ActivityFiltersBar path={basePath} directory={typeof raw.directory === "string" && raw.directory.length <= 1000 ? raw.directory : ""}
         initial={{tab:filters.tab,q:filters.q,product:filters.product,stage:filters.stage,order,
           from:filters.from,to:filters.to,range:typeof raw.range === "string" && ["7d","30d","custom"].includes(raw.range) ? raw.range : (filters.from || filters.to ? "custom" : "all")}}
@@ -224,20 +210,10 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
           {tab.label}
         </Link>)}
       </nav>} />
-    </section>
+      </section>
 
-    <div className="grid min-w-0 gap-8 lg:grid-cols-[minmax(0,1fr)_260px]">
       <ActivityTimeline events={data.events} nextHref={null} environment={environment} order={order}
         clearHref={activityHref(basePath, queryParams, {q:null,from:null,to:null,range:null,product:null,stage:null,order:null,cursor:null})}/>
-      <aside className="min-w-0 space-y-4">
-          <section aria-labelledby="activity-related-title" className="pb-3">
-            <h2 id="activity-related-title" className="mb-2 text-sm font-semibold">Related records</h2>
-            {related.map(({href,title}) => <Link key={href} href={href}
-              className="focus-ring flex items-center justify-between rounded-sm border-b border-[#E2E8F0] py-3 text-sm last:border-0 hover:underline">
-              {title}<ChevronRight size={16}/>
-            </Link>)}
-          </section>
-      </aside>
     </div>
   </div>;
 }
