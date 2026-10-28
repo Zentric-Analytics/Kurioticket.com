@@ -1,6 +1,6 @@
 /** The unified Admin Search Activity workspace keeps section-specific filters separate. */
 export const searchWorkspaceTabs = [
-  { id: "searches", label: "Searches" },
+  { id: "searches", label: "Search records" },
   { id: "journeys", label: "Journeys" },
   { id: "handoffs", label: "Provider Handoffs" },
   { id: "attribution", label: "Referral Attribution" },
