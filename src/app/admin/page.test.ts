@@ -110,10 +110,7 @@ test("Attention Required remains three compact, actionable live queues", () => {
 });
 
 test("visitor cards display exactly four real consented action-event counts", () => {
-  const start = display.indexOf('<Section title="Visitor Activity"');
-  const end = display.indexOf('<Section title="Search Performance"');
-  const visitor = display.slice(start, end);
-  assert.ok(start > -1 && end > start);
+  const visitor = sectionSource("Visitor Activity");
   for (const stage of ["SEARCH_COMPLETED", "RESULTS_VIEWED", "OFFER_SELECTED", "PROVIDER_HANDOFF_STARTED"]) {
     assert.match(visitor, new RegExp("stages\\." + stage + "\\.events"));
   }
@@ -125,10 +122,7 @@ test("visitor cards display exactly four real consented action-event counts", ()
 });
 
 test("all recorded searches are separate from consented search events", () => {
-  const start = display.indexOf('<Section title="Search Performance"');
-  const end = display.indexOf('<Section title="Provider Handoffs"');
-  const search = display.slice(start, end);
-  assert.ok(start > -1 && end > start);
+  const search = sectionSource("Search Performance");
   for (const [label, key] of [
     ["Total", "total"], ["Successful", "success"], ["Failed", "failed"], ["Partial", "partial"],
   ]) {
@@ -182,24 +176,43 @@ test("complete provider diagnostics remain on the linked Providers page", () => 
   assert.doesNotMatch(dashboard, /errorMessage/);
 });
 
-test("short handoff and support cards stack independently beside provider health", () => {
+test("Overview cards use two independent content-height columns without wasted row space", () => {
   const gridStart = display.indexOf('<div className="grid min-w-0 items-start gap-4 lg:grid-cols-2">');
-  assert.ok(gridStart >= 0, "independently aligned desktop detail grid must exist");
+  assert.ok(gridStart >= 0, "responsive two-column Overview must exist");
   const stack = '<div className="flex min-w-0 flex-col gap-4">';
   const leftStart = display.indexOf(stack, gridStart);
   const rightStart = display.indexOf(stack, leftStart + stack.length);
-  assert.ok(leftStart > gridStart && rightStart > leftStart, "two independent column stacks must exist");
+  assert.ok(leftStart > gridStart && rightStart > leftStart, "both content-height stacks must exist");
 
   const left = display.slice(leftStart, rightStart);
   const right = display.slice(rightStart, display.indexOf("<AdminOverviewSecondary system={system} activity={activity} />", rightStart));
+
+  assert.match(left, /aria-label="Attention Required"/);
   assert.deepEqual([...left.matchAll(/<Section title="([^"]+)"/g)].map((match) => match[1]), [
-    "Provider Handoffs", "Support Workload",
+    "Search Performance", "Provider Handoffs", "Support Workload",
   ]);
   assert.deepEqual([...right.matchAll(/<Section title="([^"]+)"/g)].map((match) => match[1]), [
-    "Provider Health", "Deletion Workload",
+    "Visitor Activity", "Provider Health", "Deletion Workload",
   ]);
   assert.doesNotMatch(left, /h-full|flex-1|row-span|absolute/);
   assert.doesNotMatch(right, /h-full|flex-1|row-span|absolute/);
+  assert.doesNotMatch(display, /overflow-x-auto|overflow-x-scroll|whitespace-nowrap/);
+});
+
+test("Attention Required is compact and vertically stacked in its own card", () => {
+  const start = display.indexOf('<section aria-label="Attention Required"');
+  const end = display.indexOf("</section>", start);
+  assert.ok(start >= 0 && end > start);
+  const attention = display.slice(start, end);
+  assert.match(attention, /<div className="grid gap-2">/);
+  assert.doesNotMatch(attention, /md:grid-cols-3|lg:grid-cols-3|grid-cols-3/);
+  assert.equal((attention.match(/<AttentionLink /g) ?? []).length, 3);
+  assert.match(attention, /Provider health: last 24 hours. Support and deletion queues: current/);
+
+  const link = dashboard.slice(dashboard.indexOf("function AttentionLink("), dashboard.indexOf("function operationalTone("));
+  assert.match(link, /px-3 py-2\.5/);
+  assert.match(link, /min-w-0 flex-1/);
+  assert.match(link, /tabular-nums/);
 });
 
 test("operational workloads each show only three counts with dedicated destination links", () => {
@@ -275,8 +288,8 @@ test("no fake totals, old full-report panels, or hidden full diagnostics remain 
 
 test("the compact grid remains responsive without horizontal scrolling or cramped desktop cards", () => {
   assert.match(display, /grid gap-2 sm:grid-cols-2 min-\[56\.25rem\]:grid-cols-4/);
-  assert.match(display, /grid gap-2 md:grid-cols-3/);
-  assert.match(display, /grid min-w-0 gap-4 lg:grid-cols-2/);
+  assert.match(display, /<div className="grid gap-2">/);
+  assert.match(display, /grid min-w-0 items-start gap-4 lg:grid-cols-2/);
   assert.match(dashboard, /grid grid-cols-2 gap-2/);
   assert.match(dashboard, /grid grid-cols-3 gap-2/);
   assert.match(dashboard, /flex flex-wrap items-center justify-between gap-3/);
