@@ -201,7 +201,7 @@ test("addAdminSupportReply returns saved message when notification email fails",
 });
 
 test("updateSupportTicketStatus updates valid status and returns previous status", async () => {
-  const updates: Array<{ status: string }> = [];
+  const updates: Array<{ status?: string; priority?: string; updatedAt?: Date }> = [];
 
   __supportServiceTest.setPrismaClientForTesting({
     supportTicket: {
@@ -211,7 +211,7 @@ test("updateSupportTicketStatus updates valid status and returns previous status
       },
       async update(args) {
         updates.push(args.data);
-        return { id: args.where.id, email: "user@example.com", subject: "Need help", status: args.data.status };
+        return { id: args.where.id, email: "user@example.com", subject: "Need help", status: args.data.status ?? "OPEN" };
       },
     },
     supportMessage: {
