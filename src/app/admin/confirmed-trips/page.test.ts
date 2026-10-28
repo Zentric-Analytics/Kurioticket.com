@@ -92,7 +92,7 @@ test("confirmed-trip readiness facts are rendered from authoritative readiness s
 test("Confirmed Trips UI uses one existing white parent with responsive summary and balanced breakdowns", () => {
   assert.match(page, /<AdminSectionCard className="min-w-0 p-4 sm:p-5 lg:p-6">/);
   assert.equal((page.match(/<AdminSectionCard/g) || []).length, 1);
-  assert.match(page, /grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5/);
+  assert.match(page, /grid grid-cols-2 gap-2.5 sm:gap-3 md:grid-cols-3 lg:grid-cols-5/);
   assert.match(page, /grid items-stretch gap-4 lg:grid-cols-2/);
   assert.match(page, /<TripMetric label="Confirmed trips"/);
   assert.match(page, /<TripMetric label="Last 24h"/);
@@ -130,6 +130,43 @@ test("Phase 1 prioritizes trip records and preserves the two in-page shortcuts",
   assert.match(page, /id="recent-confirmed-trips-title" className="scroll-mt-28 min-\[1100px\]:scroll-mt-44/);
   assert.match(page, /id="confirmation-integration-title" className="scroll-mt-28 min-\[1100px\]:scroll-mt-44/);
   assert.match(page, /operations\.recentTrips\.length > 0/);
+});
+
+
+test("Phase 2 metric cards are compact, accessible and honest about zero values", () => {
+  assert.match(page, /grid grid-cols-2 gap-2\.5 sm:gap-3 md:grid-cols-3 lg:grid-cols-5/);
+  assert.match(page, /<h3 className="min-w-0 break-words text-xs font-semibold/);
+  assert.match(page, /new Intl\.NumberFormat\("en-US"\)\.format\(value\)/);
+  assert.match(page, /tabular-nums/);
+  assert.match(page, /Trusted confirmed trip records/);
+  assert.match(page, /Latest confirmation within 24h/);
+  assert.match(page, /it is not a new-bookings count/);
+  assert.match(page, /tone=\{operations\.metrics\.cancelled > 0 \? "warn" : "neutral"\}/);
+  assert.match(page, /tone=\{operations\.metrics\.upcoming > 0 \? "good" : "neutral"\}/);
+  assert.doesNotMatch(page, /tone=\{operations\.metrics\.cancelled > 0 \? "warn" : "bad"\}/);
+
+  const loading = readFileSync("src/app/admin/confirmed-trips/loading.tsx", "utf8");
+  assert.match(loading, /role="status"/);
+  assert.match(loading, /aria-busy="true"/);
+  assert.match(loading, /Loading confirmed-trip information/);
+  assert.match(loading, /grid grid-cols-2 gap-2\.5 sm:gap-3 md:grid-cols-3 lg:grid-cols-5/);
+  for (const label of ["Confirmed trips", "Last 24h", "Upcoming", "Past", "Cancelled"]) {
+    assert.ok(loading.includes(label), "Loading placeholder missing: " + label);
+  }
+  assert.doesNotMatch(loading, />\s*0\s*</);
+});
+
+test("Phase 2 preserves server-sourced trip counts and unavailable telemetry", () => {
+  for (const field of ["total", "confirmedLast24h", "upcoming", "past", "cancelled"]) {
+    assert.ok(page.includes("operations.metrics." + field), "Metric must use operations snapshot: " + field);
+  }
+  assert.match(service, /source: "PARTNER_CONFIRMATION"/);
+  assert.match(service, /partnerConfirmationOccurredAt: \{ not: null \}/);
+  assert.match(service, /status: "UPCOMING"/);
+  assert.match(service, /status: "PAST"/);
+  assert.match(service, /status: "CANCELLED"/);
+  assert.match(page, /Confirmed-trip telemetry unavailable/);
+  assert.match(page, /No zero values were invented/);
 });
 
 test("Confirmed Trips UI preserves honest data, alerts and no-booking boundaries", () => {
