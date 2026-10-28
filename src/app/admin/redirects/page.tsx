@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { AdminButton, AdminDataTable, AdminEmptyState, AdminFilterBar, AdminInput, AdminPageShell, AdminSelect, AdminStatusBadge } from "@/components/admin/AdminPageShell";
 import { SearchWorkspaceBackLink } from "@/components/admin/SearchWorkspaceBackLink";
+import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
 import { SearchWorkspacePanelFrame } from "@/components/admin/SearchWorkspacePanelFrame";
 import { formatDateTime } from "@/lib/admin-data";
 import { adminOperationalReads } from "@/services/adminOperationalReadService";
@@ -28,14 +29,24 @@ export default async function AdminRedirectsPage({ searchParams, embedded = fals
           {embedded ? <input type="hidden" name="tab" value="handoffs" /> : null}
           {one(raw.userId) ? <input type="hidden" name="userId" value={one(raw.userId)} /> : null}
           {one(raw.visitorId) ? <input type="hidden" name="visitorId" value={one(raw.visitorId)} /> : null}
-          {one(raw.from) && true ? <input type="hidden" name="from" value={one(raw.from)} /> : null}
-          {one(raw.to) && true ? <input type="hidden" name="to" value={one(raw.to)} /> : null}
+          {one(raw.from) ? <input type="hidden" name="from" value={one(raw.from)} /> : null}
+          {one(raw.to) ? <input type="hidden" name="to" value={one(raw.to)} /> : null}
           <AdminSelect name="product" defaultValue={one(raw.product)}>
             <option value="">All products</option><option value="FLIGHT">Flights</option><option value="HOTEL">Hotels</option>
           </AdminSelect>
-          <AdminSelect name="identity" defaultValue={one(raw.identity) || "all"}>
-            <option value="all">All identities</option><option value="registered">Registered</option><option value="guest">Guest</option><option value="unattributed">Unattributed</option>
-          </AdminSelect>
+          <SearchMonitorSelect
+            label="Identity"
+            name="identity"
+            value={one(raw.identity) || "all"}
+            appearance="plain"
+            clearFieldNamesOnChange={["userId", "visitorId"]}
+            options={[
+              { value: "all", label: "All identities" },
+              { value: "registered", label: "Registered" },
+              { value: "guest", label: "Guest" },
+              { value: "unattributed", label: "Unattributed" },
+            ]}
+          />
           <AdminSelect name="correlation" defaultValue={one(raw.correlation)}>
             <option value="">All correlations</option><option value="exact">Linked to search</option><option value="unavailable">Search link unavailable</option>
           </AdminSelect>
