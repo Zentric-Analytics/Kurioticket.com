@@ -17,8 +17,6 @@ import {
 } from "lucide-react";
 
 import { AdminOverviewAutoRefresh, AdminOverviewRangeSelect, type OverviewRange } from "@/components/admin/AdminOverviewControls";
-import { formatProviderFailureRatePct } from "@/services/providerOperationalStatusCore";
-import type { ProviderOperationalState, ProviderOperationalStatus } from "@/services/providerOperationalStatus";
 import type { getAdminOverview } from "@/services/adminOverviewService";
 import type { getRecentAdminActivity, getSafeSystemStatus } from "@/lib/admin-data";
 
@@ -33,17 +31,6 @@ function count(value: number): string {
 
 function humanize(value: string): string {
   return value.toLowerCase().split("_").map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(" ");
-}
-
-function StatusBadge({ label, tone = "neutral" }: { label: string; tone?: Tone }) {
-  const colors: Record<Tone, string> = {
-    neutral: "bg-slate-100 text-slate-700 ring-slate-200",
-    good: "bg-emerald-50 text-emerald-800 ring-emerald-200",
-    warn: "bg-amber-50 text-amber-800 ring-amber-200",
-    bad: "bg-rose-50 text-rose-800 ring-rose-200",
-    info: "bg-indigo-50 text-indigo-800 ring-indigo-200",
-  };
-  return <span className={"inline-flex max-w-full items-center rounded-full px-2 py-0.5 text-[11px] font-medium leading-4 ring-1 " + colors[tone]}>{label}</span>;
 }
 
 function Section({
@@ -147,42 +134,6 @@ function AttentionLink({ label, value, href, icon: Icon, tone }: {
   );
 }
 
-function operationalTone(state: ProviderOperationalState): Tone {
-  if (state === "HEALTHY") return "good";
-  if (state === "DEGRADED") return "warn";
-  if (state === "FAILING") return "bad";
-  if (state === "NO_RECENT_ACTIVITY") return "info";
-  return "neutral";
-}
-
-function operationalLabel(state: ProviderOperationalState): string {
-  if (state === "HEALTHY") return "Calls healthy";
-  if (state === "DEGRADED") return "Calls degraded";
-  if (state === "FAILING") return "Requests failing";
-  if (state === "NO_RECENT_ACTIVITY") return "No recent calls";
-  return "Not ready";
-}
-
-function ProviderSummary({ provider }: { provider: ProviderOperationalStatus }) {
-  const readiness = provider.readinessState === "READY" ? "Configured for calls" : humanize(provider.readinessState);
-  return (
-    <div className="min-w-0 rounded-lg border border-slate-200 p-2.5">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="text-[13px] font-semibold text-slate-950">{provider.provider}</h3>
-        <div className="flex flex-wrap items-center gap-1.5">
-          <StatusBadge label={readiness} tone={provider.readinessState === "READY" ? "info" : "neutral"} />
-          <StatusBadge label={operationalLabel(provider.operationalState)} tone={operationalTone(provider.operationalState)} />
-        </div>
-      </div>
-      <div className="mt-2 grid grid-cols-3 gap-1.5">
-        <MiniMetric label="Attempts" value={provider.attemptedCalls} />
-        <MiniMetric label="Failed" value={provider.failedCalls} tone={provider.failedCalls > 0 ? "bad" : "neutral"} />
-        <MiniMetric label="Failure rate" value={formatProviderFailureRatePct(provider.failureRatePct, provider.failedCalls)} />
-      </div>
-    </div>
-  );
-}
-
 function PlatformSummary({ system }: { system: SystemStatus }) {
   const items = [
     { label: "Database", icon: Database, value: system.databaseConnected ? "Connected" : system.databaseConfigured ? "Not connected" : "Not configured", good: system.databaseConnected },
@@ -283,71 +234,64 @@ export function AdminOverviewDashboard({ data, system, activity, range }: {
         </p>
       </section>
 
-      {/* Independent content-height stacks eliminate empty grid-row space on desktop. */}
+      {/* Independent content-height stacks keep the Overview concise; full provider diagnostics remain on /admin/providers. */}
       <div className="grid min-w-0 items-start gap-3 lg:grid-cols-2">
         <div className="flex min-w-0 flex-col gap-3">
           <section aria-label="Attention Required" className="min-w-0 rounded-xl border border-slate-200 p-3 sm:p-4">
-          <h2 className="mb-2 text-[15px] font-semibold text-slate-950">Attention Required</h2>
-          <div className="grid gap-1.5">
-          <AttentionLink href="/admin/providers" label="Provider issues" value={providerAttention} icon={Activity} tone="bad" />
-          <AttentionLink href="/admin/support" label="Support queue" value={supportAttention} icon={Headphones} tone="warn" />
-          <AttentionLink href="/admin/account-deletions" label="Deletion reviews" value={deletionAttention} icon={Trash2} tone="warn" />
-          </div>
-          <p className="mt-2 text-[11px] leading-4 text-slate-600">Provider health: last 24 hours. Support and deletion queues: current.</p>
+            <h2 className="mb-2 text-[15px] font-semibold text-slate-950">Attention Required</h2>
+            <div className="grid gap-1.5">
+              <AttentionLink href="/admin/providers" label="Provider issues" value={providerAttention} icon={Activity} tone="bad" />
+              <AttentionLink href="/admin/support" label="Support queue" value={supportAttention} icon={Headphones} tone="warn" />
+              <AttentionLink href="/admin/account-deletions" label="Deletion reviews" value={deletionAttention} icon={Trash2} tone="warn" />
+            </div>
+            <p className="mt-2 text-[11px] leading-4 text-slate-600">Provider health: last 24 hours. Support and deletion queues: current.</p>
           </section>
 
           <Section title="Search Performance" href="/admin/searches/activity" description="All recorded search operations · selected range.">
-          <div className="grid grid-cols-2 gap-1.5">
-          <MiniMetric label="Total" value={data.journeys.operationalSearches.total} />
-          <MiniMetric label="Successful" value={data.journeys.operationalSearches.success} tone="good" />
-          <MiniMetric label="Failed" value={data.journeys.operationalSearches.failed} tone={data.journeys.operationalSearches.failed ? "bad" : "neutral"} />
-          <MiniMetric label="Partial" value={data.journeys.operationalSearches.partial} />
-          </div>
-          <p className="mt-2 text-[11px] text-slate-600">Includes unattributed searches; success does not guarantee offers.</p>
-          </Section>
-
-          <Section title="Provider Handoffs" href="/admin/redirects" description="Recorded outbound redirects · selected range.">
-          <div className="grid grid-cols-3 gap-1.5">
-          <MiniMetric label="Recorded" value={data.journeys.operationalHandoffs.total} />
-          <MiniMetric label="In consented journeys" value={data.journeys.operationalHandoffs.inConsentedJourneys} />
-          <MiniMetric label="Unattributed" value={data.journeys.operationalHandoffs.withoutVisitorIdentity} />
-          </div>
-          <p className="mt-2 text-[11px] text-slate-600">Redirects are not bookings. Missing attribution does not prove declined consent.</p>
+            <div className="grid grid-cols-2 gap-1.5">
+              <MiniMetric label="Total" value={data.journeys.operationalSearches.total} />
+              <MiniMetric label="Successful" value={data.journeys.operationalSearches.success} tone="good" />
+              <MiniMetric label="Failed" value={data.journeys.operationalSearches.failed} tone={data.journeys.operationalSearches.failed ? "bad" : "neutral"} />
+              <MiniMetric label="Partial" value={data.journeys.operationalSearches.partial} />
+            </div>
+            <p className="mt-2 text-[11px] text-slate-600">Includes unattributed searches; success does not guarantee offers.</p>
           </Section>
 
           <Section title="Support Workload" href="/admin/support">
-          <div className="grid grid-cols-3 gap-1.5">
-          <MiniMetric label="Open" value={data.support.open} />
-          <MiniMetric label="Waiting on team" value={data.support.waitingOnTeam} />
-          <MiniMetric label="Waiting on user" value={data.support.waitingOnUser} />
-          </div>
+            <div className="grid grid-cols-3 gap-1.5">
+              <MiniMetric label="Open" value={data.support.open} />
+              <MiniMetric label="Waiting on team" value={data.support.waitingOnTeam} />
+              <MiniMetric label="Waiting on user" value={data.support.waitingOnUser} />
+            </div>
           </Section>
         </div>
 
         <div className="flex min-w-0 flex-col gap-3">
           <Section title="Visitor Activity" href="/admin/journeys" description="Recorded consented events · selected range.">
-          <div className="grid grid-cols-2 gap-1.5">
-          <MiniMetric label="Search events" value={stages.SEARCH_COMPLETED.events} />
-          <MiniMetric label="Results views" value={stages.RESULTS_VIEWED.events} />
-          <MiniMetric label="Offer selections" value={stages.OFFER_SELECTED.events} />
-          <MiniMetric label="Provider handoffs" value={stages.PROVIDER_HANDOFF_STARTED.events} />
-          </div>
-          <p className="mt-2 text-[11px] text-slate-600">Events can repeat. Handoffs are not confirmed bookings.</p>
+            <div className="grid grid-cols-2 gap-1.5">
+              <MiniMetric label="Search events" value={stages.SEARCH_COMPLETED.events} />
+              <MiniMetric label="Results views" value={stages.RESULTS_VIEWED.events} />
+              <MiniMetric label="Offer selections" value={stages.OFFER_SELECTED.events} />
+              <MiniMetric label="Provider handoffs" value={stages.PROVIDER_HANDOFF_STARTED.events} />
+            </div>
+            <p className="mt-2 text-[11px] text-slate-600">Events can repeat. Handoffs are not confirmed bookings.</p>
           </Section>
 
-          <Section title="Provider Health" href="/admin/providers" description="Real request outcomes · last 24 hours.">
-          <div className="grid gap-2">
-          {data.providers.map((provider) => <ProviderSummary key={provider.id} provider={provider} />)}
-          {data.providers.length === 0 ? <p className="text-sm text-slate-600">Provider status unavailable.</p> : null}
-          </div>
+          <Section title="Provider Handoffs" href="/admin/redirects" description="Recorded outbound redirects · selected range.">
+            <div className="grid grid-cols-3 gap-1.5">
+              <MiniMetric label="Recorded" value={data.journeys.operationalHandoffs.total} />
+              <MiniMetric label="In consented journeys" value={data.journeys.operationalHandoffs.inConsentedJourneys} />
+              <MiniMetric label="Unattributed" value={data.journeys.operationalHandoffs.withoutVisitorIdentity} />
+            </div>
+            <p className="mt-2 text-[11px] text-slate-600">Redirects are not bookings. Missing attribution does not prove declined consent.</p>
           </Section>
 
           <Section title="Deletion Workload" href="/admin/account-deletions">
-          <div className="grid grid-cols-3 gap-1.5">
-          <MiniMetric label="Pending" value={data.deletions.pending} />
-          <MiniMetric label="Ready for review" value={data.deletions.readyForReview} />
-          <MiniMetric label="Completed" value={data.deletions.completed} />
-          </div>
+            <div className="grid grid-cols-3 gap-1.5">
+              <MiniMetric label="Pending" value={data.deletions.pending} />
+              <MiniMetric label="Ready for review" value={data.deletions.readyForReview} />
+              <MiniMetric label="Completed" value={data.deletions.completed} />
+            </div>
           </Section>
         </div>
       </div>
