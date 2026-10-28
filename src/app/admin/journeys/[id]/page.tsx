@@ -69,7 +69,7 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
 function one(value: string | string[] | undefined) { return typeof value === "string" ? value : ""; }
 function cursorHref(id: string, raw: Record<string, string | string[] | undefined>, cursor: string) {
   const p = new URLSearchParams();
-  for (const [key, value] of Object.entries(raw)) if (typeof value === "string" && value && key !== "cursor" && key !== "range") p.set(key, value);
+  for (const [key, value] of Object.entries(raw)) if (typeof value === "string" && value && key !== "cursor") p.set(key, value);
   p.set("cursor", cursor); p.set("limit", one(raw.limit) || "50");
   return "/admin/journeys/" + id + "?" + p.toString();
 }
