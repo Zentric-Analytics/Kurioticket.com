@@ -16,8 +16,9 @@ export default async function AdminJourneyDetailPage({ params, searchParams }: {
   if (result.status === "not_found") notFound();
 
   return (
-    <SearchWorkspaceBackLink href={returnHref(raw)} label="Journeys" />
-    <AdminPageShell title="Journey detail" hideHeader>
+    <>
+      <SearchWorkspaceBackLink href={returnHref(raw)} label="Journeys" />
+      <AdminPageShell title="Journey detail" hideHeader>
       {result.status === "ok" ? (
         <div className="space-y-4">
           <AdminSectionCard className="p-5">
@@ -56,7 +57,8 @@ export default async function AdminJourneyDetailPage({ params, searchParams }: {
       ) : (
         <AdminEmptyState title={result.status === "invalid" ? "Invalid journey request" : result.status === "forbidden" ? "Admin access required" : "Journey data unavailable"} message={"issues" in result ? result.issues.map((issue) => issue.field + ": " + issue.message).join(" ") : "The journey reader could not return this record."} />
       )}
-    </AdminPageShell>
+      </AdminPageShell>
+    </>
   );
 }
 
