@@ -8,10 +8,11 @@ import { supportTicketStatuses } from "@/lib/supportTickets";
 
 type SupportStatus = (typeof supportTicketStatuses)[number];
 
-export function SupportTicketActions({ ticketId, status }: { ticketId: string; status: SupportStatus }) {
+export function SupportTicketActions({ ticketId, status, priority }: { ticketId: string; status: SupportStatus; priority: "LOW" | "NORMAL" | "HIGH" | "URGENT" }) {
   const router = useRouter();
   const [reply, setReply] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<SupportStatus>(status);
+  const [selectedPriority, setSelectedPriority] = useState(priority);
   const [replyMessage, setReplyMessage] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -47,14 +48,14 @@ export function SupportTicketActions({ ticketId, status }: { ticketId: string; s
       const response = await fetch(`/api/admin/support/${ticketId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: selectedStatus }),
+        body: JSON.stringify({ status: selectedStatus, priority: selectedPriority }),
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) {
         setError(typeof payload.error === "string" ? payload.error : "Unable to update status.");
         return;
       }
-      setStatusMessage("Ticket status updated.");
+      setStatusMessage("Ticket status and priority updated.");
       router.refresh();
     });
   }
@@ -104,10 +105,11 @@ export function SupportTicketActions({ ticketId, status }: { ticketId: string; s
               {supportTicketStatuses.map((item) => <option key={item} value={item}>{item.replaceAll("_", " ")}</option>)}
             </AdminSelect>
           </label>
-          <AdminButton type="button" variant="secondary" onClick={updateStatus} loading={isStatusPending} disabled={selectedStatus === status} aria-disabled={isStatusPending || selectedStatus === status}>
+          <AdminButton type="button" variant="secondary" onClick={updateStatus} loading={isStatusPending} disabled={selectedStatus === status && selectedPriority === priority} aria-disabled={isStatusPending || (selectedStatus === status && selectedPriority === priority)}>
             {isStatusPending ? "Saving" : "Save status"}
           </AdminButton>
         </div>
+        <label className="block" htmlFor="support-ticket-priority"><span className="text-xs font-bold uppercase tracking-wide text-slate-500">Priority</span><AdminSelect id="support-ticket-priority" className="mt-2" value={selectedPriority} onChange={event => setSelectedPriority(event.target.value as typeof priority)} disabled={isStatusPending}>{["LOW","NORMAL","HIGH","URGENT"].map(value => <option key={value} value={value}>{value}</option>)}</AdminSelect></label>
         {statusMessage ? <p className="text-sm font-bold text-emerald-700" role="status" aria-live="polite">{statusMessage}</p> : null}
       </AdminSectionCard>
 
