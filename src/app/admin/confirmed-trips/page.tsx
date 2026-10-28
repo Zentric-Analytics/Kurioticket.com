@@ -6,6 +6,7 @@ import {
   CircleX,
   Clock3,
   FileCheck2,
+  Info,
   Package,
   ShieldCheck,
   Users,
@@ -61,25 +62,31 @@ export default async function AdminConfirmedTripsPage() {
       <AdminSectionCard className="min-w-0 p-4 sm:p-5 lg:p-6">
         <div className="space-y-4 lg:space-y-5">
           <section aria-labelledby="confirmed-trips-overview">
-            <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <h2 id="confirmed-trips-overview" className="text-lg font-semibold text-slate-950">Trip overview</h2>
-                <p className="mt-1 text-sm leading-5 text-slate-600">Key metrics for provider-confirmed My Trips in this database.</p>
+            <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
+              <div className="min-w-0">
+                <h2 id="confirmed-trips-overview" className="text-lg font-semibold leading-6 text-slate-950">Trip overview</h2>
+                <p className="mt-1 text-sm leading-5 text-slate-600">Trusted provider-confirmed My Trips in this database.</p>
               </div>
               {operations ? (
-                <span className="rounded-full border border-slate-200 px-3 py-1 text-xs font-medium text-slate-600">
+                <span className="shrink-0 rounded-full border border-slate-200 px-2.5 py-1 text-[11px] font-medium text-slate-600">
                   Environment: {operations.environment}
                 </span>
               ) : null}
             </div>
             {operations ? (
-              <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
-                <TripMetric label="Confirmed trips" value={operations.metrics.total} hint="Provider-confirmed My Trips in this database" icon={FileCheck2} tone="info" />
-                <TripMetric label="Last 24h" value={operations.metrics.confirmedLast24h} hint="Trips whose latest provider-confirmation timestamp is within 24h" icon={Clock3} tone={operations.metrics.confirmedLast24h > 0 ? "good" : "neutral"} />
-                <TripMetric label="Upcoming" value={operations.metrics.upcoming} hint="Provider-confirmed upcoming trips" icon={CalendarCheck} tone="good" />
-                <TripMetric label="Past" value={operations.metrics.past} hint="Provider-confirmed past trips" icon={CalendarDays} tone="warn" />
-                <TripMetric label="Cancelled" value={operations.metrics.cancelled} hint="Provider-confirmed cancelled trips" icon={CircleX} tone={operations.metrics.cancelled > 0 ? "warn" : "bad"} />
-              </div>
+              <>
+                <div className="grid grid-cols-2 gap-2.5 sm:gap-3 md:grid-cols-3 lg:grid-cols-5">
+                  <TripMetric label="Confirmed trips" value={operations.metrics.total} hint="Trusted confirmed trip records" icon={FileCheck2} tone={operations.metrics.total > 0 ? "info" : "neutral"} />
+                  <TripMetric label="Last 24h" value={operations.metrics.confirmedLast24h} hint="Latest confirmation within 24h" icon={Clock3} tone={operations.metrics.confirmedLast24h > 0 ? "info" : "neutral"} />
+                  <TripMetric label="Upcoming" value={operations.metrics.upcoming} hint="Stored as upcoming" icon={CalendarCheck} tone={operations.metrics.upcoming > 0 ? "good" : "neutral"} />
+                  <TripMetric label="Past" value={operations.metrics.past} hint="Stored as past" icon={CalendarDays} tone="neutral" />
+                  <TripMetric label="Cancelled" value={operations.metrics.cancelled} hint="Stored as cancelled" icon={CircleX} tone={operations.metrics.cancelled > 0 ? "warn" : "neutral"} />
+                </div>
+                <p className="mt-2.5 flex items-start gap-2 text-xs leading-5 text-slate-600">
+                  <Info size={15} className="mt-0.5 shrink-0 text-slate-500" aria-hidden="true" />
+                  <span><strong className="font-semibold text-slate-700">Last 24h:</strong> Trips whose latest provider-confirmation timestamp is within 24h. This can include updates to existing trips; it is not a new-bookings count. Upcoming, Past and Cancelled use stored trip statuses.</span>
+                </p>
+              </>
             ) : (
               <div role="status" className="rounded-xl border border-slate-200 bg-slate-50 p-5">
                 <h3 className="font-bold text-slate-950">Confirmed-trip telemetry unavailable</h3>
@@ -324,7 +331,7 @@ export default async function AdminConfirmedTripsPage() {
   );
 }
 
-type TripTone = "info" | "good" | "warn" | "bad" | "neutral";
+type TripTone = "info" | "good" | "warn" | "neutral";
 
 function TripMetric({
   label,
@@ -343,17 +350,19 @@ function TripMetric({
     info: "bg-indigo-50 text-indigo-700",
     good: "bg-emerald-50 text-emerald-700",
     warn: "bg-amber-50 text-amber-700",
-    bad: "bg-rose-50 text-rose-700",
     neutral: "bg-slate-100 text-slate-600",
   };
+  const formattedValue = new Intl.NumberFormat("en-US").format(value);
   return (
-    <div className="flex min-w-0 flex-col rounded-xl border border-slate-200 bg-white p-4">
-      <div className={"flex h-9 w-9 items-center justify-center rounded-full " + styles[tone]}>
-        <Icon size={18} aria-hidden="true" />
+    <div className="flex min-w-0 flex-col rounded-xl border border-slate-200 bg-white px-3 py-3 sm:px-3.5">
+      <div className="flex min-w-0 items-center gap-2">
+        <span className={"flex h-8 w-8 shrink-0 items-center justify-center rounded-lg " + styles[tone]}>
+          <Icon size={17} strokeWidth={2.1} aria-hidden="true" />
+        </span>
+        <h3 className="min-w-0 break-words text-xs font-semibold leading-4 text-slate-700">{label}</h3>
       </div>
-      <p className="mt-3 text-[11px] font-bold uppercase tracking-wide text-slate-600">{label}</p>
-      <p className="mt-1 text-2xl font-extrabold tabular-nums text-slate-950">{value}</p>
-      <p className="mt-auto pt-2 text-xs leading-5 text-slate-600">{hint}</p>
+      <p className="mt-2 text-[clamp(1.4rem,2.2vw,1.875rem)] font-semibold leading-none tracking-tight tabular-nums text-slate-950">{formattedValue}</p>
+      <p className="mt-1.5 break-words text-[11px] leading-4 text-slate-600">{hint}</p>
     </div>
   );
 }
