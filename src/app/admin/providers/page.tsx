@@ -24,8 +24,8 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
 
   return (
     <AdminPageShell
-      title="Provider Readiness"
-      description="Configuration, search readiness and recent provider-call health. Credentials are shown only as yes/no; secret values are never exposed."
+      title={attribution ? "Referral Attribution" : "Provider Readiness"}
+      description={attribution ? "Aggregate provider referrals and source-page reporting. Handoffs do not prove bookings." : "Configuration, search readiness and recent provider-call health. Credentials are shown only as yes/no; secret values are never exposed."}
     >
       <nav aria-label="Provider reporting sections" className="mb-5 flex flex-wrap gap-5 border-b border-[#E5E7EB] text-[13px] font-semibold">
         <Link href="/admin/providers" aria-current={!attribution ? "page" : undefined} className={attribution ? "pb-3 text-[#475569]" : "border-b-2 border-[#004BB8] pb-3 text-[#004BB8]"}>Provider readiness</Link>
