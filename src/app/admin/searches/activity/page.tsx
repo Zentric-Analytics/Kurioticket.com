@@ -15,7 +15,7 @@ import { SearchMonitorTable } from "@/components/admin/SearchMonitorTable";
 import { SearchWorkspaceBackLink } from "@/components/admin/SearchWorkspaceBackLink";
 import { adminOperationalReads } from "@/services/adminOperationalReadService";
 
-export const metadata = { title: "Admin Searches" };
+export const metadata = { title: "Admin Search Activity" };
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 type RangeKey = "today" | "7d" | "30d" | "all" | "custom";
