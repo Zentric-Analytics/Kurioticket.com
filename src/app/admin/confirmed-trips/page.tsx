@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { RecentConfirmedTripTable } from "@/components/admin/RecentConfirmedTripTable";
 import {
   ArrowDown,
   CalendarCheck,
@@ -107,54 +108,7 @@ export default async function AdminConfirmedTripsPage() {
               <span className="rounded-full border border-slate-200 px-3 py-1 text-xs font-medium text-slate-600">Read-only</span>
             </div>
             {operations ? (
-              <div className="overflow-hidden rounded-xl border border-slate-200">
-                {operations.recentTrips.length > 0 ? (
-                  <div className="w-full overflow-x-auto">
-                    <table className="w-full min-w-[1000px] text-left text-sm">
-                      <thead className="bg-slate-50 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                        <tr>
-                          {["Confirmed", "Customer", "Product", "Route / destination", "Provider", "Reference", "Travel", "Status"].map((header) => (
-                            <th key={header} scope="col" className="px-3 py-3 font-semibold">{header}</th>
-                          ))}
-                        </tr>
-                      </thead>
-                      {operations.recentTrips.length ? (
-                        <tbody className="divide-y divide-slate-200">
-                          {operations.recentTrips.map((trip) => (
-                            <tr key={trip.id} className="align-top">
-                              <td className="whitespace-nowrap px-3 py-3 text-xs text-slate-700">{formatDateTime(new Date(trip.confirmedAt))}</td>
-                              <td className="max-w-[220px] px-3 py-3">
-                                <p className="break-words font-semibold text-slate-950">{trip.userEmail || "Email unavailable"}</p>
-                                <p className="mt-1 break-all text-xs text-slate-500">{trip.userId}</p>
-                              </td>
-                              <td className="px-3 py-3 text-slate-700">{trip.tripType}</td>
-                              <td className="max-w-[200px] break-words px-3 py-3 text-slate-700">{trip.origin ? trip.origin + " → " + trip.destination : trip.destination}</td>
-                              <td className="max-w-[160px] break-words px-3 py-3 text-slate-700">{trip.providerName}</td>
-                              <td className="max-w-[170px] break-all px-3 py-3 text-xs text-slate-700">{trip.providerConfirmationCode}</td>
-                              <td className="px-3 py-3">
-                                <p className="whitespace-nowrap font-semibold text-slate-950">{formatDateTime(new Date(trip.departureDate))}</p>
-                                <p className="mt-1 text-xs text-slate-500">{trip.travelerCount} traveler{trip.travelerCount === 1 ? "" : "s"}</p>
-                              </td>
-                              <td className="px-3 py-3">
-                                <AdminStatusBadge tone={trip.status === "CANCELLED" ? "warn" : trip.status === "UPCOMING" ? "good" : "neutral"}>{trip.status}</AdminStatusBadge>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      ) : null}
-                    </table>
-                  </div>
-                ) : null}
-                {operations.recentTrips.length === 0 ? (
-                  <div role="status" className="flex flex-col items-center justify-center bg-slate-50 px-4 py-5 text-center">
-                    <FileCheck2 size={24} className="text-slate-400" aria-hidden="true" />
-                    <h3 className="mt-2 text-sm font-semibold text-slate-950">No provider-confirmed trips yet</h3>
-                    <p className="mt-1 max-w-lg text-xs leading-5 text-slate-600">
-                      No accepted signed partner callback has created a confirmed My Trip in this database.
-                    </p>
-                  </div>
-                ) : null}
-              </div>
+              <RecentConfirmedTripTable trips={operations.recentTrips} />
             ) : (
               <div role="status" className="rounded-xl bg-slate-50 p-5 text-sm leading-6 text-slate-600">
                 Recent trip records are unavailable because the confirmed-trip database query could not be completed.
