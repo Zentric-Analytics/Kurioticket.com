@@ -214,7 +214,7 @@ test("updateSupportTicketStatus updates valid status and returns previous status
       async updateMany() { return { count: 1 }; },
       async create() { throw new Error("not used"); },
       async findUnique() {
-        return { id: "ticket-1", email: "user@example.com", subject: "Need help", status: "OPEN" };
+        return { id: "ticket-1", email: "user@example.com", subject: "Need help", status: "OPEN", priority: "NORMAL" as const };
       },
       async update(args) {
         updates.push(args.data);
