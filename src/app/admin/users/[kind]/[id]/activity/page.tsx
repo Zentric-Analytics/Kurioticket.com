@@ -32,8 +32,8 @@ const tabs = [
 const format = (at: Date) => new Intl.DateTimeFormat("en", {
   dateStyle: "medium", timeStyle: "short", timeZone: "UTC",
 }).format(at) + " UTC";
-const buttonClass = "focus-ring inline-flex items-center gap-1.5 rounded-md border border-[#D8E1EC] bg-white px-3 py-2 text-[13px] font-medium text-[#004BB8] hover:bg-[#F8FAFC]";
-const inputClass = "focus-ring h-11 min-w-0 w-full rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px] font-normal text-[#020617] placeholder:text-[#64748B] hover:border-[#94A3B8]";
+const buttonClass = "focus-ring inline-flex items-center gap-1.5 rounded-md border border-[#E2E8F0] bg-white px-3 py-2 text-[13px] font-medium text-[#004BB8] hover:bg-[#F8FAFC]";
+const inputClass = "focus-ring h-11 min-w-0 w-full rounded-lg border border-[#E2E8F0] bg-white px-3 text-[13px] font-normal text-[#0F172A] placeholder:text-[#64748B] hover:border-[#94A3B8]";
 
 function safeDirectoryHref(raw: RawQuery) {
   const saved = typeof raw.directory === "string" && raw.directory.length <= 1000 ? raw.directory : "";
@@ -66,7 +66,7 @@ function activityParams(raw: RawQuery) {
 function Fact({ label, children }: { label: string; children: React.ReactNode }) {
   return <div className="min-w-0 border-l border-[#E2E8F0] pl-4 sm:pl-5">
     <dt className="text-[12px] font-normal text-[#64748B]">{label}</dt>
-    <dd className="mt-1 break-words text-[13px] font-medium text-[#020617]">{children}</dd>
+    <dd className="mt-1 break-words text-[14px] font-medium text-[#0F172A]">{children}</dd>
   </div>;
 }
 
@@ -159,13 +159,13 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
     ...(!operational ? [{ href: journeysHref, icon: Route, title: "Journeys", subtitle: "View consented journeys and stages" }, { href: handoffsHref, icon: ExternalLink, title: "Provider handoffs", subtitle: "View outbound provider referral records" }] : []),
   ];
 
-  return <div className="min-w-0 space-y-6 bg-white pb-2">
+  return <div className="min-w-0 space-y-6 bg-[#F8FAFC] pb-2 text-[#0F172A]">
     <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-2 text-[13px] text-[#475569]">
       <Link href={backHref} className="focus-ring inline-flex items-center gap-1.5 rounded-sm hover:text-[#004BB8]">
         <ArrowLeft size={16} aria-hidden="true" /> Users
       </Link>
       <span aria-hidden="true">/</span>
-      <span className="font-medium text-[#020617]">Activity</span>
+      <span className="font-medium text-[#0F172A]">Activity</span>
     </nav>
 
     <section aria-label="Customer identity" className="py-2 sm:py-3">
@@ -174,7 +174,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2"><h1 className="truncate text-xl font-semibold">{kind === "guest" ? operational ? "Guest session" : "Visitor" : data.title}</h1>
             <span className="rounded-full border border-[var(--border)] px-2 py-0.5 text-xs">{kind === "guest" ? operational ? "Essential operational activity" : "Consented guest" : data.status === "ACTIVE" ? "Active" : data.status}</span></div>
-          {data.email ? <p className="mt-1 truncate text-sm text-[var(--muted-foreground)]">{data.email}</p> : null}
+          {data.email ? <p className="mt-1 truncate text-sm text-[#475569]">{data.email}</p> : null}
           <div className="mt-1 flex items-center gap-2"><code className="max-w-[240px] truncate text-xs" title={id}>{id}</code><CopyIdentityId id={id} kind={kind}/></div>
         </div>
       </div>
@@ -184,7 +184,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
         <Fact label="Events">{data.events.length}{data.nextCursor ? "+" : ""}</Fact>
         <Fact label="Journeys">{new Set(data.events.filter(e => e.journeyId).map(e => e.journeyId)).size}{data.nextCursor ? "+" : ""}</Fact>
       </dl>
-      <section aria-label="Activity summary" className="mt-5 grid min-w-0 grid-cols-4 items-center gap-x-2 border-y border-[#D8E1EC] py-4 sm:gap-x-4">
+      <section aria-label="Activity summary" className="mt-5 grid min-w-0 grid-cols-4 items-center gap-x-2 border-y border-[#E2E8F0] py-4 sm:gap-x-4">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
           <h2 className="text-base font-semibold">Activity summary</h2>
           {kind === "guest" ? <ActivityDataInfo>
@@ -199,9 +199,9 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
             ["Searches", data.summary.searches],
             ["Results viewed", data.summary.resultsViewed],
             ["Provider handoffs", data.summary.providerHandoffs],
-          ].map(([label,count]) => <div key={label} className="min-w-0 border-l border-[#D8E1EC] pl-3 sm:pl-4">
-            <strong className="block text-lg font-semibold tabular-nums">{count}</strong>
-            <span className="block text-[12px] text-[var(--muted-foreground)]">{label}</span>
+          ].map(([label,count]) => <div key={label} className="min-w-0 border-l border-[#E2E8F0] pl-3 sm:pl-4">
+            <span className="block text-[14px] font-medium tabular-nums text-[#0F172A]">{count}</span>
+            <span className="block text-[12px] font-normal text-[#64748B]">{label}</span>
           </div>)}
         </div>
       </section>
@@ -218,7 +218,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
         {tabs.map(tab => <Link key={tab.value}
           href={activityHref(basePath, queryParams, { tab: tab.value, cursor: null })}
           aria-current={filters.tab === tab.value ? "page" : undefined}
-          className={"focus-ring relative shrink-0 whitespace-nowrap rounded-sm py-3 text-[13px] font-medium text-[#334155] " +
+          className={"focus-ring relative shrink-0 whitespace-nowrap rounded-sm py-3 text-[13px] font-medium text-[#475569] " +
             (filters.tab === tab.value ? "after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-[#004BB8]" : "")}>
           {tab.label}
         </Link>)}
@@ -232,7 +232,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
           <section aria-labelledby="activity-related-title" className="pb-3">
             <h2 id="activity-related-title" className="mb-2 text-sm font-semibold">Related records</h2>
             {related.map(({href,title}) => <Link key={href} href={href}
-              className="focus-ring flex items-center justify-between rounded-sm border-b border-[var(--border)] py-3 text-sm last:border-0 hover:underline">
+              className="focus-ring flex items-center justify-between rounded-sm border-b border-[#E2E8F0] py-3 text-sm last:border-0 hover:underline">
               {title}<ChevronRight size={16}/>
             </Link>)}
           </section>
