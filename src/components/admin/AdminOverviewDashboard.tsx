@@ -43,7 +43,7 @@ function StatusBadge({ label, tone = "neutral" }: { label: string; tone?: Tone }
     bad: "bg-rose-50 text-rose-800 ring-rose-200",
     info: "bg-indigo-50 text-indigo-800 ring-indigo-200",
   };
-  return <span className={"inline-flex max-w-full items-center rounded-full px-2 py-1 text-[11px] font-medium leading-4 ring-1 " + colors[tone]}>{label}</span>;
+  return <span className={"inline-flex max-w-full items-center rounded-full px-2 py-0.5 text-[11px] font-medium leading-4 ring-1 " + colors[tone]}>{label}</span>;
 }
 
 function Section({
@@ -60,11 +60,11 @@ function Section({
   action?: React.ReactNode;
 }) {
   return (
-    <section aria-label={title} className="min-w-0 rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+    <section aria-label={title} className="min-w-0 rounded-xl border border-slate-200 bg-white p-3 sm:p-4">
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <div className="min-w-0">
           <h2 className="text-[15px] font-semibold tracking-tight text-slate-950">{title}</h2>
-          {description ? <p className="mt-1 text-xs leading-5 text-slate-600">{description}</p> : null}
+          {description ? <p className="mt-0.5 text-xs leading-[18px] text-slate-600">{description}</p> : null}
         </div>
         <div className="flex shrink-0 items-center gap-3">
           {action}
@@ -97,9 +97,9 @@ function MiniMetric({
     info: "text-indigo-800",
   };
   return (
-    <div className="min-w-0 rounded-lg bg-slate-50/75 px-3 py-2.5">
-      <p className="text-[12px] font-medium leading-4 text-slate-600">{label}</p>
-      <p className={"mt-1 text-xl font-semibold tabular-nums tracking-tight " + valueColors[tone]}>
+    <div className="min-w-0 rounded-lg bg-slate-50/75 px-3 py-2">
+      <p className="min-w-0 break-words text-[12px] font-medium leading-4 text-slate-600">{label}</p>
+      <p className={"mt-0.5 break-words text-xl font-semibold leading-6 tabular-nums tracking-tight " + valueColors[tone]}>
         {typeof value === "number" ? count(value) : value}
       </p>
       {hint ? <p className="mt-0.5 text-[11px] leading-4 text-slate-600">{hint}</p> : null}
@@ -115,13 +115,13 @@ function SnapshotLink({ label, value, href, icon: Icon, hint }: {
   hint: string;
 }) {
   return (
-    <Link href={href} className="focus-ring group flex h-full min-w-0 flex-col rounded-lg border border-slate-200 px-3 py-2.5 transition hover:border-indigo-300 hover:bg-indigo-50/30">
+    <Link href={href} className="focus-ring group flex h-full min-w-0 flex-col rounded-lg border border-slate-200 px-3 py-2 transition hover:border-indigo-300 hover:bg-indigo-50/30">
       <div className="flex items-center justify-between gap-2">
         <Icon size={17} className="text-indigo-700" aria-hidden="true" />
         <ArrowUpRight size={14} className="text-slate-400 group-hover:text-indigo-700" aria-hidden="true" />
       </div>
-      <p className="mt-1.5 min-w-0 break-words text-[12px] font-medium leading-4 text-slate-600">{label}</p>
-      <p className="mt-0.5 min-w-0 break-words text-[22px] font-semibold leading-7 tabular-nums tracking-tight text-slate-950">
+      <p className="mt-1 min-w-0 break-words text-[12px] font-medium leading-4 text-slate-600">{label}</p>
+      <p className="mt-0.5 min-w-0 break-words text-[22px] font-semibold leading-[26px] tabular-nums tracking-tight text-slate-950">
         {typeof value === "number" ? count(value) : value}
       </p>
       <p className="mt-1 min-w-0 break-words text-[11px] leading-4 text-slate-600">{hint}</p>
@@ -138,7 +138,7 @@ function AttentionLink({ label, value, href, icon: Icon, tone }: {
 }) {
   const colored = value > 0;
   return (
-    <Link href={href} className="focus-ring group flex min-w-0 items-center gap-3 rounded-lg border border-slate-200 px-3 py-2.5 transition hover:border-indigo-300 hover:bg-slate-50">
+    <Link href={href} className="focus-ring group flex min-w-0 items-center gap-2.5 rounded-lg border border-slate-200 px-3 py-2 transition hover:border-indigo-300 hover:bg-slate-50">
       <Icon size={18} className={colored && tone === "bad" ? "text-rose-700" : colored ? "text-amber-700" : "text-slate-500"} aria-hidden="true" />
       <span className="min-w-0 flex-1 text-[13px] font-medium leading-5 text-slate-800">{label}</span>
       <strong className={"text-lg font-semibold tabular-nums " + (colored && tone === "bad" ? "text-rose-800" : colored ? "text-amber-800" : "text-slate-900")}>{count(value)}</strong>
@@ -166,7 +166,7 @@ function operationalLabel(state: ProviderOperationalState): string {
 function ProviderSummary({ provider }: { provider: ProviderOperationalStatus }) {
   const readiness = provider.readinessState === "READY" ? "Configured for calls" : humanize(provider.readinessState);
   return (
-    <div className="min-w-0 rounded-lg border border-slate-200 p-3">
+    <div className="min-w-0 rounded-lg border border-slate-200 p-2.5">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-[13px] font-semibold text-slate-950">{provider.provider}</h3>
         <div className="flex flex-wrap items-center gap-1.5">
@@ -174,7 +174,7 @@ function ProviderSummary({ provider }: { provider: ProviderOperationalStatus }) 
           <StatusBadge label={operationalLabel(provider.operationalState)} tone={operationalTone(provider.operationalState)} />
         </div>
       </div>
-      <div className="mt-3 grid grid-cols-3 gap-2">
+      <div className="mt-2 grid grid-cols-3 gap-1.5">
         <MiniMetric label="Attempts" value={provider.attemptedCalls} />
         <MiniMetric label="Failed" value={provider.failedCalls} tone={provider.failedCalls > 0 ? "bad" : "neutral"} />
         <MiniMetric label="Failure rate" value={formatProviderFailureRatePct(provider.failureRatePct, provider.failedCalls)} />
@@ -191,16 +191,16 @@ function PlatformSummary({ system }: { system: SystemStatus }) {
     { label: "Provider keys", icon: ShieldCheck, value: system.providerCredentialsPresent ? "Key present, not tested" : "No keys configured", good: false },
   ] as const;
   return (
-    <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="grid gap-2 sm:grid-cols-2 min-[56.25rem]:grid-cols-4">
       {items.map(({ label, icon: Icon, value, good }) => (
-        <div key={label} className="min-w-0 rounded-lg bg-slate-50/75 px-3 py-3">
+        <div key={label} className="min-w-0 rounded-lg bg-slate-50/75 px-3 py-2">
           <div className="flex items-center gap-2">
             <Icon size={16} className="shrink-0 text-indigo-700" aria-hidden="true" />
             <span className="text-[12px] font-medium text-slate-700">{label}</span>
           </div>
-          <div className="mt-2 flex items-start gap-2">
+          <div className="mt-1 flex items-start gap-2">
             <span aria-hidden="true" className={"mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full " + (good ? "bg-emerald-500" : "bg-slate-400")} />
-            <span className="text-[12px] leading-5 text-slate-700">{value}</span>
+            <span className="min-w-0 break-words text-[12px] leading-[18px] text-slate-700">{value}</span>
           </div>
         </div>
       ))}
@@ -219,7 +219,7 @@ function RecentActivity({ activity }: { activity: AuditActivity }) {
   return (
     <ol className="divide-y divide-slate-200/90">
       {recent.map((item) => (
-        <li key={item.id} className="flex min-w-0 flex-col gap-1 py-2.5 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+        <li key={item.id} className="flex min-w-0 flex-col gap-1 py-1.5 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
           <div className="min-w-0">
             <p className="text-[13px] font-semibold text-slate-900">{humanize(item.title)}{item.source === "system" ? " (System)" : ""}</p>
             <p className="min-w-0 truncate text-[12px] leading-5 text-slate-600" title={item.detail}>{item.detail}</p>
@@ -233,7 +233,7 @@ function RecentActivity({ activity }: { activity: AuditActivity }) {
 
 export function AdminOverviewSecondary({ system, activity }: { system: SystemStatus; activity: AuditActivity }) {
   return (
-    <div className="mt-4 grid gap-4">
+    <div className="mt-3 grid gap-3">
       <Section title="Platform Health" href="/admin/system">
         <PlatformSummary system={system} />
       </Section>
@@ -261,11 +261,11 @@ export function AdminOverviewDashboard({ data, system, activity, range }: {
     : "Unavailable";
 
   return (
-    <div className="min-w-0 space-y-4">
+    <div className="min-w-0 space-y-3">
       <AdminOverviewAutoRefresh />
 
       <section aria-label="Operations Snapshot" className="min-w-0">
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
           <div>
             <h2 className="text-[16px] font-semibold tracking-tight text-slate-950">Operations Snapshot</h2>
             <p className="mt-1 text-xs text-slate-600">Current accounts and selected-range activity at a glance.</p>
@@ -284,11 +284,11 @@ export function AdminOverviewDashboard({ data, system, activity, range }: {
       </section>
 
       {/* Independent content-height stacks eliminate empty grid-row space on desktop. */}
-      <div className="grid min-w-0 items-start gap-4 lg:grid-cols-2">
-        <div className="flex min-w-0 flex-col gap-4">
-          <section aria-label="Attention Required" className="min-w-0 rounded-xl border border-slate-200 p-4 sm:p-5">
-          <h2 className="mb-3 text-[15px] font-semibold text-slate-950">Attention Required</h2>
-          <div className="grid gap-2">
+      <div className="grid min-w-0 items-start gap-3 lg:grid-cols-2">
+        <div className="flex min-w-0 flex-col gap-3">
+          <section aria-label="Attention Required" className="min-w-0 rounded-xl border border-slate-200 p-3 sm:p-4">
+          <h2 className="mb-2 text-[15px] font-semibold text-slate-950">Attention Required</h2>
+          <div className="grid gap-1.5">
           <AttentionLink href="/admin/providers" label="Provider issues" value={providerAttention} icon={Activity} tone="bad" />
           <AttentionLink href="/admin/support" label="Support queue" value={supportAttention} icon={Headphones} tone="warn" />
           <AttentionLink href="/admin/account-deletions" label="Deletion reviews" value={deletionAttention} icon={Trash2} tone="warn" />
@@ -297,7 +297,7 @@ export function AdminOverviewDashboard({ data, system, activity, range }: {
           </section>
 
           <Section title="Search Performance" href="/admin/searches/activity" description="All recorded search operations · selected range.">
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-1.5">
           <MiniMetric label="Total" value={data.journeys.operationalSearches.total} />
           <MiniMetric label="Successful" value={data.journeys.operationalSearches.success} tone="good" />
           <MiniMetric label="Failed" value={data.journeys.operationalSearches.failed} tone={data.journeys.operationalSearches.failed ? "bad" : "neutral"} />
@@ -307,7 +307,7 @@ export function AdminOverviewDashboard({ data, system, activity, range }: {
           </Section>
 
           <Section title="Provider Handoffs" href="/admin/redirects" description="Recorded outbound redirects · selected range.">
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-3 gap-1.5">
           <MiniMetric label="Recorded" value={data.journeys.operationalHandoffs.total} />
           <MiniMetric label="In consented journeys" value={data.journeys.operationalHandoffs.inConsentedJourneys} />
           <MiniMetric label="Unattributed" value={data.journeys.operationalHandoffs.withoutVisitorIdentity} />
@@ -316,7 +316,7 @@ export function AdminOverviewDashboard({ data, system, activity, range }: {
           </Section>
 
           <Section title="Support Workload" href="/admin/support">
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-3 gap-1.5">
           <MiniMetric label="Open" value={data.support.open} />
           <MiniMetric label="Waiting on team" value={data.support.waitingOnTeam} />
           <MiniMetric label="Waiting on user" value={data.support.waitingOnUser} />
@@ -324,9 +324,9 @@ export function AdminOverviewDashboard({ data, system, activity, range }: {
           </Section>
         </div>
 
-        <div className="flex min-w-0 flex-col gap-4">
+        <div className="flex min-w-0 flex-col gap-3">
           <Section title="Visitor Activity" href="/admin/journeys" description="Recorded consented events · selected range.">
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-1.5">
           <MiniMetric label="Search events" value={stages.SEARCH_COMPLETED.events} />
           <MiniMetric label="Results views" value={stages.RESULTS_VIEWED.events} />
           <MiniMetric label="Offer selections" value={stages.OFFER_SELECTED.events} />
@@ -343,7 +343,7 @@ export function AdminOverviewDashboard({ data, system, activity, range }: {
           </Section>
 
           <Section title="Deletion Workload" href="/admin/account-deletions">
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-3 gap-1.5">
           <MiniMetric label="Pending" value={data.deletions.pending} />
           <MiniMetric label="Ready for review" value={data.deletions.readyForReview} />
           <MiniMetric label="Completed" value={data.deletions.completed} />
