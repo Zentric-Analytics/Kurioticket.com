@@ -113,9 +113,7 @@ try {
   // Every fixture event is available upfront, including the formerly separate pages.
   await page.goto(url);
   let totals = page.getByRole("region",{name:"Activity summary"});
-  await expect(totals.getByText("5",{exact:true})).toBeVisible();
-  await expect(totals.getByText("2",{exact:true})).toBeVisible();
-  await expect(totals.getByText("1",{exact:true})).toBeVisible();
+  await expect(totals.locator('[data-testid="activity-metric-value"]')).toHaveText(["5","2","1"]);
   await expect(page.getByText("Counts reflect loaded events only.")).toHaveCount(0);
   await expect(page.locator("[data-activity-id]")).toHaveCount(14);
   await expect(page.locator('[data-activity-id="j-qa-older-search"]')).toBeVisible();
@@ -123,17 +121,13 @@ try {
   await page.goto(url+"?cursor=older-qa-page");
   await expect(page.getByText("14 recorded events",{exact:true})).toBeVisible();
   totals = page.getByRole("region",{name:"Activity summary"});
-  await expect(totals.getByText("5",{exact:true})).toBeVisible();
-  await expect(totals.getByText("2",{exact:true})).toBeVisible();
-  await expect(totals.getByText("1",{exact:true})).toBeVisible();
+  await expect(totals.locator('[data-testid="activity-metric-value"]')).toHaveText(["5","2","1"]);
   await page.goto(url+"?tab=searches&stage=SEARCH_COMPLETED&product=FLIGHT&q=LOS");
   totals = page.getByRole("region",{name:"Activity summary"});
-  await expect(totals.getByText("1",{exact:true})).toHaveCount(1);
-  await expect(totals.getByText("0",{exact:true})).toHaveCount(2);
+  await expect(totals.locator('[data-testid="activity-metric-value"]')).toHaveText(["1","0","0"]);
   await page.goto(url+"?tab=handoffs");
   totals = page.getByRole("region",{name:"Activity summary"});
-  await expect(totals.getByText("1",{exact:true})).toHaveCount(1);
-  await expect(totals.getByText("0",{exact:true})).toHaveCount(2);
+  await expect(totals.locator('[data-testid="activity-metric-value"]')).toHaveText(["0","0","1"]);
   await page.goto(url+"?tab=journeys&q=LOS");
   await expect(page.getByRole("navigation",{name:"Activity tabs"}).getByRole("link",{name:"All activity"})).toHaveAttribute("aria-current","page");
   await expect(page.getByRole("navigation",{name:"Activity tabs"}).getByRole("link",{name:"Journeys"})).toHaveCount(0);
@@ -154,7 +148,7 @@ try {
     assert.equal(ids.at(-1),"s-qa-complete-1004");
     await page.goto(fullUrl+"?product=FLIGHT&from=2026-10-22&to=2026-10-22");
     await expect(page.locator("[data-activity-id]")).toHaveCount(503);
-    await expect(page.getByRole("region",{name:"Activity summary"}).getByText("503",{exact:true})).toBeVisible();
+    await expect(page.getByRole("region",{name:"Activity summary"}).locator('[data-testid="activity-metric-value"]').first()).toHaveText("503");
   }
   console.log("PASS 1005 events upfront for guests and registered users with complete filters");
 
