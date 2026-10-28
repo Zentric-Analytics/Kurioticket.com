@@ -36,7 +36,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
       title="Operations Dashboard"
       hideHeader
     >
-      <AdminSectionCard className="min-w-0 p-4 sm:p-6 lg:p-7">
+      <AdminSectionCard className="min-w-0 p-4 sm:p-5 lg:p-6">
         {overview.status === "ok" ? (
           <AdminOverviewDashboard
           data={overview.data}
