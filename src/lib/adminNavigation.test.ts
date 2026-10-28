@@ -59,3 +59,11 @@ test("horizontal admin navigation keeps child routes under parent workspaces", (
   assert.deepEqual(supportEntries.map(({ item }) => item.label), []);
   assert.deepEqual(getAdminHeaderGroups("USER"), []);
 });
+
+test("retired operational report routes remain available without nested menu entries", () => {
+  const retired = ["/admin/journeys", "/admin/redirects", "/admin/referral-attribution"];
+  for (const href of retired) {
+    assert.equal(adminNavigation.some(item => item.href === href), false);
+    assert.equal(getAdminHeaderGroups("ADMIN").some(group => group.links.some(link => link.item.href === href || link.children.some(child => child.href === href))), false);
+  }
+});
