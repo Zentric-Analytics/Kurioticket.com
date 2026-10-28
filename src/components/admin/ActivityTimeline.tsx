@@ -46,7 +46,7 @@ function RecordedEvent({ row, environment, now }: { row: ActivityRow; environmen
     <span aria-hidden="true" className="mt-0.5 hidden shrink-0 text-[#64748B] sm:block"><EventIcon stage={row.stage} /></span>
     <div className="min-w-0 flex-1">
       <div className="flex flex-wrap items-start justify-between gap-2">
-        <p className="text-[13px] font-medium text-[#020617]">{row.label}</p>
+        <p className="text-[13px] font-medium text-[#0F172A]">{row.label}</p>
         <time dateTime={row.at.toISOString()} className="shrink-0 text-[12px] font-normal text-[#64748B]">{hourLabel(row.at)}</time>
       </div>
       <p className="mt-1 break-words text-[12px] leading-5 text-[#64748B]">{row.detail || "No additional details recorded"}</p>
@@ -96,8 +96,8 @@ export function ActivityTimeline({ events, nextHref, environment, order = "newes
   const now = new Date();
   return <section aria-labelledby="activity-history-title" className="min-w-0">
     <div className="flex items-center justify-between gap-3 pb-3">
-      <h2 id="activity-history-title" className="text-[17px] font-semibold text-[var(--foreground)]">Activity history</h2>
-      <span className="text-xs text-[var(--muted-foreground)]">{events.length} recorded {events.length === 1 ? "event" : "events"}</span>
+      <h2 id="activity-history-title" className="text-[17px] font-semibold text-[#0F172A]">Activity history</h2>
+      <span className="text-xs text-[#475569]">{events.length} recorded {events.length === 1 ? "event" : "events"}</span>
     </div>
     {!events.length ? <div className="flex min-h-48 flex-col items-center justify-center px-6 py-10 text-center">
       <p className="font-medium">No activity matches your filters</p><span className="sr-only">No activity recorded in this view</span>
@@ -105,10 +105,10 @@ export function ActivityTimeline({ events, nextHref, environment, order = "newes
     </div> : <div className="space-y-6">
       {days.map(day => <section key={day.date} aria-label={"Activity on " + dayLabel(new Date(day.date + "T12:00:00Z"))}>
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-          <h3 className="text-sm font-semibold">{dayLabel(new Date(day.date + "T12:00:00Z"))} <span className="ml-1 text-xs font-normal text-[var(--muted-foreground)]">UTC</span></h3>
-          <span className="text-xs text-[var(--muted-foreground)]">{day.journeys.filter(group => group.journeyId).length} journeys · {day.rows.length} events</span>
+          <h3 className="text-sm font-semibold">{dayLabel(new Date(day.date + "T12:00:00Z"))} <span className="ml-1 text-xs font-normal text-[#475569]">UTC</span></h3>
+          <span className="text-xs text-[#475569]">{day.journeys.filter(group => group.journeyId).length} journeys · {day.rows.length} events</span>
         </div>
-        <div className="divide-y divide-[var(--border)] border-y border-[var(--border)]">{day.journeys.map(group => {
+        <div className="divide-y divide-[#E2E8F0] border-y border-[#E2E8F0]">{day.journeys.map(group => {
           const key = day.date + ":" + group.key;
           const open = expanded[key] ?? (day.date === newestDay && Boolean(group.journeyId));
           const first = group.events[0];
@@ -119,12 +119,12 @@ export function ActivityTimeline({ events, nextHref, environment, order = "newes
                 onClick={() => setExpanded(previous => ({...previous,[key]:!open}))}
                 className="focus-ring flex min-w-0 flex-1 items-center gap-2 rounded-sm text-left text-sm font-medium">
                 <ProductIcon product={group.products[0]}/><span className="min-w-0 truncate">{journalTitle(group.events)}</span>
-                <span className="shrink-0 text-xs font-normal text-[var(--muted-foreground)]">{group.events.length} events</span>
+                <span className="shrink-0 text-xs font-normal text-[#475569]">{group.events.length} events</span>
                 <ChevronDown size={16} className={"shrink-0 transition-transform " + (open ? "rotate-180" : "")} aria-hidden="true"/>
               </button>
               {href ? <Link href={href} className="focus-ring shrink-0 text-xs text-[var(--primary)] hover:underline">Open journey</Link> : null}
             </div> : <h4 className="py-3 text-sm font-medium">Not linked to a journey</h4>}
-            {(!group.journeyId || open) ? <ol id={"journey-" + key.replace(/[^a-zA-Z0-9_-]/g,"-")} className="divide-y divide-[var(--border)] border-t border-[var(--border)] pl-5 sm:pl-8">
+            {(!group.journeyId || open) ? <ol id={"journey-" + key.replace(/[^a-zA-Z0-9_-]/g,"-")} className="divide-y divide-[#E2E8F0] border-t border-[#E2E8F0] pl-5 sm:pl-8">
               {compactRuns(group.events).map(batch => {
                 const first = batch[0], runKey = key + ":" + first.id;
                 const revealed = runs[runKey];
@@ -132,10 +132,10 @@ export function ActivityTimeline({ events, nextHref, environment, order = "newes
                 return <li key={runKey} className="py-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="text-[13px] font-medium">{first.stage === "OFFER_SELECTED" ? "Offer selected · " + batch.length + " events" : batch.length + " " + (first.stage === "SEARCH_COMPLETED" ? "searches" : first.label.toLowerCase() + " events")} · {first.detail} · {batch.every(row => /success/i.test(row.detail + " " + row.label)) ? "all successful" : "recorded outcomes"}</span>
-                    <span className="text-xs text-[var(--muted-foreground)]">{hourLabel(batch[0].at)} – {hourLabel(batch[batch.length-1].at)}</span>
+                    <span className="text-xs text-[#475569]">{hourLabel(batch[0].at)} – {hourLabel(batch[batch.length-1].at)}</span>
                     <button type="button" aria-expanded={Boolean(revealed)} className="focus-ring rounded-sm text-xs font-medium text-[var(--primary)] hover:underline" onClick={() => setRuns(p => ({...p,[runKey]:!revealed}))}>{revealed ? "Hide all" : "Show all"}</button>
                   </div>
-                  {revealed ? <ol className="mt-2 divide-y divide-[var(--border)] border-t border-[var(--border)]">{batch.map(row => <RecordedEvent key={row.id} row={row} environment={environment} now={now}/>)}</ol> : null}
+                  {revealed ? <ol className="mt-2 divide-y divide-[#E2E8F0] border-t border-[#E2E8F0]">{batch.map(row => <RecordedEvent key={row.id} row={row} environment={environment} now={now}/>)}</ol> : null}
                 </li>;
               })}
             </ol> : null}
