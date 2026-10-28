@@ -136,7 +136,7 @@ function SearchDetailContent({ search }: { search: AdminSearchDetail }) {
           {search.identity.userId || search.identity.visitorId ? (
             <>
               {search.identity.visitorId ? (
-                <Link href={"/admin/searches/activity?tab=journeys&visitorId=" + encodeURIComponent(search.identity.visitorId)}
+                <Link href={"/admin/searches/activity?tab=journeys&visitorId=" + encodeURIComponent(search.identity.visitorId) + "&environment=" + encodeURIComponent(search.environment)}
                   className="hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25">Related journeys</Link>
               ) : null}
               <Link href={"/admin/searches/activity?tab=handoffs&" + (search.identity.userId
