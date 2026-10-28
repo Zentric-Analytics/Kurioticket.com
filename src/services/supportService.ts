@@ -140,7 +140,7 @@ export async function addAdminSupportReply(input: { ticketId: string; body: stri
   return { ticket, message, emailStatus };
 }
 
-export async function updateSupportTicketStatus(input: { ticketId: string; status: SupportTicketStatusValue }) {
+export async function updateSupportTicketStatus(input: { ticketId: string; status?: SupportTicketStatusValue; priority?: "LOW" | "NORMAL" | "HIGH" | "URGENT" }) {
   const db = getSupportPrisma();
   const existing = await db.supportTicket.findUnique({
     where: { id: input.ticketId },
@@ -150,7 +150,7 @@ export async function updateSupportTicketStatus(input: { ticketId: string; statu
 
   const ticket = await db.supportTicket.update({
     where: { id: input.ticketId },
-    data: { status: input.status },
+    data: { ...(input.status ? { status: input.status } : {}), ...(input.priority ? { priority: input.priority } : {}) },
   });
 
   return { previousStatus: existing.status, ticket };
