@@ -272,7 +272,7 @@ export function AdminOverviewDashboard({ data, system, activity, range }: {
           </div>
           <AdminOverviewRangeSelect range={range} />
         </div>
-        <div className="grid gap-2 sm:grid-cols-2 min-[900px]:grid-cols-4">
+        <div className="grid gap-2 sm:grid-cols-2 min-[56.25rem]:grid-cols-4">
           <SnapshotLink href="/admin/users" label="Total accounts" value={data.users.total} icon={Users} hint="Current account records" />
           <SnapshotLink href="/admin/users" label="Active website users" value={websiteActive} icon={Activity} hint="Consented website identities · last 90s" />
           <SnapshotLink href="/admin/searches/activity" label="Recorded searches" value={data.journeys.operationalSearches.total} icon={Search} hint="Selected reporting range" />
