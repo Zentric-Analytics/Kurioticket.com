@@ -13,6 +13,61 @@ const errors=[];
 page.on("pageerror",error=>errors.push(error.message));
 const url=base+"/admin/users/guest/qa-guest-activity-0001/activity";
 
+async function inspectActivityTypography(page) {
+  return page.evaluate(() => {
+    const identity = document.querySelector('section[aria-label="Customer identity"]');
+    const summary = document.querySelector('section[aria-label="Activity summary"]');
+    const root = identity?.parentElement;
+    const shell = document.querySelector("main")?.parentElement;
+    const factLabel = identity?.querySelector("dt");
+    const factValue = identity?.querySelector("dd");
+    const summaryValue = summary?.querySelector(".tabular-nums");
+    const summaryLabel = summaryValue?.nextElementSibling;
+    const searchInput = document.querySelector('input[aria-label="Search activity"]');
+    if (!root || !shell || !summary || !factLabel || !factValue || !summaryValue || !summaryLabel || !searchInput)
+      throw new Error("Activity typography anchors missing");
+    const css = element => getComputedStyle(element);
+    return {
+      rootBackground: css(root).backgroundColor,
+      shellBackground: css(shell).backgroundColor,
+      primaryText: css(root).color,
+      factValueSize: css(factValue).fontSize,
+      factValueWeight: css(factValue).fontWeight,
+      factValueColor: css(factValue).color,
+      factLabelSize: css(factLabel).fontSize,
+      factLabelWeight: css(factLabel).fontWeight,
+      factLabelColor: css(factLabel).color,
+      summaryValueSize: css(summaryValue).fontSize,
+      summaryValueWeight: css(summaryValue).fontWeight,
+      summaryValueColor: css(summaryValue).color,
+      summaryLabelSize: css(summaryLabel).fontSize,
+      summaryLabelWeight: css(summaryLabel).fontWeight,
+      summaryLabelColor: css(summaryLabel).color,
+      dividerColor: css(summary).borderTopColor,
+      searchBackground: css(searchInput).backgroundColor,
+    };
+  });
+}
+const approvedActivityTypography = {
+  rootBackground: "rgb(248, 250, 252)",
+  shellBackground: "rgb(248, 250, 252)",
+  primaryText: "rgb(15, 23, 42)",
+  factValueSize: "14px",
+  factValueWeight: "500",
+  factValueColor: "rgb(15, 23, 42)",
+  factLabelSize: "12px",
+  factLabelWeight: "400",
+  factLabelColor: "rgb(100, 116, 139)",
+  summaryValueSize: "14px",
+  summaryValueWeight: "500",
+  summaryValueColor: "rgb(15, 23, 42)",
+  summaryLabelSize: "12px",
+  summaryLabelWeight: "400",
+  summaryLabelColor: "rgb(100, 116, 139)",
+  dividerColor: "rgb(226, 232, 240)",
+  searchBackground: "rgb(255, 255, 255)",
+};
+
 try {
   for (const width of [1536,390]) {
     await page.setViewportSize({width,height:900});
@@ -43,6 +98,7 @@ try {
     await expect(page.getByRole("button",{name:"Show all"})).toBeVisible();
     const widths=await page.evaluate(()=>({document:document.documentElement.scrollWidth,viewport:window.innerWidth}));
     assert.ok(widths.document <= widths.viewport+1, "No horizontal drift "+JSON.stringify(widths));
+    assert.deepEqual(await inspectActivityTypography(page), approvedActivityTypography, "Guest Activity typography and palette "+width);
     if([1536,1280,390,320].includes(width))
       await page.screenshot({path:output+"/after-view-activity-"+width+".png",fullPage:true});
     console.log("PASS responsive activity page",width);
@@ -141,6 +197,7 @@ try {
   await expect(page.getByText("customer.qa@example.invalid",{exact:true})).toBeVisible();
   await expect(page.getByRole("heading",{name:"Related records"})).toBeVisible();
   await expect(page.getByRole("button",{name:"Manage account for customer.qa@example.invalid"})).toBeVisible();
+  assert.deepEqual(await inspectActivityTypography(page), approvedActivityTypography, "Registered Activity typography and palette");
   await page.screenshot({path:output+"/after-registered-activity-1280.png",fullPage:true});
   assert.deepEqual(errors,[],"No browser exceptions");
   console.log("PASS registered identity and browser errors");

@@ -6,6 +6,7 @@ const page = readFileSync(new URL("../app/admin/users/[kind]/[id]/activity/page.
 const timeline = readFileSync(new URL("../components/admin/ActivityTimeline.tsx", import.meta.url), "utf8");
 const reader = readFileSync(new URL("../services/adminIdentityActivityService.ts", import.meta.url), "utf8");
 const filters = readFileSync(new URL("./adminIdentityActivity.ts", import.meta.url), "utf8");
+const shell = readFileSync(new URL("../components/admin/AdminHorizontalShell.tsx", import.meta.url), "utf8");
 
 test("Activity Explorer distinguishes consented visitors and operational guests without inventing identity", () => {
   assert.match(page, /operational \? "Guest session" : "Visitor"/);
@@ -43,4 +44,13 @@ test("Activity summary counts filter-wide records instead of paginated timeline 
   assert.match(page, /data\.summary\.resultsViewed/);
   assert.match(page, /data\.summary\.providerHandoffs/);
   assert.doesNotMatch(page, /Counts reflect loaded events only\./);
+});
+
+test("Activity uses its approved colors and shared metric sizes without changing Searches or Users", () => {
+  assert.match(shell, /userActivity \? "bg-\[#F8FAFC\]"/);
+  assert.match(shell, /usersDirectory \|\| searchesWorkspace \? "bg-white"/);
+  assert.match(page, /space-y-6 bg-\[#F8FAFC\]/);
+  assert.match(page, /text-\[14px\] font-medium text-\[#0F172A\]/);
+  assert.match(page, /text-\[14px\] font-medium tabular-nums text-\[#0F172A\]/);
+  assert.match(page, /text-\[12px\] font-normal text-\[#64748B\]/);
 });
