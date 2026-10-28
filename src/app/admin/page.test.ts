@@ -84,7 +84,6 @@ test("Overview shared sections and metric cards are compact without sacrificing 
   const section = dashboard.slice(dashboard.indexOf("function Section("), dashboard.indexOf("function MiniMetric("));
   const metric = dashboard.slice(dashboard.indexOf("function MiniMetric("), dashboard.indexOf("function SnapshotLink("));
   const snapshot = dashboard.slice(dashboard.indexOf("function SnapshotLink("), dashboard.indexOf("function AttentionLink("));
-  const badges = dashboard.slice(dashboard.indexOf("function StatusBadge("), dashboard.indexOf("function Section("));
 
   assert.match(section, /rounded-xl border border-slate-200 bg-white p-3 sm:p-4/);
   assert.match(section, /mb-2 flex flex-wrap items-center justify-between gap-2/);
@@ -98,22 +97,15 @@ test("Overview shared sections and metric cards are compact without sacrificing 
   assert.doesNotMatch(metric, /truncate|overflow-hidden|whitespace-nowrap/);
   assert.match(snapshot, /px-3 py-2 transition/);
   assert.match(snapshot, /text-\[22px\] font-semibold leading-\[26px\]/);
-  assert.match(badges, /rounded-full px-2 py-0\.5 text-\[11px\] font-medium leading-4/);
   assert.match(display, /className="min-w-0 space-y-3"/);
   assert.match(display, /grid min-w-0 items-start gap-3 lg:grid-cols-2/);
   assert.match(page, /<AdminSectionCard className="min-w-0 p-4 sm:p-5 lg:p-6">/);
 });
 
-test("Provider Health, four-column Platform Health and recent activity are compact but complete", async () => {
-  const provider = dashboard.slice(dashboard.indexOf("function ProviderSummary("), dashboard.indexOf("function PlatformSummary("));
+test("Four-column Platform Health and recent activity remain compact and complete", async () => {
   const platform = dashboard.slice(dashboard.indexOf("function PlatformSummary("), dashboard.indexOf("function RecentActivity("));
   const audit = dashboard.slice(dashboard.indexOf("function RecentActivity("), dashboard.indexOf("export function AdminOverviewSecondary("));
 
-  assert.match(provider, /rounded-lg border border-slate-200 p-2\.5/);
-  assert.match(provider, /mt-2 grid grid-cols-3 gap-1\.5/);
-  assert.match(provider, /provider\.attemptedCalls/);
-  assert.match(provider, /provider\.failedCalls/);
-  assert.match(provider, /formatProviderFailureRatePct/);
   const grid = platform.match(/className="(grid gap-2 sm:grid-cols-2 min-\[56\.25rem\]:grid-cols-4)"/);
   assert.ok(grid, "wide Overview must display four Platform Health statuses in one row");
   const engine = await compile("@theme { --breakpoint-sm: 40rem; } @tailwind utilities;");
@@ -200,20 +192,19 @@ test("provider handoffs remain recorded redirects, never confirmed bookings", ()
   assert.match(contract, /totalRedirects !== inConsentedJourneys \+ outsideConsentedJourneys/);
 });
 
-test("provider overview is compact but preserves truthful status and call calculations", () => {
-  const provider = sectionSource("Provider Health");
-  assert.match(provider, /data\.providers\.map\(\(provider\) => <ProviderSummary key=\{provider.id\} provider=\{provider\} \/>/);
-  assert.match(provider, /href="\/admin\/providers"/);
-  const card = dashboard.slice(dashboard.indexOf("function ProviderSummary("), dashboard.indexOf("function PlatformSummary("));
-  assert.equal((card.match(/<MiniMetric /g) ?? []).length, 3);
-  assert.match(card, /provider\.attemptedCalls/);
-  assert.match(card, /provider\.failedCalls/);
-  assert.match(card, /formatProviderFailureRatePct\(provider\.failureRatePct, provider\.failedCalls\)/);
-  assert.match(card, /provider\.readinessState === "READY"/);
-  assert.match(dashboard, /state === "FAILING"\) return "Requests failing"/);
+test("Overview omits duplicate Provider Health but preserves live provider issue detection", () => {
+  assert.doesNotMatch(display, /<Section title="Provider Health"/);
+  assert.doesNotMatch(dashboard, /function ProviderSummary\(|function StatusBadge\(|function operationalTone\(|function operationalLabel\(/);
+  assert.match(display, /providerAttention = data\.providers\.filter/);
+  for (const state of ["DEGRADED", "FAILING", "NOT_READY"]) {
+    assert.ok(display.includes('p.operationalState === "' + state + '"'), state + " must still contribute to provider issues");
+  }
+  assert.match(display, /<AttentionLink href="\/admin\/providers" label="Provider issues" value=\{providerAttention\}/);
+  assert.match(display, /Provider health: last 24 hours\. Support and deletion queues: current\./);
+  assert.match(providersPage, /getProviderOperationalStatuses\(\)/);
+  assert.match(providersPage, /provider\.serviceBreakdown\.map/);
+  assert.match(providersPage, /formatProviderFailureRatePct\(provider\.failureRatePct, provider\.failedCalls\)/);
   assert.match(core, /Math\.round\(1000 \* counts\.failed \/ n\) \/ 10/);
-  assert.match(core, /if \(failedCalls > 0 && rate === 0\) return "<0\.1%"/);
-  assert.doesNotMatch(card, /serviceBreakdown|failureReasons|lastFailureAt|averageLatencyMs/);
 });
 
 test("complete provider diagnostics remain on the linked Providers page", () => {
@@ -227,7 +218,7 @@ test("complete provider diagnostics remain on the linked Providers page", () => 
   assert.doesNotMatch(dashboard, /errorMessage/);
 });
 
-test("Overview cards use two independent content-height columns without wasted row space", () => {
+test("Overview remaining cards form independently stacked columns without excess height", () => {
   const gridStart = display.indexOf('<div className="grid min-w-0 items-start gap-3 lg:grid-cols-2">');
   assert.ok(gridStart >= 0, "responsive two-column Overview must exist");
   const stack = '<div className="flex min-w-0 flex-col gap-3">';
@@ -240,13 +231,14 @@ test("Overview cards use two independent content-height columns without wasted r
 
   assert.match(left, /aria-label="Attention Required"/);
   assert.deepEqual([...left.matchAll(/<Section title="([^"]+)"/g)].map((match) => match[1]), [
-    "Search Performance", "Provider Handoffs", "Support Workload",
+    "Search Performance", "Support Workload",
   ]);
   assert.deepEqual([...right.matchAll(/<Section title="([^"]+)"/g)].map((match) => match[1]), [
-    "Visitor Activity", "Provider Health", "Deletion Workload",
+    "Visitor Activity", "Provider Handoffs", "Deletion Workload",
   ]);
   assert.doesNotMatch(left, /h-full|flex-1|row-span|absolute/);
   assert.doesNotMatch(right, /h-full|flex-1|row-span|absolute/);
+  assert.doesNotMatch(display, /<Section title="Provider Health"/);
   assert.doesNotMatch(display, /overflow-x-auto|overflow-x-scroll|whitespace-nowrap/);
 });
 
@@ -260,7 +252,7 @@ test("Attention Required is compact and vertically stacked in its own card", () 
   assert.equal((attention.match(/<AttentionLink /g) ?? []).length, 3);
   assert.match(attention, /Provider health: last 24 hours. Support and deletion queues: current/);
 
-  const link = dashboard.slice(dashboard.indexOf("function AttentionLink("), dashboard.indexOf("function operationalTone("));
+  const link = dashboard.slice(dashboard.indexOf("function AttentionLink("), dashboard.indexOf("function PlatformSummary("));
   assert.match(link, /px-3 py-2/);
   assert.match(link, /min-w-0 flex-1/);
   assert.match(link, /tabular-nums/);
