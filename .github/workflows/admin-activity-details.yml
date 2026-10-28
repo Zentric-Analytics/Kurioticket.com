@@ -38,11 +38,11 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - name: Validate activity paging, filters and consent ownership helpers
+      - name: Validate complete activity, filters and consent ownership helpers
         env:
           JITI_TSCONFIG_PATHS: ./tsconfig.json
           JITI_JSX: "true"
-        run: node --test --import jiti/register src/components/admin/AdminIdentityTable.test.ts src/components/admin/ActivityTimeline.test.ts src/components/admin/UserStatusActions.test.ts src/components/admin/GuestTrackingActions.test.ts src/services/adminGuestManagement.test.ts src/lib/adminActivityEnvironmentBoundary.test.ts src/lib/adminIdentityActivity.test.ts src/lib/adminIdentityJourney.test.ts
+        run: node --test --import jiti/register src/components/admin/AdminIdentityTable.test.ts src/components/admin/ActivityTimeline.test.ts src/components/admin/UserStatusActions.test.ts src/components/admin/GuestTrackingActions.test.ts src/services/adminGuestManagement.test.ts src/lib/adminActivityEnvironmentBoundary.test.ts src/lib/adminIdentityActivity.test.ts src/lib/adminIdentityActivityComplete.test.ts src/lib/adminIdentityJourney.test.ts
       - run: npx playwright install --with-deps chromium
       - name: Render and test real Admin Activity component with labelled QA data
         run: node qa/admin-activity-details/run.mjs

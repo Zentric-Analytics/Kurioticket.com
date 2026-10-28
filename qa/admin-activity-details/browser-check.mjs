@@ -13,6 +13,12 @@ const errors=[];
 page.on("pageerror",error=>errors.push(error.message));
 const url=base+"/admin/users/guest/qa-guest-activity-0001/activity";
 
+// Group disclosures are unchanged; opening a group never fetches another page.
+async function expandJourneyGroups() {
+  const collapsed = page.locator('button[aria-controls^="journey-"][aria-expanded="false"]');
+  while (await collapsed.count()) await collapsed.first().click();
+}
+
 async function inspectActivityTypography(page) {
   return page.evaluate(() => {
     const identity = document.querySelector('section[aria-label="Customer identity"]');
@@ -95,6 +101,9 @@ try {
     await expect(page.getByRole("button",{name:"Activity type: All activity types"})).toBeVisible();
     await expect(page.getByRole("button",{name:/Sort activity/})).toHaveCount(0);
     await expect(page.getByRole("textbox",{name:"Search activity"})).toBeVisible();
+    await expect(page.getByRole("link",{name:/Load (older|newer) activity/})).toHaveCount(0);
+    await expect(page.getByText("14 recorded events",{exact:true})).toBeVisible();
+    await expandJourneyGroups();
     await expect(page.getByRole("button",{name:"Show all"})).toBeVisible();
     const widths=await page.evaluate(()=>({document:document.documentElement.scrollWidth,viewport:window.innerWidth}));
     assert.ok(widths.document <= widths.viewport+1, "No horizontal drift "+JSON.stringify(widths));
@@ -104,15 +113,20 @@ try {
     console.log("PASS responsive activity page",width);
   }
 
-  // The initial page has 3 searches, but two more are on separate cursor pages.
-  // Summary totals must include all five and remain stable when the cursor moves.
+  // Every fixture event is available upfront, including the formerly separate pages.
   await page.goto(url);
   let totals = page.getByRole("region",{name:"Activity summary"});
   await expect(totals.getByText("5",{exact:true})).toBeVisible();
   await expect(totals.getByText("2",{exact:true})).toBeVisible();
   await expect(totals.getByText("1",{exact:true})).toBeVisible();
   await expect(page.getByText("Counts reflect loaded events only.")).toHaveCount(0);
+  await expandJourneyGroups();
+  await page.getByRole("button",{name:"Show all"}).click();
+  await expect(page.locator("[data-activity-id]")).toHaveCount(14);
+  await expect(page.locator('[data-activity-id="j-qa-older-search"]')).toBeVisible();
+  await expect(page.locator('[data-activity-id="j-qa-newer-search"]')).toBeVisible();
   await page.goto(url+"?cursor=older-qa-page");
+  await expect(page.getByText("14 recorded events",{exact:true})).toBeVisible();
   totals = page.getByRole("region",{name:"Activity summary"});
   await expect(totals.getByText("5",{exact:true})).toBeVisible();
   await expect(totals.getByText("2",{exact:true})).toBeVisible();
@@ -125,10 +139,29 @@ try {
   totals = page.getByRole("region",{name:"Activity summary"});
   await expect(totals.getByText("1",{exact:true})).toHaveCount(1);
   await expect(totals.getByText("0",{exact:true})).toHaveCount(2);
-  console.log("PASS summary counts all matching events independently of cursor");
+  console.log("PASS complete timeline, summary and legacy cursor recovery");
+
+  // No scrolling, load-more click or additional page request is needed for any row.
+  for (const kind of ["guest","user"]) {
+    const fullUrl = base+"/admin/users/"+kind+"/qa-complete-history-0001/activity";
+    const response = await page.goto(fullUrl);
+    assert.ok((await response.text()).includes("s-qa-complete-1004"), "oldest row present in initial server response");
+    await expect(page.locator("[data-activity-id]")).toHaveCount(1005);
+    await expect(page.getByText("1005 recorded events",{exact:true})).toBeVisible();
+    await expect(page.getByRole("link",{name:/Load (older|newer) activity/})).toHaveCount(0);
+    const ids = await page.locator("[data-activity-id]").evaluateAll(nodes => nodes.map(node => node.dataset.activityId));
+    assert.equal(new Set(ids).size,1005);
+    assert.equal(ids[0],"s-qa-complete-0000");
+    assert.equal(ids.at(-1),"s-qa-complete-1004");
+    await page.goto(fullUrl+"?product=FLIGHT&from=2026-10-22&to=2026-10-22");
+    await expect(page.locator("[data-activity-id]")).toHaveCount(503);
+    await expect(page.getByRole("region",{name:"Activity summary"}).getByText("503",{exact:true})).toBeVisible();
+  }
+  console.log("PASS 1005 events upfront for guests and registered users with complete filters");
 
   await page.setViewportSize({width:1280,height:900});
   await page.goto(url+"?directory=sort%3Dname_asc%26identity%3DGUEST%26page%3D2");
+  await expandJourneyGroups();
   const show=page.getByRole("button",{name:"Show all"}).first();
   await show.click();
   await expect(page.getByRole("button",{name:"Hide all"})).toBeVisible();
@@ -188,9 +221,10 @@ try {
   await expect(page.getByText("No activity matches your filters")).toBeVisible();
   await page.screenshot({path:output+"/after-approved-empty-state-1536.png",fullPage:true});
   await page.goto(url+"?cursor=bad");
-  await expect(page.getByText("Activity page link expired")).toBeVisible();
-  await expect(page.getByRole("link",{name:"Return to newest activity"})).toBeVisible();
-  console.log("PASS empty and invalid cursor");
+  await expect(page.getByText("Activity page link expired")).toHaveCount(0);
+  await expect(page.getByText("14 recorded events",{exact:true})).toBeVisible();
+  await expect(page.getByRole("link",{name:/Load (older|newer) activity/})).toHaveCount(0);
+  console.log("PASS empty and obsolete cursor");
 
   await page.goto(base+"/admin/users/user/qa-registered-0001/activity");
   await expect(page.getByRole("heading",{name:"QA registered customer"})).toBeVisible();

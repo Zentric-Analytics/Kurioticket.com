@@ -22,7 +22,7 @@ const recorded = [
   journey("qa-journey-single", time(35), { id: "j-qa-single", at: time(35), label: "Search completed",
     detail: "CAR · LAX → SFO · SUCCESS", stage: "SEARCH_COMPLETED", product: "CAR", searchHistoryId: "qa-car-search" }),
 ];
-// This earlier synthetic event must appear on the cursor page ONLY.
+// These records used to require separate cursor pages. Complete mode includes both upfront.
 const olderRecorded = [
   journey("qa-journey-older", time(29), {
     id: "j-qa-older-search", at: time(29), label: "Search completed",
@@ -37,12 +37,20 @@ const newerRecorded = [
     stage: "SEARCH_COMPLETED", product: "FLIGHT", searchHistoryId: "qa-newer-search",
   }),
 ];
+const completeHistory = Array.from({ length: 1005 }, (_, index) => ({
+  id: "s-qa-complete-" + String(index).padStart(4, "0"),
+  at: new Date(Date.parse("2026-10-22T18:00:00Z") - index * 60000),
+  label: "Search completed", detail: "Complete history " + index + " · SUCCESS",
+  stage: "SEARCH_COMPLETED", product: index % 2 ? "HOTEL" : "FLIGHT",
+  searchHistoryId: "qa-complete-search-" + index,
+}));
 
-export async function loadAdminIdentityActivity(kind, id, filters, cursor) {
+export async function loadAdminIdentityActivity(kind, id, filters, cursor, readMode = "page") {
   if (!/^[a-z0-9_-]{6,80}$/i.test(id)) return { status: "not_found" };
   if (kind === "user" && id === "qa-registered-unavailable-0001") return { status: "unavailable" };
-  if (cursor && !["older-qa-page", "oldest-current-qa-page", "newer-qa-page"].includes(cursor)) return { status: "invalid_cursor" };
+  if (readMode !== "all" && cursor && !["older-qa-page", "oldest-current-qa-page", "newer-qa-page"].includes(cursor)) return { status: "invalid_cursor" };
   const tabMatch = stage => filters.tab === "all"
+    || (filters.tab === "journeys" && stage !== "ACCOUNT_ACTIVITY")
     || (filters.tab === "searches" && ["SEARCH_COMPLETED", "RESULTS_VIEWED"].includes(stage))
     || (filters.tab === "selections" && stage === "OFFER_SELECTED")
     || (filters.tab === "handoffs" && stage === "PROVIDER_HANDOFF_STARTED");
@@ -52,8 +60,8 @@ export async function loadAdminIdentityActivity(kind, id, filters, cursor) {
     && (!filters.q || (row.detail + row.label).toLowerCase().includes(filters.q.toLowerCase()))
     && (!filters.from || row.at >= new Date(filters.from + "T00:00:00.000Z"))
     && (!filters.to || row.at < new Date(new Date(filters.to + "T00:00:00.000Z").getTime() + 86400000));
-  // Summary reads every matching fixture event, including records on other cursor pages.
-  const allMatched = id === "qa-no-events-0001" ? [] : [...recorded, ...olderRecorded, ...newerRecorded].filter(matches);
+  const sourceRows = id === "qa-complete-history-0001" ? completeHistory : [...recorded, ...olderRecorded, ...newerRecorded];
+  const allMatched = id === "qa-no-events-0001" ? [] : sourceRows.filter(matches);
   const summary = {
     searches: allMatched.filter(row => row.stage === "SEARCH_COMPLETED").length,
     resultsViewed: allMatched.filter(row => row.stage === "RESULTS_VIEWED").length,
@@ -62,18 +70,19 @@ export async function loadAdminIdentityActivity(kind, id, filters, cursor) {
   const currentRows = id === "qa-no-events-0001" ? [] : recorded.filter(matches);
   const olderRows = id === "qa-no-events-0001" ? [] : olderRecorded.filter(matches);
   const newerRows = id === "qa-no-events-0001" ? [] : newerRecorded.filter(matches);
-  // Ascending cursor must traverse the EARLIEST fixture before the current
-  // page and only then the newer records, without omissions or overlap.
+  // Legacy fixture callers retain their old paging contract for baseline screenshots.
   const ascendingPages = [
     { cursor: null, rows: olderRows },
     { cursor: "oldest-current-qa-page", rows: [...currentRows].reverse() },
     { cursor: "newer-qa-page", rows: newerRows },
   ].filter(page => page.rows.length);
   const selected = cursor ? ascendingPages.findIndex(page => page.cursor === cursor) : 0;
-  const rows = filters.order === "oldest"
-    ? (selected < 0 ? [] : ascendingPages[selected]?.rows ?? [])
-    : (cursor === "older-qa-page" ? olderRows : currentRows);
-  const nextCursor = filters.order === "oldest"
+  const rows = readMode === "all"
+    ? [...allMatched].sort((a,b) => (filters.order === "oldest" ? a.at - b.at : b.at - a.at) || a.id.localeCompare(b.id))
+    : filters.order === "oldest"
+      ? (selected < 0 ? [] : ascendingPages[selected]?.rows ?? [])
+      : (cursor === "older-qa-page" ? olderRows : currentRows);
+  const nextCursor = readMode === "all" ? null : filters.order === "oldest"
     ? (selected >= 0 ? ascendingPages[selected + 1]?.cursor ?? null : null)
     : (!cursor && olderRows.length ? "older-qa-page" : null);
   return { status: "ok", data: {
