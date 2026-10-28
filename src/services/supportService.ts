@@ -116,7 +116,12 @@ export async function addAdminSupportReply(input: { ticketId: string; body: stri
   });
 
   // Keep the inbox ordered by the latest conversation activity, not ticket creation.
-  await db.supportTicket.update({ where: { id: ticket.id }, data: { updatedAt: message.createdAt } });
+  try {
+    await db.supportTicket.update({ where: { id: ticket.id }, data: { updatedAt: message.createdAt } });
+  } catch (error) {
+    // The reply is already saved; do not invite the admin to retry and duplicate it.
+    console.error("[support] Failed to refresh ticket activity timestamp", error);
+  }
 
   if (ticket.userId && !prismaClientForTesting) {
     await createNotificationEvent({ userId: ticket.userId, eventKey: `support-reply:${message.id}`, type: "SUPPORT_UPDATE", title: "Kurioticket Support replied", body: `There is a new reply to “${ticket.subject}”.`, actionPath: "/support", metadata: { ticketId: ticket.id, supportMessageId: message.id } }).catch((error) => console.error("[support] Failed to persist support reply notification", { ticketId: ticket.id, messageId: message.id, message: error instanceof Error ? error.message : "notification_failed" }));
