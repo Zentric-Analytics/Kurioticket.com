@@ -1,4 +1,9 @@
 import Link from "next/link";
+import { SearchWorkspaceTabs } from "@/components/admin/SearchWorkspaceTabs";
+import { searchWorkspaceTab } from "@/lib/adminSearchWorkspace";
+import AdminJourneysPage from "@/app/admin/journeys/page";
+import AdminRedirectsPage from "@/app/admin/redirects/page";
+import AdminReferralAttributionPage from "@/app/admin/referral-attribution/page";
 
 import { searchActivityDetailQuery } from "@/lib/adminSearchActivityNavigation";
 import { buildAdminSearchProviderOptions } from "@/lib/adminSearchProviderOptions";
@@ -10,13 +15,25 @@ import { SearchMonitorTable } from "@/components/admin/SearchMonitorTable";
 import { SearchWorkspaceBackLink } from "@/components/admin/SearchWorkspaceBackLink";
 import { adminOperationalReads } from "@/services/adminOperationalReadService";
 
-export const metadata = { title: "Admin Searches" };
+export const metadata = { title: "Admin Search Activity" };
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 type RangeKey = "today" | "7d" | "30d" | "all" | "custom";
 
 export default async function AdminSearchActivityPage({ searchParams }: { searchParams: SearchParams }) {
-  const raw = { ...(await searchParams) };
+  const supplied = await searchParams;
+  const tab = searchWorkspaceTab(supplied.tab);
+  if (tab !== "searches") {
+    const { tab: _tab, ...sectionParams } = supplied;
+    const content = tab === "journeys"
+      ? await AdminJourneysPage({ searchParams: Promise.resolve(sectionParams), embedded: true })
+      : tab === "handoffs"
+        ? await AdminRedirectsPage({ searchParams: Promise.resolve(sectionParams), embedded: true })
+        : await AdminReferralAttributionPage({ searchParams: Promise.resolve(sectionParams), embedded: true });
+    return <><SearchWorkspaceTabs active={tab} />{content}</>;
+  }
+  const { tab: _tab, ...suppliedSearch } = supplied;
+  const raw = { ...suppliedSearch };
   delete raw.environment;
   const currentEnvironment = getPublicEnvironment();
   const providerOptions = buildAdminSearchProviderOptions(getProviderIntegrationStatuses(), one(raw.provider) || null);
@@ -33,7 +50,7 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
 
   return (
     <>
-      <SearchWorkspaceBackLink />
+      <SearchWorkspaceTabs active="searches" />
       <AdminPageShell title="Search activity" hideHeader>
         <div className="mx-auto w-full max-w-[1500px]">
         {result.status === "ok" && summary.status === "ok" ? (

@@ -126,6 +126,35 @@ function SearchDetailContent({ search }: { search: AdminSearchDetail }) {
       </section>
 
       <section className="border-b border-[#E5E7EB] px-2 py-5">
+        <h2 className="text-[14px] font-semibold text-[#111827]">Related activity</h2>
+        <p className="mt-1 text-[12px] leading-5 text-[#6B7280]">
+          Open the independent operational reports for the same recorded identity.
+          These links do not imply that another record belongs to this exact search.
+          Handoffs without a search link remain visible in the full report.
+        </p>
+        <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-[13px] font-semibold text-[#004BB8]">
+          {search.identity.userId || search.identity.visitorId ? (
+            <>
+              <Link href={"/admin/searches/activity?tab=journeys&" + (search.identity.userId
+                ? "userId=" + encodeURIComponent(search.identity.userId)
+                : "visitorId=" + encodeURIComponent(search.identity.visitorId!)) + "&environment=" + encodeURIComponent(search.environment)}
+                className="hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25">Related journeys</Link>
+              <Link href={"/admin/searches/activity?tab=handoffs&" + (search.identity.userId
+                ? "userId=" + encodeURIComponent(search.identity.userId)
+                : "visitorId=" + encodeURIComponent(search.identity.visitorId!)) + "&environment=" + encodeURIComponent(search.environment)}
+                className="hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25">Handoffs for this identity</Link>
+            </>
+          ) : (
+            <span className="font-normal text-[#6B7280]">No verified identity link is available for this search.</span>
+          )}
+          <Link href="/admin/searches/activity?tab=handoffs"
+            className="hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25">All provider handoffs</Link>
+          <Link href="/admin/searches/activity?tab=attribution"
+            className="hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25">Referral reporting</Link>
+        </div>
+      </section>
+
+      <section className="border-b border-[#E5E7EB] px-2 py-5">
         <h2 className="text-[14px] font-semibold text-[#111827]">Provider outcomes</h2>
         {diagnostic.providers.length ? (
           <div className="mt-3 overflow-x-auto">

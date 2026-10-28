@@ -2,6 +2,8 @@ import Link from "next/link";
 
 import { AdminButton, AdminDataTable, AdminEmptyState, AdminFilterBar, AdminInput, AdminPageShell, AdminSelect, AdminStatusBadge } from "@/components/admin/AdminPageShell";
 import { SearchWorkspaceBackLink } from "@/components/admin/SearchWorkspaceBackLink";
+import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
+import { SearchWorkspacePanelFrame } from "@/components/admin/SearchWorkspacePanelFrame";
 import { formatDateTime } from "@/lib/admin-data";
 import { adminOperationalReads } from "@/services/adminOperationalReadService";
 
@@ -9,7 +11,7 @@ export const metadata = { title: "Admin Provider Handoffs" };
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
-export default async function AdminRedirectsPage({ searchParams }: { searchParams: SearchParams }) {
+export default async function AdminRedirectsPage({ searchParams, embedded = false }: { embedded?: boolean; searchParams: SearchParams }) {
   const raw = await searchParams;
   const params = toParams(raw);
   if (!params.has("limit")) params.set("limit", "50");
@@ -17,19 +19,34 @@ export default async function AdminRedirectsPage({ searchParams }: { searchParam
 
   return (
     <>
-      <SearchWorkspaceBackLink />
-      <AdminPageShell
+      {!embedded ? <SearchWorkspaceBackLink /> : null}
+      <SearchWorkspacePanelFrame embedded={embedded}
         title="Provider Handoffs"
         description="Review verified outbound provider handoffs. A handoff records leaving Kurioticket for a provider; it is not proof of a completed booking or payment."
       >
       <div className="space-y-4">
-        <AdminFilterBar action="/admin/redirects">
+        <AdminFilterBar action={embedded ? "/admin/searches/activity" : "/admin/redirects"}>
+          {embedded ? <input type="hidden" name="tab" value="handoffs" /> : null}
+          {one(raw.userId) ? <input type="hidden" name="userId" value={one(raw.userId)} /> : null}
+          {one(raw.visitorId) ? <input type="hidden" name="visitorId" value={one(raw.visitorId)} /> : null}
+          {one(raw.from) ? <input type="hidden" name="from" value={one(raw.from)} /> : null}
+          {one(raw.to) ? <input type="hidden" name="to" value={one(raw.to)} /> : null}
           <AdminSelect name="product" defaultValue={one(raw.product)}>
             <option value="">All products</option><option value="FLIGHT">Flights</option><option value="HOTEL">Hotels</option>
           </AdminSelect>
-          <AdminSelect name="identity" defaultValue={one(raw.identity) || "all"}>
-            <option value="all">All identities</option><option value="registered">Registered</option><option value="guest">Guest</option><option value="unattributed">Unattributed</option>
-          </AdminSelect>
+          <SearchMonitorSelect
+            label="Identity"
+            name="identity"
+            value={one(raw.identity) || "all"}
+            appearance="plain"
+            clearFieldNamesOnChange={["userId", "visitorId"]}
+            options={[
+              { value: "all", label: "All identities" },
+              { value: "registered", label: "Registered" },
+              { value: "guest", label: "Guest" },
+              { value: "unattributed", label: "Unattributed" },
+            ]}
+          />
           <AdminSelect name="correlation" defaultValue={one(raw.correlation)}>
             <option value="">All correlations</option><option value="exact">Linked to search</option><option value="unavailable">Search link unavailable</option>
           </AdminSelect>
@@ -63,14 +80,14 @@ export default async function AdminRedirectsPage({ searchParams }: { searchParam
                   ],
                 }))}
               />
-              {result.data.nextCursor ? <div className="flex justify-end"><Link href={cursorHref("/admin/redirects", raw, result.data.nextCursor)} className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">Next page</Link></div> : null}
+              {result.data.nextCursor ? <div className="flex justify-end"><Link href={cursorHref(embedded ? "/admin/searches/activity" : "/admin/redirects", embedded ? { ...raw, tab: "handoffs" } : raw, result.data.nextCursor)} className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">Next page</Link></div> : null}
             </>
           )
         ) : (
           <AdminEmptyState title={result.status === "invalid" ? "Invalid filters" : result.status === "forbidden" ? "Admin access required" : "Handoff data unavailable"} message={"issues" in result ? result.issues.map((issue) => issue.field + ": " + issue.message).join(" ") : "The safe admin reader could not return handoff data. No empty result was invented."} />
         )}
       </div>
-      </AdminPageShell>
+      </SearchWorkspacePanelFrame>
     </>
   );
 }

@@ -34,7 +34,7 @@ export type AdminNavDefinition = {
 };
 
 export const adminNavigationGroups = [
-  { label: "Operations", hrefs: ["/admin", "/admin/users", "/admin/searches", "/admin/confirmed-trips", "/admin/support"] },
+  { label: "Operations", hrefs: ["/admin", "/admin/users", "/admin/searches/activity", "/admin/confirmed-trips", "/admin/support"] },
   { label: "Provider readiness", hrefs: ["/admin/providers"] },
   { label: "Website content", hrefs: ["/admin/content"] },
   { label: "System & security", hrefs: ["/admin/system", "/admin/settings"] },
@@ -44,10 +44,10 @@ export const adminNavigation: AdminNavDefinition[] = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard, roles: ["ADMIN"], section: "operations", description: "Operations dashboard and platform health." },
   { href: "/admin/users", label: "Users", icon: Users, roles: ["ADMIN"], section: "operations", description: "Manage customer accounts, roles and status." },
   { href: "/admin/providers", label: "Providers", icon: Activity, roles: ["ADMIN"], section: "readiness", description: "Monitor provider configuration and health." },
-  { href: "/admin/searches", label: "Searches", icon: Search, roles: ["ADMIN"], section: "operations", description: "Review safe operational search activity and request metadata." },
-  { href: "/admin/journeys", parentHref: "/admin/searches", label: "Journeys", icon: Activity, roles: ["ADMIN"], section: "operations", description: "Trace consented search-to-handoff journey events." },
-  { href: "/admin/redirects", parentHref: "/admin/searches", label: "Provider Handoffs", icon: MousePointerClick, roles: ["ADMIN"], section: "operations", description: "Review recorded outbound provider handoffs." },
-  { href: "/admin/referral-attribution", parentHref: "/admin/searches", label: "Referral Attribution", icon: Activity, roles: ["ADMIN"], section: "operations", description: "Summarize verified provider referrals without inferring bookings." },
+  { href: "/admin/searches/activity", label: "Search Activity", icon: Search, roles: ["ADMIN"], section: "operations", description: "Review search records, observed journeys, provider handoffs, and referral reporting in one workspace." },
+  { href: "/admin/journeys", parentHref: "/admin/searches/activity", label: "Journeys", icon: Activity, roles: ["ADMIN"], section: "operations", description: "Trace consented search-to-handoff journey events." },
+  { href: "/admin/redirects", parentHref: "/admin/searches/activity", label: "Provider Handoffs", icon: MousePointerClick, roles: ["ADMIN"], section: "operations", description: "Review recorded outbound provider handoffs." },
+  { href: "/admin/referral-attribution", parentHref: "/admin/searches/activity", label: "Referral Attribution", icon: Activity, roles: ["ADMIN"], section: "operations", description: "Summarize verified provider referrals without inferring bookings." },
   { href: "/admin/confirmed-trips", label: "Trips", icon: ClipboardList, roles: ["ADMIN"], section: "operations", description: "Monitor provider-confirmed trips and their flight-status readiness." },
   { href: "/admin/flight-status", parentHref: "/admin/confirmed-trips", label: "Flight Status", icon: Activity, roles: ["ADMIN"], section: "operations", description: "Monitor trusted provider-supplied status snapshots for confirmed flights." },
   { href: "/admin/content", label: "Content", icon: FileText, roles: ["ADMIN"], section: "content", description: "Review admin-managed site content." },
@@ -66,6 +66,9 @@ export const adminNavigation: AdminNavDefinition[] = [
 
 export function isAdminNavItemActive(itemHref: string, pathname: string) {
   if (itemHref === "/admin") return pathname === itemHref;
+  // The Search Activity workspace owns legacy search-detail routes as well as
+  // its primary activity page. Never highlight it for unrelated Admin pages.
+  if (itemHref === "/admin/searches/activity" && (pathname === "/admin/searches" || /^\/admin\/searches\/(?!activity(?:\/|$))[^/]+\/?$/.test(pathname))) return true;
   return pathname === itemHref || pathname.startsWith(`${itemHref}/`);
 }
 

@@ -4,6 +4,8 @@ import { AdminButton, AdminDataTable, AdminEmptyState, AdminFilterBar, AdminInpu
 import { JourneyDateRangeFields } from "@/components/admin/JourneyDateRangeFields";
 import { journeyWindow, selectedJourneyRange } from "@/lib/adminJourneyDateRange";
 import { SearchWorkspaceBackLink } from "@/components/admin/SearchWorkspaceBackLink";
+import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
+import { SearchWorkspacePanelFrame } from "@/components/admin/SearchWorkspacePanelFrame";
 import { formatDateTime } from "@/lib/admin-data";
 import { adminJourneys } from "@/services/adminJourneyService";
 import type { AdminJourneyStage } from "@/services/adminJourneyContract";
@@ -18,7 +20,7 @@ const stages: Array<{ value: AdminJourneyStage; label: string }> = [
   { value: "PROVIDER_HANDOFF_STARTED", label: "Provider handoff" },
 ];
 
-export default async function AdminJourneysPage({ searchParams }: { searchParams: SearchParams }) {
+export default async function AdminJourneysPage({ searchParams, embedded = false }: { embedded?: boolean; searchParams: SearchParams }) {
   const raw = await searchParams;
   const now = new Date();
   // The legacy backend defaults each call to its own moving seven-day window.
@@ -34,8 +36,8 @@ export default async function AdminJourneysPage({ searchParams }: { searchParams
 
   return (
     <>
-      <SearchWorkspaceBackLink />
-      <AdminPageShell
+      {!embedded ? <SearchWorkspaceBackLink /> : null}
+      <SearchWorkspacePanelFrame embedded={embedded}
         title="Journeys"
         hideHeader
       >
@@ -50,15 +52,27 @@ export default async function AdminJourneysPage({ searchParams }: { searchParams
           </div>
         ) : null}
         <p className="border-b border-[#E5E7EB] px-2 py-3 text-[12px] leading-5 text-[#6B7280]">Only eligible consented journeys are included in these figures. Stages count recorded events, not assumed customer actions or confirmed bookings. Necessary operational guest searches remain available in Search Activity.</p>
-        <AdminFilterBar action="/admin/journeys">
+        <AdminFilterBar action={embedded ? "/admin/searches/activity" : "/admin/journeys"}>
+          {embedded ? <input type="hidden" name="tab" value="journeys" /> : null}
 
+          {one(raw.userId) ? <input type="hidden" name="userId" value={one(raw.userId)} /> : null}
+          {one(raw.visitorId) ? <input type="hidden" name="visitorId" value={one(raw.visitorId)} /> : null}
           <JourneyDateRangeFields initialRange={range} initialFrom={one(raw.from) || (range === "custom" ? (list.status === "ok" ? list.data.scope.from : "") : "")} initialTo={one(raw.to) || (range === "custom" ? (list.status === "ok" ? list.data.scope.to : "") : "")} now={now.toISOString()} />
           <AdminSelect name="product" defaultValue={one(raw.product)}>
             <option value="">All products</option><option value="FLIGHT">Flights</option><option value="HOTEL">Hotels</option><option value="CAR">Cars</option><option value="PACKAGE">Packages</option>
           </AdminSelect>
-          <AdminSelect name="identity" defaultValue={one(raw.identity) || "all"}>
-            <option value="all">All identities</option><option value="registered">Registered</option><option value="guest">Guest</option>
-          </AdminSelect>
+          <SearchMonitorSelect
+            label="Identity"
+            name="identity"
+            value={one(raw.identity) || "all"}
+            appearance="plain"
+            clearFieldNamesOnChange={["userId", "visitorId"]}
+            options={[
+              { value: "all", label: "All identities" },
+              { value: "registered", label: "Registered" },
+              { value: "guest", label: "Guest" },
+            ]}
+          />
           <AdminSelect name="stage" defaultValue={one(raw.stage)}>
             <option value="">All observed stages</option>
             {stages.map((stage) => <option key={stage.value} value={stage.value}>{stage.label}</option>)}
@@ -102,14 +116,14 @@ export default async function AdminJourneysPage({ searchParams }: { searchParams
                   ],
                 }))}
               />
-              {list.data.nextCursor ? <div className="flex justify-end"><Link href={cursorHref(raw, list.data.nextCursor)} className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">Next page</Link></div> : null}
+              {list.data.nextCursor ? <div className="flex justify-end"><Link href={embedded ? workspaceCursorHref(raw, list.data.nextCursor, "journeys") : cursorHref(raw, list.data.nextCursor)} className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">Next page</Link></div> : null}
             </>
           )
         ) : (
           <AdminEmptyState title={list.status === "invalid" ? "Invalid journey filters" : list.status === "forbidden" ? "Admin access required" : "Journey data unavailable"} message={"issues" in list ? list.issues.map((issue) => issue.field + ": " + issue.message).join(" ") : "The journey reader could not return data. An unavailable read is not shown as a false zero."} />
         )}
       </div>
-      </AdminPageShell>
+      </SearchWorkspacePanelFrame>
     </>
   );
 }
@@ -139,4 +153,8 @@ function cursorHref(raw: Record<string, string | string[] | undefined>, cursor: 
   for (const [key, value] of Object.entries(raw)) if (typeof value === "string" && value && key !== "cursor") p.set(key, value);
   p.set("cursor", cursor); p.set("limit", one(raw.limit) || "25");
   return "/admin/journeys?" + p.toString();
+}
+
+function workspaceCursorHref(raw: Record<string,string|string[]|undefined>, cursor: string, tab: string) {
+  return cursorHref({...raw, tab}, cursor).replace("/admin/journeys?", "/admin/searches/activity?");
 }
