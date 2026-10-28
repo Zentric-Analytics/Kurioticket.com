@@ -181,7 +181,9 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
           <dl className="grid min-w-0 grid-cols-1 gap-4 min-[420px]:grid-cols-2 sm:grid-cols-3 xl:gap-x-3">
             <Fact label={kind === "guest" ? "First seen" : "Joined"}>{format(data.firstSeenAt)}</Fact>
             <Fact label="Last active">{data.lastSeenAt ? format(data.lastSeenAt) : "—"}</Fact>
-            <Fact label="Events">{data.events.length}</Fact>
+            <div data-testid="activity-events-fact" className="min-w-0 sm:justify-self-end xl:justify-self-start">
+              <Fact label="Events">{data.events.length}</Fact>
+            </div>
           </dl>
 
           {kind === "user" ? <div className="flex min-w-0 justify-start xl:justify-end" aria-label="Identity management">
