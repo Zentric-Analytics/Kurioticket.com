@@ -313,38 +313,45 @@ export function AdminOverviewDashboard({ data, system, activity, range }: {
           </div>
           <p className="mt-2 text-[11px] text-slate-600">Includes unattributed searches; success does not guarantee offers.</p>
         </Section>
+      </div>
 
-        <Section title="Provider Handoffs" href="/admin/redirects" description="Recorded outbound redirects · selected range.">
-          <div className="grid grid-cols-3 gap-2">
-            <MiniMetric label="Recorded" value={data.journeys.operationalHandoffs.total} />
-            <MiniMetric label="In consented journeys" value={data.journeys.operationalHandoffs.inConsentedJourneys} />
-            <MiniMetric label="Unattributed" value={data.journeys.operationalHandoffs.withoutVisitorIdentity} />
-          </div>
-          <p className="mt-2 text-[11px] text-slate-600">Redirects are not bookings. Missing attribution does not prove declined consent.</p>
-        </Section>
+      {/* Independent columns let short workload summaries sit directly below their related cards. */}
+      <div className="grid min-w-0 items-start gap-4 lg:grid-cols-2">
+        <div className="flex min-w-0 flex-col gap-4">
+          <Section title="Provider Handoffs" href="/admin/redirects" description="Recorded outbound redirects · selected range.">
+            <div className="grid grid-cols-3 gap-2">
+              <MiniMetric label="Recorded" value={data.journeys.operationalHandoffs.total} />
+              <MiniMetric label="In consented journeys" value={data.journeys.operationalHandoffs.inConsentedJourneys} />
+              <MiniMetric label="Unattributed" value={data.journeys.operationalHandoffs.withoutVisitorIdentity} />
+            </div>
+            <p className="mt-2 text-[11px] text-slate-600">Redirects are not bookings. Missing attribution does not prove declined consent.</p>
+          </Section>
 
-        <Section title="Provider Health" href="/admin/providers" description="Real request outcomes · last 24 hours.">
-          <div className="grid gap-2">
-            {data.providers.map((provider) => <ProviderSummary key={provider.id} provider={provider} />)}
-            {data.providers.length === 0 ? <p className="text-sm text-slate-600">Provider status unavailable.</p> : null}
-          </div>
-        </Section>
+          <Section title="Support Workload" href="/admin/support">
+            <div className="grid grid-cols-3 gap-2">
+              <MiniMetric label="Open" value={data.support.open} />
+              <MiniMetric label="Waiting on team" value={data.support.waitingOnTeam} />
+              <MiniMetric label="Waiting on user" value={data.support.waitingOnUser} />
+            </div>
+          </Section>
+        </div>
 
-        <Section title="Support Workload" href="/admin/support">
-          <div className="grid grid-cols-3 gap-2">
-            <MiniMetric label="Open" value={data.support.open} />
-            <MiniMetric label="Waiting on team" value={data.support.waitingOnTeam} />
-            <MiniMetric label="Waiting on user" value={data.support.waitingOnUser} />
-          </div>
-        </Section>
+        <div className="flex min-w-0 flex-col gap-4">
+          <Section title="Provider Health" href="/admin/providers" description="Real request outcomes · last 24 hours.">
+            <div className="grid gap-2">
+              {data.providers.map((provider) => <ProviderSummary key={provider.id} provider={provider} />)}
+              {data.providers.length === 0 ? <p className="text-sm text-slate-600">Provider status unavailable.</p> : null}
+            </div>
+          </Section>
 
-        <Section title="Deletion Workload" href="/admin/account-deletions">
-          <div className="grid grid-cols-3 gap-2">
-            <MiniMetric label="Pending" value={data.deletions.pending} />
-            <MiniMetric label="Ready for review" value={data.deletions.readyForReview} />
-            <MiniMetric label="Completed" value={data.deletions.completed} />
-          </div>
-        </Section>
+          <Section title="Deletion Workload" href="/admin/account-deletions">
+            <div className="grid grid-cols-3 gap-2">
+              <MiniMetric label="Pending" value={data.deletions.pending} />
+              <MiniMetric label="Ready for review" value={data.deletions.readyForReview} />
+              <MiniMetric label="Completed" value={data.deletions.completed} />
+            </div>
+          </Section>
+        </div>
       </div>
 
       <AdminOverviewSecondary system={system} activity={activity} />
