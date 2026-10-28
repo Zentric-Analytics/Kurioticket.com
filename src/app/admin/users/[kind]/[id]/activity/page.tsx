@@ -99,12 +99,6 @@ async function fallbackManage(kind: string, id: string, actorId: string, backHre
         status={account.status} actorId={actorId}
       /> : null;
     }
-    if (kind === "guest") {
-      const visitor = await db.visitor.findFirst({
-        where: eligibleGuestVisitorWhere(id), select: { id: true },
-      });
-      return visitor ? <GuestTrackingActions visitorId={id} backHref={backHref} /> : null;
-    }
     return null;
   }, null);
 }
