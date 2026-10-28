@@ -135,10 +135,10 @@ function SearchDetailContent({ search }: { search: AdminSearchDetail }) {
         <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-[13px] font-semibold text-[#004BB8]">
           {search.identity.userId || search.identity.visitorId ? (
             <>
-              {search.identity.visitorId ? (
-                <Link href={"/admin/searches/activity?tab=journeys&visitorId=" + encodeURIComponent(search.identity.visitorId) + "&environment=" + encodeURIComponent(search.environment)}
-                  className="hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25">Related journeys</Link>
-              ) : null}
+              <Link href={"/admin/searches/activity?tab=journeys&" + (search.identity.userId
+                ? "userId=" + encodeURIComponent(search.identity.userId)
+                : "visitorId=" + encodeURIComponent(search.identity.visitorId!)) + "&environment=" + encodeURIComponent(search.environment)}
+                className="hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25">Related journeys</Link>
               <Link href={"/admin/searches/activity?tab=handoffs&" + (search.identity.userId
                 ? "userId=" + encodeURIComponent(search.identity.userId)
                 : "visitorId=" + encodeURIComponent(search.identity.visitorId!)) + "&environment=" + encodeURIComponent(search.environment)}
