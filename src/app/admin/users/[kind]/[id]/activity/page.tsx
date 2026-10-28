@@ -154,8 +154,8 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
       <section aria-label="Customer identity" className="min-w-0">
         <div className={"grid min-w-0 gap-5 xl:items-center " +
           (kind === "user"
-            ? "xl:grid-cols-[minmax(240px,1.25fr)_minmax(0,1.65fr)_auto]"
-            : "xl:grid-cols-[minmax(240px,1.25fr)_minmax(0,1.65fr)]")}>
+            ? "xl:grid-cols-[minmax(280px,0.95fr)_minmax(0,1.95fr)_auto]"
+            : "xl:grid-cols-[minmax(280px,0.95fr)_minmax(0,1.95fr)]")}>
           <div className="flex min-w-0 items-center gap-4">
             <span aria-hidden="true"
               className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[var(--muted)] text-xl font-semibold">
