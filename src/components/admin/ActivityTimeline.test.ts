@@ -170,7 +170,7 @@ test("older linked searches are visible on initial render without expanding a jo
   }));
   const html = render(rows);
   for (const row of rows) assert.ok(eventMarkup(html, row.id).includes("Flight · LOS → LHR · Success"));
-  assert.equal((html.match(/>View<\\/a>/g) || []).length, 1);
+  assert.equal((html.match(/>View<\/a>/g) || []).length, 1);
   assert.doesNotMatch(html, /Show all|Hide all|aria-expanded=/);
 });
 
