@@ -52,6 +52,13 @@ export async function loadAdminIdentityActivity(kind, id, filters, cursor) {
     && (!filters.q || (row.detail + row.label).toLowerCase().includes(filters.q.toLowerCase()))
     && (!filters.from || row.at >= new Date(filters.from + "T00:00:00.000Z"))
     && (!filters.to || row.at < new Date(new Date(filters.to + "T00:00:00.000Z").getTime() + 86400000));
+  // Summary reads every matching fixture event, including records on other cursor pages.
+  const allMatched = id === "qa-no-events-0001" ? [] : [...recorded, ...olderRecorded, ...newerRecorded].filter(matches);
+  const summary = {
+    searches: allMatched.filter(row => row.stage === "SEARCH_COMPLETED").length,
+    resultsViewed: allMatched.filter(row => row.stage === "RESULTS_VIEWED").length,
+    providerHandoffs: allMatched.filter(row => row.stage === "PROVIDER_HANDOFF_STARTED").length,
+  };
   const currentRows = id === "qa-no-events-0001" ? [] : recorded.filter(matches);
   const olderRows = id === "qa-no-events-0001" ? [] : olderRecorded.filter(matches);
   const newerRows = id === "qa-no-events-0001" ? [] : newerRecorded.filter(matches);
@@ -77,6 +84,7 @@ export async function loadAdminIdentityActivity(kind, id, filters, cursor) {
     firstSeenAt: time(39), lastSeenAt: time(48), environment: "staging",
     source: kind === "guest" ? "visitor" : "account",
     events: rows,
+    summary,
     nextCursor,
   } };
 }
