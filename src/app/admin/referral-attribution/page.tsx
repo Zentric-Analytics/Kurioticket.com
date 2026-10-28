@@ -9,7 +9,7 @@ export const metadata = { title: "Admin Referral Attribution" };
 export default async function AdminReferralAttributionPage({ searchParams, embedded = false }: { embedded?: boolean; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const auth = await requireAdminApiSession();
   if (auth.response) {
-    return <>{!embedded ? {!embedded ? <SearchWorkspaceBackLink /> : null} : null}<AdminPageShell title="Referral Attribution" description="ADMIN-only provider handoff attribution."><AdminEmptyState title="Admin access required" message="Referral attribution is restricted to configured ADMIN accounts." /></AdminPageShell></>;
+    return <>{!embedded ? <SearchWorkspaceBackLink /> : null}<AdminPageShell title="Referral Attribution" description="ADMIN-only provider handoff attribution."><AdminEmptyState title="Admin access required" message="Referral attribution is restricted to configured ADMIN accounts." /></AdminPageShell></>;
   }
 
   const raw = await searchParams;
