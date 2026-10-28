@@ -104,6 +104,9 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
   if (!validActivityIdentity(kind, id)) notFound();
   const session = await requireAdminSession("/admin/users/" + kind + "/" + id + "/activity");
   const raw = { ...(await searchParams) };
+  // Existing Journeys bookmarks now display the unfiltered activity tab.
+  // Preserve their other filters without leaving an invisible selected tab.
+  if (raw.tab === "journeys") delete raw.tab;
   // Old paginated bookmarks now open the complete newest-first history.
   delete raw.cursor;
   delete raw.order;
