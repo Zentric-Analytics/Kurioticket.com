@@ -833,7 +833,9 @@ export function createAdminOperationalReadService(dependencies: Dependencies) {
             ],
           };
           const records = await db.supportTicket.findMany({ where, select: supportListSelect, orderBy: [{ updatedAt: "desc" }, { id: "desc" }], take: limit + 1 });
-          const page = nextCursor("support", scope, records, limit);
+          const supportPage = records.slice(0, limit);
+          const last = supportPage.at(-1);
+          const page = { page: supportPage, next: records.length > limit && last ? encodeAdminOperationalCursor("support", scope, { at: last.updatedAt.toISOString(), id: last.id }) : null };
           return { status: "ok", data: { scope, items: page.page.map(supportListDto), nextCursor: page.next } };
         });
       },
