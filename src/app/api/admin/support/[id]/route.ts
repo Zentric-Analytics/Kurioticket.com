@@ -80,11 +80,11 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     await dependencies.writeAuditLog({
       adminUserId: adminResult.session.user.id,
       adminEmail: adminResult.session.user.email,
-      action: "support_ticket.status_update",
+      action: parsed.data.status && parsed.data.priority ? "support_ticket.update" : parsed.data.priority ? "support_ticket.priority_update" : "support_ticket.status_update",
       targetType: "SupportTicket",
       targetId: result.ticket.id,
       targetEmail: result.ticket.email,
-      metadata: { previousStatus: result.previousStatus, nextStatus: result.ticket.status, ...(parsed.data.priority ? { nextPriority: parsed.data.priority } : {}) },
+      metadata: { previousStatus: result.previousStatus, nextStatus: result.ticket.status, previousPriority: result.previousPriority ?? null, nextPriority: result.ticket.priority ?? null, changedFields: Object.keys(parsed.data) },
       request,
     });
 
