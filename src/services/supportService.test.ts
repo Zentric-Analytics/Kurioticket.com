@@ -31,6 +31,7 @@ test("createSupportTicket creates guest SupportTicket and SupportMessage before 
   __supportServiceTest.setPrismaClientForTesting({
     supportMessage: { async create() { return assert.fail("Unexpected separate message write during ticket creation"); } },
     supportTicket: {
+      async updateMany() { return { count: 1 }; },
       async findUnique() { return assert.fail("Unexpected ticket lookup during creation"); },
       async update() { return assert.fail("Unexpected ticket update during creation"); },
       async create(args) {
@@ -66,6 +67,7 @@ test("createSupportTicket attaches logged-in userId", async () => {
   __supportServiceTest.setPrismaClientForTesting({
     supportMessage: { async create() { return assert.fail("Unexpected separate message write during ticket creation"); } },
     supportTicket: {
+      async updateMany() { return { count: 1 }; },
       async findUnique() { return assert.fail("Unexpected ticket lookup during creation"); },
       async update() { return assert.fail("Unexpected ticket update during creation"); },
       async create(args) {
@@ -92,6 +94,7 @@ test("createSupportTicket fails instead of returning a local ticket when databas
   __supportServiceTest.setPrismaClientForTesting({
     supportMessage: { async create() { return assert.fail("Unexpected separate message write during ticket creation"); } },
     supportTicket: {
+      async updateMany() { return { count: 1 }; },
       async findUnique() { return assert.fail("Unexpected ticket lookup during creation"); },
       async update() { return assert.fail("Unexpected ticket update during creation"); },
       async create() {
@@ -120,6 +123,7 @@ test("createSupportTicket returns saved ticket when confirmation email fails", a
   __supportServiceTest.setPrismaClientForTesting({
     supportMessage: { async create() { return assert.fail("Unexpected separate message write during ticket creation"); } },
     supportTicket: {
+      async updateMany() { return { count: 1 }; },
       async findUnique() { return assert.fail("Unexpected ticket lookup during creation"); },
       async update() { return assert.fail("Unexpected ticket update during creation"); },
       async create(args) {
@@ -149,6 +153,7 @@ test("addAdminSupportReply creates admin SupportMessage and attempts notificatio
 
   __supportServiceTest.setPrismaClientForTesting({
     supportTicket: {
+      async updateMany() { return { count: 1 }; },
       async create() { throw new Error("not used"); },
       async findUnique() {
         return { id: "ticket-1", email: "user@example.com", subject: "Need help", status: "OPEN" };
@@ -178,6 +183,7 @@ test("addAdminSupportReply creates admin SupportMessage and attempts notificatio
 test("addAdminSupportReply returns saved message when notification email fails", async () => {
   __supportServiceTest.setPrismaClientForTesting({
     supportTicket: {
+      async updateMany() { return { count: 1 }; },
       async create() { throw new Error("not used"); },
       async findUnique() {
         return { id: "ticket-1", email: "user@example.com", subject: "Need help", status: "OPEN" };
@@ -205,6 +211,7 @@ test("updateSupportTicketStatus updates valid status and returns previous status
 
   __supportServiceTest.setPrismaClientForTesting({
     supportTicket: {
+      async updateMany() { return { count: 1 }; },
       async create() { throw new Error("not used"); },
       async findUnique() {
         return { id: "ticket-1", email: "user@example.com", subject: "Need help", status: "OPEN" };
@@ -229,6 +236,7 @@ test("updateSupportTicketStatus updates valid status and returns previous status
 test("support mutations reject invalid ticket ids", async () => {
   __supportServiceTest.setPrismaClientForTesting({
     supportTicket: {
+      async updateMany() { return { count: 1 }; },
       async create() { throw new Error("not used"); },
       async findUnique() { return null; },
       async update() { throw new Error("not used"); },
