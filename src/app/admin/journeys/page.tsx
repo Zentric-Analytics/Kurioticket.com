@@ -51,7 +51,13 @@ export default async function AdminJourneysPage({ searchParams }: { searchParams
         <p className="border-b border-[#E5E7EB] px-2 py-3 text-[12px] leading-5 text-[#6B7280]">Only eligible consented journeys are included in these figures. Stages count recorded events, not assumed customer actions or confirmed bookings. Necessary operational guest searches remain available in Search Activity.</p>
         <AdminFilterBar action="/admin/journeys">
 
-          <SearchMonitorSelect name="range" label="Date range" value={range || "7d"} options={[{value:"today",label:"Today"},{value:"7d",label:"Last 7 days"},{value:"30d",label:"Last 30 days"},{value:"90d",label:"Last 90 days"}]} appearance="plain" />
+          <SearchMonitorSelect name="range" label="Date range" value={range || (one(raw.from) || one(raw.to) ? "custom" : "7d")} options={[{value:"today",label:"Today"},{value:"7d",label:"Last 7 days"},{value:"30d",label:"Last 30 days"},{value:"90d",label:"Last 90 days"},{value:"custom",label:"Custom dates"}]} appearance="plain" />
+          {range === "custom" || (!range && (one(raw.from) || one(raw.to))) ? (
+            <>
+              {one(raw.from) ? <input type="hidden" name="from" value={one(raw.from)} /> : null}
+              {one(raw.to) ? <input type="hidden" name="to" value={one(raw.to)} /> : null}
+            </>
+          ) : null}
           <AdminSelect name="product" defaultValue={one(raw.product)}>
             <option value="">All products</option><option value="FLIGHT">Flights</option><option value="HOTEL">Hotels</option><option value="CAR">Cars</option><option value="PACKAGE">Packages</option>
           </AdminSelect>
@@ -97,7 +103,7 @@ export default async function AdminJourneysPage({ searchParams }: { searchParams
                     journey.searchCount,
                     <div key="stages" className="flex max-w-64 flex-wrap gap-1">{stages.filter((stage) => journey.stages[stage.value] > 0).map((stage) => <AdminStatusBadge key={stage.value} tone={stage.value === "PROVIDER_HANDOFF_STARTED" ? "good" : "info"}>{stage.label}: {journey.stages[stage.value]}</AdminStatusBadge>)}</div>,
                     journey.eventCount,
-                    <Link key="action" href={detailHref(journey.id, list.data.scope)} className="font-black text-indigo-700 hover:text-indigo-900">Open</Link>,
+                    <Link key="action" href={detailHref(journey.id, list.data.scope, range || (one(raw.from) || one(raw.to) ? "custom" : "7d"))} className="font-black text-indigo-700 hover:text-indigo-900">Open</Link>,
                   ],
                 }))}
               />
@@ -122,7 +128,7 @@ function withoutPagination(raw: Record<string, string | string[] | undefined>) {
   return copy;
 }
 function journeyWindow(raw: Record<string, string | string[] | undefined>, now: Date) {
-  if (one(raw.cursor) || (one(raw.from) && one(raw.to) && !one(raw.range))) return {};
+  if (one(raw.cursor) || one(raw.from) || one(raw.to)) return {};
   const range = one(raw.range);
   const days = range === "today" ? 0 : range === "30d" ? 30 : range === "90d" ? 90 : 7;
   const to = now.toISOString();
@@ -137,9 +143,10 @@ function Metric({label,value}:{label:string;value:number}) {
     <p className="mt-1 text-[24px] font-medium text-[#111827]">{value.toLocaleString()}</p>
   </div>;
 }
-function detailHref(id: string, scope: { from: string; to: string; environment: string; identity: string; product?: string; provider?: string; stage?: string; userId?: string; visitorId?: string }) {
+function detailHref(id: string, scope: { from: string; to: string; environment: string; identity: string; product?: string; provider?: string; stage?: string; userId?: string; visitorId?: string }, range: string) {
   const p = new URLSearchParams();
   for (const [key, value] of Object.entries(scope)) if (value) p.set(key, value);
+  p.set("range", range);
   return "/admin/journeys/" + id + "?" + p.toString();
 }
 function cursorHref(raw: Record<string, string | string[] | undefined>, cursor: string) {
