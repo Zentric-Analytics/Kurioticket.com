@@ -729,7 +729,6 @@ model SupportTicket {
   @@index([status])
   @@index([priority])
   @@index([createdAt])
-  @@index([updatedAt, id])
 }
 
 model SupportMessage {
