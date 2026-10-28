@@ -58,7 +58,7 @@ function safeDirectoryHref(raw: RawQuery) {
 }
 function activityParams(raw: RawQuery) {
   const result: Record<string, string> = {};
-  for (const key of ["tab", "range", "stage", "product", "from", "to", "q", "order", "cursor", "directory"]) {
+  for (const key of ["tab", "range", "stage", "product", "from", "to", "q", "order", "directory"]) {
     const value = raw[key];
     if (typeof value === "string" && value.length <= 1100) result[key] = value;
   }
@@ -108,8 +108,8 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
   if (!validActivityIdentity(kind, id)) notFound();
   const session = await requireAdminSession("/admin/users/" + kind + "/" + id + "/activity");
   const raw = { ...(await searchParams) };
-  // The activity toolbar intentionally has no sort control; never retain a hidden oldest-first state.
-  if (raw.order === "oldest" || raw.sort === "oldest") delete raw.cursor;
+  // Old paginated bookmarks now open the complete newest-first history.
+  delete raw.cursor;
   delete raw.order;
   delete raw.sort;
   const filtersResult = parseActivityFilters(raw);
@@ -125,7 +125,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
       action={<Link className={buttonClass} href={basePath}>Reset activity filters</Link>} />
   </div>;
   const filters: ActivityFilters = filtersResult.filters;
-  const result = await loadAdminIdentityActivity(kind, id, filters, typeof raw.cursor === "string" ? raw.cursor : undefined);
+  const result = await loadAdminIdentityActivity(kind, id, filters, undefined, "all");
   if (result.status === "not_found") notFound();
   if (result.status !== "ok") return <div className="space-y-4">
     <div className="flex flex-wrap items-center justify-between gap-3">
@@ -152,7 +152,6 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
   const journeysHref = activityHref(basePath, queryParams, { tab: "journeys", cursor: null });
   const searchesHref = "/admin/searches?" + searchParamsForLink.toString();
   const handoffsHref = activityHref(basePath, queryParams, { tab: "handoffs", cursor: null });
-  const nextHref = data.nextCursor ? activityHref(basePath, queryParams, { cursor: data.nextCursor }) : null;
 
   const order = filters.order === "oldest" ? "oldest" : "newest";
   const related = [
@@ -183,8 +182,8 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
       <dl className="mt-5 grid min-w-0 grid-cols-4 gap-x-2 sm:gap-x-4">
         <Fact label={kind === "guest" ? "First seen" : "Joined"}>{format(data.firstSeenAt)}</Fact>
         <Fact label="Last active">{data.lastSeenAt ? format(data.lastSeenAt) : "—"}</Fact>
-        <Fact label="Events">{data.events.length}{data.nextCursor ? "+" : ""}</Fact>
-        <Fact label="Journeys">{new Set(data.events.filter(e => e.journeyId).map(e => e.journeyId)).size}{data.nextCursor ? "+" : ""}</Fact>
+        <Fact label="Events">{data.events.length}</Fact>
+        <Fact label="Journeys">{new Set(data.events.filter(e => e.journeyId).map(e => e.journeyId)).size}</Fact>
       </dl>
       <section aria-label="Activity summary" className="mt-5 grid min-w-0 grid-cols-4 items-center gap-x-2 border-y border-[#E2E8F0] py-4 sm:gap-x-4">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
@@ -228,7 +227,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
     </section>
 
     <div className="grid min-w-0 gap-8 lg:grid-cols-[minmax(0,1fr)_260px]">
-      <ActivityTimeline events={data.events} nextHref={nextHref} environment={environment} order={order}
+      <ActivityTimeline events={data.events} nextHref={null} environment={environment} order={order}
         clearHref={activityHref(basePath, queryParams, {q:null,from:null,to:null,range:null,product:null,stage:null,order:null,cursor:null})}/>
       <aside className="min-w-0 space-y-4">
           <section aria-labelledby="activity-related-title" className="pb-3">
