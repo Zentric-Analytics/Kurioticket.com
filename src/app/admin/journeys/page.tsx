@@ -4,6 +4,7 @@ import { AdminButton, AdminDataTable, AdminEmptyState, AdminFilterBar, AdminInpu
 import { JourneyDateRangeFields } from "@/components/admin/JourneyDateRangeFields";
 import { journeyWindow, selectedJourneyRange } from "@/lib/adminJourneyDateRange";
 import { SearchWorkspaceBackLink } from "@/components/admin/SearchWorkspaceBackLink";
+import { SearchWorkspacePanelFrame } from "@/components/admin/SearchWorkspacePanelFrame";
 import { formatDateTime } from "@/lib/admin-data";
 import { adminJourneys } from "@/services/adminJourneyService";
 import type { AdminJourneyStage } from "@/services/adminJourneyContract";
@@ -35,7 +36,7 @@ export default async function AdminJourneysPage({ searchParams, embedded = false
   return (
     <>
       {!embedded ? <SearchWorkspaceBackLink /> : null}
-      <AdminPageShell
+      <SearchWorkspacePanelFrame embedded={embedded}
         title="Journeys"
         hideHeader
       >
@@ -110,7 +111,7 @@ export default async function AdminJourneysPage({ searchParams, embedded = false
           <AdminEmptyState title={list.status === "invalid" ? "Invalid journey filters" : list.status === "forbidden" ? "Admin access required" : "Journey data unavailable"} message={"issues" in list ? list.issues.map((issue) => issue.field + ": " + issue.message).join(" ") : "The journey reader could not return data. An unavailable read is not shown as a false zero."} />
         )}
       </div>
-      </AdminPageShell>
+      </SearchWorkspacePanelFrame>
     </>
   );
 }
