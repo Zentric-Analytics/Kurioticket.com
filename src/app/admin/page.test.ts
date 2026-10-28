@@ -11,6 +11,14 @@ const core = readFileSync("src/services/providerOperationalStatusCore.ts", "utf8
 const adminData = readFileSync("src/lib/admin-data.ts", "utf8");
 const display = dashboard.slice(dashboard.indexOf("export function AdminOverviewDashboard("));
 
+function sectionSource(title: string): string {
+  const start = display.indexOf('<Section title="' + title + '"');
+  assert.ok(start >= 0, title + " section must exist");
+  const end = display.indexOf("</Section>", start);
+  assert.ok(end > start, title + " section must close");
+  return display.slice(start, end + "</Section>".length);
+}
+
 test("Overview continues to use canonical authenticated, real data services", () => {
   assert.match(page, /getAdminOverview\(query\)/);
   assert.match(page, /getSafeSystemStatus\(\)/);
@@ -115,7 +123,7 @@ test("all recorded searches are separate from consented search events", () => {
 });
 
 test("provider handoffs remain recorded redirects, never confirmed bookings", () => {
-  const handoffs = display.slice(display.indexOf('<Section title="Provider Handoffs"'), display.indexOf('<Section title="Provider Health"'));
+  const handoffs = sectionSource("Provider Handoffs");
   assert.match(handoffs, /operationalHandoffs\.total/);
   assert.match(handoffs, /operationalHandoffs\.inConsentedJourneys/);
   assert.match(handoffs, /operationalHandoffs\.withoutVisitorIdentity/);
@@ -128,7 +136,7 @@ test("provider handoffs remain recorded redirects, never confirmed bookings", ()
 });
 
 test("provider overview is compact but preserves truthful status and call calculations", () => {
-  const provider = display.slice(display.indexOf('<Section title="Provider Health"'), display.indexOf('<Section title="Support Workload"'));
+  const provider = sectionSource("Provider Health");
   assert.match(provider, /data\.providers\.map\(\(provider\) => <ProviderSummary key=\{provider.id\} provider=\{provider\} \/>/);
   assert.match(provider, /href="\/admin\/providers"/);
   const card = dashboard.slice(dashboard.indexOf("function ProviderSummary("), dashboard.indexOf("function PlatformSummary("));
@@ -154,9 +162,29 @@ test("complete provider diagnostics remain on the linked Providers page", () => 
   assert.doesNotMatch(dashboard, /errorMessage/);
 });
 
+test("short handoff and support cards stack independently beside provider health", () => {
+  const gridStart = display.indexOf('<div className="grid min-w-0 items-start gap-4 lg:grid-cols-2">');
+  assert.ok(gridStart >= 0, "independently aligned desktop detail grid must exist");
+  const stack = '<div className="flex min-w-0 flex-col gap-4">';
+  const leftStart = display.indexOf(stack, gridStart);
+  const rightStart = display.indexOf(stack, leftStart + stack.length);
+  assert.ok(leftStart > gridStart && rightStart > leftStart, "two independent column stacks must exist");
+
+  const left = display.slice(leftStart, rightStart);
+  const right = display.slice(rightStart, display.indexOf("<AdminOverviewSecondary system={system} activity={activity} />", rightStart));
+  assert.deepEqual([...left.matchAll(/<Section title="([^"]+)"/g)].map((match) => match[1]), [
+    "Provider Handoffs", "Support Workload",
+  ]);
+  assert.deepEqual([...right.matchAll(/<Section title="([^"]+)"/g)].map((match) => match[1]), [
+    "Provider Health", "Deletion Workload",
+  ]);
+  assert.doesNotMatch(left, /h-full|flex-1|row-span|absolute/);
+  assert.doesNotMatch(right, /h-full|flex-1|row-span|absolute/);
+});
+
 test("operational workloads each show only three counts with dedicated destination links", () => {
-  const support = display.slice(display.indexOf('<Section title="Support Workload"'), display.indexOf('<Section title="Deletion Workload"'));
-  const deletion = display.slice(display.indexOf('<Section title="Deletion Workload"'), display.indexOf("<AdminOverviewSecondary system={system} activity={activity} />"));
+  const support = sectionSource("Support Workload");
+  const deletion = sectionSource("Deletion Workload");
   for (const key of ["open", "waitingOnTeam", "waitingOnUser"]) {
     assert.match(support, new RegExp("data\\.support\\." + key));
   }
