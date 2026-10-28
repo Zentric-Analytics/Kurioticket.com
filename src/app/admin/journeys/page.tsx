@@ -50,8 +50,7 @@ export default async function AdminJourneysPage({ searchParams }: { searchParams
         ) : null}
         <p className="border-b border-[#E5E7EB] px-2 py-3 text-[12px] leading-5 text-[#6B7280]">Only eligible consented journeys are included in these figures. Stages count recorded events, not assumed customer actions or confirmed bookings. Necessary operational guest searches remain available in Search Activity.</p>
         <AdminFilterBar action="/admin/journeys">
-          <input type="hidden" name="from" value={fixed.from} />
-          <input type="hidden" name="to" value={fixed.to} />
+
           <SearchMonitorSelect name="range" label="Date range" value={range || "7d"} options={[{value:"today",label:"Today"},{value:"7d",label:"Last 7 days"},{value:"30d",label:"Last 30 days"},{value:"90d",label:"Last 90 days"}]} appearance="plain" />
           <AdminSelect name="product" defaultValue={one(raw.product)}>
             <option value="">All products</option><option value="FLIGHT">Flights</option><option value="HOTEL">Hotels</option><option value="CAR">Cars</option><option value="PACKAGE">Packages</option>
@@ -72,8 +71,8 @@ export default async function AdminJourneysPage({ searchParams }: { searchParams
 
 
         {summary?.status === "ok" ? (
-          <p className="mt-3 text-xs leading-5 text-slate-600">
-            These handoff cards count consented journey events, not all provider redirects.
+          <p className="border-b border-[#E5E7EB] px-2 py-3 text-[12px] leading-5 text-[#6B7280]">
+            These handoff counts include only consented journey events, not all provider redirects.
             {" "}In the selected environment and date window, {summary.data.operationalHandoffs.total} redirect records were stored,
             {" "}{summary.data.operationalHandoffs.inConsentedJourneys} appear in eligible journeys and
             {" "}{summary.data.operationalHandoffs.outsideConsentedJourneys} are outside eligible journeys.
@@ -123,7 +122,7 @@ function withoutPagination(raw: Record<string, string | string[] | undefined>) {
   return copy;
 }
 function journeyWindow(raw: Record<string, string | string[] | undefined>, now: Date) {
-  if (one(raw.cursor)) return {};
+  if (one(raw.cursor) || (one(raw.from) && one(raw.to) && !one(raw.range))) return {};
   const range = one(raw.range);
   const days = range === "today" ? 0 : range === "30d" ? 30 : range === "90d" ? 90 : 7;
   const to = now.toISOString();
