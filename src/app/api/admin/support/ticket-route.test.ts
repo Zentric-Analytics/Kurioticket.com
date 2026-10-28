@@ -69,11 +69,14 @@ test("POST /api/admin/support/[id] creates reply and writes audit log", async ()
   });
   __supportServiceTest.setPrismaClientForTesting({
     supportTicket: {
-      async updateMany() { return { count: 1 }; },
+      async updateMany(args) {
+        assert.deepEqual(args.where, { id: "ticket-1", updatedAt: { lt: new Date("2026-07-16T00:00:00Z") } });
+        assert.deepEqual(args.data, { updatedAt: new Date("2026-07-16T00:00:00Z") });
+        return { count: 1 };
+      },
       async create() { throw new Error("not used"); },
       async findUnique() { return { id: "ticket-1", email: "user@example.com", subject: "Need help", status: "OPEN" }; },
       async update(args) {
-        assert.deepEqual(args.data, { updatedAt: new Date("2026-07-16T00:00:00Z") });
         return { id: args.where.id, email: "user@example.com", subject: "Need help", status: "OPEN" as const };
       },
     },
