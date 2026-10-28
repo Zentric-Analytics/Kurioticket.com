@@ -134,6 +134,10 @@ try {
   totals = page.getByRole("region",{name:"Activity summary"});
   await expect(totals.getByText("1",{exact:true})).toHaveCount(1);
   await expect(totals.getByText("0",{exact:true})).toHaveCount(2);
+  await page.goto(url+"?tab=journeys&q=LOS");
+  await expect(page.getByRole("navigation",{name:"Activity tabs"}).getByRole("link",{name:"All activity"})).toHaveAttribute("aria-current","page");
+  await expect(page.getByRole("navigation",{name:"Activity tabs"}).getByRole("link",{name:"Journeys"})).toHaveCount(0);
+  await expect(page.getByRole("navigation",{name:"Activity tabs"}).getByRole("link",{name:"Searches"})).not.toHaveAttribute("href",/tab=journeys/);
   console.log("PASS complete timeline, summary and legacy cursor recovery");
 
   // No scrolling, load-more click or additional page request is needed for any row.
