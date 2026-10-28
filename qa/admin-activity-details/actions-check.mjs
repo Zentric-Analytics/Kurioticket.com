@@ -19,7 +19,9 @@ async function revealBaselineEvents() {
   while (await runs.count()) await runs.first().click();
 }
 
-async function headingDestinations() {
+async function headingDestinations(baseline = false) {
+  if (baseline) return page.locator('button[aria-controls^="journey-"]').evaluateAll(buttons =>
+    buttons.map(button => button.parentElement.querySelector("a")?.getAttribute("href")));
   return page.getByRole("link", {name:/^View activity for /}).evaluateAll(links =>
     links.map(link => link.getAttribute("href")));
 }
@@ -40,7 +42,7 @@ try {
     await page.goto(base + "/before");
     await expect(page.getByTestId("fixture-label")).toContainText("synthetic activity");
     await revealBaselineEvents();
-    originalDestinations = await headingDestinations();
+    originalDestinations = await headingDestinations(true);
     assert.equal(originalDestinations.length, 6);
     await capture("actions-before-guest-" + width + ".png");
 
