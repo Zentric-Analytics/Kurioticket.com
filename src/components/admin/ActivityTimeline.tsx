@@ -16,6 +16,28 @@ const hourLabel = (at: Date) => new Intl.DateTimeFormat("en", {
   hour: "numeric", minute: "2-digit", timeZone: "UTC",
 }).format(at) + " UTC";
 
+const productLabels = new Map([
+  ["FLIGHT", "Flight"], ["HOTEL", "Hotel"], ["CAR", "Car"], ["PACKAGE", "Package"],
+]);
+const searchOutcomeLabels = new Map([
+  ["SUCCESS", "Success"], ["PARTIAL", "Partial"], ["FAILED", "Failed"],
+]);
+
+/** Format only known display tokens; keep routes, provider brands and stored rows intact. */
+function activityDetail(row: ActivityRow) {
+  const parts = row.detail.split(" · ");
+  const product = productLabels.get(row.product ?? "");
+  if (product && parts[0]?.toUpperCase() === row.product) parts[0] = product;
+  // Search writers append their recorded outcome. Other event types may end
+  // with a provider name, which must never be interpreted as a search status.
+  if (row.stage === "SEARCH_COMPLETED" && parts.length > 1) {
+    const last = parts.length - 1;
+    const outcome = searchOutcomeLabels.get(parts[last]);
+    if (outcome) parts[last] = outcome;
+  }
+  return parts.join(" · ");
+}
+
 function ProductIcon({ product }: { product: string | null | undefined }) {
   if (product === "FLIGHT") return <Plane size={17} aria-hidden="true" />;
   if (product === "HOTEL") return <Building2 size={17} aria-hidden="true" />;
@@ -36,12 +58,9 @@ function detailHref(row: ActivityRow, environment: string, now: Date) {
     return "/admin/journeys/" + encodeURIComponent(row.journeyId)
       + "?" + new URLSearchParams({ from, to, environment }).toString();
   }
-  if (row.searchHistoryId) return "/admin/searches/" + encodeURIComponent(row.searchHistoryId)
-    + "?" + new URLSearchParams({ environment }).toString();
   return null;
 }
-function RecordedEvent({ row, environment, now }: { row: ActivityRow; environment: string; now: Date }) {
-  const href = detailHref(row, environment, now);
+function RecordedEvent({ row }: { row: ActivityRow }) {
   return <li data-activity-id={row.id} className="flex min-w-0 flex-col gap-1.5 py-3 sm:flex-row sm:items-start sm:gap-4">
     <span aria-hidden="true" className="mt-0.5 hidden shrink-0 text-[#64748B] sm:block"><EventIcon stage={row.stage} /></span>
     <div className="min-w-0 flex-1">
@@ -49,10 +68,7 @@ function RecordedEvent({ row, environment, now }: { row: ActivityRow; environmen
         <p className="text-[13px] font-medium text-[#0F172A]">{row.label}</p>
         <time dateTime={row.at.toISOString()} className="shrink-0 text-[12px] font-normal text-[#64748B]">{hourLabel(row.at)}</time>
       </div>
-      <p className="mt-1 break-words text-[12px] leading-5 text-[#64748B]">{row.detail || "No additional details recorded"}</p>
-      {href ? <Link href={href} className="focus-ring mt-1.5 inline-flex items-center gap-0.5 rounded-sm text-[12px] font-medium text-[#004BB8] hover:underline">
-        {row.journeyId ? "Open journey" : "Open search"} <ChevronRight size={14} aria-hidden="true" />
-      </Link> : null}
+      <p className="mt-1 break-words text-[12px] leading-5 text-[#64748B]">{activityDetail(row) || "No additional details recorded"}</p>
     </div>
   </li>;
 }
@@ -78,7 +94,7 @@ function compactRuns(rows: ActivityRow[]) {
 function journalTitle(rows: ActivityRow[]) {
   const summary = rows.find(row => row.stage === "SEARCH_COMPLETED")
     ?? rows.find(row => row.stage === "RESULTS_VIEWED") ?? rows[0];
-  const parts = summary?.detail?.split(" · ").filter(Boolean) ?? [];
+  const parts = summary ? activityDetail(summary).split(" · ").filter(Boolean) : [];
   if (!parts.length) return "Recorded activity";
   // Use only already-sanitized, source-recorded product and route/destination.
   return parts.slice(0, 2).join(" · ");
@@ -113,29 +129,30 @@ export function ActivityTimeline({ events, nextHref, environment, order = "newes
           const open = expanded[key] ?? (day.date === newestDay && Boolean(group.journeyId));
           const first = group.events[0];
           const href = detailHref(first,environment,now);
+          const title = journalTitle(group.events);
           return <div key={key} className="min-w-0 bg-transparent">
             {group.journeyId ? <div className="flex min-w-0 items-center justify-between gap-2 py-3">
               <button type="button" aria-expanded={open} aria-controls={"journey-" + key.replace(/[^a-zA-Z0-9_-]/g,"-")}
                 onClick={() => setExpanded(previous => ({...previous,[key]:!open}))}
                 className="focus-ring flex min-w-0 flex-1 items-center gap-2 rounded-sm text-left text-sm font-medium">
-                <ProductIcon product={group.products[0]}/><span className="min-w-0 truncate">{journalTitle(group.events)}</span>
+                <ProductIcon product={group.products[0]}/><span className="min-w-0 truncate">{title}</span>
                 <span className="shrink-0 text-xs font-normal text-[#475569]">{group.events.length} events</span>
                 <ChevronDown size={16} className={"shrink-0 transition-transform " + (open ? "rotate-180" : "")} aria-hidden="true"/>
               </button>
-              {href ? <Link href={href} className="focus-ring shrink-0 text-xs text-[var(--primary)] hover:underline">Open journey</Link> : null}
+              {href ? <Link href={href} aria-label={"View activity for " + title} className="focus-ring shrink-0 text-xs text-[var(--primary)] hover:underline">View</Link> : null}
             </div> : <h4 className="py-3 text-sm font-medium">Not linked to a journey</h4>}
             {(!group.journeyId || open) ? <ol id={"journey-" + key.replace(/[^a-zA-Z0-9_-]/g,"-")} className="divide-y divide-[#E2E8F0] border-t border-[#E2E8F0] pl-5 sm:pl-8">
               {compactRuns(group.events).map(batch => {
                 const first = batch[0], runKey = key + ":" + first.id;
                 const revealed = runs[runKey];
-                if (batch.length < 3) return batch.map(row => <RecordedEvent key={row.id} row={row} environment={environment} now={now}/>);
+                if (batch.length < 3) return batch.map(row => <RecordedEvent key={row.id} row={row}/>);
                 return <li key={runKey} className="py-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <span className="text-[13px] font-medium">{first.stage === "OFFER_SELECTED" ? "Offer selected · " + batch.length + " events" : batch.length + " " + (first.stage === "SEARCH_COMPLETED" ? "searches" : first.label.toLowerCase() + " events")} · {first.detail} · {batch.every(row => /success/i.test(row.detail + " " + row.label)) ? "all successful" : "recorded outcomes"}</span>
+                    <span className="text-[13px] font-medium">{first.stage === "OFFER_SELECTED" ? "Offer selected · " + batch.length + " events" : batch.length + " " + (first.stage === "SEARCH_COMPLETED" ? "searches" : first.label.toLowerCase() + " events")} · {activityDetail(first)} · {batch.every(row => /success/i.test(row.detail + " " + row.label)) ? "all successful" : "recorded outcomes"}</span>
                     <span className="text-xs text-[#475569]">{hourLabel(batch[0].at)} – {hourLabel(batch[batch.length-1].at)}</span>
                     <button type="button" aria-expanded={Boolean(revealed)} className="focus-ring rounded-sm text-xs font-medium text-[var(--primary)] hover:underline" onClick={() => setRuns(p => ({...p,[runKey]:!revealed}))}>{revealed ? "Hide all" : "Show all"}</button>
                   </div>
-                  {revealed ? <ol className="mt-2 divide-y divide-[#E2E8F0] border-t border-[#E2E8F0]">{batch.map(row => <RecordedEvent key={row.id} row={row} environment={environment} now={now}/>)}</ol> : null}
+                  {revealed ? <ol className="mt-2 divide-y divide-[#E2E8F0] border-t border-[#E2E8F0]">{batch.map(row => <RecordedEvent key={row.id} row={row}/>)}</ol> : null}
                 </li>;
               })}
             </ol> : null}
