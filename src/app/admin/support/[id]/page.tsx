@@ -74,7 +74,7 @@ export default async function AdminSupportTicketPage({ params }: PageProps) {
             </AdminSectionCard>
           </div>
 
-          <SupportTicketActions ticketId={result.data.id} status={result.data.status} />
+          <SupportTicketActions ticketId={result.data.id} status={result.data.status} priority={result.data.priority} />
         </div>
       ) : (
         <AdminEmptyState
