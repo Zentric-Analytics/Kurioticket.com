@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
+import { compile } from "tailwindcss";
 
 const page = readFileSync("src/app/admin/page.tsx", "utf8");
 const dashboard = readFileSync("src/components/admin/AdminOverviewDashboard.tsx", "utf8");
@@ -43,11 +44,30 @@ test("compact Operations Snapshot has exactly four genuine primary metrics", () 
     assert.ok(snapshot.includes('label="' + label + '" value={' + value + "}"), label);
   }
   assert.equal((snapshot.match(/<SnapshotLink /g) ?? []).length, 4);
-  assert.match(snapshot, /min-\[900px\]:grid-cols-4/);
+  assert.match(snapshot, /min-\[56\.25rem\]:grid-cols-4/);
   assert.match(snapshot, /sm:grid-cols-2/);
   assert.match(snapshot, /<AdminOverviewRangeSelect range=\{range\} \/>/);
   assert.doesNotMatch(snapshot, /data\.users\.(?:active|suspended|deleted)/);
   assert.doesNotMatch(snapshot, /data\.audit\.human/);
+});
+
+test("Operations Snapshot generated CSS keeps four columns above the 900px breakpoint", async () => {
+  const snapshot = display.slice(display.indexOf('aria-label="Operations Snapshot"'), display.indexOf('aria-label="Attention Required"'));
+  const grid = snapshot.match(/<div className="(grid gap-2 sm:grid-cols-2 [^"]+)">/);
+  assert.ok(grid, "the responsive snapshot grid must exist");
+
+  const classes = grid[1].split(/\s+/);
+  assert.ok(classes.includes("min-[56.25rem]:grid-cols-4"), "use a rem breakpoint to match Tailwind's defaults");
+  assert.ok(!classes.includes("min-[900px]:grid-cols-4"), "do not mix px breakpoints with rem breakpoints");
+
+  const engine = await compile("@theme { --breakpoint-sm: 40rem; } @tailwind utilities;");
+  const generatedCss = engine.build(classes);
+  const twoColumnRule = generatedCss.indexOf(".sm\\:grid-cols-2");
+  const fourColumnRule = generatedCss.indexOf(".min-\\[56\\.25rem\\]\\:grid-cols-4");
+
+  assert.ok(twoColumnRule >= 0, "Tailwind must emit the two-column fallback");
+  assert.ok(fourColumnRule > twoColumnRule, "Tailwind must emit the four-column rule after the fallback");
+  assert.match(generatedCss.slice(fourColumnRule), /@media \(width >= 56\.25rem\)/);
 });
 
 test("compact snapshot links keep cards equal height and explanatory text readable", () => {
@@ -254,7 +274,7 @@ test("no fake totals, old full-report panels, or hidden full diagnostics remain 
 });
 
 test("the compact grid remains responsive without horizontal scrolling or cramped desktop cards", () => {
-  assert.match(display, /grid gap-2 sm:grid-cols-2 min-\[900px\]:grid-cols-4/);
+  assert.match(display, /grid gap-2 sm:grid-cols-2 min-\[56\.25rem\]:grid-cols-4/);
   assert.match(display, /grid gap-2 md:grid-cols-3/);
   assert.match(display, /grid min-w-0 gap-4 lg:grid-cols-2/);
   assert.match(dashboard, /grid grid-cols-2 gap-2/);
