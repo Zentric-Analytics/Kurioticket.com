@@ -11,7 +11,7 @@ const options = {
   stage: [["all","All activity types"],["SEARCH_COMPLETED","Search completed"],["RESULTS_VIEWED","Results viewed"],["OFFER_SELECTED","Offer selected"],["PROVIDER_HANDOFF_STARTED","Provider handoff"],["ACCOUNT_ACTIVITY","Account activity"]],
   order: [["newest","Newest first"],["oldest","Oldest first"]],
 };
-const control = "focus-ring h-11 w-full min-w-0 rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 text-[13px] text-[var(--foreground)]";
+const control = "focus-ring h-11 w-full min-w-0 rounded-lg border border-[#E2E8F0] bg-white px-3 text-[13px] text-[#0F172A]";
 function utcWindow(days: number) {
   const today = new Date().toISOString().slice(0, 10);
   const start = new Date(Date.now() - (days - 1) * 86400000).toISOString().slice(0, 10);
@@ -86,13 +86,13 @@ export function ActivityFiltersBar({ path, initial, directory, tabs }: { path: s
   return <div className="min-w-0 space-y-3">
     <label className="relative block min-w-0">
       <span className="sr-only">Search activity</span>
-      <Search aria-hidden="true" size={16} className="pointer-events-none absolute left-3 top-3.5 text-[var(--muted-foreground)]" />
+      <Search aria-hidden="true" size={16} className="pointer-events-none absolute left-3 top-3.5 text-[#64748B]" />
       <input aria-label="Search activity" value={values.q} maxLength={80} placeholder="Route, destination, or provider"
         onChange={e => update({q:e.target.value}, true)}
         onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); if (timeout.current) clearTimeout(timeout.current); navigate(values); } }}
-        className="h-11 w-full min-w-0 rounded-lg border border-[#D8E1EC] bg-white pl-9 pr-3 text-[13px] text-[#020617] outline-none placeholder:text-[#64748B] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#64748B]" />
+        className="h-11 w-full min-w-0 rounded-lg border border-[#E2E8F0] bg-white pl-9 pr-3 text-[13px] text-[#0F172A] outline-none placeholder:text-[#64748B] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#64748B]" />
     </label>
-    <div className="flex min-w-0 flex-col gap-x-5 gap-y-2 border-b border-[#D8E1EC] lg:flex-row lg:items-end lg:justify-between">
+    <div className="flex min-w-0 flex-col gap-x-5 gap-y-2 border-b border-[#E2E8F0] lg:flex-row lg:items-end lg:justify-between">
       {tabs}
       <div className="flex min-w-0 flex-wrap items-center gap-x-6 gap-y-2 pb-2 lg:pb-1">
         <SearchMonitorSelect label="Date range" name="range" value={editingCustom ? "custom" : values.range} options={rangeOptions}
@@ -106,11 +106,11 @@ export function ActivityFiltersBar({ path, initial, directory, tabs }: { path: s
       </div>
     </div>
     {(editingCustom || values.range === "custom") ? <div className="flex flex-wrap items-end gap-3">
-      <label className="text-xs text-[var(--muted-foreground)]">From (UTC)
+      <label className="text-xs text-[#64748B]">From (UTC)
         <input type="date" aria-label="Custom start date UTC" value={draftDates.from}
           max={draftDates.to || undefined} onChange={e => setDraftDates(current => ({...current, from:e.target.value}))} className={control}/>
       </label>
-      <label className="text-xs text-[var(--muted-foreground)]">To (UTC)
+      <label className="text-xs text-[#64748B]">To (UTC)
         <input type="date" aria-label="Custom end date UTC" value={draftDates.to}
           min={draftDates.from || undefined} onChange={e => setDraftDates(current => ({...current, to:e.target.value}))} className={control}/>
       </label>
