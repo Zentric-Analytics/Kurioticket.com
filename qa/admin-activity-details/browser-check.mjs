@@ -123,6 +123,12 @@ try {
     await expect(outerCard).toBeVisible();
     await expect(outerCard.locator('section[aria-label="Customer identity"]')).toBeVisible();
     await expect(outerCard.locator('section[aria-label="Activity summary"]')).toBeVisible();
+    const facts = outerCard.locator('section[aria-label="Customer identity"] dl > div');
+    await expect(facts).toHaveCount(3);
+    assert.ok(await facts.evaluateAll(nodes => nodes.every(node =>
+      node.firstElementChild?.tagName === "DT" && node.lastElementChild?.tagName === "DD"
+    )), "Each identity fact keeps a direct term-description grouping");
+
     await expect(outerCard.getByTestId("activity-body-card")).toBeVisible();
     await expect(outerCard.getByRole("navigation",{name:"Breadcrumb"})).toHaveCount(0);
     await expect(page.getByRole("navigation",{name:"Breadcrumb"})).toBeVisible();
