@@ -4,7 +4,7 @@ import type { PublicEnvironment } from "./stagingSafety";
 
 export const ACTIVITY_PAGE_SIZE = 20;
 export const ACTIVITY_FETCH_LIMIT = ACTIVITY_PAGE_SIZE + 25;
-export const activityTabs = ["all", "searches", "selections", "handoffs"] as const;
+export const activityTabs = ["all", "searches", "journeys", "selections", "handoffs"] as const;
 export const activityStages = ["all", "SEARCH_COMPLETED", "RESULTS_VIEWED", "OFFER_SELECTED", "PROVIDER_HANDOFF_STARTED", "ACCOUNT_ACTIVITY"] as const;
 export const activityProducts = ["all", "FLIGHT", "HOTEL", "CAR", "PACKAGE"] as const;
 
@@ -89,6 +89,7 @@ const allJourneyStages: JourneyStage[] = ["SEARCH_COMPLETED", "RESULTS_VIEWED", 
 export function allowedActivityStages(filters: ActivityFilters): Set<ActivityStage> {
   const available: ActivityStage[] = filters.tab === "all"
     ? [...allJourneyStages, "ACCOUNT_ACTIVITY"]
+    : filters.tab === "journeys" ? allJourneyStages
     : filters.tab === "searches" ? ["SEARCH_COMPLETED", "RESULTS_VIEWED"]
     : filters.tab === "selections" ? ["OFFER_SELECTED"] : ["PROVIDER_HANDOFF_STARTED"];
   return new Set(filters.stage === "all" ? available : available.filter(stage => stage === filters.stage));
