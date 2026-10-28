@@ -19,6 +19,17 @@ test("headline metrics report recorded funnel stages, not correlation as a journ
 });
 test("detail back link preserves scoped filters, not an untrusted destination", () => {
   assert.match(detail, /<SearchWorkspaceBackLink href=\{returnHref\(raw\)\}/);
-  assert.match(detail, /for \(const key of \["from", "to", "environment"/);
+  assert.match(detail, /for \(const key of \["range", "from", "to", "environment"/);
   assert.match(detail, /return "\/admin\/journeys"/);
+});
+
+test("journey detail is valid JSX and strips view-only range from backend input", () => {
+  assert.match(detail, /return \(\s*<>\s*<SearchWorkspaceBackLink/);
+  assert.match(detail, /<\/AdminPageShell>\s*<\/>/);
+  assert.match(detail, /range: _range, \.\.\.backendRaw/);
+});
+test("journey date presets are passed to detail and single-ended historical bounds survive", () => {
+  assert.match(list, /p\.set\("range", range\)/);
+  assert.match(list, /if \(one\(raw\.cursor\) \|\| one\(raw\.from\) \|\| one\(raw\.to\)\) return \{\}/);
+  assert.match(list, /"custom",label:"Custom dates"/);
 });
