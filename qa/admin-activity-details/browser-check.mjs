@@ -19,17 +19,22 @@ async function inspectActivityTypography(page) {
     const summary = document.querySelector('section[aria-label="Activity summary"]');
     const root = identity?.parentElement;
     const shell = document.querySelector("main")?.parentElement;
+    const bodyCard = document.querySelector('[data-testid="activity-body-card"]');
     const factLabel = identity?.querySelector("dt");
     const factValue = identity?.querySelector("dd");
     const summaryValue = summary?.querySelector('[data-testid="activity-metric-value"]');
     const summaryLabel = summary?.querySelector('[data-testid="activity-metric-label"]');
     const searchInput = document.querySelector('input[aria-label="Search activity"]');
-    if (!root || !shell || !summary || !factLabel || !factValue || !summaryValue || !summaryLabel || !searchInput)
+    if (!root || !shell || !summary || !bodyCard || !factLabel || !factValue || !summaryValue || !summaryLabel || !searchInput)
       throw new Error("Activity typography anchors missing");
     const css = element => getComputedStyle(element);
     return {
       rootBackground: css(root).backgroundColor,
       shellBackground: css(shell).backgroundColor,
+      summaryBackground: css(summary).backgroundColor,
+      bodyBackground: css(bodyCard).backgroundColor,
+      outerBorderColor: css(root).borderTopColor,
+      innerBorderColor: css(bodyCard).borderTopColor,
       primaryText: css(root).color,
       factValueSize: css(factValue).fontSize,
       factValueWeight: css(factValue).fontWeight,
@@ -49,8 +54,12 @@ async function inspectActivityTypography(page) {
   });
 }
 const approvedActivityTypography = {
-  rootBackground: "rgb(248, 250, 252)",
+  rootBackground: "rgb(255, 255, 255)",
   shellBackground: "rgb(248, 250, 252)",
+  summaryBackground: "rgba(0, 0, 0, 0)",
+  bodyBackground: "rgb(255, 255, 255)",
+  outerBorderColor: "rgb(226, 232, 240)",
+  innerBorderColor: "rgb(203, 213, 225)",
   primaryText: "rgb(15, 23, 42)",
   factValueSize: "14px",
   factValueWeight: "500",
@@ -83,7 +92,15 @@ try {
     await expect(page.getByRole("heading",{name:"Activity history"})).toBeVisible();
     await expect(page.getByRole("heading",{name:"Activity summary"})).toBeVisible();
     await expect(page.getByRole("heading",{name:"Related records"})).toHaveCount(0);
-    await expect(page.getByTestId("activity-body-card")).toBeVisible();
+    const outerCard = page.getByTestId("activity-page-card");
+    await expect(outerCard).toHaveCount(1);
+    await expect(outerCard).toBeVisible();
+    await expect(outerCard.locator('section[aria-label="Customer identity"]')).toBeVisible();
+    await expect(outerCard.locator('section[aria-label="Activity summary"]')).toBeVisible();
+    await expect(outerCard.getByTestId("activity-body-card")).toBeVisible();
+    await expect(outerCard.getByRole("navigation",{name:"Breadcrumb"})).toHaveCount(0);
+    await expect(page.getByRole("navigation",{name:"Breadcrumb"})).toBeVisible();
+    await expect(page.locator('[data-testid="activity-page-card"] [data-testid="activity-body-card"]')).toHaveCount(1);
     await expect(page.getByRole("navigation",{name:"Activity tabs"}).getByRole("link",{name:"Journeys"})).toHaveCount(0);
     await expect(page.getByRole("button",{name:"About activity data"})).toBeVisible();
     await expect(page.getByRole("tooltip")).toBeHidden();
@@ -218,7 +235,9 @@ try {
   await expect(page.getByRole("heading",{name:"QA registered customer"})).toBeVisible();
   await expect(page.getByText("customer.qa@example.invalid",{exact:true})).toBeVisible();
   await expect(page.getByRole("heading",{name:"Related records"})).toHaveCount(0);
-  await expect(page.getByRole("button",{name:"Manage account for customer.qa@example.invalid"})).toBeVisible();
+  const accountCard = page.getByTestId("activity-page-card");
+  await expect(accountCard.getByRole("button",{name:"Manage account for customer.qa@example.invalid"})).toBeVisible();
+  await expect(accountCard.getByTestId("activity-body-card")).toBeVisible();
   assert.deepEqual(await inspectActivityTypography(page), approvedActivityTypography, "Registered Activity typography and palette");
   await page.screenshot({path:output+"/after-registered-activity-1280.png",fullPage:true});
   assert.deepEqual(errors,[],"No browser exceptions");
