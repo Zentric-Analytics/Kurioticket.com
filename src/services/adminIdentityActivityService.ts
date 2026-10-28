@@ -256,7 +256,7 @@ export async function loadAdminIdentityActivity(
             // or loading full event records into application memory.
             let lastVisitorId: string | null = null;
             for (;;) {
-              const batch = await tx.visitor.findMany({
+              const batch: Array<{ id: string }> = await tx.visitor.findMany({
                 where: eligibleJourneyLinkedVisitorWhere(id),
                 select: { id: true },
                 orderBy: { id: "asc" },
