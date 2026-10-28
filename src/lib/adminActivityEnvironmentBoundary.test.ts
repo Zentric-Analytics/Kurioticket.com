@@ -51,6 +51,9 @@ test("Activity uses its approved colors and shared metric sizes without changing
   assert.match(shell, /usersDirectory \|\| searchesWorkspace \? "bg-white"/);
   assert.match(page, /space-y-6 bg-\[#F8FAFC\]/);
   assert.match(page, /text-\[14px\] font-medium text-\[#0F172A\]/);
-  assert.match(page, /text-\[14px\] font-medium tabular-nums text-\[#0F172A\]/);
+  assert.match(page, /text-\[22px\] font-medium leading-tight tabular-nums text-\[#0F172A\]/);
   assert.match(page, /text-\[12px\] font-normal text-\[#64748B\]/);
+  assert.match(page, /data-testid="activity-body-card"/);
+  assert.doesNotMatch(page, /Related records|const related =|label="Journeys"|value: "journeys"/);
+  assert.doesNotMatch(timeline, /Show all|Hide all|Not linked to a journey/);
 });
