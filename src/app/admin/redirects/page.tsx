@@ -33,7 +33,7 @@ export default async function AdminRedirectsPage({ searchParams, embedded = fals
           <AdminSelect name="product" defaultValue={one(raw.product)}>
             <option value="">All products</option><option value="FLIGHT">Flights</option><option value="HOTEL">Hotels</option>
           </AdminSelect>
-          <AdminSelect name="identity" defaultValue={one(raw.identity) || "all"} onChangeCapture={undefined}>
+          <AdminSelect name="identity" defaultValue={one(raw.identity) || "all"}>
             <option value="all">All identities</option><option value="registered">Registered</option><option value="guest">Guest</option><option value="unattributed">Unattributed</option>
           </AdminSelect>
           <AdminSelect name="correlation" defaultValue={one(raw.correlation)}>
