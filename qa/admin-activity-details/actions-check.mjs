@@ -24,6 +24,15 @@ async function headingDestinations() {
     buttons.map(button => button.parentElement.querySelector("a")?.getAttribute("href")));
 }
 
+async function capture(filename) {
+  // Disclosure clicks and keyboard focus legitimately scroll the viewport.
+  // Reset it before full-page capture so the sticky header is not photographed
+  // partway down the document. This affects test capture only, not product CSS.
+  await page.evaluate(() => window.scrollTo({ top: 0, left: 0, behavior: "instant" }));
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+  await page.screenshot({ path: output + "/" + filename, fullPage: true });
+}
+
 try {
   let originalDestinations;
   for (const width of [1280, 320]) {
@@ -33,7 +42,7 @@ try {
     await revealRecordedEvents();
     originalDestinations = await headingDestinations();
     assert.equal(originalDestinations.length, 6);
-    await page.screenshot({ path: output + "/actions-before-guest-" + width + ".png", fullPage: true });
+    await capture("actions-before-guest-" + width + ".png");
 
     for (const kind of ["guest", "user"]) {
       const id = kind === "guest" ? "qa-guest-activity-0001" : "qa-registered-0001";
@@ -56,7 +65,7 @@ try {
       await expect(views.first()).toBeFocused();
       const widths = await page.evaluate(() => ({ viewport: innerWidth, document: document.documentElement.scrollWidth }));
       assert.ok(widths.document <= widths.viewport + 1, "No horizontal overflow: " + JSON.stringify(widths));
-      await page.screenshot({ path: output + "/actions-after-" + kind + "-" + width + ".png", fullPage: true });
+      await capture("actions-after-" + kind + "-" + width + ".png");
       console.log("PASS Activity actions, readable labels and unchanged destinations", kind, width);
     }
   }
