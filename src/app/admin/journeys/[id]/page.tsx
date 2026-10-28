@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { AdminDataTable, AdminEmptyState, AdminPageShell, AdminSectionCard, AdminStatusBadge } from "@/components/admin/AdminPageShell";
+import { SearchWorkspaceBackLink } from "@/components/admin/SearchWorkspaceBackLink";
 import { formatDateTime } from "@/lib/admin-data";
 import { adminJourneys } from "@/services/adminJourneyService";
 
@@ -10,12 +11,15 @@ export const metadata = { title: "Admin Journey Detail" };
 export default async function AdminJourneyDetailPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { id } = await params;
   const raw = await searchParams;
-  const input: Record<string, unknown> = { ...raw, limit: one(raw.limit) || "50" };
+  const { range: _range, ...backendRaw } = raw;
+  const input: Record<string, unknown> = { ...backendRaw, limit: one(raw.limit) || "50" };
   const result = await adminJourneys.detail(id, input);
   if (result.status === "not_found") notFound();
 
   return (
-    <AdminPageShell title="Journey detail" description="Chronological view of eligible recorded journey events. Missing stages are not inferred as abandonment, and a provider handoff is not a booking confirmation." actions={<Link href="/admin/journeys" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">Back to journeys</Link>}>
+    <>
+      <SearchWorkspaceBackLink href={returnHref(raw)} label="Journeys" />
+      <AdminPageShell title="Journey detail" hideHeader>
       {result.status === "ok" ? (
         <div className="space-y-4">
           <AdminSectionCard className="p-5">
@@ -54,7 +58,8 @@ export default async function AdminJourneyDetailPage({ params, searchParams }: {
       ) : (
         <AdminEmptyState title={result.status === "invalid" ? "Invalid journey request" : result.status === "forbidden" ? "Admin access required" : "Journey data unavailable"} message={"issues" in result ? result.issues.map((issue) => issue.field + ": " + issue.message).join(" ") : "The journey reader could not return this record."} />
       )}
-    </AdminPageShell>
+      </AdminPageShell>
+    </>
   );
 }
 
@@ -67,4 +72,14 @@ function cursorHref(id: string, raw: Record<string, string | string[] | undefine
   for (const [key, value] of Object.entries(raw)) if (typeof value === "string" && value && key !== "cursor") p.set(key, value);
   p.set("cursor", cursor); p.set("limit", one(raw.limit) || "50");
   return "/admin/journeys/" + id + "?" + p.toString();
+}
+
+function returnHref(raw: Record<string, string | string[] | undefined>) {
+  // Always return to the filtered cohort, never to an arbitrary supplied URL.
+  const p = new URLSearchParams();
+  for (const key of ["range", "from", "to", "environment", "identity", "product", "provider", "stage", "userId", "visitorId"]) {
+    const value = raw[key];
+    if (typeof value === "string" && value.length <= 256 && value) p.set(key, value);
+  }
+  return "/admin/journeys" + (p.size ? "?" + p.toString() : "");
 }

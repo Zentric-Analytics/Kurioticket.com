@@ -1,6 +1,8 @@
 import Link from "next/link";
 
-import { AdminButton, AdminDataTable, AdminEmptyState, AdminFilterBar, AdminInput, AdminMetricCard, AdminPageShell, AdminSelect, AdminStatusBadge } from "@/components/admin/AdminPageShell";
+import { AdminButton, AdminDataTable, AdminEmptyState, AdminFilterBar, AdminInput, AdminPageShell, AdminSelect, AdminStatusBadge } from "@/components/admin/AdminPageShell";
+import { JourneyDateRangeFields } from "@/components/admin/JourneyDateRangeFields";
+import { journeyWindow, selectedJourneyRange } from "@/lib/adminJourneyDateRange";
 import { SearchWorkspaceBackLink } from "@/components/admin/SearchWorkspaceBackLink";
 import { formatDateTime } from "@/lib/admin-data";
 import { adminJourneys } from "@/services/adminJourneyService";
@@ -18,21 +20,39 @@ const stages: Array<{ value: AdminJourneyStage; label: string }> = [
 
 export default async function AdminJourneysPage({ searchParams }: { searchParams: SearchParams }) {
   const raw = await searchParams;
-  const input: Record<string, unknown> = { ...raw, limit: one(raw.limit) || "25" };
-  const [list, summary] = await Promise.all([
-    adminJourneys.list(input),
-    adminJourneys.summary(withoutPagination(raw)),
-  ]);
+  const now = new Date();
+  // The legacy backend defaults each call to its own moving seven-day window.
+  // Pin both reads to the same explicit bounds, including cursor continuations.
+  const range = selectedJourneyRange(raw);
+  const fixed = journeyWindow(raw, now);
+  const input: Record<string, unknown> = { ...withoutPagination(raw), ...fixed, limit: one(raw.limit) || "25" };
+  if (one(raw.cursor)) input.cursor = one(raw.cursor);
+  const list = await adminJourneys.list(input);
+  const summary = list.status === "ok"
+    ? await adminJourneys.summary({ ...withoutPagination(raw), ...list.data.scope })
+    : null;
 
   return (
     <>
       <SearchWorkspaceBackLink />
       <AdminPageShell
         title="Journeys"
-        description="Trace consented user journeys across recorded search, result-view, offer-selection and provider-handoff events. Observed stages are evidence of activity, not proof of booking completion."
+        hideHeader
       >
-      <div className="space-y-4">
+      <div className="mx-auto w-full max-w-[1500px] text-[#374151]">
+        {summary?.status === "ok" ? (
+          <div className="grid grid-cols-2 border-y border-[#E5E7EB] md:grid-cols-5">
+            <Metric label="Journeys" value={summary.data.journeys} />
+            <Metric label="Searches in journeys" value={summary.data.recordedSearches.total} />
+            <Metric label="Results viewed" value={summary.data.stages.RESULTS_VIEWED.events} />
+            <Metric label="Offers selected" value={summary.data.stages.OFFER_SELECTED.events} />
+            <Metric label="Provider handoffs" value={summary.data.stages.PROVIDER_HANDOFF_STARTED.events} />
+          </div>
+        ) : null}
+        <p className="border-b border-[#E5E7EB] px-2 py-3 text-[12px] leading-5 text-[#6B7280]">Only eligible consented journeys are included in these figures. Stages count recorded events, not assumed customer actions or confirmed bookings. Necessary operational guest searches remain available in Search Activity.</p>
         <AdminFilterBar action="/admin/journeys">
+
+          <JourneyDateRangeFields initialRange={range} initialFrom={one(raw.from) || (range === "custom" ? (list.status === "ok" ? list.data.scope.from : "") : "")} initialTo={one(raw.to) || (range === "custom" ? (list.status === "ok" ? list.data.scope.to : "") : "")} now={now.toISOString()} />
           <AdminSelect name="product" defaultValue={one(raw.product)}>
             <option value="">All products</option><option value="FLIGHT">Flights</option><option value="HOTEL">Hotels</option><option value="CAR">Cars</option><option value="PACKAGE">Packages</option>
           </AdminSelect>
@@ -50,18 +70,10 @@ export default async function AdminJourneysPage({ searchParams }: { searchParams
           <AdminButton type="submit">Apply filters</AdminButton>
         </AdminFilterBar>
 
-        {summary.status === "ok" ? (
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-            <AdminMetricCard label="Journeys" value={summary.data.journeys} hint="Matched consented journeys" tone="info" />
-            <AdminMetricCard label="Identities" value={summary.data.identities.total} hint={summary.data.identities.registered + " registered · " + summary.data.identities.guests + " guest"} />
-            <AdminMetricCard label="Recorded searches" value={summary.data.recordedSearches.total} hint={summary.data.recordedSearches.failed + " failed"} tone={summary.data.recordedSearches.failed ? "warn" : "neutral"} />
-            <AdminMetricCard label="Exact handoffs" value={summary.data.handoffCorrelation.exactEvents} hint="Eligible journey events with an exact search link" tone="good" />
-            <AdminMetricCard label="Uncorrelated handoffs" value={summary.data.handoffCorrelation.uncorrelatedEvents} hint="Eligible journey events without an exact search link" tone="neutral" />
-          </div>
-        ) : null}
-        {summary.status === "ok" ? (
-          <p className="mt-3 text-xs leading-5 text-slate-600">
-            These handoff cards count consented journey events, not all provider redirects.
+
+        {summary?.status === "ok" ? (
+          <p className="border-b border-[#E5E7EB] px-2 py-3 text-[12px] leading-5 text-[#6B7280]">
+            These handoff counts include only consented journey events, not all provider redirects.
             {" "}In the selected environment and date window, {summary.data.operationalHandoffs.total} redirect records were stored,
             {" "}{summary.data.operationalHandoffs.inConsentedJourneys} appear in eligible journeys and
             {" "}{summary.data.operationalHandoffs.outsideConsentedJourneys} are outside eligible journeys.
@@ -86,7 +98,7 @@ export default async function AdminJourneysPage({ searchParams }: { searchParams
                     journey.searchCount,
                     <div key="stages" className="flex max-w-64 flex-wrap gap-1">{stages.filter((stage) => journey.stages[stage.value] > 0).map((stage) => <AdminStatusBadge key={stage.value} tone={stage.value === "PROVIDER_HANDOFF_STARTED" ? "good" : "info"}>{stage.label}: {journey.stages[stage.value]}</AdminStatusBadge>)}</div>,
                     journey.eventCount,
-                    <Link key="action" href={detailHref(journey.id, list.data.scope)} className="font-black text-indigo-700 hover:text-indigo-900">Open</Link>,
+                    <Link key="action" href={detailHref(journey.id, list.data.scope, range)} className="font-black text-indigo-700 hover:text-indigo-900">Open</Link>,
                   ],
                 }))}
               />
@@ -105,12 +117,21 @@ export default async function AdminJourneysPage({ searchParams }: { searchParams
 function one(value: string | string[] | undefined) { return typeof value === "string" ? value : ""; }
 function withoutPagination(raw: Record<string, string | string[] | undefined>) {
   const copy: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(raw)) if (key !== "cursor" && key !== "limit") copy[key] = value;
+  for (const key of ["environment","identity","product","stage","provider","userId","visitorId","from","to"]) {
+    if (raw[key] !== undefined) copy[key] = raw[key];
+  }
   return copy;
 }
-function detailHref(id: string, scope: { from: string; to: string; environment: string; identity: string; product?: string; provider?: string; stage?: string; userId?: string; visitorId?: string }) {
+function Metric({label,value}:{label:string;value:number}) {
+  return <div className="min-h-[84px] border-r border-[#E5E7EB] px-3 py-3 last:border-r-0">
+    <p className="text-[11px] font-medium text-[#6B7280]">{label}</p>
+    <p className="mt-1 text-[24px] font-medium text-[#111827]">{value.toLocaleString()}</p>
+  </div>;
+}
+function detailHref(id: string, scope: { from: string; to: string; environment: string; identity: string; product?: string; provider?: string; stage?: string; userId?: string; visitorId?: string }, range: string) {
   const p = new URLSearchParams();
   for (const [key, value] of Object.entries(scope)) if (value) p.set(key, value);
+  p.set("range", range);
   return "/admin/journeys/" + id + "?" + p.toString();
 }
 function cursorHref(raw: Record<string, string | string[] | undefined>, cursor: string) {
