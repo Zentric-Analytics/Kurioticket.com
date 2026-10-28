@@ -41,6 +41,13 @@ export function SupportTicketActions({ ticketId, status, priority }: { ticketId:
   }
 
   function updateStatus() {
+    // Submit only changed fields. A stale untouched status must not undo
+    // another agent\'s resolution when we change only the priority.
+    const changes = {
+      ...(selectedStatus !== status ? { status: selectedStatus } : {}),
+      ...(selectedPriority !== priority ? { priority: selectedPriority } : {}),
+    };
+    if (Object.keys(changes).length === 0) return;
     setReplyMessage(null);
     setStatusMessage(null);
     setError(null);
@@ -48,14 +55,14 @@ export function SupportTicketActions({ ticketId, status, priority }: { ticketId:
       const response = await fetch(`/api/admin/support/${ticketId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: selectedStatus, priority: selectedPriority }),
+        body: JSON.stringify(changes),
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) {
         setError(typeof payload.error === "string" ? payload.error : "Unable to update status.");
         return;
       }
-      setStatusMessage("Ticket status and priority updated.");
+      setStatusMessage("Ticket changes saved.");
       router.refresh();
     });
   }
@@ -106,7 +113,7 @@ export function SupportTicketActions({ ticketId, status, priority }: { ticketId:
             </AdminSelect>
           </label>
           <AdminButton type="button" variant="secondary" onClick={updateStatus} loading={isStatusPending} disabled={selectedStatus === status && selectedPriority === priority} aria-disabled={isStatusPending || (selectedStatus === status && selectedPriority === priority)}>
-            {isStatusPending ? "Saving" : "Save status"}
+            {isStatusPending ? "Saving" : "Save changes"}
           </AdminButton>
         </div>
         <label className="block" htmlFor="support-ticket-priority"><span className="text-xs font-bold uppercase tracking-wide text-slate-500">Priority</span><AdminSelect id="support-ticket-priority" className="mt-2" value={selectedPriority} onChange={event => setSelectedPriority(event.target.value as typeof priority)} disabled={isStatusPending}>{["LOW","NORMAL","HIGH","URGENT"].map(value => <option key={value} value={value}>{value}</option>)}</AdminSelect></label>
