@@ -5,10 +5,10 @@ import { currentReferralAttributionEnvironment, getReferralAttributionSummary, p
 
 export const metadata = { title: "Admin Referral Attribution" };
 
-export default async function AdminReferralAttributionPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+export default async function AdminReferralAttributionPage({ searchParams, embedded = false }: { embedded?: boolean; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const auth = await requireAdminApiSession();
   if (auth.response) {
-    return <><SearchWorkspaceBackLink /><AdminPageShell title="Referral Attribution" description="ADMIN-only provider handoff attribution."><AdminEmptyState title="Admin access required" message="Referral attribution is restricted to configured ADMIN accounts." /></AdminPageShell></>;
+    return <>{!embedded ? <SearchWorkspaceBackLink /> : null}<AdminPageShell title="Referral Attribution" description="ADMIN-only provider handoff attribution."><AdminEmptyState title="Admin access required" message="Referral attribution is restricted to configured ADMIN accounts." /></AdminPageShell></>;
   }
 
   const raw = await searchParams;
@@ -29,7 +29,8 @@ export default async function AdminReferralAttributionPage({ searchParams }: { s
         description="Measure verified provider handoffs by provider and source page. These figures describe outbound referrals only; they do not claim bookings, payments or revenue."
       >
       <div className="space-y-4">
-        <AdminFilterBar action="/admin/referral-attribution">
+        <AdminFilterBar action={embedded ? "/admin/searches/activity" : "/admin/referral-attribution"}>
+          {embedded ? <input type="hidden" name="tab" value="attribution" /> : null}
           <AdminSelect name="days" defaultValue={String(days)}>
             <option value="7">Last 7 days</option>
             <option value="14">Last 14 days</option>
