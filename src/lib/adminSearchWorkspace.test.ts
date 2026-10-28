@@ -43,3 +43,11 @@ test("Search Activity has one navigation label, a Search records tab, and an acc
   assert.match(frame, /<h1 className="sr-only">\{title\}<\/h1>/);
   assert.match(searchDetail, /"&environment=" \+ encodeURIComponent\(search\.environment\)/);
 });
+
+test("registered account searches link to journeys and filter forms retain scoped identity", () => {
+  assert.match(searchDetail, /tab=journeys&" \+ \(search\.identity\.userId/);
+  assert.match(journeys, /name="userId" value=\{one\(raw\.userId\)\}/);
+  assert.match(journeys, /name="visitorId" value=\{one\(raw\.visitorId\)\}/);
+  assert.match(redirects, /name="userId" value=\{one\(raw\.userId\)\}/);
+  assert.match(redirects, /name="visitorId" value=\{one\(raw\.visitorId\)\}/);
+});
