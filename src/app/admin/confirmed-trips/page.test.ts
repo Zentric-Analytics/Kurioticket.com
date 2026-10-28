@@ -90,9 +90,9 @@ test("confirmed-trip readiness facts are rendered from authoritative readiness s
 
 
 test("Confirmed Trips UI uses one existing white parent with responsive summary and balanced breakdowns", () => {
-  assert.match(page, /<AdminSectionCard className="min-w-0 p-4 sm:p-6 lg:p-7">/);
+  assert.match(page, /<AdminSectionCard className="min-w-0 p-4 sm:p-5 lg:p-6">/);
   assert.equal((page.match(/<AdminSectionCard/g) || []).length, 1);
-  assert.match(page, /grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5/);
+  assert.match(page, /grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5/);
   assert.match(page, /grid items-stretch gap-4 lg:grid-cols-2/);
   assert.match(page, /<TripMetric label="Confirmed trips"/);
   assert.match(page, /<TripMetric label="Last 24h"/);
@@ -102,6 +102,34 @@ test("Confirmed Trips UI uses one existing white parent with responsive summary 
   assert.match(page, /<section aria-labelledby="recent-confirmed-trips-title"/);
   assert.match(page, /min-w-\[1000px\]/);
   assert.match(page, /overflow-x-auto/);
+});
+
+
+test("Phase 1 prioritizes trip records and preserves the two in-page shortcuts", () => {
+  const order = [
+    "confirmed-trips-overview",
+    "recent-confirmed-trips-title",
+    "confirmation-integration-title",
+    "confirmation-delivery-health-title",
+    "trips-by-product-title",
+    "trips-by-provider-title",
+    "trips-operational-boundaries",
+  ];
+  const positions = order.map((id) => page.indexOf('aria-labelledby="' + id + '"'));
+  assert.ok(positions.every((position) => position >= 0), "All seven overview sections remain present");
+  assert.deepEqual(positions, [...positions].sort((a, b) => a - b), "Overview sections follow the Phase 1 reading order");
+
+  const headerActions = page.slice(page.indexOf('actions={'), page.indexOf('aria-label="Confirmed Trips page shortcuts"'));
+  assert.match(headerActions, /href="\/admin\/confirmed-trips\/records"/);
+  assert.match(headerActions, /href="\/admin\/flight-status"/);
+  assert.doesNotMatch(headerActions, /href="#/);
+
+  assert.match(page, /aria-label="Confirmed Trips page shortcuts"/);
+  assert.match(page, /href="#recent-confirmed-trips-title"/);
+  assert.match(page, /href="#confirmation-integration-title"/);
+  assert.match(page, /id="recent-confirmed-trips-title" className="scroll-mt-28 min-\[1100px\]:scroll-mt-44/);
+  assert.match(page, /id="confirmation-integration-title" className="scroll-mt-28 min-\[1100px\]:scroll-mt-44/);
+  assert.match(page, /operations\.recentTrips\.length > 0/);
 });
 
 test("Confirmed Trips UI preserves honest data, alerts and no-booking boundaries", () => {
