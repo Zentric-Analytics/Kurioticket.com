@@ -73,11 +73,62 @@ test("Operations Snapshot generated CSS keeps four columns above the 900px break
 test("compact snapshot links keep cards equal height and explanatory text readable", () => {
   const card = dashboard.slice(dashboard.indexOf("function SnapshotLink("), dashboard.indexOf("function AttentionLink("));
   assert.match(card, /flex h-full min-w-0 flex-col/);
-  assert.match(card, /px-3 py-2\.5/);
-  assert.match(card, /mt-1\.5 min-w-0 break-words/);
+  assert.match(card, /px-3 py-2/);
+  assert.match(card, /mt-1 min-w-0 break-words/);
   assert.match(card, /mt-0\.5 min-w-0 break-words text-\[22px\]/);
   assert.match(card, /mt-1 min-w-0 break-words text-\[11px\] leading-4/);
   assert.doesNotMatch(card, /truncate|whitespace-nowrap|overflow-hidden/);
+});
+
+test("Overview shared sections and metric cards are compact without sacrificing text hierarchy", () => {
+  const section = dashboard.slice(dashboard.indexOf("function Section("), dashboard.indexOf("function MiniMetric("));
+  const metric = dashboard.slice(dashboard.indexOf("function MiniMetric("), dashboard.indexOf("function SnapshotLink("));
+  const snapshot = dashboard.slice(dashboard.indexOf("function SnapshotLink("), dashboard.indexOf("function AttentionLink("));
+  const badges = dashboard.slice(dashboard.indexOf("function StatusBadge("), dashboard.indexOf("function Section("));
+
+  assert.match(section, /rounded-xl border border-slate-200 bg-white p-3 sm:p-4/);
+  assert.match(section, /mb-2 flex flex-wrap items-center justify-between gap-2/);
+  assert.match(section, /text-\[15px\] font-semibold/);
+  assert.match(section, /mt-0\.5 text-xs leading-\[18px\] text-slate-600/);
+  assert.match(section, /focus-ring/);
+  assert.match(metric, /rounded-lg bg-slate-50\/75 px-3 py-2/);
+  assert.match(metric, /min-w-0 break-words text-\[12px\] font-medium leading-4/);
+  assert.match(metric, /mt-0\.5 break-words text-xl font-semibold leading-6/);
+  assert.match(metric, /tabular-nums/);
+  assert.doesNotMatch(metric, /truncate|overflow-hidden|whitespace-nowrap/);
+  assert.match(snapshot, /px-3 py-2 transition/);
+  assert.match(snapshot, /text-\[22px\] font-semibold leading-\[26px\]/);
+  assert.match(badges, /rounded-full px-2 py-0\.5 text-\[11px\] font-medium leading-4/);
+  assert.match(display, /className="min-w-0 space-y-3"/);
+  assert.match(display, /grid min-w-0 items-start gap-3 lg:grid-cols-2/);
+  assert.match(page, /<AdminSectionCard className="min-w-0 p-4 sm:p-5 lg:p-6">/);
+});
+
+test("Provider Health, four-column Platform Health and recent activity are compact but complete", async () => {
+  const provider = dashboard.slice(dashboard.indexOf("function ProviderSummary("), dashboard.indexOf("function PlatformSummary("));
+  const platform = dashboard.slice(dashboard.indexOf("function PlatformSummary("), dashboard.indexOf("function RecentActivity("));
+  const audit = dashboard.slice(dashboard.indexOf("function RecentActivity("), dashboard.indexOf("export function AdminOverviewSecondary("));
+
+  assert.match(provider, /rounded-lg border border-slate-200 p-2\.5/);
+  assert.match(provider, /mt-2 grid grid-cols-3 gap-1\.5/);
+  assert.match(provider, /provider\.attemptedCalls/);
+  assert.match(provider, /provider\.failedCalls/);
+  assert.match(provider, /formatProviderFailureRatePct/);
+  const grid = platform.match(/className="(grid gap-2 sm:grid-cols-2 min-\[56\.25rem\]:grid-cols-4)"/);
+  assert.ok(grid, "wide Overview must display four Platform Health statuses in one row");
+  const engine = await compile("@theme { --breakpoint-sm: 40rem; } @tailwind utilities;");
+  const generatedCss = engine.build(grid[1].split(/\s+/));
+  const twoColumns = generatedCss.indexOf(".sm\\:grid-cols-2");
+  const fourColumns = generatedCss.indexOf(".min-\\[56\\.25rem\\]\\:grid-cols-4");
+  assert.ok(twoColumns >= 0 && fourColumns > twoColumns, "four-column platform rule must win Tailwind cascade");
+  assert.match(platform, /px-3 py-2/);
+  assert.match(platform, /min-w-0 break-words text-\[12px\] leading-\[18px\]/);
+  assert.match(platform, /Configured, not tested/);
+  assert.match(platform, /Key present, not tested/);
+  assert.match(audit, /activity\.items\.slice\(0, 3\)/);
+  assert.match(audit, /gap-1 py-1\.5 sm:flex-row/);
+  assert.match(audit, /item\.timestamp/);
+  assert.match(dashboard, /className="mt-3 grid gap-3"/);
 });
 
 test("live presence keeps consent, 90-second window, and explicit unavailable state", () => {
@@ -177,9 +228,9 @@ test("complete provider diagnostics remain on the linked Providers page", () => 
 });
 
 test("Overview cards use two independent content-height columns without wasted row space", () => {
-  const gridStart = display.indexOf('<div className="grid min-w-0 items-start gap-4 lg:grid-cols-2">');
+  const gridStart = display.indexOf('<div className="grid min-w-0 items-start gap-3 lg:grid-cols-2">');
   assert.ok(gridStart >= 0, "responsive two-column Overview must exist");
-  const stack = '<div className="flex min-w-0 flex-col gap-4">';
+  const stack = '<div className="flex min-w-0 flex-col gap-3">';
   const leftStart = display.indexOf(stack, gridStart);
   const rightStart = display.indexOf(stack, leftStart + stack.length);
   assert.ok(leftStart > gridStart && rightStart > leftStart, "both content-height stacks must exist");
@@ -204,13 +255,13 @@ test("Attention Required is compact and vertically stacked in its own card", () 
   const end = display.indexOf("</section>", start);
   assert.ok(start >= 0 && end > start);
   const attention = display.slice(start, end);
-  assert.match(attention, /<div className="grid gap-2">/);
+  assert.match(attention, /<div className="grid gap-1\.5">/);
   assert.doesNotMatch(attention, /md:grid-cols-3|lg:grid-cols-3|grid-cols-3/);
   assert.equal((attention.match(/<AttentionLink /g) ?? []).length, 3);
   assert.match(attention, /Provider health: last 24 hours. Support and deletion queues: current/);
 
   const link = dashboard.slice(dashboard.indexOf("function AttentionLink("), dashboard.indexOf("function operationalTone("));
-  assert.match(link, /px-3 py-2\.5/);
+  assert.match(link, /px-3 py-2/);
   assert.match(link, /min-w-0 flex-1/);
   assert.match(link, /tabular-nums/);
 });
@@ -288,11 +339,11 @@ test("no fake totals, old full-report panels, or hidden full diagnostics remain 
 
 test("the compact grid remains responsive without horizontal scrolling or cramped desktop cards", () => {
   assert.match(display, /grid gap-2 sm:grid-cols-2 min-\[56\.25rem\]:grid-cols-4/);
-  assert.match(display, /<div className="grid gap-2">/);
-  assert.match(display, /grid min-w-0 items-start gap-4 lg:grid-cols-2/);
-  assert.match(dashboard, /grid grid-cols-2 gap-2/);
-  assert.match(dashboard, /grid grid-cols-3 gap-2/);
-  assert.match(dashboard, /flex flex-wrap items-center justify-between gap-3/);
+  assert.match(display, /<div className="grid gap-1\.5">/);
+  assert.match(display, /grid min-w-0 items-start gap-3 lg:grid-cols-2/);
+  assert.match(dashboard, /grid grid-cols-2 gap-1\.5/);
+  assert.match(dashboard, /grid grid-cols-3 gap-1\.5/);
+  assert.match(dashboard, /flex flex-wrap items-center justify-between gap-2/);
   assert.doesNotMatch(dashboard, /overflow-x-auto|overflow-x-scroll|whitespace-nowrap/);
 });
 
@@ -303,7 +354,7 @@ test("the white parent container, original admin header, and automatic refresh r
   assert.match(page, /hideHeader/);
   assert.match(shell, /hideHeader = false/);
   assert.match(shell, /<h1 className="sr-only">\{title\}<\/h1>/);
-  assert.match(page, /<AdminSectionCard className="min-w-0 p-4 sm:p-6 lg:p-7">/);
+  assert.match(page, /<AdminSectionCard className="min-w-0 p-4 sm:p-5 lg:p-6">/);
   assert.equal((page.match(/<AdminSectionCard /g) ?? []).length, 1);
   assert.match(horizontalShell, /bg-\[#f1f5fb\]/);
   assert.match(display, /<AdminOverviewAutoRefresh \/>/);
