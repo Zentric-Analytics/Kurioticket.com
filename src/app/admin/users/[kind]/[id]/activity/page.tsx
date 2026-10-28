@@ -26,6 +26,7 @@ type PageProps = { params: Promise<Params>; searchParams: Promise<RawQuery> };
 const tabs = [
   { value: "all", label: "All activity" },
   { value: "searches", label: "Searches" },
+  { value: "journeys", label: "Journeys" },
   { value: "selections", label: "Selections" },
   { value: "handoffs", label: "Provider handoffs" },
 ] as const;
@@ -148,15 +149,16 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
     journeysParams.set("from", visibleJourneyWindow.from);
     journeysParams.set("to", visibleJourneyWindow.to);
   }
-  const journeysHref = "/admin/journeys?" + journeysParams.toString();
+  const journeysHref = activityHref(basePath, queryParams, { tab: "journeys", cursor: null });
   const searchesHref = "/admin/searches?" + searchParamsForLink.toString();
-  const handoffsHref = "/admin/redirects?" + searchParamsForLink.toString();
+  const handoffsHref = activityHref(basePath, queryParams, { tab: "handoffs", cursor: null });
   const nextHref = data.nextCursor ? activityHref(basePath, queryParams, { cursor: data.nextCursor }) : null;
 
   const order = filters.order === "oldest" ? "oldest" : "newest";
   const related = [
-    ...(!operational ? [{ href: searchesHref, icon: Search, title: "Searches", subtitle: "View all searches from this identity" }] : []),
-    ...(!operational ? [{ href: journeysHref, icon: Route, title: "Journeys", subtitle: "View consented journeys and stages" }, { href: handoffsHref, icon: ExternalLink, title: "Provider handoffs", subtitle: "View outbound provider referral records" }] : []),
+    { href: searchesHref, icon: Search, title: "Search records", subtitle: "View searches for this verified identity" },
+    { href: journeysHref, icon: Route, title: "Journeys", subtitle: operational ? "Operational sessions contain searches and handoffs; consented journey stages may be unavailable" : "View recorded journey stages for this identity" },
+    { href: handoffsHref, icon: ExternalLink, title: "Provider handoffs", subtitle: "View recorded outbound handoffs for this identity" },
   ];
 
   return <div className="min-w-0 space-y-6 bg-[#F8FAFC] pb-2 text-[#0F172A]">
