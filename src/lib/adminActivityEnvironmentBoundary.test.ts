@@ -72,11 +72,11 @@ test("User Activity renders exactly two nested white workspace cards with a flat
   assert.equal((page.match(/data-testid="activity-page-card"/g) ?? []).length, 1);
   assert.equal((page.match(/data-testid="activity-body-card"/g) ?? []).length, 1);
   const mainCardMarkup = page.slice(mainCard, identity);
-  assert.match(mainCardMarkup, /rounded-xl border border-\\[#E2E8F0\\] bg-white/);
+  assert.match(mainCardMarkup, /rounded-xl border border-\[#E2E8F0\] bg-white/);
   const summaryMarkup = page.slice(summary, body);
-  assert.doesNotMatch(summaryMarkup, /bg-(?:blue|sky|emerald|amber|\\[#)/,
+  assert.doesNotMatch(summaryMarkup, /bg-(?:blue|sky|emerald|amber|\[#)/,
     "Activity summary uses no colored background or metric dots");
-  assert.match(summaryMarkup, /data\\.summary\\.searches/);
-  assert.match(summaryMarkup, /data\\.summary\\.resultsViewed/);
-  assert.match(summaryMarkup, /data\\.summary\\.providerHandoffs/);
+  assert.match(summaryMarkup, /data\.summary\.searches/);
+  assert.match(summaryMarkup, /data\.summary\.resultsViewed/);
+  assert.match(summaryMarkup, /data\.summary\.providerHandoffs/);
 });
