@@ -71,7 +71,10 @@ test("POST /api/admin/support/[id] creates reply and writes audit log", async ()
     supportTicket: {
       async create() { throw new Error("not used"); },
       async findUnique() { return { id: "ticket-1", email: "user@example.com", subject: "Need help", status: "OPEN" }; },
-      async update() { throw new Error("not used"); },
+      async update(args) {
+        assert.deepEqual(args.data, { updatedAt: new Date("2026-07-16T00:00:00Z") });
+        return { id: args.where.id, email: "user@example.com", subject: "Need help", status: "OPEN" as const };
+      },
     },
     supportMessage: {
       async create(args) { return { id: "message-1", ticketId: args.data.ticketId, author: args.data.author, body: args.data.body, createdAt: new Date("2026-07-16T00:00:00Z") }; },
@@ -84,9 +87,10 @@ test("POST /api/admin/support/[id] creates reply and writes audit log", async ()
 
   assert.equal(response.status, 201);
   assert.equal(body.message.author, "admin");
+  assert.equal(body.emailStatus, "sent");
   assert.equal(audits[0].action, "support_ticket.reply");
   assert.equal(audits[0].targetId, "ticket-1");
-  assert.deepEqual(audits[0].metadata, { messageId: "message-1", status: "OPEN" });
+  assert.deepEqual(audits[0].metadata, { messageId: "message-1", status: "OPEN", emailStatus: "sent" });
 });
 
 test("PATCH /api/admin/support/[id] updates valid status and writes audit log", async () => {
@@ -100,7 +104,7 @@ test("PATCH /api/admin/support/[id] updates valid status and writes audit log", 
     supportTicket: {
       async create() { throw new Error("not used"); },
       async findUnique() { return { id: "ticket-1", email: "user@example.com", subject: "Need help", status: "OPEN" }; },
-      async update(args) { return { id: args.where.id, email: "user@example.com", subject: "Need help", status: args.data.status }; },
+      async update(args) { return { id: args.where.id, email: "user@example.com", subject: "Need help", status: args.data.status ?? "OPEN" }; },
     },
     supportMessage: {
       async create() { throw new Error("not used"); },
