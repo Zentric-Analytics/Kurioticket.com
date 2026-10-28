@@ -36,3 +36,13 @@ test("environment defaults and explicit date bounds are normalized", () => {
   assert.equal(parseAdminHandoffQuery(new URLSearchParams("environment=production"), "staging").status, "ok");
   assert.equal(parseAdminSupportQuery(new URLSearchParams("from=2026-10-03T00:00:00Z&to=2026-10-02T00:00:00Z")).status, "invalid");
 });
+
+test("support activity cursors invalidate legacy creation-time pagination links", () => {
+  const scope = parseAdminSupportQuery(new URLSearchParams("status=OPEN"));
+  assert.equal(scope.status, "ok");
+  if (scope.status !== "ok") return;
+  const cursor = encodeAdminOperationalCursor("support", scope.data.scope, { at: "2026-10-28T12:00:00.000Z", id: "ticket_123" });
+  assert.equal(parseAdminSupportQuery(new URLSearchParams("status=OPEN&cursor=" + encodeURIComponent(cursor))).status, "ok");
+  const legacy = Buffer.from(JSON.stringify({ v: 1, kind: "support", at: "2026-10-28T12:00:00.000Z", id: "ticket_123", scope: JSON.stringify(scope.data.scope) })).toString("base64url");
+  assert.equal(parseAdminSupportQuery(new URLSearchParams("status=OPEN&cursor=" + encodeURIComponent(legacy))).status, "invalid");
+});
