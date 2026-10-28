@@ -52,9 +52,7 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
     <>
       <AdminPageShell title="Search activity" hideHeader>
         <div className="mx-auto w-full max-w-[1500px]">
-        <div className="flex flex-wrap justify-end gap-4 border-b border-[#E5E7EB] px-2 py-2 text-[12px] font-medium text-[#004BB8]">
-          <Link href="/admin/redirects?correlation=unavailable" className="hover:underline">Unmatched provider handoffs</Link>
-        </div>
+        
         {result.status === "ok" && summary.status === "ok" ? (
           <>
             <div className="grid grid-cols-2 border-y border-[#E5E7EB] md:grid-cols-4">

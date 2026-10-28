@@ -9,14 +9,14 @@ export const metadata = { title: "Admin Referral Attribution" };
 export default async function AdminReferralAttributionPage({ searchParams, embedded = false }: { embedded?: boolean; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const auth = await requireAdminApiSession();
   if (auth.response) {
-    return <>{!embedded ? <SearchWorkspaceBackLink /> : null}<AdminPageShell title="Referral Attribution" description="ADMIN-only provider handoff attribution."><AdminEmptyState title="Admin access required" message="Referral attribution is restricted to configured ADMIN accounts." /></AdminPageShell></>;
+    return <>{!embedded ? <SearchWorkspaceBackLink href="/admin/providers" label="Providers" /> : null}<AdminPageShell title="Referral Attribution" description="ADMIN-only provider handoff attribution."><AdminEmptyState title="Admin access required" message="Referral attribution is restricted to configured ADMIN accounts." /></AdminPageShell></>;
   }
 
   const raw = await searchParams;
   const daysValue = typeof raw.days === "string" ? raw.days : null;
   const days = parseAttributionDays(daysValue);
   if (days === null) {
-    return <>{!embedded ? <SearchWorkspaceBackLink /> : null}<AdminPageShell title="Referral Attribution" description="ADMIN-only provider handoff attribution."><AdminEmptyState title="Invalid date window" message="Choose a reporting window from 1 to 90 days." /></AdminPageShell></>;
+    return <>{!embedded ? <SearchWorkspaceBackLink href="/admin/providers" label="Providers" /> : null}<AdminPageShell title="Referral Attribution" description="ADMIN-only provider handoff attribution."><AdminEmptyState title="Invalid date window" message="Choose a reporting window from 1 to 90 days." /></AdminPageShell></>;
   }
 
   const environment = currentReferralAttributionEnvironment();
@@ -24,7 +24,7 @@ export default async function AdminReferralAttributionPage({ searchParams, embed
 
   return (
     <>
-      {!embedded ? <SearchWorkspaceBackLink /> : null}
+      {!embedded ? <SearchWorkspaceBackLink href="/admin/providers" label="Providers" /> : null}
       <SearchWorkspacePanelFrame embedded={embedded}
         title="Referral Attribution"
         description="Measure verified provider handoffs by provider and source page. These figures describe outbound referrals only; they do not claim bookings, payments or revenue."

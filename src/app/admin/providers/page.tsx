@@ -31,7 +31,7 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
         <Link href="/admin/providers" aria-current={!attribution ? "page" : undefined} className={attribution ? "pb-3 text-[#475569]" : "border-b-2 border-[#004BB8] pb-3 text-[#004BB8]"}>Provider readiness</Link>
         <Link href="/admin/providers?view=attribution" aria-current={attribution ? "page" : undefined} className={attribution ? "border-b-2 border-[#004BB8] pb-3 text-[#004BB8]" : "pb-3 text-[#475569]"}>Referral Attribution</Link>
       </nav>
-      {attribution ? <AdminReferralAttributionPage embedded searchParams={Promise.resolve(raw)} /> : <>
+      {attribution ? <><AdminReferralAttributionPage embedded searchParams={Promise.resolve(raw)} /><div className="mt-5 border-t border-[#E5E7EB] pt-3 text-[13px]"><Link href="/admin/redirects?correlation=unavailable" className="font-semibold text-[#004BB8] hover:underline">Handoffs without a linked search</Link><p className="mt-1 text-[#64748B]">These provider clicks have no verified link to a specific search. This does not mean the redirect failed or a booking occurred.</p></div></> : <>
       <div className="mb-4 flex flex-wrap gap-2">
         {productFilters.map((item) => (
           <Link
