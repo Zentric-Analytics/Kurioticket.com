@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { readFileSync } from "node:fs";
 
 import {
   ACTIVITY_PAGE_SIZE, activityEnvironmentScope, allowedActivityStages, activityHref, activityWindow,
@@ -295,4 +296,12 @@ test("contiguous journey grouping preserves interleaved event chronology", () =>
   assert.equal(new Set(groups.map(group => group.key)).size, 3);
   const adjacent = groupContiguousActivityRows([events[0], { ...events[0], id: "j-a0959" }, events[1]]);
   assert.deepEqual(adjacent.map(group => group.events.length), [2, 1]);
+});
+
+test("user details host observed journeys and handoffs without sending operational guests to broad searches", () => {
+  const source = readFileSync("src/app/admin/users/[kind]/[id]/activity/page.tsx","utf8");
+  assert.match(source, /value: "journeys", label: "Journeys"/);
+  assert.match(source, /activityHref\(basePath, queryParams, \{ tab: "journeys", cursor: null \}\)/);
+  assert.match(source, /activityHref\(basePath, queryParams, \{ tab: "handoffs", cursor: null \}\)/);
+  assert.match(source, /!operational \? \[\{ href: searchesHref/);
 });
