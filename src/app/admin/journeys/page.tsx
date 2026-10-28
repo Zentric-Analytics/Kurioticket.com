@@ -1,7 +1,8 @@
 import Link from "next/link";
 
 import { AdminButton, AdminDataTable, AdminEmptyState, AdminFilterBar, AdminInput, AdminPageShell, AdminSelect, AdminStatusBadge } from "@/components/admin/AdminPageShell";
-import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
+import { JourneyDateRangeFields } from "@/components/admin/JourneyDateRangeFields";
+import { journeyWindow, selectedJourneyRange } from "@/lib/adminJourneyDateRange";
 import { SearchWorkspaceBackLink } from "@/components/admin/SearchWorkspaceBackLink";
 import { formatDateTime } from "@/lib/admin-data";
 import { adminJourneys } from "@/services/adminJourneyService";
@@ -22,7 +23,7 @@ export default async function AdminJourneysPage({ searchParams }: { searchParams
   const now = new Date();
   // The legacy backend defaults each call to its own moving seven-day window.
   // Pin both reads to the same explicit bounds, including cursor continuations.
-  const range = one(raw.range);
+  const range = selectedJourneyRange(raw);
   const fixed = journeyWindow(raw, now);
   const input: Record<string, unknown> = { ...withoutPagination(raw), ...fixed, limit: one(raw.limit) || "25" };
   if (one(raw.cursor)) input.cursor = one(raw.cursor);
@@ -51,13 +52,7 @@ export default async function AdminJourneysPage({ searchParams }: { searchParams
         <p className="border-b border-[#E5E7EB] px-2 py-3 text-[12px] leading-5 text-[#6B7280]">Only eligible consented journeys are included in these figures. Stages count recorded events, not assumed customer actions or confirmed bookings. Necessary operational guest searches remain available in Search Activity.</p>
         <AdminFilterBar action="/admin/journeys">
 
-          <SearchMonitorSelect name="range" label="Date range" value={range || (one(raw.from) || one(raw.to) ? "custom" : "7d")} options={[{value:"today",label:"Today"},{value:"7d",label:"Last 7 days"},{value:"30d",label:"Last 30 days"},{value:"90d",label:"Last 90 days"},{value:"custom",label:"Custom dates"}]} appearance="plain" />
-          {range === "custom" || (!range && (one(raw.from) || one(raw.to))) ? (
-            <>
-              {one(raw.from) ? <input type="hidden" name="from" value={one(raw.from)} /> : null}
-              {one(raw.to) ? <input type="hidden" name="to" value={one(raw.to)} /> : null}
-            </>
-          ) : null}
+          <JourneyDateRangeFields initialRange={range} initialFrom={one(raw.from) || (range === "custom" ? (list.status === "ok" ? list.data.scope.from : "") : "")} initialTo={one(raw.to) || (range === "custom" ? (list.status === "ok" ? list.data.scope.to : "") : "")} now={now.toISOString()} />
           <AdminSelect name="product" defaultValue={one(raw.product)}>
             <option value="">All products</option><option value="FLIGHT">Flights</option><option value="HOTEL">Hotels</option><option value="CAR">Cars</option><option value="PACKAGE">Packages</option>
           </AdminSelect>
@@ -103,7 +98,7 @@ export default async function AdminJourneysPage({ searchParams }: { searchParams
                     journey.searchCount,
                     <div key="stages" className="flex max-w-64 flex-wrap gap-1">{stages.filter((stage) => journey.stages[stage.value] > 0).map((stage) => <AdminStatusBadge key={stage.value} tone={stage.value === "PROVIDER_HANDOFF_STARTED" ? "good" : "info"}>{stage.label}: {journey.stages[stage.value]}</AdminStatusBadge>)}</div>,
                     journey.eventCount,
-                    <Link key="action" href={detailHref(journey.id, list.data.scope, range || (one(raw.from) || one(raw.to) ? "custom" : "7d"))} className="font-black text-indigo-700 hover:text-indigo-900">Open</Link>,
+                    <Link key="action" href={detailHref(journey.id, list.data.scope, range)} className="font-black text-indigo-700 hover:text-indigo-900">Open</Link>,
                   ],
                 }))}
               />
@@ -126,16 +121,6 @@ function withoutPagination(raw: Record<string, string | string[] | undefined>) {
     if (raw[key] !== undefined) copy[key] = raw[key];
   }
   return copy;
-}
-function journeyWindow(raw: Record<string, string | string[] | undefined>, now: Date) {
-  if (one(raw.cursor) || one(raw.from) || one(raw.to)) return {};
-  const range = one(raw.range);
-  const days = range === "today" ? 0 : range === "30d" ? 30 : range === "90d" ? 90 : 7;
-  const to = now.toISOString();
-  const from = days === 0
-    ? new Date(Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate())).toISOString()
-    : new Date(now.getTime() - days * 86400000).toISOString();
-  return { from, to };
 }
 function Metric({label,value}:{label:string;value:number}) {
   return <div className="min-h-[84px] border-r border-[#E5E7EB] px-3 py-3 last:border-r-0">
