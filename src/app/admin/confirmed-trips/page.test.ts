@@ -4,6 +4,7 @@ import test from "node:test";
 
 const page = readFileSync("src/app/admin/confirmed-trips/page.tsx", "utf8");
 const recent = readFileSync("src/components/admin/RecentConfirmedTripTable.tsx", "utf8");
+const breakdowns = readFileSync("src/components/admin/ConfirmedTripsBreakdowns.tsx", "utf8");
 const service = readFileSync("src/services/adminConfirmedTripsOperationsService.ts", "utf8");
 const navigation = readFileSync("src/lib/adminNavigation.ts", "utf8");
 const architecture = readFileSync("src/lib/my-trips-architecture.test.ts", "utf8");
@@ -94,7 +95,8 @@ test("Confirmed Trips UI uses one existing white parent with responsive summary 
   assert.match(page, /<AdminSectionCard className="min-w-0 p-4 sm:p-5 lg:p-6">/);
   assert.equal((page.match(/<AdminSectionCard/g) || []).length, 1);
   assert.match(page, /grid grid-cols-2 gap-2.5 sm:gap-3 md:grid-cols-3 lg:grid-cols-5/);
-  assert.match(page, /grid items-stretch gap-4 lg:grid-cols-2/);
+  assert.match(page, /<ConfirmedTripsBreakdowns operations=\{operations\} \/>/);
+  assert.match(breakdowns, /grid items-start gap-3 lg:grid-cols-2/);
   assert.match(page, /<TripMetric label="Confirmed trips"/);
   assert.match(page, /<TripMetric label="Last 24h"/);
   assert.match(page, /<TripMetric label="Upcoming"/);
@@ -113,13 +115,17 @@ test("Phase 1 prioritizes trip records and preserves the two in-page shortcuts",
     "recent-confirmed-trips-title",
     "confirmation-integration-title",
     "confirmation-delivery-health-title",
-    "trips-by-product-title",
-    "trips-by-provider-title",
     "trips-operational-boundaries",
   ];
   const positions = order.map((id) => page.indexOf('aria-labelledby="' + id + '"'));
-  assert.ok(positions.every((position) => position >= 0), "All seven overview sections remain present");
+  const breakdownPosition = page.indexOf("<ConfirmedTripsBreakdowns operations={operations} />");
+  assert.ok(positions.every((position) => position >= 0), "All overview sections remain present");
+  assert.ok(positions[3] < breakdownPosition && breakdownPosition < positions[4],
+    "Both breakdowns remain between delivery health and operational boundaries");
   assert.deepEqual(positions, [...positions].sort((a, b) => a - b), "Overview sections follow the Phase 1 reading order");
+  const productIndex = breakdowns.indexOf('aria-labelledby="trips-by-product-title"');
+  const providerIndex = breakdowns.indexOf('aria-labelledby="trips-by-provider-title"');
+  assert.ok(productIndex >= 0 && providerIndex > productIndex, "Both breakdown panels remain in reading order");
 
   const headerActions = page.slice(page.indexOf('actions={'), page.indexOf('aria-label="Confirmed Trips page shortcuts"'));
   assert.match(headerActions, /href="\/admin\/confirmed-trips\/records"/);
@@ -177,9 +183,11 @@ test("Confirmed Trips UI preserves honest data, alerts and no-booking boundaries
   for (const property of [
     "operations.metrics.total", "operations.metrics.confirmedLast24h",
     "operations.metrics.upcoming", "operations.metrics.past",
-    "operations.metrics.cancelled", "operations.byProduct.map",
-    "operations.byProvider.map",
+    "operations.metrics.cancelled",
   ]) assert.ok(page.includes(property), property);
+  assert.match(page, /<ConfirmedTripsBreakdowns operations=\{operations\} \/>/);
+  assert.match(breakdowns, /operations\.byProduct\.map/);
+  assert.match(breakdowns, /operations\.byProvider\.map/);
   assert.match(page, /<RecentConfirmedTripTable trips=\{operations\.recentTrips\}/);
   assert.match(recent, /trips\.map\(\(trip\) =>/);
   for (const property of [
@@ -212,38 +220,63 @@ test("Confirmed Trips exposes all operational sections regardless of available t
   assert.match(page, /<Link href="\/admin\/flight-status"/);
   assert.match(flightStatusPage, /getFlightStatusOperationsSnapshot/);
 
-  const start = page.indexOf('<div className="grid items-stretch gap-4 lg:grid-cols-2">');
+  const start = page.indexOf('<ConfirmedTripsBreakdowns operations={operations} />');
   const end = page.indexOf('<section aria-labelledby="trips-operational-boundaries"', start);
-  assert.ok(start >= 0 && end > start, "product and provider panels must remain present");
-  const breakdowns = page.slice(start, end);
+  assert.ok(start >= 0 && end > start, "Product and provider panels remain unconditionally mounted");
   assert.match(breakdowns, /<section aria-labelledby="trips-by-product-title"/);
   assert.match(breakdowns, /<section aria-labelledby="trips-by-provider-title"/);
   assert.match(breakdowns, /Product breakdown unavailable/);
   assert.match(breakdowns, /Provider breakdown unavailable/);
   assert.equal((breakdowns.match(/!operations \? \(/g) || []).length, 2,
-    "both breakdowns must show honest unavailable-data states");
-  assert.doesNotMatch(page, /\{operations \? \(\s*<div className="grid items-stretch/);
+    "Both breakdowns must show honest unavailable-data states");
+  assert.doesNotMatch(page, /\{operations \? \(\s*<ConfirmedTripsBreakdowns/);
   assert.match(page, /<section aria-labelledby="confirmed-trips-overview"/);
   assert.match(page, /<section aria-labelledby="confirmation-integration-title"/);
   assert.match(page, /<section aria-labelledby="recent-confirmed-trips-title"/);
-  for (const match of page.matchAll(/className="([^"]*)"/g)) {
-    const classes = match[1].split(/\s+/);
-    assert.equal(
-      classes.some(token => /^(?:[a-z0-9-]+:)*(?:hidden|invisible|opacity-0)$/.test(token)),
-      false,
-      "Confirmed Trips sections must not use a visibility-hiding utility",
-    );
+  for (const source of [page, breakdowns]) {
+    for (const match of source.matchAll(/className="([^"]*)"/g)) {
+      const classes = match[1].split(/\s+/);
+      assert.equal(
+        classes.some(token => /^(?:[a-z0-9-]+:)*(?:hidden|invisible|opacity-0)$/.test(token)),
+        false,
+        "Confirmed Trips sections must not use a visibility-hiding utility",
+      );
+    }
   }
 });
 
+
+test("Phase 5 keeps both breakdowns visible, compact, and backed by real operations data", () => {
+  assert.match(page, /<ConfirmedTripsBreakdowns operations=\{operations\} \/>/);
+  assert.match(breakdowns, /grid items-start gap-3 lg:grid-cols-2/);
+  assert.match(breakdowns, /operations\.byProduct\.length/);
+  assert.match(breakdowns, /operations\.byProvider\.length/);
+  assert.match(breakdowns, /operations\.byProduct\.map/);
+  assert.match(breakdowns, /operations\.byProvider\.map/);
+  assert.match(breakdowns, /item\.lastConfirmationAt/);
+  assert.match(breakdowns, /item\.count/);
+  assert.doesNotMatch(breakdowns, /min-h-36|items-stretch|opacity-0|md:grid-cols-5/);
+  assert.match(page, /font-semibold leading-6 text-slate-950">Operational boundaries/);
+  for (const text of [
+    "Kurioticket is a metasearch and referral platform",
+    "Kurioticket accepted a valid signed partner confirmation and stored it as trusted trip data",
+    "It does not create a Kurioticket booking, payment, refund, cancellation or ticketing record",
+    "Signed confirmations only",
+    "Provider handoff ≠ confirmation",
+    "No Kurioticket payment record",
+    "MyTrip rows do not carry an environment column",
+    "reports the database connected to the current",
+  ]) assert.ok(page.includes(text), "Important operational limit must remain: " + text);
+});
+
 test("Previously conditional trip records remain truthful and read-only", () => {
-  assert.match(page, /operations\.byProduct\.map/);
-  assert.match(page, /operations\.byProvider\.map/);
+  assert.match(breakdowns, /operations\.byProduct\.map/);
+  assert.match(breakdowns, /operations\.byProvider\.map/);
   assert.match(recent, /trips\.map\(\(trip\) =>/);
   assert.match(recent, /No provider-confirmed trips yet/);
   assert.match(page, /Recent trip records are unavailable because the confirmed-trip database query could not be completed/);
-  assert.match(page, /No counts are assumed/);
-  assert.match(page, /No providers or counts are assumed/);
+  assert.match(breakdowns, /No counts are assumed/);
+  assert.match(breakdowns, /No providers or counts are assumed/);
   assert.match(page, /Provider handoff ≠ confirmation/);
   assert.doesNotMatch(page, /<form|method:\s*["'](?:POST|PATCH|DELETE)/);
 });
@@ -270,7 +303,7 @@ test("Phase 4 readiness is compact, truthful, and exposes all five configuration
 
 test("Phase 4 delivery health keeps distinct inactive, unavailable, and genuine receipt states", () => {
   const start = page.indexOf('<section aria-labelledby="confirmation-delivery-health-title"');
-  const end = page.indexOf('<div className="grid items-stretch gap-4 lg:grid-cols-2">', start);
+  const end = page.indexOf('<ConfirmedTripsBreakdowns operations={operations} />', start);
   const section = page.slice(start, end);
   assert.ok(start >= 0 && end > start);
   assert.match(section, /!readiness\.feedReady \? \(/);
