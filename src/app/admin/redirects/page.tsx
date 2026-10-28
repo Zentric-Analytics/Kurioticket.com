@@ -19,7 +19,7 @@ export default async function AdminRedirectsPage({ searchParams, embedded = fals
 
   return (
     <>
-      {!embedded ? <SearchWorkspaceBackLink /> : null}
+      {!embedded ? <SearchWorkspaceBackLink href="/admin/providers?view=attribution" label="Provider reports" /> : null}
       <SearchWorkspacePanelFrame embedded={embedded}
         title="Provider Handoffs"
         description="Review verified outbound provider handoffs. A handoff records leaving Kurioticket for a provider; it is not proof of a completed booking or payment."
