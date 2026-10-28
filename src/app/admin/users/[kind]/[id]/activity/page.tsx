@@ -196,9 +196,9 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
         </div>
         <div className="col-span-3 grid min-w-0 grid-cols-3 gap-2 sm:gap-4">
           {[
-            ["Searches", data.events.filter(e => e.stage === "SEARCH_COMPLETED").length],
-            ["Results viewed", data.events.filter(e => e.stage === "RESULTS_VIEWED").length],
-            ["Provider handoffs", data.events.filter(e => e.stage === "PROVIDER_HANDOFF_STARTED").length],
+            ["Searches", data.summary.searches],
+            ["Results viewed", data.summary.resultsViewed],
+            ["Provider handoffs", data.summary.providerHandoffs],
           ].map(([label,count]) => <div key={label} className="min-w-0 border-l border-[#D8E1EC] pl-3 sm:pl-4">
             <strong className="block text-lg font-semibold tabular-nums">{count}</strong>
             <span className="block text-[12px] text-[var(--muted-foreground)]">{label}</span>
@@ -208,7 +208,6 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
       {kind === "user" ? <div className="mt-2 flex justify-end" aria-label="Identity management">
         <RegisteredManage id={id} email={data.email} role={data.role || "USER"} status={data.status} actorId={session.user.id}/>
       </div> : null}
-      <p className="mt-1 text-right text-xs text-[var(--muted-foreground)]">Counts reflect loaded events only.</p>
     </section>
 
     <section aria-label="Activity filters" className="min-w-0">
