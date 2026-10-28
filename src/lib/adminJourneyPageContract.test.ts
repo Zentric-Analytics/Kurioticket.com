@@ -44,3 +44,14 @@ test("custom dates are editable and preset selection does not submit stale bound
   assert.match(controls, /onValueChange=/);
   assert.match(list, /<JourneyDateRangeFields/);
 });
+
+test("equal custom UTC endpoints block native form submission", () => {
+  assert.match(controls, /setCustomValidity\(valid \? "" :/);
+  assert.match(controls, /offsetUtcDateTime\(from, 1\)/);
+  assert.match(controls, /offsetUtcDateTime\(to, -1\)/);
+  assert.match(controls, /Date\.parse\(startIso\) < Date\.parse\(endIso\)/);
+});
+test("detail event pagination retains the display preset without forwarding it to backend", () => {
+  assert.match(detail, /key !== "cursor"\) p\.set\(key, value\)/);
+  assert.match(detail, /range: _range, \.\.\.backendRaw/);
+});
