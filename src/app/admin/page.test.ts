@@ -35,11 +35,21 @@ test("compact Operations Snapshot has exactly four genuine primary metrics", () 
     assert.ok(snapshot.includes('label="' + label + '" value={' + value + "}"), label);
   }
   assert.equal((snapshot.match(/<SnapshotLink /g) ?? []).length, 4);
-  assert.match(snapshot, /xl:grid-cols-4/);
+  assert.match(snapshot, /min-\[900px\]:grid-cols-4/);
   assert.match(snapshot, /sm:grid-cols-2/);
   assert.match(snapshot, /<AdminOverviewRangeSelect range=\{range\} \/>/);
   assert.doesNotMatch(snapshot, /data\.users\.(?:active|suspended|deleted)/);
   assert.doesNotMatch(snapshot, /data\.audit\.human/);
+});
+
+test("compact snapshot links keep cards equal height and explanatory text readable", () => {
+  const card = dashboard.slice(dashboard.indexOf("function SnapshotLink("), dashboard.indexOf("function AttentionLink("));
+  assert.match(card, /flex h-full min-w-0 flex-col/);
+  assert.match(card, /px-3 py-2\.5/);
+  assert.match(card, /mt-1\.5 min-w-0 break-words/);
+  assert.match(card, /mt-0\.5 min-w-0 break-words text-\[22px\]/);
+  assert.match(card, /mt-1 min-w-0 break-words text-\[11px\] leading-4/);
+  assert.doesNotMatch(card, /truncate|whitespace-nowrap|overflow-hidden/);
 });
 
 test("live presence keeps consent, 90-second window, and explicit unavailable state", () => {
@@ -216,7 +226,7 @@ test("no fake totals, old full-report panels, or hidden full diagnostics remain 
 });
 
 test("the compact grid remains responsive without horizontal scrolling or cramped desktop cards", () => {
-  assert.match(display, /grid gap-2 sm:grid-cols-2 xl:grid-cols-4/);
+  assert.match(display, /grid gap-2 sm:grid-cols-2 min-\[900px\]:grid-cols-4/);
   assert.match(display, /grid gap-2 md:grid-cols-3/);
   assert.match(display, /grid min-w-0 gap-4 lg:grid-cols-2/);
   assert.match(dashboard, /grid grid-cols-2 gap-2/);
