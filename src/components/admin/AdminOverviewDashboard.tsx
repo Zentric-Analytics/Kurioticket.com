@@ -115,16 +115,16 @@ function SnapshotLink({ label, value, href, icon: Icon, hint }: {
   hint: string;
 }) {
   return (
-    <Link href={href} className="focus-ring group min-w-0 rounded-lg border border-slate-200 px-3 py-3 transition hover:border-indigo-300 hover:bg-indigo-50/30 sm:px-4">
+    <Link href={href} className="focus-ring group flex h-full min-w-0 flex-col rounded-lg border border-slate-200 px-3 py-2.5 transition hover:border-indigo-300 hover:bg-indigo-50/30">
       <div className="flex items-center justify-between gap-2">
         <Icon size={17} className="text-indigo-700" aria-hidden="true" />
         <ArrowUpRight size={14} className="text-slate-400 group-hover:text-indigo-700" aria-hidden="true" />
       </div>
-      <p className="mt-2 text-[12px] font-medium leading-4 text-slate-600">{label}</p>
-      <p className="mt-1 text-2xl font-semibold tabular-nums tracking-tight text-slate-950">
+      <p className="mt-1.5 min-w-0 break-words text-[12px] font-medium leading-4 text-slate-600">{label}</p>
+      <p className="mt-0.5 min-w-0 break-words text-[22px] font-semibold leading-7 tabular-nums tracking-tight text-slate-950">
         {typeof value === "number" ? count(value) : value}
       </p>
-      <p className="mt-1 text-[11px] leading-4 text-slate-600">{hint}</p>
+      <p className="mt-1 min-w-0 break-words text-[11px] leading-4 text-slate-600">{hint}</p>
     </Link>
   );
 }
@@ -272,7 +272,7 @@ export function AdminOverviewDashboard({ data, system, activity, range }: {
           </div>
           <AdminOverviewRangeSelect range={range} />
         </div>
-        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-2 sm:grid-cols-2 min-[900px]:grid-cols-4">
           <SnapshotLink href="/admin/users" label="Total accounts" value={data.users.total} icon={Users} hint="Current account records" />
           <SnapshotLink href="/admin/users" label="Active website users" value={websiteActive} icon={Activity} hint="Consented website identities · last 90s" />
           <SnapshotLink href="/admin/searches/activity" label="Recorded searches" value={data.journeys.operationalSearches.total} icon={Search} hint="Selected reporting range" />
