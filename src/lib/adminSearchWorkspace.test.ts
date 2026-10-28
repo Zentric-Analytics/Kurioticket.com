@@ -9,14 +9,10 @@ const journeys = readFileSync("src/app/admin/journeys/page.tsx","utf8");
 const attribution = readFileSync("src/app/admin/referral-attribution/page.tsx","utf8");
 const searchDetail = readFileSync("src/app/admin/searches/[id]/page.tsx","utf8");
 
-test("all four sections render within one Search Activity route", () => {
-  for (const tab of ["searches","journeys","handoffs","attribution"] as const) {
-    assert.equal(searchWorkspaceTab(tab),tab);
-  }
-  assert.match(activity, /<SearchWorkspaceTabs active=/);
-  assert.match(activity, /AdminJourneysPage\(\{ searchParams: Promise\.resolve\(sectionParams\), embedded: true \}\)/);
-  assert.match(activity, /AdminRedirectsPage\(\{ searchParams: Promise\.resolve\(sectionParams\), embedded: true \}\)/);
-  assert.match(activity, /AdminReferralAttributionPage\(\{ searchParams: Promise\.resolve\(sectionParams\), embedded: true \}\)/);
+test("Search Activity retains independent search monitoring and redirects old section links", () => {
+  assert.match(activity, /redirect\(target/);
+  assert.doesNotMatch(activity, /<SearchWorkspaceTabs active=/);
+  assert.doesNotMatch(activity, /AdminJourneysPage\(\{/);
 });
 test("tab destinations cannot carry incompatible backend filter keys", () => {
   assert.equal(searchWorkspaceHref("handoffs",{status:"FAILED",product:"HOTEL",environment:"staging"}),"/admin/searches/activity?tab=handoffs&environment=staging&product=HOTEL");
@@ -26,10 +22,10 @@ test("tab destinations cannot carry incompatible backend filter keys", () => {
 test("filtered sections submit back to the unified route and keep their reporting contracts", () => {
   assert.match(journeys,/action=\{embedded \? "\/admin\/searches\/activity"/);
   assert.match(redirects,/action=\{embedded \? "\/admin\/searches\/activity"/);
-  assert.match(attribution,/action=\{embedded \? "\/admin\/searches\/activity"/);
+  assert.match(attribution,/action=\{embedded \? "\/admin\/providers"/);
   assert.match(redirects,/name="tab" value="handoffs"/);
   assert.match(journeys,/name="tab" value="journeys"/);
-  assert.match(attribution,/name="tab" value="attribution"/);
+  assert.match(attribution,/name="view" value="attribution"/);
   assert.match(searchDetail,/No verified identity link is available/);
   assert.match(searchDetail,/These links do not imply that another record belongs to this exact search/);
 });
