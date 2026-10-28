@@ -141,7 +141,7 @@ function SearchDetailContent({ search }: { search: AdminSearchDetail }) {
               ) : null}
               <Link href={"/admin/searches/activity?tab=handoffs&" + (search.identity.userId
                 ? "userId=" + encodeURIComponent(search.identity.userId)
-                : "visitorId=" + encodeURIComponent(search.identity.visitorId!))}
+                : "visitorId=" + encodeURIComponent(search.identity.visitorId!)) + "&environment=" + encodeURIComponent(search.environment)}
                 className="hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25">Handoffs for this identity</Link>
             </>
           ) : (
