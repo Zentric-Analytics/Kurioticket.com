@@ -28,6 +28,12 @@ const safeAnalyticsLabels = {
 } as const;
 type SafeAnalyticsType = keyof typeof safeAnalyticsLabels;
 
+export type IdentityActivitySummary = {
+  searches: number;
+  resultsViewed: number;
+  providerHandoffs: number;
+};
+
 export type IdentityActivityRecord = {
   id: string;
   kind: IdentityKind;
@@ -38,6 +44,8 @@ export type IdentityActivityRecord = {
   firstSeenAt: Date;
   lastSeenAt: Date | null;
   events: ActivityRow[];
+  /** Exact matching record counts across all pages, never the current cursor page. */
+  summary: IdentityActivitySummary;
   nextCursor: string | null;
   environment: PublicEnvironment;
   /** Operational search records do not imply a consented analytics identity. */
@@ -158,50 +166,102 @@ export async function loadAdminIdentityActivity(
       ],
     } : {};
 
+    // The timeline is cursor-paginated. Reuse these *unpaginated* predicates for
+    // database aggregates so Activity summary always reflects all matching records,
+    // including events on earlier and later pages.
+    const journeyWhere: Prisma.JourneyEventWhereInput = {
+      AND: [scopedJourneyOwner, { type: { in: stages } }, { createdAt: window }, productEventFilter, eventQ],
+    };
+    const searchWhere: Prisma.SearchHistoryWhereInput = {
+      AND: [
+        searchOwner, environmentScope.search, { createdAt: window },
+        ...(isOperationalGuest ? [] : [excludeCanonicalLegacyRows("SEARCH_COMPLETED", scopedJourneyOwner, window, productEventFilter, eventQ)]),
+        ...(product ? [{ type: product }] : []),
+        ...(q && !legacyStageLabelMatchesQuery("SEARCH_COMPLETED", q) ? [{ OR: [
+          { origin: ci(q) }, { destination: ci(q) },
+          ...(product?.toLowerCase().includes(q.toLowerCase()) ? [{ type: product }] : []),
+        ] }] : []),
+      ],
+    };
+    const handoffWhere: Prisma.RedirectLogWhereInput = {
+      AND: [
+        redirectOwner, environmentScope.handoff, { createdAt: window },
+        ...(isOperationalGuest ? [] : [excludeCanonicalLegacyRows("PROVIDER_HANDOFF_STARTED", scopedJourneyOwner, window, productEventFilter, eventQ)]),
+        ...(product ? [{ type: product }] : []),
+        ...(q && !legacyStageLabelMatchesQuery("PROVIDER_HANDOFF_STARTED", q)
+          ? [{ OR: [{ provider: ci(q) }, { route: ci(q) }] }] : []),
+      ],
+    };
+    const analyticsWhere: Prisma.AnalyticsEventWhereInput = {
+      AND: [
+        analyticsOwner, environmentScope.analytics, { createdAt: window },
+        { type: { in: Object.keys(safeAnalyticsLabels) as SafeAnalyticsType[] } },
+        ...(q ? [{ type: { in: (Object.keys(safeAnalyticsLabels) as SafeAnalyticsType[])
+          .filter(type => safeAnalyticsLabels[type].toLowerCase().includes(q.toLowerCase())) } }] : []),
+      ],
+    };
+    const canReadHandoffs = allowed.has("PROVIDER_HANDOFF_STARTED")
+      && (!product || product === "FLIGHT" || product === "HOTEL");
+
+    // Match the canonical event reader's source-reference validation as well as
+    // ownership, consent and environment checks. Never count an orphaned stage or
+    // an attached source record belonging to an unrelated identity.
+    const sourceOwnerSearch: Prisma.SearchHistoryWhereInput = kind === "guest"
+      ? { userId: null, visitorId: id }
+      : { AND: [{ visitor: { is: eligibleJourneyLinkedVisitorWhere(id) } },
+          { OR: [{ userId: null }, { userId: id }] }] };
+    const sourceOwnerHandoff: Prisma.RedirectLogWhereInput = kind === "guest"
+      ? { userId: null, visitorId: id }
+      : { AND: [{ visitor: { is: eligibleJourneyLinkedVisitorWhere(id) } },
+          { OR: [{ userId: null }, { userId: id }] }] };
+    const canonicalCountValidity: Prisma.JourneyEventWhereInput = {
+      AND: [
+        { OR: [
+          { type: "PROVIDER_HANDOFF_STARTED", redirectLogId: { not: null } },
+          { type: { in: ["SEARCH_COMPLETED", "RESULTS_VIEWED", "OFFER_SELECTED"] }, searchHistoryId: { not: null } },
+        ] },
+        { OR: [{ searchHistoryId: null }, { searchHistory: { is: sourceOwnerSearch } }] },
+        { OR: [{ redirectLogId: null }, { redirectLog: { is: sourceOwnerHandoff } }] },
+      ],
+    };
+
     // Each source is separately seek-paginated in its own existing index.
-    // Bounded per-source reads prevent a busy visitor from loading their full history.
-    const [journey, searches, handoffs, analytics] = await Promise.all([
+    // Counts use the same base filters but deliberately omit every page cursor
+    // and read no unbounded event arrays.
+    const [journey, searches, handoffs, analytics, canonicalTotals, legacySearchTotal, legacyHandoffTotal] = await Promise.all([
       stages.length && !isOperationalGuest ? db.journeyEvent.findMany({
-        where: { AND: [scopedJourneyOwner, { type: { in: stages } }, { createdAt: window }, sourceActivitySeek(cursor, "j", order), productEventFilter, eventQ] },
+        where: { AND: [journeyWhere, sourceActivitySeek(cursor, "j", order)] },
         orderBy: [{ createdAt: createdAtDirection }, { id: "asc" }],
         take: ACTIVITY_FETCH_LIMIT, select: journeySelect,
       }) : Promise.resolve([]),
       allowed.has("SEARCH_COMPLETED") ? db.searchHistory.findMany({
-        where: { AND: [
-          searchOwner, environmentScope.search, { createdAt: window }, sourceActivitySeek(cursor, "s", order),
-          ...(isOperationalGuest ? [] : [excludeCanonicalLegacyRows("SEARCH_COMPLETED", scopedJourneyOwner, window, productEventFilter, eventQ)]),
-          ...(product ? [{ type: product }] : []),
-          ...(q && !legacyStageLabelMatchesQuery("SEARCH_COMPLETED", q) ? [{ OR: [
-            { origin: ci(q) }, { destination: ci(q) },
-            ...(product?.toLowerCase().includes(q.toLowerCase()) ? [{ type: product }] : []),
-          ] }] : []),
-        ] },
+        where: { AND: [searchWhere, sourceActivitySeek(cursor, "s", order)] },
         orderBy: [{ createdAt: createdAtDirection }, { id: "asc" }],
         take: ACTIVITY_FETCH_LIMIT,
         select: { id: true, type: true, origin: true, destination: true, status: true, createdAt: true },
       }) : Promise.resolve([]),
-      allowed.has("PROVIDER_HANDOFF_STARTED") && (!product || product === "FLIGHT" || product === "HOTEL")
-        ? db.redirectLog.findMany({
-          where: { AND: [
-            redirectOwner, environmentScope.handoff, { createdAt: window }, sourceActivitySeek(cursor, "r", order),
-            ...(isOperationalGuest ? [] : [excludeCanonicalLegacyRows("PROVIDER_HANDOFF_STARTED", scopedJourneyOwner, window, productEventFilter, eventQ)]),
-            ...(product ? [{ type: product }] : []),
-            ...(q && !legacyStageLabelMatchesQuery("PROVIDER_HANDOFF_STARTED", q) ? [{ OR: [{ provider: ci(q) }, { route: ci(q) }] }] : []),
-          ] },
-          orderBy: [{ createdAt: createdAtDirection }, { id: "asc" }], take: ACTIVITY_FETCH_LIMIT,
-          select: { id: true, type: true, provider: true, route: true, createdAt: true },
-        }) : Promise.resolve([]),
+      canReadHandoffs ? db.redirectLog.findMany({
+        where: { AND: [handoffWhere, sourceActivitySeek(cursor, "r", order)] },
+        orderBy: [{ createdAt: createdAtDirection }, { id: "asc" }], take: ACTIVITY_FETCH_LIMIT,
+        select: { id: true, type: true, provider: true, route: true, createdAt: true },
+      }) : Promise.resolve([]),
       allowed.has("ACCOUNT_ACTIVITY") && !product && !isOperationalGuest ? db.analyticsEvent.findMany({
-        where: { AND: [
-          analyticsOwner, environmentScope.analytics, { createdAt: window }, sourceActivitySeek(cursor, "e", order),
-          { type: { in: Object.keys(safeAnalyticsLabels) as SafeAnalyticsType[] } },
-          ...(q ? [{ type: { in: (Object.keys(safeAnalyticsLabels) as SafeAnalyticsType[])
-            .filter(type => safeAnalyticsLabels[type].toLowerCase().includes(q.toLowerCase())) } }] : []),
-        ] },
+        where: { AND: [analyticsWhere, sourceActivitySeek(cursor, "e", order)] },
         orderBy: [{ createdAt: createdAtDirection }, { id: "asc" }], take: ACTIVITY_FETCH_LIMIT,
         select: { id: true, type: true, createdAt: true },
       }) : Promise.resolve([]),
+      stages.length && !isOperationalGuest ? db.journeyEvent.groupBy({
+        by: ["type"], where: { AND: [journeyWhere, canonicalCountValidity] }, _count: { _all: true },
+      }) : Promise.resolve([]),
+      allowed.has("SEARCH_COMPLETED") ? db.searchHistory.count({ where: searchWhere }) : Promise.resolve(0),
+      canReadHandoffs ? db.redirectLog.count({ where: handoffWhere }) : Promise.resolve(0),
     ]);
+    const canonicalCounts = new Map(canonicalTotals.map(row => [row.type, row._count._all]));
+    const summary: IdentityActivitySummary = {
+      searches: (canonicalCounts.get("SEARCH_COMPLETED") ?? 0) + legacySearchTotal,
+      resultsViewed: canonicalCounts.get("RESULTS_VIEWED") ?? 0,
+      providerHandoffs: (canonicalCounts.get("PROVIDER_HANDOFF_STARTED") ?? 0) + legacyHandoffTotal,
+    };
 
     const canonical = journey.flatMap(event => {
       const row = toAdminJourneyActivity(event, kind, id);
@@ -247,6 +307,7 @@ export async function loadAdminIdentityActivity(
         lastSeenAt: visitor?.lastSeenAt ?? operationalLastSeen ?? latestVisibleActivityAt(page),
         source: kind === "user" ? "account" : isOperationalGuest ? "operational" : "visitor",
         events: page,
+        summary,
         nextCursor: hasMore && last ? encodeActivityCursor(last, kind, id, filters, environment) : null,
       },
     };
