@@ -7,7 +7,7 @@ import {
   decodeActivityCursor, encodeActivityCursor, excludeCanonicalLegacyRows, latestVisibleActivityAt, legacyStageLabelMatchesQuery, sourceActivitySeek,
   type ActivityCursor, type ActivityFilters, type JourneyStage,
 } from "@/lib/adminIdentityActivity";
-import { readCompleteActivitySource, type ActivitySourcePrefix, type ActivitySourceRow } from "@/lib/adminIdentityActivityComplete";
+import { completeActivityReadTimeout, readCompleteActivitySource, type ActivitySourcePrefix, type ActivitySourceRow } from "@/lib/adminIdentityActivityComplete";
 import { escapePrismaContainsQuery } from "@/lib/adminIdentityDirectory";
 import { getOptionalPrisma } from "@/lib/prisma";
 import { getPublicEnvironment, type PublicEnvironment } from "@/lib/stagingSafety";
@@ -230,6 +230,22 @@ export async function loadAdminIdentityActivity(
       };
     };
 
+    // Estimate complete-read work before opening the snapshot so its transaction
+    // budget grows with the full filtered history. These counts are never used to
+    // stop fetching; new matching rows are still included by the snapshot reads.
+    const readVolume = complete ? await Promise.all([
+      stages.length && !isOperationalGuest ? db.journeyEvent.count({ where: journeyWhere }) : Promise.resolve(0),
+      allowed.has("SEARCH_COMPLETED") ? db.searchHistory.count({ where: searchWhere }) : Promise.resolve(0),
+      canReadHandoffs ? db.redirectLog.count({ where: handoffWhere }) : Promise.resolve(0),
+      allowed.has("ACCOUNT_ACTIVITY") && !product && !isOperationalGuest
+        ? db.analyticsEvent.count({ where: analyticsWhere }) : Promise.resolve(0),
+      stages.length && kind === "user"
+        ? db.visitor.count({ where: eligibleJourneyLinkedVisitorWhere(id) }) : Promise.resolve(0),
+    ]) : null;
+    const transactionTimeout = readVolume
+      ? completeActivityReadTimeout(readVolume.slice(0, 4), readVolume[4])
+      : 30_000;
+
     // A repeatable-read snapshot keeps canonical + legacy de-duplication stable
     // when a source record and its JourneyEvent are inserted concurrently.
     // The timeline, all totals and every visitor-ID batch observe one snapshot.
@@ -307,7 +323,7 @@ export async function loadAdminIdentityActivity(
           canReadHandoffs ? tx.redirectLog.count({ where: handoffWhere }) : Promise.resolve(0),
         ]);
         return [pageJourney, pageSearches, pageHandoffs, pageAnalytics, counts, searchTotal, handoffTotal] as const;
-      }, { isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead, timeout: 30_000 });
+      }, { isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead, timeout: transactionTimeout });
 
     const summary: IdentityActivitySummary = {
       searches: (canonicalCounts.get("SEARCH_COMPLETED") ?? 0) + legacySearchTotal,

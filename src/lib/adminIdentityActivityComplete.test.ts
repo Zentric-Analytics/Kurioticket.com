@@ -125,17 +125,20 @@ function setup(kind: "guest" | "user" | "operational", count = 1105) {
     },
   });
   let transactions = 0;
+  const transactionOptions: Row[] = [];
   const db: Row = {
     user: { async findUnique() { return { id: userId, name: "Test account", role: "USER", status: "ACTIVE", createdAt: baseTime }; } },
     visitor: {
       async findFirst() { return kind === "operational" ? null : visitor; },
       async findMany() { return kind === "user" ? [{ id: visitorId }] : []; },
+      async count() { return kind === "user" ? 1 : 0; },
     },
     journeyEvent: delegate("journey", journeyRows), searchHistory: delegate("search", allSearchRows),
     redirectLog: delegate("handoff", handoffRows), analyticsEvent: delegate("analytics", analyticsRows),
     async $queryRaw() { return [{ firstSeenAt: baseTime, lastSeenAt: baseTime }]; },
     async $transaction(action: (tx: Row) => Promise<unknown>, options: Row) {
       transactions++;
+      transactionOptions.push(options);
       assert.equal(options.isolationLevel, "RepeatableRead");
       return action(db);
     },
@@ -150,7 +153,7 @@ function setup(kind: "guest" | "user" | "operational", count = 1105) {
   return {
     load: (filters = allFilters, cursor?: string, mode: "page" | "all" = "all") =>
       service.loadAdminIdentityActivity(kind === "user" ? "user" : "guest", id, filters, cursor, mode),
-    calls, failNextBatch: () => { failAfterFirstBatch = true; }, transactions: () => transactions,
+    transactionOptions, calls, failNextBatch: () => { failAfterFirstBatch = true; }, transactions: () => transactions,
     expected: count + handoffRows.length + analyticsRows.length,
   };
 }
@@ -234,4 +237,28 @@ test("complete source reads an exact batch multiple without dropping the last ro
   });
   assert.equal(result.length, 1000);
   assert.deepEqual(calls, [0, 500, 1000]);
+});
+
+
+test("complete transactions scale their time budget with matching history while paged reads stay bounded", async () => {
+  const small = setup("guest", 50);
+  const large = setup("guest", 2505);
+  assert.equal((await small.load()).status, "ok");
+  assert.equal((await large.load()).status, "ok");
+  assert.ok(large.transactionOptions[0].timeout > small.transactionOptions[0].timeout);
+  assert.ok(large.transactionOptions[0].timeout > 30_000);
+  const paged = setup("guest", 2505);
+  await paged.load(allFilters, undefined, "page");
+  assert.equal(paged.transactionOptions[0].timeout, 30_000);
+});
+
+test("complete-read budget accounts for every source and visitor batch without overflowing timers", () => {
+  const { completeActivityReadTimeout } = loadProduction("src/lib/adminIdentityActivityComplete.ts");
+  assert.ok(completeActivityReadTimeout([100_000, 100_000, 100_000, 100_000], 500)
+    > completeActivityReadTimeout([500, 500, 500, 500], 1));
+  assert.ok(completeActivityReadTimeout([0, 0, 0, 0], 500)
+    > completeActivityReadTimeout([0, 0, 0, 0], 0));
+  const maximum = completeActivityReadTimeout([Number.MAX_SAFE_INTEGER], 0);
+  assert.equal(maximum, 2_147_483_647);
+  assert.throws(() => completeActivityReadTimeout([-1], 0), /Invalid activity read volume/);
 });
