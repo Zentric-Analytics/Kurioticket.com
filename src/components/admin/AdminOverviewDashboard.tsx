@@ -138,7 +138,7 @@ function AttentionLink({ label, value, href, icon: Icon, tone }: {
 }) {
   const colored = value > 0;
   return (
-    <Link href={href} className="focus-ring group flex min-w-0 items-center gap-3 rounded-lg border border-slate-200 px-3 py-3 transition hover:border-indigo-300 hover:bg-slate-50">
+    <Link href={href} className="focus-ring group flex min-w-0 items-center gap-3 rounded-lg border border-slate-200 px-3 py-2.5 transition hover:border-indigo-300 hover:bg-slate-50">
       <Icon size={18} className={colored && tone === "bad" ? "text-rose-700" : colored ? "text-amber-700" : "text-slate-500"} aria-hidden="true" />
       <span className="min-w-0 flex-1 text-[13px] font-medium leading-5 text-slate-800">{label}</span>
       <strong className={"text-lg font-semibold tabular-nums " + (colored && tone === "bad" ? "text-rose-800" : colored ? "text-amber-800" : "text-slate-900")}>{count(value)}</strong>
@@ -283,73 +283,71 @@ export function AdminOverviewDashboard({ data, system, activity, range }: {
         </p>
       </section>
 
-      <section aria-label="Attention Required" className="min-w-0 rounded-xl border border-slate-200 p-4 sm:p-5">
-        <h2 className="mb-3 text-[15px] font-semibold text-slate-950">Attention Required</h2>
-        <div className="grid gap-2 md:grid-cols-3">
+      {/* Independent content-height stacks eliminate empty grid-row space on desktop. */}
+      <div className="grid min-w-0 items-start gap-4 lg:grid-cols-2">
+        <div className="flex min-w-0 flex-col gap-4">
+          <section aria-label="Attention Required" className="min-w-0 rounded-xl border border-slate-200 p-4 sm:p-5">
+          <h2 className="mb-3 text-[15px] font-semibold text-slate-950">Attention Required</h2>
+          <div className="grid gap-2">
           <AttentionLink href="/admin/providers" label="Provider issues" value={providerAttention} icon={Activity} tone="bad" />
           <AttentionLink href="/admin/support" label="Support queue" value={supportAttention} icon={Headphones} tone="warn" />
           <AttentionLink href="/admin/account-deletions" label="Deletion reviews" value={deletionAttention} icon={Trash2} tone="warn" />
-        </div>
-        <p className="mt-2 text-[11px] text-slate-600">Provider health: last 24 hours. Support and deletion queues: current.</p>
-      </section>
-
-      <div className="grid min-w-0 gap-4 lg:grid-cols-2">
-        <Section title="Visitor Activity" href="/admin/journeys" description="Recorded consented events · selected range.">
-          <div className="grid grid-cols-2 gap-2">
-            <MiniMetric label="Search events" value={stages.SEARCH_COMPLETED.events} />
-            <MiniMetric label="Results views" value={stages.RESULTS_VIEWED.events} />
-            <MiniMetric label="Offer selections" value={stages.OFFER_SELECTED.events} />
-            <MiniMetric label="Provider handoffs" value={stages.PROVIDER_HANDOFF_STARTED.events} />
           </div>
-          <p className="mt-2 text-[11px] text-slate-600">Events can repeat. Handoffs are not confirmed bookings.</p>
-        </Section>
+          <p className="mt-2 text-[11px] leading-4 text-slate-600">Provider health: last 24 hours. Support and deletion queues: current.</p>
+          </section>
 
-        <Section title="Search Performance" href="/admin/searches/activity" description="All recorded search operations · selected range.">
+          <Section title="Search Performance" href="/admin/searches/activity" description="All recorded search operations · selected range.">
           <div className="grid grid-cols-2 gap-2">
-            <MiniMetric label="Total" value={data.journeys.operationalSearches.total} />
-            <MiniMetric label="Successful" value={data.journeys.operationalSearches.success} tone="good" />
-            <MiniMetric label="Failed" value={data.journeys.operationalSearches.failed} tone={data.journeys.operationalSearches.failed ? "bad" : "neutral"} />
-            <MiniMetric label="Partial" value={data.journeys.operationalSearches.partial} />
+          <MiniMetric label="Total" value={data.journeys.operationalSearches.total} />
+          <MiniMetric label="Successful" value={data.journeys.operationalSearches.success} tone="good" />
+          <MiniMetric label="Failed" value={data.journeys.operationalSearches.failed} tone={data.journeys.operationalSearches.failed ? "bad" : "neutral"} />
+          <MiniMetric label="Partial" value={data.journeys.operationalSearches.partial} />
           </div>
           <p className="mt-2 text-[11px] text-slate-600">Includes unattributed searches; success does not guarantee offers.</p>
-        </Section>
-      </div>
+          </Section>
 
-      {/* Independent columns let short workload summaries sit directly below their related cards. */}
-      <div className="grid min-w-0 items-start gap-4 lg:grid-cols-2">
-        <div className="flex min-w-0 flex-col gap-4">
           <Section title="Provider Handoffs" href="/admin/redirects" description="Recorded outbound redirects · selected range.">
-            <div className="grid grid-cols-3 gap-2">
-              <MiniMetric label="Recorded" value={data.journeys.operationalHandoffs.total} />
-              <MiniMetric label="In consented journeys" value={data.journeys.operationalHandoffs.inConsentedJourneys} />
-              <MiniMetric label="Unattributed" value={data.journeys.operationalHandoffs.withoutVisitorIdentity} />
-            </div>
-            <p className="mt-2 text-[11px] text-slate-600">Redirects are not bookings. Missing attribution does not prove declined consent.</p>
+          <div className="grid grid-cols-3 gap-2">
+          <MiniMetric label="Recorded" value={data.journeys.operationalHandoffs.total} />
+          <MiniMetric label="In consented journeys" value={data.journeys.operationalHandoffs.inConsentedJourneys} />
+          <MiniMetric label="Unattributed" value={data.journeys.operationalHandoffs.withoutVisitorIdentity} />
+          </div>
+          <p className="mt-2 text-[11px] text-slate-600">Redirects are not bookings. Missing attribution does not prove declined consent.</p>
           </Section>
 
           <Section title="Support Workload" href="/admin/support">
-            <div className="grid grid-cols-3 gap-2">
-              <MiniMetric label="Open" value={data.support.open} />
-              <MiniMetric label="Waiting on team" value={data.support.waitingOnTeam} />
-              <MiniMetric label="Waiting on user" value={data.support.waitingOnUser} />
-            </div>
+          <div className="grid grid-cols-3 gap-2">
+          <MiniMetric label="Open" value={data.support.open} />
+          <MiniMetric label="Waiting on team" value={data.support.waitingOnTeam} />
+          <MiniMetric label="Waiting on user" value={data.support.waitingOnUser} />
+          </div>
           </Section>
         </div>
 
         <div className="flex min-w-0 flex-col gap-4">
+          <Section title="Visitor Activity" href="/admin/journeys" description="Recorded consented events · selected range.">
+          <div className="grid grid-cols-2 gap-2">
+          <MiniMetric label="Search events" value={stages.SEARCH_COMPLETED.events} />
+          <MiniMetric label="Results views" value={stages.RESULTS_VIEWED.events} />
+          <MiniMetric label="Offer selections" value={stages.OFFER_SELECTED.events} />
+          <MiniMetric label="Provider handoffs" value={stages.PROVIDER_HANDOFF_STARTED.events} />
+          </div>
+          <p className="mt-2 text-[11px] text-slate-600">Events can repeat. Handoffs are not confirmed bookings.</p>
+          </Section>
+
           <Section title="Provider Health" href="/admin/providers" description="Real request outcomes · last 24 hours.">
-            <div className="grid gap-2">
-              {data.providers.map((provider) => <ProviderSummary key={provider.id} provider={provider} />)}
-              {data.providers.length === 0 ? <p className="text-sm text-slate-600">Provider status unavailable.</p> : null}
-            </div>
+          <div className="grid gap-2">
+          {data.providers.map((provider) => <ProviderSummary key={provider.id} provider={provider} />)}
+          {data.providers.length === 0 ? <p className="text-sm text-slate-600">Provider status unavailable.</p> : null}
+          </div>
           </Section>
 
           <Section title="Deletion Workload" href="/admin/account-deletions">
-            <div className="grid grid-cols-3 gap-2">
-              <MiniMetric label="Pending" value={data.deletions.pending} />
-              <MiniMetric label="Ready for review" value={data.deletions.readyForReview} />
-              <MiniMetric label="Completed" value={data.deletions.completed} />
-            </div>
+          <div className="grid grid-cols-3 gap-2">
+          <MiniMetric label="Pending" value={data.deletions.pending} />
+          <MiniMetric label="Ready for review" value={data.deletions.readyForReview} />
+          <MiniMetric label="Completed" value={data.deletions.completed} />
+          </div>
           </Section>
         </div>
       </div>
