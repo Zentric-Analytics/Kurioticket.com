@@ -149,18 +149,49 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
       <span className="font-medium text-[#0F172A]">Activity</span>
     </nav>
 
-    <section aria-label="Customer identity" className="py-2 sm:py-3">
-      <div className="flex min-w-0 items-center gap-4">
-        <span aria-hidden="true" className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[var(--muted)] text-xl font-semibold">{(kind === "guest" ? "G" : (data.title || "U").slice(0,1)).toUpperCase()}</span>
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2"><h1 className="truncate text-xl font-semibold">{kind === "guest" ? operational ? "Guest session" : "Visitor" : data.title}</h1>
-            <span className="rounded-full border border-[var(--border)] px-2 py-0.5 text-xs">{kind === "guest" ? operational ? "Essential operational activity" : "Consented guest" : data.status === "ACTIVE" ? "Active" : data.status}</span></div>
-          {data.email ? <p className="mt-1 truncate text-sm text-[#475569]">{data.email}</p> : null}
-          <div className="mt-1 flex items-center gap-2"><code className="max-w-[240px] truncate text-xs" title={id}>{id}</code><CopyIdentityId id={id} kind={kind}/></div>
+    <section data-testid="activity-page-card" aria-label="Customer activity workspace"
+      className="min-w-0 space-y-6 rounded-xl border border-[#E2E8F0] bg-white p-4 sm:p-6 lg:p-7">
+      <section aria-label="Customer identity" className="min-w-0">
+        <div className={"grid min-w-0 gap-5 xl:items-center " +
+          (kind === "user"
+            ? "xl:grid-cols-[minmax(240px,1.25fr)_minmax(0,1.65fr)_auto]"
+            : "xl:grid-cols-[minmax(240px,1.25fr)_minmax(0,1.65fr)]")}>
+          <div className="flex min-w-0 items-center gap-4">
+            <span aria-hidden="true"
+              className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[var(--muted)] text-xl font-semibold">
+              {(kind === "guest" ? "G" : (data.title || "U").slice(0,1)).toUpperCase()}
+            </span>
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="truncate text-xl font-semibold">
+                  {kind === "guest" ? operational ? "Guest session" : "Visitor" : data.title}
+                </h1>
+                <span className="rounded-full border border-[var(--border)] px-2 py-0.5 text-xs">
+                  {kind === "guest" ? operational ? "Essential operational activity" : "Consented guest" : data.status === "ACTIVE" ? "Active" : data.status}
+                </span>
+              </div>
+              {data.email ? <p className="mt-1 truncate text-sm text-[#475569]">{data.email}</p> : null}
+              <div className="mt-1 flex min-w-0 items-center gap-2">
+                <code className="max-w-[240px] truncate text-xs" title={id}>{id}</code>
+                <CopyIdentityId id={id} kind={kind}/>
+              </div>
+            </div>
+          </div>
+
+          <dl className="grid min-w-0 grid-cols-1 gap-4 min-[420px]:grid-cols-2 sm:grid-cols-3 xl:gap-x-3">
+            <Fact label={kind === "guest" ? "First seen" : "Joined"}>{format(data.firstSeenAt)}</Fact>
+            <Fact label="Last active">{data.lastSeenAt ? format(data.lastSeenAt) : "—"}</Fact>
+            <Fact label="Events">{data.events.length}</Fact>
+          </dl>
+
+          {kind === "user" ? <div className="flex min-w-0 justify-start xl:justify-end" aria-label="Identity management">
+            <RegisteredManage id={id} email={data.email} role={data.role || "USER"} status={data.status} actorId={session.user.id}/>
+          </div> : null}
         </div>
-      </div>
-      <section aria-label="Activity summary" className="mt-5 min-w-0 border-y border-[#E2E8F0]">
-        <div className="grid min-w-0 gap-y-4 py-4 sm:grid-cols-4 sm:gap-x-4">
+      </section>
+
+      <section aria-label="Activity summary" className="min-w-0 border-y border-[#E2E8F0] py-5">
+        <div className="grid min-w-0 gap-4 md:grid-cols-[minmax(155px,0.75fr)_repeat(3,minmax(0,1fr))] md:items-center md:gap-x-4">
           <div className="flex min-w-0 flex-wrap items-center gap-2">
             <h2 className="text-base font-semibold">Activity summary</h2>
             {kind === "guest" ? <ActivityDataInfo>
@@ -170,50 +201,38 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
               Missing records do not establish that no visit occurred. Provider handoffs are not proof of a booking or payment.
             </ActivityDataInfo> : null}
           </div>
-          <dl className="contents">
-            <Fact label={kind === "guest" ? "First seen" : "Joined"}>{format(data.firstSeenAt)}</Fact>
-            <Fact label="Last active">{data.lastSeenAt ? format(data.lastSeenAt) : "—"}</Fact>
-            <Fact label="Events">{data.events.length}</Fact>
-          </dl>
-        </div>
-        <div className="grid min-w-0 gap-y-4 border-t border-[#E2E8F0] py-4 sm:grid-cols-4 sm:gap-x-4">
-          <span aria-hidden="true" className="hidden sm:block" />
-          {([
-            { label: "Searches", count: data.summary.searches, dot: "bg-[#004BB8]" },
-            { label: "Results viewed", count: data.summary.resultsViewed, dot: "bg-emerald-500" },
-            { label: "Provider handoffs", count: data.summary.providerHandoffs, dot: "bg-amber-400" },
-          ]).map(({label,count,dot}) => <div key={label} className="min-w-0 border-l border-[#E2E8F0] pl-4 sm:pl-5">
-            <div className="flex min-w-0 items-center gap-2">
-              <span aria-hidden="true" className={"h-2 w-2 shrink-0 rounded-full " + dot} />
+          <div className="grid min-w-0 grid-cols-3 gap-2 md:contents">
+            {([
+              { label: "Searches", count: data.summary.searches },
+              { label: "Results viewed", count: data.summary.resultsViewed },
+              { label: "Provider handoffs", count: data.summary.providerHandoffs },
+            ]).map(({label,count}) => <div key={label} className="min-w-0 border-l border-[#E2E8F0] pl-3 sm:pl-5">
               <span data-testid="activity-metric-label" className="block text-[12px] font-normal text-[#64748B]">{label}</span>
-            </div>
-            <span data-testid="activity-metric-value" className="mt-1 block text-[22px] font-medium leading-tight tabular-nums text-[#0F172A]">{count}</span>
-          </div>)}
+              <span data-testid="activity-metric-value" className="mt-1 block text-[22px] font-medium leading-tight tabular-nums text-[#0F172A]">{count}</span>
+            </div>)}
+          </div>
         </div>
       </section>
-      {kind === "user" ? <div className="mt-2 flex justify-end" aria-label="Identity management">
-        <RegisteredManage id={id} email={data.email} role={data.role || "USER"} status={data.status} actorId={session.user.id}/>
-      </div> : null}
+
+      <div data-testid="activity-body-card" className="min-w-0 space-y-6 rounded-lg border border-[#CBD5E1] bg-white p-3 sm:p-5 lg:p-6">
+        <section aria-label="Activity filters" className="min-w-0">
+          <ActivityFiltersBar path={basePath} directory={typeof raw.directory === "string" && raw.directory.length <= 1000 ? raw.directory : ""}
+            initial={{tab:filters.tab,q:filters.q,product:filters.product,stage:filters.stage,order,
+              from:filters.from,to:filters.to,range:typeof raw.range === "string" && ["7d","30d","custom"].includes(raw.range) ? raw.range : (filters.from || filters.to ? "custom" : "all")}}
+            tabs={<nav aria-label="Activity tabs" className="flex max-w-full shrink-0 gap-7 overflow-x-auto">
+              {tabs.map(tab => <Link key={tab.value}
+                href={activityHref(basePath, queryParams, { tab: tab.value, cursor: null })}
+                aria-current={filters.tab === tab.value ? "page" : undefined}
+                className={"focus-ring relative shrink-0 whitespace-nowrap rounded-sm py-3 text-[13px] font-medium text-[#475569] " +
+                  (filters.tab === tab.value ? "after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-[#004BB8]" : "")}>
+                  {tab.label}
+                </Link>)}
+            </nav>} />
+        </section>
+
+        <ActivityTimeline events={data.events} nextHref={null} environment={environment} order={order}
+          clearHref={activityHref(basePath, queryParams, {q:null,from:null,to:null,range:null,product:null,stage:null,order:null,cursor:null})}/>
+      </div>
     </section>
-
-    <div data-testid="activity-body-card" className="min-w-0 space-y-6 rounded-xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-6">
-      <section aria-label="Activity filters" className="min-w-0">
-      <ActivityFiltersBar path={basePath} directory={typeof raw.directory === "string" && raw.directory.length <= 1000 ? raw.directory : ""}
-        initial={{tab:filters.tab,q:filters.q,product:filters.product,stage:filters.stage,order,
-          from:filters.from,to:filters.to,range:typeof raw.range === "string" && ["7d","30d","custom"].includes(raw.range) ? raw.range : (filters.from || filters.to ? "custom" : "all")}}
-        tabs={<nav aria-label="Activity tabs" className="flex max-w-full shrink-0 gap-7 overflow-x-auto">
-        {tabs.map(tab => <Link key={tab.value}
-          href={activityHref(basePath, queryParams, { tab: tab.value, cursor: null })}
-          aria-current={filters.tab === tab.value ? "page" : undefined}
-          className={"focus-ring relative shrink-0 whitespace-nowrap rounded-sm py-3 text-[13px] font-medium text-[#475569] " +
-            (filters.tab === tab.value ? "after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-[#004BB8]" : "")}>
-          {tab.label}
-        </Link>)}
-      </nav>} />
-      </section>
-
-      <ActivityTimeline events={data.events} nextHref={null} environment={environment} order={order}
-        clearHref={activityHref(basePath, queryParams, {q:null,from:null,to:null,range:null,product:null,stage:null,order:null,cursor:null})}/>
-    </div>
   </div>;
 }
