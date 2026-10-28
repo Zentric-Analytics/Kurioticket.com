@@ -54,11 +54,15 @@ export default async function AdminJourneysPage({ searchParams, embedded = false
         <AdminFilterBar action={embedded ? "/admin/searches/activity" : "/admin/journeys"}>
           {embedded ? <input type="hidden" name="tab" value="journeys" /> : null}
 
+          {one(raw.userId) ? <input type="hidden" name="userId" value={one(raw.userId)} /> : null}
+          {one(raw.visitorId) ? <input type="hidden" name="visitorId" value={one(raw.visitorId)} /> : null}
+          {one(raw.from) && false ? <input type="hidden" name="from" value={one(raw.from)} /> : null}
+          {one(raw.to) && false ? <input type="hidden" name="to" value={one(raw.to)} /> : null}
           <JourneyDateRangeFields initialRange={range} initialFrom={one(raw.from) || (range === "custom" ? (list.status === "ok" ? list.data.scope.from : "") : "")} initialTo={one(raw.to) || (range === "custom" ? (list.status === "ok" ? list.data.scope.to : "") : "")} now={now.toISOString()} />
           <AdminSelect name="product" defaultValue={one(raw.product)}>
             <option value="">All products</option><option value="FLIGHT">Flights</option><option value="HOTEL">Hotels</option><option value="CAR">Cars</option><option value="PACKAGE">Packages</option>
           </AdminSelect>
-          <AdminSelect name="identity" defaultValue={one(raw.identity) || "all"}>
+          <AdminSelect name="identity" defaultValue={one(raw.identity) || "all"} onChangeCapture={undefined}>
             <option value="all">All identities</option><option value="registered">Registered</option><option value="guest">Guest</option>
           </AdminSelect>
           <AdminSelect name="stage" defaultValue={one(raw.stage)}>
