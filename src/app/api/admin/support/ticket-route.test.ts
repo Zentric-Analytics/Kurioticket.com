@@ -69,6 +69,7 @@ test("POST /api/admin/support/[id] creates reply and writes audit log", async ()
   });
   __supportServiceTest.setPrismaClientForTesting({
     supportTicket: {
+      async updateMany() { return { count: 1 }; },
       async create() { throw new Error("not used"); },
       async findUnique() { return { id: "ticket-1", email: "user@example.com", subject: "Need help", status: "OPEN" }; },
       async update(args) {
@@ -102,6 +103,7 @@ test("PATCH /api/admin/support/[id] updates valid status and writes audit log", 
   });
   __supportServiceTest.setPrismaClientForTesting({
     supportTicket: {
+      async updateMany() { return { count: 1 }; },
       async create() { throw new Error("not used"); },
       async findUnique() { return { id: "ticket-1", email: "user@example.com", subject: "Need help", status: "OPEN" }; },
       async update(args) { return { id: args.where.id, email: "user@example.com", subject: "Need help", status: args.data.status ?? "OPEN" }; },
@@ -131,6 +133,7 @@ test("PATCH /api/admin/support/[id] rejects invalid enum and missing ticket", as
 
   __supportServiceTest.setPrismaClientForTesting({
     supportTicket: {
+      async updateMany() { return { count: 1 }; },
       async create() { throw new Error("not used"); },
       async findUnique() { return null; },
       async update() { throw new Error("not used"); },
