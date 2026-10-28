@@ -156,7 +156,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
 
   const order = filters.order === "oldest" ? "oldest" : "newest";
   const related = [
-    { href: searchesHref, icon: Search, title: "Search records", subtitle: "View searches for this verified identity" },
+    ...(!operational ? [{ href: searchesHref, icon: Search, title: "Search records", subtitle: "View searches for this verified identity" }] : []),
     { href: journeysHref, icon: Route, title: "Journeys", subtitle: operational ? "Operational sessions contain searches and handoffs; consented journey stages may be unavailable" : "View recorded journey stages for this identity" },
     { href: handoffsHref, icon: ExternalLink, title: "Provider handoffs", subtitle: "View recorded outbound handoffs for this identity" },
   ];
