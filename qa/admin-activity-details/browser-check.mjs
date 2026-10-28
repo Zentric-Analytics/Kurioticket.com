@@ -68,6 +68,17 @@ async function expectIdentityDatesOnOneLine(page, context) {
   }
 }
 
+async function expectEventsFactNearRightEdge(page, context) {
+  const gap = await page.evaluate(() => {
+    const card = document.querySelector('[data-testid="activity-page-card"]');
+    const events = document.querySelector('[data-testid="activity-events-fact"]');
+    if (!card || !events) throw new Error("Activity card or Events fact missing");
+    return Math.round(card.getBoundingClientRect().right - events.getBoundingClientRect().right);
+  });
+  assert.ok(gap >= 0 && gap <= 72,
+    context + ": excessive empty space after Events (" + gap + "px)");
+}
+
 const approvedActivityTypography = {
   rootBackground: "rgb(255, 255, 255)",
   shellBackground: "rgb(248, 250, 252)",
@@ -138,10 +149,17 @@ try {
     assert.ok(widths.document <= widths.viewport+1, "No horizontal drift "+JSON.stringify(widths));
     assert.deepEqual(await inspectActivityTypography(page), approvedActivityTypography, "Guest Activity typography and palette "+width);
     if (width === 1280) await expectIdentityDatesOnOneLine(page, "Guest desktop");
+    if (width === 768 || width === 1024)
+      await expectEventsFactNearRightEdge(page, "Guest " + width + "px");
     if([1536,1280,390,320].includes(width))
       await page.screenshot({path:output+"/after-view-activity-"+width+".png",fullPage:true});
     console.log("PASS responsive activity page",width);
   }
+
+  // Registered accounts use the same fact grid, including protected-admin labels.
+  await page.setViewportSize({width:1024,height:900});
+  await page.goto(base + "/admin/users/user/qa-registered-0001/activity");
+  await expectEventsFactNearRightEdge(page, "Registered 1024px");
 
   // Every fixture event is available upfront, including the formerly separate pages.
   await page.goto(url);
