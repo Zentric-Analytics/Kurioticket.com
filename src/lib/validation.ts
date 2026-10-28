@@ -262,8 +262,9 @@ export const adminSupportReplySchema = z.object({
 });
 
 export const adminSupportStatusSchema = z.object({
-  status: z.enum(["OPEN", "WAITING_ON_USER", "WAITING_ON_TEAM", "RESOLVED", "CLOSED"]),
-});
+  status: z.enum(["OPEN", "WAITING_ON_USER", "WAITING_ON_TEAM", "RESOLVED", "CLOSED"]).optional(),
+  priority: z.enum(["LOW", "NORMAL", "HIGH", "URGENT"]).optional(),
+}).refine(value => value.status !== undefined || value.priority !== undefined);
 
 export const newsletterSubscribeSchema = z.object({
   email: emailSchema,
