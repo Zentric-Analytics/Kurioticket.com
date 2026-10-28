@@ -73,10 +73,10 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
   const { id } = await context.params;
   const body = await request.json().catch(() => null);
   const parsed = adminSupportStatusSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: "Choose a valid ticket status." }, { status: 400 });
+  if (!parsed.success) return NextResponse.json({ error: "Choose a valid ticket status or priority." }, { status: 400 });
 
   try {
-    const result = await updateSupportTicketStatus({ ticketId: id, status: parsed.data.status });
+    const result = await updateSupportTicketStatus({ ticketId: id, ...parsed.data });
     await dependencies.writeAuditLog({
       adminUserId: adminResult.session.user.id,
       adminEmail: adminResult.session.user.email,
@@ -84,7 +84,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       targetType: "SupportTicket",
       targetId: result.ticket.id,
       targetEmail: result.ticket.email,
-      metadata: { previousStatus: result.previousStatus, nextStatus: result.ticket.status },
+      metadata: { previousStatus: result.previousStatus, nextStatus: result.ticket.status, ...(parsed.data.priority ? { nextPriority: parsed.data.priority } : {}) },
       request,
     });
 
