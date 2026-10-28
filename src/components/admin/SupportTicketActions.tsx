@@ -34,7 +34,7 @@ export function SupportTicketActions({ ticketId, status }: { ticketId: string; s
         return;
       }
       setReply("");
-      setReplyMessage("Reply sent.");
+      setReplyMessage(payload.emailStatus === "sent" ? "Reply saved and accepted by email provider (delivery not yet confirmed)." : "Reply saved, but the email could not be sent. Check Email Delivery before following up.");
       router.refresh();
     });
   }
