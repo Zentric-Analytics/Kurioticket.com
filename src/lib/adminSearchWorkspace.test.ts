@@ -19,7 +19,7 @@ test("tab destinations cannot carry incompatible backend filter keys", () => {
   assert.equal(searchWorkspaceHref("attribution",{days:"30",userId:"account-001",stage:"OFFER_SELECTED"}),"/admin/searches/activity?tab=attribution&days=30");
   assert.equal(searchWorkspaceHref("searches", {stage:"OFFER_SELECTED",identity:"guest"}),"/admin/searches/activity?identity=guest");
 });
-test("filtered sections submit back to the unified route and keep their reporting contracts", () => {
+test("legacy section routes retain their own safe filter contracts", () => {
   assert.match(journeys,/action=\{embedded \? "\/admin\/searches\/activity"/);
   assert.match(redirects,/action=\{embedded \? "\/admin\/searches\/activity"/);
   assert.match(attribution,/action=\{embedded \? "\/admin\/providers"/);
