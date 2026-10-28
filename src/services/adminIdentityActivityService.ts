@@ -5,8 +5,9 @@ import { eligibleGuestVisitorWhere, eligibleJourneyLinkedVisitorWhere, eligibleL
 import {
   ACTIVITY_FETCH_LIMIT, ACTIVITY_PAGE_SIZE, activityEnvironmentScope, activityWindow, allowedActivityStages,
   decodeActivityCursor, encodeActivityCursor, excludeCanonicalLegacyRows, latestVisibleActivityAt, legacyStageLabelMatchesQuery, sourceActivitySeek,
-  type ActivityFilters, type JourneyStage,
+  type ActivityCursor, type ActivityFilters, type JourneyStage,
 } from "@/lib/adminIdentityActivity";
+import { readCompleteActivitySource, type ActivitySourcePrefix, type ActivitySourceRow } from "@/lib/adminIdentityActivityComplete";
 import { escapePrismaContainsQuery } from "@/lib/adminIdentityDirectory";
 import { getOptionalPrisma } from "@/lib/prisma";
 import { getPublicEnvironment, type PublicEnvironment } from "@/lib/stagingSafety";
@@ -58,9 +59,11 @@ export type ActivityReadResult =
 /** Re-authorize before calling. Never expose token hashes or raw analytics metadata. */
 export async function loadAdminIdentityActivity(
   kind: IdentityKind, id: string, filters: ActivityFilters, cursorInput?: string,
+  readMode: "page" | "all" = "page",
 ): Promise<ActivityReadResult> {
   const environment = getPublicEnvironment();
-  const cursor = decodeActivityCursor(cursorInput, kind, id, filters, environment);
+  const complete = readMode === "all";
+  const cursor = complete ? undefined : decodeActivityCursor(cursorInput, kind, id, filters, environment);
   if (cursor === null) return { status: "invalid_cursor" };
   try {
     const db = getOptionalPrisma();
@@ -166,9 +169,8 @@ export async function loadAdminIdentityActivity(
       ],
     } : {};
 
-    // The timeline is cursor-paginated. Reuse these *unpaginated* predicates for
-    // database aggregates so Activity summary always reflects all matching records,
-    // including events on earlier and later pages.
+    // Complete timelines and summary aggregates share these unpaginated predicates.
+    // Legacy paged callers add a seek only when reading their requested page.
     const journeyWhere: Prisma.JourneyEventWhereInput = {
       AND: [scopedJourneyOwner, { type: { in: stages } }, { createdAt: window }, productEventFilter, eventQ],
     };
@@ -271,30 +273,36 @@ export async function loadAdminIdentityActivity(
           }
         }
 
-        // Page reads remain bounded; count queries reuse the same scope but
-        // deliberately omit the pagination cursor.
+        // Complete mode drains every source in bounded internal batches within
+        // this same snapshot. The browser receives all matching records upfront.
+        const readSource = <T extends ActivitySourceRow>(
+          prefix: ActivitySourcePrefix,
+          fetchBatch: (after: ActivityCursor | undefined, take: number) => Promise<T[]>,
+        ): Promise<T[]> => complete
+          ? readCompleteActivitySource(prefix, fetchBatch)
+          : fetchBatch(cursor, ACTIVITY_FETCH_LIMIT);
         const [pageJourney, pageSearches, pageHandoffs, pageAnalytics, searchTotal, handoffTotal] = await Promise.all([
-          stages.length && !isOperationalGuest ? tx.journeyEvent.findMany({
-            where: { AND: [journeyWhere, sourceActivitySeek(cursor, "j", order)] },
+          stages.length && !isOperationalGuest ? readSource("j", (after, take) => tx.journeyEvent.findMany({
+            where: { AND: [journeyWhere, sourceActivitySeek(after, "j", order)] },
             orderBy: [{ createdAt: createdAtDirection }, { id: "asc" }],
-            take: ACTIVITY_FETCH_LIMIT, select: journeySelect,
-          }) : Promise.resolve([]),
-          allowed.has("SEARCH_COMPLETED") ? tx.searchHistory.findMany({
-            where: { AND: [searchWhere, sourceActivitySeek(cursor, "s", order)] },
+            take, select: journeySelect,
+          })) : Promise.resolve([]),
+          allowed.has("SEARCH_COMPLETED") ? readSource("s", (after, take) => tx.searchHistory.findMany({
+            where: { AND: [searchWhere, sourceActivitySeek(after, "s", order)] },
             orderBy: [{ createdAt: createdAtDirection }, { id: "asc" }],
-            take: ACTIVITY_FETCH_LIMIT,
+            take,
             select: { id: true, type: true, origin: true, destination: true, status: true, createdAt: true },
-          }) : Promise.resolve([]),
-          canReadHandoffs ? tx.redirectLog.findMany({
-            where: { AND: [handoffWhere, sourceActivitySeek(cursor, "r", order)] },
-            orderBy: [{ createdAt: createdAtDirection }, { id: "asc" }], take: ACTIVITY_FETCH_LIMIT,
+          })) : Promise.resolve([]),
+          canReadHandoffs ? readSource("r", (after, take) => tx.redirectLog.findMany({
+            where: { AND: [handoffWhere, sourceActivitySeek(after, "r", order)] },
+            orderBy: [{ createdAt: createdAtDirection }, { id: "asc" }], take,
             select: { id: true, type: true, provider: true, route: true, createdAt: true },
-          }) : Promise.resolve([]),
-          allowed.has("ACCOUNT_ACTIVITY") && !product && !isOperationalGuest ? tx.analyticsEvent.findMany({
-            where: { AND: [analyticsWhere, sourceActivitySeek(cursor, "e", order)] },
-            orderBy: [{ createdAt: createdAtDirection }, { id: "asc" }], take: ACTIVITY_FETCH_LIMIT,
+          })) : Promise.resolve([]),
+          allowed.has("ACCOUNT_ACTIVITY") && !product && !isOperationalGuest ? readSource("e", (after, take) => tx.analyticsEvent.findMany({
+            where: { AND: [analyticsWhere, sourceActivitySeek(after, "e", order)] },
+            orderBy: [{ createdAt: createdAtDirection }, { id: "asc" }], take,
             select: { id: true, type: true, createdAt: true },
-          }) : Promise.resolve([]),
+          })) : Promise.resolve([]),
           allowed.has("SEARCH_COMPLETED") ? tx.searchHistory.count({ where: searchWhere }) : Promise.resolve(0),
           canReadHandoffs ? tx.redirectLog.count({ where: handoffWhere }) : Promise.resolve(0),
         ]);
@@ -332,12 +340,12 @@ export async function loadAdminIdentityActivity(
         }] : [];
       }),
     ];
-    const sorted = mergeAdminActivity(canonical, legacy, ACTIVITY_FETCH_LIMIT * 4, order);
-    const page = sorted.slice(0, ACTIVITY_PAGE_SIZE);
+    const sorted = mergeAdminActivity(canonical, legacy, complete ? canonical.length + legacy.length : ACTIVITY_FETCH_LIMIT * 4, order);
+    const page = complete ? sorted : sorted.slice(0, ACTIVITY_PAGE_SIZE);
     const last = page.at(-1);
-    const hasMore = sorted.length > ACTIVITY_PAGE_SIZE
+    const hasMore = !complete && (sorted.length > ACTIVITY_PAGE_SIZE
       || [journey.length, searches.length, handoffs.length, analytics.length]
-        .some(count => count === ACTIVITY_FETCH_LIMIT);
+        .some(count => count === ACTIVITY_FETCH_LIMIT));
 
     return {
       status: "ok",
