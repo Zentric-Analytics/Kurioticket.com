@@ -53,11 +53,11 @@ export async function POST(request: NextRequest, context: RouteContext) {
       targetType: "SupportTicket",
       targetId: result.ticket.id,
       targetEmail: result.ticket.email,
-      metadata: { messageId: result.message.id, status: result.ticket.status },
+      metadata: { messageId: result.message.id, status: result.ticket.status, emailStatus: result.emailStatus },
       request,
     });
 
-    return NextResponse.json({ message: result.message }, { status: 201 });
+    return NextResponse.json({ message: result.message, emailStatus: result.emailStatus }, { status: 201 });
   } catch (error) {
     if (error instanceof SupportTicketNotFoundError) return NextResponse.json({ error: "Support ticket not found." }, { status: 404 });
     console.error("[admin-support:reply] Failed to add reply", error);
@@ -73,18 +73,18 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
   const { id } = await context.params;
   const body = await request.json().catch(() => null);
   const parsed = adminSupportStatusSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: "Choose a valid ticket status." }, { status: 400 });
+  if (!parsed.success) return NextResponse.json({ error: "Choose a valid ticket status or priority." }, { status: 400 });
 
   try {
-    const result = await updateSupportTicketStatus({ ticketId: id, status: parsed.data.status });
+    const result = await updateSupportTicketStatus({ ticketId: id, ...parsed.data });
     await dependencies.writeAuditLog({
       adminUserId: adminResult.session.user.id,
       adminEmail: adminResult.session.user.email,
-      action: "support_ticket.status_update",
+      action: parsed.data.status && parsed.data.priority ? "support_ticket.update" : parsed.data.priority ? "support_ticket.priority_update" : "support_ticket.status_update",
       targetType: "SupportTicket",
       targetId: result.ticket.id,
       targetEmail: result.ticket.email,
-      metadata: { previousStatus: result.previousStatus, nextStatus: result.ticket.status },
+      metadata: { previousStatus: result.previousStatus, nextStatus: result.ticket.status, previousPriority: result.previousPriority ?? null, nextPriority: result.ticket.priority ?? null, changedFields: Object.keys(parsed.data) },
       request,
     });
 

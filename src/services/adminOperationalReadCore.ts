@@ -829,11 +829,13 @@ export function createAdminOperationalReadService(dependencies: Dependencies) {
                 { user: { is: { email: { contains: scope.q, mode: "insensitive" as const } } } },
                 { user: { is: { name: { contains: scope.q, mode: "insensitive" as const } } } },
               ] }] : []),
-              ...(cursor ? [{ OR: [{ createdAt: { lt: new Date(cursor.at) } }, { createdAt: new Date(cursor.at), id: { lt: cursor.id } }] }] : []),
+              ...(cursor ? [{ OR: [{ updatedAt: { lt: new Date(cursor.at) } }, { updatedAt: new Date(cursor.at), id: { lt: cursor.id } }] }] : []),
             ],
           };
-          const records = await db.supportTicket.findMany({ where, select: supportListSelect, orderBy: [{ createdAt: "desc" }, { id: "desc" }], take: limit + 1 });
-          const page = nextCursor("support", scope, records, limit);
+          const records = await db.supportTicket.findMany({ where, select: supportListSelect, orderBy: [{ updatedAt: "desc" }, { id: "desc" }], take: limit + 1 });
+          const supportPage = records.slice(0, limit);
+          const last = supportPage.at(-1);
+          const page = { page: supportPage, next: records.length > limit && last ? encodeAdminOperationalCursor("support", scope, { at: last.updatedAt.toISOString(), id: last.id }) : null };
           return { status: "ok", data: { scope, items: page.page.map(supportListDto), nextCursor: page.next } };
         });
       },

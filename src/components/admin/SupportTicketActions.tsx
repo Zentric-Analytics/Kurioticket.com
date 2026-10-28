@@ -1,22 +1,35 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 
 import { AdminButton, AdminSectionCard, AdminSelect, AdminTextarea } from "@/components/admin/AdminPageShell";
 import { supportTicketStatuses } from "@/lib/supportTickets";
 
 type SupportStatus = (typeof supportTicketStatuses)[number];
 
-export function SupportTicketActions({ ticketId, status }: { ticketId: string; status: SupportStatus }) {
+export function SupportTicketActions({ ticketId, status, priority }: { ticketId: string; status: SupportStatus; priority: "LOW" | "NORMAL" | "HIGH" | "URGENT" }) {
   const router = useRouter();
   const [reply, setReply] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<SupportStatus>(status);
+  const [selectedPriority, setSelectedPriority] = useState(priority);
+  const [statusDirty, setStatusDirty] = useState(false);
+  const [priorityDirty, setPriorityDirty] = useState(false);
   const [replyMessage, setReplyMessage] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isReplyPending, startReplyTransition] = useTransition();
   const [isStatusPending, startStatusTransition] = useTransition();
+
+  // router.refresh() updates server props without remounting this component.
+  // Keep unsaved edits, but synchronize controls the admin never changed.
+  useEffect(() => {
+    if (!statusDirty) setSelectedStatus(status);
+  }, [status, statusDirty]);
+
+  useEffect(() => {
+    if (!priorityDirty) setSelectedPriority(priority);
+  }, [priority, priorityDirty]);
 
   function submitReply() {
     setReplyMessage(null);
@@ -34,12 +47,19 @@ export function SupportTicketActions({ ticketId, status }: { ticketId: string; s
         return;
       }
       setReply("");
-      setReplyMessage("Reply sent.");
+      setReplyMessage(payload.emailStatus === "sent" ? "Reply saved and accepted by email provider (delivery not yet confirmed)." : "Reply saved, but the email could not be sent. Check Email Delivery before following up.");
       router.refresh();
     });
   }
 
   function updateStatus() {
+    // Only submit explicit edits: refreshed props can change independently
+    // when another admin updates the same ticket.
+    const changes = {
+      ...(statusDirty ? { status: selectedStatus } : {}),
+      ...(priorityDirty ? { priority: selectedPriority } : {}),
+    };
+    if (Object.keys(changes).length === 0) return;
     setReplyMessage(null);
     setStatusMessage(null);
     setError(null);
@@ -47,14 +67,16 @@ export function SupportTicketActions({ ticketId, status }: { ticketId: string; s
       const response = await fetch(`/api/admin/support/${ticketId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: selectedStatus }),
+        body: JSON.stringify(changes),
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) {
-        setError(typeof payload.error === "string" ? payload.error : "Unable to update status.");
+        setError(typeof payload.error === "string" ? payload.error : "Unable to update ticket.");
         return;
       }
-      setStatusMessage("Ticket status updated.");
+      setStatusDirty(false);
+      setPriorityDirty(false);
+      setStatusMessage("Ticket changes saved.");
       router.refresh();
     });
   }
@@ -97,17 +119,22 @@ export function SupportTicketActions({ ticketId, status }: { ticketId: string; s
             <AdminSelect
               id="support-ticket-status"
               value={selectedStatus}
-              onChange={(event) => setSelectedStatus(event.target.value as SupportStatus)}
+              onChange={(event) => {
+                const next = event.target.value as SupportStatus;
+                setSelectedStatus(next);
+                setStatusDirty(next !== status);
+              }}
               disabled={isStatusPending}
               className="mt-2"
             >
               {supportTicketStatuses.map((item) => <option key={item} value={item}>{item.replaceAll("_", " ")}</option>)}
             </AdminSelect>
           </label>
-          <AdminButton type="button" variant="secondary" onClick={updateStatus} loading={isStatusPending} disabled={selectedStatus === status} aria-disabled={isStatusPending || selectedStatus === status}>
-            {isStatusPending ? "Saving" : "Save status"}
+          <AdminButton type="button" variant="secondary" onClick={updateStatus} loading={isStatusPending} disabled={!statusDirty && !priorityDirty} aria-disabled={isStatusPending || (!statusDirty && !priorityDirty)}>
+            {isStatusPending ? "Saving" : "Save changes"}
           </AdminButton>
         </div>
+        <label className="block" htmlFor="support-ticket-priority"><span className="text-xs font-bold uppercase tracking-wide text-slate-500">Priority</span><AdminSelect id="support-ticket-priority" className="mt-2" value={selectedPriority} onChange={event => { const next = event.target.value as typeof priority; setSelectedPriority(next); setPriorityDirty(next !== priority); }} disabled={isStatusPending}>{["LOW","NORMAL","HIGH","URGENT"].map(value => <option key={value} value={value}>{value}</option>)}</AdminSelect></label>
         {statusMessage ? <p className="text-sm font-bold text-emerald-700" role="status" aria-live="polite">{statusMessage}</p> : null}
       </AdminSectionCard>
 
