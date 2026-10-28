@@ -69,16 +69,9 @@ test("POST /api/admin/support/[id] creates reply and writes audit log", async ()
   });
   __supportServiceTest.setPrismaClientForTesting({
     supportTicket: {
-      async updateMany(args) {
-        assert.deepEqual(args.where, { id: "ticket-1", updatedAt: { lt: new Date("2026-07-16T00:00:00Z") } });
-        assert.deepEqual(args.data, { updatedAt: new Date("2026-07-16T00:00:00Z") });
-        return { count: 1 };
-      },
       async create() { throw new Error("not used"); },
       async findUnique() { return { id: "ticket-1", email: "user@example.com", subject: "Need help", status: "OPEN" }; },
-      async update(args) {
-        return { id: args.where.id, email: "user@example.com", subject: "Need help", status: "OPEN" as const };
-      },
+      async update() { throw new Error("not used"); },
     },
     supportMessage: {
       async create(args) { return { id: "message-1", ticketId: args.data.ticketId, author: args.data.author, body: args.data.body, createdAt: new Date("2026-07-16T00:00:00Z") }; },
@@ -91,10 +84,9 @@ test("POST /api/admin/support/[id] creates reply and writes audit log", async ()
 
   assert.equal(response.status, 201);
   assert.equal(body.message.author, "admin");
-  assert.equal(body.emailStatus, "sent");
   assert.equal(audits[0].action, "support_ticket.reply");
   assert.equal(audits[0].targetId, "ticket-1");
-  assert.deepEqual(audits[0].metadata, { messageId: "message-1", status: "OPEN", emailStatus: "sent" });
+  assert.deepEqual(audits[0].metadata, { messageId: "message-1", status: "OPEN" });
 });
 
 test("PATCH /api/admin/support/[id] updates valid status and writes audit log", async () => {
@@ -106,10 +98,9 @@ test("PATCH /api/admin/support/[id] updates valid status and writes audit log", 
   });
   __supportServiceTest.setPrismaClientForTesting({
     supportTicket: {
-      async updateMany() { return { count: 1 }; },
       async create() { throw new Error("not used"); },
-      async findUnique() { return { id: "ticket-1", email: "user@example.com", subject: "Need help", status: "OPEN", priority: "NORMAL" as const }; },
-      async update(args) { return { id: args.where.id, email: "user@example.com", subject: "Need help", status: args.data.status ?? "OPEN", priority: args.data.priority ?? "NORMAL" }; },
+      async findUnique() { return { id: "ticket-1", email: "user@example.com", subject: "Need help", status: "OPEN" }; },
+      async update(args) { return { id: args.where.id, email: "user@example.com", subject: "Need help", status: args.data.status }; },
     },
     supportMessage: {
       async create() { throw new Error("not used"); },
@@ -122,7 +113,7 @@ test("PATCH /api/admin/support/[id] updates valid status and writes audit log", 
   assert.equal(response.status, 200);
   assert.equal(body.ticket.status, "RESOLVED");
   assert.equal(audits[0].action, "support_ticket.status_update");
-  assert.deepEqual(audits[0].metadata, { previousStatus: "OPEN", nextStatus: "RESOLVED", previousPriority: "NORMAL", nextPriority: "NORMAL", changedFields: ["status"] });
+  assert.deepEqual(audits[0].metadata, { previousStatus: "OPEN", nextStatus: "RESOLVED" });
 });
 
 test("PATCH /api/admin/support/[id] rejects invalid enum and missing ticket", async () => {
@@ -136,7 +127,6 @@ test("PATCH /api/admin/support/[id] rejects invalid enum and missing ticket", as
 
   __supportServiceTest.setPrismaClientForTesting({
     supportTicket: {
-      async updateMany() { return { count: 1 }; },
       async create() { throw new Error("not used"); },
       async findUnique() { return null; },
       async update() { throw new Error("not used"); },
@@ -151,28 +141,4 @@ test("PATCH /api/admin/support/[id] rejects invalid enum and missing ticket", as
 
   assert.equal(missingTicket.status, 404);
   assert.equal(body.error, "Support ticket not found.");
-});
-
-test("PATCH priority-only records old and new priority without overwriting status", async () => {
-  const audits: Array<{ action: string; metadata?: Record<string, unknown> }> = [];
-  __adminSupportTicketRouteTest.setDependenciesForTesting({
-    async requireAdmin() { return { session: adminSession } as never; },
-    async writeAuditLog(input) { audits.push({ action: input.action, metadata: input.metadata }); },
-  });
-  __supportServiceTest.setPrismaClientForTesting({
-    supportTicket: {
-      async updateMany() { return { count: 1 }; },
-      async create() { throw new Error("not used"); },
-      async findUnique() { return { id: "ticket-1", email: "user@example.com", subject: "Need help", status: "RESOLVED", priority: "NORMAL" }; },
-      async update(args) {
-        assert.deepEqual(args.data, { priority: "HIGH" });
-        return { id: args.where.id, email: "user@example.com", subject: "Need help", status: "RESOLVED", priority: "HIGH" };
-      },
-    },
-    supportMessage: { async create() { throw new Error("not used"); } },
-  });
-  const response = await PATCH(jsonRequest("PATCH", { priority: "HIGH" }), context());
-  assert.equal(response.status, 200);
-  assert.equal(audits[0].action, "support_ticket.priority_update");
-  assert.deepEqual(audits[0].metadata, { previousStatus: "RESOLVED", nextStatus: "RESOLVED", previousPriority: "NORMAL", nextPriority: "HIGH", changedFields: ["priority"] });
 });

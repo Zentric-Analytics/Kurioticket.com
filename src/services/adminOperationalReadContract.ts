@@ -262,7 +262,7 @@ function decodeCursor(kind: AdminOperationalKind, token: string | null, scope: o
   if (!token) return { status: "ok", data: null };
   try {
     const decoded = JSON.parse(Buffer.from(token, "base64url").toString("utf8")) as Record<string, unknown>;
-    if (decoded.v !== (kind === "support" ? 2 : 1) || decoded.kind !== kind || typeof decoded.at !== "string" || typeof decoded.id !== "string" || decoded.scope !== scopeKey(scope)) {
+    if (decoded.v !== 1 || decoded.kind !== kind || typeof decoded.at !== "string" || typeof decoded.id !== "string" || decoded.scope !== scopeKey(scope)) {
       return invalid("cursor", "Cursor does not match this query.");
     }
     if (!ISO_WITH_ZONE.test(decoded.at) || !Number.isFinite(Date.parse(decoded.at)) || !ID.test(decoded.id)) return invalid("cursor", "Cursor is malformed.");
@@ -273,7 +273,7 @@ function decodeCursor(kind: AdminOperationalKind, token: string | null, scope: o
 }
 
 export function encodeAdminOperationalCursor(kind: AdminOperationalKind, scope: object, position: CursorPosition) {
-  return Buffer.from(JSON.stringify({ v: kind === "support" ? 2 : 1, kind, at: position.at, id: position.id, scope: scopeKey(scope) }), "utf8").toString("base64url");
+  return Buffer.from(JSON.stringify({ v: 1, kind, at: position.at, id: position.id, scope: scopeKey(scope) }), "utf8").toString("base64url");
 }
 
 function environment(value: string | null, fallback: PublicEnvironment): ParseResult<PublicEnvironment> {

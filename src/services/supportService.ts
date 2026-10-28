@@ -6,7 +6,6 @@ import type { SupportTicketStatusValue } from "@/lib/supportTickets";
 
 type SupportPrismaClient = {
   supportTicket: {
-    updateMany(args: { where: { id: string; updatedAt: { lt: Date } }; data: { updatedAt: Date } }): Promise<{ count: number }>;
     create(args: {
       data: {
         userId?: string;
@@ -24,13 +23,13 @@ type SupportPrismaClient = {
     }): Promise<{ id: string; subject: string }>;
     findUnique(args: {
       where: { id: string };
-      select?: { id?: boolean; userId?: boolean; email?: boolean; subject?: boolean; status?: boolean; priority?: boolean };
+      select?: { id?: boolean; userId?: boolean; email?: boolean; subject?: boolean; status?: boolean };
       include?: { messages?: { orderBy: { createdAt: "asc" } } };
-    }): Promise<{ id: string; userId?: string | null; email: string; subject: string; status: SupportTicketStatusValue; priority?: "LOW" | "NORMAL" | "HIGH" | "URGENT"; messages?: Array<{ id: string; createdAt: Date }> } | null>;
+    }): Promise<{ id: string; userId?: string | null; email: string; subject: string; status: SupportTicketStatusValue; messages?: Array<{ id: string; createdAt: Date }> } | null>;
     update(args: {
       where: { id: string };
-      data: { status?: SupportTicketStatusValue; priority?: "LOW" | "NORMAL" | "HIGH" | "URGENT"; updatedAt?: Date };
-    }): Promise<{ id: string; email: string; subject: string; status: SupportTicketStatusValue; priority?: "LOW" | "NORMAL" | "HIGH" | "URGENT" }>;
+      data: { status: SupportTicketStatusValue };
+    }): Promise<{ id: string; email: string; subject: string; status: SupportTicketStatusValue }>;
   };
   supportMessage: {
     create(args: {
@@ -73,17 +72,12 @@ export async function createSupportTicket(input: {
     },
   });
 
-  try {
-    await trackAnalyticsEvent({
-      userId: input.userId,
-      type: "SUPPORT_TICKET",
-      name: "support_ticket_created",
-      metadata: { category: input.category },
-    });
-  } catch (error) {
-    // A saved ticket must never appear to have failed because optional analytics failed.
-    console.error("[support] Failed to record optional ticket analytics", error);
-  }
+  await trackAnalyticsEvent({
+    userId: input.userId,
+    type: "SUPPORT_TICKET",
+    name: "support_ticket_created",
+    metadata: { category: input.category },
+  });
 
   try {
     await getSendSupportEmail()({
@@ -116,50 +110,39 @@ export async function addAdminSupportReply(input: { ticketId: string; body: stri
     },
   });
 
-  // Keep the inbox ordered by the latest conversation activity, not ticket creation.
-  try {
-    await db.supportTicket.updateMany({ where: { id: ticket.id, updatedAt: { lt: message.createdAt } }, data: { updatedAt: message.createdAt } });
-  } catch (error) {
-    // The reply is already saved; do not invite the admin to retry and duplicate it.
-    console.error("[support] Failed to refresh ticket activity timestamp", error);
-  }
-
   if (ticket.userId && !prismaClientForTesting) {
     await createNotificationEvent({ userId: ticket.userId, eventKey: `support-reply:${message.id}`, type: "SUPPORT_UPDATE", title: "Kurioticket Support replied", body: `There is a new reply to “${ticket.subject}”.`, actionPath: "/support", metadata: { ticketId: ticket.id, supportMessageId: message.id } }).catch((error) => console.error("[support] Failed to persist support reply notification", { ticketId: ticket.id, messageId: message.id, message: error instanceof Error ? error.message : "notification_failed" }));
   }
 
-  let emailStatus: "sent" | "failed" = "sent";
   try {
-    const email = await getSendSupportEmail()({
+    await getSendSupportEmail()({
       to: ticket.email,
       subject: "Re: Your Kurioticket support request",
       html: supportTicketReplyEmail({ ticketId: ticket.id, subject: ticket.subject, body: input.body }),
       template: "support_ticket",
       idempotencyKey: `support-ticket-reply-${message.id}`,
     });
-    if (email.id === "resend-not-configured") emailStatus = "failed";
   } catch (error) {
-    emailStatus = "failed";
     console.error("[support] Failed to send support ticket reply email", error);
   }
 
-  return { ticket, message, emailStatus };
+  return { ticket, message };
 }
 
-export async function updateSupportTicketStatus(input: { ticketId: string; status?: SupportTicketStatusValue; priority?: "LOW" | "NORMAL" | "HIGH" | "URGENT" }) {
+export async function updateSupportTicketStatus(input: { ticketId: string; status: SupportTicketStatusValue }) {
   const db = getSupportPrisma();
   const existing = await db.supportTicket.findUnique({
     where: { id: input.ticketId },
-    select: { id: true, email: true, subject: true, status: true, priority: true },
+    select: { id: true, email: true, subject: true, status: true },
   });
   if (!existing) throw new SupportTicketNotFoundError();
 
   const ticket = await db.supportTicket.update({
     where: { id: input.ticketId },
-    data: { ...(input.status ? { status: input.status } : {}), ...(input.priority ? { priority: input.priority } : {}) },
+    data: { status: input.status },
   });
 
-  return { previousStatus: existing.status, previousPriority: existing.priority, ticket };
+  return { previousStatus: existing.status, ticket };
 }
 
 export class SupportTicketNotFoundError extends Error {
