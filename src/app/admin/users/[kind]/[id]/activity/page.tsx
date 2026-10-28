@@ -191,8 +191,8 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
         <Fact label="Events">{data.events.length}{data.nextCursor ? "+" : ""}</Fact>
         <Fact label="Journeys">{new Set(data.events.filter(e => e.journeyId).map(e => e.journeyId)).size}{data.nextCursor ? "+" : ""}</Fact>
       </dl>
-      <section aria-label="Activity summary" className="mt-5 flex min-w-0 flex-col gap-3 border-y border-[#D8E1EC] py-4 lg:flex-row lg:items-center lg:gap-6">
-        <div className="flex shrink-0 items-center gap-2 lg:w-56">
+      <section aria-label="Activity summary" className="mt-5 grid min-w-0 grid-cols-4 items-center gap-x-2 border-y border-[#D8E1EC] py-4 sm:gap-x-4">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
           <h2 className="text-base font-semibold">Activity summary</h2>
           {kind === "guest" ? <ActivityDataInfo>
             {operational
@@ -201,7 +201,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
             Missing records do not establish that no visit occurred. Provider handoffs are not proof of a booking or payment.
           </ActivityDataInfo> : null}
         </div>
-        <div className="grid min-w-0 flex-1 grid-cols-3 gap-2 sm:gap-4">
+        <div className="col-span-3 grid min-w-0 grid-cols-3 gap-2 sm:gap-4">
           {[
             ["Searches", data.events.filter(e => e.stage === "SEARCH_COMPLETED").length],
             ["Results viewed", data.events.filter(e => e.stage === "RESULTS_VIEWED").length],
@@ -211,10 +211,10 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
             <span className="block text-[12px] text-[var(--muted-foreground)]">{label}</span>
           </div>)}
         </div>
-        <div className="flex shrink-0 justify-end" aria-label="Identity management">{kind === "user"
-          ? <RegisteredManage id={id} email={data.email} role={data.role || "USER"} status={data.status} actorId={session.user.id}/>
-          : operational ? null : <GuestTrackingActions visitorId={id} backHref={backHref}/>}</div>
       </section>
+      {kind === "user" ? <div className="mt-2 flex justify-end" aria-label="Identity management">
+        <RegisteredManage id={id} email={data.email} role={data.role || "USER"} status={data.status} actorId={session.user.id}/>
+      </div> : null}
       <p className="mt-1 text-right text-xs text-[var(--muted-foreground)]">Counts reflect loaded events only.</p>
     </section>
 
