@@ -203,60 +203,104 @@ export async function loadAdminIdentityActivity(
     const canReadHandoffs = allowed.has("PROVIDER_HANDOFF_STARTED")
       && (!product || product === "FLIGHT" || product === "HOTEL");
 
-    // Match the canonical event reader's source-reference validation as well as
-    // ownership, consent and environment checks. Never count an orphaned stage or
-    // an attached source record belonging to an unrelated identity.
-    const sourceOwnerSearch: Prisma.SearchHistoryWhereInput = kind === "guest"
-      ? { userId: null, visitorId: id }
-      : { AND: [{ visitor: { is: eligibleJourneyLinkedVisitorWhere(id) } },
-          { OR: [{ userId: null }, { userId: id }] }] };
-    const sourceOwnerHandoff: Prisma.RedirectLogWhereInput = kind === "guest"
-      ? { userId: null, visitorId: id }
-      : { AND: [{ visitor: { is: eligibleJourneyLinkedVisitorWhere(id) } },
-          { OR: [{ userId: null }, { userId: id }] }] };
-    const canonicalCountValidity: Prisma.JourneyEventWhereInput = {
-      AND: [
-        { OR: [
-          { type: "PROVIDER_HANDOFF_STARTED", redirectLogId: { not: null } },
-          { type: { in: ["SEARCH_COMPLETED", "RESULTS_VIEWED", "OFFER_SELECTED"] }, searchHistoryId: { not: null } },
-        ] },
-        { OR: [{ searchHistoryId: null }, { searchHistory: { is: sourceOwnerSearch } }] },
-        { OR: [{ redirectLogId: null }, { redirectLog: { is: sourceOwnerHandoff } }] },
+    // Only count canonical events that the timeline itself can display.
+    // Each attached source must belong to the *same* visitor as its journey;
+    // matching any other linked visitor for this account is insufficient.
+    const primaryReferenceRequired: Prisma.JourneyEventWhereInput = {
+      OR: [
+        { type: "PROVIDER_HANDOFF_STARTED", redirectLogId: { not: null } },
+        { type: { in: ["SEARCH_COMPLETED", "RESULTS_VIEWED", "OFFER_SELECTED"] }, searchHistoryId: { not: null } },
       ],
     };
+    const canonicalForVisitor = (visitorId: string): Prisma.JourneyEventWhereInput => {
+      const searchReference: Prisma.SearchHistoryWhereInput = kind === "guest"
+        ? { visitorId, userId: null }
+        : { visitorId, OR: [{ userId: null }, { userId: id }] };
+      const handoffReference: Prisma.RedirectLogWhereInput = kind === "guest"
+        ? { visitorId, userId: null }
+        : { visitorId, OR: [{ userId: null }, { userId: id }] };
+      return {
+        AND: [
+          { journey: { visitorId } },
+          { OR: [{ searchHistoryId: null }, { searchHistory: { is: searchReference } }] },
+          { OR: [{ redirectLogId: null }, { redirectLog: { is: handoffReference } }] },
+        ],
+      };
+    };
 
-    // Each source is separately seek-paginated in its own existing index.
-    // Counts use the same base filters but deliberately omit every page cursor
-    // and read no unbounded event arrays.
-    const [journey, searches, handoffs, analytics, canonicalTotals, legacySearchTotal, legacyHandoffTotal] = await Promise.all([
-      stages.length && !isOperationalGuest ? db.journeyEvent.findMany({
-        where: { AND: [journeyWhere, sourceActivitySeek(cursor, "j", order)] },
-        orderBy: [{ createdAt: createdAtDirection }, { id: "asc" }],
-        take: ACTIVITY_FETCH_LIMIT, select: journeySelect,
-      }) : Promise.resolve([]),
-      allowed.has("SEARCH_COMPLETED") ? db.searchHistory.findMany({
-        where: { AND: [searchWhere, sourceActivitySeek(cursor, "s", order)] },
-        orderBy: [{ createdAt: createdAtDirection }, { id: "asc" }],
-        take: ACTIVITY_FETCH_LIMIT,
-        select: { id: true, type: true, origin: true, destination: true, status: true, createdAt: true },
-      }) : Promise.resolve([]),
-      canReadHandoffs ? db.redirectLog.findMany({
-        where: { AND: [handoffWhere, sourceActivitySeek(cursor, "r", order)] },
-        orderBy: [{ createdAt: createdAtDirection }, { id: "asc" }], take: ACTIVITY_FETCH_LIMIT,
-        select: { id: true, type: true, provider: true, route: true, createdAt: true },
-      }) : Promise.resolve([]),
-      allowed.has("ACCOUNT_ACTIVITY") && !product && !isOperationalGuest ? db.analyticsEvent.findMany({
-        where: { AND: [analyticsWhere, sourceActivitySeek(cursor, "e", order)] },
-        orderBy: [{ createdAt: createdAtDirection }, { id: "asc" }], take: ACTIVITY_FETCH_LIMIT,
-        select: { id: true, type: true, createdAt: true },
-      }) : Promise.resolve([]),
-      stages.length && !isOperationalGuest ? db.journeyEvent.groupBy({
-        by: ["type"], where: { AND: [journeyWhere, canonicalCountValidity] }, _count: { _all: true },
-      }) : Promise.resolve([]),
-      allowed.has("SEARCH_COMPLETED") ? db.searchHistory.count({ where: searchWhere }) : Promise.resolve(0),
-      canReadHandoffs ? db.redirectLog.count({ where: handoffWhere }) : Promise.resolve(0),
-    ]);
-    const canonicalCounts = new Map(canonicalTotals.map(row => [row.type, row._count._all]));
+    // A repeatable-read snapshot keeps canonical + legacy de-duplication stable
+    // when a source record and its JourneyEvent are inserted concurrently.
+    // The timeline, all totals and every visitor-ID batch observe one snapshot.
+    const [journey, searches, handoffs, analytics, canonicalCounts, legacySearchTotal, legacyHandoffTotal] =
+      await db.$transaction(async tx => {
+        const counts = new Map<string, number>();
+        const countVisitorBatch = async (visitorIds: string[]) => {
+          if (!visitorIds.length) return;
+          const grouped = await tx.journeyEvent.groupBy({
+            by: ["type"],
+            where: {
+              AND: [journeyWhere, primaryReferenceRequired,
+                { OR: visitorIds.map(visitorId => canonicalForVisitor(visitorId)) }],
+            },
+            _count: { _all: true },
+          });
+          for (const row of grouped) {
+            counts.set(row.type, (counts.get(row.type) ?? 0) + row._count._all);
+          }
+        };
+        if (stages.length && !isOperationalGuest) {
+          if (kind === "guest") {
+            await countVisitorBatch([id]);
+          } else {
+            // Bound the query size without capping the number of linked visitors
+            // or loading full event records into application memory.
+            let lastVisitorId: string | null = null;
+            for (;;) {
+              const batch = await tx.visitor.findMany({
+                where: eligibleJourneyLinkedVisitorWhere(id),
+                select: { id: true },
+                orderBy: { id: "asc" },
+                take: 100,
+                ...(lastVisitorId ? { cursor: { id: lastVisitorId }, skip: 1 } : {}),
+              });
+              if (!batch.length) break;
+              await countVisitorBatch(batch.map(visitor => visitor.id));
+              if (batch.length < 100) break;
+              lastVisitorId = batch[batch.length - 1].id;
+            }
+          }
+        }
+
+        // Page reads remain bounded; count queries reuse the same scope but
+        // deliberately omit the pagination cursor.
+        const [pageJourney, pageSearches, pageHandoffs, pageAnalytics, searchTotal, handoffTotal] = await Promise.all([
+          stages.length && !isOperationalGuest ? tx.journeyEvent.findMany({
+            where: { AND: [journeyWhere, sourceActivitySeek(cursor, "j", order)] },
+            orderBy: [{ createdAt: createdAtDirection }, { id: "asc" }],
+            take: ACTIVITY_FETCH_LIMIT, select: journeySelect,
+          }) : Promise.resolve([]),
+          allowed.has("SEARCH_COMPLETED") ? tx.searchHistory.findMany({
+            where: { AND: [searchWhere, sourceActivitySeek(cursor, "s", order)] },
+            orderBy: [{ createdAt: createdAtDirection }, { id: "asc" }],
+            take: ACTIVITY_FETCH_LIMIT,
+            select: { id: true, type: true, origin: true, destination: true, status: true, createdAt: true },
+          }) : Promise.resolve([]),
+          canReadHandoffs ? tx.redirectLog.findMany({
+            where: { AND: [handoffWhere, sourceActivitySeek(cursor, "r", order)] },
+            orderBy: [{ createdAt: createdAtDirection }, { id: "asc" }], take: ACTIVITY_FETCH_LIMIT,
+            select: { id: true, type: true, provider: true, route: true, createdAt: true },
+          }) : Promise.resolve([]),
+          allowed.has("ACCOUNT_ACTIVITY") && !product && !isOperationalGuest ? tx.analyticsEvent.findMany({
+            where: { AND: [analyticsWhere, sourceActivitySeek(cursor, "e", order)] },
+            orderBy: [{ createdAt: createdAtDirection }, { id: "asc" }], take: ACTIVITY_FETCH_LIMIT,
+            select: { id: true, type: true, createdAt: true },
+          }) : Promise.resolve([]),
+          allowed.has("SEARCH_COMPLETED") ? tx.searchHistory.count({ where: searchWhere }) : Promise.resolve(0),
+          canReadHandoffs ? tx.redirectLog.count({ where: handoffWhere }) : Promise.resolve(0),
+        ]);
+        return [pageJourney, pageSearches, pageHandoffs, pageAnalytics, counts, searchTotal, handoffTotal] as const;
+      }, { isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead, timeout: 30_000 });
+
     const summary: IdentityActivitySummary = {
       searches: (canonicalCounts.get("SEARCH_COMPLETED") ?? 0) + legacySearchTotal,
       resultsViewed: canonicalCounts.get("RESULTS_VIEWED") ?? 0,
