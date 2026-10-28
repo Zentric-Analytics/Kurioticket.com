@@ -24,8 +24,12 @@ export type ActivityFilters = {
 export type ActivityCursor = { at: string; id: string };
 /** Latest recorded timestamp among visible events, independent of sort direction. */
 export function latestVisibleActivityAt(rows: ActivityRow[]): Date | null {
-  const timestamps = rows.map(row => row.at.getTime()).filter(Number.isFinite);
-  return timestamps.length ? new Date(Math.max(...timestamps)) : null;
+  let latest = -Infinity;
+  for (const row of rows) {
+    const timestamp = row.at.getTime();
+    if (Number.isFinite(timestamp) && timestamp > latest) latest = timestamp;
+  }
+  return Number.isFinite(latest) ? new Date(latest) : null;
 }
 
 /** Only show activity whose source records can be opened in the selected environment. */
@@ -183,8 +187,13 @@ export function relatedJourneysWindow(rows: ActivityRow[], now: Date): { from: s
   const canonical = recorded.filter(row => row.journeyId);
   const focus = canonical.length ? canonical : recorded;
   if (!focus.length) return null;
-  const latest = Math.max(...focus.map(row => row.at.getTime()));
-  const earliest = Math.min(...focus.map(row => row.at.getTime()));
+  let latest = -Infinity;
+  let earliest = Infinity;
+  for (const row of focus) {
+    const timestamp = row.at.getTime();
+    latest = Math.max(latest, timestamp);
+    earliest = Math.min(earliest, timestamp);
+  }
   const end = Math.min(nowMs, latest + dayMs);
   const start = Math.max(earliest - dayMs, end - 89 * dayMs);
   return start < end ? { from: new Date(start).toISOString(), to: new Date(end).toISOString() } : null;
