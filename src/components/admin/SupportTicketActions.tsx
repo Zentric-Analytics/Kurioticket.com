@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 
 import { AdminButton, AdminSectionCard, AdminSelect, AdminTextarea } from "@/components/admin/AdminPageShell";
 import { supportTicketStatuses } from "@/lib/supportTickets";
@@ -13,11 +13,23 @@ export function SupportTicketActions({ ticketId, status, priority }: { ticketId:
   const [reply, setReply] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<SupportStatus>(status);
   const [selectedPriority, setSelectedPriority] = useState(priority);
+  const [statusDirty, setStatusDirty] = useState(false);
+  const [priorityDirty, setPriorityDirty] = useState(false);
   const [replyMessage, setReplyMessage] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isReplyPending, startReplyTransition] = useTransition();
   const [isStatusPending, startStatusTransition] = useTransition();
+
+  // router.refresh() updates server props without remounting this component.
+  // Keep unsaved edits, but synchronize controls the admin never changed.
+  useEffect(() => {
+    if (!statusDirty) setSelectedStatus(status);
+  }, [status, statusDirty]);
+
+  useEffect(() => {
+    if (!priorityDirty) setSelectedPriority(priority);
+  }, [priority, priorityDirty]);
 
   function submitReply() {
     setReplyMessage(null);
@@ -41,11 +53,11 @@ export function SupportTicketActions({ ticketId, status, priority }: { ticketId:
   }
 
   function updateStatus() {
-    // Submit only changed fields. A stale untouched status must not undo
-    // another agent\'s resolution when we change only the priority.
+    // Only submit explicit edits: refreshed props can change independently
+    // when another admin updates the same ticket.
     const changes = {
-      ...(selectedStatus !== status ? { status: selectedStatus } : {}),
-      ...(selectedPriority !== priority ? { priority: selectedPriority } : {}),
+      ...(statusDirty ? { status: selectedStatus } : {}),
+      ...(priorityDirty ? { priority: selectedPriority } : {}),
     };
     if (Object.keys(changes).length === 0) return;
     setReplyMessage(null);
@@ -59,9 +71,11 @@ export function SupportTicketActions({ ticketId, status, priority }: { ticketId:
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) {
-        setError(typeof payload.error === "string" ? payload.error : "Unable to update status.");
+        setError(typeof payload.error === "string" ? payload.error : "Unable to update ticket.");
         return;
       }
+      setStatusDirty(false);
+      setPriorityDirty(false);
       setStatusMessage("Ticket changes saved.");
       router.refresh();
     });
@@ -105,18 +119,22 @@ export function SupportTicketActions({ ticketId, status, priority }: { ticketId:
             <AdminSelect
               id="support-ticket-status"
               value={selectedStatus}
-              onChange={(event) => setSelectedStatus(event.target.value as SupportStatus)}
+              onChange={(event) => {
+                const next = event.target.value as SupportStatus;
+                setSelectedStatus(next);
+                setStatusDirty(next !== status);
+              }}
               disabled={isStatusPending}
               className="mt-2"
             >
               {supportTicketStatuses.map((item) => <option key={item} value={item}>{item.replaceAll("_", " ")}</option>)}
             </AdminSelect>
           </label>
-          <AdminButton type="button" variant="secondary" onClick={updateStatus} loading={isStatusPending} disabled={selectedStatus === status && selectedPriority === priority} aria-disabled={isStatusPending || (selectedStatus === status && selectedPriority === priority)}>
+          <AdminButton type="button" variant="secondary" onClick={updateStatus} loading={isStatusPending} disabled={!statusDirty && !priorityDirty} aria-disabled={isStatusPending || (!statusDirty && !priorityDirty)}>
             {isStatusPending ? "Saving" : "Save changes"}
           </AdminButton>
         </div>
-        <label className="block" htmlFor="support-ticket-priority"><span className="text-xs font-bold uppercase tracking-wide text-slate-500">Priority</span><AdminSelect id="support-ticket-priority" className="mt-2" value={selectedPriority} onChange={event => setSelectedPriority(event.target.value as typeof priority)} disabled={isStatusPending}>{["LOW","NORMAL","HIGH","URGENT"].map(value => <option key={value} value={value}>{value}</option>)}</AdminSelect></label>
+        <label className="block" htmlFor="support-ticket-priority"><span className="text-xs font-bold uppercase tracking-wide text-slate-500">Priority</span><AdminSelect id="support-ticket-priority" className="mt-2" value={selectedPriority} onChange={event => { const next = event.target.value as typeof priority; setSelectedPriority(next); setPriorityDirty(next !== priority); }} disabled={isStatusPending}>{["LOW","NORMAL","HIGH","URGENT"].map(value => <option key={value} value={value}>{value}</option>)}</AdminSelect></label>
         {statusMessage ? <p className="text-sm font-bold text-emerald-700" role="status" aria-live="polite">{statusMessage}</p> : null}
       </AdminSectionCard>
 
