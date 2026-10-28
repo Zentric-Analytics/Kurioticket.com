@@ -3,7 +3,7 @@ import {
   AdminOverviewDashboard,
   AdminOverviewSecondary,
 } from "@/components/admin/AdminOverviewDashboard";
-import type { OverviewRange } from "@/components/admin/AdminOverviewControls";
+import { AdminOverviewRangeTransitionProvider, type OverviewRange } from "@/components/admin/AdminOverviewControls";
 import { getRecentAdminActivity, getSafeSystemStatus } from "@/lib/admin-data";
 import { getAdminOverview } from "@/services/adminOverviewService";
 
@@ -38,12 +38,14 @@ export default async function AdminPage({ searchParams }: PageProps) {
     >
       <AdminSectionCard className="min-w-0 p-4 sm:p-5 lg:p-6">
         {overview.status === "ok" ? (
+          <AdminOverviewRangeTransitionProvider range={range}>
           <AdminOverviewDashboard
           data={overview.data}
           system={system}
           activity={activity}
           range={range}
         />
+          </AdminOverviewRangeTransitionProvider>
       ) : (
         <>
           <section role="status" className="border-b border-slate-200/90 py-5">
