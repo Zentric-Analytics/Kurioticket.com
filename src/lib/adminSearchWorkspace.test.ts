@@ -33,3 +33,13 @@ test("filtered sections submit back to the unified route and keep their reportin
   assert.match(searchDetail,/No verified identity link is available/);
   assert.match(searchDetail,/These links do not imply that another record belongs to this exact search/);
 });
+
+test("Search Activity has one navigation label, a Search records tab, and an accessible heading", () => {
+  const nav = readFileSync("src/lib/adminNavigation.ts","utf8");
+  const workspace = readFileSync("src/lib/adminSearchWorkspace.ts","utf8");
+  const frame = readFileSync("src/components/admin/SearchWorkspacePanelFrame.tsx","utf8");
+  assert.match(nav, /href: "\/admin\/searches\/activity", label: "Search Activity"/);
+  assert.match(workspace, /id: "searches", label: "Search records"/);
+  assert.match(frame, /<h1 className="sr-only">\{title\}<\/h1>/);
+  assert.match(searchDetail, /"&environment=" \+ encodeURIComponent\(search\.environment\)/);
+});
