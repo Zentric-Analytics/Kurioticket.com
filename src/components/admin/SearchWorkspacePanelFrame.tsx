@@ -10,6 +10,7 @@ export function SearchWorkspacePanelFrame({
   if (embedded) {
     return (
       <section aria-label={title} className="mx-auto w-full max-w-[1500px] text-[#374151]">
+        <h1 className="sr-only">{title}</h1>
         {description ? <p className="border-b border-[#E5E7EB] px-2 py-3 text-[12px] leading-5 text-[#6B7280]">{description}</p> : null}
         {children}
       </section>
