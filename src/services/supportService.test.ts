@@ -153,7 +153,7 @@ test("addAdminSupportReply creates admin SupportMessage and attempts notificatio
       async findUnique() {
         return { id: "ticket-1", email: "user@example.com", subject: "Need help", status: "OPEN" };
       },
-      async update() { throw new Error("not used"); },
+      async update() { return { id: "ticket-1", email: "user@example.com", subject: "Need help", status: "OPEN" as const }; },
     },
     supportMessage: {
       async create(args) {
@@ -170,6 +170,7 @@ test("addAdminSupportReply creates admin SupportMessage and attempts notificatio
   const result = await addAdminSupportReply({ ticketId: "ticket-1", body: "Thanks for contacting support." });
 
   assert.equal(result.message.author, "admin");
+  assert.equal(result.emailStatus, "sent");
   assert.deepEqual(messageOrder, ["customer-message", "Thanks for contacting support."]);
   assert.deepEqual(sentEmails, [{ to: "user@example.com", subject: "Re: Your Kurioticket support request", idempotencyKey: "support-ticket-reply-message-admin" }]);
 });
@@ -181,7 +182,7 @@ test("addAdminSupportReply returns saved message when notification email fails",
       async findUnique() {
         return { id: "ticket-1", email: "user@example.com", subject: "Need help", status: "OPEN" };
       },
-      async update() { throw new Error("not used"); },
+      async update() { return { id: "ticket-1", email: "user@example.com", subject: "Need help", status: "OPEN" as const }; },
     },
     supportMessage: {
       async create(args) {
@@ -196,6 +197,7 @@ test("addAdminSupportReply returns saved message when notification email fails",
   const result = await addAdminSupportReply({ ticketId: "ticket-1", body: "We are checking this." });
 
   assert.equal(result.message.id, "message-admin");
+  assert.equal(result.emailStatus, "failed");
 });
 
 test("updateSupportTicketStatus updates valid status and returns previous status", async () => {
