@@ -68,7 +68,9 @@ test("POST /api/admin/support/[id] creates reply and writes audit log", async ()
     async writeAuditLog(input) { audits.push({ action: input.action, targetId: input.targetId, metadata: input.metadata }); },
   });
   __supportServiceTest.setPrismaClientForTesting({
+    async $transaction(work) { return work(this); },
     supportTicket: {
+      async updateMany() { return { count: 1 }; },
       async create() { throw new Error("not used"); },
       async findUnique() { return { id: "ticket-1", email: "user@example.com", subject: "Need help", status: "OPEN" }; },
       async update() { throw new Error("not used"); },
@@ -84,9 +86,10 @@ test("POST /api/admin/support/[id] creates reply and writes audit log", async ()
 
   assert.equal(response.status, 201);
   assert.equal(body.message.author, "admin");
+  assert.equal(body.emailStatus, "accepted");
   assert.equal(audits[0].action, "support_ticket.reply");
   assert.equal(audits[0].targetId, "ticket-1");
-  assert.deepEqual(audits[0].metadata, { messageId: "message-1", status: "OPEN" });
+  assert.deepEqual(audits[0].metadata, { messageId: "message-1", status: "OPEN", emailStatus: "accepted" });
 });
 
 test("PATCH /api/admin/support/[id] updates valid status and writes audit log", async () => {
@@ -97,7 +100,9 @@ test("PATCH /api/admin/support/[id] updates valid status and writes audit log", 
     async writeAuditLog(input) { audits.push({ action: input.action, metadata: input.metadata }); },
   });
   __supportServiceTest.setPrismaClientForTesting({
+    async $transaction(work) { return work(this); },
     supportTicket: {
+      async updateMany() { return { count: 1 }; },
       async create() { throw new Error("not used"); },
       async findUnique() { return { id: "ticket-1", email: "user@example.com", subject: "Need help", status: "OPEN" }; },
       async update(args) { return { id: args.where.id, email: "user@example.com", subject: "Need help", status: args.data.status }; },
@@ -126,7 +131,9 @@ test("PATCH /api/admin/support/[id] rejects invalid enum and missing ticket", as
   assert.equal(invalidStatus.status, 400);
 
   __supportServiceTest.setPrismaClientForTesting({
+    async $transaction(work) { return work(this); },
     supportTicket: {
+      async updateMany() { return { count: 1 }; },
       async create() { throw new Error("not used"); },
       async findUnique() { return null; },
       async update() { throw new Error("not used"); },

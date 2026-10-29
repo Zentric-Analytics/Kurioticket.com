@@ -53,11 +53,11 @@ export async function POST(request: NextRequest, context: RouteContext) {
       targetType: "SupportTicket",
       targetId: result.ticket.id,
       targetEmail: result.ticket.email,
-      metadata: { messageId: result.message.id, status: result.ticket.status },
+      metadata: { messageId: result.message.id, status: result.ticket.status, emailStatus: result.emailStatus },
       request,
     });
 
-    return NextResponse.json({ message: result.message }, { status: 201 });
+    return NextResponse.json({ message: result.message, emailStatus: result.emailStatus }, { status: 201 });
   } catch (error) {
     if (error instanceof SupportTicketNotFoundError) return NextResponse.json({ error: "Support ticket not found." }, { status: 404 });
     console.error("[admin-support:reply] Failed to add reply", error);

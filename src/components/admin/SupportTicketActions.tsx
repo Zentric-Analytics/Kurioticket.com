@@ -31,7 +31,7 @@ export function SupportReplyForm({ ticketId, recipientEmail }: { ticketId: strin
         return;
       }
       setReply("");
-      setReplyMessage("Reply recorded. Email delivery is not confirmed.");
+      setReplyMessage(payload.emailStatus === "accepted" ? "Reply saved. Email accepted by provider; delivery is not confirmed." : payload.emailStatus === "failed" ? "Reply saved, but email sending failed. Check email delivery records." : "Reply saved. Email sending status is unknown; check email delivery records.");
       router.refresh();
       } catch {
         setError("Unable to send reply. Check the conversation before retrying.");
