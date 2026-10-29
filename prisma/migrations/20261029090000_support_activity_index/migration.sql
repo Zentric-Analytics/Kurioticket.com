@@ -12,4 +12,4 @@ WHERE ticket."id" = latest."ticketId"
   AND ticket."updatedAt" < latest."lastMessageAt";
 
 -- The inbox now sorts/paginates by last activity, then ticket ID.
-CREATE INDEX "SupportTicket_updatedAt_id_idx" ON "SupportTicket"("updatedAt", "id");
+CREATE INDEX IF NOT EXISTS "SupportTicket_updatedAt_id_idx" ON "SupportTicket"("updatedAt", "id");
