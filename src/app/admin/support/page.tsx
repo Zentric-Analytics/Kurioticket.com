@@ -76,6 +76,9 @@ function priorityStyle(priority: AdminSupportPriority) {
 export default async function AdminSupportPage({ searchParams }: { searchParams: SearchParams }) {
   const raw = await searchParams;
   const params = scopedParams(raw);
+  // Forward the continuation cursor only to the ticket read. Status tabs and
+  // filter submissions use scopedParams without cursor, so they start at page one.
+  if (one(raw.cursor)) params.set("cursor", one(raw.cursor));
   if (!params.has("limit")) params.set("limit", "50");
   // Preserve the current support query contract and creation-time pagination.
   // Sorting, ticket delivery and lifecycle logic belong to the later workflow phase.
