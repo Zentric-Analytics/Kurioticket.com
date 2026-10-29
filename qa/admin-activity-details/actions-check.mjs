@@ -20,7 +20,7 @@ async function revealBaselineEvents() {
 }
 
 async function headingDestinations(baseline = false) {
-  if (baseline) return page.locator('button[aria-controls^="journey-"]').evaluateAll(buttons =>
+  if (baseline && await page.locator('button[aria-controls^="journey-"]').count()) return page.locator('button[aria-controls^="journey-"]').evaluateAll(buttons =>
     buttons.map(button => button.parentElement.querySelector("a")?.getAttribute("href")));
   return page.getByRole("link", {name:/^View activity for /}).evaluateAll(links =>
     links.map(link => link.getAttribute("href")));
