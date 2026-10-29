@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { AdminDataTable, AdminEmptyState, AdminPageShell, AdminSectionCard, AdminStatusBadge } from "@/components/admin/AdminPageShell";
 import { SearchWorkspaceBackLink } from "@/components/admin/SearchWorkspaceBackLink";
 import { formatDateTime } from "@/lib/admin-data";
-import { activityJourneyReturnHref } from "@/lib/adminActivityJourneyNavigation";
+import { decodeActivityJourneyReturn } from "@/lib/adminActivityJourneyNavigation";
 import { adminJourneys } from "@/services/adminJourneyService";
 
 export const metadata = { title: "Admin Journey Detail" };
@@ -19,7 +19,7 @@ export default async function AdminJourneyDetailPage({ params, searchParams }: {
 
   return (
     <>
-      <SearchWorkspaceBackLink href={returnHref(raw)} label={activityJourneyReturnHref(raw.activityReturn) ? "Back to Activity" : "Journeys"} />
+      <SearchWorkspaceBackLink href={returnHref(raw)} label={decodeActivityJourneyReturn(raw.activityReturn) ? "Back to Activity" : "Journeys"} />
       <AdminPageShell title="Journey detail" hideHeader>
       {result.status === "ok" ? (
         <div className="space-y-4">
@@ -76,7 +76,7 @@ function cursorHref(id: string, raw: Record<string, string | string[] | undefine
 }
 
 function returnHref(raw: Record<string, string | string[] | undefined>) {
-  const activityReturn = activityJourneyReturnHref(raw.activityReturn);
+  const activityReturn = decodeActivityJourneyReturn(raw.activityReturn);
   if (activityReturn) return activityReturn;
   // Always return to the filtered cohort, never to an arbitrary supplied URL.
   const p = new URLSearchParams();
