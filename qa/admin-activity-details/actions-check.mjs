@@ -31,7 +31,8 @@ async function capture(filename) {
   // Reset it before full-page capture so the sticky header is not photographed
   // partway down the document. This affects test capture only, not product CSS.
   await page.evaluate(() => window.scrollTo({ top: 0, left: 0, behavior: "instant" }));
-  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+  // Browser scroll anchoring can leave a 1-2px rounding offset on narrow pages.
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeLessThanOrEqual(2);
   await page.screenshot({ path: output + "/" + filename, fullPage: true });
 }
 
