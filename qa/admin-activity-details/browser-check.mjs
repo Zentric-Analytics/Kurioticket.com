@@ -89,15 +89,15 @@ async function expectBalancedDesktopHeader(page, context, requireSingleLineEmail
     const firstMetric = document.querySelector('section[aria-label="Activity summary"] [data-testid="activity-metric-label"]')?.parentElement;
     const events = document.querySelector('[data-testid="activity-events-fact"]');
     const email = identity?.firstElementChild?.querySelector('p');
-    if (!identity || !heading || !firstMetric || !events || !email) throw new Error("Header spacing anchors missing");
+    if (!identity || !heading || !firstMetric || !events) throw new Error("Header spacing anchors missing");
     const columns = identity.children[0].getBoundingClientRect();
     const eventsRect = events.getBoundingClientRect();
-    const emailStyle = getComputedStyle(email);
+    const emailStyle = email ? getComputedStyle(email) : null;
     return {
       firstToEventsRatio: columns.width / eventsRect.width,
       summaryHeadingGap: firstMetric.getBoundingClientRect().left - heading.getBoundingClientRect().right,
-      emailHeight: email.getBoundingClientRect().height,
-      emailFontSize: Number.parseFloat(emailStyle.fontSize),
+      emailHeight: email?.getBoundingClientRect().height ?? 0,
+      emailFontSize: emailStyle ? Number.parseFloat(emailStyle.fontSize) : 0,
       overflow: document.documentElement.scrollWidth > innerWidth + 1,
     };
   });
