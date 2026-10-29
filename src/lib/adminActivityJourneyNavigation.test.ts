@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { activityJourneyReturnHref } from "./adminActivityJourneyNavigation";
+import { activityJourneyReturnHref, encodeActivityJourneyReturn, decodeActivityJourneyReturn } from "./adminActivityJourneyNavigation";
 
 test("journey return keeps Activity identity and recognized filters", () => {
   const href = "/admin/users/guest/qa-visitor-0001/activity?tab=searches&q=LOS&product=FLIGHT&from=2026-10-01&to=2026-10-22&directory=tab%3Dguests";
@@ -23,4 +23,16 @@ test("journey return preserves valid international search and directory context"
   assert.ok(returned);
   assert.equal(new URL(returned, "https://kurioticket.test").searchParams.get("q"), "旅".repeat(120));
   assert.equal(new URL(returned, "https://kurioticket.test").searchParams.get("directory"), "客".repeat(1000));
+});
+
+
+test("compact context round-trips international filters and rejects invalid destinations", () => {
+  const href = "/admin/users/guest/qa-visitor-0001/activity?" + new URLSearchParams({q:"旅".repeat(120),directory:"客".repeat(1000)});
+  const token = encodeActivityJourneyReturn(href);
+  assert.ok(token && token.length < 7000);
+  assert.equal(decodeActivityJourneyReturn(token), href);
+  assert.equal(decodeActivityJourneyReturn("/admin/users/user/qa-account/activity?q=LOS"), "/admin/users/user/qa-account/activity?q=LOS");
+  for (const value of [null, "v1.invalid!", "v1."+"a".repeat(7000), "v1."+btoa(JSON.stringify({path:"https://evil.test",filters:{q:"LOS"}})), "v1."+btoa(JSON.stringify({path:"/admin/users/user/qa-account/activity",filters:{q:{nested:true}}}))]) {
+    assert.equal(decodeActivityJourneyReturn(value),null);
+  }
 });

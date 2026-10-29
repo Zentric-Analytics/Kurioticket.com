@@ -6,7 +6,7 @@ import {
   ListChecks, MousePointerClick, Plane, Search,
 } from "lucide-react";
 import { groupContiguousActivityRows } from "@/lib/adminIdentityActivity";
-import { activityJourneyReturnHref } from "@/lib/adminActivityJourneyNavigation";
+import { encodeActivityJourneyReturn } from "@/lib/adminActivityJourneyNavigation";
 import type { ActivityRow } from "@/lib/adminIdentityJourney";
 
 const dayLabel = (at: Date) => new Intl.DateTimeFormat("en", {
@@ -56,7 +56,7 @@ function detailHref(row: ActivityRow, environment: string, now: Date, returnHref
     const to = new Date(Math.min(now.getTime(), row.at.getTime() + 86_400_000)).toISOString();
     const from = new Date(row.at.getTime() - 86_400_000).toISOString();
     const query = new URLSearchParams({ from, to, environment });
-    const activityReturn = activityJourneyReturnHref(returnHref);
+    const activityReturn = encodeActivityJourneyReturn(returnHref);
     if (activityReturn) query.set("activityReturn", activityReturn);
     return "/admin/journeys/" + encodeURIComponent(row.journeyId)
       + "?" + query.toString();
