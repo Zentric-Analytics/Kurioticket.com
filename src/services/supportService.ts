@@ -12,6 +12,7 @@ type SupportReplyTransaction = {
 type SupportPrismaClient = {
   $transaction?<T>(work: (tx: SupportReplyTransaction) => Promise<T>): Promise<T>;
   supportTicket: {
+    updateMany(args: { where: { id: string; updatedAt: { lt: Date } }; data: { updatedAt: Date } }): Promise<{ count: number }>;
     create(args: {
       data: {
         userId?: string;
