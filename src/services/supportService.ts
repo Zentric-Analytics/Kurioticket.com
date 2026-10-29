@@ -4,8 +4,15 @@ import { trackAnalyticsEvent } from "@/services/analyticsService";
 import { createNotificationEvent } from "@/services/notificationService";
 import type { SupportTicketStatusValue } from "@/lib/supportTickets";
 
+type SupportReplyTransaction = {
+  supportTicket: { updateMany(args: { where: { id: string; updatedAt: { lt: Date } }; data: { updatedAt: Date } }): Promise<{ count: number }> };
+  supportMessage: { create(args: { data: { ticketId: string; author: string; body: string } }): Promise<{ id: string; ticketId: string; author: string; body: string; createdAt: Date }> };
+};
+
 type SupportPrismaClient = {
+  $transaction?<T>(work: (tx: SupportReplyTransaction) => Promise<T>): Promise<T>;
   supportTicket: {
+    updateMany(args: { where: { id: string; updatedAt: { lt: Date } }; data: { updatedAt: Date } }): Promise<{ count: number }>;
     create(args: {
       data: {
         userId?: string;
@@ -43,9 +50,11 @@ type SupportPrismaClient = {
 };
 
 type SendSupportEmail = typeof sendTransactionalEmail;
+type TrackSupportAnalytics = typeof trackAnalyticsEvent;
 
 let prismaClientForTesting: SupportPrismaClient | null = null;
 let sendSupportEmailForTesting: SendSupportEmail | null = null;
+let trackSupportAnalyticsForTesting: TrackSupportAnalytics | null = null;
 
 export async function createSupportTicket(input: {
   userId?: string | null;
@@ -72,12 +81,17 @@ export async function createSupportTicket(input: {
     },
   });
 
-  await trackAnalyticsEvent({
-    userId: input.userId,
-    type: "SUPPORT_TICKET",
-    name: "support_ticket_created",
-    metadata: { category: input.category },
-  });
+  try {
+    await (trackSupportAnalyticsForTesting ?? trackAnalyticsEvent)({
+      userId: input.userId,
+      type: "SUPPORT_TICKET",
+      name: "support_ticket_created",
+      metadata: { category: input.category },
+    });
+  } catch (error) {
+    // A persisted request must not look like a failed submission because optional telemetry failed.
+    console.error("[support] Failed to record optional ticket analytics", error);
+  }
 
   try {
     await getSendSupportEmail()({
@@ -86,6 +100,7 @@ export async function createSupportTicket(input: {
       html: supportTicketEmail({ ticketId: ticket.id, subject: input.subject }),
       template: "support_ticket",
       idempotencyKey: `support-ticket-${ticket.id}`,
+      metadata: { supportTicketId: ticket.id, supportDeliveryType: "confirmation" },
     });
   } catch (error) {
     console.error("[support] Failed to send support ticket confirmation email", error);
@@ -102,31 +117,42 @@ export async function addAdminSupportReply(input: { ticketId: string; body: stri
   });
   if (!ticket) throw new SupportTicketNotFoundError();
 
-  const message = await db.supportMessage.create({
-    data: {
-      ticketId: ticket.id,
-      author: "admin",
-      body: input.body,
-    },
+  // Save the message and advance last activity together: a failed update must
+  // not leave behind a reply that the admin is told to retry.
+  if (!db.$transaction) throw new Error("Support transaction unavailable.");
+  const message = await db.$transaction(async (tx) => {
+    const saved = await tx.supportMessage.create({
+      data: { ticketId: ticket.id, author: "admin", body: input.body },
+    });
+    // A concurrent newer ticket action must not be moved backward in the inbox.
+    await tx.supportTicket.updateMany({
+      where: { id: ticket.id, updatedAt: { lt: saved.createdAt } },
+      data: { updatedAt: saved.createdAt },
+    });
+    return saved;
   });
 
   if (ticket.userId && !prismaClientForTesting) {
     await createNotificationEvent({ userId: ticket.userId, eventKey: `support-reply:${message.id}`, type: "SUPPORT_UPDATE", title: "Kurioticket Support replied", body: `There is a new reply to “${ticket.subject}”.`, actionPath: "/support", metadata: { ticketId: ticket.id, supportMessageId: message.id } }).catch((error) => console.error("[support] Failed to persist support reply notification", { ticketId: ticket.id, messageId: message.id, message: error instanceof Error ? error.message : "notification_failed" }));
   }
 
+  let emailStatus: "accepted" | "failed" | "unknown" = "unknown";
   try {
-    await getSendSupportEmail()({
+    const sendResult = await getSendSupportEmail()({
       to: ticket.email,
       subject: "Re: Your Kurioticket support request",
       html: supportTicketReplyEmail({ ticketId: ticket.id, subject: ticket.subject, body: input.body }),
       template: "support_ticket",
       idempotencyKey: `support-ticket-reply-${message.id}`,
+      metadata: { supportTicketId: ticket.id, supportMessageId: message.id, supportDeliveryType: "admin_reply" },
     });
+    emailStatus = sendResult.id === "resend-not-configured" ? "failed" : sendResult.id ? "accepted" : "unknown";
   } catch (error) {
+    emailStatus = "failed";
     console.error("[support] Failed to send support ticket reply email", error);
   }
 
-  return { ticket, message };
+  return { ticket, message, emailStatus };
 }
 
 export async function updateSupportTicketStatus(input: { ticketId: string; status: SupportTicketStatusValue }) {
@@ -166,5 +192,8 @@ export const __supportServiceTest = {
   },
   setSendSupportEmailForTesting(sendEmail: SendSupportEmail | null) {
     sendSupportEmailForTesting = sendEmail;
+  },
+  setTrackAnalyticsForTesting(track: TrackSupportAnalytics | null) {
+    trackSupportAnalyticsForTesting = track;
   },
 };
