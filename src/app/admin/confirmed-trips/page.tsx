@@ -2,7 +2,6 @@ import Link from "next/link";
 import { RecentConfirmedTripTable } from "@/components/admin/RecentConfirmedTripTable";
 import { ConfirmedTripsBreakdowns } from "@/components/admin/ConfirmedTripsBreakdowns";
 import {
-  ArrowDown,
   CalendarCheck,
   CalendarDays,
   CircleX,
@@ -34,7 +33,7 @@ export default async function AdminConfirmedTripsPage() {
   return (
     <AdminPageShell
       title="Confirmed Trips"
-      description="Monitor provider-confirmed My Trips created by signed partner callbacks. Provider handoffs, searches and payments are not treated as booking confirmations."
+      description="View trips confirmed by travel providers and monitor confirmation activity."
       actions={
         <div className="flex flex-wrap items-center gap-2 md:justify-end">
           <Link href="/admin/confirmed-trips/records" className="inline-flex min-h-9 items-center justify-center rounded-lg bg-indigo-700 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-indigo-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2">
@@ -46,17 +45,6 @@ export default async function AdminConfirmedTripsPage() {
         </div>
       }
     >
-      <nav aria-label="Confirmed Trips page shortcuts" className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-slate-200 pb-3">
-        <span className="text-xs font-medium text-slate-500">Jump to:</span>
-        <Link href="#recent-confirmed-trips-title" className="inline-flex min-h-9 items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 hover:text-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400">
-          <ArrowDown size={15} aria-hidden="true" />
-          Recent confirmed trips
-        </Link>
-        <Link href="#confirmation-integration-title" className="inline-flex min-h-9 items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 hover:text-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400">
-          <ArrowDown size={15} aria-hidden="true" />
-          Confirmation readiness
-        </Link>
-      </nav>
       {/* Retain the existing page body background. One parent groups every
           read-only section without changing the canonical data sources. */}
       <AdminSectionCard className="min-w-0 p-4 sm:p-5 lg:p-6">
