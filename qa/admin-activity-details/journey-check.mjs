@@ -22,6 +22,7 @@ try {
   await expect(page.getByRole('table')).toContainText('PROVIDER HANDOFF STARTED');
   await page.screenshot({path:output+'/journey-detail-navigation-1280.png',fullPage:true});
   await back.click();
+  await expect(page).toHaveURL(/\/admin\/users\/guest\/qa-guest-activity-0001\/activity\?/);
   const returned = new URL(page.url());
   assert.equal(returned.pathname,'/admin/users/guest/qa-guest-activity-0001/activity');
   assert.equal(returned.searchParams.get('tab'),'searches');
