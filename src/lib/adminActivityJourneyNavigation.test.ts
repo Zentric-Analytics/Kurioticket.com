@@ -13,3 +13,14 @@ test("journey return rejects external, malformed and unrelated targets", () => {
   }
   assert.equal(activityJourneyReturnHref("/admin/users/user/qa-account/activity?redirect=https://evil.test&q=LOS"), "/admin/users/user/qa-account/activity?q=LOS");
 });
+
+
+test("journey return preserves valid international search and directory context", () => {
+  const params = new URLSearchParams({q:"旅".repeat(120),directory:"客".repeat(1000)});
+  const href = "/admin/users/guest/qa-visitor-0001/activity?" + params;
+  assert.ok(href.length > 2400);
+  const returned = activityJourneyReturnHref(href);
+  assert.ok(returned);
+  assert.equal(new URL(returned, "https://kurioticket.test").searchParams.get("q"), "旅".repeat(120));
+  assert.equal(new URL(returned, "https://kurioticket.test").searchParams.get("directory"), "客".repeat(1000));
+});

@@ -2,7 +2,7 @@
  * Accept only an individual Activity route and reconstruct its known filters.
  */
 export function activityJourneyReturnHref(input: unknown): string | null {
-  if (typeof input !== "string" || input.length > 2400 || /[\u0000-\u001f\u007f#]/.test(input)) return null;
+  if (typeof input !== "string" || input.length > 16384 || /[\u0000-\u001f\u007f#]/.test(input)) return null;
   const [pathname, query = ""] = input.split("?");
   if (!/^\/admin\/users\/(?:user|guest)\/[a-z0-9_-]{6,80}\/activity$/i.test(pathname)) return null;
   const candidates = new URLSearchParams(query);
