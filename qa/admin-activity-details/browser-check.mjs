@@ -93,11 +93,15 @@ async function expectBalancedDesktopHeader(page, context, requireSingleLineEmail
     const columns = identity.children[0].getBoundingClientRect();
     const eventsRect = events.getBoundingClientRect();
     const emailStyle = email ? getComputedStyle(email) : null;
+    const providerLabel = document.querySelectorAll('section[aria-label="Activity summary"] [data-testid="activity-metric-label"]')[2];
+    if (!providerLabel) throw new Error("Provider handoffs metric is missing");
     return {
       firstToEventsRatio: columns.width / eventsRect.width,
       summaryHeadingGap: firstMetric.getBoundingClientRect().left - heading.getBoundingClientRect().right,
       emailHeight: email?.getBoundingClientRect().height ?? 0,
       emailFontSize: emailStyle ? Number.parseFloat(emailStyle.fontSize) : 0,
+      providerLabelHeight: providerLabel.getBoundingClientRect().height,
+      providerLabelFontSize: Number.parseFloat(getComputedStyle(providerLabel).fontSize),
       overflow: document.documentElement.scrollWidth > innerWidth + 1,
     };
   });
@@ -105,6 +109,8 @@ async function expectBalancedDesktopHeader(page, context, requireSingleLineEmail
     context + ": identity must be at least four times wider than Events: " + JSON.stringify(layout));
   assert.ok(layout.summaryHeadingGap >= 8 && layout.summaryHeadingGap <= 64,
     context + ": Activity summary heading must sit close to Searches: " + JSON.stringify(layout));
+  assert.ok(layout.providerLabelHeight < layout.providerLabelFontSize * 1.9,
+    context + ": Provider handoffs label should not wrap across desktop lines: " + JSON.stringify(layout));
   if (requireSingleLineEmail) assert.ok(layout.emailHeight < layout.emailFontSize * 1.9,
     context + ": realistic desktop email should fit without wrapping: " + JSON.stringify(layout));
   assert.equal(layout.overflow, false, context + ": no horizontal overflow");
