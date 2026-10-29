@@ -15,15 +15,15 @@ function loadProduction(relative: string, overrides: Record<string, unknown> = {
   const output = ts.transpileModule(readFileSync(filename, "utf8"), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true },
   }).outputText;
-  const module = { exports: {} };
+  const loadedModule = { exports: {} };
   const requireSource = (id: string): unknown => {
     if (Object.hasOwn(overrides, id)) return overrides[id];
     if (id.startsWith("@/")) return loadProduction("src/" + id.slice(2) + ".ts", overrides);
     if (id.startsWith(".")) return loadProduction(resolve(dirname(filename), id + ".ts"), overrides);
     throw new Error("Unmocked runtime dependency: " + id);
   };
-  new Function("require", "module", "exports", "console", output)(requireSource, module, module.exports, { error() {} });
-  return module.exports;
+  new Function("require", "module", "exports", "console", output)(requireSource, loadedModule, loadedModule.exports, { error() {} });
+  return loadedModule.exports;
 }
 
 // Fail on unsupported predicates rather than silently broadening a test query.
@@ -51,7 +51,7 @@ function matches(value: any, condition: any): boolean {
   });
 }
 
-function setup(kind: "guest" | "user" | "operational", count = 1105) {
+function setup(kind: "guest" | "user" | "operational", count = 1105, products = ["FLIGHT", "HOTEL"]) {
   const userId = "qa-complete-account";
   const visitorId = "qa-complete-visitor";
   const id = kind === "user" ? userId : kind === "operational" ? "qa-operational-session" : visitorId;
@@ -70,7 +70,7 @@ function setup(kind: "guest" | "user" | "operational", count = 1105) {
   const searchRows: Row[] = Array.from({ length: count }, (_, index) => ({
     ...owner, id: "qa-search-" + String(index).padStart(6, "0"),
     createdAt: new Date(+baseTime - Math.floor(index / 17) * 1000), // ties cross batch boundaries
-    type: index % 2 ? "HOTEL" : "FLIGHT", origin: "LOS", destination: index % 2 ? "Accra" : "London",
+    type: products[index % products.length], origin: "LOS", destination: index % 2 ? "Accra" : "London",
     status: "SUCCESS", query: metadata, journeyEvents: [],
   }));
   const handoffRows: Row[] = Array.from({ length: 53 }, (_, index) => ({
@@ -262,3 +262,24 @@ test("complete-read budget accounts for every source and visitor batch without o
   assert.equal(maximum, 2_147_483_647);
   assert.throws(() => completeActivityReadTimeout([-1], 0), /Invalid activity read volume/);
 });
+
+for (const kind of ["guest", "user", "operational"] as const) {
+  test("complete " + kind + " search breakdown uses deduplicated eligible records including repeats", async () => {
+    const result = await setup(kind).load();
+    assert.equal(result.status, "ok");
+    assert.deepEqual(result.data.summary.searchProducts, { flights: 553, hotels: 552, cars: 0, other: 0 });
+    const filtered = await setup(kind).load({ ...allFilters, product: "HOTEL" });
+    assert.deepEqual(filtered.data.summary.searchProducts, { flights: 0, hotels: 552, cars: 0, other: 0 });
+    const noSearch = await setup(kind).load({ ...allFilters, tab: "handoffs" });
+    assert.deepEqual(noSearch.data.summary.searchProducts, { flights: 0, hotels: 0, cars: 0, other: 0 });
+  });
+}
+
+for (const kind of ["guest", "user", "operational"] as const) {
+  test(kind + " product counts reconcile including cars and other searches", async () => {
+    const result = await setup(kind, 10, ["FLIGHT", "HOTEL", "CAR", "PACKAGE", "UNKNOWN"]).load();
+    assert.equal(result.status, "ok");
+    assert.deepEqual(result.data.summary.searchProducts, { flights: 2, hotels: 2, cars: 2, other: 4 });
+    assert.equal(Object.values(result.data.summary.searchProducts).reduce((sum: number, n) => sum + Number(n), 0), result.data.summary.searches);
+  });
+}

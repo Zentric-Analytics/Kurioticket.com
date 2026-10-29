@@ -1,7 +1,6 @@
 // QA ONLY: deterministic synthetic rows for rendering the actual Admin Activity route.
 // Never use this as production data or cite a generated screenshot as a staging result.
 const time = minute => new Date("2026-10-22T17:" + String(minute).padStart(2, "0") + ":00.000Z");
-const guest = "qa-guest-activity-0001";
 const journey = (id, startedAt, props) => ({ journeyId: id, journeyStartedAt: startedAt, ...props });
 const recorded = [
   // Four separately recorded identical-looking selections, each retaining its own ID/time.
@@ -63,6 +62,12 @@ export async function loadAdminIdentityActivity(kind, id, filters, cursor, readM
   const sourceRows = id === "qa-complete-history-0001" ? completeHistory : [...recorded, ...olderRecorded, ...newerRecorded];
   const allMatched = id === "qa-no-events-0001" ? [] : sourceRows.filter(matches);
   const summary = {
+    searchProducts: {
+      flights: allMatched.filter(row => row.stage === "SEARCH_COMPLETED" && row.product === "FLIGHT").length,
+      hotels: allMatched.filter(row => row.stage === "SEARCH_COMPLETED" && row.product === "HOTEL").length,
+      cars: allMatched.filter(row => row.stage === "SEARCH_COMPLETED" && row.product === "CAR").length,
+      other: allMatched.filter(row => row.stage === "SEARCH_COMPLETED" && !["FLIGHT", "HOTEL", "CAR"].includes(row.product)).length,
+    },
     searches: allMatched.filter(row => row.stage === "SEARCH_COMPLETED").length,
     resultsViewed: allMatched.filter(row => row.stage === "RESULTS_VIEWED").length,
     providerHandoffs: allMatched.filter(row => row.stage === "PROVIDER_HANDOFF_STARTED").length,
@@ -86,8 +91,8 @@ export async function loadAdminIdentityActivity(kind, id, filters, cursor, readM
     ? (selected >= 0 ? ascendingPages[selected + 1]?.cursor ?? null : null)
     : (!cursor && olderRows.length ? "older-qa-page" : null);
   return { status: "ok", data: {
-    id, kind, title: kind === "guest" ? "Guest visitor" : "QA registered customer",
-    email: kind === "guest" ? null : "customer.qa@example.invalid",
+    id, kind, title: kind === "guest" ? "Guest visitor" : id === "qa-long-identity-0001" ? "Alexandria Olufunmilayo Adekunle-Wellington" : "QA registered customer",
+    email: kind === "guest" ? null : id === "qa-protected-admin-0001" ? "protected.qa@example.invalid" : id === "qa-long-identity-0001" ? "alexandria.olufunmilayo.adekunle-wellington@example.invalid" : "customer.qa@example.invalid",
     role: kind === "guest" ? null : "USER",
     status: kind === "guest" ? "Anonymous" : "ACTIVE",
     firstSeenAt: time(39), lastSeenAt: time(48), environment: "staging",

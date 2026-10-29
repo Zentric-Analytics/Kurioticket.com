@@ -51,7 +51,7 @@ await put("mocks/activity.js", await readFile(path.join(qa, "activity-fixture.js
 await put("mocks/prisma.js", await readFile(path.join(qa, "old-drawer-fixture.js"), "utf8"));
 // Compare the unmodified Activity page and timeline at this change's dev base,
 // using the same fictional identity and complete event history.
-const baseline = "9a97c268bd02bfb45ecdea9bf5057fac131f9363";
+const baseline = process.env.ADMIN_ACTIVITY_QA_BASE || "1bfa4db410ae11512a2fc1aea74a2a6c3d63ae8d";
 const oldTimeline = execFileSync("git", [
   "show", baseline + ":src/components/admin/ActivityTimeline.tsx",
 ], { cwd: repo, encoding: "utf8" });
@@ -70,7 +70,7 @@ await put("app/before/page.tsx", [
 
 const app = spawn(process.execPath,
   [path.join(repo, "node_modules/next/dist/bin/next"), "dev", "--webpack", "-p", port],
-  { cwd: temp, stdio: "inherit" });
+  { cwd: temp, stdio: "inherit", env: {...process.env, ADMIN_EMAILS:"protected.qa@example.invalid"} });
 try {
   const root = "http://localhost:" + port;
   let running = false;
@@ -98,7 +98,7 @@ try {
     }
     if (!ready) throw new Error("QA fixture route did not compile successfully: " + route);
   }
-  for (const check of ["browser-check.mjs", "actions-check.mjs"]) {
+  for (const check of ["browser-check.mjs", "actions-check.mjs", "zoom-check.mjs"]) {
     const result = await new Promise((resolve, reject) => {
       const child = spawn(process.execPath, [path.join(qa, check)], {
         cwd: repo, stdio: "inherit",
