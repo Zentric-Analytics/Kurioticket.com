@@ -6,6 +6,7 @@ import {
   ListChecks, MousePointerClick, Plane, Search,
 } from "lucide-react";
 import { groupContiguousActivityRows } from "@/lib/adminIdentityActivity";
+import { activityJourneyReturnHref } from "@/lib/adminActivityJourneyNavigation";
 import type { ActivityRow } from "@/lib/adminIdentityJourney";
 
 const dayLabel = (at: Date) => new Intl.DateTimeFormat("en", {
@@ -50,12 +51,15 @@ function EventIcon({ stage }: { stage: ActivityRow["stage"] }) {
   if (stage === "PROVIDER_HANDOFF_STARTED") return <ExternalLink size={15} aria-hidden="true" />;
   return <CircleDot size={15} aria-hidden="true" />;
 }
-function detailHref(row: ActivityRow, environment: string, now: Date) {
+function detailHref(row: ActivityRow, environment: string, now: Date, returnHref?: string) {
   if (row.journeyId) {
     const to = new Date(Math.min(now.getTime(), row.at.getTime() + 86_400_000)).toISOString();
     const from = new Date(row.at.getTime() - 86_400_000).toISOString();
+    const query = new URLSearchParams({ from, to, environment });
+    const activityReturn = activityJourneyReturnHref(returnHref);
+    if (activityReturn) query.set("activityReturn", activityReturn);
     return "/admin/journeys/" + encodeURIComponent(row.journeyId)
-      + "?" + new URLSearchParams({ from, to, environment }).toString();
+      + "?" + query.toString();
   }
   return null;
 }
@@ -89,11 +93,11 @@ function journalTitle(rows: ActivityRow[]) {
 }
 
 /** Every eligible event is visible immediately, including repeated searches.
- * Preserve optional journey context and one View action without collapse controls.
+ * Preserve optional journey context and one View journey action without collapse controls.
  */
-export function ActivityTimeline({ events, nextHref, environment, order = "newest", clearHref }: {
+export function ActivityTimeline({ events, nextHref, environment, order = "newest", returnHref, clearHref }: {
   events: ActivityRow[]; nextHref: string | null; environment: string;
-  order?: "newest" | "oldest"; clearHref?: string;
+  order?: "newest" | "oldest"; returnHref?: string; clearHref?: string;
 }) {
   const days = dayGroups(events);
   const now = new Date();
@@ -114,7 +118,7 @@ export function ActivityTimeline({ events, nextHref, environment, order = "newes
         <div className="divide-y divide-[#E2E8F0] border-y border-[#E2E8F0]">
           {day.journeys.map(group => {
             const first = group.events[0];
-            const href = detailHref(first, environment, now);
+            const href = detailHref(first, environment, now, returnHref);
             const title = journalTitle(group.events);
             return <div key={day.date + ":" + group.key} className="min-w-0">
               {group.journeyId ? <div className="flex min-w-0 items-center justify-between gap-2 py-3">
@@ -123,7 +127,7 @@ export function ActivityTimeline({ events, nextHref, environment, order = "newes
                   <span className="min-w-0 truncate">{title}</span>
                   <span className="shrink-0 text-xs font-normal text-[#475569]">{group.events.length} events</span>
                 </div>
-                {href ? <Link href={href} aria-label={"View activity for " + title} className="focus-ring shrink-0 text-xs text-[var(--primary)] hover:underline">View</Link> : null}
+                {href ? <Link href={href} aria-label={"View journey for " + title} className="focus-ring inline-flex shrink-0 items-center gap-1 rounded-sm py-1 text-[13px] font-medium text-[var(--primary)] hover:underline">View journey<ChevronRight size={14} aria-hidden="true" /></Link> : null}
               </div> : null}
               <ol className={"divide-y divide-[#E2E8F0] pl-3 sm:pl-8 " + (group.journeyId ? "border-t border-[#E2E8F0]" : "")}>
                 {group.events.map(row => <RecordedEvent key={row.id} row={row}/>)}

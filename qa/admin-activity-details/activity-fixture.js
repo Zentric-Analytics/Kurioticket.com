@@ -3,7 +3,7 @@
 const time = minute => new Date("2026-10-22T17:" + String(minute).padStart(2, "0") + ":00.000Z");
 const guest = "qa-guest-activity-0001";
 const journey = (id, startedAt, props) => ({ journeyId: id, journeyStartedAt: startedAt, ...props });
-const recorded = [
+export const recorded = [
   // Four separately recorded identical-looking selections, each retaining its own ID/time.
   ...[59, 58, 57, 56].map(minute =>
     journey("qa-journey-repeated", time(56), {

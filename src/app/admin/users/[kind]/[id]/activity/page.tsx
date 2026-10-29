@@ -234,6 +234,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
         </section>
 
         <ActivityTimeline events={data.events} nextHref={null} environment={environment} order={order}
+          returnHref={activityHref(basePath, queryParams, {})}
           clearHref={activityHref(basePath, queryParams, {q:null,from:null,to:null,range:null,product:null,stage:null,order:null,cursor:null})}/>
       </div>
     </section>

@@ -20,9 +20,9 @@ async function revealBaselineEvents() {
 }
 
 async function headingDestinations(baseline = false) {
-  if (baseline) return page.locator('button[aria-controls^="journey-"]').evaluateAll(buttons =>
+  if (baseline && await page.locator('button[aria-controls^="journey-"]').count()) return page.locator('button[aria-controls^="journey-"]').evaluateAll(buttons =>
     buttons.map(button => button.parentElement.querySelector("a")?.getAttribute("href")));
-  return page.getByRole("link", {name:/^View activity for /}).evaluateAll(links =>
+  return page.getByRole("link", {name:/^View (?:activity|journey) for /}).evaluateAll(links =>
     links.map(link => link.getAttribute("href")));
 }
 
@@ -55,10 +55,10 @@ try {
       await expect(page.getByTestId("activity-body-card")).toBeVisible();
       await expect(history.getByRole("link", { name: /Open search|Open journey/ })).toHaveCount(0);
       await expect(history.locator('[data-activity-id] a, [data-activity-id] [role="link"]')).toHaveCount(0);
-      const views = history.getByRole("link", { name: /^View activity for / });
+      const views = history.getByRole("link", { name: /^View (?:activity|journey) for / });
       await expect(views).toHaveCount(6);
-      assert.deepEqual(await views.allTextContents(), Array(6).fill("View"));
-      assert.deepEqual(await headingDestinations(), originalDestinations, "Same journey targets and date/environment scope");
+      assert.deepEqual(await views.allTextContents(), Array(6).fill("View journey"));
+      assert.deepEqual((await headingDestinations()).map(href => { const url = new URL(href, base); url.searchParams.delete("activityReturn"); return url.pathname + url.search; }), originalDestinations, "Same journey targets and date/environment scope");
       await expect(history.locator('[data-activity-id="j-qa-hotel-search"]')).toContainText("Hotel · Johannesburg, South Africa · Success");
       await expect(history.locator('[data-activity-id="j-qa-flight-search"]')).toContainText("Flight · LOS → IST · Success");
       await expect(history.locator('[data-activity-id="j-qa-flight-offer"]')).toContainText("Flight · LOS → IST · Jetabroad");
@@ -78,7 +78,7 @@ try {
     const history = page.getByRole("region", { name: "Activity history", exact: true });
     await expect(history.locator("[data-activity-id]")).toHaveCount(1005);
     await expect(history.locator("[data-activity-id] a")).toHaveCount(0);
-    await expect(history.getByRole("link", { name: /^View activity for / })).toHaveCount(0);
+    await expect(history.getByRole("link", { name: /^View (?:activity|journey) for / })).toHaveCount(0);
     await expect(history.getByRole("link", { name: /Open search|Open journey|Load (older|newer) activity/ })).toHaveCount(0);
     console.log("PASS standalone full search history has no replacement links", kind);
   }
