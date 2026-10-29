@@ -70,7 +70,7 @@ await put("app/before/page.tsx", [
 
 const app = spawn(process.execPath,
   [path.join(repo, "node_modules/next/dist/bin/next"), "dev", "--webpack", "-p", port],
-  { cwd: temp, stdio: "inherit" });
+  { cwd: temp, stdio: "inherit", env: {...process.env, ADMIN_EMAILS:"protected.qa@example.invalid"} });
 try {
   const root = "http://localhost:" + port;
   let running = false;
@@ -98,7 +98,7 @@ try {
     }
     if (!ready) throw new Error("QA fixture route did not compile successfully: " + route);
   }
-  for (const check of ["browser-check.mjs", "actions-check.mjs"]) {
+  for (const check of ["browser-check.mjs", "actions-check.mjs", "zoom-check.mjs"]) {
     const result = await new Promise((resolve, reject) => {
       const child = spawn(process.execPath, [path.join(qa, check)], {
         cwd: repo, stdio: "inherit",

@@ -171,6 +171,12 @@ try {
   await expect(page.getByLabel("Hotels: 2", {exact:true})).toBeVisible();
   await expect(page.getByLabel("Cars: 1", {exact:true})).toBeVisible();
 
+  await page.goto(base + "/admin/users/user/qa-protected-admin-0001/activity");
+  await expect(page.getByText("Protected admin",{exact:true})).toBeVisible();
+  await expect(page.getByRole("button",{name:/Manage account/})).toHaveCount(0);
+  await expectAlignedColumns(page);
+  await page.screenshot({path: output+"/after-protected-admin-1024.png",fullPage:true});
+
   // Every fixture event is available upfront, including the formerly separate pages.
   await page.goto(url);
   let totals = page.getByRole("region",{name:"Activity summary"});

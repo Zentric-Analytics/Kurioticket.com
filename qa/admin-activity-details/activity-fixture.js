@@ -92,7 +92,7 @@ export async function loadAdminIdentityActivity(kind, id, filters, cursor, readM
     : (!cursor && olderRows.length ? "older-qa-page" : null);
   return { status: "ok", data: {
     id, kind, title: kind === "guest" ? "Guest visitor" : "QA registered customer",
-    email: kind === "guest" ? null : "customer.qa@example.invalid",
+    email: kind === "guest" ? null : id === "qa-protected-admin-0001" ? "protected.qa@example.invalid" : "customer.qa@example.invalid",
     role: kind === "guest" ? null : "USER",
     status: kind === "guest" ? "Anonymous" : "ACTIVE",
     firstSeenAt: time(39), lastSeenAt: time(48), environment: "staging",
