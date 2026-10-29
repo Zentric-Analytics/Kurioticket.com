@@ -33,6 +33,7 @@ export default async function AdminConfirmedTripsPage() {
   return (
     <AdminPageShell
       title="Confirmed Trips"
+      eyebrow=""
       description="View trips confirmed by travel providers and monitor confirmation activity."
       actions={
         <div className="flex flex-wrap items-center gap-2 md:justify-end">
@@ -53,7 +54,7 @@ export default async function AdminConfirmedTripsPage() {
             <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
               <div className="min-w-0">
                 <h2 id="confirmed-trips-overview" className="text-lg font-semibold leading-6 text-slate-950">Trip overview</h2>
-                <p className="mt-1 text-sm leading-5 text-slate-600">Trusted provider-confirmed My Trips in this database.</p>
+                <p className="mt-1 text-[13px] leading-5 text-slate-600">Trusted provider-confirmed My Trips in this database.</p>
               </div>
               {operations ? (
                 <span className="shrink-0 rounded-full border border-slate-200 px-2.5 py-1 text-[11px] font-medium text-slate-600">
@@ -70,38 +71,42 @@ export default async function AdminConfirmedTripsPage() {
                   <TripMetric label="Past" value={operations.metrics.past} hint="Stored as past" icon={CalendarDays} tone="neutral" />
                   <TripMetric label="Cancelled" value={operations.metrics.cancelled} hint="Stored as cancelled" icon={CircleX} tone={operations.metrics.cancelled > 0 ? "warn" : "neutral"} />
                 </div>
-                <p className="mt-2.5 flex items-start gap-2 text-xs leading-5 text-slate-600">
+                <p className="mt-2.5 flex items-start gap-2 text-[13px] leading-5 text-slate-600">
                   <Info size={15} className="mt-0.5 shrink-0 text-slate-500" aria-hidden="true" />
                   <span><strong className="font-semibold text-slate-700">Last 24h:</strong> Trips whose latest provider-confirmation timestamp is within 24h. This can include updates to existing trips; it is not a new-bookings count. Upcoming, Past and Cancelled use stored trip statuses.</span>
                 </p>
               </>
             ) : (
               <div role="status" className="rounded-xl border border-slate-200 bg-slate-50 p-5">
-                <h3 className="font-bold text-slate-950">Confirmed-trip telemetry unavailable</h3>
-                <p className="mt-1 text-sm leading-6 text-slate-600">The connected database could not return confirmed-trip operations. No zero values were invented.</p>
+                <h3 className="text-sm font-semibold text-slate-950">Confirmed-trip telemetry unavailable</h3>
+                <p className="mt-1 text-[13px] leading-5 text-slate-600">The connected database could not return confirmed-trip operations. No zero values were invented.</p>
               </div>
             )}
           </section>
 
-          <section aria-labelledby="recent-confirmed-trips-title" className="min-w-0 rounded-xl border border-slate-200 p-4 sm:p-5">
-            <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+          <section aria-labelledby="recent-confirmed-trips-title" className="min-w-0 rounded-xl border border-slate-200 px-4 py-3 sm:px-5 sm:py-4">
+            <div className="mb-3 flex flex-wrap items-start justify-between gap-2.5">
               <div className="flex min-w-0 items-start gap-2.5">
-                <FileCheck2 size={20} className="mt-0.5 shrink-0 text-indigo-600" aria-hidden="true" />
-                <div>
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-700">
+                  <FileCheck2 size={17} aria-hidden="true" />
+                </span>
+                <div className="min-w-0">
                   <h2 id="recent-confirmed-trips-title" className="scroll-mt-28 min-[1100px]:scroll-mt-44 text-base font-semibold text-slate-950">Recent provider-confirmed trips</h2>
-                  <p className="mt-1 text-xs leading-5 text-slate-600">Latest trusted partner-confirmed trip records in this database.</p>
+                  <p className="mt-0.5 text-[13px] leading-5 text-slate-600">Latest trusted partner-confirmed trip records in this database.</p>
                 </div>
               </div>
-              <span className="rounded-full border border-slate-200 px-3 py-1 text-xs font-medium text-slate-600">Read-only</span>
+              <span className="shrink-0 rounded-full border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-600">Read-only</span>
             </div>
             {operations ? (
               <RecentConfirmedTripTable trips={operations.recentTrips} />
             ) : (
-              <div role="status" className="rounded-xl bg-slate-50 p-5 text-sm leading-6 text-slate-600">
+              <div role="status" className="rounded-lg bg-slate-50 px-3 py-3 text-[13px] leading-5 text-slate-600">
                 Recent trip records are unavailable because the confirmed-trip database query could not be completed.
               </div>
             )}
           </section>
+          <ConfirmedTripsBreakdowns operations={operations} />
+
           <section aria-labelledby="confirmation-integration-title" className="min-w-0 rounded-xl border border-slate-200 px-4 py-3 sm:px-5 sm:py-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="flex min-w-0 flex-1 items-start gap-2.5">
@@ -110,7 +115,7 @@ export default async function AdminConfirmedTripsPage() {
                 </span>
                 <div className="min-w-0">
                   <h2 id="confirmation-integration-title" className="scroll-mt-28 min-[1100px]:scroll-mt-44 text-base font-semibold leading-6 text-slate-950">Confirmation integration readiness</h2>
-                  <p className="mt-1 text-xs leading-5 text-slate-600">
+                  <p className="mt-1 text-[13px] leading-5 text-slate-600">
                     The partner confirmation endpoint is server-to-server only. Current Duffel search and KAYAK sandbox integrations do not send booking confirmations.
                   </p>
                 </div>
@@ -130,7 +135,7 @@ export default async function AdminConfirmedTripsPage() {
               <InlineFact label="Endpoint" value="POST /api/internal/partner-confirmations" />
               <InlineFact label="Webhook credential model" value={readiness.credentialModel === "single_provider_bound_secret" ? "Single provider + dedicated secret" : "Unknown"} />
             </dl>
-            <p className="mt-2.5 text-xs leading-5 text-slate-600">
+            <p className="mt-2.5 text-[13px] leading-5 text-slate-600">
               A configured webhook secret means the signed callback boundary is ready; it does not mean a provider agreement or live confirmation feed is active. The server now binds the signing secret to a single configured provider, and rejects a signed payload naming a different provider.
             </p>
           </section>
@@ -139,7 +144,7 @@ export default async function AdminConfirmedTripsPage() {
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div className="min-w-0">
                 <h2 id="confirmation-delivery-health-title" className="text-base font-semibold leading-6 text-slate-950">Confirmation delivery health</h2>
-                <p className="mt-1 text-xs leading-5 text-slate-600">Authenticated provider callback receipts. Accepted deliveries may be retries; these are not additional bookings or unique trips.</p>
+                <p className="mt-1 text-[13px] leading-5 text-slate-600">Authenticated provider callback receipts. Accepted deliveries may be retries; these are not additional bookings or unique trips.</p>
               </div>
               <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
                 <AdminStatusBadge tone={!readiness.feedReady ? "neutral" : !deliveryHealth ? "warn" : deliveryHealth.rejectedLast24h > 0 ? "warn" : "info"}>
@@ -149,12 +154,12 @@ export default async function AdminConfirmedTripsPage() {
               </div>
             </div>
             {!readiness.feedReady ? (
-              <p role="status" className="mt-3 flex items-start gap-2 rounded-lg bg-slate-50 px-3 py-2.5 text-xs leading-5 text-slate-700">
+              <p role="status" className="mt-3 flex items-start gap-2 rounded-lg bg-slate-50 px-3 py-2.5 text-[13px] leading-5 text-slate-700">
                 <Info size={16} className="mt-0.5 shrink-0 text-slate-500" aria-hidden="true" />
                 <span>No provider-bound confirmation feed is configured. Delivery monitoring remains inactive.</span>
               </p>
             ) : !deliveryHealth ? (
-              <p role="status" className="mt-3 flex items-start gap-2 rounded-lg bg-slate-50 px-3 py-2.5 text-xs leading-5 text-slate-700">
+              <p role="status" className="mt-3 flex items-start gap-2 rounded-lg bg-slate-50 px-3 py-2.5 text-[13px] leading-5 text-slate-700">
                 <Info size={16} className="mt-0.5 shrink-0 text-slate-500" aria-hidden="true" />
                 <span>Delivery telemetry is unavailable. No delivery counts have been assumed.</span>
               </p>
@@ -201,8 +206,6 @@ export default async function AdminConfirmedTripsPage() {
               </>
             )}
           </section>
-
-          <ConfirmedTripsBreakdowns operations={operations} />
 
           <section aria-labelledby="trips-operational-boundaries" className="min-w-0 rounded-xl border border-slate-200 px-4 py-3 sm:px-5 sm:py-4">
             <div className="flex min-w-0 items-start gap-2.5">
@@ -263,7 +266,7 @@ function TripMetric({
         <h3 className="min-w-0 break-words text-xs font-semibold leading-4 text-slate-700">{label}</h3>
       </div>
       <p className="mt-2 text-[clamp(1.4rem,2.2vw,1.875rem)] font-semibold leading-none tracking-tight tabular-nums text-slate-950">{formattedValue}</p>
-      <p className="mt-1.5 break-words text-[11px] leading-4 text-slate-600">{hint}</p>
+      <p className="mt-1.5 break-words text-xs leading-4 text-slate-600">{hint}</p>
     </div>
   );
 }
@@ -271,8 +274,8 @@ function TripMetric({
 function InlineFact({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0">
-      <dt className="text-[11px] font-medium leading-4 text-slate-600">{label}</dt>
-      <dd className="mt-0.5 break-words text-xs font-semibold leading-5 text-slate-900">{value}</dd>
+      <dt className="text-xs font-medium leading-4 text-slate-600">{label}</dt>
+      <dd className="mt-0.5 break-words text-[13px] font-semibold leading-5 text-slate-900">{value}</dd>
     </div>
   );
 }
@@ -280,8 +283,8 @@ function InlineFact({ label, value }: { label: string; value: string }) {
 function Fact({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0 rounded-lg bg-slate-50 px-3 py-2.5">
-      <p className="text-[11px] font-medium leading-4 text-slate-600">{label}</p>
-      <p className="mt-1 break-words text-lg font-semibold leading-6 tabular-nums text-slate-900">{value}</p>
+      <p className="text-xs font-medium leading-4 text-slate-600">{label}</p>
+      <p className="mt-1 break-words text-base font-semibold leading-6 tabular-nums text-slate-900">{value}</p>
     </div>
   );
 }
