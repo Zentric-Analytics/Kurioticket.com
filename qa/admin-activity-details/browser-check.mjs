@@ -75,10 +75,10 @@ async function expectHeaderTimePresentation(page, context) {
     const timestamp = facts.nth(index).locator('dd time');
     await expect(timestamp).toHaveCount(1);
     const displayed = (await timestamp.textContent())?.trim() ?? "";
-    assert.ok(displayed.length > 0 && !/\\bUTC\\b/.test(displayed),
+    assert.ok(displayed.length > 0 && !/\bUTC\b/.test(displayed),
       context + ": header date should not wrap a visible UTC suffix: " + displayed);
     await expect(timestamp).toHaveAttribute("datetime", /Z$/);
-    await expect(timestamp).toHaveAttribute("title", /\\bUTC\\b/);
+    await expect(timestamp).toHaveAttribute("title", /\bUTC\b/);
   }
 }
 
