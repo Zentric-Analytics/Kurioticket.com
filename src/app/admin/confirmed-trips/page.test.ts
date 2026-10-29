@@ -11,7 +11,8 @@ const architecture = readFileSync("src/lib/my-trips-architecture.test.ts", "utf8
 
 test("confirmed trips admin is a read-only provider-confirmation operations page", () => {
   assert.match(page, /title="Confirmed Trips"/);
-  assert.match(page, /provider-confirmed My Trips created by signed partner callbacks/);
+  assert.match(page, /description="View trips confirmed by travel providers and monitor confirmation activity\."/);
+  assert.match(page, /Kurioticket accepted a valid signed partner confirmation and stored it as trusted trip data/);
   assert.match(page, /Confirmation integration readiness/);
   assert.match(page, /Recent provider-confirmed trips/);
   assert.match(page, /Provider handoff ≠ confirmation/);
@@ -109,7 +110,7 @@ test("Confirmed Trips UI uses one existing white parent with responsive summary 
 });
 
 
-test("Phase 1 prioritizes trip records and preserves the two in-page shortcuts", () => {
+test("Confirmed Trips preserves section order and primary header actions without jump shortcuts", () => {
   const order = [
     "confirmed-trips-overview",
     "recent-confirmed-trips-title",
@@ -127,16 +128,18 @@ test("Phase 1 prioritizes trip records and preserves the two in-page shortcuts",
   const providerIndex = breakdowns.indexOf('aria-labelledby="trips-by-provider-title"');
   assert.ok(productIndex >= 0 && providerIndex > productIndex, "Both breakdown panels remain in reading order");
 
-  const headerActions = page.slice(page.indexOf('actions={'), page.indexOf('aria-label="Confirmed Trips page shortcuts"'));
+  const headerActions = page.slice(page.indexOf('actions={'), page.indexOf('      }\n    >'));
   assert.match(headerActions, /href="\/admin\/confirmed-trips\/records"/);
+  assert.match(headerActions, /Browse confirmed trips/);
   assert.match(headerActions, /href="\/admin\/flight-status"/);
+  assert.match(headerActions, /Flight status/);
   assert.doesNotMatch(headerActions, /href="#/);
 
-  assert.match(page, /aria-label="Confirmed Trips page shortcuts"/);
-  assert.match(page, /href="#recent-confirmed-trips-title"/);
-  assert.match(page, /href="#confirmation-integration-title"/);
-  assert.match(page, /id="recent-confirmed-trips-title" className="scroll-mt-28 min-\[1100px\]:scroll-mt-44/);
-  assert.match(page, /id="confirmation-integration-title" className="scroll-mt-28 min-\[1100px\]:scroll-mt-44/);
+  assert.match(page, /description="View trips confirmed by travel providers and monitor confirmation activity\."/);
+  assert.doesNotMatch(page, /Monitor provider-confirmed My Trips created by signed partner callbacks/);
+  assert.doesNotMatch(page, /Jump to:|Confirmed Trips page shortcuts|href="#recent-confirmed-trips-title"|href="#confirmation-integration-title"|<nav\b|<ArrowDown\b/);
+  assert.match(page, /id="recent-confirmed-trips-title"/);
+  assert.match(page, /id="confirmation-integration-title"/);
   assert.match(page, /<RecentConfirmedTripTable trips=\{operations\.recentTrips\}/);
 });
 
@@ -207,8 +210,9 @@ test("Confirmed Trips UI preserves honest data, alerts and no-booking boundaries
 test("Confirmed Trips UI retains shell background and navigation while limiting changes to the page", () => {
   const shell = readFileSync("src/components/admin/AdminPageShellHistorical.tsx", "utf8");
   assert.match(shell, /border-slate-200 bg-white shadow-sm/);
-  assert.match(page, /<Link href="#confirmation-integration-title"/);
-  assert.match(page, /<Link href="#recent-confirmed-trips-title"/);
+  assert.match(page, /<Link href="\/admin\/confirmed-trips\/records"/);
+  assert.match(page, /<Link href="\/admin\/flight-status"/);
+  assert.doesNotMatch(page, /<Link href="#/);
   assert.doesNotMatch(page, /<Link href="\/admin\/(?:redirects|searches)"/);
   assert.match(page, /<AdminStatusBadge tone=\{readiness.feedReady/);
 });
