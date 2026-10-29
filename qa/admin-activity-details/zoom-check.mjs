@@ -12,6 +12,7 @@ const context = await chromium.launchPersistentContext("", {channel:"chromium",h
 try {
   const worker = context.serviceWorkers()[0] || await context.waitForEvent("serviceworker");
   const page = await context.newPage();
+  const capture = await context.newCDPSession(page);
   for (const kind of ["guest","user"]) {
     await page.goto(base+"/admin/users/"+kind+"/"+(kind === "guest" ? "qa-guest-activity-0001" : "qa-registered-0001")+"/activity");
     for (const zoom of [0.9,1,1.1]) {
@@ -38,7 +39,12 @@ try {
       assert.equal(layout.overflow,false);
       assert.equal(layout.aligned,true);
       assert.deepEqual(layout.values,Array(6).fill("16px"));
-      await page.screenshot({path:output+"/actual-browser-zoom-"+kind+"-"+Math.round(zoom*100)+".png",fullPage:true});
+      // CDP's DIP content bounds include browser zoom; using CSS viewport bounds
+      // for a full-page screenshot crops the right edge at 110%.
+      const bounds = await capture.send("Page.getLayoutMetrics");
+      const screenshot = await capture.send("Page.captureScreenshot", {format:"png",captureBeyondViewport:true,
+        clip:{x:0,y:0,width:bounds.contentSize.width,height:bounds.contentSize.height,scale:1/zoom}});
+      await writeFile(output+"/actual-browser-zoom-"+kind+"-"+Math.round(zoom*100)+".png", Buffer.from(screenshot.data,"base64"));
       console.log("PASS actual browser zoom",kind,zoom,layout.viewport);
     }
   }

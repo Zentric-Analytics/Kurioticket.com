@@ -29,6 +29,7 @@ await put("next.config.mjs",
   'export default {devIndicators:false,agentRules:false,experimental:{externalDir:true},webpack(config){\n' +
   'config.resolve.alias["@/lib/auth-guards"]=path.resolve("mocks/auth-guards.js");\n' +
   'config.resolve.alias["@/lib/stagingSafety"]=path.resolve("mocks/stagingSafety.js");\n' +
+  'config.resolve.alias["@/services/adminJourneyService"]=path.resolve("mocks/journeys.js");\n' +
   'config.resolve.alias["@/lib/prisma"]=path.resolve("mocks/prisma.js");\n' +
   'config.resolve.alias["@/services/adminIdentityActivityService"]=path.resolve("mocks/activity.js");\n' +
   'config.resolve.alias["@"]=' + JSON.stringify(source) + ';return config;}};');
@@ -49,6 +50,8 @@ await put("mocks/auth-guards.js", 'export async function requireAdminSession(){r
 await put("mocks/stagingSafety.js", 'export function getPublicEnvironment(){return "staging";}');
 await put("mocks/activity.js", await readFile(path.join(qa, "activity-fixture.js"), "utf8"));
 await put("mocks/prisma.js", await readFile(path.join(qa, "old-drawer-fixture.js"), "utf8"));
+await put("app/admin/journeys/[id]/page.tsx", await readFile(path.join(source, "app/admin/journeys/[id]/page.tsx"), "utf8"));
+await put("mocks/journeys.js", await readFile(path.join(qa, "journey-fixture.js"), "utf8"));
 // Compare the unmodified Activity page and timeline at this change's dev base,
 // using the same fictional identity and complete event history.
 const baseline = process.env.ADMIN_ACTIVITY_QA_BASE || "1bfa4db410ae11512a2fc1aea74a2a6c3d63ae8d";
@@ -98,7 +101,7 @@ try {
     }
     if (!ready) throw new Error("QA fixture route did not compile successfully: " + route);
   }
-  for (const check of ["browser-check.mjs", "actions-check.mjs", "zoom-check.mjs"]) {
+  for (const check of ["browser-check.mjs", "actions-check.mjs", "zoom-check.mjs", "journey-check.mjs"]) {
     const result = await new Promise((resolve, reject) => {
       const child = spawn(process.execPath, [path.join(qa, check)], {
         cwd: repo, stdio: "inherit",

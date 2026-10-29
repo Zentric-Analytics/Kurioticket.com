@@ -28,7 +28,7 @@ test("detail back link preserves scoped filters, not an untrusted destination", 
 test("journey detail is valid JSX and strips view-only range from backend input", () => {
   assert.match(detail, /return \(\s*<>\s*<SearchWorkspaceBackLink/);
   assert.match(detail, /<\/AdminPageShell>\s*<\/>/);
-  assert.match(detail, /range: _range, \.\.\.backendRaw/);
+  assert.match(detail, /range: _range, activityReturn: _activityReturn, \.\.\.backendRaw/);
 });
 test("journey date presets are passed to detail and single-ended historical bounds survive", () => {
   assert.match(list, /p\.set\("range", range\)/);
@@ -53,5 +53,5 @@ test("equal custom UTC endpoints block native form submission", () => {
 });
 test("detail event pagination retains the display preset without forwarding it to backend", () => {
   assert.match(detail, /key !== "cursor"\) p\.set\(key, value\)/);
-  assert.match(detail, /range: _range, \.\.\.backendRaw/);
+  assert.match(detail, /range: _range, activityReturn: _activityReturn, \.\.\.backendRaw/);
 });

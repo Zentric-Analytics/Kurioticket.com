@@ -15,6 +15,8 @@ on:
       - src/components/admin/ActivityTimeline.test.ts
       - src/components/admin/AdminDirectorySelect.tsx
       - src/components/admin/AdminHorizontalShell.tsx
+      - src/lib/adminActivityJourneyNavigation*
+      - src/app/admin/journeys/**
       - src/lib/adminIdentityActivity*
       - src/lib/adminIdentityJourney.ts
       - src/services/adminIdentityActivityService.ts
@@ -42,7 +44,7 @@ jobs:
         env:
           JITI_TSCONFIG_PATHS: ./tsconfig.json
           JITI_JSX: "true"
-        run: node --test --import jiti/register src/components/admin/AdminIdentityTable.test.ts src/components/admin/ActivityTimeline.test.ts src/components/admin/UserStatusActions.test.ts src/components/admin/GuestTrackingActions.test.ts src/services/adminGuestManagement.test.ts src/lib/adminActivityEnvironmentBoundary.test.ts src/lib/adminIdentityActivity.test.ts src/lib/adminIdentityActivityComplete.test.ts src/lib/adminIdentityJourney.test.ts
+        run: node --test --import jiti/register src/lib/adminActivityJourneyNavigation.test.ts src/lib/adminJourneyPageContract.test.ts src/services/adminJourneyContract.test.ts src/services/adminJourneyCore.test.ts src/components/admin/AdminIdentityTable.test.ts src/components/admin/ActivityTimeline.test.ts src/components/admin/UserStatusActions.test.ts src/components/admin/GuestTrackingActions.test.ts src/services/adminGuestManagement.test.ts src/lib/adminActivityEnvironmentBoundary.test.ts src/lib/adminIdentityActivity.test.ts src/lib/adminIdentityActivityComplete.test.ts src/lib/adminIdentityJourney.test.ts
       - run: npx playwright install --with-deps chromium
       - name: Render and test real Admin Activity component with labelled QA data
         run: node qa/admin-activity-details/run.mjs
