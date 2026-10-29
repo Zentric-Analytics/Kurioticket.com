@@ -47,11 +47,11 @@ test("Activity summary counts filter-wide records instead of paginated timeline 
 });
 
 test("Activity uses its approved colors and shared metric sizes without changing Searches or Users", () => {
-  assert.match(shell, /userActivity \? "bg-\[#F8FAFC\]"/);
+  assert.match(shell, /userActivity \? "bg-\[#f1f5fb\]"/);
   assert.match(shell, /usersDirectory \|\| searchesWorkspace \? "bg-white"/);
-  assert.match(page, /space-y-6 bg-\[#F8FAFC\]/);
-  assert.match(page, /text-\[14px\] font-medium text-\[#0F172A\]/);
-  assert.match(page, /text-\[22px\] font-medium leading-tight tabular-nums text-\[#0F172A\]/);
+  assert.match(page, /space-y-6 bg-\[#F1F5FB\]/);
+  assert.match(page, /text-\[16px\] font-medium leading-6 tabular-nums text-\[#0F172A\]/);
+  assert.match(page, /text-\[16px\] font-medium leading-6 tabular-nums text-\[#0F172A\]/);
   assert.match(page, /text-\[12px\] font-normal text-\[#64748B\]/);
   assert.match(page, /data-testid="activity-body-card"/);
   assert.match(page, /if \(raw\.tab === "journeys"\) delete raw\.tab/);
@@ -72,7 +72,7 @@ test("User Activity renders exactly two nested white workspace cards with a flat
   assert.equal((page.match(/data-testid="activity-page-card"/g) ?? []).length, 1);
   assert.equal((page.match(/data-testid="activity-body-card"/g) ?? []).length, 1);
   const mainCardMarkup = page.slice(mainCard, identity);
-  assert.match(mainCardMarkup, /rounded-xl border border-\[#E2E8F0\] bg-white/);
+  assert.match(mainCardMarkup, /rounded-2xl border border-\[#E2E8F0\] bg-white/);
   const summaryMarkup = page.slice(summary, body);
   assert.doesNotMatch(summaryMarkup, /bg-(?:blue|sky|emerald|amber|\[#)/,
     "Activity summary uses no colored background or metric dots");
