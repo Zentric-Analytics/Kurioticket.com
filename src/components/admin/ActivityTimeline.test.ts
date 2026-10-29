@@ -34,7 +34,7 @@ test("Activity timeline shows repeated records individually and keeps one journe
   assert.equal((html.match(/data-activity-id=/g) || []).length, 4);
   assert.equal((html.match(/<time dateTime=/g) || []).length, 4);
   assert.doesNotMatch(html, /Show all|Hide all|aria-expanded=/);
-  assert.equal((html.match(/>View<\/a>/g) || []).length, 1);
+  assert.equal((html.match(/>View journey<svg/g) || []).length, 1);
   assert.doesNotMatch(html, /Open journey|Open search/);
   assert.match(html, /environment=staging/);
   assert.match(html, /cursor=older/);
@@ -112,8 +112,8 @@ test("one descriptive View action belongs to the journey heading rather than its
     { id: "j-search", at: new Date(at.getTime() - 60000), journeyId: "journey-paris", searchHistoryId: "search-paris", stage: "SEARCH_COMPLETED", label: "Search completed", detail: "HOTEL · Paris, France · SUCCESS", product: "HOTEL" },
   ];
   const html = render(rows);
-  assert.equal((html.match(/>View<\/a>/g) || []).length, 1);
-  assert.match(html, /aria-label="View activity for Hotel · Paris, France"/);
+  assert.equal((html.match(/>View journey<svg/g) || []).length, 1);
+  assert.match(html, /aria-label="View journey for Hotel · Paris, France"/);
   assert.doesNotMatch(html, /Open journey|Open search/);
   for (const row of rows) assert.doesNotMatch(eventMarkup(html, row.id), /<a\b/);
   const href = html.match(/href="([^\"]*\/admin\/journeys\/[^\"]*)"/)?.[1];
@@ -170,7 +170,7 @@ test("older linked searches are visible on initial render without expanding a jo
   }));
   const html = render(rows);
   for (const row of rows) assert.ok(eventMarkup(html, row.id).includes("Flight · LOS → LHR · Success"));
-  assert.equal((html.match(/>View<\/a>/g) || []).length, 1);
+  assert.equal((html.match(/>View journey<svg/g) || []).length, 1);
   assert.doesNotMatch(html, /Show all|Hide all|aria-expanded=/);
 });
 
@@ -183,4 +183,16 @@ test("unknown details and account activity are not indiscriminately title-cased"
   assert.match(html, /NASA · JFK → MIA · UNKNOWN_STATUS/);
   assert.match(html, /SUCCESS · API reference ABC123/);
   assert.doesNotMatch(html, /Open search|Open journey/);
+});
+
+
+test("journey links retain safe filtered Activity return context", () => {
+  const returnHref = "/admin/users/guest/qa-visitor-0001/activity?tab=searches&q=LOS";
+  const html = renderToStaticMarkup(createElement(ActivityTimeline, {
+    events: [offer("j-return", 0)], nextHref: null, environment: "staging", returnHref,
+  }));
+  const href = html.match(/href="([^\"]*\/admin\/journeys\/[^\"]*)"/)?.[1];
+  assert.ok(href);
+  const target = new URL(href.replaceAll("&amp;", "&"), "https://kurioticket.test");
+  assert.equal(target.searchParams.get("activityReturn"), returnHref);
 });

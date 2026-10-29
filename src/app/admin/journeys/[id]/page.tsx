@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { AdminDataTable, AdminEmptyState, AdminPageShell, AdminSectionCard, AdminStatusBadge } from "@/components/admin/AdminPageShell";
 import { SearchWorkspaceBackLink } from "@/components/admin/SearchWorkspaceBackLink";
 import { formatDateTime } from "@/lib/admin-data";
+import { activityJourneyReturnHref } from "@/lib/adminActivityJourneyNavigation";
 import { adminJourneys } from "@/services/adminJourneyService";
 
 export const metadata = { title: "Admin Journey Detail" };
@@ -11,14 +12,14 @@ export const metadata = { title: "Admin Journey Detail" };
 export default async function AdminJourneyDetailPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { id } = await params;
   const raw = await searchParams;
-  const { range: _range, ...backendRaw } = raw;
+  const { range: _range, activityReturn: _activityReturn, ...backendRaw } = raw;
   const input: Record<string, unknown> = { ...backendRaw, limit: one(raw.limit) || "50" };
   const result = await adminJourneys.detail(id, input);
   if (result.status === "not_found") notFound();
 
   return (
     <>
-      <SearchWorkspaceBackLink href={returnHref(raw)} label="Journeys" />
+      <SearchWorkspaceBackLink href={returnHref(raw)} label={activityJourneyReturnHref(raw.activityReturn) ? "Back to Activity" : "Journeys"} />
       <AdminPageShell title="Journey detail" hideHeader>
       {result.status === "ok" ? (
         <div className="space-y-4">
@@ -75,6 +76,8 @@ function cursorHref(id: string, raw: Record<string, string | string[] | undefine
 }
 
 function returnHref(raw: Record<string, string | string[] | undefined>) {
+  const activityReturn = activityJourneyReturnHref(raw.activityReturn);
+  if (activityReturn) return activityReturn;
   // Always return to the filtered cohort, never to an arbitrary supplied URL.
   const p = new URLSearchParams();
   for (const key of ["range", "from", "to", "environment", "identity", "product", "provider", "stage", "userId", "visitorId"]) {

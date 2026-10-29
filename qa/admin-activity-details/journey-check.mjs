@@ -1,0 +1,33 @@
+import { chromium, expect } from "@playwright/test";
+import assert from "node:assert/strict";
+const base = process.env.ADMIN_ACTIVITY_QA_URL;
+const output = process.env.ADMIN_ACTIVITY_QA_OUTPUT;
+const browser = await chromium.launch({headless:true,args:["--no-sandbox"]});
+try {
+  const page = await browser.newPage({viewport:{width:1280,height:900}});
+  const path = "/admin/users/guest/qa-guest-activity-0001/activity?tab=searches&q=LOS&directory=tab%3Dguests";
+  await page.goto(base + path);
+  await expect(page.locator('[data-activity-id]')).toHaveCount(2);
+  const link = page.getByRole('link',{name:'View journey for Flight · LOS → IST'});
+  await expect(link).toBeVisible();
+  await expect(link).toContainText('View journey');
+  await link.click();
+  await expect(page).toHaveURL(/\/admin\/journeys\/qa-journey-flight\?/);
+  const back = page.getByRole('link',{name:'Back to Activity'});
+  await expect(back).toBeVisible();
+  await expect(page.getByText('qa-journey-flight',{exact:true})).toBeVisible();
+  await expect(page.getByRole('table')).toContainText('SEARCH COMPLETED');
+  await expect(page.getByRole('table')).toContainText('RESULTS VIEWED');
+  await expect(page.getByRole('table')).toContainText('OFFER SELECTED');
+  await expect(page.getByRole('table')).toContainText('PROVIDER HANDOFF STARTED');
+  await page.screenshot({path:output+'/journey-detail-navigation-1280.png',fullPage:true});
+  await back.click();
+  await expect(page).toHaveURL(/\/admin\/users\/guest\/qa-guest-activity-0001\/activity\?/);
+  const returned = new URL(page.url());
+  assert.equal(returned.pathname,'/admin/users/guest/qa-guest-activity-0001/activity');
+  assert.equal(returned.searchParams.get('tab'),'searches');
+  assert.equal(returned.searchParams.get('q'),'LOS');
+  assert.equal(returned.searchParams.get('directory'),'tab=guests');
+  await expect(page.locator('[data-activity-id]')).toHaveCount(2);
+  console.log('PASS journey association, recorded sequence and filtered Activity return');
+} finally { await browser.close(); }
