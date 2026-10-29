@@ -69,6 +69,47 @@ async function expectAlignedColumns(page) {
   for (const top of layout.factTops) assert.ok(top < layout.bottom && top >= layout.identityTop - 30, 'facts share desktop row');
 }
 
+async function expectHeaderTimePresentation(page, context) {
+  const facts = page.locator('section[aria-label="Customer identity"] dl > div');
+  for (const index of [0, 1]) {
+    const timestamp = facts.nth(index).locator('dd time');
+    await expect(timestamp).toHaveCount(1);
+    const displayed = (await timestamp.textContent())?.trim() ?? "";
+    assert.ok(displayed.length > 0 && !/\\bUTC\\b/.test(displayed),
+      context + ": header date should not wrap a visible UTC suffix: " + displayed);
+    await expect(timestamp).toHaveAttribute("datetime", /Z$/);
+    await expect(timestamp).toHaveAttribute("title", /\\bUTC\\b/);
+  }
+}
+
+async function expectBalancedDesktopHeader(page, context, requireSingleLineEmail = false) {
+  const layout = await page.evaluate(() => {
+    const identity = document.querySelector('section[aria-label="Customer identity"] > div');
+    const heading = document.querySelector('section[aria-label="Activity summary"] h2');
+    const firstMetric = document.querySelector('section[aria-label="Activity summary"] [data-testid="activity-metric-label"]')?.parentElement;
+    const events = document.querySelector('[data-testid="activity-events-fact"]');
+    const email = identity?.firstElementChild?.querySelector('p');
+    if (!identity || !heading || !firstMetric || !events || !email) throw new Error("Header spacing anchors missing");
+    const columns = identity.children[0].getBoundingClientRect();
+    const eventsRect = events.getBoundingClientRect();
+    const emailStyle = getComputedStyle(email);
+    return {
+      firstToEventsRatio: columns.width / eventsRect.width,
+      summaryHeadingGap: firstMetric.getBoundingClientRect().left - heading.getBoundingClientRect().right,
+      emailHeight: email.getBoundingClientRect().height,
+      emailFontSize: Number.parseFloat(emailStyle.fontSize),
+      overflow: document.documentElement.scrollWidth > innerWidth + 1,
+    };
+  });
+  assert.ok(layout.firstToEventsRatio >= 4,
+    context + ": identity must be at least four times wider than Events: " + JSON.stringify(layout));
+  assert.ok(layout.summaryHeadingGap >= 8 && layout.summaryHeadingGap <= 64,
+    context + ": Activity summary heading must sit close to Searches: " + JSON.stringify(layout));
+  if (requireSingleLineEmail) assert.ok(layout.emailHeight < layout.emailFontSize * 1.9,
+    context + ": realistic desktop email should fit without wrapping: " + JSON.stringify(layout));
+  assert.equal(layout.overflow, false, context + ": no horizontal overflow");
+}
+
 const approvedActivityTypography = {
   rootBackground: "rgb(255, 255, 255)",
   shellBackground: "rgb(241, 245, 251)",
@@ -145,6 +186,8 @@ try {
     assert.ok(widths.document <= widths.viewport+1, "No horizontal drift "+JSON.stringify(widths));
     assert.deepEqual(await inspectActivityTypography(page), approvedActivityTypography, "Guest Activity typography and palette "+width);
     if (width >= 1024) await expectAlignedColumns(page);
+    await expectHeaderTimePresentation(page, "Guest " + width);
+    if (width === 1536) await expectBalancedDesktopHeader(page, "Guest desktop");
 
     if([1536,1280,1024,768,390,320].includes(width))
       await page.screenshot({path:output+"/after-view-activity-"+width+".png",fullPage:true});
@@ -157,6 +200,8 @@ try {
     await page.setViewportSize({width: Math.round(1280/zoom), height: Math.round(900/zoom)});
     await page.goto(base + "/admin/users/user/qa-registered-0001/activity");
     await expectAlignedColumns(page);
+    await expectHeaderTimePresentation(page, "Registered zoom " + zoom);
+    await expectBalancedDesktopHeader(page, "Registered zoom " + zoom);
     assert.deepEqual(await inspectActivityTypography(page), approvedActivityTypography);
     await page.screenshot({path: output + "/after-desktop-zoom-equivalent-" + Math.round(zoom*100) + ".png",fullPage:true});
   }
@@ -177,7 +222,7 @@ try {
   await expectAlignedColumns(page);
   await page.screenshot({path: output+"/after-protected-admin-1024.png",fullPage:true});
 
-  for (const width of [1280,1024,768,390,320]) {
+  for (const width of [1792,1536,1280,1024,768,390,320]) {
     await page.setViewportSize({width,height:900});
     await page.goto(base + "/admin/users/user/qa-long-identity-0001/activity");
     await expect(page.getByRole("heading",{name:"Alexandria Olufunmilayo Adekunle-Wellington",exact:true})).toBeVisible();
@@ -188,6 +233,8 @@ try {
     assert.equal(identity.overflow,false);
     assert.equal(identity.truncated,false);
     if (width >= 1024) await expectAlignedColumns(page);
+    await expectHeaderTimePresentation(page, "Long identity " + width);
+    if (width >= 1536) await expectBalancedDesktopHeader(page, "Long identity " + width, true);
     await page.screenshot({path:output+"/after-long-identity-"+width+".png",fullPage:true});
   }
 
