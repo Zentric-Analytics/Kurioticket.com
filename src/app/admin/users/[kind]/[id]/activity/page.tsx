@@ -28,9 +28,9 @@ const tabs = [
 ] as const;
 const format = (at: Date) => new Intl.DateTimeFormat("en", {
   dateStyle: "medium", timeStyle: "short", timeZone: "UTC",
-}).format(at) + " UTC";
+}).format(at);
 // Identical track boundaries for both sections, including the empty management track.
-const activityColumns = "grid min-w-0 gap-y-5 lg:grid-cols-[minmax(0,2.1fr)_minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,0.8fr)] lg:items-center";
+const activityColumns = "grid min-w-0 gap-y-5 lg:grid-cols-[minmax(0,3.2fr)_minmax(0,1.32fr)_minmax(0,1.32fr)_minmax(72px,0.48fr)_minmax(126px,0.7fr)] lg:items-center";
 const buttonClass = "focus-ring inline-flex items-center gap-1.5 rounded-md border border-[#E2E8F0] bg-white px-3 py-2 text-[13px] font-medium text-[#004BB8] hover:bg-[#F8FAFC]";
 
 function safeDirectoryHref(raw: RawQuery) {
@@ -60,6 +60,10 @@ function activityParams(raw: RawQuery) {
     if (typeof value === "string" && value.length <= 1100) result[key] = value;
   }
   return result;
+}
+function HeaderTime({ at }: { at: Date }) {
+  const label = format(at);
+  return <time dateTime={at.toISOString()} title={label + " UTC"}>{label}</time>;
 }
 function Fact({ label, children, className = "", testId }: {
   label: string; children: React.ReactNode; className?: string; testId?: string;
@@ -179,8 +183,8 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
           </div>
 
           <dl className="grid min-w-0 grid-cols-1 gap-4 min-[420px]:grid-cols-2 sm:grid-cols-3 lg:contents">
-            <Fact label={kind === "guest" ? "First seen" : "Joined"}>{format(data.firstSeenAt)}</Fact>
-            <Fact label="Last active">{data.lastSeenAt ? format(data.lastSeenAt) : "—"}</Fact>
+            <Fact label={kind === "guest" ? "First seen" : "Joined"}><HeaderTime at={data.firstSeenAt}/></Fact>
+            <Fact label="Last active">{data.lastSeenAt ? <HeaderTime at={data.lastSeenAt}/> : "—"}</Fact>
             <Fact label="Events" testId="activity-events-fact">{data.events.length}</Fact>
           </dl>
 
@@ -192,7 +196,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
 
       <section aria-label="Activity summary" className="min-w-0 border-y border-[#E2E8F0] py-5">
         <div className={activityColumns}>
-          <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <div className="flex min-w-0 flex-wrap items-center gap-2 lg:justify-end lg:pr-5">
             <h2 className="text-base font-semibold">Activity summary</h2>
             {kind === "guest" ? <ActivityDataInfo>
               {operational
