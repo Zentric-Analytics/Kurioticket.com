@@ -169,6 +169,7 @@ async function getDatabaseState(connectionString) {
         canonicalUserProfileMigration,
       ),
       initialMigrationApplied: isMigrationApplied(initialMigration),
+      migrationTableExists: hasMigrationTable,
       initialMigrationFailed: isMigrationFailed(initialMigration),
       legacyUserProfileMigrationApplied: isMigrationApplied(
         legacyUserProfileMigration,
@@ -344,7 +345,8 @@ async function main() {
 
   // Recover one known staging-only duplicate-index failure from PR #6560.
   // Never auto-resolve unrecognized migration failures or production databases.
-  {
+  // On a fresh database, let Prisma create _prisma_migrations normally.
+  if (state.migrationTableExists) {
     const client = new Client({ connectionString: databaseUrl.value });
     await client.connect();
     try {
@@ -365,8 +367,11 @@ async function main() {
       const row = stateResult.rows[0];
       if (Number(row?.target_failed_count) > 0) {
         const expectedIndex = 'CREATE INDEX "SupportTicket_updatedAt_id_idx" ON public."SupportTicket" USING btree ("updatedAt", id)';
+        // The existing Render staging instance uses kurioticket_web_staging;
+        // the checked-in Render Blueprint declares kurioticket_staging.
+        const knownStagingDatabase = ["kurioticket_web_staging", "kurioticket_staging"].includes(row.database_name);
         const safe =
-          row.database_name === "kurioticket_web_staging" &&
+          knownStagingDatabase &&
           Number(row.failed_count) === 1 &&
           Number(row.target_failed_count) === 1 &&
           Number(row.original_applied_count) === 1 &&
