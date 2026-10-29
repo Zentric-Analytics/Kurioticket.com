@@ -22,6 +22,7 @@ type CreateArgs = {
 afterEach(() => {
   __supportServiceTest.setPrismaClientForTesting(null);
   __supportServiceTest.setSendSupportEmailForTesting(null);
+  __supportServiceTest.setTrackAnalyticsForTesting(null);
 });
 
 test("createSupportTicket creates guest SupportTicket and SupportMessage before emailing", async () => {
@@ -29,8 +30,10 @@ test("createSupportTicket creates guest SupportTicket and SupportMessage before 
   const sentEmails: Array<{ to: string; idempotencyKey?: string }> = [];
 
   __supportServiceTest.setPrismaClientForTesting({
+    async $transaction(work) { return work(this); },
     supportMessage: { async create() { return assert.fail("Unexpected separate message write during ticket creation"); } },
     supportTicket: {
+      async updateMany() { return { count: 1 }; },
       async findUnique() { return assert.fail("Unexpected ticket lookup during creation"); },
       async update() { return assert.fail("Unexpected ticket update during creation"); },
       async create(args) {
@@ -64,8 +67,10 @@ test("createSupportTicket attaches logged-in userId", async () => {
   const createCalls: CreateArgs[] = [];
 
   __supportServiceTest.setPrismaClientForTesting({
+    async $transaction(work) { return work(this); },
     supportMessage: { async create() { return assert.fail("Unexpected separate message write during ticket creation"); } },
     supportTicket: {
+      async updateMany() { return { count: 1 }; },
       async findUnique() { return assert.fail("Unexpected ticket lookup during creation"); },
       async update() { return assert.fail("Unexpected ticket update during creation"); },
       async create(args) {
@@ -90,8 +95,10 @@ test("createSupportTicket attaches logged-in userId", async () => {
 
 test("createSupportTicket fails instead of returning a local ticket when database creation fails", async () => {
   __supportServiceTest.setPrismaClientForTesting({
+    async $transaction(work) { return work(this); },
     supportMessage: { async create() { return assert.fail("Unexpected separate message write during ticket creation"); } },
     supportTicket: {
+      async updateMany() { return { count: 1 }; },
       async findUnique() { return assert.fail("Unexpected ticket lookup during creation"); },
       async update() { return assert.fail("Unexpected ticket update during creation"); },
       async create() {
@@ -118,8 +125,10 @@ test("createSupportTicket returns saved ticket when confirmation email fails", a
   const createCalls: CreateArgs[] = [];
 
   __supportServiceTest.setPrismaClientForTesting({
+    async $transaction(work) { return work(this); },
     supportMessage: { async create() { return assert.fail("Unexpected separate message write during ticket creation"); } },
     supportTicket: {
+      async updateMany() { return { count: 1 }; },
       async findUnique() { return assert.fail("Unexpected ticket lookup during creation"); },
       async update() { return assert.fail("Unexpected ticket update during creation"); },
       async create(args) {
@@ -148,7 +157,9 @@ test("addAdminSupportReply creates admin SupportMessage and attempts notificatio
   const sentEmails: Array<{ to: string; subject: string; idempotencyKey?: string }> = [];
 
   __supportServiceTest.setPrismaClientForTesting({
+    async $transaction(work) { return work(this); },
     supportTicket: {
+      async updateMany() { return { count: 1 }; },
       async create() { throw new Error("not used"); },
       async findUnique() {
         return { id: "ticket-1", email: "user@example.com", subject: "Need help", status: "OPEN" };
@@ -170,13 +181,16 @@ test("addAdminSupportReply creates admin SupportMessage and attempts notificatio
   const result = await addAdminSupportReply({ ticketId: "ticket-1", body: "Thanks for contacting support." });
 
   assert.equal(result.message.author, "admin");
+  assert.equal(result.emailStatus, "accepted");
   assert.deepEqual(messageOrder, ["customer-message", "Thanks for contacting support."]);
   assert.deepEqual(sentEmails, [{ to: "user@example.com", subject: "Re: Your Kurioticket support request", idempotencyKey: "support-ticket-reply-message-admin" }]);
 });
 
 test("addAdminSupportReply returns saved message when notification email fails", async () => {
   __supportServiceTest.setPrismaClientForTesting({
+    async $transaction(work) { return work(this); },
     supportTicket: {
+      async updateMany() { return { count: 1 }; },
       async create() { throw new Error("not used"); },
       async findUnique() {
         return { id: "ticket-1", email: "user@example.com", subject: "Need help", status: "OPEN" };
@@ -196,13 +210,16 @@ test("addAdminSupportReply returns saved message when notification email fails",
   const result = await addAdminSupportReply({ ticketId: "ticket-1", body: "We are checking this." });
 
   assert.equal(result.message.id, "message-admin");
+  assert.equal(result.emailStatus, "failed");
 });
 
 test("updateSupportTicketStatus updates valid status and returns previous status", async () => {
   const updates: Array<{ status: string }> = [];
 
   __supportServiceTest.setPrismaClientForTesting({
+    async $transaction(work) { return work(this); },
     supportTicket: {
+      async updateMany() { return { count: 1 }; },
       async create() { throw new Error("not used"); },
       async findUnique() {
         return { id: "ticket-1", email: "user@example.com", subject: "Need help", status: "OPEN" };
@@ -226,7 +243,9 @@ test("updateSupportTicketStatus updates valid status and returns previous status
 
 test("support mutations reject invalid ticket ids", async () => {
   __supportServiceTest.setPrismaClientForTesting({
+    async $transaction(work) { return work(this); },
     supportTicket: {
+      async updateMany() { return { count: 1 }; },
       async create() { throw new Error("not used"); },
       async findUnique() { return null; },
       async update() { throw new Error("not used"); },
@@ -238,4 +257,37 @@ test("support mutations reject invalid ticket ids", async () => {
 
   await assert.rejects(addAdminSupportReply({ ticketId: "missing", body: "Reply body" }), /Support ticket not found/);
   await assert.rejects(updateSupportTicketStatus({ ticketId: "missing", status: "CLOSED" }), /Support ticket not found/);
+});
+
+test("createSupportTicket returns persisted ticket even if optional analytics fails", async () => {
+  __supportServiceTest.setTrackAnalyticsForTesting(async () => { throw new Error("analytics unavailable"); });
+  __supportServiceTest.setPrismaClientForTesting({
+    async $transaction(work) { return work(this); },
+    supportTicket: {
+      async updateMany() { return { count: 1 }; },
+      async create(args) { return { id: "ticket-analytics", subject: args.data.subject }; },
+      async findUnique() { return null; },
+      async update() { throw new Error("not used"); },
+    },
+    supportMessage: { async create() { throw new Error("not used"); } },
+  });
+  __supportServiceTest.setSendSupportEmailForTesting(async () => ({ id: "email-accepted" }));
+  const ticket = await createSupportTicket({ email: "guest@example.com", subject: "Need help", category: "search-help", body: "Flight results unavailable." });
+  assert.equal(ticket.id, "ticket-analytics");
+});
+
+test("addAdminSupportReply rolls back reply when activity update fails", async () => {
+  __supportServiceTest.setPrismaClientForTesting({
+    async $transaction(work) { return work(this); },
+    supportTicket: {
+      async updateMany() { throw new Error("activity update failed"); },
+      async create() { throw new Error("not used"); },
+      async findUnique() { return { id: "ticket-1", email: "user@example.com", subject: "Need help", status: "OPEN" }; },
+      async update() { throw new Error("not used"); },
+    },
+    supportMessage: {
+      async create(args) { return { id: "message-admin", ticketId: args.data.ticketId, author: args.data.author, body: args.data.body, createdAt: new Date("2026-10-29T08:00:00Z") }; },
+    },
+  });
+  await assert.rejects(addAdminSupportReply({ ticketId: "ticket-1", body: "Reply" }), /activity update failed/);
 });
