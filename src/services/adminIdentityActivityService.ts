@@ -31,6 +31,8 @@ type SafeAnalyticsType = keyof typeof safeAnalyticsLabels;
 
 export type IdentityActivitySummary = {
   searches: number;
+  /** Available on complete reads; uses the same authorized, merged timeline. */
+  searchProducts?: { flights: number; hotels: number; cars: number; other: number };
   resultsViewed: number;
   providerHandoffs: number;
 };
@@ -357,6 +359,17 @@ export async function loadAdminIdentityActivity(
       }),
     ];
     const sorted = mergeAdminActivity(canonical, legacy, complete ? canonical.length + legacy.length : ACTIVITY_FETCH_LIMIT * 4, order);
+    if (complete) {
+      const products = { flights: 0, hotels: 0, cars: 0, other: 0 };
+      for (const row of sorted) {
+        if (row.stage !== "SEARCH_COMPLETED") continue;
+        if (row.product === "FLIGHT") products.flights++;
+        else if (row.product === "HOTEL") products.hotels++;
+        else if (row.product === "CAR") products.cars++;
+        else products.other++;
+      }
+      summary.searchProducts = products;
+    }
     const page = complete ? sorted : sorted.slice(0, ACTIVITY_PAGE_SIZE);
     const last = page.at(-1);
     const hasMore = !complete && (sorted.length > ACTIVITY_PAGE_SIZE

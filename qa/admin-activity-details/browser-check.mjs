@@ -53,47 +53,37 @@ async function inspectActivityTypography(page) {
     };
   });
 }
-async function expectIdentityDatesOnOneLine(page, context) {
-  const dates = await page.locator('section[aria-label="Customer identity"] dd').evaluateAll(
-    nodes => nodes.slice(0, 2).map(el => ({
-      height: el.getBoundingClientRect().height,
-      fontSize: Number.parseFloat(getComputedStyle(el).fontSize),
-      text: el.textContent?.trim(),
-    }))
-  );
-  assert.equal(dates.length, 2, context + ": Joined/First seen and Last active facts are present");
-  for (const date of dates) {
-    assert.ok(date.height <= date.fontSize * 1.9,
-      context + ": date unexpectedly wraps: " + JSON.stringify(date));
-  }
-}
-
-async function expectEventsFactNearRightEdge(page, context) {
-  const gap = await page.evaluate(() => {
-    const card = document.querySelector('[data-testid="activity-page-card"]');
-    const events = document.querySelector('[data-testid="activity-events-fact"]');
-    if (!card || !events) throw new Error("Activity card or Events fact missing");
-    return Math.round(card.getBoundingClientRect().right - events.getBoundingClientRect().right);
+async function expectAlignedColumns(page) {
+  const layout = await page.evaluate(() => {
+    const identity = document.querySelector('section[aria-label="Customer identity"] > div');
+    const summary = document.querySelector('section[aria-label="Activity summary"] > div');
+    const facts = [...identity.querySelectorAll('dl > div')].map(el => el.getBoundingClientRect());
+    const metrics = [...summary.querySelectorAll('[data-testid="activity-metric-label"]')].map(el => el.parentElement.getBoundingClientRect());
+    return { identityTracks: getComputedStyle(identity).gridTemplateColumns, summaryTracks: getComputedStyle(summary).gridTemplateColumns,
+      positions: facts.map((fact,i) => ({fact:fact.x,metric:metrics[i].x})),
+      identityTop: identity.firstElementChild.getBoundingClientRect().top,
+      factTops: facts.map(rect => rect.top), bottom: identity.getBoundingClientRect().bottom };
   });
-  assert.ok(gap >= 0 && gap <= 72,
-    context + ": excessive empty space after Events (" + gap + "px)");
+  assert.equal(layout.identityTracks, layout.summaryTracks, 'same five grid tracks');
+  for (const position of layout.positions) assert.ok(Math.abs(position.fact-position.metric) < 1, 'divider alignment');
+  for (const top of layout.factTops) assert.ok(top < layout.bottom && top >= layout.identityTop - 30, 'facts share desktop row');
 }
 
 const approvedActivityTypography = {
   rootBackground: "rgb(255, 255, 255)",
-  shellBackground: "rgb(248, 250, 252)",
+  shellBackground: "rgb(241, 245, 251)",
   summaryBackground: "rgba(0, 0, 0, 0)",
   bodyBackground: "rgb(255, 255, 255)",
   outerBorderColor: "rgb(226, 232, 240)",
-  innerBorderColor: "rgb(203, 213, 225)",
+  innerBorderColor: "rgb(226, 232, 240)",
   primaryText: "rgb(15, 23, 42)",
-  factValueSize: "14px",
+  factValueSize: "16px",
   factValueWeight: "500",
   factValueColor: "rgb(15, 23, 42)",
   factLabelSize: "12px",
   factLabelWeight: "400",
   factLabelColor: "rgb(100, 116, 139)",
-  summaryValueSize: "22px",
+  summaryValueSize: "16px",
   summaryValueWeight: "500",
   summaryValueColor: "rgb(15, 23, 42)",
   summaryLabelSize: "12px",
@@ -154,19 +144,32 @@ try {
     const widths=await page.evaluate(()=>({document:document.documentElement.scrollWidth,viewport:window.innerWidth}));
     assert.ok(widths.document <= widths.viewport+1, "No horizontal drift "+JSON.stringify(widths));
     assert.deepEqual(await inspectActivityTypography(page), approvedActivityTypography, "Guest Activity typography and palette "+width);
-    if (width === 1280) await expectIdentityDatesOnOneLine(page, "Guest desktop");
-    if (width === 768 || width === 1024)
-      await expectEventsFactNearRightEdge(page, "Guest " + width + "px");
+    if (width >= 1024) await expectAlignedColumns(page);
+
     if([1536,1280,1024,768,390,320].includes(width))
       await page.screenshot({path:output+"/after-view-activity-"+width+".png",fullPage:true});
     console.log("PASS responsive activity page",width);
   }
 
+  // Browser zoom changes CSS viewport width. Check the equivalent 1280px desktop
+  // at 90%, 100%, 110%, keeping device scale fixed (no CSS zoom hacks).
+  for (const zoom of [0.9, 1, 1.1]) {
+    await page.setViewportSize({width: Math.round(1280/zoom), height: Math.round(900/zoom)});
+    await page.goto(base + "/admin/users/user/qa-registered-0001/activity");
+    await expectAlignedColumns(page);
+    assert.deepEqual(await inspectActivityTypography(page), approvedActivityTypography);
+    await page.screenshot({path: output + "/after-desktop-zoom-equivalent-" + Math.round(zoom*100) + ".png",fullPage:true});
+  }
+
   // Registered accounts use the same fact grid, including protected-admin labels.
   await page.setViewportSize({width:1024,height:900});
   await page.goto(base + "/admin/users/user/qa-registered-0001/activity");
-  await expectEventsFactNearRightEdge(page, "Registered 1024px");
+  await expectAlignedColumns(page);
   await page.screenshot({path:output+"/after-registered-activity-1024.png",fullPage:true});
+
+  await expect(page.getByLabel("Flights: 2", {exact:true})).toBeVisible();
+  await expect(page.getByLabel("Hotels: 2", {exact:true})).toBeVisible();
+  await expect(page.getByLabel("Cars: 1", {exact:true})).toBeVisible();
 
   // Every fixture event is available upfront, including the formerly separate pages.
   await page.goto(url);
@@ -280,7 +283,7 @@ try {
   await expect(accountCard.getByRole("button",{name:"Manage account for customer.qa@example.invalid"})).toBeVisible();
   await expect(accountCard.getByTestId("activity-body-card")).toBeVisible();
   assert.deepEqual(await inspectActivityTypography(page), approvedActivityTypography, "Registered Activity typography and palette");
-  await expectIdentityDatesOnOneLine(page, "Registered desktop");
+  await expectAlignedColumns(page);
   await page.screenshot({path:output+"/after-registered-activity-1280.png",fullPage:true});
   assert.deepEqual(errors,[],"No browser exceptions");
   console.log("PASS registered identity and browser errors");

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Plane, Building2, CarFront } from "lucide-react";
 
 import { CopyIdentityId } from "@/components/admin/CopyIdentityId";
 import { UserStatusActions } from "@/components/admin/UserStatusActions";
@@ -29,8 +29,9 @@ const tabs = [
 const format = (at: Date) => new Intl.DateTimeFormat("en", {
   dateStyle: "medium", timeStyle: "short", timeZone: "UTC",
 }).format(at) + " UTC";
+// Identical track boundaries for both sections, including the empty management track.
+const activityColumns = "grid min-w-0 gap-y-5 lg:grid-cols-[minmax(0,2.1fr)_minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,0.8fr)] lg:items-center";
 const buttonClass = "focus-ring inline-flex items-center gap-1.5 rounded-md border border-[#E2E8F0] bg-white px-3 py-2 text-[13px] font-medium text-[#004BB8] hover:bg-[#F8FAFC]";
-const inputClass = "focus-ring h-11 min-w-0 w-full rounded-lg border border-[#E2E8F0] bg-white px-3 text-[13px] font-normal text-[#0F172A] placeholder:text-[#64748B] hover:border-[#94A3B8]";
 
 function safeDirectoryHref(raw: RawQuery) {
   const saved = typeof raw.directory === "string" && raw.directory.length <= 1000 ? raw.directory : "";
@@ -65,7 +66,7 @@ function Fact({ label, children, className = "", testId }: {
 }) {
   return <div data-testid={testId} className={"min-w-0 border-l border-[#E2E8F0] pl-4 sm:pl-5 " + className}>
     <dt className="text-[12px] font-normal text-[#64748B]">{label}</dt>
-    <dd className="mt-1 break-words text-[14px] font-medium text-[#0F172A]">{children}</dd>
+    <dd className="mt-1 break-words text-[16px] font-medium leading-6 tabular-nums text-[#0F172A]">{children}</dd>
   </div>;
 }
 
@@ -86,7 +87,7 @@ function RegisteredManage({ id, email, role, status, actorId }: {
  * Keep existing account administration reachable on an Activity error page
  * without bypassing its separate API authorization, roles or account guards.
  */
-async function fallbackManage(kind: string, id: string, actorId: string, backHref: string): Promise<React.ReactNode> {
+async function fallbackManage(kind: string, id: string, actorId: string): Promise<React.ReactNode> {
   return withOptionalDb<React.ReactNode>(async db => {
     if (kind === "user") {
       const account = await db.user.findUnique({
@@ -120,7 +121,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
   if (!filtersResult.ok) return <div className="space-y-4">
     <div className="flex flex-wrap items-center justify-between gap-3">
       <Link href={backHref} className={buttonClass}><ArrowLeft size={16} /> Back to Users</Link>
-      <div aria-label="Identity management">{await fallbackManage(kind, id, session.user.id, backHref)}</div>
+      <div aria-label="Identity management">{await fallbackManage(kind, id, session.user.id)}</div>
     </div>
     <AdminEmptyState title="Invalid activity filters" message={filtersResult.error}
       action={<Link className={buttonClass} href={basePath}>Reset activity filters</Link>} />
@@ -131,7 +132,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
   if (result.status !== "ok") return <div className="space-y-4">
     <div className="flex flex-wrap items-center justify-between gap-3">
       <Link href={backHref} className={buttonClass}><ArrowLeft size={16} /> Back to Users</Link>
-      <div aria-label="Identity management">{await fallbackManage(kind, id, session.user.id, backHref)}</div>
+      <div aria-label="Identity management">{await fallbackManage(kind, id, session.user.id)}</div>
     </div>
     <AdminEmptyState title={result.status === "invalid_cursor" ? "Activity page link expired" : "Activity data unavailable"}
       message={result.status === "invalid_cursor" ? "The pagination link does not match this customer or the selected filters." : "The activity reader is temporarily unavailable. This does not mean there is no customer history."}
@@ -142,7 +143,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
   const operational = data.source === "operational";
   const order = filters.order === "oldest" ? "oldest" : "newest";
 
-  return <div className="min-w-0 space-y-6 bg-[#F8FAFC] pb-2 text-[#0F172A]">
+  return <div className="min-w-0 space-y-6 bg-[#F1F5FB] pb-2 text-[#0F172A]">
     <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-2 text-[13px] text-[#475569]">
       <Link href={backHref} className="focus-ring inline-flex items-center gap-1.5 rounded-sm hover:text-[#004BB8]">
         <ArrowLeft size={16} aria-hidden="true" /> Users
@@ -152,12 +153,9 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
     </nav>
 
     <section data-testid="activity-page-card" aria-label="Customer activity workspace"
-      className="min-w-0 space-y-6 rounded-xl border border-[#E2E8F0] bg-white p-4 sm:p-6 lg:p-7">
+      className="min-w-0 space-y-6 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-5 lg:p-6">
       <section aria-label="Customer identity" className="min-w-0">
-        <div className={"grid min-w-0 gap-5 xl:items-center " +
-          (kind === "user"
-            ? "xl:grid-cols-[minmax(280px,0.95fr)_minmax(0,1.95fr)_auto]"
-            : "xl:grid-cols-[minmax(280px,0.95fr)_minmax(0,1.95fr)]")}>
+        <div className={activityColumns}>
           <div className="flex min-w-0 items-center gap-4">
             <span aria-hidden="true"
               className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[var(--muted)] text-xl font-semibold">
@@ -165,14 +163,14 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
             </span>
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <h1 className="truncate text-xl font-semibold">
+                <h1 className="break-words text-xl font-semibold [overflow-wrap:anywhere]">
                   {kind === "guest" ? operational ? "Guest session" : "Visitor" : data.title}
                 </h1>
                 <span className="rounded-full border border-[var(--border)] px-2 py-0.5 text-xs">
                   {kind === "guest" ? operational ? "Essential operational activity" : "Consented guest" : data.status === "ACTIVE" ? "Active" : data.status}
                 </span>
               </div>
-              {data.email ? <p className="mt-1 truncate text-sm text-[#475569]">{data.email}</p> : null}
+              {data.email ? <p className="mt-1 break-words text-sm text-[#475569] [overflow-wrap:anywhere]">{data.email}</p> : null}
               <div className="mt-1 flex min-w-0 items-center gap-2">
                 <code className="max-w-[240px] truncate text-xs" title={id}>{id}</code>
                 <CopyIdentityId id={id} kind={kind}/>
@@ -180,21 +178,20 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
             </div>
           </div>
 
-          <dl className="grid min-w-0 grid-cols-1 gap-4 min-[420px]:grid-cols-2 sm:grid-cols-3 xl:gap-x-3">
+          <dl className="grid min-w-0 grid-cols-1 gap-4 min-[420px]:grid-cols-2 sm:grid-cols-3 lg:contents">
             <Fact label={kind === "guest" ? "First seen" : "Joined"}>{format(data.firstSeenAt)}</Fact>
             <Fact label="Last active">{data.lastSeenAt ? format(data.lastSeenAt) : "—"}</Fact>
-            <Fact label="Events" testId="activity-events-fact"
-              className="sm:justify-self-end xl:justify-self-start">{data.events.length}</Fact>
+            <Fact label="Events" testId="activity-events-fact">{data.events.length}</Fact>
           </dl>
 
-          {kind === "user" ? <div className="flex min-w-0 justify-start xl:justify-end" aria-label="Identity management">
+          {kind === "user" ? <div className="flex min-w-0 justify-start lg:justify-end" aria-label="Identity management">
             <RegisteredManage id={id} email={data.email} role={data.role || "USER"} status={data.status} actorId={session.user.id}/>
-          </div> : null}
+          </div> : <div aria-hidden="true" className="hidden lg:block" />}
         </div>
       </section>
 
       <section aria-label="Activity summary" className="min-w-0 border-y border-[#E2E8F0] py-5">
-        <div className="grid min-w-0 gap-4 md:grid-cols-[minmax(155px,0.75fr)_repeat(3,minmax(0,1fr))] md:items-center md:gap-x-4">
+        <div className={activityColumns}>
           <div className="flex min-w-0 flex-wrap items-center gap-2">
             <h2 className="text-base font-semibold">Activity summary</h2>
             {kind === "guest" ? <ActivityDataInfo>
@@ -204,20 +201,33 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
               Missing records do not establish that no visit occurred. Provider handoffs are not proof of a booking or payment.
             </ActivityDataInfo> : null}
           </div>
-          <div className="grid min-w-0 grid-cols-3 gap-2 md:contents">
+          <div className="grid min-w-0 grid-cols-3 gap-2 lg:contents">
             {([
               { label: "Searches", count: data.summary.searches },
               { label: "Results viewed", count: data.summary.resultsViewed },
               { label: "Provider handoffs", count: data.summary.providerHandoffs },
-            ]).map(({label,count}) => <div key={label} className="min-w-0 border-l border-[#E2E8F0] pl-3 sm:pl-5">
+            ]).map(({label,count}) => <div key={label} className="min-w-0 border-l border-[#E2E8F0] pl-4 sm:pl-5">
               <span data-testid="activity-metric-label" className="block text-[12px] font-normal text-[#64748B]">{label}</span>
-              <span data-testid="activity-metric-value" className="mt-1 block text-[22px] font-medium leading-tight tabular-nums text-[#0F172A]">{count}</span>
+              <span data-testid="activity-metric-value" className="mt-1 block text-[16px] font-medium leading-6 tabular-nums text-[#0F172A]">{count}</span>
+              {label === "Searches" && data.summary.searchProducts ? <div aria-label="Searches by product"
+                className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs leading-4 text-[#64748B]">
+                {([
+                  { label: "Flights", count: data.summary.searchProducts.flights, Icon: Plane },
+                  { label: "Hotels", count: data.summary.searchProducts.hotels, Icon: Building2 },
+                  { label: "Cars", count: data.summary.searchProducts.cars, Icon: CarFront },
+                ]).map(({label, count, Icon}) => <span key={label} aria-label={label + ": " + count} title={label}
+                  className="inline-flex items-center gap-1 tabular-nums"><Icon size={13} aria-hidden="true" />{count}</span>)}
+                {data.summary.searchProducts.other > 0 ? <span aria-label={"Other or unknown: " + data.summary.searchProducts.other}>
+                  Other: {data.summary.searchProducts.other}
+                </span> : null}
+              </div> : null}
             </div>)}
           </div>
+          <div aria-hidden="true" className="hidden lg:block" />
         </div>
       </section>
 
-      <div data-testid="activity-body-card" className="min-w-0 space-y-6 rounded-lg border border-[#CBD5E1] bg-white p-3 sm:p-5 lg:p-6">
+      <div data-testid="activity-body-card" className="min-w-0 space-y-6 rounded-xl border border-[#E2E8F0] bg-white p-3 sm:p-4">
         <section aria-label="Activity filters" className="min-w-0">
           <ActivityFiltersBar path={basePath} directory={typeof raw.directory === "string" && raw.directory.length <= 1000 ? raw.directory : ""}
             initial={{tab:filters.tab,q:filters.q,product:filters.product,stage:filters.stage,order,
