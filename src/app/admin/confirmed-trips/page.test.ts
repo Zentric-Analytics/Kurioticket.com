@@ -11,7 +11,8 @@ const architecture = readFileSync("src/lib/my-trips-architecture.test.ts", "utf8
 
 test("confirmed trips admin is a read-only provider-confirmation operations page", () => {
   assert.match(page, /title="Confirmed Trips"/);
-  assert.match(page, /provider-confirmed My Trips created by signed partner callbacks/);
+  assert.match(page, /description="View trips confirmed by travel providers and monitor confirmation activity\."/);
+  assert.match(page, /Kurioticket accepted a valid signed partner confirmation and stored it as trusted trip data/);
   assert.match(page, /Confirmation integration readiness/);
   assert.match(page, /Recent provider-confirmed trips/);
   assert.match(page, /Provider handoff ≠ confirmation/);
