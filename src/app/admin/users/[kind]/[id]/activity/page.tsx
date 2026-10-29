@@ -201,22 +201,22 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
               Missing records do not establish that no visit occurred. Provider handoffs are not proof of a booking or payment.
             </ActivityDataInfo> : null}
           </div>
-          <div className="grid min-w-0 grid-cols-3 gap-2 lg:contents">
+          <div className="grid min-w-0 grid-cols-[1.5fr_0.95fr_1.1fr] gap-1 sm:grid-cols-3 sm:gap-2 lg:contents">
             {([
               { label: "Searches", count: data.summary.searches },
               { label: "Results viewed", count: data.summary.resultsViewed },
               { label: "Provider handoffs", count: data.summary.providerHandoffs },
-            ]).map(({label,count}) => <div key={label} className="min-w-0 border-l border-[#E2E8F0] pl-4 sm:pl-5">
+            ]).map(({label,count}) => <div key={label} className="min-w-0 border-l border-[#E2E8F0] pl-2 sm:pl-5">
               <span data-testid="activity-metric-label" className="block text-[12px] font-normal text-[#64748B]">{label}</span>
               <span data-testid="activity-metric-value" className="mt-1 block text-[16px] font-medium leading-6 tabular-nums text-[#0F172A]">{count}</span>
               {label === "Searches" && data.summary.searchProducts ? <div aria-label="Searches by product"
-                className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs leading-4 text-[#64748B]">
+                className="mt-1 flex flex-wrap items-center gap-x-1 gap-y-1 text-[11px] sm:gap-x-3 sm:text-xs leading-4 text-[#64748B]">
                 {([
                   { label: "Flights", count: data.summary.searchProducts.flights, Icon: Plane },
                   { label: "Hotels", count: data.summary.searchProducts.hotels, Icon: Building2 },
                   { label: "Cars", count: data.summary.searchProducts.cars, Icon: CarFront },
                 ]).map(({label, count, Icon}) => <span key={label} aria-label={label + ": " + count} title={label}
-                  className="inline-flex items-center gap-1 tabular-nums"><Icon size={13} aria-hidden="true" />{count}</span>)}
+                  className="inline-flex items-center gap-0.5 tabular-nums sm:gap-1"><Icon size={12} aria-hidden="true" />{count}</span>)}
                 {data.summary.searchProducts.other > 0 ? <span aria-label={"Other or unknown: " + data.summary.searchProducts.other}>
                   Other: {data.summary.searchProducts.other}
                 </span> : null}

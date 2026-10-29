@@ -177,6 +177,20 @@ try {
   await expectAlignedColumns(page);
   await page.screenshot({path: output+"/after-protected-admin-1024.png",fullPage:true});
 
+  for (const width of [1280,1024,768,390,320]) {
+    await page.setViewportSize({width,height:900});
+    await page.goto(base + "/admin/users/user/qa-long-identity-0001/activity");
+    await expect(page.getByRole("heading",{name:"Alexandria Olufunmilayo Adekunle-Wellington",exact:true})).toBeVisible();
+    const identity = await page.locator('section[aria-label="Customer identity"]').evaluate(el => ({
+      overflow: document.documentElement.scrollWidth > innerWidth+1,
+      truncated:[...el.querySelectorAll('h1,p')].some(el => getComputedStyle(el).textOverflow === "ellipsis"),
+    }));
+    assert.equal(identity.overflow,false);
+    assert.equal(identity.truncated,false);
+    if (width >= 1024) await expectAlignedColumns(page);
+    await page.screenshot({path:output+"/after-long-identity-"+width+".png",fullPage:true});
+  }
+
   // Every fixture event is available upfront, including the formerly separate pages.
   await page.goto(url);
   let totals = page.getByRole("region",{name:"Activity summary"});
