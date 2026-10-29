@@ -1,8 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { createServer, request } from "node:http";
+import { once } from "node:events";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { createJiti } from "jiti";
+import { decodeActivityJourneyReturn } from "@/lib/adminActivityJourneyNavigation";
 import type { ActivityRow } from "@/lib/adminIdentityJourney";
 
 const jiti = createJiti(import.meta.url, { jsx: { runtime: "automatic" }, fsCache: false });
@@ -194,5 +197,31 @@ test("journey links retain safe filtered Activity return context", () => {
   const href = html.match(/href="([^\"]*\/admin\/journeys\/[^\"]*)"/)?.[1];
   assert.ok(href);
   const target = new URL(href.replaceAll("&amp;", "&"), "https://kurioticket.test");
-  assert.equal(target.searchParams.get("activityReturn"), returnHref);
+  assert.equal(decodeActivityJourneyReturn(target.searchParams.get("activityReturn")), returnHref);
+});
+
+test("international Activity context keeps the final journey request target below 8KB", async () => {
+  const query = new URLSearchParams({q:"旅".repeat(120),directory:"客".repeat(1000)});
+  const returnHref = "/admin/users/guest/qa-visitor-0001/activity?" + query;
+  const html = renderToStaticMarkup(createElement(ActivityTimeline, {
+    events: [offer("j-international", 0)], nextHref: null, environment: "staging", returnHref,
+  }));
+  const href = html.match(/href="([^\"]*\/admin\/journeys\/[^\"]*)"/)?.[1]?.replaceAll("&amp;", "&");
+  assert.ok(href);
+  assert.equal(decodeActivityJourneyReturn(new URL(href, "https://kurioticket.test").searchParams.get("activityReturn")), returnHref);
+  assert.ok(Buffer.byteLength(href) < 8192, "Final request target must leave room for ordinary HTTP headers: " + Buffer.byteLength(href));
+  const server = createServer((_req,res) => res.end("ok"));
+  server.listen(0,"127.0.0.1");
+  await once(server,"listening");
+  try {
+    const address = server.address();
+    assert.ok(address && typeof address !== "string");
+    const status = await new Promise<number | undefined>((resolve,reject) => {
+      const req = request({hostname:"127.0.0.1",port:address.port,path:href,headers:{cookie:"session="+"a".repeat(4096)}},res => {
+        res.resume(); res.on("end",() => resolve(res.statusCode));
+      });
+      req.on("error",reject); req.end();
+    });
+    assert.equal(status,200,"Node's default HTTP parser accepts the final URL with a 4KB cookie");
+  } finally { await new Promise<void>((resolve,reject) => server.close(error => error ? reject(error) : resolve())); }
 });

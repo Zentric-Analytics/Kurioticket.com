@@ -29,5 +29,16 @@ try {
   assert.equal(returned.searchParams.get('q'),'LOS');
   assert.equal(returned.searchParams.get('directory'),'tab=guests');
   await expect(page.locator('[data-activity-id]')).toHaveCount(2);
-  console.log('PASS journey association, recorded sequence and filtered Activity return');
+  // Exercise an actual long-context request through Next/Node, not only URL helpers.
+  const longDirectory = "客".repeat(1000);
+  await page.goto(base + "/admin/users/guest/qa-guest-activity-0001/activity?" + new URLSearchParams({q:"LOS",directory:longDirectory}));
+  const longLink = page.getByRole('link',{name:'View journey for Flight · LOS → IST'});
+  assert.ok((await longLink.getAttribute("href")).length < 8192);
+  await longLink.click();
+  await expect(page.getByRole('link',{name:'Back to Activity'})).toBeVisible();
+  await page.getByRole('link',{name:'Back to Activity'}).click();
+  await expect(page).toHaveURL(/\/admin\/users\/guest\/qa-guest-activity-0001\/activity\?/);
+  assert.equal(new URL(page.url()).searchParams.get("directory"),longDirectory);
+  assert.equal(new URL(page.url()).searchParams.get("q"),"LOS");
+  console.log('PASS journey association, recorded sequence, filtered return and long international context');
 } finally { await browser.close(); }
