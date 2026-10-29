@@ -33,9 +33,11 @@ export function SupportReplyForm({ ticketId, recipientEmail }: { ticketId: strin
       setReply("");
       setReplyMessage("Reply recorded. Email delivery is not confirmed.");
       router.refresh();
+      } catch {
+        setError("Unable to send reply. Check the conversation before retrying.");
+      }
     });
   }
-
 
   return (
     <section aria-labelledby="support-reply-heading" className="rounded-lg border border-[#E5E7EB] bg-white px-5 py-4">
