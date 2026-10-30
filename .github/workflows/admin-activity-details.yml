@@ -6,6 +6,7 @@ on:
     paths:
       - src/app/admin/users/**
       - src/components/admin/AdminIdentityTable.tsx
+      - src/components/admin/JourneyEventHistory*
       - src/components/admin/ActivityTimeline.tsx
       - src/components/admin/UserStatusActions.tsx
       - src/components/admin/GuestTrackingActions.tsx
@@ -44,11 +45,12 @@ jobs:
         env:
           JITI_TSCONFIG_PATHS: ./tsconfig.json
           JITI_JSX: "true"
-        run: node --test --import jiti/register src/lib/adminActivityJourneyNavigation.test.ts src/lib/adminJourneyPageContract.test.ts src/services/adminJourneyContract.test.ts src/services/adminJourneyCore.test.ts src/components/admin/AdminIdentityTable.test.ts src/components/admin/ActivityTimeline.test.ts src/components/admin/UserStatusActions.test.ts src/components/admin/GuestTrackingActions.test.ts src/services/adminGuestManagement.test.ts src/lib/adminActivityEnvironmentBoundary.test.ts src/lib/adminIdentityActivity.test.ts src/lib/adminIdentityActivityComplete.test.ts src/lib/adminIdentityJourney.test.ts
+        run: node --test --import jiti/register src/lib/adminActivityJourneyNavigation.test.ts src/lib/adminJourneyPageContract.test.ts src/services/adminJourneyContract.test.ts src/services/adminJourneyCore.test.ts src/components/admin/AdminIdentityTable.test.ts src/components/admin/ActivityTimeline.test.ts src/components/admin/JourneyEventHistory.test.ts src/components/admin/UserStatusActions.test.ts src/components/admin/GuestTrackingActions.test.ts src/services/adminGuestManagement.test.ts src/lib/adminActivityEnvironmentBoundary.test.ts src/lib/adminIdentityActivity.test.ts src/lib/adminIdentityActivityComplete.test.ts src/lib/adminIdentityJourney.test.ts
       - run: npx playwright install --with-deps chromium
       - name: Render and test real Admin Activity component with labelled QA data
         run: node qa/admin-activity-details/run.mjs
         env:
+          ADMIN_ACTIVITY_QA_BASE: ${{ github.event.pull_request.base.sha }}
           ADMIN_ACTIVITY_QA_WORK: ${{ runner.temp }}
           ADMIN_ACTIVITY_QA_OUTPUT: ${{ runner.temp }}/admin-customer-activity-screenshots
       - name: Upload screenshots (fixture content only, not staging data)
