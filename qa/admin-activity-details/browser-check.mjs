@@ -175,11 +175,9 @@ try {
     await expect(page.getByRole("navigation",{name:"Breadcrumb"})).toBeVisible();
     await expect(page.locator('[data-testid="activity-page-card"] [data-testid="activity-body-card"]')).toHaveCount(1);
     await expect(page.getByRole("navigation",{name:"Activity tabs"}).getByRole("link",{name:"Journeys"})).toHaveCount(0);
-    await expect(page.getByRole("button",{name:"About activity data"})).toBeVisible();
-    await expect(page.getByRole("tooltip")).toBeHidden();
-    await page.getByRole("button",{name:"About activity data"}).focus();
-    await expect(page.getByRole("tooltip")).toBeVisible();
-    await page.keyboard.press("Tab");
+    // The summary is intentionally just a heading and metrics, with no info icon or disclosure.
+    await expect(outerCard.locator('section[aria-label="Activity summary"] button[aria-label="About activity data"]')).toHaveCount(0);
+    await expect(outerCard.locator('section[aria-label="Activity summary"] [role="tooltip"]')).toHaveCount(0);
     await expect(page.getByRole("button",{name:/Manage guest/})).toHaveCount(0);
     await expect(page.getByRole("button",{name:"Apply Filter"})).toHaveCount(0);
     await expect(page.getByRole("button",{name:"Date range: All dates"})).toBeVisible();
@@ -357,6 +355,7 @@ try {
   await expect(page.getByText("customer.qa@example.invalid",{exact:true})).toBeVisible();
   await expect(page.getByRole("heading",{name:"Related records"})).toHaveCount(0);
   const accountCard = page.getByTestId("activity-page-card");
+  await expect(accountCard.locator('section[aria-label="Activity summary"] button[aria-label="About activity data"]')).toHaveCount(0);
   await expect(accountCard.getByRole("button",{name:"Manage account for customer.qa@example.invalid"})).toBeVisible();
   await expect(accountCard.getByTestId("activity-body-card")).toBeVisible();
   assert.deepEqual(await inspectActivityTypography(page), approvedActivityTypography, "Registered Activity typography and palette");

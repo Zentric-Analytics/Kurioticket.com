@@ -7,7 +7,6 @@ import { UserStatusActions } from "@/components/admin/UserStatusActions";
 import { AdminEmptyState } from "@/components/admin/AdminPageShell";
 import { ActivityTimeline } from "@/components/admin/ActivityTimeline";
 import { ActivityFiltersBar } from "@/components/admin/ActivityFiltersBar";
-import { ActivityDataInfo } from "@/components/admin/ActivityDataInfo";
 import { requireAdminSession } from "@/lib/auth-guards";
 import { getAdminEmails } from "@/lib/env";
 import { withOptionalDb } from "@/lib/prisma";
@@ -199,12 +198,6 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
         <div className={activityColumns + " lg:items-start"}>
           <div className="flex min-w-0 flex-wrap items-center gap-2">
             <h2 className="text-base font-semibold">Activity summary</h2>
-            {kind === "guest" ? <ActivityDataInfo>
-              {operational
-                ? <>Only recorded, necessary {environment} search and provider-handoff activity is displayed. The session credential expires, but retained records remain available. This ID does not identify a person. </>
-                : <>Only recorded, consented {environment} guest activity is displayed. </>}
-              Missing records do not establish that no visit occurred. Provider handoffs are not proof of a booking or payment.
-            </ActivityDataInfo> : null}
           </div>
           <div className="grid min-w-0 grid-cols-[1.5fr_0.95fr_1.1fr] gap-1 sm:grid-cols-3 sm:gap-2 lg:contents">
             {([
