@@ -31,7 +31,7 @@ export function RecentConfirmedTripTable({ trips, now = new Date() }: Props) {
         <FileCheck2 size={20} className="text-slate-400" aria-hidden="true" />
         <h3 className="mt-2 text-sm font-semibold text-slate-950">No provider-confirmed trips yet</h3>
         <p className="mt-1 max-w-xl text-[13px] leading-5 text-slate-600">
-          No accepted signed partner callback has created a confirmed My Trip in this database.
+          No signed provider confirmations have been accepted yet.
         </p>
       </div>
     );
@@ -100,7 +100,7 @@ export function RecentConfirmedTripTable({ trips, now = new Date() }: Props) {
           </tbody>
         </table>
       </div>
-      <p className="mt-2 text-xs leading-5 text-slate-600">Latest stored provider status; a handoff is not a booking confirmation. Scroll the table horizontally on narrow screens.</p>
+      <p className="mt-2 text-xs leading-5 text-slate-600">Statuses come from providers. Handoffs are not confirmations. Scroll sideways on narrow screens.</p>
     </div>
   );
 }
