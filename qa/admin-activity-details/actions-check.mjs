@@ -26,6 +26,12 @@ async function headingDestinations(baseline = false) {
     links.map(link => link.getAttribute("href")));
 }
 
+function journeyScope(href) {
+  const url = new URL(href, base);
+  url.searchParams.delete("activityReturn");
+  return url.pathname + url.search;
+}
+
 async function capture(filename) {
   // Disclosure clicks and keyboard focus legitimately scroll the viewport.
   // Reset it before full-page capture so the sticky header is not photographed
@@ -43,7 +49,7 @@ try {
     await page.goto(base + "/before");
     await expect(page.getByTestId("fixture-label")).toContainText("synthetic activity");
     await revealBaselineEvents();
-    originalDestinations = await headingDestinations(true);
+    originalDestinations = (await headingDestinations(true)).map(journeyScope);
     assert.equal(originalDestinations.length, 6);
     await capture("actions-before-guest-" + width + ".png");
 
@@ -59,7 +65,7 @@ try {
       const views = history.getByRole("link", { name: /^View (?:activity|journey) for / });
       await expect(views).toHaveCount(6);
       assert.deepEqual(await views.allTextContents(), Array(6).fill("View journey"));
-      assert.deepEqual((await headingDestinations()).map(href => { const url = new URL(href, base); url.searchParams.delete("activityReturn"); return url.pathname + url.search; }), originalDestinations, "Same journey targets and date/environment scope");
+      assert.deepEqual((await headingDestinations()).map(journeyScope), originalDestinations, "Same journey targets and date/environment scope");
       await expect(history.locator('[data-activity-id="j-qa-hotel-search"]')).toContainText("Hotel · Johannesburg, South Africa · Success");
       await expect(history.locator('[data-activity-id="j-qa-flight-search"]')).toContainText("Flight · LOS → IST · Success");
       await expect(history.locator('[data-activity-id="j-qa-flight-offer"]')).toContainText("Flight · LOS → IST · Jetabroad");

@@ -25,7 +25,7 @@ export default async function AdminJourneyDetailPage({ params, searchParams }: {
       {result.status === "ok" ? (
         <div className="min-w-0 space-y-5 bg-white p-4 sm:p-5">
           <section aria-labelledby="journey-details-heading" className="min-w-0 border-b border-[#E2E8F0] pb-4">
-            <h1 id="journey-details-heading" className="mb-4 text-base font-semibold text-[#0F172A]">Journey detail</h1>
+            <h2 id="journey-details-heading" className="mb-4 text-base font-semibold text-[#0F172A]">Journey details</h2>
             <dl className="grid min-w-0 gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-4">
               <Field label="Journey ID" value={result.data.journey.id} />
               <Field label="Identity" value={result.data.journey.identity.kind} />
