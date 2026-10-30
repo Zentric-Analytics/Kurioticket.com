@@ -11,7 +11,7 @@ const architecture = readFileSync("src/lib/my-trips-architecture.test.ts", "utf8
 
 test("confirmed trips admin is a read-only provider-confirmation operations page", () => {
   assert.match(page, /title="Confirmed Trips"/);
-  assert.match(page, /description="View trips confirmed by travel providers and monitor confirmation activity\."/);
+  assert.doesNotMatch(page, /description="View trips confirmed by travel providers and monitor confirmation activity\."/);
   assert.match(page, /Kurioticket accepted a valid signed partner confirmation and stored it as trusted trip data/);
   assert.match(page, /Confirmation integration readiness/);
   assert.match(page, /Recent provider-confirmed trips/);
@@ -110,7 +110,7 @@ test("Confirmed Trips UI uses one existing white parent with responsive summary 
 });
 
 
-test("Confirmed Trips preserves section order and primary header actions without jump shortcuts", () => {
+test("Confirmed Trips preserves section order and primary toolbar links without jump shortcuts", () => {
   const order = [
     "confirmed-trips-overview",
     "recent-confirmed-trips-title",
@@ -128,14 +128,19 @@ test("Confirmed Trips preserves section order and primary header actions without
   const providerIndex = breakdowns.indexOf('aria-labelledby="trips-by-provider-title"');
   assert.ok(productIndex >= 0 && providerIndex > productIndex, "Both breakdown panels remain in reading order");
 
-  const headerActions = page.slice(page.indexOf('actions={'), page.indexOf('      }\n    >'));
-  assert.match(headerActions, /href="\/admin\/confirmed-trips\/records"/);
-  assert.match(headerActions, /Browse confirmed trips/);
-  assert.match(headerActions, /href="\/admin\/flight-status"/);
-  assert.match(headerActions, /Flight status/);
-  assert.doesNotMatch(headerActions, /href="#/);
+  const actionsStart = page.indexOf('<div role="group" aria-label="Confirmed Trips actions"');
+  const actionsEnd = page.indexOf('</div>', actionsStart);
+  const panelStart = page.indexOf('<AdminSectionCard', actionsEnd);
+  assert.ok(actionsStart >= 0 && actionsEnd > actionsStart && panelStart > actionsEnd, "The right-aligned action toolbar must precede Trip overview");
+  const toolbar = page.slice(actionsStart, actionsEnd);
+  assert.match(toolbar, /justify-end gap-2/);
+  assert.match(toolbar, /href="\/admin\/confirmed-trips\/records"/);
+  assert.match(toolbar, /Browse confirmed trips/);
+  assert.match(toolbar, /href="\/admin\/flight-status"/);
+  assert.match(toolbar, /Flight status/);
+  assert.doesNotMatch(toolbar, /href="#/);
 
-  assert.match(page, /description="View trips confirmed by travel providers and monitor confirmation activity\."/);
+  assert.doesNotMatch(page, /description="View trips confirmed by travel providers and monitor confirmation activity\."/);
   assert.doesNotMatch(page, /Monitor provider-confirmed My Trips created by signed partner callbacks/);
   assert.doesNotMatch(page, /Jump to:|Confirmed Trips page shortcuts|href="#recent-confirmed-trips-title"|href="#confirmation-integration-title"|<nav\b|<ArrowDown\b/);
   assert.match(page, /id="recent-confirmed-trips-title"/);
@@ -145,13 +150,13 @@ test("Confirmed Trips preserves section order and primary header actions without
 
 
 
-test("Confirmed Trips hides only its page-level Admin operations eyebrow and prioritizes trip intelligence", () => {
+test("Confirmed Trips hides its visible introduction and preserves all sections", () => {
   const shell = readFileSync("src/components/admin/AdminPageShellHistorical.tsx", "utf8");
   assert.match(shell, /eyebrow = "Admin operations"/);
   assert.match(shell, /\{eyebrow \? <p/);
-  assert.match(page, /<AdminPageShell\s+title="Confirmed Trips"\s+eyebrow=""/);
+  assert.match(page, /<AdminPageShell\s+title="Confirmed Trips"\s+hideHeader>/);
   assert.doesNotMatch(page, /eyebrow="Admin operations"|Jump to:/);
-  assert.match(page, /description="View trips confirmed by travel providers and monitor confirmation activity\."/);
+  assert.doesNotMatch(page, /description="View trips confirmed by travel providers and monitor confirmation activity\."/);
 
   const markers = [
     'aria-labelledby="confirmed-trips-overview"',
@@ -172,7 +177,7 @@ test("Confirmed Trips hides only its page-level Admin operations eyebrow and pri
 
 
 test("Confirmed Trips has consistent typography without changing its section order", () => {
-  assert.match(page, /eyebrow=""/);
+  assert.match(page, /<AdminPageShell\s+title="Confirmed Trips"\s+hideHeader>/);
   for (const id of ["confirmed-trips-overview", "recent-confirmed-trips-title", "confirmation-integration-title", "confirmation-delivery-health-title", "trips-operational-boundaries"]) {
     const heading = page.split("\n").find(line => line.includes('<h2 id="' + id + '"'));
     assert.ok(heading && heading.includes("text-base font-semibold") && heading.includes("tracking-tight"), id);
@@ -183,6 +188,31 @@ test("Confirmed Trips has consistent typography without changing its section ord
   assert.match(recent, /bg-slate-50 px-4 py-4 text-center/);
   assert.match(page, /<ConfirmedTripsBreakdowns operations=\{operations\} \/>/);
   assert.doesNotMatch(page, /Jump to:|Confirmed Trips page shortcuts/);
+});
+
+
+test("Confirmed Trips removes only the visible heading and description in both loaded and loading states", () => {
+  const shell = readFileSync("src/components/admin/AdminPageShellHistorical.tsx", "utf8");
+  const loading = readFileSync("src/app/admin/confirmed-trips/loading.tsx", "utf8");
+  assert.match(shell, /hideHeader\s*\?\s*<h1 className="sr-only">\{title\}<\/h1>/);
+  assert.match(shell, /hideHeader \? "" : "mt-6"/);
+  for (const source of [page, loading]) {
+    assert.match(source, /<AdminPageShell title="Confirmed Trips" hideHeader>/);
+    assert.doesNotMatch(source, /description=|eyebrow=|actions=\{|View trips confirmed by travel providers and monitor confirmation activity\./);
+    const toolbar = source.match(/<div role="group" aria-label="Confirmed Trips actions" className="([^"]+)">([\s\S]*?)<\/div>/);
+    assert.ok(toolbar, "Both screens must retain the same action toolbar");
+    assert.match(toolbar[1], /mb-3/);
+    assert.match(toolbar[1], /justify-end gap-2/);
+    assert.match(toolbar[2], /href="\/admin\/confirmed-trips\/records"/);
+    assert.match(toolbar[2], /href="\/admin\/flight-status"/);
+    assert.equal((toolbar[2].match(/<Link\b/g) || []).length, 2);
+    assert.ok(source.indexOf('role="group" aria-label="Confirmed Trips actions"') < source.indexOf("<AdminSectionCard"),
+      "Action links should precede the white overview card");
+  }
+  assert.match(page, /<section aria-labelledby="confirmed-trips-overview"/);
+  assert.match(loading, /aria-busy="true"/);
+  assert.match(page, /<RecentConfirmedTripTable trips=\{operations\.recentTrips\} \/>/);
+  assert.match(page, /<ConfirmedTripsBreakdowns operations=\{operations\} \/>/);
 });
 
 test("Phase 2 metric cards are compact, accessible and honest about zero values", () => {
