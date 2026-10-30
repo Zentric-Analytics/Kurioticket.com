@@ -301,7 +301,12 @@ test("Phase 5 keeps both breakdowns visible, compact, and backed by real operati
   assert.match(breakdowns, /item\.lastConfirmationAt/);
   assert.match(breakdowns, /item\.count/);
   assert.doesNotMatch(breakdowns, /min-h-36|items-stretch|opacity-0|md:grid-cols-5/);
-  assert.match(page, /font-semibold leading-6 text-slate-950">Operational boundaries/);
+  const boundaryHeading = page.match(/<h2 id="trips-operational-boundaries" className="([^"]+)">Operational boundaries<\/h2>/);
+  assert.ok(boundaryHeading, "Operational boundaries heading must remain visible");
+  const headingClasses = boundaryHeading[1].split(/\s+/);
+  for (const className of ["text-base", "font-semibold", "leading-6", "text-slate-950"]) {
+    assert.ok(headingClasses.includes(className), "Operational boundaries heading must retain " + className);
+  }
   for (const text of [
     "Kurioticket is a metasearch and referral platform",
     "Kurioticket accepted a valid signed partner confirmation and stored it as trusted trip data",
