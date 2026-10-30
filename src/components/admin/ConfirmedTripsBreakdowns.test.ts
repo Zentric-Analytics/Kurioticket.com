@@ -21,10 +21,10 @@ test("product and provider sections remain visible and compact when no trips exi
   const html = render(snapshot);
   assert.match(html, /Confirmed trips by product/);
   assert.match(html, /Confirmed trips by provider/);
-  assert.match(html, /No provider-confirmed trips are recorded yet/);
-  assert.match(html, /No provider confirmation feed has produced a confirmed trip yet/);
-  assert.match(html, /A product breakdown will appear after accepted signed confirmations are recorded/);
-  assert.match(html, /A provider breakdown will appear after genuine signed confirmations are accepted/);
+  assert.match(html, /No confirmed trips yet/);
+  assert.match(html, /No confirmed trips from providers yet/);
+  assert.match(html, /Product totals will appear after verified confirmations arrive/);
+  assert.match(html, /Provider totals will appear after verified confirmations arrive/);
   assert.equal((html.match(/role="status"/g) || []).length, 2);
   assert.doesNotMatch(html, /Product breakdown unavailable|Provider breakdown unavailable|min-h-36|View details/);
   assert.doesNotMatch(html, /<table|>0<\/span>/);
@@ -37,7 +37,7 @@ test("database unavailable never appears as zero records or fictitious providers
   assert.match(html, /No counts are assumed/);
   assert.match(html, /No providers or counts are assumed/);
   assert.equal((html.match(/role="status"/g) || []).length, 2);
-  assert.doesNotMatch(html, /No provider-confirmed trips are recorded yet|No provider confirmation feed has produced a confirmed trip yet/);
+  assert.doesNotMatch(html, /No confirmed trips yet|No confirmed trips from providers yet/);
   assert.doesNotMatch(html, /<table|>0<\/span>/);
 });
 
@@ -63,7 +63,7 @@ test("populated breakdowns display every product and provider without fabricated
     assert.ok(html.includes(count), "Count must be rendered: " + count);
   }
   assert.equal((html.match(/aria-label="\d[\d,]* provider-confirmed trips"/g) || []).length, 7);
-  assert.doesNotMatch(html, /No provider-confirmed trips are recorded yet|breakdown unavailable|<table|<form/);
+  assert.doesNotMatch(html, /No confirmed trips yet|breakdown unavailable|<table|<form/);
   assert.match(html, /break-words/);
   assert.match(html, /tabular-nums/);
 });
@@ -75,6 +75,6 @@ test("uneven datasets do not force placeholders or equal-height empty cards", ()
     byProvider: [],
   });
   assert.match(html, /Car/);
-  assert.match(html, /No provider confirmation feed has produced a confirmed trip yet/);
+  assert.match(html, /No confirmed trips from providers yet/);
   assert.doesNotMatch(html, /min-h-36|items-stretch|opacity-0/);
 });

@@ -49,12 +49,12 @@ export function ConfirmedTripsBreakdowns({ operations }: Props) {
           </span>
           <div className="min-w-0">
             <h2 id="trips-by-product-title" className="text-base font-semibold leading-6 tracking-tight text-slate-950">Confirmed trips by product</h2>
-            <p className="mt-0.5 text-[13px] leading-5 text-slate-600">Provider-confirmed trips grouped by product.</p>
+            <p className="mt-0.5 text-[13px] leading-5 text-slate-600">Confirmed trips by travel type.</p>
           </div>
         </div>
         {!operations ? (
           <BreakdownMessage icon={Info} title="Product breakdown unavailable"
-            text="Confirmed-trip records could not be loaded from the connected database. No counts are assumed." />
+            text="Trip data couldn't be loaded. No counts are assumed." />
         ) : operations.byProduct.length ? (
           <div className="mt-3 divide-y divide-slate-100 border-t border-slate-100">
             {operations.byProduct.map((item) => (
@@ -67,8 +67,8 @@ export function ConfirmedTripsBreakdowns({ operations }: Props) {
             ))}
           </div>
         ) : (
-          <BreakdownMessage icon={Package} title="No provider-confirmed trips are recorded yet."
-            text="A product breakdown will appear after accepted signed confirmations are recorded." />
+          <BreakdownMessage icon={Package} title="No confirmed trips yet."
+            text="Product totals will appear after verified confirmations arrive." />
         )}
       </section>
 
@@ -79,12 +79,12 @@ export function ConfirmedTripsBreakdowns({ operations }: Props) {
           </span>
           <div className="min-w-0">
             <h2 id="trips-by-provider-title" className="text-base font-semibold leading-6 tracking-tight text-slate-950">Confirmed trips by provider</h2>
-            <p className="mt-0.5 text-[13px] leading-5 text-slate-600">Provider-confirmed trips grouped by provider.</p>
+            <p className="mt-0.5 text-[13px] leading-5 text-slate-600">Confirmed trips from each provider.</p>
           </div>
         </div>
         {!operations ? (
           <BreakdownMessage icon={Info} title="Provider breakdown unavailable"
-            text="Confirmed-trip records could not be loaded from the connected database. No providers or counts are assumed." />
+            text="Provider data couldn't be loaded. No providers or counts are assumed." />
         ) : operations.byProvider.length ? (
           <div className="mt-3 divide-y divide-slate-100 border-t border-slate-100">
             {operations.byProvider.map((item) => (
@@ -100,8 +100,8 @@ export function ConfirmedTripsBreakdowns({ operations }: Props) {
             ))}
           </div>
         ) : (
-          <BreakdownMessage icon={Users} title="No provider confirmation feed has produced a confirmed trip yet."
-            text="A provider breakdown will appear after genuine signed confirmations are accepted." />
+          <BreakdownMessage icon={Users} title="No confirmed trips from providers yet."
+            text="Provider totals will appear after verified confirmations arrive." />
         )}
       </section>
     </div>

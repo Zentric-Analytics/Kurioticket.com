@@ -48,7 +48,7 @@ export default async function AdminConfirmedTripsPage() {
             <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
               <div className="min-w-0">
                 <h2 id="confirmed-trips-overview" className="text-base font-semibold leading-6 tracking-tight text-slate-950">Trip overview</h2>
-                <p className="mt-1 text-[13px] leading-5 text-slate-600">Trusted provider-confirmed My Trips in this database.</p>
+                <p className="mt-1 text-[13px] leading-5 text-slate-600">Overview of verified confirmed trips.</p>
               </div>
               {operations ? (
                 <span className="shrink-0 rounded-full border border-slate-200 px-2.5 py-1 text-xs font-medium leading-4 text-slate-600">
@@ -59,21 +59,21 @@ export default async function AdminConfirmedTripsPage() {
             {operations ? (
               <>
                 <div className="grid grid-cols-2 gap-2.5 sm:gap-3 md:grid-cols-3 lg:grid-cols-5">
-                  <TripMetric label="Confirmed trips" value={operations.metrics.total} hint="Trusted confirmed trip records" icon={FileCheck2} tone={operations.metrics.total > 0 ? "info" : "neutral"} />
+                  <TripMetric label="Confirmed trips" value={operations.metrics.total} hint="Verified trip records" icon={FileCheck2} tone={operations.metrics.total > 0 ? "info" : "neutral"} />
                   <TripMetric label="Last 24h" value={operations.metrics.confirmedLast24h} hint="Latest confirmation within 24h" icon={Clock3} tone={operations.metrics.confirmedLast24h > 0 ? "info" : "neutral"} />
-                  <TripMetric label="Upcoming" value={operations.metrics.upcoming} hint="Stored as upcoming" icon={CalendarCheck} tone={operations.metrics.upcoming > 0 ? "good" : "neutral"} />
-                  <TripMetric label="Past" value={operations.metrics.past} hint="Stored as past" icon={CalendarDays} tone="neutral" />
-                  <TripMetric label="Cancelled" value={operations.metrics.cancelled} hint="Stored as cancelled" icon={CircleX} tone={operations.metrics.cancelled > 0 ? "warn" : "neutral"} />
+                  <TripMetric label="Upcoming" value={operations.metrics.upcoming} hint="Marked upcoming" icon={CalendarCheck} tone={operations.metrics.upcoming > 0 ? "good" : "neutral"} />
+                  <TripMetric label="Past" value={operations.metrics.past} hint="Marked past" icon={CalendarDays} tone="neutral" />
+                  <TripMetric label="Cancelled" value={operations.metrics.cancelled} hint="Marked cancelled" icon={CircleX} tone={operations.metrics.cancelled > 0 ? "warn" : "neutral"} />
                 </div>
                 <p className="mt-2.5 flex items-start gap-2 text-[13px] leading-5 text-slate-600">
                   <Info size={15} className="mt-0.5 shrink-0 text-slate-500" aria-hidden="true" />
-                  <span><strong className="font-semibold text-slate-700">Last 24h:</strong> Trips whose latest provider-confirmation timestamp is within 24h. This can include updates to existing trips; it is not a new-bookings count. Upcoming, Past and Cancelled use stored trip statuses.</span>
+                  <span><strong className="font-semibold text-slate-700">Last 24h:</strong> Trips with a provider confirmation in the last 24 hours, including updates. Not a count of new bookings.</span>
                 </p>
               </>
             ) : (
               <div role="status" className="rounded-xl border border-slate-200 bg-slate-50 p-5">
-                <h3 className="text-sm font-semibold text-slate-950">Confirmed-trip telemetry unavailable</h3>
-                <p className="mt-1 text-[13px] leading-5 text-slate-600">The connected database could not return confirmed-trip operations. No zero values were invented.</p>
+                <h3 className="text-sm font-semibold text-slate-950">Trip counts unavailable</h3>
+                <p className="mt-1 text-[13px] leading-5 text-slate-600">Trip data couldn't be loaded. No counts are shown.</p>
               </div>
             )}
           </section>
@@ -86,7 +86,7 @@ export default async function AdminConfirmedTripsPage() {
                 </span>
                 <div className="min-w-0">
                   <h2 id="recent-confirmed-trips-title" className="scroll-mt-28 min-[1100px]:scroll-mt-44 text-base font-semibold leading-6 tracking-tight text-slate-950">Recent provider-confirmed trips</h2>
-                  <p className="mt-0.5 text-[13px] leading-5 text-slate-600">Latest trusted partner-confirmed trip records in this database.</p>
+                  <p className="mt-0.5 text-[13px] leading-5 text-slate-600">Latest trips confirmed by travel providers.</p>
                 </div>
               </div>
               <span className="shrink-0 rounded-full border border-slate-200 px-2.5 py-1 text-xs font-medium leading-4 text-slate-600">Read-only</span>
@@ -95,7 +95,7 @@ export default async function AdminConfirmedTripsPage() {
               <RecentConfirmedTripTable trips={operations.recentTrips} />
             ) : (
               <div role="status" className="rounded-lg bg-slate-50 px-3 py-3 text-[13px] leading-5 text-slate-600">
-                Recent trip records are unavailable because the confirmed-trip database query could not be completed.
+                Recent trips couldn't be loaded from the database.
               </div>
             )}
           </section>
@@ -110,7 +110,7 @@ export default async function AdminConfirmedTripsPage() {
                 <div className="min-w-0">
                   <h2 id="confirmation-integration-title" className="scroll-mt-28 min-[1100px]:scroll-mt-44 text-base font-semibold leading-6 tracking-tight text-slate-950">Confirmation integration readiness</h2>
                   <p className="mt-1 text-[13px] leading-5 text-slate-600">
-                    The partner confirmation endpoint is server-to-server only. Current Duffel search and KAYAK sandbox integrations do not send booking confirmations.
+                    Provider confirmation setup and connection status.
                   </p>
                 </div>
               </div>
@@ -130,7 +130,7 @@ export default async function AdminConfirmedTripsPage() {
               <InlineFact label="Webhook credential model" value={readiness.credentialModel === "single_provider_bound_secret" ? "Single provider + dedicated secret" : "Unknown"} />
             </dl>
             <p className="mt-2.5 text-[13px] leading-5 text-slate-600">
-              A configured webhook secret means the signed callback boundary is ready; it does not mean a provider agreement or live confirmation feed is active. The server now binds the signing secret to a single configured provider, and rejects a signed payload naming a different provider.
+              Confirmations require signed server-to-server callbacks from the configured provider. A webhook setup does not mean a live feed or provider agreement. Duffel search and KAYAK sandbox do not send booking confirmations.
             </p>
           </section>
 
@@ -138,7 +138,7 @@ export default async function AdminConfirmedTripsPage() {
             <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2.5">
               <div className="min-w-0 flex-1">
                 <h2 id="confirmation-delivery-health-title" className="text-base font-semibold leading-6 tracking-tight text-slate-950">Confirmation delivery health</h2>
-                <p className="mt-1 text-[13px] leading-5 text-slate-600">Authenticated provider callback receipts. Accepted deliveries may be retries; these are not additional bookings or unique trips.</p>
+                <p className="mt-1 text-[13px] leading-5 text-slate-600">Tracks authenticated provider callbacks. Retries are not new bookings or trips.</p>
               </div>
               <div className="flex max-w-full flex-wrap items-center gap-x-3 gap-y-2">
                 <AdminStatusBadge tone={!readiness.feedReady ? "neutral" : !deliveryHealth ? "warn" : deliveryHealth.rejectedLast24h > 0 ? "warn" : "info"}>
@@ -150,12 +150,12 @@ export default async function AdminConfirmedTripsPage() {
             {!readiness.feedReady ? (
               <p role="status" className="mt-3 flex items-start gap-2 rounded-lg bg-slate-50 px-3 py-2.5 text-[13px] leading-5 text-slate-700">
                 <Info size={16} className="mt-0.5 shrink-0 text-slate-500" aria-hidden="true" />
-                <span>No provider-bound confirmation feed is configured. Delivery monitoring remains inactive.</span>
+                <span>No provider confirmation feed is configured. Monitoring is off.</span>
               </p>
             ) : !deliveryHealth ? (
               <p role="status" className="mt-3 flex items-start gap-2 rounded-lg bg-slate-50 px-3 py-2.5 text-[13px] leading-5 text-slate-700">
                 <Info size={16} className="mt-0.5 shrink-0 text-slate-500" aria-hidden="true" />
-                <span>Delivery telemetry is unavailable. No delivery counts have been assumed.</span>
+                <span>Delivery data is unavailable. No counts are assumed.</span>
               </p>
             ) : (
               <>
@@ -195,7 +195,7 @@ export default async function AdminConfirmedTripsPage() {
                     </table>
                   </div>
                 ) : (
-                  <p role="status" className="mt-2 rounded-lg bg-slate-50 px-3 py-2.5 text-[13px] leading-5 text-slate-700">No authenticated partner confirmation deliveries have been recorded yet.</p>
+                  <p role="status" className="mt-2 rounded-lg bg-slate-50 px-3 py-2.5 text-[13px] leading-5 text-slate-700">No authenticated provider callbacks recorded yet.</p>
                 )}
               </>
             )}
@@ -209,7 +209,7 @@ export default async function AdminConfirmedTripsPage() {
               <div className="min-w-0 flex-1">
                 <h2 id="trips-operational-boundaries" className="text-base font-semibold leading-6 tracking-tight text-slate-950">Operational boundaries</h2>
                 <p className="mt-1 text-[13px] leading-5 text-slate-700">
-                  Kurioticket is a metasearch and referral platform. A confirmed My Trip means Kurioticket accepted a valid signed partner confirmation and stored it as trusted trip data. It does not create a Kurioticket booking, payment, refund, cancellation or ticketing record.
+                  Kurioticket is a travel search and referral platform. It stores verified signed provider confirmations, but does not create bookings, payments, refunds, cancellations, or tickets.
                 </p>
               </div>
             </div>
@@ -219,7 +219,7 @@ export default async function AdminConfirmedTripsPage() {
               <AdminStatusBadge>No Kurioticket payment record</AdminStatusBadge>
             </div>
             <p className="mt-2 text-[13px] leading-5 text-slate-600 sm:pl-10">
-              MyTrip rows do not carry an environment column. This page therefore reports the database connected to the current {operations?.environment ?? "application"} environment rather than applying a per-row environment filter.
+              Trips have no environment label. This page shows records from the connected {operations?.environment ?? "application"} database.
             </p>
           </section>
 
