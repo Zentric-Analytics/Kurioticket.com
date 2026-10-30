@@ -21,7 +21,9 @@ try {
       return chrome.tabs.getZoom(tab.id);
     }, {url:page.url(),zoom});
     assert.ok(Math.abs(applied-zoom)<0.001,"Real Chromium tab zoom applied");
-    await expect.poll(() => page.evaluate(() => innerWidth)).toBe(Math.round((await page.viewportSize()).width / zoom));
+    const expectedWidth = (await page.viewportSize()).width / zoom;
+    // Chromium rounds fractional CSS viewport widths down at some zoom factors.
+    await expect.poll(async () => Math.abs(await page.evaluate(() => innerWidth) - expectedWidth)).toBeLessThanOrEqual(1);
   };
   const screenshot = async (name,zoom) => {
     const bounds = await capture.send("Page.getLayoutMetrics");
