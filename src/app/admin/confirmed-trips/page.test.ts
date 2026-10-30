@@ -79,7 +79,7 @@ test("confirmation readiness remains available when database telemetry is unavai
 
 
 test("confirmed-trip copy describes canonical confirmation state without overstating provider identity", () => {
-  assert.match(page, /Trips whose latest provider-confirmation timestamp is within 24h/);
+  assert.match(page, /Trips with a provider confirmation in the last 24 hours, including updates\. Not a count of new bookings/);
   assert.match(page, /It stores verified signed provider confirmations/);
   assert.doesNotMatch(page, /approved external provider sent a valid signed confirmation/);
   assert.match(recent, /No signed provider confirmations have been accepted yet/i);
@@ -368,7 +368,7 @@ test("Phase 5 keeps both breakdowns visible, compact, and backed by real operati
     assert.ok(headingClasses.includes(className), "Operational boundaries heading must retain " + className);
   }
   for (const text of [
-    "Kurioticket is a metasearch and referral platform",
+    "Kurioticket is a travel search and referral platform",
     "It stores verified signed provider confirmations",
     "does not create bookings, payments, refunds, cancellations, or tickets",
     "Signed confirmations only",
@@ -407,7 +407,7 @@ test("Phase 4 readiness is compact, truthful, and exposes all five configuration
   assert.match(section, /readiness\.webhookCredentialConfigured \? "Configured" : "Not configured"/);
   assert.match(section, /readiness\.currentSearchProviderConfirmationFeed === "none" \? "None" : "Configured"/);
   assert.match(section, /readiness\.feedReady \? "info" : "warn"/);
-  assert.match(section, /does not mean a provider agreement or live confirmation feed is active/);
+  assert.match(section, /A webhook setup does not mean a live feed or provider agreement/);
   assert.doesNotMatch(section, /<details|aria-hidden="true" className=.*(?:facts|details)|md:grid-cols-5/);
 });
 
@@ -444,6 +444,6 @@ test("confirmation delivery health is read-only, provider-bound and truthful", (
   assert.match(page, /Delivery data is unavailable/);
   assert.match(page, /No counts are assumed/);
   assert.match(page, /deliveryHealth.rejectedLast24h/);
-  assert.match(page, /Authenticated provider callback receipts/);
+  assert.match(page, /Tracks authenticated provider callbacks\. Retries are not new bookings or trips/);
   assert.doesNotMatch(page, /Cancel booking|Refund trip|Create confirmed trip/);
 });
