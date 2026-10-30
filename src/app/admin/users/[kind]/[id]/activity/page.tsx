@@ -29,8 +29,9 @@ const tabs = [
 const format = (at: Date) => new Intl.DateTimeFormat("en", {
   dateStyle: "medium", timeStyle: "short", timeZone: "UTC",
 }).format(at);
-// Identical track boundaries for both sections, including the empty management track.
-const activityColumns = "grid min-w-0 max-w-[1240px] gap-y-4 lg:grid-cols-[minmax(0,2.7fr)_minmax(0,1.15fr)_minmax(0,1.15fr)_minmax(126px,0.85fr)_112px] lg:items-center";
+// Both sections share column boundaries: identity, two dates, compact events, management.
+// Give date values enough room at desktop zoom without stretching the identity track.
+const activityColumns = "grid min-w-0 w-full max-w-[1320px] gap-y-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_80px_116px]";
 const buttonClass = "focus-ring inline-flex items-center gap-1.5 rounded-md border border-[#E2E8F0] bg-white px-3 py-2 text-[13px] font-medium text-[#004BB8] hover:bg-[#F8FAFC]";
 
 function safeDirectoryHref(raw: RawQuery) {
@@ -159,7 +160,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
     <section data-testid="activity-page-card" aria-label="Customer activity workspace"
       className="min-w-0 space-y-4 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-5 lg:p-6">
       <section aria-label="Customer identity" className="min-w-0">
-        <div className={activityColumns}>
+        <div className={activityColumns + " lg:items-center"}>
           <div className="flex min-w-0 items-center gap-4">
             <span aria-hidden="true"
               className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[var(--muted)] text-xl font-semibold">
@@ -195,8 +196,8 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
       </section>
 
       <section aria-label="Activity summary" className="min-w-0 border-y border-[#E2E8F0] py-3">
-        <div className={activityColumns}>
-          <div className="flex min-w-0 flex-wrap items-center gap-2 lg:justify-end lg:pr-3">
+        <div className={activityColumns + " lg:items-start"}>
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
             <h2 className="text-base font-semibold">Activity summary</h2>
             {kind === "guest" ? <ActivityDataInfo>
               {operational

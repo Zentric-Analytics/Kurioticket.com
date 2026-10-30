@@ -50,18 +50,24 @@ try {
           const heading = document.querySelector('section[aria-label="Activity summary"] h2');
           const headingRight = Math.max(heading.getBoundingClientRect().right, heading.parentElement.querySelector("button")?.getBoundingClientRect().right || 0);
           const metric = metrics[0].parentElement.getBoundingClientRect();
+          const headingColumn = heading.parentElement.getBoundingClientRect();
+          const dates = facts.slice(0,2).map(fact => fact.querySelector("time")).filter(Boolean);
+          const datesUnwrapped = dates.every(time => time.getBoundingClientRect().height < Number.parseFloat(getComputedStyle(time).lineHeight || "24")*1.5);
           return {overflow:document.documentElement.scrollWidth > innerWidth+1,
             horizontal:facts.every(fact => fact.getBoundingClientRect().top < identity.firstElementChild.getBoundingClientRect().bottom),
             aligned:facts.every((fact,i) => Math.abs(fact.getBoundingClientRect().x-metrics[i].parentElement.getBoundingClientRect().x)<1),
             emailFits: !email || email.getBoundingClientRect().height < parseFloat(getComputedStyle(email).fontSize)*1.9,
             headingGap: metric.left-headingRight,
+            headingLeftAligned: Math.abs(heading.getBoundingClientRect().left-headingColumn.left)<2,
+            datesUnwrapped,
             values:[...document.querySelectorAll('section[aria-label="Customer identity"] dd,[data-testid="activity-metric-value"]')].map(el=>getComputedStyle(el).fontSize)};
         });
         assert.equal(layout.overflow,false);
         assert.equal(layout.horizontal,true);
         assert.equal(layout.aligned,true);
         assert.equal(layout.emailFits,true);
-        assert.ok(layout.headingGap >= 8 && layout.headingGap <= 32, JSON.stringify({width,zoom,kind,...layout}));
+        assert.equal(layout.headingLeftAligned,true,JSON.stringify({width,zoom,kind,...layout}));
+        assert.equal(layout.datesUnwrapped,true,JSON.stringify({width,zoom,kind,...layout}));
         assert.deepEqual(layout.values,Array(6).fill("16px"));
         await screenshot(`after-activity-${kind}-${width}-zoom-${Math.round(zoom*100)}`,zoom);
       }
