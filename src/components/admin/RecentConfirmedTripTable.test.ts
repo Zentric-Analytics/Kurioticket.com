@@ -62,7 +62,7 @@ test("recent-trips empty state is compact, truthful and contains no fabricated r
   const html = render([]);
   assert.match(html, /role="status"/);
   assert.match(html, /No provider-confirmed trips yet/);
-  assert.match(html, /No accepted signed partner callback has created a confirmed My Trip/);
+  assert.match(html, /No signed provider confirmations have been accepted yet./);
   assert.doesNotMatch(html, /<table|<tbody|View details|QA Partner|qa@example\.invalid/);
 });
 
