@@ -82,7 +82,7 @@ test("delivery receipts contain only approved metadata and do not log raw sensit
   assert.match(schema, /myTripId\s+String\?/);
   assert.match(ingestion, /partnerConfirmationDelivery.create/);
   assert.doesNotMatch(schema.slice(schema.indexOf("model PartnerConfirmationDelivery"), schema.indexOf("model FlightStatusSnapshot")), /rawBody|customerId|providerConfirmationCode|secret|signature|payload/i);
-  assert.match(admin, /Delivery telemetry is unavailable/);
+  assert.match(admin, /Delivery data is unavailable\. No counts are assumed/);
   assert.match(details, /Authenticated confirmation delivery history/);
   assert.doesNotMatch(ingestion, /console.log\(outcome|JSON.stringify\(outcome/);
 });
