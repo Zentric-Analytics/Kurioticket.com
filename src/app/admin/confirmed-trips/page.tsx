@@ -53,11 +53,11 @@ export default async function AdminConfirmedTripsPage() {
           <section aria-labelledby="confirmed-trips-overview">
             <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
               <div className="min-w-0">
-                <h2 id="confirmed-trips-overview" className="text-lg font-semibold leading-6 text-slate-950">Trip overview</h2>
+                <h2 id="confirmed-trips-overview" className="text-base font-semibold leading-6 tracking-tight text-slate-950">Trip overview</h2>
                 <p className="mt-1 text-[13px] leading-5 text-slate-600">Trusted provider-confirmed My Trips in this database.</p>
               </div>
               {operations ? (
-                <span className="shrink-0 rounded-full border border-slate-200 px-2.5 py-1 text-[11px] font-medium text-slate-600">
+                <span className="shrink-0 rounded-full border border-slate-200 px-2.5 py-1 text-xs font-medium leading-4 text-slate-600">
                   Environment: {operations.environment}
                 </span>
               ) : null}
@@ -91,11 +91,11 @@ export default async function AdminConfirmedTripsPage() {
                   <FileCheck2 size={17} aria-hidden="true" />
                 </span>
                 <div className="min-w-0">
-                  <h2 id="recent-confirmed-trips-title" className="scroll-mt-28 min-[1100px]:scroll-mt-44 text-base font-semibold text-slate-950">Recent provider-confirmed trips</h2>
+                  <h2 id="recent-confirmed-trips-title" className="scroll-mt-28 min-[1100px]:scroll-mt-44 text-base font-semibold leading-6 tracking-tight text-slate-950">Recent provider-confirmed trips</h2>
                   <p className="mt-0.5 text-[13px] leading-5 text-slate-600">Latest trusted partner-confirmed trip records in this database.</p>
                 </div>
               </div>
-              <span className="shrink-0 rounded-full border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-600">Read-only</span>
+              <span className="shrink-0 rounded-full border border-slate-200 px-2.5 py-1 text-xs font-medium leading-4 text-slate-600">Read-only</span>
             </div>
             {operations ? (
               <RecentConfirmedTripTable trips={operations.recentTrips} />
@@ -108,13 +108,13 @@ export default async function AdminConfirmedTripsPage() {
           <ConfirmedTripsBreakdowns operations={operations} />
 
           <section aria-labelledby="confirmation-integration-title" className="min-w-0 rounded-xl border border-slate-200 px-4 py-3 sm:px-5 sm:py-4">
-            <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2.5">
               <div className="flex min-w-0 flex-1 items-start gap-2.5">
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-700">
                   <ShieldCheck size={17} aria-hidden="true" />
                 </span>
                 <div className="min-w-0">
-                  <h2 id="confirmation-integration-title" className="scroll-mt-28 min-[1100px]:scroll-mt-44 text-base font-semibold leading-6 text-slate-950">Confirmation integration readiness</h2>
+                  <h2 id="confirmation-integration-title" className="scroll-mt-28 min-[1100px]:scroll-mt-44 text-base font-semibold leading-6 tracking-tight text-slate-950">Confirmation integration readiness</h2>
                   <p className="mt-1 text-[13px] leading-5 text-slate-600">
                     The partner confirmation endpoint is server-to-server only. Current Duffel search and KAYAK sandbox integrations do not send booking confirmations.
                   </p>
@@ -126,7 +126,7 @@ export default async function AdminConfirmedTripsPage() {
                 </AdminStatusBadge>
               </div>
             </div>
-            <dl className="mt-3 grid gap-x-5 gap-y-2 border-y border-slate-100 py-2.5 sm:grid-cols-3">
+            <dl className="mt-3 grid gap-x-5 gap-y-2.5 border-y border-slate-100 py-2.5 md:grid-cols-3">
               <InlineFact label="Configured provider" value={readiness.providerName || "None"} />
               <InlineFact label="Webhook credential" value={readiness.webhookCredentialConfigured ? "Configured" : "Not configured"} />
               <InlineFact label="Current search-provider confirmation feed" value={readiness.currentSearchProviderConfirmationFeed === "none" ? "None" : "Configured"} />
@@ -141,16 +141,16 @@ export default async function AdminConfirmedTripsPage() {
           </section>
 
           <section aria-labelledby="confirmation-delivery-health-title" className="min-w-0 rounded-xl border border-slate-200 px-4 py-3 sm:px-5 sm:py-4">
-            <div className="flex flex-wrap items-start justify-between gap-2">
-              <div className="min-w-0">
-                <h2 id="confirmation-delivery-health-title" className="text-base font-semibold leading-6 text-slate-950">Confirmation delivery health</h2>
+            <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2.5">
+              <div className="min-w-0 flex-1">
+                <h2 id="confirmation-delivery-health-title" className="text-base font-semibold leading-6 tracking-tight text-slate-950">Confirmation delivery health</h2>
                 <p className="mt-1 text-[13px] leading-5 text-slate-600">Authenticated provider callback receipts. Accepted deliveries may be retries; these are not additional bookings or unique trips.</p>
               </div>
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+              <div className="flex max-w-full flex-wrap items-center gap-x-3 gap-y-2">
                 <AdminStatusBadge tone={!readiness.feedReady ? "neutral" : !deliveryHealth ? "warn" : deliveryHealth.rejectedLast24h > 0 ? "warn" : "info"}>
                   {!readiness.feedReady ? "Monitoring inactive" : !deliveryHealth ? "Telemetry unavailable" : deliveryHealth.rejectedLast24h > 0 ? "Rejected deliveries · last 24h" : "Receipt telemetry available"}
                 </AdminStatusBadge>
-                <Link href="/admin/notifications" className="text-xs font-semibold text-indigo-700 underline-offset-4 hover:underline">Operational alerts</Link>
+                <Link href="/admin/notifications" className="inline-flex min-h-8 items-center rounded-md text-[13px] font-semibold text-indigo-700 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">Operational alerts</Link>
               </div>
             </div>
             {!readiness.feedReady ? (
@@ -201,7 +201,7 @@ export default async function AdminConfirmedTripsPage() {
                     </table>
                   </div>
                 ) : (
-                  <p role="status" className="mt-2 rounded-lg bg-slate-50 px-3 py-2.5 text-xs leading-5 text-slate-700">No authenticated partner confirmation deliveries have been recorded yet.</p>
+                  <p role="status" className="mt-2 rounded-lg bg-slate-50 px-3 py-2.5 text-[13px] leading-5 text-slate-700">No authenticated partner confirmation deliveries have been recorded yet.</p>
                 )}
               </>
             )}
@@ -213,7 +213,7 @@ export default async function AdminConfirmedTripsPage() {
                 <ShieldCheck size={17} aria-hidden="true" />
               </span>
               <div className="min-w-0 flex-1">
-                <h2 id="trips-operational-boundaries" className="text-base font-semibold leading-6 text-slate-950">Operational boundaries</h2>
+                <h2 id="trips-operational-boundaries" className="text-base font-semibold leading-6 tracking-tight text-slate-950">Operational boundaries</h2>
                 <p className="mt-1 text-[13px] leading-5 text-slate-700">
                   Kurioticket is a metasearch and referral platform. A confirmed My Trip means Kurioticket accepted a valid signed partner confirmation and stored it as trusted trip data. It does not create a Kurioticket booking, payment, refund, cancellation or ticketing record.
                 </p>
@@ -224,7 +224,7 @@ export default async function AdminConfirmedTripsPage() {
               <AdminStatusBadge>Provider handoff ≠ confirmation</AdminStatusBadge>
               <AdminStatusBadge>No Kurioticket payment record</AdminStatusBadge>
             </div>
-            <p className="mt-2 text-xs leading-5 text-slate-600 sm:pl-10">
+            <p className="mt-2 text-[13px] leading-5 text-slate-600 sm:pl-10">
               MyTrip rows do not carry an environment column. This page therefore reports the database connected to the current {operations?.environment ?? "application"} environment rather than applying a per-row environment filter.
             </p>
           </section>
@@ -263,9 +263,9 @@ function TripMetric({
         <span className={"flex h-8 w-8 shrink-0 items-center justify-center rounded-lg " + styles[tone]}>
           <Icon size={17} strokeWidth={2.1} aria-hidden="true" />
         </span>
-        <h3 className="min-w-0 break-words text-xs font-semibold leading-4 text-slate-700">{label}</h3>
+        <h3 className="min-w-0 break-words text-[13px] font-medium leading-5 text-slate-700">{label}</h3>
       </div>
-      <p className="mt-2 text-[clamp(1.4rem,2.2vw,1.875rem)] font-semibold leading-none tracking-tight tabular-nums text-slate-950">{formattedValue}</p>
+      <p className="mt-2 text-2xl font-semibold leading-7 tracking-tight tabular-nums text-slate-950">{formattedValue}</p>
       <p className="mt-1.5 break-words text-xs leading-4 text-slate-600">{hint}</p>
     </div>
   );
