@@ -91,8 +91,8 @@ export async function loadAdminIdentityActivity(kind, id, filters, cursor, readM
     ? (selected >= 0 ? ascendingPages[selected + 1]?.cursor ?? null : null)
     : (!cursor && olderRows.length ? "older-qa-page" : null);
   return { status: "ok", data: {
-    id, kind, title: kind === "guest" ? "Guest visitor" : id === "qa-long-identity-0001" ? "Alexandria Olufunmilayo Adekunle-Wellington" : "QA registered customer",
-    email: kind === "guest" ? null : id === "qa-protected-admin-0001" ? "protected.qa@example.invalid" : id === "qa-long-identity-0001" ? "alexandria.olufunmilayo.adekunle-wellington@example.invalid" : "customer.qa@example.invalid",
+    id, kind, title: kind === "guest" ? "Guest visitor" : id === "qa-realistic-identity-0001" ? "Alexandria Adekunle" : id === "qa-long-identity-0001" ? "Alexandria Olufunmilayo Adekunle-Wellington" : "QA registered customer",
+    email: kind === "guest" ? null : id === "qa-realistic-identity-0001" ? "alexandria.adekunle@zentricexample.invalid" : id === "qa-protected-admin-0001" ? "protected.qa@example.invalid" : id === "qa-long-identity-0001" ? "alexandria.olufunmilayo.adekunle-wellington@example.invalid" : "customer.qa@example.invalid",
     role: kind === "guest" ? null : "USER",
     status: kind === "guest" ? "Anonymous" : "ACTIVE",
     firstSeenAt: time(39), lastSeenAt: time(48), environment: "staging",

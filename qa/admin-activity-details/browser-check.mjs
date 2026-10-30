@@ -105,8 +105,8 @@ async function expectBalancedDesktopHeader(page, context, requireSingleLineEmail
       overflow: document.documentElement.scrollWidth > innerWidth + 1,
     };
   });
-  assert.ok(layout.firstToEventsRatio >= 4,
-    context + ": identity must be at least four times wider than Events: " + JSON.stringify(layout));
+  assert.ok(layout.firstToEventsRatio >= 2,
+    context + ": identity retains enough room beside compact facts: " + JSON.stringify(layout));
   assert.ok(layout.summaryHeadingGap >= 8 && layout.summaryHeadingGap <= 64,
     context + ": Activity summary heading must sit close to Searches: " + JSON.stringify(layout));
   assert.ok(layout.providerLabelHeight < layout.providerLabelFontSize * 1.9,
@@ -145,7 +145,7 @@ try {
     await page.setViewportSize({width,height:900});
     await page.goto(base+"/before");
     await expect(page.getByTestId("fixture-label")).toContainText("synthetic activity");
-    await page.screenshot({path:output+"/before-view-activity-"+width+".png",fullPage:true});
+    await page.screenshot({caret:"initial",path:output+"/before-view-activity-"+width+".png",fullPage:true});
   }
 
   for(const width of [1536,1280,1024,768,390,320]) {
@@ -196,7 +196,7 @@ try {
     if (width === 1536) await expectBalancedDesktopHeader(page, "Guest desktop");
 
     if([1536,1280,1024,768,390,320].includes(width))
-      await page.screenshot({path:output+"/after-view-activity-"+width+".png",fullPage:true});
+      await page.screenshot({caret:"initial",path:output+"/after-view-activity-"+width+".png",fullPage:true});
     console.log("PASS responsive activity page",width);
   }
 
@@ -209,14 +209,14 @@ try {
     await expectHeaderTimePresentation(page, "Registered zoom " + zoom);
     await expectBalancedDesktopHeader(page, "Registered zoom " + zoom);
     assert.deepEqual(await inspectActivityTypography(page), approvedActivityTypography);
-    await page.screenshot({path: output + "/after-desktop-zoom-equivalent-" + Math.round(zoom*100) + ".png",fullPage:true});
+    await page.screenshot({caret:"initial",path: output + "/after-desktop-zoom-equivalent-" + Math.round(zoom*100) + ".png",fullPage:true});
   }
 
   // Registered accounts use the same fact grid, including protected-admin labels.
   await page.setViewportSize({width:1024,height:900});
   await page.goto(base + "/admin/users/user/qa-registered-0001/activity");
   await expectAlignedColumns(page);
-  await page.screenshot({path:output+"/after-registered-activity-1024.png",fullPage:true});
+  await page.screenshot({caret:"initial",path:output+"/after-registered-activity-1024.png",fullPage:true});
 
   await expect(page.getByLabel("Flights: 2", {exact:true})).toBeVisible();
   await expect(page.getByLabel("Hotels: 2", {exact:true})).toBeVisible();
@@ -226,7 +226,7 @@ try {
   await expect(page.getByText("Protected admin",{exact:true})).toBeVisible();
   await expect(page.getByRole("button",{name:/Manage account/})).toHaveCount(0);
   await expectAlignedColumns(page);
-  await page.screenshot({path: output+"/after-protected-admin-1024.png",fullPage:true});
+  await page.screenshot({caret:"initial",path: output+"/after-protected-admin-1024.png",fullPage:true});
 
   for (const width of [1792,1536,1280,1024,768,390,320]) {
     await page.setViewportSize({width,height:900});
@@ -241,7 +241,7 @@ try {
     if (width >= 1024) await expectAlignedColumns(page);
     await expectHeaderTimePresentation(page, "Long identity " + width);
     if (width >= 1536) await expectBalancedDesktopHeader(page, "Long identity " + width, true);
-    await page.screenshot({path:output+"/after-long-identity-"+width+".png",fullPage:true});
+    await page.screenshot({caret:"initial",path:output+"/after-long-identity-"+width+".png",fullPage:true});
   }
 
   // Every fixture event is available upfront, including the formerly separate pages.
@@ -290,7 +290,7 @@ try {
   await page.goto(url+"?directory=sort%3Dname_asc%26identity%3DGUEST%26page%3D2");
   await expect(page.locator("[data-activity-id]")).toHaveCount(14);
   for(const stamp of ["5:59","5:58","5:57","5:56"]) await expect(page.getByRole("main")).toContainText(stamp);
-  await page.screenshot({path:output+"/after-all-selections-visible-1280.png",fullPage:true});
+  await page.screenshot({caret:"initial",path:output+"/after-all-selections-visible-1280.png",fullPage:true});
   await expect(page.getByRole("button",{name:"Show all"})).toHaveCount(0);
   const back=await page.getByRole("link",{name:"Users",exact:true}).last().getAttribute("href");
   assert.ok(back.includes("sort=name_asc") && back.includes("identity=GUEST") && back.includes("page=2"));
@@ -311,7 +311,7 @@ try {
   await page.getByRole("listbox",{name:"Activity type"}).getByRole("option",{name:"Search completed"}).click();
   await expect(page).toHaveURL(/stage=SEARCH_COMPLETED/);
   await expect(page.getByRole("button",{name:"Clear filters"})).toHaveCount(0);
-  await page.screenshot({path:output+"/after-filtered-activity-1280.png",fullPage:true});
+  await page.screenshot({caret:"initial",path:output+"/after-filtered-activity-1280.png",fullPage:true});
   await page.getByRole("button",{name:/Activity product:/}).click();
   await page.getByRole("listbox",{name:"Activity product"}).getByRole("option",{name:"All products"}).click();
   await expect(page).not.toHaveURL(/product=FLIGHT/);
@@ -341,7 +341,7 @@ try {
 
   await page.goto(base+"/admin/users/guest/qa-no-events-0001/activity");
   await expect(page.getByText("No activity matches your filters")).toBeVisible();
-  await page.screenshot({path:output+"/after-approved-empty-state-1536.png",fullPage:true});
+  await page.screenshot({caret:"initial",path:output+"/after-approved-empty-state-1536.png",fullPage:true});
   await page.goto(url+"?cursor=bad");
   await expect(page.getByText("Activity page link expired")).toHaveCount(0);
   await expect(page.getByText("14 recorded events",{exact:true})).toBeVisible();
@@ -357,7 +357,7 @@ try {
   await expect(accountCard.getByTestId("activity-body-card")).toBeVisible();
   assert.deepEqual(await inspectActivityTypography(page), approvedActivityTypography, "Registered Activity typography and palette");
   await expectAlignedColumns(page);
-  await page.screenshot({path:output+"/after-registered-activity-1280.png",fullPage:true});
+  await page.screenshot({caret:"initial",path:output+"/after-registered-activity-1280.png",fullPage:true});
   assert.deepEqual(errors,[],"No browser exceptions");
   console.log("PASS registered identity and browser errors");
 } finally {

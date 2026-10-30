@@ -54,7 +54,7 @@ await put("app/admin/journeys/[id]/page.tsx", await readFile(path.join(source, "
 await put("mocks/journeys.js", await readFile(path.join(qa, "journey-fixture.js"), "utf8"));
 // Compare the unmodified Activity page and timeline at this change's dev base,
 // using the same fictional identity and complete event history.
-const baseline = process.env.ADMIN_ACTIVITY_QA_BASE || "1bfa4db410ae11512a2fc1aea74a2a6c3d63ae8d";
+const baseline = process.env.ADMIN_ACTIVITY_QA_BASE || "90741da62f3743bc6b431485e4257837b4ab7fd9";
 const oldTimeline = execFileSync("git", [
   "show", baseline + ":src/components/admin/ActivityTimeline.tsx",
 ], { cwd: repo, encoding: "utf8" });
@@ -66,13 +66,17 @@ const oldActivity = execFileSync("git", [
 await put("app/before/OldActivityPage.tsx", oldActivity);
 await put("app/before/page.tsx", [
   'import OldActivityPage from "./OldActivityPage";',
-  'export default function BeforeActivityPage(){',
-  '  return <OldActivityPage params={Promise.resolve({kind:"guest",id:"qa-guest-activity-0001"})} searchParams={Promise.resolve({})} />;',
+  'export default async function BeforeActivityPage({searchParams}){ const raw=await searchParams;',
+  '  return <OldActivityPage params={Promise.resolve({kind:raw.kind === "user" ? "user" : "guest",id:raw.kind === "user" ? "qa-realistic-identity-0001" : "qa-guest-activity-0001"})} searchParams={Promise.resolve({})} />;',
   '}',
 ].join("\n"));
 
+const oldJourney = execFileSync("git", ["show", baseline + ":src/app/admin/journeys/[id]/page.tsx"], { cwd: repo, encoding: "utf8" });
+await put("app/before-journey/OldJourneyPage.tsx", oldJourney);
+await put("app/before-journey/page.tsx", 'import OldJourneyPage from "./OldJourneyPage"; export default function BeforeJourney(){return <OldJourneyPage params={Promise.resolve({id:"qa-journey-flight"})} searchParams={Promise.resolve({})} />;}');
+
 const app = spawn(process.execPath,
-  [path.join(repo, "node_modules/next/dist/bin/next"), "dev", "--webpack", "-p", port],
+  [path.join(repo, "node_modules/next/dist/bin/next"), "dev", "--webpack", "--hostname", "127.0.0.1", "-p", port],
   { cwd: temp, stdio: "inherit", env: {...process.env, ADMIN_EMAILS:"protected.qa@example.invalid"} });
 try {
   const root = "http://localhost:" + port;
