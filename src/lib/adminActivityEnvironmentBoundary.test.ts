@@ -12,13 +12,13 @@ test("Activity Explorer distinguishes consented visitors and operational guests 
   assert.match(page, /operational \? "Guest session" : "Visitor"/);
   assert.match(page, /data\.source === "operational"/);
   assert.match(page, /Essential operational activity/);
-  assert.match(page, /Only recorded, necessary \{environment\} search and provider-handoff activity is displayed/);
-  assert.match(page, /Only recorded, consented \{environment\} guest activity is displayed/);
-  assert.match(page, /This ID does not identify a person/);
+  assert.match(page, /Consented guest/);
+  // Privacy and environment scoping are enforced in the reader, not by a tooltip.
+  assert.doesNotMatch(page, /ActivityDataInfo|Only recorded, necessary|Only recorded, consented/);
   assert.doesNotMatch(page, /Guest · Not an account|Unregistered visitor with active analytics consent/);
   assert.match(timeline, /No activity recorded in this view/);
   assert.match(timeline, /No activity matches your filters/);
-  assert.match(page, /Missing records do not establish that no visit occurred/);
+  assert.doesNotMatch(page, /Missing records do not establish that no visit occurred/);
 });
 
 test("the activity reader never includes cross-environment or unowned history in an identity timeline", () => {
