@@ -97,7 +97,9 @@ async function expectBalancedDesktopHeader(page, context, requireSingleLineEmail
     if (!providerLabel) throw new Error("Provider handoffs metric is missing");
     return {
       firstToEventsRatio: columns.width / eventsRect.width,
-      summaryHeadingGap: firstMetric.getBoundingClientRect().left - heading.getBoundingClientRect().right,
+      summaryHeadingLeftOffset: heading.getBoundingClientRect().left - heading.parentElement.getBoundingClientRect().left,
+      headingWithinSection: heading.getBoundingClientRect().right <= firstMetric.getBoundingClientRect().left - 12,
+      headingTopOffset: Math.abs(heading.getBoundingClientRect().top - firstMetric.getBoundingClientRect().top),
       emailHeight: email?.getBoundingClientRect().height ?? 0,
       emailFontSize: emailStyle ? Number.parseFloat(emailStyle.fontSize) : 0,
       providerLabelHeight: providerLabel.getBoundingClientRect().height,
@@ -107,8 +109,10 @@ async function expectBalancedDesktopHeader(page, context, requireSingleLineEmail
   });
   assert.ok(layout.firstToEventsRatio >= 2,
     context + ": identity retains enough room beside compact facts: " + JSON.stringify(layout));
-  assert.ok(layout.summaryHeadingGap >= 8 && layout.summaryHeadingGap <= 64,
-    context + ": Activity summary heading must sit close to Searches: " + JSON.stringify(layout));
+  assert.ok(Math.abs(layout.summaryHeadingLeftOffset) <= 2 && layout.headingWithinSection,
+    context + ": Activity summary must start at the left of its own track without crossing into Searches: " + JSON.stringify(layout));
+  assert.ok(layout.headingTopOffset <= 12,
+    context + ": Activity summary must align vertically with the metric labels: " + JSON.stringify(layout));
   assert.ok(layout.providerLabelHeight < layout.providerLabelFontSize * 1.9,
     context + ": Provider handoffs label should not wrap across desktop lines: " + JSON.stringify(layout));
   if (requireSingleLineEmail) assert.ok(layout.emailHeight < layout.emailFontSize * 1.9,
