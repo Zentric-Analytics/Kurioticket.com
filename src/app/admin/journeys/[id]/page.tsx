@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { AdminDataTable, AdminEmptyState, AdminPageShell, AdminSectionCard, AdminStatusBadge } from "@/components/admin/AdminPageShell";
+import { AdminEmptyState, AdminPageShell } from "@/components/admin/AdminPageShell";
+import { JourneyEventHistory } from "@/components/admin/JourneyEventHistory";
 import { SearchWorkspaceBackLink } from "@/components/admin/SearchWorkspaceBackLink";
 import { formatDateTime } from "@/lib/admin-data";
 import { decodeActivityJourneyReturn } from "@/lib/adminActivityJourneyNavigation";
@@ -22,9 +23,10 @@ export default async function AdminJourneyDetailPage({ params, searchParams }: {
       <SearchWorkspaceBackLink href={returnHref(raw)} label={decodeActivityJourneyReturn(raw.activityReturn) ? "Back to Activity" : "Journeys"} />
       <AdminPageShell title="Journey detail" hideHeader>
       {result.status === "ok" ? (
-        <div className="space-y-4">
-          <AdminSectionCard className="p-5">
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <div className="min-w-0 space-y-5 bg-white p-4 sm:p-5">
+          <section aria-labelledby="journey-details-heading" className="min-w-0 border-b border-[#E2E8F0] pb-4">
+            <h1 id="journey-details-heading" className="mb-4 text-base font-semibold text-[#0F172A]">Journey detail</h1>
+            <dl className="grid min-w-0 gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-4">
               <Field label="Journey ID" value={result.data.journey.id} />
               <Field label="Identity" value={result.data.journey.identity.kind} />
               <Field label="User ID" value={result.data.journey.identity.userId || "—"} />
@@ -35,25 +37,11 @@ export default async function AdminJourneyDetailPage({ params, searchParams }: {
               <Field label="Products" value={result.data.journey.products.join(", ") || "—"} />
               <Field label="Providers" value={result.data.journey.providers.join(", ") || "—"} />
               <Field label="Recorded searches" value={String(result.data.journey.searchCount)} />
-              <Field label="Events" value={String(result.data.journey.eventCount)} />
+              <Field label="Journey events count" value={String(result.data.journey.eventCount)} />
               <Field label="Environment" value={result.data.scope.environment} />
-            </div>
-          </AdminSectionCard>
-          <AdminDataTable
-            columns={["Time", "Stage", "Product", "Provider", "Search", "Handoff", "Source"]}
-            rows={result.data.events.map((event) => ({
-              id: event.id,
-              cells: [
-                formatDateTime(new Date(event.createdAt)),
-                <AdminStatusBadge key="type" tone={event.type === "PROVIDER_HANDOFF_STARTED" ? "good" : "info"}>{event.type.replaceAll("_", " ")}</AdminStatusBadge>,
-                event.product || "—",
-                event.provider || "—",
-                event.search ? <div key="search"><p className="font-semibold text-slate-950">{event.search.origin || "—"}{event.search.destination ? " → " + event.search.destination : ""}</p><p className="text-xs text-slate-500">{event.search.status} · {event.search.resultCount} results</p></div> : "—",
-                event.handoff ? <div key="handoff"><p className="font-semibold text-slate-950">{event.handoff.provider}</p><p className="text-xs text-slate-500">{event.handoff.destinationDomain || "—"} · {event.handoff.searchCorrelation === "exact" ? "exact search link" : "search link unavailable"}</p></div> : "—",
-                event.sourcePage || "—",
-              ],
-            }))}
-          />
+            </dl>
+          </section>
+          <JourneyEventHistory events={result.data.events} />
           {result.data.nextCursor ? <div className="flex justify-end"><Link href={cursorHref(id, raw, result.data.nextCursor)} className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">Next events</Link></div> : null}
         </div>
       ) : (
@@ -65,7 +53,7 @@ export default async function AdminJourneyDetailPage({ params, searchParams }: {
 }
 
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
-  return <div className="rounded-xl bg-slate-50 p-3"><p className="text-xs font-black uppercase tracking-wide text-slate-500">{label}</p><div className="mt-1 break-words text-sm font-semibold text-slate-900">{value}</div></div>;
+  return <div className="min-w-0"><dt className="text-xs text-[#64748B]">{label}</dt><dd className="mt-1 text-[13px] font-medium text-[#0F172A] [overflow-wrap:anywhere]">{value}</dd></div>;
 }
 function one(value: string | string[] | undefined) { return typeof value === "string" ? value : ""; }
 function cursorHref(id: string, raw: Record<string, string | string[] | undefined>, cursor: string) {

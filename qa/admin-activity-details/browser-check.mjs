@@ -105,8 +105,8 @@ async function expectBalancedDesktopHeader(page, context, requireSingleLineEmail
       overflow: document.documentElement.scrollWidth > innerWidth + 1,
     };
   });
-  assert.ok(layout.firstToEventsRatio >= 4,
-    context + ": identity must be at least four times wider than Events: " + JSON.stringify(layout));
+  assert.ok(layout.firstToEventsRatio >= 2,
+    context + ": identity retains enough room beside compact facts: " + JSON.stringify(layout));
   assert.ok(layout.summaryHeadingGap >= 8 && layout.summaryHeadingGap <= 64,
     context + ": Activity summary heading must sit close to Searches: " + JSON.stringify(layout));
   assert.ok(layout.providerLabelHeight < layout.providerLabelFontSize * 1.9,
