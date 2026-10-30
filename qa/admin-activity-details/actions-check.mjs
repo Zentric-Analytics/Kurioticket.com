@@ -39,7 +39,7 @@ async function capture(filename) {
   await page.evaluate(() => window.scrollTo({ top: 0, left: 0, behavior: "instant" }));
   // Browser scroll anchoring can leave a 1-2px rounding offset on narrow pages.
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeLessThanOrEqual(2);
-  await page.screenshot({ path: output + "/" + filename, fullPage: true });
+  await page.screenshot({caret:"initial", path: output + "/" + filename, fullPage: true });
 }
 
 try {

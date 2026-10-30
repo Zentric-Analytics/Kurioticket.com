@@ -27,7 +27,7 @@ try {
   await expect(page.getByRole('table')).toContainText('LOS → IST');
   await expect(page.getByRole('table')).toContainText('Handoff → Duffel');
   await expect(page.getByRole('table')).toContainText('exact search link');
-  await page.screenshot({path:output+'/journey-detail-navigation-1280.png',fullPage:true});
+  await page.screenshot({caret:"initial",path:output+'/journey-detail-navigation-1280.png',fullPage:true});
   await back.click();
   await expect(page).toHaveURL(/\/admin\/users\/guest\/qa-guest-activity-0001\/activity\?/);
   const returned = new URL(page.url());

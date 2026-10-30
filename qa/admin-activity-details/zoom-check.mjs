@@ -45,20 +45,21 @@ try {
           const facts = [...document.querySelectorAll('section[aria-label="Customer identity"] dl > div')];
           const metrics = [...document.querySelectorAll('[data-testid="activity-metric-label"]')];
           const email = identity.firstElementChild.querySelector('p');
-          const heading = document.querySelector('section[aria-label="Activity summary"] h2').getBoundingClientRect();
+          const heading = document.querySelector('section[aria-label="Activity summary"] h2');
+          const headingRight = Math.max(heading.getBoundingClientRect().right, heading.parentElement.querySelector("button")?.getBoundingClientRect().right || 0);
           const metric = metrics[0].parentElement.getBoundingClientRect();
           return {overflow:document.documentElement.scrollWidth > innerWidth+1,
-            horizontal:facts.every(fact => fact.getBoundingClientRect().top < identity.getBoundingClientRect().bottom),
+            horizontal:facts.every(fact => fact.getBoundingClientRect().top < identity.firstElementChild.getBoundingClientRect().bottom),
             aligned:facts.every((fact,i) => Math.abs(fact.getBoundingClientRect().x-metrics[i].parentElement.getBoundingClientRect().x)<1),
             emailFits: !email || email.getBoundingClientRect().height < parseFloat(getComputedStyle(email).fontSize)*1.9,
-            headingGap: metric.left-heading.right,
+            headingGap: metric.left-headingRight,
             values:[...document.querySelectorAll('section[aria-label="Customer identity"] dd,[data-testid="activity-metric-value"]')].map(el=>getComputedStyle(el).fontSize)};
         });
         assert.equal(layout.overflow,false);
         assert.equal(layout.horizontal,true);
         assert.equal(layout.aligned,true);
         assert.equal(layout.emailFits,true);
-        assert.ok(layout.headingGap >= 8 && layout.headingGap <= 32);
+        assert.ok(layout.headingGap >= 8 && layout.headingGap <= 32, JSON.stringify({width,zoom,kind,...layout}));
         assert.deepEqual(layout.values,Array(6).fill("16px"));
         await screenshot(`after-activity-${kind}-${width}-zoom-${Math.round(zoom*100)}`,zoom);
       }
