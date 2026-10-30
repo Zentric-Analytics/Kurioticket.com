@@ -211,7 +211,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
               { label: "Results viewed", count: data.summary.resultsViewed },
               { label: "Provider handoffs", count: data.summary.providerHandoffs },
             ]).map(({label,count}) => <div key={label} className="min-w-0 border-l border-[#E2E8F0] pl-2 sm:pl-5">
-              <span data-testid="activity-metric-label" className="block text-[12px] font-normal text-[#64748B]">{label}</span>
+              <span data-testid="activity-metric-label" className="block text-[12px] font-normal text-[#64748B] lg:whitespace-nowrap">{label}</span>
               <span data-testid="activity-metric-value" className="mt-1 block text-[16px] font-medium leading-6 tabular-nums text-[#0F172A]">{count}</span>
               {label === "Searches" && data.summary.searchProducts ? <div aria-label="Searches by product"
                 className="mt-1 flex flex-wrap items-center gap-x-1 gap-y-1 text-[11px] sm:gap-x-3 sm:text-xs leading-4 text-[#64748B]">
