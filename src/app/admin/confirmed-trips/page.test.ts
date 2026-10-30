@@ -170,9 +170,24 @@ test("Confirmed Trips hides only its page-level Admin operations eyebrow and pri
   }
 });
 
+
+test("Confirmed Trips has consistent typography without changing its section order", () => {
+  assert.match(page, /eyebrow=""/);
+  for (const id of ["confirmed-trips-overview", "recent-confirmed-trips-title", "confirmation-integration-title", "confirmation-delivery-health-title", "trips-operational-boundaries"]) {
+    const heading = page.split("\n").find(line => line.includes('<h2 id="' + id + '"'));
+    assert.ok(heading && heading.includes("text-base font-semibold") && heading.includes("tracking-tight"), id);
+  }
+  assert.match(page, /text-2xl font-semibold leading-7 tracking-tight tabular-nums/);
+  for (const content of [page, breakdowns, recent]) assert.doesNotMatch(content, /text-\[11px\]/);
+  assert.match(breakdowns, /grid items-start gap-3 lg:grid-cols-2/);
+  assert.match(recent, /bg-slate-50 px-4 py-4 text-center/);
+  assert.match(page, /<ConfirmedTripsBreakdowns operations=\{operations\} \/>/);
+  assert.doesNotMatch(page, /Jump to:|Confirmed Trips page shortcuts/);
+});
+
 test("Phase 2 metric cards are compact, accessible and honest about zero values", () => {
   assert.match(page, /grid grid-cols-2 gap-2\.5 sm:gap-3 md:grid-cols-3 lg:grid-cols-5/);
-  assert.match(page, /<h3 className="min-w-0 break-words text-xs font-semibold/);
+  assert.match(page, /<h3 className="min-w-0 break-words text-\[13px\] font-medium leading-5/);
   assert.match(page, /new Intl\.NumberFormat\("en-US"\)\.format\(value\)/);
   assert.match(page, /tabular-nums/);
   assert.match(page, /Trusted confirmed trip records/);
@@ -286,7 +301,12 @@ test("Phase 5 keeps both breakdowns visible, compact, and backed by real operati
   assert.match(breakdowns, /item\.lastConfirmationAt/);
   assert.match(breakdowns, /item\.count/);
   assert.doesNotMatch(breakdowns, /min-h-36|items-stretch|opacity-0|md:grid-cols-5/);
-  assert.match(page, /font-semibold leading-6 text-slate-950">Operational boundaries/);
+  const boundaryHeading = page.match(/<h2 id="trips-operational-boundaries" className="([^"]+)">Operational boundaries<\/h2>/);
+  assert.ok(boundaryHeading, "Operational boundaries heading must remain visible");
+  const headingClasses = boundaryHeading[1].split(/\s+/);
+  for (const className of ["text-base", "font-semibold", "leading-6", "text-slate-950"]) {
+    assert.ok(headingClasses.includes(className), "Operational boundaries heading must retain " + className);
+  }
   for (const text of [
     "Kurioticket is a metasearch and referral platform",
     "Kurioticket accepted a valid signed partner confirmation and stored it as trusted trip data",
@@ -318,7 +338,7 @@ test("Phase 4 readiness is compact, truthful, and exposes all five configuration
   const section = page.slice(start, end);
   assert.ok(start >= 0 && end > start);
   assert.match(section, /px-4 py-3 sm:px-5 sm:py-4/);
-  assert.match(section, /<dl className="mt-3 grid gap-x-5 gap-y-2 border-y/);
+  assert.match(section, /<dl className="mt-3 grid gap-x-5 gap-y-2\.5 border-y/);
   assert.match(section, /<dl className="mt-2 grid gap-x-5 gap-y-2 sm:grid-cols-2"/);
   for (const label of ["Endpoint", "Webhook credential model", "Configured provider", "Webhook credential", "Current search-provider confirmation feed"]) {
     assert.ok(section.includes('label="' + label + '"'), "Readiness fact must stay visible: " + label);
