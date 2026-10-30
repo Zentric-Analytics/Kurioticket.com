@@ -121,8 +121,8 @@ test("Confirmed Trips preserves section order and primary header actions without
   const positions = order.map((id) => page.indexOf('aria-labelledby="' + id + '"'));
   const breakdownPosition = page.indexOf("<ConfirmedTripsBreakdowns operations={operations} />");
   assert.ok(positions.every((position) => position >= 0), "All overview sections remain present");
-  assert.ok(positions[3] < breakdownPosition && breakdownPosition < positions[4],
-    "Both breakdowns remain between delivery health and operational boundaries");
+  assert.ok(positions[1] < breakdownPosition && breakdownPosition < positions[2],
+    "Both breakdowns appear between recent trips and technical confirmation monitoring");
   assert.deepEqual(positions, [...positions].sort((a, b) => a - b), "Overview sections follow the Phase 1 reading order");
   const productIndex = breakdowns.indexOf('aria-labelledby="trips-by-product-title"');
   const providerIndex = breakdowns.indexOf('aria-labelledby="trips-by-provider-title"');
@@ -143,6 +143,32 @@ test("Confirmed Trips preserves section order and primary header actions without
   assert.match(page, /<RecentConfirmedTripTable trips=\{operations\.recentTrips\}/);
 });
 
+
+
+test("Confirmed Trips hides only its page-level Admin operations eyebrow and prioritizes trip intelligence", () => {
+  const shell = readFileSync("src/components/admin/AdminPageShellHistorical.tsx", "utf8");
+  assert.match(shell, /eyebrow = "Admin operations"/);
+  assert.match(shell, /\{eyebrow \? <p/);
+  assert.match(page, /<AdminPageShell\s+title="Confirmed Trips"\s+eyebrow=""/);
+  assert.doesNotMatch(page, /eyebrow="Admin operations"|Jump to:/);
+  assert.match(page, /description="View trips confirmed by travel providers and monitor confirmation activity\."/);
+
+  const markers = [
+    'aria-labelledby="confirmed-trips-overview"',
+    'aria-labelledby="recent-confirmed-trips-title"',
+    "<ConfirmedTripsBreakdowns operations={operations} />",
+    'aria-labelledby="confirmation-integration-title"',
+    'aria-labelledby="confirmation-delivery-health-title"',
+    'aria-labelledby="trips-operational-boundaries"',
+  ];
+  const positions = markers.map(marker => page.indexOf(marker));
+  assert.ok(positions.every(position => position >= 0));
+  assert.deepEqual(positions, [...positions].sort((a, b) => a - b));
+  assert.equal((page.match(/<ConfirmedTripsBreakdowns operations=\{operations\} \/>/g) || []).length, 1);
+  for (const text of ["No zero values were invented", "Monitoring inactive", "Delivery telemetry is unavailable", "Provider handoff ≠ confirmation"]) {
+    assert.ok(page.includes(text), "Critical read-only state preserved: " + text);
+  }
+});
 
 test("Phase 2 metric cards are compact, accessible and honest about zero values", () => {
   assert.match(page, /grid grid-cols-2 gap-2\.5 sm:gap-3 md:grid-cols-3 lg:grid-cols-5/);
@@ -225,7 +251,7 @@ test("Confirmed Trips exposes all operational sections regardless of available t
   assert.match(flightStatusPage, /getFlightStatusOperationsSnapshot/);
 
   const start = page.indexOf('<ConfirmedTripsBreakdowns operations={operations} />');
-  const end = page.indexOf('<section aria-labelledby="trips-operational-boundaries"', start);
+  const end = page.indexOf('<section aria-labelledby="confirmation-integration-title"', start);
   assert.ok(start >= 0 && end > start, "Product and provider panels remain unconditionally mounted");
   assert.match(breakdowns, /<section aria-labelledby="trips-by-product-title"/);
   assert.match(breakdowns, /<section aria-labelledby="trips-by-provider-title"/);
@@ -307,7 +333,7 @@ test("Phase 4 readiness is compact, truthful, and exposes all five configuration
 
 test("Phase 4 delivery health keeps distinct inactive, unavailable, and genuine receipt states", () => {
   const start = page.indexOf('<section aria-labelledby="confirmation-delivery-health-title"');
-  const end = page.indexOf('<ConfirmedTripsBreakdowns operations={operations} />', start);
+  const end = page.indexOf('<section aria-labelledby="trips-operational-boundaries"', start);
   const section = page.slice(start, end);
   assert.ok(start >= 0 && end > start);
   assert.match(section, /!readiness\.feedReady \? \(/);
