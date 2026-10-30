@@ -31,7 +31,7 @@ const format = (at: Date) => new Intl.DateTimeFormat("en", {
 }).format(at);
 // Both sections share column boundaries: identity, two dates, compact events, management.
 // Give date values enough room at desktop zoom without stretching the identity track.
-const activityColumns = "grid min-w-0 w-full max-w-[1320px] gap-y-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_128px_124px]";
+const activityColumns = "grid min-w-0 w-full max-w-[1320px] gap-y-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_80px_116px]";
 const buttonClass = "focus-ring inline-flex items-center gap-1.5 rounded-md border border-[#E2E8F0] bg-white px-3 py-2 text-[13px] font-medium text-[#004BB8] hover:bg-[#F8FAFC]";
 
 function safeDirectoryHref(raw: RawQuery) {
