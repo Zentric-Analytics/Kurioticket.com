@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import ts from "typescript";
 
 const core = readFileSync("src/services/adminAlertCore.ts", "utf8");
 const service = readFileSync("src/services/adminAlertService.ts", "utf8");
@@ -133,7 +134,18 @@ test("acknowledgement mutation is authenticated, rate-limited, and safe", () => 
 test("notifications page explains acknowledgement semantics and monitored boundaries", () => {
   assert.match(page, /title="Notifications & Alerts"/);
   assert.match(page, /does not resolve the underlying condition/);
-  assert.match(page, /Phase 1 monitoring boundaries/);
+  const document = ts.createSourceFile("notifications.tsx", page, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+  const headings: ts.JsxElement[] = [];
+  function visit(node: ts.Node) {
+    if (ts.isJsxElement(node) && node.openingElement.tagName.getText(document) === "h2" && node.children.map((child) => child.getText(document)).join("").trim() === "Monitoring boundaries") headings.push(node);
+    ts.forEachChild(node, visit);
+  }
+  visit(document);
+  assert.equal(headings.length, 1, "one current monitoring-boundaries heading");
+  const section = headings[0].parent;
+  assert.ok(ts.isJsxElement(section) && section.openingElement.tagName.getText(document) === "AdminSectionCard");
+  const boundaries = section.getText(document).replace(/\s+/g, " ");
+  for (const guarantee of ["authoritative System/database health", "ready provider operational health", "Email Delivery", "CMS integrity", "Homepage Fare readiness", "configured Flight Status telemetry", "authenticated Confirmed Trips delivery failures when a provider is explicitly configured", "does not fabricate alerts for inactive integrations", "no trustworthy expected cadence exists"]) assert.ok(boundaries.includes(guarantee), guarantee);
   assert.match(page, /does not fabricate alerts/);
   assert.match(page, /AdminAlertAcknowledgeButton/);
   assert.match(page, /isProtectedAdminEmail\(session\.user\.email\)/);

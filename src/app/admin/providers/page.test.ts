@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import ts from "typescript";
 
 import { adminNavigation } from "@/lib/adminNavigation";
 import { filterProviderStatuses, normalizeProductFilter, productFilters } from "@/lib/adminProviderFilters";
@@ -54,7 +55,38 @@ test("provider filter helpers drive the providers page", () => {
 test("providers page preserves truthful provider data and the active retest control", () => {
   assert.match(providersPage, /Provider health retest/);
   assert.match(providersPage, /<ProviderRetestButton \/>/);
-  assert.match(providersPage, /Retesting records real provider health/);
+  const page = ts.createSourceFile("providers.tsx", providersPage, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+  const headings: ts.JsxElement[] = [];
+  function visit(node: ts.Node) {
+    if (ts.isJsxElement(node) && node.openingElement.tagName.getText(page) === "h2" && node.children.map((child) => child.getText(page)).join("").trim() === "Provider health retest") headings.push(node);
+    ts.forEachChild(node, visit);
+  }
+  visit(page);
+  assert.equal(headings.length, 1);
+  let section: ts.Node = headings[0];
+  while (section.parent && !(ts.isJsxElement(section) && section.openingElement.tagName.getText(page) === "AdminSectionCard")) section = section.parent;
+  assert.ok(ts.isJsxElement(section) && section.openingElement.tagName.getText(page) === "AdminSectionCard");
+  const retest = section.getText(page).replace(/\s+/g, " ");
+  assert.match(retest, /Retesting records a real Duffel health check and writes an admin audit event\./);
+  assert.match(retest, /It does not claim booking readiness\./);
+  assert.match(retest, /<ProviderRetestButton\s*\/>/);
+  assert.match(retest, /Secrets hidden/);
+  assert.match(retest, /Booking remains provider-owned/);
+  const control = ts.createSourceFile("ProviderRetestButton.tsx", readFileSync("src/components/admin/ProviderRetestButton.tsx", "utf8"), ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+  const buttons: ts.JsxOpeningElement[] = [];
+  const requests: ts.CallExpression[] = [];
+  function visitControl(node: ts.Node) {
+    if (ts.isJsxOpeningElement(node) && node.tagName.getText(control) === "Button") buttons.push(node);
+    if (ts.isCallExpression(node) && ts.isIdentifier(node.expression) && node.expression.text === "fetch") requests.push(node);
+    ts.forEachChild(node, visitControl);
+  }
+  visitControl(control);
+  assert.equal(buttons.length, 1);
+  assert.ok(buttons[0].attributes.properties.some((attribute) => ts.isJsxAttribute(attribute) && attribute.name.getText(control) === "onClick" && attribute.initializer && ts.isJsxExpression(attribute.initializer) && attribute.initializer.expression?.getText(control) === "retest"));
+  assert.equal(requests.length, 1);
+  assert.ok(ts.isStringLiteral(requests[0].arguments[0]));
+  assert.equal(requests[0].arguments[0].text, "/api/admin/providers/duffel/retest");
+  assert.match(requests[0].arguments[1].getText(control), /method:\s*"POST"/);
   assert.match(providersPage, /Booking remains provider-owned/);
   assert.match(providersPage, /Secrets hidden/);
 });
@@ -83,7 +115,17 @@ test("provider APIs, retest API, and unrelated admin pages are not edited by pro
   assert.match(providerRetestApi, /writeAdminAuditLog/);
   assert.match(overviewPage, /Operations Dashboard/);
   assert.match(systemPage, /Safe operational status only/);
-  assert.match(settingsPage, /AdminPageShell title="Settings"/);
+  const settings = ts.createSourceFile("settings.tsx", settingsPage, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+  const shells: ts.JsxOpeningElement[] = [];
+  function visit(node: ts.Node) {
+    if (ts.isJsxOpeningElement(node) && node.tagName.getText(settings) === "AdminPageShell") shells.push(node);
+    ts.forEachChild(node, visit);
+  }
+  visit(settings);
+  assert.equal(shells.length, 1, "Settings has one page shell");
+  const title = shells[0].attributes.properties.find((attribute) => ts.isJsxAttribute(attribute) && attribute.name.getText(settings) === "title");
+  assert.ok(title && ts.isJsxAttribute(title) && title.initializer && ts.isStringLiteral(title.initializer));
+  assert.equal(title.initializer.text, "Settings");
 });
 
 function provider(product: TestProvider["product"], providerName: string): TestProvider {

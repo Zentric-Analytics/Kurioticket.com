@@ -1,3 +1,4 @@
+import { ResultsAvailabilityNotice } from "@/components/results/ResultsAvailabilityNotice";
 import { Suspense, type ReactNode } from "react";
 import { cookies } from "next/headers";
 
@@ -63,7 +64,7 @@ export default async function CarsResultsPage({
   if (getParamValue(params, "provider") === "kayak-sandbox") {
     if (!isKayakSandboxEnabled()) notFound();
     const adapted = adaptKayakCarSearch(Object.fromEntries(Object.keys(params).map((key) => [key, getParamValue(params, key)])));
-    return <div className="contents cars-results-desktop-typeface"><AppHeader />{adapted.supported
+    return <div className="contents cars-results-desktop-typeface"><AppHeader /><ResultsAvailabilityNotice />{adapted.supported
       ? <KayakSandboxResults key={JSON.stringify(adapted.search)} search={adapted.search} />
       : <main className="page-shell py-6"><h1>KAYAK sandbox search unavailable</h1><p>{adapted.reason}</p><a href="/sandbox/kayak">Edit sandbox search</a></main>}</div>;
   }
@@ -117,6 +118,7 @@ export default async function CarsResultsPage({
         carsResultsDesktopSticky
         carsResultsMobileInlineSearch
       />
+      <ResultsAvailabilityNotice />
       <Suspense
         key={searchIdentity}
         fallback={

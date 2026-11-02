@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { runInNewContext } from "node:vm";
+import ts from "typescript";
+import { cn } from "../../lib/utils";
 
 const headerSource = readFileSync(
   new URL("./AppHeader.tsx", import.meta.url),
@@ -170,7 +173,29 @@ test("results navbar accepts a custom leading action while preserving the defaul
 test("results navbar can render filters as part of the mobile header body", () => {
   assert.match(headerSource, /mobileResultsFilters\?: ReactNode/);
   assert.match(headerSource, /!mobileResultsFilters && !hotelResultsDesktopSticky && "border-b border-slate-200"/);
-  assert.match(headerSource, /data-mobile-results-filter-navbar className="bg-white sm:hidden"/);
+  const header = ts.createSourceFile("AppHeader.tsx", headerSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+  const filterRails: ts.JsxOpeningElement[] = [];
+  function visit(node: ts.Node) {
+    if (ts.isJsxOpeningElement(node) && node.attributes.properties.some((attribute) => ts.isJsxAttribute(attribute) && attribute.name.getText(header) === "data-mobile-results-filter-navbar")) filterRails.push(node);
+    ts.forEachChild(node, visit);
+  }
+  visit(header);
+  assert.equal(filterRails.length, 1, "the header owns a single mobile filter rail");
+  const rail = filterRails[0];
+  const className = rail.attributes.properties.find((attribute) => ts.isJsxAttribute(attribute) && attribute.name.getText(header) === "className");
+  assert.ok(className && ts.isJsxAttribute(className) && className.initializer && ts.isJsxExpression(className.initializer) && className.initializer.expression);
+  const expression = className.initializer.expression.getText(header);
+  for (const hideMobileResultsNavbarDivider of [false, true]) {
+    const classes = new Set<string>(runInNewContext(expression, { cn, hideMobileResultsNavbarDivider }).split(/\s+/));
+    assert.ok(classes.has("bg-white"));
+    assert.ok(classes.has("sm:hidden"));
+    assert.equal(classes.has("border-b-0"), hideMobileResultsNavbarDivider);
+    assert.equal(classes.has("shadow-none"), hideMobileResultsNavbarDivider);
+  }
+  assert.ok(ts.isJsxElement(rail.parent));
+  const slots = rail.parent.children.filter((node) => ts.isJsxExpression(node) && node.expression && ts.isIdentifier(node.expression) && node.expression.text === "mobileResultsFilters");
+  assert.equal(slots.length, 1, "render the caller-owned filters once");
+  assert.doesNotMatch(headerSource, /<ResultsAvailabilityNotice\b/);
 });
 
 test("results header hides its filter rail while mobile drawers are open", () => {

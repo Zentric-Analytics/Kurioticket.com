@@ -6,12 +6,14 @@ import { isMobileProductAvailable, useFeatureAvailability } from "../availabilit
 import { ApprovedCarResultsScreen } from "../search/ApprovedCarResultsScreen";
 import { ApprovedResultsScreen } from "../search/ApprovedResultsScreen";
 import { NativeTravelSearchLoadingScreen } from "../search/NativeTravelSearchLoadingScreen";
+import { ResultsAvailabilityNotice } from "../search/ResultsAvailabilityNotice";
 import { useAppTheme } from "../../theme/AppTheme";
 import { buildSearchPlan, type Product } from "./travelSearchModel";
 
 const one = (value: string | string[] | undefined) => Array.isArray(value) ? value[0] : value;
 
 export function TravelResultsScreen({ product }: { product: Product }) {
+  const { theme } = useAppTheme();
   const params = useLocalSearchParams<Record<string, string | string[]>>();
   const hotelPlan = product === "hotel" ? buildSearchPlan("hotel", params) : undefined;
   const { availability, initializing } = useFeatureAvailability();
@@ -30,16 +32,24 @@ export function TravelResultsScreen({ product }: { product: Product }) {
   }, [hotelPlan?.plan?.key, product, one(params.destinationId), one(params.destination), one(params.checkIn), one(params.checkOut), one(params.guests), one(params.rooms)]);
 
   if (product === "hotel" && !hotelPlan?.plan) return null;
-  if (initializing) return <NativeTravelSearchLoadingScreen product={product} />;
-  if (!isMobileProductAvailable(availability, product)) return <TravelProductUnavailableScreen product={product} />;
-  if (product === "car") return <ApprovedCarResultsScreen />;
-  return <ApprovedResultsScreen product={product} />;
+  let content;
+  if (initializing) content = <NativeTravelSearchLoadingScreen product={product} includeTopInset={false} />;
+  else if (!isMobileProductAvailable(availability, product)) content = <TravelProductUnavailableScreen product={product} />;
+  else if (product === "car") content = <ApprovedCarResultsScreen />;
+  else content = <ApprovedResultsScreen product={product} />;
+
+  return (
+    <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]} edges={["top"]}>
+      <ResultsAvailabilityNotice />
+      <View style={styles.safe}>{content}</View>
+    </SafeAreaView>
+  );
 }
 
 function TravelProductUnavailableScreen({ product }: { product: Product }) {
   const { theme } = useAppTheme();
   const label = product === "car" ? "Car" : product[0].toUpperCase() + product.slice(1);
-  return <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]} edges={["top", "bottom"]}>
+  return <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]} edges={["bottom"]}>
     <View style={styles.content} accessibilityRole="alert">
       <Text accessibilityRole="header" style={[styles.title, { color: theme.textPrimary }]}>{label} search is temporarily unavailable</Text>
       <Text style={[styles.body, { color: theme.textSecondary }]}>Please try again later or edit your search.</Text>
