@@ -20,17 +20,12 @@ export default async function AdminFlightStatusPage() {
   const operations = await getFlightStatusOperationsSnapshot(undefined, readiness);
 
   return (
-    <AdminPageShell
-      title="Flight Status Operations"
-      description="Monitor trusted provider-supplied operational flight status for signed provider-confirmed flight trips. Search results, handoffs and booking confirmations never infer live status."
-      actions={
-        <div className="flex flex-wrap gap-2">
-          <Link href="/admin/confirmed-trips" className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
-            Confirmed trips
-          </Link>
-        </div>
-      }
-    >
+    <AdminPageShell title="Flight Status Operations" hideHeader>
+      <div role="group" aria-label="Flight Status actions" className="mb-3 flex min-w-0 flex-wrap items-center justify-end gap-2">
+        <Link href="/admin/confirmed-trips" className="inline-flex min-h-9 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2">
+          Confirmed trips
+        </Link>
+      </div>
       <AdminSectionCard className="min-w-0 space-y-3 p-4 sm:p-5 lg:p-6">
         <section aria-labelledby="flight-status-overview-title" className="min-w-0 rounded-xl border border-slate-200/90 p-3 sm:p-4">
           <h2 id="flight-status-overview-title" className="mb-2.5 text-base font-semibold leading-6 tracking-tight text-slate-950">Flight status overview</h2>
