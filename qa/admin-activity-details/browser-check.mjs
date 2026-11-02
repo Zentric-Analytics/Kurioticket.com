@@ -56,17 +56,25 @@ async function inspectActivityTypography(page) {
 async function expectAlignedColumns(page) {
   const layout = await page.evaluate(() => {
     const identity = document.querySelector('section[aria-label="Customer identity"] > div');
-    const summary = document.querySelector('section[aria-label="Activity summary"] > div');
+    const grid = document.querySelector('[data-testid="activity-metrics-grid"]');
     const facts = [...identity.querySelectorAll('dl > div')].map(el => el.getBoundingClientRect());
-    const metrics = [...summary.querySelectorAll('[data-testid="activity-metric-label"]')].map(el => el.parentElement.getBoundingClientRect());
-    return { identityTracks: getComputedStyle(identity).gridTemplateColumns, summaryTracks: getComputedStyle(summary).gridTemplateColumns,
-      positions: facts.map((fact,i) => ({fact:fact.x,metric:metrics[i].x})),
+    const metrics = [...grid.querySelectorAll('[data-testid="activity-metric"]')];
+    const rects = metrics.map(el => el.getBoundingClientRect());
+    const gridRect = grid.getBoundingClientRect();
+    return {
+      count: metrics.length,
+      gridStartsAtLeft: Math.abs(rects[0].left-gridRect.left)<1,
+      equalWidths: rects.every(rect=>Math.abs(rect.width-rects[0].width)<1),
+      oneRow: rects.every(rect=>Math.abs(rect.top-rects[0].top)<1),
+      dividers: metrics.slice(1).every(el=>parseFloat(getComputedStyle(el).borderLeftWidth)>=1),
       identityTop: identity.firstElementChild.getBoundingClientRect().top,
-      factTops: facts.map(rect => rect.top), bottom: identity.getBoundingClientRect().bottom };
+      factTops: facts.map(rect=>rect.top), bottom: identity.getBoundingClientRect().bottom,
+    };
   });
-  assert.equal(layout.identityTracks, layout.summaryTracks, 'same five grid tracks');
-  for (const position of layout.positions) assert.ok(Math.abs(position.fact-position.metric) < 1, 'divider alignment');
-  for (const top of layout.factTops) assert.ok(top < layout.bottom && top >= layout.identityTop - 30, 'facts share desktop row');
+  assert.equal(layout.count, 5, 'five visible metrics');
+  assert.ok(layout.gridStartsAtLeft && layout.equalWidths && layout.oneRow && layout.dividers,
+    'summary occupies an independent evenly divided five-column row: '+JSON.stringify(layout));
+  for (const top of layout.factTops) assert.ok(top < layout.bottom && top >= layout.identityTop - 30, 'customer facts share desktop row');
 }
 
 async function expectHeaderTimePresentation(page, context) {
@@ -85,34 +93,27 @@ async function expectHeaderTimePresentation(page, context) {
 async function expectBalancedDesktopHeader(page, context, requireSingleLineEmail = false) {
   const layout = await page.evaluate(() => {
     const identity = document.querySelector('section[aria-label="Customer identity"] > div');
-    const heading = document.querySelector('section[aria-label="Activity summary"] h2');
-    const firstMetric = document.querySelector('section[aria-label="Activity summary"] [data-testid="activity-metric-label"]')?.parentElement;
+    const metrics = document.querySelectorAll('[data-testid="activity-metric"]');
     const events = document.querySelector('[data-testid="activity-events-fact"]');
     const email = identity?.firstElementChild?.querySelector('p');
-    if (!identity || !heading || !firstMetric || !events) throw new Error("Header spacing anchors missing");
+    if (!identity || metrics.length!==5 || !events) throw new Error("Header and summary anchors missing");
     const columns = identity.children[0].getBoundingClientRect();
     const eventsRect = events.getBoundingClientRect();
     const emailStyle = email ? getComputedStyle(email) : null;
-    const providerLabel = document.querySelectorAll('section[aria-label="Activity summary"] [data-testid="activity-metric-label"]')[2];
-    if (!providerLabel) throw new Error("Provider handoffs metric is missing");
+    const providerLabel = metrics[3].querySelector('[data-testid="activity-metric-label"]');
     return {
       firstToEventsRatio: columns.width / eventsRect.width,
-      summaryHeadingLeftOffset: heading.getBoundingClientRect().left - heading.parentElement.getBoundingClientRect().left,
-      headingWithinSection: heading.getBoundingClientRect().right <= firstMetric.getBoundingClientRect().left - 12,
-      headingTopOffset: Math.abs(heading.getBoundingClientRect().top - firstMetric.getBoundingClientRect().top),
       emailHeight: email?.getBoundingClientRect().height ?? 0,
       emailFontSize: emailStyle ? Number.parseFloat(emailStyle.fontSize) : 0,
       providerLabelHeight: providerLabel.getBoundingClientRect().height,
       providerLabelFontSize: Number.parseFloat(getComputedStyle(providerLabel).fontSize),
       overflow: document.documentElement.scrollWidth > innerWidth + 1,
+      hasVisibleHeading: Boolean(document.querySelector('section[aria-label="Activity summary"] h2')),
     };
   });
   assert.ok(layout.firstToEventsRatio >= 2,
     context + ": identity retains enough room beside compact facts: " + JSON.stringify(layout));
-  assert.ok(Math.abs(layout.summaryHeadingLeftOffset) <= 2 && layout.headingWithinSection,
-    context + ": Activity summary must start at the left of its own track without crossing into Searches: " + JSON.stringify(layout));
-  assert.ok(layout.headingTopOffset <= 12,
-    context + ": Activity summary must align vertically with the metric labels: " + JSON.stringify(layout));
+  assert.equal(layout.hasVisibleHeading, false, context + ": summary has no visible heading");
   assert.ok(layout.providerLabelHeight < layout.providerLabelFontSize * 1.9,
     context + ": Provider handoffs label should not wrap across desktop lines: " + JSON.stringify(layout));
   if (requireSingleLineEmail) assert.ok(layout.emailHeight < layout.emailFontSize * 1.9,
@@ -157,7 +158,8 @@ try {
     await page.goto(url);
     await expect(page.getByRole("heading",{name:"Visitor",exact:true})).toBeVisible();
     await expect(page.getByRole("heading",{name:"Activity history"})).toBeVisible();
-    await expect(page.getByRole("heading",{name:"Activity summary"})).toBeVisible();
+    await expect(page.getByRole("heading",{name:"Activity summary"})).toHaveCount(0);
+    await expect(page.getByTestId("activity-metric")).toHaveCount(5);
     await expect(page.getByRole("heading",{name:"Related records"})).toHaveCount(0);
     const outerCard = page.getByTestId("activity-page-card");
     await expect(outerCard).toHaveCount(1);
@@ -175,7 +177,7 @@ try {
     await expect(page.getByRole("navigation",{name:"Breadcrumb"})).toBeVisible();
     await expect(page.locator('[data-testid="activity-page-card"] [data-testid="activity-body-card"]')).toHaveCount(1);
     await expect(page.getByRole("navigation",{name:"Activity tabs"}).getByRole("link",{name:"Journeys"})).toHaveCount(0);
-    // The summary is intentionally just a heading and metrics, with no info icon or disclosure.
+    // The summary has five metrics but no visible heading, info icon, or disclosure.
     await expect(outerCard.locator('section[aria-label="Activity summary"] button[aria-label="About activity data"]')).toHaveCount(0);
     await expect(outerCard.locator('section[aria-label="Activity summary"] [role="tooltip"]')).toHaveCount(0);
     await expect(page.getByRole("button",{name:/Manage guest/})).toHaveCount(0);
@@ -249,7 +251,7 @@ try {
   // Every fixture event is available upfront, including the formerly separate pages.
   await page.goto(url);
   let totals = page.getByRole("region",{name:"Activity summary"});
-  await expect(totals.locator('[data-testid="activity-metric-value"]')).toHaveText(["5","2","1"]);
+  await expect(totals.locator('[data-testid="activity-metric-value"]')).toHaveText(["5","2","5","1","6"]);
   await expect(page.getByText("Counts reflect loaded events only.")).toHaveCount(0);
   await expect(page.locator("[data-activity-id]")).toHaveCount(14);
   await expect(page.locator('[data-activity-id="j-qa-older-search"]')).toBeVisible();
@@ -257,13 +259,13 @@ try {
   await page.goto(url+"?cursor=older-qa-page");
   await expect(page.getByText("14 recorded events",{exact:true})).toBeVisible();
   totals = page.getByRole("region",{name:"Activity summary"});
-  await expect(totals.locator('[data-testid="activity-metric-value"]')).toHaveText(["5","2","1"]);
+  await expect(totals.locator('[data-testid="activity-metric-value"]')).toHaveText(["5","2","5","1","6"]);
   await page.goto(url+"?tab=searches&stage=SEARCH_COMPLETED&product=FLIGHT&q=LOS");
   totals = page.getByRole("region",{name:"Activity summary"});
-  await expect(totals.locator('[data-testid="activity-metric-value"]')).toHaveText(["1","0","0"]);
+  await expect(totals.locator('[data-testid="activity-metric-value"]')).toHaveText(["1","0","0","0","1"]);
   await page.goto(url+"?tab=handoffs");
   totals = page.getByRole("region",{name:"Activity summary"});
-  await expect(totals.locator('[data-testid="activity-metric-value"]')).toHaveText(["0","0","1"]);
+  await expect(totals.locator('[data-testid="activity-metric-value"]')).toHaveText(["0","0","0","1","1"]);
   await page.goto(url+"?tab=journeys&q=LOS");
   await expect(page.getByRole("navigation",{name:"Activity tabs"}).getByRole("link",{name:"All activity"})).toHaveAttribute("aria-current","page");
   await expect(page.getByRole("navigation",{name:"Activity tabs"}).getByRole("link",{name:"Journeys"})).toHaveCount(0);
