@@ -46,6 +46,8 @@ export function filterProviderOperationalStatuses(
   return statuses.flatMap(provider => {
     const service = provider.serviceBreakdown.find(item => item.service === serviceName);
     if (!service) return [];
+    const singleService = provider.serviceBreakdown.length === 1
+      && provider.serviceBreakdown[0]?.service === serviceName;
     return [{
       ...provider,
       operationalState: service.operationalState,
@@ -57,11 +59,13 @@ export function filterProviderOperationalStatuses(
       failedCalls: service.failedCalls,
       disabledCalls: service.disabledCalls,
       failureRatePct: service.failureRatePct,
-      averageLatencyMs: null,
-      lastActivityAt: null,
-      lastSuccessAt: null,
-      lastFailureAt: null,
-      lastAdverseAt: null,
+      // A single-service provider is already scoped to this product. Preserve
+      // genuine timing data; multi-service timings cannot be product-attributed.
+      averageLatencyMs: singleService ? provider.averageLatencyMs : null,
+      lastActivityAt: singleService ? provider.lastActivityAt : null,
+      lastSuccessAt: singleService ? provider.lastSuccessAt : null,
+      lastFailureAt: singleService ? provider.lastFailureAt : null,
+      lastAdverseAt: singleService ? provider.lastAdverseAt : null,
     }];
   });
 }
