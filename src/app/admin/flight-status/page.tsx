@@ -3,7 +3,6 @@ import Link from "next/link";
 import {
   AdminDataTable,
   AdminEmptyState,
-  AdminMetricCard,
   AdminPageShell,
   AdminSectionCard,
   AdminStatusBadge,
@@ -28,19 +27,22 @@ export default async function AdminFlightStatusPage() {
         </Link>
       </div>
       <AdminSectionCard className="min-w-0 space-y-3 p-4 sm:p-5 lg:p-6">
-        <section aria-labelledby="flight-status-overview-title" className="min-w-0">
-          <h2 id="flight-status-overview-title" className="mb-3 text-base font-semibold leading-6 tracking-tight text-slate-950">Flight status overview</h2>
+        <section aria-labelledby="flight-status-overview-title" className="min-w-0 rounded-xl border border-slate-200/90 p-3 sm:p-4">
+          <h2 id="flight-status-overview-title" className="mb-2.5 text-base font-semibold leading-6 tracking-tight text-slate-950">Flight status overview</h2>
           {operations ? (
-          <div className="grid gap-2.5 sm:grid-cols-2 md:grid-cols-3 2xl:grid-cols-6">
-            <AdminMetricCard label="Confirmed flights" value={operations.metrics.confirmedFlights} hint="Signed partner-confirmed flight trips in this database" tone="info" />
-            <AdminMetricCard label="Provider matched" value={operations.metrics.feedEligibleFlights} hint="Confirmed flights matching the configured provider name" />
-            <AdminMetricCard label="Tracked" value={operations.metrics.trackedFlights} hint="Provider-matched confirmed flights with a stored snapshot" tone={operations.metrics.trackedFlights > 0 ? "good" : "neutral"} />
-            <AdminMetricCard label="Missing status" value={operations.metrics.missingSnapshots} hint="Provider-matched confirmed flights awaiting their first snapshot" tone={operations.metrics.missingSnapshots > 0 ? "warn" : "neutral"} />
-            <AdminMetricCard label="Current" value={operations.metrics.currentSnapshots} hint="Snapshots observed from now back through 15 minutes" tone={operations.metrics.currentSnapshots > 0 ? "good" : "neutral"} />
-            <AdminMetricCard label="Stale" value={operations.metrics.staleSnapshots} hint="Stored snapshots outside the current freshness window" tone={operations.metrics.staleSnapshots > 0 ? "warn" : "neutral"} />
-          </div>
-        ) : (
-          <AdminEmptyState title="Flight-status telemetry unavailable" message="The connected database could not return flight-status operations. No zero values were invented." />
+            <div className="grid min-w-0 gap-2 sm:grid-cols-2 md:grid-cols-3 2xl:grid-cols-6">
+              <FlightStatusMetric label="Confirmed flights" value={operations.metrics.confirmedFlights} hint="Signed partner-confirmed flight trips in this database" tone="info" />
+              <FlightStatusMetric label="Provider matched" value={operations.metrics.feedEligibleFlights} hint="Confirmed flights matching the configured provider name" />
+              <FlightStatusMetric label="Tracked" value={operations.metrics.trackedFlights} hint="Provider-matched confirmed flights with a stored snapshot" tone={operations.metrics.trackedFlights > 0 ? "good" : "neutral"} />
+              <FlightStatusMetric label="Missing status" value={operations.metrics.missingSnapshots} hint="Provider-matched confirmed flights awaiting their first snapshot" tone={operations.metrics.missingSnapshots > 0 ? "warn" : "neutral"} />
+              <FlightStatusMetric label="Current" value={operations.metrics.currentSnapshots} hint="Snapshots observed from now back through 15 minutes" tone={operations.metrics.currentSnapshots > 0 ? "good" : "neutral"} />
+              <FlightStatusMetric label="Stale" value={operations.metrics.staleSnapshots} hint="Stored snapshots outside the current freshness window" tone={operations.metrics.staleSnapshots > 0 ? "warn" : "neutral"} />
+            </div>
+          ) : (
+            <div role="status" className="rounded-lg bg-slate-50 px-3 py-2.5 text-[13px] leading-5 text-slate-600">
+              <p className="font-semibold text-slate-900">Flight-status telemetry unavailable</p>
+              <p className="mt-1">The connected database could not return flight-status operations. No zero values were invented.</p>
+            </div>
           )}
         </section>
 
@@ -183,6 +185,41 @@ export default async function AdminFlightStatusPage() {
 
       </AdminSectionCard>
     </AdminPageShell>
+  );
+}
+
+
+type FlightStatusMetricTone = "info" | "good" | "warn" | "neutral";
+
+const flightStatusMetricDots: Record<FlightStatusMetricTone, string> = {
+  info: "bg-indigo-500",
+  good: "bg-emerald-500",
+  warn: "bg-amber-500",
+  neutral: "bg-slate-300",
+};
+
+function FlightStatusMetric({
+  label,
+  value,
+  hint,
+  tone = "neutral",
+}: {
+  label: string;
+  value: number;
+  hint: string;
+  tone?: FlightStatusMetricTone;
+}) {
+  return (
+    <div className="flex h-full min-w-0 flex-col rounded-lg border border-slate-200/80 bg-white px-3 py-2.5">
+      <div className="flex min-w-0 items-start justify-between gap-2">
+        <p className="min-w-0 break-words text-xs font-medium leading-4 text-slate-600">{label}</p>
+        <span aria-hidden="true" className={`mt-1 h-2 w-2 shrink-0 rounded-full ${flightStatusMetricDots[tone]}`} />
+      </div>
+      <p className="mt-1 text-[22px] font-semibold leading-[26px] tracking-tight tabular-nums text-slate-950">
+        {value.toLocaleString("en-US")}
+      </p>
+      <p className="mt-1 min-w-0 break-words text-xs font-normal leading-4 text-slate-600">{hint}</p>
+    </div>
   );
 }
 
