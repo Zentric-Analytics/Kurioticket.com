@@ -155,3 +155,34 @@ test("Flight Status action links open confirmed trips and flight-filtered Search
   assert.match(navigation, /href: "\/admin\/searches\/activity", label: "Search Activity"/);
   assert.match(navigation, /href: "\/admin\/flights", parentHref: "\/admin\/providers"/);
 });
+
+
+test("Flight Status uses the same single white parent column as Admin Overview", () => {
+  const overviewPage = readFileSync("src/app/admin/page.tsx", "utf8");
+  assert.match(overviewPage, /<AdminSectionCard className="min-w-0 p-4 sm:p-5 lg:p-6">/);
+  const parentOpening = '<AdminSectionCard className="min-w-0 space-y-3 p-4 sm:p-5 lg:p-6">';
+  const parentStart = page.indexOf(parentOpening);
+  const parentEnd = page.lastIndexOf("</AdminSectionCard>");
+  const shellEnd = page.indexOf("</AdminPageShell>", parentEnd);
+
+  assert.ok(parentStart >= 0 && parentEnd > parentStart && shellEnd > parentEnd,
+    "One parent card must wrap the Flight Status operational content inside AdminPageShell");
+  assert.equal((page.match(/<AdminSectionCard className="min-w-0 space-y-3 p-4 sm:p-5 lg:p-6">/g) || []).length, 1,
+    "A single parent card should be used, not an extra stack of nested parent containers");
+  assert.match(page, />\s*<AdminSectionCard className="min-w-0 space-y-3 p-4 sm:p-5 lg:p-6">\s*<section aria-labelledby="flight-status-overview-title"/);
+  assert.doesNotMatch(page.slice(parentStart, parentEnd), /className="[^"]*(?:\bhidden\b|\binvisible\b|\bopacity-0\b)/);
+  const order = ["Flight status overview", "Status-feed readiness", "Latest status distribution",
+    "Snapshot scope", "Awaiting first status snapshot", "Latest trusted flight-status snapshots",
+    "Operational boundaries"];
+  const positions = order.map(label => page.indexOf(">" + label + "</h2>", parentStart));
+  assert.ok(positions.every(n => n > parentStart && n < parentEnd), "All existing sections must stay within the parent card");
+  assert.deepEqual(positions, [...positions].sort((a, b) => a - b), "Keep the existing section order");
+  assert.match(page.slice(0, parentStart), /href="\/admin\/confirmed-trips"/);
+  assert.match(page.slice(0, parentStart), /href="\/admin\/searches\/activity\?product=FLIGHT"/);
+  assert.equal((page.match(/<AdminMetricCard label=/g) || []).length, 6);
+  assert.match(page, /grid gap-2\.5 sm:grid-cols-2 md:grid-cols-3 2xl:grid-cols-6/);
+  assert.match(page, /No zero values were invented/);
+  assert.match(page, /Flight-status distribution is unavailable\. No counts are assumed/);
+  assert.match(page, /operations\.awaitingFirstSnapshot\.map/);
+  assert.match(page, /operations\.recentSnapshots\.map/);
+});
