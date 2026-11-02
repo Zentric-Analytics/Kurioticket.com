@@ -78,3 +78,46 @@ test("flight status telemetry unavailable state never invents zero metrics", () 
   assert.match(service, /if \(!db\) return null/);
   assert.match(service, /catch \(error\)[\s\S]*return null/);
 });
+
+test("all Flight Status sections are present regardless of telemetry availability", () => {
+  const originalSections = [
+    "Status-feed readiness",
+    "Latest status distribution",
+    "Snapshot scope",
+    "Operational boundaries",
+    "Awaiting first status snapshot",
+    "Latest trusted flight-status snapshots",
+  ];
+  for (const section of originalSections) {
+    assert.ok(page.includes(section), "Section must remain visible: " + section);
+  }
+  assert.doesNotMatch(page, /className="[^"]*(?:\bhidden\b|\binvisible\b|\bopacity-0\b)/);
+
+  const distributionStart = page.indexOf('<div className="grid gap-4 xl:grid-cols-2">');
+  const boundaryStart = page.indexOf('<h2 className="font-black text-slate-950">Operational boundaries');
+  assert.ok(distributionStart >= 0 && boundaryStart > distributionStart);
+  const summaryPanels = page.slice(distributionStart, boundaryStart);
+  assert.match(summaryPanels, /Latest status distribution/);
+  assert.match(summaryPanels, /Snapshot scope/);
+  assert.match(summaryPanels, /!operations \? \(/);
+  assert.match(summaryPanels, /Flight-status distribution is unavailable/);
+  assert.match(summaryPanels, /No counts are assumed/);
+  assert.match(summaryPanels, /operations\.statusDistribution\.length/);
+  assert.doesNotMatch(page, /\{operations \? \(\s*<div className="grid gap-4 xl:grid-cols-2">/);
+});
+
+test("latest snapshots and awaiting-first-snapshot sections never disappear at zero or on failure", () => {
+  assert.match(page, /operations\.awaitingFirstSnapshot\.length/);
+  assert.match(page, /operations\.awaitingFirstSnapshot\.map/);
+  assert.match(page, /No flights awaiting a first snapshot/);
+  assert.match(page, /The number of flights awaiting a snapshot is unknown/);
+  assert.match(page, /operations\.recentSnapshots\.length/);
+  assert.match(page, /operations\.recentSnapshots\.map/);
+  assert.match(page, /<AdminEmptyState[\s\S]*?title="Latest trusted flight-status snapshots"/);
+  assert.match(page, /No trusted flight-status snapshots have been recorded/);
+  assert.match(page, /Recent snapshots could not be loaded/);
+  assert.match(page, /<AdminEmptyState title="Awaiting first status snapshot"/);
+  assert.match(page, /No status provider feed is configured/);
+  assert.match(page, /No zero values were invented/);
+  assert.doesNotMatch(page, /operations\.recentSnapshots\.length \? \([\s\S]*?\) : null\s*\) : null/);
+});
