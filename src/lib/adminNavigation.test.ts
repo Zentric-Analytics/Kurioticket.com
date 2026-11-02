@@ -34,6 +34,9 @@ test("admin navigation activates exact routes and their detail pages", () => {
   assert.equal(isAdminNavItemActive("/admin", "/admin/users"), false);
   assert.equal(isAdminNavItemActive("/admin/support", "/admin/support/123"), true);
   assert.equal(isAdminNavItemActive("/admin/support", "/admin/supportive"), false);
+  assert.equal(isAdminNavItemActive("/admin/confirmed-trips", "/admin/confirmed-trips/alerts"), true);
+  assert.equal(isAdminNavItemActive("/admin/system", "/admin/confirmed-trips/alerts"), false);
+  assert.equal(isAdminNavItemActive("/admin/notifications", "/admin/confirmed-trips/alerts"), false);
 });
 
 

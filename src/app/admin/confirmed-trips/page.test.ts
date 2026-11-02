@@ -408,7 +408,9 @@ test("Phase 4 delivery health keeps distinct inactive, unavailable, and genuine 
   assert.match(section, /deliveryHealth\.recent\.map/);
   assert.match(section, /No authenticated provider callbacks recorded yet/);
   assert.match(section, /aria-label="Recent authenticated delivery receipts" tabIndex=\{0\}/);
-  assert.match(section, /href="\/admin\/notifications"/);
+  assert.match(section, /href="\/admin\/confirmed-trips\/alerts"/);
+  assert.match(section, /Confirmation alerts/);
+  assert.doesNotMatch(section, /href="\/admin\/notifications"|Operational alerts/);
   assert.match(section, /Receipts may include retries/);
   assert.doesNotMatch(section, /Cancel booking|Refund|Create confirmed trip/);
 });
