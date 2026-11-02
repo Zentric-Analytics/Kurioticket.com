@@ -47,6 +47,7 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
   const visibleOperational = filterProviderOperationalStatuses(operational ?? [], filter);
   const operationalById = new Map(visibleOperational.map(provider => [provider.id, provider]));
   const attention = visibleOperational.filter(requiresAttention);
+  const unscopedTimingProviders = new Set(integrations.filter(item => item.products.length > 1).map(item => item.id));
   const directoryRows: ProviderDirectoryRecord[] = [
     ...visibleIntegrations.map(integration => {
       const status = operationalById.get(integration.id);
@@ -182,14 +183,16 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
                             <dt className="text-[12px] text-[#64748B]">Last success</dt>
                             <dd className="mt-0.5 text-[13px] text-[#020617]">
                               <ActivityTime value={provider.lastSuccessAt}
-                                empty={filter === "all" ? "Not recorded in the last 24 hours" : "Not available for this service"} />
+                                empty={filter !== "all" && unscopedTimingProviders.has(provider.id)
+                                  ? "Not available for this service" : "Not recorded in the last 24 hours"} />
                             </dd>
                           </div>
                           <div>
                             <dt className="text-[12px] text-[#64748B]">Last failure</dt>
                             <dd className="mt-0.5 text-[13px] text-[#020617]">
                               <ActivityTime value={provider.lastFailureAt}
-                                empty={filter === "all" ? "Not recorded in the last 24 hours" : "Not available for this service"} />
+                                empty={filter !== "all" && unscopedTimingProviders.has(provider.id)
+                                  ? "Not available for this service" : "Not recorded in the last 24 hours"} />
                             </dd>
                           </div>
                         </dl>
