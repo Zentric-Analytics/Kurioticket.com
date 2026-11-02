@@ -3,7 +3,8 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import { adminNavigation } from "@/lib/adminNavigation";
-import { filterProviderStatuses, normalizeProductFilter, productFilters } from "@/lib/adminProviderFilters";
+import { filterProviderOperationalStatuses, filterProviderStatuses, normalizeProductFilter, productFilters } from "@/lib/adminProviderFilters";
+import type { ProviderOperationalStatus, ProviderOperationalServiceStatus } from "@/services/providerOperationalStatusCore";
 
 const providersPage = readFileSync("src/app/admin/providers/page.tsx", "utf8");
 const providerFiltersSource = readFileSync("src/lib/adminProviderFilters.ts", "utf8");
@@ -48,13 +49,14 @@ test("provider filter helpers drive the providers page", () => {
   assert.match(providersPage, /productFilters\.map/);
   assert.match(providersPage, /getProviderStatuses\(\)/);
   assert.match(providersPage, /getProviderOperationalStatuses\(\)/);
-  assert.match(providersPage, /<AdminProviderStatusCard key=\{provider\.product\} \{\.\.\.provider\} \/>/);
+  assert.match(providersPage, /All providers/);
+  assert.match(providersPage, /filterProviderOperationalStatuses/);
 });
 
 test("providers page preserves truthful provider data and the active retest control", () => {
-  assert.match(providersPage, /Provider health retest/);
+  assert.match(providersPage, /Provider health checks/);
   assert.match(providersPage, /<ProviderRetestButton \/>/);
-  assert.match(providersPage, /Retesting records real provider health/);
+  assert.match(providersPage, /Retesting records a real Duffel health check/);
   assert.match(providersPage, /Booking remains provider-owned/);
   assert.match(providersPage, /Secrets hidden/);
 });
@@ -99,3 +101,80 @@ function provider(product: TestProvider["product"], providerName: string): TestP
     notes: `${product} provider notes`,
   };
 }
+
+
+test("provider health sections prioritize attention and use a flat layout", () => {
+  const positions = [
+    "Providers requiring attention",
+    "All providers",
+    "Operational performance",
+    "Provider health checks",
+  ].map(section => providersPage.indexOf(section));
+  assert.ok(positions.every(position => position >= 0));
+  assert.deepEqual([...positions].sort((a, b) => a - b), positions);
+  assert.match(providersPage, /getProviderIntegrationStatuses/);
+  assert.match(providersPage, /overflow-x-auto/);
+  assert.doesNotMatch(providersPage, /AdminSectionCard/);
+});
+
+
+test("product filtering retains truthful timing metrics for a single-service provider", () => {
+  const flight: ProviderOperationalServiceStatus = {
+    service: "flight-search",
+    operationalState: "HEALTHY",
+    totalCalls: 2,
+    attemptedCalls: 2,
+    successCalls: 2,
+    degradedCalls: 0,
+    failedCalls: 0,
+    disabledCalls: 0,
+    failureRatePct: 0,
+    failureReasons: [],
+  };
+  const duffel: ProviderOperationalStatus = {
+    id: "duffel",
+    provider: "Duffel",
+    readinessState: "READY",
+    operationalState: "HEALTHY",
+    windowHours: 24,
+    totalCalls: 2,
+    attemptedCalls: 2,
+    successCalls: 2,
+    degradedCalls: 0,
+    failedCalls: 0,
+    disabledCalls: 0,
+    failureRatePct: 0,
+    serviceBreakdown: [flight],
+    averageLatencyMs: 1500,
+    lastActivityAt: "2026-11-02T08:00:00.000Z",
+    lastSuccessAt: "2026-11-02T08:00:00.000Z",
+    lastFailureAt: null,
+    lastAdverseAt: null,
+  };
+  const selected = filterProviderOperationalStatuses([duffel], "flights");
+  assert.equal(selected.length, 1);
+  assert.equal(selected[0].averageLatencyMs, 1500);
+  assert.equal(selected[0].lastActivityAt, duffel.lastActivityAt);
+  assert.equal(selected[0].lastSuccessAt, duffel.lastSuccessAt);
+  assert.equal(filterProviderOperationalStatuses([duffel], "hotels").length, 0);
+
+  // Combined timings cannot honestly be attributed to one service.
+  const kayak: ProviderOperationalStatus = {
+    ...duffel,
+    id: "kayak-sandbox",
+    provider: "KAYAK sandbox",
+    serviceBreakdown: [
+      flight,
+      {...flight, service: "hotel-search", attemptedCalls: 3, successCalls: 3, totalCalls: 3},
+      {...flight, service: "car-search", attemptedCalls: 0, successCalls: 0, totalCalls: 0, failureRatePct: null},
+    ],
+    attemptedCalls: 5,
+    successCalls: 5,
+    totalCalls: 5,
+  };
+  const kayakFlights = filterProviderOperationalStatuses([kayak], "flights")[0];
+  assert.equal(kayakFlights.attemptedCalls, 2);
+  assert.equal(kayakFlights.averageLatencyMs, null);
+  assert.equal(kayakFlights.lastActivityAt, null);
+  assert.equal(kayakFlights.lastSuccessAt, null);
+});
