@@ -138,6 +138,9 @@ test("provider issue link expands inline and cannot jump to the bottom", () => {
   assert.match(providersPage, /Hide details ‹/);
   assert.match(providersPage, /service\.failureReasons/);
   assert.match(providersPage, /<ActivityTime value=\{provider\.lastFailureAt\}/);
+  assert.match(providersPage, /unscopedTimingProviders\.has\(provider\.id\)/);
+  assert.match(providersPage, /Not recorded in the last 24 hours/);
+  assert.match(providersPage, /Not available for this service/);
   assert.doesNotMatch(providersPage, /href=\{"#provider-operation-" \+ provider\.id\}/);
 });
 
