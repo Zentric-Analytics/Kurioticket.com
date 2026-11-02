@@ -139,3 +139,19 @@ test("Flight Status overview follows the planned responsive page hierarchy", () 
   assert.match(page, /operations\.recentSnapshots\.map/);
   assert.match(page, /operations\.awaitingFirstSnapshot\.map/);
 });
+
+
+test("Flight Status action links open confirmed trips and flight-filtered Search Activity", () => {
+  const actions = page.match(/actions=\{([\s\S]*?)\n      \}\n    >/ )?.[1];
+  assert.ok(actions, "Flight Status header actions must be present");
+  assert.match(actions, /<Link href="\/admin\/confirmed-trips"[^>]*>\s*Confirmed trips\s*<\/Link>/);
+  assert.match(actions, /<Link href="\/admin\/searches\/activity\?product=FLIGHT"[^>]*>\s*Flight search operations\s*<\/Link>/);
+  assert.doesNotMatch(actions, /href="\/admin\/flights"/);
+  assert.equal((actions.match(/<Link /g) || []).length, 2, "Keep both existing header actions");
+
+  const searchActivity = readFileSync("src/app/admin/searches/activity/page.tsx", "utf8");
+  assert.match(searchActivity, /{ label: "Flights", value: "FLIGHT" }/);
+  assert.match(searchActivity, /one\(raw\.product\) === item\.value/);
+  assert.match(navigation, /href: "\/admin\/searches\/activity", label: "Search Activity"/);
+  assert.match(navigation, /href: "\/admin\/flights", parentHref: "\/admin\/providers"/);
+});
