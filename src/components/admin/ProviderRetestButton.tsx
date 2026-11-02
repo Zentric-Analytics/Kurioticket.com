@@ -1,30 +1,48 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 
 export function ProviderRetestButton() {
+  const router = useRouter();
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function retest() {
+    if (loading) return;
     setLoading(true);
     setMessage("");
-    const response = await fetch("/api/admin/providers/duffel/retest", { method: "POST" });
-    const data = await response.json();
-    setLoading(false);
-    if (!response.ok) {
-      setMessage(data.error || "Retest failed.");
-      return;
+    try {
+      const response = await fetch("/api/admin/providers/duffel/retest", {
+        method: "POST",
+        credentials: "same-origin",
+        cache: "no-store",
+      });
+      const data: { error?: string; provider?: { connected?: boolean } } | null =
+        await response.json().catch(() => null);
+      if (!response.ok) {
+        setMessage(data?.error || "Retest failed. Please try again.");
+        return;
+      }
+      setMessage(data?.provider?.connected
+        ? "Duffel health check succeeded."
+        : "Duffel health check failed. Review credentials and server logs.");
+      // Refresh server-rendered health values without discarding this message.
+      router.refresh();
+    } catch {
+      setMessage("Unable to reach the health-check service. Please try again.");
+    } finally {
+      setLoading(false);
     }
-    setMessage(data.provider?.connected ? "Duffel is healthy." : "Duffel is not healthy. Check server logs and credentials.");
-    window.location.reload();
   }
 
   return (
-    <div className="grid gap-2">
-      <Button type="button" onClick={retest} disabled={loading}>{loading ? "Retesting..." : "Retest Duffel"}</Button>
-      {message ? <p className="text-sm font-semibold text-muted">{message}</p> : null}
+    <div className="flex min-w-0 flex-col items-start gap-2">
+      <Button type="button" onClick={retest} disabled={loading}>
+        {loading ? "Retesting..." : "Retest Duffel"}
+      </Button>
+      {message ? <p role="status" aria-live="polite" className="text-[12px] leading-5 text-[#475569]">{message}</p> : null}
     </div>
   );
 }
