@@ -35,7 +35,7 @@ export default async function AdminFlightStatusPage() {
         </div>
       }
     >
-      <div className="space-y-3">
+      <AdminSectionCard className="min-w-0 space-y-3 p-4 sm:p-5 lg:p-6">
         <section aria-labelledby="flight-status-overview-title" className="min-w-0">
           <h2 id="flight-status-overview-title" className="mb-3 text-base font-semibold leading-6 tracking-tight text-slate-950">Flight status overview</h2>
           {operations ? (
@@ -189,7 +189,7 @@ export default async function AdminFlightStatusPage() {
           </p>
         </AdminSectionCard>
 
-      </div>
+      </AdminSectionCard>
     </AdminPageShell>
   );
 }
