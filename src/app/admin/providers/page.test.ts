@@ -7,6 +7,8 @@ import { filterProviderOperationalStatuses, filterProviderStatuses, normalizePro
 import type { ProviderOperationalStatus, ProviderOperationalServiceStatus } from "@/services/providerOperationalStatusCore";
 
 const providersPage = readFileSync("src/app/admin/providers/page.tsx", "utf8");
+const directoryTable = readFileSync("src/components/admin/ProviderDirectoryTable.tsx", "utf8");
+const retestButton = readFileSync("src/components/admin/ProviderRetestButton.tsx", "utf8");
 const providerFiltersSource = readFileSync("src/lib/adminProviderFilters.ts", "utf8");
 const flightsPage = readFileSync("src/app/admin/flights/page.tsx", "utf8");
 const hotelsPage = readFileSync("src/app/admin/hotels/page.tsx", "utf8");
@@ -53,12 +55,21 @@ test("provider filter helpers drive the providers page", () => {
   assert.match(providersPage, /filterProviderOperationalStatuses/);
 });
 
-test("providers page preserves truthful provider data and the active retest control", () => {
-  assert.match(providersPage, /Provider health checks/);
-  assert.match(providersPage, /<ProviderRetestButton \/>/);
-  assert.match(providersPage, /Retesting records a real Duffel health check/);
-  assert.match(providersPage, /Booking remains provider-owned/);
-  assert.match(providersPage, /Secrets hidden/);
+test("provider details preserve booking, readiness and audited Duffel retest", () => {
+  assert.match(providersPage, /<ProviderDirectoryTable rows=\{directoryRows\} \/>/);
+  assert.match(providersPage, /canRetestDuffel: integration\.id === "duffel"/);
+  assert.match(directoryTable, /<ProviderRetestButton \/>/);
+  assert.match(directoryTable, /row\.canRetestDuffel/);
+  assert.match(directoryTable, /row\.detail\.configured/);
+  assert.match(directoryTable, /row\.detail\.booking/);
+  assert.match(directoryTable, /row\.detail\.note/);
+  assert.match(directoryTable, /row\.detail\.lastFailure/);
+  assert.match(directoryTable, /records an admin audit event/);
+  assert.match(retestButton, /router\.refresh\(\)/);
+  assert.match(retestButton, /catch/);
+  assert.match(retestButton, /finally/);
+  assert.doesNotMatch(retestButton, /window\.location\.reload/);
+  assert.doesNotMatch(providersPage, /Provider health checks/);
 });
 
 test("admin navigation restores Providers and the original product destinations", () => {
@@ -103,18 +114,57 @@ function provider(product: TestProvider["product"], providerName: string): TestP
 }
 
 
-test("provider health sections prioritize attention and use a flat layout", () => {
+test("provider health sections prioritize attention and use a flat compact layout", () => {
   const positions = [
     "Providers requiring attention",
     "All providers",
     "Operational performance",
-    "Provider health checks",
+    "Search service breakdown",
   ].map(section => providersPage.indexOf(section));
   assert.ok(positions.every(position => position >= 0));
   assert.deepEqual([...positions].sort((a, b) => a - b), positions);
   assert.match(providersPage, /getProviderIntegrationStatuses/);
-  assert.match(providersPage, /overflow-x-auto/);
+  assert.match(providersPage, /<h1 className="sr-only">Providers<\/h1>/);
+  assert.doesNotMatch(providersPage, /Monitor provider availability, search reliability/);
+  assert.doesNotMatch(providersPage, /<header>/);
   assert.doesNotMatch(providersPage, /AdminSectionCard/);
+  assert.match(providersPage, /<ProviderDirectoryTable rows=/);
+  assert.match(providersPage, /aria-labelledby="service-breakdown-heading"/);
+});
+
+test("provider issue link expands inline and cannot jump to the bottom", () => {
+  assert.match(providersPage, /<details className="group py-3">/);
+  assert.match(providersPage, /View details ›/);
+  assert.match(providersPage, /Hide details ‹/);
+  assert.match(providersPage, /service\.failureReasons/);
+  assert.match(providersPage, /<ActivityTime value=\{provider\.lastFailureAt\}/);
+  assert.doesNotMatch(providersPage, /href=\{"#provider-operation-" \+ provider\.id\}/);
+});
+
+test("directory rows are compact and disclose secondary diagnostics on request", () => {
+  assert.match(directoryTable, /aria-expanded=\{open\}/);
+  assert.match(directoryTable, /aria-controls=\{"provider-details-" \+ row\.id\}/);
+  assert.match(directoryTable, /hidden=\{!open\}/);
+  assert.match(directoryTable, /row\.shortLabel/);
+  assert.match(directoryTable, /row\.lastActivity/);
+  assert.doesNotMatch(directoryTable, /Credentials: Yes/);
+  assert.doesNotMatch(directoryTable, /Booking: Not live yet/);
+  assert.match(providersPage, /shortLabel: "Internal catalogue"/);
+  assert.match(providersPage, /shortLabel: integration\.id === "duffel"/);
+  assert.match(directoryTable, /Not externally monitored|row\.lastActivity/);
+});
+
+test("performance table has concise rows, an attempted-calls tooltip and aligned service columns", () => {
+  assert.match(providersPage, /Disabled calls are not counted as attempts\./);
+  assert.match(providersPage, /<Info size=\{13\}/);
+  assert.doesNotMatch(providersPage, /Recorded external provider calls in the current environment/);
+  assert.doesNotMatch(providersPage, /Product filtering uses service-specific counts/);
+  assert.doesNotMatch(providersPage, /Last success: <ActivityTime/);
+  assert.doesNotMatch(providersPage, /Last failure: <ActivityTime/);
+  assert.match(providersPage, /Failure reason/);
+  assert.match(providersPage, /numberHeadingClass/);
+  assert.match(providersPage, /service\.disabledCalls\.toLocaleString\(\)/);
+  assert.match(providersPage, /service\.failureRatePct === null \? "No attempts"/);
 });
 
 
