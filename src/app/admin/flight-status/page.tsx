@@ -67,8 +67,14 @@ export default async function AdminFlightStatusPage() {
             <Fact label="Provider binding" value={readiness.credentialModel === "single_provider_bound_secret" ? "Single provider + dedicated secret" : "Unknown"} />
             <Fact label="Current search-provider status feed" value={readiness.currentSearchProviderStatusFeed === "none" ? "None" : "Configured"} />
           </div>
-          <p className="mt-4 text-sm leading-6 text-slate-600">
+          <p className="mt-3 text-sm leading-6 text-slate-600">
             Each signed update must name the configured provider. A configured feed does not mean updates are arriving.
+          </p>
+          <p className="mt-2 text-xs leading-5 text-slate-600">
+            Live status requires a valid signed update from the configured provider for a confirmed flight. Searches, handoffs and confirmations do not prove live status.
+          </p>
+          <p className="mt-1 text-xs leading-5 text-slate-500">
+            Status records have no environment label. This page uses the connected {operations?.environment ?? "application"} database.
           </p>
         </AdminSectionCard>
 
@@ -175,15 +181,6 @@ export default async function AdminFlightStatusPage() {
         ) : (
           <AdminEmptyState title="Latest trusted flight-status snapshots" message="Recent flight-status data unavailable. No records are assumed." />
         )}
-        <AdminSectionCard className="min-w-0 p-4 sm:p-5">
-          <h2 className="text-base font-semibold leading-6 tracking-tight text-slate-950">Operational boundaries</h2>
-          <p className="mt-2 text-sm leading-6 text-slate-600">
-            Live status requires a valid signed update from the configured provider for a confirmed flight. Searches, handoffs and confirmations do not prove live status.
-          </p>
-          <p className="mt-3 text-xs leading-5 text-slate-500">
-            Status records have no environment label. This page uses the connected {operations?.environment ?? "application"} database.
-          </p>
-        </AdminSectionCard>
 
       </AdminSectionCard>
     </AdminPageShell>
