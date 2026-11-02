@@ -12,11 +12,8 @@ const architecture = readFileSync("src/lib/my-trips-architecture.test.ts", "utf8
 test("confirmed trips admin is a read-only provider-confirmation operations page", () => {
   assert.match(page, /title="Confirmed Trips"/);
   assert.doesNotMatch(page, /description="View trips confirmed by travel providers and monitor confirmation activity\."/);
-  assert.match(page, /It stores verified signed provider confirmations/);
   assert.match(page, /Confirmation integration readiness/);
   assert.match(page, /Recent provider-confirmed trips/);
-  assert.match(page, /Provider handoff ≠ confirmation/);
-  assert.match(page, /No Kurioticket payment record/);
   assert.match(recent, /trip\.userEmail \|\| "Email unavailable"/);
   assert.doesNotMatch(page, /fetch\(|method:\s*["'](?:POST|PATCH|DELETE)|<form/);
 });
@@ -54,13 +51,11 @@ test("confirmed trips keeps the metasearch architecture boundary", () => {
   assert.match(navigation, /href: "\/admin\/confirmed-trips"/);
   assert.doesNotMatch(navigation, /\/admin\/bookings/);
   assert.match(architecture, /"\/admin\/bookings"/);
-  assert.match(page, /does not create bookings, payments, refunds, cancellations, or tickets/);
 });
 
-test("confirmed trips declares the database-scoped environment limitation", () => {
-  assert.match(page, /Trips have no environment label/);
-  assert.match(page, /shows records from the connected/);
+test("confirmed trips retains environment scoping in the service, not dashboard copy", () => {
   assert.doesNotMatch(service, /query: \{ path: \["environment"\]/);
+  assert.doesNotMatch(page, /Trips have no environment label|Environment: \{operations\.environment\}/);
 });
 
 
@@ -80,7 +75,6 @@ test("confirmation readiness remains available when database telemetry is unavai
 
 test("confirmed-trip copy describes canonical confirmation state without overstating provider identity", () => {
   assert.match(page, /Trips with a provider confirmation in the last 24 hours, including updates\. Not a count of new bookings/);
-  assert.match(page, /It stores verified signed provider confirmations/);
   assert.doesNotMatch(page, /approved external provider sent a valid signed confirmation/);
   assert.match(recent, /No signed provider confirmations have been accepted yet/i);
 });
@@ -116,7 +110,6 @@ test("Confirmed Trips preserves section order and primary toolbar links without 
     "recent-confirmed-trips-title",
     "confirmation-integration-title",
     "confirmation-delivery-health-title",
-    "trips-operational-boundaries",
   ];
   const positions = order.map((id) => page.indexOf('aria-labelledby="' + id + '"'));
   const breakdownPosition = page.indexOf("<ConfirmedTripsBreakdowns operations={operations} />");
@@ -164,13 +157,12 @@ test("Confirmed Trips hides its visible introduction and preserves all sections"
     "<ConfirmedTripsBreakdowns operations={operations} />",
     'aria-labelledby="confirmation-integration-title"',
     'aria-labelledby="confirmation-delivery-health-title"',
-    'aria-labelledby="trips-operational-boundaries"',
   ];
   const positions = markers.map(marker => page.indexOf(marker));
   assert.ok(positions.every(position => position >= 0));
   assert.deepEqual(positions, [...positions].sort((a, b) => a - b));
   assert.equal((page.match(/<ConfirmedTripsBreakdowns operations=\{operations\} \/>/g) || []).length, 1);
-  for (const text of ["No counts are shown", "Monitoring inactive", "Delivery data is unavailable", "Provider handoff ≠ confirmation"]) {
+  for (const text of ["No counts are shown", "Monitoring inactive", "Delivery data is unavailable"]) {
     assert.ok(page.includes(text), "Critical read-only state preserved: " + text);
   }
 });
@@ -178,7 +170,7 @@ test("Confirmed Trips hides its visible introduction and preserves all sections"
 
 test("Confirmed Trips has consistent typography without changing its section order", () => {
   assert.match(page, /<AdminPageShell\s+title="Confirmed Trips"\s+hideHeader>/);
-  for (const id of ["confirmed-trips-overview", "recent-confirmed-trips-title", "confirmation-integration-title", "confirmation-delivery-health-title", "trips-operational-boundaries"]) {
+  for (const id of ["confirmed-trips-overview", "recent-confirmed-trips-title", "confirmation-integration-title", "confirmation-delivery-health-title"]) {
     const heading = page.split("\n").find(line => line.includes('<h2 id="' + id + '"'));
     assert.ok(heading && heading.includes("text-base font-semibold") && heading.includes("tracking-tight"), id);
   }
@@ -218,7 +210,6 @@ test("Confirmed Trips removes only the visible heading and description in both l
 
 test("Confirmed Trips explanations are short without hiding confirmation or unavailable-data safeguards", () => {
   const descriptions = [
-    "Overview of verified confirmed trips.",
     "Latest trips confirmed by travel providers.",
     "Confirmed trips by travel type.",
     "Confirmed trips from each provider.",
@@ -234,8 +225,6 @@ test("Confirmed Trips explanations are short without hiding confirmation or unav
   assert.match(page, /signed server-to-server callbacks from the configured provider/);
   assert.match(page, /A webhook setup does not mean a live feed or provider agreement/);
   assert.match(page, /Duffel search and KAYAK sandbox do not send booking confirmations/);
-  assert.match(page, /It stores verified signed provider confirmations, but does not create bookings, payments, refunds, cancellations, or tickets/);
-  assert.match(page, /Trips have no environment label/);
   assert.match(page, /No counts are shown/);
   assert.match(page, /Delivery data is unavailable\. No counts are assumed/);
   assert.match(breakdowns, /No providers or counts are assumed/);
@@ -304,7 +293,6 @@ test("Confirmed Trips UI preserves honest data, alerts and no-booking boundaries
   assert.match(recent, /No signed provider confirmations have been accepted yet/i);
   assert.match(page, /readiness.webhookCredentialConfigured/);
   assert.match(page, /readiness.currentSearchProviderConfirmationFeed === "none"/);
-  assert.match(page, /Provider handoff ≠ confirmation/);
   assert.doesNotMatch(page, /<form|method:\s*["'](?:POST|PATCH|DELETE)/);
 });
 
@@ -361,22 +349,11 @@ test("Phase 5 keeps both breakdowns visible, compact, and backed by real operati
   assert.match(breakdowns, /item\.lastConfirmationAt/);
   assert.match(breakdowns, /item\.count/);
   assert.doesNotMatch(breakdowns, /min-h-36|items-stretch|opacity-0|md:grid-cols-5/);
-  const boundaryHeading = page.match(/<h2 id="trips-operational-boundaries" className="([^"]+)">Operational boundaries<\/h2>/);
-  assert.ok(boundaryHeading, "Operational boundaries heading must remain visible");
-  const headingClasses = boundaryHeading[1].split(/\s+/);
-  for (const className of ["text-base", "font-semibold", "leading-6", "text-slate-950"]) {
-    assert.ok(headingClasses.includes(className), "Operational boundaries heading must retain " + className);
-  }
-  for (const text of [
-    "Kurioticket is a travel search and referral platform",
-    "It stores verified signed provider confirmations",
-    "does not create bookings, payments, refunds, cancellations, or tickets",
-    "Signed confirmations only",
-    "Provider handoff ≠ confirmation",
-    "No Kurioticket payment record",
-    "Trips have no environment label",
-    "shows records from the connected",
-  ]) assert.ok(page.includes(text), "Important operational limit must remain: " + text);
+  assert.doesNotMatch(page, /Operational boundaries|trips-operational-boundaries/);
+  assert.doesNotMatch(page, /Signed confirmations only|Provider handoff ≠ confirmation|No Kurioticket payment record/);
+  assert.doesNotMatch(page, /Overview of verified confirmed trips|Environment: \{operations\.environment\}|Trips have no environment label/);
+  assert.match(page, /Confirmations require signed server-to-server callbacks from the configured provider/);
+  assert.match(page, /A webhook setup does not mean a live feed or provider agreement/);
 });
 
 test("Previously conditional trip records remain truthful and read-only", () => {
@@ -387,7 +364,6 @@ test("Previously conditional trip records remain truthful and read-only", () => 
   assert.match(page, /Recent trips couldn't be loaded from the database/);
   assert.match(breakdowns, /No counts are assumed/);
   assert.match(breakdowns, /No providers or counts are assumed/);
-  assert.match(page, /Provider handoff ≠ confirmation/);
   assert.doesNotMatch(page, /<form|method:\s*["'](?:POST|PATCH|DELETE)/);
 });
 
@@ -413,7 +389,7 @@ test("Phase 4 readiness is compact, truthful, and exposes all five configuration
 
 test("Phase 4 delivery health keeps distinct inactive, unavailable, and genuine receipt states", () => {
   const start = page.indexOf('<section aria-labelledby="confirmation-delivery-health-title"');
-  const end = page.indexOf('<section aria-labelledby="trips-operational-boundaries"', start);
+  const end = page.indexOf('        </div>\n      </AdminSectionCard>', start);
   const section = page.slice(start, end);
   assert.ok(start >= 0 && end > start);
   assert.match(section, /!readiness\.feedReady \? \(/);

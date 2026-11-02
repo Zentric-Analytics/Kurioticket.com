@@ -45,17 +45,7 @@ export default async function AdminConfirmedTripsPage() {
       <AdminSectionCard className="min-w-0 p-4 sm:p-5 lg:p-6">
         <div className="space-y-4 lg:space-y-5">
           <section aria-labelledby="confirmed-trips-overview">
-            <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
-              <div className="min-w-0">
-                <h2 id="confirmed-trips-overview" className="text-base font-semibold leading-6 tracking-tight text-slate-950">Trip overview</h2>
-                <p className="mt-1 text-[13px] leading-5 text-slate-600">Overview of verified confirmed trips.</p>
-              </div>
-              {operations ? (
-                <span className="shrink-0 rounded-full border border-slate-200 px-2.5 py-1 text-xs font-medium leading-4 text-slate-600">
-                  Environment: {operations.environment}
-                </span>
-              ) : null}
-            </div>
+            <h2 id="confirmed-trips-overview" className="mb-3 text-base font-semibold leading-6 tracking-tight text-slate-950">Trip overview</h2>
             {operations ? (
               <>
                 <div className="grid grid-cols-2 gap-2.5 sm:gap-3 md:grid-cols-3 lg:grid-cols-5">
@@ -201,27 +191,7 @@ export default async function AdminConfirmedTripsPage() {
             )}
           </section>
 
-          <section aria-labelledby="trips-operational-boundaries" className="min-w-0 rounded-xl border border-slate-200 px-4 py-3 sm:px-5 sm:py-4">
-            <div className="flex min-w-0 items-start gap-2.5">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-700">
-                <ShieldCheck size={17} aria-hidden="true" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <h2 id="trips-operational-boundaries" className="text-base font-semibold leading-6 tracking-tight text-slate-950">Operational boundaries</h2>
-                <p className="mt-1 text-[13px] leading-5 text-slate-700">
-                  Kurioticket is a travel search and referral platform. It stores verified signed provider confirmations, but does not create bookings, payments, refunds, cancellations, or tickets.
-                </p>
-              </div>
-            </div>
-            <div className="mt-3 flex flex-wrap gap-1.5 sm:pl-10">
-              <AdminStatusBadge tone="good">Signed confirmations only</AdminStatusBadge>
-              <AdminStatusBadge>Provider handoff ≠ confirmation</AdminStatusBadge>
-              <AdminStatusBadge>No Kurioticket payment record</AdminStatusBadge>
-            </div>
-            <p className="mt-2 text-[13px] leading-5 text-slate-600 sm:pl-10">
-              Trips have no environment label. This page shows records from the connected {operations?.environment ?? "application"} database.
-            </p>
-          </section>
+
 
         </div>
       </AdminSectionCard>
