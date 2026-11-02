@@ -75,7 +75,7 @@ export default async function AdminSupportPage({ searchParams }: { searchParams:
             <>
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[1100px] table-fixed text-left text-[13px]">
-                  <colgroup><col className="w-[23%]" /><col className="w-[18%]" /><col className="w-[10%]" /><col className="w-[14%]" /><col className="w-[8%]" /><col className="w-[14%]" /><col className="w-[13%]" /></colgroup>
+                  <colgroup><col className="w-[18%]" /><col className="w-[29%]" /><col className="w-[9%]" /><col className="w-[12%]" /><col className="w-[8%]" /><col className="w-[12%]" /><col className="w-[12%]" /></colgroup>
                   <thead className="border-b border-[#D8E1EC] bg-white text-[12px] text-[#475569]">
                     <tr>
                       {["Ticket", "Requester", "Priority", "Status", "Messages", "Last updated", "Action"].map((label) => (
@@ -97,7 +97,7 @@ export default async function AdminSupportPage({ searchParams }: { searchParams:
                               {ticket.subject}
                             </Link>
                           </td>
-                          <td className="min-w-0 max-w-[240px] px-3 py-1.5 align-middle">
+                          <td className="min-w-0 px-3 py-1.5 align-middle">
                             <span className="block min-w-0 truncate whitespace-nowrap font-medium text-[#374151]" title={ticket.email || undefined}>
                               {ticket.email || "—"}
                             </span>
