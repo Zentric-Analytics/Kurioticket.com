@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
-import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
+import { AdminSupportToolbar } from "@/components/admin/AdminSupportToolbar";
+import { supportCategoryLabel } from "@/lib/adminSupportInboxNavigation";
 import { formatDateTime } from "@/lib/admin-data";
 import type { AdminSupportPriority, AdminSupportStatus } from "@/services/adminOperationalReadContract";
 import { adminOperationalReads } from "@/services/adminOperationalReadService";
@@ -10,23 +12,6 @@ export const metadata = { title: "Admin Support" };
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 type Query = Record<string, string | string[] | undefined>;
-
-const statuses: Array<{ value: AdminSupportStatus | ""; label: string }> = [
-  { value: "", label: "All tickets" },
-  { value: "OPEN", label: "Open" },
-  { value: "WAITING_ON_TEAM", label: "Awaiting team" },
-  { value: "WAITING_ON_USER", label: "Awaiting customer" },
-  { value: "RESOLVED", label: "Resolved" },
-  { value: "CLOSED", label: "Closed" },
-];
-
-const priorities: Array<{ value: AdminSupportPriority | ""; label: string }> = [
-  { value: "", label: "All priorities" },
-  { value: "LOW", label: "Low" },
-  { value: "NORMAL", label: "Normal" },
-  { value: "HIGH", label: "High" },
-  { value: "URGENT", label: "Urgent" },
-];
 
 const statusStyle: Record<AdminSupportStatus, { label: string; dot: string; text: string }> = {
   OPEN: { label: "Open", dot: "bg-amber-400", text: "text-[#6B4A10]" },
@@ -47,14 +32,6 @@ function scopedParams(raw: Query) {
     if (value) params.set(key, value);
   }
   return params;
-}
-
-function statusHref(raw: Query, status: AdminSupportStatus | "") {
-  const params = scopedParams(raw);
-  params.delete("status");
-  if (status) params.set("status", status);
-  const query = params.toString();
-  return "/admin/support" + (query ? "?" + query : "");
 }
 
 function cursorHref(raw: Query, cursor: string) {
@@ -81,81 +58,15 @@ export default async function AdminSupportPage({ searchParams }: { searchParams:
   // filter submissions use scopedParams without cursor, so they start at page one.
   if (one(raw.cursor)) params.set("cursor", one(raw.cursor));
   if (!params.has("limit")) params.set("limit", "50");
-  // Preserve the current support query contract and creation-time pagination.
-  // Sorting, ticket delivery and lifecycle logic belong to the later workflow phase.
+  // Keep the current activity-based ticket ordering and cursor contract unchanged.
   const result = await adminOperationalReads.support.list(params);
-  const hasFilters = ["status", "priority", "category", "q", "from", "to"].some((key) => Boolean(one(raw[key])));
+  const toolbarQuery = scopedParams(raw).toString();
+  const pageHref = "/admin/support" + (toolbarQuery ? "?" + toolbarQuery : "");
 
   return (
     <AdminPageShell title="Support" hideHeader>
       <div className="mx-auto w-full max-w-[1500px] text-[#374151]">
-        <div className="flex flex-wrap items-end justify-between gap-3 border-b border-[#E5E7EB] px-2 pb-4">
-          <div>
-            <h1 className="text-[18px] font-semibold tracking-tight text-[#111827]">Support</h1>
-            <p className="mt-1 text-[12px] text-[#64748B]">Customer tickets and conversations</p>
-          </div>
-          <span className="text-[12px] text-[#64748B]">Ticket inbox</span>
-        </div>
-
-        <nav aria-label="Support ticket status" className="flex flex-wrap items-center gap-x-5 gap-y-2 border-b border-[#E5E7EB] px-2 pt-3">
-          {statuses.map((item) => {
-            const active = one(raw.status) === item.value;
-            return (
-              <Link
-                key={item.value}
-                href={statusHref(raw, item.value)}
-                aria-current={active ? "page" : undefined}
-                className={
-                  "relative inline-flex items-center pb-2 text-[13px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 " +
-                  (active ? "text-[#004BB8] after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:bg-[#004BB8]" : "text-[#475569] hover:text-[#111827]")
-                }
-              >
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
-
-        <form action="/admin/support" className="border-b border-[#E5E7EB] px-2 py-3">
-          {one(raw.status) ? <input type="hidden" name="status" value={one(raw.status)} /> : null}
-          {one(raw.from) ? <input type="hidden" name="from" value={one(raw.from)} /> : null}
-          {one(raw.to) ? <input type="hidden" name="to" value={one(raw.to)} /> : null}
-          <div className="flex flex-wrap items-end gap-x-5 gap-y-3">
-            <label className="block w-[270px] max-w-full flex-1">
-              <span className="mb-1 block text-[11px] font-medium text-[#64748B]">Find a ticket</span>
-              <input
-                type="search"
-                name="q"
-                defaultValue={one(raw.q)}
-                placeholder="Subject, name or email"
-                className="h-9 w-full min-w-[180px] border-0 border-b border-[#AEB8C6] bg-transparent px-0 text-[13px] font-medium text-[#475569] outline-none placeholder:text-[#9CA3AF] focus:border-[#004BB8]"
-              />
-            </label>
-            <div className="w-[165px] max-w-full"><SearchMonitorSelect label="Priority" name="priority" value={one(raw.priority)} options={priorities} /></div>
-            <label className="block w-[175px] max-w-full">
-              <span className="mb-1 block text-[11px] font-medium text-[#64748B]">Category</span>
-              <input
-                type="text"
-                name="category"
-                defaultValue={one(raw.category)}
-                placeholder="Any category"
-                className="h-9 w-full border-0 border-b border-[#AEB8C6] bg-transparent px-0 text-[13px] font-medium text-[#475569] outline-none placeholder:text-[#9CA3AF] focus:border-[#004BB8]"
-              />
-            </label>
-            <button
-              type="submit"
-              className="h-9 cursor-pointer bg-[#111827] px-4 text-[13px] font-semibold text-white transition-colors hover:bg-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-200"
-            >
-              Apply filters
-            </button>
-            {hasFilters ? (
-              <Link href="/admin/support" className="inline-flex h-9 items-center text-[12px] font-medium text-[#64748B] hover:text-[#004BB8]">
-                Clear filters
-              </Link>
-            ) : null}
-          </div>
-        </form>
-
+        <AdminSupportToolbar query={one(raw.q)} status={one(raw.status)} priority={one(raw.priority)} category={one(raw.category)} pageHref={pageHref}>
         {result.status === "ok" ? (
           result.data.items.length === 0 ? (
             <div className="border-b border-[#E5E7EB] px-2 py-10 text-center">
@@ -165,20 +76,21 @@ export default async function AdminSupportPage({ searchParams }: { searchParams:
           ) : (
             <>
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[960px] border-collapse text-left">
-                  <thead>
-                    <tr className="border-b border-[#E5E7EB] text-[11px] uppercase tracking-[0.08em] text-[#6B7280]">
+                <table className="w-full min-w-[1100px] table-fixed text-left text-[13px]">
+                  <colgroup><col className="w-[25%]" /><col className="w-[20%]" /><col className="w-[10%]" /><col className="w-[14%]" /><col className="w-[8%]" /><col className="w-[11%]" /><col className="w-[12%]" /></colgroup>
+                  <thead className="border-b border-[#D8E1EC] bg-white text-[12px] text-[#475569]">
+                    <tr>
                       {["Ticket", "Customer", "Priority", "Status", "Messages", "Last updated", "Action"].map((label) => (
-                        <th key={label} scope="col" className="px-2 py-3 font-semibold">{label}</th>
+                        <th key={label} scope="col" className="px-3 py-3 font-medium">{label.toUpperCase()}</th>
                       ))}
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="divide-y divide-[#E7ECF5]">
                     {result.data.items.map((ticket) => {
                       const status = statusStyle[ticket.status];
                       return (
-                        <tr key={ticket.id} className="border-b border-[#E5E7EB] text-[13px] text-[#374151] hover:bg-[#FAFAFA] focus-within:bg-[#F8FAFC]">
-                          <td className="max-w-[330px] px-2 py-3 align-top">
+                        <tr key={ticket.id} className="group h-[64px] align-middle text-[13px] text-[#374151] transition-colors hover:bg-[#F8FAFC] focus-within:bg-[#F8FAFC]">
+                          <td className="max-w-[330px] px-3 py-1.5 align-middle">
                             <Link
                               href={ticketHref(ticket.id)}
                               className="block break-words font-semibold text-[#111827] hover:text-[#004BB8] hover:underline focus-visible:outline-[#004BB8]"
@@ -186,31 +98,31 @@ export default async function AdminSupportPage({ searchParams }: { searchParams:
                               {ticket.subject}
                             </Link>
                             <span className="mt-1 block text-[11px] text-[#64748B]">
-                              {ticket.category} · Submitted {formatDateTime(new Date(ticket.createdAt))}
+                              {supportCategoryLabel(ticket.category)} · Submitted {formatDateTime(new Date(ticket.createdAt))}
                             </span>
                           </td>
-                          <td className="max-w-[240px] px-2 py-3 align-top">
+                          <td className="max-w-[240px] px-3 py-1.5 align-middle">
                             <span className="block break-all font-medium text-[#374151]">{ticket.email || "—"}</span>
                             <span className="mt-1 block text-[11px] text-[#64748B]">{ticket.identity.kind === "registered" ? "Registered customer" : "Guest"}</span>
                           </td>
-                          <td className={"whitespace-nowrap px-2 py-3 align-top font-semibold " + priorityStyle(ticket.priority)}>
+                          <td className={"whitespace-nowrap px-3 py-1.5 align-middle font-semibold " + priorityStyle(ticket.priority)}>
                             {ticket.priority.charAt(0) + ticket.priority.slice(1).toLowerCase()}
                           </td>
-                          <td className="whitespace-nowrap px-2 py-3 align-top">
+                          <td className="whitespace-nowrap px-3 py-1.5 align-middle">
                             <span className={"inline-flex items-center gap-1.5 font-medium " + status.text}>
                               <span aria-hidden="true" className={"h-1.5 w-1.5 rounded-full " + status.dot} />
                               {status.label}
                             </span>
                           </td>
-                          <td className="px-2 py-3 align-top">{ticket.messageCount}</td>
-                          <td className="whitespace-nowrap px-2 py-3 align-top">{formatDateTime(new Date(ticket.updatedAt))}</td>
-                          <td className="whitespace-nowrap px-2 py-3 align-top">
+                          <td className="px-3 py-1.5 align-middle">{ticket.messageCount}</td>
+                          <td className="whitespace-nowrap px-3 py-1.5 align-middle">{formatDateTime(new Date(ticket.updatedAt))}</td>
+                          <td className="whitespace-nowrap px-3 py-1.5 align-middle">
                             <Link
                               href={ticketHref(ticket.id)}
                               aria-label={"View ticket: " + ticket.subject}
-                              className="inline-flex items-center gap-1 font-semibold text-[#004BB8] hover:underline focus-visible:outline-[#004BB8]"
+                              className="focus-ring inline-flex h-9 items-center gap-1 whitespace-nowrap rounded-sm px-0.5 text-[13px] font-medium text-[#004BB8] underline-offset-4 transition-colors hover:underline"
                             >
-                              View ticket <span aria-hidden="true">→</span>
+                              View ticket <ChevronRight size={15} aria-hidden="true" />
                             </Link>
                           </td>
                         </tr>
@@ -241,6 +153,7 @@ export default async function AdminSupportPage({ searchParams }: { searchParams:
             </p>
           </div>
         )}
+        </AdminSupportToolbar>
       </div>
     </AdminPageShell>
   );
