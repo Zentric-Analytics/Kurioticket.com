@@ -1,7 +1,8 @@
 import AdminReferralAttributionPage from "@/app/admin/referral-attribution/page";
 import Link from "next/link";
 
-import { ProviderRetestButton } from "@/components/admin/ProviderRetestButton";
+import { Info } from "lucide-react";
+import { ProviderDirectoryTable, type ProviderDirectoryRecord } from "@/components/admin/ProviderDirectoryTable";
 import { formatDateTime, getProviderStatuses } from "@/lib/admin-data";
 import {
   filterProviderOperationalStatuses,
@@ -23,7 +24,8 @@ type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 type StatusTone = "good" | "bad" | "warn" | "neutral";
 
 const tableHeadingClass = "px-3 py-3 text-left text-[12px] font-medium uppercase text-[#475569]";
-const tableCellClass = "px-3 py-3 align-top text-[13px] text-[#020617]";
+const tableCellClass = "px-3 py-3 align-middle text-[13px] text-[#020617]";
+const numberHeadingClass = "px-3 py-3 text-right text-[12px] font-medium uppercase text-[#475569]";
 
 export default async function AdminProvidersPage({ searchParams }: { searchParams: SearchParams }) {
   const raw = await searchParams;
@@ -45,17 +47,71 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
   const visibleOperational = filterProviderOperationalStatuses(operational ?? [], filter);
   const operationalById = new Map(visibleOperational.map(provider => [provider.id, provider]));
   const attention = visibleOperational.filter(requiresAttention);
+  const unscopedTimingProviders = new Set(integrations.filter(item => item.products.length > 1).map(item => item.id));
+  const directoryRows: ProviderDirectoryRecord[] = [
+    ...visibleIntegrations.map(integration => {
+      const status = operationalById.get(integration.id);
+      const unscopedTiming = filter !== "all" && integration.products.length > 1;
+      const timingUnavailable = operational === null ? "Unavailable"
+        : unscopedTiming ? "Not tracked by service" : "Not recorded in the last 24 hours";
+      return {
+        id: "integration-" + integration.id,
+        name: integration.provider,
+        products: integration.products.map(productLabel).join(", "),
+        shortLabel: integration.id === "duffel"
+          ? (integration.environment === "test" ? "Test mode" : "Live mode") : null,
+        readiness: { label: readinessLabel(integration.state), tone: readinessTone(integration.state) },
+        health: operational === null
+          ? { label: "Unavailable", tone: "neutral" as const }
+          : status
+            ? { label: operationalLabel(status.operationalState), tone: operationalTone(status.operationalState) }
+            : { label: "Not monitored", tone: "neutral" as const },
+        lastActivity: displayTime(status?.lastActivityAt ?? null,
+          unscopedTiming ? "Not tracked by service" : operational === null ? "Unavailable" : "No recent activity"),
+        detail: {
+          environment: integration.environment === "test" ? "Test mode"
+            : integration.environment === "live" ? "Live mode" : "Sandbox",
+          configured: integration.configured ? "Yes" : "No",
+          search: integration.searchEnabled ? "Enabled" : "Not enabled",
+          booking: integration.bookingEnabled ? "Enabled" : "Not live yet",
+          externalHandoff: integration.externalHandoffEnabled ? "Enabled" : "Not enabled",
+          lastSuccess: displayTime(status?.lastSuccessAt ?? null, timingUnavailable),
+          lastFailure: displayTime(status?.lastFailureAt ?? null, timingUnavailable),
+          note: integration.note,
+        },
+        canRetestDuffel: integration.id === "duffel",
+      };
+    }),
+    ...catalogues.map(catalogue => ({
+      id: "catalogue-" + catalogue.product.toLowerCase(),
+      name: catalogue.providerName,
+      products: catalogue.product,
+      shortLabel: "Internal catalogue",
+      readiness: {
+        label: catalogue.searchEnabled ? "Search ready" : "Not ready",
+        tone: catalogue.searchEnabled ? "good" as const : "warn" as const,
+      },
+      health: { label: "Internal catalogue", tone: "neutral" as const },
+      lastActivity: displayTime(null, "Not externally monitored"),
+      detail: {
+        environment: catalogue.environment,
+        configured: "Not required",
+        search: catalogue.searchEnabled ? "Enabled" : "Not enabled",
+        booking: catalogue.bookingEnabled ? "Enabled" : "Not live yet",
+        externalHandoff: null,
+        lastSuccess: displayTime(null, "Not externally monitored"),
+        lastFailure: displayTime(null, "Not externally monitored"),
+        note: catalogue.notes,
+      },
+      canRetestDuffel: false,
+    })),
+  ];
 
   return (
     <div className="w-full min-w-0 bg-white text-[#020617]">
-      <header>
-        <h1 className="text-xl font-semibold tracking-tight text-[#020617]">Providers</h1>
-        <p className="mt-1 text-[13px] leading-5 text-[#475569]">
-          Monitor provider availability, search reliability, and external referrals.
-        </p>
-      </header>
+      <h1 className="sr-only">Providers</h1>
 
-      <nav aria-label="Provider reporting sections" className="mt-4 flex min-w-0 gap-6 overflow-x-auto border-b border-[#D8E1EC]">
+      <nav aria-label="Provider reporting sections" className="flex min-w-0 gap-6 overflow-x-auto border-b border-[#D8E1EC]">
         <Link href="/admin/providers" aria-current={!attribution ? "page" : undefined}
           className={"inline-flex h-11 shrink-0 items-center whitespace-nowrap border-b-2 px-1 text-[13px] font-medium text-[#020617] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] " +
             (!attribution ? "border-[#004BB8]" : "border-transparent hover:border-[#D8E1EC]")}>
@@ -97,21 +153,69 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
             ) : attention.length ? (
               <ul className="mt-2 divide-y divide-[#E7ECF5]">
                 {attention.map(provider => (
-                  <li key={provider.id} className="flex min-w-0 flex-wrap items-center justify-between gap-3 py-3">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-[13px] font-semibold text-[#020617]">{provider.provider}</span>
-                        <StatusIndicator value={operationalLabel(provider.operationalState)}
-                          tone={operationalTone(provider.operationalState)} />
+                  <li key={provider.id} className="min-w-0">
+                    <details className="group py-3">
+                      <summary className="flex min-w-0 cursor-pointer list-none flex-wrap items-center justify-between gap-3 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] [&::-webkit-details-marker]:hidden">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="text-[13px] font-semibold text-[#020617]">{provider.provider}</span>
+                            <StatusIndicator value={operationalLabel(provider.operationalState)}
+                              tone={operationalTone(provider.operationalState)} />
+                          </div>
+                          <p className="mt-1 text-[12px] leading-5 text-[#475569]">
+                            {attentionSummary(provider)}
+                          </p>
+                        </div>
+                        <span className="shrink-0 text-[13px] font-medium text-[#004BB8]">
+                          <span className="group-open:hidden">View details ›</span>
+                          <span className="hidden group-open:inline">Hide details ‹</span>
+                        </span>
+                      </summary>
+                      <div className="mt-3 border-l-2 border-[#004BB8] pl-4">
+                        <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-3">
+                          <div>
+                            <dt className="text-[12px] text-[#64748B]">Failure rate</dt>
+                            <dd className="mt-0.5 text-[13px] text-[#020617]">
+                              {formatProviderFailureRatePct(provider.failureRatePct, provider.failedCalls)}
+                            </dd>
+                          </div>
+                          <div>
+                            <dt className="text-[12px] text-[#64748B]">Last success</dt>
+                            <dd className="mt-0.5 text-[13px] text-[#020617]">
+                              <ActivityTime value={provider.lastSuccessAt}
+                                empty={filter !== "all" && unscopedTimingProviders.has(provider.id)
+                                  ? "Not available for this service" : "Not recorded in the last 24 hours"} />
+                            </dd>
+                          </div>
+                          <div>
+                            <dt className="text-[12px] text-[#64748B]">Last failure</dt>
+                            <dd className="mt-0.5 text-[13px] text-[#020617]">
+                              <ActivityTime value={provider.lastFailureAt}
+                                empty={filter !== "all" && unscopedTimingProviders.has(provider.id)
+                                  ? "Not available for this service" : "Not recorded in the last 24 hours"} />
+                            </dd>
+                          </div>
+                        </dl>
+                        <div className="mt-3 divide-y divide-[#E7ECF5] border-t border-[#E7ECF5]">
+                          {provider.serviceBreakdown.map(service => (
+                            <div key={service.service} className="flex min-w-0 flex-wrap items-start justify-between gap-x-5 gap-y-1 py-2.5">
+                              <div className="flex min-w-0 flex-wrap items-center gap-2">
+                                <span className="text-[13px] font-medium text-[#020617]">{serviceLabel(service.service)}</span>
+                                <StatusIndicator value={operationalLabel(service.operationalState)}
+                                  tone={operationalTone(service.operationalState)} />
+                              </div>
+                              <div className="min-w-0 text-[12px] leading-5 text-[#475569] sm:text-right">
+                                <p>{service.attemptedCalls.toLocaleString()} attempted · {service.failedCalls.toLocaleString()} failed</p>
+                                {service.failureReasons.length ? (
+                                  <p>Reasons: {service.failureReasons.map(reason =>
+                                    reason.label + " (" + reason.calls.toLocaleString() + ")").join(", ")}</p>
+                                ) : null}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                      <p className="mt-1 text-[12px] leading-5 text-[#475569]">
-                        {attentionSummary(provider)}
-                      </p>
-                    </div>
-                    <Link href={"#provider-operation-" + provider.id}
-                      className="shrink-0 text-[13px] font-medium text-[#004BB8] hover:underline">
-                      View details ›
-                    </Link>
+                    </details>
                   </li>
                 ))}
               </ul>
@@ -136,98 +240,7 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
                 </Link>
               ))}
             </nav>
-            <div className="mt-2 min-w-0 overflow-x-auto" role="region"
-              aria-labelledby="provider-directory" tabIndex={0}>
-              <table className="w-full min-w-[820px] table-fixed text-left">
-                <caption className="sr-only">
-                  Provider configuration, service coverage, search health, and last activity for the selected product.
-                </caption>
-                <colgroup>
-                  <col className="w-[30%]" />
-                  <col className="w-[16%]" />
-                  <col className="w-[23%]" />
-                  <col className="w-[17%]" />
-                  <col className="w-[14%]" />
-                </colgroup>
-                <thead className="border-b border-[#D8E1EC]">
-                  <tr>
-                    <th scope="col" className={tableHeadingClass}>Provider</th>
-                    <th scope="col" className={tableHeadingClass}>Products</th>
-                    <th scope="col" className={tableHeadingClass}>Readiness</th>
-                    <th scope="col" className={tableHeadingClass}>Health</th>
-                    <th scope="col" className={tableHeadingClass}>Last activity</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#E7ECF5]">
-                  {visibleIntegrations.map(integration => {
-                    const status = operationalById.get(integration.id);
-                    return (
-                      <tr key={integration.id} className="hover:bg-[#F8FAFC]">
-                        <th scope="row" className={tableCellClass + " font-normal"}>
-                          <span className="block text-[13px] font-semibold">{integration.provider}</span>
-                          <span className="mt-1 block text-[12px] leading-5 text-[#64748B]">
-                            {integration.environment} · {integration.note}
-                          </span>
-                        </th>
-                        <td className={tableCellClass}>
-                          {integration.products.map(product => productLabel(product)).join(", ")}
-                        </td>
-                        <td className={tableCellClass}>
-                          <StatusIndicator value={readinessLabel(integration.state)}
-                            tone={readinessTone(integration.state)} />
-                          <span className="mt-1 block text-[12px] leading-5 text-[#64748B]">
-                            Credentials: {integration.configured ? "Yes" : "No"} · Search: {integration.searchEnabled ? "Enabled" : "Not enabled"}
-                          </span>
-                        </td>
-                        <td className={tableCellClass}>
-                          {operational === null
-                            ? <StatusIndicator value="Unavailable" tone="neutral" />
-                            : status
-                              ? <StatusIndicator value={operationalLabel(status.operationalState)}
-                                tone={operationalTone(status.operationalState)} />
-                              : <StatusIndicator value="Not monitored" tone="neutral" />}
-                          <span className="mt-1 block text-[12px] text-[#64748B]">
-                            Booking: {integration.bookingEnabled ? "Enabled" : "Not live yet"}
-                          </span>
-                        </td>
-                        <td className={tableCellClass}>
-                          <ActivityTime value={status?.lastActivityAt ?? null}
-                            empty={filter !== "all" && integration.products.length > 1
-                              ? "Not tracked by service" : "No recent activity"} />
-                        </td>
-                      </tr>
-                    );
-                  })}
-                  {catalogues.map(catalogue => (
-                    <tr key={"catalogue-" + catalogue.product} className="hover:bg-[#F8FAFC]">
-                      <th scope="row" className={tableCellClass + " font-normal"}>
-                        <span className="block text-[13px] font-semibold">{catalogue.providerName}</span>
-                        <span className="mt-1 block text-[12px] leading-5 text-[#64748B]">
-                          {catalogue.environment} · {catalogue.notes}
-                        </span>
-                      </th>
-                      <td className={tableCellClass}>{catalogue.product}</td>
-                      <td className={tableCellClass}>
-                        <StatusIndicator value={catalogue.searchEnabled ? "Search ready" : "Not ready"}
-                          tone={catalogue.searchEnabled ? "good" : "warn"} />
-                        <span className="mt-1 block text-[12px] text-[#64748B]">
-                          No external credentials required
-                        </span>
-                      </td>
-                      <td className={tableCellClass}>
-                        <StatusIndicator value="Internal catalogue" tone="neutral" />
-                        <span className="mt-1 block text-[12px] text-[#64748B]">
-                          Booking: {catalogue.bookingEnabled ? "Enabled" : "Not live yet"}
-                        </span>
-                      </td>
-                      <td className={tableCellClass}>
-                        <span className="text-[12px] text-[#64748B]">Not externally monitored</span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <ProviderDirectoryTable rows={directoryRows} />
           </section>
 
           <section id="operational-performance" aria-labelledby="operational-performance-heading"
@@ -235,15 +248,6 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
             <h2 id="operational-performance-heading" className="text-[15px] font-semibold text-[#020617]">
               Operational performance
             </h2>
-            <p className="mt-1 text-[12px] leading-5 text-[#64748B]">
-              Recorded external provider calls in the current environment over the past 24 hours.
-              Disabled calls are not counted as attempts.
-            </p>
-            {filter !== "all" ? (
-              <p className="mt-1 text-[12px] text-[#64748B]">
-                Product filtering uses service-specific counts. Latency and activity timestamps are shown only when they are available for that service.
-              </p>
-            ) : null}
             {operational === null ? (
               <p className="mt-3 text-[13px] text-[#9A3412]" role="status">
                 Operational provider telemetry is unavailable because the database could not be read.
@@ -261,7 +265,17 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
                     <thead className="border-b border-[#D8E1EC]">
                       <tr>
                         {["Provider", "Attempted", "Successful", "Failed", "Degraded", "Failure rate", "Avg latency"].map(label => (
-                          <th key={label} scope="col" className={tableHeadingClass}>{label}</th>
+                          <th key={label} scope="col"
+                            className={label === "Provider" ? tableHeadingClass : numberHeadingClass}>
+                            {label}
+                            {label === "Attempted" ? (
+                              <span tabIndex={0} className="ml-1 inline-flex align-middle text-[#64748B]"
+                                title="Disabled calls are not counted as attempts."
+                                aria-label="Disabled calls are not counted as attempts.">
+                                <Info size={13} aria-hidden="true" />
+                              </span>
+                            ) : null}
+                          </th>
                         ))}
                       </tr>
                     </thead>
@@ -273,21 +287,15 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
                             <span className="block font-semibold">{provider.provider}</span>
                             <StatusIndicator value={operationalLabel(provider.operationalState)}
                               tone={operationalTone(provider.operationalState)} />
-                            <span className="mt-1 block text-[12px] leading-5 text-[#64748B]">
-                              Last success: <ActivityTime value={provider.lastSuccessAt} empty="Not recorded" />
-                            </span>
-                            <span className="block text-[12px] leading-5 text-[#64748B]">
-                              Last failure: <ActivityTime value={provider.lastFailureAt} empty="Not recorded" />
-                            </span>
                           </th>
-                          <td className={tableCellClass}>{provider.attemptedCalls.toLocaleString()}</td>
-                          <td className={tableCellClass}>{provider.successCalls.toLocaleString()}</td>
-                          <td className={tableCellClass}>{provider.failedCalls.toLocaleString()}</td>
-                          <td className={tableCellClass}>{provider.degradedCalls.toLocaleString()}</td>
-                          <td className={tableCellClass}>
+                          <td className={tableCellClass + " text-right tabular-nums"}>{provider.attemptedCalls.toLocaleString()}</td>
+                          <td className={tableCellClass + " text-right tabular-nums"}>{provider.successCalls.toLocaleString()}</td>
+                          <td className={tableCellClass + " text-right tabular-nums"}>{provider.failedCalls.toLocaleString()}</td>
+                          <td className={tableCellClass + " text-right tabular-nums"}>{provider.degradedCalls.toLocaleString()}</td>
+                          <td className={tableCellClass + " text-right tabular-nums"}>
                             {formatProviderFailureRatePct(provider.failureRatePct, provider.failedCalls)}
                           </td>
-                          <td className={tableCellClass}>
+                          <td className={tableCellClass + " text-right tabular-nums"}>
                             {provider.averageLatencyMs === null ? "—" : provider.averageLatencyMs + " ms"}
                           </td>
                         </tr>
@@ -296,55 +304,81 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
                   </table>
                 </div>
 
-                <h3 className="mt-5 text-[13px] font-semibold text-[#020617]">Search service breakdown</h3>
-                <div className="mt-1 divide-y divide-[#E7ECF5]">
-                  {visibleOperational.flatMap(provider => provider.serviceBreakdown.map(service => (
-                    <div key={provider.id + "-" + service.service} className="grid gap-1 py-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] sm:gap-4">
-                      <div className="min-w-0">
-                        <p className="text-[13px] font-medium text-[#020617]">
-                          {provider.provider} · {serviceLabel(service.service)}
-                        </p>
-                        <StatusIndicator value={operationalLabel(service.operationalState)}
-                          tone={operationalTone(service.operationalState)} />
-                      </div>
-                      <div className="min-w-0 text-[12px] leading-5 text-[#475569]">
-                        <p>
-                          {service.attemptedCalls.toLocaleString()} attempted · {service.successCalls.toLocaleString()} successful · {service.failedCalls.toLocaleString()} failed · {service.disabledCalls.toLocaleString()} disabled · {formatProviderFailureRatePct(service.failureRatePct, service.failedCalls)} failed
-                        </p>
-                        {service.failureReasons.length ? (
-                          <p className="mt-0.5 text-[#64748B]">
-                            Reasons: {service.failureReasons.map(reason => reason.label + " (" + reason.calls.toLocaleString() + ")").join(", ")}
-                          </p>
-                        ) : null}
-                      </div>
-                    </div>
-                  )))}
+                <h3 id="service-breakdown-heading" className="mt-5 text-[13px] font-semibold text-[#020617]">
+                  Search service breakdown
+                </h3>
+                <div className="mt-2 min-w-0 overflow-x-auto" role="region"
+                  aria-labelledby="service-breakdown-heading" tabIndex={0}>
+                  <table className="w-full min-w-[1050px] table-fixed text-[13px]">
+                    <caption className="sr-only">
+                      Search service call counts and classified failure reasons for the selected product.
+                    </caption>
+                    <colgroup>
+                      <col className="w-[20%]" />
+                      <col className="w-[10%]" />
+                      <col className="w-[9%]" />
+                      <col className="w-[9%]" />
+                      <col className="w-[9%]" />
+                      <col className="w-[9%]" />
+                      <col className="w-[10%]" />
+                      <col className="w-[24%]" />
+                    </colgroup>
+                    <thead className="border-b border-[#D8E1EC]">
+                      <tr>
+                        <th scope="col" className={tableHeadingClass}>Provider / service</th>
+                        <th scope="col" className={tableHeadingClass}>Status</th>
+                        {["Attempts", "Success", "Failed", "Disabled", "Failure %"].map(label => (
+                          <th scope="col" key={label} className={numberHeadingClass}>{label}</th>
+                        ))}
+                        <th scope="col" className={tableHeadingClass}>Failure reason</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#E7ECF5]">
+                      {visibleOperational.flatMap(provider => provider.serviceBreakdown.map(service => (
+                        <tr key={provider.id + "-" + service.service} className="hover:bg-[#F8FAFC]">
+                          <th scope="row" className={tableCellClass + " text-left font-normal"}>
+                            <span className="block font-semibold">{provider.provider}</span>
+                            <span className="mt-0.5 block text-[12px] text-[#64748B]">
+                              {serviceLabel(service.service)}
+                            </span>
+                          </th>
+                          <td className={tableCellClass}>
+                            <StatusIndicator value={operationalLabel(service.operationalState)}
+                              tone={operationalTone(service.operationalState)} />
+                          </td>
+                          <td className={tableCellClass + " text-right tabular-nums"}>{service.attemptedCalls.toLocaleString()}</td>
+                          <td className={tableCellClass + " text-right tabular-nums"}>{service.successCalls.toLocaleString()}</td>
+                          <td className={tableCellClass + " text-right tabular-nums"}>{service.failedCalls.toLocaleString()}</td>
+                          <td className={tableCellClass + " text-right tabular-nums"}>{service.disabledCalls.toLocaleString()}</td>
+                          <td className={tableCellClass + " text-right tabular-nums"}>
+                            {service.failureRatePct === null ? "No attempts" :
+                              formatProviderFailureRatePct(service.failureRatePct, service.failedCalls)}
+                          </td>
+                          <td className={tableCellClass + " text-left text-[12px] leading-5 text-[#475569]"}>
+                            {service.failureReasons.length
+                              ? service.failureReasons.map(reason =>
+                                reason.label + " (" + reason.calls.toLocaleString() + ")").join(", ")
+                              : "—"}
+                          </td>
+                        </tr>
+                      )))}
+                    </tbody>
+                  </table>
                 </div>
               </>
             )}
           </section>
 
-          <section aria-labelledby="provider-health-checks" className="py-5">
-            <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-              <div className="min-w-0 max-w-3xl">
-                <h2 id="provider-health-checks" className="text-[15px] font-semibold text-[#020617]">
-                  Provider health checks
-                </h2>
-                <p className="mt-1 text-[13px] leading-5 text-[#475569]">
-                  Retesting records a real Duffel health check and writes an admin audit event.
-                  It does not verify booking readiness.
-                </p>
-                <p className="mt-1 text-[12px] leading-5 text-[#64748B]">
-                  Audited action · Secrets hidden · Booking remains provider-owned.
-                </p>
-              </div>
-              <div className="shrink-0"><ProviderRetestButton /></div>
-            </div>
-          </section>
         </>
       )}
     </div>
   );
+}
+
+function displayTime(value: string | null, empty: string) {
+  return value
+    ? { text: formatDateTime(new Date(value)), iso: value }
+    : { text: empty, iso: null };
 }
 
 function requiresAttention(provider: ProviderOperationalStatus) {

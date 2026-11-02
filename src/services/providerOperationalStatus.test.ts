@@ -149,3 +149,62 @@ test("provider percentages preserve small observed failures without inventing ca
   assert.equal(providerFailureRatePct({ success: 15, failed: 374, degraded: 0, disabled: 2 }), 96.1);
   assert.equal(formatProviderFailureRatePct(96.1, 374), "96.1%");
 });
+
+
+test("manual Duffel provider-health probes never alter customer search health or timestamps", async () => {
+  const flightAt = new Date("2026-10-22T13:00:00Z");
+  const probeAt = new Date("2026-10-22T13:10:00Z");
+  const events = [
+    { service: "flight-search", status: "FAILED", errorMessage: "unauthorized", latencyMs: 700, createdAt: flightAt },
+    { service: "provider-health", status: "SUCCESS", errorMessage: null, latencyMs: 10, createdAt: probeAt },
+  ];
+  type Where = { service?: { in?: string[] }; status?: string | { in?: string[] } };
+  function matching(where: Where) {
+    assert.deepEqual(where.service?.in, ["flight-search"], "customer search metrics must exclude manual health probes");
+    return events.filter(event => {
+      const allowedStatuses = typeof where.status === "string"
+        ? [where.status]
+        : where.status?.in;
+      return where.service?.in?.includes(event.service)
+        && (!allowedStatuses || allowedStatuses.includes(event.status));
+    });
+  }
+  const db = {
+    apiProviderLog: {
+      count: async ({ where }: { where: Where }) => matching(where).length,
+      groupBy: async ({ where }: { where: Where }) =>
+        matching(where).map(event => ({
+          service: event.service,
+          status: event.status,
+          errorMessage: event.errorMessage,
+          _count: { _all: 1 },
+        })),
+      aggregate: async ({ where }: { where: Where }) => {
+        const allowed = matching(where);
+        return { _avg: { latencyMs: allowed.length
+          ? allowed.reduce((total, event) => total + event.latencyMs, 0) / allowed.length
+          : null } };
+      },
+      findFirst: async ({ where }: { where: Where }) => {
+        const latest = matching(where).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0];
+        return latest ? { createdAt: latest.createdAt } : null;
+      },
+    },
+  };
+  const snapshot = await readProviderOperationalSnapshot({
+    database: db as never,
+    readiness: ready,
+    environment: "staging",
+    now: new Date("2026-10-22T14:00:00Z"),
+  });
+  const duffel = snapshot[0];
+  assert.equal(duffel?.attemptedCalls, 1);
+  assert.equal(duffel?.successCalls, 0);
+  assert.equal(duffel?.failedCalls, 1);
+  assert.equal(duffel?.operationalState, "FAILING");
+  assert.equal(duffel?.averageLatencyMs, 700);
+  assert.equal(duffel?.lastSuccessAt, null);
+  assert.equal(duffel?.lastFailureAt, flightAt.toISOString());
+  assert.equal(duffel?.lastActivityAt, flightAt.toISOString());
+  assert.deepEqual(duffel?.serviceBreakdown.map(service => service.service), ["flight-search"]);
+});
