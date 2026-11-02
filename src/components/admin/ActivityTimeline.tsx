@@ -108,7 +108,7 @@ export function ActivityTimeline({ events, nextHref, environment, order = "newes
     </div>
     {!events.length ? <div className="flex min-h-48 flex-col items-center justify-center px-6 py-10 text-center">
       <p className="font-medium">No activity matches your filters</p><span className="sr-only">No activity recorded in this view</span>
-      {clearHref ? <Link className="focus-ring mt-3 inline-block text-sm text-[var(--primary)] underline" href={clearHref}>Clear filters</Link> : null}
+      {clearHref ? <Link className="focus-ring mt-3 inline-block text-sm text-[#004BB8] underline" href={clearHref}>Clear filters</Link> : null}
     </div> : <div className="space-y-6">
       {days.map(day => <section key={day.date} aria-label={"Activity on " + dayLabel(new Date(day.date + "T12:00:00Z"))}>
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
@@ -127,7 +127,7 @@ export function ActivityTimeline({ events, nextHref, environment, order = "newes
                   <span className="min-w-0 truncate">{title}</span>
                   <span className="shrink-0 text-xs font-normal text-[#475569]">{group.events.length} events</span>
                 </div>
-                {href ? <Link href={href} aria-label={"View journey for " + title} className="focus-ring inline-flex shrink-0 items-center gap-1 rounded-sm py-1 text-[13px] font-medium text-[var(--primary)] hover:underline">View journey<ChevronRight size={14} aria-hidden="true" /></Link> : null}
+                {href ? <Link href={href} aria-label={"View journey for " + title} className="focus-ring inline-flex shrink-0 items-center gap-1 rounded-sm py-1 text-[13px] font-medium text-[#004BB8] hover:underline">View journey<ChevronRight size={14} aria-hidden="true" /></Link> : null}
               </div> : null}
               <ol className={"divide-y divide-[#E2E8F0] pl-3 sm:pl-8 " + (group.journeyId ? "border-t border-[#E2E8F0]" : "")}>
                 {group.events.map(row => <RecordedEvent key={row.id} row={row}/>)}
@@ -137,6 +137,6 @@ export function ActivityTimeline({ events, nextHref, environment, order = "newes
         </div>
       </section>)}
     </div>}
-    {nextHref ? <div className="pt-4"><Link className="focus-ring text-sm font-medium text-[var(--primary)] hover:underline" href={nextHref}>{order === "oldest" ? "Load newer activity" : "Load older activity"} <ChevronRight size={15} className="inline" aria-hidden="true"/></Link></div> : null}
+    {nextHref ? <div className="pt-4"><Link className="focus-ring text-sm font-medium text-[#004BB8] hover:underline" href={nextHref}>{order === "oldest" ? "Load newer activity" : "Load older activity"} <ChevronRight size={15} className="inline" aria-hidden="true"/></Link></div> : null}
   </section>;
 }

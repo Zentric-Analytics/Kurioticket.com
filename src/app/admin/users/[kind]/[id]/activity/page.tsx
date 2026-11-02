@@ -194,34 +194,32 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
         </div>
       </section>
 
-      <section aria-label="Activity summary" className="min-w-0 border-y border-[#E2E8F0] py-3">
-        <div className={activityColumns + " lg:items-start"}>
-          <div className="flex min-w-0 flex-wrap items-center gap-2">
-            <h2 className="text-base font-semibold">Activity summary</h2>
-          </div>
-          <div className="grid min-w-0 grid-cols-[1.5fr_0.95fr_1.1fr] gap-1 sm:grid-cols-3 sm:gap-2 lg:contents">
-            {([
-              { label: "Searches", count: data.summary.searches },
-              { label: "Results viewed", count: data.summary.resultsViewed },
-              { label: "Provider handoffs", count: data.summary.providerHandoffs },
-            ]).map(({label,count}) => <div key={label} className="min-w-0 border-l border-[#E2E8F0] pl-2 sm:pl-5">
-              <span data-testid="activity-metric-label" className="block text-[12px] font-normal text-[#64748B] lg:whitespace-nowrap">{label}</span>
-              <span data-testid="activity-metric-value" className="mt-1 block text-[16px] font-medium leading-6 tabular-nums text-[#0F172A]">{count}</span>
-              {label === "Searches" && data.summary.searchProducts ? <div aria-label="Searches by product"
-                className="mt-1 flex flex-wrap items-center gap-x-1 gap-y-1 text-[11px] sm:gap-x-3 sm:text-xs leading-4 text-[#64748B]">
-                {([
-                  { label: "Flights", count: data.summary.searchProducts.flights, Icon: Plane },
-                  { label: "Hotels", count: data.summary.searchProducts.hotels, Icon: Building2 },
-                  { label: "Cars", count: data.summary.searchProducts.cars, Icon: CarFront },
-                ]).map(({label, count, Icon}) => <span key={label} aria-label={label + ": " + count} title={label}
-                  className="inline-flex items-center gap-0.5 tabular-nums sm:gap-1"><Icon size={12} aria-hidden="true" />{count}</span>)}
-                {data.summary.searchProducts.other > 0 ? <span aria-label={"Other or unknown: " + data.summary.searchProducts.other}>
-                  Other: {data.summary.searchProducts.other}
-                </span> : null}
-              </div> : null}
-            </div>)}
-          </div>
-          <div aria-hidden="true" className="hidden lg:block" />
+      <section aria-label="Activity summary" className="min-w-0 border-y border-[#E2E8F0] py-4">
+        <div data-testid="activity-metrics-grid" className="grid min-w-0 grid-cols-2 gap-x-4 gap-y-5 sm:grid-cols-3 lg:grid-cols-5 lg:gap-x-0">
+          {([
+            { label: "Searches", count: data.summary.searches },
+            { label: "Results viewed", count: data.summary.resultsViewed },
+            { label: "Offers selected", count: data.summary.offersSelected },
+            { label: "Provider handoffs", count: data.summary.providerHandoffs },
+            { label: "Journeys tracked", count: data.summary.journeysTracked },
+          ]).map(({label,count}, index) => <div key={label} data-testid="activity-metric"
+            className={"min-w-0 pr-2 sm:pr-3 " +
+              (index ? "lg:border-l lg:border-[#E2E8F0] lg:pl-5" : "lg:pl-0")}>
+            <span data-testid="activity-metric-label" className="block text-[12px] font-normal text-[#64748B] lg:whitespace-nowrap">{label}</span>
+            <span data-testid="activity-metric-value" className="mt-1 block text-[16px] font-medium leading-6 tabular-nums text-[#0F172A]">{count}</span>
+            {label === "Searches" && data.summary.searchProducts ? <div aria-label="Searches by product"
+              className="mt-1 flex flex-wrap items-center gap-x-1 gap-y-1 text-[11px] sm:gap-x-3 sm:text-xs leading-4 text-[#64748B]">
+              {([
+                { label: "Flights", count: data.summary.searchProducts.flights, Icon: Plane },
+                { label: "Hotels", count: data.summary.searchProducts.hotels, Icon: Building2 },
+                { label: "Cars", count: data.summary.searchProducts.cars, Icon: CarFront },
+              ]).map(({label, count, Icon}) => <span key={label} aria-label={label + ": " + count} title={label}
+                className="inline-flex items-center gap-0.5 tabular-nums sm:gap-1"><Icon size={12} aria-hidden="true" />{count}</span>)}
+              {data.summary.searchProducts.other > 0 ? <span aria-label={"Other or unknown: " + data.summary.searchProducts.other}>
+                Other: {data.summary.searchProducts.other}
+              </span> : null}
+            </div> : null}
+          </div>)}
         </div>
       </section>
 
