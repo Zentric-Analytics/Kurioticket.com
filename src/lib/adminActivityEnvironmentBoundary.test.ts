@@ -36,13 +36,17 @@ test("Activity summary counts filter-wide records instead of paginated timeline 
   assert.match(reader, /tx\.journeyEvent\.groupBy\(/);
   assert.match(reader, /tx\.searchHistory\.count\(\{ where: searchWhere \}\)/);
   assert.match(reader, /tx\.redirectLog\.count\(\{ where: handoffWhere \}\)/);
+  assert.match(reader, /tx\.searchJourney\.count\(/);
+  assert.match(reader, /events: \{ some: validEvents \}/);
   assert.match(reader, /Prisma\.TransactionIsolationLevel\.RepeatableRead/);
   assert.match(reader, /canonicalForVisitor\(visitorId\)/);
   assert.match(reader, /visitorIds\.map\(visitorId => canonicalForVisitor\(visitorId\)\)/);
   assert.match(reader, /const summary: IdentityActivitySummary/);
   assert.match(page, /data\.summary\.searches/);
   assert.match(page, /data\.summary\.resultsViewed/);
+  assert.match(page, /data\.summary\.offersSelected/);
   assert.match(page, /data\.summary\.providerHandoffs/);
+  assert.match(page, /data\.summary\.journeysTracked/);
   assert.doesNotMatch(page, /Counts reflect loaded events only\./);
 });
 
@@ -78,5 +82,9 @@ test("User Activity renders exactly two nested white workspace cards with a flat
     "Activity summary uses no colored background or metric dots");
   assert.match(summaryMarkup, /data\.summary\.searches/);
   assert.match(summaryMarkup, /data\.summary\.resultsViewed/);
+  assert.match(summaryMarkup, /data\.summary\.offersSelected/);
   assert.match(summaryMarkup, /data\.summary\.providerHandoffs/);
+  assert.match(summaryMarkup, /data\.summary\.journeysTracked/);
+  assert.match(summaryMarkup, /lg:grid-cols-5/);
+  assert.doesNotMatch(summaryMarkup, /<h2/, "the five metrics replace the visible summary heading");
 });
