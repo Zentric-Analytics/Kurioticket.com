@@ -70,7 +70,9 @@ export async function loadAdminIdentityActivity(kind, id, filters, cursor, readM
     },
     searches: allMatched.filter(row => row.stage === "SEARCH_COMPLETED").length,
     resultsViewed: allMatched.filter(row => row.stage === "RESULTS_VIEWED").length,
+    offersSelected: allMatched.filter(row => row.stage === "OFFER_SELECTED").length,
     providerHandoffs: allMatched.filter(row => row.stage === "PROVIDER_HANDOFF_STARTED").length,
+    journeysTracked: new Set(allMatched.map(row => row.journeyId).filter(Boolean)).size,
   };
   const currentRows = id === "qa-no-events-0001" ? [] : recorded.filter(matches);
   const olderRows = id === "qa-no-events-0001" ? [] : olderRecorded.filter(matches);
