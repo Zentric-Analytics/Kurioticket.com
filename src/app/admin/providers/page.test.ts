@@ -79,11 +79,18 @@ test("admin navigation restores Providers and the original product destinations"
   assert.equal(adminNavigation.some((item) => item.href === "/admin/cars" && item.label === "Cars"), true);
 });
 
-test("product pages retain truthful metasearch readiness views", () => {
+test("product pages retain truthful metasearch and provider health views", () => {
   assert.match(flightsPage, /title="Flight Operations"/);
-  assert.match(hotelsPage, /title="Hotel Search Readiness"/);
-  assert.match(carsPage, /title="Car Search Readiness"/);
-  for (const source of [flightsPage, hotelsPage, carsPage]) assert.match(source, /AdminProviderStatusCard/);
+  assert.match(hotelsPage, /title="Hotel Operations"/);
+  assert.match(carsPage, /title="Car Operations"/);
+  assert.match(flightsPage, /AdminProviderStatusCard/);
+  // Hotel and Car Operations now own their own provider-health sections,
+  // rather than reusing the older generic readiness card.
+  for (const source of [hotelsPage, carsPage]) {
+    assert.match(source, /getProviderIntegrationStatuses/);
+    assert.match(source, /providerHealth\.find/);
+    assert.match(source, /AdminSectionCard/);
+  }
   for (const source of [flightsPage, hotelsPage, carsPage]) {
     assert.match(source, /provider-owned/i);
     assert.doesNotMatch(source, /Booking not live|production booking workflow|booking actions/i);
