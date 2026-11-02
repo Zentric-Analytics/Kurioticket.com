@@ -73,7 +73,7 @@ test("Flight Status keeps safety and environment guidance within readiness, not 
   assert.match(readinessCopy, /Searches, handoffs and confirmations do not prove live status/);
   assert.match(readinessCopy, /Status records have no environment label/);
   assert.match(readinessCopy, /connected \{operations\?\.environment \?\? "application"\} database/);
-  assert.equal((page.match(/<AdminSectionCard className="min-w-0 p-4 sm:p-5">/g) || []).length, 3);
+  assert.equal((page.match(/<AdminSectionCard className="min-w-0 p-3 shadow-none sm:p-4">/g) || []).length, 5);
   assert.match(page, /<AdminSectionCard className="min-w-0 space-y-3 p-4 sm:p-5 lg:p-6">/);
   assert.match(page, /grid w-full min-w-\[960px\] grid-cols-6 gap-2/);
   assert.match(page, /No zero values were invented/);
@@ -114,7 +114,7 @@ test("all Flight Status sections are present regardless of telemetry availabilit
   }
   assert.doesNotMatch(page, /className="[^"]*(?:\bhidden\b|\binvisible\b|\bopacity-0\b)/);
 
-  const distributionStart = page.indexOf('<div className="grid items-start gap-3 lg:grid-cols-2">');
+  const distributionStart = page.indexOf('<div className="grid min-w-0 items-stretch gap-3 lg:grid-cols-2">');
   const awaitingStart = page.indexOf('operations.awaitingFirstSnapshot.length ? (', distributionStart);
   assert.ok(distributionStart >= 0 && awaitingStart > distributionStart);
   const summaryPanels = page.slice(distributionStart, awaitingStart);
@@ -124,7 +124,7 @@ test("all Flight Status sections are present regardless of telemetry availabilit
   assert.match(summaryPanels, /Flight-status distribution is unavailable/);
   assert.match(summaryPanels, /No counts are assumed/);
   assert.match(summaryPanels, /operations\.statusDistribution\.length/);
-  assert.doesNotMatch(page, /\{operations \? \(\s*<div className="grid items-start gap-3 lg:grid-cols-2">/);
+  assert.doesNotMatch(page, /\{operations \? \(\s*<div className="grid min-w-0 items-stretch gap-3 lg:grid-cols-2">/);
 });
 
 test("latest snapshots and awaiting-first-snapshot sections never disappear at zero or on failure", () => {
@@ -134,10 +134,10 @@ test("latest snapshots and awaiting-first-snapshot sections never disappear at z
   assert.match(page, /Count awaiting first status is unknown/);
   assert.match(page, /operations\.recentSnapshots\.length/);
   assert.match(page, /operations\.recentSnapshots\.map/);
-  assert.match(page, /<AdminEmptyState[\s\S]*?title="Latest trusted flight-status snapshots"/);
+  assert.match(page, /<h2[^>]*>Latest trusted flight-status snapshots<\/h2>/);
   assert.match(page, /No verified flight-status snapshots recorded yet/);
   assert.match(page, /Recent flight-status data unavailable/);
-  assert.match(page, /<AdminEmptyState title="Awaiting first status snapshot"/);
+  assert.match(page, /<h2[^>]*>Awaiting first status snapshot<\/h2>/);
   assert.match(page, /No status feed is configured/);
   assert.match(page, /No zero values were invented/);
   assert.doesNotMatch(page, /operations\.recentSnapshots\.length \? \([\s\S]*?\) : null\s*\) : null/);
@@ -145,7 +145,7 @@ test("latest snapshots and awaiting-first-snapshot sections never disappear at z
 
 test("Flight Status overview follows the planned responsive page hierarchy", () => {
   assert.match(page, /grid w-full min-w-\[960px\] grid-cols-6 gap-2/);
-  assert.match(page, /grid items-start gap-3 lg:grid-cols-2/);
+  assert.match(page, /grid min-w-0 items-stretch gap-3 lg:grid-cols-2/);
   const order = ["Flight status overview", "Status-feed readiness", "Latest status distribution",
     "Snapshot scope", "Awaiting first status snapshot", "Latest trusted flight-status snapshots"];
   const locations = order.map(label => page.indexOf(">" + label + "</h2>"));
@@ -243,6 +243,45 @@ test("short descriptions preserve source and data-availability boundaries", () =
   assert.match(page, /operations\.statusDistribution\.map/);
   assert.match(page, /operations\.awaitingFirstSnapshot\.map/);
   assert.match(page, /operations\.recentSnapshots\.map/);
+});
+
+
+test("Snapshot Scope is compact, readable and aligned with the distribution section", () => {
+  const start = page.indexOf('<div className="grid min-w-0 items-stretch gap-3 lg:grid-cols-2">');
+  const end = page.indexOf('>Awaiting first status snapshot</h2>', start);
+  assert.ok(start >= 0 && end > start);
+  const paired = page.slice(start, end);
+  assert.equal((paired.match(/<AdminSectionCard className="min-w-0 p-3 shadow-none sm:p-4">/g) || []).length, 2);
+  const scope = paired.slice(paired.indexOf(">Snapshot scope</h2>"));
+  assert.match(scope, /mt-1 text-\[13px\] leading-5 text-slate-600/);
+  assert.match(scope, /mt-2 flex min-w-0 flex-wrap gap-1\.5/);
+  assert.match(scope, /One latest primary-flight status per confirmed trip/);
+  assert.match(scope, /Return flights and connections are not tracked separately/);
+  assert.match(scope, /Provider supplied only/);
+  assert.match(scope, /Latest snapshot only/);
+  assert.match(scope, /No segment history yet/);
+  assert.doesNotMatch(scope, /\bmt-4\b|\bfont-black\b|\bshadow-md\b/);
+});
+
+test("Flight Status uses consistent compact sections, balanced readiness facts and honest empty states", () => {
+  assert.equal((page.match(/<AdminSectionCard className="min-w-0 p-3 shadow-none sm:p-4">/g) || []).length, 5);
+  assert.match(page, /grid min-w-0 items-stretch gap-3 lg:grid-cols-2/);
+  assert.match(page, /grid min-w-0 gap-2 sm:grid-cols-2 lg:grid-cols-3/);
+  assert.match(page, /mt-2 grid min-w-0 gap-2 sm:grid-cols-2/);
+  assert.match(page, /shrink-0 whitespace-nowrap/);
+  assert.equal((page.match(/<Fact label=/g) || []).length, 5);
+  assert.equal((page.match(/<AdminDataTable/g) || []).length, 2);
+  assert.equal((page.match(/<p role="status" className="mt-2 rounded-lg bg-slate-50 px-3 py-2\.5/g) || []).length, 6);
+  assert.doesNotMatch(page, /<AdminEmptyState/);
+  assert.match(page, /operations\.awaitingFirstSnapshot\.map/);
+  assert.match(page, /operations\.recentSnapshots\.map/);
+  assert.match(page, /Count awaiting first status is unknown/);
+  assert.match(page, /Recent flight-status data unavailable\. No records are assumed/);
+  assert.match(page, /Flight-status distribution is unavailable\. No counts are assumed/);
+  assert.match(page, /No zero values were invented/);
+  assert.match(page, /getFlightStatusOperationsSnapshot\(undefined, readiness\)/);
+  assert.match(page, /grid w-full min-w-\[960px\] grid-cols-6 gap-2/);
+  assert.doesNotMatch(page, /className="[^"]*(?:\bhidden\b|\binvisible\b|\bopacity-0\b)/);
 });
 
 test("Flight Status uses a compact, right-aligned Confirmed trips toolbar and keeps Flight Search in Search Activity", () => {

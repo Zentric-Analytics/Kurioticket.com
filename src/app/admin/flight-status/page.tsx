@@ -2,7 +2,6 @@ import Link from "next/link";
 
 import {
   AdminDataTable,
-  AdminEmptyState,
   AdminPageShell,
   AdminSectionCard,
   AdminStatusBadge,
@@ -48,83 +47,91 @@ export default async function AdminFlightStatusPage() {
           )}
         </section>
 
-        <AdminSectionCard className="min-w-0 p-4 sm:p-5">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-            <div>
+        <AdminSectionCard className="min-w-0 p-3 shadow-none sm:p-4">
+          <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
+            <div className="min-w-0 flex-1">
               <h2 className="text-base font-semibold leading-6 tracking-tight text-slate-950">Status-feed readiness</h2>
-              <p className="mt-1 text-sm leading-6 text-slate-600">
+              <p className="mt-0.5 text-[13px] leading-5 text-slate-600">
                 Only the configured provider can send signed updates. Duffel search and KAYAK sandbox do not supply this feed.
               </p>
             </div>
-            <AdminStatusBadge tone={readiness.feedReady ? "good" : "warn"}>
-              {readiness.feedReady ? "Status feed configured" : "Status feed not configured"}
-            </AdminStatusBadge>
+            <div className="shrink-0 whitespace-nowrap">
+              <AdminStatusBadge tone={readiness.feedReady ? "good" : "warn"}>
+                {readiness.feedReady ? "Status feed configured" : "Status feed not configured"}
+              </AdminStatusBadge>
+            </div>
           </div>
-          <div className="mt-3 grid gap-2.5 sm:grid-cols-2 md:grid-cols-3">
-            <Fact label="Endpoint" value="POST /api/internal/flight-status/updates" />
+          <div className="mt-3 grid min-w-0 gap-2 sm:grid-cols-2 lg:grid-cols-3">
             <Fact label="Configured provider" value={readiness.providerName || "None"} />
             <Fact label="Webhook credential" value={readiness.webhookCredentialConfigured ? "Configured" : "Not configured"} />
-            <Fact label="Provider binding" value={readiness.credentialModel === "single_provider_bound_secret" ? "Single provider + dedicated secret" : "Unknown"} />
             <Fact label="Current search-provider status feed" value={readiness.currentSearchProviderStatusFeed === "none" ? "None" : "Configured"} />
           </div>
-          <p className="mt-3 text-sm leading-6 text-slate-600">
-            Each signed update must name the configured provider. A configured feed does not mean updates are arriving.
-          </p>
-          <p className="mt-2 text-xs leading-5 text-slate-600">
-            Live status requires a valid signed update from the configured provider for a confirmed flight. Searches, handoffs and confirmations do not prove live status.
-          </p>
-          <p className="mt-1 text-xs leading-5 text-slate-500">
-            Status records have no environment label. This page uses the connected {operations?.environment ?? "application"} database.
-          </p>
+          <div className="mt-2 grid min-w-0 gap-2 sm:grid-cols-2">
+            <Fact label="Endpoint" value="POST /api/internal/flight-status/updates" />
+            <Fact label="Provider binding" value={readiness.credentialModel === "single_provider_bound_secret" ? "Single provider + dedicated secret" : "Unknown"} />
+          </div>
+          <div className="mt-3 space-y-1.5">
+            <p className="text-[13px] leading-5 text-slate-600">
+              Each signed update must name the configured provider. A configured feed does not mean updates are arriving.
+            </p>
+            <p className="text-xs leading-5 text-slate-600">
+              Live status requires a valid signed update from the configured provider for a confirmed flight. Searches, handoffs and confirmations do not prove live status.
+            </p>
+            <p className="text-xs leading-5 text-slate-500">
+              Status records have no environment label. This page uses the connected {operations?.environment ?? "application"} database.
+            </p>
+          </div>
         </AdminSectionCard>
 
-        {/* Keep both informational panels present even when the data query fails. */}
-        <div className="grid items-start gap-3 lg:grid-cols-2">
-            <AdminSectionCard className="min-w-0 p-4 sm:p-5">
-              <h2 className="text-base font-semibold leading-6 tracking-tight text-slate-950">Latest status distribution</h2>
-              <p className="mt-1 text-sm leading-6 text-slate-600">Latest stored statuses from the configured provider.</p>
-              {!operations ? (
-                <p role="status" className="mt-4 rounded-xl bg-slate-50 p-3 text-sm leading-6 text-slate-600">
-                  Flight-status distribution is unavailable. No counts are assumed.
-                </p>
-              ) : operations.statusDistribution.length ? (
-                <div className="mt-4 divide-y divide-slate-100">
-                  {operations.statusDistribution.map((item) => (
-                    <div key={item.status} className="flex items-center justify-between gap-3 py-3">
-                      <span className="font-semibold text-slate-900">{item.status}</span>
-                      <AdminStatusBadge tone={item.status === "DELAYED" || item.status === "CANCELLED" ? "warn" : item.status === "UNKNOWN" ? "neutral" : "info"}>{item.count}</AdminStatusBadge>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p role="status" className="mt-4 rounded-xl bg-slate-50 p-3 text-sm text-slate-600">
-                  {readiness.feedReady
-                    ? "No verified flight-status snapshots recorded yet."
-                    : "No status feed is configured; no snapshots to show."}
-                </p>
-              )}
-            </AdminSectionCard>
-
-            <AdminSectionCard className="min-w-0 p-4 sm:p-5">
-              <h2 className="text-base font-semibold leading-6 tracking-tight text-slate-950">Snapshot scope</h2>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
-                One latest primary-flight status per confirmed trip. Return flights and connections are not tracked separately.
+        {/* Keep monitoring cards visible when data is unavailable. */}
+        <div className="grid min-w-0 items-stretch gap-3 lg:grid-cols-2">
+          <AdminSectionCard className="min-w-0 p-3 shadow-none sm:p-4">
+            <h2 className="text-base font-semibold leading-6 tracking-tight text-slate-950">Latest status distribution</h2>
+            <p className="mt-0.5 text-[13px] leading-5 text-slate-600">Latest stored statuses from the configured provider.</p>
+            {!operations ? (
+              <p role="status" className="mt-2 rounded-lg bg-slate-50 px-3 py-2.5 text-[13px] leading-5 text-slate-600">
+                Flight-status distribution is unavailable. No counts are assumed.
               </p>
-              <div className="mt-4 flex flex-wrap gap-2">
-                <AdminStatusBadge tone="good">Provider supplied only</AdminStatusBadge>
-                <AdminStatusBadge>Latest snapshot only</AdminStatusBadge>
-                <AdminStatusBadge>No segment history yet</AdminStatusBadge>
+            ) : operations.statusDistribution.length ? (
+              <div className="mt-2 divide-y divide-slate-100">
+                {operations.statusDistribution.map((item) => (
+                  <div key={item.status} className="flex min-w-0 items-center justify-between gap-3 py-2">
+                    <span className="min-w-0 break-words text-[13px] font-medium leading-5 text-slate-800">{item.status}</span>
+                    <AdminStatusBadge tone={item.status === "DELAYED" || item.status === "CANCELLED" ? "warn" : item.status === "UNKNOWN" ? "neutral" : "info"}>{item.count}</AdminStatusBadge>
+                  </div>
+                ))}
               </div>
-            </AdminSectionCard>
+            ) : (
+              <p role="status" className="mt-2 rounded-lg bg-slate-50 px-3 py-2.5 text-[13px] leading-5 text-slate-600">
+                {readiness.feedReady
+                  ? "No verified flight-status snapshots recorded yet."
+                  : "No status feed is configured; no snapshots to show."}
+              </p>
+            )}
+          </AdminSectionCard>
+
+          <AdminSectionCard className="min-w-0 p-3 shadow-none sm:p-4">
+            <h2 className="text-base font-semibold leading-6 tracking-tight text-slate-950">Snapshot scope</h2>
+            <p className="mt-1 text-[13px] leading-5 text-slate-600">
+              One latest primary-flight status per confirmed trip. Return flights and connections are not tracked separately.
+            </p>
+            <div className="mt-2 flex min-w-0 flex-wrap gap-1.5">
+              <AdminStatusBadge tone="good">Provider supplied only</AdminStatusBadge>
+              <AdminStatusBadge>Latest snapshot only</AdminStatusBadge>
+              <AdminStatusBadge>No segment history yet</AdminStatusBadge>
+            </div>
+          </AdminSectionCard>
         </div>
 
-        {operations ? (
-          operations.awaitingFirstSnapshot.length ? (
-            <div>
-              <div className="mb-3">
-                <h2 className="text-base font-semibold leading-6 tracking-tight text-slate-950">Awaiting first status snapshot</h2>
-                <p className="mt-1 text-sm text-slate-600">Provider-matched flights awaiting their first status.</p>
-              </div>
+        <AdminSectionCard className="min-w-0 p-3 shadow-none sm:p-4">
+          <h2 className="text-base font-semibold leading-6 tracking-tight text-slate-950">Awaiting first status snapshot</h2>
+          <p className="mt-0.5 text-[13px] leading-5 text-slate-600">Provider-matched flights awaiting their first status.</p>
+          {!operations ? (
+            <p role="status" className="mt-2 rounded-lg bg-slate-50 px-3 py-2.5 text-[13px] leading-5 text-slate-600">
+              Flight-status data unavailable. Count awaiting first status is unknown.
+            </p>
+          ) : operations.awaitingFirstSnapshot.length ? (
+            <div className="mt-3 min-w-0">
               <AdminDataTable
                 columns={["Departure", "Customer", "Route", "Provider", "Reference", "Confirmed"]}
                 rows={operations.awaitingFirstSnapshot.map((trip) => ({
@@ -141,19 +148,24 @@ export default async function AdminFlightStatusPage() {
               />
             </div>
           ) : (
-            <AdminEmptyState title="No flights awaiting a first snapshot" message={readiness.feedReady ? "No provider-matched flights are awaiting a first status." : "No matching flights are waiting; the status feed is not ready."} />
-          )
-        ) : (
-          <AdminEmptyState title="Awaiting first status snapshot" message="Flight-status data unavailable. Count awaiting first status is unknown." />
-        )}
+            <p role="status" className="mt-2 rounded-lg bg-slate-50 px-3 py-2.5 text-[13px] leading-5 text-slate-600">
+              <span className="font-medium text-slate-800">No flights awaiting a first snapshot.</span>{" "}
+              {readiness.feedReady
+                ? "No provider-matched flights are awaiting a first status."
+                : "No matching flights are waiting; the status feed is not ready."}
+            </p>
+          )}
+        </AdminSectionCard>
 
-        {operations ? (
-          operations.recentSnapshots.length ? (
-            <div>
-              <div className="mb-3">
-                <h2 className="text-base font-semibold leading-6 tracking-tight text-slate-950">Latest trusted flight-status snapshots</h2>
-                <p className="mt-1 text-sm text-slate-600">Latest verified statuses. This is not an event history.</p>
-              </div>
+        <AdminSectionCard className="min-w-0 p-3 shadow-none sm:p-4">
+          <h2 className="text-base font-semibold leading-6 tracking-tight text-slate-950">Latest trusted flight-status snapshots</h2>
+          <p className="mt-0.5 text-[13px] leading-5 text-slate-600">Latest verified statuses. This is not an event history.</p>
+          {!operations ? (
+            <p role="status" className="mt-2 rounded-lg bg-slate-50 px-3 py-2.5 text-[13px] leading-5 text-slate-600">
+              Recent flight-status data unavailable. No records are assumed.
+            </p>
+          ) : operations.recentSnapshots.length ? (
+            <div className="mt-3 min-w-0">
               <AdminDataTable
                 columns={["Observed", "Flight", "Route", "Status", "Freshness", "Customer", "Reference"]}
                 rows={operations.recentSnapshots.map((snapshot) => ({
@@ -171,17 +183,13 @@ export default async function AdminFlightStatusPage() {
               />
             </div>
           ) : (
-            <AdminEmptyState
-              title="Latest trusted flight-status snapshots"
-              message={readiness.feedReady
+            <p role="status" className="mt-2 rounded-lg bg-slate-50 px-3 py-2.5 text-[13px] leading-5 text-slate-600">
+              {readiness.feedReady
                 ? "No verified flight-status snapshots recorded yet."
                 : "No status feed is configured; no snapshots to show."}
-            />
-          )
-        ) : (
-          <AdminEmptyState title="Latest trusted flight-status snapshots" message="Recent flight-status data unavailable. No records are assumed." />
-        )}
-
+            </p>
+          )}
+        </AdminSectionCard>
       </AdminSectionCard>
     </AdminPageShell>
   );
@@ -224,9 +232,9 @@ function FlightStatusMetric({
 
 function Fact({ label, value }: { label: string; value: string }) {
   return (
-    <div className="min-w-0 rounded-lg bg-slate-50 px-3 py-2.5">
-      <p className="text-xs font-medium text-slate-600">{label}</p>
-      <p className="mt-1 break-words text-[13px] font-semibold leading-5 text-slate-900">{value}</p>
+    <div className="min-w-0 rounded-lg bg-slate-50 px-3 py-2">
+      <p className="text-xs font-medium leading-4 text-slate-600">{label}</p>
+      <p className="mt-0.5 break-words text-[13px] font-semibold leading-5 text-slate-900">{value}</p>
     </div>
   );
 }
