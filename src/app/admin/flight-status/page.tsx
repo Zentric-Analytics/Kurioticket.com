@@ -26,7 +26,7 @@ export default async function AdminFlightStatusPage() {
         </Link>
       </div>
       <AdminSectionCard className="min-w-0 space-y-3 p-4 sm:p-5 lg:p-6">
-        <section aria-labelledby="flight-status-overview-title" className="min-w-0 rounded-xl border border-slate-200/90 p-3 sm:p-4">
+        <section aria-labelledby="flight-status-overview-title" className="min-w-0 p-3 sm:p-4">
           <h2 id="flight-status-overview-title" className="mb-2.5 text-base font-semibold leading-6 tracking-tight text-slate-950">Flight status overview</h2>
           {operations ? (
             <div role="region" aria-label="Flight status metrics" tabIndex={0} className="min-w-0 max-w-full overflow-x-auto overscroll-x-contain rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400">
