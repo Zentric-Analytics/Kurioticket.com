@@ -42,6 +42,8 @@ test("Activity timeline shows repeated records individually and keeps one journe
   assert.match(html, /environment=staging/);
   assert.match(html, /cursor=older/);
   assert.match(html, /Load older activity/);
+  assert.equal((html.match(/text-\[#004BB8\]/g) || []).length, 2,
+    "Existing View journey and load-more links use Kurioticket blue");
   assert.doesNotMatch(html, /rounded-2xl|shadow-|rounded-xl|bg-slate-50/);
 });
 
@@ -59,6 +61,7 @@ test("empty timeline remains readable without claiming no customer history", () 
   assert.match(html, /No activity recorded in this view/);
   assert.match(html, /No activity matches your filters/);
   assert.match(html, /0 recorded events/);
+  assert.match(html, /text-\[#004BB8\]/, "Existing Clear filters link uses Kurioticket blue");
   assert.doesNotMatch(html, /selection-run/);
 });
 
