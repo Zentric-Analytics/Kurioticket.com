@@ -162,12 +162,15 @@ test("Flight Status overview follows the planned responsive page hierarchy", () 
 
 
 
-test("Flight Status overview has an understated container and compact metrics without shared card shadows", () => {
+test("Flight Status overview has no extra outline and keeps compact metrics with individual borders", () => {
   const sectionStart = page.indexOf('<section aria-labelledby="flight-status-overview-title"');
   const sectionEnd = page.indexOf("</section>", sectionStart);
   assert.ok(sectionStart >= 0 && sectionEnd > sectionStart, "The overview section must be visible");
   const overview = page.slice(sectionStart, sectionEnd);
-  assert.match(overview, /rounded-xl border border-slate-200\/90 p-3 sm:p-4/);
+  assert.match(overview, /^<section aria-labelledby="flight-status-overview-title" className="min-w-0 p-3 sm:p-4">/);
+  const overviewOpeningTag = overview.slice(0, overview.indexOf(">") + 1);
+  assert.doesNotMatch(overviewOpeningTag, /\b(?:border|rounded|shadow)(?:-[^\s"]+)?\b/,
+    "Overview section must not add a redundant decorative outline");
   assert.match(overview, /mb-2\.5 text-base font-semibold leading-6 tracking-tight/);
   assert.match(overview, /grid w-full min-w-\[960px\] grid-cols-6 gap-2/);
   assert.equal((overview.match(/<FlightStatusMetric label=/g) || []).length, 6);
