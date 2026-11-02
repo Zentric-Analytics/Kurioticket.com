@@ -29,7 +29,7 @@ export default async function AdminFlightStatusPage() {
           <Link href="/admin/confirmed-trips" className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
             Confirmed trips
           </Link>
-          <Link href="/admin/flights" className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+          <Link href="/admin/searches/activity?product=FLIGHT" className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
             Flight search operations
           </Link>
         </div>
