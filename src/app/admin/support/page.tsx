@@ -77,7 +77,7 @@ export default async function AdminSupportPage({ searchParams }: { searchParams:
             <>
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[1100px] table-fixed text-left text-[13px]">
-                  <colgroup><col className="w-[25%]" /><col className="w-[20%]" /><col className="w-[10%]" /><col className="w-[14%]" /><col className="w-[8%]" /><col className="w-[11%]" /><col className="w-[12%]" /></colgroup>
+                  <colgroup><col className="w-[23%]" /><col className="w-[18%]" /><col className="w-[10%]" /><col className="w-[14%]" /><col className="w-[8%]" /><col className="w-[14%]" /><col className="w-[13%]" /></colgroup>
                   <thead className="border-b border-[#D8E1EC] bg-white text-[12px] text-[#475569]">
                     <tr>
                       {["Ticket", "Customer", "Priority", "Status", "Messages", "Last updated", "Action"].map((label) => (
@@ -88,6 +88,7 @@ export default async function AdminSupportPage({ searchParams }: { searchParams:
                   <tbody className="divide-y divide-[#E7ECF5]">
                     {result.data.items.map((ticket) => {
                       const status = statusStyle[ticket.status];
+                      const updatedAt = new Date(ticket.updatedAt);
                       return (
                         <tr key={ticket.id} className="group h-[64px] align-middle text-[13px] text-[#374151] transition-colors hover:bg-[#F8FAFC] focus-within:bg-[#F8FAFC]">
                           <td className="max-w-[330px] px-3 py-1.5 align-middle">
@@ -115,7 +116,14 @@ export default async function AdminSupportPage({ searchParams }: { searchParams:
                             </span>
                           </td>
                           <td className="px-3 py-1.5 align-middle">{ticket.messageCount}</td>
-                          <td className="whitespace-nowrap px-3 py-1.5 align-middle">{formatDateTime(new Date(ticket.updatedAt))}</td>
+                          <td className="px-3 py-1.5 align-middle">
+                            <time dateTime={updatedAt.toISOString()} className="block whitespace-nowrap text-[13px] font-medium text-[#374151]">
+                              {new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(updatedAt)}
+                              <span className="mt-0.5 block text-[12px] font-normal text-[#64748B]">
+                                {new Intl.DateTimeFormat("en", { timeStyle: "short" }).format(updatedAt)}
+                              </span>
+                            </time>
+                          </td>
                           <td className="whitespace-nowrap px-3 py-1.5 align-middle">
                             <Link
                               href={ticketHref(ticket.id)}

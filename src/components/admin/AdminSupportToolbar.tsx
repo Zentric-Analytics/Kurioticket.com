@@ -40,6 +40,8 @@ export function AdminSupportToolbar({ query, status, priority, category, pageHre
   const router = useRouter();
   const [searchText, setSearchText] = useState(query);
   const [isPending, startTransition] = useTransition();
+  // Hide stale ticket rows as soon as a search is edited, including during debounce.
+  const isLoadingResults = isPending || searchText.trim().slice(0, 160) !== query.trim().slice(0, 160);
   const textRef = useRef(query);
   const editingRef = useRef(false);
   const lastSubmittedRef = useRef<string | null>(null);
@@ -139,7 +141,7 @@ export function AdminSupportToolbar({ query, status, priority, category, pageHre
   return (
     <div className="min-w-0">
       <div className="pb-3">
-        <form action="/admin/support" method="get" role="search" onSubmit={submitSearch} className="relative min-w-0">
+        <form action="/admin/support" method="get" role="search" autoComplete="off" onSubmit={submitSearch} className="relative min-w-0">
           {["status", "priority", "category", "from", "to", "limit"].map(key => base.get(key)
             ? <input key={key} type="hidden" name={key} value={base.get(key) ?? ""} readOnly />
             : null)}
@@ -149,6 +151,10 @@ export function AdminSupportToolbar({ query, status, priority, category, pageHre
             id="admin-support-search"
             type="search"
             name="q"
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck={false}
             maxLength={160}
             value={searchText}
             onChange={event => {
@@ -229,16 +235,15 @@ export function AdminSupportToolbar({ query, status, priority, category, pageHre
         </form>
       </div>
 
-      <div aria-busy={isPending} className="relative min-w-0">
-        {isPending ? (
-          <div role="status" aria-live="polite" className="absolute inset-0 z-10 flex min-h-[180px] items-start justify-center bg-white/75 pt-14 text-[13px] font-medium text-foreground">
+      <div aria-busy={isLoadingResults} className="min-w-0">
+        {isLoadingResults ? (
+          <div role="status" aria-live="polite" className="flex min-h-[240px] items-center justify-center bg-white text-[13px] font-medium text-foreground">
             <span className="inline-flex items-center gap-2">
               <LoaderCircle size={18} className="animate-spin text-blue" aria-hidden="true" />
               Loading tickets…
             </span>
           </div>
-        ) : null}
-        <div className={isPending ? "opacity-40" : undefined}>{children}</div>
+        ) : children}
       </div>
     </div>
   );
