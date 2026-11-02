@@ -71,8 +71,7 @@ test("Flight Status keeps safety and environment guidance within readiness, not 
   assert.match(readinessCopy, /A configured feed does not mean updates are arriving/);
   assert.match(readinessCopy, /Live status requires a valid signed update from the configured provider for a confirmed flight/);
   assert.match(readinessCopy, /Searches, handoffs and confirmations do not prove live status/);
-  assert.match(readinessCopy, /Status records have no environment label/);
-  assert.match(readinessCopy, /connected \{operations\?\.environment \?\? "application"\} database/);
+  assert.doesNotMatch(readinessCopy, /Status records have no environment label|uses the connected/);
   assert.equal((page.match(/<AdminSectionCard className="min-w-0 p-3 shadow-none sm:p-4">/g) || []).length, 5);
   assert.match(page, /<AdminSectionCard className="min-w-0 space-y-3 p-4 sm:p-5 lg:p-6">/);
   assert.match(page, /grid w-full min-w-\[960px\] grid-cols-6 gap-2/);
@@ -89,8 +88,7 @@ test("flight status operations preserves the metasearch boundary", () => {
 });
 
 test("flight status declares database-scoped environment limits", () => {
-  assert.match(page, /Status records have no environment label/);
-  assert.match(page, /uses the connected/);
+  assert.doesNotMatch(page, /Status records have no environment label|uses the connected/);
   assert.doesNotMatch(service, /query: \{ path: \["environment"\]/);
 });
 
@@ -230,7 +228,6 @@ test("short descriptions preserve source and data-availability boundaries", () =
     "Return flights and connections are not tracked separately.",
     "Live status requires a valid signed update from the configured provider for a confirmed flight.",
     "Searches, handoffs and confirmations do not prove live status.",
-    "Status records have no environment label.",
   ]) {
     assert.ok(page.includes(sentence), "Key boundary missing: " + sentence);
   }
