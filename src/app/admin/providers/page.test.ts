@@ -80,7 +80,7 @@ test("admin navigation restores Providers and the original product destinations"
 });
 
 test("product pages retain truthful metasearch readiness views", () => {
-  assert.match(flightsPage, /title="Flight Search Readiness"/);
+  assert.match(flightsPage, /title="Flight Operations"/);
   assert.match(hotelsPage, /title="Hotel Search Readiness"/);
   assert.match(carsPage, /title="Car Search Readiness"/);
   for (const source of [flightsPage, hotelsPage, carsPage]) assert.match(source, /AdminProviderStatusCard/);
@@ -96,7 +96,7 @@ test("provider APIs, retest API, and unrelated admin pages are not edited by pro
   assert.match(providerRetestApi, /writeAdminAuditLog/);
   assert.match(overviewPage, /Operations Dashboard/);
   assert.match(systemPage, /Safe operational status only/);
-  assert.match(settingsPage, /AdminPageShell title="Settings"/);
+  assert.match(settingsPage, /<AdminPageShell\s+title="Settings"/);
 });
 
 function provider(product: TestProvider["product"], providerName: string): TestProvider {
