@@ -37,38 +37,38 @@ try {
       for (const kind of ["guest","user"]) {
         await page.goto(base+"/admin/users/"+kind+"/"+(kind === "guest" ? "qa-guest-activity-0001" : "qa-realistic-identity-0001")+"/activity");
         await applyZoom(zoom);
-        await expect.poll(() => page.evaluate(() => {
-          const identity = document.querySelector('section[aria-label="Customer identity"] > div');
-          const summary = document.querySelector('section[aria-label="Activity summary"] > div');
-          return getComputedStyle(identity).gridTemplateColumns === getComputedStyle(summary).gridTemplateColumns;
-        })).toBe(true);
         const layout = await page.evaluate(() => {
           const identity = document.querySelector('section[aria-label="Customer identity"] > div');
           const facts = [...document.querySelectorAll('section[aria-label="Customer identity"] dl > div')];
-          const metrics = [...document.querySelectorAll('[data-testid="activity-metric-label"]')];
+          const summaryGrid = document.querySelector('[data-testid="activity-metrics-grid"]');
+          const metrics = [...summaryGrid.querySelectorAll('[data-testid="activity-metric"]')];
+          const metricRects = metrics.map(el=>el.getBoundingClientRect());
           const email = identity.firstElementChild.querySelector('p');
-          const heading = document.querySelector('section[aria-label="Activity summary"] h2');
-          const headingRight = Math.max(heading.getBoundingClientRect().right, heading.parentElement.querySelector("button")?.getBoundingClientRect().right || 0);
-          const metric = metrics[0].parentElement.getBoundingClientRect();
-          const headingColumn = heading.parentElement.getBoundingClientRect();
           const dates = facts.slice(0,2).map(fact => fact.querySelector("time")).filter(Boolean);
           const datesUnwrapped = dates.every(time => time.getBoundingClientRect().height < Number.parseFloat(getComputedStyle(time).lineHeight || "24")*1.5);
-          return {overflow:document.documentElement.scrollWidth > innerWidth+1,
+          return {
+            overflow:document.documentElement.scrollWidth > innerWidth+1,
             horizontal:facts.every(fact => fact.getBoundingClientRect().top < identity.firstElementChild.getBoundingClientRect().bottom),
-            aligned:facts.every((fact,i) => Math.abs(fact.getBoundingClientRect().x-metrics[i].parentElement.getBoundingClientRect().x)<1),
+            metricsCount: metrics.length,
+            noHeading: !document.querySelector('section[aria-label="Activity summary"] h2'),
+            evenlySpaced: metricRects.length === 5 && metricRects.every(rect=>Math.abs(rect.width-metricRects[0].width)<1 && Math.abs(rect.top-metricRects[0].top)<1),
+            separated:metrics.slice(1).every(el=>parseFloat(getComputedStyle(el).borderLeftWidth)>=1),
+            startsAtLeft: Math.abs(metricRects[0].left-summaryGrid.getBoundingClientRect().left)<1,
             emailFits: !email || email.getBoundingClientRect().height < parseFloat(getComputedStyle(email).fontSize)*1.9,
-            headingGap: metric.left-headingRight,
-            headingLeftAligned: Math.abs(heading.getBoundingClientRect().left-headingColumn.left)<2,
             datesUnwrapped,
-            values:[...document.querySelectorAll('section[aria-label="Customer identity"] dd,[data-testid="activity-metric-value"]')].map(el=>getComputedStyle(el).fontSize)};
+            values:[...document.querySelectorAll('section[aria-label="Customer identity"] dd,[data-testid="activity-metric-value"]')].map(el=>getComputedStyle(el).fontSize)
+          };
         });
-        assert.equal(layout.overflow,false);
-        assert.equal(layout.horizontal,true);
-        assert.equal(layout.aligned,true);
-        assert.equal(layout.emailFits,true);
-        assert.equal(layout.headingLeftAligned,true,JSON.stringify({width,zoom,kind,...layout}));
+        assert.equal(layout.overflow,false,JSON.stringify({width,zoom,kind,...layout}));
+        assert.equal(layout.horizontal,true,JSON.stringify({width,zoom,kind,...layout}));
+        assert.equal(layout.metricsCount,5,JSON.stringify({width,zoom,kind,...layout}));
+        assert.equal(layout.noHeading,true,JSON.stringify({width,zoom,kind,...layout}));
+        assert.equal(layout.evenlySpaced,true,JSON.stringify({width,zoom,kind,...layout}));
+        assert.equal(layout.separated,true,JSON.stringify({width,zoom,kind,...layout}));
+        assert.equal(layout.startsAtLeft,true,JSON.stringify({width,zoom,kind,...layout}));
+        assert.equal(layout.emailFits,true,JSON.stringify({width,zoom,kind,...layout}));
         assert.equal(layout.datesUnwrapped,true,JSON.stringify({width,zoom,kind,...layout}));
-        assert.deepEqual(layout.values,Array(6).fill("16px"));
+        assert.deepEqual(layout.values,Array(8).fill("16px"));
         await screenshot(`after-activity-${kind}-${width}-zoom-${Math.round(zoom*100)}`,zoom);
       }
       await page.goto(base+"/before?kind=user");
