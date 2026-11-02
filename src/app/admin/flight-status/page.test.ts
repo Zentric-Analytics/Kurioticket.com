@@ -141,14 +141,14 @@ test("Flight Status overview follows the planned responsive page hierarchy", () 
 });
 
 
-test("Flight Status action links open confirmed trips and flight-filtered Search Activity", () => {
+test("Flight Status header keeps only Confirmed trips while flight search stays in Search Activity", () => {
   const actions = page.match(/actions=\{([\s\S]*?)\n      \}\n    >/ )?.[1];
   assert.ok(actions, "Flight Status header actions must be present");
   assert.match(actions, /<Link href="\/admin\/confirmed-trips"[^>]*>\s*Confirmed trips\s*<\/Link>/);
-  assert.match(actions, /<Link href="\/admin\/searches\/activity\?product=FLIGHT"[^>]*>\s*Flight search operations\s*<\/Link>/);
-  assert.doesNotMatch(actions, /href="\/admin\/flights"/);
-  assert.equal((actions.match(/<Link /g) || []).length, 2, "Keep both existing header actions");
+  assert.equal((actions.match(/<Link /g) || []).length, 1, "Keep only the relevant Confirmed trips shortcut");
+  assert.doesNotMatch(actions, /href="\/admin\/flights"|href="\/admin\/searches\/activity|Flight search operations/);
 
+  // Flight search monitoring is still available from the canonical admin navigation.
   const searchActivity = readFileSync("src/app/admin/searches/activity/page.tsx", "utf8");
   assert.match(searchActivity, /{ label: "Flights", value: "FLIGHT" }/);
   assert.match(searchActivity, /one\(raw\.product\) === item\.value/);
@@ -178,7 +178,7 @@ test("Flight Status uses the same single white parent column as Admin Overview",
   assert.ok(positions.every(n => n > parentStart && n < parentEnd), "All existing sections must stay within the parent card");
   assert.deepEqual(positions, [...positions].sort((a, b) => a - b), "Keep the existing section order");
   assert.match(page.slice(0, parentStart), /href="\/admin\/confirmed-trips"/);
-  assert.match(page.slice(0, parentStart), /href="\/admin\/searches\/activity\?product=FLIGHT"/);
+  assert.doesNotMatch(page.slice(0, parentStart), /href="\/admin\/searches\/activity\?product=FLIGHT"/);
   assert.equal((page.match(/<AdminMetricCard label=/g) || []).length, 6);
   assert.match(page, /grid gap-2\.5 sm:grid-cols-2 md:grid-cols-3 2xl:grid-cols-6/);
   assert.match(page, /No zero values were invented/);
