@@ -77,9 +77,6 @@ export default async function AdminFlightStatusPage() {
             <p className="text-xs leading-5 text-slate-600">
               Live status requires a valid signed update from the configured provider for a confirmed flight. Searches, handoffs and confirmations do not prove live status.
             </p>
-            <p className="text-xs leading-5 text-slate-500">
-              Status records have no environment label. This page uses the connected {operations?.environment ?? "application"} database.
-            </p>
           </div>
         </AdminSectionCard>
 
