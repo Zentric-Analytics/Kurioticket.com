@@ -195,7 +195,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
       </section>
 
       <section aria-label="Activity summary" className="min-w-0 border-y border-[#E2E8F0] py-4">
-        <div data-testid="activity-metrics-grid" className="grid min-w-0 grid-cols-2 gap-y-5 sm:grid-cols-3 lg:grid-cols-5">
+        <div data-testid="activity-metrics-grid" className="grid min-w-0 grid-cols-2 gap-x-4 gap-y-5 sm:grid-cols-3 lg:grid-cols-5 lg:gap-x-0">
           {([
             { label: "Searches", count: data.summary.searches },
             { label: "Results viewed", count: data.summary.resultsViewed },
@@ -204,9 +204,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
             { label: "Journeys tracked", count: data.summary.journeysTracked },
           ]).map(({label,count}, index) => <div key={label} data-testid="activity-metric"
             className={"min-w-0 pr-2 sm:pr-3 " +
-              (index % 2 ? "border-l border-[#E2E8F0] pl-3" : "border-l-0 pl-0") + " " +
-              (index % 3 ? "sm:border-l sm:pl-4" : "sm:border-l-0 sm:pl-0") + " " +
-              (index ? "lg:border-l lg:pl-5" : "lg:border-l-0 lg:pl-0")}>
+              (index ? "lg:border-l lg:border-[#E2E8F0] lg:pl-5" : "lg:pl-0")}>
             <span data-testid="activity-metric-label" className="block text-[12px] font-normal text-[#64748B] lg:whitespace-nowrap">{label}</span>
             <span data-testid="activity-metric-value" className="mt-1 block text-[16px] font-medium leading-6 tabular-nums text-[#0F172A]">{count}</span>
             {label === "Searches" && data.summary.searchProducts ? <div aria-label="Searches by product"
