@@ -73,12 +73,16 @@ export default async function AdminFlightStatusPage() {
           </p>
         </AdminSectionCard>
 
-        {operations ? (
-          <div className="grid gap-4 xl:grid-cols-2">
+        {/* Keep both informational panels present even when the data query fails. */}
+        <div className="grid gap-4 xl:grid-cols-2">
             <AdminSectionCard className="p-5">
               <h2 className="font-black text-slate-950">Latest status distribution</h2>
               <p className="mt-1 text-sm leading-6 text-slate-600">Distribution of the latest stored provider snapshot for confirmed flights matching the configured provider.</p>
-              {operations.statusDistribution.length ? (
+              {!operations ? (
+                <p role="status" className="mt-4 rounded-xl bg-slate-50 p-3 text-sm leading-6 text-slate-600">
+                  Flight-status distribution is unavailable. No counts are assumed.
+                </p>
+              ) : operations.statusDistribution.length ? (
                 <div className="mt-4 divide-y divide-slate-100">
                   {operations.statusDistribution.map((item) => (
                     <div key={item.status} className="flex items-center justify-between gap-3 py-3">
@@ -88,7 +92,11 @@ export default async function AdminFlightStatusPage() {
                   ))}
                 </div>
               ) : (
-                <p className="mt-4 rounded-xl bg-slate-50 p-3 text-sm text-slate-600">No trusted flight-status snapshot is recorded for the configured provider yet.</p>
+                <p role="status" className="mt-4 rounded-xl bg-slate-50 p-3 text-sm text-slate-600">
+                  {readiness.feedReady
+                    ? "No trusted flight-status snapshot is recorded for the configured provider yet."
+                    : "No status provider feed is configured. There are no trusted snapshots to show."}
+                </p>
               )}
             </AdminSectionCard>
 
@@ -103,8 +111,7 @@ export default async function AdminFlightStatusPage() {
                 <AdminStatusBadge>No segment history yet</AdminStatusBadge>
               </div>
             </AdminSectionCard>
-          </div>
-        ) : null}
+        </div>
 
         <AdminSectionCard className="p-5">
           <h2 className="font-black text-slate-950">Operational boundaries</h2>
@@ -141,7 +148,9 @@ export default async function AdminFlightStatusPage() {
           ) : (
             <AdminEmptyState title="No flights awaiting a first snapshot" message={readiness.feedReady ? "Every provider-matched confirmed flight currently has a stored status snapshot, or there are no matched flights." : "No configured status provider is currently eligible to receive snapshots."} />
           )
-        ) : null}
+        ) : (
+          <AdminEmptyState title="Awaiting first status snapshot" message="Flight-status data is unavailable. The number of flights awaiting a snapshot is unknown." />
+        )}
 
         {operations ? (
           operations.recentSnapshots.length ? (
@@ -166,8 +175,17 @@ export default async function AdminFlightStatusPage() {
                 }))}
               />
             </div>
-          ) : null
-        ) : null}
+          ) : (
+            <AdminEmptyState
+              title="Latest trusted flight-status snapshots"
+              message={readiness.feedReady
+                ? "No trusted flight-status snapshots have been recorded for the configured provider yet."
+                : "No status provider feed is configured. There are no trusted snapshots to show."}
+            />
+          )
+        ) : (
+          <AdminEmptyState title="Latest trusted flight-status snapshots" message="Flight-status data is unavailable. Recent snapshots could not be loaded." />
+        )}
       </div>
     </AdminPageShell>
   );
