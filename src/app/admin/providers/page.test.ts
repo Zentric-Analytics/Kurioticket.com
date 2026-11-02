@@ -48,13 +48,14 @@ test("provider filter helpers drive the providers page", () => {
   assert.match(providersPage, /productFilters\.map/);
   assert.match(providersPage, /getProviderStatuses\(\)/);
   assert.match(providersPage, /getProviderOperationalStatuses\(\)/);
-  assert.match(providersPage, /<AdminProviderStatusCard key=\{provider\.product\} \{\.\.\.provider\} \/>/);
+  assert.match(providersPage, /All providers/);
+  assert.match(providersPage, /filterProviderOperationalStatuses/);
 });
 
 test("providers page preserves truthful provider data and the active retest control", () => {
-  assert.match(providersPage, /Provider health retest/);
+  assert.match(providersPage, /Provider health checks/);
   assert.match(providersPage, /<ProviderRetestButton \/>/);
-  assert.match(providersPage, /Retesting records real provider health/);
+  assert.match(providersPage, /Retesting records a real Duffel health check/);
   assert.match(providersPage, /Booking remains provider-owned/);
   assert.match(providersPage, /Secrets hidden/);
 });
@@ -99,3 +100,18 @@ function provider(product: TestProvider["product"], providerName: string): TestP
     notes: `${product} provider notes`,
   };
 }
+
+
+test("provider health sections prioritize attention and use a flat layout", () => {
+  const positions = [
+    "Providers requiring attention",
+    "All providers",
+    "Operational performance",
+    "Provider health checks",
+  ].map(section => providersPage.indexOf(section));
+  assert.ok(positions.every(position => position >= 0));
+  assert.deepEqual([...positions].sort((a, b) => a - b), positions);
+  assert.match(providersPage, /getProviderIntegrationStatuses/);
+  assert.match(providersPage, /overflow-x-auto/);
+  assert.doesNotMatch(providersPage, /AdminSectionCard/);
+});
