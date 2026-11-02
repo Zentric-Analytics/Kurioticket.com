@@ -93,8 +93,8 @@ test("all Flight Status sections are present regardless of telemetry availabilit
   }
   assert.doesNotMatch(page, /className="[^"]*(?:\bhidden\b|\binvisible\b|\bopacity-0\b)/);
 
-  const distributionStart = page.indexOf('<div className="grid gap-4 xl:grid-cols-2">');
-  const boundaryStart = page.indexOf('<h2 className="font-black text-slate-950">Operational boundaries');
+  const distributionStart = page.indexOf('<div className="grid items-start gap-3 lg:grid-cols-2">');
+  const boundaryStart = page.indexOf('>Operational boundaries</h2>');
   assert.ok(distributionStart >= 0 && boundaryStart > distributionStart);
   const summaryPanels = page.slice(distributionStart, boundaryStart);
   assert.match(summaryPanels, /Latest status distribution/);
@@ -103,7 +103,7 @@ test("all Flight Status sections are present regardless of telemetry availabilit
   assert.match(summaryPanels, /Flight-status distribution is unavailable/);
   assert.match(summaryPanels, /No counts are assumed/);
   assert.match(summaryPanels, /operations\.statusDistribution\.length/);
-  assert.doesNotMatch(page, /\{operations \? \(\s*<div className="grid gap-4 xl:grid-cols-2">/);
+  assert.doesNotMatch(page, /\{operations \? \(\s*<div className="grid items-start gap-3 lg:grid-cols-2">/);
 });
 
 test("latest snapshots and awaiting-first-snapshot sections never disappear at zero or on failure", () => {
@@ -120,4 +120,22 @@ test("latest snapshots and awaiting-first-snapshot sections never disappear at z
   assert.match(page, /No status provider feed is configured/);
   assert.match(page, /No zero values were invented/);
   assert.doesNotMatch(page, /operations\.recentSnapshots\.length \? \([\s\S]*?\) : null\s*\) : null/);
+});
+
+test("Flight Status overview follows the planned responsive page hierarchy", () => {
+  assert.match(page, /sm:grid-cols-2 md:grid-cols-3 2xl:grid-cols-6/);
+  assert.match(page, /grid items-start gap-3 lg:grid-cols-2/);
+  const order = ["Flight status overview", "Status-feed readiness", "Latest status distribution",
+    "Snapshot scope", "Awaiting first status snapshot", "Latest trusted flight-status snapshots",
+    "Operational boundaries"];
+  const locations = order.map(label => page.indexOf(">" + label + "</h2>"));
+  assert.ok(locations.every(n => n >= 0), "All operational headings must stay visible");
+  assert.deepEqual(locations, [...locations].sort((a, b) => a - b));
+  for (const field of ["confirmedFlights", "feedEligibleFlights", "trackedFlights", "missingSnapshots", "currentSnapshots", "staleSnapshots"]) {
+    assert.ok(page.includes("operations.metrics." + field), "Metric data must be preserved: " + field);
+  }
+  assert.equal((page.match(/<Fact label=/g) || []).length, 5);
+  assert.match(page, /No zero values were invented/);
+  assert.match(page, /operations\.recentSnapshots\.map/);
+  assert.match(page, /operations\.awaitingFirstSnapshot\.map/);
 });
