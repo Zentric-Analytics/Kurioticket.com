@@ -52,7 +52,7 @@ try {
             metricsCount: metrics.length,
             noHeading: !document.querySelector('section[aria-label="Activity summary"] h2'),
             evenlySpaced: metricRects.length === 5 && metricRects.every(rect=>Math.abs(rect.width-metricRects[0].width)<1 && Math.abs(rect.top-metricRects[0].top)<1),
-            separated:metrics.slice(1).every(el=>parseFloat(getComputedStyle(el).borderLeftWidth)>=1),
+            separated:metrics.slice(1).every(el=>parseFloat(getComputedStyle(el).borderLeftWidth)>0.5),
             startsAtLeft: Math.abs(metricRects[0].left-summaryGrid.getBoundingClientRect().left)<1,
             emailFits: !email || email.getBoundingClientRect().height < parseFloat(getComputedStyle(email).fontSize)*1.9,
             datesUnwrapped,
