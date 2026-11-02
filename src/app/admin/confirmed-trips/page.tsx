@@ -134,7 +134,7 @@ export default async function AdminConfirmedTripsPage() {
                 <AdminStatusBadge tone={!readiness.feedReady ? "neutral" : !deliveryHealth ? "warn" : deliveryHealth.rejectedLast24h > 0 ? "warn" : "info"}>
                   {!readiness.feedReady ? "Monitoring inactive" : !deliveryHealth ? "Telemetry unavailable" : deliveryHealth.rejectedLast24h > 0 ? "Rejected deliveries · last 24h" : "Receipt telemetry available"}
                 </AdminStatusBadge>
-                <Link href="/admin/notifications" className="inline-flex min-h-8 items-center rounded-md text-[13px] font-semibold text-indigo-700 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">Operational alerts</Link>
+                <Link href="/admin/confirmed-trips/alerts" className="inline-flex min-h-8 items-center rounded-md text-[13px] font-semibold text-indigo-700 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">Confirmation alerts</Link>
               </div>
             </div>
             {!readiness.feedReady ? (
