@@ -34,7 +34,10 @@ export type IdentityActivitySummary = {
   /** Available on complete reads; uses the same authorized, merged timeline. */
   searchProducts?: { flights: number; hotels: number; cars: number; other: number };
   resultsViewed: number;
+  offersSelected: number;
   providerHandoffs: number;
+  /** Distinct authorized journeys containing at least one matching recorded event. */
+  journeysTracked: number;
 };
 
 export type IdentityActivityRecord = {
@@ -251,22 +254,31 @@ export async function loadAdminIdentityActivity(
     // A repeatable-read snapshot keeps canonical + legacy de-duplication stable
     // when a source record and its JourneyEvent are inserted concurrently.
     // The timeline, all totals and every visitor-ID batch observe one snapshot.
-    const [journey, searches, handoffs, analytics, canonicalCounts, legacySearchTotal, legacyHandoffTotal] =
+    const [journey, searches, handoffs, analytics, canonicalCounts, legacySearchTotal, legacyHandoffTotal, journeysTracked] =
       await db.$transaction(async tx => {
         const counts = new Map<string, number>();
+        let distinctJourneyCount = 0;
         const countVisitorBatch = async (visitorIds: string[]) => {
           if (!visitorIds.length) return;
+          // Count only events whose referenced records belong to the same authorized
+          // visitor as their journey. Reuse the exact stage/date/product/text filters.
+          const validEvents: Prisma.JourneyEventWhereInput = {
+            AND: [journeyWhere, primaryReferenceRequired,
+              { OR: visitorIds.map(visitorId => canonicalForVisitor(visitorId)) }],
+          };
           const grouped = await tx.journeyEvent.groupBy({
             by: ["type"],
-            where: {
-              AND: [journeyWhere, primaryReferenceRequired,
-                { OR: visitorIds.map(visitorId => canonicalForVisitor(visitorId)) }],
-            },
+            where: validEvents,
             _count: { _all: true },
           });
           for (const row of grouped) {
             counts.set(row.type, (counts.get(row.type) ?? 0) + row._count._all);
           }
+          // SearchJourney is unique by ID: count distinct journeys server-side
+          // within the same repeatable-read snapshot, not from the current page.
+          distinctJourneyCount += await tx.searchJourney.count({
+            where: { visitorId: { in: visitorIds }, events: { some: validEvents } },
+          });
         };
         if (stages.length && !isOperationalGuest) {
           if (kind === "guest") {
@@ -324,13 +336,15 @@ export async function loadAdminIdentityActivity(
           allowed.has("SEARCH_COMPLETED") ? tx.searchHistory.count({ where: searchWhere }) : Promise.resolve(0),
           canReadHandoffs ? tx.redirectLog.count({ where: handoffWhere }) : Promise.resolve(0),
         ]);
-        return [pageJourney, pageSearches, pageHandoffs, pageAnalytics, counts, searchTotal, handoffTotal] as const;
+        return [pageJourney, pageSearches, pageHandoffs, pageAnalytics, counts, searchTotal, handoffTotal, distinctJourneyCount] as const;
       }, { isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead, timeout: transactionTimeout });
 
     const summary: IdentityActivitySummary = {
       searches: (canonicalCounts.get("SEARCH_COMPLETED") ?? 0) + legacySearchTotal,
       resultsViewed: canonicalCounts.get("RESULTS_VIEWED") ?? 0,
+      offersSelected: canonicalCounts.get("OFFER_SELECTED") ?? 0,
       providerHandoffs: (canonicalCounts.get("PROVIDER_HANDOFF_STARTED") ?? 0) + legacyHandoffTotal,
+      journeysTracked,
     };
 
     const canonical = journey.flatMap(event => {
