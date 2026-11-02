@@ -44,7 +44,7 @@ export default async function AdminSupportTicketPage({ params }: PageProps) {
       <div className="mx-auto w-full max-w-[1500px] text-[#374151]">
         <Link
           href="/admin/support"
-          className="mb-5 inline-flex items-center gap-2 text-[13px] font-semibold text-[#475569] transition-colors hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/20"
+          className="mb-5 inline-flex items-center gap-2 text-[14px] font-semibold leading-5 text-slate-600 transition-colors hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/20"
         >
           <ArrowLeft className="h-4 w-4" aria-hidden="true" />
           Back to Support
@@ -78,7 +78,7 @@ function TicketContent({ ticket }: { ticket: AdminSupportDetail }) {
         <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-4">
           <div className="min-w-0">
             <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-[#64748B]">Support ticket</p>
-            <h2 className="mt-2 max-w-[900px] break-words text-[20px] font-semibold leading-7 tracking-tight text-[#111827]">
+            <h2 className="mt-2 max-w-[900px] break-words text-[18px] font-semibold leading-7 tracking-tight text-[#111827]">
               {ticket.subject}
             </h2>
             <p className="mt-2 break-all text-[12px] text-[#64748B]">
@@ -86,11 +86,11 @@ function TicketContent({ ticket }: { ticket: AdminSupportDetail }) {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <span className={"inline-flex items-center gap-1.5 rounded-md border border-[#E5E7EB] px-3 py-1.5 text-[12px] font-semibold " + status.text}>
+            <span className={"inline-flex items-center gap-1.5 text-[13px] font-semibold " + status.text}>
               <span className={"h-1.5 w-1.5 rounded-full " + status.dot} aria-hidden="true" />
               {status.label}
             </span>
-            <span className={"rounded-md border border-[#E5E7EB] px-3 py-1.5 text-[12px] font-semibold " + priorityColor(ticket.priority)}>
+            <span className={"text-[13px] font-semibold " + priorityColor(ticket.priority)}>
               {ticket.priority.charAt(0) + ticket.priority.slice(1).toLowerCase()} priority
             </span>
           </div>
@@ -101,10 +101,10 @@ function TicketContent({ ticket }: { ticket: AdminSupportDetail }) {
         </div>
       </header>
 
-      <div className="mt-5 grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_330px]">
-        <div className="min-w-0 space-y-5">
-          <section aria-labelledby="support-conversation-heading" className="overflow-hidden rounded-lg border border-[#E5E7EB] bg-white">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E5E7EB] px-5 py-4">
+      <div className="mt-3 grid items-start gap-x-8 gap-y-6 xl:grid-cols-[minmax(0,1fr)_330px]">
+        <div className="min-w-0 space-y-4">
+          <section aria-labelledby="support-conversation-heading" className="border-b border-[#E5E7EB] bg-transparent">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E5E7EB] px-2 py-4">
               <h3 id="support-conversation-heading" className="text-[14px] font-semibold text-[#111827]">Conversation</h3>
               <span className="text-[12px] text-[#64748B]">
                 {ticket.messages.length} {ticket.messages.length === 1 ? "message" : "messages"}
@@ -112,13 +112,13 @@ function TicketContent({ ticket }: { ticket: AdminSupportDetail }) {
             </div>
 
             {ticket.messages.length === 0 ? (
-              <p className="px-5 py-8 text-[13px] text-[#64748B]">No messages have been recorded for this ticket.</p>
+              <p className="px-2 py-8 text-[13px] text-[#64748B]">No messages have been recorded for this ticket.</p>
             ) : (
               <ol className="divide-y divide-[#E5E7EB]">
                 {ticket.messages.map((message) => {
                   const fromSupport = message.author === "admin";
                   return (
-                    <li key={message.id} className={"px-5 py-5 " + (fromSupport ? "bg-[#F7FAFF]" : "bg-white")}>
+                    <li key={message.id} className={"px-2 py-5 " + (fromSupport ? "bg-[#F8FAFC]" : "bg-white")}>
                       <div className="flex flex-wrap items-start justify-between gap-2">
                         <div className="flex min-w-0 items-center gap-2.5">
                           <span
@@ -150,28 +150,28 @@ function TicketContent({ ticket }: { ticket: AdminSupportDetail }) {
           <SupportReplyForm ticketId={ticket.id} recipientEmail={ticket.email} />
         </div>
 
-        <aside aria-label="Ticket information and management" className="min-w-0 space-y-5">
+        <aside aria-label="Ticket information and management" className="min-w-0 space-y-4">
           <SupportTicketStatusControl ticketId={ticket.id} status={ticket.status} />
 
-          <section aria-labelledby="support-customer-heading" className="rounded-lg border border-[#E5E7EB] bg-white">
-            <h3 id="support-customer-heading" className="border-b border-[#E5E7EB] px-4 py-3 text-[14px] font-semibold text-[#111827]">Customer</h3>
-            <dl className="space-y-3 px-4 py-4">
+          <section aria-labelledby="support-customer-heading" className="border-b border-[#E5E7EB] bg-transparent">
+            <h3 id="support-customer-heading" className="border-b border-[#E5E7EB] px-2 py-3 text-[14px] font-semibold text-[#111827]">Customer</h3>
+            <dl className="space-y-3 px-2 py-4">
               <Info label="Name" value={contactName} />
               <Info label="Email" value={ticket.email || "—"} />
               <Info label="Account" value={ticket.identity.kind === "registered" ? "Registered" : "Guest"} />
             </dl>
           </section>
 
-          <section aria-labelledby="support-reference-heading" className="rounded-lg border border-[#E5E7EB] bg-white">
-            <h3 id="support-reference-heading" className="border-b border-[#E5E7EB] px-4 py-3 text-[14px] font-semibold text-[#111827]">Ticket information</h3>
-            <dl className="space-y-3 px-4 py-4">
+          <section aria-labelledby="support-reference-heading" className="border-b border-[#E5E7EB] bg-transparent">
+            <h3 id="support-reference-heading" className="border-b border-[#E5E7EB] px-2 py-3 text-[14px] font-semibold text-[#111827]">Ticket information</h3>
+            <dl className="space-y-3 px-2 py-4">
               <Info label="Category" value={humanize(ticket.category)} />
               <Info label="Priority" value={ticket.priority.charAt(0) + ticket.priority.slice(1).toLowerCase()} />
               <Info label="Created" value={formatDateTime(new Date(ticket.createdAt))} />
               <Info label="Last updated" value={formatDateTime(new Date(ticket.updatedAt))} />
             </dl>
             {ticket.identity.userId ? (
-              <details className="border-t border-[#E5E7EB] px-4 py-3">
+              <details className="border-t border-[#E5E7EB] px-2 py-3">
                 <summary className="cursor-pointer text-[12px] font-medium text-[#475569] hover:text-[#004BB8]">
                   Account reference
                 </summary>
@@ -181,9 +181,9 @@ function TicketContent({ ticket }: { ticket: AdminSupportDetail }) {
           </section>
 
           {contextFields.length ? (
-            <section aria-labelledby="support-source-heading" className="rounded-lg border border-[#E5E7EB] bg-white">
-              <h3 id="support-source-heading" className="border-b border-[#E5E7EB] px-4 py-3 text-[14px] font-semibold text-[#111827]">Request context</h3>
-              <dl className="space-y-3 px-4 py-4">
+            <section aria-labelledby="support-source-heading" className="border-b border-[#E5E7EB] bg-transparent">
+              <h3 id="support-source-heading" className="border-b border-[#E5E7EB] px-2 py-3 text-[14px] font-semibold text-[#111827]">Request context</h3>
+              <dl className="space-y-3 px-2 py-4">
                 {contextFields.map(([key, value]) => (
                   <Info key={key} label={humanize(key)} value={humanize(value)} />
                 ))}
@@ -192,7 +192,7 @@ function TicketContent({ ticket }: { ticket: AdminSupportDetail }) {
           ) : null}
 
           {ticket.deletionRequestId ? (
-            <div className="rounded-lg border border-[#E5E7EB] bg-white px-4 py-4">
+            <div className="border-b border-[#E5E7EB] bg-transparent px-2 py-4">
               <p className="text-[13px] font-semibold text-[#111827]">Linked account deletion</p>
               <p className="mt-1 text-[12px] leading-5 text-[#64748B]">This ticket is connected to an account deletion request.</p>
               <Link
@@ -212,7 +212,7 @@ function TicketContent({ ticket }: { ticket: AdminSupportDetail }) {
 function Info({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div>
-      <dt className="text-[11px] font-medium text-[#64748B]">{label}</dt>
+      <dt className="text-[11px] font-medium text-[#6B7280]">{label}</dt>
       <dd className="mt-1 break-words text-[13px] font-medium text-[#374151]">{value}</dd>
     </div>
   );

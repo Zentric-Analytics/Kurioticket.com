@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
+import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
 import { formatDateTime } from "@/lib/admin-data";
 import type { AdminSupportPriority, AdminSupportStatus } from "@/services/adminOperationalReadContract";
 import { adminOperationalReads } from "@/services/adminOperationalReadService";
@@ -90,13 +91,13 @@ export default async function AdminSupportPage({ searchParams }: { searchParams:
       <div className="mx-auto w-full max-w-[1500px] text-[#374151]">
         <div className="flex flex-wrap items-end justify-between gap-3 border-b border-[#E5E7EB] px-2 pb-4">
           <div>
-            <h1 className="text-[20px] font-semibold tracking-tight text-[#111827]">Support</h1>
+            <h1 className="text-[18px] font-semibold tracking-tight text-[#111827]">Support</h1>
             <p className="mt-1 text-[12px] text-[#64748B]">Customer tickets and conversations</p>
           </div>
           <span className="text-[12px] text-[#64748B]">Ticket inbox</span>
         </div>
 
-        <nav aria-label="Support ticket status" className="flex flex-wrap gap-2 border-b border-[#E5E7EB] px-2 py-3">
+        <nav aria-label="Support ticket status" className="flex flex-wrap items-center gap-x-5 gap-y-2 border-b border-[#E5E7EB] px-2 pt-3">
           {statuses.map((item) => {
             const active = one(raw.status) === item.value;
             return (
@@ -105,8 +106,8 @@ export default async function AdminSupportPage({ searchParams }: { searchParams:
                 href={statusHref(raw, item.value)}
                 aria-current={active ? "page" : undefined}
                 className={
-                  "inline-flex min-h-8 items-center rounded-md px-3 py-1.5 text-[12px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 " +
-                  (active ? "bg-[#EEF4FF] text-[#004BB8]" : "text-[#475569] hover:bg-[#F8FAFC] hover:text-[#111827]")
+                  "relative inline-flex items-center pb-2 text-[13px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 " +
+                  (active ? "text-[#004BB8] after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:bg-[#004BB8]" : "text-[#475569] hover:text-[#111827]")
                 }
               >
                 {item.label}
@@ -127,19 +128,10 @@ export default async function AdminSupportPage({ searchParams }: { searchParams:
                 name="q"
                 defaultValue={one(raw.q)}
                 placeholder="Subject, name or email"
-                className="h-9 w-full min-w-[180px] rounded-md border border-[#DDE3EA] bg-white px-3 text-[13px] text-[#111827] outline-none placeholder:text-[#9CA3AF] focus:border-[#004BB8] focus:ring-2 focus:ring-[#004BB8]/10"
+                className="h-9 w-full min-w-[180px] border-0 border-b border-[#AEB8C6] bg-transparent px-0 text-[13px] font-medium text-[#475569] outline-none placeholder:text-[#9CA3AF] focus:border-[#004BB8]"
               />
             </label>
-            <label className="block w-[165px]">
-              <span className="mb-1 block text-[11px] font-medium text-[#64748B]">Priority</span>
-              <select
-                name="priority"
-                defaultValue={one(raw.priority)}
-                className="h-9 w-full cursor-pointer rounded-md border border-[#DDE3EA] bg-white px-2 text-[13px] text-[#374151] outline-none focus:border-[#004BB8] focus:ring-2 focus:ring-[#004BB8]/10"
-              >
-                {priorities.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
-              </select>
-            </label>
+            <div className="w-[165px] max-w-full"><SearchMonitorSelect label="Priority" name="priority" value={one(raw.priority)} options={priorities} /></div>
             <label className="block w-[175px] max-w-full">
               <span className="mb-1 block text-[11px] font-medium text-[#64748B]">Category</span>
               <input
@@ -147,12 +139,12 @@ export default async function AdminSupportPage({ searchParams }: { searchParams:
                 name="category"
                 defaultValue={one(raw.category)}
                 placeholder="Any category"
-                className="h-9 w-full rounded-md border border-[#DDE3EA] bg-white px-3 text-[13px] text-[#111827] outline-none placeholder:text-[#9CA3AF] focus:border-[#004BB8] focus:ring-2 focus:ring-[#004BB8]/10"
+                className="h-9 w-full border-0 border-b border-[#AEB8C6] bg-transparent px-0 text-[13px] font-medium text-[#475569] outline-none placeholder:text-[#9CA3AF] focus:border-[#004BB8]"
               />
             </label>
             <button
               type="submit"
-              className="h-9 cursor-pointer rounded-md bg-[#111827] px-4 text-[13px] font-semibold text-white transition-colors hover:bg-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-200"
+              className="h-9 cursor-pointer bg-[#111827] px-4 text-[13px] font-semibold text-white transition-colors hover:bg-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-200"
             >
               Apply filters
             </button>
@@ -185,7 +177,7 @@ export default async function AdminSupportPage({ searchParams }: { searchParams:
                     {result.data.items.map((ticket) => {
                       const status = statusStyle[ticket.status];
                       return (
-                        <tr key={ticket.id} className="border-b border-[#E5E7EB] text-[13px] text-[#374151] hover:bg-[#FAFBFD] focus-within:bg-[#F8FAFC]">
+                        <tr key={ticket.id} className="border-b border-[#E5E7EB] text-[13px] text-[#374151] hover:bg-[#FAFAFA] focus-within:bg-[#F8FAFC]">
                           <td className="max-w-[330px] px-2 py-3 align-top">
                             <Link
                               href={ticketHref(ticket.id)}

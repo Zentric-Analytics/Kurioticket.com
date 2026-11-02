@@ -107,14 +107,15 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
     };
   }, [pathname]);
 
-  // Flat directory/workspace pages borrow the public site's clean white canvas.
-  // Keep unrelated operational detail routes on the existing Admin surface.
-  // Search detail is part of the white Searches workspace, just like activity.
+  // Search and Support share the clean white operational workspace surface.
+  // Other Admin sections keep their established background unchanged.
   const usersDirectory = pathname === "/admin/users" || pathname === "/admin/users/";
   const userActivity = /^\/admin\/users\/(?:user|guest)\/[a-z0-9_-]{6,80}\/activity\/?$/i.test(pathname);
   const searchDetail = /^\/admin\/searches\/[a-z0-9_-]{6,128}\/?$/i.test(pathname);
   const searchesWorkspace = pathname === "/admin/searches" || pathname === "/admin/searches/" || pathname === "/admin/searches/activity" || pathname === "/admin/searches/activity/" || searchDetail;
-  return <AdminWorkspaceSearchProvider account={adminEmail || "admin"}><div className={"min-h-screen text-slate-950 " + (userActivity ? "bg-[#f1f5fb]" : usersDirectory || searchesWorkspace ? "bg-white" : "bg-[#f1f5fb]")}>
+  const supportWorkspace = pathname === "/admin/support" || pathname.startsWith("/admin/support/");
+  const whiteWorkspace = usersDirectory || searchesWorkspace || supportWorkspace;
+  return <AdminWorkspaceSearchProvider account={adminEmail || "admin"}><div className={"min-h-screen text-slate-950 " + (userActivity ? "bg-[#f1f5fb]" : whiteWorkspace ? "bg-white" : "bg-[#f1f5fb]")}>
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
       <AdminSearchHeader>
       <div className="mx-auto flex h-16 w-full max-w-[1920px] items-center justify-between gap-4 pl-2 pr-4 sm:pr-6 lg:pr-10">
