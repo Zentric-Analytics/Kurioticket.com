@@ -141,6 +141,37 @@ test("Flight Status overview follows the planned responsive page hierarchy", () 
 });
 
 
+
+test("Flight Status overview has an understated container and compact metrics without shared card shadows", () => {
+  const sectionStart = page.indexOf('<section aria-labelledby="flight-status-overview-title"');
+  const sectionEnd = page.indexOf("</section>", sectionStart);
+  assert.ok(sectionStart >= 0 && sectionEnd > sectionStart, "The overview section must be visible");
+  const overview = page.slice(sectionStart, sectionEnd);
+  assert.match(overview, /rounded-xl border border-slate-200\/90 p-3 sm:p-4/);
+  assert.match(overview, /mb-2\.5 text-base font-semibold leading-6 tracking-tight/);
+  assert.match(overview, /grid min-w-0 gap-2 sm:grid-cols-2 md:grid-cols-3 2xl:grid-cols-6/);
+  assert.equal((overview.match(/<FlightStatusMetric label=/g) || []).length, 6);
+  assert.doesNotMatch(overview, /<AdminMetricCard/);
+
+  const tileStart = page.indexOf("function FlightStatusMetric(");
+  const tileEnd = page.indexOf("function Fact(", tileStart);
+  assert.ok(tileStart >= 0 && tileEnd > tileStart);
+  const tile = page.slice(tileStart, tileEnd);
+  assert.match(tile, /rounded-lg border border-slate-200\/80 bg-white px-3 py-2\.5/);
+  assert.match(tile, /text-xs font-medium leading-4 text-slate-600/);
+  assert.match(tile, /text-\[22px\] font-semibold leading-\[26px\] tracking-tight tabular-nums/);
+  assert.match(tile, /value\.toLocaleString\("en-US"\)/);
+  assert.doesNotMatch(tile, /\bshadow-(?:sm|md|lg|xl|2xl)\b|\bfont-black\b/);
+
+  for (const field of ["confirmedFlights", "feedEligibleFlights", "trackedFlights", "missingSnapshots", "currentSnapshots", "staleSnapshots"]) {
+    assert.ok(overview.includes("operations.metrics." + field), "Use trusted metric " + field);
+  }
+  assert.match(overview, /role="status"/);
+  assert.match(overview, /No zero values were invented/);
+  assert.match(page, /<AdminSectionCard className="min-w-0 space-y-3 p-4 sm:p-5 lg:p-6">/);
+  assert.doesNotMatch(page, /className="[^"]*(?:\bhidden\b|\binvisible\b|\bopacity-0\b)/);
+});
+
 test("Flight Status header keeps only Confirmed trips while flight search stays in Search Activity", () => {
   const actions = page.match(/actions=\{([\s\S]*?)\n      \}\n    >/ )?.[1];
   assert.ok(actions, "Flight Status header actions must be present");
@@ -179,8 +210,8 @@ test("Flight Status uses the same single white parent column as Admin Overview",
   assert.deepEqual(positions, [...positions].sort((a, b) => a - b), "Keep the existing section order");
   assert.match(page.slice(0, parentStart), /href="\/admin\/confirmed-trips"/);
   assert.doesNotMatch(page.slice(0, parentStart), /href="\/admin\/searches\/activity\?product=FLIGHT"/);
-  assert.equal((page.match(/<AdminMetricCard label=/g) || []).length, 6);
-  assert.match(page, /grid gap-2\.5 sm:grid-cols-2 md:grid-cols-3 2xl:grid-cols-6/);
+  assert.equal((page.match(/<FlightStatusMetric label=/g) || []).length, 6);
+  assert.match(page, /grid min-w-0 gap-2 sm:grid-cols-2 md:grid-cols-3 2xl:grid-cols-6/);
   assert.match(page, /No zero values were invented/);
   assert.match(page, /Flight-status distribution is unavailable\. No counts are assumed/);
   assert.match(page, /operations\.awaitingFirstSnapshot\.map/);
