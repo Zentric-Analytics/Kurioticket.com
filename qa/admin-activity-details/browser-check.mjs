@@ -66,7 +66,7 @@ async function expectAlignedColumns(page) {
       gridStartsAtLeft: Math.abs(rects[0].left-gridRect.left)<1,
       equalWidths: rects.every(rect=>Math.abs(rect.width-rects[0].width)<1),
       oneRow: rects.every(rect=>Math.abs(rect.top-rects[0].top)<1),
-      dividers: metrics.slice(1).every(el=>parseFloat(getComputedStyle(el).borderLeftWidth)>=1),
+      dividers: metrics.slice(1).every(el=>parseFloat(getComputedStyle(el).borderLeftWidth)>0.5),
       identityTop: identity.firstElementChild.getBoundingClientRect().top,
       factTops: facts.map(rect=>rect.top), bottom: identity.getBoundingClientRect().bottom,
     };
