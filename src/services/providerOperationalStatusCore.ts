@@ -186,6 +186,10 @@ export async function readProviderOperationalSnapshot(input: {
     const provider = providerNames[integration.id];
     const where: Prisma.ApiProviderLogWhereInput = {
       provider,
+      // Count customer search requests only. Admin-initiated health probes
+      // use service "provider-health" and must not distort success rates,
+      // latency, last activity, or service-specific timestamp availability.
+      service: { in: [...expectedServices[integration.id]] },
       createdAt: { gte: since, lte: input.now },
       metadata: { path: ["environment"], equals: input.environment },
     };
