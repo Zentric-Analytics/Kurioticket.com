@@ -26,18 +26,20 @@ export default async function AdminFlightStatusPage() {
       description="Monitor trusted provider-supplied operational flight status for signed provider-confirmed flight trips. Search results, handoffs and booking confirmations never infer live status."
       actions={
         <div className="flex flex-wrap gap-2">
-          <Link href="/admin/confirmed-trips" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">
+          <Link href="/admin/confirmed-trips" className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
             Confirmed trips
           </Link>
-          <Link href="/admin/flights" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">
+          <Link href="/admin/flights" className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
             Flight search operations
           </Link>
         </div>
       }
     >
-      <div className="space-y-4">
-        {operations ? (
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+      <div className="space-y-3">
+        <section aria-labelledby="flight-status-overview-title" className="min-w-0">
+          <h2 id="flight-status-overview-title" className="mb-3 text-base font-semibold leading-6 tracking-tight text-slate-950">Flight status overview</h2>
+          {operations ? (
+          <div className="grid gap-2.5 sm:grid-cols-2 md:grid-cols-3 2xl:grid-cols-6">
             <AdminMetricCard label="Confirmed flights" value={operations.metrics.confirmedFlights} hint="Signed partner-confirmed flight trips in this database" tone="info" />
             <AdminMetricCard label="Provider matched" value={operations.metrics.feedEligibleFlights} hint="Confirmed flights matching the configured provider name" />
             <AdminMetricCard label="Tracked" value={operations.metrics.trackedFlights} hint="Provider-matched confirmed flights with a stored snapshot" tone={operations.metrics.trackedFlights > 0 ? "good" : "neutral"} />
@@ -47,12 +49,13 @@ export default async function AdminFlightStatusPage() {
           </div>
         ) : (
           <AdminEmptyState title="Flight-status telemetry unavailable" message="The connected database could not return flight-status operations. No zero values were invented." />
-        )}
+          )}
+        </section>
 
-        <AdminSectionCard className="p-5">
+        <AdminSectionCard className="min-w-0 p-4 sm:p-5">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
             <div>
-              <h2 className="font-black text-slate-950">Status-feed readiness</h2>
+              <h2 className="text-base font-semibold leading-6 tracking-tight text-slate-950">Status-feed readiness</h2>
               <p className="mt-1 text-sm leading-6 text-slate-600">
                 The status endpoint accepts one provider-bound signed feed. Current Duffel search and KAYAK sandbox integrations do not supply this feed.
               </p>
@@ -61,7 +64,7 @@ export default async function AdminFlightStatusPage() {
               {readiness.feedReady ? "Status feed configured" : "Status feed not configured"}
             </AdminStatusBadge>
           </div>
-          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+          <div className="mt-3 grid gap-2.5 sm:grid-cols-2 md:grid-cols-3">
             <Fact label="Endpoint" value="POST /api/internal/flight-status/updates" />
             <Fact label="Configured provider" value={readiness.providerName || "None"} />
             <Fact label="Webhook credential" value={readiness.webhookCredentialConfigured ? "Configured" : "Not configured"} />
@@ -74,9 +77,9 @@ export default async function AdminFlightStatusPage() {
         </AdminSectionCard>
 
         {/* Keep both informational panels present even when the data query fails. */}
-        <div className="grid gap-4 xl:grid-cols-2">
-            <AdminSectionCard className="p-5">
-              <h2 className="font-black text-slate-950">Latest status distribution</h2>
+        <div className="grid items-start gap-3 lg:grid-cols-2">
+            <AdminSectionCard className="min-w-0 p-4 sm:p-5">
+              <h2 className="text-base font-semibold leading-6 tracking-tight text-slate-950">Latest status distribution</h2>
               <p className="mt-1 text-sm leading-6 text-slate-600">Distribution of the latest stored provider snapshot for confirmed flights matching the configured provider.</p>
               {!operations ? (
                 <p role="status" className="mt-4 rounded-xl bg-slate-50 p-3 text-sm leading-6 text-slate-600">
@@ -100,8 +103,8 @@ export default async function AdminFlightStatusPage() {
               )}
             </AdminSectionCard>
 
-            <AdminSectionCard className="p-5">
-              <h2 className="font-black text-slate-950">Snapshot scope</h2>
+            <AdminSectionCard className="min-w-0 p-4 sm:p-5">
+              <h2 className="text-base font-semibold leading-6 tracking-tight text-slate-950">Snapshot scope</h2>
               <p className="mt-2 text-sm leading-6 text-slate-600">
                 Flight status currently stores one latest primary-flight snapshot per confirmed My Trip. Return legs and connecting segments are not tracked independently yet.
               </p>
@@ -113,21 +116,11 @@ export default async function AdminFlightStatusPage() {
             </AdminSectionCard>
         </div>
 
-        <AdminSectionCard className="p-5">
-          <h2 className="font-black text-slate-950">Operational boundaries</h2>
-          <p className="mt-2 text-sm leading-6 text-slate-600">
-            Kurioticket never derives live flight status from a search, a provider handoff, or a trip confirmation. A status appears only when the configured provider sends a valid signed update for an existing signed provider-confirmed flight.
-          </p>
-          <p className="mt-3 text-xs leading-5 text-slate-500">
-            FlightStatusSnapshot rows do not carry an environment column. This page reports the database connected to the current {operations?.environment ?? "application"} environment rather than pretending to apply per-row environment scoping.
-          </p>
-        </AdminSectionCard>
-
         {operations ? (
           operations.awaitingFirstSnapshot.length ? (
             <div>
               <div className="mb-3">
-                <h2 className="font-black text-slate-950">Awaiting first status snapshot</h2>
+                <h2 className="text-base font-semibold leading-6 tracking-tight text-slate-950">Awaiting first status snapshot</h2>
                 <p className="mt-1 text-sm text-slate-600">Provider-matched confirmed flights that have not received a trusted status snapshot yet.</p>
               </div>
               <AdminDataTable
@@ -156,7 +149,7 @@ export default async function AdminFlightStatusPage() {
           operations.recentSnapshots.length ? (
             <div>
               <div className="mb-3">
-                <h2 className="font-black text-slate-950">Latest trusted flight-status snapshots</h2>
+                <h2 className="text-base font-semibold leading-6 tracking-tight text-slate-950">Latest trusted flight-status snapshots</h2>
                 <p className="mt-1 text-sm text-slate-600">Newest canonical provider snapshots. This is not an event history.</p>
               </div>
               <AdminDataTable
@@ -186,6 +179,16 @@ export default async function AdminFlightStatusPage() {
         ) : (
           <AdminEmptyState title="Latest trusted flight-status snapshots" message="Flight-status data is unavailable. Recent snapshots could not be loaded." />
         )}
+        <AdminSectionCard className="min-w-0 p-4 sm:p-5">
+          <h2 className="text-base font-semibold leading-6 tracking-tight text-slate-950">Operational boundaries</h2>
+          <p className="mt-2 text-sm leading-6 text-slate-600">
+            Kurioticket never derives live flight status from a search, a provider handoff, or a trip confirmation. A status appears only when the configured provider sends a valid signed update for an existing signed provider-confirmed flight.
+          </p>
+          <p className="mt-3 text-xs leading-5 text-slate-500">
+            FlightStatusSnapshot rows do not carry an environment column. This page reports the database connected to the current {operations?.environment ?? "application"} environment rather than pretending to apply per-row environment scoping.
+          </p>
+        </AdminSectionCard>
+
       </div>
     </AdminPageShell>
   );
@@ -193,9 +196,9 @@ export default async function AdminFlightStatusPage() {
 
 function Fact({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl bg-slate-50 p-3">
-      <p className="text-xs font-black uppercase tracking-wide text-slate-500">{label}</p>
-      <p className="mt-1 text-sm font-semibold text-slate-900">{value}</p>
+    <div className="min-w-0 rounded-lg bg-slate-50 px-3 py-2.5">
+      <p className="text-xs font-medium text-slate-600">{label}</p>
+      <p className="mt-1 break-words text-[13px] font-semibold leading-5 text-slate-900">{value}</p>
     </div>
   );
 }
