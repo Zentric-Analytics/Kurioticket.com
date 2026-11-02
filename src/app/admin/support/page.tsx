@@ -3,8 +3,6 @@ import { ChevronRight } from "lucide-react";
 
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { AdminSupportToolbar } from "@/components/admin/AdminSupportToolbar";
-import { supportCategoryLabel } from "@/lib/adminSupportInboxNavigation";
-import { formatDateTime } from "@/lib/admin-data";
 import type { AdminSupportPriority, AdminSupportStatus } from "@/services/adminOperationalReadContract";
 import { adminOperationalReads } from "@/services/adminOperationalReadService";
 
@@ -80,7 +78,7 @@ export default async function AdminSupportPage({ searchParams }: { searchParams:
                   <colgroup><col className="w-[23%]" /><col className="w-[18%]" /><col className="w-[10%]" /><col className="w-[14%]" /><col className="w-[8%]" /><col className="w-[14%]" /><col className="w-[13%]" /></colgroup>
                   <thead className="border-b border-[#D8E1EC] bg-white text-[12px] text-[#475569]">
                     <tr>
-                      {["Ticket", "Customer", "Priority", "Status", "Messages", "Last updated", "Action"].map((label) => (
+                      {["Ticket", "Requester", "Priority", "Status", "Messages", "Last updated", "Action"].map((label) => (
                         <th key={label} scope="col" className="px-3 py-3 font-medium">{label.toUpperCase()}</th>
                       ))}
                     </tr>
@@ -98,13 +96,11 @@ export default async function AdminSupportPage({ searchParams }: { searchParams:
                             >
                               {ticket.subject}
                             </Link>
-                            <span className="mt-1 block text-[11px] text-[#64748B]">
-                              {supportCategoryLabel(ticket.category)} · Submitted {formatDateTime(new Date(ticket.createdAt))}
-                            </span>
                           </td>
-                          <td className="max-w-[240px] px-3 py-1.5 align-middle">
-                            <span className="block break-all font-medium text-[#374151]">{ticket.email || "—"}</span>
-                            <span className="mt-1 block text-[11px] text-[#64748B]">{ticket.identity.kind === "registered" ? "Registered customer" : "Guest"}</span>
+                          <td className="min-w-0 max-w-[240px] px-3 py-1.5 align-middle">
+                            <span className="block min-w-0 truncate whitespace-nowrap font-medium text-[#374151]" title={ticket.email || undefined}>
+                              {ticket.email || "—"}
+                            </span>
                           </td>
                           <td className={"whitespace-nowrap px-3 py-1.5 align-middle font-semibold " + priorityStyle(ticket.priority)}>
                             {ticket.priority.charAt(0) + ticket.priority.slice(1).toLowerCase()}
