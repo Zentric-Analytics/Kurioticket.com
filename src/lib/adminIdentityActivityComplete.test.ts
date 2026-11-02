@@ -51,7 +51,7 @@ function matches(value: any, condition: any): boolean {
   });
 }
 
-function setup(kind: "guest" | "user" | "operational", count = 1105, products = ["FLIGHT", "HOTEL"]) {
+function setup(kind: "guest" | "user" | "operational", count = 1105, products = ["FLIGHT", "HOTEL"], includeOfferJourneys = false) {
   const userId = "qa-complete-account";
   const visitorId = "qa-complete-visitor";
   const id = kind === "user" ? userId : kind === "operational" ? "qa-operational-session" : visitorId;
@@ -94,11 +94,32 @@ function setup(kind: "guest" | "user" | "operational", count = 1105, products = 
       search.journeyEvents.push(event);
       journeyRows.push(event);
     }
+    if (includeOfferJourneys) {
+      // Two selected offers from two distinct recorded journeys.
+      for (const [index, journeyId] of ["qa-journey", "qa-journey-extra"].entries()) {
+        const search = searchRows[index];
+        const event: Row = {
+          id: "qa-offer-" + index, type: "OFFER_SELECTED", createdAt: search.createdAt,
+          product: search.type, provider: "Example provider", metadata,
+          searchHistoryId: search.id, redirectLogId: null,
+          searchHistory: search, redirectLog: null,
+          journey: { id: journeyId, visitorId, visitor, startedAt: baseTime },
+        };
+        search.journeyEvents.push(event);
+        journeyRows.push(event);
+      }
+    }
   }
   // These records must never become visible just because complete mode removes paging.
   const foreign = { ...searchRows[0], ...owner, id: "qa-foreign", userId: "other-account", visitorId: "other-visitor", visitor: { ...visitor, id: "other-visitor", currentUserId: "other-account" }, journeyEvents: [] };
   const production = { ...searchRows[0], id: "qa-production", query: { ...metadata, environment: "production" }, journeyEvents: [] };
   const allSearchRows = [...searchRows, ...(count ? [foreign, production] : [])];
+  const journeysById = new Map<string, Row>();
+  for (const event of journeyRows) {
+    const journey = event.journey;
+    if (!journeysById.has(journey.id)) journeysById.set(journey.id, { ...journey, events: [] });
+    journeysById.get(journey.id)!.events.push(event);
+  }
   const calls: Array<{ source: string; take: number }> = [];
   let failAfterFirstBatch = false;
   const delegate = (source: string, rows: Row[]) => ({
@@ -135,6 +156,9 @@ function setup(kind: "guest" | "user" | "operational", count = 1105, products = 
     },
     journeyEvent: delegate("journey", journeyRows), searchHistory: delegate("search", allSearchRows),
     redirectLog: delegate("handoff", handoffRows), analyticsEvent: delegate("analytics", analyticsRows),
+    searchJourney: { async count(args: Row) {
+      return [...journeysById.values()].filter(journey => matches(journey, args.where)).length;
+    } },
     async $queryRaw() { return [{ firstSeenAt: baseTime, lastSeenAt: baseTime }]; },
     async $transaction(action: (tx: Row) => Promise<unknown>, options: Row) {
       transactions++;
@@ -168,6 +192,8 @@ for (const kind of ["guest", "user", "operational"] as const) {
     assert.equal(result.data.nextCursor, null);
     assert.equal(result.data.summary.searches, 1105);
     assert.equal(result.data.summary.providerHandoffs, 53);
+    assert.equal(result.data.summary.offersSelected, 0);
+    assert.equal(result.data.summary.journeysTracked, kind === "operational" ? 0 : 1);
     assert.ok(result.data.events.every((event: Row, i: number, rows: Row[]) => !i || +rows[i - 1].at >= +event.at));
     assert.ok(!result.data.events.some((event: Row) => /foreign|production/.test(event.id)));
     assert.ok(scenario.calls.filter(call => call.source === "search").length >= 2);
@@ -176,6 +202,29 @@ for (const kind of ["guest", "user", "operational"] as const) {
     assert.equal(scenario.transactions(), 1);
   });
 }
+
+test("offer selections and distinct journeys follow the exact authorized, filtered activity window", async () => {
+  for (const kind of ["guest", "user"] as const) {
+    const scenario = setup(kind, 40, ["FLIGHT", "HOTEL"], true);
+    const result = await scenario.load();
+    assert.equal(result.status, "ok");
+    assert.equal(result.data.summary.offersSelected, 2);
+    assert.equal(result.data.summary.journeysTracked, 2);
+    assert.equal(result.data.summary.searches, 40);
+    const searchOnly = await scenario.load({ ...allFilters, tab: "searches" });
+    assert.equal(searchOnly.data.summary.offersSelected, 0);
+    assert.equal(searchOnly.data.summary.journeysTracked, 1);
+    const selectedOnly = await scenario.load({ ...allFilters, tab: "selections" });
+    assert.equal(selectedOnly.data.summary.offersSelected, 2);
+    assert.equal(selectedOnly.data.summary.journeysTracked, 2);
+    const filtered = await scenario.load({ ...allFilters, tab: "selections", product: "HOTEL" });
+    assert.equal(filtered.data.summary.offersSelected, 1);
+    assert.equal(filtered.data.summary.journeysTracked, 1);
+  }
+  const operational = await setup("operational", 40).load();
+  assert.equal(operational.data.summary.offersSelected, 0);
+  assert.equal(operational.data.summary.journeysTracked, 0);
+});
 
 test("complete reads preserve stage, product, text and inclusive UTC date filters", async () => {
   const scenario = setup("guest");
