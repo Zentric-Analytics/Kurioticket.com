@@ -114,7 +114,8 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
   const searchDetail = /^\/admin\/searches\/[a-z0-9_-]{6,128}\/?$/i.test(pathname);
   const searchesWorkspace = pathname === "/admin/searches" || pathname === "/admin/searches/" || pathname === "/admin/searches/activity" || pathname === "/admin/searches/activity/" || searchDetail;
   const supportWorkspace = pathname === "/admin/support" || pathname.startsWith("/admin/support/");
-  const whiteWorkspace = usersDirectory || searchesWorkspace || supportWorkspace;
+  const providersWorkspace = pathname === "/admin/providers" || pathname === "/admin/providers/";
+  const whiteWorkspace = usersDirectory || searchesWorkspace || supportWorkspace || providersWorkspace;
   return <AdminWorkspaceSearchProvider account={adminEmail || "admin"}><div className={"min-h-screen text-slate-950 " + (userActivity ? "bg-[#f1f5fb]" : whiteWorkspace ? "bg-white" : "bg-[#f1f5fb]")}>
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
       <AdminSearchHeader>
