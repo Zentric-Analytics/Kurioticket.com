@@ -31,8 +31,8 @@ test("missing status is scoped to the configured provider rather than all confir
   assert.match(service, /monitoringTrackedFlights/);
   assert.match(service, /monitoringStaleSnapshots/);
   assert.match(service, /flightStatusSnapshot: \{ is: null \}/);
-  assert.match(page, /Provider-matched confirmed flights that have not received a trusted status snapshot yet/);
-  assert.match(page, /Confirmed flights matching the configured provider name/);
+  assert.match(page, /Provider-matched flights awaiting their first status/);
+  assert.match(page, /Matches status provider/);
 });
 
 test("flight status readiness is provider-bound and independent from database telemetry", () => {
@@ -48,27 +48,27 @@ test("flight status readiness is provider-bound and independent from database te
 test("flight status operations shares the canonical freshness rule", () => {
   assert.match(service, /flightStatusFreshness/);
   assert.match(service, /flightStatusLimits\.freshnessWindowMs/);
-  assert.match(page, /Snapshots observed from now back through 15 minutes/);
+  assert.match(page, /Within 15-min window/);
   assert.match(statusService, /age >= -maximumFutureEventSkewMs && age <= freshnessWindowMs/);
 });
 
 test("flight status operations does not invent an event history or segment model", () => {
-  assert.match(page, /one latest primary-flight snapshot per confirmed My Trip/);
-  assert.match(page, /Return legs and connecting segments are not tracked independently yet/);
+  assert.match(page, /One latest primary-flight status per confirmed trip/);
+  assert.match(page, /Return flights and connections are not tracked separately/);
   assert.match(page, /No segment history yet/);
   assert.match(contract, /one operational snapshot per `MyTrip`/);
   assert.doesNotMatch(service, /FlightStatusEvent/);
 });
 
 test("flight status operations preserves the metasearch boundary", () => {
-  assert.match(page, /never derives live flight status from a search, a provider handoff, or a trip confirmation/);
+  assert.match(page, /Searches, handoffs and confirmations do not prove live status/);
   assert.match(navigation, /href: "\/admin\/flight-status"/);
   assert.doesNotMatch(navigation, /\/admin\/bookings/);
 });
 
 test("flight status declares database-scoped environment limits", () => {
-  assert.match(page, /FlightStatusSnapshot rows do not carry an environment column/);
-  assert.match(page, /reports the database connected to the current/);
+  assert.match(page, /Status records have no environment label/);
+  assert.match(page, /uses the connected/);
   assert.doesNotMatch(service, /query: \{ path: \["environment"\]/);
 });
 
@@ -110,20 +110,20 @@ test("latest snapshots and awaiting-first-snapshot sections never disappear at z
   assert.match(page, /operations\.awaitingFirstSnapshot\.length/);
   assert.match(page, /operations\.awaitingFirstSnapshot\.map/);
   assert.match(page, /No flights awaiting a first snapshot/);
-  assert.match(page, /The number of flights awaiting a snapshot is unknown/);
+  assert.match(page, /Count awaiting first status is unknown/);
   assert.match(page, /operations\.recentSnapshots\.length/);
   assert.match(page, /operations\.recentSnapshots\.map/);
   assert.match(page, /<AdminEmptyState[\s\S]*?title="Latest trusted flight-status snapshots"/);
-  assert.match(page, /No trusted flight-status snapshots have been recorded/);
-  assert.match(page, /Recent snapshots could not be loaded/);
+  assert.match(page, /No verified flight-status snapshots recorded yet/);
+  assert.match(page, /Recent flight-status data unavailable/);
   assert.match(page, /<AdminEmptyState title="Awaiting first status snapshot"/);
-  assert.match(page, /No status provider feed is configured/);
+  assert.match(page, /No status feed is configured/);
   assert.match(page, /No zero values were invented/);
   assert.doesNotMatch(page, /operations\.recentSnapshots\.length \? \([\s\S]*?\) : null\s*\) : null/);
 });
 
 test("Flight Status overview follows the planned responsive page hierarchy", () => {
-  assert.match(page, /sm:grid-cols-2 md:grid-cols-3 2xl:grid-cols-6/);
+  assert.match(page, /grid w-full min-w-\[960px\] grid-cols-6 gap-2/);
   assert.match(page, /grid items-start gap-3 lg:grid-cols-2/);
   const order = ["Flight status overview", "Status-feed readiness", "Latest status distribution",
     "Snapshot scope", "Awaiting first status snapshot", "Latest trusted flight-status snapshots",
@@ -149,7 +149,7 @@ test("Flight Status overview has an understated container and compact metrics wi
   const overview = page.slice(sectionStart, sectionEnd);
   assert.match(overview, /rounded-xl border border-slate-200\/90 p-3 sm:p-4/);
   assert.match(overview, /mb-2\.5 text-base font-semibold leading-6 tracking-tight/);
-  assert.match(overview, /grid min-w-0 gap-2 sm:grid-cols-2 md:grid-cols-3 2xl:grid-cols-6/);
+  assert.match(overview, /grid w-full min-w-\[960px\] grid-cols-6 gap-2/);
   assert.equal((overview.match(/<FlightStatusMetric label=/g) || []).length, 6);
   assert.doesNotMatch(overview, /<AdminMetricCard/);
 
@@ -170,6 +170,59 @@ test("Flight Status overview has an understated container and compact metrics wi
   assert.match(overview, /No zero values were invented/);
   assert.match(page, /<AdminSectionCard className="min-w-0 space-y-3 p-4 sm:p-5 lg:p-6">/);
   assert.doesNotMatch(page, /className="[^"]*(?:\bhidden\b|\binvisible\b|\bopacity-0\b)/);
+});
+
+
+test("all six Flight Status metrics form one accessible horizontal row without page overflow", () => {
+  const start = page.indexOf('<section aria-labelledby="flight-status-overview-title"');
+  const end = page.indexOf("</section>", start);
+  assert.ok(start >= 0 && end > start);
+  const overview = page.slice(start, end);
+  assert.match(overview, /role="region" aria-label="Flight status metrics" tabIndex=\{0\}/);
+  assert.match(overview, /min-w-0 max-w-full overflow-x-auto overscroll-x-contain/);
+  assert.match(overview, /grid w-full min-w-\[960px\] grid-cols-6 gap-2/);
+  assert.doesNotMatch(overview, /(?:sm|md|lg|xl|2xl):grid-cols-(?:1|2|3|4|5|6)/);
+  assert.equal((overview.match(/<FlightStatusMetric label=/g) || []).length, 6);
+  assert.match(page, /flex h-full min-w-0 flex-col rounded-lg/);
+  assert.match(page, /min-w-0 break-words text-xs font-normal leading-4/);
+  assert.match(page, /value\.toLocaleString\("en-US"\)/);
+  for (const key of ["confirmedFlights", "feedEligibleFlights", "trackedFlights", "missingSnapshots", "currentSnapshots", "staleSnapshots"]) {
+    assert.ok(overview.includes("operations.metrics." + key), "Original trustworthy metric missing: " + key);
+  }
+  const hints = Array.from(overview.matchAll(/<FlightStatusMetric label="([^"]+)"[^>]*?hint="([^"]+)"/g));
+  assert.equal(hints.length, 6);
+  for (const [, label, hint] of hints) {
+    assert.ok(hint.length <= 30, label + " hint should fit a compact card");
+  }
+});
+
+test("short descriptions preserve source and data-availability boundaries", () => {
+  for (const sentence of [
+    "Only the configured provider can send signed updates.",
+    "Duffel search and KAYAK sandbox do not supply this feed.",
+    "Each signed update must name the configured provider.",
+    "A configured feed does not mean updates are arriving.",
+    "Latest stored statuses from the configured provider.",
+    "One latest primary-flight status per confirmed trip.",
+    "Return flights and connections are not tracked separately.",
+    "Live status requires a valid signed update from the configured provider for a confirmed flight.",
+    "Searches, handoffs and confirmations do not prove live status.",
+    "Status records have no environment label.",
+  ]) {
+    assert.ok(page.includes(sentence), "Key boundary missing: " + sentence);
+  }
+  assert.match(page, /No zero values were invented/);
+  assert.match(page, /No counts are assumed/);
+  assert.match(page, /Count awaiting first status is unknown/);
+  assert.match(page, /No verified flight-status snapshots recorded yet/);
+  assert.match(page, /Recent flight-status data unavailable/);
+  assert.match(page, /No status feed is configured; no snapshots to show/);
+  assert.match(page, /<AdminPageShell title="Flight Status Operations" hideHeader>/);
+  assert.match(page, /href="\/admin\/confirmed-trips"/);
+  assert.doesNotMatch(page, /href="\/admin\/flights"|href="\/admin\/searches\/activity/);
+  assert.match(page, /operations\.statusDistribution\.map/);
+  assert.match(page, /operations\.awaitingFirstSnapshot\.map/);
+  assert.match(page, /operations\.recentSnapshots\.map/);
 });
 
 test("Flight Status uses a compact, right-aligned Confirmed trips toolbar and keeps Flight Search in Search Activity", () => {
@@ -235,7 +288,7 @@ test("Flight Status uses the same single white parent column as Admin Overview",
   assert.match(page.slice(0, parentStart), /href="\/admin\/confirmed-trips"/);
   assert.doesNotMatch(page.slice(0, parentStart), /href="\/admin\/searches\/activity\?product=FLIGHT"/);
   assert.equal((page.match(/<FlightStatusMetric label=/g) || []).length, 6);
-  assert.match(page, /grid min-w-0 gap-2 sm:grid-cols-2 md:grid-cols-3 2xl:grid-cols-6/);
+  assert.match(page, /grid w-full min-w-\[960px\] grid-cols-6 gap-2/);
   assert.match(page, /No zero values were invented/);
   assert.match(page, /Flight-status distribution is unavailable\. No counts are assumed/);
   assert.match(page, /operations\.awaitingFirstSnapshot\.map/);
