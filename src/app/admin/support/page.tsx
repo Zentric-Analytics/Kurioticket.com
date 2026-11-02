@@ -58,8 +58,7 @@ export default async function AdminSupportPage({ searchParams }: { searchParams:
   // filter submissions use scopedParams without cursor, so they start at page one.
   if (one(raw.cursor)) params.set("cursor", one(raw.cursor));
   if (!params.has("limit")) params.set("limit", "50");
-  // Preserve the current support query contract and creation-time pagination.
-  // Sorting, ticket delivery and lifecycle logic belong to the later workflow phase.
+  // Keep the current activity-based ticket ordering and cursor contract unchanged.
   const result = await adminOperationalReads.support.list(params);
   const toolbarQuery = scopedParams(raw).toString();
   const pageHref = "/admin/support" + (toolbarQuery ? "?" + toolbarQuery : "");
@@ -77,8 +76,8 @@ export default async function AdminSupportPage({ searchParams }: { searchParams:
           ) : (
             <>
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[960px] table-fixed text-left text-[13px]">
-                  <colgroup><col className="w-[28%]" /><col className="w-[21%]" /><col className="w-[10%]" /><col className="w-[14%]" /><col className="w-[8%]" /><col className="w-[10%]" /><col className="w-[9%]" /></colgroup>
+                <table className="w-full min-w-[1100px] table-fixed text-left text-[13px]">
+                  <colgroup><col className="w-[25%]" /><col className="w-[20%]" /><col className="w-[10%]" /><col className="w-[14%]" /><col className="w-[8%]" /><col className="w-[11%]" /><col className="w-[12%]" /></colgroup>
                   <thead className="border-b border-[#D8E1EC] bg-white text-[12px] text-[#475569]">
                     <tr>
                       {["Ticket", "Customer", "Priority", "Status", "Messages", "Last updated", "Action"].map((label) => (
