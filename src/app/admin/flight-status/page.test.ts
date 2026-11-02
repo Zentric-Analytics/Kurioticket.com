@@ -9,9 +9,9 @@ const navigation = readFileSync("src/lib/adminNavigation.ts", "utf8");
 const contract = readFileSync("docs/partner-flight-status-contract.md", "utf8");
 
 test("flight status admin is a read-only trusted snapshot operations page", () => {
-  assert.match(page, /title="Flight Status Operations"/);
-  assert.match(page, /trusted provider-supplied operational flight status/);
-  assert.match(page, /Search results, handoffs and booking confirmations never infer live status/);
+  assert.match(page, /<AdminPageShell title="Flight Status Operations" hideHeader>/);
+  assert.doesNotMatch(page, /description="Monitor trusted provider-supplied operational flight status/);
+  assert.doesNotMatch(page, /Search results, handoffs and booking confirmations never infer live status/);
   assert.match(page, /Latest trusted flight-status snapshots/);
   assert.match(page, /This is not an event history/);
   assert.doesNotMatch(page, /fetch\(|method:\s*["'](?:POST|PATCH|DELETE)|<form/);
@@ -172,9 +172,13 @@ test("Flight Status overview has an understated container and compact metrics wi
   assert.doesNotMatch(page, /className="[^"]*(?:\bhidden\b|\binvisible\b|\bopacity-0\b)/);
 });
 
-test("Flight Status header keeps only Confirmed trips while flight search stays in Search Activity", () => {
-  const actions = page.match(/actions=\{([\s\S]*?)\n      \}\n    >/ )?.[1];
-  assert.ok(actions, "Flight Status header actions must be present");
+test("Flight Status uses a compact, right-aligned Confirmed trips toolbar and keeps Flight Search in Search Activity", () => {
+  const match = page.match(/<div role="group" aria-label="Flight Status actions" className="([^"]+)">([\s\S]*?)<\/div>/);
+  assert.ok(match, "Flight Status action toolbar must be visible");
+  const [, classes, actions] = match;
+  assert.match(classes, /mb-3/);
+  assert.match(classes, /justify-end/);
+  assert.match(classes, /flex-wrap/);
   assert.match(actions, /<Link href="\/admin\/confirmed-trips"[^>]*>\s*Confirmed trips\s*<\/Link>/);
   assert.equal((actions.match(/<Link /g) || []).length, 1, "Keep only the relevant Confirmed trips shortcut");
   assert.doesNotMatch(actions, /href="\/admin\/flights"|href="\/admin\/searches\/activity|Flight search operations/);
@@ -187,6 +191,26 @@ test("Flight Status header keeps only Confirmed trips while flight search stays 
   assert.match(navigation, /href: "\/admin\/flights", parentHref: "\/admin\/providers"/);
 });
 
+
+
+test("Flight Status hides only the page introduction and preserves an accessible title", () => {
+  const shell = readFileSync("src/components/admin/AdminPageShellHistorical.tsx", "utf8");
+  assert.match(shell, /hideHeader\s*\?\s*<h1 className="sr-only">\{title\}<\/h1>/);
+  assert.match(shell, /hideHeader \? "" : "mt-6"/);
+  assert.match(page, /<AdminPageShell title="Flight Status Operations" hideHeader>/);
+  assert.doesNotMatch(page, /eyebrow=|description=|actions=\{/);
+  assert.doesNotMatch(page, /Admin operations|Monitor trusted provider-supplied operational flight status/);
+  const toolbarIndex = page.indexOf('role="group" aria-label="Flight Status actions"');
+  const parentIndex = page.indexOf('<AdminSectionCard className="min-w-0 space-y-3 p-4 sm:p-5 lg:p-6">');
+  assert.ok(toolbarIndex > 0 && parentIndex > toolbarIndex, "The toolbar must sit above the original parent card");
+  assert.equal((page.match(/href="\/admin\/confirmed-trips"/g) || []).length, 1);
+  for (const section of ["Flight status overview", "Status-feed readiness", "Latest status distribution",
+    "Snapshot scope", "Awaiting first status snapshot", "Latest trusted flight-status snapshots", "Operational boundaries"]) {
+    assert.ok(page.includes(section), "Preserve operational section: " + section);
+  }
+  assert.match(page, /getFlightStatusOperationsSnapshot\(undefined, readiness\)/);
+  assert.match(page, /No zero values were invented/);
+});
 
 test("Flight Status uses the same single white parent column as Admin Overview", () => {
   const overviewPage = readFileSync("src/app/admin/page.tsx", "utf8");
