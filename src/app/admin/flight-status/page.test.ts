@@ -60,6 +60,28 @@ test("flight status operations does not invent an event history or segment model
   assert.doesNotMatch(service, /FlightStatusEvent/);
 });
 
+
+test("Flight Status keeps safety and environment guidance within readiness, not a standalone card", () => {
+  assert.doesNotMatch(page, /<h2[^>]*>Operational boundaries<\/h2>/);
+  const readinessStart = page.indexOf(">Status-feed readiness</h2>");
+  const distributionStart = page.indexOf(">Latest status distribution</h2>", readinessStart);
+  assert.ok(readinessStart >= 0 && distributionStart > readinessStart);
+  const readinessCopy = page.slice(readinessStart, distributionStart);
+  assert.match(readinessCopy, /Only the configured provider can send signed updates/);
+  assert.match(readinessCopy, /A configured feed does not mean updates are arriving/);
+  assert.match(readinessCopy, /Live status requires a valid signed update from the configured provider for a confirmed flight/);
+  assert.match(readinessCopy, /Searches, handoffs and confirmations do not prove live status/);
+  assert.match(readinessCopy, /Status records have no environment label/);
+  assert.match(readinessCopy, /connected \{operations\?\.environment \?\? "application"\} database/);
+  assert.equal((page.match(/<AdminSectionCard className="min-w-0 p-4 sm:p-5">/g) || []).length, 3);
+  assert.match(page, /<AdminSectionCard className="min-w-0 space-y-3 p-4 sm:p-5 lg:p-6">/);
+  assert.match(page, /grid w-full min-w-\[960px\] grid-cols-6 gap-2/);
+  assert.match(page, /No zero values were invented/);
+  assert.match(page, /Flight-status distribution is unavailable\. No counts are assumed/);
+  assert.match(page, /operations\.awaitingFirstSnapshot\.map/);
+  assert.match(page, /operations\.recentSnapshots\.map/);
+});
+
 test("flight status operations preserves the metasearch boundary", () => {
   assert.match(page, /Searches, handoffs and confirmations do not prove live status/);
   assert.match(navigation, /href: "\/admin\/flight-status"/);
@@ -84,7 +106,6 @@ test("all Flight Status sections are present regardless of telemetry availabilit
     "Status-feed readiness",
     "Latest status distribution",
     "Snapshot scope",
-    "Operational boundaries",
     "Awaiting first status snapshot",
     "Latest trusted flight-status snapshots",
   ];
@@ -94,9 +115,9 @@ test("all Flight Status sections are present regardless of telemetry availabilit
   assert.doesNotMatch(page, /className="[^"]*(?:\bhidden\b|\binvisible\b|\bopacity-0\b)/);
 
   const distributionStart = page.indexOf('<div className="grid items-start gap-3 lg:grid-cols-2">');
-  const boundaryStart = page.indexOf('>Operational boundaries</h2>');
-  assert.ok(distributionStart >= 0 && boundaryStart > distributionStart);
-  const summaryPanels = page.slice(distributionStart, boundaryStart);
+  const awaitingStart = page.indexOf('operations.awaitingFirstSnapshot.length ? (', distributionStart);
+  assert.ok(distributionStart >= 0 && awaitingStart > distributionStart);
+  const summaryPanels = page.slice(distributionStart, awaitingStart);
   assert.match(summaryPanels, /Latest status distribution/);
   assert.match(summaryPanels, /Snapshot scope/);
   assert.match(summaryPanels, /!operations \? \(/);
@@ -126,8 +147,7 @@ test("Flight Status overview follows the planned responsive page hierarchy", () 
   assert.match(page, /grid w-full min-w-\[960px\] grid-cols-6 gap-2/);
   assert.match(page, /grid items-start gap-3 lg:grid-cols-2/);
   const order = ["Flight status overview", "Status-feed readiness", "Latest status distribution",
-    "Snapshot scope", "Awaiting first status snapshot", "Latest trusted flight-status snapshots",
-    "Operational boundaries"];
+    "Snapshot scope", "Awaiting first status snapshot", "Latest trusted flight-status snapshots"];
   const locations = order.map(label => page.indexOf(">" + label + "</h2>"));
   assert.ok(locations.every(n => n >= 0), "All operational headings must stay visible");
   assert.deepEqual(locations, [...locations].sort((a, b) => a - b));
@@ -258,7 +278,7 @@ test("Flight Status hides only the page introduction and preserves an accessible
   assert.ok(toolbarIndex > 0 && parentIndex > toolbarIndex, "The toolbar must sit above the original parent card");
   assert.equal((page.match(/href="\/admin\/confirmed-trips"/g) || []).length, 1);
   for (const section of ["Flight status overview", "Status-feed readiness", "Latest status distribution",
-    "Snapshot scope", "Awaiting first status snapshot", "Latest trusted flight-status snapshots", "Operational boundaries"]) {
+    "Snapshot scope", "Awaiting first status snapshot", "Latest trusted flight-status snapshots"]) {
     assert.ok(page.includes(section), "Preserve operational section: " + section);
   }
   assert.match(page, /getFlightStatusOperationsSnapshot\(undefined, readiness\)/);
@@ -280,8 +300,7 @@ test("Flight Status uses the same single white parent column as Admin Overview",
   assert.match(page, />\s*<AdminSectionCard className="min-w-0 space-y-3 p-4 sm:p-5 lg:p-6">\s*<section aria-labelledby="flight-status-overview-title"/);
   assert.doesNotMatch(page.slice(parentStart, parentEnd), /className="[^"]*(?:\bhidden\b|\binvisible\b|\bopacity-0\b)/);
   const order = ["Flight status overview", "Status-feed readiness", "Latest status distribution",
-    "Snapshot scope", "Awaiting first status snapshot", "Latest trusted flight-status snapshots",
-    "Operational boundaries"];
+    "Snapshot scope", "Awaiting first status snapshot", "Latest trusted flight-status snapshots"];
   const positions = order.map(label => page.indexOf(">" + label + "</h2>", parentStart));
   assert.ok(positions.every(n => n > parentStart && n < parentEnd), "All existing sections must stay within the parent card");
   assert.deepEqual(positions, [...positions].sort((a, b) => a - b), "Keep the existing section order");
