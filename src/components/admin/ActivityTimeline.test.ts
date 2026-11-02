@@ -57,7 +57,10 @@ test("one recorded event displays singular grammar and no unnecessary disclosure
 });
 
 test("empty timeline remains readable without claiming no customer history", () => {
-  const html = render([]);
+  const html = renderToStaticMarkup(createElement(ActivityTimeline, {
+    events: [], nextHref: null, environment: "staging",
+    clearHref: "/admin/users/guest/qa-guest-activity-0001/activity",
+  }));
   assert.match(html, /No activity recorded in this view/);
   assert.match(html, /No activity matches your filters/);
   assert.match(html, /0 recorded events/);
