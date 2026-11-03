@@ -35,3 +35,22 @@ export function providerHandoffFiltersHref(
   const query = params.toString();
   return "/admin/redirects" + (query ? "?" + query : "");
 }
+
+
+/**
+ * Only apply server-backed filter props for our latest navigation when there
+ * are no newer local provider keystrokes. Previous responses can finish while
+ * a new 300 ms debounce is pending, so accepting them would lose user input.
+ */
+export function shouldAcceptHandoffFilterResponse(
+  initial: ProviderHandoffFilterValues,
+  scope: ProviderHandoffFilterScope,
+  latestRequestedHref: string | null,
+  latestProviderDraft: string,
+  externalNavigation = false,
+): boolean {
+  if (externalNavigation) return true;
+  const incomingHref = providerHandoffFiltersHref(initial, scope);
+  return (latestRequestedHref === null || incomingHref === latestRequestedHref)
+    && latestProviderDraft.trim() === initial.provider.trim();
+}
