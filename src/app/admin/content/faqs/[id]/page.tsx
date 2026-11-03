@@ -9,12 +9,16 @@ import {
 import { FaqCmsEditor } from "@/components/admin/FaqCmsEditor";
 import { CmsRevisionRestoreButton } from "@/components/admin/CmsRevisionRestoreButton";
 import { CmsContentError, getAdminCmsContent } from "@/services/cmsContentService";
+import { faqCmsListNavigation } from "@/lib/adminContentNavigation";
 
 export const metadata = { title: "Edit Admin FAQ" };
 
-type PageProps = { params: Promise<{ id: string }> };
+type PageProps = {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
 
-export default async function AdminFaqDetailPage({ params }: PageProps) {
+export default async function AdminFaqDetailPage({ params, searchParams }: PageProps) {
   const { id } = await params;
 
   let result: Awaited<ReturnType<typeof getAdminCmsContent>>;
@@ -33,14 +37,16 @@ export default async function AdminFaqDetailPage({ params }: PageProps) {
     notFound();
   }
 
+  const nav = faqCmsListNavigation(await searchParams);
+
   return (
     <AdminPageShell
       title="Edit FAQ"
       description="Review the draft, publish intentionally, and inspect the immutable revision trail."
-      actions={<AdminLinkButton href="/admin/content/faqs">Back to FAQs</AdminLinkButton>}
+      actions={<AdminLinkButton href={nav.listHref}>Back to FAQs</AdminLinkButton>}
     >
       <div className="space-y-5">
-        <FaqCmsEditor initialItem={result.item} />
+        <FaqCmsEditor initialItem={result.item} listQuery={nav.query} />
 
         <AdminSectionCard className="overflow-hidden p-0">
           <div className="border-b border-slate-100 p-5">

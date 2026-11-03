@@ -10,12 +10,16 @@ import { HomepageCmsEditor } from "@/components/admin/HomepageCmsEditor";
 import { CmsRevisionRestoreButton } from "@/components/admin/CmsRevisionRestoreButton";
 import { hotelDestinations } from "@/data/hotelDestinations";
 import { getHomepageCmsSection, homepageCmsSections } from "@/lib/adminHomepageCms";
+import { homepageCmsListNavigation } from "@/lib/adminContentNavigation";
 import { CmsContentError, getAdminCmsContent } from "@/services/cmsContentService";
 import { homepageCmsMarkets } from "@/services/homepageCmsService";
 
-type PageProps = { params: Promise<{ section: string; id: string }> };
+type PageProps = {
+  params: Promise<{ section: string; id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
 
-export default async function HomepageCmsDetailPage({ params }: PageProps) {
+export default async function HomepageCmsDetailPage({ params, searchParams }: PageProps) {
   const { section: rawSection, id } = await params;
   const section = getHomepageCmsSection(rawSection);
   if (!section) notFound();
@@ -30,18 +34,20 @@ export default async function HomepageCmsDetailPage({ params }: PageProps) {
   }
 
   if (result.item.type !== config.type || result.item.locale !== "en") notFound();
+  const nav = homepageCmsListNavigation(section, await searchParams, result.item.market);
 
   return (
     <AdminPageShell
       title={`Edit ${config.singular}`}
       description="Review the draft, publish intentionally, and inspect the immutable revision trail."
-      actions={<AdminLinkButton href={`/admin/content/homepage/${section}?market=${result.item.market}`}>Back</AdminLinkButton>}
+      actions={<AdminLinkButton href={nav.listHref}>Back to {config.title}</AdminLinkButton>}
     >
       <div className="space-y-5">
         <HomepageCmsEditor
           section={section}
           markets={homepageCmsMarkets}
           initialMarket={result.item.market}
+          listQuery={nav.query}
           initialItem={result.item}
           hotelOptions={section === "hotel-destinations" ? getHotelOptions() : []}
         />
