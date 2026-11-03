@@ -343,16 +343,16 @@ export default async function AdminConfirmedTripsPage({ searchParams }: Props) {
                 </div>
               </details>
 
-              <details className="group rounded-xl border border-slate-200 bg-white">
+              <details id="confirmation-delivery-health-title" className="group rounded-xl border border-slate-200 bg-white">
                 <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-sm font-semibold text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 [&::-webkit-details-marker]:hidden">
                   <span className="flex items-center gap-2"><Clock3 size={17} className="text-indigo-700" aria-hidden="true" />Confirmation delivery health and alerts</span>
                   <ChevronDown size={17} className="shrink-0 text-slate-500 transition-transform group-open:rotate-180" aria-hidden="true" />
                 </summary>
                 <div className="border-t border-slate-100 p-3">
-          <section aria-labelledby="confirmation-delivery-health-title" className="min-w-0 rounded-xl border border-slate-200 px-4 py-3 sm:px-5 sm:py-4">
+          <section aria-labelledby="confirmation-delivery-health-heading" className="min-w-0 rounded-xl border border-slate-200 px-4 py-3 sm:px-5 sm:py-4">
             <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2.5">
               <div className="min-w-0 flex-1">
-                <h2 id="confirmation-delivery-health-title" className="text-base font-semibold leading-6 tracking-tight text-slate-950">Confirmation delivery health</h2>
+                <h2 id="confirmation-delivery-health-heading" className="text-base font-semibold leading-6 tracking-tight text-slate-950">Confirmation delivery health</h2>
                 <p className="mt-1 text-[13px] leading-5 text-slate-600">Tracks authenticated provider callbacks. Retries are not new bookings or trips.</p>
               </div>
               <div className="flex max-w-full flex-wrap items-center gap-x-3 gap-y-2">
