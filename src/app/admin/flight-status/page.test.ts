@@ -284,16 +284,24 @@ test("Flight Status uses consistent compact sections, balanced readiness facts a
   assert.doesNotMatch(page, /className="[^"]*(?:\bhidden\b|\binvisible\b|\bopacity-0\b)/);
 });
 
-test("Flight Status uses a compact, right-aligned Confirmed trips toolbar and keeps Flight Search in Search Activity", () => {
-  const match = page.match(/<div role="group" aria-label="Flight Status actions" className="([^"]+)">([\s\S]*?)<\/div>/);
-  assert.ok(match, "Flight Status action toolbar must be visible");
-  const [, classes, actions] = match;
+test("Flight Status has a left-aligned Back to Confirmed Trips link and keeps Flight Search in Search Activity", () => {
+  const match = page.match(/<nav aria-label="Flight Status navigation" className="([^"]+)">([\s\S]*?)<\/nav>/);
+  assert.ok(match, "Flight Status back navigation must be visible");
+  const [, classes, navigationLinks] = match;
   assert.match(classes, /mb-3/);
-  assert.match(classes, /justify-end/);
+  assert.match(classes, /justify-start/);
   assert.match(classes, /flex-wrap/);
-  assert.match(actions, /<Link href="\/admin\/confirmed-trips"[^>]*>\s*Confirmed trips\s*<\/Link>/);
-  assert.equal((actions.match(/<Link /g) || []).length, 1, "Keep only the relevant Confirmed trips shortcut");
-  assert.doesNotMatch(actions, /href="\/admin\/flights"|href="\/admin\/searches\/activity|Flight search operations/);
+  assert.doesNotMatch(classes, /justify-end/);
+  const link = navigationLinks.match(/<Link href="\/admin\/confirmed-trips" className="([^"]+)">([\s\S]*?)<\/Link>/);
+  assert.ok(link, "Back link must navigate directly to Confirmed Trips");
+  assert.match(link[1], /min-h-9/);
+  assert.match(link[1], /font-medium/);
+  assert.match(link[1], /focus-visible:ring-2/);
+  assert.doesNotMatch(link[1], /(?:^|\s)(?:border(?:-[^\s"]+)?|bg-[^\s"]+|font-bold|font-semibold)(?:\s|$)/, "Use an understated navigation link, not a prominent button");
+  assert.match(link[2], /<ArrowLeft size=\{16\} aria-hidden="true" \/>/);
+  assert.match(link[2], /Back to Confirmed Trips/);
+  assert.equal((navigationLinks.match(/<Link /g) || []).length, 1, "Keep only the relevant Confirmed Trips back link");
+  assert.doesNotMatch(navigationLinks, /href="\/admin\/flights"|href="\/admin\/searches\/activity|Flight search operations/);
 
   // Flight search monitoring is still available from the canonical admin navigation.
   const searchActivity = readFileSync("src/app/admin/searches/activity/page.tsx", "utf8");
@@ -312,9 +320,9 @@ test("Flight Status hides only the page introduction and preserves an accessible
   assert.match(page, /<AdminPageShell title="Flight Status Operations" hideHeader>/);
   assert.doesNotMatch(page, /eyebrow=|description=|actions=\{/);
   assert.doesNotMatch(page, /Admin operations|Monitor trusted provider-supplied operational flight status/);
-  const toolbarIndex = page.indexOf('role="group" aria-label="Flight Status actions"');
+  const navigationIndex = page.indexOf('<nav aria-label="Flight Status navigation"');
   const parentIndex = page.indexOf('<AdminSectionCard className="min-w-0 space-y-3 p-4 sm:p-5 lg:p-6">');
-  assert.ok(toolbarIndex > 0 && parentIndex > toolbarIndex, "The toolbar must sit above the original parent card");
+  assert.ok(navigationIndex > 0 && parentIndex > navigationIndex, "The back link must sit above the original parent card");
   assert.equal((page.match(/href="\/admin\/confirmed-trips"/g) || []).length, 1);
   for (const section of ["Flight status overview", "Status-feed readiness", "Latest status distribution",
     "Snapshot scope", "Awaiting first status snapshot", "Latest trusted flight-status snapshots"]) {
