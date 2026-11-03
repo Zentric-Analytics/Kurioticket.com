@@ -4,7 +4,7 @@ import test from "node:test";
 
 import { adminNavigation } from "@/lib/adminNavigation";
 import { getProviderOutcomeWidths } from "@/lib/adminProviderVisuals";
-import { providerHandoffFiltersHref } from "@/lib/adminProviderHandoffFilterUrl";
+import { providerHandoffFiltersHref, shouldAcceptHandoffFilterResponse } from "@/lib/adminProviderHandoffFilterUrl";
 import { filterProviderOperationalStatuses, filterProviderStatuses, normalizeProductFilter, productFilters } from "@/lib/adminProviderFilters";
 import type { ProviderOperationalStatus, ProviderOperationalServiceStatus } from "@/services/providerOperationalStatusCore";
 
@@ -377,6 +377,56 @@ test("Task 8 keeps filters and deep-linked date/identity scope correctly across 
   assert.equal(changedIdentity.searchParams.get("to"), "2026-11-03");
   assert.equal(changedIdentity.searchParams.get("product"), "HOTEL");
   assert.equal(changedIdentity.searchParams.get("identity"), "unattributed");
+});
+
+test("Handoff filter keeps newer local text during stale server refreshes", () => {
+  const scope = { userId: "", visitorId: "", from: "", to: "" };
+  const base = {
+    product: "", identity: "all", correlation: "",
+    provider: "KAYAK", environment: "",
+  };
+  const latest = providerHandoffFiltersHref({ ...base, provider: "KAYAK sandbox" }, scope);
+  assert.equal(shouldAcceptHandoffFilterResponse(base, scope, latest, "KAYAK sandbox"), false);
+  assert.equal(shouldAcceptHandoffFilterResponse(base, scope,
+    providerHandoffFiltersHref(base, scope), "KAYAK sandbox"), false);
+  assert.equal(shouldAcceptHandoffFilterResponse({ ...base, provider: "KAYAK sandbox" },
+    scope, latest, "KAYAK sandbox"), true);
+  assert.equal(shouldAcceptHandoffFilterResponse(base, scope, latest,
+    "KAYAK sandbox", true), true); // Deliberate browser Back/Forward.
+  assert.match(handoffFilters, /latestProviderDraft\.current = patch\.provider/);
+  assert.match(handoffFilters, /shouldAcceptHandoffFilterResponse\(/);
+  assert.match(handoffFilters, /if \(timeout\.current\) clearTimeout\(timeout\.current\)/);
+});
+
+test("Handoff identity unscoping stays active during subsequent rapid changes", () => {
+  assert.match(handoffFilters, /const identityScopeCleared = useRef\(false\)/);
+  assert.match(handoffFilters, /if \(changeIdentity\) identityScopeCleared\.current = true/);
+  assert.match(handoffFilters, /providerHandoffFiltersHref\(next, scope, identityScopeCleared\.current\)/);
+  const scope = { userId: "account_1", visitorId: "visitor_1",
+    from: "2026-10-20", to: "2026-11-03" };
+  const identityChanged = {
+    product: "HOTEL", identity: "guest", correlation: "",
+    provider: "", environment: "staging",
+  };
+  for (const product of ["FLIGHT", "HOTEL"]) {
+    const target = new URL(providerHandoffFiltersHref({ ...identityChanged, product },
+      scope, true), "https://internal.example");
+    assert.equal(target.searchParams.has("userId"), false);
+    assert.equal(target.searchParams.has("visitorId"), false);
+    assert.equal(target.searchParams.get("identity"), "guest");
+    assert.equal(target.searchParams.get("from"), scope.from);
+    assert.equal(target.searchParams.get("to"), scope.to);
+  }
+});
+
+test("No-script referral date selection submits exactly one days field", () => {
+  const enhanced = referralWindowFilter.indexOf("<SearchMonitorSelect");
+  const noScript = referralWindowFilter.indexOf("<noscript>");
+  const fallback = referralWindowFilter.indexOf("<form action=", noScript);
+  assert.ok(enhanced >= 0 && noScript > enhanced && fallback > noScript);
+  assert.match(referralWindowFilter, /<select id="referral-window-fallback" name="days"/);
+  assert.match(referralWindowFilter, /referral-window-enhanced \{ display: none !important; \}/);
+  assert.match(referralWindowFilter, /<button type="submit"/);
 });
 
 test("Tasks 9–10 simplify only the handoff detail header and move back navigation left", () => {
