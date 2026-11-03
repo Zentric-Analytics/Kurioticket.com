@@ -28,7 +28,8 @@ export function handoffNextPageHref(raw: Raw, nextCursor: string) {
   const history = trail(raw);
   const previous = raw.cursor;
   history.push(typeof previous === "string" && TOKEN.test(previous) ? previous : FIRST);
-  params.set("pageTrail", history.slice(-MAX_DEPTH).join("."));
+  while (history.length > MAX_DEPTH || history.join(".").length > 8192) history.shift();
+  params.set("pageTrail", history.join("."));
   params.set("cursor", nextCursor);
   return "/admin/redirects?" + params.toString();
 }
