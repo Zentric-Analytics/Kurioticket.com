@@ -143,8 +143,17 @@ test("Content's nested pages use the preserved return context", () => {
   const faqEditor = readFileSync("src/components/admin/FaqCmsEditor.tsx", "utf8");
   assert.match(homepageEditor, /listQuery \? "\?" \+ listQuery/);
   assert.match(faqEditor, /listQuery \? "\?" \+ listQuery/);
-  assert.match(readFileSync("src/components/admin/HomepageCmsListClient.tsx", "utf8"), /window\.history\.replaceState/);
-  assert.match(readFileSync("src/components/admin/FaqCmsListClient.tsx", "utf8"), /window\.history\.replaceState/);
+  const directory = readFileSync("src/components/admin/ContentDirectoryToolbar.tsx", "utf8");
+  assert.match(directory, /router\.replace\(url, \{ scroll: false \}\)/);
+  assert.match(directory, /window\.addEventListener\("popstate"/);
+  assert.match(directory, /setTimeout/);
+  assert.match(directory, /<AdminDirectorySelect/);
+  assert.doesNotMatch(directory, /Apply filters/);
+  for (const path of ["src/components/admin/HomepageCmsListClient.tsx", "src/components/admin/FaqCmsListClient.tsx"]) {
+    const list = readFileSync(path, "utf8");
+    assert.doesNotMatch(list, /Search this page|Search questions, answers or categories/);
+    assert.match(list, /ContentRecordsTable/);
+  }
   assert.match(readFileSync("src/components/admin/CmsCreateLink.tsx", "utf8"), /useSearchParams/);
 });
 
@@ -177,4 +186,31 @@ test("Content management uses consistent arrow back links and clean page framing
     assert.match(source, /ContentStatusPill/);
     assert.doesNotMatch(source, /<AdminSectionCard/);
   }
+});
+
+test("Content lists search the whole CMS dataset and filters apply instantly", () => {
+  const home = readFileSync("src/app/admin/content/homepage/[section]/page.tsx", "utf8");
+  const faq = readFileSync("src/app/admin/content/faqs/page.tsx", "utf8");
+  const service = readFileSync("src/services/cmsContentService.ts", "utf8");
+  const api = readFileSync("src/app/api/admin/content/route.ts", "utf8");
+  const toolbar = readFileSync("src/components/admin/ContentDirectoryToolbar.tsx", "utf8");
+  for (const source of [home, faq]) {
+    assert.match(source, /<ContentDirectoryToolbar/);
+    assert.match(source, /search: one\(raw\.q\) \|\| undefined/);
+    assert.doesNotMatch(source, /<AdminButton[^>]*type="submit">Apply/);
+  }
+  assert.match(faq, /listAdminCmsFaqCategories/);
+  assert.match(faq, /category: one\(raw\.category\) \|\| undefined/);
+  assert.match(toolbar, /role="search"/);
+  assert.match(toolbar, /aria-label="Content publication status"/);
+  assert.match(toolbar, /onValueChange=\{next => navigate/);
+  assert.match(toolbar, /<AdminDirectorySelect/);
+  assert.match(service, /db\.\$queryRaw/);
+  assert.match(service, /jsonb_each_text/);
+  assert.match(service, /Prisma\.join\(predicates, " AND "\)/);
+  assert.match(service, /scope\.search/);
+  assert.match(service, /scope\.category/);
+  assert.match(service, /encodeCmsListCursor\(scope/);
+  assert.match(api, /search: url\.searchParams\.get\("q"\)/);
+  assert.match(api, /category: url\.searchParams\.get\("category"\)/);
 });
