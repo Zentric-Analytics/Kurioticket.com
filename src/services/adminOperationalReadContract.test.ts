@@ -46,3 +46,13 @@ test("support activity pagination uses version two and invalidates old creation-
   const old = Buffer.from(JSON.stringify({ v: 1, kind: "support", scope: JSON.stringify(parsed.data.scope), at: "2026-10-29T09:00:00.000Z", id: "ticket_123" })).toString("base64url");
   assert.equal(parseAdminSupportQuery(new URLSearchParams("status=OPEN&cursor=" + encodeURIComponent(old))).status, "invalid");
 });
+
+test("handoff source-page scope accepts normalized paths and rejects external URLs", () => {
+  const good = parseAdminHandoffQuery(new URLSearchParams("sourcePage=%2Fhotel_details&product=HOTEL"), "staging");
+  assert.equal(good.status, "ok");
+  if (good.status === "ok") assert.equal(good.data.scope.sourcePage, "/hotel_details");
+  for (const value of ["https://example.com/hotel_details", "//evil", "/hotels?private=1", "/hotel#fragment"]) {
+    const params = new URLSearchParams({ sourcePage: value });
+    assert.equal(parseAdminHandoffQuery(params, "staging").status, "invalid");
+  }
+});
