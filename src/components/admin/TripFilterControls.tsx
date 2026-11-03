@@ -118,10 +118,7 @@ export function TripFilterControls({ filters, range, dateFields, providerNames }
             className={inputClass + " px-1.5 2xl:px-2"} />
         </label>
       </div>
-      <div className="mt-3 flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-2">
-        <p className="min-w-0 flex-1 text-[11px] leading-4 text-slate-500">
-          UTC dates filter signed confirmation timestamps. Tracking and precise minute-level ranges require a future integration.
-        </p>
+      <div className="mt-3 flex min-w-0 flex-wrap items-center justify-end gap-2">
         <div className="flex shrink-0 flex-wrap items-center gap-2">
           <Link href="/admin/confirmed-trips#trip-directory" className="inline-flex min-h-9 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">Clear filters</Link>
           <button type="submit" className="inline-flex min-h-9 items-center justify-center rounded-lg bg-indigo-700 px-4 text-xs font-semibold text-white hover:bg-indigo-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">Apply filters</button>
