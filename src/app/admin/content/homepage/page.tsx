@@ -9,19 +9,21 @@ import {
 } from "@/components/admin/AdminPageShell";
 import { HomepageCmsInitializeButton } from "@/components/admin/HomepageCmsInitializeButton";
 import { getCmsContentScopeSummary } from "@/services/cmsContentService";
-import { homepageCmsLocale } from "@/services/homepageCmsService";
+import { getHomepageCmsInitializationReadiness, homepageCmsLocale } from "@/services/homepageCmsService";
 
 export const metadata = { title: "Admin Homepage Content" };
 
 export default async function AdminHomepageContentPage() {
-  const [destinations, flights, hotels] = await Promise.all([
+  const [destinations, flights, hotels, initializationReadiness] = await Promise.all([
     getCmsContentScopeSummary("HOMEPAGE_DESTINATION", "US", homepageCmsLocale).catch(() => null),
     getCmsContentScopeSummary("FLIGHT_ROUTE", "US", homepageCmsLocale).catch(() => null),
     getCmsContentScopeSummary("HOTEL_DESTINATION", "GLOBAL", homepageCmsLocale).catch(() => null),
+    getHomepageCmsInitializationReadiness().catch(() => null),
   ]);
 
-  const available = Boolean(destinations?.available && flights?.available && hotels?.available);
+  const available = Boolean(destinations?.available && flights?.available && hotels?.available && initializationReadiness?.available);
   const active = Boolean(destinations?.active && flights?.active && hotels?.active);
+  const partiallyInitialized = !active && Boolean(initializationReadiness?.hasExistingHomepageData);
 
   return (
     <AdminPageShell
@@ -38,6 +40,12 @@ export default async function AdminHomepageContentPage() {
           <AdminEmptyState
             title="Homepage CMS unavailable"
             message="CMS storage could not be verified. The public homepage continues using the existing code-backed content."
+          />
+        ) : partiallyInitialized ? (
+          <AdminEmptyState
+            title="Homepage CMS setup is incomplete"
+            message="Some homepage scopes exist, so the full initialisation action cannot safely be run again. Review the affected scopes in System → CMS Health before changing content."
+            action={<Link href="/admin/system/cms-health" className="inline-flex text-sm font-semibold text-indigo-700 hover:underline">Review CMS Health</Link>}
           />
         ) : !active ? (
           <AdminSectionCard className="p-5">

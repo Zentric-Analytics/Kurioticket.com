@@ -59,7 +59,19 @@ export default async function AdminSettingsPage() {
           </div>
         </AdminSectionCard>
 
-        <div className="grid gap-4 xl:grid-cols-3">
+        <section aria-labelledby="homepage-fare-settings-heading" className="rounded-xl border border-slate-200 bg-white p-5">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="min-w-0">
+              <h2 id="homepage-fare-settings-heading" className="text-[15px] font-semibold text-slate-950">Homepage Fare Operations</h2>
+              <p className="mt-1 text-[13px] leading-5 text-slate-600">Monitor and refresh provider-backed homepage fares in the existing audited operations workspace.</p>
+            </div>
+            <Link href="/admin/homepage-fares" className="inline-flex min-h-9 shrink-0 items-center rounded-lg border border-slate-200 bg-white px-3 text-[13px] font-semibold text-indigo-700 hover:border-slate-300 hover:bg-slate-50">
+              Open fare operations
+            </Link>
+          </div>
+        </section>
+
+        <div className="grid gap-4 lg:grid-cols-2">
           <OwnershipCard
             title="Runtime & credentials"
             mode="Deployment owned"
@@ -73,13 +85,6 @@ export default async function AdminSettingsPage() {
             body="ADMIN_EMAILS and production feature-controller permissions stay in server configuration. Settings never exposes or edits those values."
             href="/admin/system"
             linkLabel="View admin configuration status"
-          />
-          <OwnershipCard
-            title="Homepage fares"
-            mode="Operational workspace"
-            body="Provider-backed homepage fare refresh and readiness are operations, not settings. The existing audited refresh workflow now has its own workspace."
-            href="/admin/homepage-fares"
-            linkLabel="Open homepage fare operations"
           />
         </div>
 
