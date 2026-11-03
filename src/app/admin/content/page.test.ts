@@ -11,7 +11,7 @@ const statusApi = readFileSync("src/app/api/admin/homepage-fares/status/route.ts
 const refreshApi = readFileSync("src/app/api/admin/homepage-fares/refresh/route.ts", "utf8");
 
 test("public content management exposes homepage and FAQ CMS areas while fare operations stay separate", () => {
-  assert.match(contentPage, /title="Public Content Management"/);
+  assert.match(contentPage, /title="Content" hideHeader/);
 
   for (const section of [
     "Homepage destination cards",
