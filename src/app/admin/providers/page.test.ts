@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import { adminNavigation } from "@/lib/adminNavigation";
+import { getProviderOutcomeWidths } from "@/lib/adminProviderVisuals";
 import { filterProviderOperationalStatuses, filterProviderStatuses, normalizeProductFilter, productFilters } from "@/lib/adminProviderFilters";
 import type { ProviderOperationalStatus, ProviderOperationalServiceStatus } from "@/services/providerOperationalStatusCore";
 
@@ -140,7 +141,7 @@ test("provider health sections prioritize attention and use a flat compact layou
 });
 
 test("provider issue link expands inline and cannot jump to the bottom", () => {
-  assert.match(providersPage, /<details className="group py-3">/);
+  assert.match(providersPage, /<details className="group py-2\.5">/);
   assert.match(providersPage, /View details ›/);
   assert.match(providersPage, /Hide details ‹/);
   assert.match(providersPage, /service\.failureReasons/);
@@ -164,7 +165,7 @@ test("directory rows are compact and disclose secondary diagnostics on request",
   assert.match(directoryTable, /Not externally monitored|row\.lastActivity/);
 });
 
-test("performance table has concise rows, an attempted-calls tooltip and aligned service columns", () => {
+test("performance visualization preserves call counts, an attempted-calls hint and aligned service diagnostics", () => {
   assert.match(providersPage, /Disabled calls are not counted as attempts\./);
   assert.match(providersPage, /<Info size=\{13\}/);
   assert.doesNotMatch(providersPage, /Recorded external provider calls in the current environment/);
@@ -175,6 +176,47 @@ test("performance table has concise rows, an attempted-calls tooltip and aligned
   assert.match(providersPage, /numberHeadingClass/);
   assert.match(providersPage, /service\.disabledCalls\.toLocaleString\(\)/);
   assert.match(providersPage, /service\.failureRatePct === null \? "No attempts"/);
+  assert.match(providersPage, /getProviderOutcomeWidths\(provider\)/);
+  assert.match(providersPage, /aria-label="Provider call outcome comparison"/);
+  assert.match(providersPage, /segments\.successPct/);
+  assert.match(providersPage, /segments\.failurePct/);
+  assert.match(providersPage, /segments\.degradedPct/);
+  assert.match(providersPage, /segments\.hasAttempts/);
+  assert.match(providersPage, /provider\.averageLatencyMs/);
+  assert.match(providersPage, /provider\.attemptedCalls\.toLocaleString/);
+  assert.match(providersPage, /provider\.degradedCalls\.toLocaleString/);
+  assert.doesNotMatch(providersPage, /<table className="w-full min-w-\[790px\]/);
+});
+
+test("attention uses state-dependent incident accents without inserting cards", () => {
+  assert.match(providersPage, /border-l-\[3px\]/);
+  assert.match(providersPage, /"border-rose-500" : "border-amber-500"/);
+  assert.match(providersPage, /<ul className="mt-3 space-y-2">/);
+  assert.match(providersPage, /border-t border-\[#E7ECF5\] pt-3/);
+  assert.doesNotMatch(providersPage, /AdminSectionCard/);
+  assert.match(providersPage, /<ProviderDirectoryTable rows=\{directoryRows\} \/>/);
+  assert.match(providersPage, /mt-6 border-t border-\[#E7ECF5\] pt-4 text-\[12px\]/);
+});
+
+test("provider outcome bars reconcile attempted calls without treating disabled calls as successes", () => {
+  assert.deepEqual(getProviderOutcomeWidths({
+    attemptedCalls: 20, successCalls: 12, failedCalls: 5, degradedCalls: 3,
+  }), {
+    hasAttempts: true, successPct: 60, failurePct: 25, degradedPct: 15,
+  });
+  assert.deepEqual(getProviderOutcomeWidths({
+    attemptedCalls: 0, successCalls: 0, failedCalls: 0, degradedCalls: 0,
+  }), {
+    hasAttempts: false, successPct: 0, failurePct: 0, degradedPct: 0,
+  });
+  assert.deepEqual(getProviderOutcomeWidths({
+    attemptedCalls: 10000, successCalls: 9999, failedCalls: 1, degradedCalls: 0,
+  }), {
+    hasAttempts: true, successPct: 99.99, failurePct: 0.01, degradedPct: 0,
+  });
+  assert.throws(() => getProviderOutcomeWidths({
+    attemptedCalls: 20, successCalls: 20, failedCalls: 1, degradedCalls: 0,
+  }), /must reconcile/);
 });
 
 
