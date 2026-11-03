@@ -24,3 +24,15 @@ test("homepage CMS initialization distinguishes unique and write conflicts", () 
   assert.match(service, /error\.code === "P2034"/);
   assert.match(service, /homepage-initialize-write-conflict/);
 });
+
+test("homepage CMS setup checks for existing items and scopes across every market", () => {
+  assert.match(service, /getHomepageCmsInitializationReadiness/);
+  assert.match(service, /cmsContentItem\.findFirst\(\{ where/);
+  assert.match(service, /cmsContentScope\.findFirst\(\{ where/);
+  assert.match(service, /hasExistingHomepageData: Boolean\(item \|\| scope\)/);
+  assert.match(service, /const relevantTypes = homepageCmsContentTypes/);
+  const page = readFileSync("src/app/admin/content/homepage/page.tsx", "utf8");
+  assert.match(page, /getHomepageCmsInitializationReadiness\(\)/);
+  assert.match(page, /initializationReadiness\?\.hasExistingHomepageData/);
+  assert.match(page, /initializationReadiness\?\.available/);
+});
