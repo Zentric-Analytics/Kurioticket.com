@@ -48,12 +48,12 @@ export default async function AdminFaqDetailPage({ params, searchParams }: PageP
         <section className="mt-7 min-w-0">
           <div className="mb-3">
             <ContentSectionHeading>Revision history</ContentSectionHeading>
-            <p className="mt-1 text-sm leading-6 text-slate-600">
+            <p className="mt-1 text-[13px] leading-5 text-[#64748B]">
               Recent immutable CMS revisions, including the admin identity recorded for each change.
             </p>
           </div>
           {result.revisions.length === 0 ? (
-            <p className="p-5 text-sm text-slate-600">No revisions are recorded for this FAQ.</p>
+            <p className="py-4 text-[13px] text-[#64748B]">No revisions are recorded for this FAQ.</p>
           ) : (
             <div className="divide-y divide-[#E5E7EB] border-t border-[#E5E7EB]">
               {result.revisions.map((revision) => {
@@ -61,24 +61,24 @@ export default async function AdminFaqDetailPage({ params, searchParams }: PageP
                 return (
                   <div key={revision.id} className="grid gap-3 py-4 lg:grid-cols-[100px_130px_minmax(0,1fr)_210px_150px] lg:items-start">
                     <div>
-                      <p className="text-xs font-black uppercase tracking-wide text-slate-500">Version</p>
-                      <p className="mt-1 font-black text-slate-950">v{revision.version}</p>
+                      <p className="text-[12px] font-medium text-[#64748B]">Version</p>
+                      <p className="mt-1 text-[13px] font-semibold text-[#111827]">v{revision.version}</p>
                     </div>
                     <div>
-                      <p className="text-xs font-black uppercase tracking-wide text-slate-500">Action</p>
+                      <p className="text-[12px] font-medium text-[#64748B]">Action</p>
                       <div className="mt-1">
                         <ContentStatusPill status={revision.action} />
                       </div>
                     </div>
                     <div>
-                      <p className="text-xs font-black uppercase tracking-wide text-slate-500">Draft snapshot</p>
-                      <p className="mt-1 font-bold text-slate-950">{payload.question || "Invalid legacy question"}</p>
-                      <p className="mt-1 text-xs text-slate-500">{payload.category || "Uncategorized"}</p>
+                      <p className="text-[12px] font-medium text-[#64748B]">Draft snapshot</p>
+                      <p className="mt-1 text-[13px] font-medium text-[#334155]">{payload.question || "Invalid legacy question"}</p>
+                      <p className="mt-1 text-[12px] text-[#64748B]">{payload.category || "Uncategorized"}</p>
                     </div>
                     <div>
-                      <p className="text-xs font-black uppercase tracking-wide text-slate-500">Recorded</p>
-                      <p className="mt-1 text-sm font-semibold text-slate-900">{new Date(revision.createdAt).toLocaleString()}</p>
-                      <p className="mt-1 break-all text-xs text-slate-500">{revision.actorEmail}</p>
+                      <p className="text-[12px] font-medium text-[#64748B]">Recorded</p>
+                      <p className="mt-1 text-[13px] font-medium text-[#334155]">{new Date(revision.createdAt).toLocaleString()}</p>
+                      <p className="mt-1 break-all text-[12px] text-[#64748B]">{revision.actorEmail}</p>
                     </div>
                     <div>
                       {result.item.status !== "ARCHIVED" && revision.version < result.item.version ? (
