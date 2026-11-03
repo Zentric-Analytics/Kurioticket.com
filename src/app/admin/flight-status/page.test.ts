@@ -61,7 +61,7 @@ test("flight status operations does not invent an event history or segment model
 });
 
 
-test("Flight Status keeps safety and environment guidance within readiness, not a standalone card", () => {
+test("Flight Status keeps one concise provider safety note within readiness, not a standalone card", () => {
   assert.doesNotMatch(page, /<h2[^>]*>Operational boundaries<\/h2>/);
   const readinessStart = page.indexOf(">Status-feed readiness</h2>");
   const distributionStart = page.indexOf(">Latest status distribution</h2>", readinessStart);
@@ -69,8 +69,12 @@ test("Flight Status keeps safety and environment guidance within readiness, not 
   const readinessCopy = page.slice(readinessStart, distributionStart);
   assert.match(readinessCopy, /Only the configured provider can send signed updates/);
   assert.match(readinessCopy, /A configured feed does not mean updates are arriving/);
-  assert.match(readinessCopy, /Live status requires a valid signed update from the configured provider for a confirmed flight/);
-  assert.match(readinessCopy, /Searches, handoffs and confirmations do not prove live status/);
+  assert.match(readinessCopy, /Live status requires signed provider updates for confirmed flights/);
+  assert.match(readinessCopy, /not searches, handoffs or trip confirmations/);
+  const note = readinessCopy.match(/<p className="mt-3 text-\[13px\] leading-5 text-slate-600">([\s\S]*?)<\/p>/);
+  assert.ok(note, "Keep exactly one concise readiness note below the five configuration fields");
+  assert.ok(note[1].trim().length < 185, "Readiness note should remain short");
+  assert.doesNotMatch(readinessCopy, /<div className="mt-3 space-y-1\.5">|Each signed update must name the configured provider/);
   assert.doesNotMatch(readinessCopy, /Status records have no environment label|uses the connected/);
   assert.equal((page.match(/<AdminSectionCard className="min-w-0 p-3 shadow-none sm:p-4">/g) || []).length, 5);
   assert.match(page, /<AdminSectionCard className="min-w-0 space-y-3 p-4 sm:p-5 lg:p-6">/);
@@ -82,7 +86,8 @@ test("Flight Status keeps safety and environment guidance within readiness, not 
 });
 
 test("flight status operations preserves the metasearch boundary", () => {
-  assert.match(page, /Searches, handoffs and confirmations do not prove live status/);
+  assert.match(page, /not searches, handoffs or trip confirmations/);
+  assert.match(contract, /does not infer operational flight status from a search, a provider handoff, or a booking confirmation/);
   assert.match(navigation, /href: "\/admin\/flight-status"/);
   assert.doesNotMatch(navigation, /\/admin\/bookings/);
 });
@@ -221,13 +226,12 @@ test("short descriptions preserve source and data-availability boundaries", () =
   for (const sentence of [
     "Only the configured provider can send signed updates.",
     "Duffel search and KAYAK sandbox do not supply this feed.",
-    "Each signed update must name the configured provider.",
     "A configured feed does not mean updates are arriving.",
+    "Live status requires signed provider updates for confirmed flights",
+    "not searches, handoffs or trip confirmations.",
     "Latest stored statuses from the configured provider.",
     "One latest primary-flight status per confirmed trip.",
     "Return flights and connections are not tracked separately.",
-    "Live status requires a valid signed update from the configured provider for a confirmed flight.",
-    "Searches, handoffs and confirmations do not prove live status.",
   ]) {
     assert.ok(page.includes(sentence), "Key boundary missing: " + sentence);
   }
