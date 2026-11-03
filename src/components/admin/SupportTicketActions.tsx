@@ -131,14 +131,14 @@ export function SupportTicketStatusControl({ ticketId, status }: { ticketId: str
       <fieldset disabled={isStatusPending} className="min-w-0 pt-3">
         <span className="mb-1 block text-[12px] font-medium text-[#64748B]">Status</span>
         <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
-          <div className="min-w-0 [&_button]:h-9 [&_select]:h-9">
+          <div className="min-w-0 rounded-lg border border-[#D9DDE3] bg-white px-2.5 [&_button]:h-9 [&_button]:w-full [&_button]:justify-between [&_select]:h-9 [&_select]:w-full [&_select]:border-0 [&_select]:bg-transparent">
             <AdminDirectorySelect
               key={ticketId + "-" + status}
               label="Ticket status"
               name="status"
               value={status}
               options={statusChoices}
-              compact
+              plain
               onValueChange={value => { setSelectedStatus(value as SupportStatus); setStatusMessage(null); setError(null); }}
             />
           </div>
