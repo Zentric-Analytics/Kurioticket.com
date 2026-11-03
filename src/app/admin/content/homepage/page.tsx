@@ -1,12 +1,6 @@
 import Link from "next/link";
 
-import {
-  AdminEmptyState,
-  AdminMetricCard,
-  AdminPageShell,
-  AdminSectionCard,
-  AdminStatusBadge,
-} from "@/components/admin/AdminPageShell";
+import { ContentPageFrame, ContentEmptyState, ContentMetric, ContentStatusPill } from "@/components/admin/ContentWorkspace";
 import { HomepageCmsInitializeButton } from "@/components/admin/HomepageCmsInitializeButton";
 import { getCmsContentScopeSummary } from "@/services/cmsContentService";
 import { getHomepageCmsInitializationReadiness, homepageCmsLocale } from "@/services/homepageCmsService";
@@ -26,34 +20,31 @@ export default async function AdminHomepageContentPage() {
   const partiallyInitialized = !active && Boolean(initializationReadiness?.hasExistingHomepageData);
 
   return (
-    <AdminPageShell
+    <ContentPageFrame
       title="Homepage content"
-      description="Manage market destination cards, homepage flight-route cards and the canonical hotel destination catalog without changing fare operations."
-      actions={
-        <Link href="/admin/content" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">
-          Back to content
-        </Link>
-      }
+      subtitle="Manage homepage destinations, flight routes and hotel destinations."
+      backHref="/admin/content"
+      backLabel="Back to Content"
     >
       <div className="space-y-5">
         {!available ? (
-          <AdminEmptyState
+          <ContentEmptyState
             title="Homepage CMS unavailable"
             message="CMS storage could not be verified. The public homepage continues using the existing code-backed content."
           />
         ) : partiallyInitialized ? (
-          <AdminEmptyState
+          <ContentEmptyState
             title="Homepage CMS setup is incomplete"
             message="Some homepage scopes exist, so the full initialisation action cannot safely be run again. Review the affected scopes in System → CMS Health before changing content."
             action={<Link href="/admin/system/cms-health" className="inline-flex text-sm font-semibold text-indigo-700 hover:underline">Review CMS Health</Link>}
           />
         ) : !active ? (
-          <AdminSectionCard className="p-5">
+          <div className="rounded-lg border border-[#E5E7EB] bg-white p-4">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div>
                 <div className="flex items-center gap-2">
                   <h2 className="text-lg font-black text-slate-950">Initialize homepage CMS</h2>
-                  <AdminStatusBadge tone="warn">Setup required</AdminStatusBadge>
+                  <ContentStatusPill status="Setup required" />
                 </div>
                 <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
                   Import the current homepage destinations, flight routes and canonical hotel destinations as the first published CMS versions. This is an explicit audited action.
@@ -61,13 +52,13 @@ export default async function AdminHomepageContentPage() {
               </div>
               <HomepageCmsInitializeButton />
             </div>
-          </AdminSectionCard>
+          </div>
         ) : (
           <>
-            <div className="grid gap-4 md:grid-cols-3">
-              <AdminMetricCard label="US destination cards" value={destinations?.total ?? 0} tone="good" />
-              <AdminMetricCard label="US flight routes" value={flights?.total ?? 0} tone="good" />
-              <AdminMetricCard label="Hotel destinations" value={hotels?.total ?? 0} tone="good" />
+            <div className="grid gap-4 border-b border-[#E5E7EB] pb-4 sm:grid-cols-3">
+              <ContentMetric label="US destination cards" value={destinations?.total ?? 0} />
+              <ContentMetric label="US flight routes" value={flights?.total ?? 0} />
+              <ContentMetric label="Hotel destinations" value={hotels?.total ?? 0} />
             </div>
 
             <div className="grid gap-4 lg:grid-cols-3">
@@ -90,21 +81,21 @@ export default async function AdminHomepageContentPage() {
           </>
         )}
       </div>
-    </AdminPageShell>
+    </ContentPageFrame>
   );
 }
 
 function ContentArea({ title, description, href }: { title: string; description: string; href: string }) {
   return (
-    <AdminSectionCard className="p-5">
+    <div className="rounded-lg border border-[#E5E7EB] bg-white p-4">
       <div className="flex items-start justify-between gap-3">
-        <h2 className="font-black text-slate-950">{title}</h2>
-        <AdminStatusBadge tone="good">CMS managed</AdminStatusBadge>
+        <h2 className="text-[14px] font-semibold text-[#111827]">{title}</h2>
+        <ContentStatusPill status="CMS managed" />
       </div>
-      <p className="mt-3 text-sm leading-6 text-slate-600">{description}</p>
-      <Link href={href} className="mt-4 inline-flex text-sm font-black text-indigo-700 hover:text-indigo-900">
+      <p className="mt-2 text-[13px] leading-5 text-[#64748B]">{description}</p>
+      <Link href={href} className="mt-4 inline-flex text-[13px] font-medium text-[#004BB8] hover:underline">
         Manage
       </Link>
-    </AdminSectionCard>
+    </div>
   );
 }
