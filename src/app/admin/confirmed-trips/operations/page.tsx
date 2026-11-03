@@ -51,9 +51,6 @@ export default async function AdminTripOperationsPage({ searchParams }: Props) {
           <Link href="/admin/confirmed-trips" className="inline-flex min-h-9 items-center gap-1.5 rounded-lg px-1.5 text-[13px] font-semibold text-slate-700 hover:text-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
             <ArrowLeft size={16} aria-hidden="true" /> Back to Trips
           </Link>
-          <Link href="/admin/confirmed-trips/records" className="inline-flex min-h-9 items-center justify-center rounded-lg border border-indigo-200 bg-white px-3 text-xs font-semibold text-indigo-700 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
-            Browse confirmed trips
-          </Link>
         </nav>
           <section aria-labelledby="trip-operations-title" className="min-w-0 rounded-xl border border-slate-200/80 bg-white px-4 py-3 sm:px-5 sm:py-4">
             <h2 id="trip-operations-title" className="text-base font-semibold text-slate-950">Trip operations</h2>
