@@ -28,9 +28,9 @@ const tabs = [
 const format = (at: Date) => new Intl.DateTimeFormat("en", {
   dateStyle: "medium", timeStyle: "short", timeZone: "UTC",
 }).format(at);
-// Both sections share column boundaries: identity, two dates, compact events, management.
-// Give date values enough room at desktop zoom without stretching the identity track.
-const activityColumns = "grid min-w-0 w-full max-w-[1320px] gap-y-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_80px_116px]";
+// One common desktop grid: guest/customer identity spans two fifths, while
+// First seen/Joined, Last active and Events each occupy one fifth.
+const activityColumns = "grid min-w-0 w-full gap-y-4 lg:grid-cols-5 lg:gap-y-0";
 const buttonClass = "focus-ring inline-flex items-center gap-1.5 rounded-md border border-[#E2E8F0] bg-white px-3 py-2 text-[13px] font-medium text-[#004BB8] hover:bg-[#F8FAFC]";
 
 function safeDirectoryHref(raw: RawQuery) {
@@ -158,9 +158,19 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
 
     <section data-testid="activity-page-card" aria-label="Customer activity workspace"
       className="min-w-0 space-y-4 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm sm:p-5 lg:p-6">
-      <section aria-label="Customer identity" className="min-w-0">
-        <div className={activityColumns + " lg:items-center"}>
-          <div className="flex min-w-0 items-center gap-4">
+      <div data-testid="activity-info-grid"
+        className="relative min-w-0 lg:-mx-6 lg:-mt-6 lg:border-y lg:border-[#E2E8F0]">
+        {/* These three rules span the entire information grid, including its
+            top and bottom boundaries. No independent inset fact borders. */}
+        <div aria-hidden="true" data-testid="activity-shared-dividers"
+          className="pointer-events-none absolute inset-0 hidden lg:block">
+          <span data-testid="activity-divider-40" className="absolute inset-y-0 left-[40%] border-l border-[#E2E8F0]" />
+          <span data-testid="activity-divider-60" className="absolute inset-y-0 left-[60%] border-l border-[#E2E8F0]" />
+          <span data-testid="activity-divider-80" className="absolute inset-y-0 left-[80%] border-l border-[#E2E8F0]" />
+        </div>
+      <section aria-label="Customer identity" className="relative min-w-0">
+        <div className={activityColumns + " lg:items-start lg:py-6"}>
+          <div className="flex min-w-0 items-center gap-4 lg:col-span-2 lg:px-6">
             <span aria-hidden="true"
               className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[var(--muted)] text-xl font-semibold">
               {(kind === "guest" ? "G" : (data.title || "U").slice(0,1)).toUpperCase()}
@@ -183,18 +193,26 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
           </div>
 
           <dl className="grid min-w-0 grid-cols-1 gap-4 min-[420px]:grid-cols-2 sm:grid-cols-3 lg:contents">
-            <Fact label={kind === "guest" ? "First seen" : "Joined"}><HeaderTime at={data.firstSeenAt}/></Fact>
-            <Fact label="Last active">{data.lastSeenAt ? <HeaderTime at={data.lastSeenAt}/> : "—"}</Fact>
-            <Fact label="Events" testId="activity-events-fact">{data.events.length}</Fact>
+            <Fact label={kind === "guest" ? "First seen" : "Joined"} className="lg:border-l-0 lg:pl-6"><HeaderTime at={data.firstSeenAt}/></Fact>
+            <Fact label="Last active" className="lg:border-l-0 lg:pl-6">{data.lastSeenAt ? <HeaderTime at={data.lastSeenAt}/> : "—"}</Fact>
+            <Fact label="Events" testId="activity-events-fact"
+              className={"lg:border-l-0 lg:pl-6 " + (kind === "user" ? "lg:pr-28" : "")}>
+              {data.events.length}
+            </Fact>
           </dl>
 
-          {kind === "user" ? <div className="flex min-w-0 justify-start lg:justify-end" aria-label="Identity management">
+          {kind === "user" ? <div
+            className="flex min-w-0 justify-start lg:absolute lg:right-2 lg:top-1/2 lg:-translate-y-1/2"
+            aria-label="Identity management">
             <RegisteredManage id={id} email={data.email} role={data.role || "USER"} status={data.status} actorId={session.user.id}/>
-          </div> : <div aria-hidden="true" className="hidden lg:block" />}
+          </div> : null}
         </div>
       </section>
 
-      <section aria-label="Activity summary" className="min-w-0 border-y border-[#E2E8F0] py-4">
+      <section aria-label="Activity summary" className="relative min-w-0 border-y border-[#E2E8F0] py-4 lg:border-b-0 lg:py-5">
+        {/* The 20% line begins at the separator, since identity spans two cells above. */}
+        <span aria-hidden="true" data-testid="activity-divider-20"
+          className="pointer-events-none absolute inset-y-0 left-[20%] hidden border-l border-[#E2E8F0] lg:block" />
         <div data-testid="activity-metrics-grid" className="grid min-w-0 grid-cols-2 gap-x-4 gap-y-5 sm:grid-cols-3 lg:grid-cols-5 lg:gap-x-0">
           {([
             { label: "Searches", count: data.summary.searches },
@@ -202,9 +220,8 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
             { label: "Offers selected", count: data.summary.offersSelected },
             { label: "Provider handoffs", count: data.summary.providerHandoffs },
             { label: "Journeys tracked", count: data.summary.journeysTracked },
-          ]).map(({label,count}, index) => <div key={label} data-testid="activity-metric"
-            className={"min-w-0 pr-2 sm:pr-3 " +
-              (index ? "lg:border-l lg:border-[#E2E8F0] lg:pl-5" : "lg:pl-0")}>
+          ]).map(({label,count}) => <div key={label} data-testid="activity-metric"
+            className="min-w-0 pr-2 sm:pr-3 lg:px-6">
             <span data-testid="activity-metric-label" className="block text-[12px] font-normal text-[#64748B] lg:whitespace-nowrap">{label}</span>
             <span data-testid="activity-metric-value" className="mt-1 block text-[16px] font-medium leading-6 tabular-nums text-[#0F172A]">{count}</span>
             {label === "Searches" && data.summary.searchProducts ? <div aria-label="Searches by product"
@@ -222,6 +239,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
           </div>)}
         </div>
       </section>
+      </div>
 
       <div data-testid="activity-body-card" className="min-w-0 space-y-6 rounded-xl border border-[#E2E8F0] bg-white p-3 sm:p-4">
         <section aria-label="Activity filters" className="min-w-0">
