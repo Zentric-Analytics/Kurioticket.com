@@ -4,7 +4,7 @@ import { parseAttributionDays } from "@/services/referralAttributionService";
 import Link from "next/link";
 
 import { Info } from "lucide-react";
-import { parseProviderHealthHours, providerHealthHref, providerHealthWindows, providerSearchActivityHref } from "@/lib/adminProviderAttention";
+import { parseProviderHealthHours, providerHealthHref } from "@/lib/adminProviderAttention";
 import { getProviderOutcomeWidths } from "@/lib/adminProviderVisuals";
 import { ProviderDirectoryTable, type ProviderDirectoryRecord } from "@/components/admin/ProviderDirectoryTable";
 import { formatDateTime, getProviderStatuses } from "@/lib/admin-data";
@@ -87,10 +87,7 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
           note: integration.note,
         },
         canRetestDuffel: integration.id === "duffel",
-        investigateHref: status && status.attemptedCalls > 0
-          ? providerSearchActivityHref({ provider: integration.provider, hours: monitoringHours, until: monitoringNow,
-              product: filter === "all" ? undefined : filter === "flights" ? "FLIGHT" : filter === "hotels" ? "HOTEL" : "CAR" })
-          : null,
+
       };
     }),
     ...catalogues.map(catalogue => ({
@@ -268,16 +265,7 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
                             </tbody>
                           </table>
                         </div>
-                        {provider.serviceBreakdown.some(service => service.attemptedCalls > 0) ? (
-                          <div className="mt-3 border-t border-[#E7ECF5] pt-3">
-                            <Link href={providerSearchActivityHref({ provider: provider.provider, hours: monitoringHours, until: monitoringNow,
-                              product: filter === "all" ? undefined : filter === "flights" ? "FLIGHT" : filter === "hotels" ? "HOTEL" : "CAR" })}
-                              className="text-[13px] font-medium text-[#004BB8] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
-                              Review provider searches ›
-                            </Link>
-                            <p className="mt-1 text-[12px] text-[#64748B]">Shows searches created in this date range with provider execution evidence. Provider calls can occur outside these search dates, so this is not an exact list of calls behind the warning or of failed searches.</p>
-                          </div>
-                        ) : null}
+
                       </div>
                     </details>
                   </li>
@@ -354,16 +342,7 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
                             </span>
                           </div>
                         </div>
-                        {provider.attemptedCalls > 0 ? (
-                          <div className="mt-1 text-[12px]">
-                            <Link href={providerSearchActivityHref({ provider: provider.provider, hours: monitoringHours,
-                              until: monitoringNow, product: filter === "all" ? undefined : filter === "flights" ? "FLIGHT" : filter === "hotels" ? "HOTEL" : "CAR" })}
-                              className="font-medium text-[#004BB8] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
-                              Investigate provider searches ›
-                            </Link>
-                            <span className="ml-2 text-[#64748B]">Search creation dates may differ from provider-call timestamps.</span>
-                          </div>
-                        ) : null}
+
                         <div aria-hidden="true"
                           className="mt-3 flex h-2 w-full overflow-hidden rounded-full bg-[#E7ECF5]">
                           {segments.hasAttempts ? (
