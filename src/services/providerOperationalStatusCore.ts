@@ -173,6 +173,7 @@ export async function readProviderOperationalSnapshot(input: {
   environment: PublicEnvironment;
   now: Date;
   windowHours?: number;
+  customRange?: { from: Date; to: Date };
 }): Promise<ProviderOperationalStatus[]> {
   const hours =
     Number.isInteger(input.windowHours) &&
@@ -180,7 +181,14 @@ export async function readProviderOperationalSnapshot(input: {
     (input.windowHours ?? 0) <= 168
       ? input.windowHours as number
       : 24;
-  const since = new Date(input.now.getTime() - hours * 60 * 60 * 1000);
+  const custom = input.customRange;
+  if (custom && (Number.isNaN(custom.from.getTime()) || Number.isNaN(custom.to.getTime()) ||
+    custom.from > custom.to || custom.to > input.now ||
+    custom.to.getTime() - custom.from.getTime() > 90 * 86_400_000)) {
+    throw new Error("Invalid custom provider telemetry range.");
+  }
+  const since = custom?.from ?? new Date(input.now.getTime() - hours * 60 * 60 * 1000);
+  const until = custom?.to ?? input.now;
 
   return Promise.all(input.readiness.map(async integration => {
     const provider = providerNames[integration.id];
@@ -190,7 +198,7 @@ export async function readProviderOperationalSnapshot(input: {
       // use service "provider-health" and must not distort success rates,
       // latency, last activity, or service-specific timestamp availability.
       service: { in: [...expectedServices[integration.id]] },
-      createdAt: { gte: since, lte: input.now },
+      createdAt: { gte: since, lte: until },
       metadata: { path: ["environment"], equals: input.environment },
     };
     const attemptedWhere: Prisma.ApiProviderLogWhereInput = {
