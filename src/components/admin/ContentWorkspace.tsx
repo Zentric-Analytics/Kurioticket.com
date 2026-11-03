@@ -11,6 +11,7 @@ export function ContentPageFrame({
   backHref,
   backLabel = "Back to Content",
   actions,
+  wide = false,
   children,
 }: {
   title: string;
@@ -18,11 +19,12 @@ export function ContentPageFrame({
   backHref?: string;
   backLabel?: string;
   actions?: ReactNode;
+  wide?: boolean;
   children: ReactNode;
 }) {
   return (
     <AdminPageShell title={title} hideHeader>
-      <div className="mx-auto w-full max-w-[1138px] min-w-0 text-[#374151]">
+      <div className={"mx-auto w-full min-w-0 text-[#374151] " + (wide ? "max-w-[1500px]" : "max-w-[1138px]")}>
         {backHref ? (
           <Link
             href={backHref}
