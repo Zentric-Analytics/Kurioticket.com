@@ -38,11 +38,23 @@ try {
         await page.goto(base+"/admin/users/"+kind+"/"+(kind === "guest" ? "qa-guest-activity-0001" : "qa-realistic-identity-0001")+"/activity");
         await applyZoom(zoom);
         const layout = await page.evaluate(() => {
-          const identity = document.querySelector('section[aria-label="Customer identity"] > div');
-          const facts = [...document.querySelectorAll('section[aria-label="Customer identity"] dl > div')];
-          const summaryGrid = document.querySelector('[data-testid="activity-metrics-grid"]');
-          const metrics = [...summaryGrid.querySelectorAll('[data-testid="activity-metric"]')];
+          const info = document.querySelector('[data-testid="activity-info-grid"]');
+          const identity = info.querySelector('section[aria-label="Customer identity"] > div');
+          const summary = info.querySelector('section[aria-label="Activity summary"]');
+          const facts = [...identity.querySelectorAll('dl > div')];
+          const metrics = [...info.querySelectorAll('[data-testid="activity-metric"]')];
           const metricRects = metrics.map(el=>el.getBoundingClientRect());
+          const infoRect = info.getBoundingClientRect();
+          const summaryRect = summary.getBoundingClientRect();
+          const epsilon=2;
+          const lineMatches = (el,x,top,bottom) => {
+            const rect = el.getBoundingClientRect();
+            return Math.abs(rect.left-x)<epsilon && Math.abs(rect.top-top)<epsilon
+              && Math.abs(rect.bottom-bottom)<epsilon
+              && parseFloat(getComputedStyle(el).borderLeftWidth)>0.5;
+          };
+          const shared = [40,60,80].map(n=>info.querySelector('[data-testid="activity-divider-'+n+'"]'));
+          const lower=info.querySelector('[data-testid="activity-divider-20"]');
           const email = identity.firstElementChild.querySelector('p');
           const dates = facts.slice(0,2).map(fact => fact.querySelector("time")).filter(Boolean);
           const datesUnwrapped = dates.every(time => time.getBoundingClientRect().height < Number.parseFloat(getComputedStyle(time).lineHeight || "24")*1.5);
@@ -50,10 +62,16 @@ try {
             overflow:document.documentElement.scrollWidth > innerWidth+1,
             horizontal:facts.every(fact => fact.getBoundingClientRect().top < identity.firstElementChild.getBoundingClientRect().bottom),
             metricsCount: metrics.length,
-            noHeading: !document.querySelector('section[aria-label="Activity summary"] h2'),
+            noHeading: !summary.querySelector('h2'),
             evenlySpaced: metricRects.length === 5 && metricRects.every(rect=>Math.abs(rect.width-metricRects[0].width)<1 && Math.abs(rect.top-metricRects[0].top)<1),
-            separated:metrics.slice(1).every(el=>parseFloat(getComputedStyle(el).borderLeftWidth)>0.5),
-            startsAtLeft: Math.abs(metricRects[0].left-summaryGrid.getBoundingClientRect().left)<1,
+            sharedConnected:shared.every((el,i)=>lineMatches(el,metricRects[i+2].left,infoRect.top,infoRect.bottom)),
+            partialConnected:lineMatches(lower,metricRects[1].left,summaryRect.top,summaryRect.bottom),
+            alignedFacts:facts.every((fact,i)=>Math.abs(fact.getBoundingClientRect().left-metricRects[i+2].left)<epsilon),
+            joint:Math.abs(identity.getBoundingClientRect().bottom-summaryRect.top)<epsilon &&
+              parseFloat(getComputedStyle(summary).borderTopWidth)>0.5,
+            edges:parseFloat(getComputedStyle(info).borderTopWidth)>0.5 &&
+              parseFloat(getComputedStyle(info).borderBottomWidth)>0.5,
+            startsAtLeft: Math.abs(metricRects[0].left-infoRect.left)<epsilon,
             emailFits: !email || email.getBoundingClientRect().height < parseFloat(getComputedStyle(email).fontSize)*1.9,
             datesUnwrapped,
             values:[...document.querySelectorAll('section[aria-label="Customer identity"] dd,[data-testid="activity-metric-value"]')].map(el=>getComputedStyle(el).fontSize)
@@ -64,8 +82,8 @@ try {
         assert.equal(layout.metricsCount,5,JSON.stringify({width,zoom,kind,...layout}));
         assert.equal(layout.noHeading,true,JSON.stringify({width,zoom,kind,...layout}));
         assert.equal(layout.evenlySpaced,true,JSON.stringify({width,zoom,kind,...layout}));
-        assert.equal(layout.separated,true,JSON.stringify({width,zoom,kind,...layout}));
-        assert.equal(layout.startsAtLeft,true,JSON.stringify({width,zoom,kind,...layout}));
+        for (const key of ["sharedConnected","partialConnected","alignedFacts","joint","edges","startsAtLeft"])
+          assert.equal(layout[key],true,JSON.stringify({width,zoom,kind,...layout}));
         assert.equal(layout.emailFits,true,JSON.stringify({width,zoom,kind,...layout}));
         assert.equal(layout.datesUnwrapped,true,JSON.stringify({width,zoom,kind,...layout}));
         assert.deepEqual(layout.values,Array(8).fill("16px"));
