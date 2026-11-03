@@ -22,17 +22,17 @@ const productOptions = [
   { value: "PACKAGE", label: "Packages" },
 ] as const;
 const statusOptions = [
-  { value: "all", label: "All statuses" },
+  { value: "all", label: "All statuses", shortLabel: "All" },
   { value: "UPCOMING", label: "Upcoming" },
   { value: "PAST", label: "Past" },
   { value: "CANCELLED", label: "Cancelled" },
 ] as const;
 const rangeOptions = [
   { value: "all", label: "All time" },
-  { value: "today", label: "Today (UTC)" },
-  { value: "7d", label: "Last 7 UTC days" },
-  { value: "30d", label: "Last 30 UTC days" },
-  { value: "custom", label: "Custom dates" },
+  { value: "today", label: "Today (UTC)", shortLabel: "Today" },
+  { value: "7d", label: "Last 7 UTC days", shortLabel: "7 days" },
+  { value: "30d", label: "Last 30 UTC days", shortLabel: "30 days" },
+  { value: "custom", label: "Custom dates", shortLabel: "Custom" },
 ] as const;
 
 const fieldLabel = "block min-w-0 text-[11px] font-medium leading-4 text-slate-700 2xl:text-xs";
