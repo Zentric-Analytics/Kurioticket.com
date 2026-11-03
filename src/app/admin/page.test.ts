@@ -201,14 +201,14 @@ test("Overview omits duplicate Provider Health but preserves live provider issue
   }
   assert.match(display, /<AttentionLink href="\/admin\/providers" label="Provider issues" value=\{providerAttention\}/);
   assert.match(display, /Provider health: last 24 hours\. Support and deletion queues: current\./);
-  assert.match(providersPage, /getProviderOperationalStatuses\(monitoringHours\)/);
+  assert.match(providersPage, /getProviderOperationalStatuses\(monitoringHours, undefined, monitoringRange \?\? undefined\)/);
   assert.match(providersPage, /provider\.serviceBreakdown\.map/);
   assert.match(providersPage, /formatProviderFailureRatePct\(provider\.failureRatePct, provider\.failedCalls\)/);
   assert.match(core, /Math\.round\(1000 \* counts\.failed \/ n\) \/ 10/);
 });
 
 test("complete provider diagnostics remain on the linked Providers page", () => {
-  assert.match(providersPage, /getProviderOperationalStatuses\(monitoringHours\)/);
+  assert.match(providersPage, /getProviderOperationalStatuses\(monitoringHours, undefined, monitoringRange \?\? undefined\)/);
   assert.match(providersPage, /provider\.serviceBreakdown\.map/);
   assert.match(providersPage, /service\.failureReasons\.map/);
   assert.match(providersPage, /provider\.averageLatencyMs/);

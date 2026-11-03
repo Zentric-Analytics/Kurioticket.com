@@ -4,7 +4,8 @@ import { parseAttributionDays } from "@/services/referralAttributionService";
 import Link from "next/link";
 
 import { Info } from "lucide-react";
-import { parseProviderHealthHours, providerHealthHref, providerHealthWindows, providerSearchActivityHref } from "@/lib/adminProviderAttention";
+import { parseProviderHealthRange, providerHealthRangeHref } from "@/lib/adminProviderAttention";
+import { ProviderHealthWindowFilter } from "@/components/admin/ProviderHealthWindowFilter";
 import { getProviderOutcomeWidths } from "@/lib/adminProviderVisuals";
 import { ProviderDirectoryTable, type ProviderDirectoryRecord } from "@/components/admin/ProviderDirectoryTable";
 import { formatDateTime, getProviderStatuses } from "@/lib/admin-data";
@@ -36,14 +37,18 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
   const filter = normalizeProductFilter(raw.product);
   const attribution = raw.view === "attribution";
   const attributionDays = parseAttributionDays(typeof raw.days === "string" ? raw.days : null);
-  const monitoringHours = parseProviderHealthHours(raw.hours);
-  const monitoringWindow = providerHealthWindows.find(window => window.hours === monitoringHours)!;
   const monitoringNow = new Date();
+  const monitoringSelection = parseProviderHealthRange(raw, monitoringNow);
+  const monitoringHours = monitoringSelection.hours;
+  const monitoringRange = monitoringSelection.range;
+  const monitoringWindow = monitoringRange
+    ? { label: monitoringRange.fromDate + " – " + monitoringRange.toDate }
+    : { label: monitoringHours === 72 ? "Last 3 days" : monitoringHours === 168 ? "Last 7 days" : "Last 24 hours" };
 
   // Referral reporting has its own read path; avoid unnecessary readiness queries.
   const providerData = attribution
     ? null
-    : await Promise.all([getProviderStatuses(), getProviderOperationalStatuses(monitoringHours).catch(() => null)]);
+    : await Promise.all([getProviderStatuses(), getProviderOperationalStatuses(monitoringHours, undefined, monitoringRange ?? undefined).catch(() => null)]);
   const allProviders = providerData?.[0] ?? [];
   const operational = providerData?.[1] ?? null;
   const integrations = attribution ? [] : getProviderIntegrationStatuses();
@@ -87,10 +92,8 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
           note: integration.note,
         },
         canRetestDuffel: integration.id === "duffel",
-        investigateHref: status && status.attemptedCalls > 0
-          ? providerSearchActivityHref({ provider: integration.provider, hours: monitoringHours, until: monitoringNow,
-              product: filter === "all" ? undefined : filter === "flights" ? "FLIGHT" : filter === "hotels" ? "HOTEL" : "CAR" })
-          : null,
+        canRetestKayak: integration.id === "kayak-sandbox",
+
       };
     }),
     ...catalogues.map(catalogue => ({
@@ -115,6 +118,7 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
         note: catalogue.notes,
       },
       canRetestDuffel: false,
+      canRetestKayak: false,
     })),
   ];
 
@@ -152,25 +156,16 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
           <section aria-labelledby="provider-attention" className="border-b border-[#D8E1EC] pb-5 pt-6">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h2 id="provider-attention" className="text-[15px] font-semibold text-[#020617]">
-                {monitoringHours === 24 ? "Providers requiring attention" : "Provider health signals (historical)"}
+                {monitoringHours === 24 && !monitoringRange ? "Providers requiring attention" : "Provider health signals (historical)"}
               </h2>
-              <nav aria-label="Provider health time window" className="flex flex-wrap items-center gap-3 text-[12px]">
-                {providerHealthWindows.map(window => (
-                  <Link key={window.hours} href={providerHealthHref(window.hours, filter)}
-                    aria-current={monitoringHours === window.hours ? "page" : undefined}
-                    className={monitoringHours === window.hours
-                      ? "font-semibold text-[#004BB8] underline underline-offset-4"
-                      : "text-[#475569] hover:text-[#004BB8]"}>
-                    {window.label}
-                  </Link>
-                ))}
-                <span className="text-[#64748B]">· Current environment</span>
-              </nav>
+              <ProviderHealthWindowFilter product={filter} hours={monitoringHours} custom={monitoringRange} />
             </div>
-            {monitoringHours !== 24 ? (
+            {monitoringHours !== 24 || monitoringRange ? (
               <p className="mt-2 text-[12px] text-[#64748B]">Historical outcomes in this window do not necessarily represent an active incident.</p>
             ) : null}
-            {operational === null ? (
+            {monitoringSelection.error ? (
+              <p className="mt-3 text-[13px] text-rose-700" role="alert">{monitoringSelection.error}</p>
+            ) : operational === null ? (
               <p className="mt-3 text-[13px] text-[#9A3412]" role="status">
                 Operational telemetry is unavailable. Provider health cannot be verified right now.
               </p>
@@ -268,16 +263,7 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
                             </tbody>
                           </table>
                         </div>
-                        {provider.serviceBreakdown.some(service => service.attemptedCalls > 0) ? (
-                          <div className="mt-3 border-t border-[#E7ECF5] pt-3">
-                            <Link href={providerSearchActivityHref({ provider: provider.provider, hours: monitoringHours, until: monitoringNow,
-                              product: filter === "all" ? undefined : filter === "flights" ? "FLIGHT" : filter === "hotels" ? "HOTEL" : "CAR" })}
-                              className="text-[13px] font-medium text-[#004BB8] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
-                              Review provider searches ›
-                            </Link>
-                            <p className="mt-1 text-[12px] text-[#64748B]">Shows searches created in this date range with provider execution evidence. Provider calls can occur outside these search dates, so this is not an exact list of calls behind the warning or of failed searches.</p>
-                          </div>
-                        ) : null}
+
                       </div>
                     </details>
                   </li>
@@ -297,7 +283,7 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
             <nav aria-label="Filter providers by product"
               className="mt-2 flex min-w-0 gap-5 overflow-x-auto border-b border-[#D8E1EC]">
               {productFilters.map(item => (
-                <Link key={item.key} href={providerHealthHref(monitoringHours, item.key)}
+                <Link key={item.key} href={providerHealthRangeHref(item.key, monitoringRange, monitoringHours)}
                   aria-current={filter === item.key ? "page" : undefined}
                   className={"inline-flex h-10 shrink-0 items-center whitespace-nowrap border-b-2 px-1 text-[13px] font-medium text-[#020617] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] " +
                     (filter === item.key ? "border-[#004BB8]" : "border-transparent hover:border-[#D8E1EC]")}>
@@ -354,16 +340,7 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
                             </span>
                           </div>
                         </div>
-                        {provider.attemptedCalls > 0 ? (
-                          <div className="mt-1 text-[12px]">
-                            <Link href={providerSearchActivityHref({ provider: provider.provider, hours: monitoringHours,
-                              until: monitoringNow, product: filter === "all" ? undefined : filter === "flights" ? "FLIGHT" : filter === "hotels" ? "HOTEL" : "CAR" })}
-                              className="font-medium text-[#004BB8] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
-                              Investigate provider searches ›
-                            </Link>
-                            <span className="ml-2 text-[#64748B]">Search creation dates may differ from provider-call timestamps.</span>
-                          </div>
-                        ) : null}
+
                         <div aria-hidden="true"
                           className="mt-3 flex h-2 w-full overflow-hidden rounded-full bg-[#E7ECF5]">
                           {segments.hasAttempts ? (

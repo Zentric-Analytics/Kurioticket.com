@@ -58,7 +58,7 @@ test("provider filter helpers drive the providers page", () => {
   assert.match(providersPage, /filterProviderStatuses/);
   assert.match(providersPage, /productFilters\.map/);
   assert.match(providersPage, /getProviderStatuses\(\)/);
-  assert.match(providersPage, /getProviderOperationalStatuses\(monitoringHours\)/);
+  assert.match(providersPage, /getProviderOperationalStatuses\(monitoringHours, undefined, monitoringRange \?\? undefined\)/);
   assert.match(providersPage, /All providers/);
   assert.match(providersPage, /filterProviderOperationalStatuses/);
 });
@@ -66,7 +66,8 @@ test("provider filter helpers drive the providers page", () => {
 test("provider details preserve booking, readiness and audited Duffel retest", () => {
   assert.match(providersPage, /<ProviderDirectoryTable rows=\{directoryRows\} \/>/);
   assert.match(providersPage, /canRetestDuffel: integration\.id === "duffel"/);
-  assert.match(directoryTable, /<ProviderRetestButton \/>/);
+  assert.match(directoryTable, /<ProviderRetestButton provider="duffel" \/>/);
+  assert.match(directoryTable, /<ProviderRetestButton provider="kayak-sandbox" \/>/);
   assert.match(directoryTable, /row\.canRetestDuffel/);
   assert.match(directoryTable, /sm:grid-cols-2 lg:grid-cols-4/);
   assert.doesNotMatch(directoryTable, /xl:grid-cols-4/);
@@ -150,16 +151,15 @@ test("provider health sections prioritize attention and use a flat compact layou
   assert.match(providersPage, /aria-labelledby="service-breakdown-heading"/);
 });
 
-test("provider attention supports truthful history windows and provider-search investigation", () => {
-  assert.match(providersPage, /parseProviderHealthHours\(raw\.hours\)/);
-  assert.match(providersPage, /getProviderOperationalStatuses\(monitoringHours\)/);
-  assert.match(providersPage, /providerHealthWindows\.map\(window =>/);
-  assert.match(providersPage, /providerHealthHref\(monitoringHours, item\.key\)/);
+test("provider attention uses a single dropdown and safely bounded date selection", () => {
+  assert.match(providersPage, /parseProviderHealthRange\(raw, monitoringNow\)/);
+  assert.match(providersPage, /ProviderHealthWindowFilter/);
+  assert.match(providersPage, /providerHealthRangeHref\(item\.key, monitoringRange, monitoringHours\)/);
   assert.match(providersPage, /Provider health signals \(historical\)/);
-  assert.match(providersPage, /providerSearchActivityHref\(/);
-  assert.match(providersPage, /Review provider searches/);
-  assert.match(providersPage, /Provider calls can occur outside these search dates/);
-  assert.match(providersPage, /getProviderOperationalStatuses\(monitoringHours\)\.catch\(\(\) => null\)/);
+  assert.doesNotMatch(providersPage, /Review provider searches/);
+  assert.doesNotMatch(providersPage, /Investigate provider searches/);
+  assert.doesNotMatch(providersPage, /Current environment<\/span>/);
+  assert.match(providersPage, /getProviderOperationalStatuses\(monitoringHours, undefined, monitoringRange \?\? undefined\)/);
 });
 
 test("provider issue link expands inline and cannot jump to the bottom", () => {
@@ -552,15 +552,15 @@ test("product filtering retains truthful timing metrics for a single-service pro
 });
 
 test("provider workflow drilldowns preserve attribution scope and linked search navigation", () => {
-  assert.match(referralPage, /referralHandoffHref\(/);
-  assert.match(referralPage, /sourcePage: item.sourcePage/);
-  assert.match(referralPage, /provider: item.provider, product: item.product/);
+  assert.doesNotMatch(referralPage, /provider: item\.provider, product: item\.product/);
+  assert.doesNotMatch(referralPage, /sourcePage: item\.sourcePage/);
+  assert.match(referralPage, /correlation: "unavailable"/);
   assert.match(handoffsPage, /sourcePage: one\(raw.sourcePage\)/);
   assert.match(handoffsPage, /handoffDetailHref\(handoff.id, handoff.environment, raw\)/);
   assert.match(handoffDetailPage, /handoffReturnHref\(raw\)/);
   assert.match(handoffDetailPage, /encodeURIComponent\(result.data.searchCorrelation.searchHistoryId\)/);
-  assert.match(providersPage, /Investigate provider searches/);
+  assert.doesNotMatch(providersPage, /Investigate provider searches/);
   assert.match(directoryTable, /Integration readiness/);
   assert.match(directoryTable, /Search health/);
-  assert.match(directoryTable, /row\.investigateHref/);
+  assert.doesNotMatch(directoryTable, /row\.investigateHref/);
 });

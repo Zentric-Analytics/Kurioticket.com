@@ -13,6 +13,7 @@ export type {
 export async function getProviderOperationalStatuses(
   windowHours = 24,
   environment: PublicEnvironment = getPublicEnvironment(),
+  customRange?: { from: Date; to: Date },
 ) {
   const db = getOptionalPrisma();
   if (!db) return null;
@@ -32,6 +33,7 @@ export async function getProviderOperationalStatuses(
         environment,
         now,
         windowHours,
+        customRange,
       }),
     { isolationLevel: "RepeatableRead" },
   );
