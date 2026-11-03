@@ -4,12 +4,14 @@ import test from "node:test";
 
 import { adminNavigation } from "@/lib/adminNavigation";
 import { getProviderOutcomeWidths } from "@/lib/adminProviderVisuals";
+import { providerHandoffFiltersHref } from "@/lib/adminProviderHandoffFilterUrl";
 import { filterProviderOperationalStatuses, filterProviderStatuses, normalizeProductFilter, productFilters } from "@/lib/adminProviderFilters";
 import type { ProviderOperationalStatus, ProviderOperationalServiceStatus } from "@/services/providerOperationalStatusCore";
 
 const providersPage = readFileSync("src/app/admin/providers/page.tsx", "utf8");
 const referralPage = readFileSync("src/app/admin/referral-attribution/page.tsx", "utf8");
 const referralWindowFilter = readFileSync("src/components/admin/ReferralWindowFilter.tsx", "utf8");
+const handoffFilters = readFileSync("src/components/admin/ProviderHandoffFilters.tsx", "utf8");
 const handoffsPage = readFileSync("src/app/admin/redirects/page.tsx", "utf8");
 const handoffDetailPage = readFileSync("src/app/admin/redirects/[id]/page.tsx", "utf8");
 const adminShell = readFileSync("src/components/admin/AdminHorizontalShell.tsx", "utf8");
@@ -255,12 +257,12 @@ test("Task 3: referral attribution uses compact preset auto-apply and white metr
   assert.match(referralPage, /requireAdminApiSession\(\)/);
   assert.match(referralPage, /parseAttributionDays\(daysValue\)/);
   assert.match(referralPage, /getReferralAttributionSummary\(days, environment\)/);
-  assert.match(referralPage, /<ReferralWindowFilter days=\{days\} embedded=\{embedded\} \/>/);
-  assert.match(referralWindowFilter, /event\.currentTarget\.form\?\.requestSubmit\(\)/);
+  assert.match(referralPage, /<ReferralWindowFilter days=\{days\} embedded=\{false\} \/>/);
+  assert.match(referralWindowFilter, /router\.replace\(target, \{ scroll: false \}\)/);
   assert.match(referralWindowFilter, /name="days"/);
   assert.match(referralWindowFilter, /name="view" value="attribution"/);
   for (const window of ["7","14","30","60","90"]) {
-    assert.match(referralWindowFilter, new RegExp('value="' + window + '"'));
+    assert.match(referralWindowFilter, new RegExp('value: "' + window + '"'));
   }
   assert.match(referralPage, /summary\.dataAvailable \? summary\.handoffs\.total\.toLocaleString\(\) : "—"/);
   assert.match(referralPage, /Linked to search/);
@@ -275,7 +277,8 @@ test("Task 3: standalone handoffs preserve filters, records and next-cursor beha
   assert.match(handoffsPage, /adminOperationalReads\.handoffs\.list\(params\)/);
   assert.match(handoffsPage, /if \(embedded\) return \(/);
   assert.match(handoffsPage, /<AdminDataTable/); // Original embedded Search Activity variant remains.
-  assert.match(handoffsPage, /aria-label="Filter provider handoffs"/);
+  assert.match(handoffsPage, /<ProviderHandoffFilters/);
+  assert.match(handoffFilters, /aria-label="Filter provider handoffs"/);
   assert.match(handoffsPage, /aria-label="Provider handoff records"/);
   assert.match(handoffsPage, /min-w-\[1080px\] table-fixed/);
   for (const field of ["product", "identity", "correlation", "provider", "environment"]) {
@@ -305,11 +308,88 @@ test("Task 3: handoff detail groups every field without tiles or losing verifica
     "Identity", "Search correlation", "Search history ID", "User ID", "Visitor ID"]) {
     assert.ok(handoffDetailPage.includes('label="' + label + '"'), "Missing detail field " + label);
   }
-  assert.match(handoffDetailPage, /Recorded outbound referral, not a booking or payment confirmation/);
+  assert.match(handoffDetailPage, /Outbound referral recorded; booking and payment are not confirmed/);
   assert.match(handoffDetailPage, /searchCorrelation\.kind === "exact"/);
   assert.doesNotMatch(handoffDetailPage, /AdminSectionCard|bg-slate-50|rounded-xl/);
   assert.match(adminShell, /providerReportingWorkspace/);
   assert.match(adminShell, /providersWorkspace \|\| providerReportingWorkspace/);
+});
+
+test("Tasks 4–6 place the small Referral date filter beside tabs only when selected", () => {
+  assert.match(providersPage, /attribution \? \(/);
+  assert.match(providersPage, /<nav aria-label="Provider reporting sections"/);
+  assert.match(providersPage, /<ReferralWindowFilter days=\{attributionDays \?\? 30\} embedded \/>/);
+  assert.match(providersPage, /currentReferralAttributionEnvironment\(\)/);
+  assert.match(providersPage, /\{attributionEnvironment === "production" \? "Production" : "Staging"\}/);
+  assert.match(referralPage, /\{!embedded \? \(/);
+  assert.doesNotMatch(referralPage, /day window/);
+  assert.doesNotMatch(referralWindowFilter, /Reporting window/);
+  assert.match(referralWindowFilter, /<SearchMonitorSelect label="Date range" name="days"/);
+  assert.match(referralWindowFilter, /appearance="plain" align="end"/);
+  assert.match(referralWindowFilter, /router\.replace\(target, \{ scroll: false \}\)/);
+  assert.match(referralWindowFilter, /name="view" value="attribution"/);
+  assert.match(referralWindowFilter, /<noscript>/);
+  assert.match(referralWindowFilter, /Last " \+ days \+ " days"/);
+});
+
+test("Tasks 7–8 use User Activity-style provider handoff filters without losing scoped IDs", () => {
+  assert.match(handoffsPage, /<h1 className="sr-only">Provider Handoffs<\/h1>/);
+  assert.doesNotMatch(handoffsPage, /Recorded outbound referrals only/);
+  assert.match(handoffsPage, /<SearchWorkspaceBackLink href="\/admin\/providers\?view=attribution"/);
+  assert.match(handoffsPage, /<ProviderHandoffFilters/);
+  assert.match(handoffFilters, /aria-label="Search by provider"/);
+  assert.match(handoffFilters, /<SearchMonitorSelect label="Product"/);
+  assert.match(handoffFilters, /<SearchMonitorSelect label="Identity"/);
+  assert.match(handoffFilters, /<SearchMonitorSelect label="Search link"/);
+  assert.match(handoffFilters, /<SearchMonitorSelect label="Environment"/);
+  assert.match(handoffFilters, /appearance="plain"/);
+  assert.match(handoffFilters, /setTimeout\(\(\) => navigate\(next\), 300\)/);
+  assert.match(handoffFilters, /router\.replace\(href, \{ scroll: false \}\)/);
+  assert.match(handoffFilters, /onValueChange=\{value => update\(\{ identity: value \}, false, true\)\}/);
+  assert.doesNotMatch(handoffFilters, /Apply filters/);
+  assert.match(handoffsPage, /if \(embedded\) return \(/);
+  assert.match(handoffsPage, /<AdminFilterBar action=\{embedded/);
+});
+
+test("Task 8 keeps filters and deep-linked date/identity scope correctly across changes", () => {
+  const initial = {
+    product: "HOTEL", identity: "guest", correlation: "unavailable",
+    provider: "  KAYAK sandbox  ", environment: "staging",
+  };
+  const scope = {
+    userId: "user_123", visitorId: "guest_123",
+    from: "2026-10-01", to: "2026-11-03",
+  };
+  const normal = new URL(providerHandoffFiltersHref(initial, scope), "https://internal.example");
+  assert.equal(normal.pathname, "/admin/redirects");
+  for (const [key, value] of Object.entries({
+    userId: "user_123", visitorId: "guest_123",
+    from: "2026-10-01", to: "2026-11-03",
+    product: "HOTEL", identity: "guest", correlation: "unavailable",
+    provider: "KAYAK sandbox", environment: "staging",
+  })) assert.equal(normal.searchParams.get(key), value);
+  assert.equal(normal.searchParams.has("cursor"), false);
+  const changedIdentity = new URL(providerHandoffFiltersHref({ ...initial, identity: "unattributed" },
+    scope, true), "https://internal.example");
+  assert.equal(changedIdentity.searchParams.has("userId"), false);
+  assert.equal(changedIdentity.searchParams.has("visitorId"), false);
+  assert.equal(changedIdentity.searchParams.get("from"), "2026-10-01");
+  assert.equal(changedIdentity.searchParams.get("to"), "2026-11-03");
+  assert.equal(changedIdentity.searchParams.get("product"), "HOTEL");
+  assert.equal(changedIdentity.searchParams.get("identity"), "unattributed");
+});
+
+test("Tasks 9–10 simplify only the handoff detail header and move back navigation left", () => {
+  assert.match(handoffDetailPage, /<h1 className="sr-only">Provider handoff detail<\/h1>/);
+  assert.match(handoffDetailPage, /<ArrowLeft size=\{16\}/);
+  assert.match(handoffDetailPage, /<Link href=\{backHref\}/);
+  assert.match(handoffDetailPage, /Back to handoffs/);
+  assert.ok(handoffDetailPage.indexOf("Back to handoffs") < handoffDetailPage.indexOf("Handoff overview"));
+  assert.doesNotMatch(handoffDetailPage, /justify-between gap-3 border-b/);
+  assert.match(handoffDetailPage, /Referral information/);
+  assert.match(handoffDetailPage, /Outbound referral recorded; booking and payment are not confirmed/);
+  assert.match(handoffDetailPage, /<Field label="User ID"/);
+  assert.match(handoffDetailPage, /<Field label="Visitor ID"/);
 });
 
 test("product filtering retains truthful timing metrics for a single-service provider", () => {
