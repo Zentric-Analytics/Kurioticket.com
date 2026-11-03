@@ -54,7 +54,10 @@ test("Activity preserves its approved colors while Support joins the white Searc
   assert.match(shell, /userActivity \? "bg-\[#f1f5fb\]"/);
   assert.match(shell, /const supportWorkspace = pathname === "\/admin\/support" \|\| pathname\.startsWith\("\/admin\/support\/"\)/);
   assert.match(shell, /const providersWorkspace = pathname === "\/admin\/providers"/);
-  assert.match(shell, /const whiteWorkspace = usersDirectory \|\| searchesWorkspace \|\| supportWorkspace \|\| providersWorkspace;/);
+  assert.match(shell, /const providerReportingWorkspace = pathname === "\/admin\/referral-attribution"/);
+  assert.match(shell, /const accountDeletionDetail = accountDeletionParts\.length === 3/);
+  assert.match(shell, /accountDeletionParts\[1\] === "account-deletions"/);
+  assert.match(shell, /const whiteWorkspace = usersDirectory \|\| searchesWorkspace \|\| supportWorkspace\s+\|\| providersWorkspace \|\| providerReportingWorkspace \|\| accountDeletionDetail;/);
   assert.match(shell, /whiteWorkspace \? "bg-white" : "bg-\[#f1f5fb\]"/);
   assert.match(page, /space-y-6 bg-\[#F1F5FB\]/);
   assert.match(page, /text-\[16px\] font-medium leading-6 tabular-nums text-\[#0F172A\]/);
