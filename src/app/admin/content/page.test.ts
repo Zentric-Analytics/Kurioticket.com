@@ -162,6 +162,7 @@ test("Content management uses consistent arrow back links and clean page framing
   assert.match(frame, /ArrowLeft size=\{14\}/);
   assert.match(frame, /href=\{backHref\}/);
   assert.match(frame, /max-w-\[1138px\]/);
+  assert.match(frame, /max-w-\[1500px\]/);
   assert.match(frame, /export function ContentSectionHeading/);
   const pages = [
     "src/app/admin/content/homepage/page.tsx",
@@ -195,6 +196,7 @@ test("Content lists search the whole CMS dataset and filters apply instantly", (
   const api = readFileSync("src/app/api/admin/content/route.ts", "utf8");
   const toolbar = readFileSync("src/components/admin/ContentDirectoryToolbar.tsx", "utf8");
   for (const source of [home, faq]) {
+    assert.match(source, /<ContentPageFrame\s+wide/);
     assert.match(source, /<ContentDirectoryToolbar/);
     assert.match(source, /search: one\(raw\.q\) \|\| undefined/);
     assert.doesNotMatch(source, /<AdminButton[^>]*type="submit">Apply/);
