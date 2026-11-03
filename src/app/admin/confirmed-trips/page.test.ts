@@ -387,7 +387,7 @@ test("Phase 4 readiness is compact, truthful, and exposes all five configuration
   assert.doesNotMatch(section, /<details|aria-hidden="true" className=.*(?:facts|details)|md:grid-cols-5/);
 });
 
-test("Phase 4 delivery health keeps distinct inactive, unavailable, and genuine receipt states", () => {
+test("Phase 4 delivery health keeps distinct inactive, unavailable, and genuine receipt states with optional inline alerts", () => {
   const start = page.indexOf('<section aria-labelledby="confirmation-delivery-health-title"');
   const end = page.indexOf('        </div>\n      </AdminSectionCard>', start);
   const section = page.slice(start, end);
@@ -408,9 +408,9 @@ test("Phase 4 delivery health keeps distinct inactive, unavailable, and genuine 
   assert.match(section, /deliveryHealth\.recent\.map/);
   assert.match(section, /No authenticated provider callbacks recorded yet/);
   assert.match(section, /aria-label="Recent authenticated delivery receipts" tabIndex=\{0\}/);
-  assert.match(section, /href="\/admin\/confirmed-trips\/alerts"/);
-  assert.match(section, /Confirmation alerts/);
-  assert.doesNotMatch(section, /href="\/admin\/notifications"|Operational alerts/);
+  assert.match(section, /\{readiness\.feedReady \? <ConfirmedTripDeliveryAlerts \/> : null\}/);
+  assert.doesNotMatch(section, /href="\/admin\/confirmed-trips\/alerts"|href="\/admin\/notifications"|Operational alerts/);
+  assert.match(page, /import \{ ConfirmedTripDeliveryAlerts \} from "@\/components\/admin\/ConfirmedTripDeliveryAlerts"/);
   assert.match(section, /Receipts may include retries/);
   assert.doesNotMatch(section, /Cancel booking|Refund|Create confirmed trip/);
 });
