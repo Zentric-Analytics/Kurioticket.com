@@ -12,6 +12,7 @@ import {
 import { HomepageCmsListClient } from "@/components/admin/HomepageCmsListClient";
 import type { CmsContentStatus } from "@/generated/prisma/enums";
 import { getHomepageCmsSection, homepageCmsSections } from "@/lib/adminHomepageCms";
+import { contentEditorHref, homepageCmsListNavigation } from "@/lib/adminContentNavigation";
 import {
   CmsContentError,
   getCmsContentScopeSummary,
@@ -40,6 +41,7 @@ export default async function HomepageCmsSectionPage({ params, searchParams }: P
     : homepageCmsMarkets.includes(requestedMarket as never)
       ? requestedMarket
       : defaultMarket;
+  const nav = homepageCmsListNavigation(section, raw, allowedMarket);
   const cursor = one(raw.cursor) || undefined;
 
   const summary = await getCmsContentScopeSummary(config.type, allowedMarket, homepageCmsLocale).catch(() => null);
@@ -48,7 +50,7 @@ export default async function HomepageCmsSectionPage({ params, searchParams }: P
       <AdminPageShell
         title={config.title}
         description="This CMS scope must be initialized before it can be managed."
-        actions={<AdminLinkButton href="/admin/content/homepage">Back to homepage content</AdminLinkButton>}
+        actions={<AdminLinkButton href={nav.backHref}>{nav.backLabel}</AdminLinkButton>}
       >
         <AdminEmptyState
           title="CMS scope unavailable"
@@ -79,8 +81,8 @@ export default async function HomepageCmsSectionPage({ params, searchParams }: P
       description="Manage ordered published content for this CMS scope. Save draft and Publish remain separate actions."
       actions={
         <div className="flex flex-wrap gap-2">
-          <AdminLinkButton href="/admin/content/homepage">Back</AdminLinkButton>
-          <AdminLinkButton href={`/admin/content/homepage/${section}/new?market=${allowedMarket}`} variant="primary">
+          <AdminLinkButton href={nav.backHref}>{nav.backLabel}</AdminLinkButton>
+          <AdminLinkButton href={contentEditorHref(`/admin/content/homepage/${section}/new`, nav.query)} variant="primary">
             Add {config.singular}
           </AdminLinkButton>
         </div>
@@ -107,10 +109,10 @@ export default async function HomepageCmsSectionPage({ params, searchParams }: P
           <AdminEmptyState title="Content unavailable" message={error} />
         ) : listing && listing.items.length > 0 ? (
           <>
-            <HomepageCmsListClient section={section} items={listing.items} />
+            <HomepageCmsListClient section={section} items={listing.items} listQuery={nav.query} />
             {listing.nextCursor ? (
               <div className="flex justify-end">
-                <Link href={nextHref(section, allowedMarket, statusRaw, listing.nextCursor)} className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">
+                <Link href={nextHref(section, nav.query, listing.nextCursor)} className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">
                   Next page
                 </Link>
               </div>
@@ -120,7 +122,7 @@ export default async function HomepageCmsSectionPage({ params, searchParams }: P
           <AdminEmptyState
             title="No content found"
             message="No content records match this market and lifecycle status."
-            action={<AdminLinkButton href={`/admin/content/homepage/${section}/new?market=${allowedMarket}`} variant="primary">Add {config.singular}</AdminLinkButton>}
+            action={<AdminLinkButton href={contentEditorHref(`/admin/content/homepage/${section}/new`, nav.query)} variant="primary">Add {config.singular}</AdminLinkButton>}
           />
         )}
       </div>
@@ -132,10 +134,8 @@ function one(value: string | string[] | undefined) {
   return typeof value === "string" ? value : "";
 }
 
-function nextHref(section: string, market: string, status: string, cursor: string) {
-  const params = new URLSearchParams();
-  if (market) params.set("market", market);
-  if (status) params.set("status", status);
+function nextHref(section: string, query: string, cursor: string) {
+  const params = new URLSearchParams(query);
   params.set("cursor", cursor);
   return `/admin/content/homepage/${section}?${params.toString()}`;
 }
