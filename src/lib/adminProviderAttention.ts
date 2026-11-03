@@ -19,8 +19,9 @@ export function providerHealthHref(hours: number, product: string) {
 }
 
 /** Show the exact provider and reporting interval in Search Activity.
- * This is an investigation entry point, NOT proof that a given search failed.
- * Search Activity uses exact execution evidence for its provider filter. */
+ * Search Activity filters by SearchHistory.createdAt (not ApiProviderLog.createdAt).
+ * Its provider filter requires execution evidence, but it is NOT an exact list
+ * of provider calls in the health window and does not prove search failure. */
 export function providerSearchActivityHref(input: {
   provider: string;
   product?: string;
