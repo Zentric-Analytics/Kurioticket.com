@@ -155,7 +155,9 @@ test("provider attention uses a single dropdown and safely bounded date selectio
   assert.match(providersPage, /parseProviderHealthRange\(raw, monitoringNow\)/);
   assert.match(providersPage, /ProviderHealthWindowFilter/);
   assert.match(providersPage, /providerHealthRangeHref\(item\.key, monitoringRange, monitoringHours\)/);
-  assert.match(providersPage, /Provider health signals \(historical\)/);
+  assert.doesNotMatch(providersPage, /Provider health signals \(historical\)/);
+  assert.doesNotMatch(providersPage, /Historical outcomes in this window do not necessarily represent an active incident/);
+  assert.match(providersPage, /Providers requiring attention/);
   assert.doesNotMatch(providersPage, /Review provider searches/);
   assert.doesNotMatch(providersPage, /Investigate provider searches/);
   assert.doesNotMatch(providersPage, /Current environment<\/span>/);
