@@ -67,9 +67,7 @@ export default async function AdminFaqDetailPage({ params, searchParams }: PageP
                     <div>
                       <p className="text-xs font-black uppercase tracking-wide text-slate-500">Action</p>
                       <div className="mt-1">
-                        <ContentStatusPill status={revision.action}>
-                          {revision.action}
-                        </ContentStatusPill>
+                        <ContentStatusPill status={revision.action} />
                       </div>
                     </div>
                     <div>
