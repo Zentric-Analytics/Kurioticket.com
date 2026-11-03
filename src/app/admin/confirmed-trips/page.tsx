@@ -113,6 +113,9 @@ function TripCategoryCard({
         <div className="flex items-center justify-between gap-2 py-2">
           <dt className="text-slate-600">Tracked trips</dt><dd className="text-xs font-medium text-slate-500">Not connected</dd>
         </div>
+        <div className="flex items-center justify-between gap-2 py-2">
+          <dt className="text-slate-600">Cancelled trips</dt><dd className="text-xs font-medium text-slate-500">Count pending integration</dd>
+        </div>
       </dl>
       <div className="mt-3 flex min-w-0 flex-wrap gap-2">
         <Link href={tripDirectoryHref({ ...blankFilters, product: type, status: "UPCOMING" })}
