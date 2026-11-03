@@ -79,3 +79,38 @@ export function supportInboxReturnHref(inbox: string | undefined) {
   const query = scopedInboxReturnQuery(new URLSearchParams((inbox || "").slice(0, 2048)));
   return "/admin/support" + (query ? "?" + query : "");
 }
+
+/** Contextual Support <-> deletion links carry only allowlisted inbox filters.
+ * A query parameter alone cannot establish a ticket/deletion relationship:
+ * callers must use the linked IDs returned by the authorized detail readers.
+ */
+export function supportDeletionRequestHref(deletionRequestId: string, inbox: string | undefined) {
+  const params = new URLSearchParams({ fromSupport: "1" });
+  const query = scopedInboxReturnQuery(new URLSearchParams((inbox || "").slice(0, 2048)));
+  if (query) params.set("inbox", query);
+  return "/admin/account-deletions/" + encodeURIComponent(deletionRequestId) + "?" + params.toString();
+}
+
+export function supportTicketFromDeletionHref(ticketId: string, deletionRequestId: string) {
+  return "/admin/support/" + encodeURIComponent(ticketId) + "?fromDeletion=" + encodeURIComponent(deletionRequestId);
+}
+
+export function supportTicketBackHref(
+  linkedDeletionRequestId: string | null,
+  fromDeletion: string | undefined,
+  inbox: string | undefined,
+) {
+  return linkedDeletionRequestId && fromDeletion === linkedDeletionRequestId
+    ? "/admin/account-deletions/" + encodeURIComponent(linkedDeletionRequestId)
+    : supportInboxReturnHref(inbox);
+}
+
+export function deletionRequestBackHref(
+  linkedSupportTicketId: string | null,
+  fromSupport: string | undefined,
+  inbox: string | undefined,
+) {
+  if (fromSupport !== "1" || !linkedSupportTicketId) return "/admin/account-deletions";
+  const safeInboxQuery = scopedInboxReturnQuery(new URLSearchParams((inbox || "").slice(0, 2048)));
+  return supportTicketDetailHref(linkedSupportTicketId, new URLSearchParams(safeInboxQuery));
+}
