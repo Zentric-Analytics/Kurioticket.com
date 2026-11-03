@@ -33,21 +33,26 @@ export function ReferralWindowFilter({ days, embedded }: { days: number; embedde
   };
 
   return (
-    <form action={embedded ? "/admin/providers" : "/admin/referral-attribution"} method="get"
-      className="inline-flex min-w-0 items-center">
-      {embedded ? <input type="hidden" name="view" value="attribution" /> : null}
-      <SearchMonitorSelect label="Date range" name="days" value={String(days)}
-        options={options} appearance="plain" align="end"
-        onValueChange={applyPreset} />
+    <div className="inline-flex min-w-0 items-center">
+      <div className="referral-window-enhanced">
+        <SearchMonitorSelect label="Date range" name="days" value={String(days)}
+          options={options} appearance="plain" align="end"
+          onValueChange={applyPreset} />
+      </div>
       <noscript>
-        <label htmlFor="referral-window-fallback" className="sr-only">Date range</label>
-        <select id="referral-window-fallback" name="days" defaultValue={String(days)}
-          className="h-9 border-0 bg-transparent text-[13px]">
-          {options.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
-        </select>
-        <button type="submit" className="ml-2 text-[13px] font-medium text-[#004BB8]">Apply</button>
+        <style>{".referral-window-enhanced { display: none !important; }"}</style>
+        <form action={embedded ? "/admin/providers" : "/admin/referral-attribution"} method="get"
+          className="inline-flex items-center gap-2">
+          {embedded ? <input type="hidden" name="view" value="attribution" /> : null}
+          <label htmlFor="referral-window-fallback" className="sr-only">Date range</label>
+          <select id="referral-window-fallback" name="days" defaultValue={String(days)}
+            className="h-9 border-0 bg-transparent text-[13px]">
+            {options.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+          </select>
+          <button type="submit" className="text-[13px] font-medium text-[#004BB8]">Apply</button>
+        </form>
       </noscript>
       <span aria-live="polite" className="sr-only">{pending ? "Updating referral attribution…" : ""}</span>
-    </form>
+    </div>
   );
 }
