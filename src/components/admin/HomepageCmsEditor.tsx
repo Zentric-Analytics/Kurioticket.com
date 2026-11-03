@@ -212,7 +212,7 @@ export function HomepageCmsEditor({
       <section className="min-w-0 space-y-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <ContentSectionHeading>{item ? "Edit content" : "Create draft"}</ContentSectionHeading>
+            <ContentSectionHeading>Content details</ContentSectionHeading>
             <p className="mt-1 text-[13px] text-[#64748B]">Structured CMS content only. Save draft before publishing changes.</p>
           </div>
           {item ? <ContentStatusPill status={item.status} /> : null}
