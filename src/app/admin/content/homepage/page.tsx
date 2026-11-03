@@ -74,17 +74,17 @@ export default async function AdminHomepageContentPage() {
               <ContentArea
                 title="Homepage destinations"
                 description="Market-scoped destination cards used by the popular destination/stay surface."
-                href="/admin/content/homepage/destinations"
+                href="/admin/content/homepage/destinations?from=overview"
               />
               <ContentArea
                 title="Flight route cards"
                 description="Market-scoped discovery and regional route cards. Order controls which cards appear first."
-                href="/admin/content/homepage/flight-routes"
+                href="/admin/content/homepage/flight-routes?from=overview"
               />
               <ContentArea
                 title="Hotel destinations"
                 description="Canonical GLOBAL hotel destination identities used for safe hotel discovery."
-                href="/admin/content/homepage/hotel-destinations"
+                href="/admin/content/homepage/hotel-destinations?from=overview"
               />
             </div>
           </>
