@@ -41,3 +41,12 @@ test("detail and back URLs retain only allowed filters, with record environment 
   }
   assert.equal(back.searchParams.get("environment"), "staging");
 });
+
+test("legitimate pagination history survives detail and back navigation past 2048 characters", () => {
+  const trail = Array.from({ length: 7 }, (_, i) => "A".repeat(390) + String(i)).join(".");
+  assert.ok(trail.length > 2048 && trail.length < 8192);
+  const detail = new URL(handoffDetailHref("redirect_123", "staging", { pageTrail: trail, cursor: "cursorCurrent" }), "https://example.test");
+  assert.equal(detail.searchParams.get("pageTrail"), trail);
+  const back = new URL(handoffReturnHref(Object.fromEntries(detail.searchParams)), "https://example.test");
+  assert.equal(back.searchParams.get("pageTrail"), trail);
+});
