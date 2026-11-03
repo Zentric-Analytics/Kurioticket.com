@@ -1,7 +1,6 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Info } from "lucide-react";
 import { useEffect, useState, useTransition } from "react";
 
 import { AdminDirectorySelect } from "@/components/admin/AdminDirectorySelect";
@@ -64,12 +63,8 @@ export function SupportReplyForm({ ticketId }: { ticketId: string }) {
           placeholder="Write your reply..."
           disabled={isReplyPending}
         />
-        <div className="flex min-h-[54px] flex-wrap items-center justify-between gap-3 bg-[#F8FAFC] px-4 py-2">
-          <p className="inline-flex min-w-0 items-center gap-2 text-[11px] leading-5 text-[#64748B]">
-            <Info size={13} aria-hidden="true" className="shrink-0" />
-            Replies are saved first; email delivery is not guaranteed.
-          </p>
-          <div className="ml-auto flex shrink-0 items-center gap-4">
+        <div className="flex min-h-[54px] flex-wrap items-center justify-end gap-3 border-t border-[#E5E7EB] bg-white px-4 py-2">
+          <div className="flex shrink-0 items-center gap-4">
             <span className="whitespace-nowrap text-[11px] tabular-nums text-[#64748B]">{reply.length.toLocaleString()} / {replyMaxLength.toLocaleString()}</span>
             <button
               type="button"
@@ -139,6 +134,7 @@ export function SupportTicketStatusControl({ ticketId, status }: { ticketId: str
               value={status}
               options={statusChoices}
               plain
+              spaciousMenu
               onValueChange={value => { setSelectedStatus(value as SupportStatus); setStatusMessage(null); setError(null); }}
             />
           </div>
