@@ -51,9 +51,6 @@ export default async function AdminReferralAttributionPage({
       {!embedded ? (
         <div className="flex min-w-0 flex-wrap items-center justify-between gap-3 border-b border-[#D8E1EC] pb-2">
           <ReferralWindowFilter days={days} embedded={false} />
-          <span className="text-[12px] text-[#64748B]">
-            {summary.environment === "production" ? "Production" : "Staging"}
-          </span>
         </div>
       ) : null}
 

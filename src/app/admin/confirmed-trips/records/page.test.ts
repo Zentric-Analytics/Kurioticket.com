@@ -62,7 +62,7 @@ test("trip details never invent history, status, payments or booking authority",
 
 test("Phase 6 directory retains filters and keyset navigation in a compact two-row layout", () => {
   assert.match(directory, /sm:grid-cols-2 lg:grid-cols-4/);
-  assert.match(directory, /<ConfirmedTripRecordsTable rows=\{result\.rows\} \/>/);
+  assert.match(directory, /<TripDirectoryView rows=\{result\.rows\} \/>/);
   assert.match(directory, /Dates filter the latest signed provider-confirmation timestamp in UTC/);
   assert.match(directory, /href="\/admin\/confirmed-trips\/records" className="inline-flex h-9/);
   assert.match(directory, /tripDirectoryHref\(filters, result\.nextCursor\)/);

@@ -218,7 +218,7 @@ function cmsAlerts(signals: AdminAlertSignals) {
         source: "CMS",
         title: "CMS health could not be verified",
         message: "The CMS integrity overview could not be read from the authoritative store.",
-        actionHref: "/admin/content/health",
+        actionHref: "/admin/system/cms-health",
         signalToken: signals.telemetryOutageTokens.cms,
       },
     ] satisfies AdminAlertCandidate[];
@@ -234,7 +234,7 @@ function cmsAlerts(signals: AdminAlertSignals) {
       source: "CMS",
       title: "CMS integrity needs attention",
       message: `${signals.cms.totals.unhealthy} of ${signals.cms.totals.scopes} managed CMS scope(s) currently fail integrity checks.`,
-      actionHref: "/admin/content/health",
+      actionHref: "/admin/system/cms-health",
       signalToken: signals.cms.occurrenceToken,
     },
   ] satisfies AdminAlertCandidate[];

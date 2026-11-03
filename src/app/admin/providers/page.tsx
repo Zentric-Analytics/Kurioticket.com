@@ -1,6 +1,6 @@
 import AdminReferralAttributionPage from "@/app/admin/referral-attribution/page";
 import { ReferralWindowFilter } from "@/components/admin/ReferralWindowFilter";
-import { currentReferralAttributionEnvironment, parseAttributionDays } from "@/services/referralAttributionService";
+import { parseAttributionDays } from "@/services/referralAttributionService";
 import Link from "next/link";
 
 import { Info } from "lucide-react";
@@ -35,7 +35,6 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
   const filter = normalizeProductFilter(raw.product);
   const attribution = raw.view === "attribution";
   const attributionDays = parseAttributionDays(typeof raw.days === "string" ? raw.days : null);
-  const attributionEnvironment = attribution ? currentReferralAttributionEnvironment() : null;
 
   // Referral reporting has its own read path; avoid unnecessary readiness queries.
   const providerData = attribution
@@ -131,9 +130,6 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
         </nav>
         {attribution ? (
           <div className="ml-auto flex min-w-0 items-center gap-4 pb-1.5">
-            <span className="text-[12px] text-[#64748B]">
-              {attributionEnvironment === "production" ? "Production" : "Staging"}
-            </span>
             <ReferralWindowFilter days={attributionDays ?? 30} embedded />
           </div>
         ) : null}

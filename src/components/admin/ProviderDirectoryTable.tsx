@@ -114,7 +114,7 @@ export function ProviderDirectoryTable({ rows }: { rows: ProviderDirectoryRecord
             </tr>
             <tr id={"provider-details-" + row.id} hidden={!open} className="bg-white">
               <td colSpan={5} className="border-l-2 border-[#004BB8] px-4 py-4">
-                <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2 xl:grid-cols-4">
+                <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-4">
                   <Fact label="Environment" value={row.detail.environment} />
                   <Fact label="Credentials" value={row.detail.configured} />
                   <Fact label="Search" value={row.detail.search} />
@@ -131,10 +131,6 @@ export function ProviderDirectoryTable({ rows }: { rows: ProviderDirectoryRecord
                 {row.canRetestDuffel ? (
                   <div className="mt-3 flex min-w-0 flex-wrap items-start gap-x-4 gap-y-2 border-t border-[#E7ECF5] pt-3">
                     <ProviderRetestButton />
-                    <p className="max-w-xl text-[12px] leading-5 text-[#64748B]">
-                      A retest makes a real Duffel health request and records an admin audit event.
-                      It does not verify booking readiness.
-                    </p>
                   </div>
                 ) : null}
               </td>

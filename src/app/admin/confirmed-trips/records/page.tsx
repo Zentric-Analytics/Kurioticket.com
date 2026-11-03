@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Search, ArrowLeft } from "lucide-react";
-import { ConfirmedTripRecordsTable } from "@/components/admin/ConfirmedTripRecordsTable";
+import { TripDirectoryView } from "@/components/admin/TripDirectoryView";
 import { AdminPageShell, AdminSectionCard } from "@/components/admin/AdminPageShell";
 import { requireAdminSession } from "@/lib/auth-guards";
 import { parseAdminTripFilters, tripDirectoryHref } from "@/lib/adminConfirmedTripsDirectory";
@@ -82,7 +82,7 @@ export default async function AdminConfirmedTripRecordsPage({ searchParams }: Pr
               <span className="text-xs font-medium tabular-nums text-slate-600">{new Intl.NumberFormat("en-US").format(result.totalMatching)} verified records</span>
             </div>
             {result.rows.length ? (
-              <ConfirmedTripRecordsTable rows={result.rows} />
+              <TripDirectoryView rows={result.rows} />
             ) : <p role="status" className="rounded-lg bg-slate-50 px-4 py-4 text-center text-xs leading-5 text-slate-600">No provider-confirmed trip matches the selected filters.</p>}
             {result.nextCursor ? (
               <div className="mt-4 flex justify-end">

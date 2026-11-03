@@ -38,20 +38,35 @@ export default async function AdminHandoffDetailPage({
       </div>
       {result.status === "ok" ? (
         <div className="divide-y divide-[#D8E1EC]">
-          <section aria-labelledby="handoff-overview" className="py-5">
-            <h2 id="handoff-overview" className="text-[15px] font-semibold">Handoff overview</h2>
-            <dl className="mt-3 grid min-w-0 gap-x-6 gap-y-4 sm:grid-cols-2 xl:grid-cols-3">
-              <Field label="Provider" value={result.data.provider} />
-              <Field label="Product" value={result.data.product} />
-              <Field label="Created" value={formatDateTime(new Date(result.data.createdAt))} />
-              <Field label="Route" value={result.data.route || "—"} />
-              <Field label="Price" value={result.data.price
-                ? result.data.currency + " " + result.data.price : "—"} />
+          <section aria-labelledby="handoff-identity" className="py-4">
+            <h2 id="handoff-identity" className="text-[15px] font-semibold">Identity &amp; correlation</h2>
+            <dl className="mt-3 grid min-w-0 gap-x-5 gap-y-3 md:grid-cols-3">
+              <Field label="Identity" value={result.data.identity.kind} />
+              <Field label="Search correlation"
+                value={<span className={result.data.searchCorrelation.kind === "exact"
+                  ? "font-medium text-emerald-700" : "text-[#64748B]"}>
+                  {result.data.searchCorrelation.kind === "exact" ? "Exact" : "Unavailable"}
+                </span>} />
+              <Field label="User ID" value={result.data.identity.userId || "—"} />
+              <Field label="Handoff ID" value={result.data.id} />
+              <Field label="Search history ID" value={result.data.searchCorrelation.searchHistoryId || "—"} />
+              <Field label="Visitor ID" value={result.data.identity.visitorId || "—"} />
             </dl>
           </section>
-          <section aria-labelledby="handoff-referral" className="py-5">
+          <section aria-labelledby="handoff-overview" className="py-4">
+            <h2 id="handoff-overview" className="text-[15px] font-semibold">Handoff overview</h2>
+            <dl className="mt-3 grid min-w-0 gap-x-5 gap-y-3 md:grid-cols-3">
+              <Field label="Provider" value={result.data.provider} />
+              <Field label="Product" value={result.data.product} />
+              <Field label="Price" value={result.data.price
+                ? result.data.currency + " " + result.data.price : "—"} />
+              <Field label={result.data.product.toUpperCase() === "HOTEL" ? "Property" : "Route"} value={result.data.route || "—"} />
+              <Field label="Created" value={formatDateTime(new Date(result.data.createdAt))} />
+            </dl>
+          </section>
+          <section aria-labelledby="handoff-referral" className="py-4">
             <h2 id="handoff-referral" className="text-[15px] font-semibold">Referral information</h2>
-            <dl className="mt-3 grid min-w-0 gap-x-6 gap-y-4 sm:grid-cols-2 xl:grid-cols-3">
+            <dl className="mt-3 grid min-w-0 gap-x-5 gap-y-3 md:grid-cols-3">
               <Field label="Source page" value={result.data.sourcePage || "—"} />
               <Field label="Destination domain" value={result.data.destinationDomain || "—"} />
               <Field label="Environment" value={result.data.environment} />
@@ -59,21 +74,6 @@ export default async function AdminHandoffDetailPage({
             <p className="mt-3 text-[12px] leading-5 text-[#64748B]">
               Outbound referral recorded; booking and payment are not confirmed.
             </p>
-          </section>
-          <section aria-labelledby="handoff-identity" className="py-5">
-            <h2 id="handoff-identity" className="text-[15px] font-semibold">Identity &amp; correlation</h2>
-            <dl className="mt-3 grid min-w-0 gap-x-6 gap-y-4 sm:grid-cols-2 xl:grid-cols-3">
-              <Field label="Handoff ID" value={result.data.id} />
-              <Field label="Identity" value={result.data.identity.kind} />
-              <Field label="Search correlation"
-                value={<span className={result.data.searchCorrelation.kind === "exact"
-                  ? "font-medium text-emerald-700" : "text-[#64748B]"}>
-                  {result.data.searchCorrelation.kind === "exact" ? "Exact" : "Unavailable"}
-                </span>} />
-              <Field label="Search history ID" value={result.data.searchCorrelation.searchHistoryId || "—"} />
-              <Field label="User ID" value={result.data.identity.userId || "—"} />
-              <Field label="Visitor ID" value={result.data.identity.visitorId || "—"} />
-            </dl>
           </section>
         </div>
       ) : (
@@ -90,7 +90,7 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="min-w-0">
       <dt className="text-[12px] font-normal text-[#64748B]">{label}</dt>
-      <dd className="mt-1 break-words text-[13px] font-medium leading-5 text-[#0F172A] [overflow-wrap:anywhere]">
+      <dd className="mt-1 select-text break-words text-[13px] font-medium leading-5 text-[#0F172A] [overflow-wrap:anywhere]">
         {value}
       </dd>
     </div>

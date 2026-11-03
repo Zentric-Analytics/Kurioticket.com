@@ -13,7 +13,7 @@ import {
 import { popularDestinationsByMarket } from "@/data/marketHomeContent";
 import { resolveHotelDiscoveryIntent } from "@/lib/hotels/hotelDiscoveryIntent";
 import { HOMEPAGE_REFRESH_MARKET_CODES } from "@/lib/market/resolveMarket";
-import { getPrisma } from "@/lib/prisma";
+import { getOptionalPrisma, getPrisma } from "@/lib/prisma";
 import {
   CmsContentError,
   cmsPayloadSchemas,
@@ -154,6 +154,24 @@ function buildSeedRows(): SeedRow[] {
   return rows;
 }
 
+const homepageCmsContentTypes = ["HOMEPAGE_DESTINATION", "FLIGHT_ROUTE", "HOTEL_DESTINATION"] as const;
+
+/**
+ * This mirrors the full-initialization preflight across ALL markets, not only US.
+ * A record or scope in another market must disable the initial seed action.
+ * Unavailable storage is represented explicitly and never enables initialization.
+ */
+export async function getHomepageCmsInitializationReadiness() {
+  const db = getOptionalPrisma();
+  if (!db) return { available: false, hasExistingHomepageData: false };
+  const where = { type: { in: [...homepageCmsContentTypes] } };
+  const [item, scope] = await Promise.all([
+    db.cmsContentItem.findFirst({ where, select: { id: true } }),
+    db.cmsContentScope.findFirst({ where, select: { id: true } }),
+  ]);
+  return { available: true, hasExistingHomepageData: Boolean(item || scope) };
+}
+
 export async function initializeHomepageCms(actorInput: CmsActor) {
   const actor = normalizeActor(actorInput);
   const db = getPrisma();
@@ -161,7 +179,7 @@ export async function initializeHomepageCms(actorInput: CmsActor) {
 
   try {
     return await db.$transaction(async (tx) => {
-      const relevantTypes = ["HOMEPAGE_DESTINATION", "FLIGHT_ROUTE", "HOTEL_DESTINATION"] as const;
+      const relevantTypes = homepageCmsContentTypes;
       const [existingItems, existingScopes] = await Promise.all([
         tx.cmsContentItem.findMany({
           where: { type: { in: [...relevantTypes] } },
