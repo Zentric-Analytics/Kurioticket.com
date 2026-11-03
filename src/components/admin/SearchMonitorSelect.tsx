@@ -3,7 +3,7 @@
 import { Check } from "lucide-react";
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 
-export type SearchMonitorOption = { value: string; label: string };
+export type SearchMonitorOption = { value: string; label: string; shortLabel?: string };
 
 export function SearchMonitorSelect({
   label,
@@ -41,6 +41,7 @@ export function SearchMonitorSelect({
   const [activeIndex, setActiveIndex] = useState(0);
   const selectedIndex = Math.max(0, options.findIndex((option) => option.value === selected));
   const selectedLabel = options[selectedIndex]?.label ?? "";
+  const triggerLabel = appearance === "boxed" ? options[selectedIndex]?.shortLabel ?? selectedLabel : selectedLabel;
 
   useEffect(() => {
     setSelected(value);
@@ -188,7 +189,7 @@ export function SearchMonitorSelect({
               : "w-full border-b border-[#AEB8C6] bg-transparent px-0 text-[13px] font-semibold focus-visible:border-[#004BB8]")
         }
       >
-        <span className={truncateLabel ? "min-w-0 flex-1 truncate" : "whitespace-nowrap"}>{selectedLabel}</span>
+        <span className={truncateLabel ? "min-w-0 flex-1 truncate" : "whitespace-nowrap"}>{triggerLabel}</span>
         <svg aria-hidden="true" viewBox="0 0 8 5" className="mt-px h-[5px] w-[8px] shrink-0" fill="currentColor">
           <path d="M0 0h8L4 5z" />
         </svg>
