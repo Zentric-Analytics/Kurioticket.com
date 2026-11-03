@@ -228,3 +228,12 @@ function toParams(raw: Record<string, string | string[] | undefined>) {
   return params;
 }
 
+
+/** Embedded Search Activity handoffs retain their existing cursor links.
+ * Standalone Handoff Records use the separate previous/next cursor history. */
+function cursorHref(path: string, raw: Record<string, string | string[] | undefined>, cursor: string) {
+  const params = toParams(raw);
+  params.set("cursor", cursor);
+  params.set("limit", "50");
+  return path + "?" + params.toString();
+}
