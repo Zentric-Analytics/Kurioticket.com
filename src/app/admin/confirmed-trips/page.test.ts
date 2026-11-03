@@ -96,21 +96,38 @@ test("tracked trips remain unavailable instead of showing fabricated totals", ()
   assert.doesNotMatch(page, /\{ status: "TRACKED" \}/);
 });
 
-test("travel-type tabs and dropdown share the same selected scope", () => {
-  for (const type of ["all", "FLIGHT", "HOTEL", "CAR", "PACKAGE"]) {
-    assert.ok(page.includes('type: "' + type + '"'), "Missing tab: " + type);
+test("Travel type dropdown is the only category selector on the Trips page", () => {
+  for (const [value, label] of [
+    ["all", "All types"],
+    ["FLIGHT", "Flights"],
+    ["HOTEL", "Hotels"],
+    ["CAR", "Cars"],
+    ["PACKAGE", "Packages"],
+  ]) {
+    assert.match(controls, new RegExp('value: "' + value + '", label: "' + label + '"'));
   }
-  assert.match(page, /aria-label="Trip travel types"/);
-  assert.match(page, /tripWorkspaceHref\(filters, range, \{ product: type \}\)/);
-  assert.match(page, /filters\.product === type/);
   assert.match(controls, /name="product" value=\{filters\.product\} options=\{productOptions\}/);
+  assert.match(controls, /label="Travel type".*autoSubmit/);
+  assert.match(page, /<TripFilterControls filters=\{filters\}/);
+  assert.doesNotMatch(page + loading, /aria-label="Trip travel types"|tripCategories|tripWorkspaceHref|Trips by category|TripCategoryCard/);
   assert.match(operationsPage, /<ConfirmedTripsBreakdowns operations=\{operations\} \/>/);
   assert.match(breakdowns, /operations\.byProduct\.map/);
   assert.match(breakdowns, /operations\.byProvider\.map/);
   assert.match(breakdowns, /No providers or counts are assumed/);
-  assert.doesNotMatch(page, /TripCategoryCard|trip-categories-title|Trips by category/);
 });
 
+test("redundant directory descriptions are absent without changing records or pagination", () => {
+  assert.doesNotMatch(page, /Search verified records; filters use the latest signed confirmation date in UTC/);
+  assert.doesNotMatch(controls, /UTC dates filter signed confirmation timestamps\. Tracking and precise minute-level ranges require a future integration/);
+  assert.doesNotMatch(page, /Showing up to 20 records, newest confirmation first/);
+  assert.match(page, /\{directory\.totalMatching\.toLocaleString\("en-US"\)\} matching verified trips/);
+  assert.match(page, /<TripDirectoryView rows=\{directory\.rows\} subtle \/>/);
+  assert.match(page, /directory\.nextCursor/);
+  assert.match(page, /tripDirectoryHref\(filters, directory\.nextCursor\)/);
+  assert.match(controls, /href="\/admin\/confirmed-trips#trip-directory"/);
+  assert.match(controls, /type="submit"/);
+  assert.match(controls, /justify-end gap-2/);
+});
 
 test("the main directory uses authorized read-only filtered records, never the 20-row overview sample", () => {
   assert.match(page, /parseAdminTripWorkspace\(raw\)/);
@@ -159,7 +176,7 @@ test("eight polished directory fields use one compact desktop row with accessibl
   assert.match(dropdown, /if \(!options\.some\(\(option\) => option\.value === next && !option\.disabled\)\) return/);
   assert.match(controls, /focus-visible:ring-2/);
   assert.match(controls, /href="\/admin\/confirmed-trips#trip-directory"/);
-  assert.match(controls, /precise minute-level ranges require a future integration/);
+  assert.doesNotMatch(controls, /precise minute-level ranges require a future integration/);
   assert.match(dropdown, /aria-haspopup="listbox"/);
   assert.match(dropdown, /case "ArrowDown":/);
   assert.match(dropdown, /case "Escape":/);
@@ -251,7 +268,7 @@ test("loading state mirrors two primary sections with a visible operations short
   assert.match(loading, /motion-safe:animate-pulse/);
   assert.equal((loading.match(/<AdminSectionCard/g) ?? []).length, 1);
   assert.equal((loading.match(/<section className="min-w-0 rounded-xl border border-slate-200\/80 bg-white/g) ?? []).length, 2);
-  assert.match(loading, /"All", "Flights", "Hotels", "Cars", "Packages"/);
+  assert.doesNotMatch(loading, /"All", "Flights", "Hotels", "Cars", "Packages"|aria-label="Trip travel types"/);
   assert.match(loading, /"Search trips", "Provider", "Travel type", "Trip status", "Time range", "Tracking", "From \(UTC\)", "To \(UTC\)"/);
   assert.doesNotMatch(loading, /Confirmed by type · all time|Trips by category|Related trip operations/);
   assert.doesNotMatch(loading, />\s*0\s*</);
