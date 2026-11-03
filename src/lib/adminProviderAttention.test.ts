@@ -20,7 +20,7 @@ test("provider health window navigation preserves product and current default", 
   assert.equal(providerHealthHref(24, "flights"), "/admin/providers?product=flights");
 });
 
-test("search investigation URLs carry exact provider and bounded UTC interval without implying failed searches", () => {
+test("search investigation URLs scope search creation dates, not provider-call timestamps", () => {
   const until = new Date("2026-11-03T12:00:00.000Z");
   const url = new URL(providerSearchActivityHref({ provider: "KAYAK sandbox", product: "HOTEL", hours: 72, until }), "https://example.test");
   assert.equal(url.pathname, "/admin/searches/activity");
