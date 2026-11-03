@@ -22,6 +22,7 @@ export default async function AdminHomepageContentPage() {
 
   const available = Boolean(destinations?.available && flights?.available && hotels?.available);
   const active = Boolean(destinations?.active && flights?.active && hotels?.active);
+  const partiallyInitialized = !active && Boolean(destinations?.active || flights?.active || hotels?.active);
 
   return (
     <AdminPageShell
@@ -38,6 +39,12 @@ export default async function AdminHomepageContentPage() {
           <AdminEmptyState
             title="Homepage CMS unavailable"
             message="CMS storage could not be verified. The public homepage continues using the existing code-backed content."
+          />
+        ) : partiallyInitialized ? (
+          <AdminEmptyState
+            title="Homepage CMS setup is incomplete"
+            message="Some homepage scopes exist, so the full initialisation action cannot safely be run again. Review the affected scopes in System → CMS Health before changing content."
+            action={<Link href="/admin/system/cms-health" className="inline-flex text-sm font-semibold text-indigo-700 hover:underline">Review CMS Health</Link>}
           />
         ) : !active ? (
           <AdminSectionCard className="p-5">
