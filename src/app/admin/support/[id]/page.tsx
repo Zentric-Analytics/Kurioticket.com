@@ -1,66 +1,63 @@
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ChevronDown } from "lucide-react";
 import { notFound } from "next/navigation";
 
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { SupportReplyForm, SupportTicketStatusControl } from "@/components/admin/SupportTicketActions";
 import { formatDateTime } from "@/lib/admin-data";
-import type { AdminSupportDetail, AdminSupportPriority, AdminSupportStatus } from "@/services/adminOperationalReadContract";
+import { supportCategoryLabel, supportInboxReturnHref } from "@/lib/adminSupportInboxNavigation";
+import type { AdminSupportDetail } from "@/services/adminOperationalReadContract";
 import { adminOperationalReads } from "@/services/adminOperationalReadService";
 
 export const metadata = { title: "Admin Support Ticket" };
 
-type PageProps = { params: Promise<{ id: string }> };
-
-const statuses: Record<AdminSupportStatus, { label: string; dot: string; text: string }> = {
-  OPEN: { label: "Open", dot: "bg-amber-400", text: "text-[#6B4A10]" },
-  WAITING_ON_TEAM: { label: "Awaiting team", dot: "bg-orange-400", text: "text-[#92400E]" },
-  WAITING_ON_USER: { label: "Awaiting customer", dot: "bg-[#004BB8]", text: "text-[#004BB8]" },
-  RESOLVED: { label: "Resolved", dot: "bg-emerald-500", text: "text-emerald-700" },
-  CLOSED: { label: "Closed", dot: "bg-slate-400", text: "text-[#64748B]" },
+type PageProps = {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ inbox?: string | string[] }>;
 };
-
-function priorityColor(priority: AdminSupportPriority) {
-  return priority === "URGENT" ? "text-rose-700" : priority === "HIGH" ? "text-amber-700" : "text-[#475569]";
-}
-
-function humanize(value: string) {
-  return value.replaceAll("_", " ").replaceAll("-", " ");
-}
 
 function senderName(author: string, ticket: AdminSupportDetail) {
   if (author === "admin") return "Support team";
-  if (author === "user" || author === "guest") return ticket.user?.name || "Customer";
-  return humanize(author);
+  if (author === "user" || author === "guest") return ticket.user?.name || "Requester";
+  return author.replaceAll("_", " ").replaceAll("-", " ");
 }
 
-export default async function AdminSupportTicketPage({ params }: PageProps) {
-  const { id } = await params;
+function DetailField({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="grid min-w-0 grid-cols-[minmax(90px,38%)_minmax(0,1fr)] items-start gap-x-3 gap-y-1 py-2.5 text-[13px]">
+      <dt className="text-[#64748B]">{label}</dt>
+      <dd className="min-w-0 break-words text-right font-medium text-[#334155]">{children}</dd>
+    </div>
+  );
+}
+
+const panel = "min-w-0 rounded-xl border border-[#E2E8F0] bg-white";
+const heading = "text-[15px] font-semibold leading-6 text-[#111827]";
+
+export default async function AdminSupportTicketPage({ params, searchParams }: PageProps) {
+  const [{ id }, query] = await Promise.all([params, searchParams]);
+  const backHref = supportInboxReturnHref(typeof query?.inbox === "string" ? query.inbox : undefined);
   const result = await adminOperationalReads.support.detail(id);
   if (result.status === "not_found") notFound();
 
   return (
     <AdminPageShell title="Support ticket" hideHeader>
       <div className="mx-auto w-full max-w-[1500px] text-[#374151]">
-        <Link
-          href="/admin/support"
-          className="mb-5 inline-flex items-center gap-2 text-[14px] font-semibold leading-5 text-slate-600 transition-colors hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/20"
-        >
-          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-          Back to Support
+        <Link href={backHref} className="focus-ring mb-5 inline-flex items-center gap-2 rounded-sm text-[13px] font-medium text-[#475569] hover:text-[#004BB8]">
+          <ArrowLeft size={16} aria-hidden="true" /> Back to Support
         </Link>
 
         {result.status === "ok" ? <TicketContent ticket={result.data} /> : (
-          <div className="border-y border-[#E5E7EB] px-2 py-10">
-            <h2 className="text-[15px] font-semibold text-[#111827]">
+          <section className="border-y border-[#E5E7EB] px-3 py-10">
+            <h2 className={heading}>
               {result.status === "invalid" ? "Invalid ticket reference" : result.status === "forbidden" ? "Admin access required" : "Ticket details unavailable"}
             </h2>
-            <p className="mt-2 text-[12px] text-[#64748B]">
+            <p className="mt-2 text-[13px] text-[#64748B]">
               {"issues" in result
-                ? result.issues.map((issue) => issue.field + ": " + issue.message).join(" ")
-                : "This ticket could not be loaded. It has not been treated as an empty conversation."}
+                ? result.issues.map(issue => issue.field + ": " + issue.message).join(" ")
+                : "This ticket could not be loaded. No conversation data was changed."}
             </p>
-          </div>
+          </section>
         )}
       </div>
     </AdminPageShell>
@@ -68,74 +65,44 @@ export default async function AdminSupportTicketPage({ params }: PageProps) {
 }
 
 function TicketContent({ ticket }: { ticket: AdminSupportDetail }) {
-  const status = statuses[ticket.status];
-  const contactName = ticket.user?.name || (ticket.identity.kind === "registered" ? "Registered customer" : "Guest customer");
   const contextFields = Object.entries(ticket.source);
+  const contactName = ticket.user?.name || (ticket.identity.kind === "registered" ? "Registered requester" : "Guest requester");
 
   return (
     <>
-      <header className="border-b border-[#E5E7EB] px-2 pb-5">
-        <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-4">
-          <div className="min-w-0">
-            <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-[#64748B]">Support ticket</p>
-            <h2 className="mt-2 max-w-[900px] break-words text-[18px] font-semibold leading-7 tracking-tight text-[#111827]">
-              {ticket.subject}
-            </h2>
-            <p className="mt-2 break-all text-[12px] text-[#64748B]">
-              {humanize(ticket.category)} · Ticket ID: {ticket.id}
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <span className={"inline-flex items-center gap-1.5 text-[13px] font-semibold " + status.text}>
-              <span className={"h-1.5 w-1.5 rounded-full " + status.dot} aria-hidden="true" />
-              {status.label}
-            </span>
-            <span className={"text-[13px] font-semibold " + priorityColor(ticket.priority)}>
-              {ticket.priority.charAt(0) + ticket.priority.slice(1).toLowerCase()} priority
-            </span>
-          </div>
-        </div>
-        <div className="mt-4 flex flex-wrap gap-x-6 gap-y-1 text-[12px] text-[#64748B]">
-          <span>Created {formatDateTime(new Date(ticket.createdAt))}</span>
-          <span>Updated {formatDateTime(new Date(ticket.updatedAt))}</span>
-        </div>
+      <header className="min-w-0 border-b border-[#E2E8F0] pb-5">
+        <h2 className="max-w-[1000px] break-words text-[22px] font-semibold leading-8 tracking-tight text-[#111827]">
+          {ticket.subject}
+        </h2>
       </header>
 
-      <div className="mt-3 grid items-start gap-x-8 gap-y-6 xl:grid-cols-[minmax(0,1fr)_330px]">
-        <div className="min-w-0 space-y-4">
-          <section aria-labelledby="support-conversation-heading" className="border-b border-[#E5E7EB] bg-transparent">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E5E7EB] px-2 py-4">
-              <h3 id="support-conversation-heading" className="text-[14px] font-semibold text-[#111827]">Conversation</h3>
+      <div className="mt-5 grid min-w-0 items-start gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(290px,340px)] xl:gap-7">
+        <div className="min-w-0 space-y-5">
+          <section aria-labelledby="support-conversation-heading" className={panel}>
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E2E8F0] px-5 py-4">
+              <h3 id="support-conversation-heading" className={heading}>Conversation</h3>
               <span className="text-[12px] text-[#64748B]">
                 {ticket.messages.length} {ticket.messages.length === 1 ? "message" : "messages"}
               </span>
             </div>
-
             {ticket.messages.length === 0 ? (
-              <p className="px-2 py-8 text-[13px] text-[#64748B]">No messages have been recorded for this ticket.</p>
+              <p className="px-5 py-8 text-[13px] text-[#64748B]">No messages have been recorded for this ticket.</p>
             ) : (
-              <ol className="divide-y divide-[#E5E7EB]">
-                {ticket.messages.map((message) => {
+              <ol className="divide-y divide-[#E2E8F0]">
+                {ticket.messages.map(message => {
                   const fromSupport = message.author === "admin";
                   return (
-                    <li key={message.id} className={"px-2 py-5 " + (fromSupport ? "bg-[#F8FAFC]" : "bg-white")}>
-                      <div className="flex flex-wrap items-start justify-between gap-2">
-                        <div className="flex min-w-0 items-center gap-2.5">
-                          <span
-                            aria-hidden="true"
-                            className={
-                              "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[12px] font-semibold " +
-                              (fromSupport ? "bg-[#E5EFFF] text-[#004BB8]" : "bg-[#F0F2F5] text-[#475569]")
-                            }
-                          >
-                            {fromSupport ? "S" : "C"}
+                    <li key={message.id} className="px-5 py-5">
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <span aria-hidden="true" className={"flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[12px] font-semibold " + (fromSupport ? "bg-[#E5EFFF] text-[#004BB8]" : "bg-[#F1F5F9] text-[#334155]")}>
+                            {fromSupport ? "S" : "R"}
                           </span>
-                          <div>
-                            <p className="text-[13px] font-semibold text-[#111827]">{senderName(message.author, ticket)}</p>
-                            <p className="text-[11px] text-[#64748B]">{fromSupport ? "Admin reply" : "Customer message"}</p>
-                          </div>
+                          <span className="min-w-0 break-words text-[13px] font-semibold text-[#111827]">
+                            {senderName(message.author, ticket)}
+                          </span>
                         </div>
-                        <time dateTime={message.createdAt} className="text-[11px] text-[#64748B]">
+                        <time dateTime={message.createdAt} className="shrink-0 text-[12px] text-[#64748B]">
                           {formatDateTime(new Date(message.createdAt))}
                         </time>
                       </div>
@@ -147,73 +114,71 @@ function TicketContent({ ticket }: { ticket: AdminSupportDetail }) {
             )}
           </section>
 
-          <SupportReplyForm ticketId={ticket.id} recipientEmail={ticket.email} />
+          <SupportReplyForm ticketId={ticket.id} />
         </div>
 
-        <aside aria-label="Ticket information and management" className="min-w-0 space-y-4">
+        <aside aria-label="Ticket information and management" className="min-w-0 space-y-5">
           <SupportTicketStatusControl ticketId={ticket.id} status={ticket.status} />
 
-          <section aria-labelledby="support-customer-heading" className="border-b border-[#E5E7EB] bg-transparent">
-            <h3 id="support-customer-heading" className="border-b border-[#E5E7EB] px-2 py-3 text-[14px] font-semibold text-[#111827]">Customer</h3>
-            <dl className="space-y-3 px-2 py-4">
-              <Info label="Name" value={contactName} />
-              <Info label="Email" value={ticket.email || "—"} />
-              <Info label="Account" value={ticket.identity.kind === "registered" ? "Registered" : "Guest"} />
+          <section aria-labelledby="support-requester-heading" className={panel}>
+            <h3 id="support-requester-heading" className={heading + " border-b border-[#E2E8F0] px-4 py-3.5"}>Requester</h3>
+            <dl className="divide-y divide-[#F1F5F9] px-4 py-1">
+              <DetailField label="Name">{contactName}</DetailField>
+              <DetailField label="Email"><span className="[overflow-wrap:anywhere]">{ticket.email || "—"}</span></DetailField>
+              <DetailField label="Account">{ticket.identity.kind === "registered" ? "Registered" : "Guest"}</DetailField>
             </dl>
           </section>
 
-          <section aria-labelledby="support-reference-heading" className="border-b border-[#E5E7EB] bg-transparent">
-            <h3 id="support-reference-heading" className="border-b border-[#E5E7EB] px-2 py-3 text-[14px] font-semibold text-[#111827]">Ticket information</h3>
-            <dl className="space-y-3 px-2 py-4">
-              <Info label="Category" value={humanize(ticket.category)} />
-              <Info label="Priority" value={ticket.priority.charAt(0) + ticket.priority.slice(1).toLowerCase()} />
-              <Info label="Created" value={formatDateTime(new Date(ticket.createdAt))} />
-              <Info label="Last updated" value={formatDateTime(new Date(ticket.updatedAt))} />
+          <section aria-labelledby="support-details-heading" className={panel}>
+            <h3 id="support-details-heading" className={heading + " border-b border-[#E2E8F0] px-4 py-3.5"}>Ticket details</h3>
+            <dl className="divide-y divide-[#F1F5F9] px-4 py-1">
+              <DetailField label="Category">{supportCategoryLabel(ticket.category)}</DetailField>
+              <DetailField label="Priority">
+                <span className={ticket.priority === "URGENT" ? "text-rose-700" : ticket.priority === "HIGH" ? "text-amber-700" : ""}>
+                  {ticket.priority.charAt(0) + ticket.priority.slice(1).toLowerCase()}
+                </span>
+              </DetailField>
+              <DetailField label="Created">{formatDateTime(new Date(ticket.createdAt))}</DetailField>
+              <DetailField label="Updated">{formatDateTime(new Date(ticket.updatedAt))}</DetailField>
+              <DetailField label="Ticket ID"><span className="break-all text-[12px]">{ticket.id}</span></DetailField>
             </dl>
             {ticket.identity.userId ? (
-              <details className="border-t border-[#E5E7EB] px-2 py-3">
-                <summary className="cursor-pointer text-[12px] font-medium text-[#475569] hover:text-[#004BB8]">
-                  Account reference
+              <details className="group border-t border-[#E2E8F0] px-4 py-3">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-[13px] font-medium text-[#475569] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#64748B] [&::-webkit-details-marker]:hidden">
+                  Account reference <ChevronDown size={14} aria-hidden="true" className="shrink-0 transition-transform group-open:rotate-180" />
                 </summary>
-                <p className="mt-2 break-all text-[12px] text-[#64748B]">{ticket.identity.userId}</p>
+                <p className="mt-3 break-all text-[12px] text-[#64748B]">{ticket.identity.userId}</p>
               </details>
             ) : null}
           </section>
 
           {contextFields.length ? (
-            <section aria-labelledby="support-source-heading" className="border-b border-[#E5E7EB] bg-transparent">
-              <h3 id="support-source-heading" className="border-b border-[#E5E7EB] px-2 py-3 text-[14px] font-semibold text-[#111827]">Request context</h3>
-              <dl className="space-y-3 px-2 py-4">
-                {contextFields.map(([key, value]) => (
-                  <Info key={key} label={humanize(key)} value={humanize(value)} />
-                ))}
-              </dl>
+            <section aria-label="Request context" className={panel}>
+              <details className="group">
+                <summary className={heading + " flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#64748B] [&::-webkit-details-marker]:hidden"}>
+                  Request context <ChevronDown size={15} aria-hidden="true" className="shrink-0 text-[#475569] transition-transform group-open:rotate-180" />
+                </summary>
+                <dl className="divide-y divide-[#F1F5F9] border-t border-[#E2E8F0] px-4 py-1">
+                  {contextFields.map(([key, value]) => (
+                    <DetailField key={key} label={key.replaceAll("_", " ").replaceAll("-", " ")}>
+                      {value}
+                    </DetailField>
+                  ))}
+                </dl>
+              </details>
             </section>
           ) : null}
 
           {ticket.deletionRequestId ? (
-            <div className="border-b border-[#E5E7EB] bg-transparent px-2 py-4">
-              <p className="text-[13px] font-semibold text-[#111827]">Linked account deletion</p>
-              <p className="mt-1 text-[12px] leading-5 text-[#64748B]">This ticket is connected to an account deletion request.</p>
-              <Link
-                href={"/admin/account-deletions/" + encodeURIComponent(ticket.deletionRequestId)}
-                className="mt-3 inline-flex text-[12px] font-semibold text-[#004BB8] hover:underline"
-              >
+            <section className={panel + " px-4 py-4"}>
+              <h3 className={heading}>Linked account deletion</h3>
+              <Link href={"/admin/account-deletions/" + encodeURIComponent(ticket.deletionRequestId)} className="focus-ring mt-3 inline-flex rounded-sm text-[13px] font-medium text-[#004BB8] hover:underline">
                 View deletion request
               </Link>
-            </div>
+            </section>
           ) : null}
         </aside>
       </div>
     </>
-  );
-}
-
-function Info({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div>
-      <dt className="text-[11px] font-medium text-[#6B7280]">{label}</dt>
-      <dd className="mt-1 break-words text-[13px] font-medium text-[#374151]">{value}</dd>
-    </div>
   );
 }

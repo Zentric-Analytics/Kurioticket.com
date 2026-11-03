@@ -56,3 +56,26 @@ export function supportInboxHref(base: URLSearchParams, changes: Record<string, 
   const query = params.toString();
   return "/admin/support" + (query ? "?" + query : "");
 }
+
+
+/** Keep inbox return links on the Support route; never accept an arbitrary URL. */
+const INBOX_RETURN_KEYS = ["status", "priority", "category", "q", "from", "to", "limit", "cursor"] as const;
+
+function scopedInboxReturnQuery(params: URLSearchParams) {
+  const scoped = new URLSearchParams();
+  for (const key of INBOX_RETURN_KEYS) {
+    const value = params.get(key);
+    if (value) scoped.set(key, value);
+  }
+  return scoped.toString();
+}
+
+export function supportTicketDetailHref(ticketId: string, inboxParams: URLSearchParams) {
+  const query = scopedInboxReturnQuery(inboxParams);
+  return "/admin/support/" + encodeURIComponent(ticketId) + (query ? "?inbox=" + encodeURIComponent(query) : "");
+}
+
+export function supportInboxReturnHref(inbox: string | undefined) {
+  const query = scopedInboxReturnQuery(new URLSearchParams((inbox || "").slice(0, 2048)));
+  return "/admin/support" + (query ? "?" + query : "");
+}

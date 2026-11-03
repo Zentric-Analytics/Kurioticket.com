@@ -3,6 +3,7 @@ import { ChevronRight } from "lucide-react";
 
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { AdminSupportToolbar } from "@/components/admin/AdminSupportToolbar";
+import { supportTicketDetailHref } from "@/lib/adminSupportInboxNavigation";
 import type { AdminSupportPriority, AdminSupportStatus } from "@/services/adminOperationalReadContract";
 import { adminOperationalReads } from "@/services/adminOperationalReadService";
 
@@ -39,8 +40,8 @@ function cursorHref(raw: Query, cursor: string) {
   return "/admin/support?" + params.toString();
 }
 
-function ticketHref(id: string) {
-  return "/admin/support/" + encodeURIComponent(id);
+function ticketHref(id: string, params: URLSearchParams) {
+  return supportTicketDetailHref(id, params);
 }
 
 function priorityStyle(priority: AdminSupportPriority) {
@@ -91,7 +92,7 @@ export default async function AdminSupportPage({ searchParams }: { searchParams:
                         <tr key={ticket.id} className="group h-[64px] align-middle text-[13px] text-[#374151] transition-colors hover:bg-[#F8FAFC] focus-within:bg-[#F8FAFC]">
                           <td className="max-w-[330px] px-3 py-1.5 align-middle">
                             <Link
-                              href={ticketHref(ticket.id)}
+                              href={ticketHref(ticket.id, params)}
                               className="block break-words font-semibold text-[#111827] hover:text-[#004BB8] hover:underline focus-visible:outline-[#004BB8]"
                             >
                               {ticket.subject}
@@ -122,7 +123,7 @@ export default async function AdminSupportPage({ searchParams }: { searchParams:
                           </td>
                           <td className="whitespace-nowrap px-3 py-1.5 align-middle">
                             <Link
-                              href={ticketHref(ticket.id)}
+                              href={ticketHref(ticket.id, params)}
                               aria-label={"View ticket: " + ticket.subject}
                               className="focus-ring inline-flex h-9 items-center gap-1 whitespace-nowrap rounded-sm px-0.5 text-[13px] font-medium text-[#004BB8] underline-offset-4 transition-colors hover:underline"
                             >
