@@ -19,6 +19,7 @@ import {
   listAdminCmsContent,
 } from "@/services/cmsContentService";
 import { faqCmsScope } from "@/services/faqCmsService";
+import { contentEditorHref, faqCmsListNavigation } from "@/lib/adminContentNavigation";
 
 export const metadata = { title: "Admin FAQs" };
 
@@ -32,6 +33,7 @@ export default async function AdminFaqCmsPage({ searchParams }: { searchParams: 
   const status = validStatuses.has(statusRaw as CmsContentStatus)
     ? statusRaw as CmsContentStatus
     : undefined;
+  const nav = faqCmsListNavigation(raw);
   const cursor = one(raw.cursor) || undefined;
 
   const summary = await getCmsContentScopeSummary("FAQ", faqCmsScope.market, faqCmsScope.locale)
@@ -72,7 +74,7 @@ export default async function AdminFaqCmsPage({ searchParams }: { searchParams: 
       actions={
         <div className="flex flex-wrap gap-2">
           <AdminLinkButton href="/admin/content">Back to content</AdminLinkButton>
-          {summary.active ? <AdminLinkButton href="/admin/content/faqs/new" variant="primary">Add FAQ</AdminLinkButton> : null}
+          {summary.active ? <AdminLinkButton href={contentEditorHref("/admin/content/faqs/new", nav.query)} variant="primary">Add FAQ</AdminLinkButton> : null}
         </div>
       }
     >
@@ -122,11 +124,11 @@ export default async function AdminFaqCmsPage({ searchParams }: { searchParams: 
               <AdminEmptyState title="FAQ list unavailable" message={listingError} />
             ) : listing && listing.items.length > 0 ? (
               <>
-                <FaqCmsListClient items={listing.items} />
+                <FaqCmsListClient items={listing.items} listQuery={nav.query} />
                 {listing.nextCursor ? (
                   <div className="flex justify-end">
                     <Link
-                      href={nextPageHref(statusRaw, listing.nextCursor)}
+                      href={nextPageHref(nav.query, listing.nextCursor)}
                       className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-700 hover:bg-slate-50"
                     >
                       Next page
@@ -138,7 +140,7 @@ export default async function AdminFaqCmsPage({ searchParams }: { searchParams: 
               <AdminEmptyState
                 title="No FAQs found"
                 message="No FAQ records match the selected lifecycle status."
-                action={<AdminLinkButton href="/admin/content/faqs/new" variant="primary">Add FAQ</AdminLinkButton>}
+                action={<AdminLinkButton href={contentEditorHref("/admin/content/faqs/new", nav.query)} variant="primary">Add FAQ</AdminLinkButton>}
               />
             )}
           </>
@@ -152,9 +154,8 @@ function one(value: string | string[] | undefined) {
   return typeof value === "string" ? value : "";
 }
 
-function nextPageHref(status: string, cursor: string) {
-  const params = new URLSearchParams();
-  if (status) params.set("status", status);
+function nextPageHref(query: string, cursor: string) {
+  const params = new URLSearchParams(query);
   params.set("cursor", cursor);
-  return `/admin/content/faqs?${params.toString()}`;
+  return "/admin/content/faqs?" + params.toString();
 }
