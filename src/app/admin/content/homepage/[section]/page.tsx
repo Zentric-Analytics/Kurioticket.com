@@ -10,9 +10,10 @@ import {
   AdminSelect,
 } from "@/components/admin/AdminPageShell";
 import { HomepageCmsListClient } from "@/components/admin/HomepageCmsListClient";
+import { CmsCreateLink } from "@/components/admin/CmsCreateLink";
 import type { CmsContentStatus } from "@/generated/prisma/enums";
 import { getHomepageCmsSection, homepageCmsSections } from "@/lib/adminHomepageCms";
-import { contentEditorHref, homepageCmsListNavigation } from "@/lib/adminContentNavigation";
+import { homepageCmsListNavigation } from "@/lib/adminContentNavigation";
 import {
   CmsContentError,
   getCmsContentScopeSummary,
@@ -82,14 +83,13 @@ export default async function HomepageCmsSectionPage({ params, searchParams }: P
       actions={
         <div className="flex flex-wrap gap-2">
           <AdminLinkButton href={nav.backHref}>{nav.backLabel}</AdminLinkButton>
-          <AdminLinkButton href={contentEditorHref(`/admin/content/homepage/${section}/new`, nav.query)} variant="primary">
-            Add {config.singular}
-          </AdminLinkButton>
+          <CmsCreateLink path={`/admin/content/homepage/${section}/new`} label={`Add ${config.singular}`} />
         </div>
       }
     >
       <div className="space-y-4">
         <AdminFilterBar action={`/admin/content/homepage/${section}`}>
+          {raw.from === "overview" ? <input type="hidden" name="from" value="overview" /> : null}
           {section !== "hotel-destinations" ? (
             <AdminSelect name="market" defaultValue={allowedMarket}>
               {homepageCmsMarkets.map((market) => <option key={market} value={market}>{market}</option>)}
@@ -122,7 +122,7 @@ export default async function HomepageCmsSectionPage({ params, searchParams }: P
           <AdminEmptyState
             title="No content found"
             message="No content records match this market and lifecycle status."
-            action={<AdminLinkButton href={contentEditorHref(`/admin/content/homepage/${section}/new`, nav.query)} variant="primary">Add {config.singular}</AdminLinkButton>}
+            action={<CmsCreateLink path={`/admin/content/homepage/${section}/new`} label={`Add ${config.singular}`} />}
           />
         )}
       </div>
