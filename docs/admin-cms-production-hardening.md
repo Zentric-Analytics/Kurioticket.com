@@ -18,7 +18,7 @@ Archived content remains terminal in this phase and cannot be restored in place.
 
 ## Scope health
 
-`/admin/content/health` reports every active CMS scope with:
+`/admin/system/cms-health` (under System; the previous `/admin/content/health` URL redirects here) reports every active CMS scope with:
 
 - invalid draft payloads;
 - invalid published payloads;
