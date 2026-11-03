@@ -1,14 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import {
-  AdminButton,
-  AdminEmptyState,
-  AdminFilterBar,
-  AdminLinkButton,
-  AdminPageShell,
-  AdminSelect,
-} from "@/components/admin/AdminPageShell";
+import { AdminButton, AdminSelect } from "@/components/admin/AdminPageShell";
+import { ContentPageFrame, ContentEmptyState } from "@/components/admin/ContentWorkspace";
 import { HomepageCmsListClient } from "@/components/admin/HomepageCmsListClient";
 import { CmsCreateLink } from "@/components/admin/CmsCreateLink";
 import type { CmsContentStatus } from "@/generated/prisma/enums";
@@ -48,16 +42,17 @@ export default async function HomepageCmsSectionPage({ params, searchParams }: P
   const summary = await getCmsContentScopeSummary(config.type, allowedMarket, homepageCmsLocale).catch(() => null);
   if (!summary?.available || !summary.active) {
     return (
-      <AdminPageShell
+      <ContentPageFrame
         title={config.title}
-        description="This CMS scope must be initialized before it can be managed."
-        actions={<AdminLinkButton href={nav.backHref}>{nav.backLabel}</AdminLinkButton>}
+        subtitle="This CMS scope must be initialized before editing."
+        backHref={nav.backHref}
+        backLabel={nav.backLabel}
       >
-        <AdminEmptyState
+        <ContentEmptyState
           title="CMS scope unavailable"
           message="Initialize Homepage CMS from the homepage content overview before creating or editing this content."
         />
-      </AdminPageShell>
+      </ContentPageFrame>
     );
   }
 
@@ -77,18 +72,15 @@ export default async function HomepageCmsSectionPage({ params, searchParams }: P
   }
 
   return (
-    <AdminPageShell
+    <ContentPageFrame
       title={config.title}
-      description="Manage ordered published content for this CMS scope. Save draft and Publish remain separate actions."
-      actions={
-        <div className="flex flex-wrap gap-2">
-          <AdminLinkButton href={nav.backHref}>{nav.backLabel}</AdminLinkButton>
-          <CmsCreateLink path={`/admin/content/homepage/${section}/new`} label={`Add ${config.singular}`} />
-        </div>
-      }
+      subtitle="Manage drafts and published content."
+      backHref={nav.backHref}
+      backLabel={nav.backLabel}
+      actions={<CmsCreateLink path={`/admin/content/homepage/${section}/new`} label={`Add ${config.singular}`} />}
     >
       <div className="space-y-4">
-        <AdminFilterBar action={`/admin/content/homepage/${section}`}>
+        <form action={`/admin/content/homepage/${section}`} className="flex min-w-0 flex-wrap items-center gap-2 rounded-lg border border-[#E5E7EB] bg-white p-3 [&_select]:w-auto [&_select]:min-w-[150px]">
           {raw.from === "overview" ? <input type="hidden" name="from" value="overview" /> : null}
           {section !== "hotel-destinations" ? (
             <AdminSelect name="market" defaultValue={allowedMarket}>
@@ -102,11 +94,11 @@ export default async function HomepageCmsSectionPage({ params, searchParams }: P
             <option value="HIDDEN">Hidden</option>
             <option value="ARCHIVED">Archived</option>
           </AdminSelect>
-          <AdminButton type="submit">Apply filters</AdminButton>
-        </AdminFilterBar>
+          <AdminButton size="sm" className="rounded-lg font-medium shadow-none" type="submit">Apply filters</AdminButton>
+        </form>
 
         {error ? (
-          <AdminEmptyState title="Content unavailable" message={error} />
+          <ContentEmptyState title="Content unavailable" message={error} />
         ) : listing && listing.items.length > 0 ? (
           <>
             <HomepageCmsListClient section={section} items={listing.items} listQuery={nav.query} />
@@ -119,14 +111,14 @@ export default async function HomepageCmsSectionPage({ params, searchParams }: P
             ) : null}
           </>
         ) : (
-          <AdminEmptyState
+          <ContentEmptyState
             title="No content found"
             message="No content records match this market and lifecycle status."
             action={<CmsCreateLink path={`/admin/content/homepage/${section}/new`} label={`Add ${config.singular}`} />}
           />
         )}
       </div>
-    </AdminPageShell>
+    </ContentPageFrame>
   );
 }
 
