@@ -485,7 +485,7 @@ test("Tasks 9–10 simplify only the handoff detail header and move back navigat
   assert.ok(handoffDetailPage.indexOf("Back to handoffs") < handoffDetailPage.indexOf("Handoff overview"));
   assert.doesNotMatch(handoffDetailPage, /justify-between gap-3 border-b/);
   assert.match(handoffDetailPage, /Referral information/);
-  assert.match(handoffDetailPage, /Outbound referral recorded; booking and payment are not confirmed/);
+  assert.doesNotMatch(handoffDetailPage, /Outbound referral recorded; booking and payment are not confirmed/);
   assert.match(handoffDetailPage, /<Field label="User ID"/);
   assert.match(handoffDetailPage, /<Field label="Visitor ID"/);
 });
