@@ -56,7 +56,7 @@ export function HomepageCmsListClient({
   const editorContext = new URLSearchParams(listQuery);
 
   return (
-    <div className="min-w-0 pt-3">
+    <div className="min-w-0">
         <ContentRecordsTable
           columns={["Content", "Market", "Status", "Order", "Version", "Updated", "Action"]}
           rows={items.map((item) => {
@@ -71,7 +71,7 @@ export function HomepageCmsListClient({
                 </div>,
                 item.market,
                 <div key="status" className="space-y-1">
-                  <ContentStatusPill status={item.status} />
+                  <ContentStatusPill status={item.status} inline />
                   {unpublished ? <p className="text-[12px] font-medium text-amber-700">Unpublished changes</p> : null}
                 </div>,
                 item.sortOrder,
