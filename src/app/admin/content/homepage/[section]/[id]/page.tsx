@@ -1,7 +1,7 @@
 import { ContentPageFrame, ContentSectionHeading, ContentStatusPill } from "@/components/admin/ContentWorkspace";
 import { notFound } from "next/navigation";
 
-import { AdminStatusBadge } from "@/components/admin/AdminPageShell";
+
 import { HomepageCmsEditor } from "@/components/admin/HomepageCmsEditor";
 import { CmsRevisionRestoreButton } from "@/components/admin/CmsRevisionRestoreButton";
 import { hotelDestinations } from "@/data/hotelDestinations";
@@ -63,7 +63,7 @@ export default async function HomepageCmsDetailPage({ params, searchParams }: Pa
                 </div>
                 <div>
                   <p className="text-xs font-black uppercase tracking-wide text-slate-500">Action</p>
-                  <div className="mt-1"><AdminStatusBadge tone={revision.action === "PUBLISHED" ? "good" : revision.action === "HIDDEN" ? "warn" : revision.action === "ARCHIVED" ? "neutral" : "info"}>{revision.action}</AdminStatusBadge></div>
+                  <div className="mt-1"><ContentStatusPill status={revision.action} /></div>
                 </div>
                 <div>
                   <p className="text-xs font-black uppercase tracking-wide text-slate-500">Market</p>
