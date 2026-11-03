@@ -54,7 +54,7 @@ export default async function HomepageCmsDetailPage({ params, searchParams }: Pa
             <ContentSectionHeading>Revision history</ContentSectionHeading>
             <p className="mt-1 text-[13px] leading-5 text-[#64748B]">Recent immutable draft and published snapshots.</p>
           </div>
-          <div className="divide-y divide-[#E5E7EB] border-t border-[#E5E7EB]">
+          <div className="divide-y divide-[#E7ECF5]">
             {result.revisions.map((revision) => (
               <div key={revision.id} className="grid gap-3 py-4 lg:grid-cols-[90px_130px_100px_minmax(0,1fr)_200px_150px]">
                 <div>
