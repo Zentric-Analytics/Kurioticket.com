@@ -27,7 +27,13 @@ test("public content management exposes homepage and FAQ CMS areas while fare op
   assert.match(contentPage, /Manage destinations/);
   assert.match(contentPage, /Manage flight routes/);
   assert.match(contentPage, /Manage hotel destinations/);
-  assert.match(contentPage, /Homepage CMS overview/);
+  assert.doesNotMatch(contentPage, /Homepage CMS overview|Homepage fare operations|CMS Health/);
+  assert.match(contentPage, /contentScopeStatus\(destinationSummary\)/);
+  assert.match(contentPage, /contentScopeStatus\(flightSummary\)/);
+  assert.match(contentPage, /contentScopeStatus\(hotelSummary\)/);
+  assert.match(contentPage, /publishedContentCount\(destinationSummary\)/);
+  assert.match(contentPage, /Published CMS records/);
+  assert.match(contentPage, /Review homepage CMS setup/);
   assert.match(contentPage, /CMS managed/);
   assert.match(contentPage, /Setup required/);
   assert.match(contentPage, /href: "\/admin\/content\/faqs"/);
@@ -43,7 +49,9 @@ test("homepage fare operations are separated from content, system and settings",
   assert.match(homepageFarePage, /title="Homepage Fare Operations"/);
   assert.match(homepageFarePage, /HomepageFaresRefreshCard/);
   assert.match(homepageFarePage, /href="\/admin\/settings"/);
-  assert.match(contentPage, /href="\/admin\/homepage-fares"[\s\S]*Homepage fare operations/);
+  assert.doesNotMatch(contentPage, /\/admin\/homepage-fares/);
+  assert.match(settingsPage, /href="\/admin\/homepage-fares"/);
+  assert.match(settingsPage, /Homepage Fare Operations/);
   assert.doesNotMatch(contentPage, /href="\/admin\/settings"[\s\S]{0,300}Homepage fare operations/);
 });
 
@@ -78,6 +86,7 @@ test("content overview groups three homepage areas and FAQs without hiding actio
   assert.match(contentPage, /aria-labelledby="help-content-heading"/);
   assert.match(contentPage, /sm:grid-cols-2 lg:grid-cols-3/);
   assert.match(contentPage, /flex flex-wrap items-center gap-2/);
+  assert.doesNotMatch(contentPage, /Content management shortcuts/);
   assert.match(contentPage, /href=\{area\.href\}/);
   assert.match(contentPage, /\{area\.note\}/);
   assert.match(contentPage, /\{area\.status\}/);
