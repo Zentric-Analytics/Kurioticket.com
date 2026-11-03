@@ -73,8 +73,8 @@ export default async function AdminFaqCmsPage({ searchParams }: { searchParams: 
       backLabel="Back to Content"
       actions={summary.active ? <CmsCreateLink path="/admin/content/faqs/new" label="Add FAQ" /> : null}
     >
-      <div className="space-y-5">
-        <div className="grid gap-4 border-b border-[#E5E7EB] pb-4 sm:grid-cols-3 lg:grid-cols-5">
+      <div className="space-y-4">
+        <div className="grid gap-4 pb-3 sm:grid-cols-3 lg:grid-cols-5">
           <ContentMetric label="Total" value={summary.total} />
           <ContentMetric label="Published" value={summary.published} />
           <ContentMetric label="Draft" value={summary.draft} />
