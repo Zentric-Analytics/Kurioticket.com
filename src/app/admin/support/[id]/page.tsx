@@ -124,7 +124,7 @@ function TicketContent({ ticket }: { ticket: AdminSupportDetail }) {
             <h3 id="support-requester-heading" className={heading + " border-b border-[#E2E8F0] px-4 py-3.5"}>Requester</h3>
             <dl className="divide-y divide-[#F1F5F9] px-4 py-1">
               <DetailField label="Name">{contactName}</DetailField>
-              <DetailField label="Email"><span className="break-all">{ticket.email || "—"}</span></DetailField>
+              <DetailField label="Email"><span className="[overflow-wrap:anywhere]">{ticket.email || "—"}</span></DetailField>
               <DetailField label="Account">{ticket.identity.kind === "registered" ? "Registered" : "Guest"}</DetailField>
             </dl>
           </section>
