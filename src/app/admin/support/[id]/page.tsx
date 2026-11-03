@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { SupportReplyForm, SupportTicketStatusControl } from "@/components/admin/SupportTicketActions";
 import { formatDateTime } from "@/lib/admin-data";
-import { supportCategoryLabel, supportInboxReturnHref } from "@/lib/adminSupportInboxNavigation";
+import { supportCategoryLabel, supportDeletionRequestHref, supportTicketBackHref } from "@/lib/adminSupportInboxNavigation";
 import type { AdminSupportDetail, AdminSupportStatus } from "@/services/adminOperationalReadContract";
 import { adminOperationalReads } from "@/services/adminOperationalReadService";
 
@@ -13,7 +13,7 @@ export const metadata = { title: "Admin Support Ticket" };
 
 type PageProps = {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ inbox?: string | string[] }>;
+  searchParams: Promise<{ inbox?: string | string[]; fromDeletion?: string | string[] }>;
 };
 
 const statusPills: Record<AdminSupportStatus, { label: string; dot: string }> = {
@@ -43,9 +43,11 @@ const sectionHeading = "border-b border-[#E5E7EB] pb-2.5 text-[14px] font-semibo
 
 export default async function AdminSupportTicketPage({ params, searchParams }: PageProps) {
   const [{ id }, query] = await Promise.all([params, searchParams]);
-  const backHref = supportInboxReturnHref(typeof query?.inbox === "string" ? query.inbox : undefined);
   const result = await adminOperationalReads.support.detail(id);
   if (result.status === "not_found") notFound();
+  const inbox = typeof query?.inbox === "string" ? query.inbox : undefined;
+  const fromDeletion = typeof query?.fromDeletion === "string" ? query.fromDeletion : undefined;
+  const backHref = supportTicketBackHref(result.status === "ok" ? result.data.deletionRequestId : null, fromDeletion, inbox);
 
   return (
     <AdminPageShell title="Support ticket" hideHeader>
@@ -54,7 +56,7 @@ export default async function AdminSupportTicketPage({ params, searchParams }: P
           <ArrowLeft size={14} aria-hidden="true" /> Back to Support
         </Link>
 
-        {result.status === "ok" ? <TicketContent ticket={result.data} /> : (
+        {result.status === "ok" ? <TicketContent ticket={result.data} inbox={inbox} /> : (
           <section className="py-10">
             <h2 className="text-[16px] font-semibold text-[#111827]">
               {result.status === "invalid" ? "Invalid ticket reference" : result.status === "forbidden" ? "Admin access required" : "Ticket details unavailable"}
@@ -71,7 +73,7 @@ export default async function AdminSupportTicketPage({ params, searchParams }: P
   );
 }
 
-function TicketContent({ ticket }: { ticket: AdminSupportDetail }) {
+function TicketContent({ ticket, inbox }: { ticket: AdminSupportDetail; inbox?: string }) {
   const contextFields = Object.entries(ticket.source);
   const contactName = ticket.user?.name || (ticket.identity.kind === "registered" ? "Registered requester" : "Guest requester");
   const pill = statusPills[ticket.status];
@@ -166,6 +168,9 @@ function TicketContent({ ticket }: { ticket: AdminSupportDetail }) {
               <DetailField label="Created">{formatDateTime(new Date(ticket.createdAt))}</DetailField>
               <DetailField label="Updated">{formatDateTime(new Date(ticket.updatedAt))}</DetailField>
               <DetailField label="Ticket ID"><span className="[overflow-wrap:anywhere] text-[12px]">{ticket.id}</span></DetailField>
+              {ticket.deletionRequestId ? (
+                <DetailField label="Deletion"><Link href={supportDeletionRequestHref(ticket.deletionRequestId, inbox)} className="focus-ring inline-flex items-center rounded-sm text-[13px] font-medium text-[#004BB8] hover:underline">View deletion request</Link></DetailField>
+              ) : null}
             </dl>
             {ticket.identity.userId ? (
               <details className="group mt-2">
@@ -178,14 +183,6 @@ function TicketContent({ ticket }: { ticket: AdminSupportDetail }) {
             ) : null}
           </section>
 
-          {ticket.deletionRequestId ? (
-            <section className="min-w-0">
-              <h3 className={sectionHeading}>Linked account deletion</h3>
-              <Link href={"/admin/account-deletions/" + encodeURIComponent(ticket.deletionRequestId)} className="focus-ring mt-3 inline-flex rounded-sm text-[13px] font-medium text-[#004BB8] hover:underline">
-                View deletion request
-              </Link>
-            </section>
-          ) : null}
         </aside>
       </div>
     </>
