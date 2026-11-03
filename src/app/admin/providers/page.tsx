@@ -175,47 +175,75 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
                         </span>
                       </summary>
                       <div className="mt-3 border-t border-[#E7ECF5] pt-3">
-                        <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-3">
-                          <div>
+                        <dl className="grid max-w-[980px] gap-x-5 gap-y-3 sm:grid-cols-3">
+                          <div className="min-w-0">
                             <dt className="text-[12px] text-[#64748B]">Failure rate</dt>
-                            <dd className="mt-0.5 text-[13px] text-[#020617]">
+                            <dd className="mt-0.5 text-[15px] font-semibold tabular-nums text-[#0F172A]">
                               {formatProviderFailureRatePct(provider.failureRatePct, provider.failedCalls)}
                             </dd>
                           </div>
-                          <div>
-                            <dt className="text-[12px] text-[#64748B]">Last success</dt>
-                            <dd className="mt-0.5 text-[13px] text-[#020617]">
-                              <ActivityTime value={provider.lastSuccessAt}
-                                empty={filter !== "all" && unscopedTimingProviders.has(provider.id)
-                                  ? "Not available for this service" : "Not recorded in the last 24 hours"} />
-                            </dd>
-                          </div>
-                          <div>
+                          <div className="min-w-0">
                             <dt className="text-[12px] text-[#64748B]">Last failure</dt>
-                            <dd className="mt-0.5 text-[13px] text-[#020617]">
+                            <dd className="mt-0.5 text-[13px] font-medium text-[#0F172A]">
                               <ActivityTime value={provider.lastFailureAt}
                                 empty={filter !== "all" && unscopedTimingProviders.has(provider.id)
                                   ? "Not available for this service" : "Not recorded in the last 24 hours"} />
                             </dd>
                           </div>
+                          <div className="min-w-0">
+                            <dt className="text-[12px] text-[#64748B]">Last success</dt>
+                            <dd className="mt-0.5 text-[13px] font-medium text-[#0F172A]">
+                              <ActivityTime value={provider.lastSuccessAt}
+                                empty={filter !== "all" && unscopedTimingProviders.has(provider.id)
+                                  ? "Not available for this service" : "Not recorded in the last 24 hours"} />
+                            </dd>
+                          </div>
                         </dl>
-                        <div className="mt-3 divide-y divide-[#E7ECF5] border-t border-[#E7ECF5]">
-                          {provider.serviceBreakdown.map(service => (
-                            <div key={service.service} className="flex min-w-0 flex-wrap items-start justify-between gap-x-5 gap-y-1 py-2.5">
-                              <div className="flex min-w-0 flex-wrap items-center gap-2">
-                                <span className="text-[13px] font-medium text-[#020617]">{serviceLabel(service.service)}</span>
-                                <StatusIndicator value={operationalLabel(service.operationalState)}
-                                  tone={operationalTone(service.operationalState)} />
-                              </div>
-                              <div className="min-w-0 text-[12px] leading-5 text-[#475569] sm:text-right">
-                                <p>{service.attemptedCalls.toLocaleString()} attempted · {service.failedCalls.toLocaleString()} failed</p>
-                                {service.failureReasons.length ? (
-                                  <p>Reasons: {service.failureReasons.map(reason =>
-                                    reason.label + " (" + reason.calls.toLocaleString() + ")").join(", ")}</p>
-                                ) : null}
-                              </div>
-                            </div>
-                          ))}
+                        <div role="region" tabIndex={0}
+                          aria-label={"Service diagnostics for " + provider.provider}
+                          className="mt-4 max-w-[1200px] min-w-0 overflow-x-auto border-t border-[#E7ECF5]">
+                          <table className="w-full min-w-[760px] table-fixed text-[12px]">
+                            <caption className="sr-only">
+                              Recent service status, attempts, failures and failure reasons for {provider.provider}.
+                            </caption>
+                            <colgroup>
+                              <col className="w-[23%]" />
+                              <col className="w-[16%]" />
+                              <col className="w-[12%]" />
+                              <col className="w-[12%]" />
+                              <col className="w-[37%]" />
+                            </colgroup>
+                            <thead>
+                              <tr className="border-b border-[#E7ECF5] text-[#64748B]">
+                                <th scope="col" className="py-2 pr-3 text-left font-medium">Service</th>
+                                <th scope="col" className="px-2 py-2 text-left font-medium">Status</th>
+                                <th scope="col" className="px-2 py-2 text-right font-medium">Attempts</th>
+                                <th scope="col" className="px-2 py-2 text-right font-medium">Failed</th>
+                                <th scope="col" className="py-2 pl-4 text-left font-medium">Main failure reason</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-[#E7ECF5]">
+                              {provider.serviceBreakdown.map(service => (
+                                <tr key={service.service}>
+                                  <th scope="row" className="py-2.5 pr-3 text-left font-medium text-[#0F172A]">
+                                    {serviceLabel(service.service)}
+                                  </th>
+                                  <td className="px-2 py-2.5">
+                                    <StatusIndicator value={operationalLabel(service.operationalState)}
+                                      tone={operationalTone(service.operationalState)} />
+                                  </td>
+                                  <td className="px-2 py-2.5 text-right tabular-nums">{service.attemptedCalls.toLocaleString()}</td>
+                                  <td className="px-2 py-2.5 text-right tabular-nums">{service.failedCalls.toLocaleString()}</td>
+                                  <td className="py-2.5 pl-4 text-[#475569]">
+                                    {service.failureReasons.length
+                                      ? service.failureReasons.map(reason =>
+                                        reason.label + " (" + reason.calls.toLocaleString() + ")").join("; ")
+                                      : service.attemptedCalls === 0 ? "No attempts" : "—"}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
                         </div>
                       </div>
                     </details>
@@ -378,10 +406,20 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
                               formatProviderFailureRatePct(service.failureRatePct, service.failedCalls)}
                           </td>
                           <td className={tableCellClass + " text-left text-[12px] leading-5 text-[#475569]"}>
-                            {service.failureReasons.length
-                              ? service.failureReasons.map(reason =>
-                                reason.label + " (" + reason.calls.toLocaleString() + ")").join(", ")
-                              : "—"}
+                            {service.failureReasons.length ? (
+                              <ul aria-label={"Failure reasons for " + provider.provider + " " + serviceLabel(service.service)}
+                                className="min-w-0 space-y-1">
+                                {service.failureReasons.map(reason => (
+                                  <li key={reason.code}
+                                    className="flex min-w-0 items-baseline justify-between gap-3">
+                                    <span className="min-w-0 break-words">{reason.label}</span>
+                                    <span className="shrink-0 font-medium tabular-nums text-[#0F172A]">
+                                      {reason.calls.toLocaleString()}
+                                    </span>
+                                  </li>
+                                ))}
+                              </ul>
+                            ) : "—"}
                           </td>
                         </tr>
                       )))}
