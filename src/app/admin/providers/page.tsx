@@ -138,15 +138,16 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
       {attribution ? (
         <div className="pt-3">
           <AdminReferralAttributionPage embedded searchParams={Promise.resolve(raw)} />
-          <div className="mt-5 border-t border-[#D8E1EC] pt-3 text-[13px]">
+          <section aria-labelledby="unlinked-handoffs" className="mt-5 border-t border-[#D8E1EC] pt-4">
+            <h2 id="unlinked-handoffs" className="text-[15px] font-semibold">Unlinked handoffs</h2>
             <Link href="/admin/redirects?correlation=unavailable"
-              className="font-medium text-[#004BB8] hover:underline">
-              Handoffs without a linked search
+              className="mt-2 inline-block text-[13px] font-medium text-[#004BB8] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
+              View handoffs without a linked search
             </Link>
-            <p className="mt-1 text-[#64748B]">
-              These provider clicks have no verified link to a specific search. This does not mean the redirect failed or a booking occurred.
+            <p className="mt-1 text-[12px] leading-5 text-[#64748B]">
+              These provider clicks have no verified link to a specific search; they do not establish a failed redirect or confirmed booking.
             </p>
-          </div>
+          </section>
         </div>
       ) : (
         <>

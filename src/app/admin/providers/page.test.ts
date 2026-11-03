@@ -271,6 +271,11 @@ test("Task 3: referral attribution uses compact preset auto-apply and white metr
   assert.match(referralPage, /Linked to search/);
   assert.match(referralPage, /Not linked to search/);
   assert.match(referralPage, /Data state/);
+  assert.match(referralPage, /lg:grid-cols-4/);
+  assert.match(referralPage, /lg:grid-cols-2/);
+  assert.match(referralPage, /grid grid-cols-2 gap-x-4 gap-y-4/);
+  assert.match(providersPage, /aria-labelledby="unlinked-handoffs"/);
+  assert.match(providersPage, /href="\/admin\/redirects\?correlation=unavailable"/);
   assert.match(referralPage, /not confirmed bookings or payments/);
   assert.match(referralPage, /table className="w-full table-fixed text-\[13px\]"/);
   assert.doesNotMatch(referralPage, /AdminMetricCard|AdminFilterBar|AdminDataTable|AdminStatusBadge/);
