@@ -350,6 +350,16 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
                             </span>
                           </div>
                         </div>
+                        {provider.attemptedCalls > 0 ? (
+                          <div className="mt-1 text-[12px]">
+                            <Link href={providerSearchActivityHref({ provider: provider.provider, hours: monitoringHours,
+                              until: monitoringNow, product: filter === "all" ? undefined : filter === "flights" ? "FLIGHT" : filter === "hotels" ? "HOTEL" : "CAR" })}
+                              className="font-medium text-[#004BB8] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
+                              Investigate provider searches ›
+                            </Link>
+                            <span className="ml-2 text-[#64748B]">Search creation dates may differ from provider-call timestamps.</span>
+                          </div>
+                        ) : null}
                         <div aria-hidden="true"
                           className="mt-3 flex h-2 w-full overflow-hidden rounded-full bg-[#E7ECF5]">
                           {segments.hasAttempts ? (
