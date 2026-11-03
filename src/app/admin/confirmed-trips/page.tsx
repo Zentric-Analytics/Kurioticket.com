@@ -33,7 +33,7 @@ export default async function AdminConfirmedTripsPage() {
 
   return (
     <AdminPageShell title="Confirmed Trips" hideHeader>
-      <div role="group" aria-label="Confirmed Trips actions" className="mb-3 flex min-w-0 flex-wrap items-center justify-end gap-2">
+      <div role="group" aria-label="Confirmed Trips actions" className="mb-3 flex min-w-0 flex-wrap items-center justify-start gap-2">
         <Link href="/admin/confirmed-trips/records" className="inline-flex min-h-9 items-center justify-center rounded-lg bg-indigo-700 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-indigo-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2">
           Browse confirmed trips
         </Link>
