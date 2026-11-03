@@ -1,4 +1,6 @@
 import AdminReferralAttributionPage from "@/app/admin/referral-attribution/page";
+import { ReferralWindowFilter } from "@/components/admin/ReferralWindowFilter";
+import { currentReferralAttributionEnvironment, parseAttributionDays } from "@/services/referralAttributionService";
 import Link from "next/link";
 
 import { Info } from "lucide-react";
@@ -32,6 +34,8 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
   const raw = await searchParams;
   const filter = normalizeProductFilter(raw.product);
   const attribution = raw.view === "attribution";
+  const attributionDays = parseAttributionDays(typeof raw.days === "string" ? raw.days : null);
+  const attributionEnvironment = attribution ? currentReferralAttributionEnvironment() : null;
 
   // Referral reporting has its own read path; avoid unnecessary readiness queries.
   const providerData = attribution
@@ -112,21 +116,31 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
     <div className="w-full min-w-0 bg-white text-[#020617]">
       <h1 className="sr-only">Providers</h1>
 
-      <nav aria-label="Provider reporting sections" className="flex min-w-0 gap-6 overflow-x-auto border-b border-[#D8E1EC]">
-        <Link href="/admin/providers" aria-current={!attribution ? "page" : undefined}
-          className={"inline-flex h-11 shrink-0 items-center whitespace-nowrap border-b-2 px-1 text-[13px] font-medium text-[#020617] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] " +
-            (!attribution ? "border-[#004BB8]" : "border-transparent hover:border-[#D8E1EC]")}>
-          Provider Health
-        </Link>
-        <Link href="/admin/providers?view=attribution" aria-current={attribution ? "page" : undefined}
-          className={"inline-flex h-11 shrink-0 items-center whitespace-nowrap border-b-2 px-1 text-[13px] font-medium text-[#020617] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] " +
-            (attribution ? "border-[#004BB8]" : "border-transparent hover:border-[#D8E1EC]")}>
-          Referral Attribution
-        </Link>
-      </nav>
+      <div className="flex min-w-0 flex-wrap items-end justify-between gap-x-6 gap-y-1 border-b border-[#D8E1EC]">
+        <nav aria-label="Provider reporting sections" className="flex min-w-0 gap-6">
+          <Link href="/admin/providers" aria-current={!attribution ? "page" : undefined}
+            className={"inline-flex h-11 shrink-0 items-center whitespace-nowrap border-b-2 px-1 text-[13px] font-medium text-[#020617] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] " +
+              (!attribution ? "border-[#004BB8]" : "border-transparent hover:border-[#D8E1EC]")}>
+            Provider Health
+          </Link>
+          <Link href="/admin/providers?view=attribution" aria-current={attribution ? "page" : undefined}
+            className={"inline-flex h-11 shrink-0 items-center whitespace-nowrap border-b-2 px-1 text-[13px] font-medium text-[#020617] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] " +
+              (attribution ? "border-[#004BB8]" : "border-transparent hover:border-[#D8E1EC]")}>
+            Referral Attribution
+          </Link>
+        </nav>
+        {attribution ? (
+          <div className="ml-auto flex min-w-0 items-center gap-4 pb-1.5">
+            <span className="text-[12px] text-[#64748B]">
+              {attributionEnvironment === "production" ? "Production" : "Staging"}
+            </span>
+            <ReferralWindowFilter days={attributionDays ?? 30} embedded />
+          </div>
+        ) : null}
+      </div>
 
       {attribution ? (
-        <div className="pt-5">
+        <div className="pt-3">
           <AdminReferralAttributionPage embedded searchParams={Promise.resolve(raw)} />
           <div className="mt-5 border-t border-[#D8E1EC] pt-3 text-[13px]">
             <Link href="/admin/redirects?correlation=unavailable"
