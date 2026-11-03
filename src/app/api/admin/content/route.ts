@@ -38,6 +38,8 @@ export async function GET(request: Request) {
       locale: url.searchParams.get("locale") || undefined,
       limit,
       cursor: url.searchParams.get("cursor") || undefined,
+      search: url.searchParams.get("q") || undefined,
+      category: url.searchParams.get("category") || undefined,
     });
     return NextResponse.json(result);
   } catch (error) {
