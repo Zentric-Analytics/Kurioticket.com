@@ -29,7 +29,8 @@ export function AccountDeletionManageForm({ requestId, status, accountEmail, rev
     setMessage(null);
     setError(null);
     startTransition(async () => {
-      const response = await fetch("/api/admin/account-deletions/" + requestId, {
+      try {
+      const response = await fetch("/api/admin/account-deletions/" + encodeURIComponent(requestId), {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -50,6 +51,9 @@ export function AccountDeletionManageForm({ requestId, status, accountEmail, rev
         setRetentionReviewed(false);
       }
       router.refresh();
+      } catch {
+        setError("Unable to update the deletion request. Check the current request state before trying again.");
+      }
     });
   }
 
