@@ -7,6 +7,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
 import {
   providerHandoffFiltersHref,
+  shouldAcceptHandoffFilterResponse,
   type ProviderHandoffFilterScope,
   type ProviderHandoffFilterValues,
 } from "@/lib/adminProviderHandoffFilterUrl";
@@ -64,14 +65,12 @@ export function ProviderHandoffFilters({
   }, []);
 
   useEffect(() => {
-    const incomingHref = providerHandoffFiltersHref(initial, scope);
-    const isStaleResponse = latestRequestedHref.current !== null
-      && latestRequestedHref.current !== incomingHref;
-    const providerDraftAhead = latestProviderDraft.current.trim() !== initial.provider.trim();
-    // A previous search response must not overwrite more recently typed text
-    // or cancel its pending 300 ms debounce. The same rule guards quick
-    // successive dropdown changes against out-of-order server responses.
-    if (!externalNavigation.current && (isStaleResponse || providerDraftAhead)) return;
+    // A previous response must not overwrite newer keystrokes or filter
+    // changes, nor cancel their pending 300 ms debounce.
+    if (!shouldAcceptHandoffFilterResponse(
+      initial, scope, latestRequestedHref.current,
+      latestProviderDraft.current, externalNavigation.current,
+    )) return;
     externalNavigation.current = false;
     if (timeout.current) clearTimeout(timeout.current);
     timeout.current = null;
