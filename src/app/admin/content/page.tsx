@@ -20,13 +20,13 @@ function contentScopeStatus(summary: CmsScopeSummary) {
 }
 
 function publishedContentCount(summary: CmsScopeSummary) {
-  return summary?.available && summary.active ? summary.published : "—";
+  return summary?.available && summary.active ? summary.publishedInScope : "—";
 }
 
 function contentScopeDescription(summary: CmsScopeSummary, scope: string) {
   if (!summary?.available) return scope + ": CMS storage could not be verified.";
   if (!summary.active) return scope + ": CMS setup required; legacy content may still be used as fallback.";
-  return scope + ": " + summary.published + " published · " + summary.draft
+  return scope + ": " + summary.publishedInScope + " published in scope · " + summary.draft
     + " draft · " + summary.hidden + " hidden · " + summary.archived + " archived";
 }
 
