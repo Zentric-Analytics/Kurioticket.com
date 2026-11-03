@@ -69,14 +69,14 @@ test("authenticated rejection activity raises a warning without expected-cadence
   }).filter(alert => alert.source === "CONFIRMED_TRIPS");
   assert.equal(alerts.length, 1);
   assert.equal(alerts[0].severity, "WARNING");
-  assert.equal(alerts[0].actionHref, "/admin/confirmed-trips");
+  assert.equal(alerts[0].actionHref, "/admin/confirmed-trips/operations?panel=delivery#confirmation-delivery-health-title");
   assert.match(alerts[0].message, /3 authenticated confirmation callback/);
 });
 
 test("delivery receipts contain only approved metadata and do not log raw sensitive fields", () => {
   const schema = readFileSync("prisma/schema.prisma", "utf8");
   const ingestion = readFileSync("src/services/partnerConfirmationDeliveryService.ts", "utf8");
-  const admin = readFileSync("src/app/admin/confirmed-trips/page.tsx", "utf8");
+  const admin = readFileSync("src/app/admin/confirmed-trips/operations/page.tsx", "utf8");
   const details = readFileSync("src/app/admin/confirmed-trips/records/[id]/page.tsx", "utf8");
   assert.match(schema, /model PartnerConfirmationDelivery/);
   assert.match(schema, /myTripId\s+String\?/);
