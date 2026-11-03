@@ -15,6 +15,12 @@ test("system is read-only safe runtime status", () => {
   assert.match(systemPage, /Admin Configuration/);
   assert.match(systemPage, /ADMIN_EMAILS configured/);
   assert.match(systemPage, /Configured admin count/);
+  assert.match(systemPage, /aria-label="Related System tools"/);
+  for (const href of ["/admin/email-delivery", "/admin/notifications", "/admin/logs"]) {
+    assert.match(systemPage, new RegExp(`href="${href}"`));
+  }
+  assert.equal((systemPage.match(/<AdminSectionCard /g) || []).length, 2);
+  assert.doesNotMatch(systemPage, /className="[^"]*(?:hidden|sr-only)[^"]*"[^>]*>\s*<(?:AdminSectionCard|section)/);
   assert.doesNotMatch(systemPage, /FeatureControlsPanel|listFeatureControls|getServerSession/);
   assert.doesNotMatch(systemPage, /HomepageFaresRefreshCard|homepage fare/i);
 });
