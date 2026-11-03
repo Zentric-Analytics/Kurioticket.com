@@ -67,6 +67,7 @@ export default async function AdminFaqCmsPage({ searchParams }: { searchParams: 
 
   return (
     <ContentPageFrame
+      wide
       title="FAQs"
       subtitle="Manage English FAQ questions and answers."
       backHref="/admin/content"
