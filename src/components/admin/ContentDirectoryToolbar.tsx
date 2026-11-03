@@ -117,10 +117,13 @@ export function ContentDirectoryToolbar({
 
   return (
     <div className="min-w-0">
-      <form role="search" action={path} onSubmit={submitSearch} autoComplete="off" className="relative mb-3">
-        <Search size={17} aria-hidden="true" className="pointer-events-none absolute left-3.5 top-3.5 text-[#64748B]" />
-        <label className="sr-only" htmlFor="cms-directory-search">{searchLabel}</label>
-        <input
+      <form role="search" method="get" action={path} onSubmit={submitSearch} autoComplete="off" className="min-w-0">
+        {status ? <input type="hidden" name="status" value={status} readOnly /> : null}
+        {paramsRef.current.get("from") === "overview" ? <input type="hidden" name="from" value="overview" readOnly /> : null}
+        <div className="relative mb-3">
+          <Search size={17} aria-hidden="true" className="pointer-events-none absolute left-3.5 top-3.5 text-[#64748B]" />
+          <label className="sr-only" htmlFor="cms-directory-search">{searchLabel}</label>
+          <input
           id="cms-directory-search"
           type="search"
           name="q"
@@ -136,10 +139,10 @@ export function ContentDirectoryToolbar({
           }}
           placeholder={searchLabel}
           className="h-11 w-full min-w-0 rounded-lg border border-[#D8E1EC] bg-white pl-10 pr-3 text-[13px] text-[#374151] outline-none placeholder:text-[#64748B] focus:border-[#94A3B8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#64748B]"
-        />
-      </form>
+          />
+        </div>
 
-      <div className="flex min-w-0 flex-col gap-2 border-b border-[#E5E7EB] lg:flex-row lg:items-end lg:justify-between">
+        <div className="flex min-w-0 flex-col gap-2 border-b border-[#E5E7EB] lg:flex-row lg:items-end lg:justify-between">
         <nav aria-label="Content publication status" className="flex min-w-0 items-center gap-5 overflow-x-auto">
           {statuses.map(tab => {
             const active = status === tab.value;
@@ -192,6 +195,10 @@ export function ContentDirectoryToolbar({
           ) : null}
         </div>
       </div>
+        <noscript>
+          <button type="submit" className="mt-2 rounded-lg border border-[#D8E1EC] px-3 py-2 text-[13px] font-medium text-[#374151]">Update filters</button>
+        </noscript>
+      </form>
 
       <div aria-busy={loading} className="min-w-0">
         {loading ? (
