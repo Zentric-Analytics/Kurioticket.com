@@ -1,6 +1,7 @@
+import { ContentPageFrame } from "@/components/admin/ContentWorkspace";
 import { redirect } from "next/navigation";
 
-import { AdminLinkButton, AdminPageShell } from "@/components/admin/AdminPageShell";
+
 import { FaqCmsEditor } from "@/components/admin/FaqCmsEditor";
 import { getCmsContentScopeSummary } from "@/services/cmsContentService";
 import { faqCmsScope } from "@/services/faqCmsService";
@@ -18,12 +19,13 @@ export default async function NewAdminFaqPage({ searchParams }: { searchParams: 
   }
 
   return (
-    <AdminPageShell
+    <ContentPageFrame
       title="New FAQ"
-      description="Create an English FAQ draft. Publishing remains a separate explicit action."
-      actions={<AdminLinkButton href={nav.listHref}>Back to FAQs</AdminLinkButton>}
+      subtitle="Create an English FAQ draft before publishing."
+      backHref={nav.listHref}
+      backLabel="Back to FAQs"
     >
       <FaqCmsEditor listQuery={nav.query} />
-    </AdminPageShell>
+    </ContentPageFrame>
   );
 }
