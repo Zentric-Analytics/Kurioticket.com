@@ -68,11 +68,12 @@ test("provider details preserve booking, readiness and audited Duffel retest", (
   assert.match(providersPage, /canRetestDuffel: integration\.id === "duffel"/);
   assert.match(directoryTable, /<ProviderRetestButton \/>/);
   assert.match(directoryTable, /row\.canRetestDuffel/);
+  assert.doesNotMatch(directoryTable, /A retest makes a real Duffel health request/);
   assert.match(directoryTable, /row\.detail\.configured/);
   assert.match(directoryTable, /row\.detail\.booking/);
   assert.match(directoryTable, /row\.detail\.note/);
   assert.match(directoryTable, /row\.detail\.lastFailure/);
-  assert.match(directoryTable, /records an admin audit event/);
+  assert.match(providerRetestApi, /writeAdminAuditLog/);
   assert.match(retestButton, /router\.refresh\(\)/);
   assert.match(retestButton, /catch/);
   assert.match(retestButton, /finally/);
@@ -303,7 +304,11 @@ test("Task 3: handoff detail groups every field without tiles or losing verifica
   assert.match(handoffDetailPage, /Handoff overview/);
   assert.match(handoffDetailPage, /Referral information/);
   assert.match(handoffDetailPage, /Identity &amp; correlation/);
-  for (const label of ["Provider", "Product", "Created", "Route", "Price",
+  assert.ok(handoffDetailPage.indexOf('aria-labelledby="handoff-identity"') < handoffDetailPage.indexOf('aria-labelledby="handoff-overview"'));
+  assert.ok(handoffDetailPage.indexOf('aria-labelledby="handoff-overview"') < handoffDetailPage.indexOf('aria-labelledby="handoff-referral"'));
+  assert.match(handoffDetailPage, /md:grid-cols-3/);
+  assert.match(handoffDetailPage, /"HOTEL" \? "Property" : "Route"/);
+  for (const label of ["Provider", "Product", "Created", "Price",
     "Source page", "Destination domain", "Environment", "Handoff ID",
     "Identity", "Search correlation", "Search history ID", "User ID", "Visitor ID"]) {
     assert.ok(handoffDetailPage.includes('label="' + label + '"'), "Missing detail field " + label);
@@ -319,8 +324,8 @@ test("Tasks 4–6 place the small Referral date filter beside tabs only when sel
   assert.match(providersPage, /attribution \? \(/);
   assert.match(providersPage, /<nav aria-label="Provider reporting sections"/);
   assert.match(providersPage, /<ReferralWindowFilter days=\{attributionDays \?\? 30\} embedded \/>/);
-  assert.match(providersPage, /currentReferralAttributionEnvironment\(\)/);
-  assert.match(providersPage, /\{attributionEnvironment === "production" \? "Production" : "Staging"\}/);
+  assert.doesNotMatch(providersPage, /attributionEnvironment === "production"/);
+  assert.doesNotMatch(referralPage, /summary\.environment === "production"/);
   assert.match(referralPage, /\{!embedded \? \(/);
   assert.doesNotMatch(referralPage, /day window/);
   assert.doesNotMatch(referralWindowFilter, /Reporting window/);
