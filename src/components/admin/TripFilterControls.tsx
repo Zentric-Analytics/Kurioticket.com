@@ -22,7 +22,11 @@ const productOptions = [
   { value: "PACKAGE", label: "Packages" },
 ] as const;
 const statusOptions = [
-  { value: "all", label: "All statuses", shortLabel: "All" },
+  // The directory only contains provider-confirmed records. "Confirmed trips"
+  // is the existing unscoped status filter, not a separate lifecycle status.
+  { value: "all", label: "Confirmed trips", shortLabel: "Confirmed" },
+  // Tracking reporting is not connected: the control must never submit TRACKED.
+  { value: "TRACKED", label: "Tracked trips", shortLabel: "Tracked", disabled: true, description: "Not connected" },
   { value: "UPCOMING", label: "Upcoming" },
   { value: "PAST", label: "Past" },
   { value: "CANCELLED", label: "Cancelled" },
