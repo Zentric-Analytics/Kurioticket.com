@@ -8,7 +8,7 @@ export function CmsCreateLink({ path, label }: { path: string; label: string }) 
   const searchParams = useSearchParams();
   const query = searchParams.toString();
   return (
-    <AdminLinkButton href={path + (query ? "?" + query : "")} variant="primary">
+    <AdminLinkButton href={path + (query ? "?" + query : "")} variant="primary" size="sm" className="h-9 rounded-lg bg-[#3154EF] text-[13px] font-semibold shadow-none hover:bg-[#2445D7]">
       {label}
     </AdminLinkButton>
   );
