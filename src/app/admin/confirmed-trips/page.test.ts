@@ -74,8 +74,10 @@ test("all five counters share the same filtered directory query and link to pres
   }
   assert.match(page, /aria-current=\{active \? "page" : undefined\}/);
   assert.match(page, /active=\{filters\.status === "CANCELLED"\}/);
-  assert.match(recordsService, /db\.myTrip\.groupBy\(\{ by: \["status"\], where, _count: \{ _all: true \} \}\)/);
-  assert.match(recordsService, /const \[count, page, groupedStatuses\] = await db\.\$transaction/);
+  assert.match(recordsService, /const \[count, page, upcoming, past, cancelled\] = await db\.\$transaction/);
+  for (const status of ["UPCOMING", "PAST", "CANCELLED"]) {
+    assert.ok(recordsService.includes('db.myTrip.count({ where: { AND: [where, { status: "' + status + '" }] } })'));
+  }
   assert.match(recordsService, /statusCounts:/);
 });
 
