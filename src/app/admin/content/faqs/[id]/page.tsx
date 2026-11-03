@@ -1,7 +1,7 @@
 import { ContentPageFrame, ContentSectionHeading, ContentStatusPill } from "@/components/admin/ContentWorkspace";
 import { notFound } from "next/navigation";
 
-import { AdminStatusBadge } from "@/components/admin/AdminPageShell";
+
 import { FaqCmsEditor } from "@/components/admin/FaqCmsEditor";
 import { CmsRevisionRestoreButton } from "@/components/admin/CmsRevisionRestoreButton";
 import { CmsContentError, getAdminCmsContent } from "@/services/cmsContentService";
@@ -67,9 +67,9 @@ export default async function AdminFaqDetailPage({ params, searchParams }: PageP
                     <div>
                       <p className="text-xs font-black uppercase tracking-wide text-slate-500">Action</p>
                       <div className="mt-1">
-                        <AdminStatusBadge tone={revision.action === "PUBLISHED" ? "good" : revision.action === "ARCHIVED" ? "neutral" : revision.action === "HIDDEN" ? "warn" : "info"}>
+                        <ContentStatusPill status={revision.action}>
                           {revision.action}
-                        </AdminStatusBadge>
+                        </ContentStatusPill>
                       </div>
                     </div>
                     <div>
