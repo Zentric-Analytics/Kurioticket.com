@@ -92,3 +92,13 @@ test("content overview groups three homepage areas and FAQs without hiding actio
   assert.match(contentPage, /\{area\.status\}/);
   assert.match(contentPage, /\{area\.value\}/);
 });
+
+test("Content published count uses the published scope, not a draft's scope", () => {
+  const cms = readFileSync("src/services/cmsContentService.ts", "utf8");
+  assert.match(cms, /publishedInScope/);
+  assert.match(cms, /db\.cmsContentItem\.count\(\{/);
+  assert.match(cms, /publishedMarket: parsedMarket\.data/);
+  assert.match(cms, /publishedLocale: parsedLocale\.data/);
+  assert.match(cms, /publishedPayload: \{ not: Prisma\.DbNull \}/);
+  assert.match(contentPage, /summary\.publishedInScope/);
+});
