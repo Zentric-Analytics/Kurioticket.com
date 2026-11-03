@@ -4,12 +4,10 @@ import {
   ArrowRight,
   CalendarCheck,
   CalendarDays,
-  Car,
   ChevronDown,
   CircleX,
   Clock3,
   FileCheck2,
-  Hotel,
   Info,
   Plane,
   ShieldCheck,
@@ -43,10 +41,10 @@ const blankFilters: AdminTripFilters = {
   q: "", provider: "", product: "all", status: "all", from: "", to: "",
 };
 
-const travelTypes = [
-  { type: "FLIGHT", title: "Flights", icon: Plane, detail: "Flight itineraries" },
-  { type: "HOTEL", title: "Hotels", icon: Hotel, detail: "Hotel stays" },
-  { type: "CAR", title: "Cars", icon: Car, detail: "Car rentals" },
+const tripCategories = [
+  { type: "FLIGHT", label: "Flights" },
+  { type: "HOTEL", label: "Hotels" },
+  { type: "CAR", label: "Cars" },
 ] as const;
 
 function TripMetric({
@@ -85,48 +83,6 @@ function TripMetric({
     <div className={className} aria-label={label + ": reporting not yet available"}>
       {content}
     </div>
-  );
-}
-
-function TripCategoryCard({
-  title, type, detail, icon: Icon, count,
-}: {
-  title: string; type: "FLIGHT" | "HOTEL" | "CAR";
-  detail: string; icon: LucideIcon; count: number | null;
-}) {
-  const href = tripDirectoryHref({ ...blankFilters, product: type });
-  return (
-    <article className="flex h-full min-w-0 flex-col rounded-xl border border-slate-200/80 bg-white p-3.5">
-      <Link href={href} className="flex min-w-0 items-center gap-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-700"><Icon size={19} aria-hidden="true" /></span>
-        <span className="min-w-0 flex-1">
-          <span className="block text-sm font-semibold text-slate-950">{title}</span>
-          <span className="block text-xs text-slate-600">{detail}</span>
-        </span>
-        <ArrowRight size={16} className="shrink-0 text-slate-500" aria-hidden="true" />
-      </Link>
-      <dl className="mt-3 divide-y divide-slate-100 border-y border-slate-100 text-[13px]">
-        <div className="flex items-center justify-between gap-2 py-2">
-          <dt className="font-medium text-slate-700">Provider-confirmed</dt>
-          <dd className="font-semibold tabular-nums text-slate-950">{count === null ? "Unavailable" : count.toLocaleString("en-US")}</dd>
-        </div>
-        <div className="flex items-center justify-between gap-2 py-2">
-          <dt className="text-slate-600">Tracked trips</dt><dd className="text-xs font-medium text-slate-500">Not connected</dd>
-        </div>
-        <div className="flex items-center justify-between gap-2 py-2">
-          <dt className="text-slate-600">Cancelled trips</dt><dd className="text-xs font-medium text-slate-500">Count pending integration</dd>
-        </div>
-      </dl>
-      <div className="mt-3 flex min-w-0 flex-wrap gap-2">
-        <Link href={tripDirectoryHref({ ...blankFilters, product: type, status: "UPCOMING" })}
-          className="inline-flex min-h-9 flex-1 items-center justify-center rounded-lg border border-slate-200 px-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">Upcoming</Link>
-        <Link href={tripDirectoryHref({ ...blankFilters, product: type, status: "CANCELLED" })}
-          className="inline-flex min-h-9 flex-1 items-center justify-center rounded-lg border border-slate-200 px-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">Cancelled</Link>
-        <Link href={href} className="inline-flex min-h-9 w-full items-center justify-center gap-2 rounded-lg bg-indigo-50 px-3 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
-          View {title.toLowerCase()} <ArrowRight size={14} aria-hidden="true" />
-        </Link>
-      </div>
-    </article>
   );
 }
 
@@ -197,18 +153,6 @@ export default async function AdminConfirmedTripsPage({ searchParams }: Props) {
             </p>
           </section>
 
-          <section aria-labelledby="trip-categories-title" className="min-w-0 rounded-xl border border-slate-200/80 bg-white px-4 py-3 sm:px-5 sm:py-4">
-            <h2 id="trip-categories-title" className="text-base font-semibold text-slate-950">Trips by category</h2>
-            <p className="mt-0.5 text-xs leading-5 text-slate-600">Select a travel type or open its upcoming and cancelled records.</p>
-            <div className="mt-3 grid min-w-0 items-stretch gap-3 lg:grid-cols-3">
-              {travelTypes.map(({ type, title, detail, icon }) => (
-                <TripCategoryCard key={type} type={type} title={title} detail={detail} icon={icon}
-                  count={operations ? operations.byProduct.find((item) => item.tripType === type)?.count ?? 0 : null} />
-              ))}
-            </div>
-            <p className="mt-2 text-xs leading-5 text-slate-600">Package and additional product types remain available in the full directory and detailed breakdowns.</p>
-          </section>
-
           <section aria-labelledby="trip-directory-title" id="trip-directory" className="min-w-0 rounded-xl border border-slate-200/80 bg-white px-4 py-3 sm:px-5 sm:py-4">
             <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
               <div>
@@ -218,6 +162,21 @@ export default async function AdminConfirmedTripsPage({ searchParams }: Props) {
               <Link href={tripDirectoryHref(filters)} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-indigo-200 px-3 text-xs font-semibold text-indigo-700 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
                 Open full directory <ArrowRight size={14} aria-hidden="true" />
               </Link>
+            </div>
+
+            <div role="group" aria-label="All-time provider-confirmed trips by travel type" className="mb-3 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1.5">
+              <span className="text-[11px] font-medium text-slate-600">Confirmed by type · all time</span>
+              {tripCategories.map(({ type, label }) => {
+                const count = operations?.byProduct.find(item => item.tripType === type)?.count;
+                return (
+                  <Link key={type} href={tripDirectoryHref({ ...blankFilters, product: type })}
+                    className="inline-flex min-h-8 items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-medium text-slate-700 transition-colors hover:border-indigo-300 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                    aria-label={label + " provider-confirmed trips, " + (operations ? (count ?? 0).toLocaleString("en-US") : "count unavailable") + ", open filtered records"}>
+                    <span>{label}</span>
+                    <span className="font-semibold tabular-nums text-slate-950">{operations ? (count ?? 0).toLocaleString("en-US") : "—"}</span>
+                  </Link>
+                );
+              })}
             </div>
 
             <form method="get" action="/admin/confirmed-trips" aria-label="Filter trip directory" className="min-w-0">

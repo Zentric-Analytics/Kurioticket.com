@@ -29,10 +29,9 @@ test("Trips preserves its existing admin workspace without a visible page introd
   assert.doesNotMatch(page, /Kurioticket handles refunds|Cancel booking|Issue ticket/);
 });
 
-test("one white parent card holds four white thin-bordered sections in the approved reading order", () => {
+test("one white parent card contains three compact sections without the duplicate category panel", () => {
   const markers = [
     'aria-labelledby="confirmed-trips-overview"',
-    'aria-labelledby="trip-categories-title"',
     'aria-labelledby="trip-directory-title"',
     'aria-labelledby="related-trip-operations-title"',
   ];
@@ -41,7 +40,7 @@ test("one white parent card holds four white thin-bordered sections in the appro
   assert.deepEqual(positions, [...positions].sort((a, b) => a - b));
   assert.equal((page.match(/<AdminSectionCard/g) ?? []).length, 1);
   assert.match(page, /<AdminSectionCard className="min-w-0 p-4 sm:p-5 lg:p-6">/);
-  assert.equal((page.match(/className="min-w-0 rounded-xl border border-slate-200\/80 bg-white px-4 py-3 sm:px-5 sm:py-4"/g) ?? []).length, 4);
+  assert.equal((page.match(/className="min-w-0 rounded-xl border border-slate-200\/80 bg-white px-4 py-3 sm:px-5 sm:py-4"/g) ?? []).length, 3);
   const parentStart = page.indexOf('<AdminSectionCard className="min-w-0 p-4 sm:p-5 lg:p-6">');
   const parentEnd = page.lastIndexOf("</AdminSectionCard>");
   const toolbarStart = page.indexOf('role="group" aria-label="Trip shortcuts"');
@@ -49,12 +48,12 @@ test("one white parent card holds four white thin-bordered sections in the appro
   assert.doesNotMatch(page, /text-2xl font-semibold tracking-tight text-slate-950">Trips/);
   assert.ok(positions.every(position => position > parentStart && position < parentEnd));
   assert.match(page, /bg-white px-3 py-3/);
-  assert.match(page, /bg-white p-3\.5/);
+  assert.doesNotMatch(page, /TripCategoryCard|Trips by category/);
   assert.match(page, /group rounded-xl border border-slate-200\/80 bg-white/);
   assert.doesNotMatch(page, /bg-slate-(?:50\/80|100\/65|100\/60|100\/80)/);
   assert.doesNotMatch(page, /<AdminSectionCard className="min-w-0 p-4 sm:p-5">/);
   assert.match(page, /grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-5/);
-  assert.match(page, /grid min-w-0 items-stretch gap-3 lg:grid-cols-3/);
+  assert.match(page, /aria-label="All-time provider-confirmed trips by travel type"/);
   assert.doesNotMatch(page, /grid w-full min-w-\[850px\] grid-cols-5/);
 });
 
@@ -77,18 +76,19 @@ test("tracked-trip metrics remain explicitly disconnected instead of equating co
   assert.match(page, /label="Tracked trips" value="—"/);
   assert.match(page, /Tracking begins at confirmation once integrated/);
   assert.match(page, /Tracking totals require a separate future data source/);
-  assert.match(page, /Tracked trips<\/dt><dd[^>]*>Not connected/);
-  assert.match(page, /Cancelled trips<\/dt><dd[^>]*>Count pending integration/);
+  assert.doesNotMatch(page, /Tracked trips<\/dt><dd|Cancelled trips<\/dt><dd/);
   assert.doesNotMatch(page, /operations\.metrics\.tracked|Math\.random|mockTrips|sampleTrips/);
 });
 
-test("category counts use actual provider-confirmed product grouping and retain future products", () => {
+test("category shortcuts stay in the directory, use verified all-time counts and link to full filtered records", () => {
   for (const type of ["FLIGHT", "HOTEL", "CAR"]) assert.ok(page.includes('type: "' + type + '"'));
-  assert.match(page, /operations\.byProduct\.find\(\(item\) => item\.tripType === type\)\?\.count \?\? 0/);
+  assert.match(page, /Confirmed by type · all time/);
+  assert.match(page, /aria-label="All-time provider-confirmed trips by travel type"/);
+  assert.match(page, /operations\?\.byProduct\.find\(item => item\.tripType === type\)\?\.count/);
   assert.match(page, /tripDirectoryHref\(\{ \.\.\.blankFilters, product: type \}\)/);
-  assert.match(page, /tripDirectoryHref\(\{ \.\.\.blankFilters, product: type, status: "UPCOMING" \}\)/);
-  assert.match(page, /tripDirectoryHref\(\{ \.\.\.blankFilters, product: type, status: "CANCELLED" \}\)/);
-  assert.match(page, /Package and additional product types remain available/);
+  assert.match(page, /count unavailable/);
+  assert.match(page, /operations \? \(count \?\? 0\)\.toLocaleString\("en-US"\) : "—"/);
+  assert.doesNotMatch(page, /TripCategoryCard|trip-categories-title|Trips by category/);
   assert.match(page, /<ConfirmedTripsBreakdowns operations=\{operations\} \/>/);
   assert.match(breakdowns, /operations\.byProduct\.map/);
   assert.match(breakdowns, /operations\.byProvider\.map/);
@@ -209,9 +209,9 @@ test("service preserves provider-confirmation trust boundary and no invented rev
   assert.match(page, /Receipts may include retries/);
 });
 
-test("loading state matches the overview, category, directory and operations structure without false counts", () => {
+test("loading state matches the three-section dashboard and compact category shortcuts", () => {
   assert.match(loading, /<AdminPageShell title="Trips" hideHeader>/);
-  for (const label of ["Trip overview", "Trips by category", "Trip directory", "Related trip operations"]) {
+  for (const label of ["Trip overview", "Trip directory", "Related trip operations"]) {
     assert.ok(loading.includes(label), "Missing loading section: " + label);
     assert.ok(page.includes(label), "Missing loaded section: " + label);
   }
@@ -219,8 +219,10 @@ test("loading state matches the overview, category, directory and operations str
   assert.match(loading, /aria-busy="true"/);
   assert.match(loading, /motion-safe:animate-pulse/);
   assert.equal((loading.match(/<AdminSectionCard/g) ?? []).length, 1);
-  assert.equal((loading.match(/<section className="min-w-0 rounded-xl border border-slate-200\/80 bg-white/g) ?? []).length, 4);
-  assert.match(loading, /rounded-xl border border-slate-200\/80 bg-white/);
+  assert.equal((loading.match(/<section className="min-w-0 rounded-xl border border-slate-200\/80 bg-white/g) ?? []).length, 3);
+  assert.match(loading, /Confirmed by type · all time/);
+  assert.match(loading, /"Flights", "Hotels", "Cars"/);
+  assert.doesNotMatch(loading, /Trips by category/);
   assert.doesNotMatch(loading, /text-2xl font-semibold tracking-tight text-slate-950">Trips|View verified provider-confirmed trips across flights, hotels, and cars/);
   assert.doesNotMatch(loading, />\s*0\s*</);
 });
