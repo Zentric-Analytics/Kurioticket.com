@@ -128,6 +128,26 @@ test("main directory controls expose only supported search, provider, category, 
   assert.match(page, /select disabled defaultValue="unavailable"/);
   assert.match(page, /type="date"/);
   assert.match(page, /href="\/admin\/confirmed-trips#trip-directory"/);
+  // Eight visible controls stay in a single width-aware desktop row at 100% zoom.
+  const formStart = page.indexOf('<form method="get" action="/admin/confirmed-trips"');
+  const formEnd = page.indexOf("</form>", formStart);
+  assert.ok(formStart >= 0 && formEnd > formStart);
+  const formMarkup = page.slice(formStart, formEnd);
+  assert.match(formMarkup, /lg:grid-cols-\[minmax\(0,1\.25fr\).*minmax\(0,1\.15fr\)\]/);
+  assert.match(formMarkup, /md:grid-cols-4/);
+  assert.match(formMarkup, /items-end gap-x-2/);
+  assert.equal((formMarkup.match(/className="block min-w-0 text-\[11px\] font-medium leading-4/g) ?? []).length, 8);
+  assert.doesNotMatch(formMarkup, /overflow-x-auto|overflow-x-scroll|min-w-\[\d+px\]|whitespace-nowrap/);
+  for (const label of ["Search trips", "Provider", "Travel type", "Trip status", "Time range", "Tracking", "From (UTC)", "To (UTC)"]) {
+    assert.ok(formMarkup.includes(label), "Missing filter label: " + label);
+  }
+  assert.match(formMarkup, /aria-label="Confirmed from \(UTC\)"/);
+  assert.match(formMarkup, /aria-label="Confirmed to \(UTC\)"/);
+  assert.match(formMarkup, /title="Confirmation time range"/);
+  assert.match(formMarkup, /title="Tracking health"/);
+  assert.match(formMarkup, /focus-visible:ring-2/);
+  assert.match(loading, /lg:grid-cols-\[minmax\(0,1\.25fr\).*minmax\(0,1\.15fr\)\]/);
+  assert.match(loading, /"Search trips", "Provider", "Travel type", "Trip status", "Time range", "Tracking", "From \(UTC\)", "To \(UTC\)"/);
   assert.doesNotMatch(page, /<form method="post"|fetch\(|method:\s*["'](?:POST|PATCH|DELETE)/);
 });
 
