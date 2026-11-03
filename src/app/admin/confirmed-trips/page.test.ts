@@ -103,6 +103,12 @@ test("main directory controls expose only supported search, provider, category, 
     assert.match(filterSource, new RegExp('"' + key + '"'));
   }
   assert.match(page, /Precise 10- and 30-minute filters and tracking health require backend integration/);
+  assert.match(page, /Precise time range requires backend integration/);
+  assert.match(page, /Last 10 minutes \(planned\)/);
+  assert.match(page, /Last 30 minutes \(planned\)/);
+  assert.match(page, /Tracking health requires backend integration/);
+  assert.match(page, /select disabled defaultValue="planned"/);
+  assert.match(page, /select disabled defaultValue="unavailable"/);
   assert.match(page, /type="date"/);
   assert.match(page, /href="\/admin\/confirmed-trips#trip-directory"/);
   assert.doesNotMatch(page, /<form method="post"|fetch\(|method:\s*["'](?:POST|PATCH|DELETE)/);
