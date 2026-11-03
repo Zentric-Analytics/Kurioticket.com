@@ -25,3 +25,16 @@ test("handoff pagination reverses multiple cursor steps without replacing filter
   assert.equal(back.searchParams.get("pageTrail"), "first");
   assert.equal(handoffPreviousPageHref({}), null);
 });
+
+test("long cursor history is bounded by length without losing previous navigation", () => {
+  let raw: Record<string, string> = { environment: "staging" };
+  for (let i = 0; i < 21; i++) {
+    const token = "C".repeat(510) + String(i);
+    const next = new URL(handoffNextPageHref(raw, token), "https://internal.test");
+    assert.ok((next.searchParams.get("pageTrail") || "").length <= 8192);
+    raw = Object.fromEntries(next.searchParams);
+  }
+  const previous = handoffPreviousPageHref(raw);
+  assert.ok(previous);
+  assert.equal(new URL(previous!, "https://internal.test").searchParams.has("cursor"), true);
+});
