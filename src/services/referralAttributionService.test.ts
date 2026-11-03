@@ -100,3 +100,19 @@ test("linked handoffs are counted as distinct redirects even when multiple journ
     some: { type: "PROVIDER_HANDOFF_STARTED", searchHistoryId: { not: null } },
   });
 });
+
+test("sentinel and normalized unknown handoff sources share a non-navigable bucket", async () => {
+  const service = createReferralAttributionService(() => ({
+    $transaction: async fn => fn({
+      redirectLog: {
+        count: async () => 2,
+        groupBy: async () => [
+          { provider: "KAYAK sandbox", type: "HOTEL", sourcePage: "unknown", _count: { _all: 1 } },
+          { provider: "KAYAK sandbox", type: "HOTEL", sourcePage: "/unknown", _count: { _all: 1 } },
+        ],
+      },
+    }),
+  }), () => fixedNow);
+  const summary = await service.getSummary(30, "staging");
+  assert.deepEqual(summary.sourcePages, [{ sourcePage: "unknown", handoffs: 2 }]);
+});
