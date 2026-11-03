@@ -73,7 +73,7 @@ test("provider details preserve booking, readiness and audited Duffel retest", (
   assert.match(directoryTable, /row\.detail\.booking/);
   assert.match(directoryTable, /row\.detail\.note/);
   assert.match(directoryTable, /row\.detail\.lastFailure/);
-  assert.match(directoryTable, /records an admin audit event/);
+  assert.match(providerRetestApi, /writeAdminAuditLog/);
   assert.match(retestButton, /router\.refresh\(\)/);
   assert.match(retestButton, /catch/);
   assert.match(retestButton, /finally/);
