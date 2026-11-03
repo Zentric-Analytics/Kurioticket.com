@@ -49,12 +49,14 @@ export default async function AdminConfirmedTripsPage() {
             <h2 id="confirmed-trips-overview" className="mb-3 text-base font-semibold leading-6 tracking-tight text-slate-950">Trip overview</h2>
             {operations ? (
               <>
-                <div className="grid grid-cols-2 gap-2.5 sm:gap-3 md:grid-cols-3 lg:grid-cols-5">
-                  <TripMetric label="Confirmed trips" value={operations.metrics.total} hint="Verified trip records" icon={FileCheck2} tone={operations.metrics.total > 0 ? "info" : "neutral"} />
-                  <TripMetric label="Last 24h" value={operations.metrics.confirmedLast24h} hint="Latest confirmation within 24h" icon={Clock3} tone={operations.metrics.confirmedLast24h > 0 ? "info" : "neutral"} />
-                  <TripMetric label="Upcoming" value={operations.metrics.upcoming} hint="Marked upcoming" icon={CalendarCheck} tone={operations.metrics.upcoming > 0 ? "good" : "neutral"} />
-                  <TripMetric label="Past" value={operations.metrics.past} hint="Marked past" icon={CalendarDays} tone="neutral" />
-                  <TripMetric label="Cancelled" value={operations.metrics.cancelled} hint="Marked cancelled" icon={CircleX} tone={operations.metrics.cancelled > 0 ? "warn" : "neutral"} />
+                <div role="region" aria-label="Trip overview metrics" tabIndex={0} className="min-w-0 max-w-full overflow-x-auto overscroll-x-contain rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400">
+                  <div className="grid w-full min-w-[850px] grid-cols-5 gap-2">
+                    <TripMetric label="Confirmed trips" value={operations.metrics.total} hint="Verified trip records" icon={FileCheck2} tone={operations.metrics.total > 0 ? "info" : "neutral"} />
+                    <TripMetric label="Last 24h" value={operations.metrics.confirmedLast24h} hint="Latest confirmation within 24h" icon={Clock3} tone={operations.metrics.confirmedLast24h > 0 ? "info" : "neutral"} />
+                    <TripMetric label="Upcoming" value={operations.metrics.upcoming} hint="Marked upcoming" icon={CalendarCheck} tone={operations.metrics.upcoming > 0 ? "good" : "neutral"} />
+                    <TripMetric label="Past" value={operations.metrics.past} hint="Marked past" icon={CalendarDays} tone="neutral" />
+                    <TripMetric label="Cancelled" value={operations.metrics.cancelled} hint="Marked cancelled" icon={CircleX} tone={operations.metrics.cancelled > 0 ? "warn" : "neutral"} />
+                  </div>
                 </div>
                 <p className="mt-2.5 flex items-start gap-2 text-[13px] leading-5 text-slate-600">
                   <Info size={15} className="mt-0.5 shrink-0 text-slate-500" aria-hidden="true" />
@@ -221,15 +223,15 @@ function TripMetric({
   };
   const formattedValue = new Intl.NumberFormat("en-US").format(value);
   return (
-    <div className="flex min-w-0 flex-col rounded-xl border border-slate-200 bg-white px-3 py-3 sm:px-3.5">
-      <div className="flex min-w-0 items-center gap-2">
-        <span className={"flex h-8 w-8 shrink-0 items-center justify-center rounded-lg " + styles[tone]}>
-          <Icon size={17} strokeWidth={2.1} aria-hidden="true" />
+    <div className="flex h-full min-w-0 flex-col rounded-lg border border-slate-200/80 bg-white px-3 py-2.5">
+      <div className="flex min-w-0 items-center gap-1.5">
+        <span className={"flex h-5 w-5 shrink-0 items-center justify-center rounded-md " + styles[tone]}>
+          <Icon size={15} strokeWidth={2} aria-hidden="true" />
         </span>
-        <h3 className="min-w-0 break-words text-[13px] font-medium leading-5 text-slate-700">{label}</h3>
+        <h3 className="min-w-0 break-words text-xs font-medium leading-4 text-slate-600">{label}</h3>
       </div>
-      <p className="mt-2 text-2xl font-semibold leading-7 tracking-tight tabular-nums text-slate-950">{formattedValue}</p>
-      <p className="mt-1.5 break-words text-xs leading-4 text-slate-600">{hint}</p>
+      <p className="mt-1 text-[22px] font-semibold leading-[26px] tracking-tight tabular-nums text-slate-950">{formattedValue}</p>
+      <p className="mt-1 min-w-0 break-words text-xs font-normal leading-4 text-slate-600">{hint}</p>
     </div>
   );
 }

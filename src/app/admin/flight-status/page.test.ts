@@ -165,12 +165,14 @@ test("Flight Status overview follows the planned responsive page hierarchy", () 
 
 
 
-test("Flight Status overview has no extra outline and keeps compact metrics with individual borders", () => {
+test("Flight Status overview has no extra outline or double padding and keeps compact metrics", () => {
   const sectionStart = page.indexOf('<section aria-labelledby="flight-status-overview-title"');
   const sectionEnd = page.indexOf("</section>", sectionStart);
   assert.ok(sectionStart >= 0 && sectionEnd > sectionStart, "The overview section must be visible");
   const overview = page.slice(sectionStart, sectionEnd);
-  assert.match(overview, /^<section aria-labelledby="flight-status-overview-title" className="min-w-0 p-3 sm:p-4">/);
+  assert.match(overview, /^<section aria-labelledby="flight-status-overview-title" className="min-w-0">/);
+  assert.doesNotMatch(overview.slice(0, overview.indexOf(">") + 1), /(?:^|\s)(?:p-[0-9]|sm:p-[0-9]|pt-[0-9]|sm:pt-[0-9])/,
+    "Do not add padding inside the already padded parent card");
   const overviewOpeningTag = overview.slice(0, overview.indexOf(">") + 1);
   assert.doesNotMatch(overviewOpeningTag, /\b(?:border|rounded|shadow)(?:-[^\s"]+)?\b/,
     "Overview section must not add a redundant decorative outline");
