@@ -47,7 +47,7 @@ export function TripDirectoryView({ rows, subtle = false }: Props) {
       ) : (
         <div aria-label="Matching confirmed trip cards" className="grid min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {rows.map((trip) => (
-            <article key={trip.id} className={"flex min-w-0 flex-col rounded-xl border p-4 " + (subtle ? "border-slate-200/80 bg-slate-100/65" : "border-slate-200 bg-white")}>
+            <article key={trip.id} className={"flex min-w-0 flex-col rounded-xl border p-4 " + (subtle ? "border-slate-200/80 bg-white" : "border-slate-200 bg-white")}>
               <div className="flex min-w-0 items-start justify-between gap-2">
                 <div className="min-w-0">
                   <span className="text-[11px] font-semibold uppercase tracking-wide text-indigo-700">{trip.tripType}</span>

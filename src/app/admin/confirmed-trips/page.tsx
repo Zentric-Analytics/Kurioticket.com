@@ -76,7 +76,7 @@ function TripMetric({
       <p className="mt-1 min-w-0 text-xs leading-4 text-slate-600">{hint}</p>
     </>
   );
-  const className = "flex h-full min-w-0 flex-col rounded-xl border border-slate-200/80 bg-slate-100/65 px-3 py-3";
+  const className = "flex h-full min-w-0 flex-col rounded-xl border border-slate-200/80 bg-white px-3 py-3";
   return href ? (
     <Link href={href} className={className + " transition-colors hover:border-indigo-300 hover:bg-indigo-50/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"}>
       {content}
@@ -96,7 +96,7 @@ function TripCategoryCard({
 }) {
   const href = tripDirectoryHref({ ...blankFilters, product: type });
   return (
-    <article className="flex h-full min-w-0 flex-col rounded-xl border border-slate-200/80 bg-slate-100/65 p-3.5">
+    <article className="flex h-full min-w-0 flex-col rounded-xl border border-slate-200/80 bg-white p-3.5">
       <Link href={href} className="flex min-w-0 items-center gap-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-700"><Icon size={19} aria-hidden="true" /></span>
         <span className="min-w-0 flex-1">
@@ -141,7 +141,7 @@ function InlineFact({ label, value }: { label: string; value: string }) {
 
 function Fact({ label, value }: { label: string; value: string }) {
   return (
-    <div className="min-w-0 rounded-lg bg-slate-50 px-3 py-2.5">
+    <div className="min-w-0 rounded-lg border border-slate-100 bg-white px-3 py-2.5">
       <p className="text-xs font-medium leading-4 text-slate-600">{label}</p>
       <p className="mt-1 break-words text-base font-semibold leading-6 tabular-nums text-slate-900">{value}</p>
     </div>
@@ -162,25 +162,21 @@ export default async function AdminConfirmedTripsPage({ searchParams }: Props) {
   return (
     <AdminPageShell title="Trips" hideHeader>
       <AdminSectionCard className="min-w-0 p-4 sm:p-5 lg:p-6">
-        <div className="mb-4 flex min-w-0 flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-2xl font-semibold tracking-tight text-slate-950">Trips</p>
-            <p className="mt-1 text-[13px] leading-5 text-slate-600">View verified provider-confirmed trips across flights, hotels, and cars.</p>
-          </div>
-          <div className="flex flex-wrap gap-2">
+        <div role="group" aria-label="Trip shortcuts" className="mb-3 flex min-w-0 flex-wrap items-center justify-end gap-2">
+          <div className="flex flex-wrap justify-end gap-2">
             <Link href="/admin/confirmed-trips/records" className="inline-flex min-h-9 items-center justify-center rounded-lg border border-indigo-200 bg-white px-3 text-sm font-semibold text-indigo-700 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">Browse confirmed trips</Link>
             <Link href="/admin/flight-status" className="inline-flex min-h-9 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">Flight status</Link>
           </div>
         </div>
 
         <div className="space-y-3">
-          <section aria-labelledby="confirmed-trips-overview" className="min-w-0 rounded-xl border border-slate-200/80 bg-slate-50/80 px-4 py-3 sm:px-5 sm:py-4">
+          <section aria-labelledby="confirmed-trips-overview" className="min-w-0 rounded-xl border border-slate-200/80 bg-white px-4 py-3 sm:px-5 sm:py-4">
             <div className="mb-3 flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
               <div className="min-w-0">
                 <h2 id="confirmed-trips-overview" className="text-base font-semibold text-slate-950">Trip overview</h2>
                 <p className="mt-0.5 text-xs leading-5 text-slate-600">All-time verified trip records. Select a card to inspect matching records.</p>
               </div>
-              {operations ? <div className="rounded-lg bg-slate-100/80 px-3 py-2 text-xs text-slate-700">
+              {operations ? <div className="rounded-lg border border-slate-200/80 bg-white px-3 py-2 text-xs text-slate-700">
                 <span className="font-semibold tabular-nums">{operations.metrics.confirmedLast24h.toLocaleString("en-US")}</span> confirmation updates · last 24h
               </div> : null}
             </div>
@@ -193,7 +189,7 @@ export default async function AdminConfirmedTripsPage({ searchParams }: Props) {
                 <TripMetric label="Cancelled" value={operations.metrics.cancelled} hint="Latest provider status: cancelled" icon={CircleX} tone="warn" href="/admin/confirmed-trips/records?status=CANCELLED" />
               </div>
             ) : (
-              <p role="status" className="rounded-lg bg-slate-50 px-4 py-4 text-sm text-slate-700">Trip counts unavailable. No counts are shown.</p>
+              <p role="status" className="rounded-lg border border-slate-100 bg-white px-4 py-4 text-sm text-slate-700">Trip counts unavailable. No counts are shown.</p>
             )}
             <p className="mt-2 flex items-start gap-1.5 text-xs leading-5 text-slate-600">
               <Info size={14} className="mt-0.5 shrink-0" aria-hidden="true" />
@@ -201,7 +197,7 @@ export default async function AdminConfirmedTripsPage({ searchParams }: Props) {
             </p>
           </section>
 
-          <section aria-labelledby="trip-categories-title" className="min-w-0 rounded-xl border border-slate-200/80 bg-slate-50/80 px-4 py-3 sm:px-5 sm:py-4">
+          <section aria-labelledby="trip-categories-title" className="min-w-0 rounded-xl border border-slate-200/80 bg-white px-4 py-3 sm:px-5 sm:py-4">
             <h2 id="trip-categories-title" className="text-base font-semibold text-slate-950">Trips by category</h2>
             <p className="mt-0.5 text-xs leading-5 text-slate-600">Select a travel type or open its upcoming and cancelled records.</p>
             <div className="mt-3 grid min-w-0 items-stretch gap-3 lg:grid-cols-3">
@@ -213,7 +209,7 @@ export default async function AdminConfirmedTripsPage({ searchParams }: Props) {
             <p className="mt-2 text-xs leading-5 text-slate-600">Package and additional product types remain available in the full directory and detailed breakdowns.</p>
           </section>
 
-          <section aria-labelledby="trip-directory-title" id="trip-directory" className="min-w-0 rounded-xl border border-slate-200/80 bg-slate-50/80 px-4 py-3 sm:px-5 sm:py-4">
+          <section aria-labelledby="trip-directory-title" id="trip-directory" className="min-w-0 rounded-xl border border-slate-200/80 bg-white px-4 py-3 sm:px-5 sm:py-4">
             <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
               <div>
                 <h2 id="trip-directory-title" className="text-base font-semibold text-slate-950">Trip directory</h2>
@@ -245,7 +241,7 @@ export default async function AdminConfirmedTripsPage({ searchParams }: Props) {
               </label>
               <label className="min-w-0 text-xs font-medium text-slate-700">Confirmation time range
                 <select disabled defaultValue="planned" aria-label="Precise time range requires backend integration" title="Precise time ranges will be available after backend integration"
-                  className="mt-1 h-9 w-full min-w-0 cursor-not-allowed rounded-lg border border-slate-200 bg-slate-50 px-2 text-xs text-slate-500">
+                  className="mt-1 h-9 w-full min-w-0 cursor-not-allowed rounded-lg border border-slate-200 bg-white px-2 text-xs text-slate-500">
                   <option value="planned">Use UTC dates for now</option>
                   <option value="10m">Last 10 minutes (planned)</option>
                   <option value="30m">Last 30 minutes (planned)</option>
@@ -256,7 +252,7 @@ export default async function AdminConfirmedTripsPage({ searchParams }: Props) {
               </label>
               <label className="min-w-0 text-xs font-medium text-slate-700">Tracking health
                 <select disabled defaultValue="unavailable" aria-label="Tracking health requires backend integration" title="Tracking health will be available after backend integration"
-                  className="mt-1 h-9 w-full min-w-0 cursor-not-allowed rounded-lg border border-slate-200 bg-slate-50 px-2 text-xs text-slate-500">
+                  className="mt-1 h-9 w-full min-w-0 cursor-not-allowed rounded-lg border border-slate-200 bg-white px-2 text-xs text-slate-500">
                   <option value="unavailable">Not connected</option>
                 </select>
               </label>
@@ -277,7 +273,7 @@ export default async function AdminConfirmedTripsPage({ searchParams }: Props) {
               {!parsed.ok ? (
                 <p role="alert" className="rounded-lg bg-rose-50 px-4 py-3 text-sm text-rose-800">{parsed.error}</p>
               ) : directory?.status === "unavailable" ? (
-                <p role="status" className="rounded-lg bg-slate-50 px-4 py-4 text-sm text-slate-700">Trip records are temporarily unavailable. No records or counts are assumed.</p>
+                <p role="status" className="rounded-lg border border-slate-100 bg-white px-4 py-4 text-sm text-slate-700">Trip records are temporarily unavailable. No records or counts are assumed.</p>
               ) : directory?.status === "ok" ? (
                 <>
                   <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
@@ -287,7 +283,7 @@ export default async function AdminConfirmedTripsPage({ searchParams }: Props) {
                   {directory.rows.length ? (
                     <TripDirectoryView rows={directory.rows} subtle />
                   ) : (
-                    <p role="status" className="rounded-lg bg-slate-50 px-4 py-4 text-center text-sm text-slate-700">No provider-confirmed trip matches the selected filters.</p>
+                    <p role="status" className="rounded-lg border border-slate-100 bg-white px-4 py-4 text-center text-sm text-slate-700">No provider-confirmed trip matches the selected filters.</p>
                   )}
                   {directory.nextCursor ? (
                     <div className="mt-3 flex justify-end">
@@ -298,16 +294,16 @@ export default async function AdminConfirmedTripsPage({ searchParams }: Props) {
                   ) : null}
                 </>
               ) : (
-                <p role="status" className="rounded-lg bg-slate-50 px-4 py-3 text-sm text-slate-700">Trip directory couldn't be loaded.</p>
+                <p role="status" className="rounded-lg border border-slate-100 bg-white px-4 py-3 text-sm text-slate-700">Trip directory couldn't be loaded.</p>
               )}
             </div>
           </section>
 
-          <section aria-labelledby="related-trip-operations-title" className="min-w-0 rounded-xl border border-slate-200/80 bg-slate-50/80 px-4 py-3 sm:px-5 sm:py-4">
+          <section aria-labelledby="related-trip-operations-title" className="min-w-0 rounded-xl border border-slate-200/80 bg-white px-4 py-3 sm:px-5 sm:py-4">
             <h2 id="related-trip-operations-title" className="text-base font-semibold text-slate-950">Related trip operations</h2>
             <p className="mt-0.5 text-xs leading-5 text-slate-600">Technical monitoring remains available without crowding trip records.</p>
             <div className="mt-3 space-y-2">
-              <details className="group rounded-xl border border-slate-200/80 bg-slate-100/60">
+              <details className="group rounded-xl border border-slate-200/80 bg-white">
                 <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-sm font-semibold text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 [&::-webkit-details-marker]:hidden">
                   <span className="flex items-center gap-2"><FileCheck2 size={17} className="text-indigo-700" aria-hidden="true" />Detailed product and provider breakdowns</span>
                   <ChevronDown size={17} className="shrink-0 text-slate-500 transition-transform group-open:rotate-180" aria-hidden="true" />
@@ -315,7 +311,7 @@ export default async function AdminConfirmedTripsPage({ searchParams }: Props) {
                 <div className="border-t border-slate-100 p-3"><ConfirmedTripsBreakdowns operations={operations} /></div>
               </details>
 
-              <details className="group rounded-xl border border-slate-200/80 bg-slate-100/60">
+              <details className="group rounded-xl border border-slate-200/80 bg-white">
                 <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-sm font-semibold text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 [&::-webkit-details-marker]:hidden">
                   <span className="flex items-center gap-2"><ShieldCheck size={17} className="text-indigo-700" aria-hidden="true" />Confirmation integration readiness</span>
                   <ChevronDown size={17} className="shrink-0 text-slate-500 transition-transform group-open:rotate-180" aria-hidden="true" />
@@ -357,7 +353,7 @@ export default async function AdminConfirmedTripsPage({ searchParams }: Props) {
                 </div>
               </details>
 
-              <details id="confirmation-delivery-health-title" className="group rounded-xl border border-slate-200/80 bg-slate-100/60">
+              <details id="confirmation-delivery-health-title" className="group rounded-xl border border-slate-200/80 bg-white">
                 <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-sm font-semibold text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 [&::-webkit-details-marker]:hidden">
                   <span className="flex items-center gap-2"><Clock3 size={17} className="text-indigo-700" aria-hidden="true" />Confirmation delivery health and alerts</span>
                   <ChevronDown size={17} className="shrink-0 text-slate-500 transition-transform group-open:rotate-180" aria-hidden="true" />
@@ -432,7 +428,7 @@ export default async function AdminConfirmedTripsPage({ searchParams }: Props) {
                 </div>
               </details>
 
-              <Link href="/admin/flight-status" className="flex min-h-11 items-center justify-between gap-3 rounded-xl border border-slate-200/80 bg-slate-100/60 px-3 py-2 text-sm font-semibold text-slate-800 hover:border-indigo-300 hover:bg-indigo-50/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
+              <Link href="/admin/flight-status" className="flex min-h-11 items-center justify-between gap-3 rounded-xl border border-slate-200/80 bg-white px-3 py-2 text-sm font-semibold text-slate-800 hover:border-indigo-300 hover:bg-indigo-50/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
                 <span className="flex items-center gap-2"><Plane size={17} className="text-indigo-700" aria-hidden="true" />Flight status monitoring</span>
                 <ArrowRight size={17} className="shrink-0 text-slate-500" aria-hidden="true" />
               </Link>
