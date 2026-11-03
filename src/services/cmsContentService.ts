@@ -862,6 +862,7 @@ export async function getCmsContentScopeSummary(
       total: 0,
       draft: 0,
       published: 0,
+      publishedInScope: 0,
       hidden: 0,
       archived: 0,
     };
@@ -871,7 +872,7 @@ export async function getCmsContentScopeSummary(
   if (!parsedMarket.success || !parsedLocale.success) {
     throw new CmsContentError("INVALID", "CMS scope is invalid.");
   }
-  const [scope, groups] = await Promise.all([
+  const [scope, groups, publishedInScope] = await Promise.all([
     db.cmsContentScope.findUnique({
       where: {
         type_market_locale: {
@@ -898,6 +899,17 @@ export async function getCmsContentScopeSummary(
       },
       _count: { _all: true },
     }),
+    // A saved draft may move scope without moving its published version.
+    // This count mirrors the public reader's published market/locale predicate.
+    db.cmsContentItem.count({
+      where: {
+        type,
+        status: "PUBLISHED",
+        publishedMarket: parsedMarket.data,
+        publishedLocale: parsedLocale.data,
+        publishedPayload: { not: Prisma.DbNull },
+      },
+    }),
   ]);
   const counts = new Map(groups.map((group) => [group.status, group._count._all]));
   return {
@@ -909,6 +921,7 @@ export async function getCmsContentScopeSummary(
     total: groups.reduce((sum, group) => sum + group._count._all, 0),
     draft: counts.get("DRAFT") ?? 0,
     published: counts.get("PUBLISHED") ?? 0,
+    publishedInScope,
     hidden: counts.get("HIDDEN") ?? 0,
     archived: counts.get("ARCHIVED") ?? 0,
   };
