@@ -68,9 +68,10 @@ test("genuine alerts expand in place and reuse protected acknowledgement", () =>
 
 test("old Confirmation alerts links safely redirect to Delivery Health within Trip operations", () => {
   assert.match(route, /await requireAdminSession\("\/admin\/confirmed-trips\/alerts"\)/);
-  assert.match(route, /redirect\("\/admin\/confirmed-trips\/operations#confirmation-delivery-health-title"\)/);
+  assert.match(route, /redirect\("\/admin\/confirmed-trips\/operations\?panel=delivery#confirmation-delivery-health-title"\)/);
   assert.doesNotMatch(route, /<AdminPageShell|Monitoring inactive|No confirmation provider feed is configured|<AdminSectionCard/);
   assert.match(operations, /id="confirmation-delivery-health-title"/);
+  assert.match(operations, /open=\{expandDelivery\}/);
   assert.match(globalAlerts, /title="Notifications & Alerts"/);
   assert.match(globalAlerts, /<AdminAlertAcknowledgeButton/);
   assert.match(navigation, /href: "\/admin\/notifications", parentHref: "\/admin\/system"/);
