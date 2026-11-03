@@ -26,12 +26,25 @@ test("Trips preserves its existing admin workspace without a visible page introd
   assert.match(page, /<AdminPageShell title="Trips" hideHeader>/);
   assert.match(page, /role="group" aria-label="Trip shortcuts"/);
   assert.match(navigation, /href: "\/admin\/confirmed-trips", label: "Trips"/);
-  assert.match(page, /href="\/admin\/confirmed-trips\/records"/);
+  assert.doesNotMatch(page, /href="\/admin\/confirmed-trips\/records"|Browse confirmed trips|Open full directory/);
   assert.match(page, /href="\/admin\/confirmed-trips\/operations"/);
   assert.match(page, /href="\/admin\/flight-status"/);
   assert.match(shell, /border-slate-200 bg-white shadow-sm/);
   assert.doesNotMatch(page, /Admin operations|Jump to:/);
   assert.doesNotMatch(page, /Kurioticket handles refunds|Cancel booking|Issue ticket/);
+});
+
+test("Trip directory is the primary record workspace without duplicate entry links", () => {
+  assert.doesNotMatch(page, /Browse confirmed trips|Open full directory/);
+  assert.doesNotMatch(page, /href="\/admin\/confirmed-trips\/records"/);
+  assert.doesNotMatch(loading, /Browse confirmed trips|href="\/admin\/confirmed-trips\/records"/);
+  assert.match(page, /<TripDirectoryView rows=\{directory\.rows\} subtle \/>/);
+  assert.match(page, /tripDirectoryHref\(filters, directory\.nextCursor\)/);
+  assert.match(page, /Older matching trips/);
+  assert.match(recordsView, /encodeURIComponent\(trip\.id\)/);
+  assert.match(directory, /await requireAdminSession\("\/admin\/confirmed-trips\/records"\)/);
+  assert.match(page, /href="\/admin\/confirmed-trips\/operations"/);
+  assert.match(page, /href="\/admin\/flight-status"/);
 });
 
 test("main Trips workspace contains two compact sections and a visible Trip operations shortcut", () => {
@@ -208,11 +221,13 @@ test("both directory views use genuine records and the same read-only details ro
 test("relocated Trip operations remains discoverable, authenticated and complete", () => {
   assert.match(page, /href="\/admin\/confirmed-trips\/operations"/);
   assert.match(loading, /href="\/admin\/confirmed-trips\/operations"/);
+  assert.doesNotMatch(loading, /Browse confirmed trips|href="\/admin\/confirmed-trips\/records"/);
   assert.doesNotMatch(page, /Related trip operations|getConfirmationDeliveryHealth\(\)|getConfirmedTripsIntegrationReadiness\(\)/);
   assert.match(operationsPage, /<AdminPageShell title="Trip operations" hideHeader>/);
   assert.match(operationsPage, /await requireAdminSession\("\/admin\/confirmed-trips\/operations"\)/);
   assert.match(operationsPage, /href="\/admin\/confirmed-trips"/);
-  assert.match(operationsPage, /href="\/admin\/confirmed-trips\/records"/);
+  assert.doesNotMatch(operationsPage, /href="\/admin\/confirmed-trips\/records"|Browse confirmed trips/);
+  assert.match(operationsPage, /Back to Trips/);
   assert.match(operationsPage, /href="\/admin\/flight-status"/);
   assert.match(operationsPage, /Detailed product and provider breakdowns/);
   assert.match(operationsPage, /Confirmation integration readiness/);

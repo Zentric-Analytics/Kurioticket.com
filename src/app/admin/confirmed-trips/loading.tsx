@@ -9,7 +9,6 @@ export default function ConfirmedTripsLoading() {
       <AdminSectionCard className="min-w-0 p-4 sm:p-5 lg:p-6">
         <div role="group" aria-label="Trip shortcuts" className="mb-3 flex min-w-0 flex-wrap items-center justify-end gap-2">
           <div className="flex flex-wrap justify-end gap-2">
-            <Link href="/admin/confirmed-trips/records" className="inline-flex min-h-9 items-center rounded-lg border border-indigo-200 bg-white px-3 text-sm font-semibold text-indigo-700">Browse confirmed trips</Link>
             <Link href="/admin/confirmed-trips/operations" className="inline-flex min-h-9 items-center rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700">Trip operations</Link>
             <Link href="/admin/flight-status" className="inline-flex min-h-9 items-center rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700">Flight status</Link>
           </div>

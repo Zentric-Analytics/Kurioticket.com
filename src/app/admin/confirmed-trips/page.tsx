@@ -79,7 +79,6 @@ export default async function AdminConfirmedTripsPage({ searchParams }: Props) {
       <AdminSectionCard className="min-w-0 p-4 sm:p-5 lg:p-6">
         <div role="group" aria-label="Trip shortcuts" className="mb-3 flex min-w-0 flex-wrap items-center justify-end gap-2">
           <div className="flex flex-wrap justify-end gap-2">
-            <Link href="/admin/confirmed-trips/records" className="inline-flex min-h-9 items-center justify-center rounded-lg border border-indigo-200 bg-white px-3 text-sm font-semibold text-indigo-700 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">Browse confirmed trips</Link>
             <Link href="/admin/confirmed-trips/operations" className="inline-flex min-h-9 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">Trip operations</Link>
             <Link href="/admin/flight-status" className="inline-flex min-h-9 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">Flight status</Link>
           </div>
@@ -111,12 +110,7 @@ export default async function AdminConfirmedTripsPage({ searchParams }: Props) {
           </section>
 
           <section aria-labelledby="trip-directory-title" id="trip-directory" className="min-w-0 rounded-xl border border-slate-200/80 bg-white px-4 py-3 sm:px-5 sm:py-4">
-            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-              <h2 id="trip-directory-title" className="text-base font-semibold text-slate-950">Trip directory</h2>
-              <Link href={tripDirectoryHref(filters)} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-indigo-200 px-3 text-xs font-semibold text-indigo-700 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
-                Open full directory <ArrowRight size={14} aria-hidden="true" />
-              </Link>
-            </div>
+            <h2 id="trip-directory-title" className="mb-3 text-base font-semibold text-slate-950">Trip directory</h2>
 
             <TripFilterControls filters={filters} range={range} dateFields={dateFields}
               key={[filters.q, filters.provider, filters.product, filters.status, range, filters.from, filters.to].join("|")}

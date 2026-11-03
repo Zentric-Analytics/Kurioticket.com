@@ -17,9 +17,6 @@ export default function TripOperationsLoading() {
           <Link href="/admin/confirmed-trips" className="inline-flex min-h-9 items-center gap-1.5 rounded-lg px-1.5 text-[13px] font-semibold text-slate-700">
             <ArrowLeft size={16} aria-hidden="true" /> Back to Trips
           </Link>
-          <Link href="/admin/confirmed-trips/records" className="inline-flex min-h-9 items-center rounded-lg border border-indigo-200 bg-white px-3 text-xs font-semibold text-indigo-700">
-            Browse confirmed trips
-          </Link>
         </nav>
         <div role="status" aria-live="polite" className="sr-only">Loading trip operations…</div>
         <section aria-labelledby="trip-operations-loading-heading" aria-busy="true" className="min-w-0 rounded-xl border border-slate-200/80 bg-white px-4 py-3 sm:px-5 sm:py-4">
