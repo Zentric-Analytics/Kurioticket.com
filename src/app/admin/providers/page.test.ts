@@ -4,7 +4,7 @@ import test from "node:test";
 
 import { adminNavigation } from "@/lib/adminNavigation";
 import { getProviderOutcomeWidths } from "@/lib/adminProviderVisuals";
-import { providerHandoffFiltersHref, shouldAcceptHandoffFilterResponse } from "@/lib/adminProviderHandoffFilterUrl";
+import { providerHandoffFiltersHref, providerHandoffHistoryFilterHref, shouldAcceptHandoffFilterResponse } from "@/lib/adminProviderHandoffFilterUrl";
 import { filterProviderOperationalStatuses, filterProviderStatuses, normalizeProductFilter, productFilters } from "@/lib/adminProviderFilters";
 import type { ProviderOperationalStatus, ProviderOperationalServiceStatus } from "@/services/providerOperationalStatusCore";
 
@@ -427,6 +427,29 @@ test("No-script referral date selection submits exactly one days field", () => {
   assert.match(referralWindowFilter, /<select id="referral-window-fallback" name="days"/);
   assert.match(referralWindowFilter, /referral-window-enhanced \{ display: none !important; \}/);
   assert.match(referralWindowFilter, /<button type="submit"/);
+});
+
+test("Handoff browser history only bypasses the stale-response guard for real filter changes", () => {
+  const original = {
+    product: "HOTEL", identity: "guest", correlation: "unavailable",
+    provider: "KAYAK", environment: "staging",
+  };
+  const scope = {
+    userId: "", visitorId: "", from: "2026-10-01", to: "2026-11-03",
+  };
+  const currentHref = providerHandoffFiltersHref(original, scope);
+  const cursorOnly = currentHref + "&cursor=next-record&limit=50";
+  assert.equal(providerHandoffHistoryFilterHref(new URL(cursorOnly, "https://internal.example").search),
+    currentHref);
+  assert.notEqual(providerHandoffHistoryFilterHref("?product=FLIGHT&identity=guest"),
+    currentHref);
+  // A cursor-only change must not set the override used for external
+  // filter navigation. Otherwise the next older search response wins.
+  assert.match(handoffFilters, /providerHandoffHistoryFilterHref\(window\.location\.search\) === latestServerFilterHref\.current/);
+  assert.match(handoffFilters, /externalNavigation\.current = false;\s+return;/);
+  assert.match(handoffFilters, /latestServerFilterHref\.current = providerHandoffFiltersHref\(initial, scope\)/);
+  assert.equal(shouldAcceptHandoffFilterResponse(original, scope,
+    currentHref, "KAYAK sandbox", false), false);
 });
 
 test("Tasks 9–10 simplify only the handoff detail header and move back navigation left", () => {
