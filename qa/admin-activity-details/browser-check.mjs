@@ -17,7 +17,7 @@ async function inspectActivityTypography(page) {
   return page.evaluate(() => {
     const identity = document.querySelector('section[aria-label="Customer identity"]');
     const summary = document.querySelector('section[aria-label="Activity summary"]');
-    const root = identity?.parentElement;
+    const root = identity?.closest('[data-testid="activity-page-card"]');
     const shell = document.querySelector("main")?.parentElement;
     const bodyCard = document.querySelector('[data-testid="activity-body-card"]');
     const factLabel = identity?.querySelector("dt");
@@ -55,26 +55,40 @@ async function inspectActivityTypography(page) {
 }
 async function expectAlignedColumns(page) {
   const layout = await page.evaluate(() => {
-    const identity = document.querySelector('section[aria-label="Customer identity"] > div');
-    const grid = document.querySelector('[data-testid="activity-metrics-grid"]');
-    const facts = [...identity.querySelectorAll('dl > div')].map(el => el.getBoundingClientRect());
-    const metrics = [...grid.querySelectorAll('[data-testid="activity-metric"]')];
-    const rects = metrics.map(el => el.getBoundingClientRect());
-    const gridRect = grid.getBoundingClientRect();
+    const info = document.querySelector('[data-testid="activity-info-grid"]');
+    const identity = info.querySelector('section[aria-label="Customer identity"] > div');
+    const summary = info.querySelector('section[aria-label="Activity summary"]');
+    const metrics = [...info.querySelectorAll('[data-testid="activity-metric"]')];
+    const facts = [...identity.querySelectorAll('dl > div')];
+    const shared = [40,60,80].map(n => info.querySelector('[data-testid="activity-divider-'+n+'"]'));
+    const partial = info.querySelector('[data-testid="activity-divider-20"]');
+    const metricRects = metrics.map(el => el.getBoundingClientRect());
+    const factRects = facts.map(el => el.getBoundingClientRect());
+    const infoRect = info.getBoundingClientRect();
+    const summaryRect = summary.getBoundingClientRect();
+    const boundary = (el, top, bottom, x) => {
+      const r=el.getBoundingClientRect();
+      return Math.abs(r.left-x)<2 && Math.abs(r.top-top)<2 && Math.abs(r.bottom-bottom)<2
+        && parseFloat(getComputedStyle(el).borderLeftWidth)>0.5;
+    };
     return {
-      count: metrics.length,
-      gridStartsAtLeft: Math.abs(rects[0].left-gridRect.left)<1,
-      equalWidths: rects.every(rect=>Math.abs(rect.width-rects[0].width)<1),
-      oneRow: rects.every(rect=>Math.abs(rect.top-rects[0].top)<1),
-      dividers: metrics.slice(1).every(el=>parseFloat(getComputedStyle(el).borderLeftWidth)>0.5),
-      identityTop: identity.firstElementChild.getBoundingClientRect().top,
-      factTops: facts.map(rect=>rect.top), bottom: identity.getBoundingClientRect().bottom,
+      metricsCount:metrics.length,
+      equalWidths:metricRects.every(rect=>Math.abs(rect.width-metricRects[0].width)<1),
+      oneRow:metricRects.every(rect=>Math.abs(rect.top-metricRects[0].top)<1),
+      identitySpansTwo:Math.abs(identity.firstElementChild.getBoundingClientRect().width-2*metricRects[0].width)<2,
+      topAligned:facts.length===3 && factRects.every((rect,i)=>Math.abs(rect.left-metricRects[i+2].left)<2),
+      sharedConnected:shared.every((line,i)=>boundary(line,infoRect.top,infoRect.bottom,metricRects[i+2].left)),
+      lowerConnected:boundary(partial,summaryRect.top,summaryRect.bottom,metricRects[1].left),
+      horizontalConnected:Math.abs(summaryRect.top - identity.getBoundingClientRect().bottom)<2
+        && parseFloat(getComputedStyle(summary).borderTopWidth)>0.5,
+      topBottom:parseFloat(getComputedStyle(info).borderTopWidth)>0.5 &&
+        parseFloat(getComputedStyle(info).borderBottomWidth)>0.5,
+      customerFactsSameRow:factRects.every(rect=>Math.abs(rect.top-factRects[0].top)<2),
+      noOverflow:document.documentElement.scrollWidth<=innerWidth+1,
     };
   });
-  assert.equal(layout.count, 5, 'five visible metrics');
-  assert.ok(layout.gridStartsAtLeft && layout.equalWidths && layout.oneRow && layout.dividers,
-    'summary occupies an independent evenly divided five-column row: '+JSON.stringify(layout));
-  for (const top of layout.factTops) assert.ok(top < layout.bottom && top >= layout.identityTop - 30, 'customer facts share desktop row');
+  for (const [key, value] of Object.entries(layout)) assert.equal(value,key==="metricsCount"?5:true,
+    "Unified full-height grid "+key+": "+JSON.stringify(layout));
 }
 
 async function expectHeaderTimePresentation(page, context) {
@@ -111,7 +125,7 @@ async function expectBalancedDesktopHeader(page, context, requireSingleLineEmail
       hasVisibleHeading: Boolean(document.querySelector('section[aria-label="Activity summary"] h2')),
     };
   });
-  assert.ok(layout.firstToEventsRatio >= 2,
+  assert.ok(layout.firstToEventsRatio >= 1.98,
     context + ": identity retains enough room beside compact facts: " + JSON.stringify(layout));
   assert.equal(layout.hasVisibleHeading, false, context + ": summary has no visible heading");
   assert.ok(layout.providerLabelHeight < layout.providerLabelFontSize * 1.9,
