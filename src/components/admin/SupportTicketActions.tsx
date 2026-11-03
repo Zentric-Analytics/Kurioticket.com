@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 
 import { AdminDirectorySelect } from "@/components/admin/AdminDirectorySelect";
 import { AdminTextarea } from "@/components/admin/AdminPageShell";
@@ -96,6 +96,10 @@ export function SupportTicketStatusControl({ ticketId, status }: { ticketId: str
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isStatusPending, startStatusTransition] = useTransition();
+
+  useEffect(() => {
+    setSelectedStatus(status);
+  }, [status]);
 
   function updateStatus() {
     if (selectedStatus === status || isStatusPending) return;
