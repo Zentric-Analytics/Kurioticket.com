@@ -110,7 +110,7 @@ export async function listAdminConfirmedTrips(
     ] }
     : undefined;
   try {
-    const [count, page, groupedStatuses] = await db.$transaction([
+    const [count, page, upcoming, past, cancelled] = await db.$transaction([
       db.myTrip.count({ where }),
       db.myTrip.findMany({
         where: seek ? { AND: [where, seek] } : where,
@@ -118,7 +118,9 @@ export async function listAdminConfirmedTrips(
         take: ADMIN_CONFIRMED_TRIPS_PAGE_SIZE + 1,
         select,
       }),
-      db.myTrip.groupBy({ by: ["status"], where, _count: { _all: true } }),
+      db.myTrip.count({ where: { AND: [where, { status: "UPCOMING" }] } }),
+      db.myTrip.count({ where: { AND: [where, { status: "PAST" }] } }),
+      db.myTrip.count({ where: { AND: [where, { status: "CANCELLED" }] } }),
     ], { isolationLevel: "RepeatableRead" });
     const rows = page.slice(0, ADMIN_CONFIRMED_TRIPS_PAGE_SIZE);
     const last = rows.at(-1);
@@ -126,14 +128,9 @@ export async function listAdminConfirmedTrips(
       ? encodeAdminTripCursor({ id: last.id, confirmedAt: last.partnerConfirmationOccurredAt!.toISOString() }, filters, environment)
       : null;
     const now = new Date();
-    const byStatus = new Map(groupedStatuses.map(item => [item.status, item._count._all]));
     return {
       status: "ok", rows: rows.map(row => serialize(row, now)), nextCursor, totalMatching: count,
-      statusCounts: {
-        upcoming: byStatus.get("UPCOMING") ?? 0,
-        past: byStatus.get("PAST") ?? 0,
-        cancelled: byStatus.get("CANCELLED") ?? 0,
-      },
+      statusCounts: { upcoming, past, cancelled },
     };
   } catch (error) {
     console.error("[admin:confirmed-trip-directory]", error);
