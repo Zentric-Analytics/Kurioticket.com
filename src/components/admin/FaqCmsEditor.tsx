@@ -168,7 +168,7 @@ export function FaqCmsEditor({ initialItem, listQuery = "" }: { initialItem?: Fa
         <section className="min-w-0 space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <ContentSectionHeading>{item ? "Edit FAQ" : "Create FAQ draft"}</ContentSectionHeading>
+              <ContentSectionHeading>FAQ details</ContentSectionHeading>
               <p className="mt-1 text-[13px] leading-5 text-[#64748B]">
                 English FAQ content for the GLOBAL public FAQ scope.
               </p>
