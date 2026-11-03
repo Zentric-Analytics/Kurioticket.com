@@ -29,6 +29,7 @@ type CmsListScope = {
   status: CmsContentStatus | null;
   market: string | null;
   locale: string | null;
+  search: string | null;
 };
 
 function encodeCmsListCursor(scope: CmsListScope, updatedAt: string, id: string) {
@@ -45,6 +46,7 @@ function decodeCmsListCursor(value: string | undefined): { scope: CmsListScope; 
     const status = scope?.status ?? null;
     const market = scope?.market ?? null;
     const locale = scope?.locale ?? null;
+    const search = scope?.search ?? null;
     if (
       decoded.v !== 1 ||
       !scope ||
@@ -52,6 +54,7 @@ function decodeCmsListCursor(value: string | undefined): { scope: CmsListScope; 
       (status !== null && !cmsContentStatuses.includes(status as CmsContentStatus)) ||
       (market !== null && (typeof market !== "string" || !cmsMarketCodeSet.has(market))) ||
       (locale !== null && (typeof locale !== "string" || !/^[a-z]{2}(?:-[a-z]{2})?$/.test(locale))) ||
+      (search !== null && (typeof search !== "string" || search.length > 160 || /[\x00-\x1f\x7f]/.test(search))) ||
       typeof decoded.updatedAt !== "string" ||
       !cmsCursorIso.test(decoded.updatedAt) ||
       !Number.isFinite(Date.parse(decoded.updatedAt)) ||
@@ -61,7 +64,7 @@ function decodeCmsListCursor(value: string | undefined): { scope: CmsListScope; 
       throw new Error("invalid");
     }
     return {
-      scope: { type: type as CmsContentType | null, status: status as CmsContentStatus | null, market, locale },
+      scope: { type: type as CmsContentType | null, status: status as CmsContentStatus | null, market, locale, search },
       updatedAt: new Date(decoded.updatedAt).toISOString(),
       id: decoded.id,
     };
@@ -696,6 +699,7 @@ export async function listAdminCmsContent(input: {
   locale?: string;
   limit?: number;
   cursor?: string;
+  search?: string;
 } = {}) {
   const db = getOptionalPrisma();
   if (!db) throw new CmsContentError("UNAVAILABLE", "CMS storage is unavailable.");
@@ -705,6 +709,10 @@ export async function listAdminCmsContent(input: {
   if (parsedMarket && !parsedMarket.success) throw new CmsContentError("INVALID", "Market filter is invalid.", parsedMarket.error.flatten());
   const parsedLocale = input.locale ? localeSchema.safeParse(input.locale) : null;
   if (parsedLocale && !parsedLocale.success) throw new CmsContentError("INVALID", "Locale filter is invalid.", parsedLocale.error.flatten());
+  const search = input.search?.trim() || null;
+  if (search && (search.length > 160 || /[\x00-\x1f\x7f]/.test(search))) {
+    throw new CmsContentError("INVALID", "Search term must be 160 characters or fewer.", { field: "q" });
+  }
   const limit = input.limit ?? 50;
   if (!Number.isInteger(limit) || limit < 1 || limit > 100) {
     throw new CmsContentError("INVALID", "Limit must be an integer from 1 to 100.", { field: "limit" });
@@ -715,29 +723,69 @@ export async function listAdminCmsContent(input: {
     status: input.status ?? cursor?.scope.status ?? null,
     market: parsedMarket?.success ? parsedMarket.data : cursor?.scope.market ?? null,
     locale: parsedLocale?.success ? parsedLocale.data : cursor?.scope.locale ?? null,
+    search: input.search !== undefined ? search : cursor?.scope.search ?? null,
   };
   if (cursor && JSON.stringify(cursor.scope) !== JSON.stringify(scope)) {
     throw new CmsContentError("INVALID", "CMS cursor does not match this query.", { field: "cursor" });
   }
 
-  const rows = await db.cmsContentItem.findMany({
-    where: {
-      ...(scope.type ? { type: scope.type } : {}),
-      ...(scope.status ? { status: scope.status } : {}),
-      ...(scope.market ? { market: scope.market } : {}),
-      ...(scope.locale ? { locale: scope.locale } : {}),
-      ...(cursor
-        ? {
-            OR: [
-              { updatedAt: { lt: new Date(cursor.updatedAt) } },
-              { updatedAt: new Date(cursor.updatedAt), id: { lt: cursor.id } },
-            ],
-          }
-        : {}),
-    },
-    orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
-    take: limit + 1,
-  });
+
+  // Search runs in the database, not over just the first 100 items on screen.
+  // Every interpolated value is bound through Prisma.sql, including the LIKE pattern.
+  // Scope and continuation cursor are still enforced before any rows are returned.
+  const rows = scope.search
+    ? await (async () => {
+        const pattern = "%" + scope.search.replace(/[\\%_]/g, (character) => "\\" + character) + "%";
+        const predicates: Prisma.Sql[] = [Prisma.sql`TRUE`];
+        if (scope.type) predicates.push(Prisma.sql`"type"::text = ${scope.type}`);
+        if (scope.status) predicates.push(Prisma.sql`"status"::text = ${scope.status}`);
+        if (scope.market) predicates.push(Prisma.sql`"market" = ${scope.market}`);
+        if (scope.locale) predicates.push(Prisma.sql`"locale" = ${scope.locale}`);
+        if (cursor) {
+          const updatedAt = new Date(cursor.updatedAt);
+          predicates.push(Prisma.sql`("updatedAt" < ${updatedAt} OR ("updatedAt" = ${updatedAt} AND "id" < ${cursor.id}))`);
+        }
+        predicates.push(Prisma.sql`(
+          "key" ILIKE ${pattern}
+          OR EXISTS (
+            SELECT 1 FROM jsonb_each_text(
+              CASE WHEN jsonb_typeof("draftPayload") = 'object' THEN "draftPayload" ELSE '{}'::jsonb END
+            ) AS field(key, value)
+            WHERE field.value ILIKE ${pattern}
+          )
+        )`);
+        const matches = await db.$queryRaw<Array<{ id: string }>>(Prisma.sql`
+          SELECT "id" FROM "CmsContentItem"
+          WHERE ${Prisma.join(predicates, " AND ")}
+          ORDER BY "updatedAt" DESC, "id" DESC
+          LIMIT ${limit + 1}
+        `);
+        if (matches.length === 0) return [];
+        const matchedRows = await db.cmsContentItem.findMany({ where: { id: { in: matches.map((entry) => entry.id) } } });
+        const byId = new Map(matchedRows.map((item) => [item.id, item]));
+        return matches.flatMap((entry) => {
+          const item = byId.get(entry.id);
+          return item ? [item] : [];
+        });
+      })()
+    : await db.cmsContentItem.findMany({
+        where: {
+          ...(scope.type ? { type: scope.type } : {}),
+          ...(scope.status ? { status: scope.status } : {}),
+          ...(scope.market ? { market: scope.market } : {}),
+          ...(scope.locale ? { locale: scope.locale } : {}),
+          ...(cursor
+            ? {
+                OR: [
+                  { updatedAt: { lt: new Date(cursor.updatedAt) } },
+                  { updatedAt: new Date(cursor.updatedAt), id: { lt: cursor.id } },
+                ],
+              }
+            : {}),
+        },
+        orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
+        take: limit + 1,
+      });
 
   const page = rows.slice(0, limit);
   const last = page.at(-1);
