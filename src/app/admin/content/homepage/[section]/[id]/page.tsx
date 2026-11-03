@@ -1,11 +1,7 @@
+import { ContentPageFrame, ContentSectionHeading, ContentStatusPill } from "@/components/admin/ContentWorkspace";
 import { notFound } from "next/navigation";
 
-import {
-  AdminLinkButton,
-  AdminPageShell,
-  AdminSectionCard,
-  AdminStatusBadge,
-} from "@/components/admin/AdminPageShell";
+import { AdminStatusBadge } from "@/components/admin/AdminPageShell";
 import { HomepageCmsEditor } from "@/components/admin/HomepageCmsEditor";
 import { CmsRevisionRestoreButton } from "@/components/admin/CmsRevisionRestoreButton";
 import { hotelDestinations } from "@/data/hotelDestinations";
@@ -37,10 +33,11 @@ export default async function HomepageCmsDetailPage({ params, searchParams }: Pa
   const nav = homepageCmsListNavigation(section, await searchParams, result.item.market);
 
   return (
-    <AdminPageShell
+    <ContentPageFrame
       title={`Edit ${config.singular}`}
-      description="Review the draft, publish intentionally, and inspect the immutable revision trail."
-      actions={<AdminLinkButton href={nav.listHref}>Back to {config.title}</AdminLinkButton>}
+      subtitle="Edit the draft, manage publication and review its revision history."
+      backHref={nav.listHref}
+      backLabel={`Back to ${config.title}`}
     >
       <div className="space-y-5">
         <HomepageCmsEditor
@@ -52,14 +49,14 @@ export default async function HomepageCmsDetailPage({ params, searchParams }: Pa
           hotelOptions={section === "hotel-destinations" ? getHotelOptions() : []}
         />
 
-        <AdminSectionCard className="overflow-hidden p-0">
-          <div className="border-b border-slate-100 p-5">
-            <h2 className="text-lg font-black text-slate-950">Revision history</h2>
+        <section className="mt-7 min-w-0">
+          <div className="mb-3">
+            <ContentSectionHeading>Revision history</ContentSectionHeading>
             <p className="mt-1 text-sm leading-6 text-slate-600">Recent immutable draft and published snapshots.</p>
           </div>
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-[#E5E7EB] border-t border-[#E5E7EB]">
             {result.revisions.map((revision) => (
-              <div key={revision.id} className="grid gap-3 p-5 lg:grid-cols-[90px_130px_100px_minmax(0,1fr)_200px_150px]">
+              <div key={revision.id} className="grid gap-3 py-4 lg:grid-cols-[90px_130px_100px_minmax(0,1fr)_200px_150px]">
                 <div>
                   <p className="text-xs font-black uppercase tracking-wide text-slate-500">Version</p>
                   <p className="mt-1 font-black text-slate-950">v{revision.version}</p>
@@ -93,9 +90,9 @@ export default async function HomepageCmsDetailPage({ params, searchParams }: Pa
               </div>
             ))}
           </div>
-        </AdminSectionCard>
+        </section>
       </div>
-    </AdminPageShell>
+    </ContentPageFrame>
   );
 }
 
