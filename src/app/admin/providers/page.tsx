@@ -4,6 +4,7 @@ import { parseAttributionDays } from "@/services/referralAttributionService";
 import Link from "next/link";
 
 import { Info } from "lucide-react";
+import { parseProviderHealthHours, providerHealthHref, providerHealthWindows, providerSearchActivityHref } from "@/lib/adminProviderAttention";
 import { getProviderOutcomeWidths } from "@/lib/adminProviderVisuals";
 import { ProviderDirectoryTable, type ProviderDirectoryRecord } from "@/components/admin/ProviderDirectoryTable";
 import { formatDateTime, getProviderStatuses } from "@/lib/admin-data";
@@ -35,11 +36,14 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
   const filter = normalizeProductFilter(raw.product);
   const attribution = raw.view === "attribution";
   const attributionDays = parseAttributionDays(typeof raw.days === "string" ? raw.days : null);
+  const monitoringHours = parseProviderHealthHours(raw.hours);
+  const monitoringWindow = providerHealthWindows.find(window => window.hours === monitoringHours)!;
+  const monitoringNow = new Date();
 
   // Referral reporting has its own read path; avoid unnecessary readiness queries.
   const providerData = attribution
     ? null
-    : await Promise.all([getProviderStatuses(), getProviderOperationalStatuses()]);
+    : await Promise.all([getProviderStatuses(), getProviderOperationalStatuses(monitoringHours).catch(() => null)]);
   const allProviders = providerData?.[0] ?? [];
   const operational = providerData?.[1] ?? null;
   const integrations = attribution ? [] : getProviderIntegrationStatuses();
@@ -57,7 +61,7 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
       const status = operationalById.get(integration.id);
       const unscopedTiming = filter !== "all" && integration.products.length > 1;
       const timingUnavailable = operational === null ? "Unavailable"
-        : unscopedTiming ? "Not tracked by service" : "Not recorded in the last 24 hours";
+        : unscopedTiming ? "Not tracked by service" : "Not recorded in " + monitoringWindow.label.toLowerCase();
       return {
         id: "integration-" + integration.id,
         name: integration.provider,
@@ -71,7 +75,7 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
             ? { label: operationalLabel(status.operationalState), tone: operationalTone(status.operationalState) }
             : { label: "Not monitored", tone: "neutral" as const },
         lastActivity: displayTime(status?.lastActivityAt ?? null,
-          unscopedTiming ? "Not tracked by service" : operational === null ? "Unavailable" : "No recent activity"),
+          unscopedTiming ? "Not tracked by service" : operational === null ? "Unavailable" : "No activity in selected window"),
         detail: {
           environment: integration.environment === "test" ? "Test mode"
             : integration.environment === "live" ? "Live mode" : "Sandbox",
@@ -154,10 +158,24 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
           <section aria-labelledby="provider-attention" className="border-b border-[#D8E1EC] pb-5 pt-6">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h2 id="provider-attention" className="text-[15px] font-semibold text-[#020617]">
-                Providers requiring attention
+                {monitoringHours === 24 ? "Providers requiring attention" : "Provider health signals (historical)"}
               </h2>
-              <span className="text-[12px] text-[#64748B]">Last 24 hours · Current environment</span>
+              <nav aria-label="Provider health time window" className="flex flex-wrap items-center gap-3 text-[12px]">
+                {providerHealthWindows.map(window => (
+                  <Link key={window.hours} href={providerHealthHref(window.hours, filter)}
+                    aria-current={monitoringHours === window.hours ? "page" : undefined}
+                    className={monitoringHours === window.hours
+                      ? "font-semibold text-[#004BB8] underline underline-offset-4"
+                      : "text-[#475569] hover:text-[#004BB8]"}>
+                    {window.label}
+                  </Link>
+                ))}
+                <span className="text-[#64748B]">· Current environment</span>
+              </nav>
             </div>
+            {monitoringHours !== 24 ? (
+              <p className="mt-2 text-[12px] text-[#64748B]">Historical outcomes in this window do not necessarily represent an active incident.</p>
+            ) : null}
             {operational === null ? (
               <p className="mt-3 text-[13px] text-[#9A3412]" role="status">
                 Operational telemetry is unavailable. Provider health cannot be verified right now.
@@ -198,7 +216,7 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
                             <dd className="mt-0.5 text-[13px] font-medium text-[#0F172A]">
                               <ActivityTime value={provider.lastFailureAt}
                                 empty={filter !== "all" && unscopedTimingProviders.has(provider.id)
-                                  ? "Not available for this service" : "Not recorded in the last 24 hours"} />
+                                  ? "Not available for this service" : "Not recorded in " + monitoringWindow.label.toLowerCase()} />
                             </dd>
                           </div>
                           <div className="min-w-0">
@@ -206,7 +224,7 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
                             <dd className="mt-0.5 text-[13px] font-medium text-[#0F172A]">
                               <ActivityTime value={provider.lastSuccessAt}
                                 empty={filter !== "all" && unscopedTimingProviders.has(provider.id)
-                                  ? "Not available for this service" : "Not recorded in the last 24 hours"} />
+                                  ? "Not available for this service" : "Not recorded in " + monitoringWindow.label.toLowerCase()} />
                             </dd>
                           </div>
                         </dl>
@@ -256,6 +274,16 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
                             </tbody>
                           </table>
                         </div>
+                        {provider.serviceBreakdown.some(service => service.attemptedCalls > 0) ? (
+                          <div className="mt-3 border-t border-[#E7ECF5] pt-3">
+                            <Link href={providerSearchActivityHref({ provider: provider.provider, hours: monitoringHours, until: monitoringNow,
+                              product: filter === "all" ? undefined : filter === "flights" ? "FLIGHT" : filter === "hotels" ? "HOTEL" : "CAR" })}
+                              className="text-[13px] font-medium text-[#004BB8] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
+                              Review provider searches ›
+                            </Link>
+                            <p className="mt-1 text-[12px] text-[#64748B]">Shows searches with exact provider execution evidence during this reporting window; not all searches necessarily failed.</p>
+                          </div>
+                        ) : null}
                       </div>
                     </details>
                   </li>
@@ -263,7 +291,7 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
               </ul>
             ) : (
               <p className="mt-3 text-[13px] leading-5 text-[#475569]">
-                No failing or degraded provider calls were recorded for this selection in the last 24 hours.
+                No provider health warnings were recorded for this selection in the chosen reporting window.
                 A provider with no recent activity is not necessarily healthy.
               </p>
             )}
@@ -274,7 +302,7 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
             <nav aria-label="Filter providers by product"
               className="mt-2 flex min-w-0 gap-5 overflow-x-auto border-b border-[#D8E1EC]">
               {productFilters.map(item => (
-                <Link key={item.key} href={item.href}
+                <Link key={item.key} href={providerHealthHref(monitoringHours, item.key)}
                   aria-current={filter === item.key ? "page" : undefined}
                   className={"inline-flex h-10 shrink-0 items-center whitespace-nowrap border-b-2 px-1 text-[13px] font-medium text-[#020617] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] " +
                     (filter === item.key ? "border-[#004BB8]" : "border-transparent hover:border-[#D8E1EC]")}>
@@ -291,7 +319,7 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
               <h2 id="operational-performance-heading" className="text-[15px] font-semibold text-[#020617]">
                 Operational performance
               </h2>
-              <span className="text-[12px] text-[#64748B]">Last 24 hours</span>
+              <span className="text-[12px] text-[#64748B]">{monitoringWindow.label}</span>
             </div>
             {operational === null ? (
               <p className="mt-3 text-[13px] text-[#9A3412]" role="status">
