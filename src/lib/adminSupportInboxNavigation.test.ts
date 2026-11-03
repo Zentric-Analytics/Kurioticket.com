@@ -6,6 +6,8 @@ import {
   supportInboxHref,
   supportStatusTabs,
   supportPriorityOptions,
+  supportTicketDetailHref,
+  supportInboxReturnHref,
 } from "./adminSupportInboxNavigation";
 
 test("Support categories use actual form and system-generated storage values", () => {
@@ -36,4 +38,18 @@ test("Changing Support filters preserves other filters and clears the stale page
   assert.equal(all.searchParams.get("status"), null);
   assert.equal(all.searchParams.get("category"), null);
   assert.equal(all.searchParams.get("priority"), null);
+});
+
+
+test("Support ticket detail returns to the exact filtered inbox, including pagination", () => {
+  const params = new URLSearchParams("q=refund&status=OPEN&priority=HIGH&category=redirect&cursor=next-page&limit=25");
+  const detail = new URL(supportTicketDetailHref("ticket-123", params), "https://kurioticket.test");
+  assert.equal(detail.pathname, "/admin/support/ticket-123");
+  assert.equal(supportInboxReturnHref(detail.searchParams.get("inbox") || undefined), "/admin/support?" + params.toString());
+});
+
+test("Support detail return navigation cannot lead outside the Support inbox", () => {
+  assert.equal(supportInboxReturnHref("https://evil.example/admin?next=1"), "/admin/support");
+  assert.equal(supportInboxReturnHref("q=flight&redirect=https%3A%2F%2Fevil.example"), "/admin/support?q=flight");
+  assert.equal(supportInboxReturnHref(undefined), "/admin/support");
 });
