@@ -219,6 +219,8 @@ test("relocated Trip operations remains discoverable, authenticated and complete
   ]) assert.ok(operationsPage.includes(property), property);
   assert.match(operationsPage, /readiness\.feedReady \? <ConfirmedTripDeliveryAlerts \/> : null/);
   assert.match(operationsPage, /id="confirmation-delivery-health-title"/);
+  assert.match(operationsPage, /const expandDelivery = panel === "delivery"/);
+  assert.match(operationsPage, /open=\{expandDelivery\}/);
   assert.doesNotMatch(operationsPage, /mockData|sampleTrips|Math\.random|process\.env/);
 });
 
