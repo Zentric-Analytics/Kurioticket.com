@@ -72,14 +72,9 @@ export default async function AdminFlightStatusPage() {
             <Fact label="Endpoint" value="POST /api/internal/flight-status/updates" />
             <Fact label="Provider binding" value={readiness.credentialModel === "single_provider_bound_secret" ? "Single provider + dedicated secret" : "Unknown"} />
           </div>
-          <div className="mt-3 space-y-1.5">
-            <p className="text-[13px] leading-5 text-slate-600">
-              Each signed update must name the configured provider. A configured feed does not mean updates are arriving.
-            </p>
-            <p className="text-xs leading-5 text-slate-600">
-              Live status requires a valid signed update from the configured provider for a confirmed flight. Searches, handoffs and confirmations do not prove live status.
-            </p>
-          </div>
+          <p className="mt-3 text-[13px] leading-5 text-slate-600">
+            A configured feed does not mean updates are arriving. Live status requires signed provider updates for confirmed flights—not searches, handoffs or trip confirmations.
+          </p>
         </AdminSectionCard>
 
         {/* Keep monitoring cards visible when data is unavailable. */}
