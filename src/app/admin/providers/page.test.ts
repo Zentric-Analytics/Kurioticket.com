@@ -554,7 +554,7 @@ test("product filtering retains truthful timing metrics for a single-service pro
 test("provider workflow drilldowns preserve attribution scope and linked search navigation", () => {
   assert.doesNotMatch(referralPage, /provider: item\.provider, product: item\.product/);
   assert.doesNotMatch(referralPage, /sourcePage: item\.sourcePage/);
-  assert.doesNotMatch(referralPage, /<Link href=\{referralHandoffHref\(/);
+  assert.match(referralPage, /correlation: "unavailable"/);
   assert.match(handoffsPage, /sourcePage: one\(raw.sourcePage\)/);
   assert.match(handoffsPage, /handoffDetailHref\(handoff.id, handoff.environment, raw\)/);
   assert.match(handoffDetailPage, /handoffReturnHref\(raw\)/);
