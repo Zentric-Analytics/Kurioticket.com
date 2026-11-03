@@ -2,6 +2,7 @@ import AdminReferralAttributionPage from "@/app/admin/referral-attribution/page"
 import Link from "next/link";
 
 import { Info } from "lucide-react";
+import { getProviderOutcomeWidths } from "@/lib/adminProviderVisuals";
 import { ProviderDirectoryTable, type ProviderDirectoryRecord } from "@/components/admin/ProviderDirectoryTable";
 import { formatDateTime, getProviderStatuses } from "@/lib/admin-data";
 import {
@@ -139,7 +140,7 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
         </div>
       ) : (
         <>
-          <section aria-labelledby="provider-attention" className="border-b border-[#D8E1EC] py-5">
+          <section aria-labelledby="provider-attention" className="border-b border-[#D8E1EC] pb-5 pt-6">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h2 id="provider-attention" className="text-[15px] font-semibold text-[#020617]">
                 Providers requiring attention
@@ -151,10 +152,12 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
                 Operational telemetry is unavailable. Provider health cannot be verified right now.
               </p>
             ) : attention.length ? (
-              <ul className="mt-2 divide-y divide-[#E7ECF5]">
+              <ul className="mt-3 space-y-2">
                 {attention.map(provider => (
-                  <li key={provider.id} className="min-w-0">
-                    <details className="group py-3">
+                  <li key={provider.id}
+                    className={"min-w-0 border-l-[3px] pl-3 " +
+                      (provider.operationalState === "FAILING" ? "border-rose-500" : "border-amber-500")}>
+                    <details className="group py-2.5">
                       <summary className="flex min-w-0 cursor-pointer list-none flex-wrap items-center justify-between gap-3 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] [&::-webkit-details-marker]:hidden">
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-2">
@@ -171,7 +174,7 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
                           <span className="hidden group-open:inline">Hide details ‹</span>
                         </span>
                       </summary>
-                      <div className="mt-3 border-l-2 border-[#004BB8] pl-4">
+                      <div className="mt-3 border-t border-[#E7ECF5] pt-3">
                         <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-3">
                           <div>
                             <dt className="text-[12px] text-[#64748B]">Failure rate</dt>
@@ -227,7 +230,7 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
             )}
           </section>
 
-          <section aria-labelledby="provider-directory" className="border-b border-[#D8E1EC] py-5">
+          <section aria-labelledby="provider-directory" className="border-b border-[#D8E1EC] pb-6 pt-6">
             <h2 id="provider-directory" className="text-[15px] font-semibold text-[#020617]">All providers</h2>
             <nav aria-label="Filter providers by product"
               className="mt-2 flex min-w-0 gap-5 overflow-x-auto border-b border-[#D8E1EC]">
@@ -244,10 +247,13 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
           </section>
 
           <section id="operational-performance" aria-labelledby="operational-performance-heading"
-            className="border-b border-[#D8E1EC] py-5">
-            <h2 id="operational-performance-heading" className="text-[15px] font-semibold text-[#020617]">
-              Operational performance
-            </h2>
+            className="border-b border-[#D8E1EC] pb-6 pt-7">
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <h2 id="operational-performance-heading" className="text-[15px] font-semibold text-[#020617]">
+                Operational performance
+              </h2>
+              <span className="text-[12px] text-[#64748B]">Last 24 hours</span>
+            </div>
             {operational === null ? (
               <p className="mt-3 text-[13px] text-[#9A3412]" role="status">
                 Operational provider telemetry is unavailable because the database could not be read.
@@ -258,56 +264,73 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
               </p>
             ) : (
               <>
-                <div className="mt-3 min-w-0 overflow-x-auto" role="region"
-                  aria-labelledby="operational-performance-heading" tabIndex={0}>
-                  <table className="w-full min-w-[790px] text-left text-[13px]">
-                    <caption className="sr-only">Provider call totals and failure rates for the selected product.</caption>
-                    <thead className="border-b border-[#D8E1EC]">
-                      <tr>
-                        {["Provider", "Attempted", "Successful", "Failed", "Degraded", "Failure rate", "Avg latency"].map(label => (
-                          <th key={label} scope="col"
-                            className={label === "Provider" ? tableHeadingClass : numberHeadingClass}>
-                            {label}
-                            {label === "Attempted" ? (
-                              <span tabIndex={0} className="ml-1 inline-flex align-middle text-[#64748B]"
-                                title="Disabled calls are not counted as attempts."
-                                aria-label="Disabled calls are not counted as attempts.">
-                                <Info size={13} aria-hidden="true" />
-                              </span>
-                            ) : null}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[#E7ECF5]">
-                      {visibleOperational.map(provider => (
-                        <tr id={"provider-operation-" + provider.id} key={provider.id}
-                          className="scroll-mt-32 hover:bg-[#F8FAFC]">
-                          <th scope="row" className={tableCellClass + " font-normal"}>
-                            <span className="block font-semibold">{provider.provider}</span>
+                <div className="mt-2 divide-y divide-[#E7ECF5]" role="list"
+                  aria-label="Provider call outcome comparison">
+                  {visibleOperational.map(provider => {
+                    const segments = getProviderOutcomeWidths(provider);
+                    return (
+                      <div id={"provider-operation-" + provider.id} role="listitem"
+                        key={provider.id} className="py-4 first:pt-3 last:pb-3">
+                        <div className="flex min-w-0 flex-wrap items-start justify-between gap-x-6 gap-y-1.5">
+                          <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+                            <span className="text-[13px] font-semibold text-[#020617]">{provider.provider}</span>
                             <StatusIndicator value={operationalLabel(provider.operationalState)}
                               tone={operationalTone(provider.operationalState)} />
-                          </th>
-                          <td className={tableCellClass + " text-right tabular-nums"}>{provider.attemptedCalls.toLocaleString()}</td>
-                          <td className={tableCellClass + " text-right tabular-nums"}>{provider.successCalls.toLocaleString()}</td>
-                          <td className={tableCellClass + " text-right tabular-nums"}>{provider.failedCalls.toLocaleString()}</td>
-                          <td className={tableCellClass + " text-right tabular-nums"}>{provider.degradedCalls.toLocaleString()}</td>
-                          <td className={tableCellClass + " text-right tabular-nums"}>
-                            {formatProviderFailureRatePct(provider.failureRatePct, provider.failedCalls)}
-                          </td>
-                          <td className={tableCellClass + " text-right tabular-nums"}>
-                            {provider.averageLatencyMs === null ? "—" : provider.averageLatencyMs + " ms"}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                          </div>
+                          <div className="flex min-w-0 flex-wrap items-center gap-x-2 text-[12px] text-[#475569]">
+                            <span className="tabular-nums">{provider.attemptedCalls.toLocaleString()} attempted</span>
+                            <span tabIndex={0} className="inline-flex text-[#64748B]"
+                              title="Disabled calls are not counted as attempts."
+                              aria-label="Disabled calls are not counted as attempts.">
+                              <Info size={13} aria-hidden="true" />
+                            </span>
+                            <span aria-hidden="true">·</span>
+                            <span className="tabular-nums">
+                              {provider.averageLatencyMs === null
+                                ? "Average latency unavailable"
+                                : provider.averageLatencyMs.toLocaleString() + " ms avg latency"}
+                            </span>
+                          </div>
+                        </div>
+                        <div aria-hidden="true"
+                          className="mt-3 flex h-2 w-full overflow-hidden rounded-full bg-[#E7ECF5]">
+                          {segments.hasAttempts ? (
+                            <>
+                              <span className="h-full bg-emerald-600"
+                                style={{ width: String(segments.successPct) + "%" }} />
+                              <span className="h-full bg-rose-500"
+                                style={{ width: String(segments.failurePct) + "%" }} />
+                              <span className="h-full bg-amber-500"
+                                style={{ width: String(segments.degradedPct) + "%" }} />
+                            </>
+                          ) : null}
+                        </div>
+                        <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-[12px]">
+                          <span className="inline-flex items-center gap-1.5 text-[#475569]">
+                            <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-emerald-600" />
+                            <span className="tabular-nums">{provider.successCalls.toLocaleString()}</span> successful
+                          </span>
+                          <span className="inline-flex items-center gap-1.5 text-[#475569]">
+                            <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-rose-500" />
+                            <span className="tabular-nums">{provider.failedCalls.toLocaleString()}</span> failed
+                          </span>
+                          <span className="inline-flex items-center gap-1.5 text-[#475569]">
+                            <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                            <span className="tabular-nums">{provider.degradedCalls.toLocaleString()}</span> degraded
+                          </span>
+                          <span className="tabular-nums text-[#475569]">
+                            Failure rate: {formatProviderFailureRatePct(provider.failureRatePct, provider.failedCalls)}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
 
-                <h3 id="service-breakdown-heading" className="mt-5 text-[13px] font-semibold text-[#020617]">
+                <h3 id="service-breakdown-heading" className="mt-6 border-t border-[#E7ECF5] pt-4 text-[12px] font-semibold text-[#334155]">
                   Search service breakdown
                 </h3>
-                <div className="mt-2 min-w-0 overflow-x-auto" role="region"
+                <div className="mt-1 min-w-0 overflow-x-auto" role="region"
                   aria-labelledby="service-breakdown-heading" tabIndex={0}>
                   <table className="w-full min-w-[1050px] table-fixed text-[13px]">
                     <caption className="sr-only">
