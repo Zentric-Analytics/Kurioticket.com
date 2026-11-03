@@ -54,26 +54,26 @@ export default async function AdminReferralAttributionPage({
         </div>
       ) : null}
 
-      <dl className="grid grid-cols-2 gap-y-4 border-b border-[#D8E1EC] py-5 xl:grid-cols-4">
-        <div className="min-w-0 px-3 first:pl-0 xl:border-r xl:border-[#E7ECF5]">
+      <dl className="grid grid-cols-2 gap-x-4 gap-y-4 border-b border-[#D8E1EC] py-4 lg:grid-cols-4">
+        <div className="min-w-0 px-2 first:pl-0 lg:border-r lg:border-[#E7ECF5]">
           <dt className="text-[12px] text-[#64748B]">Provider handoffs</dt>
           <dd className="mt-1 text-[20px] font-semibold tabular-nums">
             {summary.dataAvailable ? summary.handoffs.total.toLocaleString() : "—"}
           </dd>
         </div>
-        <div className="min-w-0 px-3 xl:border-r xl:border-[#E7ECF5]">
+        <div className="min-w-0 px-2 lg:border-r lg:border-[#E7ECF5]">
           <dt className="text-[12px] text-[#64748B]">Linked to search</dt>
           <dd className="mt-1 text-[20px] font-semibold tabular-nums">
             {summary.dataAvailable ? summary.handoffs.linkedToSearch.toLocaleString() : "—"}
           </dd>
         </div>
-        <div className="min-w-0 px-3 xl:border-r xl:border-[#E7ECF5]">
+        <div className="min-w-0 px-2 lg:border-r lg:border-[#E7ECF5]">
           <dt className="text-[12px] text-[#64748B]">Not linked to search</dt>
           <dd className="mt-1 text-[20px] font-semibold tabular-nums">
             {summary.dataAvailable ? summary.handoffs.notLinkedToSearch.toLocaleString() : "—"}
           </dd>
         </div>
-        <div className="min-w-0 px-3 last:pr-0">
+        <div className="min-w-0 px-2 last:pr-0">
           <dt className="text-[12px] text-[#64748B]">Data state</dt>
           <dd className={"mt-1 text-[15px] font-medium " +
             (summary.dataAvailable ? "text-emerald-700" : "text-amber-700")}>
@@ -82,8 +82,8 @@ export default async function AdminReferralAttributionPage({
         </div>
       </dl>
       <p className="mt-2 text-[12px] leading-5 text-[#64748B]">
-        Handoffs record outbound provider referrals, not confirmed bookings or payments.
-        Unlinked handoffs have no verified search correlation.
+        Handoffs are outbound provider referrals, not confirmed bookings or payments.
+        Unlinked records have no verified search correlation.
       </p>
 
       {!summary.dataAvailable ? (
@@ -92,7 +92,7 @@ export default async function AdminReferralAttributionPage({
             message="The referral reader could not verify attribution data for this window. No zero-performance claim is being made." />
         </div>
       ) : (
-        <div className="mt-6 grid min-w-0 gap-x-8 gap-y-7 xl:grid-cols-2">
+        <div className="mt-5 grid min-w-0 items-start gap-x-8 gap-y-6 lg:grid-cols-2">
           <section aria-labelledby="handoffs-by-provider" className="min-w-0">
             <h2 id="handoffs-by-provider" className="mb-2 text-[15px] font-semibold">
               Handoffs by provider
