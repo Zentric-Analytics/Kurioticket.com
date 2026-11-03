@@ -69,7 +69,7 @@ export function ProviderDirectoryTable({ rows }: { rows: ProviderDirectoryRecord
     aria-labelledby="provider-directory" tabIndex={0}>
     <table className="w-full min-w-[820px] table-fixed text-left text-[13px]">
       <caption className="sr-only">
-        Provider product coverage, readiness, search health and recent activity.
+        Provider product coverage, integration readiness, measured search health and recent activity.
         Expand a provider for configuration, diagnostic timestamps and supported actions.
       </caption>
       <colgroup>
@@ -83,8 +83,8 @@ export function ProviderDirectoryTable({ rows }: { rows: ProviderDirectoryRecord
         <tr>
           <th scope="col" className={headingClass}>Provider</th>
           <th scope="col" className={headingClass}>Products</th>
-          <th scope="col" className={headingClass}>Readiness</th>
-          <th scope="col" className={headingClass}>Health</th>
+          <th scope="col" className={headingClass}>Integration readiness</th>
+          <th scope="col" className={headingClass}>Search health</th>
           <th scope="col" className={headingClass}>Last activity</th>
         </tr>
       </thead>
