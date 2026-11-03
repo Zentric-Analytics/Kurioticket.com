@@ -91,18 +91,35 @@ export function supportDeletionRequestHref(deletionRequestId: string, inbox: str
   return "/admin/account-deletions/" + encodeURIComponent(deletionRequestId) + "?" + params.toString();
 }
 
-export function supportTicketFromDeletionHref(ticketId: string, deletionRequestId: string) {
-  return "/admin/support/" + encodeURIComponent(ticketId) + "?fromDeletion=" + encodeURIComponent(deletionRequestId);
+export function supportTicketFromDeletionHref(
+  ticketId: string,
+  deletionRequestId: string,
+  fromSupport?: string,
+  inbox?: string,
+) {
+  const params = new URLSearchParams({ fromDeletion: deletionRequestId });
+  if (fromSupport === "1") {
+    params.set("fromSupport", "1");
+    const safeInboxQuery = scopedInboxReturnQuery(new URLSearchParams((inbox || "").slice(0, 2048)));
+    if (safeInboxQuery) params.set("inbox", safeInboxQuery);
+  }
+  return "/admin/support/" + encodeURIComponent(ticketId) + "?" + params.toString();
 }
 
 export function supportTicketBackHref(
   linkedDeletionRequestId: string | null,
   fromDeletion: string | undefined,
   inbox: string | undefined,
+  fromSupport?: string,
 ) {
-  return linkedDeletionRequestId && fromDeletion === linkedDeletionRequestId
-    ? "/admin/account-deletions/" + encodeURIComponent(linkedDeletionRequestId)
-    : supportInboxReturnHref(inbox);
+  // Only link back to a deletion record verified by the authorized Support detail.
+  if (!linkedDeletionRequestId || fromDeletion !== linkedDeletionRequestId) {
+    return supportInboxReturnHref(inbox);
+  }
+  // Keep the originating Support inbox available throughout the round trip.
+  return fromSupport === "1"
+    ? supportDeletionRequestHref(linkedDeletionRequestId, inbox)
+    : "/admin/account-deletions/" + encodeURIComponent(linkedDeletionRequestId);
 }
 
 export function deletionRequestBackHref(
