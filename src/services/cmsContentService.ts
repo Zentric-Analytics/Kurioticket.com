@@ -742,9 +742,10 @@ export async function listAdminCmsContent(input: {
   // Search runs in the database, not over just the first 100 items on screen.
   // Every interpolated value is bound through Prisma.sql, including the LIKE pattern.
   // Scope and continuation cursor are still enforced before any rows are returned.
-  const rows = scope.search
+  const searchTerm = scope.search;
+  const rows = searchTerm
     ? await (async () => {
-        const pattern = "%" + scope.search.replace(/[\\%_]/g, (character) => "\\" + character) + "%";
+        const pattern = "%" + searchTerm.replace(/[\\%_]/g, (character) => "\\" + character) + "%";
         const predicates: Prisma.Sql[] = [Prisma.sql`TRUE`];
         if (scope.type) predicates.push(Prisma.sql`"type"::text = ${scope.type}`);
         if (scope.status) predicates.push(Prisma.sql`"status"::text = ${scope.status}`);
