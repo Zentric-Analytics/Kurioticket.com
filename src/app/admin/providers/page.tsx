@@ -281,7 +281,7 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
                               className="text-[13px] font-medium text-[#004BB8] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
                               Review provider searches ›
                             </Link>
-                            <p className="mt-1 text-[12px] text-[#64748B]">Shows searches with exact provider execution evidence during this reporting window; not all searches necessarily failed.</p>
+                            <p className="mt-1 text-[12px] text-[#64748B]">Shows searches created in this date range with provider execution evidence. Provider calls can occur outside these search dates, so this is not an exact list of calls behind the warning or of failed searches.</p>
                           </div>
                         ) : null}
                       </div>
