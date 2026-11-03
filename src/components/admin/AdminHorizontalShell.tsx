@@ -116,7 +116,8 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
   const supportWorkspace = pathname === "/admin/support" || pathname.startsWith("/admin/support/");
   const providersWorkspace = pathname === "/admin/providers" || pathname === "/admin/providers/";
   // Match the connected Support detail view without changing the Account Deletions queue.
-  const accountDeletionDetail = /^\/admin\/account-deletions\/[^/]+\/?$/.test(pathname);
+  const accountDeletionParts = pathname.split("/").filter(Boolean);
+  const accountDeletionDetail = accountDeletionParts.length === 3 && accountDeletionParts[0] === "admin" && accountDeletionParts[1] === "account-deletions";
   const whiteWorkspace = usersDirectory || searchesWorkspace || supportWorkspace || providersWorkspace || accountDeletionDetail;
   return <AdminWorkspaceSearchProvider account={adminEmail || "admin"}><div className={"min-h-screen text-slate-950 " + (userActivity ? "bg-[#f1f5fb]" : whiteWorkspace ? "bg-white" : "bg-[#f1f5fb]")}>
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
