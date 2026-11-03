@@ -313,7 +313,8 @@ test("Task 3: standalone handoffs preserve filters, records and next-cursor beha
   assert.match(handoffsPage, /handoff\.identity\.userId \|\| handoff\.identity\.visitorId/);
   assert.match(handoffsPage, /handoff\.searchCorrelation\.kind === "exact"/);
   assert.match(handoffsPage, /handoffDetailHref\(handoff\.id, handoff\.environment, raw\)/);
-  assert.match(handoffsPage, /cursorHref\("\/admin\/redirects", raw, result\.data\.nextCursor\)/);
+  assert.match(handoffsPage, /handoffNextPageHref\(raw, result\.data\.nextCursor\)/);
+  assert.match(handoffsPage, /handoffPreviousPageHref\(raw\)/);
   assert.match(handoffsPage, /result\.status === "invalid"/);
 });
 
@@ -561,4 +562,5 @@ test("provider workflow drilldowns preserve attribution scope and linked search 
   assert.match(providersPage, /Investigate provider searches/);
   assert.match(directoryTable, /Integration readiness/);
   assert.match(directoryTable, /Search health/);
+  assert.match(directoryTable, /row\.investigateHref/);
 });
