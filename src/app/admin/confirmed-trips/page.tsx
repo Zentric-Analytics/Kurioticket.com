@@ -220,52 +220,64 @@ export default async function AdminConfirmedTripsPage({ searchParams }: Props) {
               </Link>
             </div>
 
-            <form method="get" action="/admin/confirmed-trips" aria-label="Filter trip directory" className="grid min-w-0 gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
-              <label className="min-w-0 text-xs font-medium text-slate-700 lg:col-span-2">Search trips
-                <input name="q" defaultValue={filters.q} maxLength={80} placeholder="Customer, reference, destination…"
-                  className="mt-1 h-9 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-xs text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500" />
-              </label>
-              <label className="min-w-0 text-xs font-medium text-slate-700 lg:col-span-2">Provider
-                <input name="provider" defaultValue={filters.provider} maxLength={100} placeholder="All providers"
-                  className="mt-1 h-9 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-xs text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500" />
-              </label>
-              <label className="min-w-0 text-xs font-medium text-slate-700">Travel type
-                <select name="product" defaultValue={filters.product} className="mt-1 h-9 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-2 text-xs text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
-                  <option value="all">All travel types</option><option value="FLIGHT">Flights</option><option value="HOTEL">Hotels</option><option value="CAR">Cars</option><option value="PACKAGE">Packages</option>
-                </select>
-              </label>
-              <label className="min-w-0 text-xs font-medium text-slate-700">Trip status
-                <select name="status" defaultValue={filters.status} className="mt-1 h-9 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-2 text-xs text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
-                  <option value="all">All statuses</option><option value="UPCOMING">Upcoming</option><option value="PAST">Past</option><option value="CANCELLED">Cancelled</option>
-                </select>
-              </label>
-              <label className="min-w-0 text-xs font-medium text-slate-700">Confirmation time range
-                <select disabled defaultValue="planned" aria-label="Precise time range requires backend integration" title="Precise time ranges will be available after backend integration"
-                  className="mt-1 h-9 w-full min-w-0 cursor-not-allowed rounded-lg border border-slate-200 bg-white px-2 text-xs text-slate-500">
-                  <option value="planned">Use UTC dates for now</option>
-                  <option value="10m">Last 10 minutes (planned)</option>
-                  <option value="30m">Last 30 minutes (planned)</option>
-                  <option value="24h">Last 24 hours (planned)</option>
-                  <option value="7d">Last 7 days (planned)</option>
-                  <option value="30d">Last 30 days (planned)</option>
-                </select>
-              </label>
-              <label className="min-w-0 text-xs font-medium text-slate-700">Tracking health
-                <select disabled defaultValue="unavailable" aria-label="Tracking health requires backend integration" title="Tracking health will be available after backend integration"
-                  className="mt-1 h-9 w-full min-w-0 cursor-not-allowed rounded-lg border border-slate-200 bg-white px-2 text-xs text-slate-500">
-                  <option value="unavailable">Not connected</option>
-                </select>
-              </label>
-              <label className="min-w-0 text-xs font-medium text-slate-700">Confirmed from (UTC)
-                <input type="date" name="from" defaultValue={filters.from} className="mt-1 h-9 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-2 text-xs text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500" />
-              </label>
-              <label className="min-w-0 text-xs font-medium text-slate-700">Confirmed to (UTC)
-                <input type="date" name="to" defaultValue={filters.to} className="mt-1 h-9 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-2 text-xs text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500" />
-              </label>
-              <div className="flex flex-wrap items-center gap-2 sm:col-span-2 lg:col-span-4">
-                <button type="submit" className="inline-flex min-h-9 items-center justify-center rounded-lg bg-indigo-700 px-4 text-xs font-semibold text-white hover:bg-indigo-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">Apply filters</button>
-                <Link href="/admin/confirmed-trips#trip-directory" className="inline-flex min-h-9 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">Clear filters</Link>
-                <span className="text-xs leading-5 text-slate-500">Precise 10- and 30-minute filters and tracking health require backend integration.</span>
+            <form method="get" action="/admin/confirmed-trips" aria-label="Filter trip directory" className="min-w-0">
+              <div className="grid min-w-0 grid-cols-1 items-end gap-x-2 gap-y-2.5 sm:grid-cols-2 md:grid-cols-4 lg:gap-x-1.5 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,0.95fr)_minmax(0,0.9fr)_minmax(0,0.9fr)_minmax(0,1.05fr)_minmax(0,0.95fr)_minmax(0,1.15fr)_minmax(0,1.15fr)] 2xl:gap-x-2.5">
+                <label className="block min-w-0 text-[11px] font-medium leading-4 text-slate-700 2xl:text-xs">Search trips
+                  <input name="q" type="search" defaultValue={filters.q} maxLength={80} placeholder="Search trips…" title="Search by customer, reference or destination"
+                    className="mt-1 block h-9 w-full min-w-0 max-w-full rounded-lg border border-slate-200 bg-white px-2 text-[11px] text-slate-900 placeholder:text-slate-500 focus-visible:border-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/25 2xl:px-3 2xl:text-xs" />
+                </label>
+                <label className="block min-w-0 text-[11px] font-medium leading-4 text-slate-700 2xl:text-xs">Provider
+                  <input name="provider" type="search" defaultValue={filters.provider} maxLength={100} placeholder="All providers" title="Filter by provider name"
+                    className="mt-1 block h-9 w-full min-w-0 max-w-full rounded-lg border border-slate-200 bg-white px-2 text-[11px] text-slate-900 placeholder:text-slate-500 focus-visible:border-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/25 2xl:px-3 2xl:text-xs" />
+                </label>
+                <label className="block min-w-0 text-[11px] font-medium leading-4 text-slate-700 2xl:text-xs">Travel type
+                  <select name="product" defaultValue={filters.product} title="Filter by travel type"
+                    className="mt-1 block h-9 w-full min-w-0 max-w-full rounded-lg border border-slate-200 bg-white pl-2 pr-1 text-[11px] text-slate-900 focus-visible:border-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/25 2xl:text-xs">
+                    <option value="all">All types</option><option value="FLIGHT">Flights</option><option value="HOTEL">Hotels</option><option value="CAR">Cars</option><option value="PACKAGE">Packages</option>
+                  </select>
+                </label>
+                <label className="block min-w-0 text-[11px] font-medium leading-4 text-slate-700 2xl:text-xs">Trip status
+                  <select name="status" defaultValue={filters.status} title="Filter by trip status"
+                    className="mt-1 block h-9 w-full min-w-0 max-w-full rounded-lg border border-slate-200 bg-white pl-2 pr-1 text-[11px] text-slate-900 focus-visible:border-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/25 2xl:text-xs">
+                    <option value="all">All statuses</option><option value="UPCOMING">Upcoming</option><option value="PAST">Past</option><option value="CANCELLED">Cancelled</option>
+                  </select>
+                </label>
+                <label className="block min-w-0 text-[11px] font-medium leading-4 text-slate-700 2xl:text-xs">
+                  <span title="Confirmation time range">Time range</span>
+                  <select disabled defaultValue="planned" aria-label="Precise time range requires backend integration" title="Precise time ranges will be available after backend integration"
+                    className="mt-1 block h-9 w-full min-w-0 max-w-full cursor-not-allowed rounded-lg border border-slate-200 bg-white pl-2 pr-1 text-[11px] text-slate-500 disabled:opacity-75 2xl:text-xs">
+                    <option value="planned">UTC dates</option>
+                    <option value="10m">Last 10 minutes (planned)</option>
+                    <option value="30m">Last 30 minutes (planned)</option>
+                    <option value="24h">Last 24 hours (planned)</option>
+                    <option value="7d">Last 7 days (planned)</option>
+                    <option value="30d">Last 30 days (planned)</option>
+                  </select>
+                </label>
+                <label className="block min-w-0 text-[11px] font-medium leading-4 text-slate-700 2xl:text-xs">
+                  <span title="Tracking health">Tracking</span>
+                  <select disabled defaultValue="unavailable" aria-label="Tracking health requires backend integration" title="Tracking health will be available after backend integration"
+                    className="mt-1 block h-9 w-full min-w-0 max-w-full cursor-not-allowed rounded-lg border border-slate-200 bg-white pl-2 pr-1 text-[11px] text-slate-500 disabled:opacity-75 2xl:text-xs">
+                    <option value="unavailable">Not connected</option>
+                  </select>
+                </label>
+                <label className="block min-w-0 text-[11px] font-medium leading-4 text-slate-700 2xl:text-xs">
+                  <span title="Confirmed from (UTC)">From (UTC)</span>
+                  <input type="date" name="from" defaultValue={filters.from} aria-label="Confirmed from (UTC)" title="Confirmation date from (UTC)"
+                    className="mt-1 block h-9 w-full min-w-0 max-w-full rounded-lg border border-slate-200 bg-white px-1.5 text-[11px] text-slate-900 focus-visible:border-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/25 2xl:px-2 2xl:text-xs" />
+                </label>
+                <label className="block min-w-0 text-[11px] font-medium leading-4 text-slate-700 2xl:text-xs">
+                  <span title="Confirmed to (UTC)">To (UTC)</span>
+                  <input type="date" name="to" defaultValue={filters.to} aria-label="Confirmed to (UTC)" title="Confirmation date to (UTC)"
+                    className="mt-1 block h-9 w-full min-w-0 max-w-full rounded-lg border border-slate-200 bg-white px-1.5 text-[11px] text-slate-900 focus-visible:border-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/25 2xl:px-2 2xl:text-xs" />
+                </label>
+              </div>
+              <div className="mt-3 flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-2">
+                <p className="min-w-0 flex-1 text-[11px] leading-4 text-slate-500">Precise 10- and 30-minute filters and tracking health require backend integration.</p>
+                <div className="flex shrink-0 flex-wrap items-center gap-2">
+                  <Link href="/admin/confirmed-trips#trip-directory" className="inline-flex min-h-9 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">Clear filters</Link>
+                  <button type="submit" className="inline-flex min-h-9 items-center justify-center rounded-lg bg-indigo-700 px-4 text-xs font-semibold text-white hover:bg-indigo-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">Apply filters</button>
+                </div>
               </div>
             </form>
 
