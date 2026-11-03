@@ -244,6 +244,23 @@ export default async function AdminConfirmedTripsPage({ searchParams }: Props) {
                   <option value="all">All statuses</option><option value="UPCOMING">Upcoming</option><option value="PAST">Past</option><option value="CANCELLED">Cancelled</option>
                 </select>
               </label>
+              <label className="min-w-0 text-xs font-medium text-slate-700">Confirmation time range
+                <select disabled defaultValue="planned" aria-label="Precise time range requires backend integration" title="Precise time ranges will be available after backend integration"
+                  className="mt-1 h-9 w-full min-w-0 cursor-not-allowed rounded-lg border border-slate-200 bg-slate-50 px-2 text-xs text-slate-500">
+                  <option value="planned">Use UTC dates for now</option>
+                  <option value="10m">Last 10 minutes (planned)</option>
+                  <option value="30m">Last 30 minutes (planned)</option>
+                  <option value="24h">Last 24 hours (planned)</option>
+                  <option value="7d">Last 7 days (planned)</option>
+                  <option value="30d">Last 30 days (planned)</option>
+                </select>
+              </label>
+              <label className="min-w-0 text-xs font-medium text-slate-700">Tracking health
+                <select disabled defaultValue="unavailable" aria-label="Tracking health requires backend integration" title="Tracking health will be available after backend integration"
+                  className="mt-1 h-9 w-full min-w-0 cursor-not-allowed rounded-lg border border-slate-200 bg-slate-50 px-2 text-xs text-slate-500">
+                  <option value="unavailable">Not connected</option>
+                </select>
+              </label>
               <label className="min-w-0 text-xs font-medium text-slate-700">Confirmed from (UTC)
                 <input type="date" name="from" defaultValue={filters.from} className="mt-1 h-9 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-2 text-xs text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500" />
               </label>
