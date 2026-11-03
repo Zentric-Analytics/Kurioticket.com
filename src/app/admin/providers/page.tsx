@@ -87,6 +87,10 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
           note: integration.note,
         },
         canRetestDuffel: integration.id === "duffel",
+        investigateHref: status && status.attemptedCalls > 0
+          ? providerSearchActivityHref({ provider: integration.provider, hours: monitoringHours, until: monitoringNow,
+              product: filter === "all" ? undefined : filter === "flights" ? "FLIGHT" : filter === "hotels" ? "HOTEL" : "CAR" })
+          : null,
       };
     }),
     ...catalogues.map(catalogue => ({
