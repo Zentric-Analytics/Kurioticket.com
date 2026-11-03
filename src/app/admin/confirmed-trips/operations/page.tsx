@@ -5,6 +5,7 @@ import { AdminPageShell, AdminSectionCard, AdminStatusBadge } from "@/components
 import { ConfirmedTripsBreakdowns } from "@/components/admin/ConfirmedTripsBreakdowns";
 import { ConfirmedTripDeliveryAlerts } from "@/components/admin/ConfirmedTripDeliveryAlerts";
 import { formatDateTime } from "@/lib/admin-data";
+import { requireAdminSession } from "@/lib/auth-guards";
 import {
   getConfirmedTripsIntegrationReadiness,
   getConfirmedTripsOperationsSnapshot,
@@ -32,6 +33,7 @@ function Fact({ label, value }: { label: string; value: string }) {
 }
 
 export default async function AdminTripOperationsPage() {
+  await requireAdminSession("/admin/confirmed-trips/operations");
   const readiness = getConfirmedTripsIntegrationReadiness();
   const [operations, deliveryHealth] = await Promise.all([
     getConfirmedTripsOperationsSnapshot(),
