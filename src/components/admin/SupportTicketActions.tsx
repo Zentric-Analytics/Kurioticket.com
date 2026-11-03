@@ -1,16 +1,15 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { Info } from "lucide-react";
 import { useEffect, useState, useTransition } from "react";
 
 import { AdminDirectorySelect } from "@/components/admin/AdminDirectorySelect";
-import { AdminTextarea } from "@/components/admin/AdminPageShell";
 import { supportStatusTabs } from "@/lib/adminSupportInboxNavigation";
 import { supportTicketStatuses } from "@/lib/supportTickets";
 
 type SupportStatus = (typeof supportTicketStatuses)[number];
 const replyMaxLength = 4000;
-const panel = "min-w-0 rounded-xl border border-[#E2E8F0] bg-white";
 const statusChoices = supportStatusTabs.filter(option => option.value !== "") as Array<{ value: SupportStatus; label: string }>;
 
 export function SupportReplyForm({ ticketId }: { ticketId: string }) {
@@ -51,41 +50,40 @@ export function SupportReplyForm({ ticketId }: { ticketId: string }) {
   }
 
   return (
-    <section aria-labelledby="support-reply-heading" className={panel}>
-      <div className="border-b border-[#E2E8F0] px-5 py-4">
-        <h3 id="support-reply-heading" className="text-[15px] font-semibold text-[#111827]">Reply</h3>
-      </div>
-      <div className="px-5 py-4">
+    <section aria-labelledby="support-reply-heading" className="min-w-0">
+      <h3 id="support-reply-heading" className="mb-2 text-[14px] font-semibold leading-5 text-[#111827]">Reply</h3>
+      <div className="min-w-0 overflow-hidden rounded-xl border border-[#D9DDE3] bg-white">
         <label htmlFor="support-reply-body" className="sr-only">Reply message</label>
-        <AdminTextarea
+        <textarea
           id="support-reply-body"
           value={reply}
           onChange={event => setReply(event.target.value)}
           maxLength={replyMaxLength}
           rows={5}
-          className="min-h-32 w-full rounded-lg border-[#CBD5E1] bg-white text-[13px] font-normal text-[#374151] focus:border-[#64748B] focus:ring-0"
+          className="block h-[116px] min-h-[116px] w-full resize-y border-0 bg-white px-4 py-3 text-[13px] leading-5 text-[#374151] outline-none placeholder:text-[#9CA3AF] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#B9C6EA]"
           placeholder="Write your reply..."
           disabled={isReplyPending}
         />
-        <div className="mt-2 flex justify-end text-[11px] tabular-nums text-[#64748B]">
-          {reply.length.toLocaleString()} / {replyMaxLength.toLocaleString()}
-        </div>
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-          <p className="max-w-[460px] text-[12px] leading-5 text-[#64748B]">
+        <div className="flex min-h-[54px] flex-wrap items-center justify-between gap-3 bg-[#F8FAFC] px-4 py-2">
+          <p className="inline-flex min-w-0 items-center gap-2 text-[11px] leading-5 text-[#64748B]">
+            <Info size={13} aria-hidden="true" className="shrink-0" />
             Replies are saved first; email delivery is not guaranteed.
           </p>
-          <button
-            type="button"
-            onClick={submitReply}
-            disabled={isReplyPending || !validReply}
-            className="focus-ring inline-flex h-10 shrink-0 items-center justify-center rounded-md bg-[#111827] px-5 text-[13px] font-semibold text-white transition-colors hover:bg-[#334155] disabled:cursor-not-allowed disabled:opacity-55"
-          >
-            {isReplyPending ? "Sending…" : "Send reply"}
-          </button>
+          <div className="ml-auto flex shrink-0 items-center gap-4">
+            <span className="whitespace-nowrap text-[11px] tabular-nums text-[#64748B]">{reply.length.toLocaleString()} / {replyMaxLength.toLocaleString()}</span>
+            <button
+              type="button"
+              onClick={submitReply}
+              disabled={isReplyPending || !validReply}
+              className="focus-ring inline-flex h-9 items-center justify-center rounded-lg bg-[#3154EF] px-4 text-[13px] font-semibold text-white transition-colors hover:bg-[#2445D7] disabled:cursor-not-allowed disabled:opacity-75"
+            >
+              {isReplyPending ? "Sending…" : "Send reply"}
+            </button>
+          </div>
         </div>
-        {replyMessage ? <p className="mt-3 text-[12px] font-medium text-emerald-700" role="status" aria-live="polite">{replyMessage}</p> : null}
-        {error ? <p className="mt-3 text-[12px] font-medium text-rose-700" role="alert">{error}</p> : null}
       </div>
+      {replyMessage ? <p className="mt-3 text-[12px] font-medium text-emerald-700" role="status" aria-live="polite">{replyMessage}</p> : null}
+      {error ? <p className="mt-3 text-[12px] font-medium text-rose-700" role="alert">{error}</p> : null}
     </section>
   );
 }
@@ -126,31 +124,33 @@ export function SupportTicketStatusControl({ ticketId, status }: { ticketId: str
   }
 
   return (
-    <section aria-labelledby="support-ticket-controls-heading" className={panel}>
-      <h3 id="support-ticket-controls-heading" className="border-b border-[#E2E8F0] px-4 py-3.5 text-[15px] font-semibold text-[#111827]">
+    <section aria-labelledby="support-ticket-controls-heading" className="min-w-0">
+      <h3 id="support-ticket-controls-heading" className="border-b border-[#E5E7EB] pb-2.5 text-[14px] font-semibold leading-5 text-[#111827]">
         Manage ticket
       </h3>
-      <fieldset disabled={isStatusPending} className="min-w-0 px-4 py-4 disabled:opacity-70">
-        <span className="mb-2 block text-[12px] font-medium text-[#64748B]">Status</span>
-        <div className="flex min-h-11 items-center rounded-lg border border-[#CBD5E1] px-3">
-          <AdminDirectorySelect
-            key={ticketId + "-" + status}
-            label="Ticket status"
-            name="status"
-            value={status}
-            options={statusChoices}
-            plain
-            onValueChange={value => { setSelectedStatus(value as SupportStatus); setStatusMessage(null); setError(null); }}
-          />
+      <fieldset disabled={isStatusPending} className="min-w-0 pt-3">
+        <span className="mb-1 block text-[12px] font-medium text-[#64748B]">Status</span>
+        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
+          <div className="min-w-0 [&_button]:h-9 [&_select]:h-9">
+            <AdminDirectorySelect
+              key={ticketId + "-" + status}
+              label="Ticket status"
+              name="status"
+              value={status}
+              options={statusChoices}
+              compact
+              onValueChange={value => { setSelectedStatus(value as SupportStatus); setStatusMessage(null); setError(null); }}
+            />
+          </div>
+          <button
+            type="button"
+            onClick={updateStatus}
+            disabled={isStatusPending || selectedStatus === status}
+            className="focus-ring inline-flex h-9 shrink-0 items-center justify-center whitespace-nowrap rounded-lg border border-[#D9DDE3] bg-white px-3 text-[13px] font-medium text-[#374151] transition-colors hover:border-[#64748B] disabled:cursor-not-allowed disabled:opacity-65"
+          >
+            {isStatusPending ? "Saving…" : "Save status"}
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={updateStatus}
-          disabled={isStatusPending || selectedStatus === status}
-          className="focus-ring mt-4 inline-flex h-10 items-center justify-center rounded-md border border-[#CBD5E1] px-4 text-[13px] font-semibold text-[#374151] transition-colors hover:border-[#64748B] disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {isStatusPending ? "Saving…" : "Save status"}
-        </button>
         {statusMessage ? <p className="mt-3 text-[12px] font-medium text-emerald-700" role="status" aria-live="polite">{statusMessage}</p> : null}
         {error ? <p className="mt-3 text-[12px] font-medium text-rose-700" role="alert">{error}</p> : null}
       </fieldset>
