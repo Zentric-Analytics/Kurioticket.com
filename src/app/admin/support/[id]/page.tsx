@@ -88,7 +88,7 @@ function TicketContent({ ticket }: { ticket: AdminSupportDetail }) {
         </div>
       </header>
 
-      <div className="mt-5 grid min-w-0 items-start gap-6 xl:grid-cols-[minmax(0,1fr)_320px] xl:gap-14">
+      <div className="mt-5 grid min-w-0 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-8 xl:gap-14">
         <div className="min-w-0">
           <section aria-labelledby="support-conversation-heading" className="min-w-0">
             <div className="flex items-center justify-between gap-3 border-b border-[#E5E7EB] pb-2.5">
