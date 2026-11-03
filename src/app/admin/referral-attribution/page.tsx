@@ -148,7 +148,10 @@ export default async function AdminReferralAttributionPage({
                 <tbody className="divide-y divide-[#E7ECF5]">
                   {summary.sourcePages.map(item => (
                     <tr key={item.sourcePage}>
-                      <th scope="row" className="break-all py-3 pr-3 text-left font-medium">{item.sourcePage}</th>
+                      <th scope="row" className="break-all py-3 pr-3 text-left font-medium">{item.sourcePage === "unknown"
+                        ? item.sourcePage
+                        : <Link href={referralHandoffHref({ start: summary.window.start, end: summary.window.end, environment: summary.environment, sourcePage: item.sourcePage })}
+                            className="text-[#004BB8] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">{item.sourcePage}</Link>}</th>
                       <td className="py-3 pl-3 text-right tabular-nums">{item.handoffs.toLocaleString()}</td>
                     </tr>
                   ))}
