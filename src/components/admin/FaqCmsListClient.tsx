@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ArrowUpRight } from "lucide-react";
 import { ContentRecordsTable, ContentStatusPill, ContentEmptyState } from "@/components/admin/ContentWorkspace";
 import { useMemo, useState } from "react";
 
@@ -113,7 +114,7 @@ export function FaqCmsListClient({ items, listQuery = "" }: { items: FaqListItem
                 `v${item.version}`,
                 new Date(item.updatedAt).toLocaleString(),
                 <Link key="action" href={`/admin/content/faqs/${encodeURIComponent(item.id)}?${editorContext.toString()}`} className="inline-flex items-center gap-1 text-[13px] font-medium text-[#004BB8] hover:underline">
-                  Edit
+                  Edit <ArrowUpRight size={14} aria-hidden="true" />
                 </Link>,
               ],
             };
