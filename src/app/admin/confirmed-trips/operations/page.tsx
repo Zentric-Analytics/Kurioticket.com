@@ -32,8 +32,12 @@ function Fact({ label, value }: { label: string; value: string }) {
   );
 }
 
-export default async function AdminTripOperationsPage() {
+type Props = { searchParams?: Promise<{ panel?: string | string[] }> };
+
+export default async function AdminTripOperationsPage({ searchParams }: Props) {
   await requireAdminSession("/admin/confirmed-trips/operations");
+  const panel = (await searchParams)?.panel;
+  const expandDelivery = panel === "delivery";
   const readiness = getConfirmedTripsIntegrationReadiness();
   const [operations, deliveryHealth] = await Promise.all([
     getConfirmedTripsOperationsSnapshot(),
@@ -105,7 +109,7 @@ export default async function AdminTripOperationsPage() {
                 </div>
               </details>
 
-              <details id="confirmation-delivery-health-title" className="group rounded-xl border border-slate-200/80 bg-white">
+              <details id="confirmation-delivery-health-title" open={expandDelivery} className="group rounded-xl border border-slate-200/80 bg-white">
                 <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-sm font-semibold text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 [&::-webkit-details-marker]:hidden">
                   <span className="flex items-center gap-2"><Clock3 size={17} className="text-indigo-700" aria-hidden="true" />Confirmation delivery health and alerts</span>
                   <ChevronDown size={17} className="shrink-0 text-slate-500 transition-transform group-open:rotate-180" aria-hidden="true" />
