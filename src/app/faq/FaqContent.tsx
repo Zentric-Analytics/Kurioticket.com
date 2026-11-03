@@ -46,6 +46,8 @@ export function FaqContent({ showAccountLink, initialFaqItems, initialFaqLocale 
               typeof (item as FaqItem).answer === "string",
             ),
         );
+        // Parsing can finish after cleanup even when the fetch was aborted.
+        if (controller.signal.aborted) return;
         setCmsFaqState({ locale, items });
       })
       .catch((error: unknown) => {

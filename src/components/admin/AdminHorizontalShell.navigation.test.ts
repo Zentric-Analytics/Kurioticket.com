@@ -1,3 +1,4 @@
+import { jsxOpening } from "../../test-support/sourceStructure";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
@@ -95,9 +96,10 @@ test("navigation keeps parent workspaces visible while child routes stay nested"
 
 
 test("navbar search opens the dedicated global-search workspace", () => {
-  assert.match(shell, /<Link href="\/admin\/search" aria-label="Search Kurioticket admin"/);
-  assert.match(shell, /router\.push\("\/admin\/search"\)/);
-  assert.doesNotMatch(shell, /Search navigation only/);
-  assert.doesNotMatch(shell, /aria-label="Search admin pages"/);
-  assert.doesNotMatch(shell, /searchOpen/);
+  assert.equal(jsxOpening(shell, 'AdminWorkspaceSearchProvider').length, 1);
+  assert.equal(jsxOpening(shell, 'AdminSearchTrigger').length, 1);
+  assert.equal(jsxOpening(shell, 'AdminSearchHeader').length, 1);
+  assert.equal(jsxOpening(shell, 'AdminSearchContent').length, 1);
+  assert.doesNotMatch(shell, /Search navigation only|aria-label="Search admin pages"/);
+  assert.doesNotMatch(shell, /router\.push\("\/admin\/search"\)/);
 });

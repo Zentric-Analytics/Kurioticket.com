@@ -1,3 +1,4 @@
+import { verifyMultiCityNavigation, verifyEditorDispatch } from "../../test-support/flightEditorContracts";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import assert from "node:assert/strict";
@@ -110,23 +111,7 @@ test("desktop header opens only the selected field editor", () => {
   assert.match(callback, /resolvedTarget === "trip" \? null : resolvedTarget/);
 });
 
-test("desktop Multi-city marks the sticky editor open before observer callbacks can collapse it", () => {
-  const callback = stickyEditorCallbackSource();
-  const toolbar = desktopHeaderSearchBarSource();
-
-  assert.match(
-    callback,
-    /stickySearchPanelOpenRef\.current = true;[\s\S]*setIsSearchExpandedWhileSticky\(true\)/,
-  );
-  assert.match(
-    toolbar,
-    /if \(option\.value === "multi-city"\) \{[\s\S]*stickySearchPanelOpenRef\.current = true;[\s\S]*setIsSearchExpandedWhileSticky\(true\)/,
-  );
-  assert.match(
-    source,
-    /const collapseStickySearch = useCallback\([\s\S]*stickySearchPanelOpenRef\.current = false;[\s\S]*setIsSearchExpandedWhileSticky\(false\)/,
-  );
-});
+test("desktop Multi-city marks the sticky editor open before observer callbacks can collapse it", () => { verifyMultiCityNavigation(source); assert.match(desktopHeaderSearchBarSource(), /navigateDesktopMultiCityToHome\(\)/); });
 
 test("sticky search moves focus directly to the requested field editor", () => {
   assert.match(source, /pendingTarget === "origin"/);
@@ -197,6 +182,7 @@ test("trip type copies the desktop Sort dropdown layout and multi-city expands s
 
 test("route field is one grouped control with a circular swap and interrupted divider", () => {
   const toolbar = desktopHeaderSearchBarSource();
+  verifyEditorDispatch(source);
 
   assert.match(toolbar, /data-flight-results-compact-route/);
   assert.match(toolbar, /grid-cols-\[minmax\(56px,1fr\)_36px_minmax\(56px,1fr\)\]/);
@@ -206,8 +192,8 @@ test("route field is one grouped control with a circular swap and interrupted di
   assert.doesNotMatch(toolbar, /border-x border-\[#D8E1EC\]/);
   assert.match(toolbar, /data-flight-results-header-origin/);
   assert.match(toolbar, /data-flight-results-header-destination/);
-  assert.match(toolbar, /openStickySearchEditor\(event\.currentTarget, "origin"\)/);
-  assert.match(toolbar, /openStickySearchEditor\(event\.currentTarget, "destination"\)/);
+  assert.match(toolbar, /openDesktopSearchEditor\(event\.currentTarget, "origin"\)/);
+  assert.match(toolbar, /openDesktopSearchEditor\(event\.currentTarget, "destination"\)/);
   assert.doesNotMatch(toolbar, /openCompactRouteEditor/);
   assert.doesNotMatch(
     toolbar,

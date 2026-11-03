@@ -1,3 +1,5 @@
+import ts from "typescript";
+import { parseSource, nodesWhere, evaluateExpression } from "../../test-support/sourceStructure";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
@@ -22,27 +24,22 @@ test("source-contract: Cars uses the full form measurement and in-place dialog",
 });
 
 test("source-contract: sticky editor lifecycle keeps scroll locking independent from nested controls", () => {
-  assert.match(
-    source,
-    /const desktopStickySearchOpen = desktopStickySearchSection !== null/,
-  );
-  assert.match(
-    source,
-    /const scrollLock = lockDesktopPageScroll\(\);[\s\S]*?scrollLock\.restore\(\);[\s\S]*?\}, \[desktopStickySearchOpen\]\);/,
-  );
-  const scrollLockEffect =
-    source.match(
-      /useEffect\(\(\) => \{[\s\S]*?const scrollLock = lockDesktopPageScroll\(\);[\s\S]*?\}, \[desktopStickySearchOpen\]\);/,
-    )?.[0] ?? "";
-  assert.doesNotMatch(scrollLockEffect, /datesOpen|timesOpen|driverAgeOpen/);
-  assert.match(
-    source,
-    /const frame = requestAnimationFrame[\s\S]*?stickyDialogRef\.current\?\.focus\(\{ preventScroll: true \}\)[\s\S]*?cancelAnimationFrame\(frame\)[\s\S]*?\[desktopStickySearchSection\]/,
-  );
-  assert.doesNotMatch(
-    source,
-    /if \(!next\) setDesktopStickySearchSection\(null\)/,
-  );
+  const root = parseSource(source);
+  const effects = nodesWhere(root, node => ts.isCallExpression(node) && node.expression.getText(root) === 'useEffect' && node.arguments[1]?.getText(root) === '[desktopStickySearchOpen]') as ts.CallExpression[];
+  assert.equal(effects.length, 1);
+  const effect = effects[0].arguments[0].getText(root);
+  assert.doesNotMatch(effect, /datesOpen|timesOpen|driverAgeOpen/);
+  for (const open of [false, true]) {
+    let locks = 0, restores = 0;
+    const callback = evaluateExpression<() => undefined | (() => void)>(effect, { desktopStickySearchOpen: open, stickyScrollLockRef: { current: null }, lockDesktopPageScroll: () => { locks++; return { restore: () => { restores++; } }; } });
+    const cleanup = callback();
+    assert.equal(locks, Number(open));
+    assert.equal(restores, 0);
+    cleanup?.();
+    assert.equal(restores, Number(open));
+  }
+  assert.match(source, /stickyDialogRef\.current\?\.focus\(\{ preventScroll: true \}\)/);
+  assert.doesNotMatch(source, /if \(!next\) setDesktopStickySearchSection\(null\)/);
 });
 
 test("source-contract: sticky editor opens with nested controls closed and focuses the dialog", () => {

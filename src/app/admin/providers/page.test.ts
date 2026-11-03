@@ -1,3 +1,4 @@
+import { jsxOpening } from "../../../test-support/sourceStructure";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
@@ -99,14 +100,18 @@ test("admin navigation restores Providers and the original product destinations"
 });
 
 test("product pages retain truthful metasearch readiness views", () => {
-  assert.match(flightsPage, /title="Flight Search Readiness"/);
-  assert.match(hotelsPage, /title="Hotel Search Readiness"/);
-  assert.match(carsPage, /title="Car Search Readiness"/);
-  for (const source of [flightsPage, hotelsPage, carsPage]) assert.match(source, /AdminProviderStatusCard/);
-  for (const source of [flightsPage, hotelsPage, carsPage]) {
+  for (const [source, title] of [[flightsPage, 'Flight Operations'], [hotelsPage, 'Hotel Operations'], [carsPage, 'Car Operations']]) {
+    const pages = jsxOpening(source, 'AdminPageShell');
+    assert.equal(pages.length, 1);
+    assert.ok(pages[0].attributes.properties.some(property => property.getText().includes('title="'+title+'"')));
+    assert.match(source, /telemetry unavailable/);
+    assert.match(source, /No zero values were invented/);
     assert.match(source, /provider-owned/i);
     assert.doesNotMatch(source, /Booking not live|production booking workflow|booking actions/i);
   }
+  assert.equal(jsxOpening(flightsPage, 'AdminProviderStatusCard').length, 1);
+  assert.ok(jsxOpening(providersPage, 'AdminProviderStatusCard').length > 0);
+  assert.match(providersPage, /getProviderOperationalStatuses\(\)/);
 });
 
 test("provider APIs, retest API, and unrelated admin pages are not edited by provider page consolidation", () => {

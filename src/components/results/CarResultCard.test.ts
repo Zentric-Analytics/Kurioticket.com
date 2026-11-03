@@ -1,3 +1,4 @@
+import { verifyCarCommerce } from "../../test-support/carCommerceBrowser";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
@@ -67,13 +68,10 @@ test("desktop Compare deals owns a sibling expansion slot without changing mobil
   assert.doesNotMatch(mobile, /desktopPanelTarget/);
 });
 
-test("standalone result commerce is provider-ready without fabricating booking URLs", () => {
-  assert.match(source, /const approvedProviderBookingUrl/);
-  assert.match(source, /sandboxBookingUrl\(offer\.bookingUrl\)/);
+test("standalone result commerce is provider-ready without fabricating booking URLs", async () => {
   assert.match(source, /url\.protocol !== "https:" \|\| url\.username \|\| url\.password/);
-  assert.equal((source.match(/href=\{providerBookingHref\}/g) ?? []).length, 2);
-  assert.match(source, /aria-label="Provider booking link unavailable"/);
   assert.doesNotMatch(source, /href="#"/);
+  await verifyCarCommerce();
 });
 
 test("KAYAK handoff is validated once while guided detail navigation remains available", () => {

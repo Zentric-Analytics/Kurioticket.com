@@ -1,3 +1,4 @@
+import { assertFullWidthRateAlert } from "../../test-support/sourceStructure";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
@@ -147,7 +148,7 @@ test("desktop Cars pricing and price tracking keep price emphasis without over-w
   assert.match(comparison, /text-\[21px\] font-bold leading-\[25px\] tracking-\[-0\.012em\]/);
   assert.match(comparison, /text-\[13px\] font-medium leading-5 text-\[#475569\]/);
   assert.match(comparison, /cleanStaticSummary \? "text-\[14px\] tracking-\[-0\.003em\]" : "text-\[14px\] tracking-\[-0\.005em\]"/);
-  assert.match(alert, /lg:whitespace-nowrap lg:text-\[13px\] lg:font-semibold lg:leading-4 lg:tracking-\[-0\.002em\] lg:text-slate-950/);
+  assertFullWidthRateAlert(alert);
 });
 
 
@@ -172,8 +173,8 @@ test("desktop Cars Results keeps footer supporting copy readable without changin
 test("mobile typography remains intact while desktop is refined", () => {
   assert.match(card, /text-\[15px\] font-bold leading-\[18px\]/);
   assert.match(results, /className="text-xl font-extrabold text-slate-950 outline-none/);
-  assert.match(alert, /text-\[12px\] font-semibold leading-\[17px\] text-\[#07133B\]/);
-  assert.match(alert, /max-\[359px\]:text-\[10\.5px\]/);
+  assertFullWidthRateAlert(alert);
+  assert.match(alert, /min-w-0 flex-1 text-\[13px\] font-semibold leading-\[18px\]/);
 });
 
 test("desktop Cars Results uses the same Inter foundation as mobile web", () => {
@@ -191,10 +192,8 @@ test("desktop Cars Results uses the same Inter foundation as mobile web", () => 
     route,
     /className="contents cars-results-desktop-typeface"/,
   );
-  assert.match(
-    results,
-    /cars-results-desktop-typeface fixed inset-0 z-\[1200\]/,
-  );
+  assert.match(results, /role="dialog"/);
+  assert.match(results, /carsDesktopPopoverClassName/);
   assert.match(
     results,
     /cn\("cars-results-desktop-typeface", carsDesktopPopoverClassName, shellClassName\)/,
