@@ -96,6 +96,9 @@ export default async function AdminRedirectsPage({ searchParams, embedded = fals
     <section className="w-full min-w-0 bg-white text-[#0F172A]">
       <SearchWorkspaceBackLink href="/admin/providers?view=attribution" label="Provider reports" />
       <h1 className="sr-only">Provider Handoffs</h1>
+      {one(raw.sourcePage) ? (
+        <p className="mb-2 text-[12px] text-[#475569]">Source page: <span className="font-semibold text-[#020617]">{one(raw.sourcePage)}</span> <Link href={"/admin/redirects?" + (() => { const params = toParams(raw); params.delete("sourcePage"); params.delete("cursor"); return params.toString(); })()} className="ml-2 font-medium text-[#004BB8] hover:underline">Clear source</Link></p>
+      ) : null}
       <ProviderHandoffFilters
         initial={{
           product: one(raw.product),
@@ -109,6 +112,7 @@ export default async function AdminRedirectsPage({ searchParams, embedded = fals
           visitorId: one(raw.visitorId),
           from: one(raw.from),
           to: one(raw.to),
+          sourcePage: one(raw.sourcePage),
         }}
       />
       {result.status === "ok" ? (
