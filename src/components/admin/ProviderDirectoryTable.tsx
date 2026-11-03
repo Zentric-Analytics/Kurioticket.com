@@ -1,7 +1,6 @@
 "use client";
 
 import { Fragment, useState } from "react";
-import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 
 import { ProviderRetestButton } from "@/components/admin/ProviderRetestButton";
@@ -27,7 +26,7 @@ export type ProviderDirectoryRecord = {
     note: string;
   };
   canRetestDuffel: boolean;
-  investigateHref?: string | null;
+  canRetestKayak: boolean;
 };
 
 const headingClass = "px-3 py-3 text-left text-[12px] font-medium uppercase text-[#475569]";
@@ -130,12 +129,10 @@ export function ProviderDirectoryTable({ rows }: { rows: ProviderDirectoryRecord
                 {row.detail.note ? (
                   <p className="mt-3 text-[12px] leading-5 text-[#475569]">{row.detail.note}</p>
                 ) : null}
-                {row.canRetestDuffel || row.investigateHref ? (
+                {row.canRetestDuffel || row.canRetestKayak ? (
                   <div className="mt-3 flex min-w-0 flex-wrap items-center gap-x-5 gap-y-2 border-t border-[#E7ECF5] pt-3">
-                    {row.canRetestDuffel ? <ProviderRetestButton /> : null}
-                    {row.investigateHref ? (
-                      <Link href={row.investigateHref} className="text-[13px] font-medium text-[#004BB8] hover:underline">Review provider searches ›</Link>
-                    ) : null}
+                    {row.canRetestDuffel ? <ProviderRetestButton provider="duffel" /> : null}
+                    {row.canRetestKayak ? <ProviderRetestButton provider="kayak-sandbox" /> : null}
                   </div>
                 ) : null}
               </td>
