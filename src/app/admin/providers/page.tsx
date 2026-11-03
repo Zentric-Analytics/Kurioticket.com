@@ -66,8 +66,7 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
         id: "integration-" + integration.id,
         name: integration.provider,
         products: integration.products.map(productLabel).join(", "),
-        shortLabel: integration.id === "duffel"
-          ? (integration.environment === "test" ? "Test mode" : "Live mode") : null,
+        shortLabel: null,
         readiness: { label: readinessLabel(integration.state), tone: readinessTone(integration.state) },
         health: operational === null
           ? { label: "Unavailable", tone: "neutral" as const }
@@ -79,9 +78,9 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
         detail: {
           environment: integration.environment === "test" ? "Test mode"
             : integration.environment === "live" ? "Live mode" : "Sandbox",
-          configured: integration.configured ? "Yes" : "No",
+          configured: integration.configured ? "Configured" : "Not configured",
           search: integration.searchEnabled ? "Enabled" : "Not enabled",
-          booking: integration.bookingEnabled ? "Enabled" : "Not live yet",
+          booking: integration.bookingEnabled ? "Enabled" : "Not available",
           externalHandoff: integration.externalHandoffEnabled ? "Enabled" : "Not enabled",
           lastSuccess: displayTime(status?.lastSuccessAt ?? null, timingUnavailable),
           lastFailure: displayTime(status?.lastFailureAt ?? null, timingUnavailable),
@@ -142,16 +141,7 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
       {attribution ? (
         <div className="pt-3">
           <AdminReferralAttributionPage embedded searchParams={Promise.resolve(raw)} />
-          <section aria-labelledby="unlinked-handoffs" className="mt-5 border-t border-[#D8E1EC] pt-4">
-            <h2 id="unlinked-handoffs" className="text-[15px] font-semibold">Unlinked handoffs</h2>
-            <Link href="/admin/redirects?correlation=unavailable"
-              className="mt-2 inline-block text-[13px] font-medium text-[#004BB8] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
-              View handoffs without a linked search
-            </Link>
-            <p className="mt-1 text-[12px] leading-5 text-[#64748B]">
-              These provider clicks have no verified link to a specific search; they do not establish a failed redirect or confirmed booking.
-            </p>
-          </section>
+
         </div>
       ) : (
         <>
@@ -299,6 +289,7 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
 
           <section aria-labelledby="provider-directory" className="border-b border-[#D8E1EC] pb-6 pt-6">
             <h2 id="provider-directory" className="text-[15px] font-semibold text-[#020617]">All providers</h2>
+            <p className="mt-1 text-[12px] text-[#64748B]">Readiness shows whether an integration is configured and permitted; health summarizes recorded search outcomes in the selected window. Internal catalogues are not externally monitored.</p>
             <nav aria-label="Filter providers by product"
               className="mt-2 flex min-w-0 gap-5 overflow-x-auto border-b border-[#D8E1EC]">
               {productFilters.map(item => (
