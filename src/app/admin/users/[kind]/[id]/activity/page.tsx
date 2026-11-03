@@ -168,8 +168,8 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
           <span data-testid="activity-divider-60" className="absolute inset-y-0 left-[60%] border-l border-[#E2E8F0]" />
           <span data-testid="activity-divider-80" className="absolute inset-y-0 left-[80%] border-l border-[#E2E8F0]" />
         </div>
-      <section aria-label="Customer identity" className="min-w-0">
-        <div className={activityColumns + " lg:items-center lg:py-6"}>
+      <section aria-label="Customer identity" className="relative min-w-0">
+        <div className={activityColumns + " lg:items-start lg:py-6"}>
           <div className="flex min-w-0 items-center gap-4 lg:col-span-2 lg:px-6">
             <span aria-hidden="true"
               className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[var(--muted)] text-xl font-semibold">
@@ -202,7 +202,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
           </dl>
 
           {kind === "user" ? <div
-            className="flex min-w-0 justify-start lg:col-start-5 lg:row-start-1 lg:mr-6 lg:justify-self-end lg:self-center"
+            className="flex min-w-0 justify-start lg:absolute lg:right-2 lg:top-1/2 lg:-translate-y-1/2"
             aria-label="Identity management">
             <RegisteredManage id={id} email={data.email} role={data.role || "USER"} status={data.status} actorId={session.user.id}/>
           </div> : null}
