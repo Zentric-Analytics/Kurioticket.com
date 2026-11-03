@@ -58,7 +58,7 @@ test("provider filter helpers drive the providers page", () => {
   assert.match(providersPage, /filterProviderStatuses/);
   assert.match(providersPage, /productFilters\.map/);
   assert.match(providersPage, /getProviderStatuses\(\)/);
-  assert.match(providersPage, /getProviderOperationalStatuses\(\)/);
+  assert.match(providersPage, /getProviderOperationalStatuses\(monitoringHours\)/);
   assert.match(providersPage, /All providers/);
   assert.match(providersPage, /filterProviderOperationalStatuses/);
 });
@@ -150,6 +150,18 @@ test("provider health sections prioritize attention and use a flat compact layou
   assert.match(providersPage, /aria-labelledby="service-breakdown-heading"/);
 });
 
+test("provider attention supports truthful history windows and provider-search investigation", () => {
+  assert.match(providersPage, /parseProviderHealthHours\(raw\.hours\)/);
+  assert.match(providersPage, /getProviderOperationalStatuses\(monitoringHours\)/);
+  assert.match(providersPage, /providerHealthWindows\.map\(window =>/);
+  assert.match(providersPage, /providerHealthHref\(monitoringHours, item\.key\)/);
+  assert.match(providersPage, /Provider health signals \(historical\)/);
+  assert.match(providersPage, /providerSearchActivityHref\(/);
+  assert.match(providersPage, /Review provider searches/);
+  assert.match(providersPage, /not all searches necessarily failed/);
+  assert.match(providersPage, /getProviderOperationalStatuses\(monitoringHours\)\.catch\(\(\) => null\)/);
+});
+
 test("provider issue link expands inline and cannot jump to the bottom", () => {
   assert.match(providersPage, /<details className="group py-2\.5">/);
   assert.match(providersPage, /View details ›/);
@@ -157,7 +169,7 @@ test("provider issue link expands inline and cannot jump to the bottom", () => {
   assert.match(providersPage, /service\.failureReasons/);
   assert.match(providersPage, /<ActivityTime value=\{provider\.lastFailureAt\}/);
   assert.match(providersPage, /unscopedTimingProviders\.has\(provider\.id\)/);
-  assert.match(providersPage, /Not recorded in the last 24 hours/);
+  assert.match(providersPage, /Not recorded in /);
   assert.match(providersPage, /Not available for this service/);
   assert.doesNotMatch(providersPage, /href=\{"#provider-operation-" \+ provider\.id\}/);
 });
