@@ -26,7 +26,7 @@ test("Trips preserves its existing admin workspace and visually introduces the t
   assert.doesNotMatch(page, /Kurioticket handles refunds|Cancel booking|Issue ticket/);
 });
 
-test("four visible parent cards keep the approved compact reading order", () => {
+test("one white parent card contains four subtle section wrappers in the approved reading order", () => {
   const markers = [
     'aria-labelledby="confirmed-trips-overview"',
     'aria-labelledby="trip-categories-title"',
@@ -36,7 +36,17 @@ test("four visible parent cards keep the approved compact reading order", () => 
   const positions = markers.map(m => page.indexOf(m));
   assert.ok(positions.every(p => p !== -1));
   assert.deepEqual(positions, [...positions].sort((a, b) => a - b));
-  assert.equal((page.match(/<AdminSectionCard/g) ?? []).length, 4);
+  assert.equal((page.match(/<AdminSectionCard/g) ?? []).length, 1);
+  assert.match(page, /<AdminSectionCard className="min-w-0 p-4 sm:p-5 lg:p-6">/);
+  assert.equal((page.match(/className="min-w-0 rounded-xl border border-slate-200\/80 bg-slate-50\/80 px-4 py-3 sm:px-5 sm:py-4"/g) ?? []).length, 4);
+  const parentStart = page.indexOf('<AdminSectionCard className="min-w-0 p-4 sm:p-5 lg:p-6">');
+  const parentEnd = page.lastIndexOf("</AdminSectionCard>");
+  assert.ok(parentStart >= 0 && parentStart < page.indexOf('tracking-tight text-slate-950">Trips</p>'));
+  assert.ok(positions.every(position => position > parentStart && position < parentEnd));
+  assert.match(page, /bg-slate-100\/65 px-3 py-3/);
+  assert.match(page, /bg-slate-100\/65 p-3\.5/);
+  assert.match(page, /bg-slate-100\/60/);
+  assert.doesNotMatch(page, /<AdminSectionCard className="min-w-0 p-4 sm:p-5">/);
   assert.match(page, /grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-5/);
   assert.match(page, /grid min-w-0 items-stretch gap-3 lg:grid-cols-3/);
   assert.doesNotMatch(page, /grid w-full min-w-\[850px\] grid-cols-5/);
@@ -82,7 +92,7 @@ test("category counts use actual provider-confirmed product grouping and retain 
 test("the main directory uses authorized read-only filtered records, never the 20-row overview sample", () => {
   assert.match(page, /parseAdminTripFilters\(raw\)/);
   assert.match(page, /listAdminConfirmedTrips\(filters\)/);
-  assert.match(page, /<TripDirectoryView rows=\{directory\.rows\} \/>/);
+  assert.match(page, /<TripDirectoryView rows=\{directory\.rows\} subtle \/>/);
   assert.match(page, /directory\.totalMatching/);
   assert.match(page, /directory\.nextCursor/);
   assert.match(page, /tripDirectoryHref\(filters, directory\.nextCursor\)/);
@@ -119,6 +129,8 @@ test("both directory views use genuine records and the same read-only details ro
   assert.match(directory, /<TripDirectoryView rows=\{result\.rows\} \/>/);
   assert.match(recordsView, /"use client"/);
   assert.match(recordsView, /useState<"list" \| "grid">\("list"\)/);
+  assert.match(recordsView, /subtle = false/);
+  assert.match(recordsView, /bg-slate-100\/65/);
   assert.match(recordsView, /aria-pressed=\{view === "list"\}/);
   assert.match(recordsView, /aria-pressed=\{view === "grid"\}/);
   assert.match(recordsView, /<ConfirmedTripRecordsTable rows=\{rows\} \/>/);
@@ -180,5 +192,8 @@ test("loading state matches the overview, category, directory and operations str
   assert.match(loading, /role="status"/);
   assert.match(loading, /aria-busy="true"/);
   assert.match(loading, /motion-safe:animate-pulse/);
+  assert.equal((loading.match(/<AdminSectionCard/g) ?? []).length, 1);
+  assert.equal((loading.match(/<section className="min-w-0 rounded-xl border border-slate-200\/80 bg-slate-50\/80/g) ?? []).length, 4);
+  assert.match(loading, /bg-slate-100\/65/);
   assert.doesNotMatch(loading, />\s*0\s*</);
 });
