@@ -3,11 +3,11 @@
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 
+import { ContentSectionHeading, ContentStatusPill } from "@/components/admin/ContentWorkspace";
+
 import {
   AdminButton,
   AdminInput,
-  AdminSectionCard,
-  AdminStatusBadge,
   AdminTextarea,
 } from "@/components/admin/AdminPageShell";
 
@@ -170,21 +170,21 @@ export function FaqCmsEditor({ initialItem, listQuery = "" }: { initialItem?: Fa
   }
 
   return (
-    <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_420px]">
+    <div className="grid min-w-0 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-8 xl:gap-14 [&_input]:rounded-lg [&_select]:rounded-lg [&_textarea]:rounded-lg [&_input]:h-9 [&_select]:h-9 [&_input]:text-[13px] [&_select]:text-[13px] [&_textarea]:text-[13px] [&_input]:font-normal [&_select]:font-normal">
       <div className="space-y-5">
-        <AdminSectionCard className="space-y-5 p-5">
+        <section className="min-w-0 space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="text-lg font-black text-slate-950">{item ? "Edit FAQ" : "Create FAQ draft"}</h2>
-              <p className="mt-1 text-sm leading-6 text-slate-600">
+              <ContentSectionHeading>{item ? "Edit FAQ" : "Create FAQ draft"}</ContentSectionHeading>
+              <p className="mt-1 text-[13px] leading-5 text-[#64748B]">
                 English FAQ content for the GLOBAL public FAQ scope.
               </p>
             </div>
-            {item ? <AdminStatusBadge tone={statusTone(item.status)}>{item.status}</AdminStatusBadge> : null}
+            {item ? <ContentStatusPill status={item.status} /> : null}
           </div>
 
           <label className="block">
-            <span className="text-xs font-black uppercase tracking-wide text-slate-500">Question</span>
+            <span className="text-[12px] font-medium text-[#64748B]">Question</span>
             <AdminInput
               className="mt-2"
               value={question}
@@ -195,7 +195,7 @@ export function FaqCmsEditor({ initialItem, listQuery = "" }: { initialItem?: Fa
           </label>
 
           <label className="block">
-            <span className="text-xs font-black uppercase tracking-wide text-slate-500">Answer</span>
+            <span className="text-[12px] font-medium text-[#64748B]">Answer</span>
             <AdminTextarea
               className="mt-2 min-h-44"
               value={answer}
@@ -207,7 +207,7 @@ export function FaqCmsEditor({ initialItem, listQuery = "" }: { initialItem?: Fa
 
           <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_160px]">
             <label className="block">
-              <span className="text-xs font-black uppercase tracking-wide text-slate-500">Category</span>
+              <span className="text-[12px] font-medium text-[#64748B]">Category</span>
               <AdminInput
                 className="mt-2"
                 value={category}
@@ -217,7 +217,7 @@ export function FaqCmsEditor({ initialItem, listQuery = "" }: { initialItem?: Fa
               />
             </label>
             <label className="block">
-              <span className="text-xs font-black uppercase tracking-wide text-slate-500">Order</span>
+              <span className="text-[12px] font-medium text-[#64748B]">Order</span>
               <AdminInput
                 className="mt-2"
                 type="number"
@@ -230,7 +230,7 @@ export function FaqCmsEditor({ initialItem, listQuery = "" }: { initialItem?: Fa
             </label>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 border-t border-slate-100 pt-5">
+          <div className="flex flex-wrap items-center gap-2 border-t border-[#E5E7EB] pt-4 [&_button]:rounded-lg [&_button]:text-[13px] [&_button]:font-medium [&_button]:shadow-none">
             {!item ? (
               <AdminButton type="button" onClick={createDraft} loading={pending} disabled={!validDraft}>
                 Create draft
@@ -267,41 +267,41 @@ export function FaqCmsEditor({ initialItem, listQuery = "" }: { initialItem?: Fa
               Reload latest
             </AdminButton>
           ) : null}
-        </AdminSectionCard>
+        </section>
 
         {item ? (
-          <AdminSectionCard className="p-5">
-            <h2 className="text-base font-black text-slate-950">Publishing state</h2>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <section className="mt-6 min-w-0">
+            <ContentSectionHeading>Publishing state</ContentSectionHeading>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
               <State label="Draft version" value={`v${item.version}`} />
               <State label="Published version" value={item.publishedVersion ? `v${item.publishedVersion}` : "Not published"} />
               <State label="Unpublished changes" value={hasUnpublishedChanges ? "Yes" : "No"} />
               <State label="Published at" value={item.publishedAt ? new Date(item.publishedAt).toLocaleString() : "—"} />
             </div>
-          </AdminSectionCard>
+          </section>
         ) : null}
       </div>
 
-      <AdminSectionCard className="h-fit p-5 xl:sticky xl:top-24">
-        <p className="text-xs font-black uppercase tracking-wide text-indigo-700">Draft preview</p>
-        <h2 className="mt-2 text-lg font-black text-slate-950">{question.trim() || "FAQ question"}</h2>
-        <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-slate-600">
+      <aside className="h-fit min-w-0 lg:sticky lg:top-24">
+        <ContentSectionHeading>Draft preview</ContentSectionHeading>
+        <h2 className="mt-2 text-[15px] font-semibold text-[#111827]">{question.trim() || "FAQ question"}</h2>
+        <p className="mt-3 whitespace-pre-wrap text-[13px] leading-5 text-[#475569]">
           {answer.trim() || "The FAQ answer preview will appear here."}
         </p>
-        <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-100 pt-4 text-xs font-bold text-slate-500">
+        <div className="mt-4 flex items-center justify-between gap-3 border-t border-[#E5E7EB] pt-4 text-[12px] text-[#64748B]">
           <span>{category.trim() || "General"}</span>
           <span>Order {sortOrder || "0"}</span>
         </div>
-      </AdminSectionCard>
+      </aside>
     </div>
   );
 }
 
 function State({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl bg-slate-50 p-3">
-      <p className="text-xs font-black uppercase tracking-wide text-slate-500">{label}</p>
-      <p className="mt-1 break-words text-sm font-bold text-slate-900">{value}</p>
+    <div className="min-w-0 border-b border-[#E5E7EB] py-2.5">
+      <p className="text-[12px] font-medium text-[#64748B]">{label}</p>
+      <p className="mt-1 break-words text-[13px] font-medium text-[#334155]">{value}</p>
     </div>
   );
 }
