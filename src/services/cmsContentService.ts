@@ -30,6 +30,7 @@ type CmsListScope = {
   market: string | null;
   locale: string | null;
   search: string | null;
+  category: string | null;
 };
 
 function encodeCmsListCursor(scope: CmsListScope, updatedAt: string, id: string) {
@@ -47,6 +48,7 @@ function decodeCmsListCursor(value: string | undefined): { scope: CmsListScope; 
     const market = scope?.market ?? null;
     const locale = scope?.locale ?? null;
     const search = scope?.search ?? null;
+    const category = scope?.category ?? null;
     if (
       decoded.v !== 1 ||
       !scope ||
@@ -55,6 +57,7 @@ function decodeCmsListCursor(value: string | undefined): { scope: CmsListScope; 
       (market !== null && (typeof market !== "string" || !cmsMarketCodeSet.has(market))) ||
       (locale !== null && (typeof locale !== "string" || !/^[a-z]{2}(?:-[a-z]{2})?$/.test(locale))) ||
       (search !== null && (typeof search !== "string" || search.length > 160 || /[\x00-\x1f\x7f]/.test(search))) ||
+      (category !== null && (typeof category !== "string" || category.length > 80 || /[\x00-\x1f\x7f]/.test(category))) ||
       typeof decoded.updatedAt !== "string" ||
       !cmsCursorIso.test(decoded.updatedAt) ||
       !Number.isFinite(Date.parse(decoded.updatedAt)) ||
@@ -64,7 +67,7 @@ function decodeCmsListCursor(value: string | undefined): { scope: CmsListScope; 
       throw new Error("invalid");
     }
     return {
-      scope: { type: type as CmsContentType | null, status: status as CmsContentStatus | null, market, locale, search },
+      scope: { type: type as CmsContentType | null, status: status as CmsContentStatus | null, market, locale, search, category },
       updatedAt: new Date(decoded.updatedAt).toISOString(),
       id: decoded.id,
     };
@@ -700,6 +703,7 @@ export async function listAdminCmsContent(input: {
   limit?: number;
   cursor?: string;
   search?: string;
+  category?: string;
 } = {}) {
   const db = getOptionalPrisma();
   if (!db) throw new CmsContentError("UNAVAILABLE", "CMS storage is unavailable.");
@@ -713,6 +717,10 @@ export async function listAdminCmsContent(input: {
   if (search && (search.length > 160 || /[\x00-\x1f\x7f]/.test(search))) {
     throw new CmsContentError("INVALID", "Search term must be 160 characters or fewer.", { field: "q" });
   }
+  const category = input.category?.trim() || null;
+  if (category && (category.length > 80 || /[\x00-\x1f\x7f]/.test(category))) {
+    throw new CmsContentError("INVALID", "Category filter must be 80 characters or fewer.", { field: "category" });
+  }
   const limit = input.limit ?? 50;
   if (!Number.isInteger(limit) || limit < 1 || limit > 100) {
     throw new CmsContentError("INVALID", "Limit must be an integer from 1 to 100.", { field: "limit" });
@@ -724,6 +732,7 @@ export async function listAdminCmsContent(input: {
     market: parsedMarket?.success ? parsedMarket.data : cursor?.scope.market ?? null,
     locale: parsedLocale?.success ? parsedLocale.data : cursor?.scope.locale ?? null,
     search: input.search !== undefined ? search : cursor?.scope.search ?? null,
+    category: input.category !== undefined ? category : cursor?.scope.category ?? null,
   };
   if (cursor && JSON.stringify(cursor.scope) !== JSON.stringify(scope)) {
     throw new CmsContentError("INVALID", "CMS cursor does not match this query.", { field: "cursor" });
@@ -741,6 +750,7 @@ export async function listAdminCmsContent(input: {
         if (scope.status) predicates.push(Prisma.sql`"status"::text = ${scope.status}`);
         if (scope.market) predicates.push(Prisma.sql`"market" = ${scope.market}`);
         if (scope.locale) predicates.push(Prisma.sql`"locale" = ${scope.locale}`);
+        if (scope.category) predicates.push(Prisma.sql`"draftPayload"->>'category' = ${scope.category}`);
         if (cursor) {
           const updatedAt = new Date(cursor.updatedAt);
           predicates.push(Prisma.sql`("updatedAt" < ${updatedAt} OR ("updatedAt" = ${updatedAt} AND "id" < ${cursor.id}))`);
@@ -774,6 +784,7 @@ export async function listAdminCmsContent(input: {
           ...(scope.status ? { status: scope.status } : {}),
           ...(scope.market ? { market: scope.market } : {}),
           ...(scope.locale ? { locale: scope.locale } : {}),
+          ...(scope.category ? { draftPayload: { path: ["category"], equals: scope.category } } : {}),
           ...(cursor
             ? {
                 OR: [
@@ -794,6 +805,23 @@ export async function listAdminCmsContent(input: {
     : null;
 
   return { items: page.map(serialize), nextCursor };
+}
+
+/** Options reflect all CMS draft records, not only one paginated list page. */
+export async function listAdminCmsFaqCategories(): Promise<string[]> {
+  const db = getOptionalPrisma();
+  if (!db) return [];
+  const rows = await db.$queryRaw<Array<{ category: string }>>(Prisma.sql`
+    SELECT DISTINCT "draftPayload"->>'category' AS category
+    FROM "CmsContentItem"
+    WHERE "type" = 'FAQ'::"CmsContentType"
+      AND "market" = 'GLOBAL'
+      AND "locale" = 'en'
+      AND jsonb_typeof("draftPayload") = 'object'
+      AND "draftPayload"->>'category' IS NOT NULL
+    ORDER BY category
+  `);
+  return rows.map(row => row.category).filter(Boolean);
 }
 
 export async function getAdminCmsContent(id: string) {
