@@ -153,7 +153,7 @@ test("Content management uses consistent arrow back links and clean page framing
   assert.match(frame, /ArrowLeft size=\{14\}/);
   assert.match(frame, /href=\{backHref\}/);
   assert.match(frame, /max-w-\[1138px\]/);
-  assert.match(frame, /<ContentSectionHeading/);
+  assert.match(frame, /export function ContentSectionHeading/);
   const pages = [
     "src/app/admin/content/homepage/page.tsx",
     "src/app/admin/content/homepage/[section]/page.tsx",
