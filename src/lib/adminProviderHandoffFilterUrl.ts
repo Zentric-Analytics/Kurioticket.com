@@ -54,3 +54,24 @@ export function shouldAcceptHandoffFilterResponse(
   return (latestRequestedHref === null || incomingHref === latestRequestedHref)
     && latestProviderDraft.trim() === initial.provider.trim();
 }
+
+
+/**
+ * Canonicalize a History API URL to its actual record-filter fields. Cursor
+ * and limit changes intentionally do not change the filter context.
+ */
+export function providerHandoffHistoryFilterHref(search: string): string {
+  const params = new URLSearchParams(search);
+  return providerHandoffFiltersHref({
+    product: params.get("product") || "",
+    identity: params.get("identity") || "all",
+    correlation: params.get("correlation") || "",
+    provider: params.get("provider") || "",
+    environment: params.get("environment") || "",
+  }, {
+    userId: params.get("userId") || "",
+    visitorId: params.get("visitorId") || "",
+    from: params.get("from") || "",
+    to: params.get("to") || "",
+  });
+}
