@@ -308,7 +308,7 @@ test("Task 3: handoff detail groups every field without tiles or losing verifica
   assert.ok(handoffDetailPage.indexOf('aria-labelledby="handoff-overview"') < handoffDetailPage.indexOf('aria-labelledby="handoff-referral"'));
   assert.match(handoffDetailPage, /md:grid-cols-3/);
   assert.match(handoffDetailPage, /"HOTEL" \? "Property" : "Route"/);
-  for (const label of ["Provider", "Product", "Created", "Route", "Price",
+  for (const label of ["Provider", "Product", "Created", "Price",
     "Source page", "Destination domain", "Environment", "Handoff ID",
     "Identity", "Search correlation", "Search history ID", "User ID", "Visitor ID"]) {
     assert.ok(handoffDetailPage.includes('label="' + label + '"'), "Missing detail field " + label);
