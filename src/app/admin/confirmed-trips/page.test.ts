@@ -58,7 +58,7 @@ test("one white parent holds three compact trip investigation sections", () => {
 });
 
 
-test("all five counters share the same filtered directory query and link to preserved search scopes", () => {
+test("all five overview counters display the current filtered scope without clickable links or active styling", () => {
   for (const label of ["Confirmed trips", "Tracked trips", "Upcoming", "Past", "Cancelled"]) {
     assert.ok(page.includes('label="' + label + '"'), "Missing metric: " + label);
   }
@@ -69,11 +69,11 @@ test("all five counters share the same filtered directory query and link to pres
   assert.match(page, /label="Upcoming" value=\{directory\.statusCounts\.upcoming\}/);
   assert.match(page, /label="Past" value=\{directory\.statusCounts\.past\}/);
   assert.match(page, /label="Cancelled" value=\{directory\.statusCounts\.cancelled\}/);
-  for (const status of ["all", "UPCOMING", "PAST", "CANCELLED"]) {
-    assert.ok(page.includes('tripWorkspaceHref(filters, range, { status: "' + status + '" })'), "Missing clickable status: " + status);
-  }
-  assert.match(page, /aria-current=\{active \? "page" : undefined\}/);
-  assert.match(page, /active=\{filters\.status === "CANCELLED"\}/);
+  const metric = page.slice(page.indexOf("function TripMetric({"), page.indexOf("function InlineFact("));
+  assert.match(metric, /return \(\s*<div className="flex h-full min-w-0 flex-col rounded-lg border border-slate-200\/80 bg-white/);
+  assert.doesNotMatch(metric, /<Link|href=|aria-current|active\s*=|ArrowRight|ring-indigo-100|border-indigo-300|hover:bg-indigo-50|cursor-pointer|cursor-not-allowed/);
+  assert.match(page, /Use Trip status to investigate matching records/);
+  assert.doesNotMatch(page, /tripWorkspaceHref\(filters, range, \{ status:/);
   assert.match(recordsService, /const \[count, page, upcoming, past, cancelled\] = await db\.\$transaction/);
   for (const status of ["UPCOMING", "PAST", "CANCELLED"]) {
     assert.ok(recordsService.includes('db.myTrip.count({ where: { AND: [where, { status: "' + status + '" }] } })'));
@@ -86,7 +86,11 @@ test("tracked trips remain unavailable instead of showing fabricated totals", ()
   assert.match(page, /Tracking reporting not connected/);
   assert.match(page, /Tracking totals require a separate data source/);
   assert.match(controls, /<SearchMonitorSelect label="Tracking".*disabled \/>/);
-  assert.match(dropdown, /disabled=\{disabled\}/);
+  assert.match(controls, /value: "TRACKED", label: "Tracked trips".*disabled: true/);
+  assert.match(dropdown, /disabled=\{option\.disabled\}/);
+  assert.match(dropdown, /aria-disabled=\{option\.disabled \|\| undefined\}/);
+  assert.match(dropdown, /!option\.disabled/);
+  assert.doesNotMatch(filterSource, /"TRACKED"/);
   assert.doesNotMatch(page, /operations\.metrics\.tracked|Math\.random|mockTrips|sampleTrips/);
   assert.doesNotMatch(page, /\{ status: "TRACKED" \}/);
 });
@@ -148,6 +152,10 @@ test("eight polished directory fields use one compact desktop row with accessibl
   assert.match(controls, /aria-label="Confirmed to \(UTC\)"/);
   assert.match(controls, /setSelectedRange\("custom"\)/);
   assert.match(controls, /appearance="boxed"/);
+  assert.match(controls, /value: "all", label: "Confirmed trips", shortLabel: "Confirmed"/);
+  assert.match(controls, /value: "TRACKED", label: "Tracked trips".*disabled: true, description: "Not connected"/);
+  assert.match(controls, /name="status" value=\{filters\.status\} options=\{statusOptions\}/);
+  assert.match(dropdown, /if \(!options\.some\(\(option\) => option\.value === next && !option\.disabled\)\) return/);
   assert.match(controls, /focus-visible:ring-2/);
   assert.match(controls, /href="\/admin\/confirmed-trips#trip-directory"/);
   assert.match(controls, /precise minute-level ranges require a future integration/);
