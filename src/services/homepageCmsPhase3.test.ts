@@ -92,3 +92,10 @@ test("Phase 3 does not move native mobile homepage merchandising onto CMS", () =
   assert.match(mobileHome, /getMarketplaceHomeMerchandising/);
   assert.doesNotMatch(mobileHome, /api\/content\/homepage/);
 });
+
+test("homepage CMS overview links use valid JSX and preserve overview navigation context", () => {
+  for (const section of ["destinations", "flight-routes", "hotel-destinations"]) {
+    assert.match(overview, new RegExp('href="/admin/content/homepage/' + section + '\\?from=overview"'));
+  }
+  assert.doesNotMatch(overview, /href=\?from=overview/);
+});
