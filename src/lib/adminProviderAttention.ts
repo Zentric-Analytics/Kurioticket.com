@@ -31,7 +31,7 @@ export function parseProviderHealthRange(
   if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime()) ||
       from.toISOString().slice(0, 10) !== start ||
       to.toISOString().slice(0, 10) !== end ||
-      to < from || to.getTime() > now.getTime() + 86_400_000 ||
+      to < from || end > now.toISOString().slice(0, 10) ||
       to.getTime() - from.getTime() > 90 * 86_400_000) {
     return { hours, range: null, error: "Choose a valid date range of up to 90 days, ending no later than today." };
   }
