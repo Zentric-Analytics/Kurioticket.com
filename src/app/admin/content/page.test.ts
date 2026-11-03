@@ -202,6 +202,12 @@ test("Content lists search the whole CMS dataset and filters apply instantly", (
   assert.match(faq, /listAdminCmsFaqCategories/);
   assert.match(faq, /category: one\(raw\.category\) \|\| undefined/);
   assert.match(toolbar, /role="search"/);
+  assert.match(toolbar, /method="get"/);
+  assert.match(toolbar, /name="status" value=\{status\}/);
+  assert.match(toolbar, /name="from" value="overview"/);
+  assert.match(toolbar, /<noscript>/);
+  assert.equal((toolbar.match(/<form\b/g) ?? []).length, 1);
+  assert.equal((toolbar.match(/<\/form>/g) ?? []).length, 1);
   assert.match(toolbar, /aria-label="Content publication status"/);
   assert.match(toolbar, /onValueChange=\{next => navigate/);
   assert.match(toolbar, /<AdminDirectorySelect/);
