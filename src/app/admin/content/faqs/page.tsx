@@ -12,6 +12,7 @@ import {
 } from "@/components/admin/AdminPageShell";
 import { FaqCmsInitializeButton } from "@/components/admin/FaqCmsInitializeButton";
 import { FaqCmsListClient } from "@/components/admin/FaqCmsListClient";
+import { CmsCreateLink } from "@/components/admin/CmsCreateLink";
 import type { CmsContentStatus } from "@/generated/prisma/enums";
 import {
   CmsContentError,
@@ -19,7 +20,7 @@ import {
   listAdminCmsContent,
 } from "@/services/cmsContentService";
 import { faqCmsScope } from "@/services/faqCmsService";
-import { contentEditorHref, faqCmsListNavigation } from "@/lib/adminContentNavigation";
+import { faqCmsListNavigation } from "@/lib/adminContentNavigation";
 
 export const metadata = { title: "Admin FAQs" };
 
@@ -74,7 +75,7 @@ export default async function AdminFaqCmsPage({ searchParams }: { searchParams: 
       actions={
         <div className="flex flex-wrap gap-2">
           <AdminLinkButton href="/admin/content">Back to content</AdminLinkButton>
-          {summary.active ? <AdminLinkButton href={contentEditorHref("/admin/content/faqs/new", nav.query)} variant="primary">Add FAQ</AdminLinkButton> : null}
+          {summary.active ? <CmsCreateLink path="/admin/content/faqs/new" label="Add FAQ" /> : null}
         </div>
       }
     >
@@ -140,7 +141,7 @@ export default async function AdminFaqCmsPage({ searchParams }: { searchParams: 
               <AdminEmptyState
                 title="No FAQs found"
                 message="No FAQ records match the selected lifecycle status."
-                action={<AdminLinkButton href={contentEditorHref("/admin/content/faqs/new", nav.query)} variant="primary">Add FAQ</AdminLinkButton>}
+                action={<CmsCreateLink path="/admin/content/faqs/new" label="Add FAQ" />}
               />
             )}
           </>
