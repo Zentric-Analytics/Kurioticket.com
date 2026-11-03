@@ -4,6 +4,7 @@ import { AdminLinkButton, AdminPageShell } from "@/components/admin/AdminPageShe
 import { HomepageCmsEditor } from "@/components/admin/HomepageCmsEditor";
 import { hotelDestinations } from "@/data/hotelDestinations";
 import { getHomepageCmsSection, homepageCmsSections } from "@/lib/adminHomepageCms";
+import { homepageCmsListNavigation } from "@/lib/adminContentNavigation";
 import { getCmsContentScopeSummary } from "@/services/cmsContentService";
 import { homepageCmsLocale, homepageCmsMarkets } from "@/services/homepageCmsService";
 
@@ -24,6 +25,7 @@ export default async function NewHomepageCmsContentPage({ params, searchParams }
     : homepageCmsMarkets.includes(requestedMarket as never)
       ? requestedMarket
       : "US";
+  const nav = homepageCmsListNavigation(section, raw, market);
   const config = homepageCmsSections[section];
   const summary = await getCmsContentScopeSummary(config.type, market, homepageCmsLocale).catch(() => null);
 
@@ -35,12 +37,13 @@ export default async function NewHomepageCmsContentPage({ params, searchParams }
     <AdminPageShell
       title={`New ${config.singular}`}
       description="Create a structured draft. Save and Publish remain separate lifecycle actions."
-      actions={<AdminLinkButton href={`/admin/content/homepage/${section}?market=${market}`}>Back</AdminLinkButton>}
+      actions={<AdminLinkButton href={nav.listHref}>Back to {config.title}</AdminLinkButton>}
     >
       <HomepageCmsEditor
         section={section}
         markets={homepageCmsMarkets}
         initialMarket={market}
+        listQuery={nav.query}
         hotelOptions={section === "hotel-destinations" ? getHotelOptions() : []}
       />
     </AdminPageShell>
