@@ -114,7 +114,7 @@ export function ProviderDirectoryTable({ rows }: { rows: ProviderDirectoryRecord
             </tr>
             <tr id={"provider-details-" + row.id} hidden={!open} className="bg-white">
               <td colSpan={5} className="border-l-2 border-[#004BB8] px-4 py-4">
-                <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2 xl:grid-cols-4">
+                <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-4">
                   <Fact label="Environment" value={row.detail.environment} />
                   <Fact label="Credentials" value={row.detail.configured} />
                   <Fact label="Search" value={row.detail.search} />
