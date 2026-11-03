@@ -7,6 +7,7 @@ const activity = readFileSync("src/app/admin/searches/activity/page.tsx","utf8")
 const redirects = readFileSync("src/app/admin/redirects/page.tsx","utf8");
 const journeys = readFileSync("src/app/admin/journeys/page.tsx","utf8");
 const attribution = readFileSync("src/app/admin/referral-attribution/page.tsx","utf8");
+const referralWindow = readFileSync("src/components/admin/ReferralWindowFilter.tsx","utf8");
 const searchDetail = readFileSync("src/app/admin/searches/[id]/page.tsx","utf8");
 
 test("Search Activity retains independent search monitoring and redirects old section links", () => {
@@ -22,10 +23,12 @@ test("tab destinations cannot carry incompatible backend filter keys", () => {
 test("legacy section routes retain their own safe filter contracts", () => {
   assert.match(journeys,/action=\{embedded \? "\/admin\/searches\/activity"/);
   assert.match(redirects,/action=\{embedded \? "\/admin\/searches\/activity"/);
-  assert.match(attribution,/action=\{embedded \? "\/admin\/providers"/);
+  assert.match(attribution,/ReferralWindowFilter days=\{days\} embedded=\{false\}/);
+  assert.match(referralWindow,/action=\{embedded \? "\/admin\/providers" : "\/admin\/referral-attribution"\}/);
+  assert.match(referralWindow,/router\.replace\(target, \{ scroll: false \}\)/);
   assert.match(redirects,/name="tab" value="handoffs"/);
   assert.match(journeys,/name="tab" value="journeys"/);
-  assert.match(attribution,/name="view" value="attribution"/);
+  assert.match(referralWindow,/name="view" value="attribution"/);
   assert.doesNotMatch(searchDetail,/No verified identity link is available/);
   assert.doesNotMatch(searchDetail,/These links do not imply that another record belongs to this exact search/);
 });
