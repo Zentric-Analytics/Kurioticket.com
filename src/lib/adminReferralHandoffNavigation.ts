@@ -28,7 +28,7 @@ export function handoffListParams(raw: Record<string, string | string[] | undefi
   const result = new URLSearchParams();
   for (const key of listKeys) {
     const value = raw[key];
-    if (typeof value === "string" && value.length > 0 && value.length <= 2048) result.set(key, value);
+    if (typeof value === "string" && value.length > 0 && value.length <= (key === "pageTrail" ? 8192 : 2048)) result.set(key, value);
   }
   return result;
 }
