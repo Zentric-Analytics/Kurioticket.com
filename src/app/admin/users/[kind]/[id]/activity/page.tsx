@@ -220,7 +220,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
             { label: "Offers selected", count: data.summary.offersSelected },
             { label: "Provider handoffs", count: data.summary.providerHandoffs },
             { label: "Journeys tracked", count: data.summary.journeysTracked },
-          ]).map(({label,count}, index) => <div key={label} data-testid="activity-metric"
+          ]).map(({label,count}) => <div key={label} data-testid="activity-metric"
             className="min-w-0 pr-2 sm:pr-3 lg:px-6">
             <span data-testid="activity-metric-label" className="block text-[12px] font-normal text-[#64748B] lg:whitespace-nowrap">{label}</span>
             <span data-testid="activity-metric-value" className="mt-1 block text-[16px] font-medium leading-6 tabular-nums text-[#0F172A]">{count}</span>
