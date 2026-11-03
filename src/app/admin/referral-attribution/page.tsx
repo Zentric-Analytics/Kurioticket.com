@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { referralHandoffHref } from "@/lib/adminReferralHandoffNavigation";
 import { AdminEmptyState } from "@/components/admin/AdminPageShell";
 import { ReferralWindowFilter } from "@/components/admin/ReferralWindowFilter";
 import { SearchWorkspaceBackLink } from "@/components/admin/SearchWorkspaceBackLink";
@@ -115,7 +117,7 @@ export default async function AdminReferralAttributionPage({
                 <tbody className="divide-y divide-[#E7ECF5]">
                   {summary.providers.map(item => (
                     <tr key={item.provider + "-" + item.product}>
-                      <th scope="row" className="break-words py-3 pr-3 text-left font-medium">{item.provider}</th>
+                      <th scope="row" className="break-words py-3 pr-3 text-left font-medium"><Link href={referralHandoffHref({ start: summary.window.start, end: summary.window.end, environment: summary.environment, provider: item.provider, product: item.product })} className="text-[#004BB8] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">{item.provider}</Link></th>
                       <td className="px-2 py-3 text-[#475569]">{item.product}</td>
                       <td className="py-3 pl-2 text-right tabular-nums">{item.handoffs.toLocaleString()}</td>
                     </tr>
@@ -157,6 +159,15 @@ export default async function AdminReferralAttributionPage({
           </section>
         </div>
       )}
+      {summary.dataAvailable ? (
+        <section aria-labelledby="unlinked-handoffs" className="mt-5 border-t border-[#D8E1EC] pt-4">
+          <h2 id="unlinked-handoffs" className="text-[15px] font-semibold">Unlinked handoffs</h2>
+          <Link href={referralHandoffHref({ start: summary.window.start, end: summary.window.end, environment: summary.environment, correlation: "unavailable" })}
+            className="mt-2 inline-block text-[13px] font-medium text-[#004BB8] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
+            View {summary.handoffs.notLinkedToSearch.toLocaleString()} handoffs without a linked search
+          </Link>
+        </section>
+      ) : null}
     </section>
   );
 }
