@@ -414,7 +414,8 @@ export default async function AdminConfirmedTripsPage({ searchParams }: Props) {
               </>
             )}
             {readiness.feedReady ? <ConfirmedTripDeliveryAlerts /> : null}
-          </section>                </div>
+          </section>
+                </div>
               </details>
 
               <Link href="/admin/flight-status" className="flex min-h-11 items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 hover:border-indigo-300 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
