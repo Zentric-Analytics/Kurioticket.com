@@ -2,12 +2,8 @@
 
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
-import { ContentRecordsTable, ContentStatusPill, ContentEmptyState } from "@/components/admin/ContentWorkspace";
-import { useMemo, useState } from "react";
+import { ContentRecordsTable, ContentStatusPill } from "@/components/admin/ContentWorkspace";
 
-import {
-  AdminInput,
-} from "@/components/admin/AdminPageShell";
 import type { HomepageCmsSection } from "@/lib/adminHomepageCms";
 
 type CmsListItem = {
@@ -57,47 +53,13 @@ export function HomepageCmsListClient({
   items: CmsListItem[];
   listQuery?: string;
 }) {
-  const [query, setQuery] = useState(() => new URLSearchParams(listQuery).get("q") || "");
-
-  function changeQuery(next: string) {
-    setQuery(next);
-    const url = new URL(window.location.href);
-    if (next.trim()) url.searchParams.set("q", next.trim().slice(0, 160));
-    else url.searchParams.delete("q");
-    window.history.replaceState(window.history.state, "", url.pathname + url.search);
-  }
-
   const editorContext = new URLSearchParams(listQuery);
-  if (query.trim()) editorContext.set("q", query.trim().slice(0, 160));
-  else editorContext.delete("q");
-
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return items;
-    return items.filter((item) => {
-      const summary = readSummary(section, item.draftPayload);
-      return [summary.title, summary.detail, item.market, item.status]
-        .some((value) => value.toLowerCase().includes(q));
-    });
-  }, [items, query, section]);
 
   return (
-    <div className="space-y-3 [&_input]:h-9 [&_input]:rounded-lg [&_input]:text-[13px] [&_select]:h-9 [&_select]:rounded-lg [&_select]:text-[13px]">
-      <div className="rounded-lg border border-[#E5E7EB] bg-white p-3">
-        <AdminInput
-          value={query}
-          onChange={(event) => changeQuery(event.target.value)}
-          placeholder="Search this page"
-          aria-label="Search CMS content on this page"
-        />
-      </div>
-
-      {filtered.length === 0 ? (
-        <ContentEmptyState title="No matching content" message="No content on this page matches your search." />
-      ) : (
+    <div className="min-w-0">
         <ContentRecordsTable
           columns={["Content", "Market", "Status", "Order", "Version", "Updated", "Action"]}
-          rows={filtered.map((item) => {
+          rows={items.map((item) => {
             const summary = readSummary(section, item.draftPayload);
             const unpublished = item.publishedVersion !== null && item.version !== item.publishedVersion;
             return {
@@ -109,7 +71,7 @@ export function HomepageCmsListClient({
                 </div>,
                 item.market,
                 <div key="status" className="space-y-1">
-                  <ContentStatusPill status={item.status} />
+                  <ContentStatusPill status={item.status} inline />
                   {unpublished ? <p className="text-[12px] font-medium text-amber-700">Unpublished changes</p> : null}
                 </div>,
                 item.sortOrder,
@@ -122,7 +84,6 @@ export function HomepageCmsListClient({
             };
           })}
         />
-      )}
     </div>
   );
 }

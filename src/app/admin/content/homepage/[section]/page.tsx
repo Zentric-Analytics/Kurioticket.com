@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { AdminButton, AdminSelect } from "@/components/admin/AdminPageShell";
+import { ContentDirectoryToolbar } from "@/components/admin/ContentDirectoryToolbar";
 import { ContentPageFrame, ContentEmptyState } from "@/components/admin/ContentWorkspace";
 import { HomepageCmsListClient } from "@/components/admin/HomepageCmsListClient";
 import { CmsCreateLink } from "@/components/admin/CmsCreateLink";
@@ -43,6 +43,7 @@ export default async function HomepageCmsSectionPage({ params, searchParams }: P
   if (!summary?.available || !summary.active) {
     return (
       <ContentPageFrame
+      wide
         title={config.title}
         subtitle="This CMS scope must be initialized before editing."
         backHref={nav.backHref}
@@ -66,6 +67,7 @@ export default async function HomepageCmsSectionPage({ params, searchParams }: P
       locale: homepageCmsLocale,
       limit: 100,
       cursor,
+      search: one(raw.q) || undefined,
     });
   } catch (caught) {
     error = caught instanceof CmsContentError ? caught.message : "CMS content is unavailable.";
@@ -73,6 +75,7 @@ export default async function HomepageCmsSectionPage({ params, searchParams }: P
 
   return (
     <ContentPageFrame
+      wide
       title={config.title}
       subtitle="Manage drafts and published content."
       backHref={nav.backHref}
@@ -80,23 +83,14 @@ export default async function HomepageCmsSectionPage({ params, searchParams }: P
       actions={<CmsCreateLink path={`/admin/content/homepage/${section}/new`} label={`Add ${config.singular}`} />}
     >
       <div className="space-y-4">
-        <form action={`/admin/content/homepage/${section}`} className="flex min-w-0 flex-wrap items-center gap-2 rounded-lg border border-[#E5E7EB] bg-white p-3 [&_select]:w-auto [&_select]:min-w-[150px]">
-          {raw.from === "overview" ? <input type="hidden" name="from" value="overview" /> : null}
-          {section !== "hotel-destinations" ? (
-            <AdminSelect name="market" defaultValue={allowedMarket}>
-              {homepageCmsMarkets.map((market) => <option key={market} value={market}>{market}</option>)}
-            </AdminSelect>
-          ) : null}
-          <AdminSelect name="status" defaultValue={statusRaw}>
-            <option value="">All statuses</option>
-            <option value="PUBLISHED">Published</option>
-            <option value="DRAFT">Draft</option>
-            <option value="HIDDEN">Hidden</option>
-            <option value="ARCHIVED">Archived</option>
-          </AdminSelect>
-          <AdminButton size="sm" className="rounded-lg font-medium shadow-none" type="submit">Apply filters</AdminButton>
-        </form>
-
+        <ContentDirectoryToolbar
+          path={`/admin/content/homepage/${section}`}
+          query={nav.query}
+          status={statusRaw}
+          market={section !== "hotel-destinations" ? allowedMarket : undefined}
+          markets={section !== "hotel-destinations" ? homepageCmsMarkets : []}
+          searchLabel={section === "flight-routes" ? "Search flight routes" : section === "hotel-destinations" ? "Search hotel destinations" : "Search destinations"}
+        >
         {error ? (
           <ContentEmptyState title="Content unavailable" message={error} />
         ) : listing && listing.items.length > 0 ? (
@@ -117,6 +111,7 @@ export default async function HomepageCmsSectionPage({ params, searchParams }: P
             action={<CmsCreateLink path={`/admin/content/homepage/${section}/new`} label={`Add ${config.singular}`} />}
           />
         )}
+        </ContentDirectoryToolbar>
       </div>
     </ContentPageFrame>
   );

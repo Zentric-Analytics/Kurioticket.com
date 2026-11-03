@@ -281,7 +281,7 @@ export function HomepageCmsEditor({
           <AdminInput type="number" min={0} max={100000} value={sortOrder} onChange={(event) => setSortOrder(event.target.value)} disabled={pending || archived} />
         </Field>
 
-        <div className="flex flex-wrap gap-2 border-t border-[#E5E7EB] pt-4 [&_button]:rounded-lg [&_button]:text-[13px] [&_button]:font-medium [&_button]:shadow-none">
+        <div className="flex flex-wrap gap-2 pt-3 [&_button]:rounded-lg [&_button]:text-[13px] [&_button]:font-medium [&_button]:shadow-none">
           {!item ? (
             <AdminButton type="button" onClick={createDraft} loading={pending} disabled={!validDraft}>Create draft</AdminButton>
           ) : !archived ? (
@@ -308,7 +308,7 @@ export function HomepageCmsEditor({
         <ContentSectionHeading>Draft preview</ContentSectionHeading>
         <h2 className="mt-2 text-[15px] font-semibold text-[#111827]">{previewTitle(section, currentPayload)}</h2>
         <p className="mt-2 whitespace-pre-wrap text-[13px] leading-5 text-[#475569]">{previewDetail(section, currentPayload)}</p>
-        <div className="mt-4 grid gap-2 border-t border-[#E5E7EB] pt-4 text-[12px] text-[#64748B]">
+        <div className="mt-4 grid gap-2 pt-2 text-[12px] text-[#64748B]">
           <span>Market: {section === "hotel-destinations" ? "GLOBAL" : market}</span>
           <span>Order: {sortOrder || "0"}</span>
           {item ? <span>Draft v{item.version} · Published {item.publishedVersion ? `v${item.publishedVersion}` : "none"} · Unpublished changes: {unpublished ? "yes" : "no"}</span> : null}

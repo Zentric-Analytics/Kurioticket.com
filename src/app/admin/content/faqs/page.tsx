@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { AdminButton, AdminSelect } from "@/components/admin/AdminPageShell";
+import { ContentDirectoryToolbar } from "@/components/admin/ContentDirectoryToolbar";
 import { ContentPageFrame, ContentEmptyState, ContentMetric, ContentStatusPill } from "@/components/admin/ContentWorkspace";
 import { FaqCmsInitializeButton } from "@/components/admin/FaqCmsInitializeButton";
 import { FaqCmsListClient } from "@/components/admin/FaqCmsListClient";
@@ -10,6 +10,7 @@ import {
   CmsContentError,
   getCmsContentScopeSummary,
   listAdminCmsContent,
+  listAdminCmsFaqCategories,
 } from "@/services/cmsContentService";
 import { faqCmsScope } from "@/services/faqCmsService";
 import { faqCmsListNavigation } from "@/lib/adminContentNavigation";
@@ -40,6 +41,8 @@ export default async function AdminFaqCmsPage({ searchParams }: { searchParams: 
       archived: 0,
     }));
 
+  const categories = summary.available ? await listAdminCmsFaqCategories().catch(() => []) : [];
+
   let listing:
     | Awaited<ReturnType<typeof listAdminCmsContent>>
     | null = null;
@@ -54,6 +57,8 @@ export default async function AdminFaqCmsPage({ searchParams }: { searchParams: 
         locale: faqCmsScope.locale,
         limit: 100,
         cursor,
+        search: one(raw.q) || undefined,
+        category: one(raw.category) || undefined,
       });
     } catch (error) {
       listingError = error instanceof CmsContentError ? error.message : "FAQ CMS data is unavailable.";
@@ -62,14 +67,15 @@ export default async function AdminFaqCmsPage({ searchParams }: { searchParams: 
 
   return (
     <ContentPageFrame
+      wide
       title="FAQs"
       subtitle="Manage English FAQ questions and answers."
       backHref="/admin/content"
       backLabel="Back to Content"
       actions={summary.active ? <CmsCreateLink path="/admin/content/faqs/new" label="Add FAQ" /> : null}
     >
-      <div className="space-y-5">
-        <div className="grid gap-4 border-b border-[#E5E7EB] pb-4 sm:grid-cols-3 lg:grid-cols-5">
+      <div className="space-y-4">
+        <div className="grid gap-4 pb-3 sm:grid-cols-3 lg:grid-cols-5">
           <ContentMetric label="Total" value={summary.total} />
           <ContentMetric label="Published" value={summary.published} />
           <ContentMetric label="Draft" value={summary.draft} />
@@ -99,17 +105,14 @@ export default async function AdminFaqCmsPage({ searchParams }: { searchParams: 
           </div>
         ) : (
           <>
-            <form action="/admin/content/faqs" className="flex min-w-0 flex-wrap items-center gap-2 rounded-lg border border-[#E5E7EB] bg-white p-3 [&_select]:w-auto [&_select]:min-w-[150px]">
-              <AdminSelect name="status" defaultValue={statusRaw}>
-                <option value="">All statuses</option>
-                <option value="PUBLISHED">Published</option>
-                <option value="DRAFT">Draft</option>
-                <option value="HIDDEN">Hidden</option>
-                <option value="ARCHIVED">Archived</option>
-              </AdminSelect>
-              <AdminButton size="sm" className="rounded-lg font-medium shadow-none" type="submit">Apply status</AdminButton>
-            </form>
-
+            <ContentDirectoryToolbar
+              path="/admin/content/faqs"
+              query={nav.query}
+              status={statusRaw}
+              category={one(raw.category)}
+              categories={categories}
+              searchLabel="Search FAQs"
+            >
             {listingError ? (
               <ContentEmptyState title="FAQ list unavailable" message={listingError} />
             ) : listing && listing.items.length > 0 ? (
@@ -133,6 +136,7 @@ export default async function AdminFaqCmsPage({ searchParams }: { searchParams: 
                 action={<CmsCreateLink path="/admin/content/faqs/new" label="Add FAQ" />}
               />
             )}
+            </ContentDirectoryToolbar>
           </>
         )}
       </div>

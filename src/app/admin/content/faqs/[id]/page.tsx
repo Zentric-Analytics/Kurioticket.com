@@ -55,7 +55,7 @@ export default async function AdminFaqDetailPage({ params, searchParams }: PageP
           {result.revisions.length === 0 ? (
             <p className="py-4 text-[13px] text-[#64748B]">No revisions are recorded for this FAQ.</p>
           ) : (
-            <div className="divide-y divide-[#E5E7EB] border-t border-[#E5E7EB]">
+            <div className="divide-y divide-[#E7ECF5]">
               {result.revisions.map((revision) => {
                 const payload = faqPayload(revision.draftPayload);
                 return (
