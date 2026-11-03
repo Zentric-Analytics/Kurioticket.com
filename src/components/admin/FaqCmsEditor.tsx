@@ -223,7 +223,7 @@ export function FaqCmsEditor({ initialItem, listQuery = "" }: { initialItem?: Fa
             </label>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 border-t border-[#E5E7EB] pt-4 [&_button]:rounded-lg [&_button]:text-[13px] [&_button]:font-medium [&_button]:shadow-none">
+          <div className="flex flex-wrap items-center gap-2 pt-3 [&_button]:rounded-lg [&_button]:text-[13px] [&_button]:font-medium [&_button]:shadow-none">
             {!item ? (
               <AdminButton type="button" onClick={createDraft} loading={pending} disabled={!validDraft}>
                 Create draft
@@ -281,7 +281,7 @@ export function FaqCmsEditor({ initialItem, listQuery = "" }: { initialItem?: Fa
         <p className="mt-3 whitespace-pre-wrap text-[13px] leading-5 text-[#475569]">
           {answer.trim() || "The FAQ answer preview will appear here."}
         </p>
-        <div className="mt-4 flex items-center justify-between gap-3 border-t border-[#E5E7EB] pt-4 text-[12px] text-[#64748B]">
+        <div className="mt-4 flex items-center justify-between gap-3 pt-2 text-[12px] text-[#64748B]">
           <span>{category.trim() || "General"}</span>
           <span>Order {sortOrder || "0"}</span>
         </div>
@@ -292,7 +292,7 @@ export function FaqCmsEditor({ initialItem, listQuery = "" }: { initialItem?: Fa
 
 function State({ label, value }: { label: string; value: string }) {
   return (
-    <div className="min-w-0 border-b border-[#E5E7EB] py-2.5">
+    <div className="min-w-0 py-2.5">
       <p className="text-[12px] font-medium text-[#64748B]">{label}</p>
       <p className="mt-1 break-words text-[13px] font-medium text-[#334155]">{value}</p>
     </div>
