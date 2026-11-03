@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { AdminButton, AdminDataTable, AdminEmptyState, AdminFilterBar, AdminInput, AdminPageShell, AdminSelect, AdminStatusBadge } from "@/components/admin/AdminPageShell";
 import { SearchWorkspaceBackLink } from "@/components/admin/SearchWorkspaceBackLink";
+import { ProviderHandoffFilters } from "@/components/admin/ProviderHandoffFilters";
 import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
 import { SearchWorkspacePanelFrame } from "@/components/admin/SearchWorkspacePanelFrame";
 import { formatDateTime } from "@/lib/admin-data";
@@ -93,61 +94,22 @@ export default async function AdminRedirectsPage({ searchParams, embedded = fals
   return (
     <section className="w-full min-w-0 bg-white text-[#0F172A]">
       <SearchWorkspaceBackLink href="/admin/providers?view=attribution" label="Provider reports" />
-      <div className="mb-4">
-        <h1 className="text-[18px] font-semibold">Provider Handoffs</h1>
-        <p className="mt-1 text-[12px] leading-5 text-[#64748B]">
-          Recorded outbound referrals only — not confirmation of a booking or payment.
-        </p>
-      </div>
-      <form action="/admin/redirects" method="get"
-        aria-label="Filter provider handoffs"
-        className="flex min-w-0 flex-wrap items-center gap-2 border-y border-[#D8E1EC] py-3">
-        {one(raw.userId) ? <input type="hidden" name="userId" value={one(raw.userId)} /> : null}
-        {one(raw.visitorId) ? <input type="hidden" name="visitorId" value={one(raw.visitorId)} /> : null}
-        {one(raw.from) ? <input type="hidden" name="from" value={one(raw.from)} /> : null}
-        {one(raw.to) ? <input type="hidden" name="to" value={one(raw.to)} /> : null}
-        <label htmlFor="handoff-product" className="sr-only">Product</label>
-        <select id="handoff-product" name="product" defaultValue={one(raw.product)}
-          className="h-9 min-w-[118px] rounded-md border border-[#D8E1EC] bg-white px-2 text-[12px]">
-          <option value="">All products</option>
-          <option value="FLIGHT">Flights</option>
-          <option value="HOTEL">Hotels</option>
-        </select>
-        <div className="flex h-9 min-w-[132px] items-center rounded-md border border-[#D8E1EC] px-3">
-          <SearchMonitorSelect label="Identity" name="identity"
-            value={one(raw.identity) || "all"} appearance="plain"
-            clearFieldNamesOnChange={["userId", "visitorId"]}
-            options={[
-              { value: "all", label: "All identities" },
-              { value: "registered", label: "Registered" },
-              { value: "guest", label: "Guest" },
-              { value: "unattributed", label: "Unattributed" },
-            ]}
-          />
-        </div>
-        <label htmlFor="handoff-correlation" className="sr-only">Search link</label>
-        <select id="handoff-correlation" name="correlation" defaultValue={one(raw.correlation)}
-          className="h-9 min-w-[175px] rounded-md border border-[#D8E1EC] bg-white px-2 text-[12px]">
-          <option value="">All correlations</option>
-          <option value="exact">Linked to search</option>
-          <option value="unavailable">Search link unavailable</option>
-        </select>
-        <label htmlFor="handoff-provider" className="sr-only">Provider</label>
-        <input id="handoff-provider" name="provider" type="search"
-          defaultValue={one(raw.provider)} placeholder="Provider"
-          className="h-9 min-w-[130px] flex-1 rounded-md border border-[#D8E1EC] bg-white px-3 text-[12px] placeholder:text-[#94A3B8] sm:max-w-[220px]" />
-        <label htmlFor="handoff-environment" className="sr-only">Environment</label>
-        <select id="handoff-environment" name="environment" defaultValue={one(raw.environment)}
-          className="h-9 min-w-[146px] rounded-md border border-[#D8E1EC] bg-white px-2 text-[12px]">
-          <option value="">Current environment</option>
-          <option value="staging">Staging</option>
-          <option value="production">Production</option>
-        </select>
-        <button type="submit"
-          className="h-9 rounded-md bg-[#004BB8] px-4 text-[12px] font-medium text-white hover:bg-[#003F9E] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
-          Apply filters
-        </button>
-      </form>
+      <h1 className="sr-only">Provider Handoffs</h1>
+      <ProviderHandoffFilters
+        initial={{
+          product: one(raw.product),
+          identity: one(raw.identity) || "all",
+          correlation: one(raw.correlation),
+          provider: one(raw.provider),
+          environment: one(raw.environment),
+        }}
+        scope={{
+          userId: one(raw.userId),
+          visitorId: one(raw.visitorId),
+          from: one(raw.from),
+          to: one(raw.to),
+        }}
+      />
       {result.status === "ok" ? (
         result.data.items.length === 0 ? (
           <div className="py-5">

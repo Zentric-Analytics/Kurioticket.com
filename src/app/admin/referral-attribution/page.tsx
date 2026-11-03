@@ -48,12 +48,14 @@ export default async function AdminReferralAttributionPage({
         </div>
       ) : <h1 className="sr-only">Referral Attribution</h1>}
 
-      <div className="flex min-w-0 flex-wrap items-center justify-between gap-3 border-b border-[#D8E1EC] pb-3">
-        <ReferralWindowFilter days={days} embedded={embedded} />
-        <span className="text-[12px] text-[#64748B]">
-          {summary.environment} · {summary.window.days}-day window
-        </span>
-      </div>
+      {!embedded ? (
+        <div className="flex min-w-0 flex-wrap items-center justify-between gap-3 border-b border-[#D8E1EC] pb-2">
+          <ReferralWindowFilter days={days} embedded={false} />
+          <span className="text-[12px] text-[#64748B]">
+            {summary.environment === "production" ? "Production" : "Staging"}
+          </span>
+        </div>
+      ) : null}
 
       <dl className="grid grid-cols-2 gap-y-4 border-b border-[#D8E1EC] py-5 xl:grid-cols-4">
         <div className="min-w-0 px-3 first:pl-0 xl:border-r xl:border-[#E7ECF5]">
