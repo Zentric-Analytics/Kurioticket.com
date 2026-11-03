@@ -22,8 +22,7 @@ function publishedContentCount(summary: CmsScopeSummary) {
 function contentScopeDescription(summary: CmsScopeSummary, scope: string) {
   if (!summary?.available) return scope + ": CMS storage could not be verified.";
   if (!summary.active) return scope + ": CMS setup required; legacy content may still be used as fallback.";
-  return scope + ": " + summary.publishedInScope + " published in scope · " + summary.draft
-    + " draft · " + summary.hidden + " hidden · " + summary.archived + " archived";
+  return scope + " · " + summary.draft + " draft" + (summary.draft === 1 ? "" : "s") + " awaiting publication";
 }
 
 export default async function AdminContentPage() {
