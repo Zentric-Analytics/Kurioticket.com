@@ -50,11 +50,12 @@ const tripCategories = [
   { type: "PACKAGE", label: "Packages" },
 ] as const;
 
+/** The trip overview is a read-only summary; filtering lives in Trip Directory. */
 function TripMetric({
-  label, value, hint, icon: Icon, tone, href, active = false,
+  label, value, hint, icon: Icon, tone,
 }: {
   label: string; value: number | string; hint: string;
-  icon: LucideIcon; tone: TripTone; href?: string; active?: boolean;
+  icon: LucideIcon; tone: TripTone;
 }) {
   const colors: Record<TripTone, string> = {
     info: "bg-indigo-50 text-indigo-700",
@@ -62,31 +63,19 @@ function TripMetric({
     warn: "bg-amber-50 text-amber-700",
     neutral: "bg-slate-100 text-slate-600",
   };
-  const content = (
-    <>
+
+  return (
+    <div className="flex h-full min-w-0 flex-col rounded-lg border border-slate-200/80 bg-white px-3 py-2.5">
       <div className="flex min-w-0 items-center gap-2">
         <span className={"flex h-7 w-7 shrink-0 items-center justify-center rounded-md " + colors[tone]}>
           <Icon size={15} aria-hidden="true" />
         </span>
         <h3 className="min-w-0 flex-1 break-words text-[11px] font-semibold leading-4 text-slate-800">{label}</h3>
-        {href ? <ArrowRight size={14} className="shrink-0 text-slate-400" aria-hidden="true" /> : null}
       </div>
       <p className="mt-2 text-[22px] font-semibold leading-6 tracking-tight tabular-nums text-slate-950">
         {typeof value === "number" ? new Intl.NumberFormat("en-US").format(value) : value}
       </p>
       <p className="mt-1 min-w-0 text-[11px] leading-4 text-slate-600">{hint}</p>
-    </>
-  );
-  const className = "flex h-full min-w-0 flex-col rounded-lg border bg-white px-3 py-2.5 " +
-    (active ? "border-indigo-300 ring-1 ring-indigo-100" : "border-slate-200/80");
-  return href ? (
-    <Link href={href} aria-current={active ? "page" : undefined}
-      className={className + " transition-colors hover:border-indigo-300 hover:bg-indigo-50/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"}>
-      {content}
-    </Link>
-  ) : (
-    <div className={className + " cursor-not-allowed"} aria-label={label + ": reporting not yet available"}>
-      {content}
     </div>
   );
 }
@@ -136,19 +125,15 @@ export default async function AdminConfirmedTripsPage({ searchParams }: Props) {
           <section aria-labelledby="confirmed-trips-overview" className="min-w-0 rounded-xl border border-slate-200/80 bg-white px-4 py-3 sm:px-5 sm:py-4">
             <div className="mb-3 min-w-0">
               <h2 id="confirmed-trips-overview" className="text-base font-semibold text-slate-950">Trip overview</h2>
-              <p className="mt-0.5 text-xs leading-5 text-slate-600">The counters and records follow the same applied filters. Select a status to investigate matching trips.</p>
+              <p className="mt-0.5 text-xs leading-5 text-slate-600">The counters reflect the filters applied in the Trip Directory. Use Trip status to investigate matching records.</p>
             </div>
             {directory?.status === "ok" ? (
               <div className="grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-5">
-                <TripMetric label="Confirmed trips" value={directory.totalMatching} hint="All verified trips matching this scope" icon={FileCheck2} tone="info"
-                  href={tripWorkspaceHref(filters, range, { status: "all" })} active={filters.status === "all"} />
+                <TripMetric label="Confirmed trips" value={directory.totalMatching} hint="All verified trips matching this scope" icon={FileCheck2} tone="info" />
                 <TripMetric label="Tracked trips" value="—" hint="Tracking reporting not connected" icon={Activity} tone="neutral" />
-                <TripMetric label="Upcoming" value={directory.statusCounts.upcoming} hint="Matching upcoming trips" icon={CalendarCheck} tone="good"
-                  href={tripWorkspaceHref(filters, range, { status: "UPCOMING" })} active={filters.status === "UPCOMING"} />
-                <TripMetric label="Past" value={directory.statusCounts.past} hint="Matching past trips" icon={CalendarDays} tone="neutral"
-                  href={tripWorkspaceHref(filters, range, { status: "PAST" })} active={filters.status === "PAST"} />
-                <TripMetric label="Cancelled" value={directory.statusCounts.cancelled} hint="Matching cancelled trips" icon={CircleX} tone="warn"
-                  href={tripWorkspaceHref(filters, range, { status: "CANCELLED" })} active={filters.status === "CANCELLED"} />
+                <TripMetric label="Upcoming" value={directory.statusCounts.upcoming} hint="Matching upcoming trips" icon={CalendarCheck} tone="good" />
+                <TripMetric label="Past" value={directory.statusCounts.past} hint="Matching past trips" icon={CalendarDays} tone="neutral" />
+                <TripMetric label="Cancelled" value={directory.statusCounts.cancelled} hint="Matching cancelled trips" icon={CircleX} tone="warn" />
               </div>
             ) : (
               <p role="status" className="rounded-lg border border-slate-100 bg-white px-4 py-4 text-sm text-slate-700">

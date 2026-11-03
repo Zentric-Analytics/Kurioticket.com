@@ -3,7 +3,7 @@
 import { Check } from "lucide-react";
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 
-export type SearchMonitorOption = { value: string; label: string; shortLabel?: string };
+export type SearchMonitorOption = { value: string; label: string; shortLabel?: string; disabled?: boolean; description?: string };
 
 export function SearchMonitorSelect({
   label,
@@ -41,6 +41,13 @@ export function SearchMonitorSelect({
   const [activeIndex, setActiveIndex] = useState(0);
   const selectedIndex = Math.max(0, options.findIndex((option) => option.value === selected));
   const selectedLabel = options[selectedIndex]?.label ?? "";
+  const nextEnabledIndex = (start: number, direction: 1 | -1) => {
+    for (let step = 1; step <= options.length; step++) {
+      const index = (start + direction * step + options.length * (step + 1)) % options.length;
+      if (!options[index].disabled) return index;
+    }
+    return start;
+  };
   const triggerLabel = appearance === "boxed" ? options[selectedIndex]?.shortLabel ?? selectedLabel : selectedLabel;
 
   useEffect(() => {
@@ -86,7 +93,7 @@ export function SearchMonitorSelect({
     setOpen(true);
   };
   const choose = (next: string) => {
-    if (!options.some((option) => option.value === next)) return;
+    if (!options.some((option) => option.value === next && !option.disabled)) return;
     const changed = next !== selected;
     if (changed) {
       // A different identity must not carry the former customer's userId or
@@ -118,19 +125,19 @@ export function SearchMonitorSelect({
     switch (event.key) {
       case "ArrowDown":
         event.preventDefault();
-        setActiveIndex((current) => (current + 1) % options.length);
+        setActiveIndex((current) => nextEnabledIndex(current, 1));
         break;
       case "ArrowUp":
         event.preventDefault();
-        setActiveIndex((current) => (current - 1 + options.length) % options.length);
+        setActiveIndex((current) => nextEnabledIndex(current, -1));
         break;
       case "Home":
         event.preventDefault();
-        setActiveIndex(0);
+        setActiveIndex(options.findIndex(option => !option.disabled) >= 0 ? options.findIndex(option => !option.disabled) : 0);
         break;
       case "End":
         event.preventDefault();
-        setActiveIndex(options.length - 1);
+        setActiveIndex(options.findLastIndex(option => !option.disabled) >= 0 ? options.findLastIndex(option => !option.disabled) : 0);
         break;
       case "Enter":
       case " ":
@@ -147,8 +154,8 @@ export function SearchMonitorSelect({
       default:
         if (event.key.length === 1 && !event.altKey && !event.ctrlKey && !event.metaKey) {
           const letter = event.key.toLocaleLowerCase();
-          const next = options.findIndex((option, index) => index > activeIndex && option.label.toLocaleLowerCase().startsWith(letter));
-          const wrapped = options.findIndex((option) => option.label.toLocaleLowerCase().startsWith(letter));
+          const next = options.findIndex((option, index) => !option.disabled && index > activeIndex && option.label.toLocaleLowerCase().startsWith(letter));
+          const wrapped = options.findIndex((option) => !option.disabled && option.label.toLocaleLowerCase().startsWith(letter));
           if (next >= 0 || wrapped >= 0) setActiveIndex(next >= 0 ? next : wrapped);
         }
     }
@@ -216,15 +223,19 @@ export function SearchMonitorSelect({
               role="option"
               tabIndex={-1}
               aria-selected={selected === option.value}
-              onMouseEnter={() => setActiveIndex(index)}
+              aria-disabled={option.disabled || undefined}
+              disabled={option.disabled}
+              onMouseEnter={() => { if (!option.disabled) setActiveIndex(index); }}
               onClick={() => choose(option.value)}
               className={
-                "flex min-h-9 w-full cursor-pointer items-center justify-between gap-3 rounded-md px-3 py-2 text-left text-[13px] transition-colors " +
-                (index === activeIndex ? "bg-[#F1F7FF]" : "hover:bg-[#F8FAFC]") +
-                (selected === option.value ? " font-semibold text-[#004BB8]" : " font-normal text-[#1A1A1A]")
+                "flex min-h-9 w-full items-center justify-between gap-3 rounded-md px-3 py-2 text-left text-[13px] transition-colors " +
+                (option.disabled ? "cursor-not-allowed text-slate-400" : "cursor-pointer ") +
+                (!option.disabled && index === activeIndex ? "bg-[#F1F7FF]" : !option.disabled ? "hover:bg-[#F8FAFC]" : "") +
+                (option.disabled ? "" : selected === option.value ? " font-semibold text-[#004BB8]" : " font-normal text-[#1A1A1A]")
               }
             >
               <span className={truncateLabel ? "min-w-0 whitespace-normal break-words" : "whitespace-nowrap"}>{option.label}</span>
+              {option.disabled && option.description ? <span className="shrink-0 text-[10px] font-medium text-slate-400">{option.description}</span> : null}
               {selected === option.value ? <Check aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-[#004BB8]" /> : null}
             </button>
           ))}
