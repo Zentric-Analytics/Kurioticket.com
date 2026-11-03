@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { homepageCmsListNavigation, faqCmsListNavigation, contentEditorHref } from "@/lib/adminContentNavigation";
 
 const contentPage = readFileSync("src/app/admin/content/page.tsx", "utf8");
 const systemPage = readFileSync("src/app/admin/system/page.tsx", "utf8");
@@ -101,4 +102,46 @@ test("Content published count uses the published scope, not a draft's scope", ()
   assert.match(cms, /publishedLocale: parsedLocale\.data/);
   assert.match(cms, /publishedPayload: \{ not: Prisma\.DbNull \}/);
   assert.match(contentPage, /summary\.publishedInScope/);
+});
+
+test("Content returns to the actual source and only retains allowlisted filters", () => {
+  const direct = homepageCmsListNavigation("destinations", { market: "US", status: "PUBLISHED", q: "Paris", cursor: "page_one" });
+  assert.equal(direct.backHref, "/admin/content");
+  assert.equal(direct.listHref, "/admin/content/homepage/destinations?market=US&status=PUBLISHED&cursor=page_one&q=Paris");
+  assert.equal(contentEditorHref("/admin/content/homepage/destinations/new", direct.query),
+    "/admin/content/homepage/destinations/new?market=US&status=PUBLISHED&cursor=page_one&q=Paris");
+
+  const fromOverview = homepageCmsListNavigation("flight-routes", { market: "US", from: "overview" });
+  assert.equal(fromOverview.backHref, "/admin/content/homepage");
+  assert.equal(fromOverview.backLabel, "Back to homepage content");
+  assert.equal(fromOverview.listHref, "/admin/content/homepage/flight-routes?market=US&from=overview");
+
+  const unsafe = homepageCmsListNavigation("hotel-destinations", {
+    market: "invalid", status: "not-valid", cursor: "https://example.com", from: "https://example.com",
+  });
+  assert.equal(unsafe.listHref, "/admin/content/homepage/hotel-destinations?market=GLOBAL");
+  assert.equal(unsafe.backHref, "/admin/content");
+
+  const faq = faqCmsListNavigation({ status: "DRAFT", cursor: "next-2", q: "how to fly", category: "General" });
+  assert.equal(faq.listHref, "/admin/content/faqs?status=DRAFT&cursor=next-2&q=how+to+fly&category=General");
+  assert.equal(faqCmsListNavigation({ status: "invalid", cursor: "../admin/system" }).listHref, "/admin/content/faqs");
+});
+
+test("Content's nested pages use the preserved return context", () => {
+  const files = [
+    "src/app/admin/content/homepage/[section]/page.tsx",
+    "src/app/admin/content/homepage/[section]/new/page.tsx",
+    "src/app/admin/content/homepage/[section]/[id]/page.tsx",
+    "src/app/admin/content/faqs/page.tsx",
+    "src/app/admin/content/faqs/new/page.tsx",
+    "src/app/admin/content/faqs/[id]/page.tsx",
+  ].map(path => readFileSync(path, "utf8"));
+  for (const content of files) assert.match(content, /nav\.(?:backHref|listHref|query)/);
+  const homepageEditor = readFileSync("src/components/admin/HomepageCmsEditor.tsx", "utf8");
+  const faqEditor = readFileSync("src/components/admin/FaqCmsEditor.tsx", "utf8");
+  assert.match(homepageEditor, /listQuery \? "\?" \+ listQuery/);
+  assert.match(faqEditor, /listQuery \? "\?" \+ listQuery/);
+  assert.match(readFileSync("src/components/admin/HomepageCmsListClient.tsx", "utf8"), /window\.history\.replaceState/);
+  assert.match(readFileSync("src/components/admin/FaqCmsListClient.tsx", "utf8"), /window\.history\.replaceState/);
+  assert.match(readFileSync("src/components/admin/CmsCreateLink.tsx", "utf8"), /useSearchParams/);
 });
