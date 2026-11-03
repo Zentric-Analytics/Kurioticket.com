@@ -89,7 +89,7 @@ test("confirmed-trip readiness facts are rendered from authoritative readiness s
 test("Confirmed Trips UI uses one existing white parent with responsive summary and balanced breakdowns", () => {
   assert.match(page, /<AdminSectionCard className="min-w-0 p-4 sm:p-5 lg:p-6">/);
   assert.equal((page.match(/<AdminSectionCard/g) || []).length, 1);
-  assert.match(page, /grid grid-cols-2 gap-2.5 sm:gap-3 md:grid-cols-3 lg:grid-cols-5/);
+  assert.match(page, /grid w-full min-w-\[850px\] grid-cols-5 gap-2/);
   assert.match(page, /<ConfirmedTripsBreakdowns operations=\{operations\} \/>/);
   assert.match(breakdowns, /grid items-start gap-3 lg:grid-cols-2/);
   assert.match(page, /<TripMetric label="Confirmed trips"/);
@@ -174,7 +174,7 @@ test("Confirmed Trips has consistent typography without changing its section ord
     const heading = page.split("\n").find(line => line.includes('<h2 id="' + id + '"'));
     assert.ok(heading && heading.includes("text-base font-semibold") && heading.includes("tracking-tight"), id);
   }
-  assert.match(page, /text-2xl font-semibold leading-7 tracking-tight tabular-nums/);
+  assert.match(page, /text-\[22px\] font-semibold leading-\[26px\] tracking-tight tabular-nums/);
   for (const content of [page, breakdowns, recent]) assert.doesNotMatch(content, /text-\[11px\]/);
   assert.match(breakdowns, /grid items-start gap-3 lg:grid-cols-2/);
   assert.match(recent, /bg-slate-50 px-4 py-4 text-center/);
@@ -235,8 +235,8 @@ test("Confirmed Trips explanations are short without hiding confirmation or unav
 });
 
 test("Phase 2 metric cards are compact, accessible and honest about zero values", () => {
-  assert.match(page, /grid grid-cols-2 gap-2\.5 sm:gap-3 md:grid-cols-3 lg:grid-cols-5/);
-  assert.match(page, /<h3 className="min-w-0 break-words text-\[13px\] font-medium leading-5/);
+  assert.match(page, /grid w-full min-w-\[850px\] grid-cols-5 gap-2/);
+  assert.match(page, /<h3 className="min-w-0 break-words text-xs font-medium leading-4/);
   assert.match(page, /new Intl\.NumberFormat\("en-US"\)\.format\(value\)/);
   assert.match(page, /tabular-nums/);
   assert.match(page, /Verified trip records/);
@@ -250,11 +250,50 @@ test("Phase 2 metric cards are compact, accessible and honest about zero values"
   assert.match(loading, /role="status"/);
   assert.match(loading, /aria-busy="true"/);
   assert.match(loading, /Loading confirmed-trip information/);
-  assert.match(loading, /grid grid-cols-2 gap-2\.5 sm:gap-3 md:grid-cols-3 lg:grid-cols-5/);
+  assert.match(loading, /grid w-full min-w-\[850px\] grid-cols-5 gap-2/);
   for (const label of ["Confirmed trips", "Last 24h", "Upcoming", "Past", "Cancelled"]) {
     assert.ok(loading.includes(label), "Loading placeholder missing: " + label);
   }
   assert.doesNotMatch(loading, />\s*0\s*</);
+});
+
+
+test("Trip metrics match Flight Status card density without wrapping or page overflow", () => {
+  const flightPage = readFileSync("src/app/admin/flight-status/page.tsx", "utf8");
+  const loading = readFileSync("src/app/admin/confirmed-trips/loading.tsx", "utf8");
+  const start = page.indexOf('<section aria-labelledby="confirmed-trips-overview">');
+  const end = page.indexOf("</section>", start);
+  assert.ok(start >= 0 && end > start);
+  const overview = page.slice(start, end);
+  assert.match(overview, /role="region" aria-label="Trip overview metrics" tabIndex=\{0\}/);
+  assert.match(overview, /min-w-0 max-w-full overflow-x-auto overscroll-x-contain rounded-lg/);
+  assert.match(overview, /grid w-full min-w-\[850px\] grid-cols-5 gap-2/);
+  assert.doesNotMatch(overview, /(?:sm|md|lg|xl|2xl):grid-cols-(?:1|2|3|4|5)/);
+  assert.equal((overview.match(/<TripMetric label=/g) || []).length, 5);
+  for (const metric of ["total", "confirmedLast24h", "upcoming", "past", "cancelled"]) {
+    assert.ok(overview.includes("operations.metrics." + metric), "Real metric missing: " + metric);
+  }
+  const metricStart = page.indexOf("function TripMetric(");
+  const metricEnd = page.indexOf("function InlineFact(", metricStart);
+  assert.ok(metricStart >= 0 && metricEnd > metricStart);
+  const card = page.slice(metricStart, metricEnd);
+  assert.match(card, /flex h-full min-w-0 flex-col rounded-lg border border-slate-200\/80 bg-white px-3 py-2\.5/);
+  assert.match(card, /flex h-5 w-5 shrink-0 items-center justify-center rounded-md/);
+  assert.match(card, /<Icon size=\{15\} strokeWidth=\{2\} aria-hidden="true"/);
+  assert.match(card, /text-xs font-medium leading-4 text-slate-600/);
+  assert.match(card, /mt-1 text-\[22px\] font-semibold leading-\[26px\] tracking-tight tabular-nums/);
+  assert.match(card, /new Intl\.NumberFormat\("en-US"\)\.format\(value\)/);
+  assert.doesNotMatch(card, /\bshadow-(?:sm|md|lg)\b|\bfont-black\b/);
+  assert.match(flightPage, /grid w-full min-w-\[960px\] grid-cols-6 gap-2/);
+  assert.match(flightPage, /rounded-lg border border-slate-200\/80 bg-white px-3 py-2\.5/);
+  assert.match(flightPage, /text-\[22px\] font-semibold leading-\[26px\] tracking-tight tabular-nums/);
+  assert.match(loading, /mt-3 min-w-0 max-w-full overflow-x-auto overscroll-x-contain rounded-lg/);
+  assert.match(loading, /grid w-full min-w-\[850px\] grid-cols-5 gap-2/);
+  assert.match(loading, /flex h-full min-w-0 flex-col rounded-lg border border-slate-200\/80 bg-white px-3 py-2\.5/);
+  assert.match(loading, /h-5 w-5 shrink-0/);
+  assert.doesNotMatch(loading, />\s*0\s*</);
+  assert.match(page, /Trip counts unavailable/);
+  assert.match(page, /Not a count of new bookings/);
 });
 
 test("Phase 2 preserves server-sourced trip counts and unavailable telemetry", () => {
