@@ -40,9 +40,24 @@ function tone(status: FaqListItem["status"]) {
   return "info" as const;
 }
 
-export function FaqCmsListClient({ items }: { items: FaqListItem[] }) {
-  const [query, setQuery] = useState("");
-  const [category, setCategory] = useState("");
+export function FaqCmsListClient({ items, listQuery = "" }: { items: FaqListItem[]; listQuery?: string }) {
+  const [query, setQuery] = useState(() => new URLSearchParams(listQuery).get("q") || "");
+  const [category, setCategory] = useState(() => new URLSearchParams(listQuery).get("category") || "");
+
+  function changeFilter(name: "q" | "category", next: string) {
+    if (name === "q") setQuery(next);
+    else setCategory(next);
+    const url = new URL(window.location.href);
+    if (next.trim()) url.searchParams.set(name, next.trim().slice(0, name === "q" ? 160 : 80));
+    else url.searchParams.delete(name);
+    window.history.replaceState(window.history.state, "", url.pathname + url.search);
+  }
+
+  const editorContext = new URLSearchParams(listQuery);
+  if (query.trim()) editorContext.set("q", query.trim().slice(0, 160));
+  else editorContext.delete("q");
+  if (category) editorContext.set("category", category);
+  else editorContext.delete("category");
 
   const categories = useMemo(
     () => Array.from(new Set(items.map((item) => faqPayload(item.draftPayload).category))).sort(),
@@ -66,13 +81,13 @@ export function FaqCmsListClient({ items }: { items: FaqListItem[] }) {
       <div className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:grid-cols-[minmax(0,1fr)_220px]">
         <AdminInput
           value={query}
-          onChange={(event) => setQuery(event.target.value)}
+          onChange={(event) => changeFilter("q", event.target.value)}
           placeholder="Search questions, answers or categories"
           aria-label="Search FAQs on this page"
         />
         <AdminSelect
           value={category}
-          onChange={(event) => setCategory(event.target.value)}
+          onChange={(event) => changeFilter("category", event.target.value)}
           aria-label="Filter FAQs by category"
         >
           <option value="">All categories</option>
@@ -106,7 +121,7 @@ export function FaqCmsListClient({ items }: { items: FaqListItem[] }) {
                 item.sortOrder,
                 `v${item.version}`,
                 new Date(item.updatedAt).toLocaleString(),
-                <Link key="action" href={`/admin/content/faqs/${item.id}`} className="font-black text-indigo-700 hover:text-indigo-900">
+                <Link key="action" href={`/admin/content/faqs/${encodeURIComponent(item.id)}?${editorContext.toString()}`} className="font-black text-indigo-700 hover:text-indigo-900">
                   Edit
                 </Link>,
               ],

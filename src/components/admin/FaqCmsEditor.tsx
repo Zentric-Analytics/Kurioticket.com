@@ -43,7 +43,7 @@ function statusTone(status: FaqCmsItem["status"]) {
   return "info" as const;
 }
 
-export function FaqCmsEditor({ initialItem }: { initialItem?: FaqCmsItem }) {
+export function FaqCmsEditor({ initialItem, listQuery = "" }: { initialItem?: FaqCmsItem; listQuery?: string }) {
   const router = useRouter();
   const initialPayload = useMemo(() => readPayload(initialItem?.draftPayload), [initialItem]);
   const [item, setItem] = useState<FaqCmsItem | undefined>(initialItem);
@@ -109,7 +109,7 @@ export function FaqCmsEditor({ initialItem }: { initialItem?: FaqCmsItem }) {
         setError(typeof body.error === "string" ? body.error : "Unable to create FAQ draft.");
         return;
       }
-      router.replace(`/admin/content/faqs/${body.item.id}`);
+      router.replace(`/admin/content/faqs/${encodeURIComponent(body.item.id)}${listQuery ? "?" + listQuery : ""}`);
       router.refresh();
     });
   }

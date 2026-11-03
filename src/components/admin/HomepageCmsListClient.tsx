@@ -59,11 +59,25 @@ function tone(status: CmsListItem["status"]) {
 export function HomepageCmsListClient({
   section,
   items,
+  listQuery = "",
 }: {
   section: HomepageCmsSection;
   items: CmsListItem[];
+  listQuery?: string;
 }) {
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(() => new URLSearchParams(listQuery).get("q") || "");
+
+  function changeQuery(next: string) {
+    setQuery(next);
+    const url = new URL(window.location.href);
+    if (next.trim()) url.searchParams.set("q", next.trim().slice(0, 160));
+    else url.searchParams.delete("q");
+    window.history.replaceState(window.history.state, "", url.pathname + url.search);
+  }
+
+  const editorContext = new URLSearchParams(listQuery);
+  if (query.trim()) editorContext.set("q", query.trim().slice(0, 160));
+  else editorContext.delete("q");
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -80,7 +94,7 @@ export function HomepageCmsListClient({
       <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
         <AdminInput
           value={query}
-          onChange={(event) => setQuery(event.target.value)}
+          onChange={(event) => changeQuery(event.target.value)}
           placeholder="Search this page"
           aria-label="Search CMS content on this page"
         />
@@ -109,7 +123,7 @@ export function HomepageCmsListClient({
                 item.sortOrder,
                 `v${item.version}`,
                 new Date(item.updatedAt).toLocaleString(),
-                <Link key="action" href={`/admin/content/homepage/${section}/${item.id}`} className="font-black text-indigo-700 hover:text-indigo-900">
+                <Link key="action" href={`/admin/content/homepage/${section}/${encodeURIComponent(item.id)}?${editorContext.toString()}`} className="font-black text-indigo-700 hover:text-indigo-900">
                   Edit
                 </Link>,
               ],

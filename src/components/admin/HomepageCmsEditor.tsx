@@ -65,12 +65,14 @@ export function HomepageCmsEditor({
   initialMarket,
   initialItem,
   hotelOptions = [],
+  listQuery = "",
 }: {
   section: HomepageCmsSection;
   markets: readonly string[];
   initialMarket: string;
   initialItem?: CmsItem;
   hotelOptions?: HotelOption[];
+  listQuery?: string;
 }) {
   const router = useRouter();
   const saved = useMemo(() => payloadRecord(initialItem?.draftPayload), [initialItem]);
@@ -144,7 +146,7 @@ export function HomepageCmsEditor({
         setError(typeof body.error === "string" ? body.error : "Unable to create draft.");
         return;
       }
-      router.replace(`/admin/content/homepage/${section}/${body.item.id}`);
+      router.replace(`/admin/content/homepage/${section}/${encodeURIComponent(body.item.id)}${listQuery ? "?" + listQuery : ""}`);
       router.refresh();
     });
   }
