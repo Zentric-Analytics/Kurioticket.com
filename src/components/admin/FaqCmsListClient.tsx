@@ -1,14 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import { ContentRecordsTable, ContentStatusPill, ContentEmptyState } from "@/components/admin/ContentWorkspace";
 import { useMemo, useState } from "react";
 
 import {
-  AdminDataTable,
   AdminEmptyState,
   AdminInput,
   AdminSelect,
-  AdminStatusBadge,
 } from "@/components/admin/AdminPageShell";
 
 type FaqListItem = {
@@ -31,13 +30,6 @@ function faqPayload(value: unknown) {
     answer: typeof raw.answer === "string" ? raw.answer : "",
     category: typeof raw.category === "string" ? raw.category : "Uncategorized",
   };
-}
-
-function tone(status: FaqListItem["status"]) {
-  if (status === "PUBLISHED") return "good" as const;
-  if (status === "HIDDEN") return "warn" as const;
-  if (status === "ARCHIVED") return "neutral" as const;
-  return "info" as const;
 }
 
 export function FaqCmsListClient({ items, listQuery = "" }: { items: FaqListItem[]; listQuery?: string }) {
@@ -77,8 +69,8 @@ export function FaqCmsListClient({ items, listQuery = "" }: { items: FaqListItem
   }, [category, items, query]);
 
   return (
-    <div className="space-y-4">
-      <div className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:grid-cols-[minmax(0,1fr)_220px]">
+    <div className="space-y-3 [&_input]:h-9 [&_input]:rounded-lg [&_input]:text-[13px] [&_select]:h-9 [&_select]:rounded-lg [&_select]:text-[13px]">
+      <div className="grid gap-3 rounded-lg border border-[#E5E7EB] bg-white p-3 md:grid-cols-[minmax(0,1fr)_220px]">
         <AdminInput
           value={query}
           onChange={(event) => changeFilter("q", event.target.value)}
@@ -96,12 +88,12 @@ export function FaqCmsListClient({ items, listQuery = "" }: { items: FaqListItem
       </div>
 
       {filtered.length === 0 ? (
-        <AdminEmptyState
+        <ContentEmptyState
           title="No FAQs match"
           message="No FAQ on this page matches the selected search and category filters."
         />
       ) : (
-        <AdminDataTable
+        <ContentRecordsTable
           columns={["Question", "Category", "Status", "Order", "Version", "Updated", "Action"]}
           rows={filtered.map((item) => {
             const payload = faqPayload(item.draftPayload);
@@ -110,18 +102,18 @@ export function FaqCmsListClient({ items, listQuery = "" }: { items: FaqListItem
               id: item.id,
               cells: [
                 <div key="question" className="max-w-xl">
-                  <p className="font-black text-slate-950">{payload.question}</p>
+                  <p className="text-[13px] font-medium text-[#111827]">{payload.question}</p>
                   <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">{payload.answer}</p>
                 </div>,
                 payload.category,
                 <div key="status" className="space-y-1">
-                  <AdminStatusBadge tone={tone(item.status)}>{item.status}</AdminStatusBadge>
-                  {hasUnpublishedChanges ? <p className="text-xs font-bold text-amber-700">Unpublished changes</p> : null}
+                  <ContentStatusPill status={item.status} />
+                  {hasUnpublishedChanges ? <p className="text-[12px] font-medium text-amber-700">Unpublished changes</p> : null}
                 </div>,
                 item.sortOrder,
                 `v${item.version}`,
                 new Date(item.updatedAt).toLocaleString(),
-                <Link key="action" href={`/admin/content/faqs/${encodeURIComponent(item.id)}?${editorContext.toString()}`} className="font-black text-indigo-700 hover:text-indigo-900">
+                <Link key="action" href={`/admin/content/faqs/${encodeURIComponent(item.id)}?${editorContext.toString()}`} className="inline-flex items-center gap-1 text-[13px] font-medium text-[#004BB8] hover:underline">
                   Edit
                 </Link>,
               ],
