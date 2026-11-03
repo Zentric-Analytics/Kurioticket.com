@@ -7,6 +7,7 @@ export function referralHandoffHref(input: {
   provider?: string;
   product?: "flight" | "hotel";
   correlation?: "exact" | "unavailable";
+  sourcePage?: string;
 }) {
   const params = new URLSearchParams({
     environment: input.environment,
@@ -16,12 +17,13 @@ export function referralHandoffHref(input: {
   if (input.provider) params.set("provider", input.provider);
   if (input.product) params.set("product", input.product.toUpperCase());
   if (input.correlation) params.set("correlation", input.correlation);
+  if (input.sourcePage) params.set("sourcePage", input.sourcePage);
   return "/admin/redirects?" + params.toString();
 }
 
 /** Only known list-query fields return to the records page from a detail.
  * Never accept a caller-supplied URL or redirect destination. */
-const listKeys = ["environment", "product", "identity", "userId", "visitorId", "provider", "correlation", "from", "to", "cursor", "limit"] as const;
+const listKeys = ["environment", "product", "identity", "userId", "visitorId", "provider", "correlation", "from", "to", "cursor", "limit", "sourcePage"] as const;
 export function handoffListParams(raw: Record<string, string | string[] | undefined>) {
   const result = new URLSearchParams();
   for (const key of listKeys) {
