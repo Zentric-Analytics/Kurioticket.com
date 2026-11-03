@@ -12,6 +12,7 @@ export type ProviderHandoffFilterScope = {
   visitorId: string;
   from: string;
   to: string;
+  sourcePage?: string;
 };
 
 /** Changing identity is the only operation that removes pinned user/visitor IDs. */
@@ -27,6 +28,7 @@ export function providerHandoffFiltersHref(
   }
   if (scope.from) params.set("from", scope.from);
   if (scope.to) params.set("to", scope.to);
+  if (scope.sourcePage) params.set("sourcePage", scope.sourcePage);
   if (values.product) params.set("product", values.product);
   if (values.identity && values.identity !== "all") params.set("identity", values.identity);
   if (values.correlation) params.set("correlation", values.correlation);
@@ -73,5 +75,6 @@ export function providerHandoffHistoryFilterHref(search: string): string {
     visitorId: params.get("visitorId") || "",
     from: params.get("from") || "",
     to: params.get("to") || "",
+    sourcePage: params.get("sourcePage") || "",
   });
 }

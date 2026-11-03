@@ -40,6 +40,7 @@ export type AdminHandoffScope = ScopeBase & {
   visitorId: string | null;
   provider: string | null;
   correlation: AdminHandoffCorrelation | null;
+  sourcePage: string | null;
 };
 export type AdminSupportScope = ScopeBase & {
   status: AdminSupportStatus | null;
@@ -193,7 +194,7 @@ type ParseResult<T> = { status: "ok"; data: T } | { status: "invalid"; issues: A
 
 const COMMON = ["from", "to", "limit", "cursor"] as const;
 const SEARCH_KEYS = [...COMMON, "environment", "product", "status", "identity", "userId", "visitorId", "provider"] as const;
-const HANDOFF_KEYS = [...COMMON, "environment", "product", "identity", "userId", "visitorId", "provider", "correlation"] as const;
+const HANDOFF_KEYS = [...COMMON, "environment", "product", "identity", "userId", "visitorId", "provider", "correlation", "sourcePage"] as const;
 const SUPPORT_KEYS = [...COMMON, "status", "priority", "category", "q"] as const;
 const DELETION_KEYS = [...COMMON, "status", "q"] as const;
 const DETAIL_KEYS = ["environment"] as const;
@@ -333,6 +334,7 @@ export function parseAdminHandoffQuery(params: URLSearchParams, fallbackEnvironm
   const visitorId = optionalId(raw.data.visitorId, "visitorId");
   const provider = optionalText(raw.data.provider, "provider", 100);
   const correlation = enumValue(raw.data.correlation, "correlation", ["exact", "unavailable"] as const);
+  const sourcePage = optionalText(raw.data.sourcePage, "sourcePage", 240);
   if (env.status !== "ok") return env;
   if (product.status !== "ok") return product;
   if (idFilter.status !== "ok") return idFilter;
@@ -340,9 +342,11 @@ export function parseAdminHandoffQuery(params: URLSearchParams, fallbackEnvironm
   if (visitorId.status !== "ok") return visitorId;
   if (provider.status !== "ok") return provider;
   if (correlation.status !== "ok") return correlation;
+  if (sourcePage.status !== "ok") return sourcePage;
+  if (sourcePage.data && (!sourcePage.data.startsWith("/") || sourcePage.data.startsWith("//") || /[?#\\\\\s]/.test(sourcePage.data))) return invalid("sourcePage", "Use a normalized source path.");
   if ((idFilter.data === "guest" || idFilter.data === "unattributed") && userId.data) return invalid("userId", "userId conflicts with this identity filter.");
   if (idFilter.data === "unattributed" && visitorId.data) return invalid("visitorId", "visitorId conflicts with this identity filter.");
-  const scope: AdminHandoffScope = { ...base.data, environment: env.data, product: product.data, identity: idFilter.data, userId: userId.data, visitorId: visitorId.data, provider: provider.data, correlation: correlation.data };
+  const scope: AdminHandoffScope = { ...base.data, environment: env.data, product: product.data, identity: idFilter.data, userId: userId.data, visitorId: visitorId.data, provider: provider.data, correlation: correlation.data, sourcePage: sourcePage.data };
   return finish("handoffs", raw.data, { scope });
 }
 

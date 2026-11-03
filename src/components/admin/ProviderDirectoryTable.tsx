@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useState } from "react";
+import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 
 import { ProviderRetestButton } from "@/components/admin/ProviderRetestButton";
@@ -26,6 +27,7 @@ export type ProviderDirectoryRecord = {
     note: string;
   };
   canRetestDuffel: boolean;
+  investigateHref?: string | null;
 };
 
 const headingClass = "px-3 py-3 text-left text-[12px] font-medium uppercase text-[#475569]";
@@ -69,7 +71,7 @@ export function ProviderDirectoryTable({ rows }: { rows: ProviderDirectoryRecord
     aria-labelledby="provider-directory" tabIndex={0}>
     <table className="w-full min-w-[820px] table-fixed text-left text-[13px]">
       <caption className="sr-only">
-        Provider product coverage, readiness, search health and recent activity.
+        Provider product coverage, integration readiness, measured search health and recent activity.
         Expand a provider for configuration, diagnostic timestamps and supported actions.
       </caption>
       <colgroup>
@@ -83,8 +85,8 @@ export function ProviderDirectoryTable({ rows }: { rows: ProviderDirectoryRecord
         <tr>
           <th scope="col" className={headingClass}>Provider</th>
           <th scope="col" className={headingClass}>Products</th>
-          <th scope="col" className={headingClass}>Readiness</th>
-          <th scope="col" className={headingClass}>Health</th>
+          <th scope="col" className={headingClass}>Integration readiness</th>
+          <th scope="col" className={headingClass}>Search health</th>
           <th scope="col" className={headingClass}>Last activity</th>
         </tr>
       </thead>
@@ -128,9 +130,12 @@ export function ProviderDirectoryTable({ rows }: { rows: ProviderDirectoryRecord
                 {row.detail.note ? (
                   <p className="mt-3 text-[12px] leading-5 text-[#475569]">{row.detail.note}</p>
                 ) : null}
-                {row.canRetestDuffel ? (
-                  <div className="mt-3 flex min-w-0 flex-wrap items-start gap-x-4 gap-y-2 border-t border-[#E7ECF5] pt-3">
-                    <ProviderRetestButton />
+                {row.canRetestDuffel || row.investigateHref ? (
+                  <div className="mt-3 flex min-w-0 flex-wrap items-center gap-x-5 gap-y-2 border-t border-[#E7ECF5] pt-3">
+                    {row.canRetestDuffel ? <ProviderRetestButton /> : null}
+                    {row.investigateHref ? (
+                      <Link href={row.investigateHref} className="text-[13px] font-medium text-[#004BB8] hover:underline">Review provider searches ›</Link>
+                    ) : null}
                   </div>
                 ) : null}
               </td>

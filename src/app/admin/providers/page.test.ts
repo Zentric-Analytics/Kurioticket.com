@@ -183,7 +183,7 @@ test("directory rows are compact and disclose secondary diagnostics on request",
   assert.doesNotMatch(directoryTable, /Credentials: Yes/);
   assert.doesNotMatch(directoryTable, /Booking: Not live yet/);
   assert.match(providersPage, /shortLabel: "Internal catalogue"/);
-  assert.match(providersPage, /shortLabel: integration\.id === "duffel"/);
+  assert.match(providersPage, /shortLabel: null/);
   assert.match(directoryTable, /Not externally monitored|row\.lastActivity/);
 });
 
@@ -286,8 +286,8 @@ test("Task 3: referral attribution uses compact preset auto-apply and white metr
   assert.match(referralPage, /lg:grid-cols-4/);
   assert.match(referralPage, /lg:grid-cols-2/);
   assert.match(referralPage, /grid grid-cols-2 gap-x-4 gap-y-4/);
-  assert.match(providersPage, /aria-labelledby="unlinked-handoffs"/);
-  assert.match(providersPage, /href="\/admin\/redirects\?correlation=unavailable"/);
+  assert.match(referralPage, /aria-labelledby="unlinked-handoffs"/);
+  assert.match(referralPage, /correlation: "unavailable"/);
   assert.match(referralPage, /not confirmed bookings or payments/);
   assert.match(referralPage, /table className="w-full table-fixed text-\[13px\]"/);
   assert.doesNotMatch(referralPage, /AdminMetricCard|AdminFilterBar|AdminDataTable|AdminStatusBadge/);
@@ -307,13 +307,14 @@ test("Task 3: standalone handoffs preserve filters, records and next-cursor beha
   for (const field of ["userId", "visitorId", "from", "to"]) {
     assert.match(handoffsPage, new RegExp('name="' + field + '"'));
   }
-  for (const label of ["Created", "Product", "Provider", "Route", "Price", "Source", "Destination", "Identity", "Search link", "Action"]) {
+  for (const label of ["Created", "Product", "Provider", "Route / property", "Price", "Source", "Destination", "Identity", "Search link", "Action"]) {
     assert.ok(handoffsPage.includes('"' + label + '"'), "Missing handoff column " + label);
   }
   assert.match(handoffsPage, /handoff\.identity\.userId \|\| handoff\.identity\.visitorId/);
   assert.match(handoffsPage, /handoff\.searchCorrelation\.kind === "exact"/);
-  assert.match(handoffsPage, /href=\{"\/admin\/redirects\/" \+ handoff\.id/);
-  assert.match(handoffsPage, /cursorHref\("\/admin\/redirects", raw, result\.data\.nextCursor\)/);
+  assert.match(handoffsPage, /handoffDetailHref\(handoff\.id, handoff\.environment, raw\)/);
+  assert.match(handoffsPage, /handoffNextPageHref\(raw, result\.data\.nextCursor\)/);
+  assert.match(handoffsPage, /handoffPreviousPageHref\(raw\)/);
   assert.match(handoffsPage, /result\.status === "invalid"/);
 });
 
@@ -332,7 +333,7 @@ test("Task 3: handoff detail groups every field without tiles or losing verifica
     "Identity", "Search correlation", "Search history ID", "User ID", "Visitor ID"]) {
     assert.ok(handoffDetailPage.includes('label="' + label + '"'), "Missing detail field " + label);
   }
-  assert.match(handoffDetailPage, /Outbound referral recorded; booking and payment are not confirmed/);
+  assert.doesNotMatch(handoffDetailPage, /Outbound referral recorded; booking and payment are not confirmed/);
   assert.match(handoffDetailPage, /searchCorrelation\.kind === "exact"/);
   assert.doesNotMatch(handoffDetailPage, /AdminSectionCard|bg-slate-50|rounded-xl/);
   assert.match(adminShell, /providerReportingWorkspace/);
@@ -484,7 +485,7 @@ test("Tasks 9–10 simplify only the handoff detail header and move back navigat
   assert.ok(handoffDetailPage.indexOf("Back to handoffs") < handoffDetailPage.indexOf("Handoff overview"));
   assert.doesNotMatch(handoffDetailPage, /justify-between gap-3 border-b/);
   assert.match(handoffDetailPage, /Referral information/);
-  assert.match(handoffDetailPage, /Outbound referral recorded; booking and payment are not confirmed/);
+  assert.doesNotMatch(handoffDetailPage, /Outbound referral recorded; booking and payment are not confirmed/);
   assert.match(handoffDetailPage, /<Field label="User ID"/);
   assert.match(handoffDetailPage, /<Field label="Visitor ID"/);
 });
@@ -548,4 +549,18 @@ test("product filtering retains truthful timing metrics for a single-service pro
   assert.equal(kayakFlights.averageLatencyMs, null);
   assert.equal(kayakFlights.lastActivityAt, null);
   assert.equal(kayakFlights.lastSuccessAt, null);
+});
+
+test("provider workflow drilldowns preserve attribution scope and linked search navigation", () => {
+  assert.match(referralPage, /referralHandoffHref\(/);
+  assert.match(referralPage, /sourcePage: item.sourcePage/);
+  assert.match(referralPage, /provider: item.provider, product: item.product/);
+  assert.match(handoffsPage, /sourcePage: one\(raw.sourcePage\)/);
+  assert.match(handoffsPage, /handoffDetailHref\(handoff.id, handoff.environment, raw\)/);
+  assert.match(handoffDetailPage, /handoffReturnHref\(raw\)/);
+  assert.match(handoffDetailPage, /encodeURIComponent\(result.data.searchCorrelation.searchHistoryId\)/);
+  assert.match(providersPage, /Investigate provider searches/);
+  assert.match(directoryTable, /Integration readiness/);
+  assert.match(directoryTable, /Search health/);
+  assert.match(directoryTable, /row\.investigateHref/);
 });

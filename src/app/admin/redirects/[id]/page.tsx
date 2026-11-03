@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 
 import { AdminEmptyState } from "@/components/admin/AdminPageShell";
 import { formatDateTime } from "@/lib/admin-data";
+import { handoffReturnHref } from "@/lib/adminReferralHandoffNavigation";
 import { adminOperationalReads } from "@/services/adminOperationalReadService";
 
 export const metadata = { title: "Admin Provider Handoff Detail" };
@@ -23,8 +24,7 @@ export default async function AdminHandoffDetailPage({
   const result = await adminOperationalReads.handoffs.detail(id, query);
   if (result.status === "not_found") notFound();
 
-  const backHref = "/admin/redirects" + (environment
-    ? "?environment=" + encodeURIComponent(environment) : "");
+  const backHref = handoffReturnHref(raw);
 
   return (
     <section className="w-full min-w-0 bg-white text-[#0F172A]">
@@ -49,7 +49,11 @@ export default async function AdminHandoffDetailPage({
                 </span>} />
               <Field label="User ID" value={result.data.identity.userId || "—"} />
               <Field label="Handoff ID" value={result.data.id} />
-              <Field label="Search history ID" value={result.data.searchCorrelation.searchHistoryId || "—"} />
+              <Field label="Search history ID" value={result.data.searchCorrelation.searchHistoryId ? (
+                <Link href={"/admin/searches/" + encodeURIComponent(result.data.searchCorrelation.searchHistoryId) + "?environment=" + encodeURIComponent(result.data.environment)} className="text-[#004BB8] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
+                  {result.data.searchCorrelation.searchHistoryId}
+                </Link>
+              ) : "—"} />
               <Field label="Visitor ID" value={result.data.identity.visitorId || "—"} />
             </dl>
           </section>
@@ -60,7 +64,7 @@ export default async function AdminHandoffDetailPage({
               <Field label="Product" value={result.data.product} />
               <Field label="Price" value={result.data.price
                 ? result.data.currency + " " + result.data.price : "—"} />
-              <Field label={result.data.product.toUpperCase() === "HOTEL" ? "Property" : "Route"} value={result.data.route || "—"} />
+              <div className="min-w-0 md:col-span-2"><Field label={result.data.product.toUpperCase() === "HOTEL" ? "Property" : "Route"} value={result.data.route || "—"} /></div>
               <Field label="Created" value={formatDateTime(new Date(result.data.createdAt))} />
             </dl>
           </section>
@@ -71,9 +75,6 @@ export default async function AdminHandoffDetailPage({
               <Field label="Destination domain" value={result.data.destinationDomain || "—"} />
               <Field label="Environment" value={result.data.environment} />
             </dl>
-            <p className="mt-3 text-[12px] leading-5 text-[#64748B]">
-              Outbound referral recorded; booking and payment are not confirmed.
-            </p>
           </section>
         </div>
       ) : (
