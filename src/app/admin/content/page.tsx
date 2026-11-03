@@ -6,18 +6,29 @@ import {
   AdminSectionCard,
   AdminStatusBadge,
 } from "@/components/admin/AdminPageShell";
-import { generalFaqs } from "@/content/faqs";
-import { getDefaultHomeDiscoveryPriceRoutes } from "@/data/homeDiscovery";
-import { hotelDestinations } from "@/data/hotelDestinations";
-import { popularDestinationsByMarket } from "@/data/marketHomeContent";
 import { getCmsContentScopeSummary } from "@/services/cmsContentService";
 import { faqCmsScope } from "@/services/faqCmsService";
 import { homepageCmsLocale } from "@/services/homepageCmsService";
 
 export const metadata = { title: "Admin Content" };
 
-const homepageDestinationCount = Object.values(popularDestinationsByMarket).reduce((count, items) => count + items.length, 0);
-const flightRouteCount = getDefaultHomeDiscoveryPriceRoutes().length;
+type CmsScopeSummary = Awaited<ReturnType<typeof getCmsContentScopeSummary>> | null;
+
+function contentScopeStatus(summary: CmsScopeSummary) {
+  if (!summary?.available) return "Unavailable";
+  return summary.active ? "CMS managed" : "Setup required";
+}
+
+function publishedContentCount(summary: CmsScopeSummary) {
+  return summary?.available && summary.active ? summary.published : "—";
+}
+
+function contentScopeDescription(summary: CmsScopeSummary, scope: string) {
+  if (!summary?.available) return scope + ": CMS storage could not be verified.";
+  if (!summary.active) return scope + ": CMS setup required; legacy content may still be used as fallback.";
+  return scope + ": " + summary.published + " published · " + summary.draft
+    + " draft · " + summary.hidden + " hidden · " + summary.archived + " archived";
+}
 
 export default async function AdminContentPage() {
   const [faqSummary, destinationSummary, flightSummary, hotelSummary] = await Promise.all([
@@ -27,19 +38,17 @@ export default async function AdminContentPage() {
     getCmsContentScopeSummary("HOTEL_DESTINATION", "GLOBAL", homepageCmsLocale).catch(() => null),
   ]);
 
-  const homepageAvailable = Boolean(destinationSummary?.available && flightSummary?.available && hotelSummary?.available);
-  const homepageActive = Boolean(destinationSummary?.active && flightSummary?.active && hotelSummary?.active);
+  const homepageNeedsSetup = [destinationSummary, flightSummary, hotelSummary]
+    .some((summary) => summary?.available && !summary.active);
 
   const contentAreas = [
     {
       section: "homepage" as const,
       icon: MapPin,
       title: "Homepage destination cards",
-      status: !homepageAvailable ? "Unavailable" : homepageActive ? "CMS managed" : "Setup required",
-      value: homepageActive ? destinationSummary?.total ?? 0 : homepageDestinationCount,
-      note: homepageActive
-        ? "Market-scoped destination cards with draft, publish, hide, archive and ordering controls."
-        : "Initialize Homepage CMS to move market destination cards from code-backed content into managed publishing.",
+      status: contentScopeStatus(destinationSummary),
+      value: publishedContentCount(destinationSummary),
+      note: contentScopeDescription(destinationSummary, "US market"),
       href: "/admin/content/homepage/destinations",
       actionLabel: "Manage destinations",
     },
@@ -47,11 +56,9 @@ export default async function AdminContentPage() {
       section: "homepage" as const,
       icon: Plane,
       title: "Flight route cards",
-      status: !homepageAvailable ? "Unavailable" : homepageActive ? "CMS managed" : "Setup required",
-      value: homepageActive ? flightSummary?.total ?? 0 : flightRouteCount,
-      note: homepageActive
-        ? "Market-scoped discovery and regional route cards backed by canonical Kurioticket airport codes."
-        : "Initialize Homepage CMS to migrate the current route-card order without changing fare operations.",
+      status: contentScopeStatus(flightSummary),
+      value: publishedContentCount(flightSummary),
+      note: contentScopeDescription(flightSummary, "US market"),
       href: "/admin/content/homepage/flight-routes",
       actionLabel: "Manage flight routes",
     },
@@ -59,11 +66,9 @@ export default async function AdminContentPage() {
       section: "homepage" as const,
       icon: Building2,
       title: "Hotel destination cards",
-      status: !homepageAvailable ? "Unavailable" : homepageActive ? "CMS managed" : "Setup required",
-      value: homepageActive ? hotelSummary?.total ?? 0 : hotelDestinations.length,
-      note: homepageActive
-        ? "Canonical GLOBAL hotel destination records validated against the Kurioticket hotel catalog."
-        : "Initialize Homepage CMS to make canonical hotel destination content manageable.",
+      status: contentScopeStatus(hotelSummary),
+      value: publishedContentCount(hotelSummary),
+      note: contentScopeDescription(hotelSummary, "Global"),
       href: "/admin/content/homepage/hotel-destinations",
       actionLabel: "Manage hotel destinations",
     },
@@ -71,13 +76,9 @@ export default async function AdminContentPage() {
       section: "help" as const,
       icon: CircleHelp,
       title: "FAQs",
-      status: !faqSummary?.available ? "Unavailable" : faqSummary.active ? "CMS managed" : "Setup required",
-      value: faqSummary?.active ? faqSummary.total : generalFaqs.length,
-      note: !faqSummary?.available
-        ? "CMS storage could not be verified. Public FAQs continue using the existing translated code-backed content."
-        : faqSummary.active
-          ? faqSummary.published + " published · " + faqSummary.draft + " draft · " + faqSummary.hidden + " hidden · " + faqSummary.archived + " archived"
-          : "Initialize the current English FAQ set, then create drafts, preview, publish, hide and archive from admin.",
+      status: contentScopeStatus(faqSummary),
+      value: publishedContentCount(faqSummary),
+      note: contentScopeDescription(faqSummary, "English FAQs"),
       href: "/admin/content/faqs",
       actionLabel: "Manage FAQs",
     },
@@ -93,17 +94,14 @@ export default async function AdminContentPage() {
       description="Manage website content, publishing, and visibility."
     >
       <div className="space-y-6">
-        <nav aria-label="Content management shortcuts" className="flex flex-wrap items-center gap-2">
-          <Link href="/admin/content/health" className="inline-flex min-h-9 items-center rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-800 hover:bg-emerald-100">
-            CMS Health
-          </Link>
-          <Link href="/admin/content/homepage" className="inline-flex min-h-9 items-center rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-800 hover:bg-indigo-100">
-            Homepage CMS overview
-          </Link>
-          <Link href="/admin/homepage-fares" className="inline-flex min-h-9 items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
-            Homepage fare operations
-          </Link>
-        </nav>
+        {homepageNeedsSetup ? (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50/60 px-4 py-3">
+            <p className="text-[13px] text-slate-700">Some homepage content scopes still need CMS setup.</p>
+            <Link href="/admin/content/homepage" className="inline-flex items-center gap-1 text-[13px] font-semibold text-indigo-700 hover:underline">
+              Review homepage CMS setup <ArrowUpRight size={14} aria-hidden="true" />
+            </Link>
+          </div>
+        ) : null}
 
         <section aria-labelledby="homepage-content-heading" className="space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -127,7 +125,10 @@ export default async function AdminContentPage() {
                       {area.status}
                     </AdminStatusBadge>
                   </div>
-                  <p className="mt-3 text-3xl font-semibold leading-none tabular-nums text-slate-950">{area.value}</p>
+                  <div className="mt-3">
+                    <p className="text-3xl font-semibold leading-none tabular-nums text-slate-950">{area.value}</p>
+                    <p className="mt-1 text-xs text-slate-500">Published CMS records</p>
+                  </div>
                   <p className="mt-2 flex-1 text-sm leading-5 text-slate-600">{area.note}</p>
                   <div className="mt-4 border-t border-slate-100 pt-3">
                     <Link href={area.href} className="inline-flex items-center gap-1.5 text-sm font-semibold text-indigo-700 hover:text-indigo-900">
@@ -162,7 +163,10 @@ export default async function AdminContentPage() {
                       </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-3">
-                      <p className="text-2xl font-semibold leading-none tabular-nums text-slate-950">{area.value}</p>
+                      <div className="text-right">
+                        <p className="text-2xl font-semibold leading-none tabular-nums text-slate-950">{area.value}</p>
+                        <p className="text-xs text-slate-500">Published</p>
+                      </div>
                       <AdminStatusBadge tone={area.status === "CMS managed" ? "good" : area.status === "Setup required" ? "warn" : "bad"}>
                         {area.status}
                       </AdminStatusBadge>
