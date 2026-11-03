@@ -49,7 +49,7 @@ test("one white parent holds three compact trip investigation sections", () => {
   const toolbarStart = page.indexOf('role="group" aria-label="Trip shortcuts"');
   assert.ok(parentStart >= 0 && toolbarStart > parentStart && toolbarStart < positions[0]);
   assert.ok(positions.every(position => position > parentStart && position < parentEnd));
-  assert.match(page, /rounded-lg border bg-white px-3 py-2\.5/);
+  assert.match(page, /rounded-lg border border-slate-200\/80 bg-white px-3 py-2\.5/);
   assert.doesNotMatch(page, /TripCategoryCard|Trips by category/);
   assert.match(page, /group rounded-xl border border-slate-200\/80 bg-white/);
   assert.doesNotMatch(page, /bg-slate-(?:50\/80|100\/65|100\/60|100\/80)/);
