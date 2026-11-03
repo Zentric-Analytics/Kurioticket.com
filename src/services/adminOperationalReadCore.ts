@@ -793,7 +793,22 @@ export function createAdminOperationalReadService(dependencies: Dependencies) {
             metadata: { path: ["environment"], equals: scope.environment },
             ...(scope.correlation === "exact" ? { journeyEvents: { some: { type: "PROVIDER_HANDOFF_STARTED", searchHistoryId: { not: null } } } } : {}),
             ...(scope.correlation === "unavailable" ? { journeyEvents: { none: { type: "PROVIDER_HANDOFF_STARTED", searchHistoryId: { not: null } } } } : {}),
-            AND: cursor ? [{ OR: [{ createdAt: { lt: new Date(cursor.at) } }, { createdAt: new Date(cursor.at), id: { lt: cursor.id } }] }] : [],
+            AND: [
+              ...(scope.sourcePage ? [{
+                OR: [
+                  { sourcePage: scope.sourcePage },
+                  { sourcePage: { startsWith: scope.sourcePage + "?" } },
+                  { sourcePage: { startsWith: scope.sourcePage + "#" } },
+                  // Legacy short names were stored without the leading slash.
+                  ...(scope.sourcePage.slice(1).includes("/") ? [] : [
+                    { sourcePage: scope.sourcePage.slice(1) },
+                    { sourcePage: { startsWith: scope.sourcePage.slice(1) + "?" } },
+                    { sourcePage: { startsWith: scope.sourcePage.slice(1) + "#" } },
+                  ]),
+                ],
+              }] : []),
+              ...(cursor ? [{ OR: [{ createdAt: { lt: new Date(cursor.at) } }, { createdAt: new Date(cursor.at), id: { lt: cursor.id } }] }] : []),
+            ],
           };
           const records = await db.redirectLog.findMany({ where, select: handoffSelect, orderBy: [{ createdAt: "desc" }, { id: "desc" }], take: limit + 1 });
           const page = nextCursor("handoffs", scope, records, limit);
