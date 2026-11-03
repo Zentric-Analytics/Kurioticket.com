@@ -68,3 +68,18 @@ test("homepage fare admin APIs preserve authorization, audit logging, and refres
     assert.match(refreshApi, new RegExp(scope));
   }
 });
+
+test("content overview groups three homepage areas and FAQs without hiding actions", () => {
+  assert.match(contentPage, /const homepageAreas = contentAreas\.filter\(\(area\) => area\.section === "homepage"\)/);
+  assert.match(contentPage, /const helpAreas = contentAreas\.filter\(\(area\) => area\.section === "help"\)/);
+  assert.equal((contentPage.match(/section: "homepage" as const/g) ?? []).length, 3);
+  assert.equal((contentPage.match(/section: "help" as const/g) ?? []).length, 1);
+  assert.match(contentPage, /aria-labelledby="homepage-content-heading"/);
+  assert.match(contentPage, /aria-labelledby="help-content-heading"/);
+  assert.match(contentPage, /sm:grid-cols-2 lg:grid-cols-3/);
+  assert.match(contentPage, /flex flex-wrap items-center gap-2/);
+  assert.match(contentPage, /href=\{area\.href\}/);
+  assert.match(contentPage, /\{area\.note\}/);
+  assert.match(contentPage, /\{area\.status\}/);
+  assert.match(contentPage, /\{area\.value\}/);
+});
