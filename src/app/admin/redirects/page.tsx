@@ -7,6 +7,7 @@ import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
 import { SearchWorkspacePanelFrame } from "@/components/admin/SearchWorkspacePanelFrame";
 import { formatDateTime } from "@/lib/admin-data";
 import { handoffDetailHref } from "@/lib/adminReferralHandoffNavigation";
+import { handoffNextPageHref, handoffPreviousPageHref } from "@/lib/adminHandoffPagination";
 import { adminOperationalReads } from "@/services/adminOperationalReadService";
 
 export const metadata = { title: "Admin Provider Handoffs" };
@@ -186,13 +187,17 @@ export default async function AdminRedirectsPage({ searchParams, embedded = fals
                 </tbody>
               </table>
             </div>
-            {result.data.nextCursor ? (
-              <div className="flex justify-end border-t border-[#E7ECF5] py-3">
-                <Link href={cursorHref("/admin/redirects", raw, result.data.nextCursor)}
-                  className="text-[13px] font-medium text-[#004BB8] hover:underline">
-                  Next page ›
-                </Link>
-              </div>
+            {handoffPreviousPageHref(raw) || result.data.nextCursor ? (
+              <nav aria-label="Provider handoff pagination" className="flex justify-end gap-5 border-t border-[#E7ECF5] py-3">
+                {handoffPreviousPageHref(raw) ? (
+                  <Link href={handoffPreviousPageHref(raw)!}
+                    className="text-[13px] font-medium text-[#004BB8] hover:underline">‹ Previous page</Link>
+                ) : null}
+                {result.data.nextCursor ? (
+                  <Link href={handoffNextPageHref(raw, result.data.nextCursor)}
+                    className="text-[13px] font-medium text-[#004BB8] hover:underline">Next page ›</Link>
+                ) : null}
+              </nav>
             ) : null}
           </>
         )
@@ -222,6 +227,4 @@ function toParams(raw: Record<string, string | string[] | undefined>) {
   }
   return params;
 }
-function cursorHref(path: string, raw: Record<string, string | string[] | undefined>, cursor: string) {
-  const params = toParams(raw); params.set("cursor", cursor); params.set("limit", "50"); return path + "?" + params.toString();
-}
+
