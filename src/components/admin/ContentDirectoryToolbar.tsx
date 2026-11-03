@@ -111,7 +111,7 @@ export function ContentDirectoryToolbar({
     navigate({}, false, true);
   }
 
-  const hasFilters = Boolean(searchTerm || status || category || (market && market !== "US" && market !== "GLOBAL"));
+  const hasFilters = Boolean(searchTerm || status || category || (market && markets.length > 0 && market !== "US"));
   const marketOptions: Option[] = markets.map(value => ({ value, label: value.replaceAll("_", " ") }));
   const categoryOptions: Option[] = [{ value: "", label: "All categories" }, ...categories.map(value => ({ value, label: value }))];
 
@@ -167,6 +167,7 @@ export function ContentDirectoryToolbar({
               value={market}
               options={marketOptions}
               plain
+              spaciousMenu
               align="end"
               onValueChange={next => navigate({ q: searchTerm, market: next })}
             />
@@ -179,6 +180,7 @@ export function ContentDirectoryToolbar({
               value={category}
               options={categoryOptions}
               plain
+              spaciousMenu
               align="end"
               onValueChange={next => navigate({ q: searchTerm, category: next })}
             />
