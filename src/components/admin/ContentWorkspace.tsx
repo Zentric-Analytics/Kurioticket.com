@@ -47,7 +47,7 @@ export function ContentPageFrame({
 
 export function ContentSectionHeading({ children, extra }: { children: ReactNode; extra?: ReactNode }) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E5E7EB] pb-2.5">
+    <div className="flex flex-wrap items-center justify-between gap-3">
       <h3 className="text-[14px] font-semibold leading-5 text-[#111827]">{children}</h3>
       {extra ? <div className="text-[12px] text-[#64748B]">{extra}</div> : null}
     </div>
@@ -64,13 +64,15 @@ const statusDots: Record<string, string> = {
   Unavailable: "bg-rose-500",
 };
 
-export function ContentStatusPill({ status }: { status: string }) {
+export function ContentStatusPill({ status, inline = false }: { status: string; inline?: boolean }) {
   const label = status.replaceAll("_", " ").toLowerCase();
   const displayed = status === "CMS managed" || status === "Setup required" || status === "Unavailable"
     ? status
     : label.charAt(0).toUpperCase() + label.slice(1);
   return (
-    <span className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-[#F1F2F5] px-2.5 py-1 text-[12px] font-medium leading-4 text-[#475569]">
+    <span className={inline
+      ? "inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap text-[12px] font-medium leading-4 text-[#475569]"
+      : "inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-[#F1F2F5] px-2.5 py-1 text-[12px] font-medium leading-4 text-[#475569]"}>
       <span className={`h-1.5 w-1.5 rounded-full ${statusDots[status] ?? "bg-[#94A3B8]"}`} aria-hidden="true" />
       {displayed}
     </span>
@@ -85,22 +87,22 @@ export function ContentRecordsTable({
   rows: Array<{ id: string; cells: ReactNode[] }>;
 }) {
   return (
-    <div className="min-w-0 overflow-x-auto rounded-lg border border-[#E5E7EB] bg-white">
+    <div className="min-w-0 overflow-x-auto bg-white">
       <table className="w-full min-w-[740px] text-left text-[13px] text-[#374151]">
         <thead>
-          <tr className="border-b border-[#E5E7EB] bg-[#FAFBFD]">
+          <tr className="border-b border-[#D8E1EC] bg-white">
             {columns.map(column => (
-              <th key={column} scope="col" className="whitespace-nowrap px-3 py-2.5 text-[12px] font-medium text-[#64748B] sm:px-4">
+              <th key={column} scope="col" className="whitespace-nowrap px-3 py-3 text-[12px] font-medium text-[#475569] sm:px-4">
                 {column}
               </th>
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-[#E5E7EB]">
+        <tbody className="divide-y divide-[#E7ECF5]">
           {rows.map(row => (
-            <tr key={row.id} className="align-middle transition-colors hover:bg-[#F8FAFC]">
+            <tr key={row.id} className="h-[64px] align-middle transition-colors hover:bg-[#F8FAFC]">
               {row.cells.map((cell, i) => (
-                <td key={i} className="px-3 py-3 align-middle sm:px-4">{cell}</td>
+                <td key={i} className="px-3 py-1.5 align-middle sm:px-4">{cell}</td>
               ))}
             </tr>
           ))}
@@ -120,7 +122,7 @@ export function ContentEmptyState({
   action?: ReactNode;
 }) {
   return (
-    <div className="rounded-lg border border-[#E5E7EB] bg-white px-5 py-7">
+    <div className="bg-white px-2 py-8">
       <p className="text-[14px] font-semibold text-[#111827]">{title}</p>
       <p className="mt-1 text-[13px] leading-5 text-[#64748B]">{message}</p>
       {action ? <div className="mt-4">{action}</div> : null}
