@@ -6,12 +6,11 @@ import { useMemo, useState, useTransition } from "react";
 import {
   AdminButton,
   AdminInput,
-  AdminSectionCard,
   AdminSelect,
-  AdminStatusBadge,
   AdminTextarea,
 } from "@/components/admin/AdminPageShell";
 import type { HomepageCmsSection } from "@/lib/adminHomepageCms";
+import { ContentSectionHeading, ContentStatusPill } from "@/components/admin/ContentWorkspace";
 
 type CmsItem = {
   id: string;
@@ -216,14 +215,14 @@ export function HomepageCmsEditor({
   const archived = item?.status === "ARCHIVED";
 
   return (
-    <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_420px]">
-      <AdminSectionCard className="space-y-5 p-5">
+    <div className="grid min-w-0 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-8 xl:gap-14 [&_input]:rounded-lg [&_select]:rounded-lg [&_textarea]:rounded-lg [&_input]:h-9 [&_select]:h-9 [&_input]:text-[13px] [&_select]:text-[13px] [&_textarea]:text-[13px] [&_input]:font-normal [&_select]:font-normal">
+      <section className="min-w-0 space-y-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h2 className="text-lg font-black text-slate-950">{item ? "Edit content" : "Create draft"}</h2>
-            <p className="mt-1 text-sm text-slate-600">Structured CMS content only. Save draft before publishing changes.</p>
+            <ContentSectionHeading>{item ? "Edit content" : "Create draft"}</ContentSectionHeading>
+            <p className="mt-1 text-[13px] text-[#64748B]">Structured CMS content only. Save draft before publishing changes.</p>
           </div>
-          {item ? <AdminStatusBadge tone={statusTone(item.status)}>{item.status}</AdminStatusBadge> : null}
+          {item ? <ContentStatusPill status={item.status} /> : null}
         </div>
 
         {section !== "hotel-destinations" ? (
@@ -289,7 +288,7 @@ export function HomepageCmsEditor({
           <AdminInput type="number" min={0} max={100000} value={sortOrder} onChange={(event) => setSortOrder(event.target.value)} disabled={pending || archived} />
         </Field>
 
-        <div className="flex flex-wrap gap-3 border-t border-slate-100 pt-5">
+        <div className="flex flex-wrap gap-2 border-t border-[#E5E7EB] pt-4 [&_button]:rounded-lg [&_button]:text-[13px] [&_button]:font-medium [&_button]:shadow-none">
           {!item ? (
             <AdminButton type="button" onClick={createDraft} loading={pending} disabled={!validDraft}>Create draft</AdminButton>
           ) : !archived ? (
@@ -310,18 +309,18 @@ export function HomepageCmsEditor({
             Reload latest
           </AdminButton>
         ) : null}
-      </AdminSectionCard>
+      </section>
 
-      <AdminSectionCard className="h-fit p-5 xl:sticky xl:top-24">
-        <p className="text-xs font-black uppercase tracking-wide text-indigo-700">Draft preview</p>
-        <h2 className="mt-2 text-lg font-black text-slate-950">{previewTitle(section, currentPayload)}</h2>
-        <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-600">{previewDetail(section, currentPayload)}</p>
-        <div className="mt-4 grid gap-2 border-t border-slate-100 pt-4 text-xs font-bold text-slate-500">
+      <aside className="h-fit min-w-0 lg:sticky lg:top-24">
+        <ContentSectionHeading>Draft preview</ContentSectionHeading>
+        <h2 className="mt-2 text-[15px] font-semibold text-[#111827]">{previewTitle(section, currentPayload)}</h2>
+        <p className="mt-2 whitespace-pre-wrap text-[13px] leading-5 text-[#475569]">{previewDetail(section, currentPayload)}</p>
+        <div className="mt-4 grid gap-2 border-t border-[#E5E7EB] pt-4 text-[12px] text-[#64748B]">
           <span>Market: {section === "hotel-destinations" ? "GLOBAL" : market}</span>
           <span>Order: {sortOrder || "0"}</span>
           {item ? <span>Draft v{item.version} · Published {item.publishedVersion ? `v${item.publishedVersion}` : "none"} · Unpublished changes: {unpublished ? "yes" : "no"}</span> : null}
         </div>
-      </AdminSectionCard>
+      </aside>
     </div>
   );
 }
@@ -426,7 +425,7 @@ function previewDetail(section: HomepageCmsSection, payload: Record<string, unkn
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return <label className="block"><span className="text-xs font-black uppercase tracking-wide text-slate-500">{label}</span><div className="mt-2">{children}</div></label>;
+  return <label className="block"><span className="text-[12px] font-medium text-[#64748B]">{label}</span><div className="mt-2">{children}</div></label>;
 }
 
 function TextField({
