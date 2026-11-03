@@ -119,8 +119,13 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
     || pathname === "/admin/referral-attribution/"
     || pathname === "/admin/redirects" || pathname === "/admin/redirects/"
     || /^\/admin\/redirects\/[^/]+\/?$/.test(pathname);
+  // Account deletion request details share Support's white workspace; the queue keeps its existing surface.
+  const accountDeletionParts = pathname.split("/").filter(Boolean);
+  const accountDeletionDetail = accountDeletionParts.length === 3
+    && accountDeletionParts[0] === "admin"
+    && accountDeletionParts[1] === "account-deletions";
   const whiteWorkspace = usersDirectory || searchesWorkspace || supportWorkspace
-    || providersWorkspace || providerReportingWorkspace;
+    || providersWorkspace || providerReportingWorkspace || accountDeletionDetail;
   return <AdminWorkspaceSearchProvider account={adminEmail || "admin"}><div className={"min-h-screen text-slate-950 " + (userActivity ? "bg-[#f1f5fb]" : whiteWorkspace ? "bg-white" : "bg-[#f1f5fb]")}>
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
       <AdminSearchHeader>

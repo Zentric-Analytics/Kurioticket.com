@@ -21,6 +21,8 @@ type Props = {
   compact?: boolean;
   underlined?: boolean;
   plain?: boolean;
+  /** Opt-in roomier popover for long labels in an action sidebar. */
+  spaciousMenu?: boolean;
   align?: "start" | "end";
   onValueChange?: (next: string) => void;
 };
@@ -40,6 +42,7 @@ export function AdminDirectorySelect({
   compact = false,
   underlined = false,
   plain = false,
+  spaciousMenu = false,
   align = "start",
   onValueChange,
 }: Props) {
@@ -205,7 +208,7 @@ export function AdminDirectorySelect({
           aria-activedescendant={`${listboxId}-option-${activeIndex}`}
           tabIndex={-1}
           onKeyDown={onListKeyDown}
-          className={`absolute top-full z-50 mt-1.5 max-h-64 min-w-[170px] max-w-[min(90vw,280px)] overflow-y-auto rounded-lg border border-[#D8E1EC] bg-white p-1.5 shadow-[0_10px_28px_-12px_rgba(2,6,23,0.25)] outline-none ${(underlined || plain) && align === "end" ? "left-0 lg:left-auto lg:right-0" : "left-0"} ${underlined || plain ? "" : "w-full"}`}
+          className={`absolute top-full z-50 mt-1.5 max-h-64 max-w-[min(90vw,280px)] overflow-y-auto rounded-lg border border-[#D8E1EC] bg-white shadow-[0_10px_28px_-12px_rgba(2,6,23,0.25)] outline-none ${spaciousMenu ? "min-w-[228px] space-y-1 p-2" : "min-w-[170px] p-1.5"} ${(underlined || plain) && align === "end" ? "left-0 lg:left-auto lg:right-0" : "left-0"} ${underlined || plain ? "" : "w-full"}`}
         >
           {options.map((option, index) => (
             <button
@@ -217,9 +220,9 @@ export function AdminDirectorySelect({
               aria-selected={selected === option.value}
               onMouseEnter={() => setActiveIndex(index)}
               onClick={() => choose(option.value)}
-              className={`flex min-h-9 w-full items-center justify-between gap-2 rounded-md px-3 py-2 text-left text-[13px] transition-colors ${index === activeIndex ? "bg-[#F1F7FF]" : "hover:bg-[#F8FAFC]"} ${selected === option.value ? "font-medium text-[#004BB8]" : "font-normal text-[#020617]"}`}
+              className={`flex w-full items-center justify-between rounded-md px-3 text-left text-[13px] transition-colors ${spaciousMenu ? "min-h-11 gap-3 py-2.5" : "min-h-9 gap-2 py-2"} ${index === activeIndex ? "bg-[#F1F7FF]" : "hover:bg-[#F8FAFC]"} ${selected === option.value ? "font-medium text-[#004BB8]" : "font-normal text-[#020617]"}`}
             >
-              <span className="min-w-0">{option.label}</span>
+              <span className={spaciousMenu ? "min-w-0 whitespace-nowrap" : "min-w-0"}>{option.label}</span>
               {selected === option.value ? <Check size={15} aria-hidden="true" className="shrink-0 text-[#004BB8]" /> : null}
             </button>
           ))}

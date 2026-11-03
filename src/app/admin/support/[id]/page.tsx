@@ -54,7 +54,7 @@ export default async function AdminSupportTicketPage({ params, searchParams }: P
 
   return (
     <AdminPageShell title="Support ticket" hideHeader>
-      <div className="mx-auto w-full max-w-[1138px] text-[#374151]">
+      <div className="mx-auto w-full max-w-[1138px] bg-white text-[#374151]">
         <Link href={backHref} className="focus-ring mb-3 inline-flex items-center gap-1.5 rounded-sm text-[12px] font-medium text-[#64748B] hover:text-[#004BB8]">
           <ArrowLeft size={14} aria-hidden="true" /> {backLabel}
         </Link>
