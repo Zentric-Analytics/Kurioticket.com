@@ -1,15 +1,7 @@
 import Link from "next/link";
 
-import {
-  AdminButton,
-  AdminEmptyState,
-  AdminFilterBar,
-  AdminLinkButton,
-  AdminMetricCard,
-  AdminPageShell,
-  AdminSelect,
-  AdminStatusBadge,
-} from "@/components/admin/AdminPageShell";
+import { AdminButton, AdminSelect } from "@/components/admin/AdminPageShell";
+import { ContentPageFrame, ContentEmptyState, ContentMetric, ContentStatusPill } from "@/components/admin/ContentWorkspace";
 import { FaqCmsInitializeButton } from "@/components/admin/FaqCmsInitializeButton";
 import { FaqCmsListClient } from "@/components/admin/FaqCmsListClient";
 import { CmsCreateLink } from "@/components/admin/CmsCreateLink";
@@ -69,37 +61,34 @@ export default async function AdminFaqCmsPage({ searchParams }: { searchParams: 
   }
 
   return (
-    <AdminPageShell
+    <ContentPageFrame
       title="FAQs"
-      description="Create, review, preview and publish English FAQ content through the versioned CMS."
-      actions={
-        <div className="flex flex-wrap gap-2">
-          <AdminLinkButton href="/admin/content">Back to content</AdminLinkButton>
-          {summary.active ? <CmsCreateLink path="/admin/content/faqs/new" label="Add FAQ" /> : null}
-        </div>
-      }
+      subtitle="Manage English FAQ questions and answers."
+      backHref="/admin/content"
+      backLabel="Back to Content"
+      actions={summary.active ? <CmsCreateLink path="/admin/content/faqs/new" label="Add FAQ" /> : null}
     >
       <div className="space-y-5">
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-          <AdminMetricCard label="Total" value={summary.total} hint="English FAQ CMS records" />
-          <AdminMetricCard label="Published" value={summary.published} tone="good" />
-          <AdminMetricCard label="Draft" value={summary.draft} tone="info" />
-          <AdminMetricCard label="Hidden" value={summary.hidden} tone="warn" />
-          <AdminMetricCard label="Archived" value={summary.archived} />
+        <div className="grid gap-4 border-b border-[#E5E7EB] pb-4 sm:grid-cols-3 lg:grid-cols-5">
+          <ContentMetric label="Total" value={summary.total} />
+          <ContentMetric label="Published" value={summary.published} />
+          <ContentMetric label="Draft" value={summary.draft} />
+          <ContentMetric label="Hidden" value={summary.hidden} />
+          <ContentMetric label="Archived" value={summary.archived} />
         </div>
 
         {!summary.available ? (
-          <AdminEmptyState
+          <ContentEmptyState
             title="FAQ CMS unavailable"
             message="CMS storage could not be verified. The public FAQ keeps using the existing translated code-backed content while storage is unavailable."
           />
         ) : !summary.active ? (
-          <div className="rounded-2xl border border-indigo-200 bg-indigo-50/70 p-5">
+          <div className="rounded-lg border border-[#E5E7EB] bg-white p-4">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div>
                 <div className="flex items-center gap-2">
                   <h2 className="text-lg font-black text-slate-950">Initialize English FAQ CMS</h2>
-                  <AdminStatusBadge tone="info">Setup required</AdminStatusBadge>
+                  <ContentStatusPill status="Setup required" />
                 </div>
                 <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
                   Import the current English FAQs as the first published CMS version. This is an explicit audited action; nothing is imported merely by opening this page.
@@ -110,7 +99,7 @@ export default async function AdminFaqCmsPage({ searchParams }: { searchParams: 
           </div>
         ) : (
           <>
-            <AdminFilterBar action="/admin/content/faqs">
+            <form action="/admin/content/faqs" className="flex min-w-0 flex-wrap items-center gap-2 rounded-lg border border-[#E5E7EB] bg-white p-3 [&_select]:w-auto [&_select]:min-w-[150px]">
               <AdminSelect name="status" defaultValue={statusRaw}>
                 <option value="">All statuses</option>
                 <option value="PUBLISHED">Published</option>
@@ -118,11 +107,11 @@ export default async function AdminFaqCmsPage({ searchParams }: { searchParams: 
                 <option value="HIDDEN">Hidden</option>
                 <option value="ARCHIVED">Archived</option>
               </AdminSelect>
-              <AdminButton type="submit">Apply status</AdminButton>
-            </AdminFilterBar>
+              <AdminButton size="sm" className="rounded-lg font-medium shadow-none" type="submit">Apply status</AdminButton>
+            </form>
 
             {listingError ? (
-              <AdminEmptyState title="FAQ list unavailable" message={listingError} />
+              <ContentEmptyState title="FAQ list unavailable" message={listingError} />
             ) : listing && listing.items.length > 0 ? (
               <>
                 <FaqCmsListClient items={listing.items} listQuery={nav.query} />
@@ -138,7 +127,7 @@ export default async function AdminFaqCmsPage({ searchParams }: { searchParams: 
                 ) : null}
               </>
             ) : (
-              <AdminEmptyState
+              <ContentEmptyState
                 title="No FAQs found"
                 message="No FAQ records match the selected lifecycle status."
                 action={<CmsCreateLink path="/admin/content/faqs/new" label="Add FAQ" />}
@@ -147,7 +136,7 @@ export default async function AdminFaqCmsPage({ searchParams }: { searchParams: 
           </>
         )}
       </div>
-    </AdminPageShell>
+    </ContentPageFrame>
   );
 }
 
