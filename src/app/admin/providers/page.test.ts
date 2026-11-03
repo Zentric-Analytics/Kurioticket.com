@@ -8,6 +8,11 @@ import { filterProviderOperationalStatuses, filterProviderStatuses, normalizePro
 import type { ProviderOperationalStatus, ProviderOperationalServiceStatus } from "@/services/providerOperationalStatusCore";
 
 const providersPage = readFileSync("src/app/admin/providers/page.tsx", "utf8");
+const referralPage = readFileSync("src/app/admin/referral-attribution/page.tsx", "utf8");
+const referralWindowFilter = readFileSync("src/components/admin/ReferralWindowFilter.tsx", "utf8");
+const handoffsPage = readFileSync("src/app/admin/redirects/page.tsx", "utf8");
+const handoffDetailPage = readFileSync("src/app/admin/redirects/[id]/page.tsx", "utf8");
+const adminShell = readFileSync("src/components/admin/AdminHorizontalShell.tsx", "utf8");
 const directoryTable = readFileSync("src/components/admin/ProviderDirectoryTable.tsx", "utf8");
 const retestButton = readFileSync("src/components/admin/ProviderRetestButton.tsx", "utf8");
 const providerFiltersSource = readFileSync("src/lib/adminProviderFilters.ts", "utf8");
@@ -219,6 +224,93 @@ test("provider outcome bars reconcile attempted calls without treating disabled 
   }), /must reconcile/);
 });
 
+
+test("Task 1: incident details show compact facts and aligned per-service diagnostics", () => {
+  assert.match(providersPage, /grid max-w-\[980px\] gap-x-5 gap-y-3 sm:grid-cols-3/);
+  assert.match(providersPage, /<ActivityTime value=\{provider\.lastFailureAt\}/);
+  assert.match(providersPage, /<ActivityTime value=\{provider\.lastSuccessAt\}/);
+  assert.match(providersPage, /aria-label=\{"Service diagnostics for " \+ provider\.provider\}/);
+  assert.match(providersPage, /<table className="w-full min-w-\[760px\] table-fixed/);
+  for (const column of ["Service", "Status", "Attempts", "Failed", "Main failure reason"]) {
+    assert.ok(providersPage.includes(">" + column + "</th>"), "Missing incident diagnostic column: " + column);
+  }
+  assert.match(providersPage, /service\.failureReasons\.map\(reason =>/);
+  assert.match(providersPage, /service\.attemptedCalls === 0 \? "No attempts"/);
+  assert.match(providersPage, /border-l-\[3px\]/);
+  assert.match(providersPage, /<details className="group py-2\.5">/);
+});
+
+test("Task 2: breakdown reasons are stacked with aligned counts, not comma-joined sentences", () => {
+  assert.match(providersPage, /aria-label=\{"Failure reasons for " \+ provider\.provider/);
+  assert.match(providersPage, /<ul aria-label=\{"Failure reasons for "/);
+  assert.match(providersPage, /<li key=\{reason\.code\}/);
+  assert.match(providersPage, /reason\.calls\.toLocaleString\(\)/);
+  assert.match(providersPage, /justify-between gap-3/);
+  assert.match(providersPage, /service\.failureReasons\.length \? \(/);
+  assert.match(providersPage, /: "—"/);
+  assert.match(providersPage, /aria-labelledby="service-breakdown-heading"/);
+});
+
+test("Task 3: referral attribution uses compact preset auto-apply and white metric summaries", () => {
+  assert.match(referralPage, /requireAdminApiSession\(\)/);
+  assert.match(referralPage, /parseAttributionDays\(daysValue\)/);
+  assert.match(referralPage, /getReferralAttributionSummary\(days, environment\)/);
+  assert.match(referralPage, /<ReferralWindowFilter days=\{days\} embedded=\{embedded\} \/>/);
+  assert.match(referralWindowFilter, /event\.currentTarget\.form\?\.requestSubmit\(\)/);
+  assert.match(referralWindowFilter, /name="days"/);
+  assert.match(referralWindowFilter, /name="view" value="attribution"/);
+  for (const window of ["7","14","30","60","90"]) {
+    assert.match(referralWindowFilter, new RegExp('value="' + window + '"'));
+  }
+  assert.match(referralPage, /summary\.dataAvailable \? summary\.handoffs\.total\.toLocaleString\(\) : "—"/);
+  assert.match(referralPage, /Linked to search/);
+  assert.match(referralPage, /Not linked to search/);
+  assert.match(referralPage, /Data state/);
+  assert.match(referralPage, /not confirmed bookings or payments/);
+  assert.match(referralPage, /table className="w-full table-fixed text-\[13px\]"/);
+  assert.doesNotMatch(referralPage, /AdminMetricCard|AdminFilterBar|AdminDataTable|AdminStatusBadge/);
+});
+
+test("Task 3: standalone handoffs preserve filters, records and next-cursor behavior", () => {
+  assert.match(handoffsPage, /adminOperationalReads\.handoffs\.list\(params\)/);
+  assert.match(handoffsPage, /if \(embedded\) return \(/);
+  assert.match(handoffsPage, /<AdminDataTable/); // Original embedded Search Activity variant remains.
+  assert.match(handoffsPage, /aria-label="Filter provider handoffs"/);
+  assert.match(handoffsPage, /aria-label="Provider handoff records"/);
+  assert.match(handoffsPage, /min-w-\[1080px\] table-fixed/);
+  for (const field of ["product", "identity", "correlation", "provider", "environment"]) {
+    assert.match(handoffsPage, new RegExp('name="' + field + '"'));
+  }
+  for (const field of ["userId", "visitorId", "from", "to"]) {
+    assert.match(handoffsPage, new RegExp('name="' + field + '"'));
+  }
+  for (const label of ["Created", "Product", "Provider", "Route", "Price", "Source", "Destination", "Identity", "Search link", "Action"]) {
+    assert.ok(handoffsPage.includes('"' + label + '"'), "Missing handoff column " + label);
+  }
+  assert.match(handoffsPage, /handoff\.identity\.userId \|\| handoff\.identity\.visitorId/);
+  assert.match(handoffsPage, /handoff\.searchCorrelation\.kind === "exact"/);
+  assert.match(handoffsPage, /href=\{"\/admin\/redirects\/" \+ handoff\.id/);
+  assert.match(handoffsPage, /cursorHref\("\/admin\/redirects", raw, result\.data\.nextCursor\)/);
+  assert.match(handoffsPage, /result\.status === "invalid"/);
+});
+
+test("Task 3: handoff detail groups every field without tiles or losing verification meaning", () => {
+  assert.match(handoffDetailPage, /adminOperationalReads\.handoffs\.detail\(id, query\)/);
+  assert.match(handoffDetailPage, /notFound\(\)/);
+  assert.match(handoffDetailPage, /Handoff overview/);
+  assert.match(handoffDetailPage, /Referral information/);
+  assert.match(handoffDetailPage, /Identity &amp; correlation/);
+  for (const label of ["Provider", "Product", "Created", "Route", "Price",
+    "Source page", "Destination domain", "Environment", "Handoff ID",
+    "Identity", "Search correlation", "Search history ID", "User ID", "Visitor ID"]) {
+    assert.ok(handoffDetailPage.includes('label="' + label + '"'), "Missing detail field " + label);
+  }
+  assert.match(handoffDetailPage, /Recorded outbound referral, not a booking or payment confirmation/);
+  assert.match(handoffDetailPage, /searchCorrelation\.kind === "exact"/);
+  assert.doesNotMatch(handoffDetailPage, /AdminSectionCard|bg-slate-50|rounded-xl/);
+  assert.match(adminShell, /providerReportingWorkspace/);
+  assert.match(adminShell, /providersWorkspace \|\| providerReportingWorkspace/);
+});
 
 test("product filtering retains truthful timing metrics for a single-service provider", () => {
   const flight: ProviderOperationalServiceStatus = {
