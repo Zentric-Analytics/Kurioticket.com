@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { notFound } from "next/navigation";
 
 import { AdminEmptyState } from "@/components/admin/AdminPageShell";
@@ -27,16 +28,12 @@ export default async function AdminHandoffDetailPage({
 
   return (
     <section className="w-full min-w-0 bg-white text-[#0F172A]">
-      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[#D8E1EC] pb-4">
-        <div>
-          <h1 className="text-[18px] font-semibold">Provider handoff detail</h1>
-          <p className="mt-1 text-[12px] text-[#64748B]">
-            Recorded outbound referral, not a booking or payment confirmation.
-          </p>
-        </div>
+      <h1 className="sr-only">Provider handoff detail</h1>
+      <div className="border-b border-[#D8E1EC] pb-3">
         <Link href={backHref}
-          className="text-[13px] font-medium text-[#004BB8] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
-          ‹ Back to handoffs
+          className="inline-flex items-center gap-2 text-[13px] font-medium text-[#475569] hover:text-[#004BB8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
+          <ArrowLeft size={16} strokeWidth={2} aria-hidden="true" />
+          Back to handoffs
         </Link>
       </div>
       {result.status === "ok" ? (
@@ -59,6 +56,9 @@ export default async function AdminHandoffDetailPage({
               <Field label="Destination domain" value={result.data.destinationDomain || "—"} />
               <Field label="Environment" value={result.data.environment} />
             </dl>
+            <p className="mt-3 text-[12px] leading-5 text-[#64748B]">
+              Outbound referral recorded; booking and payment are not confirmed.
+            </p>
           </section>
           <section aria-labelledby="handoff-identity" className="py-5">
             <h2 id="handoff-identity" className="text-[15px] font-semibold">Identity &amp; correlation</h2>
