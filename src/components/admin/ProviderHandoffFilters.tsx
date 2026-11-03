@@ -90,7 +90,7 @@ export function ProviderHandoffFilters({
   }, [
     initial.product, initial.identity, initial.correlation,
     initial.provider, initial.environment,
-    scope.userId, scope.visitorId, scope.from, scope.to,
+    scope.userId, scope.visitorId, scope.from, scope.to, scope.sourcePage,
   ]);
   useEffect(() => () => {
     if (timeout.current) clearTimeout(timeout.current);
