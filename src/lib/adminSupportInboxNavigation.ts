@@ -79,3 +79,55 @@ export function supportInboxReturnHref(inbox: string | undefined) {
   const query = scopedInboxReturnQuery(new URLSearchParams((inbox || "").slice(0, 2048)));
   return "/admin/support" + (query ? "?" + query : "");
 }
+
+/** Contextual Support <-> deletion links carry only allowlisted inbox filters.
+ * A query parameter alone cannot establish a ticket/deletion relationship:
+ * callers must use the linked IDs returned by the authorized detail readers.
+ */
+export function supportDeletionRequestHref(deletionRequestId: string, inbox: string | undefined) {
+  const params = new URLSearchParams({ fromSupport: "1" });
+  const query = scopedInboxReturnQuery(new URLSearchParams((inbox || "").slice(0, 2048)));
+  if (query) params.set("inbox", query);
+  return "/admin/account-deletions/" + encodeURIComponent(deletionRequestId) + "?" + params.toString();
+}
+
+export function supportTicketFromDeletionHref(
+  ticketId: string,
+  deletionRequestId: string,
+  fromSupport?: string,
+  inbox?: string,
+) {
+  const params = new URLSearchParams({ fromDeletion: deletionRequestId });
+  if (fromSupport === "1") {
+    params.set("fromSupport", "1");
+    const safeInboxQuery = scopedInboxReturnQuery(new URLSearchParams((inbox || "").slice(0, 2048)));
+    if (safeInboxQuery) params.set("inbox", safeInboxQuery);
+  }
+  return "/admin/support/" + encodeURIComponent(ticketId) + "?" + params.toString();
+}
+
+export function supportTicketBackHref(
+  linkedDeletionRequestId: string | null,
+  fromDeletion: string | undefined,
+  inbox: string | undefined,
+  fromSupport?: string,
+) {
+  // Only link back to a deletion record verified by the authorized Support detail.
+  if (!linkedDeletionRequestId || fromDeletion !== linkedDeletionRequestId) {
+    return supportInboxReturnHref(inbox);
+  }
+  // Keep the originating Support inbox available throughout the round trip.
+  return fromSupport === "1"
+    ? supportDeletionRequestHref(linkedDeletionRequestId, inbox)
+    : "/admin/account-deletions/" + encodeURIComponent(linkedDeletionRequestId);
+}
+
+export function deletionRequestBackHref(
+  linkedSupportTicketId: string | null,
+  fromSupport: string | undefined,
+  inbox: string | undefined,
+) {
+  if (fromSupport !== "1" || !linkedSupportTicketId) return "/admin/account-deletions";
+  const safeInboxQuery = scopedInboxReturnQuery(new URLSearchParams((inbox || "").slice(0, 2048)));
+  return supportTicketDetailHref(linkedSupportTicketId, new URLSearchParams(safeInboxQuery));
+}
