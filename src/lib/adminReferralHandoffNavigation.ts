@@ -23,7 +23,7 @@ export function referralHandoffHref(input: {
 
 /** Only known list-query fields return to the records page from a detail.
  * Never accept a caller-supplied URL or redirect destination. */
-const listKeys = ["environment", "product", "identity", "userId", "visitorId", "provider", "correlation", "from", "to", "cursor", "limit", "sourcePage"] as const;
+const listKeys = ["environment", "product", "identity", "userId", "visitorId", "provider", "correlation", "from", "to", "cursor", "limit", "sourcePage", "pageTrail"] as const;
 export function handoffListParams(raw: Record<string, string | string[] | undefined>) {
   const result = new URLSearchParams();
   for (const key of listKeys) {
