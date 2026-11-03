@@ -68,6 +68,8 @@ test("provider details preserve booking, readiness and audited Duffel retest", (
   assert.match(providersPage, /canRetestDuffel: integration\.id === "duffel"/);
   assert.match(directoryTable, /<ProviderRetestButton \/>/);
   assert.match(directoryTable, /row\.canRetestDuffel/);
+  assert.match(directoryTable, /sm:grid-cols-2 lg:grid-cols-4/);
+  assert.doesNotMatch(directoryTable, /xl:grid-cols-4/);
   assert.doesNotMatch(directoryTable, /A retest makes a real Duffel health request/);
   assert.match(directoryTable, /row\.detail\.configured/);
   assert.match(directoryTable, /row\.detail\.booking/);
