@@ -124,8 +124,9 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
   const accountDeletionDetail = accountDeletionParts.length === 3
     && accountDeletionParts[0] === "admin"
     && accountDeletionParts[1] === "account-deletions";
+  const contentOverview = pathname === "/admin/content" || pathname === "/admin/content/";
   const whiteWorkspace = usersDirectory || searchesWorkspace || supportWorkspace
-    || providersWorkspace || providerReportingWorkspace || accountDeletionDetail;
+    || providersWorkspace || providerReportingWorkspace || accountDeletionDetail || contentOverview;
   return <AdminWorkspaceSearchProvider account={adminEmail || "admin"}><div className={"min-h-screen text-slate-950 " + (userActivity ? "bg-[#f1f5fb]" : whiteWorkspace ? "bg-white" : "bg-[#f1f5fb]")}>
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
       <AdminSearchHeader>
