@@ -1,0 +1,37 @@
+/** Build a standalone handoff-list URL without breaking deep-linked customer scope. */
+export type ProviderHandoffFilterValues = {
+  product: string;
+  identity: string;
+  correlation: string;
+  provider: string;
+  environment: string;
+};
+
+export type ProviderHandoffFilterScope = {
+  userId: string;
+  visitorId: string;
+  from: string;
+  to: string;
+};
+
+/** Changing identity is the only operation that removes pinned user/visitor IDs. */
+export function providerHandoffFiltersHref(
+  values: ProviderHandoffFilterValues,
+  scope: ProviderHandoffFilterScope,
+  changeIdentity = false,
+) {
+  const params = new URLSearchParams();
+  if (!changeIdentity) {
+    if (scope.userId) params.set("userId", scope.userId);
+    if (scope.visitorId) params.set("visitorId", scope.visitorId);
+  }
+  if (scope.from) params.set("from", scope.from);
+  if (scope.to) params.set("to", scope.to);
+  if (values.product) params.set("product", values.product);
+  if (values.identity && values.identity !== "all") params.set("identity", values.identity);
+  if (values.correlation) params.set("correlation", values.correlation);
+  if (values.provider.trim()) params.set("provider", values.provider.trim());
+  if (values.environment) params.set("environment", values.environment);
+  const query = params.toString();
+  return "/admin/redirects" + (query ? "?" + query : "");
+}
