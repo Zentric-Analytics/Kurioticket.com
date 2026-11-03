@@ -10,6 +10,45 @@ export function parseProviderHealthHours(value: string | string[] | undefined): 
     ? Number(value) : 24;
 }
 
+export type ProviderHealthRange = { from: Date; to: Date; fromDate: string; toDate: string };
+
+/** Date-only inputs are interpreted as complete UTC calendar days. Bounded to
+ * 90 days to avoid unbounded telemetry scans. Presets keep their rolling hours. */
+export function parseProviderHealthRange(
+  raw: Record<string, string | string[] | undefined>,
+  now: Date = new Date(),
+): { hours: number; range: ProviderHealthRange | null; error: string | null } {
+  const hours = parseProviderHealthHours(raw.hours);
+  if (raw.period !== "custom") return { hours, range: null, error: null };
+  const start = raw.from;
+  const end = raw.to;
+  if (typeof start !== "string" || typeof end !== "string" ||
+      !/^\\d{4}-\\d{2}-\\d{2}$/.test(start) || !/^\\d{4}-\\d{2}-\\d{2}$/.test(end)) {
+    return { hours, range: null, error: "Select both dates and apply the custom range." };
+  }
+  const from = new Date(start + "T00:00:00.000Z");
+  const to = new Date(end + "T23:59:59.999Z");
+  if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime()) ||
+      from.toISOString().slice(0, 10) !== start ||
+      to.toISOString().slice(0, 10) !== end ||
+      to < from || to.getTime() > now.getTime() + 86_400_000 ||
+      to.getTime() - from.getTime() > 90 * 86_400_000) {
+    return { hours, range: null, error: "Choose a valid date range of up to 90 days, ending no later than today." };
+  }
+  return { hours, range: { from, to: to > now ? now : to, fromDate: start, toDate: end }, error: null };
+}
+
+export function providerHealthRangeHref(
+  product: string,
+  range: ProviderHealthRange | null,
+  hours: number,
+) {
+  if (!range) return providerHealthHref(hours, product);
+  const params = new URLSearchParams({ period: "custom", from: range.fromDate, to: range.toDate });
+  if (product !== "all") params.set("product", product);
+  return "/admin/providers?" + params.toString();
+}
+
 export function providerHealthHref(hours: number, product: string) {
   const params = new URLSearchParams();
   if (product !== "all") params.set("product", product);
