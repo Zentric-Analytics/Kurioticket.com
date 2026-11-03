@@ -17,6 +17,7 @@ export default function ConfirmedTripsLoading() {
         <div aria-busy="true" className="space-y-3">
           <section className="min-w-0 rounded-xl border border-slate-200/80 bg-white px-4 py-3 sm:px-5 sm:py-4">
             <h2 className="text-base font-semibold text-slate-950">Trip overview</h2>
+            <p className="mt-1 text-xs text-slate-600">Loading counters for the selected trip filters…</p>
             <div aria-hidden="true" className="mt-3 grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-5">
               {metricLabels.map((label) => (
                 <div key={label} className="rounded-xl border border-slate-200/80 bg-white px-3 py-3">
@@ -29,16 +30,12 @@ export default function ConfirmedTripsLoading() {
           </section>
           <section className="min-w-0 rounded-xl border border-slate-200/80 bg-white px-4 py-3 sm:px-5 sm:py-4">
             <h2 className="text-base font-semibold text-slate-950">Trip directory</h2>
-            <p className="mt-1 text-xs text-slate-600">Loading verified trip records…</p>
-            <div aria-hidden="true" className="mt-3 flex min-w-0 flex-wrap items-center gap-2">
-              <span className="text-[11px] font-medium text-slate-600">Confirmed by type · all time</span>
-              {["Flights", "Hotels", "Cars"].map((label) => (
-                <div key={label} className="flex h-8 min-w-20 items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-2.5">
-                  <span className="text-xs text-slate-700">{label}</span>
-                  <span className="h-3 w-4 rounded bg-slate-100 motion-safe:animate-pulse" />
-                </div>
+            <p className="mt-1 text-xs text-slate-600">Loading verified trip records for the selected filters…</p>
+            <nav aria-label="Trip travel types" className="mt-3 mb-3 flex min-w-0 flex-wrap items-center gap-5 border-b border-slate-100">
+              {["All", "Flights", "Hotels", "Cars", "Packages"].map(label => (
+                <span key={label} className="inline-flex min-h-9 items-center text-xs font-semibold text-slate-600">{label}</span>
               ))}
-            </div>
+            </nav>
             <div aria-hidden="true" className="mt-3 grid min-w-0 grid-cols-1 gap-x-2 gap-y-2.5 sm:grid-cols-2 md:grid-cols-4 lg:gap-x-1.5 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,0.95fr)_minmax(0,0.9fr)_minmax(0,0.9fr)_minmax(0,1.05fr)_minmax(0,0.95fr)_minmax(0,1.15fr)_minmax(0,1.15fr)] 2xl:gap-x-2.5">
               {["Search trips", "Provider", "Travel type", "Trip status", "Time range", "Tracking", "From (UTC)", "To (UTC)"].map((label) => (
                 <div key={label} className="min-w-0">
