@@ -57,7 +57,8 @@ function summarizeGroups(groups: AttributionGroupRow[]) {
     if (existingProvider) existingProvider.handoffs += group._count._all;
     else providers.set(providerKey, { provider, product, handoffs: group._count._all });
 
-    const sourcePage = journeySourcePath(group.sourcePage) ?? "unknown";
+    const sourcePage = group.sourcePage === "unknown" || group.sourcePage === "/unknown"
+      ? "unknown" : journeySourcePath(group.sourcePage) ?? "unknown";
     sourcePages.set(sourcePage, (sourcePages.get(sourcePage) ?? 0) + group._count._all);
   }
 
