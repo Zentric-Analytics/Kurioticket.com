@@ -143,7 +143,7 @@ export default async function AdminAccountDeletionDetailPage({ params, searchPar
                     <h3 id="deletion-linked-ticket-heading" className={sectionTitle}>Linked Support ticket</h3>
                     <p className="mt-2 text-[12px] leading-5 text-[#64748B]">This deletion request is connected to a customer Support conversation.</p>
                     <Link
-                      href={supportTicketFromDeletionHref(request.supportTicketId, request.id)}
+                      href={supportTicketFromDeletionHref(request.supportTicketId, request.id, fromSupport, inbox)}
                       className="focus-ring mt-2 inline-flex items-center gap-1.5 rounded-sm text-[13px] font-medium text-[#004BB8] hover:underline"
                     >
                       View Support ticket <ExternalLink size={13} aria-hidden="true" />
