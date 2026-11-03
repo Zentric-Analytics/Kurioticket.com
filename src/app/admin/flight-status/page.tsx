@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 
 import {
   AdminDataTable,
@@ -20,11 +21,12 @@ export default async function AdminFlightStatusPage() {
 
   return (
     <AdminPageShell title="Flight Status Operations" hideHeader>
-      <div role="group" aria-label="Flight Status actions" className="mb-3 flex min-w-0 flex-wrap items-center justify-end gap-2">
-        <Link href="/admin/confirmed-trips" className="inline-flex min-h-9 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2">
-          Confirmed trips
+      <nav aria-label="Flight Status navigation" className="mb-3 flex min-w-0 flex-wrap items-center justify-start">
+        <Link href="/admin/confirmed-trips" className="inline-flex min-h-9 items-center gap-1.5 rounded-md px-1.5 text-[13px] font-medium text-slate-700 underline-offset-4 transition-colors hover:text-indigo-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2">
+          <ArrowLeft size={16} aria-hidden="true" />
+          Back to Confirmed Trips
         </Link>
-      </div>
+      </nav>
       <AdminSectionCard className="min-w-0 space-y-3 p-4 sm:p-5 lg:p-6">
         <section aria-labelledby="flight-status-overview-title" className="min-w-0 p-3 sm:p-4">
           <h2 id="flight-status-overview-title" className="mb-2.5 text-base font-semibold leading-6 tracking-tight text-slate-950">Flight status overview</h2>
