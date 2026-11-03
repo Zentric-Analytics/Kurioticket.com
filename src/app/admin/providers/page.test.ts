@@ -158,7 +158,7 @@ test("provider attention supports truthful history windows and provider-search i
   assert.match(providersPage, /Provider health signals \(historical\)/);
   assert.match(providersPage, /providerSearchActivityHref\(/);
   assert.match(providersPage, /Review provider searches/);
-  assert.match(providersPage, /not all searches necessarily failed/);
+  assert.match(providersPage, /Provider calls can occur outside these search dates/);
   assert.match(providersPage, /getProviderOperationalStatuses\(monitoringHours\)\.catch\(\(\) => null\)/);
 });
 
