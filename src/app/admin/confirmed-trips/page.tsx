@@ -17,10 +17,10 @@ import {
 import { ConfirmedTripsBreakdowns } from "@/components/admin/ConfirmedTripsBreakdowns";
 import { ConfirmedTripDeliveryAlerts } from "@/components/admin/ConfirmedTripDeliveryAlerts";
 import { TripDirectoryView } from "@/components/admin/TripDirectoryView";
+import { TripFilterControls } from "@/components/admin/TripFilterControls";
 import { AdminPageShell, AdminSectionCard, AdminStatusBadge } from "@/components/admin/AdminPageShell";
 import { formatDateTime } from "@/lib/admin-data";
 import {
-  parseAdminTripFilters,
   tripDirectoryHref,
   type AdminTripFilters,
 } from "@/lib/adminConfirmedTripsDirectory";
@@ -29,6 +29,7 @@ import {
   getConfirmedTripsOperationsSnapshot,
 } from "@/services/adminConfirmedTripsOperationsService";
 import { listAdminConfirmedTrips } from "@/services/adminConfirmedTripsDirectoryService";
+import { parseAdminTripWorkspace, tripWorkspaceHref } from "@/lib/adminTripWorkspace";
 import { getConfirmationDeliveryHealth } from "@/services/partnerConfirmationDeliveryService";
 
 export const metadata = { title: "Admin Trips" };
@@ -42,16 +43,18 @@ const blankFilters: AdminTripFilters = {
 };
 
 const tripCategories = [
+  { type: "all", label: "All" },
   { type: "FLIGHT", label: "Flights" },
   { type: "HOTEL", label: "Hotels" },
   { type: "CAR", label: "Cars" },
+  { type: "PACKAGE", label: "Packages" },
 ] as const;
 
 function TripMetric({
-  label, value, hint, icon: Icon, tone, href,
+  label, value, hint, icon: Icon, tone, href, active = false,
 }: {
   label: string; value: number | string; hint: string;
-  icon: LucideIcon; tone: TripTone; href?: string;
+  icon: LucideIcon; tone: TripTone; href?: string; active?: boolean;
 }) {
   const colors: Record<TripTone, string> = {
     info: "bg-indigo-50 text-indigo-700",
@@ -62,25 +65,27 @@ function TripMetric({
   const content = (
     <>
       <div className="flex min-w-0 items-center gap-2">
-        <span className={"flex h-8 w-8 shrink-0 items-center justify-center rounded-lg " + colors[tone]}>
-          <Icon size={17} aria-hidden="true" />
+        <span className={"flex h-7 w-7 shrink-0 items-center justify-center rounded-md " + colors[tone]}>
+          <Icon size={15} aria-hidden="true" />
         </span>
-        <h3 className="min-w-0 flex-1 break-words text-xs font-semibold leading-4 text-slate-800">{label}</h3>
-        {href ? <ArrowRight size={15} className="shrink-0 text-slate-400" aria-hidden="true" /> : null}
+        <h3 className="min-w-0 flex-1 break-words text-[11px] font-semibold leading-4 text-slate-800">{label}</h3>
+        {href ? <ArrowRight size={14} className="shrink-0 text-slate-400" aria-hidden="true" /> : null}
       </div>
-      <p className="mt-2 text-[22px] font-semibold leading-[26px] tracking-tight tabular-nums text-slate-950">
+      <p className="mt-2 text-[22px] font-semibold leading-6 tracking-tight tabular-nums text-slate-950">
         {typeof value === "number" ? new Intl.NumberFormat("en-US").format(value) : value}
       </p>
-      <p className="mt-1 min-w-0 text-xs leading-4 text-slate-600">{hint}</p>
+      <p className="mt-1 min-w-0 text-[11px] leading-4 text-slate-600">{hint}</p>
     </>
   );
-  const className = "flex h-full min-w-0 flex-col rounded-xl border border-slate-200/80 bg-white px-3 py-3";
+  const className = "flex h-full min-w-0 flex-col rounded-lg border bg-white px-3 py-2.5 " +
+    (active ? "border-indigo-300 ring-1 ring-indigo-100" : "border-slate-200/80");
   return href ? (
-    <Link href={href} className={className + " transition-colors hover:border-indigo-300 hover:bg-indigo-50/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"}>
+    <Link href={href} aria-current={active ? "page" : undefined}
+      className={className + " transition-colors hover:border-indigo-300 hover:bg-indigo-50/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"}>
       {content}
     </Link>
   ) : (
-    <div className={className} aria-label={label + ": reporting not yet available"}>
+    <div className={className + " cursor-not-allowed"} aria-label={label + ": reporting not yet available"}>
       {content}
     </div>
   );
@@ -106,8 +111,10 @@ function Fact({ label, value }: { label: string; value: string }) {
 
 export default async function AdminConfirmedTripsPage({ searchParams }: Props) {
   const raw = (await searchParams) ?? {};
-  const parsed = parseAdminTripFilters(raw);
+  const parsed = parseAdminTripWorkspace(raw);
   const filters = parsed.ok ? parsed.filters : blankFilters;
+  const range = parsed.ok ? parsed.range : "all";
+  const dateFields = parsed.ok ? parsed.dateFields : { from: "", to: "" };
   const readiness = getConfirmedTripsIntegrationReadiness();
   const [operations, deliveryHealth, directory] = await Promise.all([
     getConfirmedTripsOperationsSnapshot(),
@@ -127,29 +134,30 @@ export default async function AdminConfirmedTripsPage({ searchParams }: Props) {
 
         <div className="space-y-3">
           <section aria-labelledby="confirmed-trips-overview" className="min-w-0 rounded-xl border border-slate-200/80 bg-white px-4 py-3 sm:px-5 sm:py-4">
-            <div className="mb-3 flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
-              <div className="min-w-0">
-                <h2 id="confirmed-trips-overview" className="text-base font-semibold text-slate-950">Trip overview</h2>
-                <p className="mt-0.5 text-xs leading-5 text-slate-600">All-time verified trip records. Select a card to inspect matching records.</p>
-              </div>
-              {operations ? <div className="rounded-lg border border-slate-200/80 bg-white px-3 py-2 text-xs text-slate-700">
-                <span className="font-semibold tabular-nums">{operations.metrics.confirmedLast24h.toLocaleString("en-US")}</span> confirmation updates · last 24h
-              </div> : null}
+            <div className="mb-3 min-w-0">
+              <h2 id="confirmed-trips-overview" className="text-base font-semibold text-slate-950">Trip overview</h2>
+              <p className="mt-0.5 text-xs leading-5 text-slate-600">The counters and records follow the same applied filters. Select a status to investigate matching trips.</p>
             </div>
-            {operations ? (
+            {directory?.status === "ok" ? (
               <div className="grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-5">
-                <TripMetric label="Confirmed trips" value={operations.metrics.total} hint="All verified trip records, including later status changes" icon={FileCheck2} tone="info" href="/admin/confirmed-trips/records" />
-                <TripMetric label="Tracked trips" value="—" hint="Tracking begins at confirmation once integrated" icon={Activity} tone="neutral" />
-                <TripMetric label="Upcoming" value={operations.metrics.upcoming} hint="Latest provider status: upcoming" icon={CalendarCheck} tone="good" href="/admin/confirmed-trips/records?status=UPCOMING" />
-                <TripMetric label="Past" value={operations.metrics.past} hint="Latest provider status: past" icon={CalendarDays} tone="neutral" href="/admin/confirmed-trips/records?status=PAST" />
-                <TripMetric label="Cancelled" value={operations.metrics.cancelled} hint="Latest provider status: cancelled" icon={CircleX} tone="warn" href="/admin/confirmed-trips/records?status=CANCELLED" />
+                <TripMetric label="Confirmed trips" value={directory.totalMatching} hint="All verified trips matching this scope" icon={FileCheck2} tone="info"
+                  href={tripWorkspaceHref(filters, range, { status: "all" })} active={filters.status === "all"} />
+                <TripMetric label="Tracked trips" value="—" hint="Tracking reporting not connected" icon={Activity} tone="neutral" />
+                <TripMetric label="Upcoming" value={directory.statusCounts.upcoming} hint="Matching upcoming trips" icon={CalendarCheck} tone="good"
+                  href={tripWorkspaceHref(filters, range, { status: "UPCOMING" })} active={filters.status === "UPCOMING"} />
+                <TripMetric label="Past" value={directory.statusCounts.past} hint="Matching past trips" icon={CalendarDays} tone="neutral"
+                  href={tripWorkspaceHref(filters, range, { status: "PAST" })} active={filters.status === "PAST"} />
+                <TripMetric label="Cancelled" value={directory.statusCounts.cancelled} hint="Matching cancelled trips" icon={CircleX} tone="warn"
+                  href={tripWorkspaceHref(filters, range, { status: "CANCELLED" })} active={filters.status === "CANCELLED"} />
               </div>
             ) : (
-              <p role="status" className="rounded-lg border border-slate-100 bg-white px-4 py-4 text-sm text-slate-700">Trip counts unavailable. No counts are shown.</p>
+              <p role="status" className="rounded-lg border border-slate-100 bg-white px-4 py-4 text-sm text-slate-700">
+                {parsed.ok ? "Trip summary is temporarily unavailable. No counts are assumed." : parsed.error}
+              </p>
             )}
             <p className="mt-2 flex items-start gap-1.5 text-xs leading-5 text-slate-600">
               <Info size={14} className="mt-0.5 shrink-0" aria-hidden="true" />
-              <span>Trips with a provider confirmation in the last 24 hours, including updates. Not a count of new bookings. Tracking totals require a separate future data source.</span>
+              <span>Confirmed trips include cancelled records; the status counters partition the selected trips. UTC dates refer to the latest signed provider confirmation, not the trip date. Tracking totals require a separate data source.</span>
             </p>
           </section>
 
@@ -164,81 +172,23 @@ export default async function AdminConfirmedTripsPage({ searchParams }: Props) {
               </Link>
             </div>
 
-            <div role="group" aria-label="All-time provider-confirmed trips by travel type" className="mb-3 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1.5">
-              <span className="text-[11px] font-medium text-slate-600">Confirmed by type · all time</span>
+            <nav aria-label="Trip travel types" className="mb-3 flex min-w-0 flex-wrap items-center gap-x-5 gap-y-2 border-b border-slate-100">
               {tripCategories.map(({ type, label }) => {
-                const count = operations?.byProduct.find(item => item.tripType === type)?.count;
+                const selected = filters.product === type;
                 return (
-                  <Link key={type} href={tripDirectoryHref({ ...blankFilters, product: type })}
-                    className="inline-flex min-h-8 items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-medium text-slate-700 transition-colors hover:border-indigo-300 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-                    aria-label={label + " provider-confirmed trips, " + (operations ? (count ?? 0).toLocaleString("en-US") : "count unavailable") + ", open filtered records"}>
-                    <span>{label}</span>
-                    <span className="font-semibold tabular-nums text-slate-950">{operations ? (count ?? 0).toLocaleString("en-US") : "—"}</span>
+                  <Link key={type} href={tripWorkspaceHref(filters, range, { product: type })}
+                    aria-current={selected ? "page" : undefined}
+                    className={"relative inline-flex min-h-9 items-center text-[13px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 " +
+                      (selected ? "text-indigo-700 after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:bg-indigo-700" : "text-slate-600 hover:text-slate-950")}>
+                    {label}
                   </Link>
                 );
               })}
-            </div>
+            </nav>
 
-            <form method="get" action="/admin/confirmed-trips" aria-label="Filter trip directory" className="min-w-0">
-              <div className="grid min-w-0 grid-cols-1 items-end gap-x-2 gap-y-2.5 sm:grid-cols-2 md:grid-cols-4 lg:gap-x-1.5 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,0.95fr)_minmax(0,0.9fr)_minmax(0,0.9fr)_minmax(0,1.05fr)_minmax(0,0.95fr)_minmax(0,1.15fr)_minmax(0,1.15fr)] 2xl:gap-x-2.5">
-                <label className="block min-w-0 text-[11px] font-medium leading-4 text-slate-700 2xl:text-xs">Search trips
-                  <input name="q" type="search" defaultValue={filters.q} maxLength={80} placeholder="Search trips…" title="Search by customer, reference or destination"
-                    className="mt-1 block h-9 w-full min-w-0 max-w-full rounded-lg border border-slate-200 bg-white px-2 text-[11px] text-slate-900 placeholder:text-slate-500 focus-visible:border-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/25 2xl:px-3 2xl:text-xs" />
-                </label>
-                <label className="block min-w-0 text-[11px] font-medium leading-4 text-slate-700 2xl:text-xs">Provider
-                  <input name="provider" type="search" defaultValue={filters.provider} maxLength={100} placeholder="All providers" title="Filter by provider name"
-                    className="mt-1 block h-9 w-full min-w-0 max-w-full rounded-lg border border-slate-200 bg-white px-2 text-[11px] text-slate-900 placeholder:text-slate-500 focus-visible:border-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/25 2xl:px-3 2xl:text-xs" />
-                </label>
-                <label className="block min-w-0 text-[11px] font-medium leading-4 text-slate-700 2xl:text-xs">Travel type
-                  <select name="product" defaultValue={filters.product} title="Filter by travel type"
-                    className="mt-1 block h-9 w-full min-w-0 max-w-full rounded-lg border border-slate-200 bg-white pl-2 pr-1 text-[11px] text-slate-900 focus-visible:border-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/25 2xl:text-xs">
-                    <option value="all">All types</option><option value="FLIGHT">Flights</option><option value="HOTEL">Hotels</option><option value="CAR">Cars</option><option value="PACKAGE">Packages</option>
-                  </select>
-                </label>
-                <label className="block min-w-0 text-[11px] font-medium leading-4 text-slate-700 2xl:text-xs">Trip status
-                  <select name="status" defaultValue={filters.status} title="Filter by trip status"
-                    className="mt-1 block h-9 w-full min-w-0 max-w-full rounded-lg border border-slate-200 bg-white pl-2 pr-1 text-[11px] text-slate-900 focus-visible:border-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/25 2xl:text-xs">
-                    <option value="all">All statuses</option><option value="UPCOMING">Upcoming</option><option value="PAST">Past</option><option value="CANCELLED">Cancelled</option>
-                  </select>
-                </label>
-                <label className="block min-w-0 text-[11px] font-medium leading-4 text-slate-700 2xl:text-xs">
-                  <span title="Confirmation time range">Time range</span>
-                  <select disabled defaultValue="planned" aria-label="Precise time range requires backend integration" title="Precise time ranges will be available after backend integration"
-                    className="mt-1 block h-9 w-full min-w-0 max-w-full cursor-not-allowed rounded-lg border border-slate-200 bg-white pl-2 pr-1 text-[11px] text-slate-500 disabled:opacity-75 2xl:text-xs">
-                    <option value="planned">UTC dates</option>
-                    <option value="10m">Last 10 minutes (planned)</option>
-                    <option value="30m">Last 30 minutes (planned)</option>
-                    <option value="24h">Last 24 hours (planned)</option>
-                    <option value="7d">Last 7 days (planned)</option>
-                    <option value="30d">Last 30 days (planned)</option>
-                  </select>
-                </label>
-                <label className="block min-w-0 text-[11px] font-medium leading-4 text-slate-700 2xl:text-xs">
-                  <span title="Tracking health">Tracking</span>
-                  <select disabled defaultValue="unavailable" aria-label="Tracking health requires backend integration" title="Tracking health will be available after backend integration"
-                    className="mt-1 block h-9 w-full min-w-0 max-w-full cursor-not-allowed rounded-lg border border-slate-200 bg-white pl-2 pr-1 text-[11px] text-slate-500 disabled:opacity-75 2xl:text-xs">
-                    <option value="unavailable">Not connected</option>
-                  </select>
-                </label>
-                <label className="block min-w-0 text-[11px] font-medium leading-4 text-slate-700 2xl:text-xs">
-                  <span title="Confirmed from (UTC)">From (UTC)</span>
-                  <input type="date" name="from" defaultValue={filters.from} aria-label="Confirmed from (UTC)" title="Confirmation date from (UTC)"
-                    className="mt-1 block h-9 w-full min-w-0 max-w-full rounded-lg border border-slate-200 bg-white px-1.5 text-[11px] text-slate-900 focus-visible:border-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/25 2xl:px-2 2xl:text-xs" />
-                </label>
-                <label className="block min-w-0 text-[11px] font-medium leading-4 text-slate-700 2xl:text-xs">
-                  <span title="Confirmed to (UTC)">To (UTC)</span>
-                  <input type="date" name="to" defaultValue={filters.to} aria-label="Confirmed to (UTC)" title="Confirmation date to (UTC)"
-                    className="mt-1 block h-9 w-full min-w-0 max-w-full rounded-lg border border-slate-200 bg-white px-1.5 text-[11px] text-slate-900 focus-visible:border-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/25 2xl:px-2 2xl:text-xs" />
-                </label>
-              </div>
-              <div className="mt-3 flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-2">
-                <p className="min-w-0 flex-1 text-[11px] leading-4 text-slate-500">Precise 10- and 30-minute filters and tracking health require backend integration.</p>
-                <div className="flex shrink-0 flex-wrap items-center gap-2">
-                  <Link href="/admin/confirmed-trips#trip-directory" className="inline-flex min-h-9 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">Clear filters</Link>
-                  <button type="submit" className="inline-flex min-h-9 items-center justify-center rounded-lg bg-indigo-700 px-4 text-xs font-semibold text-white hover:bg-indigo-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">Apply filters</button>
-                </div>
-              </div>
-            </form>
+            <TripFilterControls filters={filters} range={range} dateFields={dateFields}
+              key={[filters.q, filters.provider, filters.product, filters.status, range, filters.from, filters.to].join("|")}
+              providerNames={operations?.byProvider.map(item => item.provider) ?? []} />
 
             <div className="mt-3 border-t border-slate-100 pt-3">
               {!parsed.ok ? (

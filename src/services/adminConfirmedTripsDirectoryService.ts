@@ -89,7 +89,7 @@ function serialize(row: TripRow, now: Date) {
 
 export type AdminConfirmedTripRow = ReturnType<typeof serialize>;
 export type AdminConfirmedTripDirectoryResult =
-  | { status: "ok"; rows: AdminConfirmedTripRow[]; nextCursor: string | null; totalMatching: number }
+  | { status: "ok"; rows: AdminConfirmedTripRow[]; nextCursor: string | null; totalMatching: number; statusCounts: { upcoming: number; past: number; cancelled: number } }
   | { status: "invalid_cursor" }
   | { status: "unavailable" };
 
@@ -110,7 +110,7 @@ export async function listAdminConfirmedTrips(
     ] }
     : undefined;
   try {
-    const [count, page] = await db.$transaction([
+    const [count, page, upcoming, past, cancelled] = await db.$transaction([
       db.myTrip.count({ where }),
       db.myTrip.findMany({
         where: seek ? { AND: [where, seek] } : where,
@@ -118,6 +118,9 @@ export async function listAdminConfirmedTrips(
         take: ADMIN_CONFIRMED_TRIPS_PAGE_SIZE + 1,
         select,
       }),
+      db.myTrip.count({ where: { AND: [where, { status: "UPCOMING" }] } }),
+      db.myTrip.count({ where: { AND: [where, { status: "PAST" }] } }),
+      db.myTrip.count({ where: { AND: [where, { status: "CANCELLED" }] } }),
     ], { isolationLevel: "RepeatableRead" });
     const rows = page.slice(0, ADMIN_CONFIRMED_TRIPS_PAGE_SIZE);
     const last = rows.at(-1);
@@ -125,7 +128,10 @@ export async function listAdminConfirmedTrips(
       ? encodeAdminTripCursor({ id: last.id, confirmedAt: last.partnerConfirmationOccurredAt!.toISOString() }, filters, environment)
       : null;
     const now = new Date();
-    return { status: "ok", rows: rows.map(row => serialize(row, now)), nextCursor, totalMatching: count };
+    return {
+      status: "ok", rows: rows.map(row => serialize(row, now)), nextCursor, totalMatching: count,
+      statusCounts: { upcoming, past, cancelled },
+    };
   } catch (error) {
     console.error("[admin:confirmed-trip-directory]", error);
     return { status: "unavailable" };

@@ -3,7 +3,7 @@
 import { Check } from "lucide-react";
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 
-export type SearchMonitorOption = { value: string; label: string };
+export type SearchMonitorOption = { value: string; label: string; shortLabel?: string };
 
 export function SearchMonitorSelect({
   label,
@@ -15,18 +15,20 @@ export function SearchMonitorSelect({
   autoSubmit = false,
   clearFieldNamesOnChange = [],
   truncateLabel = false,
+  disabled = false,
   onValueChange,
 }: {
   label: string;
   name: string;
   value: string;
   options: readonly SearchMonitorOption[];
-  appearance?: "underlined" | "plain";
+  appearance?: "underlined" | "plain" | "boxed";
   align?: "start" | "end";
   autoSubmit?: boolean;
   /** Omit a stale scoped field from submission when this filter changes. */
   clearFieldNamesOnChange?: readonly string[];
   truncateLabel?: boolean;
+  disabled?: boolean;
   onValueChange?: (value: string) => void;
 }) {
   const id = useId();
@@ -39,6 +41,7 @@ export function SearchMonitorSelect({
   const [activeIndex, setActiveIndex] = useState(0);
   const selectedIndex = Math.max(0, options.findIndex((option) => option.value === selected));
   const selectedLabel = options[selectedIndex]?.label ?? "";
+  const triggerLabel = appearance === "boxed" ? options[selectedIndex]?.shortLabel ?? selectedLabel : selectedLabel;
 
   useEffect(() => {
     setSelected(value);
@@ -156,13 +159,14 @@ export function SearchMonitorSelect({
       <input
         ref={hiddenRef}
         type="hidden"
-        name={selected ? name : undefined}
+        name={!disabled && selected ? name : undefined}
         value={selected}
         readOnly
       />
       <button
         ref={triggerRef}
         type="button"
+        disabled={disabled}
         aria-label={label + ": " + selectedLabel}
         title={truncateLabel ? selectedLabel : undefined}
         aria-haspopup="listbox"
@@ -176,13 +180,16 @@ export function SearchMonitorSelect({
           }
         }}
         className={
-          "inline-flex h-9 min-w-0 cursor-pointer items-center justify-start gap-[5px] whitespace-nowrap bg-transparent text-left text-[13px] font-semibold text-[#475569] transition-colors hover:text-[#111827] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 " +
+          "inline-flex h-9 min-w-0 items-center justify-start gap-[5px] whitespace-nowrap text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 " +
+          (disabled ? "cursor-not-allowed text-slate-500 opacity-75 " : "cursor-pointer text-[#475569] hover:text-[#111827] ") +
           (appearance === "plain"
-            ? "px-0"
-            : "w-full border-b border-[#AEB8C6] px-0 focus-visible:border-[#004BB8]")
+            ? "bg-transparent px-0 text-[13px] font-semibold"
+            : appearance === "boxed"
+              ? "w-full max-w-full rounded-lg border border-slate-200 bg-white px-2 text-[11px] font-medium focus-visible:border-indigo-500 2xl:text-xs"
+              : "w-full border-b border-[#AEB8C6] bg-transparent px-0 text-[13px] font-semibold focus-visible:border-[#004BB8]")
         }
       >
-        <span className={truncateLabel ? "min-w-0 truncate" : "whitespace-nowrap"}>{selectedLabel}</span>
+        <span className={truncateLabel ? "min-w-0 flex-1 truncate" : "whitespace-nowrap"}>{triggerLabel}</span>
         <svg aria-hidden="true" viewBox="0 0 8 5" className="mt-px h-[5px] w-[8px] shrink-0" fill="currentColor">
           <path d="M0 0h8L4 5z" />
         </svg>
