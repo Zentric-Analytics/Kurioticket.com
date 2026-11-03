@@ -19,7 +19,7 @@ import {
 } from "@/lib/adminConfirmedTripsDirectory";
 import { getConfirmedTripsOperationsSnapshot } from "@/services/adminConfirmedTripsOperationsService";
 import { listAdminConfirmedTrips } from "@/services/adminConfirmedTripsDirectoryService";
-import { parseAdminTripWorkspace, tripWorkspaceHref } from "@/lib/adminTripWorkspace";
+import { parseAdminTripWorkspace } from "@/lib/adminTripWorkspace";
 
 export const metadata = { title: "Admin Trips" };
 
@@ -30,14 +30,6 @@ type TripTone = "info" | "good" | "warn" | "neutral";
 const blankFilters: AdminTripFilters = {
   q: "", provider: "", product: "all", status: "all", from: "", to: "",
 };
-
-const tripCategories = [
-  { type: "all", label: "All" },
-  { type: "FLIGHT", label: "Flights" },
-  { type: "HOTEL", label: "Hotels" },
-  { type: "CAR", label: "Cars" },
-  { type: "PACKAGE", label: "Packages" },
-] as const;
 
 /** The trip overview is a read-only summary; filtering lives in Trip Directory. */
 function TripMetric({
@@ -119,29 +111,12 @@ export default async function AdminConfirmedTripsPage({ searchParams }: Props) {
           </section>
 
           <section aria-labelledby="trip-directory-title" id="trip-directory" className="min-w-0 rounded-xl border border-slate-200/80 bg-white px-4 py-3 sm:px-5 sm:py-4">
-            <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
-              <div>
-                <h2 id="trip-directory-title" className="text-base font-semibold text-slate-950">Trip directory</h2>
-                <p className="mt-0.5 text-xs leading-5 text-slate-600">Search verified records; filters use the latest signed confirmation date in UTC.</p>
-              </div>
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <h2 id="trip-directory-title" className="text-base font-semibold text-slate-950">Trip directory</h2>
               <Link href={tripDirectoryHref(filters)} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-indigo-200 px-3 text-xs font-semibold text-indigo-700 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
                 Open full directory <ArrowRight size={14} aria-hidden="true" />
               </Link>
             </div>
-
-            <nav aria-label="Trip travel types" className="mb-3 flex min-w-0 flex-wrap items-center gap-x-5 gap-y-2 border-b border-slate-100">
-              {tripCategories.map(({ type, label }) => {
-                const selected = filters.product === type;
-                return (
-                  <Link key={type} href={tripWorkspaceHref(filters, range, { product: type })}
-                    aria-current={selected ? "page" : undefined}
-                    className={"relative inline-flex min-h-9 items-center text-[13px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 " +
-                      (selected ? "text-indigo-700 after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:bg-indigo-700" : "text-slate-600 hover:text-slate-950")}>
-                    {label}
-                  </Link>
-                );
-              })}
-            </nav>
 
             <TripFilterControls filters={filters} range={range} dateFields={dateFields}
               key={[filters.q, filters.provider, filters.product, filters.status, range, filters.from, filters.to].join("|")}
@@ -154,9 +129,8 @@ export default async function AdminConfirmedTripsPage({ searchParams }: Props) {
                 <p role="status" className="rounded-lg border border-slate-100 bg-white px-4 py-4 text-sm text-slate-700">Trip records are temporarily unavailable. No records or counts are assumed.</p>
               ) : directory?.status === "ok" ? (
                 <>
-                  <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                  <div className="mb-3">
                     <p className="text-xs font-semibold tabular-nums text-slate-700">{directory.totalMatching.toLocaleString("en-US")} matching verified trips</p>
-                    <p className="text-xs text-slate-500">Showing up to 20 records, newest confirmation first</p>
                   </div>
                   {directory.rows.length ? (
                     <TripDirectoryView rows={directory.rows} subtle />
