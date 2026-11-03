@@ -80,3 +80,36 @@ test("Direct deletion visits return to requests; unrelated query parameters cann
     "/admin/support/ticket-1?fromDeletion=deletion-1",
   );
 });
+
+test("linked deletion round trip retains the original Support inbox and accurate navigation", () => {
+  const originalInbox = "q=help&status=OPEN&priority=HIGH&cursor=page-2";
+  const deletion = new URL(supportDeletionRequestHref("deletion-1", originalInbox), "https://kurioticket.test");
+  const support = new URL(
+    supportTicketFromDeletionHref("ticket-1", "deletion-1", deletion.searchParams.get("fromSupport") || undefined, deletion.searchParams.get("inbox") || undefined),
+    "https://kurioticket.test",
+  );
+  assert.equal(support.pathname, "/admin/support/ticket-1");
+  assert.equal(support.searchParams.get("fromDeletion"), "deletion-1");
+  assert.equal(support.searchParams.get("fromSupport"), "1");
+  assert.equal(support.searchParams.get("inbox"), "status=OPEN&priority=HIGH&q=help&cursor=page-2");
+
+  const back = supportTicketBackHref(
+    "deletion-1",
+    support.searchParams.get("fromDeletion") || undefined,
+    support.searchParams.get("inbox") || undefined,
+    support.searchParams.get("fromSupport") || undefined,
+  );
+  assert.equal(back, deletion.pathname + deletion.search);
+  const backToTicket = deletionRequestBackHref("ticket-1", "1", new URL(back, "https://kurioticket.test").searchParams.get("inbox") || undefined);
+  assert.equal(backToTicket, supportTicketDetailHref("ticket-1", new URLSearchParams(originalInbox)));
+  assert.equal(supportInboxReturnHref(new URL(backToTicket, "https://kurioticket.test").searchParams.get("inbox") || undefined),
+    "/admin/support?status=OPEN&priority=HIGH&q=help&cursor=page-2");
+});
+
+test("direct deletion navigation does not invent an originating Support inbox", () => {
+  assert.equal(supportTicketFromDeletionHref("ticket-1", "deletion-1", undefined, "q=private"),
+    "/admin/support/ticket-1?fromDeletion=deletion-1");
+  assert.equal(supportTicketBackHref("deletion-1", "deletion-1", "q=private"),
+    "/admin/account-deletions/deletion-1");
+  assert.equal(supportTicketBackHref("deletion-1", "other", "q=private", "1"), "/admin/support?q=private");
+});
