@@ -124,9 +124,9 @@ test("Confirmed Trips preserves section order and primary toolbar links without 
   const actionsStart = page.indexOf('<div role="group" aria-label="Confirmed Trips actions"');
   const actionsEnd = page.indexOf('</div>', actionsStart);
   const panelStart = page.indexOf('<AdminSectionCard', actionsEnd);
-  assert.ok(actionsStart >= 0 && actionsEnd > actionsStart && panelStart > actionsEnd, "The right-aligned action toolbar must precede Trip overview");
+  assert.ok(actionsStart >= 0 && actionsEnd > actionsStart && panelStart > actionsEnd, "The left-aligned action toolbar must precede Trip overview");
   const toolbar = page.slice(actionsStart, actionsEnd);
-  assert.match(toolbar, /justify-end gap-2/);
+  assert.match(toolbar, /justify-start gap-2/);
   assert.match(toolbar, /href="\/admin\/confirmed-trips\/records"/);
   assert.match(toolbar, /Browse confirmed trips/);
   assert.match(toolbar, /href="\/admin\/flight-status"/);
@@ -194,7 +194,7 @@ test("Confirmed Trips removes only the visible heading and description in both l
     const toolbar = source.match(/<div role="group" aria-label="Confirmed Trips actions" className="([^"]+)">([\s\S]*?)<\/div>/);
     assert.ok(toolbar, "Both screens must retain the same action toolbar");
     assert.match(toolbar[1], /mb-3/);
-    assert.match(toolbar[1], /justify-end gap-2/);
+    assert.match(toolbar[1], /justify-start gap-2/);
     assert.match(toolbar[2], /href="\/admin\/confirmed-trips\/records"/);
     assert.match(toolbar[2], /href="\/admin\/flight-status"/);
     assert.equal((toolbar[2].match(/<Link\b/g) || []).length, 2);
