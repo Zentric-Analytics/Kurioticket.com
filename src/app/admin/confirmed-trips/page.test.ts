@@ -4,6 +4,7 @@ import test from "node:test";
 
 const page = readFileSync("src/app/admin/confirmed-trips/page.tsx", "utf8");
 const loading = readFileSync("src/app/admin/confirmed-trips/loading.tsx", "utf8");
+const operationsPage = readFileSync("src/app/admin/confirmed-trips/operations/page.tsx", "utf8");
 const directory = readFileSync("src/app/admin/confirmed-trips/records/page.tsx", "utf8");
 const recordsView = readFileSync("src/components/admin/TripDirectoryView.tsx", "utf8");
 const controls = readFileSync("src/components/admin/TripFilterControls.tsx", "utf8");
@@ -26,24 +27,24 @@ test("Trips preserves its existing admin workspace without a visible page introd
   assert.match(page, /role="group" aria-label="Trip shortcuts"/);
   assert.match(navigation, /href: "\/admin\/confirmed-trips", label: "Trips"/);
   assert.match(page, /href="\/admin\/confirmed-trips\/records"/);
+  assert.match(page, /href="\/admin\/confirmed-trips\/operations"/);
   assert.match(page, /href="\/admin\/flight-status"/);
   assert.match(shell, /border-slate-200 bg-white shadow-sm/);
   assert.doesNotMatch(page, /Admin operations|Jump to:/);
   assert.doesNotMatch(page, /Kurioticket handles refunds|Cancel booking|Issue ticket/);
 });
 
-test("one white parent holds three compact trip investigation sections", () => {
+test("main Trips workspace contains two compact sections and a visible Trip operations shortcut", () => {
   const markers = [
     'aria-labelledby="confirmed-trips-overview"',
     'aria-labelledby="trip-directory-title"',
-    'aria-labelledby="related-trip-operations-title"',
   ];
   const positions = markers.map(m => page.indexOf(m));
   assert.ok(positions.every(p => p !== -1));
   assert.deepEqual(positions, [...positions].sort((a, b) => a - b));
   assert.equal((page.match(/<AdminSectionCard/g) ?? []).length, 1);
   assert.match(page, /<AdminSectionCard className="min-w-0 p-4 sm:p-5 lg:p-6">/);
-  assert.equal((page.match(/className="min-w-0 rounded-xl border border-slate-200\/80 bg-white px-4 py-3 sm:px-5 sm:py-4"/g) ?? []).length, 3);
+  assert.equal((page.match(/className="min-w-0 rounded-xl border border-slate-200\/80 bg-white px-4 py-3 sm:px-5 sm:py-4"/g) ?? []).length, 2);
   const parentStart = page.indexOf('<AdminSectionCard className="min-w-0 p-4 sm:p-5 lg:p-6">');
   const parentEnd = page.lastIndexOf("</AdminSectionCard>");
   const toolbarStart = page.indexOf('role="group" aria-label="Trip shortcuts"');
@@ -51,7 +52,7 @@ test("one white parent holds three compact trip investigation sections", () => {
   assert.ok(positions.every(position => position > parentStart && position < parentEnd));
   assert.match(page, /rounded-lg border border-slate-200\/80 bg-white px-3 py-2\.5/);
   assert.doesNotMatch(page, /TripCategoryCard|Trips by category/);
-  assert.match(page, /group rounded-xl border border-slate-200\/80 bg-white/);
+  assert.doesNotMatch(page, /Related trip operations|Detailed product and provider breakdowns|Confirmation integration readiness|Confirmation delivery health and alerts/);
   assert.doesNotMatch(page, /bg-slate-(?:50\/80|100\/65|100\/60|100\/80)/);
   assert.match(page, /grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-5/);
   assert.doesNotMatch(page, /grid w-full min-w-\[850px\] grid-cols-5/);
@@ -69,7 +70,7 @@ test("all five overview counters display the current filtered scope without clic
   assert.match(page, /label="Upcoming" value=\{directory\.statusCounts\.upcoming\}/);
   assert.match(page, /label="Past" value=\{directory\.statusCounts\.past\}/);
   assert.match(page, /label="Cancelled" value=\{directory\.statusCounts\.cancelled\}/);
-  const metric = page.slice(page.indexOf("function TripMetric({"), page.indexOf("function InlineFact("));
+  const metric = page.slice(page.indexOf("function TripMetric({"), page.indexOf("export default async function AdminConfirmedTripsPage("));
   assert.match(metric, /return \(\s*<div className="flex h-full min-w-0 flex-col rounded-lg border border-slate-200\/80 bg-white/);
   assert.doesNotMatch(metric, /<Link|href=|aria-current|active\s*=|ArrowRight|ring-indigo-100|border-indigo-300|hover:bg-indigo-50|cursor-pointer|cursor-not-allowed/);
   assert.match(page, /Use Trip status to investigate matching records/);
@@ -103,7 +104,7 @@ test("travel-type tabs and dropdown share the same selected scope", () => {
   assert.match(page, /tripWorkspaceHref\(filters, range, \{ product: type \}\)/);
   assert.match(page, /filters\.product === type/);
   assert.match(controls, /name="product" value=\{filters\.product\} options=\{productOptions\}/);
-  assert.match(page, /<ConfirmedTripsBreakdowns operations=\{operations\} \/>/);
+  assert.match(operationsPage, /<ConfirmedTripsBreakdowns operations=\{operations\} \/>/);
   assert.match(breakdowns, /operations\.byProduct\.map/);
   assert.match(breakdowns, /operations\.byProvider\.map/);
   assert.match(breakdowns, /No providers or counts are assumed/);
@@ -187,28 +188,40 @@ test("both directory views use genuine records and the same read-only details ro
   assert.doesNotMatch(recordsView, /mockRows|sampleData|random|Cancel booking|Refund now/);
 });
 
-test("related trip operations remain available with all real readiness and delivery states", () => {
-  assert.match(page, /Related trip operations/);
-  assert.match(page, /Detailed product and provider breakdowns/);
-  assert.match(page, /Confirmation integration readiness/);
-  assert.match(page, /Confirmation delivery health and alerts/);
-  assert.match(page, /<details className="group/);
-  assert.match(page, /<ConfirmedTripsBreakdowns operations=\{operations\} \/>/);
-  assert.match(page, /getConfirmedTripsIntegrationReadiness\(\)/);
-  assert.match(page, /readiness\.webhookCredentialConfigured/);
-  assert.match(page, /readiness\.currentSearchProviderConfirmationFeed === "none" \? "None" : "Configured"/);
-  assert.match(page, /A webhook setup does not mean a live feed or provider agreement/);
-  assert.match(page, /Duffel search and KAYAK sandbox do not send booking confirmations/);
-  assert.match(page, /!readiness\.feedReady \? \(/);
-  assert.match(page, /Delivery data is unavailable\. No counts are assumed/);
+test("relocated Trip operations remains discoverable, authenticated and complete", () => {
+  assert.match(page, /href="\/admin\/confirmed-trips\/operations"/);
+  assert.match(loading, /href="\/admin\/confirmed-trips\/operations"/);
+  assert.doesNotMatch(page, /Related trip operations|getConfirmationDeliveryHealth\(\)|getConfirmedTripsIntegrationReadiness\(\)/);
+  assert.match(operationsPage, /<AdminPageShell title="Trip operations" hideHeader>/);
+  assert.match(operationsPage, /await requireAdminSession\("\/admin\/confirmed-trips\/operations"\)/);
+  assert.match(operationsPage, /href="\/admin\/confirmed-trips"/);
+  assert.match(operationsPage, /href="\/admin\/confirmed-trips\/records"/);
+  assert.match(operationsPage, /href="\/admin\/flight-status"/);
+  assert.match(operationsPage, /Detailed product and provider breakdowns/);
+  assert.match(operationsPage, /Confirmation integration readiness/);
+  assert.match(operationsPage, /Confirmation delivery health and alerts/);
+  assert.match(operationsPage, /Flight status monitoring/);
+  assert.equal((operationsPage.match(/<details/g) ?? []).length, 3);
+  assert.match(operationsPage, /<ConfirmedTripsBreakdowns operations=\{operations\} \/>/);
+  assert.match(operationsPage, /getConfirmedTripsIntegrationReadiness\(\)/);
+  assert.match(operationsPage, /getConfirmedTripsOperationsSnapshot\(\)/);
+  assert.match(operationsPage, /getConfirmationDeliveryHealth\(\)/);
+  assert.match(operationsPage, /readiness\.webhookCredentialConfigured/);
+  assert.match(operationsPage, /readiness\.currentSearchProviderConfirmationFeed === "none" \? "None" : "Configured"/);
+  assert.match(operationsPage, /A webhook setup does not mean a live feed or provider agreement/);
+  assert.match(operationsPage, /Duffel search and KAYAK sandbox do not send booking confirmations/);
+  assert.match(operationsPage, /!readiness\.feedReady \? \(/);
+  assert.match(operationsPage, /Delivery data is unavailable\. No counts are assumed/);
   for (const property of [
     "deliveryHealth.receivedLast24h", "deliveryHealth.acceptedLast24h", "deliveryHealth.rejectedLast24h",
     "deliveryHealth.lastReceivedAt", "deliveryHealth.lastAcceptedAt", "deliveryHealth.lastRejectedAt",
     "deliveryHealth.providerName", "deliveryHealth.recent.map",
-  ]) assert.ok(page.includes(property), property);
-  assert.match(page, /readiness\.feedReady \? <ConfirmedTripDeliveryAlerts \/> : null/);
-  assert.match(page, /id="confirmation-delivery-health-title"/);
-  assert.match(page, /href="\/admin\/flight-status"/);
+  ]) assert.ok(operationsPage.includes(property), property);
+  assert.match(operationsPage, /readiness\.feedReady \? <ConfirmedTripDeliveryAlerts \/> : null/);
+  assert.match(operationsPage, /id="confirmation-delivery-health-title"/);
+  assert.match(operationsPage, /const expandDelivery = panel === "delivery"/);
+  assert.match(operationsPage, /open=\{expandDelivery\}/);
+  assert.doesNotMatch(operationsPage, /mockData|sampleTrips|Math\.random|process\.env/);
 });
 
 test("service preserves provider-confirmation trust boundary and no invented revenue", () => {
@@ -224,12 +237,12 @@ test("service preserves provider-confirmation trust boundary and no invented rev
   assert.doesNotMatch(navigation, /\/admin\/bookings/);
   assert.match(architecture, /"\/admin\/bookings"/);
   assert.match(page, /Confirmed trips include cancelled records/);
-  assert.match(page, /Receipts may include retries/);
+  assert.match(operationsPage, /Receipts may include retries/);
 });
 
-test("loading state mirrors three sections, five counters, tabs, and eight filter controls without false counts", () => {
+test("loading state mirrors two primary sections with a visible operations shortcut", () => {
   assert.match(loading, /<AdminPageShell title="Trips" hideHeader>/);
-  for (const label of ["Trip overview", "Trip directory", "Related trip operations"]) {
+  for (const label of ["Trip overview", "Trip directory"]) {
     assert.ok(loading.includes(label), "Missing loading section: " + label);
     assert.ok(page.includes(label), "Missing loaded section: " + label);
   }
@@ -237,9 +250,9 @@ test("loading state mirrors three sections, five counters, tabs, and eight filte
   assert.match(loading, /aria-busy="true"/);
   assert.match(loading, /motion-safe:animate-pulse/);
   assert.equal((loading.match(/<AdminSectionCard/g) ?? []).length, 1);
-  assert.equal((loading.match(/<section className="min-w-0 rounded-xl border border-slate-200\/80 bg-white/g) ?? []).length, 3);
+  assert.equal((loading.match(/<section className="min-w-0 rounded-xl border border-slate-200\/80 bg-white/g) ?? []).length, 2);
   assert.match(loading, /"All", "Flights", "Hotels", "Cars", "Packages"/);
   assert.match(loading, /"Search trips", "Provider", "Travel type", "Trip status", "Time range", "Tracking", "From \(UTC\)", "To \(UTC\)"/);
-  assert.doesNotMatch(loading, /Confirmed by type · all time|Trips by category/);
+  assert.doesNotMatch(loading, /Confirmed by type · all time|Trips by category|Related trip operations/);
   assert.doesNotMatch(loading, />\s*0\s*</);
 });
