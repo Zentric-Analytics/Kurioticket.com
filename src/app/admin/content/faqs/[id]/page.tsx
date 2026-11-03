@@ -1,11 +1,7 @@
+import { ContentPageFrame, ContentSectionHeading, ContentStatusPill } from "@/components/admin/ContentWorkspace";
 import { notFound } from "next/navigation";
 
-import {
-  AdminLinkButton,
-  AdminPageShell,
-  AdminSectionCard,
-  AdminStatusBadge,
-} from "@/components/admin/AdminPageShell";
+import { AdminStatusBadge } from "@/components/admin/AdminPageShell";
 import { FaqCmsEditor } from "@/components/admin/FaqCmsEditor";
 import { CmsRevisionRestoreButton } from "@/components/admin/CmsRevisionRestoreButton";
 import { CmsContentError, getAdminCmsContent } from "@/services/cmsContentService";
@@ -40,17 +36,18 @@ export default async function AdminFaqDetailPage({ params, searchParams }: PageP
   const nav = faqCmsListNavigation(await searchParams);
 
   return (
-    <AdminPageShell
+    <ContentPageFrame
       title="Edit FAQ"
-      description="Review the draft, publish intentionally, and inspect the immutable revision trail."
-      actions={<AdminLinkButton href={nav.listHref}>Back to FAQs</AdminLinkButton>}
+      subtitle="Review the draft, publication status and revision history."
+      backHref={nav.listHref}
+      backLabel="Back to FAQs"
     >
       <div className="space-y-5">
         <FaqCmsEditor initialItem={result.item} listQuery={nav.query} />
 
-        <AdminSectionCard className="overflow-hidden p-0">
-          <div className="border-b border-slate-100 p-5">
-            <h2 className="text-lg font-black text-slate-950">Revision history</h2>
+        <section className="mt-7 min-w-0">
+          <div className="mb-3">
+            <ContentSectionHeading>Revision history</ContentSectionHeading>
             <p className="mt-1 text-sm leading-6 text-slate-600">
               Recent immutable CMS revisions, including the admin identity recorded for each change.
             </p>
@@ -58,11 +55,11 @@ export default async function AdminFaqDetailPage({ params, searchParams }: PageP
           {result.revisions.length === 0 ? (
             <p className="p-5 text-sm text-slate-600">No revisions are recorded for this FAQ.</p>
           ) : (
-            <div className="divide-y divide-slate-100">
+            <div className="divide-y divide-[#E5E7EB] border-t border-[#E5E7EB]">
               {result.revisions.map((revision) => {
                 const payload = faqPayload(revision.draftPayload);
                 return (
-                  <div key={revision.id} className="grid gap-3 p-5 lg:grid-cols-[100px_130px_minmax(0,1fr)_210px_150px] lg:items-start">
+                  <div key={revision.id} className="grid gap-3 py-4 lg:grid-cols-[100px_130px_minmax(0,1fr)_210px_150px] lg:items-start">
                     <div>
                       <p className="text-xs font-black uppercase tracking-wide text-slate-500">Version</p>
                       <p className="mt-1 font-black text-slate-950">v{revision.version}</p>
@@ -99,9 +96,9 @@ export default async function AdminFaqDetailPage({ params, searchParams }: PageP
               })}
             </div>
           )}
-        </AdminSectionCard>
+        </section>
       </div>
-    </AdminPageShell>
+    </ContentPageFrame>
   );
 }
 
