@@ -70,7 +70,7 @@ test("all five overview counters display the current filtered scope without clic
   assert.match(page, /label="Upcoming" value=\{directory\.statusCounts\.upcoming\}/);
   assert.match(page, /label="Past" value=\{directory\.statusCounts\.past\}/);
   assert.match(page, /label="Cancelled" value=\{directory\.statusCounts\.cancelled\}/);
-  const metric = page.slice(page.indexOf("function TripMetric({"), page.indexOf("function InlineFact("));
+  const metric = page.slice(page.indexOf("function TripMetric({"), page.indexOf("export default async function AdminConfirmedTripsPage("));
   assert.match(metric, /return \(\s*<div className="flex h-full min-w-0 flex-col rounded-lg border border-slate-200\/80 bg-white/);
   assert.doesNotMatch(metric, /<Link|href=|aria-current|active\s*=|ArrowRight|ring-indigo-100|border-indigo-300|hover:bg-indigo-50|cursor-pointer|cursor-not-allowed/);
   assert.match(page, /Use Trip status to investigate matching records/);
