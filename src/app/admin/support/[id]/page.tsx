@@ -125,7 +125,7 @@ function TicketContent({ ticket }: { ticket: AdminSupportDetail }) {
           </div>
 
           {contextFields.length ? (
-            <details className="group mt-6 border-t border-[#E5E7EB]">
+            <details className="group mt-6">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-3 border-b border-[#E5E7EB] py-3 text-[14px] font-semibold text-[#111827] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#64748B] [&::-webkit-details-marker]:hidden">
                 Request context
                 <ChevronDown size={15} aria-hidden="true" className="shrink-0 text-[#64748B] transition-transform group-open:rotate-180" />
