@@ -43,6 +43,7 @@ export default async function HomepageCmsSectionPage({ params, searchParams }: P
   if (!summary?.available || !summary.active) {
     return (
       <ContentPageFrame
+      wide
         title={config.title}
         subtitle="This CMS scope must be initialized before editing."
         backHref={nav.backHref}
@@ -74,6 +75,7 @@ export default async function HomepageCmsSectionPage({ params, searchParams }: P
 
   return (
     <ContentPageFrame
+      wide
       title={config.title}
       subtitle="Manage drafts and published content."
       backHref={nav.backHref}
