@@ -13,7 +13,7 @@ export const metadata = { title: "Admin Support Ticket" };
 
 type PageProps = {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ inbox?: string | string[]; fromDeletion?: string | string[] }>;
+  searchParams: Promise<{ inbox?: string | string[]; fromDeletion?: string | string[]; fromSupport?: string | string[] }>;
 };
 
 const statusPills: Record<AdminSupportStatus, { label: string; dot: string }> = {
@@ -47,13 +47,16 @@ export default async function AdminSupportTicketPage({ params, searchParams }: P
   if (result.status === "not_found") notFound();
   const inbox = typeof query?.inbox === "string" ? query.inbox : undefined;
   const fromDeletion = typeof query?.fromDeletion === "string" ? query.fromDeletion : undefined;
-  const backHref = supportTicketBackHref(result.status === "ok" ? result.data.deletionRequestId : null, fromDeletion, inbox);
+  const fromSupport = typeof query?.fromSupport === "string" ? query.fromSupport : undefined;
+  const verifiedDeletionId = result.status === "ok" ? result.data.deletionRequestId : null;
+  const backHref = supportTicketBackHref(verifiedDeletionId, fromDeletion, inbox, fromSupport);
+  const backLabel = verifiedDeletionId && fromDeletion === verifiedDeletionId ? "Back to deletion request" : "Back to Support";
 
   return (
     <AdminPageShell title="Support ticket" hideHeader>
       <div className="mx-auto w-full max-w-[1138px] text-[#374151]">
         <Link href={backHref} className="focus-ring mb-3 inline-flex items-center gap-1.5 rounded-sm text-[12px] font-medium text-[#64748B] hover:text-[#004BB8]">
-          <ArrowLeft size={14} aria-hidden="true" /> Back to Support
+          <ArrowLeft size={14} aria-hidden="true" /> {backLabel}
         </Link>
 
         {result.status === "ok" ? <TicketContent ticket={result.data} inbox={inbox} /> : (
