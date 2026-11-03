@@ -85,7 +85,7 @@ test("content overview groups three homepage areas and FAQs without hiding actio
   assert.match(contentPage, /aria-labelledby="homepage-content-heading"/);
   assert.match(contentPage, /aria-labelledby="help-content-heading"/);
   assert.match(contentPage, /sm:grid-cols-2 lg:grid-cols-3/);
-  assert.match(contentPage, /flex flex-wrap items-center gap-2/);
+  assert.match(contentPage, /flex flex-wrap items-center justify-between gap-2/);
   assert.doesNotMatch(contentPage, /Content management shortcuts/);
   assert.match(contentPage, /href=\{area\.href\}/);
   assert.match(contentPage, /\{area\.note\}/);
