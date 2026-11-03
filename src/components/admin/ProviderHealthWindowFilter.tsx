@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
 
 type Props = {
@@ -19,6 +19,14 @@ export function ProviderHealthWindowFilter({ product, hours, custom }: Props) {
   const [from, setFrom] = useState(custom?.fromDate ?? "");
   const [to, setTo] = useState(custom?.toDate ?? "");
   const [error, setError] = useState("");
+  // URL history and product navigation can update the server scope while
+  // preserving this client component instance. Reconcile its displayed draft.
+  useEffect(() => {
+    setSelection(custom ? "custom" : String(hours));
+    setFrom(custom?.fromDate ?? "");
+    setTo(custom?.toDate ?? "");
+    setError("");
+  }, [hours, custom?.fromDate, custom?.toDate]);
   const options = [
     { value: "24", label: "Last 24 hours" },
     { value: "72", label: "Last 3 days" },
