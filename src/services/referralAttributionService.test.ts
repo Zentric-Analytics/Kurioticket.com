@@ -10,11 +10,16 @@ const fixedNow = new Date("2026-10-22T12:00:00.000Z");
 
 test("attribution summary reports handoffs by provider and safe source path without claiming bookings", async () => {
   let groupByArgs: unknown;
-  let eventCountArgs: unknown;
+  let linkedCountArgs: unknown;
+  let countCalls = 0;
   let isolationLevel: unknown;
   const transaction = {
     redirectLog: {
-      count: async () => 5,
+      count: async (args: unknown) => {
+        countCalls++;
+        if (countCalls === 2) { linkedCountArgs = args; return 3; }
+        return 5;
+      },
       groupBy: async (args: unknown) => {
         groupByArgs = args;
         return [
@@ -22,9 +27,6 @@ test("attribution summary reports handoffs by provider and safe source path with
           { provider: "KAYAK sandbox", type: "HOTEL" as const, sourcePage: "/hotels/details#rate", _count: { _all: 2 } },
         ];
       },
-    },
-    journeyEvent: {
-      count: async (args: unknown) => { eventCountArgs = args; return 3; },
     },
   };
   const service = createReferralAttributionService(() => ({
@@ -53,11 +55,8 @@ test("attribution summary reports handoffs by provider and safe source path with
   assert.deepEqual((groupByArgs as { where: { metadata: unknown } }).where.metadata, {
     path: ["environment"], equals: "production",
   });
-  assert.deepEqual((eventCountArgs as { where: { redirectLog: unknown } }).where.redirectLog, {
-    is: {
-      createdAt: { gte: new Date("2026-10-15T12:00:00.000Z"), lte: fixedNow },
-      metadata: { path: ["environment"], equals: "production" },
-    },
+  assert.deepEqual((linkedCountArgs as { where: { journeyEvents: unknown } }).where.journeyEvents, {
+    some: { type: "PROVIDER_HANDOFF_STARTED", searchHistoryId: { not: null } },
   });
   assert.equal(JSON.stringify(summary).includes("private=1"), false);
   assert.equal(isolationLevel, "RepeatableRead");
@@ -79,4 +78,41 @@ test("attribution reporting window accepts only an explicit bounded day count", 
   for (const invalid of ["0", "91", "1.5", " 7", "-3", "all"]) {
     assert.equal(parseAttributionDays(invalid), null);
   }
+});
+
+test("linked handoffs are counted as distinct redirects even when multiple journey events exist", async () => {
+  let linkedCountQuery: unknown;
+  const service = createReferralAttributionService(() => ({
+    $transaction: async fn => fn({
+      redirectLog: {
+        count: async (args: unknown) => {
+          const where = (args as { where: { journeyEvents?: unknown } }).where;
+          if (where.journeyEvents) { linkedCountQuery = where; return 1; }
+          return 2;
+        },
+        groupBy: async () => [{ provider: "KAYAK sandbox", type: "HOTEL", sourcePage: "/hotel_details", _count: { _all: 2 } }],
+      },
+    }),
+  }), () => fixedNow);
+  const summary = await service.getSummary(30, "staging");
+  assert.deepEqual(summary.handoffs, { total: 2, linkedToSearch: 1, notLinkedToSearch: 1 });
+  assert.deepEqual((linkedCountQuery as { journeyEvents: unknown }).journeyEvents, {
+    some: { type: "PROVIDER_HANDOFF_STARTED", searchHistoryId: { not: null } },
+  });
+});
+
+test("sentinel and normalized unknown handoff sources share a non-navigable bucket", async () => {
+  const service = createReferralAttributionService(() => ({
+    $transaction: async fn => fn({
+      redirectLog: {
+        count: async () => 2,
+        groupBy: async () => [
+          { provider: "KAYAK sandbox", type: "HOTEL", sourcePage: "unknown", _count: { _all: 1 } },
+          { provider: "KAYAK sandbox", type: "HOTEL", sourcePage: "/unknown", _count: { _all: 1 } },
+        ],
+      },
+    }),
+  }), () => fixedNow);
+  const summary = await service.getSummary(30, "staging");
+  assert.deepEqual(summary.sourcePages, [{ sourcePage: "unknown", handoffs: 2 }]);
 });

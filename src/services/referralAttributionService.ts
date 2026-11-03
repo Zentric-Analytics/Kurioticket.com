@@ -16,7 +16,6 @@ type ReferralAttributionTransaction = {
     count(args: unknown): Promise<number>;
     groupBy(args: unknown): Promise<AttributionGroupRow[]>;
   };
-  journeyEvent: { count(args: unknown): Promise<number> };
 };
 
 type ReferralAttributionDatabase = {
@@ -58,7 +57,8 @@ function summarizeGroups(groups: AttributionGroupRow[]) {
     if (existingProvider) existingProvider.handoffs += group._count._all;
     else providers.set(providerKey, { provider, product, handoffs: group._count._all });
 
-    const sourcePage = journeySourcePath(group.sourcePage) ?? "unknown";
+    const sourcePage = group.sourcePage === "unknown" || group.sourcePage === "/unknown"
+      ? "unknown" : journeySourcePath(group.sourcePage) ?? "unknown";
     sourcePages.set(sourcePage, (sourcePages.get(sourcePage) ?? 0) + group._count._all);
   }
 
@@ -116,12 +116,14 @@ export function createReferralAttributionService(
       const [total, linkedToSearch, groups] = await db.$transaction(
         async tx => Promise.all([
           tx.redirectLog.count({ where: redirectWhere }),
-          tx.journeyEvent.count({
+          // Count distinct handoff records rather than linked events: multiple
+          // events for one redirect must never inflate the linked total.
+          tx.redirectLog.count({
             where: {
-              type: "PROVIDER_HANDOFF_STARTED",
-              searchHistoryId: { not: null },
-              createdAt: { gte: start, lte: end },
-              redirectLog: { is: redirectWhere },
+              ...redirectWhere,
+              journeyEvents: {
+                some: { type: "PROVIDER_HANDOFF_STARTED", searchHistoryId: { not: null } },
+              },
             },
           }),
           tx.redirectLog.groupBy({
@@ -134,15 +136,15 @@ export function createReferralAttributionService(
       );
 
       const summary = summarizeGroups(groups);
-      const safelyLinked = Math.min(linkedToSearch, total);
+      if (linkedToSearch > total) throw new Error("Linked handoffs cannot exceed total handoffs");
       return {
         dataAvailable: true,
         environment,
         window: { start: start.toISOString(), end: end.toISOString(), days },
         handoffs: {
           total,
-          linkedToSearch: safelyLinked,
-          notLinkedToSearch: total - safelyLinked,
+          linkedToSearch,
+          notLinkedToSearch: total - linkedToSearch,
         },
         ...summary,
       };

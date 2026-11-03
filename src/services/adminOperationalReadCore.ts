@@ -52,7 +52,7 @@ const handoffSelect = {
   id: true, userId: true, visitorId: true, type: true, provider: true, route: true, price: true, currency: true,
   sourcePage: true, destinationUrl: true, metadata: true, createdAt: true,
   visitor: { select: { consentStatus: true, trackingDisabledAt: true } },
-  journeyEvents: { where: { searchHistoryId: { not: null } }, select: { searchHistoryId: true }, take: 1 },
+  journeyEvents: { where: { type: "PROVIDER_HANDOFF_STARTED", searchHistoryId: { not: null } }, select: { searchHistoryId: true }, take: 1 },
 } satisfies Prisma.RedirectLogSelect;
 type HandoffRow = Prisma.RedirectLogGetPayload<{ select: typeof handoffSelect }>;
 
@@ -791,9 +791,24 @@ export function createAdminOperationalReadService(dependencies: Dependencies) {
             ...(scope.provider ? { provider: { equals: scope.provider, mode: "insensitive" } } : {}),
             ...(dateRange(scope.from, scope.to) ? { createdAt: dateRange(scope.from, scope.to) } : {}),
             metadata: { path: ["environment"], equals: scope.environment },
-            ...(scope.correlation === "exact" ? { journeyEvents: { some: { searchHistoryId: { not: null } } } } : {}),
-            ...(scope.correlation === "unavailable" ? { journeyEvents: { none: { searchHistoryId: { not: null } } } } : {}),
-            AND: cursor ? [{ OR: [{ createdAt: { lt: new Date(cursor.at) } }, { createdAt: new Date(cursor.at), id: { lt: cursor.id } }] }] : [],
+            ...(scope.correlation === "exact" ? { journeyEvents: { some: { type: "PROVIDER_HANDOFF_STARTED", searchHistoryId: { not: null } } } } : {}),
+            ...(scope.correlation === "unavailable" ? { journeyEvents: { none: { type: "PROVIDER_HANDOFF_STARTED", searchHistoryId: { not: null } } } } : {}),
+            AND: [
+              ...(scope.sourcePage ? [{
+                OR: [
+                  { sourcePage: scope.sourcePage },
+                  { sourcePage: { startsWith: scope.sourcePage + "?" } },
+                  { sourcePage: { startsWith: scope.sourcePage + "#" } },
+                  // Legacy short names were stored without the leading slash.
+                  ...(scope.sourcePage.slice(1).includes("/") ? [] : [
+                    { sourcePage: scope.sourcePage.slice(1) },
+                    { sourcePage: { startsWith: scope.sourcePage.slice(1) + "?" } },
+                    { sourcePage: { startsWith: scope.sourcePage.slice(1) + "#" } },
+                  ]),
+                ],
+              }] : []),
+              ...(cursor ? [{ OR: [{ createdAt: { lt: new Date(cursor.at) } }, { createdAt: new Date(cursor.at), id: { lt: cursor.id } }] }] : []),
+            ],
           };
           const records = await db.redirectLog.findMany({ where, select: handoffSelect, orderBy: [{ createdAt: "desc" }, { id: "desc" }], take: limit + 1 });
           const page = nextCursor("handoffs", scope, records, limit);
