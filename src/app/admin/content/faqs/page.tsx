@@ -119,7 +119,7 @@ export default async function AdminFaqCmsPage({ searchParams }: { searchParams: 
                   <div className="flex justify-end">
                     <Link
                       href={nextPageHref(nav.query, listing.nextCursor)}
-                      className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-700 hover:bg-slate-50"
+                      className="inline-flex h-9 items-center rounded-lg border border-[#D9DDE3] bg-white px-3 text-[13px] font-medium text-[#374151] hover:bg-[#F8FAFC]"
                     >
                       Next page
                     </Link>
