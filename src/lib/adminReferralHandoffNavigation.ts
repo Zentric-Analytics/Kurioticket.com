@@ -34,3 +34,11 @@ export function handoffReturnHref(raw: Record<string, string | string[] | undefi
   const params = handoffListParams(raw);
   return "/admin/redirects" + (params.size ? "?" + params.toString() : "");
 }
+
+/** Detail routes inherit only validated list-state keys; the environment is
+ * forced from the record, and no caller-controlled redirect URL is accepted. */
+export function handoffDetailHref(id: string, environment: "staging" | "production", raw: Record<string, string | string[] | undefined>) {
+  const params = handoffListParams(raw);
+  params.set("environment", environment);
+  return "/admin/redirects/" + encodeURIComponent(id) + "?" + params.toString();
+}
