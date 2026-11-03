@@ -156,13 +156,10 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
           <section aria-labelledby="provider-attention" className="border-b border-[#D8E1EC] pb-5 pt-6">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h2 id="provider-attention" className="text-[15px] font-semibold text-[#020617]">
-                {monitoringHours === 24 && !monitoringRange ? "Providers requiring attention" : "Provider health signals (historical)"}
+                Providers requiring attention
               </h2>
               <ProviderHealthWindowFilter product={filter} hours={monitoringHours} custom={monitoringRange} />
             </div>
-            {monitoringHours !== 24 || monitoringRange ? (
-              <p className="mt-2 text-[12px] text-[#64748B]">Historical outcomes in this window do not necessarily represent an active incident.</p>
-            ) : null}
             {monitoringSelection.error ? (
               <p className="mt-3 text-[13px] text-rose-700" role="alert">{monitoringSelection.error}</p>
             ) : operational === null ? (
