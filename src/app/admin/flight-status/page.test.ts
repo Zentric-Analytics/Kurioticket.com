@@ -53,8 +53,8 @@ test("flight status operations shares the canonical freshness rule", () => {
 });
 
 test("flight status operations does not invent an event history or segment model", () => {
-  assert.match(page, /One latest primary-flight status per confirmed trip/);
-  assert.match(page, /Return flights and connections are not tracked separately/);
+  assert.match(page, /We save only the latest status of the main flight in each confirmed trip/);
+  assert.match(page, /Return and connecting flights aren't tracked separately/);
   assert.match(page, /No segment history yet/);
   assert.match(contract, /one operational snapshot per `MyTrip`/);
   assert.doesNotMatch(service, /FlightStatusEvent/);
@@ -230,8 +230,8 @@ test("short descriptions preserve source and data-availability boundaries", () =
     "Live status requires signed provider updates for confirmed flights",
     "not searches, handoffs or trip confirmations.",
     "Latest stored statuses from the configured provider.",
-    "One latest primary-flight status per confirmed trip.",
-    "Return flights and connections are not tracked separately.",
+    "We save only the latest status of the main flight in each confirmed trip.",
+    "Return and connecting flights aren't tracked separately.",
   ]) {
     assert.ok(page.includes(sentence), "Key boundary missing: " + sentence);
   }
@@ -259,11 +259,13 @@ test("Snapshot Scope is compact, readable and aligned with the distribution sect
   const scope = paired.slice(paired.indexOf(">Snapshot scope</h2>"));
   assert.match(scope, /mt-1 text-\[13px\] leading-5 text-slate-600/);
   assert.match(scope, /mt-2 flex min-w-0 flex-wrap gap-1\.5/);
-  assert.match(scope, /One latest primary-flight status per confirmed trip/);
-  assert.match(scope, /Return flights and connections are not tracked separately/);
+  assert.match(scope, /We save only the latest status of the main flight in each confirmed trip/);
+  assert.match(scope, /Return and connecting flights aren't tracked separately/);
   assert.match(scope, /Provider supplied only/);
   assert.match(scope, /Latest snapshot only/);
   assert.match(scope, /No segment history yet/);
+  assert.match(scope, /We save only the latest status of the main flight in each confirmed trip\. Return and connecting flights aren't tracked separately\./);
+  assert.doesNotMatch(scope, /primary-flight status|Return flights and connections are not tracked separately/);
   assert.doesNotMatch(scope, /\bmt-4\b|\bfont-black\b|\bshadow-md\b/);
 });
 

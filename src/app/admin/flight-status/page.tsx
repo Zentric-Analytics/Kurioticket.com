@@ -107,7 +107,7 @@ export default async function AdminFlightStatusPage() {
           <AdminSectionCard className="min-w-0 p-3 shadow-none sm:p-4">
             <h2 className="text-base font-semibold leading-6 tracking-tight text-slate-950">Snapshot scope</h2>
             <p className="mt-1 text-[13px] leading-5 text-slate-600">
-              One latest primary-flight status per confirmed trip. Return flights and connections are not tracked separately.
+              We save only the latest status of the main flight in each confirmed trip. Return and connecting flights aren't tracked separately.
             </p>
             <div className="mt-2 flex min-w-0 flex-wrap gap-1.5">
               <AdminStatusBadge tone="good">Provider supplied only</AdminStatusBadge>
