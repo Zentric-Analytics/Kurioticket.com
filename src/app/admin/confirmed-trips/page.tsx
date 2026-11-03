@@ -163,15 +163,15 @@ export default async function AdminConfirmedTripsPage({ searchParams }: Props) {
     <AdminPageShell title="Trips" hideHeader>
       <AdminSectionCard className="min-w-0 p-4 sm:p-5 lg:p-6">
         <div className="mb-4 flex min-w-0 flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-2xl font-semibold tracking-tight text-slate-950">Trips</p>
-          <p className="mt-1 text-[13px] leading-5 text-slate-600">View verified provider-confirmed trips across flights, hotels, and cars.</p>
+          <div className="min-w-0">
+            <p className="text-2xl font-semibold tracking-tight text-slate-950">Trips</p>
+            <p className="mt-1 text-[13px] leading-5 text-slate-600">View verified provider-confirmed trips across flights, hotels, and cars.</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Link href="/admin/confirmed-trips/records" className="inline-flex min-h-9 items-center justify-center rounded-lg border border-indigo-200 bg-white px-3 text-sm font-semibold text-indigo-700 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">Browse confirmed trips</Link>
+            <Link href="/admin/flight-status" className="inline-flex min-h-9 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">Flight status</Link>
+          </div>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Link href="/admin/confirmed-trips/records" className="inline-flex min-h-9 items-center justify-center rounded-lg border border-indigo-200 bg-white px-3 text-sm font-semibold text-indigo-700 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">Browse confirmed trips</Link>
-          <Link href="/admin/flight-status" className="inline-flex min-h-9 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">Flight status</Link>
-        </div>
-      </div>
 
         <div className="space-y-3">
           <section aria-labelledby="confirmed-trips-overview" className="min-w-0 rounded-xl border border-slate-200/80 bg-slate-50/80 px-4 py-3 sm:px-5 sm:py-4">
@@ -285,7 +285,7 @@ export default async function AdminConfirmedTripsPage({ searchParams }: Props) {
                     <p className="text-xs text-slate-500">Showing up to 20 records, newest confirmation first</p>
                   </div>
                   {directory.rows.length ? (
-                    <TripDirectoryView rows={directory.rows} />
+                    <TripDirectoryView rows={directory.rows} subtle />
                   ) : (
                     <p role="status" className="rounded-lg bg-slate-50 px-4 py-4 text-center text-sm text-slate-700">No provider-confirmed trip matches the selected filters.</p>
                   )}
