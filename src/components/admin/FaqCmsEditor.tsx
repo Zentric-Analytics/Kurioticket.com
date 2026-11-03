@@ -36,13 +36,6 @@ function readPayload(value: unknown) {
   };
 }
 
-function statusTone(status: FaqCmsItem["status"]) {
-  if (status === "PUBLISHED") return "good" as const;
-  if (status === "HIDDEN") return "warn" as const;
-  if (status === "ARCHIVED") return "neutral" as const;
-  return "info" as const;
-}
-
 export function FaqCmsEditor({ initialItem, listQuery = "" }: { initialItem?: FaqCmsItem; listQuery?: string }) {
   const router = useRouter();
   const initialPayload = useMemo(() => readPayload(initialItem?.draftPayload), [initialItem]);
