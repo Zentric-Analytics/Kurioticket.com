@@ -9,20 +9,21 @@ import {
 } from "@/components/admin/AdminPageShell";
 import { HomepageCmsInitializeButton } from "@/components/admin/HomepageCmsInitializeButton";
 import { getCmsContentScopeSummary } from "@/services/cmsContentService";
-import { homepageCmsLocale } from "@/services/homepageCmsService";
+import { getHomepageCmsInitializationReadiness, homepageCmsLocale } from "@/services/homepageCmsService";
 
 export const metadata = { title: "Admin Homepage Content" };
 
 export default async function AdminHomepageContentPage() {
-  const [destinations, flights, hotels] = await Promise.all([
+  const [destinations, flights, hotels, initializationReadiness] = await Promise.all([
     getCmsContentScopeSummary("HOMEPAGE_DESTINATION", "US", homepageCmsLocale).catch(() => null),
     getCmsContentScopeSummary("FLIGHT_ROUTE", "US", homepageCmsLocale).catch(() => null),
     getCmsContentScopeSummary("HOTEL_DESTINATION", "GLOBAL", homepageCmsLocale).catch(() => null),
+    getHomepageCmsInitializationReadiness().catch(() => null),
   ]);
 
-  const available = Boolean(destinations?.available && flights?.available && hotels?.available);
+  const available = Boolean(destinations?.available && flights?.available && hotels?.available && initializationReadiness?.available);
   const active = Boolean(destinations?.active && flights?.active && hotels?.active);
-  const partiallyInitialized = !active && Boolean(destinations?.active || flights?.active || hotels?.active);
+  const partiallyInitialized = !active && Boolean(initializationReadiness?.hasExistingHomepageData);
 
   return (
     <AdminPageShell
