@@ -12,7 +12,7 @@ const statusApi = readFileSync("src/app/api/admin/homepage-fares/status/route.ts
 const refreshApi = readFileSync("src/app/api/admin/homepage-fares/refresh/route.ts", "utf8");
 
 test("public content management exposes homepage and FAQ CMS areas while fare operations stay separate", () => {
-  assert.match(contentPage, /title="Content" hideHeader/);
+  assert.match(contentPage, /<ContentPageFrame title="Content"/);
 
   for (const section of [
     "Homepage destination cards",
@@ -86,7 +86,9 @@ test("content overview groups three homepage areas and FAQs without hiding actio
   assert.match(contentPage, /aria-labelledby="homepage-content-heading"/);
   assert.match(contentPage, /aria-labelledby="help-content-heading"/);
   assert.match(contentPage, /sm:grid-cols-2 lg:grid-cols-3/);
-  assert.match(contentPage, /flex flex-wrap items-center justify-between gap-2/);
+  assert.match(contentPage, /ContentSectionHeading>Homepage content/);
+  assert.match(contentPage, /ContentSectionHeading>Help &amp; information/);
+  assert.match(contentPage, /ContentStatusPill status=\{area\.status\}/);
   assert.doesNotMatch(contentPage, /Content management shortcuts/);
   assert.match(contentPage, /href=\{area\.href\}/);
   assert.match(contentPage, /\{area\.note\}/);
@@ -144,4 +146,35 @@ test("Content's nested pages use the preserved return context", () => {
   assert.match(readFileSync("src/components/admin/HomepageCmsListClient.tsx", "utf8"), /window\.history\.replaceState/);
   assert.match(readFileSync("src/components/admin/FaqCmsListClient.tsx", "utf8"), /window\.history\.replaceState/);
   assert.match(readFileSync("src/components/admin/CmsCreateLink.tsx", "utf8"), /useSearchParams/);
+});
+
+test("Content management uses consistent arrow back links and clean page framing", () => {
+  const frame = readFileSync("src/components/admin/ContentWorkspace.tsx", "utf8");
+  assert.match(frame, /ArrowLeft size=\{14\}/);
+  assert.match(frame, /href=\{backHref\}/);
+  assert.match(frame, /max-w-\[1138px\]/);
+  assert.match(frame, /export function ContentSectionHeading/);
+  const pages = [
+    "src/app/admin/content/homepage/page.tsx",
+    "src/app/admin/content/homepage/[section]/page.tsx",
+    "src/app/admin/content/homepage/[section]/new/page.tsx",
+    "src/app/admin/content/homepage/[section]/[id]/page.tsx",
+    "src/app/admin/content/faqs/page.tsx",
+    "src/app/admin/content/faqs/new/page.tsx",
+    "src/app/admin/content/faqs/[id]/page.tsx",
+  ];
+  for (const page of pages) {
+    const source = readFileSync(page, "utf8");
+    assert.match(source, /<ContentPageFrame/);
+    assert.match(source, /backHref=/);
+    assert.doesNotMatch(source, /<AdminLinkButton[^>]*>Back/);
+  }
+  const home = readFileSync("src/components/admin/HomepageCmsEditor.tsx", "utf8");
+  const faq = readFileSync("src/components/admin/FaqCmsEditor.tsx", "utf8");
+  for (const source of [home, faq]) {
+    assert.match(source, /ContentSectionHeading/);
+    assert.match(source, /lg:grid-cols-\[minmax\(0,1fr\)_320px\]/);
+    assert.match(source, /ContentStatusPill/);
+    assert.doesNotMatch(source, /<AdminSectionCard/);
+  }
 });

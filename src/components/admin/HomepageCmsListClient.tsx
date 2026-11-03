@@ -1,13 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { ArrowUpRight } from "lucide-react";
+import { ContentRecordsTable, ContentStatusPill, ContentEmptyState } from "@/components/admin/ContentWorkspace";
 import { useMemo, useState } from "react";
 
 import {
-  AdminDataTable,
-  AdminEmptyState,
   AdminInput,
-  AdminStatusBadge,
 } from "@/components/admin/AdminPageShell";
 import type { HomepageCmsSection } from "@/lib/adminHomepageCms";
 
@@ -49,13 +48,6 @@ function readSummary(section: HomepageCmsSection, value: unknown) {
   return { title: name, detail: [country, canonicalId].filter(Boolean).join(" · ") };
 }
 
-function tone(status: CmsListItem["status"]) {
-  if (status === "PUBLISHED") return "good" as const;
-  if (status === "HIDDEN") return "warn" as const;
-  if (status === "ARCHIVED") return "neutral" as const;
-  return "info" as const;
-}
-
 export function HomepageCmsListClient({
   section,
   items,
@@ -90,8 +82,8 @@ export function HomepageCmsListClient({
   }, [items, query, section]);
 
   return (
-    <div className="space-y-4">
-      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+    <div className="space-y-3 [&_input]:h-9 [&_input]:rounded-lg [&_input]:text-[13px] [&_select]:h-9 [&_select]:rounded-lg [&_select]:text-[13px]">
+      <div className="rounded-lg border border-[#E5E7EB] bg-white p-3">
         <AdminInput
           value={query}
           onChange={(event) => changeQuery(event.target.value)}
@@ -101,9 +93,9 @@ export function HomepageCmsListClient({
       </div>
 
       {filtered.length === 0 ? (
-        <AdminEmptyState title="No matching content" message="No content on this page matches your search." />
+        <ContentEmptyState title="No matching content" message="No content on this page matches your search." />
       ) : (
-        <AdminDataTable
+        <ContentRecordsTable
           columns={["Content", "Market", "Status", "Order", "Version", "Updated", "Action"]}
           rows={filtered.map((item) => {
             const summary = readSummary(section, item.draftPayload);
@@ -112,19 +104,19 @@ export function HomepageCmsListClient({
               id: item.id,
               cells: [
                 <div key="content" className="max-w-xl">
-                  <p className="font-black text-slate-950">{summary.title}</p>
+                  <p className="text-[13px] font-medium text-[#111827]">{summary.title}</p>
                   <p className="mt-1 text-xs leading-5 text-slate-500">{summary.detail || "—"}</p>
                 </div>,
                 item.market,
                 <div key="status" className="space-y-1">
-                  <AdminStatusBadge tone={tone(item.status)}>{item.status}</AdminStatusBadge>
-                  {unpublished ? <p className="text-xs font-bold text-amber-700">Unpublished changes</p> : null}
+                  <ContentStatusPill status={item.status} />
+                  {unpublished ? <p className="text-[12px] font-medium text-amber-700">Unpublished changes</p> : null}
                 </div>,
                 item.sortOrder,
                 `v${item.version}`,
                 new Date(item.updatedAt).toLocaleString(),
-                <Link key="action" href={`/admin/content/homepage/${section}/${encodeURIComponent(item.id)}?${editorContext.toString()}`} className="font-black text-indigo-700 hover:text-indigo-900">
-                  Edit
+                <Link key="action" href={`/admin/content/homepage/${section}/${encodeURIComponent(item.id)}?${editorContext.toString()}`} className="inline-flex items-center gap-1 text-[13px] font-medium text-[#004BB8] hover:underline">
+                  Edit <ArrowUpRight size={14} aria-hidden="true" />
                 </Link>,
               ],
             };

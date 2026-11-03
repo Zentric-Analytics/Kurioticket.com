@@ -1,9 +1,7 @@
 import Link from "next/link";
 import { ArrowUpRight, Building2, CircleHelp, MapPin, Plane } from "lucide-react";
 
-import {
-  AdminPageShell,
-} from "@/components/admin/AdminPageShell";
+import { ContentPageFrame, ContentSectionHeading, ContentStatusPill } from "@/components/admin/ContentWorkspace";
 import { getCmsContentScopeSummary } from "@/services/cmsContentService";
 import { faqCmsScope } from "@/services/faqCmsService";
 import { homepageCmsLocale } from "@/services/homepageCmsService";
@@ -86,12 +84,8 @@ export default async function AdminContentPage() {
   const helpAreas = contentAreas.filter((area) => area.section === "help");
 
   return (
-    <AdminPageShell title="Content" hideHeader>
-      <div className="mx-auto w-full max-w-[1138px] space-y-6 text-[#374151]">
-        <header>
-          <h2 className="text-[28px] font-semibold leading-9 tracking-tight text-[#111827]">Content</h2>
-          <p className="mt-1 text-[13px] text-[#64748B]">Manage the content published across Kurioticket.</p>
-        </header>
+    <ContentPageFrame title="Content" subtitle="Manage the content published across Kurioticket.">
+      <div className="space-y-6">
         {homepageNeedsSetup ? (
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50/60 px-4 py-3">
             <p className="text-[13px] text-slate-700">Some homepage content scopes still need CMS setup.</p>
@@ -102,30 +96,25 @@ export default async function AdminContentPage() {
         ) : null}
 
         <section aria-labelledby="homepage-content-heading" className="space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 id="homepage-content-heading" className="text-[14px] font-semibold text-[#111827]">
-              Homepage content
-            </h2>
-            
-          </div>
+          <div id="homepage-content-heading"><ContentSectionHeading>Homepage content</ContentSectionHeading></div>
 
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {homepageAreas.map((area) => {
               const Icon = area.icon;
               return (
-                <div key={area.title} className="flex min-w-0 flex-col rounded-xl border border-[#E5E7EB] bg-white p-4">
+                <div key={area.title} className="flex min-w-0 flex-col rounded-lg border border-[#E5E7EB] bg-white p-4">
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div className="flex min-w-0 flex-1 items-center gap-2">
                       <Icon size={18} className="shrink-0 text-slate-500" aria-hidden="true" />
                       <h3 className="min-w-0 text-sm font-semibold leading-5 text-slate-950">{area.title}</h3>
                     </div>
-                    <span className="inline-flex shrink-0 items-center rounded-full bg-[#F1F2F5] px-2.5 py-1 text-[11px] font-medium text-[#475569]">{area.status}</span>
+                    <ContentStatusPill status={area.status} />
                   </div>
                   <div className="mt-3">
                     <p className="text-2xl font-semibold leading-none tabular-nums text-[#111827]">{area.value}</p>
                     <p className="mt-1 text-xs text-slate-500">Published CMS records</p>
                   </div>
-                  <p className="mt-2 flex-1 text-sm leading-5 text-slate-600">{area.note}</p>
+                  <p className="mt-2 flex-1 text-[13px] leading-5 text-[#64748B]">{area.note}</p>
                   <div className="mt-4 pt-1">
                     <Link href={area.href} className="inline-flex items-center gap-1.5 text-sm font-semibold text-indigo-700 hover:text-indigo-900">
                       {area.actionLabel}
@@ -139,15 +128,13 @@ export default async function AdminContentPage() {
         </section>
 
         <section aria-labelledby="help-content-heading" className="space-y-3">
-          <h2 id="help-content-heading" className="text-[14px] font-semibold text-[#111827]">
-            Help &amp; information
-          </h2>
+          <div id="help-content-heading"><ContentSectionHeading>Help &amp; information</ContentSectionHeading></div>
 
           <div className="space-y-3">
             {helpAreas.map((area) => {
               const Icon = area.icon;
               return (
-                <div key={area.title} className="min-w-0 rounded-xl border border-[#E5E7EB] bg-white p-4">
+                <div key={area.title} className="min-w-0 rounded-lg border border-[#E5E7EB] bg-white p-4">
                   <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
                     <div className="flex min-w-0 flex-1 items-center gap-3">
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100">
@@ -163,11 +150,11 @@ export default async function AdminContentPage() {
                         <p className="text-2xl font-semibold leading-none tabular-nums text-slate-950">{area.value}</p>
                         <p className="text-xs text-slate-500">Published</p>
                       </div>
-                      <span className="inline-flex shrink-0 items-center rounded-full bg-[#F1F2F5] px-2.5 py-1 text-[11px] font-medium text-[#475569]">{area.status}</span>
+                      <ContentStatusPill status={area.status} />
                     </div>
                   </div>
                   <div className="mt-3 flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
-                    <p className="min-w-0 flex-1 text-sm leading-5 text-slate-600">{area.note}</p>
+                    <p className="min-w-0 flex-1 text-[13px] leading-5 text-[#64748B]">{area.note}</p>
                     <Link href={area.href} className="inline-flex shrink-0 items-center gap-1.5 text-sm font-semibold text-indigo-700 hover:text-indigo-900">
                       {area.actionLabel}
                       <ArrowUpRight size={15} aria-hidden="true" />
@@ -179,6 +166,6 @@ export default async function AdminContentPage() {
           </div>
         </section>
       </div>
-    </AdminPageShell>
+    </ContentPageFrame>
   );
 }

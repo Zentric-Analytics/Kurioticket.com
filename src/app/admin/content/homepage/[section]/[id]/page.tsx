@@ -1,11 +1,7 @@
+import { ContentPageFrame, ContentSectionHeading, ContentStatusPill } from "@/components/admin/ContentWorkspace";
 import { notFound } from "next/navigation";
 
-import {
-  AdminLinkButton,
-  AdminPageShell,
-  AdminSectionCard,
-  AdminStatusBadge,
-} from "@/components/admin/AdminPageShell";
+
 import { HomepageCmsEditor } from "@/components/admin/HomepageCmsEditor";
 import { CmsRevisionRestoreButton } from "@/components/admin/CmsRevisionRestoreButton";
 import { hotelDestinations } from "@/data/hotelDestinations";
@@ -37,10 +33,11 @@ export default async function HomepageCmsDetailPage({ params, searchParams }: Pa
   const nav = homepageCmsListNavigation(section, await searchParams, result.item.market);
 
   return (
-    <AdminPageShell
+    <ContentPageFrame
       title={`Edit ${config.singular}`}
-      description="Review the draft, publish intentionally, and inspect the immutable revision trail."
-      actions={<AdminLinkButton href={nav.listHref}>Back to {config.title}</AdminLinkButton>}
+      subtitle="Edit the draft, manage publication and review its revision history."
+      backHref={nav.listHref}
+      backLabel={`Back to ${config.title}`}
     >
       <div className="space-y-5">
         <HomepageCmsEditor
@@ -52,34 +49,34 @@ export default async function HomepageCmsDetailPage({ params, searchParams }: Pa
           hotelOptions={section === "hotel-destinations" ? getHotelOptions() : []}
         />
 
-        <AdminSectionCard className="overflow-hidden p-0">
-          <div className="border-b border-slate-100 p-5">
-            <h2 className="text-lg font-black text-slate-950">Revision history</h2>
-            <p className="mt-1 text-sm leading-6 text-slate-600">Recent immutable draft and published snapshots.</p>
+        <section className="mt-7 min-w-0">
+          <div className="mb-3">
+            <ContentSectionHeading>Revision history</ContentSectionHeading>
+            <p className="mt-1 text-[13px] leading-5 text-[#64748B]">Recent immutable draft and published snapshots.</p>
           </div>
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-[#E5E7EB] border-t border-[#E5E7EB]">
             {result.revisions.map((revision) => (
-              <div key={revision.id} className="grid gap-3 p-5 lg:grid-cols-[90px_130px_100px_minmax(0,1fr)_200px_150px]">
+              <div key={revision.id} className="grid gap-3 py-4 lg:grid-cols-[90px_130px_100px_minmax(0,1fr)_200px_150px]">
                 <div>
-                  <p className="text-xs font-black uppercase tracking-wide text-slate-500">Version</p>
-                  <p className="mt-1 font-black text-slate-950">v{revision.version}</p>
+                  <p className="text-[12px] font-medium text-[#64748B]">Version</p>
+                  <p className="mt-1 text-[13px] font-semibold text-[#111827]">v{revision.version}</p>
                 </div>
                 <div>
-                  <p className="text-xs font-black uppercase tracking-wide text-slate-500">Action</p>
-                  <div className="mt-1"><AdminStatusBadge tone={revision.action === "PUBLISHED" ? "good" : revision.action === "HIDDEN" ? "warn" : revision.action === "ARCHIVED" ? "neutral" : "info"}>{revision.action}</AdminStatusBadge></div>
+                  <p className="text-[12px] font-medium text-[#64748B]">Action</p>
+                  <div className="mt-1"><ContentStatusPill status={revision.action} /></div>
                 </div>
                 <div>
-                  <p className="text-xs font-black uppercase tracking-wide text-slate-500">Market</p>
-                  <p className="mt-1 text-sm font-bold text-slate-900">{revision.market}</p>
+                  <p className="text-[12px] font-medium text-[#64748B]">Market</p>
+                  <p className="mt-1 text-[13px] font-medium text-[#334155]">{revision.market}</p>
                 </div>
                 <div>
-                  <p className="text-xs font-black uppercase tracking-wide text-slate-500">Snapshot</p>
-                  <p className="mt-1 text-sm font-bold text-slate-900">{revisionTitle(section, revision.draftPayload)}</p>
+                  <p className="text-[12px] font-medium text-[#64748B]">Snapshot</p>
+                  <p className="mt-1 text-[13px] font-medium text-[#334155]">{revisionTitle(section, revision.draftPayload)}</p>
                 </div>
                 <div>
-                  <p className="text-xs font-black uppercase tracking-wide text-slate-500">Recorded</p>
-                  <p className="mt-1 text-sm font-semibold text-slate-900">{new Date(revision.createdAt).toLocaleString()}</p>
-                  <p className="mt-1 break-all text-xs text-slate-500">{revision.actorEmail}</p>
+                  <p className="text-[12px] font-medium text-[#64748B]">Recorded</p>
+                  <p className="mt-1 text-[13px] font-medium text-[#334155]">{new Date(revision.createdAt).toLocaleString()}</p>
+                  <p className="mt-1 break-all text-[12px] text-[#64748B]">{revision.actorEmail}</p>
                 </div>
                 <div>
                   {result.item.status !== "ARCHIVED" && revision.version < result.item.version ? (
@@ -93,9 +90,9 @@ export default async function HomepageCmsDetailPage({ params, searchParams }: Pa
               </div>
             ))}
           </div>
-        </AdminSectionCard>
+        </section>
       </div>
-    </AdminPageShell>
+    </ContentPageFrame>
   );
 }
 

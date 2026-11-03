@@ -1,6 +1,7 @@
+import { ContentPageFrame } from "@/components/admin/ContentWorkspace";
 import { notFound, redirect } from "next/navigation";
 
-import { AdminLinkButton, AdminPageShell } from "@/components/admin/AdminPageShell";
+
 import { HomepageCmsEditor } from "@/components/admin/HomepageCmsEditor";
 import { hotelDestinations } from "@/data/hotelDestinations";
 import { getHomepageCmsSection, homepageCmsSections } from "@/lib/adminHomepageCms";
@@ -34,10 +35,11 @@ export default async function NewHomepageCmsContentPage({ params, searchParams }
   }
 
   return (
-    <AdminPageShell
+    <ContentPageFrame
       title={`New ${config.singular}`}
-      description="Create a structured draft. Save and Publish remain separate lifecycle actions."
-      actions={<AdminLinkButton href={nav.listHref}>Back to {config.title}</AdminLinkButton>}
+      subtitle="Create a draft, then publish it when ready."
+      backHref={nav.listHref}
+      backLabel={`Back to ${config.title}`}
     >
       <HomepageCmsEditor
         section={section}
@@ -46,7 +48,7 @@ export default async function NewHomepageCmsContentPage({ params, searchParams }
         listQuery={nav.query}
         hotelOptions={section === "hotel-destinations" ? getHotelOptions() : []}
       />
-    </AdminPageShell>
+    </ContentPageFrame>
   );
 }
 
