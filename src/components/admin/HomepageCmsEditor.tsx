@@ -51,13 +51,6 @@ function text(value: unknown, fallback = "") {
   return typeof value === "string" ? value : fallback;
 }
 
-function statusTone(status: CmsItem["status"]) {
-  if (status === "PUBLISHED") return "good" as const;
-  if (status === "HIDDEN") return "warn" as const;
-  if (status === "ARCHIVED") return "neutral" as const;
-  return "info" as const;
-}
-
 export function HomepageCmsEditor({
   section,
   markets,
