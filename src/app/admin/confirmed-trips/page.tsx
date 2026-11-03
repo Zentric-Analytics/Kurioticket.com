@@ -187,6 +187,7 @@ export default async function AdminConfirmedTripsPage({ searchParams }: Props) {
             </nav>
 
             <TripFilterControls filters={filters} range={range} dateFields={dateFields}
+              key={[filters.q, filters.provider, filters.product, filters.status, range, filters.from, filters.to].join("|")}
               providerNames={operations?.byProvider.map(item => item.provider) ?? []} />
 
             <div className="mt-3 border-t border-slate-100 pt-3">
