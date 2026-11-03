@@ -6,6 +6,7 @@ import { ProviderHandoffFilters } from "@/components/admin/ProviderHandoffFilter
 import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
 import { SearchWorkspacePanelFrame } from "@/components/admin/SearchWorkspacePanelFrame";
 import { formatDateTime } from "@/lib/admin-data";
+import { handoffDetailHref } from "@/lib/adminReferralHandoffNavigation";
 import { adminOperationalReads } from "@/services/adminOperationalReadService";
 
 export const metadata = { title: "Admin Provider Handoffs" };
@@ -139,7 +140,7 @@ export default async function AdminRedirectsPage({ searchParams, embedded = fals
                 </colgroup>
                 <thead className="border-y border-[#D8E1EC] text-[#475569]">
                   <tr>
-                    {["Created", "Product", "Provider", "Route", "Price", "Source", "Destination", "Identity", "Search link", "Action"].map(label => (
+                    {["Created", "Product", "Provider", "Route / property", "Price", "Source", "Destination", "Identity", "Search link", "Action"].map(label => (
                       <th key={label} scope="col" className="px-2 py-3 text-left font-medium first:pl-0">
                         {label}
                       </th>
@@ -171,7 +172,7 @@ export default async function AdminRedirectsPage({ searchParams, embedded = fals
                         </span>
                       </td>
                       <td className="py-3 pl-2">
-                        <Link href={"/admin/redirects/" + handoff.id + "?environment=" + handoff.environment}
+                        <Link href={handoffDetailHref(handoff.id, handoff.environment, raw)}
                           className="font-medium text-[#004BB8] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
                           Open
                         </Link>
@@ -211,6 +212,7 @@ function one(value: string | string[] | undefined) { return typeof value === "st
 function toParams(raw: Record<string, string | string[] | undefined>) {
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(raw)) {
+    if (key === "pageTrail") continue;
     if (Array.isArray(value)) value.forEach((item) => params.append(key, item));
     else if (value) params.set(key, value);
   }
