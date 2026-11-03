@@ -62,6 +62,7 @@ test("tracked-trip metrics remain explicitly disconnected instead of equating co
   assert.match(page, /Tracking begins at confirmation once integrated/);
   assert.match(page, /Tracking totals require a separate future data source/);
   assert.match(page, /Tracked trips<\/dt><dd[^>]*>Not connected/);
+  assert.match(page, /Cancelled trips<\/dt><dd[^>]*>Count pending integration/);
   assert.doesNotMatch(page, /operations\.metrics\.tracked|Math\.random|mockTrips|sampleTrips/);
 });
 
