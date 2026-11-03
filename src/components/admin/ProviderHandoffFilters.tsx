@@ -7,6 +7,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
 import {
   providerHandoffFiltersHref,
+  providerHandoffHistoryFilterHref,
   shouldAcceptHandoffFilterResponse,
   type ProviderHandoffFilterScope,
   type ProviderHandoffFilterValues,
@@ -49,6 +50,7 @@ export function ProviderHandoffFilters({
   const timeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const submitted = useRef("");
   const latestRequestedHref = useRef<string | null>(null);
+  const latestServerFilterHref = useRef(providerHandoffFiltersHref(initial, scope));
   const latestProviderDraft = useRef(initial.provider);
   const identityScopeCleared = useRef(false);
   const externalNavigation = useRef(false);
@@ -56,6 +58,13 @@ export function ProviderHandoffFilters({
   useEffect(() => {
     // A browser history navigation is not one of our filter submissions.
     const onPopState = () => {
+      // Back/Forward frequently changes only the record cursor. In that
+      // case the filter props never change, so an unconditional override would
+      // linger and wrongly accept a later stale provider-search response.
+      if (providerHandoffHistoryFilterHref(window.location.search) === latestServerFilterHref.current) {
+        externalNavigation.current = false;
+        return;
+      }
       externalNavigation.current = true;
       latestRequestedHref.current = null;
       identityScopeCleared.current = false;
@@ -65,6 +74,7 @@ export function ProviderHandoffFilters({
   }, []);
 
   useEffect(() => {
+    latestServerFilterHref.current = providerHandoffFiltersHref(initial, scope);
     // A previous response must not overwrite newer keystrokes or filter
     // changes, nor cancel their pending 300 ms debounce.
     if (!shouldAcceptHandoffFilterResponse(
