@@ -32,10 +32,10 @@ const blankFilters: AdminTripFilters = {
 
 /** The trip overview is a read-only summary; filtering lives in Trip Directory. */
 function TripMetric({
-  label, value, icon: Icon, tone, screenReaderNote,
+  label, value, icon: Icon, tone, index, screenReaderNote,
 }: {
   label: string; value: number | string;
-  icon: LucideIcon; tone: TripTone; screenReaderNote?: string;
+  icon: LucideIcon; tone: TripTone; index: number; screenReaderNote?: string;
 }) {
   const colors: Record<TripTone, string> = {
     info: "bg-indigo-50 text-indigo-700",
@@ -45,7 +45,10 @@ function TripMetric({
   };
 
   return (
-    <div className="flex h-full min-w-0 flex-col rounded-lg border border-slate-200/80 bg-white px-3 py-2.5">
+    <div className={"flex h-full min-w-0 flex-col border-slate-200/80 px-3 py-2.5 " +
+      (index < 4 ? "border-b lg:border-b-0 " : "") +
+      (index % 2 === 1 ? "sm:border-l " : "") +
+      (index > 0 ? "lg:border-l" : "")}>
       <div className="flex min-w-0 items-center gap-2">
         <span className={"flex h-7 w-7 shrink-0 items-center justify-center rounded-md " + colors[tone]}>
           <Icon size={15} aria-hidden="true" />
@@ -87,12 +90,12 @@ export default async function AdminConfirmedTripsPage({ searchParams }: Props) {
           <section aria-labelledby="confirmed-trips-overview" className="min-w-0">
             <h2 id="confirmed-trips-overview" className="mb-3 text-base font-semibold text-slate-950">Trip overview</h2>
             {directory?.status === "ok" ? (
-              <div className="grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-5">
-                <TripMetric label="Confirmed trips" value={directory.totalMatching} icon={FileCheck2} tone="info" />
-                <TripMetric label="Tracked trips" value="—" icon={Activity} tone="neutral" screenReaderNote="Tracking reporting not connected" />
-                <TripMetric label="Upcoming" value={directory.statusCounts.upcoming} icon={CalendarCheck} tone="good" />
-                <TripMetric label="Past" value={directory.statusCounts.past} icon={CalendarDays} tone="neutral" />
-                <TripMetric label="Cancelled" value={directory.statusCounts.cancelled} icon={CircleX} tone="warn" />
+              <div className="grid min-w-0 grid-cols-1 gap-0 sm:grid-cols-2 lg:grid-cols-5">
+                <TripMetric index={0} label="Confirmed trips" value={directory.totalMatching} icon={FileCheck2} tone="info" />
+                <TripMetric index={1} label="Tracked trips" value="—" icon={Activity} tone="neutral" screenReaderNote="Tracking reporting not connected" />
+                <TripMetric index={2} label="Upcoming" value={directory.statusCounts.upcoming} icon={CalendarCheck} tone="good" />
+                <TripMetric index={3} label="Past" value={directory.statusCounts.past} icon={CalendarDays} tone="neutral" />
+                <TripMetric index={4} label="Cancelled" value={directory.statusCounts.cancelled} icon={CircleX} tone="warn" />
               </div>
             ) : (
               <p role="status" className="rounded-lg border border-slate-100 bg-white px-4 py-4 text-sm text-slate-700">
