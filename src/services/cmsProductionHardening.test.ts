@@ -102,3 +102,11 @@ test("edit conflicts provide an explicit recovery path", () => {
     assert.match(editor, /window\.location\.reload\(\)/);
   }
 });
+
+test("System browser QA mock includes every required CMS Health response field", () => {
+  const browserQa = readFileSync("qa/admin-system-cleanup/run.mjs", "utf8");
+  const healthSource = readFileSync("src/app/admin/system/cms-health/page.tsx", "utf8");
+  assert.match(healthSource, /overview\.missingHomepageScopes\.length/);
+  assert.match(browserQa, /getCmsHealthOverview\(\)\{return \{available:true,totals:/);
+  assert.match(browserQa, /scopes:\[\],missingHomepageScopes:\[\]/);
+});
