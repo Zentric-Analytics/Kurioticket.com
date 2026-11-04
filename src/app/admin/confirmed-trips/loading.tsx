@@ -29,8 +29,8 @@ export default function ConfirmedTripsLoading() {
           <section className="min-w-0 rounded-xl border border-slate-200/80 bg-white px-4 py-3 sm:px-5 sm:py-4">
             <h2 className="text-base font-semibold text-slate-950">Trip directory</h2>
             <p className="mt-1 text-xs text-slate-600">Loading verified trip records for the selected filters…</p>
-            <div aria-hidden="true" className="mt-3 grid min-w-0 grid-cols-1 gap-x-2 gap-y-2.5 sm:grid-cols-2 md:grid-cols-4 lg:gap-x-1.5 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,0.95fr)_minmax(0,0.9fr)_minmax(0,0.9fr)_minmax(0,1.05fr)_minmax(0,0.95fr)_minmax(0,1.15fr)_minmax(0,1.15fr)] 2xl:gap-x-2.5">
-              {["Search trips", "Provider", "Travel type", "Trip status", "Time range", "Tracking", "From (UTC)", "To (UTC)"].map((label) => (
+            <div aria-hidden="true" className="mt-3 grid min-w-0 grid-cols-1 gap-x-2 gap-y-2.5 sm:grid-cols-2 md:grid-cols-4 lg:gap-x-1.5 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)_minmax(0,0.95fr)_minmax(0,0.95fr)_minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,1.2fr)] 2xl:gap-x-2.5">
+              {["Search trips", "Provider", "Travel type", "Trip status", "Time range", "From (UTC)", "To (UTC)"].map((label) => (
                 <div key={label} className="min-w-0">
                   <p className="text-[11px] font-medium leading-4 text-slate-600">{label}</p>
                   <div className="mt-1 h-9 w-full min-w-0 rounded-lg border border-slate-200 bg-slate-100 motion-safe:animate-pulse" />
