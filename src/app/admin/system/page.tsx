@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { AdminPageShell, AdminStatusBadge } from "@/components/admin/AdminPageShell";
 import { getSafeSystemStatus } from "@/lib/admin-data";
 import { getAdminEmails } from "@/lib/env";
@@ -23,14 +22,7 @@ export default async function AdminSystemPage() {
   return (
     <AdminPageShell
       title="System"
-      description="Read-only configuration and connectivity status. Secret values, database URLs, API keys, tokens, and raw environment variables are never displayed."
-      actions={
-        <div className="flex flex-wrap gap-2">
-          <Link href="/admin/system/cms-health" className="rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm font-black text-indigo-800 hover:bg-indigo-100">CMS Health</Link>
-          <Link href="/admin/email-delivery" className="rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm font-black text-indigo-800 hover:bg-indigo-100">Email delivery</Link>
-          <Link href="/admin/logs" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">View audit logs</Link>
-        </div>
-      }
+      hideHeader
     >
       <section aria-labelledby="system-status-heading" className="border-b border-slate-200 py-4">
         <h2 id="system-status-heading" className="text-base font-semibold text-slate-950">System Status</h2>
