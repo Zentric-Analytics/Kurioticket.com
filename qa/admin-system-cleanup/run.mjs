@@ -26,7 +26,7 @@ const mocks = {
   "next-auth$": 'export async function getServerSession(){return {user:{email:"operator@example.invalid"}};}',
   "@/lib/feature-controls/service": 'export async function listFeatureControls(){return {environment:"STAGING",dataAvailable:true,controls:[]};}',
   "@/services/adminAuditReadService": 'export const adminAuditReads={async list(){return {status:"ok",data:{items:[],nextCursor:null}};}};',
-  "@/services/cmsHardeningService": 'export async function getCmsHealthOverview(){return {available:true,totals:{scopes:0,healthy:0,unhealthy:0,retiredFallback:0,unpublishedChanges:0},scopes:[]};}',
+  "@/services/cmsHardeningService": 'export async function getCmsHealthOverview(){return {available:true,totals:{scopes:0,healthy:0,unhealthy:0,retiredFallback:0,unpublishedChanges:0},scopes:[],missingHomepageScopes:[]};}',
   "@/services/emailDeliveryService": 'export async function getEmailDeliveryHealthSnapshot(){return {dataAvailable:true,last24Hours:0,failures:0,delayed:0,suppressed:0,latest:[]};}',
   "@/services/adminAlertService": `
 const at="2026-11-04T14:00:00.000Z";
