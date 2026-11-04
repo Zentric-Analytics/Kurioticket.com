@@ -276,7 +276,7 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
 
           <section aria-labelledby="provider-directory" className="border-b border-[#D8E1EC] pb-6 pt-6">
             <h2 id="provider-directory" className="text-[15px] font-semibold text-[#020617]">All providers</h2>
-            <p className="mt-1 text-[12px] text-[#64748B]">Readiness shows whether an integration is configured and permitted; health summarizes recorded search outcomes in the selected window. Internal catalogues are not externally monitored.</p>
+            
             <nav aria-label="Filter providers by product"
               className="mt-2 flex min-w-0 gap-5 overflow-x-auto border-b border-[#D8E1EC]">
               {productFilters.map(item => (
@@ -339,7 +339,7 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
                         </div>
 
                         <div aria-hidden="true"
-                          className="mt-3 flex h-2 w-full overflow-hidden rounded-full bg-[#E7ECF5]">
+                          className="mt-3 flex h-2 w-full max-w-[800px] overflow-hidden rounded-full bg-[#E7ECF5]">
                           {segments.hasAttempts ? (
                             <>
                               <span className="h-full bg-emerald-600"
