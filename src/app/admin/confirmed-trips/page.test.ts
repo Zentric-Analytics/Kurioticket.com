@@ -336,7 +336,9 @@ test("Trips and Trip monitoring use the Providers-style workspace navigation whi
   assert.match(flightStatusRedirect, /redirect\("\/admin\/confirmed-trips\/monitoring\?panel=flight#flight-status-overview-title"\)/);
   assert.match(operationsPage, /Detailed product and provider breakdowns/);
   assert.match(operationsPage, /Confirmation integration readiness/);
-  assert.match(operationsPage, /Confirmation delivery health and alerts/);
+  assert.match(operationsPage, />Delivery health and alerts<\/h4>/);
+  assert.doesNotMatch(operationsPage, />Confirmation delivery health<\/h4>|>Confirmation delivery health and alerts<\/h4>/);
+  assert.match(operationsPage, /No authenticated delivery telemetry is available/);
   assert.equal((operationsPage.match(/<details/g) ?? []).length, 0);
   assert.equal((operationsPage.match(/<summary/g) ?? []).length, 0);
   assert.doesNotMatch(operationsPage, /ChevronDown|cursor-pointer|group-open:rotate-180/);
