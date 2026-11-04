@@ -15,12 +15,12 @@ test("public content management exposes homepage and FAQ CMS areas while fare op
   assert.match(contentPage, /<ContentPageFrame title="Content"/);
 
   for (const section of [
-    "Homepage destination cards",
-    "Flight route cards",
-    "Hotel destination cards",
+    "Homepage destinations",
+    "Flight routes",
+    "Hotel destinations",
     "FAQs",
   ]) {
-    assert.match(contentPage, new RegExp(section));
+    assert.match(contentPage, new RegExp('title: "' + section + '"'));
   }
 
   assert.match(contentPage, /getCmsContentScopeSummary/);
