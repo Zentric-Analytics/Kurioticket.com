@@ -21,27 +21,23 @@ export default async function AdminTripMonitoringPage() {
         </nav>
 
         <section aria-labelledby="trip-monitoring-title" className="min-w-0">
-          <h2 id="trip-monitoring-title" className="mb-4 text-base font-semibold text-slate-950">Trip monitoring</h2>
+          <h2 id="trip-monitoring-title" className="mb-5 text-base font-semibold text-slate-950">Trip monitoring</h2>
 
-          <div className="space-y-4">
-            <section id="trip-confirmations-panel" aria-labelledby="trip-confirmations-title" className="min-w-0 rounded-xl border border-slate-200/80 bg-white">
-              <div className="flex min-h-11 items-center gap-2 border-b border-slate-100 px-3 py-2.5">
+          <div className="space-y-8">
+            <section id="trip-confirmations-panel" aria-labelledby="trip-confirmations-title" className="min-w-0">
+              <div className="mb-3 flex min-w-0 items-center gap-2 border-b border-slate-200/80 pb-2.5">
                 <FileCheck2 size={17} className="shrink-0 text-indigo-700" aria-hidden="true" />
-                <h3 id="trip-confirmations-title" className="text-sm font-semibold text-slate-800">Trip confirmations</h3>
+                <h3 id="trip-confirmations-title" className="text-sm font-semibold text-slate-900">Trip confirmations</h3>
               </div>
-              <div className="min-w-0 p-3">
-                <TripConfirmationsMonitoringPanel />
-              </div>
+              <TripConfirmationsMonitoringPanel />
             </section>
 
-            <section id="trip-flight-status-panel" aria-labelledby="trip-flight-status-title" className="min-w-0 rounded-xl border border-slate-200/80 bg-white">
-              <div className="flex min-h-11 items-center gap-2 border-b border-slate-100 px-3 py-2.5">
+            <section id="trip-flight-status-panel" aria-labelledby="trip-flight-status-title" className="min-w-0 border-t border-slate-200/80 pt-6">
+              <div className="mb-3 flex min-w-0 items-center gap-2 border-b border-slate-200/80 pb-2.5">
                 <Plane size={17} className="shrink-0 text-indigo-700" aria-hidden="true" />
-                <h3 id="trip-flight-status-title" className="text-sm font-semibold text-slate-800">Flight status</h3>
+                <h3 id="trip-flight-status-title" className="text-sm font-semibold text-slate-900">Flight status</h3>
               </div>
-              <div className="min-w-0 p-3">
-                <TripFlightStatusMonitoringPanel />
-              </div>
+              <TripFlightStatusMonitoringPanel />
             </section>
           </div>
         </section>

@@ -14,6 +14,7 @@ const controls = readFileSync("src/components/admin/TripFilterControls.tsx", "ut
 const dropdown = readFileSync("src/components/admin/SearchMonitorSelect.tsx", "utf8");
 const workspace = readFileSync("src/lib/adminTripWorkspace.ts", "utf8");
 const recordsTable = readFileSync("src/components/admin/ConfirmedTripRecordsTable.tsx", "utf8");
+const flightMonitoring = readFileSync("src/components/admin/TripFlightStatusMonitoringPanel.tsx", "utf8");
 const breakdowns = readFileSync("src/components/admin/ConfirmedTripsBreakdowns.tsx", "utf8");
 const service = readFileSync("src/services/adminConfirmedTripsOperationsService.ts", "utf8");
 const recordsService = readFileSync("src/services/adminConfirmedTripsDirectoryService.ts", "utf8");
@@ -306,6 +307,10 @@ test("unified Trip monitoring consolidates protected confirmation and flight-sta
   assert.match(monitoringPage, /id="trip-confirmations-panel"/);
   assert.match(monitoringPage, /id="trip-flight-status-panel"/);
   assert.doesNotMatch(monitoringPage, /<details|<summary|ChevronDown|showConfirmations|showFlightStatus|requestedPanel/);
+  assert.match(monitoringPage, /className="space-y-8"/);
+  assert.match(monitoringPage, /id="trip-confirmations-panel"[^>]*className="min-w-0"/);
+  assert.match(monitoringPage, /id="trip-flight-status-panel"[^>]*className="min-w-0 border-t border-slate-200\/80 pt-6"/);
+  assert.doesNotMatch(monitoringPage, /id="trip-confirmations-panel"[^>]*rounded-xl|id="trip-flight-status-panel"[^>]*rounded-xl/);
   assert.match(operationsRedirect, /await requireAdminSession\("\/admin\/confirmed-trips\/operations"\)/);
   assert.match(operationsRedirect, /redirect\("\/admin\/confirmed-trips\/monitoring\?panel=delivery#confirmation-delivery-health-title"\)/);
   assert.match(flightStatusRedirect, /redirect\("\/admin\/confirmed-trips\/monitoring\?panel=flight#flight-status-overview-title"\)/);
@@ -315,6 +320,9 @@ test("unified Trip monitoring consolidates protected confirmation and flight-sta
   assert.equal((operationsPage.match(/<details/g) ?? []).length, 0);
   assert.equal((operationsPage.match(/<summary/g) ?? []).length, 0);
   assert.doesNotMatch(operationsPage, /ChevronDown|cursor-pointer|group-open:rotate-180/);
+  assert.match(operationsPage, /className="min-w-0 space-y-4"/);
+  assert.match(operationsPage, /aria-labelledby="confirmation-breakdowns-title" className="min-w-0"/);
+  assert.doesNotMatch(operationsPage, /aria-labelledby="confirmation-breakdowns-title"[^>]*rounded-xl/);
   assert.match(operationsPage, /<ConfirmedTripsBreakdowns operations=\{operations\} \/>/);
   assert.match(operationsPage, /getConfirmedTripsIntegrationReadiness\(\)/);
   assert.match(operationsPage, /getConfirmedTripsOperationsSnapshot\(\)/);
@@ -336,6 +344,9 @@ test("unified Trip monitoring consolidates protected confirmation and flight-sta
   assert.match(operationsPage, /id="confirmation-breakdowns-title"/);
   assert.doesNotMatch(operationsPage, /expandDelivery|open=\{/);
   assert.doesNotMatch(operationsPage, /mockData|sampleTrips|Math\.random|process\.env/);
+  assert.match(flightMonitoring, /className="min-w-0 space-y-4"/);
+  assert.equal((flightMonitoring.match(/rounded-xl border border-slate-200\/80 bg-white p-3 sm:p-4/g) ?? []).length, 5);
+  assert.doesNotMatch(flightMonitoring, /AdminSectionCard/);
 });
 
 test("service preserves provider-confirmation trust boundary and no invented revenue", () => {

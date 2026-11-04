@@ -1,6 +1,5 @@
 import {
   AdminDataTable,
-  AdminSectionCard,
   AdminStatusBadge,
 } from "@/components/admin/AdminPageShell";
 import { formatDateTime } from "@/lib/admin-data";
@@ -15,7 +14,7 @@ export async function TripFlightStatusMonitoringPanel() {
   const operations = await getFlightStatusOperationsSnapshot(undefined, readiness);
 
   return (
-    <div className="min-w-0 space-y-3">
+    <div className="min-w-0 space-y-4">
         <section aria-labelledby="flight-status-overview-title" className="min-w-0">
           <h2 id="flight-status-overview-title" className="mb-2.5 text-base font-semibold leading-6 tracking-tight text-slate-950">Flight status overview</h2>
           {operations ? (
@@ -37,7 +36,7 @@ export async function TripFlightStatusMonitoringPanel() {
           )}
         </section>
 
-        <AdminSectionCard className="min-w-0 p-3 shadow-none sm:p-4">
+        <section className="min-w-0 rounded-xl border border-slate-200/80 bg-white p-3 sm:p-4">
           <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
             <div className="min-w-0 flex-1">
               <h2 className="text-base font-semibold leading-6 tracking-tight text-slate-950">Status-feed readiness</h2>
@@ -63,11 +62,11 @@ export async function TripFlightStatusMonitoringPanel() {
           <p className="mt-3 text-[13px] leading-5 text-slate-600">
             A configured feed does not mean updates are arriving. Live status requires signed provider updates for confirmed flights—not searches, handoffs or trip confirmations.
           </p>
-        </AdminSectionCard>
+        </section>
 
         {/* Keep monitoring cards visible when data is unavailable. */}
         <div className="grid min-w-0 items-stretch gap-3 lg:grid-cols-2">
-          <AdminSectionCard className="min-w-0 p-3 shadow-none sm:p-4">
+          <section className="min-w-0 rounded-xl border border-slate-200/80 bg-white p-3 sm:p-4">
             <h2 className="text-base font-semibold leading-6 tracking-tight text-slate-950">Latest status distribution</h2>
             <p className="mt-0.5 text-[13px] leading-5 text-slate-600">Latest stored statuses from the configured provider.</p>
             {!operations ? (
@@ -90,9 +89,9 @@ export async function TripFlightStatusMonitoringPanel() {
                   : "No status feed is configured; no snapshots to show."}
               </p>
             )}
-          </AdminSectionCard>
+          </section>
 
-          <AdminSectionCard className="min-w-0 p-3 shadow-none sm:p-4">
+          <section className="min-w-0 rounded-xl border border-slate-200/80 bg-white p-3 sm:p-4">
             <h2 className="text-base font-semibold leading-6 tracking-tight text-slate-950">Snapshot scope</h2>
             <p className="mt-1 text-[13px] leading-5 text-slate-600">
               We save only the latest status of the main flight in each confirmed trip. Return and connecting flights aren't tracked separately.
@@ -102,10 +101,10 @@ export async function TripFlightStatusMonitoringPanel() {
               <AdminStatusBadge>Latest snapshot only</AdminStatusBadge>
               <AdminStatusBadge>No segment history yet</AdminStatusBadge>
             </div>
-          </AdminSectionCard>
+          </section>
         </div>
 
-        <AdminSectionCard className="min-w-0 p-3 shadow-none sm:p-4">
+        <section className="min-w-0 rounded-xl border border-slate-200/80 bg-white p-3 sm:p-4">
           <h2 className="text-base font-semibold leading-6 tracking-tight text-slate-950">Awaiting first status snapshot</h2>
           <p className="mt-0.5 text-[13px] leading-5 text-slate-600">Provider-matched flights awaiting their first status.</p>
           {!operations ? (
@@ -137,9 +136,9 @@ export async function TripFlightStatusMonitoringPanel() {
                 : "No matching flights are waiting; the status feed is not ready."}
             </p>
           )}
-        </AdminSectionCard>
+        </section>
 
-        <AdminSectionCard className="min-w-0 p-3 shadow-none sm:p-4">
+        <section className="min-w-0 rounded-xl border border-slate-200/80 bg-white p-3 sm:p-4">
           <h2 className="text-base font-semibold leading-6 tracking-tight text-slate-950">Latest trusted flight-status snapshots</h2>
           <p className="mt-0.5 text-[13px] leading-5 text-slate-600">Latest verified statuses. This is not an event history.</p>
           {!operations ? (
@@ -171,7 +170,7 @@ export async function TripFlightStatusMonitoringPanel() {
                 : "No status feed is configured; no snapshots to show."}
             </p>
           )}
-        </AdminSectionCard>
+        </section>
     </div>
   );
 }
