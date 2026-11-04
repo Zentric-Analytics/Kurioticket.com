@@ -48,7 +48,7 @@ test("scope hardening uses optimistic concurrency and preserves explicit publish
   assert.match(hardeningService, /CMS_ORDER_NORMALIZED/);
   assert.match(hardeningService, /CMS_LEGACY_FALLBACK_RETIRED/);
   assert.match(hardeningService, /CMS_LEGACY_FALLBACK_REACTIVATED/);
-  assert.match(contentService, /action: "ORDER_NORMALIZED"/);
+  assert.match(hardeningService, /action: "ORDER_NORMALIZED"/);
   assert.doesNotMatch(
     hardeningService.slice(hardeningService.indexOf("export async function normalizeCmsDraftOrder"), hardeningService.indexOf("export async function setCmsLegacyFallbackRetired")),
     /publishedSortOrder:\s*nextOrder/,
