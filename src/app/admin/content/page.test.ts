@@ -12,7 +12,7 @@ const statusApi = readFileSync("src/app/api/admin/homepage-fares/status/route.ts
 const refreshApi = readFileSync("src/app/api/admin/homepage-fares/refresh/route.ts", "utf8");
 
 test("public content management exposes homepage and FAQ CMS areas while fare operations stay separate", () => {
-  assert.match(contentPage, /<ContentPageFrame title="Content"/);
+  assert.match(contentPage, /<ContentPageFrame title="Content" visuallyHideTitle/);
 
   for (const section of [
     "Homepage destinations",
@@ -163,6 +163,7 @@ test("Content management uses consistent arrow back links and clean page framing
   const frame = readFileSync("src/components/admin/ContentWorkspace.tsx", "utf8");
   assert.match(frame, /ArrowLeft size=\{14\}/);
   assert.match(frame, /href=\{backHref\}/);
+  assert.match(frame, /visuallyHideTitle \? "sr-only"/);
   assert.match(frame, /max-w-\[1138px\]/);
   assert.match(frame, /max-w-\[1500px\]/);
   assert.match(frame, /export function ContentSectionHeading/);
