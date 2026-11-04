@@ -33,7 +33,6 @@ test("missing status is scoped to the configured provider rather than all confir
   assert.match(service, /monitoringTrackedFlights/);
   assert.match(service, /monitoringStaleSnapshots/);
   assert.match(service, /flightStatusSnapshot: \{ is: null \}/);
-  assert.match(page, /Provider-matched flights awaiting their first status/);
   assert.match(page, /Matches status provider/);
 });
 
@@ -55,29 +54,18 @@ test("flight status operations shares the canonical freshness rule", () => {
 });
 
 test("flight status operations does not invent an event history or segment model", () => {
-  assert.match(page, /We save only the latest provider-supplied status for the main flight in each confirmed trip/);
-  assert.match(page, /Return and connecting flights aren't tracked separately/);
   assert.match(page, /No segment history yet/);
   assert.match(contract, /one operational snapshot per `MyTrip`/);
   assert.doesNotMatch(service, /FlightStatusEvent/);
 });
 
 
-test("Flight Status keeps one concise provider safety note within readiness, not a standalone card", () => {
-  assert.doesNotMatch(page, /<h2[^>]*>Operational boundaries<\/h2>/);
-  const readinessStart = page.indexOf(">Status-feed readiness</h2>");
-  const distributionStart = page.indexOf(">Latest status distribution</h2>", readinessStart);
-  assert.ok(readinessStart >= 0 && distributionStart > readinessStart);
-  const readinessCopy = page.slice(readinessStart, distributionStart);
-  assert.match(readinessCopy, /Only the configured provider can send signed updates/);
-  assert.match(readinessCopy, /A configured feed does not mean updates are arriving/);
-  assert.match(readinessCopy, /Live status requires signed provider updates for confirmed flights/);
-  assert.match(readinessCopy, /not searches, handoffs or trip confirmations/);
-  const note = readinessCopy.match(/<p className="mt-3 text-\[13px\] leading-5 text-slate-600">([\s\S]*?)<\/p>/);
-  assert.ok(note, "Keep exactly one concise readiness note below the five configuration fields");
-  assert.ok(note[1].trim().length < 185, "Readiness note should remain short");
-  assert.doesNotMatch(readinessCopy, /<div className="mt-3 space-y-1\.5">|Each signed update must name the configured provider/);
-  assert.doesNotMatch(readinessCopy, /Status records have no environment label|uses the connected/);
+test("Flight Status keeps provider safety in backend contracts without explanatory UI copy", () => {
+  assert.doesNotMatch(page, /Only the configured provider can send signed updates|A configured feed does not mean updates are arriving|Live status requires signed provider updates for confirmed flights/);
+  assert.match(service, /FLIGHT_STATUS_PROVIDER_NAME/);
+  assert.match(service, /FLIGHT_STATUS_WEBHOOK_SECRET/);
+  assert.match(service, /credentialModel: "single_provider_bound_secret"/);
+  assert.match(contract, /does not infer operational flight status from a search, a provider handoff, or a booking confirmation/);
   assert.equal((page.match(/<section className="min-w-0 rounded-xl border border-slate-200\/80 bg-white p-3 sm:p-4">/g) || []).length, 4);
   assert.match(page, /<div className="min-w-0 space-y-4">/);
   assert.match(page, /grid w-full min-w-\[960px\] grid-cols-6 gap-2/);
@@ -118,7 +106,6 @@ test("all Flight Status monitoring sections remain visible without duplicate sco
   assert.doesNotMatch(page, />Snapshot scope<\/h2>/);
   assert.doesNotMatch(page, />Flight status overview<\/h2>/);
   assert.match(page, /id="flight-status-overview-title" aria-label="Flight status overview"/);
-  assert.match(page, /We save only the latest provider-supplied status for the main flight in each confirmed trip/);
   assert.match(page, /Provider supplied only/);
   assert.match(page, /Latest snapshot only/);
   assert.match(page, /No segment history yet/);
@@ -220,19 +207,11 @@ test("all six Flight Status metrics form one accessible horizontal row without p
   }
 });
 
-test("short descriptions preserve source and data-availability boundaries", () => {
-  for (const sentence of [
-    "Only the configured provider can send signed updates.",
-    "Duffel search and KAYAK sandbox do not supply this feed.",
-    "A configured feed does not mean updates are arriving.",
-    "Live status requires signed provider updates for confirmed flights",
-    "not searches, handoffs or trip confirmations.",
-    "Latest stored statuses from the configured provider.",
-    "We save only the latest provider-supplied status for the main flight in each confirmed trip.",
-    "Return and connecting flights aren't tracked separately.",
-  ]) {
-    assert.ok(page.includes(sentence), "Key boundary missing: " + sentence);
-  }
+test("data-availability boundaries remain truthful without explanatory helper copy", () => {
+  assert.doesNotMatch(page, /Only the configured provider can send signed updates|Duffel search and KAYAK sandbox do not supply this feed|A configured feed does not mean updates are arriving|Latest stored statuses from the configured provider|Provider-matched flights awaiting their first status|Latest verified statuses\. This is not an event history|We save only the latest provider-supplied status for the main flight/);
+  assert.match(service, /providerName: readiness\.providerName/);
+  assert.match(service, /flightStatusSnapshot: \{ is: null \}/);
+  assert.match(contract, /one operational snapshot per `MyTrip`/);
   assert.match(page, /No zero values were invented/);
   assert.match(page, /No counts are assumed/);
   assert.match(page, /Count awaiting first status is unknown/);
@@ -253,8 +232,7 @@ test("Snapshot scope is folded into status-feed readiness", () => {
   const distributionStart = page.indexOf(">Latest status distribution</h2>", readinessStart);
   assert.ok(readinessStart >= 0 && distributionStart > readinessStart);
   const readiness = page.slice(readinessStart, distributionStart);
-  assert.match(readiness, /We save only the latest provider-supplied status for the main flight in each confirmed trip/);
-  assert.match(readiness, /Return and connecting flights aren't tracked separately/);
+  assert.doesNotMatch(readiness, /We save only the latest provider-supplied status for the main flight|Return and connecting flights aren't tracked separately/);
   assert.match(readiness, /Provider supplied only/);
   assert.match(readiness, /Latest snapshot only/);
   assert.match(readiness, /No segment history yet/);
