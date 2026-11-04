@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import type { FeatureControlEnvironment, FeatureControlKey } from "@/lib/feature-controls/registry";
 
 type Control = {
@@ -34,37 +35,65 @@ export function FeatureControlsPanel({
   const [reason, setReason] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const router = useRouter();
   const categories = Array.from(new Set(controls.map((control) => control.category)));
 
-  async function submit() {
+  function closePending() {
+    if (saving) return;
+    setPending(null);
+    setError("");
+    setReason("");
+  }
+
+  useEffect(() => {
     if (!pending) return;
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape" && !saving) closePending();
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [pending, saving]);
+
+  async function submit() {
+    if (!pending || saving) return;
     setSaving(true);
     setError("");
-    const response = await fetch("/api/admin/feature-controls", {
-      method: "PATCH",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        key: pending.control.key,
-        enabled: pending.enabled,
-        ...(reason.trim() ? { reason: reason.trim() } : {}),
-      }),
-    });
-    const body = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      setError(body.error || "The control could not be changed.");
+    try {
+      const response = await fetch("/api/admin/feature-controls", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          key: pending.control.key,
+          enabled: pending.enabled,
+          ...(reason.trim() ? { reason: reason.trim() } : {}),
+        }),
+      });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        setError(body.error || "The control could not be changed.");
+        return;
+      }
+      setControls((current) =>
+        current.map((control) =>
+          control.key === pending.control.key
+            ? {
+                ...control,
+                state: {
+                  enabled: body.enabled,
+                  updatedAt: typeof body.updatedAt === "string" ? body.updatedAt : control.state.updatedAt,
+                },
+              }
+            : control,
+        ),
+      );
+      setPending(null);
+      setReason("");
+      router.refresh();
+    } catch {
+      setError("The control could not be changed. Please try again.");
+    } finally {
       setSaving(false);
-      return;
     }
-    setControls((current) =>
-      current.map((control) =>
-        control.key === pending.control.key
-          ? { ...control, state: { enabled: body.enabled, updatedAt: new Date().toISOString() } }
-          : control,
-      ),
-    );
-    setPending(null);
-    setReason("");
-    setSaving(false);
   }
 
   return (
@@ -72,6 +101,10 @@ export function FeatureControlsPanel({
       {!operationsAvailable ? (
         <p role="status" className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-[13px] font-medium leading-5 text-amber-800">
           Feature controls are in read-only fallback mode. Registry defaults are shown and changes are disabled.
+        </p>
+      ) : environment === "PRODUCTION" && !canControlProduction ? (
+        <p role="status" className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-[13px] font-medium leading-5 text-slate-700">
+          Production controls are view only for your account.
         </p>
       ) : null}
 
@@ -113,6 +146,8 @@ export function FeatureControlsPanel({
                       </div>
                       <button
                         type="button"
+                        aria-pressed={control.state.enabled}
+                        aria-label={(control.state.enabled ? "Disable " : "Enable ") + control.name}
                         disabled={!permitted}
                         onClick={() => setPending({ control, enabled: !control.state.enabled })}
                         className={
@@ -149,6 +184,7 @@ export function FeatureControlsPanel({
               Reason {environment === "PRODUCTION" ? "(required)" : "(optional)"}
               <textarea
                 maxLength={500}
+                disabled={saving}
                 value={reason}
                 onChange={(event) => setReason(event.target.value)}
                 className="mt-2 min-h-24 w-full rounded-lg border border-slate-300 p-3 text-[13px] outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
@@ -158,17 +194,15 @@ export function FeatureControlsPanel({
             <div className="mt-5 flex justify-end gap-2">
               <button
                 type="button"
-                onClick={() => {
-                  setPending(null);
-                  setError("");
-                  setReason("");
-                }}
-                className="inline-flex h-9 items-center rounded-lg px-3 text-[13px] font-semibold text-slate-700 hover:bg-slate-100"
+                disabled={saving}
+                onClick={closePending}
+                className="inline-flex h-9 items-center rounded-lg px-3 text-[13px] font-semibold text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 type="button"
+                aria-busy={saving}
                 disabled={saving || (environment === "PRODUCTION" && !reason.trim())}
                 onClick={submit}
                 className="inline-flex h-9 items-center rounded-lg bg-indigo-700 px-3 text-[13px] font-semibold text-white hover:bg-indigo-800 disabled:opacity-50"
