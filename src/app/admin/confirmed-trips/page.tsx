@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import {
   Activity,
   ArrowRight,
@@ -66,9 +67,13 @@ function TripMetric({
 export default async function AdminConfirmedTripsPage({ searchParams }: Props) {
   const raw = (await searchParams) ?? {};
   const parsed = parseAdminTripWorkspace(raw);
+  // Preserve legacy custom-date bookmarks without applying invisible filters
+  // to the simplified five-field Trip Directory workspace.
+  if (parsed.ok && parsed.range === "custom") {
+    redirect(tripDirectoryHref(parsed.filters));
+  }
   const filters = parsed.ok ? parsed.filters : blankFilters;
   const range = parsed.ok ? parsed.range : "all";
-  const dateFields = parsed.ok ? parsed.dateFields : { from: "", to: "" };
   // The product/provider snapshot supplies provider names to the directory filter.
   // Confirmation readiness and delivery telemetry are now loaded only on Trip operations.
   const [operations, directory] = await Promise.all([
@@ -106,7 +111,7 @@ export default async function AdminConfirmedTripsPage({ searchParams }: Props) {
           <section aria-labelledby="trip-directory-title" id="trip-directory" className="min-w-0 rounded-xl border border-slate-200/80 bg-white px-4 py-3 sm:px-5 sm:py-4">
             <h2 id="trip-directory-title" className="mb-3 text-base font-semibold text-slate-950">Trip directory</h2>
 
-            <TripFilterControls filters={filters} range={range} dateFields={dateFields}
+            <TripFilterControls filters={filters} range={range}
               key={[filters.q, filters.provider, filters.product, filters.status, range, filters.from, filters.to].join("|")}
               providerNames={operations?.byProvider.map(item => item.provider) ?? []} />
 
