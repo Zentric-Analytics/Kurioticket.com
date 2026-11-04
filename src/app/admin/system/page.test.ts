@@ -34,7 +34,12 @@ test("System child routes use the same compact horizontal navigation", () => {
   assert.match(adminShell, /function SystemSectionTabs/);
   assert.match(adminShell, /aria-label="System sections"/);
   assert.match(adminShell, /systemSectionsVisible \? <SystemSectionTabs/);
-  assert.match(adminShell, /overflow-x-auto whitespace-nowrap/);
+  assert.match(adminShell, /gap-6 overflow-x-auto whitespace-nowrap/);
+  assert.match(adminShell, /border-b border-\[#D8E1EC\]/);
+  assert.match(adminShell, /h-11 shrink-0 items-center whitespace-nowrap border-b-2 px-1 text-\[13px\] font-medium text-\[#020617\]/);
+  assert.match(adminShell, /<main className="mx-auto w-full max-w-\[1920px\]/);
+  assert.match(adminShell, /\{systemSectionsVisible \? <SystemSectionTabs entries=\{systemChildren\} pathname=\{pathname\} \/> : null\}/);
+  assert.doesNotMatch(adminShell, /<\/header>\s*\{systemSectionsVisible/);
   assert.match(adminShell, /border-b-2/);
   assert.match(adminShell, /aria-current=\{active \? "page" : undefined\}/);
   assert.match(adminShell, /aria-current=\{pathname === item\.href \|\| pathname === item\.href \+ "\/" \? "page" : undefined\}/);

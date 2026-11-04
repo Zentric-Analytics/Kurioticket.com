@@ -60,21 +60,19 @@ function SystemSectionTabs({ entries, pathname }: { entries: HeaderEntry["childr
   ];
 
   return (
-    <nav aria-label="System sections" className="border-b border-slate-200 bg-white">
-      <div className="mx-auto w-full max-w-[1920px] px-4 sm:px-6 lg:px-10">
-        <div className="flex items-center gap-5 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <nav aria-label="System sections" className="min-w-0 border-b border-[#D8E1EC] bg-white">
+      <div className="flex min-w-0 items-center gap-6 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {tabs.map((tab) => {
             const active = pathname === tab.href || pathname === tab.href + "/" ||
               (tab.href !== "/admin/system" && pathname.startsWith(tab.href + "/"));
             return (
               <Link key={tab.href} href={tab.href} aria-current={active ? "page" : undefined}
-                className={"relative inline-flex min-h-11 shrink-0 items-center border-b-2 px-0.5 py-2 text-[13px] font-medium leading-5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 " +
-                  (active ? "border-[#004BB8] text-[#0F172A]" : "border-transparent text-[#475569] hover:text-[#0F172A]")}>
+                className={"inline-flex h-11 shrink-0 items-center whitespace-nowrap border-b-2 px-1 text-[13px] font-medium text-[#020617] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] " +
+                  (active ? "border-[#004BB8]" : "border-transparent hover:border-[#D8E1EC]")}>
                 {tab.label}
               </Link>
             );
           })}
-        </div>
       </div>
     </nav>
   );
@@ -218,8 +216,10 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
       {mobileOpen ? <div className="max-h-[70vh] overflow-y-auto border-t border-slate-100 bg-white min-[1100px]:hidden"><Navigation groups={groups} pathname={pathname} mobile close={() => setMobileOpen(false)} /></div> : null}
       </AdminSearchHeader>
     </header>
-    {systemSectionsVisible ? <SystemSectionTabs entries={systemChildren} pathname={pathname} /> : null}
-    <main className="mx-auto w-full max-w-[1920px] px-4 py-5 sm:px-6 lg:px-10"><AdminSearchContent>{children}</AdminSearchContent></main>
+    <main className="mx-auto w-full max-w-[1920px] px-4 py-5 sm:px-6 lg:px-10">
+      {systemSectionsVisible ? <SystemSectionTabs entries={systemChildren} pathname={pathname} /> : null}
+      <div className={systemSectionsVisible ? "pt-5" : ""}><AdminSearchContent>{children}</AdminSearchContent></div>
+    </main>
 
   </div></AdminWorkspaceSearchProvider>;
 }
