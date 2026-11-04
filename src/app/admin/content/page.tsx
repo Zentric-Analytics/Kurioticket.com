@@ -64,7 +64,7 @@ export default async function AdminContentPage() {
   ];
 
   return (
-    <ContentPageFrame title="Content">
+    <ContentPageFrame title="Content" visuallyHideTitle>
       <div className="space-y-4">
         {homepageNeedsSetup ? (
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50/60 px-4 py-3">
