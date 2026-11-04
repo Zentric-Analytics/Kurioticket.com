@@ -38,11 +38,7 @@ export default function TripMonitoringLoading() {
               </div>
 
               <div aria-hidden="true" className="min-w-0 space-y-4">
-                <section className="min-w-0">
-                  <div className="mb-2.5 flex items-center gap-2">
-                    <FileCheck2 size={17} className="shrink-0 text-indigo-700" aria-hidden="true" />
-                    <span className="text-sm font-semibold text-slate-900">Detailed product and provider breakdowns</span>
-                  </div>
+                <section aria-label="Confirmed trip breakdowns" className="min-w-0">
                   <div className="grid items-start gap-3 lg:grid-cols-2">
                     <SkeletonPanel rows={2} />
                     <SkeletonPanel rows={2} />
