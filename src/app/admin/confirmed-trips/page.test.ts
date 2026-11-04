@@ -4,7 +4,10 @@ import test from "node:test";
 
 const page = readFileSync("src/app/admin/confirmed-trips/page.tsx", "utf8");
 const loading = readFileSync("src/app/admin/confirmed-trips/loading.tsx", "utf8");
-const operationsPage = readFileSync("src/app/admin/confirmed-trips/operations/page.tsx", "utf8");
+const operationsPage = readFileSync("src/components/admin/TripConfirmationsMonitoringPanel.tsx", "utf8");
+const monitoringPage = readFileSync("src/app/admin/confirmed-trips/monitoring/page.tsx", "utf8");
+const operationsRedirect = readFileSync("src/app/admin/confirmed-trips/operations/page.tsx", "utf8");
+const flightStatusRedirect = readFileSync("src/app/admin/flight-status/page.tsx", "utf8");
 const directory = readFileSync("src/app/admin/confirmed-trips/records/page.tsx", "utf8");
 const recordsView = readFileSync("src/components/admin/TripDirectoryView.tsx", "utf8");
 const controls = readFileSync("src/components/admin/TripFilterControls.tsx", "utf8");
@@ -27,8 +30,8 @@ test("Trips preserves its existing admin workspace without a visible page introd
   assert.match(page, /role="group" aria-label="Trip shortcuts"/);
   assert.match(navigation, /href: "\/admin\/confirmed-trips", label: "Trips"/);
   assert.doesNotMatch(page, /href="\/admin\/confirmed-trips\/records"|Browse confirmed trips|Open full directory/);
-  assert.match(page, /href="\/admin\/confirmed-trips\/operations"/);
-  assert.match(page, /href="\/admin\/flight-status"/);
+  assert.match(page, /href="\/admin\/confirmed-trips\/monitoring"/);
+  assert.match(page, /href="\/admin\/confirmed-trips\/monitoring"/);
   assert.match(shell, /border-slate-200 bg-white shadow-sm/);
   assert.doesNotMatch(page, /Admin operations|Jump to:/);
   assert.doesNotMatch(page, /Kurioticket handles refunds|Cancel booking|Issue ticket/);
@@ -43,8 +46,8 @@ test("Trip directory is the primary record workspace without duplicate entry lin
   assert.match(page, /Older matching trips/);
   assert.match(recordsView, /encodeURIComponent\(trip\.id\)/);
   assert.match(directory, /await requireAdminSession\("\/admin\/confirmed-trips\/records"\)/);
-  assert.match(page, /href="\/admin\/confirmed-trips\/operations"/);
-  assert.match(page, /href="\/admin\/flight-status"/);
+  assert.match(page, /href="\/admin\/confirmed-trips\/monitoring"/);
+  assert.match(page, /href="\/admin\/confirmed-trips\/monitoring"/);
 });
 
 test("main Trips workspace contains two compact sections and a visible Trip operations shortcut", () => {
@@ -267,21 +270,24 @@ test("both directory views use genuine records and the same read-only details ro
   assert.doesNotMatch(recordsView, /mockRows|sampleData|random|Cancel booking|Refund now/);
 });
 
-test("relocated Trip operations remains discoverable, authenticated and complete", () => {
-  assert.match(page, /href="\/admin\/confirmed-trips\/operations"/);
-  assert.match(loading, /href="\/admin\/confirmed-trips\/operations"/);
-  assert.doesNotMatch(loading, /Browse confirmed trips|href="\/admin\/confirmed-trips\/records"/);
-  assert.doesNotMatch(page, /Related trip operations|getConfirmationDeliveryHealth\(\)|getConfirmedTripsIntegrationReadiness\(\)/);
-  assert.match(operationsPage, /<AdminPageShell title="Trip operations" hideHeader>/);
-  assert.match(operationsPage, /await requireAdminSession\("\/admin\/confirmed-trips\/operations"\)/);
-  assert.match(operationsPage, /href="\/admin\/confirmed-trips"/);
-  assert.doesNotMatch(operationsPage, /href="\/admin\/confirmed-trips\/records"|Browse confirmed trips/);
-  assert.match(operationsPage, /Back to Trips/);
-  assert.match(operationsPage, /href="\/admin\/flight-status"/);
+test("unified Trip monitoring consolidates protected confirmation and flight-status panels", () => {
+  assert.match(page, /href="\/admin\/confirmed-trips\/monitoring"/);
+  assert.match(loading, /href="\/admin\/confirmed-trips\/monitoring"/);
+  assert.doesNotMatch(page + loading, /href="\/admin\/flight-status"|href="\/admin\/confirmed-trips\/operations"/);
+  assert.match(monitoringPage, /<AdminPageShell title="Trip monitoring" hideHeader>/);
+  assert.match(monitoringPage, /await requireAdminSession\("\/admin\/confirmed-trips\/monitoring"\)/);
+  assert.match(monitoringPage, /href="\/admin\/confirmed-trips"/);
+  assert.match(monitoringPage, /Back to Trips/);
+  assert.match(monitoringPage, /<TripConfirmationsMonitoringPanel expandDelivery=\{panel === "delivery"\} \/>/);
+  assert.match(monitoringPage, /<TripFlightStatusMonitoringPanel \/>/);
+  assert.match(monitoringPage, /id="trip-confirmations-panel" open=\{showConfirmations\}/);
+  assert.match(monitoringPage, /id="trip-flight-status-panel" open=\{showFlightStatus\}/);
+  assert.match(operationsRedirect, /await requireAdminSession\("\/admin\/confirmed-trips\/operations"\)/);
+  assert.match(operationsRedirect, /redirect\("\/admin\/confirmed-trips\/monitoring\?panel=delivery#confirmation-delivery-health-title"\)/);
+  assert.match(flightStatusRedirect, /redirect\("\/admin\/confirmed-trips\/monitoring\?panel=flight#flight-status-overview-title"\)/);
   assert.match(operationsPage, /Detailed product and provider breakdowns/);
   assert.match(operationsPage, /Confirmation integration readiness/);
   assert.match(operationsPage, /Confirmation delivery health and alerts/);
-  assert.match(operationsPage, /Flight status monitoring/);
   assert.equal((operationsPage.match(/<details/g) ?? []).length, 3);
   assert.match(operationsPage, /<ConfirmedTripsBreakdowns operations=\{operations\} \/>/);
   assert.match(operationsPage, /getConfirmedTripsIntegrationReadiness\(\)/);
@@ -300,7 +306,6 @@ test("relocated Trip operations remains discoverable, authenticated and complete
   ]) assert.ok(operationsPage.includes(property), property);
   assert.match(operationsPage, /readiness\.feedReady \? <ConfirmedTripDeliveryAlerts \/> : null/);
   assert.match(operationsPage, /id="confirmation-delivery-health-title"/);
-  assert.match(operationsPage, /const expandDelivery = panel === "delivery"/);
   assert.match(operationsPage, /open=\{expandDelivery\}/);
   assert.doesNotMatch(operationsPage, /mockData|sampleTrips|Math\.random|process\.env/);
 });

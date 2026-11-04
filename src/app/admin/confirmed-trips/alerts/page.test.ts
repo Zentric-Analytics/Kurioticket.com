@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const route = readFileSync("src/app/admin/confirmed-trips/alerts/page.tsx", "utf8");
-const operations = readFileSync("src/app/admin/confirmed-trips/operations/page.tsx", "utf8");
+const operations = readFileSync("src/components/admin/TripConfirmationsMonitoringPanel.tsx", "utf8");
 const inline = readFileSync("src/components/admin/ConfirmedTripDeliveryAlerts.tsx", "utf8");
 const globalAlerts = readFileSync("src/app/admin/notifications/page.tsx", "utf8");
 const core = readFileSync("src/services/adminAlertCore.ts", "utf8");
@@ -66,9 +66,9 @@ test("genuine alerts expand in place and reuse protected acknowledgement", () =>
   assert.doesNotMatch(inline, /<form|method:\s*"(?:POST|PATCH|DELETE)"|providerConfirmationSecret/);
 });
 
-test("old Confirmation alerts links safely redirect to Delivery Health within Trip operations", () => {
+test("old Confirmation alerts links safely redirect to Delivery Health within Trip monitoring", () => {
   assert.match(route, /await requireAdminSession\("\/admin\/confirmed-trips\/alerts"\)/);
-  assert.match(route, /redirect\("\/admin\/confirmed-trips\/operations\?panel=delivery#confirmation-delivery-health-title"\)/);
+  assert.match(route, /redirect\("\/admin\/confirmed-trips\/monitoring\?panel=delivery#confirmation-delivery-health-title"\)/);
   assert.doesNotMatch(route, /<AdminPageShell|Monitoring inactive|No confirmation provider feed is configured|<AdminSectionCard/);
   assert.match(operations, /id="confirmation-delivery-health-title"/);
   assert.match(operations, /open=\{expandDelivery\}/);

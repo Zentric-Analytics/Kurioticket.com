@@ -2,14 +2,16 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-const page = readFileSync("src/app/admin/flight-status/page.tsx", "utf8");
+const page = readFileSync("src/components/admin/TripFlightStatusMonitoringPanel.tsx", "utf8");
+const monitoring = readFileSync("src/app/admin/confirmed-trips/monitoring/page.tsx", "utf8");
+const route = readFileSync("src/app/admin/flight-status/page.tsx", "utf8");
 const service = readFileSync("src/services/adminFlightStatusOperationsService.ts", "utf8");
 const statusService = readFileSync("src/services/flightStatusService.ts", "utf8");
 const navigation = readFileSync("src/lib/adminNavigation.ts", "utf8");
 const contract = readFileSync("docs/partner-flight-status-contract.md", "utf8");
 
 test("flight status admin is a read-only trusted snapshot operations page", () => {
-  assert.match(page, /<AdminPageShell title="Flight Status Operations" hideHeader>/);
+  assert.match(monitoring, /<AdminPageShell title="Trip monitoring" hideHeader>/);
   assert.doesNotMatch(page, /description="Monitor trusted provider-supplied operational flight status/);
   assert.doesNotMatch(page, /Search results, handoffs and booking confirmations never infer live status/);
   assert.match(page, /Latest trusted flight-status snapshots/);
@@ -77,7 +79,7 @@ test("Flight Status keeps one concise provider safety note within readiness, not
   assert.doesNotMatch(readinessCopy, /<div className="mt-3 space-y-1\.5">|Each signed update must name the configured provider/);
   assert.doesNotMatch(readinessCopy, /Status records have no environment label|uses the connected/);
   assert.equal((page.match(/<AdminSectionCard className="min-w-0 p-3 shadow-none sm:p-4">/g) || []).length, 5);
-  assert.match(page, /<AdminSectionCard className="min-w-0 space-y-3 p-4 sm:p-5 lg:p-6">/);
+  assert.match(page, /<div className="min-w-0 space-y-3">/);
   assert.match(page, /grid w-full min-w-\[960px\] grid-cols-6 gap-2/);
   assert.match(page, /No zero values were invented/);
   assert.match(page, /Flight-status distribution is unavailable\. No counts are assumed/);
@@ -88,7 +90,7 @@ test("Flight Status keeps one concise provider safety note within readiness, not
 test("flight status operations preserves the metasearch boundary", () => {
   assert.match(page, /not searches, handoffs or trip confirmations/);
   assert.match(contract, /does not infer operational flight status from a search, a provider handoff, or a booking confirmation/);
-  assert.match(navigation, /href: "\/admin\/flight-status"/);
+  assert.match(navigation, /href: "\/admin\/confirmed-trips\/monitoring"/);
   assert.doesNotMatch(navigation, /\/admin\/bookings/);
 });
 
@@ -196,7 +198,7 @@ test("Flight Status overview has no extra outline or double padding and keeps co
   }
   assert.match(overview, /role="status"/);
   assert.match(overview, /No zero values were invented/);
-  assert.match(page, /<AdminSectionCard className="min-w-0 space-y-3 p-4 sm:p-5 lg:p-6">/);
+  assert.match(page, /<div className="min-w-0 space-y-3">/);
   assert.doesNotMatch(page, /className="[^"]*(?:\bhidden\b|\binvisible\b|\bopacity-0\b)/);
 });
 
@@ -243,8 +245,8 @@ test("short descriptions preserve source and data-availability boundaries", () =
   assert.match(page, /No verified flight-status snapshots recorded yet/);
   assert.match(page, /Recent flight-status data unavailable/);
   assert.match(page, /No status feed is configured; no snapshots to show/);
-  assert.match(page, /<AdminPageShell title="Flight Status Operations" hideHeader>/);
-  assert.match(page, /href="\/admin\/confirmed-trips"/);
+  assert.match(monitoring, /<AdminPageShell title="Trip monitoring" hideHeader>/);
+  assert.match(monitoring, /href="\/admin\/confirmed-trips"/);
   assert.doesNotMatch(page, /href="\/admin\/flights"|href="\/admin\/searches\/activity/);
   assert.match(page, /operations\.statusDistribution\.map/);
   assert.match(page, /operations\.awaitingFirstSnapshot\.map/);
@@ -292,26 +294,16 @@ test("Flight Status uses consistent compact sections, balanced readiness facts a
   assert.doesNotMatch(page, /className="[^"]*(?:\bhidden\b|\binvisible\b|\bopacity-0\b)/);
 });
 
-test("Flight Status has a left-aligned Back to Confirmed Trips link and keeps Flight Search in Search Activity", () => {
-  const match = page.match(/<nav aria-label="Flight Status navigation" className="([^"]+)">([\s\S]*?)<\/nav>/);
-  assert.ok(match, "Flight Status back navigation must be visible");
-  const [, classes, navigationLinks] = match;
-  assert.match(classes, /mb-3/);
-  assert.match(classes, /justify-start/);
-  assert.match(classes, /flex-wrap/);
-  assert.doesNotMatch(classes, /justify-end/);
-  const link = navigationLinks.match(/<Link href="\/admin\/confirmed-trips" className="([^"]+)">([\s\S]*?)<\/Link>/);
-  assert.ok(link, "Back link must navigate directly to Confirmed Trips");
-  assert.match(link[1], /min-h-9/);
-  assert.match(link[1], /font-medium/);
-  assert.match(link[1], /focus-visible:ring-2/);
-  assert.doesNotMatch(link[1], /(?:^|\s)(?:border(?:-[^\s"]+)?|bg-[^\s"]+|font-bold|font-semibold)(?:\s|$)/, "Use an understated navigation link, not a prominent button");
-  assert.match(link[2], /<ArrowLeft size=\{16\} aria-hidden="true" \/>/);
-  assert.match(link[2], /Back to Confirmed Trips/);
-  assert.equal((navigationLinks.match(/<Link /g) || []).length, 1, "Keep only the relevant Confirmed Trips back link");
-  assert.doesNotMatch(navigationLinks, /href="\/admin\/flights"|href="\/admin\/searches\/activity|Flight search operations/);
-
-  // Flight search monitoring is still available from the canonical admin navigation.
+test("legacy Flight Status links redirect securely to the expanded monitoring panel", () => {
+  assert.match(route, /await requireAdminSession\("\/admin\/flight-status"\)/);
+  assert.match(route, /redirect\("\/admin\/confirmed-trips\/monitoring\?panel=flight#flight-status-overview-title"\)/);
+  assert.doesNotMatch(route, /<AdminPageShell|<AdminSectionCard|<FlightStatusMetric/);
+  assert.match(monitoring, /<AdminPageShell title="Trip monitoring" hideHeader>/);
+  assert.match(monitoring, /<nav aria-label="Trip monitoring navigation"/);
+  assert.match(monitoring, /href="\/admin\/confirmed-trips"/);
+  assert.match(monitoring, /Back to Trips/);
+  assert.match(monitoring, /<TripFlightStatusMonitoringPanel \/>/);
+  assert.match(monitoring, /id="trip-flight-status-panel" open=\{showFlightStatus\}/);
   const searchActivity = readFileSync("src/app/admin/searches/activity/page.tsx", "utf8");
   assert.match(searchActivity, /{ label: "Flights", value: "FLIGHT" }/);
   assert.match(searchActivity, /one\(raw\.product\) === item\.value/);
@@ -319,48 +311,19 @@ test("Flight Status has a left-aligned Back to Confirmed Trips link and keeps Fl
   assert.match(navigation, /href: "\/admin\/flights", parentHref: "\/admin\/providers"/);
 });
 
-
-
-test("Flight Status hides only the page introduction and preserves an accessible title", () => {
+test("unified Trip monitoring owns a single parent while preserving original flight-status sections", () => {
   const shell = readFileSync("src/components/admin/AdminPageShellHistorical.tsx", "utf8");
   assert.match(shell, /hideHeader\s*\?\s*<h1 className="sr-only">\{title\}<\/h1>/);
-  assert.match(shell, /hideHeader \? "" : "mt-6"/);
-  assert.match(page, /<AdminPageShell title="Flight Status Operations" hideHeader>/);
-  assert.doesNotMatch(page, /eyebrow=|description=|actions=\{/);
-  assert.doesNotMatch(page, /Admin operations|Monitor trusted provider-supplied operational flight status/);
-  const navigationIndex = page.indexOf('<nav aria-label="Flight Status navigation"');
-  const parentIndex = page.indexOf('<AdminSectionCard className="min-w-0 space-y-3 p-4 sm:p-5 lg:p-6">');
-  assert.ok(navigationIndex > 0 && parentIndex > navigationIndex, "The back link must sit above the original parent card");
-  assert.equal((page.match(/href="\/admin\/confirmed-trips"/g) || []).length, 1);
-  for (const section of ["Flight status overview", "Status-feed readiness", "Latest status distribution",
-    "Snapshot scope", "Awaiting first status snapshot", "Latest trusted flight-status snapshots"]) {
-    assert.ok(page.includes(section), "Preserve operational section: " + section);
-  }
-  assert.match(page, /getFlightStatusOperationsSnapshot\(undefined, readiness\)/);
-  assert.match(page, /No zero values were invented/);
-});
-
-test("Flight Status uses the same single white parent column as Admin Overview", () => {
-  const overviewPage = readFileSync("src/app/admin/page.tsx", "utf8");
-  assert.match(overviewPage, /<AdminSectionCard className="min-w-0 p-4 sm:p-5 lg:p-6">/);
-  const parentOpening = '<AdminSectionCard className="min-w-0 space-y-3 p-4 sm:p-5 lg:p-6">';
-  const parentStart = page.indexOf(parentOpening);
-  const parentEnd = page.lastIndexOf("</AdminSectionCard>");
-  const shellEnd = page.indexOf("</AdminPageShell>", parentEnd);
-
-  assert.ok(parentStart >= 0 && parentEnd > parentStart && shellEnd > parentEnd,
-    "One parent card must wrap the Flight Status operational content inside AdminPageShell");
-  assert.equal((page.match(/<AdminSectionCard className="min-w-0 space-y-3 p-4 sm:p-5 lg:p-6">/g) || []).length, 1,
-    "A single parent card should be used, not an extra stack of nested parent containers");
-  assert.match(page, />\s*<AdminSectionCard className="min-w-0 space-y-3 p-4 sm:p-5 lg:p-6">\s*<section aria-labelledby="flight-status-overview-title"/);
-  assert.doesNotMatch(page.slice(parentStart, parentEnd), /className="[^"]*(?:\bhidden\b|\binvisible\b|\bopacity-0\b)/);
-  const order = ["Flight status overview", "Status-feed readiness", "Latest status distribution",
+  assert.match(monitoring, /<AdminSectionCard className="min-w-0 p-4 sm:p-5 lg:p-6">/);
+  assert.equal((monitoring.match(/<AdminSectionCard /g) || []).length, 1);
+  assert.match(monitoring, /<TripConfirmationsMonitoringPanel expandDelivery=\{panel === "delivery"\} \/>/);
+  assert.match(monitoring, /<TripFlightStatusMonitoringPanel \/>/);
+  assert.match(page, /<div className="min-w-0 space-y-3">/);
+  const sections = ["Flight status overview", "Status-feed readiness", "Latest status distribution",
     "Snapshot scope", "Awaiting first status snapshot", "Latest trusted flight-status snapshots"];
-  const positions = order.map(label => page.indexOf(">" + label + "</h2>", parentStart));
-  assert.ok(positions.every(n => n > parentStart && n < parentEnd), "All existing sections must stay within the parent card");
-  assert.deepEqual(positions, [...positions].sort((a, b) => a - b), "Keep the existing section order");
-  assert.match(page.slice(0, parentStart), /href="\/admin\/confirmed-trips"/);
-  assert.doesNotMatch(page.slice(0, parentStart), /href="\/admin\/searches\/activity\?product=FLIGHT"/);
+  const positions = sections.map(label => page.indexOf(">" + label + "</h2>"));
+  assert.ok(positions.every(n => n >= 0), "All original sections must remain");
+  assert.deepEqual(positions, [...positions].sort((a, b) => a - b));
   assert.equal((page.match(/<FlightStatusMetric label=/g) || []).length, 6);
   assert.match(page, /grid w-full min-w-\[960px\] grid-cols-6 gap-2/);
   assert.match(page, /No zero values were invented/);
