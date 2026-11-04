@@ -2,16 +2,17 @@ import Link from "next/link";
 import { ArrowUpRight, Building2, CircleHelp, MapPin, Plane } from "lucide-react";
 
 import { ContentPageFrame } from "@/components/admin/ContentWorkspace";
-import { getCmsContentScopeSummary } from "@/services/cmsContentService";
+import { getCmsContentMarketOverview, getCmsContentScopeSummary } from "@/services/cmsContentService";
 import { faqCmsScope } from "@/services/faqCmsService";
-import { homepageCmsLocale } from "@/services/homepageCmsService";
+import { homepageCmsLocale, homepageCmsMarkets } from "@/services/homepageCmsService";
 
 export const metadata = { title: "Admin Content" };
 
-type CmsScopeSummary = Awaited<ReturnType<typeof getCmsContentScopeSummary>> | null;
+type CmsScopeSummary = { available: boolean; active: boolean; needsSetup?: boolean; publishedInScope: number } | null;
 
 function contentScopeStatus(summary: CmsScopeSummary) {
   if (!summary?.available) return "Unavailable";
+  if (summary.needsSetup) return "Setup required";
   return summary.active ? "CMS managed" : "Setup required";
 }
 
@@ -22,13 +23,15 @@ function publishedContentCount(summary: CmsScopeSummary) {
 export default async function AdminContentPage() {
   const [faqSummary, destinationSummary, flightSummary, hotelSummary] = await Promise.all([
     getCmsContentScopeSummary("FAQ", faqCmsScope.market, faqCmsScope.locale).catch(() => null),
-    getCmsContentScopeSummary("HOMEPAGE_DESTINATION", "US", homepageCmsLocale).catch(() => null),
-    getCmsContentScopeSummary("FLIGHT_ROUTE", "US", homepageCmsLocale).catch(() => null),
+    getCmsContentMarketOverview("HOMEPAGE_DESTINATION", homepageCmsMarkets, homepageCmsLocale).catch(() => null),
+    getCmsContentMarketOverview("FLIGHT_ROUTE", homepageCmsMarkets, homepageCmsLocale).catch(() => null),
     getCmsContentScopeSummary("HOTEL_DESTINATION", "GLOBAL", homepageCmsLocale).catch(() => null),
   ]);
 
-  const homepageNeedsSetup = [destinationSummary, flightSummary, hotelSummary]
-    .some((summary) => summary?.available && !summary.active);
+  const homepageNeedsSetup =
+    Boolean(destinationSummary?.available && destinationSummary.needsSetup) ||
+    Boolean(flightSummary?.available && flightSummary.needsSetup) ||
+    Boolean(hotelSummary?.available && !hotelSummary.active);
 
   const contentAreas = [
     {
@@ -36,7 +39,6 @@ export default async function AdminContentPage() {
       title: "Homepage destinations",
       status: contentScopeStatus(destinationSummary),
       value: publishedContentCount(destinationSummary),
-      scope: "US market",
       href: "/admin/content/homepage/destinations",
     },
     {
@@ -44,7 +46,6 @@ export default async function AdminContentPage() {
       title: "Flight routes",
       status: contentScopeStatus(flightSummary),
       value: publishedContentCount(flightSummary),
-      scope: "US market",
       href: "/admin/content/homepage/flight-routes",
     },
     {
@@ -52,7 +53,6 @@ export default async function AdminContentPage() {
       title: "Hotel destinations",
       status: contentScopeStatus(hotelSummary),
       value: publishedContentCount(hotelSummary),
-      scope: "Global",
       href: "/admin/content/homepage/hotel-destinations",
     },
     {
@@ -60,19 +60,18 @@ export default async function AdminContentPage() {
       title: "FAQs",
       status: contentScopeStatus(faqSummary),
       value: publishedContentCount(faqSummary),
-      scope: "English",
       href: "/admin/content/faqs",
     },
   ];
 
   return (
-    <ContentPageFrame title="Content">
+    <ContentPageFrame title="Content" visuallyHideTitle>
       <div className="space-y-4">
         {homepageNeedsSetup ? (
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50/60 px-4 py-3">
-            <p className="text-[13px] text-[#475569]">Some homepage content needs CMS setup.</p>
-            <Link href="/admin/content/homepage" className="inline-flex items-center gap-1 text-[13px] font-medium text-[#004BB8] hover:underline">
-              Review homepage CMS setup <ArrowUpRight size={14} aria-hidden="true" />
+            <p className="text-[13px] text-[#475569]">Some homepage content markets need CMS setup.</p>
+            <Link href="/admin/system/cms-health" className="inline-flex items-center gap-1 text-[13px] font-medium text-[#004BB8] hover:underline">
+              Review CMS Health <ArrowUpRight size={14} aria-hidden="true" />
             </Link>
           </div>
         ) : null}
@@ -97,9 +96,7 @@ export default async function AdminContentPage() {
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
                     <span className="text-[24px] font-semibold leading-7 tracking-tight tabular-nums text-[#111827]">{area.value}</span>
-                    <span className="text-[12px] leading-5 text-[#64748B]">
-                      Published records <span className="mx-1" aria-hidden="true">·</span> {area.scope}
-                    </span>
+                    <span className="text-[12px] leading-5 text-[#64748B]">Published records</span>
                   </div>
                   {area.status !== "CMS managed" ? (
                     <p className="mt-1 text-[12px] font-medium text-amber-700">{area.status}</p>
