@@ -44,7 +44,7 @@ test("Trip directory is the primary record workspace without duplicate entry lin
   assert.match(page, /<TripDirectoryView rows=\{directory\.rows\} subtle \/>/);
   assert.match(page, /tripDirectoryHref\(filters, directory\.nextCursor\)/);
   assert.match(page, /Older matching trips/);
-  assert.match(recordsView, /encodeURIComponent\(trip\.id\)/);
+  assert.match(recordsTable, /encodeURIComponent\(trip\.id\)/);
   assert.match(directory, /await requireAdminSession\("\/admin\/confirmed-trips\/records"\)/);
   assert.match(page, /href="\/admin\/confirmed-trips\/monitoring"/);
   assert.match(page, /href="\/admin\/confirmed-trips\/monitoring"/);
@@ -338,7 +338,7 @@ test("loading state mirrors the streamlined summary, six filters and list shell"
   assert.match(loading, /aria-busy="true"/);
   assert.match(loading, /motion-safe:animate-pulse/);
   assert.equal((loading.match(/<AdminSectionCard/g) ?? []).length, 1);
-  assert.equal((loading.match(/<section className="min-w-0 rounded-xl border border-slate-200\/80 bg-white/g) ?? []).length, 1);
+  assert.equal((loading.match(/<section aria-label="Trip records" className="min-w-0 rounded-xl border border-slate-200\/80 bg-white/g) ?? []).length, 1);
   assert.match(loading, /<section aria-label="Trip summary" className="min-w-0">/);
   assert.match(loading, /grid min-w-0 grid-cols-1 gap-0 sm:grid-cols-2 lg:grid-cols-5/);
   assert.match(loading, /metricLabels\.map\(\(label, index\) =>/);
