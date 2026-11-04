@@ -101,7 +101,6 @@ export function ConfirmedTripRecordsTable({ rows }: Props) {
           </tbody>
         </table>
       </div>
-      <p className="mt-2 text-[11px] leading-4 text-slate-600">Latest stored provider-confirmed trips. Scroll the list horizontally on narrower screens.</p>
     </div>
   );
 }

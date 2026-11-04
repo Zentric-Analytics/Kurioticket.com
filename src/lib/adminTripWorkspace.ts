@@ -35,7 +35,7 @@ export function parseAdminTripWorkspace(raw: RawQuery, now = new Date()): Resolv
     return { ok: false, error: "Unsupported trip time range." };
   }
   if (!Number.isFinite(now.getTime())) return { ok: false, error: "Invalid time reference." };
-  const range: AdminTripWorkspaceRange = (requested || (raw.from || raw.to ? "custom" : "all")) as AdminTripWorkspaceRange;
+  const range: AdminTripWorkspaceRange = (requested || (raw.from || raw.to ? "custom" : "today")) as AdminTripWorkspaceRange;
   const dateFields = {
     from: typeof raw.from === "string" && range === "custom" ? raw.from : "",
     to: typeof raw.to === "string" && range === "custom" ? raw.to : "",

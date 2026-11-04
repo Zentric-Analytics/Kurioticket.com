@@ -61,42 +61,42 @@ export function TripFilterControls({ filters, range, providerNames }: Props) {
 
   return (
     <form method="get" action="/admin/confirmed-trips" aria-label="Filter trip directory" className="min-w-0">
-      <div className="grid min-w-0 grid-cols-1 items-end gap-x-2 gap-y-2.5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)_minmax(0,0.9fr)_minmax(0,0.95fr)_minmax(0,1fr)_minmax(0,1.05fr)_auto] lg:gap-x-2 2xl:gap-x-2.5">
-        <label className={fieldLabel}>
+      <div className="flex min-w-0 flex-wrap items-end gap-x-2 gap-y-2.5">
+        <label className={fieldLabel + " w-full sm:w-[180px]"}>
           Search trips
           <input name="q" type="search" defaultValue={filters.q} maxLength={80} placeholder="Search…" title="Search customer, reference, provider or destination" className={inputClass} />
         </label>
-        <div className={fieldLabel}>
+        <div className={fieldLabel + " w-full sm:w-[135px]"}>
           <span>Provider</span>
           <div className="mt-1">
             <SearchMonitorSelect label="Provider" name="provider" value={filters.provider} options={providerOptions} appearance="boxed" truncateLabel />
           </div>
         </div>
-        <div className={fieldLabel}>
+        <div className={fieldLabel + " w-full sm:w-[110px]"}>
           <span>Travel type</span>
           <div className="mt-1">
             <SearchMonitorSelect label="Travel type" name="product" value={filters.product} options={productOptions} appearance="boxed" truncateLabel autoSubmit />
           </div>
         </div>
-        <div className={fieldLabel}>
+        <div className={fieldLabel + " w-full sm:w-[120px]"}>
           <span>Trip status</span>
           <div className="mt-1">
             <SearchMonitorSelect label="Trip status" name="status" value={filters.status} options={statusOptions} appearance="boxed" truncateLabel autoSubmit />
           </div>
         </div>
-        <div className={fieldLabel}>
+        <div className={fieldLabel + " w-full sm:w-[135px]"}>
           <span>Identity</span>
           <div className="mt-1">
             <SearchMonitorSelect label="Identity" name="identity" value={filters.identity} options={identityOptions} appearance="boxed" truncateLabel autoSubmit />
           </div>
         </div>
-        <div className={fieldLabel}>
+        <div className={fieldLabel + " w-full sm:w-[120px]"}>
           <span>Time range</span>
           <div className="mt-1">
             <SearchMonitorSelect label="Time range" name="range" value={range} options={rangeOptions} appearance="boxed" truncateLabel autoSubmit />
           </div>
         </div>
-        <div className="min-w-0">
+        <div className="w-full min-w-0 sm:w-auto">
           <button type="submit" className="inline-flex h-9 items-center justify-center whitespace-nowrap rounded-lg bg-indigo-700 px-3 text-xs font-semibold text-white hover:bg-indigo-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">Apply filters</button>
         </div>
       </div>

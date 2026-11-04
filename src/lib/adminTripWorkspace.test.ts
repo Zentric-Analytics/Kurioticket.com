@@ -5,13 +5,13 @@ import { parseAdminTripWorkspace, tripWorkspaceHref } from "./adminTripWorkspace
 
 const now = new Date("2026-11-03T15:42:00.000Z");
 
-test("all-time and UTC day-based ranges normalize to the same filters used by the directory", () => {
-  const all = parseAdminTripWorkspace({}, now);
-  assert.equal(all.ok, true);
-  if (!all.ok) return;
-  assert.equal(all.range, "all");
-  assert.equal(all.filters.from, "");
-  assert.equal(all.filters.to, "");
+test("Today is the default and UTC day-based ranges normalize to the same filters used by the directory", () => {
+  const defaultRange = parseAdminTripWorkspace({}, now);
+  assert.equal(defaultRange.ok, true);
+  if (!defaultRange.ok) return;
+  assert.equal(defaultRange.range, "today");
+  assert.equal(defaultRange.filters.from, "2026-11-03");
+  assert.equal(defaultRange.filters.to, "2026-11-03");
 
   const today = parseAdminTripWorkspace({ range: "today", product: "FLIGHT", status: "CANCELLED" }, now);
   assert.equal(today.ok, true);
