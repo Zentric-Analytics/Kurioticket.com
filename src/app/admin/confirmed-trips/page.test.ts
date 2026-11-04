@@ -163,7 +163,7 @@ test("tracked trips remain unavailable instead of showing fabricated totals", ()
 
 test("Travel type dropdown is the only category selector on the Trips page", () => {
   for (const [value, label] of [
-    ["all", "All types"],
+    ["all", "All"],
     ["FLIGHT", "Flights"],
     ["HOTEL", "Hotels"],
     ["CAR", "Cars"],
