@@ -78,14 +78,13 @@ export async function TripConfirmationsMonitoringPanel() {
       </section>
 
       <section id="confirmation-delivery-health-title" aria-labelledby="confirmation-delivery-health-heading" className="min-w-0 rounded-xl border border-slate-200/80 bg-white px-4 py-3 sm:px-5 sm:py-4">
-        <div className="mb-3 flex items-center gap-2">
-          <Clock3 size={17} className="shrink-0 text-indigo-700" aria-hidden="true" />
-          <h4 className="text-sm font-semibold text-slate-800">Confirmation delivery health and alerts</h4>
-        </div>
         <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2.5">
-          <div className="min-w-0 flex-1">
-            <h4 id="confirmation-delivery-health-heading" className="text-base font-semibold leading-6 tracking-tight text-slate-950">Confirmation delivery health</h4>
-            <p className="mt-1 text-[13px] leading-5 text-slate-600">Tracks authenticated provider callbacks. Retries are not new bookings or trips.</p>
+          <div className="flex min-w-0 flex-1 items-start gap-2.5">
+            <Clock3 size={17} className="mt-1 shrink-0 text-indigo-700" aria-hidden="true" />
+            <div className="min-w-0">
+              <h4 id="confirmation-delivery-health-heading" className="text-base font-semibold leading-6 tracking-tight text-slate-950">Delivery health and alerts</h4>
+              <p className="mt-1 text-[13px] leading-5 text-slate-600">Tracks authenticated provider callbacks. Retries are not new bookings or trips.</p>
+            </div>
           </div>
           <div className="flex max-w-full flex-wrap items-center gap-x-3 gap-y-2">
             <AdminStatusBadge tone={!readiness.feedReady ? "neutral" : !deliveryHealth ? "warn" : deliveryHealth.rejectedLast24h > 0 ? "warn" : "info"}>
@@ -97,7 +96,7 @@ export async function TripConfirmationsMonitoringPanel() {
         {!readiness.feedReady ? (
           <p role="status" className="mt-3 flex items-start gap-2 rounded-lg bg-slate-50 px-3 py-2.5 text-[13px] leading-5 text-slate-700">
             <Info size={16} className="mt-0.5 shrink-0 text-slate-500" aria-hidden="true" />
-            <span>No provider confirmation feed is configured. Monitoring is off.</span>
+            <span>No authenticated delivery telemetry is available.</span>
           </p>
         ) : !deliveryHealth ? (
           <p role="status" className="mt-3 flex items-start gap-2 rounded-lg bg-slate-50 px-3 py-2.5 text-[13px] leading-5 text-slate-700">

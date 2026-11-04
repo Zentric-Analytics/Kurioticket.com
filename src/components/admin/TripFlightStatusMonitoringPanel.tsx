@@ -15,8 +15,7 @@ export async function TripFlightStatusMonitoringPanel() {
 
   return (
     <div className="min-w-0 space-y-4">
-        <section aria-labelledby="flight-status-overview-title" className="min-w-0">
-          <h2 id="flight-status-overview-title" className="mb-2.5 text-base font-semibold leading-6 tracking-tight text-slate-950">Flight status overview</h2>
+        <section id="flight-status-overview-title" aria-label="Flight status overview" className="min-w-0">
           {operations ? (
             <div role="region" aria-label="Flight status metrics" tabIndex={0} className="min-w-0 max-w-full overflow-x-auto overscroll-x-contain rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400">
               <div className="grid w-full min-w-[960px] grid-cols-6 gap-2">
@@ -62,47 +61,43 @@ export async function TripFlightStatusMonitoringPanel() {
           <p className="mt-3 text-[13px] leading-5 text-slate-600">
             A configured feed does not mean updates are arriving. Live status requires signed provider updates for confirmed flights—not searches, handoffs or trip confirmations.
           </p>
-        </section>
-
-        {/* Keep monitoring cards visible when data is unavailable. */}
-        <div className="grid min-w-0 items-stretch gap-3 lg:grid-cols-2">
-          <section className="min-w-0 rounded-xl border border-slate-200/80 bg-white p-3 sm:p-4">
-            <h2 className="text-base font-semibold leading-6 tracking-tight text-slate-950">Latest status distribution</h2>
-            <p className="mt-0.5 text-[13px] leading-5 text-slate-600">Latest stored statuses from the configured provider.</p>
-            {!operations ? (
-              <p role="status" className="mt-2 rounded-lg bg-slate-50 px-3 py-2.5 text-[13px] leading-5 text-slate-600">
-                Flight-status distribution is unavailable. No counts are assumed.
-              </p>
-            ) : operations.statusDistribution.length ? (
-              <div className="mt-2 divide-y divide-slate-100">
-                {operations.statusDistribution.map((item) => (
-                  <div key={item.status} className="flex min-w-0 items-center justify-between gap-3 py-2">
-                    <span className="min-w-0 break-words text-[13px] font-medium leading-5 text-slate-800">{item.status}</span>
-                    <AdminStatusBadge tone={item.status === "DELAYED" || item.status === "CANCELLED" ? "warn" : item.status === "UNKNOWN" ? "neutral" : "info"}>{item.count}</AdminStatusBadge>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p role="status" className="mt-2 rounded-lg bg-slate-50 px-3 py-2.5 text-[13px] leading-5 text-slate-600">
-                {readiness.feedReady
-                  ? "No verified flight-status snapshots recorded yet."
-                  : "No status feed is configured; no snapshots to show."}
-              </p>
-            )}
-          </section>
-
-          <section className="min-w-0 rounded-xl border border-slate-200/80 bg-white p-3 sm:p-4">
-            <h2 className="text-base font-semibold leading-6 tracking-tight text-slate-950">Snapshot scope</h2>
-            <p className="mt-1 text-[13px] leading-5 text-slate-600">
-              We save only the latest status of the main flight in each confirmed trip. Return and connecting flights aren't tracked separately.
+          <div className="mt-3 border-t border-slate-100 pt-3">
+            <p className="text-[13px] leading-5 text-slate-600">
+              We save only the latest provider-supplied status for the main flight in each confirmed trip. Return and connecting flights aren't tracked separately.
             </p>
             <div className="mt-2 flex min-w-0 flex-wrap gap-1.5">
               <AdminStatusBadge tone="good">Provider supplied only</AdminStatusBadge>
               <AdminStatusBadge>Latest snapshot only</AdminStatusBadge>
               <AdminStatusBadge>No segment history yet</AdminStatusBadge>
             </div>
-          </section>
-        </div>
+          </div>
+        </section>
+
+        {/* Keep monitoring cards visible when data is unavailable. */}
+        <section className="min-w-0 rounded-xl border border-slate-200/80 bg-white p-3 sm:p-4">
+          <h2 className="text-base font-semibold leading-6 tracking-tight text-slate-950">Latest status distribution</h2>
+          <p className="mt-0.5 text-[13px] leading-5 text-slate-600">Latest stored statuses from the configured provider.</p>
+          {!operations ? (
+            <p role="status" className="mt-2 rounded-lg bg-slate-50 px-3 py-2.5 text-[13px] leading-5 text-slate-600">
+              Flight-status distribution is unavailable. No counts are assumed.
+            </p>
+          ) : operations.statusDistribution.length ? (
+            <div className="mt-2 divide-y divide-slate-100">
+              {operations.statusDistribution.map((item) => (
+                <div key={item.status} className="flex min-w-0 items-center justify-between gap-3 py-2">
+                  <span className="min-w-0 break-words text-[13px] font-medium leading-5 text-slate-800">{item.status}</span>
+                  <AdminStatusBadge tone={item.status === "DELAYED" || item.status === "CANCELLED" ? "warn" : item.status === "UNKNOWN" ? "neutral" : "info"}>{item.count}</AdminStatusBadge>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p role="status" className="mt-2 rounded-lg bg-slate-50 px-3 py-2.5 text-[13px] leading-5 text-slate-600">
+              {readiness.feedReady
+                ? "No verified flight-status snapshots recorded yet."
+                : "No status feed is configured; no snapshots to show."}
+            </p>
+          )}
+        </section>
 
         <section className="min-w-0 rounded-xl border border-slate-200/80 bg-white p-3 sm:p-4">
           <h2 className="text-base font-semibold leading-6 tracking-tight text-slate-950">Awaiting first status snapshot</h2>

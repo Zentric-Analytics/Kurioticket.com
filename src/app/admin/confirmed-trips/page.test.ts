@@ -336,7 +336,9 @@ test("Trips and Trip monitoring use the Providers-style workspace navigation whi
   assert.match(flightStatusRedirect, /redirect\("\/admin\/confirmed-trips\/monitoring\?panel=flight#flight-status-overview-title"\)/);
   assert.match(operationsPage, /Detailed product and provider breakdowns/);
   assert.match(operationsPage, /Confirmation integration readiness/);
-  assert.match(operationsPage, /Confirmation delivery health and alerts/);
+  assert.match(operationsPage, />Delivery health and alerts<\/h4>/);
+  assert.doesNotMatch(operationsPage, />Confirmation delivery health<\/h4>|>Confirmation delivery health and alerts<\/h4>/);
+  assert.match(operationsPage, /No authenticated delivery telemetry is available/);
   assert.equal((operationsPage.match(/<details/g) ?? []).length, 0);
   assert.equal((operationsPage.match(/<summary/g) ?? []).length, 0);
   assert.doesNotMatch(operationsPage, /ChevronDown|cursor-pointer|group-open:rotate-180/);
@@ -365,7 +367,8 @@ test("Trips and Trip monitoring use the Providers-style workspace navigation whi
   assert.doesNotMatch(operationsPage, /expandDelivery|open=\{/);
   assert.doesNotMatch(operationsPage, /mockData|sampleTrips|Math\.random|process\.env/);
   assert.match(flightMonitoring, /className="min-w-0 space-y-4"/);
-  assert.equal((flightMonitoring.match(/rounded-xl border border-slate-200\/80 bg-white p-3 sm:p-4/g) ?? []).length, 5);
+  assert.equal((flightMonitoring.match(/rounded-xl border border-slate-200\/80 bg-white p-3 sm:p-4/g) ?? []).length, 4);
+  assert.doesNotMatch(flightMonitoring, />Snapshot scope<\/h2>|>Flight status overview<\/h2>/);
   assert.doesNotMatch(flightMonitoring, /AdminSectionCard/);
 });
 
