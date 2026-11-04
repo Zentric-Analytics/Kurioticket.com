@@ -1,4 +1,4 @@
-import { Clock3, FileCheck2, Info, ShieldCheck } from "lucide-react";
+import { Clock3, Info, ShieldCheck } from "lucide-react";
 
 import { AdminStatusBadge } from "@/components/admin/AdminPageShell";
 import { ConfirmedTripsBreakdowns } from "@/components/admin/ConfirmedTripsBreakdowns";
@@ -38,11 +38,7 @@ export async function TripConfirmationsMonitoringPanel() {
 
   return (
     <div className="min-w-0 space-y-4">
-      <section aria-labelledby="confirmation-breakdowns-title" className="min-w-0">
-        <div className="mb-2.5 flex items-center gap-2">
-          <FileCheck2 size={17} className="shrink-0 text-indigo-700" aria-hidden="true" />
-          <h4 id="confirmation-breakdowns-title" className="text-sm font-semibold text-slate-900">Detailed product and provider breakdowns</h4>
-        </div>
+      <section aria-label="Confirmed trip breakdowns" className="min-w-0">
         <ConfirmedTripsBreakdowns operations={operations} />
       </section>
 
@@ -83,7 +79,6 @@ export async function TripConfirmationsMonitoringPanel() {
             <Clock3 size={17} className="mt-1 shrink-0 text-indigo-700" aria-hidden="true" />
             <div className="min-w-0">
               <h4 id="confirmation-delivery-health-heading" className="text-base font-semibold leading-6 tracking-tight text-slate-950">Delivery health and alerts</h4>
-              <p className="mt-1 text-[13px] leading-5 text-slate-600">Tracks authenticated provider callbacks. Retries are not new bookings or trips.</p>
             </div>
           </div>
           <div className="flex max-w-full flex-wrap items-center gap-x-3 gap-y-2">
