@@ -258,7 +258,7 @@ async function loadAdminAlertCandidates(now: Date): Promise<AdminAlertCandidate[
       email: telemetryOutageTokens.email,
       cms: telemetryOutageTokens.cms,
       homepageFares: telemetryOutageTokens["homepage-fares"],
-      flightStatus: telemetryOutageTokens.flightStatus,
+      flightStatus: telemetryOutageTokens["flight-status"],
       confirmedTrips: telemetryOutageTokens["confirmed-trips"],
     },
     confirmedTrips: {
