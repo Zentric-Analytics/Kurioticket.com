@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo } from "react";
 
 import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
@@ -62,7 +61,7 @@ export function TripFilterControls({ filters, range, providerNames }: Props) {
 
   return (
     <form method="get" action="/admin/confirmed-trips" aria-label="Filter trip directory" className="min-w-0">
-      <div className="grid min-w-0 grid-cols-1 items-end gap-x-2 gap-y-2.5 sm:grid-cols-2 md:grid-cols-3 lg:gap-x-1.5 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)_minmax(0,0.9fr)_minmax(0,0.95fr)_minmax(0,1fr)_minmax(0,1.05fr)] 2xl:gap-x-2.5">
+      <div className="grid min-w-0 grid-cols-1 items-end gap-x-2 gap-y-2.5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)_minmax(0,0.9fr)_minmax(0,0.95fr)_minmax(0,1fr)_minmax(0,1.05fr)_auto] lg:gap-x-2 2xl:gap-x-2.5">
         <label className={fieldLabel}>
           Search trips
           <input name="q" type="search" defaultValue={filters.q} maxLength={80} placeholder="Search…" title="Search customer, reference, provider or destination" className={inputClass} />
@@ -97,11 +96,8 @@ export function TripFilterControls({ filters, range, providerNames }: Props) {
             <SearchMonitorSelect label="Time range" name="range" value={range} options={rangeOptions} appearance="boxed" truncateLabel autoSubmit />
           </div>
         </div>
-      </div>
-      <div className="mt-3 flex min-w-0 flex-wrap items-center justify-end gap-2">
-        <div className="flex shrink-0 flex-wrap items-center gap-2">
-          <Link href="/admin/confirmed-trips#trip-directory" className="inline-flex min-h-9 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">Clear filters</Link>
-          <button type="submit" className="inline-flex min-h-9 items-center justify-center rounded-lg bg-indigo-700 px-4 text-xs font-semibold text-white hover:bg-indigo-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">Apply filters</button>
+        <div className="min-w-0">
+          <button type="submit" className="inline-flex h-9 items-center justify-center whitespace-nowrap rounded-lg bg-indigo-700 px-3 text-xs font-semibold text-white hover:bg-indigo-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">Apply filters</button>
         </div>
       </div>
     </form>

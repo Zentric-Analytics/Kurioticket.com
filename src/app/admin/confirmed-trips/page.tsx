@@ -107,7 +107,7 @@ export default async function AdminConfirmedTripsPage({ searchParams }: Props) {
             )}
           </section>
 
-          <section aria-label="Trip records" id="trip-directory" className="min-w-0 rounded-xl border border-slate-200/80 bg-white px-4 py-3 sm:px-5 sm:py-4">
+          <section aria-label="Trip records" id="trip-directory" className="min-w-0">
             <TripFilterControls filters={filters} range={range}
               key={[filters.q, filters.provider, filters.product, filters.status, filters.identity, range, filters.from, filters.to].join("|")}
               providerNames={operations?.byProvider.map(item => item.provider) ?? []} />
