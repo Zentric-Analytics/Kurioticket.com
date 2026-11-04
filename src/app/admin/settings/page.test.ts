@@ -98,3 +98,31 @@ test("settings feature controls remain grouped and mutation-safe after UI polish
   assert.match(featurePanel, /Confirm change/);
   assert.doesNotMatch(featurePanel, /process\.env|ADMIN_EMAILS/);
 });
+
+test("feature-control interaction states stay explicit and safe", () => {
+  assert.match(featurePanel, /aria-pressed=\{control\.state\.enabled\}/);
+  assert.match(featurePanel, /aria-label=\{\(control\.state\.enabled \? "Disable " : "Enable "\) \+ control\.name\}/);
+  assert.match(featurePanel, /Production controls are view only for your account/);
+  assert.match(featurePanel, /event\.key === "Escape" && !saving/);
+  assert.match(featurePanel, /disabled=\{saving\}[\s\S]*onClick=\{closePending\}/);
+  assert.match(featurePanel, /aria-busy=\{saving\}/);
+  assert.match(featurePanel, /disabled=\{saving \|\| \(environment === "PRODUCTION" && !reason\.trim\(\)\)\}/);
+  assert.match(featurePanel, /disabled=\{saving\}[\s\S]*value=\{reason\}/);
+});
+
+test("successful feature-control changes refresh from persisted server state", () => {
+  assert.match(featureApi, /updatedAt: result\.state\.updatedAt\.toISOString\(\)/);
+  assert.match(featurePanel, /typeof body\.updatedAt === "string" \? body\.updatedAt : control\.state\.updatedAt/);
+  assert.match(featurePanel, /router\.refresh\(\)/);
+  assert.match(featurePanel, /setControls\(initialControls\)/);
+  assert.doesNotMatch(featurePanel, /updatedAt: new Date\(\)\.toISOString\(\)/);
+});
+
+test("feature-control network failures remain retryable without closing the dialog", () => {
+  assert.match(featurePanel, /try \{/);
+  assert.match(featurePanel, /catch \{/);
+  assert.match(featurePanel, /The control could not be changed\. Please try again\./);
+  assert.match(featurePanel, /finally \{/);
+  assert.match(featurePanel, /setSaving\(false\)/);
+  assert.match(featurePanel, /if \(!pending \|\| saving\) return/);
+});

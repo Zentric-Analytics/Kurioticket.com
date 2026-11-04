@@ -41,7 +41,7 @@ export async function PATCH(request: Request) {
   }
   try {
     const result = await mutateFeatureControl({ ...parsed.data, environment, actor: { id: auth.session.user.id, email, ipAddress: getRequestIp(request), userAgent: request.headers.get("user-agent") || undefined } });
-    return NextResponse.json({ changed: result.changed, key: parsed.data.key, environment, enabled: result.state.enabled });
+    return NextResponse.json({ changed: result.changed, key: parsed.data.key, environment, enabled: result.state.enabled, updatedAt: result.state.updatedAt.toISOString() });
   } catch (error) {
     if (error instanceof z.ZodError) return NextResponse.json({ error: "Invalid feature control request." }, { status: 400 });
     console.error("[feature-controls:mutation-failed]", { key: parsed.data.key, environment, errorName: error instanceof Error ? error.name : "unknown" });
