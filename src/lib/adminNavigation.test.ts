@@ -25,7 +25,7 @@ test("admin navigation exposes parent workspaces in the header", () => {
 
 test("admin navigation preserves role restrictions", () => {
   assert.deepEqual(getAdminNavForRole("SUPPORT"), []);
-  assert.deepEqual(getAdminNavForRole("ADMIN").filter((item) => item.parentHref).map((item) => [item.label, item.parentHref]), [["Trip monitoring", "/admin/confirmed-trips"], ["Flights", "/admin/providers"], ["Hotels", "/admin/providers"], ["Cars", "/admin/providers"], ["Deletion Requests", "/admin/support"], ["Logs", "/admin/system"], ["CMS Health", "/admin/system"], ["Email Delivery", "/admin/system"], ["Notifications & Alerts", "/admin/system"], ["Homepage Fare Operations", "/admin/settings"]]);
+  assert.deepEqual(getAdminNavForRole("ADMIN").filter((item) => item.parentHref).map((item) => [item.label, item.parentHref]), [["Trip monitoring", "/admin/confirmed-trips"], ["Flights", "/admin/providers"], ["Hotels", "/admin/providers"], ["Cars", "/admin/providers"], ["Deletion Requests", "/admin/support"], ["Logs", "/admin/system"], ["CMS Health", "/admin/system"], ["Email Delivery", "/admin/system"], ["Homepage Fare Operations", "/admin/settings"]]);
   assert.deepEqual(getAdminNavForRole("USER"), []);
 });
 
@@ -55,13 +55,23 @@ test("horizontal admin navigation keeps child routes under parent workspaces", (
   assert.deepEqual(providers?.children.map((item) => item.href), ["/admin/flights", "/admin/hotels", "/admin/cars"]);
   assert.deepEqual(trips?.children.map((item) => item.href), ["/admin/confirmed-trips/monitoring"]);
   assert.deepEqual(support?.children.map((item) => item.href), ["/admin/account-deletions"]);
-  assert.deepEqual(system?.children.map((item) => item.href), ["/admin/logs", "/admin/system/cms-health", "/admin/email-delivery", "/admin/notifications"]);
+  assert.deepEqual(system?.children.map((item) => item.href), ["/admin/logs", "/admin/system/cms-health", "/admin/email-delivery"]);
   assert.deepEqual(settings?.children.map((item) => item.href), ["/admin/homepage-fares"]);
   assert.equal(entries.some(({ item }) => item.href === "/admin/redirects"), false);
   assert.equal(entries.some(({ item }) => item.href === "/admin/flights"), false);
   const supportEntries = getAdminHeaderGroups("SUPPORT").flatMap((group) => group.links);
   assert.deepEqual(supportEntries.map(({ item }) => item.label), []);
   assert.deepEqual(getAdminHeaderGroups("USER"), []);
+});
+
+test("global Alerts remains discoverable without belonging to a System tab or highlighting System", () => {
+  const alerts = getAdminNavForRole("ADMIN").find(item => item.href === "/admin/notifications");
+  assert.ok(alerts);
+  assert.equal(alerts.parentHref, undefined);
+  assert.deepEqual(alerts.roles, ["ADMIN"]);
+  const system = getAdminHeaderGroups("ADMIN").flatMap(group => group.links).find(entry => entry.item.href === "/admin/system")!;
+  assert.equal(isAdminNavItemActive(system.item.href, "/admin/notifications"), false);
+  assert.equal(system.children.some(child => isAdminNavItemActive(child.href, "/admin/notifications")), false);
 });
 
 test("retired operational report routes remain available without nested menu entries", () => {
