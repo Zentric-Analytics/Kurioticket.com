@@ -179,7 +179,8 @@ test("Travel type dropdown is the only category selector on the Trips page", () 
     assert.match(controls, new RegExp('value: "' + value + '", label: "' + label + '"'));
   }
   assert.match(controls, /name="product" value=\{filters\.product\} options=\{productOptions\}/);
-  assert.match(controls, /label="Travel type".*autoSubmit/);
+  assert.match(controls, /label="Travel type" name="product" value=\{filters\.product\} options=\{productOptions\} appearance="boxed" truncateLabel \/>/);
+  assert.doesNotMatch(controls, /autoSubmit/);
   assert.match(page, /<TripFilterControls filters=\{filters\}/);
   assert.doesNotMatch(page + loading, /aria-label="Trip travel types"|tripCategories|tripWorkspaceHref|Trips by category|TripCategoryCard/);
   assert.match(operationsPage, /<ConfirmedTripsBreakdowns operations=\{operations\} \/>/);
@@ -256,7 +257,10 @@ test("six directory filters use a compact left-anchored toolbar with a polished 
   assert.match(controls, /name="status" value=\{filters\.status\} options=\{statusOptions\}/);
   assert.doesNotMatch(controls, /description: "Not connected"|description: "Provider-confirmed trips are account-linked"/);
   assert.match(controls, /appearance="boxed"/);
-  assert.match(controls, /autoSubmit/);
+  assert.doesNotMatch(controls, /autoSubmit/);
+  assert.match(controls, /onKeyDown=\{keepFiltersDraftUntilApply\}/);
+  assert.match(controls, /event\.key === "Enter" && !\(event\.target instanceof HTMLButtonElement\)/);
+  assert.match(controls, /event\.preventDefault\(\)/);
   assert.match(dropdown, /if \(!options\.some\(\(option\) => option\.value === next && !option\.disabled\)\) return/);
   assert.match(dropdown, /aria-haspopup="listbox"|role="listbox"/);
   assert.doesNotMatch(controls, /Clear filters|href="\/admin\/confirmed-trips#trip-directory"/);
