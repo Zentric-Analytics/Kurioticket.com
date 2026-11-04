@@ -6,7 +6,6 @@ import {
   CalendarDays,
   CircleX,
   FileCheck2,
-  Info,
   type LucideIcon,
 } from "lucide-react";
 
@@ -100,10 +99,6 @@ export default async function AdminConfirmedTripsPage({ searchParams }: Props) {
                 {parsed.ok ? "Trip summary is temporarily unavailable. No counts are assumed." : parsed.error}
               </p>
             )}
-            <p className="mt-2 flex items-start gap-1.5 text-xs leading-5 text-slate-600">
-              <Info size={14} className="mt-0.5 shrink-0" aria-hidden="true" />
-              <span>Confirmed trips include cancelled records; the status counters partition the selected trips. UTC dates refer to the latest signed provider confirmation, not the trip date. Tracking totals require a separate data source.</span>
-            </p>
           </section>
 
           <section aria-labelledby="trip-directory-title" id="trip-directory" className="min-w-0 rounded-xl border border-slate-200/80 bg-white px-4 py-3 sm:px-5 sm:py-4">
