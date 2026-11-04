@@ -12,6 +12,7 @@ import {
 
 import { TripDirectoryView } from "@/components/admin/TripDirectoryView";
 import { TripFilterControls } from "@/components/admin/TripFilterControls";
+import { TripWorkspaceNavigation } from "@/components/admin/TripWorkspaceNavigation";
 import { AdminPageShell, AdminSectionCard } from "@/components/admin/AdminPageShell";
 import {
   tripDirectoryHref,
@@ -84,13 +85,9 @@ export default async function AdminConfirmedTripsPage({ searchParams }: Props) {
   return (
     <AdminPageShell title="Trips" hideHeader>
       <AdminSectionCard className="min-w-0 p-4 sm:p-5 lg:p-6">
-        <div role="group" aria-label="Trip shortcuts" className="mb-3 flex min-w-0 flex-wrap items-center justify-end gap-2">
-          <div className="flex flex-wrap justify-end gap-2">
-            <Link href="/admin/confirmed-trips/monitoring" className="inline-flex min-h-9 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">Trip monitoring</Link>
-          </div>
-        </div>
+        <TripWorkspaceNavigation active="trips" />
 
-        <div className="space-y-10">
+        <div className="space-y-10 pt-6">
           <section aria-label="Trip summary" className="min-w-0">
             {directory?.status === "ok" ? (
               <div className="grid min-w-0 grid-cols-1 gap-0 sm:grid-cols-2 lg:grid-cols-5">
