@@ -43,9 +43,10 @@ const fieldLabel = "block min-w-0 text-[11px] font-medium leading-4 text-slate-7
 const inputClass = "mt-1 block h-9 w-full min-w-0 max-w-full rounded-lg border border-slate-200 bg-white px-2 text-[11px] text-slate-900 placeholder:text-slate-500 focus-visible:border-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/25 2xl:text-xs";
 
 /**
- * One read-only GET form. Native UTC date fields are real; tracking cannot be
- * selected until the monitoring source exists. Dropdowns use the same
- * keyboard-accessible popup behavior as Search Activity.
+ * One read-only GET form with seven compact fields. Native UTC date inputs
+ * preserve the confirmation-time filter. The disconnected Tracked trips status
+ * stays disabled until its reporting source exists.
+ * Dropdowns use the same keyboard-accessible popup as Search Activity.
  */
 export function TripFilterControls({ filters, range, dateFields, providerNames }: Props) {
   const [selectedRange, setSelectedRange] = useState<AdminTripWorkspaceRange>(range);
@@ -69,7 +70,7 @@ export function TripFilterControls({ filters, range, dateFields, providerNames }
 
   return (
     <form method="get" action="/admin/confirmed-trips" aria-label="Filter trip directory" className="min-w-0">
-      <div className="grid min-w-0 grid-cols-1 items-end gap-x-2 gap-y-2.5 sm:grid-cols-2 md:grid-cols-4 lg:gap-x-1.5 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,0.95fr)_minmax(0,0.9fr)_minmax(0,0.9fr)_minmax(0,1.05fr)_minmax(0,0.95fr)_minmax(0,1.15fr)_minmax(0,1.15fr)] 2xl:gap-x-2.5">
+      <div className="grid min-w-0 grid-cols-1 items-end gap-x-2 gap-y-2.5 sm:grid-cols-2 md:grid-cols-4 lg:gap-x-1.5 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)_minmax(0,0.95fr)_minmax(0,0.95fr)_minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,1.2fr)] 2xl:gap-x-2.5">
         <label className={fieldLabel}>
           Search trips
           <input name="q" type="search" defaultValue={filters.q} maxLength={80} placeholder="Search…" title="Search customer, reference, provider or destination" className={inputClass} />
@@ -97,12 +98,6 @@ export function TripFilterControls({ filters, range, dateFields, providerNames }
           <div className="mt-1">
             <SearchMonitorSelect label="Time range" name="range" value={selectedRange} options={rangeOptions} appearance="boxed" truncateLabel autoSubmit
               onValueChange={next => setSelectedRange(next as AdminTripWorkspaceRange)} />
-          </div>
-        </div>
-        <div className={fieldLabel}>
-          <span>Tracking</span>
-          <div className="mt-1">
-            <SearchMonitorSelect label="Tracking" name="tracking" value="unavailable" options={[{ value: "unavailable", label: "Not connected" }]} appearance="boxed" truncateLabel disabled />
           </div>
         </div>
         <label className={fieldLabel}>
