@@ -38,6 +38,10 @@ export function FeatureControlsPanel({
   const router = useRouter();
   const categories = Array.from(new Set(controls.map((control) => control.category)));
 
+  useEffect(() => {
+    setControls(initialControls);
+  }, [initialControls]);
+
   function closePending() {
     if (saving) return;
     setPending(null);
@@ -48,7 +52,11 @@ export function FeatureControlsPanel({
   useEffect(() => {
     if (!pending) return;
     function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape" && !saving) closePending();
+      if (event.key === "Escape" && !saving) {
+        setPending(null);
+        setError("");
+        setReason("");
+      }
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
