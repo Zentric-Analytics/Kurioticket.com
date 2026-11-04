@@ -11,7 +11,7 @@ import { AdminWorkspaceSearchProvider, AdminSearchTrigger, AdminSearchHeader, Ad
 type HeaderGroup = ReturnType<typeof getAdminHeaderGroups>[number];
 type HeaderEntry = HeaderGroup["links"][number];
 
-function HeaderNavLink({ entry, pathname, close }: { entry: HeaderEntry; pathname: string; mobile?: boolean; close: () => void }) {
+function HeaderNavLink({ entry, pathname, mobile = false, close }: { entry: HeaderEntry; pathname: string; mobile?: boolean; close: () => void }) {
   const { item } = entry;
   const selected =
     isAdminNavItemActive(item.href, pathname) ||
@@ -22,6 +22,34 @@ function HeaderNavLink({ entry, pathname, close }: { entry: HeaderEntry; pathnam
   const underline = selected
     ? " after:absolute after:-bottom-1 after:left-1 after:right-1 after:h-0.5 after:rounded-full after:bg-[#004BB8]"
     : "";
+  // System's existing child routes need an actual navigation control, not only parent highlighting.
+  // Keep the System link independently navigable while exposing its children in a keyboard-friendly menu.
+  if (item.href === "/admin/system" && entry.children.length > 0) {
+    return (
+      <div className={mobile ? "flex flex-wrap items-center gap-1" : "relative flex shrink-0 items-center gap-1"}>
+        <Link href={item.href} onClick={close} aria-current={pathname === item.href ? "page" : undefined}
+          className={"relative inline-flex h-10 items-center gap-2 whitespace-nowrap rounded-xl px-2.5 text-[15px] font-semibold leading-none transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 " + style + underline}>
+          <Icon size={14} aria-hidden="true" className="h-[13px] w-[13px] shrink-0 xl:h-3.5 xl:w-3.5 2xl:h-4 2xl:w-4" />
+          <span>{item.label}</span>
+        </Link>
+        <details className={mobile ? "group w-full" : "group relative"}>
+          <summary aria-label="System sections" className={"flex cursor-pointer list-none items-center justify-center rounded-lg text-[#475569] hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 [&::-webkit-details-marker]:hidden " + (mobile ? "h-9 w-full justify-start px-3 text-sm" : "h-9 w-8")}>
+            <ChevronDown size={15} aria-hidden="true" className="transition-transform group-open:rotate-180" />
+            {mobile ? <span className="ml-2">System sections</span> : null}
+          </summary>
+          <div className={mobile ? "ml-3 flex flex-col border-l border-slate-200 pl-3" : "absolute right-0 top-full z-50 mt-1 flex min-w-56 flex-col rounded-lg border border-slate-200 bg-white p-1 shadow-lg"}>
+            {entry.children.map((child) => (
+              <Link key={child.item.href} href={child.item.href} onClick={close}
+                aria-current={isAdminNavItemActive(child.item.href, pathname) ? "page" : undefined}
+                className="rounded-md px-3 py-2 text-[13px] font-medium text-[#475569] hover:bg-slate-50 hover:text-[#0F172A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25">
+                {child.item.label}
+              </Link>
+            ))}
+          </div>
+        </details>
+      </div>
+    );
+  }
   return (
     <Link href={item.href} onClick={close} aria-current={selected ? "page" : undefined}
       className={"relative inline-flex h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-xl px-2.5 text-[15px] font-semibold leading-none tracking-[-0.005em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 " + style + underline}>
