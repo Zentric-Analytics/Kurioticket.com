@@ -60,7 +60,7 @@ test("main Trips workspace keeps the compact summary and records workspace witho
   assert.deepEqual(positions, [...positions].sort((a, b) => a - b));
   assert.equal((page.match(/<AdminSectionCard/g) ?? []).length, 1);
   assert.match(page, /<AdminSectionCard className="min-w-0 p-4 sm:p-5 lg:p-6">/);
-  assert.match(page, /<div className="space-y-5">/);
+  assert.match(page, /<div className="space-y-8">/);
   assert.equal((page.match(/className="min-w-0 rounded-xl border border-slate-200\/80 bg-white px-4 py-3 sm:px-5 sm:py-4"/g) ?? []).length, 0);
   assert.match(page, /<section aria-label="Trip summary" className="min-w-0">/);
   assert.match(page, /<section aria-label="Trip records" id="trip-directory" className="min-w-0">/);
@@ -255,6 +255,7 @@ test("six directory filters use a compact desktop row with a polished truthful i
   assert.match(dropdown, /aria-haspopup="listbox"|role="listbox"/);
   assert.doesNotMatch(controls, /Clear filters|href="\/admin\/confirmed-trips#trip-directory"/);
   assert.match(controls, /<button type="submit" className="inline-flex h-9 items-center justify-center whitespace-nowrap rounded-lg bg-indigo-700 px-3/);
+  assert.match(workspace, /requested \|\| \(raw\.from \|\| raw\.to \? "custom" : "today"\)/);
   assert.match(workspace, /parseAdminTripFilters\(\{ \.\.\.raw, from, to \}\)/);
   assert.match(page, /if \(parsed\.ok && parsed\.range === "custom"\)/);
   assert.match(page, /redirect\(tripDirectoryHref\(parsed\.filters\)\)/);
@@ -276,6 +277,7 @@ test("Trips use one dedicated list backed by genuine records and the existing re
   assert.match(recordsTable, /encodeURIComponent\(trip\.id\)/);
   assert.match(recordsTable, />Registered</);
   assert.match(recordsTable, /overflow-x-auto/);
+  assert.doesNotMatch(recordsTable, /Latest stored provider-confirmed trips|Scroll the list horizontally on narrower screens/);
   assert.doesNotMatch(recordsView + recordsTable, /mockRows|sampleData|random|Cancel booking|Refund now/);
 });
 
@@ -340,7 +342,7 @@ test("loading state mirrors the streamlined summary, six filters and list shell"
   assert.doesNotMatch(loading + page, />Trip overview<|>Trip directory</);
   assert.match(loading, /role="status"/);
   assert.match(loading, /aria-busy="true"/);
-  assert.match(loading, /aria-busy="true" className="space-y-5"/);
+  assert.match(loading, /aria-busy="true" className="space-y-8"/);
   assert.match(loading, /motion-safe:animate-pulse/);
   assert.equal((loading.match(/<AdminSectionCard/g) ?? []).length, 1);
   assert.equal((loading.match(/<section aria-label="Trip records" className="min-w-0">/g) ?? []).length, 1);
