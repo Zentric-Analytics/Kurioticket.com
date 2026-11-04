@@ -10,7 +10,8 @@ const systemApi = readFileSync("src/app/api/admin/system/route.ts", "utf8");
 
 test("system is read-only safe runtime status", () => {
   assert.match(systemPage, /title="System"/);
-  assert.match(systemPage, /Read-only configuration and connectivity status/);
+  assert.match(systemPage, /hideHeader/);
+  assert.doesNotMatch(systemPage, /Admin operations|Read-only configuration and connectivity status|CMS Health|Email delivery|View audit logs/);
   assert.match(systemPage, /System Status/);
   assert.match(systemPage, /Configuration Readiness/);
   assert.match(systemPage, /Database connectivity/);
