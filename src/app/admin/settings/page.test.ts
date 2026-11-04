@@ -10,13 +10,20 @@ const featureService = readFileSync("src/lib/feature-controls/service.ts", "utf8
 const fareRefreshApi = readFileSync("src/app/api/admin/homepage-fares/refresh/route.ts", "utf8");
 
 test("settings exposes real persisted controls rather than fake toggles", () => {
-  assert.match(settingsPage, /Authoritative platform controls and configuration ownership/);
+  assert.match(settingsPage, /Manage persisted platform controls/);
+  assert.match(settingsPage, />Platform controls<\/h2>/);
+  assert.match(settingsPage, />Recent control updates<\/h2>/);
+  assert.match(settingsPage, />Related operations<\/h2>/);
+  assert.match(settingsPage, />Deployment-owned configuration<\/h2>/);
+  assert.match(settingsPage, />Change safeguards<\/h2>/);
   assert.match(settingsPage, /FeatureControlsPanel/);
   assert.match(settingsPage, /listFeatureControls\(\)/);
   assert.match(featureService, /featureFlag\.findMany/);
   assert.match(featureService, /featureFlag\.update/);
   assert.match(featurePanel, /fetch\("\/api\/admin\/feature-controls"/);
   assert.match(featurePanel, /Array\.from\(new Set\(controls\.map\(\(control\) => control\.category\)\)\)/);
+  assert.match(featurePanel, /Travel Search|category/);
+  assert.match(featurePanel, /controls\.filter\(\(control\) => control\.category === category\)/);
 });
 
 test("production feature-control changes keep strong authorization", () => {
@@ -45,8 +52,8 @@ test("settings disables mutation when authoritative feature store is unavailable
 });
 
 test("deployment secrets are explicitly outside admin Settings", () => {
-  assert.match(settingsPage, /Deployment secrets and runtime credentials remain outside the admin UI/);
-  assert.match(settingsPage, /Database URLs, API keys, session secrets, provider credentials and server environment variables are never editable here/);
+  assert.match(settingsPage, /Secrets and runtime credentials remain deployment-owned/);
+  assert.match(settingsPage, /Database URLs, API keys, session secrets, provider credentials and server environment variables are not editable here/);
   assert.doesNotMatch(settingsPage, /process\.env\./);
   assert.doesNotMatch(featurePanel, /API key|database URL|session secret/i);
 });
@@ -57,4 +64,37 @@ test("homepage fare operations preserve the existing audited mutation path", () 
   assert.match(fareRefreshApi, /requireAdminApiSession\(\)/);
   assert.match(fareRefreshApi, /writeAdminAuditLog/);
   assert.match(fareRefreshApi, /HOMEPAGE_FARES_REFRESHED/);
+});
+
+
+test("settings shows truthful operator context without exposing secret configuration", () => {
+  assert.match(settingsPage, /label="Environment"/);
+  assert.match(settingsPage, /label="Control store"/);
+  assert.match(settingsPage, /label="Current access"/);
+  assert.match(settingsPage, /label="Production access"/);
+  assert.match(settingsPage, /featureControls\.dataAvailable/);
+  assert.match(settingsPage, /canControlProduction/);
+  assert.match(settingsPage, /recentControlUpdates/);
+  assert.match(settingsPage, /No persisted control updates yet/);
+  assert.doesNotMatch(settingsPage, /updatedBy|change reason|admin email address/i);
+});
+
+test("settings keeps related operations and deployment-owned boundaries compact instead of duplicating System", () => {
+  assert.match(settingsPage, /href="\/admin\/homepage-fares"/);
+  assert.match(settingsPage, /Homepage Fare Operations/);
+  assert.match(settingsPage, /Managed outside Admin/);
+  assert.match(settingsPage, /Runtime & credentials/);
+  assert.match(settingsPage, /Admin access/);
+  assert.doesNotMatch(settingsPage, /View system status|View admin configuration status|href="\/admin\/system"|href="\/admin\/logs"/);
+});
+
+test("settings feature controls remain grouped and mutation-safe after UI polish", () => {
+  assert.match(featurePanel, /role="dialog"/);
+  assert.match(featurePanel, /aria-modal="true"/);
+  assert.match(featurePanel, /Reason \{environment === "PRODUCTION" \? "\(required\)" : "\(optional\)"\}/);
+  assert.match(featurePanel, /disabled=\{!permitted\}/);
+  assert.match(featurePanel, /environment === "STAGING" \|\| canControlProduction/);
+  assert.match(featurePanel, /type="button"/);
+  assert.match(featurePanel, /Confirm change/);
+  assert.doesNotMatch(featurePanel, /process\.env|ADMIN_EMAILS/);
 });
