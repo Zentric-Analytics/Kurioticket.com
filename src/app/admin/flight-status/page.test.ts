@@ -90,7 +90,7 @@ test("Flight Status keeps one concise provider safety note within readiness, not
 test("flight status operations preserves the metasearch boundary", () => {
   assert.match(page, /not searches, handoffs or trip confirmations/);
   assert.match(contract, /does not infer operational flight status from a search, a provider handoff, or a booking confirmation/);
-  assert.match(navigation, /href: "\/admin\/flight-status"/);
+  assert.match(navigation, /href: "\/admin\/confirmed-trips\/monitoring"/);
   assert.doesNotMatch(navigation, /\/admin\/bookings/);
 });
 
