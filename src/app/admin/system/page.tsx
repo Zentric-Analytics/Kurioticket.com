@@ -37,7 +37,7 @@ export default async function AdminSystemPage() {
       label: "Database connectivity unavailable",
       detail: system.databaseConfigured
         ? "The database is configured, but its connectivity check did not succeed. Check database availability and application connectivity in the deployment environment."
-        : "A database connection is not configured. Database credentials are managed in deployment configuration rather than on this page.",
+        : "A database connection is not configured. Managed in deployment configuration; database credentials are not editable on this page.",
     });
   }
   if (!system.authConfigured) attention.push({
