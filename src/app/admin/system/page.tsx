@@ -22,6 +22,13 @@ export default async function AdminSystemPage() {
     ["ADMIN_EMAILS configured", system.adminEmailsConfigured, "Yes", "No"],
   ] as const;
 
+  const configurationGapCount =
+    Number(!system.databaseConfigured) +
+    Number(!system.authConfigured) +
+    Number(!system.emailConfigured) +
+    Number(!system.providerCredentialsPresent) +
+    Number(!system.adminEmailsConfigured);
+
   const attention: AttentionItem[] = [];
   if (!system.databaseConnected) {
     attention.push({
@@ -75,7 +82,7 @@ export default async function AdminSystemPage() {
             </div>
             <div className="min-w-0">
               <p className="text-[12px] text-[#64748B]">Configuration gaps</p>
-              <p className="mt-1 text-[14px] font-semibold tabular-nums">{attention.filter((item) => item.label !== "Database connectivity unavailable").length}</p>
+              <p className="mt-1 text-[14px] font-semibold tabular-nums">{configurationGapCount}</p>
             </div>
           </div>
         </section>
