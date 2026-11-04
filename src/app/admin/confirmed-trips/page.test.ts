@@ -60,6 +60,7 @@ test("main Trips workspace keeps the compact summary and records workspace witho
   assert.deepEqual(positions, [...positions].sort((a, b) => a - b));
   assert.equal((page.match(/<AdminSectionCard/g) ?? []).length, 1);
   assert.match(page, /<AdminSectionCard className="min-w-0 p-4 sm:p-5 lg:p-6">/);
+  assert.match(page, /<div className="space-y-5">/);
   assert.equal((page.match(/className="min-w-0 rounded-xl border border-slate-200\/80 bg-white px-4 py-3 sm:px-5 sm:py-4"/g) ?? []).length, 1);
   assert.match(page, /<section aria-label="Trip summary" className="min-w-0">/);
   assert.match(page, /<section aria-label="Trip records" id="trip-directory" className="min-w-0 rounded-xl border border-slate-200\/80 bg-white/);
@@ -233,7 +234,7 @@ test("six directory filters use a compact desktop row with a polished truthful i
   const ranges = controls.slice(controls.indexOf("const rangeOptions"), controls.indexOf("const fieldLabel"));
   assert.match(products, /\{ value: "all", label: "All" \}/);
   assert.match(statuses, /\{ value: "all", label: "Confirmed" \}/);
-  assert.match(statuses, /\{ value: "TRACKED", label: "Tracked", disabled: true, description: "Not connected" \}/);
+  assert.match(statuses, /\{ value: "TRACKED", label: "Tracked", disabled: true \}/);
   assert.doesNotMatch(products + statuses, /All types|label: "Confirmed trips"|label: "Tracked trips"/);
   const options = Array.from(ranges.matchAll(/\{ value: "([^"]+)", label: "([^"]+)" \}/g)).map(([, value, label]) => [value, label]);
   assert.deepEqual(options, [
@@ -243,9 +244,10 @@ test("six directory filters use a compact desktop row with a polished truthful i
   assert.match(controls, /name="identity" value=\{filters\.identity\} options=\{identityOptions\}/);
   assert.match(controls, /\{ value: "all", label: "All identities" \}/);
   assert.match(controls, /\{ value: "registered", label: "Registered" \}/);
-  assert.match(controls, /\{ value: "guest", label: "Guest", disabled: true, description: "Provider-confirmed trips are account-linked" \}/);
+  assert.match(controls, /\{ value: "guest", label: "Guest", disabled: true \}/);
   assert.match(controls, /name="range" value=\{range\} options=\{rangeOptions\}/);
   assert.match(controls, /name="status" value=\{filters\.status\} options=\{statusOptions\}/);
+  assert.doesNotMatch(controls, /description: "Not connected"|description: "Provider-confirmed trips are account-linked"/);
   assert.match(controls, /appearance="boxed"/);
   assert.match(controls, /autoSubmit/);
   assert.match(dropdown, /if \(!options\.some\(\(option\) => option\.value === next && !option\.disabled\)\) return/);
@@ -336,6 +338,7 @@ test("loading state mirrors the streamlined summary, six filters and list shell"
   assert.doesNotMatch(loading + page, />Trip overview<|>Trip directory</);
   assert.match(loading, /role="status"/);
   assert.match(loading, /aria-busy="true"/);
+  assert.match(loading, /aria-busy="true" className="space-y-5"/);
   assert.match(loading, /motion-safe:animate-pulse/);
   assert.equal((loading.match(/<AdminSectionCard/g) ?? []).length, 1);
   assert.equal((loading.match(/<section aria-label="Trip records" className="min-w-0 rounded-xl border border-slate-200\/80 bg-white/g) ?? []).length, 1);
