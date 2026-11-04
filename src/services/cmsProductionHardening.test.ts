@@ -10,7 +10,7 @@ const itemRoute = readFileSync("src/app/api/admin/content/[id]/route.ts", "utf8"
 const scopeRoute = readFileSync("src/app/api/admin/content/scope/route.ts", "utf8");
 const healthPage = readFileSync("src/app/admin/system/cms-health/page.tsx", "utf8");
 const legacyHealthPage = readFileSync("src/app/admin/content/health/page.tsx", "utf8");
-const adminNavigation = readFileSync("src/lib/adminNavigation.ts", "utf8");
+const systemPage = readFileSync("src/app/admin/system/page.tsx", "utf8");
 const faqDetail = readFileSync("src/app/admin/content/faqs/[id]/page.tsx", "utf8");
 const homepageDetail = readFileSync("src/app/admin/content/homepage/[section]/[id]/page.tsx", "utf8");
 const faqEditor = readFileSync("src/components/admin/FaqCmsEditor.tsx", "utf8");
@@ -80,7 +80,7 @@ test("CMS health reports integrity, ordering, fallback and unpublished changes",
   assert.match(hardeningService, /draftOrderNeedsNormalization/);
   assert.match(healthPage, /CMS Health/);
   assert.match(healthPage, /View audit logs/);
-  assert.match(adminNavigation, /href: "\/admin\/system\/cms-health", parentHref: "\/admin\/system"/);
+  assert.match(systemPage, /href="\/admin\/system\/cms-health"/);
   assert.match(legacyHealthPage, /redirect\("\/admin\/system\/cms-health"\)/);
   assert.doesNotMatch(contentPage, /\/admin\/content\/health/);
 });
