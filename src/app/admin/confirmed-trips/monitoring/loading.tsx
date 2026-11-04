@@ -61,8 +61,7 @@ export default function TripMonitoringLoading() {
 
               <div aria-hidden="true" className="min-w-0 space-y-4">
                 <section className="min-w-0">
-                  <SkeletonLine className="h-4 w-40" />
-                  <div className="mt-2 grid min-w-[960px] grid-cols-6 gap-2 overflow-hidden">
+                  <div className="grid min-w-[960px] grid-cols-6 gap-2 overflow-hidden">
                     {Array.from({ length: 6 }).map((_, index) => (
                       <div key={index} className="rounded-lg border border-slate-200/80 bg-white px-3 py-2.5">
                         <SkeletonLine className="h-3 w-20" />
@@ -72,11 +71,8 @@ export default function TripMonitoringLoading() {
                     ))}
                   </div>
                 </section>
-                <SkeletonPanel rows={3} />
-                <div className="grid min-w-0 items-stretch gap-3 lg:grid-cols-2">
-                  <SkeletonPanel rows={2} />
-                  <SkeletonPanel rows={2} />
-                </div>
+                <SkeletonPanel rows={4} />
+                <SkeletonPanel rows={2} />
                 <SkeletonPanel rows={2} />
                 <SkeletonPanel rows={2} />
               </div>
