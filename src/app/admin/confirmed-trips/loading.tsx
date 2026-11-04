@@ -28,9 +28,16 @@ export default function ConfirmedTripsLoading() {
             </div>
           </section>
           <section aria-label="Trip records" className="min-w-0">
-            <div aria-hidden="true" className="grid min-w-0 grid-cols-1 items-end gap-x-2 gap-y-2.5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)_minmax(0,0.9fr)_minmax(0,0.95fr)_minmax(0,1fr)_minmax(0,1.05fr)_auto] lg:gap-x-2 2xl:gap-x-2.5">
-              {["Search trips", "Provider", "Travel type", "Trip status", "Identity", "Time range"].map((label) => (
-                <div key={label} className="min-w-0">
+            <div aria-hidden="true" className="flex min-w-0 flex-wrap items-end gap-x-2 gap-y-2.5">
+              {[
+                ["Search trips", "sm:w-[180px]"],
+                ["Provider", "sm:w-[135px]"],
+                ["Travel type", "sm:w-[110px]"],
+                ["Trip status", "sm:w-[120px]"],
+                ["Identity", "sm:w-[135px]"],
+                ["Time range", "sm:w-[120px]"],
+              ].map(([label, width]) => (
+                <div key={label} className={"min-w-0 w-full " + width}>
                   <p className="text-[11px] font-medium leading-4 text-slate-600">{label}</p>
                   <div className="mt-1 h-9 w-full min-w-0 rounded-lg border border-slate-200 bg-slate-100 motion-safe:animate-pulse" />
                 </div>
