@@ -8,10 +8,11 @@ import { homepageCmsLocale, homepageCmsMarkets } from "@/services/homepageCmsSer
 
 export const metadata = { title: "Admin Content" };
 
-type CmsScopeSummary = { available: boolean; active: boolean; publishedInScope: number } | null;
+type CmsScopeSummary = { available: boolean; active: boolean; needsSetup?: boolean; publishedInScope: number } | null;
 
 function contentScopeStatus(summary: CmsScopeSummary) {
   if (!summary?.available) return "Unavailable";
+  if (summary.needsSetup) return "Setup required";
   return summary.active ? "CMS managed" : "Setup required";
 }
 
