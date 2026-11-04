@@ -60,7 +60,7 @@ test("main Trips workspace keeps the compact summary and records workspace witho
   assert.deepEqual(positions, [...positions].sort((a, b) => a - b));
   assert.equal((page.match(/<AdminSectionCard/g) ?? []).length, 1);
   assert.match(page, /<AdminSectionCard className="min-w-0 p-4 sm:p-5 lg:p-6">/);
-  assert.match(page, /<div className="space-y-5">/);
+  assert.match(page, /<div className="space-y-8">/);
   assert.equal((page.match(/className="min-w-0 rounded-xl border border-slate-200\/80 bg-white px-4 py-3 sm:px-5 sm:py-4"/g) ?? []).length, 0);
   assert.match(page, /<section aria-label="Trip summary" className="min-w-0">/);
   assert.match(page, /<section aria-label="Trip records" id="trip-directory" className="min-w-0">/);
@@ -216,7 +216,7 @@ test("the main directory uses authorized read-only filtered records, never the 2
   assert.doesNotMatch(recordsService, /\.create\(|\.update\(|\.delete\(|\.upsert\(/);
 });
 
-test("six directory filters use a compact desktop row with a polished truthful identity dropdown", () => {
+test("six directory filters use a compact left-anchored toolbar with a polished truthful identity dropdown", () => {
   assert.match(page, /<TripFilterControls filters=\{filters\} range=\{range\}/);
   assert.doesNotMatch(page, /dateFields=\{dateFields\}/);
   assert.match(controls, /<form method="get" action="\/admin\/confirmed-trips"/);
@@ -224,8 +224,11 @@ test("six directory filters use a compact desktop row with a polished truthful i
     assert.match(controls, new RegExp('name="' + name + '"'));
   }
   assert.doesNotMatch(controls, /name="from"|name="to"|type="date"/);
-  assert.match(controls, /lg:grid-cols-\[minmax\(0,1\.35fr\).*minmax\(0,1\.05fr\)_auto\]/);
-  assert.match(controls, /sm:grid-cols-2 md:grid-cols-3/);
+  assert.match(controls, /flex min-w-0 flex-wrap items-end gap-x-2 gap-y-2\.5/);
+  for (const width of ["sm:w-[180px]", "sm:w-[135px]", "sm:w-[110px]", "sm:w-[120px]"]) {
+    assert.ok(controls.includes(width), "Missing compact toolbar width: " + width);
+  }
+  assert.doesNotMatch(controls, /grid-cols-|minmax\(0,1\.(?:35|05)fr\)/);
   assert.doesNotMatch(controls, /overflow-x-auto|overflow-x-scroll|min-w-\[\d+px\]/);
   for (const label of ["Search trips", "Provider", "Travel type", "Trip status", "Identity", "Time range"]) {
     assert.ok(controls.includes(label), "Missing filter: " + label);
@@ -255,13 +258,19 @@ test("six directory filters use a compact desktop row with a polished truthful i
   assert.match(dropdown, /aria-haspopup="listbox"|role="listbox"/);
   assert.doesNotMatch(controls, /Clear filters|href="\/admin\/confirmed-trips#trip-directory"/);
   assert.match(controls, /<button type="submit" className="inline-flex h-9 items-center justify-center whitespace-nowrap rounded-lg bg-indigo-700 px-3/);
+  assert.match(workspace, /requested \|\| \(raw\.from \|\| raw\.to \? "custom" : "today"\)/);
   assert.match(workspace, /parseAdminTripFilters\(\{ \.\.\.raw, from, to \}\)/);
   assert.match(page, /if \(parsed\.ok && parsed\.range === "custom"\)/);
   assert.match(page, /redirect\(tripDirectoryHref\(parsed\.filters\)\)/);
   assert.match(directory, /<input type="date" name="from"/);
   assert.match(directory, /<input type="date" name="to"/);
-  assert.match(loading, /lg:grid-cols-\[minmax\(0,1\.35fr\).*minmax\(0,1\.05fr\)_auto\]/);
-  assert.match(loading, /sm:grid-cols-2 md:grid-cols-3/);
+  assert.match(loading, /flex min-w-0 flex-wrap items-end gap-x-2 gap-y-2\.5/);
+  assert.match(loading, /"Search trips", "sm:w-\[180px\]"/);
+  assert.match(loading, /"Provider", "sm:w-\[135px\]"/);
+  assert.match(loading, /"Travel type", "sm:w-\[110px\]"/);
+  assert.match(loading, /"Trip status", "sm:w-\[120px\]"/);
+  assert.match(loading, /"Identity", "sm:w-\[135px\]"/);
+  assert.match(loading, /"Time range", "sm:w-\[120px\]"/);
   assert.doesNotMatch(page + controls, /<form method="post"|fetch\(|method:\s*["'](?:POST|PATCH|DELETE)/);
 });
 
@@ -276,6 +285,7 @@ test("Trips use one dedicated list backed by genuine records and the existing re
   assert.match(recordsTable, /encodeURIComponent\(trip\.id\)/);
   assert.match(recordsTable, />Registered</);
   assert.match(recordsTable, /overflow-x-auto/);
+  assert.doesNotMatch(recordsTable, /Latest stored provider-confirmed trips|Scroll the list horizontally on narrower screens/);
   assert.doesNotMatch(recordsView + recordsTable, /mockRows|sampleData|random|Cancel booking|Refund now/);
 });
 
@@ -340,7 +350,7 @@ test("loading state mirrors the streamlined summary, six filters and list shell"
   assert.doesNotMatch(loading + page, />Trip overview<|>Trip directory</);
   assert.match(loading, /role="status"/);
   assert.match(loading, /aria-busy="true"/);
-  assert.match(loading, /aria-busy="true" className="space-y-5"/);
+  assert.match(loading, /aria-busy="true" className="space-y-8"/);
   assert.match(loading, /motion-safe:animate-pulse/);
   assert.equal((loading.match(/<AdminSectionCard/g) ?? []).length, 1);
   assert.equal((loading.match(/<section aria-label="Trip records" className="min-w-0">/g) ?? []).length, 1);
@@ -355,7 +365,9 @@ test("loading state mirrors the streamlined summary, six filters and list shell"
   assert.doesNotMatch(loading, /Loading counters for the selected trip filters/);
   assert.doesNotMatch(loading, /h-3 w-3\/4 rounded bg-slate-100/);
   assert.doesNotMatch(loading, /"All", "Flights", "Hotels", "Cars", "Packages"|aria-label="Trip travel types"/);
-  assert.match(loading, /"Search trips", "Provider", "Travel type", "Trip status", "Identity", "Time range"/);
+  for (const label of ["Search trips", "Provider", "Travel type", "Trip status", "Identity", "Time range"]) {
+    assert.ok(loading.includes(label), "Missing loading filter: " + label);
+  }
   assert.match(loading, /<div className="h-9 w-24 rounded-lg bg-slate-100 motion-safe:animate-pulse" \/>/);
   assert.match(loading, /"Created", "Type", "Trip", "Travel dates", "Provider", "Identity", "Status", "Action"/);
   assert.doesNotMatch(loading, /"From \(UTC\)"|"To \(UTC\)"/);

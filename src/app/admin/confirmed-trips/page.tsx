@@ -73,7 +73,7 @@ export default async function AdminConfirmedTripsPage({ searchParams }: Props) {
     redirect(tripDirectoryHref(parsed.filters));
   }
   const filters = parsed.ok ? parsed.filters : blankFilters;
-  const range = parsed.ok ? parsed.range : "all";
+  const range = parsed.ok ? parsed.range : "today";
   // The product/provider snapshot supplies provider names to the directory filter.
   // Confirmation readiness and delivery telemetry are now loaded only on Trip operations.
   const [operations, directory] = await Promise.all([
@@ -90,7 +90,7 @@ export default async function AdminConfirmedTripsPage({ searchParams }: Props) {
           </div>
         </div>
 
-        <div className="space-y-5">
+        <div className="space-y-8">
           <section aria-label="Trip summary" className="min-w-0">
             {directory?.status === "ok" ? (
               <div className="grid min-w-0 grid-cols-1 gap-0 sm:grid-cols-2 lg:grid-cols-5">
