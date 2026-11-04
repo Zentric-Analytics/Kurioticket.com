@@ -30,12 +30,16 @@ test("system is read-only safe runtime status", () => {
   assert.doesNotMatch(systemPage, /HomepageFaresRefreshCard|homepage fare/i);
 });
 
-test("System tools remain discoverable in the existing Admin navigation", () => {
-  assert.match(adminShell, /item\.href === "\/admin\/system"/);
-  assert.match(adminShell, /<details/);
+test("System child routes use the same compact horizontal navigation", () => {
+  assert.match(adminShell, /function SystemSectionTabs/);
   assert.match(adminShell, /aria-label="System sections"/);
-  assert.match(adminShell, /entry\.children\.map/);
-  for (const href of ["/admin/system/cms-health", "/admin/email-delivery", "/admin/logs"]) {
+  assert.match(adminShell, /systemSectionsVisible \? <SystemSectionTabs/);
+  assert.match(adminShell, /overflow-x-auto whitespace-nowrap/);
+  assert.match(adminShell, /border-b-2/);
+  assert.match(adminShell, /aria-current=\{active \? "page" : undefined\}/);
+  assert.doesNotMatch(adminShell, /<details|<summary|group-open:rotate-180/);
+  assert.match(adminShell, /entry\.item\.href === "\/admin\/system"/);
+  for (const href of ["/admin/system/cms-health", "/admin/email-delivery", "/admin/logs", "/admin/notifications"]) {
     assert.ok(adminNav.includes(`href: "${href}", parentHref: "/admin/system"`));
   }
 });
