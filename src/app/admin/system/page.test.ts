@@ -81,7 +81,7 @@ test("System child routes use the same compact horizontal navigation", () => {
 
 test("settings owns authoritative feature controls", () => {
   assert.match(settingsPage, /title="Settings"/);
-  assert.match(settingsPage, /Feature Controls/);
+  assert.match(settingsPage, /Platform controls/);
   assert.match(settingsPage, /FeatureControlsPanel/);
   assert.match(settingsPage, /listFeatureControls/);
   assert.match(settingsPage, /getFeatureControlProductionAdmins/);
@@ -91,8 +91,8 @@ test("settings owns authoritative feature controls", () => {
 });
 
 test("deployment-owned configuration stays outside Settings mutations", () => {
-  assert.match(settingsPage, /Database URLs, API keys, session secrets, provider credentials and server environment variables are never editable here/);
-  assert.match(settingsPage, /ADMIN_EMAILS and production feature-controller permissions stay in server configuration/);
+  assert.match(settingsPage, /Database URLs, API keys, session secrets, provider credentials and server environment variables are not editable here/);
+  assert.match(settingsPage, /Admin allowlists and production feature-controller permissions remain in server configuration/);
   assert.match(envSource, /getFeatureControlProductionAdmins/);
   assert.match(envSource, /export function getAdminEmails\(\)/);
   assert.match(envSource, /process\.env\.ADMIN_EMAILS \|\| ""/);
