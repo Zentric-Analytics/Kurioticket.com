@@ -1,7 +1,6 @@
 import {
   AdminDataTable,
   AdminEmptyState,
-  AdminLinkButton,
   AdminMetricCard,
   AdminPageShell,
   AdminStatusBadge,
@@ -18,12 +17,6 @@ export default async function AdminCmsHealthPage() {
     <AdminPageShell
       title="CMS Health"
       description="Production integrity, fallback policy, ordering and unpublished-change diagnostics for every active CMS scope."
-      actions={
-        <div className="flex flex-wrap gap-2">
-          <AdminLinkButton href="/admin/system">Back to System</AdminLinkButton>
-          <AdminLinkButton href="/admin/logs">View audit logs</AdminLinkButton>
-        </div>
-      }
     >
       {!overview.available ? (
         <AdminEmptyState
