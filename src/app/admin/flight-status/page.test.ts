@@ -4,7 +4,8 @@ import test from "node:test";
 import ts from "typescript";
 import { nodesWhere, parseSource } from "../../../test-support/sourceStructure";
 
-const page = readFileSync("src/components/admin/TripFlightStatusMonitoringPanel.tsx", "utf8");
+// Copy contracts describe visible text; JSX entity escaping must preserve it.
+const page = readFileSync("src/components/admin/TripFlightStatusMonitoringPanel.tsx", "utf8").replaceAll("&apos;", "'");
 const monitoring = readFileSync("src/app/admin/confirmed-trips/monitoring/page.tsx", "utf8");
 const route = readFileSync("src/app/admin/flight-status/page.tsx", "utf8");
 const service = readFileSync("src/services/adminFlightStatusOperationsService.ts", "utf8");
@@ -310,7 +311,8 @@ test("legacy Flight Status links redirect securely to the expanded monitoring pa
   assert.match(monitoring, /href="\/admin\/confirmed-trips"/);
   assert.match(monitoring, /Back to Trips/);
   assert.match(monitoring, /<TripFlightStatusMonitoringPanel \/>/);
-  assert.match(monitoring, /id="trip-flight-status-panel" open=\{showFlightStatus\}/);
+  assert.match(monitoring, /<section id="trip-flight-status-panel" aria-labelledby="trip-flight-status-title"/);
+  assert.doesNotMatch(monitoring, /<details id="trip-flight-status-panel"/);
   const searchActivity = readFileSync("src/app/admin/searches/activity/page.tsx", "utf8");
   assert.match(searchActivity, /{ label: "Flights", value: "FLIGHT" }/);
   assert.match(searchActivity, /one\(raw\.product\) === item\.value/);
@@ -323,7 +325,8 @@ test("unified Trip monitoring owns a single parent while preserving original fli
   assert.match(shell, /hideHeader\s*\?\s*<h1 className="sr-only">\{title\}<\/h1>/);
   assert.match(monitoring, /<AdminSectionCard className="min-w-0 p-4 sm:p-5 lg:p-6">/);
   assert.equal((monitoring.match(/<AdminSectionCard /g) || []).length, 1);
-  assert.match(monitoring, /<TripConfirmationsMonitoringPanel expandDelivery=\{panel === "delivery"\} \/>/);
+  assert.match(monitoring, /<TripConfirmationsMonitoringPanel \/>/);
+  assert.doesNotMatch(monitoring, /<details id="trip-confirmations-panel"/);
   assert.match(monitoring, /<TripFlightStatusMonitoringPanel \/>/);
   assert.match(page, /<div className="min-w-0 space-y-3">/);
   const sections = ["Flight status overview", "Status-feed readiness", "Latest status distribution",

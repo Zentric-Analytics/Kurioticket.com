@@ -31,13 +31,9 @@ export function AdminOverviewRangeTransitionProvider({ range, children }: { rang
   const sawPending = useRef(false);
   const isUpdating = requestedRange !== null && requestedRange !== range;
 
-  useEffect(() => {
-    if (requestedRange !== null && requestedRange === range) {
-      sawPending.current = false;
-      setRequestedRange(null);
-    }
-  }, [range, requestedRange]);
-
+  if (requestedRange !== null && requestedRange === range) {
+    setRequestedRange(null);
+  }
   useEffect(() => {
     if (isPending) {
       sawPending.current = true;

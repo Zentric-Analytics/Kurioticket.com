@@ -50,10 +50,12 @@ export function SearchMonitorSelect({
   };
   const triggerLabel = appearance === "boxed" ? options[selectedIndex]?.shortLabel ?? selectedLabel : selectedLabel;
 
-  useEffect(() => {
+  const [previousValue, setPreviousValue] = useState(value);
+  if (previousValue !== value) {
+    setPreviousValue(value);
     setSelected(value);
     setOpen(false);
-  }, [value]);
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -248,9 +250,11 @@ export function SearchMonitorSelect({
 export function SearchMonitorProviderInput({ value }: { value: string }) {
   const [provider, setProvider] = useState(value);
 
-  useEffect(() => {
+  const [previousValue, setPreviousValue] = useState(value);
+  if (previousValue !== value) {
+    setPreviousValue(value);
     setProvider(value);
-  }, [value]);
+  }
 
   return (
     <input

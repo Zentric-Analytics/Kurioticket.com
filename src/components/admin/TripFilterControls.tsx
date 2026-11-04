@@ -97,7 +97,7 @@ export function TripFilterControls({ filters, range, providerNames }: Props) {
           </div>
         </div>
         <div className="w-full min-w-0 sm:w-auto">
-          <button type="submit" className="inline-flex h-9 items-center justify-center whitespace-nowrap rounded-lg bg-indigo-700 px-3 text-xs font-semibold text-white hover:bg-indigo-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">Apply filters</button>
+          <button type="submit" className="inline-flex h-8 items-center justify-center whitespace-nowrap rounded-md bg-indigo-700 px-2.5 text-[11px] font-semibold text-white hover:bg-indigo-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">Apply filters</button>
         </div>
       </div>
     </form>

@@ -90,7 +90,7 @@ export default async function AdminConfirmedTripsPage({ searchParams }: Props) {
           </div>
         </div>
 
-        <div className="space-y-8">
+        <div className="space-y-10">
           <section aria-label="Trip summary" className="min-w-0">
             {directory?.status === "ok" ? (
               <div className="grid min-w-0 grid-cols-1 gap-0 sm:grid-cols-2 lg:grid-cols-5">
@@ -112,7 +112,7 @@ export default async function AdminConfirmedTripsPage({ searchParams }: Props) {
               key={[filters.q, filters.provider, filters.product, filters.status, filters.identity, range, filters.from, filters.to].join("|")}
               providerNames={operations?.byProvider.map(item => item.provider) ?? []} />
 
-            <div className="mt-3 border-t border-slate-100 pt-3">
+            <div className="mt-2">
               {!parsed.ok ? (
                 <p role="alert" className="rounded-lg bg-rose-50 px-4 py-3 text-sm text-rose-800">{parsed.error}</p>
               ) : directory?.status === "unavailable" ? (
@@ -129,7 +129,7 @@ export default async function AdminConfirmedTripsPage({ searchParams }: Props) {
                   ) : null}
                 </>
               ) : (
-                <p role="status" className="rounded-lg border border-slate-100 bg-white px-4 py-3 text-sm text-slate-700">Trip directory couldn't be loaded.</p>
+                <p role="status" className="rounded-lg border border-slate-100 bg-white px-4 py-3 text-sm text-slate-700">Trip directory couldn&apos;t be loaded.</p>
               )}
             </div>
           </section>
