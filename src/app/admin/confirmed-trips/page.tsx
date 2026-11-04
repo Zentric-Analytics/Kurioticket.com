@@ -28,10 +28,10 @@ type Props = { searchParams?: Promise<RawQuery> };
 type TripTone = "info" | "good" | "warn" | "neutral";
 
 const blankFilters: AdminTripFilters = {
-  q: "", provider: "", product: "all", status: "all", from: "", to: "",
+  q: "", provider: "", product: "all", status: "all", identity: "all", from: "", to: "",
 };
 
-/** The trip overview is a read-only summary; filtering lives in Trip Directory. */
+/** Read-only trip summary; filtering lives in the records workspace below. */
 function TripMetric({
   label, value, icon: Icon, tone, index, screenReaderNote,
 }: {
@@ -91,8 +91,7 @@ export default async function AdminConfirmedTripsPage({ searchParams }: Props) {
         </div>
 
         <div className="space-y-3">
-          <section aria-labelledby="confirmed-trips-overview" className="min-w-0">
-            <h2 id="confirmed-trips-overview" className="mb-3 text-base font-semibold text-slate-950">Trip overview</h2>
+          <section aria-label="Trip summary" className="min-w-0">
             {directory?.status === "ok" ? (
               <div className="grid min-w-0 grid-cols-1 gap-0 sm:grid-cols-2 lg:grid-cols-5">
                 <TripMetric index={0} label="Confirmed trips" value={directory.totalMatching} icon={FileCheck2} tone="info" />
@@ -108,11 +107,9 @@ export default async function AdminConfirmedTripsPage({ searchParams }: Props) {
             )}
           </section>
 
-          <section aria-labelledby="trip-directory-title" id="trip-directory" className="min-w-0 rounded-xl border border-slate-200/80 bg-white px-4 py-3 sm:px-5 sm:py-4">
-            <h2 id="trip-directory-title" className="mb-3 text-base font-semibold text-slate-950">Trip directory</h2>
-
+          <section aria-label="Trip records" id="trip-directory" className="min-w-0 rounded-xl border border-slate-200/80 bg-white px-4 py-3 sm:px-5 sm:py-4">
             <TripFilterControls filters={filters} range={range}
-              key={[filters.q, filters.provider, filters.product, filters.status, range, filters.from, filters.to].join("|")}
+              key={[filters.q, filters.provider, filters.product, filters.status, filters.identity, range, filters.from, filters.to].join("|")}
               providerNames={operations?.byProvider.map(item => item.provider) ?? []} />
 
             <div className="mt-3 border-t border-slate-100 pt-3">
@@ -122,14 +119,7 @@ export default async function AdminConfirmedTripsPage({ searchParams }: Props) {
                 <p role="status" className="rounded-lg border border-slate-100 bg-white px-4 py-4 text-sm text-slate-700">Trip records are temporarily unavailable. No records or counts are assumed.</p>
               ) : directory?.status === "ok" ? (
                 <>
-                  <div className="mb-3">
-                    <p className="text-xs font-semibold tabular-nums text-slate-700">{directory.totalMatching.toLocaleString("en-US")} matching verified trips</p>
-                  </div>
-                  {directory.rows.length ? (
-                    <TripDirectoryView rows={directory.rows} subtle />
-                  ) : (
-                    <p role="status" className="rounded-lg border border-slate-100 bg-white px-4 py-4 text-center text-sm text-slate-700">No provider-confirmed trip matches the selected filters.</p>
-                  )}
+                  <TripDirectoryView rows={directory.rows} subtle />
                   {directory.nextCursor ? (
                     <div className="mt-3 flex justify-end">
                       <Link href={tripDirectoryHref(filters, directory.nextCursor)} className="inline-flex min-h-9 items-center rounded-lg border border-slate-200 px-3 text-xs font-semibold text-indigo-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
