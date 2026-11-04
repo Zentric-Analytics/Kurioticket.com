@@ -65,11 +65,12 @@ test("main Trips workspace contains two compact sections and a visible Trip oper
   const toolbarStart = page.indexOf('role="group" aria-label="Trip shortcuts"');
   assert.ok(parentStart >= 0 && toolbarStart > parentStart && toolbarStart < positions[0]);
   assert.ok(positions.every(position => position > parentStart && position < parentEnd));
-  assert.match(page, /rounded-lg border border-slate-200\/80 bg-white px-3 py-2\.5/);
+  assert.match(page, /border-slate-200\/80 px-3 py-2\.5/);
+  assert.doesNotMatch(page, /rounded-lg border border-slate-200\/80 bg-white px-3 py-2\.5/);
   assert.doesNotMatch(page, /TripCategoryCard|Trips by category/);
   assert.doesNotMatch(page, /Related trip operations|Detailed product and provider breakdowns|Confirmation integration readiness|Confirmation delivery health and alerts/);
   assert.doesNotMatch(page, /bg-slate-(?:50\/80|100\/65|100\/60|100\/80)/);
-  assert.match(page, /grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-5/);
+  assert.match(page, /grid min-w-0 grid-cols-1 gap-0 sm:grid-cols-2 lg:grid-cols-5/);
   assert.doesNotMatch(page, /grid w-full min-w-\[850px\] grid-cols-5/);
 });
 
@@ -90,13 +91,17 @@ test("Trip overview note and disconnected Tracking field are removed without los
   assert.match(page, /directory\.nextCursor/);
 });
 
-test("Trip overview removes only its surrounding card, not the five individual metric tiles", () => {
+test("Trip overview retains five unboxed metrics with responsive divider lines", () => {
   const start = page.indexOf('<section aria-labelledby="confirmed-trips-overview"');
   const end = page.indexOf('</section>', start);
   const section = page.slice(start, end);
   assert.match(section, /<section aria-labelledby="confirmed-trips-overview" className="min-w-0">/);
-  assert.match(section, /grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-5/);
+  assert.match(section, /grid min-w-0 grid-cols-1 gap-0 sm:grid-cols-2 lg:grid-cols-5/);
   assert.equal((section.match(/<TripMetric /g) ?? []).length, 5);
+  for (let index = 0; index < 5; index++) {
+    assert.ok(section.includes('<TripMetric index={' + index + '}'), 'Missing metric index ' + index);
+  }
+  assert.doesNotMatch(section, /rounded-lg border border-slate-200\/80 bg-white px-3 py-2\.5/);
   assert.doesNotMatch(section, /<Info|Confirmed trips include cancelled records|Tracking totals require a separate data source/);
   assert.doesNotMatch(section, /The counters reflect the filters applied|hint="/);
 });
@@ -113,7 +118,12 @@ test("all five overview counters display the current filtered scope without clic
   assert.match(page, /label="Past" value=\{directory\.statusCounts\.past\}/);
   assert.match(page, /label="Cancelled" value=\{directory\.statusCounts\.cancelled\}/);
   const metric = page.slice(page.indexOf("function TripMetric({"), page.indexOf("export default async function AdminConfirmedTripsPage("));
-  assert.match(metric, /return \(\s*<div className="flex h-full min-w-0 flex-col rounded-lg border border-slate-200\/80 bg-white/);
+  assert.match(metric, /index: number/);
+  assert.match(metric, /border-slate-200\/80 px-3 py-2\.5/);
+  assert.match(metric, /index < 4 \? "border-b lg:border-b-0 "/);
+  assert.match(metric, /index % 2 === 1 \? "sm:border-l "/);
+  assert.match(metric, /index > 0 \? "lg:border-l"/);
+  assert.doesNotMatch(metric, /rounded-lg|bg-white|shadow|ring-indigo/);
   assert.doesNotMatch(metric, /<Link|href=|aria-current|active\s*=|ArrowRight|ring-indigo-100|border-indigo-300|hover:bg-indigo-50|cursor-pointer|cursor-not-allowed/);
   assert.doesNotMatch(page, /The counters reflect the filters applied in the Trip Directory/);
   assert.doesNotMatch(page, /hint=|\{hint\}/);
@@ -323,6 +333,12 @@ test("loading state mirrors two primary sections with a visible operations short
   assert.equal((loading.match(/<AdminSectionCard/g) ?? []).length, 1);
   assert.equal((loading.match(/<section className="min-w-0 rounded-xl border border-slate-200\/80 bg-white/g) ?? []).length, 1);
   assert.match(loading, /<section className="min-w-0">\s*<h2 className="mb-3 text-base font-semibold text-slate-950">Trip overview<\/h2>/);
+  assert.match(loading, /grid min-w-0 grid-cols-1 gap-0 sm:grid-cols-2 lg:grid-cols-5/);
+  assert.match(loading, /metricLabels\.map\(\(label, index\) =>/);
+  assert.match(loading, /index < 4 \? "border-b lg:border-b-0 "/);
+  assert.match(loading, /index % 2 === 1 \? "sm:border-l "/);
+  assert.match(loading, /index > 0 \? "lg:border-l"/);
+  assert.doesNotMatch(loading, /rounded-lg border border-slate-200\/80 bg-white px-3 py-2\.5/);
   assert.doesNotMatch(loading, /Loading counters for the selected trip filters/);
   assert.doesNotMatch(loading, /h-3 w-3\/4 rounded bg-slate-100/);
   assert.doesNotMatch(loading, /"All", "Flights", "Hotels", "Cars", "Packages"|aria-label="Trip travel types"/);
