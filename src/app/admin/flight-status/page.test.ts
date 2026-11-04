@@ -33,7 +33,7 @@ test("missing status is scoped to the configured provider rather than all confir
   assert.match(service, /monitoringTrackedFlights/);
   assert.match(service, /monitoringStaleSnapshots/);
   assert.match(service, /flightStatusSnapshot: \{ is: null \}/);
-  assert.match(page, /Matches status provider/);
+  assert.match(page, /Provider eligible/);
 });
 
 test("flight status readiness is provider-bound and independent from database telemetry", () => {
@@ -69,6 +69,7 @@ test("Flight Status keeps provider safety in backend contracts without explanato
   assert.equal((page.match(/<section className="min-w-0 rounded-xl border border-slate-200\/80 bg-white p-3 sm:p-4">/g) || []).length, 4);
   assert.match(page, /<div className="min-w-0 space-y-4">/);
   assert.match(page, /grid w-full min-w-\[960px\] grid-cols-6 gap-2/);
+  assert.match(page, /grid min-w-0 items-start gap-3 lg:grid-cols-2/);
   assert.match(page, /No zero values were invented/);
   assert.match(page, /Flight-status distribution is unavailable\. No counts are assumed/);
   assert.match(page, /operations\.awaitingFirstSnapshot\.map/);
@@ -122,10 +123,10 @@ test("latest snapshots and awaiting-first-snapshot sections never disappear at z
   assert.match(page, /operations\.recentSnapshots\.length/);
   assert.match(page, /operations\.recentSnapshots\.map/);
   assert.match(page, /<h2[^>]*>Latest trusted flight-status snapshots<\/h2>/);
-  assert.match(page, /No verified flight-status snapshots recorded yet/);
+  assert.match(page, /No status snapshots recorded yet/);
   assert.match(page, /Recent flight-status data unavailable/);
   assert.match(page, /<h2[^>]*>Awaiting first status snapshot<\/h2>/);
-  assert.match(page, /No status feed is configured/);
+  assert.match(page, /No status feed configured/);
   assert.match(page, /No zero values were invented/);
   assert.doesNotMatch(page, /operations\.recentSnapshots\.length \? \([\s\S]*?\) : null\s*\) : null/);
 });
@@ -215,9 +216,9 @@ test("data-availability boundaries remain truthful without explanatory helper co
   assert.match(page, /No zero values were invented/);
   assert.match(page, /No counts are assumed/);
   assert.match(page, /Count awaiting first status is unknown/);
-  assert.match(page, /No verified flight-status snapshots recorded yet/);
+  assert.match(page, /No status snapshots recorded yet/);
   assert.match(page, /Recent flight-status data unavailable/);
-  assert.match(page, /No status feed is configured; no snapshots to show/);
+  assert.match(page, /No status feed configured/);
   assert.match(monitoring, /<AdminPageShell title="Trip monitoring" hideHeader>/);
   assert.match(monitoring, /href="\/admin\/confirmed-trips"/);
   assert.doesNotMatch(page, /href="\/admin\/flights"|href="\/admin\/searches\/activity/);

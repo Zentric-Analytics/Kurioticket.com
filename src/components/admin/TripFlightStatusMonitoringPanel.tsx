@@ -20,9 +20,9 @@ export async function TripFlightStatusMonitoringPanel() {
             <div role="region" aria-label="Flight status metrics" tabIndex={0} className="min-w-0 max-w-full overflow-x-auto overscroll-x-contain rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400">
               <div className="grid w-full min-w-[960px] grid-cols-6 gap-2">
               <FlightStatusMetric label="Confirmed flights" value={operations.metrics.confirmedFlights} hint="Provider-confirmed trips" tone="info" />
-              <FlightStatusMetric label="Provider matched" value={operations.metrics.feedEligibleFlights} hint="Matches status provider" />
-              <FlightStatusMetric label="Tracked" value={operations.metrics.trackedFlights} hint="With a stored status" tone={operations.metrics.trackedFlights > 0 ? "good" : "neutral"} />
-              <FlightStatusMetric label="Missing status" value={operations.metrics.missingSnapshots} hint="Awaiting first status" tone={operations.metrics.missingSnapshots > 0 ? "warn" : "neutral"} />
+              <FlightStatusMetric label="Provider matched" value={operations.metrics.feedEligibleFlights} hint="Provider eligible" />
+              <FlightStatusMetric label="Tracked" value={operations.metrics.trackedFlights} hint="Stored snapshot" tone={operations.metrics.trackedFlights > 0 ? "good" : "neutral"} />
+              <FlightStatusMetric label="Missing status" value={operations.metrics.missingSnapshots} hint="No snapshot yet" tone={operations.metrics.missingSnapshots > 0 ? "warn" : "neutral"} />
               <FlightStatusMetric label="Current" value={operations.metrics.currentSnapshots} hint="Within 15-min window" tone={operations.metrics.currentSnapshots > 0 ? "good" : "neutral"} />
               <FlightStatusMetric label="Stale" value={operations.metrics.staleSnapshots} hint="Outside 15-min window" tone={operations.metrics.staleSnapshots > 0 ? "warn" : "neutral"} />
               </div>
@@ -63,67 +63,66 @@ export async function TripFlightStatusMonitoringPanel() {
         </section>
 
         {/* Keep monitoring cards visible when data is unavailable. */}
-        <section className="min-w-0 rounded-xl border border-slate-200/80 bg-white p-3 sm:p-4">
-          <h2 className="text-base font-semibold leading-6 tracking-tight text-slate-950">Latest status distribution</h2>
-          {!operations ? (
-            <p role="status" className="mt-2 rounded-lg bg-slate-50 px-3 py-2.5 text-[13px] leading-5 text-slate-600">
-              Flight-status distribution is unavailable. No counts are assumed.
-            </p>
-          ) : operations.statusDistribution.length ? (
-            <div className="mt-2 divide-y divide-slate-100">
-              {operations.statusDistribution.map((item) => (
-                <div key={item.status} className="flex min-w-0 items-center justify-between gap-3 py-2">
-                  <span className="min-w-0 break-words text-[13px] font-medium leading-5 text-slate-800">{item.status}</span>
-                  <AdminStatusBadge tone={item.status === "DELAYED" || item.status === "CANCELLED" ? "warn" : item.status === "UNKNOWN" ? "neutral" : "info"}>{item.count}</AdminStatusBadge>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p role="status" className="mt-2 rounded-lg bg-slate-50 px-3 py-2.5 text-[13px] leading-5 text-slate-600">
-              {readiness.feedReady
-                ? "No verified flight-status snapshots recorded yet."
-                : "No status feed is configured; no snapshots to show."}
-            </p>
-          )}
-        </section>
+        <div className="grid min-w-0 items-start gap-3 lg:grid-cols-2">
+          <section className="min-w-0 rounded-xl border border-slate-200/80 bg-white p-3 sm:p-4">
+            <h2 className="text-base font-semibold leading-6 tracking-tight text-slate-950">Latest status distribution</h2>
+            {!operations ? (
+              <p role="status" className="mt-2 rounded-lg bg-slate-50 px-3 py-2 text-[13px] leading-5 text-slate-600">
+                Flight-status distribution is unavailable. No counts are assumed.
+              </p>
+            ) : operations.statusDistribution.length ? (
+              <div className="mt-2 divide-y divide-slate-100">
+                {operations.statusDistribution.map((item) => (
+                  <div key={item.status} className="flex min-w-0 items-center justify-between gap-3 py-2">
+                    <span className="min-w-0 break-words text-[13px] font-medium leading-5 text-slate-800">{item.status}</span>
+                    <AdminStatusBadge tone={item.status === "DELAYED" || item.status === "CANCELLED" ? "warn" : item.status === "UNKNOWN" ? "neutral" : "info"}>{item.count}</AdminStatusBadge>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p role="status" className="mt-2 rounded-lg bg-slate-50 px-3 py-2 text-[13px] leading-5 text-slate-600">
+                {readiness.feedReady
+                  ? "No status snapshots recorded yet."
+                  : "No status feed configured."}
+              </p>
+            )}
+          </section>
 
-        <section className="min-w-0 rounded-xl border border-slate-200/80 bg-white p-3 sm:p-4">
-          <h2 className="text-base font-semibold leading-6 tracking-tight text-slate-950">Awaiting first status snapshot</h2>
-          {!operations ? (
-            <p role="status" className="mt-2 rounded-lg bg-slate-50 px-3 py-2.5 text-[13px] leading-5 text-slate-600">
-              Flight-status data unavailable. Count awaiting first status is unknown.
-            </p>
-          ) : operations.awaitingFirstSnapshot.length ? (
-            <div className="mt-3 min-w-0">
-              <AdminDataTable
-                columns={["Departure", "Customer", "Route", "Provider", "Reference", "Confirmed"]}
-                rows={operations.awaitingFirstSnapshot.map((trip) => ({
-                  id: trip.id,
-                  cells: [
-                    formatDateTime(new Date(trip.departureDate)),
-                    <div key="customer"><p className="font-semibold text-slate-950">{trip.userEmail || "Email unavailable"}</p><p className="text-xs text-slate-500">{trip.userId}</p></div>,
-                    trip.origin ? trip.origin + " → " + trip.destination : trip.destination,
-                    trip.providerName,
-                    trip.providerConfirmationCode,
-                    formatDateTime(new Date(trip.confirmedAt)),
-                  ],
-                }))}
-              />
-            </div>
-          ) : (
-            <p role="status" className="mt-2 rounded-lg bg-slate-50 px-3 py-2.5 text-[13px] leading-5 text-slate-600">
-              <span className="font-medium text-slate-800">No flights awaiting a first snapshot.</span>{" "}
-              {readiness.feedReady
-                ? "No provider-matched flights are awaiting a first status."
-                : "No matching flights are waiting; the status feed is not ready."}
-            </p>
-          )}
-        </section>
+          <section className="min-w-0 rounded-xl border border-slate-200/80 bg-white p-3 sm:p-4">
+            <h2 className="text-base font-semibold leading-6 tracking-tight text-slate-950">Awaiting first status snapshot</h2>
+            {!operations ? (
+              <p role="status" className="mt-2 rounded-lg bg-slate-50 px-3 py-2 text-[13px] leading-5 text-slate-600">
+                Flight-status data unavailable. Count awaiting first status is unknown.
+              </p>
+            ) : operations.awaitingFirstSnapshot.length ? (
+              <div className="mt-3 min-w-0">
+                <AdminDataTable
+                  columns={["Departure", "Customer", "Route", "Provider", "Reference", "Confirmed"]}
+                  rows={operations.awaitingFirstSnapshot.map((trip) => ({
+                    id: trip.id,
+                    cells: [
+                      formatDateTime(new Date(trip.departureDate)),
+                      <div key="customer"><p className="font-semibold text-slate-950">{trip.userEmail || "Email unavailable"}</p><p className="text-xs text-slate-500">{trip.userId}</p></div>,
+                      trip.origin ? trip.origin + " → " + trip.destination : trip.destination,
+                      trip.providerName,
+                      trip.providerConfirmationCode,
+                      formatDateTime(new Date(trip.confirmedAt)),
+                    ],
+                  }))}
+                />
+              </div>
+            ) : (
+              <p role="status" className="mt-2 rounded-lg bg-slate-50 px-3 py-2 text-[13px] font-medium leading-5 text-slate-700">
+                No flights awaiting a first snapshot.
+              </p>
+            )}
+          </section>
+        </div>
 
         <section className="min-w-0 rounded-xl border border-slate-200/80 bg-white p-3 sm:p-4">
           <h2 className="text-base font-semibold leading-6 tracking-tight text-slate-950">Latest trusted flight-status snapshots</h2>
           {!operations ? (
-            <p role="status" className="mt-2 rounded-lg bg-slate-50 px-3 py-2.5 text-[13px] leading-5 text-slate-600">
+            <p role="status" className="mt-2 rounded-lg bg-slate-50 px-3 py-2 text-[13px] leading-5 text-slate-600">
               Recent flight-status data unavailable. No records are assumed.
             </p>
           ) : operations.recentSnapshots.length ? (
@@ -145,10 +144,10 @@ export async function TripFlightStatusMonitoringPanel() {
               />
             </div>
           ) : (
-            <p role="status" className="mt-2 rounded-lg bg-slate-50 px-3 py-2.5 text-[13px] leading-5 text-slate-600">
+            <p role="status" className="mt-2 rounded-lg bg-slate-50 px-3 py-2 text-[13px] leading-5 text-slate-600">
               {readiness.feedReady
-                ? "No verified flight-status snapshots recorded yet."
-                : "No status feed is configured; no snapshots to show."}
+                ? "No status snapshots recorded yet."
+                : "No status feed configured."}
             </p>
           )}
         </section>

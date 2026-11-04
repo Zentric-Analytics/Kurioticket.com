@@ -30,7 +30,7 @@ export default function TripMonitoringLoading() {
         <div role="status" aria-live="polite" className="sr-only">Loading trip monitoring…</div>
 
         <section aria-label="Trip monitoring details" aria-busy="true" className="min-w-0 pt-6">
-          <div className="space-y-8">
+          <div className="space-y-6">
             <section id="trip-confirmations-panel" aria-labelledby="trip-confirmations-title" className="min-w-0">
               <div className="mb-3 flex min-w-0 items-center gap-2 border-b border-slate-200/80 pb-2.5">
                 <FileCheck2 size={17} className="shrink-0 text-indigo-700" aria-hidden="true" />
@@ -49,7 +49,7 @@ export default function TripMonitoringLoading() {
               </div>
             </section>
 
-            <section id="trip-flight-status-panel" aria-labelledby="trip-flight-status-title" className="min-w-0 border-t border-slate-200/80 pt-6">
+            <section id="trip-flight-status-panel" aria-labelledby="trip-flight-status-title" className="min-w-0 border-t border-slate-200/80 pt-5">
               <div className="mb-3 flex min-w-0 items-center gap-2 border-b border-slate-200/80 pb-2.5">
                 <Plane size={17} className="shrink-0 text-indigo-700" aria-hidden="true" />
                 <h3 id="trip-flight-status-title" className="text-sm font-semibold text-slate-900">Flight status</h3>
@@ -68,8 +68,10 @@ export default function TripMonitoringLoading() {
                   </div>
                 </section>
                 <SkeletonPanel rows={4} />
-                <SkeletonPanel rows={2} />
-                <SkeletonPanel rows={2} />
+                <div className="grid min-w-0 items-start gap-3 lg:grid-cols-2">
+                  <SkeletonPanel rows={2} />
+                  <SkeletonPanel rows={2} />
+                </div>
                 <SkeletonPanel rows={2} />
               </div>
             </section>

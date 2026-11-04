@@ -28,7 +28,7 @@ function BreakdownMessage({ title, text, icon: Icon }: {
   icon: typeof Info;
 }) {
   return (
-    <div role="status" className="mt-3 flex min-w-0 items-start gap-2 rounded-lg bg-slate-50 px-3 py-2.5">
+    <div role="status" className="mt-2.5 flex min-w-0 items-center gap-2 rounded-lg bg-slate-50 px-3 py-2">
       <Icon size={16} className="mt-0.5 shrink-0 text-slate-500" aria-hidden="true" />
       <div className="min-w-0">
         <p className="break-words text-[13px] font-medium leading-5 text-slate-800">{title}</p>
@@ -42,7 +42,7 @@ function BreakdownMessage({ title, text, icon: Icon }: {
 export function ConfirmedTripsBreakdowns({ operations }: Props) {
   return (
     <div className="grid items-start gap-3 lg:grid-cols-2">
-      <section aria-labelledby="trips-by-product-title" className="min-w-0 rounded-xl border border-slate-200 px-4 py-3 sm:px-5 sm:py-4">
+      <section aria-labelledby="trips-by-product-title" className="min-w-0 rounded-xl border border-slate-200/80 bg-white p-3 sm:p-4">
         <div className="flex min-w-0 items-center gap-2.5">
           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-700">
             <Package size={17} aria-hidden="true" />
@@ -68,7 +68,7 @@ export function ConfirmedTripsBreakdowns({ operations }: Props) {
         )}
       </section>
 
-      <section aria-labelledby="trips-by-provider-title" className="min-w-0 rounded-xl border border-slate-200 px-4 py-3 sm:px-5 sm:py-4">
+      <section aria-labelledby="trips-by-provider-title" className="min-w-0 rounded-xl border border-slate-200/80 bg-white p-3 sm:p-4">
         <div className="flex min-w-0 items-center gap-2.5">
           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-700">
             <Users size={17} aria-hidden="true" />
