@@ -338,9 +338,15 @@ test("Trips and Trip monitoring use the Providers-style workspace navigation whi
   assert.match(operationsRedirect, /await requireAdminSession\("\/admin\/confirmed-trips\/operations"\)/);
   assert.match(operationsRedirect, /redirect\("\/admin\/confirmed-trips\/monitoring\?panel=delivery#confirmation-delivery-health-title"\)/);
   assert.match(flightStatusRedirect, /redirect\("\/admin\/confirmed-trips\/monitoring\?panel=flight#flight-status-overview-title"\)/);
-  assert.match(operationsPage, /Detailed product and provider breakdowns/);
+  assert.doesNotMatch(operationsPage, /Detailed product and provider breakdowns/);
+  assert.match(operationsPage, /aria-label="Confirmed trip breakdowns"/);
   assert.match(operationsPage, /Confirmation integration readiness/);
   assert.match(operationsPage, />Delivery health and alerts<\/h4>/);
+  assert.doesNotMatch(operationsPage, /Tracks authenticated provider callbacks\. Retries are not new bookings or trips\./);
+  assert.doesNotMatch(breakdowns, /Confirmed trips by travel type\.|Confirmed trips from each provider\./);
+  assert.doesNotMatch(breakdowns, /Product totals will appear after verified confirmations arrive\.|Provider totals will appear after verified confirmations arrive\./);
+  assert.match(breakdowns, />No confirmed trips yet\.<\/p>/);
+  assert.match(breakdowns, />No confirmed trips from providers yet\.<\/p>/);
   assert.doesNotMatch(operationsPage, />Confirmation delivery health<\/h4>|>Confirmation delivery health and alerts<\/h4>/);
   assert.match(operationsPage, /No authenticated delivery telemetry is available/);
   assert.equal((operationsPage.match(/<details/g) ?? []).length, 0);
@@ -367,7 +373,7 @@ test("Trips and Trip monitoring use the Providers-style workspace navigation whi
   assert.match(operationsPage, /readiness\.feedReady \? <ConfirmedTripDeliveryAlerts \/> : null/);
   assert.match(operationsPage, /id="confirmation-delivery-health-title"/);
   assert.match(operationsPage, /id="confirmation-integration-title"/);
-  assert.match(operationsPage, /id="confirmation-breakdowns-title"/);
+  assert.doesNotMatch(operationsPage, /id="confirmation-breakdowns-title"/);
   assert.doesNotMatch(operationsPage, /expandDelivery|open=\{/);
   assert.doesNotMatch(operationsPage, /mockData|sampleTrips|Math\.random|process\.env/);
   assert.match(flightMonitoring, /className="min-w-0 space-y-4"/);
