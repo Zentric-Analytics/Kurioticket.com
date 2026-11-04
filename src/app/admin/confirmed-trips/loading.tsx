@@ -13,7 +13,7 @@ export default function ConfirmedTripsLoading() {
           </div>
         </div>
         <div role="status" aria-live="polite" className="sr-only">Loading confirmed-trip information…</div>
-        <div aria-busy="true" className="space-y-8">
+        <div aria-busy="true" className="space-y-10">
           <section aria-label="Trip summary" className="min-w-0">
             <div aria-hidden="true" className="grid min-w-0 grid-cols-1 gap-0 sm:grid-cols-2 lg:grid-cols-5">
               {metricLabels.map((label, index) => (
@@ -42,9 +42,9 @@ export default function ConfirmedTripsLoading() {
                   <div className="mt-1 h-9 w-full min-w-0 rounded-lg border border-slate-200 bg-slate-100 motion-safe:animate-pulse" />
                 </div>
               ))}
-              <div className="h-9 w-24 rounded-lg bg-slate-100 motion-safe:animate-pulse" />
+              <div className="h-8 w-20 rounded-md bg-slate-100 motion-safe:animate-pulse" />
             </div>
-            <div aria-hidden="true" className="mt-4 overflow-hidden rounded-lg border border-slate-200">
+            <div aria-hidden="true" className="mt-2 overflow-hidden rounded-lg border border-slate-200">
               <div className="grid min-w-[1080px] grid-cols-8 gap-0 bg-slate-50">
                 {["Created", "Type", "Trip", "Travel dates", "Provider", "Identity", "Status", "Action"].map((label) => (
                   <div key={label} className="px-3 py-2.5 text-[11px] font-semibold text-slate-500">{label}</div>
