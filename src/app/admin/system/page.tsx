@@ -157,7 +157,7 @@ export default async function AdminSystemPage() {
         </section>
 
         <section aria-labelledby="system-attention-heading" className="border-b border-[#D8E1EC] py-5">
-          <h2 id="system-attention-heading" className="text-[15px] font-semibold">Issues requiring attention</h2>
+          <h2 id="system-attention-heading" className="text-[15px] font-semibold">Issues Requiring Attention</h2>
           {attention.length ? (
             <ul className="mt-3 max-w-[980px] divide-y divide-[#E7ECF5]">
               {attention.map((item) => (
