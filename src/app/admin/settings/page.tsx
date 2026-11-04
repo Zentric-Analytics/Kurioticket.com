@@ -123,7 +123,7 @@ export default async function AdminSettingsPage() {
                 <p className="text-[13px] font-semibold text-slate-900">Homepage Fare Operations</p>
                 <p className="mt-0.5 text-[12px] leading-5 text-slate-600">Provider-backed homepage fare readiness and refresh.</p>
               </div>
-              <Link href="/admin/homepage-fares" className="inline-flex h-8 shrink-0 items-center rounded-md border border-slate-200 bg-white px-2.5 text-[11px] font-semibold text-indigo-700 hover:border-slate-300 hover:bg-slate-50">
+              <Link href="/admin/homepage-fares" aria-label="Open fare operations" className="inline-flex h-8 shrink-0 items-center rounded-md border border-slate-200 bg-white px-2.5 text-[11px] font-semibold text-indigo-700 hover:border-slate-300 hover:bg-slate-50">
                 Open
               </Link>
             </div>
