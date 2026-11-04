@@ -45,7 +45,7 @@ export const adminNavigation: AdminNavDefinition[] = [
   { href: "/admin/providers", label: "Providers", icon: Activity, roles: ["ADMIN"], section: "readiness", description: "Monitor provider configuration and health." },
   { href: "/admin/searches/activity", label: "Search Activity", icon: Search, roles: ["ADMIN"], section: "operations", description: "Review platform-wide search records, outcomes, and diagnostics." },
   { href: "/admin/confirmed-trips", label: "Trips", icon: ClipboardList, roles: ["ADMIN"], section: "operations", description: "Monitor provider-confirmed trips and their flight-status readiness." },
-  { href: "/admin/flight-status", parentHref: "/admin/confirmed-trips", label: "Flight Status", icon: Activity, roles: ["ADMIN"], section: "operations", description: "Monitor trusted provider-supplied status snapshots for confirmed flights." },
+  { href: "/admin/confirmed-trips/monitoring", parentHref: "/admin/confirmed-trips", label: "Trip monitoring", icon: Activity, roles: ["ADMIN"], section: "operations", description: "Monitor trusted trip confirmations, provider deliveries and flight-status snapshots." },
   { href: "/admin/content", label: "Content", icon: FileText, roles: ["ADMIN"], section: "content", description: "Review admin-managed site content." },
   { href: "/admin/flights", parentHref: "/admin/providers", label: "Flights", icon: Plane, roles: ["ADMIN"], section: "readiness", description: "Review flight administration readiness." },
   { href: "/admin/hotels", parentHref: "/admin/providers", label: "Hotels", icon: Hotel, roles: ["ADMIN"], section: "readiness", description: "Review hotel administration readiness." },
