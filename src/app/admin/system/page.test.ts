@@ -16,10 +16,10 @@ test("system status uses a truthful snapshot-attention-services-configuration hi
   assert.match(systemPage, /max-w-\[980px\]/);
 
   const positions = [
-    "System snapshot",
-    "Issues requiring attention",
-    "Services",
-    "Configuration",
+    ">System snapshot</h2>",
+    ">Issues Requiring Attention</h2>",
+    ">Services</h2>",
+    ">Configuration</h2>",
   ].map(section => systemPage.indexOf(section));
   assert.ok(positions.every(position => position >= 0));
   assert.deepEqual([...positions].sort((a, b) => a - b), positions);
