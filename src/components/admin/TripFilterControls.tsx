@@ -24,7 +24,7 @@ const statusOptions = [
   // "Confirmed" represents all provider-confirmed records, not a separate lifecycle status.
   { value: "all", label: "Confirmed" },
   // Tracking reporting is not connected: the control must never submit TRACKED.
-  { value: "TRACKED", label: "Tracked", disabled: true, description: "Not connected" },
+  { value: "TRACKED", label: "Tracked", disabled: true },
   { value: "UPCOMING", label: "Upcoming" },
   { value: "PAST", label: "Past" },
   { value: "CANCELLED", label: "Cancelled" },
@@ -32,7 +32,7 @@ const statusOptions = [
 const identityOptions = [
   { value: "all", label: "All identities" },
   { value: "registered", label: "Registered" },
-  { value: "guest", label: "Guest", disabled: true, description: "Provider-confirmed trips are account-linked" },
+  { value: "guest", label: "Guest", disabled: true },
 ] as const;
 const rangeOptions = [
   { value: "today", label: "Today" },
