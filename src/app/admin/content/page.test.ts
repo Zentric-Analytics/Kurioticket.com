@@ -35,7 +35,8 @@ test("public content management exposes homepage and FAQ CMS areas while fare op
   assert.match(contentPage, /contentScopeStatus\(hotelSummary\)/);
   assert.match(contentPage, /publishedContentCount\(destinationSummary\)/);
   assert.match(contentPage, /Published records/);
-  assert.match(contentPage, /Review homepage CMS setup/);
+  assert.match(contentPage, /Review CMS Health/);
+  assert.match(contentPage, /href="\/admin\/system\/cms-health"/);
   assert.match(contentPage, /CMS managed/);
   assert.match(contentPage, /Setup required/);
   assert.match(contentPage, /href: "\/admin\/content\/faqs"/);
@@ -242,6 +243,7 @@ test("Content landing aggregates distinct published snapshots from every support
   assert.match(helper, /publishedLocale: parsedLocale\.data/);
   assert.match(helper, /publishedPayload: \{ not: Prisma\.DbNull \}/);
   assert.match(helper, /needsSetup: scopeCount < normalizedMarkets\.length/);
+  assert.match(contentPage, /Some homepage content markets need CMS setup/);
   assert.doesNotMatch(contentPage, /getCmsContentScopeSummary\("HOMEPAGE_DESTINATION", "US"/);
   assert.doesNotMatch(contentPage, /getCmsContentScopeSummary\("FLIGHT_ROUTE", "US"/);
   assert.match(contentPage, /getCmsContentScopeSummary\("HOTEL_DESTINATION", "GLOBAL"/);
