@@ -79,11 +79,14 @@ test("homepage fare admin APIs preserve authorization, audit logging, and refres
 });
 
 test("content overview shows four equal, fully clickable management cards", () => {
-  assert.match(contentPage, /<nav aria-label="Content management" className="grid auto-rows-fr grid-cols-1 gap-4 sm:grid-cols-2">/);
+  assert.match(contentPage, /<nav aria-label="Content management" className="grid auto-rows-fr grid-cols-1 gap-3 sm:grid-cols-2">/);
   assert.equal((contentPage.match(/href: "\/admin\/content\/(?:homepage\/(?:destinations|flight-routes|hotel-destinations)|faqs)"/g) ?? []).length, 4);
   assert.match(contentPage, /href=\{area\.href\}/);
-  assert.match(contentPage, /className="group focus-ring flex h-full min-h-\[178px\]/);
+  assert.match(contentPage, /className="group focus-ring flex h-full min-w-0 cursor-pointer flex-col gap-3 rounded-lg/);
   assert.match(contentPage, /cursor-pointer/);
+  assert.doesNotMatch(contentPage, /min-h-\[178px\]|justify-between gap-6/);
+  assert.match(contentPage, /text-\[24px\]/);
+  assert.match(contentPage, /flex flex-wrap items-baseline gap-x-2\.5 gap-y-1/);
   assert.match(contentPage, /hover:border-\[#6D28D9\]/);
   assert.match(contentPage, /focus-visible:outline-\[#6D28D9\]/);
   assert.match(contentPage, /area\.value/);
