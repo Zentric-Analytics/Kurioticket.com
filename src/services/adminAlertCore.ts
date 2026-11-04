@@ -362,14 +362,14 @@ function confirmedTripAlerts(signals: AdminAlertSignals): AdminAlertCandidate[] 
     key: "confirmed-trips.telemetry.unavailable", severity: "WARNING", source: "CONFIRMED_TRIPS",
     title: "Confirmation delivery telemetry unavailable",
     message: "An authenticated confirmation provider is configured, but delivery receipts could not be queried.",
-    actionHref: "/admin/confirmed-trips/operations?panel=delivery#confirmation-delivery-health-title", signalToken: signals.telemetryOutageTokens.confirmedTrips ?? "confirmation-telemetry-unavailable",
+    actionHref: "/admin/confirmed-trips/monitoring?panel=delivery#confirmation-delivery-health-title", signalToken: signals.telemetryOutageTokens.confirmedTrips ?? "confirmation-telemetry-unavailable",
   }];
   if (health.rejectedLast24h <= 0) return [];
   return [{
     key: "confirmed-trips.deliveries.rejected", severity: "WARNING", source: "CONFIRMED_TRIPS",
     title: "Partner confirmation deliveries were rejected",
     message: `${health.rejectedLast24h} authenticated confirmation callback(s) were rejected in the last 24 hours. Review the provider delivery receipts.`,
-    actionHref: "/admin/confirmed-trips/operations?panel=delivery#confirmation-delivery-health-title",
+    actionHref: "/admin/confirmed-trips/monitoring?panel=delivery#confirmation-delivery-health-title",
     signalToken: `confirmation-rejected:${health.lastRejectedAt ?? "unknown"}`,
     signalAt: health.lastRejectedAt,
   }];
