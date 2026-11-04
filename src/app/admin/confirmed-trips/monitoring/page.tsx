@@ -1,9 +1,9 @@
-import Link from "next/link";
-import { ArrowLeft, FileCheck2, Plane } from "lucide-react";
+import { FileCheck2, Plane } from "lucide-react";
 
 import { AdminPageShell, AdminSectionCard } from "@/components/admin/AdminPageShell";
 import { TripConfirmationsMonitoringPanel } from "@/components/admin/TripConfirmationsMonitoringPanel";
 import { TripFlightStatusMonitoringPanel } from "@/components/admin/TripFlightStatusMonitoringPanel";
+import { TripWorkspaceNavigation } from "@/components/admin/TripWorkspaceNavigation";
 import { requireAdminSession } from "@/lib/auth-guards";
 
 export const metadata = { title: "Admin Trip Monitoring" };
@@ -14,15 +14,10 @@ export default async function AdminTripMonitoringPage() {
   return (
     <AdminPageShell title="Trip monitoring" hideHeader>
       <AdminSectionCard className="min-w-0 p-4 sm:p-5 lg:p-6">
-        <nav aria-label="Trip monitoring navigation" className="mb-3 flex min-w-0 items-center">
-          <Link href="/admin/confirmed-trips" className="inline-flex min-h-9 items-center gap-1.5 rounded-lg px-1.5 text-[13px] font-semibold text-slate-700 hover:text-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
-            <ArrowLeft size={16} aria-hidden="true" /> Back to Trips
-          </Link>
-        </nav>
+        <TripWorkspaceNavigation active="monitoring" />
+        <h1 className="sr-only">Trip monitoring</h1>
 
-        <section aria-labelledby="trip-monitoring-title" className="min-w-0">
-          <h2 id="trip-monitoring-title" className="mb-5 text-base font-semibold text-slate-950">Trip monitoring</h2>
-
+        <section aria-label="Trip monitoring details" className="min-w-0 pt-6">
           <div className="space-y-8">
             <section id="trip-confirmations-panel" aria-labelledby="trip-confirmations-title" className="min-w-0">
               <div className="mb-3 flex min-w-0 items-center gap-2 border-b border-slate-200/80 pb-2.5">
