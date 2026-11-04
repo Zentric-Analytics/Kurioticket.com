@@ -18,7 +18,7 @@ test("system is read-only safe runtime status", () => {
   assert.doesNotMatch(systemPage, /Session secret configured|No secrets shown|Database URL hidden|API keys hidden/);
   assert.match(systemPage, /system\.emailConfigured/);
   assert.match(systemPage, /system\.providerCredentialsPresent/);
-  assert.match(systemPage, /Admin Configuration/);
+  assert.match(systemPage, /Configuration Readiness/);
   assert.match(systemPage, /ADMIN_EMAILS configured/);
   assert.match(systemPage, /Configured admin count/);
   assert.doesNotMatch(systemPage, /FeatureControlsPanel|listFeatureControls|getServerSession/);
