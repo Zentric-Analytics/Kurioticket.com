@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, type KeyboardEvent } from "react";
 
 import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
 import type { AdminTripFilters } from "@/lib/adminConfirmedTripsDirectory";
@@ -43,11 +43,18 @@ const rangeOptions = [
 const fieldLabel = "block min-w-0 text-[11px] font-medium leading-4 text-slate-700 2xl:text-xs";
 const inputClass = "mt-1 block h-9 w-full min-w-0 max-w-full rounded-lg border border-slate-200 bg-white px-2 text-[11px] text-slate-900 placeholder:text-slate-500 focus-visible:border-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/25 2xl:text-xs";
 
+function keepFiltersDraftUntilApply(event: KeyboardEvent<HTMLFormElement>) {
+  if (event.key === "Enter" && !(event.target instanceof HTMLButtonElement)) {
+    event.preventDefault();
+  }
+}
+
 /**
  * One read-only GET form with six compact fields. Preset time ranges use UTC
  * calendar-day boundaries, while legacy custom-date links live in the records
  * directory. Tracked stays disabled until its reporting source is connected.
- * Dropdowns reuse the accessible popup behavior from Search Activity.
+ * Dropdowns reuse the accessible popup behavior from Search Activity, but
+ * remain draft selections until the administrator explicitly presses Apply.
  */
 export function TripFilterControls({ filters, range, providerNames }: Props) {
   const providerOptions = useMemo(() => {
@@ -60,7 +67,7 @@ export function TripFilterControls({ filters, range, providerNames }: Props) {
   }, [providerNames, filters.provider]);
 
   return (
-    <form method="get" action="/admin/confirmed-trips" aria-label="Filter trip directory" className="min-w-0">
+    <form method="get" action="/admin/confirmed-trips" aria-label="Filter trip directory" className="min-w-0" onKeyDown={keepFiltersDraftUntilApply}>
       <div className="flex min-w-0 flex-wrap items-end gap-x-2 gap-y-2.5">
         <label className={fieldLabel + " w-full sm:w-[180px]"}>
           Search trips
@@ -75,25 +82,25 @@ export function TripFilterControls({ filters, range, providerNames }: Props) {
         <div className={fieldLabel + " w-full sm:w-[110px]"}>
           <span>Travel type</span>
           <div className="mt-1">
-            <SearchMonitorSelect label="Travel type" name="product" value={filters.product} options={productOptions} appearance="boxed" truncateLabel autoSubmit />
+            <SearchMonitorSelect label="Travel type" name="product" value={filters.product} options={productOptions} appearance="boxed" truncateLabel />
           </div>
         </div>
         <div className={fieldLabel + " w-full sm:w-[120px]"}>
           <span>Trip status</span>
           <div className="mt-1">
-            <SearchMonitorSelect label="Trip status" name="status" value={filters.status} options={statusOptions} appearance="boxed" truncateLabel autoSubmit />
+            <SearchMonitorSelect label="Trip status" name="status" value={filters.status} options={statusOptions} appearance="boxed" truncateLabel />
           </div>
         </div>
         <div className={fieldLabel + " w-full sm:w-[135px]"}>
           <span>Identity</span>
           <div className="mt-1">
-            <SearchMonitorSelect label="Identity" name="identity" value={filters.identity} options={identityOptions} appearance="boxed" truncateLabel autoSubmit />
+            <SearchMonitorSelect label="Identity" name="identity" value={filters.identity} options={identityOptions} appearance="boxed" truncateLabel />
           </div>
         </div>
         <div className={fieldLabel + " w-full sm:w-[120px]"}>
           <span>Time range</span>
           <div className="mt-1">
-            <SearchMonitorSelect label="Time range" name="range" value={range} options={rangeOptions} appearance="boxed" truncateLabel autoSubmit />
+            <SearchMonitorSelect label="Time range" name="range" value={range} options={rangeOptions} appearance="boxed" truncateLabel />
           </div>
         </div>
         <div className="w-full min-w-0 sm:w-auto">
