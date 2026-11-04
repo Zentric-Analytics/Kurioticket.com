@@ -5,14 +5,17 @@ import type { PublicEnvironment } from "./stagingSafety";
 export const ADMIN_CONFIRMED_TRIPS_PAGE_SIZE = 20;
 export const adminTripProducts = ["all", "FLIGHT", "HOTEL", "CAR", "PACKAGE"] as const;
 export const adminTripStatuses = ["all", "UPCOMING", "PAST", "CANCELLED"] as const;
+export const adminTripIdentities = ["all", "registered"] as const;
 
 export type AdminTripProduct = (typeof adminTripProducts)[number];
 export type AdminTripStatus = (typeof adminTripStatuses)[number];
+export type AdminTripIdentity = (typeof adminTripIdentities)[number];
 export type AdminTripFilters = {
   q: string;
   provider: string;
   product: AdminTripProduct;
   status: AdminTripStatus;
+  identity: AdminTripIdentity;
   from: string;
   to: string;
 };
@@ -33,7 +36,7 @@ function validUtcDay(day: string) {
 
 /** Input is untrusted: reject duplicate values, unknown enums and invalid UTC days. */
 export function parseAdminTripFilters(raw: RawQuery): ParseResult {
-  const keys = ["q", "provider", "product", "status", "from", "to", "cursor"];
+  const keys = ["q", "provider", "product", "status", "identity", "from", "to", "cursor"];
   if (keys.some(key => Array.isArray(raw[key]))) {
     return { ok: false, error: "Repeated trip filters are not supported." };
   }
@@ -41,19 +44,21 @@ export function parseAdminTripFilters(raw: RawQuery): ParseResult {
   const provider = one(raw.provider).trim();
   const product = one(raw.product) || "all";
   const status = one(raw.status) || "all";
+  const identity = one(raw.identity) || "all";
   const from = one(raw.from);
   const to = one(raw.to);
   if (q.length > 80 || provider.length > 100 || unsafeText.test(q) || unsafeText.test(provider)) {
     return { ok: false, error: "Search and provider filters must contain ordinary text within the allowed length." };
   }
   if (!adminTripProducts.includes(product as AdminTripProduct)
-    || !adminTripStatuses.includes(status as AdminTripStatus)) {
-    return { ok: false, error: "Unsupported product or trip-status filter." };
+    || !adminTripStatuses.includes(status as AdminTripStatus)
+    || !adminTripIdentities.includes(identity as AdminTripIdentity)) {
+    return { ok: false, error: "Unsupported product, trip-status or identity filter." };
   }
   if ((from && !validUtcDay(from)) || (to && !validUtcDay(to)) || (from && to && from > to)) {
     return { ok: false, error: "Enter a valid UTC date range." };
   }
-  return { ok: true, filters: { q, provider, product: product as AdminTripProduct, status: status as AdminTripStatus, from, to } };
+  return { ok: true, filters: { q, provider, product: product as AdminTripProduct, status: status as AdminTripStatus, identity: identity as AdminTripIdentity, from, to } };
 }
 
 export function tripConfirmationWindow(filters: AdminTripFilters) {
@@ -65,7 +70,7 @@ export function tripConfirmationWindow(filters: AdminTripFilters) {
 
 function cursorScope(filters: AdminTripFilters, environment: PublicEnvironment) {
   return createHash("sha256")
-    .update(JSON.stringify([environment, filters.q, filters.provider, filters.product, filters.status, filters.from, filters.to]))
+    .update(JSON.stringify([environment, filters.q, filters.provider, filters.product, filters.status, filters.identity, filters.from, filters.to]))
     .digest("hex")
     .slice(0, 24);
 }
@@ -115,6 +120,7 @@ export function tripDirectoryHref(filters: AdminTripFilters, cursor?: string | n
   if (filters.provider) params.set("provider", filters.provider);
   if (filters.product !== "all") params.set("product", filters.product);
   if (filters.status !== "all") params.set("status", filters.status);
+  if (filters.identity !== "all") params.set("identity", filters.identity);
   if (filters.from) params.set("from", filters.from);
   if (filters.to) params.set("to", filters.to);
   if (cursor) params.set("cursor", cursor);

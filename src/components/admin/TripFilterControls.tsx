@@ -29,6 +29,11 @@ const statusOptions = [
   { value: "PAST", label: "Past" },
   { value: "CANCELLED", label: "Cancelled" },
 ] as const;
+const identityOptions = [
+  { value: "all", label: "All identities" },
+  { value: "registered", label: "Registered" },
+  { value: "guest", label: "Guest", disabled: true, description: "Provider-confirmed trips are account-linked" },
+] as const;
 const rangeOptions = [
   { value: "today", label: "Today" },
   { value: "7d", label: "Last 7 days" },
@@ -40,7 +45,7 @@ const fieldLabel = "block min-w-0 text-[11px] font-medium leading-4 text-slate-7
 const inputClass = "mt-1 block h-9 w-full min-w-0 max-w-full rounded-lg border border-slate-200 bg-white px-2 text-[11px] text-slate-900 placeholder:text-slate-500 focus-visible:border-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/25 2xl:text-xs";
 
 /**
- * One read-only GET form with five compact fields. Preset time ranges use UTC
+ * One read-only GET form with six compact fields. Preset time ranges use UTC
  * calendar-day boundaries, while legacy custom-date links live in the records
  * directory. Tracked stays disabled until its reporting source is connected.
  * Dropdowns reuse the accessible popup behavior from Search Activity.
@@ -57,7 +62,7 @@ export function TripFilterControls({ filters, range, providerNames }: Props) {
 
   return (
     <form method="get" action="/admin/confirmed-trips" aria-label="Filter trip directory" className="min-w-0">
-      <div className="grid min-w-0 grid-cols-1 items-end gap-x-2 gap-y-2.5 sm:grid-cols-2 md:grid-cols-3 lg:gap-x-1.5 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,0.95fr)_minmax(0,1fr)_minmax(0,1.15fr)] 2xl:gap-x-2.5">
+      <div className="grid min-w-0 grid-cols-1 items-end gap-x-2 gap-y-2.5 sm:grid-cols-2 md:grid-cols-3 lg:gap-x-1.5 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)_minmax(0,0.9fr)_minmax(0,0.95fr)_minmax(0,1fr)_minmax(0,1.05fr)] 2xl:gap-x-2.5">
         <label className={fieldLabel}>
           Search trips
           <input name="q" type="search" defaultValue={filters.q} maxLength={80} placeholder="Search…" title="Search customer, reference, provider or destination" className={inputClass} />
@@ -78,6 +83,12 @@ export function TripFilterControls({ filters, range, providerNames }: Props) {
           <span>Trip status</span>
           <div className="mt-1">
             <SearchMonitorSelect label="Trip status" name="status" value={filters.status} options={statusOptions} appearance="boxed" truncateLabel autoSubmit />
+          </div>
+        </div>
+        <div className={fieldLabel}>
+          <span>Identity</span>
+          <div className="mt-1">
+            <SearchMonitorSelect label="Identity" name="identity" value={filters.identity} options={identityOptions} appearance="boxed" truncateLabel autoSubmit />
           </div>
         </div>
         <div className={fieldLabel}>
