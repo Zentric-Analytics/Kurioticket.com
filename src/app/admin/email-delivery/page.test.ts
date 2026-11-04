@@ -6,7 +6,7 @@ const page = readFileSync("src/app/admin/email-delivery/page.tsx", "utf8");
 const button = readFileSync("src/components/admin/EmailDeliveryTestButton.tsx", "utf8");
 const service = readFileSync("src/services/emailDeliveryService.ts", "utf8");
 const route = readFileSync("src/app/api/admin/email/health/route.ts", "utf8");
-const systemPage = readFileSync("src/app/admin/system/page.tsx", "utf8");
+const adminNavigation = readFileSync("src/lib/adminNavigation.ts", "utf8");
 
 test("Email Delivery Operations exposes safe operational health without secret values", () => {
   assert.match(page, /title="Email Delivery Operations"/);
@@ -57,7 +57,6 @@ test("admin email test send is constrained, audited, and provider-neutral", () =
   assert.doesNotMatch(route, /providerMessageId/);
 });
 
-test("System links to the Email Delivery Operations workspace", () => {
-  assert.match(systemPage, /href="\/admin\/email-delivery"/);
-  assert.match(systemPage, />Email delivery</);
+test("System navigation retains the Email Delivery Operations workspace", () => {
+  assert.match(adminNavigation, /href: "\/admin\/email-delivery", parentHref: "\/admin\/system"/);
 });
