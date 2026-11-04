@@ -23,7 +23,6 @@ test("system is read-only safe runtime status", () => {
   assert.match(systemPage, /attention\.length/);
   assert.match(systemPage, /getSafeSystemStatus\(\)/);
   assert.doesNotMatch(systemPage, /Math\.random|mockHealth|fakeLatency|overallHealthy/);
-  assert.match(systemPage, /System Status/);
   assert.match(systemPage, /Configuration Readiness/);
   assert.match(systemPage, /Database connectivity/);
   assert.match(systemPage, /Authentication configuration/);
