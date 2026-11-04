@@ -283,7 +283,8 @@ test("Trips use one dedicated list backed by genuine records and the existing re
   assert.doesNotMatch(recordsView, /useState|LayoutGrid|aria-pressed|Grid/);
   assert.match(recordsView, /<ConfirmedTripRecordsTable rows=\{rows\} \/>/);
   assert.match(recordsTable, /\["CREATED", "TYPE", "TRIP", "TRAVEL DATES", "PROVIDER", "IDENTITY", "STATUS", "ACTION"\]/);
-  assert.match(recordsTable, /text-\[10px\].*tracking-\[0\.08em\]/);
+  assert.match(recordsTable, /<thead className="border-b border-slate-200\/80 bg-slate-50\/90 text-\[10px\] text-slate-500">/);
+  assert.match(recordsTable, /className="px-3 py-2\.5 font-semibold tracking-\[0\.08em\]"/);
   assert.match(recordsTable, /border-b border-slate-200\/80 bg-slate-50\/90/);
   assert.match(recordsTable, /rows\.length \? rows\.map\(trip =>/);
   assert.match(recordsTable, /colSpan=\{8\}/);
