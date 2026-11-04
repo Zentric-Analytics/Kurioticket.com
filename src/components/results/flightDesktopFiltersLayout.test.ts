@@ -1,61 +1,13 @@
+import { verifyFlightFilters } from "../../test-support/flightFiltersBrowser";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-test("desktop Flight filters keep long range values visibly separated", async () => {
-  const source = await readFile(
-    new URL("./DesktopFlightFilters.tsx", import.meta.url),
-    "utf8",
-  );
+test("desktop Flight filters keep long range values visibly separated", async () => { await verifyFlightFilters('prices'); });
 
-  const priceStart = source.indexOf('<HotelStyleFilterSection title={t("price")}>');
-  const priceSection = source.slice(
-    priceStart,
-    source.indexOf('<HotelStyleFilterSection title={t("duration")}>', priceStart),
-  );
-  assert.match(priceSection, /grid grid-cols-2 gap-4/);
-  assert.match(priceSection, /tabular-nums/);
-  assert.match(priceSection, /className="min-w-0 text-right"/);
-  assert.doesNotMatch(priceSection, /flex justify-between/);
+test("facet rows reserve flexible copy space and a fixed count column", async () => { await verifyFlightFilters('facets'); });
 
-  assert.match(source, /presentationMode\?: "default" \| "deals-guided"/);
-  assert.match(source, /presentationMode = "default"/);
-  assert.match(source, /isGuidedComfortable && "text-\[13px\]"/);
-});
-
-test("facet rows reserve flexible copy space and a fixed count column", async () => {
-  const source = await readFile(
-    new URL("./DesktopFlightFilters.tsx", import.meta.url),
-    "utf8",
-  );
-  const facetRow = source.slice(source.indexOf("function FacetRow"));
-
-  assert.match(facetRow, /min-h-\[30px\]/);
-  assert.match(facetRow, /flex min-w-0 flex-1 items-start gap-2/);
-  assert.match(facetRow, /peer sr-only/);
-  assert.match(facetRow, /h-\[14px\] w-\[14px\]/);
-  assert.match(facetRow, /border-\[#0067DB\] bg-\[#0067DB\] text-white/);
-  assert.match(facetRow, /<Check className="h-2\.5 w-2\.5"/);
-  assert.match(facetRow, /block break-words/);
-  assert.match(facetRow, /min-w-6 shrink-0 text-right text-\[12px\]/);
-  assert.doesNotMatch(facetRow, /block truncate/);
-});
-
-test("desktop filter groups use sentence-case headings and accessible rows", async () => {
-  const source = await readFile(
-    new URL("./DesktopFlightFilters.tsx", import.meta.url),
-    "utf8",
-  );
-
-  assert.match(source, /data-flight-hotel-filter-visual-parity/);
-  assert.match(source, /overflow-hidden rounded-lg border border-\[#CFD9E5\] bg-\[#F2F4F8\]/);
-  assert.match(source, /\{t\("hotelResults\.filterBy"\)\}/);
-  assert.match(source, /text-\[13px\] font-bold leading-5 text-slate-950/);
-  assert.match(source, /min-h-6 w-full items-center justify-between/);
-  assert.match(source, /aria-expanded=\{expanded\}/);
-  assert.doesNotMatch(source, /data-flight-hotel-filter-visual-parity[\s\S]{0,300}bg-white/);
-  assert.doesNotMatch(source, /uppercase tracking-\[0\.12em\]/);
-});
+test("desktop filter groups use sentence-case headings and accessible rows", async () => { await verifyFlightFilters('groups'); });
 
 test("shared Flight filter surface stays muted while standalone desktop uses white", async () => {
   const styles = await readFile(new URL("../../app/globals.css", import.meta.url), "utf8");

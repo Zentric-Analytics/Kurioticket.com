@@ -1,3 +1,4 @@
+import { ResultsAvailabilityNotice } from "@/components/results/ResultsAvailabilityNotice";
 import { Suspense } from "react";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { cookies } from "next/headers";
@@ -86,6 +87,7 @@ export default async function HotelResultsPage({
         mobileResultsFilters={<div data-hotel-results-mobile-nav-filters className="w-full overflow-hidden bg-white empty:hidden" />}
         mobileResultsTrailingActions
       />
+      <ResultsAvailabilityNotice />
       <Suspense
         fallback={
           <main className="page-shell min-h-[calc(100svh-5rem)] flex-1 py-6">

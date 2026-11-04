@@ -1,6 +1,9 @@
+import { verifyCarCommerce } from "../../test-support/carCommerceBrowser";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
+import { runInNewContext } from "node:vm";
+import ts from "typescript";
 import {
   formatCarPickupType,
   getCarSpecificationIcon,
@@ -65,13 +68,10 @@ test("desktop Compare deals owns a sibling expansion slot without changing mobil
   assert.doesNotMatch(mobile, /desktopPanelTarget/);
 });
 
-test("standalone result commerce is provider-ready without fabricating booking URLs", () => {
-  assert.match(source, /const approvedProviderBookingUrl/);
-  assert.match(source, /sandboxBookingUrl\(offer\.bookingUrl\)/);
+test("standalone result commerce is provider-ready without fabricating booking URLs", async () => {
   assert.match(source, /url\.protocol !== "https:" \|\| url\.username \|\| url\.password/);
-  assert.equal((source.match(/href=\{providerBookingHref\}/g) ?? []).length, 2);
-  assert.match(source, /aria-label="Provider booking link unavailable"/);
   assert.doesNotMatch(source, /href="#"/);
+  await verifyCarCommerce();
 });
 
 test("KAYAK handoff is validated once while guided detail navigation remains available", () => {
@@ -183,10 +183,29 @@ test("standalone desktop keeps Best value above name-aligned Save and Share with
 
 
 test("standalone desktop T divider spans both remaining columns after vehicle and amenities", () => {
-  const desktop = source.slice(source.indexOf('data-region="image"'));
-  const divider = desktop.slice(desktop.indexOf('data-car-card-desktop-full-width-divider'), desktop.indexOf('data-region="details"'));
-  const details = desktop.slice(desktop.indexOf('data-region="details"'), desktop.indexOf('data-region="pricing"'));
-  assert.match(desktop, /lg:grid-cols-\[192px_minmax\(0,1fr\)\] xl:grid-cols-\[200px_minmax\(0,1fr\)\]/);
+  const card = ts.createSourceFile("CarResultCard.tsx", source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+  const markedElements = (root: ts.Node, name: string, value?: string) => {
+    const elements: Array<ts.JsxOpeningElement | ts.JsxSelfClosingElement> = [];
+    function visit(node: ts.Node) {
+      if ((ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node)) && node.attributes.properties.some((attribute) => ts.isJsxAttribute(attribute) && attribute.name.getText(card) === name && (value === undefined || (attribute.initializer && ts.isStringLiteral(attribute.initializer) && attribute.initializer.text === value)))) elements.push(node);
+      ts.forEachChild(node, visit);
+    }
+    visit(root);
+    assert.equal(elements.length, 1, `one ${name} owner${value ? `: ${value}` : ""}`);
+    return elements[0];
+  };
+  const image = markedElements(card, "data-region", "image");
+  assert.ok(ts.isJsxElement(image.parent) && ts.isJsxElement(image.parent.parent));
+  const grid = image.parent.parent;
+  const className = grid.openingElement.attributes.properties.find((attribute) => ts.isJsxAttribute(attribute) && attribute.name.getText(card) === "className");
+  assert.ok(className && ts.isJsxAttribute(className) && className.initializer && ts.isJsxExpression(className.initializer) && className.initializer.expression);
+  const classes = new Set<string>(runInNewContext(className.initializer.expression.getText(card), { guidedPlanning: false }).split(/\s+/));
+  for (const token of ["hidden", "md:grid", "md:grid-cols-[250px_minmax(0,1fr)]", "lg:grid-cols-[192px_minmax(0,1fr)]", "xl:grid-cols-[200px_minmax(0,1fr)]"]) assert.ok(classes.has(token), token);
+  const desktop = grid.getText(card);
+  const divider = markedElements(grid, "data-car-card-desktop-full-width-divider").getText(card);
+  const detailsElement = markedElements(grid, "data-region", "details");
+  assert.ok(ts.isJsxElement(detailsElement.parent));
+  const details = detailsElement.parent.getText(card);
   assert.match(desktop, /lg:!h-\[176px\] lg:!min-h-\[176px\] lg:max-h-\[176px\]/);
   assert.match(divider, /pointer-events-none hidden lg:col-span-2 lg:col-start-1 lg:row-start-2 lg:z-20 lg:block lg:h-px lg:w-full lg:self-start lg:bg-\[#CBD5E1\]/);
   assert.match(details, /lg:col-span-2 lg:col-start-1 lg:pl-8 lg:pr-4/);

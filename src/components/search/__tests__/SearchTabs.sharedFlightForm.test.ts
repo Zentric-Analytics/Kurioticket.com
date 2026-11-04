@@ -1,3 +1,4 @@
+import { verifyMobileFlightSubmission } from "../../../test-support/flightEditorContracts";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
@@ -59,5 +60,6 @@ test("mobile homepage keeps its existing dedicated Flight form", () => {
     searchTabs,
     /tab === "flights" \? \([\s\S]*?mobileHomepage \? \([\s\S]*?<form[\s\S]*?onSubmit=\{\s*onFlightSubmit\s*\}/,
   );
-  assert.match(searchTabs, /data-testid="mobile-homepage-flight-controls"/);
+  assert.match(searchTabs, /data-testid="mobile-homepage-flight-search"/);
+  verifyMobileFlightSubmission(searchTabs);
 });

@@ -5,7 +5,7 @@ import { searchLoadingPresentation, type SearchLoadingProduct } from "../../../.
 import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
 import { useAppTheme } from "../../theme/AppTheme";
 
-export function NativeTravelSearchLoadingScreen({ product }: { product: SearchLoadingProduct }) {
+export function NativeTravelSearchLoadingScreen({ product, includeTopInset = true }: { product: SearchLoadingProduct; includeTopInset?: boolean }) {
   const { locale, direction } = useMobileLocalization();
   const { theme } = useAppTheme();
   const presentation = searchLoadingPresentation(product, locale);
@@ -55,6 +55,7 @@ export function NativeTravelSearchLoadingScreen({ product }: { product: SearchLo
   const progressWidth = progress.interpolate({ inputRange: [0, 1], outputRange: ["0%", "100%"] });
 
   return <SafeAreaView
+    edges={includeTopInset ? undefined : ["right", "bottom", "left"]}
     style={[styles.safe, { backgroundColor: theme.dark ? theme.background : "#F7FAFF" }]}
     accessibilityRole="progressbar"
     accessibilityState={{ busy: true }}

@@ -1174,9 +1174,9 @@ function ResultsScreen({ product }: { product: Product }) {
     && status === "ready"
     && (results as HotelResult[]).some(hasHotelPrice)
     && !currencyState;
-  if (status === "loading" || hotelCurrencyPending) return <NativeBrandedSearchLoading product={product} />;
+  if (status === "loading" || hotelCurrencyPending) return <NativeBrandedSearchLoading product={product} includeTopInset={false} />;
   return (
-    <SafeAreaView style={[s0.safe, { backgroundColor: flightResults ? (theme.dark ? flightCanvasColor : flightResultsColors.surface) : hotelCanvasColor }]} edges={["top"]}>
+    <SafeAreaView style={[s0.safe, { backgroundColor: flightResults ? (theme.dark ? flightCanvasColor : flightResultsColors.surface) : hotelCanvasColor }]} edges={[]}>
       {flightResults ? (
         <FlightResultsHeader
           route={flightSummary.route}
