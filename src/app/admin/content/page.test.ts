@@ -24,6 +24,7 @@ test("public content management exposes homepage and FAQ CMS areas while fare op
   }
 
   assert.match(contentPage, /getCmsContentScopeSummary/);
+  assert.match(contentPage, /getCmsContentMarketOverview/);
   assert.match(contentPage, /title: "FAQs"/);
   assert.match(contentPage, /title: "Homepage destinations"/);
   assert.match(contentPage, /title: "Flight routes"/);
@@ -90,7 +91,7 @@ test("content overview shows four equal, fully clickable management cards", () =
   assert.match(contentPage, /hover:border-\[#6D28D9\]/);
   assert.match(contentPage, /focus-visible:outline-\[#6D28D9\]/);
   assert.match(contentPage, /area\.value/);
-  assert.match(contentPage, /area\.scope/);
+  assert.doesNotMatch(contentPage, /area\.scope|scope: "US market"|scope: "Global"|scope: "English"/);
   assert.match(contentPage, /area\.status !== "CMS managed"/);
   assert.doesNotMatch(contentPage, /ContentSectionHeading|homepageAreas|helpAreas|Manage destinations|Manage FAQs/);
 });
@@ -103,6 +104,8 @@ test("Content published count uses the published scope, not a draft's scope", ()
   assert.match(cms, /publishedLocale: parsedLocale\.data/);
   assert.match(cms, /publishedPayload: \{ not: Prisma\.DbNull \}/);
   assert.match(contentPage, /summary\.publishedInScope/);
+  assert.match(contentPage, /getCmsContentMarketOverview\("HOMEPAGE_DESTINATION", homepageCmsMarkets, homepageCmsLocale\)/);
+  assert.match(contentPage, /getCmsContentMarketOverview\("FLIGHT_ROUTE", homepageCmsMarkets, homepageCmsLocale\)/);
 });
 
 test("Content returns to the actual source and only retains allowlisted filters", () => {
@@ -220,4 +223,27 @@ test("Content lists search the whole CMS dataset and filters apply instantly", (
   assert.match(service, /encodeCmsListCursor\(scope/);
   assert.match(api, /search: url\.searchParams\.get\("q"\)/);
   assert.match(api, /category: url\.searchParams\.get\("category"\)/);
+});
+
+test("Content landing aggregates distinct published snapshots from every supported CMS market", () => {
+  const cms = readFileSync("src/services/cmsContentService.ts", "utf8");
+  const helper = cms.slice(
+    cms.indexOf("export async function getCmsContentMarketOverview"),
+    cms.indexOf("export async function getCmsContentScopeSummary"),
+  );
+  const homepage = readFileSync("src/services/homepageCmsService.ts", "utf8");
+  assert.match(homepage, /homepageCmsMarkets = HOMEPAGE_REFRESH_MARKET_CODES/);
+  assert.match(helper, /normalizedMarkets = \[\.\.\.new Set\(markets\)\]/);
+  assert.match(helper, /cmsContentScope\.count\(\{/);
+  assert.match(helper, /cmsContentItem\.count\(\{/);
+  assert.match(helper, /status: "PUBLISHED"/);
+  assert.match(helper, /publishedMarket: \{ in: normalizedMarkets \}/);
+  assert.match(helper, /publishedLocale: parsedLocale\.data/);
+  assert.match(helper, /publishedPayload: \{ not: Prisma\.DbNull \}/);
+  assert.match(helper, /needsSetup: scopeCount < normalizedMarkets\.length/);
+  assert.doesNotMatch(contentPage, /getCmsContentScopeSummary\("HOMEPAGE_DESTINATION", "US"/);
+  assert.doesNotMatch(contentPage, /getCmsContentScopeSummary\("FLIGHT_ROUTE", "US"/);
+  assert.match(contentPage, /getCmsContentScopeSummary\("HOTEL_DESTINATION", "GLOBAL"/);
+  assert.match(contentPage, /getCmsContentScopeSummary\("FAQ", faqCmsScope\.market, faqCmsScope\.locale\)/);
+  assert.match(contentPage, />Published records<\/span>/);
 });
