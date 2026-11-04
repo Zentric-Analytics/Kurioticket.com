@@ -78,7 +78,7 @@ test("Flight Status keeps one concise provider safety note within readiness, not
   assert.ok(note[1].trim().length < 185, "Readiness note should remain short");
   assert.doesNotMatch(readinessCopy, /<div className="mt-3 space-y-1\.5">|Each signed update must name the configured provider/);
   assert.doesNotMatch(readinessCopy, /Status records have no environment label|uses the connected/);
-  assert.equal((page.match(/<AdminSectionCard className="min-w-0 p-3 shadow-none sm:p-4">/g) || []).length, 5);
+  assert.equal((page.match(/<section className="min-w-0 rounded-xl border border-slate-200\/80 bg-white p-3 sm:p-4">/g) || []).length, 4);
   assert.match(page, /<div className="min-w-0 space-y-4">/);
   assert.match(page, /grid w-full min-w-\[960px\] grid-cols-6 gap-2/);
   assert.match(page, /No zero values were invented/);
@@ -192,7 +192,7 @@ test("Flight Status overview has no extra outline or double padding and keeps co
   }
   assert.match(overview, /role="status"/);
   assert.match(overview, /No zero values were invented/);
-  assert.match(page, /<div className="min-w-0 space-y-3">/);
+  assert.match(page, /<div className="min-w-0 space-y-4">/);
   assert.doesNotMatch(page, /className="[^"]*(?:\bhidden\b|\binvisible\b|\bopacity-0\b)/);
 });
 
@@ -303,7 +303,7 @@ test("unified Trip monitoring owns a single parent while preserving original fli
   assert.equal((monitoring.match(/<AdminSectionCard /g) || []).length, 1);
   assert.match(monitoring, /<TripConfirmationsMonitoringPanel \/>/);
   assert.match(monitoring, /<TripFlightStatusMonitoringPanel \/>/);
-  assert.match(page, /<div className="min-w-0 space-y-3">/);
+  assert.match(page, /<div className="min-w-0 space-y-4">/);
   const sections = ["Status-feed readiness", "Latest status distribution", "Awaiting first status snapshot", "Latest trusted flight-status snapshots"];
   const positions = sections.map(label => page.indexOf(">" + label + "</h2>"));
   assert.ok(positions.every(n => n >= 0), "All monitoring sections must remain");
