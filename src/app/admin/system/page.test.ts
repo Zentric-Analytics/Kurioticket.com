@@ -16,7 +16,15 @@ test("system is read-only safe runtime status", () => {
   assert.match(systemPage, /max-w-\[880px\]/);
   assert.match(systemPage, /divide-y divide-slate-200/);
   assert.doesNotMatch(systemPage, /href="\/admin\/(?:logs|email-delivery)"|href="\/admin\/system\/cms-health"/);
-  assert.match(systemPage, /System Status/);
+  assert.match(systemPage, /System Health Overview/);
+  assert.match(systemPage, /Service Health/);
+  assert.match(systemPage, /Issues Requiring Attention/);
+  assert.match(systemPage, /system\.databaseConnected/);
+  assert.match(systemPage, /attention\.length/);
+  assert.match(systemPage, /Number\(!system\.databaseConfigured\)/);
+  assert.match(systemPage, /\{configurationGapCount\}/);
+  assert.match(systemPage, /getSafeSystemStatus\(\)/);
+  assert.doesNotMatch(systemPage, /Math\.random|mockHealth|fakeLatency|overallHealthy/);
   assert.match(systemPage, /Configuration Readiness/);
   assert.match(systemPage, /Database connectivity/);
   assert.match(systemPage, /Authentication configuration/);
