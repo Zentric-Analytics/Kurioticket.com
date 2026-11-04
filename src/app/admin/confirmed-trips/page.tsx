@@ -90,7 +90,7 @@ export default async function AdminConfirmedTripsPage({ searchParams }: Props) {
           </div>
         </div>
 
-        <div className="space-y-5">
+        <div className="space-y-8">
           <section aria-label="Trip summary" className="min-w-0">
             {directory?.status === "ok" ? (
               <div className="grid min-w-0 grid-cols-1 gap-0 sm:grid-cols-2 lg:grid-cols-5">
