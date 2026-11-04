@@ -49,10 +49,10 @@ export function ConfirmedTripRecordsTable({ rows }: Props) {
             <col className="w-[10%]" />
             <col className="w-[7%]" />
           </colgroup>
-          <thead className="bg-slate-50 text-[11px] text-slate-600">
+          <thead className="border-b border-slate-200/80 bg-slate-50/90 text-[10px] text-slate-500">
             <tr>
-              {["Created", "Type", "Trip", "Travel dates", "Provider", "Identity", "Status", "Action"].map(heading => (
-                <th key={heading} scope="col" className="px-3 py-2.5 font-semibold">{heading}</th>
+              {["CREATED", "TYPE", "TRIP", "TRAVEL DATES", "PROVIDER", "IDENTITY", "STATUS", "ACTION"].map(heading => (
+                <th key={heading} scope="col" className="px-3 py-2.5 font-semibold tracking-[0.08em]">{heading}</th>
               ))}
             </tr>
           </thead>
