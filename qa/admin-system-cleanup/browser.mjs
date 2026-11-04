@@ -32,7 +32,7 @@ try {
           await expect(main.getByRole("link", { name, exact: true })).toHaveCount(0);
         }
         if (route === "system") {
-          for (const heading of ["System snapshot", "Issues requiring attention", "Services", "Configuration"]) {
+          for (const heading of ["System snapshot", "Issues Requiring Attention", "Services", "Configuration"]) {
             await expect(main.getByRole("heading", { name: heading, exact: true })).toBeVisible();
           }
           await expect(main.getByRole("link", { name: "View email diagnostics" })).toHaveAttribute("href", "/admin/email-delivery");
