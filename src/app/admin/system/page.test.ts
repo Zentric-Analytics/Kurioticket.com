@@ -7,10 +7,15 @@ const settingsPage = readFileSync("src/app/admin/settings/page.tsx", "utf8");
 const envSource = readFileSync("src/lib/env.ts", "utf8");
 const adminDataSource = readFileSync("src/lib/admin-data.ts", "utf8");
 const systemApi = readFileSync("src/app/api/admin/system/route.ts", "utf8");
+const adminShell = readFileSync("src/components/admin/AdminHorizontalShell.tsx", "utf8");
+const adminNav = readFileSync("src/lib/adminNavigation.ts", "utf8");
 
 test("system is read-only safe runtime status", () => {
   assert.match(systemPage, /title="System"/);
-  assert.match(systemPage, /Read-only configuration and connectivity status/);
+  assert.match(systemPage, /hideHeader/);
+  assert.match(systemPage, /max-w-\[880px\]/);
+  assert.match(systemPage, /divide-y divide-slate-200/);
+  assert.doesNotMatch(systemPage, /href="\/admin\/(?:logs|email-delivery)"|href="\/admin\/system\/cms-health"/);
   assert.match(systemPage, /System Status/);
   assert.match(systemPage, /Configuration Readiness/);
   assert.match(systemPage, /Database connectivity/);
@@ -23,6 +28,16 @@ test("system is read-only safe runtime status", () => {
   assert.match(systemPage, /Configured admin count/);
   assert.doesNotMatch(systemPage, /FeatureControlsPanel|listFeatureControls|getServerSession/);
   assert.doesNotMatch(systemPage, /HomepageFaresRefreshCard|homepage fare/i);
+});
+
+test("System tools remain discoverable in the existing Admin navigation", () => {
+  assert.match(adminShell, /item\.href === "\/admin\/system"/);
+  assert.match(adminShell, /<details/);
+  assert.match(adminShell, /aria-label="System sections"/);
+  assert.match(adminShell, /entry\.children\.map/);
+  for (const href of ["/admin/system/cms-health", "/admin/email-delivery", "/admin/logs"]) {
+    assert.ok(adminNav.includes(`href: "${href}", parentHref: "/admin/system"`));
+  }
 });
 
 test("settings owns authoritative feature controls", () => {
