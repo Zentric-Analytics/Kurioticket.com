@@ -10,30 +10,48 @@ const systemApi = readFileSync("src/app/api/admin/system/route.ts", "utf8");
 const adminShell = readFileSync("src/components/admin/AdminHorizontalShell.tsx", "utf8");
 const adminNav = readFileSync("src/lib/adminNavigation.ts", "utf8");
 
-test("system is read-only safe runtime status", () => {
+test("system status uses a truthful snapshot-attention-services-configuration hierarchy", () => {
   assert.match(systemPage, /title="System"/);
   assert.match(systemPage, /hideHeader/);
-  assert.match(systemPage, /max-w-\[880px\]/);
-  assert.match(systemPage, /divide-y divide-slate-200/);
-  assert.doesNotMatch(systemPage, /href="\/admin\/(?:logs|email-delivery)"|href="\/admin\/system\/cms-health"/);
-  assert.match(systemPage, /System Health Overview/);
-  assert.match(systemPage, /Service Health/);
-  assert.match(systemPage, /Issues Requiring Attention/);
+  assert.match(systemPage, /max-w-\[980px\]/);
+
+  const positions = [
+    "System snapshot",
+    "Issues requiring attention",
+    "Services",
+    "Configuration",
+  ].map(section => systemPage.indexOf(section));
+  assert.ok(positions.every(position => position >= 0));
+  assert.deepEqual([...positions].sort((a, b) => a - b), positions);
+
+  assert.doesNotMatch(systemPage, /System Health Overview|Service Health|Configuration Readiness/);
   assert.match(systemPage, /system\.databaseConnected/);
+  assert.match(systemPage, /system\.databaseConfigured/);
   assert.match(systemPage, /attention\.length/);
-  assert.match(systemPage, /Number\(!system\.databaseConfigured\)/);
-  assert.match(systemPage, /\{configurationGapCount\}/);
+  assert.match(systemPage, /serviceRows\.length/);
   assert.match(systemPage, /getSafeSystemStatus\(\)/);
   assert.doesNotMatch(systemPage, /Math\.random|mockHealth|fakeLatency|overallHealthy/);
-  assert.match(systemPage, /Configuration Readiness/);
-  assert.match(systemPage, /Database connectivity/);
+
+  assert.match(systemPage, /Live connectivity check/);
+  assert.match(systemPage, /Configuration only/);
+  assert.match(systemPage, /Dedicated diagnostics/);
+  assert.match(systemPage, /this page does not duplicate or infer that state/);
+  assert.match(systemPage, /<details key=\{service\.id\}/);
+  assert.match(systemPage, /Open Email Delivery/);
+  assert.match(systemPage, /Open Providers/);
+  assert.match(systemPage, /Open CMS Health/);
+
+  assert.match(systemPage, /Database configuration/);
   assert.match(systemPage, /Authentication configuration/);
+  assert.match(systemPage, /Email credentials/);
+  assert.match(systemPage, /Provider credentials/);
+  assert.match(systemPage, /Administrator allowlist/);
+  assert.match(systemPage, /Configured administrators/);
   assert.doesNotMatch(systemPage, /Session secret configured|No secrets shown|Database URL hidden|API keys hidden/);
+
   assert.match(systemPage, /system\.emailConfigured/);
   assert.match(systemPage, /system\.providerCredentialsPresent/);
-  assert.match(systemPage, /Configuration Readiness/);
-  assert.match(systemPage, /ADMIN_EMAILS configured/);
-  assert.match(systemPage, /Configured admin count/);
+  assert.match(systemPage, /system\.adminEmailsConfigured/);
   assert.doesNotMatch(systemPage, /FeatureControlsPanel|listFeatureControls|getServerSession/);
   assert.doesNotMatch(systemPage, /HomepageFaresRefreshCard|homepage fare/i);
   assert.doesNotMatch(systemPage, /View operational alerts|Open Alerts|\/admin\/notifications/);
