@@ -12,6 +12,7 @@ export function ContentPageFrame({
   backLabel = "Back to Content",
   actions,
   wide = false,
+  visuallyHideTitle = false,
   children,
 }: {
   title: string;
@@ -20,6 +21,7 @@ export function ContentPageFrame({
   backLabel?: string;
   actions?: ReactNode;
   wide?: boolean;
+  visuallyHideTitle?: boolean;
   children: ReactNode;
 }) {
   return (
@@ -34,7 +36,7 @@ export function ContentPageFrame({
             {backLabel}
           </Link>
         ) : null}
-        <header className="mb-5 flex min-w-0 flex-wrap items-start justify-between gap-x-6 gap-y-3">
+        <header className={visuallyHideTitle ? "sr-only" : "mb-5 flex min-w-0 flex-wrap items-start justify-between gap-x-6 gap-y-3"}>
           <div className="min-w-0 flex-1">
             <h2 className="break-words text-[28px] font-semibold leading-9 tracking-tight text-[#111827]">{title}</h2>
             {subtitle ? <p className="mt-1 text-[13px] leading-5 text-[#64748B]">{subtitle}</p> : null}
