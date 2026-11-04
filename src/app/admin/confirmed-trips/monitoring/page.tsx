@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, ChevronDown, FileCheck2, Plane } from "lucide-react";
+import { ArrowLeft, FileCheck2, Plane } from "lucide-react";
 
 import { AdminPageShell, AdminSectionCard } from "@/components/admin/AdminPageShell";
 import { TripConfirmationsMonitoringPanel } from "@/components/admin/TripConfirmationsMonitoringPanel";
@@ -8,14 +8,8 @@ import { requireAdminSession } from "@/lib/auth-guards";
 
 export const metadata = { title: "Admin Trip Monitoring" };
 
-type Props = { searchParams?: Promise<{ panel?: string | string[] }> };
-
-export default async function AdminTripMonitoringPage({ searchParams }: Props) {
+export default async function AdminTripMonitoringPage() {
   await requireAdminSession("/admin/confirmed-trips/monitoring");
-  const requestedPanel = (await searchParams)?.panel;
-  const panel = typeof requestedPanel === "string" ? requestedPanel : "";
-  const showConfirmations = panel === "confirmations" || panel === "delivery";
-  const showFlightStatus = panel === "flight";
 
   return (
     <AdminPageShell title="Trip monitoring" hideHeader>
@@ -25,27 +19,30 @@ export default async function AdminTripMonitoringPage({ searchParams }: Props) {
             <ArrowLeft size={16} aria-hidden="true" /> Back to Trips
           </Link>
         </nav>
+
         <section aria-labelledby="trip-monitoring-title" className="min-w-0">
-          <h2 id="trip-monitoring-title" className="mb-3 text-base font-semibold text-slate-950">Trip monitoring</h2>
-          <div className="space-y-2">
-            <details id="trip-confirmations-panel" open={showConfirmations} className="group min-w-0 rounded-xl border border-slate-200/80 bg-white">
-              <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-sm font-semibold text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 [&::-webkit-details-marker]:hidden">
-                <span className="flex min-w-0 items-center gap-2"><FileCheck2 size={17} className="shrink-0 text-indigo-700" aria-hidden="true" /> Trip confirmations</span>
-                <ChevronDown size={17} className="shrink-0 text-slate-500 transition-transform group-open:rotate-180" aria-hidden="true" />
-              </summary>
-              <div className="min-w-0 border-t border-slate-100 p-3">
-                <TripConfirmationsMonitoringPanel expandDelivery={panel === "delivery"} />
+          <h2 id="trip-monitoring-title" className="mb-4 text-base font-semibold text-slate-950">Trip monitoring</h2>
+
+          <div className="space-y-4">
+            <section id="trip-confirmations-panel" aria-labelledby="trip-confirmations-title" className="min-w-0 rounded-xl border border-slate-200/80 bg-white">
+              <div className="flex min-h-11 items-center gap-2 border-b border-slate-100 px-3 py-2.5">
+                <FileCheck2 size={17} className="shrink-0 text-indigo-700" aria-hidden="true" />
+                <h3 id="trip-confirmations-title" className="text-sm font-semibold text-slate-800">Trip confirmations</h3>
               </div>
-            </details>
-            <details id="trip-flight-status-panel" open={showFlightStatus} className="group min-w-0 rounded-xl border border-slate-200/80 bg-white">
-              <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-sm font-semibold text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 [&::-webkit-details-marker]:hidden">
-                <span className="flex min-w-0 items-center gap-2"><Plane size={17} className="shrink-0 text-indigo-700" aria-hidden="true" /> Flight status</span>
-                <ChevronDown size={17} className="shrink-0 text-slate-500 transition-transform group-open:rotate-180" aria-hidden="true" />
-              </summary>
-              <div className="min-w-0 border-t border-slate-100 p-3">
+              <div className="min-w-0 p-3">
+                <TripConfirmationsMonitoringPanel />
+              </div>
+            </section>
+
+            <section id="trip-flight-status-panel" aria-labelledby="trip-flight-status-title" className="min-w-0 rounded-xl border border-slate-200/80 bg-white">
+              <div className="flex min-h-11 items-center gap-2 border-b border-slate-100 px-3 py-2.5">
+                <Plane size={17} className="shrink-0 text-indigo-700" aria-hidden="true" />
+                <h3 id="trip-flight-status-title" className="text-sm font-semibold text-slate-800">Flight status</h3>
+              </div>
+              <div className="min-w-0 p-3">
                 <TripFlightStatusMonitoringPanel />
               </div>
-            </details>
+            </section>
           </div>
         </section>
       </AdminSectionCard>

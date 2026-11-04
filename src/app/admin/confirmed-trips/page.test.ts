@@ -60,7 +60,9 @@ test("main Trips workspace keeps the compact summary and records workspace witho
   assert.deepEqual(positions, [...positions].sort((a, b) => a - b));
   assert.equal((page.match(/<AdminSectionCard/g) ?? []).length, 1);
   assert.match(page, /<AdminSectionCard className="min-w-0 p-4 sm:p-5 lg:p-6">/);
-  assert.match(page, /<div className="space-y-8">/);
+  assert.match(page, /<div className="space-y-10">/);
+  assert.match(page, /<div className="mt-2">/);
+  assert.doesNotMatch(page, /mt-3 border-t border-slate-100 pt-3/);
   assert.equal((page.match(/className="min-w-0 rounded-xl border border-slate-200\/80 bg-white px-4 py-3 sm:px-5 sm:py-4"/g) ?? []).length, 0);
   assert.match(page, /<section aria-label="Trip summary" className="min-w-0">/);
   assert.match(page, /<section aria-label="Trip records" id="trip-directory" className="min-w-0">/);
@@ -195,7 +197,7 @@ test("redundant directory labels and result count are absent without changing re
   assert.match(page, /tripDirectoryHref\(filters, directory\.nextCursor\)/);
   assert.doesNotMatch(controls, /Clear filters|href="\/admin\/confirmed-trips#trip-directory"/);
   assert.match(controls, /type="submit"/);
-  assert.match(controls, /h-9 items-center justify-center whitespace-nowrap rounded-lg bg-indigo-700 px-3/);
+  assert.match(controls, /h-8 items-center justify-center whitespace-nowrap rounded-md bg-indigo-700 px-2\.5 text-\[11px\]/);
 });
 
 test("the main directory uses authorized read-only filtered records, never the 20-row overview sample", () => {
@@ -257,7 +259,7 @@ test("six directory filters use a compact left-anchored toolbar with a polished 
   assert.match(dropdown, /if \(!options\.some\(\(option\) => option\.value === next && !option\.disabled\)\) return/);
   assert.match(dropdown, /aria-haspopup="listbox"|role="listbox"/);
   assert.doesNotMatch(controls, /Clear filters|href="\/admin\/confirmed-trips#trip-directory"/);
-  assert.match(controls, /<button type="submit" className="inline-flex h-9 items-center justify-center whitespace-nowrap rounded-lg bg-indigo-700 px-3/);
+  assert.match(controls, /<button type="submit" className="inline-flex h-8 items-center justify-center whitespace-nowrap rounded-md bg-indigo-700 px-2\.5 text-\[11px\]/);
   assert.match(workspace, /requested \|\| \(raw\.from \|\| raw\.to \? "custom" : "today"\)/);
   assert.match(workspace, /parseAdminTripFilters\(\{ \.\.\.raw, from, to \}\)/);
   assert.match(page, /if \(parsed\.ok && parsed\.range === "custom"\)/);
@@ -297,17 +299,20 @@ test("unified Trip monitoring consolidates protected confirmation and flight-sta
   assert.match(monitoringPage, /await requireAdminSession\("\/admin\/confirmed-trips\/monitoring"\)/);
   assert.match(monitoringPage, /href="\/admin\/confirmed-trips"/);
   assert.match(monitoringPage, /Back to Trips/);
-  assert.match(monitoringPage, /<TripConfirmationsMonitoringPanel expandDelivery=\{panel === "delivery"\} \/>/);
+  assert.match(monitoringPage, /<TripConfirmationsMonitoringPanel \/>/);
   assert.match(monitoringPage, /<TripFlightStatusMonitoringPanel \/>/);
-  assert.match(monitoringPage, /id="trip-confirmations-panel" open=\{showConfirmations\}/);
-  assert.match(monitoringPage, /id="trip-flight-status-panel" open=\{showFlightStatus\}/);
+  assert.match(monitoringPage, /id="trip-confirmations-panel"/);
+  assert.match(monitoringPage, /id="trip-flight-status-panel"/);
+  assert.doesNotMatch(monitoringPage, /<details|<summary|ChevronDown|showConfirmations|showFlightStatus|requestedPanel/);
   assert.match(operationsRedirect, /await requireAdminSession\("\/admin\/confirmed-trips\/operations"\)/);
   assert.match(operationsRedirect, /redirect\("\/admin\/confirmed-trips\/monitoring\?panel=delivery#confirmation-delivery-health-title"\)/);
   assert.match(flightStatusRedirect, /redirect\("\/admin\/confirmed-trips\/monitoring\?panel=flight#flight-status-overview-title"\)/);
   assert.match(operationsPage, /Detailed product and provider breakdowns/);
   assert.match(operationsPage, /Confirmation integration readiness/);
   assert.match(operationsPage, /Confirmation delivery health and alerts/);
-  assert.equal((operationsPage.match(/<details/g) ?? []).length, 3);
+  assert.equal((operationsPage.match(/<details/g) ?? []).length, 0);
+  assert.equal((operationsPage.match(/<summary/g) ?? []).length, 0);
+  assert.doesNotMatch(operationsPage, /ChevronDown|cursor-pointer|group-open:rotate-180/);
   assert.match(operationsPage, /<ConfirmedTripsBreakdowns operations=\{operations\} \/>/);
   assert.match(operationsPage, /getConfirmedTripsIntegrationReadiness\(\)/);
   assert.match(operationsPage, /getConfirmedTripsOperationsSnapshot\(\)/);
@@ -325,7 +330,9 @@ test("unified Trip monitoring consolidates protected confirmation and flight-sta
   ]) assert.ok(operationsPage.includes(property), property);
   assert.match(operationsPage, /readiness\.feedReady \? <ConfirmedTripDeliveryAlerts \/> : null/);
   assert.match(operationsPage, /id="confirmation-delivery-health-title"/);
-  assert.match(operationsPage, /open=\{expandDelivery\}/);
+  assert.match(operationsPage, /id="confirmation-integration-title"/);
+  assert.match(operationsPage, /id="confirmation-breakdowns-title"/);
+  assert.doesNotMatch(operationsPage, /expandDelivery|open=\{/);
   assert.doesNotMatch(operationsPage, /mockData|sampleTrips|Math\.random|process\.env/);
 });
 
@@ -350,7 +357,7 @@ test("loading state mirrors the streamlined summary, six filters and list shell"
   assert.doesNotMatch(loading + page, />Trip overview<|>Trip directory</);
   assert.match(loading, /role="status"/);
   assert.match(loading, /aria-busy="true"/);
-  assert.match(loading, /aria-busy="true" className="space-y-8"/);
+  assert.match(loading, /aria-busy="true" className="space-y-10"/);
   assert.match(loading, /motion-safe:animate-pulse/);
   assert.equal((loading.match(/<AdminSectionCard/g) ?? []).length, 1);
   assert.equal((loading.match(/<section aria-label="Trip records" className="min-w-0">/g) ?? []).length, 1);
@@ -368,7 +375,8 @@ test("loading state mirrors the streamlined summary, six filters and list shell"
   for (const label of ["Search trips", "Provider", "Travel type", "Trip status", "Identity", "Time range"]) {
     assert.ok(loading.includes(label), "Missing loading filter: " + label);
   }
-  assert.match(loading, /<div className="h-9 w-24 rounded-lg bg-slate-100 motion-safe:animate-pulse" \/>/);
+  assert.match(loading, /<div className="h-8 w-20 rounded-md bg-slate-100 motion-safe:animate-pulse" \/>/);
+  assert.match(loading, /className="mt-2 overflow-hidden rounded-lg border border-slate-200"/);
   assert.match(loading, /"Created", "Type", "Trip", "Travel dates", "Provider", "Identity", "Status", "Action"/);
   assert.doesNotMatch(loading, /"From \(UTC\)"|"To \(UTC\)"/);
   assert.doesNotMatch(loading, /"Tracking"|Not connected/);
