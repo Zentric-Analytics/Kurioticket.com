@@ -74,6 +74,22 @@ test("main Trips workspace contains two compact sections and a visible Trip oper
 });
 
 
+test("Trip overview note and disconnected Tracking field are removed without losing valid controls", () => {
+  const start = page.indexOf('<section aria-labelledby="confirmed-trips-overview"');
+  const end = page.indexOf("</section>", start);
+  const overview = page.slice(start, end);
+  assert.doesNotMatch(overview, /Confirmed trips include cancelled records|Tracking totals require|<Info/);
+  assert.match(overview, /label="Tracked trips" value="—"/);
+  assert.match(overview, /screenReaderNote="Tracking reporting not connected"/);
+  const fields = ["q", "provider", "product", "status", "range", "from", "to"];
+  for (const field of fields) assert.match(controls, new RegExp('name="' + field + '"'));
+  assert.doesNotMatch(controls, /name="tracking"|label="Tracking"|<span>Tracking<\/span>/);
+  assert.match(controls, /value: "TRACKED", label: "Tracked trips".*disabled: true/);
+  assert.match(page, /<TripDirectoryView rows=\{directory\.rows\} subtle \/>/);
+  assert.match(page, /directory\.statusCounts\.cancelled/);
+  assert.match(page, /directory\.nextCursor/);
+});
+
 test("Trip overview removes only its surrounding card, not the five individual metric tiles", () => {
   const start = page.indexOf('<section aria-labelledby="confirmed-trips-overview"');
   const end = page.indexOf('</section>', start);
@@ -81,8 +97,7 @@ test("Trip overview removes only its surrounding card, not the five individual m
   assert.match(section, /<section aria-labelledby="confirmed-trips-overview" className="min-w-0">/);
   assert.match(section, /grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-5/);
   assert.equal((section.match(/<TripMetric /g) ?? []).length, 5);
-  assert.match(section, /<p className="mt-2 flex items-start gap-1.5 text-xs leading-5 text-slate-600">/);
-  assert.match(section, /Tracking totals require a separate data source/);
+  assert.doesNotMatch(section, /<Info|Confirmed trips include cancelled records|Tracking totals require a separate data source/);
   assert.doesNotMatch(section, /The counters reflect the filters applied|hint="/);
 });
 
@@ -110,7 +125,7 @@ test("all five overview counters display the current filtered scope without clic
     "Matching past trips",
     "Matching cancelled trips",
   ]) assert.ok(!page.includes(description), description);
-  assert.match(page, /Confirmed trips include cancelled records/);
+  assert.doesNotMatch(page, /Confirmed trips include cancelled records/);
   assert.doesNotMatch(page, /tripWorkspaceHref\(filters, range, \{ status:/);
   assert.match(recordsService, /const \[count, page, upcoming, past, cancelled\] = await db\.\$transaction/);
   for (const status of ["UPCOMING", "PAST", "CANCELLED"]) {
@@ -122,8 +137,8 @@ test("all five overview counters display the current filtered scope without clic
 test("tracked trips remain unavailable instead of showing fabricated totals", () => {
   assert.match(page, /label="Tracked trips" value="—"/);
   assert.match(page, /Tracking reporting not connected/);
-  assert.match(page, /Tracking totals require a separate data source/);
-  assert.match(controls, /<SearchMonitorSelect label="Tracking".*disabled \/>/);
+  assert.doesNotMatch(page, /Tracking totals require a separate data source/);
+  assert.doesNotMatch(controls, /<SearchMonitorSelect label="Tracking"|name="tracking"|<span>Tracking<\/span>/);
   assert.match(controls, /value: "TRACKED", label: "Tracked trips".*disabled: true/);
   assert.match(dropdown, /disabled=\{option\.disabled\}/);
   assert.match(dropdown, /aria-disabled=\{option\.disabled \|\| undefined\}/);
@@ -184,7 +199,7 @@ test("the main directory uses authorized read-only filtered records, never the 2
   assert.doesNotMatch(recordsService, /\.create\(|\.update\(|\.delete\(|\.upsert\(/);
 });
 
-test("eight polished directory fields use one compact desktop row with accessible popups and real UTC date inputs", () => {
+test("seven polished directory fields use one compact desktop row with accessible popups and real UTC date inputs", () => {
   assert.match(page, /<TripFilterControls filters=\{filters\} range=\{range\} dateFields=\{dateFields\}/);
   assert.match(controls, /<form method="get" action="\/admin\/confirmed-trips"/);
   for (const key of ["q", "provider", "product", "status", "from", "to"]) {
@@ -193,11 +208,11 @@ test("eight polished directory fields use one compact desktop row with accessibl
   }
   assert.match(controls, /name="range"/);
   assert.match(workspace, /parseAdminTripFilters\(\{ \.\.\.raw, from, to \}\)/);
-  assert.match(controls, /lg:grid-cols-\[minmax\(0,1\.25fr\).*minmax\(0,1\.15fr\)\]/);
+  assert.match(controls, /lg:grid-cols-\[minmax\(0,1\.35fr\).*minmax\(0,1\.2fr\)\]/);
   assert.match(controls, /md:grid-cols-4/);
   assert.match(controls, /items-end gap-x-2/);
   assert.doesNotMatch(controls, /overflow-x-auto|overflow-x-scroll|min-w-\[\d+px\]/);
-  for (const label of ["Search trips", "Provider", "Travel type", "Trip status", "Time range", "Tracking", "From (UTC)", "To (UTC)"]) {
+  for (const label of ["Search trips", "Provider", "Travel type", "Trip status", "Time range", "From (UTC)", "To (UTC)"]) {
     assert.ok(controls.includes(label), "Missing filter: " + label);
   }
   assert.match(controls, /Last 7 UTC days/);
@@ -219,7 +234,7 @@ test("eight polished directory fields use one compact desktop row with accessibl
   assert.match(dropdown, /case "Escape":/);
   assert.match(dropdown, /appearance === "boxed"/);
   assert.match(dropdown, /role="listbox"/);
-  assert.match(loading, /lg:grid-cols-\[minmax\(0,1\.25fr\).*minmax\(0,1\.15fr\)\]/);
+  assert.match(loading, /lg:grid-cols-\[minmax\(0,1\.35fr\).*minmax\(0,1\.2fr\)\]/);
   assert.doesNotMatch(page + controls, /<form method="post"|fetch\(|method:\s*["'](?:POST|PATCH|DELETE)/);
 });
 
@@ -292,7 +307,7 @@ test("service preserves provider-confirmation trust boundary and no invented rev
   assert.doesNotMatch(page, /Revenue|GMV|Gross booking value|Total value|PARTNER_CONFIRMATION_WEBHOOK_SECRET|process\.env/);
   assert.doesNotMatch(navigation, /\/admin\/bookings/);
   assert.match(architecture, /"\/admin\/bookings"/);
-  assert.match(page, /Confirmed trips include cancelled records/);
+  assert.doesNotMatch(page, /Confirmed trips include cancelled records/);
   assert.match(operationsPage, /Receipts may include retries/);
 });
 
@@ -311,7 +326,8 @@ test("loading state mirrors two primary sections with a visible operations short
   assert.doesNotMatch(loading, /Loading counters for the selected trip filters/);
   assert.doesNotMatch(loading, /h-3 w-3\/4 rounded bg-slate-100/);
   assert.doesNotMatch(loading, /"All", "Flights", "Hotels", "Cars", "Packages"|aria-label="Trip travel types"/);
-  assert.match(loading, /"Search trips", "Provider", "Travel type", "Trip status", "Time range", "Tracking", "From \(UTC\)", "To \(UTC\)"/);
+  assert.match(loading, /"Search trips", "Provider", "Travel type", "Trip status", "Time range", "From \(UTC\)", "To \(UTC\)"/);
+  assert.doesNotMatch(loading, /"Tracking"|Not connected/);
   assert.doesNotMatch(loading, /Confirmed by type · all time|Trips by category|Related trip operations/);
   assert.doesNotMatch(loading, />\s*0\s*</);
 });
