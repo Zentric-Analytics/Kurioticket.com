@@ -50,7 +50,6 @@ export async function TripConfirmationsMonitoringPanel() {
             </span>
             <div className="min-w-0">
               <h4 id="confirmation-integration-title" className="scroll-mt-28 min-[1100px]:scroll-mt-44 text-base font-semibold leading-6 tracking-tight text-slate-950">Confirmation integration readiness</h4>
-              <p className="mt-1 text-[13px] leading-5 text-slate-600">Provider confirmation setup and connection status.</p>
             </div>
           </div>
           <div className="max-w-full shrink-0">
@@ -68,9 +67,6 @@ export async function TripConfirmationsMonitoringPanel() {
           <InlineFact label="Endpoint" value="POST /api/internal/partner-confirmations" />
           <InlineFact label="Webhook credential model" value={readiness.credentialModel === "single_provider_bound_secret" ? "Single provider + dedicated secret" : "Unknown"} />
         </dl>
-        <p className="mt-2.5 text-[13px] leading-5 text-slate-600">
-          Confirmations require signed server-to-server callbacks from the configured provider. A webhook setup does not mean a live feed or provider agreement. Duffel search and KAYAK sandbox do not send booking confirmations.
-        </p>
       </section>
 
       <section id="confirmation-delivery-health-title" aria-labelledby="confirmation-delivery-health-heading" className="min-w-0 rounded-xl border border-slate-200/80 bg-white px-4 py-3 sm:px-5 sm:py-4">
