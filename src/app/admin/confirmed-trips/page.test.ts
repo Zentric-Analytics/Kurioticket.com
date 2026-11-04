@@ -6,6 +6,7 @@ const page = readFileSync("src/app/admin/confirmed-trips/page.tsx", "utf8");
 const loading = readFileSync("src/app/admin/confirmed-trips/loading.tsx", "utf8");
 const operationsPage = readFileSync("src/components/admin/TripConfirmationsMonitoringPanel.tsx", "utf8");
 const monitoringPage = readFileSync("src/app/admin/confirmed-trips/monitoring/page.tsx", "utf8");
+const tripWorkspaceNavigation = readFileSync("src/components/admin/TripWorkspaceNavigation.tsx", "utf8");
 const operationsRedirect = readFileSync("src/app/admin/confirmed-trips/operations/page.tsx", "utf8");
 const flightStatusRedirect = readFileSync("src/app/admin/flight-status/page.tsx", "utf8");
 const directory = readFileSync("src/app/admin/confirmed-trips/records/page.tsx", "utf8");
@@ -28,11 +29,10 @@ test("Trips preserves its existing admin workspace without a visible page introd
   assert.doesNotMatch(page, /View verified provider-confirmed trips across flights, hotels, and cars/);
   assert.doesNotMatch(page, /tracking-tight text-slate-950">Trips<\/p>/);
   assert.match(page, /<AdminPageShell title="Trips" hideHeader>/);
-  assert.match(page, /role="group" aria-label="Trip shortcuts"/);
+  assert.match(page, /<TripWorkspaceNavigation active="trips" \/>/);
+  assert.doesNotMatch(page, /role="group" aria-label="Trip shortcuts"/);
   assert.match(navigation, /href: "\/admin\/confirmed-trips", label: "Trips"/);
   assert.doesNotMatch(page, /href="\/admin\/confirmed-trips\/records"|Browse confirmed trips|Open full directory/);
-  assert.match(page, /href="\/admin\/confirmed-trips\/monitoring"/);
-  assert.match(page, /href="\/admin\/confirmed-trips\/monitoring"/);
   assert.match(shell, /border-slate-200 bg-white shadow-sm/);
   assert.doesNotMatch(page, /Admin operations|Jump to:/);
   assert.doesNotMatch(page, /Kurioticket handles refunds|Cancel booking|Issue ticket/);
@@ -47,8 +47,7 @@ test("Trip directory is the primary record workspace without duplicate entry lin
   assert.match(page, /Older matching trips/);
   assert.match(recordsTable, /encodeURIComponent\(trip\.id\)/);
   assert.match(directory, /await requireAdminSession\("\/admin\/confirmed-trips\/records"\)/);
-  assert.match(page, /href="\/admin\/confirmed-trips\/monitoring"/);
-  assert.match(page, /href="\/admin\/confirmed-trips\/monitoring"/);
+  assert.match(page, /<TripWorkspaceNavigation active="trips" \/>/);
 });
 
 test("main Trips workspace keeps the compact summary and records workspace without redundant headings", () => {
@@ -61,7 +60,7 @@ test("main Trips workspace keeps the compact summary and records workspace witho
   assert.deepEqual(positions, [...positions].sort((a, b) => a - b));
   assert.equal((page.match(/<AdminSectionCard/g) ?? []).length, 1);
   assert.match(page, /<AdminSectionCard className="min-w-0 p-4 sm:p-5 lg:p-6">/);
-  assert.match(page, /<div className="space-y-10">/);
+  assert.match(page, /<div className="space-y-10 pt-6">/);
   assert.match(page, /<div className="mt-2">/);
   assert.doesNotMatch(page, /mt-3 border-t border-slate-100 pt-3/);
   assert.equal((page.match(/className="min-w-0 rounded-xl border border-slate-200\/80 bg-white px-4 py-3 sm:px-5 sm:py-4"/g) ?? []).length, 0);
@@ -71,8 +70,8 @@ test("main Trips workspace keeps the compact summary and records workspace witho
   assert.doesNotMatch(page, />Trip overview<|>Trip directory<|matching verified trips/);
   const parentStart = page.indexOf('<AdminSectionCard className="min-w-0 p-4 sm:p-5 lg:p-6">');
   const parentEnd = page.lastIndexOf("</AdminSectionCard>");
-  const toolbarStart = page.indexOf('role="group" aria-label="Trip shortcuts"');
-  assert.ok(parentStart >= 0 && toolbarStart > parentStart && toolbarStart < positions[0]);
+  const workspaceNavStart = page.indexOf('<TripWorkspaceNavigation active="trips" />');
+  assert.ok(parentStart >= 0 && workspaceNavStart > parentStart && workspaceNavStart < positions[0]);
   assert.ok(positions.every(position => position > parentStart && position < parentEnd));
   assert.match(page, /border-slate-200\/80 px-3 py-2\.5/);
   assert.doesNotMatch(page, /rounded-lg border border-slate-200\/80 bg-white px-3 py-2\.5/);
@@ -294,14 +293,25 @@ test("Trips use one dedicated list backed by genuine records and the existing re
   assert.doesNotMatch(recordsView + recordsTable, /mockRows|sampleData|random|Cancel booking|Refund now/);
 });
 
-test("unified Trip monitoring consolidates protected confirmation and flight-status panels", () => {
-  assert.match(page, /href="\/admin\/confirmed-trips\/monitoring"/);
-  assert.match(loading, /href="\/admin\/confirmed-trips\/monitoring"/);
-  assert.doesNotMatch(page + loading, /href="\/admin\/flight-status"|href="\/admin\/confirmed-trips\/operations"/);
+test("Trips and Trip monitoring use the Providers-style workspace navigation while preserving monitoring panels", () => {
+  assert.match(page, /<TripWorkspaceNavigation active="trips" \/>/);
+  assert.match(loading, /<TripWorkspaceNavigation active="trips" \/>/);
+  assert.match(monitoringPage, /<TripWorkspaceNavigation active="monitoring" \/>/);
+  assert.doesNotMatch(page + loading, /role="group" aria-label="Trip shortcuts"|href="\/admin\/flight-status"|href="\/admin\/confirmed-trips\/operations"/);
+  assert.match(tripWorkspaceNavigation, /aria-label="Trip reporting sections"/);
+  assert.match(tripWorkspaceNavigation, /href="\/admin\/confirmed-trips"/);
+  assert.match(tripWorkspaceNavigation, /href="\/admin\/confirmed-trips\/monitoring"/);
+  assert.match(tripWorkspaceNavigation, /inline-flex h-11 shrink-0 items-center whitespace-nowrap border-b-2 px-1 text-\[13px\] font-medium text-\[#020617\]/);
+  assert.match(tripWorkspaceNavigation, /border-b border-\[#D8E1EC\]/);
+  assert.match(tripWorkspaceNavigation, /gap-6/);
+  assert.match(tripWorkspaceNavigation, /border-\[#004BB8\]/);
+  assert.match(tripWorkspaceNavigation, /border-transparent hover:border-\[#D8E1EC\]/);
+  assert.match(tripWorkspaceNavigation, /aria-current=\{active === "trips" \? "page" : undefined\}/);
+  assert.match(tripWorkspaceNavigation, /aria-current=\{active === "monitoring" \? "page" : undefined\}/);
   assert.match(monitoringPage, /<AdminPageShell title="Trip monitoring" hideHeader>/);
   assert.match(monitoringPage, /await requireAdminSession\("\/admin\/confirmed-trips\/monitoring"\)/);
-  assert.match(monitoringPage, /href="\/admin\/confirmed-trips"/);
-  assert.match(monitoringPage, /Back to Trips/);
+  assert.doesNotMatch(monitoringPage, /Back to Trips|ArrowLeft|Trip monitoring navigation/);
+  assert.match(monitoringPage, /<section aria-label="Trip monitoring details" className="min-w-0 pt-6">/);
   assert.match(monitoringPage, /<TripConfirmationsMonitoringPanel \/>/);
   assert.match(monitoringPage, /<TripFlightStatusMonitoringPanel \/>/);
   assert.match(monitoringPage, /id="trip-confirmations-panel"/);
@@ -370,7 +380,7 @@ test("loading state mirrors the streamlined summary, six filters and list shell"
   assert.doesNotMatch(loading + page, />Trip overview<|>Trip directory</);
   assert.match(loading, /role="status"/);
   assert.match(loading, /aria-busy="true"/);
-  assert.match(loading, /aria-busy="true" className="space-y-10"/);
+  assert.match(loading, /aria-busy="true" className="space-y-10 pt-6"/);
   assert.match(loading, /motion-safe:animate-pulse/);
   assert.equal((loading.match(/<AdminSectionCard/g) ?? []).length, 1);
   assert.equal((loading.match(/<section aria-label="Trip records" className="min-w-0">/g) ?? []).length, 1);

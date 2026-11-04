@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { AdminPageShell, AdminSectionCard } from "@/components/admin/AdminPageShell";
+import { TripWorkspaceNavigation } from "@/components/admin/TripWorkspaceNavigation";
 
 const metricLabels = ["Confirmed trips", "Tracked trips", "Upcoming", "Past", "Cancelled"];
 
@@ -7,13 +7,9 @@ export default function ConfirmedTripsLoading() {
   return (
     <AdminPageShell title="Trips" hideHeader>
       <AdminSectionCard className="min-w-0 p-4 sm:p-5 lg:p-6">
-        <div role="group" aria-label="Trip shortcuts" className="mb-3 flex min-w-0 flex-wrap items-center justify-end gap-2">
-          <div className="flex flex-wrap justify-end gap-2">
-            <Link href="/admin/confirmed-trips/monitoring" className="inline-flex min-h-9 items-center rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700">Trip monitoring</Link>
-          </div>
-        </div>
+        <TripWorkspaceNavigation active="trips" />
         <div role="status" aria-live="polite" className="sr-only">Loading confirmed-trip information…</div>
-        <div aria-busy="true" className="space-y-10">
+        <div aria-busy="true" className="space-y-10 pt-6">
           <section aria-label="Trip summary" className="min-w-0">
             <div aria-hidden="true" className="grid min-w-0 grid-cols-1 gap-0 sm:grid-cols-2 lg:grid-cols-5">
               {metricLabels.map((label, index) => (
