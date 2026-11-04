@@ -23,6 +23,9 @@ test("admin alerts derive only from authoritative operational sources", () => {
     "getCmsHealthOverview",
     "readHomepageFareSnapshotStatus",
     "getFlightStatusOperationsSnapshot",
+    "readExpandedAdminAlertSignals",
+    "deriveExpandedAdminAlerts",
+    "persistExpandedAlertOccurrences",
   ]) {
     assert.match(service, new RegExp(source));
   }
@@ -85,6 +88,9 @@ test("admin alerts distinguish telemetry outages from real healthy zeroes", () =
   assert.match(core, /signals\.telemetryOutageTokens\.cms/);
   assert.match(core, /signals\.telemetryOutageTokens\.homepageFares/);
   assert.match(core, /signals\.telemetryOutageTokens\.flightStatus/);
+  assert.match(core, /!signals\.cms \|\| !signals\.cms\.available/);
+  assert.match(service, /cms: cms === null \|\| !cms\.available/);
+  assert.match(service, /const cmsOccurrenceToken = cms\?\.available/);
 });
 
 test("acknowledgements are per-admin, signal-specific, temporary, and must persist", () => {
@@ -133,11 +139,14 @@ test("acknowledgement mutation is authenticated, rate-limited, and safe", () => 
 test("notifications page explains acknowledgement semantics and monitored boundaries", () => {
   assert.match(page, /title="Notifications & Alerts"/);
   assert.match(page, /does not resolve the underlying condition/);
-  assert.match(page, /Phase 1 monitoring boundaries/);
+  assert.match(page, /Monitoring boundaries/);
   assert.match(page, /does not fabricate alerts/);
   assert.match(page, /AdminAlertAcknowledgeButton/);
   assert.match(page, /isProtectedAdminEmail\(session\.user\.email\)/);
   assert.match(page, /signalToken=\{alert\.signalToken\}/);
+  assert.match(page, /alertSourceHref\(alert\.actionHref\)/);
+  assert.match(page, /signalToken\.startsWith\("unpersisted:"\)/);
+  assert.doesNotMatch(page, /actions=\{/);
   assert.doesNotMatch(
     core,
     /markets\.join\(","\),\s*signals\.homepageFares\.lastRefreshAt/,

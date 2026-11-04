@@ -1,0 +1,76 @@
+name: Global Admin alerts and navigation
+
+on:
+  pull_request:
+    branches: [dev]
+    paths:
+      - src/services/adminAlert*
+      - src/services/adminExpandedAlert*
+      - src/lib/adminAlertNavigation*
+      - src/lib/adminNavigation*
+      - src/lib/adminSystemCleanup.test.ts
+      - src/app/admin/system/**
+      - src/app/admin/settings/**
+      - src/app/admin/email-delivery/**
+      - src/app/admin/notifications/**
+      - qa/admin-system-cleanup/**
+      - .github/workflows/admin-global-alerts.yml
+
+permissions:
+  contents: read
+
+jobs:
+  global-alert-contracts:
+    name: Verify global alerts and navigation contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Run alert rules, readers, integration, recovery and navigation regression tests
+        env:
+          JITI_TSCONFIG_PATHS: ./tsconfig.json
+          JITI_JSX: true
+        run: >-
+          node --test --test-concurrency=2 --import jiti/register
+          src/services/adminExpandedAlertCore.test.ts
+          src/services/adminExpandedAlertReader.test.ts
+          src/services/adminExpandedAlertOccurrences.test.ts
+          src/services/adminAlertCoreCoverage.test.ts
+          src/services/adminAlertServiceExpansion.test.ts
+          src/lib/adminAlertNavigation.test.ts
+          src/lib/adminSystemCleanup.test.ts
+          src/lib/adminNavigation.test.ts
+          src/app/admin/system/page.test.ts
+          src/app/admin/notifications/page.test.ts
+          src/app/admin/email-delivery/page.test.ts
+          src/services/cmsProductionHardening.test.ts
+  global-alert-visual-evidence:
+    name: Verify Admin navigation and capture before-after evidence
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Render real System components with isolated labelled records
+        run: node qa/admin-system-cleanup/run.mjs
+        env:
+          ADMIN_SYSTEM_QA_OUTPUT: ${{ runner.temp }}/admin-system-cleanup-evidence
+      - name: Upload before-after screenshots and browser results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: admin-system-cleanup-evidence
+          path: ${{ runner.temp }}/admin-system-cleanup-evidence/
+          if-no-files-found: warn

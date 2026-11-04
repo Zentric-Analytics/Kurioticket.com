@@ -1,5 +1,3 @@
-import Link from "next/link";
-
 import {
   AdminDataTable,
   AdminEmptyState,
@@ -43,16 +41,6 @@ export default async function AdminEmailDeliveryOperationsPage() {
     <AdminPageShell
       title="Email Delivery Operations"
       description="Monitor transactional email configuration and delivery health without exposing credentials, raw provider payloads, or customer email addresses."
-      actions={
-        <div className="flex flex-wrap gap-2">
-          <Link href="/admin/system" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">
-            Back to System
-          </Link>
-          <Link href="/admin/logs" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">
-            View audit logs
-          </Link>
-        </div>
-      }
     >
       {!health.dataAvailable ? (
         <AdminEmptyState

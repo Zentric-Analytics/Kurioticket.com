@@ -25,16 +25,6 @@ export default async function AdminSettingsPage() {
     <AdminPageShell
       title="Settings"
       description="Authoritative platform controls and configuration ownership. Deployment secrets and runtime credentials remain outside the admin UI."
-      actions={
-        <div className="flex flex-wrap gap-2">
-          <Link href="/admin/system" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">
-            System status
-          </Link>
-          <Link href="/admin/logs" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">
-            Audit logs
-          </Link>
-        </div>
-      }
     >
       <div className="space-y-4">
         <AdminSectionCard className="p-5">
@@ -76,15 +66,11 @@ export default async function AdminSettingsPage() {
             title="Runtime & credentials"
             mode="Deployment owned"
             body="Database URLs, API keys, session secrets, provider credentials and server environment variables are never editable here. System shows only safe readiness state."
-            href="/admin/system"
-            linkLabel="View system status"
           />
           <OwnershipCard
             title="Admin access"
             mode="Deployment owned"
             body="ADMIN_EMAILS and production feature-controller permissions stay in server configuration. Settings never exposes or edits those values."
-            href="/admin/system"
-            linkLabel="View admin configuration status"
           />
         </div>
 
@@ -110,14 +96,10 @@ function OwnershipCard({
   title,
   mode,
   body,
-  href,
-  linkLabel,
 }: {
   title: string;
   mode: string;
   body: string;
-  href: string;
-  linkLabel: string;
 }) {
   return (
     <AdminSectionCard className="p-5">
@@ -126,9 +108,6 @@ function OwnershipCard({
         <AdminStatusBadge tone="info">{mode}</AdminStatusBadge>
       </div>
       <p className="mt-3 text-sm leading-6 text-slate-600">{body}</p>
-      <Link href={href} className="mt-4 inline-flex text-sm font-black text-blue-700 hover:underline">
-        {linkLabel}
-      </Link>
     </AdminSectionCard>
   );
 }
