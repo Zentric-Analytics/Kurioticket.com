@@ -32,11 +32,17 @@ try {
           await expect(main.getByRole("link", { name, exact: true })).toHaveCount(0);
         }
         if (route === "system") {
-          await expect(main.getByRole("heading", { name: "Issues Requiring Attention" })).toBeVisible();
+          for (const heading of ["System snapshot", "Issues Requiring Attention", "Services", "Configuration"]) {
+            await expect(main.getByRole("heading", { name: heading, exact: true })).toBeVisible();
+          }
           await expect(main.getByRole("link", { name: "View email diagnostics" })).toHaveAttribute("href", "/admin/email-delivery");
           await expect(main.getByRole("link", { name: "Review provider readiness" })).toHaveAttribute("href", "/admin/providers");
+          await expect(main.getByText("Live connectivity check", { exact: true })).toBeVisible();
+          await expect(main.getByText("Configuration only", { exact: true }).first()).toBeVisible();
+          await expect(main.getByText("Dedicated diagnostics", { exact: true })).toBeVisible();
+          await expect(main.locator("details")).toHaveCount(5);
           await expect(main.locator('a[href="/admin/settings"],a[href="/admin/notifications"]')).toHaveCount(0);
-          await expect(main.getByText(/Managed in deployment configuration/).first()).toBeVisible();
+          await expect(main.getByText(/deployment configuration/).first()).toBeVisible();
         }
         if (route === "email-delivery") await expect(main.getByRole("button", { name: "Send test email to me" })).toBeDisabled();
         if (route === "settings") await expect(main.getByRole("link", { name: "Open fare operations" })).toHaveAttribute("href", "/admin/homepage-fares");
