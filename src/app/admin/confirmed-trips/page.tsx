@@ -90,7 +90,7 @@ export default async function AdminConfirmedTripsPage({ searchParams }: Props) {
           </div>
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-5">
           <section aria-label="Trip summary" className="min-w-0">
             {directory?.status === "ok" ? (
               <div className="grid min-w-0 grid-cols-1 gap-0 sm:grid-cols-2 lg:grid-cols-5">
@@ -107,7 +107,7 @@ export default async function AdminConfirmedTripsPage({ searchParams }: Props) {
             )}
           </section>
 
-          <section aria-label="Trip records" id="trip-directory" className="min-w-0 rounded-xl border border-slate-200/80 bg-white px-4 py-3 sm:px-5 sm:py-4">
+          <section aria-label="Trip records" id="trip-directory" className="min-w-0">
             <TripFilterControls filters={filters} range={range}
               key={[filters.q, filters.provider, filters.product, filters.status, filters.identity, range, filters.from, filters.to].join("|")}
               providerNames={operations?.byProvider.map(item => item.provider) ?? []} />
