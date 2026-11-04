@@ -1,6 +1,8 @@
 import { Prisma } from "@/generated/prisma/client";
 import type { CmsContentType } from "@/generated/prisma/enums";
 import { getOptionalPrisma, getPrisma } from "@/lib/prisma";
+import { homepageCmsLocale, homepageCmsMarkets } from "@/services/homepageCmsService";
+import { findMissingHomepageCmsScopes } from "@/lib/adminCmsScopeDiagnostics";
 import {
   CmsContentError,
   type CmsActor,
@@ -471,6 +473,7 @@ export async function getCmsHealthOverview() {
     return {
       available: false,
       scopes: [],
+      missingHomepageScopes: [],
       totals: {
         scopes: 0,
         healthy: 0,
@@ -490,6 +493,8 @@ export async function getCmsHealthOverview() {
     },
   });
 
+  const missingHomepageScopes = findMissingHomepageCmsScopes(scopes, homepageCmsMarkets, homepageCmsLocale);
+
   const results = await Promise.all(
     scopes.map(async (scope) => ({
       type: scope.type,
@@ -502,6 +507,7 @@ export async function getCmsHealthOverview() {
   return {
     available: true,
     scopes: results,
+    missingHomepageScopes,
     totals: {
       scopes: results.length,
       healthy: results.filter((entry) => entry.integrity.healthy).length,
