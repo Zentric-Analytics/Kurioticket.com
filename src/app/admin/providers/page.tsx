@@ -297,7 +297,6 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
               <h2 id="operational-performance-heading" className="text-[15px] font-semibold text-[#020617]">
                 Operational performance
               </h2>
-              <span className="text-[12px] text-[#64748B]">{monitoringWindow.label}</span>
             </div>
             {operational === null ? (
               <p className="mt-3 text-[13px] text-[#9A3412]" role="status">
