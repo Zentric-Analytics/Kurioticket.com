@@ -367,7 +367,8 @@ test("Trips and Trip monitoring use the Providers-style workspace navigation whi
   assert.doesNotMatch(operationsPage, /expandDelivery|open=\{/);
   assert.doesNotMatch(operationsPage, /mockData|sampleTrips|Math\.random|process\.env/);
   assert.match(flightMonitoring, /className="min-w-0 space-y-4"/);
-  assert.equal((flightMonitoring.match(/rounded-xl border border-slate-200\/80 bg-white p-3 sm:p-4/g) ?? []).length, 5);
+  assert.equal((flightMonitoring.match(/rounded-xl border border-slate-200\/80 bg-white p-3 sm:p-4/g) ?? []).length, 4);
+  assert.doesNotMatch(flightMonitoring, />Snapshot scope<\/h2>|>Flight status overview<\/h2>/);
   assert.doesNotMatch(flightMonitoring, /AdminSectionCard/);
 });
 
