@@ -282,7 +282,10 @@ test("Trips use one dedicated list backed by genuine records and the existing re
   assert.match(directory, /<TripDirectoryView rows=\{result\.rows\} \/>/);
   assert.doesNotMatch(recordsView, /useState|LayoutGrid|aria-pressed|Grid/);
   assert.match(recordsView, /<ConfirmedTripRecordsTable rows=\{rows\} \/>/);
-  assert.match(recordsTable, /\["Created", "Type", "Trip", "Travel dates", "Provider", "Identity", "Status", "Action"\]/);
+  assert.match(recordsTable, /\["CREATED", "TYPE", "TRIP", "TRAVEL DATES", "PROVIDER", "IDENTITY", "STATUS", "ACTION"\]/);
+  assert.match(recordsTable, /<thead className="border-b border-slate-200\/80 bg-slate-50\/90 text-\[10px\] text-slate-500">/);
+  assert.match(recordsTable, /className="px-3 py-2\.5 font-semibold tracking-\[0\.08em\]"/);
+  assert.match(recordsTable, /border-b border-slate-200\/80 bg-slate-50\/90/);
   assert.match(recordsTable, /rows\.length \? rows\.map\(trip =>/);
   assert.match(recordsTable, /colSpan=\{8\}/);
   assert.match(recordsTable, /No trips match the selected filters/);
@@ -400,7 +403,8 @@ test("loading state mirrors the streamlined summary, six filters and list shell"
   }
   assert.match(loading, /<div className="h-8 w-20 rounded-md bg-slate-100 motion-safe:animate-pulse" \/>/);
   assert.match(loading, /className="mt-2 overflow-hidden rounded-lg border border-slate-200"/);
-  assert.match(loading, /"Created", "Type", "Trip", "Travel dates", "Provider", "Identity", "Status", "Action"/);
+  assert.match(loading, /"CREATED", "TYPE", "TRIP", "TRAVEL DATES", "PROVIDER", "IDENTITY", "STATUS", "ACTION"/);
+  assert.match(loading, /text-\[10px\] font-semibold tracking-\[0\.08em\] text-slate-500/);
   assert.doesNotMatch(loading, /"From \(UTC\)"|"To \(UTC\)"/);
   assert.doesNotMatch(loading, /"Tracking"|Not connected/);
   assert.doesNotMatch(loading, /Confirmed by type · all time|Trips by category|Related trip operations/);
