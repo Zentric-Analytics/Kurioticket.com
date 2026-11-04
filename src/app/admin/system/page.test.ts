@@ -37,6 +37,7 @@ test("System child routes use the same compact horizontal navigation", () => {
   assert.match(adminShell, /overflow-x-auto whitespace-nowrap/);
   assert.match(adminShell, /border-b-2/);
   assert.match(adminShell, /aria-current=\{active \? "page" : undefined\}/);
+  assert.match(adminShell, /aria-current=\{pathname === item\.href \|\| pathname === item\.href \+ "\/" \? "page" : undefined\}/);
   assert.doesNotMatch(adminShell, /<details|<summary|group-open:rotate-180/);
   assert.match(adminShell, /entry\.item\.href === "\/admin\/system"/);
   for (const href of ["/admin/system/cms-health", "/admin/email-delivery", "/admin/logs", "/admin/notifications"]) {
