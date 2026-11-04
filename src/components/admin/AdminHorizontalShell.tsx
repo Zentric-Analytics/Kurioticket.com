@@ -22,34 +22,6 @@ function HeaderNavLink({ entry, pathname, mobile = false, close }: { entry: Head
   const underline = selected
     ? " after:absolute after:-bottom-1 after:left-1 after:right-1 after:h-0.5 after:rounded-full after:bg-[#004BB8]"
     : "";
-  // System's existing child routes need an actual navigation control, not only parent highlighting.
-  // Keep the System link independently navigable while exposing its children in a keyboard-friendly menu.
-  if (item.href === "/admin/system" && entry.children.length > 0) {
-    return (
-      <div className={mobile ? "flex flex-wrap items-center gap-1" : "relative flex shrink-0 items-center gap-1"}>
-        <Link href={item.href} onClick={close} aria-current={pathname === item.href ? "page" : undefined}
-          className={"relative inline-flex h-10 items-center gap-2 whitespace-nowrap rounded-xl px-2.5 text-[15px] font-semibold leading-none transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 " + style + underline}>
-          <Icon size={14} aria-hidden="true" className="h-[13px] w-[13px] shrink-0 xl:h-3.5 xl:w-3.5 2xl:h-4 2xl:w-4" />
-          <span>{item.label}</span>
-        </Link>
-        <details className={mobile ? "group w-full" : "group relative"}>
-          <summary aria-label="System sections" className={"flex cursor-pointer list-none items-center justify-center rounded-lg text-[#475569] hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 [&::-webkit-details-marker]:hidden " + (mobile ? "h-9 w-full justify-start px-3 text-sm" : "h-9 w-8")}>
-            <ChevronDown size={15} aria-hidden="true" className="transition-transform group-open:rotate-180" />
-            {mobile ? <span className="ml-2">System sections</span> : null}
-          </summary>
-          <div className={mobile ? "ml-3 flex flex-col border-l border-slate-200 pl-3" : "absolute right-0 top-full z-50 mt-1 flex min-w-56 flex-col rounded-lg border border-slate-200 bg-white p-1 shadow-lg"}>
-            {entry.children.map((child) => (
-              <Link key={child.href} href={child.href} onClick={close}
-                aria-current={isAdminNavItemActive(child.href, pathname) ? "page" : undefined}
-                className="rounded-md px-3 py-2 text-[13px] font-medium text-[#475569] hover:bg-slate-50 hover:text-[#0F172A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25">
-                {child.label}
-              </Link>
-            ))}
-          </div>
-        </details>
-      </div>
-    );
-  }
   return (
     <Link href={item.href} onClick={close} aria-current={selected ? "page" : undefined}
       className={"relative inline-flex h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-xl px-2.5 text-[15px] font-semibold leading-none tracking-[-0.005em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 " + style + underline}>
@@ -74,12 +46,50 @@ function Navigation({ groups, pathname, mobile = false, close }: { groups: Heade
   </nav>;
 }
 
+/**
+ * System's secondary pages are real routes, not panels inside /admin/system.
+ * Keep their navigation visible on each child route without a floating menu.
+ */
+function SystemSectionTabs({ entries, pathname }: { entries: HeaderEntry["children"]; pathname: string }) {
+  const tabs = [
+    { href: "/admin/system", label: "System Status" },
+    ...entries.map((entry) => ({
+      href: entry.href,
+      label: entry.href === "/admin/notifications" ? "Alerts" : entry.label,
+    })),
+  ];
+
+  return (
+    <nav aria-label="System sections" className="border-b border-slate-200 bg-white">
+      <div className="mx-auto w-full max-w-[1920px] px-4 sm:px-6 lg:px-10">
+        <div className="flex items-center gap-5 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {tabs.map((tab) => {
+            const active = pathname === tab.href || pathname === tab.href + "/" ||
+              (tab.href !== "/admin/system" && pathname.startsWith(tab.href + "/"));
+            return (
+              <Link key={tab.href} href={tab.href} aria-current={active ? "page" : undefined}
+                className={"relative inline-flex min-h-11 shrink-0 items-center border-b-2 px-0.5 py-2 text-[13px] font-medium leading-5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 " +
+                  (active ? "border-[#004BB8] text-[#0F172A]" : "border-transparent text-[#475569] hover:text-[#0F172A]")}>
+                {tab.label}
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+    </nav>
+  );
+}
+
 export function AdminHorizontalShell({ children, adminEmail, adminName, adminRole, showPreviewTesters = false }: {
   children: React.ReactNode; adminEmail?: string | null; adminName?: string | null; adminRole: string; showPreviewTesters?: boolean;
 }) {
   const role: AdminRole = adminRole === "SUPPORT" || adminRole === "USER" ? adminRole : "ADMIN";
   const groups = getAdminHeaderGroups(role, showPreviewTesters);
   const pathname = usePathname();
+  const systemChildren = groups.flatMap((group) => group.links).find((entry) => entry.item.href === "/admin/system")?.children ?? [];
+  const systemSectionsVisible = pathname === "/admin/system" || pathname === "/admin/system/" ||
+    systemChildren.some((entry) => pathname === entry.href || pathname.startsWith(entry.href + "/"));
+
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [unreadAlertCount, setUnreadAlertCount] = useState<number | null>(null);
@@ -208,6 +218,7 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
       {mobileOpen ? <div className="max-h-[70vh] overflow-y-auto border-t border-slate-100 bg-white min-[1100px]:hidden"><Navigation groups={groups} pathname={pathname} mobile close={() => setMobileOpen(false)} /></div> : null}
       </AdminSearchHeader>
     </header>
+    {systemSectionsVisible ? <SystemSectionTabs entries={systemChildren} pathname={pathname} /> : null}
     <main className="mx-auto w-full max-w-[1920px] px-4 py-5 sm:px-6 lg:px-10"><AdminSearchContent>{children}</AdminSearchContent></main>
 
   </div></AdminWorkspaceSearchProvider>;
