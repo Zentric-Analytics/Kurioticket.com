@@ -68,9 +68,9 @@ export default async function AdminContentPage() {
       <div className="space-y-4">
         {homepageNeedsSetup ? (
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50/60 px-4 py-3">
-            <p className="text-[13px] text-[#475569]">Some homepage content needs CMS setup.</p>
-            <Link href="/admin/content/homepage" className="inline-flex items-center gap-1 text-[13px] font-medium text-[#004BB8] hover:underline">
-              Review homepage CMS setup <ArrowUpRight size={14} aria-hidden="true" />
+            <p className="text-[13px] text-[#475569]">Some homepage content markets need CMS setup.</p>
+            <Link href="/admin/system/cms-health" className="inline-flex items-center gap-1 text-[13px] font-medium text-[#004BB8] hover:underline">
+              Review CMS Health <ArrowUpRight size={14} aria-hidden="true" />
             </Link>
           </div>
         ) : null}
