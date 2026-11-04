@@ -316,7 +316,8 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
                     return (
                       <div id={"provider-operation-" + provider.id} role="listitem"
                         key={provider.id} className="py-4 first:pt-3 last:pb-3">
-                        <div className="flex min-w-0 flex-wrap items-start justify-between gap-x-6 gap-y-1.5">
+                        <div className="w-full max-w-[800px]">
+                          <div className="flex min-w-0 flex-wrap items-start justify-between gap-x-6 gap-y-1.5">
                           <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
                             <span className="text-[13px] font-semibold text-[#020617]">{provider.provider}</span>
                             <StatusIndicator value={operationalLabel(provider.operationalState)}
@@ -339,7 +340,7 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
                         </div>
 
                         <div aria-hidden="true"
-                          className="mt-3 flex h-2 w-full max-w-[800px] overflow-hidden rounded-full bg-[#E7ECF5]">
+                          className="mt-3 flex h-2 w-full overflow-hidden rounded-full bg-[#E7ECF5]">
                           {segments.hasAttempts ? (
                             <>
                               <span className="h-full bg-emerald-600"
@@ -350,6 +351,7 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
                                 style={{ width: String(segments.degradedPct) + "%" }} />
                             </>
                           ) : null}
+                        </div>
                         </div>
                         <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-[12px]">
                           <span className="inline-flex items-center gap-1.5 text-[#475569]">
