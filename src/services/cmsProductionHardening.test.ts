@@ -48,7 +48,7 @@ test("scope hardening uses optimistic concurrency and preserves explicit publish
   assert.match(hardeningService, /CMS_ORDER_NORMALIZED/);
   assert.match(hardeningService, /CMS_LEGACY_FALLBACK_RETIRED/);
   assert.match(hardeningService, /CMS_LEGACY_FALLBACK_REACTIVATED/);
-  assert.match(hardeningService, /action: "ORDER_NORMALIZED"/);
+  assert.match(contentService, /action: "ORDER_NORMALIZED"/);
   assert.doesNotMatch(
     hardeningService.slice(hardeningService.indexOf("export async function normalizeCmsDraftOrder"), hardeningService.indexOf("export async function setCmsLegacyFallbackRetired")),
     /publishedSortOrder:\s*nextOrder/,
@@ -79,7 +79,8 @@ test("CMS health reports integrity, ordering, fallback and unpublished changes",
   assert.match(hardeningService, /publishedOrderCollisions/);
   assert.match(hardeningService, /draftOrderNeedsNormalization/);
   assert.match(healthPage, /CMS Health/);
-  assert.match(healthPage, /View audit logs/);
+  assert.doesNotMatch(healthPage, /View audit logs|Back to System/);
+  assert.match(adminNavigation, /href: "\/admin\/logs", parentHref: "\/admin\/system"/);
   assert.match(adminNavigation, /href: "\/admin\/system\/cms-health", parentHref: "\/admin\/system"/);
   assert.match(legacyHealthPage, /redirect\("\/admin\/system\/cms-health"\)/);
   assert.doesNotMatch(contentPage, /\/admin\/content\/health/);
