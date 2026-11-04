@@ -160,7 +160,7 @@ test("provider APIs, retest API, and unrelated admin pages are not edited by pro
   assert.match(providerRetestApi, /checkDuffelHealth\(\)/);
   assert.match(providerRetestApi, /writeAdminAuditLog/);
   assert.match(overviewPage, /Operations Dashboard/);
-  assert.match(systemPage, /Safe operational status only/);
+  assert.match(systemPage, /Read-only configuration and connectivity status/);
   const shells = jsxOpening(settingsPage, "AdminPageShell");
   assert.equal(shells.length, 1, "Settings has one page shell");
   const title = shells[0].attributes.properties.find(attribute => ts.isJsxAttribute(attribute) && attribute.name.getText() === "title");
