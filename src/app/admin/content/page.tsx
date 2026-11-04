@@ -77,30 +77,32 @@ export default async function AdminContentPage() {
           </div>
         ) : null}
 
-        <nav aria-label="Content management" className="grid auto-rows-fr grid-cols-1 gap-4 sm:grid-cols-2">
+        <nav aria-label="Content management" className="grid auto-rows-fr grid-cols-1 gap-3 sm:grid-cols-2">
           {contentAreas.map((area) => {
             const Icon = area.icon;
             return (
               <Link
                 key={area.href}
                 href={area.href}
-                className="group focus-ring flex h-full min-h-[178px] min-w-0 cursor-pointer flex-col justify-between gap-6 rounded-xl border border-[#E5E7EB] bg-white p-5 transition-colors hover:border-[#6D28D9] hover:bg-[#FBFAFF] focus-visible:border-[#6D28D9] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6D28D9]"
+                className="group focus-ring flex h-full min-w-0 cursor-pointer flex-col gap-3 rounded-lg border border-[#E5E7EB] bg-white p-4 transition-colors hover:border-[#6D28D9] hover:bg-[#FBFAFF] focus-visible:border-[#6D28D9] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6D28D9]"
               >
-                <div className="flex min-w-0 items-start justify-between gap-4">
+                <div className="flex min-w-0 items-center justify-between gap-3">
                   <div className="flex min-w-0 items-center gap-2.5">
-                    <Icon size={19} className="shrink-0 text-[#64748B]" aria-hidden="true" />
-                    <h3 className="min-w-0 text-[15px] font-semibold leading-5 text-[#111827]">{area.title}</h3>
+                    <Icon size={18} className="shrink-0 text-[#64748B]" aria-hidden="true" />
+                    <h3 className="min-w-0 text-[14px] font-semibold leading-5 text-[#111827]">{area.title}</h3>
                   </div>
-                  <ArrowUpRight size={17} aria-hidden="true" className="shrink-0 text-[#64748B] transition-colors group-hover:text-[#6D28D9]" />
+                  <ArrowUpRight size={16} aria-hidden="true" className="shrink-0 text-[#64748B] transition-colors group-hover:text-[#6D28D9]" />
                 </div>
 
-                <div>
-                  <p className="text-[30px] font-semibold leading-none tracking-tight tabular-nums text-[#111827]">{area.value}</p>
-                  <p className="mt-2 text-[12px] leading-5 text-[#64748B]">
-                    Published records <span className="mx-1" aria-hidden="true">·</span> {area.scope}
-                  </p>
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
+                    <span className="text-[24px] font-semibold leading-7 tracking-tight tabular-nums text-[#111827]">{area.value}</span>
+                    <span className="text-[12px] leading-5 text-[#64748B]">
+                      Published records <span className="mx-1" aria-hidden="true">·</span> {area.scope}
+                    </span>
+                  </div>
                   {area.status !== "CMS managed" ? (
-                    <p className="mt-2 text-[12px] font-medium text-amber-700">{area.status}</p>
+                    <p className="mt-1 text-[12px] font-medium text-amber-700">{area.status}</p>
                   ) : null}
                 </div>
               </Link>
