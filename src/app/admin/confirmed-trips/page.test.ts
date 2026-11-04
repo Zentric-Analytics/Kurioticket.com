@@ -261,6 +261,8 @@ test("six directory filters use a compact left-anchored toolbar with a polished 
   assert.match(dropdown, /aria-haspopup="listbox"|role="listbox"/);
   assert.doesNotMatch(controls, /Clear filters|href="\/admin\/confirmed-trips#trip-directory"/);
   assert.match(controls, /<button type="submit" className="inline-flex h-8 items-center justify-center whitespace-nowrap rounded-md bg-indigo-700 px-2\.5 text-\[11px\]/);
+  assert.match(controls, />Apply<\/button>/);
+  assert.doesNotMatch(controls, />Apply filters<\/button>/);
   assert.match(workspace, /requested \|\| \(raw\.from \|\| raw\.to \? "custom" : "today"\)/);
   assert.match(workspace, /parseAdminTripFilters\(\{ \.\.\.raw, from, to \}\)/);
   assert.match(page, /if \(parsed\.ok && parsed\.range === "custom"\)/);
