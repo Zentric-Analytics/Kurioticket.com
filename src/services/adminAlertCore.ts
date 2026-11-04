@@ -7,7 +7,10 @@ export type AdminAlertSource =
   | "CMS"
   | "HOMEPAGE_FARES"
   | "FLIGHT_STATUS"
-  | "CONFIRMED_TRIPS";
+  | "CONFIRMED_TRIPS"
+  | "SEARCH"
+  | "SUPPORT"
+  | "USERS";
 
 export type AdminAlertCandidate = {
   key: string;
@@ -210,7 +213,7 @@ function emailAlerts(signals: AdminAlertSignals) {
 function cmsAlerts(signals: AdminAlertSignals) {
   if (!signals.system.databaseConnected) return [] satisfies AdminAlertCandidate[];
 
-  if (!signals.cms) {
+  if (!signals.cms || !signals.cms.available) {
     return [
       {
         key: "cms.health.unavailable",
@@ -224,7 +227,6 @@ function cmsAlerts(signals: AdminAlertSignals) {
     ] satisfies AdminAlertCandidate[];
   }
 
-  if (!signals.cms.available) return [] satisfies AdminAlertCandidate[];
   if (signals.cms.totals.unhealthy === 0) return [] satisfies AdminAlertCandidate[];
 
   return [
@@ -385,7 +387,7 @@ export function deriveAdminAlertCandidates(signals: AdminAlertSignals): AdminAle
       source: "SYSTEM",
       title: "Database is not configured",
       message: "The current environment does not have an authoritative database configuration.",
-      actionHref: "/admin/system",
+      actionHref: "/admin/system#service-health-heading",
       signalToken: "not-configured",
     });
   } else if (!signals.system.databaseConnected) {
@@ -395,7 +397,7 @@ export function deriveAdminAlertCandidates(signals: AdminAlertSignals): AdminAle
       source: "SYSTEM",
       title: "Database is unavailable",
       message: "The configured database did not respond to the admin health check.",
-      actionHref: "/admin/system",
+      actionHref: "/admin/system#service-health-heading",
       signalToken: "unavailable",
     });
   }
@@ -407,7 +409,7 @@ export function deriveAdminAlertCandidates(signals: AdminAlertSignals): AdminAle
       source: "SYSTEM",
       title: "Authentication configuration is incomplete",
       message: "The authentication/session secret configuration is incomplete for this environment.",
-      actionHref: "/admin/system",
+      actionHref: "/admin/system#service-health-heading",
       signalToken: [
         signals.system.authConfigured ? "auth-ready" : "auth-missing",
         signals.system.sessionConfigured ? "session-ready" : "session-missing",

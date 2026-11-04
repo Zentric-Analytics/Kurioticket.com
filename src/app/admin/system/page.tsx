@@ -5,7 +5,7 @@ import { getAdminEmails } from "@/lib/env";
 
 export const metadata = { title: "Admin System" };
 
-type AttentionItem = { label: string; detail: string; href: string };
+type AttentionItem = { label: string; detail: string; href?: string; actionLabel?: string };
 
 export default async function AdminSystemPage() {
   const system = await getSafeSystemStatus();
@@ -34,30 +34,29 @@ export default async function AdminSystemPage() {
     attention.push({
       label: "Database connectivity unavailable",
       detail: system.databaseConfigured
-        ? "The database is configured, but its connectivity check did not succeed."
-        : "A database connection is not configured.",
-      href: "/admin/notifications",
+        ? "The database is configured, but its connectivity check did not succeed. Check database availability and application connectivity in the deployment environment."
+        : "A database connection is not configured. Managed in deployment configuration; no secret values are editable here.",
     });
   }
   if (!system.authConfigured) attention.push({
     label: "Authentication configuration missing",
-    detail: "The server authentication secret was not found.",
-    href: "/admin/notifications",
+    detail: "The server authentication secret was not found. Managed in deployment configuration; ask an authorized operator to restore it.",
   });
   if (!system.emailConfigured) attention.push({
     label: "Email configuration incomplete",
     detail: "Email credentials are not fully configured; this is not a delivery-health measurement.",
     href: "/admin/email-delivery",
+    actionLabel: "View email diagnostics",
   });
   if (!system.providerCredentialsPresent) attention.push({
     label: "Provider credentials absent",
     detail: "No provider credentials were detected. Review integration readiness.",
     href: "/admin/providers",
+    actionLabel: "Review provider readiness",
   });
   if (!system.adminEmailsConfigured) attention.push({
     label: "Administrator email configuration missing",
-    detail: "No configured administrator email entries were detected.",
-    href: "/admin/settings",
+    detail: "No configured administrator email entries were detected. Managed in deployment configuration; Settings cannot edit the administrator allowlist.",
   });
 
   return (
@@ -69,7 +68,6 @@ export default async function AdminSystemPage() {
               <h2 id="system-health-heading" className="text-[15px] font-semibold">System Health Overview</h2>
               <p className="mt-1 text-[12px] leading-5 text-[#64748B]">Verified connectivity and configuration readiness. This is not a full platform uptime or performance score.</p>
             </div>
-            <Link href="/admin/notifications" className="text-[13px] font-medium text-[#004BB8] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">View operational alerts</Link>
           </div>
           <div className="mt-4 grid gap-x-8 gap-y-3 sm:grid-cols-3">
             <div className="min-w-0">
@@ -125,7 +123,6 @@ export default async function AdminSystemPage() {
         <section aria-labelledby="system-attention-heading" className="pt-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 id="system-attention-heading" className="text-[15px] font-semibold">Issues Requiring Attention</h2>
-            <Link href="/admin/notifications" className="text-[13px] font-medium text-[#004BB8] hover:underline">Open Alerts</Link>
           </div>
           {attention.length ? (
             <ul className="mt-2 max-w-[880px] divide-y divide-slate-200">
@@ -135,7 +132,7 @@ export default async function AdminSystemPage() {
                     <p className="text-[13px] font-medium text-[#0F172A]">{item.label}</p>
                     <p className="mt-1 text-[12px] leading-5 text-[#64748B]">{item.detail}</p>
                   </div>
-                  <Link href={item.href} className="shrink-0 text-[13px] font-medium text-[#004BB8] hover:underline">Investigate</Link>
+                  {item.href ? <Link href={item.href} className="shrink-0 text-[13px] font-medium text-[#004BB8] hover:underline">{item.actionLabel}</Link> : null}
                 </li>
               ))}
             </ul>
