@@ -24,7 +24,7 @@ function BreakdownCount({ count }: { count: number }) {
 
 function BreakdownMessage({ title, text, icon: Icon }: {
   title: string;
-  text: string;
+  text?: string;
   icon: typeof Info;
 }) {
   return (
@@ -32,7 +32,7 @@ function BreakdownMessage({ title, text, icon: Icon }: {
       <Icon size={16} className="mt-0.5 shrink-0 text-slate-500" aria-hidden="true" />
       <div className="min-w-0">
         <p className="break-words text-[13px] font-medium leading-5 text-slate-800">{title}</p>
-        <p className="mt-0.5 break-words text-[13px] leading-5 text-slate-600">{text}</p>
+        {text ? <p className="mt-0.5 break-words text-[13px] leading-5 text-slate-600">{text}</p> : null}
       </div>
     </div>
   );
@@ -43,14 +43,11 @@ export function ConfirmedTripsBreakdowns({ operations }: Props) {
   return (
     <div className="grid items-start gap-3 lg:grid-cols-2">
       <section aria-labelledby="trips-by-product-title" className="min-w-0 rounded-xl border border-slate-200 px-4 py-3 sm:px-5 sm:py-4">
-        <div className="flex min-w-0 items-start gap-2.5">
+        <div className="flex min-w-0 items-center gap-2.5">
           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-700">
             <Package size={17} aria-hidden="true" />
           </span>
-          <div className="min-w-0">
-            <h2 id="trips-by-product-title" className="text-base font-semibold leading-6 tracking-tight text-slate-950">Confirmed trips by product</h2>
-            <p className="mt-0.5 text-[13px] leading-5 text-slate-600">Confirmed trips by travel type.</p>
-          </div>
+          <h2 id="trips-by-product-title" className="min-w-0 text-base font-semibold leading-6 tracking-tight text-slate-950">Confirmed trips by product</h2>
         </div>
         {!operations ? (
           <BreakdownMessage icon={Info} title="Product breakdown unavailable"
@@ -67,20 +64,16 @@ export function ConfirmedTripsBreakdowns({ operations }: Props) {
             ))}
           </div>
         ) : (
-          <BreakdownMessage icon={Package} title="No confirmed trips yet."
-            text="Product totals will appear after verified confirmations arrive." />
+          <BreakdownMessage icon={Package} title="No confirmed trips yet." />
         )}
       </section>
 
       <section aria-labelledby="trips-by-provider-title" className="min-w-0 rounded-xl border border-slate-200 px-4 py-3 sm:px-5 sm:py-4">
-        <div className="flex min-w-0 items-start gap-2.5">
+        <div className="flex min-w-0 items-center gap-2.5">
           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-700">
             <Users size={17} aria-hidden="true" />
           </span>
-          <div className="min-w-0">
-            <h2 id="trips-by-provider-title" className="text-base font-semibold leading-6 tracking-tight text-slate-950">Confirmed trips by provider</h2>
-            <p className="mt-0.5 text-[13px] leading-5 text-slate-600">Confirmed trips from each provider.</p>
-          </div>
+          <h2 id="trips-by-provider-title" className="min-w-0 text-base font-semibold leading-6 tracking-tight text-slate-950">Confirmed trips by provider</h2>
         </div>
         {!operations ? (
           <BreakdownMessage icon={Info} title="Provider breakdown unavailable"
@@ -100,8 +93,7 @@ export function ConfirmedTripsBreakdowns({ operations }: Props) {
             ))}
           </div>
         ) : (
-          <BreakdownMessage icon={Users} title="No confirmed trips from providers yet."
-            text="Provider totals will appear after verified confirmations arrive." />
+          <BreakdownMessage icon={Users} title="No confirmed trips from providers yet." />
         )}
       </section>
     </div>
