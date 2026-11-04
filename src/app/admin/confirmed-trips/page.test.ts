@@ -310,6 +310,8 @@ test("Trips and Trip monitoring use the Providers-style workspace navigation whi
   assert.match(monitoringLoading, /id="trip-confirmations-panel"/);
   assert.match(monitoringLoading, /id="trip-flight-status-panel"/);
   assert.match(monitoringLoading, /className="space-y-6"/);
+  assert.ok(monitoringLoading.indexOf('id="trip-flight-status-panel"') < monitoringLoading.indexOf('id="trip-confirmations-panel"'), "Loading state must keep Flight status first");
+  assert.match(monitoringLoading, /id="trip-confirmations-panel"[^>]*className="min-w-0 border-t border-slate-200\/80 pt-5"/);
   assert.doesNotMatch(monitoringLoading, /ChevronDown|Back to Trips|ArrowLeft|Trip monitoring navigation|rounded-xl border border-slate-200\/80 bg-white px-3 py-2 text-sm font-semibold/);
   assert.doesNotMatch(page + loading, /role="group" aria-label="Trip shortcuts"|href="\/admin\/flight-status"|href="\/admin\/confirmed-trips\/operations"/);
   assert.match(tripWorkspaceNavigation, /aria-label="Trip reporting sections"/);
@@ -332,8 +334,12 @@ test("Trips and Trip monitoring use the Providers-style workspace navigation whi
   assert.match(monitoringPage, /id="trip-flight-status-panel"/);
   assert.doesNotMatch(monitoringPage, /<details|<summary|ChevronDown|showConfirmations|showFlightStatus|requestedPanel/);
   assert.match(monitoringPage, /className="space-y-6"/);
-  assert.match(monitoringPage, /id="trip-confirmations-panel"[^>]*className="min-w-0"/);
-  assert.match(monitoringPage, /id="trip-flight-status-panel"[^>]*className="min-w-0 border-t border-slate-200\/80 pt-5"/);
+  const flightPanelIndex = monitoringPage.indexOf('id="trip-flight-status-panel"');
+  const confirmationsPanelIndex = monitoringPage.indexOf('id="trip-confirmations-panel"');
+  assert.ok(flightPanelIndex >= 0 && confirmationsPanelIndex > flightPanelIndex, "Flight status must appear before Trip confirmations");
+  assert.ok(monitoringPage.indexOf("<TripFlightStatusMonitoringPanel />") < monitoringPage.indexOf("<TripConfirmationsMonitoringPanel />"), "Flight monitoring content must render first");
+  assert.match(monitoringPage, /id="trip-flight-status-panel"[^>]*className="min-w-0"/);
+  assert.match(monitoringPage, /id="trip-confirmations-panel"[^>]*className="min-w-0 border-t border-slate-200\/80 pt-5"/);
   assert.doesNotMatch(monitoringPage, /id="trip-confirmations-panel"[^>]*rounded-xl|id="trip-flight-status-panel"[^>]*rounded-xl/);
   assert.match(operationsRedirect, /await requireAdminSession\("\/admin\/confirmed-trips\/operations"\)/);
   assert.match(operationsRedirect, /redirect\("\/admin\/confirmed-trips\/monitoring\?panel=delivery#confirmation-delivery-health-title"\)/);
