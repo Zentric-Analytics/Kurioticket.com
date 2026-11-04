@@ -39,10 +39,10 @@ function HeaderNavLink({ entry, pathname, mobile = false, close }: { entry: Head
           </summary>
           <div className={mobile ? "ml-3 flex flex-col border-l border-slate-200 pl-3" : "absolute right-0 top-full z-50 mt-1 flex min-w-56 flex-col rounded-lg border border-slate-200 bg-white p-1 shadow-lg"}>
             {entry.children.map((child) => (
-              <Link key={child.item.href} href={child.item.href} onClick={close}
-                aria-current={isAdminNavItemActive(child.item.href, pathname) ? "page" : undefined}
+              <Link key={child.href} href={child.href} onClick={close}
+                aria-current={isAdminNavItemActive(child.href, pathname) ? "page" : undefined}
                 className="rounded-md px-3 py-2 text-[13px] font-medium text-[#475569] hover:bg-slate-50 hover:text-[#0F172A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25">
-                {child.item.label}
+                {child.label}
               </Link>
             ))}
           </div>
