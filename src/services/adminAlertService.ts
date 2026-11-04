@@ -4,6 +4,10 @@ import { createHash } from "node:crypto";
 
 import { getOptionalPrisma } from "@/lib/prisma";
 import { getSafeSystemStatus } from "@/lib/admin-data";
+import { getPublicEnvironment } from "@/lib/stagingSafety";
+import { readExpandedAdminAlertSignals } from "@/services/adminExpandedAlertReader";
+import { deriveExpandedAdminAlerts } from "@/services/adminExpandedAlertCore";
+import { persistExpandedAlertOccurrences } from "@/services/adminExpandedAlertOccurrences";
 import { getCmsHealthOverview } from "@/services/cmsHardeningService";
 import { getEmailDeliveryHealthSnapshot } from "@/services/emailDeliveryService";
 import {
@@ -181,8 +185,9 @@ async function readAdminAlertCandidates(
 async function loadAdminAlertCandidates(now: Date): Promise<AdminAlertCandidate[]> {
   const readiness = getFlightStatusIntegrationReadiness();
   const confirmationBinding = getPartnerConfirmationBinding();
+  const environment = getPublicEnvironment();
 
-  const [system, providers, email, cms, homepageFares, flightStatusOperations, confirmationHealth] =
+  const [system, providers, email, cms, homepageFares, flightStatusOperations, confirmationHealth, expanded] =
     await Promise.all([
       getSafeSystemStatus(),
       getProviderOperationalStatuses().catch((error) => {
@@ -213,13 +218,14 @@ async function loadAdminAlertCandidates(now: Date): Promise<AdminAlertCandidate[
             return null;
           })
         : Promise.resolve(null),
+      readExpandedAdminAlertSignals(getOptionalPrisma(), environment, now),
     ]);
 
   const telemetryOutageTokens = await readTelemetryOutageTokens(
     {
       providers: providers === null,
       email: email === null || !email.dataAvailable,
-      cms: cms === null,
+      cms: cms === null || !cms.available,
       "homepage-fares":
         homepageFares === null || !homepageFares.dataAvailable,
       "flight-status":
@@ -230,8 +236,8 @@ async function loadAdminAlertCandidates(now: Date): Promise<AdminAlertCandidate[
     now,
   );
 
-  const cmsFingerprint = cms ? cmsUnhealthyFingerprint(cms) : null;
-  const cmsOccurrenceToken = cms
+  const cmsFingerprint = cms?.available ? cmsUnhealthyFingerprint(cms) : null;
+  const cmsOccurrenceToken = cms?.available
     ? await readCmsIntegrityOccurrenceToken(cms, cmsFingerprint!, now)
     : "cms-unavailable";
 
@@ -252,7 +258,7 @@ async function loadAdminAlertCandidates(now: Date): Promise<AdminAlertCandidate[
       email: telemetryOutageTokens.email,
       cms: telemetryOutageTokens.cms,
       homepageFares: telemetryOutageTokens["homepage-fares"],
-      flightStatus: telemetryOutageTokens["flight-status"],
+      flightStatus: telemetryOutageTokens.flightStatus,
       confirmedTrips: telemetryOutageTokens["confirmed-trips"],
     },
     confirmedTrips: {
@@ -265,7 +271,11 @@ async function loadAdminAlertCandidates(now: Date): Promise<AdminAlertCandidate[
     },
   };
 
-  return deriveAdminAlertCandidates(signals);
+  const expandedSignals = deriveExpandedAdminAlerts(expanded, system.databaseConnected, now);
+  const expandedCandidates = await persistExpandedAlertOccurrences(
+    getOptionalPrisma(), environment, expandedSignals.candidates, expandedSignals.states, now,
+  );
+  return [...deriveAdminAlertCandidates(signals), ...expandedCandidates];
 }
 
 type TelemetrySource =
@@ -613,6 +623,9 @@ function compareAlerts(a: AdminOperationalAlert, b: AdminOperationalAlert) {
     HOMEPAGE_FARES: 4,
     FLIGHT_STATUS: 5,
     CONFIRMED_TRIPS: 6,
+    SEARCH: 7,
+    SUPPORT: 8,
+    USERS: 9,
   };
   return sourceRank[a.source] - sourceRank[b.source] || a.title.localeCompare(b.title);
 }
