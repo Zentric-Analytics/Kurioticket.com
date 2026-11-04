@@ -79,6 +79,15 @@ test("CMS health reports integrity, ordering, fallback and unpublished changes",
   assert.match(hardeningService, /publishedOrderCollisions/);
   assert.match(hardeningService, /draftOrderNeedsNormalization/);
   assert.match(healthPage, /CMS Health/);
+  assert.match(hardeningService, /findMissingHomepageCmsScopes\(scopes, homepageCmsMarkets, homepageCmsLocale\)/);
+  assert.match(healthPage, /Missing homepage CMS scopes/);
+  assert.match(healthPage, /overview\.missingHomepageScopes\.map/);
+  const diagnostic = readFileSync("src/lib/adminCmsScopeDiagnostics.ts", "utf8");
+  assert.match(diagnostic, /for \(const market of new Set\(markets\)\)/);
+  assert.match(diagnostic, /type: "HOMEPAGE_DESTINATION"/);
+  assert.match(diagnostic, /type: "FLIGHT_ROUTE"/);
+  assert.match(diagnostic, /type: "HOTEL_DESTINATION", market: "GLOBAL"/);
+  assert.match(diagnostic, /!storedKeys\.has\(key\(scope\)\)/);
   assert.doesNotMatch(healthPage, /View audit logs|Back to System/);
   assert.match(adminNavigation, /href: "\/admin\/logs", parentHref: "\/admin\/system"/);
   assert.match(adminNavigation, /href: "\/admin\/system\/cms-health", parentHref: "\/admin\/system"/);
