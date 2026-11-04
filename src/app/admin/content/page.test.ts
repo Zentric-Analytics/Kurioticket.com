@@ -29,7 +29,11 @@ test("public content management exposes homepage and FAQ CMS areas while fare op
   assert.match(contentPage, /title: "Homepage destinations"/);
   assert.match(contentPage, /title: "Flight routes"/);
   assert.match(contentPage, /title: "Hotel destinations"/);
-  assert.doesNotMatch(contentPage, /Homepage CMS overview|Homepage fare operations|CMS Health/);
+  // Technical utilities must not become permanent Content navigation cards.
+  // The conditional CMS Health *diagnostic link* is intentional for incomplete markets.
+  assert.doesNotMatch(contentPage, /title: "(?:Homepage CMS overview|Homepage fare operations|CMS Health)"/);
+  assert.doesNotMatch(contentPage, /href: "\/admin\/system\/cms-health"/);
+  assert.match(contentPage, /href="\/admin\/system\/cms-health"/);
   assert.match(contentPage, /contentScopeStatus\(destinationSummary\)/);
   assert.match(contentPage, /contentScopeStatus\(flightSummary\)/);
   assert.match(contentPage, /contentScopeStatus\(hotelSummary\)/);
