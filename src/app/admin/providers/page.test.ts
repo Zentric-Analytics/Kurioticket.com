@@ -114,7 +114,7 @@ test("provider APIs, retest API, and unrelated admin pages are not edited by pro
   assert.match(providerRetestApi, /checkDuffelHealth\(\)/);
   assert.match(providerRetestApi, /writeAdminAuditLog/);
   assert.match(overviewPage, /Operations Dashboard/);
-  assert.match(systemPage, /Safe operational status only/);
+  assert.match(systemPage, /Read-only configuration and connectivity status/);
   assert.match(settingsPage, /<AdminPageShell\s+title="Settings"/);
 });
 

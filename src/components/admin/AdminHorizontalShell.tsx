@@ -126,7 +126,7 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
     && accountDeletionParts[1] === "account-deletions";
   // All Content lists, drafts and editors use the same white workspace as Support details.
   const contentWorkspace = pathname === "/admin/content" || pathname.startsWith("/admin/content/");
-  const whiteWorkspace = usersDirectory || searchesWorkspace || supportWorkspace
+  const whiteWorkspace = pathname === "/admin/system" || pathname === "/admin/system/" || usersDirectory || searchesWorkspace || supportWorkspace
     || providersWorkspace || providerReportingWorkspace || accountDeletionDetail || contentWorkspace;
   return <AdminWorkspaceSearchProvider account={adminEmail || "admin"}><div className={"min-h-screen text-slate-950 " + (userActivity ? "bg-[#f1f5fb]" : whiteWorkspace ? "bg-white" : "bg-[#f1f5fb]")}>
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">

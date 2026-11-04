@@ -10,9 +10,15 @@ const systemApi = readFileSync("src/app/api/admin/system/route.ts", "utf8");
 
 test("system is read-only safe runtime status", () => {
   assert.match(systemPage, /title="System"/);
-  assert.match(systemPage, /Safe operational status only/);
+  assert.match(systemPage, /Read-only configuration and connectivity status/);
   assert.match(systemPage, /System Status/);
-  assert.match(systemPage, /Admin Configuration/);
+  assert.match(systemPage, /Configuration Readiness/);
+  assert.match(systemPage, /Database connectivity/);
+  assert.match(systemPage, /Authentication configuration/);
+  assert.doesNotMatch(systemPage, /Session secret configured|No secrets shown|Database URL hidden|API keys hidden/);
+  assert.match(systemPage, /system\.emailConfigured/);
+  assert.match(systemPage, /system\.providerCredentialsPresent/);
+  assert.match(systemPage, /Configuration Readiness/);
   assert.match(systemPage, /ADMIN_EMAILS configured/);
   assert.match(systemPage, /Configured admin count/);
   assert.doesNotMatch(systemPage, /FeatureControlsPanel|listFeatureControls|getServerSession/);
