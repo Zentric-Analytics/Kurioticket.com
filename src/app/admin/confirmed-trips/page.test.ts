@@ -299,17 +299,20 @@ test("unified Trip monitoring consolidates protected confirmation and flight-sta
   assert.match(monitoringPage, /await requireAdminSession\("\/admin\/confirmed-trips\/monitoring"\)/);
   assert.match(monitoringPage, /href="\/admin\/confirmed-trips"/);
   assert.match(monitoringPage, /Back to Trips/);
-  assert.match(monitoringPage, /<TripConfirmationsMonitoringPanel expandDelivery=\{panel === "delivery"\} \/>/);
+  assert.match(monitoringPage, /<TripConfirmationsMonitoringPanel \/>/);
   assert.match(monitoringPage, /<TripFlightStatusMonitoringPanel \/>/);
-  assert.match(monitoringPage, /id="trip-confirmations-panel" open=\{showConfirmations\}/);
-  assert.match(monitoringPage, /id="trip-flight-status-panel" open=\{showFlightStatus\}/);
+  assert.match(monitoringPage, /id="trip-confirmations-panel"/);
+  assert.match(monitoringPage, /id="trip-flight-status-panel"/);
+  assert.doesNotMatch(monitoringPage, /<details|<summary|ChevronDown|showConfirmations|showFlightStatus|requestedPanel/);
   assert.match(operationsRedirect, /await requireAdminSession\("\/admin\/confirmed-trips\/operations"\)/);
   assert.match(operationsRedirect, /redirect\("\/admin\/confirmed-trips\/monitoring\?panel=delivery#confirmation-delivery-health-title"\)/);
   assert.match(flightStatusRedirect, /redirect\("\/admin\/confirmed-trips\/monitoring\?panel=flight#flight-status-overview-title"\)/);
   assert.match(operationsPage, /Detailed product and provider breakdowns/);
   assert.match(operationsPage, /Confirmation integration readiness/);
   assert.match(operationsPage, /Confirmation delivery health and alerts/);
-  assert.equal((operationsPage.match(/<details/g) ?? []).length, 3);
+  assert.equal((operationsPage.match(/<details/g) ?? []).length, 0);
+  assert.equal((operationsPage.match(/<summary/g) ?? []).length, 0);
+  assert.doesNotMatch(operationsPage, /ChevronDown|cursor-pointer|group-open:rotate-180/);
   assert.match(operationsPage, /<ConfirmedTripsBreakdowns operations=\{operations\} \/>/);
   assert.match(operationsPage, /getConfirmedTripsIntegrationReadiness\(\)/);
   assert.match(operationsPage, /getConfirmedTripsOperationsSnapshot\(\)/);
@@ -327,7 +330,9 @@ test("unified Trip monitoring consolidates protected confirmation and flight-sta
   ]) assert.ok(operationsPage.includes(property), property);
   assert.match(operationsPage, /readiness\.feedReady \? <ConfirmedTripDeliveryAlerts \/> : null/);
   assert.match(operationsPage, /id="confirmation-delivery-health-title"/);
-  assert.match(operationsPage, /open=\{expandDelivery\}/);
+  assert.match(operationsPage, /id="confirmation-integration-title"/);
+  assert.match(operationsPage, /id="confirmation-breakdowns-title"/);
+  assert.doesNotMatch(operationsPage, /expandDelivery|open=\{/);
   assert.doesNotMatch(operationsPage, /mockData|sampleTrips|Math\.random|process\.env/);
 });
 
