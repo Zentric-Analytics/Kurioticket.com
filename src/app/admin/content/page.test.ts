@@ -35,6 +35,8 @@ test("public content management exposes homepage and FAQ CMS areas while fare op
   assert.doesNotMatch(contentPage, /href: "\/admin\/system\/cms-health"/);
   assert.match(contentPage, /href="\/admin\/system\/cms-health"/);
   assert.match(contentPage, /contentScopeStatus\(destinationSummary\)/);
+  assert.match(contentPage, /if \(summary\.needsSetup\) return "Setup required"/);
+  assert.match(contentPage, /summary\?\.available && summary\.active \? summary\.publishedInScope/);
   assert.match(contentPage, /contentScopeStatus\(flightSummary\)/);
   assert.match(contentPage, /contentScopeStatus\(hotelSummary\)/);
   assert.match(contentPage, /publishedContentCount\(destinationSummary\)/);
