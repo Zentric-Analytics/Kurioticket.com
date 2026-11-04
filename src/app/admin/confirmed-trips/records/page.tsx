@@ -40,7 +40,7 @@ export default async function AdminConfirmedTripRecordsPage({ searchParams }: Pr
   return (
     <AdminPageShell title="Confirmed Trip Records"
       description="Read-only provider-confirmed My Trips. Handoffs and search results are not confirmations."
-      actions={<Link href="/admin/confirmed-trips" className="inline-flex items-center gap-1.5 rounded-md text-sm font-semibold text-indigo-700 hover:underline"><ArrowLeft size={15} aria-hidden="true" />Back to Trip overview</Link>}>
+      actions={<Link href="/admin/confirmed-trips" className="inline-flex items-center gap-1.5 rounded-md text-sm font-semibold text-indigo-700 hover:underline"><ArrowLeft size={15} aria-hidden="true" />Back to Trips</Link>}>
       <AdminSectionCard className="min-w-0 p-4 sm:p-5">
         <form method="get" action="/admin/confirmed-trips/records" aria-label="Confirmed trip filters" className="grid min-w-0 gap-2.5 border-b border-slate-200 pb-3 sm:grid-cols-2 lg:grid-cols-4">
           <label className="min-w-0 text-xs font-medium text-slate-700">Search

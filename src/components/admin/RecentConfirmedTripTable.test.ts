@@ -41,8 +41,12 @@ test("recent confirmed trips preserve every original field and link to existing 
   assert.match(html, /overflow-x-auto/);
   assert.match(html, /min-w-\[880px\]/);
   assert.equal((html.match(/<th /g) || []).length, 6);
-  assert.equal((html.match(/<tbody>/g) || []).length, 1);
-  assert.equal((html.match(/View details <svg/g) || []).length, 1);
+  assert.equal((html.match(/<tbody\b[^>]*>/g) || []).length, 1);
+  const detailLinks = [...html.matchAll(/<a\b[^>]*href="\/admin\/confirmed-trips\/records\/qa-confirmed-001"[^>]*>[\s\S]*?<\/a>/g)];
+  assert.equal(detailLinks.length, 1, "one actual detail link for the source trip");
+  assert.match(detailLinks[0][0], /aria-label="View details for trip reference QA-REF-123"/);
+  assert.match(detailLinks[0][0], /View details/);
+  assert.match(detailLinks[0][0], /<svg\b[^>]*aria-hidden="true"/);
 });
 
 test("status labels use stored provider values and warn only for overdue Upcoming trips", () => {

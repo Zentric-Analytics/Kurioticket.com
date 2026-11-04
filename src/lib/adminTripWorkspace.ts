@@ -62,6 +62,7 @@ export function tripWorkspaceHref(
   const status = overrides.status ?? filters.status;
   if (product !== "all") params.set("product", product);
   if (status !== "all") params.set("status", status);
+  if (filters.identity !== "all") params.set("identity", filters.identity);
   if (range !== "all") params.set("range", range);
   if (range === "custom") {
     if (filters.from) params.set("from", filters.from);

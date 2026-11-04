@@ -276,7 +276,7 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
 
           <section aria-labelledby="provider-directory" className="border-b border-[#D8E1EC] pb-6 pt-6">
             <h2 id="provider-directory" className="text-[15px] font-semibold text-[#020617]">All providers</h2>
-            <p className="mt-1 text-[12px] text-[#64748B]">Readiness shows whether an integration is configured and permitted; health summarizes recorded search outcomes in the selected window. Internal catalogues are not externally monitored.</p>
+            
             <nav aria-label="Filter providers by product"
               className="mt-2 flex min-w-0 gap-5 overflow-x-auto border-b border-[#D8E1EC]">
               {productFilters.map(item => (
@@ -297,7 +297,6 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
               <h2 id="operational-performance-heading" className="text-[15px] font-semibold text-[#020617]">
                 Operational performance
               </h2>
-              <span className="text-[12px] text-[#64748B]">{monitoringWindow.label}</span>
             </div>
             {operational === null ? (
               <p className="mt-3 text-[13px] text-[#9A3412]" role="status">
@@ -316,40 +315,42 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
                     return (
                       <div id={"provider-operation-" + provider.id} role="listitem"
                         key={provider.id} className="py-4 first:pt-3 last:pb-3">
-                        <div className="flex min-w-0 flex-wrap items-start justify-between gap-x-6 gap-y-1.5">
-                          <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
-                            <span className="text-[13px] font-semibold text-[#020617]">{provider.provider}</span>
-                            <StatusIndicator value={operationalLabel(provider.operationalState)}
-                              tone={operationalTone(provider.operationalState)} />
+                        <div className="w-full max-w-[800px]">
+                          <div className="flex min-w-0 flex-wrap items-start justify-between gap-x-6 gap-y-1.5">
+                            <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+                              <span className="text-[13px] font-semibold text-[#020617]">{provider.provider}</span>
+                              <StatusIndicator value={operationalLabel(provider.operationalState)}
+                                tone={operationalTone(provider.operationalState)} />
+                            </div>
+                            <div className="flex min-w-0 flex-wrap items-center gap-x-2 text-[12px] text-[#475569]">
+                              <span className="tabular-nums">{provider.attemptedCalls.toLocaleString()} attempted</span>
+                              <span tabIndex={0} className="inline-flex text-[#64748B]"
+                                title="Disabled calls are not counted as attempts."
+                                aria-label="Disabled calls are not counted as attempts.">
+                                <Info size={13} aria-hidden="true" />
+                              </span>
+                              <span aria-hidden="true">·</span>
+                              <span className="tabular-nums">
+                                {provider.averageLatencyMs === null
+                                  ? "Average latency unavailable"
+                                  : provider.averageLatencyMs.toLocaleString() + " ms avg latency"}
+                              </span>
+                            </div>
                           </div>
-                          <div className="flex min-w-0 flex-wrap items-center gap-x-2 text-[12px] text-[#475569]">
-                            <span className="tabular-nums">{provider.attemptedCalls.toLocaleString()} attempted</span>
-                            <span tabIndex={0} className="inline-flex text-[#64748B]"
-                              title="Disabled calls are not counted as attempts."
-                              aria-label="Disabled calls are not counted as attempts.">
-                              <Info size={13} aria-hidden="true" />
-                            </span>
-                            <span aria-hidden="true">·</span>
-                            <span className="tabular-nums">
-                              {provider.averageLatencyMs === null
-                                ? "Average latency unavailable"
-                                : provider.averageLatencyMs.toLocaleString() + " ms avg latency"}
-                            </span>
-                          </div>
-                        </div>
 
-                        <div aria-hidden="true"
-                          className="mt-3 flex h-2 w-full overflow-hidden rounded-full bg-[#E7ECF5]">
-                          {segments.hasAttempts ? (
-                            <>
-                              <span className="h-full bg-emerald-600"
-                                style={{ width: String(segments.successPct) + "%" }} />
-                              <span className="h-full bg-rose-500"
-                                style={{ width: String(segments.failurePct) + "%" }} />
-                              <span className="h-full bg-amber-500"
-                                style={{ width: String(segments.degradedPct) + "%" }} />
-                            </>
-                          ) : null}
+                          <div aria-hidden="true"
+                            className="mt-3 flex h-2 w-full overflow-hidden rounded-full bg-[#E7ECF5]">
+                            {segments.hasAttempts ? (
+                              <>
+                                <span className="h-full bg-emerald-600"
+                                  style={{ width: String(segments.successPct) + "%" }} />
+                                <span className="h-full bg-rose-500"
+                                  style={{ width: String(segments.failurePct) + "%" }} />
+                                <span className="h-full bg-amber-500"
+                                  style={{ width: String(segments.degradedPct) + "%" }} />
+                              </>
+                            ) : null}
+                          </div>
                         </div>
                         <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-[12px]">
                           <span className="inline-flex items-center gap-1.5 text-[#475569]">

@@ -312,7 +312,7 @@ function flightStatusAlerts(signals: AdminAlertSignals) {
         source: "FLIGHT_STATUS",
         title: "Flight-status telemetry is unavailable",
         message: "The configured flight-status feed is ready, but its operational snapshot could not be read.",
-        actionHref: "/admin/flight-status",
+        actionHref: "/admin/confirmed-trips/monitoring?panel=flight#flight-status-overview-title",
         signalToken: signals.telemetryOutageTokens.flightStatus,
       },
     ] satisfies AdminAlertCandidate[];
@@ -328,7 +328,7 @@ function flightStatusAlerts(signals: AdminAlertSignals) {
       source: "FLIGHT_STATUS",
       title: "Some flight-status snapshots are missing",
       message: `${metrics.monitoringMissingSnapshots} of ${metrics.monitoringFlights} actively monitored flight(s) are still awaiting their first status snapshot.`,
-      actionHref: "/admin/flight-status",
+      actionHref: "/admin/confirmed-trips/monitoring?panel=flight#flight-status-overview-title",
       signalToken: `flight-status-missing:${metrics.monitoringMissingSnapshotFingerprint}`,
     });
   }
@@ -347,7 +347,7 @@ function flightStatusAlerts(signals: AdminAlertSignals) {
         ? "All tracked flight-status snapshots are stale"
         : "Some flight-status snapshots are stale",
       message: `${metrics.monitoringStaleSnapshots} stale snapshot(s) are recorded across ${metrics.monitoringTrackedFlights} tracked provider-matched flight(s).`,
-      actionHref: "/admin/flight-status",
+      actionHref: "/admin/confirmed-trips/monitoring?panel=flight#flight-status-overview-title",
       signalToken: `flight-status-stale:${metrics.monitoringStaleSnapshotFingerprint}`,
     });
   }
@@ -362,14 +362,14 @@ function confirmedTripAlerts(signals: AdminAlertSignals): AdminAlertCandidate[] 
     key: "confirmed-trips.telemetry.unavailable", severity: "WARNING", source: "CONFIRMED_TRIPS",
     title: "Confirmation delivery telemetry unavailable",
     message: "An authenticated confirmation provider is configured, but delivery receipts could not be queried.",
-    actionHref: "/admin/confirmed-trips/operations?panel=delivery#confirmation-delivery-health-title", signalToken: signals.telemetryOutageTokens.confirmedTrips ?? "confirmation-telemetry-unavailable",
+    actionHref: "/admin/confirmed-trips/monitoring?panel=delivery#confirmation-delivery-health-title", signalToken: signals.telemetryOutageTokens.confirmedTrips ?? "confirmation-telemetry-unavailable",
   }];
   if (health.rejectedLast24h <= 0) return [];
   return [{
     key: "confirmed-trips.deliveries.rejected", severity: "WARNING", source: "CONFIRMED_TRIPS",
     title: "Partner confirmation deliveries were rejected",
     message: `${health.rejectedLast24h} authenticated confirmation callback(s) were rejected in the last 24 hours. Review the provider delivery receipts.`,
-    actionHref: "/admin/confirmed-trips/operations?panel=delivery#confirmation-delivery-health-title",
+    actionHref: "/admin/confirmed-trips/monitoring?panel=delivery#confirmation-delivery-health-title",
     signalToken: `confirmation-rejected:${health.lastRejectedAt ?? "unknown"}`,
     signalAt: health.lastRejectedAt,
   }];
