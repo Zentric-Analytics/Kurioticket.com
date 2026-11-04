@@ -57,7 +57,9 @@ test("main Trips workspace contains two compact sections and a visible Trip oper
   assert.deepEqual(positions, [...positions].sort((a, b) => a - b));
   assert.equal((page.match(/<AdminSectionCard/g) ?? []).length, 1);
   assert.match(page, /<AdminSectionCard className="min-w-0 p-4 sm:p-5 lg:p-6">/);
-  assert.equal((page.match(/className="min-w-0 rounded-xl border border-slate-200\/80 bg-white px-4 py-3 sm:px-5 sm:py-4"/g) ?? []).length, 2);
+  assert.equal((page.match(/className="min-w-0 rounded-xl border border-slate-200\/80 bg-white px-4 py-3 sm:px-5 sm:py-4"/g) ?? []).length, 1);
+  assert.match(page, /<section aria-labelledby="confirmed-trips-overview" className="min-w-0">/);
+  assert.match(page, /<section aria-labelledby="trip-directory-title" id="trip-directory" className="min-w-0 rounded-xl border border-slate-200\/80 bg-white/);
   const parentStart = page.indexOf('<AdminSectionCard className="min-w-0 p-4 sm:p-5 lg:p-6">');
   const parentEnd = page.lastIndexOf("</AdminSectionCard>");
   const toolbarStart = page.indexOf('role="group" aria-label="Trip shortcuts"');
@@ -71,6 +73,18 @@ test("main Trips workspace contains two compact sections and a visible Trip oper
   assert.doesNotMatch(page, /grid w-full min-w-\[850px\] grid-cols-5/);
 });
 
+
+test("Trip overview removes only its surrounding card, not the five individual metric tiles", () => {
+  const start = page.indexOf('<section aria-labelledby="confirmed-trips-overview"');
+  const end = page.indexOf('</section>', start);
+  const section = page.slice(start, end);
+  assert.match(section, /<section aria-labelledby="confirmed-trips-overview" className="min-w-0">/);
+  assert.match(section, /grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-5/);
+  assert.equal((section.match(/<TripMetric /g) ?? []).length, 5);
+  assert.match(section, /<p className="mt-2 flex items-start gap-1.5 text-xs leading-5 text-slate-600">/);
+  assert.match(section, /Tracking totals require a separate data source/);
+  assert.doesNotMatch(section, /The counters reflect the filters applied|hint="/);
+});
 
 test("all five overview counters display the current filtered scope without clickable links or active styling", () => {
   for (const label of ["Confirmed trips", "Tracked trips", "Upcoming", "Past", "Cancelled"]) {
@@ -86,7 +100,17 @@ test("all five overview counters display the current filtered scope without clic
   const metric = page.slice(page.indexOf("function TripMetric({"), page.indexOf("export default async function AdminConfirmedTripsPage("));
   assert.match(metric, /return \(\s*<div className="flex h-full min-w-0 flex-col rounded-lg border border-slate-200\/80 bg-white/);
   assert.doesNotMatch(metric, /<Link|href=|aria-current|active\s*=|ArrowRight|ring-indigo-100|border-indigo-300|hover:bg-indigo-50|cursor-pointer|cursor-not-allowed/);
-  assert.match(page, /Use Trip status to investigate matching records/);
+  assert.doesNotMatch(page, /The counters reflect the filters applied in the Trip Directory/);
+  assert.doesNotMatch(page, /hint=|\{hint\}/);
+  assert.match(page, /screenReaderNote="Tracking reporting not connected"/);
+  assert.match(metric, /<span className="sr-only">\{screenReaderNote\}<\/span>/);
+  for (const description of [
+    "All verified trips matching this scope",
+    "Matching upcoming trips",
+    "Matching past trips",
+    "Matching cancelled trips",
+  ]) assert.ok(!page.includes(description), description);
+  assert.match(page, /Confirmed trips include cancelled records/);
   assert.doesNotMatch(page, /tripWorkspaceHref\(filters, range, \{ status:/);
   assert.match(recordsService, /const \[count, page, upcoming, past, cancelled\] = await db\.\$transaction/);
   for (const status of ["UPCOMING", "PAST", "CANCELLED"]) {
@@ -282,7 +306,10 @@ test("loading state mirrors two primary sections with a visible operations short
   assert.match(loading, /aria-busy="true"/);
   assert.match(loading, /motion-safe:animate-pulse/);
   assert.equal((loading.match(/<AdminSectionCard/g) ?? []).length, 1);
-  assert.equal((loading.match(/<section className="min-w-0 rounded-xl border border-slate-200\/80 bg-white/g) ?? []).length, 2);
+  assert.equal((loading.match(/<section className="min-w-0 rounded-xl border border-slate-200\/80 bg-white/g) ?? []).length, 1);
+  assert.match(loading, /<section className="min-w-0">\s*<h2 className="mb-3 text-base font-semibold text-slate-950">Trip overview<\/h2>/);
+  assert.doesNotMatch(loading, /Loading counters for the selected trip filters/);
+  assert.doesNotMatch(loading, /h-3 w-3\/4 rounded bg-slate-100/);
   assert.doesNotMatch(loading, /"All", "Flights", "Hotels", "Cars", "Packages"|aria-label="Trip travel types"/);
   assert.match(loading, /"Search trips", "Provider", "Travel type", "Trip status", "Time range", "Tracking", "From \(UTC\)", "To \(UTC\)"/);
   assert.doesNotMatch(loading, /Confirmed by type · all time|Trips by category|Related trip operations/);
