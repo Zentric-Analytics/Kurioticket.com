@@ -15,25 +15,25 @@ test("public content management exposes homepage and FAQ CMS areas while fare op
   assert.match(contentPage, /<ContentPageFrame title="Content"/);
 
   for (const section of [
-    "Homepage destination cards",
-    "Flight route cards",
-    "Hotel destination cards",
+    "Homepage destinations",
+    "Flight routes",
+    "Hotel destinations",
     "FAQs",
   ]) {
-    assert.match(contentPage, new RegExp(section));
+    assert.match(contentPage, new RegExp('title: "' + section + '"'));
   }
 
   assert.match(contentPage, /getCmsContentScopeSummary/);
-  assert.match(contentPage, /Manage FAQs/);
-  assert.match(contentPage, /Manage destinations/);
-  assert.match(contentPage, /Manage flight routes/);
-  assert.match(contentPage, /Manage hotel destinations/);
+  assert.match(contentPage, /title: "FAQs"/);
+  assert.match(contentPage, /title: "Homepage destinations"/);
+  assert.match(contentPage, /title: "Flight routes"/);
+  assert.match(contentPage, /title: "Hotel destinations"/);
   assert.doesNotMatch(contentPage, /Homepage CMS overview|Homepage fare operations|CMS Health/);
   assert.match(contentPage, /contentScopeStatus\(destinationSummary\)/);
   assert.match(contentPage, /contentScopeStatus\(flightSummary\)/);
   assert.match(contentPage, /contentScopeStatus\(hotelSummary\)/);
   assert.match(contentPage, /publishedContentCount\(destinationSummary\)/);
-  assert.match(contentPage, /Published CMS records/);
+  assert.match(contentPage, /Published records/);
   assert.match(contentPage, /Review homepage CMS setup/);
   assert.match(contentPage, /CMS managed/);
   assert.match(contentPage, /Setup required/);
@@ -78,22 +78,18 @@ test("homepage fare admin APIs preserve authorization, audit logging, and refres
   }
 });
 
-test("content overview groups three homepage areas and FAQs without hiding actions", () => {
-  assert.match(contentPage, /const homepageAreas = contentAreas\.filter\(\(area\) => area\.section === "homepage"\)/);
-  assert.match(contentPage, /const helpAreas = contentAreas\.filter\(\(area\) => area\.section === "help"\)/);
-  assert.equal((contentPage.match(/section: "homepage" as const/g) ?? []).length, 3);
-  assert.equal((contentPage.match(/section: "help" as const/g) ?? []).length, 1);
-  assert.match(contentPage, /aria-labelledby="homepage-content-heading"/);
-  assert.match(contentPage, /aria-labelledby="help-content-heading"/);
-  assert.match(contentPage, /sm:grid-cols-2 lg:grid-cols-3/);
-  assert.match(contentPage, /ContentSectionHeading>Homepage content/);
-  assert.match(contentPage, /ContentSectionHeading>Help &amp; information/);
-  assert.match(contentPage, /ContentStatusPill status=\{area\.status\}/);
-  assert.doesNotMatch(contentPage, /Content management shortcuts/);
+test("content overview shows four equal, fully clickable management cards", () => {
+  assert.match(contentPage, /<nav aria-label="Content management" className="grid auto-rows-fr grid-cols-1 gap-4 sm:grid-cols-2">/);
+  assert.equal((contentPage.match(/href: "\/admin\/content\/(?:homepage\/(?:destinations|flight-routes|hotel-destinations)|faqs)"/g) ?? []).length, 4);
   assert.match(contentPage, /href=\{area\.href\}/);
-  assert.match(contentPage, /\{area\.note\}/);
-  assert.match(contentPage, /\{area\.status\}/);
-  assert.match(contentPage, /\{area\.value\}/);
+  assert.match(contentPage, /className="group focus-ring flex h-full min-h-\[178px\]/);
+  assert.match(contentPage, /cursor-pointer/);
+  assert.match(contentPage, /hover:border-\[#6D28D9\]/);
+  assert.match(contentPage, /focus-visible:outline-\[#6D28D9\]/);
+  assert.match(contentPage, /area\.value/);
+  assert.match(contentPage, /area\.scope/);
+  assert.match(contentPage, /area\.status !== "CMS managed"/);
+  assert.doesNotMatch(contentPage, /ContentSectionHeading|homepageAreas|helpAreas|Manage destinations|Manage FAQs/);
 });
 
 test("Content published count uses the published scope, not a draft's scope", () => {

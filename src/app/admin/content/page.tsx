@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowUpRight, Building2, CircleHelp, MapPin, Plane } from "lucide-react";
 
-import { ContentPageFrame, ContentSectionHeading, ContentStatusPill } from "@/components/admin/ContentWorkspace";
+import { ContentPageFrame } from "@/components/admin/ContentWorkspace";
 import { getCmsContentScopeSummary } from "@/services/cmsContentService";
 import { faqCmsScope } from "@/services/faqCmsService";
 import { homepageCmsLocale } from "@/services/homepageCmsService";
@@ -19,12 +19,6 @@ function publishedContentCount(summary: CmsScopeSummary) {
   return summary?.available && summary.active ? summary.publishedInScope : "—";
 }
 
-function contentScopeDescription(summary: CmsScopeSummary, scope: string) {
-  if (!summary?.available) return scope + ": CMS storage could not be verified.";
-  if (!summary.active) return scope + ": CMS setup required; legacy content may still be used as fallback.";
-  return scope + " · " + summary.draft + " draft" + (summary.draft === 1 ? "" : "s") + " awaiting publication";
-}
-
 export default async function AdminContentPage() {
   const [faqSummary, destinationSummary, flightSummary, hotelSummary] = await Promise.all([
     getCmsContentScopeSummary("FAQ", faqCmsScope.market, faqCmsScope.locale).catch(() => null),
@@ -38,132 +32,81 @@ export default async function AdminContentPage() {
 
   const contentAreas = [
     {
-      section: "homepage" as const,
       icon: MapPin,
-      title: "Homepage destination cards",
+      title: "Homepage destinations",
       status: contentScopeStatus(destinationSummary),
       value: publishedContentCount(destinationSummary),
-      note: contentScopeDescription(destinationSummary, "US market"),
+      scope: "US market",
       href: "/admin/content/homepage/destinations",
-      actionLabel: "Manage destinations",
     },
     {
-      section: "homepage" as const,
       icon: Plane,
-      title: "Flight route cards",
+      title: "Flight routes",
       status: contentScopeStatus(flightSummary),
       value: publishedContentCount(flightSummary),
-      note: contentScopeDescription(flightSummary, "US market"),
+      scope: "US market",
       href: "/admin/content/homepage/flight-routes",
-      actionLabel: "Manage flight routes",
     },
     {
-      section: "homepage" as const,
       icon: Building2,
-      title: "Hotel destination cards",
+      title: "Hotel destinations",
       status: contentScopeStatus(hotelSummary),
       value: publishedContentCount(hotelSummary),
-      note: contentScopeDescription(hotelSummary, "Global"),
+      scope: "Global",
       href: "/admin/content/homepage/hotel-destinations",
-      actionLabel: "Manage hotel destinations",
     },
     {
-      section: "help" as const,
       icon: CircleHelp,
       title: "FAQs",
       status: contentScopeStatus(faqSummary),
       value: publishedContentCount(faqSummary),
-      note: contentScopeDescription(faqSummary, "English FAQs"),
+      scope: "English",
       href: "/admin/content/faqs",
-      actionLabel: "Manage FAQs",
     },
   ];
 
-  const homepageAreas = contentAreas.filter((area) => area.section === "homepage");
-  const helpAreas = contentAreas.filter((area) => area.section === "help");
-
   return (
-    <ContentPageFrame title="Content" subtitle="Manage the content published across Kurioticket.">
-      <div className="space-y-6">
+    <ContentPageFrame title="Content">
+      <div className="space-y-4">
         {homepageNeedsSetup ? (
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50/60 px-4 py-3">
-            <p className="text-[13px] text-slate-700">Some homepage content scopes still need CMS setup.</p>
-            <Link href="/admin/content/homepage" className="inline-flex items-center gap-1 text-[13px] font-semibold text-indigo-700 hover:underline">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50/60 px-4 py-3">
+            <p className="text-[13px] text-[#475569]">Some homepage content needs CMS setup.</p>
+            <Link href="/admin/content/homepage" className="inline-flex items-center gap-1 text-[13px] font-medium text-[#004BB8] hover:underline">
               Review homepage CMS setup <ArrowUpRight size={14} aria-hidden="true" />
             </Link>
           </div>
         ) : null}
 
-        <section aria-labelledby="homepage-content-heading" className="space-y-3">
-          <div id="homepage-content-heading"><ContentSectionHeading>Homepage content</ContentSectionHeading></div>
-
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {homepageAreas.map((area) => {
-              const Icon = area.icon;
-              return (
-                <div key={area.title} className="flex min-w-0 flex-col rounded-lg border border-[#E5E7EB] bg-white p-4">
-                  <div className="flex flex-wrap items-start justify-between gap-2">
-                    <div className="flex min-w-0 flex-1 items-center gap-2">
-                      <Icon size={18} className="shrink-0 text-slate-500" aria-hidden="true" />
-                      <h3 className="min-w-0 text-sm font-semibold leading-5 text-slate-950">{area.title}</h3>
-                    </div>
-                    <ContentStatusPill status={area.status} />
+        <nav aria-label="Content management" className="grid auto-rows-fr grid-cols-1 gap-4 sm:grid-cols-2">
+          {contentAreas.map((area) => {
+            const Icon = area.icon;
+            return (
+              <Link
+                key={area.href}
+                href={area.href}
+                className="group focus-ring flex h-full min-h-[178px] min-w-0 cursor-pointer flex-col justify-between gap-6 rounded-xl border border-[#E5E7EB] bg-white p-5 transition-colors hover:border-[#6D28D9] hover:bg-[#FBFAFF] focus-visible:border-[#6D28D9] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6D28D9]"
+              >
+                <div className="flex min-w-0 items-start justify-between gap-4">
+                  <div className="flex min-w-0 items-center gap-2.5">
+                    <Icon size={19} className="shrink-0 text-[#64748B]" aria-hidden="true" />
+                    <h3 className="min-w-0 text-[15px] font-semibold leading-5 text-[#111827]">{area.title}</h3>
                   </div>
-                  <div className="mt-3">
-                    <p className="text-2xl font-semibold leading-none tabular-nums text-[#111827]">{area.value}</p>
-                    <p className="mt-1 text-xs text-slate-500">Published CMS records</p>
-                  </div>
-                  <p className="mt-2 flex-1 text-[13px] leading-5 text-[#64748B]">{area.note}</p>
-                  <div className="mt-4 pt-1">
-                    <Link href={area.href} className="inline-flex items-center gap-1.5 text-sm font-semibold text-indigo-700 hover:text-indigo-900">
-                      {area.actionLabel}
-                      <ArrowUpRight size={15} aria-hidden="true" />
-                    </Link>
-                  </div>
+                  <ArrowUpRight size={17} aria-hidden="true" className="shrink-0 text-[#64748B] transition-colors group-hover:text-[#6D28D9]" />
                 </div>
-              );
-            })}
-          </div>
-        </section>
 
-        <section aria-labelledby="help-content-heading" className="space-y-3">
-          <div id="help-content-heading"><ContentSectionHeading>Help &amp; information</ContentSectionHeading></div>
-
-          <div className="space-y-3">
-            {helpAreas.map((area) => {
-              const Icon = area.icon;
-              return (
-                <div key={area.title} className="min-w-0 rounded-lg border border-[#E5E7EB] bg-white p-4">
-                  <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
-                    <div className="flex min-w-0 flex-1 items-center gap-3">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100">
-                        <Icon size={20} className="text-slate-600" aria-hidden="true" />
-                      </div>
-                      <div className="min-w-0">
-                        <h3 className="text-sm font-semibold text-slate-950">{area.title}</h3>
-                        
-                      </div>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-3">
-                      <div className="text-right">
-                        <p className="text-2xl font-semibold leading-none tabular-nums text-slate-950">{area.value}</p>
-                        <p className="text-xs text-slate-500">Published</p>
-                      </div>
-                      <ContentStatusPill status={area.status} />
-                    </div>
-                  </div>
-                  <div className="mt-3 flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
-                    <p className="min-w-0 flex-1 text-[13px] leading-5 text-[#64748B]">{area.note}</p>
-                    <Link href={area.href} className="inline-flex shrink-0 items-center gap-1.5 text-sm font-semibold text-indigo-700 hover:text-indigo-900">
-                      {area.actionLabel}
-                      <ArrowUpRight size={15} aria-hidden="true" />
-                    </Link>
-                  </div>
+                <div>
+                  <p className="text-[30px] font-semibold leading-none tracking-tight tabular-nums text-[#111827]">{area.value}</p>
+                  <p className="mt-2 text-[12px] leading-5 text-[#64748B]">
+                    Published records <span className="mx-1" aria-hidden="true">·</span> {area.scope}
+                  </p>
+                  {area.status !== "CMS managed" ? (
+                    <p className="mt-2 text-[12px] font-medium text-amber-700">{area.status}</p>
+                  ) : null}
                 </div>
-              );
-            })}
-          </div>
-        </section>
+              </Link>
+            );
+          })}
+        </nav>
       </div>
     </ContentPageFrame>
   );
