@@ -12,7 +12,7 @@ import { getConfirmationDeliveryHealth } from "@/services/partnerConfirmationDel
 
 function InlineFact({ label, value }: { label: string; value: string }) {
   return (
-    <div className="min-w-0">
+    <div className="min-w-0 rounded-lg bg-slate-50 px-3 py-2">
       <dt className="text-xs font-medium leading-4 text-slate-600">{label}</dt>
       <dd className="mt-0.5 break-words text-[13px] font-semibold leading-5 text-slate-900">{value}</dd>
     </div>
@@ -42,9 +42,9 @@ export async function TripConfirmationsMonitoringPanel() {
         <ConfirmedTripsBreakdowns operations={operations} />
       </section>
 
-      <section aria-labelledby="confirmation-integration-title" className="min-w-0 rounded-xl border border-slate-200/80 bg-white px-4 py-3 sm:px-5 sm:py-4">
-        <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2.5">
-          <div className="flex min-w-0 flex-1 items-start gap-2.5">
+      <section aria-labelledby="confirmation-integration-title" className="min-w-0 rounded-xl border border-slate-200/80 bg-white p-3 sm:p-4">
+        <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
+          <div className="flex min-w-0 flex-1 items-center gap-2.5">
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-700">
               <ShieldCheck size={17} aria-hidden="true" />
             </span>
@@ -54,22 +54,22 @@ export async function TripConfirmationsMonitoringPanel() {
           </div>
           <div className="max-w-full shrink-0">
             <AdminStatusBadge tone={readiness.feedReady ? "info" : "warn"}>
-              {readiness.feedReady ? "Provider-bound webhook configured" : "Provider-bound webhook not configured"}
+              {readiness.feedReady ? "Webhook configured" : "Webhook not configured"}
             </AdminStatusBadge>
           </div>
         </div>
-        <dl className="mt-3 grid gap-x-5 gap-y-2.5 border-y border-slate-100 py-2.5 md:grid-cols-3">
+        <dl className="mt-3 grid gap-2 md:grid-cols-3">
           <InlineFact label="Configured provider" value={readiness.providerName || "None"} />
           <InlineFact label="Webhook credential" value={readiness.webhookCredentialConfigured ? "Configured" : "Not configured"} />
           <InlineFact label="Current search-provider confirmation feed" value={readiness.currentSearchProviderConfirmationFeed === "none" ? "None" : "Configured"} />
         </dl>
-        <dl className="mt-2 grid gap-x-5 gap-y-2 sm:grid-cols-2">
+        <dl className="mt-2 grid gap-2 sm:grid-cols-2">
           <InlineFact label="Endpoint" value="POST /api/internal/partner-confirmations" />
           <InlineFact label="Webhook credential model" value={readiness.credentialModel === "single_provider_bound_secret" ? "Single provider + dedicated secret" : "Unknown"} />
         </dl>
       </section>
 
-      <section id="confirmation-delivery-health-title" aria-labelledby="confirmation-delivery-health-heading" className="min-w-0 rounded-xl border border-slate-200/80 bg-white px-4 py-3 sm:px-5 sm:py-4">
+      <section id="confirmation-delivery-health-title" aria-labelledby="confirmation-delivery-health-heading" className="min-w-0 rounded-xl border border-slate-200/80 bg-white p-3 sm:p-4">
         <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2.5">
           <div className="flex min-w-0 flex-1 items-start gap-2.5">
             <Clock3 size={17} className="mt-1 shrink-0 text-indigo-700" aria-hidden="true" />
@@ -85,9 +85,9 @@ export async function TripConfirmationsMonitoringPanel() {
         </div>
 
         {!readiness.feedReady ? (
-          <p role="status" className="mt-3 flex items-start gap-2 rounded-lg bg-slate-50 px-3 py-2.5 text-[13px] leading-5 text-slate-700">
+          <p role="status" className="mt-2.5 flex items-start gap-2 rounded-lg bg-slate-50 px-3 py-2 text-[13px] leading-5 text-slate-700">
             <Info size={16} className="mt-0.5 shrink-0 text-slate-500" aria-hidden="true" />
-            <span>No authenticated delivery telemetry is available.</span>
+            <span>No delivery telemetry available.</span>
           </p>
         ) : !deliveryHealth ? (
           <p role="status" className="mt-3 flex items-start gap-2 rounded-lg bg-slate-50 px-3 py-2.5 text-[13px] leading-5 text-slate-700">
