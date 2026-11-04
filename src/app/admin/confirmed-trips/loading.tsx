@@ -13,7 +13,7 @@ export default function ConfirmedTripsLoading() {
           </div>
         </div>
         <div role="status" aria-live="polite" className="sr-only">Loading confirmed-trip information…</div>
-        <div aria-busy="true" className="space-y-5">
+        <div aria-busy="true" className="space-y-8">
           <section aria-label="Trip summary" className="min-w-0">
             <div aria-hidden="true" className="grid min-w-0 grid-cols-1 gap-0 sm:grid-cols-2 lg:grid-cols-5">
               {metricLabels.map((label, index) => (
