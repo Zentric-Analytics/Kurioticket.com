@@ -36,6 +36,7 @@ test("system is read-only safe runtime status", () => {
   assert.match(systemPage, /Configured admin count/);
   assert.doesNotMatch(systemPage, /FeatureControlsPanel|listFeatureControls|getServerSession/);
   assert.doesNotMatch(systemPage, /HomepageFaresRefreshCard|homepage fare/i);
+  assert.doesNotMatch(systemPage, /View operational alerts|Open Alerts|\/admin\/notifications/);
 });
 
 test("System child routes use the same compact horizontal navigation", () => {
@@ -53,9 +54,11 @@ test("System child routes use the same compact horizontal navigation", () => {
   assert.match(adminShell, /aria-current=\{pathname === item\.href \|\| pathname === item\.href \+ "\/" \? "page" : undefined\}/);
   assert.doesNotMatch(adminShell, /<details|<summary|group-open:rotate-180/);
   assert.match(adminShell, /entry\.item\.href === "\/admin\/system"/);
-  for (const href of ["/admin/system/cms-health", "/admin/email-delivery", "/admin/logs", "/admin/notifications"]) {
+  for (const href of ["/admin/system/cms-health", "/admin/email-delivery", "/admin/logs"]) {
     assert.ok(adminNav.includes(`href: "${href}", parentHref: "/admin/system"`));
   }
+  assert.doesNotMatch(adminNav, /href: "\/admin\/notifications", parentHref:/);
+  assert.match(adminShell, /href="\/admin\/notifications"/);
 });
 
 test("settings owns authoritative feature controls", () => {
