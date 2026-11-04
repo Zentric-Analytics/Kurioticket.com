@@ -361,8 +361,11 @@ test("Trips and Trip monitoring use the Providers-style workspace navigation whi
   assert.match(operationsPage, /getConfirmationDeliveryHealth\(\)/);
   assert.match(operationsPage, /readiness\.webhookCredentialConfigured/);
   assert.match(operationsPage, /readiness\.currentSearchProviderConfirmationFeed === "none" \? "None" : "Configured"/);
-  assert.match(operationsPage, /A webhook setup does not mean a live feed or provider agreement/);
-  assert.match(operationsPage, /Duffel search and KAYAK sandbox do not send booking confirmations/);
+  assert.doesNotMatch(operationsPage, /A webhook setup does not mean a live feed or provider agreement|Duffel search and KAYAK sandbox do not send booking confirmations/);
+  assert.match(service, /getPartnerConfirmationBinding\(\)/);
+  assert.match(service, /isConfiguredPartnerConfirmationSecret/);
+  assert.match(service, /credentialModel: "single_provider_bound_secret"/);
+  assert.match(service, /feedReady: binding\.configured/);
   assert.match(operationsPage, /!readiness\.feedReady \? \(/);
   assert.match(operationsPage, /Delivery data is unavailable\. No counts are assumed/);
   for (const property of [
