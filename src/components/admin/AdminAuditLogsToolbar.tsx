@@ -89,7 +89,8 @@ export function AdminAuditLogsToolbar({
 
   const actionOptions = withCurrentOption(baseActionOptions, action, "Action: ");
   const targetTypeOptions = withCurrentOption(baseTargetTypeOptions, targetType, "Target: ");
-  const validCustom = validDate(draftDates.from) && validDate(draftDates.to) && draftDates.from <= draftDates.to;
+  const todayUtc = new Date().toISOString().slice(0, 10);
+  const validCustom = validDate(draftDates.from) && validDate(draftDates.to) && draftDates.from <= draftDates.to && draftDates.to <= todayUtc;
 
   function navigate(values: Record<string, string | null>) {
     const params = new URLSearchParams(pageHref.split("?")[1] || "");
@@ -196,7 +197,7 @@ export function AdminAuditLogsToolbar({
               type="date"
               aria-label="Custom start date UTC"
               value={draftDates.from}
-              max={draftDates.to || undefined}
+              max={draftDates.to || todayUtc}
               onChange={event => {
                 setCustomOpen(true);
                 setDraftDates(current => ({ ...current, from: event.target.value }));
@@ -211,6 +212,7 @@ export function AdminAuditLogsToolbar({
               aria-label="Custom end date UTC"
               value={draftDates.to}
               min={draftDates.from || undefined}
+              max={todayUtc}
               onChange={event => {
                 setCustomOpen(true);
                 setDraftDates(current => ({ ...current, to: event.target.value }));
