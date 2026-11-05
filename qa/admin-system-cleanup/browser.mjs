@@ -32,15 +32,42 @@ try {
           await expect(main.getByRole("link", { name, exact: true })).toHaveCount(0);
         }
         if (route === "system") {
-          for (const heading of ["System snapshot", "Issues Requiring Attention", "Services", "Configuration"]) {
-            await expect(main.getByRole("heading", { name: heading, exact: true })).toBeVisible();
+          await expect(main.getByRole("heading", { name: "System snapshot", exact: true })).toHaveCount(0);
+          await expect(main.getByRole("heading", { name: "Configuration", exact: true })).toHaveCount(0);
+          await expect(main.getByRole("heading", { name: "Issues Requiring Attention", exact: true })).toBeVisible();
+          await expect(main.getByRole("heading", { name: "System areas", exact: true })).toBeVisible();
+
+          const summary = main.locator('section[aria-label="System summary"]');
+          await expect(summary).toBeVisible();
+          for (const label of ["Environment", "Monitored areas", "Issues requiring attention", "Database"]) {
+            await expect(summary.getByText(label, { exact: true })).toBeVisible();
           }
+          if (width === 1440) {
+            const boxes = await Promise.all(
+              ["Environment", "Monitored areas", "Issues requiring attention", "Database"].map(async label =>
+                summary.getByText(label, { exact: true }).boundingBox()
+              )
+            );
+            expect(boxes.every(Boolean)).toBeTruthy();
+            const tops = boxes.map(box => box.y);
+            expect(Math.max(...tops) - Math.min(...tops)).toBeLessThanOrEqual(2);
+          }
+
           await expect(main.getByRole("link", { name: "View email diagnostics" })).toHaveAttribute("href", "/admin/email-delivery");
           await expect(main.getByRole("link", { name: "Review provider readiness" })).toHaveAttribute("href", "/admin/providers");
           await expect(main.getByText("Live connectivity check", { exact: true })).toBeVisible();
           await expect(main.getByText("Configuration only", { exact: true }).first()).toBeVisible();
-          await expect(main.getByText("Dedicated diagnostics", { exact: true })).toBeVisible();
-          await expect(main.locator("details")).toHaveCount(5);
+          await expect(main.getByText("CMS diagnostics", { exact: true })).toBeVisible();
+          await expect(main.getByText("Separate check", { exact: true })).toBeVisible();
+          await expect(main.getByText("Expand a row for what is actually verified.", { exact: true })).toHaveCount(0);
+          await expect(main.locator("details")).toHaveCount(6);
+
+          const adminAccess = main.locator("details").filter({ hasText: "Admin access" });
+          await expect(adminAccess).toBeVisible();
+          await adminAccess.locator("summary").click();
+          await expect(adminAccess.getByText("Administrator allowlist", { exact: true })).toBeVisible();
+          await expect(adminAccess.getByText("Configured administrators", { exact: true })).toBeVisible();
+
           await expect(main.locator('a[href="/admin/settings"],a[href="/admin/notifications"]')).toHaveCount(0);
           await expect(main.getByText(/deployment configuration/).first()).toBeVisible();
         }
