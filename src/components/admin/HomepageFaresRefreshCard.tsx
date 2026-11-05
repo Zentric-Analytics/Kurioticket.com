@@ -1018,7 +1018,7 @@ function DiagnosticsPanel({
                         {market.underfillReason ? <span className="block text-amber">{market.underfillReason}</span> : null}
                       </span>
                       <span className="text-xs font-bold text-navy">
-                        {nextRun?.needed ? formatUnderfillCause(nextRun.reason) : "Not required"}
+                        {nextRun ? (nextRun.needed ? formatUnderfillCause(nextRun.reason) : "Not required") : market.targetMet ? "Not required" : "Needed"}
                       </span>
                     </div>
                   );
