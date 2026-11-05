@@ -10,48 +10,55 @@ const systemApi = readFileSync("src/app/api/admin/system/route.ts", "utf8");
 const adminShell = readFileSync("src/components/admin/AdminHorizontalShell.tsx", "utf8");
 const adminNav = readFileSync("src/lib/adminNavigation.ts", "utf8");
 
-test("system status uses a truthful snapshot-attention-services-configuration hierarchy", () => {
+test("system status uses a compact summary-attention-system-areas hierarchy", () => {
   assert.match(systemPage, /title="System"/);
   assert.match(systemPage, /hideHeader/);
-  assert.match(systemPage, /max-w-\[980px\]/);
 
   const positions = [
-    ">System snapshot</h2>",
+    'aria-label="System summary"',
     ">Issues Requiring Attention</h2>",
-    ">Services</h2>",
-    ">Configuration</h2>",
+    ">System areas</h2>",
   ].map(section => systemPage.indexOf(section));
   assert.ok(positions.every(position => position >= 0));
   assert.deepEqual([...positions].sort((a, b) => a - b), positions);
 
-  assert.doesNotMatch(systemPage, /System Health Overview|Service Health|Configuration Readiness/);
-  assert.match(systemPage, /system\.databaseConnected/);
-  assert.match(systemPage, /system\.databaseConfigured/);
-  assert.match(systemPage, /attention\.length/);
-  assert.match(systemPage, /serviceRows\.length/);
-  assert.match(systemPage, /getSafeSystemStatus\(\)/);
-  assert.doesNotMatch(systemPage, /Math\.random|mockHealth|fakeLatency|overallHealthy/);
+  assert.doesNotMatch(systemPage, />System snapshot<\/h2>|>Services<\/h2>|>Configuration<\/h2>/);
+  assert.match(systemPage, /grid grid-cols-2 gap-x-8 gap-y-4 md:grid-cols-4/);
+  assert.match(systemPage, /Monitored areas/);
+  assert.match(systemPage, /serviceRows\.filter\(service => service\.id !== "admin-access"\)\.length/);
+
+  assert.match(systemPage, /No issues requiring attention\./);
+  assert.doesNotMatch(systemPage, /No database connectivity failures or missing required configurations were detected by these checks/);
 
   assert.match(systemPage, /Live connectivity check/);
   assert.match(systemPage, /Configuration only/);
-  assert.match(systemPage, /Dedicated diagnostics/);
-  assert.match(systemPage, /this page does not duplicate or infer that state/);
+  assert.match(systemPage, /CMS diagnostics/);
+  assert.match(systemPage, /Separate check/);
+  assert.doesNotMatch(systemPage, /Expand a row for what is actually verified/);
   assert.match(systemPage, /<details key=\{service\.id\}/);
   assert.match(systemPage, /Open Email Delivery/);
   assert.match(systemPage, /Open Providers/);
   assert.match(systemPage, /Open CMS Health/);
 
-  assert.match(systemPage, /Database configuration/);
-  assert.match(systemPage, /Authentication configuration/);
-  assert.match(systemPage, /Email credentials/);
-  assert.match(systemPage, /Provider credentials/);
+  assert.match(systemPage, /id: "admin-access"/);
+  assert.match(systemPage, /name: "Admin access"/);
   assert.match(systemPage, /Administrator allowlist/);
   assert.match(systemPage, /Configured administrators/);
+  assert.match(systemPage, /adminEmailsConfigured/);
+  assert.match(systemPage, /adminEmailCount/);
+
+  assert.doesNotMatch(systemPage, /const configurationRows|aria-labelledby="configuration-heading"/);
+  assert.doesNotMatch(systemPage, /\["Database configuration"|\["Email credentials"|\["Provider credentials"/);
   assert.doesNotMatch(systemPage, /Session secret configured|No secrets shown|Database URL hidden|API keys hidden/);
 
+  assert.match(systemPage, /system\.databaseConnected/);
+  assert.match(systemPage, /system\.databaseConfigured/);
   assert.match(systemPage, /system\.emailConfigured/);
   assert.match(systemPage, /system\.providerCredentialsPresent/);
   assert.match(systemPage, /system\.adminEmailsConfigured/);
+  assert.match(systemPage, /attention\.length/);
+  assert.match(systemPage, /getSafeSystemStatus\(\)/);
+  assert.doesNotMatch(systemPage, /Math\.random|mockHealth|fakeLatency|overallHealthy/);
   assert.doesNotMatch(systemPage, /FeatureControlsPanel|listFeatureControls|getServerSession/);
   assert.doesNotMatch(systemPage, /HomepageFaresRefreshCard|homepage fare/i);
   assert.doesNotMatch(systemPage, /View operational alerts|Open Alerts|\/admin\/notifications/);
