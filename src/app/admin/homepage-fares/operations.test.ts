@@ -183,3 +183,27 @@ test("homepage fare readiness cannot be promoted by fallback-route freshness alo
 test("underfilled diagnostics never default missing next-run metadata to not required", () => {
   assert.match(component, /nextRun \? \(nextRun\.needed \? formatUnderfillCause\(nextRun\.reason\) : "Not required"\) : market\.targetMet \? "Not required" : "Needed"/);
 });
+
+test("homepage fare diagnostics use concise coverage rows with an action-oriented next-run state", () => {
+  assert.match(component, /Popular \{market\.popularVisibleFresh\}\/\{market\.popularVisibleTarget\} · Discovery \{market\.discoveryVisibleFresh\}\/\{market\.discoveryVisibleTarget\} · Backup \{market\.backupFresh\}\/\{market\.backupTarget\}/);
+  assert.doesNotMatch(component, /\{market\.underfillReason \? <span className="block text-amber">\{market\.underfillReason\}<\/span> : null\}/);
+  assert.match(component, /<span className="block">Needed<\/span>/);
+  assert.match(component, /formatUnderfillCause\(nextRunCause\)/);
+  assert.match(component, /"Not required"/);
+});
+
+test("homepage fare diagnostics summary is horizontal instead of a tall sidebar", () => {
+  assert.match(component, /sm:grid-cols-2 lg:grid-cols-4/);
+  assert.match(component, /label="Stopped reason"/);
+  assert.match(component, /label="Provider budget"/);
+  assert.match(component, /label="Route budget"/);
+  assert.match(component, /label="Candidate pool failed"/);
+  assert.doesNotMatch(component, /lg:grid-cols-\[minmax\(0,1fr\)_18rem\]/);
+});
+
+test("route inspector empty state stays compact", () => {
+  assert.match(component, /Select a market to inspect its routes, or choose All routes\./);
+  assert.match(component, /mt-3 rounded-lg border border-dashed border-slate-300 bg-slate-50\/60 px-3 py-2\.5/);
+  assert.doesNotMatch(component, /Route rows stay hidden until a market context is selected/);
+  assert.doesNotMatch(component, /mt-5 rounded-2xl border border-dashed border-slate-300 bg-white\/55 p-6 text-center/);
+});
