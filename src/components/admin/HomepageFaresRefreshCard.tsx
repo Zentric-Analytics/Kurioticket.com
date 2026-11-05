@@ -589,10 +589,12 @@ export function HomepageFaresRefreshCard() {
             </p>
           ) : null}
 
-          <DashboardSection
-            eyebrow="Readiness"
-            title="Readiness overview"
-                >
+          <section aria-labelledby="homepage-fare-readiness-heading" className="px-1 py-1">
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-muted">Readiness</p>
+            <h2 id="homepage-fare-readiness-heading" className="mt-1 text-base font-extrabold text-navy">
+              Readiness overview
+            </h2>
+
             {initialStatusLoading ? (
               <p className="mt-4 rounded-xl border border-border bg-slate-50 p-4 text-sm font-semibold text-muted">
                 Loading homepage fare snapshot status…
@@ -600,6 +602,7 @@ export function HomepageFaresRefreshCard() {
             ) : statusPayload.dataAvailable ? (
               <DisplayReadinessSummary readiness={statusPayload.displayReadiness} />
             ) : null}
+
             <dl className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
               <SummaryMetricCard label="Fresh fares" value={statusPayload.dataAvailable ? statusPayload.summary.fresh : "Unavailable"} tone={statusPayload.dataAvailable ? "good" : "danger"} />
               <SummaryMetricCard label="Last-known-good" value={statusPayload.dataAvailable ? statusPayload.summary.last_known_good : "Unavailable"} tone={statusPayload.dataAvailable ? "info" : "danger"} />
@@ -607,7 +610,7 @@ export function HomepageFaresRefreshCard() {
               <SummaryMetricCard label="Failed / unavailable" value={statusPayload.dataAvailable ? statusPayload.summary.failed + statusPayload.summary.unavailable : "Unavailable"} tone={!statusPayload.dataAvailable ? "danger" : statusPayload.summary.failed + statusPayload.summary.unavailable ? "warning" : "neutral"} />
               <SummaryMetricCard label="Markets needing attention" value={statusPayload.dataAvailable ? marketsNeedingAnotherRun.filter((market) => market.needed).length : "Unavailable"} tone={!statusPayload.dataAvailable ? "danger" : marketsNeedingAnotherRun.some((market) => market.needed) ? "warning" : "good"} />
             </dl>
-          </DashboardSection>
+          </section>
 
           <RefreshCronPanel
             refreshing={refreshing}
@@ -720,27 +723,33 @@ function SummaryMetricCard({
   tone?: SummaryTone;
 }) {
   return (
-    <div className={`rounded-xl border p-3 ${summaryToneClass(tone)}`}>
-      <dt className="text-xs font-extrabold uppercase tracking-wide opacity-80">{label}</dt>
-      <dd className="mt-1 text-2xl font-extrabold leading-tight">{value}</dd>
+    <div className="rounded-xl border border-border bg-white p-3 text-navy">
+      <dt className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wide text-muted">
+        <span
+          aria-hidden="true"
+          className={`h-2 w-2 shrink-0 rounded-full ${summaryToneDotClass(tone)}`}
+        />
+        <span>{label}</span>
+      </dt>
+      <dd className="mt-1 text-2xl font-extrabold leading-tight text-navy">{value}</dd>
     </div>
   );
 }
 
 type SummaryTone = "good" | "info" | "warning" | "danger" | "neutral";
 
-function summaryToneClass(tone: SummaryTone) {
+function summaryToneDotClass(tone: SummaryTone) {
   switch (tone) {
     case "good":
-      return "border-teal/20 bg-teal/10 text-teal-dark";
+      return "bg-teal";
     case "info":
-      return "border-sky-100 bg-sky-50 text-sky-700";
+      return "bg-sky-500";
     case "warning":
-      return "border-amber/20 bg-amber/10 text-amber";
+      return "bg-amber";
     case "danger":
-      return "border-red-100 bg-red-50 text-danger";
+      return "bg-danger";
     case "neutral":
-      return "border-border bg-slate-50 text-navy";
+      return "bg-slate-300";
   }
 }
 
