@@ -79,13 +79,18 @@ try {
           await expect(configurationStatus).toHaveClass(/text-amber-700/);
           await expect(configurationStatus.locator("span").first()).toHaveClass(/bg-amber-500/);
           await expect(main.getByText("Expand a row for what is actually verified.", { exact: true })).toHaveCount(0);
-          await expect(main.locator("details")).toHaveCount(4);
+          await expect(main.locator("details")).toHaveCount(1);
           await expect(main.getByText("Meaning", { exact: true })).toHaveCount(0);
 
-          const emailDetails = main.locator('details[data-system-area="email"]');
-          await emailDetails.locator("summary").click();
-          await expect(emailDetails.getByText("Verification", { exact: true })).toBeVisible();
-          await expect(emailDetails.getByRole("link", { name: "Open Email Delivery ›", exact: true })).toHaveAttribute("href", "/admin/email-delivery");
+          const emailRow = main.locator('[data-system-area="email"]');
+          const providersRow = main.locator('[data-system-area="providers"]');
+          const cmsRow = main.locator('[data-system-area="cms"]');
+          await expect(emailRow.getByRole("link", { name: "Open Email Delivery ›", exact: true })).toHaveAttribute("href", "/admin/email-delivery");
+          await expect(providersRow.getByRole("link", { name: "Open Providers ›", exact: true })).toHaveAttribute("href", "/admin/providers");
+          await expect(cmsRow.getByRole("link", { name: "Open CMS Health ›", exact: true })).toHaveAttribute("href", "/admin/system/cms-health");
+          await expect(emailRow.getByText("View ›", { exact: true })).toHaveCount(0);
+          await expect(providersRow.getByText("View ›", { exact: true })).toHaveCount(0);
+          await expect(cmsRow.getByText("View ›", { exact: true })).toHaveCount(0);
 
           const adminAccess = main.locator('details[data-system-area="admin-access"]');
           await expect(adminAccess).toBeVisible();
