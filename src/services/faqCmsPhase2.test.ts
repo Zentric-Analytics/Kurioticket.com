@@ -35,13 +35,14 @@ test("FAQ admin surface exposes the intended CMS lifecycle", () => {
   assert.match(listPage, /Add FAQ/);
   assert.match(listPage, /FaqCmsListClient/);
   for (const action of ["Create draft", "Save draft", "Publish", "Hide", "Archive"]) {
-    assert.match(editor, new RegExp(action));
+    assert.match(readFileSync("src/components/admin/CmsEditorActions.tsx", "utf8"), new RegExp(action));
   }
+  assert.match(editor, /<CmsEditorActions/);
   assert.match(editor, /Draft preview/);
   assert.match(editor, /Unpublished changes/);
   assert.match(editor, /draftDirty/);
   assert.match(editor, /Save this draft before publishing the current edits/);
-  assert.match(editor, /disabled=\{!validDraft \|\| draftDirty\}/);
+  assert.match(editor, /draftDirty=\{draftDirty\}/);
   assert.match(detailPage, /Revision history/);
   assert.match(detailPage, /actorEmail/);
   assert.match(newPage, /getCmsContentScopeSummary/);
