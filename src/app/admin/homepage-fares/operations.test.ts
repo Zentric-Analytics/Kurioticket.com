@@ -158,3 +158,19 @@ test("market diagnostics use structured rows instead of repeated prose cards", (
   assert.match(component, /Discovery \{market\.discoveryVisibleFresh\}\/\{market\.discoveryVisibleTarget\}/);
   assert.doesNotMatch(component, /function buildDiagnostics/);
 });
+
+test("homepage fare status returns snapshot-derived next-run metadata before a manual refresh", () => {
+  assert.match(service, /marketsNeedingAnotherRun: HomepageFareMarketNextRunNeed\[\]/);
+  assert.match(service, /underfillCauseByMarket: Record<string, HomepageFareUnderfillCause>/);
+  assert.match(service, /buildHomepageFareStatusUnderfillMetadata\(marketTargets\)/);
+  assert.match(service, /needed: !target\.targetMet/);
+  assert.match(service, /target\.targetMet \? "none" : "underfilled"/);
+  assert.match(component, /latestCounts\?\.marketsNeedingAnotherRun \?\? statusPayload\.marketsNeedingAnotherRun/);
+});
+
+test("homepage fare global readiness excludes fallback-only pools from public readiness", () => {
+  assert.match(service, /target\.marketVisibility === "country"/);
+  assert.match(service, /target\.popularVisibleTarget \+ target\.discoveryVisibleTarget > 0/);
+  assert.match(service, /At least one public market has usable provider-backed homepage fares/);
+  assert.doesNotMatch(service, /At least one market has fresh provider-backed homepage fares/);
+});
