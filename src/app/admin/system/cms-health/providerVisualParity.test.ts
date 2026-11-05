@@ -5,6 +5,7 @@ import test from "node:test";
 const providersPage = readFileSync("src/app/admin/providers/page.tsx", "utf8");
 const cmsHealthPage = readFileSync("src/app/admin/system/cms-health/page.tsx", "utf8");
 const cmsActions = readFileSync("src/components/admin/CmsScopeHardeningActions.tsx", "utf8");
+const adminShell = readFileSync("src/components/admin/AdminHorizontalShell.tsx", "utf8");
 
 test("CMS Health follows Providers page visual tokens and table density", () => {
   assert.match(providersPage, /bg-white text-\[#020617\]/);
@@ -23,4 +24,11 @@ test("CMS Health follows Providers page visual tokens and table density", () => 
   assert.doesNotMatch(cmsHealthPage, /bg-amber-50\/50|rounded-lg border border-amber-200/);
   assert.match(cmsActions, /size="sm"/);
   assert.match(cmsActions, /className="rounded-lg font-medium"/);
+});
+
+
+test("CMS Health uses the same continuous white Admin workspace as Providers", () => {
+  assert.match(adminShell, /pathname === "\/admin\/system\/cms-health"/);
+  assert.match(adminShell, /pathname === "\/admin\/system\/cms-health\/"?/);
+  assert.match(adminShell, /whiteWorkspace \? "bg-white" : "bg-\[#f1f5fb\]"/);
 });
