@@ -81,5 +81,5 @@ test("Audit Logs, CMS Health and Email Delivery are contextual destinations rath
     assert.equal(nav.includes(`href: "${href}", parentHref: "/admin/system"`), false);
   }
   assert.doesNotMatch(shell, /SystemSectionTabs|aria-label="System sections"/);
-  assert.match(shell, /href="\/admin\/logs", label: "Audit logs"/);
+  assert.match(shell, /href="\/admin\/logs", label: "Audit Logs"/);
 });
