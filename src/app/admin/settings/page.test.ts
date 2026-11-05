@@ -154,7 +154,7 @@ test("settings keeps only concise production-facing helper copy", () => {
   assert.match(featurePanel, /Controls flight search availability\./);
   assert.match(featurePanel, /Controls hotel search availability\./);
   assert.match(featurePanel, /Controls car search availability\./);
-  assert.match(featurePanel, /Controls Deals availability\./);
+  assert.match(featurePanel, /Controls Packages availability\./);
   assert.match(featurePanel, /Controls price-alert creation and reactivation\./);
   assert.match(featurePanel, /Controls automatic price checks and alert delivery\./);
 });
@@ -162,4 +162,12 @@ test("settings keeps only concise production-facing helper copy", () => {
 test("confirmation dialog keeps full registry descriptions even when settings rows are concise", () => {
   assert.match(featurePanel, /controlRowSummaries\[control\.key\]/);
   assert.match(featurePanel, /<p className="mt-3 text-\[13px\] leading-5 text-slate-600">\{pending\.control\.description\}<\/p>/);
+});
+
+test("settings presents the Deals feature flag as Packages without changing the internal key", () => {
+  const registry = readFileSync("src/lib/feature-controls/registry.ts", "utf8");
+  assert.match(registry, /DEALS_ENABLED: control\("Packages", "Controls Packages entry points/);
+  assert.match(featurePanel, /DEALS_ENABLED: "Controls Packages availability\."/);
+  assert.doesNotMatch(featurePanel, /Controls Deals availability\./);
+  assert.match(registry, /DEALS_ENABLED/);
 });

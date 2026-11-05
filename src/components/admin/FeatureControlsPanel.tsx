@@ -19,7 +19,7 @@ const controlRowSummaries: Record<FeatureControlKey, string> = {
   FLIGHT_SEARCH_ENABLED: "Controls flight search availability.",
   HOTEL_SEARCH_ENABLED: "Controls hotel search availability.",
   CAR_SEARCH_ENABLED: "Controls car search availability.",
-  DEALS_ENABLED: "Controls Deals availability.",
+  DEALS_ENABLED: "Controls Packages availability.",
   PRICE_ALERTS_ENABLED: "Controls price-alert creation and reactivation.",
   PRICE_ALERT_PROCESSING_ENABLED: "Controls automatic price checks and alert delivery.",
 };
