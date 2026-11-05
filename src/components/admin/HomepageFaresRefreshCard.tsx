@@ -1108,96 +1108,74 @@ function DiagnosticsPanel({
   );
 }
 
-function FallbackPoolsSection({
+function AdvancedDiagnostics({
   pools,
   selectedRouteScope,
   onInspectMarket,
+  statusPayload,
+  refreshCounts,
 }: {
   pools: MarketReadiness[];
   selectedRouteScope: string | null;
   onInspectMarket: (marketCode: string) => void;
-}) {
-  return (
-    <DashboardSection
-      eyebrow="Fallback pools / internal regional pools"
-      title="Fallback-only coverage pools"
-      description="Regional and global pools remain available for debugging but are not counted as public homepage-ready markets."
-    >
-      <div className="mt-4 grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
-        {pools.length ? (
-          pools.map((pool) => {
-            const selected = normalizeAdminHomepageFareMarketCode(selectedRouteScope ?? "") === normalizeAdminHomepageFareMarketCode(pool.marketCode);
-
-            return (
-              <button
-                key={pool.marketCode}
-                type="button"
-                onClick={() => onInspectMarket(pool.marketCode)}
-                aria-pressed={selected}
-                className={`w-full cursor-pointer rounded-xl border border-dashed p-4 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-dark ${
-                  selected
-                    ? "border-navy bg-white shadow-md ring-2 ring-navy/15"
-                    : "border-border bg-slate-50 hover:border-navy/35 hover:bg-white hover:shadow-sm"
-                }`}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <h4 className="font-extrabold text-navy">{pool.marketLabel}</h4>
-                    <p className="mt-1 text-xs font-bold uppercase tracking-wide text-muted">
-                      {pool.marketCode} · {pool.marketGroup}
-                    </p>
-                  </div>
-                  <span className="rounded-full bg-slate-200 px-2.5 py-1 text-xs font-extrabold text-muted">
-                    Fallback only
-                  </span>
-                </div>
-                <p className="mt-3 text-sm font-semibold leading-6 text-muted">
-                  No public display target. Coverage is retained for internal routing, replacement, and regional debugging.
-                </p>
-                <dl className="mt-3 grid grid-cols-3 gap-2 text-sm">
-                  <MarketMiniMetric label="Fresh" value={pool.freshCount ?? 0} />
-                  <MarketMiniMetric label="Missing" value={pool.missingCount ?? 0} />
-                  <MarketMiniMetric label="Failed" value={pool.failed} />
-                  <MarketMiniMetric label="Provider" value={pool.providerCalls} />
-                  <MarketMiniMetric label="Attempts" value={pool.routeAttempts} />
-                  <MarketMiniMetric label="Timeout" value={pool.timeoutCount ?? 0} />
-                </dl>
-                <span className="mt-3 inline-flex min-h-10 items-center justify-center rounded-full border border-teal-dark/30 bg-teal/10 px-4 py-2 text-sm font-extrabold text-teal-dark">
-                  Inspect fallback routes
-                </span>
-              </button>
-            );
-          })
-        ) : (
-          <p className="rounded-xl border border-border bg-slate-50 p-4 text-sm font-semibold text-muted">
-            No fallback-only pools were returned.
-          </p>
-        )}
-      </div>
-    </DashboardSection>
-  );
-}
-
-function RawDebugDetails({
-  statusPayload,
-  refreshCounts,
-}: {
   statusPayload: HomepageFareStatusPayload;
   refreshCounts: RefreshCounts | null;
 }) {
   return (
     <details className="rounded-2xl border border-border bg-white p-4">
-      <summary className="cursor-pointer text-sm font-extrabold uppercase tracking-wide text-navy">
-        Raw debug / View All details
+      <summary className="cursor-pointer text-sm font-extrabold text-navy">
+        Advanced diagnostics
       </summary>
-      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <MetricCard label="Configured routes" value={statusPayload.summary.total} />
-        <MetricCard label="Candidate pool failed" value={statusPayload.candidatePoolHealth.failed} />
-        <MetricCard label="Candidate pool unavailable" value={statusPayload.candidatePoolHealth.unavailable} />
-        <MetricCard label="Visible gaps attempted" value={refreshCounts?.visibleGapsAttempted.length ?? 0} />
-        <MetricCard label="Immediate replacements attempted" value={refreshCounts?.replacementsUsed.length ?? 0} />
-        <MetricCard label="Executor targets" value={refreshCounts ? formatStringList(refreshCounts.targetedMarkets, "none") : "No manual run yet"} />
-        <MetricCard label="Markets needing another run" value={refreshCounts ? formatMarketsNeedingRun(refreshCounts.marketsNeedingAnotherRun) : formatMarketsNeedingRun(statusPayload.marketsNeedingAnotherRun)} />
+      <div className="mt-4 space-y-5">
+        <section aria-labelledby="fallback-pools-heading">
+          <div>
+            <h4 id="fallback-pools-heading" className="text-sm font-extrabold text-navy">Fallback coverage pools</h4>
+            <p className="mt-1 text-xs font-semibold leading-5 text-muted">
+              Internal regional and global pools used for routing and replacement; they do not count as public homepage readiness.
+            </p>
+          </div>
+          <div className="mt-3 grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
+            {pools.length ? (
+              pools.map((pool) => {
+                const selected = normalizeAdminHomepageFareMarketCode(selectedRouteScope ?? "") === normalizeAdminHomepageFareMarketCode(pool.marketCode);
+                return (
+                  <button
+                    key={pool.marketCode}
+                    type="button"
+                    onClick={() => onInspectMarket(pool.marketCode)}
+                    aria-pressed={selected}
+                    className={`rounded-xl border border-dashed p-3 text-left transition ${selected ? "border-navy bg-slate-50 ring-2 ring-navy/10" : "border-slate-200 hover:border-navy/30"}`}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="font-extrabold text-navy">{pool.marketLabel}</span>
+                      <span className="text-xs font-bold text-muted">{pool.marketCode}</span>
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs font-semibold text-muted">
+                      <span>Fresh {pool.freshCount ?? 0}</span>
+                      <span>Missing {pool.missingCount ?? 0}</span>
+                      <span>Failed {pool.failed}</span>
+                    </div>
+                  </button>
+                );
+              })
+            ) : (
+              <p className="text-sm font-semibold text-muted">No fallback-only pools were returned.</p>
+            )}
+          </div>
+        </section>
+
+        <section aria-labelledby="executor-debug-heading" className="border-t border-slate-200 pt-4">
+          <h4 id="executor-debug-heading" className="text-sm font-extrabold text-navy">Executor details</h4>
+          <dl className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <MetricCard label="Configured routes" value={statusPayload.summary.total} />
+            <MetricCard label="Candidate pool failed" value={statusPayload.candidatePoolHealth.failed} />
+            <MetricCard label="Candidate pool unavailable" value={statusPayload.candidatePoolHealth.unavailable} />
+            <MetricCard label="Visible gaps attempted" value={refreshCounts?.visibleGapsAttempted.length ?? 0} />
+            <MetricCard label="Immediate replacements attempted" value={refreshCounts?.replacementsUsed.length ?? 0} />
+            <MetricCard label="Executor targets" value={refreshCounts ? formatStringList(refreshCounts.targetedMarkets, "none") : "No manual run yet"} />
+            <MetricCard label="Markets needing another run" value={refreshCounts ? formatMarketsNeedingRun(refreshCounts.marketsNeedingAnotherRun) : formatMarketsNeedingRun(statusPayload.marketsNeedingAnotherRun)} />
+          </dl>
+        </section>
       </div>
     </details>
   );
@@ -1205,7 +1183,6 @@ function RawDebugDetails({
 
 function MarketRouteInspector({
   publicGroups,
-  fallbackGroups,
   selectedRouteScope,
   selectedGroup,
   filter,
@@ -1218,7 +1195,6 @@ function MarketRouteInspector({
   routeDetailsRef,
 }: {
   publicGroups: AdminHomepageFareMarketRouteGroup[];
-  fallbackGroups: AdminHomepageFareMarketRouteGroup[];
   selectedRouteScope: string | null;
   selectedGroup: AdminHomepageFareMarketRouteGroup | null;
   filter: AdminHomepageFareRouteGroupFilter;
@@ -1230,114 +1206,64 @@ function MarketRouteInspector({
   onFilterChange: (filter: AdminHomepageFareRouteGroupFilter) => void;
   routeDetailsRef: RefObject<HTMLDivElement | null>;
 }) {
-  const handleSelectMarket = (marketCode: string) => {
-    onSelectMarket(marketCode);
-  };
-  const handleFilterChange = (nextFilter: AdminHomepageFareRouteGroupFilter) => {
-    onFilterChange(nextFilter);
-  };
-
   return (
-    <section className="mt-6 rounded-3xl border border-slate-200/80 bg-gradient-to-br from-slate-50 via-white to-sky-50/40 p-4 shadow-sm sm:p-5">
-      <div className="max-w-4xl">
-        <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-teal-dark">
-          Route coverage
-        </p>
-        <h4 className="mt-2 text-xl font-extrabold text-navy">
-          Grouped Market Route Inspector
-        </h4>
-        <p className="mt-2 text-sm leading-6 text-muted">
-          Inspect homepage fare routes by market, status, and coverage. Select a market below to view route details.
-        </p>
-      </div>
-
-      <div className="mt-5 overflow-x-auto pb-1" aria-label="Route status filters">
-        <div className="flex min-w-max gap-2">
-          {ROUTE_FILTERS.map((item) => (
-            <button
-              key={item.key}
-              type="button"
-              onClick={() => handleFilterChange(item.key)}
-              className={`inline-flex min-h-10 items-center justify-center rounded-full border px-4 py-2 text-sm font-extrabold shadow-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-dark ${
-                filter === item.key
-                  ? "border-navy bg-navy text-white shadow-sm"
-                  : "border-slate-200 bg-white/80 text-navy hover:border-navy/40 hover:bg-white"
-              }`}
-              aria-pressed={filter === item.key}
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="mt-5 space-y-5">
-        <div>
-          <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <h5 className="text-sm font-extrabold uppercase tracking-wide text-navy">
-                Public market coverage
-              </h5>
-              <p className="mt-1 text-xs font-semibold text-muted">
-                Country display targets stay separate from fallback-only pools.
-              </p>
-            </div>
+    <DashboardSection
+      eyebrow="Routes"
+      title="Route inspector"
+      description="Select a market and status filter to inspect individual homepage fare routes."
+    >
+      <div className="mt-4 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+        <div className="min-w-0">
+          <p className="text-xs font-extrabold uppercase tracking-wide text-muted">Market</p>
+          <div className="mt-2 flex flex-wrap gap-2">
             <button
               type="button"
-              onClick={() => handleSelectMarket(ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE)}
-              className={`inline-flex min-h-10 items-center justify-center rounded-full border px-4 py-2 text-sm font-extrabold shadow-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-dark ${
-                selectedRouteScope === ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE
-                  ? "border-navy bg-navy text-white ring-2 ring-navy/15"
-                  : "border-slate-200 bg-white/80 text-navy hover:border-navy/40 hover:bg-white hover:shadow-md"
-              }`}
+              onClick={() => onSelectMarket(ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE)}
               aria-pressed={selectedRouteScope === ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE}
+              className={`rounded-lg border px-3 py-2 text-xs font-extrabold transition ${selectedRouteScope === ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE ? "border-navy bg-navy text-white" : "border-slate-200 bg-white text-navy hover:border-navy/30"}`}
             >
-              View All
+              All routes
             </button>
-          </div>
-
-          {publicGroups.length ? (
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-              {publicGroups.map((group) => (
-                <MarketRouteGroupCard
+            {publicGroups.map((group) => {
+              const selected = normalizeAdminHomepageFareMarketCode(selectedRouteScope ?? "") === normalizeAdminHomepageFareMarketCode(group.marketCode);
+              return (
+                <button
                   key={group.marketCode}
-                  group={group}
-                  selected={normalizeAdminHomepageFareMarketCode(selectedRouteScope ?? "") === normalizeAdminHomepageFareMarketCode(group.marketCode)}
-                  onSelect={handleSelectMarket}
-                />
-              ))}
-            </div>
-          ) : (
-            <p className="rounded-2xl border border-dashed border-slate-300 bg-white/50 p-4 text-sm font-semibold text-muted">
-              {loading ? "Loading market route groups…" : "No public market route groups match this filter."}
-            </p>
-          )}
+                  type="button"
+                  onClick={() => onSelectMarket(group.marketCode)}
+                  aria-pressed={selected}
+                  className={`rounded-lg border px-3 py-2 text-xs font-extrabold transition ${selected ? "border-navy bg-navy text-white" : "border-slate-200 bg-white text-navy hover:border-navy/30"}`}
+                >
+                  {group.marketLabel}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
-        {fallbackGroups.length ? (
-          <div className="rounded-2xl border border-dashed border-slate-300/90 bg-white/45 p-3">
-            <div className="mb-3">
-              <h5 className="text-sm font-extrabold uppercase tracking-wide text-navy">
-                Fallback-only debugging pools
-              </h5>
-              <p className="mt-1 text-xs font-semibold text-muted">
-                These pools have no public display target and are not counted as normal public market readiness.
-              </p>
-            </div>
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-              {fallbackGroups.map((group) => (
-                <MarketRouteGroupCard
-                  key={group.marketCode}
-                  group={group}
-                  selected={normalizeAdminHomepageFareMarketCode(selectedRouteScope ?? "") === normalizeAdminHomepageFareMarketCode(group.marketCode)}
-                  onSelect={handleSelectMarket}
-                  fallbackOnly
-                />
-              ))}
-            </div>
+        <div className="min-w-0 lg:max-w-[55%]">
+          <p className="text-xs font-extrabold uppercase tracking-wide text-muted">Status</p>
+          <div className="mt-2 flex flex-wrap gap-2" aria-label="Route status filters">
+            {ROUTE_FILTERS.map((item) => (
+              <button
+                key={item.key}
+                type="button"
+                onClick={() => onFilterChange(item.key)}
+                aria-pressed={filter === item.key}
+                className={`rounded-lg border px-3 py-2 text-xs font-extrabold transition ${filter === item.key ? "border-navy bg-navy text-white" : "border-slate-200 bg-white text-navy hover:border-navy/30"}`}
+              >
+                {item.label}
+              </button>
+            ))}
           </div>
-        ) : null}
+        </div>
       </div>
+
+      {!publicGroups.length && !loading ? (
+        <p className="mt-4 rounded-xl border border-dashed border-slate-300 p-4 text-sm font-semibold text-muted">
+          No public market route groups match this filter.
+        </p>
+      ) : null}
 
       <SelectedRouteDetails
         routeDetailsRef={routeDetailsRef}
@@ -1348,57 +1274,7 @@ function MarketRouteInspector({
         onPreviousPage={onPreviousPage}
         onNextPage={onNextPage}
       />
-    </section>
-  );
-}
-
-function MarketRouteGroupCard({
-  group,
-  selected,
-  onSelect,
-  fallbackOnly = false,
-}: {
-  group: AdminHomepageFareMarketRouteGroup;
-  selected: boolean;
-  onSelect: (marketCode: string) => void;
-  fallbackOnly?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={() => onSelect(group.marketCode)}
-      className={`h-full w-full cursor-pointer rounded-2xl border p-4 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-dark ${
-        selected
-          ? "border-navy bg-white shadow-md ring-2 ring-navy/15"
-          : "border-slate-200 bg-white/70 hover:-translate-y-0.5 hover:border-navy/35 hover:bg-white hover:shadow-md"
-      }`}
-      aria-pressed={selected}
-      aria-label={`Inspect ${group.marketCode} routes`}
-    >
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-base font-extrabold text-navy">{group.marketLabel}</p>
-          <p className="mt-1 text-xs font-bold uppercase tracking-wide text-muted">
-            {fallbackOnly ? "Fallback only · No public display target" : group.marketGroup}
-          </p>
-        </div>
-        <MarketGroupStatusBadge status={group.status} />
-      </div>
-      <p className="mt-3 text-sm font-semibold text-muted">
-        {group.routes.length} total routes · {group.freshFaresCount} fresh · {group.lastKnownGoodFaresCount} last-known-good
-      </p>
-      <dl className="mt-4 grid grid-cols-3 gap-2 text-xs">
-        <MarketMiniMetric label="Popular" value={group.popularCoverageCount} />
-        <MarketMiniMetric label="Discovery" value={group.discoveryCoverageCount} />
-        <MarketMiniMetric label="Backup" value={group.backupCoverageCount} />
-        <MarketMiniMetric label="Fresh" value={group.freshFaresCount} />
-        <MarketMiniMetric label="LKG" value={group.lastKnownGoodFaresCount} />
-        <MarketMiniMetric label="Failed/missing" value={group.failedUnavailableRoutesCount + group.missingRoutesCount} />
-      </dl>
-      <span className="mt-4 inline-flex min-h-10 items-center justify-center rounded-full border border-teal-dark/30 bg-teal/10 px-4 py-2 text-sm font-extrabold text-teal-dark transition">
-        Inspect {group.marketCode} routes
-      </span>
-    </button>
+    </DashboardSection>
   );
 }
 
