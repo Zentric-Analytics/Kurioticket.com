@@ -72,7 +72,7 @@ export default async function AdminEmailDeliveryPage({ searchParams }: { searchP
   const sendingReady = configured.resendApiKey && configured.resendFromEmail;
 
   const metrics = operations ? [
-    { label: "Email attempts", value: operations.dataAvailable ? operations.attempts.toLocaleString() : "Unavailable", dot: "bg-[#004BB8]" },
+    { label: "Email deliveries", value: operations.dataAvailable ? operations.deliveries.toLocaleString() : "Unavailable", dot: "bg-[#004BB8]" },
     { label: "Delivered", value: operations.dataAvailable ? operations.delivered.toLocaleString() : "Unavailable", dot: "bg-emerald-500" },
     { label: "Delayed", value: operations.dataAvailable ? operations.delayed.toLocaleString() : "Unavailable", dot: "bg-amber-500" },
     { label: "Failed", value: operations.dataAvailable ? operations.failures.toLocaleString() : "Unavailable", dot: "bg-rose-500" },
@@ -283,5 +283,11 @@ function resolveRange(raw: Record<string, string | string[] | undefined>) {
 }
 
 function validDate(value: string) {
-  return /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(value + "T00:00:00Z"));
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!match) return false;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
 }
