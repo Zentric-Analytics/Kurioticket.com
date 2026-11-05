@@ -1,7 +1,6 @@
 import Link from "next/link";
 
 import { AdminAuditLogsToolbar } from "@/components/admin/AdminAuditLogsToolbar";
-import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { formatDateTime } from "@/lib/admin-data";
 import type { AdminAuditRead } from "@/services/adminAuditReadContract";
 import { adminAuditReads } from "@/services/adminAuditReadService";
@@ -34,8 +33,7 @@ export default async function AdminLogsPage({ searchParams }: { searchParams: Se
   const pageHref = currentHref(raw, range);
 
   return (
-    <AdminPageShell title="Audit Logs" hideHeader>
-      <div className="w-full min-w-0 bg-white text-[#020617]">
+    <div className="w-full min-w-0 bg-white text-[#020617]">
         <header className="border-b border-[#D8E1EC] pb-4">
           <h1 className="text-[18px] font-semibold tracking-[-0.01em] text-[#020617]">Audit Logs</h1>
           <p className="mt-1 max-w-[900px] text-[12px] leading-5 text-[#64748B]">
@@ -112,8 +110,7 @@ export default async function AdminLogsPage({ searchParams }: { searchParams: Se
             }
           />
         )}
-      </div>
-    </AdminPageShell>
+    </div>
   );
 }
 
