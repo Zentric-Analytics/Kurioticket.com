@@ -140,8 +140,11 @@ try {
           await expect(main.getByRole("heading", { name: "Current setup", exact: true })).toBeVisible();
           await expect(main.getByText("Suppressed addresses", { exact: true })).toBeVisible();
           await expect(main.getByText("53", { exact: true })).toBeVisible();
-          await expect(main.getByRole("heading", { name: "Test transactional delivery", exact: true })).toBeVisible();
-          await expect(main.getByRole("button", { name: "Send test email to me" })).toBeDisabled();
+          await expect(main.getByText("Configured", { exact: true })).toHaveCount(0);
+          await expect(main.getByRole("heading", { name: "Test email delivery", exact: true })).toBeVisible();
+          await expect(main.getByText("Send a test to your admin email.", { exact: true })).toBeVisible();
+          await expect(main.getByRole("button", { name: "Send test email", exact: true })).toBeDisabled();
+          await expect(main.getByText(/Safety: only the current signed-in admin/)).toHaveCount(0);
 
           await expect(main.getByRole("heading", { name: "Delivery history", exact: true })).toBeVisible();
           await expect(main.getByText("Latest 10 in last 24 hours", { exact: true })).toBeVisible();

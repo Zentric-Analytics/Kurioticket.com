@@ -38,7 +38,7 @@ export function EmailDeliveryTestButton({ enabled }: { enabled: boolean }) {
         disabled={!enabled || pending}
         className="inline-flex h-10 items-center justify-center rounded-lg bg-[#004BB8] px-4 text-[13px] font-medium text-white hover:bg-[#003E99] disabled:cursor-not-allowed disabled:opacity-40"
       >
-        {pending ? "Sending test…" : "Send test email to me"}
+        {pending ? "Sending test…" : "Send test email"}
       </button>
       {!enabled ? (
         <p className="text-[12px] font-medium text-amber-700">

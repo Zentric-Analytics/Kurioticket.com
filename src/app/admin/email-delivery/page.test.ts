@@ -52,16 +52,19 @@ test("summary metrics use one compact four-column status band with no repeated r
   assert.doesNotMatch(page, /metric\.hint/);
 });
 
-test("current setup stays current and moves suppression count out of the filtered summary", () => {
+test("current setup hides healthy configuration details and surfaces only missing checks", () => {
   assert.match(page, /Current setup/);
   assert.match(page, /Suppressed addresses/);
   assert.match(page, /operations\.currentSuppressed\.toLocaleString\(\)/);
   assert.doesNotMatch(page, /label: "Suppressions"/);
-  for (const label of ["Resend API key", "Sender address", "Webhook secret"]) {
-    assert.ok(page.includes(label));
-  }
+  assert.match(page, /const configurationChecks = \[/);
+  assert.match(page, /const missingConfiguration = configurationChecks\.filter\(\(\[, ready\]\) => !ready\)/);
+  assert.match(page, /missingConfiguration\.length > 0/);
+  assert.match(page, /missingConfiguration\.map\(\(\[label\]\)/);
+  assert.match(page, /StatusIndicator value="Not configured" tone="warn"/);
+  assert.doesNotMatch(page, /StatusIndicator value=\{ready \? "Configured" : "Not configured"\}/);
   assert.match(page, /Sending ready/);
-  assert.match(page, /Test transactional delivery/);
+  assert.match(page, /Setup required/);
 });
 
 test("range parsing defaults to 24 hours and constrains custom ranges to 90 days", () => {
@@ -92,11 +95,14 @@ test("range-aware reads preserve privacy and the alert-specific 24-hour health c
   assert.match(route, /getEmailDeliveryHealthSnapshot\(\)/);
 });
 
-test("Test transactional delivery remains constrained to the signed-in admin", () => {
-  assert.match(page, /Safety: only the current signed-in admin can receive this test/);
+test("Test email delivery stays concise while remaining constrained to the signed-in admin", () => {
+  assert.match(page, /Test email delivery/);
+  assert.match(page, /Send a test to your admin email\./);
+  assert.doesNotMatch(page, /Successful sends are written to the admin audit log|Safety: only the current signed-in admin can receive this test|arbitrary recipients and credential values are never exposed/);
   assert.match(button, /fetch\("\/api\/admin\/email\/health"/);
   assert.match(button, /method: "POST"/);
-  assert.match(button, /Send test email to me/);
+  assert.match(button, /Send test email/);
+  assert.doesNotMatch(button, /Send test email to me/);
   assert.doesNotMatch(button, /recipient|toEmail|email:/);
   assert.match(route, /requireAdminApiSession\(\)/);
   assert.match(route, /checkAuthRateLimit/);
