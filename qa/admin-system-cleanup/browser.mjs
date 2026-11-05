@@ -170,7 +170,10 @@ try {
             await expect(page.locator('section[aria-label="Email delivery summary"]').getByText("Email deliveries", { exact: true })).toBeVisible();
           }
         }
-        if (route === "settings") await expect(main.getByRole("link", { name: "Open fare operations" })).toHaveAttribute("href", "/admin/homepage-fares");
+        if (route === "settings") {
+          await expect(main.getByRole("link", { name: "Open fare operations" })).toHaveCount(0);
+          await expect(page.getByRole("navigation", { name: "Admin navigation" }).getByRole("link", { name: "Flights", exact: true })).toHaveAttribute("href", "/admin/flights");
+        }
         if (route === "notifications") {
           await expect(main.locator('a[href="/admin/notifications"]')).toHaveCount(0);
           await expect(main.getByRole("link", { name: "Open source", exact: true })).toHaveCount(3);
