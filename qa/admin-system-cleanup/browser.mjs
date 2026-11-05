@@ -1,6 +1,7 @@
 import { chromium, expect } from "@playwright/test";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { verifyNotificationPanel } from "./notifications.mjs";
 const root = process.env.ADMIN_SYSTEM_QA_URL;
 const output = process.env.ADMIN_SYSTEM_QA_OUTPUT;
 const variant = process.env.ADMIN_SYSTEM_QA_VARIANT;
@@ -18,7 +19,7 @@ try {
     for (const route of routes) {
       await page.goto(`${root}/admin/${route}`, { waitUntil: "networkidle", timeout: 120_000 });
       await expect(page.locator("[data-qa-label]")).toBeVisible();
-      await expect(page.getByRole("link", { name: /unread admin alerts/ })).toBeVisible();
+      await expect(page.getByRole("button", { name: /admin alerts need attention|Admin notifications/ })).toBeVisible();
       const main = page.locator("main");
       await expect(main).toBeVisible();
       if (variant === "after") {
@@ -188,13 +189,7 @@ try {
       await page.getByRole("link", { name: "Audit Logs", exact: true }).click();
       await expect(page).toHaveURL(`${root}/admin/logs`);
       await expect(page.getByRole("navigation", { name: "System sections" })).toHaveCount(0);
-      await page.getByRole("link", { name: /unread admin alerts/ }).click();
-      await expect(page).toHaveURL(`${root}/admin/notifications`);
-      await expect(page.getByRole("navigation", { name: "System sections" })).toHaveCount(0);
-      const requestPromise = page.waitForRequest(request => request.url().includes("/api/admin/notifications/acknowledge") && request.method() === "POST");
-      await page.getByRole("button", { name: "Acknowledge", exact: true }).first().click();
-      const request = await requestPromise;
-      expect(request.postDataJSON()).toMatchObject({ alertKey: "qa.support", signalToken: "qa-support" });
+      await verifyNotificationPanel({ page, root, output, width });
     }
     await context.close();
   }
