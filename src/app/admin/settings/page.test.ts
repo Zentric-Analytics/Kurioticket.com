@@ -10,12 +10,12 @@ const featureService = readFileSync("src/lib/feature-controls/service.ts", "utf8
 const fareRefreshApi = readFileSync("src/app/api/admin/homepage-fares/refresh/route.ts", "utf8");
 
 test("settings exposes real persisted controls rather than fake toggles", () => {
-  assert.match(settingsPage, /Manage persisted platform controls/);
-  assert.match(settingsPage, />Platform controls<\/h2>/);
-  assert.match(settingsPage, />Recent control updates<\/h2>/);
-  assert.match(settingsPage, />Related operations<\/h2>/);
-  assert.match(settingsPage, />Deployment-owned configuration<\/h2>/);
-  assert.match(settingsPage, />Change safeguards<\/h2>/);
+  assert.match(settingsPage, /Manage platform controls and operational configuration/);
+  assert.match(settingsPage, />Feature controls<\/h2>/);
+  assert.match(settingsPage, />Operations<\/h2>/);
+  assert.match(settingsPage, />Configuration ownership<\/h2>/);
+  assert.match(settingsPage, />Recent changes<\/h2>/);
+  assert.match(settingsPage, /Protected changes/);
   assert.match(settingsPage, /FeatureControlsPanel/);
   assert.match(settingsPage, /listFeatureControls\(\)/);
   assert.match(featureService, /featureFlag\.findMany/);
@@ -68,10 +68,10 @@ test("homepage fare operations preserve the existing audited mutation path", () 
 
 
 test("settings shows truthful operator context without exposing secret configuration", () => {
-  assert.match(settingsPage, /label="Environment"/);
+  assert.match(settingsPage, /aria-label="Environment and access"/);
   assert.match(settingsPage, /label="Control store"/);
-  assert.match(settingsPage, /label="Current access"/);
-  assert.match(settingsPage, /label="Production access"/);
+  assert.match(settingsPage, /label="Your access"/);
+  assert.match(settingsPage, /label="Production"/);
   assert.match(settingsPage, /featureControls\.dataAvailable/);
   assert.match(settingsPage, /canControlProduction/);
   assert.match(settingsPage, /recentControlUpdates/);
@@ -82,7 +82,8 @@ test("settings shows truthful operator context without exposing secret configura
 test("settings keeps related operations and deployment-owned boundaries compact instead of duplicating System", () => {
   assert.match(settingsPage, /href="\/admin\/homepage-fares"/);
   assert.match(settingsPage, /Homepage Fare Operations/);
-  assert.match(settingsPage, /Managed outside Admin/);
+  assert.match(settingsPage, /Configuration ownership/);
+  assert.match(settingsPage, /Managed externally/);
   assert.match(settingsPage, /Runtime & credentials/);
   assert.match(settingsPage, /Admin access/);
   assert.doesNotMatch(settingsPage, /View system status|View admin configuration status|href="\/admin\/system"|href="\/admin\/logs"/);
@@ -100,7 +101,8 @@ test("settings feature controls remain grouped and mutation-safe after UI polish
 });
 
 test("feature-control interaction states stay explicit and safe", () => {
-  assert.match(featurePanel, /aria-pressed=\{control\.state\.enabled\}/);
+  assert.match(featurePanel, /role="switch"/);
+  assert.match(featurePanel, /aria-checked=\{control\.state\.enabled\}/);
   assert.match(featurePanel, /aria-label=\{\(control\.state\.enabled \? "Disable " : "Enable "\) \+ control\.name\}/);
   assert.match(featurePanel, /Production controls are view only for your account/);
   assert.match(featurePanel, /event\.key === "Escape" && !saving/);
@@ -125,4 +127,23 @@ test("feature-control network failures remain retryable without closing the dial
   assert.match(featurePanel, /finally \{/);
   assert.match(featurePanel, /setSaving\(false\)/);
   assert.match(featurePanel, /if \(!pending \|\| saving\) return/);
+});
+
+test("settings uses a single administrative workspace instead of dashboard cards", () => {
+  assert.match(settingsPage, /<AdminSectionCard className="overflow-hidden p-0">/);
+  assert.equal((settingsPage.match(/<AdminSectionCard/g) || []).length, 1);
+  assert.match(settingsPage, /border-t border-slate-200 px-4 py-5/);
+  assert.doesNotMatch(settingsPage, /SummaryItem|Recent control updates|Related operations|Deployment-owned configuration|Change safeguards/);
+  assert.match(settingsPage, /Recent changes/);
+  assert.match(settingsPage, /Protected changes/);
+});
+
+test("feature controls render as settings rows with switches instead of status pills", () => {
+  assert.match(featurePanel, /role="switch"/);
+  assert.match(featurePanel, /aria-checked=\{control\.state\.enabled\}/);
+  assert.match(featurePanel, /translate-x-6/);
+  assert.match(featurePanel, /translate-x-1/);
+  assert.match(featurePanel, /Enabled/);
+  assert.match(featurePanel, /Disabled/);
+  assert.doesNotMatch(featurePanel, /formatChangedDate|Changed \$\{/);
 });

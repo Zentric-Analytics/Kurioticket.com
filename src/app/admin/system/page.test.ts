@@ -81,7 +81,7 @@ test("System child routes use the same compact horizontal navigation", () => {
 
 test("settings owns authoritative feature controls", () => {
   assert.match(settingsPage, /title="Settings"/);
-  assert.match(settingsPage, /Platform controls/);
+  assert.match(settingsPage, /Feature controls/);
   assert.match(settingsPage, /FeatureControlsPanel/);
   assert.match(settingsPage, /listFeatureControls/);
   assert.match(settingsPage, /getFeatureControlProductionAdmins/);
