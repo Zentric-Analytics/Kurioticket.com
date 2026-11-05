@@ -20,10 +20,7 @@ export default async function AdminCmsHealthPage() {
   const overview = await getCmsHealthOverview();
 
   return (
-    <AdminPageShell
-      title="CMS Health"
-      description="Production integrity, fallback policy, ordering and unpublished-change diagnostics for every active CMS scope."
-    >
+    <AdminPageShell title="CMS Health" eyebrow="">
       {!overview.available ? (
         <AdminEmptyState
           title="CMS health unavailable"
@@ -31,31 +28,36 @@ export default async function AdminCmsHealthPage() {
         />
       ) : (
         <div className="space-y-5">
-          <section aria-label="CMS health summary" className="border-b border-[#D8E1EC] pb-4">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-              <div className="grid flex-1 grid-cols-2 gap-x-8 gap-y-4 sm:grid-cols-3">
-                <div className="min-w-0">
-                  <p className="text-[12px] text-[#64748B]">Healthy</p>
-                  <p className="mt-1 text-[15px] font-semibold tabular-nums text-emerald-700">
-                    {overview.totals.healthy}
-                  </p>
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[12px] text-[#64748B]">Needs attention</p>
-                  <p className={`mt-1 text-[15px] font-semibold tabular-nums ${overview.totals.unhealthy ? "text-amber-700" : "text-emerald-700"}`}>
-                    {overview.totals.unhealthy}
-                  </p>
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[12px] text-[#64748B]">Fallback active</p>
-                  <p className={`mt-1 text-[15px] font-semibold tabular-nums ${overview.totals.scopes - overview.totals.retiredFallback > 0 ? "text-amber-700" : "text-[#020617]"}`}>
-                    {overview.totals.scopes - overview.totals.retiredFallback}
-                  </p>
-                </div>
+          <section aria-label="CMS health summary" className="max-w-[720px] border-y border-[#D8E1EC]">
+            <div className="divide-y divide-[#E7ECF5]">
+              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-6 py-3">
+                <p className="flex items-center gap-2 text-[13px] font-medium text-emerald-700">
+                  <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                  Healthy
+                </p>
+                <p className="text-[14px] font-semibold tabular-nums text-[#020617]">{overview.totals.healthy}</p>
               </div>
-              <p className="shrink-0 text-[12px] text-[#64748B]">
-                Total records <span className="ml-1 font-medium tabular-nums text-[#334155]">{overview.totals.scopes}</span>
-              </p>
+              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-6 py-3">
+                <p className={`flex items-center gap-2 text-[13px] font-medium ${overview.totals.unhealthy ? "text-amber-700" : "text-emerald-700"}`}>
+                  <span
+                    aria-hidden="true"
+                    className={`h-1.5 w-1.5 rounded-full ${overview.totals.unhealthy ? "bg-amber-500" : "bg-emerald-500"}`}
+                  />
+                  Needs attention
+                </p>
+                <p className="text-[14px] font-semibold tabular-nums text-[#020617]">{overview.totals.unhealthy}</p>
+              </div>
+              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-6 py-3">
+                <p className="flex items-center gap-2 text-[13px] font-medium text-[#475569]">
+                  <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-slate-400" />
+                  Fallback retired
+                </p>
+                <p className="text-[14px] font-semibold tabular-nums text-[#020617]">{overview.totals.retiredFallback}</p>
+              </div>
+              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-6 py-3">
+                <p className="text-[13px] font-medium text-[#475569]">Total records</p>
+                <p className="text-[14px] font-semibold tabular-nums text-[#020617]">{overview.totals.scopes}</p>
+              </div>
             </div>
           </section>
 
@@ -101,7 +103,7 @@ export default async function AdminCmsHealthPage() {
 
                   const needsAttention = entries.filter((entry) => !entry.integrity.healthy).length;
                   const healthy = entries.length - needsAttention;
-                  const fallbackActive = entries.filter((entry) => !entry.integrity.legacyFallbackRetired).length;
+                  const fallbackRetired = entries.filter((entry) => entry.integrity.legacyFallbackRetired).length;
 
                   return (
                     <details
@@ -121,9 +123,7 @@ export default async function AdminCmsHealthPage() {
                             {needsAttention ? `${needsAttention} need attention` : "Healthy"}
                           </AdminStatusBadge>
                           <span className="text-[12px] text-[#64748B]">
-                            {fallbackActive === 0
-                              ? "Fallback retired"
-                              : `${fallbackActive} fallback active`}
+                            {fallbackRetired} fallback retired
                           </span>
                           <span aria-hidden="true" className="text-[16px] leading-none text-[#64748B] transition-transform group-open:rotate-180">⌄</span>
                         </div>
