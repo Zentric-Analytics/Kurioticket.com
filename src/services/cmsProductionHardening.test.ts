@@ -15,6 +15,7 @@ const faqDetail = readFileSync("src/app/admin/content/faqs/[id]/page.tsx", "utf8
 const homepageDetail = readFileSync("src/app/admin/content/homepage/[section]/[id]/page.tsx", "utf8");
 const faqEditor = readFileSync("src/components/admin/FaqCmsEditor.tsx", "utf8");
 const homepageEditor = readFileSync("src/components/admin/HomepageCmsEditor.tsx", "utf8");
+const hardeningActions = readFileSync("src/components/admin/CmsScopeHardeningActions.tsx", "utf8");
 const contentPage = readFileSync("src/app/admin/content/page.tsx", "utf8");
 
 test("CMS hardening schema adds restore/order actions and versioned fallback policy", () => {
@@ -102,11 +103,25 @@ test("CMS health reports integrity, ordering, fallback and unpublished changes",
   assert.match(healthPage, /open=\{needsAttention > 0\}/);
   assert.match(healthPage, /getCmsMarketName/);
   assert.match(healthPage, /getCmsLocaleName/);
-  assert.match(healthPage, /columns=\{\["CMS market", "Health", "Integrity", "Fallback", "Draft changes", "Actions"\]\}/);
+  assert.match(healthPage, />CMS market</);
+  assert.match(healthPage, />Legacy fallback</);
+  assert.match(healthPage, />Draft changes</);
+  assert.doesNotMatch(healthPage, /AdminDataTable/);
+  assert.match(healthPage, /table-fixed text-left text-\[13px\]/);
   assert.match(healthPage, /\{getCmsMarketName\(entry\.market\)\}/);
   assert.match(healthPage, /\{getCmsLocaleName\(entry\.locale\)\}/);
   assert.match(healthPage, /\{entry\.market\} · \{entry\.locale\} · v\{integrity\.scopeVersion \?\? "—"\}/);
+  assert.doesNotMatch(healthPage, /<small>|<\/small>/);
   assert.doesNotMatch(healthPage, /font-black text-slate-950">\{entry\.type\}/);
+  assert.match(healthPage, /integrity\.healthy \? \(/);
+  assert.match(healthPage, />No issues</);
+  assert.match(healthPage, /integrity\.unpublishedChanges === 0/);
+  assert.match(healthPage, /\? "None"/);
+  assert.match(healthPage, /integrity\.invalidDrafts\.length > 0/);
+  assert.match(healthPage, /integrity\.orphanPublished\.length > 0/);
+  assert.match(healthPage, /integrity\.publishedOrderCollisions\.length > 0/);
+  assert.match(hardeningActions, /draftOrderNeedsNormalization \|\| draftOrderCollisionCount > 0 \? \(/);
+  assert.doesNotMatch(hardeningActions, /disabled=\{pending \|\| \(!draftOrderNeedsNormalization && draftOrderCollisionCount === 0\)\}/);
   const diagnostic = readFileSync("src/lib/adminCmsScopeDiagnostics.ts", "utf8");
   assert.match(diagnostic, /for \(const market of new Set\(markets\)\)/);
   assert.match(diagnostic, /type: "HOMEPAGE_DESTINATION"/);
