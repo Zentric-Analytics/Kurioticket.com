@@ -175,4 +175,3 @@ test("settings presents the Deals feature flag as Packages without changing the 
   assert.doesNotMatch(featurePanel, /Controls Deals availability\./);
   assert.match(registry, /DEALS_ENABLED/);
 });
-
