@@ -63,3 +63,53 @@ test("homepage fare refresh refuses to run without an authoritative database", (
   assert.match(service, /error instanceof DatabaseUnavailableError/);
   assert.match(service, /Database is unavailable or misconfigured/);
 });
+
+
+test("homepage fare operations follows the production operator hierarchy", () => {
+  const readiness = component.indexOf('title="Readiness overview"');
+  const refresh = component.indexOf('title="Refresh operations"');
+  const markets = component.indexOf('title="Public market coverage"');
+  const routes = component.indexOf('title="Route inspector"');
+  const diagnostics = component.indexOf('title="Why markets are not ready"');
+  const advanced = component.indexOf("Advanced diagnostics");
+
+  assert.ok(readiness >= 0);
+  assert.ok(refresh > readiness);
+  assert.ok(markets > refresh);
+  assert.ok(routes > markets);
+  assert.ok(diagnostics > routes);
+  assert.ok(advanced > diagnostics);
+});
+
+test("homepage fare operations removes duplicated market and fallback presentations", () => {
+  assert.doesNotMatch(component, /Homepage fare readiness dashboard/);
+  assert.doesNotMatch(component, /Global readiness at a glance/);
+  assert.doesNotMatch(component, /Grouped Market Route Inspector/);
+  assert.doesNotMatch(component, /Fallback-only coverage pools/);
+  assert.doesNotMatch(component, /Fallback-only debugging pools/);
+  assert.doesNotMatch(component, /Raw debug \/ View All details/);
+  assert.doesNotMatch(component, /function MarketRouteGroupCard/);
+  assert.doesNotMatch(component, /function FallbackPoolsSection/);
+  assert.doesNotMatch(component, /function RawDebugDetails/);
+});
+
+test("homepage fare readiness keeps only core customer-facing summary metrics", () => {
+  assert.match(component, /label="Fresh fares"/);
+  assert.match(component, /label="Last-known-good"/);
+  assert.match(component, /label="Missing routes"/);
+  assert.match(component, /label="Failed \/ unavailable"/);
+  assert.match(component, /label="Markets needing attention"/);
+  assert.doesNotMatch(component, /SummaryMetricCard label="Provider calls \(manual run\)"/);
+  assert.doesNotMatch(component, /SummaryMetricCard label="Cron credential"/);
+  assert.match(component, /CompactDetail label="Provider calls \(manual run\)"/);
+  assert.match(component, /CompactDetail label="Cron credential"/);
+});
+
+test("advanced diagnostics keeps fallback and executor data available without dominating the main flow", () => {
+  assert.match(component, /<details className="rounded-2xl border border-border bg-white p-4">/);
+  assert.match(component, />Advanced diagnostics<\/summary>/);
+  assert.match(component, /Fallback coverage pools/);
+  assert.match(component, /Executor details/);
+  assert.match(component, /Configured routes/);
+  assert.match(component, /Visible gaps attempted/);
+});
