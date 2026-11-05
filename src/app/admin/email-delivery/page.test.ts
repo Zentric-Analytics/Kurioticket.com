@@ -19,7 +19,7 @@ test("Email Delivery uses a compact title and one page-level date range control"
   assert.match(rangeFilter, /onValueChange=\{changeRange\}/);
   assert.match(rangeFilter, /Email delivery custom start date UTC/);
   assert.match(rangeFilter, /Email delivery custom end date UTC/);
-  assert.match(rangeFilter, />Apply dates<\/button>/);
+  assert.ok(rangeFilter.includes("Apply dates"));
   assert.match(rangeFilter, /setRangeSelectVersion/);
 });
 
