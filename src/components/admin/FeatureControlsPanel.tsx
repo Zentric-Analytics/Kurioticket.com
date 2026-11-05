@@ -14,11 +14,6 @@ type Control = {
   state: { enabled: boolean; updatedAt: string | null };
 };
 
-function formatChangedDate(value: string | null) {
-  if (!value) return "Registry default";
-  return "Changed " + new Date(value).toLocaleDateString();
-}
-
 export function FeatureControlsPanel({
   initialControls,
   environment,
@@ -118,16 +113,11 @@ export function FeatureControlsPanel({
 
       {categories.map((category) => (
         <section key={category} aria-labelledby={"settings-" + category.toLowerCase().replaceAll(" ", "-")}>
-          <div className="flex items-center justify-between gap-3">
-            <h3 id={"settings-" + category.toLowerCase().replaceAll(" ", "-")} className="text-sm font-semibold text-slate-950">
-              {category}
-            </h3>
-            <span className="text-[11px] font-medium text-slate-500">
-              {controls.filter((control) => control.category === category).length} controls
-            </span>
-          </div>
+          <h3 id={"settings-" + category.toLowerCase().replaceAll(" ", "-")} className="text-sm font-semibold text-slate-950">
+            {category}
+          </h3>
 
-          <div className="mt-2 overflow-hidden rounded-xl border border-slate-200 bg-white">
+          <div className="mt-2 divide-y divide-slate-100 border-y border-slate-200">
             {controls
               .filter((control) => control.category === category)
               .map((control, index, group) => {
@@ -135,38 +125,40 @@ export function FeatureControlsPanel({
                 return (
                   <article
                     key={control.key}
-                    className={"flex min-w-0 flex-col gap-3 px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-4 " + (index < group.length - 1 ? "border-b border-slate-100" : "")}
+                    className="flex min-w-0 flex-col gap-3 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:gap-6"
                   >
-                    <div className="min-w-0 sm:max-w-[70%]">
-                      <div className="flex min-w-0 flex-wrap items-center gap-2">
-                        <h4 className="text-[13px] font-semibold text-slate-950">{control.name}</h4>
-                        <span className="text-[10px] font-semibold uppercase tracking-[0.06em] text-slate-500">
-                          {control.risk} risk · {control.kind}
-                        </span>
-                      </div>
+                    <div className="min-w-0 sm:max-w-[72%]">
+                      <h4 className="text-[13px] font-semibold text-slate-950">{control.name}</h4>
                       <p className="mt-1 text-[12px] leading-5 text-slate-600">{control.description}</p>
+                      <p className="mt-1.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-slate-500">
+                        {control.risk} · {control.kind}
+                      </p>
                     </div>
 
-                    <div className="flex shrink-0 items-center gap-3 sm:justify-end">
-                      <div className="text-right">
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.06em] text-slate-500">{environment}</p>
-                        <p className="mt-0.5 text-[10px] text-slate-400">{formatChangedDate(control.state.updatedAt)}</p>
-                      </div>
+                    <div className="flex shrink-0 items-center justify-between gap-3 sm:justify-end">
+                      <span className={"text-[12px] font-semibold " + (control.state.enabled ? "text-emerald-700" : "text-slate-500")}>
+                        {control.state.enabled ? "Enabled" : "Disabled"}
+                      </span>
                       <button
                         type="button"
-                        aria-pressed={control.state.enabled}
+                        role="switch"
+                        aria-checked={control.state.enabled}
                         aria-label={(control.state.enabled ? "Disable " : "Enable ") + control.name}
                         disabled={!permitted}
                         onClick={() => setPending({ control, enabled: !control.state.enabled })}
                         className={
-                          "inline-flex h-8 min-w-20 items-center justify-center rounded-full px-3 text-[12px] font-semibold transition-colors " +
-                          (control.state.enabled
-                            ? "bg-emerald-100 text-emerald-800 hover:bg-emerald-200"
-                            : "bg-slate-200 text-slate-700 hover:bg-slate-300") +
+                          "relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/30 " +
+                          (control.state.enabled ? "bg-emerald-600" : "bg-slate-300") +
                           " disabled:cursor-not-allowed disabled:opacity-50"
                         }
                       >
-                        {control.state.enabled ? "Enabled" : "Disabled"}
+                        <span
+                          aria-hidden="true"
+                          className={
+                            "inline-block h-4 w-4 rounded-full bg-white shadow-sm transition-transform " +
+                            (control.state.enabled ? "translate-x-6" : "translate-x-1")
+                          }
+                        />
                       </button>
                     </div>
                   </article>
