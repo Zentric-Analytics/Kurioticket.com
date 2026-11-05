@@ -66,7 +66,8 @@ export default async function AdminContentPage() {
 
   return (
     <ContentPageFrame title="Content" visuallyHideTitle>
-      <div className="space-y-4">
+      <div className="min-[1100px]:flex min-[1100px]:min-h-[calc(100dvh-var(--admin-header-height,120px)-40px)] min-[1100px]:items-center">
+        <div className="mx-auto w-full max-w-[900px] space-y-4">
         {homepageNeedsSetup ? (
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50/60 px-4 py-3">
             <p className="text-[13px] text-[#475569]">Some homepage content markets need CMS setup.</p>
@@ -106,6 +107,7 @@ export default async function AdminContentPage() {
             );
           })}
         </nav>
+        </div>
       </div>
     </ContentPageFrame>
   );

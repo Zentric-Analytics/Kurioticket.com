@@ -5,6 +5,8 @@ import { ArrowUpRight } from "lucide-react";
 import { ContentRecordsTable, ContentStatusPill } from "@/components/admin/ContentWorkspace";
 
 import type { HomepageCmsSection } from "@/lib/adminHomepageCms";
+import { getCmsUnpublishedChangeLabel } from "@/lib/adminCmsPublicationStatus";
+import { getCmsMarketName } from "@/lib/adminCmsMarketLabels";
 
 type CmsListItem = {
   id: string;
@@ -15,6 +17,11 @@ type CmsListItem = {
   publishedVersion: number | null;
   updatedAt: string;
   draftPayload: unknown;
+  publishedPayload: unknown;
+  publishedMarket: string | null;
+  locale: string;
+  publishedLocale: string | null;
+  publishedSortOrder: number | null;
 };
 
 function readSummary(section: HomepageCmsSection, value: unknown) {
@@ -61,7 +68,7 @@ export function HomepageCmsListClient({
           columns={["Content", "Market", "Status", "Order", "Version", "Updated", "Action"]}
           rows={items.map((item) => {
             const summary = readSummary(section, item.draftPayload);
-            const unpublished = item.publishedVersion !== null && item.version !== item.publishedVersion;
+            const unpublishedLabel = getCmsUnpublishedChangeLabel(item);
             return {
               id: item.id,
               cells: [
@@ -69,10 +76,10 @@ export function HomepageCmsListClient({
                   <p className="text-[13px] font-medium text-[#111827]">{summary.title}</p>
                   <p className="mt-1 text-xs leading-5 text-slate-500">{summary.detail || "—"}</p>
                 </div>,
-                item.market,
+                getCmsMarketName(item.market),
                 <div key="status" className="space-y-1">
                   <ContentStatusPill status={item.status} inline />
-                  {unpublished ? <p className="text-[12px] font-medium text-amber-700">Unpublished changes</p> : null}
+                  {unpublishedLabel ? <p className="text-[12px] font-medium text-amber-700">{unpublishedLabel}</p> : null}
                 </div>,
                 item.sortOrder,
                 `v${item.version}`,

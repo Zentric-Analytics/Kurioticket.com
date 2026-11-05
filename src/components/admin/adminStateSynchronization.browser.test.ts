@@ -3,6 +3,7 @@ import test from "node:test";
 import { componentBundle, withComponentBrowser } from "../../test-support/componentBrowser";
 
 const entries = {
+  audit: "src/components/admin/AdminAuditLogsToolbar.tsx",
   activity: "src/components/admin/ActivityFiltersBar.tsx",
   providers: "src/components/admin/ProviderHealthWindowFilter.tsx",
   monitor: "src/components/admin/SearchMonitorSelect.tsx",
@@ -156,5 +157,44 @@ test("CMS acknowledgements with unchanged search do not restart the existing deb
     assert.equal(url.searchParams.get("q"), "draft search");
     assert.equal(url.searchParams.get("status"), "DRAFT");
     assert.equal(url.searchParams.get("from"), "overview");
+  });
+});
+
+test("CMS all-market navigation preserves draft search, selected market and overview scope", async () => {
+  const props = { path: "/admin/content/homepage/destinations", query: "market=ALL&from=overview&cursor=old", status: "", market: "ALL", markets: ["US", "CANADA"], searchLabel: "Search content", children: "Records" };
+  await withComponentBrowser(bundle(), mount("content", "ContentDirectoryToolbar", props), async page => {
+    assert.equal(await page.getByRole("link", { name: "Clear filters", exact: true }).count(), 0);
+    const input = page.getByRole("searchbox", { name: "Search content", exact: true });
+    await input.fill("draft market search");
+    await page.getByRole("combobox", { name: "Content market", exact: true }).click();
+    await page.getByRole("option", { name: "Canada", exact: true }).click();
+    const href = await page.evaluate(() => (window as unknown as { fixtureNavigation: string[] }).fixtureNavigation.at(-1)!);
+    const url = new URL(href, "http://fixture.local");
+    assert.equal(url.searchParams.get("market"), "CANADA");
+    assert.equal(url.searchParams.get("q"), "draft market search");
+    assert.equal(url.searchParams.get("from"), "overview");
+    assert.equal(url.searchParams.get("cursor"), null);
+  });
+});
+
+test("Audit Logs preserves same-scope drafts, synchronizes committed filters and cancels custom dates", async () => {
+  const props = { action: "", adminEmail: "", targetType: "", targetEmail: "", range: "7d", fromDate: "2030-01-01", toDate: "2030-01-02", pageHref: "/admin/logs?range=7d" };
+  await withComponentBrowser(bundle(), mount("audit", "AdminAuditLogsToolbar", props), async page => {
+    const admin = page.getByRole("searchbox", { name: "Admin email", exact: true });
+    await admin.fill("draft@example.test");
+    await page.evaluate(props => (window as unknown as { fixtureRender: (props: unknown) => void }).fixtureRender(props), props);
+    assert.equal(await admin.inputValue(), "draft@example.test");
+    await page.getByRole("combobox", { name: "Date range", exact: true }).click();
+    await page.getByRole("option", { name: "Custom range", exact: true }).click();
+    await page.getByLabel("Custom start date UTC", { exact: true }).fill("2030-01-03");
+    await page.evaluate(props => (window as unknown as { fixtureRender: (props: unknown) => void }).fixtureRender(props), { ...props, adminEmail: "server@example.test", pageHref: "/admin/logs?range=7d&action=CMS", action: "CMS" });
+    await page.waitForFunction(() => (document.querySelector('input[placeholder="Search admin email"]') as HTMLInputElement)?.value === "server@example.test");
+    assert.equal(await page.getByLabel("Custom start date UTC", { exact: true }).inputValue(), "2030-01-03", "committed filters must not erase open date editing");
+    await page.getByRole("button", { name: "Cancel", exact: true }).click();
+    assert.equal(await page.getByLabel("Custom start date UTC", { exact: true }).count(), 0);
+    await page.getByRole("combobox", { name: "Date range", exact: true }).click();
+    await page.getByRole("option", { name: "Custom range", exact: true }).click();
+    assert.equal(await page.getByLabel("Custom start date UTC", { exact: true }).inputValue(), props.fromDate);
+    assert.deepEqual(await page.evaluate(() => (window as unknown as { fixtureNavigation: string[] }).fixtureNavigation), [], "editing and cancel never submit filters");
   });
 });

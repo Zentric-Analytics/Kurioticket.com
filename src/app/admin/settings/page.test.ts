@@ -9,16 +9,14 @@ const featurePanel = readFileSync("src/components/admin/FeatureControlsPanel.tsx
 const featureApi = readFileSync("src/app/api/admin/feature-controls/route.ts", "utf8");
 const featureService = readFileSync("src/lib/feature-controls/service.ts", "utf8");
 const fareRefreshApi = readFileSync("src/app/api/admin/homepage-fares/refresh/route.ts", "utf8");
-const toggle = () => jsxOpening(featurePanel, "button").find(button => button.getText().includes("aria-pressed={control.state.enabled}"))!.getText();
+const toggle = () => jsxOpening(featurePanel, "button").find(button => button.getText().includes("aria-checked={control.state.enabled}"))!.getText();
 const confirmation = () => jsxOpening(featurePanel, "button").find(button => button.getText().includes("onClick={submit}"))!.getText();
 
 test("settings exposes real persisted controls rather than fake toggles", () => {
-  assert.match(settingsPage, /Manage persisted platform controls/);
-  assert.match(settingsPage, />Platform controls<\/h2>/);
-  assert.match(settingsPage, />Recent control updates<\/h2>/);
-  assert.match(settingsPage, />Related operations<\/h2>/);
-  assert.match(settingsPage, />Deployment-owned configuration<\/h2>/);
-  assert.match(settingsPage, />Change safeguards<\/h2>/);
+  assert.match(settingsPage, />Feature controls<\/h2>/);
+  assert.match(settingsPage, />Operations<\/h2>/);
+  assert.match(settingsPage, />Configuration ownership<\/h2>/);
+  assert.match(settingsPage, />Recent changes<\/h2>/);
   assert.match(settingsPage, /FeatureControlsPanel/);
   assert.match(settingsPage, /listFeatureControls\(\)/);
   assert.match(featureService, /featureFlag\.findMany/);
@@ -26,7 +24,7 @@ test("settings exposes real persisted controls rather than fake toggles", () => 
   assert.match(featurePanel, /fetch\("\/api\/admin\/feature-controls"/);
   assert.match(featurePanel, /Array\.from\(new Set\(controls\.map\(\(control\) => control\.category\)\)\)/);
   assert.match(featurePanel, /Travel Search|category/);
-  assert.match(featurePanel, /controls\.filter\(\(control\) => control\.category === category\)/);
+  assert.match(featurePanel, /controls\s*\.filter\(\(control\) => control\.category === category\)/);
 });
 
 test("production feature-control changes keep strong authorization", () => {
@@ -55,7 +53,7 @@ test("settings disables mutation when authoritative feature store is unavailable
 });
 
 test("deployment secrets are explicitly outside admin Settings", () => {
-  assert.match(settingsPage, /Secrets and runtime credentials remain deployment-owned/);
+  assert.match(settingsPage, /Admin allowlists and production feature-controller permissions remain in server configuration/);
   assert.match(settingsPage, /Database URLs, API keys, session secrets, provider credentials and server environment variables are not editable here/);
   assert.doesNotMatch(settingsPage, /process\.env\./);
   assert.doesNotMatch(featurePanel, /API key|database URL|session secret/i);
@@ -70,13 +68,13 @@ test("homepage fare operations preserve the existing audited mutation path", () 
 });
 
 
-test("settings shows truthful operator context without exposing secret configuration", () => {
-  assert.match(settingsPage, /label="Environment"/);
-  assert.match(settingsPage, /label="Control store"/);
-  assert.match(settingsPage, /label="Current access"/);
-  assert.match(settingsPage, /label="Production access"/);
+test("settings starts directly with feature controls while keeping permission logic underneath", () => {
+  assert.match(settingsPage, /<AdminPageShell title="Settings" hideHeader>/);
+  assert.doesNotMatch(settingsPage, /aria-label="Environment and access"|ContextItem|Store available|Can edit Staging|Can edit Production|Manage platform controls and operational configuration/);
   assert.match(settingsPage, /featureControls\.dataAvailable/);
   assert.match(settingsPage, /canControlProduction/);
+  assert.match(settingsPage, /environment=\{featureControls\.environment\}/);
+  assert.match(settingsPage, /operationsAvailable=\{featureControls\.dataAvailable\}/);
   assert.match(settingsPage, /recentControlUpdates/);
   assert.match(settingsPage, /No persisted control updates yet/);
   assert.doesNotMatch(settingsPage, /updatedBy|change reason|admin email address/i);
@@ -85,7 +83,8 @@ test("settings shows truthful operator context without exposing secret configura
 test("settings keeps related operations and deployment-owned boundaries compact instead of duplicating System", () => {
   assert.match(settingsPage, /href="\/admin\/homepage-fares"/);
   assert.match(settingsPage, /Homepage Fare Operations/);
-  assert.match(settingsPage, /Managed outside Admin/);
+  assert.match(settingsPage, /Configuration ownership/);
+  assert.match(settingsPage, /Managed externally/);
   assert.match(settingsPage, /Runtime & credentials/);
   assert.match(settingsPage, /Admin access/);
   assert.doesNotMatch(settingsPage, /View system status|View admin configuration status|href="\/admin\/system"|href="\/admin\/logs"/);
@@ -103,7 +102,8 @@ test("settings feature controls remain grouped and mutation-safe after UI polish
 });
 
 test("feature-control interaction states stay explicit and safe", () => {
-  assert.match(featurePanel, /aria-pressed=\{control\.state\.enabled\}/);
+  assert.match(featurePanel, /role="switch"/);
+  assert.match(featurePanel, /aria-checked=\{control\.state\.enabled\}/);
   assert.match(featurePanel, /aria-label=\{\(control\.state\.enabled \? "Disable " : "Enable "\) \+ control\.name\}/);
   assert.match(featurePanel, /Production controls are view only for your account/);
   assert.match(featurePanel, /event\.key === "Escape" && !saving/);
@@ -131,3 +131,48 @@ test("feature-control network failures remain retryable without closing the dial
   assert.match(featurePanel, /setSaving\(false\)/);
   assert.match(namedFunction(featurePanel, "submit"), /if \(!pending \|\| saving \|\| !permitted\) return/);
 });
+test("settings uses a single administrative workspace instead of dashboard cards", () => {
+  assert.match(settingsPage, /<AdminSectionCard className="overflow-hidden p-0">/);
+  assert.match(settingsPage, /<section aria-labelledby="feature-controls-heading" className="px-4 py-5 sm:px-5">/);
+  assert.equal((settingsPage.match(/<AdminSectionCard/g) || []).length, 1);
+  assert.match(settingsPage, /border-t border-slate-200 px-4 py-5/);
+  assert.doesNotMatch(settingsPage, /SummaryItem|Recent control updates|Related operations|Deployment-owned configuration|Change safeguards|Protected changes|Persisted feature state|Turn major travel functions on or off/);
+  assert.match(settingsPage, /Recent changes/);
+});
+
+test("feature controls render as settings rows with switches instead of status pills", () => {
+  assert.match(featurePanel, /role="switch"/);
+  assert.match(featurePanel, /aria-checked=\{control\.state\.enabled\}/);
+  assert.match(featurePanel, /translate-x-6/);
+  assert.match(featurePanel, /translate-x-1/);
+  assert.match(featurePanel, /Enabled/);
+  assert.match(featurePanel, /Disabled/);
+  assert.doesNotMatch(featurePanel, /formatChangedDate|Changed \$\{/);
+});
+
+test("settings keeps only concise production-facing helper copy", () => {
+  assert.doesNotMatch(settingsPage, /Turn major travel functions on or off\. Every change requires confirmation\./);
+  assert.doesNotMatch(settingsPage, /Provider-backed homepage fare readiness and refresh\./);
+  assert.doesNotMatch(settingsPage, /Persisted feature state/);
+  assert.doesNotMatch(settingsPage, /Protected changes|Production authorization|Recent reauthentication|No secrets exposed/);
+  assert.match(featurePanel, /Controls flight search availability\./);
+  assert.match(featurePanel, /Controls hotel search availability\./);
+  assert.match(featurePanel, /Controls car search availability\./);
+  assert.match(featurePanel, /Controls Packages availability\./);
+  assert.match(featurePanel, /Controls price-alert creation and reactivation\./);
+  assert.match(featurePanel, /Controls automatic price checks and alert delivery\./);
+});
+
+test("confirmation dialog keeps full registry descriptions even when settings rows are concise", () => {
+  assert.match(featurePanel, /controlRowSummaries\[control\.key\]/);
+  assert.match(featurePanel, /<p className="mt-3 text-\[13px\] leading-5 text-slate-600">\{pending\.control\.description\}<\/p>/);
+});
+
+test("settings presents the Deals feature flag as Packages without changing the internal key", () => {
+  const registry = readFileSync("src/lib/feature-controls/registry.ts", "utf8");
+  assert.match(registry, /DEALS_ENABLED: control\("Packages", "Controls Packages entry points/);
+  assert.match(featurePanel, /DEALS_ENABLED: "Controls Packages availability\."/);
+  assert.doesNotMatch(featurePanel, /Controls Deals availability\./);
+  assert.match(registry, /DEALS_ENABLED/);
+});
+

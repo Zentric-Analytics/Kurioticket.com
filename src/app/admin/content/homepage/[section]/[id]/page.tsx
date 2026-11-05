@@ -7,6 +7,7 @@ import { CmsRevisionRestoreButton } from "@/components/admin/CmsRevisionRestoreB
 import { hotelDestinations } from "@/data/hotelDestinations";
 import { getHomepageCmsSection, homepageCmsSections } from "@/lib/adminHomepageCms";
 import { homepageCmsListNavigation } from "@/lib/adminContentNavigation";
+import { getCmsMarketName } from "@/lib/adminCmsMarketLabels";
 import { CmsContentError, getAdminCmsContent } from "@/services/cmsContentService";
 import { homepageCmsMarkets } from "@/services/homepageCmsService";
 
@@ -56,18 +57,18 @@ export default async function HomepageCmsDetailPage({ params, searchParams }: Pa
           </div>
           <div className="divide-y divide-[#E7ECF5]">
             {result.revisions.map((revision) => (
-              <div key={revision.id} className="grid gap-3 py-4 lg:grid-cols-[90px_130px_100px_minmax(0,1fr)_200px_150px]">
+              <div key={revision.id} className="grid gap-3 py-4 lg:grid-cols-[72px_130px_140px_140px_200px_minmax(0,1fr)]">
                 <div>
                   <p className="text-[12px] font-medium text-[#64748B]">Version</p>
                   <p className="mt-1 text-[13px] font-semibold text-[#111827]">v{revision.version}</p>
                 </div>
                 <div>
                   <p className="text-[12px] font-medium text-[#64748B]">Action</p>
-                  <div className="mt-1"><ContentStatusPill status={revision.action} /></div>
+                  <div className="mt-1 flex"><ContentStatusPill status={revision.action} /></div>
                 </div>
                 <div>
                   <p className="text-[12px] font-medium text-[#64748B]">Market</p>
-                  <p className="mt-1 text-[13px] font-medium text-[#334155]">{revision.market}</p>
+                  <p className="mt-1 text-[13px] font-medium text-[#334155]">{getCmsMarketName(revision.market)}</p>
                 </div>
                 <div>
                   <p className="text-[12px] font-medium text-[#64748B]">Snapshot</p>

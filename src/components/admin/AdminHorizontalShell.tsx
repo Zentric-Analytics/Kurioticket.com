@@ -2,11 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
-import { Bell, ChevronDown, LogOut, Menu, Settings, ShieldCheck, X, Building2 } from "lucide-react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import type { RefObject } from "react";
+import { ChevronDown, LogOut, Menu, Settings, ShieldCheck, X, Building2 } from "lucide-react";
 import { getAdminHeaderGroups, isAdminNavItemActive, type AdminRole } from "@/lib/adminNavigation";
 import { KurioticketLogo } from "@/components/brand/KurioticketLogo";
 import { AdminWorkspaceSearchProvider, AdminSearchTrigger, AdminSearchHeader, AdminSearchContent } from "./AdminWorkspaceSearch";
+
+import { AdminNotificationsPanel } from "./AdminNotificationsPanel";
 
 type HeaderGroup = ReturnType<typeof getAdminHeaderGroups>[number];
 type HeaderEntry = HeaderGroup["links"][number];
@@ -46,36 +49,59 @@ function Navigation({ groups, pathname, mobile = false, close }: { groups: Heade
   </nav>;
 }
 
-/**
- * System's secondary pages are real routes, not panels inside /admin/system.
- * Keep their navigation visible on each child route without a floating menu.
- */
-function SystemSectionTabs({ entries, pathname }: { entries: HeaderEntry["children"]; pathname: string }) {
-  const tabs = [
-    { href: "/admin/system", label: "System Status" },
-    ...entries.map((entry) => ({
-      href: entry.href,
-      label: entry.href === "/admin/notifications" ? "Alerts" : entry.label,
-    })),
-  ];
+function AdminHeaderMenus({ adminEmail, adminName, role, headerRef }: {
+  adminEmail?: string | null;
+  adminName?: string | null;
+  role: AdminRole;
+  headerRef: RefObject<HTMLElement | null>;
+}) {
+  const [openMenu, setOpenMenu] = useState<"profile" | "notifications" | null>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const notificationTriggerRef = useRef<HTMLButtonElement>(null);
+  const profileTriggerRef = useRef<HTMLButtonElement>(null);
+  const name = adminName || adminEmail || "Admin";
+  const initial = name.slice(0, 1).toUpperCase();
 
-  return (
-    <nav aria-label="System sections" className="min-w-0 border-b border-[#D8E1EC] bg-white">
-      <div className="flex min-w-0 items-center gap-6 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {tabs.map((tab) => {
-            const active = pathname === tab.href || pathname === tab.href + "/" ||
-              (tab.href !== "/admin/system" && pathname.startsWith(tab.href + "/"));
-            return (
-              <Link key={tab.href} href={tab.href} aria-current={active ? "page" : undefined}
-                className={"inline-flex h-11 shrink-0 items-center whitespace-nowrap border-b-2 px-1 text-[13px] font-medium text-[#020617] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] " +
-                  (active ? "border-[#004BB8]" : "border-transparent hover:border-[#D8E1EC]")}>
-                {tab.label}
-              </Link>
-            );
-          })}
-      </div>
-    </nav>
-  );
+  useEffect(() => {
+    if (!openMenu) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      if (openMenu === "notifications") notificationTriggerRef.current?.focus();
+      else profileTriggerRef.current?.focus();
+      setOpenMenu(null);
+    };
+    const onPointer = (event: PointerEvent) => {
+      // The notification panel remains beside the page until explicitly closed.
+      if (openMenu === "profile" && event.target instanceof Node && !rootRef.current?.contains(event.target)) setOpenMenu(null);
+    };
+    document.addEventListener("keydown", onKey);
+    document.addEventListener("pointerdown", onPointer);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.removeEventListener("pointerdown", onPointer);
+    };
+  }, [openMenu]);
+
+  return <div ref={rootRef} className="flex items-center gap-2 sm:gap-3">
+    {role === "ADMIN" ? <AdminNotificationsPanel
+      open={openMenu === "notifications"}
+      onToggle={() => setOpenMenu(value => value === "notifications" ? null : "notifications")}
+      onClose={() => { setOpenMenu(null); notificationTriggerRef.current?.focus(); }}
+      headerRef={headerRef}
+      triggerRef={notificationTriggerRef}
+    /> : null}
+    <div className="relative">
+      <button ref={profileTriggerRef} type="button" onClick={() => setOpenMenu(value => value === "profile" ? null : "profile")} aria-expanded={openMenu === "profile"} aria-label="Admin profile"
+        className="flex items-center gap-2 rounded-xl p-1.5 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6D28D9]/30">
+        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-sm font-bold text-indigo-700">{initial}</span>
+        <ChevronDown size={15} className="text-slate-500" aria-hidden="true" />
+      </button>
+      {openMenu === "profile" ? <div className="absolute right-0 top-full z-50 mt-2 w-64 overflow-hidden rounded-xl border border-slate-200 bg-white p-2 shadow-xl">
+        <div className="border-b border-slate-100 px-3 py-2"><p className="truncate text-sm font-semibold">{name}</p><p className="truncate text-xs text-slate-500">{adminEmail || role}</p><p className="mt-1 text-xs font-semibold text-indigo-700">{role}</p></div>
+        {([{ href: "/admin/settings", label: "Admin settings", icon: Settings }, { href: "/admin/logs", label: "Audit Logs", icon: ShieldCheck }, { href: "/", label: "Switch to public site", icon: Building2 }, { href: "/api/auth/signout", label: "Logout", icon: LogOut }]).map(({ href, label, icon: Icon }) => <Link key={href} href={href} onClick={() => setOpenMenu(null)} className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"><Icon size={16} aria-hidden="true" />{label}</Link>)}
+      </div> : null}
+    </div>
+  </div>;
 }
 
 export function AdminHorizontalShell({ children, adminEmail, adminName, adminRole, showPreviewTesters = false }: {
@@ -84,64 +110,33 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
   const role: AdminRole = adminRole === "SUPPORT" || adminRole === "USER" ? adminRole : "ADMIN";
   const groups = getAdminHeaderGroups(role, showPreviewTesters);
   const pathname = usePathname();
-  const systemChildren = groups.flatMap((group) => group.links).find((entry) => entry.item.href === "/admin/system")?.children ?? [];
-  const systemSectionsVisible = pathname === "/admin/system" || pathname === "/admin/system/" ||
-    systemChildren.some((entry) => pathname === entry.href || pathname.startsWith(entry.href + "/"));
-
+  const contentLanding = pathname === "/admin/content" || pathname === "/admin/content/";
+  const workspaceRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [profileOpen, setProfileOpen] = useState(false);
-  const [unreadAlertCount, setUnreadAlertCount] = useState<number | null>(null);
-  const name = adminName || adminEmail || "Admin";
-  const initial = name.slice(0, 1).toUpperCase();
+  // Measure before paint to prevent the card hub from jumping when desktop navigation wraps.
+  useLayoutEffect(() => {
+    if (!contentLanding || !headerRef.current || !workspaceRef.current) return;
+    const header = headerRef.current;
+    const workspace = workspaceRef.current;
+    const updateHeaderHeight = () => {
+      workspace.style.setProperty("--admin-header-height", `${header.getBoundingClientRect().height}px`);
+    };
+    updateHeaderHeight();
+    const observer = new ResizeObserver(updateHeaderHeight);
+    observer.observe(header);
+    return () => {
+      observer.disconnect();
+      workspace.style.removeProperty("--admin-header-height");
+    };
+  }, [contentLanding]);
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") { setProfileOpen(false); setMobileOpen(false); }
+      if (event.key === "Escape") setMobileOpen(false);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
-  useEffect(() => {
-    let cancelled = false;
-    let requestInFlight = false;
-
-    async function loadAlertCount() {
-      if (requestInFlight) return;
-      requestInFlight = true;
-      try {
-        const response = await fetch("/api/admin/notifications?summary=1", {
-          credentials: "include",
-          cache: "no-store",
-        });
-        if (!response.ok) return;
-        const body = await response.json();
-        const count = typeof body.unreadCount === "number" ? body.unreadCount : 0;
-        if (!cancelled) setUnreadAlertCount(count);
-      } catch {
-        if (!cancelled) setUnreadAlertCount(null);
-      } finally {
-        requestInFlight = false;
-      }
-    }
-
-    void loadAlertCount();
-    const refresh = () => void loadAlertCount();
-    const refreshIfVisible = () => {
-      if (document.visibilityState === "visible") void loadAlertCount();
-    };
-    const interval = window.setInterval(refreshIfVisible, 60_000);
-
-    window.addEventListener("admin-alerts-updated", refresh);
-    window.addEventListener("focus", refreshIfVisible);
-    document.addEventListener("visibilitychange", refreshIfVisible);
-
-    return () => {
-      cancelled = true;
-      window.clearInterval(interval);
-      window.removeEventListener("admin-alerts-updated", refresh);
-      window.removeEventListener("focus", refreshIfVisible);
-      document.removeEventListener("visibilitychange", refreshIfVisible);
-    };
-  }, [pathname]);
 
   // Search and Support share the clean white operational workspace surface.
   // Other Admin sections keep their established background unchanged.
@@ -162,10 +157,12 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
     && accountDeletionParts[1] === "account-deletions";
   // All Content lists, drafts and editors use the same white workspace as Support details.
   const contentWorkspace = pathname === "/admin/content" || pathname.startsWith("/admin/content/");
-  const whiteWorkspace = pathname === "/admin/system" || pathname === "/admin/system/" || usersDirectory || searchesWorkspace || supportWorkspace
+  const auditLogsWorkspace = pathname === "/admin/logs" || pathname === "/admin/logs/";
+  const emailDeliveryWorkspace = pathname === "/admin/email-delivery" || pathname === "/admin/email-delivery/";
+  const whiteWorkspace = pathname === "/admin/system" || pathname === "/admin/system/" || auditLogsWorkspace || emailDeliveryWorkspace || usersDirectory || searchesWorkspace || supportWorkspace
     || providersWorkspace || providerReportingWorkspace || accountDeletionDetail || contentWorkspace;
-  return <AdminWorkspaceSearchProvider account={adminEmail || "admin"}><div className={"min-h-screen text-slate-950 " + (userActivity ? "bg-[#f1f5fb]" : whiteWorkspace ? "bg-white" : "bg-[#f1f5fb]")}>
-    <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
+  return <AdminWorkspaceSearchProvider account={adminEmail || "admin"}><div ref={workspaceRef} className={"min-h-screen text-slate-950 " + (userActivity ? "bg-[#f1f5fb]" : whiteWorkspace ? "bg-white" : "bg-[#f1f5fb]")}>
+    <header ref={headerRef} className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
       <AdminSearchHeader>
       <div className="mx-auto flex h-16 w-full max-w-[1920px] items-center justify-between gap-4 pl-2 pr-4 sm:pr-6 lg:pr-10">
         <div className="flex min-w-0 items-center gap-2">
@@ -181,30 +178,7 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
         </div>
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
           <AdminSearchTrigger />
-          <Link
-            href="/admin/notifications"
-            aria-label={unreadAlertCount && unreadAlertCount > 0 ? `${unreadAlertCount} unread admin alerts` : "Admin notifications and alerts"}
-            title="Admin notifications and alerts"
-            className="relative flex h-10 w-9 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-950"
-          >
-            <Bell size={19} />
-            {unreadAlertCount && unreadAlertCount > 0 ? (
-              <span className="absolute -right-1 -top-1 inline-flex min-w-5 items-center justify-center rounded-full bg-rose-600 px-1.5 py-0.5 text-[10px] font-black leading-none text-white">
-                {unreadAlertCount > 99 ? "99+" : unreadAlertCount}
-              </span>
-            ) : null}
-          </Link>
-          <div className="relative">
-            <button type="button" onClick={() => setProfileOpen((value) => !value)} aria-expanded={profileOpen} aria-label="Admin profile"
-              className="flex items-center gap-2 rounded-xl p-1.5 hover:bg-slate-100">
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-sm font-bold text-indigo-700">{initial}</span>
-              <ChevronDown size={15} className="text-slate-500" aria-hidden="true" />
-            </button>
-            {profileOpen ? <div className="absolute right-0 top-full z-50 mt-2 w-64 overflow-hidden rounded-xl border border-slate-200 bg-white p-2 shadow-xl">
-              <div className="border-b border-slate-100 px-3 py-2"><p className="truncate text-sm font-semibold">{name}</p><p className="truncate text-xs text-slate-500">{adminEmail || role}</p><p className="mt-1 text-xs font-semibold text-indigo-700">{role}</p></div>
-              {([{ href: "/admin/settings", label: "Admin settings", icon: Settings }, { href: "/admin/logs", label: "Audit logs", icon: ShieldCheck }, { href: "/", label: "Switch to public site", icon: Building2 }, { href: "/api/auth/signout", label: "Logout", icon: LogOut }]).map(({ href, label, icon: Icon }) => <Link key={href} href={href} onClick={() => setProfileOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"><Icon size={16} />{label}</Link>)}
-            </div> : null}
-          </div>
+          <AdminHeaderMenus key={pathname} adminEmail={adminEmail} adminName={adminName} role={role} headerRef={headerRef} />
           <button type="button" className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 min-[1100px]:hidden" onClick={() => setMobileOpen((value) => !value)} aria-label={mobileOpen ? "Close admin navigation" : "Open admin navigation"} aria-expanded={mobileOpen}>{mobileOpen ? <X size={19} /> : <Menu size={19} />}</button>
         </div>
       </div>
@@ -217,8 +191,7 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
       </AdminSearchHeader>
     </header>
     <main className="mx-auto w-full max-w-[1920px] px-4 py-5 sm:px-6 lg:px-10">
-      {systemSectionsVisible ? <SystemSectionTabs entries={systemChildren} pathname={pathname} /> : null}
-      <div className={systemSectionsVisible ? "pt-5" : ""}><AdminSearchContent>{children}</AdminSearchContent></div>
+      <AdminSearchContent>{children}</AdminSearchContent>
     </main>
 
   </div></AdminWorkspaceSearchProvider>;

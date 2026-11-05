@@ -56,8 +56,8 @@ export default async function AdminHomepageContentPage() {
         ) : (
           <>
             <div className="grid gap-4 border-b border-[#E5E7EB] pb-4 sm:grid-cols-3">
-              <ContentMetric label="US destination cards" value={destinations?.total ?? 0} />
-              <ContentMetric label="US flight routes" value={flights?.total ?? 0} />
+              <ContentMetric label="United States destination cards" value={destinations?.total ?? 0} />
+              <ContentMetric label="United States flight routes" value={flights?.total ?? 0} />
               <ContentMetric label="Hotel destinations" value={hotels?.total ?? 0} />
             </div>
 
@@ -74,7 +74,7 @@ export default async function AdminHomepageContentPage() {
               />
               <ContentArea
                 title="Hotel destinations"
-                description="Canonical GLOBAL hotel destination identities used for safe hotel discovery."
+                description="Canonical global hotel destination identities used for safe hotel discovery."
                 href="/admin/content/homepage/hotel-destinations?from=overview"
               />
             </div>

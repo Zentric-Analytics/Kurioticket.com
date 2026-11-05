@@ -31,15 +31,16 @@ function optionalContext(input: RawQuery, params: URLSearchParams, options: { fa
 export function homepageCmsListNavigation(
   section: HomepageCmsSection,
   input: RawQuery,
-  fallbackMarket = "US",
+  fallbackMarket = "ALL",
 ) {
   const requestedMarket = one(input.market).trim().toUpperCase();
-  const validFallback = supportedMarkets.has(fallbackMarket) ? fallbackMarket : "US";
+  const validFallback = fallbackMarket === "ALL" || supportedMarkets.has(fallbackMarket) ? fallbackMarket : "ALL";
   const market = section === "hotel-destinations"
     ? "GLOBAL"
-    : supportedMarkets.has(requestedMarket) ? requestedMarket : validFallback;
+    : requestedMarket === "ALL" || supportedMarkets.has(requestedMarket) ? requestedMarket : validFallback;
   const params = new URLSearchParams({ market });
   optionalContext(input, params);
+  if (section === "destinations") params.delete("cursor");
   const fromOverview = one(input.from) === "overview";
   if (fromOverview) params.set("from", "overview");
   return {

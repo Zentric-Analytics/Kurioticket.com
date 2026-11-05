@@ -129,6 +129,18 @@ export async function markEmailDeliverySent(input: {
           updated_at = NOW()
       WHERE id = ${input.deliveryId}
     `;
+
+    await db.$executeRaw`
+      INSERT INTO email_events (id, delivery_id, provider_message_id, type, payload, occurred_at)
+      VALUES (
+        ${randomUUID()},
+        ${input.deliveryId},
+        ${input.providerMessageId || null},
+        'internal.send_succeeded',
+        '{}'::jsonb,
+        NOW()
+      )
+    `;
   });
 }
 
@@ -148,6 +160,18 @@ export async function markEmailDeliveryFailed(input: {
           last_error_status = ${input.statusCode || null},
           updated_at = NOW()
       WHERE id = ${input.deliveryId}
+    `;
+
+    await db.$executeRaw`
+      INSERT INTO email_events (id, delivery_id, provider_message_id, type, payload, occurred_at)
+      VALUES (
+        ${randomUUID()},
+        ${input.deliveryId},
+        NULL,
+        'internal.send_failed',
+        '{}'::jsonb,
+        NOW()
+      )
     `;
   });
 }
@@ -234,6 +258,117 @@ export async function hasSuccessfulEmailDelivery(idempotencyKey: string) {
     `;
     return rows.length > 0;
   }, false);
+}
+
+export type EmailDeliveryOperationsRange = {
+  from: Date;
+  to: Date;
+};
+
+export async function getEmailDeliveryOperationsSnapshot(range: EmailDeliveryOperationsRange) {
+  return withEmailDeliveryDb(async (db) => {
+    const [summary] = await db.$queryRaw<{
+      deliveries: bigint;
+      delivered: bigint;
+      failures: bigint;
+      delayed: bigint;
+      current_suppressed: bigint;
+    }[]>`
+      SELECT
+        (SELECT COUNT(*) FROM email_deliveries
+          WHERE created_at >= ${range.from} AND created_at < ${range.to}) AS deliveries,
+        (
+          SELECT COUNT(DISTINCT COALESCE(e.delivery_id, e.provider_message_id, e.id))
+          FROM email_events e
+          WHERE COALESCE(e.occurred_at, e.created_at) >= ${range.from}
+            AND COALESCE(e.occurred_at, e.created_at) < ${range.to}
+            AND e.type = 'email.delivered'
+        ) AS delivered,
+        (
+          SELECT COUNT(DISTINCT COALESCE(e.delivery_id, e.provider_message_id, e.id))
+          FROM email_events e
+          WHERE COALESCE(e.occurred_at, e.created_at) >= ${range.from}
+            AND COALESCE(e.occurred_at, e.created_at) < ${range.to}
+            AND e.type IN (
+              'internal.send_failed',
+              'email.failed',
+              'email.bounced',
+              'email.complained',
+              'email.suppressed'
+            )
+        ) AS failures,
+        (
+          SELECT COUNT(DISTINCT COALESCE(e.delivery_id, e.provider_message_id, e.id))
+          FROM email_events e
+          WHERE COALESCE(e.occurred_at, e.created_at) >= ${range.from}
+            AND COALESCE(e.occurred_at, e.created_at) < ${range.to}
+            AND e.type = 'email.delivery_delayed'
+        ) AS delayed,
+        (SELECT COUNT(*) FROM email_suppressions) AS current_suppressed
+    `;
+
+    const latest = await db.$queryRaw<Array<{
+      id: string;
+      template: string;
+      to_email: string;
+      status: EmailDeliveryStatus;
+      created_at: Date;
+      sent_at: Date | null;
+      delivered_at: Date | null;
+    }>>`
+      SELECT d.id, d.template, d.to_email, d.status, d.created_at, d.sent_at, d.delivered_at
+      FROM email_deliveries d
+      WHERE
+        (d.created_at >= ${range.from} AND d.created_at < ${range.to})
+        OR EXISTS (
+          SELECT 1
+          FROM email_events e
+          WHERE e.delivery_id = d.id
+            AND COALESCE(e.occurred_at, e.created_at) >= ${range.from}
+            AND COALESCE(e.occurred_at, e.created_at) < ${range.to}
+        )
+      ORDER BY GREATEST(
+        d.created_at,
+        COALESCE(
+          (
+            SELECT MAX(COALESCE(e.occurred_at, e.created_at))
+            FROM email_events e
+            WHERE e.delivery_id = d.id
+              AND COALESCE(e.occurred_at, e.created_at) >= ${range.from}
+              AND COALESCE(e.occurred_at, e.created_at) < ${range.to}
+          ),
+          d.created_at
+        )
+      ) DESC
+      LIMIT 10
+    `;
+
+    return {
+      dataAvailable: true,
+      deliveries: Number(summary?.deliveries || 0),
+      delivered: Number(summary?.delivered || 0),
+      failures: Number(summary?.failures || 0),
+      delayed: Number(summary?.delayed || 0),
+      currentSuppressed: Number(summary?.current_suppressed || 0),
+      latest: latest.map((row) => ({
+        id: row.id,
+        template: row.template,
+        toEmail: maskEmail(row.to_email),
+        status: row.status,
+        createdAt: row.created_at,
+        sentAt: row.sent_at,
+        deliveredAt: row.delivered_at,
+      })),
+    };
+  }, {
+    dataAvailable: false,
+    deliveries: 0,
+    delivered: 0,
+    failures: 0,
+    delayed: 0,
+    currentSuppressed: 0,
+    latest: [],
+  });
 }
 
 export async function getEmailDeliveryHealthSnapshot() {

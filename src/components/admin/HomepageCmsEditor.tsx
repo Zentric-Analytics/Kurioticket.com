@@ -10,7 +10,10 @@ import {
   AdminTextarea,
 } from "@/components/admin/AdminPageShell";
 import type { HomepageCmsSection } from "@/lib/adminHomepageCms";
+import { getCmsUnpublishedChangeLabel } from "@/lib/adminCmsPublicationStatus";
+import { getCmsMarketName } from "@/lib/adminCmsMarketLabels";
 import { ContentSectionHeading, ContentStatusPill } from "@/components/admin/ContentWorkspace";
+import { CmsEditorActions, type CmsEditorAction } from "@/components/admin/CmsEditorActions";
 
 type CmsItem = {
   id: string;
@@ -23,6 +26,10 @@ type CmsItem = {
   publishedVersion: number | null;
   publishedAt: string | null;
   draftPayload: unknown;
+  publishedPayload: unknown;
+  publishedMarket: string | null;
+  publishedLocale: string | null;
+  publishedSortOrder: number | null;
 };
 
 type HotelOption = {
@@ -40,6 +47,8 @@ const sectionType = {
   "flight-routes": "FLIGHT_ROUTE",
   "hotel-destinations": "HOTEL_DESTINATION",
 } as const;
+
+const editorControlClass = "h-9 rounded-lg border-2 border-[#94A3B8] bg-white text-[13px] font-normal text-[#111827] shadow-none transition-colors hover:border-[#64748B] focus:border-[#6D28D9] focus:ring-2 focus:ring-[#EDE9FE] disabled:border-[#CBD5E1] disabled:bg-[#F1F5F9] disabled:text-[#64748B]";
 
 function payloadRecord(value: unknown) {
   return value && typeof value === "object" && !Array.isArray(value)
@@ -76,6 +85,7 @@ export function HomepageCmsEditor({
   const [error, setError] = useState<string | null>(null);
   const [conflict, setConflict] = useState(false);
   const [pending, startTransition] = useTransition();
+  const [activeAction, setActiveAction] = useState<CmsEditorAction | null>(null);
 
   const currentPayload = buildPayload(section, fields);
   const savedPayload = initialFields(section, payloadRecord(item?.draftPayload));
@@ -87,12 +97,9 @@ export function HomepageCmsEditor({
       market !== item.market
     )
   );
-  const validDraft = validateClientDraft(section, currentPayload, sortOrder);
-  const unpublished = Boolean(
-    item?.publishedVersion !== null &&
-    item?.publishedVersion !== undefined &&
-    item.version !== item.publishedVersion,
-  );
+  const validMarket = section === "hotel-destinations" || markets.includes(market);
+  const validDraft = validMarket && validateClientDraft(section, currentPayload, sortOrder);
+  const unpublishedLabel = item ? getCmsUnpublishedChangeLabel(item) : null;
 
   function setField(name: string, value: string) {
     setFields((current) => ({ ...current, [name]: value }));
@@ -116,30 +123,35 @@ export function HomepageCmsEditor({
   }
 
   function createDraft() {
-    if (!validDraft) return;
+    if (!validDraft || pending) return;
     setMessage(null);
     setError(null);
     setConflict(false);
+    setActiveAction("create_draft");
     startTransition(async () => {
-      const response = await fetch("/api/admin/content", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: sectionType[section],
-          key: `${section.replaceAll("-", "")}-${crypto.randomUUID()}`,
-          market: section === "hotel-destinations" ? "GLOBAL" : market,
-          locale: "en",
-          sortOrder: Number(sortOrder),
-          payload: currentPayload,
-        }),
-      });
-      const body = await response.json().catch(() => ({}));
-      if (!response.ok || !body.item?.id) {
-        setError(typeof body.error === "string" ? body.error : "Unable to create draft.");
-        return;
+      try {
+        const response = await fetch("/api/admin/content", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            type: sectionType[section],
+            key: `${section.replaceAll("-", "")}-${crypto.randomUUID()}`,
+            market: section === "hotel-destinations" ? "GLOBAL" : market,
+            locale: "en",
+            sortOrder: Number(sortOrder),
+            payload: currentPayload,
+          }),
+        });
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok || !body.item?.id) {
+          setError(typeof body.error === "string" ? body.error : "Unable to create draft.");
+          return;
+        }
+        router.replace(`/admin/content/homepage/${section}/${encodeURIComponent(body.item.id)}${listQuery ? "?" + listQuery : ""}`);
+        router.refresh();
+      } catch {
+        setError("Unable to create draft. Check your connection and try again.");
       }
-      router.replace(`/admin/content/homepage/${section}/${encodeURIComponent(body.item.id)}${listQuery ? "?" + listQuery : ""}`);
-      router.refresh();
     });
   }
 
@@ -164,7 +176,7 @@ export function HomepageCmsEditor({
   }
 
   function archive() {
-    if (!item || !window.confirm("Archive this content? Archived content cannot be edited in this CMS phase.")) return;
+    if (!item || pending || !window.confirm("Archive this content? Archived content cannot be edited in this CMS phase.")) return;
     mutate("archive", {}, "Content archived.");
   }
 
@@ -173,130 +185,135 @@ export function HomepageCmsEditor({
     extra: Record<string, unknown>,
     success: string,
   ) {
-    if (!item) return;
+    if (!item || pending) return;
     setMessage(null);
     setError(null);
+    setActiveAction(action);
     startTransition(async () => {
-      const response = await fetch(`/api/admin/content/${item.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action,
-          expectedVersion: item.version,
-          ...extra,
-        }),
-      });
-      const body = await response.json().catch(() => ({}));
-      if (!response.ok || !body.item) {
-        if (response.status === 409) {
-          setConflict(true);
-          setError("This content changed in another admin session. Reload the latest version before making more edits.");
-        } else {
-          setError(typeof body.error === "string" ? body.error : "Unable to update content.");
+      try {
+        const response = await fetch(`/api/admin/content/${item.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action,
+            expectedVersion: item.version,
+            ...extra,
+          }),
+        });
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok || !body.item) {
+          if (response.status === 409) {
+            setConflict(true);
+            setError("This content changed in another admin session. Reload the latest version before making more edits.");
+          } else {
+            setError(typeof body.error === "string" ? body.error : "Unable to update content.");
+          }
+          return;
         }
-        return;
+        setConflict(false);
+        setItem(body.item as CmsItem);
+        setMarket(body.item.market ?? market);
+        setSortOrder(String(body.item.sortOrder ?? Number(sortOrder)));
+        setMessage(success);
+        router.refresh();
+      } catch {
+        setError("Unable to update content. Check your connection and try again.");
       }
-      setConflict(false);
-      setItem(body.item as CmsItem);
-      setMarket(body.item.market ?? market);
-      setSortOrder(String(body.item.sortOrder ?? Number(sortOrder)));
-      setMessage(success);
-      router.refresh();
     });
   }
 
   const archived = item?.status === "ARCHIVED";
 
   return (
-    <div className="grid min-w-0 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-8 xl:gap-14 [&_input]:rounded-lg [&_select]:rounded-lg [&_textarea]:rounded-lg [&_input]:h-9 [&_select]:h-9 [&_input]:text-[13px] [&_select]:text-[13px] [&_textarea]:text-[13px] [&_input]:font-normal [&_select]:font-normal">
-      <section className="min-w-0 space-y-4">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
+    <div className="grid min-w-0 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-8 xl:gap-14">
+      <section className="w-full min-w-0 max-w-[640px] space-y-4">
+        <div>
+          <div className="flex flex-wrap items-center gap-2.5">
             <ContentSectionHeading>Content details</ContentSectionHeading>
-            <p className="mt-1 text-[13px] text-[#64748B]">Structured CMS content only. Save draft before publishing changes.</p>
+            {item ? <ContentStatusPill status={item.status} /> : null}
           </div>
-          {item ? <ContentStatusPill status={item.status} /> : null}
+          <p className="mt-1 text-[13px] text-[#64748B]">Structured CMS content only. Save draft before publishing changes.</p>
         </div>
 
         {section !== "hotel-destinations" ? (
-          <Field label="Market">
-            <AdminSelect value={market} onChange={(event) => setMarket(event.target.value)} disabled={pending || archived}>
-              {markets.map((value) => <option key={value} value={value}>{value}</option>)}
+          <Field label="Market" className="max-w-[320px]">
+            <AdminSelect className={editorControlClass} value={market} onChange={(event) => setMarket(event.target.value)} disabled={pending || archived} required>
+              {!item ? <option value="">Select market</option> : null}
+              {markets.map((value) => <option key={value} value={value}>{getCmsMarketName(value)}</option>)}
             </AdminSelect>
           </Field>
         ) : null}
 
         {section === "destinations" ? (
           <>
-            <TextField label="City" name="city" fields={fields} setField={setField} disabled={pending || archived} />
-            <TextField label="Country" name="country" fields={fields} setField={setField} disabled={pending || archived} />
-            <div className="grid gap-4 sm:grid-cols-3">
-              <TextField label="Country code" name="countryCode" fields={fields} setField={setField} disabled={pending || archived} />
-              <TextField label="Origin IATA" name="originCode" fields={fields} setField={setField} disabled={pending || archived} />
-              <TextField label="Destination IATA" name="destinationCode" fields={fields} setField={setField} disabled={pending || archived} />
+            <TextField label="City" name="city" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[320px]" />
+            <TextField label="Country" name="country" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[320px]" />
+            <div className="grid max-w-[512px] gap-4 sm:grid-cols-3">
+              <TextField label="Country code" name="countryCode" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[160px]" />
+              <TextField label="Origin IATA" name="originCode" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[160px]" />
+              <TextField label="Destination IATA" name="destinationCode" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[160px]" />
             </div>
             <TextField label="Image" name="image" fields={fields} setField={setField} disabled={pending || archived} />
-            <TextField label="Image alt text" name="imageAlt" fields={fields} setField={setField} disabled={pending || archived} />
+            <TextField label="Image alt text" name="imageAlt" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[448px]" />
           </>
         ) : null}
 
         {section === "flight-routes" ? (
           <>
-            <TextField label="Title" name="title" fields={fields} setField={setField} disabled={pending || archived} />
-            <div className="grid gap-4 sm:grid-cols-2">
-              <TextField label="Origin city" name="originCity" fields={fields} setField={setField} disabled={pending || archived} />
-              <TextField label="Origin IATA" name="originCode" fields={fields} setField={setField} disabled={pending || archived} />
-              <TextField label="Destination city" name="destinationCity" fields={fields} setField={setField} disabled={pending || archived} />
-              <TextField label="Destination IATA" name="destinationCode" fields={fields} setField={setField} disabled={pending || archived} />
+            <TextField label="Title" name="title" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[448px]" />
+            <div className="grid max-w-[496px] gap-4 sm:grid-cols-[minmax(0,1fr)_160px]">
+              <TextField label="Origin city" name="originCity" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[320px]" />
+              <TextField label="Origin IATA" name="originCode" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[160px]" />
+              <TextField label="Destination city" name="destinationCity" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[320px]" />
+              <TextField label="Destination IATA" name="destinationCode" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[160px]" />
             </div>
-            <Field label="Route note">
-              <AdminTextarea value={fields.routeNote ?? ""} onChange={(event) => setField("routeNote", event.target.value)} disabled={pending || archived} />
+            <Field label="Route note" className="max-w-[480px]">
+              <AdminTextarea className={`${editorControlClass} h-auto min-h-24`} value={fields.routeNote ?? ""} onChange={(event) => setField("routeNote", event.target.value)} disabled={pending || archived} />
             </Field>
             <TextField label="Image" name="image" fields={fields} setField={setField} disabled={pending || archived} />
-            <TextField label="Image alt text" name="imageAlt" fields={fields} setField={setField} disabled={pending || archived} />
+            <TextField label="Image alt text" name="imageAlt" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[448px]" />
           </>
         ) : null}
 
         {section === "hotel-destinations" ? (
           <>
-            <Field label="Canonical hotel destination">
-              <AdminSelect value={fields.canonicalId ?? ""} onChange={(event) => applyHotelOption(event.target.value)} disabled={pending || archived}>
+            <Field label="Canonical hotel destination" className="max-w-[448px]">
+              <AdminSelect className={editorControlClass} value={fields.canonicalId ?? ""} onChange={(event) => applyHotelOption(event.target.value)} disabled={pending || archived}>
                 <option value="">Select canonical destination</option>
                 {hotelOptions.map((option) => <option key={option.canonicalId} value={option.canonicalId}>{option.label}</option>)}
               </AdminSelect>
             </Field>
             <div className="grid gap-4 sm:grid-cols-2">
-              <TextField label="Name" name="name" fields={fields} setField={setField} disabled={pending || archived} />
-              <TextField label="Country" name="country" fields={fields} setField={setField} disabled={pending || archived} />
-              <TextField label="Country code" name="countryCode" fields={fields} setField={setField} disabled={pending || archived} />
-              <TextField label="Kind" name="kind" fields={fields} setField={setField} disabled={pending || archived} />
+              <TextField label="Name" name="name" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[320px]" />
+              <TextField label="Country" name="country" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[320px]" />
+              <TextField label="Country code" name="countryCode" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[160px]" />
+              <TextField label="Kind" name="kind" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[160px]" />
             </div>
             <TextField label="Search value" name="searchValue" fields={fields} setField={setField} disabled={pending || archived} />
             <TextField label="Image (optional)" name="image" fields={fields} setField={setField} disabled={pending || archived} />
-            <TextField label="Image alt text (optional)" name="imageAlt" fields={fields} setField={setField} disabled={pending || archived} />
+            <TextField label="Image alt text (optional)" name="imageAlt" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[448px]" />
           </>
         ) : null}
 
-        <Field label="Order">
-          <AdminInput type="number" min={0} max={100000} value={sortOrder} onChange={(event) => setSortOrder(event.target.value)} disabled={pending || archived} />
+        <Field label="Order" className="max-w-[128px]">
+          <AdminInput className={editorControlClass} type="number" min={0} max={100000} value={sortOrder} onChange={(event) => setSortOrder(event.target.value)} disabled={pending || archived} />
         </Field>
 
-        <div className="flex flex-wrap gap-2 pt-3 [&_button]:rounded-lg [&_button]:text-[13px] [&_button]:font-medium [&_button]:shadow-none">
-          {!item ? (
-            <AdminButton type="button" onClick={createDraft} loading={pending} disabled={!validDraft}>Create draft</AdminButton>
-          ) : !archived ? (
-            <>
-              <AdminButton type="button" variant="secondary" onClick={saveDraft} loading={pending} disabled={!validDraft}>Save draft</AdminButton>
-              <AdminButton type="button" onClick={publish} loading={pending} disabled={!validDraft || draftDirty}>Publish</AdminButton>
-              {item.status === "PUBLISHED" ? <AdminButton type="button" variant="secondary" onClick={hide} loading={pending}>Hide</AdminButton> : null}
-              <AdminButton type="button" variant="destructive" onClick={archive} loading={pending}>Archive</AdminButton>
-            </>
-          ) : null}
-        </div>
+        <CmsEditorActions
+          status={item?.status}
+          pendingAction={pending ? activeAction : null}
+          validDraft={validDraft}
+          draftDirty={draftDirty}
+          onCreate={createDraft}
+          onSave={saveDraft}
+          onPublish={publish}
+          onHide={hide}
+          onArchive={archive}
+        />
 
-        {item && draftDirty ? <p className="text-sm font-bold text-amber-700">Save this draft before publishing the current edits.</p> : null}
-        {message ? <p className="text-sm font-bold text-emerald-700" role="status">{message}</p> : null}
-        {error ? <p className="rounded-xl bg-rose-50 px-3 py-2 text-sm font-bold text-rose-700" role="alert">{error}</p> : null}
+        {item && draftDirty ? <p className="text-[13px] leading-5 text-amber-700">Save this draft before publishing the current edits.</p> : null}
+        {message ? <p className="text-[13px] leading-5 text-emerald-700" role="status">{message}</p> : null}
+        {error ? <p className="rounded-lg bg-rose-50 px-3 py-2 text-[13px] leading-5 text-rose-700" role="alert">{error}</p> : null}
         {conflict ? (
           <AdminButton type="button" variant="secondary" onClick={() => window.location.reload()}>
             Reload latest
@@ -309,9 +326,9 @@ export function HomepageCmsEditor({
         <h2 className="mt-2 text-[15px] font-semibold text-[#111827]">{previewTitle(section, currentPayload)}</h2>
         <p className="mt-2 whitespace-pre-wrap text-[13px] leading-5 text-[#475569]">{previewDetail(section, currentPayload)}</p>
         <div className="mt-4 grid gap-2 pt-2 text-[12px] text-[#64748B]">
-          <span>Market: {section === "hotel-destinations" ? "GLOBAL" : market}</span>
+          <span>Market: {getCmsMarketName(section === "hotel-destinations" ? "GLOBAL" : market) || "Select market"}</span>
           <span>Order: {sortOrder || "0"}</span>
-          {item ? <span>Draft v{item.version} · Published {item.publishedVersion ? `v${item.publishedVersion}` : "none"} · Unpublished changes: {unpublished ? "yes" : "no"}</span> : null}
+          {item ? <span>Draft v{item.version} · Published {item.publishedVersion ? `v${item.publishedVersion}` : "none"} · {unpublishedLabel ?? "No unpublished changes"}</span> : null}
         </div>
       </aside>
     </div>
@@ -417,8 +434,8 @@ function previewDetail(section: HomepageCmsSection, payload: Record<string, unkn
   return `${payload.country || ""} · ${payload.searchValue || ""}\n${payload.canonicalId || ""}`;
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return <label className="block"><span className="text-[12px] font-medium text-[#64748B]">{label}</span><div className="mt-2">{children}</div></label>;
+function Field({ label, children, className = "" }: { label: string; children: React.ReactNode; className?: string }) {
+  return <label className={`block min-w-0 ${className}`}><span className="text-[13px] font-medium text-[#475569]">{label}</span><div className="mt-1.5">{children}</div></label>;
 }
 
 function TextField({
@@ -427,16 +444,18 @@ function TextField({
   fields,
   setField,
   disabled,
+  className = "max-w-[448px]",
 }: {
   label: string;
   name: string;
   fields: Record<string, string>;
   setField: (name: string, value: string) => void;
   disabled: boolean;
+  className?: string;
 }) {
   return (
-    <Field label={label}>
-      <AdminInput value={fields[name] ?? ""} onChange={(event) => setField(name, event.target.value)} disabled={disabled} />
+    <Field label={label} className={className}>
+      <AdminInput className={editorControlClass} value={fields[name] ?? ""} onChange={(event) => setField(name, event.target.value)} disabled={disabled} />
     </Field>
   );
 }

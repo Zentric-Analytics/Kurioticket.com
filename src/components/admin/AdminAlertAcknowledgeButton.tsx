@@ -9,10 +9,12 @@ export function AdminAlertAcknowledgeButton({
   alertKey,
   signalToken,
   acknowledged,
+  compact = false,
 }: {
   alertKey: string;
   signalToken: string;
   acknowledged: boolean;
+  compact?: boolean;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -58,11 +60,13 @@ export function AdminAlertAcknowledgeButton({
 
   return (
     <div>
-      <AdminButton type="button" onClick={acknowledge} disabled={pending}>
+      <AdminButton type="button" onClick={acknowledge} disabled={pending} loading={pending}
+        variant={compact ? "secondary" : "primary"}
+        className={compact ? "h-8 min-h-8 rounded-lg px-2.5 text-[12px] font-medium shadow-none" : undefined}>
         {pending ? "Acknowledging…" : "Acknowledge"}
       </AdminButton>
       {error ? (
-        <p className="mt-2 max-w-sm text-xs font-semibold text-rose-700">
+        <p role="alert" className="mt-2 max-w-sm text-xs font-medium text-rose-700">
           {error}
         </p>
       ) : null}

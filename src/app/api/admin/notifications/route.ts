@@ -12,7 +12,9 @@ import {
 export const runtime = "nodejs";
 
 export async function GET(request: Request) {
-  const summaryOnly = new URL(request.url).searchParams.get("summary") === "1";
+  const params = new URL(request.url).searchParams;
+  const summaryOnly = params.get("summary") === "1";
+  const panelOnly = params.get("panel") === "1";
 
   let canonicalError: unknown = null;
 
@@ -26,7 +28,9 @@ export async function GET(request: Request) {
       }
 
       return NextResponse.json(
-        await getAdminAlertSnapshot(auth.session.user.id),
+        await getAdminAlertSnapshot(auth.session.user.id, new Date(), {
+          forceRefreshCandidates: !panelOnly,
+        }),
       );
     }
     canonicalError = auth.response;

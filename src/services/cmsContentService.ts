@@ -391,6 +391,15 @@ async function createRevisionAndAudit(
 }
 
 export async function createCmsContent(raw: unknown, actorInput: CmsActor) {
+  // Market-targeted homepage records must never inherit the generic GLOBAL
+  // fallback when an admin opens the All markets view and has not chosen one.
+  if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+    const input = raw as Record<string, unknown>;
+    if ((input.type === "HOMEPAGE_DESTINATION" || input.type === "FLIGHT_ROUTE") &&
+        (typeof input.market !== "string" || !cmsMarketCodeSet.has(input.market.trim().toUpperCase()))) {
+      throw new CmsContentError("INVALID", "Choose a supported market before creating this content.", { field: "market" });
+    }
+  }
   const parsed = createSchema.safeParse(raw);
   if (!parsed.success) throw new CmsContentError("INVALID", "Content request is invalid.", parsed.error.flatten());
   const actor = normalizeActor(actorInput);

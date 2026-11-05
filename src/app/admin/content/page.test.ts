@@ -54,7 +54,7 @@ test("homepage fare operations are separated from content, system and settings",
   assert.doesNotMatch(contentPage, /HomepageFaresRefreshCard/);
   assert.doesNotMatch(systemPage, /HomepageFaresRefreshCard/);
   assert.doesNotMatch(settingsPage, /HomepageFaresRefreshCard/);
-  assert.match(settingsPage, /Platform controls/);
+  assert.match(settingsPage, /Feature controls/);
   assert.match(homepageFarePage, /title="Homepage Fare Operations"/);
   assert.match(homepageFarePage, /HomepageFaresRefreshCard/);
   assert.match(homepageFarePage, /href="\/admin\/settings"/);
@@ -103,6 +103,44 @@ test("content overview shows four equal, fully clickable management cards", () =
   assert.doesNotMatch(contentPage, /ContentSectionHeading|homepageAreas|helpAreas|Manage destinations|Manage FAQs/);
 });
 
+test("Content hub centers vertically below the desktop Admin header without changing cards", () => {
+  assert.match(contentPage, /min-\[1100px\]:flex min-\[1100px\]:min-h-\[calc\(100dvh-var\(--admin-header-height,120px\)-40px\)\] min-\[1100px\]:items-center/);
+  assert.doesNotMatch(contentPage, /100dvh-160px/);
+  const shell = readFileSync("src/components/admin/AdminHorizontalShell.tsx", "utf8");
+  assert.match(shell, /contentLanding = pathname === "\/admin\/content"/);
+  assert.match(shell, /headerRef = useRef<HTMLElement>\(null\)/);
+  assert.match(shell, /import \{ useEffect, useLayoutEffect, useRef, useState \} from "react"/);
+  assert.match(shell, /useLayoutEffect\(\(\) => \{\s*if \(!contentLanding/);
+  assert.match(shell, /getBoundingClientRect\(\)\.height/);
+  assert.match(shell, /new ResizeObserver\(updateHeaderHeight\)/);
+  assert.match(shell, /observer\.observe\(header\)/);
+  assert.match(shell, /observer\.disconnect\(\)/);
+  assert.match(shell, /workspace\.style\.removeProperty\("--admin-header-height"\)/);
+  assert.match(contentPage, /mx-auto w-full max-w-\[900px\] space-y-4/);
+  assert.match(contentPage, /grid auto-rows-fr grid-cols-1 gap-3 sm:grid-cols-2/);
+  assert.match(contentPage, /href=\{area\.href\}/);
+  assert.match(contentPage, /<ContentPageFrame title="Content" visuallyHideTitle>/);
+  assert.doesNotMatch(contentPage, /min-h-\[178px\]|justify-between gap-6/);
+});
+
+test("FAQ directory has no redundant counters before search and status filters", () => {
+  const faq = readFileSync("src/app/admin/content/faqs/page.tsx", "utf8");
+  assert.doesNotMatch(faq, /ContentMetric/);
+  assert.match(faq, /<ContentDirectoryToolbar/);
+  assert.match(faq, /<FaqCmsListClient/);
+  assert.match(faq, /actions=\{summary\.active \? <CmsCreateLink/);
+});
+
+test("Content Add actions use subdued styling and preserve selected filters", () => {
+  const create = readFileSync("src/components/admin/CmsCreateLink.tsx", "utf8");
+  assert.match(create, /useSearchParams/);
+  assert.match(create, /query = searchParams\.toString\(\)/);
+  assert.match(create, /href=\{path \+ \(query \? "\?" \+ query : ""\)\}/);
+  assert.match(create, /<Plus size=\{15\}/);
+  assert.match(create, /bg-\[#111827\]/);
+  assert.doesNotMatch(create, /bg-\[#3154EF\]|variant="primary"/);
+});
+
 test("Content published count uses the published scope, not a draft's scope", () => {
   const cms = readFileSync("src/services/cmsContentService.ts", "utf8");
   assert.match(cms, /publishedInScope/);
@@ -118,9 +156,9 @@ test("Content published count uses the published scope, not a draft's scope", ()
 test("Content returns to the actual source and only retains allowlisted filters", () => {
   const direct = homepageCmsListNavigation("destinations", { market: "US", status: "PUBLISHED", q: "Paris", cursor: "page_one" });
   assert.equal(direct.backHref, "/admin/content");
-  assert.equal(direct.listHref, "/admin/content/homepage/destinations?market=US&status=PUBLISHED&cursor=page_one&q=Paris");
+  assert.equal(direct.listHref, "/admin/content/homepage/destinations?market=US&status=PUBLISHED&q=Paris");
   assert.equal(contentEditorHref("/admin/content/homepage/destinations/new", direct.query),
-    "/admin/content/homepage/destinations/new?market=US&status=PUBLISHED&cursor=page_one&q=Paris");
+    "/admin/content/homepage/destinations/new?market=US&status=PUBLISHED&q=Paris");
 
   const fromOverview = homepageCmsListNavigation("flight-routes", { market: "US", from: "overview" });
   assert.equal(fromOverview.backHref, "/admin/content/homepage");
@@ -136,6 +174,47 @@ test("Content returns to the actual source and only retains allowlisted filters"
   const faq = faqCmsListNavigation({ status: "DRAFT", cursor: "next-2", q: "how to fly", category: "General" });
   assert.equal(faq.listHref, "/admin/content/faqs?status=DRAFT&cursor=next-2&q=how+to+fly&category=General");
   assert.equal(faqCmsListNavigation({ status: "invalid", cursor: "../admin/system" }).listHref, "/admin/content/faqs");
+});
+
+test("Homepage and flight CMS open on real All markets and retain explicit market filters", () => {
+  const destination = homepageCmsListNavigation("destinations", {});
+  const flight = homepageCmsListNavigation("flight-routes", { from: "overview" });
+  assert.equal(destination.market, "ALL");
+  assert.equal(destination.listHref, "/admin/content/homepage/destinations?market=ALL");
+  assert.equal(flight.market, "ALL");
+  assert.equal(flight.listHref, "/admin/content/homepage/flight-routes?market=ALL&from=overview");
+  assert.equal(homepageCmsListNavigation("destinations", { market: "NG" }).market, "NG");
+  assert.equal(homepageCmsListNavigation("flight-routes", { market: "US" }).market, "US");
+  assert.equal(homepageCmsListNavigation("flight-routes", { market: "invalid" }).market, "ALL");
+  assert.equal(homepageCmsListNavigation("hotel-destinations", { market: "ALL" }).market, "GLOBAL");
+
+  const listPage = readFileSync("src/app/admin/content/homepage/[section]/page.tsx", "utf8");
+  const toolbar = readFileSync("src/components/admin/ContentDirectoryToolbar.tsx", "utf8");
+  const service = readFileSync("src/services/cmsContentService.ts", "utf8");
+  assert.match(listPage, /defaultMarket = section === "hotel-destinations" \? "GLOBAL" : "ALL"/);
+  assert.match(listPage, /allowedMarket === "ALL" \? undefined : allowedMarket/);
+  assert.match(listPage, /getCmsContentMarketOverview\(config\.type, homepageCmsMarkets, homepageCmsLocale\)/);
+  assert.match(toolbar, /value: "ALL", label: "All markets"/);
+  assert.match(toolbar, /market !== "ALL"/);
+  assert.match(service, /scope\.market \? \{ market: scope\.market \} : \{\}/);
+  assert.match(service, /scope\.market\) predicates\.push/);
+  assert.match(listPage, /market=\{section !== "hotel-destinations" \? allowedMarket : undefined\}/);
+});
+
+test("New CMS drafts require a valid market but preserve chosen filtered market context", () => {
+  const newPage = readFileSync("src/app/admin/content/homepage/[section]/new/page.tsx", "utf8");
+  const editor = readFileSync("src/components/admin/HomepageCmsEditor.tsx", "utf8");
+  const service = readFileSync("src/services/cmsContentService.ts", "utf8");
+  assert.match(newPage, /: "ALL"/);
+  assert.match(newPage, /initialMarket=\{market === "ALL" \? "" : market\}/);
+  assert.match(newPage, /getCmsContentMarketOverview\(config\.type, homepageCmsMarkets, homepageCmsLocale\)/);
+  assert.match(editor, /<option value="">Select market<\/option>/);
+  assert.match(editor, /validMarket = section === "hotel-destinations" \|\| markets\.includes\(market\)/);
+  assert.match(editor, /validDraft = validMarket && validateClientDraft/);
+  assert.match(service, /Choose a supported market before creating this content/);
+  assert.match(editor, /<CmsEditorActions/);
+  assert.match(editor, /validDraft=\{validDraft\}/);
+  assert.equal(homepageCmsListNavigation("flight-routes", { market: "NG", q: "Lagos" }).query, "market=NG&q=Lagos");
 });
 
 test("Content's nested pages use the preserved return context", () => {

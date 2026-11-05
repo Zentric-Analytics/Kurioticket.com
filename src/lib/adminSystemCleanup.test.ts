@@ -38,6 +38,6 @@ test("useful actions, access guards, emergency checks and the global bell remain
   assert.match(alerts, /getCurrentDatabaseOutageAdminToken/);
   assert.match(alerts, /AdminAlertAcknowledgeButton/);
   assert.match(alerts, /alertSourceHref\(alert\.actionHref\)/);
-  assert.match(source("src/components/admin/AdminHorizontalShell.tsx"), /href="\/admin\/notifications"/);
-  assert.match(source("src/components/admin/AdminHorizontalShell.tsx"), /unreadAlertCount/);
+  assert.match(source("src/components/admin/AdminHorizontalShell.tsx"), /<AdminNotificationsPanel/);
+  assert.match(source("src/components/admin/AdminNotificationsPanel.tsx"), /unreadCount/);
 });

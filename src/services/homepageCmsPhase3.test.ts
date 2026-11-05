@@ -51,8 +51,9 @@ test("homepage CMS admin supports market targeting and explicit lifecycle", () =
   assert.match(newPage, /redirect\("\/admin\/content\/homepage"\)/);
   assert.match(detailPage, /Revision history/);
   for (const action of ["Create draft", "Save draft", "Publish", "Hide", "Archive"]) {
-    assert.match(editor, new RegExp(action));
+    assert.match(readFileSync("src/components/admin/CmsEditorActions.tsx", "utf8"), new RegExp(action));
   }
+  assert.match(editor, /<CmsEditorActions/);
   assert.match(editor, /draftDirty/);
   assert.match(editor, /Save this draft before publishing the current edits/);
   assert.match(editor, /Canonical hotel destination/);
