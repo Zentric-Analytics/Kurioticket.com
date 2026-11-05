@@ -6,6 +6,7 @@ import { ContentRecordsTable, ContentStatusPill } from "@/components/admin/Conte
 
 import type { HomepageCmsSection } from "@/lib/adminHomepageCms";
 import { getCmsUnpublishedChangeLabel } from "@/lib/adminCmsPublicationStatus";
+import { getCmsMarketName } from "@/lib/adminCmsMarketLabels";
 
 type CmsListItem = {
   id: string;
@@ -75,7 +76,7 @@ export function HomepageCmsListClient({
                   <p className="text-[13px] font-medium text-[#111827]">{summary.title}</p>
                   <p className="mt-1 text-xs leading-5 text-slate-500">{summary.detail || "—"}</p>
                 </div>,
-                item.market,
+                getCmsMarketName(item.market),
                 <div key="status" className="space-y-1">
                   <ContentStatusPill status={item.status} inline />
                   {unpublishedLabel ? <p className="text-[12px] font-medium text-amber-700">{unpublishedLabel}</p> : null}

@@ -11,6 +11,7 @@ import {
 } from "@/components/admin/AdminPageShell";
 import type { HomepageCmsSection } from "@/lib/adminHomepageCms";
 import { getCmsUnpublishedChangeLabel } from "@/lib/adminCmsPublicationStatus";
+import { getCmsMarketName } from "@/lib/adminCmsMarketLabels";
 import { ContentSectionHeading, ContentStatusPill } from "@/components/admin/ContentWorkspace";
 import { CmsEditorActions, type CmsEditorAction } from "@/components/admin/CmsEditorActions";
 
@@ -236,7 +237,7 @@ export function HomepageCmsEditor({
           <Field label="Market">
             <AdminSelect value={market} onChange={(event) => setMarket(event.target.value)} disabled={pending || archived} required>
               {!item ? <option value="">Select market</option> : null}
-              {markets.map((value) => <option key={value} value={value}>{value}</option>)}
+              {markets.map((value) => <option key={value} value={value}>{getCmsMarketName(value)}</option>)}
             </AdminSelect>
           </Field>
         ) : null}
@@ -323,7 +324,7 @@ export function HomepageCmsEditor({
         <h2 className="mt-2 text-[15px] font-semibold text-[#111827]">{previewTitle(section, currentPayload)}</h2>
         <p className="mt-2 whitespace-pre-wrap text-[13px] leading-5 text-[#475569]">{previewDetail(section, currentPayload)}</p>
         <div className="mt-4 grid gap-2 pt-2 text-[12px] text-[#64748B]">
-          <span>Market: {section === "hotel-destinations" ? "GLOBAL" : market}</span>
+          <span>Market: {getCmsMarketName(section === "hotel-destinations" ? "GLOBAL" : market) || "Select market"}</span>
           <span>Order: {sortOrder || "0"}</span>
           {item ? <span>Draft v{item.version} · Published {item.publishedVersion ? `v${item.publishedVersion}` : "none"} · {unpublishedLabel ?? "No unpublished changes"}</span> : null}
         </div>

@@ -182,7 +182,7 @@ export function FaqCmsEditor({ initialItem, listQuery = "" }: { initialItem?: Fa
             <div>
               <ContentSectionHeading>FAQ details</ContentSectionHeading>
               <p className="mt-1 text-[13px] leading-5 text-[#64748B]">
-                English FAQ content for the GLOBAL public FAQ scope.
+                English FAQ content for the Global public FAQ scope.
               </p>
             </div>
             {item ? <ContentStatusPill status={item.status} /> : null}

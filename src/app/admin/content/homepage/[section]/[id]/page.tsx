@@ -7,6 +7,7 @@ import { CmsRevisionRestoreButton } from "@/components/admin/CmsRevisionRestoreB
 import { hotelDestinations } from "@/data/hotelDestinations";
 import { getHomepageCmsSection, homepageCmsSections } from "@/lib/adminHomepageCms";
 import { homepageCmsListNavigation } from "@/lib/adminContentNavigation";
+import { getCmsMarketName } from "@/lib/adminCmsMarketLabels";
 import { CmsContentError, getAdminCmsContent } from "@/services/cmsContentService";
 import { homepageCmsMarkets } from "@/services/homepageCmsService";
 
@@ -67,7 +68,7 @@ export default async function HomepageCmsDetailPage({ params, searchParams }: Pa
                 </div>
                 <div>
                   <p className="text-[12px] font-medium text-[#64748B]">Market</p>
-                  <p className="mt-1 text-[13px] font-medium text-[#334155]">{revision.market}</p>
+                  <p className="mt-1 text-[13px] font-medium text-[#334155]">{getCmsMarketName(revision.market)}</p>
                 </div>
                 <div>
                   <p className="text-[12px] font-medium text-[#64748B]">Snapshot</p>
