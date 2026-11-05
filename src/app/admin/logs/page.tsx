@@ -201,17 +201,19 @@ function normalizeRange(value: string): AuditRange {
 
 function auditParams(raw: Record<string, string | string[] | undefined>, range: AuditRange, now: Date) {
   const params = new URLSearchParams();
-  for (const key of ["action", "adminEmail", "targetType", "targetEmail"] as const) {
-    const value = one(raw[key]).trim();
-    if (value) params.set(key, value);
-  }
-  params.set("limit", "100");
+  const pageOnlyKeys = new Set(["range", "fromDate", "toDate"]);
 
-  const cursor = one(raw.cursor);
-  if (cursor) {
-    params.set("cursor", cursor);
-    return params;
+  // Preserve the reader's validation boundary: repeated reader filters and
+  // unknown query keys must reach parseAdminAuditQuery so they fail closed
+  // instead of silently broadening the audit history.
+  for (const [key, value] of Object.entries(raw)) {
+    if (pageOnlyKeys.has(key) || value === undefined) continue;
+    if (Array.isArray(value)) value.forEach(item => params.append(key, item));
+    else params.append(key, value);
   }
+  if (!params.has("limit")) params.set("limit", "100");
+
+  if (params.has("cursor") || params.has("from") || params.has("to")) return params;
 
   if (range === "custom") {
     const fromDate = one(raw.fromDate);
