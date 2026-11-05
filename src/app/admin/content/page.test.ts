@@ -54,7 +54,7 @@ test("homepage fare operations are separated from content, system and settings",
   assert.doesNotMatch(contentPage, /HomepageFaresRefreshCard/);
   assert.doesNotMatch(systemPage, /HomepageFaresRefreshCard/);
   assert.doesNotMatch(settingsPage, /HomepageFaresRefreshCard/);
-  assert.match(settingsPage, /Platform controls/);
+  assert.match(settingsPage, /Feature controls/);
   assert.match(homepageFarePage, /title="Homepage Fare Operations"/);
   assert.match(homepageFarePage, /HomepageFaresRefreshCard/);
   assert.match(homepageFarePage, /href="\/admin\/settings"/);
@@ -102,7 +102,6 @@ test("content overview shows four equal, fully clickable management cards", () =
   assert.match(contentPage, /area\.status !== "CMS managed"/);
   assert.doesNotMatch(contentPage, /ContentSectionHeading|homepageAreas|helpAreas|Manage destinations|Manage FAQs/);
 });
-
 
 test("Content hub is centered without changing the four-card navigation", () => {
   assert.match(contentPage, /mx-auto w-full max-w-\[900px\] space-y-4/);
