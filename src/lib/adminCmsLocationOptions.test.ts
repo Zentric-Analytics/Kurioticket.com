@@ -86,7 +86,7 @@ test("destination image URL and alt text fields wrap while preserving single-str
   assert.match(expanding, /useLayoutEffect/);
   assert.match(expanding, /scrollHeight/);
   assert.match(expanding, /ResizeObserver/);
-  assert.match(expanding, /replace\(\/\[\\r\\n\]\+\/g, " "\)/);
+  assert.match(expanding, /onChange=\{\(event\) => onChange/);
   assert.match(editor, /grid max-w-\[512px\] gap-4 sm:grid-cols-3 sm:items-start/);
   assert.match(editor, /<span className="block min-h-5 text-\[13px\] font-medium leading-5/);
   assert.match(combobox, /<label className="block min-h-5 whitespace-nowrap text-\[13px\] font-medium leading-5/);
