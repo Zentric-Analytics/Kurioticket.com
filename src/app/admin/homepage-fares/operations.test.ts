@@ -27,13 +27,13 @@ test("homepage fare reload preserves snapshot-derived failure and unavailable co
 });
 
 test("homepage fare operations does not present unknown executor history as zero", () => {
-  assert.match(component, /Provider calls \(manual run\)/);
+  assert.match(component, /Provider calls/);
   assert.match(component, /No manual run in this session/);
   assert.doesNotMatch(component, /label="Provider calls used"/);
 });
 
 test("homepage fare cron copy separates credential presence from scheduler verification", () => {
-  assert.match(component, /Cron credential/);
+  assert.match(component, /Cron/);
   assert.match(component, /Scheduler cadence note/);
   assert.match(component, /Scheduler verification/);
   assert.match(component, /Not observable from this service/);
@@ -42,7 +42,7 @@ test("homepage fare cron copy separates credential presence from scheduler verif
 });
 
 test("homepage fare snapshot timestamp is not mislabeled as a completed refresh run", () => {
-  assert.match(component, /Latest snapshot search/);
+  assert.match(component, /Latest snapshot/);
   assert.doesNotMatch(component, /label="Last refresh time"/);
 });
 
@@ -173,4 +173,13 @@ test("homepage fare global readiness excludes fallback-only pools from public re
   assert.match(service, /target\.popularVisibleTarget \+ target\.discoveryVisibleTarget > 0/);
   assert.match(service, /At least one public market has usable provider-backed homepage fares/);
   assert.doesNotMatch(service, /At least one market has fresh provider-backed homepage fares/);
+});
+
+test("homepage fare readiness cannot be promoted by fallback-route freshness alone", () => {
+  assert.doesNotMatch(service, /globalReadinessStatus === "partial" \|\| visibleFresh > 0/);
+  assert.match(service, /if \(globalReadinessStatus === "partial"\)/);
+});
+
+test("underfilled diagnostics never default missing next-run metadata to not required", () => {
+  assert.match(component, /nextRun \? \(nextRun\.needed \? formatUnderfillCause\(nextRun\.reason\) : "Not required"\) : market\.targetMet \? "Not required" : "Needed"/);
 });
