@@ -562,7 +562,7 @@ export function HomepageFaresRefreshCard() {
     marketRouteGroups,
     allRoutesGroup,
   });
-  const { publicGroups: publicRouteGroups, fallbackGroups: fallbackRouteGroups } =
+  const { publicGroups: publicRouteGroups } =
     splitAdminHomepageFareMarketRouteGroups(marketRouteGroups);
 
   const publicMarkets = statusPayload.marketReadinessSummary.filter(
@@ -858,12 +858,21 @@ function RefreshCronPanel({
   const stoppedReason = refreshState.counts
     ? formatStoppedReason(refreshState.counts.stoppedReason)
     : "No manual refresh result in this session";
+  const providerCallsUsed = refreshState.counts
+    ? refreshState.counts.providerCalls
+    : "No manual run in this session";
+  const replacementCandidatesUsed = refreshState.counts
+    ? sumCountRecord(refreshState.counts.replacementCandidatesUsedByMarket)
+    : sumCountRecord(statusPayload.replacementCandidatesUsedByMarket);
+  const timeoutCount = refreshState.counts
+    ? sumCountRecord(refreshState.counts.timeoutByMarket)
+    : sumCountRecord(statusPayload.timeoutByMarket);
 
   return (
     <DashboardSection
-      eyebrow="Refresh and cron controls"
-      title="Refresh controls"
-      description="Run the existing homepage fare coverage executor and reload the current status snapshot from one dedicated operations panel."
+      eyebrow="Operations"
+      title="Refresh operations"
+      description="Refresh provider-backed homepage fares or reload the current snapshot status."
     >
       <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(18rem,0.8fr)]">
         <div className="rounded-xl border border-border bg-slate-50 p-4">
@@ -923,10 +932,13 @@ function RefreshCronPanel({
 
         <dl className="grid gap-2 rounded-xl border border-border bg-white p-4 sm:grid-cols-2 lg:grid-cols-1">
           <CompactDetail label="Latest snapshot search" value={statusPayload.dataAvailable ? formatSnapshotTime(statusPayload.lastRefreshAt) : "Unavailable"} />
+          <CompactDetail label="Provider calls (manual run)" value={providerCallsUsed} />
+          <CompactDetail label="Stopped reason" value={stoppedReason} />
+          <CompactDetail label="Replacement candidates" value={replacementCandidatesUsed} />
+          <CompactDetail label="Timeouts" value={timeoutCount} />
           <CompactDetail label="Cron credential" value={formatCronStatus(statusPayload)} />
-          <CompactDetail label="Scheduler cadence note" value={statusPayload.nextExpectedCronRefresh ?? "Not provided"} />
+          <CompactDetail label="Scheduler cadence" value={statusPayload.nextExpectedCronRefresh ?? "Not provided"} />
           <CompactDetail label="Scheduler verification" value="Not observable from this service" />
-          <CompactDetail label="Current stopped reason" value={stoppedReason} />
         </dl>
       </div>
       {!initialStatusLoading && !operationsAvailable ? (
@@ -956,7 +968,7 @@ function MarketReadinessDashboard({
     <DashboardSection
       eyebrow="Market readiness"
       title="Public market coverage"
-      description="Only public country markets with homepage display targets are shown here. Regional and global fallback pools are separated below."
+      description="Customer-facing country markets and their homepage coverage targets."
     >
       <div className="mt-4 grid gap-3 xl:grid-cols-2">
         {markets.length ? (
@@ -1012,25 +1024,19 @@ function MarketReadinessCard({
         <CoverageMetric label="Discovery coverage" current={market.discoveryVisibleFresh} target={market.discoveryVisibleTarget} />
         <CoverageMetric label="Backup coverage" current={market.backupFresh} target={market.backupTarget} />
       </dl>
-      <dl className="mt-3 grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
-        <MarketMiniMetric label="Fresh" value={market.freshCount ?? 0} />
-        <MarketMiniMetric label="LKG" value={market.lastKnownGoodCount ?? 0} />
-        <MarketMiniMetric label="Missing" value={market.missingCount ?? 0} />
-        <MarketMiniMetric label="Failed" value={market.failed} />
-        <MarketMiniMetric label="Unavailable" value={market.unavailable} />
-        <MarketMiniMetric label="Timeout" value={market.timeoutCount ?? 0} />
-        <MarketMiniMetric label="Replacements" value={market.replacementCandidatesUsed ?? 0} />
-        <MarketMiniMetric label="Provider calls" value={market.providerCalls} />
-        <MarketMiniMetric label="Attempts" value={market.routeAttempts} />
-        <MarketMiniMetric label="Cooldown" value={market.skippedCooldown} />
-        <MarketMiniMetric label="Candidates" value={market.candidatePoolSize} />
-      </dl>
-      <div className="mt-3 rounded-xl bg-slate-50 p-3 text-sm leading-6 text-muted">
-        <strong className="text-navy">Underfill reason:</strong>{" "}
-        {market.underfillReason ?? (market.targetMet ? "Coverage target met." : "No executor reason returned.")}
+      <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs font-semibold text-muted">
+        <span>Fresh {market.freshCount ?? 0}</span>
+        <span>Missing {market.missingCount ?? 0}</span>
+        <span>Failed {market.failed}</span>
+        <span>Unavailable {market.unavailable}</span>
       </div>
-      <span className="mt-3 inline-flex min-h-10 items-center justify-center rounded-full border border-teal-dark/30 bg-teal/10 px-4 py-2 text-sm font-extrabold text-teal-dark transition group-hover:border-teal-dark/50 group-hover:bg-teal/15">
-        Inspect {market.marketCode} routes
+      {!market.targetMet ? (
+        <p className="mt-2 text-xs font-semibold leading-5 text-amber">
+          {market.underfillReason ?? "Coverage target not yet met."}
+        </p>
+      ) : null}
+      <span className="mt-3 inline-flex min-h-9 items-center justify-center rounded-lg border border-teal-dark/25 px-3 py-1.5 text-xs font-extrabold text-teal-dark transition group-hover:border-teal-dark/45">
+        Inspect routes
       </span>
     </button>
   );
