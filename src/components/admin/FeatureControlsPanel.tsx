@@ -120,7 +120,7 @@ export function FeatureControlsPanel({
           <div className="mt-2 divide-y divide-slate-100 border-y border-slate-200">
             {controls
               .filter((control) => control.category === category)
-              .map((control, index, group) => {
+              .map((control) => {
                 const permitted = operationsAvailable && (environment === "STAGING" || canControlProduction);
                 return (
                   <article
