@@ -101,7 +101,7 @@ test("System specialist pages are contextual destinations rather than duplicate 
   }
   assert.match(adminNav, /href: "\/admin\/logs", label: "Audit Logs"/);
   assert.doesNotMatch(adminNav, /href: "\/admin\/notifications", parentHref:/);
-  assert.match(adminShell, /href="\/admin\/notifications"/);
+  assert.match(adminShell, /<AdminNotificationsPanel/);
 });
 test("settings owns authoritative feature controls", () => {
   assert.match(settingsPage, /title="Settings"/);

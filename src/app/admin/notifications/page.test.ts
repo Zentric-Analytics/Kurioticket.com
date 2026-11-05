@@ -11,6 +11,7 @@ const readApi = readFileSync("src/app/api/admin/notifications/route.ts", "utf8")
 const ackApi = readFileSync("src/app/api/admin/notifications/acknowledge/route.ts", "utf8");
 const acknowledgeButton = readFileSync("src/components/admin/AdminAlertAcknowledgeButton.tsx", "utf8");
 const shell = readFileSync("src/components/admin/AdminHorizontalShell.tsx", "utf8");
+const panel = readFileSync("src/components/admin/AdminNotificationsPanel.tsx", "utf8");
 const adminLib = readFileSync("src/lib/admin.ts", "utf8");
 const adminLayout = readFileSync("src/app/admin/layout.tsx", "utf8");
 const outageAccess = readFileSync("src/lib/adminDatabaseOutageAccess.ts", "utf8");
@@ -153,20 +154,28 @@ test("notifications page explains acknowledgement semantics and monitored bounda
   );
 });
 
-test("admin bell is live and reads only the summary endpoint", () => {
-  assert.match(shell, /fetch\("\/api\/admin\/notifications\?summary=1"/);
-  assert.match(shell, /href="\/admin\/notifications"/);
-  assert.match(shell, /unreadAlertCount > 99 \? "99\+" : unreadAlertCount/);
-  assert.match(shell, /admin-alerts-updated/);
-  assert.match(shell, /setInterval\(refreshIfVisible, 60_000\)/);
-  assert.match(shell, /addEventListener\("focus", refreshIfVisible\)/);
-  assert.match(shell, /addEventListener\("visibilitychange", refreshIfVisible\)/);
-  assert.doesNotMatch(shell, /aria-label="Notifications unavailable"/);
+test("admin bell opens the complete notification panel without navigating or acknowledging", () => {
+  assert.match(shell, /role === "ADMIN" \? <AdminNotificationsPanel/);
+  assert.match(shell, /key=\{pathname\}/);
+  assert.doesNotMatch(shell, /href="\/admin\/notifications"/);
+  assert.match(panel, /open \? "\/api\/admin\/notifications\?panel=1" : "\/api\/admin\/notifications\?summary=1"/);
+  assert.match(panel, /unreadCount > 99 \? "99\+" : unreadCount/);
+  assert.match(panel, /admin-alerts-updated/);
+  assert.match(panel, /setInterval\(refreshIfVisible, 60_000\)/);
+  assert.match(panel, /addEventListener\("focus", refreshIfVisible\)/);
+  assert.match(panel, /addEventListener\("visibilitychange", refreshIfVisible\)/);
+  assert.match(panel, /createPortal/);
+  assert.match(panel, /role="dialog"/);
+  assert.match(panel, /Close notifications/);
+  assert.match(panel, /snapshot\.alerts\.map/);
+  assert.match(panel, /AdminAlertAcknowledgeButton/);
+  assert.doesNotMatch(panel, /method: "POST"|slice\(0|View all|See all|href="\/admin\/notifications"|line-clamp/);
 });
 
 test("notifications read API supports cached safe summary mode", () => {
   assert.match(readApi, /requireAdminApiSession\(\)/);
   assert.match(readApi, /summaryOnly/);
+  assert.match(readApi, /forceRefreshCandidates: !panelOnly/);
   assert.match(readApi, /getAdminAlertSummary/);
   assert.match(service, /CANDIDATE_CACHE_TTL_MS = 30_000/);
   assert.match(service, /candidateCache/);
