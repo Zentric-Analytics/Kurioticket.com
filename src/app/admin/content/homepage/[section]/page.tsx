@@ -11,6 +11,7 @@ import { homepageCmsListNavigation } from "@/lib/adminContentNavigation";
 import {
   CmsContentError,
   getCmsContentScopeSummary,
+  getCmsContentMarketOverview,
   listAdminCmsContent,
 } from "@/services/cmsContentService";
 import { homepageCmsLocale, homepageCmsMarkets } from "@/services/homepageCmsService";
@@ -29,21 +30,23 @@ export default async function HomepageCmsSectionPage({ params, searchParams }: P
   const raw = await searchParams;
   const statusRaw = one(raw.status).trim();
   const status = validStatuses.has(statusRaw as CmsContentStatus) ? statusRaw as CmsContentStatus : undefined;
-  const defaultMarket = section === "hotel-destinations" ? "GLOBAL" : "US";
+  const defaultMarket = section === "hotel-destinations" ? "GLOBAL" : "ALL";
   const requestedMarket = one(raw.market).trim().toUpperCase() || defaultMarket;
   const allowedMarket = section === "hotel-destinations"
     ? "GLOBAL"
-    : homepageCmsMarkets.includes(requestedMarket as never)
+    : requestedMarket === "ALL" || homepageCmsMarkets.includes(requestedMarket as never)
       ? requestedMarket
       : defaultMarket;
   const nav = homepageCmsListNavigation(section, raw, allowedMarket);
   const cursor = one(raw.cursor) || undefined;
 
-  const summary = await getCmsContentScopeSummary(config.type, allowedMarket, homepageCmsLocale).catch(() => null);
+  const summary = await (allowedMarket === "ALL"
+    ? getCmsContentMarketOverview(config.type, homepageCmsMarkets, homepageCmsLocale)
+    : getCmsContentScopeSummary(config.type, allowedMarket, homepageCmsLocale)).catch(() => null);
   if (!summary?.available || !summary.active) {
     return (
       <ContentPageFrame
-      wide
+        wide
         title={config.title}
         subtitle="This CMS scope must be initialized before editing."
         backHref={nav.backHref}
@@ -63,7 +66,7 @@ export default async function HomepageCmsSectionPage({ params, searchParams }: P
     listing = await listAdminCmsContent({
       type: config.type,
       status,
-      market: allowedMarket,
+      market: allowedMarket === "ALL" ? undefined : allowedMarket,
       locale: homepageCmsLocale,
       limit: 100,
       cursor,
@@ -77,7 +80,7 @@ export default async function HomepageCmsSectionPage({ params, searchParams }: P
     <ContentPageFrame
       wide
       title={config.title}
-      subtitle="Manage drafts and published content."
+      subtitle={allowedMarket === "ALL" ? "Manage drafts and published content across all markets." : "Manage drafts and published content."}
       backHref={nav.backHref}
       backLabel={nav.backLabel}
       actions={<CmsCreateLink path={`/admin/content/homepage/${section}/new`} label={`Add ${config.singular}`} />}
