@@ -6,6 +6,11 @@ on:
     paths:
       - src/services/adminAlert*
       - src/services/adminExpandedAlert*
+      - src/components/admin/AdminNotificationsPanel*
+      - src/components/admin/AdminHorizontalShell*
+      - src/components/admin/AdminAlertAcknowledgeButton*
+      - src/app/api/admin/notifications/**
+      - src/lib/adminNotificationData*
       - src/lib/adminAlertNavigation*
       - src/lib/adminNavigation*
       - src/lib/adminSystemCleanup.test.ts
@@ -42,6 +47,7 @@ jobs:
           src/services/adminExpandedAlertOccurrences.test.ts
           src/services/adminAlertCoreCoverage.test.ts
           src/services/adminAlertServiceExpansion.test.ts
+          src/lib/adminNotificationData.test.ts
           src/lib/adminAlertNavigation.test.ts
           src/lib/adminSystemCleanup.test.ts
           src/lib/adminNavigation.test.ts
