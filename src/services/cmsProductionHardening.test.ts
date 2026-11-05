@@ -100,6 +100,13 @@ test("CMS health reports integrity, ordering, fallback and unpublished changes",
   assert.match(healthPage, /Hotel destinations/);
   assert.match(healthPage, /FAQs/);
   assert.match(healthPage, /open=\{needsAttention > 0\}/);
+  assert.match(healthPage, /getCmsMarketName/);
+  assert.match(healthPage, /getCmsLocaleName/);
+  assert.match(healthPage, /columns=\{\["CMS market", "Health", "Integrity", "Fallback", "Draft changes", "Actions"\]\}/);
+  assert.match(healthPage, /\{getCmsMarketName\(entry\.market\)\}/);
+  assert.match(healthPage, /\{getCmsLocaleName\(entry\.locale\)\}/);
+  assert.match(healthPage, /\{entry\.market\} · \{entry\.locale\} · v\{integrity\.scopeVersion \?\? "—"\}/);
+  assert.doesNotMatch(healthPage, /font-black text-slate-950">\{entry\.type\}/);
   const diagnostic = readFileSync("src/lib/adminCmsScopeDiagnostics.ts", "utf8");
   assert.match(diagnostic, /for \(const market of new Set\(markets\)\)/);
   assert.match(diagnostic, /type: "HOMEPAGE_DESTINATION"/);
