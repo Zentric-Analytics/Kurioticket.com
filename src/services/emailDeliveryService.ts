@@ -129,6 +129,18 @@ export async function markEmailDeliverySent(input: {
           updated_at = NOW()
       WHERE id = ${input.deliveryId}
     `;
+
+    await db.$executeRaw`
+      INSERT INTO email_events (id, delivery_id, provider_message_id, type, payload, occurred_at)
+      VALUES (
+        ${randomUUID()},
+        ${input.deliveryId},
+        ${input.providerMessageId || null},
+        'internal.send_succeeded',
+        '{}'::jsonb,
+        NOW()
+      )
+    `;
   });
 }
 
@@ -148,6 +160,18 @@ export async function markEmailDeliveryFailed(input: {
           last_error_status = ${input.statusCode || null},
           updated_at = NOW()
       WHERE id = ${input.deliveryId}
+    `;
+
+    await db.$executeRaw`
+      INSERT INTO email_events (id, delivery_id, provider_message_id, type, payload, occurred_at)
+      VALUES (
+        ${randomUUID()},
+        ${input.deliveryId},
+        NULL,
+        'internal.send_failed',
+        '{}'::jsonb,
+        NOW()
+      )
     `;
   });
 }
@@ -244,7 +268,7 @@ export type EmailDeliveryOperationsRange = {
 export async function getEmailDeliveryOperationsSnapshot(range: EmailDeliveryOperationsRange) {
   return withEmailDeliveryDb(async (db) => {
     const [summary] = await db.$queryRaw<{
-      attempts: bigint;
+      deliveries: bigint;
       delivered: bigint;
       failures: bigint;
       delayed: bigint;
@@ -252,15 +276,34 @@ export async function getEmailDeliveryOperationsSnapshot(range: EmailDeliveryOpe
     }[]>`
       SELECT
         (SELECT COUNT(*) FROM email_deliveries
-          WHERE created_at >= ${range.from} AND created_at < ${range.to}) AS attempts,
-        (SELECT COUNT(*) FROM email_deliveries
-          WHERE delivered_at >= ${range.from} AND delivered_at < ${range.to}) AS delivered,
-        (SELECT COUNT(*) FROM email_deliveries
-          WHERE updated_at >= ${range.from} AND updated_at < ${range.to}
-            AND status IN ('FAILED', 'BOUNCED', 'COMPLAINED', 'SUPPRESSED')) AS failures,
-        (SELECT COUNT(*) FROM email_deliveries
-          WHERE updated_at >= ${range.from} AND updated_at < ${range.to}
-            AND status = 'DELIVERY_DELAYED') AS delayed,
+          WHERE created_at >= ${range.from} AND created_at < ${range.to}) AS deliveries,
+        (
+          SELECT COUNT(DISTINCT COALESCE(e.delivery_id, e.provider_message_id, e.id))
+          FROM email_events e
+          WHERE COALESCE(e.occurred_at, e.created_at) >= ${range.from}
+            AND COALESCE(e.occurred_at, e.created_at) < ${range.to}
+            AND e.type = 'email.delivered'
+        ) AS delivered,
+        (
+          SELECT COUNT(DISTINCT COALESCE(e.delivery_id, e.provider_message_id, e.id))
+          FROM email_events e
+          WHERE COALESCE(e.occurred_at, e.created_at) >= ${range.from}
+            AND COALESCE(e.occurred_at, e.created_at) < ${range.to}
+            AND e.type IN (
+              'internal.send_failed',
+              'email.failed',
+              'email.bounced',
+              'email.complained',
+              'email.suppressed'
+            )
+        ) AS failures,
+        (
+          SELECT COUNT(DISTINCT COALESCE(e.delivery_id, e.provider_message_id, e.id))
+          FROM email_events e
+          WHERE COALESCE(e.occurred_at, e.created_at) >= ${range.from}
+            AND COALESCE(e.occurred_at, e.created_at) < ${range.to}
+            AND e.type = 'email.delivery_delayed'
+        ) AS delayed,
         (SELECT COUNT(*) FROM email_suppressions) AS current_suppressed
     `;
 
@@ -273,16 +316,36 @@ export async function getEmailDeliveryOperationsSnapshot(range: EmailDeliveryOpe
       sent_at: Date | null;
       delivered_at: Date | null;
     }>>`
-      SELECT id, template, to_email, status, created_at, sent_at, delivered_at
-      FROM email_deliveries
-      WHERE created_at >= ${range.from} AND created_at < ${range.to}
-      ORDER BY created_at DESC
+      SELECT d.id, d.template, d.to_email, d.status, d.created_at, d.sent_at, d.delivered_at
+      FROM email_deliveries d
+      WHERE
+        (d.created_at >= ${range.from} AND d.created_at < ${range.to})
+        OR EXISTS (
+          SELECT 1
+          FROM email_events e
+          WHERE e.delivery_id = d.id
+            AND COALESCE(e.occurred_at, e.created_at) >= ${range.from}
+            AND COALESCE(e.occurred_at, e.created_at) < ${range.to}
+        )
+      ORDER BY GREATEST(
+        d.created_at,
+        COALESCE(
+          (
+            SELECT MAX(COALESCE(e.occurred_at, e.created_at))
+            FROM email_events e
+            WHERE e.delivery_id = d.id
+              AND COALESCE(e.occurred_at, e.created_at) >= ${range.from}
+              AND COALESCE(e.occurred_at, e.created_at) < ${range.to}
+          ),
+          d.created_at
+        )
+      ) DESC
       LIMIT 10
     `;
 
     return {
       dataAvailable: true,
-      attempts: Number(summary?.attempts || 0),
+      deliveries: Number(summary?.deliveries || 0),
       delivered: Number(summary?.delivered || 0),
       failures: Number(summary?.failures || 0),
       delayed: Number(summary?.delayed || 0),
@@ -299,7 +362,7 @@ export async function getEmailDeliveryOperationsSnapshot(range: EmailDeliveryOpe
     };
   }, {
     dataAvailable: false,
-    attempts: 0,
+    deliveries: 0,
     delivered: 0,
     failures: 0,
     delayed: 0,
@@ -307,6 +370,7 @@ export async function getEmailDeliveryOperationsSnapshot(range: EmailDeliveryOpe
     latest: [],
   });
 }
+
 export async function getEmailDeliveryHealthSnapshot() {
   return withEmailDeliveryDb(async (db) => {
     const [summary] = await db.$queryRaw<{
