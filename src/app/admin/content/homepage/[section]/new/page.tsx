@@ -6,7 +6,7 @@ import { HomepageCmsEditor } from "@/components/admin/HomepageCmsEditor";
 import { hotelDestinations } from "@/data/hotelDestinations";
 import { getHomepageCmsSection, homepageCmsSections } from "@/lib/adminHomepageCms";
 import { homepageCmsListNavigation } from "@/lib/adminContentNavigation";
-import { getCmsContentScopeSummary } from "@/services/cmsContentService";
+import { getCmsContentMarketOverview, getCmsContentScopeSummary } from "@/services/cmsContentService";
 import { homepageCmsLocale, homepageCmsMarkets } from "@/services/homepageCmsService";
 
 type PageProps = {
@@ -25,10 +25,12 @@ export default async function NewHomepageCmsContentPage({ params, searchParams }
     ? "GLOBAL"
     : homepageCmsMarkets.includes(requestedMarket as never)
       ? requestedMarket
-      : "US";
+      : "ALL";
   const nav = homepageCmsListNavigation(section, raw, market);
   const config = homepageCmsSections[section];
-  const summary = await getCmsContentScopeSummary(config.type, market, homepageCmsLocale).catch(() => null);
+  const summary = await (market === "ALL"
+    ? getCmsContentMarketOverview(config.type, homepageCmsMarkets, homepageCmsLocale)
+    : getCmsContentScopeSummary(config.type, market, homepageCmsLocale)).catch(() => null);
 
   if (!summary?.available || !summary.active) {
     redirect("/admin/content/homepage");
@@ -44,7 +46,7 @@ export default async function NewHomepageCmsContentPage({ params, searchParams }
       <HomepageCmsEditor
         section={section}
         markets={homepageCmsMarkets}
-        initialMarket={market}
+        initialMarket={market === "ALL" ? "" : market}
         listQuery={nav.query}
         hotelOptions={section === "hotel-destinations" ? getHotelOptions() : []}
       />

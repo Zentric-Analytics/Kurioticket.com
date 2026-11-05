@@ -111,8 +111,8 @@ export function ContentDirectoryToolbar({
     navigate({}, false, true);
   }
 
-  const hasFilters = Boolean(searchTerm || status || category || (market && markets.length > 0 && market !== "US"));
-  const marketOptions: Option[] = markets.map(value => ({ value, label: value.replaceAll("_", " ") }));
+  const hasFilters = Boolean(searchTerm || status || category || (market && markets.length > 0 && market !== "ALL"));
+  const marketOptions: Option[] = [{ value: "ALL", label: "All markets" }, ...markets.map(value => ({ value, label: value.replaceAll("_", " ") }))];
   const categoryOptions: Option[] = [{ value: "", label: "All categories" }, ...categories.map(value => ({ value, label: value }))];
 
   return (
