@@ -82,6 +82,18 @@ test("CMS health reports integrity, ordering, fallback and unpublished changes",
   assert.match(hardeningService, /findMissingHomepageCmsScopes\(scopes, homepageCmsMarkets, homepageCmsLocale\)/);
   assert.match(healthPage, /Missing homepage CMS scopes/);
   assert.match(healthPage, /overview\.missingHomepageScopes\.map/);
+  assert.match(healthPage, /aria-label="CMS health summary"/);
+  assert.match(healthPage, />Healthy</);
+  assert.match(healthPage, />Needs attention</);
+  assert.match(healthPage, />Fallback active</);
+  assert.match(healthPage, /Total records/);
+  assert.doesNotMatch(healthPage, /label="Unpublished changes"/);
+  assert.match(healthPage, /const cmsHealthGroups = \[/);
+  assert.match(healthPage, /Homepage destinations/);
+  assert.match(healthPage, /Flight routes/);
+  assert.match(healthPage, /Hotel destinations/);
+  assert.match(healthPage, /FAQs/);
+  assert.match(healthPage, /open=\{needsAttention > 0\}/);
   const diagnostic = readFileSync("src/lib/adminCmsScopeDiagnostics.ts", "utf8");
   assert.match(diagnostic, /for \(const market of new Set\(markets\)\)/);
   assert.match(diagnostic, /type: "HOMEPAGE_DESTINATION"/);
