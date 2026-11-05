@@ -68,7 +68,8 @@ try {
           await expect(connectedStatus.locator("span").first()).toHaveClass(/w-1\.5/);
           await expect(connectedStatus.locator("span").first()).toHaveClass(/rounded-full/);
 
-          const configuredStatus = main.getByText("Configured", { exact: true }).first();
+          const authenticationSummary = main.locator("details").filter({ hasText: "Authentication" }).locator("summary");
+          const configuredStatus = authenticationSummary.getByText("Configured", { exact: true });
           await expect(configuredStatus).toHaveClass(/text-\[#004BB8\]/);
           await expect(configuredStatus.locator("span").first()).toHaveClass(/bg-\[#004BB8\]/);
           await expect(main.getByText("Expand a row for what is actually verified.", { exact: true })).toHaveCount(0);
