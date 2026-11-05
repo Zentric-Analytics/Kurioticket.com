@@ -59,7 +59,7 @@ export function HomepageDestinationDraftPreview({
   const imageUrl = permittedPreviewImage(payload.image);
 
   return (
-    <aside className="h-fit min-w-0 lg:sticky lg:top-24">
+    <aside className="h-fit min-w-0">
       <h2 className="text-[14px] font-semibold text-[#111827]">Draft preview</h2>
       <p className="mt-1 text-[12px] leading-5 text-slate-500">Updates as you edit. This is not the live website.</p>
 
