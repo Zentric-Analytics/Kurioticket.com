@@ -68,18 +68,31 @@ try {
           await expect(connectedStatus.locator("span").first()).toHaveClass(/w-1\.5/);
           await expect(connectedStatus.locator("span").first()).toHaveClass(/rounded-full/);
 
-          const authenticationSummary = main.locator("details").filter({ hasText: "Authentication" }).locator("summary");
-          const configurationStatus = authenticationSummary.getByText("Not configured", { exact: true });
+          const databaseRow = main.locator('[data-system-area="database"]');
+          const authenticationRow = main.locator('[data-system-area="authentication"]');
+          await expect(databaseRow).not.toHaveAttribute("open", "");
+          await expect(authenticationRow).not.toHaveAttribute("open", "");
+          await expect(databaseRow.getByText("View ›", { exact: true })).toHaveCount(0);
+          await expect(authenticationRow.getByText("View ›", { exact: true })).toHaveCount(0);
+
+          const configurationStatus = authenticationRow.getByText("Not configured", { exact: true });
           await expect(configurationStatus).toHaveClass(/text-amber-700/);
           await expect(configurationStatus.locator("span").first()).toHaveClass(/bg-amber-500/);
           await expect(main.getByText("Expand a row for what is actually verified.", { exact: true })).toHaveCount(0);
-          await expect(main.locator("details")).toHaveCount(6);
+          await expect(main.locator("details")).toHaveCount(4);
+          await expect(main.getByText("Meaning", { exact: true })).toHaveCount(0);
 
-          const adminAccess = main.locator("details").filter({ hasText: "Admin access" });
+          const emailDetails = main.locator('details[data-system-area="email"]');
+          await emailDetails.locator("summary").click();
+          await expect(emailDetails.getByText("Verification", { exact: true })).toBeVisible();
+          await expect(emailDetails.getByRole("link", { name: "Open Email Delivery ›", exact: true })).toHaveAttribute("href", "/admin/email-delivery");
+
+          const adminAccess = main.locator('details[data-system-area="admin-access"]');
           await expect(adminAccess).toBeVisible();
           await adminAccess.locator("summary").click();
           await expect(adminAccess.getByText("Administrator allowlist", { exact: true })).toBeVisible();
           await expect(adminAccess.getByText("Configured administrators", { exact: true })).toBeVisible();
+          await expect(adminAccess.getByText("Verification", { exact: true })).toBeVisible();
 
           await expect(main.locator('a[href="/admin/settings"],a[href="/admin/notifications"]')).toHaveCount(0);
           await expect(main.getByText(/deployment configuration/).first()).toBeVisible();
