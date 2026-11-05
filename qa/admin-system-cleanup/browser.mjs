@@ -143,7 +143,7 @@ try {
     if (variant === "after") {
       await page.goto(`${root}/admin/system`, { waitUntil: "networkidle" });
       await page.getByRole("button", { name: "Admin profile" }).click();
-      await page.getByRole("link", { name: "Audit logs", exact: true }).click();
+      await page.getByRole("link", { name: "Audit Logs", exact: true }).click();
       await expect(page).toHaveURL(`${root}/admin/logs`);
       await expect(page.getByRole("navigation", { name: "System sections" })).toHaveCount(0);
       await page.getByRole("link", { name: /unread admin alerts/ }).click();
