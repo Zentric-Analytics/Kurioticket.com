@@ -20,6 +20,7 @@ const actionLabels: Record<string, string> = {
   EMAIL_DELIVERY_TEST_SENT: "Email delivery test sent",
   USER_ROLE_UPDATED: "User role updated",
   USER_SOFT_DELETED: "User deleted",
+  FEATURE_CONTROL_UPDATED: "Feature control updated",
 };
 
 export default async function AdminLogsPage({ searchParams }: { searchParams: SearchParams }) {
