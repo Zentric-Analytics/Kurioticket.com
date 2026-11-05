@@ -50,18 +50,19 @@ test("public content management exposes homepage and FAQ CMS areas while fare op
   assert.doesNotMatch(contentPage, /Upload image|Approve content/i);
 });
 
-test("homepage fare operations are separated from content, system and settings", () => {
+test("homepage fare operations stay operational while linking to their content source", () => {
   assert.doesNotMatch(contentPage, /HomepageFaresRefreshCard/);
   assert.doesNotMatch(systemPage, /HomepageFaresRefreshCard/);
   assert.doesNotMatch(settingsPage, /HomepageFaresRefreshCard/);
   assert.match(settingsPage, /Feature controls/);
+  assert.doesNotMatch(settingsPage, /Homepage Fare Operations|\/admin\/homepage-fares/);
   assert.match(homepageFarePage, /title="Homepage Fare Operations"/);
   assert.match(homepageFarePage, /HomepageFaresRefreshCard/);
-  assert.match(homepageFarePage, /href="\/admin\/settings"/);
+  assert.match(homepageFarePage, /href="\/admin\/content\/homepage"/);
+  assert.match(homepageFarePage, />Homepage content<\/Link>/);
+  assert.match(homepageFarePage, /href="\/admin\/flights"/);
+  assert.doesNotMatch(homepageFarePage, /href="\/admin\/settings"/);
   assert.doesNotMatch(contentPage, /\/admin\/homepage-fares/);
-  assert.match(settingsPage, /href="\/admin\/homepage-fares"/);
-  assert.match(settingsPage, /Homepage Fare Operations/);
-  assert.doesNotMatch(contentPage, /href="\/admin\/settings"[\s\S]{0,300}Homepage fare operations/);
 });
 
 test("homepage fare refresh component keeps existing client APIs, scopes, and status messaging", () => {
