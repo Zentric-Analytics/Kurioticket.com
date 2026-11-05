@@ -8,7 +8,8 @@ const nav = readFileSync("src/lib/adminNavigation.ts", "utf8");
 const shell = readFileSync("src/components/admin/AdminHorizontalShell.tsx", "utf8");
 
 test("Audit Logs uses the compact Providers-style white workspace", () => {
-  assert.match(page, /title="Audit Logs" hideHeader/);
+  assert.doesNotMatch(page, /AdminPageShell/);
+  assert.equal((page.match(/>Audit Logs<\/h1>/g) || []).length, 1);
   assert.match(page, />Audit Logs<\/h1>/);
   assert.match(page, /text-\[18px\] font-semibold/);
   assert.match(page, /border-b border-\[#D8E1EC\]/);
