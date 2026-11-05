@@ -214,9 +214,14 @@ export async function verifyNotificationPanel({ page, root, output, width }) {
   await expect(dialog.locator("li")).toHaveCount(3);
   const firstItem = dialog.locator("li").first();
   const swipe = async (dx, dy = 0) => {
-    const box = await firstItem.locator("h3").boundingBox();
-    const x = box.x + box.width * 0.75;
-    const y = box.y + box.height / 2;
+    const card = firstItem.locator("[data-notification-card]");
+    const box = await card.boundingBox();
+    if (!box) throw new Error("Notification card is not visible for swipe QA");
+    // Start inside the card's non-interactive content area. Using the heading's
+    // text box made the drag origin depend on text layout and could land under
+    // an absolutely positioned action at some widths.
+    const x = box.x + box.width * 0.25;
+    const y = box.y + 26;
     await page.mouse.move(x, y);
     await page.mouse.down();
     await page.mouse.move(x + dx, y + dy, { steps: 10 });
