@@ -109,6 +109,8 @@ test("Content hub centers vertically below the desktop Admin header without chan
   const shell = readFileSync("src/components/admin/AdminHorizontalShell.tsx", "utf8");
   assert.match(shell, /contentLanding = pathname === "\/admin\/content"/);
   assert.match(shell, /headerRef = useRef<HTMLElement>\(null\)/);
+  assert.match(shell, /import \{ useEffect, useLayoutEffect, useRef, useState \} from "react"/);
+  assert.match(shell, /useLayoutEffect\(\(\) => \{\s*if \(!contentLanding/);
   assert.match(shell, /getBoundingClientRect\(\)\.height/);
   assert.match(shell, /new ResizeObserver\(updateHeaderHeight\)/);
   assert.match(shell, /observer\.observe\(header\)/);
