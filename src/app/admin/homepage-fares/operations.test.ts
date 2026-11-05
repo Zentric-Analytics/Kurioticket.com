@@ -270,9 +270,9 @@ test("readiness summary metrics use neutral cards with semantic dots instead of 
 });
 
 test("readiness metric tone logic remains unchanged", () => {
-  assert.match(component, /label="Fresh fares".*tone=\{statusPayload\.dataAvailable \? "good" : "danger"\}/s);
-  assert.match(component, /label="Last-known-good".*tone=\{statusPayload\.dataAvailable \? "info" : "danger"\}/s);
-  assert.match(component, /label="Missing routes".*statusPayload\.summary\.missing \? "warning" : "neutral"/s);
-  assert.match(component, /label="Failed \/ unavailable".*statusPayload\.summary\.failed \+ statusPayload\.summary\.unavailable \? "warning" : "neutral"/s);
-  assert.match(component, /label="Markets needing attention".*marketsNeedingAnotherRun\.some\(\(market\) => market\.needed\) \? "warning" : "good"/s);
+  assert.match(component, /label="Fresh fares"[\s\S]*tone=\{statusPayload\.dataAvailable \? "good" : "danger"\}/);
+  assert.match(component, /label="Last-known-good"[\s\S]*tone=\{statusPayload\.dataAvailable \? "info" : "danger"\}/);
+  assert.match(component, /label="Missing routes"[\s\S]*statusPayload\.summary\.missing \? "warning" : "neutral"/);
+  assert.match(component, /label="Failed \/ unavailable"[\s\S]*statusPayload\.summary\.failed \+ statusPayload\.summary\.unavailable \? "warning" : "neutral"/);
+  assert.match(component, /label="Markets needing attention"[\s\S]*marketsNeedingAnotherRun\.some\(\(market\) => market\.needed\) \? "warning" : "good"/);
 });
