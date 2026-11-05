@@ -15,6 +15,7 @@ import { getCmsMarketName } from "@/lib/adminCmsMarketLabels";
 import { ContentSectionHeading, ContentStatusPill } from "@/components/admin/ContentWorkspace";
 import { CmsEditorActions, type CmsEditorAction } from "@/components/admin/CmsEditorActions";
 import { CmsLocationCombobox } from "@/components/admin/CmsLocationCombobox";
+import { CmsExpandingTextField } from "@/components/admin/CmsExpandingTextField";
 import { HomepageDestinationDraftPreview } from "@/components/admin/HomepageDestinationDraftPreview";
 import type { CmsLocationOption } from "@/lib/adminCmsLocationOptions";
 
@@ -268,13 +269,13 @@ export function HomepageCmsEditor({
           <>
             <CmsLocationCombobox label="City" kind="city" value={fields.city ?? ""} countryCode={fields.countryCode ?? ""} onChange={(value) => setField("city", value)} onSelect={selectCity} disabled={pending || archived} className="max-w-[320px]" />
             <CmsLocationCombobox label="Country" kind="country" value={fields.country ?? ""} onChange={(value) => setFields((current) => ({ ...current, country: value, ...(value !== current.country ? { countryCode: "" } : {}) }))} onSelect={selectCountry} disabled={pending || archived} className="max-w-[320px]" />
-            <div className="grid max-w-[512px] gap-4 sm:grid-cols-3">
-              <TextField label="Country code" name="countryCode" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[160px]" />
-              <CmsLocationCombobox label="Origin IATA" kind="airport" value={fields.originCode ?? ""} onChange={(value) => setField("originCode", value)} disabled={pending || archived} className="max-w-[160px]" />
-              <CmsLocationCombobox label="Destination IATA" kind="airport" value={fields.destinationCode ?? ""} onChange={(value) => setField("destinationCode", value)} disabled={pending || archived} className="max-w-[160px]" />
+            <div className="grid max-w-[512px] gap-4 sm:grid-cols-3 sm:items-start">
+              <TextField label="Country code" name="countryCode" fields={fields} setField={setField} disabled={pending || archived} className="min-w-0" />
+              <CmsLocationCombobox label="Origin IATA" kind="airport" value={fields.originCode ?? ""} onChange={(value) => setField("originCode", value)} disabled={pending || archived} className="min-w-0" />
+              <CmsLocationCombobox label="Destination IATA" kind="airport" value={fields.destinationCode ?? ""} onChange={(value) => setField("destinationCode", value)} disabled={pending || archived} className="min-w-0" />
             </div>
-            <TextField label="Image" name="image" fields={fields} setField={setField} disabled={pending || archived} />
-            <TextField label="Image alt text" name="imageAlt" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[448px]" />
+            <CmsExpandingTextField label="Image" value={fields.image ?? ""} onChange={(value) => setField("image", value)} disabled={pending || archived} />
+            <CmsExpandingTextField label="Image alt text" value={fields.imageAlt ?? ""} onChange={(value) => setField("imageAlt", value)} disabled={pending || archived} />
           </>
         ) : null}
 
@@ -467,7 +468,7 @@ function previewDetail(section: HomepageCmsSection, payload: Record<string, unkn
 }
 
 function Field({ label, children, className = "" }: { label: string; children: React.ReactNode; className?: string }) {
-  return <label className={`block min-w-0 ${className}`}><span className="text-[13px] font-medium text-[#475569]">{label}</span><div className="mt-1.5">{children}</div></label>;
+  return <label className={`block min-w-0 ${className}`}><span className="block min-h-5 text-[13px] font-medium leading-5 text-[#475569]">{label}</span><div className="mt-1.5">{children}</div></label>;
 }
 
 function TextField({
