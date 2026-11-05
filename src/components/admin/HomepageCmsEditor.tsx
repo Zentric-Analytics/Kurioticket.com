@@ -48,6 +48,8 @@ const sectionType = {
   "hotel-destinations": "HOTEL_DESTINATION",
 } as const;
 
+const editorControlClass = "h-9 rounded-lg border-2 border-[#94A3B8] bg-white text-[13px] font-normal text-[#111827] shadow-none transition-colors hover:border-[#64748B] focus:border-[#6D28D9] focus:ring-2 focus:ring-[#EDE9FE] disabled:border-[#CBD5E1] disabled:bg-[#F1F5F9] disabled:text-[#64748B]";
+
 function payloadRecord(value: unknown) {
   return value && typeof value === "object" && !Array.isArray(value)
     ? value as Record<string, unknown>
@@ -223,8 +225,8 @@ export function HomepageCmsEditor({
   const archived = item?.status === "ARCHIVED";
 
   return (
-    <div className="grid min-w-0 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-8 xl:gap-14 [&_input]:rounded-lg [&_select]:rounded-lg [&_textarea]:rounded-lg [&_input]:h-9 [&_select]:h-9 [&_input]:text-[13px] [&_select]:text-[13px] [&_textarea]:text-[13px] [&_input]:font-normal [&_select]:font-normal">
-      <section className="min-w-0 space-y-4">
+    <div className="grid min-w-0 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-8 xl:gap-14">
+      <section className="w-full min-w-0 max-w-[640px] space-y-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <ContentSectionHeading>Content details</ContentSectionHeading>
@@ -234,8 +236,8 @@ export function HomepageCmsEditor({
         </div>
 
         {section !== "hotel-destinations" ? (
-          <Field label="Market">
-            <AdminSelect value={market} onChange={(event) => setMarket(event.target.value)} disabled={pending || archived} required>
+          <Field label="Market" className="max-w-[320px]">
+            <AdminSelect className={editorControlClass} value={market} onChange={(event) => setMarket(event.target.value)} disabled={pending || archived} required>
               {!item ? <option value="">Select market</option> : null}
               {markets.map((value) => <option key={value} value={value}>{getCmsMarketName(value)}</option>)}
             </AdminSelect>
@@ -244,57 +246,51 @@ export function HomepageCmsEditor({
 
         {section === "destinations" ? (
           <>
-            <TextField label="City" name="city" fields={fields} setField={setField} disabled={pending || archived} />
-            <TextField label="Country" name="country" fields={fields} setField={setField} disabled={pending || archived} />
-            <div className="grid gap-4 sm:grid-cols-3">
-              <TextField label="Country code" name="countryCode" fields={fields} setField={setField} disabled={pending || archived} />
-              <TextField label="Origin IATA" name="originCode" fields={fields} setField={setField} disabled={pending || archived} />
-              <TextField label="Destination IATA" name="destinationCode" fields={fields} setField={setField} disabled={pending || archived} />
-            </div>
+            <TextField label="City" name="city" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[320px]" />
+            <TextField label="Country" name="country" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[320px]" />
+            <TextField label="Country code" name="countryCode" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[160px]" />
+            <TextField label="Origin IATA" name="originCode" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[160px]" />
+            <TextField label="Destination IATA" name="destinationCode" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[160px]" />
             <TextField label="Image" name="image" fields={fields} setField={setField} disabled={pending || archived} />
-            <TextField label="Image alt text" name="imageAlt" fields={fields} setField={setField} disabled={pending || archived} />
+            <TextField label="Image alt text" name="imageAlt" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[448px]" />
           </>
         ) : null}
 
         {section === "flight-routes" ? (
           <>
-            <TextField label="Title" name="title" fields={fields} setField={setField} disabled={pending || archived} />
-            <div className="grid gap-4 sm:grid-cols-2">
-              <TextField label="Origin city" name="originCity" fields={fields} setField={setField} disabled={pending || archived} />
-              <TextField label="Origin IATA" name="originCode" fields={fields} setField={setField} disabled={pending || archived} />
-              <TextField label="Destination city" name="destinationCity" fields={fields} setField={setField} disabled={pending || archived} />
-              <TextField label="Destination IATA" name="destinationCode" fields={fields} setField={setField} disabled={pending || archived} />
-            </div>
-            <Field label="Route note">
-              <AdminTextarea value={fields.routeNote ?? ""} onChange={(event) => setField("routeNote", event.target.value)} disabled={pending || archived} />
+            <TextField label="Title" name="title" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[448px]" />
+            <TextField label="Origin city" name="originCity" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[320px]" />
+            <TextField label="Origin IATA" name="originCode" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[160px]" />
+            <TextField label="Destination city" name="destinationCity" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[320px]" />
+            <TextField label="Destination IATA" name="destinationCode" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[160px]" />
+            <Field label="Route note" className="max-w-[480px]">
+              <AdminTextarea className={`${editorControlClass} h-auto min-h-24`} value={fields.routeNote ?? ""} onChange={(event) => setField("routeNote", event.target.value)} disabled={pending || archived} />
             </Field>
             <TextField label="Image" name="image" fields={fields} setField={setField} disabled={pending || archived} />
-            <TextField label="Image alt text" name="imageAlt" fields={fields} setField={setField} disabled={pending || archived} />
+            <TextField label="Image alt text" name="imageAlt" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[448px]" />
           </>
         ) : null}
 
         {section === "hotel-destinations" ? (
           <>
-            <Field label="Canonical hotel destination">
-              <AdminSelect value={fields.canonicalId ?? ""} onChange={(event) => applyHotelOption(event.target.value)} disabled={pending || archived}>
+            <Field label="Canonical hotel destination" className="max-w-[448px]">
+              <AdminSelect className={editorControlClass} value={fields.canonicalId ?? ""} onChange={(event) => applyHotelOption(event.target.value)} disabled={pending || archived}>
                 <option value="">Select canonical destination</option>
                 {hotelOptions.map((option) => <option key={option.canonicalId} value={option.canonicalId}>{option.label}</option>)}
               </AdminSelect>
             </Field>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <TextField label="Name" name="name" fields={fields} setField={setField} disabled={pending || archived} />
-              <TextField label="Country" name="country" fields={fields} setField={setField} disabled={pending || archived} />
-              <TextField label="Country code" name="countryCode" fields={fields} setField={setField} disabled={pending || archived} />
-              <TextField label="Kind" name="kind" fields={fields} setField={setField} disabled={pending || archived} />
-            </div>
+            <TextField label="Name" name="name" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[320px]" />
+            <TextField label="Country" name="country" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[320px]" />
+            <TextField label="Country code" name="countryCode" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[160px]" />
+            <TextField label="Kind" name="kind" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[160px]" />
             <TextField label="Search value" name="searchValue" fields={fields} setField={setField} disabled={pending || archived} />
             <TextField label="Image (optional)" name="image" fields={fields} setField={setField} disabled={pending || archived} />
-            <TextField label="Image alt text (optional)" name="imageAlt" fields={fields} setField={setField} disabled={pending || archived} />
+            <TextField label="Image alt text (optional)" name="imageAlt" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[448px]" />
           </>
         ) : null}
 
-        <Field label="Order">
-          <AdminInput type="number" min={0} max={100000} value={sortOrder} onChange={(event) => setSortOrder(event.target.value)} disabled={pending || archived} />
+        <Field label="Order" className="max-w-[128px]">
+          <AdminInput className={editorControlClass} type="number" min={0} max={100000} value={sortOrder} onChange={(event) => setSortOrder(event.target.value)} disabled={pending || archived} />
         </Field>
 
         <CmsEditorActions
@@ -432,8 +428,8 @@ function previewDetail(section: HomepageCmsSection, payload: Record<string, unkn
   return `${payload.country || ""} · ${payload.searchValue || ""}\n${payload.canonicalId || ""}`;
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return <label className="block"><span className="text-[12px] font-medium text-[#64748B]">{label}</span><div className="mt-2">{children}</div></label>;
+function Field({ label, children, className = "" }: { label: string; children: React.ReactNode; className?: string }) {
+  return <label className={`block min-w-0 ${className}`}><span className="text-[13px] font-medium text-[#475569]">{label}</span><div className="mt-1.5">{children}</div></label>;
 }
 
 function TextField({
@@ -442,16 +438,18 @@ function TextField({
   fields,
   setField,
   disabled,
+  className = "max-w-[448px]",
 }: {
   label: string;
   name: string;
   fields: Record<string, string>;
   setField: (name: string, value: string) => void;
   disabled: boolean;
+  className?: string;
 }) {
   return (
-    <Field label={label}>
-      <AdminInput value={fields[name] ?? ""} onChange={(event) => setField(name, event.target.value)} disabled={disabled} />
+    <Field label={label} className={className}>
+      <AdminInput className={editorControlClass} value={fields[name] ?? ""} onChange={(event) => setField(name, event.target.value)} disabled={disabled} />
     </Field>
   );
 }
