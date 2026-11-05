@@ -59,7 +59,7 @@ test("homepage fare operations stay operational while linking to their content s
   assert.match(homepageFarePage, /title="Homepage Fare Operations"/);
   assert.match(homepageFarePage, /HomepageFaresRefreshCard/);
   assert.match(homepageFarePage, /href="\/admin\/content\/homepage"/);
-  assert.match(homepageFarePage, />Homepage content<\/Link>/);
+  assert.match(homepageFarePage, />\s*Homepage content\s*<\/Link>/);
   assert.match(homepageFarePage, /href="\/admin\/flights"/);
   assert.doesNotMatch(homepageFarePage, /href="\/admin\/settings"/);
   assert.doesNotMatch(contentPage, /\/admin\/homepage-fares/);
