@@ -70,6 +70,12 @@ export default async function AdminEmailDeliveryPage({ searchParams }: { searchP
     resendWebhookSecret: Boolean(process.env.RESEND_WEBHOOK_SECRET?.trim()),
   };
   const sendingReady = configured.resendApiKey && configured.resendFromEmail;
+  const configurationChecks = [
+    ["Resend API key", configured.resendApiKey],
+    ["Sender address", configured.resendFromEmail],
+    ["Webhook secret", configured.resendWebhookSecret],
+  ] as const;
+  const missingConfiguration = configurationChecks.filter(([, ready]) => !ready);
 
   const metrics = operations ? [
     { label: "Email deliveries", value: operations.dataAvailable ? operations.deliveries.toLocaleString() : "Unavailable", dot: "bg-[#004BB8]" },
@@ -124,17 +130,9 @@ export default async function AdminEmailDeliveryPage({ searchParams }: { searchP
             <StatusIndicator value={sendingReady ? "Sending ready" : "Setup required"} tone={sendingReady ? "good" : "warn"} />
           </div>
 
-          {([
-            ["Resend API key", configured.resendApiKey],
-            ["Sender address", configured.resendFromEmail],
-            ["Webhook secret", configured.resendWebhookSecret],
-          ] as const).some(([, ready]) => !ready) ? (
+          {missingConfiguration.length > 0 ? (
             <div className="mt-3 divide-y divide-[#E7ECF5] border-y border-[#E7ECF5]">
-              {([
-                ["Resend API key", configured.resendApiKey],
-                ["Sender address", configured.resendFromEmail],
-                ["Webhook secret", configured.resendWebhookSecret],
-              ] as const).filter(([, ready]) => !ready).map(([label]) => (
+              {missingConfiguration.map(([label]) => (
                 <div key={String(label)} className="flex min-h-11 items-center justify-between gap-4 px-1 py-2.5">
                   <span className="text-[13px] font-medium text-[#020617]">{String(label)}</span>
                   <StatusIndicator value="Not configured" tone="warn" />
