@@ -118,7 +118,6 @@ export function ContentDirectoryToolbar({
   return (
     <div className="min-w-0">
       <form role="search" method="get" action={path} onSubmit={submitSearch} autoComplete="off" className="min-w-0">
-        {market && markets.length > 0 ? <input type="hidden" name="market" value={market} readOnly /> : null}
         {status ? <input type="hidden" name="status" value={status} readOnly /> : null}
         {paramsRef.current.get("from") === "overview" ? <input type="hidden" name="from" value="overview" readOnly /> : null}
         <div className="relative mb-3">
