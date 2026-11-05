@@ -123,7 +123,42 @@ try {
           await expect(userRow.getByText("Target email", { exact: true })).toBeVisible();
           await expect(userRow.getByText("traveler@example.invalid", { exact: true })).toBeVisible();
         }
-        if (route === "email-delivery") await expect(main.getByRole("button", { name: "Send test email to me" })).toBeDisabled();
+        if (route === "email-delivery") {
+          await expect(main.getByRole("heading", { name: "Email Delivery Operations", exact: true })).toBeVisible();
+          const summary = main.locator('section[aria-label="Email delivery summary"]');
+          await expect(summary).toBeVisible();
+          for (const label of ["Last 24 hours", "Failures", "Delayed", "Suppressions"]) {
+            await expect(summary.getByText(label, { exact: true })).toBeVisible();
+          }
+          await expect(summary.getByText("14", { exact: true })).toBeVisible();
+          await expect(summary.getByText("53", { exact: true })).toBeVisible();
+
+          await expect(main.getByRole("heading", { name: "Delivery configuration", exact: true })).toBeVisible();
+          await expect(main.getByRole("heading", { name: "Test transactional delivery", exact: true })).toBeVisible();
+          await expect(main.getByText("Recipient is current admin only", { exact: true })).toHaveCount(0);
+          await expect(main.getByText(/Safety: only the current signed-in admin can receive this test/)).toBeVisible();
+          await expect(main.getByRole("button", { name: "Send test email to me" })).toBeDisabled();
+
+          await expect(main.getByRole("heading", { name: "Recent deliveries", exact: true })).toBeVisible();
+          await expect(main.getByText("Latest 10 deliveries", { exact: true })).toBeVisible();
+          const deliveries = main.getByRole("region", { name: "Recent deliveries" });
+          await expect(deliveries.getByText("bi***@zentricanalytics.com", { exact: true })).toBeVisible();
+          const delivered = deliveries.locator("tbody").getByText("Delivered", { exact: true });
+          await expect(delivered).toHaveClass(/inline-flex/);
+          await expect(delivered.locator("span").first()).toHaveClass(/rounded-full/);
+          await expect(deliveries.getByText("Delayed", { exact: true })).toBeVisible();
+
+          if (width === 1440) {
+            const boxes = await Promise.all(
+              ["Last 24 hours", "Failures", "Delayed", "Suppressions"].map(async label =>
+                summary.getByText(label, { exact: true }).boundingBox()
+              )
+            );
+            expect(boxes.every(Boolean)).toBeTruthy();
+            const tops = boxes.map(box => box.y);
+            expect(Math.max(...tops) - Math.min(...tops)).toBeLessThanOrEqual(2);
+          }
+        }
         if (route === "settings") await expect(main.getByRole("link", { name: "Open fare operations" })).toHaveAttribute("href", "/admin/homepage-fares");
         if (route === "notifications") {
           await expect(main.locator('a[href="/admin/notifications"]')).toHaveCount(0);
