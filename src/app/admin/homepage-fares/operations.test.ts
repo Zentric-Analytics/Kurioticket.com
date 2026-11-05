@@ -181,7 +181,9 @@ test("homepage fare readiness cannot be promoted by fallback-route freshness alo
 });
 
 test("underfilled diagnostics never default missing next-run metadata to not required", () => {
-  assert.match(component, /nextRun \? \(nextRun\.needed \? formatUnderfillCause\(nextRun\.reason\) : "Not required"\) : market\.targetMet \? "Not required" : "Needed"/);
+  assert.match(component, /const nextRunNeeded = nextRun \? nextRun\.needed : !market\.targetMet/);
+  assert.match(component, /<span className="block">Needed<\/span>/);
+  assert.match(component, /nextRunCause \? <span className="mt-0\.5 block text-\[10px\] font-semibold text-muted">\{formatUnderfillCause\(nextRunCause\)\}<\/span> : null/);
 });
 
 test("homepage fare diagnostics use concise coverage rows with an action-oriented next-run state", () => {
