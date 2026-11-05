@@ -80,15 +80,21 @@ export function getCmsCitySuggestions(query: string, countryCode = "", limit = 8
 }
 
 export function getCmsAirportSuggestions(query: string, limit = 8): CmsLocationOption[] {
-  const results: CmsLocationOption[] = searchAirports(query, Math.max(0, limit)).map((airport) => ({
+  const maxResults = Math.max(0, limit);
+  const typedCode = query.trim().toUpperCase();
+  const possibleManualCode = /^[A-Z]{3}$/.test(typedCode);
+  const canonical = searchAirports(query, maxResults);
+  const isKnownCode = canonical.some((airport) => airport.code === typedCode);
+  const needsManualOption = possibleManualCode && !isKnownCode;
+  const resultLimit = needsManualOption ? Math.max(0, maxResults - 1) : maxResults;
+  const results: CmsLocationOption[] = canonical.slice(0, resultLimit).map((airport) => ({
     value: airport.code,
     title: airport.code + " · " + airport.city,
     description: airport.airport + (airport.country ? " · " + airport.country : ""),
     country: airport.country,
     countryCode: airport.countryCode,
   }));
-  const typedCode = query.trim().toUpperCase();
-  if (/^[A-Z]{3}$/.test(typedCode) && !results.some((option) => option.value === typedCode)) {
+  if (needsManualOption && maxResults > 0) {
     results.push({
       value: typedCode,
       title: "Use " + typedCode,
@@ -96,5 +102,5 @@ export function getCmsAirportSuggestions(query: string, limit = 8): CmsLocationO
       manual: true,
     });
   }
-  return results.slice(0, Math.max(0, limit));
+  return results;
 }
