@@ -70,6 +70,12 @@ export default async function AdminEmailDeliveryPage({ searchParams }: { searchP
     resendWebhookSecret: Boolean(process.env.RESEND_WEBHOOK_SECRET?.trim()),
   };
   const sendingReady = configured.resendApiKey && configured.resendFromEmail;
+  const configurationChecks = [
+    ["Resend API key", configured.resendApiKey],
+    ["Sender address", configured.resendFromEmail],
+    ["Webhook secret", configured.resendWebhookSecret],
+  ] as const;
+  const missingConfiguration = configurationChecks.filter(([, ready]) => !ready);
 
   const metrics = operations ? [
     { label: "Email deliveries", value: operations.dataAvailable ? operations.deliveries.toLocaleString() : "Unavailable", dot: "bg-[#004BB8]" },
@@ -124,37 +130,31 @@ export default async function AdminEmailDeliveryPage({ searchParams }: { searchP
             <StatusIndicator value={sendingReady ? "Sending ready" : "Setup required"} tone={sendingReady ? "good" : "warn"} />
           </div>
 
-          <div className="mt-3 divide-y divide-[#E7ECF5] border-y border-[#E7ECF5]">
-            {([
-              ["Resend API key", configured.resendApiKey],
-              ["Sender address", configured.resendFromEmail],
-              ["Webhook secret", configured.resendWebhookSecret],
-            ] as const).map(([label, ready]) => (
-              <div key={String(label)} className="flex min-h-11 items-center justify-between gap-4 px-1 py-2.5">
-                <span className="text-[13px] font-medium text-[#020617]">{String(label)}</span>
-                <StatusIndicator value={ready ? "Configured" : "Not configured"} tone={ready ? "good" : "warn"} />
-              </div>
-            ))}
-            <div className="flex min-h-11 items-center justify-between gap-4 px-1 py-2.5">
-              <span className="text-[13px] font-medium text-[#020617]">Suppressed addresses</span>
-              <span className="text-[13px] tabular-nums text-[#475569]">
-                {operations?.dataAvailable ? operations.currentSuppressed.toLocaleString() : "Unavailable"}
-              </span>
+          {missingConfiguration.length > 0 ? (
+            <div className="mt-3 divide-y divide-[#E7ECF5] border-y border-[#E7ECF5]">
+              {missingConfiguration.map(([label]) => (
+                <div key={String(label)} className="flex min-h-11 items-center justify-between gap-4 px-1 py-2.5">
+                  <span className="text-[13px] font-medium text-[#020617]">{String(label)}</span>
+                  <StatusIndicator value="Not configured" tone="warn" />
+                </div>
+              ))}
             </div>
+          ) : null}
+
+          <div className="mt-3 flex min-h-11 items-center justify-between gap-4 border-y border-[#E7ECF5] px-1 py-2.5">
+            <span className="text-[13px] font-medium text-[#020617]">Suppressed addresses</span>
+            <span className="text-[13px] tabular-nums text-[#475569]">
+              {operations?.dataAvailable ? operations.currentSuppressed.toLocaleString() : "Unavailable"}
+            </span>
           </div>
         </div>
 
         <div className="py-4 lg:pl-8">
-          <h2 className="text-[15px] font-semibold text-[#020617]">Test transactional delivery</h2>
-          <p className="mt-1 max-w-[620px] text-[12px] leading-5 text-[#64748B]">
-            Send one real transactional test to the signed-in admin email. Successful sends are written to the admin audit log.
-          </p>
+          <h2 className="text-[15px] font-semibold text-[#020617]">Test email delivery</h2>
+          <p className="mt-1 text-[12px] leading-5 text-[#64748B]">Send a test to your admin email.</p>
           <div className="mt-3">
             <EmailDeliveryTestButton enabled={sendingReady} />
           </div>
-          <p className="mt-3 max-w-[620px] text-[12px] leading-5 text-[#64748B]">
-            Safety: only the current signed-in admin can receive this test; arbitrary recipients and credential values are never exposed.
-          </p>
         </div>
       </section>
 
