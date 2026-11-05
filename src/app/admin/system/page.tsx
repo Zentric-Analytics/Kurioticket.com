@@ -247,7 +247,7 @@ export default async function AdminSystemPage() {
           <h2 id="system-areas-heading" className="text-[15px] font-semibold text-[#020617]">System areas</h2>
 
           <div className="mt-2.5 border-y border-[#E7ECF5]">
-            <div className="hidden grid-cols-[minmax(150px,1.1fr)_minmax(170px,0.9fr)_minmax(170px,1fr)_80px] gap-4 border-b border-[#D8E1EC] px-3 py-3 text-[12px] font-medium uppercase text-[#475569] md:grid">
+            <div className="hidden grid-cols-[minmax(150px,1.1fr)_minmax(170px,0.9fr)_minmax(170px,1fr)_minmax(150px,auto)] gap-4 border-b border-[#D8E1EC] px-3 py-3 text-[12px] font-medium uppercase text-[#475569] md:grid">
               <span>Area</span>
               <span>Status</span>
               <span>Signal</span>
