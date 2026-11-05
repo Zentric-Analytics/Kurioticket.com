@@ -88,28 +88,21 @@ test("system status uses a compact summary-attention-system-areas hierarchy", ()
   assert.doesNotMatch(systemPage, /View operational alerts|Open Alerts|\/admin\/notifications/);
 });
 
-test("System child routes use the same compact horizontal navigation", () => {
-  assert.match(adminShell, /function SystemSectionTabs/);
-  assert.match(adminShell, /aria-label="System sections"/);
-  assert.match(adminShell, /systemSectionsVisible \? <SystemSectionTabs/);
-  assert.match(adminShell, /gap-6 overflow-x-auto whitespace-nowrap/);
-  assert.match(adminShell, /border-b border-\[#D8E1EC\]/);
-  assert.match(adminShell, /h-11 shrink-0 items-center whitespace-nowrap border-b-2 px-1 text-\[13px\] font-medium text-\[#020617\]/);
+test("System specialist pages are contextual destinations rather than duplicate header tabs", () => {
+  assert.doesNotMatch(adminShell, /function SystemSectionTabs|aria-label="System sections"|systemSectionsVisible|systemChildren/);
   assert.match(adminShell, /<main className="mx-auto w-full max-w-\[1920px\]/);
-  assert.match(adminShell, /\{systemSectionsVisible \? <SystemSectionTabs entries=\{systemChildren\} pathname=\{pathname\} \/> : null\}/);
-  assert.doesNotMatch(adminShell, /<\/header>\s*\{systemSectionsVisible/);
-  assert.match(adminShell, /border-b-2/);
-  assert.match(adminShell, /aria-current=\{active \? "page" : undefined\}/);
-  assert.match(adminShell, /aria-current=\{pathname === item\.href \|\| pathname === item\.href \+ "\/" \? "page" : undefined\}/);
-  assert.doesNotMatch(adminShell, /<details|<summary|group-open:rotate-180/);
-  assert.match(adminShell, /entry\.item\.href === "\/admin\/system"/);
+  assert.match(adminShell, /<AdminSearchContent>\{children\}<\/AdminSearchContent>/);
+  assert.match(adminShell, /href="\/admin\/logs", label: "Audit logs"/);
+  assert.match(adminShell, /auditLogsWorkspace/);
+
   for (const href of ["/admin/system/cms-health", "/admin/email-delivery", "/admin/logs"]) {
-    assert.ok(adminNav.includes(`href: "${href}", parentHref: "/admin/system"`));
+    assert.ok(adminNav.includes(`href: "${href}"`));
+    assert.equal(adminNav.includes(`href: "${href}", parentHref: "/admin/system"`), false);
   }
+  assert.match(adminNav, /href: "\/admin\/logs", label: "Audit Logs"/);
   assert.doesNotMatch(adminNav, /href: "\/admin\/notifications", parentHref:/);
   assert.match(adminShell, /href="\/admin\/notifications"/);
 });
-
 test("settings owns authoritative feature controls", () => {
   assert.match(settingsPage, /title="Settings"/);
   assert.match(settingsPage, /Feature controls/);
