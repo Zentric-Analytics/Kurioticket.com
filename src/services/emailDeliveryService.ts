@@ -236,6 +236,77 @@ export async function hasSuccessfulEmailDelivery(idempotencyKey: string) {
   }, false);
 }
 
+export type EmailDeliveryOperationsRange = {
+  from: Date;
+  to: Date;
+};
+
+export async function getEmailDeliveryOperationsSnapshot(range: EmailDeliveryOperationsRange) {
+  return withEmailDeliveryDb(async (db) => {
+    const [summary] = await db.$queryRaw<{
+      attempts: bigint;
+      delivered: bigint;
+      failures: bigint;
+      delayed: bigint;
+      current_suppressed: bigint;
+    }[]>`
+      SELECT
+        (SELECT COUNT(*) FROM email_deliveries
+          WHERE created_at >= ${range.from} AND created_at < ${range.to}) AS attempts,
+        (SELECT COUNT(*) FROM email_deliveries
+          WHERE delivered_at >= ${range.from} AND delivered_at < ${range.to}) AS delivered,
+        (SELECT COUNT(*) FROM email_deliveries
+          WHERE updated_at >= ${range.from} AND updated_at < ${range.to}
+            AND status IN ('FAILED', 'BOUNCED', 'COMPLAINED', 'SUPPRESSED')) AS failures,
+        (SELECT COUNT(*) FROM email_deliveries
+          WHERE updated_at >= ${range.from} AND updated_at < ${range.to}
+            AND status = 'DELIVERY_DELAYED') AS delayed,
+        (SELECT COUNT(*) FROM email_suppressions) AS current_suppressed
+    `;
+
+    const latest = await db.$queryRaw<Array<{
+      id: string;
+      template: string;
+      to_email: string;
+      status: EmailDeliveryStatus;
+      created_at: Date;
+      sent_at: Date | null;
+      delivered_at: Date | null;
+    }>>`
+      SELECT id, template, to_email, status, created_at, sent_at, delivered_at
+      FROM email_deliveries
+      WHERE created_at >= ${range.from} AND created_at < ${range.to}
+      ORDER BY created_at DESC
+      LIMIT 10
+    `;
+
+    return {
+      dataAvailable: true,
+      attempts: Number(summary?.attempts || 0),
+      delivered: Number(summary?.delivered || 0),
+      failures: Number(summary?.failures || 0),
+      delayed: Number(summary?.delayed || 0),
+      currentSuppressed: Number(summary?.current_suppressed || 0),
+      latest: latest.map((row) => ({
+        id: row.id,
+        template: row.template,
+        toEmail: maskEmail(row.to_email),
+        status: row.status,
+        createdAt: row.created_at,
+        sentAt: row.sent_at,
+        deliveredAt: row.delivered_at,
+      })),
+    };
+  }, {
+    dataAvailable: false,
+    attempts: 0,
+    delivered: 0,
+    failures: 0,
+    delayed: 0,
+    currentSuppressed: 0,
+    latest: [],
+  });
+}
 export async function getEmailDeliveryHealthSnapshot() {
   return withEmailDeliveryDb(async (db) => {
     const [summary] = await db.$queryRaw<{
