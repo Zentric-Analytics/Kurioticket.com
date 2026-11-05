@@ -62,6 +62,9 @@ export function AdminNotificationItem({ id, alertKey, signalToken, title, canDel
             suppressClick.current = false;
             if (!canDelete || deleting || event.button !== 0 || (event.target as HTMLElement).closest("button, a")) return;
             gesture.current = { id: event.pointerId, x: event.clientX, y: event.clientY, start: position, direction: "undecided" };
+            // Capture from pointer-down, before the card moves under the pointer.
+            // This keeps desktop drags reliable without blocking native vertical touch scroll.
+            event.currentTarget.setPointerCapture(event.pointerId);
           }}
           onPointerMove={event => {
             const current = gesture.current;
@@ -71,14 +74,23 @@ export function AdminNotificationItem({ id, alertKey, signalToken, title, canDel
             if (current.direction === "undecided") current.direction = adminNotificationSwipeDirection(dx, dy, current.start);
             if (current.direction !== "horizontal") return;
             event.preventDefault();
-            if (!event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.setPointerCapture(event.pointerId);
             suppressClick.current = true;
             setDragPosition(adminNotificationSwipePosition(current.start, dx));
           }}
           onPointerUp={event => {
             const current = gesture.current;
             if (!current || current.id !== event.pointerId) return;
-            if (current.direction === "horizontal") onSetOpen(adminNotificationSwipePosition(current.start, event.clientX - current.x) <= -ADMIN_NOTIFICATION_DELETE_WIDTH / 2);
+            const dx = event.clientX - current.x;
+            const dy = event.clientY - current.y;
+            // Mouse automation and fast physical gestures can coalesce move events.
+            // Classify the final displacement as well as the intermediate moves.
+            const direction = current.direction === "undecided"
+              ? adminNotificationSwipeDirection(dx, dy, current.start)
+              : current.direction;
+            if (direction === "horizontal") {
+              suppressClick.current = true;
+              onSetOpen(adminNotificationSwipePosition(current.start, dx) <= -ADMIN_NOTIFICATION_DELETE_WIDTH / 2);
+            }
             gesture.current = null;
             setDragPosition(null);
             if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
