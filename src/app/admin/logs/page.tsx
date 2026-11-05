@@ -70,7 +70,7 @@ export default async function AdminLogsPage({ searchParams }: { searchParams: Se
               </div>
 
               <div role="region" aria-label="Audit log records" tabIndex={0} className="min-w-0 overflow-x-auto border-y border-[#D8E1EC]">
-                <div className={"hidden min-w-[980px] gap-4 border-b border-[#D8E1EC] px-3 py-3 text-[12px] font-medium uppercase text-[#475569] md:grid " + rowGrid}>
+                <div data-audit-header className={"hidden min-w-[980px] gap-4 border-b border-[#D8E1EC] px-3 py-3 text-[12px] font-medium uppercase text-[#475569] md:grid " + rowGrid}>
                   <span>Created</span>
                   <span>Admin</span>
                   <span>Action</span>
