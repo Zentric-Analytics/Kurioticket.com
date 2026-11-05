@@ -89,6 +89,8 @@ export function HomepageDestinationDraftPreview({
         )}
         {unsaved ? (
           <p className="font-medium text-amber-700">Unsaved edits — save the draft to keep these changes.</p>
+        ) : typeof version !== "number" || publishedVersion == null ? (
+          <p className="text-slate-500">Draft not yet published</p>
         ) : unpublishedLabel ? (
           <p className="font-medium text-amber-700">{unpublishedLabel}</p>
         ) : (
