@@ -27,7 +27,7 @@ test("system status uses a compact summary-attention-system-areas hierarchy", ()
   assert.match(systemPage, /Monitored areas/);
   assert.match(systemPage, /serviceRows\.filter\(service => service\.id !== "admin-access"\)\.length/);
 
-  assert.match(systemPage, /No issues requiring attention\./);
+  assert.match(systemPage, /No issues detected by these checks\./);
   assert.doesNotMatch(systemPage, /No database connectivity failures or missing required configurations were detected by these checks/);
 
   assert.match(systemPage, /Live connectivity check/);
