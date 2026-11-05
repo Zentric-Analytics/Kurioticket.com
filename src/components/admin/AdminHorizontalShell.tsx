@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Bell, ChevronDown, LogOut, Menu, Settings, ShieldCheck, X, Building2 } from "lucide-react";
 import { getAdminHeaderGroups, isAdminNavItemActive, type AdminRole } from "@/lib/adminNavigation";
 import { KurioticketLogo } from "@/components/brand/KurioticketLogo";
@@ -84,6 +84,9 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
   const role: AdminRole = adminRole === "SUPPORT" || adminRole === "USER" ? adminRole : "ADMIN";
   const groups = getAdminHeaderGroups(role, showPreviewTesters);
   const pathname = usePathname();
+  const contentLanding = pathname === "/admin/content" || pathname === "/admin/content/";
+  const workspaceRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
   const systemChildren = groups.flatMap((group) => group.links).find((entry) => entry.item.href === "/admin/system")?.children ?? [];
   const systemSectionsVisible = pathname === "/admin/system" || pathname === "/admin/system/" ||
     systemChildren.some((entry) => pathname === entry.href || pathname.startsWith(entry.href + "/"));
@@ -93,6 +96,22 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
   const [unreadAlertCount, setUnreadAlertCount] = useState<number | null>(null);
   const name = adminName || adminEmail || "Admin";
   const initial = name.slice(0, 1).toUpperCase();
+  // Measure before paint to prevent the card hub from jumping when desktop navigation wraps.
+  useLayoutEffect(() => {
+    if (!contentLanding || !headerRef.current || !workspaceRef.current) return;
+    const header = headerRef.current;
+    const workspace = workspaceRef.current;
+    const updateHeaderHeight = () => {
+      workspace.style.setProperty("--admin-header-height", `${header.getBoundingClientRect().height}px`);
+    };
+    updateHeaderHeight();
+    const observer = new ResizeObserver(updateHeaderHeight);
+    observer.observe(header);
+    return () => {
+      observer.disconnect();
+      workspace.style.removeProperty("--admin-header-height");
+    };
+  }, [contentLanding]);
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") { setProfileOpen(false); setMobileOpen(false); }
@@ -164,8 +183,8 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
   const contentWorkspace = pathname === "/admin/content" || pathname.startsWith("/admin/content/");
   const whiteWorkspace = pathname === "/admin/system" || pathname === "/admin/system/" || usersDirectory || searchesWorkspace || supportWorkspace
     || providersWorkspace || providerReportingWorkspace || accountDeletionDetail || contentWorkspace;
-  return <AdminWorkspaceSearchProvider account={adminEmail || "admin"}><div className={"min-h-screen text-slate-950 " + (userActivity ? "bg-[#f1f5fb]" : whiteWorkspace ? "bg-white" : "bg-[#f1f5fb]")}>
-    <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
+  return <AdminWorkspaceSearchProvider account={adminEmail || "admin"}><div ref={workspaceRef} className={"min-h-screen text-slate-950 " + (userActivity ? "bg-[#f1f5fb]" : whiteWorkspace ? "bg-white" : "bg-[#f1f5fb]")}>
+    <header ref={headerRef} className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
       <AdminSearchHeader>
       <div className="mx-auto flex h-16 w-full max-w-[1920px] items-center justify-between gap-4 pl-2 pr-4 sm:pr-6 lg:pr-10">
         <div className="flex min-w-0 items-center gap-2">
