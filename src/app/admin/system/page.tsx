@@ -15,7 +15,8 @@ type ServiceItem = {
   signal: string;
   detail: string;
   configured?: string;
-  verification?: string;
+  verification: string;
+  adminDetails?: { allowlist: string; configuredAdministrators: number };
   href?: string;
   actionLabel?: string;
 };
@@ -99,7 +100,7 @@ export default async function AdminSystemPage() {
     {
       id: "providers",
       name: "Providers",
-      status: system.providerCredentialsPresent ? "Credentials present" : "Credentials absent",
+      status: system.providerCredentialsPresent ? "Configured" : "Not configured",
       tone: system.providerCredentialsPresent ? "info" : "warn",
       signal: "Configuration only",
       detail: "Provider credential presence is not provider health. Provider readiness, operational telemetry and retests live on Providers.",
@@ -111,37 +112,43 @@ export default async function AdminSystemPage() {
     {
       id: "cms",
       name: "CMS",
-      status: "Dedicated diagnostics",
+      status: "Separate check",
       tone: "neutral",
-      signal: "Checked separately",
+      signal: "CMS diagnostics",
       detail: "CMS integrity and repair diagnostics are maintained on the dedicated CMS Health page; this page does not duplicate or infer that state.",
       verification: "CMS Health diagnostics",
       href: "/admin/system/cms-health",
       actionLabel: "Open CMS Health",
     },
+    {
+      id: "admin-access",
+      name: "Admin access",
+      status: system.adminEmailsConfigured ? "Configured" : "Not configured",
+      tone: system.adminEmailsConfigured ? "info" : "warn",
+      signal: "Configuration only",
+      detail: "Managed in deployment configuration; this row reports allowlist presence and configured administrator count without exposing administrator addresses.",
+      verification: "Server configuration presence",
+      adminDetails: {
+        allowlist: system.adminEmailsConfigured ? "Configured" : "Not configured",
+        configuredAdministrators: adminEmailCount,
+      },
+    },
   ];
 
-  const configurationRows = [
-    ["Database configuration", system.databaseConfigured, "Configured", "Not configured"],
-    ["Authentication configuration", system.authConfigured, "Configured", "Not configured"],
-    ["Email credentials", system.emailConfigured, "Configured", "Not configured"],
-    ["Provider credentials", system.providerCredentialsPresent, "Present", "Absent"],
-    ["Administrator allowlist", system.adminEmailsConfigured, "Configured", "Not configured"],
-  ] as const;
+  const monitoredAreaCount = serviceRows.filter(service => service.id !== "admin-access").length;
 
   return (
     <AdminPageShell title="System" hideHeader>
       <div className="w-full min-w-0 bg-white text-[#0F172A]">
-        <section aria-labelledby="system-snapshot-heading" className="border-b border-[#D8E1EC] pb-5">
-          <h2 id="system-snapshot-heading" className="text-[15px] font-semibold">System snapshot</h2>
-          <div className="mt-4 grid gap-x-8 gap-y-4 sm:grid-cols-2 xl:grid-cols-4">
+        <section aria-label="System summary" className="border-b border-[#D8E1EC] py-4">
+          <div className="grid grid-cols-2 gap-x-8 gap-y-4 md:grid-cols-4">
             <div className="min-w-0">
               <p className="text-[12px] text-[#64748B]">Environment</p>
               <p className="mt-1 text-[14px] font-semibold">{system.appEnvironment}</p>
             </div>
             <div className="min-w-0">
               <p className="text-[12px] text-[#64748B]">Monitored areas</p>
-              <p className="mt-1 text-[14px] font-semibold tabular-nums">{serviceRows.length}</p>
+              <p className="mt-1 text-[14px] font-semibold tabular-nums">{monitoredAreaCount}</p>
             </div>
             <div className="min-w-0">
               <p className="text-[12px] text-[#64748B]">Issues requiring attention</p>
@@ -156,12 +163,12 @@ export default async function AdminSystemPage() {
           </div>
         </section>
 
-        <section aria-labelledby="system-attention-heading" className="border-b border-[#D8E1EC] py-5">
+        <section aria-labelledby="system-attention-heading" className="border-b border-[#D8E1EC] py-4">
           <h2 id="system-attention-heading" className="text-[15px] font-semibold">Issues Requiring Attention</h2>
           {attention.length ? (
-            <ul className="mt-3 max-w-[980px] divide-y divide-[#E7ECF5]">
+            <ul className="mt-2 max-w-[980px] divide-y divide-[#E7ECF5]">
               {attention.map((item) => (
-                <li key={item.label} className="flex flex-wrap items-start justify-between gap-3 py-3 first:pt-0 last:pb-0">
+                <li key={item.label} className="flex flex-wrap items-start justify-between gap-3 py-2.5 first:pt-0 last:pb-0">
                   <div className="min-w-0 max-w-[760px]">
                     <p className="text-[13px] font-medium text-[#0F172A]">{item.label}</p>
                     <p className="mt-1 text-[12px] leading-5 text-[#64748B]">{item.detail}</p>
@@ -175,21 +182,16 @@ export default async function AdminSystemPage() {
               ))}
             </ul>
           ) : (
-            <p className="mt-2 text-[13px] leading-5 text-[#475569]">
-              No database connectivity failures or missing required configurations were detected by these checks.
-            </p>
+            <p className="mt-1.5 text-[13px] leading-5 text-[#475569]">No issues requiring attention.</p>
           )}
         </section>
 
-        <section aria-labelledby="services-heading" className="border-b border-[#D8E1EC] py-5">
-          <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <h2 id="services-heading" className="text-[15px] font-semibold">Services</h2>
-            <p className="text-[12px] text-[#64748B]">Expand a row for what is actually verified.</p>
-          </div>
+        <section aria-labelledby="system-areas-heading" className="py-4">
+          <h2 id="system-areas-heading" className="text-[15px] font-semibold">System areas</h2>
 
-          <div className="mt-3 border-y border-[#E7ECF5]">
+          <div className="mt-2.5 border-y border-[#E7ECF5]">
             <div className="hidden grid-cols-[minmax(150px,1.1fr)_minmax(170px,0.9fr)_minmax(170px,1fr)_80px] gap-4 border-b border-[#E7ECF5] px-1 py-2.5 text-[11px] font-medium uppercase tracking-[0.04em] text-[#64748B] md:grid">
-              <span>Service</span>
+              <span>Area</span>
               <span>Status</span>
               <span>Signal</span>
               <span className="text-right">Details</span>
@@ -198,7 +200,7 @@ export default async function AdminSystemPage() {
             <div className="divide-y divide-[#E7ECF5]">
               {serviceRows.map((service) => (
                 <details key={service.id} className="group">
-                  <summary className="grid cursor-pointer list-none gap-2 px-1 py-3.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] md:grid-cols-[minmax(150px,1.1fr)_minmax(170px,0.9fr)_minmax(170px,1fr)_80px] md:items-center md:gap-4 [&::-webkit-details-marker]:hidden">
+                  <summary className="grid cursor-pointer list-none gap-2 px-1 py-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] md:grid-cols-[minmax(150px,1.1fr)_minmax(170px,0.9fr)_minmax(170px,1fr)_80px] md:items-center md:gap-4 [&::-webkit-details-marker]:hidden">
                     <div className="min-w-0">
                       <span className="text-[13px] font-semibold text-[#0F172A]">{service.name}</span>
                     </div>
@@ -212,9 +214,20 @@ export default async function AdminSystemPage() {
                     </span>
                   </summary>
 
-                  <div className="border-t border-[#EEF2F7] px-1 pb-4 pt-3">
-                    <div className="grid max-w-[980px] gap-x-8 gap-y-3 sm:grid-cols-3">
-                      {service.configured ? (
+                  <div className="border-t border-[#EEF2F7] px-1 pb-3.5 pt-3">
+                    <div className={"grid max-w-[1100px] gap-x-8 gap-y-3 sm:grid-cols-2 " + (service.adminDetails ? "lg:grid-cols-4" : "lg:grid-cols-3")}>
+                      {service.adminDetails ? (
+                        <>
+                          <div className="min-w-0">
+                            <p className="text-[12px] text-[#64748B]">Administrator allowlist</p>
+                            <p className="mt-1 text-[13px] font-medium text-[#0F172A]">{service.adminDetails.allowlist}</p>
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-[12px] text-[#64748B]">Configured administrators</p>
+                            <p className="mt-1 text-[13px] font-medium tabular-nums text-[#0F172A]">{service.adminDetails.configuredAdministrators}</p>
+                          </div>
+                        </>
+                      ) : service.configured ? (
                         <div className="min-w-0">
                           <p className="text-[12px] text-[#64748B]">Configuration</p>
                           <p className="mt-1 text-[13px] font-medium text-[#0F172A]">{service.configured}</p>
@@ -224,7 +237,7 @@ export default async function AdminSystemPage() {
                         <p className="text-[12px] text-[#64748B]">Verification</p>
                         <p className="mt-1 text-[13px] font-medium text-[#0F172A]">{service.verification}</p>
                       </div>
-                      <div className="min-w-0 sm:col-span-1">
+                      <div className="min-w-0">
                         <p className="text-[12px] text-[#64748B]">Meaning</p>
                         <p className="mt-1 text-[12px] leading-5 text-[#475569]">{service.detail}</p>
                       </div>
@@ -239,32 +252,6 @@ export default async function AdminSystemPage() {
               ))}
             </div>
           </div>
-        </section>
-
-        <section aria-labelledby="configuration-heading" className="py-5">
-          <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <h2 id="configuration-heading" className="text-[15px] font-semibold">Configuration</h2>
-            <p className="text-[12px] text-[#64748B]">Presence only; configuration is not operational health.</p>
-          </div>
-
-          <dl className="mt-3 max-w-[980px] divide-y divide-[#E7ECF5] border-y border-[#E7ECF5]">
-            {configurationRows.map(([label, configured, yes, no]) => (
-              <div key={label} className="flex items-center justify-between gap-4 py-3">
-                <dt className="min-w-0 text-[13px] text-[#475569]">{label}</dt>
-                <dd className="shrink-0">
-                  <AdminStatusBadge tone={configured ? "info" : "warn"}>{configured ? yes : no}</AdminStatusBadge>
-                </dd>
-              </div>
-            ))}
-            <div className="flex items-center justify-between gap-4 py-3">
-              <dt className="text-[13px] text-[#475569]">Configured administrators</dt>
-              <dd className="shrink-0"><AdminStatusBadge tone="info">{adminEmailCount}</AdminStatusBadge></dd>
-            </div>
-          </dl>
-
-          <p className="mt-3 max-w-[980px] text-[12px] leading-5 text-[#64748B]">
-            Deployment-owned database credentials, authentication secrets, email credentials, provider credentials and the administrator allowlist remain non-editable from System Status.
-          </p>
         </section>
       </div>
     </AdminPageShell>
