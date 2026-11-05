@@ -12,6 +12,7 @@ import { AdminAlertAcknowledgeButton } from "@/components/admin/AdminAlertAcknow
 import { requireAdminSession } from "@/lib/auth-guards";
 import { isProtectedAdminEmail } from "@/lib/admin";
 import { getSafeSystemStatus } from "@/lib/admin-data";
+import { alertSourceHref } from "@/lib/adminAlertNavigation";
 import { getCurrentDatabaseOutageAdminToken } from "@/lib/adminDatabaseOutageAccess";
 import {
   getAdminAlertSnapshot,
@@ -60,22 +61,6 @@ export default async function AdminNotificationsPage() {
     <AdminPageShell
       title="Notifications & Alerts"
       description="Active internal operational alerts derived from authoritative Kurioticket health signals. Acknowledging an alert hides that exact signal for 24 hours; it does not resolve the underlying condition."
-      actions={
-        <div className="flex flex-wrap gap-2">
-          <Link
-            href="/admin/system"
-            className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50"
-          >
-            System health
-          </Link>
-          <Link
-            href="/admin/logs"
-            className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50"
-          >
-            Audit logs
-          </Link>
-        </div>
-      }
     >
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <AdminMetricCard
@@ -115,7 +100,9 @@ export default async function AdminNotificationsPage() {
             message="The monitored Kurioticket operational signals currently have no alert conditions."
           />
         ) : (
-          snapshot.alerts.map((alert) => (
+          snapshot.alerts.map((alert) => {
+            const sourceHref = alertSourceHref(alert.actionHref);
+            return (
             <AdminSectionCard
               key={alert.id}
               className={`p-5 ${alert.acknowledged ? "opacity-70" : ""}`}
@@ -149,13 +136,17 @@ export default async function AdminNotificationsPage() {
                   </div>
                 </div>
                 <div className="flex shrink-0 flex-wrap items-center gap-2">
-                  <Link
-                    href={alert.actionHref}
-                    className="inline-flex min-h-10 items-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-black text-slate-700 hover:bg-slate-50"
-                  >
-                    Open source
-                  </Link>
-                  {alert.key === "system.database.unavailable" ? null : (
+                  {sourceHref ? (
+                    <Link
+                      href={sourceHref}
+                      className="inline-flex min-h-10 items-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-black text-slate-700 hover:bg-slate-50"
+                    >
+                      Open source
+                    </Link>
+                  ) : null}
+                  {alert.key === "system.database.unavailable" ? null : alert.signalToken.startsWith("unpersisted:") ? (
+                    <span className="max-w-xs text-xs text-slate-500">Acknowledgement is unavailable until monitoring-state storage recovers.</span>
+                  ) : (
                     <AdminAlertAcknowledgeButton
                       alertKey={alert.key}
                       signalToken={alert.signalToken}
@@ -165,7 +156,8 @@ export default async function AdminNotificationsPage() {
                 </div>
               </div>
             </AdminSectionCard>
-          ))
+            );
+          })
         )}
       </div>
 
@@ -173,6 +165,9 @@ export default async function AdminNotificationsPage() {
         <h2 className="font-black text-slate-950">Monitoring boundaries</h2>
         <p className="mt-2 text-sm leading-6 text-slate-600">
           Alerts are derived from authoritative System/database health, ready provider operational health, Email Delivery, CMS integrity, Homepage Fare readiness, configured Flight Status telemetry, and authenticated Confirmed Trips delivery failures when a provider is explicitly configured. Kurioticket does not fabricate alerts for inactive integrations or for booking-confirmation volume where no trustworthy expected cadence exists.
+        </p>
+        <p className="mt-2 text-sm leading-6 text-slate-600">
+          Global coverage also includes sustained failures in enabled flight, hotel and car searches in this deployment, explicitly urgent support tickets awaiting team action, and active administrators whose two-factor protection was disabled within the last 24 hours and remains disabled. Account and support records are scoped to the current database. Routine activity and isolated low-volume search failures do not create alerts. Unavailable monitoring data is reported separately, never as a healthy zero.
         </p>
       </AdminSectionCard>
     </AdminPageShell>

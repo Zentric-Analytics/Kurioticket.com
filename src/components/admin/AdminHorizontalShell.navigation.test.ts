@@ -65,13 +65,14 @@ test("selected workspaces use the public Hotel navbar palette and underline", ()
     assert.ok(classes.has("text-[#021C2B]/85"));
     assert.equal(classes.has("after:bg-[#004BB8]"), active);
     assert.equal(classes.has("after:h-0.5"), active);
-    assert.equal(element.props["aria-current"], active ? "page" : undefined);
+    const currentPage = pathname === href || pathname === href + "/";
+    assert.equal(element.props["aria-current"], currentPage ? "page" : undefined);
     assert.equal(element.props.href, href);
     element.props.onClick();
     assert.equal(clicks, 1);
     const html = renderToStaticMarkup(element);
     assert.ok(html.includes(entry.item.label));
-    assert.equal(html.includes('aria-current="page"'), active);
+    assert.equal(html.includes('aria-current="page"'), currentPage);
   }
   assert.equal(isAdminNavItemActive("/admin", "/admin"), true);
   assert.equal(isAdminNavItemActive("/admin", "/admin/users"), false);

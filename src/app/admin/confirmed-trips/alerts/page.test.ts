@@ -18,7 +18,9 @@ test("Confirmation Delivery Health contains alerts instead of navigating to a du
   assert.match(operations, /import \{ ConfirmedTripDeliveryAlerts \} from "@\/components\/admin\/ConfirmedTripDeliveryAlerts"/);
   assert.match(deliveryHealth, /\{readiness\.feedReady \? <ConfirmedTripDeliveryAlerts \/> : null\}/);
   assert.doesNotMatch(deliveryHealth, /href="\/admin\/confirmed-trips\/alerts"|href="\/admin\/notifications"|>Confirmation alerts<\/Link>/);
-  assert.match(operations, /No provider confirmation feed is configured\. Monitoring is off/);
+  assert.match(deliveryHealth, /!readiness\.feedReady \? \(/);
+  assert.match(deliveryHealth, /No delivery telemetry available/);
+  assert.match(deliveryHealth, /"Monitoring inactive"/);
   assert.match(operations, /Delivery data is unavailable\. No counts are assumed/);
   assert.match(navigation, /href: "\/admin\/confirmed-trips", label: "Trips"/);
 });
@@ -75,5 +77,6 @@ test("old Confirmation alerts links safely redirect to Delivery Health within Tr
   assert.doesNotMatch(operations, /<details id="confirmation-delivery-health-title"/);
   assert.match(globalAlerts, /title="Notifications & Alerts"/);
   assert.match(globalAlerts, /<AdminAlertAcknowledgeButton/);
-  assert.match(navigation, /href: "\/admin\/notifications", parentHref: "\/admin\/system"/);
+  assert.match(navigation, /href: "\/admin\/notifications", label: "Notifications & Alerts"/);
+  assert.doesNotMatch(navigation, /href: "\/admin\/notifications", parentHref:/);
 });

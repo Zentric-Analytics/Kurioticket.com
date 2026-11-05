@@ -12,29 +12,37 @@ const statusApi = readFileSync("src/app/api/admin/homepage-fares/status/route.ts
 const refreshApi = readFileSync("src/app/api/admin/homepage-fares/refresh/route.ts", "utf8");
 
 test("public content management exposes homepage and FAQ CMS areas while fare operations stay separate", () => {
-  assert.match(contentPage, /<ContentPageFrame title="Content"/);
+  assert.match(contentPage, /<ContentPageFrame title="Content" visuallyHideTitle/);
 
   for (const section of [
-    "Homepage destination cards",
-    "Flight route cards",
-    "Hotel destination cards",
+    "Homepage destinations",
+    "Flight routes",
+    "Hotel destinations",
     "FAQs",
   ]) {
-    assert.match(contentPage, new RegExp(section));
+    assert.match(contentPage, new RegExp('title: "' + section + '"'));
   }
 
   assert.match(contentPage, /getCmsContentScopeSummary/);
-  assert.match(contentPage, /Manage FAQs/);
-  assert.match(contentPage, /Manage destinations/);
-  assert.match(contentPage, /Manage flight routes/);
-  assert.match(contentPage, /Manage hotel destinations/);
-  assert.doesNotMatch(contentPage, /Homepage CMS overview|Homepage fare operations|CMS Health/);
+  assert.match(contentPage, /getCmsContentMarketOverview/);
+  assert.match(contentPage, /title: "FAQs"/);
+  assert.match(contentPage, /title: "Homepage destinations"/);
+  assert.match(contentPage, /title: "Flight routes"/);
+  assert.match(contentPage, /title: "Hotel destinations"/);
+  // Technical utilities must not become permanent Content navigation cards.
+  // The conditional CMS Health *diagnostic link* is intentional for incomplete markets.
+  assert.doesNotMatch(contentPage, /title: "(?:Homepage CMS overview|Homepage fare operations|CMS Health)"/);
+  assert.doesNotMatch(contentPage, /href: "\/admin\/system\/cms-health"/);
+  assert.match(contentPage, /href="\/admin\/system\/cms-health"/);
   assert.match(contentPage, /contentScopeStatus\(destinationSummary\)/);
+  assert.match(contentPage, /if \(summary\.needsSetup\) return "Setup required"/);
+  assert.match(contentPage, /summary\?\.available && summary\.active \? summary\.publishedInScope/);
   assert.match(contentPage, /contentScopeStatus\(flightSummary\)/);
   assert.match(contentPage, /contentScopeStatus\(hotelSummary\)/);
   assert.match(contentPage, /publishedContentCount\(destinationSummary\)/);
-  assert.match(contentPage, /Published CMS records/);
-  assert.match(contentPage, /Review homepage CMS setup/);
+  assert.match(contentPage, /Published records/);
+  assert.match(contentPage, /Review CMS Health/);
+  assert.match(contentPage, /href="\/admin\/system\/cms-health"/);
   assert.match(contentPage, /CMS managed/);
   assert.match(contentPage, /Setup required/);
   assert.match(contentPage, /href: "\/admin\/content\/faqs"/);
@@ -46,7 +54,7 @@ test("homepage fare operations are separated from content, system and settings",
   assert.doesNotMatch(contentPage, /HomepageFaresRefreshCard/);
   assert.doesNotMatch(systemPage, /HomepageFaresRefreshCard/);
   assert.doesNotMatch(settingsPage, /HomepageFaresRefreshCard/);
-  assert.match(settingsPage, /Feature Controls/);
+  assert.match(settingsPage, /Platform controls/);
   assert.match(homepageFarePage, /title="Homepage Fare Operations"/);
   assert.match(homepageFarePage, /HomepageFaresRefreshCard/);
   assert.match(homepageFarePage, /href="\/admin\/settings"/);
@@ -78,22 +86,21 @@ test("homepage fare admin APIs preserve authorization, audit logging, and refres
   }
 });
 
-test("content overview groups three homepage areas and FAQs without hiding actions", () => {
-  assert.match(contentPage, /const homepageAreas = contentAreas\.filter\(\(area\) => area\.section === "homepage"\)/);
-  assert.match(contentPage, /const helpAreas = contentAreas\.filter\(\(area\) => area\.section === "help"\)/);
-  assert.equal((contentPage.match(/section: "homepage" as const/g) ?? []).length, 3);
-  assert.equal((contentPage.match(/section: "help" as const/g) ?? []).length, 1);
-  assert.match(contentPage, /aria-labelledby="homepage-content-heading"/);
-  assert.match(contentPage, /aria-labelledby="help-content-heading"/);
-  assert.match(contentPage, /sm:grid-cols-2 lg:grid-cols-3/);
-  assert.match(contentPage, /ContentSectionHeading>Homepage content/);
-  assert.match(contentPage, /ContentSectionHeading>Help &amp; information/);
-  assert.match(contentPage, /ContentStatusPill status=\{area\.status\}/);
-  assert.doesNotMatch(contentPage, /Content management shortcuts/);
+test("content overview shows four equal, fully clickable management cards", () => {
+  assert.match(contentPage, /<nav aria-label="Content management" className="grid auto-rows-fr grid-cols-1 gap-3 sm:grid-cols-2">/);
+  assert.equal((contentPage.match(/href: "\/admin\/content\/(?:homepage\/(?:destinations|flight-routes|hotel-destinations)|faqs)"/g) ?? []).length, 4);
   assert.match(contentPage, /href=\{area\.href\}/);
-  assert.match(contentPage, /\{area\.note\}/);
-  assert.match(contentPage, /\{area\.status\}/);
-  assert.match(contentPage, /\{area\.value\}/);
+  assert.match(contentPage, /className="group focus-ring flex h-full min-w-0 cursor-pointer flex-col gap-3 rounded-lg/);
+  assert.match(contentPage, /cursor-pointer/);
+  assert.doesNotMatch(contentPage, /min-h-\[178px\]|justify-between gap-6/);
+  assert.match(contentPage, /text-\[24px\]/);
+  assert.match(contentPage, /flex flex-wrap items-baseline gap-x-2\.5 gap-y-1/);
+  assert.match(contentPage, /hover:border-\[#6D28D9\]/);
+  assert.match(contentPage, /focus-visible:outline-\[#6D28D9\]/);
+  assert.match(contentPage, /area\.value/);
+  assert.doesNotMatch(contentPage, /area\.scope|scope: "US market"|scope: "Global"|scope: "English"/);
+  assert.match(contentPage, /area\.status !== "CMS managed"/);
+  assert.doesNotMatch(contentPage, /ContentSectionHeading|homepageAreas|helpAreas|Manage destinations|Manage FAQs/);
 });
 
 test("Content published count uses the published scope, not a draft's scope", () => {
@@ -104,6 +111,8 @@ test("Content published count uses the published scope, not a draft's scope", ()
   assert.match(cms, /publishedLocale: parsedLocale\.data/);
   assert.match(cms, /publishedPayload: \{ not: Prisma\.DbNull \}/);
   assert.match(contentPage, /summary\.publishedInScope/);
+  assert.match(contentPage, /getCmsContentMarketOverview\("HOMEPAGE_DESTINATION", homepageCmsMarkets, homepageCmsLocale\)/);
+  assert.match(contentPage, /getCmsContentMarketOverview\("FLIGHT_ROUTE", homepageCmsMarkets, homepageCmsLocale\)/);
 });
 
 test("Content returns to the actual source and only retains allowlisted filters", () => {
@@ -161,6 +170,7 @@ test("Content management uses consistent arrow back links and clean page framing
   const frame = readFileSync("src/components/admin/ContentWorkspace.tsx", "utf8");
   assert.match(frame, /ArrowLeft size=\{14\}/);
   assert.match(frame, /href=\{backHref\}/);
+  assert.match(frame, /visuallyHideTitle \? "sr-only"/);
   assert.match(frame, /max-w-\[1138px\]/);
   assert.match(frame, /max-w-\[1500px\]/);
   assert.match(frame, /export function ContentSectionHeading/);
@@ -221,4 +231,28 @@ test("Content lists search the whole CMS dataset and filters apply instantly", (
   assert.match(service, /encodeCmsListCursor\(scope/);
   assert.match(api, /search: url\.searchParams\.get\("q"\)/);
   assert.match(api, /category: url\.searchParams\.get\("category"\)/);
+});
+
+test("Content landing aggregates distinct published snapshots from every supported CMS market", () => {
+  const cms = readFileSync("src/services/cmsContentService.ts", "utf8");
+  const helper = cms.slice(
+    cms.indexOf("export async function getCmsContentMarketOverview"),
+    cms.indexOf("export async function getCmsContentScopeSummary"),
+  );
+  const homepage = readFileSync("src/services/homepageCmsService.ts", "utf8");
+  assert.match(homepage, /homepageCmsMarkets = HOMEPAGE_REFRESH_MARKET_CODES/);
+  assert.match(helper, /normalizedMarkets = \[\.\.\.new Set\(markets\)\]/);
+  assert.match(helper, /cmsContentScope\.count\(\{/);
+  assert.match(helper, /cmsContentItem\.count\(\{/);
+  assert.match(helper, /status: "PUBLISHED"/);
+  assert.match(helper, /publishedMarket: \{ in: normalizedMarkets \}/);
+  assert.match(helper, /publishedLocale: parsedLocale\.data/);
+  assert.match(helper, /publishedPayload: \{ not: Prisma\.DbNull \}/);
+  assert.match(helper, /needsSetup: scopeCount < normalizedMarkets\.length/);
+  assert.match(contentPage, /Some homepage content markets need CMS setup/);
+  assert.doesNotMatch(contentPage, /getCmsContentScopeSummary\("HOMEPAGE_DESTINATION", "US"/);
+  assert.doesNotMatch(contentPage, /getCmsContentScopeSummary\("FLIGHT_ROUTE", "US"/);
+  assert.match(contentPage, /getCmsContentScopeSummary\("HOTEL_DESTINATION", "GLOBAL"/);
+  assert.match(contentPage, /getCmsContentScopeSummary\("FAQ", faqCmsScope\.market, faqCmsScope\.locale\)/);
+  assert.match(contentPage, />Published records<\/span>/);
 });

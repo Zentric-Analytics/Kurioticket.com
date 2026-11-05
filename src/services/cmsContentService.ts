@@ -923,6 +923,53 @@ export async function readPublishedCmsContent<T>(
 }
 
 
+
+/**
+ * Landing-page aggregate for a CMS type across its supported content markets.
+ * Count the published snapshot's market/locale, never the editable draft scope.
+ * Each item is counted once, even if the market list contains duplicates.
+ */
+export async function getCmsContentMarketOverview(
+  type: CmsContentType,
+  markets: readonly string[],
+  locale: string,
+) {
+  const db = getOptionalPrisma();
+  if (!db) return { available: false, active: false, needsSetup: false, publishedInScope: 0 };
+
+  const normalizedMarkets = [...new Set(markets)];
+  const parsedLocale = localeSchema.safeParse(locale);
+  if (
+    !parsedLocale.success ||
+    normalizedMarkets.length === 0 ||
+    normalizedMarkets.some((market) => !marketSchema.safeParse(market).success)
+  ) {
+    throw new CmsContentError("INVALID", "CMS overview markets or locale are invalid.");
+  }
+
+  const [scopeCount, publishedInScope] = await Promise.all([
+    db.cmsContentScope.count({
+      where: { type, market: { in: normalizedMarkets }, locale: parsedLocale.data },
+    }),
+    db.cmsContentItem.count({
+      where: {
+        type,
+        status: "PUBLISHED",
+        publishedMarket: { in: normalizedMarkets },
+        publishedLocale: parsedLocale.data,
+        publishedPayload: { not: Prisma.DbNull },
+      },
+    }),
+  ]);
+
+  return {
+    available: true,
+    active: scopeCount > 0,
+    needsSetup: scopeCount < normalizedMarkets.length,
+    publishedInScope,
+  };
+}
+
 export async function getCmsContentScopeSummary(
   type: CmsContentType,
   market: string,

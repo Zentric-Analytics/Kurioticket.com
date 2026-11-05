@@ -24,6 +24,9 @@ test("admin alerts derive only from authoritative operational sources", () => {
     "getCmsHealthOverview",
     "readHomepageFareSnapshotStatus",
     "getFlightStatusOperationsSnapshot",
+    "readExpandedAdminAlertSignals",
+    "deriveExpandedAdminAlerts",
+    "persistExpandedAlertOccurrences",
   ]) {
     assert.match(service, new RegExp(source));
   }
@@ -86,6 +89,9 @@ test("admin alerts distinguish telemetry outages from real healthy zeroes", () =
   assert.match(core, /signals\.telemetryOutageTokens\.cms/);
   assert.match(core, /signals\.telemetryOutageTokens\.homepageFares/);
   assert.match(core, /signals\.telemetryOutageTokens\.flightStatus/);
+  assert.match(core, /!signals\.cms \|\| !signals\.cms\.available/);
+  assert.match(service, /cms: cms === null \|\| !cms\.available/);
+  assert.match(service, /const cmsOccurrenceToken = cms\?\.available/);
 });
 
 test("acknowledgements are per-admin, signal-specific, temporary, and must persist", () => {
@@ -146,10 +152,14 @@ test("notifications page explains acknowledgement semantics and monitored bounda
   assert.ok(ts.isJsxElement(section) && section.openingElement.tagName.getText(document) === "AdminSectionCard");
   const boundaries = section.getText(document).replace(/\s+/g, " ");
   for (const guarantee of ["authoritative System/database health", "ready provider operational health", "Email Delivery", "CMS integrity", "Homepage Fare readiness", "configured Flight Status telemetry", "authenticated Confirmed Trips delivery failures when a provider is explicitly configured", "does not fabricate alerts for inactive integrations", "no trustworthy expected cadence exists"]) assert.ok(boundaries.includes(guarantee), guarantee);
+  for (const guarantee of ["Global coverage also includes sustained failures", "enabled flight, hotel and car searches in this deployment", "explicitly urgent support tickets awaiting team action", "two-factor protection was disabled within the last 24 hours and remains disabled", "Account and support records are scoped to the current database", "Routine activity and isolated low-volume search failures do not create alerts", "Unavailable monitoring data is reported separately, never as a healthy zero"]) assert.ok(boundaries.includes(guarantee), guarantee);
   assert.match(page, /does not fabricate alerts/);
   assert.match(page, /AdminAlertAcknowledgeButton/);
   assert.match(page, /isProtectedAdminEmail\(session\.user\.email\)/);
   assert.match(page, /signalToken=\{alert\.signalToken\}/);
+  assert.match(page, /alertSourceHref\(alert\.actionHref\)/);
+  assert.match(page, /signalToken\.startsWith\("unpersisted:"\)/);
+  assert.doesNotMatch(page, /actions=\{/);
   assert.doesNotMatch(
     core,
     /markets\.join\(","\),\s*signals\.homepageFares\.lastRefreshAt/,

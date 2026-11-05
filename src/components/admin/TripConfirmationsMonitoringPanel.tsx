@@ -1,4 +1,4 @@
-import { Clock3, FileCheck2, Info, ShieldCheck } from "lucide-react";
+import { Clock3, Info, ShieldCheck } from "lucide-react";
 
 import { AdminStatusBadge } from "@/components/admin/AdminPageShell";
 import { ConfirmedTripsBreakdowns } from "@/components/admin/ConfirmedTripsBreakdowns";
@@ -12,7 +12,7 @@ import { getConfirmationDeliveryHealth } from "@/services/partnerConfirmationDel
 
 function InlineFact({ label, value }: { label: string; value: string }) {
   return (
-    <div className="min-w-0">
+    <div className="min-w-0 rounded-lg bg-slate-50 px-3 py-2">
       <dt className="text-xs font-medium leading-4 text-slate-600">{label}</dt>
       <dd className="mt-0.5 break-words text-[13px] font-semibold leading-5 text-slate-900">{value}</dd>
     </div>
@@ -37,57 +37,45 @@ export async function TripConfirmationsMonitoringPanel() {
   ]);
 
   return (
-    <div className="min-w-0 space-y-3">
-      <section aria-labelledby="confirmation-breakdowns-title" className="min-w-0 rounded-xl border border-slate-200/80 bg-white">
-        <div className="flex min-h-11 items-center gap-2 border-b border-slate-100 px-3 py-2.5">
-          <FileCheck2 size={17} className="shrink-0 text-indigo-700" aria-hidden="true" />
-          <h4 id="confirmation-breakdowns-title" className="text-sm font-semibold text-slate-800">Detailed product and provider breakdowns</h4>
-        </div>
-        <div className="p-3">
-          <ConfirmedTripsBreakdowns operations={operations} />
-        </div>
+    <div className="min-w-0 space-y-4">
+      <section aria-label="Confirmed trip breakdowns" className="min-w-0">
+        <ConfirmedTripsBreakdowns operations={operations} />
       </section>
 
-      <section aria-labelledby="confirmation-integration-title" className="min-w-0 rounded-xl border border-slate-200 px-4 py-3 sm:px-5 sm:py-4">
-        <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2.5">
-          <div className="flex min-w-0 flex-1 items-start gap-2.5">
+      <section aria-labelledby="confirmation-integration-title" className="min-w-0 rounded-xl border border-slate-200/80 bg-white p-3 sm:p-4">
+        <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
+          <div className="flex min-w-0 flex-1 items-center gap-2.5">
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-700">
               <ShieldCheck size={17} aria-hidden="true" />
             </span>
             <div className="min-w-0">
               <h4 id="confirmation-integration-title" className="scroll-mt-28 min-[1100px]:scroll-mt-44 text-base font-semibold leading-6 tracking-tight text-slate-950">Confirmation integration readiness</h4>
-              <p className="mt-1 text-[13px] leading-5 text-slate-600">Provider confirmation setup and connection status.</p>
             </div>
           </div>
           <div className="max-w-full shrink-0">
             <AdminStatusBadge tone={readiness.feedReady ? "info" : "warn"}>
-              {readiness.feedReady ? "Provider-bound webhook configured" : "Provider-bound webhook not configured"}
+              {readiness.feedReady ? "Webhook configured" : "Webhook not configured"}
             </AdminStatusBadge>
           </div>
         </div>
-        <dl className="mt-3 grid gap-x-5 gap-y-2.5 border-y border-slate-100 py-2.5 md:grid-cols-3">
+        <dl className="mt-3 grid gap-2 md:grid-cols-3">
           <InlineFact label="Configured provider" value={readiness.providerName || "None"} />
           <InlineFact label="Webhook credential" value={readiness.webhookCredentialConfigured ? "Configured" : "Not configured"} />
           <InlineFact label="Current search-provider confirmation feed" value={readiness.currentSearchProviderConfirmationFeed === "none" ? "None" : "Configured"} />
         </dl>
-        <dl className="mt-2 grid gap-x-5 gap-y-2 sm:grid-cols-2">
+        <dl className="mt-2 grid gap-2 sm:grid-cols-2">
           <InlineFact label="Endpoint" value="POST /api/internal/partner-confirmations" />
           <InlineFact label="Webhook credential model" value={readiness.credentialModel === "single_provider_bound_secret" ? "Single provider + dedicated secret" : "Unknown"} />
         </dl>
-        <p className="mt-2.5 text-[13px] leading-5 text-slate-600">
-          Confirmations require signed server-to-server callbacks from the configured provider. A webhook setup does not mean a live feed or provider agreement. Duffel search and KAYAK sandbox do not send booking confirmations.
-        </p>
       </section>
 
-      <section id="confirmation-delivery-health-title" aria-labelledby="confirmation-delivery-health-heading" className="min-w-0 rounded-xl border border-slate-200 px-4 py-3 sm:px-5 sm:py-4">
-        <div className="mb-3 flex items-center gap-2">
-          <Clock3 size={17} className="shrink-0 text-indigo-700" aria-hidden="true" />
-          <h4 className="text-sm font-semibold text-slate-800">Confirmation delivery health and alerts</h4>
-        </div>
+      <section id="confirmation-delivery-health-title" aria-labelledby="confirmation-delivery-health-heading" className="min-w-0 rounded-xl border border-slate-200/80 bg-white p-3 sm:p-4">
         <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2.5">
-          <div className="min-w-0 flex-1">
-            <h4 id="confirmation-delivery-health-heading" className="text-base font-semibold leading-6 tracking-tight text-slate-950">Confirmation delivery health</h4>
-            <p className="mt-1 text-[13px] leading-5 text-slate-600">Tracks authenticated provider callbacks. Retries are not new bookings or trips.</p>
+          <div className="flex min-w-0 flex-1 items-start gap-2.5">
+            <Clock3 size={17} className="mt-1 shrink-0 text-indigo-700" aria-hidden="true" />
+            <div className="min-w-0">
+              <h4 id="confirmation-delivery-health-heading" className="text-base font-semibold leading-6 tracking-tight text-slate-950">Delivery health and alerts</h4>
+            </div>
           </div>
           <div className="flex max-w-full flex-wrap items-center gap-x-3 gap-y-2">
             <AdminStatusBadge tone={!readiness.feedReady ? "neutral" : !deliveryHealth ? "warn" : deliveryHealth.rejectedLast24h > 0 ? "warn" : "info"}>
@@ -97,9 +85,9 @@ export async function TripConfirmationsMonitoringPanel() {
         </div>
 
         {!readiness.feedReady ? (
-          <p role="status" className="mt-3 flex items-start gap-2 rounded-lg bg-slate-50 px-3 py-2.5 text-[13px] leading-5 text-slate-700">
+          <p role="status" className="mt-2.5 flex items-start gap-2 rounded-lg bg-slate-50 px-3 py-2 text-[13px] leading-5 text-slate-700">
             <Info size={16} className="mt-0.5 shrink-0 text-slate-500" aria-hidden="true" />
-            <span>No provider confirmation feed is configured. Monitoring is off.</span>
+            <span>No delivery telemetry available.</span>
           </p>
         ) : !deliveryHealth ? (
           <p role="status" className="mt-3 flex items-start gap-2 rounded-lg bg-slate-50 px-3 py-2.5 text-[13px] leading-5 text-slate-700">

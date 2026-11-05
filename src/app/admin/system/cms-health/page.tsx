@@ -1,7 +1,6 @@
 import {
   AdminDataTable,
   AdminEmptyState,
-  AdminLinkButton,
   AdminMetricCard,
   AdminPageShell,
   AdminStatusBadge,
@@ -18,12 +17,6 @@ export default async function AdminCmsHealthPage() {
     <AdminPageShell
       title="CMS Health"
       description="Production integrity, fallback policy, ordering and unpublished-change diagnostics for every active CMS scope."
-      actions={
-        <div className="flex flex-wrap gap-2">
-          <AdminLinkButton href="/admin/system">Back to System</AdminLinkButton>
-          <AdminLinkButton href="/admin/logs">View audit logs</AdminLinkButton>
-        </div>
-      }
     >
       {!overview.available ? (
         <AdminEmptyState
@@ -39,6 +32,27 @@ export default async function AdminCmsHealthPage() {
             <AdminMetricCard label="Fallback retired" value={overview.totals.retiredFallback} />
             <AdminMetricCard label="Unpublished changes" value={overview.totals.unpublishedChanges} tone={overview.totals.unpublishedChanges ? "info" : undefined} />
           </div>
+
+          {overview.missingHomepageScopes.length > 0 ? (
+            <section aria-labelledby="missing-homepage-scopes-heading" className="rounded-lg border border-amber-200 bg-amber-50/50 p-4">
+              <h2 id="missing-homepage-scopes-heading" className="text-sm font-semibold text-slate-900">
+                Missing homepage CMS scopes ({overview.missingHomepageScopes.length})
+              </h2>
+              <p className="mt-1 text-xs leading-5 text-slate-600">
+                These supported markets have no CMS scope. Existing scopes can still be healthy.
+                Review setup before changing any content; do not rerun the full initialization against existing records.
+              </p>
+              <ul className="mt-3 grid gap-1.5 text-xs text-slate-700 sm:grid-cols-2 xl:grid-cols-3">
+                {overview.missingHomepageScopes.map((scope) => (
+                  <li key={`${scope.type}:${scope.market}:${scope.locale}`} className="rounded-md border border-amber-200 bg-white px-3 py-2">
+                    <span className="font-semibold">{scope.type.replaceAll("_", " ")}</span>
+                    <span className="ml-2 text-slate-600">{scope.market} · {scope.locale}</span>
+                    <span className="ml-2 font-medium text-amber-800">Not initialized</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
 
           {overview.scopes.length === 0 ? (
             <AdminEmptyState

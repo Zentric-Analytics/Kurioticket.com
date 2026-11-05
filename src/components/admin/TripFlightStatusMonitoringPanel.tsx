@@ -1,6 +1,5 @@
 import {
   AdminDataTable,
-  AdminSectionCard,
   AdminStatusBadge,
 } from "@/components/admin/AdminPageShell";
 import { formatDateTime } from "@/lib/admin-data";
@@ -15,16 +14,15 @@ export async function TripFlightStatusMonitoringPanel() {
   const operations = await getFlightStatusOperationsSnapshot(undefined, readiness);
 
   return (
-    <div className="min-w-0 space-y-3">
-        <section aria-labelledby="flight-status-overview-title" className="min-w-0">
-          <h2 id="flight-status-overview-title" className="mb-2.5 text-base font-semibold leading-6 tracking-tight text-slate-950">Flight status overview</h2>
+    <div className="min-w-0 space-y-4">
+        <section id="flight-status-overview-title" aria-label="Flight status overview" className="min-w-0">
           {operations ? (
             <div role="region" aria-label="Flight status metrics" tabIndex={0} className="min-w-0 max-w-full overflow-x-auto overscroll-x-contain rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400">
               <div className="grid w-full min-w-[960px] grid-cols-6 gap-2">
               <FlightStatusMetric label="Confirmed flights" value={operations.metrics.confirmedFlights} hint="Provider-confirmed trips" tone="info" />
-              <FlightStatusMetric label="Provider matched" value={operations.metrics.feedEligibleFlights} hint="Matches status provider" />
-              <FlightStatusMetric label="Tracked" value={operations.metrics.trackedFlights} hint="With a stored status" tone={operations.metrics.trackedFlights > 0 ? "good" : "neutral"} />
-              <FlightStatusMetric label="Missing status" value={operations.metrics.missingSnapshots} hint="Awaiting first status" tone={operations.metrics.missingSnapshots > 0 ? "warn" : "neutral"} />
+              <FlightStatusMetric label="Provider matched" value={operations.metrics.feedEligibleFlights} hint="Provider eligible" />
+              <FlightStatusMetric label="Tracked" value={operations.metrics.trackedFlights} hint="Stored snapshot" tone={operations.metrics.trackedFlights > 0 ? "good" : "neutral"} />
+              <FlightStatusMetric label="Missing status" value={operations.metrics.missingSnapshots} hint="No snapshot yet" tone={operations.metrics.missingSnapshots > 0 ? "warn" : "neutral"} />
               <FlightStatusMetric label="Current" value={operations.metrics.currentSnapshots} hint="Within 15-min window" tone={operations.metrics.currentSnapshots > 0 ? "good" : "neutral"} />
               <FlightStatusMetric label="Stale" value={operations.metrics.staleSnapshots} hint="Outside 15-min window" tone={operations.metrics.staleSnapshots > 0 ? "warn" : "neutral"} />
               </div>
@@ -37,13 +35,10 @@ export async function TripFlightStatusMonitoringPanel() {
           )}
         </section>
 
-        <AdminSectionCard className="min-w-0 p-3 shadow-none sm:p-4">
+        <section className="min-w-0 rounded-xl border border-slate-200/80 bg-white p-3 sm:p-4">
           <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
             <div className="min-w-0 flex-1">
               <h2 className="text-base font-semibold leading-6 tracking-tight text-slate-950">Status-feed readiness</h2>
-              <p className="mt-0.5 text-[13px] leading-5 text-slate-600">
-                Only the configured provider can send signed updates. Duffel search and KAYAK sandbox do not supply this feed.
-              </p>
             </div>
             <div className="shrink-0 whitespace-nowrap">
               <AdminStatusBadge tone={readiness.feedReady ? "good" : "warn"}>
@@ -60,18 +55,19 @@ export async function TripFlightStatusMonitoringPanel() {
             <Fact label="Endpoint" value="POST /api/internal/flight-status/updates" />
             <Fact label="Provider binding" value={readiness.credentialModel === "single_provider_bound_secret" ? "Single provider + dedicated secret" : "Unknown"} />
           </div>
-          <p className="mt-3 text-[13px] leading-5 text-slate-600">
-            A configured feed does not mean updates are arriving. Live status requires signed provider updates for confirmed flights—not searches, handoffs or trip confirmations.
-          </p>
-        </AdminSectionCard>
+          <div className="mt-3 flex min-w-0 flex-wrap gap-1.5 border-t border-slate-100 pt-3">
+            <AdminStatusBadge tone="good">Provider supplied only</AdminStatusBadge>
+            <AdminStatusBadge>Latest snapshot only</AdminStatusBadge>
+            <AdminStatusBadge>No segment history yet</AdminStatusBadge>
+          </div>
+        </section>
 
         {/* Keep monitoring cards visible when data is unavailable. */}
-        <div className="grid min-w-0 items-stretch gap-3 lg:grid-cols-2">
-          <AdminSectionCard className="min-w-0 p-3 shadow-none sm:p-4">
+        <div className="grid min-w-0 items-start gap-3 lg:grid-cols-2">
+          <section className="min-w-0 rounded-xl border border-slate-200/80 bg-white p-3 sm:p-4">
             <h2 className="text-base font-semibold leading-6 tracking-tight text-slate-950">Latest status distribution</h2>
-            <p className="mt-0.5 text-[13px] leading-5 text-slate-600">Latest stored statuses from the configured provider.</p>
             {!operations ? (
-              <p role="status" className="mt-2 rounded-lg bg-slate-50 px-3 py-2.5 text-[13px] leading-5 text-slate-600">
+              <p role="status" className="mt-2 rounded-lg bg-slate-50 px-3 py-2 text-[13px] leading-5 text-slate-600">
                 Flight-status distribution is unavailable. No counts are assumed.
               </p>
             ) : operations.statusDistribution.length ? (
@@ -84,66 +80,49 @@ export async function TripFlightStatusMonitoringPanel() {
                 ))}
               </div>
             ) : (
-              <p role="status" className="mt-2 rounded-lg bg-slate-50 px-3 py-2.5 text-[13px] leading-5 text-slate-600">
+              <p role="status" className="mt-2 rounded-lg bg-slate-50 px-3 py-2 text-[13px] leading-5 text-slate-600">
                 {readiness.feedReady
-                  ? "No verified flight-status snapshots recorded yet."
-                  : "No status feed is configured; no snapshots to show."}
+                  ? "No status snapshots recorded yet."
+                  : "No status feed configured."}
               </p>
             )}
-          </AdminSectionCard>
+          </section>
 
-          <AdminSectionCard className="min-w-0 p-3 shadow-none sm:p-4">
-            <h2 className="text-base font-semibold leading-6 tracking-tight text-slate-950">Snapshot scope</h2>
-            <p className="mt-1 text-[13px] leading-5 text-slate-600">
-              We save only the latest status of the main flight in each confirmed trip. Return and connecting flights aren&apos;t tracked separately.
-            </p>
-            <div className="mt-2 flex min-w-0 flex-wrap gap-1.5">
-              <AdminStatusBadge tone="good">Provider supplied only</AdminStatusBadge>
-              <AdminStatusBadge>Latest snapshot only</AdminStatusBadge>
-              <AdminStatusBadge>No segment history yet</AdminStatusBadge>
-            </div>
-          </AdminSectionCard>
+          <section className="min-w-0 rounded-xl border border-slate-200/80 bg-white p-3 sm:p-4">
+            <h2 className="text-base font-semibold leading-6 tracking-tight text-slate-950">Awaiting first status snapshot</h2>
+            {!operations ? (
+              <p role="status" className="mt-2 rounded-lg bg-slate-50 px-3 py-2 text-[13px] leading-5 text-slate-600">
+                Flight-status data unavailable. Count awaiting first status is unknown.
+              </p>
+            ) : operations.awaitingFirstSnapshot.length ? (
+              <div className="mt-3 min-w-0">
+                <AdminDataTable
+                  columns={["Departure", "Customer", "Route", "Provider", "Reference", "Confirmed"]}
+                  rows={operations.awaitingFirstSnapshot.map((trip) => ({
+                    id: trip.id,
+                    cells: [
+                      formatDateTime(new Date(trip.departureDate)),
+                      <div key="customer"><p className="font-semibold text-slate-950">{trip.userEmail || "Email unavailable"}</p><p className="text-xs text-slate-500">{trip.userId}</p></div>,
+                      trip.origin ? trip.origin + " → " + trip.destination : trip.destination,
+                      trip.providerName,
+                      trip.providerConfirmationCode,
+                      formatDateTime(new Date(trip.confirmedAt)),
+                    ],
+                  }))}
+                />
+              </div>
+            ) : (
+              <p role="status" className="mt-2 rounded-lg bg-slate-50 px-3 py-2 text-[13px] font-medium leading-5 text-slate-700">
+                No flights awaiting a first snapshot.
+              </p>
+            )}
+          </section>
         </div>
 
-        <AdminSectionCard className="min-w-0 p-3 shadow-none sm:p-4">
-          <h2 className="text-base font-semibold leading-6 tracking-tight text-slate-950">Awaiting first status snapshot</h2>
-          <p className="mt-0.5 text-[13px] leading-5 text-slate-600">Provider-matched flights awaiting their first status.</p>
-          {!operations ? (
-            <p role="status" className="mt-2 rounded-lg bg-slate-50 px-3 py-2.5 text-[13px] leading-5 text-slate-600">
-              Flight-status data unavailable. Count awaiting first status is unknown.
-            </p>
-          ) : operations.awaitingFirstSnapshot.length ? (
-            <div className="mt-3 min-w-0">
-              <AdminDataTable
-                columns={["Departure", "Customer", "Route", "Provider", "Reference", "Confirmed"]}
-                rows={operations.awaitingFirstSnapshot.map((trip) => ({
-                  id: trip.id,
-                  cells: [
-                    formatDateTime(new Date(trip.departureDate)),
-                    <div key="customer"><p className="font-semibold text-slate-950">{trip.userEmail || "Email unavailable"}</p><p className="text-xs text-slate-500">{trip.userId}</p></div>,
-                    trip.origin ? trip.origin + " → " + trip.destination : trip.destination,
-                    trip.providerName,
-                    trip.providerConfirmationCode,
-                    formatDateTime(new Date(trip.confirmedAt)),
-                  ],
-                }))}
-              />
-            </div>
-          ) : (
-            <p role="status" className="mt-2 rounded-lg bg-slate-50 px-3 py-2.5 text-[13px] leading-5 text-slate-600">
-              <span className="font-medium text-slate-800">No flights awaiting a first snapshot.</span>{" "}
-              {readiness.feedReady
-                ? "No provider-matched flights are awaiting a first status."
-                : "No matching flights are waiting; the status feed is not ready."}
-            </p>
-          )}
-        </AdminSectionCard>
-
-        <AdminSectionCard className="min-w-0 p-3 shadow-none sm:p-4">
+        <section className="min-w-0 rounded-xl border border-slate-200/80 bg-white p-3 sm:p-4">
           <h2 className="text-base font-semibold leading-6 tracking-tight text-slate-950">Latest trusted flight-status snapshots</h2>
-          <p className="mt-0.5 text-[13px] leading-5 text-slate-600">Latest verified statuses. This is not an event history.</p>
           {!operations ? (
-            <p role="status" className="mt-2 rounded-lg bg-slate-50 px-3 py-2.5 text-[13px] leading-5 text-slate-600">
+            <p role="status" className="mt-2 rounded-lg bg-slate-50 px-3 py-2 text-[13px] leading-5 text-slate-600">
               Recent flight-status data unavailable. No records are assumed.
             </p>
           ) : operations.recentSnapshots.length ? (
@@ -165,13 +144,13 @@ export async function TripFlightStatusMonitoringPanel() {
               />
             </div>
           ) : (
-            <p role="status" className="mt-2 rounded-lg bg-slate-50 px-3 py-2.5 text-[13px] leading-5 text-slate-600">
+            <p role="status" className="mt-2 rounded-lg bg-slate-50 px-3 py-2 text-[13px] leading-5 text-slate-600">
               {readiness.feedReady
-                ? "No verified flight-status snapshots recorded yet."
-                : "No status feed is configured; no snapshots to show."}
+                ? "No status snapshots recorded yet."
+                : "No status feed configured."}
             </p>
           )}
-        </AdminSectionCard>
+        </section>
     </div>
   );
 }

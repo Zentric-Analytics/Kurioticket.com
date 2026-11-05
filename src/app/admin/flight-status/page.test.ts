@@ -1,11 +1,10 @@
+import ts from "typescript";
+import { jsxOpening, nodesWhere, parseSource } from "../../../test-support/sourceStructure";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import ts from "typescript";
-import { nodesWhere, parseSource } from "../../../test-support/sourceStructure";
 
-// Copy contracts describe visible text; JSX entity escaping must preserve it.
-const page = readFileSync("src/components/admin/TripFlightStatusMonitoringPanel.tsx", "utf8").replaceAll("&apos;", "'");
+const page = readFileSync("src/components/admin/TripFlightStatusMonitoringPanel.tsx", "utf8");
 const monitoring = readFileSync("src/app/admin/confirmed-trips/monitoring/page.tsx", "utf8");
 const route = readFileSync("src/app/admin/flight-status/page.tsx", "utf8");
 const service = readFileSync("src/services/adminFlightStatusOperationsService.ts", "utf8");
@@ -18,7 +17,8 @@ test("flight status admin is a read-only trusted snapshot operations page", () =
   assert.doesNotMatch(page, /description="Monitor trusted provider-supplied operational flight status/);
   assert.doesNotMatch(page, /Search results, handoffs and booking confirmations never infer live status/);
   assert.match(page, /Latest trusted flight-status snapshots/);
-  assert.match(page, /This is not an event history/);
+  assert.match(page, /Latest snapshot only/);
+  assert.doesNotMatch(page, />Event history<|FlightStatusEvent/);
   assert.doesNotMatch(page, /fetch\(|method:\s*["'](?:POST|PATCH|DELETE)|<form/);
 });
 
@@ -36,8 +36,7 @@ test("missing status is scoped to the configured provider rather than all confir
   assert.match(service, /monitoringTrackedFlights/);
   assert.match(service, /monitoringStaleSnapshots/);
   assert.match(service, /flightStatusSnapshot: \{ is: null \}/);
-  assert.match(page, /Provider-matched flights awaiting their first status/);
-  assert.match(page, /Matches status provider/);
+  assert.match(page, /Provider eligible/);
 });
 
 test("flight status readiness is provider-bound and independent from database telemetry", () => {
@@ -58,32 +57,22 @@ test("flight status operations shares the canonical freshness rule", () => {
 });
 
 test("flight status operations does not invent an event history or segment model", () => {
-  assert.match(page, /We save only the latest status of the main flight in each confirmed trip/);
-  assert.match(page, /Return and connecting flights aren't tracked separately/);
   assert.match(page, /No segment history yet/);
   assert.match(contract, /one operational snapshot per `MyTrip`/);
   assert.doesNotMatch(service, /FlightStatusEvent/);
 });
 
 
-test("Flight Status keeps one concise provider safety note within readiness, not a standalone card", () => {
-  assert.doesNotMatch(page, /<h2[^>]*>Operational boundaries<\/h2>/);
-  const readinessStart = page.indexOf(">Status-feed readiness</h2>");
-  const distributionStart = page.indexOf(">Latest status distribution</h2>", readinessStart);
-  assert.ok(readinessStart >= 0 && distributionStart > readinessStart);
-  const readinessCopy = page.slice(readinessStart, distributionStart);
-  assert.match(readinessCopy, /Only the configured provider can send signed updates/);
-  assert.match(readinessCopy, /A configured feed does not mean updates are arriving/);
-  assert.match(readinessCopy, /Live status requires signed provider updates for confirmed flights/);
-  assert.match(readinessCopy, /not searches, handoffs or trip confirmations/);
-  const note = readinessCopy.match(/<p className="mt-3 text-\[13px\] leading-5 text-slate-600">([\s\S]*?)<\/p>/);
-  assert.ok(note, "Keep exactly one concise readiness note below the five configuration fields");
-  assert.ok(note[1].trim().length < 185, "Readiness note should remain short");
-  assert.doesNotMatch(readinessCopy, /<div className="mt-3 space-y-1\.5">|Each signed update must name the configured provider/);
-  assert.doesNotMatch(readinessCopy, /Status records have no environment label|uses the connected/);
-  assert.equal((page.match(/<AdminSectionCard className="min-w-0 p-3 shadow-none sm:p-4">/g) || []).length, 5);
-  assert.match(page, /<div className="min-w-0 space-y-3">/);
+test("Flight Status keeps provider safety in backend contracts without explanatory UI copy", () => {
+  assert.doesNotMatch(page, /Only the configured provider can send signed updates|A configured feed does not mean updates are arriving|Live status requires signed provider updates for confirmed flights/);
+  assert.match(service, /FLIGHT_STATUS_PROVIDER_NAME/);
+  assert.match(service, /FLIGHT_STATUS_WEBHOOK_SECRET/);
+  assert.match(service, /credentialModel: "single_provider_bound_secret"/);
+  assert.match(contract, /does not infer operational flight status from a search, a provider handoff, or a booking confirmation/);
+  assert.equal((page.match(/<section className="min-w-0 rounded-xl border border-slate-200\/80 bg-white p-3 sm:p-4">/g) || []).length, 4);
+  assert.match(page, /<div className="min-w-0 space-y-4">/);
   assert.match(page, /grid w-full min-w-\[960px\] grid-cols-6 gap-2/);
+  assert.match(page, /grid min-w-0 items-start gap-3 lg:grid-cols-2/);
   assert.match(page, /No zero values were invented/);
   assert.match(page, /Flight-status distribution is unavailable\. No counts are assumed/);
   assert.match(page, /operations\.awaitingFirstSnapshot\.map/);
@@ -91,7 +80,8 @@ test("Flight Status keeps one concise provider safety note within readiness, not
 });
 
 test("flight status operations preserves the metasearch boundary", () => {
-  assert.match(page, /not searches, handoffs or trip confirmations/);
+  assert.match(page, /Provider supplied only/);
+  assert.match(service, /source: "PARTNER_CONFIRMATION"/);
   assert.match(contract, /does not infer operational flight status from a search, a provider handoff, or a booking confirmation/);
   assert.match(navigation, /href: "\/admin\/confirmed-trips\/monitoring"/);
   assert.doesNotMatch(navigation, /\/admin\/bookings/);
@@ -109,30 +99,24 @@ test("flight status telemetry unavailable state never invents zero metrics", () 
   assert.match(service, /catch \(error\)[\s\S]*return null/);
 });
 
-test("all Flight Status sections are present regardless of telemetry availability", () => {
-  const originalSections = [
+test("all Flight Status monitoring sections remain visible without duplicate scope cards", () => {
+  for (const section of [
     "Status-feed readiness",
     "Latest status distribution",
-    "Snapshot scope",
     "Awaiting first status snapshot",
     "Latest trusted flight-status snapshots",
-  ];
-  for (const section of originalSections) {
+  ]) {
     assert.ok(page.includes(section), "Section must remain visible: " + section);
   }
+  assert.doesNotMatch(page, />Snapshot scope<\/h2>/);
+  assert.doesNotMatch(page, />Flight status overview<\/h2>/);
+  assert.match(page, /id="flight-status-overview-title" aria-label="Flight status overview"/);
+  assert.match(page, /Provider supplied only/);
+  assert.match(page, /Latest snapshot only/);
+  assert.match(page, /No segment history yet/);
   assert.doesNotMatch(page, /className="[^"]*(?:\bhidden\b|\binvisible\b|\bopacity-0\b)/);
-
-  const distributionStart = page.indexOf('<div className="grid min-w-0 items-stretch gap-3 lg:grid-cols-2">');
-  const awaitingStart = page.indexOf('operations.awaitingFirstSnapshot.length ? (', distributionStart);
-  assert.ok(distributionStart >= 0 && awaitingStart > distributionStart);
-  const summaryPanels = page.slice(distributionStart, awaitingStart);
-  assert.match(summaryPanels, /Latest status distribution/);
-  assert.match(summaryPanels, /Snapshot scope/);
-  assert.match(summaryPanels, /!operations \? \(/);
-  assert.match(summaryPanels, /Flight-status distribution is unavailable/);
-  assert.match(summaryPanels, /No counts are assumed/);
-  assert.match(summaryPanels, /operations\.statusDistribution\.length/);
-  assert.doesNotMatch(page, /\{operations \? \(\s*<div className="grid min-w-0 items-stretch gap-3 lg:grid-cols-2">/);
+  assert.match(page, /Flight-status distribution is unavailable\. No counts are assumed/);
+  assert.match(page, /operations\.statusDistribution\.length/);
 });
 
 test("latest snapshots and awaiting-first-snapshot sections never disappear at zero or on failure", () => {
@@ -143,22 +127,21 @@ test("latest snapshots and awaiting-first-snapshot sections never disappear at z
   assert.match(page, /operations\.recentSnapshots\.length/);
   assert.match(page, /operations\.recentSnapshots\.map/);
   assert.match(page, /<h2[^>]*>Latest trusted flight-status snapshots<\/h2>/);
-  assert.match(page, /No verified flight-status snapshots recorded yet/);
+  assert.match(page, /No status snapshots recorded yet/);
   assert.match(page, /Recent flight-status data unavailable/);
   assert.match(page, /<h2[^>]*>Awaiting first status snapshot<\/h2>/);
-  assert.match(page, /No status feed is configured/);
+  assert.match(page, /No status feed configured/);
   assert.match(page, /No zero values were invented/);
   assert.doesNotMatch(page, /operations\.recentSnapshots\.length \? \([\s\S]*?\) : null\s*\) : null/);
 });
 
-test("Flight Status overview follows the planned responsive page hierarchy", () => {
+test("Flight Status follows the deduplicated monitoring hierarchy", () => {
   assert.match(page, /grid w-full min-w-\[960px\] grid-cols-6 gap-2/);
-  assert.match(page, /grid min-w-0 items-stretch gap-3 lg:grid-cols-2/);
-  const order = ["Flight status overview", "Status-feed readiness", "Latest status distribution",
-    "Snapshot scope", "Awaiting first status snapshot", "Latest trusted flight-status snapshots"];
+  const order = ["Status-feed readiness", "Latest status distribution", "Awaiting first status snapshot", "Latest trusted flight-status snapshots"];
   const locations = order.map(label => page.indexOf(">" + label + "</h2>"));
   assert.ok(locations.every(n => n >= 0), "All operational headings must stay visible");
   assert.deepEqual(locations, [...locations].sort((a, b) => a - b));
+  assert.doesNotMatch(page, />Flight status overview<\/h2>|>Snapshot scope<\/h2>/);
   for (const field of ["confirmedFlights", "feedEligibleFlights", "trackedFlights", "missingSnapshots", "currentSnapshots", "staleSnapshots"]) {
     assert.ok(page.includes("operations.metrics." + field), "Metric data must be preserved: " + field);
   }
@@ -171,17 +154,17 @@ test("Flight Status overview follows the planned responsive page hierarchy", () 
 
 
 test("Flight Status overview has no extra outline or double padding and keeps compact metrics", () => {
-  const sectionStart = page.indexOf('<section aria-labelledby="flight-status-overview-title"');
+  const sectionStart = page.indexOf('<section id="flight-status-overview-title" aria-label="Flight status overview"');
   const sectionEnd = page.indexOf("</section>", sectionStart);
   assert.ok(sectionStart >= 0 && sectionEnd > sectionStart, "The overview section must be visible");
   const overview = page.slice(sectionStart, sectionEnd);
-  assert.match(overview, /^<section aria-labelledby="flight-status-overview-title" className="min-w-0">/);
+  assert.match(overview, /^<section id="flight-status-overview-title" aria-label="Flight status overview" className="min-w-0">/);
   assert.doesNotMatch(overview.slice(0, overview.indexOf(">") + 1), /(?:^|\s)(?:p-[0-9]|sm:p-[0-9]|pt-[0-9]|sm:pt-[0-9])/,
     "Do not add padding inside the already padded parent card");
   const overviewOpeningTag = overview.slice(0, overview.indexOf(">") + 1);
   assert.doesNotMatch(overviewOpeningTag, /\b(?:border|rounded|shadow)(?:-[^\s"]+)?\b/,
     "Overview section must not add a redundant decorative outline");
-  assert.match(overview, /mb-2\.5 text-base font-semibold leading-6 tracking-tight/);
+  assert.doesNotMatch(overview, />Flight status overview<\/h2>/);
   assert.match(overview, /grid w-full min-w-\[960px\] grid-cols-6 gap-2/);
   assert.equal((overview.match(/<FlightStatusMetric label=/g) || []).length, 6);
   assert.doesNotMatch(overview, /<AdminMetricCard/);
@@ -201,13 +184,13 @@ test("Flight Status overview has no extra outline or double padding and keeps co
   }
   assert.match(overview, /role="status"/);
   assert.match(overview, /No zero values were invented/);
-  assert.match(page, /<div className="min-w-0 space-y-3">/);
+  assert.match(page, /<div className="min-w-0 space-y-4">/);
   assert.doesNotMatch(page, /className="[^"]*(?:\bhidden\b|\binvisible\b|\bopacity-0\b)/);
 });
 
 
 test("all six Flight Status metrics form one accessible horizontal row without page overflow", () => {
-  const start = page.indexOf('<section aria-labelledby="flight-status-overview-title"');
+  const start = page.indexOf('<section id="flight-status-overview-title" aria-label="Flight status overview"');
   const end = page.indexOf("</section>", start);
   assert.ok(start >= 0 && end > start);
   const overview = page.slice(start, end);
@@ -229,27 +212,21 @@ test("all six Flight Status metrics form one accessible horizontal row without p
   }
 });
 
-test("short descriptions preserve source and data-availability boundaries", () => {
-  for (const sentence of [
-    "Only the configured provider can send signed updates.",
-    "Duffel search and KAYAK sandbox do not supply this feed.",
-    "A configured feed does not mean updates are arriving.",
-    "Live status requires signed provider updates for confirmed flights",
-    "not searches, handoffs or trip confirmations.",
-    "Latest stored statuses from the configured provider.",
-    "We save only the latest status of the main flight in each confirmed trip.",
-    "Return and connecting flights aren't tracked separately.",
-  ]) {
-    assert.ok(page.includes(sentence), "Key boundary missing: " + sentence);
-  }
+test("data-availability boundaries remain truthful without explanatory helper copy", () => {
+  assert.doesNotMatch(page, /Only the configured provider can send signed updates|Duffel search and KAYAK sandbox do not supply this feed|A configured feed does not mean updates are arriving|Latest stored statuses from the configured provider|Provider-matched flights awaiting their first status|Latest verified statuses\. This is not an event history|We save only the latest provider-supplied status for the main flight/);
+  assert.match(service, /providerName: readiness\.providerName/);
+  assert.match(service, /flightStatusSnapshot: \{ is: null \}/);
+  assert.match(contract, /one operational snapshot per `MyTrip`/);
   assert.match(page, /No zero values were invented/);
   assert.match(page, /No counts are assumed/);
   assert.match(page, /Count awaiting first status is unknown/);
-  assert.match(page, /No verified flight-status snapshots recorded yet/);
+  assert.match(page, /No status snapshots recorded yet/);
   assert.match(page, /Recent flight-status data unavailable/);
-  assert.match(page, /No status feed is configured; no snapshots to show/);
+  assert.match(page, /No status feed configured/);
   assert.match(monitoring, /<AdminPageShell title="Trip monitoring" hideHeader>/);
-  assert.match(monitoring, /href="\/admin\/confirmed-trips"/);
+  assert.match(monitoring, /<TripWorkspaceNavigation active="monitoring" \/>/);
+  const tabs = readFileSync("src/components/admin/TripWorkspaceNavigation.tsx", "utf8");
+  assert.match(tabs, /href="\/admin\/confirmed-trips"/);
   assert.doesNotMatch(page, /href="\/admin\/flights"|href="\/admin\/searches\/activity/);
   assert.match(page, /operations\.statusDistribution\.map/);
   assert.match(page, /operations\.awaitingFirstSnapshot\.map/);
@@ -257,39 +234,30 @@ test("short descriptions preserve source and data-availability boundaries", () =
 });
 
 
-test("Snapshot Scope is compact, readable and aligned with the distribution section", () => {
+test("Snapshot scope is folded into status-feed readiness", () => {
   const root = parseSource(page);
-  const pairs = nodesWhere(root, node => ts.isJsxElement(node) && node.openingElement.tagName.getText(root) === "div" &&
-    node.openingElement.attributes.properties.some(attribute => ts.isJsxAttribute(attribute) && attribute.name.getText(root) === "className" &&
-      attribute.initializer && ts.isStringLiteral(attribute.initializer) && attribute.initializer.text === "grid min-w-0 items-stretch gap-3 lg:grid-cols-2")) as ts.JsxElement[];
-  assert.equal(pairs.length, 1);
-  const cards = pairs[0].children.filter((node): node is ts.JsxElement => ts.isJsxElement(node) && node.openingElement.tagName.getText(root) === "AdminSectionCard");
-  assert.equal(cards.length, 2, "only distribution and snapshot scope share this row");
-  assert.match(cards[0].getText(root), />Latest status distribution<\/h2>/);
-  assert.match(cards[1].getText(root), />Snapshot scope<\/h2>/);
-  for (const card of cards) assert.match(card.openingElement.getText(root), /className="min-w-0 p-3 shadow-none sm:p-4"/);
-  const scope = cards[1].getText(root);
-  assert.match(scope, /mt-1 text-\[13px\] leading-5 text-slate-600/);
-  assert.match(scope, /mt-2 flex min-w-0 flex-wrap gap-1\.5/);
-  assert.match(scope, /We save only the latest status of the main flight in each confirmed trip/);
-  assert.match(scope, /Return and connecting flights aren't tracked separately/);
-  assert.match(scope, /Provider supplied only/);
-  assert.match(scope, /Latest snapshot only/);
-  assert.match(scope, /No segment history yet/);
-  assert.match(scope, /We save only the latest status of the main flight in each confirmed trip\. Return and connecting flights aren't tracked separately\./);
-  assert.doesNotMatch(scope, /primary-flight status|Return flights and connections are not tracked separately/);
-  assert.doesNotMatch(scope, /\bmt-4\b|\bfont-black\b|\bshadow-md\b/);
+  const headings = nodesWhere(root, node => ts.isJsxElement(node) && node.openingElement.tagName.getText(root) === "h2" && node.children.map(child => child.getText(root)).join("").trim() === "Status-feed readiness");
+  assert.equal(headings.length, 1, "one readiness heading owns folded scope");
+  let section: ts.Node | undefined = headings[0].parent;
+  while (section && !(ts.isJsxElement(section) && section.openingElement.tagName.getText(root) === "section")) section = section.parent;
+  assert.ok(section && ts.isJsxElement(section), "readiness has an actual section owner");
+  const readiness = section.getText(root);
+  assert.doesNotMatch(readiness, /Awaiting first status snapshot|Latest trusted flight-status snapshots/);
+  assert.doesNotMatch(readiness, /We save only the latest provider-supplied status for the main flight|Return and connecting flights aren't tracked separately/);
+  assert.match(readiness, /Provider supplied only/);
+  assert.match(readiness, /Latest snapshot only/);
+  assert.match(readiness, /No segment history yet/);
+  assert.doesNotMatch(page, />Snapshot scope<\/h2>/);
 });
-
 test("Flight Status uses consistent compact sections, balanced readiness facts and honest empty states", () => {
-  assert.equal((page.match(/<AdminSectionCard className="min-w-0 p-3 shadow-none sm:p-4">/g) || []).length, 5);
-  assert.match(page, /grid min-w-0 items-stretch gap-3 lg:grid-cols-2/);
+  assert.doesNotMatch(page, />Snapshot scope<\/h2>/);
   assert.match(page, /grid min-w-0 gap-2 sm:grid-cols-2 lg:grid-cols-3/);
   assert.match(page, /mt-2 grid min-w-0 gap-2 sm:grid-cols-2/);
   assert.match(page, /shrink-0 whitespace-nowrap/);
   assert.equal((page.match(/<Fact label=/g) || []).length, 5);
   assert.equal((page.match(/<AdminDataTable/g) || []).length, 2);
-  assert.equal((page.match(/<p role="status" className="mt-2 rounded-lg bg-slate-50 px-3 py-2\.5/g) || []).length, 6);
+  const statuses = jsxOpening(page, "p").filter(node => node.attributes.properties.some(attribute => ts.isJsxAttribute(attribute) && attribute.name.getText() === "role" && attribute.initializer?.getText() === '"status"'));
+  assert.equal(statuses.length, 6, "each of three data sections retains unavailable and empty-state messages");
   assert.doesNotMatch(page, /<AdminEmptyState/);
   assert.match(page, /operations\.awaitingFirstSnapshot\.map/);
   assert.match(page, /operations\.recentSnapshots\.map/);
@@ -307,12 +275,10 @@ test("legacy Flight Status links redirect securely to the expanded monitoring pa
   assert.match(route, /redirect\("\/admin\/confirmed-trips\/monitoring\?panel=flight#flight-status-overview-title"\)/);
   assert.doesNotMatch(route, /<AdminPageShell|<AdminSectionCard|<FlightStatusMetric/);
   assert.match(monitoring, /<AdminPageShell title="Trip monitoring" hideHeader>/);
-  assert.match(monitoring, /<nav aria-label="Trip monitoring navigation"/);
-  assert.match(monitoring, /href="\/admin\/confirmed-trips"/);
-  assert.match(monitoring, /Back to Trips/);
+  assert.match(monitoring, /<TripWorkspaceNavigation active="monitoring" \/>/);
+  assert.doesNotMatch(monitoring, /Back to Trips|Trip monitoring navigation/);
   assert.match(monitoring, /<TripFlightStatusMonitoringPanel \/>/);
-  assert.match(monitoring, /<section id="trip-flight-status-panel" aria-labelledby="trip-flight-status-title"/);
-  assert.doesNotMatch(monitoring, /<details id="trip-flight-status-panel"/);
+  assert.match(monitoring, /id="trip-flight-status-panel"/);
   const searchActivity = readFileSync("src/app/admin/searches/activity/page.tsx", "utf8");
   assert.match(searchActivity, /{ label: "Flights", value: "FLIGHT" }/);
   assert.match(searchActivity, /one\(raw\.product\) === item\.value/);
@@ -326,14 +292,13 @@ test("unified Trip monitoring owns a single parent while preserving original fli
   assert.match(monitoring, /<AdminSectionCard className="min-w-0 p-4 sm:p-5 lg:p-6">/);
   assert.equal((monitoring.match(/<AdminSectionCard /g) || []).length, 1);
   assert.match(monitoring, /<TripConfirmationsMonitoringPanel \/>/);
-  assert.doesNotMatch(monitoring, /<details id="trip-confirmations-panel"/);
   assert.match(monitoring, /<TripFlightStatusMonitoringPanel \/>/);
-  assert.match(page, /<div className="min-w-0 space-y-3">/);
-  const sections = ["Flight status overview", "Status-feed readiness", "Latest status distribution",
-    "Snapshot scope", "Awaiting first status snapshot", "Latest trusted flight-status snapshots"];
+  assert.match(page, /<div className="min-w-0 space-y-4">/);
+  const sections = ["Status-feed readiness", "Latest status distribution", "Awaiting first status snapshot", "Latest trusted flight-status snapshots"];
   const positions = sections.map(label => page.indexOf(">" + label + "</h2>"));
-  assert.ok(positions.every(n => n >= 0), "All original sections must remain");
+  assert.ok(positions.every(n => n >= 0), "All monitoring sections must remain");
   assert.deepEqual(positions, [...positions].sort((a, b) => a - b));
+  assert.doesNotMatch(page, />Flight status overview<\/h2>|>Snapshot scope<\/h2>/);
   assert.equal((page.match(/<FlightStatusMetric label=/g) || []).length, 6);
   assert.match(page, /grid w-full min-w-\[960px\] grid-cols-6 gap-2/);
   assert.match(page, /No zero values were invented/);

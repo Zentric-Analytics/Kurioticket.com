@@ -11,7 +11,7 @@ import { AdminWorkspaceSearchProvider, AdminSearchTrigger, AdminSearchHeader, Ad
 type HeaderGroup = ReturnType<typeof getAdminHeaderGroups>[number];
 type HeaderEntry = HeaderGroup["links"][number];
 
-function HeaderNavLink({ entry, pathname, close }: { entry: HeaderEntry; pathname: string; mobile?: boolean; close: () => void }) {
+function HeaderNavLink({ entry, pathname, mobile = false, close }: { entry: HeaderEntry; pathname: string; mobile?: boolean; close: () => void }) {
   const { item } = entry;
   const selected =
     isAdminNavItemActive(item.href, pathname) ||
@@ -23,7 +23,7 @@ function HeaderNavLink({ entry, pathname, close }: { entry: HeaderEntry; pathnam
     ? " after:absolute after:-bottom-1 after:left-1 after:right-1 after:h-0.5 after:rounded-full after:bg-[#004BB8]"
     : "";
   return (
-    <Link href={item.href} onClick={close} aria-current={selected ? "page" : undefined}
+    <Link href={item.href} onClick={close} aria-current={pathname === item.href || pathname === item.href + "/" ? "page" : undefined}
       className={"relative inline-flex h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-xl px-2.5 text-[15px] font-semibold leading-none tracking-[-0.005em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 " + style + underline}>
       <Icon size={14} aria-hidden="true" className="h-[13px] w-[13px] shrink-0 xl:h-3.5 xl:w-3.5 2xl:h-4 2xl:w-4" />
       <span>{item.label}</span>
@@ -46,12 +46,48 @@ function Navigation({ groups, pathname, mobile = false, close }: { groups: Heade
   </nav>;
 }
 
+/**
+ * System's secondary pages are real routes, not panels inside /admin/system.
+ * Keep their navigation visible on each child route without a floating menu.
+ */
+function SystemSectionTabs({ entries, pathname }: { entries: HeaderEntry["children"]; pathname: string }) {
+  const tabs = [
+    { href: "/admin/system", label: "System Status" },
+    ...entries.map((entry) => ({
+      href: entry.href,
+      label: entry.href === "/admin/notifications" ? "Alerts" : entry.label,
+    })),
+  ];
+
+  return (
+    <nav aria-label="System sections" className="min-w-0 border-b border-[#D8E1EC] bg-white">
+      <div className="flex min-w-0 items-center gap-6 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {tabs.map((tab) => {
+            const active = pathname === tab.href || pathname === tab.href + "/" ||
+              (tab.href !== "/admin/system" && pathname.startsWith(tab.href + "/"));
+            return (
+              <Link key={tab.href} href={tab.href} aria-current={active ? "page" : undefined}
+                className={"inline-flex h-11 shrink-0 items-center whitespace-nowrap border-b-2 px-1 text-[13px] font-medium text-[#020617] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] " +
+                  (active ? "border-[#004BB8]" : "border-transparent hover:border-[#D8E1EC]")}>
+                {tab.label}
+              </Link>
+            );
+          })}
+      </div>
+    </nav>
+  );
+}
+
 export function AdminHorizontalShell({ children, adminEmail, adminName, adminRole, showPreviewTesters = false }: {
   children: React.ReactNode; adminEmail?: string | null; adminName?: string | null; adminRole: string; showPreviewTesters?: boolean;
 }) {
   const role: AdminRole = adminRole === "SUPPORT" || adminRole === "USER" ? adminRole : "ADMIN";
   const groups = getAdminHeaderGroups(role, showPreviewTesters);
   const pathname = usePathname();
+  const systemChildren = groups.flatMap((group) => group.links).find((entry) => entry.item.href === "/admin/system")?.children ?? [];
+  const systemSectionsVisible = pathname === "/admin/system" || pathname === "/admin/system/" ||
+    systemChildren.some((entry) => pathname === entry.href || pathname.startsWith(entry.href + "/"));
+
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [unreadAlertCount, setUnreadAlertCount] = useState<number | null>(null);
@@ -180,7 +216,10 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
       {mobileOpen ? <div className="max-h-[70vh] overflow-y-auto border-t border-slate-100 bg-white min-[1100px]:hidden"><Navigation groups={groups} pathname={pathname} mobile close={() => setMobileOpen(false)} /></div> : null}
       </AdminSearchHeader>
     </header>
-    <main className="mx-auto w-full max-w-[1920px] px-4 py-5 sm:px-6 lg:px-10"><AdminSearchContent>{children}</AdminSearchContent></main>
+    <main className="mx-auto w-full max-w-[1920px] px-4 py-5 sm:px-6 lg:px-10">
+      {systemSectionsVisible ? <SystemSectionTabs entries={systemChildren} pathname={pathname} /> : null}
+      <div className={systemSectionsVisible ? "pt-5" : ""}><AdminSearchContent>{children}</AdminSearchContent></div>
+    </main>
 
   </div></AdminWorkspaceSearchProvider>;
 }
