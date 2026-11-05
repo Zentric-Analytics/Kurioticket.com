@@ -1,70 +1,115 @@
 import Link from "next/link";
 
-import { AdminButton, AdminDataTable, AdminEmptyState, AdminFilterBar, AdminInput, AdminPageShell } from "@/components/admin/AdminPageShell";
+import { AdminAuditLogsToolbar } from "@/components/admin/AdminAuditLogsToolbar";
+import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { formatDateTime } from "@/lib/admin-data";
+import type { AdminAuditRead } from "@/services/adminAuditReadContract";
 import { adminAuditReads } from "@/services/adminAuditReadService";
 
-export const metadata = { title: "Admin Logs" };
+export const metadata = { title: "Admin Audit Logs" };
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
+type AuditRange = "24h" | "7d" | "30d" | "90d" | "custom";
+
+const rowGrid = "md:grid-cols-[minmax(130px,0.75fr)_minmax(210px,1.15fr)_minmax(220px,1.2fr)_minmax(240px,1.35fr)_90px]";
+
+const actionLabels: Record<string, string> = {
+  CMS_CONTENT_PUBLISHED: "CMS content published",
+  ADMIN_ALERT_CMS_STATE: "CMS alert state changed",
+  PROVIDER_RETESTED: "Provider retested",
+  CMS_LEGACY_FALLBACK_REACTIVATED: "CMS legacy fallback reactivated",
+  EMAIL_DELIVERY_TEST_SENT: "Email delivery test sent",
+  USER_ROLE_UPDATED: "User role updated",
+  USER_SOFT_DELETED: "User deleted",
+};
 
 export default async function AdminLogsPage({ searchParams }: { searchParams: SearchParams }) {
   const raw = await searchParams;
-  const params = toParams(raw);
-  if (!params.has("limit")) params.set("limit", "50");
+  const now = new Date();
+  const range = normalizeRange(one(raw.range));
+  const fromDate = one(raw.fromDate);
+  const toDate = one(raw.toDate);
+  const params = auditParams(raw, range, now);
   const result = await adminAuditReads.list(params);
+  const pageHref = currentHref(raw, range);
 
   return (
-    <AdminPageShell
-      title="Audit Logs"
-      description="Security audit trail for sensitive admin actions. This view uses the safe audit contract and intentionally excludes raw metadata, IP addresses and user-agent values."
-    >
-      <div className="space-y-4">
-        <AdminFilterBar action="/admin/logs">
-          <AdminInput name="action" defaultValue={one(raw.action)} placeholder="Action" />
-          <AdminInput name="adminEmail" defaultValue={one(raw.adminEmail)} placeholder="Admin email" />
-          <AdminInput name="targetType" defaultValue={one(raw.targetType)} placeholder="Target type" />
-          <AdminInput name="targetEmail" defaultValue={one(raw.targetEmail)} placeholder="Target email" />
-          <AdminButton type="submit">Apply filters</AdminButton>
-        </AdminFilterBar>
+    <AdminPageShell title="Audit Logs" hideHeader>
+      <div className="w-full min-w-0 bg-white text-[#020617]">
+        <header className="border-b border-[#D8E1EC] pb-4">
+          <h1 className="text-[18px] font-semibold tracking-[-0.01em] text-[#020617]">Audit Logs</h1>
+          <p className="mt-1 max-w-[900px] text-[12px] leading-5 text-[#64748B]">
+            Security-sensitive admin and system actions. Raw metadata, IP addresses and user-agent values are intentionally excluded.
+          </p>
+        </header>
+
+        <AdminAuditLogsToolbar
+          action={one(raw.action)}
+          adminEmail={one(raw.adminEmail)}
+          targetType={one(raw.targetType)}
+          targetEmail={one(raw.targetEmail)}
+          range={range}
+          fromDate={fromDate}
+          toDate={toDate}
+          pageHref={pageHref}
+        />
 
         {result.status === "ok" ? (
           result.data.items.length === 0 ? (
-            <AdminEmptyState
+            <AuditState
               title="No audit entries found"
-              message="No recorded admin actions match this filter set in the current audit window."
+              message="No recorded admin or system actions match the selected filters and date range."
             />
           ) : (
-            <>
-              <AdminDataTable
-                columns={["Created", "Admin", "Action", "Target", "Target email"]}
-                rows={result.data.items.map((log) => ({
-                  id: log.id,
-                  cells: [
-                    formatDateTime(new Date(log.createdAt)),
-                    <div key="admin"><p className="font-semibold text-slate-950">{log.adminEmail}</p><p className="text-xs text-slate-500">{log.adminUserId || "No user id"}</p></div>,
-                    <span key="action" className="font-black text-slate-950">{log.action}</span>,
-                    <div key="target"><p className="font-semibold text-slate-950">{log.targetType}</p><p className="text-xs text-slate-500">{log.targetId || "—"}</p></div>,
-                    log.targetEmail || "—",
-                  ],
-                }))}
-              />
-              {result.data.nextCursor ? (
-                <div className="flex justify-end">
-                  <Link
-                    href={cursorHref(raw, result.data.nextCursor)}
-                    className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-700 hover:bg-slate-50"
-                  >
-                    Next page
-                  </Link>
+            <section aria-labelledby="audit-records-heading" className="pt-4">
+              <div className="flex flex-wrap items-baseline justify-between gap-2 pb-2">
+                <h2 id="audit-records-heading" className="text-[15px] font-semibold text-[#020617]">Audit records</h2>
+                <p className="text-[12px] text-[#64748B]">
+                  {result.data.items.length.toLocaleString()} newest records on this page · {rangeLabel(range, result.data.scope.from, result.data.scope.to)}
+                </p>
+              </div>
+
+              <div role="region" aria-label="Audit log records" tabIndex={0} className="min-w-0 overflow-x-auto border-y border-[#D8E1EC]">
+                <div className={"hidden min-w-[980px] gap-4 border-b border-[#D8E1EC] px-3 py-3 text-[12px] font-medium uppercase text-[#475569] md:grid " + rowGrid}>
+                  <span>Created</span>
+                  <span>Admin</span>
+                  <span>Action</span>
+                  <span>Target</span>
+                  <span className="text-right">Details</span>
                 </div>
-              ) : null}
-            </>
+                <div className="min-w-[980px] divide-y divide-[#E7ECF5]">
+                  {result.data.items.map(log => <AuditRow key={log.id} log={log} />)}
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-between gap-3 py-3">
+                <p className="text-[12px] text-[#64748B]">Newest first · up to 100 records per page.</p>
+                <div className="flex items-center gap-4">
+                  {one(raw.cursor) ? (
+                    <Link href={newestHref(raw, range)} className="text-[13px] font-medium text-[#475569] hover:text-[#020617] hover:underline">
+                      Back to newest
+                    </Link>
+                  ) : null}
+                  {result.data.nextCursor ? (
+                    <Link href={cursorHref(raw, range, result.data.nextCursor)} className="text-[13px] font-medium text-[#004BB8] hover:underline">
+                      Older records ›
+                    </Link>
+                  ) : null}
+                </div>
+              </div>
+            </section>
           )
         ) : (
-          <AdminEmptyState
-            title={result.status === "invalid" ? "Invalid audit filters" : result.status === "forbidden" ? "Admin access required" : "Audit log unavailable"}
-            message={"issues" in result ? result.issues.map((issue) => issue.field + ": " + issue.message).join(" ") : "The audit reader could not verify log data. An unavailable audit read is not shown as an empty history."}
+          <AuditState
+            tone={result.status === "invalid" ? "warn" : result.status === "forbidden" ? "bad" : "warn"}
+            title={result.status === "invalid" ? "Invalid audit filters" : result.status === "forbidden" ? "Admin access required" : "Audit logs unavailable"}
+            message={
+              "issues" in result
+                ? result.issues.map(issue => issue.field + ": " + issue.message).join(" ")
+                : result.status === "forbidden"
+                  ? "Your current session is not permitted to read the audit trail."
+                  : "The audit reader could not verify log data. An unavailable read is not shown as an empty history."
+            }
           />
         )}
       </div>
@@ -72,22 +117,157 @@ export default async function AdminLogsPage({ searchParams }: { searchParams: Se
   );
 }
 
+function AuditRow({ log }: { log: AdminAuditRead }) {
+  const content = (
+    <>
+      <time dateTime={log.createdAt} className="text-[12px] leading-5 text-[#475569]">{formatDateTime(new Date(log.createdAt))}</time>
+      <div className="min-w-0">
+        <p className="break-words text-[13px] font-medium text-[#020617]">{log.adminEmail}</p>
+        <p className="mt-0.5 truncate text-[11px] text-[#64748B]" title={log.adminUserId || "System event"}>
+          {log.adminUserId || "System event"}
+        </p>
+      </div>
+      <div className="min-w-0">
+        <p className="text-[13px] font-medium text-[#020617]">{actionLabel(log.action)}</p>
+        <code className="mt-0.5 block truncate text-[11px] font-normal text-[#64748B]" title={log.action}>{log.action}</code>
+      </div>
+      <div className="min-w-0">
+        <p className="text-[13px] font-medium text-[#020617]">{identifierLabel(log.targetType)}</p>
+        <code className="mt-0.5 block max-w-[360px] truncate text-[11px] font-normal text-[#64748B]" title={log.targetId || undefined}>
+          {log.targetId || "No target ID"}
+        </code>
+      </div>
+    </>
+  );
+
+  if (!log.targetEmail) {
+    return (
+      <div data-audit-row={log.id} className={"grid gap-2 px-3 py-3 md:items-start md:gap-4 " + rowGrid}>
+        {content}
+        <span aria-hidden="true" />
+      </div>
+    );
+  }
+
+  return (
+    <details data-audit-row={log.id} className="group">
+      <summary className={"grid cursor-pointer list-none gap-2 px-3 py-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] md:items-start md:gap-4 [&::-webkit-details-marker]:hidden " + rowGrid}>
+        {content}
+        <span className="text-[12px] font-medium text-[#004BB8] md:text-right">
+          <span className="group-open:hidden">View ›</span>
+          <span className="hidden group-open:inline">Hide ‹</span>
+        </span>
+      </summary>
+      <div className="border-t border-[#EEF2F7] px-3 py-3">
+        <div className="max-w-[680px] border-l-2 border-[#D8E1EC] pl-3">
+          <p className="text-[12px] text-[#64748B]">Target email</p>
+          <p className="mt-0.5 break-all text-[13px] text-[#020617]">{log.targetEmail}</p>
+        </div>
+      </div>
+    </details>
+  );
+}
+
+function AuditState({ title, message, tone = "neutral" }: { title: string; message: string; tone?: "neutral" | "warn" | "bad" }) {
+  const titleClass = tone === "bad" ? "text-rose-700" : tone === "warn" ? "text-amber-700" : "text-[#020617]";
+  return (
+    <section role={tone === "neutral" ? undefined : "status"} className="border-b border-[#D8E1EC] py-8">
+      <p className={"text-[14px] font-semibold " + titleClass}>{title}</p>
+      <p className="mt-1 max-w-[760px] text-[13px] leading-5 text-[#64748B]">{message}</p>
+    </section>
+  );
+}
+
+function actionLabel(action: string) {
+  return actionLabels[action] || identifierLabel(action);
+}
+
+function identifierLabel(value: string) {
+  const acronyms: Record<string, string> = { admin: "Admin", api: "API", cms: "CMS", faq: "FAQ", id: "ID", url: "URL" };
+  const words = value
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replace(/[._-]+/g, " ")
+    .trim()
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(Boolean);
+  return words.map((word, index) => acronyms[word] || (index === 0 ? word.charAt(0).toUpperCase() + word.slice(1) : word)).join(" ");
+}
+
 function one(value: string | string[] | undefined) {
   return typeof value === "string" ? value : "";
 }
 
-function toParams(raw: Record<string, string | string[] | undefined>) {
+function normalizeRange(value: string): AuditRange {
+  return value === "24h" || value === "30d" || value === "90d" || value === "custom" ? value : "7d";
+}
+
+function auditParams(raw: Record<string, string | string[] | undefined>, range: AuditRange, now: Date) {
   const params = new URLSearchParams();
-  for (const [key, value] of Object.entries(raw)) {
-    if (Array.isArray(value)) value.forEach((item) => params.append(key, item));
-    else if (value) params.set(key, value);
+  for (const key of ["action", "adminEmail", "targetType", "targetEmail"] as const) {
+    const value = one(raw[key]).trim();
+    if (value) params.set(key, value);
   }
+  params.set("limit", "100");
+
+  const cursor = one(raw.cursor);
+  if (cursor) {
+    params.set("cursor", cursor);
+    return params;
+  }
+
+  if (range === "custom") {
+    const fromDate = one(raw.fromDate);
+    const toDate = one(raw.toDate);
+    params.set("from", /^\d{4}-\d{2}-\d{2}$/.test(fromDate) ? fromDate + "T00:00:00.000Z" : fromDate);
+    params.set("to", customEndIso(toDate, now));
+    return params;
+  }
+
+  const durationMs = range === "24h" ? 24 * 60 * 60 * 1000
+    : range === "30d" ? 30 * 24 * 60 * 60 * 1000
+      : range === "90d" ? 90 * 24 * 60 * 60 * 1000
+        : 7 * 24 * 60 * 60 * 1000;
+  params.set("from", new Date(now.getTime() - durationMs).toISOString());
+  params.set("to", now.toISOString());
   return params;
 }
 
-function cursorHref(raw: Record<string, string | string[] | undefined>, cursor: string) {
-  const params = toParams(raw);
+function customEndIso(value: string, now: Date) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+  const end = new Date(value + "T00:00:00.000Z");
+  end.setUTCDate(end.getUTCDate() + 1);
+  return new Date(Math.min(end.getTime(), now.getTime())).toISOString();
+}
+
+function rangeLabel(range: AuditRange, from: string, to: string) {
+  if (range === "24h") return "Last 24 hours";
+  if (range === "7d") return "Last 7 days";
+  if (range === "30d") return "Last 30 days";
+  if (range === "90d") return "Last 90 days";
+  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }).format(new Date(from))
+    + " – "
+    + new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }).format(new Date(new Date(to).getTime() - 1));
+}
+
+function currentHref(raw: Record<string, string | string[] | undefined>, range: AuditRange) {
+  const params = new URLSearchParams();
+  params.set("range", range);
+  for (const key of ["action", "adminEmail", "targetType", "targetEmail", "fromDate", "toDate", "cursor"] as const) {
+    const value = one(raw[key]);
+    if (value) params.set(key, value);
+  }
+  return "/admin/logs?" + params.toString();
+}
+
+function cursorHref(raw: Record<string, string | string[] | undefined>, range: AuditRange, cursor: string) {
+  const params = new URLSearchParams(currentHref(raw, range).split("?")[1]);
   params.set("cursor", cursor);
-  params.set("limit", one(raw.limit) || "50");
+  return "/admin/logs?" + params.toString();
+}
+
+function newestHref(raw: Record<string, string | string[] | undefined>, range: AuditRange) {
+  const params = new URLSearchParams(currentHref(raw, range).split("?")[1]);
+  params.delete("cursor");
   return "/admin/logs?" + params.toString();
 }
