@@ -3643,8 +3643,7 @@ function classifyHomepageFareDisplayReadiness(
       label: "Global homepage partially ready",
       message:
         "At least one public market has usable provider-backed homepage fares, but market coverage is incomplete.",
-      globalReadinessStatus:
-        globalReadinessStatus === "not_ready" ? "partial" : globalReadinessStatus,
+      globalReadinessStatus,
       popularFresh,
       popularTarget: budget.popularVisibleTarget,
       discoverFresh,
