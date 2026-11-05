@@ -10,6 +10,7 @@ import {
   AdminTextarea,
 } from "@/components/admin/AdminPageShell";
 import type { HomepageCmsSection } from "@/lib/adminHomepageCms";
+import { getCmsUnpublishedChangeLabel } from "@/lib/adminCmsPublicationStatus";
 import { ContentSectionHeading, ContentStatusPill } from "@/components/admin/ContentWorkspace";
 
 type CmsItem = {
@@ -23,6 +24,10 @@ type CmsItem = {
   publishedVersion: number | null;
   publishedAt: string | null;
   draftPayload: unknown;
+  publishedPayload: unknown;
+  publishedMarket: string | null;
+  publishedLocale: string | null;
+  publishedSortOrder: number | null;
 };
 
 type HotelOption = {
@@ -89,11 +94,7 @@ export function HomepageCmsEditor({
   );
   const validMarket = section === "hotel-destinations" || markets.includes(market);
   const validDraft = validMarket && validateClientDraft(section, currentPayload, sortOrder);
-  const unpublished = Boolean(
-    item?.publishedVersion !== null &&
-    item?.publishedVersion !== undefined &&
-    item.version !== item.publishedVersion,
-  );
+  const unpublishedLabel = item ? getCmsUnpublishedChangeLabel(item) : null;
 
   function setField(name: string, value: string) {
     setFields((current) => ({ ...current, [name]: value }));
@@ -313,7 +314,7 @@ export function HomepageCmsEditor({
         <div className="mt-4 grid gap-2 pt-2 text-[12px] text-[#64748B]">
           <span>Market: {section === "hotel-destinations" ? "GLOBAL" : market}</span>
           <span>Order: {sortOrder || "0"}</span>
-          {item ? <span>Draft v{item.version} · Published {item.publishedVersion ? `v${item.publishedVersion}` : "none"} · Unpublished changes: {unpublished ? "yes" : "no"}</span> : null}
+          {item ? <span>Draft v{item.version} · Published {item.publishedVersion ? `v${item.publishedVersion}` : "none"} · {unpublishedLabel ?? "No unpublished changes"}</span> : null}
         </div>
       </aside>
     </div>
