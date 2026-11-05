@@ -94,6 +94,7 @@ test("actual database-backed session and admin boundaries reject stale, invalid,
   let record: typeof validRecord | null = validRecord;
   const policy = load("src/lib/account-security-policy.ts", { "@/lib/previewTesterAccess": { canRetainStagingSession: async (email: string) => email.endsWith("@zentricanalytics.com") } });
   const account = load("src/lib/account-session.ts", {
+    "@/lib/mobile-deletion-recovery": {},
     "node:crypto": nativeRequire("node:crypto"),
     "@/lib/prisma": { getPrisma: () => ({ accountSession: { findFirst: async (query: { where: { id: string; userId: string } }) => {
       assert.deepEqual(query.where, { id: validRecord.id, userId: user.id }); return record;

@@ -20,6 +20,7 @@ import { FeatureAvailabilityProvider } from "../src/features/availability/Featur
 import { MobileLocalizationProvider } from "../src/localization/MobileLocalizationProvider";
 import { createForegroundUpdateHandler, ensureLatestUpdate } from "../src/updates/ensureLatestUpdate";
 import { startVisitorIdentity } from "../src/features/privacy/visitorIdentity";
+import { MobileRecoveryBoundary } from "../src/features/auth/MobileRecoveryBoundary";
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -62,7 +63,7 @@ function ThemedRootLayout() {
   return (
     <View style={{ flex: 1 }}>
       <StatusBar style={theme.dark ? "light" : "dark"} backgroundColor={theme.background} />
-      <Stack
+      <MobileRecoveryBoundary><Stack
         screenOptions={{
           headerShown: false,
           contentStyle: { backgroundColor: theme.background },
@@ -76,7 +77,7 @@ function ThemedRootLayout() {
         <Stack.Screen name="connection-status" />
         <Stack.Screen name="hotel-results" options={{ gestureEnabled: true }} />
         <Stack.Screen name="flight-details" options={{ animation: "ios_from_right", gestureEnabled: true }} />
-      </Stack>
+      </Stack></MobileRecoveryBoundary>
     </View>
   );
 }

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { getPrisma } from "@/lib/prisma";
-import { canAuthenticateAccount } from "@/lib/account-security-policy";
+import { canAuthenticateMobileAccount as canAuthenticateAccount } from "@/lib/mobile-deletion-recovery";
 import { issueMobileSession } from "@/lib/account-session";
 import {
   assertAllowedOrigin,
@@ -187,6 +187,7 @@ export async function verifyMobilePasskeyAssertion(
     throw new MobilePasskeyAuthenticationError("AUTHENTICATION_FAILED");
   }
 
+  const verifiedAt = dependencies.now();
   try {
     await prisma.$transaction(async (tx) => {
       const consumed = await tx.webAuthnChallenge.updateMany({
@@ -205,7 +206,7 @@ export async function verifyMobilePasskeyAssertion(
     throw new MobilePasskeyAuthenticationError("AUTHENTICATION_FAILED");
   }
 
-  const session = await dependencies.issueSession(passkey.userId, "PASSKEY", "PHISHING_RESISTANT", metadata);
+  const session = await dependencies.issueSession(passkey.userId, "PASSKEY", "PHISHING_RESISTANT", metadata, { sessionVersion: passkey.user.sessionVersion, status: passkey.user.status, verifiedAt });
   return {
     session,
     user: { id: passkey.user.id, email: passkey.user.email, name: passkey.user.name },

@@ -6,6 +6,7 @@ import { sendTransactionalEmail, accountDeletionCancelledEmail, accountDeletionR
 import { createSupportTicket } from "@/services/supportService";
 import { recordAccountEventSafely } from "@/services/accountNotificationService";
 import { readWebDeletionRecoverySession } from "@/lib/web-deletion-recovery";
+import { readMobileDeletionRecovery } from "@/lib/mobile-deletion-recovery";
 
 const GRACE_DAYS = 7;
 
@@ -64,7 +65,8 @@ export async function requestAccountDeletion(input: { userId: string; email: str
   return { request, created: true };
 }
 
-export async function reactivateAccount(userId: string, email: string, webSessionId?: string) {
+export async function reactivateAccount(userId: string, email: string, webSessionId?: string, mobileRecovery?: { sessionId: string; tokenHash: string }) {
+  if (webSessionId === undefined && !mobileRecovery) throw new Error("RecoveryAuthorizationRequired");
   const db = getPrisma();
 
   const updated = await db.$transaction(async (tx) => {
@@ -97,6 +99,10 @@ export async function reactivateAccount(userId: string, email: string, webSessio
       await tx.$queryRaw`SELECT "id" FROM "AccountSession" WHERE "id" = ${webSessionId} AND "userId" = ${userId} FOR UPDATE`;
       const recovery = await readWebDeletionRecoverySession(userId, webSessionId, tx, new Date());
       if (!recovery || recovery.user.email !== email) throw new Error("RecoveryAuthorizationRequired");
+    } else if (mobileRecovery) {
+      await tx.$queryRaw`SELECT "id" FROM "AccountSession" WHERE "id" = ${mobileRecovery.sessionId} AND "userId" = ${userId} FOR UPDATE`;
+      const recovery = await readMobileDeletionRecovery(mobileRecovery.sessionId, userId, tx, new Date());
+      if (!recovery || !mobileRecovery.tokenHash || recovery.session.tokenHash !== mobileRecovery.tokenHash || recovery.session.user.email !== email) throw new Error("RecoveryAuthorizationRequired");
     }
 
     await tx.user.update({ where: { id: userId }, data: { status: "ACTIVE" } });

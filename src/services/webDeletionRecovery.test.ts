@@ -37,11 +37,12 @@ function harness() {
     try { return await run(tx); } catch (error) { session = priorSession; request = priorRequest; throw error; } finally { release(); }
   } };
   const recovery = loadIsolatedModule<typeof recoveryModule>("src/lib/web-deletion-recovery.ts", { "@/lib/prisma": { getPrisma: () => db }, "@/lib/account-session": { RECENT_REAUTHENTICATION_MS } });
+  const mobile = loadIsolatedModule("src/lib/mobile-deletion-recovery.ts", { "@/lib/prisma": { getPrisma: () => db }, "@/lib/account-security-policy": {}, "@/lib/previewTesterAccess": {}, "@/services/visitorActivityIdentity": {} });
   const api = loadIsolatedModule<typeof serviceModule>("src/services/accountDeletionService.ts", {
     "date-fns": { addDays }, "@/lib/env": {}, "@/lib/prisma": { getPrisma: () => db },
     "@/services/visitorActivityIdentity": { lockVisitorAccount: async () => { events.push("lock-user"); return session.user; } },
     "@/services/emailService": { sendTransactionalEmail: async () => { mails++; }, accountDeletionCancelledEmail: () => "fixture-only" },
-    "@/services/supportService": {}, "@/services/accountNotificationService": { recordAccountEventSafely: async () => { notifications++; } }, "@/lib/web-deletion-recovery": recovery,
+    "@/services/supportService": {}, "@/services/accountNotificationService": { recordAccountEventSafely: async () => { notifications++; } }, "@/lib/web-deletion-recovery": recovery, "@/lib/mobile-deletion-recovery": mobile,
   });
   return { api, events, afterSessionLock: (run: () => void) => { onSessionLock = run; }, get request() { return request; }, get session() { return session; }, get writes() { return writes; }, deliveries: () => ({ mails, notifications }) };
 }
@@ -74,11 +75,10 @@ test("fresh post-deletion primary authentication can recover a non-MFA account t
   assert.equal((await h.api.reactivateAccount(h.session.userId, h.session.user.email!, h.session.id)).status, "CANCELLED");
 });
 
-test("the existing mobile service entry still recovers a valid owner and shares request replay protection", async () => {
+test("mobile service callers must supply transaction-bound recovery authorization", async () => {
   const h = harness(); h.session.client = "MOBILE";
-  assert.equal((await h.api.reactivateAccount(h.session.userId, h.session.user.email!)).status, "CANCELLED");
   await assert.rejects(h.api.reactivateAccount(h.session.userId, h.session.user.email!));
-  assert.deepEqual(h.deliveries(), { mails: 1, notifications: 1 });
+  assert.equal(h.writes, 0); assert.deepEqual(h.deliveries(), { mails: 0, notifications: 0 });
 });
 
 test("deadline or version drift while waiting for the session lock is revalidated before any mutation", async () => {

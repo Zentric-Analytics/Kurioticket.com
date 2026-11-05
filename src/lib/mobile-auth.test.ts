@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
 import { mobileSessionMetadata } from "@/lib/mobile-auth";
+import { namedFunction } from "../test-support/sourceStructure";
 
 for (const platform of ["ios", "android"] as const) {
   test(`mobile session metadata accepts the canonical ${platform} platform`, () => {
@@ -15,7 +16,7 @@ test("mobile session metadata rejects arbitrary client values", () => {
   assert.deepEqual(mobileSessionMetadata(request), {});
 });
 
-test("every normal mobile authentication completion forwards validated metadata without changing session security inputs", () => {
+test("mobile authentication forwards validated metadata and separate server-verified proof without trusting metadata as security input", () => {
   for (const path of [
     "src/app/api/mobile/v1/auth/password/route.ts",
     "src/app/api/mobile/v1/auth/google/route.ts",
@@ -26,6 +27,9 @@ test("every normal mobile authentication completion forwards validated metadata 
     assert.match(readFileSync(path, "utf8"), /mobileSessionMetadata\(request\)/, path);
   }
   const implementation = readFileSync("src/lib/mobile-auth.ts", "utf8");
-  assert.match(implementation, /issueMobileSession\(userId, authMethod === "google" \? "GOOGLE" : "PASSWORD", assurance, metadata\)/);
-  assert.doesNotMatch(implementation, /expiresAt|tokenHash|sessionVersion/);
+  assert.match(implementation, /issueMobileSession\(userId, authMethod === "google" \? "GOOGLE" : "PASSWORD", assurance, metadata, proof\)/);
+  assert.doesNotMatch(namedFunction(implementation, "mobileSessionMetadata"), /expiresAt|tokenHash|sessionVersion|verifiedAt/);
+  for (const method of ["password", "google"]) {
+    assert.match(readFileSync(`src/app/api/mobile/v1/auth/${method}/route.ts`, "utf8"), /sessionVersion: user\.sessionVersion, status: user\.status/);
+  }
 });

@@ -14,7 +14,7 @@ export function tracePreviewPasskey(stage: PasskeyDiagnosticStage, error?: unkno
 export type PasskeyAuthenticationOptions = { challenge: string; rpId: string; timeout: number; userVerification: "required" };
 export type PasskeyAssertion = import("../passkeys/nativePasskeys").NormalizedPasskeyAssertion;
 
-type AuthResult = { session: { token: string; expires: string }; user: { id: string; email: string; name?: string | null } } | { requiresTwoFactor: true; challengeToken: string; expiresAt: string };
+type AuthResult = { session: { token: string; expires: string; recovery?: { deadline: string } }; user: { id: string; email: string; name?: string | null } } | { requiresTwoFactor: true; challengeToken: string; expiresAt: string };
 
 export class AuthApiError extends Error {
   constructor(message: string, public status = 0, public code = "") { super(message); }
@@ -48,6 +48,11 @@ async function request<T>(path: string, options: RequestInit = {}, externalSigna
   } finally { clearTimeout(timer); externalSignal?.removeEventListener("abort", abort); }
 }
 export const authApi = {
+  recoveryStatus: async () => {
+    const session = await readSession();
+    if (!session) throw new AuthApiError("Recovery sign-in expired. Sign in again.", 401);
+    return request<{ recovery?: { deadline: string }; expires: string }>("session", { headers: { Authorization: `Bearer ${session.token}` } });
+  },
   passkeyOptions: (signal?: AbortSignal) => request<{ options: PasskeyAuthenticationOptions }>("passkey/options", { method: "POST", body: "{}" }, signal),
   passkeyVerify: async (assertion: PasskeyAssertion, signal?: AbortSignal) => {
     if (isPreviewPasskeySignIn()) {
@@ -103,7 +108,8 @@ export async function restoreAuthenticatedSession() {
   const session = await readSession();
   if (!session) return false;
   try {
-    await request("session", { headers: { Authorization: `Bearer ${session.token}` } });
+    const result = await request<{ recovery?: { deadline: string } }>("session", { headers: { Authorization: `Bearer ${session.token}` } });
+    if (result.recovery) { await writeSession({ ...session, recovery: result.recovery }); return false; }
     return true;
   } catch { await clearSession(); return false; }
 }

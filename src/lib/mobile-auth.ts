@@ -11,8 +11,8 @@ export function mobileSessionMetadata(request: Request): MobileSessionMetadata {
     ...(appVersion && appVersion.length <= 32 && /^[0-9A-Za-z][0-9A-Za-z.+_-]*$/.test(appVersion) ? { appVersion } : {}),
   };
 }
-export async function createMobileSession(userId: string, authMethod: "credentials" | "google" = "credentials", assurance: "PRIMARY" | "MFA" = "PRIMARY", metadata?: MobileSessionMetadata) {
-  return issueMobileSession(userId, authMethod === "google" ? "GOOGLE" : "PASSWORD", assurance, metadata);
+export async function createMobileSession(userId: string, authMethod: "credentials" | "google" = "credentials", assurance: "PRIMARY" | "MFA" = "PRIMARY", metadata?: MobileSessionMetadata, proof?: { sessionVersion: number; status: string; verifiedAt?: Date }) {
+  return issueMobileSession(userId, authMethod === "google" ? "GOOGLE" : "PASSWORD", assurance, metadata, proof);
 }
 export const getMobileSession = validateMobileBearer;
 export function mobileSessionFingerprint(token: string) { return createHash("sha256").update(token).digest("hex"); }
