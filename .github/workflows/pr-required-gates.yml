@@ -111,6 +111,7 @@ jobs:
         run: >-
           node --input-type=module --import jiti/register -e
           'await import("./src/services/cmsContentFoundation.test.ts");
+          await import("./src/components/admin/CmsEditorActions.test.ts");
           await import("./src/services/faqCmsPhase2.test.ts");
           await import("./src/services/homepageCmsPhase3.test.ts");
           await import("./src/services/homepageCmsInitializationFix.test.ts");
