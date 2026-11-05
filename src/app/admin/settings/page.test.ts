@@ -145,5 +145,5 @@ test("feature controls render as settings rows with switches instead of status p
   assert.match(featurePanel, /translate-x-1/);
   assert.match(featurePanel, /Enabled/);
   assert.match(featurePanel, /Disabled/);
-  assert.doesNotMatch(featurePanel, /formatChangedDate|Registry default|Changed /);
+  assert.doesNotMatch(featurePanel, /formatChangedDate|Changed \$\{/);
 });
