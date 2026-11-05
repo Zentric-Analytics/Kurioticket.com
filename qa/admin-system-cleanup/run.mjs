@@ -41,6 +41,7 @@ const items=[
  {key:"qa.unpersisted",source:"SEARCH",title:"Synthetic monitoring-state storage example",actionHref:"/admin/searches/activity",signalToken:"unpersisted:qa"}
 ];
 export async function getAdminAlertSnapshot(){return {generatedAt:at,activeCount:4,unreadCount:4,criticalCount:0,warningCount:4,alerts:items.map(item=>({...item,id:item.key,severity:"WARNING",message:"Labelled QA data only; no live incident is asserted.",signalAt:at,acknowledged:false,acknowledgedAt:null}))};}
+export async function getAdminAlertSummary(){const {alerts,...summary}=await getAdminAlertSnapshot();return summary;}
 export function getDatabaseOutageAlertSnapshot(){throw new Error("Unexpected live outage path in QA");}
 `,
 };
@@ -66,7 +67,7 @@ for (const variant of ["before", "after"]) {
   await put("app/layout.jsx", `import "./globals.css";import {AdminHorizontalShell} from "@/components/admin/AdminHorizontalShell";
 export default function Layout({children}){return <html lang="en"><body><div data-qa-label style={{padding:"6px 16px",background:"#fffbeb",color:"#7c2d12",fontSize:12}}>System cleanup ${variant}: real components with synthetic QA records only</div><AdminHorizontalShell adminRole="ADMIN" adminEmail="operator@example.invalid" adminName="QA Operator">{children}</AdminHorizontalShell></body></html>;}`);
   await put("app/page.jsx", 'export default function Home(){return <p>System cleanup QA fixture</p>;}');
-  await put("app/api/admin/notifications/route.js", 'export async function GET(){return Response.json({unreadCount:4});}');
+  await put("app/api/admin/notifications/route.js", 'import {getAdminAlertSnapshot,getAdminAlertSummary} from "@/services/adminAlertService"; export async function GET(request){return Response.json(new URL(request.url).searchParams.get("summary")==="1"?await getAdminAlertSummary():await getAdminAlertSnapshot());}');
   await put("app/api/admin/notifications/acknowledge/route.js", 'export async function POST(){return Response.json({ok:true});}');
   for (const route of pages) {
     const file = `src/app/admin/${route}/page.tsx`;
