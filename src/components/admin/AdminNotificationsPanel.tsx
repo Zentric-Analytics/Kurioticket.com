@@ -34,10 +34,11 @@ export function AdminNotificationsPanel({ open, onToggle, onClose, headerRef, tr
   useEffect(() => {
     let active = true;
     let requestInFlight = false;
+    let refreshQueued = false;
     const controller = new AbortController();
 
     function refresh() {
-      if (requestInFlight) return;
+      if (requestInFlight) { refreshQueued = true; return; }
       requestInFlight = true;
       startTransition(async () => {
         try {
@@ -62,6 +63,10 @@ export function AdminNotificationsPanel({ open, onToggle, onClose, headerRef, tr
           if (active && !controller.signal.aborted) setError("Unable to load notifications. Please try again.");
         } finally {
           requestInFlight = false;
+          if (active && refreshQueued) {
+            refreshQueued = false;
+            refresh();
+          }
         }
       });
     }
