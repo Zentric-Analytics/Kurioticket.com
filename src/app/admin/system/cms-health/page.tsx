@@ -1,5 +1,4 @@
 import {
-  AdminDataTable,
   AdminEmptyState,
   AdminPageShell,
   AdminStatusBadge,
@@ -143,61 +142,93 @@ export default async function AdminCmsHealthPage() {
                         </div>
                       </summary>
 
-                      <div className="border-t border-[#E7ECF5] px-3 pb-4 pt-3">
-                        <AdminDataTable
-                          columns={["CMS market", "Health", "Integrity", "Fallback", "Draft changes", "Actions"]}
-                          rows={entries.map((entry) => {
-                            const integrity = entry.integrity;
-                            const issueCount =
-                              integrity.invalidDrafts.length +
-                              integrity.invalidPublished.length +
-                              integrity.orphanPublished.length +
-                              integrity.draftOrderCollisions.length +
-                              integrity.publishedOrderCollisions.length +
-                              (integrity.draftOrderNeedsNormalization ? 1 : 0);
+                      <div className="border-t border-[#E7ECF5]">
+                        <div className="overflow-x-auto">
+                          <table className="w-full min-w-[980px] table-fixed text-left text-[13px]">
+                            <thead className="border-b border-[#D8E1EC] text-[#475569]">
+                              <tr>
+                                <th className="w-[22%] px-3 py-3 font-semibold">CMS market</th>
+                                <th className="w-[13%] px-3 py-3 font-semibold">Health</th>
+                                <th className="w-[24%] px-3 py-3 font-semibold">Integrity</th>
+                                <th className="w-[14%] px-3 py-3 font-semibold">Legacy fallback</th>
+                                <th className="w-[12%] px-3 py-3 font-semibold">Draft changes</th>
+                                <th className="w-[15%] px-3 py-3 font-semibold">Actions</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-[#E7ECF5]">
+                              {entries.map((entry) => {
+                                const integrity = entry.integrity;
+                                const issueCount =
+                                  integrity.invalidDrafts.length +
+                                  integrity.invalidPublished.length +
+                                  integrity.orphanPublished.length +
+                                  integrity.draftOrderCollisions.length +
+                                  integrity.publishedOrderCollisions.length +
+                                  (integrity.draftOrderNeedsNormalization ? 1 : 0);
 
-                            return {
-                              id: `${entry.type}:${entry.market}:${entry.locale}`,
-                              cells: [
-                                <div key="scope">
-                                  <p className="font-semibold text-slate-950">{getCmsMarketName(entry.market)}</p>
-                                  <p className="mt-1 text-xs text-slate-600">{getCmsLocaleName(entry.locale)}</p>
-                                  <p className="mt-1 text-[11px] text-slate-400">
-                                    {entry.market} · {entry.locale} · v{integrity.scopeVersion ?? "—"}
-                                  </p>
-                                </div>,
-                                <AdminStatusBadge key="health" tone={integrity.healthy ? "good" : "warn"}>
-                                  {integrity.healthy ? "Healthy" : "Needs attention"}
-                                </AdminStatusBadge>,
-                                <div key="integrity" className="text-xs leading-5 text-slate-600">
-                                  <p>{issueCount} issue{issueCount === 1 ? "" : "s"}</p>
-                                  <p>{integrity.invalidDrafts.length} invalid draft</p>
-                                  <p>{integrity.invalidPublished.length} invalid published</p>
-                                  <p>{integrity.draftOrderCollisions.length} draft order collision</p>
-                                  <p>{integrity.draftOrderNeedsNormalization ? "Draft order needs normalization" : "Draft order normalized"}</p>
-                                  <p>{integrity.publishedOrderCollisions.length} published order collision</p>
-                                </div>,
-                                <AdminStatusBadge key="fallback" tone={integrity.legacyFallbackRetired ? "neutral" : "info"}>
-                                  {integrity.legacyFallbackRetired ? "Retired" : "Available"}
-                                </AdminStatusBadge>,
-                                integrity.unpublishedChanges,
-                                integrity.scopeVersion ? (
-                                  <CmsScopeHardeningActions
-                                    key="actions"
-                                    type={entry.type}
-                                    market={entry.market}
-                                    locale={entry.locale}
-                                    scopeVersion={integrity.scopeVersion}
-                                    legacyFallbackRetired={integrity.legacyFallbackRetired}
-                                    fallbackRetirementEligible={integrity.fallbackRetirementEligible}
-                                    draftOrderCollisionCount={integrity.draftOrderCollisions.length}
-                                    draftOrderNeedsNormalization={integrity.draftOrderNeedsNormalization}
-                                  />
-                                ) : "—",
-                              ],
-                            };
-                          })}
-                        />
+                                return (
+                                  <tr key={`${entry.type}:${entry.market}:${entry.locale}`} className="align-top">
+                                    <td className="px-3 py-4">
+                                      <p className="font-semibold text-[#020617]">{getCmsMarketName(entry.market)}</p>
+                                      <p className="mt-1 text-[12px] text-[#475569]">{getCmsLocaleName(entry.locale)}</p>
+                                      <p className="mt-1 text-[11px] text-[#94A3B8]">
+                                        {entry.market} · {entry.locale} · v{integrity.scopeVersion ?? "—"}
+                                      </p>
+                                    </td>
+                                    <td className="px-3 py-4">
+                                      <span className={`inline-flex items-center gap-2 font-medium ${integrity.healthy ? "text-emerald-700" : "text-amber-700"}`}>
+                                        <span
+                                          aria-hidden="true"
+                                          className={`h-1.5 w-1.5 rounded-full ${integrity.healthy ? "bg-emerald-500" : "bg-amber-500"}`}
+                                        />
+                                        {integrity.healthy ? "Healthy" : "Needs attention"}
+                                      </span>
+                                    </td>
+                                    <td className="px-3 py-4 text-[#475569]">
+                                      {integrity.healthy ? (
+                                        <span>No issues</span>
+                                      ) : (
+                                        <div className="space-y-1 leading-5">
+                                          <p className="font-medium text-[#334155]">
+                                            {issueCount} issue{issueCount === 1 ? "" : "s"}
+                                          </p>
+                                          {integrity.invalidDrafts.length > 0 ? <p>{integrity.invalidDrafts.length} invalid draft{integrity.invalidDrafts.length === 1 ? "" : "s"}</p> : null}
+                                          {integrity.invalidPublished.length > 0 ? <p>{integrity.invalidPublished.length} invalid published</p> : null}
+                                          {integrity.orphanPublished.length > 0 ? <p>{integrity.orphanPublished.length} orphan published</p> : null}
+                                          {integrity.draftOrderCollisions.length > 0 ? <p>{integrity.draftOrderCollisions.length} draft order collision{integrity.draftOrderCollisions.length === 1 ? "" : "s"}</p> : null}
+                                          {integrity.draftOrderNeedsNormalization ? <p>Draft order needs normalization</p> : null}
+                                          {integrity.publishedOrderCollisions.length > 0 ? <p>{integrity.publishedOrderCollisions.length} published order collision{integrity.publishedOrderCollisions.length === 1 ? "" : "s"}</p> : null}
+                                        </div>
+                                      )}
+                                    </td>
+                                    <td className="px-3 py-4 text-[#334155]">
+                                      {integrity.legacyFallbackRetired ? "Retired" : "Available"}
+                                    </td>
+                                    <td className="px-3 py-4 text-[#334155]">
+                                      {integrity.unpublishedChanges === 0
+                                        ? "None"
+                                        : `${integrity.unpublishedChanges} change${integrity.unpublishedChanges === 1 ? "" : "s"}`}
+                                    </td>
+                                    <td className="px-3 py-4">
+                                      {integrity.scopeVersion ? (
+                                        <CmsScopeHardeningActions
+                                          type={entry.type}
+                                          market={entry.market}
+                                          locale={entry.locale}
+                                          scopeVersion={integrity.scopeVersion}
+                                          legacyFallbackRetired={integrity.legacyFallbackRetired}
+                                          fallbackRetirementEligible={integrity.fallbackRetirementEligible}
+                                          draftOrderCollisionCount={integrity.draftOrderCollisions.length}
+                                          draftOrderNeedsNormalization={integrity.draftOrderNeedsNormalization}
+                                        />
+                                      ) : "—"}
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
                       </div>
                     </details>
                   );
