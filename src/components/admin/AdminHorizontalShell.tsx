@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Bell, ChevronDown, LogOut, Menu, Settings, ShieldCheck, X, Building2 } from "lucide-react";
 import { getAdminHeaderGroups, isAdminNavItemActive, type AdminRole } from "@/lib/adminNavigation";
 import { KurioticketLogo } from "@/components/brand/KurioticketLogo";
@@ -96,7 +96,8 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
   const [unreadAlertCount, setUnreadAlertCount] = useState<number | null>(null);
   const name = adminName || adminEmail || "Admin";
   const initial = name.slice(0, 1).toUpperCase();
-  useEffect(() => {
+  // Measure before paint to prevent the card hub from jumping when desktop navigation wraps.
+  useLayoutEffect(() => {
     if (!contentLanding || !headerRef.current || !workspaceRef.current) return;
     const header = headerRef.current;
     const workspace = workspaceRef.current;
