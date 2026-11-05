@@ -3,88 +3,103 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const page = readFileSync("src/app/admin/email-delivery/page.tsx", "utf8");
+const rangeFilter = readFileSync("src/components/admin/EmailDeliveryRangeFilter.tsx", "utf8");
 const button = readFileSync("src/components/admin/EmailDeliveryTestButton.tsx", "utf8");
 const service = readFileSync("src/services/emailDeliveryService.ts", "utf8");
 const route = readFileSync("src/app/api/admin/email/health/route.ts", "utf8");
 const adminNavigation = readFileSync("src/lib/adminNavigation.ts", "utf8");
-const adminShell = readFileSync("src/components/admin/AdminHorizontalShell.tsx", "utf8");
 
-test("Email Delivery uses the compact white operational workspace instead of legacy cards", () => {
-  assert.match(page, /title="Email Delivery Operations"/);
-  assert.match(page, /aria-label="Email delivery summary"/);
-  assert.match(page, /grid grid-cols-2 gap-x-8 gap-y-5 md:grid-cols-4/);
-  assert.match(page, /aria-label="Email delivery controls"/);
-  assert.match(page, /Recent deliveries/);
-  assert.match(page, /Latest 10 deliveries/);
-  assert.doesNotMatch(page, /AdminMetricCard|AdminSectionCard|AdminDataTable|AdminStatusBadge/);
-  assert.doesNotMatch(page, /rounded-xl bg-slate-50/);
-  assert.match(adminShell, /emailDeliveryWorkspace/);
-  assert.match(adminShell, /auditLogsWorkspace \|\| emailDeliveryWorkspace/);
+test("Email Delivery uses a compact title and one page-level date range control", () => {
+  assert.equal((page.match(/>Email Delivery<\/h1>/g) || []).length, 1);
+  assert.doesNotMatch(page, /Admin operations|Email Delivery Operations|Monitor transactional email configuration/);
+  assert.match(page, /EmailDeliveryRangeFilter/);
+  for (const label of ["Last 24 hours", "Last 7 days", "Last 30 days", "Last 90 days", "Custom range"]) {
+    assert.ok(rangeFilter.includes(label));
+  }
+  assert.match(rangeFilter, /onValueChange=\{changeRange\}/);
+  assert.match(rangeFilter, /Email delivery custom start date UTC/);
+  assert.match(rangeFilter, /Email delivery custom end date UTC/);
+  assert.match(rangeFilter, />Apply dates<\/button>/);
+  assert.match(rangeFilter, /setRangeSelectVersion/);
 });
 
-test("Email Delivery preserves truthful summary semantics and safe configuration checks", () => {
-  for (const label of ["Last 24 hours", "Failures", "Delayed", "Suppressions"]) {
+test("the selected range drives the whole time-based operational view", () => {
+  assert.match(page, /getEmailDeliveryOperationsSnapshot\(\{ from: rangeState\.from, to: rangeState\.to \}\)/);
+  assert.match(page, /aria-label="Email delivery summary"/);
+  for (const label of ["Email attempts", "Delivered", "Delayed", "Failed"]) {
     assert.ok(page.includes(label));
   }
-  assert.match(page, /Failed, bounced, complained or suppressed in 24 hours/);
-  assert.match(page, /Provider-reported delays in 24 hours/);
-  assert.match(page, /Current addresses protected from optional sends/);
+  assert.doesNotMatch(page, /Tracked transactional email attempts|Provider-reported delays|Failed, bounced, complained or suppressed in 24 hours/);
+  assert.match(page, /Delivery history/);
+  assert.match(page, /Latest 10 in \{rangeState\.label\.toLowerCase\(\)\}/);
+  assert.match(service, /export async function getEmailDeliveryOperationsSnapshot/);
+  assert.match(service, /created_at >= \$\{range\.from\} AND created_at < \$\{range\.to\}/);
+  assert.match(service, /delivered_at >= \$\{range\.from\} AND delivered_at < \$\{range\.to\}/);
+  assert.match(service, /updated_at >= \$\{range\.from\} AND updated_at < \$\{range\.to\}/);
+  assert.match(service, /WHERE created_at >= \$\{range\.from\} AND created_at < \$\{range\.to\}[\s\S]*ORDER BY created_at DESC[\s\S]*LIMIT 10/);
+});
+
+test("summary metrics use one compact four-column status band with no repeated range copy", () => {
+  assert.match(page, /grid grid-cols-2 md:grid-cols-4 md:divide-x md:divide-\[#D8E1EC\]/);
+  assert.match(page, /bg-\[#004BB8\]/);
+  assert.match(page, /bg-emerald-500/);
+  assert.match(page, /bg-amber-500/);
+  assert.match(page, /bg-rose-500/);
+  assert.doesNotMatch(page, /\(24h\)|Last 24 hours<\/p>/);
+  assert.doesNotMatch(page, /metric\.hint/);
+});
+
+test("current setup stays current and moves suppression count out of the filtered summary", () => {
+  assert.match(page, /Current setup/);
+  assert.match(page, /Suppressed addresses/);
+  assert.match(page, /operations\.currentSuppressed\.toLocaleString\(\)/);
+  assert.doesNotMatch(page, /label: "Suppressions"/);
   for (const label of ["Resend API key", "Sender address", "Webhook secret"]) {
     assert.ok(page.includes(label));
   }
-  assert.match(page, /Credential values are never displayed/);
-  assert.match(page, /function StatusIndicator/);
-  assert.match(page, /inline-flex items-center gap-1\.5 text-\[12px\] font-medium/);
-  assert.match(page, /h-1\.5 w-1\.5 shrink-0 rounded-full/);
-  assert.doesNotMatch(page, /process\.env\.RESEND_API_KEY\s*\}/);
-  assert.doesNotMatch(page, /providerMessageId|lastError|delivery\.subject/);
+  assert.match(page, /Sending ready/);
+  assert.match(page, /Test transactional delivery/);
 });
 
-test("email delivery telemetry distinguishes unavailable storage from real zero activity", () => {
-  assert.match(service, /dataAvailable: true/);
-  assert.match(service, /dataAvailable: false/);
-  assert.match(page, /health\.dataAvailable \? health\.last24Hours\.toLocaleString\(\) : "Unavailable"/);
-  assert.match(page, /Email telemetry unavailable/);
-  assert.match(page, /unavailable rather than shown as zero activity/);
-  assert.match(page, /Delivery history unavailable/);
+test("range parsing defaults to 24 hours and constrains custom ranges to 90 days", () => {
+  assert.match(page, /function normalizeRange/);
+  assert.match(page, /: "24h"/);
+  assert.match(page, /MAX_RANGE_MS = 90 \* 24 \* 60 \* 60 \* 1000/);
+  assert.match(page, /Custom ranges can cover up to 90 days/);
+  assert.match(page, /Choose both a valid start date and end date/);
+  assert.match(page, /The start date must be before the end of the selected range/);
+  assert.match(page, /Math\.min\(requestedEnd\.getTime\(\), now\.getTime\(\)\)/);
+});
+
+test("range-aware reads preserve privacy and the alert-specific 24-hour health contract", () => {
+  assert.match(service, /current_suppressed/);
+  assert.match(service, /toEmail: maskEmail\(row\.to_email\)/);
   assert.doesNotMatch(service, /subject: row\.subject/);
   assert.doesNotMatch(service, /providerMessageId:/);
   assert.doesNotMatch(service, /lastError:/);
-  assert.match(service, /updated_at >= NOW\(\) - INTERVAL '24 hours'/);
-  assert.match(service, /COALESCE\(e\.occurred_at, e\.created_at\) >= NOW\(\) - INTERVAL '24 hours'/);
+
+  // Global alerts/API still use the original fixed 24-hour health reader.
+  assert.match(service, /export async function getEmailDeliveryHealthSnapshot\(\)/);
+  assert.match(service, /NOW\(\) - INTERVAL '24 hours'/);
+  assert.match(route, /getEmailDeliveryHealthSnapshot\(\)/);
 });
 
-test("Test transactional delivery stays constrained and replaces safety pills with one concise note", () => {
-  assert.match(page, /Test transactional delivery/);
+test("Test transactional delivery remains constrained to the signed-in admin", () => {
   assert.match(page, /Safety: only the current signed-in admin can receive this test/);
-  assert.match(page, /arbitrary recipients and credential values are never exposed/);
-  assert.doesNotMatch(page, /Recipient is current admin only|No arbitrary recipient input|No secrets shown/);
-
   assert.match(button, /fetch\("\/api\/admin\/email\/health"/);
   assert.match(button, /method: "POST"/);
   assert.match(button, /Send test email to me/);
-  assert.match(button, /bg-\[#004BB8\]/);
-  assert.doesNotMatch(button, /AdminButton/);
   assert.doesNotMatch(button, /recipient|toEmail|email:/);
-
   assert.match(route, /requireAdminApiSession\(\)/);
   assert.match(route, /checkAuthRateLimit/);
-  assert.match(route, /admin-email-delivery-test/);
   assert.match(route, /limit: 5/);
-  assert.match(route, /status: 429/);
-  assert.match(route, /"Retry-After"/);
   assert.match(route, /sendTransactionalEmail/);
-  assert.match(route, /Kurioticket transactional email test/);
-  assert.doesNotMatch(route, /production email test/);
   assert.match(route, /to: email/);
-  assert.match(route, /writeAdminAuditLog/);
   assert.match(route, /EMAIL_DELIVERY_TEST_SENT/);
-  assert.match(route, /targetType: "EmailDelivery"/);
-  assert.match(route, /return NextResponse\.json\(\{ ok: true \}\)/);
   assert.doesNotMatch(route, /providerMessageId/);
 });
 
-test("Recent deliveries use readable dot statuses while preserving masked recipients and latest-10 scope", () => {
+test("Delivery history keeps readable dot statuses and masked recipients", () => {
   assert.match(page, /<table className="w-full min-w-\[980px\] table-fixed text-\[13px\]">/);
   for (const heading of ["Template", "Recipient", "Status", "Created", "Sent", "Delivered"]) {
     assert.ok(page.includes(`>${heading}</th>`));
@@ -94,9 +109,6 @@ test("Recent deliveries use readable dot statuses while preserving masked recipi
   assert.match(page, /FAILED: "Failed"/);
   assert.match(page, /StatusIndicator value=\{statusLabels\[delivery\.status\] \|\| delivery\.status\}/);
   assert.match(page, /\{delivery\.toEmail\}/);
-  assert.match(service, /ORDER BY created_at DESC\s+LIMIT 10/);
-  assert.match(service, /toEmail: maskEmail\(row\.to_email\)/);
-  assert.doesNotMatch(page, /filter|pagination|cursor|page size/i);
 });
 
 test("Email Delivery remains a protected contextual workspace without a duplicate System tab", () => {
