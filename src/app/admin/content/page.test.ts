@@ -103,6 +103,30 @@ test("content overview shows four equal, fully clickable management cards", () =
   assert.doesNotMatch(contentPage, /ContentSectionHeading|homepageAreas|helpAreas|Manage destinations|Manage FAQs/);
 });
 
+test("Content hub is centered without changing the four-card navigation", () => {
+  assert.match(contentPage, /mx-auto w-full max-w-\[900px\] space-y-4/);
+  assert.match(contentPage, /grid auto-rows-fr grid-cols-1 gap-3 sm:grid-cols-2/);
+  assert.match(contentPage, /href=\{area\.href\}/);
+});
+
+test("FAQ directory has no redundant counters before search and status filters", () => {
+  const faq = readFileSync("src/app/admin/content/faqs/page.tsx", "utf8");
+  assert.doesNotMatch(faq, /ContentMetric/);
+  assert.match(faq, /<ContentDirectoryToolbar/);
+  assert.match(faq, /<FaqCmsListClient/);
+  assert.match(faq, /actions=\{summary\.active \? <CmsCreateLink/);
+});
+
+test("Content Add actions use subdued styling and preserve selected filters", () => {
+  const create = readFileSync("src/components/admin/CmsCreateLink.tsx", "utf8");
+  assert.match(create, /useSearchParams/);
+  assert.match(create, /query = searchParams\.toString\(\)/);
+  assert.match(create, /href=\{path \+ \(query \? "\?" \+ query : ""\)\}/);
+  assert.match(create, /<Plus size=\{15\}/);
+  assert.match(create, /bg-\[#111827\]/);
+  assert.doesNotMatch(create, /bg-\[#3154EF\]|variant="primary"/);
+});
+
 test("Content published count uses the published scope, not a draft's scope", () => {
   const cms = readFileSync("src/services/cmsContentService.ts", "utf8");
   assert.match(cms, /publishedInScope/);
