@@ -20,7 +20,7 @@ function formatControlUpdateDate(value: string) {
   }).format(new Date(value));
 }
 
-function SummaryItem({
+function ContextItem({
   label,
   value,
 }: {
@@ -28,10 +28,10 @@ function SummaryItem({
   value: string;
 }) {
   return (
-    <div className="min-w-0 rounded-lg bg-slate-50 px-3 py-2.5">
-      <p className="text-[11px] font-medium leading-4 text-slate-500">{label}</p>
-      <p className="mt-0.5 break-words text-[13px] font-semibold leading-5 text-slate-900">{value}</p>
-    </div>
+    <span className="inline-flex min-w-0 items-center gap-1.5 text-[12px] leading-5 text-slate-600">
+      <span className="font-medium text-slate-500">{label}</span>
+      <span className="font-semibold text-slate-900">{value}</span>
+    </span>
   );
 }
 
@@ -45,9 +45,9 @@ export default async function AdminSettingsPage() {
   const currentAccess = !featureControls.dataAvailable
     ? "Read only"
     : featureControls.environment === "STAGING"
-      ? "Staging changes allowed"
+      ? "Can edit Staging"
       : canControlProduction
-        ? "Production changes allowed"
+        ? "Can edit Production"
         : "View only";
   const recentControlUpdates = featureControls.controls
     .filter((control) => Boolean(control.state.updatedAt))
@@ -57,111 +57,124 @@ export default async function AdminSettingsPage() {
   return (
     <AdminPageShell
       title="Settings"
-      description="Manage persisted platform controls. Secrets and runtime credentials remain deployment-owned."
+      description="Manage platform controls and operational configuration."
     >
-      <div className="space-y-4">
-        <AdminSectionCard className="p-4 sm:p-5">
-          <div className="flex flex-wrap items-start justify-between gap-3">
+      <AdminSectionCard className="overflow-hidden p-0">
+        <section aria-label="Environment and access" className="px-4 py-4 sm:px-5">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-slate-200 bg-slate-50/80 px-3 py-2.5">
+            <span className="inline-flex h-6 items-center rounded-md bg-slate-900 px-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-white">
+              {featureControls.environment === "STAGING" ? "Staging" : "Production"}
+            </span>
+            <ContextItem label="Control store" value={featureControls.dataAvailable ? "Available" : "Unavailable"} />
+            <ContextItem label="Your access" value={currentAccess} />
+            <ContextItem label="Production" value={canControlProduction ? "Authorized" : "Restricted"} />
+            <span className="ml-auto">
+              <AdminStatusBadge tone={featureControls.dataAvailable ? "good" : "warn"}>
+                {featureControls.dataAvailable ? "Store available" : "Read-only fallback"}
+              </AdminStatusBadge>
+            </span>
+          </div>
+        </section>
+
+        <section aria-labelledby="feature-controls-heading" className="border-t border-slate-200 px-4 py-5 sm:px-5">
+          <div className="mb-4">
+            <h2 id="feature-controls-heading" className="text-[15px] font-semibold text-slate-950">Feature controls</h2>
+            <p className="mt-1 text-[12px] leading-5 text-slate-600">
+              Turn major travel functions on or off. Every change requires confirmation.
+            </p>
+          </div>
+          <FeatureControlsPanel
+            initialControls={featureControls.controls}
+            environment={featureControls.environment}
+            canControlProduction={canControlProduction}
+            operationsAvailable={featureControls.dataAvailable}
+          />
+        </section>
+
+        <section aria-labelledby="settings-operations-heading" className="border-t border-slate-200 px-4 py-5 sm:px-5">
+          <h2 id="settings-operations-heading" className="text-[15px] font-semibold text-slate-950">Operations</h2>
+          <div className="mt-3 flex min-w-0 items-center justify-between gap-4 py-1">
             <div className="min-w-0">
-              <h2 className="text-[15px] font-semibold text-slate-950">Platform controls</h2>
+              <h3 className="text-[13px] font-semibold text-slate-900">Homepage Fare Operations</h3>
+              <p className="mt-1 text-[12px] leading-5 text-slate-600">Provider-backed homepage fare readiness and refresh.</p>
             </div>
-            <AdminStatusBadge tone={featureControls.dataAvailable ? "good" : "warn"}>
-              {featureControls.dataAvailable ? "Control store available" : "Read-only fallback"}
-            </AdminStatusBadge>
+            <Link
+              href="/admin/homepage-fares"
+              aria-label="Open fare operations"
+              className="inline-flex h-8 shrink-0 items-center rounded-md border border-slate-200 bg-white px-3 text-[12px] font-semibold text-indigo-700 hover:border-slate-300 hover:bg-slate-50"
+            >
+              Open
+            </Link>
           </div>
+        </section>
 
-          <div className="mt-4 grid min-w-0 grid-cols-2 gap-2 lg:grid-cols-4">
-            <SummaryItem label="Environment" value={featureControls.environment === "STAGING" ? "Staging" : "Production"} />
-            <SummaryItem label="Control store" value={featureControls.dataAvailable ? "Available" : "Unavailable"} />
-            <SummaryItem label="Current access" value={currentAccess} />
-            <SummaryItem label="Production access" value={canControlProduction ? "Authorized" : "Restricted"} />
-          </div>
-
-          <div className="mt-4 border-t border-slate-200/80 pt-4">
-            <FeatureControlsPanel
-              initialControls={featureControls.controls}
-              environment={featureControls.environment}
-              canControlProduction={canControlProduction}
-              operationsAvailable={featureControls.dataAvailable}
-            />
-          </div>
-        </AdminSectionCard>
-
-        <div className="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)]">
-          <AdminSectionCard className="p-4 sm:p-5">
-            <div className="flex items-center justify-between gap-3">
-              <h2 className="text-[15px] font-semibold text-slate-950">Recent control updates</h2>
-              <AdminStatusBadge>Persisted state</AdminStatusBadge>
+        <section aria-labelledby="configuration-ownership-heading" className="border-t border-slate-200 px-4 py-5 sm:px-5">
+          <h2 id="configuration-ownership-heading" className="text-[15px] font-semibold text-slate-950">Configuration ownership</h2>
+          <div className="mt-3 divide-y divide-slate-100">
+            <div className="flex min-w-0 flex-col gap-2 py-3 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+              <div className="min-w-0">
+                <h3 className="text-[13px] font-semibold text-slate-900">Runtime & credentials</h3>
+                <p className="mt-1 max-w-3xl text-[12px] leading-5 text-slate-600">
+                  Database URLs, API keys, session secrets, provider credentials and server environment variables are not editable here.
+                </p>
+              </div>
+              <span className="shrink-0 text-[12px] font-semibold text-slate-500">Managed externally</span>
             </div>
-            {recentControlUpdates.length ? (
-              <div className="mt-3 divide-y divide-slate-100">
+            <div className="flex min-w-0 flex-col gap-2 py-3 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+              <div className="min-w-0">
+                <h3 className="text-[13px] font-semibold text-slate-900">Admin access</h3>
+                <p className="mt-1 max-w-3xl text-[12px] leading-5 text-slate-600">
+                  Admin allowlists and production feature-controller permissions remain in server configuration.
+                </p>
+              </div>
+              <span className="shrink-0 text-[12px] font-semibold text-slate-500">Managed externally</span>
+            </div>
+          </div>
+        </section>
+
+        <section aria-labelledby="recent-settings-changes-heading" className="border-t border-slate-200 px-4 py-5 sm:px-5">
+          <div className="flex items-center justify-between gap-3">
+            <h2 id="recent-settings-changes-heading" className="text-[15px] font-semibold text-slate-950">Recent changes</h2>
+            <span className="text-[11px] font-medium text-slate-500">Persisted feature state</span>
+          </div>
+          {recentControlUpdates.length ? (
+            <div className="mt-3 overflow-hidden rounded-lg border border-slate-200">
+              <div className="hidden grid-cols-[minmax(0,1fr)_110px_140px] gap-4 bg-slate-50 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.06em] text-slate-500 sm:grid">
+                <span>Setting</span>
+                <span>State</span>
+                <span>Changed</span>
+              </div>
+              <div className="divide-y divide-slate-100">
                 {recentControlUpdates.map((control) => (
-                  <div key={control.key} className="flex min-w-0 items-center justify-between gap-3 py-2.5">
-                    <div className="min-w-0">
-                      <p className="truncate text-[13px] font-semibold text-slate-900">{control.name}</p>
-                      <p className="mt-0.5 text-[11px] text-slate-500">
-                        Last recorded update · {formatControlUpdateDate(control.state.updatedAt!)}
-                      </p>
-                    </div>
-                    <AdminStatusBadge tone={control.state.enabled ? "good" : "neutral"}>
+                  <div key={control.key} className="grid min-w-0 gap-2 px-3 py-2.5 sm:grid-cols-[minmax(0,1fr)_110px_140px] sm:items-center sm:gap-4">
+                    <p className="min-w-0 truncate text-[13px] font-medium text-slate-900">{control.name}</p>
+                    <span className={"text-[12px] font-semibold " + (control.state.enabled ? "text-emerald-700" : "text-slate-600")}>
                       {control.state.enabled ? "Enabled" : "Disabled"}
-                    </AdminStatusBadge>
+                    </span>
+                    <span className="text-[12px] text-slate-500">{formatControlUpdateDate(control.state.updatedAt!)}</span>
                   </div>
                 ))}
               </div>
-            ) : (
-              <p role="status" className="mt-3 rounded-lg bg-slate-50 px-3 py-2.5 text-[13px] text-slate-600">
-                No persisted control updates yet.
-              </p>
-            )}
-          </AdminSectionCard>
-
-          <section aria-labelledby="related-settings-operations-heading" className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
-            <h2 id="related-settings-operations-heading" className="text-[15px] font-semibold text-slate-950">Related operations</h2>
-            <div className="mt-3 flex min-w-0 items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-3">
-              <div className="min-w-0">
-                <p className="text-[13px] font-semibold text-slate-900">Homepage Fare Operations</p>
-                <p className="mt-0.5 text-[12px] leading-5 text-slate-600">Provider-backed homepage fare readiness and refresh.</p>
-              </div>
-              <Link href="/admin/homepage-fares" aria-label="Open fare operations" className="inline-flex h-8 shrink-0 items-center rounded-md border border-slate-200 bg-white px-2.5 text-[11px] font-semibold text-indigo-700 hover:border-slate-300 hover:bg-slate-50">
-                Open
-              </Link>
             </div>
-          </section>
-        </div>
+          ) : (
+            <p role="status" className="mt-3 text-[13px] text-slate-600">No persisted control updates yet.</p>
+          )}
+        </section>
 
-        <AdminSectionCard className="p-4 sm:p-5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-[15px] font-semibold text-slate-950">Deployment-owned configuration</h2>
-            <AdminStatusBadge tone="info">Managed outside Admin</AdminStatusBadge>
+        <footer className="border-t border-slate-200 bg-slate-50/60 px-4 py-3 sm:px-5">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] leading-5 text-slate-600">
+            <span className="font-semibold text-slate-800">Protected changes</span>
+            <span aria-hidden="true">•</span>
+            <span>Audited</span>
+            <span aria-hidden="true">•</span>
+            <span>Production authorization</span>
+            <span aria-hidden="true">•</span>
+            <span>Recent reauthentication</span>
+            <span aria-hidden="true">•</span>
+            <span>No secrets exposed</span>
           </div>
-          <div className="mt-3 grid gap-2 lg:grid-cols-2">
-            <div className="rounded-lg bg-slate-50 px-3 py-3">
-              <h3 className="text-[13px] font-semibold text-slate-900">Runtime & credentials</h3>
-              <p className="mt-1 text-[12px] leading-5 text-slate-600">
-                Database URLs, API keys, session secrets, provider credentials and server environment variables are not editable here.
-              </p>
-            </div>
-            <div className="rounded-lg bg-slate-50 px-3 py-3">
-              <h3 className="text-[13px] font-semibold text-slate-900">Admin access</h3>
-              <p className="mt-1 text-[12px] leading-5 text-slate-600">
-                Admin allowlists and production feature-controller permissions remain in server configuration.
-              </p>
-            </div>
-          </div>
-        </AdminSectionCard>
-
-        <AdminSectionCard className="p-4 sm:p-5">
-          <h2 className="text-[15px] font-semibold text-slate-950">Change safeguards</h2>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <AdminStatusBadge tone="good">Persisted controls</AdminStatusBadge>
-            <AdminStatusBadge tone="good">Audited changes</AdminStatusBadge>
-            <AdminStatusBadge>Production permission</AdminStatusBadge>
-            <AdminStatusBadge>Recent reauthentication</AdminStatusBadge>
-            <AdminStatusBadge>No secrets exposed</AdminStatusBadge>
-          </div>
-        </AdminSectionCard>
-      </div>
+        </footer>
+      </AdminSectionCard>
     </AdminPageShell>
   );
 }
