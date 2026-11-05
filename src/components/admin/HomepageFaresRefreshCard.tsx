@@ -585,7 +585,7 @@ export function HomepageFaresRefreshCard() {
           ) : null}
           {telemetryUnavailable ? (
             <p className="rounded-xl border border-red-100 bg-red-50 p-3 text-sm font-semibold text-danger">
-              Homepage fare telemetry is unavailable from the authoritative snapshot store. Coverage counts below are hidden rather than replaced with zeroes.
+              Telemetry unavailable. Homepage fare data could not be read from the authoritative snapshot store. Coverage counts below are hidden rather than replaced with zeroes.
             </p>
           ) : null}
 
@@ -920,7 +920,7 @@ function RefreshCronPanel({
           <CompactDetail label="Replacement candidates" value={replacementCandidatesUsed} />
           <CompactDetail label="Timeouts" value={timeoutCount} />
           <CompactDetail label="Cron credential" value={formatCronStatus(statusPayload)} />
-          <CompactDetail label="Scheduler cadence" value={statusPayload.nextExpectedCronRefresh ?? "Not provided"} />
+          <CompactDetail label="Scheduler cadence note" value={statusPayload.nextExpectedCronRefresh ?? "Not provided"} />
           <CompactDetail label="Scheduler verification" value="Not observable from this service" />
         </dl>
       </div>
