@@ -219,10 +219,12 @@ export async function verifyNotificationPanel({ page, root, output, width }) {
     const point = await swipeCard.evaluate(node => {
       const box = node.getBoundingClientRect();
       const candidates = [
-        [0.18, 0.18],
-        [0.18, 0.5],
-        [0.5, 0.18],
+        [0.82, 0.5],
+        [0.82, 0.18],
+        [0.68, 0.5],
+        [0.68, 0.18],
         [0.5, 0.5],
+        [0.5, 0.18],
       ];
       for (const [xRatio, yRatio] of candidates) {
         const x = box.left + box.width * xRatio;
