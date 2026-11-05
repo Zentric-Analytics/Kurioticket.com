@@ -87,7 +87,8 @@ export function HomepageCmsEditor({
       market !== item.market
     )
   );
-  const validDraft = validateClientDraft(section, currentPayload, sortOrder);
+  const validMarket = section === "hotel-destinations" || markets.includes(market);
+  const validDraft = validMarket && validateClientDraft(section, currentPayload, sortOrder);
   const unpublished = Boolean(
     item?.publishedVersion !== null &&
     item?.publishedVersion !== undefined &&
@@ -220,8 +221,9 @@ export function HomepageCmsEditor({
 
         {section !== "hotel-destinations" ? (
           <Field label="Market">
-            <AdminSelect value={market} onChange={(event) => setMarket(event.target.value)} disabled={pending || archived}>
-              {markets.map((value) => <option key={value} value={value}>{value}</option>)}
+            <AdminSelect value={market} onChange={(event) => setMarket(event.target.value)} disabled={pending || archived} required>
+              {!item ? <option value="">Select market</option> : null}
+              {markets.map((value) => <option key={value} value={value}>{value}</option>}
             </AdminSelect>
           </Field>
         ) : null}
