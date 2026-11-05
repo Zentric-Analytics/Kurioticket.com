@@ -111,13 +111,14 @@ export function ContentDirectoryToolbar({
     navigate({}, false, true);
   }
 
-  const hasFilters = Boolean(searchTerm || status || category || (market && markets.length > 0 && market !== "US"));
-  const marketOptions: Option[] = markets.map(value => ({ value, label: value.replaceAll("_", " ") }));
+  const hasFilters = Boolean(searchTerm || status || category || (market && markets.length > 0 && market !== "ALL"));
+  const marketOptions: Option[] = [{ value: "ALL", label: "All markets" }, ...markets.map(value => ({ value, label: value.replaceAll("_", " ") }))];
   const categoryOptions: Option[] = [{ value: "", label: "All categories" }, ...categories.map(value => ({ value, label: value }))];
 
   return (
     <div className="min-w-0">
       <form role="search" method="get" action={path} onSubmit={submitSearch} autoComplete="off" className="min-w-0">
+        {market && markets.length > 0 ? <input type="hidden" name="market" value={market} readOnly /> : null}
         {status ? <input type="hidden" name="status" value={status} readOnly /> : null}
         {paramsRef.current.get("from") === "overview" ? <input type="hidden" name="from" value="overview" readOnly /> : null}
         <div className="relative mb-3">
