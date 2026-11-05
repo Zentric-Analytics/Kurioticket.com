@@ -267,7 +267,7 @@ export function HomepageCmsEditor({
         {section === "destinations" ? (
           <>
             <CmsLocationCombobox label="City" kind="city" value={fields.city ?? ""} countryCode={fields.countryCode ?? ""} onChange={(value) => setField("city", value)} onSelect={selectCity} disabled={pending || archived} className="max-w-[320px]" />
-            <CmsLocationCombobox label="Country" kind="country" value={fields.country ?? ""} onChange={(value) => setField("country", value)} onSelect={selectCountry} disabled={pending || archived} className="max-w-[320px]" />
+            <CmsLocationCombobox label="Country" kind="country" value={fields.country ?? ""} onChange={(value) => setFields((current) => ({ ...current, country: value, ...(value !== current.country ? { countryCode: "" } : {}) }))} onSelect={selectCountry} disabled={pending || archived} className="max-w-[320px]" />
             <div className="grid max-w-[512px] gap-4 sm:grid-cols-3">
               <TextField label="Country code" name="countryCode" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[160px]" />
               <CmsLocationCombobox label="Origin IATA" kind="airport" value={fields.originCode ?? ""} onChange={(value) => setField("originCode", value)} disabled={pending || archived} className="max-w-[160px]" />
