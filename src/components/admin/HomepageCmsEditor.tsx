@@ -223,7 +223,7 @@ export function HomepageCmsEditor({
           <Field label="Market">
             <AdminSelect value={market} onChange={(event) => setMarket(event.target.value)} disabled={pending || archived} required>
               {!item ? <option value="">Select market</option> : null}
-              {markets.map((value) => <option key={value} value={value}>{value}</option>}
+              {markets.map((value) => <option key={value} value={value}>{value}</option>)}
             </AdminSelect>
           </Field>
         ) : null}
