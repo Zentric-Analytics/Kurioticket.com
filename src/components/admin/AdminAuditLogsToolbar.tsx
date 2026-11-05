@@ -76,6 +76,7 @@ export function AdminAuditLogsToolbar({
 }: Props) {
   const router = useRouter();
   const [customOpen, setCustomOpen] = useState(false);
+  const [rangeSelectVersion, setRangeSelectVersion] = useState(0);
   const [draftDates, setDraftDates] = useState({ from: fromDate, to: toDate });
   const [adminDraft, setAdminDraft] = useState(adminEmail);
   const [targetDraft, setTargetDraft] = useState(targetEmail);
@@ -126,6 +127,7 @@ export function AdminAuditLogsToolbar({
       <div className="flex min-w-0 flex-wrap items-end justify-between gap-x-8 gap-y-2">
         <div className="flex min-w-0 flex-wrap items-end gap-x-6 gap-y-2">
           <AdminDirectorySelect
+            key={range + ":" + rangeSelectVersion}
             name="range"
             label="Date range"
             value={range}
@@ -236,6 +238,7 @@ export function AdminAuditLogsToolbar({
             onClick={() => {
               setCustomOpen(false);
               setDraftDates({ from: fromDate, to: toDate });
+              setRangeSelectVersion(version => version + 1);
             }}
             className="h-10 px-2 text-[13px] font-medium text-[#475569] hover:underline"
           >
