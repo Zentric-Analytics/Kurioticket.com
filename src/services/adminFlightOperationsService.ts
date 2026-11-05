@@ -3,8 +3,6 @@ import "server-only";
 import type { Prisma } from "@/generated/prisma/client";
 import { getOptionalPrisma } from "@/lib/prisma";
 import { getPublicEnvironment, type PublicEnvironment } from "@/lib/stagingSafety";
-import { classifyProviderIssue } from "@/services/searchFailureDiagnostics";
-import { getProviderIntegrationStatuses } from "@/services/travel/providerIntegrationStatus";
 
 export type FlightOperationsSnapshot = {
   environment: PublicEnvironment;
@@ -17,16 +15,6 @@ export type FlightOperationsSnapshot = {
     successfulZeroResults: number;
     averageLatencyMs: number | null;
   };
-  providerHealth: Array<{
-    id: "duffel" | "kayak-sandbox";
-    provider: string;
-    totalCalls: number;
-    degradedCalls: number;
-    failedCalls: number;
-    averageLatencyMs: number | null;
-    lastIssueAt: string | null;
-    lastFailureAt: string | null;
-  }>;
   exceptionSearches: Array<{
     id: string;
     requestId: string | null;
@@ -43,14 +31,6 @@ export type FlightOperationsSnapshot = {
     destination: string | null;
     issueCount: number;
     lastIssueAt: string | null;
-  }>;
-  providerIssues: Array<{
-    id: string;
-    provider: string;
-    status: string;
-    category: string;
-    latencyMs: number | null;
-    createdAt: string;
   }>;
   recentSearches: Array<{
     id: string;
@@ -86,9 +66,6 @@ export async function getFlightOperationsSnapshot(
       { status: "SUCCESS", resultCount: 0 },
     ],
   };
-  const flightProviders = getProviderIntegrationStatuses().filter((provider) => provider.products.includes("FLIGHTS"));
-  const flightProviderNames = flightProviders.map((provider) => provider.provider);
-
   try {
     return await db.$transaction(async (tx) => {
       const [
@@ -101,8 +78,6 @@ export async function getFlightOperationsSnapshot(
         recentSearches,
         exceptionSearches,
         routeIssues,
-        providerIssues,
-        providerHealth,
       ] = await Promise.all([
         tx.searchHistory.count({ where: searchWhere }),
         tx.searchHistory.count({ where: { ...searchWhere, status: "SUCCESS" } }),
@@ -148,59 +123,6 @@ export async function getFlightOperationsSnapshot(
           orderBy: { _count: { id: "desc" } },
           take: 8,
         }),
-        tx.apiProviderLog.findMany({
-          where: {
-            provider: { in: flightProviderNames },
-            service: "flight-search",
-            status: { in: ["FAILED", "DEGRADED"] },
-            createdAt: { gte: since, lte: now },
-            metadata: { path: ["environment"], equals: environment },
-          },
-          orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-          take: 10,
-          select: {
-            id: true,
-            provider: true,
-            status: true,
-            latencyMs: true,
-            errorMessage: true,
-            createdAt: true,
-          },
-        }),
-        Promise.all(flightProviders.map(async (integration) => {
-          const providerWhere: Prisma.ApiProviderLogWhereInput = {
-            provider: integration.provider,
-            service: "flight-search",
-            createdAt: { gte: since, lte: now },
-            metadata: { path: ["environment"], equals: environment },
-          };
-          const [totalCalls, degradedCalls, failedCalls, providerLatency, lastIssue, lastFailure] = await Promise.all([
-            tx.apiProviderLog.count({ where: providerWhere }),
-            tx.apiProviderLog.count({ where: { ...providerWhere, status: "DEGRADED" } }),
-            tx.apiProviderLog.count({ where: { ...providerWhere, status: "FAILED" } }),
-            tx.apiProviderLog.aggregate({ where: providerWhere, _avg: { latencyMs: true } }),
-            tx.apiProviderLog.findFirst({
-              where: { ...providerWhere, status: { in: ["FAILED", "DEGRADED"] } },
-              select: { createdAt: true },
-              orderBy: { createdAt: "desc" },
-            }),
-            tx.apiProviderLog.findFirst({
-              where: { ...providerWhere, status: "FAILED" },
-              select: { createdAt: true },
-              orderBy: { createdAt: "desc" },
-            }),
-          ]);
-          return {
-            id: integration.id,
-            provider: integration.provider,
-            totalCalls,
-            degradedCalls,
-            failedCalls,
-            averageLatencyMs: providerLatency._avg.latencyMs === null ? null : Math.round(providerLatency._avg.latencyMs),
-            lastIssueAt: lastIssue?.createdAt.toISOString() ?? null,
-            lastFailureAt: lastFailure?.createdAt.toISOString() ?? null,
-          };
-        })),
       ]);
 
       return {
@@ -214,7 +136,6 @@ export async function getFlightOperationsSnapshot(
           successfulZeroResults,
           averageLatencyMs: latency._avg.latencyMs === null ? null : Math.round(latency._avg.latencyMs),
         },
-        providerHealth,
         exceptionSearches: exceptionSearches.map((search) => ({
           ...search,
           kind: search.status === "FAILED" ? "FAILED" : search.status === "PARTIAL" ? "PARTIAL" : "ZERO_RESULTS",
@@ -225,14 +146,6 @@ export async function getFlightOperationsSnapshot(
           destination: route.destination,
           issueCount: route._count._all,
           lastIssueAt: route._max.createdAt?.toISOString() ?? null,
-        })),
-        providerIssues: providerIssues.map((issue) => ({
-          id: issue.id,
-          provider: issue.provider,
-          status: issue.status,
-          category: classifyProviderIssue(issue.errorMessage).label,
-          latencyMs: issue.latencyMs,
-          createdAt: issue.createdAt.toISOString(),
         })),
         recentSearches: recentSearches.map((search) => ({
           ...search,
@@ -246,4 +159,3 @@ export async function getFlightOperationsSnapshot(
   }
 }
 
-export const __adminFlightOperationsTest = { classifyProviderIssue };
