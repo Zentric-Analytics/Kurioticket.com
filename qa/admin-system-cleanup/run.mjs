@@ -25,7 +25,11 @@ const mocks = {
   "@/lib/auth": 'export const authOptions={};',
   "next-auth$": 'export async function getServerSession(){return {user:{email:"operator@example.invalid"}};}',
   "@/lib/feature-controls/service": 'export async function listFeatureControls(){return {environment:"STAGING",dataAvailable:true,controls:[]};}',
-  "@/services/adminAuditReadService": 'export const adminAuditReads={async list(){return {status:"ok",data:{items:[],nextCursor:null}};}};',
+  "@/services/adminAuditReadService": `export const adminAuditReads={async list(){return {status:"ok",data:{scope:{from:"2026-10-29T12:00:00.000Z",to:"2026-11-05T12:00:00.000Z",action:null,adminEmail:null,targetType:null,targetEmail:null},items:[
+{id:"audit-system",adminUserId:null,adminEmail:"system-alert-monitor",action:"ADMIN_ALERT_CMS_STATE",targetType:"AdminCmsIntegrity",targetId:"cms-integrity",targetEmail:null,createdAt:"2026-11-05T11:02:00.000Z"},
+{id:"audit-cms",adminUserId:"admin-1",adminEmail:"bisola.ogunlade@example.invalid",action:"CMS_CONTENT_PUBLISHED",targetType:"CmsContentItem",targetId:"cms-content-001",targetEmail:null,createdAt:"2026-11-05T11:01:00.000Z"},
+{id:"audit-user",adminUserId:"admin-2",adminEmail:"operator@example.invalid",action:"USER_ROLE_UPDATED",targetType:"User",targetId:"user-qa-001",targetEmail:"traveler@example.invalid",createdAt:"2026-11-05T11:00:00.000Z"}
+],nextCursor:"qa-older-cursor"}};}};`,
   "@/services/cmsHardeningService": 'export async function getCmsHealthOverview(){return {available:true,totals:{scopes:0,healthy:0,unhealthy:0,retiredFallback:0,unpublishedChanges:0},scopes:[],missingHomepageScopes:[]};}',
   "@/services/emailDeliveryService": 'export async function getEmailDeliveryHealthSnapshot(){return {dataAvailable:true,last24Hours:0,failures:0,delayed:0,suppressed:0,latest:[]};}',
   "@/services/adminAlertService": `
