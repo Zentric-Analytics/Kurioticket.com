@@ -156,9 +156,9 @@ test("Content published count uses the published scope, not a draft's scope", ()
 test("Content returns to the actual source and only retains allowlisted filters", () => {
   const direct = homepageCmsListNavigation("destinations", { market: "US", status: "PUBLISHED", q: "Paris", cursor: "page_one" });
   assert.equal(direct.backHref, "/admin/content");
-  assert.equal(direct.listHref, "/admin/content/homepage/destinations?market=US&status=PUBLISHED&cursor=page_one&q=Paris");
+  assert.equal(direct.listHref, "/admin/content/homepage/destinations?market=US&status=PUBLISHED&q=Paris");
   assert.equal(contentEditorHref("/admin/content/homepage/destinations/new", direct.query),
-    "/admin/content/homepage/destinations/new?market=US&status=PUBLISHED&cursor=page_one&q=Paris");
+    "/admin/content/homepage/destinations/new?market=US&status=PUBLISHED&q=Paris");
 
   const fromOverview = homepageCmsListNavigation("flight-routes", { market: "US", from: "overview" });
   assert.equal(fromOverview.backHref, "/admin/content/homepage");
@@ -212,7 +212,8 @@ test("New CMS drafts require a valid market but preserve chosen filtered market 
   assert.match(editor, /validMarket = section === "hotel-destinations" \|\| markets\.includes\(market\)/);
   assert.match(editor, /validDraft = validMarket && validateClientDraft/);
   assert.match(service, /Choose a supported market before creating this content/);
-  assert.match(editor, /disabled=\{!validDraft\}>Create draft/);
+  assert.match(editor, /<CmsEditorActions/);
+  assert.match(editor, /validDraft=\{validDraft\}/);
   assert.equal(homepageCmsListNavigation("flight-routes", { market: "NG", q: "Lagos" }).query, "market=NG&q=Lagos");
 });
 

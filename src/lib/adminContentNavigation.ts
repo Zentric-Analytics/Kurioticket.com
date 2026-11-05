@@ -40,6 +40,7 @@ export function homepageCmsListNavigation(
     : requestedMarket === "ALL" || supportedMarkets.has(requestedMarket) ? requestedMarket : validFallback;
   const params = new URLSearchParams({ market });
   optionalContext(input, params);
+  if (section === "destinations") params.delete("cursor");
   const fromOverview = one(input.from) === "overview";
   if (fromOverview) params.set("from", "overview");
   return {
