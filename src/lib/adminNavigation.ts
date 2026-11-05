@@ -12,7 +12,6 @@ import {
   LayoutDashboard,
   LockKeyhole,
   Mail,
-  Plane,
   Search,
   Settings,
   Users,
@@ -34,7 +33,7 @@ export type AdminNavDefinition = {
 
 export const adminNavigationGroups = [
   { label: "Operations", hrefs: ["/admin", "/admin/users", "/admin/searches/activity", "/admin/confirmed-trips", "/admin/support"] },
-  { label: "Provider readiness", hrefs: ["/admin/providers", "/admin/flights"] },
+  { label: "Provider readiness", hrefs: ["/admin/providers", "/admin/homepage-fares"] },
   { label: "Website content", hrefs: ["/admin/content"] },
   { label: "System & security", hrefs: ["/admin/system", "/admin/settings"] },
 ] as const;
@@ -47,7 +46,7 @@ export const adminNavigation: AdminNavDefinition[] = [
   { href: "/admin/confirmed-trips", label: "Trips", icon: ClipboardList, roles: ["ADMIN"], section: "operations", description: "Monitor provider-confirmed trips and their flight-status readiness." },
   { href: "/admin/confirmed-trips/monitoring", parentHref: "/admin/confirmed-trips", label: "Trip monitoring", icon: Activity, roles: ["ADMIN"], section: "operations", description: "Monitor trusted trip confirmations, provider deliveries and flight-status snapshots." },
   { href: "/admin/content", label: "Content", icon: FileText, roles: ["ADMIN"], section: "content", description: "Review admin-managed site content." },
-  { href: "/admin/flights", label: "Flights", icon: Plane, roles: ["ADMIN"], section: "readiness", description: "Review flight administration readiness." },
+  { href: "/admin/homepage-fares", label: "Homepage Fares", icon: Activity, roles: ["ADMIN"], section: "readiness", description: "Monitor and refresh provider-backed homepage fare readiness." },
   { href: "/admin/hotels", parentHref: "/admin/providers", label: "Hotels", icon: Hotel, roles: ["ADMIN"], section: "readiness", description: "Review hotel administration readiness." },
   { href: "/admin/cars", parentHref: "/admin/providers", label: "Cars", icon: Car, roles: ["ADMIN"], section: "readiness", description: "Review car administration readiness." },
   { href: "/admin/support", label: "Support", icon: Headphones, roles: ["ADMIN"], section: "operations", description: "Review tickets and respond to customers." },
@@ -58,7 +57,6 @@ export const adminNavigation: AdminNavDefinition[] = [
   { href: "/admin/email-delivery", label: "Email Delivery", icon: Mail, roles: ["ADMIN"], section: "controls", description: "Monitor transactional email delivery health and test sending readiness." },
   { href: "/admin/notifications", label: "Notifications & Alerts", icon: Bell, roles: ["ADMIN"], section: "controls", description: "Review active internal operational alerts and acknowledgement state." },
   { href: "/admin/settings", label: "Settings", icon: Settings, roles: ["ADMIN"], section: "controls", description: "Manage authoritative persisted platform controls." },
-  { href: "/admin/homepage-fares", parentHref: "/admin/flights", label: "Homepage Fare Operations", icon: Activity, roles: ["ADMIN"], section: "readiness", description: "Monitor and refresh provider-backed homepage fare readiness." },
 ];
 
 export function isAdminNavItemActive(itemHref: string, pathname: string) {
