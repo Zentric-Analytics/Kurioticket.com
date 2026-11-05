@@ -257,3 +257,34 @@ test("homepage fare Flight operations shortcut opens the standalone Flight Opera
   assert.match(navigation, /\{ href: "\/admin\/flights", label: "Flights"/);
   assert.doesNotMatch(navigation, /href: "\/admin\/flights", parentHref: "\/admin\/providers"/);
 });
+
+test("readiness overview is unwrapped while preserving the status banner and metrics", () => {
+  assert.match(component, /<section aria-labelledby="homepage-fare-readiness-heading" className="px-1 py-1">/);
+  assert.match(component, /id="homepage-fare-readiness-heading"/);
+  assert.match(component, />Readiness overview<\/h2>/);
+  assert.match(component, /<DisplayReadinessSummary readiness=\{statusPayload\.displayReadiness\} \/>/);
+  assert.doesNotMatch(component, /<DashboardSection\s+eyebrow="Readiness"\s+title="Readiness overview"/);
+});
+
+test("readiness summary metrics use neutral cards with semantic dots instead of colored card surfaces", () => {
+  assert.match(component, /className="rounded-xl border border-border bg-white p-3 text-navy"/);
+  assert.match(component, /className=\{\`h-2 w-2 shrink-0 rounded-full \$\{summaryToneDotClass\(tone\)\}\`\}/);
+  assert.match(component, /return "bg-teal"/);
+  assert.match(component, /return "bg-sky-500"/);
+  assert.match(component, /return "bg-amber"/);
+  assert.match(component, /return "bg-danger"/);
+  assert.match(component, /return "bg-slate-300"/);
+  assert.doesNotMatch(component, /summaryToneClass/);
+  assert.doesNotMatch(component, /border-teal\/20 bg-teal\/10 text-teal-dark/);
+  assert.doesNotMatch(component, /border-sky-100 bg-sky-50 text-sky-700/);
+  assert.doesNotMatch(component, /border-amber\/20 bg-amber\/10 text-amber/);
+  assert.doesNotMatch(component, /border-red-100 bg-red-50 text-danger/);
+});
+
+test("readiness metric tone logic remains unchanged", () => {
+  assert.match(component, /label="Fresh fares"[\s\S]*tone=\{statusPayload\.dataAvailable \? "good" : "danger"\}/);
+  assert.match(component, /label="Last-known-good"[\s\S]*tone=\{statusPayload\.dataAvailable \? "info" : "danger"\}/);
+  assert.match(component, /label="Missing routes"[\s\S]*statusPayload\.summary\.missing \? "warning" : "neutral"/);
+  assert.match(component, /label="Failed \/ unavailable"[\s\S]*statusPayload\.summary\.failed \+ statusPayload\.summary\.unavailable \? "warning" : "neutral"/);
+  assert.match(component, /label="Markets needing attention"[\s\S]*marketsNeedingAnotherRun\.some\(\(market\) => market\.needed\) \? "warning" : "good"/);
+});
