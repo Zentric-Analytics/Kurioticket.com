@@ -272,7 +272,8 @@ test("legacy Flight Status links redirect securely to the expanded monitoring pa
   assert.match(searchActivity, /{ label: "Flights", value: "FLIGHT" }/);
   assert.match(searchActivity, /one\(raw\.product\) === item\.value/);
   assert.match(navigation, /href: "\/admin\/searches\/activity", label: "Search Activity"/);
-  assert.match(navigation, /href: "\/admin\/flights", parentHref: "\/admin\/providers"/);
+  assert.match(navigation, /href: "\/admin\/homepage-fares", label: "Homepage Fares"/);
+  assert.doesNotMatch(navigation, /href: "\/admin\/flights"/);
 });
 
 test("unified Trip monitoring owns a single parent while preserving original flight-status sections", () => {
