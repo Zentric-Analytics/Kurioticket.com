@@ -216,13 +216,25 @@ export async function verifyNotificationPanel({ page, root, output, width }) {
   const swipeCard = firstItem.locator("[data-notification-card]");
   const swipe = async (dx, dy = 0) => {
     await expect(swipeCard).toBeVisible();
-    const box = await swipeCard.boundingBox();
-    if (!box) throw new Error("Notification swipe card has no bounding box");
-    const x = box.x + box.width * 0.65;
-    const y = box.y + Math.min(box.height * 0.45, 72);
-    await page.mouse.move(x, y);
+    const point = await swipeCard.evaluate(node => {
+      const box = node.getBoundingClientRect();
+      const candidates = [
+        [0.18, 0.18],
+        [0.18, 0.5],
+        [0.5, 0.18],
+        [0.5, 0.5],
+      ];
+      for (const [xRatio, yRatio] of candidates) {
+        const x = box.left + box.width * xRatio;
+        const y = box.top + box.height * yRatio;
+        const target = document.elementFromPoint(x, y);
+        if (target && node.contains(target) && !target.closest("button, a")) return { x, y };
+      }
+      throw new Error("Notification swipe card has no non-interactive drag point");
+    });
+    await page.mouse.move(point.x, point.y);
     await page.mouse.down();
-    await page.mouse.move(x + dx, y + dy, { steps: 12 });
+    await page.mouse.move(point.x + dx, point.y + dy, { steps: 12 });
     await page.mouse.up();
   };
   await swipe(-10, 50);
