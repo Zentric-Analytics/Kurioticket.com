@@ -76,6 +76,8 @@ test("visual preview shows the unsaved CMS draft, route, image and publication s
   assert.match(preview, /Unsaved edits/);
   assert.match(preview, /Saving a draft does not publish it/);
   assert.match(preview, /marketName/);
+  assert.match(preview, /<aside className="h-fit min-w-0">/);
+  assert.doesNotMatch(preview, /lg:sticky|lg:top-24/);
 });
 
 
