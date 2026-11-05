@@ -47,20 +47,21 @@ test("system status uses a compact summary-attention-system-areas hierarchy", ()
   assert.doesNotMatch(systemPage, /text-\[11px\].*uppercase/);
   assert.doesNotMatch(systemPage, /Expand a row for what is actually verified/);
   assert.match(systemPage, /function SystemAreaRow/);
-  assert.match(systemPage, /const hasDetails = Boolean\(service\.href \|\| service\.adminDetails\)/);
+  assert.match(systemPage, /if \(!service\.adminDetails\)/);
+  assert.match(systemPage, /service\.href \? \(/);
   assert.match(systemPage, /data-system-area=\{service\.id\}/);
   assert.match(systemPage, /<details data-system-area=\{service\.id\} className="group">/);
   assert.match(systemPage, /Open Email Delivery/);
   assert.match(systemPage, /Open Providers/);
   assert.match(systemPage, /Open CMS Health/);
   assert.doesNotMatch(systemPage, />Meaning<\/p>/);
-  assert.doesNotMatch(systemPage, /Direct database query|A database query completed successfully|This row verifies authentication configuration presence/);
+  assert.doesNotMatch(systemPage, /Direct database query|A database query completed successfully|This row verifies authentication configuration presence|Provider configuration presence|CMS Health diagnostics/);
 
   assert.match(systemPage, /id: "database"[\s\S]*?signal: "Live connectivity check",\n    \},/);
   assert.match(systemPage, /id: "authentication"[\s\S]*?signal: "Configuration only",\n    \},/);
-  assert.match(systemPage, /id: "email"[\s\S]*?href: "\/admin\/email-delivery"/);
-  assert.match(systemPage, /id: "providers"[\s\S]*?href: "\/admin\/providers"/);
-  assert.match(systemPage, /id: "cms"[\s\S]*?href: "\/admin\/system\/cms-health"/);
+  assert.match(systemPage, /id: "email"[\s\S]*?href: "\/admin\/email-delivery"[\s\S]*?actionLabel: "Open Email Delivery"/);
+  assert.match(systemPage, /id: "providers"[\s\S]*?href: "\/admin\/providers"[\s\S]*?actionLabel: "Open Providers"/);
+  assert.match(systemPage, /id: "cms"[\s\S]*?href: "\/admin\/system\/cms-health"[\s\S]*?actionLabel: "Open CMS Health"/);
   assert.match(systemPage, /id: "admin-access"/);
   assert.match(systemPage, /name: "Admin access"/);
   assert.match(systemPage, /Administrator allowlist/);
