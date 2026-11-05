@@ -585,15 +585,14 @@ export function HomepageFaresRefreshCard() {
           ) : null}
           {telemetryUnavailable ? (
             <p className="rounded-xl border border-red-100 bg-red-50 p-3 text-sm font-semibold text-danger">
-              Telemetry unavailable. Homepage fare data could not be read from the authoritative snapshot store. Coverage counts below are hidden rather than replaced with zeroes.
+              Telemetry unavailable. Snapshot data could not be read; coverage counts are hidden.
             </p>
           ) : null}
 
           <DashboardSection
             eyebrow="Readiness"
             title="Readiness overview"
-            description="Customer-facing homepage fare health across public markets."
-          >
+                >
             {initialStatusLoading ? (
               <p className="mt-4 rounded-xl border border-border bg-slate-50 p-4 text-sm font-semibold text-muted">
                 Loading homepage fare snapshot status…
@@ -646,8 +645,6 @@ export function HomepageFaresRefreshCard() {
               <DiagnosticsPanel
                 markets={statusPayload.marketReadinessSummary}
                 marketsNeedingAnotherRun={marketsNeedingAnotherRun}
-                candidatePoolHealth={statusPayload.candidatePoolHealth}
-                publicPriceDiagnostics={statusPayload.publicPriceDiagnostics}
                 stoppedReason={latestCounts?.stoppedReason}
               />
 
@@ -772,7 +769,7 @@ function DashboardSection({
 }: {
   eyebrow: string;
   title: string;
-  description: string;
+  description?: string;
   children: ReactNode;
 }) {
   return (
@@ -780,7 +777,7 @@ function DashboardSection({
       <div>
         <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-muted">{eyebrow}</p>
         <h3 className="mt-1 text-lg font-extrabold text-navy">{title}</h3>
-        <p className="mt-1 max-w-4xl text-[13px] leading-5 text-muted">{description}</p>
+        {description ? <p className="mt-1 max-w-4xl text-[13px] leading-5 text-muted">{description}</p> : null}
       </div>
       {children}
     </section>
@@ -808,22 +805,14 @@ function RefreshCronPanel({
 }) {
   const stoppedReason = refreshState.counts
     ? formatStoppedReason(refreshState.counts.stoppedReason)
-    : "No manual refresh result in this session";
+    : "No result yet";
   const providerCallsUsed = refreshState.counts
     ? refreshState.counts.providerCalls
-    : "No manual run in this session";
-  const replacementCandidatesUsed = refreshState.counts
-    ? sumCountRecord(refreshState.counts.replacementCandidatesUsedByMarket)
-    : sumCountRecord(statusPayload.replacementCandidatesUsedByMarket);
-  const timeoutCount = refreshState.counts
-    ? sumCountRecord(refreshState.counts.timeoutByMarket)
-    : sumCountRecord(statusPayload.timeoutByMarket);
-
+    : "No run yet";
   return (
     <DashboardSection
       eyebrow="Operations"
       title="Refresh operations"
-      description="Refresh provider-backed homepage fares or reload the current snapshot status."
     >
       <div className="mt-4 rounded-xl border border-border bg-slate-50/70 p-3">
         <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
@@ -866,13 +855,6 @@ function RefreshCronPanel({
           </dl>
         </div>
 
-        <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 border-t border-slate-200 pt-2 text-xs font-semibold text-muted">
-          <span>Replacements {replacementCandidatesUsed}</span>
-          <span>Timeouts {timeoutCount}</span>
-          <span>Cadence {statusPayload.nextExpectedCronRefresh ?? "Not provided"}</span>
-          <span>Scheduler verification not observable from this service</span>
-        </div>
-
         {refreshState.message ? (
           <div
             className={
@@ -897,12 +879,12 @@ function RefreshCronPanel({
       </div>
       {!initialStatusLoading && !operationsAvailable ? (
         <p className="mt-3 rounded-xl border border-red-100 bg-red-50 p-3 text-sm font-semibold text-danger">
-          Manual refresh is disabled because the authoritative homepage fare snapshot store is unavailable.
+          Manual refresh unavailable while the snapshot store is offline.
         </p>
       ) : null}
       {!statusPayload.cronConfigured ? (
         <p className="mt-3 rounded-xl border border-amber/20 bg-amber/10 p-3 text-sm font-semibold text-amber">
-          The cron credential is not configured. Set HOMEPAGE_FARES_CRON_SECRET before configuring an external scheduler for POST /api/internal/homepage-fares/refresh.
+          Cron credential not configured.
         </p>
       ) : null}
     </DashboardSection>
@@ -922,7 +904,6 @@ function MarketReadinessDashboard({
     <DashboardSection
       eyebrow="Market readiness"
       title="Public market coverage"
-      description="Customer-facing country markets and their homepage coverage targets."
     >
       {markets.length ? (
         <div className="mt-4 overflow-hidden rounded-xl border border-slate-200">
@@ -955,7 +936,11 @@ function MarketReadinessDashboard({
                   <span className="min-w-0">
                     <MarketStatusBadge status={market.status} />
                     <span className="mt-1 block truncate text-[10px] font-semibold text-muted">
-                      Fresh {market.freshCount ?? 0} · Missing {market.missingCount ?? 0} · Failed {market.failed}
+                      {[
+                        (market.freshCount ?? 0) > 0 ? `${market.freshCount} fresh` : null,
+                        (market.missingCount ?? 0) > 0 ? `${market.missingCount} missing` : null,
+                        market.failed > 0 ? `${market.failed} failed` : null,
+                      ].filter(Boolean).join(" · ") || "No issues"}
                     </span>
                   </span>
                   <span className="text-xs font-extrabold text-teal-dark">Inspect</span>
@@ -976,14 +961,10 @@ function MarketReadinessDashboard({
 function DiagnosticsPanel({
   markets,
   marketsNeedingAnotherRun,
-  candidatePoolHealth,
-  publicPriceDiagnostics,
   stoppedReason,
 }: {
   markets: MarketReadiness[];
   marketsNeedingAnotherRun: MarketNextRunNeed[];
-  candidatePoolHealth: HomepageFareStatusSummary;
-  publicPriceDiagnostics: Record<PublicPriceDiagnosis, number>;
   stoppedReason?: RefreshStoppedReason;
 }) {
   const issueMarkets = markets
@@ -994,17 +975,11 @@ function DiagnosticsPanel({
     <DashboardSection
       eyebrow="Provider failure / underfill diagnostics"
       title="Why markets are not ready"
-      description="Coverage gaps and executor signals for public markets that need attention."
     >
-      <dl className="mt-3 grid gap-x-4 gap-y-2 rounded-xl border border-border bg-slate-50/70 p-3 sm:grid-cols-2 lg:grid-cols-4">
-        <CompactDetail label="Stopped reason" value={stoppedReason ? formatStoppedReason(stoppedReason) : "No manual run yet"} />
+      <dl className="mt-3 grid gap-x-4 gap-y-2 rounded-xl border border-border bg-slate-50/70 p-3 sm:grid-cols-3">
+        <CompactDetail label="Stopped reason" value={stoppedReason ? formatStoppedReason(stoppedReason) : "No run yet"} />
         <CompactDetail label="Provider budget" value={stoppedReason === "provider_budget_exhausted" ? "Exhausted" : "Available"} />
         <CompactDetail label="Route budget" value={stoppedReason === "route_budget_exhausted" ? "Exhausted" : "Available"} />
-        <CompactDetail label="Candidate pool failed" value={candidatePoolHealth.failed} />
-        <CompactDetail label="Candidate pool unavailable" value={candidatePoolHealth.unavailable} />
-        <CompactDetail label="Fresh used publicly" value={publicPriceDiagnostics.fresh_available} />
-        <CompactDetail label="LKG used publicly" value={publicPriceDiagnostics.last_known_good_used} />
-        <CompactDetail label="Exact route mismatch" value={publicPriceDiagnostics.exact_route_mismatch} />
       </dl>
 
       <div className="mt-3 overflow-hidden rounded-xl border border-slate-200">
@@ -1032,7 +1007,7 @@ function DiagnosticsPanel({
                       {nextRunNeeded ? (
                         <>
                           <span className="block">Needed</span>
-                          {nextRunCause ? <span className="mt-0.5 block text-[10px] font-semibold text-muted">{formatUnderfillCause(nextRunCause)}</span> : null}
+                          {nextRunCause && nextRunCause !== "underfilled" ? <span className="mt-0.5 block text-[10px] font-semibold text-muted">{formatUnderfillCause(nextRunCause)}</span> : null}
                         </>
                       ) : (
                         "Not required"
@@ -1115,6 +1090,13 @@ function AdvancedDiagnostics({
             <MetricCard label="Configured routes" value={statusPayload.summary.total} />
             <MetricCard label="Candidate pool failed" value={statusPayload.candidatePoolHealth.failed} />
             <MetricCard label="Candidate pool unavailable" value={statusPayload.candidatePoolHealth.unavailable} />
+            <MetricCard label="Fresh used publicly" value={statusPayload.publicPriceDiagnostics.fresh_available} />
+            <MetricCard label="LKG used publicly" value={statusPayload.publicPriceDiagnostics.last_known_good_used} />
+            <MetricCard label="Exact route mismatch" value={statusPayload.publicPriceDiagnostics.exact_route_mismatch} />
+            <MetricCard label="Replacement candidates" value={refreshCounts ? sumCountRecord(refreshCounts.replacementCandidatesUsedByMarket) : sumCountRecord(statusPayload.replacementCandidatesUsedByMarket)} />
+            <MetricCard label="Timeouts" value={refreshCounts ? sumCountRecord(refreshCounts.timeoutByMarket) : sumCountRecord(statusPayload.timeoutByMarket)} />
+            <MetricCard label="Scheduler cadence" value={statusPayload.nextExpectedCronRefresh ?? "Not provided"} />
+            <MetricCard label="Scheduler verification" value="Not observable from this service" />
             <MetricCard label="Visible gaps attempted" value={refreshCounts?.visibleGapsAttempted.length ?? 0} />
             <MetricCard label="Immediate replacements attempted" value={refreshCounts?.replacementsUsed.length ?? 0} />
             <MetricCard label="Executor targets" value={refreshCounts ? formatStringList(refreshCounts.targetedMarkets, "none") : "No manual run yet"} />
@@ -1155,7 +1137,6 @@ function MarketRouteInspector({
     <DashboardSection
       eyebrow="Routes"
       title="Route inspector"
-      description="Select a market and status to inspect individual homepage fare routes."
     >
       <div className="mt-4 flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50/70 p-3 sm:flex-row sm:items-end">
         <label className="min-w-0 flex-1 text-xs font-extrabold uppercase tracking-wide text-muted">
@@ -1228,7 +1209,7 @@ function SelectedRouteDetails({
   if (!selectedRouteScope || !group) {
     return (
       <p ref={routeDetailsRef} className="mt-3 rounded-lg border border-dashed border-slate-300 bg-slate-50/60 px-3 py-2.5 text-center text-[13px] font-semibold text-muted">
-        Select a market to inspect its routes, or choose All routes.
+        Select a market or All routes.
       </p>
     );
   }
@@ -2258,6 +2239,6 @@ function formatDateTime(value: string) {
 }
 
 function formatCronStatus(status: Pick<HomepageFareStatusPayload, "cronConfigured" | "nextExpectedCronRefresh">) {
-  if (!status.cronConfigured) return "Credential not configured";
-  return status.nextExpectedCronRefresh ? "Credential configured" : "Credential configured; cadence note missing";
+  if (!status.cronConfigured) return "Not configured";
+  return status.nextExpectedCronRefresh ? "Configured" : "Configured · cadence missing";
 }
