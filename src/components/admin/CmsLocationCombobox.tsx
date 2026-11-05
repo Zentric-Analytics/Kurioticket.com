@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
+import { useEffect, useId, useRef, useState, type KeyboardEvent, type PointerEvent as ReactPointerEvent } from "react";
 import { createPortal } from "react-dom";
 import { Check, ChevronDown } from "lucide-react";
 
@@ -96,7 +96,7 @@ export function CmsLocationCombobox({
 
   useEffect(() => {
     if (!open) return;
-    const dismissOutside = (event: globalThis.PointerEvent | FocusEvent) => {
+    const dismissOutside = (event: PointerEvent | FocusEvent) => {
       const target = event.target;
       if (!(target instanceof Node)) return;
       if (!rootRef.current?.contains(target) && !listRef.current?.contains(target)) dismiss();
@@ -123,7 +123,7 @@ export function CmsLocationCombobox({
     const list = listRef.current;
     const option = list?.querySelector<HTMLElement>('[data-cms-option-index="' + activeIndex + '"]');
     if (!list || !option) return;
-    // Adjust only the menu's own scrollTop, never scrollIntoView on the document.
+    // Adjust only the menu's own scrollTop, without moving the document.
     const top = option.offsetTop;
     const bottom = top + option.offsetHeight;
     if (top < list.scrollTop) list.scrollTop = top;
@@ -162,7 +162,7 @@ export function CmsLocationCombobox({
     }
   }
 
-  function toggleOnPointerDown(event: PointerEvent<HTMLInputElement>) {
+  function toggleOnPointerDown(event: ReactPointerEvent<HTMLInputElement>) {
     // First click focuses and opens the field. Clicking that same focused box
     // again closes the menu; a third click reopens it without losing the caret.
     if (document.activeElement === event.currentTarget) {
