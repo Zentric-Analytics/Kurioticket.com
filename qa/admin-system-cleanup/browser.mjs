@@ -172,7 +172,11 @@ try {
         }
         if (route === "settings") {
           await expect(main.getByRole("link", { name: "Open fare operations" })).toHaveCount(0);
-          await expect(page.getByRole("navigation", { name: "Admin navigation" }).getByRole("link", { name: "Flights", exact: true })).toHaveAttribute("href", "/admin/flights");
+          if (width === 1440) {
+            await expect(page.getByRole("navigation", { name: "Admin navigation" }).getByRole("link", { name: "Flights", exact: true })).toHaveAttribute("href", "/admin/flights");
+          } else {
+            await expect(page.getByRole("button", { name: "Open admin navigation" })).toBeVisible();
+          }
         }
         if (route === "notifications") {
           await expect(main.locator('a[href="/admin/notifications"]')).toHaveCount(0);
