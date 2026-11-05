@@ -124,39 +124,46 @@ try {
           await expect(userRow.getByText("traveler@example.invalid", { exact: true })).toBeVisible();
         }
         if (route === "email-delivery") {
-          await expect(main.getByRole("heading", { name: "Email Delivery Operations", exact: true })).toBeVisible();
+          await expect(main.getByRole("heading", { name: "Email Delivery", exact: true })).toBeVisible();
+          await expect(main.getByRole("combobox", { name: "Date range" })).toBeVisible();
+
           const summary = main.locator('section[aria-label="Email delivery summary"]');
           await expect(summary).toBeVisible();
-          for (const label of ["Last 24 hours", "Failures", "Delayed", "Suppressions"]) {
+          for (const label of ["Email deliveries", "Delivered", "Delayed", "Failed"]) {
             await expect(summary.getByText(label, { exact: true })).toBeVisible();
           }
+          await expect(summary.getByText("15", { exact: true })).toBeVisible();
           await expect(summary.getByText("14", { exact: true })).toBeVisible();
-          await expect(summary.getByText("53", { exact: true })).toBeVisible();
+          await expect(summary.getByText("Last 24 hours", { exact: true })).toHaveCount(0);
 
-          await expect(main.getByRole("heading", { name: "Delivery configuration", exact: true })).toBeVisible();
+          await expect(main.getByRole("heading", { name: "Current setup", exact: true })).toBeVisible();
+          await expect(main.getByText("Suppressed addresses", { exact: true })).toBeVisible();
+          await expect(main.getByText("53", { exact: true })).toBeVisible();
           await expect(main.getByRole("heading", { name: "Test transactional delivery", exact: true })).toBeVisible();
-          await expect(main.getByText("Recipient is current admin only", { exact: true })).toHaveCount(0);
-          await expect(main.getByText(/Safety: only the current signed-in admin can receive this test/)).toBeVisible();
           await expect(main.getByRole("button", { name: "Send test email to me" })).toBeDisabled();
 
-          await expect(main.getByRole("heading", { name: "Recent deliveries", exact: true })).toBeVisible();
-          await expect(main.getByText("Latest 10 deliveries", { exact: true })).toBeVisible();
-          const deliveries = main.getByRole("region", { name: "Recent deliveries" });
+          await expect(main.getByRole("heading", { name: "Delivery history", exact: true })).toBeVisible();
+          await expect(main.getByText("Latest 10 in last 24 hours", { exact: true })).toBeVisible();
+          const deliveries = main.getByRole("region", { name: "Delivery history" });
           await expect(deliveries.getByText("bi***@zentricanalytics.com", { exact: true })).toBeVisible();
           const delivered = deliveries.locator("tbody").getByText("Delivered", { exact: true });
           await expect(delivered).toHaveClass(/inline-flex/);
           await expect(delivered.locator("span").first()).toHaveClass(/rounded-full/);
-          await expect(deliveries.getByText("Delayed", { exact: true })).toBeVisible();
 
           if (width === 1440) {
             const boxes = await Promise.all(
-              ["Last 24 hours", "Failures", "Delayed", "Suppressions"].map(async label =>
+              ["Email deliveries", "Delivered", "Delayed", "Failed"].map(async label =>
                 summary.getByText(label, { exact: true }).boundingBox()
               )
             );
             expect(boxes.every(Boolean)).toBeTruthy();
             const tops = boxes.map(box => box.y);
             expect(Math.max(...tops) - Math.min(...tops)).toBeLessThanOrEqual(2);
+
+            await page.goto(`${root}/admin/email-delivery?range=7d`, { waitUntil: "networkidle" });
+            await expect(page.getByRole("heading", { name: "Email Delivery", exact: true })).toBeVisible();
+            await expect(page.getByText("Latest 10 in last 7 days", { exact: true })).toBeVisible();
+            await expect(page.locator('section[aria-label="Email delivery summary"]').getByText("Email deliveries", { exact: true })).toBeVisible();
           }
         }
         if (route === "settings") await expect(main.getByRole("link", { name: "Open fare operations" })).toHaveAttribute("href", "/admin/homepage-fares");
