@@ -5,6 +5,7 @@ import {
   AdminStatusBadge,
 } from "@/components/admin/AdminPageShell";
 import { CmsScopeHardeningActions } from "@/components/admin/CmsScopeHardeningActions";
+import { getCmsMarketName } from "@/lib/adminCmsMarketLabels";
 import { getCmsHealthOverview } from "@/services/cmsHardeningService";
 
 export const metadata = { title: "CMS Health" };
@@ -15,6 +16,19 @@ const cmsHealthGroups = [
   { id: "hotel-destinations", label: "Hotel destinations", type: "HOTEL_DESTINATION" },
   { id: "faqs", label: "FAQs", type: "FAQ" },
 ] as const;
+
+const cmsLocaleDisplayNames =
+  typeof Intl.DisplayNames === "function"
+    ? new Intl.DisplayNames(["en"], { type: "language" })
+    : null;
+
+function getCmsLocaleName(locale: string) {
+  try {
+    return cmsLocaleDisplayNames?.of(locale) ?? locale;
+  } catch {
+    return locale;
+  }
+}
 
 export default async function AdminCmsHealthPage() {
   const overview = await getCmsHealthOverview();
@@ -131,7 +145,7 @@ export default async function AdminCmsHealthPage() {
 
                       <div className="border-t border-[#E7ECF5] px-3 pb-4 pt-3">
                         <AdminDataTable
-                          columns={["Scope", "Health", "Integrity", "Fallback", "Draft changes", "Actions"]}
+                          columns={["CMS market", "Health", "Integrity", "Fallback", "Draft changes", "Actions"]}
                           rows={entries.map((entry) => {
                             const integrity = entry.integrity;
                             const issueCount =
@@ -146,9 +160,11 @@ export default async function AdminCmsHealthPage() {
                               id: `${entry.type}:${entry.market}:${entry.locale}`,
                               cells: [
                                 <div key="scope">
-                                  <p className="font-black text-slate-950">{entry.type}</p>
-                                  <p className="text-xs text-slate-500">{entry.market} · {entry.locale}</p>
-                                  <p className="mt-1 text-xs text-slate-400">Scope v{integrity.scopeVersion ?? "—"}</p>
+                                  <p className="font-semibold text-slate-950">{getCmsMarketName(entry.market)}</p>
+                                  <p className="mt-1 text-xs text-slate-600">{getCmsLocaleName(entry.locale)}</p>
+                                  <p className="mt-1 text-[11px] text-slate-400">
+                                    {entry.market} · {entry.locale} · v{integrity.scopeVersion ?? "—"}
+                                  </p>
                                 </div>,
                                 <AdminStatusBadge key="health" tone={integrity.healthy ? "good" : "warn"}>
                                   {integrity.healthy ? "Healthy" : "Needs attention"}

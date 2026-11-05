@@ -25,7 +25,7 @@ test("admin navigation exposes parent workspaces in the header", () => {
 
 test("admin navigation preserves role restrictions", () => {
   assert.deepEqual(getAdminNavForRole("SUPPORT"), []);
-  assert.deepEqual(getAdminNavForRole("ADMIN").filter((item) => item.parentHref).map((item) => [item.label, item.parentHref]), [["Trip monitoring", "/admin/confirmed-trips"], ["Flights", "/admin/providers"], ["Hotels", "/admin/providers"], ["Cars", "/admin/providers"], ["Deletion Requests", "/admin/support"], ["Homepage Fare Operations", "/admin/settings"]]);
+  assert.deepEqual(getAdminNavForRole("ADMIN").filter((item) => item.parentHref).map((item) => [item.label, item.parentHref]), [["Trip monitoring", "/admin/confirmed-trips"], ["Hotels", "/admin/providers"], ["Cars", "/admin/providers"], ["Deletion Requests", "/admin/support"], ["Homepage Fare Operations", "/admin/settings"]]);
   assert.deepEqual(getAdminNavForRole("USER"), []);
 });
 
@@ -52,7 +52,7 @@ test("horizontal admin navigation keeps child routes under parent workspaces", (
   const settings = entries.find(({ item }) => item.href === "/admin/settings");
   assert.deepEqual(searches?.children.map((item) => item.href), []);
   assert.deepEqual(entries.find(({ item }) => item.href === "/admin/users")?.children.map(item => item.href), []);
-  assert.deepEqual(providers?.children.map((item) => item.href), ["/admin/flights", "/admin/hotels", "/admin/cars"]);
+  assert.deepEqual(providers?.children.map((item) => item.href), ["/admin/hotels", "/admin/cars"]);
   assert.deepEqual(trips?.children.map((item) => item.href), ["/admin/confirmed-trips/monitoring"]);
   assert.deepEqual(support?.children.map((item) => item.href), ["/admin/account-deletions"]);
   assert.deepEqual(system?.children.map((item) => item.href), []);
@@ -90,4 +90,18 @@ test("retired operational report routes remain available without nested menu ent
     assert.equal(adminNavigation.some(item => item.href === href), false);
     assert.equal(getAdminHeaderGroups("ADMIN").some(group => group.links.some(link => link.item.href === href || link.children.some(child => child.href === href))), false);
   }
+});
+
+
+test("Flight Operations is a standalone deep-linked workspace and does not activate Providers", () => {
+  const flights = getAdminNavForRole("ADMIN").find((item) => item.href === "/admin/flights");
+  assert.ok(flights);
+  assert.equal(flights.parentHref, undefined);
+
+  const providers = getAdminHeaderGroups("ADMIN")
+    .flatMap((group) => group.links)
+    .find((entry) => entry.item.href === "/admin/providers");
+  assert.ok(providers);
+  assert.equal(isAdminNavItemActive(providers.item.href, "/admin/flights"), false);
+  assert.equal(providers.children.some((child) => isAdminNavItemActive(child.href, "/admin/flights")), false);
 });

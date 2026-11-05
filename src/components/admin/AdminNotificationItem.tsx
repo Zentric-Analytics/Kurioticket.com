@@ -61,6 +61,9 @@ export function AdminNotificationItem({ id, alertKey, signalToken, title, canDel
           onPointerDown={event => {
             suppressClick.current = false;
             if (!canDelete || deleting || event.button !== 0 || (event.target as HTMLElement).closest("button, a")) return;
+            // Desktop drags can otherwise become native text-selection gestures before
+            // the horizontal swipe is classified. Keep touch/pointer scrolling native.
+            if (event.pointerType === "mouse") event.preventDefault();
             gesture.current = { id: event.pointerId, x: event.clientX, y: event.clientY, start: position, direction: "undecided" };
             // Capture from pointer-down, before the card moves under the pointer.
             // This keeps desktop drags reliable without blocking native vertical touch scroll.
