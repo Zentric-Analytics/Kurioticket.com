@@ -176,6 +176,46 @@ test("Content returns to the actual source and only retains allowlisted filters"
   assert.equal(faqCmsListNavigation({ status: "invalid", cursor: "../admin/system" }).listHref, "/admin/content/faqs");
 });
 
+test("Homepage and flight CMS open on real All markets and retain explicit market filters", () => {
+  const destination = homepageCmsListNavigation("destinations", {});
+  const flight = homepageCmsListNavigation("flight-routes", { from: "overview" });
+  assert.equal(destination.market, "ALL");
+  assert.equal(destination.listHref, "/admin/content/homepage/destinations?market=ALL");
+  assert.equal(flight.market, "ALL");
+  assert.equal(flight.listHref, "/admin/content/homepage/flight-routes?market=ALL&from=overview");
+  assert.equal(homepageCmsListNavigation("destinations", { market: "NG" }).market, "NG");
+  assert.equal(homepageCmsListNavigation("flight-routes", { market: "US" }).market, "US");
+  assert.equal(homepageCmsListNavigation("flight-routes", { market: "invalid" }).market, "ALL");
+  assert.equal(homepageCmsListNavigation("hotel-destinations", { market: "ALL" }).market, "GLOBAL");
+
+  const listPage = readFileSync("src/app/admin/content/homepage/[section]/page.tsx", "utf8");
+  const toolbar = readFileSync("src/components/admin/ContentDirectoryToolbar.tsx", "utf8");
+  const service = readFileSync("src/services/cmsContentService.ts", "utf8");
+  assert.match(listPage, /defaultMarket = section === "hotel-destinations" \? "GLOBAL" : "ALL"/);
+  assert.match(listPage, /allowedMarket === "ALL" \? undefined : allowedMarket/);
+  assert.match(listPage, /getCmsContentMarketOverview\(config\.type, homepageCmsMarkets, homepageCmsLocale\)/);
+  assert.match(toolbar, /value: "ALL", label: "All markets"/);
+  assert.match(toolbar, /market !== "ALL"/);
+  assert.match(service, /scope\.market \? \{ market: scope\.market \} : \{\}/);
+  assert.match(service, /scope\.market\) predicates\.push/);
+  assert.match(listPage, /market=\{section !== "hotel-destinations" \? allowedMarket : undefined\}/);
+});
+
+test("New CMS drafts require a valid market but preserve chosen filtered market context", () => {
+  const newPage = readFileSync("src/app/admin/content/homepage/[section]/new/page.tsx", "utf8");
+  const editor = readFileSync("src/components/admin/HomepageCmsEditor.tsx", "utf8");
+  const service = readFileSync("src/services/cmsContentService.ts", "utf8");
+  assert.match(newPage, /: "ALL"/);
+  assert.match(newPage, /initialMarket=\{market === "ALL" \? "" : market\}/);
+  assert.match(newPage, /getCmsContentMarketOverview\(config\.type, homepageCmsMarkets, homepageCmsLocale\)/);
+  assert.match(editor, /<option value="">Select market<\/option>/);
+  assert.match(editor, /validMarket = section === "hotel-destinations" \|\| markets\.includes\(market\)/);
+  assert.match(editor, /validDraft = validMarket && validateClientDraft/);
+  assert.match(service, /Choose a supported market before creating this content/);
+  assert.match(editor, /disabled=\{!validDraft\}>Create draft/);
+  assert.equal(homepageCmsListNavigation("flight-routes", { market: "NG", q: "Lagos" }).query, "market=NG&q=Lagos");
+});
+
 test("Content's nested pages use the preserved return context", () => {
   const files = [
     "src/app/admin/content/homepage/[section]/page.tsx",
