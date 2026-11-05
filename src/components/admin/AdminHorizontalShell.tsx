@@ -46,38 +46,6 @@ function Navigation({ groups, pathname, mobile = false, close }: { groups: Heade
   </nav>;
 }
 
-/**
- * System's secondary pages are real routes, not panels inside /admin/system.
- * Keep their navigation visible on each child route without a floating menu.
- */
-function SystemSectionTabs({ entries, pathname }: { entries: HeaderEntry["children"]; pathname: string }) {
-  const tabs = [
-    { href: "/admin/system", label: "System Status" },
-    ...entries.map((entry) => ({
-      href: entry.href,
-      label: entry.href === "/admin/notifications" ? "Alerts" : entry.label,
-    })),
-  ];
-
-  return (
-    <nav aria-label="System sections" className="min-w-0 border-b border-[#D8E1EC] bg-white">
-      <div className="flex min-w-0 items-center gap-6 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {tabs.map((tab) => {
-            const active = pathname === tab.href || pathname === tab.href + "/" ||
-              (tab.href !== "/admin/system" && pathname.startsWith(tab.href + "/"));
-            return (
-              <Link key={tab.href} href={tab.href} aria-current={active ? "page" : undefined}
-                className={"inline-flex h-11 shrink-0 items-center whitespace-nowrap border-b-2 px-1 text-[13px] font-medium text-[#020617] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] " +
-                  (active ? "border-[#004BB8]" : "border-transparent hover:border-[#D8E1EC]")}>
-                {tab.label}
-              </Link>
-            );
-          })}
-      </div>
-    </nav>
-  );
-}
-
 export function AdminHorizontalShell({ children, adminEmail, adminName, adminRole, showPreviewTesters = false }: {
   children: React.ReactNode; adminEmail?: string | null; adminName?: string | null; adminRole: string; showPreviewTesters?: boolean;
 }) {
@@ -87,10 +55,6 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
   const contentLanding = pathname === "/admin/content" || pathname === "/admin/content/";
   const workspaceRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLElement>(null);
-  const systemChildren = groups.flatMap((group) => group.links).find((entry) => entry.item.href === "/admin/system")?.children ?? [];
-  const systemSectionsVisible = pathname === "/admin/system" || pathname === "/admin/system/" ||
-    systemChildren.some((entry) => pathname === entry.href || pathname.startsWith(entry.href + "/"));
-
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [unreadAlertCount, setUnreadAlertCount] = useState<number | null>(null);
@@ -181,7 +145,8 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
     && accountDeletionParts[1] === "account-deletions";
   // All Content lists, drafts and editors use the same white workspace as Support details.
   const contentWorkspace = pathname === "/admin/content" || pathname.startsWith("/admin/content/");
-  const whiteWorkspace = pathname === "/admin/system" || pathname === "/admin/system/" || usersDirectory || searchesWorkspace || supportWorkspace
+  const auditLogsWorkspace = pathname === "/admin/logs" || pathname === "/admin/logs/";
+  const whiteWorkspace = pathname === "/admin/system" || pathname === "/admin/system/" || auditLogsWorkspace || usersDirectory || searchesWorkspace || supportWorkspace
     || providersWorkspace || providerReportingWorkspace || accountDeletionDetail || contentWorkspace;
   return <AdminWorkspaceSearchProvider account={adminEmail || "admin"}><div ref={workspaceRef} className={"min-h-screen text-slate-950 " + (userActivity ? "bg-[#f1f5fb]" : whiteWorkspace ? "bg-white" : "bg-[#f1f5fb]")}>
     <header ref={headerRef} className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
@@ -221,7 +186,7 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
             </button>
             {profileOpen ? <div className="absolute right-0 top-full z-50 mt-2 w-64 overflow-hidden rounded-xl border border-slate-200 bg-white p-2 shadow-xl">
               <div className="border-b border-slate-100 px-3 py-2"><p className="truncate text-sm font-semibold">{name}</p><p className="truncate text-xs text-slate-500">{adminEmail || role}</p><p className="mt-1 text-xs font-semibold text-indigo-700">{role}</p></div>
-              {([{ href: "/admin/settings", label: "Admin settings", icon: Settings }, { href: "/admin/logs", label: "Audit logs", icon: ShieldCheck }, { href: "/", label: "Switch to public site", icon: Building2 }, { href: "/api/auth/signout", label: "Logout", icon: LogOut }]).map(({ href, label, icon: Icon }) => <Link key={href} href={href} onClick={() => setProfileOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"><Icon size={16} />{label}</Link>)}
+              {([{ href: "/admin/settings", label: "Admin settings", icon: Settings }, { href: "/admin/logs", label: "Audit Logs", icon: ShieldCheck }, { href: "/", label: "Switch to public site", icon: Building2 }, { href: "/api/auth/signout", label: "Logout", icon: LogOut }]).map(({ href, label, icon: Icon }) => <Link key={href} href={href} onClick={() => setProfileOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"><Icon size={16} />{label}</Link>)}
             </div> : null}
           </div>
           <button type="button" className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 min-[1100px]:hidden" onClick={() => setMobileOpen((value) => !value)} aria-label={mobileOpen ? "Close admin navigation" : "Open admin navigation"} aria-expanded={mobileOpen}>{mobileOpen ? <X size={19} /> : <Menu size={19} />}</button>
@@ -236,8 +201,7 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
       </AdminSearchHeader>
     </header>
     <main className="mx-auto w-full max-w-[1920px] px-4 py-5 sm:px-6 lg:px-10">
-      {systemSectionsVisible ? <SystemSectionTabs entries={systemChildren} pathname={pathname} /> : null}
-      <div className={systemSectionsVisible ? "pt-5" : ""}><AdminSearchContent>{children}</AdminSearchContent></div>
+      <AdminSearchContent>{children}</AdminSearchContent>
     </main>
 
   </div></AdminWorkspaceSearchProvider>;

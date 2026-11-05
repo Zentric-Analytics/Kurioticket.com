@@ -57,6 +57,7 @@ test("admin email test send is constrained, audited, and provider-neutral", () =
   assert.doesNotMatch(route, /providerMessageId/);
 });
 
-test("System navigation retains the Email Delivery Operations workspace", () => {
-  assert.match(adminNavigation, /href: "\/admin\/email-delivery", parentHref: "\/admin\/system"/);
+test("Email Delivery remains a protected contextual workspace without a duplicate System tab", () => {
+  assert.match(adminNavigation, /href: "\/admin\/email-delivery"/);
+  assert.doesNotMatch(adminNavigation, /href: "\/admin\/email-delivery", parentHref: "\/admin\/system"/);
 });

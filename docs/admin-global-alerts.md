@@ -2,7 +2,7 @@
 
 ## Navigation ownership
 
-The existing `/admin/notifications` destination is global and retains its protected-admin guards, read-only outage fallback, unread summary and acknowledgement API. The shared header bell remains its primary entry. System navigation contains System Status, Logs, CMS Health and Email Delivery. Generic System/Logs/Alerts header shortcuts and duplicate Settings ownership-panel links are removed; the destinations themselves are not deleted.
+The existing `/admin/notifications` destination is global and retains its protected-admin guards, read-only outage fallback, unread summary and acknowledgement API. The shared header bell remains its primary entry. System Status is the System landing page; Audit Logs, CMS Health and Email Delivery remain protected destinations reached from contextual actions, the profile menu, Overview or direct links rather than duplicate System tabs. Generic System/Logs/Alerts header shortcuts and duplicate Settings ownership-panel links are removed; the destinations themselves are not deleted.
 
 Contextual email/provider diagnostics, Logs filtering/pagination, CMS repairs, test email, alert acknowledgement, homepage fare operations and the profile-menu Audit Logs shortcut remain. Database/authentication/admin-allowlist issues explain deployment ownership rather than linking in circles. Alert source destinations must be internal Admin routes and must not reload the Alerts list itself.
 

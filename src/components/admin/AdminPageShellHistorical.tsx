@@ -179,7 +179,7 @@ function AdminProfileMenu({
           <p className="truncate text-xs font-medium text-slate-500">{adminEmail || "No email available"}</p>
         </div>
         <ProfileLink href="/admin/settings" label="Admin settings" icon={Settings} />
-        <ProfileLink href="/admin/logs" label="Audit logs" icon={ShieldCheck} />
+        <ProfileLink href="/admin/logs" label="Audit Logs" icon={ShieldCheck} />
         <ProfileLink href="/" label="Switch to public site" icon={Building2} />
         <ProfileLink href="/api/auth/signout" label="Logout" icon={LogOut} />
       </div>

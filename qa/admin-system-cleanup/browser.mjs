@@ -22,12 +22,7 @@ try {
       const main = page.locator("main");
       await expect(main).toBeVisible();
       if (variant === "after") {
-        if (["system", "logs", "system/cms-health", "email-delivery"].includes(route)) {
-          const tabs = page.getByRole("navigation", { name: "System sections" });
-          await expect(tabs.getByRole("link")).toHaveText(["System Status", "Logs", "CMS Health", "Email Delivery"]);
-        } else {
-          await expect(page.getByRole("navigation", { name: "System sections" })).toHaveCount(0);
-        }
+        await expect(page.getByRole("navigation", { name: "System sections" })).toHaveCount(0);
         for (const name of ["View operational alerts", "Open Alerts", "Back to System", "View audit logs", "Audit logs", "System health", "View system status", "View admin configuration status"]) {
           await expect(main.getByRole("link", { name, exact: true })).toHaveCount(0);
         }
@@ -102,6 +97,32 @@ try {
           await expect(main.locator('a[href="/admin/settings"],a[href="/admin/notifications"]')).toHaveCount(0);
           await expect(main.getByText(/deployment configuration/).first()).toBeVisible();
         }
+        if (route === "logs") {
+          await expect(main.getByRole("heading", { name: "Audit Logs", exact: true })).toBeVisible();
+          await expect(main.getByRole("heading", { name: "Audit records", exact: true })).toBeVisible();
+          await expect(main.getByText("CMS alert state changed", { exact: true })).toBeVisible();
+          await expect(main.getByText("CMS content published", { exact: true })).toBeVisible();
+          await expect(main.getByText("User role updated", { exact: true })).toBeVisible();
+          await expect(main.getByText("ADMIN_ALERT_CMS_STATE", { exact: true })).toBeVisible();
+          await expect(main.getByText("CMS_CONTENT_PUBLISHED", { exact: true })).toBeVisible();
+          await expect(main.getByRole("combobox", { name: "Date range" })).toBeVisible();
+          await expect(main.getByRole("combobox", { name: "Action" })).toBeVisible();
+          await expect(main.getByRole("combobox", { name: "Target type" })).toBeVisible();
+          await expect(main.getByPlaceholder("Search admin email")).toBeVisible();
+          await expect(main.getByPlaceholder("Search target email")).toBeVisible();
+          await expect(main.getByRole("link", { name: "Clear filters", exact: true })).toHaveAttribute("href", "/admin/logs?range=7d");
+          await expect(main.getByRole("link", { name: "Older records ›", exact: true })).toBeVisible();
+
+          const auditRegion = main.getByRole("region", { name: "Audit log records" });
+          await expect(auditRegion).toBeVisible();
+          await expect(auditRegion.locator("[data-audit-header]").getByText("Target email", { exact: true })).toHaveCount(0);
+          const userRow = auditRegion.locator('[data-audit-row="audit-user"]');
+          await expect(userRow.getByText("View ›", { exact: true })).toBeVisible();
+          await expect(userRow.getByText("traveler@example.invalid", { exact: true })).not.toBeVisible();
+          await userRow.locator("summary").click();
+          await expect(userRow.getByText("Target email", { exact: true })).toBeVisible();
+          await expect(userRow.getByText("traveler@example.invalid", { exact: true })).toBeVisible();
+        }
         if (route === "email-delivery") await expect(main.getByRole("button", { name: "Send test email to me" })).toBeDisabled();
         if (route === "settings") await expect(main.getByRole("link", { name: "Open fare operations" })).toHaveAttribute("href", "/admin/homepage-fares");
         if (route === "notifications") {
@@ -121,8 +142,10 @@ try {
     expect(errors).toEqual([]);
     if (variant === "after") {
       await page.goto(`${root}/admin/system`, { waitUntil: "networkidle" });
-      await page.getByRole("navigation", { name: "System sections" }).getByRole("link", { name: "Logs", exact: true }).click();
+      await page.getByRole("button", { name: "Admin profile" }).click();
+      await page.getByRole("link", { name: "Audit Logs", exact: true }).click();
       await expect(page).toHaveURL(`${root}/admin/logs`);
+      await expect(page.getByRole("navigation", { name: "System sections" })).toHaveCount(0);
       await page.getByRole("link", { name: /unread admin alerts/ }).click();
       await expect(page).toHaveURL(`${root}/admin/notifications`);
       await expect(page.getByRole("navigation", { name: "System sections" })).toHaveCount(0);

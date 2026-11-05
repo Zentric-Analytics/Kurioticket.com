@@ -3,7 +3,7 @@ import test from "node:test";
 
 import { adminNavigation, adminNavigationGroups, getAdminNavForRole, getAdminHeaderGroups, isAdminNavItemActive } from "@/lib/adminNavigation";
 
-const originalLabels = ["Overview", "Users", "Providers", "Search Activity", "Trips", "Trip monitoring", "Content", "Flights", "Hotels", "Cars", "Support", "Deletion Requests", "Logs", "System", "CMS Health", "Email Delivery", "Notifications & Alerts", "Settings", "Homepage Fare Operations"];
+const originalLabels = ["Overview", "Users", "Providers", "Search Activity", "Trips", "Trip monitoring", "Content", "Flights", "Hotels", "Cars", "Support", "Deletion Requests", "Audit Logs", "System", "CMS Health", "Email Delivery", "Notifications & Alerts", "Settings", "Homepage Fare Operations"];
 
 test("admin navigation restores the original flat module order", () => {
   assert.deepEqual(adminNavigation.map((item) => item.label), originalLabels);
@@ -25,7 +25,7 @@ test("admin navigation exposes parent workspaces in the header", () => {
 
 test("admin navigation preserves role restrictions", () => {
   assert.deepEqual(getAdminNavForRole("SUPPORT"), []);
-  assert.deepEqual(getAdminNavForRole("ADMIN").filter((item) => item.parentHref).map((item) => [item.label, item.parentHref]), [["Trip monitoring", "/admin/confirmed-trips"], ["Flights", "/admin/providers"], ["Hotels", "/admin/providers"], ["Cars", "/admin/providers"], ["Deletion Requests", "/admin/support"], ["Logs", "/admin/system"], ["CMS Health", "/admin/system"], ["Email Delivery", "/admin/system"], ["Homepage Fare Operations", "/admin/settings"]]);
+  assert.deepEqual(getAdminNavForRole("ADMIN").filter((item) => item.parentHref).map((item) => [item.label, item.parentHref]), [["Trip monitoring", "/admin/confirmed-trips"], ["Flights", "/admin/providers"], ["Hotels", "/admin/providers"], ["Cars", "/admin/providers"], ["Deletion Requests", "/admin/support"], ["Homepage Fare Operations", "/admin/settings"]]);
   assert.deepEqual(getAdminNavForRole("USER"), []);
 });
 
@@ -55,13 +55,23 @@ test("horizontal admin navigation keeps child routes under parent workspaces", (
   assert.deepEqual(providers?.children.map((item) => item.href), ["/admin/flights", "/admin/hotels", "/admin/cars"]);
   assert.deepEqual(trips?.children.map((item) => item.href), ["/admin/confirmed-trips/monitoring"]);
   assert.deepEqual(support?.children.map((item) => item.href), ["/admin/account-deletions"]);
-  assert.deepEqual(system?.children.map((item) => item.href), ["/admin/logs", "/admin/system/cms-health", "/admin/email-delivery"]);
+  assert.deepEqual(system?.children.map((item) => item.href), []);
   assert.deepEqual(settings?.children.map((item) => item.href), ["/admin/homepage-fares"]);
   assert.equal(entries.some(({ item }) => item.href === "/admin/redirects"), false);
   assert.equal(entries.some(({ item }) => item.href === "/admin/flights"), false);
   const supportEntries = getAdminHeaderGroups("SUPPORT").flatMap((group) => group.links);
   assert.deepEqual(supportEntries.map(({ item }) => item.label), []);
   assert.deepEqual(getAdminHeaderGroups("USER"), []);
+});
+
+
+test("Audit Logs, CMS Health and Email Delivery remain reachable without System child tabs", () => {
+  for (const href of ["/admin/logs", "/admin/system/cms-health", "/admin/email-delivery"]) {
+    const item = getAdminNavForRole("ADMIN").find(entry => entry.href === href);
+    assert.ok(item);
+    assert.equal(item.parentHref, undefined);
+  }
+  assert.equal(getAdminNavForRole("ADMIN").find(item => item.href === "/admin/logs")?.label, "Audit Logs");
 });
 
 test("global Alerts remains discoverable without belonging to a System tab or highlighting System", () => {
