@@ -13,7 +13,7 @@ const cmsHealthGroups = [
 ] as const;
 
 const tableHeadingClass = "px-3 py-3 text-left text-[12px] font-medium uppercase text-[#475569]";
-const tableCellClass = "px-3 py-3 align-top text-[13px] text-[#020617]";
+const tableCellClass = "px-3 py-3 align-middle text-[13px] text-[#020617]";
 
 const cmsLocaleDisplayNames =
   typeof Intl.DisplayNames === "function"
@@ -139,11 +139,11 @@ export default async function AdminCmsHealthPage() {
                       <summary className="flex cursor-pointer list-none flex-col gap-2 py-3.5 marker:content-none sm:flex-row sm:items-center sm:justify-between [&::-webkit-details-marker]:hidden">
                         <div className="min-w-0">
                           <p className="text-[13px] font-semibold text-[#020617]">{group.label}</p>
-                          <p className="mt-1 text-[12px] text-[#64748B]">
+                          <p className="mt-0.5 text-[12px] text-[#64748B]">
                             {entries.length} record{entries.length === 1 ? "" : "s"} · {healthy} healthy · {needsAttention} need{needsAttention === 1 ? "s" : ""} attention
                           </p>
                         </div>
-                        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 sm:justify-end">
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 sm:justify-end">
                           <CmsStatusIndicator
                             label={needsAttention ? `${needsAttention} need attention` : "Healthy"}
                             tone={needsAttention ? "warn" : "good"}
@@ -151,21 +151,29 @@ export default async function AdminCmsHealthPage() {
                           <span className="text-[12px] text-[#64748B]">
                             {fallbackRetired} fallback retired
                           </span>
-                          <span aria-hidden="true" className="text-[16px] leading-none text-[#64748B] transition-transform group-open:rotate-180">⌄</span>
+                          <span aria-hidden="true" className="text-[14px] leading-none text-[#64748B] transition-transform group-open:rotate-180">⌄</span>
                         </div>
                       </summary>
 
                       <div className="border-t border-[#E7ECF5]">
                         <div className="overflow-x-auto">
-                          <table className="w-full min-w-[980px] table-fixed text-left text-[13px]">
-                            <thead className="border-b border-[#D8E1EC] text-[#475569]">
+                          <table className="w-full min-w-[980px] table-fixed text-[13px]">
+                            <colgroup>
+                              <col className="w-[22%]" />
+                              <col className="w-[13%]" />
+                              <col className="w-[24%]" />
+                              <col className="w-[14%]" />
+                              <col className="w-[12%]" />
+                              <col className="w-[15%]" />
+                            </colgroup>
+                            <thead className="border-b border-[#D8E1EC]">
                               <tr>
-                                <th className="w-[22%] px-3 py-3 font-semibold">CMS market</th>
-                                <th className="w-[13%] px-3 py-3 font-semibold">Health</th>
-                                <th className="w-[24%] px-3 py-3 font-semibold">Integrity</th>
-                                <th className="w-[14%] px-3 py-3 font-semibold">Legacy fallback</th>
-                                <th className="w-[12%] px-3 py-3 font-semibold">Draft changes</th>
-                                <th className="w-[15%] px-3 py-3 font-semibold">Actions</th>
+                                <th scope="col" className={tableHeadingClass}>CMS market</th>
+                                <th scope="col" className={tableHeadingClass}>Health</th>
+                                <th scope="col" className={tableHeadingClass}>Integrity</th>
+                                <th scope="col" className={tableHeadingClass}>Legacy fallback</th>
+                                <th scope="col" className={tableHeadingClass}>Draft changes</th>
+                                <th scope="col" className={tableHeadingClass}>Actions</th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-[#E7ECF5]">
@@ -214,7 +222,7 @@ export default async function AdminCmsHealthPage() {
                                     <td className={tableCellClass}>
                                       {integrity.legacyFallbackRetired ? "Retired" : "Available"}
                                     </td>
-                                    <td className="px-3 py-4 text-[#334155]">
+                                    <td className={tableCellClass}>
                                       {integrity.unpublishedChanges === 0
                                         ? "None"
                                         : `${integrity.unpublishedChanges} change${integrity.unpublishedChanges === 1 ? "" : "s"}`}
