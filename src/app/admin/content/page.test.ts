@@ -54,7 +54,7 @@ test("homepage fare operations are separated from content, system and settings",
   assert.doesNotMatch(contentPage, /HomepageFaresRefreshCard/);
   assert.doesNotMatch(systemPage, /HomepageFaresRefreshCard/);
   assert.doesNotMatch(settingsPage, /HomepageFaresRefreshCard/);
-  assert.match(settingsPage, /Platform controls/);
+  assert.match(settingsPage, /Feature controls/);
   assert.match(homepageFarePage, /title="Homepage Fare Operations"/);
   assert.match(homepageFarePage, /HomepageFaresRefreshCard/);
   assert.match(homepageFarePage, /href="\/admin\/settings"/);
