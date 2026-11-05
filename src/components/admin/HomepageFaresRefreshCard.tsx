@@ -584,37 +584,9 @@ export function HomepageFaresRefreshCard() {
   const marketsNeedingAnotherRun = latestCounts?.marketsNeedingAnotherRun ?? statusPayload.marketsNeedingAnotherRun;
 
   return (
-    <section className="space-y-5">
+    <section className="space-y-4">
       <Card className="overflow-hidden p-0">
-        <div className="border-b border-border bg-gradient-to-br from-white via-slate-50 to-sky-50/60 p-5">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-            <div>
-              <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-teal-dark">
-                Homepage fare operations
-              </p>
-              <h2 className="mt-2 text-2xl font-extrabold text-navy">
-                Homepage fare readiness dashboard
-              </h2>
-              <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">
-                Monitor provider-backed homepage fare coverage by public market, fallback pool,
-                route health, refresh state, and underfill cause without changing pricing logic.
-              </p>
-            </div>
-            {initialStatusLoading ? (
-              <span className="inline-flex w-fit rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-extrabold text-navy">
-                Loading status…
-              </span>
-            ) : statusPayload.dataAvailable ? (
-              <GlobalReadinessBadge status={statusPayload.displayReadiness.globalReadinessStatus} />
-            ) : (
-              <span className="inline-flex w-fit rounded-full border border-red-100 bg-red-50 px-3 py-2 text-sm font-extrabold text-danger">
-                Telemetry unavailable
-              </span>
-            )}
-          </div>
-        </div>
-
-        <div className="space-y-5 p-5">
+        <div className="space-y-4 p-4 sm:p-5">
           {statusState.error ? (
             <p className="rounded-xl bg-red-50 p-3 text-sm font-semibold text-danger">
               {statusState.error}
@@ -627,9 +599,9 @@ export function HomepageFaresRefreshCard() {
           ) : null}
 
           <DashboardSection
-            eyebrow="Homepage fare status summary"
-            title="Global readiness at a glance"
-            description="Public readiness excludes fallback-only regional and global pools, so internal 0/0 coverage rows do not make the homepage look ready."
+            eyebrow="Readiness"
+            title="Readiness overview"
+            description="Customer-facing homepage fare health across public markets."
           >
             {initialStatusLoading ? (
               <p className="mt-4 rounded-xl border border-border bg-slate-50 p-4 text-sm font-semibold text-muted">
@@ -638,20 +610,12 @@ export function HomepageFaresRefreshCard() {
             ) : statusPayload.dataAvailable ? (
               <DisplayReadinessSummary readiness={statusPayload.displayReadiness} />
             ) : null}
-            <dl className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
-              <SummaryMetricCard label="Global homepage readiness" value={statusPayload.dataAvailable ? formatGlobalReadinessStatus(statusPayload.displayReadiness.globalReadinessStatus) : "Unavailable"} tone={statusPayload.dataAvailable ? readinessTone(statusPayload.displayReadiness.globalReadinessStatus) : "danger"} />
-              <SummaryMetricCard label="Fresh provider-backed fares" value={statusPayload.dataAvailable ? statusPayload.summary.fresh : "Unavailable"} tone={statusPayload.dataAvailable ? "good" : "danger"} />
-              <SummaryMetricCard label="Last-known-good fares" value={statusPayload.dataAvailable ? statusPayload.summary.last_known_good : "Unavailable"} tone={statusPayload.dataAvailable ? "info" : "danger"} />
+            <dl className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+              <SummaryMetricCard label="Fresh fares" value={statusPayload.dataAvailable ? statusPayload.summary.fresh : "Unavailable"} tone={statusPayload.dataAvailable ? "good" : "danger"} />
+              <SummaryMetricCard label="Last-known-good" value={statusPayload.dataAvailable ? statusPayload.summary.last_known_good : "Unavailable"} tone={statusPayload.dataAvailable ? "info" : "danger"} />
               <SummaryMetricCard label="Missing routes" value={statusPayload.dataAvailable ? statusPayload.summary.missing : "Unavailable"} tone={!statusPayload.dataAvailable ? "danger" : statusPayload.summary.missing ? "warning" : "neutral"} />
-              <SummaryMetricCard label="Failed routes" value={statusPayload.dataAvailable ? statusPayload.summary.failed : "Unavailable"} tone={!statusPayload.dataAvailable ? "danger" : statusPayload.summary.failed ? "danger" : "neutral"} />
-              <SummaryMetricCard label="Unavailable routes" value={statusPayload.dataAvailable ? statusPayload.summary.unavailable : "Unavailable"} tone={!statusPayload.dataAvailable ? "danger" : statusPayload.summary.unavailable ? "warning" : "neutral"} />
-              <SummaryMetricCard label="Timeout count" value={statusPayload.dataAvailable ? timeoutCount : "Unavailable"} tone={!statusPayload.dataAvailable ? "danger" : timeoutCount ? "warning" : "neutral"} />
-              <SummaryMetricCard label="Provider calls (manual run)" value={providerCallsUsed} />
-              <SummaryMetricCard label="Stopped reason" value={latestCounts ? formatStoppedReason(latestCounts.stoppedReason) : "No manual run yet"} />
-              <SummaryMetricCard label="Replacement candidates used" value={statusPayload.dataAvailable ? replacementCandidatesUsed : "Unavailable"} />
-              <SummaryMetricCard label="Markets needing another run" value={statusPayload.dataAvailable ? marketsNeedingAnotherRun.filter((market) => market.needed).length : "Unavailable"} tone={!statusPayload.dataAvailable ? "danger" : marketsNeedingAnotherRun.some((market) => market.needed) ? "warning" : "good"} />
-              <SummaryMetricCard label="Latest snapshot search" value={statusPayload.dataAvailable ? formatSnapshotTime(statusPayload.lastRefreshAt) : "Unavailable"} />
-              <SummaryMetricCard label="Cron credential" value={formatCronStatus(statusPayload)} tone={statusPayload.cronConfigured ? "info" : "warning"} />
+              <SummaryMetricCard label="Failed / unavailable" value={statusPayload.dataAvailable ? statusPayload.summary.failed + statusPayload.summary.unavailable : "Unavailable"} tone={!statusPayload.dataAvailable ? "danger" : statusPayload.summary.failed + statusPayload.summary.unavailable ? "warning" : "neutral"} />
+              <SummaryMetricCard label="Markets needing attention" value={statusPayload.dataAvailable ? marketsNeedingAnotherRun.filter((market) => market.needed).length : "Unavailable"} tone={!statusPayload.dataAvailable ? "danger" : marketsNeedingAnotherRun.some((market) => market.needed) ? "warning" : "good"} />
             </dl>
           </DashboardSection>
 
