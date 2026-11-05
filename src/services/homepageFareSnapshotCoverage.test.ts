@@ -473,3 +473,138 @@ test("replacement executor prefers same-market historical-success candidates", (
 
   assert.equal(replacements[0].id, sameMarketHistorical.id);
 });
+
+
+test("global readiness ignores fallback-only zero-target pools", () => {
+  const status = __homepageFareCoverageTest.getGlobalHomepageFareReadinessStatus({
+    US: {
+      marketCode: "US",
+      marketLabel: "United States",
+      marketGroup: "US",
+      marketVisibility: "country",
+      popularVisibleTarget: 8,
+      popularVisibleFresh: 0,
+      discoveryVisibleTarget: 15,
+      discoveryVisibleFresh: 0,
+      backupTarget: 3,
+      backupFresh: 0,
+      targetMet: false,
+      status: "underfilled",
+      routeAttempts: 0,
+      providerCalls: 0,
+      failed: 0,
+      unavailable: 0,
+      skippedCooldown: 0,
+      candidatePoolSize: 26,
+      freshCount: 0,
+      lastKnownGoodCount: 0,
+      missingCount: 26,
+      timeoutCount: 0,
+      replacementCandidatesUsed: 0,
+    },
+    AFRICA: {
+      marketCode: "AFRICA",
+      marketLabel: "Africa",
+      marketGroup: "Africa",
+      marketVisibility: "regional",
+      popularVisibleTarget: 0,
+      popularVisibleFresh: 0,
+      discoveryVisibleTarget: 0,
+      discoveryVisibleFresh: 0,
+      backupTarget: 0,
+      backupFresh: 0,
+      targetMet: true,
+      status: "ready",
+      routeAttempts: 0,
+      providerCalls: 0,
+      failed: 0,
+      unavailable: 0,
+      skippedCooldown: 0,
+      candidatePoolSize: 0,
+      freshCount: 0,
+      lastKnownGoodCount: 0,
+      missingCount: 0,
+      timeoutCount: 0,
+      replacementCandidatesUsed: 0,
+    },
+  } as never);
+
+  assert.equal(status, "not_ready");
+});
+
+test("display readiness never claims usable public fares when public visible fare count is zero", () => {
+  const readiness = __homepageFareCoverageTest.classifyHomepageFareDisplayReadiness(
+    [],
+    {
+      ...__homepageFareCoverageTest.getHomepageFareSmartRefreshBudget(),
+      popularVisibleTarget: 8,
+      discoverVisibleTarget: 15,
+    },
+    {
+      US: {
+        marketCode: "US",
+        marketLabel: "United States",
+        marketGroup: "US",
+        marketVisibility: "country",
+        popularVisibleTarget: 8,
+        popularVisibleFresh: 0,
+        discoveryVisibleTarget: 15,
+        discoveryVisibleFresh: 0,
+        backupTarget: 3,
+        backupFresh: 0,
+        targetMet: false,
+        status: "underfilled",
+        routeAttempts: 0,
+        providerCalls: 0,
+        failed: 0,
+        unavailable: 0,
+        skippedCooldown: 0,
+        candidatePoolSize: 26,
+        freshCount: 0,
+        lastKnownGoodCount: 0,
+        missingCount: 26,
+        timeoutCount: 0,
+        replacementCandidatesUsed: 0,
+      },
+    } as never,
+  );
+
+  assert.equal(readiness.globalReadinessStatus, "not_ready");
+  assert.equal(readiness.label, "Global homepage not ready");
+  assert.match(readiness.message, /not available/);
+});
+
+test("snapshot status derives next-run need from underfilled market targets", () => {
+  const metadata = __homepageFareCoverageTest.buildHomepageFareStatusUnderfillMetadata({
+    US: {
+      marketCode: "US",
+      marketLabel: "United States",
+      marketGroup: "US",
+      marketVisibility: "country",
+      popularVisibleTarget: 8,
+      popularVisibleFresh: 0,
+      discoveryVisibleTarget: 15,
+      discoveryVisibleFresh: 0,
+      backupTarget: 3,
+      backupFresh: 0,
+      targetMet: false,
+      status: "underfilled",
+      routeAttempts: 0,
+      providerCalls: 0,
+      failed: 0,
+      unavailable: 0,
+      skippedCooldown: 0,
+      candidatePoolSize: 26,
+      freshCount: 0,
+      lastKnownGoodCount: 0,
+      missingCount: 26,
+      timeoutCount: 0,
+      replacementCandidatesUsed: 0,
+    },
+  } as never);
+
+  assert.deepEqual(metadata.marketsNeedingAnotherRun, [
+    { market: "US", needed: true, reason: "underfilled" },
+  ]);
+  assert.equal(metadata.underfillCauseByMarket.US, "underfilled");
+});
