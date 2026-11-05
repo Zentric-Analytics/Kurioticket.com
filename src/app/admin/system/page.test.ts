@@ -34,6 +34,17 @@ test("system status uses a compact summary-attention-system-areas hierarchy", ()
   assert.match(systemPage, /Configuration only/);
   assert.match(systemPage, /CMS diagnostics/);
   assert.match(systemPage, /Separate check/);
+
+  // System Status follows the Providers table typography and compact status treatment.
+  assert.match(systemPage, /function StatusIndicator/);
+  assert.match(systemPage, /inline-flex items-center gap-1\.5 text-\[12px\] font-medium/);
+  assert.match(systemPage, /h-1\.5 w-1\.5 shrink-0 rounded-full/);
+  assert.match(systemPage, /px-3 py-3 text-\[12px\] font-medium uppercase text-\[#475569\]/);
+  assert.match(systemPage, /text-\[13px\] font-semibold text-\[#020617\]/);
+  assert.match(systemPage, /text-\[12px\] text-\[#475569\]\}\>\{service\.signal\}/);
+  assert.match(systemPage, /info: \{ text: "text-\[#004BB8\]", dot: "bg-\[#004BB8\]" \}/);
+  assert.doesNotMatch(systemPage, /AdminStatusBadge/);
+  assert.doesNotMatch(systemPage, /text-\[11px\].*uppercase/);
   assert.doesNotMatch(systemPage, /Expand a row for what is actually verified/);
   assert.match(systemPage, /<details key=\{service\.id\}/);
   assert.match(systemPage, /Open Email Delivery/);
