@@ -113,15 +113,8 @@ export default async function AdminCmsHealthPage() {
               </p>
             </section>
           ) : (
-            <section aria-labelledby="cms-areas-heading" className="border-b border-[#D8E1EC] pb-6 pt-6">
-              <div>
-                <h2 id="cms-areas-heading" className="text-[15px] font-semibold text-[#020617]">CMS areas</h2>
-                <p className="mt-0.5 text-[12px] text-[#64748B]">
-                  Expand an area to review individual records and diagnostics.
-                </p>
-              </div>
-
-              <div className="mt-2 border-y border-[#D8E1EC]">
+            <section aria-label="CMS area diagnostics" className="border-b border-[#D8E1EC] pb-6 pt-4">
+              <div className="border-y border-[#D8E1EC]">
                 {cmsHealthGroups.map((group) => {
                   const entries = overview.scopes.filter((entry) => entry.type === group.type);
                   if (entries.length === 0) return null;
