@@ -28,6 +28,8 @@ import {
 const ACK_ACTION = "ADMIN_ALERT_ACKNOWLEDGED";
 const ACK_TARGET_TYPE = "AdminOperationalAlert";
 const ACK_WINDOW_MS = 24 * 60 * 60 * 1_000;
+const DISMISS_ACTION = "ADMIN_ALERT_DISMISSED";
+const DISMISS_TARGET_TYPE = "AdminOperationalAlertDismissal";
 const CANDIDATE_CACHE_TTL_MS = 30_000;
 const TELEMETRY_STATE_ACTION = "ADMIN_ALERT_TELEMETRY_STATE";
 const TELEMETRY_STATE_TARGET_TYPE = "AdminOperationalTelemetry";
@@ -139,11 +141,15 @@ async function getAdminOperationalAlerts(
     now,
     forceRefreshCandidates,
   );
-  const acknowledgements = adminUserId
-    ? await readRecentAcknowledgements(adminUserId, candidates, now)
-    : new Map<string, string>();
+  const [acknowledgements, dismissals] = adminUserId
+    ? await Promise.all([
+        readRecentAcknowledgements(adminUserId, candidates, now),
+        readDismissedAlerts(adminUserId, candidates, now),
+      ])
+    : [new Map<string, string>(), new Set<string>()] as const;
 
   return candidates
+    .filter(candidate => !dismissals.has(adminAlertDismissalKey(candidate.key, candidate.signalToken)))
     .map((candidate) => {
       const ackKey = acknowledgementKey(candidate.key, candidate.signalToken);
       const acknowledgedAt = acknowledgements.get(ackKey) ?? null;
@@ -548,6 +554,39 @@ export const adminAlertAcknowledgement = {
   targetType: ACK_TARGET_TYPE,
   windowMs: ACK_WINDOW_MS,
 };
+
+// A deletion belongs to this admin and this exact occurrence in this environment.
+// Keeping its durable state in the existing audit store leaves the incident itself intact.
+export function adminAlertDismissalKey(alertKey: string, signalToken: string) {
+  return createHash("sha256").update(JSON.stringify([getPublicEnvironment(), alertKey, signalToken])).digest("hex");
+}
+
+export const adminAlertDismissal = {
+  action: DISMISS_ACTION,
+  targetType: DISMISS_TARGET_TYPE,
+};
+
+async function readDismissedAlerts(adminUserId: string, candidates: AdminAlertCandidate[], now: Date): Promise<Set<string>> {
+  const db = getOptionalPrisma();
+  if (!db || candidates.length === 0) return new Set();
+  try {
+    const rows = await db.adminAuditLog.findMany({
+      where: {
+        adminUserId,
+        action: DISMISS_ACTION,
+        targetType: DISMISS_TARGET_TYPE,
+        targetId: { in: candidates.map(candidate => adminAlertDismissalKey(candidate.key, candidate.signalToken)) },
+        createdAt: { lte: now },
+      },
+      select: { targetId: true },
+      distinct: ["targetId"],
+    });
+    return new Set(rows.flatMap(row => row.targetId ? [row.targetId] : []));
+  } catch (error) {
+    console.error("[admin-alerts:dismissals]", error);
+    return new Set();
+  }
+}
 
 async function readRecentAcknowledgements(
   adminUserId: string,
