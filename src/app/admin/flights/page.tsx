@@ -5,37 +5,31 @@ import {
   AdminEmptyState,
   AdminMetricCard,
   AdminPageShell,
-  AdminProviderStatusCard,
   AdminSectionCard,
   AdminStatusBadge,
 } from "@/components/admin/AdminPageShell";
-import { formatDateTime, getProviderStatuses } from "@/lib/admin-data";
+import { formatDateTime } from "@/lib/admin-data";
 import { getFlightOperationsSnapshot } from "@/services/adminFlightOperationsService";
-import { getProviderIntegrationStatuses } from "@/services/travel/providerIntegrationStatus";
 
 export const metadata = { title: "Admin Flight Operations" };
 
 export default async function AdminFlightsPage() {
-  const [providerStatuses, operations, integrations] = await Promise.all([
-    getProviderStatuses(),
-    getFlightOperationsSnapshot(),
-    Promise.resolve(getProviderIntegrationStatuses()),
-  ]);
-
-  const flight = providerStatuses.find((provider) => provider.product === "Flights");
-  const flightIntegrations = integrations.filter((provider) => provider.products.includes("FLIGHTS"));
+  const operations = await getFlightOperationsSnapshot();
 
   return (
     <AdminPageShell
       title="Flight Operations"
-      description="Monitor flight-search health, provider readiness, operational exceptions and recent outcomes from recorded production-safe telemetry. Booking completion and live flight status remain separate provider-confirmed systems."
+      description="Monitor flight-search health, route-level exceptions and recent outcomes from recorded production-safe telemetry. Provider health is managed in Providers, while homepage fare readiness remains a separate flight workspace."
       actions={
         <div className="flex flex-wrap gap-2">
-          <Link href="/admin/searches?product=FLIGHT" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">
+          <Link href="/admin/searches/activity?product=FLIGHT" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">
             View flight searches
           </Link>
-          <Link href="/admin/journeys?product=FLIGHT" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">
-            View flight journeys
+          <Link href="/admin/providers?product=flights" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">
+            View flight providers
+          </Link>
+          <Link href="/admin/homepage-fares" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">
+            Homepage fare operations
           </Link>
         </div>
       }
@@ -53,51 +47,20 @@ export default async function AdminFlightsPage() {
           <AdminEmptyState title="Flight telemetry unavailable" message="The current environment could not return flight-search telemetry. No zero values were invented." />
         )}
 
-        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
-          {flight ? <AdminProviderStatusCard {...flight} /> : null}
-
-          <AdminSectionCard className="p-5">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-              <div>
-                <h2 className="font-black text-slate-950">Flight provider health</h2>
-                <p className="mt-1 text-sm leading-6 text-slate-600">
-                  Configuration readiness and flight-search-only provider-call health for integrations that can serve flight search.
-                </p>
-              </div>
-              <AdminStatusBadge tone="info">Current environment</AdminStatusBadge>
+        <AdminSectionCard className="p-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h2 className="font-black text-slate-950">Related flight operations</h2>
+              <p className="mt-1 text-sm leading-6 text-slate-600">
+                Provider readiness and provider-call diagnostics live in Providers. Homepage fare coverage and refresh controls live in Homepage Fare Operations.
+              </p>
             </div>
-
-            <div className="mt-4 grid gap-3 lg:grid-cols-2">
-              {flightIntegrations.map((integration) => {
-                const health = operations?.providerHealth.find((provider) => provider.id === integration.id);
-                return (
-                  <div key={integration.id} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="font-black text-slate-950">{integration.provider}</p>
-                        <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-slate-500">{integration.environment}</p>
-                      </div>
-                      <AdminStatusBadge tone={integration.state === "READY" ? "good" : integration.state === "ENVIRONMENT_BLOCKED" ? "warn" : "neutral"}>
-                        {integration.state.replaceAll("_", " ")}
-                      </AdminStatusBadge>
-                    </div>
-                    <div className="mt-4 grid gap-2 text-sm sm:grid-cols-2">
-                      <Stat label="Search" value={integration.searchEnabled ? "Enabled" : "Not enabled"} />
-                      <Stat label="Handoff" value={integration.externalHandoffEnabled ? "Enabled" : "Not enabled"} />
-                      <Stat label="Calls (24h)" value={health ? String(health.totalCalls) : "—"} />
-                      <Stat label="Degraded (24h)" value={health ? String(health.degradedCalls) : "—"} />
-                      <Stat label="Failed (24h)" value={health ? String(health.failedCalls) : "—"} />
-                      <Stat label="Avg latency" value={health?.averageLatencyMs === null || health?.averageLatencyMs === undefined ? "—" : health.averageLatencyMs + " ms"} />
-                      <Stat label="Last issue" value={health?.lastIssueAt ? formatDateTime(new Date(health.lastIssueAt)) : "—"} />
-                      <Stat label="Last failure" value={health?.lastFailureAt ? formatDateTime(new Date(health.lastFailureAt)) : "—"} />
-                    </div>
-                    <p className="mt-3 text-xs leading-5 text-slate-500">{integration.note}</p>
-                  </div>
-                );
-              })}
+            <div className="flex flex-wrap gap-3 text-sm font-black">
+              <Link href="/admin/providers?product=flights" className="text-indigo-700 hover:text-indigo-900">Open Providers</Link>
+              <Link href="/admin/homepage-fares" className="text-indigo-700 hover:text-indigo-900">Open Homepage Fare Operations</Link>
             </div>
-          </AdminSectionCard>
-        </div>
+          </div>
+        </AdminSectionCard>
 
         {operations ? (
           <AdminSectionCard className="p-5">
@@ -142,69 +105,36 @@ export default async function AdminFlightsPage() {
         ) : null}
 
         {operations ? (
-          <div className="grid gap-4 xl:grid-cols-2">
-            <AdminSectionCard className="p-5">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <h2 className="font-black text-slate-950">Routes needing attention</h2>
-                  <p className="mt-1 text-sm leading-6 text-slate-600">Highest-volume routes with failed, partial or zero-result searches in this window.</p>
-                </div>
-                <AdminStatusBadge tone={operations.routeIssues.length ? "warn" : "good"}>{operations.routeIssues.length ? "Exceptions found" : "Clear"}</AdminStatusBadge>
+          <AdminSectionCard className="p-5">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 className="font-black text-slate-950">Routes needing attention</h2>
+                <p className="mt-1 text-sm leading-6 text-slate-600">Highest-volume routes with failed, partial or zero-result searches in this window.</p>
               </div>
-              {operations.routeIssues.length ? (
-                <div className="mt-4 divide-y divide-slate-100">
-                  {operations.routeIssues.map((route, index) => (
-                    <div key={(route.origin || "unknown") + "-" + (route.destination || "unknown") + "-" + index} className="flex items-center justify-between gap-4 py-3">
-                      <div>
-                        <p className="font-black text-slate-950">{route.origin || "—"}{route.destination ? " → " + route.destination : ""}</p>
-                        <p className="mt-1 text-xs font-semibold text-slate-500">{route.lastIssueAt ? "Last issue " + formatDateTime(new Date(route.lastIssueAt)) : "No timestamp"}</p>
-                      </div>
-                      <AdminStatusBadge tone="warn">{route.issueCount} {route.issueCount === 1 ? "exception" : "exceptions"}</AdminStatusBadge>
+              <AdminStatusBadge tone={operations.routeIssues.length ? "warn" : "good"}>{operations.routeIssues.length ? "Exceptions found" : "Clear"}</AdminStatusBadge>
+            </div>
+            {operations.routeIssues.length ? (
+              <div className="mt-4 divide-y divide-slate-100">
+                {operations.routeIssues.map((route, index) => (
+                  <div key={(route.origin || "unknown") + "-" + (route.destination || "unknown") + "-" + index} className="flex items-center justify-between gap-4 py-3">
+                    <div>
+                      <p className="font-black text-slate-950">{route.origin || "—"}{route.destination ? " → " + route.destination : ""}</p>
+                      <p className="mt-1 text-xs font-semibold text-slate-500">{route.lastIssueAt ? "Last issue " + formatDateTime(new Date(route.lastIssueAt)) : "No timestamp"}</p>
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="mt-4 rounded-xl bg-slate-50 p-3 text-sm text-slate-600">No route-level flight search exceptions were recorded in this window.</p>
-              )}
-            </AdminSectionCard>
-
-            <AdminSectionCard className="p-5">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <h2 className="font-black text-slate-950">Provider exceptions</h2>
-                  <p className="mt-1 text-sm leading-6 text-slate-600">Recent degraded or failed flight-search provider calls. Raw provider error payloads are not exposed.</p>
-                </div>
-                <Link href="/admin/providers?product=flights" className="text-sm font-black text-indigo-700 hover:text-indigo-900">Providers</Link>
+                    <AdminStatusBadge tone="warn">{route.issueCount} {route.issueCount === 1 ? "exception" : "exceptions"}</AdminStatusBadge>
+                  </div>
+                ))}
               </div>
-              {operations.providerIssues.length ? (
-                <div className="mt-4 divide-y divide-slate-100">
-                  {operations.providerIssues.map((issue) => (
-                    <div key={issue.id} className="py-3">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="font-black text-slate-950">{issue.provider}</p>
-                          <p className="mt-1 text-xs font-semibold text-slate-500">{formatDateTime(new Date(issue.createdAt))}</p>
-                        </div>
-                        <AdminStatusBadge tone={issue.status === "FAILED" ? "bad" : "warn"}>{issue.status}</AdminStatusBadge>
-                      </div>
-                      <div className="mt-2 flex flex-wrap gap-2 text-xs font-semibold text-slate-600">
-                        <span className="rounded-lg bg-slate-50 px-2.5 py-1.5">{issue.category}</span>
-                        <span className="rounded-lg bg-slate-50 px-2.5 py-1.5">{issue.latencyMs === null ? "Latency unavailable" : issue.latencyMs + " ms"}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="mt-4 rounded-xl bg-slate-50 p-3 text-sm text-slate-600">No degraded or failed flight-search provider calls were recorded in this window.</p>
-              )}
-            </AdminSectionCard>
-          </div>
+            ) : (
+              <p className="mt-4 rounded-xl bg-slate-50 p-3 text-sm text-slate-600">No route-level flight search exceptions were recorded in this window.</p>
+            )}
+          </AdminSectionCard>
         ) : null}
 
         <AdminSectionCard className="p-5">
           <h2 className="font-black text-slate-950">Operational boundaries</h2>
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            Flight Operations reports recorded search and provider health only. A provider handoff is not a booking confirmation, and search data is not used to infer live flight status.
+            Flight Operations reports recorded flight-search health only. Provider readiness belongs to Providers, a provider handoff is not a booking confirmation, and search data is not used to infer live flight status.
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
             <AdminStatusBadge tone="info">Search operations live</AdminStatusBadge>
@@ -221,7 +151,7 @@ export default async function AdminFlightsPage() {
                   <h2 className="font-black text-slate-950">Recent flight searches</h2>
                   <p className="mt-1 text-sm text-slate-600">Latest recorded flight searches in this environment.</p>
                 </div>
-                <Link href="/admin/searches?product=FLIGHT" className="text-sm font-black text-indigo-700 hover:text-indigo-900">View all</Link>
+                <Link href="/admin/searches/activity?product=FLIGHT" className="text-sm font-black text-indigo-700 hover:text-indigo-900">View all</Link>
               </div>
               <AdminDataTable
                 columns={["Created", "Route", "Results", "Latency", "Status", "Action"]}
@@ -245,8 +175,4 @@ export default async function AdminFlightsPage() {
       </div>
     </AdminPageShell>
   );
-}
-
-function Stat({ label, value }: { label: string; value: string }) {
-  return <div className="rounded-lg bg-white px-3 py-2"><p className="text-xs font-black uppercase tracking-wide text-slate-500">{label}</p><p className="mt-1 font-semibold text-slate-900">{value}</p></div>;
 }
