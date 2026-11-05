@@ -10,7 +10,6 @@ const featureService = readFileSync("src/lib/feature-controls/service.ts", "utf8
 const fareRefreshApi = readFileSync("src/app/api/admin/homepage-fares/refresh/route.ts", "utf8");
 
 test("settings exposes real persisted controls rather than fake toggles", () => {
-  assert.match(settingsPage, /Manage platform controls and operational configuration/);
   assert.match(settingsPage, />Feature controls<\/h2>/);
   assert.match(settingsPage, />Operations<\/h2>/);
   assert.match(settingsPage, />Configuration ownership<\/h2>/);
@@ -67,13 +66,13 @@ test("homepage fare operations preserve the existing audited mutation path", () 
 });
 
 
-test("settings shows truthful operator context without exposing secret configuration", () => {
-  assert.match(settingsPage, /aria-label="Environment and access"/);
-  assert.match(settingsPage, /label="Control store"/);
-  assert.match(settingsPage, /label="Your access"/);
-  assert.match(settingsPage, /label="Production"/);
+test("settings starts directly with feature controls while keeping permission logic underneath", () => {
+  assert.match(settingsPage, /<AdminPageShell title="Settings" hideHeader>/);
+  assert.doesNotMatch(settingsPage, /aria-label="Environment and access"|ContextItem|Store available|Can edit Staging|Can edit Production|Manage platform controls and operational configuration/);
   assert.match(settingsPage, /featureControls\.dataAvailable/);
   assert.match(settingsPage, /canControlProduction/);
+  assert.match(settingsPage, /environment=\{featureControls\.environment\}/);
+  assert.match(settingsPage, /operationsAvailable=\{featureControls\.dataAvailable\}/);
   assert.match(settingsPage, /recentControlUpdates/);
   assert.match(settingsPage, /No persisted control updates yet/);
   assert.doesNotMatch(settingsPage, /updatedBy|change reason|admin email address/i);
@@ -131,6 +130,7 @@ test("feature-control network failures remain retryable without closing the dial
 
 test("settings uses a single administrative workspace instead of dashboard cards", () => {
   assert.match(settingsPage, /<AdminSectionCard className="overflow-hidden p-0">/);
+  assert.match(settingsPage, /<section aria-labelledby="feature-controls-heading" className="px-4 py-5 sm:px-5">/);
   assert.equal((settingsPage.match(/<AdminSectionCard/g) || []).length, 1);
   assert.match(settingsPage, /border-t border-slate-200 px-4 py-5/);
   assert.doesNotMatch(settingsPage, /SummaryItem|Recent control updates|Related operations|Deployment-owned configuration|Change safeguards/);
