@@ -22,11 +22,11 @@ test("page headers no longer repeat System and Logs navigation", () => {
     assert.doesNotMatch(page, /actions=\{|Back to System|View audit logs|href="\/admin\/logs"|href="\/admin\/system"/);
   }
 });
-test("Settings retains operational controls but not duplicate ownership-panel links", () => {
+test("Settings retains feature controls without owning flight fare operations", () => {
   const page = source("src/app/admin/settings/page.tsx");
   assert.doesNotMatch(page, /linkLabel|View system status|View admin configuration status/);
   assert.match(page, /FeatureControlsPanel/);
-  assert.match(page, /href="\/admin\/homepage-fares"/);
+  assert.doesNotMatch(page, /Homepage Fare Operations|href="\/admin\/homepage-fares"/);
   assert.match(page, /canControlProduction/);
 });
 test("useful actions, access guards, emergency checks and the global bell remain intact", () => {

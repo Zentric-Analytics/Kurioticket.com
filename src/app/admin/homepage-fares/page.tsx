@@ -11,8 +11,8 @@ export default function AdminHomepageFareOperationsPage() {
       title="Homepage Fare Operations"
       actions={
         <div className="flex flex-wrap gap-2">
-          <Link href="/admin/settings" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">
-            Settings
+          <Link href="/admin/content/homepage" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">
+            Homepage content
           </Link>
           <Link href="/admin/flights" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">
             Flight operations

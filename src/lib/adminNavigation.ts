@@ -34,7 +34,7 @@ export type AdminNavDefinition = {
 
 export const adminNavigationGroups = [
   { label: "Operations", hrefs: ["/admin", "/admin/users", "/admin/searches/activity", "/admin/confirmed-trips", "/admin/support"] },
-  { label: "Provider readiness", hrefs: ["/admin/providers"] },
+  { label: "Provider readiness", hrefs: ["/admin/providers", "/admin/flights"] },
   { label: "Website content", hrefs: ["/admin/content"] },
   { label: "System & security", hrefs: ["/admin/system", "/admin/settings"] },
 ] as const;
@@ -58,7 +58,7 @@ export const adminNavigation: AdminNavDefinition[] = [
   { href: "/admin/email-delivery", label: "Email Delivery", icon: Mail, roles: ["ADMIN"], section: "controls", description: "Monitor transactional email delivery health and test sending readiness." },
   { href: "/admin/notifications", label: "Notifications & Alerts", icon: Bell, roles: ["ADMIN"], section: "controls", description: "Review active internal operational alerts and acknowledgement state." },
   { href: "/admin/settings", label: "Settings", icon: Settings, roles: ["ADMIN"], section: "controls", description: "Manage authoritative persisted platform controls." },
-  { href: "/admin/homepage-fares", parentHref: "/admin/settings", label: "Homepage Fare Operations", icon: Activity, roles: ["ADMIN"], section: "controls", description: "Monitor and refresh provider-backed homepage fare readiness." },
+  { href: "/admin/homepage-fares", parentHref: "/admin/flights", label: "Homepage Fare Operations", icon: Activity, roles: ["ADMIN"], section: "readiness", description: "Monitor and refresh provider-backed homepage fare readiness." },
 ];
 
 export function isAdminNavItemActive(itemHref: string, pathname: string) {

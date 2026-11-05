@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { getServerSession } from "next-auth";
 
 import {
@@ -42,20 +41,6 @@ export default async function AdminSettingsPage() {
             canControlProduction={canControlProduction}
             operationsAvailable={featureControls.dataAvailable}
           />
-        </section>
-
-        <section aria-labelledby="settings-operations-heading" className="border-t border-slate-200 px-4 py-5 sm:px-5">
-          <h2 id="settings-operations-heading" className="text-[15px] font-semibold text-slate-950">Operations</h2>
-          <div className="mt-3 flex min-w-0 items-center justify-between gap-4 py-1">
-            <h3 className="min-w-0 text-[13px] font-semibold text-slate-900">Homepage Fare Operations</h3>
-            <Link
-              href="/admin/homepage-fares"
-              aria-label="Open fare operations"
-              className="inline-flex h-8 shrink-0 items-center rounded-md border border-slate-200 bg-white px-3 text-[12px] font-semibold text-indigo-700 hover:border-slate-300 hover:bg-slate-50"
-            >
-              Open
-            </Link>
-          </div>
         </section>
 
         <section aria-labelledby="configuration-ownership-heading" className="border-t border-slate-200 px-4 py-5 sm:px-5">
