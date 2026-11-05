@@ -645,8 +645,6 @@ export function HomepageFaresRefreshCard() {
               <DiagnosticsPanel
                 markets={statusPayload.marketReadinessSummary}
                 marketsNeedingAnotherRun={marketsNeedingAnotherRun}
-                candidatePoolHealth={statusPayload.candidatePoolHealth}
-                publicPriceDiagnostics={statusPayload.publicPriceDiagnostics}
                 stoppedReason={latestCounts?.stoppedReason}
               />
 
@@ -811,13 +809,6 @@ function RefreshCronPanel({
   const providerCallsUsed = refreshState.counts
     ? refreshState.counts.providerCalls
     : "No run yet";
-  const replacementCandidatesUsed = refreshState.counts
-    ? sumCountRecord(refreshState.counts.replacementCandidatesUsedByMarket)
-    : sumCountRecord(statusPayload.replacementCandidatesUsedByMarket);
-  const timeoutCount = refreshState.counts
-    ? sumCountRecord(refreshState.counts.timeoutByMarket)
-    : sumCountRecord(statusPayload.timeoutByMarket);
-
   return (
     <DashboardSection
       eyebrow="Operations"
@@ -970,14 +961,10 @@ function MarketReadinessDashboard({
 function DiagnosticsPanel({
   markets,
   marketsNeedingAnotherRun,
-  candidatePoolHealth,
-  publicPriceDiagnostics,
   stoppedReason,
 }: {
   markets: MarketReadiness[];
   marketsNeedingAnotherRun: MarketNextRunNeed[];
-  candidatePoolHealth: HomepageFareStatusSummary;
-  publicPriceDiagnostics: Record<PublicPriceDiagnosis, number>;
   stoppedReason?: RefreshStoppedReason;
 }) {
   const issueMarkets = markets
@@ -1106,8 +1093,8 @@ function AdvancedDiagnostics({
             <MetricCard label="Fresh used publicly" value={statusPayload.publicPriceDiagnostics.fresh_available} />
             <MetricCard label="LKG used publicly" value={statusPayload.publicPriceDiagnostics.last_known_good_used} />
             <MetricCard label="Exact route mismatch" value={statusPayload.publicPriceDiagnostics.exact_route_mismatch} />
-            <MetricCard label="Replacement candidates" value={sumCountRecord(statusPayload.replacementCandidatesUsedByMarket)} />
-            <MetricCard label="Timeouts" value={sumCountRecord(statusPayload.timeoutByMarket)} />
+            <MetricCard label="Replacement candidates" value={refreshCounts ? sumCountRecord(refreshCounts.replacementCandidatesUsedByMarket) : sumCountRecord(statusPayload.replacementCandidatesUsedByMarket)} />
+            <MetricCard label="Timeouts" value={refreshCounts ? sumCountRecord(refreshCounts.timeoutByMarket) : sumCountRecord(statusPayload.timeoutByMarket)} />
             <MetricCard label="Scheduler cadence" value={statusPayload.nextExpectedCronRefresh ?? "Not provided"} />
             <MetricCard label="Scheduler verification" value="Not observable from this service" />
             <MetricCard label="Visible gaps attempted" value={refreshCounts?.visibleGapsAttempted.length ?? 0} />
