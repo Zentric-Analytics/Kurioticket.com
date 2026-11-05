@@ -13,9 +13,7 @@ type ServiceItem = {
   status: string;
   tone: StatusTone;
   signal: string;
-  detail: string;
-  configured?: string;
-  verification: string;
+  verification?: string;
   adminDetails?: { allowlist: string; configuredAdministrators: number };
   href?: string;
   actionLabel?: string;
@@ -36,6 +34,73 @@ function StatusIndicator({ value, tone }: { value: string; tone: StatusTone }) {
       <span aria-hidden="true" className={"h-1.5 w-1.5 shrink-0 rounded-full " + style.dot} />
       {value}
     </span>
+  );
+}
+
+function SystemAreaRow({ service }: { service: ServiceItem }) {
+  const rowContent = (
+    <>
+      <div className="min-w-0">
+        <span className="text-[13px] font-semibold text-[#020617]">{service.name}</span>
+      </div>
+      <div className="min-w-0">
+        <StatusIndicator value={service.status} tone={service.tone} />
+      </div>
+      <p className="text-[12px] text-[#475569]">{service.signal}</p>
+    </>
+  );
+
+  const hasDetails = Boolean(service.href || service.adminDetails);
+  if (!hasDetails) {
+    return (
+      <div className="grid gap-2 px-3 py-3 md:grid-cols-[minmax(150px,1.1fr)_minmax(170px,0.9fr)_minmax(170px,1fr)_80px] md:items-center md:gap-4">
+        {rowContent}
+        <span aria-hidden="true" />
+      </div>
+    );
+  }
+
+  return (
+    <details className="group">
+      <summary className="grid cursor-pointer list-none gap-2 px-3 py-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] md:grid-cols-[minmax(150px,1.1fr)_minmax(170px,0.9fr)_minmax(170px,1fr)_80px] md:items-center md:gap-4 [&::-webkit-details-marker]:hidden">
+        {rowContent}
+        <span className="text-[12px] font-medium text-[#004BB8] md:text-right">
+          <span className="group-open:hidden">View ›</span>
+          <span className="hidden group-open:inline">Hide ‹</span>
+        </span>
+      </summary>
+
+      <div className="border-t border-[#EEF2F7] px-3 py-3">
+        {service.adminDetails ? (
+          <div className="grid max-w-[900px] gap-x-8 gap-y-3 sm:grid-cols-3">
+            <div className="min-w-0">
+              <p className="text-[12px] text-[#64748B]">Administrator allowlist</p>
+              <p className="mt-1 text-[13px] text-[#020617]">{service.adminDetails.allowlist}</p>
+            </div>
+            <div className="min-w-0">
+              <p className="text-[12px] text-[#64748B]">Configured administrators</p>
+              <p className="mt-1 text-[13px] tabular-nums text-[#020617]">{service.adminDetails.configuredAdministrators}</p>
+            </div>
+            <div className="min-w-0">
+              <p className="text-[12px] text-[#64748B]">Verification</p>
+              <p className="mt-1 text-[13px] text-[#020617]">{service.verification}</p>
+            </div>
+          </div>
+        ) : (
+          <div className="flex max-w-[780px] flex-wrap items-end gap-x-10 gap-y-3">
+            <div className="min-w-[220px]">
+              <p className="text-[12px] text-[#64748B]">Verification</p>
+              <p className="mt-1 text-[13px] text-[#020617]">{service.verification}</p>
+            </div>
+            {service.href ? (
+              <Link href={service.href} className="inline-flex text-[13px] font-medium text-[#004BB8] hover:underline">
+                {service.actionLabel} ›
+              </Link>
+            ) : null}
+          </div>
+        )}
+      </div>
+    </details>
   );
 }
 
@@ -87,11 +152,6 @@ export default async function AdminSystemPage() {
       status: databaseLabel,
       tone: system.databaseConnected ? "good" : "bad",
       signal: "Live connectivity check",
-      detail: system.databaseConnected
-        ? "A database query completed successfully for this System Status request."
-        : "The database connectivity check did not succeed for this System Status request.",
-      configured: system.databaseConfigured ? "Configured" : "Not configured",
-      verification: "Direct database query",
     },
     {
       id: "authentication",
@@ -99,9 +159,6 @@ export default async function AdminSystemPage() {
       status: system.authConfigured ? "Configured" : "Not configured",
       tone: system.authConfigured ? "info" : "warn",
       signal: "Configuration only",
-      detail: "This row verifies authentication configuration presence only. It does not prove that sign-in requests are succeeding.",
-      configured: system.authConfigured ? "Configured" : "Not configured",
-      verification: "Server configuration presence",
     },
     {
       id: "email",
@@ -109,8 +166,6 @@ export default async function AdminSystemPage() {
       status: system.emailConfigured ? "Configured" : "Incomplete",
       tone: system.emailConfigured ? "info" : "warn",
       signal: "Configuration only",
-      detail: "Email credentials are checked for configuration presence here. Delivery outcomes and test-email diagnostics live on Email Delivery.",
-      configured: system.emailConfigured ? "Configured" : "Not configured",
       verification: "Server configuration presence",
       href: "/admin/email-delivery",
       actionLabel: "Open Email Delivery",
@@ -121,8 +176,6 @@ export default async function AdminSystemPage() {
       status: system.providerCredentialsPresent ? "Configured" : "Not configured",
       tone: system.providerCredentialsPresent ? "info" : "warn",
       signal: "Configuration only",
-      detail: "Provider credential presence is not provider health. Provider readiness, operational telemetry and retests live on Providers.",
-      configured: system.providerCredentialsPresent ? "Credentials detected" : "No credentials detected",
       verification: "Provider configuration presence",
       href: "/admin/providers",
       actionLabel: "Open Providers",
@@ -133,7 +186,6 @@ export default async function AdminSystemPage() {
       status: "Separate check",
       tone: "neutral",
       signal: "CMS diagnostics",
-      detail: "CMS integrity and repair diagnostics are maintained on the dedicated CMS Health page; this page does not duplicate or infer that state.",
       verification: "CMS Health diagnostics",
       href: "/admin/system/cms-health",
       actionLabel: "Open CMS Health",
@@ -144,7 +196,6 @@ export default async function AdminSystemPage() {
       status: system.adminEmailsConfigured ? "Configured" : "Not configured",
       tone: system.adminEmailsConfigured ? "info" : "warn",
       signal: "Configuration only",
-      detail: "Managed in deployment configuration; this row reports allowlist presence and configured administrator count without exposing administrator addresses.",
       verification: "Server configuration presence",
       adminDetails: {
         allowlist: system.adminEmailsConfigured ? "Configured" : "Not configured",
@@ -217,56 +268,7 @@ export default async function AdminSystemPage() {
 
             <div className="divide-y divide-[#E7ECF5]">
               {serviceRows.map((service) => (
-                <details key={service.id} className="group">
-                  <summary className="grid cursor-pointer list-none gap-2 px-3 py-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] md:grid-cols-[minmax(150px,1.1fr)_minmax(170px,0.9fr)_minmax(170px,1fr)_80px] md:items-center md:gap-4 [&::-webkit-details-marker]:hidden">
-                    <div className="min-w-0">
-                      <span className="text-[13px] font-semibold text-[#020617]">{service.name}</span>
-                    </div>
-                    <div className="min-w-0">
-                      <StatusIndicator value={service.status} tone={service.tone} />
-                    </div>
-                    <p className="text-[12px] text-[#475569]">{service.signal}</p>
-                    <span className="text-[12px] font-medium text-[#004BB8] md:text-right">
-                      <span className="group-open:hidden">View ›</span>
-                      <span className="hidden group-open:inline">Hide ‹</span>
-                    </span>
-                  </summary>
-
-                  <div className="border-t border-[#EEF2F7] px-3 pb-3.5 pt-3">
-                    <div className={"grid max-w-[1100px] gap-x-8 gap-y-3 sm:grid-cols-2 " + (service.adminDetails ? "lg:grid-cols-4" : "lg:grid-cols-3")}>
-                      {service.adminDetails ? (
-                        <>
-                          <div className="min-w-0">
-                            <p className="text-[12px] text-[#64748B]">Administrator allowlist</p>
-                            <p className="mt-1 text-[13px] text-[#020617]">{service.adminDetails.allowlist}</p>
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-[12px] text-[#64748B]">Configured administrators</p>
-                            <p className="mt-1 text-[13px] tabular-nums text-[#020617]">{service.adminDetails.configuredAdministrators}</p>
-                          </div>
-                        </>
-                      ) : service.configured ? (
-                        <div className="min-w-0">
-                          <p className="text-[12px] text-[#64748B]">Configuration</p>
-                          <p className="mt-1 text-[13px] text-[#020617]">{service.configured}</p>
-                        </div>
-                      ) : null}
-                      <div className="min-w-0">
-                        <p className="text-[12px] text-[#64748B]">Verification</p>
-                        <p className="mt-1 text-[13px] text-[#020617]">{service.verification}</p>
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-[12px] text-[#64748B]">Meaning</p>
-                        <p className="mt-1 text-[12px] leading-5 text-[#475569]">{service.detail}</p>
-                      </div>
-                    </div>
-                    {service.href ? (
-                      <Link href={service.href} className="mt-3 inline-flex text-[13px] font-medium text-[#004BB8] hover:underline">
-                        {service.actionLabel} ›
-                      </Link>
-                    ) : null}
-                  </div>
-                </details>
+                <SystemAreaRow key={service.id} service={service} />
               ))}
             </div>
           </div>
