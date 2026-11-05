@@ -72,10 +72,10 @@ export default async function AdminFlightsPage() {
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
-                <Link href="/admin/searches?product=FLIGHT&status=FAILED" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">
+                <Link href="/admin/searches/activity?product=FLIGHT&status=FAILED" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">
                   Failed searches
                 </Link>
-                <Link href="/admin/searches?product=FLIGHT&status=PARTIAL" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">
+                <Link href="/admin/searches/activity?product=FLIGHT&status=PARTIAL" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">
                   Partial searches
                 </Link>
               </div>
