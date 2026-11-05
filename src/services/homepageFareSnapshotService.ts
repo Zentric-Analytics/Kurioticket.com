@@ -213,6 +213,8 @@ export type HomepageFareSnapshotStatusResponse = {
   unavailableByMarket: Record<string, number>;
   skippedCooldownByMarket: Record<string, number>;
   replacementCandidatesUsedByMarket: Record<string, number>;
+  marketsNeedingAnotherRun: HomepageFareMarketNextRunNeed[];
+  underfillCauseByMarket: Record<string, HomepageFareUnderfillCause>;
   lastRefreshAt?: string;
   cronConfigured: boolean;
   nextExpectedCronRefresh?: string;
@@ -821,7 +823,12 @@ function getGlobalHomepageFareReadinessStatus(
 ): HomepageFareGlobalReadinessStatus {
   const requiredTargets = HOMEPAGE_FARE_REFRESH_MARKETS
     .map((market) => marketTargets[market])
-    .filter((target): target is HomepageFareMarketTarget => Boolean(target));
+    .filter(
+      (target): target is HomepageFareMarketTarget =>
+        Boolean(target) &&
+        target.marketVisibility === "country" &&
+        target.popularVisibleTarget + target.discoveryVisibleTarget > 0,
+    );
 
   if (!requiredTargets.length) return "not_ready";
   if (requiredTargets.every((target) => target.targetMet)) return "ready";
@@ -845,6 +852,27 @@ function buildHomepageFareMarketReadinessSummary(
     market,
     ...marketTargets[market],
   })).filter((target) => Boolean(target.marketCode)) as HomepageFareMarketReadinessSummary[];
+}
+
+function buildHomepageFareStatusUnderfillMetadata(
+  marketTargets: Record<string, HomepageFareMarketTarget>,
+) {
+  const underfillCauseByMarket = Object.fromEntries(
+    Object.entries(marketTargets).map(([market, target]) => [
+      market,
+      target.targetMet ? "none" : "underfilled",
+    ]),
+  ) as Record<string, HomepageFareUnderfillCause>;
+
+  const marketsNeedingAnotherRun = Object.entries(marketTargets).map(
+    ([market, target]) => ({
+      market,
+      needed: !target.targetMet,
+      reason: underfillCauseByMarket[market] ?? "underfilled",
+    }),
+  );
+
+  return { underfillCauseByMarket, marketsNeedingAnotherRun };
 }
 
 
@@ -3035,6 +3063,8 @@ export async function readHomepageFareSnapshotStatus({
       refreshBudget,
       marketTargets,
     );
+    const { underfillCauseByMarket, marketsNeedingAnotherRun } =
+      buildHomepageFareStatusUnderfillMetadata(marketTargets);
 
     return {
       dataAvailable,
@@ -3073,6 +3103,8 @@ export async function readHomepageFareSnapshotStatus({
       unavailableByMarket: createEmptyRefreshMarketCounts(),
       skippedCooldownByMarket: createEmptyRefreshMarketCounts(),
       replacementCandidatesUsedByMarket: createEmptyRefreshMarketCounts(),
+      marketsNeedingAnotherRun,
+      underfillCauseByMarket,
       cronConfigured: Boolean(process.env.HOMEPAGE_FARES_CRON_SECRET),
       nextExpectedCronRefresh: process.env.HOMEPAGE_FARES_CRON_SCHEDULE_NOTE,
     };
@@ -3218,6 +3250,8 @@ export async function readHomepageFareSnapshotStatus({
   const underfilledMarkets = Object.entries(marketTargets)
     .filter(([, target]) => !target.targetMet)
     .map(([market, target]) => ({ market, ...target }));
+  const { underfillCauseByMarket, marketsNeedingAnotherRun } =
+    buildHomepageFareStatusUnderfillMetadata(marketTargets);
 
   return {
     dataAvailable,
@@ -3249,6 +3283,8 @@ export async function readHomepageFareSnapshotStatus({
     unavailableByMarket,
     skippedCooldownByMarket: emptyMarketCounts,
     replacementCandidatesUsedByMarket,
+    marketsNeedingAnotherRun,
+    underfillCauseByMarket,
     lastRefreshAt,
     cronConfigured: Boolean(process.env.HOMEPAGE_FARES_CRON_SECRET),
     nextExpectedCronRefresh: process.env.HOMEPAGE_FARES_CRON_SCHEDULE_NOTE,
@@ -3607,7 +3643,7 @@ function classifyHomepageFareDisplayReadiness(
       status: "warning",
       label: "Global homepage partially ready",
       message:
-        "At least one market has fresh provider-backed homepage fares, but market coverage is incomplete.",
+        "At least one public market has usable provider-backed homepage fares, but market coverage is incomplete.",
       globalReadinessStatus:
         globalReadinessStatus === "not_ready" ? "partial" : globalReadinessStatus,
       popularFresh,
@@ -4065,4 +4101,7 @@ export const __homepageFareCoverageTest = {
   hasHomepageFareDateFallbackPayload,
   isExactProviderResultForHomepageFareSnapshot,
   updateHomepageFareUnderfillExecutionMetadata,
+  getGlobalHomepageFareReadinessStatus,
+  classifyHomepageFareDisplayReadiness,
+  buildHomepageFareStatusUnderfillMetadata,
 };
