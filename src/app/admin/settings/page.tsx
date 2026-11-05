@@ -35,12 +35,7 @@ export default async function AdminSettingsPage() {
     <AdminPageShell title="Settings" hideHeader>
       <AdminSectionCard className="overflow-hidden p-0">
         <section aria-labelledby="feature-controls-heading" className="px-4 py-5 sm:px-5">
-          <div className="mb-4">
-            <h2 id="feature-controls-heading" className="text-[15px] font-semibold text-slate-950">Feature controls</h2>
-            <p className="mt-1 text-[12px] leading-5 text-slate-600">
-              Turn major travel functions on or off. Every change requires confirmation.
-            </p>
-          </div>
+          <h2 id="feature-controls-heading" className="mb-4 text-[15px] font-semibold text-slate-950">Feature controls</h2>
           <FeatureControlsPanel
             initialControls={featureControls.controls}
             environment={featureControls.environment}
@@ -52,10 +47,7 @@ export default async function AdminSettingsPage() {
         <section aria-labelledby="settings-operations-heading" className="border-t border-slate-200 px-4 py-5 sm:px-5">
           <h2 id="settings-operations-heading" className="text-[15px] font-semibold text-slate-950">Operations</h2>
           <div className="mt-3 flex min-w-0 items-center justify-between gap-4 py-1">
-            <div className="min-w-0">
-              <h3 className="text-[13px] font-semibold text-slate-900">Homepage Fare Operations</h3>
-              <p className="mt-1 text-[12px] leading-5 text-slate-600">Provider-backed homepage fare readiness and refresh.</p>
-            </div>
+            <h3 className="min-w-0 text-[13px] font-semibold text-slate-900">Homepage Fare Operations</h3>
             <Link
               href="/admin/homepage-fares"
               aria-label="Open fare operations"
@@ -91,10 +83,7 @@ export default async function AdminSettingsPage() {
         </section>
 
         <section aria-labelledby="recent-settings-changes-heading" className="border-t border-slate-200 px-4 py-5 sm:px-5">
-          <div className="flex items-center justify-between gap-3">
-            <h2 id="recent-settings-changes-heading" className="text-[15px] font-semibold text-slate-950">Recent changes</h2>
-            <span className="text-[11px] font-medium text-slate-500">Persisted feature state</span>
-          </div>
+          <h2 id="recent-settings-changes-heading" className="text-[15px] font-semibold text-slate-950">Recent changes</h2>
           {recentControlUpdates.length ? (
             <div className="mt-3 overflow-hidden rounded-lg border border-slate-200">
               <div className="hidden grid-cols-[minmax(0,1fr)_110px_140px] gap-4 bg-slate-50 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.06em] text-slate-500 sm:grid">
@@ -119,19 +108,6 @@ export default async function AdminSettingsPage() {
           )}
         </section>
 
-        <footer className="border-t border-slate-200 bg-slate-50/60 px-4 py-3 sm:px-5">
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] leading-5 text-slate-600">
-            <span className="font-semibold text-slate-800">Protected changes</span>
-            <span aria-hidden="true">•</span>
-            <span>Audited</span>
-            <span aria-hidden="true">•</span>
-            <span>Production authorization</span>
-            <span aria-hidden="true">•</span>
-            <span>Recent reauthentication</span>
-            <span aria-hidden="true">•</span>
-            <span>No secrets exposed</span>
-          </div>
-        </footer>
       </AdminSectionCard>
     </AdminPageShell>
   );

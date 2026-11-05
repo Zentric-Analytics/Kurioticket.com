@@ -14,6 +14,16 @@ type Control = {
   state: { enabled: boolean; updatedAt: string | null };
 };
 
+
+const controlRowSummaries: Record<FeatureControlKey, string> = {
+  FLIGHT_SEARCH_ENABLED: "Controls flight search availability.",
+  HOTEL_SEARCH_ENABLED: "Controls hotel search availability.",
+  CAR_SEARCH_ENABLED: "Controls car search availability.",
+  DEALS_ENABLED: "Controls Deals availability.",
+  PRICE_ALERTS_ENABLED: "Controls price-alert creation and reactivation.",
+  PRICE_ALERT_PROCESSING_ENABLED: "Controls automatic price checks and alert delivery.",
+};
+
 export function FeatureControlsPanel({
   initialControls,
   environment,
@@ -129,7 +139,7 @@ export function FeatureControlsPanel({
                   >
                     <div className="min-w-0 sm:max-w-[72%]">
                       <h4 className="text-[13px] font-semibold text-slate-950">{control.name}</h4>
-                      <p className="mt-1 text-[12px] leading-5 text-slate-600">{control.description}</p>
+                      <p className="mt-1 text-[12px] leading-5 text-slate-600">{controlRowSummaries[control.key]}</p>
                       <p className="mt-1.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-slate-500">
                         {control.risk} · {control.kind}
                       </p>

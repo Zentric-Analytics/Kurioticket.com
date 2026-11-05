@@ -14,7 +14,6 @@ test("settings exposes real persisted controls rather than fake toggles", () => 
   assert.match(settingsPage, />Operations<\/h2>/);
   assert.match(settingsPage, />Configuration ownership<\/h2>/);
   assert.match(settingsPage, />Recent changes<\/h2>/);
-  assert.match(settingsPage, /Protected changes/);
   assert.match(settingsPage, /FeatureControlsPanel/);
   assert.match(settingsPage, /listFeatureControls\(\)/);
   assert.match(featureService, /featureFlag\.findMany/);
@@ -133,9 +132,8 @@ test("settings uses a single administrative workspace instead of dashboard cards
   assert.match(settingsPage, /<section aria-labelledby="feature-controls-heading" className="px-4 py-5 sm:px-5">/);
   assert.equal((settingsPage.match(/<AdminSectionCard/g) || []).length, 1);
   assert.match(settingsPage, /border-t border-slate-200 px-4 py-5/);
-  assert.doesNotMatch(settingsPage, /SummaryItem|Recent control updates|Related operations|Deployment-owned configuration|Change safeguards/);
+  assert.doesNotMatch(settingsPage, /SummaryItem|Recent control updates|Related operations|Deployment-owned configuration|Change safeguards|Protected changes|Persisted feature state|Turn major travel functions on or off/);
   assert.match(settingsPage, /Recent changes/);
-  assert.match(settingsPage, /Protected changes/);
 });
 
 test("feature controls render as settings rows with switches instead of status pills", () => {
@@ -146,4 +144,22 @@ test("feature controls render as settings rows with switches instead of status p
   assert.match(featurePanel, /Enabled/);
   assert.match(featurePanel, /Disabled/);
   assert.doesNotMatch(featurePanel, /formatChangedDate|Changed \$\{/);
+});
+
+test("settings keeps only concise production-facing helper copy", () => {
+  assert.doesNotMatch(settingsPage, /Turn major travel functions on or off\. Every change requires confirmation\./);
+  assert.doesNotMatch(settingsPage, /Provider-backed homepage fare readiness and refresh\./);
+  assert.doesNotMatch(settingsPage, /Persisted feature state/);
+  assert.doesNotMatch(settingsPage, /Protected changes|Production authorization|Recent reauthentication|No secrets exposed/);
+  assert.match(featurePanel, /Controls flight search availability\./);
+  assert.match(featurePanel, /Controls hotel search availability\./);
+  assert.match(featurePanel, /Controls car search availability\./);
+  assert.match(featurePanel, /Controls Deals availability\./);
+  assert.match(featurePanel, /Controls price-alert creation and reactivation\./);
+  assert.match(featurePanel, /Controls automatic price checks and alert delivery\./);
+});
+
+test("confirmation dialog keeps full registry descriptions even when settings rows are concise", () => {
+  assert.match(featurePanel, /controlRowSummaries\[control\.key\]/);
+  assert.match(featurePanel, /<p className="mt-3 text-\[13px\] leading-5 text-slate-600">\{pending\.control\.description\}<\/p>/);
 });
