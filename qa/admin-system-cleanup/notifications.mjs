@@ -66,10 +66,22 @@ export async function verifyNotificationPanel({ page, root, output, width }) {
   });
   let snapshot = makeSnapshot(105);
   let mode = "normal";
+  let holdNextPanel = false;
+  let heldStarted;
+  let releaseHeld;
+  const heldRequest = new Promise(resolve => { heldStarted = resolve; });
+  const heldResponse = new Promise(resolve => { releaseHeld = resolve; });
   let release;
   const gate = new Promise(resolve => { release = resolve; });
   const routePattern = /\/api\/admin\/notifications(?:\?.*)?$/;
   const handler = async route => {
+    if (holdNextPanel && route.request().url().includes("panel=1")) {
+      holdNextPanel = false;
+      const captured = snapshot;
+      heldStarted();
+      await heldResponse;
+      return route.fulfill({ json: captured });
+    }
     if (mode === "loading" && route.request().url().includes("panel=1")) await gate;
     if (mode === "error") return route.fulfill({ status: 503, json: { error: "Synthetic QA failure" } });
     const { alerts, ...summary } = snapshot;
@@ -128,7 +140,18 @@ export async function verifyNotificationPanel({ page, root, output, width }) {
     snapshot = { ...snapshot, unreadCount: 0, alerts: snapshot.alerts.map(alert => ({ ...alert, acknowledged: true })) };
     await route.fulfill({ json: { ok: true } });
   });
+  // An older poll must not swallow an acknowledgement invalidation.
+  holdNextPanel = true;
+  await page.evaluate(() => window.dispatchEvent(new Event("admin-alerts-updated")));
+  await heldRequest;
+  await expect(dialog.getByRole("button", { name: "Refresh notifications" })).toBeDisabled();
+  await page.evaluate(() => {
+    window.__notificationQaAckUpdated = false;
+    window.addEventListener("admin-alerts-updated", () => { window.__notificationQaAckUpdated = true; }, { once: true });
+  });
   await dialog.getByRole("button", { name: "Acknowledge", exact: true }).click();
+  await page.waitForFunction(() => window.__notificationQaAckUpdated === true);
+  releaseHeld();
   await expect(dialog.getByText("Acknowledged for 24 hours", { exact: true })).toBeVisible();
   await expect(bell).toHaveAttribute("aria-label", "Admin notifications");
   expect(posts).toHaveLength(1);
