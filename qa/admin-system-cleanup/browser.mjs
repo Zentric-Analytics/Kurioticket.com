@@ -59,6 +59,18 @@ try {
           await expect(main.getByText("Configuration only", { exact: true }).first()).toBeVisible();
           await expect(main.getByText("CMS diagnostics", { exact: true })).toBeVisible();
           await expect(main.getByText("Separate check", { exact: true })).toBeVisible();
+
+          const connectedStatus = main.getByText("Connected", { exact: true }).first();
+          await expect(connectedStatus).toHaveClass(/inline-flex/);
+          await expect(connectedStatus).toHaveClass(/text-\[12px\]/);
+          await expect(connectedStatus).toHaveClass(/font-medium/);
+          await expect(connectedStatus.locator("span").first()).toHaveClass(/h-1\.5/);
+          await expect(connectedStatus.locator("span").first()).toHaveClass(/w-1\.5/);
+          await expect(connectedStatus.locator("span").first()).toHaveClass(/rounded-full/);
+
+          const configuredStatus = main.getByText("Configured", { exact: true }).first();
+          await expect(configuredStatus).toHaveClass(/text-\[#004BB8\]/);
+          await expect(configuredStatus.locator("span").first()).toHaveClass(/bg-\[#004BB8\]/);
           await expect(main.getByText("Expand a row for what is actually verified.", { exact: true })).toHaveCount(0);
           await expect(main.locator("details")).toHaveCount(6);
 
