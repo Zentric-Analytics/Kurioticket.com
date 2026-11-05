@@ -28,16 +28,17 @@ test("homepage fare reload preserves snapshot-derived failure and unavailable co
 
 test("homepage fare operations does not present unknown executor history as zero", () => {
   assert.match(component, /Provider calls/);
-  assert.match(component, /No manual run in this session/);
+  assert.match(component, /No run yet/);
   assert.doesNotMatch(component, /label="Provider calls used"/);
 });
 
-test("homepage fare cron copy separates credential presence from scheduler verification", () => {
+test("homepage fare cron copy keeps the primary operator view concise while retaining advanced verification", () => {
   assert.match(component, /Cron/);
-  assert.match(component, /Scheduler cadence note/);
-  assert.match(component, /Scheduler verification/);
-  assert.match(component, /Not observable from this service/);
   assert.match(component, /Credential configured/);
+  assert.doesNotMatch(component, /<span>Scheduler verification not observable from this service<\/span>/);
+  assert.match(component, /MetricCard label="Scheduler cadence"/);
+  assert.match(component, /MetricCard label="Scheduler verification"/);
+  assert.match(component, /Not observable from this service/);
   assert.doesNotMatch(component, /label="Cron status"/);
 });
 
@@ -105,7 +106,7 @@ test("homepage fare readiness keeps only core customer-facing summary metrics", 
   assert.match(component, /label="Markets needing attention"/);
   assert.doesNotMatch(component, /SummaryMetricCard label="Provider calls \(manual run\)"/);
   assert.doesNotMatch(component, /SummaryMetricCard label="Cron credential"/);
-  assert.match(component, /CompactDetail label="Provider calls \(manual run\)"/);
+  assert.match(component, /CompactDetail label="Provider calls"/);
   assert.match(component, /formatCronStatus\(statusPayload\)/);
 });
 
@@ -151,7 +152,7 @@ test("route inspector uses compact select controls while preserving every route 
 });
 
 test("market diagnostics use structured rows instead of repeated prose cards", () => {
-  assert.match(component, /sm:grid-cols-\[minmax\(140px,1fr\)_110px_minmax\(220px,1\.5fr\)_100px\]/);
+  assert.match(component, /sm:grid-cols-\[minmax\(140px,1fr\)_110px_minmax\(220px,1\.5fr\)_120px\]/);
   assert.match(component, />Coverage gap<\/span>/);
   assert.match(component, />Next run<\/span>/);
   assert.match(component, /Popular \{market\.popularVisibleFresh\}\/\{market\.popularVisibleTarget\}/);
@@ -183,7 +184,7 @@ test("homepage fare readiness cannot be promoted by fallback-route freshness alo
 test("underfilled diagnostics never default missing next-run metadata to not required", () => {
   assert.match(component, /const nextRunNeeded = nextRun \? nextRun\.needed : !market\.targetMet/);
   assert.match(component, /<span className="block">Needed<\/span>/);
-  assert.match(component, /nextRunCause \? <span className="mt-0\.5 block text-\[10px\] font-semibold text-muted">\{formatUnderfillCause\(nextRunCause\)\}<\/span> : null/);
+  assert.match(component, /nextRunCause && nextRunCause !== "underfilled" \? <span className="mt-0\.5 block text-\[10px\] font-semibold text-muted">\{formatUnderfillCause\(nextRunCause\)\}<\/span> : null/);
 });
 
 test("homepage fare diagnostics use concise coverage rows with an action-oriented next-run state", () => {
@@ -194,18 +195,44 @@ test("homepage fare diagnostics use concise coverage rows with an action-oriente
   assert.match(component, /"Not required"/);
 });
 
-test("homepage fare diagnostics summary is horizontal instead of a tall sidebar", () => {
-  assert.match(component, /sm:grid-cols-2 lg:grid-cols-4/);
+test("homepage fare diagnostics keeps only operator-relevant signals in the main flow", () => {
+  assert.match(component, /sm:grid-cols-3/);
   assert.match(component, /label="Stopped reason"/);
   assert.match(component, /label="Provider budget"/);
   assert.match(component, /label="Route budget"/);
-  assert.match(component, /label="Candidate pool failed"/);
-  assert.doesNotMatch(component, /lg:grid-cols-\[minmax\(0,1fr\)_18rem\]/);
+  assert.doesNotMatch(component, /<CompactDetail label="Candidate pool failed"/);
+  assert.doesNotMatch(component, /<CompactDetail label="Fresh used publicly"/);
+  assert.match(component, /MetricCard label="Candidate pool failed"/);
+  assert.match(component, /MetricCard label="Fresh used publicly"/);
 });
 
 test("route inspector empty state stays compact", () => {
-  assert.match(component, /Select a market to inspect its routes, or choose All routes\./);
+  assert.match(component, /Select a market or All routes\./);
   assert.match(component, /mt-3 rounded-lg border border-dashed border-slate-300 bg-slate-50\/60 px-3 py-2\.5/);
   assert.doesNotMatch(component, /Route rows stay hidden until a market context is selected/);
   assert.doesNotMatch(component, /mt-5 rounded-2xl border border-dashed border-slate-300 bg-white\/55 p-6 text-center/);
+});
+
+test("homepage fare production view removes redundant explanatory copy", () => {
+  const page = readFileSync("src/app/admin/homepage-fares/page.tsx", "utf8");
+  assert.doesNotMatch(page, /Monitor and refresh provider-backed homepage fare coverage/);
+  assert.doesNotMatch(component, /Customer-facing homepage fare health across public markets/);
+  assert.doesNotMatch(component, /Refresh provider-backed homepage fares or reload the current snapshot status/);
+  assert.doesNotMatch(component, /Customer-facing country markets and their homepage coverage targets/);
+  assert.doesNotMatch(component, /Coverage gaps and executor signals for public markets that need attention/);
+  assert.doesNotMatch(component, /Select a market and status to inspect individual homepage fare routes/);
+});
+
+test("homepage fare primary market health suppresses repeated zero-value copy", () => {
+  assert.match(component, /market\.freshCount \?\? 0\) > 0/);
+  assert.match(component, /market\.missingCount \?\? 0\) > 0/);
+  assert.match(component, /market\.failed > 0/);
+  assert.match(component, /\.filter\(Boolean\)\.join\(" · "\) \|\| "No issues"/);
+  assert.doesNotMatch(component, /Fresh \{market\.freshCount \?\? 0\} · Missing \{market\.missingCount \?\? 0\} · Failed \{market\.failed\}/);
+});
+
+test("homepage fare readiness copy stays short and state-focused", () => {
+  assert.match(service, /message: "All public markets meet homepage fare targets\."/);
+  assert.match(service, /message: "Some public markets have usable fares; coverage is incomplete\."/);
+  assert.match(service, /message: "No fresh provider-backed fares available\."/);
 });
