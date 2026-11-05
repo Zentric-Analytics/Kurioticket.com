@@ -16,7 +16,7 @@ test("homepage fare status distinguishes loading, telemetry outage, and real mis
   assert.match(component, /initialStatusLoading/);
   assert.match(component, /telemetryUnavailable/);
   assert.match(component, /Telemetry unavailable/);
-  assert.match(component, /Coverage counts below are hidden rather than replaced with zeroes/);
+  assert.match(component, /Snapshot data could not be read; coverage counts are hidden/);
   assert.match(component, /operationsAvailable=\{statusPayload\.dataAvailable\}/);
 });
 
@@ -172,7 +172,7 @@ test("homepage fare status returns snapshot-derived next-run metadata before a m
 test("homepage fare global readiness excludes fallback-only pools from public readiness", () => {
   assert.match(service, /target\.marketVisibility === "country"/);
   assert.match(service, /target\.popularVisibleTarget \+ target\.discoveryVisibleTarget > 0/);
-  assert.match(service, /At least one public market has usable provider-backed homepage fares/);
+  assert.match(service, /Some public markets have usable fares; coverage is incomplete/);
   assert.doesNotMatch(service, /At least one market has fresh provider-backed homepage fares/);
 });
 
@@ -235,4 +235,13 @@ test("homepage fare readiness copy stays short and state-focused", () => {
   assert.match(service, /message: "All public markets meet homepage fare targets\."/);
   assert.match(service, /message: "Some public markets have usable fares; coverage is incomplete\."/);
   assert.match(service, /message: "No fresh provider-backed fares available\."/);
+});
+
+test("homepage fare operator warnings remain concise but truthful", () => {
+  assert.match(component, /Telemetry unavailable\. Snapshot data could not be read; coverage counts are hidden\./);
+  assert.match(component, /Manual refresh unavailable while the snapshot store is offline\./);
+  assert.match(component, /Cron credential not configured\./);
+  assert.match(component, /Configured · cadence missing/);
+  assert.doesNotMatch(component, /authoritative homepage fare snapshot store is unavailable/);
+  assert.doesNotMatch(component, /Set HOMEPAGE_FARES_CRON_SECRET before configuring an external scheduler/);
 });
