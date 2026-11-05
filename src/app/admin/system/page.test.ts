@@ -40,6 +40,8 @@ test("system status uses a compact summary-attention-system-areas hierarchy", ()
   assert.match(systemPage, /inline-flex items-center gap-1\.5 text-\[12px\] font-medium/);
   assert.match(systemPage, /h-1\.5 w-1\.5 shrink-0 rounded-full/);
   assert.match(systemPage, /px-3 py-3 text-\[12px\] font-medium uppercase text-\[#475569\]/);
+  assert.doesNotMatch(systemPage, /grid-cols-\[minmax\(150px,1\.1fr\)_minmax\(170px,0\.9fr\)_minmax\(170px,1fr\)_80px\]/);
+  assert.match(systemPage, /grid-cols-\[minmax\(150px,1\.1fr\)_minmax\(170px,0\.9fr\)_minmax\(170px,1fr\)_minmax\(150px,auto\)\]/);
   assert.match(systemPage, /text-\[13px\] font-semibold text-\[#020617\]/);
   assert.match(systemPage, /<p className="text-\[12px\] text-\[#475569\]">\{service\.signal\}<\/p>/);
   assert.match(systemPage, /info: \{ text: "text-\[#004BB8\]", dot: "bg-\[#004BB8\]" \}/);
