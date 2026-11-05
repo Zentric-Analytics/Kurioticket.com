@@ -3638,7 +3638,7 @@ function classifyHomepageFareDisplayReadiness(
     };
   }
 
-  if (globalReadinessStatus === "partial" || visibleFresh > 0) {
+  if (globalReadinessStatus === "partial") {
     return {
       status: "warning",
       label: "Global homepage partially ready",
