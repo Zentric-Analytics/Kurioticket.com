@@ -3616,7 +3616,6 @@ function classifyHomepageFareDisplayReadiness(
   );
   const publicFreshTarget =
     budget.popularVisibleTarget + budget.discoverVisibleTarget;
-  const visibleFresh = popularFresh + discoverDisplayedFresh;
   const globalReadinessStatus = marketTargets
     ? getGlobalHomepageFareReadinessStatus(marketTargets)
     : "not_ready";
