@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { ContentDirectoryToolbar } from "@/components/admin/ContentDirectoryToolbar";
-import { ContentPageFrame, ContentEmptyState, ContentMetric, ContentStatusPill } from "@/components/admin/ContentWorkspace";
+import { ContentPageFrame, ContentEmptyState, ContentStatusPill } from "@/components/admin/ContentWorkspace";
 import { FaqCmsInitializeButton } from "@/components/admin/FaqCmsInitializeButton";
 import { FaqCmsListClient } from "@/components/admin/FaqCmsListClient";
 import { CmsCreateLink } from "@/components/admin/CmsCreateLink";
@@ -74,15 +74,7 @@ export default async function AdminFaqCmsPage({ searchParams }: { searchParams: 
       backLabel="Back to Content"
       actions={summary.active ? <CmsCreateLink path="/admin/content/faqs/new" label="Add FAQ" /> : null}
     >
-      <div className="space-y-4">
-        <div className="grid gap-4 pb-3 sm:grid-cols-3 lg:grid-cols-5">
-          <ContentMetric label="Total" value={summary.total} />
-          <ContentMetric label="Published" value={summary.published} />
-          <ContentMetric label="Draft" value={summary.draft} />
-          <ContentMetric label="Hidden" value={summary.hidden} />
-          <ContentMetric label="Archived" value={summary.archived} />
-        </div>
-
+      <div>
         {!summary.available ? (
           <ContentEmptyState
             title="FAQ CMS unavailable"
