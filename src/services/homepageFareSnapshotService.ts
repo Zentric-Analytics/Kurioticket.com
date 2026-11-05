@@ -3624,8 +3624,7 @@ function classifyHomepageFareDisplayReadiness(
     return {
       status: "healthy",
       label: "Global homepage ready",
-      message:
-        "Every configured homepage market has enough fresh provider-backed fares to fill visible homepage pricing slots.",
+      message: "All public markets meet homepage fare targets.",
       globalReadinessStatus,
       popularFresh,
       popularTarget: budget.popularVisibleTarget,
@@ -3641,8 +3640,7 @@ function classifyHomepageFareDisplayReadiness(
     return {
       status: "warning",
       label: "Global homepage partially ready",
-      message:
-        "At least one public market has usable provider-backed homepage fares, but market coverage is incomplete.",
+      message: "Some public markets have usable fares; coverage is incomplete.",
       globalReadinessStatus,
       popularFresh,
       popularTarget: budget.popularVisibleTarget,
@@ -3657,8 +3655,7 @@ function classifyHomepageFareDisplayReadiness(
   return {
     status: "attention",
     label: "Global homepage not ready",
-    message:
-      "Fresh provider-backed fares are not available for configured homepage markets yet.",
+    message: "No fresh provider-backed fares available.",
     globalReadinessStatus,
     popularFresh,
     popularTarget: budget.popularVisibleTarget,
