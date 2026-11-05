@@ -4,7 +4,6 @@ import { getServerSession } from "next-auth";
 import {
   AdminPageShell,
   AdminSectionCard,
-  AdminStatusBadge,
 } from "@/components/admin/AdminPageShell";
 import { FeatureControlsPanel } from "@/components/admin/FeatureControlsPanel";
 import { authOptions } from "@/lib/auth";
@@ -20,21 +19,6 @@ function formatControlUpdateDate(value: string) {
   }).format(new Date(value));
 }
 
-function ContextItem({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
-  return (
-    <span className="inline-flex min-w-0 items-center gap-1.5 text-[12px] leading-5 text-slate-600">
-      <span className="font-medium text-slate-500">{label}</span>
-      <span className="font-semibold text-slate-900">{value}</span>
-    </span>
-  );
-}
-
 export default async function AdminSettingsPage() {
   const [featureControls, session] = await Promise.all([
     listFeatureControls(),
@@ -42,41 +26,15 @@ export default async function AdminSettingsPage() {
   ]);
   const currentEmail = session?.user?.email?.trim().toLowerCase() || "";
   const canControlProduction = getFeatureControlProductionAdmins().includes(currentEmail);
-  const currentAccess = !featureControls.dataAvailable
-    ? "Read only"
-    : featureControls.environment === "STAGING"
-      ? "Can edit Staging"
-      : canControlProduction
-        ? "Can edit Production"
-        : "View only";
   const recentControlUpdates = featureControls.controls
     .filter((control) => Boolean(control.state.updatedAt))
     .sort((a, b) => Date.parse(b.state.updatedAt || "") - Date.parse(a.state.updatedAt || ""))
     .slice(0, 4);
 
   return (
-    <AdminPageShell
-      title="Settings"
-      description="Manage platform controls and operational configuration."
-    >
+    <AdminPageShell title="Settings" hideHeader>
       <AdminSectionCard className="overflow-hidden p-0">
-        <section aria-label="Environment and access" className="px-4 py-4 sm:px-5">
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-slate-200 bg-slate-50/80 px-3 py-2.5">
-            <span className="inline-flex h-6 items-center rounded-md bg-slate-900 px-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-white">
-              {featureControls.environment === "STAGING" ? "Staging" : "Production"}
-            </span>
-            <ContextItem label="Control store" value={featureControls.dataAvailable ? "Available" : "Unavailable"} />
-            <ContextItem label="Your access" value={currentAccess} />
-            <ContextItem label="Production" value={canControlProduction ? "Authorized" : "Restricted"} />
-            <span className="ml-auto">
-              <AdminStatusBadge tone={featureControls.dataAvailable ? "good" : "warn"}>
-                {featureControls.dataAvailable ? "Store available" : "Read-only fallback"}
-              </AdminStatusBadge>
-            </span>
-          </div>
-        </section>
-
-        <section aria-labelledby="feature-controls-heading" className="border-t border-slate-200 px-4 py-5 sm:px-5">
+        <section aria-labelledby="feature-controls-heading" className="px-4 py-5 sm:px-5">
           <div className="mb-4">
             <h2 id="feature-controls-heading" className="text-[15px] font-semibold text-slate-950">Feature controls</h2>
             <p className="mt-1 text-[12px] leading-5 text-slate-600">
