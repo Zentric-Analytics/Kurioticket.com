@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { bindingExpression, jsxOpening, namedFunction } from "../../../test-support/sourceStructure";
 
 const settingsPage = readFileSync("src/app/admin/settings/page.tsx", "utf8");
 const homepageFarePage = readFileSync("src/app/admin/homepage-fares/page.tsx", "utf8");
@@ -8,6 +9,8 @@ const featurePanel = readFileSync("src/components/admin/FeatureControlsPanel.tsx
 const featureApi = readFileSync("src/app/api/admin/feature-controls/route.ts", "utf8");
 const featureService = readFileSync("src/lib/feature-controls/service.ts", "utf8");
 const fareRefreshApi = readFileSync("src/app/api/admin/homepage-fares/refresh/route.ts", "utf8");
+const toggle = () => jsxOpening(featurePanel, "button").find(button => button.getText().includes("aria-pressed={control.state.enabled}"))!.getText();
+const confirmation = () => jsxOpening(featurePanel, "button").find(button => button.getText().includes("onClick={submit}"))!.getText();
 
 test("settings exposes real persisted controls rather than fake toggles", () => {
   assert.match(settingsPage, /Manage persisted platform controls/);
@@ -47,7 +50,7 @@ test("feature-control mutations remain transactionally audited", () => {
 test("settings disables mutation when authoritative feature store is unavailable", () => {
   assert.match(settingsPage, /operationsAvailable=\{featureControls\.dataAvailable\}/);
   assert.match(featurePanel, /read-only fallback mode/);
-  assert.match(featurePanel, /disabled=\{!permitted\}/);
+  assert.match(toggle(), /disabled=\{!permitted \|\| saving\}/);
   assert.match(featureService, /dataAvailable = false/);
 });
 
@@ -92,7 +95,7 @@ test("settings feature controls remain grouped and mutation-safe after UI polish
   assert.match(featurePanel, /role="dialog"/);
   assert.match(featurePanel, /aria-modal="true"/);
   assert.match(featurePanel, /Reason \{environment === "PRODUCTION" \? "\(required\)" : "\(optional\)"\}/);
-  assert.match(featurePanel, /disabled=\{!permitted\}/);
+  assert.match(toggle(), /disabled=\{!permitted \|\| saving\}/);
   assert.match(featurePanel, /environment === "STAGING" \|\| canControlProduction/);
   assert.match(featurePanel, /type="button"/);
   assert.match(featurePanel, /Confirm change/);
@@ -106,7 +109,7 @@ test("feature-control interaction states stay explicit and safe", () => {
   assert.match(featurePanel, /event\.key === "Escape" && !saving/);
   assert.match(featurePanel, /disabled=\{saving\}[\s\S]*onClick=\{closePending\}/);
   assert.match(featurePanel, /aria-busy=\{saving\}/);
-  assert.match(featurePanel, /disabled=\{saving \|\| \(environment === "PRODUCTION" && !reason\.trim\(\)\)\}/);
+  assert.match(confirmation(), /disabled=\{saving \|\| !permitted \|\| \(environment === "PRODUCTION" && !reason\.trim\(\)\)\}/);
   assert.match(featurePanel, /disabled=\{saving\}[\s\S]*value=\{reason\}/);
 });
 
@@ -114,7 +117,9 @@ test("successful feature-control changes refresh from persisted server state", (
   assert.match(featureApi, /updatedAt: result\.state\.updatedAt\.toISOString\(\)/);
   assert.match(featurePanel, /typeof body\.updatedAt === "string" \? body\.updatedAt : control\.state\.updatedAt/);
   assert.match(featurePanel, /router\.refresh\(\)/);
-  assert.match(featurePanel, /setControls\(initialControls\)/);
+  assert.equal(bindingExpression(featurePanel, "serverScope"), "JSON.stringify([environment, canControlProduction, operationsAvailable, initialControls])");
+  assert.match(featurePanel, /if \(snapshot\.scope !== serverScope\) \{\s*setSnapshot\(\{ scope: serverScope, environment, controls: initialControls \}\)/);
+  assert.match(namedFunction(featurePanel, "submit"), /current\.scope !== serverScope \? current/);
   assert.doesNotMatch(featurePanel, /updatedAt: new Date\(\)\.toISOString\(\)/);
 });
 
@@ -124,5 +129,5 @@ test("feature-control network failures remain retryable without closing the dial
   assert.match(featurePanel, /The control could not be changed\. Please try again\./);
   assert.match(featurePanel, /finally \{/);
   assert.match(featurePanel, /setSaving\(false\)/);
-  assert.match(featurePanel, /if \(!pending \|\| saving\) return/);
+  assert.match(namedFunction(featurePanel, "submit"), /if \(!pending \|\| saving \|\| !permitted\) return/);
 });

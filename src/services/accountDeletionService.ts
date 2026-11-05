@@ -5,6 +5,7 @@ import { lockVisitorAccount } from "@/services/visitorActivityIdentity";
 import { sendTransactionalEmail, accountDeletionCancelledEmail, accountDeletionRequestAdminEmail, accountDeletionRequestEmail } from "@/services/emailService";
 import { createSupportTicket } from "@/services/supportService";
 import { recordAccountEventSafely } from "@/services/accountNotificationService";
+import { readWebDeletionRecoverySession } from "@/lib/web-deletion-recovery";
 
 const GRACE_DAYS = 7;
 
@@ -63,9 +64,8 @@ export async function requestAccountDeletion(input: { userId: string; email: str
   return { request, created: true };
 }
 
-export async function reactivateAccount(userId: string, email: string) {
+export async function reactivateAccount(userId: string, email: string, webSessionId?: string) {
   const db = getPrisma();
-  const now = new Date();
 
   const updated = await db.$transaction(async (tx) => {
     const account = await lockVisitorAccount(tx, userId);
@@ -84,13 +84,20 @@ export async function reactivateAccount(userId: string, email: string) {
 
     await tx.$queryRaw`SELECT "id" FROM "AccountDeletionRequest" WHERE "id" = ${request.id} FOR UPDATE`;
     const lockedRequest = await tx.accountDeletionRequest.findUnique({ where: { id: request.id } });
-    if (!lockedRequest || lockedRequest.status === "CANCELLED" || lockedRequest.completedAt) {
+    if (!lockedRequest || !["PENDING", "READY_FOR_REVIEW"].includes(lockedRequest.status) || lockedRequest.cancelledAt || lockedRequest.completedAt || lockedRequest.userId !== userId) {
       throw new Error("NoPendingRequest");
     }
+    const now = new Date(); // Evaluate the deadline after waiting for locks.
     if (lockedRequest.deletionScheduledAt.getTime() <= now.getTime()) {
       throw new Error("GracePeriodExpired");
     }
     if (account.status !== "PENDING_DELETION") throw new Error("AccountUnavailable");
+
+    if (webSessionId !== undefined) {
+      await tx.$queryRaw`SELECT "id" FROM "AccountSession" WHERE "id" = ${webSessionId} AND "userId" = ${userId} FOR UPDATE`;
+      const recovery = await readWebDeletionRecoverySession(userId, webSessionId, tx, new Date());
+      if (!recovery || recovery.user.email !== email) throw new Error("RecoveryAuthorizationRequired");
+    }
 
     await tx.user.update({ where: { id: userId }, data: { status: "ACTIVE" } });
     return tx.accountDeletionRequest.update({

@@ -131,6 +131,7 @@ test("actual database-backed session and admin boundaries reject stale, invalid,
   assert.equal((await admin.requireAdminApiSession() as { response: Response }).response.status, 403);
 
   const pages = load("src/lib/auth-guards.ts", {
+    "@/lib/web-deletion-recovery": { readWebDeletionRecoverySession: async () => assert.fail("ACTIVE fixtures must not use recovery authorization") },
     "next-auth": { getServerSession: async () => session }, "@/lib/auth": { authOptions: {} },
     "next/navigation": { redirect: (url: string) => { throw new Error(`Redirect:${url}`); } },
     "@/lib/env": { getAdminEmails: () => [user.email] },
