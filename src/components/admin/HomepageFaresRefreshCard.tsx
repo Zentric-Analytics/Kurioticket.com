@@ -585,7 +585,7 @@ export function HomepageFaresRefreshCard() {
           ) : null}
           {telemetryUnavailable ? (
             <p className="rounded-xl border border-red-100 bg-red-50 p-3 text-sm font-semibold text-danger">
-              Telemetry unavailable. Homepage fare data could not be read from the authoritative snapshot store. Coverage counts below are hidden rather than replaced with zeroes.
+              Telemetry unavailable. Snapshot data could not be read; coverage counts are hidden.
             </p>
           ) : null}
 
@@ -879,12 +879,12 @@ function RefreshCronPanel({
       </div>
       {!initialStatusLoading && !operationsAvailable ? (
         <p className="mt-3 rounded-xl border border-red-100 bg-red-50 p-3 text-sm font-semibold text-danger">
-          Manual refresh is disabled because the authoritative homepage fare snapshot store is unavailable.
+          Manual refresh unavailable while the snapshot store is offline.
         </p>
       ) : null}
       {!statusPayload.cronConfigured ? (
         <p className="mt-3 rounded-xl border border-amber/20 bg-amber/10 p-3 text-sm font-semibold text-amber">
-          The cron credential is not configured. Set HOMEPAGE_FARES_CRON_SECRET before configuring an external scheduler for POST /api/internal/homepage-fares/refresh.
+          Cron credential not configured.
         </p>
       ) : null}
     </DashboardSection>
@@ -2239,6 +2239,6 @@ function formatDateTime(value: string) {
 }
 
 function formatCronStatus(status: Pick<HomepageFareStatusPayload, "cronConfigured" | "nextExpectedCronRefresh">) {
-  if (!status.cronConfigured) return "Credential not configured";
-  return status.nextExpectedCronRefresh ? "Credential configured" : "Credential configured; cadence note missing";
+  if (!status.cronConfigured) return "Not configured";
+  return status.nextExpectedCronRefresh ? "Configured" : "Configured · cadence missing";
 }
