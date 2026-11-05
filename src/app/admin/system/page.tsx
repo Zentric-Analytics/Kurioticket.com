@@ -182,7 +182,7 @@ export default async function AdminSystemPage() {
               ))}
             </ul>
           ) : (
-            <p className="mt-1.5 text-[13px] leading-5 text-[#475569]">No issues requiring attention.</p>
+            <p className="mt-1.5 text-[13px] leading-5 text-[#475569]">No issues detected by these checks.</p>
           )}
         </section>
 
