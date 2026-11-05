@@ -12,6 +12,7 @@ import {
 import type { HomepageCmsSection } from "@/lib/adminHomepageCms";
 import { getCmsUnpublishedChangeLabel } from "@/lib/adminCmsPublicationStatus";
 import { ContentSectionHeading, ContentStatusPill } from "@/components/admin/ContentWorkspace";
+import { CmsEditorActions, type CmsEditorAction } from "@/components/admin/CmsEditorActions";
 
 type CmsItem = {
   id: string;
@@ -81,6 +82,7 @@ export function HomepageCmsEditor({
   const [error, setError] = useState<string | null>(null);
   const [conflict, setConflict] = useState(false);
   const [pending, startTransition] = useTransition();
+  const [activeAction, setActiveAction] = useState<CmsEditorAction | null>(null);
 
   const currentPayload = buildPayload(section, fields);
   const savedPayload = initialFields(section, payloadRecord(item?.draftPayload));
@@ -118,30 +120,35 @@ export function HomepageCmsEditor({
   }
 
   function createDraft() {
-    if (!validDraft) return;
+    if (!validDraft || pending) return;
     setMessage(null);
     setError(null);
     setConflict(false);
+    setActiveAction("create_draft");
     startTransition(async () => {
-      const response = await fetch("/api/admin/content", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: sectionType[section],
-          key: `${section.replaceAll("-", "")}-${crypto.randomUUID()}`,
-          market: section === "hotel-destinations" ? "GLOBAL" : market,
-          locale: "en",
-          sortOrder: Number(sortOrder),
-          payload: currentPayload,
-        }),
-      });
-      const body = await response.json().catch(() => ({}));
-      if (!response.ok || !body.item?.id) {
-        setError(typeof body.error === "string" ? body.error : "Unable to create draft.");
-        return;
+      try {
+        const response = await fetch("/api/admin/content", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            type: sectionType[section],
+            key: `${section.replaceAll("-", "")}-${crypto.randomUUID()}`,
+            market: section === "hotel-destinations" ? "GLOBAL" : market,
+            locale: "en",
+            sortOrder: Number(sortOrder),
+            payload: currentPayload,
+          }),
+        });
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok || !body.item?.id) {
+          setError(typeof body.error === "string" ? body.error : "Unable to create draft.");
+          return;
+        }
+        router.replace(`/admin/content/homepage/${section}/${encodeURIComponent(body.item.id)}${listQuery ? "?" + listQuery : ""}`);
+        router.refresh();
+      } catch {
+        setError("Unable to create draft. Check your connection and try again.");
       }
-      router.replace(`/admin/content/homepage/${section}/${encodeURIComponent(body.item.id)}${listQuery ? "?" + listQuery : ""}`);
-      router.refresh();
     });
   }
 
@@ -166,7 +173,7 @@ export function HomepageCmsEditor({
   }
 
   function archive() {
-    if (!item || !window.confirm("Archive this content? Archived content cannot be edited in this CMS phase.")) return;
+    if (!item || pending || !window.confirm("Archive this content? Archived content cannot be edited in this CMS phase.")) return;
     mutate("archive", {}, "Content archived.");
   }
 
@@ -175,35 +182,40 @@ export function HomepageCmsEditor({
     extra: Record<string, unknown>,
     success: string,
   ) {
-    if (!item) return;
+    if (!item || pending) return;
     setMessage(null);
     setError(null);
+    setActiveAction(action);
     startTransition(async () => {
-      const response = await fetch(`/api/admin/content/${item.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action,
-          expectedVersion: item.version,
-          ...extra,
-        }),
-      });
-      const body = await response.json().catch(() => ({}));
-      if (!response.ok || !body.item) {
-        if (response.status === 409) {
-          setConflict(true);
-          setError("This content changed in another admin session. Reload the latest version before making more edits.");
-        } else {
-          setError(typeof body.error === "string" ? body.error : "Unable to update content.");
+      try {
+        const response = await fetch(`/api/admin/content/${item.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action,
+            expectedVersion: item.version,
+            ...extra,
+          }),
+        });
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok || !body.item) {
+          if (response.status === 409) {
+            setConflict(true);
+            setError("This content changed in another admin session. Reload the latest version before making more edits.");
+          } else {
+            setError(typeof body.error === "string" ? body.error : "Unable to update content.");
+          }
+          return;
         }
-        return;
+        setConflict(false);
+        setItem(body.item as CmsItem);
+        setMarket(body.item.market ?? market);
+        setSortOrder(String(body.item.sortOrder ?? Number(sortOrder)));
+        setMessage(success);
+        router.refresh();
+      } catch {
+        setError("Unable to update content. Check your connection and try again.");
       }
-      setConflict(false);
-      setItem(body.item as CmsItem);
-      setMarket(body.item.market ?? market);
-      setSortOrder(String(body.item.sortOrder ?? Number(sortOrder)));
-      setMessage(success);
-      router.refresh();
     });
   }
 
@@ -284,22 +296,21 @@ export function HomepageCmsEditor({
           <AdminInput type="number" min={0} max={100000} value={sortOrder} onChange={(event) => setSortOrder(event.target.value)} disabled={pending || archived} />
         </Field>
 
-        <div className="flex flex-wrap gap-2 pt-3 [&_button]:rounded-lg [&_button]:text-[13px] [&_button]:font-medium [&_button]:shadow-none">
-          {!item ? (
-            <AdminButton type="button" onClick={createDraft} loading={pending} disabled={!validDraft}>Create draft</AdminButton>
-          ) : !archived ? (
-            <>
-              <AdminButton type="button" variant="secondary" onClick={saveDraft} loading={pending} disabled={!validDraft}>Save draft</AdminButton>
-              <AdminButton type="button" onClick={publish} loading={pending} disabled={!validDraft || draftDirty}>Publish</AdminButton>
-              {item.status === "PUBLISHED" ? <AdminButton type="button" variant="secondary" onClick={hide} loading={pending}>Hide</AdminButton> : null}
-              <AdminButton type="button" variant="destructive" onClick={archive} loading={pending}>Archive</AdminButton>
-            </>
-          ) : null}
-        </div>
+        <CmsEditorActions
+          status={item?.status}
+          pendingAction={pending ? activeAction : null}
+          validDraft={validDraft}
+          draftDirty={draftDirty}
+          onCreate={createDraft}
+          onSave={saveDraft}
+          onPublish={publish}
+          onHide={hide}
+          onArchive={archive}
+        />
 
-        {item && draftDirty ? <p className="text-sm font-bold text-amber-700">Save this draft before publishing the current edits.</p> : null}
-        {message ? <p className="text-sm font-bold text-emerald-700" role="status">{message}</p> : null}
-        {error ? <p className="rounded-xl bg-rose-50 px-3 py-2 text-sm font-bold text-rose-700" role="alert">{error}</p> : null}
+        {item && draftDirty ? <p className="text-[13px] leading-5 text-amber-700">Save this draft before publishing the current edits.</p> : null}
+        {message ? <p className="text-[13px] leading-5 text-emerald-700" role="status">{message}</p> : null}
+        {error ? <p className="rounded-lg bg-rose-50 px-3 py-2 text-[13px] leading-5 text-rose-700" role="alert">{error}</p> : null}
         {conflict ? (
           <AdminButton type="button" variant="secondary" onClick={() => window.location.reload()}>
             Reload latest

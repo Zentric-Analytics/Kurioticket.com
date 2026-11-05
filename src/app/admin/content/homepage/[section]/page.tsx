@@ -38,7 +38,7 @@ export default async function HomepageCmsSectionPage({ params, searchParams }: P
       ? requestedMarket
       : defaultMarket;
   const nav = homepageCmsListNavigation(section, raw, allowedMarket);
-  const cursor = one(raw.cursor) || undefined;
+  const cursor = section === "destinations" ? undefined : one(raw.cursor) || undefined;
 
   const summary = await (allowedMarket === "ALL"
     ? getCmsContentMarketOverview(config.type, homepageCmsMarkets, homepageCmsLocale)
@@ -63,7 +63,7 @@ export default async function HomepageCmsSectionPage({ params, searchParams }: P
   let listing: Awaited<ReturnType<typeof listAdminCmsContent>> | null = null;
   let error: string | null = null;
   try {
-    listing = await listAdminCmsContent({
+    const listInput = {
       type: config.type,
       status,
       market: allowedMarket === "ALL" ? undefined : allowedMarket,
@@ -71,7 +71,13 @@ export default async function HomepageCmsSectionPage({ params, searchParams }: P
       limit: 100,
       cursor,
       search: one(raw.q) || undefined,
-    });
+    };
+    listing = await listAdminCmsContent(listInput);
+    // Destinations form one complete scrollable directory, including old paged URLs.
+    while (section === "destinations" && listing.nextCursor) {
+      const nextPage = await listAdminCmsContent({ ...listInput, cursor: listing.nextCursor });
+      listing = { items: [...listing.items, ...nextPage.items], nextCursor: nextPage.nextCursor };
+    }
   } catch (caught) {
     error = caught instanceof CmsContentError ? caught.message : "CMS content is unavailable.";
   }
