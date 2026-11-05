@@ -40,6 +40,8 @@ test("system status uses a compact summary-attention-system-areas hierarchy", ()
   assert.match(systemPage, /inline-flex items-center gap-1\.5 text-\[12px\] font-medium/);
   assert.match(systemPage, /h-1\.5 w-1\.5 shrink-0 rounded-full/);
   assert.match(systemPage, /px-3 py-3 text-\[12px\] font-medium uppercase text-\[#475569\]/);
+  assert.doesNotMatch(systemPage, /grid-cols-\[minmax\(150px,1\.1fr\)_minmax\(170px,0\.9fr\)_minmax\(170px,1fr\)_80px\]/);
+  assert.match(systemPage, /grid-cols-\[minmax\(150px,1\.1fr\)_minmax\(170px,0\.9fr\)_minmax\(170px,1fr\)_minmax\(150px,auto\)\]/);
   assert.match(systemPage, /text-\[13px\] font-semibold text-\[#020617\]/);
   assert.match(systemPage, /<p className="text-\[12px\] text-\[#475569\]">\{service\.signal\}<\/p>/);
   assert.match(systemPage, /info: \{ text: "text-\[#004BB8\]", dot: "bg-\[#004BB8\]" \}/);
@@ -47,20 +49,21 @@ test("system status uses a compact summary-attention-system-areas hierarchy", ()
   assert.doesNotMatch(systemPage, /text-\[11px\].*uppercase/);
   assert.doesNotMatch(systemPage, /Expand a row for what is actually verified/);
   assert.match(systemPage, /function SystemAreaRow/);
-  assert.match(systemPage, /const hasDetails = Boolean\(service\.href \|\| service\.adminDetails\)/);
+  assert.match(systemPage, /if \(!service\.adminDetails\)/);
+  assert.match(systemPage, /service\.href \? \(/);
   assert.match(systemPage, /data-system-area=\{service\.id\}/);
   assert.match(systemPage, /<details data-system-area=\{service\.id\} className="group">/);
   assert.match(systemPage, /Open Email Delivery/);
   assert.match(systemPage, /Open Providers/);
   assert.match(systemPage, /Open CMS Health/);
   assert.doesNotMatch(systemPage, />Meaning<\/p>/);
-  assert.doesNotMatch(systemPage, /Direct database query|A database query completed successfully|This row verifies authentication configuration presence/);
+  assert.doesNotMatch(systemPage, /Direct database query|A database query completed successfully|This row verifies authentication configuration presence|Provider configuration presence|CMS Health diagnostics/);
 
   assert.match(systemPage, /id: "database"[\s\S]*?signal: "Live connectivity check",\n    \},/);
   assert.match(systemPage, /id: "authentication"[\s\S]*?signal: "Configuration only",\n    \},/);
-  assert.match(systemPage, /id: "email"[\s\S]*?href: "\/admin\/email-delivery"/);
-  assert.match(systemPage, /id: "providers"[\s\S]*?href: "\/admin\/providers"/);
-  assert.match(systemPage, /id: "cms"[\s\S]*?href: "\/admin\/system\/cms-health"/);
+  assert.match(systemPage, /id: "email"[\s\S]*?href: "\/admin\/email-delivery"[\s\S]*?actionLabel: "Open Email Delivery"/);
+  assert.match(systemPage, /id: "providers"[\s\S]*?href: "\/admin\/providers"[\s\S]*?actionLabel: "Open Providers"/);
+  assert.match(systemPage, /id: "cms"[\s\S]*?href: "\/admin\/system\/cms-health"[\s\S]*?actionLabel: "Open CMS Health"/);
   assert.match(systemPage, /id: "admin-access"/);
   assert.match(systemPage, /name: "Admin access"/);
   assert.match(systemPage, /Administrator allowlist/);

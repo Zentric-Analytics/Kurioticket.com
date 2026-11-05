@@ -50,19 +50,24 @@ function SystemAreaRow({ service }: { service: ServiceItem }) {
     </>
   );
 
-  const hasDetails = Boolean(service.href || service.adminDetails);
-  if (!hasDetails) {
+  if (!service.adminDetails) {
     return (
-      <div data-system-area={service.id} className="grid gap-2 px-3 py-3 md:grid-cols-[minmax(150px,1.1fr)_minmax(170px,0.9fr)_minmax(170px,1fr)_80px] md:items-center md:gap-4">
+      <div data-system-area={service.id} className="grid gap-2 px-3 py-3 md:grid-cols-[minmax(150px,1.1fr)_minmax(170px,0.9fr)_minmax(170px,1fr)_minmax(150px,auto)] md:items-center md:gap-4">
         {rowContent}
-        <span aria-hidden="true" />
+        {service.href ? (
+          <Link href={service.href} className="text-[12px] font-medium text-[#004BB8] hover:underline md:text-right">
+            {service.actionLabel} ›
+          </Link>
+        ) : (
+          <span aria-hidden="true" />
+        )}
       </div>
     );
   }
 
   return (
     <details data-system-area={service.id} className="group">
-      <summary className="grid cursor-pointer list-none gap-2 px-3 py-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] md:grid-cols-[minmax(150px,1.1fr)_minmax(170px,0.9fr)_minmax(170px,1fr)_80px] md:items-center md:gap-4 [&::-webkit-details-marker]:hidden">
+      <summary className="grid cursor-pointer list-none gap-2 px-3 py-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] md:grid-cols-[minmax(150px,1.1fr)_minmax(170px,0.9fr)_minmax(170px,1fr)_minmax(150px,auto)] md:items-center md:gap-4 [&::-webkit-details-marker]:hidden">
         {rowContent}
         <span className="text-[12px] font-medium text-[#004BB8] md:text-right">
           <span className="group-open:hidden">View ›</span>
@@ -71,34 +76,20 @@ function SystemAreaRow({ service }: { service: ServiceItem }) {
       </summary>
 
       <div className="border-t border-[#EEF2F7] px-3 py-3">
-        {service.adminDetails ? (
-          <div className="grid max-w-[900px] gap-x-8 gap-y-3 sm:grid-cols-3">
-            <div className="min-w-0">
-              <p className="text-[12px] text-[#64748B]">Administrator allowlist</p>
-              <p className="mt-1 text-[13px] text-[#020617]">{service.adminDetails.allowlist}</p>
-            </div>
-            <div className="min-w-0">
-              <p className="text-[12px] text-[#64748B]">Configured administrators</p>
-              <p className="mt-1 text-[13px] tabular-nums text-[#020617]">{service.adminDetails.configuredAdministrators}</p>
-            </div>
-            <div className="min-w-0">
-              <p className="text-[12px] text-[#64748B]">Verification</p>
-              <p className="mt-1 text-[13px] text-[#020617]">{service.verification}</p>
-            </div>
+        <div className="grid max-w-[900px] gap-x-8 gap-y-3 sm:grid-cols-3">
+          <div className="min-w-0">
+            <p className="text-[12px] text-[#64748B]">Administrator allowlist</p>
+            <p className="mt-1 text-[13px] text-[#020617]">{service.adminDetails.allowlist}</p>
           </div>
-        ) : (
-          <div className="flex max-w-[780px] flex-wrap items-end gap-x-10 gap-y-3">
-            <div className="min-w-[220px]">
-              <p className="text-[12px] text-[#64748B]">Verification</p>
-              <p className="mt-1 text-[13px] text-[#020617]">{service.verification}</p>
-            </div>
-            {service.href ? (
-              <Link href={service.href} className="inline-flex text-[13px] font-medium text-[#004BB8] hover:underline">
-                {service.actionLabel} ›
-              </Link>
-            ) : null}
+          <div className="min-w-0">
+            <p className="text-[12px] text-[#64748B]">Configured administrators</p>
+            <p className="mt-1 text-[13px] tabular-nums text-[#020617]">{service.adminDetails.configuredAdministrators}</p>
           </div>
-        )}
+          <div className="min-w-0">
+            <p className="text-[12px] text-[#64748B]">Verification</p>
+            <p className="mt-1 text-[13px] text-[#020617]">{service.verification}</p>
+          </div>
+        </div>
       </div>
     </details>
   );
@@ -166,7 +157,6 @@ export default async function AdminSystemPage() {
       status: system.emailConfigured ? "Configured" : "Incomplete",
       tone: system.emailConfigured ? "info" : "warn",
       signal: "Configuration only",
-      verification: "Server configuration presence",
       href: "/admin/email-delivery",
       actionLabel: "Open Email Delivery",
     },
@@ -176,7 +166,6 @@ export default async function AdminSystemPage() {
       status: system.providerCredentialsPresent ? "Configured" : "Not configured",
       tone: system.providerCredentialsPresent ? "info" : "warn",
       signal: "Configuration only",
-      verification: "Provider configuration presence",
       href: "/admin/providers",
       actionLabel: "Open Providers",
     },
@@ -186,7 +175,6 @@ export default async function AdminSystemPage() {
       status: "Separate check",
       tone: "neutral",
       signal: "CMS diagnostics",
-      verification: "CMS Health diagnostics",
       href: "/admin/system/cms-health",
       actionLabel: "Open CMS Health",
     },
@@ -259,7 +247,7 @@ export default async function AdminSystemPage() {
           <h2 id="system-areas-heading" className="text-[15px] font-semibold text-[#020617]">System areas</h2>
 
           <div className="mt-2.5 border-y border-[#E7ECF5]">
-            <div className="hidden grid-cols-[minmax(150px,1.1fr)_minmax(170px,0.9fr)_minmax(170px,1fr)_80px] gap-4 border-b border-[#D8E1EC] px-3 py-3 text-[12px] font-medium uppercase text-[#475569] md:grid">
+            <div className="hidden grid-cols-[minmax(150px,1.1fr)_minmax(170px,0.9fr)_minmax(170px,1fr)_minmax(150px,auto)] gap-4 border-b border-[#D8E1EC] px-3 py-3 text-[12px] font-medium uppercase text-[#475569] md:grid">
               <span>Area</span>
               <span>Status</span>
               <span>Signal</span>
