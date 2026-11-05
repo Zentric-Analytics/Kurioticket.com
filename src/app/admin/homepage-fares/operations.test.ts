@@ -245,3 +245,15 @@ test("homepage fare operator warnings remain concise but truthful", () => {
   assert.doesNotMatch(component, /authoritative homepage fare snapshot store is unavailable/);
   assert.doesNotMatch(component, /Set HOMEPAGE_FARES_CRON_SECRET before configuring an external scheduler/);
 });
+
+test("homepage fare Flight operations shortcut opens the standalone Flight Operations page", () => {
+  const page = readFileSync("src/app/admin/homepage-fares/page.tsx", "utf8");
+  const flights = readFileSync("src/app/admin/flights/page.tsx", "utf8");
+  const navigation = readFileSync("src/lib/adminNavigation.ts", "utf8");
+
+  assert.match(page, /<Link href="\/admin\/flights"[^>]*>\s*Flight operations\s*<\/Link>/);
+  assert.match(flights, /title="Flight Operations"/);
+  assert.match(flights, /metadata = \{ title: "Admin Flight Operations" \}/);
+  assert.match(navigation, /\{ href: "\/admin\/flights", label: "Flights"/);
+  assert.doesNotMatch(navigation, /href: "\/admin\/flights", parentHref: "\/admin\/providers"/);
+});
