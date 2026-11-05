@@ -28,7 +28,7 @@ test("CMS Health follows Providers page visual tokens and table density", () => 
 
 
 test("CMS Health uses the same continuous white Admin workspace as Providers", () => {
-  assert.match(adminShell, /pathname === "\/admin\/system\/cms-health"/);
-  assert.match(adminShell, /pathname === "\/admin\/system\/cms-health\/"?/);
+  assert.ok(adminShell.includes('pathname === "/admin/system/cms-health"'));
+  assert.ok(adminShell.includes('pathname === "/admin/system/cms-health/"'));
   assert.match(adminShell, /whiteWorkspace \? "bg-white" : "bg-\[#f1f5fb\]"/);
 });
