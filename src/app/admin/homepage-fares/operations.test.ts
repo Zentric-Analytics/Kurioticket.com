@@ -273,13 +273,22 @@ test("homepage fare operations links directly to content and flight providers wi
   const flights = readFileSync("src/app/admin/flights/page.tsx", "utf8");
   const navigation = readFileSync("src/lib/adminNavigation.ts", "utf8");
 
-  assert.match(page, /<Link href="\/admin\/content\/homepage"[^>]*>\s*Homepage content\s*<\/Link>/);
-  assert.match(page, /<Link href="\/admin\/providers\?product=flights"[^>]*>\s*Flight providers\s*<\/Link>/);
+  assert.match(page, /<Link[\s\S]*?href="\/admin\/content\/homepage"[\s\S]*?>\s*Homepage content\s*<\/Link>/);
+  assert.match(page, /<Link[\s\S]*?href="\/admin\/providers\?product=flights"[\s\S]*?>\s*Flight providers\s*<\/Link>/);
   assert.doesNotMatch(page, /href="\/admin\/flights"/);
   assert.match(flights, /redirect\("\/admin\/searches\/activity\?product=FLIGHT"\)/);
   assert.match(navigation, /\{ href: "\/admin\/homepage-fares", label: "Homepage Fares"/);
   assert.doesNotMatch(navigation, /\{ href: "\/admin\/flights", label: "Flights"/);
   assert.doesNotMatch(navigation, /href: "\/admin\/homepage-fares", parentHref:/);
+});
+
+test("homepage fare page header follows the compact Providers treatment", () => {
+  const page = readFileSync("src/app/admin/homepage-fares/page.tsx", "utf8");
+  assert.match(page, /<AdminPageShell title="Homepage Fare Operations" hideHeader>/);
+  assert.match(page, /border-b border-\[#D8E1EC\] pb-3/);
+  assert.match(page, /text-\[18px\] font-semibold tracking-tight text-\[#020617\]/);
+  assert.match(page, /rounded-md border border-\[#D8E1EC\] bg-white px-3 text-\[13px\] font-medium/);
+  assert.doesNotMatch(page, /rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black/);
 });
 
 test("readiness overview is flat like Providers while preserving status and metrics", () => {
