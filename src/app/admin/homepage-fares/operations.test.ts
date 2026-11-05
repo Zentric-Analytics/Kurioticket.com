@@ -106,7 +106,7 @@ test("homepage fare readiness keeps only core customer-facing summary metrics", 
   assert.doesNotMatch(component, /SummaryMetricCard label="Provider calls \(manual run\)"/);
   assert.doesNotMatch(component, /SummaryMetricCard label="Cron credential"/);
   assert.match(component, /CompactDetail label="Provider calls \(manual run\)"/);
-  assert.match(component, /CompactDetail label="Cron credential"/);
+  assert.match(component, /formatCronStatus\(statusPayload\)/);
 });
 
 test("advanced diagnostics keeps fallback and executor data available without dominating the main flow", () => {
