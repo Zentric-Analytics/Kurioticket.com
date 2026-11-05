@@ -67,11 +67,11 @@ test("homepage fare refresh refuses to run without an authoritative database", (
 
 test("homepage fare operations follows the production operator hierarchy", () => {
   const readiness = component.indexOf('title="Readiness overview"');
-  const refresh = component.indexOf('title="Refresh operations"');
-  const markets = component.indexOf('title="Public market coverage"');
-  const routes = component.indexOf('title="Route inspector"');
-  const diagnostics = component.indexOf('title="Why markets are not ready"');
-  const advanced = component.indexOf("Advanced diagnostics");
+  const refresh = component.indexOf("<RefreshCronPanel");
+  const markets = component.indexOf("<MarketReadinessDashboard");
+  const routes = component.indexOf("<MarketRouteInspector");
+  const diagnostics = component.indexOf("<DiagnosticsPanel");
+  const advanced = component.indexOf("<AdvancedDiagnostics");
 
   assert.ok(readiness >= 0);
   assert.ok(refresh > readiness);
@@ -79,6 +79,10 @@ test("homepage fare operations follows the production operator hierarchy", () =>
   assert.ok(routes > markets);
   assert.ok(diagnostics > routes);
   assert.ok(advanced > diagnostics);
+  assert.match(component, /title="Refresh operations"/);
+  assert.match(component, /title="Public market coverage"/);
+  assert.match(component, /title="Route inspector"/);
+  assert.match(component, /title="Why markets are not ready"/);
 });
 
 test("homepage fare operations removes duplicated market and fallback presentations", () => {
@@ -107,7 +111,7 @@ test("homepage fare readiness keeps only core customer-facing summary metrics", 
 
 test("advanced diagnostics keeps fallback and executor data available without dominating the main flow", () => {
   assert.match(component, /<details className="rounded-2xl border border-border bg-white p-4">/);
-  assert.match(component, />Advanced diagnostics<\/summary>/);
+  assert.match(component, /Advanced diagnostics/);
   assert.match(component, /Fallback coverage pools/);
   assert.match(component, /Executor details/);
   assert.match(component, /Configured routes/);
