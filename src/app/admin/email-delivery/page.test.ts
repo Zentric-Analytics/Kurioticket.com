@@ -26,7 +26,7 @@ test("Email Delivery uses a compact title and one page-level date range control"
 test("the selected range drives the whole time-based operational view", () => {
   assert.match(page, /getEmailDeliveryOperationsSnapshot\(\{ from: rangeState\.from, to: rangeState\.to \}\)/);
   assert.match(page, /aria-label="Email delivery summary"/);
-  for (const label of ["Email attempts", "Delivered", "Delayed", "Failed"]) {
+  for (const label of ["Email deliveries", "Delivered", "Delayed", "Failed"]) {
     assert.ok(page.includes(label));
   }
   assert.doesNotMatch(page, /Tracked transactional email attempts|Provider-reported delays|Failed, bounced, complained or suppressed in 24 hours/);
@@ -34,9 +34,12 @@ test("the selected range drives the whole time-based operational view", () => {
   assert.match(page, /Latest 10 in \{rangeState\.label\.toLowerCase\(\)\}/);
   assert.match(service, /export async function getEmailDeliveryOperationsSnapshot/);
   assert.match(service, /created_at >= \$\{range\.from\} AND created_at < \$\{range\.to\}/);
-  assert.match(service, /delivered_at >= \$\{range\.from\} AND delivered_at < \$\{range\.to\}/);
-  assert.match(service, /updated_at >= \$\{range\.from\} AND updated_at < \$\{range\.to\}/);
-  assert.match(service, /WHERE created_at >= \$\{range\.from\} AND created_at < \$\{range\.to\}[\s\S]*ORDER BY created_at DESC[\s\S]*LIMIT 10/);
+  assert.match(service, /COALESCE\(e\.occurred_at, e\.created_at\) >= \$\{range\.from\}/);
+  assert.match(service, /e\.type = 'email\.delivered'/);
+  assert.match(service, /'internal\.send_failed'/);
+  assert.match(service, /e\.type = 'email\.delivery_delayed'/);
+  assert.match(service, /OR EXISTS \([\s\S]*FROM email_events e[\s\S]*COALESCE\(e\.occurred_at, e\.created_at\) >= \$\{range\.from\}/);
+  assert.match(service, /ORDER BY GREATEST\([\s\S]*LIMIT 10/);
 });
 
 test("summary metrics use one compact four-column status band with no repeated range copy", () => {
@@ -69,10 +72,15 @@ test("range parsing defaults to 24 hours and constrains custom ranges to 90 days
   assert.match(page, /Choose both a valid start date and end date/);
   assert.match(page, /The start date must be before the end of the selected range/);
   assert.match(page, /Math\.min\(requestedEnd\.getTime\(\), now\.getTime\(\)\)/);
+  assert.match(page, /date\.getUTCFullYear\(\) === year/);
+  assert.match(rangeFilter, /date\.getUTCFullYear\(\) === year/);
 });
 
 test("range-aware reads preserve privacy and the alert-specific 24-hour health contract", () => {
   assert.match(service, /current_suppressed/);
+  assert.match(service, /internal\.send_succeeded/);
+  assert.match(service, /internal\.send_failed/);
+  assert.match(service, /INSERT INTO email_events/);
   assert.match(service, /toEmail: maskEmail\(row\.to_email\)/);
   assert.doesNotMatch(service, /subject: row\.subject/);
   assert.doesNotMatch(service, /providerMessageId:/);
