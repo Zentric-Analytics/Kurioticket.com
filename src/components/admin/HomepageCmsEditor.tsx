@@ -227,12 +227,12 @@ export function HomepageCmsEditor({
   return (
     <div className="grid min-w-0 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-8 xl:gap-14">
       <section className="w-full min-w-0 max-w-[640px] space-y-4">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
+        <div>
+          <div className="flex flex-wrap items-center gap-2.5">
             <ContentSectionHeading>Content details</ContentSectionHeading>
-            <p className="mt-1 text-[13px] text-[#64748B]">Structured CMS content only. Save draft before publishing changes.</p>
+            {item ? <ContentStatusPill status={item.status} /> : null}
           </div>
-          {item ? <ContentStatusPill status={item.status} /> : null}
+          <p className="mt-1 text-[13px] text-[#64748B]">Structured CMS content only. Save draft before publishing changes.</p>
         </div>
 
         {section !== "hotel-destinations" ? (
@@ -248,9 +248,11 @@ export function HomepageCmsEditor({
           <>
             <TextField label="City" name="city" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[320px]" />
             <TextField label="Country" name="country" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[320px]" />
-            <TextField label="Country code" name="countryCode" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[160px]" />
-            <TextField label="Origin IATA" name="originCode" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[160px]" />
-            <TextField label="Destination IATA" name="destinationCode" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[160px]" />
+            <div className="grid max-w-[512px] gap-4 sm:grid-cols-3">
+              <TextField label="Country code" name="countryCode" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[160px]" />
+              <TextField label="Origin IATA" name="originCode" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[160px]" />
+              <TextField label="Destination IATA" name="destinationCode" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[160px]" />
+            </div>
             <TextField label="Image" name="image" fields={fields} setField={setField} disabled={pending || archived} />
             <TextField label="Image alt text" name="imageAlt" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[448px]" />
           </>
@@ -259,10 +261,12 @@ export function HomepageCmsEditor({
         {section === "flight-routes" ? (
           <>
             <TextField label="Title" name="title" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[448px]" />
-            <TextField label="Origin city" name="originCity" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[320px]" />
-            <TextField label="Origin IATA" name="originCode" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[160px]" />
-            <TextField label="Destination city" name="destinationCity" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[320px]" />
-            <TextField label="Destination IATA" name="destinationCode" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[160px]" />
+            <div className="grid max-w-[496px] gap-4 sm:grid-cols-[minmax(0,1fr)_160px]">
+              <TextField label="Origin city" name="originCity" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[320px]" />
+              <TextField label="Origin IATA" name="originCode" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[160px]" />
+              <TextField label="Destination city" name="destinationCity" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[320px]" />
+              <TextField label="Destination IATA" name="destinationCode" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[160px]" />
+            </div>
             <Field label="Route note" className="max-w-[480px]">
               <AdminTextarea className={`${editorControlClass} h-auto min-h-24`} value={fields.routeNote ?? ""} onChange={(event) => setField("routeNote", event.target.value)} disabled={pending || archived} />
             </Field>
@@ -279,10 +283,12 @@ export function HomepageCmsEditor({
                 {hotelOptions.map((option) => <option key={option.canonicalId} value={option.canonicalId}>{option.label}</option>)}
               </AdminSelect>
             </Field>
-            <TextField label="Name" name="name" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[320px]" />
-            <TextField label="Country" name="country" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[320px]" />
-            <TextField label="Country code" name="countryCode" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[160px]" />
-            <TextField label="Kind" name="kind" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[160px]" />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <TextField label="Name" name="name" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[320px]" />
+              <TextField label="Country" name="country" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[320px]" />
+              <TextField label="Country code" name="countryCode" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[160px]" />
+              <TextField label="Kind" name="kind" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[160px]" />
+            </div>
             <TextField label="Search value" name="searchValue" fields={fields} setField={setField} disabled={pending || archived} />
             <TextField label="Image (optional)" name="image" fields={fields} setField={setField} disabled={pending || archived} />
             <TextField label="Image alt text (optional)" name="imageAlt" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[448px]" />
