@@ -143,7 +143,7 @@ try {
           await expect(main.getByText("Latest 10 deliveries", { exact: true })).toBeVisible();
           const deliveries = main.getByRole("region", { name: "Recent deliveries" });
           await expect(deliveries.getByText("bi***@zentricanalytics.com", { exact: true })).toBeVisible();
-          const delivered = deliveries.getByText("Delivered", { exact: true });
+          const delivered = deliveries.locator("tbody").getByText("Delivered", { exact: true });
           await expect(delivered).toHaveClass(/inline-flex/);
           await expect(delivered.locator("span").first()).toHaveClass(/rounded-full/);
           await expect(deliveries.getByText("Delayed", { exact: true })).toBeVisible();
