@@ -48,7 +48,7 @@ const sectionType = {
   "hotel-destinations": "HOTEL_DESTINATION",
 } as const;
 
-const editorControlClass = "h-9 rounded-lg border-2 border-[#94A3B8] bg-white text-[13px] font-normal text-[#111827] shadow-none transition-colors hover:border-[#64748B] focus:border-[#6D28D9] focus:ring-2 focus:ring-[#EDE9FE] disabled:border-[#CBD5E1] disabled:bg-[#F1F5F9] disabled:text-[#64748B]";
+const editorControlClass = "h-9 rounded-lg border border-slate-300 bg-white text-[13px] font-normal text-[#111827] shadow-[0_1px_0_rgba(15,23,42,0.04)] transition-colors hover:border-slate-400 focus:border-[#004BB8]/40 focus:ring-2 focus:ring-[#004BB8]/15 disabled:border-slate-300 disabled:bg-slate-100 disabled:text-slate-700";
 
 function payloadRecord(value: unknown) {
   return value && typeof value === "object" && !Array.isArray(value)
