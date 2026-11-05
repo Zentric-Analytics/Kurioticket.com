@@ -43,8 +43,8 @@ test("homepage destinations use searchable selectors without restructuring the e
   assert.match(editor, /onSelect=\{selectCountry\}/);
   assert.match(editor, /onSelect=\{selectCity\}/);
   assert.match(editor, /grid max-w-\[512px\] gap-4 sm:grid-cols-3/);
-  assert.match(editor, /<TextField label="Image" name="image"/);
-  assert.match(editor, /<TextField label="Image alt text" name="imageAlt"/);
+  assert.match(editor, /<CmsExpandingTextField label="Image" value=\{fields\.image/);
+  assert.match(editor, /<CmsExpandingTextField label="Image alt text" value=\{fields\.imageAlt/);
   assert.match(editor, /<CmsEditorActions/);
   assert.match(editor, /focus:border-\[#004BB8\]\/40/);
 });
@@ -57,6 +57,14 @@ test("combobox supports keyboard selection and never saves or publishes automati
   assert.match(combobox, /event\.key === "Escape"/);
   assert.match(combobox, /event\.key === "Enter"/);
   assert.doesNotMatch(combobox, /fetch\(|publish\(|saveDraft\(/);
+  assert.match(combobox, /onPointerDown=\{toggleOnPointerDown\}/);
+  assert.match(combobox, /if \(open\) dismiss\(\)/);
+  assert.match(combobox, /createPortal\(/);
+  assert.match(combobox, /overscroll-contain/);
+  assert.match(combobox, /preventScroll: true/);
+  assert.match(combobox, /document\.addEventListener\("scroll", dismissOnScroll, true\)/);
+  assert.match(combobox, /scrollTop/);
+  assert.doesNotMatch(combobox, /scrollIntoView/);
 });
 
 test("visual preview shows the unsaved CMS draft, route, image and publication state", () => {
@@ -68,4 +76,18 @@ test("visual preview shows the unsaved CMS draft, route, image and publication s
   assert.match(preview, /Unsaved edits/);
   assert.match(preview, /Saving a draft does not publish it/);
   assert.match(preview, /marketName/);
+});
+
+
+test("destination image URL and alt text fields wrap while preserving single-string CMS payloads", () => {
+  const expanding = readFileSync("src/components/admin/CmsExpandingTextField.tsx", "utf8");
+  assert.match(expanding, /wrap="soft"/);
+  assert.match(expanding, /\[overflow-wrap:anywhere\]/);
+  assert.match(expanding, /useLayoutEffect/);
+  assert.match(expanding, /scrollHeight/);
+  assert.match(expanding, /ResizeObserver/);
+  assert.match(expanding, /replace\(\/\[\\r\\n\]\+\/g, " "\)/);
+  assert.match(editor, /grid max-w-\[512px\] gap-4 sm:grid-cols-3 sm:items-start/);
+  assert.match(editor, /<span className="block min-h-5 text-\[13px\] font-medium leading-5/);
+  assert.match(combobox, /<label className="block min-h-5 whitespace-nowrap text-\[13px\] font-medium leading-5/);
 });
