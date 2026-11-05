@@ -53,7 +53,7 @@ function SystemAreaRow({ service }: { service: ServiceItem }) {
   const hasDetails = Boolean(service.href || service.adminDetails);
   if (!hasDetails) {
     return (
-      <div className="grid gap-2 px-3 py-3 md:grid-cols-[minmax(150px,1.1fr)_minmax(170px,0.9fr)_minmax(170px,1fr)_80px] md:items-center md:gap-4">
+      <div data-system-area={service.id} className="grid gap-2 px-3 py-3 md:grid-cols-[minmax(150px,1.1fr)_minmax(170px,0.9fr)_minmax(170px,1fr)_80px] md:items-center md:gap-4">
         {rowContent}
         <span aria-hidden="true" />
       </div>
@@ -61,7 +61,7 @@ function SystemAreaRow({ service }: { service: ServiceItem }) {
   }
 
   return (
-    <details className="group">
+    <details data-system-area={service.id} className="group">
       <summary className="grid cursor-pointer list-none gap-2 px-3 py-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] md:grid-cols-[minmax(150px,1.1fr)_minmax(170px,0.9fr)_minmax(170px,1fr)_80px] md:items-center md:gap-4 [&::-webkit-details-marker]:hidden">
         {rowContent}
         <span className="text-[12px] font-medium text-[#004BB8] md:text-right">
