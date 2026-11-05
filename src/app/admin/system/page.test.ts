@@ -41,7 +41,7 @@ test("system status uses a compact summary-attention-system-areas hierarchy", ()
   assert.match(systemPage, /h-1\.5 w-1\.5 shrink-0 rounded-full/);
   assert.match(systemPage, /px-3 py-3 text-\[12px\] font-medium uppercase text-\[#475569\]/);
   assert.match(systemPage, /text-\[13px\] font-semibold text-\[#020617\]/);
-  assert.match(systemPage, /text-\[12px\] text-\[#475569\]\}\>\{service\.signal\}/);
+  assert.match(systemPage, /<p className="text-\[12px\] text-\[#475569\]">\{service\.signal\}<\/p>/);
   assert.match(systemPage, /info: \{ text: "text-\[#004BB8\]", dot: "bg-\[#004BB8\]" \}/);
   assert.doesNotMatch(systemPage, /AdminStatusBadge/);
   assert.doesNotMatch(systemPage, /text-\[11px\].*uppercase/);
