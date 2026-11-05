@@ -34,7 +34,7 @@ test("homepage fare operations does not present unknown executor history as zero
 
 test("homepage fare cron copy keeps the primary operator view concise while retaining advanced verification", () => {
   assert.match(component, /Cron/);
-  assert.match(component, /Credential configured/);
+  assert.match(component, /Configured · cadence missing|return "Configured"/);
   assert.doesNotMatch(component, /<span>Scheduler verification not observable from this service<\/span>/);
   assert.match(component, /MetricCard label="Scheduler cadence"/);
   assert.match(component, /MetricCard label="Scheduler verification"/);
