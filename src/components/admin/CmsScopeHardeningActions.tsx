@@ -60,15 +60,17 @@ export function CmsScopeHardeningActions({
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap gap-2">
-        <AdminButton
-          type="button"
-          variant="secondary"
-          onClick={() => run("normalize_draft_order")}
-          loading={pending}
-          disabled={pending || (!draftOrderNeedsNormalization && draftOrderCollisionCount === 0)}
-        >
-          Normalize draft order
-        </AdminButton>
+        {draftOrderNeedsNormalization || draftOrderCollisionCount > 0 ? (
+          <AdminButton
+            type="button"
+            variant="secondary"
+            onClick={() => run("normalize_draft_order")}
+            loading={pending}
+            disabled={pending}
+          >
+            Normalize draft order
+          </AdminButton>
+        ) : null}
 
         {legacyFallbackRetired ? (
           <AdminButton
