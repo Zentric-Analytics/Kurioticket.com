@@ -117,3 +117,44 @@ test("advanced diagnostics keeps fallback and executor data available without do
   assert.match(component, /Configured routes/);
   assert.match(component, /Visible gaps attempted/);
 });
+
+test("homepage fare refresh operations stay compact without an empty two-column panel", () => {
+  assert.match(component, /xl:flex-row xl:items-center xl:justify-between/);
+  assert.match(component, /xl:max-w-4xl xl:grid-cols-4/);
+  assert.match(component, /Latest snapshot/);
+  assert.match(component, /Provider calls/);
+  assert.match(component, /Stopped reason/);
+  assert.match(component, /Cron/);
+  assert.doesNotMatch(component, /lg:grid-cols-\[minmax\(0,1\.2fr\)_minmax\(18rem,0\.8fr\)\]/);
+});
+
+test("public market coverage renders compact scan rows instead of tall readiness cards", () => {
+  assert.match(component, /lg:grid-cols-\[minmax\(160px,1\.2fr\)_110px_110px_110px_150px_90px\]/);
+  assert.match(component, />Market<\/span>/);
+  assert.match(component, />Popular<\/span>/);
+  assert.match(component, />Discovery<\/span>/);
+  assert.match(component, />Backup<\/span>/);
+  assert.doesNotMatch(component, /function MarketReadinessCard/);
+  assert.doesNotMatch(component, /function CoverageMetric/);
+});
+
+test("route inspector uses compact select controls while preserving every route filter", () => {
+  assert.equal((component.match(/<select/g) || []).length, 2);
+  assert.match(component, /<option value="">Select market<\/option>/);
+  assert.match(component, /<option value=\{ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE\}>All routes<\/option>/);
+  assert.match(component, /value=\{filter\}/);
+  assert.match(component, /onFilterChange\(event\.target\.value as AdminHomepageFareRouteGroupFilter\)/);
+  for (const label of ["All", "Ready", "Underfilled", "Failed", "Missing", "Stale", "Last-known-good", "Fresh", "Unavailable"]) {
+    assert.match(component, new RegExp('label: "' + label + '"'));
+  }
+  assert.doesNotMatch(component, /aria-label="Route status filters"/);
+});
+
+test("market diagnostics use structured rows instead of repeated prose cards", () => {
+  assert.match(component, /sm:grid-cols-\[minmax\(140px,1fr\)_110px_minmax\(220px,1\.5fr\)_100px\]/);
+  assert.match(component, />Coverage gap<\/span>/);
+  assert.match(component, />Next run<\/span>/);
+  assert.match(component, /Popular \{market\.popularVisibleFresh\}\/\{market\.popularVisibleTarget\}/);
+  assert.match(component, /Discovery \{market\.discoveryVisibleFresh\}\/\{market\.discoveryVisibleTarget\}/);
+  assert.doesNotMatch(component, /function buildDiagnostics/);
+});
