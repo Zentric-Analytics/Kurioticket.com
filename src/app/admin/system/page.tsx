@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AdminPageShell, AdminStatusBadge } from "@/components/admin/AdminPageShell";
+import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { getSafeSystemStatus } from "@/lib/admin-data";
 import { getAdminEmails } from "@/lib/env";
 
@@ -20,6 +20,24 @@ type ServiceItem = {
   href?: string;
   actionLabel?: string;
 };
+
+const statusStyles: Record<StatusTone, { text: string; dot: string }> = {
+  good: { text: "text-emerald-700", dot: "bg-emerald-500" },
+  bad: { text: "text-rose-700", dot: "bg-rose-500" },
+  warn: { text: "text-amber-700", dot: "bg-amber-500" },
+  neutral: { text: "text-[#475569]", dot: "bg-slate-400" },
+  info: { text: "text-[#004BB8]", dot: "bg-[#004BB8]" },
+};
+
+function StatusIndicator({ value, tone }: { value: string; tone: StatusTone }) {
+  const style = statusStyles[tone];
+  return (
+    <span className={"inline-flex items-center gap-1.5 text-[12px] font-medium " + style.text}>
+      <span aria-hidden="true" className={"h-1.5 w-1.5 shrink-0 rounded-full " + style.dot} />
+      {value}
+    </span>
+  );
+}
 
 export default async function AdminSystemPage() {
   const system = await getSafeSystemStatus();
@@ -139,7 +157,7 @@ export default async function AdminSystemPage() {
 
   return (
     <AdminPageShell title="System" hideHeader>
-      <div className="w-full min-w-0 bg-white text-[#0F172A]">
+      <div className="w-full min-w-0 bg-white text-[#020617]">
         <section aria-label="System summary" className="border-b border-[#D8E1EC] py-4">
           <div className="grid grid-cols-2 gap-x-8 gap-y-4 md:grid-cols-4">
             <div className="min-w-0">
@@ -157,20 +175,20 @@ export default async function AdminSystemPage() {
             <div className="min-w-0">
               <p className="text-[12px] text-[#64748B]">Database</p>
               <div className="mt-1">
-                <AdminStatusBadge tone={system.databaseConnected ? "good" : "bad"}>{databaseLabel}</AdminStatusBadge>
+                <StatusIndicator value={databaseLabel} tone={system.databaseConnected ? "good" : "bad"} />
               </div>
             </div>
           </div>
         </section>
 
         <section aria-labelledby="system-attention-heading" className="border-b border-[#D8E1EC] py-4">
-          <h2 id="system-attention-heading" className="text-[15px] font-semibold">Issues Requiring Attention</h2>
+          <h2 id="system-attention-heading" className="text-[15px] font-semibold text-[#020617]">Issues Requiring Attention</h2>
           {attention.length ? (
             <ul className="mt-2 max-w-[980px] divide-y divide-[#E7ECF5]">
               {attention.map((item) => (
                 <li key={item.label} className="flex flex-wrap items-start justify-between gap-3 py-2.5 first:pt-0 last:pb-0">
                   <div className="min-w-0 max-w-[760px]">
-                    <p className="text-[13px] font-medium text-[#0F172A]">{item.label}</p>
+                    <p className="text-[13px] font-medium text-[#020617]">{item.label}</p>
                     <p className="mt-1 text-[12px] leading-5 text-[#64748B]">{item.detail}</p>
                   </div>
                   {item.href ? (
@@ -187,10 +205,10 @@ export default async function AdminSystemPage() {
         </section>
 
         <section aria-labelledby="system-areas-heading" className="py-4">
-          <h2 id="system-areas-heading" className="text-[15px] font-semibold">System areas</h2>
+          <h2 id="system-areas-heading" className="text-[15px] font-semibold text-[#020617]">System areas</h2>
 
           <div className="mt-2.5 border-y border-[#E7ECF5]">
-            <div className="hidden grid-cols-[minmax(150px,1.1fr)_minmax(170px,0.9fr)_minmax(170px,1fr)_80px] gap-4 border-b border-[#E7ECF5] px-1 py-2.5 text-[11px] font-medium uppercase tracking-[0.04em] text-[#64748B] md:grid">
+            <div className="hidden grid-cols-[minmax(150px,1.1fr)_minmax(170px,0.9fr)_minmax(170px,1fr)_80px] gap-4 border-b border-[#D8E1EC] px-3 py-3 text-[12px] font-medium uppercase text-[#475569] md:grid">
               <span>Area</span>
               <span>Status</span>
               <span>Signal</span>
@@ -200,42 +218,42 @@ export default async function AdminSystemPage() {
             <div className="divide-y divide-[#E7ECF5]">
               {serviceRows.map((service) => (
                 <details key={service.id} className="group">
-                  <summary className="grid cursor-pointer list-none gap-2 px-1 py-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] md:grid-cols-[minmax(150px,1.1fr)_minmax(170px,0.9fr)_minmax(170px,1fr)_80px] md:items-center md:gap-4 [&::-webkit-details-marker]:hidden">
+                  <summary className="grid cursor-pointer list-none gap-2 px-3 py-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] md:grid-cols-[minmax(150px,1.1fr)_minmax(170px,0.9fr)_minmax(170px,1fr)_80px] md:items-center md:gap-4 [&::-webkit-details-marker]:hidden">
                     <div className="min-w-0">
-                      <span className="text-[13px] font-semibold text-[#0F172A]">{service.name}</span>
+                      <span className="text-[13px] font-semibold text-[#020617]">{service.name}</span>
                     </div>
                     <div className="min-w-0">
-                      <AdminStatusBadge tone={service.tone}>{service.status}</AdminStatusBadge>
+                      <StatusIndicator value={service.status} tone={service.tone} />
                     </div>
-                    <p className="text-[12px] text-[#64748B]">{service.signal}</p>
+                    <p className="text-[12px] text-[#475569]">{service.signal}</p>
                     <span className="text-[12px] font-medium text-[#004BB8] md:text-right">
                       <span className="group-open:hidden">View ›</span>
                       <span className="hidden group-open:inline">Hide ‹</span>
                     </span>
                   </summary>
 
-                  <div className="border-t border-[#EEF2F7] px-1 pb-3.5 pt-3">
+                  <div className="border-t border-[#EEF2F7] px-3 pb-3.5 pt-3">
                     <div className={"grid max-w-[1100px] gap-x-8 gap-y-3 sm:grid-cols-2 " + (service.adminDetails ? "lg:grid-cols-4" : "lg:grid-cols-3")}>
                       {service.adminDetails ? (
                         <>
                           <div className="min-w-0">
                             <p className="text-[12px] text-[#64748B]">Administrator allowlist</p>
-                            <p className="mt-1 text-[13px] font-medium text-[#0F172A]">{service.adminDetails.allowlist}</p>
+                            <p className="mt-1 text-[13px] text-[#020617]">{service.adminDetails.allowlist}</p>
                           </div>
                           <div className="min-w-0">
                             <p className="text-[12px] text-[#64748B]">Configured administrators</p>
-                            <p className="mt-1 text-[13px] font-medium tabular-nums text-[#0F172A]">{service.adminDetails.configuredAdministrators}</p>
+                            <p className="mt-1 text-[13px] tabular-nums text-[#020617]">{service.adminDetails.configuredAdministrators}</p>
                           </div>
                         </>
                       ) : service.configured ? (
                         <div className="min-w-0">
                           <p className="text-[12px] text-[#64748B]">Configuration</p>
-                          <p className="mt-1 text-[13px] font-medium text-[#0F172A]">{service.configured}</p>
+                          <p className="mt-1 text-[13px] text-[#020617]">{service.configured}</p>
                         </div>
                       ) : null}
                       <div className="min-w-0">
                         <p className="text-[12px] text-[#64748B]">Verification</p>
-                        <p className="mt-1 text-[13px] font-medium text-[#0F172A]">{service.verification}</p>
+                        <p className="mt-1 text-[13px] text-[#020617]">{service.verification}</p>
                       </div>
                       <div className="min-w-0">
                         <p className="text-[12px] text-[#64748B]">Meaning</p>
