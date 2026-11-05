@@ -14,6 +14,9 @@ import { getCmsUnpublishedChangeLabel } from "@/lib/adminCmsPublicationStatus";
 import { getCmsMarketName } from "@/lib/adminCmsMarketLabels";
 import { ContentSectionHeading, ContentStatusPill } from "@/components/admin/ContentWorkspace";
 import { CmsEditorActions, type CmsEditorAction } from "@/components/admin/CmsEditorActions";
+import { CmsLocationCombobox } from "@/components/admin/CmsLocationCombobox";
+import { HomepageDestinationDraftPreview } from "@/components/admin/HomepageDestinationDraftPreview";
+import type { CmsLocationOption } from "@/lib/adminCmsLocationOptions";
 
 type CmsItem = {
   id: string;
@@ -103,6 +106,23 @@ export function HomepageCmsEditor({
 
   function setField(name: string, value: string) {
     setFields((current) => ({ ...current, [name]: value }));
+  }
+
+  function selectCountry(option: CmsLocationOption) {
+    setFields((current) => ({
+      ...current,
+      country: option.value,
+      ...(option.countryCode ? { countryCode: option.countryCode } : {}),
+    }));
+  }
+
+  function selectCity(option: CmsLocationOption) {
+    setFields((current) => ({
+      ...current,
+      city: option.value,
+      ...(option.country ? { country: option.country } : {}),
+      ...(option.countryCode ? { countryCode: option.countryCode } : {}),
+    }));
   }
 
   function applyHotelOption(canonicalId: string) {
@@ -246,12 +266,12 @@ export function HomepageCmsEditor({
 
         {section === "destinations" ? (
           <>
-            <TextField label="City" name="city" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[320px]" />
-            <TextField label="Country" name="country" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[320px]" />
+            <CmsLocationCombobox label="City" kind="city" value={fields.city ?? ""} countryCode={fields.countryCode ?? ""} onChange={(value) => setField("city", value)} onSelect={selectCity} disabled={pending || archived} className="max-w-[320px]" />
+            <CmsLocationCombobox label="Country" kind="country" value={fields.country ?? ""} onChange={(value) => setField("country", value)} onSelect={selectCountry} disabled={pending || archived} className="max-w-[320px]" />
             <div className="grid max-w-[512px] gap-4 sm:grid-cols-3">
               <TextField label="Country code" name="countryCode" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[160px]" />
-              <TextField label="Origin IATA" name="originCode" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[160px]" />
-              <TextField label="Destination IATA" name="destinationCode" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[160px]" />
+              <CmsLocationCombobox label="Origin IATA" kind="airport" value={fields.originCode ?? ""} onChange={(value) => setField("originCode", value)} disabled={pending || archived} className="max-w-[160px]" />
+              <CmsLocationCombobox label="Destination IATA" kind="airport" value={fields.destinationCode ?? ""} onChange={(value) => setField("destinationCode", value)} disabled={pending || archived} className="max-w-[160px]" />
             </div>
             <TextField label="Image" name="image" fields={fields} setField={setField} disabled={pending || archived} />
             <TextField label="Image alt text" name="imageAlt" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[448px]" />
@@ -321,6 +341,17 @@ export function HomepageCmsEditor({
         ) : null}
       </section>
 
+      {section === "destinations" ? (
+        <HomepageDestinationDraftPreview
+          payload={currentPayload}
+          marketName={getCmsMarketName(market)}
+          order={sortOrder}
+          version={item?.version}
+          publishedVersion={item?.publishedVersion}
+          unpublishedLabel={unpublishedLabel}
+          unsaved={draftDirty}
+        />
+      ) : (
       <aside className="h-fit min-w-0 lg:sticky lg:top-24">
         <ContentSectionHeading>Draft preview</ContentSectionHeading>
         <h2 className="mt-2 text-[15px] font-semibold text-[#111827]">{previewTitle(section, currentPayload)}</h2>
@@ -331,6 +362,7 @@ export function HomepageCmsEditor({
           {item ? <span>Draft v{item.version} · Published {item.publishedVersion ? `v${item.publishedVersion}` : "none"} · {unpublishedLabel ?? "No unpublished changes"}</span> : null}
         </div>
       </aside>
+      )}
     </div>
   );
 }
