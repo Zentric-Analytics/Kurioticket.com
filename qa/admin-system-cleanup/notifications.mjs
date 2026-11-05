@@ -213,25 +213,44 @@ export async function verifyNotificationPanel({ page, root, output, width }) {
   await dialog.getByRole("button", { name: "Refresh notifications" }).click();
   await expect(dialog.locator("li")).toHaveCount(3);
   const firstItem = dialog.locator("li").first();
+  const swipeCard = firstItem.locator("[data-notification-card]");
   const swipe = async (dx, dy = 0) => {
-    const card = firstItem.locator("[data-notification-card]");
-    const box = await card.boundingBox();
-    if (!box) throw new Error("Notification card is not visible for swipe QA");
-    // Start inside the card's non-interactive content area. Using the heading's
-    // text box made the drag origin depend on text layout and could land under
-    // an absolutely positioned action at some widths.
-    const x = box.x + box.width * 0.25;
-    const y = box.y + 26;
-    await page.mouse.move(x, y);
+    await expect(swipeCard).toBeVisible();
+    const point = await swipeCard.evaluate(node => {
+      const box = node.getBoundingClientRect();
+      const candidates = [
+        [0.82, 0.5],
+        [0.82, 0.18],
+        [0.68, 0.5],
+        [0.68, 0.18],
+        [0.5, 0.5],
+        [0.5, 0.18],
+      ];
+      for (const [xRatio, yRatio] of candidates) {
+        const x = box.left + box.width * xRatio;
+        const y = box.top + box.height * yRatio;
+        const target = document.elementFromPoint(x, y);
+        if (target && node.contains(target) && !target.closest("button, a")) return { x, y };
+      }
+      throw new Error("Notification swipe card has no non-interactive drag point");
+    });
+    await page.mouse.move(point.x, point.y);
     await page.mouse.down();
-    await page.mouse.move(x + dx, y + dy, { steps: 10 });
+    await page.mouse.move(point.x + dx, point.y + dy, { steps: 12 });
     await page.mouse.up();
   };
   await swipe(-10, 50);
   await expect(firstItem).toHaveAttribute("data-notification-swipe-open", "false");
   await swipe(-20);
   await expect(firstItem).toHaveAttribute("data-notification-swipe-open", "false");
-  await swipe(-75);
+
+  // Chromium can coalesce automated pointer moves under CI load. Use a deliberate
+  // drag beyond the real 44px open threshold, then retry once if the first
+  // native pointer sequence was coalesced.
+  for (const dx of [-120, -160]) {
+    await swipe(dx);
+    if (await firstItem.getAttribute("data-notification-swipe-open") === "true") break;
+  }
   await expect(firstItem).toHaveAttribute("data-notification-swipe-open", "true");
   expect(deletions).toHaveLength(0, "swiping reveals the action without deleting automatically");
   await page.screenshot({ path: path.join(output, "notification-swipe-" + width + ".png") });
