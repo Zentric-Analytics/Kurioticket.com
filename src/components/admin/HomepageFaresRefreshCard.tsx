@@ -572,15 +572,6 @@ export function HomepageFaresRefreshCard() {
   const latestCounts = refreshState.counts;
   const initialStatusLoading = statusState.loading && !statusState.data;
   const telemetryUnavailable = !initialStatusLoading && !statusPayload.dataAvailable;
-  const providerCallsUsed = latestCounts
-    ? latestCounts.providerCalls
-    : "No manual run in this session";
-  const replacementCandidatesUsed = latestCounts
-    ? sumCountRecord(latestCounts.replacementCandidatesUsedByMarket)
-    : sumCountRecord(statusPayload.replacementCandidatesUsedByMarket);
-  const timeoutCount = latestCounts
-    ? sumCountRecord(latestCounts.timeoutByMarket)
-    : sumCountRecord(statusPayload.timeoutByMarket);
   const marketsNeedingAnotherRun = latestCounts?.marketsNeedingAnotherRun ?? statusPayload.marketsNeedingAnotherRun;
 
   return (
@@ -640,7 +631,6 @@ export function HomepageFaresRefreshCard() {
 
               <MarketRouteInspector
                 publicGroups={publicRouteGroups}
-                fallbackGroups={fallbackRouteGroups}
                 selectedRouteScope={selectedRouteScope}
                 selectedGroup={selectedRouteGroup}
                 filter={routeFilter}
@@ -661,13 +651,13 @@ export function HomepageFaresRefreshCard() {
                 stoppedReason={latestCounts?.stoppedReason}
               />
 
-              <FallbackPoolsSection
+              <AdvancedDiagnostics
                 pools={fallbackPools}
                 selectedRouteScope={selectedRouteScope}
                 onInspectMarket={selectRouteScope}
+                statusPayload={statusPayload}
+                refreshCounts={latestCounts}
               />
-
-              <RawDebugDetails statusPayload={statusPayload} refreshCounts={latestCounts} />
             </>
           ) : null}
         </div>
@@ -722,14 +712,6 @@ const ROUTE_FILTERS: Array<{
 ];
 
 
-
-function GlobalReadinessBadge({ status }: { status: GlobalReadinessStatus }) {
-  return (
-    <span className={`inline-flex w-fit rounded-full px-3 py-2 text-sm font-extrabold ${summaryToneClass(readinessTone(status))}`}>
-      {formatGlobalReadinessStatus(status)}
-    </span>
-  );
-}
 
 function SummaryMetricCard({
   label,
