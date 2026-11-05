@@ -92,7 +92,7 @@ test("System specialist pages are contextual destinations rather than duplicate 
   assert.doesNotMatch(adminShell, /function SystemSectionTabs|aria-label="System sections"|systemSectionsVisible|systemChildren/);
   assert.match(adminShell, /<main className="mx-auto w-full max-w-\[1920px\]/);
   assert.match(adminShell, /<AdminSearchContent>\{children\}<\/AdminSearchContent>/);
-  assert.match(adminShell, /href="\/admin\/logs", label: "Audit logs"/);
+  assert.match(adminShell, /href="\/admin\/logs", label: "Audit Logs"/);
   assert.match(adminShell, /auditLogsWorkspace/);
 
   for (const href of ["/admin/system/cms-health", "/admin/email-delivery", "/admin/logs"]) {
