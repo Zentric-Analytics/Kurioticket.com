@@ -103,10 +103,13 @@ test("content overview shows four equal, fully clickable management cards", () =
   assert.doesNotMatch(contentPage, /ContentSectionHeading|homepageAreas|helpAreas|Manage destinations|Manage FAQs/);
 });
 
-test("Content hub is centered without changing the four-card navigation", () => {
+test("Content hub centers vertically below the desktop Admin header without changing cards", () => {
+  assert.match(contentPage, /min-\[1100px\]:flex min-\[1100px\]:min-h-\[calc\(100dvh-160px\)\] min-\[1100px\]:items-center/);
   assert.match(contentPage, /mx-auto w-full max-w-\[900px\] space-y-4/);
   assert.match(contentPage, /grid auto-rows-fr grid-cols-1 gap-3 sm:grid-cols-2/);
   assert.match(contentPage, /href=\{area\.href\}/);
+  assert.match(contentPage, /<ContentPageFrame title="Content" visuallyHideTitle>/);
+  assert.doesNotMatch(contentPage, /min-h-\[178px\]|justify-between gap-6/);
 });
 
 test("FAQ directory has no redundant counters before search and status filters", () => {
