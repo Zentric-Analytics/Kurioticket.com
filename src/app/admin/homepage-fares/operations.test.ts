@@ -246,16 +246,18 @@ test("homepage fare operator warnings remain concise but truthful", () => {
   assert.doesNotMatch(component, /Set HOMEPAGE_FARES_CRON_SECRET before configuring an external scheduler/);
 });
 
-test("homepage fare Flight operations shortcut opens the standalone Flight Operations page", () => {
+test("homepage fare operations links directly to content and flight providers without a Flight Operations parent", () => {
   const page = readFileSync("src/app/admin/homepage-fares/page.tsx", "utf8");
   const flights = readFileSync("src/app/admin/flights/page.tsx", "utf8");
   const navigation = readFileSync("src/lib/adminNavigation.ts", "utf8");
 
-  assert.match(page, /<Link href="\/admin\/flights"[^>]*>\s*Flight operations\s*<\/Link>/);
-  assert.match(flights, /title="Flight Operations"/);
-  assert.match(flights, /metadata = \{ title: "Admin Flight Operations" \}/);
-  assert.match(navigation, /\{ href: "\/admin\/flights", label: "Flights"/);
-  assert.doesNotMatch(navigation, /href: "\/admin\/flights", parentHref: "\/admin\/providers"/);
+  assert.match(page, /<Link href="\/admin\/content\/homepage"[^>]*>\s*Homepage content\s*<\/Link>/);
+  assert.match(page, /<Link href="\/admin\/providers\?product=flights"[^>]*>\s*Flight providers\s*<\/Link>/);
+  assert.doesNotMatch(page, /href="\/admin\/flights"/);
+  assert.match(flights, /redirect\("\/admin\/searches\/activity\?product=FLIGHT"\)/);
+  assert.match(navigation, /\{ href: "\/admin\/homepage-fares", label: "Homepage Fares"/);
+  assert.doesNotMatch(navigation, /\{ href: "\/admin\/flights", label: "Flights"/);
+  assert.doesNotMatch(navigation, /href: "\/admin\/homepage-fares", parentHref:/);
 });
 
 test("readiness overview is unwrapped while preserving the status banner and metrics", () => {
