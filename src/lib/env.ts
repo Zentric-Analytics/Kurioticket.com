@@ -1,4 +1,5 @@
 import { isStagingEnvironment } from "./stagingSafety";
+import { resolveAuthSecret } from "./authSecret";
 
 export function getBaseUrl() {
   return (
@@ -9,11 +10,7 @@ export function getBaseUrl() {
 }
 
 export function getAuthSecret() {
-  return (
-    process.env.AUTH_SECRET ||
-    process.env.NEXTAUTH_SECRET ||
-    ""
-  );
+  return resolveAuthSecret(process.env);
 }
 
 export function getGoogleClientId() {
