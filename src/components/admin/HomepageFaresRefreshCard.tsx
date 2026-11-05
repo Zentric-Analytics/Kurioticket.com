@@ -576,12 +576,12 @@ export function HomepageFaresRefreshCard() {
   return (
     <section className="min-w-0 bg-white text-[#020617]">
           {statusState.error ? (
-            <p className="rounded-xl bg-red-50 p-3 text-sm font-semibold text-danger">
+            <p className="mb-3 border-l-[3px] border-rose-500 py-1 pl-3 text-[13px] font-medium text-rose-700">
               {statusState.error}
             </p>
           ) : null}
           {telemetryUnavailable ? (
-            <p className="rounded-xl border border-red-100 bg-red-50 p-3 text-sm font-semibold text-danger">
+            <p className="mb-3 border-l-[3px] border-rose-500 py-1 pl-3 text-[13px] font-medium text-rose-700">
               Telemetry unavailable. Snapshot data could not be read; coverage counts are hidden.
             </p>
           ) : null}
@@ -592,7 +592,7 @@ export function HomepageFaresRefreshCard() {
         </h2>
 
             {initialStatusLoading ? (
-              <p className="mt-4 rounded-xl border border-border bg-slate-50 p-4 text-sm font-semibold text-muted">
+              <p className="mt-3 text-[13px] leading-5 text-[#475569]">
                 Loading homepage fare snapshot status…
               </p>
             ) : statusPayload.dataAvailable ? (
@@ -621,6 +621,12 @@ export function HomepageFaresRefreshCard() {
 
       {statusPayload.dataAvailable ? (
             <>
+              <DiagnosticsPanel
+                markets={statusPayload.marketReadinessSummary}
+                marketsNeedingAnotherRun={marketsNeedingAnotherRun}
+                stoppedReason={latestCounts?.stoppedReason}
+              />
+
               <MarketReadinessDashboard
                 markets={publicMarkets}
                 selectedRouteScope={selectedRouteScope}
@@ -639,12 +645,6 @@ export function HomepageFaresRefreshCard() {
                 onNextPage={() => setRoutePage((page) => page + 1)}
                 onFilterChange={selectRouteFilter}
                 routeDetailsRef={routeDetailsRef}
-              />
-
-              <DiagnosticsPanel
-                markets={statusPayload.marketReadinessSummary}
-                marketsNeedingAnotherRun={marketsNeedingAnotherRun}
-                stoppedReason={latestCounts?.stoppedReason}
               />
 
               <AdvancedDiagnostics
@@ -916,12 +916,12 @@ function MarketReadinessDashboard({
                   className={`grid w-full min-w-0 gap-2 px-3 py-3 text-left transition hover:bg-[#F8FAFC] lg:min-w-[760px] lg:grid-cols-[minmax(180px,1.2fr)_100px_100px_100px_160px_80px] lg:items-center lg:gap-3 ${selected ? "bg-[#EFF6FF]" : ""}`}
                 >
                   <span className="min-w-0">
-                    <span className="block truncate text-[13px] font-extrabold text-navy">{market.marketLabel}</span>
-                    <span className="mt-0.5 block text-[10px] font-bold uppercase tracking-wide text-muted">{market.marketCode} · {market.marketGroup}</span>
+                    <span className="block truncate text-[13px] font-semibold text-[#020617]">{market.marketLabel}</span>
+                    <span className="mt-0.5 block text-[11px] font-medium uppercase tracking-wide text-[#64748B]">{market.marketCode} · {market.marketGroup}</span>
                   </span>
-                  <span className="text-xs font-bold text-navy"><span className="lg:hidden text-muted">Popular </span>{market.popularVisibleFresh}/{market.popularVisibleTarget}</span>
-                  <span className="text-xs font-bold text-navy"><span className="lg:hidden text-muted">Discovery </span>{market.discoveryVisibleFresh}/{market.discoveryVisibleTarget}</span>
-                  <span className="text-xs font-bold text-navy"><span className="lg:hidden text-muted">Backup </span>{market.backupFresh}/{market.backupTarget}</span>
+                  <span className="text-[13px] font-medium tabular-nums text-[#0F172A]"><span className="lg:hidden text-muted">Popular </span>{market.popularVisibleFresh}/{market.popularVisibleTarget}</span>
+                  <span className="text-[13px] font-medium tabular-nums text-[#0F172A]"><span className="lg:hidden text-muted">Discovery </span>{market.discoveryVisibleFresh}/{market.discoveryVisibleTarget}</span>
+                  <span className="text-[13px] font-medium tabular-nums text-[#0F172A]"><span className="lg:hidden text-muted">Backup </span>{market.backupFresh}/{market.backupTarget}</span>
                   <span className="min-w-0">
                     <MarketStatusBadge status={market.status} />
                     <span className="mt-1 block truncate text-[10px] font-semibold text-muted">
@@ -961,57 +961,64 @@ function DiagnosticsPanel({
     .slice(0, 12);
 
   return (
-    <DashboardSection
-      title="Why markets are not ready"
-    >
-      <dl className="mt-3 grid gap-x-4 gap-y-2 rounded-xl border border-border bg-slate-50/70 p-3 sm:grid-cols-3">
+    <DashboardSection title="Markets requiring attention">
+      <dl className="mt-3 grid max-w-[980px] gap-x-5 gap-y-3 sm:grid-cols-3">
         <CompactDetail label="Stopped reason" value={stoppedReason ? formatStoppedReason(stoppedReason) : "No run yet"} />
         <CompactDetail label="Provider budget" value={stoppedReason === "provider_budget_exhausted" ? "Exhausted" : "Available"} />
         <CompactDetail label="Route budget" value={stoppedReason === "route_budget_exhausted" ? "Exhausted" : "Available"} />
       </dl>
 
-      <div className="mt-3 overflow-hidden rounded-xl border border-slate-200">
-        {issueMarkets.length ? (
-          <>
-            <div className="hidden grid-cols-[minmax(140px,1fr)_110px_minmax(220px,1.5fr)_120px] gap-3 bg-slate-50 px-3 py-2 text-[10px] font-extrabold uppercase tracking-wide text-muted sm:grid">
-              <span>Market</span>
-              <span>Status</span>
-              <span>Coverage gap</span>
-              <span>Next run</span>
-            </div>
-            <div className="divide-y divide-slate-100">
-              {issueMarkets.map((market) => {
-                const nextRun = marketsNeedingAnotherRun.find((item) => normalizeAdminHomepageFareMarketCode(item.market) === normalizeAdminHomepageFareMarketCode(market.marketCode));
-                const nextRunNeeded = nextRun ? nextRun.needed : !market.targetMet;
-                const nextRunCause = nextRun?.reason;
-                return (
-                  <div key={market.marketCode} className="grid gap-2 px-3 py-2.5 sm:grid-cols-[minmax(140px,1fr)_110px_minmax(220px,1.5fr)_120px] sm:items-center sm:gap-3">
-                    <span className="text-[13px] font-extrabold text-navy">{market.marketLabel}</span>
-                    <span className="text-xs font-bold text-amber">{formatMarketStatus(market.status)}</span>
-                    <span className="text-xs font-semibold leading-5 text-muted">
-                      Popular {market.popularVisibleFresh}/{market.popularVisibleTarget} · Discovery {market.discoveryVisibleFresh}/{market.discoveryVisibleTarget} · Backup {market.backupFresh}/{market.backupTarget}
+      {issueMarkets.length ? (
+        <ul className="mt-3 space-y-2">
+          {issueMarkets.map((market) => {
+            const nextRun = marketsNeedingAnotherRun.find(
+              (item) =>
+                normalizeAdminHomepageFareMarketCode(item.market) ===
+                normalizeAdminHomepageFareMarketCode(market.marketCode),
+            );
+            const nextRunNeeded = nextRun ? nextRun.needed : !market.targetMet;
+            const nextRunCause = nextRun?.reason;
+
+            return (
+              <li key={market.marketCode} className="min-w-0 border-l-[3px] border-amber-500 pl-3">
+                <details className="group py-2.5">
+                  <summary className="flex min-w-0 cursor-pointer list-none flex-wrap items-center justify-between gap-3 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] [&::-webkit-details-marker]:hidden">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-[13px] font-semibold text-[#020617]">{market.marketLabel}</span>
+                        <MarketStatusBadge status={market.status} />
+                      </div>
+                      <p className="mt-1 text-[12px] leading-5 text-[#475569]">
+                        Popular {market.popularVisibleFresh}/{market.popularVisibleTarget} · Discovery {market.discoveryVisibleFresh}/{market.discoveryVisibleTarget} · Backup {market.backupFresh}/{market.backupTarget}
+                      </p>
+                    </div>
+                    <span className="shrink-0 text-[13px] font-medium text-[#004BB8]">
+                      <span className="group-open:hidden">View details ›</span>
+                      <span className="hidden group-open:inline">Hide details ‹</span>
                     </span>
-                    <span className="text-xs font-bold text-navy">
-                      {nextRunNeeded ? (
-                        <>
-                          <span className="block">Needed</span>
-                          {nextRunCause && nextRunCause !== "underfilled" ? <span className="mt-0.5 block text-[10px] font-semibold text-muted">{formatUnderfillCause(nextRunCause)}</span> : null}
-                        </>
-                      ) : (
-                        "Not required"
-                      )}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </>
-        ) : (
-          <p className="bg-teal/10 p-3 text-sm font-semibold text-teal-dark">
-            No underfill diagnostics are currently reported for public markets.
-          </p>
-        )}
-      </div>
+                  </summary>
+
+                  <dl className="mt-3 grid max-w-[760px] gap-x-5 gap-y-3 border-t border-[#E7ECF5] pt-3 sm:grid-cols-3">
+                    <CompactDetail label="Next run" value={nextRunNeeded ? "Needed" : "Not required"} />
+                    <CompactDetail
+                      label="Reason"
+                      value={nextRunCause && nextRunCause !== "underfilled" ? formatUnderfillCause(nextRunCause) : formatMarketStatus(market.status)}
+                    />
+                    <CompactDetail
+                      label="Current gaps"
+                      value={`${Math.max(0, market.popularVisibleTarget - market.popularVisibleFresh)} popular · ${Math.max(0, market.discoveryVisibleTarget - market.discoveryVisibleFresh)} discovery · ${Math.max(0, market.backupTarget - market.backupFresh)} backup`}
+                    />
+                  </dl>
+                </details>
+              </li>
+            );
+          })}
+        </ul>
+      ) : (
+        <p className="mt-3 text-[13px] leading-5 text-[#475569]">
+          No public markets currently require attention.
+        </p>
+      )}
     </DashboardSection>
   );
 }
@@ -1030,19 +1037,20 @@ function AdvancedDiagnostics({
   refreshCounts: RefreshCounts | null;
 }) {
   return (
-    <details className="rounded-2xl border border-border bg-white p-4">
-      <summary className="cursor-pointer text-sm font-extrabold text-navy">
-        Advanced diagnostics
+    <details className="group border-b border-[#D8E1EC] py-5">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-[15px] font-semibold text-[#020617] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] [&::-webkit-details-marker]:hidden">
+        <span>Advanced diagnostics</span>
+        <span className="text-[13px] font-medium text-[#004BB8]"><span className="group-open:hidden">View details ›</span><span className="hidden group-open:inline">Hide details ‹</span></span>
       </summary>
       <div className="mt-4 space-y-5">
         <section aria-labelledby="fallback-pools-heading">
           <div>
-            <h4 id="fallback-pools-heading" className="text-sm font-extrabold text-navy">Fallback coverage pools</h4>
-            <p className="mt-1 text-xs font-semibold leading-5 text-muted">
+            <h4 id="fallback-pools-heading" className="text-[13px] font-semibold text-[#020617]">Fallback coverage pools</h4>
+            <p className="mt-1 text-[12px] leading-5 text-[#475569]">
               Internal regional and global pools used for routing and replacement; they do not count as public homepage readiness.
             </p>
           </div>
-          <div className="mt-3 grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
+          <div className="mt-3 divide-y divide-[#E7ECF5] border-y border-[#E7ECF5] lg:grid lg:grid-cols-2 lg:divide-x lg:divide-y-0">
             {pools.length ? (
               pools.map((pool) => {
                 const selected = normalizeAdminHomepageFareMarketCode(selectedRouteScope ?? "") === normalizeAdminHomepageFareMarketCode(pool.marketCode);
@@ -1052,7 +1060,7 @@ function AdvancedDiagnostics({
                     type="button"
                     onClick={() => onInspectMarket(pool.marketCode)}
                     aria-pressed={selected}
-                    className={`rounded-xl border border-dashed p-3 text-left transition ${selected ? "border-navy bg-slate-50 ring-2 ring-navy/10" : "border-slate-200 hover:border-navy/30"}`}
+                    className={`min-w-0 px-3 py-3 text-left transition hover:bg-[#F8FAFC] ${selected ? "bg-[#EFF6FF]" : ""}`}
                   >
                     <div className="flex items-center justify-between gap-3">
                       <span className="font-extrabold text-navy">{pool.marketLabel}</span>
@@ -1072,9 +1080,9 @@ function AdvancedDiagnostics({
           </div>
         </section>
 
-        <section aria-labelledby="executor-debug-heading" className="border-t border-slate-200 pt-4">
-          <h4 id="executor-debug-heading" className="text-sm font-extrabold text-navy">Executor details</h4>
-          <dl className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <section aria-labelledby="executor-debug-heading" className="border-t border-[#E7ECF5] pt-4">
+          <h4 id="executor-debug-heading" className="text-[13px] font-semibold text-[#020617]">Executor details</h4>
+          <dl className="mt-3 grid gap-x-5 gap-y-3 sm:grid-cols-2 lg:grid-cols-4">
             <MetricCard label="Configured routes" value={statusPayload.summary.total} />
             <MetricCard label="Candidate pool failed" value={statusPayload.candidatePoolHealth.failed} />
             <MetricCard label="Candidate pool unavailable" value={statusPayload.candidatePoolHealth.unavailable} />
@@ -1126,7 +1134,7 @@ function MarketRouteInspector({
       title="Route inspector"
     >
       <div className="mt-3 flex flex-col gap-3 border-y border-[#E7ECF5] py-3 sm:flex-row sm:items-end">
-        <label className="min-w-0 flex-1 text-xs font-extrabold uppercase tracking-wide text-muted">
+        <label className="min-w-0 flex-1 text-[12px] font-medium text-[#64748B]">
           Market
           <select
             value={selectedRouteScope ?? ""}
@@ -1143,7 +1151,7 @@ function MarketRouteInspector({
           </select>
         </label>
 
-        <label className="min-w-0 flex-1 text-xs font-extrabold uppercase tracking-wide text-muted">
+        <label className="min-w-0 flex-1 text-[12px] font-medium text-[#64748B]">
           Status
           <select
             value={filter}
