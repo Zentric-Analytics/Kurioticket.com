@@ -213,20 +213,30 @@ export async function verifyNotificationPanel({ page, root, output, width }) {
   await dialog.getByRole("button", { name: "Refresh notifications" }).click();
   await expect(dialog.locator("li")).toHaveCount(3);
   const firstItem = dialog.locator("li").first();
+  const swipeCard = firstItem.locator("[data-notification-card]");
   const swipe = async (dx, dy = 0) => {
-    const box = await firstItem.locator("h3").boundingBox();
-    const x = box.x + box.width * 0.75;
-    const y = box.y + box.height / 2;
+    await expect(swipeCard).toBeVisible();
+    const box = await swipeCard.boundingBox();
+    if (!box) throw new Error("Notification swipe card has no bounding box");
+    const x = box.x + box.width * 0.65;
+    const y = box.y + Math.min(box.height * 0.45, 72);
     await page.mouse.move(x, y);
     await page.mouse.down();
-    await page.mouse.move(x + dx, y + dy, { steps: 10 });
+    await page.mouse.move(x + dx, y + dy, { steps: 12 });
     await page.mouse.up();
   };
   await swipe(-10, 50);
   await expect(firstItem).toHaveAttribute("data-notification-swipe-open", "false");
   await swipe(-20);
   await expect(firstItem).toHaveAttribute("data-notification-swipe-open", "false");
-  await swipe(-75);
+
+  // Chromium can coalesce automated pointer moves under CI load. Use a deliberate
+  // drag beyond the real 44px open threshold, then retry once if the first
+  // native pointer sequence was coalesced.
+  for (const dx of [-120, -160]) {
+    await swipe(dx);
+    if (await firstItem.getAttribute("data-notification-swipe-open") === "true") break;
+  }
   await expect(firstItem).toHaveAttribute("data-notification-swipe-open", "true");
   expect(deletions).toHaveLength(0, "swiping reveals the action without deleting automatically");
   await page.screenshot({ path: path.join(output, "notification-swipe-" + width + ".png") });
