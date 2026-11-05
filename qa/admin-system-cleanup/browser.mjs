@@ -129,7 +129,7 @@ try {
 
           const summary = main.locator('section[aria-label="Email delivery summary"]');
           await expect(summary).toBeVisible();
-          for (const label of ["Email attempts", "Delivered", "Delayed", "Failed"]) {
+          for (const label of ["Email deliveries", "Delivered", "Delayed", "Failed"]) {
             await expect(summary.getByText(label, { exact: true })).toBeVisible();
           }
           await expect(summary.getByText("15", { exact: true })).toBeVisible();
@@ -152,7 +152,7 @@ try {
 
           if (width === 1440) {
             const boxes = await Promise.all(
-              ["Email attempts", "Delivered", "Delayed", "Failed"].map(async label =>
+              ["Email deliveries", "Delivered", "Delayed", "Failed"].map(async label =>
                 summary.getByText(label, { exact: true }).boundingBox()
               )
             );
@@ -163,7 +163,7 @@ try {
             await page.goto(`${root}/admin/email-delivery?range=7d`, { waitUntil: "networkidle" });
             await expect(page.getByRole("heading", { name: "Email Delivery", exact: true })).toBeVisible();
             await expect(page.getByText("Latest 10 in last 7 days", { exact: true })).toBeVisible();
-            await expect(page.locator('section[aria-label="Email delivery summary"]').getByText("Email attempts", { exact: true })).toBeVisible();
+            await expect(page.locator('section[aria-label="Email delivery summary"]').getByText("Email deliveries", { exact: true })).toBeVisible();
           }
         }
         if (route === "settings") await expect(main.getByRole("link", { name: "Open fare operations" })).toHaveAttribute("href", "/admin/homepage-fares");
