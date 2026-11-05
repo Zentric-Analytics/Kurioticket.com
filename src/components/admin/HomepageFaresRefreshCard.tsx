@@ -764,23 +764,6 @@ function getPublicDisplayTarget(market: MarketReadiness) {
   return market.popularVisibleTarget + market.discoveryVisibleTarget;
 }
 
-function readinessTone(status: GlobalReadinessStatus): SummaryTone {
-  if (status === "ready") return "good";
-  if (status === "partial") return "warning";
-  return "danger";
-}
-
-function formatGlobalReadinessStatus(status: GlobalReadinessStatus) {
-  switch (status) {
-    case "ready":
-      return "Ready";
-    case "partial":
-      return "Partially ready";
-    case "not_ready":
-      return "Not ready";
-  }
-}
-
 function buildDiagnostics(
   markets: MarketReadiness[],
   marketsNeedingAnotherRun: MarketNextRunNeed[],
