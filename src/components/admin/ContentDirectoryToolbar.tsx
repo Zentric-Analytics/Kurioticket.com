@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useTransition, type FormEvent, type MouseEvent, type ReactNode } from "react";
 
 import { AdminDirectorySelect } from "@/components/admin/AdminDirectorySelect";
+import { getCmsMarketName } from "@/lib/adminCmsMarketLabels";
 
 const statuses = [
   { label: "All", value: "" },
@@ -112,7 +113,7 @@ export function ContentDirectoryToolbar({
   }
 
   const hasFilters = Boolean(searchTerm || status || category || (market && markets.length > 0 && market !== "ALL"));
-  const marketOptions: Option[] = [{ value: "ALL", label: "All markets" }, ...markets.map(value => ({ value, label: value.replaceAll("_", " ") }))];
+  const marketOptions: Option[] = [{ value: "ALL", label: "All markets" }, ...markets.map(value => ({ value, label: getCmsMarketName(value) }))];
   const categoryOptions: Option[] = [{ value: "", label: "All categories" }, ...categories.map(value => ({ value, label: value }))];
 
   return (
