@@ -9,33 +9,33 @@ const shell = readFileSync("src/components/admin/AdminHorizontalShell.tsx", "utf
 
 test("Audit Logs uses the compact Providers-style white workspace", () => {
   assert.doesNotMatch(page, /AdminPageShell/);
-  assert.equal((page.match(/>Audit Logs<\/h1>/g) || []).length, 1);
-  assert.match(page, />Audit Logs<\/h1>/);
-  assert.match(page, /text-\[18px\] font-semibold/);
-  assert.match(page, /border-b border-\[#D8E1EC\]/);
-  assert.match(page, /text-\[12px\] font-medium uppercase text-\[#475569\]/);
-  assert.match(page, /text-\[13px\] font-medium text-\[#020617\]/);
+  assert.equal((page.match(/Audit Logs<\/h1>/g) || []).length, 1);
+  assert.ok(page.includes("text-[18px] font-semibold"));
+  assert.ok(page.includes("border-b border-[#D8E1EC]"));
+  assert.ok(page.includes("text-[12px] font-medium uppercase text-[#475569]"));
+  assert.ok(page.includes("text-[13px] font-medium text-[#020617]"));
   assert.doesNotMatch(page, /AdminDataTable|AdminFilterBar|AdminSectionCard|rounded-xl border border-slate-200 bg-white/);
-  assert.match(shell, /auditLogsWorkspace/);
+  assert.ok(shell.includes("auditLogsWorkspace"));
 });
 
 test("Audit Logs presents readable actions while retaining technical audit values", () => {
-  assert.match(page, /CMS_CONTENT_PUBLISHED: "CMS content published"/);
-  assert.match(page, /ADMIN_ALERT_CMS_STATE: "CMS alert state changed"/);
-  assert.match(page, /PROVIDER_RETESTED: "Provider retested"/);
-  assert.match(page, /actionLabel\(log\.action\)/);
-  assert.match(page, /<code[^>]*title=\{log\.action\}>\{log\.action\}<\/code>/);
-  assert.match(page, /identifierLabel\(log\.targetType\)/);
-  assert.match(page, /title=\{log\.targetId \|\| undefined\}/);
+  assert.ok(page.includes('CMS_CONTENT_PUBLISHED: "CMS content published"'));
+  assert.ok(page.includes('ADMIN_ALERT_CMS_STATE: "CMS alert state changed"'));
+  assert.ok(page.includes('PROVIDER_RETESTED: "Provider retested"'));
+  assert.ok(page.includes("actionLabel(log.action)"));
+  assert.ok(page.includes("title={log.action}>{log.action}</code>"));
+  assert.ok(page.includes("identifierLabel(log.targetType)"));
+  assert.ok(page.includes("title={log.targetId || undefined}"));
 });
 
 test("Target email is filterable but not a permanent table column", () => {
-  assert.match(toolbar, />Target email\s*<input/);
-  assert.doesNotMatch(page, /<span>Target email<\/span>/);
-  assert.match(page, /if \(!log\.targetEmail\)/);
-  assert.match(page, /<details data-audit-row=\{log\.id\}/);
-  assert.match(page, />Target email<\/p>/);
-  assert.match(page, /\{log\.targetEmail\}/);
+  assert.ok(toolbar.includes("Target email"));
+  assert.ok(toolbar.includes('placeholder="Search target email"'));
+  assert.equal(page.includes("<span>Target email</span>"), false);
+  assert.ok(page.includes("if (!log.targetEmail)"));
+  assert.ok(page.includes("<details data-audit-row={log.id}"));
+  assert.ok(page.includes("Target email</p>"));
+  assert.ok(page.includes("{log.targetEmail}"));
 });
 
 test("Audit Logs filters preserve the safe reader contract and user-page custom-date rules", () => {
@@ -48,39 +48,53 @@ test("Audit Logs filters preserve the safe reader contract and user-page custom-
   for (const label of ["All target types", "User", "Visitor", "Provider", "Support ticket", "Email delivery", "CMS content item"]) {
     assert.ok(toolbar.includes(label));
   }
-  assert.match(toolbar, /onValueChange=\{changeRange\}/);
-  assert.match(toolbar, /onValueChange=\{next => navigate\(\{ action: next \|\| null \}\)\}/);
-  assert.match(toolbar, /onValueChange=\{next => navigate\(\{ targetType: next \|\| null \}\)\}/);
-  assert.match(toolbar, /aria-label="Custom start date UTC"/);
-  assert.match(toolbar, /aria-label="Custom end date UTC"/);
-  assert.match(toolbar, />Apply dates<\/button>/);
-  assert.match(toolbar, /disabled=\{!validCustom \|\| isPending\}/);
-  assert.match(toolbar, />Apply filters<\/button>/);
-  assert.match(toolbar, /href="\/admin\/logs\?range=7d"/);
-  assert.match(page, /for \(const key of \["action", "adminEmail", "targetType", "targetEmail"\]/);
-  assert.match(page, /params\.set\("limit", "100"\)/);
-  assert.match(page, /if \(cursor\)/);
-  assert.match(page, /range === "90d"/);
-  assert.doesNotMatch(page, /params\.set\("range"/);
+  assert.ok(toolbar.includes("onValueChange={changeRange}"));
+  assert.ok(toolbar.includes("onValueChange={next => navigate({ action: next || null })}"));
+  assert.ok(toolbar.includes("onValueChange={next => navigate({ targetType: next || null })}"));
+  assert.ok(toolbar.includes('aria-label="Custom start date UTC"'));
+  assert.ok(toolbar.includes('aria-label="Custom end date UTC"'));
+  assert.ok(toolbar.includes("Apply dates"));
+  assert.ok(toolbar.includes("disabled={!validCustom || isPending}"));
+  assert.ok(toolbar.includes("Apply filters"));
+  assert.ok(toolbar.includes('href="/admin/logs?range=7d"'));
+  assert.ok(page.includes('params.set("limit", "100")'));
+  assert.ok(page.includes('params.has("cursor")'));
+  assert.ok(page.includes('range === "90d"'));
+  assert.equal(page.includes('params.set("range"'), false);
+});
+
+test("Audit Logs forwards malformed reader parameters so the safe reader can reject them", () => {
+  assert.ok(page.includes('const pageOnlyKeys = new Set(["range", "fromDate", "toDate"])'));
+  assert.ok(page.includes("for (const [key, value] of Object.entries(raw))"));
+  assert.ok(page.includes("if (pageOnlyKeys.has(key) || value === undefined) continue"));
+  assert.ok(page.includes("if (Array.isArray(value)) value.forEach(item => params.append(key, item))"));
+  assert.ok(page.includes("else params.append(key, value)"));
+  assert.ok(page.includes('if (!params.has("limit")) params.set("limit", "100")'));
+});
+
+test("Canceling custom date editing restores the applied range selector", () => {
+  assert.ok(toolbar.includes("rangeSelectVersion"));
+  assert.ok(toolbar.includes('key={range + ":" + rangeSelectVersion}'));
+  assert.ok(toolbar.includes("setRangeSelectVersion(version => version + 1)"));
 });
 
 test("Audit Logs keeps cursor pagination explicit and distinguishes empty, invalid, forbidden and unavailable reads", () => {
-  assert.match(page, />Back to newest<\/Link>/);
-  assert.match(page, />Older records ›<\/Link>/);
-  assert.match(page, /Newest first · up to 100 records per page\./);
-  assert.match(page, /No audit entries found/);
-  assert.match(page, /Invalid audit filters/);
-  assert.match(page, /Admin access required/);
-  assert.match(page, /Audit logs unavailable/);
-  assert.match(page, /An unavailable read is not shown as an empty history/);
+  assert.ok(page.includes("Back to newest"));
+  assert.ok(page.includes("Older records ›"));
+  assert.ok(page.includes("Newest first · up to 100 records per page."));
+  assert.ok(page.includes("No audit entries found"));
+  assert.ok(page.includes("Invalid audit filters"));
+  assert.ok(page.includes("Admin access required"));
+  assert.ok(page.includes("Audit logs unavailable"));
+  assert.ok(page.includes("An unavailable read is not shown as an empty history"));
 });
 
 test("Audit Logs, CMS Health and Email Delivery are contextual destinations rather than System header children", () => {
-  assert.match(nav, /href: "\/admin\/logs", label: "Audit Logs"/);
+  assert.ok(nav.includes('href: "/admin/logs", label: "Audit Logs"'));
   for (const href of ["/admin/logs", "/admin/system/cms-health", "/admin/email-delivery"]) {
     assert.ok(nav.includes(`href: "${href}"`));
     assert.equal(nav.includes(`href: "${href}", parentHref: "/admin/system"`), false);
   }
   assert.doesNotMatch(shell, /SystemSectionTabs|aria-label="System sections"/);
-  assert.match(shell, /href: "\/admin\/logs", label: "Audit Logs"/);
+  assert.ok(shell.includes('{ href: "/admin/logs", label: "Audit Logs", icon: ShieldCheck }'));
 });
