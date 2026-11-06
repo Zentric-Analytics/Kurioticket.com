@@ -71,7 +71,7 @@ export function AdminAlertAcknowledgeButton({
     <div>
       {compact ? <button type="button" onClick={markRead} disabled={pending} aria-busy={pending}
         title="Mark this alert as read for 24 hours. This does not resolve the issue."
-        className={styles.action + " min-w-[128px]"}>
+        className={styles.action + " min-w-[168px]"}>
         {pending ? <AdminNotificationSpinner className="h-3.5 w-3.5" /> : <Check size={14} strokeWidth={1.75} aria-hidden="true" />}
         {pending ? "Marking as read…" : "Mark as read"}
       </button> : <AdminButton type="button" onClick={markRead} disabled={pending} loading={pending} size={rowStyle ? "sm" : "md"} className={rowStyle ? "rounded-md font-semibold shadow-none" : undefined}>
