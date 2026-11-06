@@ -211,3 +211,37 @@ test("Cars results keep the sticky inline search with a mobile-only Back control
   assert.doesNotMatch(headerSource, /data-cars-results-mobile-nav-filter/);
 });
 
+
+test("shared footer exposes FAQ under Contact Us on desktop and mobile", () => {
+  const footer = readFileSync(new URL("./Footer.tsx", import.meta.url), "utf8");
+  const contactStart = footer.indexOf('id: "contact" as const');
+  const discoverStart = footer.indexOf('id: "discover" as const');
+  const contact = footer.slice(contactStart, discoverStart);
+  assert.ok(contactStart >= 0 && discoverStart > contactStart);
+  assert.match(contact, /label: t\.faqHeading,\s*href: "\/faq"/);
+  assert.match(footer, /footerSections\.map\(\(section\) =>/);
+  assert.match(footer, /className="hidden gap-x-8 lg:grid lg:grid-cols-4/);
+  assert.match(footer, /className="lg:hidden"/);
+});
+
+test("desktop signed-in menu restores My Account first without changing mobile links", () => {
+  const desktopStart = headerSource.indexOf("const desktopSignedInAccountMenuItems = [");
+  const mobileStart = headerSource.indexOf("const mobileSignedInAccountMenuItems = [");
+  const desktop = headerSource.slice(desktopStart, mobileStart);
+  assert.ok(desktopStart >= 0 && mobileStart > desktopStart);
+  assert.match(desktop, /href: "\/dashboard\/account", labelKey: "accountMenu\.myAccount\.label"/);
+  assert.match(desktop, /\.\.\.signedInAccountMenuItems/);
+  const accountIndex = desktop.indexOf('href: "/dashboard/account"');
+  const existingItemsIndex = desktop.indexOf("...signedInAccountMenuItems");
+  assert.ok(accountIndex >= 0 && existingItemsIndex >= 0 && accountIndex < existingItemsIndex,
+    "My Account must precede the existing desktop signed-in menu entries");
+  // Ensure My Account is actually the first array entry, not merely ahead of
+  // the spread of existing links.
+  assert.match(desktop, /const desktopSignedInAccountMenuItems = \[\s*\{\s*href: "\/dashboard\/account"/);
+  assert.match(headerSource, /desktopSignedInAccountMenuItems\.map\(\(item\) =>/);
+
+  const mobile = headerSource.slice(mobileStart, headerSource.indexOf("const mobileInfoLegalMenuItems", mobileStart));
+  assert.match(mobile, /href: "\/dashboard\/account"/);
+  assert.match(mobile, /\.\.\.signedInAccountMenuItems\.slice\(1\)/);
+  assert.match(headerSource, /translatedMobileSignedInAccountMenuItems\.map/);
+});

@@ -106,6 +106,13 @@ const signedInAccountMenuItems = [
   { href: "/dashboard/alerts?from=account", labelKey: "accountMenu.priceAlerts.label", icon: Tag },
 ];
 
+// Restore My Account in the desktop dropdown without changing the existing
+// mobile account drawer entries or their order.
+const desktopSignedInAccountMenuItems = [
+  { href: "/dashboard/account", labelKey: "accountMenu.myAccount.label", icon: UserCircle },
+  ...signedInAccountMenuItems,
+];
+
 const mobileSignedInAccountMenuItems = [
   {
     href: "/dashboard/account",
@@ -401,7 +408,7 @@ export function AppHeader({
 
   const translatedSignedInAccountMenuItems = useMemo(
     () =>
-      signedInAccountMenuItems.map((item) => ({
+      desktopSignedInAccountMenuItems.map((item) => ({
         ...item,
         label: t[item.labelKey],
       })),
