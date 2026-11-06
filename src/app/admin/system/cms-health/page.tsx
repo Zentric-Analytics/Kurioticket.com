@@ -1,3 +1,6 @@
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
+
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { CmsScopeHealthRow } from "@/components/admin/CmsScopeHealthRow";
 import { hotelDestinations } from "@/data/hotelDestinations";
@@ -45,6 +48,13 @@ export default async function AdminCmsHealthPage() {
 
   return (
     <div className="w-full min-w-0 bg-white text-[#020617]">
+      <Link
+        href="/admin/system"
+        className="focus-ring mb-3 inline-flex items-center gap-1.5 rounded-sm text-[12px] font-medium text-[#64748B] hover:text-[#004BB8]"
+      >
+        <ArrowLeft size={14} aria-hidden="true" />
+        Back to System
+      </Link>
       <AdminPageShell title="CMS Health" eyebrow="">
         {!overview.available ? (
           <section className="border-y border-[#D8E1EC] py-5" aria-labelledby="cms-health-unavailable">
