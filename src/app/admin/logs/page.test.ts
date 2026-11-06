@@ -31,7 +31,7 @@ test("Audit Logs presents readable actions while retaining technical audit value
 });
 
 test("Target email is filterable but not a permanent table column", () => {
-  assert.ok(toolbar.includes("Target email"));
+  assert.ok(toolbar.includes("Search target email"));
   assert.ok(toolbar.includes('placeholder="Search target email"'));
   assert.equal(page.includes("<span>Target email</span>"), false);
   assert.ok(page.includes("if (!log.targetEmail)"));
