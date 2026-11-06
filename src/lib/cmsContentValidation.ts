@@ -2,6 +2,7 @@ import { z } from "zod";
 import { cmsOrderForStorage, CMS_DISPLAY_ORDER_MIN, CMS_DISPLAY_ORDER_MAX } from "@/lib/cmsOrderPresentation";
 import type { CmsContentType } from "@/generated/prisma/enums";
 import { imageRemotePatterns, matchesImagePattern } from "@/config/imagePatterns";
+import { cmsImageContentType } from "@/lib/cmsImageUploadRules";
 
 const printable = (max: number) =>
   z.string().trim().min(1).max(max).refine((value) => !/[\u0000-\u001f\u007f]/.test(value), "Control characters are not allowed.");
@@ -15,6 +16,8 @@ const airportCode = z.string().trim().toUpperCase().regex(/^[A-Z0-9]{3}$/);
 const countryCode = z.string().trim().toUpperCase().regex(/^[A-Z]{2}$/);
 const safeImage = z.string().trim().max(2000).refine((value) => {
   if (value.startsWith("/images/")) return true;
+  const uploadedPrefix = "/api/cms/images/";
+  if (value.startsWith(uploadedPrefix)) return cmsImageContentType(value.slice(uploadedPrefix.length)) !== null;
   try {
     const url = new URL(value);
     return url.protocol === "https:"
