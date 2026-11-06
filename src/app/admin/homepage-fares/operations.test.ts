@@ -192,7 +192,8 @@ test("route pagination keeps columns and layout steady across short and long pag
 
 test("route inspector defaults to All routes with seven distinct status options", () => {
   assert.equal((component.match(/<SearchMonitorSelect/g) || []).length, 2);
-  assert.match(component, /useState<string>\(ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE\)/);
+  assert.match(component, /initialMarket = ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE/);
+  assert.match(component, /useState<string>\(\s*initialMarket === ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE/);
   assert.match(component, /value: ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE, label: "All routes"/);
   assert.doesNotMatch(component, /value: "", label: "Select market"/);
   assert.match(component, /value=\{selectedRouteScope\}/);
@@ -375,7 +376,7 @@ test("readiness overview is flat like Providers while preserving status and metr
 });
 
 test("readiness summary metrics use flat neutral rows with semantic dots", () => {
-  assert.match(component, /className="min-h-\[88px\] min-w-0 bg-white px-4 py-4 xl:px-5"/);
+  assert.match(component, /className="min-h-\[88px\] min-w-0 bg-white px-3 py-4 sm:px-4 xl:px-5"/);
   assert.match(component, /h-1\.5 w-1\.5 shrink-0 rounded-full/);
   assert.match(component, /text-\[24px\] font-medium leading-7 tracking-\[-0\.03em\] tabular-nums/);
   assert.match(component, /return "bg-teal"/);
@@ -434,7 +435,7 @@ test("Market coverage retains public market inspection and reports counts outsid
   assert.match(component, /outside the public country table/);
   assert.match(component, /hidden=\{!showDetails\}/);
   assert.match(component, /href=\{onInspectMarket\(market\.marketCode\)\}/);
-  assert.match(component, /href=\{onInspectMarket\(market\.marketCode\)\}/);
+  assert.match(component, /href=\{onInspectMarket\(pool\.marketCode\)\}/);
   assert.match(component, /<MarketRouteInspector/);
   assert.match(component, /onSelectMarket=\{selectRouteScope\}/);
   assert.match(component, /onFilterChange=\{selectRouteFilter\}/);
