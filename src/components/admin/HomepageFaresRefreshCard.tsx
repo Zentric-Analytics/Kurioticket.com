@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject, type ReactNode } from "react";
 import { ChevronDown, RefreshCcw } from "lucide-react";
+import Link from "next/link";
 
 import { Button } from "@/components/ui/Button";
 import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
@@ -416,7 +417,10 @@ type StatusLoadState = {
   error: string;
 };
 
-export function HomepageFaresRefreshCard() {
+export function HomepageFaresRefreshCard({ view = "operations", initialMarket = ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE }: {
+  view?: "operations" | "routes";
+  initialMarket?: string;
+} = {}) {
   const [refreshing, setRefreshing] = useState(false);
   const [refreshState, setRefreshState] = useState<RefreshState>({
     counts: null,
@@ -428,10 +432,13 @@ export function HomepageFaresRefreshCard() {
     loading: true,
     error: "",
   });
-  const [selectedRouteScope, setSelectedRouteScope] = useState<string>(ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE);
+  const [selectedRouteScope, setSelectedRouteScope] = useState<string>(
+    initialMarket === ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE
+      ? ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE
+      : normalizeAdminHomepageFareMarketCode(initialMarket),
+  );
   const [routePage, setRoutePage] = useState(1);
-  // Stable route-inspector anchor: only explicit Inspect actions navigate here.
-  const routeInspectorRef = useRef<HTMLDivElement>(null);
+
   const [routeFilter, setRouteFilter] =
     useState<AdminHomepageFareRouteGroupFilter>("all");
   const selectRouteScope = useCallback((scope: string) => {
@@ -448,16 +455,6 @@ export function HomepageFaresRefreshCard() {
     setRoutePage(1);
     setRouteFilter(filter);
   }, []);
-
-  const inspectMarketRoutes = useCallback((marketCode: string) => {
-    selectRouteScope(marketCode);
-    // An explicit click navigates even when this market is already selected.
-    // Dropdown and status-filter changes must never automatically scroll.
-    routeInspectorRef.current?.scrollIntoView({
-      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
-      block: "start",
-    });
-  }, [selectRouteScope]);
 
   const loadStatus = useCallback(async () => {
     setStatusState((current) => ({ ...current, loading: true, error: "" }));
@@ -590,6 +587,8 @@ export function HomepageFaresRefreshCard() {
             </p>
           ) : null}
 
+      {view === "operations" ? (
+        <>
       <section aria-labelledby="homepage-fare-readiness-heading" className="pb-5 pt-5">
         <h2 id="homepage-fare-readiness-heading" className="text-[15px] font-semibold text-[#020617]">
           Readiness overview
@@ -636,32 +635,42 @@ export function HomepageFaresRefreshCard() {
                 markets={publicMarkets}
                 marketsNeedingAnotherRun={marketsNeedingAnotherRun}
                 selectedRouteScope={selectedRouteScope}
-                onInspectMarket={inspectMarketRoutes}
-              />
-
-              <MarketRouteInspector
-                publicGroups={publicRouteGroups}
-                selectedRouteScope={selectedRouteScope}
-                selectedGroup={selectedRouteGroup}
-                filter={routeFilter}
-                loading={statusState.loading}
-                onSelectMarket={selectRouteScope}
-                routePage={routePage}
-                onPreviousPage={() => setRoutePage((page) => Math.max(1, page - 1))}
-                onNextPage={() => setRoutePage((page) => page + 1)}
-                onFilterChange={selectRouteFilter}
-                routeInspectorRef={routeInspectorRef}
+                onInspectMarket={homepageFareRoutesHref}
               />
 
               <AdvancedDiagnostics
                 pools={fallbackPools}
                 selectedRouteScope={selectedRouteScope}
-                onInspectMarket={inspectMarketRoutes}
+                onInspectMarket={homepageFareRoutesHref}
                 statusPayload={statusPayload}
                 refreshCounts={latestCounts}
               />
             </>
           ) : null}
+        </>
+      ) : (
+        <>
+          {initialStatusLoading ? (
+            <p role="status" className="border-b border-[#E7ECF5] py-4 text-[13px] text-[#64748B]">
+              Loading homepage fare route snapshots…
+            </p>
+          ) : null}
+          {statusPayload.dataAvailable ? (
+            <MarketRouteInspector
+              publicGroups={publicRouteGroups}
+              selectedRouteScope={selectedRouteScope}
+              selectedGroup={selectedRouteGroup}
+              filter={routeFilter}
+              loading={statusState.loading}
+              onSelectMarket={selectRouteScope}
+              routePage={routePage}
+              onPreviousPage={() => setRoutePage((page) => Math.max(1, page - 1))}
+              onNextPage={() => setRoutePage((page) => page + 1)}
+              onFilterChange={selectRouteFilter}
+            />
+          ) : null}
+        </>
+      )}
     </section>
   );
 }
@@ -907,6 +916,12 @@ function RefreshCronPanel({
   );
 }
 
+function homepageFareRoutesHref(marketCode: string) {
+  const market = normalizeAdminHomepageFareMarketCode(marketCode);
+  const selected = market || ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE;
+  return "/admin/homepage-fares/routes?market=" + encodeURIComponent(selected);
+}
+
 function MarketReadinessDashboard({
   markets,
   marketsNeedingAnotherRun,
@@ -916,7 +931,7 @@ function MarketReadinessDashboard({
   markets: MarketReadiness[];
   marketsNeedingAnotherRun: MarketNextRunNeed[];
   selectedRouteScope: string | null;
-  onInspectMarket: (marketCode: string) => void;
+  onInspectMarket: (marketCode: string) => string;
 }) {
   const [expandedMarket, setExpandedMarket] = useState<string | null>(null);
   const displayedCodes = new Set(markets.map((market) => normalizeAdminHomepageFareMarketCode(market.marketCode)));
@@ -980,15 +995,13 @@ function MarketReadinessDashboard({
                           <ChevronDown size={14} aria-hidden="true" className={"shrink-0 transition-transform " + (showDetails ? "rotate-180" : "")} />
                         </button>
                       ) : null}
-                      <button
-                        type="button"
-                        onClick={() => onInspectMarket(market.marketCode)}
-                        aria-pressed={selected}
+                      <Link
+                        href={onInspectMarket(market.marketCode)}
                         aria-label={"Inspect routes for " + market.marketLabel}
                         className="inline-flex min-h-9 items-center whitespace-nowrap text-[12px] font-semibold text-[#004BB8] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]"
                       >
                         Inspect routes
-                      </button>
+                      </Link>
                     </div>
                   </div>
                   {needsAttention ? (
@@ -1040,17 +1053,14 @@ function AdvancedDiagnostics({
 }: {
   pools: MarketReadiness[];
   selectedRouteScope: string | null;
-  onInspectMarket: (marketCode: string) => void;
+  onInspectMarket: (marketCode: string) => string;
   statusPayload: HomepageFareStatusPayload;
   refreshCounts: RefreshCounts | null;
 }) {
   return (
-    <details id="homepage-fare-advanced-diagnostics" className="group border-b border-[#D8E1EC] py-5">
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-sm text-[15px] font-semibold text-[#020617] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] [&::-webkit-details-marker]:hidden">
-        <span>Advanced diagnostics</span>
-        <ChevronDown size={16} aria-hidden="true" className="shrink-0 text-[#64748B] transition-transform group-open:rotate-180" />
-      </summary>
-      <div className="mt-5 space-y-6">
+    <section id="homepage-fare-advanced-diagnostics" aria-labelledby="homepage-fare-advanced-diagnostics-heading" className="min-w-0 border-b border-[#D8E1EC] py-6">
+      <h3 id="homepage-fare-advanced-diagnostics-heading" className="text-[15px] font-semibold text-[#020617]">Advanced diagnostics</h3>
+      <div className="mt-5 space-y-7">
         <section aria-labelledby="fallback-pools-heading">
           <h4 id="fallback-pools-heading" className="text-[14px] font-semibold text-[#020617]">Fallback coverage pools</h4>
           <p className="mt-1 max-w-4xl text-[12px] leading-5 text-[#475569]">
@@ -1061,11 +1071,9 @@ function AdvancedDiagnostics({
               pools.map((pool) => {
                 const selected = normalizeAdminHomepageFareMarketCode(selectedRouteScope ?? "") === normalizeAdminHomepageFareMarketCode(pool.marketCode);
                 return (
-                  <button
+                  <Link
                     key={pool.marketCode}
-                    type="button"
-                    onClick={() => onInspectMarket(pool.marketCode)}
-                    aria-pressed={selected}
+                    href={onInspectMarket(pool.marketCode)}
                     aria-label={"Inspect routes for " + pool.marketLabel}
                     className={"min-w-0 border-b border-[#E7ECF5] px-2 py-3.5 text-left transition-colors hover:bg-[#F8FAFC] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] " + (selected ? "bg-[#F2F7FF]" : "")}
                   >
@@ -1078,7 +1086,7 @@ function AdvancedDiagnostics({
                       <span>Missing <strong className="font-semibold text-[#020617]">{pool.missingCount ?? 0}</strong></span>
                       <span>Failed <strong className="font-semibold text-[#020617]">{pool.failed}</strong></span>
                     </div>
-                  </button>
+                  </Link>
                 );
               })
             ) : (
@@ -1125,7 +1133,7 @@ function AdvancedDiagnostics({
           </div>
         </section>
       </div>
-    </details>
+    </section>
   );
 }
 
@@ -1140,7 +1148,6 @@ function MarketRouteInspector({
   onPreviousPage,
   onNextPage,
   onFilterChange,
-  routeInspectorRef,
 }: {
   publicGroups: AdminHomepageFareMarketRouteGroup[];
   selectedRouteScope: string;
@@ -1152,7 +1159,6 @@ function MarketRouteInspector({
   onPreviousPage: () => void;
   onNextPage: () => void;
   onFilterChange: (filter: AdminHomepageFareRouteGroupFilter) => void;
-  routeInspectorRef: RefObject<HTMLDivElement | null>;
 }) {
   const marketOptions = [
     { value: ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE, label: "All routes" },
@@ -1166,7 +1172,7 @@ function MarketRouteInspector({
   }
 
   return (
-    <div ref={routeInspectorRef} className="min-w-0 scroll-mt-32">
+    <div className="min-w-0">
       <DashboardSection title="Route inspector">
       <div className="mt-4 grid gap-x-4 gap-y-3 border-y border-[#E7ECF5] py-4 sm:grid-cols-[minmax(0,320px)_minmax(0,240px)]">
         <div className="min-w-0">
