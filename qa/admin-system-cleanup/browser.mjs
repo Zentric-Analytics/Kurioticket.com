@@ -24,8 +24,14 @@ try {
       await expect(main).toBeVisible();
       if (variant === "after") {
         await expect(page.getByRole("navigation", { name: "System sections" })).toHaveCount(0);
-        for (const name of ["View operational alerts", "Open Alerts", "Back to System", "View audit logs", "Audit logs", "System health", "View system status", "View admin configuration status"]) {
+        for (const name of ["View operational alerts", "Open Alerts", "View audit logs", "Audit logs", "System health", "View system status", "View admin configuration status"]) {
           await expect(main.getByRole("link", { name, exact: true })).toHaveCount(0);
+        }
+        const backToSystem = main.getByRole("link", { name: "Back to System", exact: true });
+        if (route === "system/cms-health" || route === "email-delivery") {
+          await expect(backToSystem).toHaveAttribute("href", "/admin/system");
+        } else {
+          await expect(backToSystem).toHaveCount(0);
         }
         if (route === "system") {
           await expect(main.getByRole("heading", { name: "System snapshot", exact: true })).toHaveCount(0);

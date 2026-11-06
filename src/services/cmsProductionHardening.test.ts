@@ -153,7 +153,9 @@ test("CMS health reports integrity, ordering, fallback and unpublished changes",
   assert.match(diagnostic, /type: "FLIGHT_ROUTE"/);
   assert.match(diagnostic, /type: "HOTEL_DESTINATION", market: "GLOBAL"/);
   assert.match(diagnostic, /!storedKeys\.has\(key\(scope\)\)/);
-  assert.doesNotMatch(healthPage, /View audit logs|Back to System/);
+  assert.match(healthPage, /href="\/admin\/system"/);
+  assert.match(healthPage, /Back to System/);
+  assert.doesNotMatch(healthPage, /View audit logs/);
   assert.match(adminNavigation, /href: "\/admin\/logs", label: "Audit Logs"/);
   assert.doesNotMatch(adminNavigation, /href: "\/admin\/logs", parentHref: "\/admin\/system"/);
   assert.match(adminNavigation, /href: "\/admin\/system\/cms-health"/);
