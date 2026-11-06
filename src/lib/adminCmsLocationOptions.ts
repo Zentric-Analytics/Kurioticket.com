@@ -104,3 +104,31 @@ export function getCmsAirportSuggestions(query: string, limit = 8): CmsLocationO
   }
   return results;
 }
+
+
+/** Search the same canonical hotel list used by the existing CMS editor.
+ * The suggestion value is the canonical ID, not the visible label.
+ */
+export function getCmsHotelDestinationSuggestions(
+  options: readonly { canonicalId: string; label: string; name: string; country: string; countryCode: string; kind: string; searchValue: string }[],
+  query: string,
+  limit = 8,
+): CmsLocationOption[] {
+  const term = normalizeAirportSearchText(query);
+  return options
+    .filter((option) => [option.label, option.name, option.country, option.countryCode, option.canonicalId, option.searchValue]
+      .some((value) => normalizeAirportSearchText(value).includes(term)))
+    .sort((left, right) => {
+      const a = normalizeAirportSearchText(left.name).startsWith(term) ? 0 : 1;
+      const b = normalizeAirportSearchText(right.name).startsWith(term) ? 0 : 1;
+      return a - b || left.label.localeCompare(right.label);
+    })
+    .slice(0, Math.max(0, limit))
+    .map((option) => ({
+      value: option.canonicalId,
+      title: option.label,
+      description: option.kind + " · " + option.searchValue,
+      country: option.country,
+      countryCode: option.countryCode,
+    }));
+}
