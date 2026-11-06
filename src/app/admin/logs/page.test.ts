@@ -56,6 +56,8 @@ test("Audit Logs search mirrors the Users auto-update pattern without an apply b
   assert.ok(toolbar.includes('window.addEventListener("popstate", onHistoryNavigation)'));
   assert.ok(toolbar.includes("lastSubmittedSearchRef.current = committedSearchKey"));
   assert.ok(toolbar.includes("lastSubmittedSearchRef.current !== null && lastSubmittedSearchRef.current !== searchKey"));
+  assert.ok(toolbar.includes("[adminDraft, targetDraft, adminEmail, targetEmail, pageHref, navigate]"));
+  assert.ok(toolbar.includes("if (lastSubmittedSearchRef.current === searchKey)"));
   assert.doesNotMatch(toolbar, /Apply filters|Clear filters/);
 });
 
