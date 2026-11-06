@@ -164,6 +164,21 @@ test("public market coverage uses the compact Providers table treatment", () => 
   assert.match(component, />\s*Inspect routes\s*<\/Link>/);
 });
 
+test("Market coverage actions use stable left/right tracks across all markets", () => {
+  const table = component.slice(component.indexOf("function MarketReadinessDashboard("), component.indexOf("function FareDiagnosticsSections("));
+  assert.match(table, /<span className="text-center">Actions<\/span>/);
+  assert.match(table, /grid-cols-\[minmax\(0,1fr\)_auto\]/);
+  assert.match(table, /col-start-1 inline-flex min-h-9 items-center justify-self-start/);
+  assert.match(table, /col-start-2 inline-flex min-h-9 items-center justify-self-end/);
+  assert.doesNotMatch(table, /lg:justify-end/);
+  assert.match(table, /\{needsAttention \? \(\s*<button/);
+  assert.match(table, /aria-expanded=\{showDetails\}/);
+  assert.match(table, /aria-controls=\{detailsId\}/);
+  assert.match(table, /hidden=\{!showDetails\}/);
+  assert.match(table, /href=\{onInspectMarket\(market\.marketCode\)\}/);
+  assert.match(table, /lg:grid-cols-\[minmax\(150px,1\.5fr\)_70px_85px_72px_minmax\(120px,1fr\)_minmax\(240px,auto\)\]/);
+});
+
 test("Inspect routes navigates reliably even when selecting the same market again", () => {
   const routesPage = readFileSync("src/app/admin/homepage-fares/routes/page.tsx", "utf8");
   assert.match(component, /function homepageFareRoutesHref\(marketCode: string\)/);

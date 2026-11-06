@@ -992,7 +992,7 @@ function MarketReadinessDashboard({
             <span>Discovery</span>
             <span>Backup</span>
             <span>Health</span>
-            <span className="text-right">Actions</span>
+            <span className="text-center">Actions</span>
           </div>
           <ul aria-label="Public market coverage" className="divide-y divide-[#E7ECF5] border-b border-[#D8E1EC]">
             {markets.map((market) => {
@@ -1025,14 +1025,14 @@ function MarketReadinessDashboard({
                       <MarketStatusBadge status={market.status} />
                       <span className="mt-1 block text-[12px] leading-5 text-[#64748B]">{healthNotes}</span>
                     </div>
-                    <div className="col-span-2 flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1 lg:col-span-1 lg:justify-end">
+                    <div className="col-span-2 grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 lg:col-span-1">
                       {needsAttention ? (
                         <button
                           type="button"
                           aria-expanded={showDetails}
                           aria-controls={detailsId}
                           onClick={() => setExpandedMarket(showDetails ? null : market.marketCode)}
-                          className="inline-flex min-h-9 items-center gap-1.5 whitespace-nowrap text-[12px] font-medium text-[#475569] hover:text-[#004BB8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]"
+                          className="col-start-1 inline-flex min-h-9 items-center justify-self-start gap-1.5 whitespace-nowrap text-[12px] font-medium text-[#475569] hover:text-[#004BB8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]"
                         >
                           Coverage details
                           <ChevronDown size={14} aria-hidden="true" className={"shrink-0 transition-transform " + (showDetails ? "rotate-180" : "")} />
@@ -1041,7 +1041,7 @@ function MarketReadinessDashboard({
                       <Link
                         href={onInspectMarket(market.marketCode)}
                         aria-label={"Inspect routes for " + market.marketLabel}
-                        className="inline-flex min-h-9 items-center whitespace-nowrap text-[12px] font-semibold text-[#004BB8] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]"
+                        className="col-start-2 inline-flex min-h-9 items-center justify-self-end whitespace-nowrap text-[12px] font-semibold text-[#004BB8] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]"
                       >
                         Inspect routes
                       </Link>
