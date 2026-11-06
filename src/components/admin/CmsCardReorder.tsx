@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowDown, ArrowUp, GripVertical, LoaderCircle } from "lucide-react";
 
@@ -46,6 +46,8 @@ export function CmsCardReorder({
   const [error, setError] = useState<string | null>(null);
   const [activeDrag, setActiveDrag] = useState<string | null>(null);
   const draggingId = useRef<string | null>(null);
+  const dragPointerY = useRef<number | null>(null);
+  const scrollFrame = useRef<number | null>(null);
   const byId = new Map(rows.map(row => [row.id, row]));
   const original = rows.filter(row => row.status !== "ARCHIVED");
   const archived = rows.filter(row => row.status === "ARCHIVED");
@@ -73,17 +75,59 @@ export function CmsCardReorder({
     }
   }
 
+  function stopDragging() {
+    draggingId.current = null;
+    dragPointerY.current = null;
+    setActiveDrag(null);
+    if (scrollFrame.current !== null) {
+      window.cancelAnimationFrame(scrollFrame.current);
+      scrollFrame.current = null;
+    }
+  }
+
+  // A touch grip disables native panning. Keep the page moving while the
+  // captured pointer stays near a viewport edge so off-screen cards are
+  // reachable without dozens of manual arrow presses.
+  function autoScrollWhileDragging() {
+    if (!draggingId.current || dragPointerY.current === null) {
+      scrollFrame.current = null;
+      return;
+    }
+    const edge = 88;
+    const y = dragPointerY.current;
+    const height = window.innerHeight;
+    const up = y < edge ? -(edge - Math.max(0, y)) / edge : 0;
+    const down = y > height - edge ? (edge - Math.max(0, height - y)) / edge : 0;
+    const step = Math.round((up + down) * 16);
+    if (step !== 0) window.scrollBy(0, step);
+    scrollFrame.current = window.requestAnimationFrame(autoScrollWhileDragging);
+  }
+
+  useEffect(() => {
+    return () => {
+      if (scrollFrame.current !== null) window.cancelAnimationFrame(scrollFrame.current);
+    };
+  }, []);
+
   function onDragStart(event: PointerEvent<HTMLButtonElement>, id: string) {
     if (pending || event.button !== 0) return;
     draggingId.current = id;
+    dragPointerY.current = event.clientY;
     setActiveDrag(id);
     event.currentTarget.setPointerCapture(event.pointerId);
+    if (scrollFrame.current === null) {
+      scrollFrame.current = window.requestAnimationFrame(autoScrollWhileDragging);
+    }
+  }
+
+  function onDragMove(event: PointerEvent<HTMLButtonElement>) {
+    if (!draggingId.current) return;
+    dragPointerY.current = event.clientY;
   }
 
   function onDragEnd(event: PointerEvent<HTMLButtonElement>) {
     const dragged = draggingId.current;
-    draggingId.current = null;
-    setActiveDrag(null);
+    stopDragging();
     if (!dragged) return;
     const underPointer = document.elementFromPoint(event.clientX, event.clientY);
     const target = underPointer?.closest<HTMLElement>("[data-card-reorder-id]");
@@ -139,8 +183,9 @@ export function CmsCardReorder({
               <button type="button" aria-label={`Drag ${labelFor(row, section)}. Press up or down arrows to move.`}
                 onKeyDown={event => onHandleKeys(event, id)}
                 onPointerDown={event => onDragStart(event, id)}
+                onPointerMove={onDragMove}
                 onPointerUp={onDragEnd}
-                onPointerCancel={() => { draggingId.current = null; setActiveDrag(null); }}
+                onPointerCancel={stopDragging}
                 disabled={pending}
                 className="touch-none cursor-grab rounded-md p-2 text-[#64748B] focus-visible:outline-2 focus-visible:outline-[#6D28D9] active:cursor-grabbing disabled:cursor-not-allowed">
                 <GripVertical size={17} aria-hidden="true" />
