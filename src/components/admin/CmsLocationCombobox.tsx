@@ -69,10 +69,11 @@ export function CmsLocationCombobox({
   const [open, setOpen] = useState(false);
   const [placement, setPlacement] = useState<PopoverPlacement | null>(null);
   const [activeIndex, setActiveIndex] = useState(-1);
+  const [browseAllHotels, setBrowseAllHotels] = useState(false);
 
   const options =
     kind === "hotel"
-      ? getCmsHotelDestinationSuggestions(hotelOptions, value)
+      ? getCmsHotelDestinationSuggestions(hotelOptions, browseAllHotels ? "" : value)
       : kind === "airport"
       ? getCmsAirportSuggestions(value)
       : kind === "country"
@@ -87,6 +88,7 @@ export function CmsLocationCombobox({
     if (disabled || !inputRef.current) return;
     setPlacement(measurePopover(inputRef.current));
     setOpen(true);
+    setBrowseAllHotels(kind === "hotel");
     setActiveIndex(-1);
   }
 
@@ -204,6 +206,7 @@ export function CmsLocationCombobox({
           onChange={(event) => {
             const next = event.target.value;
             onChange(kind === "airport" ? next.toUpperCase() : next);
+            setBrowseAllHotels(false);
             setActiveIndex(-1);
             if (!open) show();
           }}
