@@ -208,6 +208,7 @@ export function CmsLocationCombobox({
           aria-haspopup="listbox"
           aria-expanded={open}
           aria-controls={open ? listId : undefined}
+          onPointerDown={(event) => event.preventDefault()}
           onClick={() => {
             if (open) {
               dismiss();
