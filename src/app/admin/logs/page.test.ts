@@ -38,7 +38,8 @@ test("Audit Logs gives the Admin column priority and keeps desktop emails on one
   assert.equal(page.includes('minmax(210px,1.15fr)'), false);
   assert.equal(page.includes('minmax(240px,1.35fr)'), false);
   assert.ok(page.includes('min-w-[1080px]'));
-  assert.ok(page.includes('md:whitespace-nowrap'));
+  assert.ok(page.includes('md:truncate md:whitespace-nowrap'));
+  assert.ok(page.includes('title={log.adminEmail}'));
 });
 
 test("Every audit row is expandable while target email stays out of the permanent columns", () => {
