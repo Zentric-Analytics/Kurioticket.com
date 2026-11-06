@@ -133,12 +133,28 @@ test("feature-control network failures remain retryable without closing the dial
   assert.match(featurePanel, /if \(!pending \|\| saving\) return/);
 });
 
-test("recent settings changes link to the authoritative filtered audit trail", () => {
-  assert.match(settingsPage, /href="\/admin\/logs\?range=30d&action=FEATURE_CONTROL_UPDATED&targetType=FeatureFlag"/);
-  assert.match(settingsPage, />\s*View audit history\s*<\/Link>/);
-  assert.match(settingsPage, /recentControlUpdates/);
-  assert.match(settingsPage, /No persisted control updates yet/);
-  assert.doesNotMatch(settingsPage, /updatedBy|admin email address/i);
+test("Recent changes opens unfiltered audit history within the reader's supported 90-day window", () => {
+  const recent = readFileSync("src/app/admin/settings/recent-changes/page.tsx", "utf8");
+  const auditLogs = readFileSync("src/app/admin/logs/page.tsx", "utf8");
+  const auditReader = readFileSync("src/services/adminAuditReadContract.ts", "utf8");
+  assert.match(recent, /href="\/admin\/logs\?range=90d"/);
+  assert.doesNotMatch(recent, /href="\/admin\/logs\?[^"]*(?:action=|targetType=|range=30d)/);
+  assert.match(recent, />\s*View audit history\s*<\/Link>/);
+  assert.match(auditLogs, /range === "90d"/);
+  assert.match(auditReader, /end - start > 90 \* dayMs/);
+});
+
+test("Recent changes distinguishes saved control timestamps from audited administrator events", () => {
+  const recent = readFileSync("src/app/admin/settings/recent-changes/page.tsx", "utf8");
+  assert.match(recent, /Latest saved feature-control states/);
+  assert.match(recent, /Dates can reflect initial setup, not only administrator changes/);
+  assert.match(recent, /<span>Last updated<\/span>/);
+  assert.match(recent, /recentControlUpdates/);
+  assert.match(recent, /!featureControls\.dataAvailable/);
+  assert.match(recent, /Feature-control records are temporarily unavailable/);
+  assert.match(recent, /No saved feature-control timestamps available/);
+  assert.doesNotMatch(recent, /updatedBy|admin email address/i);
+  assert.doesNotMatch(recent, /adminAuditLog\.create/);
 });
 
 test("Settings omits nonactionable deployment and access documentation", () => {
