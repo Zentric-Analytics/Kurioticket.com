@@ -22,7 +22,7 @@ export function SearchMonitorSelect({
   name: string;
   value: string;
   options: readonly SearchMonitorOption[];
-  appearance?: "underlined" | "plain" | "boxed";
+  appearance?: "underlined" | "plain" | "boxed" | "fare";
   align?: "start" | "end";
   autoSubmit?: boolean;
   /** Omit a stale scoped field from submission when this filter changes. */
@@ -187,13 +187,15 @@ export function SearchMonitorSelect({
           }
         }}
         className={
-          "inline-flex h-9 min-w-0 items-center justify-start gap-[5px] whitespace-nowrap text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 " +
+          "inline-flex min-w-0 items-center justify-start gap-2 whitespace-nowrap text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 " + (appearance === "fare" ? "h-10 " : "h-9 ") +
           (disabled ? "cursor-not-allowed text-slate-500 opacity-75 " : "cursor-pointer text-[#475569] hover:text-[#111827] ") +
           (appearance === "plain"
             ? "bg-transparent px-0 text-[13px] font-semibold"
             : appearance === "boxed"
               ? "w-full max-w-full rounded-lg border border-slate-200 bg-white px-2 text-[11px] font-medium focus-visible:border-indigo-500 2xl:text-xs"
-              : "w-full border-b border-[#AEB8C6] bg-transparent px-0 text-[13px] font-semibold focus-visible:border-[#004BB8]")
+              : appearance === "fare"
+                ? "w-full max-w-full rounded-md border border-[#CBD5E1] bg-white px-3 text-[13px] font-medium text-[#020617] hover:border-[#94A3B8] focus-visible:border-[#004BB8]"
+                : "w-full border-b border-[#AEB8C6] bg-transparent px-0 text-[13px] font-semibold focus-visible:border-[#004BB8]")
         }
       >
         <span className={truncateLabel ? "min-w-0 flex-1 truncate" : "whitespace-nowrap"}>{triggerLabel}</span>
