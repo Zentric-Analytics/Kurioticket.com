@@ -48,6 +48,12 @@ test("navigation keeps parent workspaces visible while child routes stay nested"
 });
 
 
+test("Settings uses the same full-white workspace surface as other flat admin workspaces", () => {
+  assert.match(shell, /const settingsWorkspace = pathname === "\/admin\/settings" \|\| pathname === "\/admin\/settings\/";/);
+  assert.match(shell, /auditLogsWorkspace \|\| emailDeliveryWorkspace \|\| settingsWorkspace \|\| usersDirectory/);
+  assert.match(shell, /whiteWorkspace \? "bg-white" : "bg-\[#f1f5fb\]"/);
+});
+
 test("navbar search opens the dedicated global-search workspace", () => {
   assert.match(shell, /<Link href="\/admin\/search" aria-label="Search Kurioticket admin"/);
   assert.match(shell, /router\.push\("\/admin\/search"\)/);
