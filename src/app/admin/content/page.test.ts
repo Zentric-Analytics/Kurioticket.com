@@ -51,7 +51,8 @@ test("public content management exposes homepage and FAQ CMS areas while fare op
   assert.doesNotMatch(contentPage, /Upload image|Approve content/i);
 });
 
-test("homepage fare operations stay operational while linking to their content source", () => {
+test("homepage fare operations remain separate from CMS and remove duplicate page-header shortcuts", () => {
+  const nav = readFileSync("src/lib/adminNavigation.ts", "utf8");
   assert.doesNotMatch(contentPage, /HomepageFaresRefreshCard/);
   assert.doesNotMatch(systemPage, /HomepageFaresRefreshCard/);
   assert.doesNotMatch(settingsPage, /HomepageFaresRefreshCard/);
@@ -59,12 +60,11 @@ test("homepage fare operations stay operational while linking to their content s
   assert.doesNotMatch(settingsPage, /Homepage Fare Operations|\/admin\/homepage-fares/);
   assert.match(homepageFarePage, /title="Homepage Fare Operations"/);
   assert.match(homepageFarePage, /HomepageFaresRefreshCard/);
-  assert.match(homepageFarePage, /href="\/admin\/content\/homepage"/);
-  assert.match(homepageFarePage, />\s*Homepage content\s*<\/Link>/);
-  assert.match(homepageFarePage, /href="\/admin\/providers\?product=flights"/);
-  assert.match(homepageFarePage, />\s*Flight providers\s*<\/Link>/);
-  assert.doesNotMatch(homepageFarePage, /href="\/admin\/flights"/);
-  assert.doesNotMatch(homepageFarePage, /href="\/admin\/settings"/);
+  assert.doesNotMatch(homepageFarePage, /href="\/admin\/content\/homepage"|href="\/admin\/providers\?product=flights"|<Link/);
+  assert.match(nav, /href: "\/admin\/content", label: "Content"/);
+  assert.match(nav, /href: "\/admin\/providers", label: "Providers"/);
+  assert.match(nav, /href: "\/admin\/homepage-fares", label: "Homepage Fares"/);
+  assert.doesNotMatch(homepageFarePage, /href="\/admin\/flights"|href="\/admin\/settings"/);
   assert.doesNotMatch(contentPage, /\/admin\/homepage-fares/);
 });
 
