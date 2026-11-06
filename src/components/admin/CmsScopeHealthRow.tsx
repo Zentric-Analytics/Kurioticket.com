@@ -106,7 +106,7 @@ export function CmsScopeHealthRow({
 
   return (
     <>
-      <tr className={expanded ? "bg-[#FBFCFE]" : "hover:bg-[#F8FAFC]"}>
+      <tr className={expanded ? "bg-white" : "hover:bg-[#F8FAFC]"}>
         <th
           scope="row"
           className={tableCellClass + " text-left font-normal"}
@@ -209,7 +209,7 @@ export function CmsScopeHealthRow({
       </tr>
 
       {expanded ? (
-        <tr id={panelId} className="bg-[#FBFCFE]">
+        <tr id={panelId} className="bg-white">
           <td colSpan={5} className="p-0">
             <div className="border-l-[3px] border-[#004BB8] px-4 py-4 sm:px-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
