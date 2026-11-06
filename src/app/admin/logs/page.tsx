@@ -10,7 +10,7 @@ export const metadata = { title: "Admin Audit Logs" };
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 type AuditRange = "24h" | "7d" | "30d" | "90d" | "custom";
 
-const rowGrid = "md:grid-cols-[minmax(130px,0.75fr)_minmax(210px,1.15fr)_minmax(220px,1.2fr)_minmax(240px,1.35fr)_90px]";
+const rowGrid = "md:grid-cols-[minmax(130px,0.75fr)_minmax(210px,1.15fr)_minmax(220px,1.2fr)_minmax(240px,1.35fr)]";
 
 const actionLabels: Record<string, string> = {
   CMS_CONTENT_PUBLISHED: "CMS content published",
@@ -69,7 +69,6 @@ export default async function AdminLogsPage({ searchParams }: { searchParams: Se
                   <span>Admin</span>
                   <span>Action</span>
                   <span>Target</span>
-                  <span className="text-right">Details</span>
                 </div>
                 <div className="min-w-[980px] divide-y divide-[#E7ECF5]">
                   {result.data.items.map(log => <AuditRow key={log.id} log={log} />)}
@@ -129,6 +128,7 @@ function AuditRow({ log }: { log: AdminAuditRead }) {
         <code className="mt-0.5 block max-w-[360px] truncate text-[11px] font-normal text-[#64748B]" title={log.targetId || undefined}>
           {log.targetId || "No target ID"}
         </code>
+        {log.targetEmail ? <span className="sr-only">Additional target email details available</span> : null}
       </div>
     </>
   );
@@ -137,19 +137,17 @@ function AuditRow({ log }: { log: AdminAuditRead }) {
     return (
       <div data-audit-row={log.id} className={"grid gap-2 px-3 py-3 md:items-start md:gap-4 " + rowGrid}>
         {content}
-        <span aria-hidden="true" />
       </div>
     );
   }
 
   return (
     <details data-audit-row={log.id} className="group">
-      <summary className={"grid cursor-pointer list-none gap-2 px-3 py-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] md:items-start md:gap-4 [&::-webkit-details-marker]:hidden " + rowGrid}>
+      <summary
+        title="View target email details"
+        className={"grid cursor-pointer list-none gap-2 px-3 py-3 transition-colors hover:bg-[#F8FAFC] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] md:items-start md:gap-4 [&::-webkit-details-marker]:hidden " + rowGrid}
+      >
         {content}
-        <span className="text-[12px] font-medium text-[#004BB8] md:text-right">
-          <span className="group-open:hidden">View ›</span>
-          <span className="hidden group-open:inline">Hide ‹</span>
-        </span>
       </summary>
       <div className="border-t border-[#EEF2F7] px-3 py-3">
         <div className="max-w-[680px] border-l-2 border-[#D8E1EC] pl-3">
