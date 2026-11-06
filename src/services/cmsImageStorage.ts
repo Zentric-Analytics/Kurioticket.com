@@ -63,7 +63,7 @@ export async function storeCmsImage(filename: string, bytes: Uint8Array): Promis
       "content-type": mime,
       "cache-control": "public, max-age=31536000, immutable",
     },
-    body: Buffer.from(bytes),
+    body: new Blob([Uint8Array.from(bytes)], { type: mime }),
     signal: AbortSignal.timeout(15000),
     cache: "no-store",
   });
