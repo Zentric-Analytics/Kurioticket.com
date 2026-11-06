@@ -20,6 +20,7 @@ type Props = {
   fallbackRetirementEligible: boolean;
   draftOrderCollisionCount: number;
   draftOrderNeedsNormalization: boolean;
+  mode?: "menu" | "normalize";
 };
 
 type ScopeAction =
@@ -36,6 +37,7 @@ export function CmsScopeHardeningActions({
   fallbackRetirementEligible,
   draftOrderCollisionCount,
   draftOrderNeedsNormalization,
+  mode = "menu",
 }: Props) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -209,6 +211,27 @@ export function CmsScopeHardeningActions({
 
   const menuItemClass =
     "focus-ring flex min-h-9 w-full items-center rounded-md px-3 py-2.5 text-left text-[13px] font-medium text-[#020617] transition-colors hover:bg-[#F8FAFC] focus-visible:bg-[#F1F7FF]";
+
+  if (mode === "normalize") {
+    return (
+      <div>
+        <button
+          ref={triggerRef}
+          type="button"
+          disabled={pending || !needsDraftNormalization}
+          onClick={() => run("normalize_draft_order")}
+          className="focus-ring inline-flex h-8 items-center rounded-md border border-[#D8E1EC] bg-white px-2.5 text-[12px] font-medium text-[#020617] transition-colors hover:bg-[#F8FAFC] disabled:cursor-not-allowed disabled:text-[#94A3B8]"
+        >
+          {pending ? "Normalizing…" : "Normalize order"}
+        </button>
+        {error ? (
+          <p className="mt-1.5 max-w-72 text-[12px] font-medium text-rose-700" role="alert">
+            {error}
+          </p>
+        ) : null}
+      </div>
+    );
+  }
 
   return (
     <div>
