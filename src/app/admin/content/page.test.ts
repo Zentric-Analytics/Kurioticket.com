@@ -383,7 +383,7 @@ test("Homepage and flight directories show all records grouped by market then Or
   ];
   const original = [...records];
   assert.deepEqual(sortHomepageCmsDirectoryItems(records).map((item) => item.key), [
-    "london", "lagos-zero", "lagos-alpha", "lagos-four", "new-york",
+    "lagos-zero", "lagos-alpha", "lagos-four", "london", "new-york",
   ]);
   assert.deepEqual(records, original, "Sorting must not mutate CMS records");
 
