@@ -195,7 +195,7 @@ export function CmsLocationCombobox({
           aria-controls={open ? listId : undefined}
           aria-activedescendant={open && activeIndex >= 0 && options[activeIndex] ? listId + "-" + activeIndex : undefined}
           autoComplete="off"
-          className={inputClass}
+          className={inputClass + " cursor-text"}
           value={value}
           disabled={disabled}
           placeholder={kind === "hotel" ? "Search canonical destination" : kind === "airport" ? "Search airport or IATA" : kind === "country" ? "Search country" : "Search city"}
@@ -209,10 +209,31 @@ export function CmsLocationCombobox({
           }}
           onKeyDown={onKeyDown}
         />
-        <ChevronDown
-          aria-hidden="true"
-          className={"pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500 transition-transform duration-150 " + (open ? "rotate-180" : "")}
-        />
+        <button
+          type="button"
+          disabled={disabled}
+          aria-label={(open ? "Close" : "Open") + " " + label + " suggestions"}
+          aria-haspopup="listbox"
+          aria-expanded={open}
+          aria-controls={open ? listId : undefined}
+          onPointerDown={(event) => event.preventDefault()}
+          onClick={() => {
+            if (open) {
+              dismiss();
+              return;
+            }
+            // Focus the editable part without moving the page; typing and
+            // ArrowDown must work immediately after using the arrow button.
+            inputRef.current?.focus({ preventScroll: true });
+            show();
+          }}
+          className="absolute inset-y-0 right-0 inline-flex w-9 cursor-pointer items-center justify-center rounded-r-lg text-[#475569] transition-colors hover:bg-[#F8FAFC] hover:text-[#111827] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] disabled:cursor-not-allowed disabled:text-slate-400"
+        >
+          <ChevronDown
+            aria-hidden="true"
+            className={"pointer-events-none h-4 w-4 transition-transform duration-150 " + (open ? "rotate-180" : "")}
+          />
+        </button>
       </div>
       {open && placement && !disabled ? createPortal(
         <div
