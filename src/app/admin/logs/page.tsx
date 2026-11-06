@@ -115,47 +115,42 @@ function AuditRow({ log }: { log: AdminAuditRead }) {
       <time dateTime={log.createdAt} className="text-[12px] leading-5 text-[#475569]">{formatDateTime(new Date(log.createdAt))}</time>
       <div className="min-w-0">
         <p className="break-words text-[13px] font-medium text-[#020617]">{log.adminEmail}</p>
-        <p className="mt-0.5 truncate text-[11px] text-[#64748B]" title={log.adminUserId || "System event"}>
-          {log.adminUserId || "System event"}
-        </p>
       </div>
       <div className="min-w-0">
         <p className="text-[13px] font-medium text-[#020617]">{actionLabel(log.action)}</p>
-        <code className="mt-0.5 block truncate text-[11px] font-normal text-[#64748B]" title={log.action}>{log.action}</code>
       </div>
       <div className="min-w-0">
         <p className="text-[13px] font-medium text-[#020617]">{identifierLabel(log.targetType)}</p>
-        <code className="mt-0.5 block max-w-[360px] truncate text-[11px] font-normal text-[#64748B]" title={log.targetId || undefined}>
-          {log.targetId || "No target ID"}
-        </code>
-        {log.targetEmail ? <span className="sr-only">Additional target email details available</span> : null}
       </div>
     </>
   );
 
-  if (!log.targetEmail) {
-    return (
-      <div data-audit-row={log.id} className={"grid gap-2 px-3 py-3 md:items-start md:gap-4 " + rowGrid}>
-        {content}
-      </div>
-    );
-  }
-
   return (
     <details data-audit-row={log.id} className="group">
       <summary
-        title="View target email details"
+        title="View audit details"
         className={"grid cursor-pointer list-none gap-2 px-3 py-3 transition-colors hover:bg-[#F8FAFC] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] md:items-start md:gap-4 [&::-webkit-details-marker]:hidden " + rowGrid}
       >
         {content}
       </summary>
       <div className="border-t border-[#EEF2F7] px-3 py-3">
-        <div className="max-w-[680px] border-l-2 border-[#D8E1EC] pl-3">
-          <p className="text-[12px] text-[#64748B]">Target email</p>
-          <p className="mt-0.5 break-all text-[13px] text-[#020617]">{log.targetEmail}</p>
-        </div>
+        <dl className="grid max-w-[980px] gap-x-8 gap-y-3 border-l-2 border-[#D8E1EC] pl-3 sm:grid-cols-2 lg:grid-cols-4">
+          <AuditTechnicalDetail label="Admin ID" value={log.adminUserId || "System event"} />
+          <AuditTechnicalDetail label="Action code" value={log.action} />
+          <AuditTechnicalDetail label="Target ID" value={log.targetId || "Not provided"} />
+          {log.targetEmail ? <AuditTechnicalDetail label="Target email" value={log.targetEmail} /> : null}
+        </dl>
       </div>
     </details>
+  );
+}
+
+function AuditTechnicalDetail({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0">
+      <dt className="text-[11px] font-medium uppercase tracking-[0.02em] text-[#64748B]">{label}</dt>
+      <dd className="mt-1 break-all text-[12px] text-[#020617]">{value}</dd>
+    </div>
   );
 }
 
