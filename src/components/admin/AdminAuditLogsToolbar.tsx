@@ -203,7 +203,13 @@ export function AdminAuditLogsToolbar({
       lastSubmittedSearchRef.current = null;
       return;
     }
-    if (lastSubmittedSearchRef.current === searchKey) return;
+    if (lastSubmittedSearchRef.current === searchKey) {
+      navigate({
+        adminEmail: nextAdmin || null,
+        targetEmail: nextTarget || null,
+      }, true);
+      return;
+    }
 
     const timer = window.setTimeout(() => {
       if (!searchEditingRef.current || lastSubmittedSearchRef.current === searchKey) return;
@@ -214,7 +220,7 @@ export function AdminAuditLogsToolbar({
       }, true);
     }, 300);
     return () => window.clearTimeout(timer);
-  }, [adminDraft, targetDraft, adminEmail, targetEmail, navigate]);
+  }, [adminDraft, targetDraft, adminEmail, targetEmail, pageHref, navigate]);
 
   function submitSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
