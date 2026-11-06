@@ -10,10 +10,7 @@ const registry = readFileSync("src/lib/feature-controls/registry.ts", "utf8");
 
 test("Settings is the authoritative workspace for persisted administrative controls", () => {
   assert.match(settingsPage, /<AdminPageShell title="Settings" hideHeader>/);
-  assert.match(settingsPage, /aria-label="Environment and access"/);
-  assert.match(settingsPage, /ContextItem label="Environment"/);
-  assert.match(settingsPage, /ContextItem label="Your access"/);
-  assert.match(settingsPage, /ContextItem label="Settings store"/);
+  assert.doesNotMatch(settingsPage, /Environment and access|ContextItem|Your access|Settings store/);
   assert.match(settingsPage, />Feature controls<\/h2>/);
   assert.match(settingsPage, />Recent settings changes<\/h2>/);
   assert.match(settingsPage, />Managed outside Settings<\/h2>/);
@@ -41,13 +38,13 @@ test("settings exposes only real persisted feature controls", () => {
   assert.doesNotMatch(settingsPage, /timezone|default currency|preferred market|language preference/i);
 });
 
-test("settings makes environment, edit access and store availability explicit", () => {
-  assert.match(settingsPage, /featureControls\.environment === "PRODUCTION" \? "Production" : "Staging"/);
-  assert.match(settingsPage, /const canEditControls =/);
-  assert.match(settingsPage, /featureControls\.dataAvailable/);
-  assert.match(settingsPage, /featureControls\.environment === "STAGING" \|\| canControlProduction/);
-  assert.match(settingsPage, /const accessLabel = canEditControls \? "Can edit" : featureControls\.dataAvailable \? "View only" : "Unavailable"/);
-  assert.match(settingsPage, /const storeLabel = featureControls\.dataAvailable \? "Available" : "Read-only fallback"/);
+test("settings starts directly with feature controls and retains authorization inputs", () => {
+  assert.match(settingsPage, /<div className="w-full min-w-0 bg-white text-\[#020617\]">\s*<section aria-labelledby="feature-controls-heading" className="border-b border-\[#D8E1EC\] pb-5">/);
+  assert.doesNotMatch(settingsPage, /Environment and access|ContextItem|canEditControls|accessLabel|storeLabel/);
+  assert.match(settingsPage, /canControlProduction=\{canControlProduction\}/);
+  assert.match(settingsPage, /environment=\{featureControls\.environment\}/);
+  assert.match(settingsPage, /operationsAvailable=\{featureControls\.dataAvailable\}/);
+  assert.match(settingsPage, /getFeatureControlProductionAdmins/);
 });
 
 test("feature controls distinguish product availability from travel automation", () => {
