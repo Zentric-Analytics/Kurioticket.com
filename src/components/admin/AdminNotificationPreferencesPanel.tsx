@@ -44,13 +44,13 @@ export function AdminNotificationPreferencesPanel({
   }
 
   return (
-    <div className="mt-3">
+    <div>
       {!available ? (
         <p role="status" className="mb-3 border-l-[3px] border-amber-500 py-1 pl-3 text-[13px] text-amber-800">
           Notification settings are unavailable. Existing alerts remain visible.
         </p>
       ) : null}
-      <div className="flex min-w-0 flex-col gap-3 border-y border-[#D8E1EC] py-3.5 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+      <div className="flex min-w-0 flex-col gap-3 border-b border-[#D8E1EC] py-3.5 sm:flex-row sm:items-center sm:justify-between sm:gap-5">
         <div className="min-w-0">
           <h3 className="text-[13px] font-semibold text-[#020617]">Show acknowledged warnings</h3>
           <p className="mt-1 text-[12px] leading-5 text-[#64748B]">
@@ -60,8 +60,8 @@ export function AdminNotificationPreferencesPanel({
             Critical and unacknowledged alerts always remain visible.
           </p>
         </div>
-        <div className="flex shrink-0 items-center gap-3">
-          <span className="text-[12px] font-medium text-[#475569]">{value ? "Shown" : "Hidden"}</span>
+        <div className="flex shrink-0 items-center justify-between gap-3 sm:min-w-[128px] sm:justify-end">
+          <span className={"text-[12px] font-medium " + (value ? "text-emerald-700" : "text-[#475569]")}>{value ? "Shown" : "Hidden"}</span>
           <button
             type="button"
             role="switch"
@@ -78,7 +78,7 @@ export function AdminNotificationPreferencesPanel({
       </div>
       {feedback ? <p role="status" className="mt-2 text-[12px] text-emerald-700">{feedback}</p> : null}
       {error ? <p role="alert" className="mt-2 text-[12px] text-rose-700">{error}</p> : null}
-      <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-[12px] text-[#64748B]">
+      <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-[12px] leading-5 text-[#64748B]">
         <Link href="/admin/notifications" className="font-medium text-[#004BB8] hover:underline">
           Open Notifications &amp; Alerts
         </Link>

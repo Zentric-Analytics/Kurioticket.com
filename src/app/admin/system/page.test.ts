@@ -108,7 +108,7 @@ test("System specialist pages are contextual destinations rather than duplicate 
 });
 test("settings owns authoritative feature controls", () => {
   assert.match(settingsPage, /title="Settings"/);
-  assert.match(settingsPage, /Feature controls/);
+  assert.match(settingsPage, /FeatureControlsPanel/);
   assert.match(settingsPage, /FeatureControlsPanel/);
   assert.match(settingsPage, /listFeatureControls/);
   assert.match(settingsPage, /getFeatureControlProductionAdmins/);
