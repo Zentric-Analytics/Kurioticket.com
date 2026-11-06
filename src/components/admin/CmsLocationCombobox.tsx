@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { Check, ChevronDown } from "lucide-react";
 
 import type { CmsLocationOption } from "@/lib/adminCmsLocationOptions";
+import { getCmsDropdownBelow } from "@/lib/adminCmsDropdownPosition";
 import {
   getCmsAirportSuggestions,
   getCmsCitySuggestions,
@@ -17,25 +18,15 @@ type HotelSearchOption = { canonicalId: string; label: string; name: string; cou
 type PopoverPlacement = { left: number; top: number; width: number; maxHeight: number };
 
 const inputClass =
-  "h-9 w-full rounded-lg border border-slate-300 bg-white px-3 pr-9 text-[13px] font-normal text-[#111827] shadow-[0_1px_0_rgba(15,23,42,0.04)] outline-none transition-colors hover:border-slate-400 focus:border-[#004BB8]/40 focus:ring-2 focus:ring-[#004BB8]/15 disabled:cursor-not-allowed disabled:border-slate-300 disabled:bg-slate-100 disabled:text-slate-700";
+  "h-9 w-full scroll-mb-28 rounded-lg border border-slate-300 bg-white px-3 pr-9 text-[13px] font-normal text-[#111827] shadow-[0_1px_0_rgba(15,23,42,0.04)] outline-none transition-colors hover:border-slate-400 focus:border-[#004BB8]/40 focus:ring-2 focus:ring-[#004BB8]/15 disabled:cursor-not-allowed disabled:border-slate-300 disabled:bg-slate-100 disabled:text-slate-700";
 
 /**
- * A viewport-anchored menu avoids extending the editor's scrollable document.
- * Flip upwards near the bottom of the window; only the popup scrolls inside it.
+ * Keep the list joined to the field's lower edge and exactly its width.
+ * Shorten the list when space below is limited; never flip it above the field.
+ * The portal preserves the editor's document height and scroll behaviour.
  */
 function measurePopover(anchor: HTMLInputElement): PopoverPlacement {
-  const rect = anchor.getBoundingClientRect();
-  const inset = 8;
-  const gap = 6;
-  const maxMenuHeight = 232;
-  const below = Math.max(0, window.innerHeight - rect.bottom - inset - gap);
-  const above = Math.max(0, rect.top - inset - gap);
-  const upwards = below < 160 && above > below;
-  const maxHeight = Math.max(72, Math.min(maxMenuHeight, upwards ? above : below));
-  const width = Math.min(Math.max(rect.width, 224), Math.max(160, window.innerWidth - inset * 2));
-  const left = Math.max(inset, Math.min(rect.left, window.innerWidth - width - inset));
-  const top = upwards ? Math.max(inset, rect.top - maxHeight - gap) : rect.bottom + gap;
-  return { left, top, width, maxHeight };
+  return getCmsDropdownBelow(anchor.getBoundingClientRect(), window.innerHeight);
 }
 
 export function CmsLocationCombobox({
@@ -90,7 +81,11 @@ export function CmsLocationCombobox({
 
   function show() {
     if (disabled || !inputRef.current) return;
-    setPlacement(measurePopover(inputRef.current));
+    const anchor = inputRef.current;
+    if (window.innerHeight - anchor.getBoundingClientRect().bottom < 96) {
+      anchor.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "instant" });
+    }
+    setPlacement(measurePopover(anchor));
     setOpen(true);
     setBrowseAllHotels(kind === "hotel");
     setActiveIndex(-1);
@@ -122,6 +117,10 @@ export function CmsLocationCombobox({
     const dismissOnScroll = (event: Event) => {
       // Scrolling inside the suggestion list must not affect the main page.
       if (event.target instanceof Node && listRef.current?.contains(event.target)) return;
+      const anchor = inputRef.current?.getBoundingClientRect();
+      // An opening adjustment can emit scroll after the popup has mounted.
+      // Keep it open if its field is already at the measured final position.
+      if (anchor && placement && anchor.bottom - 1 === placement.top && anchor.left === placement.left) return;
       dismiss();
     };
     document.addEventListener("pointerdown", dismissOutside, true);
@@ -134,7 +133,7 @@ export function CmsLocationCombobox({
       document.removeEventListener("scroll", dismissOnScroll, true);
       window.removeEventListener("resize", dismiss);
     };
-  }, [open]);
+  }, [open, placement]);
 
   useEffect(() => {
     if (!open || activeIndex < 0) return;
@@ -205,7 +204,7 @@ export function CmsLocationCombobox({
           aria-controls={open ? listId : undefined}
           aria-activedescendant={open && activeIndex >= 0 && options[activeIndex] ? listId + "-" + activeIndex : undefined}
           autoComplete="off"
-          className={inputClass + " cursor-text"}
+          className={inputClass + " cursor-text" + (open ? " rounded-b-none" : "")}
           value={value}
           disabled={disabled}
           placeholder={kind === "hotel" ? "Search canonical destination" : kind === "airport" ? "Search airport or IATA" : kind === "country" ? "Search country" : "Search city"}
@@ -253,7 +252,7 @@ export function CmsLocationCombobox({
           role="listbox"
           aria-label={label + " suggestions"}
           style={{ top: placement.top, left: placement.left, width: placement.width, maxHeight: placement.maxHeight }}
-          className="fixed z-[100] overflow-y-auto overscroll-contain rounded-lg border border-[#D8E1EC] bg-white p-1.5 shadow-[0_10px_28px_-12px_rgba(2,6,23,0.25)] [scrollbar-width:thin] [scrollbar-color:#CBD5E1_transparent]"
+          className="fixed z-[100] overflow-y-auto overscroll-contain rounded-b-lg border border-t-0 border-slate-300 bg-white p-1 shadow-[0_6px_12px_-8px_rgba(15,23,42,0.22)] [scrollbar-width:thin] [scrollbar-color:#CBD5E1_transparent]"
         >
           {options.length > 0 ? options.map((option, index) => (
             <button
@@ -297,3 +296,4 @@ export function CmsLocationCombobox({
     </div>
   );
 }
+
