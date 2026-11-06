@@ -8,6 +8,7 @@ import { hotelDestinations } from "@/data/hotelDestinations";
 import { getHomeDiscoveryRouteAllowlist } from "@/data/homeDiscovery";
 import { getPopularDestinationAllowlist, popularDestinationsByMarket } from "@/data/marketHomeContent";
 import { resolveHotelDiscoveryIntent } from "@/lib/hotels/hotelDiscoveryIntent";
+import { cmsHotelCanonicalId, getCmsHotelMetadataMismatch, homepageDestinationHotelCanonicalId } from "@/lib/cmsHotelIntegrity";
 import { HOMEPAGE_REFRESH_MARKET_CODES } from "@/lib/market/resolveMarket";
 import { imageRemotePatterns, matchesImagePattern } from "@/config/imagePatterns";
 
@@ -332,15 +333,88 @@ function parsePayload(type: CmsContentType, payload: unknown) {
   }
 
   if (type === "HOTEL_DESTINATION") {
-    const hotel = parsed.data as { canonicalId: string };
+    const hotel = parsed.data as { canonicalId: string; country: string; countryCode: string; kind: string; searchValue: string };
     if (!canonicalHotelDestinationIds.has(hotel.canonicalId)) {
       throw new CmsContentError("INVALID", "Hotel destination must use a canonical Kurioticket hotel destination id.");
     }
+    const mismatch = getCmsHotelMetadataMismatch(hotel);
+    if (mismatch) throw new CmsContentError("INVALID", mismatch);
   }
 
   return parsed.data as Prisma.InputJsonValue;
 }
 
+
+
+/** A published hotel record keeps its canonical identity for its entire lifecycle. */
+function assertHotelIdentityNotChanged(existing: { type: CmsContentType; publishedPayload: unknown }, payload: unknown) {
+  if (existing.type !== "HOTEL_DESTINATION") return;
+  const publishedId = cmsHotelCanonicalId(existing.publishedPayload);
+  if (publishedId && publishedId !== cmsHotelCanonicalId(payload)) {
+    throw new CmsContentError(
+      "CONFLICT",
+      "This hotel destination is already published under a different canonical ID. Edit its image or display name, or create a separate record for another destination.",
+    );
+  }
+}
+
+/** This is checked in the same serializable transaction as CMS writes. */
+async function assertUniqueHotelCanonicalId(tx: Prisma.TransactionClient, payload: unknown, excludeId?: string) {
+  const canonicalId = cmsHotelCanonicalId(payload);
+  if (!canonicalId) return;
+  const siblings = await tx.cmsContentItem.findMany({
+    where: { type: "HOTEL_DESTINATION", status: { not: "ARCHIVED" }, ...(excludeId ? { id: { not: excludeId } } : {}) },
+    select: { draftPayload: true, publishedPayload: true },
+  });
+  if (siblings.some((row) => cmsHotelCanonicalId(row.draftPayload) === canonicalId || cmsHotelCanonicalId(row.publishedPayload) === canonicalId)) {
+    throw new CmsContentError("CONFLICT", "This canonical hotel destination is already managed by another record. Open that record instead of adding a duplicate.");
+  }
+}
+
+/** Hide/archive would otherwise silently remove linked public homepage cards. */
+async function assertHotelNotUsedByPublishedHomepage(tx: Prisma.TransactionClient, payload: unknown) {
+  const canonicalId = cmsHotelCanonicalId(payload);
+  if (!canonicalId) return;
+  const homepageRows = await tx.cmsContentItem.findMany({
+    where: { type: "HOMEPAGE_DESTINATION", status: "PUBLISHED", publishedPayload: { not: Prisma.DbNull } },
+    select: { publishedPayload: true },
+  });
+  const used = homepageRows.some((row) => homepageDestinationHotelCanonicalId(row.publishedPayload) === canonicalId);
+  if (used) {
+    throw new CmsContentError(
+      "CONFLICT",
+      "This hotel destination is used by published Homepage Destinations. Hide or replace those homepage cards first; hiding it now would remove them from the public homepage.",
+    );
+  }
+}
+
+/** Prevent new homepage publications from linking to an already hidden hotel. */
+async function assertPublishedHomepageHasHotel(tx: Prisma.TransactionClient, payload: unknown) {
+  const canonicalId = homepageDestinationHotelCanonicalId(payload);
+  if (!canonicalId) return;
+  const scope = await tx.cmsContentScope.findUnique({
+    where: { type_market_locale: { type: "HOTEL_DESTINATION", market: "GLOBAL", locale: "en" } },
+    select: { id: true },
+  });
+  // Before hotel CMS initialization the public API still uses the owned fallback list.
+  if (!scope) return;
+  const hotels = await tx.cmsContentItem.findMany({
+    where: {
+      type: "HOTEL_DESTINATION",
+      status: "PUBLISHED",
+      publishedMarket: "GLOBAL",
+      publishedLocale: "en",
+      publishedPayload: { not: Prisma.DbNull },
+    },
+    select: { publishedPayload: true },
+  });
+  if (!hotels.some((hotel) => cmsHotelCanonicalId(hotel.publishedPayload) === canonicalId)) {
+    throw new CmsContentError(
+      "CONFLICT",
+      "The matching canonical Hotel Destination must be published before this Homepage Destination can go live.",
+    );
+  }
+}
 
 export function validateCmsPayloadIntegrity(type: CmsContentType, payload: unknown) {
   try {
@@ -493,6 +567,7 @@ export async function createCmsContent(raw: unknown, actorInput: CmsActor) {
         );
       }
 
+      if (parsed.data.type === "HOTEL_DESTINATION") await assertUniqueHotelCanonicalId(tx, payload);
       const item = await tx.cmsContentItem.create({
         data: {
           type: parsed.data.type,
@@ -533,6 +608,8 @@ export async function updateCmsContentDraft(id: string, raw: unknown, actorInput
     if (!existing) throw new CmsContentError("NOT_FOUND", "Content item not found.");
     if (existing.status === "ARCHIVED") throw new CmsContentError("ARCHIVED", "Archived content cannot be edited.");
     const payload = parsePayload(existing.type, parsed.data.payload);
+    assertHotelIdentityNotChanged(existing, payload);
+    if (existing.type === "HOTEL_DESTINATION") await assertUniqueHotelCanonicalId(tx, payload, id);
     const nextVersion = parsed.data.expectedVersion + 1;
     const updated = await tx.cmsContentItem.updateMany({
       where: { id, version: parsed.data.expectedVersion, status: { not: "ARCHIVED" } },
@@ -602,6 +679,8 @@ export async function restoreCmsContentRevision(
         );
       }
       const restoredPayload = parsePayload(existing.type, revision.draftPayload);
+      assertHotelIdentityNotChanged(existing, restoredPayload);
+      if (existing.type === "HOTEL_DESTINATION") await assertUniqueHotelCanonicalId(tx, restoredPayload, id);
       const nextVersion = parsed.data.expectedVersion + 1;
       const changed = await tx.cmsContentItem.updateMany({
         where: { id, version: parsed.data.expectedVersion, status: { not: "ARCHIVED" } },
@@ -674,6 +753,16 @@ async function transitionCmsContent(
     const existing = await tx.cmsContentItem.findUnique({ where: { id } });
     if (!existing) throw new CmsContentError("NOT_FOUND", "Content item not found.");
     if (existing.status === "ARCHIVED") throw new CmsContentError("ARCHIVED", "Archived content cannot be changed.");
+    if (transition === "PUBLISHED" && existing.type === "HOTEL_DESTINATION") {
+      assertHotelIdentityNotChanged(existing, existing.draftPayload);
+      await assertUniqueHotelCanonicalId(tx, existing.draftPayload, id);
+    }
+    if (transition === "PUBLISHED" && existing.type === "HOMEPAGE_DESTINATION") {
+      await assertPublishedHomepageHasHotel(tx, existing.draftPayload);
+    }
+    if (transition !== "PUBLISHED" && existing.type === "HOTEL_DESTINATION" && existing.status === "PUBLISHED") {
+      await assertHotelNotUsedByPublishedHomepage(tx, existing.publishedPayload);
+    }
     const nextVersion = parsed.data.expectedVersion + 1;
     const data = transition === "PUBLISHED"
       ? {

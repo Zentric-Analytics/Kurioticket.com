@@ -73,10 +73,11 @@ export function CmsLocationCombobox({
   const [open, setOpen] = useState(false);
   const [placement, setPlacement] = useState<PopoverPlacement | null>(null);
   const [activeIndex, setActiveIndex] = useState(-1);
+  const [browseAllHotels, setBrowseAllHotels] = useState(false);
 
   const options =
     kind === "hotel"
-      ? getCmsHotelDestinationSuggestions(hotelOptions, value)
+      ? getCmsHotelDestinationSuggestions(hotelOptions, browseAllHotels ? "" : value)
       : kind === "airport"
       ? getCmsAirportSuggestions(value, 8, airportCodes, allowManualAirportCode)
       : kind === "country"
@@ -91,6 +92,7 @@ export function CmsLocationCombobox({
     if (disabled || !inputRef.current) return;
     setPlacement(measurePopover(inputRef.current));
     setOpen(true);
+    setBrowseAllHotels(kind === "hotel");
     setActiveIndex(-1);
   }
 
@@ -100,7 +102,11 @@ export function CmsLocationCombobox({
   }
 
   function pick(option: CmsLocationOption) {
-    onChange(option.value);
+    // Hotel option values are canonical IDs while the editable field displays
+    // a human label. Only free typing should clear its selected ID. Picking an
+    // option must go directly to onSelect, preserving the previous identity
+    // for safe image resets when the selected destination changes.
+    if (kind !== "hotel" || !onSelect) onChange(option.value);
     onSelect?.(option);
     dismiss();
     inputRef.current?.focus({ preventScroll: true });
@@ -208,6 +214,7 @@ export function CmsLocationCombobox({
           onChange={(event) => {
             const next = event.target.value;
             onChange(kind === "airport" ? next.toUpperCase() : next);
+            setBrowseAllHotels(false);
             setActiveIndex(-1);
             if (!open) show();
           }}

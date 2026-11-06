@@ -72,6 +72,9 @@ test("combobox supports keyboard selection and never saves or publishes automati
   assert.match(combobox, /event\.key === "ArrowUp"/);
   assert.match(combobox, /event\.key === "Escape"/);
   assert.match(combobox, /event\.key === "Enter"/);
+  assert.match(combobox, /browseAllHotels/);
+  assert.match(combobox, /if \(kind !== "hotel" \|\| !onSelect\) onChange\(option\.value\)/);
+  assert.match(combobox, /setBrowseAllHotels\(kind === "hotel"\)/);
   assert.doesNotMatch(combobox, /fetch\(|publish\(|saveDraft\(/);
   assert.match(combobox, /onPointerDown=\{toggleOnPointerDown\}/);
   assert.match(combobox, /if \(open\) dismiss\(\)/);
@@ -176,4 +179,46 @@ test("flight and hotel previews match the visual, non-sticky homepage preview", 
   assert.match(visual, /payload.searchValue/);
   assert.match(visual, /unsaved/);
   assert.match(visual, /Saving a draft does not publish it/);
+});
+
+test("hotel CMS canonical search protects the mapped destination and uses visible image overrides", () => {
+  const backend = readFileSync("src/services/cmsContentService.ts", "utf8");
+  const helper = readFileSync("src/lib/cmsHotelIntegrity.ts", "utf8");
+  const api = readFileSync("src/app/api/content/homepage/route.ts", "utf8");
+  const listing = readFileSync("src/app/admin/content/homepage/[section]/page.tsx", "utf8");
+
+  for (const contract of [
+    "getCmsHotelMetadataMismatch",
+    "assertUniqueHotelCanonicalId",
+    "assertHotelIdentityNotChanged",
+    "assertHotelNotUsedByPublishedHomepage",
+    "assertPublishedHomepageHasHotel",
+  ]) assert.match(backend, new RegExp(contract));
+
+  assert.match(helper, /countryCode/);
+  assert.match(helper, /searchValue/);
+  assert.match(api, /hotelDestination\.image \?/);
+  assert.match(api, /image: hotelDestination\.image/);
+  assert.match(api, /hotelDestination\.imageAlt\?\.trim\(\) \|\| destination\.imageAlt/);
+  assert.match(listing, /left\.sortOrder - right\.sortOrder/);
+
+  assert.match(editor, /item\?\.publishedVersion != null/);
+  assert.match(editor, /selectedHotelIdRef = useRef\(text\(saved\.canonicalId\)\)/);
+  assert.match(editor, /previousCanonicalId && previousCanonicalId !== option\.canonicalId \? \{ image: "", imageAlt: "" \}/);
+  assert.match(editor, /setConflict\(staleVersion\)/);
+  assert.match(editor, /: serverError\)/);
+  assert.match(editor, /changed since it was opened\|changed concurrently\|refresh before/);
+  assert.match(editor, /create a new draft to manage a different destination/);
+  assert.match(editor, /Directory order/);
+  assert.match(editor, /Existing destinations cannot be duplicated/);
+  assert.match(editor, /Country, country code, type and search value come from the canonical catalogue/);
+});
+
+test("CMS revision restore surfaces actionable canonical conflicts instead of prescribing a stale reload", () => {
+  const restore = readFileSync("src/components/admin/CmsRevisionRestoreButton.tsx", "utf8");
+  assert.match(restore, /const serverError = typeof body\.error === "string"/);
+  assert.match(restore, /const staleVersion = response\.status === 409/);
+  assert.match(restore, /changed since it was opened\|changed concurrently\|refresh before/);
+  assert.match(restore, /: serverError\)/);
+  assert.doesNotMatch(restore, /response\.status === 409\s*\? "This content changed in another session/);
 });

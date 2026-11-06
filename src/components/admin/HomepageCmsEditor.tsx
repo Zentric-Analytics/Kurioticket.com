@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 
 import {
   AdminButton,
@@ -93,6 +93,9 @@ export function HomepageCmsEditor({
   const [market, setMarket] = useState(initialItem?.market ?? initialMarket);
   const [sortOrder, setSortOrder] = useState(String(initialItem?.sortOrder ?? 0));
   const [fields, setFields] = useState<Record<string, string>>(() => initialFields(section, saved));
+  // Typing a new hotel search clears the draft ID, but the prior selected ID
+  // must survive until selection so a different hotel cannot inherit its image.
+  const selectedHotelIdRef = useRef(text(saved.canonicalId));
   const [hotelSearch, setHotelSearch] = useState(() =>
     hotelOptions.find((option) => option.canonicalId === text(saved.canonicalId))?.label
     ?? text(saved.canonicalId)
@@ -159,10 +162,13 @@ export function HomepageCmsEditor({
       return;
     }
     setHotelSearch(option.label);
+    const previousCanonicalId = selectedHotelIdRef.current;
+    selectedHotelIdRef.current = option.canonicalId;
     setFields((current) => ({
       ...current,
       canonicalId: option.canonicalId,
       name: option.name,
+      ...(previousCanonicalId && previousCanonicalId !== option.canonicalId ? { image: "", imageAlt: "" } : {}),
       country: option.country,
       countryCode: option.countryCode,
       kind: option.kind,
@@ -250,12 +256,15 @@ export function HomepageCmsEditor({
         });
         const body = await response.json().catch(() => ({}));
         if (!response.ok || !body.item) {
-          if (response.status === 409) {
-            setConflict(true);
-            setError("This content changed in another admin session. Reload the latest version before making more edits.");
-          } else {
-            setError(typeof body.error === "string" ? body.error : "Unable to update content.");
-          }
+          const serverError = typeof body.error === "string" ? body.error : "Unable to update content.";
+          // A dependency/duplicate conflict is not a stale edit. Show the
+          // actionable server reason without incorrectly offering Reload.
+          const staleVersion = response.status === 409 &&
+            /changed since it was opened|changed concurrently|refresh before|another admin session/i.test(serverError);
+          setConflict(staleVersion);
+          setError(staleVersion
+            ? "This content changed in another admin session. Reload the latest version before making more edits."
+            : serverError);
           return;
         }
         setConflict(false);
@@ -348,28 +357,37 @@ export function HomepageCmsEditor({
                 setField("canonicalId", "");
               }}
               onSelect={(option) => applyHotelOption(option.value)}
-              disabled={pending || archived}
+              disabled={pending || archived || item?.publishedVersion != null}
               className="max-w-[448px]"
             />
+            <p className="max-w-[560px] text-[12px] leading-5 text-[#64748B]">
+              {item?.publishedVersion != null
+                ? "Canonical identity is locked after publication. Edit the display name or image here; create a new draft to manage a different destination."
+                : "Choose a canonical destination to fill its trusted hotel-search details. Existing destinations cannot be duplicated."}
+            </p>
             <div className="grid gap-4 sm:grid-cols-2">
               <TextField label="Name" name="name" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[320px]" />
-              <CmsLocationCombobox label="Country" kind="country" value={fields.country ?? ""} onChange={(value) => setFields((current) => ({ ...current, country: value, ...(value !== current.country ? { countryCode: "" } : {}) }))} onSelect={selectCountry} disabled={pending || archived} className="max-w-[320px]" />
-              <TextField label="Country code" name="countryCode" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[160px]" />
+              <CmsLocationCombobox label="Country" kind="country" value={fields.country ?? ""} onChange={(value) => setFields((current) => ({ ...current, country: value, ...(value !== current.country ? { countryCode: "" } : {}) }))} onSelect={selectCountry} disabled className="max-w-[320px]" />
+              <TextField label="Country code" name="countryCode" fields={fields} setField={setField} disabled className="max-w-[160px]" />
               <Field label="Kind" className="max-w-[160px]">
-                <AdminSelect className={editorControlClass + " cursor-pointer"} value={fields.kind ?? ""} onChange={(event) => setField("kind", event.target.value)} disabled={pending || archived}>
+                <AdminSelect className={editorControlClass + " cursor-pointer"} value={fields.kind ?? ""} onChange={(event) => setField("kind", event.target.value)} disabled>
                   {["city", "district", "landmark", "airport-area", "custom"].map((kind) => <option key={kind} value={kind}>{kind === "airport-area" ? "Airport area" : kind.charAt(0).toUpperCase() + kind.slice(1)}</option>)}
                 </AdminSelect>
               </Field>
             </div>
-            <TextField label="Search value" name="searchValue" fields={fields} setField={setField} disabled={pending || archived} />
+            <TextField label="Search value" name="searchValue" fields={fields} setField={setField} disabled />
+            <p className="text-[12px] leading-5 text-[#64748B]">Country, country code, type and search value come from the canonical catalogue and are read-only to keep public hotel searches reliable.</p>
             <CmsExpandingTextField label="Image (optional)" value={fields.image ?? ""} onChange={(value) => setField("image", value)} disabled={pending || archived} />
             <CmsExpandingTextField label="Image alt text (optional)" value={fields.imageAlt ?? ""} onChange={(value) => setField("imageAlt", value)} disabled={pending || archived} />
           </>
         ) : null}
 
-        <Field label="Order" className="max-w-[128px]">
+        <Field label={section === "hotel-destinations" ? "Directory order" : "Order"} className="max-w-[128px]">
           <AdminInput className={editorControlClass} type="number" min={0} max={100000} value={sortOrder} onChange={(event) => setSortOrder(event.target.value)} disabled={pending || archived} />
         </Field>
+        {section === "hotel-destinations" ? (
+          <p className="text-[12px] leading-5 text-[#64748B]">Directory order controls the CMS listing and its published hotel reference order. Homepage Popular Stays cards retain their own curated order.</p>
+        ) : null}
 
         <CmsEditorActions
           status={item?.status}
@@ -383,6 +401,9 @@ export function HomepageCmsEditor({
           onArchive={archive}
         />
 
+        {section === "hotel-destinations" && item?.status === "PUBLISHED" ? (
+          <p className="text-[12px] leading-5 text-[#64748B]">Hiding or archiving a hotel destination used by a published homepage card is blocked to prevent unexpectedly removing that card.</p>
+        ) : null}
         {item && draftDirty ? <p className="text-[13px] leading-5 text-amber-700">Save this draft before publishing the current edits.</p> : null}
         {message ? <p className="text-[13px] leading-5 text-emerald-700" role="status">{message}</p> : null}
         {error ? <p className="rounded-lg bg-rose-50 px-3 py-2 text-[13px] leading-5 text-rose-700" role="alert">{error}</p> : null}

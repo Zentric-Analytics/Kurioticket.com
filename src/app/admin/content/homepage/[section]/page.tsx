@@ -38,7 +38,7 @@ export default async function HomepageCmsSectionPage({ params, searchParams }: P
       ? requestedMarket
       : defaultMarket;
   const nav = homepageCmsListNavigation(section, raw, allowedMarket);
-  const cursor = section === "destinations" ? undefined : one(raw.cursor) || undefined;
+  const cursor = section === "destinations" || section === "hotel-destinations" ? undefined : one(raw.cursor) || undefined;
 
   const summary = await (allowedMarket === "ALL"
     ? getCmsContentMarketOverview(config.type, homepageCmsMarkets, homepageCmsLocale)
@@ -73,10 +73,19 @@ export default async function HomepageCmsSectionPage({ params, searchParams }: P
       search: one(raw.q) || undefined,
     };
     listing = await listAdminCmsContent(listInput);
-    // Destinations form one complete scrollable directory, including old paged URLs.
-    while (section === "destinations" && listing.nextCursor) {
-      const nextPage = await listAdminCmsContent({ ...listInput, cursor: listing.nextCursor });
-      listing = { items: [...listing.items, ...nextPage.items], nextCursor: nextPage.nextCursor };
+    // Destination directories are complete and ordered for admins. The generic
+    // CMS service remains update-time paginated for other screens.
+    if (section === "destinations" || section === "hotel-destinations") {
+      while (listing.nextCursor) {
+        const nextPage = await listAdminCmsContent({ ...listInput, cursor: listing.nextCursor });
+        listing = { items: [...listing.items, ...nextPage.items], nextCursor: nextPage.nextCursor };
+      }
+      if (section === "hotel-destinations") {
+        listing = {
+          items: [...listing.items].sort((left, right) => left.sortOrder - right.sortOrder || left.key.localeCompare(right.key)),
+          nextCursor: null,
+        };
+      }
     }
   } catch (caught) {
     error = caught instanceof CmsContentError ? caught.message : "CMS content is unavailable.";
