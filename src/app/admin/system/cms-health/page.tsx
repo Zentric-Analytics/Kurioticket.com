@@ -1,12 +1,12 @@
+import { CmsRetryButton } from "@/components/admin/CmsRetryButton";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { CmsScopeHealthRow } from "@/components/admin/CmsScopeHealthRow";
-import { hotelDestinations } from "@/data/hotelDestinations";
 import { getCmsMarketName } from "@/lib/adminCmsMarketLabels";
 import { getCmsHealthOverview } from "@/services/cmsHardeningService";
-import { getCmsHomepageFlightRoutePairs } from "@/services/cmsContentService";
+import { getAdminCmsHotelOptions, getCmsHomepageFlightRoutePairs } from "@/services/cmsContentService";
 import { homepageCmsMarkets } from "@/services/homepageCmsService";
 
 export const metadata = { title: "CMS Health" };
@@ -19,16 +19,6 @@ const cmsHealthGroups = [
 ] as const;
 
 const tableHeadingClass = "px-3 py-3 text-left text-[12px] font-medium uppercase text-[#475569]";
-
-const cmsHealthHotelOptions = hotelDestinations.map((destination) => ({
-  canonicalId: `hotel:${destination.id}`,
-  label: `${destination.name} · ${destination.country}`,
-  name: destination.name,
-  country: destination.country,
-  countryCode: destination.countryCode,
-  kind: destination.kind,
-  searchValue: destination.searchValue,
-}));
 
 const cmsLocaleDisplayNames =
   typeof Intl.DisplayNames === "function"
@@ -45,6 +35,7 @@ function getCmsLocaleName(locale: string) {
 
 export default async function AdminCmsHealthPage() {
   const overview = await getCmsHealthOverview();
+  const cmsHealthHotelOptions = overview.available ? await getAdminCmsHotelOptions().catch(() => null) : [];
 
   return (
     <div className="w-full min-w-0 bg-white text-[#020617]">
@@ -67,6 +58,7 @@ export default async function AdminCmsHealthPage() {
           </section>
         ) : (
           <div className="min-w-0">
+          {cmsHealthHotelOptions === null ? <div role="alert" className="mb-4 flex flex-wrap items-center gap-3 text-[13px] text-rose-700">Hotel destination choices could not be loaded. <CmsRetryButton /></div> : null}
           <section aria-label="CMS health summary" className="max-w-[720px] border-b border-[#D8E1EC] pb-5">
             <div className="divide-y divide-[#E7ECF5]">
               <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-6 py-3">
@@ -94,7 +86,7 @@ export default async function AdminCmsHealthPage() {
                 <p className="text-[13px] font-semibold tabular-nums text-[#020617]">{overview.totals.retiredFallback}</p>
               </div>
               <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-6 py-3">
-                <p className="text-[12px] font-medium text-[#475569]">Total records</p>
+                <p className="text-[12px] font-medium text-[#475569]">Total scopes</p>
                 <p className="text-[13px] font-semibold tabular-nums text-[#020617]">{overview.totals.scopes}</p>
               </div>
             </div>
@@ -155,7 +147,7 @@ export default async function AdminCmsHealthPage() {
                         <div className="min-w-0">
                           <p className="text-[13px] font-semibold text-[#020617]">{group.label}</p>
                           <p className="mt-0.5 text-[12px] text-[#64748B]">
-                            {entries.length} record{entries.length === 1 ? "" : "s"} · {healthy} healthy · {needsAttention} need{needsAttention === 1 ? "s" : ""} attention
+                            {entries.length} scope{entries.length === 1 ? "" : "s"} · {healthy} healthy · {needsAttention} need{needsAttention === 1 ? "s" : ""} attention
                           </p>
                         </div>
                         <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 sm:justify-end">
@@ -200,7 +192,7 @@ export default async function AdminCmsHealthPage() {
                                   localeName={getCmsLocaleName(entry.locale)}
                                   integrity={entry.integrity}
                                   markets={homepageCmsMarkets}
-                                  hotelOptions={cmsHealthHotelOptions}
+                                  hotelOptions={cmsHealthHotelOptions ?? []}
                                   supportedFlightRoutes={
                                     group.type === "HOMEPAGE_DESTINATION" || group.type === "FLIGHT_ROUTE"
                                       ? getCmsHomepageFlightRoutePairs(group.type)

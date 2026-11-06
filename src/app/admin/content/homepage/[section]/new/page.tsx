@@ -1,13 +1,13 @@
+import { CmsScopeUnavailable } from "@/components/admin/CmsScopeUnavailable";
 import { ContentPageFrame } from "@/components/admin/ContentWorkspace";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 
 
 import { HomepageCmsEditor } from "@/components/admin/HomepageCmsEditor";
-import { hotelDestinations } from "@/data/hotelDestinations";
 import { getHomepageCmsSection, homepageCmsSections } from "@/lib/adminHomepageCms";
 import { homepageCmsListNavigation } from "@/lib/adminContentNavigation";
-import { getCmsContentMarketOverview, getCmsContentScopeSummary, getCmsHomepageFlightRoutePairs } from "@/services/cmsContentService";
-import { homepageCmsLocale, homepageCmsMarkets } from "@/services/homepageCmsService";
+import { getAdminCmsHotelOptions, getCmsContentMarketOverview, getCmsContentScopeSummary, getCmsHomepageFlightRoutePairs } from "@/services/cmsContentService";
+import { homepageCmsLocale, homepageCmsMarkets, getHomepageCmsInitializationReadiness } from "@/services/homepageCmsService";
 
 type PageProps = {
   params: Promise<{ section: string }>;
@@ -33,8 +33,16 @@ export default async function NewHomepageCmsContentPage({ params, searchParams }
     : getCmsContentScopeSummary(config.type, market, homepageCmsLocale)).catch(() => null);
 
   if (!summary?.available || !summary.active) {
-    redirect("/admin/content/homepage");
+    const readiness = summary?.available ? await getHomepageCmsInitializationReadiness().catch(() => null) : null;
+    return <ContentPageFrame title={`New ${config.singular}`} backHref={nav.listHref} backLabel={`Back to ${config.title}`}>
+      <CmsScopeUnavailable available={Boolean(summary?.available)} partial={Boolean(readiness?.hasExistingHomepageData)} />
+    </ContentPageFrame>;
   }
+
+  const hotelOptions = section === "hotel-destinations" ? await getAdminCmsHotelOptions().catch(() => null) : [];
+  if (!hotelOptions) return <ContentPageFrame title={`New ${config.singular}`} backHref={nav.listHref} backLabel={`Back to ${config.title}`}>
+    <CmsScopeUnavailable available={false} />
+  </ContentPageFrame>;
 
   return (
     <ContentPageFrame
@@ -48,7 +56,7 @@ export default async function NewHomepageCmsContentPage({ params, searchParams }
         markets={homepageCmsMarkets}
         initialMarket={market === "ALL" ? "" : market}
         listQuery={nav.query}
-        hotelOptions={section === "hotel-destinations" ? getHotelOptions() : []}
+        hotelOptions={hotelOptions}
         supportedFlightRoutes={
           section === "destinations"
             ? getCmsHomepageFlightRoutePairs("HOMEPAGE_DESTINATION")
@@ -63,16 +71,4 @@ export default async function NewHomepageCmsContentPage({ params, searchParams }
 
 function one(value: string | string[] | undefined) {
   return typeof value === "string" ? value : "";
-}
-
-function getHotelOptions() {
-  return hotelDestinations.map((destination) => ({
-    canonicalId: `hotel:${destination.id}`,
-    label: `${destination.name} · ${destination.country}`,
-    name: destination.name,
-    country: destination.country,
-    countryCode: destination.countryCode,
-    kind: destination.kind,
-    searchValue: destination.searchValue,
-  }));
 }

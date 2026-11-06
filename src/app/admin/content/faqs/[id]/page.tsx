@@ -1,3 +1,5 @@
+import { CmsOperationProvider } from "@/components/admin/CmsOperationContext";
+import { CmsRevisionPagination } from "@/components/admin/CmsRevisionPagination";
 import { ContentPageFrame, ContentSectionHeading, ContentStatusPill } from "@/components/admin/ContentWorkspace";
 import { notFound } from "next/navigation";
 
@@ -17,9 +19,11 @@ type PageProps = {
 export default async function AdminFaqDetailPage({ params, searchParams }: PageProps) {
   const { id } = await params;
 
+  const raw = await searchParams;
+  const revisionBefore = typeof raw.revisionBefore === "string" ? raw.revisionBefore : undefined;
   let result: Awaited<ReturnType<typeof getAdminCmsContent>>;
   try {
-    result = await getAdminCmsContent(id);
+    result = await getAdminCmsContent(id, revisionBefore);
   } catch (error) {
     if (error instanceof CmsContentError && error.code === "NOT_FOUND") notFound();
     throw error;
@@ -33,7 +37,7 @@ export default async function AdminFaqDetailPage({ params, searchParams }: PageP
     notFound();
   }
 
-  const nav = faqCmsListNavigation(await searchParams);
+  const nav = faqCmsListNavigation(raw);
 
   return (
     <ContentPageFrame
@@ -42,14 +46,15 @@ export default async function AdminFaqDetailPage({ params, searchParams }: PageP
       backHref={nav.listHref}
       backLabel="Back to FAQs"
     >
+      <CmsOperationProvider>
       <div className="space-y-5">
-        <FaqCmsEditor initialItem={result.item} listQuery={nav.query} />
+        <FaqCmsEditor key={result.item.id} initialItem={result.item} listQuery={nav.query} />
 
         <section className="mt-7 min-w-0">
           <div className="mb-3">
             <ContentSectionHeading>Revision history</ContentSectionHeading>
             <p className="mt-1 text-[13px] leading-5 text-[#64748B]">
-              Recent immutable CMS revisions, including the admin identity recorded for each change.
+              Saved draft and publication history, with the admin who made each change.
             </p>
           </div>
           {result.revisions.length === 0 ? (
@@ -94,8 +99,10 @@ export default async function AdminFaqDetailPage({ params, searchParams }: PageP
               })}
             </div>
           )}
+          <CmsRevisionPagination query={nav.query} before={revisionBefore} next={result.nextRevisionBefore} />
         </section>
       </div>
+      </CmsOperationProvider>
     </ContentPageFrame>
   );
 }

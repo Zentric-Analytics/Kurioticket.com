@@ -9,6 +9,7 @@ type Props = {
   status?: "DRAFT" | "PUBLISHED" | "HIDDEN" | "ARCHIVED";
   pendingAction: CmsEditorAction | null;
   validDraft: boolean;
+  blocked?: boolean;
   draftDirty: boolean;
   onCreate: () => void;
   onSave: () => void;
@@ -25,9 +26,9 @@ const loadingLabels: Record<CmsEditorAction, string> = {
   archive: "Archiving…",
 };
 
-export function CmsEditorActions({ status, pendingAction, validDraft, draftDirty, onCreate, onSave, onPublish, onHide, onArchive }: Props) {
+export function CmsEditorActions({ status, pendingAction, blocked = false, validDraft, draftDirty, onCreate, onSave, onPublish, onHide, onArchive }: Props) {
   if (status === "ARCHIVED") return null;
-  const busy = pendingAction !== null;
+  const busy = blocked || pendingAction !== null;
 
   function actionButton(action: CmsEditorAction, label: string, Icon: LucideIcon, onClick: () => void, disabled = false, tone: "primary" | "secondary" | "quiet" | "danger" = "secondary") {
     const loading = pendingAction === action;
@@ -43,7 +44,7 @@ export function CmsEditorActions({ status, pendingAction, validDraft, draftDirty
         onClick={onClick}
         disabled={busy || disabled}
         aria-busy={loading || undefined}
-        className={`inline-flex h-10 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg border px-3.5 text-[13px] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6D28D9] disabled:cursor-not-allowed disabled:opacity-50 ${colors[tone]}`}
+        className={`inline-flex h-10 cursor-pointer shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg border px-3.5 text-[13px] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6D28D9] disabled:cursor-not-allowed disabled:opacity-50 ${colors[tone]}`}
       >
         {loading ? <LoaderCircle size={15} className="shrink-0 motion-safe:animate-spin" aria-hidden="true" /> : <Icon size={15} className="shrink-0" aria-hidden="true" />}
         <span className="grid">

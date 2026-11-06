@@ -1,22 +1,23 @@
+import { CmsRetryButton } from "@/components/admin/CmsRetryButton";
 import Link from "next/link";
 
 import { ContentPageFrame, ContentEmptyState, ContentMetric, ContentStatusPill } from "@/components/admin/ContentWorkspace";
 import { HomepageCmsInitializeButton } from "@/components/admin/HomepageCmsInitializeButton";
-import { getCmsContentScopeSummary } from "@/services/cmsContentService";
-import { getHomepageCmsInitializationReadiness, homepageCmsLocale } from "@/services/homepageCmsService";
+import { getCmsContentScopeSummary, getCmsContentMarketOverview } from "@/services/cmsContentService";
+import { getHomepageCmsInitializationReadiness, homepageCmsLocale, homepageCmsMarkets } from "@/services/homepageCmsService";
 
 export const metadata = { title: "Admin Homepage Content" };
 
 export default async function AdminHomepageContentPage() {
   const [destinations, flights, hotels, initializationReadiness] = await Promise.all([
-    getCmsContentScopeSummary("HOMEPAGE_DESTINATION", "US", homepageCmsLocale).catch(() => null),
-    getCmsContentScopeSummary("FLIGHT_ROUTE", "US", homepageCmsLocale).catch(() => null),
+    getCmsContentMarketOverview("HOMEPAGE_DESTINATION", homepageCmsMarkets, homepageCmsLocale).catch(() => null),
+    getCmsContentMarketOverview("FLIGHT_ROUTE", homepageCmsMarkets, homepageCmsLocale).catch(() => null),
     getCmsContentScopeSummary("HOTEL_DESTINATION", "GLOBAL", homepageCmsLocale).catch(() => null),
     getHomepageCmsInitializationReadiness().catch(() => null),
   ]);
 
   const available = Boolean(destinations?.available && flights?.available && hotels?.available && initializationReadiness?.available);
-  const active = Boolean(destinations?.active && flights?.active && hotels?.active);
+  const active = Boolean(destinations?.active && !destinations.needsSetup && flights?.active && !flights.needsSetup && hotels?.active);
   const partiallyInitialized = !active && Boolean(initializationReadiness?.hasExistingHomepageData);
 
   return (
@@ -30,7 +31,8 @@ export default async function AdminHomepageContentPage() {
         {!available ? (
           <ContentEmptyState
             title="Homepage CMS unavailable"
-            message="CMS storage could not be verified. The public homepage continues using the existing code-backed content."
+            message="CMS storage could not be verified. Retry to check the current content status."
+            action={<CmsRetryButton />}
           />
         ) : partiallyInitialized ? (
           <ContentEmptyState
@@ -56,8 +58,8 @@ export default async function AdminHomepageContentPage() {
         ) : (
           <>
             <div className="grid gap-4 border-b border-[#E5E7EB] pb-4 sm:grid-cols-3">
-              <ContentMetric label="United States destination cards" value={destinations?.total ?? 0} />
-              <ContentMetric label="United States flight routes" value={flights?.total ?? 0} />
+              <ContentMetric label="Published destination cards · All markets" value={destinations?.publishedInScope ?? 0} />
+              <ContentMetric label="Published flight routes · All markets" value={flights?.publishedInScope ?? 0} />
               <ContentMetric label="Hotel destinations" value={hotels?.total ?? 0} />
             </div>
 

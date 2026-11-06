@@ -7,6 +7,7 @@ import { cmsMarketCodes, cmsPayloadSchemas } from "./cmsContentService";
 const schema = readFileSync("prisma/schema.prisma", "utf8");
 const migration = readFileSync("prisma/migrations/20261022180000_add_cms_foundation/migration.sql", "utf8");
 const service = readFileSync("src/services/cmsContentService.ts", "utf8");
+const validation = readFileSync("src/lib/cmsContentValidation.ts", "utf8");
 const collectionApi = readFileSync("src/app/api/admin/content/route.ts", "utf8");
 const itemApi = readFileSync("src/app/api/admin/content/[id]/route.ts", "utf8");
 const publicReaders = readFileSync("src/services/publicCmsContentService.ts", "utf8");
@@ -70,8 +71,8 @@ test("CMS mutations use optimistic concurrency and transactional revision plus a
   assert.match(service, /getOwnedFlightLocationCatalog/);
   assert.match(service, /canonicalHotelDestinationIds/);
   assert.match(service, /resolveHotelDiscoveryIntent/);
-  assert.match(service, /imageRemotePatterns\.some/);
-  assert.match(service, /matchesImagePattern/);
+  assert.match(validation, /imageRemotePatterns\.some/);
+  assert.match(validation, /matchesImagePattern/);
   assert.match(service, /supportedHomepageDestinationEntries/);
   assert.match(service, /Homepage destination label and fare route must match/);
   assert.match(service, /error\.code === "P2034"/);

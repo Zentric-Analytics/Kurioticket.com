@@ -1,3 +1,4 @@
+import { sortCmsFaqDirectory } from "@/lib/cmsDirectoryPresentation";
 import { z } from "zod";
 
 import { Prisma } from "@/generated/prisma/client";
@@ -10,7 +11,8 @@ import { getPopularDestinationAllowlist, popularDestinationsByMarket } from "@/d
 import { resolveHotelDiscoveryIntent } from "@/lib/hotels/hotelDiscoveryIntent";
 import { cmsHotelCanonicalId, getCmsHotelMetadataMismatch, homepageDestinationHotelCanonicalId } from "@/lib/cmsHotelIntegrity";
 import { HOMEPAGE_REFRESH_MARKET_CODES } from "@/lib/market/resolveMarket";
-import { imageRemotePatterns, matchesImagePattern } from "@/config/imagePatterns";
+import { cmsPayloadSchemas, cmsSortOrderSchema } from "@/lib/cmsContentValidation";
+export { cmsPayloadSchemas } from "@/lib/cmsContentValidation";
 
 export const cmsContentTypes = [
   "HOMEPAGE_DESTINATION",
@@ -87,61 +89,6 @@ function rethrowCmsWriteConflict(error: unknown, duplicateMessage: string, concu
   throw error;
 }
 
-const printable = (max: number) =>
-  z.string().trim().min(1).max(max).refine((value) => !/[\u0000-\u001f\u007f]/.test(value), "Control characters are not allowed.");
-
-const airportCode = z.string().trim().toUpperCase().regex(/^[A-Z0-9]{3}$/);
-const countryCode = z.string().trim().toUpperCase().regex(/^[A-Z]{2}$/);
-const safeImage = z.string().trim().max(2000).refine((value) => {
-  if (value.startsWith("/images/")) return true;
-  try {
-    const url = new URL(value);
-    return url.protocol === "https:"
-      && imageRemotePatterns.some((pattern) => matchesImagePattern(url, pattern));
-  } catch {
-    return false;
-  }
-}, "Use an approved local image path or an image URL allowed by the application image configuration.");
-
-export const cmsPayloadSchemas = {
-  HOMEPAGE_DESTINATION: z.object({
-    city: printable(120),
-    country: printable(120),
-    countryCode: countryCode.optional(),
-    destinationCode: airportCode,
-    originCode: airportCode,
-    image: safeImage,
-    imageAlt: printable(240),
-  }).strict(),
-  FLIGHT_ROUTE: z.object({
-    title: printable(160),
-    originCity: printable(120),
-    originCode: airportCode,
-    destinationCity: printable(120),
-    destinationCode: airportCode,
-    routeNote: printable(300),
-    image: safeImage,
-    imageAlt: printable(240),
-  }).strict().refine((value) => value.originCode !== value.destinationCode, {
-    message: "Origin and destination must be different.",
-    path: ["destinationCode"],
-  }),
-  HOTEL_DESTINATION: z.object({
-    name: printable(120),
-    country: printable(120),
-    countryCode,
-    kind: z.enum(["city", "district", "landmark", "airport-area", "custom"]),
-    searchValue: printable(160),
-    canonicalId: printable(160),
-    image: safeImage.optional(),
-    imageAlt: printable(240).optional(),
-  }).strict(),
-  FAQ: z.object({
-    question: printable(240),
-    answer: printable(5000),
-    category: printable(80).default("General"),
-  }).strict(),
-} satisfies Record<CmsContentType, z.ZodTypeAny>;
 
 const keySchema = z.string().trim().toLowerCase().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).max(120);
 const marketSchema = z.string().trim().toUpperCase().refine(
@@ -149,7 +96,7 @@ const marketSchema = z.string().trim().toUpperCase().refine(
   "Use a supported Kurioticket content market code.",
 );
 const localeSchema = z.string().trim().toLowerCase().regex(/^[a-z]{2}(?:-[a-z]{2})?$/).max(10);
-const sortOrderSchema = z.number().int().min(0).max(100000);
+const sortOrderSchema = cmsSortOrderSchema;
 
 const createSchema = z.object({
   type: z.enum(cmsContentTypes),
@@ -1010,6 +957,62 @@ export async function listAdminCmsContentDirectory(input: {
   });
 }
 
+/** Canonical choices include a link to the record that already owns an identity. */
+export async function getAdminCmsHotelOptions() {
+  const db = getOptionalPrisma();
+  if (!db) throw new CmsContentError("UNAVAILABLE", "CMS storage is unavailable.");
+  const managed = await db.cmsContentItem.findMany({
+    where: { type: "HOTEL_DESTINATION", status: { not: "ARCHIVED" } },
+    select: { id: true, draftPayload: true, publishedPayload: true },
+    orderBy: { id: "asc" },
+  });
+  const owners = new Map<string, string>();
+  for (const row of managed) {
+    for (const payload of [row.draftPayload, row.publishedPayload]) {
+      const canonicalId = cmsHotelCanonicalId(payload);
+      if (canonicalId && !owners.has(canonicalId)) owners.set(canonicalId, row.id);
+    }
+  }
+  return hotelDestinations.map((destination) => ({
+    canonicalId: `hotel:${destination.id}`,
+    label: `${destination.name} · ${destination.country}`,
+    name: destination.name, country: destination.country, countryCode: destination.countryCode,
+    kind: destination.kind, searchValue: destination.searchValue,
+    managedItemId: owners.get(`hotel:${destination.id}`),
+  }));
+}
+
+/** Sort the entire filtered directory before paging, never only the current page. */
+export async function listAdminCmsFaqPage(input: {
+  status?: CmsContentStatus; search?: string; category?: string; cursor?: string;
+}) {
+  const scope = { status: input.status ?? null, search: input.search?.trim() || null, category: input.category?.trim() || null };
+  let after: { sortOrder: number; key: string; id: string } | null = null;
+  if (input.cursor) {
+    try {
+      if (input.cursor.length > 2048) throw new Error("invalid");
+      const decoded = JSON.parse(Buffer.from(input.cursor, "base64url").toString("utf8"));
+      if (decoded.v !== 1 || decoded.kind !== "faq-order" || JSON.stringify(decoded.scope) !== JSON.stringify(scope)
+        || !Number.isInteger(decoded.after?.sortOrder) || typeof decoded.after?.key !== "string"
+        || typeof decoded.after?.id !== "string" || !cmsCursorId.test(decoded.after.id)) throw new Error("invalid");
+      after = decoded.after;
+    } catch { throw new CmsContentError("INVALID", "FAQ cursor does not match this query. Return to the first page.", { field: "cursor" }); }
+  }
+  const directory = await listAdminCmsContentDirectory({
+    type: "FAQ", market: "GLOBAL", locale: "en", status: input.status,
+    search: input.search, category: input.category,
+  });
+  const sorted = sortCmsFaqDirectory(directory.items);
+  const remaining = after ? sorted.filter((item) => item.sortOrder > after!.sortOrder ||
+    (item.sortOrder === after!.sortOrder && (item.key.localeCompare(after!.key) > 0 ||
+      (item.key === after!.key && item.id.localeCompare(after!.id) > 0)))) : sorted;
+  const items = remaining.slice(0, 100);
+  const last = items.at(-1);
+  return { items, nextCursor: remaining.length > 100 && last ? Buffer.from(JSON.stringify({
+    v: 1, kind: "faq-order", scope, after: { sortOrder: last.sortOrder, key: last.key, id: last.id },
+  }), "utf8").toString("base64url") : null };
+}
+
 /** Options reflect all CMS draft records, not only one paginated list page. */
 export async function listAdminCmsFaqCategories(): Promise<string[]> {
   const db = getOptionalPrisma();
@@ -1027,17 +1030,24 @@ export async function listAdminCmsFaqCategories(): Promise<string[]> {
   return rows.map(row => row.category).filter(Boolean);
 }
 
-export async function getAdminCmsContent(id: string) {
+export async function getAdminCmsContent(id: string, beforeVersion?: string) {
+  if (beforeVersion !== undefined && (!/^[1-9]\d*$/.test(beforeVersion) || !Number.isSafeInteger(Number(beforeVersion)))) {
+    throw new CmsContentError("INVALID", "Revision cursor is invalid.", { field: "revisionBefore" });
+  }
   const db = getOptionalPrisma();
   if (!db) throw new CmsContentError("UNAVAILABLE", "CMS storage is unavailable.");
   const item = await db.cmsContentItem.findUnique({
     where: { id },
-    include: { revisions: { orderBy: { version: "desc" }, take: 50 } },
+    include: { revisions: {
+      ...(beforeVersion ? { where: { version: { lt: Number(beforeVersion) } } } : {}),
+      orderBy: { version: "desc" }, take: 51,
+    } },
   });
   if (!item) throw new CmsContentError("NOT_FOUND", "Content item not found.");
   return {
     item: serialize(item),
-    revisions: item.revisions.map((revision) => ({
+    nextRevisionBefore: item.revisions.length > 50 ? String(item.revisions[49].version) : null,
+    revisions: item.revisions.slice(0, 50).map((revision) => ({
       id: revision.id,
       version: revision.version,
       action: revision.action,

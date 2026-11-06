@@ -42,7 +42,8 @@
     "audit:i18n": "cross-env JITI_TSCONFIG_PATHS=true node scripts/audit-i18n-coverage-v4.mjs",
     "audit:images": "node scripts/audit-images.mjs",
     "audit:market-images": "node scripts/audit-market-images.mjs",
-    "travel:parity": "node scripts/run-travel-parity.mjs"
+    "travel:parity": "node scripts/run-travel-parity.mjs",
+    "test:cms": "cross-env JITI_TSCONFIG_PATHS=./tsconfig.json JITI_JSX=true node --test --import jiti/register \"src/services/cms*.test.ts\" \"src/services/*Cms*.test.ts\" \"src/lib/adminCms*.test.ts\" \"src/lib/cms*.test.ts\" \"src/components/admin/Cms*.test.ts\" src/app/admin/content/page.test.ts \"src/app/admin/system/cms-health/*.test.ts\""
   },
   "dependencies": {
     "@next-auth/prisma-adapter": "^1.0.7",
@@ -68,6 +69,7 @@
   "devDependencies": {
     "@playwright/test": "^1.61.0",
     "@tailwindcss/postcss": "^4",
+    "@types/jsdom": "^30.0.0",
     "@types/node": "^20",
     "@types/pg": "^8.20.0",
     "@types/react": "^19",
@@ -79,6 +81,7 @@
     "eslint-config-next": "^16.3.3",
     "fast-glob": "file:tools/next-lint-glob",
     "jiti": "^2.7.0",
+    "jsdom": "^27.4.0",
     "prisma": "^7.9.1",
     "selenium-webdriver": "^4.48.0",
     "tailwindcss": "^4",

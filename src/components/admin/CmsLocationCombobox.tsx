@@ -1,5 +1,8 @@
 "use client";
 
+import { CmsFieldError } from "@/components/admin/CmsEditorFeedback";
+import { cmsFieldLimits } from "@/lib/cmsContentValidation";
+
 import { useEffect, useId, useRef, useState, type KeyboardEvent, type PointerEvent as ReactPointerEvent } from "react";
 import { createPortal } from "react-dom";
 import { Check, ChevronDown } from "lucide-react";
@@ -56,6 +59,7 @@ export function CmsLocationCombobox({
   disabled?: boolean;
   className?: string;
 }) {
+  const errorName = kind === "hotel" ? "canonicalId" : label === "Origin IATA" ? "originCode" : label === "Destination IATA" ? "destinationCode" : label === "Origin city" ? "originCity" : label === "Destination city" ? "destinationCity" : kind;
   const inputId = useId();
   const listId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -196,6 +200,7 @@ export function CmsLocationCombobox({
       <div className="relative mt-1.5">
         <input
           ref={inputRef}
+          maxLength={kind === "hotel" || kind === "airport" ? undefined : cmsFieldLimits[errorName]}
           id={inputId}
           role="combobox"
           aria-autocomplete="list"
@@ -281,7 +286,7 @@ export function CmsLocationCombobox({
           )) : (
             <p className="px-3 py-2 text-[12px] leading-5 text-slate-500">
               {kind === "airport"
-                ? "No airport found. Enter a valid three-letter IATA code manually."
+                ? allowManualAirportCode ? "No airport found. Enter a valid three-letter IATA code manually." : "No supported airport matches. Clear the search or choose another supported route."
                 : kind === "hotel" ? "No matching canonical destination. Select one of the listed entries to save." : "No matching " + kind + ". You can keep typing a custom value."}
             </p>
           )}
@@ -293,6 +298,7 @@ export function CmsLocationCombobox({
         </div>,
         document.body,
       ) : null}
+      <CmsFieldError name={errorName} />
     </div>
   );
 }

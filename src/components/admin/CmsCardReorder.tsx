@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
+import { requestCmsDiscard, useCmsNavigationGuard } from "@/lib/cmsNavigationGuard";
+import { cmsReorderLabel as labelFor, sameCmsOrder } from "@/lib/cmsDirectoryPresentation";
 import { useRouter } from "next/navigation";
 import { ArrowDown, ArrowUp, GripVertical, LoaderCircle } from "lucide-react";
 
@@ -14,12 +16,6 @@ export type CmsReorderRow = {
   draftPayload: unknown;
 };
 
-function labelFor(row: CmsReorderRow, section: "destinations" | "flight-routes") {
-  const value = row.draftPayload && typeof row.draftPayload === "object" && !Array.isArray(row.draftPayload)
-    ? row.draftPayload as Record<string, unknown> : {};
-  if (section === "destinations") return String(value.city || "Destination");
-  return String(value.title || "Flight route");
-}
 
 function moveId(ids: readonly string[], from: string, to: string): string[] {
   const fromIndex = ids.indexOf(from);
@@ -41,8 +37,10 @@ export function CmsCardReorder({
 }) {
   const router = useRouter();
   const [ids, setIds] = useState(() => rows.filter(row => row.status !== "ARCHIVED").map(row => row.id));
-  const [changed, setChanged] = useState(false);
+  const [originalIds] = useState(() => rows.filter(row => row.status !== "ARCHIVED").map(row => row.id));
+  const changed = !sameCmsOrder(ids, originalIds);
   const [pending, setPending] = useState(false);
+  const navigationGuard = useCmsNavigationGuard(changed, pending);
   const [error, setError] = useState<string | null>(null);
   const [activeDrag, setActiveDrag] = useState<string | null>(null);
   const draggingId = useRef<string | null>(null);
@@ -56,7 +54,6 @@ export function CmsCardReorder({
     if (pending) return;
     setIds(current => {
       const next = moveId(current, from, to);
-      if (next.some((id, index) => id !== current[index])) setChanged(true);
       return next;
     });
     setError(null);
@@ -154,6 +151,7 @@ export function CmsCardReorder({
         setError(typeof result.error === "string" ? result.error : "Could not save this draft order.");
         return;
       }
+      navigationGuard.allowNavigation();
       router.refresh();
       onDone("Draft order saved. Publish each changed card to apply the new order to the public homepage.");
     } catch {
@@ -197,12 +195,12 @@ export function CmsCardReorder({
               </div>
               <button type="button" aria-label={`Move ${labelFor(row, section)} up`} onClick={() => moveBy(id, -1)}
                 disabled={pending || index === 0}
-                className="rounded-md p-2 text-[#475569] hover:bg-[#F1F5F9] focus-visible:outline-2 focus-visible:outline-[#6D28D9] disabled:opacity-30">
+                className="cursor-pointer rounded-md p-2 text-[#475569] hover:bg-[#F1F5F9] focus-visible:outline-2 focus-visible:outline-[#6D28D9] disabled:cursor-not-allowed disabled:opacity-30">
                 <ArrowUp size={16} aria-hidden="true" />
               </button>
               <button type="button" aria-label={`Move ${labelFor(row, section)} down`} onClick={() => moveBy(id, 1)}
                 disabled={pending || index === ids.length - 1}
-                className="rounded-md p-2 text-[#475569] hover:bg-[#F1F5F9] focus-visible:outline-2 focus-visible:outline-[#6D28D9] disabled:opacity-30">
+                className="cursor-pointer rounded-md p-2 text-[#475569] hover:bg-[#F1F5F9] focus-visible:outline-2 focus-visible:outline-[#6D28D9] disabled:cursor-not-allowed disabled:opacity-30">
                 <ArrowDown size={16} aria-hidden="true" />
               </button>
             </div>
@@ -215,12 +213,12 @@ export function CmsCardReorder({
       {error ? <p role="alert" className="text-[12px] text-rose-700">{error}</p> : null}
       <div className="flex flex-wrap items-center gap-2">
         <button type="button" disabled={!changed || pending} onClick={save}
-          className="inline-flex h-9 items-center gap-2 rounded-lg bg-[#111827] px-3.5 text-[13px] font-medium text-white hover:bg-[#303846] disabled:cursor-not-allowed disabled:opacity-40">
+          className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-lg bg-[#111827] px-3.5 text-[13px] font-medium text-white hover:bg-[#303846] disabled:cursor-not-allowed disabled:opacity-40">
           {pending ? <LoaderCircle size={15} aria-hidden="true" className="animate-spin" /> : null}
           Save draft order
         </button>
-        <button type="button" disabled={pending} onClick={() => onDone()}
-          className="h-9 rounded-lg border border-[#D8E1EC] px-3.5 text-[13px] font-medium text-[#374151] hover:bg-[#F8FAFC] disabled:opacity-40">
+        <button type="button" disabled={pending} onClick={() => { if (requestCmsDiscard()) onDone(); }}
+          className="h-9 cursor-pointer rounded-lg border border-[#D8E1EC] px-3.5 text-[13px] font-medium text-[#374151] hover:bg-[#F8FAFC] disabled:opacity-40">
           Cancel
         </button>
         <span className="text-[12px] text-[#64748B]">{changed ? "Unsaved order changes" : `${original.length} cards`}</span>
