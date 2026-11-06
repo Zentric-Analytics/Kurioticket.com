@@ -280,7 +280,7 @@ export function AdminAuditLogsToolbar({
         </div>
         </form>
 
-        <div className="flex min-w-0 flex-wrap items-end justify-end gap-x-4 gap-y-2 lg:ml-auto lg:flex-nowrap">
+        <div className="flex min-w-0 flex-wrap items-end justify-end gap-x-4 gap-y-2 lg:ml-auto xl:flex-nowrap">
         <AdminDirectorySelect
           key={range + ":" + rangeSelectVersion}
           name="range"
