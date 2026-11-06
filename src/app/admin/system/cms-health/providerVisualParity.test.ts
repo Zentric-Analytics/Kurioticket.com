@@ -22,13 +22,14 @@ test("CMS Health follows Providers page visual tokens and table density", () => 
 
   assert.doesNotMatch(cmsHealthPage, /AdminStatusBadge/);
   assert.doesNotMatch(cmsHealthPage, /bg-amber-50\/50|rounded-lg border border-amber-200/);
-  assert.match(cmsActions, />\{pending \? "Updating…" : "Manage"\}</);
+  assert.match(cmsActions, /\{pending \? "Updating…" : "Manage"\}/);
   assert.match(cmsActions, /aria-haspopup="menu"/);
   assert.match(cmsActions, /role="menu"/);
   assert.match(cmsActions, /Normalize draft order/);
   assert.match(cmsActions, /Retire fallback/);
   assert.match(cmsActions, /Reactivate fallback/);
   assert.match(cmsActions, /Resolve published CMS integrity issues first\./);
+  assert.match(cmsActions, /role="menuitem"[\s\S]*aria-disabled="true"/);
   assert.doesNotMatch(cmsActions, /Retire legacy fallback/);
   assert.doesNotMatch(cmsActions, /Reactivate legacy fallback/);
 });
