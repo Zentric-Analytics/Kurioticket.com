@@ -58,6 +58,7 @@ test("combobox supports keyboard selection and never saves or publishes automati
   assert.match(combobox, /event\.key === "Escape"/);
   assert.match(combobox, /event\.key === "Enter"/);
   assert.match(combobox, /browseAllHotels/);
+  assert.match(combobox, /if \(kind !== "hotel" \|\| !onSelect\) onChange\(option\.value\)/);
   assert.match(combobox, /setBrowseAllHotels\(kind === "hotel"\)/);
   assert.doesNotMatch(combobox, /fetch\(|publish\(|saveDraft\(/);
   assert.match(combobox, /onPointerDown=\{toggleOnPointerDown\}/);
@@ -187,6 +188,7 @@ test("hotel CMS canonical search protects the mapped destination and uses visibl
   assert.match(listing, /left\.sortOrder - right\.sortOrder/);
 
   assert.match(editor, /item\?\.publishedVersion != null/);
+  assert.match(editor, /current\.canonicalId !== option\.canonicalId \? \{ image: "", imageAlt: "" \}/);
   assert.match(editor, /create a new draft to manage a different destination/);
   assert.match(editor, /Directory order/);
   assert.match(editor, /Existing destinations cannot be duplicated/);
