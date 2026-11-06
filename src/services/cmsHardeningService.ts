@@ -424,6 +424,20 @@ export async function reorderCmsDraftCards(raw: unknown, actor: CmsActor) {
       });
       if (!scope) throw new CmsContentError("NOT_FOUND", "CMS market scope is not initialized.");
 
+      // Lock EVERY participating row, even when its new Order equals its old
+      // Order. Otherwise another admin can change an "unchanged" card after
+      // the version read, and the partial set of updates cannot detect it.
+      // Deterministic lock order also reduces cross-admin deadlock risk.
+      await tx.$queryRaw<Array<{ id: string }>>(Prisma.sql`
+        SELECT "id" FROM "CmsContentItem"
+        WHERE "type"::text = ${input.type}
+          AND "market" = ${input.market}
+          AND "locale" = ${input.locale}
+          AND "status"::text <> 'ARCHIVED'
+        ORDER BY "id"
+        FOR UPDATE
+      `);
+
       const current = await tx.cmsContentItem.findMany({
         where: {
           type: input.type,
