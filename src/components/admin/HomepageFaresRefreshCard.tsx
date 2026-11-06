@@ -1195,12 +1195,6 @@ function MarketRouteInspector({
         </div>
       </div>
 
-      {!publicGroups.length && !loading ? (
-        <p role="status" className="mt-3 py-3 text-[13px] leading-5 text-[#64748B]">
-          No public market route groups match this filter.
-        </p>
-      ) : null}
-
       <SelectedRouteDetails
         group={selectedGroup}
         selectedRouteScope={selectedRouteScope}
@@ -1249,7 +1243,7 @@ function SelectedRouteDetails({
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <h5 className="text-[15px] font-semibold leading-6 text-[#020617]">
-              {isViewAll ? "All routes" : group.displayName} — {page.totalRoutes} total routes
+              {isViewAll ? "All routes" : group.displayName} — {page.totalRoutes} {filterLabel === "All statuses" ? "total routes" : "matching routes"}
             </h5>
             <p className="mt-1 text-[12px] leading-5 text-[#64748B]">
               Showing {page.start}–{page.end} of {page.totalRoutes}
