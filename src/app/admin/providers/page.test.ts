@@ -25,7 +25,7 @@ const providersApi = readFileSync("src/app/api/admin/providers/route.ts", "utf8"
 const providerRetestApi = readFileSync("src/app/api/admin/providers/duffel/retest/route.ts", "utf8");
 const overviewPage = readFileSync("src/app/admin/page.tsx", "utf8");
 const systemPage = readFileSync("src/app/admin/system/page.tsx", "utf8");
-const settingsPage = readFileSync("src/app/admin/settings/page.tsx", "utf8");
+const settingsPage = readFileSync("src/app/admin/settings/layout.tsx", "utf8");
 
 type TestProvider = Parameters<typeof filterProviderStatuses>[0][number];
 

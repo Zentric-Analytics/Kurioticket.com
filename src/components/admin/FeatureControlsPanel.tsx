@@ -29,11 +29,13 @@ export function FeatureControlsPanel({
   environment,
   canControlProduction,
   operationsAvailable = true,
+  hideCategoryHeading = false,
 }: {
   initialControls: Control[];
   environment: FeatureControlEnvironment;
   canControlProduction: boolean;
   operationsAvailable?: boolean;
+  hideCategoryHeading?: boolean;
 }) {
   const [controls, setControls] = useState(initialControls);
   const [pending, setPending] = useState<{ control: Control; enabled: boolean } | null>(null);
@@ -130,15 +132,23 @@ export function FeatureControlsPanel({
       ) : null}
 
       {categories.map((category) => (
-        <section key={category} aria-labelledby={"settings-" + category.toLowerCase().replaceAll(" ", "-")}>
-          <h3 id={"settings-" + category.toLowerCase().replaceAll(" ", "-")} className="text-[14px] font-semibold text-[#020617]">
-            {categoryLabels[category] || category}
-          </h3>
-          <p className="mt-1 text-[12px] leading-5 text-[#64748B]">
-            {categoryDescriptions[category] || "Persisted administrative controls."}
-          </p>
+        <section
+          key={category}
+          aria-label={hideCategoryHeading ? (categoryLabels[category] || category) : undefined}
+          aria-labelledby={hideCategoryHeading ? undefined : "settings-" + category.toLowerCase().replaceAll(" ", "-")}
+        >
+          {!hideCategoryHeading ? (
+            <>
+              <h3 id={"settings-" + category.toLowerCase().replaceAll(" ", "-")} className="text-[14px] font-semibold text-[#020617]">
+                {categoryLabels[category] || category}
+              </h3>
+              <p className="mt-1 text-[12px] leading-5 text-[#64748B]">
+                {categoryDescriptions[category] || "Persisted administrative controls."}
+              </p>
+            </>
+          ) : null}
 
-          <div className="mt-2 divide-y divide-[#E7ECF5] border-y border-[#D8E1EC]">
+          <div className={(hideCategoryHeading ? "" : "mt-2 ") + "divide-y divide-[#E7ECF5] border-y border-[#D8E1EC]"}>
             {controls
               .filter((control) => control.category === category)
               .map((control) => {
