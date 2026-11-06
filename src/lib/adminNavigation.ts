@@ -33,7 +33,7 @@ export type AdminNavDefinition = {
 
 export const adminNavigationGroups = [
   { label: "Operations", hrefs: ["/admin", "/admin/users", "/admin/searches/activity", "/admin/confirmed-trips", "/admin/support"] },
-  { label: "Provider readiness", hrefs: ["/admin/providers", "/admin/homepage-fares"] },
+  { label: "Provider readiness", hrefs: ["/admin/providers"] },
   { label: "Website content", hrefs: ["/admin/content"] },
   { label: "System & security", hrefs: ["/admin/system", "/admin/settings"] },
 ] as const;
