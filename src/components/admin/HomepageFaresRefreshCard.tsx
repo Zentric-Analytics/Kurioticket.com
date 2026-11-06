@@ -601,7 +601,12 @@ export function HomepageFaresRefreshCard({ view = "operations", initialMarket = 
   const fallbackPools = statusPayload.marketReadinessSummary.filter(isFallbackMarket);
   const latestCounts = refreshState.counts;
   const initialStatusLoading = statusState.loading && !statusState.data;
-  const telemetryUnavailable = !initialStatusLoading && !statusPayload.dataAvailable;
+  // A pending request is not an outage. Preserve known counts while checking
+  // again, but keep unavailable snapshots in a loading state until confirmed.
+  const readinessLoading = statusState.loading && !statusPayload.dataAvailable;
+  const telemetryUnavailable = !statusState.loading && !statusPayload.dataAvailable;
+  const readinessFallbackValue = readinessLoading ? "Loading…" : "Unavailable";
+  const readinessFallbackTone: SummaryTone = readinessLoading ? "neutral" : "danger";
   const marketsNeedingAnotherRun = latestCounts?.marketsNeedingAnotherRun ?? statusPayload.marketsNeedingAnotherRun;
 
   return (
@@ -635,15 +640,16 @@ export function HomepageFaresRefreshCard({ view = "operations", initialMarket = 
         <div
           role="region"
           aria-label="Readiness metrics (scroll horizontally on narrow screens)"
+          aria-busy={readinessLoading}
           tabIndex={0}
           className="mt-4 max-w-full overflow-x-auto overscroll-x-contain focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]"
         >
           <dl aria-label="Fare readiness metrics" className="grid min-w-[920px] grid-cols-5 gap-px border-y border-[#D8E1EC] bg-[#E7ECF5]">
-              <SummaryMetricCard label="Fresh fares" value={statusPayload.dataAvailable ? statusPayload.summary.fresh : "Unavailable"} tone={statusPayload.dataAvailable ? "good" : "danger"} />
-              <SummaryMetricCard label="Last-known-good" value={statusPayload.dataAvailable ? statusPayload.summary.last_known_good : "Unavailable"} tone={statusPayload.dataAvailable ? "info" : "danger"} />
-              <SummaryMetricCard label="Missing routes" value={statusPayload.dataAvailable ? statusPayload.summary.missing : "Unavailable"} tone={!statusPayload.dataAvailable ? "danger" : statusPayload.summary.missing ? "warning" : "neutral"} />
-              <SummaryMetricCard label="Failed / unavailable" value={statusPayload.dataAvailable ? statusPayload.summary.failed + statusPayload.summary.unavailable : "Unavailable"} tone={!statusPayload.dataAvailable ? "danger" : statusPayload.summary.failed + statusPayload.summary.unavailable ? "warning" : "neutral"} />
-              <SummaryMetricCard label="Markets needing attention" value={statusPayload.dataAvailable ? marketsNeedingAnotherRun.filter((market) => market.needed).length : "Unavailable"} tone={!statusPayload.dataAvailable ? "danger" : marketsNeedingAnotherRun.some((market) => market.needed) ? "warning" : "good"} />
+              <SummaryMetricCard label="Fresh fares" value={statusPayload.dataAvailable ? statusPayload.summary.fresh : readinessFallbackValue} tone={statusPayload.dataAvailable ? "good" : readinessFallbackTone} />
+              <SummaryMetricCard label="Last-known-good" value={statusPayload.dataAvailable ? statusPayload.summary.last_known_good : readinessFallbackValue} tone={statusPayload.dataAvailable ? "info" : readinessFallbackTone} />
+              <SummaryMetricCard label="Missing routes" value={statusPayload.dataAvailable ? statusPayload.summary.missing : readinessFallbackValue} tone={!statusPayload.dataAvailable ? readinessFallbackTone : statusPayload.summary.missing ? "warning" : "neutral"} />
+              <SummaryMetricCard label="Failed / unavailable" value={statusPayload.dataAvailable ? statusPayload.summary.failed + statusPayload.summary.unavailable : readinessFallbackValue} tone={!statusPayload.dataAvailable ? readinessFallbackTone : statusPayload.summary.failed + statusPayload.summary.unavailable ? "warning" : "neutral"} />
+              <SummaryMetricCard label="Markets needing attention" value={statusPayload.dataAvailable ? marketsNeedingAnotherRun.filter((market) => market.needed).length : readinessFallbackValue} tone={!statusPayload.dataAvailable ? readinessFallbackTone : marketsNeedingAnotherRun.some((market) => market.needed) ? "warning" : "good"} />
           </dl>
         </div>
           </section>
@@ -654,7 +660,7 @@ export function HomepageFaresRefreshCard({ view = "operations", initialMarket = 
             refreshState={refreshState}
             statusPayload={statusPayload}
             operationsAvailable={statusPayload.dataAvailable}
-            initialStatusLoading={initialStatusLoading}
+            initialStatusLoading={readinessLoading}
             onRefresh={refreshHomepageFares}
             onReload={() => void loadStatus()}
           />
@@ -896,8 +902,8 @@ function RefreshCronPanel({
             Includes snapshots saved by manual or scheduled refreshes.
           </p>
           <dl aria-label="Saved fare status" className="mt-3 grid grid-cols-2 gap-x-5 gap-y-3">
-            <CompactDetail label="Latest saved snapshot" value={statusPayload.dataAvailable ? formatSnapshotTime(statusPayload.lastRefreshAt) : "Unavailable"} />
-            <CompactDetail label="Scheduler setup" value={formatCronStatus(statusPayload)} />
+            <CompactDetail label="Latest saved snapshot" value={initialStatusLoading ? "Loading…" : statusPayload.dataAvailable ? formatSnapshotTime(statusPayload.lastRefreshAt) : "Unavailable"} />
+            <CompactDetail label="Scheduler setup" value={initialStatusLoading ? "Loading…" : statusPayload.dataAvailable ? formatCronStatus(statusPayload) : "Unavailable"} />
           </dl>
         </div>
 
@@ -944,12 +950,12 @@ function RefreshCronPanel({
         </div>
       ) : null}
 
-      {!initialStatusLoading && !operationsAvailable ? (
+      {!loading && !operationsAvailable ? (
         <p className="mt-4 border-l-[3px] border-rose-500 py-1 pl-3 text-[13px] font-medium text-rose-700">
           Manual refresh unavailable while the snapshot store is offline.
         </p>
       ) : null}
-      {!statusPayload.cronConfigured ? (
+      {!loading && operationsAvailable && !statusPayload.cronConfigured ? (
         <p className="mt-3 border-l-[3px] border-amber-500 py-1 pl-3 text-[13px] font-medium text-[#9A3412]">
           Cron credential not configured.
         </p>
