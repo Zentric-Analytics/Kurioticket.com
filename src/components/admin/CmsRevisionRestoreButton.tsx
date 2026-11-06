@@ -35,13 +35,17 @@ export function CmsRevisionRestoreButton({
       const body = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        setError(
-          response.status === 409
-            ? "This content changed in another session. Reload before restoring."
-            : typeof body.error === "string"
-              ? body.error
-              : "Unable to restore this revision.",
-        );
+        const serverError = typeof body.error === "string"
+          ? body.error
+          : "Unable to restore this revision.";
+        // Revision uniqueness and dependency checks also use HTTP 409. Only
+        // optimistic-concurrency conflicts should suggest a reload; admins
+        // need the actionable server message for other conflicts.
+        const staleVersion = response.status === 409 &&
+          /changed since it was opened|changed concurrently|refresh before|another admin session/i.test(serverError);
+        setError(staleVersion
+          ? "This content changed in another session. Reload before restoring."
+          : serverError);
         return;
       }
 
