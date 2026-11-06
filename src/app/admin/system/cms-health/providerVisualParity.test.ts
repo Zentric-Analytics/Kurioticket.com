@@ -30,6 +30,7 @@ test("CMS Health follows Providers page visual tokens and table density", () => 
   assert.match(cmsActions, /Reactivate fallback/);
   assert.match(cmsActions, /Resolve published CMS integrity issues first\./);
   assert.match(cmsActions, /role="menuitem"[\s\S]*aria-disabled="true"/);
+  assert.match(cmsActions, /summary, a\[href\], button:not\(:disabled\), input, select, textarea/);
   assert.doesNotMatch(cmsActions, /Retire legacy fallback/);
   assert.doesNotMatch(cmsActions, /Reactivate legacy fallback/);
 });
