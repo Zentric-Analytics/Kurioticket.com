@@ -190,3 +190,10 @@ test("settings routes isolate the right-side content but preserve the working co
   assert.doesNotMatch(notifications, /FeatureControlsPanel|listFeatureControls/);
   assert.doesNotMatch(changes, /AdminNotificationPreferencesPanel/);
 });
+
+test("nested Settings pages keep the existing white admin workspace", () => {
+  const horizontalShell = readFileSync("src/components/admin/AdminHorizontalShell.tsx", "utf8");
+  const globalNavigation = readFileSync("src/lib/adminNavigation.ts", "utf8");
+  assert.match(horizontalShell, /const settingsWorkspace = pathname === "\/admin\/settings" \|\| pathname\.startsWith\("\/admin\/settings\/"\)/);
+  assert.match(globalNavigation, /return pathname === itemHref \|\| pathname\.startsWith/);
+});
