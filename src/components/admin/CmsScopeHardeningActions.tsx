@@ -145,7 +145,7 @@ export function CmsScopeHardeningActions({
       if (event.key === "Tab") {
         const controls = Array.from(
           document.querySelectorAll<HTMLElement>(
-            'a[href], button:not(:disabled), input, select, [tabindex="0"]',
+            'summary, a[href], button:not(:disabled), input, select, textarea, [tabindex]:not([tabindex="-1"])',
           ),
         ).filter(
           (item) =>
