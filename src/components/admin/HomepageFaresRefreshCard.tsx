@@ -649,7 +649,7 @@ export function HomepageFaresRefreshCard({ view = "operations", initialMarket = 
               <SummaryMetricCard label="Last-known-good" value={statusPayload.dataAvailable ? statusPayload.summary.last_known_good : readinessFallbackValue} tone={statusPayload.dataAvailable ? "info" : readinessFallbackTone} />
               <SummaryMetricCard label="Missing routes" value={statusPayload.dataAvailable ? statusPayload.summary.missing : readinessFallbackValue} tone={!statusPayload.dataAvailable ? readinessFallbackTone : statusPayload.summary.missing ? "warning" : "neutral"} />
               <SummaryMetricCard label="Failed / unavailable" value={statusPayload.dataAvailable ? statusPayload.summary.failed + statusPayload.summary.unavailable : readinessFallbackValue} tone={!statusPayload.dataAvailable ? readinessFallbackTone : statusPayload.summary.failed + statusPayload.summary.unavailable ? "warning" : "neutral"} />
-              <SummaryMetricCard label="Markets needing attention" value={statusPayload.dataAvailable ? marketsNeedingAnotherRun.filter((market) => market.needed).length : readinessFallbackValue} tone={!statusPayload.dataAvailable ? readinessFallbackTone : marketsNeedingAnotherRun.some((market) => market.needed) ? "warning" : "good} />
+              <SummaryMetricCard label="Markets needing attention" value={statusPayload.dataAvailable ? marketsNeedingAnotherRun.filter((market) => market.needed).length : readinessFallbackValue} tone={!statusPayload.dataAvailable ? readinessFallbackTone : marketsNeedingAnotherRun.some((market) => market.needed) ? "warning" : "good"} />
           </dl>
         </div>
           </section>
