@@ -20,31 +20,41 @@ test("Audit Logs uses the compact Providers-style white workspace", () => {
   assert.ok(shell.includes("auditLogsWorkspace"));
 });
 
-test("Audit Logs presents readable actions while retaining technical audit values", () => {
+test("Audit Logs keeps the main rows readable and moves technical audit values into expandable details", () => {
   assert.ok(page.includes('CMS_CONTENT_PUBLISHED: "CMS content published"'));
   assert.ok(page.includes('ADMIN_ALERT_CMS_STATE: "CMS alert state changed"'));
   assert.ok(page.includes('PROVIDER_RETESTED: "Provider retested"'));
   assert.ok(page.includes("actionLabel(log.action)"));
-  assert.ok(page.includes("title={log.action}>{log.action}</code>"));
   assert.ok(page.includes("identifierLabel(log.targetType)"));
-  assert.ok(page.includes("title={log.targetId || undefined}"));
+  assert.equal(page.includes('title={log.action}>{log.action}</code>'), false);
+  assert.equal(page.includes('title={log.targetId || undefined}'), false);
+  assert.ok(page.includes('<AuditTechnicalDetail label="Admin ID" value={log.adminUserId || "System event"} />'));
+  assert.ok(page.includes('<AuditTechnicalDetail label="Action code" value={log.action} />'));
+  assert.ok(page.includes('<AuditTechnicalDetail label="Target ID" value={log.targetId || "Not provided"} />'));
 });
 
-test("Target email stays out of the permanent columns and expandable rows own the extra detail", () => {
+test("Every audit row is expandable while target email stays out of the permanent columns", () => {
   assert.ok(toolbar.includes("Search target email"));
   assert.ok(toolbar.includes('placeholder="Search target email"'));
   assert.equal(page.includes("<span>Target email</span>"), false);
   assert.equal(page.includes(">Details</span>"), false);
   assert.equal(page.includes("View ›"), false);
   assert.equal(page.includes("Hide ‹"), false);
-  assert.ok(page.includes("if (!log.targetEmail)"));
+  assert.equal(page.includes("if (!log.targetEmail)"), false);
   assert.ok(page.includes("<details data-audit-row={log.id}"));
-  assert.ok(page.includes('title="View target email details"'));
+  assert.ok(page.includes('title="View audit details"'));
   assert.ok(page.includes("cursor-pointer"));
   assert.ok(page.includes("hover:bg-[#F8FAFC]"));
-  assert.ok(page.includes("Additional target email details available"));
-  assert.ok(page.includes("Target email</p>"));
-  assert.ok(page.includes("{log.targetEmail}"));
+  assert.ok(page.includes('<AuditTechnicalDetail label="Target email" value={log.targetEmail} />'));
+});
+
+test("Audit Logs keeps search and filters on one compact desktop row at 100% zoom widths", () => {
+  assert.ok(toolbar.includes("lg:flex-row lg:items-center"));
+  assert.ok(toolbar.includes("lg:w-[520px] lg:flex-none"));
+  assert.ok(toolbar.includes("gap-x-4"));
+  assert.ok(toolbar.includes("lg:ml-auto xl:flex-nowrap"));
+  assert.equal(toolbar.includes("lg:flex-nowrap"), false);
+  assert.equal(toolbar.includes("xl:flex-row"), false);
 });
 
 test("Audit Logs search mirrors the Users auto-update pattern without an apply button", () => {
