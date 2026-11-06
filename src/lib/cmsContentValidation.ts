@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { cmsOrderForStorage, CMS_DISPLAY_ORDER_MIN, CMS_DISPLAY_ORDER_MAX } from "@/lib/cmsOrderPresentation";
 import type { CmsContentType } from "@/generated/prisma/enums";
 import { imageRemotePatterns, matchesImagePattern } from "@/config/imagePatterns";
 
@@ -82,8 +83,8 @@ export function validateCmsEditor(type: CmsContentType, payload: unknown, order:
       (errors[field] ??= []).push(issue.message);
     }
   }
-  if (!order.trim() || !cmsSortOrderSchema.safeParse(Number(order)).success) {
-    errors.sortOrder = ["Enter a whole number from 0 to 100000."];
+  if (!order.trim() || !cmsSortOrderSchema.safeParse(cmsOrderForStorage(order)).success) {
+    errors.sortOrder = [`Enter a whole number from ${CMS_DISPLAY_ORDER_MIN} to ${CMS_DISPLAY_ORDER_MAX}.`];
   }
   return errors;
 }

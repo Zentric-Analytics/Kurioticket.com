@@ -188,7 +188,7 @@ export function CmsCardReorder({
                 className="touch-none cursor-grab rounded-md p-2 text-[#64748B] focus-visible:outline-2 focus-visible:outline-[#6D28D9] active:cursor-grabbing disabled:cursor-not-allowed">
                 <GripVertical size={17} aria-hidden="true" />
               </button>
-              <span className="w-7 shrink-0 text-center text-[13px] font-medium tabular-nums text-[#475569]">{index}</span>
+              <span className="w-7 shrink-0 text-center text-[13px] font-medium tabular-nums text-[#475569]">{index + 1}</span>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-[13px] font-medium text-[#111827]">{labelFor(row, section)}</p>
                 <p className="text-[11px] text-[#64748B]">{row.status === "PUBLISHED" ? "Published — reorder is draft only" : row.status === "HIDDEN" ? "Hidden" : "Draft"}</p>

@@ -1,5 +1,7 @@
 "use client";
 
+import { cmsOrderForDisplay, cmsOrderForStorage, CMS_DISPLAY_ORDER_MAX } from "@/lib/cmsOrderPresentation";
+
 import { validateCmsEditor, readCmsFieldErrors, type CmsFieldErrors } from "@/lib/cmsContentValidation";
 import { getCmsUnpublishedChangeLabel, type CmsPublicationSnapshot } from "@/lib/adminCmsPublicationStatus";
 import { useCmsNavigationGuard } from "@/lib/cmsNavigationGuard";
@@ -49,7 +51,7 @@ export function FaqCmsEditor({ initialItem, listQuery = "" }: { initialItem?: Fa
   const [question, setQuestion] = useState(initialPayload.question);
   const [answer, setAnswer] = useState(initialPayload.answer);
   const [category, setCategory] = useState(initialPayload.category);
-  const [sortOrder, setSortOrder] = useState(String(initialItem?.sortOrder ?? 0));
+  const [sortOrder, setSortOrder] = useState(String(cmsOrderForDisplay(initialItem?.sortOrder ?? 0)));
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [serverFieldErrors, setServerFieldErrors] = useState<CmsFieldErrors>({});
@@ -68,9 +70,9 @@ export function FaqCmsEditor({ initialItem, listQuery = "" }: { initialItem?: Fa
       question.trim() !== savedPayload.question ||
       answer.trim() !== savedPayload.answer ||
       category.trim() !== savedPayload.category ||
-      sortOrder !== String(item.sortOrder)
+      sortOrder !== String(cmsOrderForDisplay(item.sortOrder))
     )
-  ) : question !== initialPayload.question || answer !== initialPayload.answer || category !== initialPayload.category || sortOrder !== "0";
+  ) : question !== initialPayload.question || answer !== initialPayload.answer || category !== initialPayload.category || sortOrder !== "1";
   const hasUnpublishedChanges = item ? getCmsUnpublishedChangeLabel(item) !== null : false;
   const fieldErrors = { ...(draftDirty ? clientErrors : {}), ...serverFieldErrors };
   const navigationGuard = useCmsNavigationGuard(draftDirty, pending);
@@ -105,7 +107,7 @@ export function FaqCmsEditor({ initialItem, listQuery = "" }: { initialItem?: Fa
             key: `faq-${crypto.randomUUID()}`,
             market: "GLOBAL",
             locale: "en",
-            sortOrder: Number(sortOrder),
+            sortOrder: cmsOrderForStorage(sortOrder),
             payload: payload(),
           }),
         });
@@ -128,7 +130,7 @@ export function FaqCmsEditor({ initialItem, listQuery = "" }: { initialItem?: Fa
     if (!item || !validDraft) return;
     mutate("save_draft", {
       payload: payload(),
-      sortOrder: Number(sortOrder),
+      sortOrder: cmsOrderForStorage(sortOrder),
     }, "Draft saved.");
   }
 
@@ -183,7 +185,7 @@ export function FaqCmsEditor({ initialItem, listQuery = "" }: { initialItem?: Fa
           setQuestion(normalized.question);
           setAnswer(normalized.answer);
           setCategory(normalized.category);
-          setSortOrder(String(body.item.sortOrder ?? Number(sortOrder)));
+          setSortOrder(String(cmsOrderForDisplay(body.item.sortOrder ?? cmsOrderForStorage(sortOrder))));
         }
         setServerFieldErrors({});
         setMessage(success);
@@ -250,8 +252,8 @@ export function FaqCmsEditor({ initialItem, listQuery = "" }: { initialItem?: Fa
                 <AdminInput
                   className="mt-2"
                   type="number"
-                  min={0}
-                  max={100000}
+                  min={1}
+                  max={CMS_DISPLAY_ORDER_MAX}
                   value={sortOrder}
                   onChange={(event) => setSortOrder(event.target.value)}
                   disabled={pending || item?.status === "ARCHIVED"}
@@ -308,7 +310,7 @@ export function FaqCmsEditor({ initialItem, listQuery = "" }: { initialItem?: Fa
           </p>
           <div className="mt-4 flex items-center justify-between gap-3 pt-2 text-[12px] text-[#64748B]">
             <span>{category.trim() || "General"}</span>
-            <span>Order {sortOrder || "0"}</span>
+            <span>Order {sortOrder || "1"}</span>
           </div>
         </aside>
       </div>

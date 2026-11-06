@@ -458,3 +458,35 @@ test("Homepage and flight drag ordering edits complete market drafts without aut
   assert.doesNotMatch(reorder, /action:\s*"publish"/);
 });
 
+
+test("all four content directories and editors present one-based Order without migrating CMS records", () => {
+  const homepageList = readFileSync("src/components/admin/HomepageCmsListClient.tsx", "utf8");
+  const faqList = readFileSync("src/components/admin/FaqCmsListClient.tsx", "utf8");
+  const homepageEditor = readFileSync("src/components/admin/HomepageCmsEditor.tsx", "utf8");
+  const faqEditor = readFileSync("src/components/admin/FaqCmsEditor.tsx", "utf8");
+  const reorder = readFileSync("src/components/admin/CmsCardReorder.tsx", "utf8");
+  const homePreview = readFileSync("src/components/admin/HomepageDestinationDraftPreview.tsx", "utf8");
+  const otherPreview = readFileSync("src/components/admin/CmsRouteHotelDraftPreview.tsx", "utf8");
+  const conversion = readFileSync("src/lib/cmsOrderPresentation.ts", "utf8");
+  const backend = readFileSync("src/services/cmsHardeningService.ts", "utf8");
+
+  for (const directory of [homepageList, faqList]) {
+    assert.match(directory, /cmsOrderForDisplay\(item\.sortOrder\)/);
+  }
+  for (const editor of [homepageEditor, faqEditor]) {
+    assert.match(editor, /cmsOrderForDisplay\(initialItem\?\.sortOrder \?\? 0\)/);
+    assert.match(editor, /sortOrder !== String\(cmsOrderForDisplay\(item\.sortOrder\)\)/);
+    assert.match(editor, /sortOrder: cmsOrderForStorage\(sortOrder\)/);
+    assert.match(editor, /cmsOrderForDisplay\(body\.item\.sortOrder/);
+  }
+  assert.match(homepageEditor, /type="number" min=\{1\} max=\{CMS_DISPLAY_ORDER_MAX\}/);
+  assert.match(faqEditor, /min=\{1\}/);
+  assert.match(faqEditor, /max=\{CMS_DISPLAY_ORDER_MAX\}/);
+  assert.match(faqEditor, /Order \{sortOrder \|\| "1"\}/);
+  assert.match(reorder, /\{index \+ 1\}<\/span>/);
+  assert.match(homePreview, /\{order \|\| "1"\}/);
+  assert.match(otherPreview, /\{order \|\| "1"\}/);
+  assert.match(conversion, /return storedOrder \+ 1/);
+  assert.match(conversion, /return Number\(displayOrder\) - 1/);
+  assert.match(backend, /sortOrder: nextOrder/);
+});
