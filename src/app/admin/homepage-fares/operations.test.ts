@@ -290,8 +290,7 @@ test("market coverage combines the affected market diagnostics with the public t
   assert.match(component, /formatUnderfillCause\(nextRunCause\)/);
   assert.match(component, /label="Current gaps"/);
   assert.match(component, /href=\{onInspectMarket\(market\.marketCode\)\}/);
-  assert.match(component, /outsidePublicCount/);
-  assert.match(component, /additional market/);
+  assert.doesNotMatch(component, /outsidePublicCount|Review fallback diagnostics|View fare diagnostics/);
   assert.doesNotMatch(component, /function DiagnosticsPanel|title="Markets requiring attention"/);
 });
 
@@ -482,11 +481,11 @@ test("Readiness is a flat metrics strip with neutral status dots and authoritati
   assert.match(component, /Telemetry unavailable\. Snapshot data could not be read; coverage counts are hidden\./);
 });
 
-test("Market coverage retains public market inspection and reports counts outside the public table", () => {
+test("Market coverage retains public market inspection without redundant diagnostics notices", () => {
   assert.match(component, /<ul aria-label="Public market coverage"/);
-  assert.match(component, /displayedCodes = new Set\(markets\.map/);
-  assert.match(component, /outsidePublicCount = marketsNeedingAnotherRun\.filter/);
-  assert.match(component, /outside the public country table/);
+  assert.doesNotMatch(component, /displayedCodes = new Set\(markets\.map|outsidePublicCount|outside the public country table/);
+  assert.doesNotMatch(component, /Review fallback diagnostics|View fare diagnostics|For fallback coverage, refresh execution and scheduler diagnostics/);
+  assert.match(component, /marketsNeedingAnotherRun\.filter\(\(market\) => market\.needed\)\.length/);
   assert.match(component, /hidden=\{!showDetails\}/);
   assert.match(component, /href=\{onInspectMarket\(market\.marketCode\)\}/);
   assert.match(component, /href=\{onInspectMarket\(pool\.marketCode\)\}/);
@@ -527,7 +526,7 @@ test("coverage actions remain on the same row with expandable details that prese
   assert.match(component, /whitespace-nowrap text-\[12px\] font-semibold text-\[#004BB8\]/);
   assert.match(component, /label="Next run"/);
   assert.match(component, /label="Current gaps"/);
-  assert.match(component, /outside the public country table/);
+  assert.doesNotMatch(component, /outside the public country table/);
 });
 
 test("fare diagnostics preserve every metric while condensing zero-count fallback pools", () => {
