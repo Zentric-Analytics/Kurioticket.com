@@ -36,11 +36,8 @@ export default async function AdminLogsPage({ searchParams }: { searchParams: Se
 
   return (
     <div className="w-full min-w-0 bg-white text-[#020617]">
-        <header className="border-b border-[#D8E1EC] pb-4">
+        <header className="pb-3">
           <h1 className="text-[18px] font-semibold tracking-[-0.01em] text-[#020617]">Audit Logs</h1>
-          <p className="mt-1 max-w-[900px] text-[12px] leading-5 text-[#64748B]">
-            Security-sensitive admin and system actions. Raw metadata, IP addresses and user-agent values are intentionally excluded.
-          </p>
         </header>
 
         <AdminAuditLogsToolbar
@@ -62,11 +59,8 @@ export default async function AdminLogsPage({ searchParams }: { searchParams: Se
             />
           ) : (
             <section aria-labelledby="audit-records-heading" className="pt-4">
-              <div className="flex flex-wrap items-baseline justify-between gap-2 pb-2">
+              <div className="pb-2">
                 <h2 id="audit-records-heading" className="text-[15px] font-semibold text-[#020617]">Audit records</h2>
-                <p className="text-[12px] text-[#64748B]">
-                  {result.data.items.length.toLocaleString()} newest records on this page · {rangeLabel(range, result.data.scope.from, result.data.scope.to)}
-                </p>
               </div>
 
               <div role="region" aria-label="Audit log records" tabIndex={0} className="min-w-0 overflow-x-auto border-y border-[#D8E1EC]">
@@ -239,16 +233,6 @@ function customEndIso(value: string, now: Date) {
   const end = new Date(value + "T00:00:00.000Z");
   end.setUTCDate(end.getUTCDate() + 1);
   return new Date(Math.min(end.getTime(), now.getTime())).toISOString();
-}
-
-function rangeLabel(range: AuditRange, from: string, to: string) {
-  if (range === "24h") return "Last 24 hours";
-  if (range === "7d") return "Last 7 days";
-  if (range === "30d") return "Last 30 days";
-  if (range === "90d") return "Last 90 days";
-  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }).format(new Date(from))
-    + " – "
-    + new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }).format(new Date(new Date(to).getTime() - 1));
 }
 
 function currentHref(raw: Record<string, string | string[] | undefined>, range: AuditRange) {
