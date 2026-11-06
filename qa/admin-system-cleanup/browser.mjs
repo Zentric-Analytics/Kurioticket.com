@@ -194,6 +194,16 @@ try {
           await expect(main.getByRole("link", { name: "Open source", exact: true })).toHaveCount(3);
           await expect(main.getByRole("button", { name: "Acknowledge", exact: true })).toHaveCount(2);
           await expect(main.getByText("Acknowledgement is unavailable until monitoring-state storage recovers.")).toBeVisible();
+          const metrics = main.getByRole("region", { name: "Alert summary" });
+          await expect(metrics.locator("dl > div")).toHaveCount(4);
+          await expect(main.locator("[data-alert-row]")).toHaveCount(4);
+          const boundaries = main.locator("details[data-monitoring-boundaries]");
+          await expect(boundaries).not.toHaveAttribute("open", "");
+          await boundaries.locator("summary").click();
+          await expect(boundaries).toHaveAttribute("open", "");
+          await expect(main.getByText(/Kurioticket does not fabricate alerts for inactive integrations/)).toBeVisible();
+          const background = await main.evaluate(node => getComputedStyle(node.parentElement).backgroundColor);
+          expect(background).toBe("rgb(255, 255, 255)");
         }
         const dimensions = await page.evaluate(() => ({ page: document.documentElement.scrollWidth, screen: innerWidth }));
         expect(dimensions.page).toBeLessThanOrEqual(dimensions.screen + 1);

@@ -13,11 +13,13 @@ export function AdminAlertAcknowledgeButton({
   signalToken,
   acknowledged,
   compact = false,
+  rowStyle = false,
 }: {
   alertKey: string;
   signalToken: string;
   acknowledged: boolean;
   compact?: boolean;
+  rowStyle?: boolean;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -71,7 +73,7 @@ export function AdminAlertAcknowledgeButton({
         className={styles.action + " min-w-[128px]"}>
         {pending ? <AdminNotificationSpinner className="h-3.5 w-3.5" /> : <Check size={14} strokeWidth={1.75} aria-hidden="true" />}
         {pending ? "Saving…" : "Mark as seen"}
-      </button> : <AdminButton type="button" onClick={acknowledge} disabled={pending} loading={pending}>
+      </button> : <AdminButton type="button" onClick={acknowledge} disabled={pending} loading={pending} size={rowStyle ? "sm" : "md"} className={rowStyle ? "rounded-md font-semibold shadow-none" : undefined}>
         {pending ? "Acknowledging…" : "Acknowledge"}
       </AdminButton>}
       {error ? (

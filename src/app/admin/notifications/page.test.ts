@@ -183,3 +183,35 @@ test("notifications read API supports cached safe summary mode", () => {
   assert.match(service, /forceRefreshCandidates: true/);
   assert.doesNotMatch(readApi, /process\.env|errorMessage|providerMessageId/);
 });
+
+
+test("Notifications & Alerts uses the same compact white workspace as Users and Search Activity", () => {
+  assert.match(shell, /const notificationsWorkspace = pathname === "\/admin\/notifications" \|\| pathname === "\/admin\/notifications\/"/);
+  assert.match(shell, /whiteWorkspace[\s\S]*?notificationsWorkspace/);
+  assert.match(page, /<AdminPageShell title="Notifications & Alerts" hideHeader>/);
+  assert.match(page, /max-w-\[1500px\] bg-white/);
+  assert.match(page, /aria-label="Alert summary"/);
+  assert.match(page, /grid grid-cols-2 md:grid-cols-4/);
+  assert.match(page, /aria-labelledby="active-alerts-heading"/);
+  assert.match(page, /<ul aria-label="Operational alerts"/);
+  assert.match(page, /data-alert-row/);
+  assert.match(page, /data-monitoring-boundaries/);
+  assert.match(page, /<details /);
+  assert.doesNotMatch(page, /AdminMetricCard|AdminSectionCard|AdminStatusBadge|AdminEmptyState/);
+});
+
+test("compact notifications preserve real states, trusted sources, and acknowledgement safeguards", () => {
+  for (const source of ["snapshot.activeCount", "snapshot.unreadCount", "snapshot.criticalCount", "snapshot.warningCount", "snapshot.alerts.map", "snapshot.generatedAt", "alert.signalAt", "alert.acknowledgedAt"]) {
+    assert.ok(page.includes(source), "Missing live notifications field: " + source);
+  }
+  assert.match(page, /alertSourceHref\(alert\.actionHref\)/);
+  assert.match(page, /alert.key === "system.database.unavailable" \? null/);
+  assert.match(page, /alert.signalToken.startsWith\("unpersisted:"\)/);
+  assert.match(page, /alertKey=\{alert\.key\}/);
+  assert.match(page, /signalToken=\{alert\.signalToken\}/);
+  assert.match(page, /acknowledged=\{alert\.acknowledged\}/);
+  assert.match(page, /rowStyle/);
+  assert.match(acknowledgeButton, /rowStyle = false/);
+  assert.match(acknowledgeButton, /size=\{rowStyle \? "sm" : "md"\}/);
+  assert.match(acknowledgeButton, /body: JSON\.stringify\(\{ alertKey, signalToken \}\)/);
+});
