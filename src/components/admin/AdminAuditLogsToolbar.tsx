@@ -87,8 +87,10 @@ export function AdminAuditLogsToolbar({
   const targetDraftRef = useRef(targetEmail);
   const searchEditingRef = useRef(false);
   const lastSubmittedSearchRef = useRef<string | null>(null);
+  const paramsRef = useRef(new URLSearchParams(pageHref.split("?")[1] || ""));
 
   useEffect(() => {
+    paramsRef.current = new URLSearchParams(pageHref.split("?")[1] || "");
     if (!customOpen) setDraftDates({ from: fromDate, to: toDate });
   }, [pageHref, fromDate, toDate, customOpen]);
 
@@ -109,22 +111,42 @@ export function AdminAuditLogsToolbar({
     }
   }, [pageHref, adminEmail, targetEmail]);
 
+  useEffect(() => {
+    const onHistoryNavigation = () => {
+      const params = new URLSearchParams(window.location.search);
+      paramsRef.current = params;
+      searchEditingRef.current = false;
+      lastSubmittedSearchRef.current = null;
+      setCustomOpen(false);
+
+      const restoredAdmin = (params.get("adminEmail") ?? "").trim();
+      const restoredTarget = (params.get("targetEmail") ?? "").trim();
+      adminDraftRef.current = restoredAdmin;
+      targetDraftRef.current = restoredTarget;
+      setAdminDraft(restoredAdmin);
+      setTargetDraft(restoredTarget);
+    };
+    window.addEventListener("popstate", onHistoryNavigation);
+    return () => window.removeEventListener("popstate", onHistoryNavigation);
+  }, []);
+
   const actionOptions = withCurrentOption(baseActionOptions, action, "Action: ");
   const targetTypeOptions = withCurrentOption(baseTargetTypeOptions, targetType, "Target: ");
   const todayUtc = new Date().toISOString().slice(0, 10);
   const validCustom = validDate(draftDates.from) && validDate(draftDates.to) && draftDates.from <= draftDates.to && draftDates.to <= todayUtc;
 
   const navigate = useCallback((values: Record<string, string | null>, replace = false) => {
-    const params = new URLSearchParams(pageHref.split("?")[1] || "");
+    const params = new URLSearchParams(paramsRef.current);
     params.delete("cursor");
 
+    const currentAdmin = adminDraftRef.current.trim();
+    const currentTarget = targetDraftRef.current.trim();
+
     if (!("adminEmail" in values)) {
-      const currentAdmin = adminDraftRef.current.trim();
       if (currentAdmin) params.set("adminEmail", currentAdmin);
       else params.delete("adminEmail");
     }
     if (!("targetEmail" in values)) {
-      const currentTarget = targetDraftRef.current.trim();
       if (currentTarget) params.set("targetEmail", currentTarget);
       else params.delete("targetEmail");
     }
@@ -133,13 +155,22 @@ export function AdminAuditLogsToolbar({
       if (value) params.set(key, value);
       else params.delete(key);
     }
+
+    const committedAdmin = (params.get("adminEmail") ?? "").trim();
+    const committedTarget = (params.get("targetEmail") ?? "").trim();
+    const committedSearchKey = committedAdmin + "\n" + committedTarget;
+    if (searchEditingRef.current && committedAdmin === currentAdmin && committedTarget === currentTarget) {
+      lastSubmittedSearchRef.current = committedSearchKey;
+    }
+
     const query = params.toString();
+    paramsRef.current = new URLSearchParams(query);
     const href = "/admin/logs" + (query ? "?" + query : "");
     startTransition(() => {
       if (replace) router.replace(href, { scroll: false });
       else router.push(href, { scroll: false });
     });
-  }, [pageHref, router]);
+  }, [router]);
 
   function changeRange(next: string) {
     if (next === "custom") {
