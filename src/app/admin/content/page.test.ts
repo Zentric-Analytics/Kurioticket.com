@@ -484,8 +484,8 @@ test("all four content directories and editors present one-based Order without m
   assert.match(faqEditor, /max=\{CMS_DISPLAY_ORDER_MAX\}/);
   assert.match(faqEditor, /Order \{sortOrder \|\| "1"\}/);
   assert.match(reorder, /\{index \+ 1\}<\/span>/);
-  assert.match(homePreview, /\{order \|\| "0"\}/);
-  assert.match(otherPreview, /\{order \|\| "0"\}/);
+  assert.match(homePreview, /\{order \|\| "1"\}/);
+  assert.match(otherPreview, /\{order \|\| "1"\}/);
   assert.match(conversion, /return storedOrder \+ 1/);
   assert.match(conversion, /return Number\(displayOrder\) - 1/);
   assert.match(backend, /sortOrder: nextOrder/);
