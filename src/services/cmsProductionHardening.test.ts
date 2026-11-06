@@ -117,6 +117,11 @@ test("CMS health reports integrity, ordering, fallback and unpublished changes",
   assert.doesNotMatch(healthPage, /<small>|<\/small>/);
   assert.match(healthRow, /\{market\} · \{locale\} · v\{integrity\.scopeVersion \?\? "—"\}/);
   assert.match(healthRow, /aria-expanded=\{expanded\}/);
+  assert.match(healthRow, /onClick=\{toggleDetails\}/);
+  assert.match(healthRow, /onKeyDown=\{handleRowKeyDown\}/);
+  assert.match(healthRow, /tabIndex=\{0\}/);
+  assert.match(healthRow, /cursor-pointer/);
+  assert.doesNotMatch(healthRow, /ChevronDown/);
   assert.match(healthRow, /health details/);
   assert.match(healthRow, />No issues</);
   assert.match(healthRow, /integrity\.unpublishedChanges === 0/);
