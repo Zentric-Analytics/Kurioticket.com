@@ -354,7 +354,7 @@ export function DesktopFlightFilters({
         <HotelStyleFilterSection title={t("price")}>
           <div
             data-flight-filter-price-summary
-            className={cn("mb-2 flex items-center gap-1.5 text-[12px] font-medium leading-5 tabular-nums text-slate-600", isGuidedComfortable && "text-[13px]")}
+            className={cn("mb-2 min-w-0 flex items-center gap-1.5 text-[12px] font-medium leading-5 tabular-nums text-slate-600", isGuidedComfortable && "text-[13px]")}
           >
             <span className="min-w-0 truncate">{priceBounds.max && priceLabelCurrency ? formatFilterPrice(priceBounds.min) : "—"}</span>
             <span aria-hidden="true" className="shrink-0 text-slate-400">—</span>

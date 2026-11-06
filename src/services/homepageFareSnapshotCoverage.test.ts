@@ -571,7 +571,7 @@ test("display readiness never claims usable public fares when public visible far
 
   assert.equal(readiness.globalReadinessStatus, "not_ready");
   assert.equal(readiness.label, "Global homepage not ready");
-  assert.match(readiness.message, /not available/);
+  assert.equal(readiness.message, "No fresh provider-backed fares available.");
 });
 
 test("snapshot status derives next-run need from underfilled market targets", () => {

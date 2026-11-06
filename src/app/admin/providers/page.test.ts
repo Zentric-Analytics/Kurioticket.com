@@ -1,3 +1,6 @@
+import { jsxOpening } from "../../../test-support/sourceStructure";
+import { componentBundle, withComponentBrowser } from "../../../test-support/componentBrowser";
+import ts from "typescript";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
@@ -63,7 +66,7 @@ test("provider filter helpers drive the providers page", () => {
   assert.match(providersPage, /filterProviderOperationalStatuses/);
 });
 
-test("provider details preserve booking, readiness and audited Duffel retest", () => {
+test("provider details preserve booking, readiness and audited Duffel retest", async () => {
   assert.match(providersPage, /<ProviderDirectoryTable rows=\{directoryRows\} \/>/);
   assert.match(providersPage, /canRetestDuffel: integration\.id === "duffel"/);
   assert.match(directoryTable, /<ProviderRetestButton provider="duffel" \/>/);
@@ -82,6 +85,42 @@ test("provider details preserve booking, readiness and audited Duffel retest", (
   assert.match(retestButton, /finally/);
   assert.doesNotMatch(retestButton, /window\.location\.reload/);
   assert.doesNotMatch(providersPage, /Provider health checks/);
+  // The current directory owns these controls; exercise both real client paths.
+  assert.match(providerRetestApi, /requireAdminApiSession/);
+  assert.match(providerRetestApi, /checkDuffelHealth\(\)/);
+  const kayakApi = readFileSync("src/app/api/admin/providers/kayak/retest/route.ts", "utf8");
+  assert.match(kayakApi, /requireAdminApiSession/);
+  assert.match(kayakApi, /writeAdminAuditLog/);
+  assert.match(providersPage, /configured: integration\.configured \? "Configured" : "Not configured"/);
+  assert.match(providersPage, /booking: integration\.bookingEnabled/);
+  assert.match(providersPage, /note: integration\.note/);
+  const bundle = componentBundle({ retest: "src/components/admin/ProviderRetestButton.tsx" }, {
+    "next/navigation": "exports.useRouter=()=>({refresh:()=>window.refreshes++});",
+  });
+  await withComponentBrowser(bundle, `const React=require('react'),{createRoot}=require('react-dom/client'),{flushSync}=require('react-dom'),{ProviderRetestButton}=require('retest');
+    const root=createRoot(document.getElementById('root'));window.requests=[];window.refreshes=0;window.reply='success';
+    window.fetch=async(url,options)=>{window.requests.push({url,...options});if(window.reply==='network')throw Error('controlled network failure');return {ok:window.reply==='success',json:async()=>window.reply==='success'?{message:'Controlled health result'}:{error:'Admin access required.'}}};
+    window.mount=provider=>{window.requests=[];window.refreshes=0;window.reply='success';flushSync(()=>root.render(React.createElement(ProviderRetestButton,{key:provider,provider})))};window.mount('duffel');`, async page => {
+    for (const [provider, label, endpoint] of [
+      ["duffel", "Duffel", "/api/admin/providers/duffel/retest"],
+      ["kayak-sandbox", "KAYAK", "/api/admin/providers/kayak/retest"],
+    ]) {
+      await page.evaluate(provider => (window as unknown as { mount(p: string): void }).mount(provider), provider);
+      await page.getByRole("button", { name: "Retest " + label, exact: true }).click();
+      await page.getByRole("status").getByText("Controlled health result", { exact: true }).waitFor();
+      assert.deepEqual(await page.evaluate("window.requests"), [{ url: endpoint, method: "POST", credentials: "same-origin", cache: "no-store" }]);
+      assert.equal(await page.evaluate("window.refreshes"), 1);
+      await page.evaluate("window.reply='forbidden'");
+      await page.getByRole("button", { name: "Retest " + label, exact: true }).click();
+      await page.getByRole("status").getByText("Admin access required.", { exact: true }).waitFor();
+      assert.equal(await page.evaluate("window.refreshes"), 1);
+      await page.evaluate("window.reply='network'");
+      await page.getByRole("button", { name: "Retest " + label, exact: true }).click();
+      await page.getByRole("status").getByText("Unable to reach the health-check service. Please try again.", { exact: true }).waitFor();
+      assert.equal(await page.getByRole("button", { name: "Retest " + label, exact: true }).isEnabled(), true);
+      assert.equal(await page.evaluate("window.refreshes"), 1);
+    }
+  });
 });
 
 test("admin navigation keeps Providers and product destinations without a duplicate Flights workspace", () => {
@@ -97,6 +136,15 @@ test("Providers owns flight provider health while the legacy Flights route redir
   assert.doesNotMatch(flightsPage, /AdminProviderStatusCard|Flight provider health|Provider exceptions|getFlightOperationsSnapshot/);
   assert.match(hotelsPage, /title="Hotel Operations"/);
   assert.match(carsPage, /title="Car Operations"/);
+  for (const [source, title] of [[hotelsPage, "Hotel Operations"], [carsPage, "Car Operations"]]) {
+    const pages = jsxOpening(source, "AdminPageShell");
+    assert.equal(pages.length, 1);
+    assert.ok(pages[0].attributes.properties.some(property => property.getText().includes('title="' + title + '"')));
+    assert.match(source, /telemetry unavailable/);
+    assert.match(source, /No zero values were invented/);
+  }
+  // Hotel and Car Operations now own their own provider-health sections,
+  // rather than reusing the older generic readiness card.
   assert.match(providersPage, /getProviderIntegrationStatuses/);
   assert.match(providersPage, /getProviderOperationalStatuses/);
   for (const source of [hotelsPage, carsPage]) {
@@ -114,7 +162,11 @@ test("provider APIs, retest API, and unrelated admin pages are not edited by pro
   assert.match(providerRetestApi, /writeAdminAuditLog/);
   assert.match(overviewPage, /Operations Dashboard/);
   assert.match(systemPage, /hideHeader/);
-  assert.match(settingsPage, /<AdminPageShell\s+title="Settings"/);
+  const shells = jsxOpening(settingsPage, "AdminPageShell");
+  assert.equal(shells.length, 1, "Settings has one page shell");
+  const title = shells[0].attributes.properties.find(attribute => ts.isJsxAttribute(attribute) && attribute.name.getText() === "title");
+  assert.ok(title && ts.isJsxAttribute(title) && title.initializer && ts.isStringLiteral(title.initializer));
+  assert.equal(title.initializer.text, "Settings");
 });
 
 function provider(product: TestProvider["product"], providerName: string): TestProvider {

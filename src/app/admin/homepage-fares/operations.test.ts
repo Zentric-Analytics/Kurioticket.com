@@ -294,7 +294,7 @@ test("homepage fare page header follows the compact Providers treatment", () => 
 test("readiness overview is flat like Providers while preserving status and metrics", () => {
   assert.match(component, /<section aria-labelledby="homepage-fare-readiness-heading" className="border-b border-\[#D8E1EC\] pb-5 pt-1">/);
   assert.match(component, /id="homepage-fare-readiness-heading"/);
-  assert.match(component, />Readiness overview<\/h2>/);
+  assert.match(component, />\s*Readiness overview\s*<\/h2>/);
   assert.match(component, /<DisplayReadinessSummary readiness=\{statusPayload\.displayReadiness\} \/>/);
   assert.doesNotMatch(component, /<Card className=/);
   assert.doesNotMatch(component, /shadow-sm/);

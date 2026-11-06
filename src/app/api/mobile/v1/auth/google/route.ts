@@ -6,6 +6,7 @@ import { getPrisma } from "@/lib/prisma";
 import { createMobileSession, mobileSessionMetadata } from "@/lib/mobile-auth";
 import { canUseStagingGoogle } from "@/lib/previewTesterAccess";
 import { createMobileTwoFactorChallenge } from "@/lib/mobile-two-factor";
+import { canAuthenticateMobileAccount } from "@/lib/mobile-deletion-recovery";
 import {
   logMobileGoogleClaimsRejected,
   logMobileGoogleVerificationPassed,
@@ -73,15 +74,15 @@ export async function POST(request: Request) {
       name: payload.name || null,
       image: payload.picture || null,
     });
-    if (!user || !user.emailVerified || user.status !== "ACTIVE") {
+    if (!user || !user.emailVerified || !(await canAuthenticateMobileAccount(user, "google"))) {
       return NextResponse.json({ error: "This account is not available. Please contact support." }, { status: 403 });
     }
 
     const settings = await getPrisma().userSecuritySettings.findUnique({ where: { userId: user.id }, select: { twoFactorEnabled: true } });
     if (settings?.twoFactorEnabled) {
-      return NextResponse.json(await createMobileTwoFactorChallenge(user.id, "GOOGLE"), { status: 202 });
+      return NextResponse.json(await createMobileTwoFactorChallenge(user.id, "GOOGLE", { sessionVersion: user.sessionVersion, status: user.status }), { status: 202 });
     }
-    const session = await createMobileSession(user.id, "google", "PRIMARY", mobileSessionMetadata(request));
+    const session = await createMobileSession(user.id, "google", "PRIMARY", mobileSessionMetadata(request), { sessionVersion: user.sessionVersion, status: user.status, verifiedAt: new Date() });
     return NextResponse.json({
       session,
       user: { id: user.id, email: user.email, name: user.name, image: user.image },
@@ -105,12 +106,11 @@ export async function getOrCreateGoogleUser(input: {
     });
     if (account) {
       const existing = account.user;
-      if (existing.status !== "ACTIVE") return existing;
-
       const existingEmail = existing.email?.toLowerCase().trim();
       if (existingEmail && existingEmail !== input.email) {
         throw new Error("Existing Google account email does not match the verified Google email.");
       }
+      if (existing.status !== "ACTIVE") return existing;
 
       if (existing.emailVerified && existing.name && existing.image) return existing;
       return tx.user.update({
@@ -123,8 +123,15 @@ export async function getOrCreateGoogleUser(input: {
       });
     }
 
-    const existing = await tx.user.findUnique({ where: { email: input.email } });
+    const existing = await tx.user.findUnique({ where: { email: input.email }, include: { accounts: { where: { provider: "google" }, select: { providerAccountId: true } } } });
     if (existing) {
+      if (existing.status === "PENDING_DELETION") {
+        // Retain verified-provider-email linking for an unlinked owner, but
+        // never replace a different established Google subject during recovery.
+        if (!existing.emailVerified || existing.accounts.some(link => link.providerAccountId !== input.providerAccountId)) throw new Error("Recovery Google account binding does not match.");
+        await tx.account.create({ data: { userId: existing.id, type: "oauth", provider: "google", providerAccountId: input.providerAccountId } });
+        return existing;
+      }
       if (existing.status !== "ACTIVE") return existing;
       await tx.account.create({
         data: { userId: existing.id, type: "oauth", provider: "google", providerAccountId: input.providerAccountId },

@@ -2,7 +2,7 @@ import { Platform } from "react-native";
 import * as SecureStore from "expo-secure-store";
 
 const SESSION_KEY = "kurioticket.auth.session.v1";
-type StoredSession = { token: string; expires: string; user: { id: string; email: string; name?: string | null } };
+export type StoredSession = { token: string; expires: string; recovery?: { deadline: string }; user: { id: string; email: string; name?: string | null } };
 export { subscribeSession } from "./sessionEvents";
 import { publishSession } from "./sessionEvents";
 

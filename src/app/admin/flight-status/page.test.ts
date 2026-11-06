@@ -1,3 +1,5 @@
+import ts from "typescript";
+import { jsxOpening, nodesWhere, parseSource } from "../../../test-support/sourceStructure";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
@@ -15,7 +17,8 @@ test("flight status admin is a read-only trusted snapshot operations page", () =
   assert.doesNotMatch(page, /description="Monitor trusted provider-supplied operational flight status/);
   assert.doesNotMatch(page, /Search results, handoffs and booking confirmations never infer live status/);
   assert.match(page, /Latest trusted flight-status snapshots/);
-  assert.match(page, /This is not an event history/);
+  assert.match(page, /Latest snapshot only/);
+  assert.doesNotMatch(page, />Event history<|FlightStatusEvent/);
   assert.doesNotMatch(page, /fetch\(|method:\s*["'](?:POST|PATCH|DELETE)|<form/);
 });
 
@@ -77,7 +80,8 @@ test("Flight Status keeps provider safety in backend contracts without explanato
 });
 
 test("flight status operations preserves the metasearch boundary", () => {
-  assert.match(page, /not searches, handoffs or trip confirmations/);
+  assert.match(page, /Provider supplied only/);
+  assert.match(service, /source: "PARTNER_CONFIRMATION"/);
   assert.match(contract, /does not infer operational flight status from a search, a provider handoff, or a booking confirmation/);
   assert.match(navigation, /href: "\/admin\/confirmed-trips\/monitoring"/);
   assert.doesNotMatch(navigation, /\/admin\/bookings/);
@@ -186,7 +190,7 @@ test("Flight Status overview has no extra outline or double padding and keeps co
 
 
 test("all six Flight Status metrics form one accessible horizontal row without page overflow", () => {
-  const start = page.indexOf('<section aria-labelledby="flight-status-overview-title"');
+  const start = page.indexOf('<section id="flight-status-overview-title" aria-label="Flight status overview"');
   const end = page.indexOf("</section>", start);
   assert.ok(start >= 0 && end > start);
   const overview = page.slice(start, end);
@@ -220,7 +224,9 @@ test("data-availability boundaries remain truthful without explanatory helper co
   assert.match(page, /Recent flight-status data unavailable/);
   assert.match(page, /No status feed configured/);
   assert.match(monitoring, /<AdminPageShell title="Trip monitoring" hideHeader>/);
-  assert.match(monitoring, /href="\/admin\/confirmed-trips"/);
+  assert.match(monitoring, /<TripWorkspaceNavigation active="monitoring" \/>/);
+  const tabs = readFileSync("src/components/admin/TripWorkspaceNavigation.tsx", "utf8");
+  assert.match(tabs, /href="\/admin\/confirmed-trips"/);
   assert.doesNotMatch(page, /href="\/admin\/flights"|href="\/admin\/searches\/activity/);
   assert.match(page, /operations\.statusDistribution\.map/);
   assert.match(page, /operations\.awaitingFirstSnapshot\.map/);
@@ -229,10 +235,14 @@ test("data-availability boundaries remain truthful without explanatory helper co
 
 
 test("Snapshot scope is folded into status-feed readiness", () => {
-  const readinessStart = page.indexOf(">Status-feed readiness</h2>");
-  const distributionStart = page.indexOf(">Latest status distribution</h2>", readinessStart);
-  assert.ok(readinessStart >= 0 && distributionStart > readinessStart);
-  const readiness = page.slice(readinessStart, distributionStart);
+  const root = parseSource(page);
+  const headings = nodesWhere(root, node => ts.isJsxElement(node) && node.openingElement.tagName.getText(root) === "h2" && node.children.map(child => child.getText(root)).join("").trim() === "Status-feed readiness");
+  assert.equal(headings.length, 1, "one readiness heading owns folded scope");
+  let section: ts.Node | undefined = headings[0].parent;
+  while (section && !(ts.isJsxElement(section) && section.openingElement.tagName.getText(root) === "section")) section = section.parent;
+  assert.ok(section && ts.isJsxElement(section), "readiness has an actual section owner");
+  const readiness = section.getText(root);
+  assert.doesNotMatch(readiness, /Awaiting first status snapshot|Latest trusted flight-status snapshots/);
   assert.doesNotMatch(readiness, /We save only the latest provider-supplied status for the main flight|Return and connecting flights aren't tracked separately/);
   assert.match(readiness, /Provider supplied only/);
   assert.match(readiness, /Latest snapshot only/);
@@ -246,7 +256,8 @@ test("Flight Status uses consistent compact sections, balanced readiness facts a
   assert.match(page, /shrink-0 whitespace-nowrap/);
   assert.equal((page.match(/<Fact label=/g) || []).length, 5);
   assert.equal((page.match(/<AdminDataTable/g) || []).length, 2);
-  assert.ok((page.match(/<p role="status" className="mt-2 rounded-lg bg-slate-50 px-3 py-2\.5/g) || []).length >= 5);
+  const statuses = jsxOpening(page, "p").filter(node => node.attributes.properties.some(attribute => ts.isJsxAttribute(attribute) && attribute.name.getText() === "role" && attribute.initializer?.getText() === '"status"'));
+  assert.equal(statuses.length, 6, "each of three data sections retains unavailable and empty-state messages");
   assert.doesNotMatch(page, /<AdminEmptyState/);
   assert.match(page, /operations\.awaitingFirstSnapshot\.map/);
   assert.match(page, /operations\.recentSnapshots\.map/);

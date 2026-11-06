@@ -696,6 +696,7 @@ function HotelDetail({
           {activeHotelTab === "details" ? (
             <NativeHotelBookingDetails
               result={result}
+              providerDetails={details?.providerDetails}
               property={property}
               locationProperty={locationProperty}
               detailsStatus={detailsStatus}

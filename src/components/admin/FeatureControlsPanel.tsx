@@ -35,12 +35,26 @@ export function FeatureControlsPanel({
   canControlProduction: boolean;
   operationsAvailable?: boolean;
 }) {
-  const [controls, setControls] = useState(initialControls);
+  const serverScope = JSON.stringify([environment, canControlProduction, operationsAvailable, initialControls]);
+  const [snapshot, setSnapshot] = useState({ scope: serverScope, environment, controls: initialControls });
   const [pending, setPending] = useState<{ control: Control; enabled: boolean } | null>(null);
   const [reason, setReason] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const router = useRouter();
+  const permitted = operationsAvailable && (environment === "STAGING" || canControlProduction);
+  if (snapshot.scope !== serverScope) {
+    setSnapshot({ scope: serverScope, environment, controls: initialControls });
+    // Equal server data must not erase a local reason. A changed selected
+    // control or revoked permission must not retain a stale confirmation.
+    const selected = pending && initialControls.find(control => control.key === pending.control.key);
+    if (pending && (!permitted || snapshot.environment !== environment || JSON.stringify(selected) !== JSON.stringify(pending.control))) {
+      setPending(null);
+      setReason("");
+      setError("");
+    }
+  }
+  const controls = snapshot.controls;
   const categories = Array.from(new Set(controls.map((control) => control.category)));
   const categoryLabels: Record<string, string> = {
     "Travel Search": "Product availability",
@@ -50,10 +64,6 @@ export function FeatureControlsPanel({
     "Travel Search": "Controls whether customer-facing travel products are available.",
     "Travel Automation": "Controls background and customer automation without changing saved state.",
   };
-
-  useEffect(() => {
-    setControls(initialControls);
-  }, [initialControls]);
 
   function closePending() {
     if (saving) return;
@@ -76,7 +86,7 @@ export function FeatureControlsPanel({
   }, [pending, saving]);
 
   async function submit() {
-    if (!pending || saving) return;
+    if (!pending || saving || !permitted) return;
     setSaving(true);
     setError("");
     try {
@@ -94,8 +104,8 @@ export function FeatureControlsPanel({
         setError(body.error || "The control could not be changed.");
         return;
       }
-      setControls((current) =>
-        current.map((control) =>
+      setSnapshot((current) => current.scope !== serverScope ? current : ({ ...current, controls:
+        current.controls.map((control) =>
           control.key === pending.control.key
             ? {
                 ...control,
@@ -106,7 +116,7 @@ export function FeatureControlsPanel({
               }
             : control,
         ),
-      );
+      }));
       setPending(null);
       setReason("");
       router.refresh();
@@ -142,7 +152,6 @@ export function FeatureControlsPanel({
             {controls
               .filter((control) => control.category === category)
               .map((control) => {
-                const permitted = operationsAvailable && (environment === "STAGING" || canControlProduction);
                 return (
                   <article
                     key={control.key}
@@ -165,7 +174,7 @@ export function FeatureControlsPanel({
                         role="switch"
                         aria-checked={control.state.enabled}
                         aria-label={(control.state.enabled ? "Disable " : "Enable ") + control.name}
-                        disabled={!permitted}
+                        disabled={!permitted || saving}
                         onClick={() => setPending({ control, enabled: !control.state.enabled })}
                         className={
                           "relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/30 " +
@@ -224,7 +233,7 @@ export function FeatureControlsPanel({
               <button
                 type="button"
                 aria-busy={saving}
-                disabled={saving || (environment === "PRODUCTION" && !reason.trim())}
+                disabled={saving || !permitted || (environment === "PRODUCTION" && !reason.trim())}
                 onClick={submit}
                 className="inline-flex h-9 items-center rounded-lg bg-indigo-700 px-3 text-[13px] font-semibold text-white hover:bg-indigo-800 disabled:opacity-50"
               >

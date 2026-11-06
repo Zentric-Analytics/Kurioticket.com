@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { runInNewContext } from "node:vm";
+import ts from "typescript";
 
 const resultsPage = readFileSync("src/app/hotels/results/page.tsx", "utf8");
 const resultsClient = readFileSync("src/components/results/HotelResultsClient.tsx", "utf8");
@@ -55,7 +57,28 @@ test("KAYAK Hotel place ids are validated at the provider boundary without weake
 });
 
 test("provider-only Hotel search still uses the canonical server search and details cache", () => {
-  assert.match(searchRoute, /searchHotelsByProvider\(search, providerMode/);
+  const route = ts.createSourceFile("route.ts", searchRoute, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+  const providerCalls: ts.CallExpression[] = [];
+  const criteria: ts.VariableDeclaration[] = [];
+  function visit(node: ts.Node) {
+    if (ts.isCallExpression(node) && ts.isIdentifier(node.expression) && node.expression.text === "searchHotelsByProvider") providerCalls.push(node);
+    if (ts.isVariableDeclaration(node) && ts.isObjectBindingPattern(node.name) && node.name.elements.some((element) => element.dotDotDotToken && element.name.getText(route) === "providerSearch")) criteria.push(node);
+    ts.forEachChild(node, visit);
+  }
+  visit(route);
+  assert.equal(providerCalls.length, 1);
+  assert.equal(providerCalls[0].arguments[0].getText(route), "providerSearch");
+  assert.equal(providerCalls[0].arguments[1].getText(route), "providerMode");
+  assert.equal(criteria.length, 1);
+  assert.equal(criteria[0].initializer?.getText(route), "search");
+  const canonicalSearch = { destination: "Fixture City", destinationId: "kplace:123", checkIn: "2030-11-18", checkOut: "2030-11-21", guests: 2, rooms: 1 };
+  for (const currency of ["USD", "NGN"]) {
+    const search = { ...canonicalSearch, currency };
+    const sanitized = runInNewContext(`const ${criteria[0].getText(route)}; providerSearch`, { search });
+    assert.deepEqual(JSON.parse(JSON.stringify(sanitized)), canonicalSearch);
+    assert.equal(Object.hasOwn(sanitized, "currency"), false);
+    assert.equal(search.currency, currency, "display currency remains available to the response/UI");
+  }
   assert.match(searchRoute, /source: providerMode \|\| classified\.source/);
   assert.match(aggregator, /export async function searchHotelsByProvider/);
   assert.match(aggregator, /rememberProviderResults\("hotel", results, search\)/);

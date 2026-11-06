@@ -1,18 +1,21 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import test from "node:test";
-import { validateMobileBearer, validateMobileDeletionReactivationBearer } from "./account-session";
+import { validateMobileBearer, validateMobileDeletionReactivationBearer as validateRecovery } from "./account-session";
 import { requireMobileSecurity } from "./mobile-security-route";
 
 const secret = "a".repeat(43);
 const bearer = (value = secret) => new Request("https://test/reactivate", { headers: { authorization: `Bearer ktm1.session-1.${value}` } });
 const tokenHash = createHash("sha256").update(secret).digest("hex");
+const deletedAt = new Date(Date.now() - 1000);
+const deletion = { id: "request-1", userId: "user-1", status: "PENDING", requestedAt: deletedAt, deletionScheduledAt: new Date(Date.now() + 86400000), cancelledAt: null, completedAt: null };
+const validateMobileDeletionReactivationBearer = (request: Request, find: Parameters<typeof validateRecovery>[1]) => validateRecovery(request, find, async () => deletion as never);
 
 function eligible(overrides: Record<string, unknown> = {}, userOverrides: Record<string, unknown> = {}) {
   return {
     id: "session-1", userId: "user-1", client: "MOBILE", tokenHash,
-    expiresAt: new Date(Date.now() + 60_000), revokedAt: new Date(), revokeReason: "account_deletion_requested",
-    sessionVersion: 4, authMethod: "PASSWORD", assuranceLevel: "PRIMARY", lastSeenAt: new Date(),
+    createdAt: new Date(deletedAt.getTime() - 60_000), expiresAt: new Date(Date.now() + 60_000), revokedAt: deletedAt, revokeReason: "account_deletion_requested",
+    sessionVersion: 4, authMethod: "PASSWORD", assuranceLevel: "MFA", reauthenticatedAt: new Date(deletedAt.getTime() - 100), twoFactorVerifiedAt: new Date(deletedAt.getTime() - 100), lastSeenAt: new Date(),
     user: { id: "user-1", status: "PENDING_DELETION", email: "owner@example.com", emailVerified: new Date(), sessionVersion: 5, accounts: [], securitySettings: null, ...userOverrides },
     ...overrides,
   };

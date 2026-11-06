@@ -10,8 +10,12 @@ import * as occurrences from "./adminExpandedAlertOccurrences";
 import type * as service from "./adminAlertService";
 
 const now = new Date("2026-11-04T14:00:00.000Z");
+type AuditRow = { adminUserId?: string; adminEmail?: string; action: string; targetType: string; targetId: string; createdAt: Date; metadata: Record<string, unknown> };
+type AuditData = Omit<AuditRow, "createdAt">;
+type Lookup = { where: { action: string; targetType: string; targetId: string } };
+type Acknowledgements = { where: { adminUserId: string; action: string; targetType: string; targetId: { in: string[] }; createdAt: { gte?: Date; lte: Date } } };
 function harness() {
-  const audit: any[] = [];
+  const audit: AuditRow[] = [];
   let reads = 0;
   const state = {
     databaseConnected: true,
@@ -25,15 +29,15 @@ function harness() {
       users: { count: 1, latestAt: "2026-11-04T13:50:00.000Z" },
     } as expandedCore.ExpandedAlertSnapshot,
   };
-  const db: any = {
+  const tx = {
     $executeRaw: async () => 1,
     adminAuditLog: {
-      findFirst: async ({ where }: any) => audit.filter(row => row.action === where.action && row.targetType === where.targetType && row.targetId === where.targetId).at(-1) ?? null,
-      findMany: async ({ where }: any) => audit.filter(row => row.adminUserId === where.adminUserId && row.action === where.action && row.targetType === where.targetType && where.targetId.in.includes(row.targetId) && (!where.createdAt.gte || row.createdAt >= where.createdAt.gte) && row.createdAt <= where.createdAt.lte).reverse(),
-      create: async ({ data }: any) => { audit.push({ ...data, createdAt: now }); return data; },
+      findFirst: async ({ where }: Lookup) => audit.filter(row => row.action === where.action && row.targetType === where.targetType && row.targetId === where.targetId).at(-1) ?? null,
+      findMany: async ({ where }: Acknowledgements) => audit.filter(row => row.adminUserId === where.adminUserId && row.action === where.action && row.targetType === where.targetType && where.targetId.in.includes(row.targetId) && (!where.createdAt.gte || row.createdAt >= where.createdAt.gte) && row.createdAt <= where.createdAt.lte).reverse(),
+      create: async ({ data }: { data: AuditData }) => { audit.push({ ...data, createdAt: now }); return data; },
     },
   };
-  db.$transaction = async (run: (tx: any) => Promise<unknown>) => run(db);
+  const db = { ...tx, $transaction: async <T>(run: (transaction: typeof tx) => Promise<T>) => run(tx) };
   const modules: Record<string, unknown> = {
     "server-only": {}, "node:crypto": crypto,
     "@/lib/prisma": { getOptionalPrisma: () => db },
@@ -115,7 +119,7 @@ test("a fresh occurrence and a different environment are not hidden by a prior d
   const alert = initial.alerts.find(a => a.source === "SUPPORT")!;
   const oldKey = h.api.adminAlertDismissalKey(alert.key, alert.signalToken);
   h.audit.push({ adminUserId: "admin-a", action: h.api.adminAlertDismissal.action, targetType: h.api.adminAlertDismissal.targetType,
-    targetId: oldKey, createdAt: now });
+    targetId: oldKey, createdAt: now, metadata: {} });
   h.state.expanded.support!.OPEN.count = 0;
   await h.api.getAdminAlertSnapshot("admin-a", new Date(now.getTime() + 1_000));
   h.state.expanded.support!.OPEN.count = 2;

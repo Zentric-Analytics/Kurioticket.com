@@ -1,6 +1,7 @@
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { getPrisma } from "@/lib/prisma";
 import { canAuthenticateAccount } from "@/lib/account-security-policy";
+import { createRestrictedMobileRecoverySession, pendingMobileDeletion, permitsMobileDeletionRecovery } from "@/lib/mobile-deletion-recovery";
 
 export const RECENT_REAUTHENTICATION_MS = 10 * 60_000;
 export const MOBILE_SESSION_DAYS = 30;
@@ -12,7 +13,7 @@ type Assurance = "PRIMARY" | "MFA" | "PHISHING_RESISTANT";
 const hash = (secret: string) => createHash("sha256").update(secret).digest("hex");
 
 async function findMobileBearerSession(id: string) {
-  return getPrisma().accountSession.findUnique({ where: { id }, include: { user: { include: { accounts: { select: { provider: true } }, securitySettings: { select: { twoFactorEnabled: true } } } } } });
+  return getPrisma().accountSession.findUnique({ where: { id }, include: { user: { include: { accounts: { select: { provider: true } }, securitySettings: { select: { twoFactorEnabled: true, twoFactorEnabledAt: true } } } } } });
 }
 
 type MobileBearerSession = NonNullable<Awaited<ReturnType<typeof findMobileBearerSession>>>;
@@ -48,8 +49,16 @@ export async function createAccountSession(input: { userId: string; client: "WEB
   });
 }
 
-export async function issueMobileSession(userId: string, authMethod: AuthMethod, assuranceLevel: Assurance, metadata?: { platform?: string; appVersion?: string }) {
+export async function issueMobileSession(userId: string, authMethod: AuthMethod, assuranceLevel: Assurance, metadata?: { platform?: string; appVersion?: string }, proof?: { sessionVersion: number; status: string; verifiedAt?: Date }) {
   const secret = randomBytes(32).toString("base64url");
+  const user = await getPrisma().user.findUnique({ where: { id: userId }, select: { status: true, sessionVersion: true } });
+  if (proof && (user?.sessionVersion !== proof.sessionVersion || user.status !== proof.status)) throw new Error("AccountUnavailable");
+  if (user?.status === "PENDING_DELETION") {
+    if (!proof || !Number.isInteger(proof.sessionVersion) || !proof.verifiedAt) throw new Error("RecoveryAuthenticationRequired");
+    const restricted = await createRestrictedMobileRecoverySession(userId, authMethod, assuranceLevel, hash(secret), metadata, proof.sessionVersion, proof.verifiedAt);
+    return { token: `ktm1.${restricted.session.id}.${secret}`, expires: restricted.session.expiresAt.toISOString(), recovery: { deadline: restricted.deadline.toISOString() } };
+  }
+  if (!user || user.status !== "ACTIVE") throw new Error("AccountUnavailable");
   const session = await createAccountSession({ userId, client: "MOBILE", authMethod, assuranceLevel, ...metadata });
   await getPrisma().accountSession.update({ where: { id: session.id }, data: { tokenHash: hash(secret) } });
   return { token: `ktm1.${session.id}.${secret}`, expires: session.expiresAt.toISOString() };
@@ -65,12 +74,12 @@ export async function validateMobileBearer(request: Request, lookup: MobileBeare
 }
 
 /** Accepts only the obsolete bearer created by the account-deletion transition. */
-export async function validateMobileDeletionReactivationBearer(request: Request, lookup: MobileBearerLookup = findMobileBearerSession) {
+export async function validateMobileDeletionReactivationBearer(request: Request, lookup: MobileBearerLookup = findMobileBearerSession, findRequest = pendingMobileDeletion) {
   const session = await validateMobileBearerToken(request, lookup);
-  if (!session?.revokedAt || session.revokeReason !== "account_deletion_requested") return null;
-  if (session.user.status !== "PENDING_DELETION" || !session.user.email || !session.user.emailVerified) return null;
-  if (session.userId !== session.user.id || session.user.sessionVersion !== session.sessionVersion + 1) return null;
-  return { ...session, user: { ...session.user, email: session.user.email } };
+  if (!session) return null;
+  const deletion = await findRequest(session.userId);
+  if (!deletion || !permitsMobileDeletionRecovery(session, deletion, session.userId)) return null;
+  return { ...session, user: { ...session.user, email: session.user.email! }, recoveryDeadline: deletion.deletionScheduledAt };
 }
 
 export async function validateAccountSession(id: string, userId: string, options: { requireCompletedTwoFactor?: boolean } = {}) {

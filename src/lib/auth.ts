@@ -31,6 +31,7 @@ import { signinSchema } from "@/lib/validation";
 import { isPasskeyLoginToken, passkeyStrongAuthNote } from "@/lib/passkeys";
 import { assertStagingAuthenticationSafety, isStagingEnvironment } from "@/lib/stagingSafety";
 import { canRetainStagingSession, canUseStagingCredentials, canUseStagingGoogle, isTrustedPreviewCompanyEmail } from "@/lib/previewTesterAccess";
+import { readWebDeletionRecoverySession } from "@/lib/web-deletion-recovery";
 
 import {
   EmailVerificationCooldownError,
@@ -446,10 +447,6 @@ export const authOptions: NextAuthOptions =
           return "/auth/signin?error=AccountUnavailable";
         }
 
-        if (dbUser?.status === "PENDING_DELETION") {
-          return "/account/pending-deletion";
-        }
-
         const isGoogleSignIn =
           account?.provider ===
           "google";
@@ -516,6 +513,10 @@ export const authOptions: NextAuthOptions =
           }
         }
 
+        // Returning a URL here cancels NextAuth session issuance. Pending
+        // accounts need a fresh restricted session to finish recovery/MFA.
+        if (dbUser?.status === "PENDING_DELETION") return true;
+
         const adminEmails =
           getAdminEmails();
 
@@ -551,7 +552,8 @@ export const authOptions: NextAuthOptions =
         if (trigger === "update") {
           const updateSession = session as JwtUpdateSession | undefined;
           if (updateSession?.twoFactorVerified === true && token.accountSessionId) {
-            const verifiedSession = await validateAccountSession(token.accountSessionId, String(token.id), { requireCompletedTwoFactor: false });
+            const verifiedSession = await validateAccountSession(token.accountSessionId, String(token.id), { requireCompletedTwoFactor: false })
+              ?? await readWebDeletionRecoverySession(String(token.id), token.accountSessionId);
             if (verifiedSession?.assuranceLevel === "MFA" || verifiedSession?.assuranceLevel === "PHISHING_RESISTANT") {
               token.twoFactorVerified = true;
               token.assuranceLevel = verifiedSession.assuranceLevel;
@@ -643,11 +645,20 @@ export const authOptions: NextAuthOptions =
             }
 
             if (!token.accountSessionId) {
-              const canonical = await createAccountSession({ userId: dbUser.id, client: "WEB", authMethod: token.authMethod || "UNKNOWN", assuranceLevel: token.assuranceLevel || "PRIMARY" });
-              token.accountSessionId = canonical.id;
-              token.sessionVersion = canonical.sessionVersion;
+              // An old cookie refresh is not independent reauthentication.
+              // Only a newly verified sign-in can create a recovery session.
+              if (dbUser.status === "PENDING_DELETION" && !user) {
+                token.status = "SUSPENDED";
+                token.twoFactorVerified = false;
+              } else {
+                const canonical = await createAccountSession({ userId: dbUser.id, client: "WEB", authMethod: token.authMethod || "UNKNOWN", assuranceLevel: token.assuranceLevel || "PRIMARY" });
+                token.accountSessionId = canonical.id;
+                token.sessionVersion = canonical.sessionVersion;
+              }
             } else if (token.accountSessionId) {
-              const canonical = await validateAccountSession(token.accountSessionId, dbUser.id, { requireCompletedTwoFactor: false });
+              const canonical = dbUser.status === "PENDING_DELETION"
+                ? await readWebDeletionRecoverySession(dbUser.id, token.accountSessionId, getPrisma(), new Date(), false)
+                : await validateAccountSession(token.accountSessionId, dbUser.id, { requireCompletedTwoFactor: false });
               if (!canonical) { token.status = "SUSPENDED"; token.twoFactorVerified = false; }
               else token.sessionVersion = canonical.sessionVersion;
             }

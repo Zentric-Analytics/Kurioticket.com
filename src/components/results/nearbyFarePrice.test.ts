@@ -1,3 +1,4 @@
+import { verifyMobileFares } from "../../test-support/mobileFareBrowser";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
@@ -49,14 +50,4 @@ test("compact rules are desktop-only, standalone-scoped, and content-driven", ()
   assert.match(desktop, /padding: 0\.75rem 1rem/);
 });
 
-test("desktop fare geometry preserves seven dates and complete price accessibility", () => {
-  assert.match(desktop, /grid-template-columns: repeat\(7, minmax\(0, 1fr\)\)/);
-  assert.match(desktop, /min-height: 74px/);
-  assert.match(desktop, /font-variant-numeric: tabular-nums/);
-  assert.doesNotMatch(desktop, /text-overflow|overflow:\s*hidden/);
-  assert.match(source, /aria-label=\{desktopPrice\?\.full\}/);
-  assert.match(source, /title=\{desktopPrice\?\.full\}/);
-  assert.match(source, /desktop-flight-fare-price hidden lg:block/);
-  assert.match(source, /navigateNearbyFareWindow\("previous"\)/);
-  assert.match(source, /navigateNearbyFareWindow\("next"\)/);
-});
+test("desktop fare geometry preserves seven dates and complete price accessibility", async () => { await verifyMobileFares(source); });

@@ -1,6 +1,46 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { runInNewContext } from "node:vm";
+import ts from "typescript";
+import { cn } from "../../lib/utils";
+
+function assertCarsResultsListSpacing(source: string) {
+  const file = ts.createSourceFile("CarsResultsClient.tsx", source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+  const lists: ts.JsxOpeningElement[] = [];
+  function visit(node: ts.Node) {
+    if (ts.isJsxOpeningElement(node) && node.attributes.properties.some((attribute) => ts.isJsxAttribute(attribute) && attribute.name.getText(file) === "data-cars-results-card-list")) lists.push(node);
+    ts.forEachChild(node, visit);
+  }
+  visit(file);
+  assert.equal(lists.length, 2, "covering and ready each own one results list");
+  const states = lists.map((list) => {
+    const busy = list.attributes.properties.find((attribute) => ts.isJsxAttribute(attribute) && attribute.name.getText(file) === "aria-busy");
+    assert.ok(busy && ts.isJsxAttribute(busy) && busy.initializer && ts.isStringLiteral(busy.initializer));
+    assert.ok(ts.isJsxElement(list.parent) && ts.isParenthesizedExpression(list.parent.parent) && ts.isConditionalExpression(list.parent.parent.parent));
+    const branch = list.parent.parent.parent;
+    assert.equal(branch.whenTrue, list.parent.parent);
+    assert.equal(branch.condition.getText(file), busy.initializer.text === "true" ? 'filterTransitionPhase === "covering"' : "visibleResults.length");
+    assert.match(list.parent.getText(file), busy.initializer.text === "true" ? /<CarCardSkeleton\b/ : /<VirtualResultsList\b/);
+    const className = list.attributes.properties.find((attribute) => ts.isJsxAttribute(attribute) && attribute.name.getText(file) === "className");
+    assert.ok(className && ts.isJsxAttribute(className) && className.initializer && ts.isJsxExpression(className.initializer) && className.initializer.expression);
+    return { busy: busy.initializer.text, expression: className.initializer.expression.getText(file) };
+  });
+  assert.deepEqual(states.map(({ busy }) => busy), ["true", "false"]);
+  return states.flatMap(({ busy, expression }) => [false, true].flatMap((embedded) => ["standalone", "guided-planning"].map((presentation) => {
+    const standalone = !embedded && presentation === "standalone";
+    const classes = new Set<string>(runInNewContext(expression, {
+      cn, embedded, presentation, guidedPlanning: presentation === "guided-planning",
+      filterTransitionPhase: busy === "true" ? "covering" : "revealing", filterTransitionMobile: true,
+    }).split(/\s+/));
+    for (const token of ["w-full", "space-y-3.5", "sm:space-y-4"]) assert.ok(classes.has(token), `${busy}: ${token}`);
+    assert.equal(classes.has("max-sm:!mt-2"), standalone);
+    assert.equal(classes.has("max-sm:!mt-1"), !standalone);
+    assert.equal(classes.has("lg:space-y-5"), standalone);
+    assert.ok(!classes.has("max-sm:!mt-2.5"));
+    return { busy, standalone, classes };
+  })));
+}
 
 const resultsSource = readFileSync(
   "src/components/results/CarsResultsClient.tsx",
@@ -193,10 +233,7 @@ test("mobile result rhythm no longer reserves space for the removed summary card
   assert.match(resultsSource, /gap-2 pt-0 sm:gap-3 sm:pt-1 lg:py-1/);
   assert.match(resultsSource, /!embedded && presentation === "standalone" && "max-sm:pt-6"/);
   assert.match(resultsSource, /min-w-0 space-y-0 sm:space-y-4/);
-  assert.equal(
-    (resultsSource.match(/"w-full space-y-3\.5 sm:space-y-4",\s*!embedded && presentation === "standalone" \? "max-sm:!mt-2" : "max-sm:!mt-1"/g) ?? []).length,
-    2,
-  );
+  assertCarsResultsListSpacing(resultsSource);
 });
 
 test("Cars restores tinted tracking bar in rate details across breakpoints", () => {

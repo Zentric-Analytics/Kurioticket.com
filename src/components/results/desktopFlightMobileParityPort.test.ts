@@ -1,3 +1,4 @@
+import { bindingExpression } from "../../test-support/sourceStructure";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
@@ -19,7 +20,10 @@ test("desktop Flight Results moves price tracking into the sidebar without repla
   assert.match(results, /desktopPortalTarget=\{desktopFlightPriceAlertTarget\}/);
   assert.match(results, /data-flight-results-card-list className="space-y-3 sm:space-y-4"/);
   assert.match(alert, /data-flight-price-alert-sidebar/);
-  assert.match(alert, /min-h-\[48px\]/);
+  const desktop = bindingExpression(alert, "desktopControl");
+  assert.match(desktop, /data-flight-price-alert-sidebar/);
+  assert.match(desktop, /flex h-10 items-center/);
+  assert.match(alert, /aria-label="Track this flight price"/);
   assert.match(alert, />Track flight price</);
   assert.match(alert, /window\.matchMedia\("\(min-width: 1024px\)"\)/);
   assert.match(alert, /desktopSidebarActive && desktopPortalTarget[\s\S]*?createPortal\(desktopControl, desktopPortalTarget\)/);

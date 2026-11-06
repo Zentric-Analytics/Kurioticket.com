@@ -1,8 +1,48 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { runInNewContext } from "node:vm";
+import ts from "typescript";
 
 import { getLocationFieldDisplay } from "../../lib/search/locationFieldDisplay";
+import { cn } from "../../lib/utils";
+
+function assertCarsResultsListSpacing(source: string) {
+  const file = ts.createSourceFile("CarsResultsClient.tsx", source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+  const lists: ts.JsxOpeningElement[] = [];
+  function visit(node: ts.Node) {
+    if (ts.isJsxOpeningElement(node) && node.attributes.properties.some((attribute) => ts.isJsxAttribute(attribute) && attribute.name.getText(file) === "data-cars-results-card-list")) lists.push(node);
+    ts.forEachChild(node, visit);
+  }
+  visit(file);
+  assert.equal(lists.length, 2, "covering and ready each own one results list");
+  const states = lists.map((list) => {
+    const busy = list.attributes.properties.find((attribute) => ts.isJsxAttribute(attribute) && attribute.name.getText(file) === "aria-busy");
+    assert.ok(busy && ts.isJsxAttribute(busy) && busy.initializer && ts.isStringLiteral(busy.initializer));
+    assert.ok(ts.isJsxElement(list.parent) && ts.isParenthesizedExpression(list.parent.parent) && ts.isConditionalExpression(list.parent.parent.parent));
+    const branch = list.parent.parent.parent;
+    assert.equal(branch.whenTrue, list.parent.parent);
+    assert.equal(branch.condition.getText(file), busy.initializer.text === "true" ? 'filterTransitionPhase === "covering"' : "visibleResults.length");
+    assert.match(list.parent.getText(file), busy.initializer.text === "true" ? /<CarCardSkeleton\b/ : /<VirtualResultsList\b/);
+    const className = list.attributes.properties.find((attribute) => ts.isJsxAttribute(attribute) && attribute.name.getText(file) === "className");
+    assert.ok(className && ts.isJsxAttribute(className) && className.initializer && ts.isJsxExpression(className.initializer) && className.initializer.expression);
+    return { busy: busy.initializer.text, expression: className.initializer.expression.getText(file) };
+  });
+  assert.deepEqual(states.map(({ busy }) => busy), ["true", "false"]);
+  return states.flatMap(({ busy, expression }) => [false, true].flatMap((embedded) => ["standalone", "guided-planning"].map((presentation) => {
+    const standalone = !embedded && presentation === "standalone";
+    const classes = new Set<string>(runInNewContext(expression, {
+      cn, embedded, presentation, guidedPlanning: presentation === "guided-planning",
+      filterTransitionPhase: busy === "true" ? "covering" : "revealing", filterTransitionMobile: true,
+    }).split(/\s+/));
+    for (const token of ["w-full", "space-y-3.5", "sm:space-y-4"]) assert.ok(classes.has(token), `${busy}: ${token}`);
+    assert.equal(classes.has("max-sm:!mt-2"), standalone);
+    assert.equal(classes.has("max-sm:!mt-1"), !standalone);
+    assert.equal(classes.has("lg:space-y-5"), standalone);
+    assert.ok(!classes.has("max-sm:!mt-2.5"));
+    return { busy, standalone, classes };
+  })));
+}
 
 const cars = readFileSync(new URL("./CarsResultsClient.tsx", import.meta.url), "utf8");
 const alert = readFileSync(new URL("./CarPriceAlertControl.tsx", import.meta.url), "utf8");
@@ -51,13 +91,13 @@ test("Cars results heading keeps the compact mobile gutters and card gap without
   assert.match(summaryClasses, /grid-cols-\[minmax\(0,1fr\)_auto\] items-center/);
   assert.match(summaryClasses, /gap-x-1\.5 gap-y-0 px-2 max-\[359px\]:px-1/);
   assert.match(summaryClasses, /sm:gap-x-2 sm:gap-y-3 sm:px-0/);
-  assert.equal((cars.match(/"w-full space-y-3\.5 sm:space-y-4",\s*!embedded && presentation === "standalone" \? "max-sm:!mt-2" : "max-sm:!mt-1"/g) ?? []).length, 2);
+  assertCarsResultsListSpacing(cars);
   assert.doesNotMatch(cars, /w-full space-y-3\.5 max-sm:!mt-2\.5/);
   assert.match(alert, /className="relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full/);
 });
 
 test("Cars count row preserves card separation after removing the tracking toggle", () => {
-  assert.equal((cars.match(/"w-full space-y-3\.5 sm:space-y-4",\s*!embedded && presentation === "standalone" \? "max-sm:!mt-2" : "max-sm:!mt-1"/g) ?? []).length, 2);
+  assertCarsResultsListSpacing(cars);
   assert.match(cars, /data-cars-results-summary-row/);
   assert.match(alert, /flex min-h-11 w-full min-w-0 items-center gap-2/);
   assert.match(alert, /relative inline-flex h-6 w-11 shrink-0 items-center rounded-full/);
@@ -69,10 +109,10 @@ test("standalone mobile Cars preserves filter-to-count spacing while adding a sm
   assert.match(toolbar, /!embedded && presentation === "standalone" && "max-sm:pt-6"/);
   assert.doesNotMatch(toolbar, /sm:pt-2 lg:pt-2/);
   // Both loading and loaded lists have the same 8px first-card gap only for standalone Cars.
-  assert.equal((cars.match(/!embedded && presentation === "standalone" \? "max-sm:!mt-2" : "max-sm:!mt-1"/g) ?? []).length, 2);
+  const layouts = assertCarsResultsListSpacing(cars);
   assert.match(cars, /min-w-0 space-y-0 sm:space-y-4/);
   assert.doesNotMatch(toolbar, /max-sm:pt-(?:0|1|2|3|4|5)\b/);
-  assert.match(cars, /!embedded && presentation === "standalone" \? "max-sm:!mt-2" : "max-sm:!mt-1"/);
+  assert.ok(layouts.filter(({ standalone }) => !standalone).every(({ classes }) => classes.has("max-sm:!mt-1")), "embedded and guided lists retain fallback first-card spacing");
 });
 
 test("Cars keeps the left-side result count while the offer alert lives in rate details", () => {
@@ -96,7 +136,30 @@ test("desktop Cars retains map width while tracking resides within each provider
 
 test("Cars offer alert keeps the functional switch and accessible translated name", () => {
   assert.match(alert, /\{t\("carsResults\.priceTracking\.title"\)\}<\/span>/);
-  assert.match(alert, /aria-label=\{`${t\("carsResults\.priceTracking\.title"\)\} for $\{scope\.providerName\} offer`\}/);
+  const component = ts.createSourceFile("CarPriceAlertControl.tsx", alert, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+  const switches: ts.JsxOpeningElement[] = [];
+  function visit(node: ts.Node) {
+    if (ts.isJsxOpeningElement(node) && node.tagName.getText(component) === "button" && node.attributes.properties.some((attribute) => ts.isJsxAttribute(attribute) && attribute.name.getText(component) === "role" && attribute.initializer && ts.isStringLiteral(attribute.initializer) && attribute.initializer.text === "switch")) switches.push(node);
+    ts.forEachChild(node, visit);
+  }
+  visit(component);
+  assert.equal(switches.length, 1, "one functional switch, not a retired presentation pill");
+  const expression = (name: string) => {
+    const attribute = switches[0].attributes.properties.find((item) => ts.isJsxAttribute(item) && item.name.getText(component) === name);
+    assert.ok(attribute && ts.isJsxAttribute(attribute) && attribute.initializer && ts.isJsxExpression(attribute.initializer) && attribute.initializer.expression);
+    return attribute.initializer.expression.getText(component);
+  };
+  const label = runInNewContext(expression("aria-label"), {
+    t: (key: string) => { assert.equal(key, "carsResults.priceTracking.title"); return "Track car prices"; },
+    scope: { providerName: "Selected Seller" },
+  });
+  assert.equal(label, "Track car prices for Selected Seller offer");
+  for (const tracking of [false, true]) {
+    assert.equal(runInNewContext(expression("aria-checked"), { tracking }), tracking);
+    const toggles: boolean[] = [];
+    runInNewContext(`(${expression("onClick")})()`, { tracking, toggle: (next: boolean) => toggles.push(next) });
+    assert.deepEqual(toggles, [!tracking]);
+  }
   assert.match(alert, /role="switch"/);
   assert.match(alert, /aria-checked=\{tracking\}/);
   assert.match(alert, /tracking \? "border-\[#004BB8\] bg-\[#004BB8\]" : "border-slate-300 bg-slate-200"/);

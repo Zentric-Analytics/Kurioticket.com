@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, useTransition, type FormEvent } from "react";
+import { useState, useTransition, type FormEvent } from "react";
 import { LoaderCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { AdminDirectorySelect, type AdminDirectoryOption } from "./AdminDirectorySelect";
@@ -83,11 +83,14 @@ export function AdminAuditLogsToolbar({
   const [targetDraft, setTargetDraft] = useState(targetEmail);
   const [isPending, startTransition] = useTransition();
 
-  useEffect(() => {
+  const committedScope = JSON.stringify([pageHref, fromDate, toDate, adminEmail, targetEmail, customOpen]);
+  const [previousScope, setPreviousScope] = useState(committedScope);
+  if (previousScope !== committedScope) {
+    setPreviousScope(committedScope);
     if (!customOpen) setDraftDates({ from: fromDate, to: toDate });
     setAdminDraft(adminEmail);
     setTargetDraft(targetEmail);
-  }, [pageHref, fromDate, toDate, adminEmail, targetEmail, customOpen]);
+  }
 
   const actionOptions = withCurrentOption(baseActionOptions, action, "Action: ");
   const targetTypeOptions = withCurrentOption(baseTargetTypeOptions, targetType, "Target: ");

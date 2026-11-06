@@ -1,3 +1,5 @@
+import { jsxOpening } from "../../test-support/sourceStructure";
+import { assertFullWidthRateAlert } from "../../test-support/sourceStructure";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
@@ -118,7 +120,7 @@ test("standalone desktop result cards use a polished identity, details, and pric
   );
   assert.match(
     standalone,
-    /grid-cols-2 lg:text-\[13px\] lg:font-semibold lg:leading-\[18px\]/,
+    /grid-cols-2 lg:hidden lg:text-\[13px\] lg:font-semibold lg:leading-\[18px\]/,
   );
 
   assert.match(
@@ -133,10 +135,7 @@ test("standalone desktop result cards use a polished identity, details, and pric
     price,
     /data-car-price-comparison-action[\s\S]*?font-bold leading-5 text-\[#004BB8\][\s\S]*?text-\[14px\] tracking-\[-0\.005em\]/,
   );
-  assert.match(
-    alert,
-    /lg:whitespace-nowrap lg:text-\[13px\] lg:font-semibold lg:leading-4 lg:tracking-\[-0\.002em\] lg:text-slate-950/,
-  );
+  assertFullWidthRateAlert(alert);
 });
 
 test("desktop typography polish leaves the established mobile Cars hierarchy intact", () => {
@@ -161,9 +160,8 @@ test("desktop typography polish leaves the established mobile Cars hierarchy int
     mobileCard,
     /data-car-card-mobile-specs[\s\S]*?text-\[11px\] font-medium leading-\[14px\]/,
   );
-  assert.match(
-    mobileCard,
-    /text-\[19px\] font-semibold leading-\[22px\] tracking-\[-0\.02em\] text-\[#07133B\]/,
-  );
+  assert.equal(jsxOpening(mobileCard, "CarDealPicker").length, 1);
+  assert.match(mobileCard, /compact/);
+  assert.match(mobileCard, /selectedOfferId=\{offer.id\}/);
   assert.doesNotMatch(mobileCard, /text-\[20px\]/);
 });

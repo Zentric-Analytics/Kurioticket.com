@@ -288,11 +288,11 @@ test("security loading and mutations retain API and session-expiry contracts", (
   assert.match(security, /await clearSession\(\)/);
 });
 
-test("successful deletion reactivation discards the revoked session and requires sign-in", () => {
+test("pending deletion Keep action discards the old session and requires fresh recovery authentication", () => {
   const start = security.indexOf("const reactivate = async");
   const end = security.indexOf("const date =", start);
   const reactivate = security.slice(start, end);
-  assert.match(reactivate, /await travelApi\.reactivateDeletion\(\)/);
+  assert.doesNotMatch(reactivate, /travelApi\.reactivateDeletion/);
   assert.match(reactivate, /await clearSession\(\)/);
   assert.match(reactivate, /setDeletion\(null\)/);
   assert.match(reactivate, /closeDeletion\(\)/);

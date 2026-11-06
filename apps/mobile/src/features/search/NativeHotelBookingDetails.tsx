@@ -61,7 +61,7 @@ function amenityIconFor(item: HotelAmenityPresentationItem): LucideIcon {
   return Sparkles;
 }
 
-function providerFactValues(details?: PublicHotelProviderDetails) {
+function providerFactValues(details?: PublicHotelProviderDetails | null) {
   return {
     place: [...new Set((details?.overview?.place ?? []).map(({ value }) => value.trim()).filter(Boolean))],
     policies: [...new Set((details?.overview?.policies ?? []).map(({ value }) => value.trim()).filter(Boolean))],
@@ -70,6 +70,7 @@ function providerFactValues(details?: PublicHotelProviderDetails) {
 
 export function NativeHotelBookingDetails({
   result,
+  providerDetails: suppliedProviderDetails,
   property,
   locationProperty,
   detailsStatus,
@@ -81,6 +82,7 @@ export function NativeHotelBookingDetails({
   onLookAroundInteractionChange,
 }: {
   result: HotelResult;
+  providerDetails?: PublicHotelProviderDetails | null;
   property: PublicHotelPropertyDetails | null;
   locationProperty: PublicHotelPropertyDetails | null;
   detailsStatus: HotelDetailsStatus;
@@ -94,7 +96,9 @@ export function NativeHotelBookingDetails({
   const [amenitiesOpen, setAmenitiesOpen] = useState(false);
   const accent = theme.dark ? "#8FB5FF" : colors.blue;
   const iconColor = theme.dark ? theme.icon : "#1A1A1A";
-  const providerDetails = (result as HotelResultWithProviderDetails).providerDetails;
+  const providerDetails = suppliedProviderDetails === undefined
+    ? (result as HotelResultWithProviderDetails).providerDetails
+    : suppliedProviderDetails;
   const providerFacts = providerFactValues(providerDetails);
   const providerAddress = providerDetails?.overview?.address?.trim() ?? "";
   const providerPlace = providerFacts.place.join(", ");

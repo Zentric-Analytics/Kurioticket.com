@@ -31,6 +31,8 @@ jobs:
             apps/mobile/package-lock.json
       - name: Install web/server dependencies
         run: npm ci
+      - name: Install Chromium for mounted provider component contracts
+        run: npx playwright install --with-deps chromium
       - name: Validate privacy consent behind the reverse proxy
         env:
           JITI_TSCONFIG_PATHS: ./tsconfig.json
@@ -164,6 +166,12 @@ jobs:
           node-version: 24
           cache: npm
           cache-dependency-path: apps/mobile/package-lock.json
+
+      # Native notice fixtures deliberately use one root React/server-renderer pair.
+      # Install that declared toolchain rather than mixing it with native React.
+      - name: Install root component-test dependencies
+        if: steps.changes.outputs.mobile_relevant == 'true'
+        run: npm ci
 
       - name: Install mobile dependencies
         if: steps.changes.outputs.mobile_relevant == 'true'

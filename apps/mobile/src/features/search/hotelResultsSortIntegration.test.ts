@@ -25,7 +25,7 @@ test("Cheapest badge follows the actual lowest comparable filtered price, not li
 
 test("priced Hotel results wait for currency context before exposing their initial order", () => {
   assert.match(source, /const hotelCurrencyPending = product === "hotel"[\s\S]*some\(hasHotelPrice\)[\s\S]*!currencyState/);
-  assert.match(source, /if \(status === "loading" \|\| hotelCurrencyPending\) return <NativeBrandedSearchLoading product=\{product\} \/>/);
+  assert.match(source, /if \(status === "loading" \|\| hotelCurrencyPending\) return <NativeBrandedSearchLoading product=\{product\} includeTopInset=\{false\} \/>/);
 });
 
 test("changed Sort Apply updates ordering state and resets scroll position without network work", () => {

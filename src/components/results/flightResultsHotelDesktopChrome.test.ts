@@ -108,7 +108,8 @@ test("desktop Flight Results keeps page-owned navbar geometry while search waits
   assert.match(headerShell, /guidedMode \|\| externalResultsHeader \? null : \([\s\S]*?<AppHeader[\s\S]*?flightResultsDesktopSticky/);
   assert.match(readySearchDefinition, /!resultsUiPreparing[\s\S]*?createPortal\(renderDesktopHeaderSearchBar\(\), desktopNavSearchTarget\)/);
   assert.match(preparing, /\{standaloneResultsHeader\}/);
-  assert.doesNotMatch(preparing, /readyExternalMobileHeader|readyDesktopNavbarSearch|renderStickySearchPopoutOverlay\(\)|renderDesktopHeaderSearchBar\(\)/);
+  assert.doesNotMatch(preparing, /readyExternalMobileHeader|readyDesktopNavbarSearch|renderStickySearchPopoutOverlay\(\)/);
+  assert.match(preparing, /desktopSearch=\{renderDesktopHeaderSearchBar\(\)\}/);
   assert.match(ready, /\{standaloneResultsHeader\}[\s\S]*?\{readyExternalMobileHeader\}[\s\S]*?\{readyDesktopNavbarSearch\}/);
 });
 
@@ -179,9 +180,10 @@ test("desktop Flight Results puts the Hotels-style summary directly above result
   const summary = flight.indexOf("data-flight-results-desktop-summary");
   const desktopResults = flight.indexOf("ref={paginationListRef}");
 
-  assert.ok(nearby >= 0);
-  assert.ok(priceAlert > nearby);
+  assert.equal(nearby, -1, "retired desktop fare rail stays absent");
+  assert.ok(priceAlert >= 0);
   assert.ok(summary > priceAlert);
+  assert.match(flight.slice(0, priceAlert), /data-nearby-fare-presentation="mobile"/);
   assert.ok(desktopResults > summary);
 
   const summarySource = flight.slice(summary, desktopResults);
