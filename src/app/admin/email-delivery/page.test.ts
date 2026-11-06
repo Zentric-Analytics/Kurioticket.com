@@ -11,6 +11,9 @@ const adminNavigation = readFileSync("src/lib/adminNavigation.ts", "utf8");
 
 test("Email Delivery uses a compact title and one page-level date range control", () => {
   assert.equal((page.match(/>Email Delivery<\/h1>/g) || []).length, 1);
+  assert.match(page, /href="\/admin\/system"/);
+  assert.match(page, /Back to System/);
+  assert.match(page, /ArrowLeft size=\{14\}/);
   assert.doesNotMatch(page, /Admin operations|Email Delivery Operations|Monitor transactional email configuration/);
   assert.match(page, /EmailDeliveryRangeFilter/);
   for (const label of ["Last 24 hours", "Last 7 days", "Last 30 days", "Last 90 days", "Custom range"]) {

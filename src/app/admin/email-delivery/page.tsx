@@ -1,3 +1,6 @@
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
+
 import { EmailDeliveryRangeFilter, type EmailDeliveryRange } from "@/components/admin/EmailDeliveryRangeFilter";
 import { EmailDeliveryTestButton } from "@/components/admin/EmailDeliveryTestButton";
 import { getEmailDeliveryOperationsSnapshot } from "@/services/emailDeliveryService";
@@ -86,6 +89,13 @@ export default async function AdminEmailDeliveryPage({ searchParams }: { searchP
 
   return (
     <div className="w-full min-w-0 bg-white text-[#020617]">
+      <Link
+        href="/admin/system"
+        className="focus-ring mb-3 inline-flex items-center gap-1.5 rounded-sm text-[12px] font-medium text-[#64748B] hover:text-[#004BB8]"
+      >
+        <ArrowLeft size={14} aria-hidden="true" />
+        Back to System
+      </Link>
       <header className="flex flex-wrap items-end justify-between gap-4 border-b border-[#D8E1EC] pb-3">
         <h1 className="text-[18px] font-semibold tracking-[-0.01em] text-[#020617]">Email Delivery</h1>
         <EmailDeliveryRangeFilter
