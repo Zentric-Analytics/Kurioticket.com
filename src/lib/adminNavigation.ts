@@ -2,7 +2,6 @@ import type React from "react";
 
 import {
   Activity,
-  Bell,
   BookOpen,
   Car,
   ClipboardList,
