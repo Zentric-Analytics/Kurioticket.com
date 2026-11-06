@@ -239,12 +239,13 @@ export function AdminAuditLogsToolbar({
 
   return (
     <div className="border-b border-[#D8E1EC] py-3">
-      <form
-        onSubmit={submitSearch}
-        role="search"
-        aria-label="Search audit logs"
-        className="grid min-w-0 gap-3 pb-3 md:grid-cols-2"
-      >
+      <div className="flex min-w-0 flex-col gap-3 xl:flex-row xl:items-center">
+        <form
+          onSubmit={submitSearch}
+          role="search"
+          aria-label="Search audit logs"
+          className="grid min-w-0 gap-3 md:grid-cols-2 xl:w-[760px] xl:flex-none"
+        >
         <div className="relative min-w-0">
           <Search size={17} aria-hidden="true" className="pointer-events-none absolute left-3.5 top-3.5 text-[#64748B]" />
           <label className="sr-only" htmlFor="audit-admin-email-search">Search admin email</label>
@@ -277,9 +278,9 @@ export function AdminAuditLogsToolbar({
             className="h-11 w-full min-w-0 rounded-lg border border-[#D8E1EC] bg-white pl-10 pr-3 text-[13px] text-[#020617] outline-none placeholder:text-[#94A3B8] focus:border-[#94A3B8] focus:ring-0"
           />
         </div>
-      </form>
+        </form>
 
-      <div className="flex min-w-0 flex-wrap items-end justify-end gap-x-6 gap-y-2">
+        <div className="flex min-w-0 flex-wrap items-end justify-end gap-x-6 gap-y-2 xl:ml-auto xl:flex-nowrap">
         <AdminDirectorySelect
           key={range + ":" + rangeSelectVersion}
           name="range"
@@ -309,6 +310,7 @@ export function AdminAuditLogsToolbar({
           align="end"
           onValueChange={next => navigate({ targetType: next || null })}
         />
+        </div>
       </div>
 
       {(customOpen || range === "custom") ? (
