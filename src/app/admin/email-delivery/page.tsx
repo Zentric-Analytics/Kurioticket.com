@@ -71,13 +71,6 @@ export default async function AdminEmailDeliveryPage({ searchParams }: { searchP
         to: rangeState.to,
         page: requestedHistoryPage,
       });
-  const historyStart = operations?.dataAvailable && operations.historyTotal > 0
-    ? (operations.historyPage - 1) * operations.historyPageSize + 1
-    : 0;
-  const historyEnd = operations?.dataAvailable
-    ? Math.min(operations.historyPage * operations.historyPageSize, operations.historyTotal)
-    : 0;
-
   const configured = {
     resendApiKey: Boolean(process.env.RESEND_API_KEY?.trim()),
     resendFromEmail: Boolean(process.env.RESEND_FROM_EMAIL?.trim()),
@@ -180,15 +173,8 @@ export default async function AdminEmailDeliveryPage({ searchParams }: { searchP
       </section>
 
       <section aria-labelledby="delivery-history-heading" className="py-4">
-        <div className="flex flex-wrap items-baseline justify-between gap-2 pb-2">
+        <div className="pb-2">
           <h2 id="delivery-history-heading" className="text-[15px] font-semibold text-[#020617]">Delivery history</h2>
-          {operations?.dataAvailable ? (
-            <p className="text-[12px] text-[#64748B]">
-              {operations.historyTotal > 0
-                ? `Showing ${historyStart.toLocaleString()}–${historyEnd.toLocaleString()} of ${operations.historyTotal.toLocaleString()} deliveries in ${rangeState.label.toLowerCase()}`
-                : `0 deliveries in ${rangeState.label.toLowerCase()}`}
-            </p>
-          ) : null}
         </div>
 
         {rangeState.error ? (
