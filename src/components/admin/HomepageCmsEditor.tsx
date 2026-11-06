@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 
 import {
   AdminButton,
@@ -86,6 +86,9 @@ export function HomepageCmsEditor({
   const [market, setMarket] = useState(initialItem?.market ?? initialMarket);
   const [sortOrder, setSortOrder] = useState(String(initialItem?.sortOrder ?? 0));
   const [fields, setFields] = useState<Record<string, string>>(() => initialFields(section, saved));
+  // Typing a new hotel search clears the draft ID, but the prior selected ID
+  // must survive until selection so a different hotel cannot inherit its image.
+  const selectedHotelIdRef = useRef(text(saved.canonicalId));
   const [hotelSearch, setHotelSearch] = useState(() =>
     hotelOptions.find((option) => option.canonicalId === text(saved.canonicalId))?.label
     ?? text(saved.canonicalId)
@@ -138,11 +141,13 @@ export function HomepageCmsEditor({
       return;
     }
     setHotelSearch(option.label);
+    const previousCanonicalId = selectedHotelIdRef.current;
+    selectedHotelIdRef.current = option.canonicalId;
     setFields((current) => ({
       ...current,
       canonicalId: option.canonicalId,
       name: option.name,
-      ...(current.canonicalId && current.canonicalId !== option.canonicalId ? { image: "", imageAlt: "" } : {}),
+      ...(previousCanonicalId && previousCanonicalId !== option.canonicalId ? { image: "", imageAlt: "" } : {}),
       country: option.country,
       countryCode: option.countryCode,
       kind: option.kind,
@@ -230,12 +235,15 @@ export function HomepageCmsEditor({
         });
         const body = await response.json().catch(() => ({}));
         if (!response.ok || !body.item) {
-          if (response.status === 409) {
-            setConflict(true);
-            setError("This content changed in another admin session. Reload the latest version before making more edits.");
-          } else {
-            setError(typeof body.error === "string" ? body.error : "Unable to update content.");
-          }
+          const serverError = typeof body.error === "string" ? body.error : "Unable to update content.";
+          // A dependency/duplicate conflict is not a stale edit. Show the
+          // actionable server reason without incorrectly offering Reload.
+          const staleVersion = response.status === 409 &&
+            /changed since it was opened|changed concurrently|refresh before|another admin session/i.test(serverError);
+          setConflict(staleVersion);
+          setError(staleVersion
+            ? "This content changed in another admin session. Reload the latest version before making more edits."
+            : serverError);
           return;
         }
         setConflict(false);
