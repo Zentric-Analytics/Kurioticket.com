@@ -867,8 +867,10 @@ export async function listAdminCmsContent(input: {
   cursor?: string;
   search?: string;
   category?: string;
-} = {}) {
-  const db = getOptionalPrisma();
+} = {}, reader?: Prisma.TransactionClient) {
+  // An optional transaction client lets a full-directory read use one stable
+  // database snapshot across every continuation page.
+  const db = reader ?? getOptionalPrisma();
   if (!db) throw new CmsContentError("UNAVAILABLE", "CMS storage is unavailable.");
 
   const cursor = decodeCmsListCursor(input.cursor);
@@ -969,6 +971,43 @@ export async function listAdminCmsContent(input: {
     : null;
 
   return { items: page.map(serialize), nextCursor };
+}
+
+/**
+ * Fetch a full CMS directory consistently, including all matching search
+ * results. A repeatable-read snapshot prevents records from disappearing if
+ * another admin updates their updatedAt between cursor pages.
+ *
+ * The regular paginated reader remains unchanged for other admin screens.
+ */
+export async function listAdminCmsContentDirectory(input: {
+  type: CmsContentType;
+  status?: CmsContentStatus;
+  market?: string;
+  locale?: string;
+  search?: string;
+  category?: string;
+}) {
+  const db = getOptionalPrisma();
+  if (!db) throw new CmsContentError("UNAVAILABLE", "CMS storage is unavailable.");
+
+  return db.$transaction(async (tx) => {
+    const pageInput = { ...input, limit: 100 };
+    const firstPage = await listAdminCmsContent(pageInput, tx);
+    const items = [...firstPage.items];
+    let nextCursor = firstPage.nextCursor;
+
+    while (nextCursor) {
+      const nextPage = await listAdminCmsContent({ ...pageInput, cursor: nextCursor }, tx);
+      items.push(...nextPage.items);
+      nextCursor = nextPage.nextCursor;
+    }
+
+    return { items, nextCursor: null };
+  }, {
+    isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead,
+    timeout: 30_000,
+  });
 }
 
 /** Options reflect all CMS draft records, not only one paginated list page. */

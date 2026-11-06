@@ -1,4 +1,5 @@
 import type { CmsContentType } from "@/generated/prisma/enums";
+import { getCmsMarketName } from "@/lib/adminCmsMarketLabels";
 
 export const homepageCmsSections = {
   destinations: {
@@ -24,4 +25,22 @@ export function getHomepageCmsSection(value: string) {
   return value in homepageCmsSections
     ? value as HomepageCmsSection
     : null;
+}
+
+/**
+ * Order a CMS directory for admins without mutating or publishing its records.
+ * Across all markets, keep each market together alphabetically by its visible
+ * label. Within one market, smaller draft Order values appear first.
+ */
+export function sortHomepageCmsDirectoryItems<T extends {
+  market: string;
+  sortOrder: number;
+  key: string;
+}>(items: readonly T[]): T[] {
+  return [...items].sort((left, right) =>
+    getCmsMarketName(left.market).localeCompare(getCmsMarketName(right.market)) ||
+    left.market.localeCompare(right.market) ||
+    left.sortOrder - right.sortOrder ||
+    left.key.localeCompare(right.key)
+  );
 }

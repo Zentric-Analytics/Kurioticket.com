@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { homepageCmsListNavigation, faqCmsListNavigation, contentEditorHref } from "@/lib/adminContentNavigation";
+import { sortHomepageCmsDirectoryItems } from "@/lib/adminHomepageCms";
 
 const contentPage = readFileSync("src/app/admin/content/page.tsx", "utf8");
 const systemPage = readFileSync("src/app/admin/system/page.tsx", "utf8");
@@ -367,4 +368,42 @@ test("homepage CMS controls share the public personal-details border and focus t
   assert.match(editor, /grid max-w-\[512px\] gap-4 sm:grid-cols-3/);
   assert.match(editor, /className="max-w-\[320px\]"/);
   assert.match(editor, /lg:grid-cols-\[minmax\(0,1fr\)_320px\]/);
+});
+
+test("Homepage and flight directories show all records grouped by market then Order", () => {
+  const page = readFileSync("src/app/admin/content/homepage/[section]/page.tsx", "utf8");
+  const navigation = readFileSync("src/lib/adminContentNavigation.ts", "utf8");
+
+  const records = [
+    { market: "NG", sortOrder: 4, key: "lagos-four" },
+    { market: "US", sortOrder: 0, key: "new-york" },
+    { market: "NG", sortOrder: 0, key: "lagos-zero" },
+    { market: "NG", sortOrder: 4, key: "lagos-alpha" },
+    { market: "GB", sortOrder: 2, key: "london" },
+  ];
+  const original = [...records];
+  assert.deepEqual(sortHomepageCmsDirectoryItems(records).map((item) => item.key), [
+    "lagos-zero", "lagos-alpha", "lagos-four", "london", "new-york",
+  ]);
+  assert.deepEqual(records, original, "Sorting must not mutate CMS records");
+
+  const service = readFileSync("src/services/cmsContentService.ts", "utf8");
+  assert.match(page, /listAdminCmsContentDirectory\(listInput\)/);
+  assert.match(service, /listAdminCmsContentDirectory/);
+  assert.match(service, /Prisma\.TransactionIsolationLevel\.RepeatableRead/);
+  assert.match(service, /await listAdminCmsContent\(pageInput, tx\)/);
+  assert.match(service, /while \(nextCursor\)/);
+  assert.match(service, /await listAdminCmsContent\(\{ \.\.\.pageInput, cursor: nextCursor \}, tx\)/);
+  assert.match(service, /reader \?\? getOptionalPrisma\(\)/);
+  assert.match(page, /items: sortHomepageCmsDirectoryItems\(listing\.items\)/);
+  assert.match(page, /nextCursor: null/);
+  assert.doesNotMatch(page, /Next page|function nextHref|<Link\s/);
+
+  assert.equal(homepageCmsListNavigation("flight-routes", {
+    market: "NG", status: "PUBLISHED", q: "Lagos", cursor: "old_cursor",
+  }).listHref, "/admin/content/homepage/flight-routes?market=NG&status=PUBLISHED&q=Lagos");
+  assert.equal(homepageCmsListNavigation("destinations", {
+    market: "GB", cursor: "old_cursor",
+  }).listHref, "/admin/content/homepage/destinations?market=GB");
+  assert.match(navigation, /params\.delete\("cursor"\)/);
 });
