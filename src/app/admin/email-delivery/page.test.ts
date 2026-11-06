@@ -26,23 +26,28 @@ test("Email Delivery uses a compact title and one page-level date range control"
   assert.match(rangeFilter, /setRangeSelectVersion/);
 });
 
-test("the selected range drives the whole time-based operational view", () => {
-  assert.match(page, /getEmailDeliveryOperationsSnapshot\(\{ from: rangeState\.from, to: rangeState\.to \}\)/);
+test("the selected range drives the whole time-based operational view without truncating history", () => {
+  assert.match(page, /page: requestedHistoryPage/);
   assert.match(page, /aria-label="Email delivery summary"/);
   for (const label of ["Email deliveries", "Delivered", "Delayed", "Failed"]) {
     assert.ok(page.includes(label));
   }
   assert.doesNotMatch(page, /Tracked transactional email attempts|Provider-reported delays|Failed, bounced, complained or suppressed in 24 hours/);
   assert.match(page, /Delivery history/);
-  assert.match(page, /Latest 10 in \{rangeState\.label\.toLowerCase\(\)\}/);
+  assert.doesNotMatch(page, /Latest 10 in/);
+  assert.match(page, /Showing \$\{historyStart\.toLocaleString\(\)\}–\$\{historyEnd\.toLocaleString\(\)\} of \$\{operations\.historyTotal\.toLocaleString\(\)\} deliveries/);
   assert.match(service, /export async function getEmailDeliveryOperationsSnapshot/);
+  assert.match(service, /history_total: bigint/);
+  assert.match(service, /SELECT COUNT\(\*\)[\s\S]*FROM email_deliveries d/);
   assert.match(service, /created_at >= \$\{range\.from\} AND created_at < \$\{range\.to\}/);
   assert.match(service, /COALESCE\(e\.occurred_at, e\.created_at\) >= \$\{range\.from\}/);
   assert.match(service, /e\.type = 'email\.delivered'/);
   assert.match(service, /'internal\.send_failed'/);
   assert.match(service, /e\.type = 'email\.delivery_delayed'/);
   assert.match(service, /OR EXISTS \([\s\S]*FROM email_events e[\s\S]*COALESCE\(e\.occurred_at, e\.created_at\) >= \$\{range\.from\}/);
-  assert.match(service, /ORDER BY GREATEST\([\s\S]*LIMIT 10/);
+  assert.match(service, /EMAIL_DELIVERY_HISTORY_PAGE_SIZE = 100/);
+  assert.match(service, /LIMIT \$\{EMAIL_DELIVERY_HISTORY_PAGE_SIZE\}/);
+  assert.match(service, /OFFSET \$\{historyOffset\}/);
 });
 
 test("summary metrics use one compact four-column status band with no repeated range copy", () => {
@@ -80,6 +85,19 @@ test("range parsing defaults to 24 hours and constrains custom ranges to 90 days
   assert.match(page, /Math\.min\(requestedEnd\.getTime\(\), now\.getTime\(\)\)/);
   assert.match(page, /date\.getUTCFullYear\(\) === year/);
   assert.match(rangeFilter, /date\.getUTCFullYear\(\) === year/);
+});
+
+test("delivery history exposes every matching record through server-side pagination", () => {
+  assert.match(page, /parseHistoryPage\(one\(raw\.historyPage\)\)/);
+  assert.match(page, /historyPageHref\(raw, operations\.historyPage - 1\)/);
+  assert.match(page, /historyPageHref\(raw, operations\.historyPage \+ 1\)/);
+  assert.match(page, /aria-label="Delivery history pages"/);
+  assert.match(page, /Page \{operations\.historyPage\.toLocaleString\(\)\} of \{operations\.historyTotalPages\.toLocaleString\(\)\}/);
+  assert.match(page, /‹ Previous/);
+  assert.match(page, /Next ›/);
+  assert.match(service, /historyTotalPages = Math\.max\(1, Math\.ceil\(historyTotal \/ EMAIL_DELIVERY_HISTORY_PAGE_SIZE\)\)/);
+  assert.match(service, /historyPage = Math\.min\(requestedPage, historyTotalPages\)/);
+  assert.doesNotMatch(service.slice(service.indexOf("getEmailDeliveryOperationsSnapshot"), service.indexOf("getEmailDeliveryHealthSnapshot")), /LIMIT 10/);
 });
 
 test("range-aware reads preserve privacy and the alert-specific 24-hour health contract", () => {
