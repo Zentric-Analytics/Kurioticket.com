@@ -69,7 +69,7 @@ test("feature controls use concise product and automation descriptions", () => {
   assert.match(featurePanel, /Show or hide Packages\./);
   assert.match(featurePanel, /Allow new and reactivated price alerts\./);
   assert.match(featurePanel, /Run automatic price checks and send alerts\./);
-  assert.match(featurePanel, /\{control\.risk\} · \{control\.kind\}/);
+  assert.doesNotMatch(featurePanel, /\{control\.risk\} · \{control\.kind\}/);
 });
 
 test("Settings starts with a short instruction without implying service health", () => {
@@ -109,7 +109,9 @@ test("feature-control interaction states remain explicit and safe", () => {
   assert.match(featurePanel, /aria-label=\{\(control\.state\.enabled \? "Disable " : "Enable "\) \+ control\.name\}/);
   assert.match(featurePanel, /Production controls are view only for your account/);
   assert.match(featurePanel, /event\.key === "Escape" && !saving/);
-  assert.match(featurePanel, /Reason \{environment === "PRODUCTION" \? "\(required\)" : "\(optional\)"\}/);
+  assert.match(featurePanel, /Reason for change \(required\)/);
+  assert.match(featurePanel, /Add a note \(optional\)/);
+  assert.match(featurePanel, /hidden=\{!showOptionalNote\}/);
   assert.match(featurePanel, /disabled=\{saving \|\| \(environment === "PRODUCTION" && !reason\.trim\(\)\)\}/);
   assert.match(featurePanel, /aria-busy=\{saving\}/);
 });
@@ -217,3 +219,27 @@ test("Settings sections share restrained desktop widths, headings, and consisten
   assert.match(recent, /sm:grid-cols-\[minmax\(0,1fr\)_108px_140px\]/);
   assert.doesNotMatch(settingsLayout, /<AdminHorizontalShell|<AdminHeader/);
 });
+
+
+test("Settings feature dialogs show outcomes, not staging or risk metadata", () => {
+  assert.match(featurePanel, /controlChangeDescriptions: Record<FeatureControlKey/);
+  for (const key of [
+    "FLIGHT_SEARCH_ENABLED", "HOTEL_SEARCH_ENABLED", "CAR_SEARCH_ENABLED",
+    "DEALS_ENABLED", "PRICE_ALERTS_ENABLED", "PRICE_ALERT_PROCESSING_ENABLED",
+  ]) assert.ok(featurePanel.includes(key + ": {"), "Missing outcome copy for " + key);
+  assert.doesNotMatch(featurePanel, /<span>\{environment\}<\/span>/);
+  assert.doesNotMatch(featurePanel, /\{pending\.control\.risk\} risk/);
+  assert.doesNotMatch(featurePanel, /\{control\.risk\} · \{control\.kind\}/);
+  assert.match(featurePanel, /isProduction \? \(/);
+  assert.match(featurePanel, /This change affects the live website/);
+  assert.match(featurePanel, /aria-describedby="feature-control-dialog-description"/);
+  assert.match(featurePanel, /Add a note \(optional\)/);
+  assert.match(featurePanel, /aria-expanded=\{showOptionalNote\}/);
+  assert.match(featurePanel, /if \\(showOptionalNote\\) setReason\\(""\\)/);
+  assert.match(featurePanel, /\{saving \? "Saving…" : \(pending\.enabled \? "Enable " : "Disable "\) \+ pending\.control\.name\}/);
+  assert.match(featurePanel, /dialogRef\.current\?\.querySelector/);
+  assert.match(featurePanel, /triggerRef\.current\?\.focus\(\)/);
+  assert.match(featurePanel, /event\.key !== "Tab"/);
+  assert.match(featurePanel, /disabled=\{saving \|\| \(environment === "PRODUCTION" && !reason\.trim\(\)\)\}/);
+});
+
