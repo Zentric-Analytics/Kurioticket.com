@@ -5,7 +5,7 @@ import test from "node:test";
 const route = readFileSync("src/app/admin/confirmed-trips/alerts/page.tsx", "utf8");
 const operations = readFileSync("src/components/admin/TripConfirmationsMonitoringPanel.tsx", "utf8");
 const inline = readFileSync("src/components/admin/ConfirmedTripDeliveryAlerts.tsx", "utf8");
-const globalAlerts = readFileSync("src/app/admin/notifications/page.tsx", "utf8");
+const globalAlerts = readFileSync("src/app/admin/settings/notifications/page.tsx", "utf8");
 const core = readFileSync("src/services/adminAlertCore.ts", "utf8");
 const service = readFileSync("src/services/adminAlertService.ts", "utf8");
 const navigation = readFileSync("src/lib/adminNavigation.ts", "utf8");
@@ -72,7 +72,7 @@ test("old Confirmation alerts links safely redirect to Delivery Health within Tr
   assert.doesNotMatch(route, /<AdminPageShell|Monitoring inactive|No confirmation provider feed is configured|<AdminSectionCard/);
   assert.match(operations, /id="confirmation-delivery-health-title"/);
   assert.match(operations, /open=\{expandDelivery\}/);
-  assert.match(globalAlerts, /title="Notifications & Alerts"/);
+  assert.match(globalAlerts, /id="settings-section-title"/);
   assert.match(globalAlerts, /<AdminAlertAcknowledgeButton/);
-  assert.match(navigation, /href: "\/admin\/notifications", parentHref: "\/admin\/system"/);
+  assert.doesNotMatch(navigation, /href: "\/admin\/notifications"/);
 });
