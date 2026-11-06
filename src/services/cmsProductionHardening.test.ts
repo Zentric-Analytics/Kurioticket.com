@@ -134,7 +134,7 @@ test("CMS health reports integrity, ordering, fallback and unpublished changes",
   assert.match(hardeningActions, /mode === "normalize"/);
   assert.match(hardeningService, /summarizeIntegrityIssues/);
   assert.match(hardeningService, /details: summarizeIntegrityIssues/);
-  assert.match(hardeningService, /items: items/);
+  assert.match(hardeningService, /\n\s*items,\n/);
   assert.match(hardeningActions, /aria-haspopup="menu"/);
   assert.match(hardeningActions, /role="menu"/);
   assert.match(hardeningActions, /Retire fallback/);
