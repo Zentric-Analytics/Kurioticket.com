@@ -235,7 +235,7 @@ test("Settings feature dialogs show outcomes, not staging or risk metadata", () 
   assert.match(featurePanel, /aria-describedby="feature-control-dialog-description"/);
   assert.match(featurePanel, /Add a note \(optional\)/);
   assert.match(featurePanel, /aria-expanded=\{showOptionalNote\}/);
-  assert.match(featurePanel, /if \\(showOptionalNote\\) setReason\\(""\\)/);
+  assert.ok(featurePanel.includes('if (showOptionalNote) setReason("");'));
   assert.match(featurePanel, /\{saving \? "Saving…" : \(pending\.enabled \? "Enable " : "Disable "\) \+ pending\.control\.name\}/);
   assert.match(featurePanel, /dialogRef\.current\?\.querySelector/);
   assert.match(featurePanel, /triggerRef\.current\?\.focus\(\)/);

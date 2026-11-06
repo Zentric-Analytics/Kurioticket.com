@@ -105,7 +105,7 @@ export function FeatureControlsPanel({
       document.body.style.overflow = previousOverflow;
       triggerRef.current?.focus();
     };
-  }, [pending?.control.key]);
+  }, [pending]);
 
   useEffect(() => {
     if (!pending) return;
