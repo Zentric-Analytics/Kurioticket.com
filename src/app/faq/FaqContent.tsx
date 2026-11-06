@@ -94,7 +94,7 @@ export function FaqContent({ showAccountLink, initialFaqItems, initialFaqLocale 
                   +
                 </span>
               </summary>
-              <p className="mt-2 text-sm leading-6 text-slate-600 sm:text-base">
+              <p className="mt-2 whitespace-pre-line text-sm leading-6 text-slate-600 sm:text-base">
                 {item.answer}
               </p>
             </details>

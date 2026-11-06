@@ -1,3 +1,4 @@
+import { getCmsUnpublishedChangeLabel } from "@/lib/adminCmsPublicationStatus";
 import { z } from "zod";
 import { Prisma } from "@/generated/prisma/client";
 import type { CmsContentType } from "@/generated/prisma/enums";
@@ -171,8 +172,7 @@ export async function getCmsScopeIntegrity(input: ScopeInput) {
         });
       }
       if (
-        item.publishedVersion !== null &&
-        item.version !== item.publishedVersion
+        getCmsUnpublishedChangeLabel(item) !== null
       ) {
         unpublishedChanges += 1;
       }
