@@ -190,18 +190,37 @@ export class CmsContentError extends Error {
   }
 }
 
-const ownedFlightAirportCodes = new Set(
-  getOwnedFlightLocationCatalog()
-    .map((location) => location.codes?.iata)
-    .filter((code): code is string => Boolean(code)),
+const homepageDestinationRoutePairs = [...getPopularDestinationAllowlist().values()].map(
+  (destination) => ({
+    originCode: destination.originCode,
+    destinationCode: destination.code,
+  }),
 );
-const canonicalHotelDestinationIds = new Set(
-  hotelDestinations.map((destination) => `hotel:${destination.id}`),
+const homepageFlightRoutePairs = [...getHomeDiscoveryRouteAllowlist().values()].map(
+  (route) => ({
+    originCode: route.originCode,
+    destinationCode: route.destinationCode,
+  }),
 );
 const supportedHomepageDestinationRoutes = new Set(
-  [...getPopularDestinationAllowlist().values()].map(
-    (destination) => `${destination.originCode}:${destination.code}`,
+  homepageDestinationRoutePairs.map(
+    (route) => `${route.originCode}:${route.destinationCode}`,
   ),
+);
+const supportedHomepageFlightRoutes = new Set(
+  homepageFlightRoutePairs.map(
+    (route) => `${route.originCode}:${route.destinationCode}`,
+  ),
+);
+const ownedFlightAirportCodes = new Set([
+  ...getOwnedFlightLocationCatalog()
+    .map((location) => location.codes?.iata)
+    .filter((code): code is string => Boolean(code)),
+  ...homepageDestinationRoutePairs.flatMap((route) => [route.originCode, route.destinationCode]),
+  ...homepageFlightRoutePairs.flatMap((route) => [route.originCode, route.destinationCode]),
+]);
+const canonicalHotelDestinationIds = new Set(
+  hotelDestinations.map((destination) => `hotel:${destination.id}`),
 );
 const supportedHomepageDestinationEntries = new Set(
   Object.values(popularDestinationsByMarket)
@@ -213,11 +232,20 @@ const supportedHomepageDestinationEntries = new Set(
       destination.code,
     ].join("|")),
 );
-const supportedHomepageFlightRoutes = new Set(
-  [...getHomeDiscoveryRouteAllowlist().values()].map(
-    (route) => `${route.originCode}:${route.destinationCode}`,
-  ),
-);
+
+export function getCmsHomepageFlightRoutePairs(
+  type: "HOMEPAGE_DESTINATION" | "FLIGHT_ROUTE",
+) {
+  const pairs = type === "HOMEPAGE_DESTINATION"
+    ? homepageDestinationRoutePairs
+    : homepageFlightRoutePairs;
+  return [...new Map(
+    pairs.map((route) => [
+      `${route.originCode}:${route.destinationCode}`,
+      route,
+    ]),
+  ).values()];
+}
 
 function parsePayload(type: CmsContentType, payload: unknown) {
   const parsed = cmsPayloadSchemas[type].safeParse(payload);
@@ -225,9 +253,25 @@ function parsePayload(type: CmsContentType, payload: unknown) {
 
   if (type === "HOMEPAGE_DESTINATION" || type === "FLIGHT_ROUTE") {
     const route = parsed.data as { originCode: string; destinationCode: string };
-    if (!ownedFlightAirportCodes.has(route.originCode) || !ownedFlightAirportCodes.has(route.destinationCode)) {
-      throw new CmsContentError("INVALID", "Homepage flight content must use airport codes from the owned Kurioticket flight catalog.");
+    const fieldErrors: Record<string, string[]> = {};
+    if (!ownedFlightAirportCodes.has(route.originCode)) {
+      fieldErrors.originCode = [
+        `${route.originCode} is not in Kurioticket's supported homepage flight catalog.`,
+      ];
     }
+    if (!ownedFlightAirportCodes.has(route.destinationCode)) {
+      fieldErrors.destinationCode = [
+        `${route.destinationCode} is not in Kurioticket's supported homepage flight catalog.`,
+      ];
+    }
+    if (Object.keys(fieldErrors).length > 0) {
+      throw new CmsContentError(
+        "INVALID",
+        "Choose airport codes from Kurioticket's supported homepage flight catalog.",
+        { formErrors: [], fieldErrors },
+      );
+    }
+
     const routeKey = `${route.originCode}:${route.destinationCode}`;
     const supported = type === "HOMEPAGE_DESTINATION"
       ? supportedHomepageDestinationRoutes.has(routeKey)
@@ -235,7 +279,15 @@ function parsePayload(type: CmsContentType, payload: unknown) {
     if (!supported) {
       throw new CmsContentError(
         "INVALID",
-        "Homepage content must use an existing Kurioticket fare-supported route.",
+        `${route.originCode} → ${route.destinationCode} is not a fare-supported homepage route.`,
+        {
+          formErrors: [],
+          fieldErrors: {
+            destinationCode: [
+              `Choose a destination that is supported from ${route.originCode}.`,
+            ],
+          },
+        },
       );
     }
   }
@@ -257,12 +309,25 @@ function parsePayload(type: CmsContentType, payload: unknown) {
       throw new CmsContentError(
         "INVALID",
         "Homepage destination label and fare route must match the same canonical Kurioticket destination entry.",
+        {
+          formErrors: [],
+          fieldErrors: {
+            city: ["Choose the city that belongs to this supported destination route."],
+            destinationCode: ["Choose the IATA code for the same destination."],
+          },
+        },
       );
     }
     if (!resolveHotelDiscoveryIntent(`${destination.city}, ${destination.country}`, "home-popular-stays")) {
       throw new CmsContentError(
         "INVALID",
         "Homepage destination must resolve to a canonical Kurioticket hotel destination.",
+        {
+          formErrors: [],
+          fieldErrors: {
+            city: ["Choose a city that is available in the Kurioticket hotel destination catalog."],
+          },
+        },
       );
     }
   }

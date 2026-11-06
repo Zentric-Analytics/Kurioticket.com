@@ -45,6 +45,8 @@ export function CmsLocationCombobox({
   countryCode = "",
   hotelOptions = [],
   selectedValue,
+  airportCodes,
+  allowManualAirportCode = true,
   onChange,
   onSelect,
   disabled = false,
@@ -56,6 +58,8 @@ export function CmsLocationCombobox({
   countryCode?: string;
   hotelOptions?: readonly HotelSearchOption[];
   selectedValue?: string;
+  airportCodes?: readonly string[];
+  allowManualAirportCode?: boolean;
   onChange: (value: string) => void;
   onSelect?: (option: CmsLocationOption) => void;
   disabled?: boolean;
@@ -75,7 +79,7 @@ export function CmsLocationCombobox({
     kind === "hotel"
       ? getCmsHotelDestinationSuggestions(hotelOptions, browseAllHotels ? "" : value)
       : kind === "airport"
-      ? getCmsAirportSuggestions(value)
+      ? getCmsAirportSuggestions(value, 8, airportCodes, allowManualAirportCode)
       : kind === "country"
         ? getCmsCountrySuggestions(value)
         : getCmsCitySuggestions(value, countryCode);

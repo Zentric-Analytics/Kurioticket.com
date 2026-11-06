@@ -36,6 +36,16 @@ test("airport suggestions use existing shared IATA airport data with explicit ma
   assert.ok(getCmsAirportSuggestions("a").every((option) => !option.manual));
 });
 
+test("homepage flight airport suggestions can be limited to supported route codes", () => {
+  const supported = getCmsAirportSuggestions("", 8, ["LOS", "EWR"], false);
+  assert.ok(supported.every((option) => ["LOS", "EWR"].includes(option.value)));
+  assert.ok(supported.some((option) => option.value === "EWR"));
+  assert.ok(supported.every((option) => !option.manual));
+
+  const unknown = getCmsAirportSuggestions("ZZZ", 8, ["LOS", "EWR"], false);
+  assert.deepEqual(unknown, []);
+});
+
 test("homepage destinations use searchable selectors without restructuring the editor", () => {
   assert.match(editor, /<CmsLocationCombobox label="City" kind="city"/);
   assert.match(editor, /<CmsLocationCombobox label="Country" kind="country"/);
@@ -47,6 +57,11 @@ test("homepage destinations use searchable selectors without restructuring the e
   assert.match(editor, /<CmsExpandingTextField label="Image" value=\{fields\.image/);
   assert.match(editor, /<CmsExpandingTextField label="Image alt text" value=\{fields\.imageAlt/);
   assert.match(editor, /<CmsEditorActions/);
+  assert.match(editor, /supportedFlightRoutes/);
+  assert.match(editor, /airportCodes=\{originAirportCodes\}/);
+  assert.match(editor, /airportCodes=\{destinationAirportCodes\}/);
+  assert.match(editor, /allowManualAirportCode=\{false\}/);
+  assert.match(editor, /Choose a destination supported from/);
   assert.match(editor, /focus:border-\[#004BB8\]\/40/);
 });
 
