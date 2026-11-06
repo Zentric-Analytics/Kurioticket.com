@@ -114,9 +114,8 @@ test("settings owns authoritative feature controls", () => {
   assert.doesNotMatch(settingsPage, /HomepageFaresRefreshCard/);
 });
 
-test("deployment-owned configuration stays outside Settings mutations", () => {
-  assert.match(settingsPage, /Database URLs, API keys, session secrets, provider credentials and server environment variables remain deployment-owned and are not editable here/);
-  assert.match(settingsPage, /Administrator allowlists and production feature-control permissions remain server-managed/);
+test("deployment-owned configuration stays protected without a duplicate Settings section", () => {
+  assert.doesNotMatch(settingsPage, /Managed outside Settings|Runtime & credentials|Administrator access/);
   assert.match(envSource, /getFeatureControlProductionAdmins/);
   assert.match(envSource, /export function getAdminEmails\(\)/);
   assert.match(envSource, /process\.env\.ADMIN_EMAILS \|\| ""/);
