@@ -6,7 +6,8 @@ const core = readFileSync("src/services/adminAlertCore.ts", "utf8");
 const service = readFileSync("src/services/adminAlertService.ts", "utf8");
 const emailDelivery = readFileSync("src/services/emailDeliveryService.ts", "utf8");
 const flightStatus = readFileSync("src/services/adminFlightStatusOperationsService.ts", "utf8");
-const page = readFileSync("src/app/admin/notifications/page.tsx", "utf8");
+const page = readFileSync("src/app/admin/settings/notifications/page.tsx", "utf8");
+const legacyPage = readFileSync("src/app/admin/notifications/page.tsx", "utf8");
 const readApi = readFileSync("src/app/api/admin/notifications/route.ts", "utf8");
 const ackApi = readFileSync("src/app/api/admin/notifications/acknowledge/route.ts", "utf8");
 const acknowledgeButton = readFileSync("src/components/admin/AdminAlertAcknowledgeButton.tsx", "utf8");
@@ -138,7 +139,7 @@ test("acknowledgement mutation is authenticated, rate-limited, and safe", () => 
 });
 
 test("notifications page keeps clear acknowledgement guidance without verbose monitoring boundaries", () => {
-  assert.match(page, /title="Notifications & Alerts"/);
+  assert.match(page, /id="settings-section-title"/);
   assert.match(page, /does not resolve the underlying condition/);
   assert.match(page, /Alerts clear automatically when the underlying authoritative signal clears/);
   assert.doesNotMatch(page, /Monitoring boundaries|Coverage, limitations, and alert behavior|does not fabricate alerts|data-monitoring-boundaries/);
@@ -168,7 +169,7 @@ test("admin bell opens the complete notification panel without navigating or ack
   assert.match(panel, /role="dialog"/);
   assert.match(panel, /Close notifications/);
   assert.match(panel, /visibleAlerts\.map/);
-  assert.match(panel, /shouldShowAdminNotification/);
+  assert.match(panel, /const visibleAlerts = snapshot\?\.alerts \?\? \[\]/);
   assert.match(panel, /AdminAlertAcknowledgeButton/);
   assert.doesNotMatch(panel, /method: "POST"|slice\(0|View all|See all|href="\/admin\/notifications"|line-clamp/);
 });
@@ -185,11 +186,12 @@ test("notifications read API supports cached safe summary mode", () => {
 });
 
 
-test("Notifications & Alerts uses the same compact white workspace as Users and Search Activity", () => {
-  assert.match(shell, /const notificationsWorkspace = pathname === "\/admin\/notifications" \|\| pathname === "\/admin\/notifications\/"/);
-  assert.match(shell, /whiteWorkspace[\s\S]*?notificationsWorkspace/);
-  assert.match(page, /<AdminPageShell title="Notifications & Alerts" hideHeader>/);
-  assert.match(page, /max-w-\[1500px\] bg-white/);
+test("Notifications is rendered inside the existing Settings layout without duplicating admin headers", () => {
+  const settingsLayout = readFileSync("src/app/admin/settings/layout.tsx", "utf8");
+  assert.match(settingsLayout, /<AdminPageShell title="Settings" hideHeader>/);
+  assert.match(page, /<section aria-labelledby="settings-section-title"/);
+  assert.match(page, /getCurrentDatabaseOutageAdminToken/);
+  assert.match(legacyPage, /redirect\("\/admin\/settings\/notifications"\)/);
   assert.match(page, /aria-label="Alert summary"/);
   assert.match(page, /grid grid-cols-2 md:grid-cols-4/);
   assert.match(page, /aria-labelledby="active-alerts-heading"/);
