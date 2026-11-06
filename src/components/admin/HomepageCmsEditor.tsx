@@ -15,6 +15,7 @@ import { getCmsMarketName } from "@/lib/adminCmsMarketLabels";
 import { ContentSectionHeading, ContentStatusPill } from "@/components/admin/ContentWorkspace";
 import { CmsEditorActions, type CmsEditorAction } from "@/components/admin/CmsEditorActions";
 import { CmsLocationCombobox } from "@/components/admin/CmsLocationCombobox";
+import { AdminDirectorySelect } from "@/components/admin/AdminDirectorySelect";
 import { CmsExpandingTextField } from "@/components/admin/CmsExpandingTextField";
 import { HomepageDestinationDraftPreview } from "@/components/admin/HomepageDestinationDraftPreview";
 import { CmsRouteHotelDraftPreview } from "@/components/admin/CmsRouteHotelDraftPreview";
@@ -293,12 +294,25 @@ export function HomepageCmsEditor({
         </div>
 
         {section !== "hotel-destinations" ? (
-          <Field label="Market" className="max-w-[320px]">
-            <AdminSelect className={editorControlClass} value={market} onChange={(event) => setMarket(event.target.value)} disabled={pending || archived} required>
-              {!item ? <option value="">Select market</option> : null}
-              {markets.map((value) => <option key={value} value={value}>{getCmsMarketName(value)}</option>)}
-            </AdminSelect>
-          </Field>
+          <div className="max-w-[320px]">
+            <span className="block min-h-5 text-[13px] font-medium leading-5 text-[#475569]">Market</span>
+            <div className="mt-1.5">
+              <AdminDirectorySelect
+                label="Market"
+                name="market"
+                value={market}
+                options={[
+                  ...(!item ? [{ value: "", label: "Select market" }] : []),
+                  ...markets.map((value) => ({ value, label: getCmsMarketName(value) })),
+                ]}
+                field
+                attached
+                required
+                disabled={pending || archived}
+                onValueChange={setMarket}
+              />
+            </div>
+          </div>
         ) : null}
 
         {section === "destinations" ? (
@@ -596,3 +610,4 @@ function TextField({
     </Field>
   );
 }
+

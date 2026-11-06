@@ -212,7 +212,7 @@ test("New CMS drafts require a valid market but preserve chosen filtered market 
   assert.match(newPage, /: "ALL"/);
   assert.match(newPage, /initialMarket=\{market === "ALL" \? "" : market\}/);
   assert.match(newPage, /getCmsContentMarketOverview\(config\.type, homepageCmsMarkets, homepageCmsLocale\)/);
-  assert.match(editor, /<option value="">Select market<\/option>/);
+  assert.match(editor, /\{ value: "", label: "Select market" \}/);
   assert.match(editor, /validMarket = section === "hotel-destinations" \|\| markets\.includes\(market\)/);
   assert.match(editor, /const validDraft = validMarket/);
   assert.match(editor, /&& validateClientDraft\(section, currentPayload, sortOrder\)/);
@@ -347,7 +347,10 @@ test("homepage CMS controls share the public personal-details border and focus t
   const profile = readFileSync("src/components/dashboard/DashboardGrid.tsx", "utf8");
   const editor = readFileSync("src/components/admin/HomepageCmsEditor.tsx", "utf8");
   const control = editor.match(/const editorControlClass = "([^"]+)";/)?.[1];
+  const selector = readFileSync("src/components/admin/AdminDirectorySelect.tsx", "utf8");
+  const marketControl = selector.match(/const fieldClass = "([^"]+)";/)?.[1];
   assert.ok(control, "The homepage CMS should keep one shared control style");
+  assert.ok(marketControl, "The custom CMS market field should retain the same control style");
 
   for (const token of [
     "border border-slate-300",
@@ -358,11 +361,13 @@ test("homepage CMS controls share the public personal-details border and focus t
   ]) {
     assert.ok(profile.includes(token), `Public personal details must contain ${token}`);
     assert.ok(control.includes(token), `Homepage CMS must match the public treatment: ${token}`);
+    assert.ok(marketControl.includes(token), `The CMS market field must match the public treatment: ${token}`);
   }
 
   assert.doesNotMatch(control, /border-2|border-\[#94A3B8\]|focus:border-\[#6D28D9\]|focus:ring-\[#EDE9FE\]/);
   assert.match(editor, /<AdminInput className=\{editorControlClass\}/);
-  assert.match(editor, /<AdminSelect className=\{editorControlClass\}/);
+  assert.match(editor, /<AdminDirectorySelect\s+label="Market"/);
+  assert.match(editor, /\s+field\s+attached\s+required\s+disabled=\{pending \|\| archived\}/);
   assert.match(editor, /<AdminTextarea className=\{\`\$\{editorControlClass\}/);
   // Existing compact widths and grouped fields must not be rearranged.
   assert.match(editor, /grid max-w-\[512px\] gap-4 sm:grid-cols-3/);
@@ -449,3 +454,4 @@ test("Homepage and flight drag ordering edits complete market drafts without aut
   assert.doesNotMatch(reorderSection, /publishedSortOrder:\s*nextOrder|publishedPayload:\s*item\.draftPayload/);
   assert.doesNotMatch(reorder, /action:\s*"publish"/);
 });
+

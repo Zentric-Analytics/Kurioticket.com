@@ -44,3 +44,16 @@ test("server sort fallback provides explicit Apply sort without JavaScript", () 
   assert.match(html, /h-10/);
   assert.doesNotMatch(html, /role="listbox"|type="hidden"/);
 });
+
+test("CMS field fallback keeps required and disabled semantics without JavaScript", () => {
+  const html = renderToStaticMarkup(createElement(AdminDirectorySelect, {
+    name: "market", label: "Market", value: "", field: true, attached: true,
+    required: true, disabled: true,
+    options: [{ value: "", label: "Select market" }, { value: "NG", label: "Nigeria" }],
+  }));
+  assert.match(html, /<select[^>]*disabled=""[^>]*required=""/);
+  assert.match(html, /<option value="" selected="">Select market/);
+  assert.match(html, /h-9/);
+  assert.doesNotMatch(html, /role="listbox"/);
+});
+
