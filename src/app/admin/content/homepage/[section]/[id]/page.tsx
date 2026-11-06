@@ -1,14 +1,15 @@
+import { CmsOperationProvider } from "@/components/admin/CmsOperationContext";
+import { CmsRevisionPagination } from "@/components/admin/CmsRevisionPagination";
 import { ContentPageFrame, ContentSectionHeading, ContentStatusPill } from "@/components/admin/ContentWorkspace";
 import { notFound } from "next/navigation";
 
 
 import { HomepageCmsEditor } from "@/components/admin/HomepageCmsEditor";
 import { CmsRevisionRestoreButton } from "@/components/admin/CmsRevisionRestoreButton";
-import { hotelDestinations } from "@/data/hotelDestinations";
 import { getHomepageCmsSection, homepageCmsSections } from "@/lib/adminHomepageCms";
 import { homepageCmsListNavigation } from "@/lib/adminContentNavigation";
 import { getCmsMarketName } from "@/lib/adminCmsMarketLabels";
-import { CmsContentError, getAdminCmsContent, getCmsHomepageFlightRoutePairs } from "@/services/cmsContentService";
+import { CmsContentError, getAdminCmsContent, getAdminCmsHotelOptions, getCmsHomepageFlightRoutePairs } from "@/services/cmsContentService";
 import { homepageCmsMarkets } from "@/services/homepageCmsService";
 
 type PageProps = {
@@ -22,16 +23,18 @@ export default async function HomepageCmsDetailPage({ params, searchParams }: Pa
   if (!section) notFound();
 
   const config = homepageCmsSections[section];
+  const raw = await searchParams;
+  const revisionBefore = typeof raw.revisionBefore === "string" ? raw.revisionBefore : undefined;
   let result: Awaited<ReturnType<typeof getAdminCmsContent>>;
   try {
-    result = await getAdminCmsContent(id);
+    result = await getAdminCmsContent(id, revisionBefore);
   } catch (error) {
     if (error instanceof CmsContentError && error.code === "NOT_FOUND") notFound();
     throw error;
   }
 
   if (result.item.type !== config.type || result.item.locale !== "en") notFound();
-  const nav = homepageCmsListNavigation(section, await searchParams, result.item.market);
+  const nav = homepageCmsListNavigation(section, raw, result.item.market);
 
   return (
     <ContentPageFrame
@@ -40,14 +43,16 @@ export default async function HomepageCmsDetailPage({ params, searchParams }: Pa
       backHref={nav.listHref}
       backLabel={`Back to ${config.title}`}
     >
+      <CmsOperationProvider>
       <div className="space-y-5">
         <HomepageCmsEditor
+          key={result.item.id}
           section={section}
           markets={homepageCmsMarkets}
           initialMarket={result.item.market}
           listQuery={nav.query}
           initialItem={result.item}
-          hotelOptions={section === "hotel-destinations" ? getHotelOptions() : []}
+          hotelOptions={section === "hotel-destinations" ? await getAdminCmsHotelOptions() : []}
           supportedFlightRoutes={
             section === "destinations"
               ? getCmsHomepageFlightRoutePairs("HOMEPAGE_DESTINATION")
@@ -60,7 +65,7 @@ export default async function HomepageCmsDetailPage({ params, searchParams }: Pa
         <section className="mt-7 min-w-0">
           <div className="mb-3">
             <ContentSectionHeading>Revision history</ContentSectionHeading>
-            <p className="mt-1 text-[13px] leading-5 text-[#64748B]">Recent immutable draft and published snapshots.</p>
+            <p className="mt-1 text-[13px] leading-5 text-[#64748B]">Saved draft and publication history. Restore an earlier version into a new draft.</p>
           </div>
           <div className="divide-y divide-[#E7ECF5]">
             {result.revisions.map((revision) => (
@@ -98,8 +103,10 @@ export default async function HomepageCmsDetailPage({ params, searchParams }: Pa
               </div>
             ))}
           </div>
+          <CmsRevisionPagination query={nav.query} before={revisionBefore} next={result.nextRevisionBefore} />
         </section>
       </div>
+      </CmsOperationProvider>
     </ContentPageFrame>
   );
 }
@@ -109,16 +116,4 @@ function revisionTitle(section: string, value: unknown) {
   const raw = value as Record<string, unknown>;
   const key = section === "destinations" ? "city" : section === "flight-routes" ? "title" : "name";
   return typeof raw[key] === "string" ? raw[key] : "Invalid legacy snapshot";
-}
-
-function getHotelOptions() {
-  return hotelDestinations.map((destination) => ({
-    canonicalId: `hotel:${destination.id}`,
-    label: `${destination.name} · ${destination.country}`,
-    name: destination.name,
-    country: destination.country,
-    countryCode: destination.countryCode,
-    kind: destination.kind,
-    searchValue: destination.searchValue,
-  }));
 }

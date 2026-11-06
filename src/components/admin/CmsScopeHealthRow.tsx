@@ -1,5 +1,7 @@
 "use client";
 
+import { requestCmsDiscard } from "@/lib/cmsNavigationGuard";
+
 import { useId, useMemo, useState, type KeyboardEvent, type ReactNode } from "react";
 
 import { CmsHealthInlineRepair } from "@/components/admin/CmsHealthInlineRepair";
@@ -106,9 +108,15 @@ export function CmsScopeHealthRow({
   );
 
   const toggleDetails = () => {
+    if (expanded && repairTarget && !requestCmsDiscard()) return;
     setExpanded((current) => !current);
     if (expanded) setRepairTarget(null);
   };
+
+  function openRepair(target: RepairTarget) {
+    if (repairTarget && repairTarget.id !== target.id && !requestCmsDiscard()) return;
+    setRepairTarget(target);
+  }
 
   const handleRowKeyDown = (event: KeyboardEvent<HTMLTableRowElement>) => {
     if (event.key !== "Enter" && event.key !== " ") return;
@@ -259,7 +267,7 @@ export function CmsScopeHealthRow({
                         <FixButton
                           active={repairTarget?.id === issue.id}
                           onClick={() =>
-                            setRepairTarget({ id: issue.id, key: issue.key })
+                            openRepair({ id: issue.id, key: issue.key })
                           }
                         />
                       }
@@ -280,7 +288,7 @@ export function CmsScopeHealthRow({
                         <FixButton
                           active={repairTarget?.id === issue.id}
                           onClick={() =>
-                            setRepairTarget({ id: issue.id, key: issue.key })
+                            openRepair({ id: issue.id, key: issue.key })
                           }
                         />
                       }
@@ -297,7 +305,7 @@ export function CmsScopeHealthRow({
                         <FixButton
                           active={repairTarget?.id === issue.id}
                           onClick={() =>
-                            setRepairTarget({ id: issue.id, key: issue.key })
+                            openRepair({ id: issue.id, key: issue.key })
                           }
                         />
                       }
@@ -390,9 +398,9 @@ export function CmsScopeHealthRow({
                               key={item.id}
                               type="button"
                               onClick={() =>
-                                setRepairTarget({ id: item.id, key: item.key })
+                                openRepair({ id: item.id, key: item.key })
                               }
-                              className="focus-ring inline-flex h-8 items-center rounded-md border border-[#D8E1EC] bg-white px-2.5 text-[12px] font-medium text-[#020617] hover:bg-[#F8FAFC]"
+                              className="focus-ring inline-flex h-8 cursor-pointer items-center rounded-md border border-[#D8E1EC] bg-white px-2.5 text-[12px] font-medium text-[#020617] hover:bg-[#F8FAFC]"
                             >
                               Fix {item.key}
                             </button>
@@ -434,7 +442,7 @@ function FixButton({
     <button
       type="button"
       onClick={onClick}
-      className="focus-ring inline-flex h-8 items-center rounded-md border border-[#D8E1EC] bg-white px-2.5 text-[12px] font-medium text-[#020617] hover:bg-[#F8FAFC]"
+      className="focus-ring inline-flex h-8 cursor-pointer items-center rounded-md border border-[#D8E1EC] bg-white px-2.5 text-[12px] font-medium text-[#020617] hover:bg-[#F8FAFC]"
     >
       {active ? "Repair open" : "Fix"}
     </button>

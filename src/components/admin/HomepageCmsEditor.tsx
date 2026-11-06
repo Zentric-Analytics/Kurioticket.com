@@ -1,5 +1,10 @@
 "use client";
 
+import Link from "next/link";
+import { validateCmsEditor, readCmsFieldErrors, cmsFieldLimits, type CmsFieldErrors } from "@/lib/cmsContentValidation";
+import { useCmsNavigationGuard } from "@/lib/cmsNavigationGuard";
+import { CmsValidationProvider, CmsFieldError, CmsSuccessMessage } from "@/components/admin/CmsEditorFeedback";
+import { useCmsOperation } from "@/components/admin/CmsOperationContext";
 import { useRouter } from "next/navigation";
 import { useMemo, useRef, useState, useTransition } from "react";
 
@@ -51,6 +56,7 @@ type HotelOption = {
   countryCode: string;
   kind: string;
   searchValue: string;
+  managedItemId?: string;
 };
 
 const sectionType = {
@@ -103,20 +109,23 @@ export function HomepageCmsEditor({
   );
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [serverFieldErrors, setServerFieldErrors] = useState<CmsFieldErrors>({});
   const [conflict, setConflict] = useState(false);
-  const [pending, startTransition] = useTransition();
+  const [transitionPending, startTransition] = useTransition();
+  const { busy: externalBusy } = useCmsOperation();
+  const pending = transitionPending || externalBusy;
   const [activeAction, setActiveAction] = useState<CmsEditorAction | null>(null);
 
   const currentPayload = buildPayload(section, fields);
   const savedPayload = initialFields(section, payloadRecord(item?.draftPayload));
-  const draftDirty = Boolean(
-    item &&
+  const draftDirty = item ? Boolean(
     (
       JSON.stringify(currentPayload) !== JSON.stringify(buildPayload(section, savedPayload)) ||
-      Number(sortOrder) !== item.sortOrder ||
+      sortOrder !== String(item.sortOrder) ||
       market !== item.market
     )
-  );
+  ) : JSON.stringify(fields) !== JSON.stringify(initialFields(section, saved)) || sortOrder !== "0" || market !== initialMarket || hotelSearch !== (hotelOptions.find((option) => option.canonicalId === text(saved.canonicalId))?.label ?? text(saved.canonicalId));
+  const navigationGuard = useCmsNavigationGuard(draftDirty, pending);
   const validMarket = section === "hotel-destinations" || markets.includes(market);
   const normalizedOrigin = (fields.originCode ?? "").trim().toUpperCase();
   const normalizedDestination = (fields.destinationCode ?? "").trim().toUpperCase();
@@ -130,16 +139,29 @@ export function HomepageCmsEditor({
   const destinationAirportCodes = flightSection
     ? compatibleDestinationCodes(normalizedOrigin, supportedFlightRoutes)
     : [];
-  const validDraft = validMarket
-    && validateClientDraft(section, currentPayload, sortOrder)
-    && routeValidation.valid;
+  const clientErrors = validateCmsEditor(sectionType[section], currentPayload, sortOrder);
+  if (!validMarket) clientErrors.market = ["Choose a supported market."];
+  const managedHotel = hotelOptions.find((option) => option.canonicalId === fields.canonicalId && option.managedItemId && option.managedItemId !== item?.id);
+  if (managedHotel) clientErrors.canonicalId = ["This destination is already managed. Open its existing record below."];
+  const matchingManagedHotels = hotelSearch.trim() ? hotelOptions.filter((option) => option.managedItemId && option.managedItemId !== item?.id && option.label.toLowerCase().includes(hotelSearch.trim().toLowerCase())).slice(0, 5) : [];
+  const availableHotelOptions = hotelOptions.filter((option) => !option.managedItemId || option.managedItemId === item?.id);
+  const validDraft = Object.keys(clientErrors).length === 0 && routeValidation.valid;
+  const fieldErrors = { ...(draftDirty ? clientErrors : {}), ...serverFieldErrors };
   const unpublishedLabel = item ? getCmsUnpublishedChangeLabel(item) : null;
 
+  function clearFeedback() {
+    setMessage(null);
+    setServerFieldErrors({});
+    if (!conflict) setError(null);
+  }
+
   function setField(name: string, value: string) {
+    clearFeedback();
     setFields((current) => ({ ...current, [name]: value }));
   }
 
   function selectCountry(option: CmsLocationOption) {
+    clearFeedback();
     setFields((current) => ({
       ...current,
       country: option.value,
@@ -148,6 +170,7 @@ export function HomepageCmsEditor({
   }
 
   function selectCity(option: CmsLocationOption) {
+    clearFeedback();
     setFields((current) => ({
       ...current,
       city: option.value,
@@ -157,6 +180,7 @@ export function HomepageCmsEditor({
   }
 
   function applyHotelOption(canonicalId: string) {
+    clearFeedback();
     const option = hotelOptions.find((entry) => entry.canonicalId === canonicalId);
     if (!option) {
       setField("canonicalId", canonicalId);
@@ -199,9 +223,11 @@ export function HomepageCmsEditor({
         });
         const body = await response.json().catch(() => ({}));
         if (!response.ok || !body.item?.id) {
+          setServerFieldErrors(readCmsFieldErrors(body.issues));
           setError(typeof body.error === "string" ? body.error : "Unable to create draft.");
           return;
         }
+        navigationGuard.allowNavigation();
         router.replace(`/admin/content/homepage/${section}/${encodeURIComponent(body.item.id)}${listQuery ? "?" + listQuery : ""}`);
         router.refresh();
       } catch {
@@ -231,7 +257,7 @@ export function HomepageCmsEditor({
   }
 
   function archive() {
-    if (!item || pending || !window.confirm("Archive this content? Archived content cannot be edited in this CMS phase.")) return;
+    if (!item || pending || !window.confirm("Archive this content? Archived content cannot be edited or restored here. Any unsaved edits will be discarded.")) return;
     mutate("archive", {}, "Content archived.");
   }
 
@@ -257,6 +283,7 @@ export function HomepageCmsEditor({
         });
         const body = await response.json().catch(() => ({}));
         if (!response.ok || !body.item) {
+          setServerFieldErrors(readCmsFieldErrors(body.issues));
           const serverError = typeof body.error === "string" ? body.error : "Unable to update content.";
           // A dependency/duplicate conflict is not a stale edit. Show the
           // actionable server reason without incorrectly offering Reload.
@@ -270,8 +297,12 @@ export function HomepageCmsEditor({
         }
         setConflict(false);
         setItem(body.item as CmsItem);
-        setMarket(body.item.market ?? market);
-        setSortOrder(String(body.item.sortOrder ?? Number(sortOrder)));
+        if (action === "save_draft" || action === "archive" || !draftDirty) {
+          setFields(initialFields(section, payloadRecord(body.item.draftPayload)));
+          setMarket(body.item.market ?? market);
+          setSortOrder(String(body.item.sortOrder ?? Number(sortOrder)));
+        }
+        setServerFieldErrors({});
         setMessage(success);
         router.refresh();
       } catch {
@@ -283,174 +314,181 @@ export function HomepageCmsEditor({
   const archived = item?.status === "ARCHIVED";
 
   return (
-    <div className="grid min-w-0 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-8 xl:gap-14">
-      <section className="w-full min-w-0 max-w-[640px] space-y-4">
-        <div>
-          <div className="flex flex-wrap items-center gap-2.5">
-            <ContentSectionHeading>Content details</ContentSectionHeading>
-            {item ? <ContentStatusPill status={item.status} /> : null}
-          </div>
-          <p className="mt-1 text-[13px] text-[#64748B]">Structured CMS content only. Save draft before publishing changes.</p>
-        </div>
-
-        {section !== "hotel-destinations" ? (
-          <div className="max-w-[320px]">
-            <span className="block min-h-5 text-[13px] font-medium leading-5 text-[#475569]">Market</span>
-            <div className="mt-1.5">
-              <AdminDirectorySelect
-                label="Market"
-                name="market"
-                value={market}
-                options={[
-                  ...(!item ? [{ value: "", label: "Select market" }] : []),
-                  ...markets.map((value) => ({ value, label: getCmsMarketName(value) })),
-                ]}
-                field
-                attached
-                required
-                disabled={pending || archived}
-                onValueChange={setMarket}
-              />
+    <CmsValidationProvider errors={fieldErrors}>
+      <div onChangeCapture={clearFeedback} className="grid min-w-0 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-8 xl:gap-14">
+        <section className="w-full min-w-0 max-w-[640px] space-y-4">
+          <div>
+            <div className="flex flex-wrap items-center gap-2.5">
+              <ContentSectionHeading>Content details</ContentSectionHeading>
+              {item ? <ContentStatusPill status={item.status} /> : null}
             </div>
+            <p className="mt-1 text-[13px] text-[#64748B]">Save your draft before publishing changes.</p>
           </div>
-        ) : null}
+
+          {section !== "hotel-destinations" ? (
+            <div className="max-w-[320px]">
+              <span className="block min-h-5 text-[13px] font-medium leading-5 text-[#475569]">Market</span>
+              <div className="mt-1.5">
+                <AdminDirectorySelect
+                  label="Market"
+                  name="market"
+                  value={market}
+                  options={[
+                    ...(!item ? [{ value: "", label: "Select market" }] : []),
+                    ...markets.map((value) => ({ value, label: getCmsMarketName(value) })),
+                  ]}
+                  field
+                  attached
+                  required
+                  disabled={pending || archived}
+                  onValueChange={(value) => { clearFeedback(); setMarket(value); }}
+                />
+                <CmsFieldError name="market" />
+              </div>
+            </div>
+          ) : null}
+
+          {section === "destinations" ? (
+            <>
+              <CmsLocationCombobox label="City" kind="city" value={fields.city ?? ""} countryCode={fields.countryCode ?? ""} onChange={(value) => setField("city", value)} onSelect={selectCity} disabled={pending || archived} className="max-w-[320px]" />
+              <CmsLocationCombobox label="Country" kind="country" value={fields.country ?? ""} onChange={(value) => setFields((current) => ({ ...current, country: value, ...(value !== current.country ? { countryCode: "" } : {}) }))} onSelect={selectCountry} disabled={pending || archived} className="max-w-[320px]" />
+              <div className="grid max-w-[512px] gap-4 sm:grid-cols-3 sm:items-start">
+                <TextField label="Country code" name="countryCode" fields={fields} setField={setField} disabled={pending || archived} className="min-w-0" />
+                <div className="min-w-0">
+                  <CmsLocationCombobox label="Origin IATA" kind="airport" value={fields.originCode ?? ""} airportCodes={originAirportCodes} allowManualAirportCode={false} onChange={(value) => setField("originCode", value)} disabled={pending || archived} />
+                  {routeValidation.originError ? <p className="mt-1 text-[11px] leading-4 text-rose-700">{routeValidation.originError}</p> : null}
+                </div>
+                <div className="min-w-0">
+                  <CmsLocationCombobox label="Destination IATA" kind="airport" value={fields.destinationCode ?? ""} airportCodes={destinationAirportCodes} allowManualAirportCode={false} onChange={(value) => setField("destinationCode", value)} disabled={pending || archived} />
+                  {routeValidation.destinationError ? <p className="mt-1 text-[11px] leading-4 text-rose-700">{routeValidation.destinationError}</p> : null}
+                </div>
+              </div>
+              <CmsExpandingTextField label="Image" value={fields.image ?? ""} onChange={(value) => setField("image", value)} disabled={pending || archived} />
+              <CmsExpandingTextField label="Image alt text" value={fields.imageAlt ?? ""} onChange={(value) => setField("imageAlt", value)} disabled={pending || archived} />
+            </>
+          ) : null}
+
+          {section === "flight-routes" ? (
+            <>
+              <TextField label="Title" name="title" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[448px]" />
+              <div className="grid max-w-[496px] gap-4 sm:grid-cols-[minmax(0,1fr)_160px] sm:items-start">
+                <CmsLocationCombobox label="Origin city" kind="city" value={fields.originCity ?? ""} onChange={(value) => setField("originCity", value)} disabled={pending || archived} className="min-w-0" />
+                <div className="min-w-0">
+                  <CmsLocationCombobox label="Origin IATA" kind="airport" value={fields.originCode ?? ""} airportCodes={originAirportCodes} allowManualAirportCode={false} onChange={(value) => setField("originCode", value)} disabled={pending || archived} />
+                  {routeValidation.originError ? <p className="mt-1 text-[11px] leading-4 text-rose-700">{routeValidation.originError}</p> : null}
+                </div>
+                <CmsLocationCombobox label="Destination city" kind="city" value={fields.destinationCity ?? ""} onChange={(value) => setField("destinationCity", value)} disabled={pending || archived} className="min-w-0" />
+                <div className="min-w-0">
+                  <CmsLocationCombobox label="Destination IATA" kind="airport" value={fields.destinationCode ?? ""} airportCodes={destinationAirportCodes} allowManualAirportCode={false} onChange={(value) => setField("destinationCode", value)} disabled={pending || archived} />
+                  {routeValidation.destinationError ? <p className="mt-1 text-[11px] leading-4 text-rose-700">{routeValidation.destinationError}</p> : null}
+                </div>
+              </div>
+              <Field label="Route note" className="max-w-[480px]">
+                <AdminTextarea className={`${editorControlClass} h-auto min-h-24`} maxLength={cmsFieldLimits.routeNote} value={fields.routeNote ?? ""} onChange={(event) => setField("routeNote", event.target.value)} disabled={pending || archived} />
+              </Field>
+              <CmsExpandingTextField label="Image" value={fields.image ?? ""} onChange={(value) => setField("image", value)} disabled={pending || archived} />
+              <CmsExpandingTextField label="Image alt text" value={fields.imageAlt ?? ""} onChange={(value) => setField("imageAlt", value)} disabled={pending || archived} />
+            </>
+          ) : null}
+
+          {section === "hotel-destinations" ? (
+            <>
+              <CmsLocationCombobox
+                label="Canonical hotel destination"
+                kind="hotel"
+                value={hotelSearch}
+                selectedValue={fields.canonicalId ?? ""}
+                hotelOptions={availableHotelOptions}
+                onChange={(value) => {
+                  setHotelSearch(value);
+                  setField("canonicalId", "");
+                }}
+                onSelect={(option) => applyHotelOption(option.value)}
+                disabled={pending || archived || item?.publishedVersion != null || availableHotelOptions.length === 0}
+                className="max-w-[448px]"
+              />
+              {!availableHotelOptions.length && !item ? <p role="status" className="text-[13px] text-[#475569]">All canonical hotel destinations are already managed. <Link className="text-[#004BB8] underline" href={`/admin/content/homepage/hotel-destinations${listQuery ? "?" + listQuery : ""}`}>View existing destinations</Link></p> : null}
+              {matchingManagedHotels.length ? <div className="space-y-1 text-[12px] text-[#64748B]">Already managed:{matchingManagedHotels.map((option) => <Link key={option.canonicalId} className="block text-[#004BB8] underline" href={`/admin/content/homepage/hotel-destinations/${encodeURIComponent(option.managedItemId!)}${listQuery ? "?" + listQuery : ""}`}>Edit {option.label}</Link>)}</div> : null}
+              {managedHotel ? <Link className="inline-flex text-[13px] text-[#004BB8] underline" href={`/admin/content/homepage/hotel-destinations/${encodeURIComponent(managedHotel.managedItemId!)}${listQuery ? "?" + listQuery : ""}`}>Edit {managedHotel.label}</Link> : null}
+              <p className="max-w-[560px] text-[12px] leading-5 text-[#64748B]">
+                {item?.publishedVersion != null
+                  ? "Canonical identity is locked after publication. Edit the display name or image here; create a new draft to manage a different destination."
+                  : "Choose a canonical destination to fill its trusted hotel-search details. Existing destinations cannot be duplicated."}
+              </p>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <TextField label="Name" name="name" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[320px]" />
+                <CmsLocationCombobox label="Country" kind="country" value={fields.country ?? ""} onChange={(value) => setFields((current) => ({ ...current, country: value, ...(value !== current.country ? { countryCode: "" } : {}) }))} onSelect={selectCountry} disabled className="max-w-[320px]" />
+                <TextField label="Country code" name="countryCode" fields={fields} setField={setField} disabled className="max-w-[160px]" />
+                <Field label="Kind" className="max-w-[160px]">
+                  <AdminSelect className={editorControlClass + " cursor-pointer"} value={fields.kind ?? ""} onChange={(event) => setField("kind", event.target.value)} disabled>
+                    {["city", "district", "landmark", "airport-area", "custom"].map((kind) => <option key={kind} value={kind}>{kind === "airport-area" ? "Airport area" : kind.charAt(0).toUpperCase() + kind.slice(1)}</option>)}
+                  </AdminSelect>
+                </Field>
+              </div>
+              <TextField label="Search value" name="searchValue" fields={fields} setField={setField} disabled />
+              <p className="text-[12px] leading-5 text-[#64748B]">Country, country code, type and search value come from the canonical catalogue and are read-only to keep public hotel searches reliable.</p>
+              <CmsExpandingTextField label="Image (optional)" value={fields.image ?? ""} onChange={(value) => setField("image", value)} disabled={pending || archived} />
+              <CmsExpandingTextField label="Image alt text (optional)" value={fields.imageAlt ?? ""} onChange={(value) => setField("imageAlt", value)} disabled={pending || archived} />
+            </>
+          ) : null}
+
+          <Field label={section === "hotel-destinations" ? "Directory order" : "Order"} className="max-w-[128px]">
+            <AdminInput className={editorControlClass} type="number" min={0} max={100000} value={sortOrder} onChange={(event) => setSortOrder(event.target.value)} disabled={pending || archived} />
+          </Field>
+          {section === "hotel-destinations" ? (
+            <p className="text-[12px] leading-5 text-[#64748B]">Directory order controls the CMS listing and its published hotel reference order. Homepage Popular Stays cards retain their own curated order.</p>
+          ) : null}
+
+          <CmsEditorActions
+            status={item?.status}
+            pendingAction={pending ? activeAction : null}
+            blocked={externalBusy}
+            validDraft={validDraft}
+            draftDirty={draftDirty}
+            onCreate={createDraft}
+            onSave={saveDraft}
+            onPublish={publish}
+            onHide={hide}
+            onArchive={archive}
+          />
+
+          {section === "hotel-destinations" && item?.status === "PUBLISHED" ? (
+            <p className="text-[12px] leading-5 text-[#64748B]">Hiding or archiving a hotel destination used by a published homepage card is blocked to prevent unexpectedly removing that card.</p>
+          ) : null}
+          {item && draftDirty ? <p className="text-[13px] leading-5 text-amber-700">Save this draft before publishing the current edits.</p> : null}
+          <CmsSuccessMessage message={message} onDismiss={() => setMessage(null)} />
+          {error ? <p className="rounded-lg bg-rose-50 px-3 py-2 text-[13px] leading-5 text-rose-700" role="alert">{error}</p> : null}
+          {conflict ? (
+            <AdminButton className="cursor-pointer" type="button" variant="secondary" onClick={() => window.location.reload()}>
+              Reload latest
+            </AdminButton>
+          ) : null}
+        </section>
 
         {section === "destinations" ? (
-          <>
-            <CmsLocationCombobox label="City" kind="city" value={fields.city ?? ""} countryCode={fields.countryCode ?? ""} onChange={(value) => setField("city", value)} onSelect={selectCity} disabled={pending || archived} className="max-w-[320px]" />
-            <CmsLocationCombobox label="Country" kind="country" value={fields.country ?? ""} onChange={(value) => setFields((current) => ({ ...current, country: value, ...(value !== current.country ? { countryCode: "" } : {}) }))} onSelect={selectCountry} disabled={pending || archived} className="max-w-[320px]" />
-            <div className="grid max-w-[512px] gap-4 sm:grid-cols-3 sm:items-start">
-              <TextField label="Country code" name="countryCode" fields={fields} setField={setField} disabled={pending || archived} className="min-w-0" />
-              <div className="min-w-0">
-                <CmsLocationCombobox label="Origin IATA" kind="airport" value={fields.originCode ?? ""} airportCodes={originAirportCodes} allowManualAirportCode={false} onChange={(value) => setField("originCode", value)} disabled={pending || archived} />
-                {routeValidation.originError ? <p className="mt-1 text-[11px] leading-4 text-rose-700">{routeValidation.originError}</p> : null}
-              </div>
-              <div className="min-w-0">
-                <CmsLocationCombobox label="Destination IATA" kind="airport" value={fields.destinationCode ?? ""} airportCodes={destinationAirportCodes} allowManualAirportCode={false} onChange={(value) => setField("destinationCode", value)} disabled={pending || archived} />
-                {routeValidation.destinationError ? <p className="mt-1 text-[11px] leading-4 text-rose-700">{routeValidation.destinationError}</p> : null}
-              </div>
-            </div>
-            <CmsExpandingTextField label="Image" value={fields.image ?? ""} onChange={(value) => setField("image", value)} disabled={pending || archived} />
-            <CmsExpandingTextField label="Image alt text" value={fields.imageAlt ?? ""} onChange={(value) => setField("imageAlt", value)} disabled={pending || archived} />
-          </>
-        ) : null}
-
-        {section === "flight-routes" ? (
-          <>
-            <TextField label="Title" name="title" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[448px]" />
-            <div className="grid max-w-[496px] gap-4 sm:grid-cols-[minmax(0,1fr)_160px] sm:items-start">
-              <CmsLocationCombobox label="Origin city" kind="city" value={fields.originCity ?? ""} onChange={(value) => setField("originCity", value)} disabled={pending || archived} className="min-w-0" />
-              <div className="min-w-0">
-                <CmsLocationCombobox label="Origin IATA" kind="airport" value={fields.originCode ?? ""} airportCodes={originAirportCodes} allowManualAirportCode={false} onChange={(value) => setField("originCode", value)} disabled={pending || archived} />
-                {routeValidation.originError ? <p className="mt-1 text-[11px] leading-4 text-rose-700">{routeValidation.originError}</p> : null}
-              </div>
-              <CmsLocationCombobox label="Destination city" kind="city" value={fields.destinationCity ?? ""} onChange={(value) => setField("destinationCity", value)} disabled={pending || archived} className="min-w-0" />
-              <div className="min-w-0">
-                <CmsLocationCombobox label="Destination IATA" kind="airport" value={fields.destinationCode ?? ""} airportCodes={destinationAirportCodes} allowManualAirportCode={false} onChange={(value) => setField("destinationCode", value)} disabled={pending || archived} />
-                {routeValidation.destinationError ? <p className="mt-1 text-[11px] leading-4 text-rose-700">{routeValidation.destinationError}</p> : null}
-              </div>
-            </div>
-            <Field label="Route note" className="max-w-[480px]">
-              <AdminTextarea className={`${editorControlClass} h-auto min-h-24`} value={fields.routeNote ?? ""} onChange={(event) => setField("routeNote", event.target.value)} disabled={pending || archived} />
-            </Field>
-            <CmsExpandingTextField label="Image" value={fields.image ?? ""} onChange={(value) => setField("image", value)} disabled={pending || archived} />
-            <CmsExpandingTextField label="Image alt text" value={fields.imageAlt ?? ""} onChange={(value) => setField("imageAlt", value)} disabled={pending || archived} />
-          </>
-        ) : null}
-
-        {section === "hotel-destinations" ? (
-          <>
-            <CmsLocationCombobox
-              label="Canonical hotel destination"
-              kind="hotel"
-              value={hotelSearch}
-              selectedValue={fields.canonicalId ?? ""}
-              hotelOptions={hotelOptions}
-              onChange={(value) => {
-                setHotelSearch(value);
-                setField("canonicalId", "");
-              }}
-              onSelect={(option) => applyHotelOption(option.value)}
-              disabled={pending || archived || item?.publishedVersion != null}
-              className="max-w-[448px]"
-            />
-            <p className="max-w-[560px] text-[12px] leading-5 text-[#64748B]">
-              {item?.publishedVersion != null
-                ? "Canonical identity is locked after publication. Edit the display name or image here; create a new draft to manage a different destination."
-                : "Choose a canonical destination to fill its trusted hotel-search details. Existing destinations cannot be duplicated."}
-            </p>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <TextField label="Name" name="name" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[320px]" />
-              <CmsLocationCombobox label="Country" kind="country" value={fields.country ?? ""} onChange={(value) => setFields((current) => ({ ...current, country: value, ...(value !== current.country ? { countryCode: "" } : {}) }))} onSelect={selectCountry} disabled className="max-w-[320px]" />
-              <TextField label="Country code" name="countryCode" fields={fields} setField={setField} disabled className="max-w-[160px]" />
-              <Field label="Kind" className="max-w-[160px]">
-                <AdminSelect className={editorControlClass + " cursor-pointer"} value={fields.kind ?? ""} onChange={(event) => setField("kind", event.target.value)} disabled>
-                  {["city", "district", "landmark", "airport-area", "custom"].map((kind) => <option key={kind} value={kind}>{kind === "airport-area" ? "Airport area" : kind.charAt(0).toUpperCase() + kind.slice(1)}</option>)}
-                </AdminSelect>
-              </Field>
-            </div>
-            <TextField label="Search value" name="searchValue" fields={fields} setField={setField} disabled />
-            <p className="text-[12px] leading-5 text-[#64748B]">Country, country code, type and search value come from the canonical catalogue and are read-only to keep public hotel searches reliable.</p>
-            <CmsExpandingTextField label="Image (optional)" value={fields.image ?? ""} onChange={(value) => setField("image", value)} disabled={pending || archived} />
-            <CmsExpandingTextField label="Image alt text (optional)" value={fields.imageAlt ?? ""} onChange={(value) => setField("imageAlt", value)} disabled={pending || archived} />
-          </>
-        ) : null}
-
-        <Field label={section === "hotel-destinations" ? "Directory order" : "Order"} className="max-w-[128px]">
-          <AdminInput className={editorControlClass} type="number" min={0} max={100000} value={sortOrder} onChange={(event) => setSortOrder(event.target.value)} disabled={pending || archived} />
-        </Field>
-        {section === "hotel-destinations" ? (
-          <p className="text-[12px] leading-5 text-[#64748B]">Directory order controls the CMS listing and its published hotel reference order. Homepage Popular Stays cards retain their own curated order.</p>
-        ) : null}
-
-        <CmsEditorActions
-          status={item?.status}
-          pendingAction={pending ? activeAction : null}
-          validDraft={validDraft}
-          draftDirty={draftDirty}
-          onCreate={createDraft}
-          onSave={saveDraft}
-          onPublish={publish}
-          onHide={hide}
-          onArchive={archive}
-        />
-
-        {section === "hotel-destinations" && item?.status === "PUBLISHED" ? (
-          <p className="text-[12px] leading-5 text-[#64748B]">Hiding or archiving a hotel destination used by a published homepage card is blocked to prevent unexpectedly removing that card.</p>
-        ) : null}
-        {item && draftDirty ? <p className="text-[13px] leading-5 text-amber-700">Save this draft before publishing the current edits.</p> : null}
-        {message ? <p className="text-[13px] leading-5 text-emerald-700" role="status">{message}</p> : null}
-        {error ? <p className="rounded-lg bg-rose-50 px-3 py-2 text-[13px] leading-5 text-rose-700" role="alert">{error}</p> : null}
-        {conflict ? (
-          <AdminButton type="button" variant="secondary" onClick={() => window.location.reload()}>
-            Reload latest
-          </AdminButton>
-        ) : null}
-      </section>
-
-      {section === "destinations" ? (
-        <HomepageDestinationDraftPreview
-          payload={currentPayload}
-          marketName={getCmsMarketName(market)}
-          order={sortOrder}
-          version={item?.version}
-          publishedVersion={item?.publishedVersion}
-          unpublishedLabel={unpublishedLabel}
-          unsaved={draftDirty}
-        />
-      ) : (
-        <CmsRouteHotelDraftPreview
-          section={section}
-          payload={currentPayload}
-          marketName={getCmsMarketName(section === "hotel-destinations" ? "GLOBAL" : market)}
-          order={sortOrder}
-          version={item?.version}
-          publishedVersion={item?.publishedVersion}
-          unpublishedLabel={unpublishedLabel}
-          unsaved={draftDirty}
-        />
-      )}
-    </div>
+          <HomepageDestinationDraftPreview
+            payload={currentPayload}
+            marketName={getCmsMarketName(market)}
+            order={sortOrder}
+            version={item?.version}
+            publishedVersion={item?.publishedVersion}
+            unpublishedLabel={unpublishedLabel}
+            unsaved={draftDirty}
+          />
+        ) : (
+          <CmsRouteHotelDraftPreview
+            section={section}
+            payload={currentPayload}
+            marketName={getCmsMarketName(section === "hotel-destinations" ? "GLOBAL" : market)}
+            order={sortOrder}
+            version={item?.version}
+            publishedVersion={item?.publishedVersion}
+            unpublishedLabel={unpublishedLabel}
+            unsaved={draftDirty}
+          />
+        )}
+      </div>
+    </CmsValidationProvider>
   );
 }
 
@@ -573,20 +611,10 @@ function validateSupportedRoute(
   return { valid: true, originError: null, destinationError: null };
 }
 
-function validateClientDraft(section: HomepageCmsSection, payload: Record<string, unknown>, sortOrder: string) {
-  const order = Number(sortOrder);
-  if (!Number.isInteger(order) || order < 0) return false;
-  const required =
-    section === "destinations"
-      ? ["city", "country", "destinationCode", "originCode", "image", "imageAlt"]
-      : section === "flight-routes"
-        ? ["title", "originCity", "originCode", "destinationCity", "destinationCode", "routeNote", "image", "imageAlt"]
-        : ["name", "country", "countryCode", "kind", "searchValue", "canonicalId"];
-  return required.every((key) => typeof payload[key] === "string" && String(payload[key]).trim().length > 0);
-}
 
 function Field({ label, children, className = "" }: { label: string; children: React.ReactNode; className?: string }) {
-  return <label className={`block min-w-0 ${className}`}><span className="block min-h-5 text-[13px] font-medium leading-5 text-[#475569]">{label}</span><div className="mt-1.5">{children}</div></label>;
+  const name = label === "Route note" ? "routeNote" : label === "Order" || label === "Directory order" ? "sortOrder" : label === "Country code" ? "countryCode" : label === "Search value" ? "searchValue" : label.toLowerCase();
+  return <label className={`block min-w-0 ${className}`}><span className="block min-h-5 text-[13px] font-medium leading-5 text-[#475569]">{label}</span><div className="mt-1.5">{children}</div><CmsFieldError name={name} /></label>;
 }
 
 function TextField({
@@ -606,7 +634,7 @@ function TextField({
 }) {
   return (
     <Field label={label} className={className}>
-      <AdminInput className={editorControlClass} value={fields[name] ?? ""} onChange={(event) => setField(name, event.target.value)} disabled={disabled} />
+      <AdminInput maxLength={cmsFieldLimits[name]} className={editorControlClass} value={fields[name] ?? ""} onChange={(event) => setField(name, event.target.value)} disabled={disabled} />
     </Field>
   );
 }

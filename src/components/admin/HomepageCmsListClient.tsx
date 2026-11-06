@@ -1,5 +1,6 @@
 "use client";
 
+import { CmsSuccessMessage } from "@/components/admin/CmsEditorFeedback";
 import { useState } from "react";
 
 import Link from "next/link";
@@ -86,9 +87,9 @@ export function HomepageCmsListClient({
             />
           ) : (
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="text-[12px] text-[#64748B]">{reorderMessage || "Change card positions without editing their Order numbers individually."}</p>
+              <div><CmsSuccessMessage message={reorderMessage} onDismiss={() => setReorderMessage(null)} />{!reorderMessage ? <p className="text-[12px] text-[#64748B]">Change card positions without editing their Order numbers individually.</p> : null}</div>
               <button type="button" onClick={() => { setReorderMessage(null); setReorderOpen(true); }}
-                className="inline-flex h-9 items-center gap-2 rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px] font-medium text-[#374151] transition-colors hover:border-[#6D28D9] hover:bg-[#F8FAFC] focus-visible:outline-2 focus-visible:outline-[#6D28D9]">
+                className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px] font-medium text-[#374151] transition-colors hover:border-[#6D28D9] hover:bg-[#F8FAFC] focus-visible:outline-2 focus-visible:outline-[#6D28D9]">
                 <GripVertical size={15} aria-hidden="true" /> Reorder cards
               </button>
             </div>

@@ -3,6 +3,7 @@
 import { useEffect, useState, type ComponentProps } from "react";
 import { X } from "lucide-react";
 
+import { requestCmsDiscard } from "@/lib/cmsNavigationGuard";
 import { FaqCmsEditor } from "@/components/admin/FaqCmsEditor";
 import { HomepageCmsEditor } from "@/components/admin/HomepageCmsEditor";
 
@@ -43,15 +44,13 @@ export function CmsHealthInlineRepair({
   supportedFlightRoutes,
   onClose,
 }: Props) {
-  const [item, setItem] = useState<HomepageItem | FaqItem | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [result, setResult] = useState<{ itemId: string; item: HomepageItem | FaqItem | null; error: string | null } | null>(null);
+  const loading = result?.itemId !== itemId;
+  const item = loading ? null : result?.item;
+  const error = loading ? null : result?.error;
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
-    setError(null);
-    setItem(null);
 
     fetch(`/api/admin/content/${encodeURIComponent(itemId)}`, {
       method: "GET",
@@ -69,19 +68,12 @@ export function CmsHealthInlineRepair({
         return body.item as HomepageItem | FaqItem;
       })
       .then((nextItem) => {
-        if (!cancelled) setItem(nextItem);
+        if (!cancelled) setResult({ itemId, item: nextItem, error: null });
       })
       .catch((reason: unknown) => {
         if (!cancelled) {
-          setError(
-            reason instanceof Error
-              ? reason.message
-              : "Unable to load this CMS record.",
-          );
+          setResult({ itemId, item: null, error: reason instanceof Error ? reason.message : "Unable to load this CMS record." });
         }
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
       });
 
     return () => {
@@ -105,8 +97,8 @@ export function CmsHealthInlineRepair({
         </div>
         <button
           type="button"
-          onClick={onClose}
-          className="focus-ring inline-flex h-8 items-center gap-1.5 rounded-md border border-[#D8E1EC] bg-white px-2.5 text-[12px] font-medium text-[#475569] hover:bg-[#F8FAFC]"
+          onClick={() => { if (requestCmsDiscard()) onClose(); }}
+          className="focus-ring inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-md border border-[#D8E1EC] bg-white px-2.5 text-[12px] font-medium text-[#475569] hover:bg-[#F8FAFC]"
         >
           <X size={13} aria-hidden="true" />
           Close repair
@@ -124,9 +116,10 @@ export function CmsHealthInlineRepair({
       ) : item ? (
         <div className="pt-1">
           {type === "FAQ" ? (
-            <FaqCmsEditor initialItem={item as FaqItem} />
+            <FaqCmsEditor key={item.id} initialItem={item as FaqItem} />
           ) : (
             <HomepageCmsEditor
+              key={item.id}
               section={
                 type === "HOMEPAGE_DESTINATION"
                   ? "destinations"

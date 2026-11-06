@@ -73,7 +73,10 @@ test("homepage fare refresh component keeps existing client APIs, scopes, and st
   assert.ok(refreshCard.includes('fetch("/api/admin/homepage-fares/refresh"'));
   assert.match(refreshCard, /Loading homepage fare snapshot status/);
   assert.match(refreshCard, /Could not refresh homepage fares/);
-  assert.match(refreshCard, /Refresh homepage fares/);
+  assert.match(refreshCard, /Run fare refresh/);
+  assert.match(refreshCard, /Check latest status/);
+  assert.match(refreshCard, /onClick=\{onRefresh\}/);
+  assert.match(refreshCard, /onClick=\{onReload\}/);
 });
 
 test("homepage fare admin APIs preserve authorization, audit logging, and refresh scope behavior", () => {
@@ -214,8 +217,8 @@ test("New CMS drafts require a valid market but preserve chosen filtered market 
   assert.match(newPage, /getCmsContentMarketOverview\(config\.type, homepageCmsMarkets, homepageCmsLocale\)/);
   assert.match(editor, /\{ value: "", label: "Select market" \}/);
   assert.match(editor, /validMarket = section === "hotel-destinations" \|\| markets\.includes\(market\)/);
-  assert.match(editor, /const validDraft = validMarket/);
-  assert.match(editor, /&& validateClientDraft\(section, currentPayload, sortOrder\)/);
+  assert.match(editor, /if \(!validMarket\) clientErrors.market/);
+  assert.match(editor, /validateCmsEditor\(sectionType\[section\], currentPayload, sortOrder\)/);
   assert.match(editor, /&& routeValidation\.valid;/);
   assert.match(service, /Choose a supported market before creating this content/);
   assert.match(editor, /<CmsEditorActions/);
