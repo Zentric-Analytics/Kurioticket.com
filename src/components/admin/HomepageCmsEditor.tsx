@@ -1,5 +1,7 @@
 "use client";
 
+import { cmsOrderForDisplay, cmsOrderForStorage, CMS_DISPLAY_ORDER_MAX } from "@/lib/cmsOrderPresentation";
+
 import Link from "next/link";
 import { validateCmsEditor, readCmsFieldErrors, cmsFieldLimits, type CmsFieldErrors } from "@/lib/cmsContentValidation";
 import { useCmsNavigationGuard } from "@/lib/cmsNavigationGuard";
@@ -98,7 +100,7 @@ export function HomepageCmsEditor({
   const saved = useMemo(() => payloadRecord(initialItem?.draftPayload), [initialItem]);
   const [item, setItem] = useState<CmsItem | undefined>(initialItem);
   const [market, setMarket] = useState(initialItem?.market ?? initialMarket);
-  const [sortOrder, setSortOrder] = useState(String(initialItem?.sortOrder ?? 0));
+  const [sortOrder, setSortOrder] = useState(String(cmsOrderForDisplay(initialItem?.sortOrder ?? 0)));
   const [fields, setFields] = useState<Record<string, string>>(() => initialFields(section, saved));
   // Typing a new hotel search clears the draft ID, but the prior selected ID
   // must survive until selection so a different hotel cannot inherit its image.
@@ -121,10 +123,10 @@ export function HomepageCmsEditor({
   const draftDirty = item ? Boolean(
     (
       JSON.stringify(currentPayload) !== JSON.stringify(buildPayload(section, savedPayload)) ||
-      sortOrder !== String(item.sortOrder) ||
+      sortOrder !== String(cmsOrderForDisplay(item.sortOrder)) ||
       market !== item.market
     )
-  ) : JSON.stringify(fields) !== JSON.stringify(initialFields(section, saved)) || sortOrder !== "0" || market !== initialMarket || hotelSearch !== (hotelOptions.find((option) => option.canonicalId === text(saved.canonicalId))?.label ?? text(saved.canonicalId));
+  ) : JSON.stringify(fields) !== JSON.stringify(initialFields(section, saved)) || sortOrder !== "1" || market !== initialMarket || hotelSearch !== (hotelOptions.find((option) => option.canonicalId === text(saved.canonicalId))?.label ?? text(saved.canonicalId));
   const navigationGuard = useCmsNavigationGuard(draftDirty, pending);
   const validMarket = section === "hotel-destinations" || markets.includes(market);
   const normalizedOrigin = (fields.originCode ?? "").trim().toUpperCase();
@@ -217,7 +219,7 @@ export function HomepageCmsEditor({
             key: `${section.replaceAll("-", "")}-${crypto.randomUUID()}`,
             market: section === "hotel-destinations" ? "GLOBAL" : market,
             locale: "en",
-            sortOrder: Number(sortOrder),
+            sortOrder: cmsOrderForStorage(sortOrder),
             payload: currentPayload,
           }),
         });
@@ -242,7 +244,7 @@ export function HomepageCmsEditor({
       payload: currentPayload,
       market: section === "hotel-destinations" ? "GLOBAL" : market,
       locale: "en",
-      sortOrder: Number(sortOrder),
+      sortOrder: cmsOrderForStorage(sortOrder),
     }, "Draft saved.");
   }
 
@@ -300,7 +302,7 @@ export function HomepageCmsEditor({
         if (action === "save_draft" || action === "archive" || !draftDirty) {
           setFields(initialFields(section, payloadRecord(body.item.draftPayload)));
           setMarket(body.item.market ?? market);
-          setSortOrder(String(body.item.sortOrder ?? Number(sortOrder)));
+          setSortOrder(String(cmsOrderForDisplay(body.item.sortOrder ?? cmsOrderForStorage(sortOrder))));
         }
         setServerFieldErrors({});
         setMessage(success);
@@ -433,7 +435,7 @@ export function HomepageCmsEditor({
           ) : null}
 
           <Field label={section === "hotel-destinations" ? "Directory order" : "Order"} className="max-w-[128px]">
-            <AdminInput className={editorControlClass} type="number" min={0} max={100000} value={sortOrder} onChange={(event) => setSortOrder(event.target.value)} disabled={pending || archived} />
+            <AdminInput className={editorControlClass} type="number" min={1} max={CMS_DISPLAY_ORDER_MAX} value={sortOrder} onChange={(event) => setSortOrder(event.target.value)} disabled={pending || archived} />
           </Field>
           {section === "hotel-destinations" ? (
             <p className="text-[12px] leading-5 text-[#64748B]">Directory order controls the CMS listing and its published hotel reference order. Homepage Popular Stays cards retain their own curated order.</p>
