@@ -415,8 +415,27 @@ type StatusLoadState = {
   error: string;
 };
 
+type LoggedRefreshMetrics = {
+  providerCalls: number | null;
+  routeAttempts: number | null;
+  stoppedReason: string | null;
+  providerCallLimit: number | null;
+  routeAttemptLimit: number | null;
+  visibleGapsAttempted: number | null;
+  immediateReplacementsAttempted: number | null;
+  replacementCandidatesUsed: number | null;
+  timeouts: number | null;
+  targetedMarkets: string[] | null;
+};
+type LoggedRefreshRun = { completedAt: string; metrics: LoggedRefreshMetrics | null };
+type DiagnosticsLoadState = {
+  data: { dataAvailable: boolean; lastManualRun: LoggedRefreshRun | null } | null;
+  loading: boolean;
+  error: string;
+};
+
 export function HomepageFaresRefreshCard({ view = "operations", initialMarket = ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE }: {
-  view?: "operations" | "routes";
+  view?: "operations" | "routes" | "diagnostics";
   initialMarket?: string;
 } = {}) {
   const [refreshing, setRefreshing] = useState(false);
@@ -430,6 +449,7 @@ export function HomepageFaresRefreshCard({ view = "operations", initialMarket = 
     loading: true,
     error: "",
   });
+  const [diagnosticsState, setDiagnosticsState] = useState<DiagnosticsLoadState>({ data: null, loading: true, error: "" });
   const [selectedRouteScope, setSelectedRouteScope] = useState<string>(
     initialMarket === ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE
       ? ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE
@@ -490,6 +510,23 @@ export function HomepageFaresRefreshCard({ view = "operations", initialMarket = 
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (view !== "diagnostics") return;
+    let cancelled = false;
+    fetch("/api/admin/homepage-fares/diagnostics", { credentials: "include", cache: "no-store" })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Logged refresh diagnostics are unavailable.");
+        return response.json() as Promise<DiagnosticsLoadState["data"]>;
+      })
+      .then((data) => {
+        if (!cancelled) setDiagnosticsState({ data, loading: false, error: "" });
+      })
+      .catch(() => {
+        if (!cancelled) setDiagnosticsState({ data: null, loading: false, error: "Could not load logged refresh diagnostics." });
+      });
+    return () => { cancelled = true; };
+  }, [view]);
 
   async function refreshHomepageFares() {
     if (refreshing) return;
@@ -636,13 +673,25 @@ export function HomepageFaresRefreshCard({ view = "operations", initialMarket = 
                 onInspectMarket={homepageFareRoutesHref}
               />
 
-              <AdvancedDiagnostics
-                pools={fallbackPools}
-                onInspectMarket={homepageFareRoutesHref}
-                statusPayload={statusPayload}
-                refreshCounts={latestCounts}
-              />
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#D8E1EC] py-5">
+                <p className="text-[12px] leading-5 text-[#475569]">For fallback coverage, refresh execution and scheduler diagnostics, use the dedicated view.</p>
+                <Link href="/admin/homepage-fares/diagnostics" className="inline-flex min-h-9 items-center whitespace-nowrap text-[12px] font-semibold text-[#004BB8] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">View fare diagnostics</Link>
+              </div>
             </>
+          ) : null}
+        </>
+      ) : view === "diagnostics" ? (
+        <>
+          {initialStatusLoading ? <p role="status" className="border-b border-[#E7ECF5] py-4 text-[13px] text-[#64748B]">Loading fare diagnostics…</p> : null}
+          {statusPayload.dataAvailable ? (
+            <AdvancedDiagnostics
+              pools={fallbackPools}
+              onInspectMarket={homepageFareRoutesHref}
+              statusPayload={statusPayload}
+              lastManualRun={diagnosticsState.data?.lastManualRun ?? null}
+              runLoading={diagnosticsState.loading}
+              runUnavailable={Boolean(diagnosticsState.error) || diagnosticsState.data?.dataAvailable === false}
+            />
           ) : null}
         </>
       ) : (
@@ -1037,7 +1086,7 @@ function MarketReadinessDashboard({
           </ul>
           {outsidePublicCount > 0 ? (
             <p role="note" className="mt-3 text-[12px] leading-5 text-[#64748B]">
-              {outsidePublicCount} additional market {outsidePublicCount === 1 ? "scope needs" : "scopes need"} attention outside the public country table. Review Advanced diagnostics for fallback coverage.
+              {outsidePublicCount} additional market {outsidePublicCount === 1 ? "scope needs" : "scopes need"} attention outside the public country table. <Link href="/admin/homepage-fares/diagnostics" className="font-semibold text-[#004BB8] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">Review fallback diagnostics</Link>.
             </p>
           ) : null}
         </div>
@@ -1054,16 +1103,25 @@ function AdvancedDiagnostics({
   pools,
   onInspectMarket,
   statusPayload,
-  refreshCounts,
+  lastManualRun,
+  runLoading,
+  runUnavailable,
 }: {
   pools: MarketReadiness[];
   onInspectMarket: (marketCode: string) => string;
   statusPayload: HomepageFareStatusPayload;
-  refreshCounts: RefreshCounts | null;
+  lastManualRun: LoggedRefreshRun | null;
+  runLoading: boolean;
+  runUnavailable: boolean;
 }) {
+  const run = lastManualRun?.metrics;
+  const recorded = (value: number | null | undefined) => value ?? "Not recorded";
+  const budget = (used: number | null | undefined, limit: number | null | undefined) =>
+    used != null && limit != null ? used + " of " + limit : "Not recorded";
   return (
     <section id="homepage-fare-advanced-diagnostics" aria-labelledby="homepage-fare-advanced-diagnostics-heading" className="min-w-0 border-b border-[#D8E1EC] py-6">
       <h3 id="homepage-fare-advanced-diagnostics-heading" className="text-[15px] font-semibold text-[#020617]">Advanced diagnostics</h3>
+      <p className="mt-2 text-[12px] leading-5 text-[#64748B]">Snapshot health and the latest logged manual refresh are shown separately. Scheduled refresh results are not represented as manual runs.</p>
       <div className="mt-5 space-y-7">
         <section aria-labelledby="fallback-pools-heading">
           <h4 id="fallback-pools-heading" className="text-[14px] font-semibold text-[#020617]">Fallback coverage pools</h4>
@@ -1100,28 +1158,30 @@ function AdvancedDiagnostics({
 
         <section aria-labelledby="executor-debug-heading" className="border-t border-[#E7ECF5] pt-6">
           <h4 id="executor-debug-heading" className="text-[14px] font-semibold text-[#020617]">Executor details</h4>
+          <p role="status" className="mt-2 text-[12px] leading-5 text-[#64748B]">{runLoading ? "Loading logged manual refresh…" : runUnavailable ? "Logged manual refresh data is unavailable." : !lastManualRun ? "No completed manual fare refresh is recorded." : "Latest logged manual refresh: " + formatDateTime(lastManualRun.completedAt)}</p>
+          {lastManualRun && !run && !runLoading && !runUnavailable ? <p className="mt-2 text-[12px] text-[#64748B]">The latest audit record has no readable execution counts.</p> : null}
           <div className="mt-4 grid gap-x-10 gap-y-6 lg:grid-cols-2">
             <div className="min-w-0">
               <h5 className="text-[12px] font-semibold text-[#334155]">Execution and budgets</h5>
               <dl className="mt-3 grid grid-cols-2 gap-x-6 gap-y-4">
                 <MetricCard label="Configured routes" value={statusPayload.summary.total} />
-                <MetricCard label="Stopped reason" value={refreshCounts ? formatStoppedReason(refreshCounts.stoppedReason) : "No run yet"} />
-                <MetricCard label="Provider budget" value={refreshCounts ? (refreshCounts.stoppedReason === "provider_budget_exhausted" ? "Exhausted" : "Available") : "Not observed yet"} />
-                <MetricCard label="Route budget" value={refreshCounts ? (refreshCounts.stoppedReason === "route_budget_exhausted" ? "Exhausted" : "Available") : "Not observed yet"} />
+                <MetricCard label="Stopped reason" value={run?.stoppedReason ? run.stoppedReason.replaceAll("_", " ") : "Not recorded"} />
+                <MetricCard label="Provider calls / limit (last run)" value={budget(run?.providerCalls, run?.providerCallLimit)} />
+                <MetricCard label="Route attempts / limit (last run)" value={budget(run?.routeAttempts, run?.routeAttemptLimit)} />
                 <MetricCard label="Candidate pool failed" value={statusPayload.candidatePoolHealth.failed} />
                 <MetricCard label="Candidate pool unavailable" value={statusPayload.candidatePoolHealth.unavailable} />
-                <MetricCard label="Replacement candidates" value={refreshCounts ? sumCountRecord(refreshCounts.replacementCandidatesUsedByMarket) : sumCountRecord(statusPayload.replacementCandidatesUsedByMarket)} />
-                <MetricCard label="Timeouts" value={refreshCounts ? sumCountRecord(refreshCounts.timeoutByMarket) : sumCountRecord(statusPayload.timeoutByMarket)} />
+                <MetricCard label="Replacement candidates used (last run)" value={recorded(run?.replacementCandidatesUsed)} />
+                <MetricCard label="Timeouts (last run)" value={recorded(run?.timeouts)} />
               </dl>
             </div>
             <div className="min-w-0">
               <h5 className="text-[12px] font-semibold text-[#334155]">Public fare outcomes</h5>
               <dl className="mt-3 grid grid-cols-2 gap-x-6 gap-y-4">
-                <MetricCard label="Fresh used publicly" value={statusPayload.publicPriceDiagnostics.fresh_available} />
-                <MetricCard label="LKG used publicly" value={statusPayload.publicPriceDiagnostics.last_known_good_used} />
+                <MetricCard label="Fresh eligible snapshots" value={statusPayload.publicPriceDiagnostics.fresh_available} />
+                <MetricCard label="Last-known-good eligible snapshots" value={statusPayload.publicPriceDiagnostics.last_known_good_used} />
                 <MetricCard label="Exact route mismatch" value={statusPayload.publicPriceDiagnostics.exact_route_mismatch} />
-                <MetricCard label="Visible gaps attempted" value={refreshCounts?.visibleGapsAttempted.length ?? 0} />
-                <MetricCard label="Immediate replacements attempted" value={refreshCounts?.replacementsUsed.length ?? 0} />
+                <MetricCard label="Visible gaps attempted (last run)" value={recorded(run?.visibleGapsAttempted)} />
+                <MetricCard label="Immediate replacements attempted (last run)" value={recorded(run?.immediateReplacementsAttempted)} />
               </dl>
             </div>
           </div>
@@ -1130,8 +1190,8 @@ function AdvancedDiagnostics({
             <dl className="mt-3 grid gap-x-10 gap-y-5 sm:grid-cols-2">
               <MetricCard label="Scheduler cadence" value={statusPayload.nextExpectedCronRefresh ?? "Not provided"} />
               <MetricCard label="Scheduler verification" value="Not observable from this service" />
-              <MetricCard label="Executor targets" value={refreshCounts ? formatStringList(refreshCounts.targetedMarkets, "none") : "No manual run yet"} />
-              <MetricCard label="Markets needing another run" value={refreshCounts ? formatMarketsNeedingRun(refreshCounts.marketsNeedingAnotherRun) : formatMarketsNeedingRun(statusPayload.marketsNeedingAnotherRun)} />
+              <MetricCard label="Executor targets (last run)" value={run?.targetedMarkets ? formatStringList(run.targetedMarkets, "None") : "Not recorded"} />
+              <MetricCard label="Markets needing another run (current snapshot)" value={formatMarketsNeedingRun(statusPayload.marketsNeedingAnotherRun)} />
             </dl>
           </div>
         </section>
