@@ -143,6 +143,40 @@ test("public market coverage uses the compact Providers table treatment", () => 
   assert.doesNotMatch(component, /function CoverageMetric/);
 });
 
+test("Inspect routes navigates reliably even when selecting the same market again", () => {
+  assert.match(component, /const inspectMarketRoutes = useCallback\(\(marketCode: string\) => \{/);
+  assert.match(component, /selectRouteScope\(marketCode\);/);
+  assert.match(component, /routeInspectorRef\.current\?\.scrollIntoView\(/);
+  assert.match(component, /prefers-reduced-motion: reduce/);
+  assert.match(component, /onInspectMarket=\{inspectMarketRoutes\}/);
+  assert.match(component, /ref=\{routeInspectorRef\}/);
+  assert.match(component, /scroll-mt-32/);
+  assert.doesNotMatch(component, /routeDetailsRef|useEffect\(\(\) => \{\s*if \(!selectedRouteScope\) return;\s*const animationFrame/);
+});
+
+test("dropdown and status selection update results without scrolling the page", () => {
+  assert.match(component, /onValueChange=\{onSelectMarket\}/);
+  assert.match(component, /onFilterChange\(next as AdminHomepageFareRouteGroupFilter\)/);
+  assert.match(component, /onSelectMarket=\{selectRouteScope\}/);
+  assert.match(component, /onFilterChange=\{selectRouteFilter\}/);
+  const selection = component.slice(component.indexOf("const selectRouteScope = useCallback"), component.indexOf("const loadStatus = useCallback"));
+  assert.doesNotMatch(selection.slice(0, selection.indexOf("const inspectMarketRoutes")), /scrollIntoView|window\.scrollTo/);
+  assert.equal((selection.match(/scrollIntoView/g) || []).length, 1);
+});
+
+test("route pagination keeps columns and layout steady across short and long pages", () => {
+  assert.match(component, /keepPageHeight=\{page\.totalPages > 1\}/);
+  assert.match(component, /keepPageHeight \? "min-h-\[740px\]" : ""/);
+  assert.match(component, /\[overflow-anchor:none\]/);
+  assert.match(component, /table-fixed/);
+  assert.match(component, /<colgroup>/);
+  assert.equal((component.match(/<col className="w-\[/g) || []).length, 11);
+  assert.match(component, /paginateAdminHomepageFareRoutes\(group\.routes, routePage\)/);
+  assert.match(component, /disabled=\{!page\.hasNextPage\}/);
+  assert.match(component, /disabled=\{!page\.hasPreviousPage\}/);
+  assert.match(component, /setRoutePage\(1\)/);
+});
+
 test("route inspector uses compact select controls while preserving every route filter", () => {
   assert.equal((component.match(/<SearchMonitorSelect/g) || []).length, 2);
   assert.match(component, /value: "", label: "Select market"/);
