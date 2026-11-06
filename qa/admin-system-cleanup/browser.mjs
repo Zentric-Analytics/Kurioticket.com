@@ -109,8 +109,24 @@ try {
           await expect(main.getByText("CMS alert state changed", { exact: true })).toBeVisible();
           await expect(main.getByText("CMS content published", { exact: true })).toBeVisible();
           await expect(main.getByText("User role updated", { exact: true })).toBeVisible();
-          await expect(main.getByText("ADMIN_ALERT_CMS_STATE", { exact: true })).toBeVisible();
-          await expect(main.getByText("CMS_CONTENT_PUBLISHED", { exact: true })).toBeVisible();
+          // The audit list displays human-readable actions. Keep raw codes
+          // hidden until the operator explicitly expands a row.
+          const auditRegion = main.getByRole("region", { name: "Audit log records" });
+          await expect(auditRegion).toBeVisible();
+          const alertRow = auditRegion.locator('[data-audit-row="audit-system"]');
+          const cmsAuditRow = auditRegion.locator('[data-audit-row="audit-cms"]');
+          await expect(alertRow.getByText("CMS alert state changed", { exact: true })).toBeVisible();
+          await expect(cmsAuditRow.getByText("CMS content published", { exact: true })).toBeVisible();
+          await expect(alertRow.getByText("ADMIN_ALERT_CMS_STATE", { exact: true })).not.toBeVisible();
+          await expect(cmsAuditRow.getByText("CMS_CONTENT_PUBLISHED", { exact: true })).not.toBeVisible();
+          await alertRow.locator("summary").click();
+          await expect(alertRow.getByText("Action code", { exact: true })).toBeVisible();
+          await expect(alertRow.getByText("ADMIN_ALERT_CMS_STATE", { exact: true })).toBeVisible();
+          await alertRow.locator("summary").click();
+          await expect(alertRow.getByText("ADMIN_ALERT_CMS_STATE", { exact: true })).not.toBeVisible();
+          await cmsAuditRow.locator("summary").click();
+          await expect(cmsAuditRow.getByText("CMS_CONTENT_PUBLISHED", { exact: true })).toBeVisible();
+          await cmsAuditRow.locator("summary").click();
           await expect(main.getByRole("combobox", { name: "Date range" })).toBeVisible();
           await expect(main.getByRole("combobox", { name: "Action" })).toBeVisible();
           await expect(main.getByRole("combobox", { name: "Target type" })).toBeVisible();
@@ -122,15 +138,16 @@ try {
           await expect(main.getByText(/newest records on this page/)).toHaveCount(0);
           await expect(main.getByRole("link", { name: "Older records ›", exact: true })).toBeVisible();
 
-          const auditRegion = main.getByRole("region", { name: "Audit log records" });
-          await expect(auditRegion).toBeVisible();
           await expect(auditRegion.locator("[data-audit-header]").getByText("Target email", { exact: true })).toHaveCount(0);
           const userRow = auditRegion.locator('[data-audit-row="audit-user"]');
-          await expect(userRow.getByText("View ›", { exact: true })).toBeVisible();
+          await expect(userRow.locator("summary")).toBeVisible();
+          await expect(userRow.getByText("View ›", { exact: true })).toHaveCount(0);
           await expect(userRow.getByText("traveler@example.invalid", { exact: true })).not.toBeVisible();
           await userRow.locator("summary").click();
           await expect(userRow.getByText("Target email", { exact: true })).toBeVisible();
           await expect(userRow.getByText("traveler@example.invalid", { exact: true })).toBeVisible();
+          await userRow.locator("summary").click();
+          await expect(userRow.getByText("traveler@example.invalid", { exact: true })).not.toBeVisible();
         }
         if (route === "email-delivery") {
           await expect(main.getByRole("heading", { name: "Email Delivery", exact: true })).toBeVisible();
