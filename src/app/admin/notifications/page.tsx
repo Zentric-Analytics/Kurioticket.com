@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ChevronDown } from "lucide-react";
 
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { AdminAlertAcknowledgeButton } from "@/components/admin/AdminAlertAcknowledgeButton";
@@ -165,23 +164,6 @@ export default async function AdminNotificationsPage() {
           )}
         </section>
 
-        <details data-monitoring-boundaries className="group mt-4 border-b border-[#D8E1EC] py-3">
-          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-sm py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 [&::-webkit-details-marker]:hidden">
-            <span className="min-w-0">
-              <span className="block text-[13px] font-semibold text-[#020617]">Monitoring boundaries</span>
-              <span className="mt-0.5 block text-[12px] leading-5 text-[#64748B]">Coverage, limitations, and alert behavior</span>
-            </span>
-            <ChevronDown size={16} aria-hidden="true" className="shrink-0 text-[#64748B] transition-transform group-open:rotate-180" />
-          </summary>
-          <div className="space-y-2 pb-2 pt-3 text-[12px] leading-6 text-[#475569]">
-            <p>
-              Alerts are derived from authoritative System/database health, ready provider operational health, Email Delivery, CMS integrity, Homepage Fare readiness, configured Flight Status telemetry, and authenticated Confirmed Trips delivery failures when a provider is explicitly configured. Kurioticket does not fabricate alerts for inactive integrations or for booking-confirmation volume where no trustworthy expected cadence exists.
-            </p>
-            <p>
-              Global coverage also includes sustained failures in enabled flight, hotel and car searches in this deployment, explicitly urgent support tickets awaiting team action, and active administrators whose two-factor protection was disabled within the last 24 hours and remains disabled. Account and support records are scoped to the current database. Routine activity and isolated low-volume search failures do not create alerts. Unavailable monitoring data is reported separately, never as a healthy zero.
-            </p>
-          </div>
-        </details>
       </div>
     </AdminPageShell>
   );

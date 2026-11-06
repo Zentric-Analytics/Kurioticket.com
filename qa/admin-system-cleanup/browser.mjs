@@ -197,11 +197,10 @@ try {
           const metrics = main.getByRole("region", { name: "Alert summary" });
           await expect(metrics.locator("dl > div")).toHaveCount(4);
           await expect(main.locator("[data-alert-row]")).toHaveCount(4);
-          const boundaries = main.locator("details[data-monitoring-boundaries]");
-          await expect(boundaries).not.toHaveAttribute("open", "");
-          await boundaries.locator("summary").click();
-          await expect(boundaries).toHaveAttribute("open", "");
-          await expect(main.getByText(/Kurioticket does not fabricate alerts for inactive integrations/)).toBeVisible();
+          await expect(main.getByRole("heading", { name: "Active alerts", exact: true })).toBeVisible();
+          await expect(main.getByText("Alerts clear automatically when the underlying authoritative signal clears.")).toBeVisible();
+          await expect(main.locator("details[data-monitoring-boundaries]")).toHaveCount(0);
+          await expect(main.getByText("Monitoring boundaries", { exact: true })).toHaveCount(0);
           const background = await main.evaluate(node => getComputedStyle(node.parentElement).backgroundColor);
           expect(background).toBe("rgb(255, 255, 255)");
         }
