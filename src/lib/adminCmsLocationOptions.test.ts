@@ -55,7 +55,7 @@ test("homepage destinations use searchable selectors without restructuring the e
   assert.match(editor, /onSelect=\{selectCountry\}/);
   assert.match(editor, /onSelect=\{selectCity\}/);
   assert.match(editor, /grid max-w-\[512px\] gap-4 sm:grid-cols-3/);
-  assert.match(editor, /<CmsExpandingTextField label="Image" value=\{fields\.image/);
+  assert.match(editor, /<CmsImageUploadField value=\{fields\.image/);
   assert.match(editor, /<CmsExpandingTextField label="Image alt text" value=\{fields\.imageAlt/);
   assert.match(editor, /<CmsEditorActions/);
   assert.match(editor, /supportedFlightRoutes/);
@@ -152,7 +152,7 @@ test("flight routes keep paired city and IATA fields with the same responsive gr
   assert.match(editor, /<CmsLocationCombobox label="Destination city" kind="city"/);
   assert.match(editor, /<CmsLocationCombobox label="Destination IATA" kind="airport"/);
   assert.match(editor, /grid max-w-\[496px\] gap-4 sm:grid-cols-\[minmax\(0,1fr\)_160px\] sm:items-start/);
-  assert.match(editor, /<CmsExpandingTextField label="Image" value=\{fields.image/);
+  assert.match(editor, /<CmsImageUploadField value=\{fields.image/);
   assert.match(editor, /<CmsExpandingTextField label="Image alt text" value=\{fields.imageAlt/);
   assert.match(editor, /<AdminTextarea className=\{\`\$\{editorControlClass\} h-auto min-h-24\`\}/);
 });
@@ -166,7 +166,7 @@ test("hotel destinations use searchable canonical selection and preserve type an
   assert.match(editor, /<CmsLocationCombobox label="Country" kind="country"/);
   assert.match(editor, /<Field label="Kind" className="max-w-\[160px\]">/);
   assert.match(editor, /"airport-area", "custom"/);
-  assert.match(editor, /<CmsExpandingTextField label="Image \(optional\)" value=\{fields.image/);
+  assert.match(editor, /<CmsImageUploadField optional value=\{fields.image/);
   assert.match(editor, /<CmsExpandingTextField label="Image alt text \(optional\)" value=\{fields.imageAlt/);
   assert.match(editor, /canonicalId: fields.canonicalId\?\.trim\(\)/);
 });
