@@ -490,3 +490,47 @@ test("all four content directories and editors present one-based Order without m
   assert.match(conversion, /return Number\(displayOrder\) - 1/);
   assert.match(backend, /sortOrder: nextOrder/);
 });
+
+test("CMS image upload is authenticated, size-limited, durable and draft-only", () => {
+  const editor = readFileSync("src/components/admin/HomepageCmsEditor.tsx", "utf8");
+  const field = readFileSync("src/components/admin/CmsImageUploadField.tsx", "utf8");
+  const post = readFileSync("src/app/api/admin/content/image-upload/route.ts", "utf8");
+  const get = readFileSync("src/app/api/cms/images/[filename]/route.ts", "utf8");
+  const storage = readFileSync("src/services/cmsImageStorage.ts", "utf8");
+  const validation = readFileSync("src/lib/cmsContentValidation.ts", "utf8");
+
+  assert.equal((editor.match(/<CmsImageUploadField/g) ?? []).length, 3);
+  assert.match(editor, /<CmsImageUploadField optional/);
+  assert.match(editor, /<CmsExpandingTextField label="Image alt text"/);
+  assert.match(field, /type="file"/);
+  assert.match(field, /accept="image\/jpeg,image\/png,image\/webp"/);
+  assert.match(field, /CMS_IMAGE_MAX_BYTES/);
+  assert.match(field, /fetch\("\/api\/admin\/content\/image-upload"/);
+  assert.match(field, /onChange\(result\.url\)/);
+  assert.match(field, /Save your draft, then publish/);
+
+  assert.match(post, /requireAdminApiSession\(\)/);
+  assert.match(post, /if \(!isSameOriginRequest\(request\)\)/);
+  assert.match(post, /getCmsImageStorageConfig\(\)/);
+  assert.match(post, /readLimitedBody\(request\)/);
+  assert.match(post, /validateCmsImageFile/);
+  assert.match(post, /storeCmsImage\(filename, bytes\)/);
+  assert.match(post, /writeAdminAuditLog/);
+  assert.match(post, /CMS_IMAGE_UPLOADED/);
+  assert.match(post, /if \(!logged\) \{/);
+  assert.match(post, /await deleteCmsImage\(filename\)/);
+  assert.match(post, /\[cms:image-upload-rollback-failed\]/);
+  assert.match(storage, /method: "PUT" \| "GET" \| "DELETE"/);
+  assert.match(storage, /method: "DELETE"/);
+  assert.doesNotMatch(post, /publishCmsContent|action:\s*"publish"/);
+
+  assert.match(get, /cmsImageContentType\(filename\)/);
+  assert.match(get, /loadCmsImage\(filename\)/);
+  assert.match(get, /nosniff/);
+  assert.match(storage, /CMS_R2_ACCOUNT_ID/);
+  assert.match(storage, /CMS_R2_SECRET_ACCESS_KEY/);
+  assert.match(storage, /r2\.cloudflarestorage\.com/);
+  assert.match(storage, /AWS4-HMAC-SHA256/);
+  assert.doesNotMatch(storage, /writeFile|mkdir|public\/images|AWS_SECRET_ACCESS_KEY/);
+  assert.match(validation, /cmsImageContentType\(value\.slice\(uploadedPrefix\.length\)\)/);
+});
