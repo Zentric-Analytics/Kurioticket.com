@@ -67,6 +67,22 @@ test("combobox supports keyboard selection and never saves or publishes automati
   assert.doesNotMatch(combobox, /scrollIntoView/);
 });
 
+test("CMS search fields keep a typing cursor while the dropdown arrow is an accessible pointer control", () => {
+  assert.match(combobox, /className=\{inputClass \+ " cursor-text"\}/);
+  assert.match(combobox, /type="button"\s+disabled=\{disabled\}\s+aria-label=\{\(open \? "Close" : "Open"\) \+ " " \+ label \+ " suggestions"\}/);
+  assert.match(combobox, /aria-haspopup="listbox"/);
+  assert.match(combobox, /aria-expanded=\{open\}/);
+  assert.match(combobox, /className="absolute inset-y-0 right-0 inline-flex w-9 cursor-pointer/);
+  assert.match(combobox, /onPointerDown=\{\(event\) => event\.preventDefault\(\)\}/);
+  assert.match(combobox, /onClick=\{\(\) => \{\s*if \(open\) \{\s*dismiss\(\);\s*return;/);
+  assert.match(combobox, /inputRef\.current\?\.focus\(\{ preventScroll: true \}\);\s*show\(\);/);
+  // Preserve tapping the input to toggle, typing, keyboard suggestions and selecting options.
+  assert.match(combobox, /onPointerDown=\{toggleOnPointerDown\}/);
+  assert.match(combobox, /onChange=\{\(event\) => \{/);
+  assert.match(combobox, /event\.key === "ArrowDown"/);
+  assert.match(combobox, /event\.key === "Enter"/);
+});
+
 test("visual preview shows the unsaved CMS draft, route, image and publication state", () => {
   assert.match(editor, /section === "destinations" \? \(/);
   assert.match(editor, /<HomepageDestinationDraftPreview/);
