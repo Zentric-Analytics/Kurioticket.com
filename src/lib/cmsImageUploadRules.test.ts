@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { isSameOriginRequest } from "./visitor-identity";
 
 import {
   CMS_IMAGE_MAX_BYTES,
@@ -35,5 +36,28 @@ test("only randomized flat image filenames can be read from CMS object storage",
   for (const path of ["../../secret.png", "a.webp", "anything.svg", filename + "?foo=1", "cms/images/" + filename]) {
     assert.equal(cmsImageObjectKey(path), null, path);
     assert.equal(cmsImageContentType(path), null, path);
+  }
+});
+
+test("CMS upload origin guard recognizes configured staging behind Render and rejects cross-site requests", () => {
+  const oldPublic = process.env.NEXT_PUBLIC_APP_URL;
+  const oldNextAuth = process.env.NEXTAUTH_URL;
+  try {
+    process.env.NEXT_PUBLIC_APP_URL = "https://staging.kurioticket.com";
+    delete process.env.NEXTAUTH_URL;
+    const make = (origin: string, site: string) =>
+      new Request("http://localhost:10000/api/admin/content/image-upload", {
+        method: "POST",
+        headers: { origin, "sec-fetch-site": site },
+      });
+    assert.equal(isSameOriginRequest(make("https://staging.kurioticket.com", "same-origin")), true);
+    assert.equal(isSameOriginRequest(make("https://kurioticket.com", "same-site")), false);
+    assert.equal(isSameOriginRequest(make("https://attacker.example", "cross-site")), false);
+    assert.equal(isSameOriginRequest(make("https://staging.kurioticket.com", "cross-site")), false);
+  } finally {
+    if (oldPublic === undefined) delete process.env.NEXT_PUBLIC_APP_URL;
+    else process.env.NEXT_PUBLIC_APP_URL = oldPublic;
+    if (oldNextAuth === undefined) delete process.env.NEXTAUTH_URL;
+    else process.env.NEXTAUTH_URL = oldNextAuth;
   }
 });
