@@ -56,6 +56,14 @@ export function FeatureControlsPanel({
   }
   const controls = snapshot.controls;
   const categories = Array.from(new Set(controls.map((control) => control.category)));
+  const categoryLabels: Record<string, string> = {
+    "Travel Search": "Product availability",
+    "Travel Automation": "Travel automation",
+  };
+  const categoryDescriptions: Record<string, string> = {
+    "Travel Search": "Controls whether customer-facing travel products are available.",
+    "Travel Automation": "Controls background and customer automation without changing saved state.",
+  };
 
   function closePending() {
     if (saving) return;
@@ -133,11 +141,14 @@ export function FeatureControlsPanel({
 
       {categories.map((category) => (
         <section key={category} aria-labelledby={"settings-" + category.toLowerCase().replaceAll(" ", "-")}>
-          <h3 id={"settings-" + category.toLowerCase().replaceAll(" ", "-")} className="text-sm font-semibold text-slate-950">
-            {category}
+          <h3 id={"settings-" + category.toLowerCase().replaceAll(" ", "-")} className="text-[14px] font-semibold text-[#020617]">
+            {categoryLabels[category] || category}
           </h3>
+          <p className="mt-1 text-[12px] leading-5 text-[#64748B]">
+            {categoryDescriptions[category] || "Persisted administrative controls."}
+          </p>
 
-          <div className="mt-2 divide-y divide-slate-100 border-y border-slate-200">
+          <div className="mt-2 divide-y divide-[#E7ECF5] border-y border-[#D8E1EC]">
             {controls
               .filter((control) => control.category === category)
               .map((control) => {
@@ -147,15 +158,15 @@ export function FeatureControlsPanel({
                     className="flex min-w-0 flex-col gap-3 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:gap-6"
                   >
                     <div className="min-w-0 sm:max-w-[72%]">
-                      <h4 className="text-[13px] font-semibold text-slate-950">{control.name}</h4>
-                      <p className="mt-1 text-[12px] leading-5 text-slate-600">{controlRowSummaries[control.key]}</p>
-                      <p className="mt-1.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-slate-500">
+                      <h4 className="text-[13px] font-semibold text-[#020617]">{control.name}</h4>
+                      <p className="mt-1 text-[12px] leading-5 text-[#64748B]">{controlRowSummaries[control.key]}</p>
+                      <p className="mt-1.5 text-[10px] font-medium uppercase tracking-[0.06em] text-[#64748B]">
                         {control.risk} · {control.kind}
                       </p>
                     </div>
 
                     <div className="flex shrink-0 items-center justify-between gap-3 sm:justify-end">
-                      <span className={"text-[12px] font-semibold " + (control.state.enabled ? "text-emerald-700" : "text-slate-500")}>
+                      <span className={"text-[12px] font-medium " + (control.state.enabled ? "text-emerald-700" : "text-[#64748B]")}>
                         {control.state.enabled ? "Enabled" : "Disabled"}
                       </span>
                       <button

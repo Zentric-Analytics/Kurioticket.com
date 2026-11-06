@@ -3,29 +3,30 @@ import test from "node:test";
 
 import { adminNavigation, adminNavigationGroups, getAdminNavForRole, getAdminHeaderGroups, isAdminNavItemActive } from "@/lib/adminNavigation";
 
-const originalLabels = ["Overview", "Users", "Providers", "Search Activity", "Trips", "Trip monitoring", "Content", "Flights", "Hotels", "Cars", "Support", "Deletion Requests", "Audit Logs", "System", "CMS Health", "Email Delivery", "Notifications & Alerts", "Settings", "Homepage Fare Operations"];
+const originalLabels = ["Overview", "Users", "Providers", "Search Activity", "Trips", "Trip monitoring", "Content", "Homepage Fares", "Hotels", "Cars", "Support", "Deletion Requests", "Audit Logs", "System", "CMS Health", "Email Delivery", "Notifications & Alerts", "Settings"];
 
-test("admin navigation restores the original flat module order", () => {
+test("admin navigation restores the flat module order without a duplicate Flights workspace", () => {
   assert.deepEqual(adminNavigation.map((item) => item.label), originalLabels);
+  assert.equal(adminNavigation.some((item) => item.href === "/admin/flights"), false);
   assert.equal(adminNavigation.some((item) => ["Operations", "Monitoring", "Platform"].includes(item.label)), false);
 });
 
 test("admin navigation exposes parent workspaces in the header", () => {
   assert.deepEqual(adminNavigationGroups, [
     { label: "Operations", hrefs: ["/admin", "/admin/users", "/admin/searches/activity", "/admin/confirmed-trips", "/admin/support"] },
-    { label: "Provider readiness", hrefs: ["/admin/providers"] },
+    { label: "Provider readiness", hrefs: ["/admin/providers", "/admin/homepage-fares"] },
     { label: "Website content", hrefs: ["/admin/content"] },
     { label: "System & security", hrefs: ["/admin/system", "/admin/settings"] },
   ]);
   const visibleHrefs: readonly string[] = adminNavigationGroups.flatMap((group) => group.hrefs);
-  for (const href of ["/admin/journeys", "/admin/redirects", "/admin/referral-attribution", "/admin/flight-status", "/admin/account-deletions", "/admin/flights", "/admin/hotels", "/admin/cars", "/admin/logs"]) {
+  for (const href of ["/admin/journeys", "/admin/redirects", "/admin/referral-attribution", "/admin/flight-status", "/admin/flights", "/admin/account-deletions", "/admin/hotels", "/admin/cars", "/admin/logs"]) {
     assert.equal(visibleHrefs.includes(href), false);
   }
 });
 
 test("admin navigation preserves role restrictions", () => {
   assert.deepEqual(getAdminNavForRole("SUPPORT"), []);
-  assert.deepEqual(getAdminNavForRole("ADMIN").filter((item) => item.parentHref).map((item) => [item.label, item.parentHref]), [["Trip monitoring", "/admin/confirmed-trips"], ["Flights", "/admin/providers"], ["Hotels", "/admin/providers"], ["Cars", "/admin/providers"], ["Deletion Requests", "/admin/support"], ["Homepage Fare Operations", "/admin/settings"]]);
+  assert.deepEqual(getAdminNavForRole("ADMIN").filter((item) => item.parentHref).map((item) => [item.label, item.parentHref]), [["Trip monitoring", "/admin/confirmed-trips"], ["Hotels", "/admin/providers"], ["Cars", "/admin/providers"], ["Deletion Requests", "/admin/support"]]);
   assert.deepEqual(getAdminNavForRole("USER"), []);
 });
 
@@ -40,7 +41,6 @@ test("admin navigation activates exact routes and their detail pages", () => {
   assert.equal(isAdminNavItemActive("/admin/notifications", "/admin/confirmed-trips/alerts"), false);
 });
 
-
 test("horizontal admin navigation keeps child routes under parent workspaces", () => {
   const adminGroups = getAdminHeaderGroups("ADMIN", true);
   const entries = adminGroups.flatMap((group) => group.links);
@@ -49,21 +49,22 @@ test("horizontal admin navigation keeps child routes under parent workspaces", (
   const trips = entries.find(({ item }) => item.href === "/admin/confirmed-trips");
   const support = entries.find(({ item }) => item.href === "/admin/support");
   const system = entries.find(({ item }) => item.href === "/admin/system");
+  const homepageFares = entries.find(({ item }) => item.href === "/admin/homepage-fares");
   const settings = entries.find(({ item }) => item.href === "/admin/settings");
   assert.deepEqual(searches?.children.map((item) => item.href), []);
   assert.deepEqual(entries.find(({ item }) => item.href === "/admin/users")?.children.map(item => item.href), []);
-  assert.deepEqual(providers?.children.map((item) => item.href), ["/admin/flights", "/admin/hotels", "/admin/cars"]);
+  assert.deepEqual(providers?.children.map((item) => item.href), ["/admin/hotels", "/admin/cars"]);
   assert.deepEqual(trips?.children.map((item) => item.href), ["/admin/confirmed-trips/monitoring"]);
   assert.deepEqual(support?.children.map((item) => item.href), ["/admin/account-deletions"]);
   assert.deepEqual(system?.children.map((item) => item.href), []);
-  assert.deepEqual(settings?.children.map((item) => item.href), ["/admin/homepage-fares"]);
-  assert.equal(entries.some(({ item }) => item.href === "/admin/redirects"), false);
+  assert.deepEqual(homepageFares?.children.map((item) => item.href), []);
+  assert.deepEqual(settings?.children.map((item) => item.href), []);
   assert.equal(entries.some(({ item }) => item.href === "/admin/flights"), false);
+  assert.equal(entries.some(({ item }) => item.href === "/admin/redirects"), false);
   const supportEntries = getAdminHeaderGroups("SUPPORT").flatMap((group) => group.links);
   assert.deepEqual(supportEntries.map(({ item }) => item.label), []);
   assert.deepEqual(getAdminHeaderGroups("USER"), []);
 });
-
 
 test("Audit Logs, CMS Health and Email Delivery remain reachable without System child tabs", () => {
   for (const href of ["/admin/logs", "/admin/system/cms-health", "/admin/email-delivery"]) {
@@ -85,9 +86,23 @@ test("global Alerts remains discoverable without belonging to a System tab or hi
 });
 
 test("retired operational report routes remain available without nested menu entries", () => {
-  const retired = ["/admin/journeys", "/admin/redirects", "/admin/referral-attribution"];
+  const retired = ["/admin/journeys", "/admin/redirects", "/admin/referral-attribution", "/admin/flights"];
   for (const href of retired) {
     assert.equal(adminNavigation.some(item => item.href === href), false);
     assert.equal(getAdminHeaderGroups("ADMIN").some(group => group.links.some(link => link.item.href === href || link.children.some(child => child.href === href))), false);
   }
+});
+
+test("Homepage Fares is a top-level readiness workspace and does not activate Providers", () => {
+  const homepageFares = getAdminNavForRole("ADMIN").find((item) => item.href === "/admin/homepage-fares");
+  assert.ok(homepageFares);
+  assert.equal(homepageFares.label, "Homepage Fares");
+  assert.equal(homepageFares.parentHref, undefined);
+
+  const providers = getAdminHeaderGroups("ADMIN")
+    .flatMap((group) => group.links)
+    .find((entry) => entry.item.href === "/admin/providers");
+  assert.ok(providers);
+  assert.equal(isAdminNavItemActive(providers.item.href, "/admin/homepage-fares"), false);
+  assert.equal(providers.children.some((child) => isAdminNavItemActive(child.href, "/admin/homepage-fares")), false);
 });

@@ -2,8 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { Check, CheckCheck } from "lucide-react";
 
 import { AdminButton } from "@/components/admin/AdminPageShell";
+import { AdminNotificationSpinner } from "./AdminNotificationSpinner";
+import styles from "./AdminNotificationsPanel.module.css";
 
 export function AdminAlertAcknowledgeButton({
   alertKey,
@@ -21,6 +24,9 @@ export function AdminAlertAcknowledgeButton({
   const [error, setError] = useState("");
 
   if (acknowledged) {
+    if (compact) return <span className="inline-flex items-center gap-1.5 text-[11px] font-medium leading-4 text-[#6B7280]">
+      <CheckCheck size={14} strokeWidth={1.75} aria-hidden="true" /> Seen for 24 hours
+    </span>;
     return (
       <span className="text-xs font-semibold text-slate-500">
         Acknowledged for 24 hours
@@ -60,11 +66,14 @@ export function AdminAlertAcknowledgeButton({
 
   return (
     <div>
-      <AdminButton type="button" onClick={acknowledge} disabled={pending} loading={pending}
-        variant={compact ? "secondary" : "primary"}
-        className={compact ? "h-8 min-h-8 rounded-lg px-2.5 text-[12px] font-medium shadow-none" : undefined}>
+      {compact ? <button type="button" onClick={acknowledge} disabled={pending} aria-busy={pending}
+        title="Mark this alert as seen for 24 hours. This does not resolve the issue."
+        className={styles.action + " min-w-[128px]"}>
+        {pending ? <AdminNotificationSpinner className="h-3.5 w-3.5" /> : <Check size={14} strokeWidth={1.75} aria-hidden="true" />}
+        {pending ? "Saving…" : "Mark as seen"}
+      </button> : <AdminButton type="button" onClick={acknowledge} disabled={pending} loading={pending}>
         {pending ? "Acknowledging…" : "Acknowledge"}
-      </AdminButton>
+      </AdminButton>}
       {error ? (
         <p role="alert" className="mt-2 max-w-sm text-xs font-medium text-rose-700">
           {error}

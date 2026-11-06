@@ -170,7 +170,14 @@ try {
             await expect(page.locator('section[aria-label="Email delivery summary"]').getByText("Email deliveries", { exact: true })).toBeVisible();
           }
         }
-        if (route === "settings") await expect(main.getByRole("link", { name: "Open fare operations" })).toHaveAttribute("href", "/admin/homepage-fares");
+        if (route === "settings") {
+          await expect(main.getByRole("link", { name: "Open fare operations" })).toHaveCount(0);
+          if (width === 1440) {
+            await expect(page.getByRole("navigation", { name: "Admin navigation" }).getByRole("link", { name: "Homepage Fares", exact: true })).toHaveAttribute("href", "/admin/homepage-fares");
+          } else {
+            await expect(page.getByRole("button", { name: "Open admin navigation" })).toBeVisible();
+          }
+        }
         if (route === "notifications") {
           await expect(main.locator('a[href="/admin/notifications"]')).toHaveCount(0);
           await expect(main.getByRole("link", { name: "Open source", exact: true })).toHaveCount(3);

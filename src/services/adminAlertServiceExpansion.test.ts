@@ -13,13 +13,14 @@ const now = new Date("2026-11-04T14:00:00.000Z");
 type AuditRow = { adminUserId?: string; adminEmail?: string; action: string; targetType: string; targetId: string; createdAt: Date; metadata: Record<string, unknown> };
 type AuditData = Omit<AuditRow, "createdAt">;
 type Lookup = { where: { action: string; targetType: string; targetId: string } };
-type Acknowledgements = { where: { adminUserId: string; action: string; targetId: { in: string[] }; createdAt: { gte: Date; lte: Date } } };
+type Acknowledgements = { where: { adminUserId: string; action: string; targetType: string; targetId: { in: string[] }; createdAt: { gte?: Date; lte: Date } } };
 function harness() {
   const audit: AuditRow[] = [];
   let reads = 0;
   const state = {
     databaseConnected: true,
     cmsAvailable: true,
+    environment: "staging",
     expanded: {
       environment: "staging" as const,
       searches: ["FLIGHT", "HOTEL", "CAR"].map(product => ({ product: product as expandedCore.SearchProduct, enabled: true,
@@ -32,7 +33,7 @@ function harness() {
     $executeRaw: async () => 1,
     adminAuditLog: {
       findFirst: async ({ where }: Lookup) => audit.filter(row => row.action === where.action && row.targetType === where.targetType && row.targetId === where.targetId).at(-1) ?? null,
-      findMany: async ({ where }: Acknowledgements) => audit.filter(row => row.adminUserId === where.adminUserId && row.action === where.action && where.targetId.in.includes(row.targetId) && row.createdAt >= where.createdAt.gte && row.createdAt <= where.createdAt.lte).reverse(),
+      findMany: async ({ where }: Acknowledgements) => audit.filter(row => row.adminUserId === where.adminUserId && row.action === where.action && row.targetType === where.targetType && where.targetId.in.includes(row.targetId) && (!where.createdAt.gte || row.createdAt >= where.createdAt.gte) && row.createdAt <= where.createdAt.lte).reverse(),
       create: async ({ data }: { data: AuditData }) => { audit.push({ ...data, createdAt: now }); return data; },
     },
   };
@@ -40,7 +41,7 @@ function harness() {
   const modules: Record<string, unknown> = {
     "server-only": {}, "node:crypto": crypto,
     "@/lib/prisma": { getOptionalPrisma: () => db },
-    "@/lib/stagingSafety": { getPublicEnvironment: () => "staging" },
+    "@/lib/stagingSafety": { getPublicEnvironment: () => state.environment },
     "@/lib/admin-data": { getSafeSystemStatus: async () => ({ databaseConfigured: true, databaseConnected: state.databaseConnected, authConfigured: true, sessionConfigured: true, emailConfigured: true }) },
     "@/services/cmsHardeningService": { getCmsHealthOverview: async () => ({ available: state.cmsAvailable, totals: { scopes: 0, unhealthy: 0, unpublishedChanges: 0 }, scopes: [] }) },
     "@/services/emailDeliveryService": { getEmailDeliveryHealthSnapshot: async () => ({ dataAvailable: true, failures: 0, delayed: 0, latest: [] }) },
@@ -50,7 +51,7 @@ function harness() {
     "@/services/providerOperationalStatus": { getProviderOperationalStatuses: async () => [] },
     "@/services/adminAlertCore": core,
     "@/services/adminExpandedAlertCore": expandedCore,
-    "@/services/adminExpandedAlertReader": { readExpandedAdminAlertSignals: async (database: unknown, environment: string) => { assert.equal(database, db); assert.equal(environment, "staging"); reads++; return state.expanded; } },
+    "@/services/adminExpandedAlertReader": { readExpandedAdminAlertSignals: async (database: unknown, environment: string) => { assert.equal(database, db); assert.equal(environment, state.environment); reads++; return state.expanded; } },
     "@/services/adminExpandedAlertOccurrences": occurrences,
   };
   const code = ts.transpileModule(readFileSync("src/services/adminAlertService.ts", "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
@@ -94,4 +95,38 @@ test("database outage suppresses new dependent issues while retaining the emerge
   assert.deepEqual(Array.from(result.alerts, alert => alert.key), ["system.database.unavailable"]);
   const emergency = h.api.getDatabaseOutageAlertSnapshot(now);
   assert.equal(emergency.criticalCount, 1); assert.equal(emergency.alerts[0].key, "system.database.unavailable");
+});
+
+test("deleted notifications stay removed for that admin and occurrence, with matching summary counts", async () => {
+  const h = harness();
+  const initial = await h.api.getAdminAlertSnapshot("admin-a", now);
+  const alert = initial.alerts.find(a => a.source === "SUPPORT")!;
+  h.audit.push({ adminUserId: "admin-a", action: h.api.adminAlertDismissal.action, targetType: h.api.adminAlertDismissal.targetType,
+    targetId: h.api.adminAlertDismissalKey(alert.key, alert.signalToken), createdAt: now, metadata: { alertKey: alert.key, signalToken: alert.signalToken } });
+  const own = await h.api.getAdminAlertSnapshot("admin-a", new Date(now.getTime() + 30 * 60 * 60_000));
+  assert.equal(own.activeCount, 1);
+  assert.equal(own.unreadCount, 1);
+  assert.equal(own.alerts.some(a => a.key === alert.key), false);
+  assert.equal((await h.api.getAdminAlertSummary("admin-a", new Date(now.getTime() + 30 * 60 * 60_000))).unreadCount, 1);
+  assert.equal((await h.api.getAdminAlertSnapshot("admin-b", now)).activeCount, 2);
+  assert.equal((await h.api.getAdminAlertSnapshot(undefined, now)).activeCount, 2, "deletion never resolves the underlying incident");
+  assert.equal(await h.api.getCurrentAdminAlertByKey(alert.key) !== null, true, "a retry can still validate the authoritative occurrence");
+});
+
+test("a fresh occurrence and a different environment are not hidden by a prior deletion", async () => {
+  const h = harness();
+  const initial = await h.api.getAdminAlertSnapshot("admin-a", now);
+  const alert = initial.alerts.find(a => a.source === "SUPPORT")!;
+  const oldKey = h.api.adminAlertDismissalKey(alert.key, alert.signalToken);
+  h.audit.push({ adminUserId: "admin-a", action: h.api.adminAlertDismissal.action, targetType: h.api.adminAlertDismissal.targetType,
+    targetId: oldKey, createdAt: now, metadata: {} });
+  h.state.expanded.support!.OPEN.count = 0;
+  await h.api.getAdminAlertSnapshot("admin-a", new Date(now.getTime() + 1_000));
+  h.state.expanded.support!.OPEN.count = 2;
+  const next = await h.api.getAdminAlertSnapshot("admin-a", new Date(now.getTime() + 2_000));
+  const reopened = next.alerts.find(a => a.source === "SUPPORT")!;
+  assert.ok(reopened);
+  assert.notEqual(reopened.signalToken, alert.signalToken);
+  h.state.environment = "production";
+  assert.notEqual(h.api.adminAlertDismissalKey(alert.key, alert.signalToken), oldKey);
 });

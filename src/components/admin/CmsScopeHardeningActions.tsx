@@ -58,22 +58,28 @@ export function CmsScopeHardeningActions({
   }
 
   return (
-    <div className="space-y-2">
-      <div className="flex flex-wrap gap-2">
-        <AdminButton
-          type="button"
-          variant="secondary"
-          onClick={() => run("normalize_draft_order")}
-          loading={pending}
-          disabled={pending || (!draftOrderNeedsNormalization && draftOrderCollisionCount === 0)}
-        >
-          Normalize draft order
-        </AdminButton>
+    <div className="space-y-1.5">
+      <div className="flex flex-wrap gap-1.5">
+        {draftOrderNeedsNormalization || draftOrderCollisionCount > 0 ? (
+          <AdminButton
+            type="button"
+            variant="secondary"
+            size="sm"
+            className="rounded-lg font-medium"
+            onClick={() => run("normalize_draft_order")}
+            loading={pending}
+            disabled={pending}
+          >
+            Normalize draft order
+          </AdminButton>
+        ) : null}
 
         {legacyFallbackRetired ? (
           <AdminButton
             type="button"
             variant="secondary"
+            size="sm"
+            className="rounded-lg font-medium"
             onClick={() => run("reactivate_legacy_fallback")}
             loading={pending}
             disabled={pending}
@@ -84,6 +90,8 @@ export function CmsScopeHardeningActions({
           <AdminButton
             type="button"
             variant="secondary"
+            size="sm"
+            className="rounded-lg font-medium"
             onClick={() => run("retire_legacy_fallback")}
             loading={pending}
             disabled={pending || !fallbackRetirementEligible}
@@ -94,7 +102,7 @@ export function CmsScopeHardeningActions({
       </div>
 
       {error ? (
-        <p className="text-xs font-bold text-rose-700" role="alert">
+        <p className="text-[12px] font-medium text-rose-700" role="alert">
           {error}
         </p>
       ) : null}

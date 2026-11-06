@@ -14,6 +14,10 @@ import { getCmsUnpublishedChangeLabel } from "@/lib/adminCmsPublicationStatus";
 import { getCmsMarketName } from "@/lib/adminCmsMarketLabels";
 import { ContentSectionHeading, ContentStatusPill } from "@/components/admin/ContentWorkspace";
 import { CmsEditorActions, type CmsEditorAction } from "@/components/admin/CmsEditorActions";
+import { CmsLocationCombobox } from "@/components/admin/CmsLocationCombobox";
+import { CmsExpandingTextField } from "@/components/admin/CmsExpandingTextField";
+import { HomepageDestinationDraftPreview } from "@/components/admin/HomepageDestinationDraftPreview";
+import type { CmsLocationOption } from "@/lib/adminCmsLocationOptions";
 
 type CmsItem = {
   id: string;
@@ -48,7 +52,7 @@ const sectionType = {
   "hotel-destinations": "HOTEL_DESTINATION",
 } as const;
 
-const editorControlClass = "h-9 rounded-lg border-2 border-[#94A3B8] bg-white text-[13px] font-normal text-[#111827] shadow-none transition-colors hover:border-[#64748B] focus:border-[#6D28D9] focus:ring-2 focus:ring-[#EDE9FE] disabled:border-[#CBD5E1] disabled:bg-[#F1F5F9] disabled:text-[#64748B]";
+const editorControlClass = "h-9 rounded-lg border border-slate-300 bg-white text-[13px] font-normal text-[#111827] shadow-[0_1px_0_rgba(15,23,42,0.04)] transition-colors hover:border-slate-400 focus:border-[#004BB8]/40 focus:ring-2 focus:ring-[#004BB8]/15 disabled:border-slate-300 disabled:bg-slate-100 disabled:text-slate-700";
 
 function payloadRecord(value: unknown) {
   return value && typeof value === "object" && !Array.isArray(value)
@@ -103,6 +107,23 @@ export function HomepageCmsEditor({
 
   function setField(name: string, value: string) {
     setFields((current) => ({ ...current, [name]: value }));
+  }
+
+  function selectCountry(option: CmsLocationOption) {
+    setFields((current) => ({
+      ...current,
+      country: option.value,
+      ...(option.countryCode ? { countryCode: option.countryCode } : {}),
+    }));
+  }
+
+  function selectCity(option: CmsLocationOption) {
+    setFields((current) => ({
+      ...current,
+      city: option.value,
+      ...(option.country ? { country: option.country } : {}),
+      ...(option.countryCode ? { countryCode: option.countryCode } : {}),
+    }));
   }
 
   function applyHotelOption(canonicalId: string) {
@@ -246,15 +267,15 @@ export function HomepageCmsEditor({
 
         {section === "destinations" ? (
           <>
-            <TextField label="City" name="city" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[320px]" />
-            <TextField label="Country" name="country" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[320px]" />
-            <div className="grid max-w-[512px] gap-4 sm:grid-cols-3">
-              <TextField label="Country code" name="countryCode" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[160px]" />
-              <TextField label="Origin IATA" name="originCode" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[160px]" />
-              <TextField label="Destination IATA" name="destinationCode" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[160px]" />
+            <CmsLocationCombobox label="City" kind="city" value={fields.city ?? ""} countryCode={fields.countryCode ?? ""} onChange={(value) => setField("city", value)} onSelect={selectCity} disabled={pending || archived} className="max-w-[320px]" />
+            <CmsLocationCombobox label="Country" kind="country" value={fields.country ?? ""} onChange={(value) => setFields((current) => ({ ...current, country: value, ...(value !== current.country ? { countryCode: "" } : {}) }))} onSelect={selectCountry} disabled={pending || archived} className="max-w-[320px]" />
+            <div className="grid max-w-[512px] gap-4 sm:grid-cols-3 sm:items-start">
+              <TextField label="Country code" name="countryCode" fields={fields} setField={setField} disabled={pending || archived} className="min-w-0" />
+              <CmsLocationCombobox label="Origin IATA" kind="airport" value={fields.originCode ?? ""} onChange={(value) => setField("originCode", value)} disabled={pending || archived} className="min-w-0" />
+              <CmsLocationCombobox label="Destination IATA" kind="airport" value={fields.destinationCode ?? ""} onChange={(value) => setField("destinationCode", value)} disabled={pending || archived} className="min-w-0" />
             </div>
-            <TextField label="Image" name="image" fields={fields} setField={setField} disabled={pending || archived} />
-            <TextField label="Image alt text" name="imageAlt" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[448px]" />
+            <CmsExpandingTextField label="Image" value={fields.image ?? ""} onChange={(value) => setField("image", value)} disabled={pending || archived} />
+            <CmsExpandingTextField label="Image alt text" value={fields.imageAlt ?? ""} onChange={(value) => setField("imageAlt", value)} disabled={pending || archived} />
           </>
         ) : null}
 
@@ -321,6 +342,17 @@ export function HomepageCmsEditor({
         ) : null}
       </section>
 
+      {section === "destinations" ? (
+        <HomepageDestinationDraftPreview
+          payload={currentPayload}
+          marketName={getCmsMarketName(market)}
+          order={sortOrder}
+          version={item?.version}
+          publishedVersion={item?.publishedVersion}
+          unpublishedLabel={unpublishedLabel}
+          unsaved={draftDirty}
+        />
+      ) : (
       <aside className="h-fit min-w-0 lg:sticky lg:top-24">
         <ContentSectionHeading>Draft preview</ContentSectionHeading>
         <h2 className="mt-2 text-[15px] font-semibold text-[#111827]">{previewTitle(section, currentPayload)}</h2>
@@ -331,6 +363,7 @@ export function HomepageCmsEditor({
           {item ? <span>Draft v{item.version} · Published {item.publishedVersion ? `v${item.publishedVersion}` : "none"} · {unpublishedLabel ?? "No unpublished changes"}</span> : null}
         </div>
       </aside>
+      )}
     </div>
   );
 }
@@ -435,7 +468,7 @@ function previewDetail(section: HomepageCmsSection, payload: Record<string, unkn
 }
 
 function Field({ label, children, className = "" }: { label: string; children: React.ReactNode; className?: string }) {
-  return <label className={`block min-w-0 ${className}`}><span className="text-[13px] font-medium text-[#475569]">{label}</span><div className="mt-1.5">{children}</div></label>;
+  return <label className={`block min-w-0 ${className}`}><span className="block min-h-5 text-[13px] font-medium leading-5 text-[#475569]">{label}</span><div className="mt-1.5">{children}</div></label>;
 }
 
 function TextField({

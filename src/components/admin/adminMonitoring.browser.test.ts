@@ -57,3 +57,16 @@ test("Trips monitoring distinguishes unavailable, empty and populated supplier d
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
   }, 375);
 });
+
+test("compact alert acknowledgement executes with its real scoped module stylesheet", async () => {
+  const setup = `const React=require('react'),{createRoot}=require('react-dom/client'),{AdminAlertAcknowledgeButton}=require('alert');
+    window.fetch=()=>{throw Error('No automatic acknowledgement');};
+    createRoot(document.getElementById('root')).render(React.createElement(AdminAlertAcknowledgeButton,{alertKey:'fixture',signalToken:'signal',acknowledged:false,compact:true}));`;
+  await withComponentBrowser(bundle(), setup, async page => {
+    const button = page.getByRole("button", { name: "Mark as seen", exact: true });
+    assert.equal(await button.evaluate(node => getComputedStyle(node).minHeight), "34px");
+    assert.equal(await button.evaluate(node => getComputedStyle(node).fontSize), "13px");
+    assert.equal(await button.isDisabled(), false);
+    assert.match((await button.getAttribute("class"))!, /fixture_[a-f0-9]+_action/);
+  });
+});

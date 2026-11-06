@@ -87,12 +87,12 @@ test("navigation keeps parent workspaces visible while child routes stay nested"
   assert.match(shell, /Official Kurioticket mark stays in the top-left header beside the title at every width/);
   const groups = getAdminHeaderGroups("ADMIN", true);
   const entries = groups.flatMap(group => group.links);
-  assert.deepEqual(entries.map(({ item }) => item.label), ["Overview", "Users", "Search Activity", "Trips", "Support", "Providers", "Content", "System", "Settings"]);
+  assert.deepEqual(entries.map(({ item }) => item.label), ["Overview", "Users", "Search Activity", "Trips", "Support", "Providers", "Homepage Fares", "Content", "System", "Settings"]);
   const searches = entries.find(({ item }) => item.href === "/admin/searches/activity");
   const providers = entries.find(({ item }) => item.href === "/admin/providers");
   assert.deepEqual(searches?.children.map((item) => item.label), []);
   assert.deepEqual(entries.find(({ item }) => item.href === "/admin/users")?.children.map(item => item.label), []);
-  assert.deepEqual(providers?.children.map((item) => item.label), ["Flights", "Hotels", "Cars"]);
+  assert.deepEqual(providers?.children.map((item) => item.label), ["Hotels", "Cars"]);
   // Current dev intentionally hides Admin navigation from support roles.
   assert.deepEqual(getAdminHeaderGroups("SUPPORT"), []);
 });

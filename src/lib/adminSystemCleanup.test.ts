@@ -16,17 +16,20 @@ test("System removes general Alerts shortcuts and circular configuration investi
   assert.match(page, /href: "\/admin\/providers"/);
   assert.match(page, /Managed in deployment configuration/);
 });
-test("page headers no longer repeat System and Logs navigation", () => {
-  for (const path of ["src/app/admin/system/cms-health/page.tsx", "src/app/admin/email-delivery/page.tsx", "src/app/admin/notifications/page.tsx", "src/app/admin/settings/page.tsx"]) {
+test("page headers no longer repeat System navigation while Settings may link to its filtered audit history", () => {
+  for (const path of ["src/app/admin/system/cms-health/page.tsx", "src/app/admin/email-delivery/page.tsx", "src/app/admin/notifications/page.tsx"]) {
     const page = source(path);
     assert.doesNotMatch(page, /actions=\{|Back to System|View audit logs|href="\/admin\/logs"|href="\/admin\/system"/);
   }
+  const settings = source("src/app/admin/settings/page.tsx");
+  assert.doesNotMatch(settings, /actions=\{|Back to System|href="\/admin\/system"/);
+  assert.match(settings, /href="\/admin\/logs\?range=30d&action=FEATURE_CONTROL_UPDATED&targetType=FeatureFlag"/);
 });
-test("Settings retains operational controls but not duplicate ownership-panel links", () => {
+test("Settings retains feature controls without owning flight fare operations", () => {
   const page = source("src/app/admin/settings/page.tsx");
   assert.doesNotMatch(page, /linkLabel|View system status|View admin configuration status/);
   assert.match(page, /FeatureControlsPanel/);
-  assert.match(page, /href="\/admin\/homepage-fares"/);
+  assert.doesNotMatch(page, /Homepage Fare Operations|href="\/admin\/homepage-fares"/);
   assert.match(page, /canControlProduction/);
 });
 test("useful actions, access guards, emergency checks and the global bell remain intact", () => {

@@ -7,10 +7,13 @@ on:
       - src/services/adminAlert*
       - src/services/adminExpandedAlert*
       - src/components/admin/AdminNotificationsPanel*
+      - src/components/admin/AdminNotificationItem*
+      - src/components/admin/AdminNotificationSpinner*
       - src/components/admin/AdminHorizontalShell*
       - src/components/admin/AdminAlertAcknowledgeButton*
       - src/app/api/admin/notifications/**
       - src/lib/adminNotificationData*
+      - src/lib/adminNotificationSwipe*
       - src/lib/adminAlertNavigation*
       - src/lib/adminNavigation*
       - src/lib/adminSystemCleanup.test.ts
@@ -48,6 +51,8 @@ jobs:
           src/services/adminAlertCoreCoverage.test.ts
           src/services/adminAlertServiceExpansion.test.ts
           src/lib/adminNotificationData.test.ts
+          src/lib/adminNotificationSwipe.test.ts
+          src/app/api/admin/notifications/route.test.ts
           src/lib/adminAlertNavigation.test.ts
           src/lib/adminSystemCleanup.test.ts
           src/lib/adminNavigation.test.ts

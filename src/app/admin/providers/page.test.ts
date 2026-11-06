@@ -123,33 +123,34 @@ test("provider details preserve booking, readiness and audited Duffel retest", a
   });
 });
 
-test("admin navigation restores Providers and the original product destinations", () => {
+test("admin navigation keeps Providers and product destinations without a duplicate Flights workspace", () => {
   assert.equal(adminNavigation.some((item) => item.href === "/admin/providers" && item.label === "Providers"), true);
-  assert.equal(adminNavigation.some((item) => item.href === "/admin/flights" && item.label === "Flights"), true);
+  assert.equal(adminNavigation.some((item) => item.href === "/admin/homepage-fares" && item.label === "Homepage Fares"), true);
+  assert.equal(adminNavigation.some((item) => item.href === "/admin/flights"), false);
   assert.equal(adminNavigation.some((item) => item.href === "/admin/hotels" && item.label === "Hotels"), true);
   assert.equal(adminNavigation.some((item) => item.href === "/admin/cars" && item.label === "Cars"), true);
 });
 
-test("product pages retain truthful metasearch and provider health views", () => {
-  assert.match(flightsPage, /title="Flight Operations"/);
+test("Providers owns flight provider health while the legacy Flights route redirects to Search Activity", () => {
+  assert.match(flightsPage, /redirect\("\/admin\/searches\/activity\?product=FLIGHT"\)/);
+  assert.doesNotMatch(flightsPage, /AdminProviderStatusCard|Flight provider health|Provider exceptions|getFlightOperationsSnapshot/);
   assert.match(hotelsPage, /title="Hotel Operations"/);
   assert.match(carsPage, /title="Car Operations"/);
-  for (const [source, title] of [[flightsPage, "Flight Operations"], [hotelsPage, "Hotel Operations"], [carsPage, "Car Operations"]]) {
+  for (const [source, title] of [[hotelsPage, "Hotel Operations"], [carsPage, "Car Operations"]]) {
     const pages = jsxOpening(source, "AdminPageShell");
     assert.equal(pages.length, 1);
     assert.ok(pages[0].attributes.properties.some(property => property.getText().includes('title="' + title + '"')));
     assert.match(source, /telemetry unavailable/);
     assert.match(source, /No zero values were invented/);
   }
-  assert.match(flightsPage, /AdminProviderStatusCard/);
   // Hotel and Car Operations now own their own provider-health sections,
   // rather than reusing the older generic readiness card.
+  assert.match(providersPage, /getProviderIntegrationStatuses/);
+  assert.match(providersPage, /getProviderOperationalStatuses/);
   for (const source of [hotelsPage, carsPage]) {
     assert.match(source, /getProviderIntegrationStatuses/);
     assert.match(source, /providerHealth\.find/);
     assert.match(source, /AdminSectionCard/);
-  }
-  for (const source of [flightsPage, hotelsPage, carsPage]) {
     assert.match(source, /provider-owned/i);
     assert.doesNotMatch(source, /Booking not live|production booking workflow|booking actions/i);
   }

@@ -2,10 +2,11 @@
 // explicitly supplied boundary fixtures never replace the component under test.
 import assert from "node:assert/strict";
 import { existsSync, readFileSync, readdirSync, statSync, mkdirSync, writeFileSync } from "node:fs";
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { createRequire } from "node:module";
 import { dirname, posix, relative, resolve } from "node:path";
 import ts from "typescript";
+import postcss from "postcss";
 import type { Page } from "playwright";
 
 export function componentBundle(entries: Record<string, string>, boundaries: Record<string, string> = {}) {
@@ -23,6 +24,18 @@ export function componentBundle(entries: Record<string, string>, boundaries: Rec
     if (Object.hasOwn(modules, name)) return;
     modules[name] = "";
     const raw = readFileSync(file, "utf8");
+    if (file.endsWith(".module.css")) {
+      const classes: Record<string, string> = {};
+      const prefix = "fixture_" + createHash("sha256").update(file).digest("hex").slice(0, 10) + "_";
+      const css = postcss.parse(raw, { from: file });
+      css.walkRules(rule => {
+        rule.selector = rule.selector.replace(/\.([A-Za-z_][A-Za-z0-9_-]*)/g, (_match, value: string) => "." + (classes[value] ??= prefix + value));
+      });
+      // Load the actual module stylesheet with isolated fixture class names.
+      // This fixture adapter does not claim Next.js CSS compiler equivalence.
+      modules[name] = `const style=document.createElement("style");style.textContent=${JSON.stringify(css.toString())};document.head.appendChild(style);module.exports=${JSON.stringify(classes)};`;
+      return;
+    }
     let compiled = /\.tsx?$/.test(file) ? ts.transpileModule(raw, { compilerOptions: { jsx: ts.JsxEmit.ReactJSX, module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true } }).outputText : raw;
     compiled = compiled.replace(/require\("([^"]+)"\)/g, (_call, dependency: string) => {
       if (Object.hasOwn(modules, dependency)) return `require(${JSON.stringify(dependency)})`;

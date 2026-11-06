@@ -1,10 +1,6 @@
-import {
-  AdminDataTable,
-  AdminEmptyState,
-  AdminPageShell,
-  AdminStatusBadge,
-} from "@/components/admin/AdminPageShell";
+import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { CmsScopeHardeningActions } from "@/components/admin/CmsScopeHardeningActions";
+import { getCmsMarketName } from "@/lib/adminCmsMarketLabels";
 import { getCmsHealthOverview } from "@/services/cmsHardeningService";
 
 export const metadata = { title: "CMS Health" };
@@ -16,64 +12,93 @@ const cmsHealthGroups = [
   { id: "faqs", label: "FAQs", type: "FAQ" },
 ] as const;
 
+const tableHeadingClass = "px-3 py-3 text-left text-[12px] font-medium uppercase text-[#475569]";
+const tableCellClass = "px-3 py-3 align-middle text-[13px] text-[#020617]";
+
+const cmsLocaleDisplayNames =
+  typeof Intl.DisplayNames === "function"
+    ? new Intl.DisplayNames(["en"], { type: "language" })
+    : null;
+
+function getCmsLocaleName(locale: string) {
+  try {
+    return cmsLocaleDisplayNames?.of(locale) ?? locale;
+  } catch {
+    return locale;
+  }
+}
+
 export default async function AdminCmsHealthPage() {
   const overview = await getCmsHealthOverview();
 
   return (
-    <AdminPageShell
-      title="CMS Health"
-      description="Production integrity, fallback policy, ordering and unpublished-change diagnostics for every active CMS scope."
-    >
-      {!overview.available ? (
-        <AdminEmptyState
-          title="CMS health unavailable"
-          message="CMS storage could not be verified, so integrity is not being reported as healthy."
-        />
-      ) : (
-        <div className="space-y-5">
-          <section aria-label="CMS health summary" className="border-b border-[#D8E1EC] pb-4">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-              <div className="grid flex-1 grid-cols-2 gap-x-8 gap-y-4 sm:grid-cols-3">
-                <div className="min-w-0">
-                  <p className="text-[12px] text-[#64748B]">Healthy</p>
-                  <p className="mt-1 text-[15px] font-semibold tabular-nums text-emerald-700">
-                    {overview.totals.healthy}
-                  </p>
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[12px] text-[#64748B]">Needs attention</p>
-                  <p className={`mt-1 text-[15px] font-semibold tabular-nums ${overview.totals.unhealthy ? "text-amber-700" : "text-emerald-700"}`}>
-                    {overview.totals.unhealthy}
-                  </p>
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[12px] text-[#64748B]">Fallback active</p>
-                  <p className={`mt-1 text-[15px] font-semibold tabular-nums ${overview.totals.scopes - overview.totals.retiredFallback > 0 ? "text-amber-700" : "text-[#020617]"}`}>
-                    {overview.totals.scopes - overview.totals.retiredFallback}
-                  </p>
-                </div>
+    <div className="w-full min-w-0 bg-white text-[#020617]">
+      <AdminPageShell title="CMS Health" eyebrow="">
+        {!overview.available ? (
+          <section className="border-y border-[#D8E1EC] py-5" aria-labelledby="cms-health-unavailable">
+            <h2 id="cms-health-unavailable" className="text-[15px] font-semibold text-[#020617]">
+              CMS health unavailable
+            </h2>
+            <p className="mt-1 text-[13px] leading-5 text-[#475569]">
+              CMS storage could not be verified, so integrity is not being reported as healthy.
+            </p>
+          </section>
+        ) : (
+          <div className="min-w-0">
+          <section aria-label="CMS health summary" className="max-w-[720px] border-b border-[#D8E1EC] pb-5">
+            <div className="divide-y divide-[#E7ECF5]">
+              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-6 py-3">
+                <p className="flex items-center gap-1.5 text-[12px] font-medium text-emerald-700">
+                  <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                  Healthy
+                </p>
+                <p className="text-[13px] font-semibold tabular-nums text-[#020617]">{overview.totals.healthy}</p>
               </div>
-              <p className="shrink-0 text-[12px] text-[#64748B]">
-                Total records <span className="ml-1 font-medium tabular-nums text-[#334155]">{overview.totals.scopes}</span>
-              </p>
+              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-6 py-3">
+                <p className={`flex items-center gap-1.5 text-[12px] font-medium ${overview.totals.unhealthy ? "text-amber-700" : "text-emerald-700"}`}>
+                  <span
+                    aria-hidden="true"
+                    className={`h-1.5 w-1.5 rounded-full ${overview.totals.unhealthy ? "bg-amber-500" : "bg-emerald-500"}`}
+                  />
+                  Needs attention
+                </p>
+                <p className="text-[13px] font-semibold tabular-nums text-[#020617]">{overview.totals.unhealthy}</p>
+              </div>
+              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-6 py-3">
+                <p className="flex items-center gap-1.5 text-[12px] font-medium text-[#475569]">
+                  <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-slate-400" />
+                  Fallback retired
+                </p>
+                <p className="text-[13px] font-semibold tabular-nums text-[#020617]">{overview.totals.retiredFallback}</p>
+              </div>
+              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-6 py-3">
+                <p className="text-[12px] font-medium text-[#475569]">Total records</p>
+                <p className="text-[13px] font-semibold tabular-nums text-[#020617]">{overview.totals.scopes}</p>
+              </div>
             </div>
           </section>
 
           {overview.missingHomepageScopes.length > 0 ? (
-            <section aria-labelledby="missing-homepage-scopes-heading" className="rounded-lg border border-amber-200 bg-amber-50/50 p-4">
-              <h2 id="missing-homepage-scopes-heading" className="text-sm font-semibold text-slate-900">
+            <section
+              aria-labelledby="missing-homepage-scopes-heading"
+              className="border-b border-[#D8E1EC] py-5"
+            >
+              <h2 id="missing-homepage-scopes-heading" className="text-[15px] font-semibold text-[#020617]">
                 Missing homepage CMS scopes ({overview.missingHomepageScopes.length})
               </h2>
-              <p className="mt-1 text-xs leading-5 text-slate-600">
+              <p className="mt-1 max-w-4xl text-[13px] leading-5 text-[#475569]">
                 These supported markets have no CMS scope. Existing scopes can still be healthy.
                 Review setup before changing any content; do not rerun the full initialization against existing records.
               </p>
-              <ul className="mt-3 grid gap-1.5 text-xs text-slate-700 sm:grid-cols-2 xl:grid-cols-3">
+              <ul className="mt-3 grid gap-2 text-[12px] sm:grid-cols-2 xl:grid-cols-3">
                 {overview.missingHomepageScopes.map((scope) => (
-                  <li key={`${scope.type}:${scope.market}:${scope.locale}`} className="rounded-md border border-amber-200 bg-white px-3 py-2">
-                    <span className="font-semibold">{scope.type.replaceAll("_", " ")}</span>
-                    <span className="ml-2 text-slate-600">{scope.market} · {scope.locale}</span>
-                    <span className="ml-2 font-medium text-amber-800">Not initialized</span>
+                  <li
+                    key={`${scope.type}:${scope.market}:${scope.locale}`}
+                    className="border-l-[3px] border-amber-500 py-1 pl-3 text-[#475569]"
+                  >
+                    <span className="font-semibold text-[#020617]">{scope.type.replaceAll("_", " ")}</span>
+                    <span className="ml-2">{scope.market} · {scope.locale}</span>
+                    <span className="ml-2 font-medium text-amber-700">Not initialized</span>
                   </li>
                 ))}
               </ul>
@@ -81,19 +106,14 @@ export default async function AdminCmsHealthPage() {
           ) : null}
 
           {overview.scopes.length === 0 ? (
-            <AdminEmptyState
-              title="No CMS scopes"
-              message="No CMS scope has been initialized yet."
-            />
+            <section className="border-b border-[#D8E1EC] py-5" aria-labelledby="no-cms-scopes">
+              <h2 id="no-cms-scopes" className="text-[15px] font-semibold text-[#020617]">No CMS scopes</h2>
+              <p className="mt-1 text-[13px] leading-5 text-[#475569]">
+                No CMS scope has been initialized yet.
+              </p>
+            </section>
           ) : (
-            <section aria-labelledby="cms-areas-heading">
-              <div className="mb-2">
-                <h2 id="cms-areas-heading" className="text-[15px] font-semibold text-[#020617]">CMS areas</h2>
-                <p className="mt-1 text-[12px] text-[#64748B]">
-                  Expand an area to review individual records and diagnostics.
-                </p>
-              </div>
-
+            <section aria-label="CMS area diagnostics" className="border-b border-[#D8E1EC] pb-6 pt-4">
               <div className="border-y border-[#D8E1EC]">
                 {cmsHealthGroups.map((group) => {
                   const entries = overview.scopes.filter((entry) => entry.type === group.type);
@@ -101,7 +121,7 @@ export default async function AdminCmsHealthPage() {
 
                   const needsAttention = entries.filter((entry) => !entry.integrity.healthy).length;
                   const healthy = entries.length - needsAttention;
-                  const fallbackActive = entries.filter((entry) => !entry.integrity.legacyFallbackRetired).length;
+                  const fallbackRetired = entries.filter((entry) => entry.integrity.legacyFallbackRetired).length;
 
                   return (
                     <details
@@ -109,79 +129,117 @@ export default async function AdminCmsHealthPage() {
                       className="group border-b border-[#E7ECF5] last:border-b-0"
                       open={needsAttention > 0}
                     >
-                      <summary className="flex cursor-pointer list-none flex-col gap-3 px-3 py-3.5 marker:content-none sm:flex-row sm:items-center sm:justify-between [&::-webkit-details-marker]:hidden">
+                      <summary className="flex cursor-pointer list-none flex-col gap-2 py-3.5 marker:content-none sm:flex-row sm:items-center sm:justify-between [&::-webkit-details-marker]:hidden">
                         <div className="min-w-0">
                           <p className="text-[13px] font-semibold text-[#020617]">{group.label}</p>
-                          <p className="mt-1 text-[12px] text-[#64748B]">
+                          <p className="mt-0.5 text-[12px] text-[#64748B]">
                             {entries.length} record{entries.length === 1 ? "" : "s"} · {healthy} healthy · {needsAttention} need{needsAttention === 1 ? "s" : ""} attention
                           </p>
                         </div>
-                        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 sm:justify-end">
-                          <AdminStatusBadge tone={needsAttention ? "warn" : "good"}>
-                            {needsAttention ? `${needsAttention} need attention` : "Healthy"}
-                          </AdminStatusBadge>
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 sm:justify-end">
+                          <CmsStatusIndicator
+                            label={needsAttention ? `${needsAttention} need attention` : "Healthy"}
+                            tone={needsAttention ? "warn" : "good"}
+                          />
                           <span className="text-[12px] text-[#64748B]">
-                            {fallbackActive === 0
-                              ? "Fallback retired"
-                              : `${fallbackActive} fallback active`}
+                            {fallbackRetired} fallback retired
                           </span>
-                          <span aria-hidden="true" className="text-[16px] leading-none text-[#64748B] transition-transform group-open:rotate-180">⌄</span>
+                          <span aria-hidden="true" className="text-[14px] leading-none text-[#64748B] transition-transform group-open:rotate-180">⌄</span>
                         </div>
                       </summary>
 
-                      <div className="border-t border-[#E7ECF5] px-3 pb-4 pt-3">
-                        <AdminDataTable
-                          columns={["Scope", "Health", "Integrity", "Fallback", "Draft changes", "Actions"]}
-                          rows={entries.map((entry) => {
-                            const integrity = entry.integrity;
-                            const issueCount =
-                              integrity.invalidDrafts.length +
-                              integrity.invalidPublished.length +
-                              integrity.orphanPublished.length +
-                              integrity.draftOrderCollisions.length +
-                              integrity.publishedOrderCollisions.length +
-                              (integrity.draftOrderNeedsNormalization ? 1 : 0);
+                      <div className="border-t border-[#E7ECF5]">
+                        <div className="overflow-x-auto">
+                          <table className="w-full min-w-[980px] table-fixed text-left text-[13px]">
+                            <colgroup>
+                              <col className="w-[22%]" />
+                              <col className="w-[13%]" />
+                              <col className="w-[24%]" />
+                              <col className="w-[14%]" />
+                              <col className="w-[12%]" />
+                              <col className="w-[15%]" />
+                            </colgroup>
+                            <thead className="border-b border-[#D8E1EC]">
+                              <tr>
+                                <th scope="col" className={tableHeadingClass}>CMS market</th>
+                                <th scope="col" className={tableHeadingClass}>Health</th>
+                                <th scope="col" className={tableHeadingClass}>Integrity</th>
+                                <th scope="col" className={tableHeadingClass}>Legacy fallback</th>
+                                <th scope="col" className={tableHeadingClass}>Draft changes</th>
+                                <th scope="col" className={tableHeadingClass}>Actions</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-[#E7ECF5]">
+                              {entries.map((entry) => {
+                                const integrity = entry.integrity;
+                                const issueCount =
+                                  integrity.invalidDrafts.length +
+                                  integrity.invalidPublished.length +
+                                  integrity.orphanPublished.length +
+                                  integrity.draftOrderCollisions.length +
+                                  integrity.publishedOrderCollisions.length +
+                                  (integrity.draftOrderNeedsNormalization ? 1 : 0);
 
-                            return {
-                              id: `${entry.type}:${entry.market}:${entry.locale}`,
-                              cells: [
-                                <div key="scope">
-                                  <p className="font-black text-slate-950">{entry.type}</p>
-                                  <p className="text-xs text-slate-500">{entry.market} · {entry.locale}</p>
-                                  <p className="mt-1 text-xs text-slate-400">Scope v{integrity.scopeVersion ?? "—"}</p>
-                                </div>,
-                                <AdminStatusBadge key="health" tone={integrity.healthy ? "good" : "warn"}>
-                                  {integrity.healthy ? "Healthy" : "Needs attention"}
-                                </AdminStatusBadge>,
-                                <div key="integrity" className="text-xs leading-5 text-slate-600">
-                                  <p>{issueCount} issue{issueCount === 1 ? "" : "s"}</p>
-                                  <p>{integrity.invalidDrafts.length} invalid draft</p>
-                                  <p>{integrity.invalidPublished.length} invalid published</p>
-                                  <p>{integrity.draftOrderCollisions.length} draft order collision</p>
-                                  <p>{integrity.draftOrderNeedsNormalization ? "Draft order needs normalization" : "Draft order normalized"}</p>
-                                  <p>{integrity.publishedOrderCollisions.length} published order collision</p>
-                                </div>,
-                                <AdminStatusBadge key="fallback" tone={integrity.legacyFallbackRetired ? "neutral" : "info"}>
-                                  {integrity.legacyFallbackRetired ? "Retired" : "Available"}
-                                </AdminStatusBadge>,
-                                integrity.unpublishedChanges,
-                                integrity.scopeVersion ? (
-                                  <CmsScopeHardeningActions
-                                    key="actions"
-                                    type={entry.type}
-                                    market={entry.market}
-                                    locale={entry.locale}
-                                    scopeVersion={integrity.scopeVersion}
-                                    legacyFallbackRetired={integrity.legacyFallbackRetired}
-                                    fallbackRetirementEligible={integrity.fallbackRetirementEligible}
-                                    draftOrderCollisionCount={integrity.draftOrderCollisions.length}
-                                    draftOrderNeedsNormalization={integrity.draftOrderNeedsNormalization}
-                                  />
-                                ) : "—",
-                              ],
-                            };
-                          })}
-                        />
+                                return (
+                                  <tr key={`${entry.type}:${entry.market}:${entry.locale}`} className="hover:bg-[#F8FAFC]">
+                                    <th scope="row" className={tableCellClass + " text-left font-normal"}>
+                                      <span className="block font-semibold">{getCmsMarketName(entry.market)}</span>
+                                      <span className="mt-0.5 block text-[12px] text-[#64748B]">{getCmsLocaleName(entry.locale)}</span>
+                                      <span className="mt-0.5 block text-[11px] text-[#94A3B8]">
+                                        {entry.market} · {entry.locale} · v{integrity.scopeVersion ?? "—"}
+                                      </span>
+                                    </th>
+                                    <td className={tableCellClass}>
+                                      <CmsStatusIndicator
+                                        label={integrity.healthy ? "Healthy" : "Needs attention"}
+                                        tone={integrity.healthy ? "good" : "warn"}
+                                      />
+                                    </td>
+                                    <td className={tableCellClass + " text-[12px] leading-5 text-[#475569]"}>
+                                      {integrity.healthy ? (
+                                        <span>No issues</span>
+                                      ) : (
+                                        <div className="space-y-0.5">
+                                          <p className="font-medium text-[#0F172A]">
+                                            {issueCount} issue{issueCount === 1 ? "" : "s"}
+                                          </p>
+                                          {integrity.invalidDrafts.length > 0 ? <p>{integrity.invalidDrafts.length} invalid draft{integrity.invalidDrafts.length === 1 ? "" : "s"}</p> : null}
+                                          {integrity.invalidPublished.length > 0 ? <p>{integrity.invalidPublished.length} invalid published</p> : null}
+                                          {integrity.orphanPublished.length > 0 ? <p>{integrity.orphanPublished.length} orphan published</p> : null}
+                                          {integrity.draftOrderCollisions.length > 0 ? <p>{integrity.draftOrderCollisions.length} draft order collision{integrity.draftOrderCollisions.length === 1 ? "" : "s"}</p> : null}
+                                          {integrity.draftOrderNeedsNormalization ? <p>Draft order needs normalization</p> : null}
+                                          {integrity.publishedOrderCollisions.length > 0 ? <p>{integrity.publishedOrderCollisions.length} published order collision{integrity.publishedOrderCollisions.length === 1 ? "" : "s"}</p> : null}
+                                        </div>
+                                      )}
+                                    </td>
+                                    <td className={tableCellClass}>
+                                      {integrity.legacyFallbackRetired ? "Retired" : "Available"}
+                                    </td>
+                                    <td className={tableCellClass}>
+                                      {integrity.unpublishedChanges === 0
+                                        ? "None"
+                                        : `${integrity.unpublishedChanges} change${integrity.unpublishedChanges === 1 ? "" : "s"}`}
+                                    </td>
+                                    <td className={tableCellClass}>
+                                      {integrity.scopeVersion ? (
+                                        <CmsScopeHardeningActions
+                                          type={entry.type}
+                                          market={entry.market}
+                                          locale={entry.locale}
+                                          scopeVersion={integrity.scopeVersion}
+                                          legacyFallbackRetired={integrity.legacyFallbackRetired}
+                                          fallbackRetirementEligible={integrity.fallbackRetirementEligible}
+                                          draftOrderCollisionCount={integrity.draftOrderCollisions.length}
+                                          draftOrderNeedsNormalization={integrity.draftOrderNeedsNormalization}
+                                        />
+                                      ) : "—"}
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
                       </div>
                     </details>
                   );
@@ -189,8 +247,21 @@ export default async function AdminCmsHealthPage() {
               </div>
             </section>
           )}
-        </div>
-      )}
-    </AdminPageShell>
+          </div>
+        )}
+      </AdminPageShell>
+    </div>
+  );
+}
+
+function CmsStatusIndicator({ label, tone }: { label: string; tone: "good" | "warn" }) {
+  const text = tone === "good" ? "text-emerald-700" : "text-amber-700";
+  const dot = tone === "good" ? "bg-emerald-500" : "bg-amber-500";
+
+  return (
+    <span className={`inline-flex items-center gap-1.5 text-[12px] font-medium ${text}`}>
+      <span aria-hidden="true" className={`h-1.5 w-1.5 shrink-0 rounded-full ${dot}`} />
+      {label}
+    </span>
   );
 }

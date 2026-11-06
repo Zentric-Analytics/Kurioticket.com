@@ -35,7 +35,7 @@ const baseActionOptions: readonly AdminDirectoryOption[] = [
   { value: "support_ticket", label: "Support actions" },
   { value: "EMAIL", label: "Email actions" },
   { value: "ADMIN_ALERT", label: "Alert actions" },
-  { value: "FEATURE_CONTROL", label: "Feature control actions" },
+  { value: "FEATURE_CONTROL_UPDATED", label: "Feature control updates" },
   { value: "TEAM_ACCESS", label: "Team access actions" },
   { value: "HOMEPAGE_FARES", label: "Homepage fare actions" },
 ];
@@ -53,6 +53,7 @@ const baseTargetTypeOptions: readonly AdminDirectoryOption[] = [
   { value: "AdminOperationalTelemetry", label: "Operational telemetry" },
   { value: "AdminOperationalCondition", label: "Operational condition" },
   { value: "PreviewTester", label: "Preview tester" },
+  { value: "FeatureFlag", label: "Feature flag" },
 ];
 
 function withCurrentOption(options: readonly AdminDirectoryOption[], value: string, prefix: string) {

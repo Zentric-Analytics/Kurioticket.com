@@ -3,92 +3,80 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import { runInNewContext } from "node:vm";
 import ts from "typescript";
+import { classifyProviderIssue } from "@/services/searchFailureDiagnostics";
+import { __adminOperationalReadCoreTest } from "@/services/adminOperationalReadCore";
+import { searchDetailOutcomeLabel } from "@/lib/adminSearchDetailPresentation";
 
 const flightsPage = readFileSync("src/app/admin/flights/page.tsx", "utf8");
-const service = readFileSync("src/services/adminFlightOperationsService.ts", "utf8");
 
-test("flight admin is an operational overview rather than a readiness-only page", () => {
-  assert.match(flightsPage, /title="Flight Operations"/);
-  assert.match(flightsPage, /getFlightOperationsSnapshot/);
-  assert.match(flightsPage, /getProviderIntegrationStatuses/);
-  assert.match(flightsPage, /Recent flight searches/);
-  assert.match(flightsPage, /View flight searches/);
-  assert.match(flightsPage, /View flight journeys/);
-  assert.match(flightsPage, /search\.latencyMs === null \? "—"/);
-  assert.doesNotMatch(flightsPage, /Flight Search Readiness/);
+test("legacy Flight Operations bookmarks redirect securely to Flight Search Activity", async () => {
+  const calls: string[] = [];
+  const exported: Record<string, unknown> = {};
+  const code = ts.transpileModule(flightsPage, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
+  const ports: Record<string, unknown> = {
+    "@/lib/auth-guards": { requireAdminSession: async (path: string) => { calls.push(path); } },
+    "next/navigation": { redirect: (path: string) => { calls.push(path); throw new Error("redirected"); } },
+  };
+  runInNewContext(code, { exports: exported, require: (id: string) => { assert.ok(id in ports, id); return ports[id]; } });
+  await assert.rejects((exported.default as () => Promise<void>)(), /redirected/);
+  assert.deepEqual(calls, ["/admin/flights", "/admin/searches/activity?product=FLIGHT"]);
+  assert.doesNotMatch(flightsPage, /AdminPageShell|getFlightOperationsSnapshot|Recent flight searches/);
 });
 
-test("flight operations keeps booking and live status claims outside search telemetry", () => {
-  assert.match(flightsPage, /A provider handoff is not a booking confirmation/);
-  assert.match(flightsPage, /search data is not used to infer live flight status/);
-  assert.match(flightsPage, /Booking provider-owned/);
-  assert.match(flightsPage, /Flight status separate/);
+test("an unauthorized legacy Flight bookmark never reaches the canonical redirect", async () => {
+  const exported: Record<string, unknown> = {};
+  const code = ts.transpileModule(flightsPage, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
+  runInNewContext(code, { exports: exported, require: (id: string) => {
+    if (id === "@/lib/auth-guards") return { requireAdminSession: async () => { throw new Error("denied"); } };
+    assert.equal(id, "next/navigation"); return { redirect: () => assert.fail("unauthorized redirect") };
+  } });
+  await assert.rejects((exported.default as () => Promise<void>)(), /denied/);
 });
 
-test("flight operations snapshot is environment-scoped and real-data only", () => {
-  assert.match(service, /type: "FLIGHT"/);
-  assert.match(service, /query: \{ path: \["environment"\], equals: environment \}/);
-  assert.match(service, /status: "SUCCESS"/);
-  assert.match(service, /status: "PARTIAL"/);
-  assert.match(service, /status: "FAILED"/);
-  assert.match(service, /resultCount: 0/);
-  assert.match(service, /_avg: \{ latencyMs: true \}/);
-  assert.match(service, /take: 10/);
-  assert.match(service, /isolationLevel: "RepeatableRead"/);
-  assert.match(service, /return null/);
+test("canonical Flight search telemetry remains environment scoped and real-data only", () => {
+  const activity = readFileSync("src/app/admin/searches/activity/page.tsx", "utf8");
+  assert.match(activity, /delete raw\.environment/);
+  assert.match(activity, /params\.set\("environment", currentEnvironment\)/);
+  assert.match(activity, /adminOperationalReads\.searches\.list\(listParams\)/);
+  assert.match(activity, /adminOperationalReads\.searches\.summary\(params\)/);
+  assert.match(activity, /Search data unavailable/);
 });
 
-test("flight operations exposes focused search and provider exception diagnostics", () => {
-  assert.match(flightsPage, /Search exceptions/);
-  assert.match(flightsPage, /Routes needing attention/);
-  assert.match(flightsPage, /Provider exceptions/);
-  assert.match(flightsPage, /Failed searches/);
-  assert.match(flightsPage, /Partial searches/);
-  assert.match(flightsPage, /Raw provider error payloads are not exposed/);
-  assert.match(service, /exceptionSearches/);
-  assert.match(service, /routeIssues/);
-  assert.match(service, /providerIssues/);
-  assert.match(service, /service: "flight-search"/);
-  assert.match(service, /status: \{ in: \["FAILED", "DEGRADED"\] \}/);
+test("canonical search monitoring retains provider exceptions and separate booking context", () => {
+  const activity = readFileSync("src/app/admin/searches/activity/page.tsx", "utf8");
+  const table = readFileSync("src/components/admin/SearchMonitorTable.tsx", "utf8");
+  assert.match(activity, /buildAdminSearchProviderOptions\(getProviderIntegrationStatuses\(\)/);
+  assert.match(table, /No exact provider telemetry recorded/);
+  assert.match(table, /formatNumber\(search\.resultCount\)/);
+  assert.doesNotMatch(table, /Booking confirmed|Live flight status/);
 });
 
-test("provider diagnostics classify errors without returning raw provider messages", () => {
-  assert.match(service, /classifyProviderIssue\(issue\.errorMessage\)\.label/);
-  assert.doesNotMatch(flightsPage, /errorMessage/);
+test("provider diagnostics classify issues without exposing the raw provider error", () => {
+  const message = "401 provider api key synthetic-secret";
+  const result = classifyProviderIssue(message);
+  assert.equal(result.code, "AUTH_OR_CONFIG");
+  assert.equal(result.retryable, false);
+  assert.equal(JSON.stringify(result).includes("synthetic-secret"), false);
+  assert.equal(classifyProviderIssue("timeout").code, "PROVIDER_TIMEOUT");
 });
 
-test("zero-result success is treated as an operational exception, not a failed search", () => {
-  assert.match(service, /status: "SUCCESS", resultCount: 0/);
-  assert.match(service, /search\.status === "FAILED" \? "FAILED" : search\.status === "PARTIAL" \? "PARTIAL" : "ZERO_RESULTS"/);
-  const page = ts.createSourceFile("flights.tsx", flightsPage, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
-  const badges: ts.JsxElement[] = [];
-  function visit(node: ts.Node) {
-    if (ts.isJsxElement(node) && node.openingElement.tagName.getText(page) === "AdminStatusBadge" && node.openingElement.attributes.properties.some((attribute) => ts.isJsxAttribute(attribute) && attribute.name.getText(page) === "key" && attribute.initializer && ts.isStringLiteral(attribute.initializer) && attribute.initializer.text === "kind")) badges.push(node);
-    ts.forEachChild(node, visit);
-  }
-  visit(page);
-  assert.equal(badges.length, 1, "one exception-kind status badge");
-  const tone = badges[0].openingElement.attributes.properties.find((attribute) => ts.isJsxAttribute(attribute) && attribute.name.getText(page) === "tone");
-  assert.ok(tone && ts.isJsxAttribute(tone) && tone.initializer && ts.isJsxExpression(tone.initializer) && tone.initializer.expression);
-  assert.equal(badges[0].children.length, 1);
-  const label = badges[0].children[0];
-  assert.ok(ts.isJsxExpression(label) && label.expression);
-  const operations = ts.createSourceFile("operations.ts", service, ts.ScriptTarget.Latest, true);
-  const kinds: ts.Expression[] = [];
-  function visitKind(node: ts.Node) {
-    if (ts.isPropertyAssignment(node) && node.name.getText(operations) === "kind") kinds.push(node.initializer);
-    ts.forEachChild(node, visitKind);
-  }
-  visitKind(operations);
-  assert.equal(kinds.length, 1);
-  for (const [status, expectedKind, expectedTone, expectedLabel] of [
-    ["SUCCESS", "ZERO_RESULTS", "warn", "ZERO RESULTS"],
-    ["PARTIAL", "PARTIAL", "warn", "PARTIAL"],
-    ["FAILED", "FAILED", "bad", "FAILED"],
-  ]) {
-    const kind = runInNewContext(kinds[0].getText(operations), { search: { status, resultCount: 0 } });
-    assert.equal(kind, expectedKind);
-    assert.equal(runInNewContext(tone.initializer.expression.getText(page), { search: { kind } }), expectedTone);
-    assert.equal(runInNewContext(label.expression.getText(page), { search: { kind } }), expectedLabel);
-  }
+test("canonical zero-result SUCCESS remains distinct from operational failure", () => {
+  const row: Parameters<typeof __adminOperationalReadCoreTest.fallbackSearchDiagnostic>[0] = {
+    id: "search_fixture", requestId: "request_fixture", userId: null, visitorId: null,
+    type: "FLIGHT", origin: "LOS", destination: "LHR", checkIn: null, checkOut: null,
+    query: {}, resultCount: 0, latencyMs: 1200, status: "SUCCESS", createdAt: new Date("2030-01-01"), visitor: null, journeyEvents: [],
+  };
+  const result = __adminOperationalReadCoreTest.fallbackSearchDiagnostic(row);
+  assert.equal(result.outcome, "ZERO_RESULTS");
+  assert.equal(result.reasonCode, "NO_MATCHING_RESULTS");
+  assert.equal(result.retryable, false);
+  assert.equal(searchDetailOutcomeLabel(result.outcome), "No results");
+  const failed = __adminOperationalReadCoreTest.fallbackSearchDiagnostic({ ...row, status: "FAILED" });
+  assert.notEqual(failed.outcome, result.outcome);
+  assert.equal(searchDetailOutcomeLabel(failed.outcome), "Failed");
+});
+
+test("legacy metadata does not recreate a duplicate operational workspace", () => {
+  assert.match(flightsPage, /metadata = \{ title: "Admin Search Activity" \}/);
+  assert.doesNotMatch(flightsPage, /provider health|Homepage fare operations|Flight Search Readiness/);
 });

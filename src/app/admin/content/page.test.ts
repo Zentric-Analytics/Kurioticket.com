@@ -50,18 +50,21 @@ test("public content management exposes homepage and FAQ CMS areas while fare op
   assert.doesNotMatch(contentPage, /Upload image|Approve content/i);
 });
 
-test("homepage fare operations are separated from content, system and settings", () => {
+test("homepage fare operations stay operational while linking to their content source", () => {
   assert.doesNotMatch(contentPage, /HomepageFaresRefreshCard/);
   assert.doesNotMatch(systemPage, /HomepageFaresRefreshCard/);
   assert.doesNotMatch(settingsPage, /HomepageFaresRefreshCard/);
   assert.match(settingsPage, /Feature controls/);
+  assert.doesNotMatch(settingsPage, /Homepage Fare Operations|\/admin\/homepage-fares/);
   assert.match(homepageFarePage, /title="Homepage Fare Operations"/);
   assert.match(homepageFarePage, /HomepageFaresRefreshCard/);
-  assert.match(homepageFarePage, /href="\/admin\/settings"/);
+  assert.match(homepageFarePage, /href="\/admin\/content\/homepage"/);
+  assert.match(homepageFarePage, />\s*Homepage content\s*<\/Link>/);
+  assert.match(homepageFarePage, /href="\/admin\/providers\?product=flights"/);
+  assert.match(homepageFarePage, />\s*Flight providers\s*<\/Link>/);
+  assert.doesNotMatch(homepageFarePage, /href="\/admin\/flights"/);
+  assert.doesNotMatch(homepageFarePage, /href="\/admin\/settings"/);
   assert.doesNotMatch(contentPage, /\/admin\/homepage-fares/);
-  assert.match(settingsPage, /href="\/admin\/homepage-fares"/);
-  assert.match(settingsPage, /Homepage Fare Operations/);
-  assert.doesNotMatch(contentPage, /href="\/admin\/settings"[\s\S]{0,300}Homepage fare operations/);
 });
 
 test("homepage fare refresh component keeps existing client APIs, scopes, and status messaging", () => {
@@ -334,4 +337,32 @@ test("Content landing aggregates distinct published snapshots from every support
   assert.match(contentPage, /getCmsContentScopeSummary\("HOTEL_DESTINATION", "GLOBAL"/);
   assert.match(contentPage, /getCmsContentScopeSummary\("FAQ", faqCmsScope\.market, faqCmsScope\.locale\)/);
   assert.match(contentPage, />Published records<\/span>/);
+});
+
+
+test("homepage CMS controls share the public personal-details border and focus treatment", () => {
+  const profile = readFileSync("src/components/dashboard/DashboardGrid.tsx", "utf8");
+  const editor = readFileSync("src/components/admin/HomepageCmsEditor.tsx", "utf8");
+  const control = editor.match(/const editorControlClass = "([^"]+)";/)?.[1];
+  assert.ok(control, "The homepage CMS should keep one shared control style");
+
+  for (const token of [
+    "border border-slate-300",
+    "hover:border-slate-400",
+    "focus:border-[#004BB8]/40",
+    "focus:ring-2",
+    "focus:ring-[#004BB8]/15",
+  ]) {
+    assert.ok(profile.includes(token), `Public personal details must contain ${token}`);
+    assert.ok(control.includes(token), `Homepage CMS must match the public treatment: ${token}`);
+  }
+
+  assert.doesNotMatch(control, /border-2|border-\[#94A3B8\]|focus:border-\[#6D28D9\]|focus:ring-\[#EDE9FE\]/);
+  assert.match(editor, /<AdminInput className=\{editorControlClass\}/);
+  assert.match(editor, /<AdminSelect className=\{editorControlClass\}/);
+  assert.match(editor, /<AdminTextarea className=\{\`\$\{editorControlClass\}/);
+  // Existing compact widths and grouped fields must not be rearranged.
+  assert.match(editor, /grid max-w-\[512px\] gap-4 sm:grid-cols-3/);
+  assert.match(editor, /className="max-w-\[320px\]"/);
+  assert.match(editor, /lg:grid-cols-\[minmax\(0,1fr\)_320px\]/);
 });
