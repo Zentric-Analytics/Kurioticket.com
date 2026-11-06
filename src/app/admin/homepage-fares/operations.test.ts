@@ -341,7 +341,12 @@ test("Homepage Fare Operations shares the white Notifications workspace without 
 
 test("Readiness is a flat metrics strip with neutral status dots and authoritative counts", () => {
   assert.match(component, /aria-label="Fare readiness metrics"/);
-  assert.match(component, /grid-cols-2 gap-px border-y border-\[#D8E1EC\] bg-\[#E7ECF5\] sm:grid-cols-3 xl:grid-cols-5/);
+  assert.match(component, /aria-label="Readiness metrics \(scroll horizontally on narrow screens\)"/);
+  assert.match(component, /max-w-full overflow-x-auto overscroll-x-contain/);
+  assert.match(component, /grid min-w-\[920px\] grid-cols-5 gap-px border-y border-\[#D8E1EC\] bg-\[#E7ECF5\]/);
+  assert.match(component, /tabIndex=\{0\}/);
+  assert.doesNotMatch(component, /grid-cols-2 gap-px border-y border-\[#D8E1EC\] bg-\[#E7ECF5\] sm:grid-cols-3 xl:grid-cols-5/);
+  assert.match(component, /whitespace-nowrap text-\[11px\] font-medium leading-5/);
   assert.doesNotMatch(component, /rounded-lg border border-\[#D8E1EC\] bg-white px-3 py-2\.5/);
   assert.match(component, /summary\.fresh/);
   assert.match(component, /summary\.last_known_good/);
