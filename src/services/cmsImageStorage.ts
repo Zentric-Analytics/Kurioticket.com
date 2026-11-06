@@ -23,7 +23,7 @@ export function getCmsImageStorageConfig(): R2Config | null {
 const sha256 = (value: Uint8Array | string) => createHash("sha256").update(value).digest("hex");
 const sign = (key: Uint8Array | string, value: string) => createHmac("sha256", key).update(value).digest();
 
-function r2Signature(config: R2Config, method: "PUT" | "GET", objectKey: string, body: Uint8Array) {
+function r2Signature(config: R2Config, method: "PUT" | "GET" | "DELETE", objectKey: string, body: Uint8Array) {
   const host = `${config.accountId}.r2.cloudflarestorage.com`;
   const pathname = `/${encodeURIComponent(config.bucket)}/${objectKey.split("/").map(encodeURIComponent).join("/")}`;
   const now = new Date();
@@ -68,6 +68,26 @@ export async function storeCmsImage(filename: string, bytes: Uint8Array): Promis
     cache: "no-store",
   });
   return response.ok;
+}
+
+/**
+ * Compensating cleanup when an upload has reached R2 but its required audit
+ * entry could not be committed. Only freshly generated, validated CMS keys
+ * are accepted; deletion is never exposed through a public admin endpoint.
+ */
+export async function deleteCmsImage(filename: string): Promise<boolean> {
+  const config = getCmsImageStorageConfig();
+  const objectKey = cmsImageObjectKey(filename);
+  if (!config || !objectKey) return false;
+  const req = r2Signature(config, "DELETE", objectKey, new Uint8Array());
+  const response = await fetch(req.url, {
+    method: "DELETE",
+    headers: req.headers,
+    signal: AbortSignal.timeout(15000),
+    cache: "no-store",
+  });
+  // A not-found object is already clean; treat cleanup as idempotent.
+  return response.ok || response.status === 404;
 }
 
 export async function loadCmsImage(filename: string): Promise<Response | null> {
