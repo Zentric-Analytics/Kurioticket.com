@@ -30,12 +30,19 @@ test("Audit Logs presents readable actions while retaining technical audit value
   assert.ok(page.includes("title={log.targetId || undefined}"));
 });
 
-test("Target email is filterable but not a permanent table column", () => {
+test("Target email stays out of the permanent columns and expandable rows own the extra detail", () => {
   assert.ok(toolbar.includes("Search target email"));
   assert.ok(toolbar.includes('placeholder="Search target email"'));
   assert.equal(page.includes("<span>Target email</span>"), false);
+  assert.equal(page.includes(">Details</span>"), false);
+  assert.equal(page.includes("View ›"), false);
+  assert.equal(page.includes("Hide ‹"), false);
   assert.ok(page.includes("if (!log.targetEmail)"));
   assert.ok(page.includes("<details data-audit-row={log.id}"));
+  assert.ok(page.includes('title="View target email details"'));
+  assert.ok(page.includes("cursor-pointer"));
+  assert.ok(page.includes("hover:bg-[#F8FAFC]"));
+  assert.ok(page.includes("Additional target email details available"));
   assert.ok(page.includes("Target email</p>"));
   assert.ok(page.includes("{log.targetEmail}"));
 });
