@@ -430,7 +430,8 @@ export function HomepageFaresRefreshCard() {
   });
   const [selectedRouteScope, setSelectedRouteScope] = useState<string | null>(null);
   const [routePage, setRoutePage] = useState(1);
-  const routeDetailsRef = useRef<HTMLDivElement>(null);
+  // Stable route-inspector anchor: only explicit Inspect actions navigate here.
+  const routeInspectorRef = useRef<HTMLDivElement>(null);
   const [routeFilter, setRouteFilter] =
     useState<AdminHomepageFareRouteGroupFilter>("all");
   const selectRouteScope = useCallback((scope: string) => {
@@ -448,15 +449,15 @@ export function HomepageFaresRefreshCard() {
     setRouteFilter(filter);
   }, []);
 
-  useEffect(() => {
-    if (!selectedRouteScope) return;
-
-    const animationFrame = window.requestAnimationFrame(() => {
-      routeDetailsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  const inspectMarketRoutes = useCallback((marketCode: string) => {
+    selectRouteScope(marketCode);
+    // An explicit click navigates even when this market is already selected.
+    // Dropdown and status-filter changes must never automatically scroll.
+    routeInspectorRef.current?.scrollIntoView({
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+      block: "start",
     });
-
-    return () => window.cancelAnimationFrame(animationFrame);
-  }, [selectedRouteScope, routeFilter]);
+  }, [selectRouteScope]);
 
   const loadStatus = useCallback(async () => {
     setStatusState((current) => ({ ...current, loading: true, error: "" }));
@@ -635,7 +636,7 @@ export function HomepageFaresRefreshCard() {
                 markets={publicMarkets}
                 marketsNeedingAnotherRun={marketsNeedingAnotherRun}
                 selectedRouteScope={selectedRouteScope}
-                onInspectMarket={selectRouteScope}
+                onInspectMarket={inspectMarketRoutes}
               />
 
               <MarketRouteInspector
@@ -649,13 +650,13 @@ export function HomepageFaresRefreshCard() {
                 onPreviousPage={() => setRoutePage((page) => Math.max(1, page - 1))}
                 onNextPage={() => setRoutePage((page) => page + 1)}
                 onFilterChange={selectRouteFilter}
-                routeDetailsRef={routeDetailsRef}
+                routeInspectorRef={routeInspectorRef}
               />
 
               <AdvancedDiagnostics
                 pools={fallbackPools}
                 selectedRouteScope={selectedRouteScope}
-                onInspectMarket={selectRouteScope}
+                onInspectMarket={inspectMarketRoutes}
                 statusPayload={statusPayload}
                 refreshCounts={latestCounts}
               />
@@ -1115,7 +1116,7 @@ function MarketRouteInspector({
   onPreviousPage,
   onNextPage,
   onFilterChange,
-  routeDetailsRef,
+  routeInspectorRef,
 }: {
   publicGroups: AdminHomepageFareMarketRouteGroup[];
   selectedRouteScope: string | null;
@@ -1127,7 +1128,7 @@ function MarketRouteInspector({
   onPreviousPage: () => void;
   onNextPage: () => void;
   onFilterChange: (filter: AdminHomepageFareRouteGroupFilter) => void;
-  routeDetailsRef: RefObject<HTMLDivElement | null>;
+  routeInspectorRef: RefObject<HTMLDivElement | null>;
 }) {
   const marketOptions = [
     { value: "", label: "Select market" },
@@ -1142,7 +1143,8 @@ function MarketRouteInspector({
   }
 
   return (
-    <DashboardSection title="Route inspector">
+    <div ref={routeInspectorRef} className="min-w-0 scroll-mt-32">
+      <DashboardSection title="Route inspector">
       <div className="mt-4 grid gap-x-4 gap-y-3 border-y border-[#E7ECF5] py-4 sm:grid-cols-[minmax(0,320px)_minmax(0,240px)]">
         <div className="min-w-0">
           <p className="mb-1.5 text-[12px] font-medium text-[#64748B]">Market</p>
@@ -1177,7 +1179,6 @@ function MarketRouteInspector({
       ) : null}
 
       <SelectedRouteDetails
-        routeDetailsRef={routeDetailsRef}
         group={selectedGroup}
         selectedRouteScope={selectedRouteScope}
         loading={loading}
@@ -1185,12 +1186,12 @@ function MarketRouteInspector({
         onPreviousPage={onPreviousPage}
         onNextPage={onNextPage}
       />
-    </DashboardSection>
+      </DashboardSection>
+    </div>
   );
 }
 
 function SelectedRouteDetails({
-  routeDetailsRef,
   group,
   selectedRouteScope,
   loading,
@@ -1198,7 +1199,6 @@ function SelectedRouteDetails({
   onPreviousPage,
   onNextPage,
 }: {
-  routeDetailsRef: RefObject<HTMLDivElement | null>;
   group: AdminHomepageFareMarketRouteGroup | null;
   selectedRouteScope: string | null;
   loading: boolean;
@@ -1208,7 +1208,7 @@ function SelectedRouteDetails({
 }) {
   if (!selectedRouteScope || !group) {
     return (
-      <p ref={routeDetailsRef} className="mt-3 border-b border-[#E7ECF5] py-3 text-[12px] leading-5 text-[#64748B]">
+      <p className="mt-3 border-b border-[#E7ECF5] py-3 text-[12px] leading-5 text-[#64748B]">
         Select a market or All routes.
       </p>
     );
@@ -1218,7 +1218,7 @@ function SelectedRouteDetails({
   const isViewAll = group.marketCode === "ALL";
 
   return (
-    <div ref={routeDetailsRef} className="mt-4 min-w-0 border-y border-[#D8E1EC] bg-white">
+    <div className="mt-4 min-w-0 border-y border-[#D8E1EC] bg-white">
       <div className="border-b border-[#E7ECF5] px-3 py-3">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
@@ -1256,7 +1256,7 @@ function SelectedRouteDetails({
           </div>
         </div>
       </div>
-      <RouteDetailsTable group={group} routes={page.routes} loading={loading} />
+      <RouteDetailsTable group={group} routes={page.routes} loading={loading} keepPageHeight={page.totalPages > 1} />
     </div>
   );
 }
@@ -1274,10 +1274,12 @@ function RouteDetailsTable({
   group,
   routes,
   loading,
+  keepPageHeight,
 }: {
   group: AdminHomepageFareMarketRouteGroup;
   routes: AdminHomepageFareMarketRouteGroup["routes"];
   loading: boolean;
+  keepPageHeight: boolean;
 }) {
   if (!routes.length) {
     return (
@@ -1288,8 +1290,26 @@ function RouteDetailsTable({
   }
 
   return (
-    <div className="max-w-full overflow-x-auto" role="region" aria-label="Route inspection results" tabIndex={0}>
-      <table className="min-w-[1120px] text-left text-[13px]">
+    <div
+      className={"max-w-full overflow-x-auto overscroll-x-contain [overflow-anchor:none] " + (keepPageHeight ? "min-h-[740px]" : "")}
+      role="region"
+      aria-label="Route inspection results"
+      tabIndex={0}
+    >
+      <table className="w-full min-w-[1400px] table-fixed text-left text-[13px]">
+        <colgroup>
+          <col className="w-[70px]" />
+          <col className="w-[145px]" />
+          <col className="w-[115px]" />
+          <col className="w-[135px]" />
+          <col className="w-[100px]" />
+          <col className="w-[105px]" />
+          <col className="w-[110px]" />
+          <col className="w-[115px]" />
+          <col className="w-[110px]" />
+          <col className="w-[175px]" />
+          <col className="w-[220px]" />
+        </colgroup>
         <thead className="border-b border-[#E7ECF5] text-[12px] font-medium uppercase text-[#64748B]">
           <tr>
             <th className="px-3 py-2.5">Market</th>
