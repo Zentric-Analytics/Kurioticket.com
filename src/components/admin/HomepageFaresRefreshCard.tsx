@@ -428,7 +428,7 @@ export function HomepageFaresRefreshCard() {
     loading: true,
     error: "",
   });
-  const [selectedRouteScope, setSelectedRouteScope] = useState<string | null>(null);
+  const [selectedRouteScope, setSelectedRouteScope] = useState<string>(ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE);
   const [routePage, setRoutePage] = useState(1);
   // Stable route-inspector anchor: only explicit Inspect actions navigate here.
   const routeInspectorRef = useRef<HTMLDivElement>(null);
@@ -441,7 +441,7 @@ export function HomepageFaresRefreshCard() {
         ? scope === ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE
           ? ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE
           : normalizeAdminHomepageFareMarketCode(scope)
-        : null,
+        : ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE,
     );
   }, []);
   const selectRouteFilter = useCallback((filter: AdminHomepageFareRouteGroupFilter) => {
@@ -690,18 +690,19 @@ const STATUS_BADGE_STYLES: Record<HomepageFareSnapshotStatus, string> = {
 };
 
 
+// Individual route snapshot statuses only. "Ready" and "Underfilled" are
+// overlapping aggregate filters, not distinct route states. The internal
+// "stale" filter matches stored "expired" route snapshots.
 const ROUTE_FILTERS: Array<{
   key: AdminHomepageFareRouteGroupFilter;
   label: string;
 }> = [
-  { key: "all", label: "All" },
-  { key: "ready", label: "Ready" },
-  { key: "underfilled", label: "Underfilled" },
-  { key: "failed", label: "Failed" },
-  { key: "missing", label: "Missing" },
-  { key: "stale", label: "Stale" },
-  { key: "last_known_good", label: "Last-known-good" },
+  { key: "all", label: "All statuses" },
   { key: "fresh", label: "Fresh" },
+  { key: "last_known_good", label: "Last-known-good" },
+  { key: "stale", label: "Expired" },
+  { key: "missing", label: "Missing" },
+  { key: "failed", label: "Failed" },
   { key: "unavailable", label: "Unavailable" },
 ];
 
@@ -1154,7 +1155,6 @@ function MarketRouteInspector({
   routeInspectorRef: RefObject<HTMLDivElement | null>;
 }) {
   const marketOptions = [
-    { value: "", label: "Select market" },
     { value: ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE, label: "All routes" },
     ...publicGroups.map((group) => ({ value: group.marketCode, label: group.marketLabel })),
   ];
@@ -1176,7 +1176,7 @@ function MarketRouteInspector({
             name="homepage-fare-market"
             appearance="fare"
             truncateLabel
-            value={selectedRouteScope ?? ""}
+            value={selectedRouteScope}
             options={marketOptions}
             onValueChange={onSelectMarket}
           />
@@ -1204,6 +1204,7 @@ function MarketRouteInspector({
       <SelectedRouteDetails
         group={selectedGroup}
         selectedRouteScope={selectedRouteScope}
+        filterLabel={ROUTE_FILTERS.find((option) => option.key === filter)?.label ?? "All statuses"}
         loading={loading}
         routePage={routePage}
         onPreviousPage={onPreviousPage}
@@ -1217,6 +1218,7 @@ function MarketRouteInspector({
 function SelectedRouteDetails({
   group,
   selectedRouteScope,
+  filterLabel,
   loading,
   routePage,
   onPreviousPage,
@@ -1224,6 +1226,7 @@ function SelectedRouteDetails({
 }: {
   group: AdminHomepageFareMarketRouteGroup | null;
   selectedRouteScope: string | null;
+  filterLabel: string;
   loading: boolean;
   routePage: number;
   onPreviousPage: () => void;
@@ -1232,7 +1235,7 @@ function SelectedRouteDetails({
   if (!selectedRouteScope || !group) {
     return (
       <p className="mt-3 border-b border-[#E7ECF5] py-3 text-[12px] leading-5 text-[#64748B]">
-        Select a market or All routes.
+        No route group is available for this market. Choose All routes or another market.
       </p>
     );
   }
@@ -1250,11 +1253,12 @@ function SelectedRouteDetails({
             </h5>
             <p className="mt-1 text-[12px] leading-5 text-[#64748B]">
               Showing {page.start}–{page.end} of {page.totalRoutes}
-              {isViewAll ? " · Debug view across all markets" : ` · ${group.marketCode}`}
+              {isViewAll ? " · Across all markets" : ` · ${group.marketCode}`}
+              {" · Status: "}{filterLabel}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <MarketGroupStatusBadge status={group.status} />
+            {!isViewAll ? <MarketGroupStatusBadge status={group.status} /> : null}
             <div className="flex flex-wrap items-center gap-2 text-[12px] font-medium text-[#475569]">
               <button
                 type="button"
@@ -1307,7 +1311,7 @@ function RouteDetailsTable({
   if (!routes.length) {
     return (
       <p className="p-4 text-sm font-semibold text-muted">
-        {loading ? "Loading homepage fare snapshot status…" : "No routes to display for this market/filter."}
+        {loading ? "Loading homepage fare snapshot status…" : group.marketCode === "ALL" ? "No routes match the selected status." : "No routes match this market and status."}
       </p>
     );
   }
