@@ -188,7 +188,11 @@ test("hotel CMS canonical search protects the mapped destination and uses visibl
   assert.match(listing, /left\.sortOrder - right\.sortOrder/);
 
   assert.match(editor, /item\?\.publishedVersion != null/);
-  assert.match(editor, /current\.canonicalId !== option\.canonicalId \? \{ image: "", imageAlt: "" \}/);
+  assert.match(editor, /selectedHotelIdRef = useRef\(text\(saved\.canonicalId\)\)/);
+  assert.match(editor, /previousCanonicalId && previousCanonicalId !== option\.canonicalId \? \{ image: "", imageAlt: "" \}/);
+  assert.match(editor, /setConflict\(staleVersion\)/);
+  assert.match(editor, /: serverError\)/);
+  assert.match(editor, /changed since it was opened\|changed concurrently\|refresh before/);
   assert.match(editor, /create a new draft to manage a different destination/);
   assert.match(editor, /Directory order/);
   assert.match(editor, /Existing destinations cannot be duplicated/);
