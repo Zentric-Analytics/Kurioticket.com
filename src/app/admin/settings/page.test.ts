@@ -144,21 +144,20 @@ test("Recent changes opens unfiltered audit history within the reader's supporte
   assert.match(auditReader, /end - start > 90 \* dayMs/);
 });
 
-test("Recent changes distinguishes saved control timestamps from audited administrator events", () => {
+test("Recent changes reads real settings audit events instead of initialization timestamps", () => {
   const recent = readFileSync("src/app/admin/settings/recent-changes/page.tsx", "utf8");
-  assert.match(recent, /Latest saved feature-control states/);
-  assert.match(recent, /Dates can reflect initial setup, not only administrator changes/);
-  assert.match(recent, /<span>Last updated<\/span>/);
-  assert.match(recent, /recentControlUpdates/);
-  assert.match(recent, /!featureControls\.dataAvailable/);
-  assert.match(recent, /Feature-control records are temporarily unavailable/);
-  assert.match(recent, /No saved feature-control timestamps available/);
-  assert.doesNotMatch(recent, /updatedBy|admin email address/i);
-  assert.doesNotMatch(recent, /adminAuditLog\.create/);
+  assert.match(recent, /adminAuditReads\.list/);
+  assert.match(recent, /FEATURE_CONTROL_UPDATED/);
+  assert.match(recent, /ADMIN_NOTIFICATION_PREFERENCE_UPDATED/);
+  assert.match(recent, /history\.map/);
+  assert.match(recent, /Administrator/);
+  assert.match(recent, /No recorded Settings changes in the last 90 days/);
+  assert.match(recent, /Settings audit history is temporarily unavailable/);
+  assert.doesNotMatch(recent, /listFeatureControls|recentControlUpdates|featureControls\.controls/);
 });
 
 test("Settings omits nonactionable deployment and access documentation", () => {
-  assert.doesNotMatch(settingsPage, /Managed outside Settings|Runtime & credentials|Administrator access|Deployment managed|Access managed separately/);
+  assert.doesNotMatch(settingsPage, /Managed outside Settings|Runtime & credentials|Deployment managed|Access managed separately/);
   assert.doesNotMatch(settingsPage, /process\.env\./);
   assert.doesNotMatch(featurePanel, /API key|database URL|session secret/i);
 });
@@ -203,7 +202,7 @@ test("settings routes isolate the right-side content but preserve the working co
   assert.match(featureSection, /hideCategoryHeading/);
   assert.match(featurePanel, /hideCategoryHeading \? undefined/);
   assert.match(notifications, /<AdminNotificationPreferencesPanel/);
-  assert.match(changes, /recentControlUpdates/);
+  assert.match(changes, /history\.map/);
   assert.match(changes, /FEATURE_CONTROL_UPDATED/);
   assert.doesNotMatch(notifications, /FeatureControlsPanel|listFeatureControls/);
   assert.doesNotMatch(changes, /AdminNotificationPreferencesPanel/);
@@ -232,7 +231,7 @@ test("Settings sections share restrained desktop widths, headings, and consisten
   assert.doesNotMatch(featureSection, />Feature controls<\/p>/);
   assert.match(featurePanel, /sm:min-w-\[128px\] sm:justify-end/);
   assert.match(notificationPanel, /sm:min-w-\[128px\] sm:justify-end/);
-  assert.match(recent, /sm:grid-cols-\[minmax\(0,1fr\)_108px_140px\]/);
+  assert.match(recent, /lg:grid-cols-\[minmax\(0,1fr\)_minmax\(0,1\.1fr\)_minmax\(0,1\.1fr\)_150px\]/);
   assert.doesNotMatch(settingsLayout, /<AdminHorizontalShell|<AdminHeader/);
 });
 
