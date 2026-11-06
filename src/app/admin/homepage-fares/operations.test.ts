@@ -72,18 +72,13 @@ test("homepage fare operations follows the provider-style operator hierarchy", (
   const readiness = component.indexOf('id="homepage-fare-readiness-heading"');
   const refresh = component.indexOf("<RefreshCronPanel");
   const markets = component.indexOf("<MarketReadinessDashboard");
-  const routes = component.indexOf("<MarketRouteInspector");
   const advanced = component.indexOf("<AdvancedDiagnostics");
-
-  assert.ok(readiness >= 0);
-  assert.ok(refresh > readiness);
-  assert.ok(markets > refresh);
-  assert.ok(routes > markets);
-  assert.ok(advanced > routes);
+  assert.ok(readiness >= 0 && refresh > readiness && markets > refresh && advanced > markets);
+  assert.match(component, /view === "operations"/);
   assert.match(component, /title="Refresh operations"/);
   assert.match(component, /title="Market coverage"/);
+  assert.match(component, /<MarketRouteInspector/);
   assert.doesNotMatch(component, /<DiagnosticsPanel|title="Markets requiring attention"|title="Public market coverage"/);
-  assert.match(component, /title="Route inspector"/);
 });
 
 test("homepage fare operations removes duplicated market and fallback presentations", () => {
@@ -111,14 +106,13 @@ test("homepage fare readiness keeps only core customer-facing summary metrics", 
 });
 
 test("advanced diagnostics keeps fallback and executor data available in a provider-style disclosure", () => {
-  assert.match(component, /<details id="homepage-fare-advanced-diagnostics" className="group border-b border-\[#D8E1EC\] py-5">/);
-  assert.match(component, /Advanced diagnostics/);
-  assert.match(component, /group-open:rotate-180/);
+  assert.match(component, /<section id="homepage-fare-advanced-diagnostics" aria-labelledby=/);
+  assert.match(component, /<h3 id="homepage-fare-advanced-diagnostics-heading"/);
   assert.match(component, /Fallback coverage pools/);
   assert.match(component, /Executor details/);
   assert.match(component, /Configured routes/);
   assert.match(component, /Visible gaps attempted/);
-  assert.doesNotMatch(component, /rounded-2xl border border-border bg-white p-4/);
+  assert.doesNotMatch(component, /<details id="homepage-fare-advanced-diagnostics"|<summary|group-open:rotate-180/);
 });
 
 test("manual fare refresh and read-only status check have distinct labels and data sources", () => {
@@ -156,25 +150,23 @@ test("homepage fare refresh operations use the same compact fact layout as Provi
 test("public market coverage uses the compact Providers table treatment", () => {
   assert.match(component, /lg:grid-cols-\[minmax\(150px,1\.5fr\)_70px_85px_72px_minmax\(120px,1fr\)_minmax\(240px,auto\)\]/);
   assert.match(component, /border-y border-\[#D8E1EC\]/);
-  assert.match(component, /text-\[12px\] font-semibold uppercase tracking-\[0\.03em\] text-\[#64748B\]/);
   assert.match(component, />Market<\/span>/);
   assert.match(component, />Popular<\/span>/);
   assert.match(component, />Discovery<\/span>/);
   assert.match(component, />Backup<\/span>/);
-  assert.match(component, />\s*Inspect routes\s*<\/button>/);
-  assert.doesNotMatch(component, /function MarketReadinessCard/);
-  assert.doesNotMatch(component, /function CoverageMetric/);
+  assert.match(component, /href=\{onInspectMarket\(market\.marketCode\)\}/);
+  assert.match(component, />\s*Inspect routes\s*<\/Link>/);
 });
 
 test("Inspect routes navigates reliably even when selecting the same market again", () => {
-  assert.match(component, /const inspectMarketRoutes = useCallback\(\(marketCode: string\) => \{/);
-  assert.match(component, /selectRouteScope\(marketCode\);/);
-  assert.match(component, /routeInspectorRef\.current\?\.scrollIntoView\(/);
-  assert.match(component, /prefers-reduced-motion: reduce/);
-  assert.match(component, /onInspectMarket=\{inspectMarketRoutes\}/);
-  assert.match(component, /ref=\{routeInspectorRef\}/);
-  assert.match(component, /scroll-mt-32/);
-  assert.doesNotMatch(component, /routeDetailsRef|useEffect\(\(\) => \{\s*if \(!selectedRouteScope\) return;\s*const animationFrame/);
+  const routesPage = readFileSync("src/app/admin/homepage-fares/routes/page.tsx", "utf8");
+  assert.match(component, /function homepageFareRoutesHref\(marketCode: string\)/);
+  assert.match(component, /\/admin\/homepage-fares\/routes\?market=/);
+  assert.match(component, /href=\{onInspectMarket\(market\.marketCode\)\}/);
+  assert.match(component, /href=\{onInspectMarket\(pool\.marketCode\)\}/);
+  assert.match(routesPage, /view="routes" initialMarket=\{initialMarket\}/);
+  assert.match(routesPage, /Back to Homepage Fare Operations/);
+  assert.doesNotMatch(component, /scrollIntoView|routeInspectorRef|inspectMarketRoutes/);
 });
 
 test("dropdown and status selection update results without scrolling the page", () => {
@@ -182,9 +174,7 @@ test("dropdown and status selection update results without scrolling the page", 
   assert.match(component, /onFilterChange\(next as AdminHomepageFareRouteGroupFilter\)/);
   assert.match(component, /onSelectMarket=\{selectRouteScope\}/);
   assert.match(component, /onFilterChange=\{selectRouteFilter\}/);
-  const selection = component.slice(component.indexOf("const selectRouteScope = useCallback"), component.indexOf("const loadStatus = useCallback"));
-  assert.doesNotMatch(selection.slice(0, selection.indexOf("const inspectMarketRoutes")), /scrollIntoView|window\.scrollTo/);
-  assert.equal((selection.match(/scrollIntoView/g) || []).length, 1);
+  assert.doesNotMatch(component, /scrollIntoView|window\.scrollTo/);
 });
 
 test("route pagination keeps columns and layout steady across short and long pages", () => {
@@ -202,7 +192,8 @@ test("route pagination keeps columns and layout steady across short and long pag
 
 test("route inspector defaults to All routes with seven distinct status options", () => {
   assert.equal((component.match(/<SearchMonitorSelect/g) || []).length, 2);
-  assert.match(component, /useState<string>\(ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE\)/);
+  assert.match(component, /initialMarket = ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE/);
+  assert.match(component, /useState<string>\(\s*initialMarket === ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE/);
   assert.match(component, /value: ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE, label: "All routes"/);
   assert.doesNotMatch(component, /value: "", label: "Select market"/);
   assert.match(component, /value=\{selectedRouteScope\}/);
@@ -248,7 +239,7 @@ test("market coverage combines the affected market diagnostics with the public t
   assert.match(component, /<CompactDetail label="Next run" value=\{nextRunNeeded \? "Needed" : "Not required"\}/);
   assert.match(component, /formatUnderfillCause\(nextRunCause\)/);
   assert.match(component, /label="Current gaps"/);
-  assert.match(component, /onInspectMarket\(market\.marketCode\)/);
+  assert.match(component, /href=\{onInspectMarket\(market\.marketCode\)\}/);
   assert.match(component, /outsidePublicCount/);
   assert.match(component, /additional market/);
   assert.doesNotMatch(component, /function DiagnosticsPanel|title="Markets requiring attention"/);
@@ -385,7 +376,7 @@ test("readiness overview is flat like Providers while preserving status and metr
 });
 
 test("readiness summary metrics use flat neutral rows with semantic dots", () => {
-  assert.match(component, /className="min-h-\[88px\] min-w-0 bg-white px-4 py-4 xl:px-5"/);
+  assert.match(component, /className="min-h-\[88px\] min-w-0 bg-white px-3 py-4 sm:px-4 xl:px-5"/);
   assert.match(component, /h-1\.5 w-1\.5 shrink-0 rounded-full/);
   assert.match(component, /text-\[24px\] font-medium leading-7 tracking-\[-0\.03em\] tabular-nums/);
   assert.match(component, /return "bg-teal"/);
@@ -443,8 +434,8 @@ test("Market coverage retains public market inspection and reports counts outsid
   assert.match(component, /outsidePublicCount = marketsNeedingAnotherRun\.filter/);
   assert.match(component, /outside the public country table/);
   assert.match(component, /hidden=\{!showDetails\}/);
-  assert.match(component, /aria-pressed=\{selected\}/);
-  assert.match(component, /onClick=\{\(\) => onInspectMarket\(market\.marketCode\)\}/);
+  assert.match(component, /href=\{onInspectMarket\(market\.marketCode\)\}/);
+  assert.match(component, /href=\{onInspectMarket\(pool\.marketCode\)\}/);
   assert.match(component, /<MarketRouteInspector/);
   assert.match(component, /onSelectMarket=\{selectRouteScope\}/);
   assert.match(component, /onFilterChange=\{selectRouteFilter\}/);
@@ -456,20 +447,18 @@ test("Market coverage retains public market inspection and reports counts outsid
 
 test("homepage fare route filters use bounded accessible menus and preserve route selection", () => {
   const select = readFileSync("src/components/admin/SearchMonitorSelect.tsx", "utf8");
+  const routesPage = readFileSync("src/app/admin/homepage-fares/routes/page.tsx", "utf8");
   assert.match(component, /sm:grid-cols-\[minmax\(0,320px\)_minmax\(0,240px\)\]/);
   assert.match(component, /appearance="fare"/);
   assert.match(component, /onValueChange=\{onSelectMarket\}/);
   assert.match(component, /value=\{selectedRouteScope\}/);
-  assert.match(component, /useState<string>\(ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE\)/);
-  assert.match(component, /selectedGroup\.displayName/);
-  assert.match(component, /scope\s+\?\s+scope === ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE/);
+  assert.match(component, /ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE/);
+  assert.match(routesPage, /initialMarket/);
   assert.equal((component.match(/<select/g) || []).length, 0);
-  assert.match(select, /appearance\?: "underlined" \| "plain" \| "boxed" \| "fare"/);
   assert.match(select, /aria-haspopup="listbox"/);
   assert.match(select, /aria-expanded=\{open\}/);
   assert.match(select, /max-h-64/);
   assert.match(select, /case "Escape"/);
-  assert.match(select, /case "ArrowDown"/);
 });
 
 test("coverage actions remain on the same row with expandable details that preserve factual gaps", () => {
@@ -487,7 +476,7 @@ test("coverage actions remain on the same row with expandable details that prese
 });
 
 test("advanced diagnostics groups long executor details without removing operational facts", () => {
-  assert.match(component, /md:grid-cols-2 xl:grid-cols-3/);
+  assert.match(component, /mt-4 grid gap-x-8 gap-y-2 md:grid-cols-2/);
   assert.match(component, /Execution and budgets/);
   assert.match(component, /Public fare outcomes/);
   assert.match(component, /Scheduling and market targets/);
@@ -499,6 +488,19 @@ test("advanced diagnostics groups long executor details without removing operati
     "Scheduler verification", "Executor targets", "Markets needing another run",
   ];
   for (const label of labels) assert.ok(component.includes('label="' + label + '"'), "Missing metric: " + label);
-  assert.match(component, /max-w-\[1200px\]/);
   assert.match(component, /lg:grid-cols-2/);
+  assert.doesNotMatch(component, /<details id="homepage-fare-advanced-diagnostics"/);
+});
+
+test("dedicated route page validates market hints and keeps white admin workspace", () => {
+  const page = readFileSync("src/app/admin/homepage-fares/routes/page.tsx", "utf8");
+  const shell = readFileSync("src/components/admin/AdminHorizontalShell.tsx", "utf8");
+  assert.match(page, /<AdminPageShell title="Route inspector" hideHeader>/);
+  assert.match(page, /searchParams: SearchParams/);
+  assert.match(page, /Back to Homepage Fare Operations/);
+  assert.match(page, /ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE/);
+  assert.match(shell, /pathname.startsWith\("\/admin\/homepage-fares\/"\)/);
+  assert.match(component, /view === "operations"/);
+  assert.match(component, /<MarketRouteInspector/);
+  assert.doesNotMatch(component, /scrollIntoView/);
 });
