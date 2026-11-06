@@ -200,16 +200,40 @@ test("route pagination keeps columns and layout steady across short and long pag
   assert.match(component, /setRoutePage\(1\)/);
 });
 
-test("route inspector uses compact select controls while preserving every route filter", () => {
+test("route inspector defaults to All routes with seven distinct status options", () => {
   assert.equal((component.match(/<SearchMonitorSelect/g) || []).length, 2);
-  assert.match(component, /value: "", label: "Select market"/);
+  assert.match(component, /useState<string>\(ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE\)/);
   assert.match(component, /value: ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE, label: "All routes"/);
+  assert.doesNotMatch(component, /value: "", label: "Select market"/);
+  assert.match(component, /value=\{selectedRouteScope\}/);
   assert.match(component, /value=\{filter\}/);
   assert.match(component, /onFilterChange\(next as AdminHomepageFareRouteGroupFilter\)/);
-  for (const label of ["All", "Ready", "Underfilled", "Failed", "Missing", "Stale", "Last-known-good", "Fresh", "Unavailable"]) {
-    assert.match(component, new RegExp('label: "' + label + '"'));
+  const options = component.slice(component.indexOf("const ROUTE_FILTERS:"), component.indexOf("function SummaryMetricCard"));
+  const expected = [
+    ["all", "All statuses"],
+    ["fresh", "Fresh"],
+    ["last_known_good", "Last-known-good"],
+    ["stale", "Expired"],
+    ["missing", "Missing"],
+    ["failed", "Failed"],
+    ["unavailable", "Unavailable"],
+  ];
+  for (const [key, label] of expected) {
+    assert.ok(options.includes(`{ key: "${key}", label: "${label}" }`));
   }
+  assert.equal((options.match(/\{ key: "/g) || []).length, 7);
+  assert.doesNotMatch(options, /\{ key: "(ready|underfilled)"/);
+  assert.doesNotMatch(options, /label: "(Ready|Underfilled|Stale|All)"/);
   assert.doesNotMatch(component, /aria-label="Route status filters"/);
+});
+
+test("All routes summary shows the current status and does not display fallback-only badge", () => {
+  assert.match(component, /filterLabel=\{ROUTE_FILTERS\.find\(\(option\) => option\.key === filter\)\?\.label \?\? "All statuses"\}/);
+  assert.match(component, /\{" · Status: "\}\{filterLabel\}/);
+  assert.match(component, /Across all markets/);
+  assert.match(component, /!isViewAll \? <MarketGroupStatusBadge status=\{group\.status\} \/> : null/);
+  assert.match(component, /No routes match the selected status/);
+  assert.doesNotMatch(component, /Debug view across all markets/);
 });
 
 test("market coverage combines the affected market diagnostics with the public table", () => {
@@ -279,7 +303,7 @@ test("homepage fare diagnostics keeps only operator-relevant signals in the main
 });
 
 test("route inspector empty state stays compact", () => {
-  assert.match(component, /Select a market or All routes\./);
+  assert.match(component, /No route group is available for this market\. Choose All routes or another market\./);
   assert.match(component, /mt-3 border-b border-\[#E7ECF5\] py-3 text-\[12px\]/);
   assert.doesNotMatch(component, /Route rows stay hidden until a market context is selected/);
   assert.doesNotMatch(component, /mt-5 rounded-2xl border border-dashed border-slate-300 bg-white\/55 p-6 text-center/);
@@ -435,7 +459,8 @@ test("homepage fare route filters use bounded accessible menus and preserve rout
   assert.match(component, /sm:grid-cols-\[minmax\(0,320px\)_minmax\(0,240px\)\]/);
   assert.match(component, /appearance="fare"/);
   assert.match(component, /onValueChange=\{onSelectMarket\}/);
-  assert.match(component, /value=\{selectedRouteScope \?\? ""\}/);
+  assert.match(component, /value=\{selectedRouteScope\}/);
+  assert.match(component, /useState<string>\(ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE\)/);
   assert.match(component, /selectedGroup\.displayName/);
   assert.match(component, /scope\s+\?\s+scope === ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE/);
   assert.equal((component.match(/<select/g) || []).length, 0);
