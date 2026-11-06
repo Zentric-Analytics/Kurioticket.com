@@ -11,7 +11,7 @@ import {
   CmsContentError,
   getCmsContentScopeSummary,
   getCmsContentMarketOverview,
-  listAdminCmsContent,
+  listAdminCmsContentDirectory,
 } from "@/services/cmsContentService";
 import { homepageCmsLocale, homepageCmsMarkets } from "@/services/homepageCmsService";
 
@@ -37,7 +37,6 @@ export default async function HomepageCmsSectionPage({ params, searchParams }: P
       ? requestedMarket
       : defaultMarket;
   const nav = homepageCmsListNavigation(section, raw, allowedMarket);
-  const cursor = undefined; // All homepage CMS directories now display the full matching dataset.
 
   const summary = await (allowedMarket === "ALL"
     ? getCmsContentMarketOverview(config.type, homepageCmsMarkets, homepageCmsLocale)
@@ -67,18 +66,11 @@ export default async function HomepageCmsSectionPage({ params, searchParams }: P
       status,
       market: allowedMarket === "ALL" ? undefined : allowedMarket,
       locale: homepageCmsLocale,
-      limit: 100,
-      cursor,
       search: one(raw.q) || undefined,
     };
-    listing = await listAdminCmsContent(listInput);
-    // Consume every page from the existing cursor-based CMS service without
-    // changing its pagination contract for other admin areas. Display each
-    // homepage directory as one scrollable list sorted by market and Order.
-    while (listing.nextCursor) {
-      const nextPage = await listAdminCmsContent({ ...listInput, cursor: listing.nextCursor });
-      listing = { items: [...listing.items, ...nextPage.items], nextCursor: nextPage.nextCursor };
-    }
+    // Retrieve all filtered rows in one repeatable-read snapshot. The
+    // service's existing cursor pagination remains available to other screens.
+    listing = await listAdminCmsContentDirectory(listInput);
     listing = {
       items: sortHomepageCmsDirectoryItems(listing.items),
       nextCursor: null,
