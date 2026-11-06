@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject, type ReactNode } from "react";
-import { RefreshCcw } from "lucide-react";
+import { ChevronDown, RefreshCcw } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
 import {
@@ -586,7 +586,7 @@ export function HomepageFaresRefreshCard() {
             </p>
           ) : null}
 
-      <section aria-labelledby="homepage-fare-readiness-heading" className="border-b border-[#D8E1EC] pb-5 pt-1">
+      <section aria-labelledby="homepage-fare-readiness-heading" className="pb-4 pt-4">
         <h2 id="homepage-fare-readiness-heading" className="text-[15px] font-semibold text-[#020617]">
           Readiness overview
         </h2>
@@ -599,7 +599,7 @@ export function HomepageFaresRefreshCard() {
               <DisplayReadinessSummary readiness={statusPayload.displayReadiness} />
             ) : null}
 
-        <dl className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+        <dl aria-label="Fare readiness metrics" className="mt-3 grid grid-cols-2 border-y border-[#D8E1EC] sm:grid-cols-3 lg:grid-cols-5">
               <SummaryMetricCard label="Fresh fares" value={statusPayload.dataAvailable ? statusPayload.summary.fresh : "Unavailable"} tone={statusPayload.dataAvailable ? "good" : "danger"} />
               <SummaryMetricCard label="Last-known-good" value={statusPayload.dataAvailable ? statusPayload.summary.last_known_good : "Unavailable"} tone={statusPayload.dataAvailable ? "info" : "danger"} />
               <SummaryMetricCard label="Missing routes" value={statusPayload.dataAvailable ? statusPayload.summary.missing : "Unavailable"} tone={!statusPayload.dataAvailable ? "danger" : statusPayload.summary.missing ? "warning" : "neutral"} />
@@ -621,14 +621,9 @@ export function HomepageFaresRefreshCard() {
 
       {statusPayload.dataAvailable ? (
             <>
-              <DiagnosticsPanel
-                markets={statusPayload.marketReadinessSummary}
-                marketsNeedingAnotherRun={marketsNeedingAnotherRun}
-                stoppedReason={latestCounts?.stoppedReason}
-              />
-
               <MarketReadinessDashboard
                 markets={publicMarkets}
+                marketsNeedingAnotherRun={marketsNeedingAnotherRun}
                 selectedRouteScope={selectedRouteScope}
                 onInspectMarket={selectRouteScope}
               />
@@ -711,12 +706,12 @@ function SummaryMetricCard({
   tone?: SummaryTone;
 }) {
   return (
-    <div className="rounded-lg border border-[#D8E1EC] bg-white px-3 py-2.5">
-      <dt className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-wide text-[#64748B]">
+    <div className="min-w-0 border-r border-[#E7ECF5] px-3 py-3 last:border-r-0 lg:px-4">
+      <dt className="flex items-center gap-2 text-[11px] font-medium leading-4 text-[#64748B]">
         <span aria-hidden="true" className={`h-1.5 w-1.5 shrink-0 rounded-full ${summaryToneDotClass(tone)}`} />
         <span>{label}</span>
       </dt>
-      <dd className="mt-1 text-[22px] font-semibold leading-[26px] tracking-tight tabular-nums text-[#020617]">{value}</dd>
+      <dd className="mt-1.5 break-words text-[24px] font-medium leading-7 tracking-[-0.03em] tabular-nums text-[#020617]">{value}</dd>
     </div>
   );
 }
@@ -765,7 +760,7 @@ function DashboardSection({
   children: ReactNode;
 }) {
   return (
-    <section className="border-b border-[#D8E1EC] pb-6 pt-6">
+    <section className="border-b border-[#D8E1EC] pb-4 pt-4">
       <div>
         <h3 className="text-[15px] font-semibold text-[#020617]">{title}</h3>
         {description ? <p className="mt-1 max-w-4xl text-[13px] leading-5 text-[#475569]">{description}</p> : null}
@@ -805,7 +800,7 @@ function RefreshCronPanel({
       title="Refresh operations"
     >
       <div className="mt-3">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <Button
               type="button"
@@ -837,7 +832,7 @@ function RefreshCronPanel({
             </Button>
           </div>
 
-          <dl className="grid min-w-0 flex-1 gap-x-5 gap-y-3 border-t border-[#E7ECF5] pt-3 sm:grid-cols-2 lg:max-w-4xl lg:grid-cols-4 lg:border-t-0 lg:pt-0">
+          <dl className="grid min-w-0 flex-1 grid-cols-2 gap-x-4 gap-y-3 border-t border-[#E7ECF5] pt-3 sm:grid-cols-4 lg:max-w-[800px] lg:border-t-0 lg:pt-0">
             <CompactDetail label="Latest snapshot" value={statusPayload.dataAvailable ? formatSnapshotTime(statusPayload.lastRefreshAt) : "Unavailable"} />
             <CompactDetail label="Provider calls" value={providerCallsUsed} />
             <CompactDetail label="Stopped reason" value={stoppedReason} />
@@ -849,8 +844,8 @@ function RefreshCronPanel({
           <div
             className={
               refreshState.status === "error"
-                ? "mt-3 rounded-lg bg-red-50 p-3 text-sm font-semibold text-danger"
-                : "mt-3 rounded-lg bg-teal/10 p-3 text-sm font-semibold text-teal-dark"
+                ? "mt-3 border-l-2 border-rose-500 py-1 pl-3 text-[12px] font-medium leading-5 text-rose-700"
+                : "mt-3 border-l-2 border-emerald-500 py-1 pl-3 text-[12px] font-medium leading-5 text-emerald-700"
             }
             role="status"
             aria-live="polite"
@@ -883,20 +878,25 @@ function RefreshCronPanel({
 
 function MarketReadinessDashboard({
   markets,
+  marketsNeedingAnotherRun,
   selectedRouteScope,
   onInspectMarket,
 }: {
   markets: MarketReadiness[];
+  marketsNeedingAnotherRun: MarketNextRunNeed[];
   selectedRouteScope: string | null;
   onInspectMarket: (marketCode: string) => void;
 }) {
+  const displayedCodes = new Set(markets.map((market) => normalizeAdminHomepageFareMarketCode(market.marketCode)));
+  const outsidePublicCount = marketsNeedingAnotherRun.filter(
+    (market) => market.needed && !displayedCodes.has(normalizeAdminHomepageFareMarketCode(market.market)),
+  ).length;
+
   return (
-    <DashboardSection
-      title="Public market coverage"
-    >
+    <DashboardSection title="Market coverage">
       {markets.length ? (
-        <div className="mt-3 min-w-0 overflow-x-auto border-y border-[#D8E1EC]">
-          <div className="hidden min-w-[760px] grid-cols-[minmax(180px,1.2fr)_100px_100px_100px_160px_80px] gap-3 border-b border-[#E7ECF5] px-3 py-2 text-[12px] font-medium uppercase text-[#64748B] lg:grid">
+        <div className="mt-3 min-w-0">
+          <div className="hidden grid-cols-[minmax(160px,1.3fr)_90px_90px_80px_160px_90px] gap-3 border-y border-[#D8E1EC] px-3 py-2.5 text-[11px] font-semibold uppercase tracking-[0.04em] text-[#64748B] lg:grid">
             <span>Market</span>
             <span>Popular</span>
             <span>Discovery</span>
@@ -904,119 +904,77 @@ function MarketReadinessDashboard({
             <span>Health</span>
             <span aria-hidden="true" />
           </div>
-          <div className="divide-y divide-slate-100">
+          <ul aria-label="Public market coverage" className="divide-y divide-[#E7ECF5] border-b border-[#D8E1EC]">
             {markets.map((market) => {
               const selected = normalizeAdminHomepageFareMarketCode(selectedRouteScope ?? "") === normalizeAdminHomepageFareMarketCode(market.marketCode);
+              const nextRun = marketsNeedingAnotherRun.find(
+                (item) => normalizeAdminHomepageFareMarketCode(item.market) === normalizeAdminHomepageFareMarketCode(market.marketCode),
+              );
+              const nextRunNeeded = nextRun ? nextRun.needed : !market.targetMet;
+              const nextRunCause = nextRun?.reason;
+              const needsAttention = !market.targetMet || market.status !== "ready";
+              const healthNotes = [
+                (market.freshCount ?? 0) > 0 ? `${market.freshCount} fresh` : null,
+                (market.missingCount ?? 0) > 0 ? `${market.missingCount} missing` : null,
+                market.failed > 0 ? `${market.failed} failed` : null,
+              ].filter(Boolean).join(" · ") || "No issues";
+
               return (
-                <button
-                  key={market.marketCode}
-                  type="button"
-                  onClick={() => onInspectMarket(market.marketCode)}
-                  aria-pressed={selected}
-                  className={`grid w-full min-w-0 gap-2 px-3 py-3 text-left transition hover:bg-[#F8FAFC] lg:min-w-[760px] lg:grid-cols-[minmax(180px,1.2fr)_100px_100px_100px_160px_80px] lg:items-center lg:gap-3 ${selected ? "bg-[#EFF6FF]" : ""}`}
-                >
-                  <span className="min-w-0">
-                    <span className="block truncate text-[13px] font-semibold text-[#020617]">{market.marketLabel}</span>
-                    <span className="mt-0.5 block text-[11px] font-medium uppercase tracking-wide text-[#64748B]">{market.marketCode} · {market.marketGroup}</span>
-                  </span>
-                  <span className="text-[13px] font-medium tabular-nums text-[#0F172A]"><span className="lg:hidden text-muted">Popular </span>{market.popularVisibleFresh}/{market.popularVisibleTarget}</span>
-                  <span className="text-[13px] font-medium tabular-nums text-[#0F172A]"><span className="lg:hidden text-muted">Discovery </span>{market.discoveryVisibleFresh}/{market.discoveryVisibleTarget}</span>
-                  <span className="text-[13px] font-medium tabular-nums text-[#0F172A]"><span className="lg:hidden text-muted">Backup </span>{market.backupFresh}/{market.backupTarget}</span>
-                  <span className="min-w-0">
-                    <MarketStatusBadge status={market.status} />
-                    <span className="mt-1 block truncate text-[10px] font-semibold text-muted">
-                      {[
-                        (market.freshCount ?? 0) > 0 ? `${market.freshCount} fresh` : null,
-                        (market.missingCount ?? 0) > 0 ? `${market.missingCount} missing` : null,
-                        market.failed > 0 ? `${market.failed} failed` : null,
-                      ].filter(Boolean).join(" · ") || "No issues"}
-                    </span>
-                  </span>
-                  <span className="text-[13px] font-medium text-[#004BB8]">Inspect ›</span>
-                </button>
+                <li key={market.marketCode} className="min-w-0">
+                  <div className={"grid min-w-0 grid-cols-2 items-center gap-x-3 gap-y-2 px-3 py-3.5 lg:grid-cols-[minmax(160px,1.3fr)_90px_90px_80px_160px_90px] " + (selected ? "bg-[#F2F7FF]" : "")}>
+                    <div className="col-span-2 min-w-0 lg:col-span-1">
+                      <span className="block truncate text-[13px] font-semibold text-[#020617]">{market.marketLabel}</span>
+                      <span className="mt-0.5 block text-[11px] text-[#64748B]">{market.marketCode} · {market.marketGroup}</span>
+                    </div>
+                    <span className="text-[12px] font-medium tabular-nums text-[#0F172A]"><span className="mr-1 text-[#64748B] lg:hidden">Popular</span>{market.popularVisibleFresh}/{market.popularVisibleTarget}</span>
+                    <span className="text-[12px] font-medium tabular-nums text-[#0F172A]"><span className="mr-1 text-[#64748B] lg:hidden">Discovery</span>{market.discoveryVisibleFresh}/{market.discoveryVisibleTarget}</span>
+                    <span className="text-[12px] font-medium tabular-nums text-[#0F172A]"><span className="mr-1 text-[#64748B] lg:hidden">Backup</span>{market.backupFresh}/{market.backupTarget}</span>
+                    <div className="min-w-0">
+                      <MarketStatusBadge status={market.status} />
+                      <span className="mt-1 block text-[11px] leading-4 text-[#64748B]">{healthNotes}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => onInspectMarket(market.marketCode)}
+                      aria-pressed={selected}
+                      aria-label={`Inspect routes for ${market.marketLabel}`}
+                      className="col-span-2 min-h-8 justify-self-start rounded-sm text-left text-[12px] font-semibold text-[#004BB8] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] lg:col-span-1 lg:justify-self-end"
+                    >
+                      Inspect routes
+                    </button>
+                  </div>
+                  {needsAttention ? (
+                    <details className="group mx-3 mb-3 border-l-2 border-amber-500 pl-3">
+                      <summary className="flex cursor-pointer list-none items-center gap-2 py-1 text-[12px] font-medium text-[#475569] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] [&::-webkit-details-marker]:hidden">
+                        <span>Coverage details</span>
+                        <ChevronDown size={14} aria-hidden="true" className="shrink-0 transition-transform group-open:rotate-180" />
+                      </summary>
+                      <dl className="mt-2 grid max-w-[800px] gap-x-4 gap-y-2 border-t border-[#E7ECF5] pt-3 sm:grid-cols-3">
+                        <CompactDetail label="Next run" value={nextRunNeeded ? "Needed" : "Not required"} />
+                        <CompactDetail
+                          label="Reason"
+                          value={nextRunCause && nextRunCause !== "underfilled" ? formatUnderfillCause(nextRunCause) : formatMarketStatus(market.status)}
+                        />
+                        <CompactDetail
+                          label="Current gaps"
+                          value={`${Math.max(0, market.popularVisibleTarget - market.popularVisibleFresh)} popular · ${Math.max(0, market.discoveryVisibleTarget - market.discoveryVisibleFresh)} discovery · ${Math.max(0, market.backupTarget - market.backupFresh)} backup`}
+                        />
+                      </dl>
+                    </details>
+                  ) : null}
+                </li>
               );
             })}
-          </div>
+          </ul>
+          {outsidePublicCount > 0 ? (
+            <p role="note" className="mt-3 text-[12px] leading-5 text-[#64748B]">
+              {outsidePublicCount} additional market {outsidePublicCount === 1 ? "scope needs" : "scopes need"} attention outside the public country table. Review Advanced diagnostics for fallback coverage.
+            </p>
+          ) : null}
         </div>
       ) : (
-        <p className="mt-4 rounded-xl border border-border bg-slate-50 p-4 text-sm font-semibold text-muted">
+        <p className="mt-3 border-b border-[#E7ECF5] py-3 text-[13px] leading-5 text-[#64748B]">
           No public market readiness metadata was returned.
-        </p>
-      )}
-    </DashboardSection>
-  );
-}
-
-function DiagnosticsPanel({
-  markets,
-  marketsNeedingAnotherRun,
-  stoppedReason,
-}: {
-  markets: MarketReadiness[];
-  marketsNeedingAnotherRun: MarketNextRunNeed[];
-  stoppedReason?: RefreshStoppedReason;
-}) {
-  const issueMarkets = markets
-    .filter((market) => !isFallbackMarket(market) && (!market.targetMet || market.status !== "ready"))
-    .slice(0, 12);
-
-  return (
-    <DashboardSection title="Markets requiring attention">
-      <dl className="mt-3 grid max-w-[980px] gap-x-5 gap-y-3 sm:grid-cols-3">
-        <CompactDetail label="Stopped reason" value={stoppedReason ? formatStoppedReason(stoppedReason) : "No run yet"} />
-        <CompactDetail label="Provider budget" value={stoppedReason === "provider_budget_exhausted" ? "Exhausted" : "Available"} />
-        <CompactDetail label="Route budget" value={stoppedReason === "route_budget_exhausted" ? "Exhausted" : "Available"} />
-      </dl>
-
-      {issueMarkets.length ? (
-        <ul className="mt-3 space-y-2">
-          {issueMarkets.map((market) => {
-            const nextRun = marketsNeedingAnotherRun.find(
-              (item) =>
-                normalizeAdminHomepageFareMarketCode(item.market) ===
-                normalizeAdminHomepageFareMarketCode(market.marketCode),
-            );
-            const nextRunNeeded = nextRun ? nextRun.needed : !market.targetMet;
-            const nextRunCause = nextRun?.reason;
-
-            return (
-              <li key={market.marketCode} className="min-w-0 border-l-[3px] border-amber-500 pl-3">
-                <details className="group py-2.5">
-                  <summary className="flex min-w-0 cursor-pointer list-none flex-wrap items-center justify-between gap-3 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] [&::-webkit-details-marker]:hidden">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-[13px] font-semibold text-[#020617]">{market.marketLabel}</span>
-                        <MarketStatusBadge status={market.status} />
-                      </div>
-                      <p className="mt-1 text-[12px] leading-5 text-[#475569]">
-                        Popular {market.popularVisibleFresh}/{market.popularVisibleTarget} · Discovery {market.discoveryVisibleFresh}/{market.discoveryVisibleTarget} · Backup {market.backupFresh}/{market.backupTarget}
-                      </p>
-                    </div>
-                    <span className="shrink-0 text-[13px] font-medium text-[#004BB8]">
-                      <span className="group-open:hidden">View details ›</span>
-                      <span className="hidden group-open:inline">Hide details ‹</span>
-                    </span>
-                  </summary>
-
-                  <dl className="mt-3 grid max-w-[760px] gap-x-5 gap-y-3 border-t border-[#E7ECF5] pt-3 sm:grid-cols-3">
-                    <CompactDetail label="Next run" value={nextRunNeeded ? "Needed" : "Not required"} />
-                    <CompactDetail
-                      label="Reason"
-                      value={nextRunCause && nextRunCause !== "underfilled" ? formatUnderfillCause(nextRunCause) : formatMarketStatus(market.status)}
-                    />
-                    <CompactDetail
-                      label="Current gaps"
-                      value={`${Math.max(0, market.popularVisibleTarget - market.popularVisibleFresh)} popular · ${Math.max(0, market.discoveryVisibleTarget - market.discoveryVisibleFresh)} discovery · ${Math.max(0, market.backupTarget - market.backupFresh)} backup`}
-                    />
-                  </dl>
-                </details>
-              </li>
-            );
-          })}
-        </ul>
-      ) : (
-        <p className="mt-3 text-[13px] leading-5 text-[#475569]">
-          No public markets currently require attention.
         </p>
       )}
     </DashboardSection>
@@ -1037,10 +995,10 @@ function AdvancedDiagnostics({
   refreshCounts: RefreshCounts | null;
 }) {
   return (
-    <details className="group border-b border-[#D8E1EC] py-5">
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-[15px] font-semibold text-[#020617] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] [&::-webkit-details-marker]:hidden">
+    <details id="homepage-fare-advanced-diagnostics" className="group border-b border-[#D8E1EC] py-4">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-sm text-[15px] font-semibold text-[#020617] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] [&::-webkit-details-marker]:hidden">
         <span>Advanced diagnostics</span>
-        <span className="text-[13px] font-medium text-[#004BB8]"><span className="group-open:hidden">View details ›</span><span className="hidden group-open:inline">Hide details ‹</span></span>
+        <ChevronDown size={16} aria-hidden="true" className="shrink-0 text-[#64748B] transition-transform group-open:rotate-180" />
       </summary>
       <div className="mt-4 space-y-5">
         <section aria-labelledby="fallback-pools-heading">
@@ -1084,6 +1042,9 @@ function AdvancedDiagnostics({
           <h4 id="executor-debug-heading" className="text-[13px] font-semibold text-[#020617]">Executor details</h4>
           <dl className="mt-3 grid gap-x-5 gap-y-3 sm:grid-cols-2 lg:grid-cols-4">
             <MetricCard label="Configured routes" value={statusPayload.summary.total} />
+            <MetricCard label="Stopped reason" value={refreshCounts ? formatStoppedReason(refreshCounts.stoppedReason) : "No run yet"} />
+            <MetricCard label="Provider budget" value={refreshCounts ? (refreshCounts.stoppedReason === "provider_budget_exhausted" ? "Exhausted" : "Available") : "Not observed yet"} />
+            <MetricCard label="Route budget" value={refreshCounts ? (refreshCounts.stoppedReason === "route_budget_exhausted" ? "Exhausted" : "Available") : "Not observed yet"} />
             <MetricCard label="Candidate pool failed" value={statusPayload.candidatePoolHealth.failed} />
             <MetricCard label="Candidate pool unavailable" value={statusPayload.candidatePoolHealth.unavailable} />
             <MetricCard label="Fresh used publicly" value={statusPayload.publicPriceDiagnostics.fresh_available} />
@@ -1203,7 +1164,7 @@ function SelectedRouteDetails({
 }) {
   if (!selectedRouteScope || !group) {
     return (
-      <p ref={routeDetailsRef} className="mt-3 rounded-lg border border-dashed border-slate-300 bg-slate-50/60 px-3 py-2.5 text-center text-[13px] font-semibold text-muted">
+      <p ref={routeDetailsRef} className="mt-3 border-b border-[#E7ECF5] py-3 text-[12px] leading-5 text-[#64748B]">
         Select a market or All routes.
       </p>
     );
@@ -1364,12 +1325,6 @@ function MarketGroupStatusBadge({
 }
 
 function DisplayReadinessSummary({ readiness }: { readiness: DisplayReadiness }) {
-  const accent =
-    readiness.status === "healthy"
-      ? "border-emerald-500"
-      : readiness.status === "warning"
-        ? "border-amber-500"
-        : "border-rose-500";
   const dot =
     readiness.status === "healthy"
       ? "bg-emerald-500"
@@ -1378,7 +1333,7 @@ function DisplayReadinessSummary({ readiness }: { readiness: DisplayReadiness })
         : "bg-rose-500";
 
   return (
-    <div className={`mt-3 border-l-[3px] ${accent} py-2 pl-3`} role="status" aria-live="polite">
+    <div className="mt-3" role="status" aria-live="polite">
       <div className="flex flex-wrap items-center gap-2">
         <span aria-hidden="true" className={`h-1.5 w-1.5 rounded-full ${dot}`} />
         <p className="text-[13px] font-semibold text-[#020617]">{readiness.label}</p>
@@ -1392,11 +1347,8 @@ function MarketStatusBadge({ status }: { status: MarketReadinessStatus }) {
   const ready = status === "ready";
 
   return (
-    <span
-      className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold ${
-        ready ? "bg-teal/10 text-teal-dark" : "bg-amber/10 text-amber"
-      }`}
-    >
+    <span className={"inline-flex items-center gap-1.5 text-[12px] font-medium " + (ready ? "text-emerald-700" : "text-amber-700")}>
+      <span aria-hidden="true" className={"h-1.5 w-1.5 shrink-0 rounded-full " + (ready ? "bg-emerald-500" : "bg-amber-500")} />
       {formatMarketStatus(status)}
     </span>
   );

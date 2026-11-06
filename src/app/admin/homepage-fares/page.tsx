@@ -8,8 +8,9 @@ export const metadata = { title: "Admin Homepage Fare Operations" };
 export default function AdminHomepageFareOperationsPage() {
   return (
     <AdminPageShell title="Homepage Fare Operations" hideHeader>
-      <div className="flex min-w-0 flex-wrap items-center justify-between gap-3 border-b border-[#D8E1EC] pb-3">
-        <h1 className="text-[18px] font-semibold tracking-tight text-[#020617]">
+      <div className="mx-auto w-full min-w-0 max-w-[1500px] bg-white text-[#020617]">
+      <div className="flex min-w-0 flex-wrap items-center justify-between gap-3 border-b border-[#D8E1EC] pb-4">
+        <h1 className="text-[20px] font-semibold leading-7 tracking-[-0.02em] text-[#020617]">
           Homepage Fare Operations
         </h1>
         <div className="flex flex-wrap items-center gap-2">
@@ -28,6 +29,7 @@ export default function AdminHomepageFareOperationsPage() {
         </div>
       </div>
       <HomepageFaresRefreshCard />
+      </div>
     </AdminPageShell>
   );
 }
