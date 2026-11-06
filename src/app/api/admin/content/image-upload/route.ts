@@ -84,7 +84,7 @@ export async function POST(request: Request) {
       targetType: "CmsImage",
       targetId: filename,
       metadata: { filename, bytes: bytes.byteLength, mime: checked.format.mime },
-      request: { headers: request.headers },
+      request,
     });
     if (!logged) return NextResponse.json({ error: "Image uploaded but its audit record could not be saved. Contact an administrator." }, { status: 503 });
     return NextResponse.json({ url: `/api/cms/images/${filename}` }, { status: 201 });
