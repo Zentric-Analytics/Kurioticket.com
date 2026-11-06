@@ -902,8 +902,8 @@ function RefreshCronPanel({
             Includes snapshots saved by manual or scheduled refreshes.
           </p>
           <dl aria-label="Saved fare status" className="mt-3 grid grid-cols-2 gap-x-5 gap-y-3">
-            <CompactDetail label="Latest saved snapshot" value={readinessLoading ? "Loading…" : statusPayload.dataAvailable ? formatSnapshotTime(statusPayload.lastRefreshAt) : "Unavailable"} />
-            <CompactDetail label="Scheduler setup" value={readinessLoading ? "Loading…" : statusPayload.dataAvailable ? formatCronStatus(statusPayload) : "Unavailable"} />
+            <CompactDetail label="Latest saved snapshot" value={initialStatusLoading ? "Loading…" : statusPayload.dataAvailable ? formatSnapshotTime(statusPayload.lastRefreshAt) : "Unavailable"} />
+            <CompactDetail label="Scheduler setup" value={initialStatusLoading ? "Loading…" : statusPayload.dataAvailable ? formatCronStatus(statusPayload) : "Unavailable"} />
           </dl>
         </div>
 
