@@ -52,7 +52,8 @@ test("Audit Logs keeps search and filters on one compact desktop row at 100% zoo
   assert.ok(toolbar.includes("lg:flex-row lg:items-center"));
   assert.ok(toolbar.includes("lg:w-[520px] lg:flex-none"));
   assert.ok(toolbar.includes("gap-x-4"));
-  assert.ok(toolbar.includes("lg:ml-auto lg:flex-nowrap"));
+  assert.ok(toolbar.includes("lg:ml-auto xl:flex-nowrap"));
+  assert.equal(toolbar.includes("lg:flex-nowrap"), false);
   assert.equal(toolbar.includes("xl:flex-row"), false);
 });
 
