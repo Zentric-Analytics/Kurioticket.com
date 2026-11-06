@@ -161,15 +161,6 @@ export default async function AdminSystemPage() {
       actionLabel: "Open Email Delivery",
     },
     {
-      id: "providers",
-      name: "Providers",
-      status: system.providerCredentialsPresent ? "Configured" : "Not configured",
-      tone: system.providerCredentialsPresent ? "info" : "warn",
-      signal: "Configuration only",
-      href: "/admin/providers",
-      actionLabel: "Open Providers",
-    },
-    {
       id: "cms",
       name: "CMS",
       status: "Separate check",
