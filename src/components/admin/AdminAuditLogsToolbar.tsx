@@ -91,6 +91,9 @@ export function AdminAuditLogsToolbar({
 
   useEffect(() => {
     paramsRef.current = new URLSearchParams(pageHref.split("?")[1] || "");
+  }, [pageHref]);
+
+  useEffect(() => {
     if (!customOpen) setDraftDates({ from: fromDate, to: toDate });
   }, [pageHref, fromDate, toDate, customOpen]);
 
