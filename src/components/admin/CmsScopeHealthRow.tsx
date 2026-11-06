@@ -1,7 +1,6 @@
 "use client";
 
-import { useId, useMemo, useState, type ReactNode } from "react";
-import { ChevronDown } from "lucide-react";
+import { useId, useMemo, useState, type KeyboardEvent, type ReactNode } from "react";
 
 import { CmsHealthInlineRepair } from "@/components/admin/CmsHealthInlineRepair";
 import { CmsScopeHardeningActions } from "@/components/admin/CmsScopeHardeningActions";
@@ -111,39 +110,38 @@ export function CmsScopeHealthRow({
     if (expanded) setRepairTarget(null);
   };
 
+  const handleRowKeyDown = (event: KeyboardEvent<HTMLTableRowElement>) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    toggleDetails();
+  };
+
   return (
     <>
-      <tr className={expanded ? "bg-white" : "hover:bg-[#F8FAFC]"}>
+      <tr
+        onClick={toggleDetails}
+        onKeyDown={handleRowKeyDown}
+        tabIndex={0}
+        aria-expanded={expanded}
+        aria-controls={panelId}
+        className={
+          (expanded ? "bg-white" : "hover:bg-[#F8FAFC]") +
+          " cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#004BB8]/30"
+        }
+      >
         <th
           scope="row"
           className={tableCellClass + " text-left font-normal"}
         >
-          <button
-            type="button"
-            onClick={toggleDetails}
-            aria-expanded={expanded}
-            aria-controls={panelId}
-            className="focus-ring group inline-flex max-w-full items-start gap-2 rounded-sm text-left"
-          >
-            <span className="min-w-0">
-              <span className="block font-semibold">{marketName}</span>
-              <span className="mt-0.5 block text-[12px] text-[#64748B]">
-                {localeName}
-              </span>
-              <span className="mt-0.5 block text-[11px] text-[#94A3B8]">
-                {market} · {locale} · v{integrity.scopeVersion ?? "—"}
-              </span>
+          <div className="max-w-full text-left">
+            <span className="block font-semibold">{marketName}</span>
+            <span className="mt-0.5 block text-[12px] text-[#64748B]">
+              {localeName}
             </span>
-            <ChevronDown
-              size={14}
-              aria-hidden="true"
-              className={
-                expanded
-                  ? "mt-0.5 shrink-0 rotate-180 text-[#64748B] transition-transform"
-                  : "mt-0.5 shrink-0 text-[#64748B] transition-transform"
-              }
-            />
-          </button>
+            <span className="mt-0.5 block text-[11px] text-[#94A3B8]">
+              {market} · {locale} · v{integrity.scopeVersion ?? "—"}
+            </span>
+          </div>
         </th>
 
         <td className={tableCellClass}>
@@ -154,21 +152,13 @@ export function CmsScopeHealthRow({
         </td>
 
         <td className={tableCellClass + " text-[12px] leading-5 text-[#475569]"}>
-          <button
-            type="button"
-            onClick={toggleDetails}
-            aria-expanded={expanded}
-            aria-controls={panelId}
-            className="focus-ring rounded-sm text-left hover:underline"
-          >
-            {integrity.healthy ? (
-              <span>No issues</span>
-            ) : (
-              <span className="font-medium text-[#0F172A]">
-                {issueCount} issue{issueCount === 1 ? "" : "s"}
-              </span>
-            )}
-          </button>
+          {integrity.healthy ? (
+            <span>No issues</span>
+          ) : (
+            <span className="font-medium text-[#0F172A]">
+              {issueCount} issue{issueCount === 1 ? "" : "s"}
+            </span>
+          )}
 
           {!integrity.healthy ? (
             <div className="mt-0.5 space-y-0.5">
