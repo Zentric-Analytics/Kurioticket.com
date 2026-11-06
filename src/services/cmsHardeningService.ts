@@ -19,20 +19,56 @@ type ScopeMutationInput = ScopeInput & {
   expectedScopeVersion: number;
 };
 
-function duplicateOrders(values: Array<{ id: string; order: number | null }>) {
-  const idsByOrder = new Map<number, string[]>();
+function duplicateOrders(values: Array<{ id: string; key?: string; order: number | null }>) {
+  const itemsByOrder = new Map<number, Array<{ id: string; key: string }>>();
   for (const entry of values) {
     if (entry.order === null) continue;
-    const ids = idsByOrder.get(entry.order) ?? [];
-    ids.push(entry.id);
-    idsByOrder.set(entry.order, ids);
+    const items = itemsByOrder.get(entry.order) ?? [];
+    items.push({ id: entry.id, key: entry.key ?? entry.id });
+    itemsByOrder.set(entry.order, items);
   }
-  return [...idsByOrder.entries()]
-    .filter(([, ids]) => ids.length > 1)
-    .map(([order, ids]) => ({ order, ids }));
+  return [...itemsByOrder.entries()]
+    .filter(([, items]) => items.length > 1)
+    .map(([order, items]) => ({
+      order,
+      ids: items.map((item) => item.id),
+      items,
+    }));
 }
 
+function summarizeIntegrityIssues(issues: unknown) {
+  if (!issues || typeof issues !== "object" || Array.isArray(issues)) {
+    return ["Content payload failed validation."];
+  }
 
+  const source = issues as Record<string, unknown>;
+  const messages: string[] = [];
+
+  if (typeof source.message === "string" && source.message.trim()) {
+    messages.push(source.message.trim());
+  }
+
+  if (Array.isArray(source.formErrors)) {
+    for (const error of source.formErrors) {
+      if (typeof error === "string" && error.trim()) messages.push(error.trim());
+    }
+  }
+
+  if (source.fieldErrors && typeof source.fieldErrors === "object" && !Array.isArray(source.fieldErrors)) {
+    for (const [field, errors] of Object.entries(source.fieldErrors as Record<string, unknown>)) {
+      if (!Array.isArray(errors)) continue;
+      for (const error of errors) {
+        if (typeof error === "string" && error.trim()) {
+          messages.push(`${field}: ${error.trim()}`);
+        }
+      }
+    }
+  }
+
+  return [...new Set(messages)].slice(0, 4).length > 0
+    ? [...new Set(messages)].slice(0, 4)
+    : ["Content payload failed validation."];
+}
 
 function orderNeedsNormalization(values: Array<{ id: string; order: number | null }>) {
   const ordered = [...values].sort(
@@ -105,12 +141,12 @@ export async function getCmsScopeIntegrity(input: ScopeInput) {
     }),
   ]);
 
-  const invalidDrafts: Array<{ id: string; key: string }> = [];
-  const invalidPublished: Array<{ id: string; key: string }> = [];
+  const invalidDrafts: Array<{ id: string; key: string; details: string[] }> = [];
+  const invalidPublished: Array<{ id: string; key: string; details: string[] }> = [];
   const orphanPublished: Array<{ id: string; key: string }> = [];
 
-  const draftOrderEntries: Array<{ id: string; order: number | null }> = [];
-  const publishedOrderEntries: Array<{ id: string; order: number | null }> = [];
+  const draftOrderEntries: Array<{ id: string; key: string; order: number | null }> = [];
+  const publishedOrderEntries: Array<{ id: string; key: string; order: number | null }> = [];
 
   let unpublishedChanges = 0;
 
@@ -124,9 +160,14 @@ export async function getCmsScopeIntegrity(input: ScopeInput) {
       item.publishedLocale === input.locale;
 
     if (inDraftScope) {
-      draftOrderEntries.push({ id: item.id, order: item.sortOrder });
-      if (!validateCmsPayloadIntegrity(item.type, item.draftPayload).valid) {
-        invalidDrafts.push({ id: item.id, key: item.key });
+      draftOrderEntries.push({ id: item.id, key: item.key, order: item.sortOrder });
+      const draftIntegrity = validateCmsPayloadIntegrity(item.type, item.draftPayload);
+      if (!draftIntegrity.valid) {
+        invalidDrafts.push({
+          id: item.id,
+          key: item.key,
+          details: summarizeIntegrityIssues(draftIntegrity.issues),
+        });
       }
       if (
         item.publishedVersion !== null &&
@@ -143,10 +184,16 @@ export async function getCmsScopeIntegrity(input: ScopeInput) {
     ) {
       publishedOrderEntries.push({
         id: item.id,
+        key: item.key,
         order: item.publishedSortOrder,
       });
-      if (!validateCmsPayloadIntegrity(item.type, item.publishedPayload).valid) {
-        invalidPublished.push({ id: item.id, key: item.key });
+      const publishedIntegrity = validateCmsPayloadIntegrity(item.type, item.publishedPayload);
+      if (!publishedIntegrity.valid) {
+        invalidPublished.push({
+          id: item.id,
+          key: item.key,
+          details: summarizeIntegrityIssues(publishedIntegrity.issues),
+        });
       }
     }
 
