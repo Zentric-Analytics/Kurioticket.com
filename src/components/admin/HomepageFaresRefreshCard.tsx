@@ -1132,10 +1132,7 @@ function FareDiagnosticsSections({
                   aria-label={"Inspect routes for " + pool.marketLabel}
                   className="min-w-0 border-b border-[#E7ECF5] px-3 py-3 text-left transition-colors hover:bg-[#F8FAFC] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]"
                 >
-                  <div className="flex min-w-0 flex-wrap items-start justify-between gap-x-3 gap-y-1">
-                    <span className="min-w-0 break-words text-[13px] font-semibold leading-5 text-[#020617]">{pool.marketLabel}</span>
-                    <span className="break-all text-[11px] font-medium leading-5 text-[#64748B]">{pool.marketCode}</span>
-                  </div>
+                  <span className="block min-w-0 break-words text-[13px] font-semibold leading-5 text-[#020617]">{pool.marketLabel}</span>
                   {noCountedOutcomes ? (
                     <p className="mt-1.5 text-[12px] leading-5 text-[#64748B]">No fresh, missing or failed routes recorded.</p>
                   ) : (

@@ -547,6 +547,13 @@ test("fare diagnostics preserve every metric while condensing zero-count fallbac
   assert.match(diagnostics, /const noCountedOutcomes = fresh === 0 && missing === 0 && failed === 0/);
   assert.match(diagnostics, /No fresh, missing or failed routes recorded/);
   assert.match(diagnostics, /href=\{onInspectMarket\(pool\.marketCode\)\}/);
+  const pools = diagnostics.slice(diagnostics.indexOf('section aria-labelledby="fallback-pools-heading"'), diagnostics.indexOf('section aria-labelledby="refresh-execution-heading"'));
+  assert.match(pools, /key=\{pool\.marketCode\}/);
+  assert.match(pools, /aria-label=\{"Inspect routes for " \+ pool\.marketLabel\}/);
+  assert.match(pools, /href=\{onInspectMarket\(pool\.marketCode\)\}/);
+  assert.match(pools, /\{pool\.marketLabel\}/);
+  assert.doesNotMatch(pools, />\{pool\.marketCode\}<\/span>/);
+  assert.match(pools, /md:grid-cols-2/);
   assert.match(diagnostics, /No completed manual fare refresh is recorded/);
   assert.match(diagnostics, /Logged manual refresh data is unavailable/);
   assert.match(diagnostics, /Not recorded/);
