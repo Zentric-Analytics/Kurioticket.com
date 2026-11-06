@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { Prisma } from "@/generated/prisma/client";
 import type { CmsContentType } from "@/generated/prisma/enums";
 import { getOptionalPrisma, getPrisma } from "@/lib/prisma";
@@ -379,6 +380,143 @@ export async function normalizeCmsDraftOrder(
         "CONFLICT",
         "CMS scope changed concurrently. Refresh before normalizing order.",
       );
+    }
+    throw error;
+  }
+}
+
+/**
+ * Save a drag-reordered draft sequence for exactly one market. The client must
+ * submit every non-archived record with its observed version, so filtered views
+ * or concurrent edits cannot silently overwrite other records' order.
+ *
+ * This never modifies publishedSortOrder or publishedPayload. Publication stays
+ * an explicit CMS action.
+ */
+const cmsCardReorderSchema = z.object({
+  type: z.enum(["HOMEPAGE_DESTINATION", "FLIGHT_ROUTE"]),
+  market: z.string().refine((market) => homepageCmsMarkets.some((allowed) => allowed === market)),
+  locale: z.literal("en"),
+  items: z.array(z.object({
+    id: z.string().min(1).max(128),
+    version: z.number().int().min(1),
+  }).strict()).min(1).max(1000),
+}).strict();
+
+export async function reorderCmsDraftCards(raw: unknown, actor: CmsActor) {
+  const parsed = cmsCardReorderSchema.safeParse(raw);
+  if (!parsed.success) {
+    throw new CmsContentError("INVALID", "Choose a complete market-specific ordering.", parsed.error.flatten());
+  }
+  const input = parsed.data;
+  const ids = input.items.map((item) => item.id);
+  if (new Set(ids).size !== ids.length) {
+    throw new CmsContentError("INVALID", "Each destination or route must appear exactly once.");
+  }
+
+  try {
+    return await getPrisma().$transaction(async (tx) => {
+      const scope = await tx.cmsContentScope.findUnique({
+        where: {
+          type_market_locale: { type: input.type, market: input.market, locale: input.locale },
+        },
+        select: { id: true, version: true },
+      });
+      if (!scope) throw new CmsContentError("NOT_FOUND", "CMS market scope is not initialized.");
+
+      const current = await tx.cmsContentItem.findMany({
+        where: {
+          type: input.type,
+          market: input.market,
+          locale: input.locale,
+          status: { not: "ARCHIVED" },
+        },
+      });
+      const byId = new Map(current.map((item) => [item.id, item]));
+      if (current.length !== input.items.length ||
+        input.items.some(({ id, version }) => byId.get(id)?.version !== version)) {
+        throw new CmsContentError(
+          "CONFLICT",
+          "These records changed or the directory is filtered. Refresh the full list before saving the order.",
+        );
+      }
+
+      const changes = input.items.flatMap(({ id }, nextOrder) => {
+        const item = byId.get(id)!;
+        return item.sortOrder === nextOrder ? [] : [{ item, nextOrder }];
+      });
+      if (!changes.length) return { changed: 0 };
+
+      const scopeUpdated = await tx.cmsContentScope.updateMany({
+        where: { id: scope.id, version: scope.version },
+        data: { version: { increment: 1 } },
+      });
+      if (scopeUpdated.count !== 1) {
+        throw new CmsContentError("CONFLICT", "CMS scope changed concurrently. Refresh and try again.");
+      }
+
+      const revisions: Prisma.CmsContentRevisionCreateManyInput[] = [];
+      for (const { item, nextOrder } of changes) {
+        const updated = await tx.cmsContentItem.updateMany({
+          where: {
+            id: item.id,
+            version: item.version,
+            status: { not: "ARCHIVED" },
+            market: input.market,
+            locale: input.locale,
+            type: input.type,
+          },
+          data: {
+            sortOrder: nextOrder,
+            version: { increment: 1 },
+            updatedByAdminUserId: actor.id,
+          },
+        });
+        if (updated.count !== 1) {
+          throw new CmsContentError("CONFLICT", "A card changed concurrently. Refresh before saving the order.");
+        }
+        revisions.push({
+          contentItemId: item.id,
+          version: item.version + 1,
+          action: "ORDER_NORMALIZED",
+          status: item.status,
+          market: item.market,
+          locale: item.locale,
+          sortOrder: nextOrder,
+          publishedMarket: item.publishedMarket,
+          publishedLocale: item.publishedLocale,
+          publishedSortOrder: item.publishedSortOrder,
+          draftPayload: item.draftPayload as Prisma.InputJsonValue,
+          publishedPayload: item.publishedPayload === null
+            ? Prisma.DbNull
+            : item.publishedPayload as Prisma.InputJsonValue,
+          actorUserId: actor.id,
+          actorEmail: actor.email.trim().toLowerCase(),
+        });
+      }
+
+      await tx.cmsContentRevision.createMany({ data: revisions });
+      await tx.adminAuditLog.create({
+        data: {
+          adminUserId: actor.id,
+          adminEmail: actor.email.trim().toLowerCase(),
+          action: "CMS_DRAFT_CARDS_REORDERED",
+          targetType: "CmsContentScope",
+          targetId: scope.id,
+          metadata: {
+            type: input.type, market: input.market, locale: input.locale,
+            changed: changes.length, total: input.items.length,
+          } as Prisma.InputJsonValue,
+          ipAddress: actor.ipAddress,
+          userAgent: actor.userAgent,
+        },
+      });
+      return { changed: changes.length };
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable, timeout: 30_000 });
+  } catch (error) {
+    if (error instanceof CmsContentError) throw error;
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2034") {
+      throw new CmsContentError("CONFLICT", "Another admin changed this market. Refresh before saving the order.");
     }
     throw error;
   }
