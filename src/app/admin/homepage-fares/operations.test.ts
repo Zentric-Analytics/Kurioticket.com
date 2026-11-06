@@ -27,8 +27,9 @@ test("homepage fare reload preserves snapshot-derived failure and unavailable co
 });
 
 test("homepage fare operations does not present unknown executor history as zero", () => {
-  assert.match(component, /Provider calls/);
-  assert.match(component, /No run yet/);
+  assert.match(component, /Last manual run in this tab/);
+  assert.match(component, /No manual refresh result in this tab/);
+  assert.match(component, /value=\{refreshState\.counts\.providerCalls\}/);
   assert.doesNotMatch(component, /label="Provider calls used"/);
 });
 
@@ -43,7 +44,8 @@ test("homepage fare cron copy keeps the primary operator view concise while reta
 });
 
 test("homepage fare snapshot timestamp is not mislabeled as a completed refresh run", () => {
-  assert.match(component, /Latest snapshot/);
+  assert.match(component, /Latest saved snapshot/);
+  assert.match(component, /Includes snapshots saved by manual or scheduled refreshes/);
   assert.doesNotMatch(component, /label="Last refresh time"/);
 });
 
@@ -104,7 +106,7 @@ test("homepage fare readiness keeps only core customer-facing summary metrics", 
   assert.match(component, /label="Markets needing attention"/);
   assert.doesNotMatch(component, /SummaryMetricCard label="Provider calls \(manual run\)"/);
   assert.doesNotMatch(component, /SummaryMetricCard label="Cron credential"/);
-  assert.match(component, /CompactDetail label="Provider calls"/);
+  assert.match(component, /CompactDetail label="Provider calls" value=\{refreshState\.counts\.providerCalls\}/);
   assert.match(component, /formatCronStatus\(statusPayload\)/);
 });
 
@@ -119,14 +121,35 @@ test("advanced diagnostics keeps fallback and executor data available in a provi
   assert.doesNotMatch(component, /rounded-2xl border border-border bg-white p-4/);
 });
 
+test("manual fare refresh and read-only status check have distinct labels and data sources", () => {
+  assert.match(component, /Run fare refresh/);
+  assert.match(component, /Check latest status/);
+  assert.match(component, /Run fare refresh requests new fares from providers and saves the results/);
+  assert.match(component, /Check latest status only reads saved records/);
+  assert.match(component, /onClick=\{onRefresh\}/);
+  assert.match(component, /onClick=\{onReload\}/);
+  assert.match(component, /fetch\("\/api\/admin\/homepage-fares\/refresh", \{/);
+  assert.match(component, /method: "POST"/);
+  assert.match(component, /fetch\("\/api\/admin\/homepage-fares\/status", \{/);
+  assert.match(component, /await loadStatus\(\)/);
+  assert.match(component, /aria-label="Saved fare status"/);
+  assert.match(component, /aria-label="Last manual fare refresh"/);
+  assert.match(component, /No manual refresh result in this tab/);
+  assert.match(component, /Checking status does not start a run or change these results/);
+  assert.doesNotMatch(component, /"Reload status"|"Refresh homepage fares"/);
+  assert.match(adminRefresh, /writeAdminAuditLog/);
+});
+
 test("homepage fare refresh operations use the same compact fact layout as Providers", () => {
   assert.match(component, /className="mt-4 flex flex-wrap items-center gap-2\.5"/);
-  assert.match(component, /grid-cols-2 gap-x-6 gap-y-4 border-t border-\[#E7ECF5\] pt-4 lg:grid-cols-4/);
+  assert.match(component, /grid gap-5 border-t border-\[#E7ECF5\] pt-4 lg:grid-cols-2/);
   assert.match(component, /border-t border-\[#E7ECF5\] pt-3/);
-  assert.match(component, /Latest snapshot/);
+  assert.match(component, /Latest saved snapshot/);
+  assert.match(component, /Last manual run in this tab/);
   assert.match(component, /Provider calls/);
   assert.match(component, /Stopped reason/);
-  assert.match(component, /Cron/);
+  assert.match(component, /Scheduler setup/);
+  assert.match(component, /Manual run outcomes/);
   assert.doesNotMatch(component, /rounded-xl border border-border bg-slate-50\/70 p-3/);
 });
 
