@@ -226,7 +226,8 @@ test("route page places pagination beneath results, separates readiness, and ret
   assert.match(table, /formatSnapshotTime\(route\.searchedAt\)/);
   assert.match(table, /formatDateTime\(route\.expiresAt\)/);
   assert.match(component, /bg-amber-500/);
-  assert.match(component, /status === "Partially ready"/);
+  assert.match(component, /status === "Fallback only"/);
+  assert.match(component, /\{status\}/);
 });
 
 test("route inspector defaults to All routes with seven distinct status options", () => {
