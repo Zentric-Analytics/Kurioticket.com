@@ -517,7 +517,7 @@ export function HomepageFaresRefreshCard() {
 
       setRefreshState({
         counts,
-        message: `Homepage fares refreshed. ${counts.refreshed} refreshed, ${counts.unavailable} unavailable, ${counts.failed} failed, ${counts.retained} retained, ${counts.skipped} skipped. Provider calls used: ${counts.providerCalls}. Stopped: ${formatStoppedReason(counts.stoppedReason)}.`,
+        message: `Manual fare refresh finished. ${counts.refreshed} refreshed, ${counts.unavailable} unavailable, ${counts.failed} failed, ${counts.retained} retained, ${counts.skipped} skipped. Provider calls used: ${counts.providerCalls}. Stopped: ${formatStoppedReason(counts.stoppedReason)}.`,
         status: "success",
       });
       await loadStatus();
@@ -800,13 +800,6 @@ function RefreshCronPanel({
   onRefresh: () => void;
   onReload: () => void;
 }) {
-  const stoppedReason = refreshState.counts
-    ? formatStoppedReason(refreshState.counts.stoppedReason)
-    : "No result yet";
-  const providerCallsUsed = refreshState.counts
-    ? refreshState.counts.providerCalls
-    : "No run yet";
-
   return (
     <DashboardSection title="Refresh operations">
       <div className="mt-4 flex flex-wrap items-center gap-2.5">
@@ -824,7 +817,7 @@ function RefreshCronPanel({
             : initialStatusLoading
               ? "Loading status…"
               : operationsAvailable
-                ? "Refresh homepage fares"
+                ? "Run fare refresh"
                 : "Refresh unavailable"}
         </Button>
         <Button
@@ -836,16 +829,43 @@ function RefreshCronPanel({
           className="w-full sm:w-auto"
         >
           <RefreshCcw className={loading ? "animate-spin" : ""} size={16} />
-          {loading ? "Loading…" : "Reload status"}
+          {loading ? "Checking…" : "Check latest status"}
         </Button>
       </div>
 
-      <dl aria-label="Refresh operation status" className="mt-4 grid grid-cols-2 gap-x-6 gap-y-4 border-t border-[#E7ECF5] pt-4 lg:grid-cols-4">
-        <CompactDetail label="Latest snapshot" value={statusPayload.dataAvailable ? formatSnapshotTime(statusPayload.lastRefreshAt) : "Unavailable"} />
-        <CompactDetail label="Provider calls" value={providerCallsUsed} />
-        <CompactDetail label="Stopped reason" value={stoppedReason} />
-        <CompactDetail label="Cron" value={formatCronStatus(statusPayload)} />
-      </dl>
+      <p className="mt-2 text-[12px] leading-5 text-[#64748B]">
+        Run fare refresh requests new fares from providers and saves the results. Check latest status only reads saved records.
+      </p>
+
+      <div className="mt-4 grid gap-5 border-t border-[#E7ECF5] pt-4 lg:grid-cols-2">
+        <div className="min-w-0">
+          <h4 className="text-[13px] font-semibold text-[#0F172A]">Saved fare status</h4>
+          <p className="mt-1 text-[12px] leading-5 text-[#64748B]">
+            Includes snapshots saved by manual or scheduled refreshes.
+          </p>
+          <dl aria-label="Saved fare status" className="mt-3 grid grid-cols-2 gap-x-5 gap-y-3">
+            <CompactDetail label="Latest saved snapshot" value={statusPayload.dataAvailable ? formatSnapshotTime(statusPayload.lastRefreshAt) : "Unavailable"} />
+            <CompactDetail label="Scheduler setup" value={formatCronStatus(statusPayload)} />
+          </dl>
+        </div>
+
+        <div className="min-w-0 border-t border-[#E7ECF5] pt-4 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
+          <h4 className="text-[13px] font-semibold text-[#0F172A]">Last manual run in this tab</h4>
+          <p className="mt-1 text-[12px] leading-5 text-[#64748B]">
+            Checking status does not start a run or change these results.
+          </p>
+          {refreshState.counts ? (
+            <dl aria-label="Last manual fare refresh" className="mt-3 grid grid-cols-2 gap-x-5 gap-y-3">
+              <CompactDetail label="Provider calls" value={refreshState.counts.providerCalls} />
+              <CompactDetail label="Stopped reason" value={formatStoppedReason(refreshState.counts.stoppedReason)} />
+            </dl>
+          ) : (
+            <p className="mt-3 text-[12px] leading-5 text-[#64748B]">
+              No manual refresh result in this tab.
+            </p>
+          )}
+        </div>
+      </div>
 
       {refreshState.message ? (
         <div
@@ -862,11 +882,14 @@ function RefreshCronPanel({
       ) : null}
 
       {refreshState.counts ? (
-        <dl className="mt-4 grid grid-cols-2 gap-x-5 gap-y-3 border-t border-[#E7ECF5] pt-3 sm:grid-cols-3 lg:grid-cols-5">
-          {COUNT_LABELS.map(({ key, label }) => (
-            <MetricCard key={key} label={label} value={refreshState.counts?.[key] ?? 0} />
-          ))}
-        </dl>
+        <div className="mt-4 border-t border-[#E7ECF5] pt-3">
+          <h4 className="text-[12px] font-semibold text-[#0F172A]">Manual run outcomes</h4>
+          <dl aria-label="Manual run outcomes" className="mt-2 grid grid-cols-2 gap-x-5 gap-y-3 sm:grid-cols-3 lg:grid-cols-5">
+            {COUNT_LABELS.map(({ key, label }) => (
+              <MetricCard key={key} label={label} value={refreshState.counts?.[key] ?? 0} />
+            ))}
+          </dl>
+        </div>
       ) : null}
 
       {!initialStatusLoading && !operationsAvailable ? (

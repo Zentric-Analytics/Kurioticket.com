@@ -73,7 +73,10 @@ test("homepage fare refresh component keeps existing client APIs, scopes, and st
   assert.ok(refreshCard.includes('fetch("/api/admin/homepage-fares/refresh"'));
   assert.match(refreshCard, /Loading homepage fare snapshot status/);
   assert.match(refreshCard, /Could not refresh homepage fares/);
-  assert.match(refreshCard, /Refresh homepage fares/);
+  assert.match(refreshCard, /Run fare refresh/);
+  assert.match(refreshCard, /Check latest status/);
+  assert.match(refreshCard, /onClick=\{onRefresh\}/);
+  assert.match(refreshCard, /onClick=\{onReload\}/);
 });
 
 test("homepage fare admin APIs preserve authorization, audit logging, and refresh scope behavior", () => {
