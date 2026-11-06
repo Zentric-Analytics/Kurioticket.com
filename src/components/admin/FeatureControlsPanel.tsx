@@ -16,12 +16,12 @@ type Control = {
 
 
 const controlRowSummaries: Record<FeatureControlKey, string> = {
-  FLIGHT_SEARCH_ENABLED: "Controls flight search availability.",
-  HOTEL_SEARCH_ENABLED: "Controls hotel search availability.",
-  CAR_SEARCH_ENABLED: "Controls car search availability.",
-  DEALS_ENABLED: "Controls Packages availability.",
-  PRICE_ALERTS_ENABLED: "Controls price-alert creation and reactivation.",
-  PRICE_ALERT_PROCESSING_ENABLED: "Controls automatic price checks and alert delivery.",
+  FLIGHT_SEARCH_ENABLED: "Allow flight searches.",
+  HOTEL_SEARCH_ENABLED: "Allow hotel searches.",
+  CAR_SEARCH_ENABLED: "Allow car searches.",
+  DEALS_ENABLED: "Show or hide Packages.",
+  PRICE_ALERTS_ENABLED: "Allow new and reactivated price alerts.",
+  PRICE_ALERT_PROCESSING_ENABLED: "Run automatic price checks and send alerts.",
 };
 
 export function FeatureControlsPanel({
@@ -47,8 +47,8 @@ export function FeatureControlsPanel({
     "Travel Automation": "Travel automation",
   };
   const categoryDescriptions: Record<string, string> = {
-    "Travel Search": "Controls whether customer-facing travel products are available.",
-    "Travel Automation": "Controls background and customer automation without changing saved state.",
+    "Travel Search": "Manage travel search and Packages.",
+    "Travel Automation": "Manage price alerts and automatic checks.",
   };
 
   useEffect(() => {
