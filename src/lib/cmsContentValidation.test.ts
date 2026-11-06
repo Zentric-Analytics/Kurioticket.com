@@ -1,3 +1,4 @@
+import { cmsOrderForDisplay, cmsOrderForStorage } from "@/lib/cmsOrderPresentation";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { cmsPayloadSchemas, validateCmsEditor, readCmsFieldErrors } from "./cmsContentValidation";
@@ -20,8 +21,8 @@ test("browser and server use the same schemas; paragraph fields preserve line br
 });
 
 test("blank, fractional and excessive order values fail before any request", () => {
-  for (const order of ["", " ", "-1", "0.5", "100001", "NaN", "Infinity"]) assert.ok(validateCmsEditor("FAQ", faq, order).sortOrder, order);
-  for (const order of ["0", "100000"]) assert.deepEqual(validateCmsEditor("FAQ", faq, order), {});
+  for (const order of ["", " ", "-1", "0", "0.5", "100002", "NaN", "Infinity"]) assert.ok(validateCmsEditor("FAQ", faq, order).sortOrder, order);
+  for (const order of ["1", "100001"]) assert.deepEqual(validateCmsEditor("FAQ", faq, order), {});
 });
 
 test("all content field limits and approved image rules apply in the editor", () => {
@@ -32,14 +33,14 @@ test("all content field limits and approved image rules apply in the editor", ()
     HOTEL_DESTINATION: { name: "London", country: "United Kingdom", countryCode: "GB", kind: "city", searchValue: "London, United Kingdom", canonicalId: "hotel:gb-london", image: "/images/london.jpg", imageAlt: "London" },
   } as const;
   for (const [type, payload] of Object.entries(payloads)) {
-    assert.deepEqual(validateCmsEditor(type as keyof typeof payloads, payload, "0"), {}, type);
+    assert.deepEqual(validateCmsEditor(type as keyof typeof payloads, payload, "1"), {}, type);
     for (const field of Object.keys(payload)) {
-      const errors = validateCmsEditor(type as keyof typeof payloads, { ...payload, [field]: "x".repeat(5001) }, "0");
+      const errors = validateCmsEditor(type as keyof typeof payloads, { ...payload, [field]: "x".repeat(5001) }, "1");
       assert.ok(errors[field], `${type}.${field}`);
     }
   }
-  assert.ok(validateCmsEditor("FLIGHT_ROUTE", { ...flight, image: "javascript:alert(1)" }, "0").image);
-  assert.ok(validateCmsEditor("FLIGHT_ROUTE", { ...flight, destinationCode: "LOS" }, "0").destinationCode);
+  assert.ok(validateCmsEditor("FLIGHT_ROUTE", { ...flight, image: "javascript:alert(1)" }, "1").image);
+  assert.ok(validateCmsEditor("FLIGHT_ROUTE", { ...flight, destinationCode: "LOS" }, "1").destinationCode);
   assert.deepEqual(readCmsFieldErrors({ fieldErrors: { sortOrder: ["Out of range"], image: ["Image not allowed"] } }), { sortOrder: ["Out of range"], image: ["Image not allowed"] });
 });
 
@@ -53,4 +54,14 @@ test("reorder descriptions distinguish repeated city names and reset dirty state
   const items = [{ id: "b", key: "second", sortOrder: 1 }, { id: "a", key: "first", sortOrder: 0 }];
   assert.deepEqual(sortCmsFaqDirectory(items).map(item => item.id), ["a", "b"]);
   assert.equal(items[0].id, "b");
+});
+
+test("Admin Order starts at 1 while backend values stay zero-based", () => {
+  assert.equal(cmsOrderForDisplay(0), 1);
+  assert.equal(cmsOrderForDisplay(7), 8);
+  assert.equal(cmsOrderForStorage("1"), 0);
+  assert.equal(cmsOrderForStorage("8"), 7);
+  assert.equal(cmsOrderForStorage("100001"), 100000);
+  assert.ok(validateCmsEditor("FAQ", faq, "0").sortOrder);
+  assert.deepEqual(validateCmsEditor("FAQ", faq, "1"), {});
 });

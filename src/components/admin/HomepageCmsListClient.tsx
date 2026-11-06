@@ -1,5 +1,7 @@
 "use client";
 
+import { cmsOrderForDisplay } from "@/lib/cmsOrderPresentation";
+
 import { CmsSuccessMessage } from "@/components/admin/CmsEditorFeedback";
 import { useState } from "react";
 
@@ -113,7 +115,7 @@ export function HomepageCmsListClient({
                   <ContentStatusPill status={item.status} inline />
                   {unpublishedLabel ? <p className="text-[12px] font-medium text-amber-700">{unpublishedLabel}</p> : null}
                 </div>,
-                item.sortOrder,
+                cmsOrderForDisplay(item.sortOrder),
                 `v${item.version}`,
                 new Date(item.updatedAt).toLocaleString(),
                 <Link key="action" href={`/admin/content/homepage/${section}/${encodeURIComponent(item.id)}?${editorContext.toString()}`} className="inline-flex items-center gap-1 text-[13px] font-medium text-[#004BB8] hover:underline">
