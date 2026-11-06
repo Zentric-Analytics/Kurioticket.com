@@ -58,7 +58,7 @@ export default async function AdminNotificationSettingsPage() {
         <header className="border-b border-[#D8E1EC] pb-4">
           <h2 id="settings-section-title" className="text-[17px] font-semibold leading-6 tracking-[-0.01em] text-[#020617]">Notifications</h2>
           <p className="mt-1 max-w-4xl text-[13px] leading-5 text-[#64748B]">
-            Review active operational issues. Acknowledgement marks a signal as reviewed for 24 hours; it does not resolve the underlying condition.
+            Review active operational issues. Marking an alert as read lasts for 24 hours; it does not resolve the underlying condition.
           </p>
         </header>
 
@@ -121,14 +121,14 @@ export default async function AdminNotificationSettingsPage() {
                           <span className="text-[#475569]">{sourceLabel(alert.source)}</span>
                           <span aria-hidden="true" className="text-[#94A3B8]">·</span>
                           <span className={alert.acknowledged ? "text-[#64748B]" : "font-semibold text-[#004BB8]"}>
-                            {alert.acknowledged ? "Acknowledged" : "Unread"}
+                            {alert.acknowledged ? "Read" : "Unread"}
                           </span>
                         </div>
                         <h3 className="mt-1.5 text-[14px] font-semibold leading-5 text-[#020617]">{alert.title}</h3>
                         <p className="mt-1 max-w-4xl break-words text-[13px] leading-5 text-[#475569]">{alert.message}</p>
                         <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] leading-4 text-[#64748B]">
                           {alert.signalAt ? <span>Signal: {formatDateTime(alert.signalAt)}</span> : null}
-                          {alert.acknowledgedAt ? <span>Acknowledged: {formatDateTime(alert.acknowledgedAt)}</span> : null}
+                          {alert.acknowledgedAt ? <span>Marked as read: {formatDateTime(alert.acknowledgedAt)}</span> : null}
                         </div>
                       </div>
 
@@ -143,7 +143,7 @@ export default async function AdminNotificationSettingsPage() {
                         ) : null}
                         {alert.key === "system.database.unavailable" ? null : alert.signalToken.startsWith("unpersisted:") ? (
                           <span className="max-w-xs text-[12px] leading-5 text-[#64748B]">
-                            Acknowledgement is unavailable until monitoring-state storage recovers.
+                            Mark as read is unavailable until monitoring-state storage recovers.
                           </span>
                         ) : (
                           <AdminAlertAcknowledgeButton

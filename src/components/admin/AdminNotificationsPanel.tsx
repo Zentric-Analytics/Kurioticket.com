@@ -247,7 +247,7 @@ export function AdminNotificationsPanel({ open, onToggle, onClose, headerRef, tr
           <div className="min-w-0">
             <h2 id={id + "-title"} className="text-[14px] font-semibold leading-5 tracking-[-0.01em] text-[#111827]">Notifications</h2>
             <p className="mt-1 text-[12px] font-normal leading-5 text-[#6B7280]">
-              {snapshot ? snapshot.unreadCount > 0 ? snapshot.unreadCount + " need attention" : snapshot.activeCount > 0 ? "All active alerts seen" : "No active notifications" : pending ? "Loading notifications…" : "Activity and alerts"}
+              {snapshot ? snapshot.unreadCount > 0 ? snapshot.unreadCount + " need attention" : snapshot.activeCount > 0 ? "All active alerts read" : "No active notifications" : pending ? "Loading notifications…" : "Activity and alerts"}
             </p>
           </div>
           <div className="flex items-center gap-1">
