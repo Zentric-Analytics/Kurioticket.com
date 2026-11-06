@@ -85,13 +85,12 @@ try {
           await expect(main.getByText("Meaning", { exact: true })).toHaveCount(0);
 
           const emailRow = main.locator('[data-system-area="email"]');
-          const providersRow = main.locator('[data-system-area="providers"]');
           const cmsRow = main.locator('[data-system-area="cms"]');
           await expect(emailRow.getByRole("link", { name: "Open Email Delivery ›", exact: true })).toHaveAttribute("href", "/admin/email-delivery");
-          await expect(providersRow.getByRole("link", { name: "Open Providers ›", exact: true })).toHaveAttribute("href", "/admin/providers");
           await expect(cmsRow.getByRole("link", { name: "Open CMS Health ›", exact: true })).toHaveAttribute("href", "/admin/system/cms-health");
+          await expect(main.locator('[data-system-area="providers"]')).toHaveCount(0);
+          await expect(main.getByRole("link", { name: "Open Providers ›", exact: true })).toHaveCount(0);
           await expect(emailRow.getByText("View ›", { exact: true })).toHaveCount(0);
-          await expect(providersRow.getByText("View ›", { exact: true })).toHaveCount(0);
           await expect(cmsRow.getByText("View ›", { exact: true })).toHaveCount(0);
 
           const adminAccess = main.locator('details[data-system-area="admin-access"]');

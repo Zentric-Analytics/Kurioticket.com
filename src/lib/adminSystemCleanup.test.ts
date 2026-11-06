@@ -14,6 +14,8 @@ test("System removes general Alerts shortcuts and circular configuration investi
   assert.match(page, /Issues Requiring Attention/);
   assert.match(page, /href: "\/admin\/email-delivery"/);
   assert.match(page, /href: "\/admin\/providers"/);
+  assert.match(page, /Review provider readiness/);
+  assert.doesNotMatch(page, /id: "providers"|Open Providers/);
   assert.match(page, /Managed in deployment configuration/);
 });
 test("System diagnostic subpages keep a simple return path without restoring removed header shortcuts", () => {
