@@ -98,7 +98,11 @@ export function CmsLocationCombobox({
   }
 
   function pick(option: CmsLocationOption) {
-    onChange(option.value);
+    // Hotel option values are canonical IDs while the editable field displays
+    // a human label. Only free typing should clear its selected ID. Picking an
+    // option must go directly to onSelect, preserving the previous identity
+    // for safe image resets when the selected destination changes.
+    if (kind !== "hotel" || !onSelect) onChange(option.value);
     onSelect?.(option);
     dismiss();
     inputRef.current?.focus({ preventScroll: true });
