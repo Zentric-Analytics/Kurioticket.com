@@ -37,6 +37,11 @@ type CmsItem = {
   publishedSortOrder: number | null;
 };
 
+type SupportedFlightRoute = {
+  originCode: string;
+  destinationCode: string;
+};
+
 type HotelOption = {
   canonicalId: string;
   label: string;
@@ -71,6 +76,7 @@ export function HomepageCmsEditor({
   initialMarket,
   initialItem,
   hotelOptions = [],
+  supportedFlightRoutes = [],
   listQuery = "",
 }: {
   section: HomepageCmsSection;
@@ -78,6 +84,7 @@ export function HomepageCmsEditor({
   initialMarket: string;
   initialItem?: CmsItem;
   hotelOptions?: HotelOption[];
+  supportedFlightRoutes?: SupportedFlightRoute[];
   listQuery?: string;
 }) {
   const router = useRouter();
@@ -107,7 +114,21 @@ export function HomepageCmsEditor({
     )
   );
   const validMarket = section === "hotel-destinations" || markets.includes(market);
-  const validDraft = validMarket && validateClientDraft(section, currentPayload, sortOrder);
+  const normalizedOrigin = (fields.originCode ?? "").trim().toUpperCase();
+  const normalizedDestination = (fields.destinationCode ?? "").trim().toUpperCase();
+  const flightSection = section === "destinations" || section === "flight-routes";
+  const routeValidation = flightSection
+    ? validateSupportedRoute(normalizedOrigin, normalizedDestination, supportedFlightRoutes)
+    : { valid: true, originError: null, destinationError: null };
+  const originAirportCodes = flightSection
+    ? compatibleOriginCodes(normalizedDestination, supportedFlightRoutes)
+    : [];
+  const destinationAirportCodes = flightSection
+    ? compatibleDestinationCodes(normalizedOrigin, supportedFlightRoutes)
+    : [];
+  const validDraft = validMarket
+    && validateClientDraft(section, currentPayload, sortOrder)
+    && routeValidation.valid;
   const unpublishedLabel = item ? getCmsUnpublishedChangeLabel(item) : null;
 
   function setField(name: string, value: string) {
@@ -277,8 +298,14 @@ export function HomepageCmsEditor({
             <CmsLocationCombobox label="Country" kind="country" value={fields.country ?? ""} onChange={(value) => setFields((current) => ({ ...current, country: value, ...(value !== current.country ? { countryCode: "" } : {}) }))} onSelect={selectCountry} disabled={pending || archived} className="max-w-[320px]" />
             <div className="grid max-w-[512px] gap-4 sm:grid-cols-3 sm:items-start">
               <TextField label="Country code" name="countryCode" fields={fields} setField={setField} disabled={pending || archived} className="min-w-0" />
-              <CmsLocationCombobox label="Origin IATA" kind="airport" value={fields.originCode ?? ""} onChange={(value) => setField("originCode", value)} disabled={pending || archived} className="min-w-0" />
-              <CmsLocationCombobox label="Destination IATA" kind="airport" value={fields.destinationCode ?? ""} onChange={(value) => setField("destinationCode", value)} disabled={pending || archived} className="min-w-0" />
+              <div className="min-w-0">
+                <CmsLocationCombobox label="Origin IATA" kind="airport" value={fields.originCode ?? ""} airportCodes={originAirportCodes} allowManualAirportCode={false} onChange={(value) => setField("originCode", value)} disabled={pending || archived} />
+                {routeValidation.originError ? <p className="mt-1 text-[11px] leading-4 text-rose-700">{routeValidation.originError}</p> : null}
+              </div>
+              <div className="min-w-0">
+                <CmsLocationCombobox label="Destination IATA" kind="airport" value={fields.destinationCode ?? ""} airportCodes={destinationAirportCodes} allowManualAirportCode={false} onChange={(value) => setField("destinationCode", value)} disabled={pending || archived} />
+                {routeValidation.destinationError ? <p className="mt-1 text-[11px] leading-4 text-rose-700">{routeValidation.destinationError}</p> : null}
+              </div>
             </div>
             <CmsExpandingTextField label="Image" value={fields.image ?? ""} onChange={(value) => setField("image", value)} disabled={pending || archived} />
             <CmsExpandingTextField label="Image alt text" value={fields.imageAlt ?? ""} onChange={(value) => setField("imageAlt", value)} disabled={pending || archived} />
@@ -290,9 +317,15 @@ export function HomepageCmsEditor({
             <TextField label="Title" name="title" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[448px]" />
             <div className="grid max-w-[496px] gap-4 sm:grid-cols-[minmax(0,1fr)_160px] sm:items-start">
               <CmsLocationCombobox label="Origin city" kind="city" value={fields.originCity ?? ""} onChange={(value) => setField("originCity", value)} disabled={pending || archived} className="min-w-0" />
-              <CmsLocationCombobox label="Origin IATA" kind="airport" value={fields.originCode ?? ""} onChange={(value) => setField("originCode", value)} disabled={pending || archived} className="min-w-0" />
+              <div className="min-w-0">
+                <CmsLocationCombobox label="Origin IATA" kind="airport" value={fields.originCode ?? ""} airportCodes={originAirportCodes} allowManualAirportCode={false} onChange={(value) => setField("originCode", value)} disabled={pending || archived} />
+                {routeValidation.originError ? <p className="mt-1 text-[11px] leading-4 text-rose-700">{routeValidation.originError}</p> : null}
+              </div>
               <CmsLocationCombobox label="Destination city" kind="city" value={fields.destinationCity ?? ""} onChange={(value) => setField("destinationCity", value)} disabled={pending || archived} className="min-w-0" />
-              <CmsLocationCombobox label="Destination IATA" kind="airport" value={fields.destinationCode ?? ""} onChange={(value) => setField("destinationCode", value)} disabled={pending || archived} className="min-w-0" />
+              <div className="min-w-0">
+                <CmsLocationCombobox label="Destination IATA" kind="airport" value={fields.destinationCode ?? ""} airportCodes={destinationAirportCodes} allowManualAirportCode={false} onChange={(value) => setField("destinationCode", value)} disabled={pending || archived} />
+                {routeValidation.destinationError ? <p className="mt-1 text-[11px] leading-4 text-rose-700">{routeValidation.destinationError}</p> : null}
+              </div>
             </div>
             <Field label="Route note" className="max-w-[480px]">
               <AdminTextarea className={`${editorControlClass} h-auto min-h-24`} value={fields.routeNote ?? ""} onChange={(event) => setField("routeNote", event.target.value)} disabled={pending || archived} />
@@ -459,6 +492,50 @@ function buildPayload(section: HomepageCmsSection, fields: Record<string, string
     ...(fields.image?.trim() ? { image: fields.image.trim() } : {}),
     ...(fields.imageAlt?.trim() ? { imageAlt: fields.imageAlt.trim() } : {}),
   };
+}
+
+function compatibleOriginCodes(destinationCode: string, routes: SupportedFlightRoute[]) {
+  const constrained = destinationCode
+    ? routes.filter((route) => route.destinationCode === destinationCode)
+    : [];
+  const matching = constrained.length > 0 ? constrained : routes;
+  return [...new Set(matching.map((route) => route.originCode))].sort();
+}
+
+function compatibleDestinationCodes(originCode: string, routes: SupportedFlightRoute[]) {
+  const constrained = originCode
+    ? routes.filter((route) => route.originCode === originCode)
+    : [];
+  const matching = constrained.length > 0 ? constrained : routes;
+  return [...new Set(matching.map((route) => route.destinationCode))].sort();
+}
+
+function validateSupportedRoute(
+  originCode: string,
+  destinationCode: string,
+  routes: SupportedFlightRoute[],
+) {
+  if (routes.length === 0) {
+    return { valid: true, originError: null, destinationError: null };
+  }
+  const origins = new Set(routes.map((route) => route.originCode));
+  if (originCode && !origins.has(originCode)) {
+    return {
+      valid: false,
+      originError: `${originCode} is not available for this homepage content.`,
+      destinationError: null,
+    };
+  }
+  if (originCode && destinationCode && !routes.some(
+    (route) => route.originCode === originCode && route.destinationCode === destinationCode,
+  )) {
+    return {
+      valid: false,
+      originError: null,
+      destinationError: `Choose a destination supported from ${originCode}.`,
+    };
+  }
+  return { valid: true, originError: null, destinationError: null };
 }
 
 function validateClientDraft(section: HomepageCmsSection, payload: Record<string, unknown>, sortOrder: string) {

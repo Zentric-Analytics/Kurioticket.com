@@ -9,6 +9,11 @@ import { HomepageCmsEditor } from "@/components/admin/HomepageCmsEditor";
 type HomepageItem = NonNullable<ComponentProps<typeof HomepageCmsEditor>["initialItem"]>;
 type FaqItem = NonNullable<ComponentProps<typeof FaqCmsEditor>["initialItem"]>;
 
+type SupportedFlightRoute = {
+  originCode: string;
+  destinationCode: string;
+};
+
 type HotelOption = {
   canonicalId: string;
   label: string;
@@ -25,6 +30,7 @@ type Props = {
   recordKey: string;
   markets: readonly string[];
   hotelOptions: HotelOption[];
+  supportedFlightRoutes: SupportedFlightRoute[];
   onClose: () => void;
 };
 
@@ -34,6 +40,7 @@ export function CmsHealthInlineRepair({
   recordKey,
   markets,
   hotelOptions,
+  supportedFlightRoutes,
   onClose,
 }: Props) {
   const [item, setItem] = useState<HomepageItem | FaqItem | null>(null);
@@ -131,6 +138,7 @@ export function CmsHealthInlineRepair({
               initialMarket={item.market}
               initialItem={item as HomepageItem}
               hotelOptions={hotelOptions}
+              supportedFlightRoutes={supportedFlightRoutes}
             />
           )}
         </div>

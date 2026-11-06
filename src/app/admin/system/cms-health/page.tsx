@@ -3,6 +3,7 @@ import { CmsScopeHealthRow } from "@/components/admin/CmsScopeHealthRow";
 import { hotelDestinations } from "@/data/hotelDestinations";
 import { getCmsMarketName } from "@/lib/adminCmsMarketLabels";
 import { getCmsHealthOverview } from "@/services/cmsHardeningService";
+import { getCmsHomepageFlightRoutePairs } from "@/services/cmsContentService";
 import { homepageCmsMarkets } from "@/services/homepageCmsService";
 
 export const metadata = { title: "CMS Health" };
@@ -190,6 +191,11 @@ export default async function AdminCmsHealthPage() {
                                   integrity={entry.integrity}
                                   markets={homepageCmsMarkets}
                                   hotelOptions={cmsHealthHotelOptions}
+                                  supportedFlightRoutes={
+                                    group.type === "HOMEPAGE_DESTINATION" || group.type === "FLIGHT_ROUTE"
+                                      ? getCmsHomepageFlightRoutePairs(group.type)
+                                      : []
+                                  }
                                 />
                               ))}
                             </tbody>

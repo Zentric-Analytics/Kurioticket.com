@@ -8,7 +8,7 @@ import { hotelDestinations } from "@/data/hotelDestinations";
 import { getHomepageCmsSection, homepageCmsSections } from "@/lib/adminHomepageCms";
 import { homepageCmsListNavigation } from "@/lib/adminContentNavigation";
 import { getCmsMarketName } from "@/lib/adminCmsMarketLabels";
-import { CmsContentError, getAdminCmsContent } from "@/services/cmsContentService";
+import { CmsContentError, getAdminCmsContent, getCmsHomepageFlightRoutePairs } from "@/services/cmsContentService";
 import { homepageCmsMarkets } from "@/services/homepageCmsService";
 
 type PageProps = {
@@ -48,6 +48,13 @@ export default async function HomepageCmsDetailPage({ params, searchParams }: Pa
           listQuery={nav.query}
           initialItem={result.item}
           hotelOptions={section === "hotel-destinations" ? getHotelOptions() : []}
+          supportedFlightRoutes={
+            section === "destinations"
+              ? getCmsHomepageFlightRoutePairs("HOMEPAGE_DESTINATION")
+              : section === "flight-routes"
+                ? getCmsHomepageFlightRoutePairs("FLIGHT_ROUTE")
+                : []
+          }
         />
 
         <section className="mt-7 min-w-0">
