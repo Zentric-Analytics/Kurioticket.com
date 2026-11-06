@@ -239,12 +239,12 @@ export function AdminAuditLogsToolbar({
 
   return (
     <div className="border-b border-[#D8E1EC] py-3">
-      <div className="flex min-w-0 flex-col gap-3 xl:flex-row xl:items-center">
+      <div className="flex min-w-0 flex-col gap-3 lg:flex-row lg:items-center">
         <form
           onSubmit={submitSearch}
           role="search"
           aria-label="Search audit logs"
-          className="grid min-w-0 gap-3 md:grid-cols-2 xl:min-w-[520px] xl:max-w-[760px] xl:flex-[1_1_620px]"
+          className="grid min-w-0 gap-3 md:grid-cols-2 lg:w-[520px] lg:flex-none"
         >
         <div className="relative min-w-0">
           <Search size={17} aria-hidden="true" className="pointer-events-none absolute left-3.5 top-3.5 text-[#64748B]" />
@@ -280,7 +280,7 @@ export function AdminAuditLogsToolbar({
         </div>
         </form>
 
-        <div className="flex min-w-0 flex-wrap items-end justify-end gap-x-6 gap-y-2 xl:ml-auto xl:flex-[0_1_auto]">
+        <div className="flex min-w-0 flex-wrap items-end justify-end gap-x-4 gap-y-2 lg:ml-auto lg:flex-nowrap">
         <AdminDirectorySelect
           key={range + ":" + rangeSelectVersion}
           name="range"
