@@ -444,14 +444,42 @@ test("readiness summary metrics use flat neutral rows with semantic dots", () =>
   assert.doesNotMatch(component, /border-red-100 bg-red-50 text-danger/);
 });
 
-test("readiness metric tone logic remains unchanged", () => {
-  assert.match(component, /label="Fresh fares"[\s\S]*tone=\{statusPayload\.dataAvailable \? "good" : "danger"\}/);
-  assert.match(component, /label="Last-known-good"[\s\S]*tone=\{statusPayload\.dataAvailable \? "info" : "danger"\}/);
-  assert.match(component, /label="Missing routes"[\s\S]*statusPayload\.summary\.missing \? "warning" : "neutral"/);
-  assert.match(component, /label="Failed \/ unavailable"[\s\S]*statusPayload\.summary\.failed \+ statusPayload\.summary\.unavailable \? "warning" : "neutral"/);
-  assert.match(component, /label="Markets needing attention"[\s\S]*marketsNeedingAnotherRun\.some\(\(market\) => market\.needed\) \? "warning" : "good"/);
+test("readiness metrics display loading instead of Unavailable while status is pending", () => {
+  const from = component.indexOf('<dl aria-label="Fare readiness metrics"');
+  const readiness = component.slice(from, component.indexOf("</dl>", from));
+  const labels = ["Fresh fares", "Last-known-good", "Missing routes", "Failed / unavailable", "Markets needing attention"];
+  assert.ok(from >= 0);
+  assert.match(component, /const readinessLoading = statusState\.loading && !statusPayload\.dataAvailable/);
+  assert.match(component, /const readinessFallbackValue = readinessLoading \? "Loading…" : "Unavailable"/);
+  assert.match(component, /const readinessFallbackTone: SummaryTone = readinessLoading \? "neutral" : "danger"/);
+  assert.match(component, /const telemetryUnavailable = !statusState\.loading && !statusPayload\.dataAvailable/);
+  assert.match(component, /aria-busy=\{readinessLoading\}/);
+  assert.equal((readiness.match(/readinessFallbackValue/g) || []).length, 5);
+  assert.equal((readiness.match(/readinessFallbackTone/g) || []).length, 5);
+  for (const label of labels) {
+    assert.ok(readiness.includes('label="' + label + '"'), "Missing readiness label: " + label);
+    const line = readiness.split("\n").find((entry) => entry.includes('label="' + label + '"'));
+    assert.ok(line?.includes(": readinessFallbackValue"), label + " must use a loading-aware fallback");
+    assert.ok(line?.includes("readinessFallbackTone"), label + " must use a neutral loading dot");
+  }
+  assert.match(readiness, /tone=\{statusPayload\.dataAvailable \? "good" : readinessFallbackTone\}/);
+  assert.match(readiness, /tone=\{statusPayload\.dataAvailable \? "info" : readinessFallbackTone\}/);
+  assert.match(readiness, /statusPayload\.summary\.missing \? "warning" : "neutral"/);
+  assert.match(readiness, /statusPayload\.summary\.failed \+ statusPayload\.summary\.unavailable \? "warning" : "neutral"/);
+  assert.match(readiness, /marketsNeedingAnotherRun\.some\(\(market\) => market\.needed\) \? "warning" : "good"/);
 });
 
+test("saved status and scheduler wait for the result, while real outages stay visible", () => {
+  const panel = component.slice(component.indexOf("function RefreshCronPanel("), component.indexOf("function homepageFareRoutesHref("));
+  assert.match(component, /initialStatusLoading=\{readinessLoading\}/);
+  assert.match(component, /value=\{readinessLoading \? "Loading…" : statusPayload\.dataAvailable \? formatSnapshotTime/);
+  assert.match(component, /value=\{readinessLoading \? "Loading…" : statusPayload\.dataAvailable \? formatCronStatus/);
+  assert.match(panel, /\{!loading && !operationsAvailable \? \(/);
+  assert.match(panel, /\{!loading && operationsAvailable && !statusPayload\.cronConfigured \? \(/);
+  assert.match(component, /setStatusState\(\(current\) => \(\{ \.\.\.current, loading: true, error: "" \}\)\)/);
+  assert.match(component, /Telemetry unavailable\. Snapshot data could not be read; coverage counts are hidden\./);
+  assert.match(component, /Could not load homepage fare snapshot status/);
+});
 
 test("Homepage Fare Operations shares the white Notifications workspace without global header changes", () => {
   const page = readFileSync("src/app/admin/homepage-fares/page.tsx", "utf8");
