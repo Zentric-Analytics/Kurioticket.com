@@ -105,14 +105,18 @@ test("homepage fare readiness keeps only core customer-facing summary metrics", 
   assert.match(component, /formatCronStatus\(statusPayload\)/);
 });
 
-test("advanced diagnostics keeps fallback and executor data available in a provider-style disclosure", () => {
-  assert.match(component, /<section id="homepage-fare-advanced-diagnostics" aria-labelledby=/);
-  assert.match(component, /<h3 id="homepage-fare-advanced-diagnostics-heading"/);
-  assert.match(component, /Fallback coverage pools/);
-  assert.match(component, /Executor details/);
-  assert.match(component, /Configured routes/);
-  assert.match(component, /Visible gaps attempted/);
-  assert.doesNotMatch(component, /<details id="homepage-fare-advanced-diagnostics"|<summary|group-open:rotate-180/);
+test("fare diagnostics uses four standalone sections rather than redundant wrapper headings", () => {
+  const page = readFileSync("src/app/admin/homepage-fares/diagnostics/page.tsx", "utf8");
+  const diagnostics = component.slice(component.indexOf("function FareDiagnosticsSections("), component.indexOf("function MarketRouteInspector("));
+  assert.match(page, /<h1[^>]*>Fare Diagnostics<\/h1>/);
+  for (const heading of ["Fallback coverage pools", "Refresh execution", "Public fare eligibility", "Scheduling and market targets"]) {
+    assert.ok(diagnostics.includes(">" + heading + "</h2>"), "Missing heading " + heading);
+  }
+  assert.equal((diagnostics.match(/<section aria-labelledby=/g) || []).length, 4);
+  assert.doesNotMatch(diagnostics, /Advanced diagnostics|Executor details|Snapshot health and the latest logged manual refresh are shown separately/);
+  assert.match(diagnostics, /Configured routes/);
+  assert.match(diagnostics, /Visible gaps attempted/);
+  assert.doesNotMatch(diagnostics, /<details|<summary/);
 });
 
 test("manual fare refresh and read-only status check have distinct labels and data sources", () => {
@@ -327,17 +331,19 @@ test("homepage fare diagnostics keep concise coverage summaries with action-orie
   assert.match(component, /"Not required"/);
 });
 
-test("fare diagnostics preserve operator and engineering signals without duplicating public fare metrics", () => {
-  assert.match(component, /sm:grid-cols-3/);
-  assert.match(component, /label="Stopped reason"/);
-  assert.match(component, /label="Provider calls \/ limit \(last run\)"/);
-  assert.match(component, /label="Route attempts \/ limit \(last run\)"/);
-  assert.doesNotMatch(component, /<CompactDetail label="Candidate pool failed"/);
-  assert.match(component, /MetricCard label="Candidate pool failed"/);
-  assert.match(component, /MetricCard label="Fresh eligible snapshots"/);
-  assert.match(component, /MetricCard label="Last-known-good eligible snapshots"/);
-  assert.doesNotMatch(component, /MetricCard label="Fresh used publicly"/);
-  assert.doesNotMatch(component, /MetricCard label="LKG used publicly"/);
+test("fare diagnostics differentiate manual refresh execution from snapshot eligibility", () => {
+  const diagnostics = component.slice(component.indexOf("function FareDiagnosticsSections("), component.indexOf("function MarketRouteInspector("));
+  assert.match(diagnostics, /xl:grid-cols-4/);
+  assert.match(diagnostics, /label="Stopped reason"/);
+  assert.match(diagnostics, /label="Provider calls \/ limit"/);
+  assert.match(diagnostics, /label="Route attempts \/ limit"/);
+  assert.match(diagnostics, /Latest logged manual refresh:/);
+  assert.match(diagnostics, /label="Markets targeted"/);
+  assert.doesNotMatch(diagnostics, /label="Provider calls \/ limit \(last run\)"/);
+  assert.match(diagnostics, /MetricCard label="Candidate pool failed"/);
+  assert.match(diagnostics, /MetricCard label="Fresh eligible snapshots"/);
+  assert.match(diagnostics, /MetricCard label="Last-known-good eligible snapshots"/);
+  assert.doesNotMatch(diagnostics, /MetricCard label="Fresh used publicly"|MetricCard label="LKG used publicly"/);
 });
 
 test("route inspector empty state stays compact", () => {
@@ -487,9 +493,9 @@ test("Market coverage retains public market inspection and reports counts outsid
   assert.match(component, /onSelectMarket=\{selectRouteScope\}/);
   assert.match(component, /onFilterChange=\{selectRouteFilter\}/);
   assert.match(component, /view === "diagnostics"/);
-  assert.match(component, /<AdvancedDiagnostics/);
-  assert.match(component, /Provider calls \/ limit \(last run\)/);
-  assert.match(component, /Route attempts \/ limit \(last run\)/);
+  assert.match(component, /<FareDiagnosticsSections/);
+  assert.match(component, /Provider calls \/ limit/);
+  assert.match(component, /Route attempts \/ limit/);
 });
 
 
@@ -523,21 +529,28 @@ test("coverage actions remain on the same row with expandable details that prese
   assert.match(component, /outside the public country table/);
 });
 
-test("advanced diagnostics groups long executor details without removing operational facts", () => {
-  assert.match(component, /mt-4 grid gap-x-8 gap-y-2 md:grid-cols-2/);
-  assert.match(component, /Execution and budgets/);
-  assert.match(component, /Public fare outcomes/);
-  assert.match(component, /Scheduling and market targets/);
+test("fare diagnostics preserve every metric while condensing zero-count fallback pools", () => {
+  const diagnostics = component.slice(component.indexOf("function FareDiagnosticsSections("), component.indexOf("function MarketRouteInspector("));
   const labels = [
-    "Configured routes", "Stopped reason", "Provider calls / limit (last run)", "Route attempts / limit (last run)",
-    "Candidate pool failed", "Candidate pool unavailable", "Replacement candidates used (last run)",
-    "Timeouts (last run)", "Fresh eligible snapshots", "Last-known-good eligible snapshots", "Exact route mismatch",
-    "Visible gaps attempted (last run)", "Immediate replacements attempted (last run)", "Scheduler cadence",
-    "Scheduler verification", "Executor targets (last run)", "Markets needing another run (current snapshot)",
+    "Provider calls / limit", "Stopped reason", "Route attempts / limit",
+    "Visible gaps attempted", "Immediate replacements attempted",
+    "Replacement candidates used", "Timeouts", "Markets targeted",
+    "Configured routes", "Fresh eligible snapshots",
+    "Last-known-good eligible snapshots", "Exact route mismatch",
+    "Candidate pool failed", "Candidate pool unavailable",
+    "Scheduler cadence", "Scheduler verification",
+    "Markets needing another run (current snapshot)",
   ];
-  for (const label of labels) assert.ok(component.includes('label="' + label + '"'), "Missing metric: " + label);
-  assert.match(component, /lg:grid-cols-2/);
-  assert.doesNotMatch(component, /<details id="homepage-fare-advanced-diagnostics"/);
+  for (const label of labels) assert.ok(diagnostics.includes('label="' + label + '"'), "Missing metric: " + label);
+  assert.equal((diagnostics.match(/<MetricCard /g) || []).length, labels.length);
+  assert.match(diagnostics, /const noCountedOutcomes = fresh === 0 && missing === 0 && failed === 0/);
+  assert.match(diagnostics, /No fresh, missing or failed routes recorded/);
+  assert.match(diagnostics, /href=\{onInspectMarket\(pool\.marketCode\)\}/);
+  assert.match(diagnostics, /No completed manual fare refresh is recorded/);
+  assert.match(diagnostics, /Logged manual refresh data is unavailable/);
+  assert.match(diagnostics, /Not recorded/);
+  assert.match(diagnostics, /sm:grid-cols-2/);
+  assert.doesNotMatch(diagnostics, /min-w-\[920px\]|overflow-x-auto|<details/);
 });
 
 test("dedicated route page validates market hints and keeps white admin workspace", () => {
