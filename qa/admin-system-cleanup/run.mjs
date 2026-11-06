@@ -15,7 +15,7 @@ const output = path.resolve(process.env.ADMIN_SYSTEM_QA_OUTPUT || path.join(os.t
 const baseline = "c0094622f709304aebce13acc2a6e5b9f886069b";
 const port = "3218";
 await mkdir(output, { recursive: true });
-const pages = ["system", "logs", "system/cms-health", "email-delivery", "notifications", "settings"];
+const commonPages = ["system", "logs", "system/cms-health", "email-delivery", "settings"];
 const mocks = {
   "@/lib/admin-data": 'export async function getSafeSystemStatus(){return {appEnvironment:"Staging",databaseConfigured:true,databaseConnected:true,authConfigured:false,sessionConfigured:false,emailConfigured:false,providerCredentialsPresent:false,adminEmailsConfigured:false};} export function formatDateTime(value){return String(value);}',
   "@/lib/env": 'export function getAdminEmails(){return [];} export function getFeatureControlProductionAdmins(){return [];}',
@@ -69,6 +69,7 @@ export default function Layout({children}){return <html lang="en"><body><div dat
   await put("app/page.jsx", 'export default function Home(){return <p>System cleanup QA fixture</p>;}');
   await put("app/api/admin/notifications/route.js", 'import {getAdminAlertSnapshot,getAdminAlertSummary} from "@/services/adminAlertService"; export async function GET(request){return Response.json(new URL(request.url).searchParams.get("summary")==="1"?await getAdminAlertSummary():await getAdminAlertSnapshot());}');
   await put("app/api/admin/notifications/acknowledge/route.js", 'export async function POST(){return Response.json({ok:true});}');
+  const pages = [...commonPages, variant === "before" ? "notifications" : "settings/notifications"];
   for (const route of pages) {
     const file = `src/app/admin/${route}/page.tsx`;
     const content = variant === "before" ? execFileSync("git", ["show", `${baseline}:${file}`], { cwd: repo, encoding: "utf8" }) : await readFile(path.join(repo, file), "utf8");

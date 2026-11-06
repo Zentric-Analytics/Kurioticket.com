@@ -3,7 +3,7 @@ import test from "node:test";
 import { alertSourceHref } from "./adminAlertNavigation";
 
 test("global alert self-links are not rendered as investigation actions", () => {
-  for (const href of ["/admin/notifications", "/admin/notifications/", "/admin/notifications?view=all", "/admin/notifications#issue"]) assert.equal(alertSourceHref(href), null);
+  for (const href of ["/admin/notifications", "/admin/notifications/", "/admin/notifications?view=all", "/admin/notifications#issue", "/admin/settings/notifications", "/admin/settings/notifications/", "/admin/settings/notifications#active-alerts-heading"]) assert.equal(alertSourceHref(href), null);
 });
 test("real diagnostics retain their query and section context", () => {
   for (const href of ["/admin/system#service-health-heading", "/admin/providers", "/admin/confirmed-trips/monitoring?panel=flight#flight-status-overview-title", "/admin/support?priority=URGENT&status=OPEN"]) assert.equal(alertSourceHref(href), href);

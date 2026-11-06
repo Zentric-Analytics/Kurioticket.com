@@ -201,11 +201,12 @@ test("settings routes isolate the right-side content but preserve the working co
   assert.match(featureSection, /controls\.filter\(\(control\) => control\.category === category\)/);
   assert.match(featureSection, /hideCategoryHeading/);
   assert.match(featurePanel, /hideCategoryHeading \? undefined/);
-  assert.match(notifications, /<AdminNotificationPreferencesPanel/);
+  assert.match(notifications, /<AdminAlertAcknowledgeButton/);
+  assert.match(notifications, /getAdminAlertSnapshot/);
   assert.match(changes, /history\.map/);
   assert.match(changes, /FEATURE_CONTROL_UPDATED/);
   assert.doesNotMatch(notifications, /FeatureControlsPanel|listFeatureControls/);
-  assert.doesNotMatch(changes, /AdminNotificationPreferencesPanel/);
+  assert.doesNotMatch(changes, /AdminAlertAcknowledgeButton/);
 });
 
 test("nested Settings pages keep the existing white admin workspace", () => {
@@ -219,7 +220,7 @@ test("nested Settings pages keep the existing white admin workspace", () => {
 test("Settings sections share restrained desktop widths, headings, and consistent separators", () => {
   const featureSection = readFileSync("src/components/admin/SettingsFeatureSection.tsx", "utf8");
   const notifications = readFileSync("src/app/admin/settings/notifications/page.tsx", "utf8");
-  const notificationPanel = readFileSync("src/components/admin/AdminNotificationPreferencesPanel.tsx", "utf8");
+  const notificationPanel = readFileSync("src/components/admin/AdminNotificationsPanel.tsx", "utf8");
   const recent = readFileSync("src/app/admin/settings/recent-changes/page.tsx", "utf8");
   assert.match(settingsLayout, /max-w-\[1040px\]/);
   assert.match(settingsLayout, /md:grid-cols-\[232px_minmax\(0,1fr\)\]/);
@@ -230,7 +231,7 @@ test("Settings sections share restrained desktop widths, headings, and consisten
   }
   assert.doesNotMatch(featureSection, />Feature controls<\/p>/);
   assert.match(featurePanel, /sm:min-w-\[128px\] sm:justify-end/);
-  assert.match(notificationPanel, /sm:min-w-\[128px\] sm:justify-end/);
+  assert.match(notificationPanel, /const visibleAlerts = snapshot\?\.alerts \?\? \[\]/);
   assert.match(recent, /lg:grid-cols-\[minmax\(0,1fr\)_minmax\(0,1\.1fr\)_minmax\(0,1\.1fr\)_150px\]/);
   assert.doesNotMatch(settingsLayout, /<AdminHorizontalShell|<AdminHeader/);
 });

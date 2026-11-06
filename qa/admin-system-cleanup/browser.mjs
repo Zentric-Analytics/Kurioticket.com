@@ -9,7 +9,7 @@ if (!root || !output || !["before", "after"].includes(variant)) throw new Error(
 await mkdir(output, { recursive: true });
 const browser = await chromium.launch({ headless: true });
 const results = [];
-const routes = ["system", "logs", "system/cms-health", "email-delivery", "notifications", "settings"];
+const routes = ["system", "logs", "system/cms-health", "email-delivery", variant === "before" ? "notifications" : "settings/notifications", "settings"];
 try {
   for (const width of [1440, 390]) {
     const context = await browser.newContext({ viewport: { width, height: 1000 }, timezoneId: "UTC" });
@@ -209,7 +209,7 @@ try {
             await page.getByRole("button", { name: "Close admin navigation" }).click();
           }
         }
-        if (route === "notifications") {
+        if (route === "notifications" || route === "settings/notifications") {
           await expect(main.locator('a[href="/admin/notifications"]')).toHaveCount(0);
           await expect(main.getByRole("link", { name: "Open source", exact: true })).toHaveCount(3);
           await expect(main.getByRole("button", { name: "Acknowledge", exact: true })).toHaveCount(2);
