@@ -92,7 +92,7 @@ test("CMS health reports integrity, ordering, fallback and unpublished changes",
   assert.match(healthPage, /Healthy/);
   assert.match(healthPage, /Needs attention/);
   assert.match(healthPage, /Fallback retired/);
-  assert.match(healthPage, /Total records/);
+  assert.match(healthPage, /Total scopes/);
   assert.match(healthPage, /overview\.totals\.retiredFallback/);
   assert.doesNotMatch(healthPage, /Fallback active|fallback active/);
   assert.doesNotMatch(healthPage, /label="Unpublished changes"/);

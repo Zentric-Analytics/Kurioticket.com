@@ -160,7 +160,7 @@ test("flight routes keep paired city and IATA fields with the same responsive gr
 test("hotel destinations use searchable canonical selection and preserve type and country code", () => {
   assert.match(editor, /<CmsLocationCombobox[\s\S]*?label="Canonical hotel destination"[\s\S]*?kind="hotel"/);
   assert.match(editor, /selectedValue=\{fields.canonicalId \?\? ""\}/);
-  assert.match(editor, /hotelOptions=\{hotelOptions\}/);
+  assert.match(editor, /hotelOptions=\{availableHotelOptions\}/);
   assert.match(editor, /onSelect=\{\(option\) => applyHotelOption\(option.value\)\}/);
   assert.match(editor, /setField\("canonicalId", ""\)/);
   assert.match(editor, /<CmsLocationCombobox label="Country" kind="country"/);

@@ -214,8 +214,8 @@ test("New CMS drafts require a valid market but preserve chosen filtered market 
   assert.match(newPage, /getCmsContentMarketOverview\(config\.type, homepageCmsMarkets, homepageCmsLocale\)/);
   assert.match(editor, /\{ value: "", label: "Select market" \}/);
   assert.match(editor, /validMarket = section === "hotel-destinations" \|\| markets\.includes\(market\)/);
-  assert.match(editor, /const validDraft = validMarket/);
-  assert.match(editor, /&& validateClientDraft\(section, currentPayload, sortOrder\)/);
+  assert.match(editor, /if \(!validMarket\) clientErrors.market/);
+  assert.match(editor, /validateCmsEditor\(sectionType\[section\], currentPayload, sortOrder\)/);
   assert.match(editor, /&& routeValidation\.valid;/);
   assert.match(service, /Choose a supported market before creating this content/);
   assert.match(editor, /<CmsEditorActions/);

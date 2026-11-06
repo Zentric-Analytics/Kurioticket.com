@@ -175,35 +175,38 @@ export function CmsScopeHardeningActions({
   }
 
   function run(action: ScopeAction) {
+    if (pending) return;
     closeMenu();
     setError(null);
 
     startTransition(async () => {
-      const response = await fetch("/api/admin/content/scope", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action,
-          type,
-          market,
-          locale,
-          expectedScopeVersion: scopeVersion,
-        }),
-      });
-
-      const body = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        setError(
-          response.status === 409
-            ? "This CMS scope changed in another session. Reload before retrying."
-            : typeof body.error === "string"
-              ? body.error
-              : "Unable to update CMS scope.",
-        );
-        return;
+      try {
+        const response = await fetch("/api/admin/content/scope", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action,
+            type,
+            market,
+            locale,
+            expectedScopeVersion: scopeVersion,
+          }),
+        });
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          setError(
+            response.status === 409
+              ? "This CMS scope changed in another session. Reload before retrying."
+              : typeof body.error === "string"
+                ? body.error
+                : "Unable to update CMS scope.",
+          );
+          return;
+        }
+        window.location.reload();
+      } catch {
+        setError("Unable to update CMS scope. Check your connection and try again.");
       }
-
-      window.location.reload();
     });
   }
 
@@ -218,7 +221,7 @@ export function CmsScopeHardeningActions({
           type="button"
           disabled={pending || !needsDraftNormalization}
           onClick={() => run("normalize_draft_order")}
-          className="focus-ring inline-flex h-8 items-center rounded-md border border-[#D8E1EC] bg-white px-2.5 text-[12px] font-medium text-[#020617] transition-colors hover:bg-[#F8FAFC] disabled:cursor-not-allowed disabled:text-[#94A3B8]"
+          className="focus-ring inline-flex h-8 cursor-pointer items-center rounded-md border border-[#D8E1EC] bg-white px-2.5 text-[12px] font-medium text-[#020617] transition-colors hover:bg-[#F8FAFC] disabled:cursor-not-allowed disabled:text-[#94A3B8]"
         >
           {pending ? "Normalizing…" : "Normalize order"}
         </button>
@@ -249,7 +252,7 @@ export function CmsScopeHardeningActions({
           }
           if (event.key === "Escape") closeMenu();
         }}
-        className="focus-ring inline-flex h-8 scroll-mb-28 cursor-pointer items-center gap-1.5 rounded-md border border-[#D8E1EC] bg-white px-2.5 text-[12px] font-medium text-[#020617] transition-colors hover:bg-[#F8FAFC] disabled:opacity-50"
+        className="focus-ring inline-flex h-8 scroll-mb-28 cursor-pointer items-center gap-1.5 rounded-md border border-[#D8E1EC] bg-white px-2.5 text-[12px] font-medium text-[#020617] transition-colors hover:bg-[#F8FAFC] disabled:cursor-not-allowed disabled:opacity-50"
       >
         {pending ? "Updating…" : "Manage"}
         <ChevronDown

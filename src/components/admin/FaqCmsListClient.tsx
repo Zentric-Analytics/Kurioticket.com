@@ -1,11 +1,12 @@
 "use client";
 
+import { getCmsUnpublishedChangeLabel, type CmsPublicationSnapshot } from "@/lib/adminCmsPublicationStatus";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { ContentRecordsTable, ContentStatusPill } from "@/components/admin/ContentWorkspace";
 
 
-type FaqListItem = {
+type FaqListItem = CmsPublicationSnapshot & {
   id: string;
   status: "DRAFT" | "PUBLISHED" | "HIDDEN" | "ARCHIVED";
   sortOrder: number;
@@ -36,7 +37,7 @@ export function FaqCmsListClient({ items, listQuery = "" }: { items: FaqListItem
           columns={["Question", "Category", "Status", "Order", "Version", "Updated", "Action"]}
           rows={items.map((item) => {
             const payload = faqPayload(item.draftPayload);
-            const hasUnpublishedChanges = item.publishedVersion !== null && item.version !== item.publishedVersion;
+            const unpublishedLabel = getCmsUnpublishedChangeLabel(item);
             return {
               id: item.id,
               cells: [
@@ -47,7 +48,7 @@ export function FaqCmsListClient({ items, listQuery = "" }: { items: FaqListItem
                 payload.category,
                 <div key="status" className="space-y-1">
                   <ContentStatusPill status={item.status} inline />
-                  {hasUnpublishedChanges ? <p className="text-[12px] font-medium text-amber-700">Unpublished changes</p> : null}
+                  {unpublishedLabel ? <p className="text-[12px] font-medium text-amber-700">{unpublishedLabel}</p> : null}
                 </div>,
                 item.sortOrder,
                 `v${item.version}`,

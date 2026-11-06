@@ -1,3 +1,5 @@
+import { CmsRetryButton } from "@/components/admin/CmsRetryButton";
+import { CmsScopeUnavailable } from "@/components/admin/CmsScopeUnavailable";
 import { notFound } from "next/navigation";
 
 import { ContentDirectoryToolbar } from "@/components/admin/ContentDirectoryToolbar";
@@ -13,7 +15,7 @@ import {
   getCmsContentMarketOverview,
   listAdminCmsContentDirectory,
 } from "@/services/cmsContentService";
-import { homepageCmsLocale, homepageCmsMarkets } from "@/services/homepageCmsService";
+import { homepageCmsLocale, homepageCmsMarkets, getHomepageCmsInitializationReadiness } from "@/services/homepageCmsService";
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 type PageProps = { params: Promise<{ section: string }>; searchParams: SearchParams };
@@ -42,18 +44,16 @@ export default async function HomepageCmsSectionPage({ params, searchParams }: P
     ? getCmsContentMarketOverview(config.type, homepageCmsMarkets, homepageCmsLocale)
     : getCmsContentScopeSummary(config.type, allowedMarket, homepageCmsLocale)).catch(() => null);
   if (!summary?.available || !summary.active) {
+    const readiness = summary?.available ? await getHomepageCmsInitializationReadiness().catch(() => null) : null;
     return (
       <ContentPageFrame
         wide
         title={config.title}
-        subtitle="This CMS scope must be initialized before editing."
+        subtitle="Review the current content status."
         backHref={nav.backHref}
         backLabel={nav.backLabel}
       >
-        <ContentEmptyState
-          title="CMS scope unavailable"
-          message="Initialize Homepage CMS from the homepage content overview before creating or editing this content."
-        />
+        <CmsScopeUnavailable available={Boolean(summary?.available)} partial={Boolean(readiness?.hasExistingHomepageData)} />
       </ContentPageFrame>
     );
   }
@@ -98,7 +98,7 @@ export default async function HomepageCmsSectionPage({ params, searchParams }: P
           searchLabel={section === "flight-routes" ? "Search flight routes" : section === "hotel-destinations" ? "Search hotel destinations" : "Search destinations"}
         >
         {error ? (
-          <ContentEmptyState title="Content unavailable" message={error} />
+          <ContentEmptyState title="Content unavailable" message={error} action={<CmsRetryButton />} />
         ) : listing && listing.items.length > 0 ? (
           <>
             <HomepageCmsListClient
@@ -131,4 +131,3 @@ export default async function HomepageCmsSectionPage({ params, searchParams }: P
 function one(value: string | string[] | undefined) {
   return typeof value === "string" ? value : "";
 }
-

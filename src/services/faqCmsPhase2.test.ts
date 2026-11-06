@@ -46,7 +46,9 @@ test("FAQ admin surface exposes the intended CMS lifecycle", () => {
   assert.match(detailPage, /Revision history/);
   assert.match(detailPage, /actorEmail/);
   assert.match(newPage, /getCmsContentScopeSummary/);
-  assert.match(newPage, /redirect\("\/admin\/content\/faqs"\)/);
+  assert.match(newPage, /FAQ CMS unavailable/);
+  assert.match(newPage, /<CmsRetryButton/);
+  assert.doesNotMatch(newPage, /redirect\(/);
 });
 
 test("public FAQ reads are locale aware and preserve code fallback", () => {

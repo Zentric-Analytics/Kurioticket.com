@@ -1,5 +1,6 @@
-import { ContentPageFrame } from "@/components/admin/ContentWorkspace";
-import { redirect } from "next/navigation";
+import { CmsRetryButton } from "@/components/admin/CmsRetryButton";
+import Link from "next/link";
+import { ContentPageFrame, ContentEmptyState } from "@/components/admin/ContentWorkspace";
 
 
 import { FaqCmsEditor } from "@/components/admin/FaqCmsEditor";
@@ -15,7 +16,11 @@ export default async function NewAdminFaqPage({ searchParams }: { searchParams: 
     .catch(() => ({ available: false, active: false }));
 
   if (!summary.available || !summary.active) {
-    redirect("/admin/content/faqs");
+    return <ContentPageFrame title="New FAQ" backHref={nav.listHref} backLabel="Back to FAQs">
+      <ContentEmptyState title={summary.available ? "FAQ CMS setup required" : "FAQ CMS unavailable"}
+        message={summary.available ? "Initialize the English FAQ scope from the FAQ directory before creating a draft." : "Content storage could not be reached. Retry to check it again."}
+        action={summary.available ? <Link href={nav.listHref} className="text-[13px] text-[#004BB8] underline">Review FAQ setup</Link> : <CmsRetryButton />} />
+    </ContentPageFrame>;
   }
 
   return (

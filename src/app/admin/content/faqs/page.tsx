@@ -1,3 +1,4 @@
+import { CmsRetryButton } from "@/components/admin/CmsRetryButton";
 import Link from "next/link";
 
 import { ContentDirectoryToolbar } from "@/components/admin/ContentDirectoryToolbar";
@@ -9,7 +10,7 @@ import type { CmsContentStatus } from "@/generated/prisma/enums";
 import {
   CmsContentError,
   getCmsContentScopeSummary,
-  listAdminCmsContent,
+  listAdminCmsFaqPage,
   listAdminCmsFaqCategories,
 } from "@/services/cmsContentService";
 import { faqCmsScope } from "@/services/faqCmsService";
@@ -44,18 +45,14 @@ export default async function AdminFaqCmsPage({ searchParams }: { searchParams: 
   const categories = summary.available ? await listAdminCmsFaqCategories().catch(() => []) : [];
 
   let listing:
-    | Awaited<ReturnType<typeof listAdminCmsContent>>
+    | Awaited<ReturnType<typeof listAdminCmsFaqPage>>
     | null = null;
   let listingError: string | null = null;
 
   if (summary.available) {
     try {
-      listing = await listAdminCmsContent({
-        type: "FAQ",
+      listing = await listAdminCmsFaqPage({
         status,
-        market: faqCmsScope.market,
-        locale: faqCmsScope.locale,
-        limit: 100,
         cursor,
         search: one(raw.q) || undefined,
         category: one(raw.category) || undefined,
@@ -79,6 +76,7 @@ export default async function AdminFaqCmsPage({ searchParams }: { searchParams: 
           <ContentEmptyState
             title="FAQ CMS unavailable"
             message="CMS storage could not be verified. The public FAQ keeps using the existing translated code-backed content while storage is unavailable."
+            action={<CmsRetryButton />}
           />
         ) : !summary.active ? (
           <div className="rounded-lg border border-[#E5E7EB] bg-white p-4">
@@ -106,7 +104,7 @@ export default async function AdminFaqCmsPage({ searchParams }: { searchParams: 
               searchLabel="Search FAQs"
             >
             {listingError ? (
-              <ContentEmptyState title="FAQ list unavailable" message={listingError} />
+              <ContentEmptyState title="FAQ list unavailable" message={listingError} action={<Link href={nav.listHref.replace(/([?&])cursor=[^&]*&?/, "$1").replace(/[?&]$/, "")} className="text-[13px] text-[#004BB8] underline">Return to first page</Link>} />
             ) : listing && listing.items.length > 0 ? (
               <>
                 <FaqCmsListClient items={listing.items} listQuery={nav.query} />

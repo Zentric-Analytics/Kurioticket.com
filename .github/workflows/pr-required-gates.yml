@@ -104,19 +104,8 @@ jobs:
           node --input-type=module --import jiti/register -e
           'await import("./src/app/admin/providers/page.test.ts");
           await import("./src/lib/adminSearchWorkspace.test.ts");'
-      - name: Validate admin CMS contracts
-        env:
-          JITI_TSCONFIG_PATHS: ./tsconfig.json
-          JITI_JSX: "true"
-        run: >-
-          node --input-type=module --import jiti/register -e
-          'await import("./src/services/cmsContentFoundation.test.ts");
-          await import("./src/components/admin/CmsEditorActions.test.ts");
-          await import("./src/services/faqCmsPhase2.test.ts");
-          await import("./src/services/homepageCmsPhase3.test.ts");
-          await import("./src/services/homepageCmsInitializationFix.test.ts");
-          await import("./src/services/cmsProductionHardening.test.ts");
-          await import("./src/app/admin/content/page.test.ts");'
+      - name: Validate admin CMS contracts and interactions
+        run: npm run test:cms
 
       - name: Validate Render web build
         run: npm run build
