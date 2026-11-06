@@ -2,7 +2,17 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-const settingsPage = readFileSync("src/app/admin/settings/page.tsx", "utf8");
+const settingsPaths = [
+  "src/app/admin/settings/layout.tsx",
+  "src/app/admin/settings/page.tsx",
+  "src/app/admin/settings/travel-automation/page.tsx",
+  "src/app/admin/settings/notifications/page.tsx",
+  "src/app/admin/settings/recent-changes/page.tsx",
+  "src/components/admin/SettingsFeatureSection.tsx",
+];
+const settingsPage = settingsPaths.map((path) => readFileSync(path, "utf8")).join("\n");
+const settingsLayout = readFileSync("src/app/admin/settings/layout.tsx", "utf8");
+const settingsNavigation = readFileSync("src/components/admin/AdminSettingsNavigation.tsx", "utf8");
 const featurePanel = readFileSync("src/components/admin/FeatureControlsPanel.tsx", "utf8");
 const featureApi = readFileSync("src/app/api/admin/feature-controls/route.ts", "utf8");
 const featureService = readFileSync("src/lib/feature-controls/service.ts", "utf8");
@@ -11,7 +21,7 @@ const registry = readFileSync("src/lib/feature-controls/registry.ts", "utf8");
 test("Settings is the authoritative workspace for persisted administrative controls", () => {
   assert.match(settingsPage, /<AdminPageShell title="Settings" hideHeader>/);
   assert.doesNotMatch(settingsPage, /Environment and access|ContextItem|Your access|Settings store/);
-  assert.match(settingsPage, />Feature controls<\/h2>/);
+  assert.match(settingsPage, />Feature controls<\/p>/);
   assert.match(settingsPage, />Recent changes<\/h2>/);
   assert.doesNotMatch(settingsPage, /Managed outside Settings|Runtime & credentials|Administrator access/);
   assert.doesNotMatch(settingsPage, /Homepage Fare Operations|\/admin\/homepage-fares/);
@@ -39,7 +49,7 @@ test("settings exposes only real persisted feature controls", () => {
 });
 
 test("settings starts directly with feature controls and retains authorization inputs", () => {
-  assert.match(settingsPage, /<div className="w-full min-w-0 bg-white text-\[#020617\]">\s*<section aria-labelledby="feature-controls-heading" className="border-b border-\[#D8E1EC\] pb-5">/);
+  assert.match(settingsLayout, /md:grid-cols-\[232px_minmax\(0,1fr\)\]/);
   assert.doesNotMatch(settingsPage, /Environment and access|ContextItem|canEditControls|accessLabel|storeLabel/);
   assert.match(settingsPage, /canControlProduction=\{canControlProduction\}/);
   assert.match(settingsPage, /environment=\{featureControls\.environment\}/);
@@ -63,7 +73,7 @@ test("feature controls use concise product and automation descriptions", () => {
 });
 
 test("Settings starts with a short instruction without implying service health", () => {
-  assert.match(settingsPage, /Turn Kurioticket features on or off\./);
+  assert.match(settingsPage, /Manage travel search and Packages\./);
   assert.doesNotMatch(settingsPage, /Operational health is monitored in Providers and the relevant operational workspaces/);
 });
 
@@ -144,7 +154,46 @@ test("settings uses a flat administrative layout rather than dashboard cards", (
 
 test("the Deals feature flag is presented as Packages without changing the internal key", () => {
   assert.match(registry, /DEALS_ENABLED: control\("Packages", "Controls Packages entry points/);
-  assert.match(featurePanel, /DEALS_ENABLED: "Controls Packages availability\."/);
+  assert.match(featurePanel, /DEALS_ENABLED: "Show or hide Packages\."/);
   assert.doesNotMatch(featurePanel, /Controls Deals availability\./);
   assert.match(registry, /DEALS_ENABLED/);
+});
+
+test("Settings sidebar offers four deep-linkable sections without changing the global header", () => {
+  assert.match(settingsLayout, /<AdminPageShell title="Settings" hideHeader>/);
+  assert.match(settingsLayout, /<AdminSettingsNavigation \/>/);
+  assert.match(settingsNavigation, /usePathname\(\)/);
+  assert.match(settingsNavigation, /aria-label="Settings sections"/);
+  assert.match(settingsNavigation, /aria-current=\{active \? "page" : undefined\}/);
+  for (const href of [
+    "/admin/settings", "/admin/settings/travel-automation",
+    "/admin/settings/notifications", "/admin/settings/recent-changes",
+  ]) assert.ok(settingsNavigation.includes('href: "' + href + '"'));
+  assert.match(settingsLayout, /min-w-0/);
+  assert.doesNotMatch(settingsLayout, /<AdminHorizontalShell|<AdminHeader/);
+});
+
+test("settings routes isolate the right-side content but preserve the working controls", () => {
+  const availability = readFileSync("src/app/admin/settings/page.tsx", "utf8");
+  const automation = readFileSync("src/app/admin/settings/travel-automation/page.tsx", "utf8");
+  const notifications = readFileSync("src/app/admin/settings/notifications/page.tsx", "utf8");
+  const changes = readFileSync("src/app/admin/settings/recent-changes/page.tsx", "utf8");
+  const featureSection = readFileSync("src/components/admin/SettingsFeatureSection.tsx", "utf8");
+  assert.match(availability, /category="Travel Search"/);
+  assert.match(automation, /category="Travel Automation"/);
+  assert.match(featureSection, /controls\.filter\(\(control\) => control\.category === category\)/);
+  assert.match(featureSection, /hideCategoryHeading/);
+  assert.match(featurePanel, /hideCategoryHeading \? undefined/);
+  assert.match(notifications, /<AdminNotificationPreferencesPanel/);
+  assert.match(changes, /recentControlUpdates/);
+  assert.match(changes, /FEATURE_CONTROL_UPDATED/);
+  assert.doesNotMatch(notifications, /FeatureControlsPanel|listFeatureControls/);
+  assert.doesNotMatch(changes, /AdminNotificationPreferencesPanel/);
+});
+
+test("nested Settings pages keep the existing white admin workspace", () => {
+  const horizontalShell = readFileSync("src/components/admin/AdminHorizontalShell.tsx", "utf8");
+  const globalNavigation = readFileSync("src/lib/adminNavigation.ts", "utf8");
+  assert.match(horizontalShell, /const settingsWorkspace = pathname === "\/admin\/settings" \|\| pathname\.startsWith\("\/admin\/settings\/"\)/);
+  assert.match(globalNavigation, /return pathname === itemHref \|\| pathname\.startsWith/);
 });

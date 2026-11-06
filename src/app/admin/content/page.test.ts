@@ -6,7 +6,7 @@ import { sortHomepageCmsDirectoryItems } from "@/lib/adminHomepageCms";
 
 const contentPage = readFileSync("src/app/admin/content/page.tsx", "utf8");
 const systemPage = readFileSync("src/app/admin/system/page.tsx", "utf8");
-const settingsPage = readFileSync("src/app/admin/settings/page.tsx", "utf8");
+const settingsPage = readFileSync("src/components/admin/SettingsFeatureSection.tsx", "utf8");
 const homepageFarePage = readFileSync("src/app/admin/homepage-fares/page.tsx", "utf8");
 const refreshCard = readFileSync("src/components/admin/HomepageFaresRefreshCard.tsx", "utf8");
 const statusApi = readFileSync("src/app/api/admin/homepage-fares/status/route.ts", "utf8");

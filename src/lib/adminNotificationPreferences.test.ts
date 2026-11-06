@@ -4,7 +4,7 @@ import test from "node:test";
 
 import { shouldShowAdminNotification } from "@/lib/adminNotificationPreferences";
 
-const settings = readFileSync("src/app/admin/settings/page.tsx", "utf8");
+const settings = readFileSync("src/app/admin/settings/notifications/page.tsx", "utf8");
 const panel = readFileSync("src/components/admin/AdminNotificationPreferencesPanel.tsx", "utf8");
 const drawer = readFileSync("src/components/admin/AdminNotificationsPanel.tsx", "utf8");
 const api = readFileSync("src/app/api/admin/notification-preferences/route.ts", "utf8");
