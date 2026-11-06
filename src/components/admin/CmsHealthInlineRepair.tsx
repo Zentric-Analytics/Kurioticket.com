@@ -115,7 +115,7 @@ export function CmsHealthInlineRepair({
           {error}
         </p>
       ) : item ? (
-        <div className="rounded-lg border border-[#E7ECF5] bg-white p-4">
+        <div className="pt-1">
           {type === "FAQ" ? (
             <FaqCmsEditor initialItem={item as FaqItem} />
           ) : (
