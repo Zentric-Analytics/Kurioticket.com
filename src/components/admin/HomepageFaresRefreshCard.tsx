@@ -1086,7 +1086,7 @@ function MarketReadinessDashboard({
           </ul>
           {outsidePublicCount > 0 ? (
             <p role="note" className="mt-3 text-[12px] leading-5 text-[#64748B]">
-              {outsidePublicCount} additional market {outsidePublicCount === 1 ? "scope needs" : "scopes need"} attention outside the public country table. Review Fare Diagnostics for fallback coverage.
+              {outsidePublicCount} additional market {outsidePublicCount === 1 ? "scope needs" : "scopes need"} attention outside the public country table. <Link href="/admin/homepage-fares/diagnostics" className="font-semibold text-[#004BB8] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">Review fallback diagnostics</Link>.
             </p>
           ) : null}
         </div>
