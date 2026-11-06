@@ -74,7 +74,7 @@ test("CMS editors, navigation guards and action recovery", async (t) => {
     });
     await t.test("blank and over-limit Order disable save and identify the field", async () => {
       const view = await mount(createElement(FaqCmsEditor, { initialItem: faq }));
-      assert.equal(view.host.querySelector('input[type="number"]')?.value, "1");
+      assert.equal(view.host.querySelector<HTMLInputElement>('input[type="number"]')?.value, "1");
       for (const value of ["", "0", "100002"]) {
         await edit(view.host.querySelector('input[type="number"]'), value);
         assert.equal(button(view.host, "Save draft")?.disabled, true);
