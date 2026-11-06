@@ -58,7 +58,7 @@ export default async function HomepageCmsSectionPage({ params, searchParams }: P
     );
   }
 
-  let listing: Awaited<ReturnType<typeof listAdminCmsContent>> | null = null;
+  let listing: Awaited<ReturnType<typeof listAdminCmsContentDirectory>> | null = null;
   let error: string | null = null;
   try {
     const listInput = {
