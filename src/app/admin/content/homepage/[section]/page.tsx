@@ -101,7 +101,19 @@ export default async function HomepageCmsSectionPage({ params, searchParams }: P
           <ContentEmptyState title="Content unavailable" message={error} />
         ) : listing && listing.items.length > 0 ? (
           <>
-            <HomepageCmsListClient section={section} items={listing.items} listQuery={nav.query} />
+            <HomepageCmsListClient
+              section={section}
+              items={listing.items}
+              listQuery={nav.query}
+              reorderMarket={
+                section !== "hotel-destinations" &&
+                allowedMarket !== "ALL" &&
+                !status &&
+                !one(raw.q).trim()
+                  ? allowedMarket
+                  : undefined
+              }
+            />
           </>
         ) : (
           <ContentEmptyState

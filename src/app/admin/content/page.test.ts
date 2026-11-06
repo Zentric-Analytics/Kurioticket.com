@@ -407,3 +407,45 @@ test("Homepage and flight directories show all records grouped by market then Or
   }).listHref, "/admin/content/homepage/destinations?market=GB");
   assert.match(navigation, /params\.delete\("cursor"\)/);
 });
+
+test("Homepage and flight drag ordering edits complete market drafts without auto-publishing", () => {
+  const page = readFileSync("src/app/admin/content/homepage/[section]/page.tsx", "utf8");
+  const list = readFileSync("src/components/admin/HomepageCmsListClient.tsx", "utf8");
+  const reorder = readFileSync("src/components/admin/CmsCardReorder.tsx", "utf8");
+  const route = readFileSync("src/app/api/admin/content/reorder/route.ts", "utf8");
+  const service = readFileSync("src/services/cmsHardeningService.ts", "utf8");
+
+  assert.match(page, /allowedMarket !== "ALL"/);
+  assert.match(page, /!status/);
+  assert.match(page, /!one\(raw\.q\)\.trim\(\)/);
+  assert.match(list, /<CmsCardReorder/);
+  assert.match(list, /section !== "hotel-destinations"/);
+  assert.match(reorder, /onPointerDown=\{event => onDragStart\(event, id\)\}/);
+  assert.match(reorder, /document\.elementFromPoint/);
+  assert.match(reorder, /onPointerMove=\{onDragMove\}/);
+  assert.match(reorder, /window\.scrollBy\(0, step\)/);
+  assert.match(reorder, /window\.requestAnimationFrame\(autoScrollWhileDragging\)/);
+  assert.match(reorder, /window\.cancelAnimationFrame\(scrollFrame\.current\)/);
+  assert.match(reorder, /onPointerCancel=\{stopDragging\}/);
+  assert.match(reorder, /onKeyDown=\{event => onHandleKeys\(event, id\)\}/);
+  assert.match(reorder, /event\.key === "ArrowUp" \|\| event\.key === "ArrowDown"/);
+  assert.match(reorder, /Save draft order/);
+  assert.match(reorder, /row\.status !== "ARCHIVED"/);
+  assert.match(reorder, /router\.refresh\(\)/);
+  assert.match(route, /requireAdminApiSession\(\)/);
+  assert.match(route, /reorderCmsDraftCards\(body/);
+  assert.match(service, /cmsCardReorderSchema/);
+  assert.match(service, /z\.enum\(\["HOMEPAGE_DESTINATION", "FLIGHT_ROUTE"\]\)/);
+  assert.match(service, /status: \{ not: "ARCHIVED" \}/);
+  assert.match(service, /current\.length !== input\.items\.length/);
+  assert.match(service, /SELECT "id" FROM "CmsContentItem"/);
+  assert.match(service, /ORDER BY "id"\s+FOR UPDATE/);
+  assert.match(service, /Lock EVERY participating row/);
+  assert.match(service, /byId\.get\(id\)\?\.version !== version/);
+  assert.match(service, /Prisma\.TransactionIsolationLevel\.Serializable/);
+  assert.match(service, /action: "ORDER_NORMALIZED"/);
+  assert.match(service, /CMS_DRAFT_CARDS_REORDERED/);
+  const reorderSection = service.slice(service.indexOf("export async function reorderCmsDraftCards"), service.indexOf("export async function setCmsLegacyFallbackRetired"));
+  assert.doesNotMatch(reorderSection, /publishedSortOrder:\s*nextOrder|publishedPayload:\s*item\.draftPayload/);
+  assert.doesNotMatch(reorder, /action:\s*"publish"/);
+});
