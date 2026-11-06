@@ -17,6 +17,7 @@ import { CmsEditorActions, type CmsEditorAction } from "@/components/admin/CmsEd
 import { CmsLocationCombobox } from "@/components/admin/CmsLocationCombobox";
 import { CmsExpandingTextField } from "@/components/admin/CmsExpandingTextField";
 import { HomepageDestinationDraftPreview } from "@/components/admin/HomepageDestinationDraftPreview";
+import { CmsRouteHotelDraftPreview } from "@/components/admin/CmsRouteHotelDraftPreview";
 import type { CmsLocationOption } from "@/lib/adminCmsLocationOptions";
 
 type CmsItem = {
@@ -85,6 +86,10 @@ export function HomepageCmsEditor({
   const [market, setMarket] = useState(initialItem?.market ?? initialMarket);
   const [sortOrder, setSortOrder] = useState(String(initialItem?.sortOrder ?? 0));
   const [fields, setFields] = useState<Record<string, string>>(() => initialFields(section, saved));
+  const [hotelSearch, setHotelSearch] = useState(() =>
+    hotelOptions.find((option) => option.canonicalId === text(saved.canonicalId))?.label
+    ?? text(saved.canonicalId)
+  );
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [conflict, setConflict] = useState(false);
@@ -132,6 +137,7 @@ export function HomepageCmsEditor({
       setField("canonicalId", canonicalId);
       return;
     }
+    setHotelSearch(option.label);
     setFields((current) => ({
       ...current,
       canonicalId: option.canonicalId,
@@ -282,37 +288,49 @@ export function HomepageCmsEditor({
         {section === "flight-routes" ? (
           <>
             <TextField label="Title" name="title" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[448px]" />
-            <div className="grid max-w-[496px] gap-4 sm:grid-cols-[minmax(0,1fr)_160px]">
-              <TextField label="Origin city" name="originCity" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[320px]" />
-              <TextField label="Origin IATA" name="originCode" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[160px]" />
-              <TextField label="Destination city" name="destinationCity" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[320px]" />
-              <TextField label="Destination IATA" name="destinationCode" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[160px]" />
+            <div className="grid max-w-[496px] gap-4 sm:grid-cols-[minmax(0,1fr)_160px] sm:items-start">
+              <CmsLocationCombobox label="Origin city" kind="city" value={fields.originCity ?? ""} onChange={(value) => setField("originCity", value)} disabled={pending || archived} className="min-w-0" />
+              <CmsLocationCombobox label="Origin IATA" kind="airport" value={fields.originCode ?? ""} onChange={(value) => setField("originCode", value)} disabled={pending || archived} className="min-w-0" />
+              <CmsLocationCombobox label="Destination city" kind="city" value={fields.destinationCity ?? ""} onChange={(value) => setField("destinationCity", value)} disabled={pending || archived} className="min-w-0" />
+              <CmsLocationCombobox label="Destination IATA" kind="airport" value={fields.destinationCode ?? ""} onChange={(value) => setField("destinationCode", value)} disabled={pending || archived} className="min-w-0" />
             </div>
             <Field label="Route note" className="max-w-[480px]">
               <AdminTextarea className={`${editorControlClass} h-auto min-h-24`} value={fields.routeNote ?? ""} onChange={(event) => setField("routeNote", event.target.value)} disabled={pending || archived} />
             </Field>
-            <TextField label="Image" name="image" fields={fields} setField={setField} disabled={pending || archived} />
-            <TextField label="Image alt text" name="imageAlt" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[448px]" />
+            <CmsExpandingTextField label="Image" value={fields.image ?? ""} onChange={(value) => setField("image", value)} disabled={pending || archived} />
+            <CmsExpandingTextField label="Image alt text" value={fields.imageAlt ?? ""} onChange={(value) => setField("imageAlt", value)} disabled={pending || archived} />
           </>
         ) : null}
 
         {section === "hotel-destinations" ? (
           <>
-            <Field label="Canonical hotel destination" className="max-w-[448px]">
-              <AdminSelect className={editorControlClass} value={fields.canonicalId ?? ""} onChange={(event) => applyHotelOption(event.target.value)} disabled={pending || archived}>
-                <option value="">Select canonical destination</option>
-                {hotelOptions.map((option) => <option key={option.canonicalId} value={option.canonicalId}>{option.label}</option>)}
-              </AdminSelect>
-            </Field>
+            <CmsLocationCombobox
+              label="Canonical hotel destination"
+              kind="hotel"
+              value={hotelSearch}
+              selectedValue={fields.canonicalId ?? ""}
+              hotelOptions={hotelOptions}
+              onChange={(value) => {
+                setHotelSearch(value);
+                setField("canonicalId", "");
+              }}
+              onSelect={(option) => applyHotelOption(option.value)}
+              disabled={pending || archived}
+              className="max-w-[448px]"
+            />
             <div className="grid gap-4 sm:grid-cols-2">
               <TextField label="Name" name="name" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[320px]" />
-              <TextField label="Country" name="country" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[320px]" />
+              <CmsLocationCombobox label="Country" kind="country" value={fields.country ?? ""} onChange={(value) => setFields((current) => ({ ...current, country: value, ...(value !== current.country ? { countryCode: "" } : {}) }))} onSelect={selectCountry} disabled={pending || archived} className="max-w-[320px]" />
               <TextField label="Country code" name="countryCode" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[160px]" />
-              <TextField label="Kind" name="kind" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[160px]" />
+              <Field label="Kind" className="max-w-[160px]">
+                <AdminSelect className={editorControlClass + " cursor-pointer"} value={fields.kind ?? ""} onChange={(event) => setField("kind", event.target.value)} disabled={pending || archived}>
+                  {["city", "district", "landmark", "airport-area", "custom"].map((kind) => <option key={kind} value={kind}>{kind === "airport-area" ? "Airport area" : kind.charAt(0).toUpperCase() + kind.slice(1)}</option>)}
+                </AdminSelect>
+              </Field>
             </div>
             <TextField label="Search value" name="searchValue" fields={fields} setField={setField} disabled={pending || archived} />
-            <TextField label="Image (optional)" name="image" fields={fields} setField={setField} disabled={pending || archived} />
-            <TextField label="Image alt text (optional)" name="imageAlt" fields={fields} setField={setField} disabled={pending || archived} className="max-w-[448px]" />
+            <CmsExpandingTextField label="Image (optional)" value={fields.image ?? ""} onChange={(value) => setField("image", value)} disabled={pending || archived} />
+            <CmsExpandingTextField label="Image alt text (optional)" value={fields.imageAlt ?? ""} onChange={(value) => setField("imageAlt", value)} disabled={pending || archived} />
           </>
         ) : null}
 
@@ -353,16 +371,16 @@ export function HomepageCmsEditor({
           unsaved={draftDirty}
         />
       ) : (
-      <aside className="h-fit min-w-0 lg:sticky lg:top-24">
-        <ContentSectionHeading>Draft preview</ContentSectionHeading>
-        <h2 className="mt-2 text-[15px] font-semibold text-[#111827]">{previewTitle(section, currentPayload)}</h2>
-        <p className="mt-2 whitespace-pre-wrap text-[13px] leading-5 text-[#475569]">{previewDetail(section, currentPayload)}</p>
-        <div className="mt-4 grid gap-2 pt-2 text-[12px] text-[#64748B]">
-          <span>Market: {getCmsMarketName(section === "hotel-destinations" ? "GLOBAL" : market) || "Select market"}</span>
-          <span>Order: {sortOrder || "0"}</span>
-          {item ? <span>Draft v{item.version} · Published {item.publishedVersion ? `v${item.publishedVersion}` : "none"} · {unpublishedLabel ?? "No unpublished changes"}</span> : null}
-        </div>
-      </aside>
+        <CmsRouteHotelDraftPreview
+          section={section}
+          payload={currentPayload}
+          marketName={getCmsMarketName(section === "hotel-destinations" ? "GLOBAL" : market)}
+          order={sortOrder}
+          version={item?.version}
+          publishedVersion={item?.publishedVersion}
+          unpublishedLabel={unpublishedLabel}
+          unsaved={draftDirty}
+        />
       )}
     </div>
   );
