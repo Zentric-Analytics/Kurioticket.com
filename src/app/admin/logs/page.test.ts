@@ -50,6 +50,11 @@ test("Audit Logs search mirrors the Users auto-update pattern without an apply b
   assert.ok(toolbar.includes("router.replace(href, { scroll: false })"));
   assert.ok(toolbar.includes("adminDraftRef"));
   assert.ok(toolbar.includes("targetDraftRef"));
+  assert.ok(toolbar.includes("paramsRef"));
+  assert.ok(toolbar.includes("new URLSearchParams(paramsRef.current)"));
+  assert.ok(toolbar.includes("paramsRef.current = new URLSearchParams(query)"));
+  assert.ok(toolbar.includes('window.addEventListener("popstate", onHistoryNavigation)'));
+  assert.ok(toolbar.includes("lastSubmittedSearchRef.current = committedSearchKey"));
   assert.doesNotMatch(toolbar, /Apply filters|Clear filters/);
 });
 
