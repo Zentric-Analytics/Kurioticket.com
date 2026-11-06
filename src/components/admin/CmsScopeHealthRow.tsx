@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useMemo, useState } from "react";
+import { useId, useMemo, useState, type ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
 
 import { CmsHealthInlineRepair } from "@/components/admin/CmsHealthInlineRepair";
@@ -452,7 +452,7 @@ function IssueRow({
   recordKey: string;
   issue: string;
   details: string;
-  action: React.ReactNode;
+  action: ReactNode;
 }) {
   return (
     <div className="grid gap-2 border-b border-[#E7ECF5] py-3 last:border-b-0 lg:grid-cols-[minmax(180px,0.8fr)_minmax(180px,0.8fr)_minmax(320px,1.8fr)_auto] lg:items-center lg:gap-4">
