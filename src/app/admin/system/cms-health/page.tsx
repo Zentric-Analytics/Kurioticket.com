@@ -1,7 +1,9 @@
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
-import { CmsScopeHardeningActions } from "@/components/admin/CmsScopeHardeningActions";
+import { CmsScopeHealthRow } from "@/components/admin/CmsScopeHealthRow";
+import { hotelDestinations } from "@/data/hotelDestinations";
 import { getCmsMarketName } from "@/lib/adminCmsMarketLabels";
 import { getCmsHealthOverview } from "@/services/cmsHardeningService";
+import { homepageCmsMarkets } from "@/services/homepageCmsService";
 
 export const metadata = { title: "CMS Health" };
 
@@ -13,7 +15,16 @@ const cmsHealthGroups = [
 ] as const;
 
 const tableHeadingClass = "px-3 py-3 text-left text-[12px] font-medium uppercase text-[#475569]";
-const tableCellClass = "px-3 py-3 align-middle text-[13px] text-[#020617]";
+
+const cmsHealthHotelOptions = hotelDestinations.map((destination) => ({
+  canonicalId: `hotel:${destination.id}`,
+  label: `${destination.name} · ${destination.country}`,
+  name: destination.name,
+  country: destination.country,
+  countryCode: destination.countryCode,
+  kind: destination.kind,
+  searchValue: destination.searchValue,
+}));
 
 const cmsLocaleDisplayNames =
   typeof Intl.DisplayNames === "function"
@@ -150,14 +161,13 @@ export default async function AdminCmsHealthPage() {
 
                       <div className="border-t border-[#E7ECF5]">
                         <div className="overflow-x-auto">
-                          <table className="w-full min-w-[980px] table-fixed text-left text-[13px]">
+                          <table className="w-full min-w-[900px] table-fixed text-left text-[13px]">
                             <colgroup>
-                              <col className="w-[22%]" />
-                              <col className="w-[13%]" />
                               <col className="w-[24%]" />
                               <col className="w-[14%]" />
-                              <col className="w-[12%]" />
-                              <col className="w-[15%]" />
+                              <col className="w-[28%]" />
+                              <col className="w-[17%]" />
+                              <col className="w-[17%]" />
                             </colgroup>
                             <thead className="border-b border-[#D8E1EC]">
                               <tr>
@@ -166,77 +176,22 @@ export default async function AdminCmsHealthPage() {
                                 <th scope="col" className={tableHeadingClass}>Integrity</th>
                                 <th scope="col" className={tableHeadingClass}>Legacy fallback</th>
                                 <th scope="col" className={tableHeadingClass}>Draft changes</th>
-                                <th scope="col" className={tableHeadingClass}>Actions</th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-[#E7ECF5]">
-                              {entries.map((entry) => {
-                                const integrity = entry.integrity;
-                                const issueCount =
-                                  integrity.invalidDrafts.length +
-                                  integrity.invalidPublished.length +
-                                  integrity.orphanPublished.length +
-                                  integrity.draftOrderCollisions.length +
-                                  integrity.publishedOrderCollisions.length +
-                                  (integrity.draftOrderNeedsNormalization ? 1 : 0);
-
-                                return (
-                                  <tr key={`${entry.type}:${entry.market}:${entry.locale}`} className="hover:bg-[#F8FAFC]">
-                                    <th scope="row" className={tableCellClass + " text-left font-normal"}>
-                                      <span className="block font-semibold">{getCmsMarketName(entry.market)}</span>
-                                      <span className="mt-0.5 block text-[12px] text-[#64748B]">{getCmsLocaleName(entry.locale)}</span>
-                                      <span className="mt-0.5 block text-[11px] text-[#94A3B8]">
-                                        {entry.market} · {entry.locale} · v{integrity.scopeVersion ?? "—"}
-                                      </span>
-                                    </th>
-                                    <td className={tableCellClass}>
-                                      <CmsStatusIndicator
-                                        label={integrity.healthy ? "Healthy" : "Needs attention"}
-                                        tone={integrity.healthy ? "good" : "warn"}
-                                      />
-                                    </td>
-                                    <td className={tableCellClass + " text-[12px] leading-5 text-[#475569]"}>
-                                      {integrity.healthy ? (
-                                        <span>No issues</span>
-                                      ) : (
-                                        <div className="space-y-0.5">
-                                          <p className="font-medium text-[#0F172A]">
-                                            {issueCount} issue{issueCount === 1 ? "" : "s"}
-                                          </p>
-                                          {integrity.invalidDrafts.length > 0 ? <p>{integrity.invalidDrafts.length} invalid draft{integrity.invalidDrafts.length === 1 ? "" : "s"}</p> : null}
-                                          {integrity.invalidPublished.length > 0 ? <p>{integrity.invalidPublished.length} invalid published</p> : null}
-                                          {integrity.orphanPublished.length > 0 ? <p>{integrity.orphanPublished.length} orphan published</p> : null}
-                                          {integrity.draftOrderCollisions.length > 0 ? <p>{integrity.draftOrderCollisions.length} draft order collision{integrity.draftOrderCollisions.length === 1 ? "" : "s"}</p> : null}
-                                          {integrity.draftOrderNeedsNormalization ? <p>Draft order needs normalization</p> : null}
-                                          {integrity.publishedOrderCollisions.length > 0 ? <p>{integrity.publishedOrderCollisions.length} published order collision{integrity.publishedOrderCollisions.length === 1 ? "" : "s"}</p> : null}
-                                        </div>
-                                      )}
-                                    </td>
-                                    <td className={tableCellClass}>
-                                      {integrity.legacyFallbackRetired ? "Retired" : "Available"}
-                                    </td>
-                                    <td className={tableCellClass}>
-                                      {integrity.unpublishedChanges === 0
-                                        ? "None"
-                                        : `${integrity.unpublishedChanges} change${integrity.unpublishedChanges === 1 ? "" : "s"}`}
-                                    </td>
-                                    <td className={tableCellClass}>
-                                      {integrity.scopeVersion ? (
-                                        <CmsScopeHardeningActions
-                                          type={entry.type}
-                                          market={entry.market}
-                                          locale={entry.locale}
-                                          scopeVersion={integrity.scopeVersion}
-                                          legacyFallbackRetired={integrity.legacyFallbackRetired}
-                                          fallbackRetirementEligible={integrity.fallbackRetirementEligible}
-                                          draftOrderCollisionCount={integrity.draftOrderCollisions.length}
-                                          draftOrderNeedsNormalization={integrity.draftOrderNeedsNormalization}
-                                        />
-                                      ) : "—"}
-                                    </td>
-                                  </tr>
-                                );
-                              })}
+                              {entries.map((entry) => (
+                                <CmsScopeHealthRow
+                                  key={`${entry.type}:${entry.market}:${entry.locale}`}
+                                  type={entry.type}
+                                  market={entry.market}
+                                  locale={entry.locale}
+                                  marketName={getCmsMarketName(entry.market)}
+                                  localeName={getCmsLocaleName(entry.locale)}
+                                  integrity={entry.integrity}
+                                  markets={homepageCmsMarkets}
+                                  hotelOptions={cmsHealthHotelOptions}
+                                />
+                              ))}
                             </tbody>
                           </table>
                         </div>
