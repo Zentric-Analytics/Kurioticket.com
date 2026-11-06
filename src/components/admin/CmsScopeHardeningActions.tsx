@@ -42,8 +42,7 @@ export function CmsScopeHardeningActions({
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [menuPosition, setMenuPosition] = useState<{
-    top?: number;
-    bottom?: number;
+    top: number;
     right: number;
     maxHeight: number;
   } | null>(null);
@@ -61,25 +60,24 @@ export function CmsScopeHardeningActions({
   }
 
   function openMenu() {
-    const bounds = triggerRef.current?.getBoundingClientRect();
+    let bounds = triggerRef.current?.getBoundingClientRect();
     if (!bounds) return;
+    if (window.innerHeight - bounds.bottom < 96) {
+      triggerRef.current?.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "instant" });
+      bounds = triggerRef.current?.getBoundingClientRect();
+      if (!bounds) return;
+    }
 
     triggerBoundsRef.current = bounds;
-    const spaceBelow = window.innerHeight - bounds.bottom - 16;
-    const availableHeight = Math.min(
-      260,
-      Math.max(spaceBelow, bounds.top - 16),
-    );
+    const spaceBelow = Math.max(0, window.innerHeight - bounds.bottom - 10);
 
     setMenuPosition({
-      ...(spaceBelow >= availableHeight
-        ? { top: bounds.bottom + 6 }
-        : { bottom: window.innerHeight - bounds.top + 6 }),
+      top: bounds.bottom + 2,
       right: Math.max(
         8,
         Math.min(window.innerWidth - bounds.right, window.innerWidth - 248),
       ),
-      maxHeight: availableHeight,
+      maxHeight: Math.min(260, spaceBelow),
     });
   }
 
@@ -210,7 +208,7 @@ export function CmsScopeHardeningActions({
   }
 
   const menuItemClass =
-    "focus-ring flex min-h-9 w-full items-center rounded-md px-3 py-2.5 text-left text-[13px] font-medium text-[#020617] transition-colors hover:bg-[#F8FAFC] focus-visible:bg-[#F1F7FF]";
+    "focus-ring flex min-h-9 w-full cursor-pointer items-center rounded-md px-3 py-2.5 text-left text-[13px] font-medium text-[#020617] transition-colors hover:bg-[#F8FAFC] focus-visible:bg-[#F1F7FF]";
 
   if (mode === "normalize") {
     return (
@@ -251,7 +249,7 @@ export function CmsScopeHardeningActions({
           }
           if (event.key === "Escape") closeMenu();
         }}
-        className="focus-ring inline-flex h-8 items-center gap-1.5 rounded-md border border-[#D8E1EC] bg-white px-2.5 text-[12px] font-medium text-[#020617] transition-colors hover:bg-[#F8FAFC] disabled:opacity-50"
+        className="focus-ring inline-flex h-8 scroll-mb-28 cursor-pointer items-center gap-1.5 rounded-md border border-[#D8E1EC] bg-white px-2.5 text-[12px] font-medium text-[#020617] transition-colors hover:bg-[#F8FAFC] disabled:opacity-50"
       >
         {pending ? "Updating…" : "Manage"}
         <ChevronDown
@@ -341,3 +339,4 @@ export function CmsScopeHardeningActions({
     </div>
   );
 }
+

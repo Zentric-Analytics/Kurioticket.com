@@ -8,6 +8,7 @@ import {
   getCmsCountrySuggestions,
   getCmsHotelDestinationSuggestions,
 } from "@/lib/adminCmsLocationOptions";
+import { sortHomepageCmsDirectoryItems } from "@/lib/adminHomepageCms";
 
 const editor = readFileSync("src/components/admin/HomepageCmsEditor.tsx", "utf8");
 const combobox = readFileSync("src/components/admin/CmsLocationCombobox.tsx", "utf8");
@@ -83,11 +84,14 @@ test("combobox supports keyboard selection and never saves or publishes automati
   assert.match(combobox, /preventScroll: true/);
   assert.match(combobox, /document\.addEventListener\("scroll", dismissOnScroll, true\)/);
   assert.match(combobox, /scrollTop/);
-  assert.doesNotMatch(combobox, /scrollIntoView/);
+  // Only opening a field near the bottom may make room for its downward list.
+  assert.match(combobox, /anchor\.scrollIntoView\(\{ block: "nearest", inline: "nearest", behavior: "instant" \}\)/);
+  const keyboardScroll = combobox.slice(combobox.indexOf('if (!open || activeIndex < 0)'), combobox.indexOf('function onKeyDown'));
+  assert.doesNotMatch(keyboardScroll, /scrollIntoView/);
 });
 
 test("CMS search fields keep a typing cursor while the dropdown arrow is an accessible pointer control", () => {
-  assert.match(combobox, /className=\{inputClass \+ " cursor-text"\}/);
+  assert.match(combobox, /className=\{inputClass \+ " cursor-text" \+ \(open \? " rounded-b-none" : ""\)\}/);
   assert.match(combobox, /type="button"\s+disabled=\{disabled\}\s+aria-label=\{\(open \? "Close" : "Open"\) \+ " " \+ label \+ " suggestions"\}/);
   assert.match(combobox, /aria-haspopup="listbox"/);
   assert.match(combobox, /aria-expanded=\{open\}/);
@@ -200,7 +204,11 @@ test("hotel CMS canonical search protects the mapped destination and uses visibl
   assert.match(api, /hotelDestination\.image \?/);
   assert.match(api, /image: hotelDestination\.image/);
   assert.match(api, /hotelDestination\.imageAlt\?\.trim\(\) \|\| destination\.imageAlt/);
-  assert.match(listing, /left\.sortOrder - right\.sortOrder/);
+  assert.match(listing, /items: sortHomepageCmsDirectoryItems\(listing\.items\)/);
+  assert.deepEqual(sortHomepageCmsDirectoryItems([
+    { market: "GLOBAL", sortOrder: 4, key: "hotel-london" },
+    { market: "GLOBAL", sortOrder: 1, key: "hotel-new-york" },
+  ]).map((item) => item.key), ["hotel-new-york", "hotel-london"]);
 
   assert.match(editor, /item\?\.publishedVersion != null/);
   assert.match(editor, /selectedHotelIdRef = useRef\(text\(saved\.canonicalId\)\)/);
@@ -222,3 +230,4 @@ test("CMS revision restore surfaces actionable canonical conflicts instead of pr
   assert.match(restore, /: serverError\)/);
   assert.doesNotMatch(restore, /response\.status === 409\s*\? "This content changed in another session/);
 });
+
