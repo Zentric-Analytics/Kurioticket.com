@@ -2,9 +2,10 @@ import { randomUUID } from "node:crypto";
 
 import { NextResponse } from "next/server";
 
-import { getRequestIp, requireAdminApiSession, writeAdminAuditLog } from "@/lib/admin";
+import { requireAdminApiSession, writeAdminAuditLog } from "@/lib/admin";
+import { isSameOriginRequest } from "@/lib/visitor-identity";
 import { CMS_IMAGE_MAX_BYTES, validateCmsImageFile } from "@/lib/cmsImageUploadRules";
-import { getCmsImageStorageConfig, storeCmsImage } from "@/services/cmsImageStorage";
+import { deleteCmsImage, getCmsImageStorageConfig, storeCmsImage } from "@/services/cmsImageStorage";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -43,9 +44,9 @@ export async function POST(request: Request) {
   const auth = await requireAdminApiSession();
   if (auth.response) return auth.response;
 
-  // Reject cross-origin browser requests, including cookie-authenticated CSRF.
-  const origin = request.headers.get("origin");
-  if (origin && origin !== new URL(request.url).origin) {
+  // Respect the configured public origin when Render proxies requests through
+  // an internal hostname. Do not trust forwarded host headers or cross-site fetches.
+  if (!isSameOriginRequest(request)) {
     return NextResponse.json({ error: "Image uploads must come from this website." }, { status: 403 });
   }
 
@@ -86,7 +87,19 @@ export async function POST(request: Request) {
       metadata: { filename, bytes: bytes.byteLength, mime: checked.format.mime },
       request,
     });
-    if (!logged) return NextResponse.json({ error: "Image uploaded but its audit record could not be saved. Contact an administrator." }, { status: 503 });
+    if (!logged) {
+      let removed = false;
+      try {
+        removed = await deleteCmsImage(filename);
+      } catch (error) {
+        console.error("[cms:image-upload-rollback]", { errorName: error instanceof Error ? error.name : "unknown" });
+      }
+      if (!removed) {
+        console.error("[cms:image-upload-rollback-failed]", { filename });
+        return NextResponse.json({ error: "Image upload could not be finalized or cleaned up. Contact an administrator." }, { status: 503 });
+      }
+      return NextResponse.json({ error: "Image upload was cancelled because its audit record could not be saved. Please try again." }, { status: 503 });
+    }
     return NextResponse.json({ url: `/api/cms/images/${filename}` }, { status: 201 });
   } catch {
     return NextResponse.json({ error: "Image storage is currently unavailable. Please try again." }, { status: 503 });
