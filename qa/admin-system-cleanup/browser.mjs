@@ -212,8 +212,8 @@ try {
         if (route === "notifications" || route === "settings/notifications") {
           await expect(main.locator('a[href="/admin/notifications"]')).toHaveCount(0);
           await expect(main.getByRole("link", { name: "Open source", exact: true })).toHaveCount(3);
-          await expect(main.getByRole("button", { name: "Acknowledge", exact: true })).toHaveCount(2);
-          await expect(main.getByText("Acknowledgement is unavailable until monitoring-state storage recovers.")).toBeVisible();
+          await expect(main.getByRole("button", { name: variant === "before" ? "Acknowledge" : "Mark as read", exact: true })).toHaveCount(2);
+          await expect(main.getByText(variant === "before" ? "Acknowledgement is unavailable until monitoring-state storage recovers." : "Mark as read is unavailable until monitoring-state storage recovers.")).toBeVisible();
           const metrics = main.getByRole("region", { name: "Alert summary" });
           await expect(metrics.locator("dl > div")).toHaveCount(4);
           await expect(main.locator("[data-alert-row]")).toHaveCount(4);
