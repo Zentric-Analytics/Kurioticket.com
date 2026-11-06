@@ -15,6 +15,8 @@ test("Audit Logs uses the compact Providers-style white workspace", () => {
   assert.ok(page.includes("text-[12px] font-medium uppercase text-[#475569]"));
   assert.ok(page.includes("text-[13px] font-medium text-[#020617]"));
   assert.doesNotMatch(page, /AdminDataTable|AdminFilterBar|AdminSectionCard|rounded-xl border border-slate-200 bg-white/);
+  assert.doesNotMatch(page, /Security-sensitive admin and system actions/);
+  assert.doesNotMatch(page, /newest records on this page|rangeLabel\(/);
   assert.ok(shell.includes("auditLogsWorkspace"));
 });
 
@@ -29,13 +31,35 @@ test("Audit Logs presents readable actions while retaining technical audit value
 });
 
 test("Target email is filterable but not a permanent table column", () => {
-  assert.ok(toolbar.includes("Target email"));
+  assert.ok(toolbar.includes("Search target email"));
   assert.ok(toolbar.includes('placeholder="Search target email"'));
   assert.equal(page.includes("<span>Target email</span>"), false);
   assert.ok(page.includes("if (!log.targetEmail)"));
   assert.ok(page.includes("<details data-audit-row={log.id}"));
   assert.ok(page.includes("Target email</p>"));
   assert.ok(page.includes("{log.targetEmail}"));
+});
+
+test("Audit Logs search mirrors the Users auto-update pattern without an apply button", () => {
+  assert.ok(toolbar.includes('role="search"'));
+  assert.ok(toolbar.includes('aria-label="Search audit logs"'));
+  assert.ok(toolbar.includes('placeholder="Search admin email"'));
+  assert.ok(toolbar.includes('placeholder="Search target email"'));
+  assert.ok(toolbar.includes("window.setTimeout"));
+  assert.ok(toolbar.includes("}, 300);"));
+  assert.ok(toolbar.includes("router.replace(href, { scroll: false })"));
+  assert.ok(toolbar.includes("adminDraftRef"));
+  assert.ok(toolbar.includes("targetDraftRef"));
+  assert.ok(toolbar.includes("paramsRef"));
+  assert.ok(toolbar.includes("new URLSearchParams(paramsRef.current)"));
+  assert.ok(toolbar.includes("paramsRef.current = new URLSearchParams(query)"));
+  assert.match(toolbar, /paramsRef\.current = new URLSearchParams\(pageHref\.split\("\?"\)\[1\] \|\| ""\);\s*\}, \[pageHref\]\);/);
+  assert.ok(toolbar.includes('window.addEventListener("popstate", onHistoryNavigation)'));
+  assert.ok(toolbar.includes("lastSubmittedSearchRef.current = committedSearchKey"));
+  assert.ok(toolbar.includes("lastSubmittedSearchRef.current !== null && lastSubmittedSearchRef.current !== searchKey"));
+  assert.ok(toolbar.includes("[adminDraft, targetDraft, adminEmail, targetEmail, pageHref, navigate]"));
+  assert.ok(toolbar.includes("if (lastSubmittedSearchRef.current === searchKey)"));
+  assert.doesNotMatch(toolbar, /Apply filters|Clear filters/);
 });
 
 test("Audit Logs filters preserve the safe reader contract and user-page custom-date rules", () => {
@@ -55,8 +79,7 @@ test("Audit Logs filters preserve the safe reader contract and user-page custom-
   assert.ok(toolbar.includes('aria-label="Custom end date UTC"'));
   assert.ok(toolbar.includes("Apply dates"));
   assert.ok(toolbar.includes("disabled={!validCustom || isPending}"));
-  assert.ok(toolbar.includes("Apply filters"));
-  assert.ok(toolbar.includes('href="/admin/logs?range=7d"'));
+  assert.doesNotMatch(toolbar, /Apply filters|Clear filters/);
   assert.ok(page.includes('params.set("limit", "100")'));
   assert.ok(page.includes('params.has("cursor")'));
   assert.ok(page.includes('range === "90d"'));
