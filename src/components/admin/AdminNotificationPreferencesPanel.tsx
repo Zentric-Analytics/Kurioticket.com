@@ -78,10 +78,17 @@ export function AdminNotificationPreferencesPanel({
       </div>
       {feedback ? <p role="status" className="mt-2 text-[12px] text-emerald-700">{feedback}</p> : null}
       {error ? <p role="alert" className="mt-2 text-[12px] text-rose-700">{error}</p> : null}
-      <p className="mt-3 text-[12px] text-[#64748B]">
-        Alerts are still monitored in the{" "}
-        <Link href="/admin/notifications" className="font-medium text-[#004BB8] hover:underline">Notifications &amp; Alerts center</Link>.
-      </p>
+      <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-[12px] text-[#64748B]">
+        <Link href="/admin/notifications" className="font-medium text-[#004BB8] hover:underline">
+          Open Notifications &amp; Alerts
+        </Link>
+        <Link
+          href="/admin/logs?range=30d&action=ADMIN_NOTIFICATION_PREFERENCE_UPDATED&targetType=AdminNotificationPreference"
+          className="font-medium text-[#004BB8] hover:underline"
+        >
+          View notification audit history
+        </Link>
+      </div>
     </div>
   );
 }
