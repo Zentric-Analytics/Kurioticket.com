@@ -473,18 +473,6 @@ function validateClientDraft(section: HomepageCmsSection, payload: Record<string
   return required.every((key) => typeof payload[key] === "string" && String(payload[key]).trim().length > 0);
 }
 
-function previewTitle(section: HomepageCmsSection, payload: Record<string, unknown>) {
-  if (section === "destinations") return String(payload.city || "Destination");
-  if (section === "flight-routes") return String(payload.title || "Flight route");
-  return String(payload.name || "Hotel destination");
-}
-
-function previewDetail(section: HomepageCmsSection, payload: Record<string, unknown>) {
-  if (section === "destinations") return `${payload.country || ""} · ${payload.originCode || ""} → ${payload.destinationCode || ""}`;
-  if (section === "flight-routes") return `${payload.originCity || ""} (${payload.originCode || ""}) → ${payload.destinationCity || ""} (${payload.destinationCode || ""})\n${payload.routeNote || ""}`;
-  return `${payload.country || ""} · ${payload.searchValue || ""}\n${payload.canonicalId || ""}`;
-}
-
 function Field({ label, children, className = "" }: { label: string; children: React.ReactNode; className?: string }) {
   return <label className={`block min-w-0 ${className}`}><span className="block min-h-5 text-[13px] font-medium leading-5 text-[#475569]">{label}</span><div className="mt-1.5">{children}</div></label>;
 }
