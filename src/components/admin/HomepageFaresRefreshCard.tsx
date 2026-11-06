@@ -667,11 +667,6 @@ export function HomepageFaresRefreshCard({ view = "operations", initialMarket = 
                 selectedRouteScope={selectedRouteScope}
                 onInspectMarket={homepageFareRoutesHref}
               />
-
-              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#D8E1EC] py-5">
-                <p className="text-[12px] leading-5 text-[#475569]">For fallback coverage, refresh execution and scheduler diagnostics, use the dedicated view.</p>
-                <Link href="/admin/homepage-fares/diagnostics" className="inline-flex min-h-9 items-center whitespace-nowrap text-[12px] font-semibold text-[#004BB8] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">View fare diagnostics</Link>
-              </div>
             </>
           ) : null}
         </>
@@ -981,11 +976,6 @@ function MarketReadinessDashboard({
   onInspectMarket: (marketCode: string) => string;
 }) {
   const [expandedMarket, setExpandedMarket] = useState<string | null>(null);
-  const displayedCodes = new Set(markets.map((market) => normalizeAdminHomepageFareMarketCode(market.marketCode)));
-  const outsidePublicCount = marketsNeedingAnotherRun.filter(
-    (market) => market.needed && !displayedCodes.has(normalizeAdminHomepageFareMarketCode(market.market)),
-  ).length;
-
   return (
     <DashboardSection title="Market coverage">
       {markets.length ? (
@@ -1076,11 +1066,6 @@ function MarketReadinessDashboard({
               );
             })}
           </ul>
-          {outsidePublicCount > 0 ? (
-            <p role="note" className="mt-3 text-[12px] leading-5 text-[#64748B]">
-              {outsidePublicCount} additional market {outsidePublicCount === 1 ? "scope needs" : "scopes need"} attention outside the public country table. <Link href="/admin/homepage-fares/diagnostics" className="font-semibold text-[#004BB8] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">Review fallback diagnostics</Link>.
-            </p>
-          ) : null}
         </div>
       ) : (
         <p className="mt-4 border-b border-[#E7ECF5] py-3 text-[13px] leading-5 text-[#64748B]">
