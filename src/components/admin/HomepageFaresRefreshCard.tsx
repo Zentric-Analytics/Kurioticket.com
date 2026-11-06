@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type RefObject, type
 import { ChevronDown, RefreshCcw } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
+import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
 import {
   ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE,
   buildAdminHomepageFareAllRoutesGroup,
@@ -435,9 +436,11 @@ export function HomepageFaresRefreshCard() {
   const selectRouteScope = useCallback((scope: string) => {
     setRoutePage(1);
     setSelectedRouteScope(
-      scope === ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE
-        ? ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE
-        : normalizeAdminHomepageFareMarketCode(scope),
+      scope
+        ? scope === ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE
+          ? ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE
+          : normalizeAdminHomepageFareMarketCode(scope)
+        : null,
     );
   }, []);
   const selectRouteFilter = useCallback((filter: AdminHomepageFareRouteGroupFilter) => {
@@ -586,7 +589,7 @@ export function HomepageFaresRefreshCard() {
             </p>
           ) : null}
 
-      <section aria-labelledby="homepage-fare-readiness-heading" className="pb-4 pt-4">
+      <section aria-labelledby="homepage-fare-readiness-heading" className="pb-5 pt-5">
         <h2 id="homepage-fare-readiness-heading" className="text-[15px] font-semibold text-[#020617]">
           Readiness overview
         </h2>
@@ -599,7 +602,7 @@ export function HomepageFaresRefreshCard() {
               <DisplayReadinessSummary readiness={statusPayload.displayReadiness} />
             ) : null}
 
-        <dl aria-label="Fare readiness metrics" className="mt-3 grid grid-cols-2 border-y border-[#D8E1EC] sm:grid-cols-3 lg:grid-cols-5">
+        <dl aria-label="Fare readiness metrics" className="mt-4 grid grid-cols-2 gap-px border-y border-[#D8E1EC] bg-[#E7ECF5] sm:grid-cols-3 xl:grid-cols-5">
               <SummaryMetricCard label="Fresh fares" value={statusPayload.dataAvailable ? statusPayload.summary.fresh : "Unavailable"} tone={statusPayload.dataAvailable ? "good" : "danger"} />
               <SummaryMetricCard label="Last-known-good" value={statusPayload.dataAvailable ? statusPayload.summary.last_known_good : "Unavailable"} tone={statusPayload.dataAvailable ? "info" : "danger"} />
               <SummaryMetricCard label="Missing routes" value={statusPayload.dataAvailable ? statusPayload.summary.missing : "Unavailable"} tone={!statusPayload.dataAvailable ? "danger" : statusPayload.summary.missing ? "warning" : "neutral"} />
@@ -706,12 +709,12 @@ function SummaryMetricCard({
   tone?: SummaryTone;
 }) {
   return (
-    <div className="min-w-0 border-r border-[#E7ECF5] px-3 py-3 last:border-r-0 lg:px-4">
-      <dt className="flex items-center gap-2 text-[11px] font-medium leading-4 text-[#64748B]">
+    <div className="min-h-[88px] min-w-0 bg-white px-4 py-4 xl:px-5">
+      <dt className="flex min-h-5 items-center gap-2 text-[12px] font-medium leading-5 text-[#64748B]">
         <span aria-hidden="true" className={`h-1.5 w-1.5 shrink-0 rounded-full ${summaryToneDotClass(tone)}`} />
         <span>{label}</span>
       </dt>
-      <dd className="mt-1.5 break-words text-[24px] font-medium leading-7 tracking-[-0.03em] tabular-nums text-[#020617]">{value}</dd>
+      <dd className="mt-2 break-words text-[24px] font-medium leading-7 tracking-[-0.03em] tabular-nums text-[#020617]">{value}</dd>
     </div>
   );
 }
@@ -737,7 +740,7 @@ function CompactDetail({ label, value }: { label: string; value: string | number
   return (
     <div className="min-w-0">
       <dt className="text-[12px] text-[#64748B]">{label}</dt>
-      <dd className="mt-0.5 text-[13px] font-medium text-[#0F172A]">{value}</dd>
+      <dd className="mt-1 break-words text-[13px] font-medium leading-5 text-[#0F172A]">{value}</dd>
     </div>
   );
 }
@@ -760,7 +763,7 @@ function DashboardSection({
   children: ReactNode;
 }) {
   return (
-    <section className="border-b border-[#D8E1EC] pb-4 pt-4">
+    <section className="border-b border-[#D8E1EC] pb-5 pt-5">
       <div>
         <h3 className="text-[15px] font-semibold text-[#020617]">{title}</h3>
         {description ? <p className="mt-1 max-w-4xl text-[13px] leading-5 text-[#475569]">{description}</p> : null}
@@ -795,75 +798,71 @@ function RefreshCronPanel({
   const providerCallsUsed = refreshState.counts
     ? refreshState.counts.providerCalls
     : "No run yet";
+
   return (
-    <DashboardSection
-      title="Refresh operations"
-    >
-      <div className="mt-3">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <Button
-              type="button"
-              variant="accent"
-              onClick={onRefresh}
-              disabled={refreshing || !operationsAvailable}
-              aria-busy={refreshing}
-              className="w-full sm:w-auto"
-            >
-              <RefreshCcw className={refreshing ? "animate-spin" : ""} size={16} />
-              {refreshing
-                ? "Refreshing…"
-                : initialStatusLoading
-                  ? "Loading status…"
-                  : operationsAvailable
-                    ? "Refresh homepage fares"
-                    : "Refresh unavailable"}
-            </Button>
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={onReload}
-              disabled={loading || refreshing}
-              aria-busy={loading}
-              className="w-full sm:w-auto"
-            >
-              <RefreshCcw className={loading ? "animate-spin" : ""} size={16} />
-              {loading ? "Loading…" : "Reload status"}
-            </Button>
-          </div>
-
-          <dl className="grid min-w-0 flex-1 grid-cols-2 gap-x-4 gap-y-3 border-t border-[#E7ECF5] pt-3 sm:grid-cols-4 lg:max-w-[800px] lg:border-t-0 lg:pt-0">
-            <CompactDetail label="Latest snapshot" value={statusPayload.dataAvailable ? formatSnapshotTime(statusPayload.lastRefreshAt) : "Unavailable"} />
-            <CompactDetail label="Provider calls" value={providerCallsUsed} />
-            <CompactDetail label="Stopped reason" value={stoppedReason} />
-            <CompactDetail label="Cron" value={formatCronStatus(statusPayload)} />
-          </dl>
-        </div>
-
-        {refreshState.message ? (
-          <div
-            className={
-              refreshState.status === "error"
-                ? "mt-3 border-l-2 border-rose-500 py-1 pl-3 text-[12px] font-medium leading-5 text-rose-700"
-                : "mt-3 border-l-2 border-emerald-500 py-1 pl-3 text-[12px] font-medium leading-5 text-emerald-700"
-            }
-            role="status"
-            aria-live="polite"
-          >
-            {refreshState.message}
-          </div>
-        ) : null}
-
-        {refreshState.counts ? (
-          <dl className="mt-3 grid gap-2 sm:grid-cols-5">
-            {COUNT_LABELS.map(({ key, label }) => (
-              <MetricCard key={key} label={label} value={refreshState.counts?.[key] ?? 0} />
-            ))}
-          </dl>
-        ) : null}
+    <DashboardSection title="Refresh operations">
+      <div className="mt-4 flex flex-wrap items-center gap-2.5">
+        <Button
+          type="button"
+          variant="accent"
+          onClick={onRefresh}
+          disabled={refreshing || !operationsAvailable}
+          aria-busy={refreshing}
+          className="w-full sm:w-auto"
+        >
+          <RefreshCcw className={refreshing ? "animate-spin" : ""} size={16} />
+          {refreshing
+            ? "Refreshing…"
+            : initialStatusLoading
+              ? "Loading status…"
+              : operationsAvailable
+                ? "Refresh homepage fares"
+                : "Refresh unavailable"}
+        </Button>
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={onReload}
+          disabled={loading || refreshing}
+          aria-busy={loading}
+          className="w-full sm:w-auto"
+        >
+          <RefreshCcw className={loading ? "animate-spin" : ""} size={16} />
+          {loading ? "Loading…" : "Reload status"}
+        </Button>
       </div>
+
+      <dl aria-label="Refresh operation status" className="mt-4 grid grid-cols-2 gap-x-6 gap-y-4 border-t border-[#E7ECF5] pt-4 lg:grid-cols-4">
+        <CompactDetail label="Latest snapshot" value={statusPayload.dataAvailable ? formatSnapshotTime(statusPayload.lastRefreshAt) : "Unavailable"} />
+        <CompactDetail label="Provider calls" value={providerCallsUsed} />
+        <CompactDetail label="Stopped reason" value={stoppedReason} />
+        <CompactDetail label="Cron" value={formatCronStatus(statusPayload)} />
+      </dl>
+
+      {refreshState.message ? (
+        <div
+          className={
+            refreshState.status === "error"
+              ? "mt-4 border-l-2 border-rose-500 py-1 pl-3 text-[12px] font-medium leading-5 text-rose-700"
+              : "mt-4 border-l-2 border-emerald-500 py-1 pl-3 text-[12px] font-medium leading-5 text-emerald-700"
+          }
+          role="status"
+          aria-live="polite"
+        >
+          {refreshState.message}
+        </div>
+      ) : null}
+
+      {refreshState.counts ? (
+        <dl className="mt-4 grid grid-cols-2 gap-x-5 gap-y-3 border-t border-[#E7ECF5] pt-3 sm:grid-cols-3 lg:grid-cols-5">
+          {COUNT_LABELS.map(({ key, label }) => (
+            <MetricCard key={key} label={label} value={refreshState.counts?.[key] ?? 0} />
+          ))}
+        </dl>
+      ) : null}
+
       {!initialStatusLoading && !operationsAvailable ? (
-        <p className="mt-3 border-l-[3px] border-rose-500 py-1 pl-3 text-[13px] font-medium text-rose-700">
+        <p className="mt-4 border-l-[3px] border-rose-500 py-1 pl-3 text-[13px] font-medium text-rose-700">
           Manual refresh unavailable while the snapshot store is offline.
         </p>
       ) : null}
@@ -887,6 +886,7 @@ function MarketReadinessDashboard({
   selectedRouteScope: string | null;
   onInspectMarket: (marketCode: string) => void;
 }) {
+  const [expandedMarket, setExpandedMarket] = useState<string | null>(null);
   const displayedCodes = new Set(markets.map((market) => normalizeAdminHomepageFareMarketCode(market.marketCode)));
   const outsidePublicCount = marketsNeedingAnotherRun.filter(
     (market) => market.needed && !displayedCodes.has(normalizeAdminHomepageFareMarketCode(market.market)),
@@ -895,14 +895,14 @@ function MarketReadinessDashboard({
   return (
     <DashboardSection title="Market coverage">
       {markets.length ? (
-        <div className="mt-3 min-w-0">
-          <div className="hidden grid-cols-[minmax(160px,1.3fr)_90px_90px_80px_160px_90px] gap-3 border-y border-[#D8E1EC] px-3 py-2.5 text-[11px] font-semibold uppercase tracking-[0.04em] text-[#64748B] lg:grid">
+        <div className="mt-4 min-w-0">
+          <div className="hidden gap-3 border-y border-[#D8E1EC] px-3 py-3 text-[12px] font-semibold uppercase tracking-[0.03em] text-[#64748B] lg:grid lg:grid-cols-[minmax(150px,1.5fr)_70px_85px_72px_minmax(120px,1fr)_minmax(240px,auto)]">
             <span>Market</span>
             <span>Popular</span>
             <span>Discovery</span>
             <span>Backup</span>
             <span>Health</span>
-            <span aria-hidden="true" />
+            <span className="text-right">Actions</span>
           </div>
           <ul aria-label="Public market coverage" className="divide-y divide-[#E7ECF5] border-b border-[#D8E1EC]">
             {markets.map((market) => {
@@ -913,43 +913,61 @@ function MarketReadinessDashboard({
               const nextRunNeeded = nextRun ? nextRun.needed : !market.targetMet;
               const nextRunCause = nextRun?.reason;
               const needsAttention = !market.targetMet || market.status !== "ready";
+              const showDetails = expandedMarket === market.marketCode;
+              const detailsId = "fare-market-details-" + market.marketCode.replace(/[^a-zA-Z0-9_-]/g, "-");
               const healthNotes = [
-                (market.freshCount ?? 0) > 0 ? `${market.freshCount} fresh` : null,
-                (market.missingCount ?? 0) > 0 ? `${market.missingCount} missing` : null,
-                market.failed > 0 ? `${market.failed} failed` : null,
+                (market.freshCount ?? 0) > 0 ? String(market.freshCount) + " fresh" : null,
+                (market.missingCount ?? 0) > 0 ? String(market.missingCount) + " missing" : null,
+                market.failed > 0 ? String(market.failed) + " failed" : null,
               ].filter(Boolean).join(" · ") || "No issues";
 
               return (
                 <li key={market.marketCode} className="min-w-0">
-                  <div className={"grid min-w-0 grid-cols-2 items-center gap-x-3 gap-y-2 px-3 py-3.5 lg:grid-cols-[minmax(160px,1.3fr)_90px_90px_80px_160px_90px] " + (selected ? "bg-[#F2F7FF]" : "")}>
+                  <div className={"grid min-w-0 grid-cols-2 items-center gap-x-4 gap-y-2 px-3 py-3.5 lg:grid-cols-[minmax(150px,1.5fr)_70px_85px_72px_minmax(120px,1fr)_minmax(240px,auto)] lg:gap-x-3 " + (selected ? "bg-[#F2F7FF]" : "")}>
                     <div className="col-span-2 min-w-0 lg:col-span-1">
-                      <span className="block truncate text-[13px] font-semibold text-[#020617]">{market.marketLabel}</span>
-                      <span className="mt-0.5 block text-[11px] text-[#64748B]">{market.marketCode} · {market.marketGroup}</span>
+                      <span className="block text-[13px] font-semibold leading-5 text-[#020617]">{market.marketLabel}</span>
+                      <span className="mt-0.5 block text-[12px] leading-4 text-[#64748B]">{market.marketCode} · {market.marketGroup}</span>
                     </div>
-                    <span className="text-[12px] font-medium tabular-nums text-[#0F172A]"><span className="mr-1 text-[#64748B] lg:hidden">Popular</span>{market.popularVisibleFresh}/{market.popularVisibleTarget}</span>
-                    <span className="text-[12px] font-medium tabular-nums text-[#0F172A]"><span className="mr-1 text-[#64748B] lg:hidden">Discovery</span>{market.discoveryVisibleFresh}/{market.discoveryVisibleTarget}</span>
-                    <span className="text-[12px] font-medium tabular-nums text-[#0F172A]"><span className="mr-1 text-[#64748B] lg:hidden">Backup</span>{market.backupFresh}/{market.backupTarget}</span>
+                    <span className="text-[13px] font-medium tabular-nums text-[#0F172A]"><span className="mr-1.5 text-[12px] text-[#64748B] lg:hidden">Popular</span>{market.popularVisibleFresh}/{market.popularVisibleTarget}</span>
+                    <span className="text-[13px] font-medium tabular-nums text-[#0F172A]"><span className="mr-1.5 text-[12px] text-[#64748B] lg:hidden">Discovery</span>{market.discoveryVisibleFresh}/{market.discoveryVisibleTarget}</span>
+                    <span className="text-[13px] font-medium tabular-nums text-[#0F172A]"><span className="mr-1.5 text-[12px] text-[#64748B] lg:hidden">Backup</span>{market.backupFresh}/{market.backupTarget}</span>
                     <div className="min-w-0">
                       <MarketStatusBadge status={market.status} />
-                      <span className="mt-1 block text-[11px] leading-4 text-[#64748B]">{healthNotes}</span>
+                      <span className="mt-1 block text-[12px] leading-5 text-[#64748B]">{healthNotes}</span>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => onInspectMarket(market.marketCode)}
-                      aria-pressed={selected}
-                      aria-label={`Inspect routes for ${market.marketLabel}`}
-                      className="col-span-2 min-h-8 justify-self-start rounded-sm text-left text-[12px] font-semibold text-[#004BB8] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] lg:col-span-1 lg:justify-self-end"
-                    >
-                      Inspect routes
-                    </button>
+                    <div className="col-span-2 flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1 lg:col-span-1 lg:justify-end">
+                      {needsAttention ? (
+                        <button
+                          type="button"
+                          aria-expanded={showDetails}
+                          aria-controls={detailsId}
+                          onClick={() => setExpandedMarket(showDetails ? null : market.marketCode)}
+                          className="inline-flex min-h-9 items-center gap-1.5 whitespace-nowrap text-[12px] font-medium text-[#475569] hover:text-[#004BB8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]"
+                        >
+                          Coverage details
+                          <ChevronDown size={14} aria-hidden="true" className={"shrink-0 transition-transform " + (showDetails ? "rotate-180" : "")} />
+                        </button>
+                      ) : null}
+                      <button
+                        type="button"
+                        onClick={() => onInspectMarket(market.marketCode)}
+                        aria-pressed={selected}
+                        aria-label={"Inspect routes for " + market.marketLabel}
+                        className="inline-flex min-h-9 items-center whitespace-nowrap text-[12px] font-semibold text-[#004BB8] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]"
+                      >
+                        Inspect routes
+                      </button>
+                    </div>
                   </div>
                   {needsAttention ? (
-                    <details className="group mx-3 mb-3 border-l-2 border-amber-500 pl-3">
-                      <summary className="flex cursor-pointer list-none items-center gap-2 py-1 text-[12px] font-medium text-[#475569] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] [&::-webkit-details-marker]:hidden">
-                        <span>Coverage details</span>
-                        <ChevronDown size={14} aria-hidden="true" className="shrink-0 transition-transform group-open:rotate-180" />
-                      </summary>
-                      <dl className="mt-2 grid max-w-[800px] gap-x-4 gap-y-2 border-t border-[#E7ECF5] pt-3 sm:grid-cols-3">
+                    <div
+                      id={detailsId}
+                      hidden={!showDetails}
+                      role="region"
+                      aria-label={market.marketLabel + " coverage details"}
+                      className="border-t border-[#E7ECF5] px-4 py-3"
+                    >
+                      <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-3">
                         <CompactDetail label="Next run" value={nextRunNeeded ? "Needed" : "Not required"} />
                         <CompactDetail
                           label="Reason"
@@ -957,10 +975,10 @@ function MarketReadinessDashboard({
                         />
                         <CompactDetail
                           label="Current gaps"
-                          value={`${Math.max(0, market.popularVisibleTarget - market.popularVisibleFresh)} popular · ${Math.max(0, market.discoveryVisibleTarget - market.discoveryVisibleFresh)} discovery · ${Math.max(0, market.backupTarget - market.backupFresh)} backup`}
+                          value={Math.max(0, market.popularVisibleTarget - market.popularVisibleFresh) + " popular · " + Math.max(0, market.discoveryVisibleTarget - market.discoveryVisibleFresh) + " discovery · " + Math.max(0, market.backupTarget - market.backupFresh) + " backup"}
                         />
                       </dl>
-                    </details>
+                    </div>
                   ) : null}
                 </li>
               );
@@ -973,7 +991,7 @@ function MarketReadinessDashboard({
           ) : null}
         </div>
       ) : (
-        <p className="mt-3 border-b border-[#E7ECF5] py-3 text-[13px] leading-5 text-[#64748B]">
+        <p className="mt-4 border-b border-[#E7ECF5] py-3 text-[13px] leading-5 text-[#64748B]">
           No public market readiness metadata was returned.
         </p>
       )}
@@ -995,20 +1013,18 @@ function AdvancedDiagnostics({
   refreshCounts: RefreshCounts | null;
 }) {
   return (
-    <details id="homepage-fare-advanced-diagnostics" className="group border-b border-[#D8E1EC] py-4">
+    <details id="homepage-fare-advanced-diagnostics" className="group border-b border-[#D8E1EC] py-5">
       <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-sm text-[15px] font-semibold text-[#020617] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] [&::-webkit-details-marker]:hidden">
         <span>Advanced diagnostics</span>
         <ChevronDown size={16} aria-hidden="true" className="shrink-0 text-[#64748B] transition-transform group-open:rotate-180" />
       </summary>
-      <div className="mt-4 space-y-5">
+      <div className="mt-5 space-y-6">
         <section aria-labelledby="fallback-pools-heading">
-          <div>
-            <h4 id="fallback-pools-heading" className="text-[13px] font-semibold text-[#020617]">Fallback coverage pools</h4>
-            <p className="mt-1 text-[12px] leading-5 text-[#475569]">
-              Internal regional and global pools used for routing and replacement; they do not count as public homepage readiness.
-            </p>
-          </div>
-          <div className="mt-3 divide-y divide-[#E7ECF5] border-y border-[#E7ECF5] lg:grid lg:grid-cols-2 lg:divide-x lg:divide-y-0">
+          <h4 id="fallback-pools-heading" className="text-[14px] font-semibold text-[#020617]">Fallback coverage pools</h4>
+          <p className="mt-1 max-w-4xl text-[12px] leading-5 text-[#475569]">
+            Internal regional and global pools used for routing and replacement; they do not count as public homepage readiness.
+          </p>
+          <div className="mt-4 grid max-w-[1200px] gap-x-5 gap-y-1 md:grid-cols-2 xl:grid-cols-3">
             {pools.length ? (
               pools.map((pool) => {
                 const selected = normalizeAdminHomepageFareMarketCode(selectedRouteScope ?? "") === normalizeAdminHomepageFareMarketCode(pool.marketCode);
@@ -1018,47 +1034,63 @@ function AdvancedDiagnostics({
                     type="button"
                     onClick={() => onInspectMarket(pool.marketCode)}
                     aria-pressed={selected}
-                    className={`min-w-0 px-3 py-3 text-left transition hover:bg-[#F8FAFC] ${selected ? "bg-[#EFF6FF]" : ""}`}
+                    aria-label={"Inspect routes for " + pool.marketLabel}
+                    className={"min-w-0 border-b border-[#E7ECF5] px-2 py-3.5 text-left transition-colors hover:bg-[#F8FAFC] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] " + (selected ? "bg-[#F2F7FF]" : "")}
                   >
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="font-extrabold text-navy">{pool.marketLabel}</span>
-                      <span className="text-xs font-bold text-muted">{pool.marketCode}</span>
+                    <div className="flex min-w-0 items-start justify-between gap-3">
+                      <span className="min-w-0 text-[13px] font-semibold leading-5 text-[#020617]">{pool.marketLabel}</span>
+                      <span className="shrink-0 text-[11px] font-medium leading-5 text-[#64748B]">{pool.marketCode}</span>
                     </div>
-                    <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs font-semibold text-muted">
-                      <span>Fresh {pool.freshCount ?? 0}</span>
-                      <span>Missing {pool.missingCount ?? 0}</span>
-                      <span>Failed {pool.failed}</span>
+                    <div className="mt-2 grid grid-cols-3 gap-2 text-[12px] leading-5 text-[#64748B]">
+                      <span>Fresh <strong className="font-semibold text-[#020617]">{pool.freshCount ?? 0}</strong></span>
+                      <span>Missing <strong className="font-semibold text-[#020617]">{pool.missingCount ?? 0}</strong></span>
+                      <span>Failed <strong className="font-semibold text-[#020617]">{pool.failed}</strong></span>
                     </div>
                   </button>
                 );
               })
             ) : (
-              <p className="text-sm font-semibold text-muted">No fallback-only pools were returned.</p>
+              <p className="py-3 text-[13px] text-[#64748B]">No fallback-only pools were returned.</p>
             )}
           </div>
         </section>
 
-        <section aria-labelledby="executor-debug-heading" className="border-t border-[#E7ECF5] pt-4">
-          <h4 id="executor-debug-heading" className="text-[13px] font-semibold text-[#020617]">Executor details</h4>
-          <dl className="mt-3 grid gap-x-5 gap-y-3 sm:grid-cols-2 lg:grid-cols-4">
-            <MetricCard label="Configured routes" value={statusPayload.summary.total} />
-            <MetricCard label="Stopped reason" value={refreshCounts ? formatStoppedReason(refreshCounts.stoppedReason) : "No run yet"} />
-            <MetricCard label="Provider budget" value={refreshCounts ? (refreshCounts.stoppedReason === "provider_budget_exhausted" ? "Exhausted" : "Available") : "Not observed yet"} />
-            <MetricCard label="Route budget" value={refreshCounts ? (refreshCounts.stoppedReason === "route_budget_exhausted" ? "Exhausted" : "Available") : "Not observed yet"} />
-            <MetricCard label="Candidate pool failed" value={statusPayload.candidatePoolHealth.failed} />
-            <MetricCard label="Candidate pool unavailable" value={statusPayload.candidatePoolHealth.unavailable} />
-            <MetricCard label="Fresh used publicly" value={statusPayload.publicPriceDiagnostics.fresh_available} />
-            <MetricCard label="LKG used publicly" value={statusPayload.publicPriceDiagnostics.last_known_good_used} />
-            <MetricCard label="Exact route mismatch" value={statusPayload.publicPriceDiagnostics.exact_route_mismatch} />
-            <MetricCard label="Replacement candidates" value={refreshCounts ? sumCountRecord(refreshCounts.replacementCandidatesUsedByMarket) : sumCountRecord(statusPayload.replacementCandidatesUsedByMarket)} />
-            <MetricCard label="Timeouts" value={refreshCounts ? sumCountRecord(refreshCounts.timeoutByMarket) : sumCountRecord(statusPayload.timeoutByMarket)} />
-            <MetricCard label="Scheduler cadence" value={statusPayload.nextExpectedCronRefresh ?? "Not provided"} />
-            <MetricCard label="Scheduler verification" value="Not observable from this service" />
-            <MetricCard label="Visible gaps attempted" value={refreshCounts?.visibleGapsAttempted.length ?? 0} />
-            <MetricCard label="Immediate replacements attempted" value={refreshCounts?.replacementsUsed.length ?? 0} />
-            <MetricCard label="Executor targets" value={refreshCounts ? formatStringList(refreshCounts.targetedMarkets, "none") : "No manual run yet"} />
-            <MetricCard label="Markets needing another run" value={refreshCounts ? formatMarketsNeedingRun(refreshCounts.marketsNeedingAnotherRun) : formatMarketsNeedingRun(statusPayload.marketsNeedingAnotherRun)} />
-          </dl>
+        <section aria-labelledby="executor-debug-heading" className="border-t border-[#E7ECF5] pt-5">
+          <h4 id="executor-debug-heading" className="text-[14px] font-semibold text-[#020617]">Executor details</h4>
+          <div className="mt-4 grid gap-x-8 gap-y-5 lg:grid-cols-2">
+            <div className="min-w-0">
+              <h5 className="text-[12px] font-semibold text-[#334155]">Execution and budgets</h5>
+              <dl className="mt-2 grid grid-cols-2 gap-x-5 gap-y-4">
+                <MetricCard label="Configured routes" value={statusPayload.summary.total} />
+                <MetricCard label="Stopped reason" value={refreshCounts ? formatStoppedReason(refreshCounts.stoppedReason) : "No run yet"} />
+                <MetricCard label="Provider budget" value={refreshCounts ? (refreshCounts.stoppedReason === "provider_budget_exhausted" ? "Exhausted" : "Available") : "Not observed yet"} />
+                <MetricCard label="Route budget" value={refreshCounts ? (refreshCounts.stoppedReason === "route_budget_exhausted" ? "Exhausted" : "Available") : "Not observed yet"} />
+                <MetricCard label="Candidate pool failed" value={statusPayload.candidatePoolHealth.failed} />
+                <MetricCard label="Candidate pool unavailable" value={statusPayload.candidatePoolHealth.unavailable} />
+                <MetricCard label="Replacement candidates" value={refreshCounts ? sumCountRecord(refreshCounts.replacementCandidatesUsedByMarket) : sumCountRecord(statusPayload.replacementCandidatesUsedByMarket)} />
+                <MetricCard label="Timeouts" value={refreshCounts ? sumCountRecord(refreshCounts.timeoutByMarket) : sumCountRecord(statusPayload.timeoutByMarket)} />
+              </dl>
+            </div>
+            <div className="min-w-0">
+              <h5 className="text-[12px] font-semibold text-[#334155]">Public fare outcomes</h5>
+              <dl className="mt-2 grid grid-cols-2 gap-x-5 gap-y-4">
+                <MetricCard label="Fresh used publicly" value={statusPayload.publicPriceDiagnostics.fresh_available} />
+                <MetricCard label="LKG used publicly" value={statusPayload.publicPriceDiagnostics.last_known_good_used} />
+                <MetricCard label="Exact route mismatch" value={statusPayload.publicPriceDiagnostics.exact_route_mismatch} />
+                <MetricCard label="Visible gaps attempted" value={refreshCounts?.visibleGapsAttempted.length ?? 0} />
+                <MetricCard label="Immediate replacements attempted" value={refreshCounts?.replacementsUsed.length ?? 0} />
+              </dl>
+            </div>
+          </div>
+          <div className="mt-5 border-t border-[#E7ECF5] pt-4">
+            <h5 className="text-[12px] font-semibold text-[#334155]">Scheduling and market targets</h5>
+            <dl className="mt-2 grid gap-x-8 gap-y-4 sm:grid-cols-2">
+              <MetricCard label="Scheduler cadence" value={statusPayload.nextExpectedCronRefresh ?? "Not provided"} />
+              <MetricCard label="Scheduler verification" value="Not observable from this service" />
+              <MetricCard label="Executor targets" value={refreshCounts ? formatStringList(refreshCounts.targetedMarkets, "none") : "No manual run yet"} />
+              <MetricCard label="Markets needing another run" value={refreshCounts ? formatMarketsNeedingRun(refreshCounts.marketsNeedingAnotherRun) : formatMarketsNeedingRun(statusPayload.marketsNeedingAnotherRun)} />
+            </dl>
+          </div>
         </section>
       </div>
     </details>
@@ -1090,44 +1122,49 @@ function MarketRouteInspector({
   onFilterChange: (filter: AdminHomepageFareRouteGroupFilter) => void;
   routeDetailsRef: RefObject<HTMLDivElement | null>;
 }) {
-  return (
-    <DashboardSection
-      title="Route inspector"
-    >
-      <div className="mt-3 flex flex-col gap-3 border-y border-[#E7ECF5] py-3 sm:flex-row sm:items-end">
-        <label className="min-w-0 flex-1 text-[12px] font-medium text-[#64748B]">
-          Market
-          <select
-            value={selectedRouteScope ?? ""}
-            onChange={(event) => {
-              if (event.target.value) onSelectMarket(event.target.value);
-            }}
-            className="mt-1 block h-9 w-full rounded-md border border-[#CBD5E1] bg-white px-2.5 text-[13px] font-medium normal-case tracking-normal text-[#020617] outline-none focus:border-[#004BB8] focus:ring-1 focus:ring-[#004BB8]"
-          >
-            <option value="">Select market</option>
-            <option value={ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE}>All routes</option>
-            {publicGroups.map((group) => (
-              <option key={group.marketCode} value={group.marketCode}>{group.marketLabel}</option>
-            ))}
-          </select>
-        </label>
+  const marketOptions = [
+    { value: "", label: "Select market" },
+    { value: ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE, label: "All routes" },
+    ...publicGroups.map((group) => ({ value: group.marketCode, label: group.marketLabel })),
+  ];
+  // A fallback pool can be inspected from Advanced diagnostics. Keep its name
+  // visible in the selector even though it is outside the public country list.
+  if (selectedGroup && selectedRouteScope && selectedRouteScope !== ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE &&
+    !marketOptions.some((option) => normalizeAdminHomepageFareMarketCode(option.value) === normalizeAdminHomepageFareMarketCode(selectedRouteScope))) {
+    marketOptions.push({ value: selectedRouteScope, label: selectedGroup.displayName });
+  }
 
-        <label className="min-w-0 flex-1 text-[12px] font-medium text-[#64748B]">
-          Status
-          <select
+  return (
+    <DashboardSection title="Route inspector">
+      <div className="mt-4 grid gap-x-4 gap-y-3 border-y border-[#E7ECF5] py-4 sm:grid-cols-[minmax(0,320px)_minmax(0,240px)]">
+        <div className="min-w-0">
+          <p className="mb-1.5 text-[12px] font-medium text-[#64748B]">Market</p>
+          <SearchMonitorSelect
+            label="Market"
+            name="homepage-fare-market"
+            appearance="fare"
+            truncateLabel
+            value={selectedRouteScope ?? ""}
+            options={marketOptions}
+            onValueChange={onSelectMarket}
+          />
+        </div>
+        <div className="min-w-0">
+          <p className="mb-1.5 text-[12px] font-medium text-[#64748B]">Status</p>
+          <SearchMonitorSelect
+            label="Status"
+            name="homepage-fare-status"
+            appearance="fare"
+            truncateLabel
             value={filter}
-            onChange={(event) => onFilterChange(event.target.value as AdminHomepageFareRouteGroupFilter)}
-            className="mt-1 block h-9 w-full rounded-md border border-[#CBD5E1] bg-white px-2.5 text-[13px] font-medium normal-case tracking-normal text-[#020617] outline-none focus:border-[#004BB8] focus:ring-1 focus:ring-[#004BB8]"
-          >
-            {ROUTE_FILTERS.map((item) => (
-              <option key={item.key} value={item.key}>{item.label}</option>
-            ))}
-          </select>
-        </label>
+            options={ROUTE_FILTERS.map(({ key, label }) => ({ value: key, label }))}
+            onValueChange={(next) => onFilterChange(next as AdminHomepageFareRouteGroupFilter)}
+          />
+        </div>
       </div>
 
       {!publicGroups.length && !loading ? (
-        <p className="mt-4 rounded-xl border border-dashed border-slate-300 p-4 text-sm font-semibold text-muted">
+        <p role="status" className="mt-3 py-3 text-[13px] leading-5 text-[#64748B]">
           No public market route groups match this filter.
         </p>
       ) : null}
@@ -1174,21 +1211,21 @@ function SelectedRouteDetails({
   const isViewAll = group.marketCode === "ALL";
 
   return (
-    <div ref={routeDetailsRef} className="mt-4 min-w-0 overflow-hidden border-y border-[#D8E1EC] bg-white">
+    <div ref={routeDetailsRef} className="mt-4 min-w-0 border-y border-[#D8E1EC] bg-white">
       <div className="border-b border-[#E7ECF5] px-3 py-3">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h5 className="text-base font-extrabold text-navy">
+            <h5 className="text-[15px] font-semibold leading-6 text-[#020617]">
               {isViewAll ? "All routes" : group.displayName} — {page.totalRoutes} total routes
             </h5>
-            <p className="mt-1 text-sm font-semibold text-muted">
+            <p className="mt-1 text-[12px] leading-5 text-[#64748B]">
               Showing {page.start}–{page.end} of {page.totalRoutes}
               {isViewAll ? " · Debug view across all markets" : ` · ${group.marketCode}`}
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <MarketGroupStatusBadge status={group.status} />
-            <div className="flex items-center gap-2 text-sm font-bold text-muted">
+            <div className="flex flex-wrap items-center gap-2 text-[12px] font-medium text-[#475569]">
               <button
                 type="button"
                 onClick={onPreviousPage}
@@ -1244,7 +1281,7 @@ function RouteDetailsTable({
   }
 
   return (
-    <div className="overflow-x-auto">
+    <div className="max-w-full overflow-x-auto" role="region" aria-label="Route inspection results" tabIndex={0}>
       <table className="min-w-[1120px] text-left text-[13px]">
         <thead className="border-b border-[#E7ECF5] text-[12px] font-medium uppercase text-[#64748B]">
           <tr>
@@ -1364,7 +1401,7 @@ function MetricCard({
   return (
     <div className="min-w-0 border-t border-[#E7ECF5] pt-2">
       <dt className="text-[12px] text-[#64748B]">{label}</dt>
-      <dd className="mt-0.5 break-words text-[13px] font-medium text-[#0F172A]">{value}</dd>
+      <dd className="mt-1 break-words text-[13px] font-medium leading-5 text-[#0F172A]">{value}</dd>
     </div>
   );
 }
