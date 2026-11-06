@@ -33,6 +33,15 @@ test("Audit Logs keeps the main rows readable and moves technical audit values i
   assert.ok(page.includes('<AuditTechnicalDetail label="Target ID" value={log.targetId || "Not provided"} />'));
 });
 
+test("Audit Logs gives the Admin column priority and keeps desktop emails on one line", () => {
+  assert.ok(page.includes('minmax(150px,0.72fr)_minmax(360px,1.55fr)_minmax(240px,1.1fr)_minmax(220px,0.95fr)'));
+  assert.equal(page.includes('minmax(210px,1.15fr)'), false);
+  assert.equal(page.includes('minmax(240px,1.35fr)'), false);
+  assert.ok(page.includes('min-w-[1080px]'));
+  assert.ok(page.includes('md:truncate md:whitespace-nowrap'));
+  assert.ok(page.includes('title={log.adminEmail}'));
+});
+
 test("Every audit row is expandable while target email stays out of the permanent columns", () => {
   assert.ok(toolbar.includes("Search target email"));
   assert.ok(toolbar.includes('placeholder="Search target email"'));
