@@ -14,7 +14,7 @@ test("admin navigation restores the flat module order without a duplicate Flight
 test("admin navigation exposes parent workspaces in the header", () => {
   assert.deepEqual(adminNavigationGroups, [
     { label: "Operations", hrefs: ["/admin", "/admin/users", "/admin/searches/activity", "/admin/confirmed-trips", "/admin/support"] },
-    { label: "Provider readiness", hrefs: ["/admin/providers", "/admin/homepage-fares"] },
+    { label: "Provider readiness", hrefs: ["/admin/providers"] },
     { label: "Website content", hrefs: ["/admin/content"] },
     { label: "System & security", hrefs: ["/admin/system", "/admin/settings"] },
   ]);
@@ -57,7 +57,7 @@ test("horizontal admin navigation keeps child routes under parent workspaces", (
   assert.deepEqual(trips?.children.map((item) => item.href), ["/admin/confirmed-trips/monitoring"]);
   assert.deepEqual(support?.children.map((item) => item.href), ["/admin/account-deletions"]);
   assert.deepEqual(system?.children.map((item) => item.href), []);
-  assert.deepEqual(homepageFares?.children.map((item) => item.href), []);
+  assert.equal(homepageFares, undefined, "Homepage Fares must not appear in the admin header");
   assert.deepEqual(settings?.children.map((item) => item.href), []);
   assert.equal(entries.some(({ item }) => item.href === "/admin/flights"), false);
   assert.equal(entries.some(({ item }) => item.href === "/admin/redirects"), false);
@@ -93,11 +93,12 @@ test("retired operational report routes remain available without nested menu ent
   }
 });
 
-test("Homepage Fares is a top-level readiness workspace and does not activate Providers", () => {
+test("Homepage Fares remains a direct admin route without appearing in the navbar or activating Providers", () => {
   const homepageFares = getAdminNavForRole("ADMIN").find((item) => item.href === "/admin/homepage-fares");
   assert.ok(homepageFares);
   assert.equal(homepageFares.label, "Homepage Fares");
   assert.equal(homepageFares.parentHref, undefined);
+  assert.equal(getAdminHeaderGroups("ADMIN").some(group => group.links.some(entry => entry.item.href === "/admin/homepage-fares")), false);
 
   const providers = getAdminHeaderGroups("ADMIN")
     .flatMap((group) => group.links)

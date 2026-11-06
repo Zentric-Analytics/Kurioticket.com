@@ -172,10 +172,15 @@ try {
         }
         if (route === "settings") {
           await expect(main.getByRole("link", { name: "Open fare operations" })).toHaveCount(0);
+          const adminNav = page.getByRole("navigation", { name: "Admin navigation" });
           if (width === 1440) {
-            await expect(page.getByRole("navigation", { name: "Admin navigation" }).getByRole("link", { name: "Homepage Fares", exact: true })).toHaveAttribute("href", "/admin/homepage-fares");
+            await expect(adminNav.getByRole("link", { name: "Homepage Fares", exact: true })).toHaveCount(0);
           } else {
-            await expect(page.getByRole("button", { name: "Open admin navigation" })).toBeVisible();
+            const openMenu = page.getByRole("button", { name: "Open admin navigation" });
+            await expect(openMenu).toBeVisible();
+            await openMenu.click();
+            await expect(adminNav.getByRole("link", { name: "Homepage Fares", exact: true })).toHaveCount(0);
+            await page.getByRole("button", { name: "Close admin navigation" }).click();
           }
         }
         if (route === "notifications") {
