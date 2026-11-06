@@ -182,29 +182,51 @@ test("route pagination keeps columns and layout steady across short and long pag
   assert.match(component, /keepPageHeight \? "min-h-\[740px\]" : ""/);
   assert.match(component, /\[overflow-anchor:none\]/);
   assert.match(component, /table-fixed/);
-  assert.match(component, /<colgroup>/);
-  assert.equal((component.match(/<col className="w-\[/g) || []).length, 10);
+  assert.doesNotMatch(component, /<colgroup>|min-w-\[1275px\]/);
+  assert.match(component, /lg:block/);
+  assert.match(component, /lg:hidden/);
   assert.match(component, /paginateAdminHomepageFareRoutes\(group\.routes, routePage\)/);
   assert.match(component, /disabled=\{!page\.hasNextPage\}/);
   assert.match(component, /disabled=\{!page\.hasPreviousPage\}/);
   assert.match(component, /setRoutePage\(1\)/);
 });
 
-test("route inspector shows one canonical saved fare without duplicated provider-native pricing", () => {
+test("route inspector uses one saved fare and responsive table/cards without horizontal scroll", () => {
   const table = component.slice(component.indexOf("function RouteDetailsTable("), component.indexOf("function MarketGroupStatusBadge("));
-  assert.match(table, /min-w-\[1275px\]/);
-  assert.match(table, /<th className="px-3 py-2\.5">Saved fare<\/th>/);
+  assert.match(table, /<th scope="col" className="w-\[12%\] px-2 py-3 2xl:w-\[8%\]">Saved fare<\/th>/);
   assert.match(table, /\{formatRoutePrice\(route\)\}/);
-  assert.doesNotMatch(table, /Provider native|Display price|formatProviderNativePrice/);
-  assert.equal((table.match(/<th className=/g) || []).length, 10);
-  assert.equal((table.match(/<td className=/g) || []).length, 10);
+  assert.doesNotMatch(table, /Provider native|Display price|formatProviderNativePrice|overflow-x-auto|min-w-\[1275px\]/);
+  assert.match(table, /<table className="w-full table-fixed/);
+  assert.match(table, /aria-label="Routes on this page"/);
+  assert.match(table, /2xl:table-cell/);
+  assert.match(table, /2xl:hidden/);
+  assert.match(table, /lg:hidden/);
+  assert.equal((table.match(/<th scope="col"/g) || []).length, 11);
+  assert.equal((table.match(/<td className=/g) || []).length, 11);
   assert.doesNotMatch(component, /providerNativePrice|providerNativeCurrency|function formatProviderNativePrice/);
   assert.match(component, /last_known_good: "Last-known-good"/);
   assert.match(component, /\{STATUS_BADGE_LABELS\[status\]\}/);
   assert.match(component, /whitespace-nowrap rounded-full/);
-  // The snapshot service remains unchanged and still owns all provider and public fare rules.
   assert.match(service, /providerNativePrice: price/);
   assert.match(service, /providerNativeCurrency: snapshot\.currency/);
+});
+
+test("route page places pagination beneath results, separates readiness, and retains responsive detail", () => {
+  const details = component.slice(component.indexOf("function SelectedRouteDetails("), component.indexOf("function MarketMiniMetric("));
+  const table = component.slice(component.indexOf("function RouteDetailsTable("), component.indexOf("function MarketGroupStatusBadge("));
+  assert.ok(details.indexOf("<RouteDetailsTable") < details.indexOf('<nav aria-label="Route pages"'));
+  assert.ok(details.indexOf("<MarketGroupStatusBadge") < details.indexOf("<RouteDetailsTable"));
+  assert.match(details, /aria-live="polite" aria-atomic="true"/);
+  assert.match(details, /disabled=\{!page\.hasPreviousPage\}/);
+  assert.match(details, /disabled=\{!page\.hasNextPage\}/);
+  assert.match(table, /\{route\.origin\}/);
+  assert.match(table, /\{route\.destination\}/);
+  assert.match(table, /\{route\.provider \?\? "—"\}/);
+  assert.match(table, /\{route\.replacementCandidateUsed\}/);
+  assert.match(table, /formatSnapshotTime\(route\.searchedAt\)/);
+  assert.match(table, /formatDateTime\(route\.expiresAt\)/);
+  assert.match(component, /bg-amber-500/);
+  assert.match(component, /status === "Partially ready"/);
 });
 
 test("route inspector defaults to All routes with seven distinct status options", () => {
