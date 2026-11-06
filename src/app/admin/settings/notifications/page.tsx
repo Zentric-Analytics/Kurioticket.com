@@ -58,7 +58,7 @@ export default async function AdminNotificationSettingsPage() {
         <header className="border-b border-[#D8E1EC] pb-4">
           <h2 id="settings-section-title" className="text-[17px] font-semibold leading-6 tracking-[-0.01em] text-[#020617]">Notifications</h2>
           <p className="mt-1 max-w-4xl text-[13px] leading-5 text-[#64748B]">
-            Review active operational issues. Acknowledging an alert hides that exact signal for 24 hours; it does not resolve the underlying condition.
+            Review active operational issues. Acknowledgement marks a signal as reviewed for 24 hours; it does not resolve the underlying condition.
           </p>
         </header>
 
