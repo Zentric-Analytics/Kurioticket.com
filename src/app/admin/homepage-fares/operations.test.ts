@@ -108,7 +108,7 @@ test("homepage fare readiness keeps only core customer-facing summary metrics", 
 test("fare diagnostics uses four standalone sections rather than redundant wrapper headings", () => {
   const page = readFileSync("src/app/admin/homepage-fares/diagnostics/page.tsx", "utf8");
   const diagnostics = component.slice(component.indexOf("function FareDiagnosticsSections("), component.indexOf("function MarketRouteInspector("));
-  assert.match(page, /<h1[^>]*>Fare Diagnostics<\\/h1>/);
+  assert.match(page, /<h1[^>]*>Fare Diagnostics<\/h1>/);
   for (const heading of ["Fallback coverage pools", "Refresh execution", "Public fare eligibility", "Scheduling and market targets"]) {
     assert.ok(diagnostics.includes(">" + heading + "</h2>"), "Missing heading " + heading);
   }
@@ -335,11 +335,11 @@ test("fare diagnostics differentiate manual refresh execution from snapshot elig
   const diagnostics = component.slice(component.indexOf("function FareDiagnosticsSections("), component.indexOf("function MarketRouteInspector("));
   assert.match(diagnostics, /xl:grid-cols-4/);
   assert.match(diagnostics, /label="Stopped reason"/);
-  assert.match(diagnostics, /label="Provider calls \\/ limit"/);
-  assert.match(diagnostics, /label="Route attempts \\/ limit"/);
+  assert.match(diagnostics, /label="Provider calls \/ limit"/);
+  assert.match(diagnostics, /label="Route attempts \/ limit"/);
   assert.match(diagnostics, /Latest logged manual refresh:/);
   assert.match(diagnostics, /label="Markets targeted"/);
-  assert.doesNotMatch(diagnostics, /label="Provider calls \\/ limit \\(last run\\)"/);
+  assert.doesNotMatch(diagnostics, /label="Provider calls \/ limit \(last run\)"/);
   assert.match(diagnostics, /MetricCard label="Candidate pool failed"/);
   assert.match(diagnostics, /MetricCard label="Fresh eligible snapshots"/);
   assert.match(diagnostics, /MetricCard label="Last-known-good eligible snapshots"/);
@@ -545,12 +545,12 @@ test("fare diagnostics preserve every metric while condensing zero-count fallbac
   assert.equal((diagnostics.match(/<MetricCard /g) || []).length, labels.length);
   assert.match(diagnostics, /const noCountedOutcomes = fresh === 0 && missing === 0 && failed === 0/);
   assert.match(diagnostics, /No fresh, missing or failed routes recorded/);
-  assert.match(diagnostics, /href=\\{onInspectMarket\\(pool\\.marketCode\\)\\}/);
+  assert.match(diagnostics, /href=\{onInspectMarket\(pool\.marketCode\)\}/);
   assert.match(diagnostics, /No completed manual fare refresh is recorded/);
   assert.match(diagnostics, /Logged manual refresh data is unavailable/);
   assert.match(diagnostics, /Not recorded/);
   assert.match(diagnostics, /sm:grid-cols-2/);
-  assert.doesNotMatch(diagnostics, /min-w-\\[920px\\]|overflow-x-auto|<details/);
+  assert.doesNotMatch(diagnostics, /min-w-\[920px\]|overflow-x-auto|<details/);
 });
 
 test("dedicated route page validates market hints and keeps white admin workspace", () => {
