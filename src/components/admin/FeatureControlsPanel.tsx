@@ -120,7 +120,7 @@ export function FeatureControlsPanel({
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       {!operationsAvailable ? (
         <p role="status" className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-[13px] font-medium leading-5 text-amber-800">
           Feature controls are in read-only fallback mode. Registry defaults are shown and changes are disabled.
@@ -148,7 +148,7 @@ export function FeatureControlsPanel({
             </>
           ) : null}
 
-          <div className={(hideCategoryHeading ? "" : "mt-2 ") + "divide-y divide-[#E7ECF5] border-y border-[#D8E1EC]"}>
+          <div className={(hideCategoryHeading ? "" : "mt-2 border-t border-[#D8E1EC] ") + "divide-y divide-[#E7ECF5] border-b border-[#D8E1EC]"}>
             {controls
               .filter((control) => control.category === category)
               .map((control) => {
@@ -156,7 +156,7 @@ export function FeatureControlsPanel({
                 return (
                   <article
                     key={control.key}
-                    className="flex min-w-0 flex-col gap-3 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:gap-6"
+                    className="flex min-w-0 flex-col gap-2.5 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-5"
                   >
                     <div className="min-w-0 sm:max-w-[72%]">
                       <h4 className="text-[13px] font-semibold text-[#020617]">{control.name}</h4>
@@ -166,7 +166,7 @@ export function FeatureControlsPanel({
                       </p>
                     </div>
 
-                    <div className="flex shrink-0 items-center justify-between gap-3 sm:justify-end">
+                    <div className="flex shrink-0 items-center justify-between gap-3 sm:min-w-[128px] sm:justify-end">
                       <span className={"text-[12px] font-medium " + (control.state.enabled ? "text-emerald-700" : "text-[#64748B]")}>
                         {control.state.enabled ? "Enabled" : "Disabled"}
                       </span>

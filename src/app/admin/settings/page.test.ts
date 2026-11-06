@@ -21,7 +21,7 @@ const registry = readFileSync("src/lib/feature-controls/registry.ts", "utf8");
 test("Settings is the authoritative workspace for persisted administrative controls", () => {
   assert.match(settingsPage, /<AdminPageShell title="Settings" hideHeader>/);
   assert.doesNotMatch(settingsPage, /Environment and access|ContextItem|Your access|Settings store/);
-  assert.match(settingsPage, />Feature controls<\/p>/);
+  assert.match(settingsNavigation, /label: "Feature controls"/);
   assert.match(settingsPage, />Recent changes<\/h2>/);
   assert.doesNotMatch(settingsPage, /Managed outside Settings|Runtime & credentials|Administrator access/);
   assert.doesNotMatch(settingsPage, /Homepage Fare Operations|\/admin\/homepage-fares/);
@@ -148,7 +148,7 @@ test("Settings omits nonactionable deployment and access documentation", () => {
 test("settings uses a flat administrative layout rather than dashboard cards", () => {
   assert.doesNotMatch(settingsPage, /AdminSectionCard/);
   assert.match(settingsPage, /border-b border-\[#D8E1EC\]/);
-  assert.match(settingsPage, /border-y border-\[#D8E1EC\]/);
+  assert.match(featurePanel, /divide-y divide-\[#E7ECF5\] border-b border-\[#D8E1EC\]/);
   assert.doesNotMatch(settingsPage, /SummaryItem|Protected changes|Persisted feature state|Turn major travel functions on or off/);
 });
 
@@ -196,4 +196,24 @@ test("nested Settings pages keep the existing white admin workspace", () => {
   const globalNavigation = readFileSync("src/lib/adminNavigation.ts", "utf8");
   assert.match(horizontalShell, /const settingsWorkspace = pathname === "\/admin\/settings" \|\| pathname\.startsWith\("\/admin\/settings\/"\)/);
   assert.match(globalNavigation, /return pathname === itemHref \|\| pathname\.startsWith/);
+});
+
+
+test("Settings sections share restrained desktop widths, headings, and consistent separators", () => {
+  const featureSection = readFileSync("src/components/admin/SettingsFeatureSection.tsx", "utf8");
+  const notifications = readFileSync("src/app/admin/settings/notifications/page.tsx", "utf8");
+  const notificationPanel = readFileSync("src/components/admin/AdminNotificationPreferencesPanel.tsx", "utf8");
+  const recent = readFileSync("src/app/admin/settings/recent-changes/page.tsx", "utf8");
+  assert.match(settingsLayout, /max-w-\[1040px\]/);
+  assert.match(settingsLayout, /md:grid-cols-\[232px_minmax\(0,1fr\)\]/);
+  assert.match(settingsNavigation, /space-y-4/);
+  for (const section of [featureSection, notifications, recent]) {
+    assert.match(section, /border-b border-\[#D8E1EC\] pb-4/);
+    assert.match(section, /text-\[17px\] font-semibold leading-6/);
+  }
+  assert.doesNotMatch(featureSection, />Feature controls<\/p>/);
+  assert.match(featurePanel, /sm:min-w-\[128px\] sm:justify-end/);
+  assert.match(notificationPanel, /sm:min-w-\[128px\] sm:justify-end/);
+  assert.match(recent, /sm:grid-cols-\[minmax\(0,1fr\)_108px_140px\]/);
+  assert.doesNotMatch(settingsLayout, /<AdminHorizontalShell|<AdminHeader/);
 });

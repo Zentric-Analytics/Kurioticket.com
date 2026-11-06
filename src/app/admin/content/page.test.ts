@@ -55,7 +55,7 @@ test("homepage fare operations stay operational while linking to their content s
   assert.doesNotMatch(contentPage, /HomepageFaresRefreshCard/);
   assert.doesNotMatch(systemPage, /HomepageFaresRefreshCard/);
   assert.doesNotMatch(settingsPage, /HomepageFaresRefreshCard/);
-  assert.match(settingsPage, /Feature controls/);
+  assert.match(settingsPage, /SettingsFeatureSection/);
   assert.doesNotMatch(settingsPage, /Homepage Fare Operations|\/admin\/homepage-fares/);
   assert.match(homepageFarePage, /title="Homepage Fare Operations"/);
   assert.match(homepageFarePage, /HomepageFaresRefreshCard/);

@@ -29,18 +29,17 @@ export async function SettingsFeatureSection({ category }: { category: FeatureCa
 
   return (
     <section aria-labelledby="settings-section-title" className="min-w-0">
-      <p className="text-[12px] font-medium text-[#64748B]">Feature controls</p>
-      <h2 id="settings-section-title" className="mt-1 text-[16px] font-semibold text-[#020617]">{section.title}</h2>
-      <p className="mt-1 text-[12px] leading-5 text-[#64748B]">{section.description}</p>
-      <div className="mt-3">
-        <FeatureControlsPanel
-          initialControls={featureControls.controls.filter((control) => control.category === category)}
-          environment={featureControls.environment}
-          canControlProduction={canControlProduction}
-          operationsAvailable={featureControls.dataAvailable}
-          hideCategoryHeading
-        />
+      <div className="border-b border-[#D8E1EC] pb-4">
+        <h2 id="settings-section-title" className="text-[17px] font-semibold leading-6 tracking-[-0.01em] text-[#020617]">{section.title}</h2>
+        <p className="mt-1 text-[12px] leading-5 text-[#64748B]">{section.description}</p>
       </div>
+      <FeatureControlsPanel
+        initialControls={featureControls.controls.filter((control) => control.category === category)}
+        environment={featureControls.environment}
+        canControlProduction={canControlProduction}
+        operationsAvailable={featureControls.dataAvailable}
+        hideCategoryHeading
+      />
     </section>
   );
 }
