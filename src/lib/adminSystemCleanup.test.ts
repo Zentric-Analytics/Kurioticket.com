@@ -3,10 +3,11 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 const source = (path: string) => readFileSync(path, "utf8");
 
-test("Alerts remains registered but is not a System child destination", () => {
+test("Notifications belongs to the Settings sidebar without duplicate global Alerts navigation", () => {
   const nav = source("src/lib/adminNavigation.ts");
-  const alert = nav.split("\n").find(line => line.includes('href: "/admin/notifications"'))!;
-  assert.ok(alert); assert.doesNotMatch(alert, /parentHref/); assert.match(alert, /roles: \["ADMIN"\]/);
+  const settingsNav = source("src/components/admin/AdminSettingsNavigation.tsx");
+  assert.doesNotMatch(nav, /href: "\/admin\/notifications"/);
+  assert.match(settingsNav, /href: "\/admin\/settings\/notifications"/);
 });
 test("System removes general Alerts shortcuts and circular configuration investigation", () => {
   const page = source("src/app/admin/system/page.tsx");
@@ -44,12 +45,14 @@ test("useful actions, access guards, emergency checks and the global bell remain
   assert.match(source("src/app/admin/system/cms-health/page.tsx"), /CmsScopeHealthRow/);
   assert.match(source("src/components/admin/CmsScopeHealthRow.tsx"), /CmsScopeHardeningActions/);
   assert.match(source("src/app/admin/email-delivery/page.tsx"), /EmailDeliveryTestButton enabled=\{sendingReady\}/);
-  const alerts = source("src/app/admin/notifications/page.tsx");
-  assert.match(alerts, /requireAdminSession\("\/admin\/notifications"\)/);
+  const alerts = source("src/app/admin/settings/notifications/page.tsx");
+  const legacy = source("src/app/admin/notifications/page.tsx");
+  assert.match(alerts, /requireAdminSession\("\/admin\/settings\/notifications"\)/);
   assert.match(alerts, /isProtectedAdminEmail/);
   assert.match(alerts, /getCurrentDatabaseOutageAdminToken/);
   assert.match(alerts, /AdminAlertAcknowledgeButton/);
   assert.match(alerts, /alertSourceHref\(alert\.actionHref\)/);
+  assert.match(legacy, /redirect\("\/admin\/settings\/notifications"\)/);
   assert.match(source("src/components/admin/AdminHorizontalShell.tsx"), /<AdminNotificationsPanel/);
   assert.match(source("src/components/admin/AdminNotificationsPanel.tsx"), /unreadCount/);
 });
