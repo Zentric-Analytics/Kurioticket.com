@@ -24,6 +24,7 @@ import { CmsEditorActions, type CmsEditorAction } from "@/components/admin/CmsEd
 import { CmsLocationCombobox } from "@/components/admin/CmsLocationCombobox";
 import { AdminDirectorySelect } from "@/components/admin/AdminDirectorySelect";
 import { CmsExpandingTextField } from "@/components/admin/CmsExpandingTextField";
+import { CmsImageUploadField } from "@/components/admin/CmsImageUploadField";
 import { HomepageDestinationDraftPreview } from "@/components/admin/HomepageDestinationDraftPreview";
 import { CmsRouteHotelDraftPreview } from "@/components/admin/CmsRouteHotelDraftPreview";
 import type { CmsLocationOption } from "@/lib/adminCmsLocationOptions";
@@ -365,7 +366,7 @@ export function HomepageCmsEditor({
                   {routeValidation.destinationError ? <p className="mt-1 text-[11px] leading-4 text-rose-700">{routeValidation.destinationError}</p> : null}
                 </div>
               </div>
-              <CmsExpandingTextField label="Image" value={fields.image ?? ""} onChange={(value) => setField("image", value)} disabled={pending || archived} />
+              <CmsImageUploadField value={fields.image ?? ""} onChange={(value) => setField("image", value)} disabled={pending || archived} />
               <CmsExpandingTextField label="Image alt text" value={fields.imageAlt ?? ""} onChange={(value) => setField("imageAlt", value)} disabled={pending || archived} />
             </>
           ) : null}
@@ -388,7 +389,7 @@ export function HomepageCmsEditor({
               <Field label="Route note" className="max-w-[480px]">
                 <AdminTextarea className={`${editorControlClass} h-auto min-h-24`} maxLength={cmsFieldLimits.routeNote} value={fields.routeNote ?? ""} onChange={(event) => setField("routeNote", event.target.value)} disabled={pending || archived} />
               </Field>
-              <CmsExpandingTextField label="Image" value={fields.image ?? ""} onChange={(value) => setField("image", value)} disabled={pending || archived} />
+              <CmsImageUploadField value={fields.image ?? ""} onChange={(value) => setField("image", value)} disabled={pending || archived} />
               <CmsExpandingTextField label="Image alt text" value={fields.imageAlt ?? ""} onChange={(value) => setField("imageAlt", value)} disabled={pending || archived} />
             </>
           ) : null}
@@ -429,7 +430,7 @@ export function HomepageCmsEditor({
               </div>
               <TextField label="Search value" name="searchValue" fields={fields} setField={setField} disabled />
               <p className="text-[12px] leading-5 text-[#64748B]">Country, country code, type and search value come from the canonical catalogue and are read-only to keep public hotel searches reliable.</p>
-              <CmsExpandingTextField label="Image (optional)" value={fields.image ?? ""} onChange={(value) => setField("image", value)} disabled={pending || archived} />
+              <CmsImageUploadField optional value={fields.image ?? ""} onChange={(value) => setField("image", value)} disabled={pending || archived} />
               <CmsExpandingTextField label="Image alt text (optional)" value={fields.imageAlt ?? ""} onChange={(value) => setField("imageAlt", value)} disabled={pending || archived} />
             </>
           ) : null}
