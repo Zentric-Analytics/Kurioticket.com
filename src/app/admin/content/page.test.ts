@@ -510,13 +510,18 @@ test("CMS image upload is authenticated, size-limited, durable and draft-only", 
   assert.match(field, /Save your draft, then publish/);
 
   assert.match(post, /requireAdminApiSession\(\)/);
-  assert.match(post, /if \(origin && origin !== new URL\(request\.url\)\.origin\)/);
+  assert.match(post, /if \(!isSameOriginRequest\(request\)\)/);
   assert.match(post, /getCmsImageStorageConfig\(\)/);
   assert.match(post, /readLimitedBody\(request\)/);
   assert.match(post, /validateCmsImageFile/);
   assert.match(post, /storeCmsImage\(filename, bytes\)/);
   assert.match(post, /writeAdminAuditLog/);
   assert.match(post, /CMS_IMAGE_UPLOADED/);
+  assert.match(post, /if \(!logged\) \{/);
+  assert.match(post, /await deleteCmsImage\(filename\)/);
+  assert.match(post, /\[cms:image-upload-rollback-failed\]/);
+  assert.match(storage, /method: "PUT" \| "GET" \| "DELETE"/);
+  assert.match(storage, /method: "DELETE"/);
   assert.doesNotMatch(post, /publishCmsContent|action:\s*"publish"/);
 
   assert.match(get, /cmsImageContentType\(filename\)/);
