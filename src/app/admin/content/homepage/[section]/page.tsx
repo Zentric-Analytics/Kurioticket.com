@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { ContentDirectoryToolbar } from "@/components/admin/ContentDirectoryToolbar";
@@ -6,7 +5,7 @@ import { ContentPageFrame, ContentEmptyState } from "@/components/admin/ContentW
 import { HomepageCmsListClient } from "@/components/admin/HomepageCmsListClient";
 import { CmsCreateLink } from "@/components/admin/CmsCreateLink";
 import type { CmsContentStatus } from "@/generated/prisma/enums";
-import { getHomepageCmsSection, homepageCmsSections } from "@/lib/adminHomepageCms";
+import { getHomepageCmsSection, homepageCmsSections, sortHomepageCmsDirectoryItems } from "@/lib/adminHomepageCms";
 import { homepageCmsListNavigation } from "@/lib/adminContentNavigation";
 import {
   CmsContentError,
@@ -38,7 +37,7 @@ export default async function HomepageCmsSectionPage({ params, searchParams }: P
       ? requestedMarket
       : defaultMarket;
   const nav = homepageCmsListNavigation(section, raw, allowedMarket);
-  const cursor = section === "destinations" || section === "hotel-destinations" ? undefined : one(raw.cursor) || undefined;
+  const cursor = undefined; // All homepage CMS directories now display the full matching dataset.
 
   const summary = await (allowedMarket === "ALL"
     ? getCmsContentMarketOverview(config.type, homepageCmsMarkets, homepageCmsLocale)
@@ -73,20 +72,17 @@ export default async function HomepageCmsSectionPage({ params, searchParams }: P
       search: one(raw.q) || undefined,
     };
     listing = await listAdminCmsContent(listInput);
-    // Destination directories are complete and ordered for admins. The generic
-    // CMS service remains update-time paginated for other screens.
-    if (section === "destinations" || section === "hotel-destinations") {
-      while (listing.nextCursor) {
-        const nextPage = await listAdminCmsContent({ ...listInput, cursor: listing.nextCursor });
-        listing = { items: [...listing.items, ...nextPage.items], nextCursor: nextPage.nextCursor };
-      }
-      if (section === "hotel-destinations") {
-        listing = {
-          items: [...listing.items].sort((left, right) => left.sortOrder - right.sortOrder || left.key.localeCompare(right.key)),
-          nextCursor: null,
-        };
-      }
+    // Consume every page from the existing cursor-based CMS service without
+    // changing its pagination contract for other admin areas. Display each
+    // homepage directory as one scrollable list sorted by market and Order.
+    while (listing.nextCursor) {
+      const nextPage = await listAdminCmsContent({ ...listInput, cursor: listing.nextCursor });
+      listing = { items: [...listing.items, ...nextPage.items], nextCursor: nextPage.nextCursor };
     }
+    listing = {
+      items: sortHomepageCmsDirectoryItems(listing.items),
+      nextCursor: null,
+    };
   } catch (caught) {
     error = caught instanceof CmsContentError ? caught.message : "CMS content is unavailable.";
   }
@@ -114,13 +110,6 @@ export default async function HomepageCmsSectionPage({ params, searchParams }: P
         ) : listing && listing.items.length > 0 ? (
           <>
             <HomepageCmsListClient section={section} items={listing.items} listQuery={nav.query} />
-            {listing.nextCursor ? (
-              <div className="flex justify-end">
-                <Link href={nextHref(section, nav.query, listing.nextCursor)} className="inline-flex h-9 items-center rounded-lg border border-[#D9DDE3] bg-white px-3 text-[13px] font-medium text-[#374151] hover:bg-[#F8FAFC]">
-                  Next page
-                </Link>
-              </div>
-            ) : null}
           </>
         ) : (
           <ContentEmptyState
@@ -139,8 +128,3 @@ function one(value: string | string[] | undefined) {
   return typeof value === "string" ? value : "";
 }
 
-function nextHref(section: string, query: string, cursor: string) {
-  const params = new URLSearchParams(query);
-  params.set("cursor", cursor);
-  return `/admin/content/homepage/${section}?${params.toString()}`;
-}
