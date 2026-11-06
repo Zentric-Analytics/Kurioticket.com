@@ -11,7 +11,6 @@ import {
   buildAdminHomepageFareAllRoutesGroup,
   buildAdminHomepageFareRouteGroups,
   normalizeAdminHomepageFareMarketCode,
-  paginateAdminHomepageFareRoutes,
   resolveAdminHomepageFareSelectedRouteGroup,
   splitAdminHomepageFareMarketRouteGroups,
   type AdminHomepageFareRouteGroupFilter,
@@ -455,12 +454,9 @@ export function HomepageFaresRefreshCard({ view = "operations", initialMarket = 
       ? ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE
       : normalizeAdminHomepageFareMarketCode(initialMarket),
   );
-  const [routePage, setRoutePage] = useState(1);
-
   const [routeFilter, setRouteFilter] =
     useState<AdminHomepageFareRouteGroupFilter>("all");
   const selectRouteScope = useCallback((scope: string) => {
-    setRoutePage(1);
     setSelectedRouteScope(
       scope
         ? scope === ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE
@@ -470,7 +466,6 @@ export function HomepageFaresRefreshCard({ view = "operations", initialMarket = 
     );
   }, []);
   const selectRouteFilter = useCallback((filter: AdminHomepageFareRouteGroupFilter) => {
-    setRoutePage(1);
     setRouteFilter(filter);
   }, []);
 
@@ -709,9 +704,6 @@ export function HomepageFaresRefreshCard({ view = "operations", initialMarket = 
               filter={routeFilter}
               loading={statusState.loading}
               onSelectMarket={selectRouteScope}
-              routePage={routePage}
-              onPreviousPage={() => setRoutePage((page) => Math.max(1, page - 1))}
-              onNextPage={() => setRoutePage((page) => page + 1)}
               onFilterChange={selectRouteFilter}
             />
           ) : null}
@@ -1207,9 +1199,6 @@ function MarketRouteInspector({
   filter,
   loading,
   onSelectMarket,
-  routePage,
-  onPreviousPage,
-  onNextPage,
   onFilterChange,
 }: {
   publicGroups: AdminHomepageFareMarketRouteGroup[];
@@ -1218,26 +1207,21 @@ function MarketRouteInspector({
   filter: AdminHomepageFareRouteGroupFilter;
   loading: boolean;
   onSelectMarket: (marketCode: string) => void;
-  routePage: number;
-  onPreviousPage: () => void;
-  onNextPage: () => void;
   onFilterChange: (filter: AdminHomepageFareRouteGroupFilter) => void;
 }) {
   const marketOptions = [
-    { value: ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE, label: "All routes" },
+    { value: ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE, label: "All" },
     ...publicGroups.map((group) => ({ value: group.marketCode, label: group.marketLabel })),
   ];
-  // A fallback pool can be inspected from Advanced diagnostics. Keep its name
-  // visible in the selector even though it is outside the public country list.
+  // Keep fallback scopes available when following a targeted link from diagnostics.
   if (selectedGroup && selectedRouteScope && selectedRouteScope !== ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE &&
     !marketOptions.some((option) => normalizeAdminHomepageFareMarketCode(option.value) === normalizeAdminHomepageFareMarketCode(selectedRouteScope))) {
     marketOptions.push({ value: selectedRouteScope, label: selectedGroup.displayName });
   }
 
   return (
-    <div className="min-w-0">
-      <DashboardSection title="Route inspector">
-      <div className="mt-4 grid gap-x-4 gap-y-3 border-y border-[#E7ECF5] py-4 sm:grid-cols-[minmax(0,320px)_minmax(0,240px)]">
+    <section aria-label="Route inspection filters and results" className="min-w-0">
+      <div className="grid gap-x-4 gap-y-3 border-b border-[#E7ECF5] py-4 sm:grid-cols-[minmax(0,320px)_minmax(0,240px)]">
         <div className="min-w-0">
           <p className="mb-1.5 text-[12px] font-medium text-[#64748B]">Market</p>
           <SearchMonitorSelect
@@ -1269,12 +1253,8 @@ function MarketRouteInspector({
         selectedRouteScope={selectedRouteScope}
         filterLabel={ROUTE_FILTERS.find((option) => option.key === filter)?.label ?? "All statuses"}
         loading={loading}
-        routePage={routePage}
-        onPreviousPage={onPreviousPage}
-        onNextPage={onNextPage}
       />
-      </DashboardSection>
-    </div>
+    </section>
   );
 }
 
@@ -1283,68 +1263,32 @@ function SelectedRouteDetails({
   selectedRouteScope,
   filterLabel,
   loading,
-  routePage,
-  onPreviousPage,
-  onNextPage,
 }: {
   group: AdminHomepageFareMarketRouteGroup | null;
   selectedRouteScope: string | null;
   filterLabel: string;
   loading: boolean;
-  routePage: number;
-  onPreviousPage: () => void;
-  onNextPage: () => void;
 }) {
   if (!selectedRouteScope || !group) {
     return (
       <p className="mt-3 border-b border-[#E7ECF5] py-3 text-[12px] leading-5 text-[#64748B]">
-        No route group is available for this market. Choose All routes or another market.
+        No route group is available for this market. Choose All or another market.
       </p>
     );
   }
 
-  const page = paginateAdminHomepageFareRoutes(group.routes, routePage);
   const isViewAll = group.marketCode === "ALL";
+  const totalRoutes = group.routes.length;
 
   return (
     <div className="mt-4 min-w-0 border-y border-[#D8E1EC] bg-white">
       <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[#E7ECF5] px-3 py-3">
-        <div className="min-w-0 flex-1">
-          <h5 className="text-[15px] font-semibold leading-6 text-[#020617]">
-            {isViewAll ? "All routes" : group.displayName} — {page.totalRoutes} {filterLabel === "All statuses" ? "total routes" : "matching routes"}
-          </h5>
-          <p className="mt-1 text-[12px] leading-5 text-[#64748B]">
-            Showing {page.start}–{page.end} of {page.totalRoutes}
-            {isViewAll ? " · Across all markets" : ` · ${group.marketCode}`}
-            {" · Status: "}{filterLabel}
-          </p>
-        </div>
+        <h5 className="min-w-0 flex-1 text-[15px] font-semibold leading-6 text-[#020617]">
+          {isViewAll ? "All routes" : group.displayName} — {totalRoutes} {filterLabel === "All statuses" ? "total routes" : "matching routes"}
+        </h5>
         {!isViewAll ? <MarketGroupStatusBadge status={group.status} /> : null}
       </div>
-
-      <RouteDetailsTable group={group} routes={page.routes} loading={loading} keepPageHeight={page.totalPages > 1} />
-
-      <nav aria-label="Route pages" className="flex flex-wrap items-center justify-center gap-2 border-t border-[#E7ECF5] px-3 py-3 sm:justify-end">
-        <button
-          type="button"
-          onClick={onPreviousPage}
-          disabled={!page.hasPreviousPage}
-          className="inline-flex min-h-9 items-center justify-center rounded-md border border-[#D8E1EC] bg-white px-3 text-[12px] font-semibold text-[#334155] transition-colors hover:bg-[#F8FAFC] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          Previous
-        </button>
-        <span aria-live="polite" aria-atomic="true" className="min-w-[100px] text-center text-[12px] font-semibold tabular-nums text-[#475569]">
-          Page {page.currentPage} of {page.totalPages}
-        </span>
-        <button
-          type="button"
-          onClick={onNextPage}
-          disabled={!page.hasNextPage}
-          className="inline-flex min-h-9 items-center justify-center rounded-md border border-[#D8E1EC] bg-white px-3 text-[12px] font-semibold text-[#334155] transition-colors hover:bg-[#F8FAFC] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          Next
-        </button>
-      </nav>
+      <RouteDetailsTable group={group} routes={group.routes} loading={loading} />
     </div>
   );
 }
@@ -1362,12 +1306,10 @@ function RouteDetailsTable({
   group,
   routes,
   loading,
-  keepPageHeight,
 }: {
   group: AdminHomepageFareMarketRouteGroup;
   routes: AdminHomepageFareMarketRouteGroup["routes"];
   loading: boolean;
-  keepPageHeight: boolean;
 }) {
   if (!routes.length) {
     return (
@@ -1379,7 +1321,7 @@ function RouteDetailsTable({
 
   return (
     <div role="region" aria-label="Route inspection results" className="min-w-0 [overflow-anchor:none]">
-      <div className={"hidden min-w-0 lg:block " + (keepPageHeight ? "min-h-[740px]" : "")}>
+      <div className="hidden min-w-0 lg:block">
         <table className="w-full table-fixed text-left text-[13px]">
           <thead className="border-b border-[#E7ECF5] text-[11px] font-semibold uppercase tracking-[0.02em] text-[#64748B]">
             <tr>
@@ -1445,7 +1387,7 @@ function RouteDetailsTable({
         </table>
       </div>
 
-      <ul aria-label="Routes on this page" className="divide-y divide-[#E7ECF5] lg:hidden">
+      <ul aria-label="Route results" className="divide-y divide-[#E7ECF5] lg:hidden">
         {routes.map((route) => (
           <li key={`${group.marketCode}-${route.id}-mobile`} className="min-w-0 px-3 py-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
