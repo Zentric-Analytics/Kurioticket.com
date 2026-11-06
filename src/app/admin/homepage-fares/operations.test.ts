@@ -72,8 +72,9 @@ test("homepage fare operations follows the provider-style operator hierarchy", (
   const readiness = component.indexOf('id="homepage-fare-readiness-heading"');
   const refresh = component.indexOf("<RefreshCronPanel");
   const markets = component.indexOf("<MarketReadinessDashboard");
-  const diagnosticsLink = component.indexOf('href="/admin/homepage-fares/diagnostics"');
-  assert.ok(readiness >= 0 && refresh > readiness && markets > refresh && diagnosticsLink > markets);
+  assert.ok(readiness >= 0 && refresh > readiness && markets > refresh);
+  // The obsolete bottom diagnostics shortcut was removed; deep links are in the inspector tabs.
+  assert.doesNotMatch(component, /href="\/admin\/homepage-fares\/diagnostics"/);
   assert.match(component, /view === "operations"/);
   assert.match(component, /title="Refresh operations"/);
   assert.match(component, /title="Market coverage"/);
