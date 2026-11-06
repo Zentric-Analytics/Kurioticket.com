@@ -33,9 +33,9 @@ test("all content field limits and approved image rules apply in the editor", ()
     HOTEL_DESTINATION: { name: "London", country: "United Kingdom", countryCode: "GB", kind: "city", searchValue: "London, United Kingdom", canonicalId: "hotel:gb-london", image: "/images/london.jpg", imageAlt: "London" },
   } as const;
   for (const [type, payload] of Object.entries(payloads)) {
-    assert.deepEqual(validateCmsEditor(type as keyof typeof payloads, payload, "0"), {}, type);
+    assert.deepEqual(validateCmsEditor(type as keyof typeof payloads, payload, "1"), {}, type);
     for (const field of Object.keys(payload)) {
-      const errors = validateCmsEditor(type as keyof typeof payloads, { ...payload, [field]: "x".repeat(5001) }, "0");
+      const errors = validateCmsEditor(type as keyof typeof payloads, { ...payload, [field]: "x".repeat(5001) }, "1");
       assert.ok(errors[field], `${type}.${field}`);
     }
   }
