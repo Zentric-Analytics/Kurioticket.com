@@ -201,7 +201,9 @@ test("underfilled diagnostics never default missing next-run metadata to not req
 });
 
 test("homepage fare diagnostics keep concise coverage summaries with action-oriented next-run details", () => {
-  assert.match(component, /Popular \{market\.popularVisibleFresh\}\/\{market\.popularVisibleTarget\} · Discovery \{market\.discoveryVisibleFresh\}\/\{market\.discoveryVisibleTarget\} · Backup \{market\.backupFresh\}\/\{market\.backupTarget\}/);
+  assert.match(component, /\{market\.popularVisibleFresh\}\/\{market\.popularVisibleTarget\}/);
+  assert.match(component, /\{market\.discoveryVisibleFresh\}\/\{market\.discoveryVisibleTarget\}/);
+  assert.match(component, /\{market\.backupFresh\}\/\{market\.backupTarget\}/);
   assert.doesNotMatch(component, /\{market\.underfillReason \? <span className="block text-amber">\{market\.underfillReason\}<\/span> : null\}/);
   assert.match(component, /label="Next run"/);
   assert.match(component, /formatUnderfillCause\(nextRunCause\)/);
@@ -249,7 +251,7 @@ test("homepage fares uses the same flat section language as Providers", () => {
   assert.match(component, /className="border-b border-\[#D8E1EC\] pb-4 pt-4"/);
   assert.match(component, /text-\[15px\] font-semibold text-\[#020617\]/);
   assert.match(component, /focus-visible:outline-\[#004BB8\]/);
-  assert.match(component, /border-l-\[3px\] border-amber-500/);
+  assert.match(component, /border-l-2 border-amber-500/);
   assert.doesNotMatch(component, /rounded-2xl border border-border bg-white p-3\.5 shadow-sm/);
   assert.doesNotMatch(component, /Card className=/);
 });
@@ -286,14 +288,14 @@ test("homepage fare operations links directly to content and flight providers wi
 test("homepage fare page header follows the compact Providers treatment", () => {
   const page = readFileSync("src/app/admin/homepage-fares/page.tsx", "utf8");
   assert.match(page, /<AdminPageShell title="Homepage Fare Operations" hideHeader>/);
-  assert.match(page, /border-b border-\[#D8E1EC\] pb-3/);
-  assert.match(page, /text-\[18px\] font-semibold tracking-tight text-\[#020617\]/);
+  assert.match(page, /border-b border-\[#D8E1EC\] pb-4/);
+  assert.match(page, /text-\[20px\] font-semibold leading-7 tracking-\[-0\.02em\] text-\[#020617\]/);
   assert.match(page, /rounded-md border border-\[#D8E1EC\] bg-white px-3 text-\[13px\] font-medium/);
   assert.doesNotMatch(page, /rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black/);
 });
 
 test("readiness overview is flat like Providers while preserving status and metrics", () => {
-  assert.match(component, /<section aria-labelledby="homepage-fare-readiness-heading" className="border-b border-\[#D8E1EC\] pb-5 pt-1">/);
+  assert.match(component, /<section aria-labelledby="homepage-fare-readiness-heading" className="pb-4 pt-4">/);
   assert.match(component, /id="homepage-fare-readiness-heading"/);
   assert.match(component, />Readiness overview<\/h2>/);
   assert.match(component, /<DisplayReadinessSummary readiness=\{statusPayload\.displayReadiness\} \/>/);
@@ -301,10 +303,10 @@ test("readiness overview is flat like Providers while preserving status and metr
   assert.doesNotMatch(component, /shadow-sm/);
 });
 
-test("readiness summary metrics use compact neutral Providers-style cards with semantic dots", () => {
-  assert.match(component, /className="rounded-lg border border-\[#D8E1EC\] bg-white px-3 py-2\.5"/);
+test("readiness summary metrics use flat neutral rows with semantic dots", () => {
+  assert.match(component, /className="min-w-0 border-r border-\[#E7ECF5\] px-3 py-3/);
   assert.match(component, /h-1\.5 w-1\.5 shrink-0 rounded-full/);
-  assert.match(component, /text-\[22px\] font-semibold leading-\[26px\] tracking-tight tabular-nums/);
+  assert.match(component, /text-\[24px\] font-medium leading-7 tracking-\[-0\.03em\] tabular-nums/);
   assert.match(component, /return "bg-teal"/);
   assert.match(component, /return "bg-sky-500"/);
   assert.match(component, /return "bg-amber"/);
