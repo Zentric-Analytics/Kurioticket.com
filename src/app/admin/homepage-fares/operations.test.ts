@@ -177,18 +177,17 @@ test("dropdown and status selection update results without scrolling the page", 
   assert.doesNotMatch(component, /scrollIntoView|window\.scrollTo/);
 });
 
-test("route pagination keeps columns and layout steady across short and long pages", () => {
-  assert.match(component, /keepPageHeight=\{page\.totalPages > 1\}/);
-  assert.match(component, /keepPageHeight \? "min-h-\[740px\]" : ""/);
-  assert.match(component, /\[overflow-anchor:none\]/);
-  assert.match(component, /table-fixed/);
-  assert.doesNotMatch(component, /<colgroup>|min-w-\[1275px\]/);
-  assert.match(component, /lg:block/);
-  assert.match(component, /lg:hidden/);
-  assert.match(component, /paginateAdminHomepageFareRoutes\(group\.routes, routePage\)/);
-  assert.match(component, /disabled=\{!page\.hasNextPage\}/);
-  assert.match(component, /disabled=\{!page\.hasPreviousPage\}/);
-  assert.match(component, /setRoutePage\(1\)/);
+test("route inspector renders every filtered route without pagination or fixed page height", () => {
+  const details = component.slice(component.indexOf("function SelectedRouteDetails("), component.indexOf("function MarketMiniMetric("));
+  const table = component.slice(component.indexOf("function RouteDetailsTable("), component.indexOf("function MarketGroupStatusBadge("));
+  assert.match(details, /routes=\{group\.routes\}/);
+  assert.match(details, /const totalRoutes = group\.routes\.length/);
+  assert.doesNotMatch(details, /Showing |<nav aria-label="Route pages"|Page \{|paginateAdminHomepageFareRoutes/);
+  assert.doesNotMatch(component, /routePage|setRoutePage|keepPageHeight|onPreviousPage|onNextPage/);
+  assert.doesNotMatch(table, /min-h-\[740px\]|overflow-x-auto|min-w-\[1275px\]/);
+  assert.match(table, /table-fixed/);
+  assert.match(table, /lg:block/);
+  assert.match(table, /lg:hidden/);
 });
 
 test("route inspector uses one saved fare and responsive table/cards without horizontal scroll", () => {
@@ -197,7 +196,7 @@ test("route inspector uses one saved fare and responsive table/cards without hor
   assert.match(table, /\{formatRoutePrice\(route\)\}/);
   assert.doesNotMatch(table, /Provider native|Display price|formatProviderNativePrice|overflow-x-auto|min-w-\[1275px\]/);
   assert.match(table, /<table className="w-full table-fixed/);
-  assert.match(table, /aria-label="Routes on this page"/);
+  assert.match(table, /aria-label="Route results"/);
   assert.match(table, /2xl:table-cell/);
   assert.match(table, /2xl:hidden/);
   assert.match(table, /lg:hidden/);
@@ -211,30 +210,36 @@ test("route inspector uses one saved fare and responsive table/cards without hor
   assert.match(service, /providerNativeCurrency: snapshot\.currency/);
 });
 
-test("route page places pagination beneath results, separates readiness, and retains responsive detail", () => {
+test("route inspector keeps the market badge and full responsive route details", () => {
   const details = component.slice(component.indexOf("function SelectedRouteDetails("), component.indexOf("function MarketMiniMetric("));
   const table = component.slice(component.indexOf("function RouteDetailsTable("), component.indexOf("function MarketGroupStatusBadge("));
-  assert.ok(details.indexOf("<RouteDetailsTable") < details.indexOf('<nav aria-label="Route pages"'));
   assert.ok(details.indexOf("<MarketGroupStatusBadge") < details.indexOf("<RouteDetailsTable"));
-  assert.match(details, /aria-live="polite" aria-atomic="true"/);
-  assert.match(details, /disabled=\{!page\.hasPreviousPage\}/);
-  assert.match(details, /disabled=\{!page\.hasNextPage\}/);
+  assert.match(details, /routes=\{group\.routes\}/);
+  assert.doesNotMatch(details, /Showing |Route pages|Previous|Next/);
   assert.match(table, /\{route\.origin\}/);
   assert.match(table, /\{route\.destination\}/);
   assert.match(table, /\{route\.provider \?\? "—"\}/);
   assert.match(table, /\{route\.replacementCandidateUsed\}/);
   assert.match(table, /formatSnapshotTime\(route\.searchedAt\)/);
   assert.match(table, /formatDateTime\(route\.expiresAt\)/);
-  assert.match(component, /bg-amber-500/);
   assert.match(component, /status === "Fallback only"/);
-  assert.match(component, /\{status\}/);
 });
 
-test("route inspector defaults to All routes with seven distinct status options", () => {
+test("single Route inspector heading is supplied by page, not duplicated above Market", () => {
+  const page = readFileSync("src/app/admin/homepage-fares/routes/page.tsx", "utf8");
+  const inspector = component.slice(component.indexOf("function MarketRouteInspector("), component.indexOf("function SelectedRouteDetails("));
+  assert.match(page, /<h1[^>]*>Route inspector<\/h1>/);
+  assert.match(inspector, /<section aria-label="Route inspection filters and results"/);
+  assert.doesNotMatch(inspector, /<DashboardSection|title="Route inspector"|>Route inspector<\/h3>/);
+  assert.match(inspector, /label="Market"/);
+  assert.match(inspector, /label="Status"/);
+});
+
+test("route inspector defaults to All with seven distinct status options", () => {
   assert.equal((component.match(/<SearchMonitorSelect/g) || []).length, 2);
   assert.match(component, /initialMarket = ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE/);
   assert.match(component, /useState<string>\(\s*initialMarket === ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE/);
-  assert.match(component, /value: ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE, label: "All routes"/);
+  assert.match(component, /value: ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE, label: "All"/);
   assert.doesNotMatch(component, /value: "", label: "Select market"/);
   assert.match(component, /value=\{selectedRouteScope\}/);
   assert.match(component, /value=\{filter\}/);
@@ -260,8 +265,8 @@ test("route inspector defaults to All routes with seven distinct status options"
 
 test("All routes summary shows the current status and does not display fallback-only badge", () => {
   assert.match(component, /filterLabel=\{ROUTE_FILTERS\.find\(\(option\) => option\.key === filter\)\?\.label \?\? "All statuses"\}/);
-  assert.match(component, /\{" · Status: "\}\{filterLabel\}/);
-  assert.match(component, /Across all markets/);
+  assert.doesNotMatch(component, /\{" · Status: "\}\{filterLabel\}/);
+  assert.doesNotMatch(component, /Across all markets|Showing \{page\.start\}/);
   assert.match(component, /!isViewAll \? <MarketGroupStatusBadge status=\{group\.status\} \/> : null/);
   assert.match(component, /No routes match the selected status/);
   assert.doesNotMatch(component, /Debug view across all markets/);
@@ -336,7 +341,7 @@ test("fare diagnostics preserve operator and engineering signals without duplica
 });
 
 test("route inspector empty state stays compact", () => {
-  assert.match(component, /No route group is available for this market\. Choose All routes or another market\./);
+  assert.match(component, /No route group is available for this market\. Choose All or another market\./);
   assert.match(component, /mt-3 border-b border-\[#E7ECF5\] py-3 text-\[12px\]/);
   assert.doesNotMatch(component, /Route rows stay hidden until a market context is selected/);
   assert.doesNotMatch(component, /mt-5 rounded-2xl border border-dashed border-slate-300 bg-white\/55 p-6 text-center/);
