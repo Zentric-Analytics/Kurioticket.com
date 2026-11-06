@@ -10,7 +10,7 @@ export const metadata = { title: "Admin Audit Logs" };
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 type AuditRange = "24h" | "7d" | "30d" | "90d" | "custom";
 
-const rowGrid = "md:grid-cols-[minmax(130px,0.75fr)_minmax(210px,1.15fr)_minmax(220px,1.2fr)_minmax(240px,1.35fr)]";
+const rowGrid = "md:grid-cols-[minmax(150px,0.72fr)_minmax(360px,1.55fr)_minmax(240px,1.1fr)_minmax(220px,0.95fr)]";
 
 const actionLabels: Record<string, string> = {
   CMS_CONTENT_PUBLISHED: "CMS content published",
@@ -64,13 +64,13 @@ export default async function AdminLogsPage({ searchParams }: { searchParams: Se
               </div>
 
               <div role="region" aria-label="Audit log records" tabIndex={0} className="min-w-0 overflow-x-auto border-y border-[#D8E1EC]">
-                <div data-audit-header className={"hidden min-w-[980px] gap-4 border-b border-[#D8E1EC] px-3 py-3 text-[12px] font-medium uppercase text-[#475569] md:grid " + rowGrid}>
+                <div data-audit-header className={"hidden min-w-[1080px] gap-4 border-b border-[#D8E1EC] px-3 py-3 text-[12px] font-medium uppercase text-[#475569] md:grid " + rowGrid}>
                   <span>Created</span>
                   <span>Admin</span>
                   <span>Action</span>
                   <span>Target</span>
                 </div>
-                <div className="min-w-[980px] divide-y divide-[#E7ECF5]">
+                <div className="min-w-[1080px] divide-y divide-[#E7ECF5]">
                   {result.data.items.map(log => <AuditRow key={log.id} log={log} />)}
                 </div>
               </div>
@@ -114,7 +114,7 @@ function AuditRow({ log }: { log: AdminAuditRead }) {
     <>
       <time dateTime={log.createdAt} className="text-[12px] leading-5 text-[#475569]">{formatDateTime(new Date(log.createdAt))}</time>
       <div className="min-w-0">
-        <p className="break-words text-[13px] font-medium text-[#020617]">{log.adminEmail}</p>
+        <p className="break-words text-[13px] font-medium text-[#020617] md:truncate md:whitespace-nowrap" title={log.adminEmail}>{log.adminEmail}</p>
       </div>
       <div className="min-w-0">
         <p className="text-[13px] font-medium text-[#020617]">{actionLabel(log.action)}</p>
