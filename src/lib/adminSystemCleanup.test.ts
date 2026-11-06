@@ -33,7 +33,8 @@ test("Settings retains feature controls without owning flight fare operations", 
   assert.match(page, /canControlProduction/);
 });
 test("useful actions, access guards, emergency checks and the global bell remain intact", () => {
-  assert.match(source("src/app/admin/system/cms-health/page.tsx"), /CmsScopeHardeningActions/);
+  assert.match(source("src/app/admin/system/cms-health/page.tsx"), /CmsScopeHealthRow/);
+  assert.match(source("src/components/admin/CmsScopeHealthRow.tsx"), /CmsScopeHardeningActions/);
   assert.match(source("src/app/admin/email-delivery/page.tsx"), /EmailDeliveryTestButton enabled=\{sendingReady\}/);
   const alerts = source("src/app/admin/notifications/page.tsx");
   assert.match(alerts, /requireAdminSession\("\/admin\/notifications"\)/);
