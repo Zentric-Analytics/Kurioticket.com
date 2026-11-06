@@ -27,16 +27,17 @@ export function AdminAlertAcknowledgeButton({
 
   if (acknowledged) {
     if (compact) return <span className="inline-flex items-center gap-1.5 text-[11px] font-medium leading-4 text-[#6B7280]">
-      <CheckCheck size={14} strokeWidth={1.75} aria-hidden="true" /> Seen for 24 hours
+      <CheckCheck size={14} strokeWidth={1.75} aria-hidden="true" /> Marked as read · 24h
     </span>;
     return (
-      <span className="text-xs font-semibold text-slate-500">
-        Acknowledged for 24 hours
+      <span className="inline-flex items-center gap-1.5 text-xs font-semibold leading-5 text-slate-500">
+        <CheckCheck size={14} strokeWidth={1.75} aria-hidden="true" />
+        Marked as read for 24 hours
       </span>
     );
   }
 
-  function acknowledge() {
+  function markRead() {
     setError("");
 
     startTransition(async () => {
@@ -53,7 +54,7 @@ export function AdminAlertAcknowledgeButton({
           setError(
             typeof body.error === "string"
               ? body.error
-              : "Unable to acknowledge this alert.",
+              : "Unable to mark this alert as read.",
           );
           return;
         }
@@ -61,20 +62,20 @@ export function AdminAlertAcknowledgeButton({
         window.dispatchEvent(new Event("admin-alerts-updated"));
         router.refresh();
       } catch {
-        setError("Unable to acknowledge this alert. Check your connection and try again.");
+        setError("Unable to mark this alert as read. Check your connection and try again.");
       }
     });
   }
 
   return (
     <div>
-      {compact ? <button type="button" onClick={acknowledge} disabled={pending} aria-busy={pending}
-        title="Mark this alert as seen for 24 hours. This does not resolve the issue."
+      {compact ? <button type="button" onClick={markRead} disabled={pending} aria-busy={pending}
+        title="Mark this alert as read for 24 hours. This does not resolve the issue."
         className={styles.action + " min-w-[128px]"}>
         {pending ? <AdminNotificationSpinner className="h-3.5 w-3.5" /> : <Check size={14} strokeWidth={1.75} aria-hidden="true" />}
-        {pending ? "Saving…" : "Mark as seen"}
-      </button> : <AdminButton type="button" onClick={acknowledge} disabled={pending} loading={pending} size={rowStyle ? "sm" : "md"} className={rowStyle ? "rounded-md font-semibold shadow-none" : undefined}>
-        {pending ? "Acknowledging…" : "Acknowledge"}
+        {pending ? "Marking as read…" : "Mark as read"}
+      </button> : <AdminButton type="button" onClick={markRead} disabled={pending} loading={pending} size={rowStyle ? "sm" : "md"} className={rowStyle ? "rounded-md font-semibold shadow-none" : undefined}>
+        {pending ? "Marking as read…" : "Mark as read"}
       </AdminButton>}
       {error ? (
         <p role="alert" className="mt-2 max-w-sm text-xs font-medium text-rose-700">
