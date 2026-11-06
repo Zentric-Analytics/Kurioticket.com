@@ -115,6 +115,24 @@ test("acknowledgements are per-admin, signal-specific, temporary, and must persi
   assert.match(adminLib, /return false/);
 });
 
+test("bell and Settings use Mark as read consistently without changing acknowledgement behavior", () => {
+  assert.match(acknowledgeButton, /Mark as read/);
+  assert.match(acknowledgeButton, /Marked as read · 24h/);
+  assert.match(acknowledgeButton, /Marked as read for 24 hours/);
+  assert.match(acknowledgeButton, /Marking as read…/);
+  assert.match(acknowledgeButton, /title="Mark this alert as read for 24 hours\. This does not resolve the issue\."/);
+  assert.doesNotMatch(acknowledgeButton, /Mark as seen|Seen for 24 hours|Acknowledging…|\{pending \? "Saving…"/);
+  assert.match(acknowledgeButton, /if \(!response\.ok\)/);
+  assert.match(acknowledgeButton, /window\.dispatchEvent\(new Event\("admin-alerts-updated"\)\)/);
+  assert.match(acknowledgeButton, /router\.refresh\(\)/);
+  assert.match(page, /alert\.acknowledged \? "Read" : "Unread"/);
+  assert.match(page, /Marked as read: \{formatDateTime\(alert\.acknowledgedAt\)\}/);
+  assert.match(panel, /"All active alerts read"/);
+  assert.doesNotMatch(page, /alert\.acknowledged \? "Acknowledged" : "Unread"/);
+  assert.match(ackApi, /adminAlertAcknowledgement\.action/);
+  assert.match(service, /24 \* 60 \* 60 \* 1_000/);
+});
+
 test("database outage alert remains reachable through a read-only signed-admin fallback", () => {
   assert.match(outageAccess, /getToken/);
   assert.match(outageAccess, /token\?\.role !== "ADMIN"/);
