@@ -3,7 +3,7 @@ import { resolveHotelDiscoveryIntent } from "@/lib/hotels/hotelDiscoveryIntent";
 
 // The public hotel search catalogue owns this identity. The CMS may change the
 // editorial display name and image, but not the search metadata behind that ID.
-const byCanonicalId = new Map(
+const byCanonicalId: ReadonlyMap<string, (typeof hotelDestinations)[number]> = new Map(
   hotelDestinations.map((entry) => [`hotel:${entry.id}`, entry] as const),
 );
 
