@@ -26,9 +26,10 @@ export default async function AdminHomepageFareRoutesPage({ searchParams }: { se
             <h1 className="text-[20px] font-semibold leading-7 tracking-[-0.02em] text-[#020617]">Route inspector</h1>
             <p className="mt-1 text-[12px] leading-5 text-[#64748B]">Inspect saved homepage fare routes by market and status.</p>
           </div>
-          <Link href="/admin/homepage-fares" className="inline-flex min-h-9 items-center rounded-md border border-[#D8E1EC] px-3 text-[12px] font-medium text-[#004BB8] hover:bg-[#F8FAFC] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
-            Back to Homepage Fare Operations
-          </Link>
+          <nav aria-label="Homepage fares pages" className="flex flex-wrap items-center gap-2">
+            <Link href="/admin/homepage-fares" className="inline-flex min-h-9 items-center rounded-md border border-[#D8E1EC] px-3 text-[12px] font-medium text-[#004BB8] hover:bg-[#F8FAFC] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">Back to Homepage Fare Operations</Link>
+            <Link href="/admin/homepage-fares/diagnostics" className="inline-flex min-h-9 items-center rounded-md border border-[#D8E1EC] px-3 text-[12px] font-medium text-[#004BB8] hover:bg-[#F8FAFC] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">Fare diagnostics</Link>
+          </nav>
         </header>
         <HomepageFaresRefreshCard view="routes" initialMarket={initialMarket} />
       </div>

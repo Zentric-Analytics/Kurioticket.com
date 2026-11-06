@@ -72,8 +72,8 @@ test("homepage fare operations follows the provider-style operator hierarchy", (
   const readiness = component.indexOf('id="homepage-fare-readiness-heading"');
   const refresh = component.indexOf("<RefreshCronPanel");
   const markets = component.indexOf("<MarketReadinessDashboard");
-  const advanced = component.indexOf("<AdvancedDiagnostics");
-  assert.ok(readiness >= 0 && refresh > readiness && markets > refresh && advanced > markets);
+  const diagnosticsLink = component.indexOf('href="/admin/homepage-fares/diagnostics"');
+  assert.ok(readiness >= 0 && refresh > readiness && markets > refresh && diagnosticsLink > markets);
   assert.match(component, /view === "operations"/);
   assert.match(component, /title="Refresh operations"/);
   assert.match(component, /title="Market coverage"/);
@@ -299,15 +299,17 @@ test("homepage fare diagnostics keep concise coverage summaries with action-orie
   assert.match(component, /"Not required"/);
 });
 
-test("homepage fare diagnostics keeps only operator-relevant signals in the main flow", () => {
+test("fare diagnostics preserve operator and engineering signals without duplicating public fare metrics", () => {
   assert.match(component, /sm:grid-cols-3/);
   assert.match(component, /label="Stopped reason"/);
-  assert.match(component, /label="Provider budget"/);
-  assert.match(component, /label="Route budget"/);
+  assert.match(component, /label="Provider calls \/ limit \(last run\)"/);
+  assert.match(component, /label="Route attempts \/ limit \(last run\)"/);
   assert.doesNotMatch(component, /<CompactDetail label="Candidate pool failed"/);
-  assert.doesNotMatch(component, /<CompactDetail label="Fresh used publicly"/);
   assert.match(component, /MetricCard label="Candidate pool failed"/);
-  assert.match(component, /MetricCard label="Fresh used publicly"/);
+  assert.match(component, /MetricCard label="Fresh eligible snapshots"/);
+  assert.match(component, /MetricCard label="Last-known-good eligible snapshots"/);
+  assert.doesNotMatch(component, /MetricCard label="Fresh used publicly"/);
+  assert.doesNotMatch(component, /MetricCard label="LKG used publicly"/);
 });
 
 test("route inspector empty state stays compact", () => {
@@ -456,9 +458,10 @@ test("Market coverage retains public market inspection and reports counts outsid
   assert.match(component, /<MarketRouteInspector/);
   assert.match(component, /onSelectMarket=\{selectRouteScope\}/);
   assert.match(component, /onFilterChange=\{selectRouteFilter\}/);
+  assert.match(component, /view === "diagnostics"/);
   assert.match(component, /<AdvancedDiagnostics/);
-  assert.match(component, /Provider budget/);
-  assert.match(component, /Route budget/);
+  assert.match(component, /Provider calls \/ limit \(last run\)/);
+  assert.match(component, /Route attempts \/ limit \(last run\)/);
 });
 
 
@@ -498,11 +501,11 @@ test("advanced diagnostics groups long executor details without removing operati
   assert.match(component, /Public fare outcomes/);
   assert.match(component, /Scheduling and market targets/);
   const labels = [
-    "Configured routes", "Stopped reason", "Provider budget", "Route budget",
-    "Candidate pool failed", "Candidate pool unavailable", "Replacement candidates",
-    "Timeouts", "Fresh used publicly", "LKG used publicly", "Exact route mismatch",
-    "Visible gaps attempted", "Immediate replacements attempted", "Scheduler cadence",
-    "Scheduler verification", "Executor targets", "Markets needing another run",
+    "Configured routes", "Stopped reason", "Provider calls / limit (last run)", "Route attempts / limit (last run)",
+    "Candidate pool failed", "Candidate pool unavailable", "Replacement candidates used (last run)",
+    "Timeouts (last run)", "Fresh eligible snapshots", "Last-known-good eligible snapshots", "Exact route mismatch",
+    "Visible gaps attempted (last run)", "Immediate replacements attempted (last run)", "Scheduler cadence",
+    "Scheduler verification", "Executor targets (last run)", "Markets needing another run (current snapshot)",
   ];
   for (const label of labels) assert.ok(component.includes('label="' + label + '"'), "Missing metric: " + label);
   assert.match(component, /lg:grid-cols-2/);
@@ -520,4 +523,38 @@ test("dedicated route page validates market hints and keeps white admin workspac
   assert.match(component, /view === "operations"/);
   assert.match(component, /<MarketRouteInspector/);
   assert.doesNotMatch(component, /scrollIntoView/);
+});
+
+test("fare operations, route inspector and diagnostics are separate navigable views", () => {
+  const diagnosticsPage = readFileSync("src/app/admin/homepage-fares/diagnostics/page.tsx", "utf8");
+  const routesPage = readFileSync("src/app/admin/homepage-fares/routes/page.tsx", "utf8");
+  const operationsPart = component.slice(component.indexOf('{view === "operations"'), component.indexOf('view === "diagnostics"'));
+  assert.match(component, /view\?: "operations" \| "routes" \| "diagnostics"/);
+  assert.match(component, /view === "diagnostics"/);
+  assert.match(component, /href="\/admin\/homepage-fares\/diagnostics"/);
+  assert.doesNotMatch(operationsPart, /<AdvancedDiagnostics/);
+  assert.match(diagnosticsPage, /<HomepageFaresRefreshCard view="diagnostics"/);
+  assert.match(diagnosticsPage, /Back to Homepage Fare Operations/);
+  assert.match(diagnosticsPage, /href="\/admin\/homepage-fares\/routes"/);
+  assert.match(routesPage, /href="\/admin\/homepage-fares\/diagnostics"/);
+});
+
+test("logged diagnostics come from protected no-cache audit reads, never invented from snapshot zeros", () => {
+  const endpoint = readFileSync("src/app/api/admin/homepage-fares/diagnostics/route.ts", "utf8");
+  assert.match(endpoint, /requireAdminApiSession\(\)/);
+  assert.match(endpoint, /getOptionalPrisma\(\)/);
+  assert.match(endpoint, /action: REFRESH_ACTION, targetType: REFRESH_TARGET/);
+  assert.match(endpoint, /createdAt: "desc"/);
+  assert.match(endpoint, /"Cache-Control": "no-store"/);
+  assert.match(endpoint, /status: 503/);
+  assert.match(endpoint, /dataAvailable: false, lastManualRun: null/);
+  assert.match(endpoint, /metadata: true/);
+  assert.doesNotMatch(endpoint, /adminEmail: true|ipAddress: true|userAgent: true/);
+  assert.match(component, /fetch\("\/api\/admin\/homepage-fares\/diagnostics", \{ credentials: "include", cache: "no-store" \}\)/);
+  assert.match(component, /No completed manual fare refresh is recorded/);
+  assert.match(component, /Logged manual refresh data is unavailable/);
+  assert.match(component, /value=\{recorded\(run\?\.visibleGapsAttempted\)\}/);
+  assert.match(component, /value=\{recorded\(run\?\.immediateReplacementsAttempted\)\}/);
+  assert.match(component, /Markets needing another run \(current snapshot\)/);
+  assert.doesNotMatch(component, /refreshCounts\?\.visibleGapsAttempted\.length \?\? 0/);
 });
