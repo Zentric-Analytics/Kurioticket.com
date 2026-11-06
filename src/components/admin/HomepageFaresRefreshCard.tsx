@@ -679,7 +679,7 @@ export function HomepageFaresRefreshCard({ view = "operations", initialMarket = 
         <>
           {initialStatusLoading ? <p role="status" className="border-b border-[#E7ECF5] py-4 text-[13px] text-[#64748B]">Loading fare diagnostics…</p> : null}
           {statusPayload.dataAvailable ? (
-            <AdvancedDiagnostics
+            <FareDiagnosticsSections
               pools={fallbackPools}
               onInspectMarket={homepageFareRoutesHref}
               statusPayload={statusPayload}
@@ -1091,7 +1091,7 @@ function MarketReadinessDashboard({
   );
 }
 
-function AdvancedDiagnostics({
+function FareDiagnosticsSections({
   pools,
   onInspectMarket,
   statusPayload,
@@ -1110,85 +1110,99 @@ function AdvancedDiagnostics({
   const recorded = (value: number | null | undefined) => value ?? "Not recorded";
   const budget = (used: number | null | undefined, limit: number | null | undefined) =>
     used != null && limit != null ? used + " of " + limit : "Not recorded";
-  return (
-    <section id="homepage-fare-advanced-diagnostics" aria-labelledby="homepage-fare-advanced-diagnostics-heading" className="min-w-0 border-b border-[#D8E1EC] py-6">
-      <h3 id="homepage-fare-advanced-diagnostics-heading" className="text-[15px] font-semibold text-[#020617]">Advanced diagnostics</h3>
-      <p className="mt-2 text-[12px] leading-5 text-[#64748B]">Snapshot health and the latest logged manual refresh are shown separately. Scheduled refresh results are not represented as manual runs.</p>
-      <div className="mt-5 space-y-7">
-        <section aria-labelledby="fallback-pools-heading">
-          <h4 id="fallback-pools-heading" className="text-[14px] font-semibold text-[#020617]">Fallback coverage pools</h4>
-          <p className="mt-1 max-w-4xl text-[12px] leading-5 text-[#475569]">
-            Internal regional and global pools used for routing and replacement; they do not count as public homepage readiness.
-          </p>
-          <div className="mt-4 grid gap-x-8 gap-y-2 md:grid-cols-2">
-            {pools.length ? (
-              pools.map((pool) => {
-                return (
-                  <Link
-                    key={pool.marketCode}
-                    href={onInspectMarket(pool.marketCode)}
-                    aria-label={"Inspect routes for " + pool.marketLabel}
-                    className="min-w-0 border-b border-[#E7ECF5] px-3 py-4 text-left transition-colors hover:bg-[#F8FAFC] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]"
-                  >
-                    <div className="flex min-w-0 items-start justify-between gap-3">
-                      <span className="min-w-0 text-[13px] font-semibold leading-5 text-[#020617]">{pool.marketLabel}</span>
-                      <span className="shrink-0 text-[11px] font-medium leading-5 text-[#64748B]">{pool.marketCode}</span>
-                    </div>
-                    <div className="mt-2 grid grid-cols-3 gap-2 text-[12px] leading-5 text-[#64748B]">
-                      <span>Fresh <strong className="font-semibold text-[#020617]">{pool.freshCount ?? 0}</strong></span>
-                      <span>Missing <strong className="font-semibold text-[#020617]">{pool.missingCount ?? 0}</strong></span>
-                      <span>Failed <strong className="font-semibold text-[#020617]">{pool.failed}</strong></span>
-                    </div>
-                  </Link>
-                );
-              })
-            ) : (
-              <p className="py-3 text-[13px] text-[#64748B]">No fallback-only pools were returned.</p>
-            )}
-          </div>
-        </section>
 
-        <section aria-labelledby="executor-debug-heading" className="border-t border-[#E7ECF5] pt-6">
-          <h4 id="executor-debug-heading" className="text-[14px] font-semibold text-[#020617]">Executor details</h4>
-          <p role="status" className="mt-2 text-[12px] leading-5 text-[#64748B]">{runLoading ? "Loading logged manual refresh…" : runUnavailable ? "Logged manual refresh data is unavailable." : !lastManualRun ? "No completed manual fare refresh is recorded." : "Latest logged manual refresh: " + formatDateTime(lastManualRun.completedAt)}</p>
-          {lastManualRun && !run && !runLoading && !runUnavailable ? <p className="mt-2 text-[12px] text-[#64748B]">The latest audit record has no readable execution counts.</p> : null}
-          <div className="mt-4 grid gap-x-10 gap-y-6 lg:grid-cols-2">
-            <div className="min-w-0">
-              <h5 className="text-[12px] font-semibold text-[#334155]">Execution and budgets</h5>
-              <dl className="mt-3 grid grid-cols-2 gap-x-6 gap-y-4">
-                <MetricCard label="Configured routes" value={statusPayload.summary.total} />
-                <MetricCard label="Stopped reason" value={run?.stoppedReason ? run.stoppedReason.replaceAll("_", " ") : "Not recorded"} />
-                <MetricCard label="Provider calls / limit (last run)" value={budget(run?.providerCalls, run?.providerCallLimit)} />
-                <MetricCard label="Route attempts / limit (last run)" value={budget(run?.routeAttempts, run?.routeAttemptLimit)} />
-                <MetricCard label="Candidate pool failed" value={statusPayload.candidatePoolHealth.failed} />
-                <MetricCard label="Candidate pool unavailable" value={statusPayload.candidatePoolHealth.unavailable} />
-                <MetricCard label="Replacement candidates used (last run)" value={recorded(run?.replacementCandidatesUsed)} />
-                <MetricCard label="Timeouts (last run)" value={recorded(run?.timeouts)} />
-              </dl>
-            </div>
-            <div className="min-w-0">
-              <h5 className="text-[12px] font-semibold text-[#334155]">Public fare outcomes</h5>
-              <dl className="mt-3 grid grid-cols-2 gap-x-6 gap-y-4">
-                <MetricCard label="Fresh eligible snapshots" value={statusPayload.publicPriceDiagnostics.fresh_available} />
-                <MetricCard label="Last-known-good eligible snapshots" value={statusPayload.publicPriceDiagnostics.last_known_good_used} />
-                <MetricCard label="Exact route mismatch" value={statusPayload.publicPriceDiagnostics.exact_route_mismatch} />
-                <MetricCard label="Visible gaps attempted (last run)" value={recorded(run?.visibleGapsAttempted)} />
-                <MetricCard label="Immediate replacements attempted (last run)" value={recorded(run?.immediateReplacementsAttempted)} />
-              </dl>
-            </div>
+  return (
+    <div id="homepage-fare-diagnostics" className="min-w-0">
+      <section aria-labelledby="fallback-pools-heading" className="border-b border-[#D8E1EC] py-6">
+        <h2 id="fallback-pools-heading" className="text-[15px] font-semibold leading-6 text-[#020617]">Fallback coverage pools</h2>
+        <p className="mt-1 text-[12px] leading-5 text-[#64748B]">
+          Internal replacement pools; excluded from public homepage readiness.
+        </p>
+        <div className="mt-3 grid gap-x-8 gap-y-1 md:grid-cols-2">
+          {pools.length ? (
+            pools.map((pool) => {
+              const fresh = pool.freshCount ?? 0;
+              const missing = pool.missingCount ?? 0;
+              const failed = pool.failed;
+              const noCountedOutcomes = fresh === 0 && missing === 0 && failed === 0;
+              return (
+                <Link
+                  key={pool.marketCode}
+                  href={onInspectMarket(pool.marketCode)}
+                  aria-label={"Inspect routes for " + pool.marketLabel}
+                  className="min-w-0 border-b border-[#E7ECF5] px-3 py-3 text-left transition-colors hover:bg-[#F8FAFC] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]"
+                >
+                  <div className="flex min-w-0 flex-wrap items-start justify-between gap-x-3 gap-y-1">
+                    <span className="min-w-0 break-words text-[13px] font-semibold leading-5 text-[#020617]">{pool.marketLabel}</span>
+                    <span className="break-all text-[11px] font-medium leading-5 text-[#64748B]">{pool.marketCode}</span>
+                  </div>
+                  {noCountedOutcomes ? (
+                    <p className="mt-1.5 text-[12px] leading-5 text-[#64748B]">No fresh, missing or failed routes recorded.</p>
+                  ) : (
+                    <div className="mt-1.5 flex flex-wrap gap-x-5 gap-y-1 text-[12px] leading-5 text-[#64748B]">
+                      <span>Fresh <strong className="font-semibold text-[#020617]">{fresh}</strong></span>
+                      <span>Missing <strong className="font-semibold text-[#020617]">{missing}</strong></span>
+                      <span>Failed <strong className="font-semibold text-[#020617]">{failed}</strong></span>
+                    </div>
+                  )}
+                </Link>
+              );
+            })
+          ) : (
+            <p className="py-3 text-[13px] text-[#64748B]">No fallback-only pools were returned.</p>
+          )}
+        </div>
+      </section>
+
+      <section aria-labelledby="refresh-execution-heading" className="border-b border-[#D8E1EC] py-6">
+        <h2 id="refresh-execution-heading" className="text-[15px] font-semibold leading-6 text-[#020617]">Refresh execution</h2>
+        <p role="status" className="mt-1.5 text-[12px] leading-5 text-[#64748B]">
+          {runLoading
+            ? "Loading logged manual refresh…"
+            : runUnavailable
+              ? "Logged manual refresh data is unavailable."
+              : !lastManualRun
+                ? "No completed manual fare refresh is recorded."
+                : "Latest logged manual refresh: " + formatDateTime(lastManualRun.completedAt)}
+        </p>
+        {lastManualRun && !run && !runLoading && !runUnavailable ? (
+          <p className="mt-1 text-[12px] leading-5 text-[#64748B]">The latest audit record has no readable execution counts.</p>
+        ) : null}
+        <dl className="mt-4 grid min-w-0 gap-x-8 gap-y-3 sm:grid-cols-2 xl:grid-cols-4">
+          <MetricCard label="Provider calls / limit" value={budget(run?.providerCalls, run?.providerCallLimit)} />
+          <MetricCard label="Stopped reason" value={run?.stoppedReason ? run.stoppedReason.replaceAll("_", " ") : "Not recorded"} />
+          <MetricCard label="Route attempts / limit" value={budget(run?.routeAttempts, run?.routeAttemptLimit)} />
+          <MetricCard label="Visible gaps attempted" value={recorded(run?.visibleGapsAttempted)} />
+          <MetricCard label="Immediate replacements attempted" value={recorded(run?.immediateReplacementsAttempted)} />
+          <MetricCard label="Replacement candidates used" value={recorded(run?.replacementCandidatesUsed)} />
+          <MetricCard label="Timeouts" value={recorded(run?.timeouts)} />
+          <MetricCard label="Markets targeted" value={run?.targetedMarkets ? formatStringList(run.targetedMarkets, "None") : "Not recorded"} />
+        </dl>
+      </section>
+
+      <section aria-labelledby="fare-eligibility-heading" className="border-b border-[#D8E1EC] py-6">
+        <h2 id="fare-eligibility-heading" className="text-[15px] font-semibold leading-6 text-[#020617]">Public fare eligibility</h2>
+        <dl className="mt-4 grid min-w-0 gap-x-8 gap-y-3 sm:grid-cols-2 xl:grid-cols-3">
+          <MetricCard label="Configured routes" value={statusPayload.summary.total} />
+          <MetricCard label="Fresh eligible snapshots" value={statusPayload.publicPriceDiagnostics.fresh_available} />
+          <MetricCard label="Last-known-good eligible snapshots" value={statusPayload.publicPriceDiagnostics.last_known_good_used} />
+          <MetricCard label="Exact route mismatch" value={statusPayload.publicPriceDiagnostics.exact_route_mismatch} />
+          <MetricCard label="Candidate pool failed" value={statusPayload.candidatePoolHealth.failed} />
+          <MetricCard label="Candidate pool unavailable" value={statusPayload.candidatePoolHealth.unavailable} />
+        </dl>
+      </section>
+
+      <section aria-labelledby="fare-scheduling-heading" className="py-6">
+        <h2 id="fare-scheduling-heading" className="text-[15px] font-semibold leading-6 text-[#020617]">Scheduling and market targets</h2>
+        <dl className="mt-4 grid min-w-0 gap-x-8 gap-y-4 sm:grid-cols-2">
+          <MetricCard label="Scheduler cadence" value={statusPayload.nextExpectedCronRefresh ?? "Not provided"} />
+          <MetricCard label="Scheduler verification" value="Not observable from this service" />
+          <div className="min-w-0 sm:col-span-2">
+            <MetricCard label="Markets needing another run (current snapshot)" value={formatMarketsNeedingRun(statusPayload.marketsNeedingAnotherRun)} />
           </div>
-          <div className="mt-5 border-t border-[#E7ECF5] pt-4">
-            <h5 className="text-[12px] font-semibold text-[#334155]">Scheduling and market targets</h5>
-            <dl className="mt-3 grid gap-x-10 gap-y-5 sm:grid-cols-2">
-              <MetricCard label="Scheduler cadence" value={statusPayload.nextExpectedCronRefresh ?? "Not provided"} />
-              <MetricCard label="Scheduler verification" value="Not observable from this service" />
-              <MetricCard label="Executor targets (last run)" value={run?.targetedMarkets ? formatStringList(run.targetedMarkets, "None") : "Not recorded"} />
-              <MetricCard label="Markets needing another run (current snapshot)" value={formatMarketsNeedingRun(statusPayload.marketsNeedingAnotherRun)} />
-            </dl>
-          </div>
-        </section>
-      </div>
-    </section>
+        </dl>
+      </section>
+    </div>
   );
 }
 
