@@ -602,13 +602,20 @@ export function HomepageFaresRefreshCard() {
               <DisplayReadinessSummary readiness={statusPayload.displayReadiness} />
             ) : null}
 
-        <dl aria-label="Fare readiness metrics" className="mt-4 grid grid-cols-2 gap-px border-y border-[#D8E1EC] bg-[#E7ECF5] sm:grid-cols-3 xl:grid-cols-5">
+        <div
+          role="region"
+          aria-label="Readiness metrics (scroll horizontally on narrow screens)"
+          tabIndex={0}
+          className="mt-4 max-w-full overflow-x-auto overscroll-x-contain focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]"
+        >
+          <dl aria-label="Fare readiness metrics" className="grid min-w-[920px] grid-cols-5 gap-px border-y border-[#D8E1EC] bg-[#E7ECF5]">
               <SummaryMetricCard label="Fresh fares" value={statusPayload.dataAvailable ? statusPayload.summary.fresh : "Unavailable"} tone={statusPayload.dataAvailable ? "good" : "danger"} />
               <SummaryMetricCard label="Last-known-good" value={statusPayload.dataAvailable ? statusPayload.summary.last_known_good : "Unavailable"} tone={statusPayload.dataAvailable ? "info" : "danger"} />
               <SummaryMetricCard label="Missing routes" value={statusPayload.dataAvailable ? statusPayload.summary.missing : "Unavailable"} tone={!statusPayload.dataAvailable ? "danger" : statusPayload.summary.missing ? "warning" : "neutral"} />
               <SummaryMetricCard label="Failed / unavailable" value={statusPayload.dataAvailable ? statusPayload.summary.failed + statusPayload.summary.unavailable : "Unavailable"} tone={!statusPayload.dataAvailable ? "danger" : statusPayload.summary.failed + statusPayload.summary.unavailable ? "warning" : "neutral"} />
               <SummaryMetricCard label="Markets needing attention" value={statusPayload.dataAvailable ? marketsNeedingAnotherRun.filter((market) => market.needed).length : "Unavailable"} tone={!statusPayload.dataAvailable ? "danger" : marketsNeedingAnotherRun.some((market) => market.needed) ? "warning" : "good"} />
-            </dl>
+          </dl>
+        </div>
           </section>
 
       <RefreshCronPanel
@@ -709,8 +716,8 @@ function SummaryMetricCard({
   tone?: SummaryTone;
 }) {
   return (
-    <div className="min-h-[88px] min-w-0 bg-white px-4 py-4 xl:px-5">
-      <dt className="flex min-h-5 items-center gap-2 text-[12px] font-medium leading-5 text-[#64748B]">
+    <div className="min-h-[88px] min-w-0 bg-white px-3 py-4 sm:px-4 xl:px-5">
+      <dt className="flex min-h-5 items-center gap-1.5 whitespace-nowrap text-[11px] font-medium leading-5 text-[#64748B] lg:gap-2 lg:text-[12px]">
         <span aria-hidden="true" className={`h-1.5 w-1.5 shrink-0 rounded-full ${summaryToneDotClass(tone)}`} />
         <span>{label}</span>
       </dt>
