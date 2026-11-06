@@ -336,8 +336,6 @@ type HomepageFareStatusRoute = {
   section: HomepageFareRouteSection;
   price?: number;
   currency?: string;
-  providerNativePrice?: number;
-  providerNativeCurrency?: string;
   provider?: string;
   status: HomepageFareSnapshotStatus;
   providerBacked: boolean;
@@ -687,6 +685,15 @@ const COUNT_LABELS: Array<{ key: RefreshCountMetricKey; label: string }> = [
   { key: "retained", label: "Retained" },
   { key: "skipped", label: "Skipped" },
 ];
+
+const STATUS_BADGE_LABELS: Record<HomepageFareSnapshotStatus, string> = {
+  fresh: "Fresh",
+  last_known_good: "Last-known-good",
+  expired: "Expired",
+  unavailable: "Unavailable",
+  failed: "Failed",
+  missing: "Missing",
+};
 
 const STATUS_BADGE_STYLES: Record<HomepageFareSnapshotStatus, string> = {
   fresh: "bg-teal/10 text-teal-dark",
@@ -1319,19 +1326,18 @@ function RouteDetailsTable({
       aria-label="Route inspection results"
       tabIndex={0}
     >
-      <table className="w-full min-w-[1400px] table-fixed text-left text-[13px]">
+      <table className="w-full min-w-[1275px] table-fixed text-left text-[13px]">
         <colgroup>
-          <col className="w-[70px]" />
-          <col className="w-[145px]" />
-          <col className="w-[115px]" />
+          <col className="w-[65px]" />
           <col className="w-[135px]" />
           <col className="w-[100px]" />
+          <col className="w-[125px]" />
+          <col className="w-[90px]" />
+          <col className="w-[140px]" />
           <col className="w-[105px]" />
-          <col className="w-[110px]" />
-          <col className="w-[115px]" />
-          <col className="w-[110px]" />
-          <col className="w-[175px]" />
-          <col className="w-[220px]" />
+          <col className="w-[100px]" />
+          <col className="w-[170px]" />
+          <col className="w-[245px]" />
         </colgroup>
         <thead className="border-b border-[#E7ECF5] text-[12px] font-medium uppercase text-[#64748B]">
           <tr>
@@ -1341,8 +1347,7 @@ function RouteDetailsTable({
             <th className="px-3 py-2.5">Destination</th>
             <th className="px-3 py-2.5">Section</th>
             <th className="px-3 py-2.5">Status</th>
-            <th className="px-3 py-2.5">Display price</th>
-            <th className="px-3 py-2.5">Provider native</th>
+            <th className="px-3 py-2.5">Saved fare</th>
             <th className="px-3 py-2.5">Provider</th>
             <th className="px-3 py-2.5">Last refreshed</th>
             <th className="px-3 py-2.5">Reason / replacement</th>
@@ -1366,7 +1371,6 @@ function RouteDetailsTable({
                 <StatusBadge status={route.status} />
               </td>
               <td className="px-3 py-3 font-semibold text-navy">{formatRoutePrice(route)}</td>
-              <td className="px-3 py-3 font-semibold text-navy">{formatProviderNativePrice(route)}</td>
               <td className="px-3 py-3 text-navy">{route.provider ?? "—"}</td>
               <td className="px-3 py-3 text-xs font-semibold text-muted">
                 {formatSnapshotTime(route.searchedAt)}
@@ -1459,9 +1463,9 @@ function MetricCard({
 function StatusBadge({ status }: { status: HomepageFareSnapshotStatus }) {
   return (
     <span
-      className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold capitalize ${STATUS_BADGE_STYLES[status]}`}
+      className={`inline-flex max-w-full whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-bold ${STATUS_BADGE_STYLES[status]}`}
     >
-      {status}
+      {STATUS_BADGE_LABELS[status]}
     </span>
   );
 }
@@ -1770,12 +1774,6 @@ function normalizeStatusRoute(
     section: readRouteSection(route.section),
     price: typeof route.price === "number" && Number.isFinite(route.price) ? route.price : undefined,
     currency: readCode(route.currency),
-    providerNativePrice:
-      typeof route.providerNativePrice === "number" &&
-      Number.isFinite(route.providerNativePrice)
-        ? route.providerNativePrice
-        : undefined,
-    providerNativeCurrency: readCode(route.providerNativeCurrency),
     provider: typeof route.provider === "string" ? route.provider : undefined,
     status,
     providerBacked: route.providerBacked === true,
@@ -2246,16 +2244,6 @@ function formatRoutePrice(route: { status: HomepageFareSnapshotStatus; price?: n
     currency: route.currency,
     maximumFractionDigits: 0,
   }).format(route.price);
-}
-
-function formatProviderNativePrice(route: { providerNativePrice?: number; providerNativeCurrency?: string }) {
-  if (!route.providerNativePrice || !route.providerNativeCurrency) return "—";
-
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: route.providerNativeCurrency,
-    maximumFractionDigits: 0,
-  }).format(route.providerNativePrice);
 }
 
 function formatSnapshotTime(value?: string) {
