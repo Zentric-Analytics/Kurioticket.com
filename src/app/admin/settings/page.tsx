@@ -34,7 +34,7 @@ export default async function AdminSettingsPage() {
         <section aria-labelledby="feature-controls-heading" className="border-b border-[#D8E1EC] pb-5">
           <h2 id="feature-controls-heading" className="text-[15px] font-semibold text-[#020617]">Feature controls</h2>
           <p className="mt-1 max-w-4xl text-[12px] leading-5 text-[#64748B]">
-            Persisted controls determine whether Kurioticket capabilities may operate. Operational health is monitored in Providers and the relevant operational workspaces.
+            Turn Kurioticket features on or off.
           </p>
           <div className="mt-4">
             <FeatureControlsPanel
@@ -46,14 +46,14 @@ export default async function AdminSettingsPage() {
           </div>
         </section>
 
-        <section aria-labelledby="recent-settings-changes-heading" className="border-b border-[#D8E1EC] py-5">
+        <section aria-labelledby="recent-settings-changes-heading" className="py-5">
           <div className="flex flex-wrap items-baseline justify-between gap-3">
-            <h2 id="recent-settings-changes-heading" className="text-[15px] font-semibold text-[#020617]">Recent settings changes</h2>
+            <h2 id="recent-settings-changes-heading" className="text-[15px] font-semibold text-[#020617]">Recent changes</h2>
             <Link
               href="/admin/logs?range=30d&action=FEATURE_CONTROL_UPDATED&targetType=FeatureFlag"
               className="text-[13px] font-medium text-[#004BB8] hover:underline"
             >
-              View settings audit history
+              View audit history
             </Link>
           </div>
           {recentControlUpdates.length ? (
@@ -80,29 +80,6 @@ export default async function AdminSettingsPage() {
           )}
         </section>
 
-        <section aria-labelledby="managed-outside-settings-heading" className="py-5">
-          <h2 id="managed-outside-settings-heading" className="text-[15px] font-semibold text-[#020617]">Managed outside Settings</h2>
-          <div className="mt-3 divide-y divide-[#E7ECF5] border-y border-[#D8E1EC]">
-            <div className="flex min-w-0 flex-col gap-2 py-3 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
-              <div className="min-w-0">
-                <h3 className="text-[13px] font-semibold text-[#020617]">Runtime & credentials</h3>
-                <p className="mt-1 max-w-3xl text-[12px] leading-5 text-[#64748B]">
-                  Database URLs, API keys, session secrets, provider credentials and server environment variables remain deployment-owned and are not editable here.
-                </p>
-              </div>
-              <span className="shrink-0 text-[12px] font-medium text-[#64748B]">Deployment managed</span>
-            </div>
-            <div className="flex min-w-0 flex-col gap-2 py-3 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
-              <div className="min-w-0">
-                <h3 className="text-[13px] font-semibold text-[#020617]">Administrator access</h3>
-                <p className="mt-1 max-w-3xl text-[12px] leading-5 text-[#64748B]">
-                  Administrator allowlists and production feature-control permissions remain server-managed. Preview team membership continues to use Team Access where available.
-                </p>
-              </div>
-              <span className="shrink-0 text-[12px] font-medium text-[#64748B]">Access managed separately</span>
-            </div>
-          </div>
-        </section>
       </div>
     </AdminPageShell>
   );
