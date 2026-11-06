@@ -19,7 +19,9 @@ test("Settings Notifications now owns the complete protected operational alert c
   assert.match(settings, /<h2 id="settings-section-title"/);
   assert.match(settings, /<ul aria-label="Operational alerts"/);
   assert.match(settings, /<AdminAlertAcknowledgeButton/);
-  assert.match(settings, /View acknowledgement history/);
+  assert.doesNotMatch(settings, /View acknowledgement history|ADMIN_ALERT_ACKNOWLEDGED&targetType=AdminOperationalAlert/);
+  assert.match(settings, /Snapshot generated \{formatDateTime\(snapshot\.generatedAt\)\}/);
+  assert.match(settings, /sm:text-right/);
   assert.doesNotMatch(settings, /Show acknowledged warnings|AdminNotificationPreferencesPanel|readAdminNotificationPreferences/);
 });
 
