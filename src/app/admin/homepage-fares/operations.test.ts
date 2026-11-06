@@ -69,20 +69,18 @@ test("homepage fare refresh refuses to run without an authoritative database", (
 test("homepage fare operations follows the provider-style operator hierarchy", () => {
   const readiness = component.indexOf('id="homepage-fare-readiness-heading"');
   const refresh = component.indexOf("<RefreshCronPanel");
-  const diagnostics = component.indexOf("<DiagnosticsPanel");
   const markets = component.indexOf("<MarketReadinessDashboard");
   const routes = component.indexOf("<MarketRouteInspector");
   const advanced = component.indexOf("<AdvancedDiagnostics");
 
   assert.ok(readiness >= 0);
   assert.ok(refresh > readiness);
-  assert.ok(diagnostics > refresh);
-  assert.ok(markets > diagnostics);
+  assert.ok(markets > refresh);
   assert.ok(routes > markets);
   assert.ok(advanced > routes);
   assert.match(component, /title="Refresh operations"/);
-  assert.match(component, /title="Markets requiring attention"/);
-  assert.match(component, /title="Public market coverage"/);
+  assert.match(component, /title="Market coverage"/);
+  assert.doesNotMatch(component, /<DiagnosticsPanel|title="Markets requiring attention"|title="Public market coverage"/);
   assert.match(component, /title="Route inspector"/);
 });
 
@@ -111,10 +109,9 @@ test("homepage fare readiness keeps only core customer-facing summary metrics", 
 });
 
 test("advanced diagnostics keeps fallback and executor data available in a provider-style disclosure", () => {
-  assert.match(component, /<details className="group border-b border-\[#D8E1EC\] py-5">/);
+  assert.match(component, /<details id="homepage-fare-advanced-diagnostics" className="group border-b border-\[#D8E1EC\] py-4">/);
   assert.match(component, /Advanced diagnostics/);
-  assert.match(component, /View details ›/);
-  assert.match(component, /Hide details ‹/);
+  assert.match(component, /group-open:rotate-180/);
   assert.match(component, /Fallback coverage pools/);
   assert.match(component, /Executor details/);
   assert.match(component, /Configured routes/);
@@ -124,7 +121,7 @@ test("advanced diagnostics keeps fallback and executor data available in a provi
 
 test("homepage fare refresh operations use the same compact fact layout as Providers", () => {
   assert.match(component, /lg:flex-row lg:items-center lg:justify-between/);
-  assert.match(component, /lg:max-w-4xl lg:grid-cols-4/);
+  assert.match(component, /sm:grid-cols-4 lg:max-w-\[800px\]/);
   assert.match(component, /border-t border-\[#E7ECF5\] pt-3/);
   assert.match(component, /Latest snapshot/);
   assert.match(component, /Provider calls/);
@@ -134,14 +131,14 @@ test("homepage fare refresh operations use the same compact fact layout as Provi
 });
 
 test("public market coverage uses the compact Providers table treatment", () => {
-  assert.match(component, /lg:grid-cols-\[minmax\(180px,1\.2fr\)_100px_100px_100px_160px_80px\]/);
+  assert.match(component, /lg:grid-cols-\[minmax\(160px,1\.3fr\)_90px_90px_80px_160px_90px\]/);
   assert.match(component, /border-y border-\[#D8E1EC\]/);
-  assert.match(component, /text-\[12px\] font-medium uppercase text-\[#64748B\]/);
+  assert.match(component, /text-\[11px\] font-semibold uppercase tracking-\[0\.04em\] text-\[#64748B\]/);
   assert.match(component, />Market<\/span>/);
   assert.match(component, />Popular<\/span>/);
   assert.match(component, />Discovery<\/span>/);
   assert.match(component, />Backup<\/span>/);
-  assert.match(component, />Inspect ›<\/span>/);
+  assert.match(component, />\s*Inspect routes\s*<\/button>/);
   assert.doesNotMatch(component, /function MarketReadinessCard/);
   assert.doesNotMatch(component, /function CoverageMetric/);
 });
@@ -158,18 +155,22 @@ test("route inspector uses compact select controls while preserving every route 
   assert.doesNotMatch(component, /aria-label="Route status filters"/);
 });
 
-test("market diagnostics use Providers-style expandable attention rows", () => {
-  assert.match(component, /title="Markets requiring attention"/);
-  assert.match(component, /<ul className="mt-3 space-y-2">/);
-  assert.match(component, /border-l-\[3px\] border-amber-500/);
-  assert.match(component, /<details className="group py-2\.5">/);
-  assert.match(component, /View details ›/);
-  assert.match(component, /Hide details ‹/);
+test("market coverage combines the affected market diagnostics with the public table", () => {
+  assert.match(component, /title="Market coverage"/);
+  assert.match(component, /<ul aria-label="Public market coverage"/);
+  assert.match(component, /markets\.map\(\(market\) =>/);
+  assert.match(component, /<details className="group mx-3 mb-3 border-l-2 border-amber-500 pl-3">/);
+  assert.match(component, /Coverage details/);
   assert.match(component, /Popular \{market\.popularVisibleFresh\}\/\{market\.popularVisibleTarget\}/);
   assert.match(component, /Discovery \{market\.discoveryVisibleFresh\}\/\{market\.discoveryVisibleTarget\}/);
+  assert.match(component, /Backup \{market\.backupFresh\}\/\{market\.backupTarget\}/);
+  assert.match(component, /<CompactDetail label="Next run" value=\{nextRunNeeded \? "Needed" : "Not required"\}/);
+  assert.match(component, /formatUnderfillCause\(nextRunCause\)/);
   assert.match(component, /label="Current gaps"/);
-  assert.doesNotMatch(component, />Coverage gap<\/span>/);
-  assert.doesNotMatch(component, /function buildDiagnostics/);
+  assert.match(component, /onInspectMarket\(market\.marketCode\)/);
+  assert.match(component, /outsidePublicCount/);
+  assert.match(component, /additional market/);
+  assert.doesNotMatch(component, /function DiagnosticsPanel|title="Markets requiring attention"/);
 });
 
 test("homepage fare status returns snapshot-derived next-run metadata before a manual refresh", () => {
@@ -200,7 +201,9 @@ test("underfilled diagnostics never default missing next-run metadata to not req
 });
 
 test("homepage fare diagnostics keep concise coverage summaries with action-oriented next-run details", () => {
-  assert.match(component, /Popular \{market\.popularVisibleFresh\}\/\{market\.popularVisibleTarget\} · Discovery \{market\.discoveryVisibleFresh\}\/\{market\.discoveryVisibleTarget\} · Backup \{market\.backupFresh\}\/\{market\.backupTarget\}/);
+  assert.match(component, /\{market\.popularVisibleFresh\}\/\{market\.popularVisibleTarget\}/);
+  assert.match(component, /\{market\.discoveryVisibleFresh\}\/\{market\.discoveryVisibleTarget\}/);
+  assert.match(component, /\{market\.backupFresh\}\/\{market\.backupTarget\}/);
   assert.doesNotMatch(component, /\{market\.underfillReason \? <span className="block text-amber">\{market\.underfillReason\}<\/span> : null\}/);
   assert.match(component, /label="Next run"/);
   assert.match(component, /formatUnderfillCause\(nextRunCause\)/);
@@ -220,7 +223,7 @@ test("homepage fare diagnostics keeps only operator-relevant signals in the main
 
 test("route inspector empty state stays compact", () => {
   assert.match(component, /Select a market or All routes\./);
-  assert.match(component, /mt-3 rounded-lg border border-dashed border-slate-300 bg-slate-50\/60 px-3 py-2\.5/);
+  assert.match(component, /mt-3 border-b border-\[#E7ECF5\] py-3 text-\[12px\]/);
   assert.doesNotMatch(component, /Route rows stay hidden until a market context is selected/);
   assert.doesNotMatch(component, /mt-5 rounded-2xl border border-dashed border-slate-300 bg-white\/55 p-6 text-center/);
 });
@@ -245,10 +248,10 @@ test("homepage fare primary market health suppresses repeated zero-value copy", 
 
 test("homepage fares uses the same flat section language as Providers", () => {
   assert.match(component, /className="min-w-0 bg-white text-\[#020617\]"/);
-  assert.match(component, /className="border-b border-\[#D8E1EC\] pb-6 pt-6"/);
+  assert.match(component, /className="border-b border-\[#D8E1EC\] pb-4 pt-4"/);
   assert.match(component, /text-\[15px\] font-semibold text-\[#020617\]/);
   assert.match(component, /focus-visible:outline-\[#004BB8\]/);
-  assert.match(component, /border-l-\[3px\] border-amber-500/);
+  assert.match(component, /border-l-2 border-amber-500/);
   assert.doesNotMatch(component, /rounded-2xl border border-border bg-white p-3\.5 shadow-sm/);
   assert.doesNotMatch(component, /Card className=/);
 });
@@ -285,14 +288,14 @@ test("homepage fare operations links directly to content and flight providers wi
 test("homepage fare page header follows the compact Providers treatment", () => {
   const page = readFileSync("src/app/admin/homepage-fares/page.tsx", "utf8");
   assert.match(page, /<AdminPageShell title="Homepage Fare Operations" hideHeader>/);
-  assert.match(page, /border-b border-\[#D8E1EC\] pb-3/);
-  assert.match(page, /text-\[18px\] font-semibold tracking-tight text-\[#020617\]/);
+  assert.match(page, /border-b border-\[#D8E1EC\] pb-4/);
+  assert.match(page, /text-\[20px\] font-semibold leading-7 tracking-\[-0\.02em\] text-\[#020617\]/);
   assert.match(page, /rounded-md border border-\[#D8E1EC\] bg-white px-3 text-\[13px\] font-medium/);
   assert.doesNotMatch(page, /rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black/);
 });
 
 test("readiness overview is flat like Providers while preserving status and metrics", () => {
-  assert.match(component, /<section aria-labelledby="homepage-fare-readiness-heading" className="border-b border-\[#D8E1EC\] pb-5 pt-1">/);
+  assert.match(component, /<section aria-labelledby="homepage-fare-readiness-heading" className="pb-4 pt-4">/);
   assert.match(component, /id="homepage-fare-readiness-heading"/);
   assert.match(component, />Readiness overview<\/h2>/);
   assert.match(component, /<DisplayReadinessSummary readiness=\{statusPayload\.displayReadiness\} \/>/);
@@ -300,10 +303,10 @@ test("readiness overview is flat like Providers while preserving status and metr
   assert.doesNotMatch(component, /shadow-sm/);
 });
 
-test("readiness summary metrics use compact neutral Providers-style cards with semantic dots", () => {
-  assert.match(component, /className="rounded-lg border border-\[#D8E1EC\] bg-white px-3 py-2\.5"/);
+test("readiness summary metrics use flat neutral rows with semantic dots", () => {
+  assert.match(component, /className="min-w-0 border-r border-\[#E7ECF5\] px-3 py-3/);
   assert.match(component, /h-1\.5 w-1\.5 shrink-0 rounded-full/);
-  assert.match(component, /text-\[22px\] font-semibold leading-\[26px\] tracking-tight tabular-nums/);
+  assert.match(component, /text-\[24px\] font-medium leading-7 tracking-\[-0\.03em\] tabular-nums/);
   assert.match(component, /return "bg-teal"/);
   assert.match(component, /return "bg-sky-500"/);
   assert.match(component, /return "bg-amber"/);
@@ -322,4 +325,44 @@ test("readiness metric tone logic remains unchanged", () => {
   assert.match(component, /label="Missing routes"[\s\S]*statusPayload\.summary\.missing \? "warning" : "neutral"/);
   assert.match(component, /label="Failed \/ unavailable"[\s\S]*statusPayload\.summary\.failed \+ statusPayload\.summary\.unavailable \? "warning" : "neutral"/);
   assert.match(component, /label="Markets needing attention"[\s\S]*marketsNeedingAnotherRun\.some\(\(market\) => market\.needed\) \? "warning" : "good"/);
+});
+
+
+test("Homepage Fare Operations shares the white Notifications workspace without global header changes", () => {
+  const page = readFileSync("src/app/admin/homepage-fares/page.tsx", "utf8");
+  const shell = readFileSync("src/components/admin/AdminHorizontalShell.tsx", "utf8");
+  assert.match(shell, /const homepageFaresWorkspace = pathname === "\/admin\/homepage-fares"/);
+  assert.match(shell, /notificationsWorkspace \|\| homepageFaresWorkspace/);
+  assert.match(page, /max-w-\[1500px\] bg-white/);
+  assert.match(page, /<AdminPageShell title="Homepage Fare Operations" hideHeader>/);
+  assert.match(page, /href="\/admin\/content\/homepage"/);
+  assert.match(page, /href="\/admin\/providers\?product=flights"/);
+});
+
+test("Readiness is a flat metrics strip with neutral status dots and authoritative counts", () => {
+  assert.match(component, /aria-label="Fare readiness metrics"/);
+  assert.match(component, /border-y border-\[#D8E1EC\] sm:grid-cols-3 lg:grid-cols-5/);
+  assert.doesNotMatch(component, /rounded-lg border border-\[#D8E1EC\] bg-white px-3 py-2\.5/);
+  assert.match(component, /summary\.fresh/);
+  assert.match(component, /summary\.last_known_good/);
+  assert.match(component, /summary\.missing/);
+  assert.match(component, /summary\.failed \+ statusPayload\.summary\.unavailable/);
+  assert.match(component, /marketsNeedingAnotherRun\.filter\(\(market\) => market\.needed\)\.length/);
+  assert.match(component, /Telemetry unavailable\. Snapshot data could not be read; coverage counts are hidden\./);
+});
+
+test("Market coverage retains public market inspection and reports counts outside the public table", () => {
+  assert.match(component, /<ul aria-label="Public market coverage"/);
+  assert.match(component, /displayedCodes = new Set\(markets\.map/);
+  assert.match(component, /outsidePublicCount = marketsNeedingAnotherRun\.filter/);
+  assert.match(component, /outside the public country table/);
+  assert.match(component, /<details className="group mx-3 mb-3 border-l-2 border-amber-500 pl-3">/);
+  assert.match(component, /aria-pressed=\{selected\}/);
+  assert.match(component, /onClick=\{\(\) => onInspectMarket\(market\.marketCode\)\}/);
+  assert.match(component, /<MarketRouteInspector/);
+  assert.match(component, /onSelectMarket=\{selectRouteScope\}/);
+  assert.match(component, /onFilterChange=\{selectRouteFilter\}/);
+  assert.match(component, /<AdvancedDiagnostics/);
+  assert.match(component, /Provider budget/);
+  assert.match(component, /Route budget/);
 });

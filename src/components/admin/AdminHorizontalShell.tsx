@@ -161,8 +161,9 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
   const emailDeliveryWorkspace = pathname === "/admin/email-delivery" || pathname === "/admin/email-delivery/";
   const settingsWorkspace = pathname === "/admin/settings" || pathname.startsWith("/admin/settings/");
   const notificationsWorkspace = pathname === "/admin/notifications" || pathname === "/admin/notifications/";
+  const homepageFaresWorkspace = pathname === "/admin/homepage-fares" || pathname === "/admin/homepage-fares/";
   const whiteWorkspace = pathname === "/admin/system" || pathname === "/admin/system/" || pathname === "/admin/system/cms-health" || pathname === "/admin/system/cms-health/" || auditLogsWorkspace || emailDeliveryWorkspace || settingsWorkspace || usersDirectory || searchesWorkspace || supportWorkspace
-    || providersWorkspace || providerReportingWorkspace || accountDeletionDetail || contentWorkspace || notificationsWorkspace;
+    || providersWorkspace || providerReportingWorkspace || accountDeletionDetail || contentWorkspace || notificationsWorkspace || homepageFaresWorkspace;
   return <AdminWorkspaceSearchProvider account={adminEmail || "admin"}><div ref={workspaceRef} className={"min-h-screen text-slate-950 " + (userActivity ? "bg-[#f1f5fb]" : whiteWorkspace ? "bg-white" : "bg-[#f1f5fb]")}>
     <header ref={headerRef} className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
       <AdminSearchHeader>
