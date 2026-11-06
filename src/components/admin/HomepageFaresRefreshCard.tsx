@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type RefObject, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { ChevronDown, RefreshCcw } from "lucide-react";
 import Link from "next/link";
 
@@ -640,7 +640,6 @@ export function HomepageFaresRefreshCard({ view = "operations", initialMarket = 
 
               <AdvancedDiagnostics
                 pools={fallbackPools}
-                selectedRouteScope={selectedRouteScope}
                 onInspectMarket={homepageFareRoutesHref}
                 statusPayload={statusPayload}
                 refreshCounts={latestCounts}
@@ -1046,13 +1045,11 @@ function MarketReadinessDashboard({
 
 function AdvancedDiagnostics({
   pools,
-  selectedRouteScope,
   onInspectMarket,
   statusPayload,
   refreshCounts,
 }: {
   pools: MarketReadiness[];
-  selectedRouteScope: string | null;
   onInspectMarket: (marketCode: string) => string;
   statusPayload: HomepageFareStatusPayload;
   refreshCounts: RefreshCounts | null;
@@ -1066,16 +1063,15 @@ function AdvancedDiagnostics({
           <p className="mt-1 max-w-4xl text-[12px] leading-5 text-[#475569]">
             Internal regional and global pools used for routing and replacement; they do not count as public homepage readiness.
           </p>
-          <div className="mt-4 grid max-w-[1200px] gap-x-5 gap-y-1 md:grid-cols-2 xl:grid-cols-3">
+          <div className="mt-4 grid gap-x-8 gap-y-2 md:grid-cols-2">
             {pools.length ? (
               pools.map((pool) => {
-                const selected = normalizeAdminHomepageFareMarketCode(selectedRouteScope ?? "") === normalizeAdminHomepageFareMarketCode(pool.marketCode);
                 return (
                   <Link
                     key={pool.marketCode}
                     href={onInspectMarket(pool.marketCode)}
                     aria-label={"Inspect routes for " + pool.marketLabel}
-                    className={"min-w-0 border-b border-[#E7ECF5] px-2 py-3.5 text-left transition-colors hover:bg-[#F8FAFC] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] " + (selected ? "bg-[#F2F7FF]" : "")}
+                    className="min-w-0 border-b border-[#E7ECF5] px-3 py-4 text-left transition-colors hover:bg-[#F8FAFC] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]"
                   >
                     <div className="flex min-w-0 items-start justify-between gap-3">
                       <span className="min-w-0 text-[13px] font-semibold leading-5 text-[#020617]">{pool.marketLabel}</span>
@@ -1095,12 +1091,12 @@ function AdvancedDiagnostics({
           </div>
         </section>
 
-        <section aria-labelledby="executor-debug-heading" className="border-t border-[#E7ECF5] pt-5">
+        <section aria-labelledby="executor-debug-heading" className="border-t border-[#E7ECF5] pt-6">
           <h4 id="executor-debug-heading" className="text-[14px] font-semibold text-[#020617]">Executor details</h4>
-          <div className="mt-4 grid gap-x-8 gap-y-5 lg:grid-cols-2">
+          <div className="mt-4 grid gap-x-10 gap-y-6 lg:grid-cols-2">
             <div className="min-w-0">
               <h5 className="text-[12px] font-semibold text-[#334155]">Execution and budgets</h5>
-              <dl className="mt-2 grid grid-cols-2 gap-x-5 gap-y-4">
+              <dl className="mt-3 grid grid-cols-2 gap-x-6 gap-y-4">
                 <MetricCard label="Configured routes" value={statusPayload.summary.total} />
                 <MetricCard label="Stopped reason" value={refreshCounts ? formatStoppedReason(refreshCounts.stoppedReason) : "No run yet"} />
                 <MetricCard label="Provider budget" value={refreshCounts ? (refreshCounts.stoppedReason === "provider_budget_exhausted" ? "Exhausted" : "Available") : "Not observed yet"} />
@@ -1113,7 +1109,7 @@ function AdvancedDiagnostics({
             </div>
             <div className="min-w-0">
               <h5 className="text-[12px] font-semibold text-[#334155]">Public fare outcomes</h5>
-              <dl className="mt-2 grid grid-cols-2 gap-x-5 gap-y-4">
+              <dl className="mt-3 grid grid-cols-2 gap-x-6 gap-y-4">
                 <MetricCard label="Fresh used publicly" value={statusPayload.publicPriceDiagnostics.fresh_available} />
                 <MetricCard label="LKG used publicly" value={statusPayload.publicPriceDiagnostics.last_known_good_used} />
                 <MetricCard label="Exact route mismatch" value={statusPayload.publicPriceDiagnostics.exact_route_mismatch} />
@@ -1124,7 +1120,7 @@ function AdvancedDiagnostics({
           </div>
           <div className="mt-5 border-t border-[#E7ECF5] pt-4">
             <h5 className="text-[12px] font-semibold text-[#334155]">Scheduling and market targets</h5>
-            <dl className="mt-2 grid gap-x-8 gap-y-4 sm:grid-cols-2">
+            <dl className="mt-3 grid gap-x-10 gap-y-5 sm:grid-cols-2">
               <MetricCard label="Scheduler cadence" value={statusPayload.nextExpectedCronRefresh ?? "Not provided"} />
               <MetricCard label="Scheduler verification" value="Not observable from this service" />
               <MetricCard label="Executor targets" value={refreshCounts ? formatStringList(refreshCounts.targetedMarkets, "none") : "No manual run yet"} />
