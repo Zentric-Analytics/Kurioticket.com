@@ -473,8 +473,8 @@ test("readiness metrics display loading instead of Unavailable while status is p
 test("saved status and scheduler wait for the result, while real outages stay visible", () => {
   const panel = component.slice(component.indexOf("function RefreshCronPanel("), component.indexOf("function homepageFareRoutesHref("));
   assert.match(component, /initialStatusLoading=\{readinessLoading\}/);
-  assert.match(component, /value=\{readinessLoading \? "Loading…" : statusPayload\.dataAvailable \? formatSnapshotTime/);
-  assert.match(component, /value=\{readinessLoading \? "Loading…" : statusPayload\.dataAvailable \? formatCronStatus/);
+  assert.match(component, /value=\{initialStatusLoading \? "Loading…" : statusPayload\.dataAvailable \? formatSnapshotTime/);
+  assert.match(component, /value=\{initialStatusLoading \? "Loading…" : statusPayload\.dataAvailable \? formatCronStatus/);
   assert.match(panel, /\{!loading && !operationsAvailable \? \(/);
   assert.match(panel, /\{!loading && operationsAvailable && !statusPayload\.cronConfigured \? \(/);
   assert.match(component, /setStatusState\(\(current\) => \(\{ \.\.\.current, loading: true, error: "" \}\)\)/);
