@@ -88,12 +88,9 @@ export default async function AdminNotificationSettingsPage() {
         </section>
 
         <section aria-labelledby="active-alerts-heading" className="mt-5 min-w-0">
-          <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-[#D8E1EC] pb-2.5">
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-[#D8E1EC] pb-2.5">
             <h3 id="active-alerts-heading" className="text-[15px] font-semibold text-[#020617]">Active alerts</h3>
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-              <p className="text-[11px] leading-5 text-[#64748B]">Snapshot generated {formatDateTime(snapshot.generatedAt)}</p>
-              <Link href="/admin/logs?range=30d&action=ADMIN_ALERT_ACKNOWLEDGED&targetType=AdminOperationalAlert" className="text-[12px] font-medium text-[#004BB8] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30">View acknowledgement history</Link>
-            </div>
+            <p className="min-w-0 text-[11px] leading-5 text-[#64748B] sm:text-right">Snapshot generated {formatDateTime(snapshot.generatedAt)}</p>
           </div>
           <p className="py-2 text-[12px] leading-5 text-[#64748B]">
             Alerts clear automatically when the underlying authoritative signal clears.
