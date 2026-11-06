@@ -191,6 +191,14 @@ export function AdminAuditLogsToolbar({
     const searchKey = nextAdmin + "\n" + nextTarget;
 
     if (nextAdmin === appliedAdmin && nextTarget === appliedTarget) {
+      if (lastSubmittedSearchRef.current !== null && lastSubmittedSearchRef.current !== searchKey) {
+        lastSubmittedSearchRef.current = searchKey;
+        navigate({
+          adminEmail: nextAdmin || null,
+          targetEmail: nextTarget || null,
+        }, true);
+        return;
+      }
       searchEditingRef.current = false;
       lastSubmittedSearchRef.current = null;
       return;
