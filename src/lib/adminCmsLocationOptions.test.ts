@@ -198,3 +198,12 @@ test("hotel CMS canonical search protects the mapped destination and uses visibl
   assert.match(editor, /Existing destinations cannot be duplicated/);
   assert.match(editor, /Country, country code, type and search value come from the canonical catalogue/);
 });
+
+test("CMS revision restore surfaces actionable canonical conflicts instead of prescribing a stale reload", () => {
+  const restore = readFileSync("src/components/admin/CmsRevisionRestoreButton.tsx", "utf8");
+  assert.match(restore, /const serverError = typeof body\.error === "string"/);
+  assert.match(restore, /const staleVersion = response\.status === 409/);
+  assert.match(restore, /changed since it was opened\|changed concurrently\|refresh before/);
+  assert.match(restore, /: serverError\)/);
+  assert.doesNotMatch(restore, /response\.status === 409\s*\? "This content changed in another session/);
+});
