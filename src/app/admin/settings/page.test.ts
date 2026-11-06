@@ -12,8 +12,8 @@ test("Settings is the authoritative workspace for persisted administrative contr
   assert.match(settingsPage, /<AdminPageShell title="Settings" hideHeader>/);
   assert.doesNotMatch(settingsPage, /Environment and access|ContextItem|Your access|Settings store/);
   assert.match(settingsPage, />Feature controls<\/h2>/);
-  assert.match(settingsPage, />Recent settings changes<\/h2>/);
-  assert.match(settingsPage, />Managed outside Settings<\/h2>/);
+  assert.match(settingsPage, />Recent changes<\/h2>/);
+  assert.doesNotMatch(settingsPage, /Managed outside Settings|Runtime & credentials|Administrator access/);
   assert.doesNotMatch(settingsPage, /Homepage Fare Operations|\/admin\/homepage-fares/);
   assert.doesNotMatch(settingsPage, /provider health|system health|email delivery health/i);
 });
@@ -47,23 +47,24 @@ test("settings starts directly with feature controls and retains authorization i
   assert.match(settingsPage, /getFeatureControlProductionAdmins/);
 });
 
-test("feature controls distinguish product availability from travel automation", () => {
+test("feature controls use concise product and automation descriptions", () => {
   assert.match(featurePanel, /"Travel Search": "Product availability"/);
   assert.match(featurePanel, /"Travel Automation": "Travel automation"/);
-  assert.match(featurePanel, /Controls whether customer-facing travel products are available/);
-  assert.match(featurePanel, /Controls background and customer automation without changing saved state/);
+  assert.match(featurePanel, /Manage travel search and Packages\./);
+  assert.match(featurePanel, /Manage price alerts and automatic checks\./);
   assert.match(featurePanel, /controls\.filter\(\(control\) => control\.category === category\)/);
-  assert.match(featurePanel, /Controls flight search availability\./);
-  assert.match(featurePanel, /Controls hotel search availability\./);
-  assert.match(featurePanel, /Controls car search availability\./);
-  assert.match(featurePanel, /Controls Packages availability\./);
-  assert.match(featurePanel, /Controls price-alert creation and reactivation\./);
-  assert.match(featurePanel, /Controls automatic price checks and alert delivery\./);
+  assert.match(featurePanel, /Allow flight searches\./);
+  assert.match(featurePanel, /Allow hotel searches\./);
+  assert.match(featurePanel, /Allow car searches\./);
+  assert.match(featurePanel, /Show or hide Packages\./);
+  assert.match(featurePanel, /Allow new and reactivated price alerts\./);
+  assert.match(featurePanel, /Run automatic price checks and send alerts\./);
+  assert.match(featurePanel, /\{control\.risk\} · \{control\.kind\}/);
 });
 
-test("Settings explains that enabled controls do not claim operational health", () => {
-  assert.match(settingsPage, /Persisted controls determine whether Kurioticket capabilities may operate/);
-  assert.match(settingsPage, /Operational health is monitored in Providers and the relevant operational workspaces/);
+test("Settings starts with a short instruction without implying service health", () => {
+  assert.match(settingsPage, /Turn Kurioticket features on or off\./);
+  assert.doesNotMatch(settingsPage, /Operational health is monitored in Providers and the relevant operational workspaces/);
 });
 
 test("production feature-control changes keep strong authorization", () => {
@@ -122,19 +123,14 @@ test("feature-control network failures remain retryable without closing the dial
 
 test("recent settings changes link to the authoritative filtered audit trail", () => {
   assert.match(settingsPage, /href="\/admin\/logs\?range=30d&action=FEATURE_CONTROL_UPDATED&targetType=FeatureFlag"/);
-  assert.match(settingsPage, />\s*View settings audit history\s*<\/Link>/);
+  assert.match(settingsPage, />\s*View audit history\s*<\/Link>/);
   assert.match(settingsPage, /recentControlUpdates/);
   assert.match(settingsPage, /No persisted control updates yet/);
   assert.doesNotMatch(settingsPage, /updatedBy|admin email address/i);
 });
 
-test("deployment secrets and access ownership stay outside Settings", () => {
-  assert.match(settingsPage, /Managed outside Settings/);
-  assert.match(settingsPage, /Runtime & credentials/);
-  assert.match(settingsPage, /Database URLs, API keys, session secrets, provider credentials and server environment variables remain deployment-owned and are not editable here/);
-  assert.match(settingsPage, /Administrator access/);
-  assert.match(settingsPage, /Administrator allowlists and production feature-control permissions remain server-managed/);
-  assert.match(settingsPage, /Team Access/);
+test("Settings omits nonactionable deployment and access documentation", () => {
+  assert.doesNotMatch(settingsPage, /Managed outside Settings|Runtime & credentials|Administrator access|Deployment managed|Access managed separately/);
   assert.doesNotMatch(settingsPage, /process\.env\./);
   assert.doesNotMatch(featurePanel, /API key|database URL|session secret/i);
 });
