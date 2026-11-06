@@ -422,6 +422,11 @@ test("Homepage and flight drag ordering edits complete market drafts without aut
   assert.match(list, /section !== "hotel-destinations"/);
   assert.match(reorder, /onPointerDown=\{event => onDragStart\(event, id\)\}/);
   assert.match(reorder, /document\.elementFromPoint/);
+  assert.match(reorder, /onPointerMove=\{onDragMove\}/);
+  assert.match(reorder, /window\.scrollBy\(0, step\)/);
+  assert.match(reorder, /window\.requestAnimationFrame\(autoScrollWhileDragging\)/);
+  assert.match(reorder, /window\.cancelAnimationFrame\(scrollFrame\.current\)/);
+  assert.match(reorder, /onPointerCancel=\{stopDragging\}/);
   assert.match(reorder, /onKeyDown=\{event => onHandleKeys\(event, id\)\}/);
   assert.match(reorder, /event\.key === "ArrowUp" \|\| event\.key === "ArrowDown"/);
   assert.match(reorder, /Save draft order/);
@@ -433,6 +438,9 @@ test("Homepage and flight drag ordering edits complete market drafts without aut
   assert.match(service, /z\.enum\(\["HOMEPAGE_DESTINATION", "FLIGHT_ROUTE"\]\)/);
   assert.match(service, /status: \{ not: "ARCHIVED" \}/);
   assert.match(service, /current\.length !== input\.items\.length/);
+  assert.match(service, /SELECT "id" FROM "CmsContentItem"/);
+  assert.match(service, /ORDER BY "id"\s+FOR UPDATE/);
+  assert.match(service, /Lock EVERY participating row/);
   assert.match(service, /byId\.get\(id\)\?\.version !== version/);
   assert.match(service, /Prisma\.TransactionIsolationLevel\.Serializable/);
   assert.match(service, /action: "ORDER_NORMALIZED"/);
