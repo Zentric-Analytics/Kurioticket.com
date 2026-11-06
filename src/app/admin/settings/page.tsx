@@ -16,16 +16,6 @@ function formatControlUpdateDate(value: string) {
   }).format(new Date(value));
 }
 
-function ContextItem({ label, value, tone = "neutral" }: { label: string; value: string; tone?: "good" | "warn" | "neutral" }) {
-  const valueClass = tone === "good" ? "text-emerald-700" : tone === "warn" ? "text-amber-700" : "text-[#0F172A]";
-  return (
-    <div className="min-w-0">
-      <dt className="text-[12px] text-[#64748B]">{label}</dt>
-      <dd className={"mt-1 text-[14px] font-semibold " + valueClass}>{value}</dd>
-    </div>
-  );
-}
-
 export default async function AdminSettingsPage() {
   const [featureControls, session] = await Promise.all([
     listFeatureControls(),
@@ -33,11 +23,6 @@ export default async function AdminSettingsPage() {
   ]);
   const currentEmail = session?.user?.email?.trim().toLowerCase() || "";
   const canControlProduction = getFeatureControlProductionAdmins().includes(currentEmail);
-  const canEditControls =
-    featureControls.dataAvailable &&
-    (featureControls.environment === "STAGING" || canControlProduction);
-  const accessLabel = canEditControls ? "Can edit" : featureControls.dataAvailable ? "View only" : "Unavailable";
-  const storeLabel = featureControls.dataAvailable ? "Available" : "Read-only fallback";
   const recentControlUpdates = featureControls.controls
     .filter((control) => Boolean(control.state.updatedAt))
     .sort((a, b) => Date.parse(b.state.updatedAt || "") - Date.parse(a.state.updatedAt || ""))
@@ -46,15 +31,7 @@ export default async function AdminSettingsPage() {
   return (
     <AdminPageShell title="Settings" hideHeader>
       <div className="w-full min-w-0 bg-white text-[#020617]">
-        <section aria-label="Environment and access" className="border-b border-[#D8E1EC] pb-4">
-          <div className="grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-3">
-            <ContextItem label="Environment" value={featureControls.environment === "PRODUCTION" ? "Production" : "Staging"} />
-            <ContextItem label="Your access" value={accessLabel} tone={canEditControls ? "good" : "warn"} />
-            <ContextItem label="Settings store" value={storeLabel} tone={featureControls.dataAvailable ? "good" : "warn"} />
-          </div>
-        </section>
-
-        <section aria-labelledby="feature-controls-heading" className="border-b border-[#D8E1EC] py-5">
+        <section aria-labelledby="feature-controls-heading" className="border-b border-[#D8E1EC] pb-5">
           <h2 id="feature-controls-heading" className="text-[15px] font-semibold text-[#020617]">Feature controls</h2>
           <p className="mt-1 max-w-4xl text-[12px] leading-5 text-[#64748B]">
             Persisted controls determine whether Kurioticket capabilities may operate. Operational health is monitored in Providers and the relevant operational workspaces.
