@@ -1143,7 +1143,7 @@ function MarketRouteInspector({
   routeInspectorRef,
 }: {
   publicGroups: AdminHomepageFareMarketRouteGroup[];
-  selectedRouteScope: string | null;
+  selectedRouteScope: string;
   selectedGroup: AdminHomepageFareMarketRouteGroup | null;
   filter: AdminHomepageFareRouteGroupFilter;
   loading: boolean;
