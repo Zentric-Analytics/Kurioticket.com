@@ -231,6 +231,13 @@ test("desktop signed-in menu restores My Account first without changing mobile l
   assert.ok(desktopStart >= 0 && mobileStart > desktopStart);
   assert.match(desktop, /href: "\/dashboard\/account", labelKey: "accountMenu\.myAccount\.label"/);
   assert.match(desktop, /\.\.\.signedInAccountMenuItems/);
+  const accountIndex = desktop.indexOf('href: "/dashboard/account"');
+  const existingItemsIndex = desktop.indexOf("...signedInAccountMenuItems");
+  assert.ok(accountIndex >= 0 && existingItemsIndex >= 0 && accountIndex < existingItemsIndex,
+    "My Account must precede the existing desktop signed-in menu entries");
+  // Ensure My Account is actually the first array entry, not merely ahead of
+  // the spread of existing links.
+  assert.match(desktop, /const desktopSignedInAccountMenuItems = \[\s*\{\s*href: "\/dashboard\/account"/);
   assert.match(headerSource, /desktopSignedInAccountMenuItems\.map\(\(item\) =>/);
 
   const mobile = headerSource.slice(mobileStart, headerSource.indexOf("const mobileInfoLegalMenuItems", mobileStart));
