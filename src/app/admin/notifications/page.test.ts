@@ -167,7 +167,8 @@ test("admin bell opens the complete notification panel without navigating or ack
   assert.match(panel, /createPortal/);
   assert.match(panel, /role="dialog"/);
   assert.match(panel, /Close notifications/);
-  assert.match(panel, /snapshot\.alerts\.map/);
+  assert.match(panel, /visibleAlerts\.map/);
+  assert.match(panel, /shouldShowAdminNotification/);
   assert.match(panel, /AdminAlertAcknowledgeButton/);
   assert.doesNotMatch(panel, /method: "POST"|slice\(0|View all|See all|href="\/admin\/notifications"|line-clamp/);
 });

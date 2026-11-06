@@ -21,6 +21,7 @@ const actionLabels: Record<string, string> = {
   USER_ROLE_UPDATED: "User role updated",
   USER_SOFT_DELETED: "User deleted",
   FEATURE_CONTROL_UPDATED: "Feature control updated",
+  ADMIN_NOTIFICATION_PREFERENCE_UPDATED: "Notification preference updated",
 };
 
 export default async function AdminLogsPage({ searchParams }: { searchParams: SearchParams }) {

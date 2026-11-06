@@ -3,9 +3,11 @@ import { getServerSession } from "next-auth";
 
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { FeatureControlsPanel } from "@/components/admin/FeatureControlsPanel";
+import { AdminNotificationPreferencesPanel } from "@/components/admin/AdminNotificationPreferencesPanel";
 import { authOptions } from "@/lib/auth";
 import { getFeatureControlProductionAdmins } from "@/lib/env";
 import { listFeatureControls } from "@/lib/feature-controls/service";
+import { readAdminNotificationPreferences } from "@/services/adminNotificationPreferencesService";
 
 export const metadata = { title: "Admin Settings" };
 
@@ -22,6 +24,9 @@ export default async function AdminSettingsPage() {
     getServerSession(authOptions),
   ]);
   const currentEmail = session?.user?.email?.trim().toLowerCase() || "";
+  const notificationPreferences = session?.user?.id
+    ? await readAdminNotificationPreferences(session.user.id)
+    : { showAcknowledgedWarnings: true, available: false };
   const canControlProduction = getFeatureControlProductionAdmins().includes(currentEmail);
   const recentControlUpdates = featureControls.controls
     .filter((control) => Boolean(control.state.updatedAt))
@@ -44,6 +49,17 @@ export default async function AdminSettingsPage() {
               operationsAvailable={featureControls.dataAvailable}
             />
           </div>
+        </section>
+
+        <section aria-labelledby="notification-settings-heading" className="border-b border-[#D8E1EC] py-5">
+          <h2 id="notification-settings-heading" className="text-[15px] font-semibold text-[#020617]">Notifications</h2>
+          <p className="mt-1 text-[12px] leading-5 text-[#64748B]">
+            Choose how acknowledged warnings appear in your admin notification drawer.
+          </p>
+          <AdminNotificationPreferencesPanel
+            initialValue={notificationPreferences.showAcknowledgedWarnings}
+            available={notificationPreferences.available}
+          />
         </section>
 
         <section aria-labelledby="recent-settings-changes-heading" className="py-5">
