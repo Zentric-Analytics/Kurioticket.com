@@ -65,3 +65,11 @@ test("Admin Order starts at 1 while backend values stay zero-based", () => {
   assert.ok(validateCmsEditor("FAQ", faq, "0").sortOrder);
   assert.deepEqual(validateCmsEditor("FAQ", faq, "1"), {});
 });
+
+test("CMS image fields accept only managed upload URLs with strict image filenames", () => {
+  const url = "/api/cms/images/2b3af71a-4ba7-4dc5-9fbe-204c94a8b302.webp";
+  assert.deepEqual(validateCmsEditor("FLIGHT_ROUTE", { ...flight, image: url }, "1"), {});
+  for (const invalid of ["/api/cms/images/../admin", "/api/cms/images/a.svg", url + "?redirect=1", "/api/cms/images/not-a-uuid.png"]) {
+    assert.ok(validateCmsEditor("FLIGHT_ROUTE", { ...flight, image: invalid }, "1").image, invalid);
+  }
+});
