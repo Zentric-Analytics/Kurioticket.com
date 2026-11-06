@@ -266,7 +266,7 @@ test("route inspector defaults to All with seven distinct status options", () =>
 test("All routes summary shows the current status and does not display fallback-only badge", () => {
   assert.match(component, /filterLabel=\{ROUTE_FILTERS\.find\(\(option\) => option\.key === filter\)\?\.label \?\? "All statuses"\}/);
   assert.doesNotMatch(component, /\{" · Status: "\}\{filterLabel\}/);
-  assert.match(component, /Across all markets/);
+  assert.doesNotMatch(component, /Across all markets|Showing \{page\.start\}/);
   assert.match(component, /!isViewAll \? <MarketGroupStatusBadge status=\{group\.status\} \/> : null/);
   assert.match(component, /No routes match the selected status/);
   assert.doesNotMatch(component, /Debug view across all markets/);
