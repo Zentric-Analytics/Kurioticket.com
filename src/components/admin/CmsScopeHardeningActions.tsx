@@ -290,18 +290,20 @@ export function CmsScopeHardeningActions({
                   Retire fallback
                 </button>
               ) : (
-                <div
+                <button
                   role="menuitem"
+                  type="button"
                   aria-disabled="true"
-                  className="rounded-md px-3 py-2.5 text-left"
+                  className="focus-ring w-full cursor-not-allowed rounded-md px-3 py-2.5 text-left"
+                  onClick={(event) => event.preventDefault()}
                 >
-                  <p className="text-[13px] font-medium text-[#94A3B8]">
+                  <span className="block text-[13px] font-medium text-[#94A3B8]">
                     Retire fallback
-                  </p>
-                  <p className="mt-0.5 text-[11px] leading-4 text-[#94A3B8]">
+                  </span>
+                  <span className="mt-0.5 block text-[11px] leading-4 text-[#94A3B8]">
                     Resolve published CMS integrity issues first.
-                  </p>
-                </div>
+                  </span>
+                </button>
               )}
             </div>,
             document.body,
