@@ -387,8 +387,14 @@ test("Homepage and flight directories show all records grouped by market then Or
   ]);
   assert.deepEqual(records, original, "Sorting must not mutate CMS records");
 
-  assert.match(page, /while \(listing\.nextCursor\)/);
-  assert.match(page, /listAdminCmsContent\(\{ \.\.\.listInput, cursor: listing\.nextCursor \}\)/);
+  const service = readFileSync("src/services/cmsContentService.ts", "utf8");
+  assert.match(page, /listAdminCmsContentDirectory\(listInput\)/);
+  assert.match(service, /listAdminCmsContentDirectory/);
+  assert.match(service, /Prisma\.TransactionIsolationLevel\.RepeatableRead/);
+  assert.match(service, /await listAdminCmsContent\(pageInput, tx\)/);
+  assert.match(service, /while \(nextCursor\)/);
+  assert.match(service, /await listAdminCmsContent\(\{ \.\.\.pageInput, cursor: nextCursor \}, tx\)/);
+  assert.match(service, /reader \?\? getOptionalPrisma\(\)/);
   assert.match(page, /items: sortHomepageCmsDirectoryItems\(listing\.items\)/);
   assert.match(page, /nextCursor: null/);
   assert.doesNotMatch(page, /Next page|function nextHref|<Link\s/);
