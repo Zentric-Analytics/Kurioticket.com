@@ -137,11 +137,11 @@ test("acknowledgement mutation is authenticated, rate-limited, and safe", () => 
   assert.doesNotMatch(ackApi, /title|message|actionHref/);
 });
 
-test("notifications page explains acknowledgement semantics and monitored boundaries", () => {
+test("notifications page keeps clear acknowledgement guidance without verbose monitoring boundaries", () => {
   assert.match(page, /title="Notifications & Alerts"/);
   assert.match(page, /does not resolve the underlying condition/);
-  assert.match(page, /Monitoring boundaries/);
-  assert.match(page, /does not fabricate alerts/);
+  assert.match(page, /Alerts clear automatically when the underlying authoritative signal clears/);
+  assert.doesNotMatch(page, /Monitoring boundaries|Coverage, limitations, and alert behavior|does not fabricate alerts|data-monitoring-boundaries/);
   assert.match(page, /AdminAlertAcknowledgeButton/);
   assert.match(page, /isProtectedAdminEmail\(session\.user\.email\)/);
   assert.match(page, /signalToken=\{alert\.signalToken\}/);
@@ -195,8 +195,8 @@ test("Notifications & Alerts uses the same compact white workspace as Users and 
   assert.match(page, /aria-labelledby="active-alerts-heading"/);
   assert.match(page, /<ul aria-label="Operational alerts"/);
   assert.match(page, /data-alert-row/);
-  assert.match(page, /data-monitoring-boundaries/);
-  assert.match(page, /<details /);
+  assert.doesNotMatch(page, /data-monitoring-boundaries|<details |ChevronDown/);
+  assert.match(page, /aria-labelledby="active-alerts-heading"/);
   assert.doesNotMatch(page, /AdminMetricCard|AdminSectionCard|AdminStatusBadge|AdminEmptyState/);
 });
 
