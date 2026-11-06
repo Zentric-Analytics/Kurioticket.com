@@ -108,7 +108,8 @@ test("homepage fare readiness keeps only core customer-facing summary metrics", 
 test("fare diagnostics uses four standalone sections rather than redundant wrapper headings", () => {
   const page = readFileSync("src/app/admin/homepage-fares/diagnostics/page.tsx", "utf8");
   const diagnostics = component.slice(component.indexOf("function FareDiagnosticsSections("), component.indexOf("function MarketRouteInspector("));
-  assert.match(page, /<h1[^>]*>Fare Diagnostics<\/h1>/);
+  assert.match(page, /<h1 className="sr-only">Fare Diagnostics<\/h1>/);
+  assert.match(page, /<HomepageFareSubpageNavigation active="diagnostics"/);
   for (const heading of ["Fallback coverage pools", "Refresh execution", "Public fare eligibility", "Scheduling and market targets"]) {
     assert.ok(diagnostics.includes(">" + heading + "</h2>"), "Missing heading " + heading);
   }
@@ -169,7 +170,7 @@ test("Inspect routes navigates reliably even when selecting the same market agai
   assert.match(component, /href=\{onInspectMarket\(market\.marketCode\)\}/);
   assert.match(component, /href=\{onInspectMarket\(pool\.marketCode\)\}/);
   assert.match(routesPage, /view="routes" initialMarket=\{initialMarket\}/);
-  assert.match(routesPage, /Back to Homepage Fare Operations/);
+  assert.match(routesPage, /<HomepageFareSubpageNavigation active="routes"/);
   assert.doesNotMatch(component, /scrollIntoView|routeInspectorRef|inspectMarketRoutes/);
 });
 
@@ -232,7 +233,7 @@ test("route inspector keeps the market badge and full responsive route details",
 test("single Route inspector heading is supplied by page, not duplicated above Market", () => {
   const page = readFileSync("src/app/admin/homepage-fares/routes/page.tsx", "utf8");
   const inspector = component.slice(component.indexOf("function MarketRouteInspector("), component.indexOf("function SelectedRouteDetails("));
-  assert.match(page, /<h1[^>]*>Route inspector<\/h1>/);
+  assert.match(page, /<h1 className="sr-only">Route inspector<\/h1>/);
   assert.match(inspector, /<section aria-label="Route inspection filters and results"/);
   assert.doesNotMatch(inspector, /<DashboardSection|title="Route inspector"|>Route inspector<\/h3>/);
   assert.match(inspector, /label="Market"/);
@@ -558,7 +559,7 @@ test("dedicated route page validates market hints and keeps white admin workspac
   const shell = readFileSync("src/components/admin/AdminHorizontalShell.tsx", "utf8");
   assert.match(page, /<AdminPageShell title="Route inspector" hideHeader>/);
   assert.match(page, /searchParams: SearchParams/);
-  assert.match(page, /Back to Homepage Fare Operations/);
+  assert.match(page, /<HomepageFareSubpageNavigation active="routes"/);
   assert.match(page, /ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE/);
   assert.match(shell, /pathname.startsWith\("\/admin\/homepage-fares\/"\)/);
   assert.match(component, /view === "operations"/);
@@ -575,9 +576,32 @@ test("fare operations, route inspector and diagnostics are separate navigable vi
   assert.match(component, /href="\/admin\/homepage-fares\/diagnostics"/);
   assert.doesNotMatch(operationsPart, /<AdvancedDiagnostics/);
   assert.match(diagnosticsPage, /<HomepageFaresRefreshCard view="diagnostics"/);
-  assert.match(diagnosticsPage, /Back to Homepage Fare Operations/);
-  assert.match(diagnosticsPage, /href="\/admin\/homepage-fares\/routes"/);
-  assert.match(routesPage, /href="\/admin\/homepage-fares\/diagnostics"/);
+  assert.match(diagnosticsPage, /<HomepageFareSubpageNavigation active="diagnostics"/);
+  assert.match(routesPage, /<HomepageFareSubpageNavigation active="routes"/);
+});
+
+test("fare subpages share Providers-style tabs with back navigation above the tabs", () => {
+  const nav = readFileSync("src/components/admin/HomepageFareSubpageNavigation.tsx", "utf8");
+  const routes = readFileSync("src/app/admin/homepage-fares/routes/page.tsx", "utf8");
+  const diagnostics = readFileSync("src/app/admin/homepage-fares/diagnostics/page.tsx", "utf8");
+  const provider = readFileSync("src/app/admin/providers/page.tsx", "utf8");
+  assert.match(nav, /aria-label="Homepage fare sections"/);
+  assert.match(nav, /href="\/admin\/homepage-fares"/);
+  assert.match(nav, /Back to Homepage Fare Operations/);
+  assert.match(nav, /key: "routes", href: "\/admin\/homepage-fares\/routes", label: "Route Inspector"/);
+  assert.match(nav, /key: "diagnostics", href: "\/admin\/homepage-fares\/diagnostics", label: "Fare Diagnostics"/);
+  assert.match(nav, /aria-current=\{active === tab\.key \? "page" : undefined\}/);
+  assert.match(nav, /active === tab\.key \? "border-\[#004BB8\]"/);
+  assert.match(nav, /flex min-w-0 flex-wrap items-end gap-x-6 border-b/);
+  assert.match(provider, /aria-label="Provider reporting sections"/);
+  assert.match(provider, /border-b-2 px-1 text-\[13px\]/);
+  assert.ok(nav.indexOf("Back to Homepage Fare Operations") < nav.indexOf('aria-label="Homepage fare sections"'));
+  for (const page of [routes, diagnostics]) {
+    assert.doesNotMatch(page, /<nav aria-label="Homepage fares pages"|<header className="flex flex-wrap items-start justify-between/);
+    assert.match(page, /<h1 className="sr-only">/);
+  }
+  assert.match(routes, /view="routes" initialMarket=\{initialMarket\}/);
+  assert.match(diagnostics, /view="diagnostics"/);
 });
 
 test("logged diagnostics come from protected no-cache audit reads, never invented from snapshot zeros", () => {
