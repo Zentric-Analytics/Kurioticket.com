@@ -120,7 +120,13 @@ test("CMS health reports integrity, ordering, fallback and unpublished changes",
   assert.match(healthPage, /integrity\.invalidDrafts\.length > 0/);
   assert.match(healthPage, /integrity\.orphanPublished\.length > 0/);
   assert.match(healthPage, /integrity\.publishedOrderCollisions\.length > 0/);
-  assert.match(hardeningActions, /draftOrderNeedsNormalization \|\| draftOrderCollisionCount > 0 \? \(/);
+  assert.match(hardeningActions, /draftOrderNeedsNormalization \|\| draftOrderCollisionCount > 0/);
+  assert.match(hardeningActions, /aria-haspopup="menu"/);
+  assert.match(hardeningActions, /role="menu"/);
+  assert.match(hardeningActions, /Retire fallback/);
+  assert.match(hardeningActions, /Reactivate fallback/);
+  assert.doesNotMatch(hardeningActions, /Retire legacy fallback/);
+  assert.doesNotMatch(hardeningActions, /Reactivate legacy fallback/);
   assert.doesNotMatch(hardeningActions, /disabled=\{pending \|\| \(!draftOrderNeedsNormalization && draftOrderCollisionCount === 0\)\}/);
   const diagnostic = readFileSync("src/lib/adminCmsScopeDiagnostics.ts", "utf8");
   assert.match(diagnostic, /for \(const market of new Set\(markets\)\)/);
