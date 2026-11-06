@@ -9,9 +9,11 @@ import {
   getCmsAirportSuggestions,
   getCmsCitySuggestions,
   getCmsCountrySuggestions,
+  getCmsHotelDestinationSuggestions,
 } from "@/lib/adminCmsLocationOptions";
 
-type LocationKind = "city" | "country" | "airport";
+type LocationKind = "city" | "country" | "airport" | "hotel";
+type HotelSearchOption = { canonicalId: string; label: string; name: string; country: string; countryCode: string; kind: string; searchValue: string };
 type PopoverPlacement = { left: number; top: number; width: number; maxHeight: number };
 
 const inputClass =
@@ -41,6 +43,8 @@ export function CmsLocationCombobox({
   kind,
   value,
   countryCode = "",
+  hotelOptions = [],
+  selectedValue,
   onChange,
   onSelect,
   disabled = false,
@@ -50,6 +54,8 @@ export function CmsLocationCombobox({
   kind: LocationKind;
   value: string;
   countryCode?: string;
+  hotelOptions?: readonly HotelSearchOption[];
+  selectedValue?: string;
   onChange: (value: string) => void;
   onSelect?: (option: CmsLocationOption) => void;
   disabled?: boolean;
@@ -65,7 +71,9 @@ export function CmsLocationCombobox({
   const [activeIndex, setActiveIndex] = useState(-1);
 
   const options =
-    kind === "airport"
+    kind === "hotel"
+      ? getCmsHotelDestinationSuggestions(hotelOptions, value)
+      : kind === "airport"
       ? getCmsAirportSuggestions(value)
       : kind === "country"
         ? getCmsCountrySuggestions(value)
@@ -190,7 +198,7 @@ export function CmsLocationCombobox({
           className={inputClass + " cursor-text"}
           value={value}
           disabled={disabled}
-          placeholder={kind === "airport" ? "Search airport or IATA" : kind === "country" ? "Search country" : "Search city"}
+          placeholder={kind === "hotel" ? "Search canonical destination" : kind === "airport" ? "Search airport or IATA" : kind === "country" ? "Search country" : "Search city"}
           onPointerDown={toggleOnPointerDown}
           onFocus={() => { if (!open) show(); }}
           onChange={(event) => {
@@ -244,19 +252,19 @@ export function CmsLocationCombobox({
               type="button"
               tabIndex={-1}
               role="option"
-              aria-selected={option.value.toLocaleLowerCase() === value.toLocaleLowerCase()}
+              aria-selected={option.value.toLocaleLowerCase() === (selectedValue ?? value).toLocaleLowerCase()}
               onMouseDown={(event) => event.preventDefault()}
               onMouseEnter={() => setActiveIndex(index)}
               onClick={() => pick(option)}
               className={"flex min-h-10 w-full cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-left text-[13px] transition-colors " +
                 (index === activeIndex ? "bg-[#F1F7FF] " : "hover:bg-[#F8FAFC] ") +
-                (option.value.toLocaleLowerCase() === value.toLocaleLowerCase() ? "font-medium text-[#004BB8]" : "font-normal text-[#020617]")}
+                (option.value.toLocaleLowerCase() === (selectedValue ?? value).toLocaleLowerCase() ? "font-medium text-[#004BB8]" : "font-normal text-[#020617]")}
             >
               <span className="min-w-0 flex-1">
                 <span className="block leading-5">{option.title}</span>
                 {option.description ? <span className="mt-0.5 block text-[11px] leading-4 text-[#64748B]">{option.description}</span> : null}
               </span>
-              {option.value.toLocaleLowerCase() === value.toLocaleLowerCase() ? (
+              {option.value.toLocaleLowerCase() === (selectedValue ?? value).toLocaleLowerCase() ? (
                 <Check size={15} aria-hidden="true" className="shrink-0 text-[#004BB8]" />
               ) : null}
             </button>
@@ -264,7 +272,7 @@ export function CmsLocationCombobox({
             <p className="px-3 py-2 text-[12px] leading-5 text-slate-500">
               {kind === "airport"
                 ? "No airport found. Enter a valid three-letter IATA code manually."
-                : "No matching " + kind + ". You can keep typing a custom value."}
+                : kind === "hotel" ? "No matching canonical destination. Select one of the listed entries to save." : "No matching " + kind + ". You can keep typing a custom value."}
             </p>
           )}
           {kind === "country" && value.trim() && !exactCountry ? (
