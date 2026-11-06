@@ -6,7 +6,7 @@ import { HomepageCmsEditor } from "@/components/admin/HomepageCmsEditor";
 import { hotelDestinations } from "@/data/hotelDestinations";
 import { getHomepageCmsSection, homepageCmsSections } from "@/lib/adminHomepageCms";
 import { homepageCmsListNavigation } from "@/lib/adminContentNavigation";
-import { getCmsContentMarketOverview, getCmsContentScopeSummary } from "@/services/cmsContentService";
+import { getCmsContentMarketOverview, getCmsContentScopeSummary, getCmsHomepageFlightRoutePairs } from "@/services/cmsContentService";
 import { homepageCmsLocale, homepageCmsMarkets } from "@/services/homepageCmsService";
 
 type PageProps = {
@@ -49,6 +49,13 @@ export default async function NewHomepageCmsContentPage({ params, searchParams }
         initialMarket={market === "ALL" ? "" : market}
         listQuery={nav.query}
         hotelOptions={section === "hotel-destinations" ? getHotelOptions() : []}
+        supportedFlightRoutes={
+          section === "destinations"
+            ? getCmsHomepageFlightRoutePairs("HOMEPAGE_DESTINATION")
+            : section === "flight-routes"
+              ? getCmsHomepageFlightRoutePairs("FLIGHT_ROUTE")
+              : []
+        }
       />
     </ContentPageFrame>
   );

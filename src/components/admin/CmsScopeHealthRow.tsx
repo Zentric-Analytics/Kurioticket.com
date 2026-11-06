@@ -38,6 +38,11 @@ type Integrity = {
   unpublishedChanges: number;
 };
 
+type SupportedFlightRoute = {
+  originCode: string;
+  destinationCode: string;
+};
+
 type HotelOption = {
   canonicalId: string;
   label: string;
@@ -57,6 +62,7 @@ type Props = {
   integrity: Integrity;
   markets: readonly string[];
   hotelOptions: HotelOption[];
+  supportedFlightRoutes: SupportedFlightRoute[];
 };
 
 const tableCellClass =
@@ -76,6 +82,7 @@ export function CmsScopeHealthRow({
   integrity,
   markets,
   hotelOptions,
+  supportedFlightRoutes,
 }: Props) {
   const [expanded, setExpanded] = useState(false);
   const [repairTarget, setRepairTarget] = useState<RepairTarget | null>(null);
@@ -414,6 +421,7 @@ export function CmsScopeHealthRow({
                   recordKey={repairTarget.key}
                   markets={markets}
                   hotelOptions={hotelOptions}
+                  supportedFlightRoutes={supportedFlightRoutes}
                   onClose={() => setRepairTarget(null)}
                 />
               ) : null}
