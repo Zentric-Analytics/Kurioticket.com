@@ -35,7 +35,8 @@ test("the selected range drives the whole time-based operational view without tr
   assert.doesNotMatch(page, /Tracked transactional email attempts|Provider-reported delays|Failed, bounced, complained or suppressed in 24 hours/);
   assert.match(page, /Delivery history/);
   assert.doesNotMatch(page, /Latest 10 in/);
-  assert.match(page, /Showing \$\{historyStart\.toLocaleString\(\)\}–\$\{historyEnd\.toLocaleString\(\)\} of \$\{operations\.historyTotal\.toLocaleString\(\)\} deliveries/);
+  assert.doesNotMatch(page, /Showing .* deliveries in/);
+  assert.doesNotMatch(page, /historyStart|historyEnd/);
   assert.match(service, /export async function getEmailDeliveryOperationsSnapshot/);
   assert.match(service, /history_total: bigint/);
   assert.match(service, /SELECT COUNT\(\*\)[\s\S]*FROM email_deliveries d/);

@@ -153,7 +153,7 @@ try {
 
           await expect(main.getByRole("heading", { name: "Delivery history", exact: true })).toBeVisible();
           await expect(main.getByText(/Latest 10 in/)).toHaveCount(0);
-          await expect(main.getByText("Showing 1–15 of 15 deliveries in last 24 hours", { exact: true })).toBeVisible();
+          await expect(main.getByText(/Showing .* deliveries in/)).toHaveCount(0);
           const deliveries = main.getByRole("region", { name: "Delivery history" });
           await expect(deliveries.getByText("bi***@zentricanalytics.com", { exact: true })).toBeVisible();
           const delivered = deliveries.locator("tbody").getByText("Delivered", { exact: true }).first();
@@ -172,7 +172,7 @@ try {
 
             await page.goto(`${root}/admin/email-delivery?range=7d`, { waitUntil: "networkidle" });
             await expect(page.getByRole("heading", { name: "Email Delivery", exact: true })).toBeVisible();
-            await expect(page.getByText("Showing 1–15 of 15 deliveries in last 7 days", { exact: true })).toBeVisible();
+            await expect(page.getByText(/Showing .* deliveries in/)).toHaveCount(0);
             await expect(page.locator('section[aria-label="Email delivery summary"]').getByText("Email deliveries", { exact: true })).toBeVisible();
           }
         }
