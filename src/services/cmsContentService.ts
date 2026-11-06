@@ -502,6 +502,7 @@ export async function createCmsContent(raw: unknown, actorInput: CmsActor) {
         );
       }
 
+      if (parsed.data.type === "HOTEL_DESTINATION") await assertUniqueHotelCanonicalId(tx, payload);
       const item = await tx.cmsContentItem.create({
         data: {
           type: parsed.data.type,
@@ -542,6 +543,8 @@ export async function updateCmsContentDraft(id: string, raw: unknown, actorInput
     if (!existing) throw new CmsContentError("NOT_FOUND", "Content item not found.");
     if (existing.status === "ARCHIVED") throw new CmsContentError("ARCHIVED", "Archived content cannot be edited.");
     const payload = parsePayload(existing.type, parsed.data.payload);
+    assertHotelIdentityNotChanged(existing, payload);
+    if (existing.type === "HOTEL_DESTINATION") await assertUniqueHotelCanonicalId(tx, payload, id);
     const nextVersion = parsed.data.expectedVersion + 1;
     const updated = await tx.cmsContentItem.updateMany({
       where: { id, version: parsed.data.expectedVersion, status: { not: "ARCHIVED" } },
@@ -611,6 +614,8 @@ export async function restoreCmsContentRevision(
         );
       }
       const restoredPayload = parsePayload(existing.type, revision.draftPayload);
+      assertHotelIdentityNotChanged(existing, restoredPayload);
+      if (existing.type === "HOTEL_DESTINATION") await assertUniqueHotelCanonicalId(tx, restoredPayload, id);
       const nextVersion = parsed.data.expectedVersion + 1;
       const changed = await tx.cmsContentItem.updateMany({
         where: { id, version: parsed.data.expectedVersion, status: { not: "ARCHIVED" } },
@@ -683,6 +688,16 @@ async function transitionCmsContent(
     const existing = await tx.cmsContentItem.findUnique({ where: { id } });
     if (!existing) throw new CmsContentError("NOT_FOUND", "Content item not found.");
     if (existing.status === "ARCHIVED") throw new CmsContentError("ARCHIVED", "Archived content cannot be changed.");
+    if (transition === "PUBLISHED" && existing.type === "HOTEL_DESTINATION") {
+      assertHotelIdentityNotChanged(existing, existing.draftPayload);
+      await assertUniqueHotelCanonicalId(tx, existing.draftPayload, id);
+    }
+    if (transition === "PUBLISHED" && existing.type === "HOMEPAGE_DESTINATION") {
+      await assertPublishedHomepageHasHotel(tx, existing.draftPayload);
+    }
+    if (transition !== "PUBLISHED" && existing.type === "HOTEL_DESTINATION" && existing.status === "PUBLISHED") {
+      await assertHotelNotUsedByPublishedHomepage(tx, existing.publishedPayload);
+    }
     const nextVersion = parsed.data.expectedVersion + 1;
     const data = transition === "PUBLISHED"
       ? {
