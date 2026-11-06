@@ -16,7 +16,7 @@ export async function verifyNotificationPanel({ page, root, output, width }) {
   await expect(page).toHaveURL(startingUrl);
   await expect(dialog.getByRole("link", { name: /see all|view all/i })).toHaveCount(0);
   await expect(dialog.locator('a[href="/admin/notifications"]')).toHaveCount(0);
-  await expect(dialog.getByRole("button", { name: "Mark as seen", exact: true })).toHaveCount(2);
+  await expect(dialog.getByRole("button", { name: "Mark as read", exact: true })).toHaveCount(2);
   await expect(dialog.getByRole("link", { name: "View details", exact: true })).toHaveCount(3);
   await expect(dialog).toHaveCSS("background-color", "rgb(255, 255, 255)");
   await expect(bell).toHaveCSS("background-color", "rgb(255, 255, 255)");
@@ -196,16 +196,16 @@ export async function verifyNotificationPanel({ page, root, output, width }) {
     window.__notificationQaAckUpdated = false;
     window.addEventListener("admin-alerts-updated", () => { window.__notificationQaAckUpdated = true; }, { once: true });
   });
-  const markSeen = dialog.getByRole("button", { name: "Mark as seen", exact: true });
+  const markSeen = dialog.getByRole("button", { name: "Mark as read", exact: true });
   const originalWidth = (await markSeen.boundingBox()).width;
   await markSeen.click();
-  const saving = dialog.getByRole("button", { name: "Saving…", exact: true });
+  const saving = dialog.getByRole("button", { name: "Marking as read…", exact: true });
   await expect(saving.locator("[data-notification-spinner]")).toBeVisible();
   expect(Math.abs((await saving.boundingBox()).width - originalWidth)).toBeLessThan(1);
   releaseAck();
   await page.waitForFunction(() => window.__notificationQaAckUpdated === true);
   releaseHeld();
-  await expect(dialog.getByText("Seen for 24 hours", { exact: true })).toBeVisible();
+  await expect(dialog.getByText("Marked as read · 24h", { exact: true })).toBeVisible();
   await expect(bell).toHaveAttribute("aria-label", "Admin notifications");
   expect(posts).toHaveLength(1);
 
