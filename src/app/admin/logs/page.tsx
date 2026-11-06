@@ -114,7 +114,7 @@ function AuditRow({ log }: { log: AdminAuditRead }) {
     <>
       <time dateTime={log.createdAt} className="text-[12px] leading-5 text-[#475569]">{formatDateTime(new Date(log.createdAt))}</time>
       <div className="min-w-0">
-        <p className="break-words text-[13px] font-medium text-[#020617] md:whitespace-nowrap">{log.adminEmail}</p>
+        <p className="break-words text-[13px] font-medium text-[#020617] md:truncate md:whitespace-nowrap" title={log.adminEmail}>{log.adminEmail}</p>
       </div>
       <div className="min-w-0">
         <p className="text-[13px] font-medium text-[#020617]">{actionLabel(log.action)}</p>
