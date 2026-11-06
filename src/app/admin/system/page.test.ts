@@ -3,7 +3,10 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const systemPage = readFileSync("src/app/admin/system/page.tsx", "utf8");
-const settingsPage = readFileSync("src/app/admin/settings/page.tsx", "utf8");
+const settingsPage = [
+  "src/app/admin/settings/layout.tsx",
+  "src/components/admin/SettingsFeatureSection.tsx",
+].map((path) => readFileSync(path, "utf8")).join("\n");
 const envSource = readFileSync("src/lib/env.ts", "utf8");
 const adminDataSource = readFileSync("src/lib/admin-data.ts", "utf8");
 const systemApi = readFileSync("src/app/api/admin/system/route.ts", "utf8");

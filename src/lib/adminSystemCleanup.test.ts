@@ -21,12 +21,12 @@ test("page headers no longer repeat System navigation while Settings may link to
     const page = source(path);
     assert.doesNotMatch(page, /actions=\{|Back to System|View audit logs|href="\/admin\/logs"|href="\/admin\/system"/);
   }
-  const settings = source("src/app/admin/settings/page.tsx");
+  const settings = source("src/app/admin/settings/recent-changes/page.tsx");
   assert.doesNotMatch(settings, /actions=\{|Back to System|href="\/admin\/system"/);
   assert.match(settings, /href="\/admin\/logs\?range=30d&action=FEATURE_CONTROL_UPDATED&targetType=FeatureFlag"/);
 });
 test("Settings retains feature controls without owning flight fare operations", () => {
-  const page = source("src/app/admin/settings/page.tsx");
+  const page = source("src/components/admin/SettingsFeatureSection.tsx");
   assert.doesNotMatch(page, /linkLabel|View system status|View admin configuration status/);
   assert.match(page, /FeatureControlsPanel/);
   assert.doesNotMatch(page, /Homepage Fare Operations|href="\/admin\/homepage-fares"/);
