@@ -19,12 +19,12 @@ type ScopeMutationInput = ScopeInput & {
   expectedScopeVersion: number;
 };
 
-function duplicateOrders(values: Array<{ id: string; key: string; order: number | null }>) {
+function duplicateOrders(values: Array<{ id: string; key?: string; order: number | null }>) {
   const itemsByOrder = new Map<number, Array<{ id: string; key: string }>>();
   for (const entry of values) {
     if (entry.order === null) continue;
     const items = itemsByOrder.get(entry.order) ?? [];
-    items.push({ id: entry.id, key: entry.key });
+    items.push({ id: entry.id, key: entry.key ?? entry.id });
     itemsByOrder.set(entry.order, items);
   }
   return [...itemsByOrder.entries()]
