@@ -6,6 +6,7 @@ import {
   getCmsAirportSuggestions,
   getCmsCitySuggestions,
   getCmsCountrySuggestions,
+  getCmsHotelDestinationSuggestions,
 } from "@/lib/adminCmsLocationOptions";
 
 const editor = readFileSync("src/components/admin/HomepageCmsEditor.tsx", "utf8");
@@ -92,4 +93,56 @@ test("destination image URL and alt text fields wrap while preserving single-str
   assert.match(editor, /grid max-w-\[512px\] gap-4 sm:grid-cols-3 sm:items-start/);
   assert.match(editor, /<span className="block min-h-5 text-\[13px\] font-medium leading-5/);
   assert.match(combobox, /<label className="block min-h-5 whitespace-nowrap text-\[13px\] font-medium leading-5/);
+});
+
+
+test("canonical hotel destination search uses the real ID and never substitutes the label", () => {
+  const catalog = [
+    { canonicalId: "hotel:london", label: "London · United Kingdom", name: "London", country: "United Kingdom", countryCode: "GB", kind: "city", searchValue: "London" },
+    { canonicalId: "hotel:paris", label: "Paris · France", name: "Paris", country: "France", countryCode: "FR", kind: "city", searchValue: "Paris" },
+  ];
+  const suggestions = getCmsHotelDestinationSuggestions(catalog, "Paris");
+  assert.deepEqual(suggestions.map((option) => option.value), ["hotel:paris"]);
+  assert.equal(suggestions[0].title, "Paris · France");
+  assert.deepEqual(getCmsHotelDestinationSuggestions(catalog, "nonsense"), []);
+});
+
+test("flight routes keep paired city and IATA fields with the same responsive grid", () => {
+  assert.match(editor, /section === "flight-routes" \? \(/);
+  assert.match(editor, /<CmsLocationCombobox label="Origin city" kind="city"/);
+  assert.match(editor, /<CmsLocationCombobox label="Origin IATA" kind="airport"/);
+  assert.match(editor, /<CmsLocationCombobox label="Destination city" kind="city"/);
+  assert.match(editor, /<CmsLocationCombobox label="Destination IATA" kind="airport"/);
+  assert.match(editor, /grid max-w-\[496px\] gap-4 sm:grid-cols-\[minmax\(0,1fr\)_160px\] sm:items-start/);
+  assert.match(editor, /<CmsExpandingTextField label="Image" value=\{fields.image/);
+  assert.match(editor, /<CmsExpandingTextField label="Image alt text" value=\{fields.imageAlt/);
+  assert.match(editor, /<AdminTextarea className=\{\`\$\{editorControlClass\} h-auto min-h-24\`\}/);
+});
+
+test("hotel destinations use searchable canonical selection and preserve type and country code", () => {
+  assert.match(editor, /<CmsLocationCombobox[\s\S]*?label="Canonical hotel destination"[\s\S]*?kind="hotel"/);
+  assert.match(editor, /selectedValue=\{fields.canonicalId \?\? ""\}/);
+  assert.match(editor, /hotelOptions=\{hotelOptions\}/);
+  assert.match(editor, /onSelect=\{\(option\) => applyHotelOption\(option.value\)\}/);
+  assert.match(editor, /setField\("canonicalId", ""\)/);
+  assert.match(editor, /<CmsLocationCombobox label="Country" kind="country"/);
+  assert.match(editor, /<Field label="Kind" className="max-w-\[160px\]">/);
+  assert.match(editor, /"airport-area", "custom"/);
+  assert.match(editor, /<CmsExpandingTextField label="Image \(optional\)" value=\{fields.image/);
+  assert.match(editor, /<CmsExpandingTextField label="Image alt text \(optional\)" value=\{fields.imageAlt/);
+  assert.match(editor, /canonicalId: fields.canonicalId\?\.trim\(\)/);
+});
+
+test("flight and hotel previews match the visual, non-sticky homepage preview", () => {
+  const visual = readFileSync("src/components/admin/CmsRouteHotelDraftPreview.tsx", "utf8");
+  assert.match(editor, /<CmsRouteHotelDraftPreview/);
+  assert.match(editor, /payload=\{currentPayload\}/);
+  assert.match(editor, /publishedVersion=\{item\?\.publishedVersion\}/);
+  assert.match(visual, /<aside className="h-fit min-w-0">/);
+  assert.doesNotMatch(visual, /lg:sticky|lg:top-24/);
+  assert.match(visual, /<PreviewImage key=\{imageUrl \?\? "no-image"\}/);
+  assert.match(visual, /payload.routeNote/);
+  assert.match(visual, /payload.searchValue/);
+  assert.match(visual, /unsaved/);
+  assert.match(visual, /Saving a draft does not publish it/);
 });
