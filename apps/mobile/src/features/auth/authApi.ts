@@ -35,6 +35,7 @@ async function request<T>(path: string, options: RequestInit = {}, externalSigna
         Accept: "application/json",
         "Content-Type": "application/json",
         "X-Mobile-Platform": Platform.OS,
+        "X-Mobile-Recovery-Protocol": "1",
         ...(Constants.expoConfig?.version ? { "X-Mobile-App-Version": Constants.expoConfig.version } : {}),
         ...options.headers,
       },

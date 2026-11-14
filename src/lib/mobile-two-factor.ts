@@ -23,7 +23,7 @@ export async function createMobileTwoFactorChallenge(userId: string, authMethod:
   return { challengeToken: `ktc1.${challenge.id}.${proof}`, expiresAt: challenge.expiresAt.toISOString(), requiresTwoFactor: true as const };
 }
 
-export async function completeMobileTwoFactorChallenge(token: string, code: string, metadata?: { platform?: "ios" | "android"; appVersion?: string }) {
+export async function completeMobileTwoFactorChallenge(token: string, code: string, metadata?: { platform?: "ios" | "android"; appVersion?: string; recoveryProtocol?: "1" }) {
   const match = /^ktc1\.([A-Za-z0-9_-]+)\.([A-Za-z0-9_-]{43})$/.exec(token);
   if (!match) return { error: "INVALID" as const };
   const challenge = await getPrisma().mobileLoginChallenge.findUnique({ where: { id: match[1] } });

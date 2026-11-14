@@ -1,3 +1,4 @@
+import { mobileRecoveryFallback } from "@/lib/mobile-recovery-compatibility";
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 import { checkAuthRateLimit, AuthRateLimitError } from "@/lib/auth-rate-limit";
@@ -27,6 +28,8 @@ export async function POST(request: Request) {
     const session = await createMobileSession(user.id, "credentials", "PRIMARY", mobileSessionMetadata(request), { sessionVersion: user.sessionVersion, status: user.status, verifiedAt: new Date() });
     return NextResponse.json({ session, user: { id: user.id, email: user.email, name: user.name } });
   } catch (error) {
+    const fallback = mobileRecoveryFallback(error);
+    if (fallback) return fallback;
     if (error instanceof AuthRateLimitError) return NextResponse.json({ error: "Too many attempts. Please wait and try again." }, { status: 429 });
     return NextResponse.json({ error: "Unable to sign in right now." }, { status: 503 });
   }

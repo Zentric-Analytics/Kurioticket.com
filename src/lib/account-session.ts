@@ -49,7 +49,7 @@ export async function createAccountSession(input: { userId: string; client: "WEB
   });
 }
 
-export async function issueMobileSession(userId: string, authMethod: AuthMethod, assuranceLevel: Assurance, metadata?: { platform?: string; appVersion?: string }, proof?: { sessionVersion: number; status: string; verifiedAt?: Date }) {
+export async function issueMobileSession(userId: string, authMethod: AuthMethod, assuranceLevel: Assurance, metadata?: { platform?: string; appVersion?: string; recoveryProtocol?: "1" }, proof?: { sessionVersion: number; status: string; verifiedAt?: Date }) {
   const secret = randomBytes(32).toString("base64url");
   const user = await getPrisma().user.findUnique({ where: { id: userId }, select: { status: true, sessionVersion: true } });
   if (proof && (user?.sessionVersion !== proof.sessionVersion || user.status !== proof.status)) throw new Error("AccountUnavailable");
@@ -59,7 +59,7 @@ export async function issueMobileSession(userId: string, authMethod: AuthMethod,
     return { token: `ktm1.${restricted.session.id}.${secret}`, expires: restricted.session.expiresAt.toISOString(), recovery: { deadline: restricted.deadline.toISOString() } };
   }
   if (!user || user.status !== "ACTIVE") throw new Error("AccountUnavailable");
-  const session = await createAccountSession({ userId, client: "MOBILE", authMethod, assuranceLevel, ...metadata });
+  const session = await createAccountSession({ userId, client: "MOBILE", authMethod, assuranceLevel, platform: metadata?.platform, appVersion: metadata?.appVersion });
   await getPrisma().accountSession.update({ where: { id: session.id }, data: { tokenHash: hash(secret) } });
   return { token: `ktm1.${session.id}.${secret}`, expires: session.expiresAt.toISOString() };
 }

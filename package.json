@@ -63,7 +63,7 @@
     "react-dom": "19.2.4",
     "resend": "^6.12.3",
     "tailwind-merge": "^3.6.0",
-    "zod": "^4.4.3"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@playwright/test": "^1.61.0",
@@ -90,7 +90,7 @@
       "global-agent": "4.1.3"
     },
     "get-uri": {
-      "basic-ftp": "6.2.3"
+      "basic-ftp": "6.2.4"
     },
     "@hono/node-server": "^2.0.12",
     "minimatch@3.1.5": {
@@ -100,7 +100,7 @@
       "brace-expansion": "5.0.12"
     },
     "postcss": "^8.5.25",
-    "sharp": "^0.35.4",
+    "sharp": "^0.35.5",
     "@prisma/config": {
       "deepmerge-ts": "8.0.0"
     },
@@ -112,6 +112,15 @@
     },
     "gaxios@6": {
       "uuid": "11.1.1"
+    },
+    "archiver-utils": {
+      "glob@^10.0.0": "14.0.4"
+    },
+    "rimraf": {
+      "glob@^10.0.0": "14.0.4"
+    },
+    "@typescript-eslint/typescript-estree": {
+      "minimatch@^10.0.0": "11.0.5"
     }
   }
 }

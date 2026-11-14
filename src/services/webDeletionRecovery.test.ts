@@ -1,3 +1,4 @@
+import * as mobileCompatibility from "../lib/mobile-recovery-compatibility";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { NextResponse } from "next/server";
@@ -37,7 +38,7 @@ function harness() {
     try { return await run(tx); } catch (error) { session = priorSession; request = priorRequest; throw error; } finally { release(); }
   } };
   const recovery = loadIsolatedModule<typeof recoveryModule>("src/lib/web-deletion-recovery.ts", { "@/lib/prisma": { getPrisma: () => db }, "@/lib/account-session": { RECENT_REAUTHENTICATION_MS } });
-  const mobile = loadIsolatedModule("src/lib/mobile-deletion-recovery.ts", { "@/lib/prisma": { getPrisma: () => db }, "@/lib/account-security-policy": {}, "@/lib/previewTesterAccess": {}, "@/services/visitorActivityIdentity": {} });
+  const mobile = loadIsolatedModule("src/lib/mobile-deletion-recovery.ts", { "@/lib/prisma": { getPrisma: () => db }, "./mobile-recovery-compatibility": mobileCompatibility, "@/lib/account-security-policy": {}, "@/lib/previewTesterAccess": {}, "@/services/visitorActivityIdentity": {} });
   const api = loadIsolatedModule<typeof serviceModule>("src/services/accountDeletionService.ts", {
     "date-fns": { addDays }, "@/lib/env": {}, "@/lib/prisma": { getPrisma: () => db },
     "@/services/visitorActivityIdentity": { lockVisitorAccount: async () => { events.push("lock-user"); return session.user; } },

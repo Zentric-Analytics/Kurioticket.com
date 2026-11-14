@@ -2,11 +2,12 @@ import { createHash } from "node:crypto";
 import { issueMobileSession, MOBILE_SESSION_DAYS, validateMobileBearer } from "@/lib/account-session";
 
 export { MOBILE_SESSION_DAYS };
-export type MobileSessionMetadata = { platform?: "ios" | "android"; appVersion?: string };
+export type MobileSessionMetadata = { recoveryProtocol?: "1"; platform?: "ios" | "android"; appVersion?: string };
 export function mobileSessionMetadata(request: Request): MobileSessionMetadata {
   const platform = request.headers.get("x-mobile-platform")?.trim().toLowerCase();
   const appVersion = request.headers.get("x-mobile-app-version")?.trim();
   return {
+    ...(request.headers.get("x-mobile-recovery-protocol") === "1" ? { recoveryProtocol: "1" as const } : {}),
     ...(platform === "ios" || platform === "android" ? { platform } : {}),
     ...(appVersion && appVersion.length <= 32 && /^[0-9A-Za-z][0-9A-Za-z.+_-]*$/.test(appVersion) ? { appVersion } : {}),
   };

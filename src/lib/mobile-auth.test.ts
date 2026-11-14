@@ -33,3 +33,6 @@ test("mobile authentication forwards validated metadata and separate server-veri
     assert.match(readFileSync(`src/app/api/mobile/v1/auth/${method}/route.ts`, "utf8"), /sessionVersion: user\.sessionVersion, status: user\.status/);
   }
 });
+
+for (const value of ["", "0", "2", "true", "1,2"]) test(`unsupported recovery protocol ${JSON.stringify(value)} is ignored`, () => { assert.equal(mobileSessionMetadata(new Request("https://fixture.invalid", { headers: { "X-Mobile-Recovery-Protocol": value } })).recoveryProtocol, undefined); });
+for (const platform of ["ios", "android"]) test(`${platform} recognizes only the exact recovery capability`, () => { assert.deepEqual(mobileSessionMetadata(new Request("https://fixture.invalid", { headers: { "X-Mobile-Platform": platform, "X-Mobile-Recovery-Protocol": "1" } })), { platform, recoveryProtocol: "1" }); });

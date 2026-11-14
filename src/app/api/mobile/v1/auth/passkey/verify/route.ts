@@ -1,3 +1,4 @@
+import { mobileRecoveryFallback } from "@/lib/mobile-recovery-compatibility";
 import { NextResponse } from "next/server";
 import { AuthRateLimitError, checkAuthRateLimit } from "@/lib/auth-rate-limit";
 import { BoundedJsonBodyError, MAX_PASSKEY_ASSERTION_BODY_BYTES, readBoundedJsonBody } from "@/lib/bounded-json-body";
@@ -12,6 +13,8 @@ export async function POST(request: Request) {
     const body = await readBoundedJsonBody(request, MAX_PASSKEY_ASSERTION_BODY_BYTES);
     return NextResponse.json(await verifyMobilePasskeyAssertion(body, {}, mobileSessionMetadata(request)));
   } catch (error) {
+    const fallback = mobileRecoveryFallback(error);
+    if (fallback) return fallback;
     if (error instanceof AuthRateLimitError) {
       return NextResponse.json(
         { error: "Too many passkey attempts. Please wait and try again." },

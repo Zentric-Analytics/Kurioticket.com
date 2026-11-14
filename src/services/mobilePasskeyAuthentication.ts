@@ -111,7 +111,7 @@ function resolveDependencies(overrides: MobilePasskeyAuthenticationOverrides): A
 export async function verifyMobilePasskeyAssertion(
   input: unknown,
   overrides: MobilePasskeyAuthenticationOverrides = {},
-  metadata?: { platform?: "ios" | "android"; appVersion?: string },
+  metadata?: { platform?: "ios" | "android"; appVersion?: string; recoveryProtocol?: "1" },
 ) {
   const parsed = assertionSchema.safeParse(input);
   if (!parsed.success || !sameBytes(parsed.data.id, parsed.data.rawId)) {

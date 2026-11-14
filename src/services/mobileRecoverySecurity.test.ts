@@ -1,3 +1,4 @@
+import * as compatibility from "../lib/mobile-recovery-compatibility";
 import assert from "node:assert/strict";
 import test from "node:test";
 import * as crypto from "node:crypto";
@@ -25,7 +26,7 @@ type SessionApi = {
   validateMobileDeletionReactivationBearer: (request: Request) => Promise<(Row & { user: { id: string; email: string }; recoveryDeadline: Date }) | null>;
 };
 
-function harness(days = 6) {
+function harness(days = 6, protocol: "1" | null = "1", platform: "ios" | "android" = "ios") {
   const requestedAt = new Date(Date.now() - days * 86400000);
   const user = { id: "fixture-owner", email: "fixture@example.invalid", name: "Fixture", image: "fixture-image", emailVerified: new Date("2020-01-01"), status: "PENDING_DELETION", sessionVersion: 5, role: "USER", passwordHash: bcrypt.hashSync("FixturePassword123!", 4), accounts: [{ provider: "google", providerAccountId: "fixture-subject" }], securitySettings: { twoFactorEnabled: false, twoFactorEnabledAt: null as Date | null } };
   let deletion: RecoveryRequest = { id: "fixture-request", userId: user.id, status: "PENDING", requestedAt, deletionScheduledAt: addDays(requestedAt, 7), cancelledAt: null, completedAt: null };
@@ -68,23 +69,23 @@ function harness(days = 6) {
   const lockVisitorAccount = async () => { locks.push("USER LOCK"); onLock("USER LOCK"); return user; };
   const preview = { canRetainStagingSession: async (email: string) => email === user.email };
   const accountPolicy = loadIsolatedModule("src/lib/account-security-policy.ts", { "@/lib/previewTesterAccess": preview });
-  const policy = loadIsolatedModule<typeof mobileModule>("src/lib/mobile-deletion-recovery.ts", { "@/lib/prisma": { getPrisma: () => db }, "@/lib/account-security-policy": accountPolicy, "@/lib/previewTesterAccess": preview, "@/services/visitorActivityIdentity": { lockVisitorAccount } });
+  const policy = loadIsolatedModule<typeof mobileModule>("src/lib/mobile-deletion-recovery.ts", { "@/lib/prisma": { getPrisma: () => db }, "@/lib/account-security-policy": accountPolicy, "@/lib/previewTesterAccess": preview, "@/services/visitorActivityIdentity": { lockVisitorAccount }, "./mobile-recovery-compatibility": compatibility });
   const sessions = loadIsolatedModule<SessionApi>("src/lib/account-session.ts", { "node:crypto": crypto, "@/lib/prisma": { getPrisma: () => db }, "@/lib/account-security-policy": accountPolicy, "@/lib/mobile-deletion-recovery": policy });
   const mfa = loadIsolatedModule<typeof mfaModule>("src/lib/mobile-two-factor.ts", { "node:crypto": crypto, "@/lib/prisma": { getPrisma: () => db }, "@/services/twoFactorService": { verifySecondFactor: async () => factorValid }, "@/lib/account-session": sessions, "@/lib/mobile-deletion-recovery": policy });
   const rateLimit = { AuthRateLimitError: class extends Error {}, checkAuthRateLimit: () => { rateChecks++; } };
-  const mobileAuth = { createMobileSession: (id: string, method: string, assurance: "PRIMARY" | "MFA", metadata: object, proof: { sessionVersion: number; status: string; verifiedAt?: Date }) => sessions.issueMobileSession(id, method === "google" ? "GOOGLE" : "PASSWORD", assurance, metadata, proof), mobileSessionMetadata: () => ({ platform: "ios" }) };
-  const password = loadIsolatedModule<{ POST: (request: Request) => Promise<Response> }>("src/app/api/mobile/v1/auth/password/route.ts", { "bcryptjs": { default: bcrypt }, "next/server": { NextResponse }, "@/lib/auth-rate-limit": rateLimit, "@/lib/validation": { signinSchema }, "@/lib/prisma": { getPrisma: () => db }, "@/lib/mobile-auth": mobileAuth, "@/lib/previewTesterAccess": { canUseStagingCredentials: async () => true }, "@/lib/mobile-two-factor": mfa, "@/lib/mobile-deletion-recovery": policy });
+  const mobileAuth = { createMobileSession: (id: string, method: string, assurance: "PRIMARY" | "MFA", metadata: object, proof: { sessionVersion: number; status: string; verifiedAt?: Date }) => sessions.issueMobileSession(id, method === "google" ? "GOOGLE" : "PASSWORD", assurance, metadata, proof), mobileSessionMetadata: () => ({ platform, ...(protocol ? { recoveryProtocol: protocol } : {}) }) };
+  const password = loadIsolatedModule<{ POST: (request: Request) => Promise<Response> }>("src/app/api/mobile/v1/auth/password/route.ts", { "bcryptjs": { default: bcrypt }, "next/server": { NextResponse }, "@/lib/auth-rate-limit": rateLimit, "@/lib/validation": { signinSchema }, "@/lib/prisma": { getPrisma: () => db }, "@/lib/mobile-auth": mobileAuth, "@/lib/previewTesterAccess": { canUseStagingCredentials: async () => true }, "@/lib/mobile-two-factor": mfa, "@/lib/mobile-recovery-compatibility": compatibility, "@/lib/mobile-deletion-recovery": policy });
   let googlePayload = { sub: "fixture-subject", email: user.email, email_verified: true, nonce: "a".repeat(64) };
-  const google = loadIsolatedModule<{ POST: (request: Request) => Promise<Response> }>("src/app/api/mobile/v1/auth/google/route.ts", { "google-auth-library": { OAuth2Client: class { async verifyIdToken(input: { audience: string }) { assert.equal(input.audience, "fixture-audience"); return { getPayload: () => googlePayload }; } } }, "next/server": { NextResponse }, "@/lib/auth-rate-limit": rateLimit, "@/lib/env": { getMobileGoogleClientId: () => "fixture-audience" }, "@/lib/prisma": { getPrisma: () => db }, "@/lib/mobile-auth": mobileAuth, "@/lib/previewTesterAccess": { canUseStagingGoogle: async () => true }, "@/lib/mobile-two-factor": mfa, "@/lib/mobile-deletion-recovery": policy, "@/lib/mobileGoogleVerificationDiagnostics": { logMobileGoogleClaimsRejected: () => {}, logMobileGoogleVerificationPassed: () => {}, logMobileGoogleVerificationRejected: () => {} } });
+  const google = loadIsolatedModule<{ POST: (request: Request) => Promise<Response> }>("src/app/api/mobile/v1/auth/google/route.ts", { "google-auth-library": { OAuth2Client: class { async verifyIdToken(input: { audience: string }) { assert.equal(input.audience, "fixture-audience"); return { getPayload: () => googlePayload }; } } }, "next/server": { NextResponse }, "@/lib/auth-rate-limit": rateLimit, "@/lib/env": { getMobileGoogleClientId: () => "fixture-audience" }, "@/lib/prisma": { getPrisma: () => db }, "@/lib/mobile-auth": mobileAuth, "@/lib/previewTesterAccess": { canUseStagingGoogle: async () => true }, "@/lib/mobile-two-factor": mfa, "@/lib/mobile-recovery-compatibility": compatibility, "@/lib/mobile-deletion-recovery": policy, "@/lib/mobileGoogleVerificationDiagnostics": { logMobileGoogleClaimsRejected: () => {}, logMobileGoogleVerificationPassed: () => {}, logMobileGoogleVerificationRejected: () => {} } });
   const web = loadIsolatedModule("src/lib/web-deletion-recovery.ts", { "@/lib/prisma": { getPrisma: () => db }, "@/lib/account-session": { RECENT_REAUTHENTICATION_MS: 600000 } });
   const service = loadIsolatedModule<typeof serviceModule>("src/services/accountDeletionService.ts", { "date-fns": { addDays }, "@/lib/env": {}, "@/lib/prisma": { getPrisma: () => db }, "@/services/visitorActivityIdentity": { lockVisitorAccount }, "@/services/emailService": { sendTransactionalEmail: async () => { deliveries++; }, accountDeletionCancelledEmail: () => "fixture-only" }, "@/services/supportService": {}, "@/services/accountNotificationService": { recordAccountEventSafely: async () => {} }, "@/lib/web-deletion-recovery": web, "@/lib/mobile-deletion-recovery": policy });
   const tools = loadIsolatedModule<typeof passkeyTools>("src/lib/passkeys.ts", { crypto, "@/lib/env": { getBaseUrl: () => "https://fixture.invalid" } }, { WEBAUTHN_RP_ID: "fixture.invalid", WEBAUTHN_ORIGINS: "https://fixture.invalid" });
-  const passkeys = loadIsolatedModule<typeof passkeyModule>("src/services/mobilePasskeyAuthentication.ts", { zod: { z }, "@/lib/prisma": { getPrisma: () => db }, "@/lib/mobile-deletion-recovery": policy, "@/lib/account-session": sessions, "@/lib/passkeys": tools });
+  const passkeys = loadIsolatedModule<typeof passkeyModule>("src/services/mobilePasskeyAuthentication.ts", { zod: { z }, "@/lib/prisma": { getPrisma: () => db }, "@/lib/mobile-recovery-compatibility": compatibility, "@/lib/mobile-deletion-recovery": policy, "@/lib/account-session": sessions, "@/lib/passkeys": tools });
   const post = (path: string, body: object) => new Request(`https://fixture.invalid/${path}`, { method: "POST", body: JSON.stringify(body) });
-  const bearer = (token: string) => new Request("https://fixture.invalid/recovery", { headers: { authorization: `Bearer ${token}` } });
+  const bearer = (token: string) => new Request("https://fixture.invalid/recovery", { headers: { authorization: `Bearer ${token}`, ...(protocol ? { "X-Mobile-Recovery-Protocol": protocol } : {}) } });
   const signIn = async (value = "FixturePassword123!") => password.POST(post("password", { email: user.email, password: value, twoFactorVerified: true, userId: "attacker" }));
   const recover = async (token: string) => { const auth = await sessions.validateMobileDeletionReactivationBearer(bearer(token)); assert.ok(auth?.tokenHash); return service.reactivateAccount(auth.user.id, auth.user.email, undefined, { sessionId: auth.id, tokenHash: auth.tokenHash }); };
-  return { user, records, challenges, policy, sessions, mfa, google, passkeys, tools, post, bearer, signIn, recover, service, locks, db,
+  return { user, records, challenges, policy, sessions, mfa, password, google, passkeys, tools, post, bearer, signIn, recover, service, locks, db,
     get deletion() { return deletion; }, get deliveries() { return deliveries; }, get rateChecks() { return rateChecks; }, setFactor: (v: boolean) => { factorValid = v; },
     setGoogle: (patch: Partial<typeof googlePayload>) => { googlePayload = { ...googlePayload, ...patch }; }, onLock: (run: (name: string) => void) => { onLock = run; } };
 }
@@ -157,7 +158,7 @@ test("restricted issuance requires independent proof and rechecks lifecycle/MFA/
 
 test("auth/session recognizes only restricted recovery access and refuses it after account restoration", async () => {
   const h = harness(); const result = await (await h.signIn()).json() as { session: Issued };
-  const api = loadIsolatedModule<{ GET: (request: Request) => Promise<Response> }>("src/app/api/mobile/v1/auth/session/route.ts", { "next/server": { NextResponse }, "@/lib/mobile-auth": { getMobileSession: h.sessions.validateMobileBearer }, "@/lib/account-session": h.sessions });
+  const api = loadIsolatedModule<{ GET: (request: Request) => Promise<Response> }>("src/app/api/mobile/v1/auth/session/route.ts", { "next/server": { NextResponse }, "@/lib/mobile-recovery-compatibility": compatibility, "@/lib/mobile-auth": { getMobileSession: h.sessions.validateMobileBearer }, "@/lib/account-session": h.sessions });
   const response = await api.GET(h.bearer(result.session.token)); assert.equal(response.status, 200);
   const body = await response.json(); assert.deepEqual(body.recovery, result.session.recovery);
   assert.deepEqual(Object.keys(body.user).sort(), ["email", "id", "name"]);
@@ -171,7 +172,7 @@ test("MFA recovery uses current persisted proof; invalid/replayed or lifecycle-s
   assert.equal(h.records.size, 0); h.setFactor(false);
   assert.ok("error" in await h.mfa.completeMobileTwoFactorChallenge(challenge.challengeToken, "invalid")); assert.equal(h.records.size, 0);
   h.setFactor(true);
-  const complete = await h.mfa.completeMobileTwoFactorChallenge(challenge.challengeToken, "fixture-verified-code"); assert.ok("session" in complete && complete.session); assert.ok(complete.session.recovery);
+  const complete = await h.mfa.completeMobileTwoFactorChallenge(challenge.challengeToken, "fixture-verified-code", { recoveryProtocol: "1" }); assert.ok("session" in complete && complete.session); assert.ok(complete.session.recovery);
   const token = complete.session.token; assert.ok(await h.sessions.validateMobileDeletionReactivationBearer(h.bearer(token)));
   assert.ok("error" in await h.mfa.completeMobileTwoFactorChallenge(challenge.challengeToken, "fixture-verified-code"));
   [...h.records.values()][0].assuranceLevel = "PRIMARY";
@@ -180,7 +181,7 @@ test("MFA recovery uses current persisted proof; invalid/replayed or lifecycle-s
   assert.ok("error" in await h.mfa.completeMobileTwoFactorChallenge(next.challengeToken, "fixture-verified-code"));
 });
 
-test("fresh passkey recovery executes real signature, RP, UV, owner and replay checks", async () => {
+for (const supported of [true, false]) test(`fresh passkey recovery preserves signature, RP, UV, owner and replay checks (capable=${supported})`, async () => {
   const h = harness(); h.user.securitySettings.twoFactorEnabled = true;
   const challenge = h.tools.b64url(crypto.randomBytes(32)), credentialId = h.tools.b64url(crypto.randomBytes(32));
   const keys = crypto.generateKeyPairSync("ec", { namedCurve: "prime256v1" });
@@ -197,9 +198,14 @@ test("fresh passkey recovery executes real signature, RP, UV, owner and replay c
   };
   const options = { prisma: db as never, canAuthenticate: h.policy.canAuthenticateMobileAccount, issueSession: h.sessions.issueMobileSession };
   await assert.rejects(h.passkeys.verifyMobilePasskeyAssertion({ ...assertion, response: { ...assertion.response, userHandle: h.tools.userHandle("wrong-owner") } }, options));
-  const result = await h.passkeys.verifyMobilePasskeyAssertion(assertion, options); assert.ok(result.session.recovery);
+  if (supported) {
+  const result = await h.passkeys.verifyMobilePasskeyAssertion(assertion, options, { recoveryProtocol: "1" }); assert.ok(result.session.recovery);
   assert.equal([...h.records.values()][0].assuranceLevel, "PHISHING_RESISTANT");
   assert.ok(await h.sessions.validateMobileDeletionReactivationBearer(h.bearer(result.session.token)));
+  } else {
+    await assert.rejects(h.passkeys.verifyMobilePasskeyAssertion(assertion, options), compatibility.MobileRecoveryClientRequiredError);
+    assert.equal(h.records.size, 0);
+  }
   await assert.rejects(h.passkeys.verifyMobilePasskeyAssertion(assertion, options));
 });
 
@@ -288,7 +294,7 @@ test("MFA challenge expiry, invalid proof, maximum attempts and request cancella
 test("completed MFA recovery still requires a new ordinary MFA sign-in after restoration", async () => {
   const h = harness(); h.user.securitySettings.twoFactorEnabled = true;
   const first = await (await h.signIn()).json() as { challengeToken: string };
-  const recovery = await h.mfa.completeMobileTwoFactorChallenge(first.challengeToken, "fixture-code"); assert.ok("session" in recovery && recovery.session);
+  const recovery = await h.mfa.completeMobileTwoFactorChallenge(first.challengeToken, "fixture-code", { recoveryProtocol: "1" }); assert.ok("session" in recovery && recovery.session);
   await h.recover(recovery.session.token);
   assert.equal(await h.sessions.validateMobileBearer(h.bearer(recovery.session.token)), null);
   const secondResponse = await h.signIn(); assert.equal(secondResponse.status, 202);
@@ -296,4 +302,48 @@ test("completed MFA recovery still requires a new ordinary MFA sign-in after res
   const ordinary = await h.mfa.completeMobileTwoFactorChallenge(second.challengeToken, "fixture-code"); assert.ok("session" in ordinary && ordinary.session);
   assert.equal(ordinary.session.recovery, undefined);
   assert.ok(await h.sessions.validateMobileBearer(h.bearer(ordinary.session.token)));
+});
+
+for (const platform of ["ios", "android"] as const) test(`older ${platform} client receives a secure web fallback after password verification, without a bearer`, async () => {
+  const h = harness(6, null, platform);
+  const response = await h.signIn(); assert.equal(response.status, 409);
+  const body = await response.json(); assert.equal(body.code, "RECOVERY_CLIENT_UPDATE_REQUIRED");
+  const url = new URL(body.webRecoveryUrl); assert.equal(url.protocol, "https:"); assert.ok(["kurioticket.com", "staging.kurioticket.com"].includes(url.hostname));
+  assert.equal(url.pathname, "/auth/signin"); assert.equal(url.searchParams.get("callbackUrl"), "/account/pending-deletion");
+  assert.equal(body.session, undefined); assert.equal(h.records.size, 0); assert.equal(h.user.status, "PENDING_DELETION"); assert.equal(h.deliveries, 0);
+  assert.equal(response.headers.get("Cache-Control"), "no-store");
+  assert.equal((await h.signIn("wrong-password")).status, 401);
+  h.user.status = "ACTIVE"; assert.equal((await h.signIn()).status, 200, "ordinary old-client sign-in remains supported");
+});
+
+test("older-client fallback cannot bypass MFA and consumes verified challenges without issuing a recovery bearer", async () => {
+  const h = harness(6, null); h.user.securitySettings.twoFactorEnabled = true;
+  const challenge = await (await h.signIn()).json(); assert.equal(h.records.size, 0); h.setFactor(false);
+  assert.ok("error" in await h.mfa.completeMobileTwoFactorChallenge(challenge.challengeToken, "invalid"));
+  h.setFactor(true);
+  await assert.rejects(h.mfa.completeMobileTwoFactorChallenge(challenge.challengeToken, "valid"), compatibility.MobileRecoveryClientRequiredError);
+  assert.equal(h.records.size, 0); assert.ok("error" in await h.mfa.completeMobileTwoFactorChallenge(challenge.challengeToken, "valid"));
+});
+
+test("older verified Google client receives fallback without changing ownership; a forged subject is still denied", async () => {
+  const h = harness(6, null); const login = () => h.google.POST(h.post("google", { idToken: "controlled-provider-proof", nonce: "a".repeat(64) }));
+  assert.equal((await login()).status, 409); assert.equal(h.records.size, 0);
+  h.setGoogle({ sub: "different-owner" }); assert.notEqual((await login()).status, 409); assert.equal(h.records.size, 0);
+});
+
+test("two-factor route returns actionable web fallback only after valid proof", async () => {
+ const h = harness(6, null); h.user.securitySettings.twoFactorEnabled = true;
+ const challenge = await (await h.signIn()).json();
+ const route = loadIsolatedModule<{ POST(request: Request): Promise<Response> }>("src/app/api/mobile/v1/auth/two-factor/route.ts", { "next/server": { NextResponse }, "@/lib/mobile-two-factor": h.mfa, "@/lib/mobile-auth": { mobileSessionMetadata: () => ({}) }, "@/lib/mobile-recovery-compatibility": compatibility });
+ h.setFactor(false); assert.equal((await route.POST(h.post("two-factor", { challengeToken: challenge.challengeToken, code: "invalid" }))).status, 401);
+ h.setFactor(true); const result = await route.POST(h.post("two-factor", { challengeToken: challenge.challengeToken, code: "valid" })); assert.equal(result.status, 409); assert.equal((await result.json()).session, undefined); assert.equal(h.records.size, 0);
+});
+
+test("a previously stored restricted bearer cannot restore ordinary navigation on an unaware client", async () => {
+ const h = harness(); const result = await (await h.signIn()).json();
+ const api = loadIsolatedModule<{ GET(request: Request): Promise<Response> }>("src/app/api/mobile/v1/auth/session/route.ts", { "next/server": { NextResponse }, "@/lib/mobile-auth": { getMobileSession: h.sessions.validateMobileBearer }, "@/lib/account-session": h.sessions, "@/lib/mobile-recovery-compatibility": compatibility });
+ const oldRequest = new Request("https://fixture.invalid/session", { headers: { Authorization: `Bearer ${result.session.token}` } });
+ assert.equal((await api.GET(oldRequest)).status, 409); assert.equal(await h.sessions.validateMobileBearer(oldRequest), null);
+ assert.equal((await api.GET(h.bearer(result.session.token))).status, 200);
+ h.records.values().next().value!.expiresAt = new Date(0); assert.equal((await api.GET(oldRequest)).status, 401);
 });

@@ -1,3 +1,4 @@
+import { MobileRecoveryClientRequiredError } from "./mobile-recovery-compatibility";
 import { getPrisma } from "@/lib/prisma";
 import { canAuthenticateAccount } from "@/lib/account-security-policy";
 import { canRetainStagingSession } from "@/lib/previewTesterAccess";
@@ -56,7 +57,7 @@ export async function readMobileDeletionRecovery(sessionId: string, userId: stri
 }
 
 /** Called only AFTER an independent credential/MFA/passkey verifier succeeds. */
-export async function createRestrictedMobileRecoverySession(userId: string, authMethod: "PASSWORD" | "EMAIL_CODE" | "GOOGLE" | "PASSKEY" | "UNKNOWN", assuranceLevel: "PRIMARY" | "MFA" | "PHISHING_RESISTANT", tokenHash: string, metadata: { platform?: string; appVersion?: string } | undefined, expectedVersion: number, verifiedAt: Date) {
+export async function createRestrictedMobileRecoverySession(userId: string, authMethod: "PASSWORD" | "EMAIL_CODE" | "GOOGLE" | "PASSKEY" | "UNKNOWN", assuranceLevel: "PRIMARY" | "MFA" | "PHISHING_RESISTANT", tokenHash: string, metadata: { platform?: string; appVersion?: string; recoveryProtocol?: "1" } | undefined, expectedVersion: number, verifiedAt: Date) {
   return getPrisma().$transaction(async tx => {
     await lockVisitorAccount(tx, userId);
     const user = await tx.user.findUnique({ where: { id: userId }, select: { id: true, email: true, emailVerified: true, status: true, sessionVersion: true, securitySettings: { select: { twoFactorEnabled: true, twoFactorEnabledAt: true } } } });
@@ -69,6 +70,9 @@ export async function createRestrictedMobileRecoverySession(userId: string, auth
     if (!current || current.userId !== userId || verifiedAt < current.requestedAt || current.cancelledAt || current.completedAt || !["PENDING", "READY_FOR_REVIEW"].includes(current.status) || current.deletionScheduledAt <= now) throw new Error("AccountUnavailable");
     if (user.securitySettings?.twoFactorEnabled && assuranceLevel !== "MFA" && !(authMethod === "PASSKEY" && assuranceLevel === "PHISHING_RESISTANT")) throw new Error("TwoFactorRequired");
     if (assuranceLevel === "MFA" && user.securitySettings?.twoFactorEnabledAt && verifiedAt < user.securitySettings.twoFactorEnabledAt) throw new Error("TwoFactorRequired");
+    // All identity, lifecycle, deadline and MFA checks above still apply.
+    // Do not issue a success-shaped restricted credential to an unaware client.
+    if (metadata?.recoveryProtocol !== "1") throw new MobileRecoveryClientRequiredError();
     const expiresAt = new Date(Math.min(verifiedAt.getTime() + MOBILE_RECOVERY_FRESH_MS, current.deletionScheduledAt.getTime()));
     const session = await tx.accountSession.create({ data: { userId, client: "MOBILE", authMethod, assuranceLevel, sessionVersion: user.sessionVersion,
       tokenHash, createdAt: verifiedAt, expiresAt, revokedAt: now, revokeReason: MOBILE_RECOVERY_REASON + current.id,

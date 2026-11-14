@@ -1,3 +1,4 @@
+import { mobileRecoveryFallback } from "@/lib/mobile-recovery-compatibility";
 import { OAuth2Client } from "google-auth-library";
 import { NextResponse } from "next/server";
 import { AuthRateLimitError, checkAuthRateLimit } from "@/lib/auth-rate-limit";
@@ -88,6 +89,8 @@ export async function POST(request: Request) {
       user: { id: user.id, email: user.email, name: user.name, image: user.image },
     });
   } catch (error) {
+    const fallback = mobileRecoveryFallback(error);
+    if (fallback) return fallback;
     console.error("Mobile Google sign-in failed after token verification", error);
     return NextResponse.json({ error: "Google sign-in is temporarily unavailable." }, { status: 503 });
   }
