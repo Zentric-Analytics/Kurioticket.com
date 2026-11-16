@@ -35,3 +35,25 @@ export function partitionOperationalGroups(rows: OperationalGroup[]) {
     applications: Object.fromEntries(applicationSources.map(source => [source, summarizeOperationalGroups(rows, kind, source)])),
   }]));
 }
+
+/** Strict transport parsing: no exponent/hex, blanks, duplicates or environment overrides. */
+export function parsePlatformOperationsHours(params: URLSearchParams): number | null {
+  if ([...params.keys()].some(key => key !== "hours") || params.getAll("hours").length > 1) return null;
+  const raw = params.get("hours") ?? "24";
+  return /^[1-9][0-9]{0,2}$/.test(raw) && Number(raw) <= 720 ? Number(raw) : null;
+}
+
+export type ScheduledJobRun = {
+  job: string; status: string; observedAt: string; environment: string;
+  outcome: "RUNNING" | "SUCCESS" | "FAILED" | "DEGRADED" | "DISABLED" | "UNKNOWN";
+  completedAt: string | null; durationMs: number | null;
+};
+export function projectScheduledJobRun(row: { provider: string; status: string; createdAt: Date; metadata?: unknown; latencyMs?: number | null }, environment: string, now = new Date()): ScheduledJobRun {
+  const meta = row.metadata && typeof row.metadata === "object" && !Array.isArray(row.metadata) ? row.metadata as Record<string, unknown> : {};
+  const result: ScheduledJobRun = { job: /^[a-z][a-z0-9-]{0,79}$/.test(row.provider) ? row.provider : "unknown-job", status: row.status, observedAt: row.createdAt.toISOString(), environment, outcome: "UNKNOWN", completedAt: null, durationMs: null };
+  if (meta.environment !== environment) return result;
+  if (meta.state === "RUNNING" && row.status === "DEGRADED") return { ...result, outcome: "RUNNING" };
+  const completed = typeof meta.completedAt === "string" && /^\d{4}-\d{2}-\d{2}T/.test(meta.completedAt) ? new Date(meta.completedAt) : null;
+  if (!completed || !Number.isFinite(completed.getTime()) || completed < row.createdAt || completed > now || meta.state !== row.status || !["SUCCESS", "FAILED", "DEGRADED", "DISABLED"].includes(row.status)) return result;
+  return { ...result, outcome: row.status as ScheduledJobRun["outcome"], completedAt: completed.toISOString(), durationMs: typeof row.latencyMs === "number" && Number.isSafeInteger(row.latencyMs) && row.latencyMs >= 0 ? row.latencyMs : null };
+}

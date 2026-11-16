@@ -1,3 +1,4 @@
+import { applicationMetadata } from "@/lib/application-source";
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import { eligibleGuestVisitorWhere, eligibleLinkedVisitorWhere } from "@/lib/adminIdentityJourney";
 import { isJourneySourcePath, journeySourcePath } from "@/lib/search-journey";
@@ -403,10 +404,9 @@ function providerLogsForPageSql(requestIds: readonly string[], services: readonl
 // totals, use the same parameterized EXISTS predicate before keyset paging.
 // Identity, consent, date and environment scope must match searchWhere().
 function exactProviderFilteredSearchSql(scope: AdminSearchScope, cursor: { at: string; id: string } | null = null): Prisma.Sql {
-  if (!scope.provider) throw new Error("An exact provider is required");
   const clauses: Prisma.Sql[] = [
     Prisma.sql`s."query"->>'environment' = ${scope.environment}`,
-    Prisma.sql`s."requestId" IS NOT NULL`,
+    ...(scope.provider ? [Prisma.sql`s."requestId" IS NOT NULL`,
     Prisma.sql`EXISTS (
       SELECT 1 FROM "ApiProviderLog" p
       WHERE p."service" = CASE s."type"::text
@@ -426,8 +426,9 @@ function exactProviderFilteredSearchSql(scope: AdminSearchScope, cursor: { at: s
             AND p."metadata"->>'trackId' = s."requestId"
           )
         )
-    )`,
+    )`] : []),
   ];
+  if (scope.applicationSource) clauses.push(Prisma.sql`(CASE WHEN s."query"->>'applicationSource' IN ('WEB','IOS','ANDROID','UNKNOWN') THEN s."query"->>'applicationSource' ELSE 'UNKNOWN' END) = ${scope.applicationSource}`);
   if (scope.product) clauses.push(Prisma.sql`s."type"::text = ${scope.product}`);
   if (scope.status) clauses.push(Prisma.sql`s."status"::text = ${scope.status}`);
   if (scope.from) clauses.push(Prisma.sql`s."createdAt" >= ${new Date(scope.from)}`);
@@ -502,6 +503,7 @@ function searchDto(row: SearchRow, environment: PublicEnvironment, exactLogs: re
   const visitorId = attributableVisitorId(row.visitorId, row.visitor);
   const providers = [...new Set(exactLogs.map(log => text(log.provider, 100)).filter((value): value is string => Boolean(value)))].slice(0, 10);
   return {
+    ...applicationMetadata(query),
     id: row.id,
     requestId: text(row.requestId, 128),
     operationalSessionId: text(query.operationalSessionId, 64),
@@ -633,7 +635,7 @@ export function createAdminOperationalReadService(dependencies: Dependencies) {
           const parsed = parseAdminSearchQuery(params, dependencies.environment());
           if (parsed.status !== "ok") return parsed;
           const { scope, cursor, limit } = parsed.data;
-          const providerIds = scope.provider
+          const providerIds = scope.provider || scope.applicationSource
             ? (await db.$queryRaw<Array<{ id: string }>>(Prisma.sql`
                 SELECT s."id" FROM "SearchHistory" s
                 ${exactProviderFilteredSearchSql(scope, cursor)}
@@ -676,7 +678,7 @@ export function createAdminOperationalReadService(dependencies: Dependencies) {
           if (parsed.status !== "ok") return parsed;
           const { scope } = parsed.data;
           const counts = { total: 0, success: 0, partial: 0, failed: 0 };
-          if (scope.provider) {
+          if (scope.provider || scope.applicationSource) {
             const groups = await db.$queryRaw<Array<{ status: string; count: bigint }>>(Prisma.sql`
               SELECT s."status"::text AS "status", COUNT(*) AS "count"
               FROM "SearchHistory" s

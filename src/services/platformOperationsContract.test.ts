@@ -4,7 +4,7 @@ import { runInNewContext } from "node:vm";
 import test from "node:test";
 import ts from "typescript";
 import { applicationSources } from "@/lib/application-source";
-import { partitionOperationalGroups, summarizeOperationalGroups, type OperationalGroup } from "./platformOperationsContract";
+import { partitionOperationalGroups, summarizeOperationalGroups, parsePlatformOperationsHours, projectScheduledJobRun, type OperationalGroup } from "./platformOperationsContract";
 import { createScheduledJobObserver } from "./scheduledJobObservation";
 
 test("combined counts reconcile with all platform partitions including historical UNKNOWN", () => {
@@ -55,10 +55,10 @@ test("health HTTP status follows database readiness and never leaks database err
 });
 test("operational endpoint rejects unauthorized access and client-owned environment", async () => {
   let authorized = false, calls = 0;
-  const get = loadRoute("src/app/api/admin/platform-operations/route.ts", { "@/lib/admin": { requireAdminApiSession: async () => authorized ? { session: {} } : { response: Response.json({}, { status: 403 }) } }, "@/services/platformOperationsService": { readPlatformOperations: async () => { calls++; return {}; } } });
+  const get = loadRoute("src/app/api/admin/platform-operations/route.ts", { "@/services/platformOperationsContract": { parsePlatformOperationsHours }, "@/lib/admin": { requireAdminApiSession: async () => authorized ? { session: {} } : { response: Response.json({}, { status: 403 }) } }, "@/services/platformOperationsService": { readPlatformOperations: async () => { calls++; return {}; } } });
   assert.equal((await get(new Request("https://kurioticket.com/api/admin/platform-operations"))).status, 403);
   authorized = true;
-  for (const query of ["environment=staging", "hours=0", "hours=721", "hours=NaN"]) assert.equal((await get(new Request("https://kurioticket.com/api/admin/platform-operations?" + query))).status, 400);
+  for (const query of ["environment=staging", "hours=0", "hours=721", "hours=NaN", "hours=24&hours=168", "hours=", "hours=1e2", "hours=0x18", "hours=1.5", "hours=%2024", "hours=-1"]) assert.equal((await get(new Request("https://kurioticket.com/api/admin/platform-operations?" + query))).status, 400);
   assert.equal(calls, 0);
   const response = await get(new Request("https://kurioticket.com/api/admin/platform-operations?hours=24"));
   assert.equal(response.status, 200); assert.equal(response.headers.get("cache-control"), "private, no-store");
@@ -91,4 +91,18 @@ test("operational service scopes aggregate SQL to its environment and outages re
   const unavailable = await exports.readPlatformOperations();
   assert.equal(unavailable.activity.state, "MONITORING_UNAVAILABLE"); assert.equal(unavailable.activity.data, null);
   assert.doesNotMatch(JSON.stringify(unavailable), /private database/);
+});
+
+test("job projections require coherent persisted completion evidence and never turn RUNNING into failure", () => {
+  const createdAt = new Date("2026-11-01T00:00:00Z"), now = new Date("2026-11-01T00:10:00Z");
+  const row = { provider: "price-alerts", status: "DEGRADED", createdAt, latencyMs: 0, metadata: { environment: "staging", state: "RUNNING" } };
+  assert.equal(projectScheduledJobRun(row,"staging",now).outcome,"RUNNING");
+  for (const outcome of ["SUCCESS","FAILED","DEGRADED","DISABLED"]) {
+    const result = projectScheduledJobRun({ ...row, status: outcome, latencyMs: 500, metadata: { environment: "staging", state: outcome, completedAt: "2026-11-01T00:00:01Z" } },"staging",now);
+    assert.equal(result.outcome,outcome); assert.equal(result.durationMs,500); assert.ok(result.completedAt); assert.equal(result.environment,"staging");
+  }
+  for (const metadata of [null, {}, {state:"SUCCESS"}, {environment:"production",state:"RUNNING"}, {environment:"staging",state:"SUCCESS",completedAt:"bad"}, {environment:"staging",state:"SUCCESS",completedAt:"2026-12-01T00:00:00Z"}]) {
+    const result = projectScheduledJobRun({...row,status:"SUCCESS",metadata},"staging",now);
+    assert.equal(result.outcome,"UNKNOWN"); assert.equal(result.durationMs,null); assert.equal(result.completedAt,null);
+  }
 });

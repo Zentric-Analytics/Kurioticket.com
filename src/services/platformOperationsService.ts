@@ -5,7 +5,7 @@ import { getSafeSystemStatus } from "@/lib/admin-data";
 import { getProviderOperationalStatuses } from "@/services/providerOperationalStatus";
 import { getEmailDeliveryHealthSnapshot } from "@/services/emailDeliveryService";
 import { getCmsHealthOverview } from "@/services/cmsHardeningService";
-import { partitionOperationalGroups, type OperationalGroup } from "./platformOperationsContract";
+import { partitionOperationalGroups, projectScheduledJobRun, type ScheduledJobRun, type OperationalGroup } from "./platformOperationsContract";
 import { getAdminAlertSnapshot } from "./adminAlertService";
 
 /** Aggregate-only operational read. No account IDs, device IDs, raw errors,
@@ -15,7 +15,7 @@ export async function readPlatformOperations(hours = 24) {
   const to = new Date(), from = new Date(to.getTime() - hours * 3_600_000);
   const db = getOptionalPrisma();
   let activity: ReturnType<typeof partitionOperationalGroups> | null = null;
-  let jobs: Array<{ job: string; status: string; observedAt: string }> | null = null;
+  let jobs: ScheduledJobRun[] | null = null;
   if (db) try {
     const [rows, runs] = await db.$transaction(async tx => Promise.all([
       tx.$queryRaw<OperationalGroup[]>`
@@ -28,10 +28,10 @@ export async function readPlatformOperations(hours = 24) {
         SELECT 'providerCalls', metadata->>'applicationSource', status::text, COUNT(*), COALESCE(SUM(CASE WHEN status::text <> 'DISABLED' THEN "latencyMs" ELSE 0 END),0), COUNT(CASE WHEN status::text <> 'DISABLED' THEN "latencyMs" END)
         FROM "ApiProviderLog" WHERE "createdAt" >= ${from} AND "createdAt" < ${to} AND metadata->>'environment' = ${environment} AND service <> 'scheduled-job' GROUP BY 1,2,3
       `,
-      tx.apiProviderLog.findMany({ where: { service: "scheduled-job", metadata: { path: ["environment"], equals: environment }, createdAt: { gte: from, lt: to } }, select: { provider: true, status: true, createdAt: true }, orderBy: { createdAt: "desc" }, take: 100 }),
+      tx.apiProviderLog.findMany({ where: { service: "scheduled-job", metadata: { path: ["environment"], equals: environment }, createdAt: { gte: from, lt: to } }, select: { provider: true, status: true, createdAt: true, metadata: true, latencyMs: true }, orderBy: { createdAt: "desc" }, take: 100 }),
     ]), { isolationLevel: "RepeatableRead" });
     activity = partitionOperationalGroups(rows);
-    jobs = runs.map(run => ({ job: run.provider, status: run.status, observedAt: run.createdAt.toISOString() }));
+    jobs = runs.map(run => projectScheduledJobRun(run, environment, to));
   } catch { /* Unavailable never becomes an empty/healthy aggregate. */ }
   const [system, providers, email, cms, alerts] = await Promise.all([
     getSafeSystemStatus().catch(() => null), getProviderOperationalStatuses(hours, environment).catch(() => null),
