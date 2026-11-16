@@ -3,7 +3,9 @@ import test from "node:test";
 
 import type { NormalizedHotelResult } from "@/lib/types";
 import type { Notification, Prisma } from "@/generated/prisma/client";
-import { buildPriceAlertIdempotencyKey, CAR_AUTOMATIC_DROP_RATIO, isAuthorizedCronRequest, processDuePriceAlerts, selectFlightPriceAlertResult, selectHotelPriceAlertResult, type ResolvedPrice } from "@/services/priceAlertProcessor";
+import { buildPriceAlertIdempotencyKey, CAR_AUTOMATIC_DROP_RATIO, isAuthorizedCronRequest, processDuePriceAlerts as processDuePriceAlertsWithControls, selectFlightPriceAlertResult, selectHotelPriceAlertResult, type ResolvedPrice } from "@/services/priceAlertProcessor";
+
+const processDuePriceAlerts: typeof processDuePriceAlertsWithControls = (options) => processDuePriceAlertsWithControls({ featureEnabled: async () => true, ...options });
 
 const now = new Date("2026-07-10T00:00:00.000Z");
 type TestDb = NonNullable<NonNullable<Parameters<typeof processDuePriceAlerts>[0]>["db"]>;
