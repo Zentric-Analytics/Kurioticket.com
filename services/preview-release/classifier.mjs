@@ -2,6 +2,8 @@ const WEB_PREFIXES = ["src/", "public/", "prisma/", "scripts/"];
 const MOBILE_PREFIX = "apps/mobile/";
 const DOC_PATTERNS = [/^docs\//, /\/docs\//, /\.md$/i];
 const NATIVE_COMMON = [
+  // Vendored production decoder participates in immutable native dependency fingerprints.
+  /^apps\/mobile\/vendor\/decode-uri-component\//,
   /^(?:package|package-lock)\.json$/,
   /^apps\/mobile\/(?:app\.config\.(?:js|ts)|app\.json|eas\.json|release-policy\.json)$/,
   /^apps\/mobile\/(?:package|package-lock)\.json$/,

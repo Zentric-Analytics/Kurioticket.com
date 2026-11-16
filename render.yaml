@@ -17,6 +17,7 @@ services:
         - apps/mobile/release-policy.json
         - apps/mobile/package.json
         - apps/mobile/package-lock.json
+        - apps/mobile/vendor/decode-uri-component/**
         - package.json
         - package-lock.json
         - render.yaml
