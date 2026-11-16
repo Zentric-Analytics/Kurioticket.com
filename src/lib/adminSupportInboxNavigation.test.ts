@@ -49,7 +49,9 @@ test("Support ticket detail returns to the exact filtered inbox, including pagin
   const params = new URLSearchParams("q=refund&status=OPEN&priority=HIGH&category=redirect&cursor=next-page&limit=25");
   const detail = new URL(supportTicketDetailHref("ticket-123", params), "https://kurioticket.test");
   assert.equal(detail.pathname, "/admin/support/ticket-123");
-  assert.equal(supportInboxReturnHref(detail.searchParams.get("inbox") || undefined), "/admin/support?" + params.toString());
+  const returned = new URL(supportInboxReturnHref(detail.searchParams.get("inbox") || undefined), "https://kurioticket.test");
+  assert.equal(returned.pathname, "/admin/support");
+  assert.deepEqual([...returned.searchParams].sort(), [...params].sort());
 });
 
 test("Support detail return navigation cannot lead outside the Support inbox", () => {

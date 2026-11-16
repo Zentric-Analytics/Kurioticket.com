@@ -1,5 +1,22 @@
 import assert from "node:assert/strict";import test from "node:test";import { CustomizationCoordinator,normalizeCachedPreference,type PreferenceValue } from "./customizationCoordinator";
 const en={locale:"en-us",currency:"USD"} as const,es={locale:"es-es",currency:"EUR"} as const;function deferred<T>(){let resolve!:(v:T)=>void;const promise=new Promise<T>(r=>resolve=r);return{promise,resolve};}function fixture(overrides:Record<string,unknown>={}){const output:PreferenceValue[]=[];const caches=new Map<string,PreferenceValue>();const deps={readGuest:async()=>en,writeGuest:async()=>{},readAccountCache:async(u:string)=>caches.get(u)||null,writeAccountCache:async(u:string,v:PreferenceValue)=>{caches.set(u,v)},fetchAccount:async()=>({hasPreferences:true,preferences:es}),patchAccount:async(p:Partial<PreferenceValue>)=>({...en,...p}),...overrides};return{coordinator:new CustomizationCoordinator(deps as never,v=>output.push(v)),output,caches};}
+
+test("failed account preferences restore confirmed state and never pollute offline cache", async () => {
+  const f = fixture({ patchAccount: async () => { throw new Error("offline"); } });
+  await f.coordinator.transition({ userId: "a" });
+  await assert.rejects(f.coordinator.mutate({ currency: "GBP" }), /offline/);
+  assert.deepEqual(f.coordinator.snapshot(), es); assert.deepEqual(f.caches.get("a"), es);
+});
+test("preference writes serialize and resume cannot overwrite a pending newer edit", async () => {
+  const first = deferred<PreferenceValue>(); let calls = 0;
+  const f = fixture({ patchAccount: async () => ++calls === 1 ? first.promise : { ...es, currency: "GBP" } });
+  await f.coordinator.transition({ userId: "a" });
+  const a = f.coordinator.mutate({ currency: "CAD" });
+  const b = f.coordinator.mutate({ currency: "GBP" });
+  await f.coordinator.refresh(); assert.equal(f.coordinator.snapshot().currency, "GBP");
+  first.resolve({ ...es, currency: "CAD" }); await Promise.all([a,b]);
+  assert.equal(calls, 2); assert.equal(f.coordinator.snapshot().currency, "GBP");
+});
 test("guest startup and logout restore independent guest preferences",async()=>{const f=fixture();await f.coordinator.transition({userId:null});assert.deepEqual(f.coordinator.snapshot(),en);await f.coordinator.transition({userId:"a"});assert.deepEqual(f.coordinator.snapshot(),es);await f.coordinator.transition({userId:null});assert.deepEqual(f.coordinator.snapshot(),en);});
 test("existing account wins and absent account initializes from guest",async()=>{const a=fixture();await a.coordinator.transition({userId:"a"});assert.deepEqual(a.coordinator.snapshot(),es);let patched:unknown;const b=fixture({fetchAccount:async()=>({hasPreferences:false,preferences:en}),patchAccount:async(v:PreferenceValue)=>(patched=v,v)});await b.coordinator.transition({userId:"b"});assert.deepEqual(patched,en);});
 test("late user A response cannot cross into user B",async()=>{const late=deferred<{hasPreferences:boolean;preferences:PreferenceValue}>();let calls=0;const f=fixture({fetchAccount:async()=>++calls===1?late.promise:{hasPreferences:true,preferences:en}});const a=f.coordinator.transition({userId:"a"});while(calls<1)await new Promise(r=>setTimeout(r,0));await f.coordinator.transition({userId:"b"});late.resolve({hasPreferences:true,preferences:es});await a;assert.deepEqual(f.coordinator.snapshot(),en);});

@@ -236,7 +236,7 @@ test("route inspector keeps the market badge and full responsive route details",
   const table = component.slice(component.indexOf("function RouteDetailsTable("), component.indexOf("function MarketGroupStatusBadge("));
   assert.ok(details.indexOf("<MarketGroupStatusBadge") < details.indexOf("<RouteDetailsTable"));
   assert.match(details, /routes=\{group\.routes\}/);
-  assert.doesNotMatch(details, /Showing |Route pages|Previous|Next/);
+  assert.doesNotMatch(details, /Showing |Route pages|>Previous<|>Next</);
   assert.match(table, /\{route\.origin\}/);
   assert.match(table, /\{route\.destination\}/);
   assert.match(table, /\{route\.provider \?\? "—"\}/);
@@ -438,7 +438,7 @@ test("homepage fare page header follows the compact Providers treatment", () => 
 test("readiness overview is flat like Providers while preserving status and metrics", () => {
   assert.match(component, /<section aria-labelledby="homepage-fare-readiness-heading" className="pb-5 pt-5">/);
   assert.match(component, /id="homepage-fare-readiness-heading"/);
-  assert.match(component, />Readiness overview<\/h2>/);
+  assert.match(component, />\s*Readiness overview\s*<\/h2>/);
   assert.match(component, /<DisplayReadinessSummary readiness=\{statusPayload\.displayReadiness\} \/>/);
   assert.doesNotMatch(component, /<Card className=/);
   assert.doesNotMatch(component, /shadow-sm/);
@@ -623,7 +623,7 @@ test("fare operations, route inspector and diagnostics are separate navigable vi
   const operationsPart = component.slice(component.indexOf('{view === "operations"'), component.indexOf('view === "diagnostics"'));
   assert.match(component, /view\?: "operations" \| "routes" \| "diagnostics"/);
   assert.match(component, /view === "diagnostics"/);
-  assert.match(component, /href="\/admin\/homepage-fares\/diagnostics"/);
+  assert.match(readFileSync("src/components/admin/HomepageFareSubpageNavigation.tsx", "utf8"), /href: "\/admin\/homepage-fares\/diagnostics"/);
   assert.doesNotMatch(operationsPart, /<AdvancedDiagnostics/);
   assert.match(diagnosticsPage, /<HomepageFaresRefreshCard view="diagnostics"/);
   assert.match(diagnosticsPage, /<HomepageFareSubpageNavigation active="diagnostics"/);

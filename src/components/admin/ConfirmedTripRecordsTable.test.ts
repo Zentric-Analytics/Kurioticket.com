@@ -44,8 +44,8 @@ test("compact record table preserves authentic customer, trip, provider, timesta
   assert.match(html, /aria-label="Matching confirmed trip records"/);
   assert.match(html, /tabIndex="0"/i);
   assert.match(html, /overflow-x-auto/);
-  assert.match(html, /min-w-\[920px\]/);
-  assert.equal((html.match(/<th /g) || []).length, 6);
+  assert.match(html, /min-w-\[1080px\]/);
+  assert.equal((html.match(/<th /g) || []).length, 8);
 });
 
 test("stored statuses and stale-status warnings remain truthful and read-only", () => {

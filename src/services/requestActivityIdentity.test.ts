@@ -20,7 +20,7 @@ test("consented guest searches and handoffs receive a visitor but no account ide
         return "guest-visitor";
       },
     });
-    assert.deepEqual(identity, { userId: null, visitorId: "guest-visitor" });
+    assert.deepEqual(identity, { userId: null, visitorId: "guest-visitor", applicationSource: "UNKNOWN" });
   }
 });
 
@@ -37,7 +37,7 @@ test("native identity uses the app token and validated bearer without borrowing 
         return "app-visitor";
       },
     });
-    assert.deepEqual(identity, { userId: "app-user", visitorId: "app-visitor" });
+    assert.deepEqual(identity, { userId: "app-user", visitorId: "app-visitor", applicationSource: "UNKNOWN" });
   }
 });
 
@@ -52,7 +52,7 @@ test("a revoked native bearer cannot fall back to a different web account", asyn
       return null;
     },
   });
-  assert.deepEqual(identity, { userId: null, visitorId: null });
+  assert.deepEqual(identity, { userId: null, visitorId: null, applicationSource: "UNKNOWN" });
 });
 
 test("visitor failures preserve verified account attribution and never reject the caller", async () => {
@@ -61,7 +61,7 @@ test("visitor failures preserve verified account attribution and never reject th
     mobile: async () => null,
     visitor: async () => { throw new Error("visitor table unavailable"); },
   });
-  assert.deepEqual(identity, { userId: "web-user", visitorId: null });
+  assert.deepEqual(identity, { userId: "web-user", visitorId: null, applicationSource: "WEB" });
 });
 
 test("an unavailable session boundary cannot claim guest or registered ownership", async () => {
@@ -70,7 +70,7 @@ test("an unavailable session boundary cannot claim guest or registered ownership
     mobile: async () => null,
     visitor: async () => { throw new Error("must not resolve an unknown account context"); },
   });
-  assert.deepEqual(identity, { userId: null, visitorId: null });
+  assert.deepEqual(identity, { userId: null, visitorId: null, applicationSource: "UNKNOWN" });
 });
 
 test("no token and withdrawn consent do not manufacture a guest identity", async () => {
@@ -79,7 +79,7 @@ test("no token and withdrawn consent do not manufacture a guest identity", async
       web: async () => null,
       mobile: async () => null,
       visitor: async () => null,
-    }), { userId: null, visitorId: null });
+    }), { userId: null, visitorId: null, applicationSource: "UNKNOWN" });
   }
 });
 
@@ -91,7 +91,7 @@ test("a local web refusal stops visitor attribution even while durable withdrawa
     mobile: async () => null,
     visitor: async () => { throw new Error("refused visitor identity must not be resolved"); },
   });
-  assert.deepEqual(identity, { userId: "signed-in-user", visitorId: null });
+  assert.deepEqual(identity, { userId: "signed-in-user", visitorId: null, applicationSource: "WEB" });
 });
 
 
@@ -108,6 +108,6 @@ test("verified registered website users retain their own identity for all three 
         return "linked-and-consented-visitor";
       },
     });
-    assert.deepEqual(identity, { userId: "verified-user", visitorId: "linked-and-consented-visitor" });
+    assert.deepEqual(identity, { userId: "verified-user", visitorId: "linked-and-consented-visitor", applicationSource: "WEB" });
   }
 });

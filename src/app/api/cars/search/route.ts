@@ -1,3 +1,4 @@
+import { applicationMetadata } from "@/lib/application-source";
 import { after } from "next/server";
 import { attachOperationalSearchSession, prepareOperationalSearchSession } from "@/lib/operationalSearchSession";
 import { resolveSearchRequestId } from "@/lib/search-journey";
@@ -49,14 +50,14 @@ export async function POST(request: Request) {
   const recordSearch = (resultCount: number, status: "SUCCESS" | "PARTIAL" | "FAILED") => {
     after(async () => {
       try {
-        const { userId, visitorId } = await resolveRequestActivityIdentity(request);
+        const { userId, visitorId, ...application } = await resolveRequestActivityIdentity(request);
         await Promise.all([
-          logSearchHistory({
+          logSearchHistory({ ...application,
             userId, visitorId, requestId, type: "CAR",
             origin: search.pickupLocation, destination: search.dropoffLocation,
             query: recordedSearch, resultCount, latencyMs: Math.max(0, Math.round(performance.now() - started)), status,
           }),
-          trackAnalyticsEvent({
+          trackAnalyticsEvent({ ...application,
             userId, visitorId, type: "SEARCH", name: "car_search",
             metadata: { resultCount },
           }),
@@ -73,6 +74,7 @@ export async function POST(request: Request) {
       recordSearch(0, "FAILED");
       after(async () => {
         try {
+          const application = applicationMetadata(await resolveRequestActivityIdentity(request));
           await Promise.all(providerStatuses.map((provider) =>
             logProviderCall({
               provider: provider.provider,
@@ -80,7 +82,7 @@ export async function POST(request: Request) {
               status: provider.status === "success" ? "SUCCESS" : provider.status === "skipped" ? "DISABLED" : "FAILED",
               latencyMs: provider.latencyMs,
               errorMessage: provider.errorReason || provider.error,
-              metadata: { requestId },
+              metadata: { ...application, requestId },
             }),
           ));
         } catch {
@@ -93,6 +95,7 @@ export async function POST(request: Request) {
       recordSearch(0, "FAILED");
       after(async () => {
         try {
+          const application = applicationMetadata(await resolveRequestActivityIdentity(request));
           await Promise.all(providerStatuses.map((provider) =>
             logProviderCall({
               provider: provider.provider,
@@ -100,7 +103,7 @@ export async function POST(request: Request) {
               status: provider.status === "success" ? "SUCCESS" : provider.status === "skipped" ? "DISABLED" : "FAILED",
               latencyMs: provider.latencyMs,
               errorMessage: provider.errorReason || provider.error,
-              metadata: { requestId },
+              metadata: { ...application, requestId },
             }),
           ));
         } catch {
@@ -113,14 +116,15 @@ export async function POST(request: Request) {
     recordSearch(results.length, searchStatus);
     after(async () => {
       try {
-        await Promise.all(providerStatuses.map((provider) =>
+        const application = applicationMetadata(await resolveRequestActivityIdentity(request));
+          await Promise.all(providerStatuses.map((provider) =>
           logProviderCall({
             provider: provider.provider,
             service: "car-search",
             status: provider.status === "success" ? "SUCCESS" : provider.status === "skipped" ? "DISABLED" : "FAILED",
             latencyMs: provider.latencyMs,
             errorMessage: provider.errorReason || provider.error,
-            metadata: { requestId },
+            metadata: { ...application, requestId },
           }),
         ));
       } catch {

@@ -11,14 +11,14 @@ const service = readFileSync("src/services/adminAlertService.ts", "utf8");
 const navigation = readFileSync("src/lib/adminNavigation.ts", "utf8");
 
 test("Confirmation Delivery Health contains alerts instead of navigating to a duplicate page", () => {
-  const start = operations.indexOf('<details id="confirmation-delivery-health-title"');
-  const end = operations.indexOf("</details>", start);
+  const start = operations.indexOf('<section id="confirmation-delivery-health-title"');
+  const end = operations.indexOf("</section>", start);
   assert.ok(start >= 0 && end > start, "Delivery Health must exist");
   const deliveryHealth = operations.slice(start, end);
   assert.match(operations, /import \{ ConfirmedTripDeliveryAlerts \} from "@\/components\/admin\/ConfirmedTripDeliveryAlerts"/);
   assert.match(deliveryHealth, /\{readiness\.feedReady \? <ConfirmedTripDeliveryAlerts \/> : null\}/);
   assert.doesNotMatch(deliveryHealth, /href="\/admin\/confirmed-trips\/alerts"|href="\/admin\/notifications"|>Confirmation alerts<\/Link>/);
-  assert.match(operations, /No provider confirmation feed is configured\. Monitoring is off/);
+  assert.match(operations, /No delivery telemetry available/);
   assert.match(operations, /Delivery data is unavailable\. No counts are assumed/);
   assert.match(navigation, /href: "\/admin\/confirmed-trips", label: "Trips"/);
 });
@@ -71,7 +71,7 @@ test("old Confirmation alerts links safely redirect to Delivery Health within Tr
   assert.match(route, /redirect\("\/admin\/confirmed-trips\/monitoring\?panel=delivery#confirmation-delivery-health-title"\)/);
   assert.doesNotMatch(route, /<AdminPageShell|Monitoring inactive|No confirmation provider feed is configured|<AdminSectionCard/);
   assert.match(operations, /id="confirmation-delivery-health-title"/);
-  assert.match(operations, /open=\{expandDelivery\}/);
+  assert.match(operations, /<section id="confirmation-delivery-health-title"/);
   assert.match(globalAlerts, /id="settings-section-title"/);
   assert.match(globalAlerts, /<AdminAlertAcknowledgeButton/);
   assert.doesNotMatch(navigation, /href: "\/admin\/notifications"/);

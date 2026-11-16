@@ -1,6 +1,6 @@
 import { Text } from "./HomePresentation";
 import { router } from "expo-router";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import {
   ImageBackground,
   Pressable,
@@ -10,8 +10,7 @@ import {
   View,
 } from "react-native";
 import { useSavedDestinations } from "../../storage/useSavedDestinations";
-import { getApiBaseUrl } from "../../config/apiUrl";
-import { useMobileMarketplace } from "../../localization/MobileLocalizationProvider";
+import { usePublishedHome } from "./usePublishedContent";
 import { flowColors, useFlowTheme } from "../flow/flowStyles";
 import { AndroidFavoriteButton } from "./AndroidFavoriteButton";
 import { popularDestinationStayNavigation } from "./homepageCardNavigation";
@@ -23,7 +22,6 @@ import {
 export { POPULAR_STAY_LAYOUT } from "./popularStayCardLayout";
 
 import {
-  getPopularDestinationStays,
   resolvePopularDestinationStay,
 } from "./PopularDestinationStaysData";
 
@@ -38,16 +36,12 @@ export function PopularDestinationStays({
   const { width } = useWindowDimensions();
   const { width: cardWidth, imageHeight } = popularStayCardLayout(width);
   const { savedIds, toggle } = useSavedDestinations();
-  const marketplace = useMobileMarketplace();
-  const api = getApiBaseUrl(undefined, __DEV__);
-  const assetOrigin = api.ok ? api.baseUrl : "https://staging.kurioticket.com";
-  const popularDestinationStays = useMemo(
-    () => getPopularDestinationStays(marketplace.marketCountryCode, assetOrigin),
-    [assetOrigin, marketplace.marketCountryCode],
-  );
+  const published = usePublishedHome();
+  const popularDestinationStays = published.data?.destinations.items.slice(0, 8) ?? [];
   const [failedImageIds, setFailedImageIds] = useState<Set<string>>(
     () => new Set(),
   );
+  if (!popularDestinationStays.length) return null;
   return (
     <View
       collapsable={false}

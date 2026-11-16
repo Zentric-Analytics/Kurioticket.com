@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { applicationLabel } from "@/lib/platformHealthPresentation";
 import { useEffect, useRef, useState } from "react";
 
 import type { AdminSearchRead } from "@/services/adminOperationalReadContract";
 
-export function SearchMonitorTable({
+function SearchMonitorTableState({
   initialItems,
   initialCursor,
   query,
@@ -30,16 +31,12 @@ export function SearchMonitorTable({
     generationRef.current += 1;
     abortRef.current?.abort();
     abortRef.current = null;
-    setItems(initialItems);
-    setCursor(initialCursor);
-    setLoading(false);
-    setLoadError(false);
     return () => {
       generationRef.current += 1;
       abortRef.current?.abort();
       abortRef.current = null;
     };
-  }, [initialItems, initialCursor, query]);
+  }, []);
 
   useEffect(() => {
     const node = sentinelRef.current;
@@ -109,26 +106,26 @@ export function SearchMonitorTable({
 
   return (
     <>
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[1120px] border-collapse text-left">
+      <div role="region" aria-label="Search activity table" tabIndex={0} className="focus-ring max-w-full overflow-x-auto">
+        <table className="w-full min-w-[1120px] border-collapse text-left"><caption className="sr-only">Search records in the selected application and filter scope</caption>
           <thead>
             <tr className="border-b border-[#E5E7EB] text-[11px] uppercase tracking-[0.08em] text-[#6B7280]">
-              <th className="px-2 py-3 font-semibold">Created</th>
-              <th className="px-2 py-3 font-semibold">Product</th>
-              <th className="px-2 py-3 font-semibold">Route / stay</th>
-              <th className="px-2 py-3 font-semibold">Currency</th>
-              <th className="px-2 py-3 font-semibold">Results</th>
-              <th className="px-2 py-3 font-semibold">Providers</th>
-              <th className="px-2 py-3 font-semibold">Duration</th>
-              <th className="px-2 py-3 font-semibold">Identity</th>
-              <th className="px-2 py-3 font-semibold">Status</th>
+              <th scope="col" className="px-2 py-3 font-semibold">Created</th>
+              <th scope="col" className="px-2 py-3 font-semibold">Product</th><th scope="col" className="px-2 py-3 font-semibold">Application</th>
+              <th scope="col" className="px-2 py-3 font-semibold">Route / stay</th>
+              <th scope="col" className="px-2 py-3 font-semibold">Currency</th>
+              <th scope="col" className="px-2 py-3 font-semibold">Results</th>
+              <th scope="col" className="px-2 py-3 font-semibold">Providers</th>
+              <th scope="col" className="px-2 py-3 font-semibold">Duration</th>
+              <th scope="col" className="px-2 py-3 font-semibold">Identity</th>
+              <th scope="col" className="px-2 py-3 font-semibold">Status</th>
             </tr>
           </thead>
           <tbody>
             {items.map((search) => (
               <tr key={search.id} className="group relative cursor-pointer border-b border-[#E5E7EB] text-[13px] text-[#374151] hover:bg-[#FAFAFA] focus-within:bg-[#F8FAFC]">
                 <td className="whitespace-nowrap px-2 py-3 align-top"><Link href={detailHref(search, detailQuery)} aria-label={"View details for " + productLabel(search.product) + " search " + routeLabel(search.origin, search.destination)} className="absolute inset-0 z-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#004BB8]" tabIndex={0} /><span className="relative pointer-events-none">{formatCreated(search.createdAt, referenceNow)}</span></td>
-                <td className="px-2 py-3 align-top font-semibold text-[#111827]">{productLabel(search.product)}</td>
+                <td className="px-2 py-3 align-top font-semibold text-[#111827]">{productLabel(search.product)}</td><td className="px-2 py-3 align-top">{applicationLabel(search.applicationSource)}{search.appVersion?<span className="mt-0.5 block text-[11px] text-slate-500">v{search.appVersion}</span>:null}</td>
                 <td className="max-w-[260px] px-2 py-3 align-top">
                   <p className="font-semibold text-[#111827]">{routeLabel(search.origin, search.destination)}</p>
                   {formatSearchDates(search.checkIn, search.checkOut) ? (
@@ -235,4 +232,8 @@ function identityLabel(kind: "registered" | "guest" | "unattributed") {
 
 function detailHref(search: AdminSearchRead, detailQuery: string) {
   return "/admin/searches/" + search.id + "?" + (detailQuery ? detailQuery + "&" : "") + "environment=" + encodeURIComponent(search.environment);
+}
+
+export function SearchMonitorTable(props: Parameters<typeof SearchMonitorTableState>[0]) {
+  return <SearchMonitorTableState key={JSON.stringify([props.query, props.initialItems, props.initialCursor])} {...props} />;
 }

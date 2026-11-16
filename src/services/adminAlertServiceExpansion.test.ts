@@ -10,8 +10,9 @@ import * as occurrences from "./adminExpandedAlertOccurrences";
 import type * as service from "./adminAlertService";
 
 const now = new Date("2026-11-04T14:00:00.000Z");
+type AuditRow = {adminUserId?:string; action:string;targetType:string;targetId:string;createdAt:Date;metadata?:Record<string,unknown>};
 function harness() {
-  const audit: any[] = [];
+  const audit: AuditRow[] = [];
   let reads = 0;
   const state = {
     databaseConnected: true,
@@ -25,18 +26,18 @@ function harness() {
       users: { count: 1, latestAt: "2026-11-04T13:50:00.000Z" },
     } as expandedCore.ExpandedAlertSnapshot,
   };
-  const db: any = {
+  const db = {
     $executeRaw: async () => 1,
     adminAuditLog: {
-      findFirst: async ({ where }: any) => audit.filter(row => row.action === where.action && row.targetType === where.targetType && row.targetId === where.targetId).at(-1) ?? null,
-      findMany: async ({ where }: any) => audit.filter(row => row.adminUserId === where.adminUserId && row.action === where.action && row.targetType === where.targetType && where.targetId.in.includes(row.targetId) && (!where.createdAt.gte || row.createdAt >= where.createdAt.gte) && row.createdAt <= where.createdAt.lte).reverse(),
-      create: async ({ data }: any) => { audit.push({ ...data, createdAt: now }); return data; },
+      findFirst: async ({ where }: {where: Pick<AuditRow,"action"|"targetType"|"targetId">}) => audit.filter(row => row.action === where.action && row.targetType === where.targetType && row.targetId === where.targetId).at(-1) ?? null,
+      findMany: async ({ where }: {where: {adminUserId: string; action:string; targetType:string; targetId:{in:string[]}; createdAt:{gte?:Date;lte:Date}}}) => audit.filter(row => row.adminUserId === where.adminUserId && row.action === where.action && row.targetType === where.targetType && where.targetId.in.includes(row.targetId) && (!where.createdAt.gte || row.createdAt >= where.createdAt.gte) && row.createdAt <= where.createdAt.lte).reverse(),
+      create: async ({ data }: {data: Omit<AuditRow,"createdAt">}) => { audit.push({ ...data, createdAt: now }); return data; },
     },
   };
-  db.$transaction = async (run: (tx: any) => Promise<unknown>) => run(db);
+  const databaseFixture = { ...db, $transaction: async (run: (tx: typeof db) => Promise<unknown>) => run(db) };
   const modules: Record<string, unknown> = {
     "server-only": {}, "node:crypto": crypto,
-    "@/lib/prisma": { getOptionalPrisma: () => db },
+    "@/lib/prisma": { getOptionalPrisma: () => databaseFixture },
     "@/lib/stagingSafety": { getPublicEnvironment: () => state.environment },
     "@/lib/admin-data": { getSafeSystemStatus: async () => ({ databaseConfigured: true, databaseConnected: state.databaseConnected, authConfigured: true, sessionConfigured: true, emailConfigured: true }) },
     "@/services/cmsHardeningService": { getCmsHealthOverview: async () => ({ available: state.cmsAvailable, totals: { scopes: 0, unhealthy: 0, unpublishedChanges: 0 }, scopes: [] }) },
@@ -47,7 +48,7 @@ function harness() {
     "@/services/providerOperationalStatus": { getProviderOperationalStatuses: async () => [] },
     "@/services/adminAlertCore": core,
     "@/services/adminExpandedAlertCore": expandedCore,
-    "@/services/adminExpandedAlertReader": { readExpandedAdminAlertSignals: async (database: unknown, environment: string) => { assert.equal(database, db); assert.equal(environment, state.environment); reads++; return state.expanded; } },
+    "@/services/adminExpandedAlertReader": { readExpandedAdminAlertSignals: async (database: unknown, environment: string) => { assert.equal(database, databaseFixture); assert.equal(environment, state.environment); reads++; return state.expanded; } },
     "@/services/adminExpandedAlertOccurrences": occurrences,
   };
   const code = ts.transpileModule(readFileSync("src/services/adminAlertService.ts", "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;

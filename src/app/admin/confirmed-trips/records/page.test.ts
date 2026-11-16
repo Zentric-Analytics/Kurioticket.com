@@ -16,7 +16,8 @@ test("admin-only trip directory and detail routes are read-only", () => {
   assert.match(details, /getAdminConfirmedTripDetails\(id\)/);
   assert.match(details, /if \(result\.status === "not_found"\) notFound\(\)/);
   assert.doesNotMatch(directory + details, /fetch\(|method:\s*["'](?:POST|PATCH|DELETE)|<form[^>]*method="post"/);
-  assert.match(overview, /href="\/admin\/confirmed-trips\/records"/);
+  assert.match(overview, /<TripWorkspaceNavigation active="trips"/);
+  assert.match(readFileSync("src/components/admin/TripWorkspaceNavigation.tsx", "utf8"), /href="\/admin\/confirmed-trips"/);
 });
 
 test("queries use only signed confirmations, stable keyset paging, bound seek and explicit errors", () => {

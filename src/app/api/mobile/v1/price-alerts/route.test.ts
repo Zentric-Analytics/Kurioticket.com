@@ -29,7 +29,7 @@ test("Cars API accepts automatic baseline creation without weakening target crea
 });
 
 test("native Cars price-alert success path creates automatic tracking and can pause or reactivate", () => {
-  assert.match(nativeCarAlert, /travelApi\.createPriceAlert\(buildAutomaticCarPriceAlertPayload\(plan, baseline\.totalPrice, baseline\.currency\)\)/);
+  assert.match(nativeCarAlert, /travelApi\.createPriceAlert\(buildAutomaticCarPriceAlertPayload\(plan, baseline\.totalPrice, baseline\.currency, scope\)\)/);
   assert.match(nativeCarAlert, /setCurrentMatchingAlert\(saved\);[\s\S]*showFeedback\(next \? "active" : "paused"\)/);
   assert.match(nativeCarAlert, /travelApi\.updatePriceAlertStatus\(matchingAlert!\.id, "PAUSED"\)/);
   assert.match(nativeCarAlert, /travelApi\.updatePriceAlertStatus\(matchingAlert\.id, "ACTIVE"\)/);

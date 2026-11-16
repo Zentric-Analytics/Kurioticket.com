@@ -1,6 +1,6 @@
 import { Text } from "./HomePresentation";
 import { router } from "expo-router";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import {
   Image,
   Pressable,
@@ -10,12 +10,12 @@ import {
   View,
 } from "react-native";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
-import { getApiBaseUrl } from "../../config/apiUrl";
+import { usePublishedHome } from "./usePublishedContent";
 import { useMobileMarketplace } from "../../localization/MobileLocalizationProvider";
 import { FlowIcon } from "../flow/FlowIcon";
 import { flowStyles, useFlowTheme } from "../flow/flowStyles";
 import { discoverAdventureNavigation } from "./homepageCardNavigation";
-import { getRegionalDestinationRoutes, type RegionalDestinationRoute } from "./RegionalDestinationRoutesData";
+import { type RegionalDestinationRoute } from "./RegionalDestinationRoutesData";
 import type { MarketplaceContext } from "../../../../../src/shared/marketplace/marketplaceContext";
 
 function RegionalRouteCard({ route, width, marketplace }: { route: RegionalDestinationRoute; width: number; marketplace: MarketplaceContext }) {
@@ -59,9 +59,9 @@ export function RegionalDestinationRoutes() {
   const { width } = useWindowDimensions();
   const cardWidth = Math.min(width * 0.78, 250);
   const marketplace = useMobileMarketplace();
-  const api = getApiBaseUrl(undefined, __DEV__);
-  const assetOrigin = api.ok ? api.baseUrl : "https://staging.kurioticket.com";
-  const regionalDestinationRoutes = useMemo(() => getRegionalDestinationRoutes(marketplace.marketCountryCode, assetOrigin), [assetOrigin, marketplace.marketCountryCode]);
+  const published = usePublishedHome();
+  const regionalDestinationRoutes = published.data?.flightRoutes.items.slice(8, 18) ?? [];
+  if (!regionalDestinationRoutes.length) return null;
 
   return (
     <View collapsable={false} testID="regional-destination-routes" style={styles.section}>

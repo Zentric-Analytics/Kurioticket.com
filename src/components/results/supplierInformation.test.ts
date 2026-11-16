@@ -61,7 +61,7 @@ test("remaining supplier-information surfaces preserve sanitized facts without t
   const webHotel = source("src/components/results/hotelDetails/StandaloneHotelDetails.tsx");
   assert.doesNotMatch(webHotel, /SupplierInformation|hotelSupplierFacts|Property information supplied by KAYAK/);
 
-  assert.match(source("apps/mobile/src/features/search/HotelDetailsScreen.tsx"), /hotelSupplierFacts\(details\?\.providerDetails, false\)/);
+  assert.doesNotMatch(source("apps/mobile/src/features/search/HotelDetailsScreen.tsx"), /<NativeSupplierInformation|hotelSupplierFacts/);
   for (const path of ["src/components/results/SupplierInformation.tsx", "apps/mobile/src/features/search/NativeSupplierInformation.tsx"]) {
     const component = source(path);
     assert.match(component, /facts\.map/);

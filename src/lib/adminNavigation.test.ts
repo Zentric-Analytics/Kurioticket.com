@@ -3,7 +3,7 @@ import test from "node:test";
 
 import { adminNavigation, adminNavigationGroups, getAdminNavForRole, getAdminHeaderGroups, isAdminNavItemActive } from "@/lib/adminNavigation";
 
-const originalLabels = ["Overview", "Users", "Providers", "Search Activity", "Trips", "Trip monitoring", "Content", "Homepage Fares", "Hotels", "Cars", "Support", "Deletion Requests", "Audit Logs", "System", "CMS Health", "Email Delivery", "Settings"];
+const originalLabels = ["Overview", "Users", "Providers", "Search Activity", "Trips", "Trip monitoring", "Content", "Homepage Fares", "Hotels", "Cars", "Support", "Deletion Requests", "Audit Logs", "System", "Platform Health", "CMS Health", "Email Delivery", "Settings"];
 
 test("admin navigation restores the flat module order without a duplicate Flights workspace", () => {
   assert.deepEqual(adminNavigation.map((item) => item.label), originalLabels);
@@ -16,7 +16,7 @@ test("admin navigation exposes parent workspaces in the header", () => {
     { label: "Operations", hrefs: ["/admin", "/admin/users", "/admin/searches/activity", "/admin/confirmed-trips", "/admin/support"] },
     { label: "Provider readiness", hrefs: ["/admin/providers"] },
     { label: "Website content", hrefs: ["/admin/content"] },
-    { label: "System & security", hrefs: ["/admin/system", "/admin/settings"] },
+    { label: "System & security", hrefs: ["/admin/system", "/admin/platform-health", "/admin/settings"] },
   ]);
   const visibleHrefs: readonly string[] = adminNavigationGroups.flatMap((group) => group.hrefs);
   for (const href of ["/admin/journeys", "/admin/redirects", "/admin/referral-attribution", "/admin/flight-status", "/admin/flights", "/admin/account-deletions", "/admin/hotels", "/admin/cars", "/admin/logs"]) {

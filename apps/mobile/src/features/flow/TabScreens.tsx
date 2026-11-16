@@ -1,6 +1,8 @@
+import { useAccountRefresh } from "../../storage/useAccountRefresh";
 import { useCallback, useEffect, useState } from "react";
 import {
   Image,
+  RefreshControl,
   Linking,
   Pressable,
   ScrollView,
@@ -25,6 +27,8 @@ export function MyTripsFlowScreen() {
   const [trips, setTrips] = useState<MobileTrip[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [refreshVersion, setRefreshVersion] = useState(0);
+  useAccountRefresh(() => setRefreshVersion(value => value + 1), () => { setTrips([]); setError(""); setRefreshVersion(value => value + 1); });
   const [focused, setFocused] = useState(false);
   useFocusEffect(useCallback(() => { setFocused(true); return () => setFocused(false); }, []));
   useEffect(() => {
@@ -52,10 +56,10 @@ export function MyTripsFlowScreen() {
     return () => {
       active = false;
     };
-  }, [tab]);
+  }, [tab, refreshVersion]);
   return (
     <SafeAreaView style={ft.styles.safe} edges={["top"]}>
-      <ScrollView alwaysBounceVertical={false} bounces={false} contentContainerStyle={ft.styles.scroll} overScrollMode="never">
+      <ScrollView alwaysBounceVertical={false} bounces={false} contentContainerStyle={ft.styles.scroll} overScrollMode="never" refreshControl={<RefreshControl refreshing={loading} onRefresh={() => setRefreshVersion(value => value + 1)} />}>
         <ScreenHeader title="My Trips" />
         <View style={[ft.styles.card, ft.styles.shadow]}>
           <Segments

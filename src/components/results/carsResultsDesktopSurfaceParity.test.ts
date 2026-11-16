@@ -82,10 +82,10 @@ test("desktop Cars results body is compact, centered, and keeps shared surfaces 
     /className="grid gap-5 lg:grid-cols-\[232px_minmax\(0,1fr\)\] xl:grid-cols-\[236px_minmax\(0,1fr\)\]"/,
   );
   assert.match(
-    results,
+    loading,
     /data-cars-results-loading-hotel-column[\s\S]*?lg:max-w-\[928px\] lg:rounded-2xl[\s\S]*?lg:grid-cols-\[232px_minmax\(0,1fr\)\] xl:grid-cols-\[236px_minmax\(0,1fr\)\]/,
   );
-  assert.match(alert, /data-cars-price-alert className="inline-flex min-w-0 shrink-0 items-center justify-end"/);
+  assert.match(alert, /data-cars-price-alert className="mt-2 flex w-full min-w-0 items-center/);
   assert.doesNotMatch(results, /data-cars-price-alert-sidebar-slot/);
   assert.match(
     card,
@@ -207,7 +207,7 @@ test("desktop and mobile car rates share an inline tracking control inside rate 
   const picker = readFileSync(new URL("./CarDealPicker.tsx", import.meta.url), "utf8");
   const section = alert.match(/data-cars-price-alert className="([^"]+)"/)?.[1];
   assert.ok(section);
-  assert.match(section, /inline-flex min-w-0 shrink-0 items-center justify-end/);
+  assert.match(section, /mt-2 flex w-full min-w-0 items-center rounded-xl/);
   assert.doesNotMatch(section, /sm:rounded-2xl|lg:bg-\[#EEF6FF\]/);
   assert.match(picker, /data-car-rate-provider-alert-row/);
   assert.match(picker, /<CarPriceAlertControl/);
@@ -234,8 +234,8 @@ test("KAYAK car cards and loading canvases stay inside the same standalone deskt
     /desktopSurfaceParity \? "md:bg-white lg:bg-white" : "lg:bg-white"/,
   );
   assert.equal(
-    (results.match(/<CarCardSkeleton desktopSurfaceParity \/>/g) ?? []).length,
-    3,
+    (loading.match(/<CarCardSkeleton desktopSurfaceParity \/>/g) ?? []).length,
+    1,
   );
 });
 

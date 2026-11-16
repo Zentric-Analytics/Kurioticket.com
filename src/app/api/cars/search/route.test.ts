@@ -16,9 +16,11 @@ function fixture(options: { status?: string; consent?: boolean; failingLog?: boo
   const histories: Array<Record<string, unknown>> = [];
   const analytics: Array<Record<string, unknown>> = [];
   let identityCalls = 0;
-  const fakeSearch = { results: [{ id: "car-offer" }], status: options.status ?? "available", warnings: [] };
+  const fakeSearch = { results: [{ id: "car-offer" }], status: options.status ?? "available", warnings: [], providerStatuses: [] };
   const dependencies: Record<string, unknown> = {
     "next/server": { after: (callback: () => Promise<unknown>) => { deferred.push(callback); } },
+    "@/lib/operationalSearchSession": { prepareOperationalSearchSession: () => null, attachOperationalSearchSession: (response: Response) => response },
+    "@/lib/application-source": { applicationMetadata: () => ({ applicationSource: "UNKNOWN" }) },
     "@/lib/search-journey": { resolveSearchRequestId: (value: string | null) => value || requestId },
     "@/services/requestActivityIdentity": { resolveRequestActivityIdentity: async () => {
       identityCalls++;
@@ -65,7 +67,7 @@ test("car search records a consented history after returning provider results", 
   assert.equal(response.status, 200);
   assert.equal(f.calls(), 0);
   assert.equal(f.histories.length, 0);
-  assert.equal(f.deferred.length, 1);
+  assert.equal(f.deferred.length, 2);
   await f.deferred[0]();
   assert.equal(f.histories.length, 1);
   assert.equal(f.histories[0].type, "CAR");

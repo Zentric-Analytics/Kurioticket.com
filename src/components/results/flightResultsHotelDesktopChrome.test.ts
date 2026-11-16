@@ -108,7 +108,7 @@ test("desktop Flight Results keeps page-owned navbar geometry while search waits
   assert.match(headerShell, /guidedMode \|\| externalResultsHeader \? null : \([\s\S]*?<AppHeader[\s\S]*?flightResultsDesktopSticky/);
   assert.match(readySearchDefinition, /!resultsUiPreparing[\s\S]*?createPortal\(renderDesktopHeaderSearchBar\(\), desktopNavSearchTarget\)/);
   assert.match(preparing, /\{standaloneResultsHeader\}/);
-  assert.doesNotMatch(preparing, /readyExternalMobileHeader|readyDesktopNavbarSearch|renderStickySearchPopoutOverlay\(\)|renderDesktopHeaderSearchBar\(\)/);
+  assert.doesNotMatch(preparing, /readyExternalMobileHeader|readyDesktopNavbarSearch|renderStickySearchPopoutOverlay\(\)/);
   assert.match(ready, /\{standaloneResultsHeader\}[\s\S]*?\{readyExternalMobileHeader\}[\s\S]*?\{readyDesktopNavbarSearch\}/);
 });
 
@@ -174,7 +174,7 @@ test("desktop Flight Results renders one continuous desktop list without range t
 });
 
 test("desktop Flight Results puts the Hotels-style summary directly above result cards", () => {
-  const nearby = flight.indexOf("data-desktop-nearby-fare-rail");
+  const nearby = flight.indexOf('data-nearby-fare-presentation="mobile"');
   const priceAlert = flight.indexOf("data-flight-price-alert-row");
   const summary = flight.indexOf("data-flight-results-desktop-summary");
   const desktopResults = flight.indexOf("ref={paginationListRef}");

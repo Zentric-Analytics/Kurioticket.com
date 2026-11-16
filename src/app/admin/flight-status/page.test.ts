@@ -15,7 +15,7 @@ test("flight status admin is a read-only trusted snapshot operations page", () =
   assert.doesNotMatch(page, /description="Monitor trusted provider-supplied operational flight status/);
   assert.doesNotMatch(page, /Search results, handoffs and booking confirmations never infer live status/);
   assert.match(page, /Latest trusted flight-status snapshots/);
-  assert.match(page, /This is not an event history/);
+  assert.match(page, /Latest snapshot only/);
   assert.doesNotMatch(page, /fetch\(|method:\s*["'](?:POST|PATCH|DELETE)|<form/);
 });
 
@@ -77,7 +77,7 @@ test("Flight Status keeps provider safety in backend contracts without explanato
 });
 
 test("flight status operations preserves the metasearch boundary", () => {
-  assert.match(page, /not searches, handoffs or trip confirmations/);
+  assert.match(page, /Provider supplied only/);
   assert.match(contract, /does not infer operational flight status from a search, a provider handoff, or a booking confirmation/);
   assert.match(navigation, /href: "\/admin\/confirmed-trips\/monitoring"/);
   assert.doesNotMatch(navigation, /\/admin\/bookings/);
@@ -186,7 +186,7 @@ test("Flight Status overview has no extra outline or double padding and keeps co
 
 
 test("all six Flight Status metrics form one accessible horizontal row without page overflow", () => {
-  const start = page.indexOf('<section aria-labelledby="flight-status-overview-title"');
+  const start = page.indexOf('<section id="flight-status-overview-title"');
   const end = page.indexOf("</section>", start);
   assert.ok(start >= 0 && end > start);
   const overview = page.slice(start, end);
@@ -220,7 +220,7 @@ test("data-availability boundaries remain truthful without explanatory helper co
   assert.match(page, /Recent flight-status data unavailable/);
   assert.match(page, /No status feed configured/);
   assert.match(monitoring, /<AdminPageShell title="Trip monitoring" hideHeader>/);
-  assert.match(monitoring, /href="\/admin\/confirmed-trips"/);
+  assert.match(monitoring, /<TripWorkspaceNavigation active="monitoring"/);
   assert.doesNotMatch(page, /href="\/admin\/flights"|href="\/admin\/searches\/activity/);
   assert.match(page, /operations\.statusDistribution\.map/);
   assert.match(page, /operations\.awaitingFirstSnapshot\.map/);
@@ -246,7 +246,7 @@ test("Flight Status uses consistent compact sections, balanced readiness facts a
   assert.match(page, /shrink-0 whitespace-nowrap/);
   assert.equal((page.match(/<Fact label=/g) || []).length, 5);
   assert.equal((page.match(/<AdminDataTable/g) || []).length, 2);
-  assert.ok((page.match(/<p role="status" className="mt-2 rounded-lg bg-slate-50 px-3 py-2\.5/g) || []).length >= 5);
+  assert.ok((page.match(/<p role="status" className="mt-2 rounded-lg bg-slate-50 px-3 py-2/g) || []).length >= 5);
   assert.doesNotMatch(page, /<AdminEmptyState/);
   assert.match(page, /operations\.awaitingFirstSnapshot\.map/);
   assert.match(page, /operations\.recentSnapshots\.map/);

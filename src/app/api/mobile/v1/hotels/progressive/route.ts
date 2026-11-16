@@ -82,16 +82,16 @@ export async function POST(request: Request) {
       (term, vertical = "hotels") => client.places(vertical, term, trackId, request.signal));
     if (!resolved.supported || resolved.search.vertical !== "hotels") {
       after(async () => {
-        const { userId, visitorId } = await resolveRequestActivityIdentity(request);
+        const { userId, visitorId, ...application } = await resolveRequestActivityIdentity(request);
         await Promise.all([
-          logSearchHistory({ userId, visitorId, requestId: trackId, progressive: true, type: "HOTEL", destination: search.destination,
+          logSearchHistory({ ...application, userId, visitorId, requestId: trackId, progressive: true, type: "HOTEL", destination: search.destination,
             checkIn: new Date(search.checkIn), checkOut: new Date(search.checkOut),
             query: recordedSearch, resultCount: 0, latencyMs: Date.now() - startedAt, status: "FAILED" }),
-          trackAnalyticsEvent({ userId, visitorId, type: "SEARCH",
+          trackAnalyticsEvent({ ...application, userId, visitorId, type: "SEARCH",
             name: "hotel_search", metadata: { destination: search.destination, resultCount: 0, progressive: true, unsupported: true, trackId } }),
           logProviderCall({ provider: "KAYAK sandbox", service: "hotel-search", status: "DISABLED",
             latencyMs: Date.now() - startedAt, errorMessage: "unsupported_search",
-            metadata: { progressive: true, trackId } }),
+            metadata: { ...application, progressive: true, trackId } }),
         ]);
       });
       return attachOperationalSearchSession(NextResponse.json({ error: resolved.supported ? "Invalid search." : resolved.reason, status: "unavailable", results: [] }, { status: 422 }), operationalSession);
@@ -126,20 +126,20 @@ export async function POST(request: Request) {
       startedAt, issuedAt: now, expiresAt: now + TTL_MS,
     }, key) : null;
     after(async () => {
-      const { userId, visitorId } = await resolveRequestActivityIdentity(request);
+      const { userId, visitorId, ...application } = await resolveRequestActivityIdentity(request);
       // Persist each displayed batch under the signed cursor's stable request ID.
       // Early result/offer events can then resolve ownership before the last page.
-      await logSearchHistory({ userId, visitorId, requestId: trackId, progressive: true,
+      await logSearchHistory({ ...application, userId, visitorId, requestId: trackId, progressive: true,
         completed: nextCursor === null, type: "HOTEL", destination: search.destination,
         checkIn: new Date(search.checkIn), checkOut: new Date(search.checkOut),
         query: recordedSearch, resultCount: cumulative.length, latencyMs: Date.now() - startedAt,
         status: nextCursor ? "PARTIAL" : "SUCCESS" });
       if (!nextCursor) {
         await Promise.all([
-          trackAnalyticsEvent({ userId, visitorId, type: "SEARCH",
+          trackAnalyticsEvent({ ...application, userId, visitorId, type: "SEARCH",
             name: "hotel_search", metadata: { destination: search.destination, resultCount: cumulative.length, progressive: true, trackId } }),
           logProviderCall({ provider: "KAYAK sandbox", service: "hotel-search", status: "SUCCESS",
-            latencyMs: Date.now() - startedAt, metadata: { progressive: true, trackId, resultCount: cumulative.length } }),
+            latencyMs: Date.now() - startedAt, metadata: { ...application, progressive: true, trackId, resultCount: cumulative.length } }),
         ]);
       }
     });
@@ -149,16 +149,16 @@ export async function POST(request: Request) {
   } catch (error) {
     const unavailable = error instanceof KayakError ? error.code : "unavailable";
     after(async () => {
-      const { userId, visitorId } = await resolveRequestActivityIdentity(request);
+      const { userId, visitorId, ...application } = await resolveRequestActivityIdentity(request);
       await Promise.all([
-        logSearchHistory({ userId, visitorId, requestId: trackId, progressive: true, type: "HOTEL", destination: search.destination,
+        logSearchHistory({ ...application, userId, visitorId, requestId: trackId, progressive: true, type: "HOTEL", destination: search.destination,
           checkIn: new Date(search.checkIn), checkOut: new Date(search.checkOut),
           query: recordedSearch, resultCount: 0, latencyMs: Date.now() - startedAt, status: "FAILED" }),
-        trackAnalyticsEvent({ userId, visitorId, type: "SEARCH",
+        trackAnalyticsEvent({ ...application, userId, visitorId, type: "SEARCH",
           name: "hotel_search", metadata: { destination: search.destination, resultCount: 0, progressive: true, failed: true, trackId } }),
         logProviderCall({ provider: "KAYAK sandbox", service: "hotel-search",
           status: "FAILED", latencyMs: Date.now() - startedAt, errorMessage: unavailable,
-          metadata: { progressive: true, trackId } }),
+          metadata: { ...application, progressive: true, trackId } }),
       ]);
     });
     return attachOperationalSearchSession(NextResponse.json({ error: "Hotel provider is temporarily unavailable.", code: unavailable, status: "unavailable", results: [] }, { status: 503 }), operationalSession);

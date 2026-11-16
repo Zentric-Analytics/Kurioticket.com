@@ -45,13 +45,13 @@ export function MobileLocalizationProvider({children}:{children:ReactNode}){
   const coordinator=useRef<CustomizationCoordinator|null>(null);
   if(!coordinator.current)coordinator.current=new CustomizationCoordinator({
     readGuest,writeGuest,readAccountCache:readCache,writeAccountCache:async(userId,value)=>set(accountKey(userId),JSON.stringify(value)),
-    fetchAccount:async()=>{const response=await travelApi.customizationPreferences();return{hasPreferences:response.hasPreferences,preferences:{locale:normalizeMobileLocale(response.preferences.locale),currency:response.preferences.currency,region:response.preferences.region,marketplaceSource:"ACCOUNT",hasExplicitMarket:true,hasExplicitCurrency:true}};},
-    patchAccount:async patch=>{
+    fetchAccount:async(expectedUserId)=>{const response=await travelApi.customizationPreferences(expectedUserId);return{hasPreferences:response.hasPreferences,preferences:{locale:normalizeMobileLocale(response.preferences.locale),currency:response.preferences.currency,region:response.preferences.region,marketplaceSource:"ACCOUNT",hasExplicitMarket:true,hasExplicitCurrency:true}};},
+    patchAccount:async (patch,expectedUserId,initializeIfAbsent)=>{
       const accountPatch:Partial<CustomizationPreferences>={};
       if(patch.locale)accountPatch.locale=patch.locale;
       if(patch.currency)accountPatch.currency=patch.currency;
       if(patch.region)accountPatch.region=patch.region;
-      const response=await travelApi.updateCustomizationPreferences(accountPatch);
+      const response=await travelApi.updateCustomizationPreferences({...accountPatch,...(initializeIfAbsent?{initializeIfAbsent:true}:{})},expectedUserId);
       return{locale:normalizeMobileLocale(response.preferences.locale),currency:response.preferences.currency,region:response.preferences.region,marketplaceSource:"ACCOUNT",hasExplicitMarket:true,hasExplicitCurrency:true};
     }
   },value=>{setState(value);void writeCurrency(value.currency);});

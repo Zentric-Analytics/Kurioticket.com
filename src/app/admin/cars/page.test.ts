@@ -40,7 +40,7 @@ test("car provider health separates attempted calls from disabled coverage", () 
 test("car search route persists exact provider telemetry and unsupported searches", () => {
   assert.match(route, /logProviderCall/);
   assert.match(route, /service: "car-search"/);
-  assert.match(route, /metadata: \{ requestId \}/);
+  assert.match(route, /metadata: \{ \.\.\.application, requestId \}/);
   assert.match(route, /errorMessage: provider\.errorReason \|\| provider\.error/);
   assert.match(route, /if \(unsupported\) \{[\s\S]*recordSearch\(0, "FAILED"\)/);
   assert.match(route, /status: provider\.status === "success" \? "SUCCESS" : provider\.status === "skipped" \? "DISABLED" : "FAILED"/);

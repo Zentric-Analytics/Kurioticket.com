@@ -95,10 +95,11 @@ const customizationPreferencesPatchSchema = z
       .transform(normalizeRegionPreference)
       .optional(),
     personalizeRecommendations: z.boolean().optional(),
+    initializeIfAbsent: z.boolean().optional(),
   })
   .strict()
   .refine(
-    (payload) => Object.keys(payload).length > 0,
+    (payload) => Object.keys(payload).some(key => key !== "initializeIfAbsent"),
     "At least one preference must be provided.",
   );
 
@@ -181,7 +182,7 @@ export async function handleCustomizationPreferencesPatch(
     );
 
   try {
-    const payload = customizationPreferencesPatchSchema.parse(rawPayload);
+    const { initializeIfAbsent, ...payload } = customizationPreferencesPatchSchema.parse(rawPayload);
     const createData = {
       userId,
       ...customizationPreferenceDefaults,
@@ -191,7 +192,7 @@ export async function handleCustomizationPreferencesPatch(
     const preferences = await prisma.userCustomizationPreferences.upsert({
       where: { userId },
       create: createData,
-      update: payload,
+      update: initializeIfAbsent ? {} : payload,
       select: {
         locale: true,
         currency: true,

@@ -14,8 +14,8 @@ export async function GET() {
     try {
       await db.$queryRaw`SELECT 1`;
       database = { configured: true, connected: true };
-    } catch (error) {
-      console.error("[health:database]", error);
+    } catch {
+      console.error("[health:database]", { state: "unavailable" });
       database = {
         configured: true,
         connected: false,
@@ -29,5 +29,5 @@ export async function GET() {
     service: "kurioticket",
     time: new Date().toISOString(),
     database,
-  });
+  }, { status: database.configured && database.connected ? 200 : 503, headers: { "Cache-Control": "no-store" } });
 }

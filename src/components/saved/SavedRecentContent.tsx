@@ -1,5 +1,7 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useSession } from "next-auth/react";
+import { observeAccountResume } from "@/lib/accountResume";
 import Link from "next/link";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { invalidateSavedCarsClientCache } from "@/lib/saved-car-events";
@@ -20,21 +22,40 @@ export function SavedRecentContent() {
   const [saved, setSaved] = useState<Item[]>([]);
   const [recent, setRecent] = useState<Item[]>([]);
   const [error, setError] = useState(false);
+  const { data: session, status } = useSession();
+  const account = status === "authenticated" ? session?.user?.id ?? null : null;
+  const owner = useRef(account);
+  useLayoutEffect(() => { owner.current = account; return () => { owner.current = null; }; }, [account]);
+  const [dataOwner, setDataOwner] = useState<string | null>(null);
+  const revision = useRef(0), pending = useRef(0);
   const load = useCallback(async () => {
+    if (!account || pending.current) return;
+    const requested = ++revision.current;
     try {
-      const [s, r] = await Promise.all([fetch("/api/dashboard/saved"), fetch("/api/account/recent-searches")]);
+      const [s, r] = await Promise.all([fetch("/api/dashboard/saved", { cache: "no-store" }), fetch("/api/account/recent-searches", { cache: "no-store" })]);
+      if (requested !== revision.current || owner.current !== account) return;
+      if (s.status === 401 || r.status === 401) { setSaved([]); setRecent([]); setDataOwner(null); }
       if (!s.ok || !r.ok) throw new Error();
-      setSaved((await s.json()).items ?? []); setRecent((await r.json()).items ?? []);
+      const [savedData, recentData] = await Promise.all([s.json(), r.json()]);
+      if (requested !== revision.current || owner.current !== account) return;
+      setSaved(savedData.items ?? []); setRecent(recentData.items ?? []); setDataOwner(account);
       setError(false);
-    } catch { setError(true); }
-  }, []);
+    } catch { if (requested === revision.current && owner.current === account) setError(true); }
+  }, [account]);
   // The initial request hydrates private account data after the client session is available.
   // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { void load(); }, [load]);
-  const removeSaved = async (item: Item) => { const response = await fetch("/api/dashboard/saved", { method: "DELETE", headers: { "content-type": "application/json" }, body: JSON.stringify({ type: item.type, id: item.id }) }); if (response.ok) { setSaved(x => x.filter(y => y.id !== item.id)); if (item.type === "car") invalidateSavedCarsClientCache(); if (item.type === "flight") invalidateSavedFlightsClientCache(); } };
-  const removeRecent = async (id: string) => { const response = await fetch("/api/account/recent-searches", { method: "DELETE", headers: { "content-type": "application/json" }, body: JSON.stringify({ id }) }); if (response.ok) setRecent(x => x.filter(y => y.id !== id)); };
-  const clearRecent = async () => { const response = await fetch("/api/account/recent-searches?clear=all", { method: "DELETE" }); if (response.ok) setRecent([]); };
-  const items = tab === "saved" ? saved : recent;
+  useEffect(() => { void load(); return observeAccountResume(() => { void load(); }, window, document); }, [load]);
+  const mutate = async (task: () => Promise<Response>, apply: () => void) => {
+    if (!account) return;
+    pending.current++; revision.current++;
+    try { const response = await task(); if (!response.ok && response.status !== 404) throw new Error(); if (owner.current === account) { apply(); setError(false); } }
+    catch { if (owner.current === account) setError(true); }
+    finally { pending.current--; }
+  };
+  const removeSaved = async (item: Item) => mutate(() => fetch("/api/dashboard/saved", { method: "DELETE", headers: { "content-type": "application/json" }, body: JSON.stringify({ type: item.type, id: item.id }) }), () => { setSaved(x => x.filter(y => y.id !== item.id)); if (item.type === "car") invalidateSavedCarsClientCache(); if (item.type === "flight") invalidateSavedFlightsClientCache(); });
+  const removeRecent = async (id: string) => mutate(() => fetch("/api/account/recent-searches", { method: "DELETE", headers: { "content-type": "application/json" }, body: JSON.stringify({ id }) }), () => setRecent(x => x.filter(y => y.id !== id)));
+  const clearRecent = async () => mutate(() => fetch("/api/account/recent-searches?clear=all", { method: "DELETE" }), () => setRecent([]));
+  const items = account && account === dataOwner ? tab === "saved" ? saved : recent : [];
   return <section className="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6">
     <h1 className="mt-2 text-3xl font-bold text-navy">{t.savedTripsPageTitle}</h1>
     <p className="mt-2 text-slate-600">{t.savedTripsRecentSearchesSubtitle}</p>

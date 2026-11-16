@@ -32,6 +32,7 @@ export async function SettingsFeatureSection({ category }: { category: FeatureCa
       <div className="border-b border-[#D8E1EC] pb-4">
         <h2 id="settings-section-title" className="text-[17px] font-semibold leading-6 tracking-[-0.01em] text-[#020617]">{section.title}</h2>
         <p className="mt-1 text-[12px] leading-5 text-[#64748B]">{section.description}</p>
+        <p className="mt-2 text-xs leading-5 text-slate-500">Scope: shared backend · {featureControls.environment}. {category === "Travel Search" ? "Website, iOS and Android search requests use the same server checks." : "Price-alert creation/reactivation and scheduled processing use separate shared controls."} Existing production permissions, reasons and reauthentication apply.</p>
       </div>
       <FeatureControlsPanel
         initialControls={featureControls.controls.filter((control) => control.category === category)}

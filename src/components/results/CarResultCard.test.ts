@@ -69,7 +69,7 @@ test("standalone result commerce is provider-ready without fabricating booking U
   assert.match(source, /const approvedProviderBookingUrl/);
   assert.match(source, /sandboxBookingUrl\(offer\.bookingUrl\)/);
   assert.match(source, /url\.protocol !== "https:" \|\| url\.username \|\| url\.password/);
-  assert.equal((source.match(/href=\{providerBookingHref\}/g) ?? []).length, 2);
+  assert.equal((source.match(/href=\{providerBookingHref\}/g) ?? []).length, 1);
   assert.match(source, /aria-label="Provider booking link unavailable"/);
   assert.doesNotMatch(source, /href="#"/);
 });
@@ -104,7 +104,7 @@ test("standalone mobile uses one full-width offer area and no duplicate price or
 });
 
 test("desktop media fills its column and unsupported tax copy stays hidden", () => {
-  const desktop = source.slice(source.indexOf('data-region="image"'));
+  const desktop = source.slice(source.indexOf('className={`${guidedPlanning ? "grid lg:grid-cols-'));
   assert.match(desktop, /md:aspect-auto md:h-full md:min-h-\[220px\]/);
   assert.doesNotMatch(desktop, /md:p-2\.5/);
   assert.doesNotMatch(source, /Taxes and fees included/);
@@ -113,7 +113,7 @@ test("desktop media fills its column and unsupported tax copy stays hidden", () 
 
 test("standalone desktop aligns Save and Share with the car name inside a content-sized header", () => {
   const desktop = source.slice(source.indexOf('data-region="heading"'));
-  const heading = desktop.slice(0, desktop.indexOf('data-region="details"'));
+  const heading = desktop.slice(0, desktop.indexOf('data-region="details"', desktop.indexOf('data-car-card-desktop-full-width-divider')));
   assert.match(heading, /data-car-card-desktop-shared-header[\s\S]*?lg:grid-cols-\[minmax\(0,1fr\)_auto\]/);
   assert.match(heading, /data-car-card-desktop-title-row[\s\S]*?h-11[\s\S]*?data-car-card-desktop-actions[\s\S]*?h-11/);
   assert.match(heading, /data-car-card-desktop-title-row[\s\S]*?\{car\.modelName\}/);
@@ -186,7 +186,7 @@ test("standalone desktop T divider spans both remaining columns after vehicle an
   const desktop = source.slice(source.indexOf('data-region="image"'));
   const divider = desktop.slice(desktop.indexOf('data-car-card-desktop-full-width-divider'), desktop.indexOf('data-region="details"'));
   const details = desktop.slice(desktop.indexOf('data-region="details"'), desktop.indexOf('data-region="pricing"'));
-  assert.match(desktop, /lg:grid-cols-\[192px_minmax\(0,1fr\)\] xl:grid-cols-\[200px_minmax\(0,1fr\)\]/);
+  assert.match(source, /lg:grid-cols-\[192px_minmax\(0,1fr\)\] xl:grid-cols-\[200px_minmax\(0,1fr\)\]/);
   assert.match(desktop, /lg:!h-\[176px\] lg:!min-h-\[176px\] lg:max-h-\[176px\]/);
   assert.match(divider, /pointer-events-none hidden lg:col-span-2 lg:col-start-1 lg:row-start-2 lg:z-20 lg:block lg:h-px lg:w-full lg:self-start lg:bg-\[#CBD5E1\]/);
   assert.match(details, /lg:col-span-2 lg:col-start-1 lg:pl-8 lg:pr-4/);

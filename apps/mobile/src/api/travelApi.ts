@@ -1,5 +1,5 @@
 import { getApiBaseUrl } from "../config/apiUrl";
-import { readSession } from "../storage/sessionStorage";
+import { readSession, subscribeSession } from "../storage/sessionStorage";
 import { Platform } from "react-native";
 import type { CanonicalLocation } from "@/lib/locations/types";
 import Constants from "expo-constants";
@@ -104,13 +104,23 @@ let operationalSearchCredential: string | null = null;
 let operationalSearchActor: string | null = null;
 const operationalPaths = new Set(["/api/flights/search", "/api/hotels/search", "/api/cars/search", "/api/mobile/v1/hotels/progressive", "/api/redirect"]);
 const operationalCredentialPattern = /^v1\.[0-9a-f-]{36}\.[0-9]{10,13}\.(?:staging|production)\.[A-Za-z0-9_-]{43}$/;
+let accountEpoch = 0;
+let observedSessionToken: string | null | undefined;
+subscribeSession?.(session => {
+  const token = session?.token ?? null;
+  if (token !== observedSessionToken) accountEpoch++;
+  observedSessionToken = token;
+});
 
-async function request<T>(path: string, init: RequestInit = {}, options: { signal?: AbortSignal; timeoutMs?: number; requestId?: string; visitorContext?: number; body?: () => unknown } = {}) {
+async function request<T>(path: string, init: RequestInit = {}, options: { signal?: AbortSignal; timeoutMs?: number; requestId?: string; visitorContext?: number; body?: () => unknown; expectedUserId?: string } = {}) {
   const requestStartedAt = Date.now();
   const base = getApiBaseUrl(Platform.OS, __DEV__);
   if (!base.ok) throw new TravelApiError(base.message, 0, "configuration");
   const session = await readSession().catch(() => null);
   const actor = session?.user?.id ?? null;
+  if (observedSessionToken === undefined) observedSessionToken = session?.token ?? null;
+  const epoch = accountEpoch;
+  if (options.expectedUserId && actor !== options.expectedUserId) throw new TravelApiError("Account changed. Refresh before trying again.", 0, "cancelled");
   if (operationalSearchActor !== actor) {
     operationalSearchCredential = null;
     operationalSearchActor = actor;
@@ -166,6 +176,8 @@ async function request<T>(path: string, init: RequestInit = {}, options: { signa
       throw new TravelApiError("The search provider returned an invalid response.", response.status, "invalid-response");
     }
     const data = parsed as Record<string, unknown>;
+    const accountOwned = /^\/api\/mobile\/v1\/(?:saved|recent-searches|price-alerts|trips|travel-preferences|customization-preferences|email-preferences|notifications|security)(?:[/?]|$)/.test(path);
+    if ((accountOwned || options.expectedUserId) && epoch !== accountEpoch) throw new TravelApiError("Account changed. Discarding the previous response.", 0, "cancelled");
     const responseJsonMs = performance.now() - jsonStartedAt;
     if (path === "/api/flights/search") {
       logFlightSearchCheckpoint("flight-search:parsed", {
@@ -227,6 +239,8 @@ async function fetchExploreCatalogue(): Promise<MobileExploreCatalogue> {
 
 export const travelApi = {
   featureAvailability: () => request<FeatureAvailability>("/api/feature-availability"),
+  homepageContent: (market: string, locale: string) => request<unknown>(`/api/content/homepage?market=${encodeURIComponent(market)}&locale=${encodeURIComponent(locale)}`),
+  faqContent: (locale: string) => request<unknown>(`/api/content/faqs?locale=${encodeURIComponent(locale)}`),
   journeyEvent: (body: JourneyEvent, options: { signal: AbortSignal; visitorContext: number }) => request<JourneyEventResponse>("/api/journey/events", { method: "POST", body: JSON.stringify(body) }, { ...options, timeoutMs: 4000 }),
   searchFlights: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string }) => request<TravelSearchResponse<PublicFlightResult>>("/api/flights/search", { method: "POST", body: JSON.stringify(body) }, { ...options, timeoutMs: METASEARCH_REQUEST_TIMEOUT_MS }),
   flightDetails: (id: string, options: { signal?: AbortSignal } = {}) => request<FlightDetailsResponse>(`/api/flights/details?id=${encodeURIComponent(id)}`, {}, options),
@@ -274,16 +288,16 @@ export const travelApi = {
   verifyCurrentEmailCode: (code: string) => request<{ ownershipProof: string }>("/api/mobile/v1/email-change/current-confirm", { method: "POST", body: JSON.stringify({ code }) }),
   requestEmailChange: (newEmail: string, ownershipProof: string) => request<{ cooldownSeconds: number; resendLimitReached?: boolean }>("/api/mobile/v1/email-change/request", { method: "POST", body: JSON.stringify({ newEmail, ownershipProof }) }),
   confirmEmailChange: (newEmail: string, code: string, ownershipProof: string) => request<{ email: string; userId: string }>("/api/mobile/v1/email-change/confirm", { method: "POST", body: JSON.stringify({ newEmail, code, ownershipProof }) }),
-  customizationPreferences: () => request<{ hasPreferences: boolean; preferences: CustomizationPreferences }>("/api/mobile/v1/customization-preferences"),
-  updateCustomizationPreferences: (preferences: Partial<CustomizationPreferences>) => request<{ preferences: CustomizationPreferences }>("/api/mobile/v1/customization-preferences", { method: "PATCH", body: JSON.stringify(preferences) }),
+  customizationPreferences: (expectedUserId?: string) => request<{ hasPreferences: boolean; preferences: CustomizationPreferences }>("/api/mobile/v1/customization-preferences", {}, { expectedUserId }),
+  updateCustomizationPreferences: (preferences: Partial<CustomizationPreferences> & { initializeIfAbsent?: boolean }, expectedUserId?: string) => request<{ preferences: CustomizationPreferences }>("/api/mobile/v1/customization-preferences", { method: "PATCH", body: JSON.stringify(preferences) }, { expectedUserId }),
   createSupportTicket: (input: SupportTicketInput) => request<{ ticket: { id: string; subject: string } }>("/api/mobile/v1/support/tickets", { method: "POST", body: JSON.stringify(input) }),
   emailPreferences: () => request<{ hasPreferences: boolean; preferences: EmailPreferences }>("/api/mobile/v1/email-preferences"),
   updateEmailPreferences: (preferences: EmailPreferences) => request<{ preferences: EmailPreferences }>("/api/mobile/v1/email-preferences", { method: "PATCH", body: JSON.stringify(preferences) }),
   travelPreferences: () => request<{ hasPreferences: boolean; preferences: TravelPreferences }>("/api/mobile/v1/travel-preferences"),
   updateTravelPreferences: (preferences: TravelPreferencesPatch) => request<{ preferences: TravelPreferences }>("/api/mobile/v1/travel-preferences", { method: "PATCH", body: JSON.stringify(preferences) }),
-  savedItems: () => request<{ items: MobileSavedItem[]; summary: Record<string, number> }>("/api/mobile/v1/saved"),
-  createSavedItem: (input: CreateMobileSavedItem) => request<{ item: MobileSavedItem }>("/api/mobile/v1/saved", { method: "POST", body: JSON.stringify(input) }),
-  deleteSavedItem: (type: MobileSavedItem["type"], id: string) => request<{ success: true }>("/api/mobile/v1/saved", { method: "DELETE", body: JSON.stringify({ type, id }) }),
+  savedItems: (expectedUserId?: string) => request<{ items: MobileSavedItem[]; summary: Record<string, number> }>("/api/mobile/v1/saved", {}, { expectedUserId }),
+  createSavedItem: (input: CreateMobileSavedItem, expectedUserId?: string) => request<{ item: MobileSavedItem }>("/api/mobile/v1/saved", { method: "POST", body: JSON.stringify(input) }, { expectedUserId }),
+  deleteSavedItem: (type: MobileSavedItem["type"], id: string, expectedUserId?: string) => request<{ success: true }>("/api/mobile/v1/saved", { method: "DELETE", body: JSON.stringify({ type, id }) }, { expectedUserId }),
   recentSearches: () => request<{ items: MobileRecentSearch[] }>("/api/mobile/v1/recent-searches"),
   createRecentSearch: (input: CreateMobileRecentSearch) => request<{ item: MobileRecentSearch }>("/api/mobile/v1/recent-searches", { method: "POST", body: JSON.stringify(input) }),
   deleteRecentSearch: (id: string) => request<{ success: true }>("/api/mobile/v1/recent-searches", { method: "DELETE", body: JSON.stringify({ id }) }),

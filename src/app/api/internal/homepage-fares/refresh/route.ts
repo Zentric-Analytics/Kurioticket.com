@@ -1,4 +1,5 @@
 import { timingSafeEqual } from "node:crypto";
+import { observeScheduledJob } from "@/services/scheduledJobObservation";
 
 import { NextResponse } from "next/server";
 
@@ -38,7 +39,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const counts = await refreshPhase3AHomepageFareSnapshots();
+    const counts = await observeScheduledJob("homepage-fares", () => refreshPhase3AHomepageFareSnapshots());
 
     return NextResponse.json(counts);
   } catch (error) {

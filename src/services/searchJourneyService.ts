@@ -9,6 +9,7 @@ import {
 } from "@/lib/search-journey";
 import { withEnvironmentMetadata } from "@/lib/stagingSafety";
 import { lockConsentedVisitor } from "@/services/visitorActivityIdentity";
+import { applicationMetadata, type ApplicationAttribution } from "@/lib/application-source";
 
 export { clientJourneyEventTypes, journeyEventKey, type ClientJourneyEventType };
 export type SearchJourneyDatabase = Pick<PrismaClient, "$transaction">;
@@ -25,7 +26,7 @@ export type JourneyEventInput = {
   redirectLogId?: string | null;
   metadata?: Record<string, unknown>;
 };
-export type ClientJourneyEventInput = {
+export type ClientJourneyEventInput = ApplicationAttribution & {
   visitorId?: string | null;
   userId?: string | null;
   eventId: string;
@@ -34,7 +35,7 @@ export type ClientJourneyEventInput = {
   provider?: string;
   sourcePage?: string;
 };
-export type SearchHistoryInput = {
+export type SearchHistoryInput = ApplicationAttribution & {
   userId?: string | null;
   visitorId?: string | null;
   requestId?: string | null;
@@ -159,7 +160,7 @@ export function createSearchJourneyService(getDatabase: () => SearchJourneyDatab
           product: search.type,
           provider: input.provider,
           searchHistoryId: search.id,
-          metadata: input.sourcePage ? { sourcePage: input.sourcePage } : undefined,
+          metadata: { ...applicationMetadata(input), ...(input.sourcePage ? { sourcePage: input.sourcePage } : {}) },
         }, now());
         return { accepted: Boolean(result) };
       });
@@ -209,7 +210,7 @@ export function createSearchJourneyService(getDatabase: () => SearchJourneyDatab
           destination: input.destination || undefined,
           checkIn: input.checkIn || undefined,
           checkOut: input.checkOut || undefined,
-          query: withEnvironmentMetadata(input.query) as Prisma.InputJsonValue,
+          query: withEnvironmentMetadata({ ...input.query, ...applicationMetadata(input) }) as Prisma.InputJsonValue,
           resultCount: input.resultCount,
           latencyMs: input.latencyMs,
           status: input.completed === false ? "PARTIAL" : input.status,
@@ -223,7 +224,7 @@ export function createSearchJourneyService(getDatabase: () => SearchJourneyDatab
           eventKey: journeyEventKey("search", history.id),
           product: history.type,
           searchHistoryId: history.id,
-          metadata: { requestId: input.requestId || undefined, resultCount: history.resultCount, status: history.status },
+          metadata: { requestId: input.requestId || undefined, resultCount: history.resultCount, status: history.status, ...applicationMetadata(input) },
         });
       }
       return history ? { id: history.id } : null;

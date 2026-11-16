@@ -13,9 +13,9 @@ test("desktop Flight filters keep long range values visibly separated", async ()
     priceStart,
     source.indexOf('<HotelStyleFilterSection title={t("duration")}>', priceStart),
   );
-  assert.match(priceSection, /grid grid-cols-2 gap-4/);
+  assert.match(priceSection, /flex items-center gap-1\.5/);
   assert.match(priceSection, /tabular-nums/);
-  assert.match(priceSection, /className="min-w-0 text-right"/);
+  assert.match(priceSection, /className="min-w-0 truncate"/);
   assert.doesNotMatch(priceSection, /flex justify-between/);
 
   assert.match(source, /presentationMode\?: "default" \| "deals-guided"/);
@@ -30,7 +30,7 @@ test("facet rows reserve flexible copy space and a fixed count column", async ()
   );
   const facetRow = source.slice(source.indexOf("function FacetRow"));
 
-  assert.match(facetRow, /min-h-\[30px\]/);
+  assert.match(facetRow, /min-h-\[28px\]/);
   assert.match(facetRow, /flex min-w-0 flex-1 items-start gap-2/);
   assert.match(facetRow, /peer sr-only/);
   assert.match(facetRow, /h-\[14px\] w-\[14px\]/);
@@ -48,7 +48,7 @@ test("desktop filter groups use sentence-case headings and accessible rows", asy
   );
 
   assert.match(source, /data-flight-hotel-filter-visual-parity/);
-  assert.match(source, /overflow-hidden rounded-lg border border-\[#CFD9E5\] bg-\[#F2F4F8\]/);
+  assert.match(source, /overflow-hidden rounded-lg border border-\[#B8C6D6\] bg-\[#F2F4F8\]/);
   assert.match(source, /\{t\("hotelResults\.filterBy"\)\}/);
   assert.match(source, /text-\[13px\] font-bold leading-5 text-slate-950/);
   assert.match(source, /min-h-6 w-full items-center justify-between/);

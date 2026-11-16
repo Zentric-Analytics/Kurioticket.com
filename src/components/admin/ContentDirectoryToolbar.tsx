@@ -18,6 +18,15 @@ const statuses = [
 
 type Option = { label: string; value: string };
 
+function contentDirectoryHref(path: string, query: string, changes: Record<string, string>, reset = false) {
+  const params = reset ? new URLSearchParams() : new URLSearchParams(query);
+  if (reset && new URLSearchParams(query).get("from") === "overview") params.set("from", "overview");
+  for (const [key,value] of Object.entries(changes)) { if (value) params.set(key,value); else params.delete(key); }
+  params.delete("cursor");
+  const encoded = params.toString();
+  return path + (encoded ? "?" + encoded : "");
+}
+
 export function ContentDirectoryToolbar({
   path, query, status, market, markets = [], category, categories = [],
   searchLabel, children,
@@ -35,7 +44,7 @@ export function ContentDirectoryToolbar({
   const router = useRouter();
   const paramsRef = useRef(new URLSearchParams(query));
   const editingRef = useRef(false);
-  const [searchText, setSearchText] = useState(() => paramsRef.current.get("q") || "");
+  const [searchText, setSearchText] = useState(() => new URLSearchParams(query).get("q") || "");
   const [isPending, startTransition] = useTransition();
   const [submitted, setSubmitted] = useState<string | null>(null);
   const appliedSearch = new URLSearchParams(query).get("q") || "";
@@ -59,24 +68,13 @@ export function ContentDirectoryToolbar({
     return () => window.removeEventListener("popstate", onPop);
   }, []);
 
-  const hrefFor = useCallback((changes: Record<string, string>, reset = false) => {
-    const params = reset ? new URLSearchParams() : new URLSearchParams(paramsRef.current);
-    // Keep the origin of an overview visit when filters are cleared.
-    if (reset && paramsRef.current.get("from") === "overview") params.set("from", "overview");
-    for (const [key, value] of Object.entries(changes)) {
-      if (value) params.set(key, value);
-      else params.delete(key);
-    }
-    params.delete("cursor");
-    const encoded = params.toString();
-    return path + (encoded ? "?" + encoded : "");
-  }, [path]);
+  const hrefFor = useCallback((changes: Record<string,string>, reset = false) => contentDirectoryHref(path, query, changes, reset), [path, query]);
 
   const navigate = useCallback((changes: Record<string, string>, replace = false, reset = false) => {
-    const url = hrefFor(changes, reset);
+    const url = contentDirectoryHref(path, paramsRef.current.toString(), changes, reset);
     paramsRef.current = new URLSearchParams(url.split("?")[1] || "");
     startTransition(() => replace ? router.replace(url, { scroll: false }) : router.push(url, { scroll: false }));
-  }, [hrefFor, router]);
+  }, [path, router]);
 
   useEffect(() => {
     if (!editingRef.current || searchTerm === appliedSearch || submitted === searchTerm) return;
@@ -120,7 +118,7 @@ export function ContentDirectoryToolbar({
     <div className="min-w-0">
       <form role="search" method="get" action={path} onSubmit={submitSearch} autoComplete="off" className="min-w-0">
         {status ? <input type="hidden" name="status" value={status} readOnly /> : null}
-        {paramsRef.current.get("from") === "overview" ? <input type="hidden" name="from" value="overview" readOnly /> : null}
+        {new URLSearchParams(query).get("from") === "overview" ? <input type="hidden" name="from" value="overview" readOnly /> : null}
         <div className="relative mb-3">
           <Search size={17} aria-hidden="true" className="pointer-events-none absolute left-3.5 top-3.5 text-[#64748B]" />
           <label className="sr-only" htmlFor="cms-directory-search">{searchLabel}</label>

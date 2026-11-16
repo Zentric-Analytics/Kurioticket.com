@@ -4,6 +4,7 @@
  * URL from a query string as a return target.
  */
 export const searchActivityFilterKeys = [
+  "applicationSource",
   "range",
   "environment",
   "product",

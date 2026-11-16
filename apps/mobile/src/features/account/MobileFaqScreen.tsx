@@ -1,8 +1,8 @@
-import { useMemo, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useState } from "react";
+import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { getGeneralFaqs } from "../../../../../src/content/faqs";
+import { usePublishedFaqs } from "../home/usePublishedContent";
 import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
 import { useAppTheme } from "../../theme/AppTheme";
 import { FlowIcon } from "../flow/FlowIcon";
@@ -14,10 +14,8 @@ export function MobileFaqScreen() {
   const { t, locale } = useMobileLocalization();
   const [open, setOpen] = useState<string | null>(null);
   const presentation = getMobileFaqCopy(locale);
-  const faqs = useMemo(
-    () => getGeneralFaqs((key) => t(key as Parameters<typeof t>[0])),
-    [t],
-  );
+  const published = usePublishedFaqs();
+  const faqs = published.data?.items ?? [];
 
   return (
     <SafeAreaView style={[s.safe, { backgroundColor: theme.background }]} edges={["top", "bottom"]}>
@@ -37,6 +35,7 @@ export function MobileFaqScreen() {
       </View>
 
       <ScrollView
+        refreshControl={<RefreshControl refreshing={published.state === "loading"} onRefresh={() => { void published.refresh(); }} />}
         alwaysBounceVertical={false}
         bounces={false}
         contentContainerStyle={s.content}
@@ -57,6 +56,7 @@ export function MobileFaqScreen() {
           </Text>
 
           <View style={s.faqList}>
+            {published.state === "unavailable" ? <Pressable accessibilityRole="button" onPress={() => { void published.refresh(); }}><Text style={{ color: theme.muted }}>{t("retry")}</Text></Pressable> : null}
             {faqs.map((item) => {
               const accessibilityState = faqAccessibility(open, item.question);
               return (

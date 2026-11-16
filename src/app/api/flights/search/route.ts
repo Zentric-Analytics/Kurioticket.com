@@ -77,9 +77,9 @@ export async function POST(request: Request) {
   if (aggregate.unavailableMessage) {
     after(async () => {
       try {
-        const { userId, visitorId } = await resolveRequestActivityIdentity(request);
+        const { userId, visitorId, ...application } = await resolveRequestActivityIdentity(request);
         await Promise.all([
-          logSearchHistory({
+          logSearchHistory({ ...application,
             userId, visitorId, requestId, type: "FLIGHT",
             origin: parsed.data.origin, destination: parsed.data.destination,
             query: operationalQuery(parsed.data), resultCount: 0, latencyMs: aggregate.latencyMs, status: "FAILED",
@@ -92,7 +92,7 @@ export async function POST(request: Request) {
                 provider.status === "success" ? "SUCCESS" : provider.status === "skipped" ? "DISABLED" : "FAILED",
               latencyMs: provider.latencyMs,
               errorMessage: provider.error,
-              metadata: { requestId },
+              metadata: { ...application, requestId },
             }),
           ),
         ]);
@@ -119,9 +119,9 @@ export async function POST(request: Request) {
       : "SUCCESS";
 
   after(async () => {
-    const { userId, visitorId } = await resolveRequestActivityIdentity(request);
+    const { userId, visitorId, ...application } = await resolveRequestActivityIdentity(request);
     return Promise.all([
-    logSearchHistory({
+    logSearchHistory({ ...application,
       userId,
       visitorId,
       requestId,
@@ -133,7 +133,7 @@ export async function POST(request: Request) {
       latencyMs: aggregate.latencyMs,
       status,
     }),
-    trackAnalyticsEvent({
+    trackAnalyticsEvent({ ...application,
       userId,
       visitorId,
       type: "SEARCH",
@@ -154,7 +154,7 @@ export async function POST(request: Request) {
           provider.status === "success" ? "SUCCESS" : provider.status === "skipped" ? "DISABLED" : "FAILED",
         latencyMs: provider.latencyMs,
         errorMessage: provider.error,
-        metadata: { requestId },
+        metadata: { ...application, requestId },
       }),
     ),
     ]).catch((error) => console.error("[flight-search:logging]", error));

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 
 import { AdminDirectorySelect } from "@/components/admin/AdminDirectorySelect";
 import { supportStatusTabs } from "@/lib/adminSupportInboxNavigation";
@@ -90,9 +90,12 @@ export function SupportTicketStatusControl({ ticketId, status }: { ticketId: str
   const [error, setError] = useState<string | null>(null);
   const [isStatusPending, startStatusTransition] = useTransition();
 
-  useEffect(() => {
-    setSelectedStatus(status);
-  }, [status]);
+  const syncKey = JSON.stringify([ticketId,status]);
+  const [previousSyncKey, setPreviousSyncKey] = useState(syncKey);
+  if (previousSyncKey !== syncKey) {
+    setPreviousSyncKey(syncKey);
+    setSelectedStatus(status); setError(null); setStatusMessage(null);
+  }
 
   function updateStatus() {
     if (selectedStatus === status || isStatusPending) return;

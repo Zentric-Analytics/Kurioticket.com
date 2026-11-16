@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { searchWorkspaceHref, searchWorkspaceTab } from "./adminSearchWorkspace";
+import { searchWorkspaceHref } from "./adminSearchWorkspace";
 
 const activity = readFileSync("src/app/admin/searches/activity/page.tsx","utf8");
 const redirects = readFileSync("src/app/admin/redirects/page.tsx","utf8");

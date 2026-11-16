@@ -23,7 +23,7 @@ test("selected workspaces use the public Hotel navbar palette and underline", ()
   assert.match(shell, /const underline = selected/);
   assert.match(shell, /after:h-0\.5 after:rounded-full after:bg-\[#004BB8\]/);
   assert.match(shell, /text-\[15px\] font-semibold/);
-  assert.match(shell, /bg-white text-\[#021C2B\]/);
+  assert.match(shell, /bg-white\/95/);
   assert.equal(isAdminNavItemActive("/admin", "/admin"), true);
   assert.equal(isAdminNavItemActive("/admin", "/admin/users"), false);
 });
@@ -37,26 +37,27 @@ test("navigation keeps parent workspaces visible while child routes stay nested"
   assert.match(shell, /Official Kurioticket mark stays in the top-left header beside the title at every width/);
   const groups = getAdminHeaderGroups("ADMIN", true);
   const entries = groups.flatMap(group => group.links);
-  assert.deepEqual(entries.map(({ item }) => item.label), ["Overview", "Users", "Search Activity", "Trips", "Support", "Providers", "Content", "System", "Settings"]);
+  assert.deepEqual(entries.map(({ item }) => item.label), ["Overview", "Users", "Search Activity", "Trips", "Support", "Providers", "Content", "System", "Platform Health", "Settings"]);
   const searches = entries.find(({ item }) => item.href === "/admin/searches/activity");
   const providers = entries.find(({ item }) => item.href === "/admin/providers");
   assert.deepEqual(searches?.children.map((item) => item.label), []);
   assert.deepEqual(entries.find(({ item }) => item.href === "/admin/users")?.children.map(item => item.label), []);
-  assert.deepEqual(providers?.children.map((item) => item.label), ["Flights", "Hotels", "Cars"]);
+  assert.deepEqual(providers?.children.map((item) => item.label), ["Hotels", "Cars"]);
   // Current dev intentionally hides Admin navigation from support roles.
   assert.deepEqual(getAdminHeaderGroups("SUPPORT"), []);
 });
 
 
 test("Settings uses the same full-white workspace surface as other flat admin workspaces", () => {
-  assert.match(shell, /const settingsWorkspace = pathname === "\/admin\/settings" \|\| pathname === "\/admin\/settings\/";/);
+  assert.match(shell, /const settingsWorkspace = pathname === "\/admin\/settings" \|\| pathname.startsWith\("\/admin\/settings\/"\);/);
   assert.match(shell, /auditLogsWorkspace \|\| emailDeliveryWorkspace \|\| settingsWorkspace \|\| usersDirectory/);
   assert.match(shell, /whiteWorkspace \? "bg-white" : "bg-\[#f1f5fb\]"/);
 });
 
 test("navbar search opens the dedicated global-search workspace", () => {
-  assert.match(shell, /<Link href="\/admin\/search" aria-label="Search Kurioticket admin"/);
-  assert.match(shell, /router\.push\("\/admin\/search"\)/);
+  assert.match(shell, /<AdminSearchTrigger \/>/);
+  assert.match(shell, /<AdminWorkspaceSearchProvider/);
+  assert.match(readFileSync("src/components/admin/AdminWorkspaceSearch.tsx", "utf8"), /Search Kurioticket admin/);
   assert.doesNotMatch(shell, /Search navigation only/);
   assert.doesNotMatch(shell, /aria-label="Search admin pages"/);
   assert.doesNotMatch(shell, /searchOpen/);

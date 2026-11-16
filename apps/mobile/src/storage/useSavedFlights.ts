@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { useFocusEffect } from "expo-router";
+import { useAccountRefresh } from "./useAccountRefresh";
 import { TravelApiError, type FlightResult } from "../api/travelApi";
 import { favoriteAction } from "./favoriteAccess";
 import { showFavoriteSignInPrompt } from "./favoriteSignInPrompt";
@@ -12,9 +12,9 @@ export function useSavedFlights() {
   const [savedFlights, setSavedFlights] = useState(new Map<string, FlightResult>());
   const [pendingFlightKeys, setPendingFlightKeys] = useState(new Set<string>());
   const refresh = useCallback(() => {
-    void readSession().then((session) => setUserId(session?.user.id ?? null)).catch(() => setUserId(null));
+    void readSession().then((session) => { const id = session?.user.id ?? null; setUserId(id); if (id) void savedRepositoryFor(id).refresh(); }).catch(() => setUserId(null));
   }, []);
-  useFocusEffect(refresh);
+  useAccountRefresh(refresh, () => { setUserId(null); setSavedFlights(new Map()); setPendingFlightKeys(new Set()); });
   useEffect(() => {
     if (!userId) {
       setSavedFlights(new Map());

@@ -3,42 +3,34 @@ import { getPrisma } from "@/lib/prisma";
 import { getPublicEnvironment } from "@/lib/stagingSafety";
 import { featureControlKeys, featureControlRegistry, isFeatureControlKey, type FeatureControlEnvironment, type FeatureControlKey } from "./registry";
 import { bootstrapFeatureControls } from "./bootstrap";
+import { createFeatureControlEvaluator } from "./evaluation";
 
-const TTL_MS = 10_000;
-const cache = new Map<string, { enabled: boolean; expiresAt: number }>();
-const cacheKey = (key: FeatureControlKey, environment: FeatureControlEnvironment) => `${environment}:${key}`;
 export const getRuntimeFeatureEnvironment = (): FeatureControlEnvironment => getPublicEnvironment() === "staging" ? "STAGING" : "PRODUCTION";
-let bootstrapPromise: Promise<void> | undefined;
-async function ensureInitialized() {
-  bootstrapPromise ??= bootstrapFeatureControls(getPrisma(), getRuntimeFeatureEnvironment()).catch((error) => { bootstrapPromise = undefined; throw error; });
-  return bootstrapPromise;
+const bootstrapPromises = new Map<FeatureControlEnvironment, Promise<void>>();
+async function ensureInitialized(environment = getRuntimeFeatureEnvironment()) {
+  let pending = bootstrapPromises.get(environment);
+  if (!pending) {
+    pending = bootstrapFeatureControls(getPrisma(), environment).catch((error) => { bootstrapPromises.delete(environment); throw error; });
+    bootstrapPromises.set(environment, pending);
+  }
+  return pending;
 }
+const evaluator = createFeatureControlEvaluator(async (key, environment) => {
+  await ensureInitialized(environment);
+  const row = await getPrisma().featureFlag.findUnique({ where: { key_environment: { key, environment } }, select: { enabled: true } });
+  return row?.enabled ?? null;
+});
 
 export class UnknownFeatureControlError extends Error { constructor() { super("Unknown feature control."); this.name = "UnknownFeatureControlError"; } }
-export function resetFeatureControlCache() { cache.clear(); }
-export function invalidateFeatureControl(key: FeatureControlKey, environment: FeatureControlEnvironment) { cache.delete(cacheKey(key, environment)); }
+export function resetFeatureControlCache() { evaluator.clear(); }
+export function invalidateFeatureControl(key: FeatureControlKey, environment: FeatureControlEnvironment) { evaluator.invalidate(key, environment); }
 
 export async function isFeatureEnabled(key: FeatureControlKey): Promise<boolean> {
   return isFeatureEnabledInEnvironment(key, getRuntimeFeatureEnvironment());
 }
 export async function isFeatureEnabledInEnvironment(key: FeatureControlKey, environment: FeatureControlEnvironment): Promise<boolean> {
   if (!isFeatureControlKey(key)) throw new UnknownFeatureControlError();
-  const id = cacheKey(key, environment);
-  const hit = cache.get(id);
-  if (hit && hit.expiresAt > Date.now()) return hit.enabled;
-  const definition = featureControlRegistry[key];
-  const fallback = environment === "STAGING" ? definition.defaultStaging : definition.defaultProduction;
-  try {
-    await ensureInitialized();
-    const row = await getPrisma().featureFlag.findUnique({ where: { key_environment: { key, environment } }, select: { enabled: true } });
-    const enabled = row?.enabled ?? fallback;
-    cache.set(id, { enabled, expiresAt: Date.now() + TTL_MS });
-    return enabled;
-  } catch (error) {
-    console.error("[feature-controls:evaluation-fallback]", { key, environment, errorName: error instanceof Error ? error.name : "unknown" });
-    cache.set(id, { enabled: fallback, expiresAt: Date.now() + TTL_MS });
-    return fallback;
-  }
+  return evaluator.evaluate(key, environment);
 }
 
 export async function listFeatureControls() {
@@ -67,6 +59,6 @@ export async function mutateFeatureControl(input: { key: FeatureControlKey; envi
     await tx.adminAuditLog.create({ data: { adminUserId: input.actor.id, adminEmail: input.actor.email.toLowerCase(), action: "FEATURE_CONTROL_UPDATED", targetType: "FeatureFlag", targetId: row.id, metadata: { featureKey: input.key, environment: input.environment, previousEnabled: row.enabled, nextEnabled: input.enabled, reason: input.reason || null, category: definition.category, riskLevel: definition.risk } as Prisma.InputJsonValue, ipAddress: input.actor.ipAddress, userAgent: input.actor.userAgent } });
     return { changed: true as const, state: updated };
   }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
-  invalidateFeatureControl(input.key, input.environment);
+  evaluator.remember(input.key, input.environment, result.state.enabled);
   return result;
 }

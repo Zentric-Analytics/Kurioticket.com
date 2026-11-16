@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Clock3, Search } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 
 import { getAdminNavForRole, type AdminRole } from "@/lib/adminNavigation";
 
@@ -29,38 +29,38 @@ function items(payload: unknown): Array<Record<string, unknown>> {
   return Array.isArray(list) ? list.filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === "object") : [];
 }
 
+function readRecents() { try { return window.localStorage.getItem(RECENTS_KEY) || "[]"; } catch { return "[]"; } }
+function subscribeRecents(notify: () => void) { window.addEventListener("storage",notify); return () => window.removeEventListener("storage",notify); }
+
 export function AdminGlobalSearch({ role, showPreviewTesters = false }: { role: AdminRole; showPreviewTesters?: boolean }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState("");
-  const [recent, setRecent] = useState<string[]>([]);
+  const recentJson = useSyncExternalStore(subscribeRecents, readRecents, () => "[]");
+  const storedRecent = useMemo(() => { try { const values: unknown = JSON.parse(recentJson); return Array.isArray(values) ? values.filter((v): v is string => typeof v === "string").slice(0,8) : []; } catch { return []; } }, [recentJson]);
+  const [recentOverride, setRecent] = useState<string[] | null>(null);
+  const recent = recentOverride ?? storedRecent;
   const [records, setRecords] = useState<RecordResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [recordsUnavailable, setRecordsUnavailable] = useState(false);
 
   const pages = useMemo(() => getAdminNavForRole(role, showPreviewTesters), [role, showPreviewTesters]);
   const normalized = query.trim().toLowerCase();
+  const [previousQuery, setPreviousQuery] = useState(normalized);
+  if (previousQuery !== normalized) {
+    setPreviousQuery(normalized); setRecords([]); setLoading(false); setRecordsUnavailable(false);
+  }
   const pageMatches = normalized
     ? pages.filter((item) => (item.label + " " + item.description).toLowerCase().includes(normalized)).slice(0, 10)
     : [];
 
   useEffect(() => {
     inputRef.current?.focus();
-    try {
-      const stored = JSON.parse(window.localStorage.getItem(RECENTS_KEY) || "[]");
-      if (Array.isArray(stored)) setRecent(stored.filter((item): item is string => typeof item === "string").slice(0, 8));
-    } catch {
-      setRecent([]);
-    }
+
   }, []);
 
   useEffect(() => {
     const q = query.trim();
-    if (q.length < 2) {
-      setRecords([]);
-      setLoading(false);
-      setRecordsUnavailable(false);
-      return;
-    }
+    if (q.length < 2) return;
 
     const controller = new AbortController();
     const timer = window.setTimeout(async () => {
@@ -158,7 +158,8 @@ export function AdminGlobalSearch({ role, showPreviewTesters = false }: { role: 
   function remember(value: string) {
     const clean = value.trim();
     if (!clean) return;
-    setRecent((current) => {
+    setRecent((override) => {
+      const current = override ?? storedRecent;
       const next = [clean, ...current.filter((item) => item.toLowerCase() !== clean.toLowerCase())].slice(0, 8);
       window.localStorage.setItem(RECENTS_KEY, JSON.stringify(next));
       return next;

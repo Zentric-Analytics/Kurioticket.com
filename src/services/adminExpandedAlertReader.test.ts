@@ -2,17 +2,19 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readExpandedAdminAlertSignals, type ExpandedAlertDatabase } from "./adminExpandedAlertReader";
 
+type Query = { where: { query?: unknown; type?: unknown; createdAt: {gte: Date; lt: Date; lte: Date}; environment?: string; priority?: string; status?: unknown; user?: unknown; twoFactorEnabled?: boolean; twoFactorDisabledAt: {gte: Date; lte: Date} }; by?: string[]; _max?: unknown };
+type Group = {type:string;status:string;_count:{_all:number};_max:{createdAt:Date}};
 const now = new Date("2026-11-04T14:00:00.000Z");
 function database() {
-  const calls: Array<{ operation: string; args: any }> = [];
+  const calls: Array<{ operation: string; args: Query }> = [];
   const tx = {
-    searchHistory: { groupBy: async (args: any) => { calls.push({ operation: "search", args }); return []; } },
-    featureFlag: { findMany: async (args: any) => { calls.push({ operation: "flags", args }); return [{ key: "FLIGHT_SEARCH_ENABLED", enabled: false }]; } },
+    searchHistory: { groupBy: async (args: Query) => { calls.push({ operation: "search", args }); return [] as Group[]; } },
+    featureFlag: { findMany: async (args: Query) => { calls.push({ operation: "flags", args }); return [{ key: "FLIGHT_SEARCH_ENABLED", enabled: false }]; } },
   };
   const db = {
-    $transaction: async (run: (db: any) => Promise<any>, options: any) => { calls.push({ operation: "transaction", args: options }); return run(tx); },
-    supportTicket: { groupBy: async (args: any) => { calls.push({ operation: "support", args }); return [{ status: "OPEN", _count: { _all: 2 }, _max: { updatedAt: new Date("2026-11-04T13:00:00Z") } }]; } },
-    userSecuritySettings: { aggregate: async (args: any) => { calls.push({ operation: "users", args }); return { _count: { _all: 0 }, _max: { twoFactorDisabledAt: null } }; } },
+    $transaction: async (run: (db: typeof tx) => Promise<unknown>, options: unknown) => { calls.push({ operation: "transaction", args: options as Query }); return run(tx); },
+    supportTicket: { groupBy: async (args: Query) => { calls.push({ operation: "support", args }); return [{ status: "OPEN", _count: { _all: 2 }, _max: { updatedAt: new Date("2026-11-04T13:00:00Z") } }]; } },
+    userSecuritySettings: { aggregate: async (args: Query) => { calls.push({ operation: "users", args }); return { _count: { _all: 0 }, _max: { twoFactorDisabledAt: null } }; } },
   };
   return { db, tx, calls };
 }
@@ -68,14 +70,14 @@ test("source failure and absent database return unknown, never fabricated health
 });
 test("unknown statuses and invalid aggregate counts do not silently vanish", async () => {
   const { db, tx } = database();
-  tx.searchHistory.groupBy = async () => [{ type: "FLIGHT", status: "INVALID", _count: { _all: 2 }, _max: { createdAt: now } }] as any;
+  tx.searchHistory.groupBy = async () => [{ type: "FLIGHT", status: "INVALID", _count: { _all: 2 }, _max: { createdAt: now } }];
   assert.equal((await readExpandedAdminAlertSignals(db as unknown as ExpandedAlertDatabase, "staging", now)).searches, null);
-  tx.searchHistory.groupBy = async () => [{ type: "FLIGHT", status: "FAILED", _count: { _all: -1 }, _max: { createdAt: now } }] as any;
+  tx.searchHistory.groupBy = async () => [{ type: "FLIGHT", status: "FAILED", _count: { _all: -1 }, _max: { createdAt: now } }];
   assert.equal((await readExpandedAdminAlertSignals(db as unknown as ExpandedAlertDatabase, "staging", now)).searches, null);
 });
 test("success and partial groups count in attempts, but only FAILED counts in the failure numerator", async () => {
   const { db, tx } = database();
-  tx.searchHistory.groupBy = async () => ["SUCCESS", "PARTIAL", "FAILED"].map(status => ({ type: "HOTEL", status, _count: { _all: 10 }, _max: { createdAt: new Date("2026-11-04T13:40:00Z") } })) as any;
+  tx.searchHistory.groupBy = async () => ["SUCCESS", "PARTIAL", "FAILED"].map(status => ({ type: "HOTEL", status, _count: { _all: 10 }, _max: { createdAt: new Date("2026-11-04T13:40:00Z") } }));
   const result = await readExpandedAdminAlertSignals(db as unknown as ExpandedAlertDatabase, "staging", now);
   assert.equal(result.searches![1].previous.total, 30);
   assert.equal(result.searches![1].previous.failed, 10);

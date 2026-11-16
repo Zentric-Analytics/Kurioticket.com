@@ -4,7 +4,6 @@ import { requireAdminApiSession, writeAdminAuditLog } from "@/lib/admin";
 import { adminSupportReplySchema, adminSupportStatusSchema } from "@/lib/validation";
 import { addAdminSupportReply, SupportTicketNotFoundError, updateSupportTicketStatus } from "@/services/supportService";
 import { adminOperationalReadResponse } from "@/services/adminOperationalReadHttp";
-import { adminOperationalReads } from "@/services/adminOperationalReadService";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +29,7 @@ function getAdminSession(result: AdminSessionResult) {
 }
 
 export async function GET(_request: NextRequest, context: RouteContext) {
+  const { adminOperationalReads } = await import("@/services/adminOperationalReadService");
   const { id } = await context.params;
   return adminOperationalReadResponse(await adminOperationalReads.support.detail(id));
 }
