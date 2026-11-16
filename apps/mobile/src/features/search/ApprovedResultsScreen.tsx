@@ -105,7 +105,8 @@ import {
   type DisplayPrice,
   type ExchangeRates,
 } from "../currency/displayCurrency";
-import { createHotelDisplayPrices, type HotelDisplayPriceSnapshot } from "./hotelDetailCurrency";
+import { type HotelDisplayPriceSnapshot } from "./hotelDetailCurrency";
+import { hotelVisiblePrices } from "./hotelVisiblePrices";
 import { formatCabinClass, summarizeBaggage, summarizeFareRules } from "./flightCardSummaries";
 import { useCanonicalSaved } from "../../storage/useCanonicalSaved";
 import { AirlineLogo } from "./AirlineLogo";
@@ -926,12 +927,8 @@ function ResultsScreen({ product }: { product: Product }) {
   }, [currencyState, product, results]);
   const hotelDisplayPrices = useMemo(() => {
     if (product !== "hotel" || !currencyState) return new Map<string, HotelDisplayPriceSnapshot>();
-    return new Map((results as HotelResult[]).flatMap((result) =>
-      Number.isFinite(result.pricePerNight) && Number.isFinite(result.totalPrice) && typeof result.currency === "string"
-        ? [[result.id, createHotelDisplayPrices(result.pricePerNight!, result.totalPrice!, result.currency, currencyState.resolution.resolvedCurrency, currencyState.rates)] as const]
-        : [],
-    ));
-  }, [currencyState, product, results]);
+    return hotelVisiblePrices(sorted as HotelResult[], hotelScrolling.limit, currencyState.resolution.resolvedCurrency, currencyState.rates);
+  }, [currencyState, product, sorted, hotelScrolling.limit]);
   const verifiedFareContextKey = useMemo(() => {
     if (product !== "flight" || !plan.plan || !currencyState) return undefined;
     return verifiedDateFareContextKey(plan.plan.payload, currencyState.resolution.resolvedCurrency);
@@ -1949,6 +1946,7 @@ const HotelCard = memo(function HotelCard({
           <MapPin accessible={false} size={14} strokeWidth={2} color={colors.blue} />
           <Text numberOfLines={1} ellipsizeMode="tail" style={s0.hotelLocationText}>{result.location}</Text>
         </View>
+        {result.provider === "KAYAK sandbox" ? <Text style={[s0.hotelLocationNotice, { color: theme.textSecondary }]}>Provider test location — not verified for travel.</Text> : null}
         {score == null ? null : (
           <Text style={[s0.review,{color:theme.textPrimary}]}>
             <Text style={s0.score}>{score.toFixed(1)}</Text>{" "}
@@ -2223,6 +2221,7 @@ const s0 = StyleSheet.create({
   stars: { color: "#FFB800", fontSize: 14 },
   hotelLocation: { flexDirection: "row", alignItems: "center", gap: 4, minWidth: 0 },
   hotelLocationText: { flexShrink: 1, minWidth: 0, color: colors.blue, fontSize: 12, lineHeight: 16, fontWeight: "600", fontFamily: appFonts.semibold },
+  hotelLocationNotice: { fontSize: 11, lineHeight: 16, fontFamily: appFonts.medium },
   review: { fontSize: 11, color: ui.navy },
   score: { backgroundColor: ui.blue, color: "white", fontWeight: "900" },
   hotelTerm:{fontSize:11,lineHeight:15,color:ui.navy},
