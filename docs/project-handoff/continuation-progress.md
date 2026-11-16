@@ -1,5 +1,10 @@
 # Continuation task ledger
 
+## Current pinned local candidate — November 16, 2026
+
+The owner-authorized 9a13 reconciliation is complete: application merge 9bd206394d48fb5f8e0b59c23e025fce6506d2e6,52 conflicts resolved,zero remaining. See [result and review points](reconciliation-9a13-result.md), [per-file ledger](reconciliation-9a13-conflict-ledger.json) and [validation manifest](reconciliation-9a13-validation-evidence.json). Final web5,225/native2,403 tests pass; build, native typecheck, dependency graph and offline iOS/Android exports pass. Native patch graph and fingerprints changed; artifact/device compatibility remains unverified. Locally ready for separately authorized publication only. No push/CI/infra/database/worker/deployment or production action; all existing recovery/security/operational gates remain. This supersedes earlier pending-integration statements below.
+
+
 ## Latest authorized local integration — November 16, 2026
 
 Owner authorized local-only reconciliation of pinned dev 7041310cfb158ab285f82e04ef165f21e113bda1. Completed merge 30111d993a0d47b899af35e127df7cb3edc41fa9 preserves the engineering baseline and original handoff. See [local reconciliation result](local-reconciliation-20261116.md) for validation, rollback checkpoints and remaining gates. No push, remote CI, dev/main merge, deployment or infrastructure execution is authorized/performed. Render clarification remains unsent; recovery proof, schema acceptance, worker/backlog and exact native/release evidence remain open. Credential exposure remains acknowledged/unresolved; no credential changes. This update supersedes older no-reconciliation statements below; historical records remain intact.
