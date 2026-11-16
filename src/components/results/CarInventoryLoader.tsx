@@ -4,6 +4,7 @@ import type { LocationBoundCarSearchParams, NormalizedCarResult } from "@/lib/ca
 import { CarsResultsClient } from "./CarsResultsClient";
 import { useJourneyEvents } from "@/components/privacy/JourneyEventsProvider";
 import { journeyRequestId } from "@/lib/journeyEventClient";
+import { carSearchRecoveryHref } from "@/lib/cars/carSearchRecovery";
 
 /** Keep the document small; inventory arrives through the canonical JSON API. */
 export function CarInventoryLoader({ values, fallback }: {
@@ -53,8 +54,8 @@ export function CarInventoryLoader({ values, fallback }: {
   }, [results, requestId, journeyEvents]);
   if (invalidSearch) return <CarsResultsClient values={values} initialResults={[]} inventoryStatus="invalid-search" />;
   if (unsupported) return <main className="page-shell py-8">
-    <p role="alert">The available providers cannot search these rental options. Please change your search.</p>
-    <a className="mt-4 inline-block rounded border px-4 py-2" href="/cars">Change search</a>
+    <p role="alert">These rental locations could not be verified or are unsupported. Select the locations again, then search.</p>
+    <a className="mt-4 inline-block rounded border px-4 py-2" href={carSearchRecoveryHref(values)}>Change search</a>
   </main>;
   if (error) return <main className="page-shell py-8">
     <p role="alert">We couldn’t complete your search. Please try again.</p>
