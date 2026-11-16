@@ -157,8 +157,9 @@ export class KayakError extends Error {
       | "invalid_response"
       | "server_error"
       | "request_rejected",
+    public readonly httpStatus?: number,
   ) {
-    super(`KAYAK sandbox ${code.replaceAll("_", " ")}.`);
+    super(httpStatus === 403 ? "KAYAK sandbox access forbidden." : `KAYAK sandbox ${code.replaceAll("_", " ")}.`);
   }
 }
 
@@ -454,7 +455,7 @@ export class KayakSandboxClient {
             await pause(300);
             continue;
           }
-          throw new KayakError(code);
+          throw new KayakError(code, response.status);
         }
         let parsed: unknown;
         try {

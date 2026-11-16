@@ -1,3 +1,4 @@
+import { savedFlightLocalSummary } from "@/shared/flights/savedFlightTime";
 import { router } from "expo-router";
 import { Fragment, useState } from "react";
 import { Alert, Image, Pressable, RefreshControl, ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
@@ -45,7 +46,7 @@ export function canonicalSavedCards(items: readonly MobileSavedItem[]): SavedCar
       const title = text(item.airlineName) ?? text(item.label) ?? "Saved flight";
       const origin = text(item.originAirport);
       const destination = text(item.destinationAirport);
-      return { item, title, secondary: origin && destination ? `${origin} → ${destination}` : "Flight", supporting: text(item.flightNumber), open: Object.keys(params).length ? () => router.push({ pathname: resultsReady ? "/flight-results" : "/flights", params }) : undefined };
+      return { item, title, secondary: origin && destination ? `${origin} → ${destination}` : "Flight", supporting: text(item.flightNumber), summary: savedFlightLocalSummary({ payload: item.payload, originAirport: origin, destinationAirport: destination }), open: Object.keys(params).length ? () => router.push({ pathname: resultsReady ? "/flight-results" : "/flights", params }) : undefined };
     }
     if (item.type === "hotel") {
       const storedParams = sanitizeSearchParams("hotel", payload?.searchParams);

@@ -211,8 +211,8 @@ export const translations: TranslationDictionary = {
     "Đường chân trời Cairo với Kim tự tháp Giza",
   "flightLandingImageAlt.Addis Ababa cityscape in the Ethiopian highlands":
     "Cảnh thành phố Addis Ababa trên cao nguyên Ethiopia",
-  "flightLandingImageAlt.Puerto Vallarta coastline and old town":
-    "Bờ biển và phố cổ Puerto Vallarta",
+  "flightLandingImageAlt.Puerto Vallarta coastline with ocean and greenery":
+    "Bờ biển Puerto Vallarta với đại dương và cây xanh",
   "flightLandingImageAlt.Honolulu Waikiki beach with Diamond Head and bright blue water":
     "Bãi biển Waikiki ở Honolulu với Diamond Head và làn nước xanh trong",
   "flightLandingImageAlt.San Diego bay skyline and marina":

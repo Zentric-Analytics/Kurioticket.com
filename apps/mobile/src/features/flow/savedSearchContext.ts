@@ -1,3 +1,4 @@
+import { savedFlightLocalTimes } from "@/shared/flights/savedFlightTime";
 import type { FlightResult, MobileSavedItem } from "../../api/travelApi";
 import { buildSearchPlan, type Product } from "./travelSearchModel";
 
@@ -28,7 +29,7 @@ const calendarDate = (value: unknown) => typeof value === "string" && !Number.is
 export function legacyFlightSearchParams(item: MobileSavedItem, result?: FlightResult): SafeSearchParams {
   const origin = item.originAirport || result?.originAirport;
   const destination = item.destinationAirport || result?.destinationAirport;
-  const departureDate = calendarDate(item.departureTime || result?.departureTime);
+  const departureDate = calendarDate(savedFlightLocalTimes(item.payload).departure || item.departureTime || result?.departureTime);
   const returnDeparture = calendarDate(result?.legs?.[1]?.departureTime);
   return sanitizeSearchParams("flight", {
     origin, destination, departureDate,

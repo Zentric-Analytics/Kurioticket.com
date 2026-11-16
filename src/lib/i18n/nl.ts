@@ -692,8 +692,8 @@ export const translations: TranslationDictionary = {
     "Skyline van Caïro met de piramides van Gizeh",
   "flightLandingImageAlt.Addis Ababa cityscape in the Ethiopian highlands":
     "Stadsbeeld van Addis Abeba in de Ethiopische hooglanden",
-  "flightLandingImageAlt.Puerto Vallarta coastline and old town":
-    "Kustlijn en oude stad van Puerto Vallarta",
+  "flightLandingImageAlt.Puerto Vallarta coastline with ocean and greenery":
+    "Kustlijn van Puerto Vallarta met oceaan en groen",
   "flightLandingImageAlt.Honolulu Waikiki beach with Diamond Head and bright blue water":
     "Waikiki Beach in Honolulu met Diamond Head en helderblauw water",
   "flightLandingImageAlt.San Diego bay skyline and marina":

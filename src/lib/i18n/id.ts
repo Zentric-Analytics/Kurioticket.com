@@ -1238,8 +1238,8 @@ export const translations: TranslationDictionary = {
     "Cakrawala Kairo dengan Piramida Giza",
   "flightLandingImageAlt.Addis Ababa cityscape in the Ethiopian highlands":
     "Lanskap kota Addis Ababa di dataran tinggi Ethiopia",
-  "flightLandingImageAlt.Puerto Vallarta coastline and old town":
-    "Garis pantai Puerto Vallarta dan kota tua",
+  "flightLandingImageAlt.Puerto Vallarta coastline with ocean and greenery":
+    "Garis pantai Puerto Vallarta dengan laut dan pepohonan",
   "flightLandingImageAlt.Honolulu Waikiki beach with Diamond Head and bright blue water":
     "Pantai Waikiki Honolulu dengan Diamond Head dan air biru cerah",
   "flightLandingImageAlt.San Diego bay skyline and marina":

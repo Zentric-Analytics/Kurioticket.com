@@ -897,8 +897,8 @@ export const translations: TranslationDictionary = {
     "गीज़ा के पिरामिडों के साथ काहिरा स्काईलाइन",
   "flightLandingImageAlt.Addis Ababa cityscape in the Ethiopian highlands":
     "इथियोपियाई हाइलैंड्स में अदीस अबाबा का शहर दृश्य",
-  "flightLandingImageAlt.Puerto Vallarta coastline and old town":
-    "पुएर्तो वाल्यार्ता का समुद्र तट और पुराना शहर",
+  "flightLandingImageAlt.Puerto Vallarta coastline with ocean and greenery":
+    "पुएर्तो वाल्यार्ता का समुद्र तट, सागर और हरियाली",
   "flightLandingImageAlt.Honolulu Waikiki beach with Diamond Head and bright blue water":
     "डायमंड हेड और चमकदार नीले पानी वाला होनोलूलू वाइकिकी बीच",
   "flightLandingImageAlt.San Diego bay skyline and marina":

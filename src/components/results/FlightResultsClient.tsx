@@ -513,7 +513,7 @@ const beachVacationVisualsByDestinationCode: Record<
   },
   PVR: {
     image:
-      "https://images.unsplash.com/photo-1665039400840-b6b2a5786fef?auto=format&fit=crop&w=1200&q=90",
+      "/images/staging-remediation/puerto-vallarta.webp",
     imageAltKey: "flightResults.beachVisual.PVR.alt",
   },
   FAO: {

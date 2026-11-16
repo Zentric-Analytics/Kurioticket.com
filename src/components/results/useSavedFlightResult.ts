@@ -1,5 +1,7 @@
 "use client";
 
+import { savedFlightTimeFields, SavedFlightTimeError } from "@/shared/flights/savedFlightTime";
+
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import type { PublicFlightResult } from "@/lib/types";
@@ -85,6 +87,7 @@ export function useSavedFlightResult(
   const [savedItem, setSavedItem] = useState<SavedFlightItem | null>(null);
   const [localSaved, setLocalSaved] = useState(false);
   const [pending, setPending] = useState(false);
+  const [savedFlightError, setSavedFlightError] = useState<string | null>(null);
 
   useEffect(() => {
     if (status === "loading") return;
@@ -114,6 +117,7 @@ export function useSavedFlightResult(
   async function toggleSavedFlight() {
     if (pending || status === "loading") return;
     setPending(true);
+    setSavedFlightError(null);
     try {
       if (status === "authenticated") {
         const previous = savedItem;
@@ -132,6 +136,7 @@ export function useSavedFlightResult(
           return;
         }
 
+        const times = savedFlightTimeFields(flight);
         const response = await fetch("/api/dashboard/saved", {
           method: "POST",
           headers: { "Content-Type": "application/json", Accept: "application/json" },
@@ -142,12 +147,13 @@ export function useSavedFlightResult(
             flightNumber: flight.flightNumber ?? null,
             originAirport: flight.originAirport,
             destinationAirport: flight.destinationAirport,
-            departureTime: flight.departureTime,
-            arrivalTime: flight.arrivalTime,
+            departureTime: times.departureTime,
+            arrivalTime: times.arrivalTime,
             price: flight.price,
             currency: flight.currency,
             payload: {
               flightResultId: flight.id,
+              flightTime: times.flightTime,
               detailsHref,
             },
           }),
@@ -168,6 +174,8 @@ export function useSavedFlightResult(
       writeSavedItemIds(next);
       setLocalSaved(next.includes(flight.id));
       window.dispatchEvent(new Event(LOCAL_SAVED_FLIGHTS_CHANGED_EVENT));
+    } catch (error) {
+      setSavedFlightError(error instanceof SavedFlightTimeError ? error.message : "Unable to save flight. Please try again.");
     } finally {
       setPending(false);
     }
@@ -177,5 +185,6 @@ export function useSavedFlightResult(
     isSaved: status === "authenticated" ? Boolean(savedItem) : status === "unauthenticated" ? localSaved : false,
     pending: pending || status === "loading",
     toggleSavedFlight,
+    savedFlightError,
   };
 }

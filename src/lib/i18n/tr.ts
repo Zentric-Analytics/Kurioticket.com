@@ -994,8 +994,8 @@ export const translations: TranslationDictionary = {
   "flightLandingCity.Tokyo": "Tokyo",
   "flightLandingCity.Toronto": "Toronto",
   "flightLandingCity.Vancouver": "Vancouver",
-  "flightLandingImageAlt.Puerto Vallarta coastline and old town":
-    "Puerto Vallarta kıyı şeridi ve eski şehir",
+  "flightLandingImageAlt.Puerto Vallarta coastline with ocean and greenery":
+    "Puerto Vallarta kıyı şeridi, okyanus ve yeşillik",
   "flightLandingImageAlt.Honolulu Waikiki beach with Diamond Head and bright blue water":
     "Diamond Head ve parlak mavi sularıyla Honolulu Waikiki plajı",
   "flightLandingImageAlt.San Diego bay skyline and marina":

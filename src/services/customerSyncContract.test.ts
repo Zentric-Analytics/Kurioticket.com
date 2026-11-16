@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { runInNewContext } from "node:vm";
 import test from "node:test";
 import ts from "typescript";
-import * as saved from "./savedRecentService";
+import * as saved from "@/services/savedRecentService";
 import { createSavedHandlers } from "@/app/api/mobile/v1/saved/route";
 import { ZodError } from "zod";
 
@@ -47,6 +47,7 @@ test("web/iOS/Android adapters share account-owned saved records, retries and de
   assert.equal((await mobile.DELETE(request("DELETE", { type: "search", id: records[0].id }))).status, 200);
   assert.equal((await (await web.GET(request("GET"))).json()).items.length, 0);
   for (const sample of [
+    { type: "flight", provider: "Duffel", airlineName: "Duffel Airways", originAirport: "SFO", destinationAirport: "LAX", departureTime: "2026-12-16T11:36:00", arrivalTime: "2026-12-16T12:54:00", price: 54, currency: "USD", payload: {} },
     { type: "flight", provider: "Duffel", airlineName: "Airline", originAirport: "LHR", destinationAirport: "JFK", departureTime: "2030-01-01T10:00:00Z", arrivalTime: "2030-01-01T18:00:00Z", price: 100, currency: "USD", payload: {} },
     { type: "hotel", provider: "Partner", hotelName: "Hotel", destination: "Paris", checkIn: "2030-01-01T00:00:00Z", checkOut: "2030-01-02T00:00:00Z", totalPrice: 100, currency: "USD", payload: {} },
     { type: "car", resultId: "car", provider: "Partner", modelName: "Car", categoryLabel: "Compact", pickupLocation: "London", dropoffLocation: "London", pickupDate: "2030-01-01", dropoffDate: "2030-01-02", pickupTime: "10:00", dropoffTime: "10:00", driverAge: "30", totalPrice: 100, currency: "USD", payload: {} },
@@ -56,6 +57,15 @@ test("web/iOS/Android adapters share account-owned saved records, retries and de
     assert.equal((await web.POST(request("POST", value))).status, 201);
     assert.equal((await mobile.POST(request("POST", value, "android"))).status, 201);
     assert.equal(records.length, 1, `${sample.type} retry is idempotent`);
+    if (sample.type === "flight" && sample.originAirport === "SFO") {
+      assert.equal((records[0].departureTime as Date).toISOString(), "2026-12-16T19:36:00.000Z");
+      const time = (records[0].payload as { flightTime: { departure: { local: string } } }).flightTime;
+      assert.equal(time.departure.local, "2026-12-16T11:36:00");
+      userId = "account-b";
+      assert.equal((await (await mobile.GET(request("GET"))).json()).items.length, 0);
+      assert.equal((await mobile.DELETE(request("DELETE", { type: "flight", id: records[0].id }))).status, 404);
+      userId = "account-a";
+    }
     assert.equal((await (await web.GET(request("GET"))).json()).items.length, 1);
     assert.equal((await mobile.DELETE(request("DELETE", { type: sample.type, id: records[0].id }))).status, 200);
   }

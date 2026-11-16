@@ -229,3 +229,38 @@ for (const width of [320, 390]) {
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   });
 }
+
+test("authenticated Flight card persists airport-local provider times as real instants", async ({ page, request }) => {
+  const year = new Date().getUTCFullYear() + 1;
+  const departureDate = `${year}-12-16`;
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.route("**/api/auth/session", route => route.fulfill({ json: { user: { id: "qa-time-user", email: "qa-time@example.invalid" }, expires: `${year + 1}-01-01T00:00:00Z` } }));
+  await page.route("**/api/flights/search", async route => {
+    const response = await request.post("http://127.0.0.1:3011/api/flights/search");
+    const body = await response.json();
+    const replay = JSON.parse(JSON.stringify(body.results[0]).replaceAll(dates.departureDate, departureDate).replaceAll(dates.returnDate, `${year}-12-18`));
+    replay.departureTime = replay.legs[0].departureTime = replay.legs[0].segments[0].departureTime = `${departureDate}T11:36:00`;
+    replay.arrivalTime = replay.legs[0].arrivalTime = replay.legs[0].segments[0].arrivalTime = `${departureDate}T12:54:00`;
+    body.results = [replay];
+    await route.fulfill({ json: body });
+  });
+  await page.route("**/api/account/customization-preferences", route => route.fulfill({ json: { preferences: null } }));
+  const writes: Record<string, unknown>[] = [];
+  await page.route("**/api/dashboard/saved**", async route => {
+    if (route.request().method() === "POST") {
+      const input = route.request().postDataJSON(); writes.push(input);
+      await route.fulfill({ status: 201, json: { item: { ...input, id: "qa-saved-time" } } });
+    } else await route.fulfill({ json: { items: [] } });
+  });
+  await page.goto(flightResults.replace(dates.departureDate, departureDate).replace(dates.returnDate, `${year}-12-18`));
+  const consent = page.getByRole("button", { name: "Save preferences", exact: true });
+  if (await consent.isVisible()) await consent.click();
+  const save = page.getByRole("button", { name: /^Save .* flight$/ }).filter({ visible: true }).first();
+  await expect(save).toBeEnabled(); await save.click();
+  await expect.poll(() => writes.length).toBe(1);
+  expect(writes[0].departureTime).toBe(`${departureDate}T19:36:00.000Z`);
+  expect(writes[0].arrivalTime).toBe(`${departureDate}T20:54:00.000Z`);
+  const metadata = (writes[0].payload as { flightTime: { departure: { local: string; timeZone: string } } }).flightTime;
+  expect(metadata.departure.local).toBe(`${departureDate}T11:36:00`);
+  expect(metadata.departure.timeZone).toBe("America/Los_Angeles");
+});
