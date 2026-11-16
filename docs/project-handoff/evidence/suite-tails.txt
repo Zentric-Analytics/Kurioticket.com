@@ -1,0 +1,19 @@
+web-final.log
+ℹ tests 5081
+ℹ suites 40
+ℹ pass 5081
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 218350.264
+
+native-final.log
+ℹ tests 2367
+ℹ suites 0
+ℹ pass 2367
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 94849.2384
