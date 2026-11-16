@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { adminNavigation, adminNavigationGroups, getAdminNavForRole, getAdminHeaderGroups, isAdminNavItemActive } from "@/lib/adminNavigation";
+import { adminNavigation, adminNavigationGroups, getAdminNavForRole, getAdminHeaderGroups, getAdminMoreGroups, isAdminNavItemActive } from "@/lib/adminNavigation";
 
 const originalLabels = ["Overview", "Users", "Providers", "Search Activity", "Trips", "Trip monitoring", "Content", "Homepage Fares", "Hotels", "Cars", "Support", "Deletion Requests", "Audit Logs", "System", "Platform Health", "CMS Health", "Email Delivery", "Settings"];
 
@@ -105,4 +105,21 @@ test("Homepage Fares remains a direct admin route without appearing in the navba
   assert.ok(providers);
   assert.equal(isAdminNavItemActive(providers.item.href, "/admin/homepage-fares"), false);
   assert.equal(providers.children.some((child) => isAdminNavItemActive(child.href, "/admin/homepage-fares")), false);
+});
+
+test("secondary menu makes existing operational and diagnostic routes discoverable without changing primary navigation", () => {
+  const groups = getAdminMoreGroups("ADMIN", true);
+  assert.deepEqual(groups.map((group) => group.label), [
+    "Customer operations", "Travel operations", "Diagnostics and access",
+  ]);
+  assert.deepEqual(groups.flatMap((group) => group.links.map((item) => item.href)), [
+    "/admin/journeys", "/admin/redirects", "/admin/confirmed-trips/monitoring",
+    "/admin/account-deletions", "/admin/hotels", "/admin/cars",
+    "/admin/homepage-fares", "/admin/referral-attribution", "/admin/logs",
+    "/admin/system/cms-health", "/admin/email-delivery", "/admin/preview-testers",
+  ]);
+  assert.equal(getAdminMoreGroups("ADMIN", false).flatMap((group) => group.links).some((link) => link.href === "/admin/preview-testers"), false);
+  assert.deepEqual(getAdminMoreGroups("SUPPORT"), []);
+  assert.deepEqual(getAdminMoreGroups("USER"), []);
+  assert.equal(getAdminHeaderGroups("ADMIN", true).flatMap((group) => group.links).some((entry) => entry.item.href === "/admin/homepage-fares"), false);
 });

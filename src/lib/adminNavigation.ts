@@ -95,3 +95,37 @@ export function getAdminHeaderGroups(role: AdminRole, includePreviewTesters = fa
     return { label: group.label, links };
   }).filter((group) => group.links.length > 0);
 }
+
+/**
+ * The primary navbar stays compact. These existing admin destinations are
+ * available from the separate More sections menu rather than competing for
+ * header space. Redirect-only and deep-detail routes are intentionally omitted.
+ */
+const supplementalAdminNavigation: AdminNavDefinition[] = [
+  { href: "/admin/journeys", label: "Visitor Journeys", icon: Activity, roles: ["ADMIN"], section: "operations", description: "Inspect recorded consented journey events." },
+  { href: "/admin/redirects", label: "Provider Handoffs", icon: ClipboardList, roles: ["ADMIN"], section: "operations", description: "Investigate recorded outbound provider handoffs." },
+  { href: "/admin/referral-attribution", label: "Referral Attribution", icon: Activity, roles: ["ADMIN"], section: "readiness", description: "Review provider referral-attribution reporting." },
+];
+
+const additionalAdminNavigationGroups = [
+  { label: "Customer operations", hrefs: ["/admin/journeys", "/admin/redirects", "/admin/confirmed-trips/monitoring", "/admin/account-deletions"] },
+  { label: "Travel operations", hrefs: ["/admin/hotels", "/admin/cars", "/admin/homepage-fares", "/admin/referral-attribution"] },
+  { label: "Diagnostics and access", hrefs: ["/admin/logs", "/admin/system/cms-health", "/admin/email-delivery", "/admin/preview-testers"] },
+] as const;
+
+export type AdminMoreGroup = { label: string; links: AdminNavDefinition[] };
+
+export function getAdminMoreGroups(role: AdminRole, includePreviewTesters = false): AdminMoreGroup[] {
+  const available = [
+    ...getAdminNavForRole(role, includePreviewTesters),
+    ...supplementalAdminNavigation.filter((item) => item.roles.includes(role)),
+  ];
+  const byHref = new Map(available.map((item) => [item.href, item]));
+  return additionalAdminNavigationGroups.map((group) => ({
+    label: group.label,
+    links: group.hrefs.flatMap((href) => {
+      const item = byHref.get(href);
+      return item ? [item] : [];
+    }),
+  })).filter((group) => group.links.length > 0);
+}
