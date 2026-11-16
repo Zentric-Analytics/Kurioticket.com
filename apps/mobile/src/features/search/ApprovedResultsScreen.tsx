@@ -1762,6 +1762,8 @@ function FlightJourneyRow({ label, leg, locale }: { label: string; leg: FlightCa
   const intlLocale = mobileLocales.find((option) => option.code === locale)?.intl ?? "en-US";
   const departureDate = providerLocalFlightDate(leg.departureTime, intlLocale);
   const arrivalDate = providerLocalFlightDate(leg.arrivalTime, intlLocale);
+  // Android can shrink lineHeight-constrained text below minimumFontScale
+  // (react-native#52642). Keep the readable design size; retain iOS fitting.
   return (
     <View
       style={s0.journeyBlock}
@@ -1771,13 +1773,13 @@ function FlightJourneyRow({ label, leg, locale }: { label: string; leg: FlightCa
       <Text style={[s0.journeyLabel, { color: theme.dark ? "#8FB5FF" : flightResultsColors.journeyLabel }]}>{label}</Text>
       <View style={s0.journeyPrimaryRow}>
         <View style={s0.departureColumn}>
-          <Text style={[s0.time, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{clock(leg.departureTime)}</Text>
+          <Text style={[s0.time, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit={Platform.OS === "ios"} minimumFontScale={0.85}>{clock(leg.departureTime)}</Text>
         </View>
         <View style={s0.timelineColumn} accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-          <Text style={[s0.journeyDuration, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{leg.duration}</Text>
+          <Text style={[s0.journeyDuration, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit={Platform.OS === "ios"} minimumFontScale={0.85}>{leg.duration}</Text>
         </View>
         <View style={[s0.arrivalColumn, s0.rightColumnContract]}>
-          <Text style={[s0.time, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{clock(leg.arrivalTime)}</Text>
+          <Text style={[s0.time, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit={Platform.OS === "ios"} minimumFontScale={0.85}>{clock(leg.arrivalTime)}</Text>
         </View>
       </View>
       <View style={s0.journeyRouteRow}>
