@@ -245,6 +245,9 @@ test("authenticated Flight card persists airport-local provider times as real in
     await route.fulfill({ json: body });
   });
   await page.route("**/api/account/customization-preferences", route => route.fulfill({ json: { preferences: null } }));
+  // Exercise consent withdrawal through its UI with a controlled backend,
+  // independent of the nonexistent fixture account and local database.
+  await page.route("**/api/identity/visitor", route => route.fulfill({ json: { analyticsTracking: "disabled" } }));
   const writes: Record<string, unknown>[] = [];
   await page.route("**/api/dashboard/saved**", async route => {
     if (route.request().method() === "POST") {
@@ -254,7 +257,9 @@ test("authenticated Flight card persists airport-local provider times as real in
   });
   await page.goto(flightResults.replace(dates.departureDate, departureDate).replace(dates.returnDate, `${year}-12-18`));
   const consent = page.getByRole("button", { name: "Save preferences", exact: true });
-  if (await consent.isVisible()) await consent.click();
+  await expect(consent).toBeVisible();
+  await consent.click();
+  await expect(page.getByRole("dialog", { name: "Cookie preferences", exact: true })).toBeHidden();
   const save = page.getByRole("button", { name: /^Save .* flight$/ }).filter({ visible: true }).first();
   await expect(save).toBeEnabled(); await save.click();
   await expect.poll(() => writes.length).toBe(1);
