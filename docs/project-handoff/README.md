@@ -1,5 +1,10 @@
 # Kurioticket continuation handoff
 
+## Latest authorized local integration — November 16, 2026
+
+Owner authorized local-only reconciliation of pinned dev 7041310cfb158ab285f82e04ef165f21e113bda1. Completed merge 30111d993a0d47b899af35e127df7cb3edc41fa9 preserves the engineering baseline and original handoff. See [local reconciliation result](local-reconciliation-20261116.md) for validation, rollback checkpoints and remaining gates. No push, remote CI, dev/main merge, deployment or infrastructure execution is authorized/performed. Render clarification remains unsent; recovery proof, schema acceptance, worker/backlog and exact native/release evidence remain open. Credential exposure remains acknowledged/unresolved; no credential changes. This update supersedes older no-reconciliation statements below; historical records remain intact.
+
+
 Latest concrete release finding: [PR6721 conflict/policy/CI preparation](pr6721-conflict-readiness.md). Live dev refs reproduce five content conflicts; older PR API base/merge-ref snapshots are stale. No reconciliation authorized/performed. Render clarification was presented for approval and owner selected keep unsent.
 
 Latest read-only follow-up: [isolation-proof investigation](isolation-proof-investigation.md), [independent release gates](release-gates-current.md), and [unsent Render clarification draft](render-isolation-clarification-draft.md). Original timeout cause remains unproven; client classification defect reproduced. No new infrastructure execution is authorized or proposed as ready.
