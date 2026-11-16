@@ -1,7 +1,8 @@
+import { useAccountRefresh } from "../../storage/useAccountRefresh";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, RefreshControl, ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { router, useFocusEffect } from "expo-router";
+import { router } from "expo-router";
 import { travelApi, TravelApiError, type MobilePriceAlert } from "../../api/travelApi";
 import { readSession } from "../../storage/sessionStorage";
 import { FlowIcon } from "./FlowIcon";
@@ -21,25 +22,27 @@ export function PriceAlertsScreen() {
   const { height: windowHeight, width: windowWidth } = useWindowDimensions();
   const { availability } = useFeatureAvailability();
   const [alerts, setAlerts] = useState<MobilePriceAlert[]>([]); const [loading, setLoading] = useState(true); const [error, setError] = useState(""); const [pending, setPending] = useState<Record<string, boolean>>({});
-  const revision = useRef(0); const mounted = useRef(true);
+  const ownerVersion = useRef(0); const revision = useRef(0); const mounted = useRef(true);
   useEffect(() => () => { mounted.current = false; }, []);
-  const load = useCallback(async () => { const started = revision.current; setLoading((value) => alerts.length ? value : true); setError(""); try { const incoming = (await travelApi.priceAlerts()).alerts; if (mounted.current && started === revision.current) setAlerts([...new Map(incoming.map((alert) => [alert.id, alert])).values()]); } catch (e) { if (e instanceof TravelApiError && e.status === 401 || !await readSession().catch(() => null)) { router.replace(signInHref("/price-alerts")); return; } if (mounted.current) setError(e instanceof TravelApiError ? e.message : "Unable to load alerts."); } finally { if (mounted.current) setLoading(false); } }, [alerts.length]);
-  useFocusEffect(useCallback(() => { void load(); }, [load]));
+  const load = useCallback(async () => { const started = ++revision.current; setLoading((value) => alerts.length ? value : true); setError(""); try { const incoming = (await travelApi.priceAlerts()).alerts; if (mounted.current && started === revision.current) setAlerts([...new Map(incoming.map((alert) => [alert.id, alert])).values()]); } catch (e) { if (e instanceof TravelApiError && e.status === 401 || !await readSession().catch(() => null)) { router.replace(signInHref("/price-alerts")); return; } if (mounted.current) setError(e instanceof TravelApiError ? e.message : "Unable to load alerts."); } finally { if (mounted.current) setLoading(false); } }, [alerts.length]);
+  useAccountRefresh(load, () => { ownerVersion.current++; revision.current++; setAlerts([]); setPending({}); setError(""); });
   const mutateStatus = async (alert: MobilePriceAlert, status: "ACTIVE" | "PAUSED") => {
+    const mutationOwner = ownerVersion.current;
     if (pending[alert.id]) return; setError(""); revision.current += 1; setPending((value) => ({ ...value, [alert.id]: true })); setAlerts((value) => value.map((item) => item.id === alert.id ? { ...item, status } : item));
-    try { const updated = (await travelApi.updatePriceAlertStatus(alert.id, status)).alert; if (mounted.current) setAlerts((value) => value.map((item) => item.id === alert.id ? updated : item)); }
-    catch (e) { if (mounted.current) { setAlerts((value) => value.map((item) => item.id === alert.id ? alert : item)); setError(e instanceof TravelApiError ? e.message : "Unable to update alert."); } }
-    finally { if (mounted.current) setPending((value) => ({ ...value, [alert.id]: false })); }
+    try { const updated = (await travelApi.updatePriceAlertStatus(alert.id, status)).alert; if (mounted.current && mutationOwner === ownerVersion.current) setAlerts((value) => value.map((item) => item.id === alert.id ? updated : item)); }
+    catch (e) { if (mounted.current && mutationOwner === ownerVersion.current) { setAlerts((value) => value.map((item) => item.id === alert.id ? alert : item)); setError(e instanceof TravelApiError ? e.message : "Unable to update alert."); } }
+    finally { if (mounted.current && mutationOwner === ownerVersion.current) setPending((value) => ({ ...value, [alert.id]: false })); }
   };
   const deleteAlert = async (alert: MobilePriceAlert) => {
+    const mutationOwner = ownerVersion.current;
     if (pending[alert.id]) return; setError(""); revision.current += 1; setPending((value) => ({ ...value, [alert.id]: true })); setAlerts((value) => value.filter(({ id }) => id !== alert.id));
     try { await travelApi.deletePriceAlert(alert.id); }
-    catch (e) { if (mounted.current) { setAlerts((value) => value.some(({ id }) => id === alert.id) ? value : [alert, ...value]); setError(e instanceof TravelApiError ? e.message : "Unable to delete alert."); } }
-    finally { if (mounted.current) setPending((value) => ({ ...value, [alert.id]: false })); }
+    catch (e) { if (mounted.current && mutationOwner === ownerVersion.current) { setAlerts((value) => value.some(({ id }) => id === alert.id) ? value : [alert, ...value]); setError(e instanceof TravelApiError ? e.message : "Unable to delete alert."); } }
+    finally { if (mounted.current && mutationOwner === ownerVersion.current) setPending((value) => ({ ...value, [alert.id]: false })); }
   };
   const confirmDelete = (alert: MobilePriceAlert) => Alert.alert("Delete price alert?", `You will stop tracking ${routeLabel(alert)} for this alert.`, [{ text: "Cancel", style: "cancel" }, { text: "Delete", style: "destructive", onPress: () => void deleteAlert(alert) }]);
   const initialError = Boolean(error && !alerts.length);
-  return <Shell title="Price alerts">{!availability.priceAlerts && alerts.length ? <View style={styles.feedback}><Text accessibilityRole="alert" style={styles.error}>New and reactivated price alerts are temporarily unavailable. Existing alerts remain available to pause or delete.</Text></View> : null}{loading && !alerts.length ? <PageContentState state="loading" pageName="price alerts" /> : null}{initialError ? <PageContentState state="error" pageName="price alerts" onRetry={() => void load()} /> : error ? <View style={styles.feedback}><Text accessibilityRole="alert" style={styles.error}>{error}</Text><Pressable accessibilityRole="button" onPress={() => void load()}><Text style={styles.link}>Try again</Text></Pressable></View> : null}{(!loading || alerts.length) && !initialError ? <ScrollView style={!alerts.length ? { backgroundColor: theme.background } : undefined} contentContainerStyle={alerts.length ? flowStyles.scroll : styles.emptyContent}>{alerts.length ? alerts.map((alert) => {
+  return <Shell title="Price alerts">{!availability.priceAlerts && alerts.length ? <View style={styles.feedback}><Text accessibilityRole="alert" style={styles.error}>New and reactivated price alerts are temporarily unavailable. Existing alerts remain available to pause or delete.</Text></View> : null}{loading && !alerts.length ? <PageContentState state="loading" pageName="price alerts" /> : null}{initialError ? <PageContentState state="error" pageName="price alerts" onRetry={() => void load()} /> : error ? <View style={styles.feedback}><Text accessibilityRole="alert" style={styles.error}>{error}</Text><Pressable accessibilityRole="button" onPress={() => void load()}><Text style={styles.link}>Try again</Text></Pressable></View> : null}{(!loading || alerts.length) && !initialError ? <ScrollView refreshControl={<RefreshControl refreshing={loading} onRefresh={() => { void load(); }} />} style={!alerts.length ? { backgroundColor: theme.background } : undefined} contentContainerStyle={alerts.length ? flowStyles.scroll : styles.emptyContent}>{alerts.length ? alerts.map((alert) => {
   const route = routeLabel(alert);
   const trip = priceAlertTripSummary(alert);
   const target = formatPriceAlertAmount(alert.currency, alert.targetPrice);

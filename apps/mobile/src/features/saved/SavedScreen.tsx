@@ -1,6 +1,6 @@
 import { router } from "expo-router";
 import { Fragment, useState } from "react";
-import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import { Alert, Image, Pressable, RefreshControl, ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { CarResult, FlightResult, MobileSavedItem } from "../../api/travelApi";
 import { useCanonicalSaved } from "../../storage/useCanonicalSaved";
@@ -123,11 +123,11 @@ export function SavedScreen() {
   ]);
   return <SafeAreaView edges={["top", "bottom"]} style={[styles.safe, { backgroundColor: theme.background }]}>
     <View style={styles.header}><Pressable accessibilityRole="button" accessibilityLabel="Go back" onPress={() => router.back()} style={styles.back}><FlowIcon name="back" color={theme.icon} size={27} /></Pressable><Text accessibilityRole="header" style={[styles.title, { color: theme.text }]}>Saved</Text></View>
-    {!authResolved ? <PageContentState state="loading" pageName="saved items" /> : !isAuthenticated ? <View style={styles.center}><FlowIcon name="heart" color={flowColors.blue} size={42} /><Text style={[styles.guestTitle, { color: theme.text }]}>Sign in to view saved favorites</Text><Text style={[styles.guestText, { color: theme.muted }]}>Your saved travel is private to your account.</Text><Pressable accessibilityRole="button" accessibilityLabel="Sign in" onPress={() => router.push(signInHref("/saved"))} style={styles.primary}><Text style={styles.primaryText}>Sign in</Text></Pressable></View> : canonical.loading && !cards.length ? <PageContentState state="loading" pageName="saved items" /> : canonical.error && !cards.length ? <PageContentState state="error" pageName="saved items" onRetry={() => void canonical.refresh()} /> : cards.length ? <ScrollView alwaysBounceVertical={false} bounces={false} contentContainerStyle={styles.content} overScrollMode="never">
+    {!authResolved ? <PageContentState state="loading" pageName="saved items" /> : !isAuthenticated ? <View style={styles.center}><FlowIcon name="heart" color={flowColors.blue} size={42} /><Text style={[styles.guestTitle, { color: theme.text }]}>Sign in to view saved favorites</Text><Text style={[styles.guestText, { color: theme.muted }]}>Your saved travel is private to your account.</Text><Pressable accessibilityRole="button" accessibilityLabel="Sign in" onPress={() => router.push(signInHref("/saved"))} style={styles.primary}><Text style={styles.primaryText}>Sign in</Text></Pressable></View> : canonical.loading && !cards.length ? <PageContentState state="loading" pageName="saved items" /> : canonical.error && !cards.length ? <PageContentState state="error" pageName="saved items" onRetry={() => void canonical.refresh()} /> : cards.length ? <ScrollView alwaysBounceVertical={false} bounces={false} contentContainerStyle={styles.content} overScrollMode="never" refreshControl={<RefreshControl refreshing={canonical.loading} onRefresh={() => { void canonical.refresh(); }} />}>
       {canonical.error ? <Text accessibilityRole="alert" style={styles.syncError}>{canonical.error}</Text> : null}
       <Text style={[styles.explanation, { color: theme.muted }]}>Saved items are things you chose to keep.</Text>
       {cards.map((model) => <SavedCard key={`${model.item.type}:${model.item.id}`} model={model} remove={(item) => confirmRemove(item, model.title)} />)}
-    </ScrollView> : !canonical.loading ? <ScrollView alwaysBounceVertical={false} bounces={false} contentContainerStyle={styles.emptyContent} overScrollMode="never">
+    </ScrollView> : !canonical.loading ? <ScrollView alwaysBounceVertical={false} bounces={false} contentContainerStyle={styles.emptyContent} overScrollMode="never" refreshControl={<RefreshControl refreshing={canonical.loading} onRefresh={() => { void canonical.refresh(); }} />}>
       {canonical.error ? <Text accessibilityRole="alert" style={styles.syncError}>{canonical.error}</Text> : null}
       <View style={styles.emptyTopSpacer} />
       <View style={[styles.illustration, { width: Math.min(220, windowWidth - 72), height: Math.min(198, (windowWidth - 72) * .9) }]}>

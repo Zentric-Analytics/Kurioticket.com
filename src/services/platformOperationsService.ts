@@ -19,13 +19,13 @@ export async function readPlatformOperations(hours = 24) {
   if (db) try {
     const [rows, runs] = await db.$transaction(async tx => Promise.all([
       tx.$queryRaw<OperationalGroup[]>`
-        SELECT 'searches' AS kind, query->>'applicationSource' AS source, status::text, COUNT(*) AS count, COALESCE(SUM("latencyMs"),0) AS latency
+        SELECT 'searches' AS kind, query->>'applicationSource' AS source, status::text, COUNT(*) AS count, COALESCE(SUM("latencyMs"),0) AS latency, COUNT("latencyMs") AS "latencyCount"
         FROM "SearchHistory" WHERE "createdAt" >= ${from} AND "createdAt" < ${to} AND query->>'environment' = ${environment} GROUP BY 1,2,3
         UNION ALL
-        SELECT 'handoffs', metadata->>'applicationSource', 'SUCCESS', COUNT(*), 0
+        SELECT 'handoffs', metadata->>'applicationSource', 'SUCCESS', COUNT(*), 0, 0
         FROM "RedirectLog" WHERE "createdAt" >= ${from} AND "createdAt" < ${to} AND metadata->>'environment' = ${environment} GROUP BY 1,2,3
         UNION ALL
-        SELECT 'providerCalls', metadata->>'applicationSource', status::text, COUNT(*), COALESCE(SUM(CASE WHEN status::text <> 'DISABLED' THEN "latencyMs" ELSE 0 END),0)
+        SELECT 'providerCalls', metadata->>'applicationSource', status::text, COUNT(*), COALESCE(SUM(CASE WHEN status::text <> 'DISABLED' THEN "latencyMs" ELSE 0 END),0), COUNT(CASE WHEN status::text <> 'DISABLED' THEN "latencyMs" END)
         FROM "ApiProviderLog" WHERE "createdAt" >= ${from} AND "createdAt" < ${to} AND metadata->>'environment' = ${environment} AND service <> 'scheduled-job' GROUP BY 1,2,3
       `,
       tx.apiProviderLog.findMany({ where: { service: "scheduled-job", metadata: { path: ["environment"], equals: environment }, createdAt: { gte: from, lt: to } }, select: { provider: true, status: true, createdAt: true }, orderBy: { createdAt: "desc" }, take: 100 }),

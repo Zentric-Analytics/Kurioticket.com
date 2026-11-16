@@ -89,8 +89,8 @@ test("alert mutations clear stale errors before their optimistic updates", () =>
 });
 
 test("alert mutation failures restore state and report the new error", () => {
-  assert.match(mutateStatus, /catch \(e\) \{ if \(mounted\.current\) \{ setAlerts\(\(value\) => value\.map\(\(item\) => item\.id === alert\.id \? alert : item\)\); setError\(e instanceof TravelApiError \? e\.message : "Unable to update alert\."\);/);
-  assert.match(deleteAlert, /catch \(e\) \{ if \(mounted\.current\) \{ setAlerts\(\(value\) => value\.some\(\(\{ id \}\) => id === alert\.id\) \? value : \[alert, \.\.\.value\]\); setError\(e instanceof TravelApiError \? e\.message : "Unable to delete alert\."\);/);
+  assert.match(mutateStatus, /catch \(e\) \{ if \(mounted\.current && mutationOwner === ownerVersion\.current\) \{ setAlerts\(\(value\) => value\.map\(\(item\) => item\.id === alert\.id \? alert : item\)\); setError\(e instanceof TravelApiError \? e\.message : "Unable to update alert\."\);/);
+  assert.match(deleteAlert, /catch \(e\) \{ if \(mounted\.current && mutationOwner === ownerVersion\.current\) \{ setAlerts\(\(value\) => value\.some\(\(\{ id \}\) => id === alert\.id\) \? value : \[alert, \.\.\.value\]\); setError\(e instanceof TravelApiError \? e\.message : "Unable to delete alert\."\);/);
 });
 
 test("successful final deletion can reveal the zero-alert landing without a stale error", () => {

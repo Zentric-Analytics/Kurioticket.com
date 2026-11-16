@@ -19,6 +19,8 @@ test("combined counts reconcile with all platform partitions including historica
 });
 test("no observations and small samples are UNKNOWN; explicit disabled is distinct", () => {
   assert.equal(summarizeOperationalGroups([], "searches").state, "UNKNOWN");
+  assert.equal(summarizeOperationalGroups([{ kind: "searches", source: null, count: 10, status: "SUCCESS", latency: null }], "searches").averageLatencyMs, null);
+  assert.equal(summarizeOperationalGroups([{ kind: "searches", source: null, count: 10, status: "SUCCESS", latency: 20, latencyCount: 2 }], "searches").averageLatencyMs, 10);
   const row = { kind: "searches", source: "IOS", count: 1, latency: 1, status: "FAILED" };
   assert.equal(summarizeOperationalGroups([row], "searches").state, "UNKNOWN");
   assert.equal(summarizeOperationalGroups([{ ...row, status: "DISABLED" }], "searches").state, "DISABLED");

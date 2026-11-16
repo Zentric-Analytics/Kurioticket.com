@@ -10,7 +10,7 @@ const text = (value: unknown, max = 300) => typeof value === "string" && value.t
 function image(value: unknown, origin: string) {
   const path = text(value, 2000);
   if (!path || path.startsWith("//")) return null;
-  try { const url = new URL(path, origin); return url.protocol === "https:" && !url.username && !url.password ? { uri: url.href } : null; } catch { return null; }
+  try { const url = new URL(path, origin); const localApiAsset = url.protocol === "http:" && url.origin === new URL(origin).origin; return (url.protocol === "https:" || localApiAsset) && !url.username && !url.password ? { uri: url.href } : null; } catch { return null; }
 }
 function section<T>(value: unknown, parse: (row: Record<string, unknown>) => T | null): Section<T> {
   const data = record(value);
