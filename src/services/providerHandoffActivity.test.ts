@@ -20,8 +20,8 @@ test("guest handoffs persist the same visitor identity in the canonical log and 
   });
   assert.deepEqual(redirect, { ...handoff, userId: null, visitorId: "guest-123" });
   assert.deepEqual(event, {
-    userId: null, visitorId: "guest-123", type: "REDIRECT", name: "hotel_partner_redirect",
-    metadata: { provider: "Test provider", route: "Lagos" },
+    userId: null, visitorId: "guest-123", applicationSource: "UNKNOWN", type: "REDIRECT", name: "hotel_partner_redirect",
+    metadata: { applicationSource: "UNKNOWN", provider: "Test provider", route: "Lagos" },
   });
   assert.ok(!JSON.stringify([redirect, event]).includes("s".repeat(43)), "raw visitor credentials never enter stored records");
 });
@@ -63,7 +63,7 @@ test("a consented handoff is appended to the search journey after its redirect l
     product: "HOTEL",
     provider: "Test provider",
     redirectLogId: "redirect-123",
-    metadata: { sourcePage: "/hotel-details", resultId: "offer-123" },
+    metadata: { applicationSource: "UNKNOWN", sourcePage: "/hotel-details", resultId: "offer-123" },
   });
 });
 
@@ -86,7 +86,7 @@ test("signed-in handoff journeys carry authoritative accounts and discard page q
     journey: async (value) => {
       assert.equal(value.userId, "account-a");
       assert.equal(value.visitorId, "linked-visitor");
-      assert.deepEqual(value.metadata, { sourcePage: "/hotels/details", resultId: "offer-123" });
+      assert.deepEqual(value.metadata, { applicationSource: "UNKNOWN", sourcePage: "/hotels/details", resultId: "offer-123" });
       return null;
     },
   });
@@ -106,7 +106,7 @@ test("a validated handoff receipt carries exact search correlation and retries d
     visitorId: "linked-visitor", userId: "account-a", type: "PROVIDER_HANDOFF_STARTED",
     eventKey: "redirect:redirect-123", product: "HOTEL", provider: "Test provider",
     redirectLogId: "redirect-123", searchHistoryId: "search-123",
-    metadata: { sourcePage: "/hotel-details", resultId: "offer-123" },
+    metadata: { applicationSource: "UNKNOWN", sourcePage: "/hotel-details", resultId: "offer-123" },
   });
 });
 

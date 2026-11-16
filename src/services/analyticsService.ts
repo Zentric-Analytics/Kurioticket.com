@@ -2,9 +2,10 @@ import type { Prisma, PrismaClient } from "@/generated/prisma/client";
 import { getOptionalPrisma, withOptionalDb } from "@/lib/prisma";
 import { withEnvironmentMetadata } from "@/lib/stagingSafety";
 import { lockConsentedVisitor } from "@/services/visitorActivityIdentity";
+import { applicationMetadata, type ApplicationAttribution } from "@/lib/application-source";
 export { recordSearchHistory as logSearchHistory } from "@/services/searchJourneyService";
 
-export type AnalyticsEventInput = {
+export type AnalyticsEventInput = ApplicationAttribution & {
   userId?: string | null;
   visitorId?: string | null;
   type:
@@ -34,7 +35,7 @@ export function createAnalyticsEventRecorder(getDatabase: () => Pick<PrismaClien
           visitorId: visitorId || undefined,
           type: input.type,
           name: input.name,
-          metadata: withEnvironmentMetadata(input.metadata) as Prisma.InputJsonValue,
+          metadata: withEnvironmentMetadata({ ...input.metadata, ...applicationMetadata(input) }) as Prisma.InputJsonValue,
         } });
       });
     } catch {
