@@ -224,6 +224,20 @@ export function canonicalDate(year: string, month: string, day: string) {
   return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
 }
 
+/** Read-only picker projection for canonical dates and historical English dates.
+ * Never normalize the saved profile or its PATCH draft as a side effect. */
+export function personalDetailsDateParts(value?: string | null) {
+  const text = value?.trim() || "";
+  const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(text);
+  const legacy = /^(\d{1,2}) ([A-Za-z]+) (\d{4})$/.exec(text);
+  const months = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"];
+  const monthIndex = legacy ? months.indexOf(legacy[2].toLowerCase()) : -1;
+  const date = iso ? canonicalDate(iso[1], iso[2], iso[3])
+    : legacy && monthIndex >= 0 ? canonicalDate(legacy[3], String(monthIndex + 1), legacy[1]) : null;
+  const [year = "", month = "", day = ""] = date?.split("-") || [];
+  return { year, month, day };
+}
+
 export {
   clampPersonalDetailsDateOfBirth,
   isEligiblePersonalDetailsDateOfBirth,

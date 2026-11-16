@@ -15,6 +15,7 @@ import {
   parseAddress,
   PERSONAL_DETAIL_ORDER,
   personalDetailsLatestDateOfBirth,
+  personalDetailsDateParts,
   PHONE_COUNTRY_OPTIONS,
   profilesDiffer,
   serializeAddress,
@@ -22,6 +23,31 @@ import {
   STRUCTURED_ADDRESS_PREFIX,
 } from "./personalDetailsModel";
 import { personalDetailsCopy } from "./translations";
+
+test("date selectors project canonical and legacy English values without changing profile storage", () => {
+  const value = "09 September 1985";
+  const saved = normalizeProfile({ fullName: "Staging test", dateOfBirth: value });
+  const draft = { ...saved };
+  assert.deepEqual(personalDetailsDateParts(value), { year: "1985", month: "09", day: "09" });
+  assert.deepEqual(personalDetailsDateParts("1985-09-09"), personalDetailsDateParts(value));
+  assert.equal(draft.dateOfBirth, value);
+  assert.equal(profilesDiffer(draft, saved), false);
+  assert.equal(personalDetailsDateParts("29 February 2024").day, "29");
+  for (const invalid of ["29 February 2023", "31 April 1985", "09 NotAMonth 1985", "09/10/1985", "1985-13-09", "", null]) {
+    assert.deepEqual(personalDetailsDateParts(invalid), { year: "", month: "", day: "" });
+  }
+});
+
+test("projecting a legacy recent DOB does not relax the existing age restriction", () => {
+  const year = String(new Date().getUTCFullYear() - 1);
+  const raw = `01 January ${year}`;
+  const parts = personalDetailsDateParts(raw);
+  assert.equal(parts.year, year);
+  assert.equal(isEligiblePersonalDetailsDateOfBirth(`${parts.year}-${parts.month}-${parts.day}`), false);
+  const profile = normalizeProfile({ dateOfBirth: raw });
+  assert.equal(profile.dateOfBirth, raw);
+  assert.equal(profilesDiffer(profile, { ...profile }), false);
+});
 test("read-only fields have the required exact order", () =>
   assert.deepEqual(PERSONAL_DETAIL_ORDER, [
     "fullName",
