@@ -16,7 +16,12 @@ export const createSavedItemInputSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("flight"), provider: text, airlineName: text, flightNumber: z.string().max(64).nullish(), originAirport: text, destinationAirport: text, departureTime: z.string().max(64), arrivalTime: z.string().max(64), price: money, currency: z.string().length(3).transform(v => v.toUpperCase()).default("USD"), payload: json.default({}) }).transform((input, ctx) => {
     try {
       const departure = resolveSavedFlightTime(input.departureTime, input.originAirport);
-      const arrival = resolveSavedFlightTime(input.arrivalTime, input.destinationAirport);
+      let arrival: ReturnType<typeof resolveSavedFlightTime>;
+      try { arrival = resolveSavedFlightTime(input.arrivalTime, input.destinationAirport); }
+      catch (error) {
+        ctx.addIssue({ code: "custom", path: ["arrivalTime"], message: error instanceof Error ? error.message : "Unable to resolve arrival timezone." });
+        return z.NEVER;
+      }
       // Existing offset-qualified records retain their payload and meaning.
       const resolvedLocal = departure.timeZone || arrival.timeZone;
       return { ...input, departureTime: departure.instant, arrivalTime: arrival.instant,

@@ -44,6 +44,9 @@ test("shared web/native backend resolves raw local payloads but rejects ambiguou
   assert.equal((parsed.payload as { flightTime: { departure: { local: string } } }).flightTime.departure.local, input.departureTime);
   assert.equal(createSavedItemInputSchema.safeParse({ ...input, originAirport: "XXX" }).success, false);
   assert.equal(createSavedItemInputSchema.safeParse({ ...input, originAirport: "JFK", departureTime: "2026-11-01T01:30:00" }).success, false);
+  const invalidArrival = createSavedItemInputSchema.safeParse({ ...input, arrivalTime: "not-a-date" });
+  assert.equal(invalidArrival.success, false);
+  if (!invalidArrival.success) assert.equal(invalidArrival.error.issues[0].path[0], "arrivalTime");
   const legacy = createSavedItemInputSchema.parse({ ...input, departureTime: "2026-12-16T11:36:00Z", arrivalTime: "2026-12-16T12:54:00Z" });
   if (legacy.type !== "flight") throw new Error("Expected flight");
   assert.deepEqual(legacy.payload, input.payload);
