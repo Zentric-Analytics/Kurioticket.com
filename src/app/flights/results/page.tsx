@@ -1,3 +1,4 @@
+import { ResultsAvailabilityNotice } from "@/components/results/ResultsAvailabilityNotice";
 import { Suspense } from "react";
 import Link from "next/link";
 import { cookies } from "next/headers";
@@ -130,7 +131,7 @@ export default async function FlightResultsPage({
     const values = Object.fromEntries(Object.entries(params).map(([key, value]) => [key, Array.isArray(value) ? value[0] : value]));
     const parsed = flightSearchSchema.safeParse(values);
     const adapted = parsed.success ? adaptKayakFlightSearch(parsed.data) : null;
-    return <><AppHeader />{adapted?.supported
+    return <><AppHeader /><ResultsAvailabilityNotice />{adapted?.supported
       ? <KayakSandboxResults key={JSON.stringify(adapted.search)} search={adapted.search} />
       : <main className="page-shell py-6"><h1>KAYAK sandbox search unavailable</h1><p>{adapted && !adapted.supported ? adapted.reason : "Check the flight search details."}</p><Link href="/flights">Edit flight search</Link></main>}</>;
   }
@@ -165,6 +166,7 @@ export default async function FlightResultsPage({
           />
         }
       />
+      <ResultsAvailabilityNotice />
       <Suspense
         fallback={
           <>

@@ -8,7 +8,8 @@ const cars = readFileSync("src/features/search/ApprovedCarResultsScreen.tsx", "u
 
 test("flight, hotel, and car never route through legacy results during availability work", () => {
   assert.doesNotMatch(route, /LegacyTravelResultsScreen/);
-  assert.match(route, /if \(initializing\) return <NativeTravelSearchLoadingScreen product=\{product\}/);
+  assert.match(route, /if \(initializing\) content = <NativeTravelSearchLoadingScreen product=\{product\} includeTopInset=\{false\} \/>;\s*else if \(!isMobileProductAvailable/);
+  assert.match(route, /<SafeAreaView[^>]*edges=\{\["top"\]\}>\s*<ResultsAvailabilityNotice \/>\s*<View[^>]*>\{content\}<\/View>\s*<\/SafeAreaView>/);
   assert.match(route, /product === "car".*ApprovedCarResultsScreen/);
   assert.match(route, /ApprovedResultsScreen product=\{product\}/);
 });
@@ -34,8 +35,13 @@ test("availability and foreground transitions cannot own a travel search", () =>
 });
 
 test("initial loaders return before filters, counts, cards, navigation, and price alerts", () => {
-  assert.ok(approved.indexOf('if (status === "loading")') < approved.indexOf("<Animated.SectionList"));
-  assert.ok(cars.indexOf('if(status==="loading")') < cars.indexOf("<CarResultsHeader"));
+  const approvedLoader = approved.indexOf('if (status === "loading" || hotelCurrencyPending) return <NativeBrandedSearchLoading');
+  const carLoader = cars.indexOf('if(status==="loading") return <NativeBrandedSearchLoading');
+  const approvedChrome = approved.indexOf("<FlightResultsHeader");
+  const carChrome = cars.indexOf("<CarResultsHeader");
+  assert.ok(approvedLoader >= 0 && approvedChrome > approvedLoader, "Flight/Hotel loading returns before result chrome");
+  assert.ok(carLoader >= 0 && carChrome > carLoader, "Car loading returns before result chrome");
+  assert.ok(approved.indexOf("<Animated.SectionList") > approvedLoader);
 });
 
 test("car search uses canonical identity generations, abort, and stale-response guards", () => {

@@ -64,7 +64,8 @@ export function FeatureControlsPanel({
   operationsAvailable?: boolean;
   hideCategoryHeading?: boolean;
 }) {
-  const [controls, setControls] = useState(initialControls);
+  const serverScope = JSON.stringify([environment, canControlProduction, operationsAvailable, initialControls]);
+  const [snapshot, setSnapshot] = useState({ scope: serverScope, environment, controls: initialControls });
   const [pending, setPending] = useState<{ control: Control; enabled: boolean } | null>(null);
   const [reason, setReason] = useState("");
   const [showOptionalNote, setShowOptionalNote] = useState(false);
@@ -73,6 +74,20 @@ export function FeatureControlsPanel({
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const router = useRouter();
+  const permitted = operationsAvailable && (environment === "STAGING" || canControlProduction);
+  if (snapshot.scope !== serverScope) {
+    setSnapshot({ scope: serverScope, environment, controls: initialControls });
+    // Equal server data must not erase a local reason. A changed selected
+    // control or revoked permission must not retain a stale confirmation.
+    const selected = pending && initialControls.find(control => control.key === pending.control.key);
+    if (pending && (!permitted || snapshot.environment !== environment || JSON.stringify(selected) !== JSON.stringify(pending.control))) {
+      setPending(null);
+      setReason("");
+      setShowOptionalNote(false);
+      setError("");
+    }
+  }
+  const controls = snapshot.controls;
   const isProduction = environment === "PRODUCTION";
   const categories = Array.from(new Set(controls.map((control) => control.category)));
   const categoryLabels: Record<string, string> = {
@@ -83,13 +98,6 @@ export function FeatureControlsPanel({
     "Travel Search": "Manage travel search and Packages.",
     "Travel Automation": "Manage price alerts and automatic checks.",
   };
-
-  const syncKey = initialControls;
-  const [previousSyncKey, setPreviousSyncKey] = useState(syncKey);
-  if (previousSyncKey !== syncKey) {
-    setPreviousSyncKey(syncKey);
-    setControls(initialControls);
-  }
 
   function closePending() {
     if (saving) return;
@@ -139,7 +147,7 @@ export function FeatureControlsPanel({
   }, [pending, saving]);
 
   async function submit() {
-    if (!pending || saving) return;
+    if (!pending || saving || !permitted) return;
     setSaving(true);
     setError("");
     try {
@@ -157,8 +165,8 @@ export function FeatureControlsPanel({
         setError(body.error || "The control could not be changed.");
         return;
       }
-      setControls((current) =>
-        current.map((control) =>
+      setSnapshot((current) => current.scope !== serverScope ? current : ({ ...current, controls:
+        current.controls.map((control) =>
           control.key === pending.control.key
             ? {
                 ...control,
@@ -169,7 +177,7 @@ export function FeatureControlsPanel({
               }
             : control,
         ),
-      );
+      }));
       setPending(null);
       setReason("");
       setShowOptionalNote(false);
@@ -214,7 +222,6 @@ export function FeatureControlsPanel({
             {controls
               .filter((control) => control.category === category)
               .map((control) => {
-                const permitted = operationsAvailable && (environment === "STAGING" || canControlProduction);
                 return (
                   <article
                     key={control.key}
@@ -234,7 +241,7 @@ export function FeatureControlsPanel({
                         role="switch"
                         aria-checked={control.state.enabled}
                         aria-label={(control.state.enabled ? "Disable " : "Enable ") + control.name}
-                        disabled={!permitted}
+                        disabled={!permitted || saving}
                         onClick={(event) => {
                           triggerRef.current = event.currentTarget;
                           setPending({ control, enabled: !control.state.enabled });
@@ -343,7 +350,7 @@ export function FeatureControlsPanel({
               <button
                 type="button"
                 aria-busy={saving}
-                disabled={saving || (environment === "PRODUCTION" && !reason.trim())}
+                disabled={saving || !permitted || (environment === "PRODUCTION" && !reason.trim())}
                 onClick={submit}
                 className="inline-flex min-h-9 items-center justify-center rounded-md bg-[#004BB8] px-3 text-[13px] font-semibold text-white hover:bg-[#003B91] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 disabled:cursor-not-allowed disabled:opacity-50"
               >

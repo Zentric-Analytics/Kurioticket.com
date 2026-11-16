@@ -1,3 +1,4 @@
+import { ResultsAvailabilityNotice } from "@/components/results/ResultsAvailabilityNotice";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { SearchResultsLoadingTransition } from "@/components/layout/SearchResultsLoadingTransition";
 import { CarsResultsMobileSafeArea } from "@/components/results/CarsResultsMobileSafeArea";
@@ -16,6 +17,7 @@ export default function Loading() {
         carsResultsMobileInlineSearch
         stableMobileSafeAreaTop
       />
+      <ResultsAvailabilityNotice />
       <SearchResultsLoadingTransition searchType="car" />
     </>
   );

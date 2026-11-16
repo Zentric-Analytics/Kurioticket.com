@@ -1,3 +1,4 @@
+import { verifyMobileFares } from "../../test-support/mobileFareBrowser";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
@@ -49,12 +50,4 @@ test("compact rules are desktop-only, standalone-scoped, and content-driven", ()
   assert.match(desktop, /padding: 0\.75rem 1rem/);
 });
 
-test("nearby fare rail preserves full prices in accessible date buttons", () => {
-  assert.match(source, /data-nearby-fare-presentation="mobile"/);
-  assert.match(source, /const accessibleFare = displayPrice/);
-  assert.match(source, /aria-label=\{`\$\{accessibleDate\}: \$\{accessibleFare\}`\}/);
-  assert.match(source, /data-fare-date-cell/);
-  assert.match(source, /aria-pressed=\{selected\}/);
-  assert.match(source, /handleNearbyFareDateSelect\(fare.date\)/);
-  assert.doesNotMatch(source, /data-desktop-nearby-fare-rail/);
-});
+test("desktop fare geometry preserves seven dates and complete price accessibility", async () => { await verifyMobileFares(source); });

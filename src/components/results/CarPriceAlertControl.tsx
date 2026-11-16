@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Bell, CheckCircle2 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import type { CarOffer, CarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
 import {
   buildAutomaticCarPriceAlertPayload,
@@ -38,8 +38,12 @@ export function CarPriceAlertControl({ search, car, offer }: {
     providerName: offer.bookingProviderName.trim() || offer.rentalCompanyName.trim(),
   }), [car.id, offer.id, offer.bookingProviderName, offer.rentalCompanyName]);
   const [matchingAlert, setMatchingAlert] = useState<WebCarPriceAlert>();
-  const [reconciled, setReconciled] = useState(false);
-  const [pending, setPending] = useState(false);
+  const lookupKey = JSON.stringify([search, scope]);
+  const [lookup, setLookup] = useState<{ key: string; status: "loading" | "ready" | "error" | "auth" }>({ key: lookupKey, status: "loading" });
+  const reconciled = lookup.key === lookupKey && lookup.status === "ready";
+  const [mutationPending, setPending] = useState(false);
+  const pending = mutationPending || lookup.key !== lookupKey || lookup.status === "loading";
+  const lookupErrorId = useId();
   const [optimisticTracking, setOptimisticTracking] = useState<boolean | null>(null);
   const [feedback, setFeedback] = useState<SuccessFeedback>(null);
   const [error, setError] = useState<PriceTrackingError>(null);
@@ -49,20 +53,21 @@ export function CarPriceAlertControl({ search, car, offer }: {
   const switchRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
 
-  const reconcile = useCallback(async () => {
+  const reconcile = useCallback(() => {
     const request = ++requestRef.current;
-    try {
-      const response = await fetch("/api/price-alerts", { cache: "no-store" });
+    return Promise.resolve().then(() => fetch("/api/price-alerts", { cache: "no-store" })).then(async (response) => {
       if (request !== requestRef.current) return;
-      if (response.status === 401) { setMatchingAlert(undefined); setReconciled(true); return; }
-      if (!response.ok) return;
+      if (response.status === 401) { setMatchingAlert(undefined); setLookup({ key: lookupKey, status: "auth" }); return; }
+      if (!response.ok) throw new Error("Alert lookup failed");
       const data = await response.json() as { alerts?: WebCarPriceAlert[] };
+      if (request !== requestRef.current) return;
+      if (!data || !Array.isArray(data.alerts)) throw new Error("Invalid alert lookup");
       setMatchingAlert(matchingAutomaticCarPriceAlert(data.alerts ?? [], search, scope));
-      setReconciled(true);
-    } finally {
-      if (request === requestRef.current) setReconciled(true);
-    }
-  }, [search, scope]);
+      setLookup({ key: lookupKey, status: "ready" });
+    }).catch(() => {
+      if (request === requestRef.current) setLookup({ key: lookupKey, status: "error" });
+    });
+  }, [search, scope, lookupKey]);
 
   useEffect(() => { void reconcile(); return () => { requestRef.current += 1; }; }, [reconcile]);
   useEffect(() => {
@@ -118,7 +123,7 @@ export function CarPriceAlertControl({ search, car, offer }: {
   };
 
   if (!baseline || !scope.providerName) return null;
-  const committedTracking = matchingAlert?.status === "ACTIVE";
+  const committedTracking = reconciled && matchingAlert?.status === "ACTIVE";
   const tracking = optimisticTracking ?? committedTracking;
   const disabled = !reconciled;
   return <>
@@ -128,13 +133,15 @@ export function CarPriceAlertControl({ search, car, offer }: {
           <Bell className="h-4 w-4 text-[#1769AA]" aria-hidden="true" />
         </span>
         <span className="min-w-0 flex-1 text-[13px] font-semibold leading-[18px] tracking-[-0.005em] text-[#07133B]">{t("carsResults.priceTracking.title")}</span>
-        <button ref={switchRef} type="button" role="switch" aria-checked={tracking} aria-busy={pending} disabled={disabled} aria-label={`${t("carsResults.priceTracking.title")} for ${scope.providerName} offer`} onClick={() => void toggle(!tracking)} className="relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35">
+        <button ref={switchRef} type="button" role="switch" aria-checked={tracking} aria-busy={pending} disabled={disabled} aria-describedby={lookup.key === lookupKey && lookup.status === "error" ? lookupErrorId : undefined} aria-label={`${t("carsResults.priceTracking.title")} for ${scope.providerName} offer`} onClick={() => void toggle(!tracking)} className="relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35">
           <span aria-hidden="true" className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors ${tracking ? "border-[#004BB8] bg-[#004BB8]" : "border-slate-300 bg-slate-200"}`}>
             <span className={`h-[18px] w-[18px] rounded-full bg-white shadow transition-transform ${tracking ? "translate-x-[23px] rtl:-translate-x-[23px]" : "translate-x-[3px] rtl:-translate-x-[3px]"}`} />
           </span>
         </button>
       </div>
     </section>
+    {lookup.key === lookupKey && lookup.status === "error" ? <div role="alert" className="mt-2 text-sm text-slate-700"><p id={lookupErrorId}>{t("accountDashboard.priceAlerts.error.title")}</p><button type="button" onClick={() => { setLookup({ key: lookupKey, status: "loading" }); void reconcile(); }} className="min-h-11 rounded-lg px-2 font-semibold text-[#1769AA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1769AA]/40">{t("carsResults.priceTracking.retry")}</button></div> : null}
+    {lookup.key === lookupKey && lookup.status === "auth" ? <button type="button" onClick={signIn} className="mt-2 min-h-11 rounded-lg px-2 text-sm font-semibold text-[#1769AA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1769AA]/40">{t("login")}</button> : null}
     {feedback ? <div role="status" aria-live="polite" className={`fixed bottom-[calc(max(env(safe-area-inset-bottom),12px)+12px)] left-4 right-4 z-[110] mx-auto flex max-w-md items-center gap-2.5 rounded-[14px] border-[0.5px] border-[#C8DFF7] bg-[#EDF6FF] px-[13px] py-[11px] shadow-[0_4px_16px_rgba(15,23,42,0.16)] ${snackbarLeaving ? "cars-price-alert-snackbar-leaving" : "cars-price-alert-snackbar-entering"}`}>
       <CheckCircle2 className="h-5 w-5 shrink-0 text-[#1769AA]" aria-hidden="true" />
       <span className="flex min-w-0 flex-1 flex-col gap-px"><strong className="block text-[14px] font-bold leading-[19px] text-slate-950 lg:text-[15px] lg:font-bold lg:leading-5">{t(feedback === "active" ? "carsResults.priceTracking.active" : "carsResults.priceTracking.inactive")}</strong><span className="block text-[12.5px] leading-[17px] text-slate-600 lg:text-[13px] lg:font-medium lg:leading-5 lg:text-[#475569]">{t(feedback === "active" ? "carsResults.priceTracking.activeBody" : "carsResults.priceTracking.inactiveBody")}</span></span>

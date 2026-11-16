@@ -71,7 +71,8 @@ test("old Confirmation alerts links safely redirect to Delivery Health within Tr
   assert.match(route, /redirect\("\/admin\/confirmed-trips\/monitoring\?panel=delivery#confirmation-delivery-health-title"\)/);
   assert.doesNotMatch(route, /<AdminPageShell|Monitoring inactive|No confirmation provider feed is configured|<AdminSectionCard/);
   assert.match(operations, /id="confirmation-delivery-health-title"/);
-  assert.match(operations, /<section id="confirmation-delivery-health-title"/);
+  assert.match(operations, /<section id="confirmation-delivery-health-title" aria-labelledby="confirmation-delivery-health-heading"/);
+  assert.doesNotMatch(operations, /<details id="confirmation-delivery-health-title"/);
   assert.match(globalAlerts, /id="settings-section-title"/);
   assert.match(globalAlerts, /<AdminAlertAcknowledgeButton/);
   assert.doesNotMatch(navigation, /href: "\/admin\/notifications"/);

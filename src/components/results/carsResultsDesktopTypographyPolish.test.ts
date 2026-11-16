@@ -1,3 +1,5 @@
+import { jsxOpening } from "../../test-support/sourceStructure";
+import { assertFullWidthRateAlert } from "../../test-support/sourceStructure";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
@@ -133,10 +135,7 @@ test("standalone desktop result cards use a polished identity, details, and pric
     price,
     /data-car-price-comparison-action[\s\S]*?font-bold leading-5 text-\[#004BB8\][\s\S]*?text-\[14px\] tracking-\[-0\.005em\]/,
   );
-  assert.match(
-    alert,
-    /text-\[13px\] font-semibold leading-\[18px\] tracking-\[-0\.005em\] text-\[#07133B\]/,
-  );
+  assertFullWidthRateAlert(alert);
 });
 
 test("desktop typography polish leaves the established mobile Cars hierarchy intact", () => {
@@ -161,9 +160,8 @@ test("desktop typography polish leaves the established mobile Cars hierarchy int
     mobileCard,
     /data-car-card-mobile-specs[\s\S]*?text-\[11px\] font-medium leading-\[14px\]/,
   );
-  assert.match(
-    mobileCard,
-    /<CarDealPicker[\s\S]*selectedOfferId=\{offer\.id\}[\s\S]*compact/,
-  );
-  assert.doesNotMatch(mobileCard, /data-region="pricing"/);
+  assert.equal(jsxOpening(mobileCard, "CarDealPicker").length, 1);
+  assert.match(mobileCard, /compact/);
+  assert.match(mobileCard, /selectedOfferId=\{offer.id\}/);
+  assert.doesNotMatch(mobileCard, /text-\[20px\]/);
 });

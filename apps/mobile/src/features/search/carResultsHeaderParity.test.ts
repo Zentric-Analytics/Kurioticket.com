@@ -4,6 +4,7 @@ import test from "node:test";
 import { getLocationFieldDisplay } from "../../../../../src/lib/search/locationFieldDisplay";
 
 const cars = readFileSync("src/features/search/ApprovedCarResultsScreen.tsx", "utf8");
+const resultsShell = readFileSync("src/features/flow/TravelResultsScreen.tsx", "utf8");
 const carAlert = readFileSync("src/features/search/NativeCarPriceAlert.tsx", "utf8");
 const hotels = readFileSync("src/features/search/ApprovedResultsScreen.tsx", "utf8");
 const carHeader = cars.slice(cars.indexOf("function CarResultsHeader"), cars.indexOf("function CarResultItemSeparator"));
@@ -67,7 +68,8 @@ test("Cars header geometry and glass positions remain identical to Hotels", () =
 test("native Cars keeps the white filter rail and curved surface below its Hotel-style navbar", () => {
   assert.match(cars, /const CAR_RESULTS_LIGHT_CANVAS = "#F5F7FB"/);
   assert.match(cars, /const headerSurfaceColor = theme\.dark \? theme\.background : "#FFFFFF"/);
-  assert.match(cars, /<SafeAreaView style=\{\[r\.safe,\{backgroundColor:headerSurfaceColor\}\]\} edges=\{\["top"\]\}>/);
+  assert.match(cars, /<SafeAreaView style=\{\[r\.safe,\{backgroundColor:headerSurfaceColor\}\]\} edges=\{\[\]\}>/);
+  assert.match(resultsShell, /<SafeAreaView[^>]*edges=\{\["top"\]\}>\s*<ResultsAvailabilityNotice \/>\s*<View style=\{styles\.safe\}>\{content\}<\/View>\s*<\/SafeAreaView>/);
   assert.match(cars, /<View style=\{\[r\.carHeaderBackdrop,\{backgroundColor:carCanvasColor\}\]\}>/);
   assert.match(cars, /<View style=\{\[r\.carHeaderSurface,\{backgroundColor:headerSurfaceColor,borderBottomColor:theme\.dark\?theme\.border:"#D8E1EC"\}\]\}>/);
   assert.match(cars, /carHeaderSurface:\{borderBottomLeftRadius:28,borderBottomRightRadius:0,borderBottomWidth:StyleSheet\.hairlineWidth,overflow:"hidden"\}/);
@@ -82,9 +84,11 @@ test("native Cars keeps the white filter rail and curved surface below its Hotel
   assert.doesNotMatch(carHeader, /accessibilityLabel="Menu"/);
 });
 
-test("Cars navbar, status safe area, and filter rail share one white surface above muted results", () => {
+test("Cars navbar and filter rail share one white surface below the results shell safe area", () => {
   assert.match(cars, /const headerSurfaceColor = theme\.dark \? theme\.background : "#FFFFFF"/);
-  assert.match(cars, /<SafeAreaView style=\{\[r\.safe,\{backgroundColor:headerSurfaceColor\}\]\} edges=\{\["top"\]\}>/);
+  assert.match(cars, /<SafeAreaView style=\{\[r\.safe,\{backgroundColor:headerSurfaceColor\}\]\} edges=\{\[\]\}>/);
+  assert.match(resultsShell, /<SafeAreaView style=\{\[styles\.safe, \{ backgroundColor: theme\.background \}\]\} edges=\{\["top"\]\}>/);
+  assert.match(resultsShell, /else if \(product === "car"\) content = <ApprovedCarResultsScreen \/>/);
   assert.match(cars, /<CarResultsHeader[^>]*backgroundColor=\{headerSurfaceColor\}/);
   assert.match(cars, /r\.carHeaderSurface,\{backgroundColor:headerSurfaceColor,/);
   assert.match(cars, /r\.carFilterSectionHeader,\{backgroundColor:headerSurfaceColor\}/);

@@ -1,3 +1,4 @@
+import { ResultsAvailabilityNotice } from "@/components/results/ResultsAvailabilityNotice";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { SearchResultsLoadingTransition } from "@/components/layout/SearchResultsLoadingTransition";
 
@@ -26,6 +27,7 @@ export default function PageLoading() {
           />
         }
       />
+      <ResultsAvailabilityNotice />
       <SearchResultsLoadingTransition searchType="flight" />
     </>
   );

@@ -230,4 +230,3 @@ test("CMS revision restore surfaces actionable canonical conflicts instead of pr
   assert.match(restore, /: serverError\)/);
   assert.doesNotMatch(restore, /response\.status === 409\s*\? "This content changed in another session/);
 });
-

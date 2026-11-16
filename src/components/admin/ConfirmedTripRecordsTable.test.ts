@@ -45,7 +45,8 @@ test("compact record table preserves authentic customer, trip, provider, timesta
   assert.match(html, /tabIndex="0"/i);
   assert.match(html, /overflow-x-auto/);
   assert.match(html, /min-w-\[1080px\]/);
-  assert.equal((html.match(/<th /g) || []).length, 8);
+  const headings = [...html.matchAll(/<th\b[^>]*>([\s\S]*?)<\/th>/g)].map(match => match[1]);
+  assert.deepEqual(headings, ["CREATED", "TYPE", "TRIP", "TRAVEL DATES", "PROVIDER", "IDENTITY", "STATUS", "ACTION"]);
 });
 
 test("stored statuses and stale-status warnings remain truthful and read-only", () => {

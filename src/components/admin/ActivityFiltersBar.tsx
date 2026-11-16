@@ -25,10 +25,18 @@ export function ActivityFiltersBar({ path, initial, directory, tabs }: { path: s
   const [pending, startTransition] = useTransition();
   const timeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const submitted = useRef("");
-  const initialKey = JSON.stringify(initial);
-  const [previousInitialKey, setPreviousInitialKey] = useState(initialKey);
-  if (previousInitialKey !== initialKey) { setPreviousInitialKey(initialKey); setValues(initial); setDraftDates({from: initial.from,to: initial.to}); setEditingCustom(false); }
-  useEffect(() => { if (timeout.current) clearTimeout(timeout.current); submitted.current = ""; }, [initialKey]);
+  const scope = JSON.stringify([initial.tab, initial.q, initial.product, initial.stage, initial.order, initial.from, initial.to, initial.range]);
+  const [previousScope, setPreviousScope] = useState(scope);
+  if (previousScope !== scope) {
+    setPreviousScope(scope);
+    setValues(initial);
+    setDraftDates({ from: initial.from, to: initial.to });
+    setEditingCustom(false);
+  }
+  useEffect(() => {
+    if (timeout.current) clearTimeout(timeout.current);
+    submitted.current = "";
+  }, [scope]);
   useEffect(() => () => { if (timeout.current) clearTimeout(timeout.current); }, []);
   const navigate = (next: Values) => {
     const params = new URLSearchParams();

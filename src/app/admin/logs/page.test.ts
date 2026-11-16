@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { namedFunction } from "../../../test-support/sourceStructure";
 
 const page = readFileSync("src/app/admin/logs/page.tsx", "utf8");
 const toolbar = readFileSync("src/components/admin/AdminAuditLogsToolbar.tsx", "utf8");
@@ -109,7 +110,8 @@ test("Audit Logs filters preserve the safe reader contract and user-page custom-
   assert.ok(page.includes('params.set("limit", "100")'));
   assert.ok(page.includes('params.has("cursor")'));
   assert.ok(page.includes('range === "90d"'));
-  assert.ok(page.includes('params.set("range", range)'));
+  assert.equal(namedFunction(page, "auditParams").includes('params.set("range"'), false);
+  assert.match(namedFunction(page, "currentHref"), /params\.set\("range", range\)/);
 });
 
 test("Audit Logs forwards malformed reader parameters so the safe reader can reject them", () => {

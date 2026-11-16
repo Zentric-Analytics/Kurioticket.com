@@ -187,8 +187,18 @@ export function FlightMobilePickerShell({
   const closeInteractionRef = useRef<"keyboard" | "pointer">("pointer");
   const closePromiseRef = useRef<Promise<void> | null>(null);
   const shellRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDialogElement | null>(null);
   const scrollLockSnapshotRef = useRef<ScrollLockSnapshot | null>(null);
   const portalElement = typeof document === "undefined" ? null : document.body;
+  // The native modal owns initial focus, keyboard containment and background
+  // inertness. Nested pickers keep their existing parent dialog as sole owner.
+  useEffect(() => {
+    if (!open || withinDialog || !window.matchMedia("(max-width: 639px)").matches) return;
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    dialog.showModal();
+    return () => { if (dialog.open) dialog.close(); };
+  }, [open, withinDialog]);
 
   const restorePagePosition = useCallback(() => {
     if (typeof window === "undefined") return null;
@@ -229,6 +239,8 @@ export function FlightMobilePickerShell({
 
   const restoreLauncherFocus = useCallback(
     (launcherElement: HTMLElement | null | undefined) => {
+      // Release native inertness before restoring a launcher outside the modal.
+      if (dialogRef.current?.open) dialogRef.current.close();
       launcherElement?.focus({ preventScroll: true });
     },
     [],
@@ -423,6 +435,7 @@ export function FlightMobilePickerShell({
         footer(requestClose)
       : footer;
 
+  const DialogSurface = withinDialog ? "div" : "dialog";
   const content = (
     <div
       ref={shellRef}
@@ -441,13 +454,38 @@ export function FlightMobilePickerShell({
         carsResultsEdit && !whiteSurface && "bg-[#F5F7FB]",
       )}
     >
-      <div
+      <DialogSurface
+        ref={(element: HTMLDivElement | HTMLDialogElement | null) => {
+          dialogRef.current = element instanceof HTMLDialogElement ? element : null;
+        }}
         id={dialogId}
         role="dialog"
+        tabIndex={withinDialog ? undefined : -1}
         aria-modal="true"
         aria-labelledby={titleId}
+        onCancel={(event) => {
+          event.preventDefault();
+          closeInteractionRef.current = "keyboard";
+          requestClose();
+        }}
         onKeyDown={(event) => {
+          if (!withinDialog && event.key === "Tab") {
+            const dialog = event.currentTarget;
+            const controls = Array.from(dialog.querySelectorAll<HTMLElement>(
+              'a[href],button,input,select,textarea,[tabindex],[contenteditable="true"]',
+            )).filter(element => element.tabIndex >= 0 && !element.matches(":disabled") &&
+              !element.closest("[inert]") && element.getClientRects().length > 0);
+            const first = controls[0];
+            const last = controls[controls.length - 1];
+            if (!first || (event.shiftKey ? document.activeElement === first : document.activeElement === last) ||
+              document.activeElement === dialog) {
+              event.preventDefault();
+              (event.shiftKey ? last : first)?.focus({ preventScroll: true });
+              if (!first) dialog.focus({ preventScroll: true });
+            }
+          }
           if (event.key === "Escape") {
+            event.preventDefault();
             closeInteractionRef.current = "keyboard";
             event.stopPropagation();
             requestClose();
@@ -456,6 +494,7 @@ export function FlightMobilePickerShell({
         style={carsMainVisualViewport ? carsMainViewportStyle : undefined}
         className={cn(
           "fixed inset-0 flex h-[100dvh] min-h-0 w-screen max-w-full flex-col overflow-hidden bg-white pt-[env(safe-area-inset-top)]",
+          !withinDialog && "m-0 max-h-none border-0 p-0",
           carsMain && "absolute h-full",
           carsMainVisualViewport && "bottom-auto",
           carsResultsEdit && !whiteSurface && "bg-[#F5F7FB]",
@@ -529,7 +568,7 @@ export function FlightMobilePickerShell({
             <div className="mx-auto w-full max-w-xl">{renderedFooter}</div>
           </div>
         ) : null}
-      </div>
+      </DialogSurface>
     </div>
   );
   return withinDialog ? content : createPortal(content, portalElement);

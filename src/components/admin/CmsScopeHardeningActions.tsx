@@ -342,4 +342,3 @@ export function CmsScopeHardeningActions({
     </div>
   );
 }
-

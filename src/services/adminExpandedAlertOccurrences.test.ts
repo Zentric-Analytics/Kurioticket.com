@@ -1,22 +1,28 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { persistExpandedAlertOccurrences, type OccurrenceDatabase } from "./adminExpandedAlertOccurrences";
+import * as crypto from "node:crypto";
+import { loadIsolatedModule } from "../test-support/loadIsolatedModule";
+import type * as implementation from "./adminExpandedAlertOccurrences";
+import type { AdminAlertCandidate } from "./adminAlertCore";
 
-type Row = {targetId: string; metadata: {state: string}; createdAt: Date};
 const now = new Date("2026-11-04T14:00:00Z");
 const alert = { key: "expanded.staging.support.OPEN", source: "SUPPORT", severity: "WARNING", title: "Urgent tickets", message: "2 urgent tickets", actionHref: "/admin/support?priority=URGENT&status=OPEN", signalToken: "provisional" } as const;
+type AuditData = { targetId: string; metadata: { state: string; occurrenceToken?: string } };
 function database() {
-  const rows: Row[] = [];
+  const rows: Array<AuditData & { createdAt: Date }> = [];
   let locks = 0;
   const transaction = {
     $executeRaw: async () => { locks++; },
     adminAuditLog: {
-      findFirst: async (args: {where: {targetId: string}}) => rows.filter(row => row.targetId === args.where.targetId).at(-1) ?? null,
-      create: async ({ data }: {data: Omit<Row,"createdAt">}) => { rows.push({ ...data, createdAt: now }); return data; },
+      findFirst: async (args: { where: { targetId: string } }) => rows.filter(row => row.targetId === args.where.targetId).at(-1) ?? null,
+      create: async ({ data }: { data: AuditData }) => { rows.push({ ...data, createdAt: now }); return data; },
     },
   };
-  return { db: { $transaction: async (run: (tx: typeof transaction) => Promise<unknown>) => run(transaction) } as unknown as OccurrenceDatabase, rows, locks: () => locks };
+  return { db: { $transaction: async <T>(run: (tx: typeof transaction) => Promise<T>) => run(transaction) }, rows, locks: () => locks };
 }
+const { persistExpandedAlertOccurrences } = loadIsolatedModule<{
+  persistExpandedAlertOccurrences: (db: ReturnType<typeof database>["db"] | null, environment: "staging" | "production", candidates: readonly AdminAlertCandidate[], states: Record<string, boolean>, now?: Date) => ReturnType<typeof implementation.persistExpandedAlertOccurrences>;
+}>("src/services/adminExpandedAlertOccurrences.ts", { "node:crypto": crypto });
 test("polling and count changes retain acknowledgement identity for a continuous incident", async () => {
   const { db, rows, locks } = database();
   const first = await persistExpandedAlertOccurrences(db, "staging", [alert], { [alert.key]: true }, now);
@@ -40,7 +46,7 @@ test("critical escalation cannot be hidden by an earlier warning acknowledgement
   assert.notEqual(first[0].signalToken, next[0].signalToken);
 });
 test("persistence failure preserves the incident and does not claim a durable acknowledgement token", async () => {
-  const db = { $transaction: async () => { throw new Error("private diagnostic"); } } as unknown as OccurrenceDatabase;
+  const db = { $transaction: async () => { throw new Error("private diagnostic"); } };
   const result = await persistExpandedAlertOccurrences(db, "staging", [alert], { [alert.key]: true }, now);
   assert.equal(result.length, 1); assert.match(result[0].signalToken, /^unpersisted:/);
   assert.doesNotMatch(JSON.stringify(result), /private diagnostic/);

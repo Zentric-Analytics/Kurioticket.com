@@ -18,10 +18,14 @@ const statuses = [
 
 type Option = { label: string; value: string };
 
-function contentDirectoryHref(path: string, query: string, changes: Record<string, string>, reset = false) {
-  const params = reset ? new URLSearchParams() : new URLSearchParams(query);
-  if (reset && new URLSearchParams(query).get("from") === "overview") params.set("from", "overview");
-  for (const [key,value] of Object.entries(changes)) { if (value) params.set(key,value); else params.delete(key); }
+function contentDirectoryHref(path: string, source: URLSearchParams, changes: Record<string, string>, reset = false) {
+  const params = reset ? new URLSearchParams() : new URLSearchParams(source);
+  // Keep the origin of an overview visit when filters are cleared.
+  if (reset && source.get("from") === "overview") params.set("from", "overview");
+  for (const [key, value] of Object.entries(changes)) {
+    if (value) params.set(key, value);
+    else params.delete(key);
+  }
   params.delete("cursor");
   const encoded = params.toString();
   return path + (encoded ? "?" + encoded : "");
@@ -68,10 +72,11 @@ export function ContentDirectoryToolbar({
     return () => window.removeEventListener("popstate", onPop);
   }, []);
 
-  const hrefFor = useCallback((changes: Record<string,string>, reset = false) => contentDirectoryHref(path, query, changes, reset), [path, query]);
+  const hrefFor = useCallback((changes: Record<string, string>, reset = false) =>
+    contentDirectoryHref(path, new URLSearchParams(query), changes, reset), [path, query]);
 
   const navigate = useCallback((changes: Record<string, string>, replace = false, reset = false) => {
-    const url = contentDirectoryHref(path, paramsRef.current.toString(), changes, reset);
+    const url = contentDirectoryHref(path, paramsRef.current, changes, reset);
     paramsRef.current = new URLSearchParams(url.split("?")[1] || "");
     startTransition(() => replace ? router.replace(url, { scroll: false }) : router.push(url, { scroll: false }));
   }, [path, router]);
@@ -212,4 +217,3 @@ export function ContentDirectoryToolbar({
     </div>
   );
 }
-

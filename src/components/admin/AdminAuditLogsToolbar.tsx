@@ -86,6 +86,7 @@ export function AdminAuditLogsToolbar({
   const adminDraftRef = useRef(adminEmail);
   const targetDraftRef = useRef(targetEmail);
   const searchEditingRef = useRef(false);
+  const [searchEditing, setSearchEditing] = useState(false);
   const lastSubmittedSearchRef = useRef<string | null>(null);
   const paramsRef = useRef(new URLSearchParams(pageHref.split("?")[1] || ""));
 
@@ -93,29 +94,35 @@ export function AdminAuditLogsToolbar({
     paramsRef.current = new URLSearchParams(pageHref.split("?")[1] || "");
   }, [pageHref]);
 
-  const syncKey = JSON.stringify([pageHref,fromDate,toDate,customOpen]);
-  const [previousSyncKey, setPreviousSyncKey] = useState(syncKey);
-  if (previousSyncKey !== syncKey) {
-    setPreviousSyncKey(syncKey);
+  const committedScope = JSON.stringify([pageHref, fromDate, toDate, customOpen]);
+  const [previousScope, setPreviousScope] = useState(committedScope);
+  if (previousScope !== committedScope) {
+    setPreviousScope(committedScope);
     if (!customOpen) setDraftDates({ from: fromDate, to: toDate });
+  }
+  const searchScope = JSON.stringify([pageHref, adminEmail, targetEmail]);
+  const [previousSearchScope, setPreviousSearchScope] = useState(searchScope);
+  if (previousSearchScope !== searchScope) {
+    setPreviousSearchScope(searchScope);
+    const appliedAdmin = adminEmail.trim();
+    const appliedTarget = targetEmail.trim();
+    // Preserve edits while an older server navigation is still arriving.
+    if (!searchEditing) {
+      setAdminDraft(appliedAdmin);
+      setTargetDraft(appliedTarget);
+    } else if (appliedAdmin === adminDraft.trim() && appliedTarget === targetDraft.trim()) {
+      setSearchEditing(false);
+    }
   }
 
   useEffect(() => {
-    const appliedAdmin = adminEmail.trim();
-    const appliedTarget = targetEmail.trim();
-    if (!searchEditingRef.current) {
-      adminDraftRef.current = appliedAdmin;
-      targetDraftRef.current = appliedTarget;
-      setAdminDraft(appliedAdmin);
-      setTargetDraft(appliedTarget);
-      lastSubmittedSearchRef.current = null;
-      return;
-    }
-    if (appliedAdmin === adminDraftRef.current.trim() && appliedTarget === targetDraftRef.current.trim()) {
+    if (!searchEditing) {
+      adminDraftRef.current = adminDraft;
+      targetDraftRef.current = targetDraft;
       searchEditingRef.current = false;
       lastSubmittedSearchRef.current = null;
     }
-  }, [pageHref, adminEmail, targetEmail]);
+  }, [searchEditing, adminDraft, targetDraft]);
 
   useEffect(() => {
     const onHistoryNavigation = () => {
@@ -124,6 +131,7 @@ export function AdminAuditLogsToolbar({
       searchEditingRef.current = false;
       lastSubmittedSearchRef.current = null;
       setCustomOpen(false);
+      setSearchEditing(false);
 
       const restoredAdmin = (params.get("adminEmail") ?? "").trim();
       const restoredTarget = (params.get("targetEmail") ?? "").trim();
@@ -259,6 +267,7 @@ export function AdminAuditLogsToolbar({
             onChange={event => {
               adminDraftRef.current = event.target.value;
               searchEditingRef.current = true;
+              setSearchEditing(true);
               setAdminDraft(event.target.value);
             }}
             placeholder="Search admin email"
@@ -275,6 +284,7 @@ export function AdminAuditLogsToolbar({
             onChange={event => {
               targetDraftRef.current = event.target.value;
               searchEditingRef.current = true;
+              setSearchEditing(true);
               setTargetDraft(event.target.value);
             }}
             placeholder="Search target email"

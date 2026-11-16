@@ -56,4 +56,3 @@ test("CMS field fallback keeps required and disabled semantics without JavaScrip
   assert.match(html, /h-9/);
   assert.doesNotMatch(html, /role="listbox"/);
 });
-

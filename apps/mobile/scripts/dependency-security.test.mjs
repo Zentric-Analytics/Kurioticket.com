@@ -6,10 +6,11 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 const require = createRequire(import.meta.url);
 const decoder = require('decode-uri-component');
-const query = require('query-string');
+// Resolve the actual router dependency, which need not be hoisted.
+const routerRequire = createRequire(require.resolve('expo-router/package.json'));
+const queryModule = routerRequire('query-string');
+const query = queryModule.default ?? queryModule;
 const metroRequire = createRequire(require.resolve('metro/package.json'));
-const imagePath = metroRequire.resolve('image-size');
-const size = metroRequire('image-size');
 const metro = metroRequire('./src/Assets.js');
 const mobile = fileURLToPath(new URL('..', import.meta.url));
 
@@ -37,18 +38,16 @@ test('hostile decoder input finishes within an isolated process deadline', () =>
   const result = spawnSync(process.execPath, ['-e', `const d=require('decode-uri-component'); for(const x of ['%FF'.repeat(10000),Array.from({length:5000},(_,i)=>'%41'.repeat(i%10+1)+'%FF').join('-')]) { const y=d(x); if(!y.includes('%FF'))process.exit(2); }`], {cwd:mobile, timeout:5000, encoding:'utf8'});
   assert.equal(result.error, undefined); assert.equal(result.status,0,result.stderr);
 });
-test('image-size remains the callable 1.x API used by Metro', () => {
-  assert.equal(typeof size, 'function');
-  for (const name of ['imageSize','disableFS','disableTypes','setConcurrency']) assert.equal(typeof size[name], 'function');
-  assert.equal(size.default, size); assert.ok(size.types.includes('png'));
+test('retained Metro uses its internal image parser instead of the removed image-size dependency', () => {
+  const metadata = metroRequire('./package.json');
+  assert.equal(metadata.version, '0.83.8');
+  assert.equal(metadata.dependencies['image-size'], undefined);
 });
 for (const name of ['kurioticket-icon-ios.png','kurioticket-adaptive-foreground.png']) {
-  test(`Metro static asset metadata and buffer/path/callback APIs: ${name}`, async () => {
+  test(`Metro static asset metadata and internal parser: ${name}`, async () => {
     const path = fileURLToPath(new URL(`../assets/${name}`, import.meta.url));
-    const bytes = readFileSync(path); const info = size(bytes);
+    const bytes = readFileSync(path); const info = metro.getAssetSize('png', bytes, path);
     assert.ok(info.width > 0 && info.height > 0);
-    assert.deepEqual(size(path), info);
-    assert.deepEqual(await new Promise((resolve,reject)=>size(path,(err,value)=>err?reject(err):resolve(value))),info);
     assert.deepEqual(metro.getAssetSize('png',bytes,path),{width:info.width,height:info.height});
     for (const platform of ['ios','android']) {
       const data = await metro.getAssetData(path,`assets/${name}`,[],platform,'/assets');
@@ -58,14 +57,15 @@ for (const name of ['kurioticket-icon-ios.png','kurioticket-adaptive-foreground.
 }
 test('valid SVG, GIF, ICNS and unsupported/empty asset handling', () => {
   assert.deepEqual(metro.getAssetSize('svg',Buffer.from('<svg width="17" height="23"></svg>'),'test.svg'),{width:17,height:23});
-  const gif=Buffer.from('47494638396111001700','hex'); assert.equal(size(gif).width,17); assert.equal(size(gif).height,23);
-  const icns=Buffer.from('69636e73000000106963703100000008','hex'); icns.write('icp4',8); assert.equal(size(icns).width,16);
+  const gif=Buffer.from('47494638396111001700','hex'); assert.deepEqual(metro.getAssetSize('gif', gif, 'test.gif'), { width: 17, height: 23 });
+  assert.equal(metro.getAssetSize('icns', Buffer.from('icns'), 'test.icns'), null);
   assert.equal(metro.getAssetSize('txt',Buffer.from('text'),'test.txt'),null);
   assert.throws(()=>metro.getAssetSize('png',Buffer.alloc(0),'empty.png'),/empty/);
 });
 for (const kind of ['icns','heif','jxl']) {
   test(`malformed ${kind} zero/undersized boxes cannot hang the parser`, () => {
-    const program = `const size=require(${JSON.stringify(imagePath)}); const kind=${JSON.stringify(kind)}; for(const len of [0,1,2,7,8,0xffffffff]) { let b; if(kind==='icns'){b=Buffer.alloc(32);b.write('icns');b.writeUInt32BE(32,4);b.write('icp4',8);b.writeUInt32BE(8,12);b.write('icp4',16);b.writeUInt32BE(len,20);}else{b=Buffer.alloc(64); if(kind==='heif'){b.writeUInt32BE(16);b.write('ftyp',4);b.write('heic',8);b.writeUInt32BE(len,16);b.write('meta',20);}else{b.writeUInt32BE(12);b.write('JXL ',4);b.writeUInt32BE(16,12);b.write('ftyp',16);b.write('jxl ',20);b.writeUInt32BE(len,28);b.write('jxlp',32);}} try{size(b)}catch(e){if(!(e instanceof Error))process.exit(3);} }`;
+    const program = `const metro=require(${JSON.stringify(metroRequire.resolve('./src/Assets.js'))});const kind=${JSON.stringify(kind)};for(const len of [0,1,2,7,8,0xffffffff]) {const b=Buffer.alloc(64);b.write(kind==='icns'?'icns':kind==='heif'?'ftyp':'JXL ');b.writeUInt32BE(len,4);const info=metro.getAssetSize(kind,b,'fixture.'+kind);if(info!==null)process.exit(2);}`;
+
     const result = spawnSync(process.execPath,['-e',program],{cwd:mobile,timeout:5000,encoding:'utf8'});
     assert.equal(result.error,undefined); assert.equal(result.status,0,result.stderr);
   });

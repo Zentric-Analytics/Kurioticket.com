@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { bindingExpression, jsxOpening, namedFunction } from "../../../test-support/sourceStructure";
 
 const settingsPaths = [
   "src/app/admin/settings/layout.tsx",
@@ -16,15 +17,18 @@ const settingsNavigation = readFileSync("src/components/admin/AdminSettingsNavig
 const featurePanel = readFileSync("src/components/admin/FeatureControlsPanel.tsx", "utf8");
 const featureApi = readFileSync("src/app/api/admin/feature-controls/route.ts", "utf8");
 const featureService = readFileSync("src/lib/feature-controls/service.ts", "utf8");
+const homepageFarePage = readFileSync("src/app/admin/homepage-fares/page.tsx", "utf8");
+const fareRefreshApi = readFileSync("src/app/api/admin/homepage-fares/refresh/route.ts", "utf8");
+const toggle = () => jsxOpening(featurePanel, "button").find(button => button.getText().includes("aria-checked={control.state.enabled}"))!.getText();
+const confirmation = () => jsxOpening(featurePanel, "button").find(button => button.getText().includes("onClick={submit}"))!.getText();
 const registry = readFileSync("src/lib/feature-controls/registry.ts", "utf8");
 
 test("Settings is the authoritative workspace for persisted administrative controls", () => {
   assert.match(settingsPage, /<AdminPageShell title="Settings" hideHeader>/);
   assert.doesNotMatch(settingsPage, /Environment and access|ContextItem|Your access|Settings store/);
   assert.match(settingsNavigation, /label: "Feature controls"/);
-  assert.match(settingsPage, />Recent changes<\/h2>/);
-  assert.match(settingsPage, /Administrator access/);
-  assert.doesNotMatch(settingsPage, /<input[^>]+(?:name="(?:adminEmail|databaseUrl)")/);
+  assert.match(settingsNavigation, /label: "Recent changes"/);
+  assert.doesNotMatch(settingsPage, /Managed outside Settings|Runtime & credentials/);
   assert.doesNotMatch(settingsPage, /Homepage Fare Operations|\/admin\/homepage-fares/);
   assert.doesNotMatch(settingsPage, /provider health|system health|email delivery health/i);
 });
@@ -35,6 +39,9 @@ test("settings exposes only real persisted feature controls", () => {
   assert.match(featureService, /featureFlag\.findMany/);
   assert.match(featureService, /featureFlag\.update/);
   assert.match(featurePanel, /fetch\("\/api\/admin\/feature-controls"/);
+  assert.match(featurePanel, /Array\.from\(new Set\(controls\.map\(\(control\) => control\.category\)\)\)/);
+  assert.match(featurePanel, /Travel Search|category/);
+  assert.match(featurePanel, /controls\s*\.filter\(\(control\) => control\.category === category\)/);
   assert.equal((registry.match(/_ENABLED: control\(/g) || []).length, 6);
   for (const key of [
     "FLIGHT_SEARCH_ENABLED",
@@ -46,7 +53,7 @@ test("settings exposes only real persisted feature controls", () => {
   ]) {
     assert.match(registry, new RegExp(key));
   }
-  assert.doesNotMatch(settingsPage, /<input[^>]+name="(?:timezone|currency|market|language)"/);
+  assert.doesNotMatch(namedFunction(settingsPage, "AdminSettingsPage"), /timezone|default currency|preferred market|language preference/i);
 });
 
 test("settings starts directly with feature controls and retains authorization inputs", () => {
@@ -63,7 +70,7 @@ test("feature controls use concise product and automation descriptions", () => {
   assert.match(featurePanel, /"Travel Automation": "Travel automation"/);
   assert.match(featurePanel, /Manage travel search and Packages\./);
   assert.match(featurePanel, /Manage price alerts and automatic checks\./);
-  assert.match(featurePanel, /controls\s*\.filter\(\(?control\)? => control\.category === category\)/);
+  assert.match(featurePanel, /controls\s*\.filter\(\(control\) => control\.category === category\)/);
   assert.match(featurePanel, /Allow flight searches\./);
   assert.match(featurePanel, /Allow hotel searches\./);
   assert.match(featurePanel, /Allow car searches\./);
@@ -100,11 +107,47 @@ test("feature-control mutations remain transactionally audited", () => {
 test("settings disables mutation when authoritative feature store is unavailable", () => {
   assert.match(settingsPage, /operationsAvailable=\{featureControls\.dataAvailable\}/);
   assert.match(featurePanel, /read-only fallback mode/);
-  assert.match(featurePanel, /disabled=\{!permitted\}/);
+  assert.match(toggle(), /disabled=\{!permitted \|\| saving\}/);
   assert.match(featureService, /dataAvailable = false/);
 });
 
-test("feature-control interaction states remain explicit and safe", () => {
+test("deployment secrets are explicitly outside admin Settings", () => {
+  assert.doesNotMatch(settingsPage, /process\.env\./);
+  assert.doesNotMatch(featurePanel, /API key|database URL|session secret/i);
+});
+
+test("homepage fare operations preserve the existing audited mutation path", () => {
+  assert.match(homepageFarePage, /HomepageFaresRefreshCard/);
+  assert.match(homepageFarePage, /title="Homepage Fare Operations"/);
+  assert.match(fareRefreshApi, /requireAdminApiSession\(\)/);
+  assert.match(fareRefreshApi, /writeAdminAuditLog/);
+  assert.match(fareRefreshApi, /HOMEPAGE_FARES_REFRESHED/);
+});
+
+
+test("settings retains control permissions and current environment context", () => {
+  assert.match(settingsPage, /canControlProduction=\{canControlProduction\}/);
+  assert.match(settingsPage, /environment=\{featureControls\.environment\}/);
+  assert.match(settingsPage, /operationsAvailable=\{featureControls\.dataAvailable\}/);
+  assert.match(settingsPage, /getFeatureControlProductionAdmins/);
+});
+
+test("settings keeps related operations and deployment-owned boundaries compact instead of duplicating System", () => {
+  assert.doesNotMatch(settingsPage, /href="\/admin\/homepage-fares"|Managed outside Settings|Runtime & credentials|Deployment managed/);
+  assert.doesNotMatch(settingsPage, /View system status|View admin configuration status|href="\/admin\/system"/);
+});
+
+test("settings feature controls remain grouped and mutation-safe after UI polish", () => {
+  assert.match(featurePanel, /role="dialog"/);
+  assert.match(featurePanel, /aria-modal="true"/);
+  assert.match(toggle(), /disabled=\{!permitted \|\| saving\}/);
+  assert.match(featurePanel, /environment === "STAGING" \|\| canControlProduction/);
+  assert.match(featurePanel, /type="button"/);
+  assert.match(featurePanel, /onClick=\{submit\}/);
+  assert.doesNotMatch(featurePanel, /process\.env|ADMIN_EMAILS/);
+});
+
+test("feature-control interaction states stay explicit and safe", () => {
   assert.match(featurePanel, /role="switch"/);
   assert.match(featurePanel, /aria-checked=\{control\.state\.enabled\}/);
   assert.match(featurePanel, /aria-label=\{\(control\.state\.enabled \? "Disable " : "Enable "\) \+ control\.name\}/);
@@ -113,15 +156,20 @@ test("feature-control interaction states remain explicit and safe", () => {
   assert.match(featurePanel, /Reason for change \(required\)/);
   assert.match(featurePanel, /Add a note \(optional\)/);
   assert.match(featurePanel, /hidden=\{!showOptionalNote\}/);
-  assert.match(featurePanel, /disabled=\{saving \|\| \(environment === "PRODUCTION" && !reason\.trim\(\)\)\}/);
+  assert.match(featurePanel, /disabled=\{saving \|\| !permitted \|\| \(environment === "PRODUCTION" && !reason\.trim\(\)\)\}/);
+  assert.match(featurePanel, /disabled=\{saving\}[\s\S]*onClick=\{closePending\}/);
   assert.match(featurePanel, /aria-busy=\{saving\}/);
+  assert.match(confirmation(), /disabled=\{saving \|\| !permitted \|\| \(environment === "PRODUCTION" && !reason\.trim\(\)\)\}/);
+  assert.match(featurePanel, /disabled=\{saving\}[\s\S]*value=\{reason\}/);
 });
 
 test("successful feature-control changes refresh from persisted server state", () => {
   assert.match(featureApi, /updatedAt: result\.state\.updatedAt\.toISOString\(\)/);
   assert.match(featurePanel, /typeof body\.updatedAt === "string" \? body\.updatedAt : control\.state\.updatedAt/);
   assert.match(featurePanel, /router\.refresh\(\)/);
-  assert.match(featurePanel, /setControls\(initialControls\)/);
+  assert.equal(bindingExpression(featurePanel, "serverScope"), "JSON.stringify([environment, canControlProduction, operationsAvailable, initialControls])");
+  assert.match(featurePanel, /if \(snapshot\.scope !== serverScope\) \{\s*setSnapshot\(\{ scope: serverScope, environment, controls: initialControls \}\)/);
+  assert.match(namedFunction(featurePanel, "submit"), /current\.scope !== serverScope \? current/);
   assert.doesNotMatch(featurePanel, /updatedAt: new Date\(\)\.toISOString\(\)/);
 });
 
@@ -131,7 +179,12 @@ test("feature-control network failures remain retryable without closing the dial
   assert.match(featurePanel, /The control could not be changed\. Please try again\./);
   assert.match(featurePanel, /finally \{/);
   assert.match(featurePanel, /setSaving\(false\)/);
-  assert.match(featurePanel, /if \(!pending \|\| saving\) return/);
+  assert.match(namedFunction(featurePanel, "submit"), /if \(!pending \|\| saving \|\| !permitted\) return/);
+});
+test("settings uses a single administrative workspace instead of dashboard cards", () => {
+  assert.equal(jsxOpening(settingsPage, "AdminPageShell").length, 1);
+  assert.match(settingsPage, /<section aria-labelledby="settings-section-title"/);
+  assert.doesNotMatch(settingsPage, /SummaryItem|Recent control updates|Related operations|Change safeguards|Protected changes/);
 });
 
 test("Recent changes opens unfiltered audit history within the reader's supported 90-day window", () => {
@@ -199,7 +252,7 @@ test("settings routes isolate the right-side content but preserve the working co
   const featureSection = readFileSync("src/components/admin/SettingsFeatureSection.tsx", "utf8");
   assert.match(availability, /category="Travel Search"/);
   assert.match(automation, /category="Travel Automation"/);
-  assert.match(featureSection, /controls\.filter\(\(control\) => control\.category === category\)/);
+  assert.match(featureSection, /controls\s*\.filter\(\(control\) => control\.category === category\)/);
   assert.match(featureSection, /hideCategoryHeading/);
   assert.match(featurePanel, /hideCategoryHeading \? undefined/);
   assert.match(notifications, /<AdminAlertAcknowledgeButton/);
@@ -257,6 +310,5 @@ test("Settings feature dialogs show outcomes, not staging or risk metadata", () 
   assert.match(featurePanel, /dialogRef\.current\?\.querySelector/);
   assert.match(featurePanel, /triggerRef\.current\?\.focus\(\)/);
   assert.match(featurePanel, /event\.key !== "Tab"/);
-  assert.match(featurePanel, /disabled=\{saving \|\| \(environment === "PRODUCTION" && !reason\.trim\(\)\)\}/);
+  assert.match(featurePanel, /disabled=\{saving \|\| !permitted \|\| \(environment === "PRODUCTION" && !reason\.trim\(\)\)\}/);
 });
-

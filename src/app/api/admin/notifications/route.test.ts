@@ -5,14 +5,16 @@ import test from "node:test";
 import ts from "typescript";
 
 function harness() {
-  const writes: Array<{adminUserId: string; action: string; metadata: {source: string}}>  = [];
-  const state = { denied: false, limited: false, persisted: true, alert: { key: "qa.support", signalToken: "occurrence-1", severity: "WARNING", source: "SUPPORT" } as {key:string;signalToken:string;severity:string;source:string} | null };
+  type Alert = { key: string; signalToken: string; severity: string; source: string };
+  type AuditWrite = { adminUserId: string; action: string; metadata: { source: string } };
+  const writes: AuditWrite[] = [];
+  const state = { denied: false, limited: false, persisted: true, alert: { key: "qa.support", signalToken: "occurrence-1", severity: "WARNING", source: "SUPPORT" } as Alert | null };
   class RateLimitError extends Error { retryAfterSeconds = 30; }
   const modules: Record<string, unknown> = {
     "next/server": { NextRequest: Request, NextResponse: { json: (body: unknown, init?: ResponseInit) => Response.json(body, init) } },
     "@/lib/admin": {
       requireAdminApiSession: async () => state.denied ? { response: Response.json({}, { status: 403 }) } : { session: { user: { id: "server-admin", email: "admin@example.invalid" } } },
-      writeAdminAuditLog: async (value: typeof writes[number]) => { writes.push(value); return state.persisted; },
+      writeAdminAuditLog: async (value: AuditWrite) => { writes.push(value); return state.persisted; },
     },
     "@/lib/auth-rate-limit": { AuthRateLimitError: RateLimitError, checkAuthRateLimit: () => { if (state.limited) throw new RateLimitError(); } },
     "@/lib/admin-data": { getSafeSystemStatus: () => { throw new Error("No outage bypass for deletion"); } },
@@ -24,10 +26,10 @@ function harness() {
     },
   };
   const code = ts.transpileModule(readFileSync("src/app/api/admin/notifications/route.ts", "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
-  const exported: Record<string, (request: Request) => Promise<Response>> = {};
+  const exported: Record<string, unknown> = {};
   vm.runInNewContext(code, { exports: exported, module: { exports: exported }, require: (id: string) => { assert.ok(id in modules, id); return modules[id]; }, Response, Request, URL, Date }, { filename: "notifications-route.cjs" });
   const request = (body: unknown = { alertKey: "qa.support", signalToken: "occurrence-1" }) => new Request("https://example.invalid/api/admin/notifications", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-  return { state, writes, remove: (body?: unknown): Promise<Response> => exported.DELETE(request(body)) };
+  return { state, writes, remove: (body?: unknown): Promise<Response> => (exported.DELETE as (request: Request) => Promise<Response>)(request(body)) };
 }
 
 test("deletion uses the canonical admin identity and trusted alert, and requires durable persistence", async () => {

@@ -180,7 +180,8 @@ test("provider hotel details keep property facts separate while exposing verifie
     kind: "kayak-hotel-details",
     details: {
       source: "KAYAK",
-      overview: { address: "10 Test Street", countryCode: "US" },
+      overview: { address: "10 Test Street", countryCode: "US", policies: [{ label: "Check-in", value: "After 15:00" }] },
+      reviews: { quotes: [{ label: "Guest quote", value: "Quiet room" }] },
     },
     location: {
       address: "10 Test Street",
@@ -207,7 +208,8 @@ test("provider hotel details keep property facts separate while exposing verifie
     } | null;
     providerDetails?: {
       source?: string;
-      overview?: { address?: string; countryCode?: string };
+      overview?: { address?: string; countryCode?: string; policies?: Array<{ label: string; value: string }> };
+      reviews?: { quotes?: Array<{ label: string; value: string }> };
     } | null;
   };
 
@@ -226,6 +228,9 @@ test("provider hotel details keep property facts separate while exposing verifie
   });
   assert.equal(payload.providerDetails?.source, "KAYAK");
   assert.equal(payload.providerDetails?.overview?.address, "10 Test Street");
+  assert.deepEqual(payload.providerDetails?.overview?.policies, [{ label: "Check-in", value: "After 15:00" }]);
+  assert.deepEqual(payload.providerDetails?.reviews?.quotes, [{ label: "Guest quote", value: "Quiet room" }]);
+  assert.equal(Object.hasOwn(payload.hotel, "providerDetails"), false, "fixture exercises details-envelope-only metadata");
   assert.equal(Object.hasOwn(payload.hotel, "rawProviderReference"), false);
 });
 

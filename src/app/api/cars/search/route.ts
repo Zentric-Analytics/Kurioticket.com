@@ -47,10 +47,12 @@ export async function POST(request: Request) {
   const operationalSession = prepareOperationalSearchSession(request);
   const recordedSearch = { ...search, ...(operationalSession ? { operationalSessionId: operationalSession.reference.id } : {}) };
   const started = performance.now();
+  let activityIdentity: ReturnType<typeof resolveRequestActivityIdentity> | undefined;
+  const requestActivityIdentity = () => activityIdentity ??= resolveRequestActivityIdentity(request);
   const recordSearch = (resultCount: number, status: "SUCCESS" | "PARTIAL" | "FAILED") => {
     after(async () => {
       try {
-        const { userId, visitorId, ...application } = await resolveRequestActivityIdentity(request);
+        const { userId, visitorId, ...application } = await requestActivityIdentity();
         await Promise.all([
           logSearchHistory({ ...application,
             userId, visitorId, requestId, type: "CAR",
@@ -74,7 +76,7 @@ export async function POST(request: Request) {
       recordSearch(0, "FAILED");
       after(async () => {
         try {
-          const application = applicationMetadata(await resolveRequestActivityIdentity(request));
+          const application = applicationMetadata(await requestActivityIdentity());
           await Promise.all(providerStatuses.map((provider) =>
             logProviderCall({
               provider: provider.provider,
@@ -95,7 +97,7 @@ export async function POST(request: Request) {
       recordSearch(0, "FAILED");
       after(async () => {
         try {
-          const application = applicationMetadata(await resolveRequestActivityIdentity(request));
+          const application = applicationMetadata(await requestActivityIdentity());
           await Promise.all(providerStatuses.map((provider) =>
             logProviderCall({
               provider: provider.provider,
@@ -116,7 +118,7 @@ export async function POST(request: Request) {
     recordSearch(results.length, searchStatus);
     after(async () => {
       try {
-        const application = applicationMetadata(await resolveRequestActivityIdentity(request));
+        const application = applicationMetadata(await requestActivityIdentity());
           await Promise.all(providerStatuses.map((provider) =>
           logProviderCall({
             provider: provider.provider,

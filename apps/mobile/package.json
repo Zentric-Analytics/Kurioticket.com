@@ -50,7 +50,7 @@
     "@types/react": "~19.1.10",
     "expo-doctor": "^1.20.1",
     "jiti": "^2.7.0",
-    "sharp": "^0.35.3",
+    "sharp": "^0.35.5",
     "typescript": "~5.9.2"
   },
   "expo": {
@@ -63,8 +63,55 @@
     }
   },
   "overrides": {
+    "@expo/metro-config": {
+      "postcss": "8.5.33",
+      "glob@^13.0.0": "14.0.4"
+    },
+    "@react-navigation/core": {
+      "query-string": "9.5.1"
+    },
+    "expo-router": {
+      "query-string": "9.5.1"
+    },
+    "xcode": {
+      "uuid": "11.1.1"
+    },
+    "@expo/config": {
+      "glob@^13.0.0": "14.0.4"
+    },
+    "@expo/config-plugins": {
+      "glob@^13.0.0": "14.0.4"
+    },
+    "@expo/fingerprint": {
+      "glob@^13.0.0": "14.0.4",
+      "minimatch@>=9 <11": "11.0.5"
+    },
+    "@expo/cli": {
+      "glob@^13.0.0": "14.0.4",
+      "minimatch@>=9 <11": "11.0.5"
+    },
+    "expo-updates": {
+      "glob@^13.0.0": "14.0.4"
+    },
+    "metro@0.83.3": "0.83.8",
+    "metro-babel-transformer@0.83.3": "0.83.8",
+    "metro-cache@0.83.3": "0.83.8",
+    "metro-cache-key@0.83.3": "0.83.8",
+    "metro-config@0.83.3": "0.83.8",
+    "metro-core@0.83.3": "0.83.8",
+    "metro-file-map@0.83.3": "0.83.8",
+    "metro-minify-terser@0.83.3": "0.83.8",
+    "metro-resolver@0.83.3": "0.83.8",
+    "metro-runtime@0.83.3": "0.83.8",
+    "metro-source-map@0.83.3": "0.83.8",
+    "metro-symbolicate@0.83.3": "0.83.8",
+    "metro-transform-plugins@0.83.3": "0.83.8",
+    "metro-transform-worker@0.83.3": "0.83.8",
     "postcss": "^8.5.33",
-    "decode-uri-component": "$decode-uri-component",
-    "image-size": "npm:image-size-next@1.2.2"
+    "image-size": "npm:image-size-next@1.2.2",
+    "query-string": {
+      "decode-uri-component": "0.5.1"
+    },
+    "react-dom": "19.1.0"
   }
 }

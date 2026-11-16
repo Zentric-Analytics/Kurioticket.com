@@ -109,6 +109,7 @@ test("desktop Flight Results keeps page-owned navbar geometry while search waits
   assert.match(readySearchDefinition, /!resultsUiPreparing[\s\S]*?createPortal\(renderDesktopHeaderSearchBar\(\), desktopNavSearchTarget\)/);
   assert.match(preparing, /\{standaloneResultsHeader\}/);
   assert.doesNotMatch(preparing, /readyExternalMobileHeader|readyDesktopNavbarSearch|renderStickySearchPopoutOverlay\(\)/);
+  assert.match(preparing, /desktopSearch=\{renderDesktopHeaderSearchBar\(\)\}/);
   assert.match(ready, /\{standaloneResultsHeader\}[\s\S]*?\{readyExternalMobileHeader\}[\s\S]*?\{readyDesktopNavbarSearch\}/);
 });
 
@@ -179,9 +180,11 @@ test("desktop Flight Results puts the Hotels-style summary directly above result
   const summary = flight.indexOf("data-flight-results-desktop-summary");
   const desktopResults = flight.indexOf("ref={paginationListRef}");
 
-  assert.ok(nearby >= 0);
-  assert.ok(priceAlert > nearby);
+  assert.ok(nearby >= 0 && nearby < priceAlert, "nearby mobile fares precede the price alert");
+  assert.doesNotMatch(flight, /data-desktop-nearby-fare-rail/);
+  assert.ok(priceAlert >= 0);
   assert.ok(summary > priceAlert);
+  assert.match(flight.slice(0, priceAlert), /data-nearby-fare-presentation="mobile"/);
   assert.ok(desktopResults > summary);
 
   const summarySource = flight.slice(summary, desktopResults);

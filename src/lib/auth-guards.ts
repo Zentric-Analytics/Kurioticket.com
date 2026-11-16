@@ -9,6 +9,7 @@ import {
 } from "@/lib/prisma";
 import { getEmailVerificationRedirect } from "@/services/emailVerificationService";
 import { validateAccountSession } from "@/lib/account-session";
+import { readWebDeletionRecoverySession } from "@/lib/web-deletion-recovery";
 
 export function getLoginRedirect(
   pathname = "/dashboard",
@@ -34,6 +35,11 @@ export async function requireUserSession(
 
   if (session.user.twoFactorEnabled && !session.user.twoFactorVerified) {
     redirect(`/auth/two-factor?callbackUrl=${encodeURIComponent(pathname)}`);
+  }
+
+  if (session.user.status === "PENDING_DELETION" && session.user.accountSessionId
+    && await readWebDeletionRecoverySession(session.user.id, session.user.accountSessionId)) {
+    redirect("/account/pending-deletion");
   }
 
   if (!session.user.accountSessionId || !(await validateAccountSession(session.user.accountSessionId, session.user.id))) {

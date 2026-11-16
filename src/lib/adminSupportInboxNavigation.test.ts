@@ -51,7 +51,8 @@ test("Support ticket detail returns to the exact filtered inbox, including pagin
   assert.equal(detail.pathname, "/admin/support/ticket-123");
   const returned = new URL(supportInboxReturnHref(detail.searchParams.get("inbox") || undefined), "https://kurioticket.test");
   assert.equal(returned.pathname, "/admin/support");
-  assert.deepEqual([...returned.searchParams].sort(), [...params].sort());
+  // Query order is canonicalized by the allowlist; every filter and cursor survives.
+  assert.deepEqual([...returned.searchParams.entries()].sort(), [...params.entries()].sort());
 });
 
 test("Support detail return navigation cannot lead outside the Support inbox", () => {

@@ -23,7 +23,7 @@ test("Hotel quick filters retain functional draft apply semantics", () => {
 
 test("Hotel filter Apply keeps the existing results shell mounted without a timed search loader", () => {
   assert.doesNotMatch(screen, /hotelFilterApplying|hotelFilterFeedbackTimerRef|startHotelFilterFeedback|NATIVE_FILTER_RESULTS_TRANSITION_MS/);
-  assert.match(screen, /if \(status === "loading" \|\| hotelCurrencyPending\) return <NativeBrandedSearchLoading product=\{product\} \/>/);
+  assert.match(screen, /if \(status === "loading" \|\| hotelCurrencyPending\) return <NativeBrandedSearchLoading product=\{product\} includeTopInset=\{false\} \/>/);
   assert.match(screen, /const \[hotelFilterPending, startHotelFilterTransition\] = useTransition\(\)/);
   assert.match(screen, /accessibilityState=\{\{ busy: hotelFilterPending \}\}/);
   assert.match(screen, /updating=\{hotelFilterPending\}/);

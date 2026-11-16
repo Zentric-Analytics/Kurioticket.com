@@ -23,6 +23,9 @@ test("product and provider sections remain visible and compact when no trips exi
   assert.match(html, /Confirmed trips by provider/);
   assert.match(html, /No confirmed trips yet/);
   assert.match(html, /No confirmed trips from providers yet/);
+  assert.match(html, /<section aria-labelledby="trips-by-product-title"/);
+  assert.match(html, /<section aria-labelledby="trips-by-provider-title"/);
+  assert.doesNotMatch(html, /totals will appear after verified confirmations arrive/);
   assert.match(html, /No confirmed trips yet\./);
   assert.match(html, /No confirmed trips from providers yet\./);
   assert.equal((html.match(/role="status"/g) || []).length, 2);

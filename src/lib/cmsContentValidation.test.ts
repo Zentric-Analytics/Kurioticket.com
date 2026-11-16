@@ -1,7 +1,7 @@
 import { cmsOrderForDisplay, cmsOrderForStorage } from "@/lib/cmsOrderPresentation";
 import assert from "node:assert/strict";
 import test from "node:test";
-import { cmsPayloadSchemas, validateCmsEditor, readCmsFieldErrors } from "./cmsContentValidation";
+import { cmsPayloadSchemas, validateCmsEditor, readCmsFieldErrors } from "@/lib/cmsContentValidation";
 import { cmsPayloadSchemas as serverSchemas } from "@/services/cmsContentService";
 import { cmsReorderLabel, sameCmsOrder, sortCmsFaqDirectory } from "./cmsDirectoryPresentation";
 

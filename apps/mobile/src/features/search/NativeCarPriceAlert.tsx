@@ -78,25 +78,26 @@ export function NativeCarPriceAlert({ plan, resultId, offer, available, onFeedba
     try {
       if (next && !await readSession().catch(() => null)) { signIn(); return; }
       let saved: MobilePriceAlert;
-      if (next && matchingAlert?.status === "PAUSED") {
-        saved = (await travelApi.updatePriceAlertStatus(matchingAlert.id, "ACTIVE")).alert;
-      } else if (next) {
-        saved = (await travelApi.createPriceAlert(buildAutomaticCarPriceAlertPayload(plan, baseline.totalPrice, baseline.currency, scope))).alert;
-      } else {
-        saved = (await travelApi.updatePriceAlertStatus(matchingAlert!.id, "PAUSED")).alert;
+      try {
+        if (next && matchingAlert?.status === "PAUSED") {
+          saved = (await travelApi.updatePriceAlertStatus(matchingAlert.id, "ACTIVE")).alert;
+        } else if (next) {
+          saved = (await travelApi.createPriceAlert(buildAutomaticCarPriceAlertPayload(plan, baseline.totalPrice, baseline.currency, scope))).alert;
+        } else {
+          saved = (await travelApi.updatePriceAlertStatus(matchingAlert!.id, "PAUSED")).alert;
+        }
+      } catch (cause) {
+        if (!(next && cause instanceof TravelApiError && cause.status === 409)) throw cause;
+        const { alerts } = await travelApi.priceAlerts();
+        const canonical = matchingCarPriceAlert(alerts, plan, scope);
+        if (!canonical) { showFailure(true); return; }
+        saved = canonical.status === "PAUSED" ? (await travelApi.updatePriceAlertStatus(canonical.id, "ACTIVE")).alert : canonical;
       }
       setCurrentMatchingAlert(saved);
       setReconciledPlanKey(scopeKey);
       showFeedback(next ? "active" : "paused");
     } catch (cause) {
-      if (next && cause instanceof TravelApiError && cause.status === 409) {
-        const alerts = await travelApi.priceAlerts().then(({ alerts }) => alerts).catch(() => []);
-        const canonical = matchingCarPriceAlert(alerts, plan, scope);
-        if (canonical) {
-          const saved = canonical.status === "PAUSED" ? (await travelApi.updatePriceAlertStatus(canonical.id, "ACTIVE")).alert : canonical;
-          setCurrentMatchingAlert(saved); setReconciledPlanKey(scopeKey); showFeedback("active");
-        } else showFailure(true);
-      } else if (cause instanceof TravelApiError && cause.status === 401) {
+      if (cause instanceof TravelApiError && cause.status === 401) {
         setCurrentMatchingAlert(undefined); setReconciledPlanKey(scopeKey); signIn();
       } else showFailure(next);
     } finally { pendingRef.current = false; setPending(false); setOptimisticTracking(null); }
