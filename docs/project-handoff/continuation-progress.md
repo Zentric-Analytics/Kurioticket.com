@@ -119,3 +119,9 @@ Current access dependency: reconnect the existing Render app through normal user
 
 Do not restart completed engineering work. No new evidence in this continuation justifies a code correction or broad test rerun.
 
+
+## Subsequent read-only base drift check
+
+After completing the authorized pinned integration, ls-remote showed dev at 9a13ec28e9d0dd0177fb94f6ed3f9057a0c017c3, while the remote review branch remains 74a65ca5aa17fc2b51ddbf25f2299958d2a874b8. The new dev delta changes 196 files and includes platform-health/admin changes plus native URI/image parser security backports. Immutable-object fetch and merge-tree analysis found 52 content conflicts; this did not change the working tree or integrate the new dev commit. See integration-new-dev-analysis.txt. No Prisma or GitHub workflow files appear in that additional delta, but both root/mobile manifests and locks do.
+
+The completed result remains pinned to the expressly authorized 7041310 commit. It is not current-dev merge readiness. A separate local integration authorization is needed for the newly observed pin; do not chase later dev changes automatically. Proposed scope: preserve the current rollback head, resolve the 52 conflicts across root/native dependency manifests and locks, native session events, admin state components and behavioral/source tests, retain stabilization safeguards and newer dev functionality/security backports, regenerate only necessary local generated clients/locks, then run focused integration checks and justified final validation. Native dependency changes require renewed compatibility/fingerprint evidence; installed historical native artifacts remain insufficient. No remote publication, CI trigger, database, infrastructure, credentials, worker resumption, native remote build, merge to dev/main or deployment is included.
