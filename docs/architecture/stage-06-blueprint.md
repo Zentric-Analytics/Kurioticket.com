@@ -1,6 +1,6 @@
 # Stage 06 implementation blueprint
 
-Status: architecture only; no Stage 06 UI in this change. Repository baseline c61fd0b8a on dev. Release remediation and live acceptance are separate gates, recorded in the delivered report.
+Status: implemented locally in Stage 06 against 72d902975 on dev. The original design below is retained as the architectural rationale; implementation evidence is recorded in platform-unification.md and the delivered Stage 06 report. Dependency security and live acceptance remain separate release gates. Nothing has been pushed or deployed.
 
 ## Existing architecture and reuse
 
