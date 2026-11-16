@@ -999,7 +999,7 @@ export const imageInventory: InventoriedImage[] = [
   },
   {
     id: "inventory-components-results-flightresultsclient-tsx-flights-fallback-only-1665039400840-b6b2a5786fef",
-    url: "https://images.unsplash.com/photo-1665039400840-b6b2a5786fef?auto=format&fit=crop&w=1200&q=90",
+    url: "/images/staging-remediation/puerto-vallarta.webp",
     product: "flights",
     usage: "flight-route-card",
     source: "unsplash",
@@ -1943,7 +1943,7 @@ export const imageInventory: InventoriedImage[] = [
   },
   {
     id: "inventory-data-homediscovery-ts-flights-marketing-161902",
-    url: "https://images.pexels.com/photos/161902/hawaii-beach-sand-ocean-161902.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    url: "/images/staging-remediation/honolulu.webp",
     product: "flights",
     usage: "flight-inspiration-card",
     source: "pexels",
@@ -3991,7 +3991,7 @@ export const imageInventory: InventoriedImage[] = [
   },
   {
     id: "inventory-data-homediscovery-ts-flights-marketing-1665039400840-b6b2a5786fef",
-    url: "https://images.unsplash.com/photo-1665039400840-b6b2a5786fef?auto=format&fit=crop&w=1200&q=90",
+    url: "/images/staging-remediation/puerto-vallarta.webp",
     product: "flights",
     usage: "flight-inspiration-card",
     source: "unsplash",
@@ -4007,7 +4007,7 @@ export const imageInventory: InventoriedImage[] = [
   },
   {
     id: "inventory-data-homediscovery-ts-flights-marketing-1675264671526-7fb10698431b",
-    url: "https://images.unsplash.com/photo-1675264671526-7fb10698431b?auto=format&fit=crop&w=1200&q=90",
+    url: "/images/staging-remediation/phoenix.webp",
     product: "flights",
     usage: "flight-inspiration-card",
     source: "unsplash",

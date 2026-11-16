@@ -1,5 +1,7 @@
 "use client";
 
+import { savedFlightTimeFields, SavedFlightTimeError } from "@/shared/flights/savedFlightTime";
+
 import { useJourneyEvents } from "@/components/privacy/JourneyEventsProvider";
 
 import Image from "next/image";
@@ -74,6 +76,7 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
   const [localSavedFlightIds, setLocalSavedFlightIds] = useState<string[]>([]);
   const [savedFlightBackendId, setSavedFlightBackendId] = useState<string | null>(null);
   const [savedFlightPending, setSavedFlightPending] = useState(false);
+  const [savedFlightError, setSavedFlightError] = useState<string | null>(null);
   const [shareFeedback, setShareFeedback] = useState("");
   const headingRef = useRef<HTMLHeadingElement>(null);
   const fareButtonRefs = useRef<Array<HTMLButtonElement | null>>([]);
@@ -262,6 +265,7 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
   async function toggleSavedFlight() {
     if (!selectedOffer || savedFlightPending) return;
     setSavedFlightPending(true);
+    setSavedFlightError(null);
 
     try {
       if (sessionStatus === "authenticated") {
@@ -275,6 +279,7 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
           return;
         }
 
+        const times = savedFlightTimeFields(selectedOffer);
         const response = await fetch("/api/dashboard/saved", {
           method: "POST",
           headers: { "Content-Type": "application/json", Accept: "application/json" },
@@ -285,12 +290,13 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
             flightNumber: selectedOffer.flightNumber ?? null,
             originAirport: selectedOffer.originAirport,
             destinationAirport: selectedOffer.destinationAirport,
-            departureTime: selectedOffer.departureTime,
-            arrivalTime: selectedOffer.arrivalTime,
+            departureTime: times.departureTime,
+            arrivalTime: times.arrivalTime,
             price: selectedOffer.price,
             currency: selectedOffer.currency,
             payload: {
               flightResultId: selectedOffer.id,
+              flightTime: times.flightTime,
               detailsHref: window.location.pathname + window.location.search,
             },
           }),
@@ -318,6 +324,8 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
         writeSavedItemIds(next);
         return next;
       });
+    } catch (error) {
+      setSavedFlightError(error instanceof SavedFlightTimeError ? error.message : "Unable to save flight. Please try again.");
     } finally {
       setSavedFlightPending(false);
     }
@@ -369,6 +377,7 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
         )}
       />
       <span className="sr-only" role="status" aria-live="polite">{shareFeedback}</span>
+      {savedFlightError ? <p role="alert" className="mx-auto max-w-[1080px] px-4 py-2 text-sm text-red-700">{savedFlightError}</p> : null}
       <div className="mx-auto w-full max-w-[1080px] px-0 sm:px-6 lg:px-[30px]">
         <div className="min-w-0">
           <section className="min-w-0 border-[#E2E8F0] bg-white sm:rounded-[13px] sm:border sm:bg-white sm:shadow-[0_3px_15px_rgba(15,23,42,0.045)]" aria-labelledby="flight-details-heading">

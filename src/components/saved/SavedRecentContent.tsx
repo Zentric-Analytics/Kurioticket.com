@@ -1,4 +1,5 @@
 "use client";
+import { savedFlightLocalSummary } from "@/shared/flights/savedFlightTime";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { observeAccountResume } from "@/lib/accountResume";
@@ -7,7 +8,7 @@ import { useLocale } from "@/components/layout/LocaleProvider";
 import { invalidateSavedCarsClientCache } from "@/lib/saved-car-events";
 import { invalidateSavedFlightsClientCache } from "@/lib/saved-flight-events";
 
-type Item = { id: string; type?: string; label?: string | null; airlineName?: string; hotelName?: string; modelName?: string; pickupLocation?: string; destination?: string | null; subtitle?: string; href?: string; payload?: unknown };
+type Item = { originAirport?: string; destinationAirport?: string; id: string; type?: string; label?: string | null; airlineName?: string; hotelName?: string; modelName?: string; pickupLocation?: string; destination?: string | null; subtitle?: string; href?: string; payload?: unknown };
 const savedHref = (item: Item) => {
   if (item.href) return item.href;
   if (item.type !== "car" || !item.payload || typeof item.payload !== "object") return undefined;
@@ -74,7 +75,7 @@ export function SavedRecentContent() {
       const label = item.label || item.airlineName || item.hotelName || item.modelName || item.destination || item.pickupLocation || typeLabel;
       const removeLabel = tab === "saved" ? t.savedTripsRemoveSavedTrip : t.savedTripsRemoveRecentSearch;
       return <li key={`${item.type ?? "recent"}-${item.id}`} className="flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-4">
-        <div className="min-w-0 flex-1"><strong className="block truncate text-navy">{label}</strong><span className="text-sm capitalize text-slate-500">{typeLabel}</span></div>
+        <div className="min-w-0 flex-1"><strong className="block truncate text-navy">{label}</strong><span className="text-sm capitalize text-slate-500">{typeLabel}</span>{item.type === "flight" && savedFlightLocalSummary(item) ? <p className="mt-1 text-sm text-slate-600">{savedFlightLocalSummary(item)}</p> : null}</div>
         {href ? <Link className="font-semibold text-teal" href={href}>{t.savedTripsRepeatSearch}</Link> : null}
         <button className="font-semibold text-red-700" aria-label={`${removeLabel}: ${label}`} onClick={() => void (tab === "saved" ? removeSaved(item) : removeRecent(item.id))}>{removeLabel}</button>
       </li>;

@@ -547,7 +547,7 @@ export const translations: TranslationDictionary = {
   'flightLandingImageAlt.Johannesburg skyline at golden hour': 'Johannesburgs silhuett i gyllene timmen',
   'flightLandingImageAlt.Cairo skyline with the Pyramids of Giza': 'Kairos silhuett med pyramiderna i Giza',
   'flightLandingImageAlt.Addis Ababa cityscape in the Ethiopian highlands': 'Addis Abebas stadsvy i de etiopiska högländerna',
-  'flightLandingImageAlt.Puerto Vallarta coastline and old town': 'Puerto Vallartas kustlinje och gamla stad',
+  'flightLandingImageAlt.Puerto Vallarta coastline with ocean and greenery': 'Puerto Vallartas kustlinje med hav och grönska',
   'flightLandingImageAlt.Honolulu Waikiki beach with Diamond Head and bright blue water': 'Honolulus Waikiki-strand med Diamond Head och klart blått vatten',
   'flightLandingImageAlt.San Diego bay skyline and marina': 'San Diegos bukt, silhuett och marina',
   'homeDiscoveryRoute.ca-yyz-cun.title': 'Vinterresa till Cancun',

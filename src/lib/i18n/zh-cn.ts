@@ -1835,8 +1835,8 @@ export const translations: TranslationDictionary = {
     "开罗天际线与吉萨金字塔",
   "flightLandingImageAlt.Addis Ababa cityscape in the Ethiopian highlands":
     "埃塞俄比亚高原上的亚的斯亚贝巴城市景观",
-  "flightLandingImageAlt.Puerto Vallarta coastline and old town":
-    "巴亚尔塔港海岸线和老城",
+  "flightLandingImageAlt.Puerto Vallarta coastline with ocean and greenery":
+    "巴亚尔塔港的海岸线、海洋和绿植",
   "flightLandingImageAlt.Honolulu Waikiki beach with Diamond Head and bright blue water":
     "檀香山威基基海滩、钻石头山和明亮蓝色海水",
   "flightLandingImageAlt.San Diego bay skyline and marina":

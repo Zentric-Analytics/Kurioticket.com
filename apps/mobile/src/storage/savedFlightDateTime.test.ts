@@ -13,11 +13,11 @@ function assertSavedFlightApiDateContract(value: string) {
 }
 
 test("canonicalizes provider-local, UTC, offset, and fractional itinerary values", () => {
-  assert.equal(canonicalSavedFlightDateTime("2026-08-27T20:07"), "2026-08-27T20:07:00.000Z");
-  assert.equal(canonicalSavedFlightDateTime("2026-08-27T20:07:00"), "2026-08-27T20:07:00.000Z");
+  assert.equal(canonicalSavedFlightDateTime("2026-08-27T20:07", "LOS"), "2026-08-27T19:07:00.000Z");
+  assert.equal(canonicalSavedFlightDateTime("2026-08-27T20:07:00", "LOS"), "2026-08-27T19:07:00.000Z");
   assert.equal(canonicalSavedFlightDateTime("2026-08-27T20:07:00Z"), "2026-08-27T20:07:00.000Z");
   assert.equal(canonicalSavedFlightDateTime("2026-08-27T20:07:00+01:00"), "2026-08-27T19:07:00.000Z");
-  assert.equal(canonicalSavedFlightDateTime("2026-08-27T20:07:00.125"), "2026-08-27T20:07:00.125Z");
+  assert.equal(canonicalSavedFlightDateTime("2026-08-27T20:07:00.125", "LOS"), "2026-08-27T19:07:00.125Z");
 });
 
 test("rejects malformed and impossible datetimes instead of manufacturing dates", () => {
@@ -32,14 +32,21 @@ test("Duffel local mapping passes the Saved API datetime contract and keeps roun
     departureTime: "2026-08-27T20:07:00", arrivalTime: "2026-08-28T03:43:00", price: 900, currency: "USD",
   } as FlightResult;
   const createdPayload = mapFlightToSaved(flight);
-  assert.equal(createdPayload.departureTime, "2026-08-27T20:07:00.000Z");
-  assert.equal(createdPayload.arrivalTime, "2026-08-28T03:43:00.000Z");
+  assert.equal(createdPayload.departureTime, "2026-08-27T19:07:00.000Z");
+  assert.equal(createdPayload.arrivalTime, "2026-08-28T01:43:00.000Z");
   assertSavedFlightApiDateContract(createdPayload.departureTime);
   assertSavedFlightApiDateContract(createdPayload.arrivalTime);
   assert.equal((createdPayload.payload as { result: FlightResult }).result.departureTime, flight.departureTime);
   assert.equal((createdPayload.payload as { result: FlightResult }).result.arrivalTime, flight.arrivalTime);
 
-  const serverItem = { ...createdPayload, id: "saved-real-id", createdAt: "2026-08-01T00:00:00.000Z", departureTime: "2026-08-27T20:07:00.000Z", arrivalTime: "2026-08-28T03:43:00.000Z" } as MobileSavedItem;
+  const serverItem = { ...createdPayload, id: "saved-real-id", createdAt: "2026-08-01T00:00:00.000Z", departureTime: "2026-08-27T19:07:00.000Z", arrivalTime: "2026-08-28T01:43:00.000Z" } as MobileSavedItem;
   assert.equal(savedSignature(createdPayload), savedSignature(serverItem));
   assert.equal(flightSavedSignature(flight), savedSignature(serverItem));
+});
+
+test("native saved mapping rejects unresolved local times and retains legacy explicit instants", () => {
+  const flight = { provider: "Duffel", airlineName: "Air", originAirport: "XXX", destinationAirport: "LAX", departureTime: "2026-12-16T11:36:00", arrivalTime: "2026-12-16T12:54:00", price: 54, currency: "USD" } as FlightResult;
+  assert.throws(() => mapFlightToSaved(flight), /timezone is unavailable/);
+  assert.throws(() => mapFlightToSaved({ ...flight, originAirport: "JFK", departureTime: "2026-11-01T01:30:00" }), /ambiguous/);
+  assert.equal(mapFlightToSaved({ ...flight, departureTime: "2026-12-16T11:36:00Z" }).departureTime, "2026-12-16T11:36:00.000Z");
 });

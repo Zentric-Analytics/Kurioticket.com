@@ -624,13 +624,13 @@ function addPopularImageSignature(
   image: string,
   signature: string,
 ) {
-  void image;
   void signature;
   const marketIndex = popularImageSignatureIndexByMarket.get(marketCode) ?? 0;
   const photoId = cardImagePhotoIds[marketIndex % cardImagePhotoIds.length];
 
   popularImageSignatureIndexByMarket.set(marketCode, marketIndex + 1);
 
+  if (photoId === 7536261) return image;
   return `https://images.pexels.com/photos/${photoId}/pexels-photo-${photoId}.jpeg?auto=compress&cs=tinysrgb&w=1200`;
 }
 

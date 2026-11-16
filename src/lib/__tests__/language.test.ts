@@ -358,7 +358,7 @@ test("Vietnamese Flights landing copy resolves through active i18n render paths 
     beachVacations: "Kỳ nghỉ biển",
     beachVacationsBody:
       "Khám phá các tuyến bay đến bờ biển đầy nắng, đảo nghỉ dưỡng và điểm đến biển ấm áp.",
-    "flightLandingImageAlt.Puerto Vallarta coastline and old town": "Bờ biển và phố cổ Puerto Vallarta",
+    "flightLandingImageAlt.Puerto Vallarta coastline with ocean and greenery": "Bờ biển Puerto Vallarta với đại dương và cây xanh",
     "flightLandingImageAlt.Honolulu Waikiki beach with Diamond Head and bright blue water":
       "Bãi biển Waikiki ở Honolulu với Diamond Head và làn nước xanh trong",
     "flightLandingImageAlt.San Diego bay skyline and marina":
@@ -443,7 +443,7 @@ test("Vietnamese Flights landing copy resolves through active i18n render paths 
   assert.ok(homeDiscoverySource.includes('id: "ca-yyz-cun"'));
   assert.ok(homeDiscoverySource.includes('originCode: "YYZ"'));
   assert.ok(homeDiscoverySource.includes('destinationCode: "CUN"'));
-  assert.ok(homeDiscoverySource.includes('imageAlt: "Puerto Vallarta coastline and old town"'));
+  assert.ok(homeDiscoverySource.includes('imageAlt: "Puerto Vallarta coastline with ocean and greenery"'));
   assert.ok(flightLandingSource.includes("{item.originCode} → {item.destinationCode}"));
   assert.ok(flightLandingSource.includes("href={buildDiscoveryLink(item)}"));
   assert.ok(flightLandingSource.includes('columns="three"'));
@@ -7150,8 +7150,8 @@ test("Turkish Flights landing hero and standalone search form resolve without En
     "homeDiscoveryRoute.ca-yyz-san.title": "San Diego güneş ve sörf seyahati",
     "homeDiscoveryRoute.ca-yyz-san.routeNote":
       "Plajlar, parklar ve liman manzaraları için güvenilir sınır ötesi rota.",
-    "flightLandingImageAlt.Puerto Vallarta coastline and old town":
-      "Puerto Vallarta kıyı şeridi ve eski şehir",
+    "flightLandingImageAlt.Puerto Vallarta coastline with ocean and greenery":
+      "Puerto Vallarta kıyı şeridi, okyanus ve yeşillik",
     "flightLandingImageAlt.Honolulu Waikiki beach with Diamond Head and bright blue water":
       "Diamond Head ve parlak mavi sularıyla Honolulu Waikiki plajı",
     "flightLandingImageAlt.San Diego bay skyline and marina":
@@ -10147,7 +10147,7 @@ test("Swedish Flights landing copy resolves through active render path", () => {
     beachVacationsBody: "Utforska flygrutter till soliga kuster, öresor och stranddestinationer med varmt väder.",
     "homeDiscoveryRoute.ca-yyz-cun.title": "Vinterresa till Cancun",
     "homeDiscoveryRoute.ca-yyz-cun.routeNote": "Pålitlig fritidsrutt med direktalternativ under högsäsong.",
-    "flightLandingImageAlt.Puerto Vallarta coastline and old town": "Puerto Vallartas kustlinje och gamla stad",
+    "flightLandingImageAlt.Puerto Vallarta coastline with ocean and greenery": "Puerto Vallartas kustlinje med hav och grönska",
     "homeDiscoveryRoute.ca-yeg-pvr.title": "Strandresa till Puerto Vallarta",
     "homeDiscoveryRoute.ca-yeg-pvr.routeNote": "Vintersolrutt med Stillahavsstränder och charmig gammal stad.",
     "flightLandingImageAlt.Honolulu Waikiki beach with Diamond Head and bright blue water": "Honolulus Waikiki-strand med Diamond Head och klart blått vatten",
@@ -10296,7 +10296,7 @@ test("Indonesian Flights landing copy resolves through active render path", () =
     "homeDiscoveryRoute.ca-yyz-cun.routeNote": "Rute liburan andal dengan opsi nonstop pada musim puncak.",
     "homeDiscoveryRoute.ca-yeg-pvr.title": "Liburan pantai Puerto Vallarta",
     "homeDiscoveryRoute.ca-yeg-pvr.routeNote": "Rute matahari musim dingin dengan pantai Pasifik dan pesona kota tua.",
-    "flightLandingImageAlt.Puerto Vallarta coastline and old town": "Garis pantai Puerto Vallarta dan kota tua",
+    "flightLandingImageAlt.Puerto Vallarta coastline with ocean and greenery": "Garis pantai Puerto Vallarta dengan laut dan pepohonan",
     "homeDiscoveryRoute.ca-yyz-hnl.title": "Liburan pulau jarak jauh Honolulu",
     "homeDiscoveryRoute.ca-yyz-hnl.routeNote": "Opsi liburan premium untuk pantai, selancar, dan pendakian pulau.",
     "flightLandingImageAlt.Honolulu Waikiki beach with Diamond Head and bright blue water": "Pantai Waikiki Honolulu dengan Diamond Head dan air biru cerah",
@@ -14078,8 +14078,8 @@ test("Thai Flights landing copy resolves through active render paths", () => {
     "homeDiscoveryRoute.ca-yeg-pvr.title": "พักผ่อนริมทะเลที่เปอร์โตวัลลาร์ตา",
     "homeDiscoveryRoute.ca-yeg-pvr.routeNote":
       "เส้นทางรับแดดฤดูหนาวพร้อมชายหาดแปซิฟิกและเสน่ห์เมืองเก่า",
-    "flightLandingImageAlt.Puerto Vallarta coastline and old town":
-      "ชายฝั่งเปอร์โตวัลลาร์ตาและย่านเมืองเก่า",
+    "flightLandingImageAlt.Puerto Vallarta coastline with ocean and greenery":
+      "ชายฝั่งเปอร์โตวัลลาร์ตาพร้อมทะเลและพื้นที่สีเขียว",
     "homeDiscoveryRoute.ca-yyz-hnl.title": "พักเกาะระยะไกลที่โฮโนลูลู",
     "homeDiscoveryRoute.ca-yyz-hnl.routeNote":
       "ตัวเลือกพักผ่อนระดับพรีเมียมสำหรับชายหาด โต้คลื่น และเดินเขาบนเกาะ",
