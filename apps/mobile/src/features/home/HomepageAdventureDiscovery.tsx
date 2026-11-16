@@ -9,7 +9,8 @@ import { FlowIcon } from "../flow/FlowIcon";
 import { flowStyles, useFlowTheme } from "../flow/flowStyles";
 import { AndroidFavoriteButton } from "./AndroidFavoriteButton";
 import { discoverAdventureNavigation } from "./homepageCardNavigation";
-import { getHomepageAdventureDiscoveryItems, readFreshDiscoveryFare, splitAdventureDiscoveryRows, type DiscoveryFare, type HomepageAdventureDiscoveryItem } from "./HomepageAdventureDiscoveryData";
+import { readFreshDiscoveryFare, splitAdventureDiscoveryRows, type DiscoveryFare, type HomepageAdventureDiscoveryItem } from "./HomepageAdventureDiscoveryData";
+import { usePublishedHome } from "./usePublishedContent";
 import type { MarketplaceContext } from "../../../../../src/shared/marketplace/marketplaceContext";
 
 const ROW_GAP = 12;
@@ -22,11 +23,13 @@ export function HomepageAdventureDiscovery() {
   const { savedIds, toggle } = useSavedDestinations();
   const marketplace = useMobileMarketplace();
   const [failedImages, setFailedImages] = useState<Set<string>>(() => new Set());
-  const [fares, setFares] = useState<Record<string, DiscoveryFare>>({});
+  const [fareSnapshot, setFareSnapshot] = useState<{ scope: string; values: Record<string, DiscoveryFare> }>({ scope: "", values: {} });
   const cardWidth = Math.min(320, Math.max(200, Math.round(width * REFERENCE_CARD_SCREEN_FRACTION)));
   const api = getApiBaseUrl(undefined, __DEV__);
-  const assetOrigin = api.ok ? api.baseUrl : "https://staging.kurioticket.com";
-  const items = useMemo(() => getHomepageAdventureDiscoveryItems(marketplace.marketCountryCode, assetOrigin), [assetOrigin, marketplace.marketCountryCode]);
+  const published = usePublishedHome();
+  const items = useMemo(() => published.data?.flightRoutes.items.slice(0, 8) ?? [], [published.data]);
+  const fareScope = JSON.stringify([marketplace.marketCountryCode, marketplace.displayCurrency, items.map(item => [item.id, item.originCode, item.destinationCode])]);
+  const fares = fareSnapshot.scope === fareScope ? fareSnapshot.values : {};
   const rows = useMemo(() => splitAdventureDiscoveryRows(items), [items]);
   const layoutKey = JSON.stringify([cardWidth, fontScale, marketplace.locale, items.map((item) => item.id), fares]);
   const [copyMeasurements, setCopyMeasurements] = useState({ key: "", title: 0, details: 0 });
@@ -55,12 +58,13 @@ export function HomepageAdventureDiscovery() {
           const fare = readFreshDiscoveryFare(card, item);
           if (fare) next[item.id] = fare;
         }
-        setFares(next);
+        if (!controller.signal.aborted) setFareSnapshot({ scope: fareScope, values: next });
       })
       .catch(() => undefined);
     return () => controller.abort();
-  }, [api.ok ? api.baseUrl : null, items, marketplace.displayCurrency, marketplace.marketCountryCode]);
+  }, [api.ok ? api.baseUrl : null, items, marketplace.displayCurrency, marketplace.marketCountryCode, fareScope]);
 
+  if (!items.length) return null;
   return (
     <View collapsable={false} testID="homepage-adventure-discovery" style={styles.section}>
       <View style={styles.header}>
@@ -77,7 +81,7 @@ export function HomepageAdventureDiscovery() {
         contentContainerStyle={styles.rowContent}
       >
         {rows.top.map((item) => (
-          <AdventureCard key={item.id} item={item} width={cardWidth} copyHeight={copyHeight} onMeasureCopy={measureCopy} fare={fares[item.id]} marketplace={marketplace} imageFailed={failedImages.has(item.id)} saved={savedIds.has(item.id)} onImageError={() => setFailedImages((current) => new Set(current).add(item.id))} onFavorite={() => toggle(item.id)} />
+          <AdventureCard key={item.id} item={item} width={cardWidth} copyHeight={copyHeight} onMeasureCopy={measureCopy} fare={fares[item.id]} marketplace={marketplace} imageFailed={failedImages.has(item.id)} saved={savedIds.has(item.savedDestinationId ?? "")} onImageError={() => setFailedImages((current) => new Set(current).add(item.id))} onFavorite={() => { if (item.savedDestinationId) void toggle(item.savedDestinationId); }} />
         ))}
       </ScrollView>
       <ScrollView
@@ -90,7 +94,7 @@ export function HomepageAdventureDiscovery() {
         contentContainerStyle={styles.rowContent}
       >
         {rows.bottom.map((item) => (
-          <AdventureCard key={item.id} item={item} width={cardWidth} copyHeight={copyHeight} onMeasureCopy={measureCopy} fare={fares[item.id]} marketplace={marketplace} imageFailed={failedImages.has(item.id)} saved={savedIds.has(item.id)} onImageError={() => setFailedImages((current) => new Set(current).add(item.id))} onFavorite={() => toggle(item.id)} />
+          <AdventureCard key={item.id} item={item} width={cardWidth} copyHeight={copyHeight} onMeasureCopy={measureCopy} fare={fares[item.id]} marketplace={marketplace} imageFailed={failedImages.has(item.id)} saved={savedIds.has(item.savedDestinationId ?? "")} onImageError={() => setFailedImages((current) => new Set(current).add(item.id))} onFavorite={() => { if (item.savedDestinationId) void toggle(item.savedDestinationId); }} />
         ))}
       </ScrollView>
     </View>
@@ -104,7 +108,7 @@ function AdventureCard({ item, width, copyHeight, onMeasureCopy, fare, marketpla
     <Pressable accessibilityRole="button" accessibilityLabel={`${item.title}. ${item.originCode} to ${item.destinationCode}.${formattedFare ? ` From ${formattedFare}.` : ""}`} onPress={() => router.push(discoverAdventureNavigation(item, marketplace))} style={({ pressed }) => [styles.card, { width, backgroundColor: ft.colors.card, borderColor: ft.colors.border }, ft.styles.shadow, pressed && flowStyles.pressed]}>
       <View style={styles.imageFrame}>
         {imageFailed ? <View accessibilityLabel={`Image unavailable for ${item.destinationCode}`} testID={`adventure-image-fallback-${item.id}`} style={[styles.imageFallback, { backgroundColor: ft.colors.neutralImage }]}><FlowIcon name="compass" color={ft.colors.icon} size={22} /><Text style={[styles.fallbackCode, { color: ft.colors.textPrimary }]}>{item.destinationCode}</Text></View> : <Image accessibilityIgnoresInvertColors accessibilityLabel={item.imageAlt} onError={onImageError} resizeMode="cover" source={item.image} style={styles.image} />}
-        <AndroidFavoriteButton saved={saved} label={`${saved ? "Remove" : "Add"} ${item.title} ${saved ? "from" : "to"} favorites`} onPress={(event) => { event.stopPropagation(); onFavorite(); }} style={styles.heart} variant="webParity" />
+        {item.savedDestinationId ? <AndroidFavoriteButton saved={saved} label={`${saved ? "Remove" : "Add"} ${item.title} ${saved ? "from" : "to"} favorites`} onPress={(event) => { event.stopPropagation(); onFavorite(); }} style={styles.heart} variant="webParity" /> : null}
       </View>
       <View style={[styles.copy, { minHeight: copyHeight }]}>
         <View onLayout={(event) => onMeasureCopy("title", event.nativeEvent.layout.height)}>

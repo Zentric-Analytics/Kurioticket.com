@@ -227,6 +227,8 @@ async function fetchExploreCatalogue(): Promise<MobileExploreCatalogue> {
 
 export const travelApi = {
   featureAvailability: () => request<FeatureAvailability>("/api/feature-availability"),
+  homepageContent: (market: string, locale: string) => request<unknown>(`/api/content/homepage?market=${encodeURIComponent(market)}&locale=${encodeURIComponent(locale)}`),
+  faqContent: (locale: string) => request<unknown>(`/api/content/faqs?locale=${encodeURIComponent(locale)}`),
   journeyEvent: (body: JourneyEvent, options: { signal: AbortSignal; visitorContext: number }) => request<JourneyEventResponse>("/api/journey/events", { method: "POST", body: JSON.stringify(body) }, { ...options, timeoutMs: 4000 }),
   searchFlights: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string }) => request<TravelSearchResponse<PublicFlightResult>>("/api/flights/search", { method: "POST", body: JSON.stringify(body) }, { ...options, timeoutMs: METASEARCH_REQUEST_TIMEOUT_MS }),
   flightDetails: (id: string, options: { signal?: AbortSignal } = {}) => request<FlightDetailsResponse>(`/api/flights/details?id=${encodeURIComponent(id)}`, {}, options),
