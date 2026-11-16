@@ -14,7 +14,7 @@ import { AdminNotificationsPanel } from "./AdminNotificationsPanel";
 type HeaderGroup = ReturnType<typeof getAdminHeaderGroups>[number];
 type HeaderEntry = HeaderGroup["links"][number];
 
-function HeaderNavLink({ entry, pathname, mobile = false, close }: { entry: HeaderEntry; pathname: string; mobile?: boolean; close: () => void }) {
+function HeaderNavLink({ entry, pathname, close }: { entry: HeaderEntry; pathname: string; mobile?: boolean; close: () => void }) {
   const { item } = entry;
   const selected =
     isAdminNavItemActive(item.href, pathname) ||

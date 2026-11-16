@@ -126,7 +126,7 @@ export default async function AdminConfirmedTripsPage({ searchParams }: Props) {
                   ) : null}
                 </>
               ) : (
-                <p role="status" className="rounded-lg border border-slate-100 bg-white px-4 py-3 text-sm text-slate-700">Trip directory couldn't be loaded.</p>
+                <p role="status" className="rounded-lg border border-slate-100 bg-white px-4 py-3 text-sm text-slate-700">Trip directory couldn&apos;t be loaded.</p>
               )}
             </div>
           </section>

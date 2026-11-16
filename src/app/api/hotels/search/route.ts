@@ -69,7 +69,8 @@ export async function POST(request: Request) {
     : parsed.data;
   // Display currency is analytics-only. KAYAK's hotel provider criteria
   // require USD and must not depend on the customer's display preference.
-  const { currency: _displayCurrency, ...providerSearch } = search;
+  const providerSearch = { ...search };
+  delete providerSearch.currency;
   const operationalSession = prepareOperationalSearchSession(request);
   const recordedSearch = { ...search, ...(operationalSession ? { operationalSessionId: operationalSession.reference.id } : {}) };
 

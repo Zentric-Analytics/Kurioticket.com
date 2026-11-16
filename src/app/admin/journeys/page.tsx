@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { AdminButton, AdminDataTable, AdminEmptyState, AdminFilterBar, AdminInput, AdminPageShell, AdminSelect, AdminStatusBadge } from "@/components/admin/AdminPageShell";
+import { AdminButton, AdminDataTable, AdminEmptyState, AdminFilterBar, AdminInput, AdminSelect, AdminStatusBadge } from "@/components/admin/AdminPageShell";
 import { JourneyDateRangeFields } from "@/components/admin/JourneyDateRangeFields";
 import { journeyWindow, selectedJourneyRange } from "@/lib/adminJourneyDateRange";
 import { SearchWorkspaceBackLink } from "@/components/admin/SearchWorkspaceBackLink";

@@ -86,11 +86,10 @@ export function AdminUsersToolbar({
 
   useEffect(() => {
     paramsRef.current = new URLSearchParams(pageHref.split("?")[1] || "");
-    // An older in-flight response must not discard a date draft being edited.
-    if (customOpen) return;
-    setCustomOpen(false);
-    setDraftDates({from,to});
-  }, [pageHref, from, to, customOpen]);
+  }, [pageHref]);
+  const dateKey = JSON.stringify([from,to,customOpen]);
+  const [previousDateKey,setPreviousDateKey] = useState(dateKey);
+  if (previousDateKey !== dateKey) { setPreviousDateKey(dateKey); if (!customOpen) setDraftDates({from,to}); }
 
   useEffect(() => {
     const onHistoryNavigation = () => {

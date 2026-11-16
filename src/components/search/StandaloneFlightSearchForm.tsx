@@ -347,6 +347,20 @@ export function StandaloneFlightSearchForm({
   const [multiCityAirportsValid, setMultiCityAirportsValid] = useState(false);
   /* URL restoration intentionally synchronizes client state after the server
      render, where the browser query string is not available. */
+
+  const [datesOpen, setDatesOpen] = useState(false);
+  const [visibleMonthDate, setVisibleMonthDate] = useState(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  });
+  const [adultCount, setAdultCount] = useState(1);
+  const [childCount, setChildCount] = useState(0);
+  const [infantCount, setInfantCount] = useState(0);
+  const [draftAdultCount, setDraftAdultCount] = useState(1);
+  const [draftChildCount, setDraftChildCount] = useState(0);
+  const [draftInfantCount, setDraftInfantCount] = useState(0);
+  const [cabinClass, setCabinClass] = useState<CabinClass>("economy");
+  const [draftCabinClass, setDraftCabinClass] = useState<CabinClass>("economy");
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -368,19 +382,6 @@ export function StandaloneFlightSearchForm({
     setDraftCabinClass(restoredTravelers.cabinClass);
   }, []);
   /* eslint-enable react-hooks/set-state-in-effect */
-  const [datesOpen, setDatesOpen] = useState(false);
-  const [visibleMonthDate, setVisibleMonthDate] = useState(() => {
-    const now = new Date();
-    return new Date(now.getFullYear(), now.getMonth(), 1);
-  });
-  const [adultCount, setAdultCount] = useState(1);
-  const [childCount, setChildCount] = useState(0);
-  const [infantCount, setInfantCount] = useState(0);
-  const [draftAdultCount, setDraftAdultCount] = useState(1);
-  const [draftChildCount, setDraftChildCount] = useState(0);
-  const [draftInfantCount, setDraftInfantCount] = useState(0);
-  const [cabinClass, setCabinClass] = useState<CabinClass>("economy");
-  const [draftCabinClass, setDraftCabinClass] = useState<CabinClass>("economy");
   const [travelersOpen, setTravelersOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [homeAirportDefaultResolved, setHomeAirportDefaultResolved] =

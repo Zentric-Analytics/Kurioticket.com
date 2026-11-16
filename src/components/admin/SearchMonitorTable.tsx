@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 
 import type { AdminSearchRead } from "@/services/adminOperationalReadContract";
 
-export function SearchMonitorTable({
+function SearchMonitorTableState({
   initialItems,
   initialCursor,
   query,
@@ -30,16 +30,12 @@ export function SearchMonitorTable({
     generationRef.current += 1;
     abortRef.current?.abort();
     abortRef.current = null;
-    setItems(initialItems);
-    setCursor(initialCursor);
-    setLoading(false);
-    setLoadError(false);
     return () => {
       generationRef.current += 1;
       abortRef.current?.abort();
       abortRef.current = null;
     };
-  }, [initialItems, initialCursor, query]);
+  }, []);
 
   useEffect(() => {
     const node = sentinelRef.current;
@@ -235,4 +231,8 @@ function identityLabel(kind: "registered" | "guest" | "unattributed") {
 
 function detailHref(search: AdminSearchRead, detailQuery: string) {
   return "/admin/searches/" + search.id + "?" + (detailQuery ? detailQuery + "&" : "") + "environment=" + encodeURIComponent(search.environment);
+}
+
+export function SearchMonitorTable(props: Parameters<typeof SearchMonitorTableState>[0]) {
+  return <SearchMonitorTableState key={JSON.stringify([props.query, props.initialItems, props.initialCursor])} {...props} />;
 }

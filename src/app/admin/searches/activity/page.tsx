@@ -9,7 +9,7 @@ import { getPublicEnvironment } from "@/lib/stagingSafety";
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
 import { SearchMonitorTable } from "@/components/admin/SearchMonitorTable";
-import { SearchWorkspaceBackLink } from "@/components/admin/SearchWorkspaceBackLink";
+import {  } from "@/components/admin/SearchWorkspaceBackLink";
 import { adminOperationalReads } from "@/services/adminOperationalReadService";
 
 export const metadata = { title: "Admin Search Activity" };
@@ -23,7 +23,7 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
   // individual customer views or provider business reporting here.
   const tab = searchWorkspaceTab(supplied.tab);
   if (tab !== "searches") {
-    const { tab: _tab, ...old } = supplied;
+    const old = { ...supplied }; delete old.tab;
     const target = tab === "attribution" ? "/admin/providers?view=attribution" : tab === "journeys" ? "/admin/journeys" : "/admin/redirects";
     const keys = tab === "attribution" ? ["days"] : tab === "journeys"
       ? ["range","environment","product","identity","userId","visitorId","provider","stage","from","to"]
@@ -32,7 +32,7 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
     for (const key of keys) if (typeof old[key] === "string" && old[key].length <= 200) params.set(key, old[key]);
     redirect(target + (params.size ? (target.includes("?") ? "&" : "?") + params.toString() : ""));
   }
-  const { tab: _tab, ...suppliedSearch } = supplied;
+  const suppliedSearch = { ...supplied }; delete suppliedSearch.tab;
   const raw = { ...suppliedSearch };
   delete raw.environment;
   const currentEnvironment = getPublicEnvironment();

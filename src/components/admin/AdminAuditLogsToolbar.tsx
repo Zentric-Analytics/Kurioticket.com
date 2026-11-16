@@ -93,9 +93,12 @@ export function AdminAuditLogsToolbar({
     paramsRef.current = new URLSearchParams(pageHref.split("?")[1] || "");
   }, [pageHref]);
 
-  useEffect(() => {
+  const syncKey = JSON.stringify([pageHref,fromDate,toDate,customOpen]);
+  const [previousSyncKey, setPreviousSyncKey] = useState(syncKey);
+  if (previousSyncKey !== syncKey) {
+    setPreviousSyncKey(syncKey);
     if (!customOpen) setDraftDates({ from: fromDate, to: toDate });
-  }, [pageHref, fromDate, toDate, customOpen]);
+  }
 
   useEffect(() => {
     const appliedAdmin = adminEmail.trim();

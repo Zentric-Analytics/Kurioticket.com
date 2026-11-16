@@ -12,9 +12,7 @@ import {
   parseAdminSearchQuery,
   parseAdminSupportQuery,
   type AdminDeletionListItem,
-  type AdminDeletionQuery,
   type AdminDeletionScope,
-  type AdminHandoffQuery,
   type AdminHandoffRead,
   type AdminHandoffScope,
   type AdminOperationalIdentity,
@@ -23,13 +21,11 @@ import {
   type AdminSearchDetail,
   type AdminSearchDiagnostic,
   type AdminSearchProviderDiagnostic,
-  type AdminSearchQuery,
   type AdminSearchRead,
   type AdminSearchScope,
   type AdminSearchSummary,
   type AdminSupportDetail,
   type AdminSupportListItem,
-  type AdminSupportQuery,
   type AdminSupportScope,
 } from "./adminOperationalReadContract";
 
@@ -68,7 +64,6 @@ const supportDetailSelect = {
   user: { select: { id: true, email: true, name: true } },
   messages: { select: { id: true, author: true, body: true, createdAt: true }, orderBy: { createdAt: "asc" as const } },
 } satisfies Prisma.SupportTicketSelect;
-type SupportDetailRow = Prisma.SupportTicketGetPayload<{ select: typeof supportDetailSelect }>;
 
 const deletionSelect = {
   id: true, userId: true, email: true, status: true, requestedAt: true, deletionScheduledAt: true, cancelledAt: true,
@@ -151,12 +146,6 @@ function identityWhere(scope: { identity: "all" | "guest" | "registered" | "unat
     ...(scope.userId ? { userId: scope.userId } : {}),
     ...(scope.visitorId ? { visitorId: scope.visitorId, visitor: { is: eligibleVisitor } } : {}),
   };
-}
-
-function cursorWhere(cursor: { at: string; id: string } | null) {
-  if (!cursor) return {};
-  const at = new Date(cursor.at);
-  return { OR: [{ createdAt: { lt: at } }, { createdAt: at, id: { lt: cursor.id } }] };
 }
 
 function fallbackSearchDiagnostic(row: SearchRow): AdminSearchDiagnostic {

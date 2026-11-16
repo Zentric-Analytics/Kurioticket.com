@@ -84,9 +84,12 @@ export function FeatureControlsPanel({
     "Travel Automation": "Manage price alerts and automatic checks.",
   };
 
-  useEffect(() => {
+  const syncKey = initialControls;
+  const [previousSyncKey, setPreviousSyncKey] = useState(syncKey);
+  if (previousSyncKey !== syncKey) {
+    setPreviousSyncKey(syncKey);
     setControls(initialControls);
-  }, [initialControls]);
+  }
 
   function closePending() {
     if (saving) return;
