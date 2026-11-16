@@ -19,7 +19,7 @@ test("Compare deals selection stays mounted and never uses the full-page Cars sk
   );
   assert.match(
     cars,
-    /if \(providersLoading\)[\s\S]*data-cars-results-page-transition="providers"[\s\S]*<CarsResultsPageTransitionSkeleton/,
+    /if \(providersLoading\)[\s\S]*<SearchResultsLoadingTransition[\s\S]*searchType="car"/,
   );
   assert.match(
     cars,

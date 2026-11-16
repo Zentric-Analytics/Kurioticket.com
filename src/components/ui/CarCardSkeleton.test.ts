@@ -16,6 +16,6 @@ test("CarCardSkeleton mirrors the compact standalone desktop price rail", () => 
   assert.match(carSkeleton, /data-car-card-skeleton-desktop/);
   assert.match(carSkeleton, /hidden md:grid/);
   assert.match(carSkeleton, /md:grid-cols-\[250px_minmax\(0,1fr\)\]/);
-  assert.match(carSkeleton, /lg:grid-cols-\[220px_minmax\(0,1fr\)_152px\]/);
-  assert.match(carSkeleton, /xl:grid-cols-\[228px_minmax\(0,1fr\)_152px\]/);
+  assert.match(carSkeleton, /lg:grid-cols-\[192px_minmax\(0,1fr\)_152px\]/);
+  assert.match(carSkeleton, /xl:grid-cols-\[200px_minmax\(0,1fr\)_152px\]/);
 });

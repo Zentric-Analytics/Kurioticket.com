@@ -9,7 +9,11 @@ const faq = { question: "How do I book?", answer: "Choose a deal.\n\nBook with t
 const flight = { title: "Lagos to London", originCity: "Lagos", originCode: "LOS", destinationCity: "London", destinationCode: "LHR", routeNote: "Compare flights.\n\nCheck provider terms.", image: "/images/london.jpg", imageAlt: "London skyline" };
 
 test("browser and server use the same schemas; paragraph fields preserve line breaks", () => {
-  assert.equal(serverSchemas, cmsPayloadSchemas);
+  // ESM and Jiti may instantiate re-exports separately; assert identical validation behavior.
+  for (const [type, payload] of [["FAQ", faq], ["FLIGHT_ROUTE", flight]] as const) {
+    assert.deepEqual(serverSchemas[type].safeParse(payload), cmsPayloadSchemas[type].safeParse(payload));
+    assert.equal(serverSchemas[type].safeParse({}).success, false);
+  }
   assert.equal(cmsPayloadSchemas.FAQ.parse(faq).answer, faq.answer);
   assert.equal(cmsPayloadSchemas.FAQ.parse({ ...faq, answer: "First\r\n\r\nSecond" }).answer, "First\n\nSecond");
   assert.equal(cmsPayloadSchemas.FLIGHT_ROUTE.parse(flight).routeNote, flight.routeNote);

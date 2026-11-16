@@ -915,7 +915,7 @@ test("Vietnamese Account Support and Account FAQ copy resolves without English f
   assert.ok(supportFormSource.includes('setStatus(t("supportFormSending"))'));
 
   assert.ok(faqPageSource.includes('fromParam.includes("account")') && faqPageSource.includes('fromParam === "account"'));
-  assert.ok(faqContentSource.includes('const faqItems = getGeneralFaqs(t)'));
+  assert.ok(faqContentSource.includes('const fallbackFaqItems = getGeneralFaqs(t)'));
   assert.ok(faqContentSource.includes('t("faqGeneralQuestions")'));
   assert.ok(faqContentSource.includes('t("faqNeedMoreHelpPrefix")'));
   assert.ok(faqContentSource.includes('t("faqSupportPage")'));
@@ -4803,7 +4803,7 @@ test("Polish account FAQ support CTA resolves through localized segmented keys",
   const accountBackLinkRowSource = readFileSync("src/components/dashboard/AccountBackLinkRow.tsx", "utf8");
   const accountBackLinkSource = readFileSync("src/components/dashboard/AccountBackLink.tsx", "utf8");
 
-  assert.ok(faqPageSource.includes("<FaqContent showAccountLink={showAccountLink} />"), "Active FAQ page should render FaqContent with account-shell flag.");
+  assert.ok(/<FaqContent\s+showAccountLink=\{showAccountLink\}[\s\S]*initialFaqItems=\{initialFaqs.items\}/.test(faqPageSource), "Active FAQ page should render FaqContent with account-shell flag.");
   assert.ok(faqContentSource.includes('t("faqGeneralQuestions")'), "Account FAQ heading should use the corrected i18n key.");
   assert.ok(faqContentSource.includes('t("faqNeedMoreHelpPrefix")'), "Account FAQ CTA prefix should use the corrected i18n key.");
   assert.ok(faqContentSource.includes('t("faqSupportPage")'), "Account FAQ CTA link should use the corrected i18n key.");
@@ -4913,7 +4913,7 @@ test("Swedish Account FAQ render path resolves remaining support copy without En
   const accountBackLinkRowSource = readFileSync("src/components/dashboard/AccountBackLinkRow.tsx", "utf8");
   const accountBackLinkSource = readFileSync("src/components/dashboard/AccountBackLink.tsx", "utf8");
 
-  assert.ok(faqPageSource.includes("<FaqContent showAccountLink={showAccountLink} />"));
+  assert.ok(/<FaqContent\s+showAccountLink=\{showAccountLink\}[\s\S]*initialFaqItems=\{initialFaqs.items\}/.test(faqPageSource));
   assert.ok(faqContentSource.includes('t("faqGeneralQuestions")'));
   assert.ok(faqContentSource.includes('t("faqNeedMoreHelpPrefix")'));
   assert.ok(faqContentSource.includes('t("faqSupportPage")'));
@@ -4989,7 +4989,7 @@ test("Indonesian Account FAQ render path resolves remaining heading and support 
   const accountBackLinkRowSource = readFileSync("src/components/dashboard/AccountBackLinkRow.tsx", "utf8");
   const accountBackLinkSource = readFileSync("src/components/dashboard/AccountBackLink.tsx", "utf8");
 
-  assert.ok(faqPageSource.includes("<FaqContent showAccountLink={showAccountLink} />"));
+  assert.ok(/<FaqContent\s+showAccountLink=\{showAccountLink\}[\s\S]*initialFaqItems=\{initialFaqs.items\}/.test(faqPageSource));
   assert.ok(faqContentSource.includes('t("faqGeneralQuestions")'));
   assert.ok(faqContentSource.includes('t("faqNeedMoreHelpPrefix")'));
   assert.ok(faqContentSource.includes('t("faqSupportPage")'));
@@ -5063,7 +5063,7 @@ test("Thai Account FAQ render path resolves remaining heading and support copy w
   const accountBackLinkRowSource = readFileSync("src/components/dashboard/AccountBackLinkRow.tsx", "utf8");
   const accountBackLinkSource = readFileSync("src/components/dashboard/AccountBackLink.tsx", "utf8");
 
-  assert.ok(faqPageSource.includes("<FaqContent showAccountLink={showAccountLink} />"));
+  assert.ok(/<FaqContent\s+showAccountLink=\{showAccountLink\}[\s\S]*initialFaqItems=\{initialFaqs.items\}/.test(faqPageSource));
   assert.ok(faqContentSource.includes('t("faqGeneralQuestions")'));
   assert.ok(faqContentSource.includes('t("faqNeedMoreHelpPrefix")'));
   assert.ok(faqContentSource.includes('t("faqSupportPage")'));

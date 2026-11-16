@@ -55,7 +55,7 @@ test("KAYAK Hotel place ids are validated at the provider boundary without weake
 });
 
 test("provider-only Hotel search still uses the canonical server search and details cache", () => {
-  assert.match(searchRoute, /searchHotelsByProvider\(search, providerMode/);
+  assert.match(searchRoute, /searchHotelsByProvider\(providerSearch, providerMode/);
   assert.match(searchRoute, /source: providerMode \|\| classified\.source/);
   assert.match(aggregator, /export async function searchHotelsByProvider/);
   assert.match(aggregator, /rememberProviderResults\("hotel", results, search\)/);

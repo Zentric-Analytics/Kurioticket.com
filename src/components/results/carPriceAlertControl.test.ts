@@ -94,7 +94,7 @@ test("Cars rate alerts display Track car prices with an offer-specific accessibl
   const english = readFileSync(new URL("../../lib/i18n/en.ts", import.meta.url), "utf8");
   assert.match(english, /"carsResults\.priceTracking\.title": "Track car prices"/);
   assert.match(source, /<span className="min-w-0 flex-1 text-\[13px\][^>]*>\{t\("carsResults\.priceTracking\.title"\)\}<\/span>/);
-  assert.match(source, /aria-label=\{`${t\("carsResults\.priceTracking\.title"\)\} for $\{scope\.providerName\} offer`\}/);
+  assert.match(source, /aria-label=\{`\$\{t\("carsResults\.priceTracking\.title"\)\} for \$\{scope\.providerName\} offer`\}/);
 });
 
 test("Cars price tracking failures use an accessible blocking dialog", () => {

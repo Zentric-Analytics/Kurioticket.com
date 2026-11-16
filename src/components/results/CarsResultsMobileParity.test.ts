@@ -194,7 +194,7 @@ test("mobile result rhythm no longer reserves space for the removed summary card
   assert.match(resultsSource, /!embedded && presentation === "standalone" && "max-sm:pt-6"/);
   assert.match(resultsSource, /min-w-0 space-y-0 sm:space-y-4/);
   assert.equal(
-    (resultsSource.match(/"w-full space-y-3\.5 sm:space-y-4",\s*!embedded && presentation === "standalone" \? "max-sm:!mt-2" : "max-sm:!mt-1"/g) ?? []).length,
+    (resultsSource.match(/"w-full space-y-3\.5 sm:space-y-4",\s*!embedded && presentation === "standalone" \? "max-sm:!mt-2 lg:space-y-5" : "max-sm:!mt-1"/g) ?? []).length,
     2,
   );
 });

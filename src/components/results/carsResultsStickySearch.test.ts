@@ -34,7 +34,10 @@ test("source-contract: sticky editor lifecycle keeps scroll locking independent 
     source.match(
       /useEffect\(\(\) => \{[\s\S]*?const scrollLock = lockDesktopPageScroll\(\);[\s\S]*?\}, \[desktopStickySearchOpen\]\);/,
     )?.[0] ?? "";
-  assert.doesNotMatch(scrollLockEffect, /datesOpen|timesOpen|driverAgeOpen/);
+  assert.ok(scrollLockEffect);
+  const effectStart = source.lastIndexOf("useEffect(() => {", source.indexOf("const scrollLock = lockDesktopPageScroll();"));
+  const ownEffect = source.slice(effectStart, source.indexOf("}, [desktopStickySearchOpen]);", effectStart));
+  assert.doesNotMatch(ownEffect, /datesOpen|timesOpen|driverAgeOpen/);
   assert.match(
     source,
     /const frame = requestAnimationFrame[\s\S]*?stickyDialogRef\.current\?\.focus\(\{ preventScroll: true \}\)[\s\S]*?cancelAnimationFrame\(frame\)[\s\S]*?\[desktopStickySearchSection\]/,

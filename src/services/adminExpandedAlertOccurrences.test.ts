@@ -2,19 +2,20 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { persistExpandedAlertOccurrences, type OccurrenceDatabase } from "./adminExpandedAlertOccurrences";
 
+type Row = {targetId: string; metadata: {state: string}; createdAt: Date};
 const now = new Date("2026-11-04T14:00:00Z");
 const alert = { key: "expanded.staging.support.OPEN", source: "SUPPORT", severity: "WARNING", title: "Urgent tickets", message: "2 urgent tickets", actionHref: "/admin/support?priority=URGENT&status=OPEN", signalToken: "provisional" } as const;
 function database() {
-  const rows: any[] = [];
+  const rows: Row[] = [];
   let locks = 0;
-  const tx = {
+  const transaction = {
     $executeRaw: async () => { locks++; },
     adminAuditLog: {
-      findFirst: async (args: any) => rows.filter(row => row.targetId === args.where.targetId).at(-1) ?? null,
-      create: async ({ data }: any) => { rows.push({ ...data, createdAt: now }); return data; },
+      findFirst: async (args: {where: {targetId: string}}) => rows.filter(row => row.targetId === args.where.targetId).at(-1) ?? null,
+      create: async ({ data }: {data: Omit<Row,"createdAt">}) => { rows.push({ ...data, createdAt: now }); return data; },
     },
   };
-  return { db: { $transaction: async (run: (tx: any) => Promise<any>) => run(tx) } as unknown as OccurrenceDatabase, rows, locks: () => locks };
+  return { db: { $transaction: async (run: (tx: typeof transaction) => Promise<unknown>) => run(transaction) } as unknown as OccurrenceDatabase, rows, locks: () => locks };
 }
 test("polling and count changes retain acknowledgement identity for a continuous incident", async () => {
   const { db, rows, locks } = database();
@@ -28,7 +29,7 @@ test("verified recovery and recurrence produce a new token; unknown telemetry do
   await persistExpandedAlertOccurrences(db, "staging", [], {}, new Date(now.getTime() + 1_000));
   assert.equal(rows.length, 1);
   await persistExpandedAlertOccurrences(db, "staging", [], { [alert.key]: false }, new Date(now.getTime() + 2_000));
-  assert.equal(rows.at(-1).metadata.state, "CLEAR");
+  assert.equal(rows.at(-1)!.metadata.state, "CLEAR");
   const next = await persistExpandedAlertOccurrences(db, "staging", [alert], { [alert.key]: true }, new Date(now.getTime() + 3_000));
   assert.notEqual(first[0].signalToken, next[0].signalToken);
 });

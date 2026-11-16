@@ -9,7 +9,7 @@ const source = readFileSync(
 
 test("mobile web Hotel results navbar uses an edit icon for the search summary", () => {
   const start = source.indexOf("const renderMobileHotelNavSearch");
-  const end = source.indexOf("\n  return (", start);
+  const end = source.indexOf("</button>", start);
   const section = source.slice(start, end);
 
   assert.match(section, /data-hotel-results-mobile-nav-search-button/);

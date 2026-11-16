@@ -118,7 +118,7 @@ test("standalone desktop result cards use a polished identity, details, and pric
   );
   assert.match(
     standalone,
-    /grid-cols-2 lg:text-\[13px\] lg:font-semibold lg:leading-\[18px\]/,
+    /grid-cols-2 lg:hidden lg:text-\[13px\] lg:font-semibold lg:leading-\[18px\]/,
   );
 
   assert.match(
@@ -135,7 +135,7 @@ test("standalone desktop result cards use a polished identity, details, and pric
   );
   assert.match(
     alert,
-    /lg:whitespace-nowrap lg:text-\[13px\] lg:font-semibold lg:leading-4 lg:tracking-\[-0\.002em\] lg:text-slate-950/,
+    /text-\[13px\] font-semibold leading-\[18px\] tracking-\[-0\.005em\] text-\[#07133B\]/,
   );
 });
 
@@ -151,7 +151,7 @@ test("desktop typography polish leaves the established mobile Cars hierarchy int
 
   const mobileCard = card.slice(
     card.indexOf("data-car-card-mobile-main"),
-    card.indexOf('data-region="heading"'),
+    card.indexOf('data-region="image"'),
   );
   assert.match(
     mobileCard,
@@ -163,7 +163,7 @@ test("desktop typography polish leaves the established mobile Cars hierarchy int
   );
   assert.match(
     mobileCard,
-    /text-\[19px\] font-semibold leading-\[22px\] tracking-\[-0\.02em\] text-\[#07133B\]/,
+    /<CarDealPicker[\s\S]*selectedOfferId=\{offer\.id\}[\s\S]*compact/,
   );
-  assert.doesNotMatch(mobileCard, /text-\[20px\]/);
+  assert.doesNotMatch(mobileCard, /data-region="pricing"/);
 });

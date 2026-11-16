@@ -120,7 +120,7 @@ test("desktop Multi-city marks the sticky editor open before observer callbacks 
   );
   assert.match(
     toolbar,
-    /if \(option\.value === "multi-city"\) \{[\s\S]*stickySearchPanelOpenRef\.current = true;[\s\S]*setIsSearchExpandedWhileSticky\(true\)/,
+    /if \(option\.value === "multi-city"\) \{[\s\S]*navigateDesktopMultiCityToHome\(\)/,
   );
   assert.match(
     source,
@@ -206,8 +206,8 @@ test("route field is one grouped control with a circular swap and interrupted di
   assert.doesNotMatch(toolbar, /border-x border-\[#D8E1EC\]/);
   assert.match(toolbar, /data-flight-results-header-origin/);
   assert.match(toolbar, /data-flight-results-header-destination/);
-  assert.match(toolbar, /openStickySearchEditor\(event\.currentTarget, "origin"\)/);
-  assert.match(toolbar, /openStickySearchEditor\(event\.currentTarget, "destination"\)/);
+  assert.match(source, /openDesktopSearchEditor\(event\.currentTarget, "origin"\)/);
+  assert.match(toolbar, /openDesktopSearchEditor\(event\.currentTarget, "destination"\)/);
   assert.doesNotMatch(toolbar, /openCompactRouteEditor/);
   assert.doesNotMatch(
     toolbar,

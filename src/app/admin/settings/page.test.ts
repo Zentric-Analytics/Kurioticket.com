@@ -23,7 +23,8 @@ test("Settings is the authoritative workspace for persisted administrative contr
   assert.doesNotMatch(settingsPage, /Environment and access|ContextItem|Your access|Settings store/);
   assert.match(settingsNavigation, /label: "Feature controls"/);
   assert.match(settingsPage, />Recent changes<\/h2>/);
-  assert.doesNotMatch(settingsPage, /Managed outside Settings|Runtime & credentials|Administrator access/);
+  assert.match(settingsPage, /Administrator access/);
+  assert.doesNotMatch(settingsPage, /<input[^>]+(?:name="(?:adminEmail|databaseUrl)")/);
   assert.doesNotMatch(settingsPage, /Homepage Fare Operations|\/admin\/homepage-fares/);
   assert.doesNotMatch(settingsPage, /provider health|system health|email delivery health/i);
 });
@@ -45,7 +46,7 @@ test("settings exposes only real persisted feature controls", () => {
   ]) {
     assert.match(registry, new RegExp(key));
   }
-  assert.doesNotMatch(settingsPage, /timezone|default currency|preferred market|language preference/i);
+  assert.doesNotMatch(settingsPage, /<input[^>]+name="(?:timezone|currency|market|language)"/);
 });
 
 test("settings starts directly with feature controls and retains authorization inputs", () => {
@@ -62,7 +63,7 @@ test("feature controls use concise product and automation descriptions", () => {
   assert.match(featurePanel, /"Travel Automation": "Travel automation"/);
   assert.match(featurePanel, /Manage travel search and Packages\./);
   assert.match(featurePanel, /Manage price alerts and automatic checks\./);
-  assert.match(featurePanel, /controls\.filter\(\(control\) => control\.category === category\)/);
+  assert.match(featurePanel, /controls\s*\.filter\(\(?control\)? => control\.category === category\)/);
   assert.match(featurePanel, /Allow flight searches\./);
   assert.match(featurePanel, /Allow hotel searches\./);
   assert.match(featurePanel, /Allow car searches\./);

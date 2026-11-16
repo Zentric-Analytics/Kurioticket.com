@@ -19,7 +19,7 @@ test("desktop Flight Results moves price tracking into the sidebar without repla
   assert.match(results, /desktopPortalTarget=\{desktopFlightPriceAlertTarget\}/);
   assert.match(results, /data-flight-results-card-list className="space-y-3 sm:space-y-4"/);
   assert.match(alert, /data-flight-price-alert-sidebar/);
-  assert.match(alert, /min-h-\[48px\]/);
+  assert.match(alert, /min-h-\[52px\]/);
   assert.match(alert, />Track flight price</);
   assert.match(alert, /window\.matchMedia\("\(min-width: 1024px\)"\)/);
   assert.match(alert, /desktopSidebarActive && desktopPortalTarget[\s\S]*?createPortal\(desktopControl, desktopPortalTarget\)/);

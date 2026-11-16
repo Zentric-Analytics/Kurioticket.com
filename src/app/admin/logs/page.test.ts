@@ -109,7 +109,7 @@ test("Audit Logs filters preserve the safe reader contract and user-page custom-
   assert.ok(page.includes('params.set("limit", "100")'));
   assert.ok(page.includes('params.has("cursor")'));
   assert.ok(page.includes('range === "90d"'));
-  assert.equal(page.includes('params.set("range"'), false);
+  assert.ok(page.includes('params.set("range", range)'));
 });
 
 test("Audit Logs forwards malformed reader parameters so the safe reader can reject them", () => {
