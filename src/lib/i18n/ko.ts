@@ -1798,8 +1798,8 @@ export const translations: TranslationDictionary = {
   "flightLandingCity.Toronto": "토론토",
   "flightLandingCity.Edmonton": "에드먼턴",
   "flightLandingCity.Vancouver": "밴쿠버",
-  "flightLandingImageAlt.Puerto Vallarta coastline and old town":
-    "푸에르토바야르타 해안선과 구시가지",
+  "flightLandingImageAlt.Puerto Vallarta coastline with ocean and greenery":
+    "바다와 녹지가 보이는 푸에르토바야르타 해안선",
   "flightLandingImageAlt.Honolulu Waikiki beach with Diamond Head and bright blue water":
     "다이아몬드 헤드와 맑고 푸른 바다가 보이는 호놀룰루 와이키키 해변",
   "flightLandingImageAlt.San Diego bay skyline and marina":

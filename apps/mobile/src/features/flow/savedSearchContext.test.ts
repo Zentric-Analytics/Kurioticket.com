@@ -60,3 +60,8 @@ test("incomplete Explore destination search cannot open flight results", () => {
   const params = sanitizeSearchParams("flight", { destination: "Abidjan", to: "ABJ", destinationId: "ci-abidjan" });
   assert.equal(hasValidSearchPlan("flight", params, now), false);
 });
+
+test("saved airport-local calendar date survives an instant crossing midnight UTC", () => {
+  const item = { type: "flight", originAirport: "SFO", destinationAirport: "LAX", departureTime: "2026-12-17T07:30:00Z", payload: { flightTime: { version: 1, departure: { local: "2026-12-16T23:30:00", timeZone: "America/Los_Angeles" }, arrival: { local: "2026-12-17T00:54:00" } } } } as unknown as MobileSavedItem;
+  assert.equal(legacyFlightSearchParams(item).departureDate, "2026-12-16");
+});

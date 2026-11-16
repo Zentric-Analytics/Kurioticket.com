@@ -100,7 +100,7 @@ export function FlightCard({
       ? `/flights/details/${encodeURIComponent(flight.id)}`
       : detailsHref;
   const resolvedActionLabel = actionLabel ?? t("viewDeal");
-  const { isSaved, pending: savedFlightPending, toggleSavedFlight } = useSavedFlightResult(
+  const { isSaved, pending: savedFlightPending, toggleSavedFlight, savedFlightError } = useSavedFlightResult(
     flight,
     resolvedDetailsHref,
   );
@@ -159,6 +159,7 @@ export function FlightCard({
 
   return (
     <>
+      {savedFlightError ? <p role="alert" className="px-3 py-2 text-sm text-red-700">{savedFlightError}</p> : null}
       <MobileFlightCard
         flight={flight}
         resultBadge={resultBadge}

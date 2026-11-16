@@ -980,8 +980,8 @@ export const translations: TranslationDictionary = {
     "เส้นขอบฟ้าไคโรพร้อมพีระมิดแห่งกีซา",
   "flightLandingImageAlt.Addis Ababa cityscape in the Ethiopian highlands":
     "ทิวทัศน์เมืองแอดดิสอาบาบาบนที่ราบสูงเอธิโอเปีย",
-  "flightLandingImageAlt.Puerto Vallarta coastline and old town":
-    "ชายฝั่งเปอร์โตวัลลาร์ตาและย่านเมืองเก่า",
+  "flightLandingImageAlt.Puerto Vallarta coastline with ocean and greenery":
+    "ชายฝั่งเปอร์โตวัลลาร์ตาพร้อมทะเลและพื้นที่สีเขียว",
   "flightLandingImageAlt.Honolulu Waikiki beach with Diamond Head and bright blue water":
     "หาดไวกิกิในโฮโนลูลูพร้อมไดมอนด์เฮดและน้ำทะเลสีฟ้าสดใส",
   "flightLandingImageAlt.San Diego bay skyline and marina":

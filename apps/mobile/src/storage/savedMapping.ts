@@ -2,6 +2,7 @@ import type { CarResult, CreateMobileSavedItem, FlightResult, HotelResult, Mobil
 import { destinations } from "../features/explore/destinationCatalogue";
 import { sanitizeSearchParams } from "../features/flow/savedSearchContext";
 import { canonicalSavedFlightDateTime } from "./savedFlightDateTime";
+import { savedFlightTimeFields } from "@/shared/flights/savedFlightTime";
 
 export type SavableFlight = Omit<FlightResult, "bookingUrl" | "partnerRedirectUrl">;
 
@@ -103,9 +104,9 @@ export function mapFlightToSaved(f: SavableFlight, params?: Record<string, unkno
   return {
     type: "flight", provider: f.provider, airlineName: f.airlineName, flightNumber: f.flightNumber ?? null,
     originAirport: f.originAirport, destinationAirport: f.destinationAirport,
-    departureTime: canonicalSavedFlightDateTime(f.departureTime), arrivalTime: canonicalSavedFlightDateTime(f.arrivalTime),
+    departureTime: canonicalSavedFlightDateTime(f.departureTime, f.originAirport), arrivalTime: canonicalSavedFlightDateTime(f.arrivalTime, f.destinationAirport),
     price: f.price, currency: f.currency,
-    payload: { nativeRoute: "/flight-details", result: savedFlight, ...(params ? { searchParams: sanitizeSearchParams("flight", params) } : {}) },
+    payload: { nativeRoute: "/flight-details", result: savedFlight, flightTime: savedFlightTimeFields(f).flightTime, ...(params ? { searchParams: sanitizeSearchParams("flight", params) } : {}) },
   };
 }
 

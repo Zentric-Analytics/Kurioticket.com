@@ -52,6 +52,10 @@ async function search<T>(vertical: KayakVertical, criteria: Record<string, strin
     return { provider: "KAYAK sandbox", results: offers.flatMap(offer => { const value = map?.(offer); return value ? [value] : []; }), status: "success", latencyMs: Date.now() - startedAt };
   } catch (error) {
     const reason = error instanceof KayakError ? error.code : "unavailable";
+    // A 403 can reject the client agent, not just the key. Keep the real agent
+    // and safe status evidence; never log credential-bearing URLs or bodies.
+    console.warn("[kayak-search:rejection]", { vertical, category: reason,
+      httpStatus: error instanceof KayakError ? error.httpStatus : undefined });
     const errorCategory = reason === "timeout" ? "timeout" : reason === "unauthorized" ? "auth" : reason === "invalid_response" ? "invalid_response" : reason === "unavailable" ? "network" : "server";
     const errorReason = reason === "timeout" ? "provider_timeout" : reason === "unauthorized" ? "provider_auth_error" : reason === "invalid_response" ? "provider_invalid_response" : reason === "unavailable" ? "provider_network_error" : "provider_server_error";
     const results = error instanceof KayakPartialSearchError

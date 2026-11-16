@@ -34,8 +34,8 @@ test("flight mapping retains sanitized search context without changing identity"
 test("normalized Duffel local and offset flight mappings satisfy the Saved API contract", () => {
   const duffel = { ...flight, id:"off_0001",provider:"duffel",airlineName:"British Airways",flightNumber:"BA75",originAirport:"LOS",destinationAirport:"LHR",departureTime:"2026-08-27T20:07:00",arrivalTime:"2026-08-28T03:43:00",price:824.45,currency:"USD" };
   const mapped = mapFlightToSaved(duffel);
-  assert.equal(mapped.departureTime, "2026-08-27T20:07:00.000Z");
-  assert.equal(mapped.arrivalTime, "2026-08-28T03:43:00.000Z");
+  assert.equal(mapped.departureTime, "2026-08-27T19:07:00.000Z");
+  assert.equal(mapped.arrivalTime, "2026-08-28T02:43:00.000Z");
   assert.equal(typeof mapped.departureTime === "string" && !Number.isNaN(Date.parse(mapped.departureTime)), true);
   assert.equal(typeof mapped.arrivalTime === "string" && !Number.isNaN(Date.parse(mapped.arrivalTime)), true);
   assert.deepEqual((mapped.payload as Record<string, unknown>).result, urlFree(duffel));
