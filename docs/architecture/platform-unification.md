@@ -25,3 +25,11 @@ Added canonical WEB/IOS/ANDROID/UNKNOWN resolution and bounded app-version valid
 New search query metadata, provider telemetry, redirect metadata, relevant analytics/journey events and mobile support context retain source without extra behavioral events or schema changes. Existing rows are not rewritten. Support preserves authenticated ios/android and labels unverifiable guests unknown. Existing APIs remain additive/backward compatible.
 
 Verification: 75 focused resolver/identity/search/analytics/handoff/support/terminal-history tests passed; root TypeScript check passed. Touched runtime files passed ESLint (one pre-existing hotel currency warning plus subsequently removed unused local warnings). No hardware attestation or physical-device identity verification is claimed.
+
+## Stage 03
+
+Added authenticated, no-store GET /api/admin/platform-operations?hours=24 (1–720). Search, handoff and provider-call aggregates partition WEB/IOS/ANDROID/UNKNOWN without joins or duplicate behavioral records. Combined counts reconcile; absent history source remains UNKNOWN. Database queries are environment scoped and bounded. Unknown/small samples are not labeled healthy. Existing provider/email/CMS/alert readers and staging release identity are reused. Native installed-app health is explicitly UNKNOWN; API health is not device health. No new platform alert occurrences are emitted without operational evidence; existing conservative alert/acknowledgment semantics remain in use.
+
+Health now returns 503 when DB readiness fails and suppresses raw connection errors. Critical scheduler invocations record one existing ApiProviderLog row, then update its final outcome; task failures propagate and monitoring failures cannot masquerade as task success. No payload or exception content is persisted. This starts new evidence; it does not prove past cron execution, scheduler configuration or missed runs. No schema migration, new service, SDK, UI or Preview-worker change.
+
+Verification: 34 focused monitoring/provider/alert/deletion-cron tests passed; root TypeScript and scoped lint passed. SQL environment binding and outage contracts tested with injected database; live PostgreSQL execution and scheduler deployment remain unverified.
