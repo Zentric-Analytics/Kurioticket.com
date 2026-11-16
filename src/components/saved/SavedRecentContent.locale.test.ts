@@ -25,11 +25,14 @@ test("saved and recent controls render selected-language labels for both lists a
   const dictionary = getTranslations(locale);
   for (const tab of ["saved", "recent"]) {
     for (const error of [false, true]) {
-      const values = [tab, [{ id: "test", type: "search", label: "Test saved search", href: "/cars" }], [{ id: "search", label: "Test search", href: "/cars" }], error];
+      const values = [tab, [{ id: "test", type: "search", label: "Test saved search", href: "/cars" }], [{ id: "search", label: "Test search", href: "/cars" }], error, "fixture-user"];
       let stateIndex = 0;
       const text: string[] = [];
       runInNewContext(`${compiled}\nSavedRecentContent()`, {
         useLocale: () => ({ t: dictionary }),
+        useSession: () => ({ status: "authenticated", data: { user: { id: "fixture-user" } } }),
+        useRef: (current: unknown) => ({ current }),
+        useLayoutEffect: () => {},
         useState: () => [values[stateIndex++], () => {}],
         useCallback: (callback: unknown) => callback,
         useEffect: () => {},

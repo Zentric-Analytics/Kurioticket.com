@@ -7,7 +7,7 @@ import ts from "typescript";
 for (const product of ["flights", "hotels", "cars", "packages"]) {
   for (const platform of ["web", "ios", "android"]) test(`${product} shutdown blocks ${platform} before provider or body processing`, async () => {
     const exported: { POST?: (request: Request) => Promise<Response> } = {};
-    const source = readFileSync(`src/app/api/${product}/search/route.ts`, "utf8");
+    const source = readFileSync(product === "packages" ? "src/lib/deals/packageSearchHandler.ts" : `src/app/api/${product}/search/route.ts`, "utf8");
     const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
     runInNewContext(compiled, {
       exports: exported, Response, URL, performance, crypto: { randomUUID: () => "request-id" },

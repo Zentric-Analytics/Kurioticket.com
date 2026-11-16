@@ -53,6 +53,15 @@ test("deactivation during a request clears private data and ignores late respons
   assert.equal(h.repository.snapshot().items.length, 0);
   await assert.rejects(h.repository.toggleFlight(flight()), /Account changed/);
 });
+test("late cleanup cannot erase a replacement repository's newer account cache", async () => {
+  let cache: MobileSavedItem[] = [];
+  const item = serverItem(flight());
+  const deps: SavedRepositoryDependencies = { readCache: async () => cache, writeCache: async (_user, items) => { cache = items; }, list: async () => ({ items: [item], summary: {} }), create: async () => ({ item }), remove: async () => undefined, readDestinations: async () => [], writeDestinations: async () => undefined, readFlights: async () => [], writeFlights: async () => undefined };
+  const old = new SavedRepository("same-account", deps); await old.refresh();
+  old.deactivate(() => false); // The registry has already installed a new owner.
+  const replacement = new SavedRepository("same-account", deps); await replacement.refresh();
+  assert.equal(cache[0].id, item.id); assert.equal(old.snapshot().items.length, 0);
+});
 
 test("canonical flight identity ignores transient offer ids but preserves provider and departure", () => {
   assert.equal(flightSavedSignature(flight("same")), flightSavedSignature(flight("same")));

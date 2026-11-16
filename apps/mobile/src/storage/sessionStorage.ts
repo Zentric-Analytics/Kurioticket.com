@@ -4,7 +4,7 @@ import * as SecureStore from "expo-secure-store";
 const SESSION_KEY = "kurioticket.auth.session.v1";
 type StoredSession = { token: string; expires: string; user: { id: string; email: string; name?: string | null } };
 export { subscribeSession } from "./sessionEvents";
-import { publishSession } from "./sessionEvents";
+import { publishSession, getSessionRevision } from "./sessionEvents";
 
 function webStorage() { return (globalThis as { localStorage?: Storage }).localStorage; }
 export async function writeSession(session: StoredSession) {
@@ -14,7 +14,9 @@ export async function writeSession(session: StoredSession) {
   publishSession(session);
 }
 export async function readSession(): Promise<StoredSession | null> {
+  const revision = getSessionRevision?.() ?? 0;
   const value = Platform.OS === "web" ? webStorage()?.getItem(SESSION_KEY) : await SecureStore.getItemAsync(SESSION_KEY);
+  if (revision !== (getSessionRevision?.() ?? 0)) return readSession();
   if (!value) return null;
   try {
     const session = JSON.parse(value) as StoredSession;

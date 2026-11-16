@@ -69,7 +69,7 @@ test("FAQ page server-renders CMS content and refreshes on client locale changes
   assert.match(faqContent, /\[locale\]/);
 });
 
-test("Phase 2 does not change the native mobile FAQ source", () => {
-  assert.match(mobileFaq, /getGeneralFaqs/);
-  assert.doesNotMatch(mobileFaq, /api\/content\/faqs/);
+test("native FAQ consumes the shared published source while retaining native layout", () => {
+  assert.match(mobileFaq, /usePublishedFaqs/);
+  assert.match(mobileFaq, /faqAccessibility/);
 });

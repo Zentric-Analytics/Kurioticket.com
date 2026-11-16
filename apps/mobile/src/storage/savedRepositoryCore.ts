@@ -33,10 +33,10 @@ export class SavedRepository {
     this.cacheWrites = this.cacheWrites.catch(() => undefined).then(async () => { if (this.active) await this.dependencies.writeCache(this.userId, items); });
     return this.cacheWrites;
   }
-  deactivate() {
+  deactivate(shouldClearCache = () => true) {
     this.active = false; this.revision++; this.confirmed = []; this.mutations.clear(); this.pendingFlightKeys.clear(); this.publish({ loading: false, error: "" });
     // Clear after any already-started write, so late work cannot restore private data.
-    this.cacheWrites = this.cacheWrites.catch(() => undefined).then(() => this.dependencies.writeCache(this.userId, []));
+    this.cacheWrites = this.cacheWrites.catch(() => undefined).then(async () => { if (shouldClearCache()) await this.dependencies.writeCache(this.userId, []); });
     void this.cacheWrites.catch(() => undefined);
   }
   async refresh(options: { hydrateFromCache?: boolean } = {}) {

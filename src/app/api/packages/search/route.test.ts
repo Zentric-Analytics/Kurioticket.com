@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { POST } from "./route";
+import { createPackageSearchHandler } from "@/lib/deals/packageSearchHandler";
+const POST = createPackageSearchHandler(async () => true);
 
 test("package search rejects incomplete component context", async () => {
   const response = await POST(new Request("http://local/api/packages/search", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ mode: "hotel-flight", sharedDestination: "London" }) }));

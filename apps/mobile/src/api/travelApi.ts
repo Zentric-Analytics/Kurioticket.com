@@ -105,7 +105,12 @@ let operationalSearchActor: string | null = null;
 const operationalPaths = new Set(["/api/flights/search", "/api/hotels/search", "/api/cars/search", "/api/mobile/v1/hotels/progressive", "/api/redirect"]);
 const operationalCredentialPattern = /^v1\.[0-9a-f-]{36}\.[0-9]{10,13}\.(?:staging|production)\.[A-Za-z0-9_-]{43}$/;
 let accountEpoch = 0;
-subscribeSession?.(() => { accountEpoch++; });
+let observedSessionToken: string | null | undefined;
+subscribeSession?.(session => {
+  const token = session?.token ?? null;
+  if (token !== observedSessionToken) accountEpoch++;
+  observedSessionToken = token;
+});
 
 async function request<T>(path: string, init: RequestInit = {}, options: { signal?: AbortSignal; timeoutMs?: number; requestId?: string; visitorContext?: number; body?: () => unknown; expectedUserId?: string } = {}) {
   const requestStartedAt = Date.now();
@@ -113,6 +118,7 @@ async function request<T>(path: string, init: RequestInit = {}, options: { signa
   if (!base.ok) throw new TravelApiError(base.message, 0, "configuration");
   const session = await readSession().catch(() => null);
   const actor = session?.user?.id ?? null;
+  if (observedSessionToken === undefined) observedSessionToken = session?.token ?? null;
   const epoch = accountEpoch;
   if (options.expectedUserId && actor !== options.expectedUserId) throw new TravelApiError("Account changed. Refresh before trying again.", 0, "cancelled");
   if (operationalSearchActor !== actor) {

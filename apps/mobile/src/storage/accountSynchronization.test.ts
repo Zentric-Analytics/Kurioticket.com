@@ -50,3 +50,18 @@ test("saved transport refuses wrong-owner work and discards a response after sig
   while (!finish) await Promise.resolve();
   actor = null; onSession(); finish(Response.json({ items: [{ private: "a" }] })); await rejected;
 });
+
+test("a slow secure-store read cannot restore an account after a newer session event", async () => {
+  let revision = 0, calls = 0;
+  let finish!: (value: string) => void;
+  const account = (id: string) => JSON.stringify({ token: id, expires: "2099-01-01T00:00:00Z", user: { id, email: `${id}@example.com` } });
+  const modules: Record<string, unknown> = {
+    "react-native": { Platform: { OS: "ios" } },
+    "expo-secure-store": { getItemAsync: async () => ++calls === 1 ? new Promise<string>(resolve => { finish = resolve; }) : account("b") },
+    "./sessionEvents": { publishSession: () => { revision++; }, getSessionRevision: () => revision },
+  };
+  const exports: { readSession: () => Promise<{ user: { id: string } }> } = {} as never;
+  runInNewContext(ts.transpileModule(readFileSync("src/storage/sessionStorage.ts", "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText, { exports, Date, require: (name: string) => modules[name] });
+  const pending = exports.readSession(); revision++; finish(account("a"));
+  assert.equal((await pending).user.id, "b"); assert.equal(calls, 2);
+});

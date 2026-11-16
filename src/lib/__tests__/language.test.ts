@@ -677,8 +677,8 @@ test("Vietnamese Destinations and Saved Trips copy resolves through active i18n 
   assert.ok(destinationsPageSource.includes("return `/flights?destination=${encodeURIComponent(destination.name)}`;"));
   assert.ok(destinationsPageSource.includes("key={`${destination.region}-${destination.name}`}"));
   assert.ok(destinationsPageSource.includes("image={destination.image}"));
-  assert.ok(savedComponentSource.includes('fetch("/api/dashboard/saved")'));
-  assert.ok(savedComponentSource.includes('fetch("/api/account/recent-searches")'));
+  assert.ok(savedComponentSource.includes('fetch("/api/dashboard/saved", { cache: "no-store" })'));
+  assert.ok(savedComponentSource.includes('fetch("/api/account/recent-searches", { cache: "no-store" })'));
   assert.equal(vi.destinationsCardAriaLabel.includes("{destination}"), true);
   assert.equal(languageOptions.find((o) => o.code === "vi")?.direction, "ltr");
   assert.equal(languageOptions.find((o) => o.code === "ar")?.direction, "rtl");
@@ -6187,8 +6187,8 @@ test("Polish destinations and saved trips route fixtures still use localized dic
   assert.ok(savedPageSource.includes("<SavedRecentContent />"));
   assert.ok(savedComponentSource.includes('t.savedTripsPageTitle'));
   assert.ok(savedComponentSource.includes('t.savedTripsRepeatSearch'));
-  assert.ok(savedComponentSource.includes('fetch("/api/dashboard/saved")'));
-  assert.ok(savedComponentSource.includes('fetch("/api/account/recent-searches")'));
+  assert.ok(savedComponentSource.includes('fetch("/api/dashboard/saved", { cache: "no-store" })'));
+  assert.ok(savedComponentSource.includes('fetch("/api/account/recent-searches", { cache: "no-store" })'));
   assert.ok(savedComponentSource.includes('href={href}'));
 });
 
@@ -12462,7 +12462,7 @@ test("Indonesian Saved trips render path resolves active locale copy", () => {
     assert.ok(!savedComponentSource.includes(`>${englishString}<`));
   }
   assert.ok(savedComponentSource.includes('href={href}'));
-  assert.ok(savedComponentSource.includes('fetch("/api/dashboard/saved")'));
+  assert.ok(savedComponentSource.includes('fetch("/api/dashboard/saved", { cache: "no-store" })'));
   assert.ok(savedComponentSource.includes('method: "DELETE"'));
   assert.ok(languageOptions.some((o) => o.code === "id" && o.direction === "ltr"));
   assert.ok(languageOptions.some((o) => o.code === "ar" && o.direction === "rtl"));
@@ -12493,7 +12493,7 @@ test("Swedish Saved trips page copy resolves through active i18n keys", () => {
   assert.ok(savedComponentSource.includes('t.savedTripsPageTitle'));
   assert.ok(savedComponentSource.includes('t.savedTripsRecentSearchesSubtitle'));
   assert.ok(savedComponentSource.includes('href={href}'));
-  assert.ok(savedComponentSource.includes('fetch("/api/dashboard/saved")'));
+  assert.ok(savedComponentSource.includes('fetch("/api/dashboard/saved", { cache: "no-store" })'));
   assert.ok(savedComponentSource.includes('method: "DELETE"'));
 });
 
@@ -14884,8 +14884,8 @@ test("active saved render path keeps saved/search-history copy on i18n without o
   assert.ok(savedComponentSource.includes('t.savedTripsRepeatSearch'));
   assert.ok(savedComponentSource.includes('t.savedTripsRemoveSavedTrip'));
   assert.ok(savedComponentSource.includes('aria-label={`${removeLabel}: ${label}`}'));
-  assert.ok(savedComponentSource.includes('fetch("/api/dashboard/saved")'));
-  assert.ok(savedComponentSource.includes('fetch("/api/account/recent-searches")'));
+  assert.ok(savedComponentSource.includes('fetch("/api/dashboard/saved", { cache: "no-store" })'));
+  assert.ok(savedComponentSource.includes('fetch("/api/account/recent-searches", { cache: "no-store" })'));
   assert.ok(savedComponentSource.includes('JSON.stringify({ type: item.type, id: item.id })'));
   assert.ok(savedComponentSource.includes('JSON.stringify({ id })'));
 });
