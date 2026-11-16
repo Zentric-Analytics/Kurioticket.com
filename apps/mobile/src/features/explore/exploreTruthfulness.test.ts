@@ -21,7 +21,9 @@ test("misleading Explore and View all interactions are absent", () => {
 
 test("provider-backed result prices remain rendered", () => {
   assert.match(results, /displayPrice|displayFare/);
-  assert.match(results, /totalPrice|offerTotal/);
+  assert.match(results, /hotelVisiblePrices\(sorted as HotelResult\[\], hotelScrolling\.limit/);
+  const hotelPrices = source("src/features/search/hotelVisiblePrices.ts");
+  assert.match(hotelPrices, /createHotelDisplayPrices\(result\.pricePerNight!, result\.totalPrice!, result\.currency/);
   assert.match(results, /pricePerDay|dailyPrice/);
 });
 

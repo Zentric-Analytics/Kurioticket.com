@@ -17,7 +17,8 @@ test("hotel card keeps provider data but never prints its internal label", () =>
   // card must continue to omit the internal provider label.
   const renderedCard = card.slice(card.indexOf("  return ("));
   assert.match(renderedCard, /^  return \(\s*<Pressable/);
-  assert.doesNotMatch(renderedCard, /result\.provider|s0\.providers/);
+  assert.doesNotMatch(renderedCard, /\{result\.provider\}|s0\.providers/);
+  assert.match(renderedCard, /result\.provider === "KAYAK sandbox" \? <Text[^>]*>Provider test location — not verified for travel\.<\/Text> : null/);
   assert.doesNotMatch(source, /providers:/);
   assert.match(api, /PublicHotelResult/);
 });

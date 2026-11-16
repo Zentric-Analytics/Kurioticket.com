@@ -105,7 +105,8 @@ import {
   type DisplayPrice,
   type ExchangeRates,
 } from "../currency/displayCurrency";
-import { createHotelDisplayPrices, type HotelDisplayPriceSnapshot } from "./hotelDetailCurrency";
+import { type HotelDisplayPriceSnapshot } from "./hotelDetailCurrency";
+import { hotelVisiblePrices } from "./hotelVisiblePrices";
 import { formatCabinClass, summarizeBaggage, summarizeFareRules } from "./flightCardSummaries";
 import { useCanonicalSaved } from "../../storage/useCanonicalSaved";
 import { AirlineLogo } from "./AirlineLogo";
@@ -926,12 +927,8 @@ function ResultsScreen({ product }: { product: Product }) {
   }, [currencyState, product, results]);
   const hotelDisplayPrices = useMemo(() => {
     if (product !== "hotel" || !currencyState) return new Map<string, HotelDisplayPriceSnapshot>();
-    return new Map((results as HotelResult[]).flatMap((result) =>
-      Number.isFinite(result.pricePerNight) && Number.isFinite(result.totalPrice) && typeof result.currency === "string"
-        ? [[result.id, createHotelDisplayPrices(result.pricePerNight!, result.totalPrice!, result.currency, currencyState.resolution.resolvedCurrency, currencyState.rates)] as const]
-        : [],
-    ));
-  }, [currencyState, product, results]);
+    return hotelVisiblePrices(sorted as HotelResult[], hotelScrolling.limit, currencyState.resolution.resolvedCurrency, currencyState.rates);
+  }, [currencyState, product, sorted, hotelScrolling.limit]);
   const verifiedFareContextKey = useMemo(() => {
     if (product !== "flight" || !plan.plan || !currencyState) return undefined;
     return verifiedDateFareContextKey(plan.plan.payload, currencyState.resolution.resolvedCurrency);
@@ -1765,6 +1762,8 @@ function FlightJourneyRow({ label, leg, locale }: { label: string; leg: FlightCa
   const intlLocale = mobileLocales.find((option) => option.code === locale)?.intl ?? "en-US";
   const departureDate = providerLocalFlightDate(leg.departureTime, intlLocale);
   const arrivalDate = providerLocalFlightDate(leg.arrivalTime, intlLocale);
+  // Android can shrink lineHeight-constrained text below minimumFontScale
+  // (react-native#52642). Keep the readable design size; retain iOS fitting.
   return (
     <View
       style={s0.journeyBlock}
@@ -1774,13 +1773,13 @@ function FlightJourneyRow({ label, leg, locale }: { label: string; leg: FlightCa
       <Text style={[s0.journeyLabel, { color: theme.dark ? "#8FB5FF" : flightResultsColors.journeyLabel }]}>{label}</Text>
       <View style={s0.journeyPrimaryRow}>
         <View style={s0.departureColumn}>
-          <Text style={[s0.time, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{clock(leg.departureTime)}</Text>
+          <Text style={[s0.time, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit={Platform.OS === "ios"} minimumFontScale={0.85}>{clock(leg.departureTime)}</Text>
         </View>
         <View style={s0.timelineColumn} accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-          <Text style={[s0.journeyDuration, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{leg.duration}</Text>
+          <Text style={[s0.journeyDuration, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit={Platform.OS === "ios"} minimumFontScale={0.85}>{leg.duration}</Text>
         </View>
         <View style={[s0.arrivalColumn, s0.rightColumnContract]}>
-          <Text style={[s0.time, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{clock(leg.arrivalTime)}</Text>
+          <Text style={[s0.time, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit={Platform.OS === "ios"} minimumFontScale={0.85}>{clock(leg.arrivalTime)}</Text>
         </View>
       </View>
       <View style={s0.journeyRouteRow}>
@@ -1949,6 +1948,7 @@ const HotelCard = memo(function HotelCard({
           <MapPin accessible={false} size={14} strokeWidth={2} color={colors.blue} />
           <Text numberOfLines={1} ellipsizeMode="tail" style={s0.hotelLocationText}>{result.location}</Text>
         </View>
+        {result.provider === "KAYAK sandbox" ? <Text style={[s0.hotelLocationNotice, { color: theme.textSecondary }]}>Provider test location — not verified for travel.</Text> : null}
         {score == null ? null : (
           <Text style={[s0.review,{color:theme.textPrimary}]}>
             <Text style={s0.score}>{score.toFixed(1)}</Text>{" "}
@@ -2223,6 +2223,7 @@ const s0 = StyleSheet.create({
   stars: { color: "#FFB800", fontSize: 14 },
   hotelLocation: { flexDirection: "row", alignItems: "center", gap: 4, minWidth: 0 },
   hotelLocationText: { flexShrink: 1, minWidth: 0, color: colors.blue, fontSize: 12, lineHeight: 16, fontWeight: "600", fontFamily: appFonts.semibold },
+  hotelLocationNotice: { fontSize: 11, lineHeight: 16, fontFamily: appFonts.medium },
   review: { fontSize: 11, color: ui.navy },
   score: { backgroundColor: ui.blue, color: "white", fontWeight: "900" },
   hotelTerm:{fontSize:11,lineHeight:15,color:ui.navy},

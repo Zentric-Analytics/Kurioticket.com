@@ -329,7 +329,8 @@ test("flight journey gives its center column responsive surplus width", () => {
 
 test("flight journey applies the approved Step 5 hierarchy, colors, and accessibility", () => {
   assert.match(card, /s0\.journeyLabel, \{ color: theme\.dark \? "#8FB5FF" : flightResultsColors\.journeyLabel \}/);
-  assert.equal(card.match(/style=\{\[s0\.time, \{ color: theme\.textPrimary \}\]\} numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.85\}/g)?.length, 2);
+  assert.equal(card.match(/style=\{\[s0\.time, \{ color: theme\.textPrimary \}\]\} numberOfLines=\{1\} adjustsFontSizeToFit=\{Platform\.OS === "ios"\} minimumFontScale=\{0\.85\}/g)?.length, 2);
+  assert.equal(card.match(/adjustsFontSizeToFit=\{Platform\.OS === "ios"\}/g)?.length, 3, "Android journey times and duration must retain readable design sizes");
   assert.match(card, /s0\.journeyDuration, \{ color: theme\.textPrimary \}[\s\S]*?minimumFontScale=\{0\.85\}>\{leg\.duration\}<\/Text>/);
   assert.doesNotMatch(card, /\{leg\.duration\} · \{stopLabel\}/);
   assert.equal(card.match(/s0\.airportCode, \{ color: theme\.textPrimary \}/g)?.length, 2);
