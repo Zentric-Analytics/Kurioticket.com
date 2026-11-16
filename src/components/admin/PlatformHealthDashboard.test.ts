@@ -48,7 +48,7 @@ test("strict view parsing, rates and investigation scope preserve truthful windo
     assert.equal(url.searchParams.get("range"), "custom");
 });
 for (const state of ["HEALTHY", "DEGRADED", "FAILING", "DISABLED", "UNKNOWN", "MONITORING_UNAVAILABLE"])
-    test(`status ${state} has text independent of color`, () => { assert.ok(renderToStaticMarkup(createElement(OperationalStatus, { state })).replace(/<[^>]+>/g, "").trim().length > 0); });
+    test(`status ${state} has text independent of color`, () => { assert.equal(renderToStaticMarkup(createElement(OperationalStatus, { state })).replace(/<[^>]+>/g, "").trim(), ({HEALTHY:"Healthy",DEGRADED:"Degraded",FAILING:"Failing",DISABLED:"Disabled",UNKNOWN:"Unknown",MONITORING_UNAVAILABLE:"Monitoring unavailable"} as Record<string,string>)[state]); });
 test("empty activity remains UNKNOWN with no invented latency; Overview lists all partitions", () => {
     const { PlatformActivitySummary } = jiti("./PlatformActivitySummary") as typeof import("./PlatformActivitySummary");
     const empty = renderToStaticMarkup(createElement(PlatformActivitySummary, { label: "Search operations", value: { total: 0, successful: 0, partial: 0, failed: 0, disabled: 0, averageLatencyMs: null, state: "UNKNOWN" }, href: "/admin/searches/activity", linkLabel: "Investigate" }));

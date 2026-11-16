@@ -10,7 +10,7 @@ for (const source of ["WEB", "IOS", "ANDROID", "UNKNOWN"] as const)
         const rows = [0, 1].map(i => ({ id: `search_00${i}`, requestId: null, userId: null, visitorId: null, visitor: null, type: "FLIGHT", origin: "LOS", destination: "LHR", checkIn: null, checkOut: null, query: { environment: "staging", applicationSource: source, appVersion: i ? "bad version" : "1.2.3" }, resultCount: 2, latencyMs: null, status: "SUCCESS", createdAt: new Date(`2026-11-01T00:00:0${2 - i}Z`) }));
         const db = {
             $queryRaw: async (sql: Prisma.Sql) => { queries.push(sql); return sql.sql.includes('GROUP BY') ? [{ status: "SUCCESS", count: BigInt(2) }] : rows.filter(row => !sql.values.includes(rows[0].id) || row.id !== rows[0].id).map(r => ({ id: r.id })); },
-            searchHistory: { findMany: async (args: {
+            searchHistory: { findFirst: async (args: {where:{id:string;query:{equals:string}}}) => { assert.equal(args.where.query.equals,"staging"); return rows.find(row=>row.id===args.where.id)??null; }, findMany: async (args: {
                     where: {
                         id: {
                             in: string[];
@@ -30,6 +30,7 @@ for (const source of ["WEB", "IOS", "ANDROID", "UNKNOWN"] as const)
         assert.equal(list.data.items[0].applicationSource, source);
         assert.equal(list.data.items[0].appVersion, "1.2.3");
         assert.equal(summary.data.total, 2);
+        const detail=await api.searches.detail(rows[0].id,new URLSearchParams());assert.equal(detail.status,"ok");if(detail.status!=="ok")throw Error("Detail failed");assert.equal(detail.data.applicationSource,source);assert.equal(detail.data.appVersion,"1.2.3");
         assert.ok(list.data.nextCursor);
         const where = (q: Prisma.Sql) => q.sql.slice(q.sql.indexOf('WHERE'), q.sql.indexOf('ORDER BY') >= 0 ? q.sql.indexOf('ORDER BY') : q.sql.indexOf('GROUP BY')).trim();
         assert.equal(where(queries[0]), where(queries[1]));
@@ -69,4 +70,10 @@ test("source parsing, legacy normalization, combined behavior and cursor scope s
     const cursor = encodeAdminOperationalCursor("searches", parsed.data.scope, { at: "2026-11-01T00:00:00Z", id: "search_001" });
     assert.equal(parseAdminSearchQuery(new URLSearchParams({ cursor }), "staging").status, "invalid");
     assert.equal(parseAdminSearchQuery(new URLSearchParams(), "staging").status, "ok");
+});
+
+test("empty source windows retain known zero counts and never fabricate records", async()=>{
+ const api=createAdminOperationalReadService({authorize:async()=>true,environment:()=>"staging",database:()=>({$queryRaw:async()=>[],searchHistory:{findMany:async()=>{throw Error("Empty ID window must not fetch unrestricted records");}}}) as never});
+ const params=new URLSearchParams("applicationSource=UNKNOWN"); const list=await api.searches.list(params), summary=await api.searches.summary(params);
+ assert.equal(list.status,"ok");assert.equal(summary.status,"ok");if(list.status!=="ok"||summary.status!=="ok")throw Error("Empty read failed");assert.deepEqual(list.data.items,[]);assert.equal(list.data.nextCursor,null);assert.equal(summary.data.total,0);
 });

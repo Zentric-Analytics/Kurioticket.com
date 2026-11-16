@@ -62,6 +62,7 @@ test("operational endpoint rejects unauthorized access and client-owned environm
   assert.equal(calls, 0);
   const response = await get(new Request("https://kurioticket.com/api/admin/platform-operations?hours=24"));
   assert.equal(response.status, 200); assert.equal(response.headers.get("cache-control"), "private, no-store");
+  const invalid = await get(new Request("https://kurioticket.com/api/admin/platform-operations?hours=24&hours=24")); assert.equal(invalid.headers.get("cache-control"),"private, no-store");
 });
 
 test("operational service scopes aggregate SQL to its environment and outages return null data", async () => {

@@ -400,7 +400,7 @@ function providerLogsForPageSql(requestIds: readonly string[], services: readonl
 }
 
 // Prisma cannot correlate SearchHistory and ApiProviderLog across the JSON
-// request keys in its model where API. For provider-filtered lists and KPI
+// request keys in its model where API. For provider/source-filtered lists and KPI
 // totals, use the same parameterized EXISTS predicate before keyset paging.
 // Identity, consent, date and environment scope must match searchWhere().
 function exactProviderFilteredSearchSql(scope: AdminSearchScope, cursor: { at: string; id: string } | null = null): Prisma.Sql {
@@ -635,7 +635,7 @@ export function createAdminOperationalReadService(dependencies: Dependencies) {
           const parsed = parseAdminSearchQuery(params, dependencies.environment());
           if (parsed.status !== "ok") return parsed;
           const { scope, cursor, limit } = parsed.data;
-          const providerIds = scope.provider || scope.applicationSource
+          const filteredIds = scope.provider || scope.applicationSource
             ? (await db.$queryRaw<Array<{ id: string }>>(Prisma.sql`
                 SELECT s."id" FROM "SearchHistory" s
                 ${exactProviderFilteredSearchSql(scope, cursor)}
@@ -643,12 +643,12 @@ export function createAdminOperationalReadService(dependencies: Dependencies) {
                 LIMIT ${limit + 1}
               `)).map(row => row.id)
             : null;
-          const records = providerIds !== null && !providerIds.length
+          const records = filteredIds !== null && !filteredIds.length
             ? []
             : await db.searchHistory.findMany({
               where: {
                 ...searchWhere(scope, cursor),
-                ...(providerIds !== null ? { id: { in: providerIds } } : {}),
+                ...(filteredIds !== null ? { id: { in: filteredIds } } : {}),
               },
               select: searchSelect,
               orderBy: [{ createdAt: "desc" }, { id: "desc" }],

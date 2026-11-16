@@ -21,7 +21,7 @@ type PageProps = { searchParams?: Promise<{ range?: string }> };
 // authority for environment scope, date validation and database totals.
 export default async function AdminPage({ searchParams }: PageProps) {
   await requireAdminSession("/admin");
-  const access=await requireAdminApiSession(); if ("response" in access) redirect("/dashboard");
+  const access=await requireAdminApiSession(); if ("response" in access && access.response) redirect("/dashboard");
   const selected = (await searchParams)?.range;
   // An unfiltered Overview shows the last 24 hours. Seven- and 30-day
   // windows are explicit choices preserved by the URL when selected.

@@ -106,19 +106,19 @@ function SearchMonitorTableState({
 
   return (
     <>
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[1120px] border-collapse text-left">
+      <div role="region" aria-label="Search activity table" tabIndex={0} className="focus-ring max-w-full overflow-x-auto">
+        <table className="w-full min-w-[1120px] border-collapse text-left"><caption className="sr-only">Search records in the selected application and filter scope</caption>
           <thead>
             <tr className="border-b border-[#E5E7EB] text-[11px] uppercase tracking-[0.08em] text-[#6B7280]">
-              <th className="px-2 py-3 font-semibold">Created</th>
-              <th className="px-2 py-3 font-semibold">Product</th><th scope="col" className="px-2 py-3 font-semibold">Application</th>
-              <th className="px-2 py-3 font-semibold">Route / stay</th>
-              <th className="px-2 py-3 font-semibold">Currency</th>
-              <th className="px-2 py-3 font-semibold">Results</th>
-              <th className="px-2 py-3 font-semibold">Providers</th>
-              <th className="px-2 py-3 font-semibold">Duration</th>
-              <th className="px-2 py-3 font-semibold">Identity</th>
-              <th className="px-2 py-3 font-semibold">Status</th>
+              <th scope="col" className="px-2 py-3 font-semibold">Created</th>
+              <th scope="col" className="px-2 py-3 font-semibold">Product</th><th scope="col" className="px-2 py-3 font-semibold">Application</th>
+              <th scope="col" className="px-2 py-3 font-semibold">Route / stay</th>
+              <th scope="col" className="px-2 py-3 font-semibold">Currency</th>
+              <th scope="col" className="px-2 py-3 font-semibold">Results</th>
+              <th scope="col" className="px-2 py-3 font-semibold">Providers</th>
+              <th scope="col" className="px-2 py-3 font-semibold">Duration</th>
+              <th scope="col" className="px-2 py-3 font-semibold">Identity</th>
+              <th scope="col" className="px-2 py-3 font-semibold">Status</th>
             </tr>
           </thead>
           <tbody>

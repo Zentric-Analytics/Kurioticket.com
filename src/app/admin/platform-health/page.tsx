@@ -13,7 +13,7 @@ export default async function PlatformHealthPage({ searchParams }: {
 }) {
     await requireAdminSession("/admin/platform-health");
     const access = await requireAdminApiSession();
-    if ("response" in access)
+    if ("response" in access && access.response)
         redirect("/dashboard");
     const raw = await searchParams, params = new URLSearchParams();
     for (const [key, value] of Object.entries(raw)) {
