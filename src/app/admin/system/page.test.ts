@@ -3,7 +3,10 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const systemPage = readFileSync("src/app/admin/system/page.tsx", "utf8");
-const settingsPage = readFileSync("src/app/admin/settings/page.tsx", "utf8");
+const settingsPage = [
+  "src/app/admin/settings/layout.tsx",
+  "src/components/admin/SettingsFeatureSection.tsx",
+].map((path) => readFileSync(path, "utf8")).join("\n");
 const envSource = readFileSync("src/lib/env.ts", "utf8");
 const adminDataSource = readFileSync("src/lib/admin-data.ts", "utf8");
 const systemApi = readFileSync("src/app/api/admin/system/route.ts", "utf8");
@@ -54,7 +57,7 @@ test("system status uses a compact summary-attention-system-areas hierarchy", ()
   assert.match(systemPage, /data-system-area=\{service\.id\}/);
   assert.match(systemPage, /<details data-system-area=\{service\.id\} className="group">/);
   assert.match(systemPage, /Open Email Delivery/);
-  assert.match(systemPage, /Open Providers/);
+  assert.doesNotMatch(systemPage, /Open Providers/);
   assert.match(systemPage, /Open CMS Health/);
   assert.doesNotMatch(systemPage, />Meaning<\/p>/);
   assert.doesNotMatch(systemPage, /Direct database query|A database query completed successfully|This row verifies authentication configuration presence|Provider configuration presence|CMS Health diagnostics/);
@@ -62,7 +65,7 @@ test("system status uses a compact summary-attention-system-areas hierarchy", ()
   assert.match(systemPage, /id: "database"[\s\S]*?signal: "Live connectivity check",\n    \},/);
   assert.match(systemPage, /id: "authentication"[\s\S]*?signal: "Configuration only",\n    \},/);
   assert.match(systemPage, /id: "email"[\s\S]*?href: "\/admin\/email-delivery"[\s\S]*?actionLabel: "Open Email Delivery"/);
-  assert.match(systemPage, /id: "providers"[\s\S]*?href: "\/admin\/providers"[\s\S]*?actionLabel: "Open Providers"/);
+  assert.doesNotMatch(systemPage, /id: "providers"/);
   assert.match(systemPage, /id: "cms"[\s\S]*?href: "\/admin\/system\/cms-health"[\s\S]*?actionLabel: "Open CMS Health"/);
   assert.match(systemPage, /id: "admin-access"/);
   assert.match(systemPage, /name: "Admin access"/);
@@ -79,6 +82,8 @@ test("system status uses a compact summary-attention-system-areas hierarchy", ()
   assert.match(systemPage, /system\.databaseConfigured/);
   assert.match(systemPage, /system\.emailConfigured/);
   assert.match(systemPage, /system\.providerCredentialsPresent/);
+  assert.match(systemPage, /Provider credentials absent/);
+  assert.match(systemPage, /actionLabel: "Review provider readiness"/);
   assert.match(systemPage, /system\.adminEmailsConfigured/);
   assert.match(systemPage, /attention\.length/);
   assert.match(systemPage, /getSafeSystemStatus\(\)/);
@@ -105,7 +110,7 @@ test("System specialist pages are contextual destinations rather than duplicate 
 });
 test("settings owns authoritative feature controls", () => {
   assert.match(settingsPage, /title="Settings"/);
-  assert.match(settingsPage, /Feature controls/);
+  assert.match(settingsPage, /FeatureControlsPanel/);
   assert.match(settingsPage, /FeatureControlsPanel/);
   assert.match(settingsPage, /listFeatureControls/);
   assert.match(settingsPage, /getFeatureControlProductionAdmins/);
@@ -114,9 +119,8 @@ test("settings owns authoritative feature controls", () => {
   assert.doesNotMatch(settingsPage, /HomepageFaresRefreshCard/);
 });
 
-test("deployment-owned configuration stays outside Settings mutations", () => {
-  assert.match(settingsPage, /Database URLs, API keys, session secrets, provider credentials and server environment variables remain deployment-owned and are not editable here/);
-  assert.match(settingsPage, /Administrator allowlists and production feature-control permissions remain server-managed/);
+test("deployment-owned configuration stays protected without a duplicate Settings section", () => {
+  assert.doesNotMatch(settingsPage, /Managed outside Settings|Runtime & credentials|Administrator access/);
   assert.match(envSource, /getFeatureControlProductionAdmins/);
   assert.match(envSource, /export function getAdminEmails\(\)/);
   assert.match(envSource, /process\.env\.ADMIN_EMAILS \|\| ""/);

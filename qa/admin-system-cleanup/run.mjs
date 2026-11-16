@@ -15,7 +15,7 @@ const output = path.resolve(process.env.ADMIN_SYSTEM_QA_OUTPUT || path.join(os.t
 const baseline = "c0094622f709304aebce13acc2a6e5b9f886069b";
 const port = "3218";
 await mkdir(output, { recursive: true });
-const pages = ["system", "logs", "system/cms-health", "email-delivery", "notifications", "settings"];
+const commonPages = ["system", "logs", "system/cms-health", "email-delivery", "settings"];
 const mocks = {
   "@/lib/admin-data": 'export async function getSafeSystemStatus(){return {appEnvironment:"Staging",databaseConfigured:true,databaseConnected:true,authConfigured:false,sessionConfigured:false,emailConfigured:false,providerCredentialsPresent:false,adminEmailsConfigured:false};} export function formatDateTime(value){return String(value);}',
   "@/lib/env": 'export function getAdminEmails(){return [];} export function getFeatureControlProductionAdmins(){return [];}',
@@ -31,7 +31,7 @@ const mocks = {
 {id:"audit-user",adminUserId:"admin-2",adminEmail:"operator@example.invalid",action:"USER_ROLE_UPDATED",targetType:"User",targetId:"user-qa-001",targetEmail:"traveler@example.invalid",createdAt:"2026-11-05T11:00:00.000Z"}
 ],nextCursor:"qa-older-cursor"}};}};`,
   "@/services/cmsHardeningService": 'export async function getCmsHealthOverview(){return {available:true,totals:{scopes:0,healthy:0,unhealthy:0,retiredFallback:0,unpublishedChanges:0},scopes:[],missingHomepageScopes:[]};}',
-  "@/services/emailDeliveryService": 'export async function getEmailDeliveryHealthSnapshot(){return {dataAvailable:true,last24Hours:15,failures:0,delayed:0,suppressed:53,latest:[]};} export async function getEmailDeliveryOperationsSnapshot(){return {dataAvailable:true,deliveries:15,delivered:14,failures:0,delayed:0,currentSuppressed:53,latest:[{id:"email-1",template:"notification",toEmail:"bi***@zentricanalytics.com",status:"DELIVERED",createdAt:"2026-11-05T11:59:00.000Z",sentAt:"2026-11-05T11:59:00.000Z",deliveredAt:"2026-11-05T11:59:00.000Z"},{id:"email-2",template:"notification",toEmail:"ad***@zentricanalytics.com",status:"DELIVERY_DELAYED",createdAt:"2026-11-05T10:35:00.000Z",sentAt:"2026-11-05T10:35:00.000Z",deliveredAt:null}]};}',
+  "@/services/emailDeliveryService": 'export async function getEmailDeliveryHealthSnapshot(){return {dataAvailable:true,last24Hours:15,failures:0,delayed:0,suppressed:53,latest:[]};} export async function getEmailDeliveryOperationsSnapshot(){return {dataAvailable:true,deliveries:15,delivered:14,failures:0,delayed:0,currentSuppressed:53,historyTotal:15,historyPage:1,historyPageSize:100,historyTotalPages:1,latest:Array.from({length:15},(_,i)=>({id:"email-"+(i+1),template:"notification",toEmail:i===0?"bi***@zentricanalytics.com":"ad***@zentricanalytics.com",status:i===14?"DELIVERY_DELAYED":"DELIVERED",createdAt:"2026-11-05T11:59:00.000Z",sentAt:"2026-11-05T11:59:00.000Z",deliveredAt:i===14?null:"2026-11-05T11:59:00.000Z"}))};}',
   "@/services/adminAlertService": `
 const at="2026-11-04T14:00:00.000Z";
 const items=[
@@ -69,6 +69,7 @@ export default function Layout({children}){return <html lang="en"><body><div dat
   await put("app/page.jsx", 'export default function Home(){return <p>System cleanup QA fixture</p>;}');
   await put("app/api/admin/notifications/route.js", 'import {getAdminAlertSnapshot,getAdminAlertSummary} from "@/services/adminAlertService"; export async function GET(request){return Response.json(new URL(request.url).searchParams.get("summary")==="1"?await getAdminAlertSummary():await getAdminAlertSnapshot());}');
   await put("app/api/admin/notifications/acknowledge/route.js", 'export async function POST(){return Response.json({ok:true});}');
+  const pages = [...commonPages, variant === "before" ? "notifications" : "settings/notifications"];
   for (const route of pages) {
     const file = `src/app/admin/${route}/page.tsx`;
     const content = variant === "before" ? execFileSync("git", ["show", `${baseline}:${file}`], { cwd: repo, encoding: "utf8" }) : await readFile(path.join(repo, file), "utf8");

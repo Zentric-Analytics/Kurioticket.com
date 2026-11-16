@@ -260,9 +260,12 @@ export async function hasSuccessfulEmailDelivery(idempotencyKey: string) {
   }, false);
 }
 
+export const EMAIL_DELIVERY_HISTORY_PAGE_SIZE = 100;
+
 export type EmailDeliveryOperationsRange = {
   from: Date;
   to: Date;
+  page?: number;
 };
 
 export async function getEmailDeliveryOperationsSnapshot(range: EmailDeliveryOperationsRange) {
@@ -273,6 +276,7 @@ export async function getEmailDeliveryOperationsSnapshot(range: EmailDeliveryOpe
       failures: bigint;
       delayed: bigint;
       current_suppressed: bigint;
+      history_total: bigint;
     }[]>`
       SELECT
         (SELECT COUNT(*) FROM email_deliveries
@@ -304,8 +308,29 @@ export async function getEmailDeliveryOperationsSnapshot(range: EmailDeliveryOpe
             AND COALESCE(e.occurred_at, e.created_at) < ${range.to}
             AND e.type = 'email.delivery_delayed'
         ) AS delayed,
-        (SELECT COUNT(*) FROM email_suppressions) AS current_suppressed
+        (SELECT COUNT(*) FROM email_suppressions) AS current_suppressed,
+        (
+          SELECT COUNT(*)
+          FROM email_deliveries d
+          WHERE
+            (d.created_at >= ${range.from} AND d.created_at < ${range.to})
+            OR EXISTS (
+              SELECT 1
+              FROM email_events e
+              WHERE e.delivery_id = d.id
+                AND COALESCE(e.occurred_at, e.created_at) >= ${range.from}
+                AND COALESCE(e.occurred_at, e.created_at) < ${range.to}
+            )
+        ) AS history_total
     `;
+
+    const historyTotal = Number(summary?.history_total || 0);
+    const historyTotalPages = Math.max(1, Math.ceil(historyTotal / EMAIL_DELIVERY_HISTORY_PAGE_SIZE));
+    const requestedPage = Number.isSafeInteger(range.page) && Number(range.page) > 0
+      ? Number(range.page)
+      : 1;
+    const historyPage = Math.min(requestedPage, historyTotalPages);
+    const historyOffset = (historyPage - 1) * EMAIL_DELIVERY_HISTORY_PAGE_SIZE;
 
     const latest = await db.$queryRaw<Array<{
       id: string;
@@ -339,8 +364,9 @@ export async function getEmailDeliveryOperationsSnapshot(range: EmailDeliveryOpe
           ),
           d.created_at
         )
-      ) DESC
-      LIMIT 10
+      ) DESC, d.id DESC
+      LIMIT ${EMAIL_DELIVERY_HISTORY_PAGE_SIZE}
+      OFFSET ${historyOffset}
     `;
 
     return {
@@ -350,6 +376,10 @@ export async function getEmailDeliveryOperationsSnapshot(range: EmailDeliveryOpe
       failures: Number(summary?.failures || 0),
       delayed: Number(summary?.delayed || 0),
       currentSuppressed: Number(summary?.current_suppressed || 0),
+      historyTotal,
+      historyPage,
+      historyPageSize: EMAIL_DELIVERY_HISTORY_PAGE_SIZE,
+      historyTotalPages,
       latest: latest.map((row) => ({
         id: row.id,
         template: row.template,
@@ -367,6 +397,10 @@ export async function getEmailDeliveryOperationsSnapshot(range: EmailDeliveryOpe
     failures: 0,
     delayed: 0,
     currentSuppressed: 0,
+    historyTotal: 0,
+    historyPage: 1,
+    historyPageSize: EMAIL_DELIVERY_HISTORY_PAGE_SIZE,
+    historyTotalPages: 1,
     latest: [],
   });
 }

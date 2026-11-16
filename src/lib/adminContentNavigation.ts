@@ -40,7 +40,9 @@ export function homepageCmsListNavigation(
     : requestedMarket === "ALL" || supportedMarkets.has(requestedMarket) ? requestedMarket : validFallback;
   const params = new URLSearchParams({ market });
   optionalContext(input, params);
-  if (section === "destinations") params.delete("cursor");
+  // Homepage CMS directories all render one complete list; stale paged links
+  // must never persist after returning from an editor.
+  params.delete("cursor");
   const fromOverview = one(input.from) === "overview";
   if (fromOverview) params.set("from", "overview");
   return {

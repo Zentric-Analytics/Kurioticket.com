@@ -174,6 +174,7 @@ export function ContentDirectoryToolbar({
               value={market}
               options={marketOptions}
               plain
+              attached
               spaciousMenu
               align="end"
               onValueChange={next => navigate({ q: searchTerm, market: next })}
@@ -187,6 +188,7 @@ export function ContentDirectoryToolbar({
               value={category}
               options={categoryOptions}
               plain
+              attached
               spaciousMenu
               align="end"
               onValueChange={next => navigate({ q: searchTerm, category: next })}

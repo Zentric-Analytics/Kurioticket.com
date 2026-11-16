@@ -1,4 +1,5 @@
-import Link from "next/link";
+import { CmsRetryButton } from "@/components/admin/CmsRetryButton";
+import { CmsScopeUnavailable } from "@/components/admin/CmsScopeUnavailable";
 import { notFound } from "next/navigation";
 
 import { ContentDirectoryToolbar } from "@/components/admin/ContentDirectoryToolbar";
@@ -6,15 +7,15 @@ import { ContentPageFrame, ContentEmptyState } from "@/components/admin/ContentW
 import { HomepageCmsListClient } from "@/components/admin/HomepageCmsListClient";
 import { CmsCreateLink } from "@/components/admin/CmsCreateLink";
 import type { CmsContentStatus } from "@/generated/prisma/enums";
-import { getHomepageCmsSection, homepageCmsSections } from "@/lib/adminHomepageCms";
+import { getHomepageCmsSection, homepageCmsSections, sortHomepageCmsDirectoryItems } from "@/lib/adminHomepageCms";
 import { homepageCmsListNavigation } from "@/lib/adminContentNavigation";
 import {
   CmsContentError,
   getCmsContentScopeSummary,
   getCmsContentMarketOverview,
-  listAdminCmsContent,
+  listAdminCmsContentDirectory,
 } from "@/services/cmsContentService";
-import { homepageCmsLocale, homepageCmsMarkets } from "@/services/homepageCmsService";
+import { homepageCmsLocale, homepageCmsMarkets, getHomepageCmsInitializationReadiness } from "@/services/homepageCmsService";
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 type PageProps = { params: Promise<{ section: string }>; searchParams: SearchParams };
@@ -38,29 +39,26 @@ export default async function HomepageCmsSectionPage({ params, searchParams }: P
       ? requestedMarket
       : defaultMarket;
   const nav = homepageCmsListNavigation(section, raw, allowedMarket);
-  const cursor = section === "destinations" ? undefined : one(raw.cursor) || undefined;
 
   const summary = await (allowedMarket === "ALL"
     ? getCmsContentMarketOverview(config.type, homepageCmsMarkets, homepageCmsLocale)
     : getCmsContentScopeSummary(config.type, allowedMarket, homepageCmsLocale)).catch(() => null);
   if (!summary?.available || !summary.active) {
+    const readiness = summary?.available ? await getHomepageCmsInitializationReadiness().catch(() => null) : null;
     return (
       <ContentPageFrame
         wide
         title={config.title}
-        subtitle="This CMS scope must be initialized before editing."
+        subtitle="Review the current content status."
         backHref={nav.backHref}
         backLabel={nav.backLabel}
       >
-        <ContentEmptyState
-          title="CMS scope unavailable"
-          message="Initialize Homepage CMS from the homepage content overview before creating or editing this content."
-        />
+        <CmsScopeUnavailable available={Boolean(summary?.available)} partial={Boolean(readiness?.hasExistingHomepageData)} />
       </ContentPageFrame>
     );
   }
 
-  let listing: Awaited<ReturnType<typeof listAdminCmsContent>> | null = null;
+  let listing: Awaited<ReturnType<typeof listAdminCmsContentDirectory>> | null = null;
   let error: string | null = null;
   try {
     const listInput = {
@@ -68,16 +66,15 @@ export default async function HomepageCmsSectionPage({ params, searchParams }: P
       status,
       market: allowedMarket === "ALL" ? undefined : allowedMarket,
       locale: homepageCmsLocale,
-      limit: 100,
-      cursor,
       search: one(raw.q) || undefined,
     };
-    listing = await listAdminCmsContent(listInput);
-    // Destinations form one complete scrollable directory, including old paged URLs.
-    while (section === "destinations" && listing.nextCursor) {
-      const nextPage = await listAdminCmsContent({ ...listInput, cursor: listing.nextCursor });
-      listing = { items: [...listing.items, ...nextPage.items], nextCursor: nextPage.nextCursor };
-    }
+    // Retrieve all filtered rows in one repeatable-read snapshot. The
+    // service's existing cursor pagination remains available to other screens.
+    listing = await listAdminCmsContentDirectory(listInput);
+    listing = {
+      items: sortHomepageCmsDirectoryItems(listing.items),
+      nextCursor: null,
+    };
   } catch (caught) {
     error = caught instanceof CmsContentError ? caught.message : "CMS content is unavailable.";
   }
@@ -101,17 +98,22 @@ export default async function HomepageCmsSectionPage({ params, searchParams }: P
           searchLabel={section === "flight-routes" ? "Search flight routes" : section === "hotel-destinations" ? "Search hotel destinations" : "Search destinations"}
         >
         {error ? (
-          <ContentEmptyState title="Content unavailable" message={error} />
+          <ContentEmptyState title="Content unavailable" message={error} action={<CmsRetryButton />} />
         ) : listing && listing.items.length > 0 ? (
           <>
-            <HomepageCmsListClient section={section} items={listing.items} listQuery={nav.query} />
-            {listing.nextCursor ? (
-              <div className="flex justify-end">
-                <Link href={nextHref(section, nav.query, listing.nextCursor)} className="inline-flex h-9 items-center rounded-lg border border-[#D9DDE3] bg-white px-3 text-[13px] font-medium text-[#374151] hover:bg-[#F8FAFC]">
-                  Next page
-                </Link>
-              </div>
-            ) : null}
+            <HomepageCmsListClient
+              section={section}
+              items={listing.items}
+              listQuery={nav.query}
+              reorderMarket={
+                section !== "hotel-destinations" &&
+                allowedMarket !== "ALL" &&
+                !status &&
+                !one(raw.q).trim()
+                  ? allowedMarket
+                  : undefined
+              }
+            />
           </>
         ) : (
           <ContentEmptyState
@@ -128,10 +130,4 @@ export default async function HomepageCmsSectionPage({ params, searchParams }: P
 
 function one(value: string | string[] | undefined) {
   return typeof value === "string" ? value : "";
-}
-
-function nextHref(section: string, query: string, cursor: string) {
-  const params = new URLSearchParams(query);
-  params.set("cursor", cursor);
-  return `/admin/content/homepage/${section}?${params.toString()}`;
 }

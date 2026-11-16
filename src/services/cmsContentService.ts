@@ -1,3 +1,4 @@
+import { sortCmsFaqDirectory } from "@/lib/cmsDirectoryPresentation";
 import { z } from "zod";
 
 import { Prisma } from "@/generated/prisma/client";
@@ -8,8 +9,10 @@ import { hotelDestinations } from "@/data/hotelDestinations";
 import { getHomeDiscoveryRouteAllowlist } from "@/data/homeDiscovery";
 import { getPopularDestinationAllowlist, popularDestinationsByMarket } from "@/data/marketHomeContent";
 import { resolveHotelDiscoveryIntent } from "@/lib/hotels/hotelDiscoveryIntent";
+import { cmsHotelCanonicalId, getCmsHotelMetadataMismatch, homepageDestinationHotelCanonicalId } from "@/lib/cmsHotelIntegrity";
 import { HOMEPAGE_REFRESH_MARKET_CODES } from "@/lib/market/resolveMarket";
-import { imageRemotePatterns, matchesImagePattern } from "@/config/imagePatterns";
+import { cmsPayloadSchemas, cmsSortOrderSchema } from "@/lib/cmsContentValidation";
+export { cmsPayloadSchemas } from "@/lib/cmsContentValidation";
 
 export const cmsContentTypes = [
   "HOMEPAGE_DESTINATION",
@@ -86,61 +89,6 @@ function rethrowCmsWriteConflict(error: unknown, duplicateMessage: string, concu
   throw error;
 }
 
-const printable = (max: number) =>
-  z.string().trim().min(1).max(max).refine((value) => !/[\u0000-\u001f\u007f]/.test(value), "Control characters are not allowed.");
-
-const airportCode = z.string().trim().toUpperCase().regex(/^[A-Z0-9]{3}$/);
-const countryCode = z.string().trim().toUpperCase().regex(/^[A-Z]{2}$/);
-const safeImage = z.string().trim().max(2000).refine((value) => {
-  if (value.startsWith("/images/")) return true;
-  try {
-    const url = new URL(value);
-    return url.protocol === "https:"
-      && imageRemotePatterns.some((pattern) => matchesImagePattern(url, pattern));
-  } catch {
-    return false;
-  }
-}, "Use an approved local image path or an image URL allowed by the application image configuration.");
-
-export const cmsPayloadSchemas = {
-  HOMEPAGE_DESTINATION: z.object({
-    city: printable(120),
-    country: printable(120),
-    countryCode: countryCode.optional(),
-    destinationCode: airportCode,
-    originCode: airportCode,
-    image: safeImage,
-    imageAlt: printable(240),
-  }).strict(),
-  FLIGHT_ROUTE: z.object({
-    title: printable(160),
-    originCity: printable(120),
-    originCode: airportCode,
-    destinationCity: printable(120),
-    destinationCode: airportCode,
-    routeNote: printable(300),
-    image: safeImage,
-    imageAlt: printable(240),
-  }).strict().refine((value) => value.originCode !== value.destinationCode, {
-    message: "Origin and destination must be different.",
-    path: ["destinationCode"],
-  }),
-  HOTEL_DESTINATION: z.object({
-    name: printable(120),
-    country: printable(120),
-    countryCode,
-    kind: z.enum(["city", "district", "landmark", "airport-area", "custom"]),
-    searchValue: printable(160),
-    canonicalId: printable(160),
-    image: safeImage.optional(),
-    imageAlt: printable(240).optional(),
-  }).strict(),
-  FAQ: z.object({
-    question: printable(240),
-    answer: printable(5000),
-    category: printable(80).default("General"),
-  }).strict(),
-} satisfies Record<CmsContentType, z.ZodTypeAny>;
 
 const keySchema = z.string().trim().toLowerCase().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).max(120);
 const marketSchema = z.string().trim().toUpperCase().refine(
@@ -148,7 +96,7 @@ const marketSchema = z.string().trim().toUpperCase().refine(
   "Use a supported Kurioticket content market code.",
 );
 const localeSchema = z.string().trim().toLowerCase().regex(/^[a-z]{2}(?:-[a-z]{2})?$/).max(10);
-const sortOrderSchema = z.number().int().min(0).max(100000);
+const sortOrderSchema = cmsSortOrderSchema;
 
 const createSchema = z.object({
   type: z.enum(cmsContentTypes),
@@ -189,18 +137,37 @@ export class CmsContentError extends Error {
   }
 }
 
-const ownedFlightAirportCodes = new Set(
-  getOwnedFlightLocationCatalog()
-    .map((location) => location.codes?.iata)
-    .filter((code): code is string => Boolean(code)),
+const homepageDestinationRoutePairs = [...getPopularDestinationAllowlist().values()].map(
+  (destination) => ({
+    originCode: destination.originCode,
+    destinationCode: destination.code,
+  }),
 );
-const canonicalHotelDestinationIds = new Set(
-  hotelDestinations.map((destination) => `hotel:${destination.id}`),
+const homepageFlightRoutePairs = [...getHomeDiscoveryRouteAllowlist().values()].map(
+  (route) => ({
+    originCode: route.originCode,
+    destinationCode: route.destinationCode,
+  }),
 );
 const supportedHomepageDestinationRoutes = new Set(
-  [...getPopularDestinationAllowlist().values()].map(
-    (destination) => `${destination.originCode}:${destination.code}`,
+  homepageDestinationRoutePairs.map(
+    (route) => `${route.originCode}:${route.destinationCode}`,
   ),
+);
+const supportedHomepageFlightRoutes = new Set(
+  homepageFlightRoutePairs.map(
+    (route) => `${route.originCode}:${route.destinationCode}`,
+  ),
+);
+const ownedFlightAirportCodes = new Set([
+  ...getOwnedFlightLocationCatalog()
+    .map((location) => location.codes?.iata)
+    .filter((code): code is string => Boolean(code)),
+  ...homepageDestinationRoutePairs.flatMap((route) => [route.originCode, route.destinationCode]),
+  ...homepageFlightRoutePairs.flatMap((route) => [route.originCode, route.destinationCode]),
+]);
+const canonicalHotelDestinationIds = new Set(
+  hotelDestinations.map((destination) => `hotel:${destination.id}`),
 );
 const supportedHomepageDestinationEntries = new Set(
   Object.values(popularDestinationsByMarket)
@@ -212,11 +179,20 @@ const supportedHomepageDestinationEntries = new Set(
       destination.code,
     ].join("|")),
 );
-const supportedHomepageFlightRoutes = new Set(
-  [...getHomeDiscoveryRouteAllowlist().values()].map(
-    (route) => `${route.originCode}:${route.destinationCode}`,
-  ),
-);
+
+export function getCmsHomepageFlightRoutePairs(
+  type: "HOMEPAGE_DESTINATION" | "FLIGHT_ROUTE",
+) {
+  const pairs = type === "HOMEPAGE_DESTINATION"
+    ? homepageDestinationRoutePairs
+    : homepageFlightRoutePairs;
+  return [...new Map(
+    pairs.map((route) => [
+      `${route.originCode}:${route.destinationCode}`,
+      route,
+    ]),
+  ).values()];
+}
 
 function parsePayload(type: CmsContentType, payload: unknown) {
   const parsed = cmsPayloadSchemas[type].safeParse(payload);
@@ -224,9 +200,25 @@ function parsePayload(type: CmsContentType, payload: unknown) {
 
   if (type === "HOMEPAGE_DESTINATION" || type === "FLIGHT_ROUTE") {
     const route = parsed.data as { originCode: string; destinationCode: string };
-    if (!ownedFlightAirportCodes.has(route.originCode) || !ownedFlightAirportCodes.has(route.destinationCode)) {
-      throw new CmsContentError("INVALID", "Homepage flight content must use airport codes from the owned Kurioticket flight catalog.");
+    const fieldErrors: Record<string, string[]> = {};
+    if (!ownedFlightAirportCodes.has(route.originCode)) {
+      fieldErrors.originCode = [
+        `${route.originCode} is not in Kurioticket's supported homepage flight catalog.`,
+      ];
     }
+    if (!ownedFlightAirportCodes.has(route.destinationCode)) {
+      fieldErrors.destinationCode = [
+        `${route.destinationCode} is not in Kurioticket's supported homepage flight catalog.`,
+      ];
+    }
+    if (Object.keys(fieldErrors).length > 0) {
+      throw new CmsContentError(
+        "INVALID",
+        "Choose airport codes from Kurioticket's supported homepage flight catalog.",
+        { formErrors: [], fieldErrors },
+      );
+    }
+
     const routeKey = `${route.originCode}:${route.destinationCode}`;
     const supported = type === "HOMEPAGE_DESTINATION"
       ? supportedHomepageDestinationRoutes.has(routeKey)
@@ -234,7 +226,15 @@ function parsePayload(type: CmsContentType, payload: unknown) {
     if (!supported) {
       throw new CmsContentError(
         "INVALID",
-        "Homepage content must use an existing Kurioticket fare-supported route.",
+        `${route.originCode} → ${route.destinationCode} is not a fare-supported homepage route.`,
+        {
+          formErrors: [],
+          fieldErrors: {
+            destinationCode: [
+              `Choose a destination that is supported from ${route.originCode}.`,
+            ],
+          },
+        },
       );
     }
   }
@@ -256,26 +256,112 @@ function parsePayload(type: CmsContentType, payload: unknown) {
       throw new CmsContentError(
         "INVALID",
         "Homepage destination label and fare route must match the same canonical Kurioticket destination entry.",
+        {
+          formErrors: [],
+          fieldErrors: {
+            city: ["Choose the city that belongs to this supported destination route."],
+            destinationCode: ["Choose the IATA code for the same destination."],
+          },
+        },
       );
     }
     if (!resolveHotelDiscoveryIntent(`${destination.city}, ${destination.country}`, "home-popular-stays")) {
       throw new CmsContentError(
         "INVALID",
         "Homepage destination must resolve to a canonical Kurioticket hotel destination.",
+        {
+          formErrors: [],
+          fieldErrors: {
+            city: ["Choose a city that is available in the Kurioticket hotel destination catalog."],
+          },
+        },
       );
     }
   }
 
   if (type === "HOTEL_DESTINATION") {
-    const hotel = parsed.data as { canonicalId: string };
+    const hotel = parsed.data as { canonicalId: string; country: string; countryCode: string; kind: string; searchValue: string };
     if (!canonicalHotelDestinationIds.has(hotel.canonicalId)) {
       throw new CmsContentError("INVALID", "Hotel destination must use a canonical Kurioticket hotel destination id.");
     }
+    const mismatch = getCmsHotelMetadataMismatch(hotel);
+    if (mismatch) throw new CmsContentError("INVALID", mismatch);
   }
 
   return parsed.data as Prisma.InputJsonValue;
 }
 
+
+
+/** A published hotel record keeps its canonical identity for its entire lifecycle. */
+function assertHotelIdentityNotChanged(existing: { type: CmsContentType; publishedPayload: unknown }, payload: unknown) {
+  if (existing.type !== "HOTEL_DESTINATION") return;
+  const publishedId = cmsHotelCanonicalId(existing.publishedPayload);
+  if (publishedId && publishedId !== cmsHotelCanonicalId(payload)) {
+    throw new CmsContentError(
+      "CONFLICT",
+      "This hotel destination is already published under a different canonical ID. Edit its image or display name, or create a separate record for another destination.",
+    );
+  }
+}
+
+/** This is checked in the same serializable transaction as CMS writes. */
+async function assertUniqueHotelCanonicalId(tx: Prisma.TransactionClient, payload: unknown, excludeId?: string) {
+  const canonicalId = cmsHotelCanonicalId(payload);
+  if (!canonicalId) return;
+  const siblings = await tx.cmsContentItem.findMany({
+    where: { type: "HOTEL_DESTINATION", status: { not: "ARCHIVED" }, ...(excludeId ? { id: { not: excludeId } } : {}) },
+    select: { draftPayload: true, publishedPayload: true },
+  });
+  if (siblings.some((row) => cmsHotelCanonicalId(row.draftPayload) === canonicalId || cmsHotelCanonicalId(row.publishedPayload) === canonicalId)) {
+    throw new CmsContentError("CONFLICT", "This canonical hotel destination is already managed by another record. Open that record instead of adding a duplicate.");
+  }
+}
+
+/** Hide/archive would otherwise silently remove linked public homepage cards. */
+async function assertHotelNotUsedByPublishedHomepage(tx: Prisma.TransactionClient, payload: unknown) {
+  const canonicalId = cmsHotelCanonicalId(payload);
+  if (!canonicalId) return;
+  const homepageRows = await tx.cmsContentItem.findMany({
+    where: { type: "HOMEPAGE_DESTINATION", status: "PUBLISHED", publishedPayload: { not: Prisma.DbNull } },
+    select: { publishedPayload: true },
+  });
+  const used = homepageRows.some((row) => homepageDestinationHotelCanonicalId(row.publishedPayload) === canonicalId);
+  if (used) {
+    throw new CmsContentError(
+      "CONFLICT",
+      "This hotel destination is used by published Homepage Destinations. Hide or replace those homepage cards first; hiding it now would remove them from the public homepage.",
+    );
+  }
+}
+
+/** Prevent new homepage publications from linking to an already hidden hotel. */
+async function assertPublishedHomepageHasHotel(tx: Prisma.TransactionClient, payload: unknown) {
+  const canonicalId = homepageDestinationHotelCanonicalId(payload);
+  if (!canonicalId) return;
+  const scope = await tx.cmsContentScope.findUnique({
+    where: { type_market_locale: { type: "HOTEL_DESTINATION", market: "GLOBAL", locale: "en" } },
+    select: { id: true },
+  });
+  // Before hotel CMS initialization the public API still uses the owned fallback list.
+  if (!scope) return;
+  const hotels = await tx.cmsContentItem.findMany({
+    where: {
+      type: "HOTEL_DESTINATION",
+      status: "PUBLISHED",
+      publishedMarket: "GLOBAL",
+      publishedLocale: "en",
+      publishedPayload: { not: Prisma.DbNull },
+    },
+    select: { publishedPayload: true },
+  });
+  if (!hotels.some((hotel) => cmsHotelCanonicalId(hotel.publishedPayload) === canonicalId)) {
+    throw new CmsContentError(
+      "CONFLICT",
+      "The matching canonical Hotel Destination must be published before this Homepage Destination can go live.",
+    );
+  }
+}
 
 export function validateCmsPayloadIntegrity(type: CmsContentType, payload: unknown) {
   try {
@@ -428,6 +514,7 @@ export async function createCmsContent(raw: unknown, actorInput: CmsActor) {
         );
       }
 
+      if (parsed.data.type === "HOTEL_DESTINATION") await assertUniqueHotelCanonicalId(tx, payload);
       const item = await tx.cmsContentItem.create({
         data: {
           type: parsed.data.type,
@@ -468,6 +555,8 @@ export async function updateCmsContentDraft(id: string, raw: unknown, actorInput
     if (!existing) throw new CmsContentError("NOT_FOUND", "Content item not found.");
     if (existing.status === "ARCHIVED") throw new CmsContentError("ARCHIVED", "Archived content cannot be edited.");
     const payload = parsePayload(existing.type, parsed.data.payload);
+    assertHotelIdentityNotChanged(existing, payload);
+    if (existing.type === "HOTEL_DESTINATION") await assertUniqueHotelCanonicalId(tx, payload, id);
     const nextVersion = parsed.data.expectedVersion + 1;
     const updated = await tx.cmsContentItem.updateMany({
       where: { id, version: parsed.data.expectedVersion, status: { not: "ARCHIVED" } },
@@ -537,6 +626,8 @@ export async function restoreCmsContentRevision(
         );
       }
       const restoredPayload = parsePayload(existing.type, revision.draftPayload);
+      assertHotelIdentityNotChanged(existing, restoredPayload);
+      if (existing.type === "HOTEL_DESTINATION") await assertUniqueHotelCanonicalId(tx, restoredPayload, id);
       const nextVersion = parsed.data.expectedVersion + 1;
       const changed = await tx.cmsContentItem.updateMany({
         where: { id, version: parsed.data.expectedVersion, status: { not: "ARCHIVED" } },
@@ -609,6 +700,16 @@ async function transitionCmsContent(
     const existing = await tx.cmsContentItem.findUnique({ where: { id } });
     if (!existing) throw new CmsContentError("NOT_FOUND", "Content item not found.");
     if (existing.status === "ARCHIVED") throw new CmsContentError("ARCHIVED", "Archived content cannot be changed.");
+    if (transition === "PUBLISHED" && existing.type === "HOTEL_DESTINATION") {
+      assertHotelIdentityNotChanged(existing, existing.draftPayload);
+      await assertUniqueHotelCanonicalId(tx, existing.draftPayload, id);
+    }
+    if (transition === "PUBLISHED" && existing.type === "HOMEPAGE_DESTINATION") {
+      await assertPublishedHomepageHasHotel(tx, existing.draftPayload);
+    }
+    if (transition !== "PUBLISHED" && existing.type === "HOTEL_DESTINATION" && existing.status === "PUBLISHED") {
+      await assertHotelNotUsedByPublishedHomepage(tx, existing.publishedPayload);
+    }
     const nextVersion = parsed.data.expectedVersion + 1;
     const data = transition === "PUBLISHED"
       ? {
@@ -713,8 +814,10 @@ export async function listAdminCmsContent(input: {
   cursor?: string;
   search?: string;
   category?: string;
-} = {}) {
-  const db = getOptionalPrisma();
+} = {}, reader?: Prisma.TransactionClient) {
+  // An optional transaction client lets a full-directory read use one stable
+  // database snapshot across every continuation page.
+  const db = reader ?? getOptionalPrisma();
   if (!db) throw new CmsContentError("UNAVAILABLE", "CMS storage is unavailable.");
 
   const cursor = decodeCmsListCursor(input.cursor);
@@ -817,6 +920,99 @@ export async function listAdminCmsContent(input: {
   return { items: page.map(serialize), nextCursor };
 }
 
+/**
+ * Fetch a full CMS directory consistently, including all matching search
+ * results. A repeatable-read snapshot prevents records from disappearing if
+ * another admin updates their updatedAt between cursor pages.
+ *
+ * The regular paginated reader remains unchanged for other admin screens.
+ */
+export async function listAdminCmsContentDirectory(input: {
+  type: CmsContentType;
+  status?: CmsContentStatus;
+  market?: string;
+  locale?: string;
+  search?: string;
+  category?: string;
+}) {
+  const db = getOptionalPrisma();
+  if (!db) throw new CmsContentError("UNAVAILABLE", "CMS storage is unavailable.");
+
+  return db.$transaction(async (tx) => {
+    const pageInput = { ...input, limit: 100 };
+    const firstPage = await listAdminCmsContent(pageInput, tx);
+    const items = [...firstPage.items];
+    let nextCursor = firstPage.nextCursor;
+
+    while (nextCursor) {
+      const nextPage = await listAdminCmsContent({ ...pageInput, cursor: nextCursor }, tx);
+      items.push(...nextPage.items);
+      nextCursor = nextPage.nextCursor;
+    }
+
+    return { items, nextCursor: null };
+  }, {
+    isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead,
+    timeout: 30_000,
+  });
+}
+
+/** Canonical choices include a link to the record that already owns an identity. */
+export async function getAdminCmsHotelOptions() {
+  const db = getOptionalPrisma();
+  if (!db) throw new CmsContentError("UNAVAILABLE", "CMS storage is unavailable.");
+  const managed = await db.cmsContentItem.findMany({
+    where: { type: "HOTEL_DESTINATION", status: { not: "ARCHIVED" } },
+    select: { id: true, draftPayload: true, publishedPayload: true },
+    orderBy: { id: "asc" },
+  });
+  const owners = new Map<string, string>();
+  for (const row of managed) {
+    for (const payload of [row.draftPayload, row.publishedPayload]) {
+      const canonicalId = cmsHotelCanonicalId(payload);
+      if (canonicalId && !owners.has(canonicalId)) owners.set(canonicalId, row.id);
+    }
+  }
+  return hotelDestinations.map((destination) => ({
+    canonicalId: `hotel:${destination.id}`,
+    label: `${destination.name} · ${destination.country}`,
+    name: destination.name, country: destination.country, countryCode: destination.countryCode,
+    kind: destination.kind, searchValue: destination.searchValue,
+    managedItemId: owners.get(`hotel:${destination.id}`),
+  }));
+}
+
+/** Sort the entire filtered directory before paging, never only the current page. */
+export async function listAdminCmsFaqPage(input: {
+  status?: CmsContentStatus; search?: string; category?: string; cursor?: string;
+}) {
+  const scope = { status: input.status ?? null, search: input.search?.trim() || null, category: input.category?.trim() || null };
+  let after: { sortOrder: number; key: string; id: string } | null = null;
+  if (input.cursor) {
+    try {
+      if (input.cursor.length > 2048) throw new Error("invalid");
+      const decoded = JSON.parse(Buffer.from(input.cursor, "base64url").toString("utf8"));
+      if (decoded.v !== 1 || decoded.kind !== "faq-order" || JSON.stringify(decoded.scope) !== JSON.stringify(scope)
+        || !Number.isInteger(decoded.after?.sortOrder) || typeof decoded.after?.key !== "string"
+        || typeof decoded.after?.id !== "string" || !cmsCursorId.test(decoded.after.id)) throw new Error("invalid");
+      after = decoded.after;
+    } catch { throw new CmsContentError("INVALID", "FAQ cursor does not match this query. Return to the first page.", { field: "cursor" }); }
+  }
+  const directory = await listAdminCmsContentDirectory({
+    type: "FAQ", market: "GLOBAL", locale: "en", status: input.status,
+    search: input.search, category: input.category,
+  });
+  const sorted = sortCmsFaqDirectory(directory.items);
+  const remaining = after ? sorted.filter((item) => item.sortOrder > after!.sortOrder ||
+    (item.sortOrder === after!.sortOrder && (item.key.localeCompare(after!.key) > 0 ||
+      (item.key === after!.key && item.id.localeCompare(after!.id) > 0)))) : sorted;
+  const items = remaining.slice(0, 100);
+  const last = items.at(-1);
+  return { items, nextCursor: remaining.length > 100 && last ? Buffer.from(JSON.stringify({
+    v: 1, kind: "faq-order", scope, after: { sortOrder: last.sortOrder, key: last.key, id: last.id },
+  }), "utf8").toString("base64url") : null };
+}
+
 /** Options reflect all CMS draft records, not only one paginated list page. */
 export async function listAdminCmsFaqCategories(): Promise<string[]> {
   const db = getOptionalPrisma();
@@ -834,17 +1030,24 @@ export async function listAdminCmsFaqCategories(): Promise<string[]> {
   return rows.map(row => row.category).filter(Boolean);
 }
 
-export async function getAdminCmsContent(id: string) {
+export async function getAdminCmsContent(id: string, beforeVersion?: string) {
+  if (beforeVersion !== undefined && (!/^[1-9]\d*$/.test(beforeVersion) || !Number.isSafeInteger(Number(beforeVersion)))) {
+    throw new CmsContentError("INVALID", "Revision cursor is invalid.", { field: "revisionBefore" });
+  }
   const db = getOptionalPrisma();
   if (!db) throw new CmsContentError("UNAVAILABLE", "CMS storage is unavailable.");
   const item = await db.cmsContentItem.findUnique({
     where: { id },
-    include: { revisions: { orderBy: { version: "desc" }, take: 50 } },
+    include: { revisions: {
+      ...(beforeVersion ? { where: { version: { lt: Number(beforeVersion) } } } : {}),
+      orderBy: { version: "desc" }, take: 51,
+    } },
   });
   if (!item) throw new CmsContentError("NOT_FOUND", "Content item not found.");
   return {
     item: serialize(item),
-    revisions: item.revisions.map((revision) => ({
+    nextRevisionBefore: item.revisions.length > 50 ? String(item.revisions[49].version) : null,
+    revisions: item.revisions.slice(0, 50).map((revision) => ({
       id: revision.id,
       version: revision.version,
       action: revision.action,

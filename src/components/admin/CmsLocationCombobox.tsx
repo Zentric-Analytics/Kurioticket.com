@@ -1,39 +1,35 @@
 "use client";
 
+import { CmsFieldError } from "@/components/admin/CmsEditorFeedback";
+import { cmsFieldLimits } from "@/lib/cmsContentValidation";
+
 import { useEffect, useId, useRef, useState, type KeyboardEvent, type PointerEvent as ReactPointerEvent } from "react";
 import { createPortal } from "react-dom";
 import { Check, ChevronDown } from "lucide-react";
 
 import type { CmsLocationOption } from "@/lib/adminCmsLocationOptions";
+import { getCmsDropdownBelow } from "@/lib/adminCmsDropdownPosition";
 import {
   getCmsAirportSuggestions,
   getCmsCitySuggestions,
   getCmsCountrySuggestions,
+  getCmsHotelDestinationSuggestions,
 } from "@/lib/adminCmsLocationOptions";
 
-type LocationKind = "city" | "country" | "airport";
+type LocationKind = "city" | "country" | "airport" | "hotel";
+type HotelSearchOption = { canonicalId: string; label: string; name: string; country: string; countryCode: string; kind: string; searchValue: string };
 type PopoverPlacement = { left: number; top: number; width: number; maxHeight: number };
 
 const inputClass =
-  "h-9 w-full rounded-lg border border-slate-300 bg-white px-3 pr-9 text-[13px] font-normal text-[#111827] shadow-[0_1px_0_rgba(15,23,42,0.04)] outline-none transition-colors hover:border-slate-400 focus:border-[#004BB8]/40 focus:ring-2 focus:ring-[#004BB8]/15 disabled:cursor-not-allowed disabled:border-slate-300 disabled:bg-slate-100 disabled:text-slate-700";
+  "h-9 w-full scroll-mb-28 rounded-lg border border-slate-300 bg-white px-3 pr-9 text-[13px] font-normal text-[#111827] shadow-[0_1px_0_rgba(15,23,42,0.04)] outline-none transition-colors hover:border-slate-400 focus:border-[#004BB8]/40 focus:ring-2 focus:ring-[#004BB8]/15 disabled:cursor-not-allowed disabled:border-slate-300 disabled:bg-slate-100 disabled:text-slate-700";
 
 /**
- * A viewport-anchored menu avoids extending the editor's scrollable document.
- * Flip upwards near the bottom of the window; only the popup scrolls inside it.
+ * Keep the list joined to the field's lower edge and exactly its width.
+ * Shorten the list when space below is limited; never flip it above the field.
+ * The portal preserves the editor's document height and scroll behaviour.
  */
 function measurePopover(anchor: HTMLInputElement): PopoverPlacement {
-  const rect = anchor.getBoundingClientRect();
-  const inset = 8;
-  const gap = 6;
-  const maxMenuHeight = 232;
-  const below = Math.max(0, window.innerHeight - rect.bottom - inset - gap);
-  const above = Math.max(0, rect.top - inset - gap);
-  const upwards = below < 160 && above > below;
-  const maxHeight = Math.max(72, Math.min(maxMenuHeight, upwards ? above : below));
-  const width = Math.min(Math.max(rect.width, 224), Math.max(160, window.innerWidth - inset * 2));
-  const left = Math.max(inset, Math.min(rect.left, window.innerWidth - width - inset));
-  const top = upwards ? Math.max(inset, rect.top - maxHeight - gap) : rect.bottom + gap;
-  return { left, top, width, maxHeight };
+  return getCmsDropdownBelow(anchor.getBoundingClientRect(), window.innerHeight);
 }
 
 export function CmsLocationCombobox({
@@ -41,6 +37,10 @@ export function CmsLocationCombobox({
   kind,
   value,
   countryCode = "",
+  hotelOptions = [],
+  selectedValue,
+  airportCodes,
+  allowManualAirportCode = true,
   onChange,
   onSelect,
   disabled = false,
@@ -50,11 +50,16 @@ export function CmsLocationCombobox({
   kind: LocationKind;
   value: string;
   countryCode?: string;
+  hotelOptions?: readonly HotelSearchOption[];
+  selectedValue?: string;
+  airportCodes?: readonly string[];
+  allowManualAirportCode?: boolean;
   onChange: (value: string) => void;
   onSelect?: (option: CmsLocationOption) => void;
   disabled?: boolean;
   className?: string;
 }) {
+  const errorName = kind === "hotel" ? "canonicalId" : label === "Origin IATA" ? "originCode" : label === "Destination IATA" ? "destinationCode" : label === "Origin city" ? "originCity" : label === "Destination city" ? "destinationCity" : kind;
   const inputId = useId();
   const listId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -63,10 +68,13 @@ export function CmsLocationCombobox({
   const [open, setOpen] = useState(false);
   const [placement, setPlacement] = useState<PopoverPlacement | null>(null);
   const [activeIndex, setActiveIndex] = useState(-1);
+  const [browseAllHotels, setBrowseAllHotels] = useState(false);
 
   const options =
-    kind === "airport"
-      ? getCmsAirportSuggestions(value)
+    kind === "hotel"
+      ? getCmsHotelDestinationSuggestions(hotelOptions, browseAllHotels ? "" : value)
+      : kind === "airport"
+      ? getCmsAirportSuggestions(value, 8, airportCodes, allowManualAirportCode)
       : kind === "country"
         ? getCmsCountrySuggestions(value)
         : getCmsCitySuggestions(value, countryCode);
@@ -77,8 +85,13 @@ export function CmsLocationCombobox({
 
   function show() {
     if (disabled || !inputRef.current) return;
-    setPlacement(measurePopover(inputRef.current));
+    const anchor = inputRef.current;
+    if (window.innerHeight - anchor.getBoundingClientRect().bottom < 96) {
+      anchor.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "instant" });
+    }
+    setPlacement(measurePopover(anchor));
     setOpen(true);
+    setBrowseAllHotels(kind === "hotel");
     setActiveIndex(-1);
   }
 
@@ -88,7 +101,11 @@ export function CmsLocationCombobox({
   }
 
   function pick(option: CmsLocationOption) {
-    onChange(option.value);
+    // Hotel option values are canonical IDs while the editable field displays
+    // a human label. Only free typing should clear its selected ID. Picking an
+    // option must go directly to onSelect, preserving the previous identity
+    // for safe image resets when the selected destination changes.
+    if (kind !== "hotel" || !onSelect) onChange(option.value);
     onSelect?.(option);
     dismiss();
     inputRef.current?.focus({ preventScroll: true });
@@ -104,6 +121,10 @@ export function CmsLocationCombobox({
     const dismissOnScroll = (event: Event) => {
       // Scrolling inside the suggestion list must not affect the main page.
       if (event.target instanceof Node && listRef.current?.contains(event.target)) return;
+      const anchor = inputRef.current?.getBoundingClientRect();
+      // An opening adjustment can emit scroll after the popup has mounted.
+      // Keep it open if its field is already at the measured final position.
+      if (anchor && placement && anchor.bottom - 1 === placement.top && anchor.left === placement.left) return;
       dismiss();
     };
     document.addEventListener("pointerdown", dismissOutside, true);
@@ -116,7 +137,7 @@ export function CmsLocationCombobox({
       document.removeEventListener("scroll", dismissOnScroll, true);
       window.removeEventListener("resize", dismiss);
     };
-  }, [open]);
+  }, [open, placement]);
 
   useEffect(() => {
     if (!open || activeIndex < 0) return;
@@ -179,6 +200,7 @@ export function CmsLocationCombobox({
       <div className="relative mt-1.5">
         <input
           ref={inputRef}
+          maxLength={kind === "hotel" || kind === "airport" ? undefined : cmsFieldLimits[errorName]}
           id={inputId}
           role="combobox"
           aria-autocomplete="list"
@@ -187,24 +209,46 @@ export function CmsLocationCombobox({
           aria-controls={open ? listId : undefined}
           aria-activedescendant={open && activeIndex >= 0 && options[activeIndex] ? listId + "-" + activeIndex : undefined}
           autoComplete="off"
-          className={inputClass}
+          className={inputClass + " cursor-text" + (open ? " rounded-b-none" : "")}
           value={value}
           disabled={disabled}
-          placeholder={kind === "airport" ? "Search airport or IATA" : kind === "country" ? "Search country" : "Search city"}
+          placeholder={kind === "hotel" ? "Search canonical destination" : kind === "airport" ? "Search airport or IATA" : kind === "country" ? "Search country" : "Search city"}
           onPointerDown={toggleOnPointerDown}
           onFocus={() => { if (!open) show(); }}
           onChange={(event) => {
             const next = event.target.value;
             onChange(kind === "airport" ? next.toUpperCase() : next);
+            setBrowseAllHotels(false);
             setActiveIndex(-1);
             if (!open) show();
           }}
           onKeyDown={onKeyDown}
         />
-        <ChevronDown
-          aria-hidden="true"
-          className={"pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500 transition-transform duration-150 " + (open ? "rotate-180" : "")}
-        />
+        <button
+          type="button"
+          disabled={disabled}
+          aria-label={(open ? "Close" : "Open") + " " + label + " suggestions"}
+          aria-haspopup="listbox"
+          aria-expanded={open}
+          aria-controls={open ? listId : undefined}
+          onPointerDown={(event) => event.preventDefault()}
+          onClick={() => {
+            if (open) {
+              dismiss();
+              return;
+            }
+            // Focus the editable part without moving the page; typing and
+            // ArrowDown must work immediately after using the arrow button.
+            inputRef.current?.focus({ preventScroll: true });
+            show();
+          }}
+          className="absolute inset-y-0 right-0 inline-flex w-9 cursor-pointer items-center justify-center rounded-r-lg text-[#475569] transition-colors hover:bg-[#F8FAFC] hover:text-[#111827] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] disabled:cursor-not-allowed disabled:text-slate-400"
+        >
+          <ChevronDown
+            aria-hidden="true"
+            className={"pointer-events-none h-4 w-4 transition-transform duration-150 " + (open ? "rotate-180" : "")}
+          />
+        </button>
       </div>
       {open && placement && !disabled ? createPortal(
         <div
@@ -213,7 +257,7 @@ export function CmsLocationCombobox({
           role="listbox"
           aria-label={label + " suggestions"}
           style={{ top: placement.top, left: placement.left, width: placement.width, maxHeight: placement.maxHeight }}
-          className="fixed z-[100] overflow-y-auto overscroll-contain rounded-lg border border-[#D8E1EC] bg-white p-1.5 shadow-[0_10px_28px_-12px_rgba(2,6,23,0.25)] [scrollbar-width:thin] [scrollbar-color:#CBD5E1_transparent]"
+          className="fixed z-[100] overflow-y-auto overscroll-contain rounded-b-lg border border-t-0 border-slate-300 bg-white p-1 shadow-[0_6px_12px_-8px_rgba(15,23,42,0.22)] [scrollbar-width:thin] [scrollbar-color:#CBD5E1_transparent]"
         >
           {options.length > 0 ? options.map((option, index) => (
             <button
@@ -223,27 +267,27 @@ export function CmsLocationCombobox({
               type="button"
               tabIndex={-1}
               role="option"
-              aria-selected={option.value.toLocaleLowerCase() === value.toLocaleLowerCase()}
+              aria-selected={option.value.toLocaleLowerCase() === (selectedValue ?? value).toLocaleLowerCase()}
               onMouseDown={(event) => event.preventDefault()}
               onMouseEnter={() => setActiveIndex(index)}
               onClick={() => pick(option)}
               className={"flex min-h-10 w-full cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-left text-[13px] transition-colors " +
                 (index === activeIndex ? "bg-[#F1F7FF] " : "hover:bg-[#F8FAFC] ") +
-                (option.value.toLocaleLowerCase() === value.toLocaleLowerCase() ? "font-medium text-[#004BB8]" : "font-normal text-[#020617]")}
+                (option.value.toLocaleLowerCase() === (selectedValue ?? value).toLocaleLowerCase() ? "font-medium text-[#004BB8]" : "font-normal text-[#020617]")}
             >
               <span className="min-w-0 flex-1">
                 <span className="block leading-5">{option.title}</span>
                 {option.description ? <span className="mt-0.5 block text-[11px] leading-4 text-[#64748B]">{option.description}</span> : null}
               </span>
-              {option.value.toLocaleLowerCase() === value.toLocaleLowerCase() ? (
+              {option.value.toLocaleLowerCase() === (selectedValue ?? value).toLocaleLowerCase() ? (
                 <Check size={15} aria-hidden="true" className="shrink-0 text-[#004BB8]" />
               ) : null}
             </button>
           )) : (
             <p className="px-3 py-2 text-[12px] leading-5 text-slate-500">
               {kind === "airport"
-                ? "No airport found. Enter a valid three-letter IATA code manually."
-                : "No matching " + kind + ". You can keep typing a custom value."}
+                ? allowManualAirportCode ? "No airport found. Enter a valid three-letter IATA code manually." : "No supported airport matches. Clear the search or choose another supported route."
+                : kind === "hotel" ? "No matching canonical destination. Select one of the listed entries to save." : "No matching " + kind + ". You can keep typing a custom value."}
             </p>
           )}
           {kind === "country" && value.trim() && !exactCountry ? (
@@ -254,6 +298,7 @@ export function CmsLocationCombobox({
         </div>,
         document.body,
       ) : null}
+      <CmsFieldError name={errorName} />
     </div>
   );
 }

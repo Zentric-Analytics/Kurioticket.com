@@ -10,7 +10,7 @@ export const metadata = { title: "Admin Audit Logs" };
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 type AuditRange = "24h" | "7d" | "30d" | "90d" | "custom";
 
-const rowGrid = "md:grid-cols-[minmax(130px,0.75fr)_minmax(210px,1.15fr)_minmax(220px,1.2fr)_minmax(240px,1.35fr)_90px]";
+const rowGrid = "md:grid-cols-[minmax(150px,0.72fr)_minmax(360px,1.55fr)_minmax(240px,1.1fr)_minmax(220px,0.95fr)]";
 
 const actionLabels: Record<string, string> = {
   CMS_CONTENT_PUBLISHED: "CMS content published",
@@ -21,6 +21,7 @@ const actionLabels: Record<string, string> = {
   USER_ROLE_UPDATED: "User role updated",
   USER_SOFT_DELETED: "User deleted",
   FEATURE_CONTROL_UPDATED: "Feature control updated",
+  ADMIN_NOTIFICATION_PREFERENCE_UPDATED: "Notification preference updated",
 };
 
 export default async function AdminLogsPage({ searchParams }: { searchParams: SearchParams }) {
@@ -35,11 +36,8 @@ export default async function AdminLogsPage({ searchParams }: { searchParams: Se
 
   return (
     <div className="w-full min-w-0 bg-white text-[#020617]">
-        <header className="border-b border-[#D8E1EC] pb-4">
+        <header className="pb-3">
           <h1 className="text-[18px] font-semibold tracking-[-0.01em] text-[#020617]">Audit Logs</h1>
-          <p className="mt-1 max-w-[900px] text-[12px] leading-5 text-[#64748B]">
-            Security-sensitive admin and system actions. Raw metadata, IP addresses and user-agent values are intentionally excluded.
-          </p>
         </header>
 
         <AdminAuditLogsToolbar
@@ -61,22 +59,18 @@ export default async function AdminLogsPage({ searchParams }: { searchParams: Se
             />
           ) : (
             <section aria-labelledby="audit-records-heading" className="pt-4">
-              <div className="flex flex-wrap items-baseline justify-between gap-2 pb-2">
+              <div className="pb-2">
                 <h2 id="audit-records-heading" className="text-[15px] font-semibold text-[#020617]">Audit records</h2>
-                <p className="text-[12px] text-[#64748B]">
-                  {result.data.items.length.toLocaleString()} newest records on this page · {rangeLabel(range, result.data.scope.from, result.data.scope.to)}
-                </p>
               </div>
 
               <div role="region" aria-label="Audit log records" tabIndex={0} className="min-w-0 overflow-x-auto border-y border-[#D8E1EC]">
-                <div data-audit-header className={"hidden min-w-[980px] gap-4 border-b border-[#D8E1EC] px-3 py-3 text-[12px] font-medium uppercase text-[#475569] md:grid " + rowGrid}>
+                <div data-audit-header className={"hidden min-w-[1080px] gap-4 border-b border-[#D8E1EC] px-3 py-3 text-[12px] font-medium uppercase text-[#475569] md:grid " + rowGrid}>
                   <span>Created</span>
                   <span>Admin</span>
                   <span>Action</span>
                   <span>Target</span>
-                  <span className="text-right">Details</span>
                 </div>
-                <div className="min-w-[980px] divide-y divide-[#E7ECF5]">
+                <div className="min-w-[1080px] divide-y divide-[#E7ECF5]">
                   {result.data.items.map(log => <AuditRow key={log.id} log={log} />)}
                 </div>
               </div>
@@ -120,49 +114,43 @@ function AuditRow({ log }: { log: AdminAuditRead }) {
     <>
       <time dateTime={log.createdAt} className="text-[12px] leading-5 text-[#475569]">{formatDateTime(new Date(log.createdAt))}</time>
       <div className="min-w-0">
-        <p className="break-words text-[13px] font-medium text-[#020617]">{log.adminEmail}</p>
-        <p className="mt-0.5 truncate text-[11px] text-[#64748B]" title={log.adminUserId || "System event"}>
-          {log.adminUserId || "System event"}
-        </p>
+        <p className="break-words text-[13px] font-medium text-[#020617] md:truncate md:whitespace-nowrap" title={log.adminEmail}>{log.adminEmail}</p>
       </div>
       <div className="min-w-0">
         <p className="text-[13px] font-medium text-[#020617]">{actionLabel(log.action)}</p>
-        <code className="mt-0.5 block truncate text-[11px] font-normal text-[#64748B]" title={log.action}>{log.action}</code>
       </div>
       <div className="min-w-0">
         <p className="text-[13px] font-medium text-[#020617]">{identifierLabel(log.targetType)}</p>
-        <code className="mt-0.5 block max-w-[360px] truncate text-[11px] font-normal text-[#64748B]" title={log.targetId || undefined}>
-          {log.targetId || "No target ID"}
-        </code>
       </div>
     </>
   );
 
-  if (!log.targetEmail) {
-    return (
-      <div data-audit-row={log.id} className={"grid gap-2 px-3 py-3 md:items-start md:gap-4 " + rowGrid}>
-        {content}
-        <span aria-hidden="true" />
-      </div>
-    );
-  }
-
   return (
     <details data-audit-row={log.id} className="group">
-      <summary className={"grid cursor-pointer list-none gap-2 px-3 py-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] md:items-start md:gap-4 [&::-webkit-details-marker]:hidden " + rowGrid}>
+      <summary
+        title="View audit details"
+        className={"grid cursor-pointer list-none gap-2 px-3 py-3 transition-colors hover:bg-[#F8FAFC] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] md:items-start md:gap-4 [&::-webkit-details-marker]:hidden " + rowGrid}
+      >
         {content}
-        <span className="text-[12px] font-medium text-[#004BB8] md:text-right">
-          <span className="group-open:hidden">View ›</span>
-          <span className="hidden group-open:inline">Hide ‹</span>
-        </span>
       </summary>
       <div className="border-t border-[#EEF2F7] px-3 py-3">
-        <div className="max-w-[680px] border-l-2 border-[#D8E1EC] pl-3">
-          <p className="text-[12px] text-[#64748B]">Target email</p>
-          <p className="mt-0.5 break-all text-[13px] text-[#020617]">{log.targetEmail}</p>
-        </div>
+        <dl className="grid max-w-[980px] gap-x-8 gap-y-3 border-l-2 border-[#D8E1EC] pl-3 sm:grid-cols-2 lg:grid-cols-4">
+          <AuditTechnicalDetail label="Admin ID" value={log.adminUserId || "System event"} />
+          <AuditTechnicalDetail label="Action code" value={log.action} />
+          <AuditTechnicalDetail label="Target ID" value={log.targetId || "Not provided"} />
+          {log.targetEmail ? <AuditTechnicalDetail label="Target email" value={log.targetEmail} /> : null}
+        </dl>
       </div>
     </details>
+  );
+}
+
+function AuditTechnicalDetail({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0">
+      <dt className="text-[11px] font-medium uppercase tracking-[0.02em] text-[#64748B]">{label}</dt>
+      <dd className="mt-1 break-all text-[12px] text-[#020617]">{value}</dd>
+    </div>
   );
 }
 
@@ -238,16 +226,6 @@ function customEndIso(value: string, now: Date) {
   const end = new Date(value + "T00:00:00.000Z");
   end.setUTCDate(end.getUTCDate() + 1);
   return new Date(Math.min(end.getTime(), now.getTime())).toISOString();
-}
-
-function rangeLabel(range: AuditRange, from: string, to: string) {
-  if (range === "24h") return "Last 24 hours";
-  if (range === "7d") return "Last 7 days";
-  if (range === "30d") return "Last 30 days";
-  if (range === "90d") return "Last 90 days";
-  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }).format(new Date(from))
-    + " – "
-    + new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }).format(new Date(new Date(to).getTime() - 1));
 }
 
 function currentHref(raw: Record<string, string | string[] | undefined>, range: AuditRange) {

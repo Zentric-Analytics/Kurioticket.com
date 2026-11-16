@@ -196,6 +196,7 @@ export function AdminNotificationsPanel({ open, onToggle, onClose, headerRef, tr
     };
   }, [open, pathname, refreshKey]);
 
+
   useLayoutEffect(() => {
     if (!open || !headerRef.current || !panelRef.current) return;
     const header = headerRef.current;
@@ -219,6 +220,7 @@ export function AdminNotificationsPanel({ open, onToggle, onClose, headerRef, tr
   }, [open]);
 
   const unreadCount = summary?.unreadCount ?? null;
+  const visibleAlerts = snapshot?.alerts ?? [];
   const iconButton = "inline-flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-transparent bg-white text-[#6B7280] transition-[color,box-shadow,border-color] duration-150 hover:border-[#E5E7EB] hover:text-[#374151] hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-200 motion-reduce:transition-none";
 
   return <>
@@ -245,7 +247,7 @@ export function AdminNotificationsPanel({ open, onToggle, onClose, headerRef, tr
           <div className="min-w-0">
             <h2 id={id + "-title"} className="text-[14px] font-semibold leading-5 tracking-[-0.01em] text-[#111827]">Notifications</h2>
             <p className="mt-1 text-[12px] font-normal leading-5 text-[#6B7280]">
-              {snapshot ? snapshot.unreadCount > 0 ? snapshot.unreadCount + " need attention" : snapshot.activeCount > 0 ? "All active alerts seen" : "No active notifications" : pending ? "Loading notifications…" : "Activity and alerts"}
+              {snapshot ? snapshot.unreadCount > 0 ? snapshot.unreadCount + " need attention" : snapshot.activeCount > 0 ? "All active alerts read" : "No active notifications" : pending ? "Loading notifications…" : "Activity and alerts"}
             </p>
           </div>
           <div className="flex items-center gap-1">
@@ -273,13 +275,13 @@ export function AdminNotificationsPanel({ open, onToggle, onClose, headerRef, tr
               </div>)}
             </div>
           </div> : null}
-          {snapshot?.alerts.length === 0 ? <div className="flex flex-col items-center px-6 py-14 text-center">
+          {snapshot && visibleAlerts.length === 0 ? <div className="flex flex-col items-center px-6 py-14 text-center">
             <span className="mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-[#E5E7EB] bg-white text-[#6B7280]"><Bell size={22} strokeWidth={1.5} aria-hidden="true" /></span>
             <p className="text-[14px] font-semibold text-[#111827]">You’re all caught up</p>
-            <p className="mt-1 text-[12px] leading-5 text-[#6B7280]">There are no active notifications.</p>
+            <p className="mt-1 text-[12px] leading-5 text-[#6B7280]">No active notifications.</p>
           </div> : null}
-          {snapshot && snapshot.alerts.length > 0 ? <ul className="space-y-2 px-3 py-3">
-            {snapshot.alerts.map(alert => <AdminNotificationItem key={alert.id} id={alert.id} alertKey={alert.key} signalToken={alert.signalToken} title={alert.title}
+          {snapshot && visibleAlerts.length > 0 ? <ul className="space-y-2 px-3 py-3">
+            {visibleAlerts.map(alert => <AdminNotificationItem key={alert.id} id={alert.id} alertKey={alert.key} signalToken={alert.signalToken} title={alert.title}
               canDelete={alert.key !== "system.database.unavailable" && !alert.signalToken.startsWith("unpersisted:")}
               open={swipedId === alert.id} onSetOpen={open => setSwipedId(open ? alert.id : null)}
               onDelete={async () => {

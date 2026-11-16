@@ -1,13 +1,13 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import ts from "typescript";
 
 const core = readFileSync("src/services/adminAlertCore.ts", "utf8");
 const service = readFileSync("src/services/adminAlertService.ts", "utf8");
 const emailDelivery = readFileSync("src/services/emailDeliveryService.ts", "utf8");
 const flightStatus = readFileSync("src/services/adminFlightStatusOperationsService.ts", "utf8");
-const page = readFileSync("src/app/admin/notifications/page.tsx", "utf8");
+const page = readFileSync("src/app/admin/settings/notifications/page.tsx", "utf8");
+const legacyPage = readFileSync("src/app/admin/notifications/page.tsx", "utf8");
 const readApi = readFileSync("src/app/api/admin/notifications/route.ts", "utf8");
 const ackApi = readFileSync("src/app/api/admin/notifications/acknowledge/route.ts", "utf8");
 const acknowledgeButton = readFileSync("src/components/admin/AdminAlertAcknowledgeButton.tsx", "utf8");
@@ -115,6 +115,24 @@ test("acknowledgements are per-admin, signal-specific, temporary, and must persi
   assert.match(adminLib, /return false/);
 });
 
+test("bell and Settings use Mark as read consistently without changing acknowledgement behavior", () => {
+  assert.match(acknowledgeButton, /Mark as read/);
+  assert.match(acknowledgeButton, /Marked as read · 24h/);
+  assert.match(acknowledgeButton, /Marked as read for 24 hours/);
+  assert.match(acknowledgeButton, /Marking as read…/);
+  assert.match(acknowledgeButton, /title="Mark this alert as read for 24 hours\. This does not resolve the issue\."/);
+  assert.doesNotMatch(acknowledgeButton, /Mark as seen|Seen for 24 hours|Acknowledging…|\{pending \? "Saving…"/);
+  assert.match(acknowledgeButton, /if \(!response\.ok\)/);
+  assert.match(acknowledgeButton, /window\.dispatchEvent\(new Event\("admin-alerts-updated"\)\)/);
+  assert.match(acknowledgeButton, /router\.refresh\(\)/);
+  assert.match(page, /alert\.acknowledged \? "Read" : "Unread"/);
+  assert.match(page, /Marked as read: \{formatDateTime\(alert\.acknowledgedAt\)\}/);
+  assert.match(panel, /"All active alerts read"/);
+  assert.doesNotMatch(page, /alert\.acknowledged \? "Acknowledged" : "Unread"/);
+  assert.match(ackApi, /adminAlertAcknowledgement\.action/);
+  assert.match(service, /24 \* 60 \* 60 \* 1_000/);
+});
+
 test("database outage alert remains reachable through a read-only signed-admin fallback", () => {
   assert.match(outageAccess, /getToken/);
   assert.match(outageAccess, /token\?\.role !== "ADMIN"/);
@@ -138,23 +156,11 @@ test("acknowledgement mutation is authenticated, rate-limited, and safe", () => 
   assert.doesNotMatch(ackApi, /title|message|actionHref/);
 });
 
-test("notifications page explains acknowledgement semantics and monitored boundaries", () => {
-  assert.match(page, /title="Notifications & Alerts"/);
+test("notifications page keeps clear acknowledgement guidance without verbose monitoring boundaries", () => {
+  assert.match(page, /id="settings-section-title"/);
   assert.match(page, /does not resolve the underlying condition/);
-  const document = ts.createSourceFile("notifications.tsx", page, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
-  const headings: ts.JsxElement[] = [];
-  function visit(node: ts.Node) {
-    if (ts.isJsxElement(node) && node.openingElement.tagName.getText(document) === "h2" && node.children.map((child) => child.getText(document)).join("").trim() === "Monitoring boundaries") headings.push(node);
-    ts.forEachChild(node, visit);
-  }
-  visit(document);
-  assert.equal(headings.length, 1, "one current monitoring-boundaries heading");
-  const section = headings[0].parent;
-  assert.ok(ts.isJsxElement(section) && section.openingElement.tagName.getText(document) === "AdminSectionCard");
-  const boundaries = section.getText(document).replace(/\s+/g, " ");
-  for (const guarantee of ["authoritative System/database health", "ready provider operational health", "Email Delivery", "CMS integrity", "Homepage Fare readiness", "configured Flight Status telemetry", "authenticated Confirmed Trips delivery failures when a provider is explicitly configured", "does not fabricate alerts for inactive integrations", "no trustworthy expected cadence exists"]) assert.ok(boundaries.includes(guarantee), guarantee);
-  for (const guarantee of ["Global coverage also includes sustained failures", "enabled flight, hotel and car searches in this deployment", "explicitly urgent support tickets awaiting team action", "two-factor protection was disabled within the last 24 hours and remains disabled", "Account and support records are scoped to the current database", "Routine activity and isolated low-volume search failures do not create alerts", "Unavailable monitoring data is reported separately, never as a healthy zero"]) assert.ok(boundaries.includes(guarantee), guarantee);
-  assert.match(page, /does not fabricate alerts/);
+  assert.match(page, /Alerts clear automatically when the underlying authoritative signal clears/);
+  assert.doesNotMatch(page, /Monitoring boundaries|Coverage, limitations, and alert behavior|does not fabricate alerts|data-monitoring-boundaries/);
   assert.match(page, /AdminAlertAcknowledgeButton/);
   assert.match(page, /isProtectedAdminEmail\(session\.user\.email\)/);
   assert.match(page, /signalToken=\{alert\.signalToken\}/);
@@ -180,7 +186,8 @@ test("admin bell opens the complete notification panel without navigating or ack
   assert.match(panel, /createPortal/);
   assert.match(panel, /role="dialog"/);
   assert.match(panel, /Close notifications/);
-  assert.match(panel, /snapshot\.alerts\.map/);
+  assert.match(panel, /visibleAlerts\.map/);
+  assert.match(panel, /const visibleAlerts = snapshot\?\.alerts \?\? \[\]/);
   assert.match(panel, /AdminAlertAcknowledgeButton/);
   assert.doesNotMatch(panel, /method: "POST"|slice\(0|View all|See all|href="\/admin\/notifications"|line-clamp/);
 });
@@ -194,4 +201,37 @@ test("notifications read API supports cached safe summary mode", () => {
   assert.match(service, /candidateCache/);
   assert.match(service, /forceRefreshCandidates: true/);
   assert.doesNotMatch(readApi, /process\.env|errorMessage|providerMessageId/);
+});
+
+
+test("Notifications is rendered inside the existing Settings layout without duplicating admin headers", () => {
+  const settingsLayout = readFileSync("src/app/admin/settings/layout.tsx", "utf8");
+  assert.match(settingsLayout, /<AdminPageShell title="Settings" hideHeader>/);
+  assert.match(page, /<section aria-labelledby="settings-section-title"/);
+  assert.match(page, /getCurrentDatabaseOutageAdminToken/);
+  assert.match(legacyPage, /redirect\("\/admin\/settings\/notifications"\)/);
+  assert.match(page, /aria-label="Alert summary"/);
+  assert.match(page, /grid grid-cols-2 md:grid-cols-4/);
+  assert.match(page, /aria-labelledby="active-alerts-heading"/);
+  assert.match(page, /<ul aria-label="Operational alerts"/);
+  assert.match(page, /data-alert-row/);
+  assert.doesNotMatch(page, /data-monitoring-boundaries|<details |ChevronDown/);
+  assert.match(page, /aria-labelledby="active-alerts-heading"/);
+  assert.doesNotMatch(page, /AdminMetricCard|AdminSectionCard|AdminStatusBadge|AdminEmptyState/);
+});
+
+test("compact notifications preserve real states, trusted sources, and acknowledgement safeguards", () => {
+  for (const source of ["snapshot.activeCount", "snapshot.unreadCount", "snapshot.criticalCount", "snapshot.warningCount", "snapshot.alerts.map", "snapshot.generatedAt", "alert.signalAt", "alert.acknowledgedAt"]) {
+    assert.ok(page.includes(source), "Missing live notifications field: " + source);
+  }
+  assert.match(page, /alertSourceHref\(alert\.actionHref\)/);
+  assert.match(page, /alert.key === "system.database.unavailable" \? null/);
+  assert.match(page, /alert.signalToken.startsWith\("unpersisted:"\)/);
+  assert.match(page, /alertKey=\{alert\.key\}/);
+  assert.match(page, /signalToken=\{alert\.signalToken\}/);
+  assert.match(page, /acknowledged=\{alert\.acknowledged\}/);
+  assert.match(page, /rowStyle/);
+  assert.match(acknowledgeButton, /rowStyle = false/);
+  assert.match(acknowledgeButton, /size=\{rowStyle \? "sm" : "md"\}/);
+  assert.match(acknowledgeButton, /body: JSON\.stringify\(\{ alertKey, signalToken \}\)/);
 });

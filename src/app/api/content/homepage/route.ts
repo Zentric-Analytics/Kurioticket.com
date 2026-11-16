@@ -41,6 +41,12 @@ export async function GET(request: Request) {
         ...destination,
         canonicalDestinationId: intent.canonicalDestinationId,
         destinationSearchValue: hotelDestination.searchValue,
+        // A published hotel image is an optional override for the matching
+        // popular-stay card, not a requirement for existing image-less records.
+        ...(hotelDestination.image ? {
+          image: hotelDestination.image,
+          imageAlt: hotelDestination.imageAlt?.trim() || destination.imageAlt,
+        } : {}),
       }];
     });
 

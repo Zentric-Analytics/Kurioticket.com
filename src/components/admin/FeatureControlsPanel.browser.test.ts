@@ -13,10 +13,11 @@ const setup = `const React=require('react'),{createRoot}=require('react-dom/clie
 test("Feature Controls preserve same-data drafts and confirmation across refreshes, errors and cancellation", async () => {
   await withComponentBrowser(bundle(), setup, async page => {
     await page.getByRole("switch", { name: "Disable Car Search", exact: true }).click();
-    await page.getByRole("textbox", { name: "Reason (optional)" }).fill("local reason");
+    await page.getByRole("button", { name: "Add a note (optional)" }).click();
+    await page.getByRole("textbox", { name: "Note", exact: true }).fill("local reason");
     await page.evaluate(p => (window as unknown as { fixtureRender: (p: object) => void }).fixtureRender(p), props);
     assert.equal(await page.getByRole("textbox").inputValue(), "local reason");
-    await page.getByRole("button", { name: "Confirm change" }).click();
+    await page.getByRole("button", { name: "Disable Car Search", exact: true }).click();
     await page.getByRole("alert").waitFor();
     assert.equal(await page.getByRole("alert").innerText(), "Fixture denied");
     assert.equal(await page.getByRole("textbox").inputValue(), "local reason");
@@ -24,8 +25,8 @@ test("Feature Controls preserve same-data drafts and confirmation across refresh
     await page.getByRole("button", { name: "Cancel", exact: true }).click();
     assert.equal(await page.getByRole("dialog").count(), 0);
     await page.getByRole("switch", { name: "Disable Car Search", exact: true }).click();
-    assert.equal(await page.getByRole("textbox").inputValue(), "");
-    await page.getByRole("textbox").press("Escape");
+    assert.equal(await page.getByRole("textbox").count(), 0);
+    await page.getByRole("button", { name: "Cancel", exact: true }).press("Escape");
     assert.equal(await page.getByRole("dialog").count(), 0);
   });
 });
@@ -34,7 +35,7 @@ test("Feature Controls apply successful saves and reject stale confirmations aft
   await withComponentBrowser(bundle(), setup, async page => {
     await page.getByRole("switch", { name: "Disable Car Search" }).click();
     await page.evaluate(() => { (window as unknown as { fixtureOk: boolean }).fixtureOk = true; });
-    await page.getByRole("button", { name: "Confirm change" }).click();
+    await page.getByRole("button", { name: "Disable Car Search", exact: true }).click();
     await page.getByRole("switch", { name: "Enable Car Search" }).waitFor();
     assert.equal(await page.getByRole("switch", { name: "Enable Car Search" }).getAttribute("aria-checked"), "false");
     const requests = await page.evaluate(() => (window as unknown as { fixtureRequests: Array<{ url: string; method: string; body: string }> }).fixtureRequests);
@@ -54,9 +55,9 @@ test("Feature Controls retain production reason requirement and read-only fallba
   await withComponentBrowser(bundle(), setup, async page => {
     await page.evaluate(p => (window as unknown as { fixtureRender: (p: object) => void }).fixtureRender(p), { ...props, environment: "PRODUCTION", canControlProduction: true });
     await page.getByRole("switch", { name: "Disable Car Search" }).click();
-    assert.equal(await page.getByRole("button", { name: "Confirm change" }).isDisabled(), true);
-    await page.getByRole("textbox", { name: "Reason (required)" }).fill("approved fixture reason");
-    assert.equal(await page.getByRole("button", { name: "Confirm change" }).isDisabled(), false);
+    assert.equal(await page.getByRole("button", { name: "Disable Car Search", exact: true }).isDisabled(), true);
+    await page.getByRole("textbox", { name: "Reason for change (required)" }).fill("approved fixture reason");
+    assert.equal(await page.getByRole("button", { name: "Disable Car Search", exact: true }).isDisabled(), false);
     await page.evaluate(p => (window as unknown as { fixtureRender: (p: object) => void }).fixtureRender(p), { ...props, operationsAvailable: false });
     await page.waitForFunction(() => !document.querySelector('[role="dialog"]'));
     assert.equal(await page.getByRole("switch", { name: "Disable Car Search" }).isDisabled(), true);
@@ -67,10 +68,10 @@ test("Feature Controls retain production reason requirement and read-only fallba
 test("Feature Controls lock pending saves and discard a response from an obsolete server scope", async () => {
   await withComponentBrowser(bundle(), setup + `window.fetch=()=>new Promise(resolve=>window.fixtureComplete=()=>resolve({ok:true,json:async()=>({enabled:false})}));`, async page => {
     await page.getByRole("switch", { name: "Disable Car Search" }).click();
-    await page.getByRole("button", { name: "Confirm change" }).click();
+    await page.getByRole("button", { name: "Disable Car Search", exact: true }).click();
     await page.getByRole("button", { name: "Saving…", exact: true }).waitFor();
     assert.equal(await page.getByRole("button", { name: "Cancel", exact: true }).isDisabled(), true);
-    assert.equal(await page.getByRole("textbox").isDisabled(), true);
+    assert.equal(await page.getByRole("button", { name: "Add a note (optional)" }).isDisabled(), true);
     await page.keyboard.press("Escape");
     assert.equal(await page.getByRole("dialog").count(), 1);
     await page.evaluate(p => (window as unknown as { fixtureRender: (p: object) => void }).fixtureRender(p), { ...props, initialControls: [{ ...control, state: { enabled: true, updatedAt: "2030-03-01" } }] });

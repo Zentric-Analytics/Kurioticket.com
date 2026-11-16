@@ -3,6 +3,7 @@ import test from "node:test";
 import { componentBundle, withComponentBrowser } from "../../test-support/componentBrowser";
 
 const entries = {
+  select: "src/components/admin/AdminDirectorySelect.tsx",
   audit: "src/components/admin/AdminAuditLogsToolbar.tsx",
   activity: "src/components/admin/ActivityFiltersBar.tsx",
   providers: "src/components/admin/ProviderHealthWindowFilter.tsx",
@@ -180,7 +181,7 @@ test("CMS all-market navigation preserves draft search, selected market and over
 test("Audit Logs preserves same-scope drafts, synchronizes committed filters and cancels custom dates", async () => {
   const props = { action: "", adminEmail: "", targetType: "", targetEmail: "", range: "7d", fromDate: "2030-01-01", toDate: "2030-01-02", pageHref: "/admin/logs?range=7d" };
   await withComponentBrowser(bundle(), mount("audit", "AdminAuditLogsToolbar", props), async page => {
-    const admin = page.getByRole("searchbox", { name: "Admin email", exact: true });
+    const admin = page.getByRole("searchbox", { name: "Search admin email", exact: true });
     await admin.fill("draft@example.test");
     await page.evaluate(props => (window as unknown as { fixtureRender: (props: unknown) => void }).fixtureRender(props), props);
     assert.equal(await admin.inputValue(), "draft@example.test");
@@ -188,13 +189,35 @@ test("Audit Logs preserves same-scope drafts, synchronizes committed filters and
     await page.getByRole("option", { name: "Custom range", exact: true }).click();
     await page.getByLabel("Custom start date UTC", { exact: true }).fill("2030-01-03");
     await page.evaluate(props => (window as unknown as { fixtureRender: (props: unknown) => void }).fixtureRender(props), { ...props, adminEmail: "server@example.test", pageHref: "/admin/logs?range=7d&action=CMS", action: "CMS" });
-    await page.waitForFunction(() => (document.querySelector('input[placeholder="Search admin email"]') as HTMLInputElement)?.value === "server@example.test");
+    assert.equal(await admin.inputValue(), "draft@example.test", "older server results must preserve active typing");
     assert.equal(await page.getByLabel("Custom start date UTC", { exact: true }).inputValue(), "2030-01-03", "committed filters must not erase open date editing");
     await page.getByRole("button", { name: "Cancel", exact: true }).click();
     assert.equal(await page.getByLabel("Custom start date UTC", { exact: true }).count(), 0);
     await page.getByRole("combobox", { name: "Date range", exact: true }).click();
     await page.getByRole("option", { name: "Custom range", exact: true }).click();
     assert.equal(await page.getByLabel("Custom start date UTC", { exact: true }).inputValue(), props.fromDate);
-    assert.deepEqual(await page.evaluate(() => (window as unknown as { fixtureNavigation: string[] }).fixtureNavigation), [], "editing and cancel never submit filters");
+    await page.waitForTimeout(350);
+    const urls = await page.evaluate(() => (window as unknown as { fixtureNavigation: string[] }).fixtureNavigation);
+    assert.equal(new URL(urls.at(-1)!, "http://fixture.local").searchParams.get("adminEmail"), "draft@example.test");
+    await page.evaluate(() => { history.replaceState(null, "", "?range=7d&adminEmail=history%40example.test"); window.dispatchEvent(new PopStateEvent("popstate")); });
+    await page.waitForFunction(() => (document.querySelector('input[placeholder="Search admin email"]') as HTMLInputElement)?.value === "history@example.test");
+  });
+});
+
+test("Admin directory selection follows committed values and closes when disabled", async () => {
+  const props = { name: "scope", label: "Scope", value: "a", options: [{ value: "a", label: "Alpha" }, { value: "b", label: "Beta" }] };
+  await withComponentBrowser(bundle(), mount("select", "AdminDirectorySelect", props), async page => {
+    const trigger = page.getByRole("combobox", { name: "Scope", exact: true });
+    await trigger.click();
+    await page.getByRole("listbox").waitFor();
+    await page.evaluate(p => (window as unknown as { fixtureRender: (p: object) => void }).fixtureRender(p), { ...props, value: "b" });
+    await page.waitForFunction(() => document.querySelector('[role="combobox"]')?.textContent?.includes("Beta"));
+    assert.equal(await page.getByRole("listbox").count(), 0);
+    await trigger.click();
+    await page.getByRole("listbox").waitFor();
+    await page.evaluate(p => (window as unknown as { fixtureRender: (p: object) => void }).fixtureRender(p), { ...props, value: "b", disabled: true });
+    await page.waitForFunction(() => !(document.querySelector('[role="listbox"]')));
+    assert.equal(await trigger.isDisabled(), true);
+    assert.deepEqual(await page.evaluate(() => (window as unknown as { fixtureNavigation: string[] }).fixtureNavigation), []);
   });
 });

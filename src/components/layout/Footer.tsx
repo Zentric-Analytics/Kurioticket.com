@@ -42,6 +42,10 @@ export function Footer({
           href: "/support",
         },
         {
+          label: t.faqHeading,
+          href: "/faq",
+        },
+        {
           label: t.footerServiceGuarantee,
           href: "/service-guarantee",
         },

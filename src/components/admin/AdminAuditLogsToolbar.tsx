@@ -1,8 +1,7 @@
 "use client";
 
-import Link from "next/link";
-import { useState, useTransition, type FormEvent } from "react";
-import { LoaderCircle } from "lucide-react";
+import { useCallback, useEffect, useRef, useState, useTransition, type FormEvent } from "react";
+import { LoaderCircle, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { AdminDirectorySelect, type AdminDirectoryOption } from "./AdminDirectorySelect";
 
@@ -36,6 +35,7 @@ const baseActionOptions: readonly AdminDirectoryOption[] = [
   { value: "EMAIL", label: "Email actions" },
   { value: "ADMIN_ALERT", label: "Alert actions" },
   { value: "FEATURE_CONTROL_UPDATED", label: "Feature control updates" },
+  { value: "ADMIN_NOTIFICATION_PREFERENCE_UPDATED", label: "Notification preference updates" },
   { value: "TEAM_ACCESS", label: "Team access actions" },
   { value: "HOMEPAGE_FARES", label: "Homepage fare actions" },
 ];
@@ -54,6 +54,7 @@ const baseTargetTypeOptions: readonly AdminDirectoryOption[] = [
   { value: "AdminOperationalCondition", label: "Operational condition" },
   { value: "PreviewTester", label: "Preview tester" },
   { value: "FeatureFlag", label: "Feature flag" },
+  { value: "AdminNotificationPreference", label: "Notification preference" },
 ];
 
 function withCurrentOption(options: readonly AdminDirectoryOption[], value: string, prefix: string) {
@@ -82,31 +83,108 @@ export function AdminAuditLogsToolbar({
   const [adminDraft, setAdminDraft] = useState(adminEmail);
   const [targetDraft, setTargetDraft] = useState(targetEmail);
   const [isPending, startTransition] = useTransition();
+  const adminDraftRef = useRef(adminEmail);
+  const targetDraftRef = useRef(targetEmail);
+  const searchEditingRef = useRef(false);
+  const [searchEditing, setSearchEditing] = useState(false);
+  const lastSubmittedSearchRef = useRef<string | null>(null);
+  const paramsRef = useRef(new URLSearchParams(pageHref.split("?")[1] || ""));
 
-  const committedScope = JSON.stringify([pageHref, fromDate, toDate, adminEmail, targetEmail, customOpen]);
+  useEffect(() => {
+    paramsRef.current = new URLSearchParams(pageHref.split("?")[1] || "");
+  }, [pageHref]);
+
+  const committedScope = JSON.stringify([pageHref, fromDate, toDate, customOpen]);
   const [previousScope, setPreviousScope] = useState(committedScope);
   if (previousScope !== committedScope) {
     setPreviousScope(committedScope);
     if (!customOpen) setDraftDates({ from: fromDate, to: toDate });
-    setAdminDraft(adminEmail);
-    setTargetDraft(targetEmail);
   }
+  const searchScope = JSON.stringify([pageHref, adminEmail, targetEmail]);
+  const [previousSearchScope, setPreviousSearchScope] = useState(searchScope);
+  if (previousSearchScope !== searchScope) {
+    setPreviousSearchScope(searchScope);
+    const appliedAdmin = adminEmail.trim();
+    const appliedTarget = targetEmail.trim();
+    // Preserve edits while an older server navigation is still arriving.
+    if (!searchEditing) {
+      setAdminDraft(appliedAdmin);
+      setTargetDraft(appliedTarget);
+    } else if (appliedAdmin === adminDraft.trim() && appliedTarget === targetDraft.trim()) {
+      setSearchEditing(false);
+    }
+  }
+
+  useEffect(() => {
+    if (!searchEditing) {
+      adminDraftRef.current = adminDraft;
+      targetDraftRef.current = targetDraft;
+      searchEditingRef.current = false;
+      lastSubmittedSearchRef.current = null;
+    }
+  }, [searchEditing, adminDraft, targetDraft]);
+
+  useEffect(() => {
+    const onHistoryNavigation = () => {
+      const params = new URLSearchParams(window.location.search);
+      paramsRef.current = params;
+      searchEditingRef.current = false;
+      lastSubmittedSearchRef.current = null;
+      setCustomOpen(false);
+      setSearchEditing(false);
+
+      const restoredAdmin = (params.get("adminEmail") ?? "").trim();
+      const restoredTarget = (params.get("targetEmail") ?? "").trim();
+      adminDraftRef.current = restoredAdmin;
+      targetDraftRef.current = restoredTarget;
+      setAdminDraft(restoredAdmin);
+      setTargetDraft(restoredTarget);
+    };
+    window.addEventListener("popstate", onHistoryNavigation);
+    return () => window.removeEventListener("popstate", onHistoryNavigation);
+  }, []);
 
   const actionOptions = withCurrentOption(baseActionOptions, action, "Action: ");
   const targetTypeOptions = withCurrentOption(baseTargetTypeOptions, targetType, "Target: ");
   const todayUtc = new Date().toISOString().slice(0, 10);
   const validCustom = validDate(draftDates.from) && validDate(draftDates.to) && draftDates.from <= draftDates.to && draftDates.to <= todayUtc;
 
-  function navigate(values: Record<string, string | null>) {
-    const params = new URLSearchParams(pageHref.split("?")[1] || "");
+  const navigate = useCallback((values: Record<string, string | null>, replace = false) => {
+    const params = new URLSearchParams(paramsRef.current);
     params.delete("cursor");
+
+    const currentAdmin = adminDraftRef.current.trim();
+    const currentTarget = targetDraftRef.current.trim();
+
+    if (!("adminEmail" in values)) {
+      if (currentAdmin) params.set("adminEmail", currentAdmin);
+      else params.delete("adminEmail");
+    }
+    if (!("targetEmail" in values)) {
+      if (currentTarget) params.set("targetEmail", currentTarget);
+      else params.delete("targetEmail");
+    }
+
     for (const [key, value] of Object.entries(values)) {
       if (value) params.set(key, value);
       else params.delete(key);
     }
+
+    const committedAdmin = (params.get("adminEmail") ?? "").trim();
+    const committedTarget = (params.get("targetEmail") ?? "").trim();
+    const committedSearchKey = committedAdmin + "\n" + committedTarget;
+    if (searchEditingRef.current && committedAdmin === currentAdmin && committedTarget === currentTarget) {
+      lastSubmittedSearchRef.current = committedSearchKey;
+    }
+
     const query = params.toString();
-    startTransition(() => router.push("/admin/logs" + (query ? "?" + query : ""), { scroll: false }));
-  }
+    paramsRef.current = new URLSearchParams(query);
+    const href = "/admin/logs" + (query ? "?" + query : "");
+    startTransition(() => {
+      if (replace) router.replace(href, { scroll: false });
+      else router.push(href, { scroll: false });
+    });
+  }, [router]);
 
   function changeRange(next: string) {
     if (next === "custom") {
@@ -118,81 +196,134 @@ export function AdminAuditLogsToolbar({
     navigate({ range: next, fromDate: null, toDate: null });
   }
 
+  useEffect(() => {
+    if (!searchEditingRef.current) return;
+    const nextAdmin = adminDraft.trim();
+    const nextTarget = targetDraft.trim();
+    const appliedAdmin = adminEmail.trim();
+    const appliedTarget = targetEmail.trim();
+    const searchKey = nextAdmin + "\n" + nextTarget;
+
+    if (nextAdmin === appliedAdmin && nextTarget === appliedTarget) {
+      if (lastSubmittedSearchRef.current !== null && lastSubmittedSearchRef.current !== searchKey) {
+        lastSubmittedSearchRef.current = searchKey;
+        navigate({
+          adminEmail: nextAdmin || null,
+          targetEmail: nextTarget || null,
+        }, true);
+        return;
+      }
+      searchEditingRef.current = false;
+      lastSubmittedSearchRef.current = null;
+      return;
+    }
+    if (lastSubmittedSearchRef.current === searchKey) {
+      navigate({
+        adminEmail: nextAdmin || null,
+        targetEmail: nextTarget || null,
+      }, true);
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      if (!searchEditingRef.current || lastSubmittedSearchRef.current === searchKey) return;
+      lastSubmittedSearchRef.current = searchKey;
+      navigate({
+        adminEmail: nextAdmin || null,
+        targetEmail: nextTarget || null,
+      }, true);
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, [adminDraft, targetDraft, adminEmail, targetEmail, pageHref, navigate]);
+
   function submitSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const nextAdmin = adminDraftRef.current.trim();
+    const nextTarget = targetDraftRef.current.trim();
+    const searchKey = nextAdmin + "\n" + nextTarget;
+    lastSubmittedSearchRef.current = searchKey;
     navigate({
-      adminEmail: adminDraft.trim() || null,
-      targetEmail: targetDraft.trim() || null,
-    });
+      adminEmail: nextAdmin || null,
+      targetEmail: nextTarget || null,
+    }, true);
   }
 
   return (
     <div className="border-b border-[#D8E1EC] py-3">
-      <div className="flex min-w-0 flex-wrap items-end justify-between gap-x-8 gap-y-2">
-        <div className="flex min-w-0 flex-wrap items-end gap-x-6 gap-y-2">
-          <AdminDirectorySelect
-            key={range + ":" + rangeSelectVersion}
-            name="range"
-            label="Date range"
-            value={range}
-            options={rangeOptions}
-            nativeExcludeValues={["custom"]}
-            plain
-            onValueChange={changeRange}
+      <div className="flex min-w-0 flex-col gap-3 lg:flex-row lg:items-center">
+        <form
+          onSubmit={submitSearch}
+          role="search"
+          aria-label="Search audit logs"
+          className="grid min-w-0 gap-3 md:grid-cols-2 lg:w-[520px] lg:flex-none"
+        >
+        <div className="relative min-w-0">
+          <Search size={17} aria-hidden="true" className="pointer-events-none absolute left-3.5 top-3.5 text-[#64748B]" />
+          <label className="sr-only" htmlFor="audit-admin-email-search">Search admin email</label>
+          <input
+            id="audit-admin-email-search"
+            type="search"
+            value={adminDraft}
+            onChange={event => {
+              adminDraftRef.current = event.target.value;
+              searchEditingRef.current = true;
+              setSearchEditing(true);
+              setAdminDraft(event.target.value);
+            }}
+            placeholder="Search admin email"
+            className="h-11 w-full min-w-0 rounded-lg border border-[#D8E1EC] bg-white pl-10 pr-3 text-[13px] text-[#020617] outline-none placeholder:text-[#94A3B8] focus:border-[#94A3B8] focus:ring-0"
           />
-          <AdminDirectorySelect
-            name="action"
-            label="Action"
-            value={action}
-            options={actionOptions}
-            plain
-            onValueChange={next => navigate({ action: next || null })}
-          />
-          <AdminDirectorySelect
-            name="targetType"
-            label="Target type"
-            value={targetType}
-            options={targetTypeOptions}
-            plain
-            onValueChange={next => navigate({ targetType: next || null })}
-          />
-          <Link
-            href="/admin/logs?range=7d"
-            className="inline-flex h-10 items-center text-[13px] font-medium text-[#475569] hover:text-[#020617] hover:underline"
-          >
-            Clear filters
-          </Link>
         </div>
-
-        <form onSubmit={submitSearch} className="flex min-w-0 flex-1 flex-wrap items-end justify-end gap-2 lg:max-w-[650px]">
-          <label className="min-w-[190px] flex-1 text-[11px] font-medium text-[#64748B]">
-            Admin email
-            <input
-              type="search"
-              value={adminDraft}
-              onChange={event => setAdminDraft(event.target.value)}
-              placeholder="Search admin email"
-              className="mt-1 h-10 w-full rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px] text-[#020617] outline-none placeholder:text-[#94A3B8] focus:border-[#94A3B8] focus:ring-0"
-            />
-          </label>
-          <label className="min-w-[190px] flex-1 text-[11px] font-medium text-[#64748B]">
-            Target email
-            <input
-              type="search"
-              value={targetDraft}
-              onChange={event => setTargetDraft(event.target.value)}
-              placeholder="Search target email"
-              className="mt-1 h-10 w-full rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px] text-[#020617] outline-none placeholder:text-[#94A3B8] focus:border-[#94A3B8] focus:ring-0"
-            />
-          </label>
-          <button
-            type="submit"
-            disabled={isPending}
-            className="h-10 rounded-lg bg-[#004BB8] px-4 text-[13px] font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            Apply filters
-          </button>
+        <div className="relative min-w-0">
+          <Search size={17} aria-hidden="true" className="pointer-events-none absolute left-3.5 top-3.5 text-[#64748B]" />
+          <label className="sr-only" htmlFor="audit-target-email-search">Search target email</label>
+          <input
+            id="audit-target-email-search"
+            type="search"
+            value={targetDraft}
+            onChange={event => {
+              targetDraftRef.current = event.target.value;
+              searchEditingRef.current = true;
+              setSearchEditing(true);
+              setTargetDraft(event.target.value);
+            }}
+            placeholder="Search target email"
+            className="h-11 w-full min-w-0 rounded-lg border border-[#D8E1EC] bg-white pl-10 pr-3 text-[13px] text-[#020617] outline-none placeholder:text-[#94A3B8] focus:border-[#94A3B8] focus:ring-0"
+          />
+        </div>
         </form>
+
+        <div className="flex min-w-0 flex-wrap items-end justify-end gap-x-4 gap-y-2 lg:ml-auto xl:flex-nowrap">
+        <AdminDirectorySelect
+          key={range + ":" + rangeSelectVersion}
+          name="range"
+          label="Date range"
+          value={range}
+          options={rangeOptions}
+          nativeExcludeValues={["custom"]}
+          plain
+          align="end"
+          onValueChange={changeRange}
+        />
+        <AdminDirectorySelect
+          name="action"
+          label="Action"
+          value={action}
+          options={actionOptions}
+          plain
+          align="end"
+          onValueChange={next => navigate({ action: next || null })}
+        />
+        <AdminDirectorySelect
+          name="targetType"
+          label="Target type"
+          value={targetType}
+          options={targetTypeOptions}
+          plain
+          align="end"
+          onValueChange={next => navigate({ targetType: next || null })}
+        />
+        </div>
       </div>
 
       {(customOpen || range === "custom") ? (

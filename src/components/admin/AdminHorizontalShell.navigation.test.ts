@@ -87,7 +87,7 @@ test("navigation keeps parent workspaces visible while child routes stay nested"
   assert.match(shell, /Official Kurioticket mark stays in the top-left header beside the title at every width/);
   const groups = getAdminHeaderGroups("ADMIN", true);
   const entries = groups.flatMap(group => group.links);
-  assert.deepEqual(entries.map(({ item }) => item.label), ["Overview", "Users", "Search Activity", "Trips", "Support", "Providers", "Homepage Fares", "Content", "System", "Settings"]);
+  assert.deepEqual(entries.map(({ item }) => item.label), ["Overview", "Users", "Search Activity", "Trips", "Support", "Providers", "Content", "System", "Settings"]);
   const searches = entries.find(({ item }) => item.href === "/admin/searches/activity");
   const providers = entries.find(({ item }) => item.href === "/admin/providers");
   assert.deepEqual(searches?.children.map((item) => item.label), []);
@@ -97,6 +97,12 @@ test("navigation keeps parent workspaces visible while child routes stay nested"
   assert.deepEqual(getAdminHeaderGroups("SUPPORT"), []);
 });
 
+
+test("Settings uses the same full-white workspace surface as other flat admin workspaces", () => {
+  assert.match(shell, /const settingsWorkspace = pathname === "\/admin\/settings" \|\| pathname\.startsWith\("\/admin\/settings\/"\);/);
+  assert.match(shell, /auditLogsWorkspace \|\| emailDeliveryWorkspace \|\| settingsWorkspace \|\| usersDirectory/);
+  assert.match(shell, /whiteWorkspace \? "bg-white" : "bg-\[#f1f5fb\]"/);
+});
 
 test("navbar search opens the dedicated global-search workspace", () => {
   assert.equal(jsxOpening(shell, 'AdminWorkspaceSearchProvider').length, 1);

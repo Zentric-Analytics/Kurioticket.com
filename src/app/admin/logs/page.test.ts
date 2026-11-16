@@ -16,27 +16,77 @@ test("Audit Logs uses the compact Providers-style white workspace", () => {
   assert.ok(page.includes("text-[12px] font-medium uppercase text-[#475569]"));
   assert.ok(page.includes("text-[13px] font-medium text-[#020617]"));
   assert.doesNotMatch(page, /AdminDataTable|AdminFilterBar|AdminSectionCard|rounded-xl border border-slate-200 bg-white/);
+  assert.doesNotMatch(page, /Security-sensitive admin and system actions/);
+  assert.doesNotMatch(page, /newest records on this page|rangeLabel\(/);
   assert.ok(shell.includes("auditLogsWorkspace"));
 });
 
-test("Audit Logs presents readable actions while retaining technical audit values", () => {
+test("Audit Logs keeps the main rows readable and moves technical audit values into expandable details", () => {
   assert.ok(page.includes('CMS_CONTENT_PUBLISHED: "CMS content published"'));
   assert.ok(page.includes('ADMIN_ALERT_CMS_STATE: "CMS alert state changed"'));
   assert.ok(page.includes('PROVIDER_RETESTED: "Provider retested"'));
   assert.ok(page.includes("actionLabel(log.action)"));
-  assert.ok(page.includes("title={log.action}>{log.action}</code>"));
   assert.ok(page.includes("identifierLabel(log.targetType)"));
-  assert.ok(page.includes("title={log.targetId || undefined}"));
+  assert.equal(page.includes('title={log.action}>{log.action}</code>'), false);
+  assert.equal(page.includes('title={log.targetId || undefined}'), false);
+  assert.ok(page.includes('<AuditTechnicalDetail label="Admin ID" value={log.adminUserId || "System event"} />'));
+  assert.ok(page.includes('<AuditTechnicalDetail label="Action code" value={log.action} />'));
+  assert.ok(page.includes('<AuditTechnicalDetail label="Target ID" value={log.targetId || "Not provided"} />'));
 });
 
-test("Target email is filterable but not a permanent table column", () => {
-  assert.ok(toolbar.includes("Target email"));
+test("Audit Logs gives the Admin column priority and keeps desktop emails on one line", () => {
+  assert.ok(page.includes('minmax(150px,0.72fr)_minmax(360px,1.55fr)_minmax(240px,1.1fr)_minmax(220px,0.95fr)'));
+  assert.equal(page.includes('minmax(210px,1.15fr)'), false);
+  assert.equal(page.includes('minmax(240px,1.35fr)'), false);
+  assert.ok(page.includes('min-w-[1080px]'));
+  assert.ok(page.includes('md:truncate md:whitespace-nowrap'));
+  assert.ok(page.includes('title={log.adminEmail}'));
+});
+
+test("Every audit row is expandable while target email stays out of the permanent columns", () => {
+  assert.ok(toolbar.includes("Search target email"));
   assert.ok(toolbar.includes('placeholder="Search target email"'));
   assert.equal(page.includes("<span>Target email</span>"), false);
-  assert.ok(page.includes("if (!log.targetEmail)"));
+  assert.equal(page.includes(">Details</span>"), false);
+  assert.equal(page.includes("View ›"), false);
+  assert.equal(page.includes("Hide ‹"), false);
+  assert.equal(page.includes("if (!log.targetEmail)"), false);
   assert.ok(page.includes("<details data-audit-row={log.id}"));
-  assert.ok(page.includes("Target email</p>"));
-  assert.ok(page.includes("{log.targetEmail}"));
+  assert.ok(page.includes('title="View audit details"'));
+  assert.ok(page.includes("cursor-pointer"));
+  assert.ok(page.includes("hover:bg-[#F8FAFC]"));
+  assert.ok(page.includes('<AuditTechnicalDetail label="Target email" value={log.targetEmail} />'));
+});
+
+test("Audit Logs keeps search and filters on one compact desktop row at 100% zoom widths", () => {
+  assert.ok(toolbar.includes("lg:flex-row lg:items-center"));
+  assert.ok(toolbar.includes("lg:w-[520px] lg:flex-none"));
+  assert.ok(toolbar.includes("gap-x-4"));
+  assert.ok(toolbar.includes("lg:ml-auto xl:flex-nowrap"));
+  assert.equal(toolbar.includes("lg:flex-nowrap"), false);
+  assert.equal(toolbar.includes("xl:flex-row"), false);
+});
+
+test("Audit Logs search mirrors the Users auto-update pattern without an apply button", () => {
+  assert.ok(toolbar.includes('role="search"'));
+  assert.ok(toolbar.includes('aria-label="Search audit logs"'));
+  assert.ok(toolbar.includes('placeholder="Search admin email"'));
+  assert.ok(toolbar.includes('placeholder="Search target email"'));
+  assert.ok(toolbar.includes("window.setTimeout"));
+  assert.ok(toolbar.includes("}, 300);"));
+  assert.ok(toolbar.includes("router.replace(href, { scroll: false })"));
+  assert.ok(toolbar.includes("adminDraftRef"));
+  assert.ok(toolbar.includes("targetDraftRef"));
+  assert.ok(toolbar.includes("paramsRef"));
+  assert.ok(toolbar.includes("new URLSearchParams(paramsRef.current)"));
+  assert.ok(toolbar.includes("paramsRef.current = new URLSearchParams(query)"));
+  assert.match(toolbar, /paramsRef\.current = new URLSearchParams\(pageHref\.split\("\?"\)\[1\] \|\| ""\);\s*\}, \[pageHref\]\);/);
+  assert.ok(toolbar.includes('window.addEventListener("popstate", onHistoryNavigation)'));
+  assert.ok(toolbar.includes("lastSubmittedSearchRef.current = committedSearchKey"));
+  assert.ok(toolbar.includes("lastSubmittedSearchRef.current !== null && lastSubmittedSearchRef.current !== searchKey"));
+  assert.ok(toolbar.includes("[adminDraft, targetDraft, adminEmail, targetEmail, pageHref, navigate]"));
+  assert.ok(toolbar.includes("if (lastSubmittedSearchRef.current === searchKey)"));
+  assert.doesNotMatch(toolbar, /Apply filters|Clear filters/);
 });
 
 test("Audit Logs filters preserve the safe reader contract and user-page custom-date rules", () => {
@@ -56,8 +106,7 @@ test("Audit Logs filters preserve the safe reader contract and user-page custom-
   assert.ok(toolbar.includes('aria-label="Custom end date UTC"'));
   assert.ok(toolbar.includes("Apply dates"));
   assert.ok(toolbar.includes("disabled={!validCustom || isPending}"));
-  assert.ok(toolbar.includes("Apply filters"));
-  assert.ok(toolbar.includes('href="/admin/logs?range=7d"'));
+  assert.doesNotMatch(toolbar, /Apply filters|Clear filters/);
   assert.ok(page.includes('params.set("limit", "100")'));
   assert.ok(page.includes('params.has("cursor")'));
   assert.ok(page.includes('range === "90d"'));

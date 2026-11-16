@@ -256,6 +256,7 @@ model User {
   visitors                 Visitor[]                     @relation("VisitorCurrentUser")
   visitorIdentityLinks     VisitorIdentityLink[]
   notifications            Notification[]
+  adminNotificationPreference AdminNotificationPreference?
   profile                  UserProfile?
   securitySettings         UserSecuritySettings?
   customizationPreferences UserCustomizationPreferences?
@@ -823,6 +824,15 @@ model AdminAuditLog {
   @@index([targetType, targetId])
   @@index([targetEmail])
   @@index([createdAt])
+}
+
+model AdminNotificationPreference {
+  id                       String   @id @default(cuid())
+  adminUserId              String   @unique
+  showAcknowledgedWarnings Boolean  @default(true)
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+  user                     User     @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
 }
 
 model Notification {

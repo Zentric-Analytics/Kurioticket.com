@@ -3,7 +3,7 @@ import test from "node:test";
 
 import { adminNavigation, adminNavigationGroups, getAdminNavForRole, getAdminHeaderGroups, isAdminNavItemActive } from "@/lib/adminNavigation";
 
-const originalLabels = ["Overview", "Users", "Providers", "Search Activity", "Trips", "Trip monitoring", "Content", "Homepage Fares", "Hotels", "Cars", "Support", "Deletion Requests", "Audit Logs", "System", "CMS Health", "Email Delivery", "Notifications & Alerts", "Settings"];
+const originalLabels = ["Overview", "Users", "Providers", "Search Activity", "Trips", "Trip monitoring", "Content", "Homepage Fares", "Hotels", "Cars", "Support", "Deletion Requests", "Audit Logs", "System", "CMS Health", "Email Delivery", "Settings"];
 
 test("admin navigation restores the flat module order without a duplicate Flights workspace", () => {
   assert.deepEqual(adminNavigation.map((item) => item.label), originalLabels);
@@ -14,7 +14,7 @@ test("admin navigation restores the flat module order without a duplicate Flight
 test("admin navigation exposes parent workspaces in the header", () => {
   assert.deepEqual(adminNavigationGroups, [
     { label: "Operations", hrefs: ["/admin", "/admin/users", "/admin/searches/activity", "/admin/confirmed-trips", "/admin/support"] },
-    { label: "Provider readiness", hrefs: ["/admin/providers", "/admin/homepage-fares"] },
+    { label: "Provider readiness", hrefs: ["/admin/providers"] },
     { label: "Website content", hrefs: ["/admin/content"] },
     { label: "System & security", hrefs: ["/admin/system", "/admin/settings"] },
   ]);
@@ -57,7 +57,7 @@ test("horizontal admin navigation keeps child routes under parent workspaces", (
   assert.deepEqual(trips?.children.map((item) => item.href), ["/admin/confirmed-trips/monitoring"]);
   assert.deepEqual(support?.children.map((item) => item.href), ["/admin/account-deletions"]);
   assert.deepEqual(system?.children.map((item) => item.href), []);
-  assert.deepEqual(homepageFares?.children.map((item) => item.href), []);
+  assert.equal(homepageFares, undefined, "Homepage Fares must not appear in the admin header");
   assert.deepEqual(settings?.children.map((item) => item.href), []);
   assert.equal(entries.some(({ item }) => item.href === "/admin/flights"), false);
   assert.equal(entries.some(({ item }) => item.href === "/admin/redirects"), false);
@@ -75,14 +75,13 @@ test("Audit Logs, CMS Health and Email Delivery remain reachable without System 
   assert.equal(getAdminNavForRole("ADMIN").find(item => item.href === "/admin/logs")?.label, "Audit Logs");
 });
 
-test("global Alerts remains discoverable without belonging to a System tab or highlighting System", () => {
-  const alerts = getAdminNavForRole("ADMIN").find(item => item.href === "/admin/notifications");
-  assert.ok(alerts);
-  assert.equal(alerts.parentHref, undefined);
-  assert.deepEqual(alerts.roles, ["ADMIN"]);
+test("Notifications has one Settings sidebar owner rather than a duplicate global nav destination", () => {
+  assert.equal(getAdminNavForRole("ADMIN").some(item => item.href === "/admin/notifications"), false);
+  assert.equal(getAdminNavForRole("ADMIN").some(item => item.href === "/admin/settings/notifications"), false);
   const system = getAdminHeaderGroups("ADMIN").flatMap(group => group.links).find(entry => entry.item.href === "/admin/system")!;
-  assert.equal(isAdminNavItemActive(system.item.href, "/admin/notifications"), false);
-  assert.equal(system.children.some(child => isAdminNavItemActive(child.href, "/admin/notifications")), false);
+  assert.equal(isAdminNavItemActive(system.item.href, "/admin/settings/notifications"), false);
+  assert.equal(system.children.some(child => isAdminNavItemActive(child.href, "/admin/settings/notifications")), false);
+  assert.equal(isAdminNavItemActive("/admin/settings", "/admin/settings/notifications"), true);
 });
 
 test("retired operational report routes remain available without nested menu entries", () => {
@@ -93,11 +92,12 @@ test("retired operational report routes remain available without nested menu ent
   }
 });
 
-test("Homepage Fares is a top-level readiness workspace and does not activate Providers", () => {
+test("Homepage Fares remains a direct admin route without appearing in the navbar or activating Providers", () => {
   const homepageFares = getAdminNavForRole("ADMIN").find((item) => item.href === "/admin/homepage-fares");
   assert.ok(homepageFares);
   assert.equal(homepageFares.label, "Homepage Fares");
   assert.equal(homepageFares.parentHref, undefined);
+  assert.equal(getAdminHeaderGroups("ADMIN").some(group => group.links.some(entry => entry.item.href === "/admin/homepage-fares")), false);
 
   const providers = getAdminHeaderGroups("ADMIN")
     .flatMap((group) => group.links)

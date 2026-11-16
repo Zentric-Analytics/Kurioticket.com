@@ -6,7 +6,9 @@ import {
   getCmsAirportSuggestions,
   getCmsCitySuggestions,
   getCmsCountrySuggestions,
+  getCmsHotelDestinationSuggestions,
 } from "@/lib/adminCmsLocationOptions";
+import { sortHomepageCmsDirectoryItems } from "@/lib/adminHomepageCms";
 
 const editor = readFileSync("src/components/admin/HomepageCmsEditor.tsx", "utf8");
 const combobox = readFileSync("src/components/admin/CmsLocationCombobox.tsx", "utf8");
@@ -35,6 +37,16 @@ test("airport suggestions use existing shared IATA airport data with explicit ma
   assert.ok(getCmsAirportSuggestions("a").every((option) => !option.manual));
 });
 
+test("homepage flight airport suggestions can be limited to supported route codes", () => {
+  const supported = getCmsAirportSuggestions("", 8, ["LOS", "EWR"], false);
+  assert.ok(supported.every((option) => ["LOS", "EWR"].includes(option.value)));
+  assert.ok(supported.some((option) => option.value === "EWR"));
+  assert.ok(supported.every((option) => !option.manual));
+
+  const unknown = getCmsAirportSuggestions("ZZZ", 8, ["LOS", "EWR"], false);
+  assert.deepEqual(unknown, []);
+});
+
 test("homepage destinations use searchable selectors without restructuring the editor", () => {
   assert.match(editor, /<CmsLocationCombobox label="City" kind="city"/);
   assert.match(editor, /<CmsLocationCombobox label="Country" kind="country"/);
@@ -43,9 +55,14 @@ test("homepage destinations use searchable selectors without restructuring the e
   assert.match(editor, /onSelect=\{selectCountry\}/);
   assert.match(editor, /onSelect=\{selectCity\}/);
   assert.match(editor, /grid max-w-\[512px\] gap-4 sm:grid-cols-3/);
-  assert.match(editor, /<CmsExpandingTextField label="Image" value=\{fields\.image/);
+  assert.match(editor, /<CmsImageUploadField value=\{fields\.image/);
   assert.match(editor, /<CmsExpandingTextField label="Image alt text" value=\{fields\.imageAlt/);
   assert.match(editor, /<CmsEditorActions/);
+  assert.match(editor, /supportedFlightRoutes/);
+  assert.match(editor, /airportCodes=\{originAirportCodes\}/);
+  assert.match(editor, /airportCodes=\{destinationAirportCodes\}/);
+  assert.match(editor, /allowManualAirportCode=\{false\}/);
+  assert.match(editor, /Choose a destination supported from/);
   assert.match(editor, /focus:border-\[#004BB8\]\/40/);
 });
 
@@ -56,6 +73,9 @@ test("combobox supports keyboard selection and never saves or publishes automati
   assert.match(combobox, /event\.key === "ArrowUp"/);
   assert.match(combobox, /event\.key === "Escape"/);
   assert.match(combobox, /event\.key === "Enter"/);
+  assert.match(combobox, /browseAllHotels/);
+  assert.match(combobox, /if \(kind !== "hotel" \|\| !onSelect\) onChange\(option\.value\)/);
+  assert.match(combobox, /setBrowseAllHotels\(kind === "hotel"\)/);
   assert.doesNotMatch(combobox, /fetch\(|publish\(|saveDraft\(/);
   assert.match(combobox, /onPointerDown=\{toggleOnPointerDown\}/);
   assert.match(combobox, /if \(open\) dismiss\(\)/);
@@ -64,7 +84,26 @@ test("combobox supports keyboard selection and never saves or publishes automati
   assert.match(combobox, /preventScroll: true/);
   assert.match(combobox, /document\.addEventListener\("scroll", dismissOnScroll, true\)/);
   assert.match(combobox, /scrollTop/);
-  assert.doesNotMatch(combobox, /scrollIntoView/);
+  // Only opening a field near the bottom may make room for its downward list.
+  assert.match(combobox, /anchor\.scrollIntoView\(\{ block: "nearest", inline: "nearest", behavior: "instant" \}\)/);
+  const keyboardScroll = combobox.slice(combobox.indexOf('if (!open || activeIndex < 0)'), combobox.indexOf('function onKeyDown'));
+  assert.doesNotMatch(keyboardScroll, /scrollIntoView/);
+});
+
+test("CMS search fields keep a typing cursor while the dropdown arrow is an accessible pointer control", () => {
+  assert.match(combobox, /className=\{inputClass \+ " cursor-text" \+ \(open \? " rounded-b-none" : ""\)\}/);
+  assert.match(combobox, /type="button"\s+disabled=\{disabled\}\s+aria-label=\{\(open \? "Close" : "Open"\) \+ " " \+ label \+ " suggestions"\}/);
+  assert.match(combobox, /aria-haspopup="listbox"/);
+  assert.match(combobox, /aria-expanded=\{open\}/);
+  assert.match(combobox, /className="absolute inset-y-0 right-0 inline-flex w-9 cursor-pointer/);
+  assert.match(combobox, /onPointerDown=\{\(event\) => event\.preventDefault\(\)\}/);
+  assert.match(combobox, /onClick=\{\(\) => \{\s*if \(open\) \{\s*dismiss\(\);\s*return;/);
+  assert.match(combobox, /inputRef\.current\?\.focus\(\{ preventScroll: true \}\);\s*show\(\);/);
+  // Preserve tapping the input to toggle, typing, keyboard suggestions and selecting options.
+  assert.match(combobox, /onPointerDown=\{toggleOnPointerDown\}/);
+  assert.match(combobox, /onChange=\{\(event\) => \{/);
+  assert.match(combobox, /event\.key === "ArrowDown"/);
+  assert.match(combobox, /event\.key === "Enter"/);
 });
 
 test("visual preview shows the unsaved CMS draft, route, image and publication state", () => {
@@ -92,4 +131,102 @@ test("destination image URL and alt text fields wrap while preserving single-str
   assert.match(editor, /grid max-w-\[512px\] gap-4 sm:grid-cols-3 sm:items-start/);
   assert.match(editor, /<span className="block min-h-5 text-\[13px\] font-medium leading-5/);
   assert.match(combobox, /<label className="block min-h-5 whitespace-nowrap text-\[13px\] font-medium leading-5/);
+});
+
+
+test("canonical hotel destination search uses the real ID and never substitutes the label", () => {
+  const catalog = [
+    { canonicalId: "hotel:london", label: "London · United Kingdom", name: "London", country: "United Kingdom", countryCode: "GB", kind: "city", searchValue: "London" },
+    { canonicalId: "hotel:paris", label: "Paris · France", name: "Paris", country: "France", countryCode: "FR", kind: "city", searchValue: "Paris" },
+  ];
+  const suggestions = getCmsHotelDestinationSuggestions(catalog, "Paris");
+  assert.deepEqual(suggestions.map((option) => option.value), ["hotel:paris"]);
+  assert.equal(suggestions[0].title, "Paris · France");
+  assert.deepEqual(getCmsHotelDestinationSuggestions(catalog, "nonsense"), []);
+});
+
+test("flight routes keep paired city and IATA fields with the same responsive grid", () => {
+  assert.match(editor, /section === "flight-routes" \? \(/);
+  assert.match(editor, /<CmsLocationCombobox label="Origin city" kind="city"/);
+  assert.match(editor, /<CmsLocationCombobox label="Origin IATA" kind="airport"/);
+  assert.match(editor, /<CmsLocationCombobox label="Destination city" kind="city"/);
+  assert.match(editor, /<CmsLocationCombobox label="Destination IATA" kind="airport"/);
+  assert.match(editor, /grid max-w-\[496px\] gap-4 sm:grid-cols-\[minmax\(0,1fr\)_160px\] sm:items-start/);
+  assert.match(editor, /<CmsImageUploadField value=\{fields.image/);
+  assert.match(editor, /<CmsExpandingTextField label="Image alt text" value=\{fields.imageAlt/);
+  assert.match(editor, /<AdminTextarea className=\{\`\$\{editorControlClass\} h-auto min-h-24\`\}/);
+});
+
+test("hotel destinations use searchable canonical selection and preserve type and country code", () => {
+  assert.match(editor, /<CmsLocationCombobox[\s\S]*?label="Canonical hotel destination"[\s\S]*?kind="hotel"/);
+  assert.match(editor, /selectedValue=\{fields.canonicalId \?\? ""\}/);
+  assert.match(editor, /hotelOptions=\{availableHotelOptions\}/);
+  assert.match(editor, /onSelect=\{\(option\) => applyHotelOption\(option.value\)\}/);
+  assert.match(editor, /setField\("canonicalId", ""\)/);
+  assert.match(editor, /<CmsLocationCombobox label="Country" kind="country"/);
+  assert.match(editor, /<Field label="Kind" className="max-w-\[160px\]">/);
+  assert.match(editor, /"airport-area", "custom"/);
+  assert.match(editor, /<CmsImageUploadField optional value=\{fields.image/);
+  assert.match(editor, /<CmsExpandingTextField label="Image alt text \(optional\)" value=\{fields.imageAlt/);
+  assert.match(editor, /canonicalId: fields.canonicalId\?\.trim\(\)/);
+});
+
+test("flight and hotel previews match the visual, non-sticky homepage preview", () => {
+  const visual = readFileSync("src/components/admin/CmsRouteHotelDraftPreview.tsx", "utf8");
+  assert.match(editor, /<CmsRouteHotelDraftPreview/);
+  assert.match(editor, /payload=\{currentPayload\}/);
+  assert.match(editor, /publishedVersion=\{item\?\.publishedVersion\}/);
+  assert.match(visual, /<aside className="h-fit min-w-0">/);
+  assert.doesNotMatch(visual, /lg:sticky|lg:top-24/);
+  assert.match(visual, /<PreviewImage key=\{imageUrl \?\? "no-image"\}/);
+  assert.match(visual, /payload.routeNote/);
+  assert.match(visual, /payload.searchValue/);
+  assert.match(visual, /unsaved/);
+  assert.match(visual, /Saving a draft does not publish it/);
+});
+
+test("hotel CMS canonical search protects the mapped destination and uses visible image overrides", () => {
+  const backend = readFileSync("src/services/cmsContentService.ts", "utf8");
+  const helper = readFileSync("src/lib/cmsHotelIntegrity.ts", "utf8");
+  const api = readFileSync("src/app/api/content/homepage/route.ts", "utf8");
+  const listing = readFileSync("src/app/admin/content/homepage/[section]/page.tsx", "utf8");
+
+  for (const contract of [
+    "getCmsHotelMetadataMismatch",
+    "assertUniqueHotelCanonicalId",
+    "assertHotelIdentityNotChanged",
+    "assertHotelNotUsedByPublishedHomepage",
+    "assertPublishedHomepageHasHotel",
+  ]) assert.match(backend, new RegExp(contract));
+
+  assert.match(helper, /countryCode/);
+  assert.match(helper, /searchValue/);
+  assert.match(api, /hotelDestination\.image \?/);
+  assert.match(api, /image: hotelDestination\.image/);
+  assert.match(api, /hotelDestination\.imageAlt\?\.trim\(\) \|\| destination\.imageAlt/);
+  assert.match(listing, /items: sortHomepageCmsDirectoryItems\(listing\.items\)/);
+  assert.deepEqual(sortHomepageCmsDirectoryItems([
+    { market: "GLOBAL", sortOrder: 4, key: "hotel-london" },
+    { market: "GLOBAL", sortOrder: 1, key: "hotel-new-york" },
+  ]).map((item) => item.key), ["hotel-new-york", "hotel-london"]);
+
+  assert.match(editor, /item\?\.publishedVersion != null/);
+  assert.match(editor, /selectedHotelIdRef = useRef\(text\(saved\.canonicalId\)\)/);
+  assert.match(editor, /previousCanonicalId && previousCanonicalId !== option\.canonicalId \? \{ image: "", imageAlt: "" \}/);
+  assert.match(editor, /setConflict\(staleVersion\)/);
+  assert.match(editor, /: serverError\)/);
+  assert.match(editor, /changed since it was opened\|changed concurrently\|refresh before/);
+  assert.match(editor, /create a new draft to manage a different destination/);
+  assert.match(editor, /Directory order/);
+  assert.match(editor, /Existing destinations cannot be duplicated/);
+  assert.match(editor, /Country, country code, type and search value come from the canonical catalogue/);
+});
+
+test("CMS revision restore surfaces actionable canonical conflicts instead of prescribing a stale reload", () => {
+  const restore = readFileSync("src/components/admin/CmsRevisionRestoreButton.tsx", "utf8");
+  assert.match(restore, /const serverError = typeof body\.error === "string"/);
+  assert.match(restore, /const staleVersion = response\.status === 409/);
+  assert.match(restore, /changed since it was opened\|changed concurrently\|refresh before/);
+  assert.match(restore, /: serverError\)/);
+  assert.doesNotMatch(restore, /response\.status === 409\s*\? "This content changed in another session/);
 });

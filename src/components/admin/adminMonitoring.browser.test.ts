@@ -14,7 +14,7 @@ test("Global Alerts acknowledgement sends the exact scoped signal, preserves fai
     window.fetch=async (url,options)=>{window.fixtureRequests.push({url,...options});return {ok:window.fixtureOk,json:async()=>({error:'Signal changed. Refresh before acknowledging.'})};};
     createRoot(document.getElementById('root')).render(React.createElement(AdminAlertAcknowledgeButton,{alertKey:'fixture-provider-flight',signalToken:'fixture-signal-only',acknowledged:false}));`;
   await withComponentBrowser(bundle(), setup, async page => {
-    await page.getByRole("button", { name: "Acknowledge", exact: true }).click();
+    await page.getByRole("button", { name: "Mark as read", exact: true }).click();
     await page.getByText("Signal changed. Refresh before acknowledging.", { exact: true }).waitFor();
     const first = await page.evaluate(() => ({ requests: (window as unknown as { fixtureRequests: Array<{url: string; method: string; credentials: string; body: string}> }).fixtureRequests, refreshes: (window as unknown as { fixtureRefreshes: number }).fixtureRefreshes }));
     assert.equal(first.requests.length, 1);
@@ -24,7 +24,7 @@ test("Global Alerts acknowledgement sends the exact scoped signal, preserves fai
     assert.deepEqual(JSON.parse(first.requests[0].body), { alertKey: "fixture-provider-flight", signalToken: "fixture-signal-only" });
     assert.equal(first.refreshes, 0);
     await page.evaluate(() => { (window as unknown as { fixtureOk: boolean }).fixtureOk = true; });
-    await page.getByRole("button", { name: "Acknowledge", exact: true }).click();
+    await page.getByRole("button", { name: "Mark as read", exact: true }).click();
     await page.waitForFunction(() => (window as unknown as { fixtureRefreshes: number }).fixtureRefreshes === 1);
     assert.equal(await page.evaluate(() => (window as unknown as { fixtureEvents: number }).fixtureEvents), 1);
     assert.equal(await page.getByText("Signal changed. Refresh before acknowledging.", { exact: true }).count(), 0);
@@ -36,7 +36,7 @@ test("acknowledged alerts expose no repeat mutation control", async () => {
     window.fetch=()=>{throw Error('Unexpected acknowledged mutation');};
     createRoot(document.getElementById('root')).render(React.createElement(AdminAlertAcknowledgeButton,{alertKey:'fixture-only',signalToken:'fixture-only',acknowledged:true}));`;
   await withComponentBrowser(bundle(), setup, async page => {
-    await page.getByText("Acknowledged for 24 hours", { exact: true }).waitFor();
+    await page.getByText("Marked as read for 24 hours", { exact: true }).waitFor();
     assert.equal(await page.getByRole("button").count(), 0);
   });
 });
@@ -63,7 +63,7 @@ test("compact alert acknowledgement executes with its real scoped module stylesh
     window.fetch=()=>{throw Error('No automatic acknowledgement');};
     createRoot(document.getElementById('root')).render(React.createElement(AdminAlertAcknowledgeButton,{alertKey:'fixture',signalToken:'signal',acknowledged:false,compact:true}));`;
   await withComponentBrowser(bundle(), setup, async page => {
-    const button = page.getByRole("button", { name: "Mark as seen", exact: true });
+    const button = page.getByRole("button", { name: "Mark as read", exact: true });
     assert.equal(await button.evaluate(node => getComputedStyle(node).minHeight), "34px");
     assert.equal(await button.evaluate(node => getComputedStyle(node).fontSize), "13px");
     assert.equal(await button.isDisabled(), false);

@@ -2,10 +2,11 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { homepageCmsListNavigation, faqCmsListNavigation, contentEditorHref } from "@/lib/adminContentNavigation";
+import { sortHomepageCmsDirectoryItems } from "@/lib/adminHomepageCms";
 
 const contentPage = readFileSync("src/app/admin/content/page.tsx", "utf8");
 const systemPage = readFileSync("src/app/admin/system/page.tsx", "utf8");
-const settingsPage = readFileSync("src/app/admin/settings/page.tsx", "utf8");
+const settingsPage = readFileSync("src/components/admin/SettingsFeatureSection.tsx", "utf8");
 const homepageFarePage = readFileSync("src/app/admin/homepage-fares/page.tsx", "utf8");
 const refreshCard = readFileSync("src/components/admin/HomepageFaresRefreshCard.tsx", "utf8");
 const statusApi = readFileSync("src/app/api/admin/homepage-fares/status/route.ts", "utf8");
@@ -50,20 +51,20 @@ test("public content management exposes homepage and FAQ CMS areas while fare op
   assert.doesNotMatch(contentPage, /Upload image|Approve content/i);
 });
 
-test("homepage fare operations stay operational while linking to their content source", () => {
+test("homepage fare operations remain separate from CMS and remove duplicate page-header shortcuts", () => {
+  const nav = readFileSync("src/lib/adminNavigation.ts", "utf8");
   assert.doesNotMatch(contentPage, /HomepageFaresRefreshCard/);
   assert.doesNotMatch(systemPage, /HomepageFaresRefreshCard/);
   assert.doesNotMatch(settingsPage, /HomepageFaresRefreshCard/);
-  assert.match(settingsPage, /Feature controls/);
+  assert.match(settingsPage, /SettingsFeatureSection/);
   assert.doesNotMatch(settingsPage, /Homepage Fare Operations|\/admin\/homepage-fares/);
   assert.match(homepageFarePage, /title="Homepage Fare Operations"/);
   assert.match(homepageFarePage, /HomepageFaresRefreshCard/);
-  assert.match(homepageFarePage, /href="\/admin\/content\/homepage"/);
-  assert.match(homepageFarePage, />\s*Homepage content\s*<\/Link>/);
-  assert.match(homepageFarePage, /href="\/admin\/providers\?product=flights"/);
-  assert.match(homepageFarePage, />\s*Flight providers\s*<\/Link>/);
-  assert.doesNotMatch(homepageFarePage, /href="\/admin\/flights"/);
-  assert.doesNotMatch(homepageFarePage, /href="\/admin\/settings"/);
+  assert.doesNotMatch(homepageFarePage, /href="\/admin\/content\/homepage"|href="\/admin\/providers\?product=flights"|<Link/);
+  assert.match(nav, /href: "\/admin\/content", label: "Content"/);
+  assert.match(nav, /href: "\/admin\/providers", label: "Providers"/);
+  assert.match(nav, /href: "\/admin\/homepage-fares", label: "Homepage Fares"/);
+  assert.doesNotMatch(homepageFarePage, /href="\/admin\/flights"|href="\/admin\/settings"/);
   assert.doesNotMatch(contentPage, /\/admin\/homepage-fares/);
 });
 
@@ -72,7 +73,10 @@ test("homepage fare refresh component keeps existing client APIs, scopes, and st
   assert.ok(refreshCard.includes('fetch("/api/admin/homepage-fares/refresh"'));
   assert.match(refreshCard, /Loading homepage fare snapshot status/);
   assert.match(refreshCard, /Could not refresh homepage fares/);
-  assert.match(refreshCard, /Refresh homepage fares/);
+  assert.match(refreshCard, /Run fare refresh/);
+  assert.match(refreshCard, /Check latest status/);
+  assert.match(refreshCard, /onClick=\{onRefresh\}/);
+  assert.match(refreshCard, /onClick=\{onReload\}/);
 });
 
 test("homepage fare admin APIs preserve authorization, audit logging, and refresh scope behavior", () => {
@@ -211,9 +215,11 @@ test("New CMS drafts require a valid market but preserve chosen filtered market 
   assert.match(newPage, /: "ALL"/);
   assert.match(newPage, /initialMarket=\{market === "ALL" \? "" : market\}/);
   assert.match(newPage, /getCmsContentMarketOverview\(config\.type, homepageCmsMarkets, homepageCmsLocale\)/);
-  assert.match(editor, /<option value="">Select market<\/option>/);
+  assert.match(editor, /\{ value: "", label: "Select market" \}/);
   assert.match(editor, /validMarket = section === "hotel-destinations" \|\| markets\.includes\(market\)/);
-  assert.match(editor, /validDraft = validMarket && validateClientDraft/);
+  assert.match(editor, /if \(!validMarket\) clientErrors.market/);
+  assert.match(editor, /validateCmsEditor\(sectionType\[section\], currentPayload, sortOrder\)/);
+  assert.match(editor, /&& routeValidation\.valid;/);
   assert.match(service, /Choose a supported market before creating this content/);
   assert.match(editor, /<CmsEditorActions/);
   assert.match(editor, /validDraft=\{validDraft\}/);
@@ -344,7 +350,10 @@ test("homepage CMS controls share the public personal-details border and focus t
   const profile = readFileSync("src/components/dashboard/DashboardGrid.tsx", "utf8");
   const editor = readFileSync("src/components/admin/HomepageCmsEditor.tsx", "utf8");
   const control = editor.match(/const editorControlClass = "([^"]+)";/)?.[1];
+  const selector = readFileSync("src/components/admin/AdminDirectorySelect.tsx", "utf8");
+  const marketControl = selector.match(/const fieldClass = "([^"]+)";/)?.[1];
   assert.ok(control, "The homepage CMS should keep one shared control style");
+  assert.ok(marketControl, "The custom CMS market field should retain the same control style");
 
   for (const token of [
     "border border-slate-300",
@@ -355,14 +364,173 @@ test("homepage CMS controls share the public personal-details border and focus t
   ]) {
     assert.ok(profile.includes(token), `Public personal details must contain ${token}`);
     assert.ok(control.includes(token), `Homepage CMS must match the public treatment: ${token}`);
+    assert.ok(marketControl.includes(token), `The CMS market field must match the public treatment: ${token}`);
   }
 
   assert.doesNotMatch(control, /border-2|border-\[#94A3B8\]|focus:border-\[#6D28D9\]|focus:ring-\[#EDE9FE\]/);
   assert.match(editor, /<AdminInput className=\{editorControlClass\}/);
-  assert.match(editor, /<AdminSelect className=\{editorControlClass\}/);
+  assert.match(editor, /<AdminDirectorySelect\s+label="Market"/);
+  assert.match(editor, /\s+field\s+attached\s+required\s+disabled=\{pending \|\| archived\}/);
   assert.match(editor, /<AdminTextarea className=\{\`\$\{editorControlClass\}/);
   // Existing compact widths and grouped fields must not be rearranged.
   assert.match(editor, /grid max-w-\[512px\] gap-4 sm:grid-cols-3/);
   assert.match(editor, /className="max-w-\[320px\]"/);
   assert.match(editor, /lg:grid-cols-\[minmax\(0,1fr\)_320px\]/);
+});
+
+test("Homepage and flight directories show all records grouped by market then Order", () => {
+  const page = readFileSync("src/app/admin/content/homepage/[section]/page.tsx", "utf8");
+  const navigation = readFileSync("src/lib/adminContentNavigation.ts", "utf8");
+
+  const records = [
+    { market: "NG", sortOrder: 4, key: "lagos-four" },
+    { market: "US", sortOrder: 0, key: "new-york" },
+    { market: "NG", sortOrder: 0, key: "lagos-zero" },
+    { market: "NG", sortOrder: 4, key: "lagos-alpha" },
+    { market: "GB", sortOrder: 2, key: "london" },
+  ];
+  const original = [...records];
+  assert.deepEqual(sortHomepageCmsDirectoryItems(records).map((item) => item.key), [
+    "lagos-zero", "lagos-alpha", "lagos-four", "london", "new-york",
+  ]);
+  assert.deepEqual(records, original, "Sorting must not mutate CMS records");
+
+  const service = readFileSync("src/services/cmsContentService.ts", "utf8");
+  assert.match(page, /listAdminCmsContentDirectory\(listInput\)/);
+  assert.match(service, /listAdminCmsContentDirectory/);
+  assert.match(service, /Prisma\.TransactionIsolationLevel\.RepeatableRead/);
+  assert.match(service, /await listAdminCmsContent\(pageInput, tx\)/);
+  assert.match(service, /while \(nextCursor\)/);
+  assert.match(service, /await listAdminCmsContent\(\{ \.\.\.pageInput, cursor: nextCursor \}, tx\)/);
+  assert.match(service, /reader \?\? getOptionalPrisma\(\)/);
+  assert.match(page, /items: sortHomepageCmsDirectoryItems\(listing\.items\)/);
+  assert.match(page, /nextCursor: null/);
+  assert.doesNotMatch(page, /Next page|function nextHref|<Link\s/);
+
+  assert.equal(homepageCmsListNavigation("flight-routes", {
+    market: "NG", status: "PUBLISHED", q: "Lagos", cursor: "old_cursor",
+  }).listHref, "/admin/content/homepage/flight-routes?market=NG&status=PUBLISHED&q=Lagos");
+  assert.equal(homepageCmsListNavigation("destinations", {
+    market: "GB", cursor: "old_cursor",
+  }).listHref, "/admin/content/homepage/destinations?market=GB");
+  assert.match(navigation, /params\.delete\("cursor"\)/);
+});
+
+test("Homepage and flight drag ordering edits complete market drafts without auto-publishing", () => {
+  const page = readFileSync("src/app/admin/content/homepage/[section]/page.tsx", "utf8");
+  const list = readFileSync("src/components/admin/HomepageCmsListClient.tsx", "utf8");
+  const reorder = readFileSync("src/components/admin/CmsCardReorder.tsx", "utf8");
+  const route = readFileSync("src/app/api/admin/content/reorder/route.ts", "utf8");
+  const service = readFileSync("src/services/cmsHardeningService.ts", "utf8");
+
+  assert.match(page, /allowedMarket !== "ALL"/);
+  assert.match(page, /!status/);
+  assert.match(page, /!one\(raw\.q\)\.trim\(\)/);
+  assert.match(list, /<CmsCardReorder/);
+  assert.match(list, /section !== "hotel-destinations"/);
+  assert.match(reorder, /onPointerDown=\{event => onDragStart\(event, id\)\}/);
+  assert.match(reorder, /document\.elementFromPoint/);
+  assert.match(reorder, /onPointerMove=\{onDragMove\}/);
+  assert.match(reorder, /window\.scrollBy\(0, step\)/);
+  assert.match(reorder, /window\.requestAnimationFrame\(autoScrollWhileDragging\)/);
+  assert.match(reorder, /window\.cancelAnimationFrame\(scrollFrame\.current\)/);
+  assert.match(reorder, /onPointerCancel=\{stopDragging\}/);
+  assert.match(reorder, /onKeyDown=\{event => onHandleKeys\(event, id\)\}/);
+  assert.match(reorder, /event\.key === "ArrowUp" \|\| event\.key === "ArrowDown"/);
+  assert.match(reorder, /Save draft order/);
+  assert.match(reorder, /row\.status !== "ARCHIVED"/);
+  assert.match(reorder, /router\.refresh\(\)/);
+  assert.match(route, /requireAdminApiSession\(\)/);
+  assert.match(route, /reorderCmsDraftCards\(body/);
+  assert.match(service, /cmsCardReorderSchema/);
+  assert.match(service, /z\.enum\(\["HOMEPAGE_DESTINATION", "FLIGHT_ROUTE"\]\)/);
+  assert.match(service, /status: \{ not: "ARCHIVED" \}/);
+  assert.match(service, /current\.length !== input\.items\.length/);
+  assert.match(service, /SELECT "id" FROM "CmsContentItem"/);
+  assert.match(service, /ORDER BY "id"\s+FOR UPDATE/);
+  assert.match(service, /Lock EVERY participating row/);
+  assert.match(service, /byId\.get\(id\)\?\.version !== version/);
+  assert.match(service, /Prisma\.TransactionIsolationLevel\.Serializable/);
+  assert.match(service, /action: "ORDER_NORMALIZED"/);
+  assert.match(service, /CMS_DRAFT_CARDS_REORDERED/);
+  const reorderSection = service.slice(service.indexOf("export async function reorderCmsDraftCards"), service.indexOf("export async function setCmsLegacyFallbackRetired"));
+  assert.doesNotMatch(reorderSection, /publishedSortOrder:\s*nextOrder|publishedPayload:\s*item\.draftPayload/);
+  assert.doesNotMatch(reorder, /action:\s*"publish"/);
+});
+
+
+test("all four content directories and editors present one-based Order without migrating CMS records", () => {
+  const homepageList = readFileSync("src/components/admin/HomepageCmsListClient.tsx", "utf8");
+  const faqList = readFileSync("src/components/admin/FaqCmsListClient.tsx", "utf8");
+  const homepageEditor = readFileSync("src/components/admin/HomepageCmsEditor.tsx", "utf8");
+  const faqEditor = readFileSync("src/components/admin/FaqCmsEditor.tsx", "utf8");
+  const reorder = readFileSync("src/components/admin/CmsCardReorder.tsx", "utf8");
+  const homePreview = readFileSync("src/components/admin/HomepageDestinationDraftPreview.tsx", "utf8");
+  const otherPreview = readFileSync("src/components/admin/CmsRouteHotelDraftPreview.tsx", "utf8");
+  const conversion = readFileSync("src/lib/cmsOrderPresentation.ts", "utf8");
+  const backend = readFileSync("src/services/cmsHardeningService.ts", "utf8");
+
+  for (const directory of [homepageList, faqList]) {
+    assert.match(directory, /cmsOrderForDisplay\(item\.sortOrder\)/);
+  }
+  for (const editor of [homepageEditor, faqEditor]) {
+    assert.match(editor, /cmsOrderForDisplay\(initialItem\?\.sortOrder \?\? 0\)/);
+    assert.match(editor, /sortOrder !== String\(cmsOrderForDisplay\(item\.sortOrder\)\)/);
+    assert.match(editor, /sortOrder: cmsOrderForStorage\(sortOrder\)/);
+    assert.match(editor, /cmsOrderForDisplay\(body\.item\.sortOrder/);
+  }
+  assert.match(homepageEditor, /type="number" min=\{1\} max=\{CMS_DISPLAY_ORDER_MAX\}/);
+  assert.match(faqEditor, /min=\{1\}/);
+  assert.match(faqEditor, /max=\{CMS_DISPLAY_ORDER_MAX\}/);
+  assert.match(faqEditor, /Order \{sortOrder \|\| "1"\}/);
+  assert.match(reorder, /\{index \+ 1\}<\/span>/);
+  assert.match(homePreview, /\{order \|\| "1"\}/);
+  assert.match(otherPreview, /\{order \|\| "1"\}/);
+  assert.match(conversion, /return storedOrder \+ 1/);
+  assert.match(conversion, /return Number\(displayOrder\) - 1/);
+  assert.match(backend, /sortOrder: nextOrder/);
+});
+
+test("CMS image upload is authenticated, size-limited, durable and draft-only", () => {
+  const editor = readFileSync("src/components/admin/HomepageCmsEditor.tsx", "utf8");
+  const field = readFileSync("src/components/admin/CmsImageUploadField.tsx", "utf8");
+  const post = readFileSync("src/app/api/admin/content/image-upload/route.ts", "utf8");
+  const get = readFileSync("src/app/api/cms/images/[filename]/route.ts", "utf8");
+  const storage = readFileSync("src/services/cmsImageStorage.ts", "utf8");
+  const validation = readFileSync("src/lib/cmsContentValidation.ts", "utf8");
+
+  assert.equal((editor.match(/<CmsImageUploadField/g) ?? []).length, 3);
+  assert.match(editor, /<CmsImageUploadField optional/);
+  assert.match(editor, /<CmsExpandingTextField label="Image alt text"/);
+  assert.match(field, /type="file"/);
+  assert.match(field, /accept="image\/jpeg,image\/png,image\/webp"/);
+  assert.match(field, /CMS_IMAGE_MAX_BYTES/);
+  assert.match(field, /fetch\("\/api\/admin\/content\/image-upload"/);
+  assert.match(field, /onChange\(result\.url\)/);
+  assert.match(field, /Save your draft, then publish/);
+
+  assert.match(post, /requireAdminApiSession\(\)/);
+  assert.match(post, /if \(!isSameOriginRequest\(request\)\)/);
+  assert.match(post, /getCmsImageStorageConfig\(\)/);
+  assert.match(post, /readLimitedBody\(request\)/);
+  assert.match(post, /validateCmsImageFile/);
+  assert.match(post, /storeCmsImage\(filename, bytes\)/);
+  assert.match(post, /writeAdminAuditLog/);
+  assert.match(post, /CMS_IMAGE_UPLOADED/);
+  assert.match(post, /if \(!logged\) \{/);
+  assert.match(post, /await deleteCmsImage\(filename\)/);
+  assert.match(post, /\[cms:image-upload-rollback-failed\]/);
+  assert.match(storage, /method: "PUT" \| "GET" \| "DELETE"/);
+  assert.match(storage, /method: "DELETE"/);
+  assert.doesNotMatch(post, /publishCmsContent|action:\s*"publish"/);
+
+  assert.match(get, /cmsImageContentType\(filename\)/);
+  assert.match(get, /loadCmsImage\(filename\)/);
+  assert.match(get, /nosniff/);
+  assert.match(storage, /CMS_R2_ACCOUNT_ID/);
+  assert.match(storage, /CMS_R2_SECRET_ACCESS_KEY/);
+  assert.match(storage, /r2\.cloudflarestorage\.com/);
+  assert.match(storage, /AWS4-HMAC-SHA256/);
+  assert.doesNotMatch(storage, /writeFile|mkdir|public\/images|AWS_SECRET_ACCESS_KEY/);
+  assert.match(validation, /cmsImageContentType\(value\.slice\(uploadedPrefix\.length\)\)/);
 });

@@ -79,21 +79,44 @@ export function getCmsCitySuggestions(query: string, countryCode = "", limit = 8
     .slice(0, Math.max(0, limit));
 }
 
-export function getCmsAirportSuggestions(query: string, limit = 8): CmsLocationOption[] {
+export function getCmsAirportSuggestions(
+  query: string,
+  limit = 8,
+  allowedCodes?: readonly string[],
+  allowManual = true,
+): CmsLocationOption[] {
   const maxResults = Math.max(0, limit);
   const typedCode = query.trim().toUpperCase();
   const possibleManualCode = /^[A-Z]{3}$/.test(typedCode);
-  const canonical = searchAirports(query, maxResults);
-  const isKnownCode = canonical.some((airport) => airport.code === typedCode);
-  const needsManualOption = possibleManualCode && !isKnownCode;
+  const allowed = allowedCodes
+    ? new Set(allowedCodes.map((code) => code.trim().toUpperCase()).filter((code) => /^[A-Z]{3}$/.test(code)))
+    : null;
+  const canonical = searchAirports(query, Math.max(maxResults, allowed?.size ?? 0))
+    .filter((airport) => !allowed || allowed.has(airport.code));
+  const canonicalCodes = new Set(canonical.map((airport) => airport.code));
+  const supplemental = allowed
+    ? [...allowed]
+        .filter((code) => !canonicalCodes.has(code))
+        .filter((code) => !typedCode || code.includes(typedCode))
+        .map<CmsLocationOption>((code) => ({
+          value: code,
+          title: code,
+          description: "Supported Kurioticket homepage route code",
+        }))
+    : [];
+  const isKnownCode = canonical.some((airport) => airport.code === typedCode) || supplemental.some((option) => option.value === typedCode);
+  const needsManualOption = allowManual && !allowed && possibleManualCode && !isKnownCode;
   const resultLimit = needsManualOption ? Math.max(0, maxResults - 1) : maxResults;
-  const results: CmsLocationOption[] = canonical.slice(0, resultLimit).map((airport) => ({
-    value: airport.code,
-    title: airport.code + " · " + airport.city,
-    description: airport.airport + (airport.country ? " · " + airport.country : ""),
-    country: airport.country,
-    countryCode: airport.countryCode,
-  }));
+  const results: CmsLocationOption[] = [
+    ...canonical.map((airport) => ({
+      value: airport.code,
+      title: airport.code + " · " + airport.city,
+      description: airport.airport + (airport.country ? " · " + airport.country : ""),
+      country: airport.country,
+      countryCode: airport.countryCode,
+    })),
+    ...supplemental,
+  ].slice(0, resultLimit);
   if (needsManualOption && maxResults > 0) {
     results.push({
       value: typedCode,
@@ -103,4 +126,32 @@ export function getCmsAirportSuggestions(query: string, limit = 8): CmsLocationO
     });
   }
   return results;
+}
+
+
+/** Search the same canonical hotel list used by the existing CMS editor.
+ * The suggestion value is the canonical ID, not the visible label.
+ */
+export function getCmsHotelDestinationSuggestions(
+  options: readonly { canonicalId: string; label: string; name: string; country: string; countryCode: string; kind: string; searchValue: string }[],
+  query: string,
+  limit = 8,
+): CmsLocationOption[] {
+  const term = normalizeAirportSearchText(query);
+  return options
+    .filter((option) => [option.label, option.name, option.country, option.countryCode, option.canonicalId, option.searchValue]
+      .some((value) => normalizeAirportSearchText(value).includes(term)))
+    .sort((left, right) => {
+      const a = normalizeAirportSearchText(left.name).startsWith(term) ? 0 : 1;
+      const b = normalizeAirportSearchText(right.name).startsWith(term) ? 0 : 1;
+      return a - b || left.label.localeCompare(right.label);
+    })
+    .slice(0, Math.max(0, limit))
+    .map((option) => ({
+      value: option.canonicalId,
+      title: option.label,
+      description: option.kind + " · " + option.searchValue,
+      country: option.country,
+      countryCode: option.countryCode,
+    }));
 }

@@ -17,12 +17,12 @@ export const runtime = "nodejs";
 
 type Context = { params: Promise<{ id: string }> };
 
-export async function GET(_request: Request, context: Context) {
+export async function GET(request: Request, context: Context) {
   const auth = await requireAdminApiSession();
   if (auth.response) return auth.response;
   const { id } = await context.params;
   try {
-    return NextResponse.json(await getAdminCmsContent(id));
+    return NextResponse.json(await getAdminCmsContent(id, new URL(request.url).searchParams.get("revisionBefore") ?? undefined));
   } catch (error) {
     return cmsErrorResponse(error);
   }

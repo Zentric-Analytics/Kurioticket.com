@@ -1,3 +1,6 @@
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
+
 import { EmailDeliveryRangeFilter, type EmailDeliveryRange } from "@/components/admin/EmailDeliveryRangeFilter";
 import { EmailDeliveryTestButton } from "@/components/admin/EmailDeliveryTestButton";
 import { getEmailDeliveryOperationsSnapshot } from "@/services/emailDeliveryService";
@@ -60,10 +63,14 @@ function StatusIndicator({ value, tone }: { value: string; tone: StatusTone }) {
 export default async function AdminEmailDeliveryPage({ searchParams }: { searchParams: SearchParams }) {
   const raw = await searchParams;
   const rangeState = resolveRange(raw);
+  const requestedHistoryPage = parseHistoryPage(one(raw.historyPage));
   const operations = rangeState.error
     ? null
-    : await getEmailDeliveryOperationsSnapshot({ from: rangeState.from, to: rangeState.to });
-
+    : await getEmailDeliveryOperationsSnapshot({
+        from: rangeState.from,
+        to: rangeState.to,
+        page: requestedHistoryPage,
+      });
   const configured = {
     resendApiKey: Boolean(process.env.RESEND_API_KEY?.trim()),
     resendFromEmail: Boolean(process.env.RESEND_FROM_EMAIL?.trim()),
@@ -86,6 +93,13 @@ export default async function AdminEmailDeliveryPage({ searchParams }: { searchP
 
   return (
     <div className="w-full min-w-0 bg-white text-[#020617]">
+      <Link
+        href="/admin/system"
+        className="focus-ring mb-3 inline-flex items-center gap-1.5 rounded-sm text-[12px] font-medium text-[#64748B] hover:text-[#004BB8]"
+      >
+        <ArrowLeft size={14} aria-hidden="true" />
+        Back to System
+      </Link>
       <header className="flex flex-wrap items-end justify-between gap-4 border-b border-[#D8E1EC] pb-3">
         <h1 className="text-[18px] font-semibold tracking-[-0.01em] text-[#020617]">Email Delivery</h1>
         <EmailDeliveryRangeFilter
@@ -159,9 +173,8 @@ export default async function AdminEmailDeliveryPage({ searchParams }: { searchP
       </section>
 
       <section aria-labelledby="delivery-history-heading" className="py-4">
-        <div className="flex flex-wrap items-baseline justify-between gap-2 pb-2">
+        <div className="pb-2">
           <h2 id="delivery-history-heading" className="text-[15px] font-semibold text-[#020617]">Delivery history</h2>
-          <p className="text-[12px] text-[#64748B]">Latest 10 in {rangeState.label.toLowerCase()}</p>
         </div>
 
         {rangeState.error ? (
@@ -170,9 +183,10 @@ export default async function AdminEmailDeliveryPage({ searchParams }: { searchP
             <p className="mt-1 text-[12px] text-[#64748B]">Delivery history will update after the range is valid.</p>
           </div>
         ) : operations?.dataAvailable && operations.latest.length > 0 ? (
-          <div role="region" aria-labelledby="delivery-history-heading" tabIndex={0} className="min-w-0 overflow-x-auto border-y border-[#D8E1EC]">
-            <table className="w-full min-w-[980px] table-fixed text-[13px]">
-              <caption className="sr-only">Latest tracked transactional email activity in the selected date range.</caption>
+          <>
+            <div role="region" aria-labelledby="delivery-history-heading" tabIndex={0} className="min-w-0 overflow-x-auto border-y border-[#D8E1EC]">
+              <table className="w-full min-w-[980px] table-fixed text-[13px]">
+                <caption className="sr-only">Tracked transactional email activity in the selected date range.</caption>
               <colgroup>
                 <col className="w-[16%]" />
                 <col className="w-[22%]" />
@@ -205,8 +219,36 @@ export default async function AdminEmailDeliveryPage({ searchParams }: { searchP
                   </tr>
                 ))}
               </tbody>
-            </table>
-          </div>
+              </table>
+            </div>
+            {operations.historyTotalPages > 1 ? (
+              <nav aria-label="Delivery history pages" className="flex items-center justify-end gap-4 border-b border-[#D8E1EC] py-3 text-[12px]">
+                {operations.historyPage > 1 ? (
+                  <Link
+                    href={historyPageHref(raw, operations.historyPage - 1)}
+                    className="font-medium text-[#004BB8] hover:underline"
+                  >
+                    ‹ Previous
+                  </Link>
+                ) : (
+                  <span className="text-[#94A3B8]">‹ Previous</span>
+                )}
+                <span className="tabular-nums text-[#475569]">
+                  Page {operations.historyPage.toLocaleString()} of {operations.historyTotalPages.toLocaleString()}
+                </span>
+                {operations.historyPage < operations.historyTotalPages ? (
+                  <Link
+                    href={historyPageHref(raw, operations.historyPage + 1)}
+                    className="font-medium text-[#004BB8] hover:underline"
+                  >
+                    Next ›
+                  </Link>
+                ) : (
+                  <span className="text-[#94A3B8]">Next ›</span>
+                )}
+              </nav>
+            ) : null}
+          </>
         ) : operations?.dataAvailable ? (
           <div className="border-y border-[#D8E1EC] py-6">
             <p className="text-[13px] font-medium text-[#020617]">No deliveries in this range</p>
@@ -221,6 +263,24 @@ export default async function AdminEmailDeliveryPage({ searchParams }: { searchP
       </section>
     </div>
   );
+}
+
+function historyPageHref(raw: Record<string, string | string[] | undefined>, page: number) {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(raw)) {
+    if (key === "historyPage") continue;
+    const normalized = Array.isArray(value) ? value[0] : value;
+    if (normalized) params.set(key, normalized);
+  }
+  if (page > 1) params.set("historyPage", String(page));
+  const query = params.toString();
+  return query ? `/admin/email-delivery?${query}` : "/admin/email-delivery";
+}
+
+function parseHistoryPage(value: string) {
+  if (!/^\d+$/.test(value)) return 1;
+  const page = Number(value);
+  return Number.isSafeInteger(page) && page > 0 ? page : 1;
 }
 
 function one(value: string | string[] | undefined) {

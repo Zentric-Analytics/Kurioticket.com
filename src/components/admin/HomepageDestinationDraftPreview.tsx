@@ -76,7 +76,7 @@ export function HomepageDestinationDraftPreview({
           </div>
           <div className="flex flex-wrap gap-x-4 gap-y-1 border-t border-slate-100 pt-3 text-[12px] text-slate-600">
             <span>Market: <strong className="font-medium text-slate-800">{marketName || "Select market"}</strong></span>
-            <span>Order: <strong className="font-medium text-slate-800">{order || "0"}</strong></span>
+            <span>Order: <strong className="font-medium text-slate-800">{order || "1"}</strong></span>
           </div>
         </div>
       </div>
