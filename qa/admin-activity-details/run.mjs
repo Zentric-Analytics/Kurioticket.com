@@ -44,6 +44,12 @@ await put("app/layout.jsx", 'import "./globals.css";\n' +
   '<AdminHorizontalShell adminRole="ADMIN" adminEmail="qa.admin@example.invalid" adminName="QA admin">{children}</AdminHorizontalShell>\n' +
   '</body></html>;}');
 await put("app/page.jsx", 'export default function Home(){return <p>Isolated Admin Activity visual QA.</p>;}');
+// The shared admin shell polls its notification summary. Supply a deterministic
+// synthetic response in this isolated fixture instead of compiling a 404 page
+// during Activity screenshots. No live alert data or service is used.
+await put("app/api/admin/notifications/route.js",
+  'export async function GET(){return Response.json({generatedAt:"2026-11-16T00:00:00.000Z",activeCount:0,unreadCount:0,criticalCount:0,warningCount:0,alerts:[]});}');
+
 await put("app/admin/users/[kind]/[id]/activity/page.tsx",
   await readFile(path.join(source, "app/admin/users/[kind]/[id]/activity/page.tsx"), "utf8"));
 await put("mocks/auth-guards.js", 'export async function requireAdminSession(){return {user:{id:"qa-admin",role:"ADMIN"}};}');
