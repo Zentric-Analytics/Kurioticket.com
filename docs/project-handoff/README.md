@@ -1,6 +1,16 @@
 # Kurioticket continuation handoff
 
+Latest concrete release finding: [PR6721 conflict/policy/CI preparation](pr6721-conflict-readiness.md). Live dev refs reproduce five content conflicts; older PR API base/merge-ref snapshots are stale. No reconciliation authorized/performed. Render clarification was presented for approval and owner selected keep unsent.
+
+Latest read-only follow-up: [isolation-proof investigation](isolation-proof-investigation.md), [independent release gates](release-gates-current.md), and [unsent Render clarification draft](render-isolation-clarification-draft.md). Original timeout cause remains unproven; client classification defect reproduced. No new infrastructure execution is authorized or proposed as ready.
+
+Latest continuation: [November 16 recovery attempt](recovery-attempt-20261116.md) was authorized and safely aborted at an inconclusive required isolation check. Original source access is restored, staging health connected, no copy created and no incremental database cost. Do not automatically retry the terminated attempt. See current ledger for outstanding gates.
+
 Prepared 2026-11-15 (America/Los_Angeles). This is a documentation checkpoint, not a release authorization. Read this directory before continuing on another computer.
+
+Continuation: [current task ledger](continuation-progress.md) and [operational assessments](continuation-assessments.md). These local continuation records preserve the engineering baseline and do not grant infrastructure or delivery approval.
+
+Owner update November 16 supersedes all fixed-start instructions below: use rolling T0/+20/+30-minute execution/abort/source-restoration timing after explicit authorization. No other operator interference is expected. The [staging credential exposure](credential-incident-20261116.md) is acknowledged and unresolved; owner explicitly prohibits credential changes and directs continued readiness work. The prior security hold pending that decision is superseded. Infrastructure execution still needs explicit approval.
 
 - Repository: `Zentric-Analytics/Kurioticket.com`.
 - Continue on the EXISTING branch `review/kurioticket-stabilization-20261105`. Do not create a replacement branch.

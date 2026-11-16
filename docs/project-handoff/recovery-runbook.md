@@ -20,13 +20,19 @@ The chosen procedure temporarily denies external access on ONLY the identified s
 
 Official references (recheck relevant current vendor behavior at execution): [PITR](https://render.com/docs/postgresql-backups), [connection restrictions](https://render.com/docs/postgresql-creating-connecting#restricting-external-access), [PITR API](https://api-docs.render.com/reference/recover-postgres).
 
-## Before requesting a new window
+## Current rolling-window policy
+
+Owner update November 16: no predetermined start is required. Owner confirms no other operators are expected to interfere. T0 is explicitly authorized actual execution start; record exact PST/UTC then. Abort at T0+20 minutes; restore exact source access by T0+30 minutes. No automatic extension. This supersedes historical fixed-start requirements and is not infrastructure execution authorization.
+
+Security disposition: see [credential incident](credential-incident-20261116.md). Owner acknowledges the unresolved exposure and directs continuation without changing credentials. Earlier hold pending that decision is superseded. Preserve the risk in recovery approval and release reporting; do not claim remediation or harmlessness.
+
+## Before requesting execution authorization
 
 1. Read-only verify source ID, Available/healthy state, PostgreSQL version/region/size and original DB allowlist. Original is exactly `[{"cidrBlock":"0.0.0.0/0","description":"everywhere"}]`. Record it without secrets. Stop on unexplained drift.
 2. Verify staging web health, worker Suspended/Auto-Deploy Off, cron success/schedule, no active conflicting deployment/run and vendor maintenance. Owner must also confirm no conflicting operator activity.
 3. Confirm supported rollback controls and secure in-memory validation credential path. The existing application's connection must never be printed/copied/exported or replaced. PITR credential compatibility is not assumed; fail securely if authentication fails.
 4. Prepare one bounded read-only copy-validation process and a PostgreSQL-level external-denial check. A TCP-only failure, ordinary password rejection or allowlist display alone is insufficient denial proof.
-5. Propose exact 30-minute PST/PDT start/end with an abort cutoff at least ten minutes before the end. Obtain explicit owner approval. Do not begin late.
+5. Obtain final explicit execution approval for the concrete recovery plan. Record T0 in PST/UTC at actual start, abort cutoff T0+20 minutes and source-restoration deadline T0+30 minutes. No fixed scheduled start is required; never extend automatically.
 
 ## Approved execution would require all of these steps
 

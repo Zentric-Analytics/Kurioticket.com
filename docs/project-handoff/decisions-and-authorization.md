@@ -22,11 +22,15 @@ Owner approved saving/verifying evidence and prompt deletion of ONLY the tempora
 
 RPO 15 minutes and RTO 2 hours are evaluation targets, not verified guarantees. Operator/owner roles are established; target acceptance/performance remains to be measured.
 
-## Windows are not transferable
+## Current rolling-window decision
+
+Owner update November 16: fixed scheduling is removed. No other operators are expected to interfere. T0 begins only at explicitly authorized actual execution start. Abort cutoff is T0+20 minutes; original source access must be restored by T0+30 minutes. Record exact local/UTC times at T0. Preserve the $1 cap, 24-hour temporary-resource limit, isolation and cleanup controls. This timing change does not authorize infrastructure writes.
+
+## Historical windows (superseded)
 
 - `RESTORE-20261115-2230-PST`, Nov 15 22:30–23:00 PST, was approved but never executed; it is unavailable for further execution.
 - Nov 15 23:00–23:30 PST was proposed but **not approved**.
-- The second computer must propose a new exact 30-minute America/Los_Angeles window after fresh read-only readiness/conflict checks and obtain explicit approval before any access-rule change/provisioning.
-- No late start or automatic extension. The approved source external restriction must end by the exact approved deadline; abort cutoff must leave sufficient rollback time.
+- Fixed-start requirements are superseded by the current rolling-window decision above. Explicit infrastructure execution approval remains required.
+- No automatic extension; calculate the current deadlines from actual authorized T0.
 
 Never infer permission for production/main, merges, deployment, migrations, native builds/distribution, OTA, credentials, remote job cancellation or worker resumption from restore/documentation approval.
