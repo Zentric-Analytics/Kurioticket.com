@@ -1,0 +1,1 @@
+export default function PlatformHealthLoading() { return <section aria-busy="true" role="status" className="min-w-0 rounded-xl border border-slate-200 bg-white p-6"><h1 className="text-xl font-semibold text-slate-950">Platform Health</h1><p className="mt-2 text-sm text-slate-600">Loading verified operational observations…</p></section>; }

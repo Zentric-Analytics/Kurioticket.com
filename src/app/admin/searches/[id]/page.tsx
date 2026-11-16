@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { applicationLabel } from "@/lib/platformHealthPresentation";
 import { ChevronDown } from "lucide-react";
 import { notFound } from "next/navigation";
 
@@ -82,6 +83,8 @@ function SearchDetailContent({ search }: { search: AdminSearchDetail }) {
       <section className="border-b border-[#E5E7EB] px-2 py-5">
         <h2 className="text-[14px] font-semibold text-[#111827]">Search information</h2>
         <div className="mt-3 grid grid-cols-2 gap-x-5 gap-y-3 lg:grid-cols-3">
+          <Field label="Application source" value={applicationLabel(search.applicationSource)} />
+          {search.appVersion?<Field label="App version" value={search.appVersion}/>:null}
           {/* Product and locations are already identifiable in the Search overview headline. */}
           {search.checkIn || search.checkOut ? (
             <Field

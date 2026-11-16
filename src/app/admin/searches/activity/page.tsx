@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { ApplicationSourceSelect } from "@/components/admin/PlatformHealthFilters";
+import { applicationLabel, type PlatformSelection } from "@/lib/platformHealthPresentation";
 import { redirect } from "next/navigation";
 import { searchWorkspaceTab } from "@/lib/adminSearchWorkspace";
 
@@ -55,6 +57,7 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
         
         {result.status === "ok" && summary.status === "ok" ? (
           <>
+            <p className="mb-3 text-xs text-slate-500">{applicationLabel(summary.data.scope.applicationSource || "ALL")} · {currentEnvironment} · Search records only</p>
             <div className="grid grid-cols-2 border-y border-[#E5E7EB] md:grid-cols-4">
               <Metric label="All searches" value={summary.data.total} tone="all" />
               <Metric label="Complete" value={summary.data.success} tone="complete" />
@@ -153,6 +156,7 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
                   <SearchMonitorSelect label="Provider"
                     appearance="plain" name="provider" value={one(raw.provider)} options={providerOptions} truncateLabel />
                 </div>
+                <div className="w-[180px] max-w-full"><ApplicationSourceSelect name="applicationSource" id="search-application" value={(one(raw.applicationSource)||"ALL") as PlatformSelection}/></div>
                 <button
                   type="submit"
                   className="h-9 w-[146px] cursor-pointer bg-[#111827] px-4 text-[13px] font-semibold text-white transition-colors hover:bg-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-200"

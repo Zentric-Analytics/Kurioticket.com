@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { applicationLabel } from "@/lib/platformHealthPresentation";
 import { useEffect, useRef, useState } from "react";
 
 import type { AdminSearchRead } from "@/services/adminOperationalReadContract";
@@ -110,7 +111,7 @@ function SearchMonitorTableState({
           <thead>
             <tr className="border-b border-[#E5E7EB] text-[11px] uppercase tracking-[0.08em] text-[#6B7280]">
               <th className="px-2 py-3 font-semibold">Created</th>
-              <th className="px-2 py-3 font-semibold">Product</th>
+              <th className="px-2 py-3 font-semibold">Product</th><th scope="col" className="px-2 py-3 font-semibold">Application</th>
               <th className="px-2 py-3 font-semibold">Route / stay</th>
               <th className="px-2 py-3 font-semibold">Currency</th>
               <th className="px-2 py-3 font-semibold">Results</th>
@@ -124,7 +125,7 @@ function SearchMonitorTableState({
             {items.map((search) => (
               <tr key={search.id} className="group relative cursor-pointer border-b border-[#E5E7EB] text-[13px] text-[#374151] hover:bg-[#FAFAFA] focus-within:bg-[#F8FAFC]">
                 <td className="whitespace-nowrap px-2 py-3 align-top"><Link href={detailHref(search, detailQuery)} aria-label={"View details for " + productLabel(search.product) + " search " + routeLabel(search.origin, search.destination)} className="absolute inset-0 z-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#004BB8]" tabIndex={0} /><span className="relative pointer-events-none">{formatCreated(search.createdAt, referenceNow)}</span></td>
-                <td className="px-2 py-3 align-top font-semibold text-[#111827]">{productLabel(search.product)}</td>
+                <td className="px-2 py-3 align-top font-semibold text-[#111827]">{productLabel(search.product)}</td><td className="px-2 py-3 align-top">{applicationLabel(search.applicationSource)}{search.appVersion?<span className="mt-0.5 block text-[11px] text-slate-500">v{search.appVersion}</span>:null}</td>
                 <td className="max-w-[260px] px-2 py-3 align-top">
                   <p className="font-semibold text-[#111827]">{routeLabel(search.origin, search.destination)}</p>
                   {formatSearchDates(search.checkIn, search.checkOut) ? (
