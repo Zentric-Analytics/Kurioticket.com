@@ -3,6 +3,7 @@ import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 
 import { markDeletionRequestsReadyForReview } from "@/services/accountDeletionService";
+import { observeScheduledJob } from "@/services/scheduledJobObservation";
 
 export const runtime = "nodejs";
 
@@ -43,7 +44,7 @@ export function createAccountDeletionReviewCronHandler(dependencies: Dependencie
     }
 
     try {
-      const result = await dependencies.markReady(new Date());
+      const result = await observeScheduledJob("account-deletion-review", () => dependencies.markReady(new Date()));
       return NextResponse.json({ markedReadyForReview: result.count });
     } catch (error) {
       console.error("[account-deletion:ready-review-cron]", error);

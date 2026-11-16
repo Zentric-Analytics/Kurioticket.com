@@ -13,7 +13,7 @@ export const metadata = { title: "Admin Journey Detail" };
 export default async function AdminJourneyDetailPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { id } = await params;
   const raw = await searchParams;
-  const { range: _range, activityReturn: _activityReturn, ...backendRaw } = raw;
+  const backendRaw = { ...raw }; delete backendRaw.range; delete backendRaw.activityReturn;
   const input: Record<string, unknown> = { ...backendRaw, limit: one(raw.limit) || "50" };
   const result = await adminJourneys.detail(id, input);
   if (result.status === "not_found") notFound();

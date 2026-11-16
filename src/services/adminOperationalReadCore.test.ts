@@ -249,9 +249,9 @@ test("flight, hotel, and car provider logs carry exact request correlation for f
   const flightRoute = readFileSync("src/app/api/flights/search/route.ts", "utf8");
   const hotelRoute = readFileSync("src/app/api/hotels/search/route.ts", "utf8");
   const carRoute = readFileSync("src/app/api/cars/search/route.ts", "utf8");
-  assert.match(flightRoute, /service: "flight-search"[\s\S]*?metadata: \{ requestId \}/);
-  assert.match(hotelRoute, /service: "hotel-search"[\s\S]*?metadata: \{ requestId \}/);
-  assert.match(carRoute, /service: "car-search"[\s\S]*?metadata: \{ requestId \}/);
+  assert.match(flightRoute, /service: "flight-search"[\s\S]*?metadata: \{ \.\.\.application, requestId \}/);
+  assert.match(hotelRoute, /service: "hotel-search"[\s\S]*?metadata: \{ \.\.\.application, requestId \}/);
+  assert.match(carRoute, /service: "car-search"[\s\S]*?metadata: \{ \.\.\.application, requestId \}/);
 });
 
 test("search detail renders the reorganized read-only diagnostics without the visible admin header", () => {

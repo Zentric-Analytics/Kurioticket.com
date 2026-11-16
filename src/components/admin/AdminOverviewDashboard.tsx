@@ -2,12 +2,10 @@ import Link from "next/link";
 import {
   Activity,
   ArrowUpRight,
-  BookOpen,
   Database,
   Headphones,
   KeyRound,
   Mail,
-  MousePointerClick,
   Route,
   Search,
   ShieldCheck,

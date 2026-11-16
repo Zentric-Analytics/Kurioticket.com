@@ -69,13 +69,12 @@ export function AdminDirectorySelect({
   const selectedIndex = Math.max(0, options.findIndex(option => option.value === selected));
   const selectedLabel = options[selectedIndex]?.label || options[0]?.label || "";
 
-  const [previousValue, setPreviousValue] = useState(value);
-  if (previousValue !== value) {
-    setPreviousValue(value);
-    setSelected(value);
-    setOpen(false);
+  const syncKey = JSON.stringify([value, disabled]);
+  const [previousSyncKey, setPreviousSyncKey] = useState(syncKey);
+  if (previousSyncKey !== syncKey) {
+    setPreviousSyncKey(syncKey);
+    setSelected(value); setOpen(false);
   }
-  if (disabled && open) setOpen(false);
 
   const fieldClass = "h-9 w-full min-w-0 scroll-mb-28 cursor-pointer rounded-lg border border-slate-300 bg-white px-3 text-[13px] font-normal text-[#111827] shadow-[0_1px_0_rgba(15,23,42,0.04)] outline-none transition-colors hover:border-slate-400 focus:border-[#004BB8]/40 focus:ring-2 focus:ring-[#004BB8]/15 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-700";
 

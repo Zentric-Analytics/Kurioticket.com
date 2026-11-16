@@ -1,5 +1,6 @@
 import { trackAnalyticsEvent } from "@/services/analyticsService";
 import { readOperationalSearchSession } from "@/lib/operationalSearchSession";
+import { applicationMetadata } from "@/lib/application-source";
 import { resolveRequestActivityIdentity } from "@/services/requestActivityIdentity";
 import { journeyEventKey, recordJourneyEvent } from "@/services/searchJourneyService";
 import { journeySourcePath } from "@/lib/search-journey";
@@ -26,7 +27,7 @@ export async function recordProviderHandoffActivity(
   input: ProviderHandoffActivity,
   record: ActivityDependencies = dependencies,
 ) {
-  const identity = await record.identity(request).catch(() => ({ userId: null, visitorId: null }));
+  const identity = await record.identity(request).catch(() => ({ userId: null, visitorId: null, applicationSource: "UNKNOWN" as const }));
   const operationalSession = readOperationalSearchSession(request);
   const redirect = await record.redirect({ ...input, ...identity, ...(operationalSession ? { operationalSessionId: operationalSession.id } : {}) }).catch(() => null);
   // A rejected/reused key or unavailable durable write must not create a
@@ -38,9 +39,10 @@ export async function recordProviderHandoffActivity(
   if (receipt?.created !== false) {
     await Promise.allSettled([record.event({
       ...attribution,
+      ...applicationMetadata(identity),
       type: "REDIRECT",
       name: `${input.type}_partner_redirect`,
-      metadata: { provider: input.provider, route: input.route },
+      metadata: { applicationSource: identity.applicationSource ?? "UNKNOWN", provider: input.provider, route: input.route },
     })]);
   }
 
@@ -55,7 +57,7 @@ export async function recordProviderHandoffActivity(
       provider: input.provider,
       redirectLogId,
       ...(receipt?.searchHistoryId ? { searchHistoryId: receipt.searchHistoryId } : {}),
-      metadata: { ...(sourcePage ? { sourcePage } : {}), resultId: input.resultId },
+      metadata: { applicationSource: identity.applicationSource ?? "UNKNOWN", ...(sourcePage ? { sourcePage } : {}), resultId: input.resultId },
     });
   }
 }

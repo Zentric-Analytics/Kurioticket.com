@@ -1,3 +1,4 @@
+import { applicationMetadata } from "@/lib/application-source";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { runInNewContext } from "node:vm";
@@ -44,6 +45,7 @@ function fixture(t: TestContext, options: { status?: "available" | "unavailable"
     status: options.status ?? "available", warnings: [], providerStatuses: [provider],
   };
   const dependencies: Record<string, unknown> = {
+    "@/lib/application-source": { applicationMetadata },
     "next/server": { after: (callback: () => Promise<unknown>) => { deferred.push(callback); } },
     "@/lib/operationalSearchSession": {
       prepareOperationalSearchSession: (value: Request) => {
@@ -62,7 +64,7 @@ function fixture(t: TestContext, options: { status?: "available" | "unavailable"
     "@/services/requestActivityIdentity": { resolveRequestActivityIdentity: async (value: Request) => {
       check(value === request && identityCalls === 0, "resolve identity once for the actual request");
       identityCalls++;
-      return options.consent === false ? { userId: null, visitorId: null } : { userId: null, visitorId: "consented-guest" };
+      return options.consent === false ? { userId: null, visitorId: null, applicationSource: "UNKNOWN" } : { userId: null, visitorId: "consented-guest", applicationSource: "WEB" };
     } },
     "@/services/analyticsService": {
       logSearchHistory: async (value: Record<string, unknown>) => {
@@ -143,6 +145,9 @@ test("car search records a consented history after returning provider results", 
   assert.equal(f.histories[0].status, "SUCCESS");
   assert.equal((f.histories[0].query as Record<string, unknown>).operationalSessionId, f.session!.reference.id);
   assert.equal(f.analytics[0].name, "car_search");
+  assert.equal(f.histories[0].applicationSource, "WEB");
+  assert.equal(f.analytics[0].applicationSource, "WEB");
+  assert.equal((f.providerLogs[0].metadata as Record<string, unknown>).applicationSource, "WEB");
   assert.equal(f.providerLogs[0].status, "SUCCESS");
   assert.equal((f.providerLogs[0].metadata as Record<string, unknown>).requestId, requestId);
   assert.ok(!JSON.stringify([f.histories, f.analytics, f.providerLogs]).includes(f.session!.credential), "never persist a session credential in diagnostics");

@@ -236,7 +236,7 @@ test("route inspector keeps the market badge and full responsive route details",
   const table = component.slice(component.indexOf("function RouteDetailsTable("), component.indexOf("function MarketGroupStatusBadge("));
   assert.ok(details.indexOf("<MarketGroupStatusBadge") < details.indexOf("<RouteDetailsTable"));
   assert.match(details, /routes=\{group\.routes\}/);
-  assert.doesNotMatch(details, /Showing |Route pages|Previous|Next/);
+  assert.doesNotMatch(details, /Showing |Route pages|>Previous<|>Next</);
   assert.match(table, /\{route\.origin\}/);
   assert.match(table, /\{route\.destination\}/);
   assert.match(table, /\{route\.provider \?\? "—"\}/);

@@ -175,12 +175,13 @@ test("desktop Flight Results renders one continuous desktop list without range t
 });
 
 test("desktop Flight Results puts the Hotels-style summary directly above result cards", () => {
-  const nearby = flight.indexOf("data-desktop-nearby-fare-rail");
+  const nearby = flight.indexOf('data-nearby-fare-presentation="mobile"');
   const priceAlert = flight.indexOf("data-flight-price-alert-row");
   const summary = flight.indexOf("data-flight-results-desktop-summary");
   const desktopResults = flight.indexOf("ref={paginationListRef}");
 
-  assert.equal(nearby, -1, "retired desktop fare rail stays absent");
+  assert.ok(nearby >= 0 && nearby < priceAlert, "nearby mobile fares precede the price alert");
+  assert.doesNotMatch(flight, /data-desktop-nearby-fare-rail/);
   assert.ok(priceAlert >= 0);
   assert.ok(summary > priceAlert);
   assert.match(flight.slice(0, priceAlert), /data-nearby-fare-presentation="mobile"/);

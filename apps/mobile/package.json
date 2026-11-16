@@ -9,12 +9,13 @@
     "android": "node ./scripts/start-local-preview.mjs --android",
     "ios": "node ./scripts/start-local-preview.mjs --ios",
     "typecheck": "node ./scripts/validate-case-insensitive-paths.mjs && tsc --noEmit",
-    "test": "node --test --require ./testAssetSetup.cjs --import jiti/register \"src/**/*.test.ts\" \"scripts/start-local-preview.test.mjs\" \"scripts/issue6-boundaries.test.mjs\"",
+    "test": "node --test --require ./testAssetSetup.cjs --import jiti/register \"src/**/*.test.ts\" \"scripts/start-local-preview.test.mjs\" \"scripts/issue6-boundaries.test.mjs\" \"scripts/dependency-security.test.mjs\"",
     "expo:doctor": "expo-doctor",
     "release:validate": "node ./scripts/validate-release-policy.mjs",
     "release:classify": "node ./scripts/classify-release.mjs",
     "test:release-pipeline": "node --test ./scripts/release-pipeline.test.mjs",
-    "verify:ios-icon": "node ./scripts/verify-ios-icon-contract.mjs"
+    "verify:ios-icon": "node ./scripts/verify-ios-icon-contract.mjs",
+    "test:dependency-security": "node --test scripts/dependency-security.test.mjs"
   },
   "dependencies": {
     "@expo-google-fonts/inter": "^0.4.2",
@@ -42,7 +43,8 @@
     "react-native-safe-area-context": "~5.6.0",
     "react-native-screens": "~4.16.0",
     "react-native-svg": "15.12.1",
-    "react-native-webview": "13.15.0"
+    "react-native-webview": "13.15.0",
+    "decode-uri-component": "file:vendor/decode-uri-component"
   },
   "devDependencies": {
     "@types/react": "~19.1.10",
@@ -62,7 +64,7 @@
   },
   "overrides": {
     "@expo/metro-config": {
-      "postcss": "8.5.32",
+      "postcss": "8.5.33",
       "glob@^13.0.0": "14.0.4"
     },
     "@react-navigation/core": {
@@ -104,6 +106,12 @@
     "metro-source-map@0.83.3": "0.83.8",
     "metro-symbolicate@0.83.3": "0.83.8",
     "metro-transform-plugins@0.83.3": "0.83.8",
-    "metro-transform-worker@0.83.3": "0.83.8"
+    "metro-transform-worker@0.83.3": "0.83.8",
+    "postcss": "^8.5.33",
+    "image-size": "npm:image-size-next@1.2.2",
+    "query-string": {
+      "decode-uri-component": "0.5.1"
+    },
+    "react-dom": "19.1.0"
   }
 }

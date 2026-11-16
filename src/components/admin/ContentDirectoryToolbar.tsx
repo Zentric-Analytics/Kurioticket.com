@@ -72,8 +72,8 @@ export function ContentDirectoryToolbar({
     return () => window.removeEventListener("popstate", onPop);
   }, []);
 
-  const hrefFor = (changes: Record<string, string>, reset = false) =>
-    contentDirectoryHref(path, new URLSearchParams(query), changes, reset);
+  const hrefFor = useCallback((changes: Record<string, string>, reset = false) =>
+    contentDirectoryHref(path, new URLSearchParams(query), changes, reset), [path, query]);
 
   const navigate = useCallback((changes: Record<string, string>, replace = false, reset = false) => {
     const url = contentDirectoryHref(path, paramsRef.current, changes, reset);

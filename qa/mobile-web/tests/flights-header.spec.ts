@@ -1,6 +1,16 @@
 import { expect, test } from "@playwright/test";
+import { flightFixtureDates } from "../browserstack/flight-fixture-dates.mjs";
 
-const flightResults = "/flights/results?tripType=round-trip&origin=SFO&destination=LAX&departureDate=2026-11-13&returnDate=2026-11-15&adults=1&children=0&infants=0&travelers=1&cabinClass=economy";
+const dates = flightFixtureDates();
+const flightResults = `/flights/results?tripType=round-trip&origin=SFO&destination=LAX&departureDate=${dates.departureDate}&returnDate=${dates.returnDate}&adults=1&children=0&infants=0&travelers=1&cabinClass=economy`;
+
+test("Flight browser fixture dates stay future-dated across year and leap-day boundaries", () => {
+  for (const now of ["2026-12-20T23:59:59Z", "2028-02-01T00:00:00Z"]) {
+    const journey = flightFixtureDates(new Date(now));
+    expect(Date.parse(journey.departureDate)).toBeGreaterThan(Date.parse(now));
+    expect(Date.parse(journey.returnDate) - Date.parse(journey.departureDate)).toBe(2 * 86400000);
+  }
+});
 
 test.beforeEach(async ({ page, request }) => {
   await page.route("**/api/flights/search", async (route) => {

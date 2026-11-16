@@ -104,7 +104,7 @@ test("standalone mobile uses one full-width offer area and no duplicate price or
 });
 
 test("desktop media fills its column and unsupported tax copy stays hidden", () => {
-  const desktop = source.slice(source.indexOf('data-region="image"'));
+  const desktop = source.slice(source.indexOf('className={`${guidedPlanning ? "grid lg:grid-cols-'));
   assert.match(desktop, /md:aspect-auto md:h-full md:min-h-\[220px\]/);
   assert.doesNotMatch(desktop, /md:p-2\.5/);
   assert.doesNotMatch(source, /Taxes and fees included/);
@@ -113,7 +113,7 @@ test("desktop media fills its column and unsupported tax copy stays hidden", () 
 
 test("standalone desktop aligns Save and Share with the car name inside a content-sized header", () => {
   const desktop = source.slice(source.indexOf('data-region="heading"'));
-  const heading = desktop.slice(0, desktop.indexOf('data-region="details"'));
+  const heading = desktop.slice(0, desktop.indexOf('data-region="details"', desktop.indexOf('data-car-card-desktop-full-width-divider')));
   assert.match(heading, /data-car-card-desktop-shared-header[\s\S]*?lg:grid-cols-\[minmax\(0,1fr\)_auto\]/);
   assert.match(heading, /data-car-card-desktop-title-row[\s\S]*?h-11[\s\S]*?data-car-card-desktop-actions[\s\S]*?h-11/);
   assert.match(heading, /data-car-card-desktop-title-row[\s\S]*?\{car\.modelName\}/);
@@ -816,4 +816,3 @@ test("desktop-only divider ends exactly at reduced card edge while mobile divide
   assert.match(source, /data-car-card-mobile-lower-band[\s\S]*border-t border-\[#CBD5E1\]/);
   assert.doesNotMatch(header, /data-car-deal-provider-offers/);
 });
-

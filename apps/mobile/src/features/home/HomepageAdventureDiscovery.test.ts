@@ -32,7 +32,8 @@ test("discovery cards use the web route content and existing mobile contracts", 
   ]);
   assert.match(section, /router\.push\(discoverAdventureNavigation\(item, marketplace\)\)/);
   assert.match(section, /event\.stopPropagation\(\); onFavorite\(\);/);
-  assert.match(section, /toggle\(item\.id\)/);
+  assert.match(section, /toggle\(item\.savedDestinationId\)/);
+  assert.match(section, /usePublishedHome/);
 });
 
 test("only fresh, exact-route, provider-backed fares can be displayed", () => {

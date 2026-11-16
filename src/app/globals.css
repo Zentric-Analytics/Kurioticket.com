@@ -2715,3 +2715,13 @@ textarea {
     text-size-adjust: none;
   }
 }
+
+/* The operational workspace never requires motion to communicate status. */
+@media (prefers-reduced-motion: reduce) {
+  [data-platform-health], [data-platform-health] *,
+  [data-application-filter], [data-application-filter] * {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

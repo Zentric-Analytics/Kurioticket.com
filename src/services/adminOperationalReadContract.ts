@@ -1,3 +1,4 @@
+import { applicationSources, type ApplicationSource } from "@/lib/application-source";
 import type { PublicEnvironment } from "@/lib/stagingSafety";
 
 export type AdminOperationalKind = "searches" | "handoffs" | "support" | "deletions";
@@ -24,6 +25,7 @@ type ScopeBase = {
 };
 
 export type AdminSearchScope = ScopeBase & {
+  applicationSource?: ApplicationSource | null;
   environment: PublicEnvironment;
   product: AdminSearchProduct | null;
   status: AdminSearchStatus | null;
@@ -65,6 +67,8 @@ export type AdminOperationalIdentity = {
 };
 
 export type AdminSearchRead = {
+  applicationSource?: ApplicationSource;
+  appVersion?: string;
   id: string;
   requestId: string | null;
   /** Internal search-continuity reference, not an analytics visitor identity. */
@@ -193,7 +197,7 @@ export type AdminOperationalList<T, S> = {
 type ParseResult<T> = { status: "ok"; data: T } | { status: "invalid"; issues: AdminOperationalIssue[] };
 
 const COMMON = ["from", "to", "limit", "cursor"] as const;
-const SEARCH_KEYS = [...COMMON, "environment", "product", "status", "identity", "userId", "visitorId", "provider"] as const;
+const SEARCH_KEYS = [...COMMON, "environment", "product", "status", "identity", "userId", "visitorId", "provider", "applicationSource"] as const;
 const HANDOFF_KEYS = [...COMMON, "environment", "product", "identity", "userId", "visitorId", "provider", "correlation", "sourcePage"] as const;
 const SUPPORT_KEYS = [...COMMON, "status", "priority", "category", "q"] as const;
 const DELETION_KEYS = [...COMMON, "status", "q"] as const;
@@ -303,6 +307,8 @@ export function parseAdminSearchQuery(params: URLSearchParams, fallbackEnvironme
   const base = baseScope(raw.data);
   if (base.status !== "ok") return base;
   const env = environment(raw.data.environment, fallbackEnvironment);
+  const applicationSource = enumValue(raw.data.applicationSource, "applicationSource", applicationSources);
+  if (applicationSource.status !== "ok") return applicationSource;
   const product = enumValue(raw.data.product, "product", ["FLIGHT", "HOTEL", "CAR", "PACKAGE"] as const);
   const status = enumValue(raw.data.status, "status", ["SUCCESS", "PARTIAL", "FAILED"] as const);
   const idFilter = identity(raw.data.identity);
@@ -318,7 +324,7 @@ export function parseAdminSearchQuery(params: URLSearchParams, fallbackEnvironme
   if (provider.status !== "ok") return provider;
   if ((idFilter.data === "guest" || idFilter.data === "unattributed") && userId.data) return invalid("userId", "userId conflicts with this identity filter.");
   if (idFilter.data === "unattributed" && visitorId.data) return invalid("visitorId", "visitorId conflicts with this identity filter.");
-  const scope: AdminSearchScope = { ...base.data, environment: env.data, product: product.data, status: status.data, identity: idFilter.data, userId: userId.data, visitorId: visitorId.data, provider: provider.data };
+  const scope: AdminSearchScope = { ...base.data, applicationSource: applicationSource.data, environment: env.data, product: product.data, status: status.data, identity: idFilter.data, userId: userId.data, visitorId: visitorId.data, provider: provider.data };
   return finish("searches", raw.data, { scope });
 }
 

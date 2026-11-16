@@ -56,7 +56,7 @@ export async function GET(request: Request) {
 
   const outage = getDatabaseOutageAlertSnapshot();
   if (summaryOnly) {
-    const { alerts: _alerts, ...summary } = outage;
+    const summary = Object.fromEntries(Object.entries(outage).filter(([key]) => key !== "alerts"));
     return NextResponse.json(summary);
   }
 

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { createHash } from "node:crypto";
 import { getPrisma } from "@/lib/prisma";
+import type { Prisma, PrismaClient } from "@/generated/prisma/client";
 
 export const savedItemTypes = ["flight", "hotel", "car", "search"] as const;
 export type SavedItemType = (typeof savedItemTypes)[number];
@@ -40,15 +41,41 @@ export async function listUserSavedItems(userId: string, options: { type?: Saved
   const summary = { flights: flights.length, hotels: hotels.length, cars: cars.length, searches: searches.length, total: items.length };
   return { items, summary };
 }
-export async function createUserSavedItem(userId: string, input: CreateSavedItemInput) {
+function stableSavedValue(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(stableSavedValue).join(",")}]`;
+  if (value && typeof value === "object") return `{${Object.entries(value).sort(([a], [b]) => a.localeCompare(b)).map(([key, child]) => `${JSON.stringify(key)}:${stableSavedValue(child)}`).join(",")}}`;
+  return JSON.stringify(value) ?? "null";
+}
+/** Exact retry identity, not a merge of distinct itineraries or historical rows. */
+export function savedRetryKey(userId: string, input: CreateSavedItemInput) {
+  return createHash("sha256").update(stableSavedValue([userId, input])).digest("hex");
+}
+export function createSavedItemWriter(database: () => Pick<PrismaClient, "$transaction">) {
+  return async (userId: string, input: CreateSavedItemInput) => database().$transaction(async tx => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('saved-item-retry'), hashtext(${savedRetryKey(userId, input)}))`;
+    if (input.type === "flight") {
+      const existing = await tx.savedFlight.findFirst({ where: { userId, provider: input.provider, airlineName: input.airlineName, flightNumber: input.flightNumber ?? null, originAirport: input.originAirport, destinationAirport: input.destinationAirport, departureTime: new Date(input.departureTime), arrivalTime: new Date(input.arrivalTime), payload: { equals: input.payload as Prisma.InputJsonValue } } });
+      if (existing) return existing;
+    } else if (input.type === "hotel") {
+      const existing = await tx.savedHotel.findFirst({ where: { userId, provider: input.provider, hotelName: input.hotelName, destination: input.destination, checkIn: new Date(input.checkIn), checkOut: new Date(input.checkOut), payload: { equals: input.payload as Prisma.InputJsonValue } } });
+      if (existing) return existing;
+    } else if (input.type === "search") {
+      const existing = await tx.savedSearch.findFirst({ where: { userId, type: input.searchType.toUpperCase() as "FLIGHT" | "HOTEL" | "CAR" | "PACKAGE", origin: input.origin ?? null, destination: input.destination ?? null, checkIn: input.checkIn ? new Date(input.checkIn) : null, checkOut: input.checkOut ? new Date(input.checkOut) : null, query: { equals: input.query as Prisma.InputJsonValue } } });
+      if (existing) return existing;
+    }
+    return createSavedItemInTransaction(tx, userId, input);
+  });
+}
+export const createUserSavedItem = createSavedItemWriter(getPrisma);
+async function createSavedItemInTransaction(tx: Prisma.TransactionClient, userId: string, input: CreateSavedItemInput) {
   try {
-    if (input.type === "flight") return db().savedFlight.create({ data: { userId, provider: input.provider, airlineName: input.airlineName, flightNumber: input.flightNumber, originAirport: input.originAirport, destinationAirport: input.destinationAirport, departureTime: new Date(input.departureTime), arrivalTime: new Date(input.arrivalTime), price: input.price, currency: input.currency, payload: input.payload as never } });
-    if (input.type === "hotel") return db().savedHotel.create({ data: { userId, provider: input.provider, hotelName: input.hotelName, destination: input.destination, checkIn: new Date(input.checkIn), checkOut: new Date(input.checkOut), totalPrice: input.totalPrice, currency: input.currency, payload: input.payload as never } });
+    if (input.type === "flight") return tx.savedFlight.create({ data: { userId, provider: input.provider, airlineName: input.airlineName, flightNumber: input.flightNumber, originAirport: input.originAirport, destinationAirport: input.destinationAirport, departureTime: new Date(input.departureTime), arrivalTime: new Date(input.arrivalTime), price: input.price, currency: input.currency, payload: input.payload as never } });
+    if (input.type === "hotel") return tx.savedHotel.create({ data: { userId, provider: input.provider, hotelName: input.hotelName, destination: input.destination, checkIn: new Date(input.checkIn), checkOut: new Date(input.checkOut), totalPrice: input.totalPrice, currency: input.currency, payload: input.payload as never } });
     if (input.type === "car") {
       const signature = createHash("sha256").update(JSON.stringify([input.resultId, input.provider.toLowerCase(), input.modelName.toLowerCase(), input.pickupLocation.toLowerCase(), input.dropoffLocation.toLowerCase(), input.pickupDate, input.pickupTime, input.dropoffDate, input.dropoffTime, input.driverAge])).digest("hex");
-      return db().savedCar.create({ data: { userId, signature, provider: input.provider, modelName: input.modelName, categoryLabel: input.categoryLabel, pickupLocation: input.pickupLocation, dropoffLocation: input.dropoffLocation, pickupDate: input.pickupDate, pickupTime: input.pickupTime, dropoffDate: input.dropoffDate, dropoffTime: input.dropoffTime, driverAge: input.driverAge, totalPrice: input.totalPrice, currency: input.currency, payload: input.payload as never } });
+      return tx.savedCar.upsert({ where: { userId_signature: { userId, signature } }, update: {}, create: { userId, signature, provider: input.provider, modelName: input.modelName, categoryLabel: input.categoryLabel, pickupLocation: input.pickupLocation, dropoffLocation: input.dropoffLocation, pickupDate: input.pickupDate, pickupTime: input.pickupTime, dropoffDate: input.dropoffDate, dropoffTime: input.dropoffTime, driverAge: input.driverAge, totalPrice: input.totalPrice, currency: input.currency, payload: input.payload as never } });
     }
-    return db().savedSearch.create({ data: { userId, type: input.searchType.toUpperCase() as "FLIGHT" | "HOTEL" | "CAR" | "PACKAGE", label: input.label, origin: input.origin, destination: input.destination, checkIn: input.checkIn ? new Date(input.checkIn) : null, checkOut: input.checkOut ? new Date(input.checkOut) : null, query: input.query as never } });
+    return tx.savedSearch.create({ data: { userId, type: input.searchType.toUpperCase() as "FLIGHT" | "HOTEL" | "CAR" | "PACKAGE", label: input.label, origin: input.origin, destination: input.destination, checkIn: input.checkIn ? new Date(input.checkIn) : null, checkOut: input.checkOut ? new Date(input.checkOut) : null, query: input.query as never } });
   } catch (error) { if ((error as { code?: string }).code === "P2002") throw new DuplicateSavedItemError("Saved item already exists."); throw error; }
 }
 export async function deleteUserSavedItem(userId: string, input: DeleteSavedItemInput) {

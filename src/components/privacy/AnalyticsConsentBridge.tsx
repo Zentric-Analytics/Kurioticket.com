@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { useSession } from "next-auth/react";
@@ -336,7 +337,7 @@ function WebsiteAnalyticsConsentBridge() {
           </p>
         </div>
         <div className="flex items-center justify-between gap-3 border-t border-slate-200 px-5 py-4">
-          <a href="/legal/cookie-policy" className="text-xs font-medium text-violet-700 underline underline-offset-2">Cookie policy</a>
+          <Link href="/legal/cookie-policy" className="text-xs font-medium text-violet-700 underline underline-offset-2">Cookie policy</Link>
           <div className="flex gap-2">
             {syncState === "error" ? <Button type="button" variant="secondary" size="sm" onClick={retry}>Retry</Button> : null}
             <Button type="button" variant="primary" size="sm" onClick={() => choose(draftAnalytics ? "granted" : "declined")}>Save preferences</Button>

@@ -1,6 +1,7 @@
-import { router, useFocusEffect } from "expo-router";
+import { useAccountRefresh } from "../../storage/useAccountRefresh";
+import { router } from "expo-router";
 import { useCallback, useRef, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { MobileRecentSearch } from "../../api/travelApi";
 import { travelApi } from "../../api/travelApi";
@@ -46,7 +47,7 @@ export function RecentSearchesScreen() {
       if (sequence === recentLoadSequence.current) setRecentLoading(false);
     }
   }, [isAuthenticated]);
-  useFocusEffect(useCallback(() => { void loadServer(); }, [loadServer]));
+  useAccountRefresh(loadServer, () => { recentLoadSequence.current++; setRecent([]); setRecentLoaded(false); setRecentError(""); });
   const beginRecentMutation = (key: string) => {
     if (activeRecentLoadSequence.current !== null) reloadRecentAfterMutations.current = true;
     recentLoadSequence.current += 1;
@@ -91,7 +92,7 @@ export function RecentSearchesScreen() {
   };
   return <SafeAreaView edges={["top", "bottom"]} style={[styles.safe, { backgroundColor: theme.background }]}>
     <View style={[styles.header, hasPopulatedRecent && styles.populatedHeader]}><Pressable accessibilityRole="button" accessibilityLabel="Go back" onPress={() => router.back()} style={styles.back}><FlowIcon name="back" color={theme.icon} size={27} /></Pressable><View style={styles.headerCopy}><Text accessibilityRole="header" style={[styles.title, { color: theme.text }]}>Recent searches</Text><Text style={[styles.description, { color: theme.muted }]}>Recent shows searches you recently performed.</Text></View></View>
-    {!authResolved ? <PageContentState state="loading" pageName="recent searches" /> : !isAuthenticated ? <View style={styles.center}><FlowIcon name="clock" color={flowColors.blue} size={42} /><Text style={[styles.guestTitle, { color: theme.text }]}>Sign in to view recent searches</Text><Text style={[styles.guestText, { color: theme.muted }]}>Your recent searches are private to your account.</Text><Pressable accessibilityRole="button" accessibilityLabel="Sign in" onPress={() => router.push(signInHref("/recent"))} style={styles.primary}><Text style={styles.primaryText}>Sign in</Text></Pressable></View> : recentError && !recentLoaded ? <PageContentState state="error" pageName="recent searches" onRetry={() => void loadServer()} /> : !recentLoaded ? (recentLoading ? <PageContentState state="loading" pageName="recent searches" /> : null) : <ScrollView alwaysBounceVertical={false} bounces={false} contentContainerStyle={!recent.length ? styles.emptyContent : styles.content} overScrollMode="never">
+    {!authResolved ? <PageContentState state="loading" pageName="recent searches" /> : !isAuthenticated ? <View style={styles.center}><FlowIcon name="clock" color={flowColors.blue} size={42} /><Text style={[styles.guestTitle, { color: theme.text }]}>Sign in to view recent searches</Text><Text style={[styles.guestText, { color: theme.muted }]}>Your recent searches are private to your account.</Text><Pressable accessibilityRole="button" accessibilityLabel="Sign in" onPress={() => router.push(signInHref("/recent"))} style={styles.primary}><Text style={styles.primaryText}>Sign in</Text></Pressable></View> : recentError && !recentLoaded ? <PageContentState state="error" pageName="recent searches" onRetry={() => void loadServer()} /> : !recentLoaded ? (recentLoading ? <PageContentState state="loading" pageName="recent searches" /> : null) : <ScrollView alwaysBounceVertical={false} bounces={false} contentContainerStyle={!recent.length ? styles.emptyContent : styles.content} overScrollMode="never" refreshControl={<RefreshControl refreshing={recentLoading} onRefresh={() => { void loadServer(); }} />}>
       {recentError ? <Text accessibilityRole="alert" style={styles.syncError}>{recentError}</Text> : null}
       {recent.length ? <><View style={styles.sectionHeader}><Text style={[styles.sectionTitle, { color: theme.text }]}>Recent</Text><Pressable accessibilityRole="button" accessibilityLabel="Clear recent searches" disabled={recentMutations.size > 0} onPress={() => void clearRecent()} style={styles.clearTouchTarget}><Text style={[styles.clear, recentMutations.size > 0 && styles.disabled]}>Clear all</Text></Pressable></View>{recent.map((item) => {
         const presentation = recentSearchPresentation(item);

@@ -11,14 +11,14 @@ type AuditData = { targetId: string; metadata: { state: string; occurrenceToken?
 function database() {
   const rows: Array<AuditData & { createdAt: Date }> = [];
   let locks = 0;
-  const tx = {
+  const transaction = {
     $executeRaw: async () => { locks++; },
     adminAuditLog: {
       findFirst: async (args: { where: { targetId: string } }) => rows.filter(row => row.targetId === args.where.targetId).at(-1) ?? null,
       create: async ({ data }: { data: AuditData }) => { rows.push({ ...data, createdAt: now }); return data; },
     },
   };
-  return { db: { $transaction: async <T>(run: (transaction: typeof tx) => Promise<T>) => run(tx) }, rows, locks: () => locks };
+  return { db: { $transaction: async <T>(run: (tx: typeof transaction) => Promise<T>) => run(transaction) }, rows, locks: () => locks };
 }
 const { persistExpandedAlertOccurrences } = loadIsolatedModule<{
   persistExpandedAlertOccurrences: (db: ReturnType<typeof database>["db"] | null, environment: "staging" | "production", candidates: readonly AdminAlertCandidate[], states: Record<string, boolean>, now?: Date) => ReturnType<typeof implementation.persistExpandedAlertOccurrences>;

@@ -246,4 +246,3 @@ test("Cars restores tinted tracking bar in rate details across breakpoints", () 
   assert.match(picker, /data-car-rate-provider-alert-row/);
   assert.doesNotMatch(resultsSource, /data-cars-price-alert-sidebar-slot|<CarPriceAlertControl/);
 });
-

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { useFocusEffect } from "expo-router";
+import { useAccountRefresh } from "./useAccountRefresh";
 import { readSession } from "./sessionStorage";
 import { savedRepositoryFor, type SavedSnapshot } from "./savedRepository";
 import { favoriteAction } from "./favoriteAccess";
@@ -10,8 +10,8 @@ const emptySnapshot = (): SavedSnapshot => ({ destinationIds: new Set(), flights
 export function useCanonicalSaved() {
   const [userId, setUserId] = useState<string | null>(null);
   const [owned, setOwned] = useState<{ userId: string | null; value: SavedSnapshot }>({ userId: null, value: emptySnapshot() });
-  const auth = useCallback(() => { void readSession().then((session) => setUserId(session?.user.id ?? null)).catch(() => setUserId(null)); }, []);
-  useFocusEffect(auth);
+  const auth = useCallback(() => { void readSession().then((session) => { const id = session?.user.id ?? null; setUserId(id); if (id) void savedRepositoryFor(id).refresh(); }).catch(() => setUserId(null)); }, []);
+  useAccountRefresh(auth, () => { setUserId(null); setOwned({ userId: null, value: emptySnapshot() }); });
   useEffect(() => {
     if (!userId) { setOwned({ userId: null, value: emptySnapshot() }); return; }
     const repo = savedRepositoryFor(userId);

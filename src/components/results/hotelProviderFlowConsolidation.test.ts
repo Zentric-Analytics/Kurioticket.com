@@ -60,9 +60,11 @@ test("provider-only Hotel search still uses the canonical server search and deta
   const route = ts.createSourceFile("route.ts", searchRoute, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
   const providerCalls: ts.CallExpression[] = [];
   const criteria: ts.VariableDeclaration[] = [];
+  const currencyDeletes: ts.DeleteExpression[] = [];
   function visit(node: ts.Node) {
     if (ts.isCallExpression(node) && ts.isIdentifier(node.expression) && node.expression.text === "searchHotelsByProvider") providerCalls.push(node);
-    if (ts.isVariableDeclaration(node) && ts.isObjectBindingPattern(node.name) && node.name.elements.some((element) => element.dotDotDotToken && element.name.getText(route) === "providerSearch")) criteria.push(node);
+    if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.name.text === "providerSearch") criteria.push(node);
+    if (ts.isDeleteExpression(node) && node.expression.getText(route) === "providerSearch.currency") currencyDeletes.push(node);
     ts.forEachChild(node, visit);
   }
   visit(route);
@@ -70,11 +72,13 @@ test("provider-only Hotel search still uses the canonical server search and deta
   assert.equal(providerCalls[0].arguments[0].getText(route), "providerSearch");
   assert.equal(providerCalls[0].arguments[1].getText(route), "providerMode");
   assert.equal(criteria.length, 1);
-  assert.equal(criteria[0].initializer?.getText(route), "search");
+  assert.equal(criteria[0].initializer?.getText(route), "{ ...search }");
+  assert.equal(currencyDeletes.length, 1);
+  assert.ok(currencyDeletes[0].getStart() < providerCalls[0].getStart());
   const canonicalSearch = { destination: "Fixture City", destinationId: "kplace:123", checkIn: "2030-11-18", checkOut: "2030-11-21", guests: 2, rooms: 1 };
   for (const currency of ["USD", "NGN"]) {
     const search = { ...canonicalSearch, currency };
-    const sanitized = runInNewContext(`const ${criteria[0].getText(route)}; providerSearch`, { search });
+    const sanitized = runInNewContext(`const ${criteria[0].getText(route)}; ${currencyDeletes[0].getText(route)}; providerSearch`, { search });
     assert.deepEqual(JSON.parse(JSON.stringify(sanitized)), canonicalSearch);
     assert.equal(Object.hasOwn(sanitized, "currency"), false);
     assert.equal(search.currency, currency, "display currency remains available to the response/UI");

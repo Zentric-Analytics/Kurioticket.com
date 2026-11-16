@@ -2,6 +2,7 @@ import {
   isAuthorizedTravelInspirationCronRequest,
   processTravelInspirationCampaign,
 } from "@/services/travelInspirationCampaign";
+import { observeScheduledJob } from "@/services/scheduledJobObservation";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -12,7 +13,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const counts = await processTravelInspirationCampaign();
+    const counts = await observeScheduledJob("travel-inspiration", () => processTravelInspirationCampaign());
     return Response.json(counts);
   } catch (error) {
     console.error(

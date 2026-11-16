@@ -11,6 +11,16 @@ type Preferences = typeof customizationPreferenceDefaults;
 
 type StoredPreferences = Preferences & { userId: string };
 
+test("device initialization cannot overwrite preferences already saved by another device", async () => {
+  const current = { ...customizationPreferenceDefaults, userId: "owner", locale: "fr", currency: "EUR", region: "FR" };
+  const { prisma, rows } = createFakePrisma([current]);
+  const response = await handleCustomizationPreferencesPatch("owner", prisma, { locale: "en-us", currency: "USD", region: "US", initializeIfAbsent: true });
+  assert.equal(response.status, 200);
+  assert.equal(rows.get("owner")?.currency, "EUR");
+  const unauthorized = await handleCustomizationPreferencesPatch(null, prisma, { currency: "USD", initializeIfAbsent: true });
+  assert.equal(unauthorized.status, 401);
+});
+
 function createFakePrisma(initialRows: StoredPreferences[] = []) {
   const rows = new Map<string, StoredPreferences>();
 

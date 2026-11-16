@@ -7,6 +7,12 @@ import { AdminOverviewRangeTransitionProvider, type OverviewRange } from "@/comp
 import { getRecentAdminActivity, getSafeSystemStatus } from "@/lib/admin-data";
 import { getAdminOverview } from "@/services/adminOverviewService";
 
+import { redirect } from "next/navigation";
+import { requireAdminApiSession } from "@/lib/admin";
+import { requireAdminSession } from "@/lib/auth-guards";
+import { readPlatformOperations } from "@/services/platformOperationsService";
+import { PlatformOverviewSummary } from "@/components/admin/PlatformOverviewSummary";
+
 export const metadata = { title: "Admin" };
 
 type PageProps = { searchParams?: Promise<{ range?: string }> };
@@ -14,6 +20,8 @@ type PageProps = { searchParams?: Promise<{ range?: string }> };
 // Reporting controls only select valid windows; the backend remains the
 // authority for environment scope, date validation and database totals.
 export default async function AdminPage({ searchParams }: PageProps) {
+  await requireAdminSession("/admin");
+  const access=await requireAdminApiSession(); if ("response" in access && access.response) redirect("/dashboard");
   const selected = (await searchParams)?.range;
   // An unfiltered Overview shows the last 24 hours. Seven- and 30-day
   // windows are explicit choices preserved by the URL when selected.
@@ -25,10 +33,11 @@ export default async function AdminPage({ searchParams }: PageProps) {
   query.set("from", new Date(to.getTime() - durationMs).toISOString());
   query.set("to", to.toISOString());
 
-  const [overview, system, activity] = await Promise.all([
+  const [overview, system, activity, platform] = await Promise.all([
     getAdminOverview(query),
     getSafeSystemStatus(),
     getRecentAdminActivity(),
+    readPlatformOperations(range === "30d" ? 720 : range === "7d" ? 168 : 24),
   ]);
 
   return (
@@ -37,6 +46,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
       hideHeader
     >
       <AdminSectionCard className="min-w-0 p-4 sm:p-5 lg:p-6">
+        <PlatformOverviewSummary data={platform} hours={range === "30d" ? 720 : range === "7d" ? 168 : 24}/>
         {overview.status === "ok" ? (
           <AdminOverviewRangeTransitionProvider range={range}>
           <AdminOverviewDashboard

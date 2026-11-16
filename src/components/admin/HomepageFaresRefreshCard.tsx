@@ -1295,15 +1295,6 @@ function SelectedRouteDetails({
   );
 }
 
-function MarketMiniMetric({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded-lg bg-white/80 p-2 ring-1 ring-slate-100">
-      <dt className="font-bold uppercase tracking-wide text-muted">{label}</dt>
-      <dd className="mt-0.5 font-extrabold text-navy">{value}</dd>
-    </div>
-  );
-}
-
 function RouteDetailsTable({
   group,
   routes,
@@ -2259,10 +2250,6 @@ function readSnapshotStatus(
 
 function readCode(value: unknown) {
   return typeof value === "string" && /^[A-Z]{3}$/.test(value) ? value : undefined;
-}
-
-function sumCountRecord(record: Record<string, number>) {
-  return Object.values(record).reduce((total, value) => total + value, 0);
 }
 
 function readCount(value: unknown) {

@@ -188,4 +188,3 @@ test("Cars alert preserves authenticated API flow and selected-offer payload", (
   assert.match(alert, /response\.status === 401/);
   assert.match(alert, /response\.status === 409/);
 });
-

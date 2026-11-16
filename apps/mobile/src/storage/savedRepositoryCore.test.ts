@@ -32,6 +32,37 @@ function harness(initial: MobileSavedItem[] = []) {
   return { repository, creates, removes, setCreate: (fn: typeof createImpl) => { createImpl = fn; }, setRemove: (fn: typeof removeImpl) => { removeImpl = fn; } };
 }
 
+test("a failed concurrent save cannot roll back another successful save", async () => {
+  const h = harness(); await h.repository.refresh();
+  const failed = deferred<{ item: MobileSavedItem }>();
+  const successfulFlight = flight("b", "other-provider");
+  h.setCreate(value => value.provider === "duffel" ? failed.promise : Promise.resolve({ item: { ...value, id: "successful", createdAt: "2030-01-01" } as MobileSavedItem }));
+  const first = h.repository.toggleFlight(flight());
+  const rejected = assert.rejects(first, /offline/);
+  await h.repository.toggleFlight(successfulFlight);
+  failed.reject(new Error("offline")); await rejected;
+  assert.equal(h.repository.snapshot().flights.has(flightSavedSignature(successfulFlight)), true);
+  assert.equal(h.repository.snapshot().flights.has(flightSavedSignature(flight())), false);
+});
+test("deactivation during a request clears private data and ignores late responses", async () => {
+  const h = harness([serverItem(flight())]); await h.repository.refresh();
+  const pending = deferred<{ item: MobileSavedItem }>(); h.setCreate(() => pending.promise);
+  const operation = h.repository.toggleFlight(flight("second", "other-provider"));
+  h.repository.deactivate();
+  pending.resolve({ item: serverItem(flight("second", "other-provider")) }); await operation;
+  assert.equal(h.repository.snapshot().items.length, 0);
+  await assert.rejects(h.repository.toggleFlight(flight()), /Account changed/);
+});
+test("late cleanup cannot erase a replacement repository's newer account cache", async () => {
+  let cache: MobileSavedItem[] = [];
+  const item = serverItem(flight());
+  const deps: SavedRepositoryDependencies = { readCache: async () => cache, writeCache: async (_user, items) => { cache = items; }, list: async () => ({ items: [item], summary: {} }), create: async () => ({ item }), remove: async () => undefined, readDestinations: async () => [], writeDestinations: async () => undefined, readFlights: async () => [], writeFlights: async () => undefined };
+  const old = new SavedRepository("same-account", deps); await old.refresh();
+  old.deactivate(() => false); // The registry has already installed a new owner.
+  const replacement = new SavedRepository("same-account", deps); await replacement.refresh();
+  assert.equal(cache[0].id, item.id); assert.equal(old.snapshot().items.length, 0);
+});
+
 test("canonical flight identity ignores transient offer ids but preserves provider and departure", () => {
   assert.equal(flightSavedSignature(flight("same")), flightSavedSignature(flight("same")));
   assert.equal(flightSavedSignature(flight("offer-old")), flightSavedSignature(flight("offer-new")));

@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { AdminButton, AdminDataTable, AdminEmptyState, AdminFilterBar, AdminInput, AdminPageShell, AdminSelect, AdminStatusBadge } from "@/components/admin/AdminPageShell";
+import { AdminButton, AdminDataTable, AdminEmptyState, AdminFilterBar, AdminInput, AdminSelect, AdminStatusBadge } from "@/components/admin/AdminPageShell";
 import { SearchWorkspaceBackLink } from "@/components/admin/SearchWorkspaceBackLink";
 import { ProviderHandoffFilters } from "@/components/admin/ProviderHandoffFilters";
 import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";

@@ -89,10 +89,10 @@ test("homepage fare paths authorize and render published CMS routes", () => {
   assert.match(fareService, /isCmsManaged/);
 });
 
-test("Phase 3 does not move native mobile homepage merchandising onto CMS", () => {
-  const mobileHome = readFileSync("apps/mobile/src/features/home/HomepageAdventureDiscoveryData.ts", "utf8");
-  assert.match(mobileHome, /getMarketplaceHomeMerchandising/);
-  assert.doesNotMatch(mobileHome, /api\/content\/homepage/);
+test("native merchandising now consumes the same published CMS contract without replacing its layout", () => {
+  const mobileHome = readFileSync("apps/mobile/src/features/home/HomepageAdventureDiscovery.tsx", "utf8");
+  assert.match(mobileHome, /usePublishedHome/);
+  assert.match(mobileHome, /splitAdventureDiscoveryRows/);
 });
 
 test("homepage CMS overview links use valid JSX and preserve overview navigation context", () => {

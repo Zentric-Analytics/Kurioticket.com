@@ -6,7 +6,7 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState } f
 import { Search, X, Clock, Users, Activity, Server } from "lucide-react";
 import type { AdminSearchResults } from "@/lib/adminSearchResults";
 
-const categories = ["All", "Users", "Searches", "Providers"] as const;
+const categories = ["All", "Pages", "Users", "Searches", "Providers"] as const;
 type Category = typeof categories[number];
 type SearchContextValue = {
   open: boolean; query: string; setQuery: (value: string) => void;
@@ -64,7 +64,7 @@ export function AdminSearchHeader({ children }: { children: React.ReactNode }) {
   const { open, query, setQuery, close, remember } = useSearch();
   const input = useRef<HTMLInputElement>(null);
   useEffect(() => { if (open) input.current?.focus(); }, [open]);
-  return <>{open ? <form role="search" onSubmit={(event) => { event.preventDefault(); remember(query); }} className="flex min-h-16 w-full items-center gap-3 px-4 sm:px-6 lg:px-10"><Search size={17} className="shrink-0 text-[#004bb8]" /><input ref={input} value={query} onChange={(event) => setQuery(event.target.value)} aria-label="Search users, searches, providers" placeholder="Search users, searches, providers..." maxLength={120} className="h-10 min-w-0 flex-1 bg-transparent text-sm text-[#141414] outline-none" /><button type="button" onClick={close} className="focus-ring flex shrink-0 items-center gap-2 border-l border-zinc-200 pl-3 text-xs text-[#6b6b6b]"><X size={14} /><span className="hidden sm:inline">Close search</span><kbd>Esc</kbd></button></form> : children}</>;
+  return <>{open ? <form role="search" onSubmit={(event) => { event.preventDefault(); remember(query); }} className="flex min-h-16 w-full items-center gap-3 px-4 sm:px-6 lg:px-10"><Search size={17} className="shrink-0 text-[#004bb8]" /><input ref={input} value={query} onChange={(event) => setQuery(event.target.value)} aria-label="Search admin workspaces and records" placeholder="Search pages, users, searches, providers..." maxLength={120} className="h-10 min-w-0 flex-1 bg-transparent text-sm text-[#141414] outline-none" /><button type="button" onClick={close} className="focus-ring flex shrink-0 items-center gap-2 border-l border-zinc-200 pl-3 text-xs text-[#6b6b6b]"><X size={14} /><span className="hidden sm:inline">Close search</span><kbd>Esc</kbd></button></form> : children}</>;
 }
 
 export function AdminSearchContent({ children }: { children: React.ReactNode }) {
@@ -94,16 +94,16 @@ function SearchResults() {
   if (!q) return <section aria-label="Recent searches"><div className="flex items-center justify-between border-b border-zinc-200 pb-3"><h2 className="text-base font-semibold">Recent searches</h2>{recent.length ? <button onClick={() => clearRecent()} className="focus-ring text-xs text-[#6b6b6b]">Clear recent</button> : null}</div>{recent.length ? recent.map((term) => <div key={term} className="flex items-center gap-3 border-b border-zinc-100 py-3"><Clock size={15} className="text-[#6b6b6b]" /><button onClick={() => setQuery(term)} className="focus-ring min-w-0 break-words text-left text-sm">{term}</button><button onClick={() => clearRecent(term)} aria-label={`Remove recent search ${term}`} className="focus-ring p-1 text-[#6b6b6b]"><X size={14} /></button></div>) : <p className="py-5 text-sm text-[#6b6b6b]">Search by name, email, route, product, provider or status. Your recent searches will appear here.</p>}</section>;
   const data = response?.query === q ? response.data : undefined;
   const error = response?.query === q ? response.error : undefined;
-  const groups = [{ name: "Users", key: "users", icon: Users }, { name: "Searches", key: "searches", icon: Activity }, { name: "Providers", key: "providers", icon: Server }] as const;
+  const groups = [{name:"Pages",key:"pages",icon:Search}, { name: "Users", key: "users", icon: Users }, { name: "Searches", key: "searches", icon: Activity }, { name: "Providers", key: "providers", icon: Server }] as const;
   const shown = groups.filter((group) => category === "All" || category === group.name);
-  const count = data ? shown.reduce((total, group) => total + data[group.key].length, 0) : 0;
+  const count = data ? shown.reduce((total, group) => total + (data[group.key]?.length ?? 0), 0) : 0;
   return <section aria-label="Admin search results">
     <div aria-label="Search categories" className="mb-6 flex flex-wrap border-b border-zinc-200">{categories.map((name) => <button key={name} onClick={() => setCategory(name)} aria-pressed={category === name} className={`focus-ring border-b-2 px-4 py-2 text-sm ${category === name ? "border-[#004bb8] text-[#004bb8]" : "border-transparent text-[#6b6b6b]"}`}>{name}</button>)}</div>
     <p role="status" className="sr-only">{error || (!data ? "Searching" : `${count} results`)}</p>
     {!data && !error ? <p className="text-sm text-[#6b6b6b]">Searching…</p> : null}
     {error ? <div className="text-sm text-[#6b6b6b]">{error}<button className="focus-ring ml-3 text-[#004bb8]" onClick={() => { setResponse(null); setRetry((value) => value + 1); }}>Retry</button></div> : null}
-    {data?.databaseUnavailable ? <p className="mb-4 text-sm text-amber-800">User and search-log results are temporarily unavailable. Provider results are shown below.</p> : null}
+    {data?.databaseUnavailable ? <p className="mb-4 text-sm text-amber-800">User and search-log results are temporarily unavailable. Available workspace and provider results are shown below.</p> : null}
     {data && count === 0 ? <p className="text-sm text-[#6b6b6b]">No matches for “{q}”{category !== "All" ? ` in ${category.toLowerCase()}` : ""}.</p> : null}
-    {data ? shown.map(({ name, key, icon: Icon }) => data[key].length ? <section key={key} className="mb-6"><h2 className="mb-2 text-xs font-medium uppercase tracking-wide text-[#6b6b6b]">{name} · {data[key].length}</h2><ul>{data[key].map((item) => <li key={item.id}><Link href={item.href} onClick={() => { remember(q); close(); }} className="focus-ring flex items-center gap-3 border-b border-zinc-200 py-3 text-sm hover:bg-blue-50"><Icon size={16} className="shrink-0 text-[#6b6b6b]" /><span className="min-w-0 flex-1 break-words font-medium text-[#141414]">{item.title}</span><span className="hidden max-w-[35%] truncate text-xs text-[#6b6b6b] md:block">{item.detail}</span><span className="shrink-0 text-xs text-[#6b6b6b]">{item.status}</span></Link></li>)}</ul></section> : null) : null}
+    {data ? shown.map(({ name, key, icon: Icon }) => data[key]?.length ? <section key={key} className="mb-6"><h2 className="mb-2 text-xs font-medium uppercase tracking-wide text-[#6b6b6b]">{name} · {data[key].length}</h2><ul>{data[key]?.map((item) => <li key={item.id}><Link href={item.href} onClick={() => { remember(q); close(); }} className="focus-ring flex items-center gap-3 border-b border-zinc-200 py-3 text-sm hover:bg-blue-50"><Icon size={16} className="shrink-0 text-[#6b6b6b]" /><span className="min-w-0 flex-1 break-words font-medium text-[#141414]">{item.title}</span><span className="hidden max-w-[35%] truncate text-xs text-[#6b6b6b] md:block">{item.detail}</span><span className="shrink-0 text-xs text-[#6b6b6b]">{item.status}</span></Link></li>)}</ul></section> : null) : null}
   </section>;
 }

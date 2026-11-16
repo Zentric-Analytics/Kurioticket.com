@@ -9,7 +9,7 @@ const routeSource = readFileSync(fileURLToPath(new URL("../../../app/faq.tsx", i
 
 test("FAQ route uses the dedicated native mobile FAQ screen", () => {
   assert.match(routeSource, /MobileFaqScreen/);
-  assert.match(screenSource, /getGeneralFaqs/);
+  assert.match(screenSource, /usePublishedFaqs/);
   assert.doesNotMatch(screenSource, /TextInput/);
   assert.doesNotMatch(screenSource, /faqSearch/);
   assert.doesNotMatch(screenSource, /clearSearch/);

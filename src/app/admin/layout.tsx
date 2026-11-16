@@ -5,19 +5,9 @@ import { requireAdminSession } from "@/lib/auth-guards";
 import { isStagingEnvironment } from "@/lib/stagingSafety";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  let session;
   try {
-    const session = await requireAdminSession("/admin");
-
-    return (
-      <AdminHorizontalShell
-        adminEmail={session.user.email}
-        adminName={session.user.name}
-        adminRole={session.user.role}
-        showPreviewTesters={isStagingEnvironment()}
-      >
-        {children}
-      </AdminHorizontalShell>
-    );
+    session = await requireAdminSession("/admin");
   } catch (error) {
     const system = await getSafeSystemStatus();
     if (!system.databaseConfigured || system.databaseConnected) throw error;
@@ -49,4 +39,15 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       </AdminHorizontalShell>
     );
   }
+    return (
+      <AdminHorizontalShell
+        adminEmail={session.user.email}
+        adminName={session.user.name}
+        adminRole={session.user.role}
+        showPreviewTesters={isStagingEnvironment()}
+      >
+        {children}
+      </AdminHorizontalShell>
+    );
+
 }

@@ -11,7 +11,7 @@ test("inline admin search preserves keyboard focus, account recents, query cance
     const trigger = page.getByRole("button", { name: "Search Kurioticket admin" });
     await trigger.focus();
     await page.keyboard.press("Control+k");
-    const input = page.getByRole("textbox", { name: "Search users, searches, providers" });
+    const input = page.getByRole("textbox", { name: "Search admin workspaces and records" });
     await input.waitFor();
     assert.equal(await input.evaluate((node) => node === document.activeElement), true);
     assert.equal(await page.getByText("Owner recent", { exact: true }).count(), 1);
@@ -22,8 +22,11 @@ test("inline admin search preserves keyboard focus, account recents, query cance
     await input.fill("current");
     await page.waitForFunction("window.requests.length===2");
     assert.equal(await page.evaluate("window.requests[0].signal.aborted"), true);
-    await page.evaluate(`window.requests[1].resolve({ok:true,json:async()=>({users:[{id:'u',href:'/admin/users/u',title:'Current user',detail:'Fixture',status:'ACTIVE'}],searches:[],providers:[{id:'p',href:'/admin/providers',title:'Fixture provider',detail:'Fixture',status:'OK'}]})})`);
+    await page.evaluate(`window.requests[1].resolve({ok:true,json:async()=>({pages:[{id:'page-health',href:'/admin/system',title:'Platform Health',detail:'Workspace',status:'AVAILABLE'}],users:[{id:'u',href:'/admin/users/u',title:'Current user',detail:'Fixture',status:'ACTIVE'}],searches:[],providers:[{id:'p',href:'/admin/providers',title:'Fixture provider',detail:'Fixture',status:'OK'}]})})`);
     await page.getByText("Current user", { exact: true }).waitFor();
+    await page.getByRole("button", { name: "Pages", exact: true }).click();
+    assert.equal(await page.getByRole("link", { name: /Platform Health/ }).getAttribute("href"), "/admin/system");
+    assert.equal(await page.getByText("Current user", { exact: true }).count(), 0);
     await page.getByRole("button", { name: "Providers", exact: true }).click();
     assert.equal(await page.getByText("Current user", { exact: true }).count(), 0);
     assert.equal(await page.getByText("Fixture provider", { exact: true }).count(), 1);

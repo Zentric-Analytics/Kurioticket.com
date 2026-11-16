@@ -195,7 +195,7 @@ test("repository normalization preserves the newest canonical duplicate", () => 
   ]);
   assert.deepEqual(cards.map((saved) => saved.id), ["new", "flight"]);
   const repository = source("src/storage/savedRepositoryCore.ts");
-  assert.match(repository, /items=canonicalItemsNewestFirst\(items\)/);
+  assert.match(repository, /items\s*=\s*canonicalItemsNewestFirst\(items\)/);
   assert.doesNotMatch(repository, /new Map\(items\.map\(item=>\[savedSignature\(item\),item\]\)\)/);
 });
 
@@ -239,7 +239,7 @@ test("legacy destination and flight migration remains repository-only", () => {
   assert.match(repository, /mapDestinationToSaved/);
   assert.match(repository, /mapFlightToSaved/);
   assert.match(repository, /previous state was restored/);
-  assert.match(repository, /requested!==this\.revision/);
+  assert.match(repository, /requested === this\.revision/);
 });
 
 

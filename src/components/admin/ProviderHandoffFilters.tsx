@@ -88,9 +88,7 @@ export function ProviderHandoffFilters({
     latestProviderDraft.current = initial.provider;
     setValues(initial);
   }, [
-    initial.product, initial.identity, initial.correlation,
-    initial.provider, initial.environment,
-    scope.userId, scope.visitorId, scope.from, scope.to, scope.sourcePage,
+    initial, scope,
   ]);
   useEffect(() => () => {
     if (timeout.current) clearTimeout(timeout.current);

@@ -150,7 +150,7 @@ test("desktop typography polish leaves the established mobile Cars hierarchy int
 
   const mobileCard = card.slice(
     card.indexOf("data-car-card-mobile-main"),
-    card.indexOf('data-region="heading"'),
+    card.indexOf('data-region="image"'),
   );
   assert.match(
     mobileCard,

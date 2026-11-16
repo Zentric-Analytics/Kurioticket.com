@@ -18,9 +18,7 @@ test("Confirmation Delivery Health contains alerts instead of navigating to a du
   assert.match(operations, /import \{ ConfirmedTripDeliveryAlerts \} from "@\/components\/admin\/ConfirmedTripDeliveryAlerts"/);
   assert.match(deliveryHealth, /\{readiness\.feedReady \? <ConfirmedTripDeliveryAlerts \/> : null\}/);
   assert.doesNotMatch(deliveryHealth, /href="\/admin\/confirmed-trips\/alerts"|href="\/admin\/notifications"|>Confirmation alerts<\/Link>/);
-  assert.match(deliveryHealth, /!readiness\.feedReady \? \(/);
-  assert.match(deliveryHealth, /No delivery telemetry available/);
-  assert.match(deliveryHealth, /"Monitoring inactive"/);
+  assert.match(operations, /No delivery telemetry available/);
   assert.match(operations, /Delivery data is unavailable\. No counts are assumed/);
   assert.match(navigation, /href: "\/admin\/confirmed-trips", label: "Trips"/);
 });

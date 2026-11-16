@@ -2,7 +2,7 @@ import { expect } from "@playwright/test";
 import path from "node:path";
 
 // Runs only against the isolated QA app. Never acknowledges a live alert.
-export async function verifyNotificationPanel({ page, root, output, width }) {
+export async function verifyNotificationPanel({ page, output, width }) {
   const bell = page.getByRole("button", { name: /^(?:\d+ admin alerts need attention|Admin notifications)$/ });
   const dialog = page.getByRole("dialog", { name: "Notifications", exact: true });
   const startingUrl = page.url();
@@ -107,7 +107,7 @@ export async function verifyNotificationPanel({ page, root, output, width }) {
     }
     if (mode === "loading" && route.request().url().includes("panel=1")) await gate;
     if (mode === "error") return route.fulfill({ status: 503, json: { error: "Synthetic QA failure" } });
-    const { alerts, ...summary } = snapshot;
+    const summary = Object.fromEntries(Object.entries(snapshot).filter(([key]) => key !== "alerts"));
     return route.fulfill({ json: route.request().url().includes("summary=1") ? summary : snapshot });
   };
   await page.route(routePattern, handler);

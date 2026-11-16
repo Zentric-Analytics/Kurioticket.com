@@ -90,10 +90,11 @@ export function SupportTicketStatusControl({ ticketId, status }: { ticketId: str
   const [error, setError] = useState<string | null>(null);
   const [isStatusPending, startStatusTransition] = useTransition();
 
-  const [previousStatus, setPreviousStatus] = useState(status);
-  if (previousStatus !== status) {
-    setPreviousStatus(status);
-    setSelectedStatus(status);
+  const syncKey = JSON.stringify([ticketId,status]);
+  const [previousSyncKey, setPreviousSyncKey] = useState(syncKey);
+  if (previousSyncKey !== syncKey) {
+    setPreviousSyncKey(syncKey);
+    setSelectedStatus(status); setError(null); setStatusMessage(null);
   }
 
   function updateStatus() {

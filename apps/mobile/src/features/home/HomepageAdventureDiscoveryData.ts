@@ -1,6 +1,6 @@
 import { getMarketplaceHomeMerchandising } from "../../../../../src/shared/home/homeMerchandising";
 
-export type HomepageAdventureDiscoveryItem = { id: string; title: string; originCode: string; destinationCode: string; routeNote: string; image: { uri: string }; imageAlt: string };
+export type HomepageAdventureDiscoveryItem = { id: string; title: string; originCode: string; destinationCode: string; routeNote: string; image: { uri: string }; imageAlt: string; savedDestinationId?: string };
 
 export function getHomepageAdventureDiscoveryItems(marketCountryCode: string, assetOrigin: string): readonly HomepageAdventureDiscoveryItem[] {
   return getMarketplaceHomeMerchandising(marketCountryCode).adventureRoutes.map((item) => ({
