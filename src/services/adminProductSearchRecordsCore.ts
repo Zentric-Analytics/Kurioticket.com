@@ -116,7 +116,16 @@ function parseCursor(value: string | null, expected: Pick<SearchCursor, "product
       || !isIso(data.asOf) || !isIso(data.at) || typeof data.id !== "string" || !ID.test(data.id)
       || Date.parse(data.at) > Date.parse(data.asOf)
       || Date.parse(data.asOf) > now.getTime() + 60_000) return { ok: false };
-    return { ok: true, cursor: data as SearchCursor };
+    return { ok: true, cursor: {
+      v: 1,
+      product: expected.product,
+      filter: expected.filter,
+      window: expected.window,
+      environment: expected.environment,
+      asOf: data.asOf,
+      at: data.at,
+      id: data.id,
+    } };
   } catch {
     return { ok: false };
   }
