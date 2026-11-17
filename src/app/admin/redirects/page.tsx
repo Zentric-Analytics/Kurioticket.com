@@ -1,11 +1,12 @@
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 
 import { AdminButton, AdminDataTable, AdminEmptyState, AdminFilterBar, AdminInput, AdminSelect, AdminStatusBadge } from "@/components/admin/AdminPageShell";
 import { ProviderHandoffFilters } from "@/components/admin/ProviderHandoffFilters";
 import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
 import { SearchWorkspacePanelFrame } from "@/components/admin/SearchWorkspacePanelFrame";
 import { formatDateTime } from "@/lib/admin-data";
-import { handoffDetailHref } from "@/lib/adminReferralHandoffNavigation";
+import { handoffDetailHref, referralAttributionReturnHref } from "@/lib/adminReferralHandoffNavigation";
 import { handoffNextPageHref, handoffPreviousPageHref } from "@/lib/adminHandoffPagination";
 import { adminOperationalReads } from "@/services/adminOperationalReadService";
 
@@ -15,6 +16,7 @@ type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
 export default async function AdminRedirectsPage({ searchParams, embedded = false }: { embedded?: boolean; searchParams: SearchParams }) {
   const raw = await searchParams;
+  const referralReturnHref = referralAttributionReturnHref(raw);
   const params = toParams(raw);
   if (!params.has("limit")) params.set("limit", "50");
   const result = await adminOperationalReads.handoffs.list(params);
@@ -94,6 +96,14 @@ export default async function AdminRedirectsPage({ searchParams, embedded = fals
   return (
     <section className="w-full min-w-0 bg-white text-[#0F172A]">
       <h1 className="sr-only">Provider Handoffs</h1>
+      {referralReturnHref ? (
+        <nav aria-label="Return to Referral Attribution" className="mb-4 border-b border-[#D8E1EC] pb-3">
+          <Link href={referralReturnHref}
+            className="inline-flex items-center gap-2 text-[13px] font-medium text-[#004BB8] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
+            <ArrowLeft size={15} aria-hidden="true" /> Back to Referral Attribution
+          </Link>
+        </nav>
+      ) : null}
       {one(raw.sourcePage) ? (
         <p className="mb-2 text-[12px] text-[#475569]">Source page: <span className="font-semibold text-[#020617]">{one(raw.sourcePage)}</span> <Link href={"/admin/redirects?" + (() => { const params = toParams(raw); params.delete("sourcePage"); params.delete("cursor"); return params.toString(); })()} className="ml-2 font-medium text-[#004BB8] hover:underline">Clear source</Link></p>
       ) : null}
@@ -111,6 +121,7 @@ export default async function AdminRedirectsPage({ searchParams, embedded = fals
           from: one(raw.from),
           to: one(raw.to),
           sourcePage: one(raw.sourcePage),
+          referralDays: one(raw.referralDays),
         }}
       />
       {result.status === "ok" ? (
@@ -218,7 +229,7 @@ function one(value: string | string[] | undefined) { return typeof value === "st
 function toParams(raw: Record<string, string | string[] | undefined>) {
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(raw)) {
-    if (key === "pageTrail") continue;
+    if (key === "pageTrail" || key === "referralDays") continue;
     if (Array.isArray(value)) value.forEach((item) => params.append(key, item));
     else if (value) params.set(key, value);
   }
