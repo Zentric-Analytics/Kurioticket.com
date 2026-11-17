@@ -18,6 +18,7 @@ type Database = Pick<PrismaClient, "searchHistory" | "journeyEvent">;
 type Dependencies = {
   authorize: () => Promise<boolean>;
   database: () => Database | null;
+  environment: () => PublicEnvironment;
 };
 
 const MAX_EVENTS = 25;
@@ -90,6 +91,11 @@ export function createAdminSearchScopedActivityReader(deps: Dependencies) {
       }
       const pagination = decodeCursor(params.get("cursor"), searchId, environment);
       if (!pagination.ok) return invalid("cursor", "Cursor does not match this search.");
+      if (environment !== deps.environment()) {
+        // A Search Detail may be inspected across environments, but activity must
+        // never be inferred from another deployment's customer or guest history.
+        return { status: "ok", data: { events: [], nextCursor: null, searchOnly: true } };
+      }
       const db = deps.database();
       if (!db) return { status: "unavailable" };
 
@@ -122,7 +128,9 @@ export function createAdminSearchScopedActivityReader(deps: Dependencies) {
           visitorId: search.visitorId,
           visitor: { is: eligibleVisitor },
         } },
-        OR: [
+        AND: [
+          { OR: [{ product: search.type }, { product: null }] },
+          { OR: [
           { type: { in: ["SEARCH_COMPLETED", "RESULTS_VIEWED", "OFFER_SELECTED"] }, redirectLogId: null },
           ...(search.requestId ? [{
             type: "PROVIDER_HANDOFF_STARTED" as const,
@@ -134,13 +142,14 @@ export function createAdminSearchScopedActivityReader(deps: Dependencies) {
               ],
             } },
           }] : []),
-        ],
-        ...(cursor ? { AND: [{
+          ] },
+          ...(cursor ? [{
           OR: [
             { createdAt: { gt: new Date(cursor.at) } },
             { createdAt: new Date(cursor.at), id: { gt: cursor.id } },
           ],
-        }] } : {}),
+        }] : []),
+        ],
       };
 
       const rows: EventRecord[] = await db.journeyEvent.findMany({
@@ -158,7 +167,7 @@ export function createAdminSearchScopedActivityReader(deps: Dependencies) {
           id: event.id,
           stage: event.type,
           occurredAt: event.createdAt.toISOString(),
-          provider: event.provider?.trim().slice(0, 100) || null,
+          provider: event.provider?.replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, 100) || null,
         }));
       const last = page.at(-1);
       return { status: "ok", data: {
