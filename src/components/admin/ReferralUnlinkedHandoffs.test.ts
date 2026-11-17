@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -18,4 +19,43 @@ test("Referral Attribution unlinked handoffs are an inline, collapsed control ra
   assert.match(html, /hidden=""/);
   assert.doesNotMatch(html, /href="\/admin\/(?:redirects|searches)/);
   assert.doesNotMatch(html, /Loading provider handoffs/);
+});
+
+const source = readFileSync("src/components/admin/ReferralUnlinkedHandoffs.tsx", "utf8");
+
+test("Provider and Product filters reuse the polished accessible monitor select without new navigation", () => {
+  assert.match(source, /<SearchMonitorSelect label="Provider" name="provider" appearance="fare"/);
+  assert.match(source, /<SearchMonitorSelect label="Product" name="product" appearance="fare"/);
+  assert.match(source, /onValueChange=\{value => \{ setProvider\(value\); resetPage\(\); \}\}/);
+  assert.match(source, /onValueChange=\{value => \{ setProduct\(value as ProductFilter\); resetPage\(\); \}\}/);
+  assert.match(source, /referralUnlinkedRecordsParams/);
+  assert.doesNotMatch(source, /router\.push|router\.replace|\/admin\/redirects|\/admin\/searches/);
+});
+
+test("Refresh control preserves selected filters, existing rows, and current cursor while loading", () => {
+  assert.match(source, /<RefreshCw size=\{15\}/);
+  assert.match(source, /loadState === "loading" \? "Refreshing…" : "Refresh records"/);
+  assert.match(source, /disabled=\{loadState === "loading"\}/);
+  assert.match(source, /setReload\(value => value \+ 1\)/);
+  assert.match(source, /cache: "no-store"/);
+  assert.match(source, /credentials: "include"/);
+  assert.match(source, /loadState === "loading" && list/);
+  assert.doesNotMatch(source, /onClick=\{\(\) => \{\s*setPageIndex\(0\);\s*setReload/);
+});
+
+test("Expanded details remain a read-only, grouped card displaying all existing record fields", () => {
+  assert.match(source, /aria-label="Provider handoff record details"/);
+  assert.match(source, /Handoff information/);
+  assert.match(source, /Source &amp; destination/);
+  assert.match(source, /Identity &amp; correlation/);
+  assert.match(source, /max-w-\[960px\]/);
+  assert.match(source, /Search link: \{handoff\.searchCorrelation\.kind === "exact" \? "Verified" : "Unavailable"\}/);
+  for (const field of [
+    "Handoff ID", "Provider", "Product", "Route or property", "Price", "Created",
+    "Source page", "Destination domain", "Environment", "Identity", "User ID", "Visitor ID",
+  ]) {
+    assert.ok(source.includes('label="' + field + '"'), field);
+  }
+  assert.match(source, /setSelectedId\(current => current === handoff\.id \? null : handoff\.id\)/);
+  assert.match(source, /<td colSpan=\{9\}/);
 });
