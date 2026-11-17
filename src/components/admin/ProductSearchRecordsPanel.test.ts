@@ -4,7 +4,7 @@ import test from "node:test";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
-import { ProductSearchJumpLink, ProductSearchRecordsPanel } from "./ProductSearchRecordsPanel";
+import { ProductSearchRecordsPanel } from "./ProductSearchRecordsPanel";
 
 const panelSource = readFileSync("src/components/admin/ProductSearchRecordsPanel.tsx", "utf8");
 const hotelSource = readFileSync("src/app/admin/hotels/page.tsx", "utf8");
@@ -14,20 +14,16 @@ const service = readFileSync("src/services/adminProductSearchRecordsService.ts",
 const listRoute = readFileSync("src/app/api/admin/providers/search-records/route.ts", "utf8");
 const detailRoute = readFileSync("src/app/api/admin/providers/search-records/[id]/route.ts", "utf8");
 
-test("same-page links target the correct product directory without cross-department navigation", () => {
-  const hotel = renderToStaticMarkup(createElement(ProductSearchJumpLink, { product: "HOTEL" }));
-  const car = renderToStaticMarkup(createElement(ProductSearchJumpLink, { product: "CAR" }));
-  assert.match(hotel, /href="#hotel-search-records"/);
-  assert.match(hotel, /View hotel searches/);
-  assert.match(car, /href="#car-search-records"/);
-  assert.match(car, /View car searches/);
+test("both product pages remove redundant header search links without losing records or navigation isolation", () => {
   for (const source of [hotelSource, carSource]) {
     assert.doesNotMatch(source, /\/admin\/searches\/|\/admin\/journeys/);
-    assert.match(source, /<ProductSearchJumpLink product=/);
+    assert.doesNotMatch(source, /ProductSearchJumpLink|View hotel searches|View car searches/);
     assert.match(source, /<ProductSearchRecordsPanel product=/);
     assert.match(source, /<OperationsMetricStrip>/);
     assert.match(source, /<OperationsProviderIssues/);
   }
+  assert.doesNotMatch(panelSource, /export function ProductSearchJumpLink/);
+  assert.match(panelSource, /window.location.hash === "#" \+ sectionId/);
 });
 
 test("both product directories render independently accessible, responsive read-only record tables", () => {
