@@ -4,16 +4,17 @@ import test from "node:test";
 
 const hotelsPage = readFileSync("src/app/admin/hotels/page.tsx", "utf8");
 const service = readFileSync("src/services/adminHotelOperationsService.ts", "utf8");
+const recordsPanel = readFileSync("src/components/admin/ProductSearchRecordsPanel.tsx", "utf8");
 
 test("hotel admin is an operational overview rather than a readiness-only page", () => {
   assert.match(hotelsPage, /title="Hotel Operations"/);
   assert.match(hotelsPage, /getHotelOperationsSnapshot/);
   assert.match(hotelsPage, /getProviderIntegrationStatuses/);
   assert.doesNotMatch(hotelsPage, /Recent hotel searches|operations\.recentSearches/);
-  assert.match(hotelsPage, /<OperationsDataTable/);
+  assert.match(hotelsPage, /<ProductSearchRecordsPanel product="HOTEL"/);
   assert.match(hotelsPage, /<OperationsMetric/);
-  assert.match(hotelsPage, /View hotel searches/);
-  assert.match(hotelsPage, /View hotel journeys/);
+  assert.match(hotelsPage, /<ProductSearchJumpLink product="HOTEL"/);
+  assert.doesNotMatch(hotelsPage, /View hotel journeys|\/admin\/journeys/);
   assert.doesNotMatch(hotelsPage, /Hotel Search Readiness/);
   assert.doesNotMatch(hotelsPage, /Kurioticket static catalogue/);
 });
@@ -41,9 +42,9 @@ test("hotel operations snapshot is environment and service scoped", () => {
   assert.match(service, /isolationLevel: "RepeatableRead"/);
 });
 
-test("hotel operations remains read-only and links to canonical search diagnostics", () => {
-  assert.match(hotelsPage, /\/admin\/searches\/activity\?product=HOTEL/);
-  assert.match(hotelsPage, /\/admin\/searches\//);
+test("hotel operations keeps search diagnostics within Providers", () => {
+  assert.match(hotelsPage, /<ProductSearchJumpLink product="HOTEL"/);
+  assert.doesNotMatch(hotelsPage, /\/admin\/searches\//);
   assert.match(hotelsPage, /booking completion remains provider-owned/);
   assert.match(hotelsPage, /provider handoffs do not confirm reservations/);
   assert.doesNotMatch(hotelsPage, /fetch\(|method:\s*["'](?:POST|PATCH|DELETE)|<form/);
@@ -70,11 +71,11 @@ test("hotel operations does not invent unavailable telemetry", () => {
 
 
 test("hotel operations exposes focused search, destination, and provider exceptions", () => {
-  assert.match(hotelsPage, /Search exceptions/);
+  assert.match(recordsPanel, /Search exceptions and records/);
   assert.match(hotelsPage, /Destinations needing attention/);
   assert.match(hotelsPage, /Provider exceptions/);
-  assert.match(hotelsPage, /Failed searches/);
-  assert.match(hotelsPage, /Partial searches/);
+  assert.match(recordsPanel, /value: "FAILED"/);
+  assert.match(recordsPanel, /value: "PARTIAL"/);
   assert.match(hotelsPage, /Raw provider error payloads are not exposed/);
   assert.match(service, /exceptionSearches/);
   assert.match(service, /destinationIssues/);
@@ -85,7 +86,7 @@ test("hotel operations exposes focused search, destination, and provider excepti
 test("hotel exception diagnostics keep valid zero results distinct from failure", () => {
   assert.match(service, /status: "SUCCESS", resultCount: 0/);
   assert.match(service, /search\.status === "FAILED" \? "FAILED" : search\.status === "PARTIAL" \? "PARTIAL" : "ZERO_RESULTS"/);
-  assert.match(hotelsPage, /search\.kind\.replaceAll\("_", " "\)/);
+  assert.match(recordsPanel, /value === "ZERO_RESULTS"/);
 });
 
 test("hotel provider exceptions classify disabled coverage without exposing raw errors", () => {
