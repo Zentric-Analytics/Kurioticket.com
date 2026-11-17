@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { adminNavigation, adminNavigationGroups, getAdminNavForRole, getAdminHeaderGroups, getAdminWorkspaceSections, isAdminNavItemActive } from "@/lib/adminNavigation";
+import { adminNavigation, adminNavigationGroups, getAdminNavForRole, getAdminHeaderGroups, getAdminWorkspaceSections, isAdminWorkspaceSectionActive, isAdminNavItemActive } from "@/lib/adminNavigation";
 
 const originalLabels = ["Overview", "Users", "Providers", "Search Activity", "Trips", "Trip monitoring", "Content", "Homepage Fares", "Hotels", "Cars", "Support", "Deletion Requests", "Audit Logs", "System", "Platform Health", "CMS Health", "Email Delivery", "Settings", "Visitor Journeys", "Provider Handoffs", "Referral Attribution"];
 
@@ -117,4 +117,27 @@ test("staging-only Team Access remains separate from permanently available route
   assert.equal(getAdminNavForRole("ADMIN", false).some(item => item.href === "/admin/preview-testers"), false);
   assert.equal(getAdminNavForRole("ADMIN", true).find(item => item.href === "/admin/preview-testers")?.parentHref, "/admin/settings");
   assert.equal(getAdminHeaderGroups("ADMIN", true).some(group => group.links.some(entry => entry.item.href === "/admin/preview-testers")), false);
+});
+
+test("contextual tabs highlight the actual current subsection, including nested detail routes", () => {
+  const examples: Array<[string, string, boolean]> = [
+    ["/admin/users", "/admin/users", true],
+    ["/admin/journeys/abc", "/admin/journeys", true],
+    ["/admin/journeys", "/admin/users", false],
+    ["/admin/searches/activity", "/admin/searches/activity", true],
+    ["/admin/searches/a1b2c3", "/admin/searches/activity", true],
+    ["/admin/redirects/a1b2c3", "/admin/redirects", true],
+    ["/admin/redirects", "/admin/searches/activity", false],
+    ["/admin/providers", "/admin/providers", true],
+    ["/admin/hotels", "/admin/providers", false],
+    ["/admin/homepage-fares/routes", "/admin/homepage-fares", true],
+    ["/admin/referral-attribution", "/admin/providers?view=attribution", true],
+    ["/admin/system", "/admin/system", true],
+    ["/admin/system/cms-health", "/admin/system", false],
+    ["/admin/system/cms-health", "/admin/system/cms-health", true],
+    ["/admin/email-delivery", "/admin/logs", false],
+  ];
+  for (const [path, target, selected] of examples) {
+    assert.equal(isAdminWorkspaceSectionActive(path, target), selected, path + " -> " + target);
+  }
 });
