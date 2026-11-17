@@ -340,7 +340,7 @@ test("Task 3: referral attribution uses compact preset auto-apply and white metr
   assert.match(referralPage, /lg:grid-cols-4/);
   assert.match(referralPage, /lg:grid-cols-2/);
   assert.match(referralPage, /grid grid-cols-2 gap-x-4 gap-y-4/);
-  assert.match(referralPage, /aria-labelledby="unlinked-handoffs"/);
+  assert.match(inlineUnlinkedPanel, /aria-labelledby="unlinked-handoffs"/);
   assert.match(referralPage, /<ReferralUnlinkedHandoffs/);
   assert.match(referralPage, /unlinkedCount={summary.handoffs.notLinkedToSearch}/);
   assert.match(referralPage, /providers={summary.providers.map\(item => item.provider\)}/);
