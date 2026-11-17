@@ -162,6 +162,7 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
   // Search and Support share the clean white operational workspace surface.
   // Other Admin sections keep their established background unchanged.
   const usersDirectory = pathname === "/admin/users" || pathname === "/admin/users/";
+  const visitorJourneysWorkspace = pathname === "/admin/journeys" || pathname.startsWith("/admin/journeys/");
   const userActivity = /^\/admin\/users\/(?:user|guest)\/[a-z0-9_-]{6,80}\/activity\/?$/i.test(pathname);
   const searchDetail = /^\/admin\/searches\/[a-z0-9_-]{6,128}\/?$/i.test(pathname);
   const searchesWorkspace = pathname === "/admin/searches" || pathname === "/admin/searches/" || pathname === "/admin/searches/activity" || pathname === "/admin/searches/activity/" || searchDetail;
@@ -183,7 +184,7 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
   const settingsWorkspace = pathname === "/admin/settings" || pathname.startsWith("/admin/settings/") || pathname === "/admin/preview-testers";
   const notificationsWorkspace = pathname === "/admin/notifications" || pathname === "/admin/notifications/";
   const homepageFaresWorkspace = pathname === "/admin/homepage-fares" || pathname.startsWith("/admin/homepage-fares/");
-  const whiteWorkspace = pathname === "/admin/system" || pathname === "/admin/system/" || pathname === "/admin/system/cms-health" || pathname === "/admin/system/cms-health/" || auditLogsWorkspace || emailDeliveryWorkspace || settingsWorkspace || usersDirectory || searchesWorkspace || supportWorkspace
+  const whiteWorkspace = pathname === "/admin/system" || pathname === "/admin/system/" || pathname === "/admin/system/cms-health" || pathname === "/admin/system/cms-health/" || auditLogsWorkspace || emailDeliveryWorkspace || settingsWorkspace || usersDirectory || visitorJourneysWorkspace || searchesWorkspace || supportWorkspace
     || providersWorkspace || providerReportingWorkspace || accountDeletionDetail || contentWorkspace || notificationsWorkspace || homepageFaresWorkspace;
   return <AdminWorkspaceSearchProvider account={adminEmail || "admin"}><div ref={workspaceRef} className={"min-h-screen text-slate-950 " + (userActivity ? "bg-[#f1f5fb]" : whiteWorkspace ? "bg-white" : "bg-[#f1f5fb]")}>
     <header ref={headerRef} className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
