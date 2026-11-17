@@ -55,3 +55,33 @@ test("detail event pagination retains the display preset without forwarding it t
   assert.match(detail, /key !== "cursor"\) p\.set\(key, value\)/);
   assert.match(detail, /delete backendRaw\.range; delete backendRaw\.activityReturn;/);
 });
+
+test("Journeys directory shares Users styling without modifying consent-aware data reads", () => {
+  const shell = readFileSync("src/components/admin/AdminHorizontalShell.tsx", "utf8");
+  const datesView = readFileSync("src/components/admin/JourneyDateRangeFields.tsx", "utf8");
+  const history = readFileSync("src/components/admin/JourneyEventHistory.tsx", "utf8");
+  assert.match(shell, /const visitorJourneysWorkspace = pathname === "\/admin\/journeys"/);
+  assert.match(shell, /\|\| visitorJourneysWorkspace \|\| searchesWorkspace/);
+  assert.match(list, /bg-white text-\[#020617\]/);
+  assert.match(list, /aria-label="Visitor journeys directory"/);
+  assert.match(list, /border-b border-\[#D8E1EC\] bg-white/);
+  assert.match(list, /name="provider" type="search"/);
+  assert.match(list, /clearFieldNamesOnChange=\{\["userId", "visitorId"\]\}/);
+  assert.match(list, /adminJourneys\.list\(input\)/);
+  assert.match(list, /Only eligible consented journeys are included/);
+  assert.match(datesView, /<AdminDirectorySelect label="Date range"/);
+  assert.match(datesView, /setCustomValidity\(valid \? "" :/);
+  assert.match(history, /aria-label="Journey event history"/);
+  assert.match(history, /events\.map\(event =>/);
+});
+
+test("Journey Details shares clean directory layout and preserves event chronology", () => {
+  const history = readFileSync("src/components/admin/JourneyEventHistory.tsx", "utf8");
+  assert.match(detail, /className="min-w-0 space-y-6 bg-white py-3/);
+  assert.match(detail, /<JourneyEventHistory events=\{result\.data\.events\} \/>/);
+  assert.match(detail, /<SearchWorkspaceBackLink href=\{returnHref\(raw\)\}/);
+  assert.match(detail, /result\.data\.nextCursor/);
+  assert.match(history, /key=\{event\.id\}/);
+  assert.match(history, /dateTime=\{event\.createdAt\}/);
+  assert.match(history, /event\.handoff\.searchCorrelation === "exact"/);
+});

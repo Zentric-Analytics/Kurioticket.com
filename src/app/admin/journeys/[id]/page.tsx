@@ -23,10 +23,10 @@ export default async function AdminJourneyDetailPage({ params, searchParams }: {
       <SearchWorkspaceBackLink href={returnHref(raw)} label={decodeActivityJourneyReturn(raw.activityReturn) ? "Back to Activity" : "Journeys"} />
       <AdminPageShell title="Journey detail" hideHeader>
       {result.status === "ok" ? (
-        <div className="min-w-0 space-y-5 bg-white p-4 sm:p-5">
-          <section aria-labelledby="journey-details-heading" className="min-w-0 border-b border-[#E2E8F0] pb-4">
-            <h2 id="journey-details-heading" className="mb-4 text-base font-semibold text-[#0F172A]">Journey details</h2>
-            <dl className="grid min-w-0 gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="min-w-0 space-y-6 bg-white py-3 text-[#020617]">
+          <section aria-labelledby="journey-details-heading" className="min-w-0 border-b border-[#D8E1EC] pb-5">
+            <h2 id="journey-details-heading" className="mb-4 text-[15px] font-semibold text-[#020617]">Journey details</h2>
+            <dl className="grid min-w-0 gap-x-8 gap-y-5 sm:grid-cols-2 lg:grid-cols-4">
               <Field label="Journey ID" value={result.data.journey.id} />
               <Field label="Identity" value={result.data.journey.identity.kind} />
               <Field label="User ID" value={result.data.journey.identity.userId || "—"} />
@@ -42,7 +42,7 @@ export default async function AdminJourneyDetailPage({ params, searchParams }: {
             </dl>
           </section>
           <JourneyEventHistory events={result.data.events} />
-          {result.data.nextCursor ? <div className="flex justify-end"><Link href={cursorHref(id, raw, result.data.nextCursor)} className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">Next events</Link></div> : null}
+          {result.data.nextCursor ? <div className="flex justify-end"><Link href={cursorHref(id, raw, result.data.nextCursor)} className="inline-flex h-9 items-center rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px] font-medium text-[#004BB8] hover:bg-[#F8FAFC]">Next events</Link></div> : null}
         </div>
       ) : (
         <AdminEmptyState title={result.status === "invalid" ? "Invalid journey request" : result.status === "forbidden" ? "Admin access required" : "Journey data unavailable"} message={"issues" in result ? result.issues.map((issue) => issue.field + ": " + issue.message).join(" ") : "The journey reader could not return this record."} />
@@ -53,7 +53,7 @@ export default async function AdminJourneyDetailPage({ params, searchParams }: {
 }
 
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
-  return <div className="min-w-0"><dt className="text-xs text-[#64748B]">{label}</dt><dd className="mt-1 text-[13px] font-medium text-[#0F172A] [overflow-wrap:anywhere]">{value}</dd></div>;
+  return <div className="min-w-0"><dt className="text-[12px] font-normal text-[#64748B]">{label}</dt><dd className="mt-1 text-[13px] font-medium leading-5 text-[#020617] [overflow-wrap:anywhere]">{value}</dd></div>;
 }
 function one(value: string | string[] | undefined) { return typeof value === "string" ? value : ""; }
 function cursorHref(id: string, raw: Record<string, string | string[] | undefined>, cursor: string) {

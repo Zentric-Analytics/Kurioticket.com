@@ -1,9 +1,10 @@
 import Link from "next/link";
 
-import { AdminButton, AdminDataTable, AdminEmptyState, AdminFilterBar, AdminInput, AdminSelect, AdminStatusBadge } from "@/components/admin/AdminPageShell";
+import { AdminEmptyState } from "@/components/admin/AdminPageShell";
+import { AdminDirectorySelect } from "@/components/admin/AdminDirectorySelect";
 import { JourneyDateRangeFields } from "@/components/admin/JourneyDateRangeFields";
 import { journeyWindow, selectedJourneyRange } from "@/lib/adminJourneyDateRange";
-import { SearchWorkspaceBackLink } from "@/components/admin/SearchWorkspaceBackLink";
+import { ChevronRight } from "lucide-react";
 import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
 import { SearchWorkspacePanelFrame } from "@/components/admin/SearchWorkspacePanelFrame";
 import { formatDateTime } from "@/lib/admin-data";
@@ -35,63 +36,85 @@ export default async function AdminJourneysPage({ searchParams, embedded = false
     : null;
 
   return (
-    <>
-      {!embedded ? <SearchWorkspaceBackLink href="/admin/users" label="Users" /> : null}
-      <SearchWorkspacePanelFrame embedded={embedded}
-        title="Journeys"
-        hideHeader
-      >
-      <div className="mx-auto w-full max-w-[1500px] text-[#374151]">
+    <SearchWorkspacePanelFrame embedded={embedded} title="Visitor Journeys" hideHeader>
+      <div className="w-full min-w-0 bg-white text-[#020617]">
         {summary?.status === "ok" ? (
-          <div className="grid grid-cols-2 border-y border-[#E5E7EB] md:grid-cols-5">
+          <section aria-label="Journey summary" className="grid min-w-0 grid-cols-2 gap-y-3 border-y border-[#D8E1EC] py-4 sm:grid-cols-3 lg:grid-cols-5 lg:gap-y-0">
             <Metric label="Journeys" value={summary.data.journeys} />
             <Metric label="Searches in journeys" value={summary.data.recordedSearches.total} />
             <Metric label="Results viewed" value={summary.data.stages.RESULTS_VIEWED.events} />
             <Metric label="Offers selected" value={summary.data.stages.OFFER_SELECTED.events} />
             <Metric label="Provider handoffs" value={summary.data.stages.PROVIDER_HANDOFF_STARTED.events} />
-          </div>
+          </section>
         ) : null}
-        <p className="border-b border-[#E5E7EB] px-2 py-3 text-[12px] leading-5 text-[#6B7280]">Only eligible consented journeys are included in these figures. Stages count recorded events, not assumed customer actions or confirmed bookings. Necessary operational guest searches remain available in Search Activity.</p>
-        <AdminFilterBar action={embedded ? "/admin/searches/activity" : "/admin/journeys"}>
-          {embedded ? <input type="hidden" name="tab" value="journeys" /> : null}
 
+        <p className="py-3 text-[12px] leading-5 text-[#64748B]">
+          Only eligible consented journeys are included. Stages count recorded events, not confirmed bookings.
+          Necessary operational guest searches remain available in Search Activity.
+        </p>
+
+        <form action={embedded ? "/admin/searches/activity" : "/admin/journeys"} method="get"
+          aria-label="Filter visitor journeys"
+          className="flex min-w-0 flex-wrap items-center gap-x-5 gap-y-3 border-y border-[#D8E1EC] py-3 sm:gap-x-6">
+          {embedded ? <input type="hidden" name="tab" value="journeys" /> : null}
           {one(raw.userId) ? <input type="hidden" name="userId" value={one(raw.userId)} /> : null}
           {one(raw.visitorId) ? <input type="hidden" name="visitorId" value={one(raw.visitorId)} /> : null}
-          <JourneyDateRangeFields initialRange={range} initialFrom={one(raw.from) || (range === "custom" ? (list.status === "ok" ? list.data.scope.from : "") : "")} initialTo={one(raw.to) || (range === "custom" ? (list.status === "ok" ? list.data.scope.to : "") : "")} now={now.toISOString()} />
-          <AdminSelect name="product" defaultValue={one(raw.product)}>
-            <option value="">All products</option><option value="FLIGHT">Flights</option><option value="HOTEL">Hotels</option><option value="CAR">Cars</option><option value="PACKAGE">Packages</option>
-          </AdminSelect>
-          <SearchMonitorSelect
-            label="Identity"
-            name="identity"
-            value={one(raw.identity) || "all"}
-            appearance="plain"
+
+          <JourneyDateRangeFields initialRange={range}
+            initialFrom={one(raw.from) || (range === "custom" ? (list.status === "ok" ? list.data.scope.from : "") : "")}
+            initialTo={one(raw.to) || (range === "custom" ? (list.status === "ok" ? list.data.scope.to : "") : "")}
+            now={now.toISOString()} />
+
+          <AdminDirectorySelect name="product" label="Product" value={one(raw.product)}
+            plain options={[
+              { value: "", label: "All products" },
+              { value: "FLIGHT", label: "Flights" },
+              { value: "HOTEL", label: "Hotels" },
+              { value: "CAR", label: "Cars" },
+              { value: "PACKAGE", label: "Packages" },
+            ]} />
+
+          <SearchMonitorSelect label="Identity" name="identity"
+            value={one(raw.identity) || "all"} appearance="plain"
             clearFieldNamesOnChange={["userId", "visitorId"]}
             options={[
               { value: "all", label: "All identities" },
               { value: "registered", label: "Registered" },
               { value: "guest", label: "Guest" },
-            ]}
-          />
-          <AdminSelect name="stage" defaultValue={one(raw.stage)}>
-            <option value="">All observed stages</option>
-            {stages.map((stage) => <option key={stage.value} value={stage.value}>{stage.label}</option>)}
-          </AdminSelect>
-          <AdminInput name="provider" defaultValue={one(raw.provider)} placeholder="Provider" />
-          <AdminSelect name="environment" defaultValue={one(raw.environment)}>
-            <option value="">Current environment</option><option value="staging">Staging</option><option value="production">Production</option>
-          </AdminSelect>
-          <AdminButton type="submit">Apply filters</AdminButton>
-        </AdminFilterBar>
+            ]} />
 
+          <AdminDirectorySelect name="stage" label="Observed stage" value={one(raw.stage)}
+            plain options={[
+              { value: "", label: "All observed stages" },
+              ...stages.map((stage) => ({ value: stage.value, label: stage.label })),
+            ]} />
+
+          <label className="min-w-0">
+            <span className="sr-only">Provider</span>
+            <input name="provider" type="search" defaultValue={one(raw.provider)}
+              placeholder="Provider" aria-label="Provider"
+              className="h-10 w-28 min-w-0 border-0 border-b border-[#CAD3DF] bg-white px-0 text-[13px] text-[#020617] outline-none placeholder:text-[#64748B] focus:border-[#004BB8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#64748B] sm:w-36" />
+          </label>
+
+          <AdminDirectorySelect name="environment" label="Environment" value={one(raw.environment)}
+            plain options={[
+              { value: "", label: "Current environment" },
+              { value: "staging", label: "Staging" },
+              { value: "production", label: "Production" },
+            ]} />
+
+          <button type="submit"
+            className="inline-flex h-9 items-center justify-center rounded-lg bg-[#004BB8] px-4 text-[13px] font-medium text-white transition hover:bg-[#003D97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
+            Apply filters
+          </button>
+        </form>
 
         {summary?.status === "ok" ? (
-          <p className="border-b border-[#E5E7EB] px-2 py-3 text-[12px] leading-5 text-[#6B7280]">
-            These handoff counts include only consented journey events, not all provider redirects.
-            {" "}In the selected environment and date window, {summary.data.operationalHandoffs.total} redirect records were stored,
-            {" "}{summary.data.operationalHandoffs.inConsentedJourneys} appear in eligible journeys and
-            {" "}{summary.data.operationalHandoffs.outsideConsentedJourneys} are outside eligible journeys.
-            Missing identity or consent is never reconstructed from timing.
+          <p className="py-3 text-[12px] leading-5 text-[#64748B]">
+            Provider handoffs: {summary.data.operationalHandoffs.total} recorded redirects in this environment and time window;
+            {" "}{summary.data.operationalHandoffs.inConsentedJourneys} in eligible journeys and
+            {" "}{summary.data.operationalHandoffs.outsideConsentedJourneys} outside eligible journeys.
+            Missing identity or consent is never inferred.
           </p>
         ) : null}
 
@@ -99,32 +122,84 @@ export default async function AdminJourneysPage({ searchParams, embedded = false
           list.data.items.length === 0 ? (
             <AdminEmptyState title="No journeys found" message="No consented journeys match this environment, time window and filter set." />
           ) : (
-            <>
-              <AdminDataTable
-                columns={["Last activity", "Identity", "Products", "Providers", "Searches", "Observed stages", "Events", "Action"]}
-                rows={list.data.items.map((journey) => ({
-                  id: journey.id,
-                  cells: [
-                    <div key="time"><p className="font-semibold text-slate-950">{formatDateTime(new Date(journey.lastEventAt))}</p><p className="text-xs text-slate-500">Started {formatDateTime(new Date(journey.startedAt))}</p></div>,
-                    <div key="identity"><p className="font-semibold capitalize">{journey.identity.kind}</p><p className="max-w-40 truncate text-xs text-slate-500">{journey.identity.userId || journey.identity.visitorId}</p></div>,
-                    journey.products.join(", ") || "—",
-                    journey.providers.length ? journey.providers.join(", ") + (journey.providerCount > journey.providers.length ? " +" + (journey.providerCount - journey.providers.length) : "") : "—",
-                    journey.searchCount,
-                    <div key="stages" className="flex max-w-64 flex-wrap gap-1">{stages.filter((stage) => journey.stages[stage.value] > 0).map((stage) => <AdminStatusBadge key={stage.value} tone={stage.value === "PROVIDER_HANDOFF_STARTED" ? "good" : "info"}>{stage.label}: {journey.stages[stage.value]}</AdminStatusBadge>)}</div>,
-                    journey.eventCount,
-                    <Link key="action" href={detailHref(journey.id, list.data.scope, range)} className="font-black text-indigo-700 hover:text-indigo-900">Open</Link>,
-                  ],
-                }))}
-              />
-              {list.data.nextCursor ? <div className="flex justify-end"><Link href={embedded ? workspaceCursorHref(raw, list.data.nextCursor, "journeys") : cursorHref(raw, list.data.nextCursor)} className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">Next page</Link></div> : null}
-            </>
+            <section aria-label="Visitor journeys directory" className="min-w-0 pt-2">
+              <div className="overflow-x-auto" role="region" aria-label="Journey records" tabIndex={0}>
+                <table className="w-full min-w-[1060px] table-fixed text-left text-[13px]">
+                  <caption className="sr-only">Eligible visitor journeys matching the selected filters</caption>
+                  <colgroup>
+                    <col className="w-[14%]" /><col className="w-[18%]" /><col className="w-[12%]" />
+                    <col className="w-[15%]" /><col className="w-[8%]" /><col className="w-[19%]" />
+                    <col className="w-[7%]" /><col className="w-[7%]" />
+                  </colgroup>
+                  <thead className="border-b border-[#D8E1EC] bg-white text-[12px] text-[#475569]">
+                    <tr>
+                      {["Last activity", "Identity", "Products", "Providers", "Searches", "Observed stages", "Events", "Action"].map(label => (
+                        <th key={label} scope="col" className="px-3 py-3 font-medium uppercase">{label}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#E7ECF5]">
+                    {list.data.items.map(journey => (
+                      <tr key={journey.id} className="h-[64px] align-top transition-colors hover:bg-[#F8FAFC]">
+                        <td className="px-3 py-3">
+                          <p className="font-medium leading-5 text-[#020617]">{formatDateTime(new Date(journey.lastEventAt))}</p>
+                          <p className="mt-1 text-[12px] leading-4 text-[#64748B]">Started {formatDateTime(new Date(journey.startedAt))}</p>
+                        </td>
+                        <td className="px-3 py-3">
+                          <p className="font-medium capitalize text-[#020617]">{journey.identity.kind}</p>
+                          <p className="mt-1 truncate text-[12px] text-[#64748B]"
+                            title={journey.identity.userId || journey.identity.visitorId || undefined}>
+                            {journey.identity.userId || journey.identity.visitorId || "—"}
+                          </p>
+                        </td>
+                        <td className="px-3 py-3 text-[#334155]">{journey.products.join(", ") || "—"}</td>
+                        <td className="px-3 py-3 text-[#334155] [overflow-wrap:anywhere]">
+                          {journey.providers.length
+                            ? journey.providers.join(", ") + (journey.providerCount > journey.providers.length ? " +" + (journey.providerCount - journey.providers.length) : "")
+                            : "—"}
+                        </td>
+                        <td className="px-3 py-3 tabular-nums text-[#334155]">{journey.searchCount}</td>
+                        <td className="px-3 py-3">
+                          <div className="flex flex-wrap gap-1.5">
+                            {stages.filter(stage => journey.stages[stage.value] > 0).map(stage => (
+                              <span key={stage.value}
+                                className={"inline-flex items-center rounded-md border px-2 py-1 text-[11px] font-medium leading-4 " +
+                                  (stage.value === "PROVIDER_HANDOFF_STARTED"
+                                    ? "border-[#A7E6D1] bg-[#F0FDF8] text-[#047857]"
+                                    : "border-[#D8E1EC] bg-white text-[#475569]")}>
+                                {stage.label}: {journey.stages[stage.value]}
+                              </span>
+                            ))}
+                          </div>
+                        </td>
+                        <td className="px-3 py-3 tabular-nums text-[#334155]">{journey.eventCount}</td>
+                        <td className="px-3 py-3">
+                          <Link href={detailHref(journey.id, list.data.scope, range)}
+                            className="inline-flex items-center gap-1 whitespace-nowrap text-[13px] font-medium text-[#004BB8] underline-offset-4 hover:underline">
+                            View <ChevronRight size={14} aria-hidden="true" />
+                          </Link>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {list.data.nextCursor ? (
+                <div className="flex justify-end border-t border-[#E7ECF5] py-3">
+                  <Link href={embedded ? workspaceCursorHref(raw, list.data.nextCursor, "journeys") : cursorHref(raw, list.data.nextCursor)}
+                    className="inline-flex h-9 items-center rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px] font-medium text-[#004BB8] hover:bg-[#F8FAFC]">
+                    Next page
+                  </Link>
+                </div>
+              ) : null}
+            </section>
           )
         ) : (
-          <AdminEmptyState title={list.status === "invalid" ? "Invalid journey filters" : list.status === "forbidden" ? "Admin access required" : "Journey data unavailable"} message={"issues" in list ? list.issues.map((issue) => issue.field + ": " + issue.message).join(" ") : "The journey reader could not return data. An unavailable read is not shown as a false zero."} />
+          <AdminEmptyState title={list.status === "invalid" ? "Invalid journey filters" : list.status === "forbidden" ? "Admin access required" : "Journey data unavailable"}
+            message={"issues" in list ? list.issues.map(issue => issue.field + ": " + issue.message).join(" ") : "The journey reader could not return data. An unavailable read is not shown as a false zero."} />
         )}
       </div>
-      </SearchWorkspacePanelFrame>
-    </>
+    </SearchWorkspacePanelFrame>
   );
 }
 
@@ -137,9 +212,9 @@ function withoutPagination(raw: Record<string, string | string[] | undefined>) {
   return copy;
 }
 function Metric({label,value}:{label:string;value:number}) {
-  return <div className="min-h-[84px] border-r border-[#E5E7EB] px-3 py-3 last:border-r-0">
-    <p className="text-[11px] font-medium text-[#6B7280]">{label}</p>
-    <p className="mt-1 text-[24px] font-medium text-[#111827]">{value.toLocaleString()}</p>
+  return <div className="min-w-0 px-3 py-1 lg:border-r lg:border-[#E7ECF5] lg:px-5 lg:last:border-r-0">
+    <p className="text-[12px] font-normal text-[#64748B]">{label}</p>
+    <p className="mt-1 text-[18px] font-medium leading-6 tabular-nums text-[#020617]">{value.toLocaleString()}</p>
   </div>;
 }
 function detailHref(id: string, scope: { from: string; to: string; environment: string; identity: string; product?: string; provider?: string; stage?: string; userId?: string; visitorId?: string }, range: string) {
