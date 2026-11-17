@@ -132,7 +132,6 @@ export function SearchDetailActivityPanel({ searchId, environment, searchedAt, s
                   : "No additional verified journey events are linked to this search in this page of results."}
               </p>
             ) : (
-              <>
                 <ol className="mt-3 space-y-3" aria-label="Verified search journey events">
                   {list.events.map(event => (
                     <li key={event.id} className="min-w-0 border-l-2 border-[#C8D6EB] pl-3">
@@ -144,7 +143,8 @@ export function SearchDetailActivityPanel({ searchId, environment, searchedAt, s
                     </li>
                   ))}
                 </ol>
-                {list.nextCursor || pageIndex > 0 ? (
+            )}
+            {list && (list.nextCursor || pageIndex > 0) ? (
                   <nav aria-label="Search activity pagination"
                     className="mt-4 flex flex-wrap items-center justify-end gap-3 border-t border-[#E5E7EB] pt-3">
                     <span className="text-[12px] text-[#6B7280]">Page {pageIndex + 1} · Up to {PAGE_SIZE} events per page</span>
@@ -157,9 +157,7 @@ export function SearchDetailActivityPanel({ searchId, environment, searchedAt, s
                       setPageIndex(index => index + 1);
                     }}>Next</button>
                   </nav>
-                ) : null}
-              </>
-            )}
+            ) : null}
           </section>
         ) : null}
       </div>
