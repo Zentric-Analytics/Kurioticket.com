@@ -77,7 +77,7 @@ test("rejects unrecognized filters and keeps the environment bound to one search
   assert.equal((await instance.read(searchId, new URLSearchParams({ environment: env, userId: "victim" }))).status, "invalid");
   assert.equal((await instance.read(searchId, new URLSearchParams({ environment: env, environment2: "production" }))).status, "invalid");
   assert.equal((await instance.read(searchId, new URLSearchParams({ environment: env, cursor: "tampered" }))).status, "invalid");
-  assert.equal((await instance.read(searchId, new URLSearchParams({ environment: env, environment: "production" }))).status, "invalid");
+  assert.equal((await instance.read(searchId, new URLSearchParams([["environment", env], ["environment", "production"]]))).status, "invalid");
   assert.equal(instance.inspected().databaseCalls, 0);
 });
 
