@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { SearchDetailActivityPanel } from "@/components/admin/SearchDetailActivityPanel";
 import { applicationLabel } from "@/lib/platformHealthPresentation";
 import { ChevronDown } from "lucide-react";
 import { notFound } from "next/navigation";
@@ -103,23 +103,17 @@ function SearchDetailContent({ search }: { search: AdminSearchDetail }) {
                 ? search.searcher.name || search.searcher.email || "Registered account"
                 : search.identity.kind === "guest" && !search.identity.visitorId && search.operationalSessionId ? "Guest search session"
                 : search.identity.kind === "guest" ? "Guest visitor" : "Unidentified visitor"}
-              {search.operationalSessionId && search.environment === getPublicEnvironment() && !search.identity.userId && !search.identity.visitorId ? (
-                <Link
-                  href={"/admin/users/guest/" + encodeURIComponent(search.operationalSessionId) + "/activity"}
-                  className="ml-3 inline-flex items-center whitespace-nowrap align-baseline text-[13px] font-semibold text-[#004BB8] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
-                >
-                  View activity
-                </Link>
-              ) : null}
-              {search.searcher.activity ? (
-                <Link
-                  href={"/admin/users/" + search.searcher.activity.kind + "/" + encodeURIComponent(search.searcher.activity.id) + "/activity"}
-                  className="ml-3 inline-flex items-center whitespace-nowrap align-baseline text-[13px] font-semibold text-[#004BB8] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
-                >
-                  View activity
-                </Link>
-              ) : null}
             </p>
+            {((search.operationalSessionId && search.environment === getPublicEnvironment()
+              && !search.identity.userId && !search.identity.visitorId)
+              || Boolean(search.searcher.activity)) ? (
+              <SearchDetailActivityPanel
+                searchId={search.id}
+                environment={search.environment}
+                searchedAt={search.createdAt}
+                status={search.status}
+              />
+            ) : null}
             {search.identity.kind === "registered" && search.searcher.name && search.searcher.email ? (
               <p className="mt-0.5 break-words text-[12px] text-[#6B7280]">{search.searcher.email}</p>
             ) : null}
