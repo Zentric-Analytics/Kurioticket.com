@@ -60,7 +60,8 @@ function WorkspaceSectionNavigation({ pathname, role }: { pathname: string; role
         const [target, query] = item.href.split("?");
         const active = query
           ? pathname === "/admin/referral-attribution"
-          : pathname === target || pathname.startsWith(target + "/");
+          : pathname === target ||
+            (target !== "/admin/system" && pathname.startsWith(target + "/"));
         return (
           <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined}
             className={"inline-flex min-h-11 items-center whitespace-nowrap border-b-2 px-1 text-[13px] font-medium text-[#020617] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] " +
