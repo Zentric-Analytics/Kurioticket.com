@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
+import { AdminDirectorySelect } from "@/components/admin/AdminDirectorySelect";
 import { offsetUtcDateTime, utcDateTimeInput, utcDateTimeIso, type JourneyDateRange } from "@/lib/adminJourneyDateRange";
 
 export function JourneyDateRangeFields({ initialRange, initialFrom, initialTo, now }: {
@@ -27,8 +27,8 @@ export function JourneyDateRangeFields({ initialRange, initialFrom, initialTo, n
     toInputRef.current?.setCustomValidity(valid ? "" : "Choose a valid UTC interval with From before To, no more than 90 days.");
   }, [custom, valid]);
   return (
-    <div className="flex flex-wrap items-center gap-3">
-      <SearchMonitorSelect label="Date range" name="range" value={range}
+    <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2">
+      <AdminDirectorySelect label="Date range" name="range" value={range}
         onValueChange={value => {
           const next = value as JourneyDateRange;
           if (next === "custom" && range !== "custom") {
@@ -38,7 +38,7 @@ export function JourneyDateRangeFields({ initialRange, initialFrom, initialTo, n
           }
           setRange(next);
         }}
-        appearance="plain"
+        plain
         options={[
           { value: "today", label: "Today" },
           { value: "7d", label: "Last 7 days" },
@@ -47,19 +47,19 @@ export function JourneyDateRangeFields({ initialRange, initialFrom, initialTo, n
           { value: "custom", label: "Custom dates" },
         ]} />
       {custom ? (
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex min-w-0 flex-wrap items-end gap-3">
           <label className="text-xs text-[#475569]">From (UTC)
             <input type="datetime-local" required value={from}
               max={to ? offsetUtcDateTime(to, -1) : now.slice(0, 16)}
               min={to ? offsetUtcDateTime(to, -90 * 24 * 60) : undefined}
               onChange={e => setFrom(e.target.value)}
-              className="ml-2 h-9 border-b border-[#AEB8C6] bg-white text-xs text-[#374151]" />
+              className="ml-2 h-10 min-w-0 rounded-lg border border-[#D8E1EC] bg-white px-2 text-[13px] text-[#020617] outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#64748B]" />
           </label>
           <label className="text-xs text-[#475569]">To (UTC)
             <input ref={toInputRef} type="datetime-local" required value={to}
               min={from ? offsetUtcDateTime(from, 1) : undefined}
               max={from ? (offsetUtcDateTime(from, 90 * 24 * 60) < now.slice(0,16) ? offsetUtcDateTime(from, 90 * 24 * 60) : now.slice(0,16)) : now.slice(0,16)} onChange={e => setTo(e.target.value)}
-              className="ml-2 h-9 border-b border-[#AEB8C6] bg-white text-xs text-[#374151]" />
+              className="ml-2 h-10 min-w-0 rounded-lg border border-[#D8E1EC] bg-white px-2 text-[13px] text-[#020617] outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#64748B]" />
           </label>
           <input name="from" type="hidden" value={startIso} />
           <input name="to" type="hidden" value={endIso} />
