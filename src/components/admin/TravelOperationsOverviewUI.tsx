@@ -18,13 +18,28 @@ export function OperationsMetric({ label, value, hint, tone = "neutral" }: {
     neutral: "bg-[#CBD5E1]",
   };
   return (
-    <div className="min-w-0 border-b border-[#E7ECF5] px-3 py-4 first:pl-0 xl:border-b-0 xl:border-r xl:last:border-r-0">
+    <div className="min-w-0 bg-white px-4 py-4">
       <div className="flex min-w-0 items-center gap-2">
         <span aria-hidden="true" className={"h-1.5 w-1.5 shrink-0 rounded-full " + dots[tone]} />
         <dt className="min-w-0 text-[12px] font-medium text-[#64748B]">{label}</dt>
       </div>
       <dd className="mt-2 break-words text-[22px] font-semibold leading-7 tabular-nums text-[#020617]">{value}</dd>
       {hint ? <p className="mt-1 text-[11px] leading-4 text-[#64748B]">{hint}</p> : null}
+    </div>
+  );
+}
+
+/** Same continuous five-column metric strip used by Homepage Fare Operations.
+ * Narrow screens scroll only the metric region; metrics never wrap into rows. */
+export function OperationsMetricStrip({ children }: { children: ReactNode }) {
+  return (
+    <div role="region" tabIndex={0}
+      aria-label="Operations metrics (scroll horizontally on narrow screens)"
+      className="w-full min-w-0 overflow-x-auto overscroll-x-contain focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
+      <dl aria-label="Search operations metrics"
+        className="grid min-w-[920px] grid-cols-5 gap-px border-y border-[#D8E1EC] bg-[#E7ECF5]">
+        {children}
+      </dl>
     </div>
   );
 }
