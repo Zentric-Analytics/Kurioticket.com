@@ -3,10 +3,9 @@ import Link from "next/link";
 import {
   AdminEmptyState,
   AdminPageShell,
-  AdminStatusBadge,
 } from "@/components/admin/AdminPageShell";
 import { formatDateTime } from "@/lib/admin-data";
-import { OperationsDataTable, OperationsMetric, OperationsProviderIssues, OperationsSection } from "@/components/admin/TravelOperationsOverviewUI";
+import { OperationsDataTable, OperationsMetric, OperationsProviderIssues, OperationsSection, OperationsStatus } from "@/components/admin/TravelOperationsOverviewUI";
 import { getCarOperationsSnapshot } from "@/services/adminCarOperationsService";
 import { getProviderIntegrationStatuses } from "@/services/travel/providerIntegrationStatus";
 
@@ -51,7 +50,7 @@ export default async function AdminCarsPage() {
                 Configuration readiness and car-search-only provider telemetry for integrations that can serve car search.
               </p>
             </div>
-            <AdminStatusBadge tone="info">Current environment</AdminStatusBadge>
+            <OperationsStatus tone="info">Current environment</OperationsStatus>
           </div>
 
           <div className="mt-3 grid gap-x-8 gap-y-3 lg:grid-cols-2">
@@ -64,9 +63,9 @@ export default async function AdminCarsPage() {
                       <p className="font-semibold text-[#020617]">{integration.provider}</p>
                       <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-[#64748B]">{integration.environment}</p>
                     </div>
-                    <AdminStatusBadge tone={integration.state === "READY" ? "good" : integration.state === "ENVIRONMENT_BLOCKED" ? "warn" : "neutral"}>
+                    <OperationsStatus tone={integration.state === "READY" ? "good" : integration.state === "ENVIRONMENT_BLOCKED" ? "warn" : "neutral"}>
                       {integration.state.replaceAll("_", " ")}
-                    </AdminStatusBadge>
+                    </OperationsStatus>
                   </div>
                   <div className="mt-4 grid gap-2 text-sm sm:grid-cols-2">
                     <Stat label="Search" value={integration.searchEnabled ? "Enabled" : "Not enabled"} />
@@ -108,7 +107,7 @@ export default async function AdminCarsPage() {
                       formatDateTime(new Date(search.createdAt)),
                       <div key="origin"><p className="font-semibold text-[#020617]">{search.origin || "—"}</p><p className="text-xs text-[#64748B]">{search.requestId || "No request ID"}</p></div>,
                       search.destination || "—",
-                      <AdminStatusBadge key="kind" tone={search.kind === "FAILED" ? "bad" : "warn"}>{search.kind.replaceAll("_", " ")}</AdminStatusBadge>,
+                      <OperationsStatus key="kind" tone={search.kind === "FAILED" ? "bad" : "warn"}>{search.kind.replaceAll("_", " ")}</OperationsStatus>,
                       search.resultCount,
                       search.latencyMs === null ? "—" : search.latencyMs + " ms",
                       <Link key="action" href={"/admin/searches/" + search.id + "?environment=" + operations.environment} className="font-semibold text-[#004BB8] hover:text-[#003985]">Open</Link>,
@@ -130,7 +129,7 @@ export default async function AdminCarsPage() {
                   <h2 className="font-semibold text-[#020617]">Locations needing attention</h2>
                   <p className="mt-1 text-[12px] leading-5 text-[#64748B]">Pick-up/drop-off pairs with the highest number of failed, partial, or zero-result searches.</p>
                 </div>
-                <AdminStatusBadge tone={operations.locationIssues.length ? "warn" : "good"}>{operations.locationIssues.length ? "Exceptions found" : "Clear"}</AdminStatusBadge>
+                <OperationsStatus tone={operations.locationIssues.length ? "warn" : "good"}>{operations.locationIssues.length ? "Exceptions found" : "Clear"}</OperationsStatus>
               </div>
               {operations.locationIssues.length ? (
                 <div className="mt-4 divide-y divide-[#E7ECF5]">
@@ -140,7 +139,7 @@ export default async function AdminCarsPage() {
                         <p className="font-semibold text-[#020617]">{location.origin || "—"} → {location.destination || "—"}</p>
                         <p className="mt-1 text-xs font-semibold text-[#64748B]">{location.lastIssueAt ? "Last issue " + formatDateTime(new Date(location.lastIssueAt)) : "No timestamp"}</p>
                       </div>
-                      <AdminStatusBadge tone="warn">{location.issueCount} {location.issueCount === 1 ? "exception" : "exceptions"}</AdminStatusBadge>
+                      <OperationsStatus tone="warn">{location.issueCount} {location.issueCount === 1 ? "exception" : "exceptions"}</OperationsStatus>
                     </div>
                   ))}
                 </div>
