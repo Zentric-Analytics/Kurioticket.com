@@ -13,6 +13,7 @@ import type { ProviderOperationalStatus, ProviderOperationalServiceStatus } from
 
 const providersPage = readFileSync("src/app/admin/providers/page.tsx", "utf8");
 const referralPage = readFileSync("src/app/admin/referral-attribution/page.tsx", "utf8");
+const inlineUnlinkedPanel = readFileSync("src/components/admin/ReferralUnlinkedHandoffs.tsx", "utf8");
 const referralWindowFilter = readFileSync("src/components/admin/ReferralWindowFilter.tsx", "utf8");
 const handoffFilters = readFileSync("src/components/admin/ProviderHandoffFilters.tsx", "utf8");
 const handoffsPage = readFileSync("src/app/admin/redirects/page.tsx", "utf8");
@@ -340,7 +341,19 @@ test("Task 3: referral attribution uses compact preset auto-apply and white metr
   assert.match(referralPage, /lg:grid-cols-2/);
   assert.match(referralPage, /grid grid-cols-2 gap-x-4 gap-y-4/);
   assert.match(referralPage, /aria-labelledby="unlinked-handoffs"/);
-  assert.match(referralPage, /correlation: "unavailable"/);
+  assert.match(referralPage, /<ReferralUnlinkedHandoffs/);
+  assert.match(referralPage, /unlinkedCount={summary.handoffs.notLinkedToSearch}/);
+  assert.match(referralPage, /providers={summary.providers.map\(item => item.provider\)}/);
+  assert.doesNotMatch(referralPage, /href=\{referralHandoffHref/);
+  assert.match(inlineUnlinkedPanel, /referralUnlinkedRecordsParams/);
+  assert.match(inlineUnlinkedPanel, /fetch\("\/api\/admin\/provider-handoffs\?" \+ params.toString\(\)/);
+  assert.match(inlineUnlinkedPanel, /aria-expanded=\{expanded\}/);
+  assert.match(inlineUnlinkedPanel, /aria-label="Unlinked provider handoff records"/);
+  assert.match(inlineUnlinkedPanel, /aria-label="Unlinked handoff pagination"/);
+  assert.match(inlineUnlinkedPanel, /setSelectedId\(current => current === handoff.id/);
+  assert.match(inlineUnlinkedPanel, /credentials: "include"/);
+  assert.match(inlineUnlinkedPanel, /cache: "no-store"/);
+  assert.doesNotMatch(inlineUnlinkedPanel, /\/admin\/redirects|\/admin\/searches|router\.push|router\.replace/);
   assert.match(referralPage, /not confirmed bookings or payments/);
   assert.match(referralPage, /table className="w-full table-fixed text-\[13px\]"/);
   assert.doesNotMatch(referralPage, /AdminMetricCard|AdminFilterBar|AdminDataTable|AdminStatusBadge/);
