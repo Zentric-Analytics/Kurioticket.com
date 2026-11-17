@@ -34,11 +34,13 @@ function dateLabel(value: string) {
     : new Intl.DateTimeFormat("en", { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" }).format(date) + " UTC";
 }
 
-function DetailField({ label, value }: { label: string; value: string | null }) {
+function DetailField({ label, value, identifier = false }: { label: string; value: string | null; identifier?: boolean }) {
   return (
     <div className="min-w-0">
       <dt className="text-[11px] font-medium text-[#64748B]">{label}</dt>
-      <dd className="mt-1 break-all text-[12px] font-medium leading-5 text-[#020617]">{value || "—"}</dd>
+      <dd className={"mt-1 text-[13px] font-medium leading-5 text-[#020617] " + (identifier ? "break-all" : "break-words")}>
+        {value || "—"}
+      </dd>
     </div>
   );
 }
@@ -229,33 +231,52 @@ export function ReferralUnlinkedHandoffs({ window, environment, unlinkedCount, p
                             <button type="button" aria-expanded={selectedId === handoff.id}
                               aria-controls={selectedId === handoff.id ? detailId : undefined}
                               onClick={() => setSelectedId(current => current === handoff.id ? null : handoff.id)}
-                              className="text-[12px] font-medium text-[#004BB8] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
+                              className="inline-flex min-h-8 items-center rounded-md px-2 text-[12px] font-semibold text-[#004BB8] hover:bg-[#EAF2FF] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
                               {selectedId === handoff.id ? "Close" : "Details"}
                             </button>
                           </td>
                         </tr>
                         {selectedId === handoff.id ? (
                           <tr>
-                            <td colSpan={9} className="bg-[#FAFBFD] p-4">
-                              <section id={detailId} aria-label="Provider handoff record details">
-                                <div className="flex flex-wrap items-center justify-between gap-2">
-                                  <h4 className="text-[13px] font-semibold">Handoff details</h4>
-                                  <span className="text-[11px] text-[#64748B]">Search link: {handoff.searchCorrelation.kind === "exact" ? "Verified" : "Unavailable"}</span>
+                            <td colSpan={9} className="bg-[#F7F9FC] px-3 py-4 sm:px-5 sm:py-5">
+                              <section id={detailId} aria-label="Provider handoff record details"
+                                className="mx-auto w-full max-w-[960px] rounded-xl border border-[#DBE3EE] bg-white p-4 shadow-[0_4px_18px_-12px_rgba(15,23,42,0.22)] sm:p-5">
+                                <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
+                                  <div className="min-w-0">
+                                    <h4 className="text-[14px] font-semibold text-[#0F172A]">Handoff details</h4>
+                                    <p className="mt-1 text-[12px] text-[#64748B]">Read-only provider referral record</p>
+                                  </div>
+                                  <span className="inline-flex min-h-7 items-center rounded-full border border-[#D8E1EC] bg-[#F8FAFC] px-3 text-[11px] font-medium text-[#475569]">
+                                    Search link: {handoff.searchCorrelation.kind === "exact" ? "Verified" : "Unavailable"}
+                                  </span>
                                 </div>
-                                <dl className="mt-3 grid min-w-0 gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
-                                  <DetailField label="Handoff ID" value={handoff.id} />
-                                  <DetailField label="Provider" value={handoff.provider} />
-                                  <DetailField label="Product" value={handoff.product} />
-                                  <DetailField label="Route or property" value={handoff.route} />
-                                  <DetailField label="Price" value={handoff.price ? handoff.currency + " " + handoff.price : null} />
-                                  <DetailField label="Created" value={dateLabel(handoff.createdAt)} />
-                                  <DetailField label="Source page" value={handoff.sourcePage} />
-                                  <DetailField label="Destination domain" value={handoff.destinationDomain} />
-                                  <DetailField label="Environment" value={handoff.environment} />
-                                  <DetailField label="Identity" value={handoff.identity.kind} />
-                                  <DetailField label="User ID" value={handoff.identity.userId} />
-                                  <DetailField label="Visitor ID" value={handoff.identity.visitorId} />
-                                </dl>
+                                <div className="mt-4 border-t border-[#E7ECF5] pt-4">
+                                  <h5 className="text-[12px] font-semibold text-[#334155]">Handoff information</h5>
+                                  <dl className="mt-3 grid min-w-0 grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
+                                    <DetailField label="Handoff ID" value={handoff.id} identifier />
+                                    <DetailField label="Provider" value={handoff.provider} />
+                                    <DetailField label="Product" value={handoff.product} />
+                                    <DetailField label="Route or property" value={handoff.route} />
+                                    <DetailField label="Price" value={handoff.price ? handoff.currency + " " + handoff.price : null} />
+                                    <DetailField label="Created" value={dateLabel(handoff.createdAt)} />
+                                  </dl>
+                                </div>
+                                <div className="mt-4 border-t border-[#E7ECF5] pt-4">
+                                  <h5 className="text-[12px] font-semibold text-[#334155]">Source &amp; destination</h5>
+                                  <dl className="mt-3 grid min-w-0 grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
+                                    <DetailField label="Source page" value={handoff.sourcePage} />
+                                    <DetailField label="Destination domain" value={handoff.destinationDomain} />
+                                    <DetailField label="Environment" value={handoff.environment} />
+                                  </dl>
+                                </div>
+                                <div className="mt-4 border-t border-[#E7ECF5] pt-4">
+                                  <h5 className="text-[12px] font-semibold text-[#334155]">Identity &amp; correlation</h5>
+                                  <dl className="mt-3 grid min-w-0 grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
+                                    <DetailField label="Identity" value={handoff.identity.kind} />
+                                    <DetailField label="User ID" value={handoff.identity.userId} identifier />
+                                    <DetailField label="Visitor ID" value={handoff.identity.visitorId} identifier />
+                                  </dl>
+                                </div>
                               </section>
                             </td>
                           </tr>
