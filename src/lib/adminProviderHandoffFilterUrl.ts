@@ -33,7 +33,7 @@ export function providerHandoffFiltersHref(
   if (scope.from) params.set("from", scope.from);
   if (scope.to) params.set("to", scope.to);
   if (scope.sourcePage) params.set("sourcePage", scope.sourcePage);
-  if (referralAttributionReturnHref({ referralDays: scope.referralDays })) params.set("referralDays", scope.referralDays!);
+  if (typeof scope.referralDays === "string" && referralAttributionReturnHref({ referralDays: scope.referralDays })) params.set("referralDays", scope.referralDays);
   if (values.product) params.set("product", values.product);
   if (values.identity && values.identity !== "all") params.set("identity", values.identity);
   if (values.correlation) params.set("correlation", values.correlation);
