@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { RefObject } from "react";
 import { ChevronDown, LogOut, Menu, Settings, ShieldCheck, X, Building2 } from "lucide-react";
-import { getAdminHeaderGroups, getAdminWorkspaceSections, isAdminNavItemActive, type AdminRole } from "@/lib/adminNavigation";
+import { getAdminHeaderGroups, getAdminWorkspaceSections, isAdminNavItemActive, isAdminWorkspaceSectionActive, type AdminRole } from "@/lib/adminNavigation";
 import { KurioticketLogo } from "@/components/brand/KurioticketLogo";
 import { AdminWorkspaceSearchProvider, AdminSearchTrigger, AdminSearchHeader, AdminSearchContent } from "./AdminWorkspaceSearch";
 
@@ -55,17 +55,13 @@ function WorkspaceSectionNavigation({ pathname, role }: { pathname: string; role
   const group = getAdminWorkspaceSections(pathname, role);
   if (!group || group.links.length < 2) return null;
   return (
-    <nav aria-label={group.label + " sections"} className="mb-5 flex min-w-0 flex-wrap items-end gap-x-6 gap-y-1 border-b border-[#D8E1EC]">
+    <nav aria-label={group.label + " sections"} className="mb-5 flex min-w-0 flex-wrap items-end gap-x-5 gap-y-1 border-b border-[#D8E1EC] sm:gap-x-6">
       {group.links.map((item) => {
-        const [target, query] = item.href.split("?");
-        const active = query
-          ? pathname === "/admin/referral-attribution"
-          : pathname === target ||
-            (target !== "/admin/system" && pathname.startsWith(target + "/"));
+        const active = isAdminWorkspaceSectionActive(pathname, item.href);
         return (
           <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined}
-            className={"inline-flex min-h-11 items-center whitespace-nowrap border-b-2 px-1 text-[13px] font-medium text-[#020617] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] " +
-              (active ? "border-[#004BB8]" : "border-transparent hover:border-[#D8E1EC]")}>
+            className={"inline-flex min-h-11 items-center whitespace-nowrap border-b-2 px-1 text-[13px] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] " +
+              (active ? "border-[#004BB8] text-[#004BB8]" : "border-transparent text-[#475569] hover:border-[#D8E1EC] hover:text-[#020617]")}>
             {item.label}
           </Link>
         );
