@@ -53,7 +53,7 @@ export default async function AdminHotelsPage() {
               <OperationsStatus tone="info">Current environment</OperationsStatus>
             </div>
 
-            <div className="mt-4 grid min-w-0 gap-x-10 gap-y-4 lg:grid-cols-2">
+            <div className={"mt-4 grid min-w-0 gap-x-10 gap-y-4 " + (hotelIntegrations.length > 1 ? "lg:grid-cols-2" : "grid-cols-1")}>
               {hotelIntegrations.map((integration) => {
                 const health = operations?.providerHealth.find((provider) => provider.id === integration.id);
                 return (
@@ -67,7 +67,7 @@ export default async function AdminHotelsPage() {
                         {integration.state.replaceAll("_", " ")}
                       </OperationsStatus>
                     </div>
-                    <div className="mt-4 grid min-w-0 gap-x-6 gap-y-2 text-sm grid-cols-2">
+                    <div className="mt-4 grid min-w-0 grid-cols-2 gap-x-6 gap-y-2 text-sm lg:grid-cols-4">
                       <Stat label="Search" value={integration.searchEnabled ? "Enabled" : "Not enabled"} />
                       <Stat label="Handoff" value={integration.externalHandoffEnabled ? "Enabled" : "Not enabled"} />
                       <Stat label="Calls (24h)" value={health ? String(health.attemptedCalls) : "—"} />
