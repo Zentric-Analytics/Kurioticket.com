@@ -104,6 +104,15 @@ test("Settings uses the same full-white workspace surface as other flat admin wo
   assert.match(shell, /whiteWorkspace \? "bg-white" : "bg-\[#f1f5fb\]"/);
 });
 
+test("Hotel and Car Operations use the same full-white workspace as Homepage Fares", () => {
+  assert.match(shell, /const hotelCarsWorkspace = pathname === "\/admin\/hotels"/);
+  assert.match(shell, /pathname === "\/admin\/cars"/);
+  assert.match(shell, /providerReportingWorkspace \|\| hotelCarsWorkspace \|\| accountDeletionWorkspace/);
+  assert.match(shell, /whiteWorkspace \? "bg-white" : "bg-\[#f1f5fb\]"/);
+  assert.doesNotMatch(shell, /pathname\.startsWith\("\/admin\/hotels\/"\)/);
+  assert.doesNotMatch(shell, /pathname\.startsWith\("\/admin\/cars\/"\)/);
+});
+
 test("navbar search opens the dedicated global-search workspace", () => {
   assert.equal(jsxOpening(shell, 'AdminWorkspaceSearchProvider').length, 1);
   assert.equal(jsxOpening(shell, 'AdminSearchTrigger').length, 1);
