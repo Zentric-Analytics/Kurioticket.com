@@ -104,7 +104,11 @@ export function getAdminHeaderGroups(role: AdminRole, includePreviewTesters = fa
  * navigation groups; none of these links are repeated in the global header.
  * Keep the routes themselves unchanged for bookmarks and deep links.
  */
-const workspaceSections = [
+const workspaceSections: ReadonlyArray<{
+  label: string;
+  paths: readonly string[];
+  links: ReadonlyArray<{ href: string; label: string }>;
+}> = [
   {
     label: "Users",
     paths: ["/admin/users", "/admin/journeys"],
