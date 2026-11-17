@@ -8,6 +8,8 @@ export function referralHandoffHref(input: {
   product?: "flight" | "hotel";
   correlation?: "exact" | "unavailable";
   sourcePage?: string;
+  /** Only presentation context: the selected Referral Attribution report window. */
+  referralDays?: number;
 }) {
   const params = new URLSearchParams({
     environment: input.environment,
@@ -18,16 +20,28 @@ export function referralHandoffHref(input: {
   if (input.product) params.set("product", input.product.toUpperCase());
   if (input.correlation) params.set("correlation", input.correlation);
   if (input.sourcePage) params.set("sourcePage", input.sourcePage);
+  if (Number.isInteger(input.referralDays) && input.referralDays! >= 1 && input.referralDays! <= 90) {
+    params.set("referralDays", String(input.referralDays));
+  }
   return "/admin/redirects?" + params.toString();
+}
+
+/** A fixed, internal destination; never use an arbitrary return URL from query parameters. */
+export function referralAttributionReturnHref(raw: Record<string, string | string[] | undefined>): string | null {
+  const value = raw.referralDays;
+  if (typeof value !== "string" || !/^[1-9]\\d?$/.test(value)) return null;
+  const days = Number(value);
+  return days >= 1 && days <= 90 ? "/admin/providers?view=attribution&days=" + days : null;
 }
 
 /** Only known list-query fields return to the records page from a detail.
  * Never accept a caller-supplied URL or redirect destination. */
-const listKeys = ["environment", "product", "identity", "userId", "visitorId", "provider", "correlation", "from", "to", "cursor", "limit", "sourcePage", "pageTrail"] as const;
+const listKeys = ["environment", "product", "identity", "userId", "visitorId", "provider", "correlation", "from", "to", "cursor", "limit", "sourcePage", "pageTrail", "referralDays"] as const;
 export function handoffListParams(raw: Record<string, string | string[] | undefined>) {
   const result = new URLSearchParams();
   for (const key of listKeys) {
     const value = raw[key];
+    if (key === "referralDays" && !referralAttributionReturnHref(raw)) continue;
     if (typeof value === "string" && value.length > 0 && value.length <= (key === "pageTrail" ? 8192 : 2048)) result.set(key, value);
   }
   return result;
