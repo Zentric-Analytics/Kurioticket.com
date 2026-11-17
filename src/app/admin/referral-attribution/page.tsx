@@ -162,7 +162,7 @@ export default async function AdminReferralAttributionPage({
       {summary.dataAvailable ? (
         <section aria-labelledby="unlinked-handoffs" className="mt-5 border-t border-[#D8E1EC] pt-4">
           <h2 id="unlinked-handoffs" className="text-[15px] font-semibold">Unlinked handoffs</h2>
-          <Link href={referralHandoffHref({ start: summary.window.start, end: summary.window.end, environment: summary.environment, correlation: "unavailable" })}
+          <Link href={referralHandoffHref({ start: summary.window.start, end: summary.window.end, environment: summary.environment, correlation: "unavailable", referralDays: days })}
             className="mt-2 inline-block text-[13px] font-medium text-[#004BB8] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
             View {summary.handoffs.notLinkedToSearch.toLocaleString()} handoffs without a linked search
           </Link>
