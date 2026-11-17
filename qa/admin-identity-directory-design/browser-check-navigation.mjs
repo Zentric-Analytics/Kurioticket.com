@@ -24,8 +24,23 @@ try {
     await expect(page.getByRole("heading", { name: "Users directory" })).toHaveCount(1);
     await expect(page.getByRole("region", { name: "Users directory" })).toBeVisible();
     await expect(page.getByRole("navigation", { name: "User types" }).getByRole("link", { name: "All (30)" })).toBeVisible();
-    const sectionNavigation = page.getByRole("navigation", { name: "Admin sections" });
-    await expect(sectionNavigation.getByRole("link", { name: "Users", exact: true })).toBeVisible();
+    const workspace = page.getByRole("navigation", { name: "Users subsections" });
+    await expect(page.getByRole("heading", { name: "Users", exact: true })).toBeVisible();
+    await expect(workspace.getByRole("link", { name: "Users Directory", exact: true })).toBeVisible();
+    await expect(workspace.getByRole("link", { name: "Visitor Journeys", exact: true })).toBeVisible();
+    await expect(workspace.getByRole("link", { name: "Users Directory", exact: true })).toHaveAttribute("aria-current", "page");
+    for (const unrelated of ["Trips", "Support", "Settings", "System"]) {
+      await expect(workspace.getByRole("link", { name: unrelated, exact: true })).toHaveCount(0);
+    }
+    if (width >= 1024) {
+      const layout = await page.evaluate(() => {
+        const sidebar = document.querySelector('aside[aria-label="Users navigation"]')?.getBoundingClientRect();
+        const content = document.querySelector('[data-admin-page-content]')?.getBoundingClientRect();
+        return { sideBySide: Boolean(sidebar && content && content.left > sidebar.right
+          && Math.abs(sidebar.top - content.top) <= 1) };
+      });
+      assert.equal(layout.sideBySide, true, "Users workspace stays two-column at 100% desktop zoom");
+    }
     if (width >= 1100) {
       const headerNavigation = page.getByRole("navigation", { name: "Admin navigation" });
       await expect(headerNavigation).toBeVisible();

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { RefObject } from "react";
 import { ChevronDown, LogOut, Menu, Settings, ShieldCheck, X, Building2 } from "lucide-react";
@@ -72,7 +72,8 @@ function WorkspaceSectionNavigation({ pathname, role }: { pathname: string; role
 
 function WorkspaceSidebar({ pathname, role, showPreviewTesters }: { pathname: string; role: AdminRole; showPreviewTesters: boolean }) {
   const groups = getAdminHeaderGroups(role, showPreviewTesters);
-  const allItems = getAdminNavForRole(role, showPreviewTesters);
+  const navigation = getAdminNavForRole(role, showPreviewTesters);
+  const searchParams = useSearchParams();
   const activeGroup = groups.flatMap(group => group.links).find(entry =>
     isAdminNavItemActive(entry.item.href, pathname)
     || entry.children.some(child => isAdminNavItemActive(child.href, pathname))
@@ -84,36 +85,35 @@ function WorkspaceSidebar({ pathname, role, showPreviewTesters }: { pathname: st
       ? [{ href: activeGroup.item.href, label: activeGroup.item.label }, ...activeGroup.children.map(child => ({ href: child.href, label: child.label }))]
       : [];
   const uniqueLinks = links.filter((link, index) => links.findIndex(other => other.href === link.href) === index);
+  const title = sections?.label || activeGroup?.item.label || "Workspace";
+  const providerAttribution = pathname === "/admin/providers" && searchParams.get("view") === "attribution";
+
   return (
-    <aside aria-label="Admin workspace sidebar" className="min-w-0 border-b border-[#D8E1EC] pb-4 xl:border-b-0 xl:border-r xl:pb-0 xl:pr-4">
-      <h2 className="px-2 text-[15px] font-semibold text-[#020617]">Sections</h2>
-      <nav aria-label="Admin sections" className="mt-4 space-y-1">
-        {groups.flatMap(group => group.links).filter(entry => entry.item.href !== "/admin").map(entry => {
-          const active = activeGroup?.item.href === entry.item.href;
-          const Icon = entry.item.icon;
-          return (
-            <Link key={entry.item.href} href={entry.item.href} aria-current={pathname === entry.item.href ? "page" : undefined}
-              className={"flex min-h-10 items-center gap-2 rounded-lg px-3 text-[13px] font-medium transition-colors " +
-                (active ? "bg-[#EAF2FF] font-semibold text-[#004BB8]" : "text-[#475569] hover:bg-[#F4F7FB] hover:text-[#020617]")}>
-              <Icon size={15} aria-hidden="true" className="shrink-0" /><span>{entry.item.label}</span>
-            </Link>
-          );
-        })}
-      </nav>
-      {uniqueLinks.length > 1 ? (
-        <nav aria-label={(sections?.label || activeGroup?.item.label || "Workspace") + " subsections"} className="mt-5 border-t border-[#D8E1EC] pt-4">
-          <p className="px-3 text-[10px] font-semibold uppercase tracking-[0.09em] text-[#64748B]">{sections?.label || activeGroup?.item.label}</p>
-          <div className="mt-2 flex flex-col gap-1">
+    <aside aria-label={title + " navigation"} className="min-w-0 border-b border-[#D8E1EC] pb-4 lg:border-b-0 lg:border-r lg:pb-0 lg:pr-4">
+      <h2 className="px-2 text-[15px] font-semibold text-[#020617]">{title}</h2>
+      <nav aria-label={title + " subsections"} className="mt-4 space-y-4">
+        <div>
+          <p className="px-3 text-[10px] font-semibold uppercase tracking-[0.09em] text-[#64748B]">{title}</p>
+          <div className="mt-1 flex flex-col gap-0.5">
             {uniqueLinks.map(link => {
-              const active = isAdminWorkspaceSectionActive(pathname, link.href) || pathname === link.href.split("?")[0];
-              return <Link key={link.href} href={link.href} aria-current={active ? "page" : undefined}
-                className={"rounded-lg px-3 py-2 text-[13px] transition-colors " +
-                  (active ? "bg-[#EAF2FF] font-semibold text-[#004BB8]" : "text-[#475569] hover:bg-[#F4F7FB] hover:text-[#020617]")}>{link.label}</Link>;
+              const destination = link.href.split("?")[0];
+              const Icon = navigation.find(item => item.href === destination)?.icon || activeGroup?.item.icon;
+              const active = link.href === "/admin/providers?view=attribution"
+                ? providerAttribution || pathname === "/admin/referral-attribution"
+                : !(providerAttribution && link.href === "/admin/providers")
+                  && isAdminWorkspaceSectionActive(pathname, link.href);
+              return (
+                <Link key={link.href} href={link.href} aria-current={active ? "page" : undefined}
+                  className={"flex min-h-10 min-w-0 items-center gap-2.5 rounded-r-md border-l-2 px-3 py-2 text-[13px] font-medium leading-5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 " +
+                    (active ? "border-[#004BB8] bg-[#F2F7FF] text-[#004BB8]" : "border-transparent text-[#475569] hover:bg-[#F8FAFC] hover:text-[#020617]")}>
+                  {Icon ? <Icon size={15} aria-hidden="true" className="shrink-0" /> : null}
+                  <span className="min-w-0">{link.label}</span>
+                </Link>
+              );
             })}
           </div>
-        </nav>
-      ) : null}
-      {allItems.length === 0 ? <p className="px-3 py-3 text-xs text-slate-500">No sections available for this role.</p> : null}
+        </div>
+      </nav>
     </aside>
   );
 }
@@ -272,7 +272,7 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
     <main className="mx-auto w-full max-w-[1920px] px-4 py-5 sm:px-6 lg:px-10">
       <AdminSearchContent>
         {!isOverview && !isSettings && role === "ADMIN" ? (
-          <div className="grid min-w-0 grid-cols-1 gap-5 bg-white xl:grid-cols-[208px_minmax(0,1fr)] xl:gap-5">
+          <div className="grid min-w-0 grid-cols-1 gap-5 bg-white lg:grid-cols-[232px_minmax(0,1fr)] lg:gap-7">
             <WorkspaceSidebar pathname={pathname} role={role} showPreviewTesters={showPreviewTesters} />
             <div data-admin-page-content className="min-w-0">{children}</div>
           </div>

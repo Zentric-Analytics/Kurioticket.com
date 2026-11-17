@@ -45,6 +45,10 @@ export const adminNavigation: AdminNavDefinition[] = [
   { href: "/admin/confirmed-trips", label: "Trips", icon: ClipboardList, roles: ["ADMIN"], section: "operations", description: "Monitor provider-confirmed trips and their flight-status readiness." },
   { href: "/admin/confirmed-trips/monitoring", parentHref: "/admin/confirmed-trips", label: "Trip monitoring", icon: Activity, roles: ["ADMIN"], section: "operations", description: "Monitor trusted trip confirmations, provider deliveries and flight-status snapshots." },
   { href: "/admin/content", label: "Content", icon: FileText, roles: ["ADMIN"], section: "content", description: "Review admin-managed site content." },
+  { href: "/admin/content/homepage/destinations", parentHref: "/admin/content", label: "Homepage destinations", icon: FileText, roles: ["ADMIN"], section: "content", description: "Manage published homepage destination content." },
+  { href: "/admin/content/homepage/flight-routes", parentHref: "/admin/content", label: "Flight routes", icon: FileText, roles: ["ADMIN"], section: "content", description: "Manage published homepage flight routes." },
+  { href: "/admin/content/homepage/hotel-destinations", parentHref: "/admin/content", label: "Hotel destinations", icon: Hotel, roles: ["ADMIN"], section: "content", description: "Manage homepage hotel destinations." },
+  { href: "/admin/content/faqs", parentHref: "/admin/content", label: "FAQs", icon: BookOpen, roles: ["ADMIN"], section: "content", description: "Manage published frequently asked questions." },
   { href: "/admin/homepage-fares", parentHref: "/admin/providers", label: "Homepage Fares", icon: Activity, roles: ["ADMIN"], section: "readiness", description: "Monitor and refresh provider-backed homepage fare readiness." },
   { href: "/admin/hotels", parentHref: "/admin/providers", label: "Hotels", icon: Hotel, roles: ["ADMIN"], section: "readiness", description: "Review hotel administration readiness." },
   { href: "/admin/cars", parentHref: "/admin/providers", label: "Cars", icon: Car, roles: ["ADMIN"], section: "readiness", description: "Review car administration readiness." },
@@ -126,6 +130,14 @@ const workspaceSections: ReadonlyArray<{
     ],
   },
   {
+    label: "Trips",
+    paths: ["/admin/confirmed-trips"],
+    links: [
+      { href: "/admin/confirmed-trips", label: "Trips Directory" },
+      { href: "/admin/confirmed-trips/monitoring", label: "Trip Monitoring" },
+    ],
+  },
+  {
     label: "Support",
     paths: ["/admin/support", "/admin/account-deletions"],
     links: [
@@ -142,6 +154,17 @@ const workspaceSections: ReadonlyArray<{
       { href: "/admin/cars", label: "Cars" },
       { href: "/admin/homepage-fares", label: "Homepage Fares" },
       { href: "/admin/providers?view=attribution", label: "Referral Attribution" },
+    ],
+  },
+  {
+    label: "Content",
+    paths: ["/admin/content"],
+    links: [
+      { href: "/admin/content", label: "Content Overview" },
+      { href: "/admin/content/homepage/destinations", label: "Homepage Destinations" },
+      { href: "/admin/content/homepage/flight-routes", label: "Flight Routes" },
+      { href: "/admin/content/homepage/hotel-destinations", label: "Hotel Destinations" },
+      { href: "/admin/content/faqs", label: "FAQs" },
     ],
   },
   {
@@ -166,8 +189,12 @@ export function isAdminWorkspaceSectionActive(pathname: string, href: string): b
   if (href.includes("?")) return pathname === "/admin/referral-attribution";
   if (destination === "/admin/searches/activity"
     && /^\/admin\/searches\/(?!activity(?:\/|$))[^/]+\/?$/.test(pathname)) return true;
-  return pathname === destination
-    || (destination !== "/admin/system" && pathname.startsWith(destination + "/"));
+  if (destination === "/admin/providers" || destination === "/admin/content"
+    || destination === "/admin/system") return pathname === destination;
+  if (destination === "/admin/confirmed-trips") {
+    return pathname === destination || pathname.startsWith("/admin/confirmed-trips/records");
+  }
+  return pathname === destination || pathname.startsWith(destination + "/");
 }
 
 export type AdminWorkspaceSections = {
