@@ -151,8 +151,9 @@ test("Providers owns flight provider health while the legacy Flights route redir
   for (const source of [hotelsPage, carsPage]) {
     assert.match(source, /getProviderIntegrationStatuses/);
     assert.match(source, /providerHealth\.find/);
-    assert.match(source, /AdminSectionCard/);
-    assert.match(source, /provider-owned/i);
+    assert.match(source, /OperationsSection/);
+    assert.match(source, /<OperationsDataTable/);
+    assert.doesNotMatch(source, /AdminSectionCard|AdminMetricCard|operations\.recentSearches/);
     assert.doesNotMatch(source, /Booking not live|production booking workflow|booking actions/i);
   }
 });
