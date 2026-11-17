@@ -19,6 +19,16 @@ test("car admin is a provider-aware operational overview", () => {
   assert.doesNotMatch(carsPage, /Provider-call telemetry pending/);
 });
 
+test("cars operations share Homepage Fares one-row metrics and balanced overview sections", () => {
+  assert.match(carsPage, /<OperationsMetricStrip>/);
+  assert.equal((carsPage.match(/<OperationsMetric /g) || []).length, 5);
+  assert.doesNotMatch(carsPage, /sm:grid-cols-3 xl:grid-cols-5|grid-cols-2 border-b border-\[#D8E1EC\]/);
+  assert.match(carsPage, /integrations\.length > 1|carIntegrations\.length > 1/);
+  assert.match(carsPage, /lg:grid-cols-4/);
+  assert.doesNotMatch(carsPage, /grid gap-4 xl:grid-cols-2/);
+  assert.match(carsPage, /<OperationsProviderIssues/);
+});
+
 test("car operations snapshot is environment scoped and read-only", () => {
   assert.match(service, /type: "CAR"/);
   assert.match(service, /query: \{ path: \["environment"\], equals: environment \}/);
