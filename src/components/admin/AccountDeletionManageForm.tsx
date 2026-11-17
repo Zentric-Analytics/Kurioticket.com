@@ -65,9 +65,9 @@ export function AccountDeletionManageForm({ requestId, status, accountEmail, rev
 
   return (
     <section aria-labelledby="deletion-manage-heading" className="min-w-0">
-      <h3 id="deletion-manage-heading" className="border-b border-[#E5E7EB] pb-2.5 text-[14px] font-semibold leading-5 text-[#111827]">Manage deletion</h3>
+      <h3 id="deletion-manage-heading" className="border-b border-[#E7ECF5] pb-2.5 text-[14px] font-semibold leading-5 text-[#0F172A]">Manage deletion</h3>
 
-      <div className="min-w-0 space-y-4 pt-3">
+      <div className="min-w-0 space-y-4 pt-4">
         <label className="block min-w-0">
           <span className="mb-1.5 block text-[12px] font-medium text-[#64748B]">Review notes</span>
           <AdminTextarea
@@ -75,7 +75,7 @@ export function AccountDeletionManageForm({ requestId, status, accountEmail, rev
             onChange={event => setNotes(event.target.value)}
             maxLength={5000}
             rows={4}
-            className="min-h-[104px] w-full rounded-lg border-[#D9DDE3] bg-white px-3 py-2 text-[13px] font-normal text-[#374151] focus:border-[#64748B] focus:ring-0"
+            className="min-h-[116px] w-full rounded-lg border-[#D8E1EC] bg-white px-3 py-2.5 text-[13px] font-normal leading-5 text-[#374151] focus:border-[#004BB8] focus:ring-2 focus:ring-[#EAF2FF]"
             placeholder="Document retention review and next steps"
             disabled={isPending}
           />
@@ -87,7 +87,7 @@ export function AccountDeletionManageForm({ requestId, status, accountEmail, rev
             value={reference}
             onChange={event => setReference(event.target.value)}
             maxLength={255}
-            className="h-9 w-full rounded-lg border-[#D9DDE3] bg-white px-3 text-[13px] font-normal text-[#374151] focus:border-[#64748B] focus:ring-0"
+            className="h-10 w-full rounded-lg border-[#D8E1EC] bg-white px-3 text-[13px] font-normal text-[#374151] focus:border-[#004BB8] focus:ring-2 focus:ring-[#EAF2FF]"
             placeholder="Internal case reference"
             disabled={isPending}
           />
@@ -106,7 +106,7 @@ export function AccountDeletionManageForm({ requestId, status, accountEmail, rev
                 onChange={event => setConfirmEmail(event.target.value)}
                 autoComplete="off"
                 placeholder={accountEmail || "Account email"}
-                className="h-9 w-full rounded-lg border-[#D9DDE3] bg-white px-3 text-[13px] font-normal text-[#374151] focus:border-[#64748B] focus:ring-0"
+                className="h-10 w-full rounded-lg border-[#D8E1EC] bg-white px-3 text-[13px] font-normal text-[#374151] focus:border-[#004BB8] focus:ring-2 focus:ring-[#EAF2FF]"
                 disabled={isPending}
               />
             </label>
@@ -125,7 +125,7 @@ export function AccountDeletionManageForm({ requestId, status, accountEmail, rev
         {message ? <p className="text-[12px] font-medium text-emerald-700" role="status">{message}</p> : null}
         {error ? <p className="text-[12px] font-medium text-rose-700" role="alert">{error}</p> : null}
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2 pt-1">
           <AdminButton type="button" onClick={() => submit("save_notes")} loading={isPending} className="h-9 rounded-lg bg-[#3154EF] px-3 text-[13px] font-semibold hover:bg-[#2445D7]">Save notes</AdminButton>
           {status === "PENDING" ? (
             <AdminButton
