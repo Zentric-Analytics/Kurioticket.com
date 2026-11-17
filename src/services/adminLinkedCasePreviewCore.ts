@@ -87,15 +87,20 @@ export function createAdminLinkedCasePreviewReader({ authorize, database }: Depe
         });
         if (!ticket || ticket.category !== "account_deletion") return { status: "not_found" };
 
-        const deletion = await db.accountDeletionRequest.findFirst({
+        // The database does not enforce uniqueness on supportTicketId. If
+        // multiple deletion records point at one ticket, fail closed rather
+        // than choosing an arbitrary customer's case.
+        const matchingDeletions = await db.accountDeletionRequest.findMany({
           where: ticket.userId
             ? { supportTicketId: ticket.id, userId: ticket.userId }
             // Only a completed deletion can legitimately detach its Support
             // ticket. Do not treat any other orphaned record as linked.
             : { supportTicketId: ticket.id, status: "COMPLETED" },
           select: deletionPreviewSelect,
+          take: 2,
         });
-        if (!deletion) return { status: "not_found" };
+        if (matchingDeletions.length !== 1) return { status: "not_found" };
+        const deletion = matchingDeletions[0];
 
         return {
           status: "ok",
