@@ -153,7 +153,7 @@ test("Providers owns flight provider health while the legacy Flights route redir
     assert.match(source, /providerHealth\.find/);
     assert.match(source, /OperationsSection/);
     assert.match(source, /<ProductSearchRecordsPanel product=/);
-    assert.match(source, /<ProductSearchJumpLink product=/);
+    assert.doesNotMatch(source, /ProductSearchJumpLink|View hotel searches|View car searches/);
     assert.doesNotMatch(source, /\/admin\/searches\/|\/admin\/journeys/);
     assert.doesNotMatch(source, /AdminSectionCard|AdminMetricCard|operations\.recentSearches/);
     assert.doesNotMatch(source, /Booking not live|production booking workflow|booking actions/i);
