@@ -50,7 +50,8 @@ test("inactive or zero-alert states do not create a duplicate informational card
 });
 
 test("genuine alerts expand in place and reuse protected acknowledgement", () => {
-  assert.match(inline, /<details className="group mt-3/);
+  assert.match(inline, /<details open=\{hasUnacknowledgedCritical\} className="group mt-3/);
+  assert.match(inline, /alerts\.some\(\(alert\) => alert\.severity === "CRITICAL" && !alert\.acknowledged\)/);
   assert.match(inline, /<summary className=/);
   assert.match(inline, /active confirmation alert/);
   assert.match(inline, /group-open:rotate-180/);

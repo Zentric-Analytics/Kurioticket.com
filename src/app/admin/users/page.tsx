@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getPublicEnvironment } from "@/lib/stagingSafety";
 import { AdminIdentityTable, type IdentityRow } from "@/components/admin/AdminIdentityTable";
@@ -56,7 +57,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
   // Operational sessions are not accounts or analytics visitor identities.
   // A single identity query supplies the operational guest cohort, timestamps,
   // and total. Account and consented visitor counts remain independent of tab.
-  const result = await withOptionalDb(async db => {
+  const result = await withOptionalDb<{ rows: IdentityRow[]; registeredCount: number; guestCount: number } | null>(async db => {
     const [registeredCount, consentedGuestCount] = await Promise.all([
       db.user.count({ where }),
       guestsEligibleForFilters ? db.visitor.count({ where: guestWhere }) : Promise.resolve(0),
@@ -99,8 +100,26 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
       return record ? [{ kind: "guest" as const, record }] : [];
     });
     return { rows, registeredCount, guestCount: consentedGuestCount + operationalGuestCount };
-  }, { rows: [] as IdentityRow[], registeredCount: 0, guestCount: 0 });
+  }, null);
   const link = "/admin/users?" + new URLSearchParams({ ...(q ? { q } : {}), role, status, tab, sort, date, ...(from && to ? {from,to} : {}) }).toString();
+  if (result === null) {
+    return (
+      <div className="w-full min-w-0 bg-white text-[#020617]">
+        <h1 className="sr-only">Users</h1>
+        <section role="status" aria-label="Users directory unavailable"
+          className="border-y border-[#D8E1EC] px-3 py-8 sm:px-4">
+          <h2 className="text-[15px] font-semibold">Users directory unavailable</h2>
+          <p className="mt-2 max-w-[760px] text-[13px] leading-5 text-[#475569]">
+            The identity directory could not be read. User and guest counts and records are unavailable;
+            an empty directory is not assumed.
+          </p>
+          <Link href={link} className="mt-4 inline-flex h-9 items-center rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px] font-medium text-[#004BB8] hover:bg-[#F8FAFC]">
+            Retry directory
+          </Link>
+        </section>
+      </div>
+    );
+  }
   return (
     <div className="w-full min-w-0 bg-white">
       <h1 className="sr-only">Users</h1>

@@ -39,9 +39,10 @@ export async function ConfirmedTripDeliveryAlerts() {
   }
 
   if (alerts.length === 0) return null;
+  const hasUnacknowledgedCritical = alerts.some((alert) => alert.severity === "CRITICAL" && !alert.acknowledged);
 
   return (
-    <details className="group mt-3 min-w-0 rounded-lg border border-amber-200 bg-amber-50/40">
+    <details open={hasUnacknowledgedCritical} className="group mt-3 min-w-0 rounded-lg border border-amber-200 bg-amber-50/40">
       <summary className="flex min-h-10 cursor-pointer list-none items-center justify-between gap-3 rounded-lg px-3 py-2 text-[13px] font-semibold leading-5 text-amber-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 [&::-webkit-details-marker]:hidden">
         <span className="flex min-w-0 items-center gap-2">
           <AlertTriangle size={16} className="shrink-0" aria-hidden="true" />
