@@ -152,7 +152,7 @@ test("Hotel and Car search records remain in Providers, without redirecting to S
     ["CAR", "src/app/admin/cars/page.tsx"],
   ] as const) {
     const source = readFileSync(path, "utf8");
-    assert.ok(source.includes(`<ProductSearchJumpLink product="${product}"`));
+    assert.equal(source.includes("ProductSearchJumpLink"), false);
     assert.ok(source.includes(`<ProductSearchRecordsPanel product="${product}"`));
     assert.equal(source.includes("/admin/searches/"), false);
     assert.equal(source.includes("/admin/journeys"), false);

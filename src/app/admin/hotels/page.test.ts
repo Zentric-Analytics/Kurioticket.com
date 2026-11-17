@@ -13,7 +13,7 @@ test("hotel admin is an operational overview rather than a readiness-only page",
   assert.doesNotMatch(hotelsPage, /Recent hotel searches|operations\.recentSearches/);
   assert.match(hotelsPage, /<ProductSearchRecordsPanel product="HOTEL"/);
   assert.match(hotelsPage, /<OperationsMetric/);
-  assert.match(hotelsPage, /<ProductSearchJumpLink product="HOTEL"/);
+  assert.doesNotMatch(hotelsPage, /ProductSearchJumpLink|View hotel searches/);
   assert.doesNotMatch(hotelsPage, /View hotel journeys|\/admin\/journeys/);
   assert.doesNotMatch(hotelsPage, /Hotel Search Readiness/);
   assert.doesNotMatch(hotelsPage, /Kurioticket static catalogue/);
@@ -43,7 +43,7 @@ test("hotel operations snapshot is environment and service scoped", () => {
 });
 
 test("hotel operations keeps search diagnostics within Providers", () => {
-  assert.match(hotelsPage, /<ProductSearchJumpLink product="HOTEL"/);
+  assert.doesNotMatch(hotelsPage, /ProductSearchJumpLink|View hotel searches/);
   assert.doesNotMatch(hotelsPage, /\/admin\/searches\//);
   assert.match(hotelsPage, /booking completion remains provider-owned/);
   assert.match(hotelsPage, /provider handoffs do not confirm reservations/);

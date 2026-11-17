@@ -5,7 +5,7 @@ import {
   AdminPageShell,
 } from "@/components/admin/AdminPageShell";
 import { formatDateTime } from "@/lib/admin-data";
-import { ProductSearchJumpLink, ProductSearchRecordsPanel } from "@/components/admin/ProductSearchRecordsPanel";
+import { ProductSearchRecordsPanel } from "@/components/admin/ProductSearchRecordsPanel";
 import { OperationsMetric, OperationsMetricStrip, OperationsProviderIssues, OperationsSection, OperationsStatus } from "@/components/admin/TravelOperationsOverviewUI";
 import { getCarOperationsSnapshot } from "@/services/adminCarOperationsService";
 import { getProviderIntegrationStatuses } from "@/services/travel/providerIntegrationStatus";
@@ -23,12 +23,8 @@ export default async function AdminCarsPage() {
   return (
     <AdminPageShell title="Car Operations" hideHeader>
       <div className="mx-auto w-full min-w-0 max-w-[1500px] bg-white text-[#020617]">
-        <header className="flex min-w-0 flex-wrap items-center justify-between gap-3 border-b border-[#D8E1EC] pb-4 pt-1">
+        <header className="min-w-0 border-b border-[#D8E1EC] pb-4 pt-1">
           <h1 className="text-[20px] font-semibold leading-7 tracking-[-0.02em] text-[#020617]">Car Operations</h1>
-          <div className="flex min-w-0 flex-wrap items-center gap-2">
-            <ProductSearchJumpLink product="CAR" />
-            
-          </div>
         </header>
         <div className="min-w-0 space-y-0">
         {operations ? (

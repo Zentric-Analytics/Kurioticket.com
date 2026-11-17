@@ -35,7 +35,7 @@ test("car operations snapshot is environment scoped and read-only", () => {
   assert.match(service, /query: \{ path: \["environment"\], equals: environment \}/);
   assert.match(service, /service: "car-search"/);
   assert.match(service, /isolationLevel: "RepeatableRead"/);
-  assert.match(carsPage, /<ProductSearchJumpLink product="CAR"/);
+  assert.doesNotMatch(carsPage, /ProductSearchJumpLink|View car searches/);
   assert.doesNotMatch(carsPage, /\/admin\/journeys|\/admin\/searches\//);
   assert.doesNotMatch(carsPage, /fetch\(|method:\s*["'](?:POST|PATCH|DELETE)|<form/);
 });
