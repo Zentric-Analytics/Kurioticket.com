@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { RefObject } from "react";
 import { ChevronDown, LogOut, Menu, Settings, ShieldCheck, X, Building2 } from "lucide-react";
-import { getAdminHeaderGroups, getAdminWorkspaceSections, isAdminNavItemActive, isAdminWorkspaceSectionActive, type AdminRole } from "@/lib/adminNavigation";
+import { getAdminHeaderGroups, getAdminNavForRole, getAdminWorkspaceSections, isAdminNavItemActive, isAdminWorkspaceSectionActive, type AdminRole } from "@/lib/adminNavigation";
 import { KurioticketLogo } from "@/components/brand/KurioticketLogo";
 import { AdminWorkspaceSearchProvider, AdminSearchTrigger, AdminSearchHeader, AdminSearchContent } from "./AdminWorkspaceSearch";
 
@@ -70,6 +70,54 @@ function WorkspaceSectionNavigation({ pathname, role }: { pathname: string; role
   );
 }
 
+function WorkspaceSidebar({ pathname, role, showPreviewTesters }: { pathname: string; role: AdminRole; showPreviewTesters: boolean }) {
+  const groups = getAdminHeaderGroups(role, showPreviewTesters);
+  const allItems = getAdminNavForRole(role, showPreviewTesters);
+  const activeGroup = groups.flatMap(group => group.links).find(entry =>
+    isAdminNavItemActive(entry.item.href, pathname)
+    || entry.children.some(child => isAdminNavItemActive(child.href, pathname))
+  );
+  const sections = getAdminWorkspaceSections(pathname, role);
+  const links = sections?.links.length
+    ? sections.links
+    : activeGroup
+      ? [{ href: activeGroup.item.href, label: activeGroup.item.label }, ...activeGroup.children.map(child => ({ href: child.href, label: child.label }))]
+      : [];
+  const uniqueLinks = links.filter((link, index) => links.findIndex(other => other.href === link.href) === index);
+  return (
+    <aside aria-label="Admin workspace sidebar" className="min-w-0 border-b border-[#D8E1EC] pb-4 md:border-b-0 md:border-r md:pb-0 md:pr-4">
+      <h2 className="px-2 text-[15px] font-semibold text-[#020617]">Sections</h2>
+      <nav aria-label="Admin sections" className="mt-4 space-y-1">
+        {groups.flatMap(group => group.links).filter(entry => entry.item.href !== "/admin").map(entry => {
+          const active = activeGroup?.item.href === entry.item.href;
+          const Icon = entry.item.icon;
+          return (
+            <Link key={entry.item.href} href={entry.item.href} aria-current={pathname === entry.item.href ? "page" : undefined}
+              className={"flex min-h-10 items-center gap-2 rounded-lg px-3 text-[13px] font-medium transition-colors " +
+                (active ? "bg-[#EAF2FF] font-semibold text-[#004BB8]" : "text-[#475569] hover:bg-[#F4F7FB] hover:text-[#020617]")}>
+              <Icon size={15} aria-hidden="true" className="shrink-0" /><span>{entry.item.label}</span>
+            </Link>
+          );
+        })}
+      </nav>
+      {uniqueLinks.length > 1 ? (
+        <nav aria-label={(sections?.label || activeGroup?.item.label || "Workspace") + " subsections"} className="mt-5 border-t border-[#D8E1EC] pt-4">
+          <p className="px-3 text-[10px] font-semibold uppercase tracking-[0.09em] text-[#64748B]">{sections?.label || activeGroup?.item.label}</p>
+          <div className="mt-2 flex flex-col gap-1">
+            {uniqueLinks.map(link => {
+              const active = isAdminWorkspaceSectionActive(pathname, link.href) || pathname === link.href.split("?")[0];
+              return <Link key={link.href} href={link.href} aria-current={active ? "page" : undefined}
+                className={"rounded-lg px-3 py-2 text-[13px] transition-colors " +
+                  (active ? "bg-[#EAF2FF] font-semibold text-[#004BB8]" : "text-[#475569] hover:bg-[#F4F7FB] hover:text-[#020617]")}>{link.label}</Link>;
+            })}
+          </div>
+        </nav>
+      ) : null}
+      {allItems.length === 0 ? <p className="px-3 py-3 text-xs text-slate-500">No sections available for this role.</p> : null}
+    </aside>
+  );
+}
+
 function AdminHeaderMenus({ adminEmail, adminName, role, headerRef }: {
   adminEmail?: string | null;
   adminName?: string | null;
@@ -131,6 +179,9 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
   const role: AdminRole = adminRole === "SUPPORT" || adminRole === "USER" ? adminRole : "ADMIN";
   const groups = getAdminHeaderGroups(role, showPreviewTesters);
   const pathname = usePathname();
+  const isOverview = pathname === "/admin" || pathname === "/admin/";
+  const isSettings = pathname === "/admin/settings" || pathname.startsWith("/admin/settings/") || pathname === "/admin/preview-testers";
+  const overviewGroups = groups.map(group => ({ ...group, links: group.links.filter(entry => entry.item.href === "/admin") })).filter(group => group.links.length > 0);
   const contentLanding = pathname === "/admin/content" || pathname === "/admin/content/";
   const workspaceRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLElement>(null);
@@ -212,14 +263,23 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
       </div>
       <div className="hidden border-t border-slate-100 min-[1100px]:block">
         <div className="mx-auto max-w-[1920px] px-4 pb-2 pt-2 sm:px-6 lg:px-10">
-          <Navigation groups={groups} pathname={pathname} close={() => {}} />
+          <Navigation groups={isOverview ? groups : overviewGroups} pathname={pathname} close={() => {}} />
         </div>
       </div>
       {mobileOpen ? <div className="max-h-[70vh] overflow-y-auto border-t border-slate-100 bg-white min-[1100px]:hidden"><Navigation groups={groups} pathname={pathname} mobile close={() => setMobileOpen(false)} /></div> : null}
       </AdminSearchHeader>
     </header>
     <main className="mx-auto w-full max-w-[1920px] px-4 py-5 sm:px-6 lg:px-10">
-      <AdminSearchContent><WorkspaceSectionNavigation pathname={pathname} role={role} />{children}</AdminSearchContent>
+      <AdminSearchContent>
+        {!isOverview && !isSettings && role === "ADMIN" ? (
+          <div className="grid min-w-0 grid-cols-1 gap-5 bg-white md:grid-cols-[232px_minmax(0,1fr)] md:gap-7">
+            <WorkspaceSidebar pathname={pathname} role={role} showPreviewTesters={showPreviewTesters} />
+            <div className="min-w-0">{children}</div>
+          </div>
+        ) : (
+          <>{children}</>
+        )}
+      </AdminSearchContent>
     </main>
 
   </div></AdminWorkspaceSearchProvider>;
