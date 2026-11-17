@@ -157,7 +157,7 @@ export default async function AdminCarsPage() {
                 <Link href="/admin/providers?product=cars" className="text-sm font-semibold text-[#004BB8] hover:text-[#003985]">Providers</Link>
               </div>
               {operations.providerIssues.length ? (
-                <OperationsProviderIssues items={operations.providerIssues} />
+                <OperationsProviderIssues items={operations.providerIssues} formatDate={formatDateTime} />
               ) : (
                 <p className="mt-4 rounded-xl bg-slate-50 p-3 text-[12px] text-[#64748B]">No disabled, degraded or failed car-search provider observations were recorded in this window.</p>
               )}
