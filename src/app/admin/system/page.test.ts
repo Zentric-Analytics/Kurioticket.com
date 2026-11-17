@@ -93,18 +93,18 @@ test("system status uses a compact summary-attention-system-areas hierarchy", ()
   assert.doesNotMatch(systemPage, /View operational alerts|Open Alerts|\/admin\/notifications/);
 });
 
-test("System specialist pages are contextual destinations rather than duplicate header tabs", () => {
+test("System specialist pages remain dedicated routes and appear under System workspace navigation", () => {
   assert.doesNotMatch(adminShell, /function SystemSectionTabs|aria-label="System sections"|systemSectionsVisible|systemChildren/);
   assert.match(adminShell, /<main className="mx-auto w-full max-w-\[1920px\]/);
-  assert.match(adminShell, /<AdminSearchContent>\{children\}<\/AdminSearchContent>/);
+  assert.match(adminShell, /<AdminSearchContent><WorkspaceSectionNavigation pathname=\{pathname\} role=\{role\} \/>\{children\}<\/AdminSearchContent>/);
   assert.match(adminShell, /href: "\/admin\/logs", label: "Audit Logs"/);
   assert.match(adminShell, /auditLogsWorkspace/);
 
   for (const href of ["/admin/system/cms-health", "/admin/email-delivery", "/admin/logs"]) {
     assert.ok(adminNav.includes(`href: "${href}"`));
-    assert.equal(adminNav.includes(`href: "${href}", parentHref: "/admin/system"`), false);
+    assert.equal(adminNav.includes(`href: "${href}", parentHref: "/admin/system"`), true);
   }
-  assert.match(adminNav, /href: "\/admin\/logs", label: "Audit Logs"/);
+  assert.match(adminNav, /href: "\/admin\/logs", parentHref: "\/admin\/system", label: "Audit Logs"/);
   assert.doesNotMatch(adminNav, /href: "\/admin\/notifications", parentHref:/);
   assert.match(adminShell, /<AdminNotificationsPanel/);
 });
