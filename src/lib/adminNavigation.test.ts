@@ -64,7 +64,7 @@ test("horizontal admin navigation keeps child routes under parent workspaces", (
   assert.deepEqual(support?.children.map((item) => item.href), ["/admin/account-deletions"]);
   assert.deepEqual(system?.children.map((item) => item.href), ["/admin/logs", "/admin/system/cms-health", "/admin/email-delivery"]);
   assert.equal(homepageFares, undefined, "Homepage Fares must not appear in the admin header");
-  assert.deepEqual(settings?.children.map((item) => item.href), []);
+  assert.deepEqual(settings?.children.map((item) => item.href), ["/admin/preview-testers"], "staging-only Team Access is owned by Settings");
   assert.equal(entries.some(({ item }) => item.href === "/admin/flights"), false);
   assert.equal(entries.some(({ item }) => item.href === "/admin/redirects"), false);
   const supportEntries = getAdminHeaderGroups("SUPPORT").flatMap((group) => group.links);
