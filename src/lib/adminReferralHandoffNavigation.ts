@@ -21,6 +21,32 @@ export function referralHandoffHref(input: {
   return "/admin/redirects?" + params.toString();
 }
 
+
+/** Build a read-only, in-place Providers query. No navigation destination is
+ * returned: the existing protected handoff API serves the records inside
+ * Referral Attribution. The correlation and reporting window cannot drift. */
+export function referralUnlinkedRecordsParams(input: {
+  start: string;
+  end: string;
+  environment: "staging" | "production";
+  provider?: string;
+  product?: "FLIGHT" | "HOTEL";
+  cursor?: string | null;
+  limit?: number;
+}) {
+  const params = new URLSearchParams({
+    environment: input.environment,
+    from: input.start,
+    to: input.end,
+    correlation: "unavailable",
+    limit: String(input.limit ?? 25),
+  });
+  if (input.provider) params.set("provider", input.provider);
+  if (input.product) params.set("product", input.product);
+  if (input.cursor) params.set("cursor", input.cursor);
+  return params;
+}
+
 /** Only known list-query fields return to the records page from a detail.
  * Never accept a caller-supplied URL or redirect destination. */
 const listKeys = ["environment", "product", "identity", "userId", "visitorId", "provider", "correlation", "from", "to", "cursor", "limit", "sourcePage", "pageTrail"] as const;

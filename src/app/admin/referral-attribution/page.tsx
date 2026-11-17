@@ -1,5 +1,4 @@
-import Link from "next/link";
-import { referralHandoffHref } from "@/lib/adminReferralHandoffNavigation";
+import { ReferralUnlinkedHandoffs } from "@/components/admin/ReferralUnlinkedHandoffs";
 import { AdminEmptyState } from "@/components/admin/AdminPageShell";
 import { ReferralWindowFilter } from "@/components/admin/ReferralWindowFilter";
 import { SearchWorkspaceBackLink } from "@/components/admin/SearchWorkspaceBackLink";
@@ -160,13 +159,13 @@ export default async function AdminReferralAttributionPage({
         </div>
       )}
       {summary.dataAvailable ? (
-        <section aria-labelledby="unlinked-handoffs" className="mt-5 border-t border-[#D8E1EC] pt-4">
-          <h2 id="unlinked-handoffs" className="text-[15px] font-semibold">Unlinked handoffs</h2>
-          <Link href={referralHandoffHref({ start: summary.window.start, end: summary.window.end, environment: summary.environment, correlation: "unavailable" })}
-            className="mt-2 inline-block text-[13px] font-medium text-[#004BB8] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
-            View {summary.handoffs.notLinkedToSearch.toLocaleString()} handoffs without a linked search
-          </Link>
-        </section>
+        <ReferralUnlinkedHandoffs
+          key={summary.environment + ":" + summary.window.start + ":" + summary.window.end}
+          window={{ start: summary.window.start, end: summary.window.end }}
+          environment={summary.environment}
+          unlinkedCount={summary.handoffs.notLinkedToSearch}
+          providers={summary.providers.map(item => item.provider)}
+        />
       ) : null}
     </section>
   );
