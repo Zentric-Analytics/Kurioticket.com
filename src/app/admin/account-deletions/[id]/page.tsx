@@ -3,6 +3,7 @@ import { ArrowLeft } from "lucide-react";
 import { notFound } from "next/navigation";
 
 import { AccountDeletionManageForm } from "@/components/admin/AccountDeletionManageForm";
+import { CaseDetailHeading, CaseInfoField, CaseMilestone, CaseSectionTitle, caseAsideClass, caseColumnsClass, caseMainClass, casePageClass } from "@/components/admin/AdminCaseDetailUI";
 import { LinkedCasePreview } from "@/components/admin/LinkedCasePreview";
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { formatDateTime } from "@/lib/admin-data";
@@ -16,7 +17,6 @@ type PageProps = {
   searchParams: Promise<{ fromSupport?: string | string[]; inbox?: string | string[] }>;
 };
 
-const sectionTitle = "border-b border-[#E5E7EB] pb-2.5 text-[14px] font-semibold leading-5 text-[#111827]";
 const statusView: Record<AdminAccountDeletionDetail["status"], { label: string; dot: string; description: string }> = {
   PENDING: {
     label: "Pending",
@@ -44,15 +44,6 @@ function daysRemaining(scheduledAt: string) {
   return Math.ceil((new Date(scheduledAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
 }
 
-function DetailField({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="grid min-w-0 grid-cols-[minmax(120px,35%)_minmax(0,1fr)] gap-x-4 gap-y-1 py-1.5 text-[13px] leading-5">
-      <dt className="text-[#64748B]">{label}</dt>
-      <dd className="min-w-0 break-words font-medium text-[#334155]">{children}</dd>
-    </div>
-  );
-}
-
 export default async function AdminAccountDeletionDetailPage({ params, searchParams }: PageProps) {
   const [{ id }, query] = await Promise.all([params, searchParams]);
   const result = await getAdminAccountDeletionDetail(id);
@@ -70,8 +61,8 @@ export default async function AdminAccountDeletionDetailPage({ params, searchPar
 
   return (
     <AdminPageShell title="Account deletion request" hideHeader>
-      <div className="mx-auto w-full max-w-[1138px] text-[#374151]">
-        <Link href={backHref} className="focus-ring mb-3 inline-flex items-center gap-1.5 rounded-sm text-[12px] font-medium text-[#64748B] hover:text-[#004BB8]">
+      <div className={casePageClass}>
+        <Link href={backHref} className="focus-ring mb-4 inline-flex min-h-9 items-center gap-2 rounded-md px-1 text-[12px] font-medium text-[#64748B] transition-colors hover:text-[#004BB8]">
           <ArrowLeft size={14} aria-hidden="true" /> {contextual ? "Back to Support ticket" : "Back to deletion requests"}
         </Link>
 
@@ -82,18 +73,12 @@ export default async function AdminAccountDeletionDetailPage({ params, searchPar
           </section>
         ) : (
           <>
-            <header className="flex min-w-0 flex-wrap items-center gap-3">
-              <h2 className="break-words text-[28px] font-semibold leading-9 tracking-tight text-[#111827]">Account deletion request</h2>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#F1F2F5] px-2.5 py-1 text-[12px] font-medium leading-4 text-[#475569]">
-                <span aria-hidden="true" className={"h-1.5 w-1.5 rounded-full " + statusView[request.status].dot} />
-                {statusView[request.status].label}
-              </span>
-            </header>
+            <CaseDetailHeading title="Account deletion request" status={statusView[request.status].label} dot={statusView[request.status].dot} />
 
-            <div className="mt-5 grid min-w-0 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-8 xl:gap-14">
-              <div className="min-w-0 space-y-6">
+            <div className={caseColumnsClass}>
+              <div className={caseMainClass}>
                 <section aria-labelledby="deletion-lifecycle-heading">
-                  <h3 id="deletion-lifecycle-heading" className={sectionTitle}>Deletion lifecycle</h3>
+                  <CaseSectionTitle id="deletion-lifecycle-heading">Deletion lifecycle</CaseSectionTitle>
                   <p className="mt-3 text-[13px] leading-6 text-[#475569]">
                     {readyForReview
                       ? "The 7-day deadline has passed. The request can now be marked ready for final review."
@@ -101,34 +86,34 @@ export default async function AdminAccountDeletionDetailPage({ params, searchPar
                         ? "Grace period: " + Math.max(remaining, 0) + " day" + (Math.max(remaining, 0) === 1 ? "" : "s") + " remaining."
                         : statusView[request.status].description}
                   </p>
-                  <dl className="mt-3">
-                    <DetailField label="Requested">{formatDateTime(new Date(request.requestedAt))}</DetailField>
-                    <DetailField label="Scheduled">{formatDateTime(new Date(request.deletionScheduledAt))}</DetailField>
-                    {request.cancelledAt ? <DetailField label="Cancelled">{formatDateTime(new Date(request.cancelledAt))}</DetailField> : null}
-                    {request.completedAt ? <DetailField label="Completed">{formatDateTime(new Date(request.completedAt))}</DetailField> : null}
+                  <dl className="mt-4 grid min-w-0 gap-x-5 gap-y-4 sm:grid-cols-2 xl:grid-cols-3">
+                    <CaseMilestone label="Requested" tone="info" value={formatDateTime(new Date(request.requestedAt))} />
+                    <CaseMilestone label="Scheduled review" value={formatDateTime(new Date(request.deletionScheduledAt))} />
+                    {request.cancelledAt ? <CaseMilestone label="Cancelled" value={formatDateTime(new Date(request.cancelledAt))} /> : null}
+                    {request.completedAt ? <CaseMilestone label="Completed" tone="complete" value={formatDateTime(new Date(request.completedAt))} /> : null}
                   </dl>
                 </section>
 
                 <section aria-labelledby="deletion-account-heading">
-                  <h3 id="deletion-account-heading" className={sectionTitle}>Account information</h3>
-                  <dl className="mt-3">
-                    <DetailField label="Email"><span className="[overflow-wrap:anywhere]">{request.userEmail || "—"}</span></DetailField>
-                    <DetailField label="Account status">{request.userStatus.replaceAll("_", " ")}</DetailField>
-                    <DetailField label="Role">{request.userRole}</DetailField>
-                    <DetailField label="User ID"><span className="[overflow-wrap:anywhere] text-[12px]">{request.userId}</span></DetailField>
+                  <CaseSectionTitle id="deletion-account-heading">Account information</CaseSectionTitle>
+                  <dl className="mt-4 grid min-w-0 gap-x-6 gap-y-4 sm:grid-cols-2">
+                    <CaseInfoField label="Email" wide><span className="[overflow-wrap:anywhere]">{request.userEmail || "—"}</span></CaseInfoField>
+                    <CaseInfoField label="Account status">{request.userStatus.replaceAll("_", " ")}</CaseInfoField>
+                    <CaseInfoField label="Role">{request.userRole}</CaseInfoField>
+                    <CaseInfoField label="User ID" wide><span className="[overflow-wrap:anywhere] text-[12px]">{request.userId}</span></CaseInfoField>
                   </dl>
                 </section>
 
                 <section aria-labelledby="deletion-record-heading">
-                  <h3 id="deletion-record-heading" className={sectionTitle}>Request details</h3>
-                  <dl className="mt-3">
-                    <DetailField label="Request ID"><span className="[overflow-wrap:anywhere] text-[12px]">{request.id}</span></DetailField>
-                    {request.adminReference ? <DetailField label="Admin reference"><span className="[overflow-wrap:anywhere]">{request.adminReference}</span></DetailField> : null}
+                  <CaseSectionTitle id="deletion-record-heading">Request details</CaseSectionTitle>
+                  <dl className="mt-4 grid min-w-0 gap-x-6 gap-y-4 sm:grid-cols-2">
+                    <CaseInfoField label="Request ID" wide><span className="[overflow-wrap:anywhere] text-[12px]">{request.id}</span></CaseInfoField>
+                    {request.adminReference ? <CaseInfoField label="Admin reference" wide><span className="[overflow-wrap:anywhere]">{request.adminReference}</span></CaseInfoField> : null}
                   </dl>
                 </section>
               </div>
 
-              <aside aria-label="Deletion request management and related Support ticket" className="min-w-0 space-y-6">
+              <aside aria-label="Deletion request management and related Support ticket" className={caseAsideClass}>
                 <AccountDeletionManageForm
                   requestId={request.id}
                   status={request.status}
@@ -141,8 +126,7 @@ export default async function AdminAccountDeletionDetailPage({ params, searchPar
 
                 {request.supportTicketId ? (
                   <section aria-labelledby="deletion-linked-ticket-heading" className="min-w-0">
-                    <h3 id="deletion-linked-ticket-heading" className={sectionTitle}>Linked Support ticket</h3>
-                    <p className="mt-2 text-[12px] leading-5 text-[#64748B]">This deletion request is connected to a customer Support ticket.</p>
+                    <CaseSectionTitle id="deletion-linked-ticket-heading">Linked Support ticket</CaseSectionTitle>
                     <LinkedCasePreview origin="deletion" sourceId={request.id} />
                   </section>
                 ) : null}
