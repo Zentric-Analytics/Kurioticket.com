@@ -1,6 +1,9 @@
 "use client";
 
 import { Fragment, useEffect, useId, useState } from "react";
+import { RefreshCw } from "lucide-react";
+
+import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
 
 import { referralUnlinkedRecordsParams } from "@/lib/adminReferralHandoffNavigation";
 import type {
@@ -22,8 +25,7 @@ type Props = {
 };
 
 const PAGE_SIZE = 25;
-const selectClass = "h-9 min-w-0 rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px] text-[#020617] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]";
-const actionClass = "inline-flex min-h-9 items-center justify-center rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px] font-medium text-[#004BB8] hover:bg-[#F5F8FF] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] disabled:cursor-not-allowed disabled:opacity-50";
+const actionClass = "inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg border border-[#D8E1EC] bg-white px-3.5 text-[13px] font-medium text-[#004BB8] transition-colors hover:border-[#B8C9DF] hover:bg-[#F5F8FF] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] disabled:cursor-not-allowed disabled:opacity-50";
 
 function dateLabel(value: string) {
   const date = new Date(value);
@@ -63,7 +65,8 @@ export function ReferralUnlinkedHandoffs({ window, environment, unlinkedCount, p
     const controller = new AbortController();
     let active = true;
     setLoadState("loading");
-    setResult(null);
+    // Keep the current rows visible on an explicit refresh; filters and page
+    // navigation clear stale rows synchronously before triggering the read.
 
     const params = referralUnlinkedRecordsParams({
       start: window.start,
@@ -111,7 +114,11 @@ export function ReferralUnlinkedHandoffs({ window, environment, unlinkedCount, p
     setLoadState("loading");
   };
 
-  const list = loadState === "ready" && result?.status === "ok" ? result.data : null;
+  const list = result?.status === "ok" ? result.data : null;
+  const providerOptions = [
+    { value: "", label: "All providers" },
+    ...[...new Set(providers)].sort((a, b) => a.localeCompare(b)).map(name => ({ value: name, label: name })),
+  ];
   const failure = result?.status === "forbidden"
     ? "You do not have permission to view these handoff records."
     : result?.status === "invalid"
@@ -129,9 +136,9 @@ export function ReferralUnlinkedHandoffs({ window, environment, unlinkedCount, p
 
       <div id={panelId} hidden={!expanded}>
       {expanded ? (
-        <div role="region" aria-label="Unlinked provider handoff records"
+        <div role="region" aria-label="Unlinked provider handoff records" aria-busy={loadState === "loading"}
           className="mt-4 min-w-0 border-t border-[#E7ECF5] pt-4">
-          <div className="flex min-w-0 flex-wrap items-end justify-between gap-x-5 gap-y-3">
+          <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
             <div className="min-w-0">
               <h3 className="text-[14px] font-semibold text-[#020617]">Handoff records</h3>
               <p className="mt-1 text-[12px] leading-5 text-[#64748B]">
@@ -139,38 +146,42 @@ export function ReferralUnlinkedHandoffs({ window, environment, unlinkedCount, p
                 This list uses the selected attribution reporting window.
               </p>
             </div>
-            <div className="flex min-w-0 flex-wrap items-end gap-3">
-              <label className="grid min-w-0 gap-1 text-[12px] text-[#475569]">
-                Provider
-                <select className={selectClass + " max-w-[220px]"} value={provider} onChange={event => {
-                  setProvider(event.target.value);
-                  resetPage();
-                }}>
-                  <option value="">All providers</option>
-                  {[...new Set(providers)].sort((a, b) => a.localeCompare(b)).map(name => (
-                    <option value={name} key={name}>{name}</option>
-                  ))}
-                </select>
-              </label>
-              <label className="grid gap-1 text-[12px] text-[#475569]">
-                Product
-                <select className={selectClass} value={product} onChange={event => {
-                  setProduct(event.target.value as ProductFilter);
-                  resetPage();
-                }}>
-                  <option value="">All products</option>
-                  <option value="FLIGHT">Flights</option>
-                  <option value="HOTEL">Hotels</option>
-                </select>
-              </label>
-              <button type="button" className={actionClass} onClick={() => {
-                setSelectedId(null);
-                setReload(value => value + 1);
-              }}>Refresh records</button>
-            </div>
           </div>
-
-          {loadState === "loading" || loadState === "idle" ? (
+          <div role="group" aria-label="Filter unlinked handoff records"
+            className="mt-4 flex min-w-0 flex-wrap items-end gap-3 border-y border-[#E7ECF5] py-3">
+            <div className="min-w-0 flex-[1_1_170px] sm:w-[210px] sm:flex-none">
+              <span className="mb-1 block text-[12px] font-medium text-[#475569]">Provider</span>
+              <SearchMonitorSelect label="Provider" name="provider" appearance="fare"
+                value={provider} options={providerOptions} truncateLabel
+                onValueChange={value => { setProvider(value); resetPage(); }} />
+            </div>
+            <div className="min-w-0 flex-[1_1_150px] sm:w-[170px] sm:flex-none">
+              <span className="mb-1 block text-[12px] font-medium text-[#475569]">Product</span>
+              <SearchMonitorSelect label="Product" name="product" appearance="fare"
+                value={product} options={[
+                  { value: "", label: "All products" },
+                  { value: "FLIGHT", label: "Flights" },
+                  { value: "HOTEL", label: "Hotels" },
+                ]}
+                onValueChange={value => { setProduct(value as ProductFilter); resetPage(); }} />
+            </div>
+            <button type="button" className={actionClass + " w-full sm:w-auto"}
+              disabled={loadState === "loading"}
+              onClick={() => {
+                setLoadState("loading");
+                setReload(value => value + 1);
+              }}>
+              <RefreshCw size={15} aria-hidden="true"
+                className={loadState === "loading" ? "animate-spin" : ""} />
+              {loadState === "loading" ? "Refreshing…" : "Refresh records"}
+            </button>
+          </div>
+          {loadState === "loading" && list ? (
+            <p role="status" className="mt-2 text-[12px] text-[#64748B]">
+              Refreshing current records; existing results remain visible.
+            </p>
+          ) : null}
+          {(loadState === "loading" || loadState === "idle") && !list ? (
             <p role="status" className="py-6 text-[13px] text-[#64748B]">Loading provider handoffs…</p>
           ) : loadState === "error" || !list && result?.status !== "ok" ? (
             <p role="alert" className="py-6 text-[13px] text-[#9A3412]">
@@ -256,12 +267,14 @@ export function ReferralUnlinkedHandoffs({ window, environment, unlinkedCount, p
               </div>
               <nav aria-label="Unlinked handoff pagination" className="mt-2 flex flex-wrap items-center justify-end gap-4 border-t border-[#E7ECF5] py-3">
                 <span className="text-[12px] tabular-nums text-[#64748B]">Page {pageIndex + 1}</span>
-                <button type="button" className={actionClass} disabled={pageIndex === 0}
-                  onClick={() => { setSelectedId(null); setPageIndex(value => Math.max(0, value - 1)); }}>Previous</button>
-                <button type="button" className={actionClass} disabled={!list.nextCursor}
+                <button type="button" className={actionClass} disabled={pageIndex === 0 || loadState === "loading"}
+                  onClick={() => { setSelectedId(null); setResult(null); setLoadState("loading"); setPageIndex(value => Math.max(0, value - 1)); }}>Previous</button>
+                <button type="button" className={actionClass} disabled={!list.nextCursor || loadState === "loading"}
                   onClick={() => {
                     if (!list.nextCursor) return;
                     setSelectedId(null);
+                    setResult(null);
+                    setLoadState("loading");
                     setPageCursors(previous => [...previous.slice(0, pageIndex + 1), list.nextCursor]);
                     setPageIndex(value => value + 1);
                   }}>Next</button>
