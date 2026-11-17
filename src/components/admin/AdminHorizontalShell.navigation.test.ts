@@ -90,9 +90,9 @@ test("navigation keeps parent workspaces visible while child routes stay nested"
   assert.deepEqual(entries.map(({ item }) => item.label), ["Overview", "Users", "Search Activity", "Trips", "Support", "Providers", "Content", "System", "Platform Health", "Settings"]);
   const searches = entries.find(({ item }) => item.href === "/admin/searches/activity");
   const providers = entries.find(({ item }) => item.href === "/admin/providers");
-  assert.deepEqual(searches?.children.map((item) => item.label), []);
-  assert.deepEqual(entries.find(({ item }) => item.href === "/admin/users")?.children.map(item => item.label), []);
-  assert.deepEqual(providers?.children.map((item) => item.label), ["Hotels", "Cars"]);
+  assert.deepEqual(searches?.children.map((item) => item.label), ["Provider Handoffs"]);
+  assert.deepEqual(entries.find(({ item }) => item.href === "/admin/users")?.children.map(item => item.label), ["Visitor Journeys"]);
+  assert.deepEqual(providers?.children.map((item) => item.label), ["Homepage Fares", "Hotels", "Cars", "Referral Attribution"]);
   // Current dev intentionally hides Admin navigation from support roles.
   assert.deepEqual(getAdminHeaderGroups("SUPPORT"), []);
 });
@@ -111,4 +111,13 @@ test("navbar search opens the dedicated global-search workspace", () => {
   assert.equal(jsxOpening(shell, 'AdminSearchContent').length, 1);
   assert.doesNotMatch(shell, /Search navigation only|aria-label="Search admin pages"/);
   assert.doesNotMatch(shell, /router\.push\("\/admin\/search"\)/);
+});
+
+test("global More sections dropdown is replaced with per-workspace navigation", () => {
+  assert.doesNotMatch(shell, /function MoreAdminSections/);
+  assert.doesNotMatch(shell, /getAdminMoreGroups/);
+  assert.match(shell, /function WorkspaceSectionNavigation/);
+  assert.match(shell, /getAdminWorkspaceSections\(pathname, role\)/);
+  assert.match(shell, /<WorkspaceSectionNavigation pathname=\{pathname\} role=\{role\}/);
+  assert.match(shell, /if \(pathname === "\/admin\/providers"/);
 });

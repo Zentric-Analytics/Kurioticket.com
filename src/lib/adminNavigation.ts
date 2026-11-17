@@ -45,17 +45,20 @@ export const adminNavigation: AdminNavDefinition[] = [
   { href: "/admin/confirmed-trips", label: "Trips", icon: ClipboardList, roles: ["ADMIN"], section: "operations", description: "Monitor provider-confirmed trips and their flight-status readiness." },
   { href: "/admin/confirmed-trips/monitoring", parentHref: "/admin/confirmed-trips", label: "Trip monitoring", icon: Activity, roles: ["ADMIN"], section: "operations", description: "Monitor trusted trip confirmations, provider deliveries and flight-status snapshots." },
   { href: "/admin/content", label: "Content", icon: FileText, roles: ["ADMIN"], section: "content", description: "Review admin-managed site content." },
-  { href: "/admin/homepage-fares", label: "Homepage Fares", icon: Activity, roles: ["ADMIN"], section: "readiness", description: "Monitor and refresh provider-backed homepage fare readiness." },
+  { href: "/admin/homepage-fares", parentHref: "/admin/providers", label: "Homepage Fares", icon: Activity, roles: ["ADMIN"], section: "readiness", description: "Monitor and refresh provider-backed homepage fare readiness." },
   { href: "/admin/hotels", parentHref: "/admin/providers", label: "Hotels", icon: Hotel, roles: ["ADMIN"], section: "readiness", description: "Review hotel administration readiness." },
   { href: "/admin/cars", parentHref: "/admin/providers", label: "Cars", icon: Car, roles: ["ADMIN"], section: "readiness", description: "Review car administration readiness." },
   { href: "/admin/support", label: "Support", icon: Headphones, roles: ["ADMIN"], section: "operations", description: "Review tickets and respond to customers." },
   { href: "/admin/account-deletions", parentHref: "/admin/support", label: "Deletion Requests", icon: ClipboardList, roles: ["ADMIN"], section: "operations", description: "Review account deletion request lifecycles." },
-  { href: "/admin/logs", label: "Audit Logs", icon: BookOpen, roles: ["ADMIN"], section: "controls", description: "Review administrative and security-sensitive actions." },
+  { href: "/admin/logs", parentHref: "/admin/system", label: "Audit Logs", icon: BookOpen, roles: ["ADMIN"], section: "controls", description: "Review administrative and security-sensitive actions." },
   { href: "/admin/system", label: "System", icon: LockKeyhole, roles: ["ADMIN"], section: "controls", description: "Review safe runtime health and deployment configuration status." },
   { href: "/admin/platform-health", label: "Platform Health", icon: Activity, roles: ["ADMIN"], section: "controls", description: "Combined and application-specific operational observations and shared service health." },
-  { href: "/admin/system/cms-health", label: "CMS Health", icon: FileText, roles: ["ADMIN"], section: "controls", description: "Monitor content integrity, fallback policy and publishing health." },
-  { href: "/admin/email-delivery", label: "Email Delivery", icon: Mail, roles: ["ADMIN"], section: "controls", description: "Monitor transactional email delivery health and test sending readiness." },
+  { href: "/admin/system/cms-health", parentHref: "/admin/system", label: "CMS Health", icon: FileText, roles: ["ADMIN"], section: "controls", description: "Monitor content integrity, fallback policy and publishing health." },
+  { href: "/admin/email-delivery", parentHref: "/admin/system", label: "Email Delivery", icon: Mail, roles: ["ADMIN"], section: "controls", description: "Monitor transactional email delivery health and test sending readiness." },
   { href: "/admin/settings", label: "Settings", icon: Settings, roles: ["ADMIN"], section: "controls", description: "Manage authoritative persisted platform controls." },
+  { href: "/admin/journeys", parentHref: "/admin/users", label: "Visitor Journeys", icon: Activity, roles: ["ADMIN"], section: "operations", description: "Inspect recorded consented journey events." },
+  { href: "/admin/redirects", parentHref: "/admin/searches/activity", label: "Provider Handoffs", icon: ClipboardList, roles: ["ADMIN"], section: "operations", description: "Investigate verified outbound provider handoffs." },
+  { href: "/admin/referral-attribution", parentHref: "/admin/providers", label: "Referral Attribution", icon: Activity, roles: ["ADMIN"], section: "readiness", description: "Review provider referral-attribution reporting." },
 ];
 
 export function isAdminNavItemActive(itemHref: string, pathname: string) {
@@ -66,7 +69,7 @@ export function isAdminNavItemActive(itemHref: string, pathname: string) {
   return pathname === itemHref || pathname.startsWith(`${itemHref}/`);
 }
 
-const previewTesterNavigation: AdminNavDefinition = { href: "/admin/preview-testers", label: "Team Access", icon: UserCheck, roles: ["ADMIN"], section: "controls", description: "Manage Preview team roles, access and developer build notifications." };
+const previewTesterNavigation: AdminNavDefinition = { href: "/admin/preview-testers", parentHref: "/admin/settings", label: "Team Access", icon: UserCheck, roles: ["ADMIN"], section: "controls", description: "Manage Preview team roles, access and developer build notifications." };
 
 export function getAdminNavForRole(role: AdminRole, includePreviewTesters = false) {
   return [...adminNavigation, ...(includePreviewTesters ? [previewTesterNavigation] : [])].filter((item) => item.roles.includes(role));
@@ -97,35 +100,76 @@ export function getAdminHeaderGroups(role: AdminRole, includePreviewTesters = fa
 }
 
 /**
- * The primary navbar stays compact. These existing admin destinations are
- * available from the separate More sections menu rather than competing for
- * header space. Redirect-only and deep-detail routes are intentionally omitted.
+ * Each secondary destination has one parent workspace. These are page-level
+ * navigation groups; none of these links are repeated in the global header.
+ * Keep the routes themselves unchanged for bookmarks and deep links.
  */
-const supplementalAdminNavigation: AdminNavDefinition[] = [
-  { href: "/admin/journeys", label: "Visitor Journeys", icon: Activity, roles: ["ADMIN"], section: "operations", description: "Inspect recorded consented journey events." },
-  { href: "/admin/redirects", label: "Provider Handoffs", icon: ClipboardList, roles: ["ADMIN"], section: "operations", description: "Investigate recorded outbound provider handoffs." },
-  { href: "/admin/referral-attribution", label: "Referral Attribution", icon: Activity, roles: ["ADMIN"], section: "readiness", description: "Review provider referral-attribution reporting." },
-];
-
-const additionalAdminNavigationGroups = [
-  { label: "Customer operations", hrefs: ["/admin/journeys", "/admin/redirects", "/admin/confirmed-trips/monitoring", "/admin/account-deletions"] },
-  { label: "Travel operations", hrefs: ["/admin/hotels", "/admin/cars", "/admin/homepage-fares", "/admin/referral-attribution"] },
-  { label: "Diagnostics and access", hrefs: ["/admin/logs", "/admin/system/cms-health", "/admin/email-delivery", "/admin/preview-testers"] },
+const workspaceSections: ReadonlyArray<{
+  label: string;
+  paths: readonly string[];
+  links: ReadonlyArray<{ href: string; label: string }>;
+}> = [
+  {
+    label: "Users",
+    paths: ["/admin/users", "/admin/journeys"],
+    links: [
+      { href: "/admin/users", label: "Users Directory" },
+      { href: "/admin/journeys", label: "Visitor Journeys" },
+    ],
+  },
+  {
+    label: "Search Activity",
+    paths: ["/admin/searches", "/admin/redirects"],
+    links: [
+      { href: "/admin/searches/activity", label: "Search Records" },
+      { href: "/admin/redirects", label: "Provider Handoffs" },
+    ],
+  },
+  {
+    label: "Support",
+    paths: ["/admin/support", "/admin/account-deletions"],
+    links: [
+      { href: "/admin/support", label: "Support Tickets" },
+      { href: "/admin/account-deletions", label: "Deletion Requests" },
+    ],
+  },
+  {
+    label: "Providers",
+    paths: ["/admin/providers", "/admin/hotels", "/admin/cars", "/admin/homepage-fares", "/admin/referral-attribution"],
+    links: [
+      { href: "/admin/providers", label: "Provider Health" },
+      { href: "/admin/hotels", label: "Hotels" },
+      { href: "/admin/cars", label: "Cars" },
+      { href: "/admin/homepage-fares", label: "Homepage Fares" },
+      { href: "/admin/providers?view=attribution", label: "Referral Attribution" },
+    ],
+  },
+  {
+    label: "System",
+    paths: ["/admin/system", "/admin/logs", "/admin/email-delivery"],
+    links: [
+      { href: "/admin/system", label: "System Overview" },
+      { href: "/admin/logs", label: "Audit Logs" },
+      { href: "/admin/system/cms-health", label: "CMS Health" },
+      { href: "/admin/email-delivery", label: "Email Delivery" },
+    ],
+  },
 ] as const;
 
-export type AdminMoreGroup = { label: string; links: AdminNavDefinition[] };
+export type AdminWorkspaceSections = {
+  label: string;
+  links: Array<{ href: string; label: string }>;
+};
 
-export function getAdminMoreGroups(role: AdminRole, includePreviewTesters = false): AdminMoreGroup[] {
-  const available = [
-    ...getAdminNavForRole(role, includePreviewTesters),
-    ...supplementalAdminNavigation.filter((item) => item.roles.includes(role)),
-  ];
-  const byHref = new Map(available.map((item) => [item.href, item]));
-  return additionalAdminNavigationGroups.map((group) => ({
+export function getAdminWorkspaceSections(pathname: string, role: AdminRole): AdminWorkspaceSections | null {
+  if (role !== "ADMIN") return null;
+  const group = workspaceSections.find((candidate) =>
+    candidate.paths.some((prefix) => pathname === prefix || pathname.startsWith(prefix + "/"))
+  );
+  if (!group) return null;
+  const permitted = new Set(getAdminNavForRole(role).map((item) => item.href));
+  return {
     label: group.label,
-    links: group.hrefs.flatMap((href) => {
-      const item = byHref.get(href);
-      return item ? [item] : [];
-    }),
-  })).filter((group) => group.links.length > 0);
+    links: group.links.filter((link) => permitted.has(link.href.split("?")[0])),
+  };
 }

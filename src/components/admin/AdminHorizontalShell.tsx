@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { RefObject } from "react";
 import { ChevronDown, LogOut, Menu, Settings, ShieldCheck, X, Building2 } from "lucide-react";
-import { getAdminHeaderGroups, getAdminMoreGroups, isAdminNavItemActive, type AdminRole } from "@/lib/adminNavigation";
+import { getAdminHeaderGroups, getAdminWorkspaceSections, isAdminNavItemActive, type AdminRole } from "@/lib/adminNavigation";
 import { KurioticketLogo } from "@/components/brand/KurioticketLogo";
 import { AdminWorkspaceSearchProvider, AdminSearchTrigger, AdminSearchHeader, AdminSearchContent } from "./AdminWorkspaceSearch";
 
@@ -49,39 +49,28 @@ function Navigation({ groups, pathname, mobile = false, close }: { groups: Heade
   </nav>;
 }
 
-function MoreAdminSections({ role, includePreviewTesters, mobile = false, close }: {
-  role: AdminRole; includePreviewTesters: boolean; mobile?: boolean; close: () => void;
-}) {
-  const groups = getAdminMoreGroups(role, includePreviewTesters);
-  const pathname = usePathname();
-  if (!groups.length) return null;
-  const active = groups.some((group) => group.links.some((item) => isAdminNavItemActive(item.href, pathname)));
+function WorkspaceSectionNavigation({ pathname, role }: { pathname: string; role: AdminRole }) {
+  // Providers already has its own Health / Attribution tabs. Do not render two bars.
+  if (pathname === "/admin/providers" || pathname === "/admin/providers/") return null;
+  const group = getAdminWorkspaceSections(pathname, role);
+  if (!group || group.links.length < 2) return null;
   return (
-    <details className={mobile ? "group border-t border-slate-100 px-3 py-2" : "group relative shrink-0"}>
-      <summary className={"flex cursor-pointer list-none items-center gap-2 rounded-lg px-3 py-2.5 text-[13px] font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] [&::-webkit-details-marker]:hidden " + (active ? "text-[#004BB8]" : "text-[#021C2B]/85 hover:bg-[#004BB8]/5")}>
-        More sections <ChevronDown size={15} aria-hidden="true" className="transition-transform group-open:rotate-180" />
-      </summary>
-      <div className={mobile
-        ? "mt-2 space-y-3 pb-2"
-        : "absolute right-0 top-full z-50 mt-2 max-h-[65vh] w-[340px] overflow-y-auto rounded-xl border border-slate-200 bg-white p-3 shadow-xl"}>
-        {groups.map((group) => (
-          <div key={group.label} className="mb-2 last:mb-0">
-            <p className="px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">{group.label}</p>
-            <div className="flex flex-col gap-0.5">
-              {group.links.map((item) => {
-                const Icon = item.icon;
-                return <Link key={item.href} href={item.href} onClick={close}
-                  aria-current={isAdminNavItemActive(item.href, pathname) ? "page" : undefined}
-                  className="flex min-w-0 items-center gap-2 rounded-md px-2 py-2 text-[13px] font-medium text-slate-700 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
-                  <Icon size={15} className="shrink-0" aria-hidden="true" />
-                  <span>{item.label}</span>
-                </Link>;
-              })}
-            </div>
-          </div>
-        ))}
-      </div>
-    </details>
+    <nav aria-label={group.label + " sections"} className="mb-5 flex min-w-0 flex-wrap items-end gap-x-6 gap-y-1 border-b border-[#D8E1EC]">
+      {group.links.map((item) => {
+        const [target, query] = item.href.split("?");
+        const active = query
+          ? pathname === "/admin/referral-attribution"
+          : pathname === target ||
+            (target !== "/admin/system" && pathname.startsWith(target + "/"));
+        return (
+          <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined}
+            className={"inline-flex min-h-11 items-center whitespace-nowrap border-b-2 px-1 text-[13px] font-medium text-[#020617] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] " +
+              (active ? "border-[#004BB8]" : "border-transparent hover:border-[#D8E1EC]")}>
+            {item.label}
+          </Link>
+        );
+      })}
+    </nav>
   );
 }
 
@@ -223,14 +212,14 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
       </div>
       <div className="hidden border-t border-slate-100 min-[1100px]:block">
         <div className="mx-auto max-w-[1920px] px-4 pb-2 pt-2 sm:px-6 lg:px-10">
-          <div className="flex min-w-0 items-center gap-3"><div className="min-w-0 flex-1"><Navigation groups={groups} pathname={pathname} close={() => {}} /></div><MoreAdminSections role={role} includePreviewTesters={showPreviewTesters} close={() => {}} /></div>
+          <Navigation groups={groups} pathname={pathname} close={() => {}} />
         </div>
       </div>
-      {mobileOpen ? <div className="max-h-[70vh] overflow-y-auto border-t border-slate-100 bg-white min-[1100px]:hidden"><Navigation groups={groups} pathname={pathname} mobile close={() => setMobileOpen(false)} /><MoreAdminSections role={role} includePreviewTesters={showPreviewTesters} mobile close={() => setMobileOpen(false)} /></div> : null}
+      {mobileOpen ? <div className="max-h-[70vh] overflow-y-auto border-t border-slate-100 bg-white min-[1100px]:hidden"><Navigation groups={groups} pathname={pathname} mobile close={() => setMobileOpen(false)} /></div> : null}
       </AdminSearchHeader>
     </header>
     <main className="mx-auto w-full max-w-[1920px] px-4 py-5 sm:px-6 lg:px-10">
-      <AdminSearchContent>{children}</AdminSearchContent>
+      <AdminSearchContent><WorkspaceSectionNavigation pathname={pathname} role={role} />{children}</AdminSearchContent>
     </main>
 
   </div></AdminWorkspaceSearchProvider>;

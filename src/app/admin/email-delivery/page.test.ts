@@ -147,7 +147,7 @@ test("Delivery history keeps readable dot statuses and masked recipients", () =>
   assert.match(page, /\{delivery\.toEmail\}/);
 });
 
-test("Email Delivery remains a protected contextual workspace without a duplicate System tab", () => {
+test("Email Delivery remains protected and is discoverable from System sections", () => {
   assert.match(adminNavigation, /href: "\/admin\/email-delivery"/);
-  assert.doesNotMatch(adminNavigation, /href: "\/admin\/email-delivery", parentHref: "\/admin\/system"/);
+  assert.match(adminNavigation, /href: "\/admin\/email-delivery", parentHref: "\/admin\/system"/);
 });

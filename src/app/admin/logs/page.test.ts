@@ -140,11 +140,11 @@ test("Audit Logs keeps cursor pagination explicit and distinguishes empty, inval
   assert.ok(page.includes("An unavailable read is not shown as an empty history"));
 });
 
-test("Audit Logs, CMS Health and Email Delivery are contextual destinations rather than System header children", () => {
-  assert.ok(nav.includes('href: "/admin/logs", label: "Audit Logs"'));
+test("Audit Logs, CMS Health and Email Delivery are grouped under System without becoming top-level header destinations", () => {
+  assert.ok(nav.includes('href: "/admin/logs", parentHref: "/admin/system", label: "Audit Logs"'));
   for (const href of ["/admin/logs", "/admin/system/cms-health", "/admin/email-delivery"]) {
     assert.ok(nav.includes(`href: "${href}"`));
-    assert.equal(nav.includes(`href: "${href}", parentHref: "/admin/system"`), false);
+    assert.equal(nav.includes(`href: "${href}", parentHref: "/admin/system"`), true);
   }
   assert.doesNotMatch(shell, /SystemSectionTabs|aria-label="System sections"/);
   assert.ok(shell.includes('{ href: "/admin/logs", label: "Audit Logs", icon: ShieldCheck }'));
