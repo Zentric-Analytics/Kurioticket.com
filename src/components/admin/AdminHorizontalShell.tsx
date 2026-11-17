@@ -272,9 +272,9 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
     <main className="mx-auto w-full max-w-[1920px] px-4 py-5 sm:px-6 lg:px-10">
       <AdminSearchContent>
         {!isOverview && !isSettings && role === "ADMIN" ? (
-          <div className="grid min-w-0 grid-cols-1 gap-5 bg-white md:grid-cols-[232px_minmax(0,1fr)] md:gap-7">
+          <div className="grid min-w-0 grid-cols-1 gap-5 bg-white md:grid-cols-[208px_minmax(0,1fr)] md:gap-5">
             <WorkspaceSidebar pathname={pathname} role={role} showPreviewTesters={showPreviewTesters} />
-            <div className="min-w-0">{children}</div>
+            <div data-admin-page-content className="min-w-0">{children}</div>
           </div>
         ) : (
           <>{children}</>

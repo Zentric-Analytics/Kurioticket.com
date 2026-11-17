@@ -170,9 +170,9 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
         </div>
       <section aria-label="Customer identity" className="relative min-w-0">
         <div className={activityColumns + " lg:items-start lg:py-6"}>
-          <div className="flex min-w-0 items-center gap-4 lg:col-span-2 lg:px-6">
+          <div className="flex min-w-0 items-center gap-4 lg:col-span-2 lg:gap-3 lg:px-3 min-[1700px]:gap-4 min-[1700px]:px-6">
             <span aria-hidden="true"
-              className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[var(--muted)] text-xl font-semibold">
+              className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[var(--muted)] text-xl font-semibold min-[1100px]:hidden min-[1700px]:flex">
               {(kind === "guest" ? "G" : (data.title || "U").slice(0,1)).toUpperCase()}
             </span>
             <div className="min-w-0">

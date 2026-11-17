@@ -23,17 +23,18 @@ try {
       const main = page.locator("main");
       await expect(main).toBeVisible();
       if (variant === "after") {
-        const systemSections = page.getByRole("navigation", { name: "System sections" });
+        const pageContent = route.startsWith("settings") ? main : main.locator("[data-admin-page-content]");
+        const systemSections = page.getByRole("navigation", { name: "System subsections" });
         if (["system", "logs", "system/cms-health", "email-delivery"].includes(route)) {
           await expect(systemSections).toHaveCount(1);
-          for (const label of ["System Overview", "Audit Logs", "CMS Health", "Email Delivery"]) {
+          for (const label of ["System Overview", "Platform Health", "Audit Logs", "CMS Health", "Email Delivery"]) {
             await expect(systemSections.getByRole("link", { name: label, exact: true })).toHaveCount(1);
           }
         } else {
           await expect(systemSections).toHaveCount(0);
         }
         for (const name of ["View operational alerts", "Open Alerts", "View audit logs", "Audit logs", "System health", "View system status", "View admin configuration status"]) {
-          await expect(main.getByRole("link", { name, exact: true })).toHaveCount(0);
+          await expect(pageContent.getByRole("link", { name, exact: true })).toHaveCount(0);
         }
         const backToSystem = main.getByRole("link", { name: "Back to System", exact: true });
         if (route === "system/cms-health" || route === "email-delivery") {
@@ -108,7 +109,7 @@ try {
           await expect(adminAccess.getByText("Configured administrators", { exact: true })).toBeVisible();
           await expect(adminAccess.getByText("Verification", { exact: true })).toBeVisible();
 
-          await expect(main.locator('a[href="/admin/settings"],a[href="/admin/notifications"]')).toHaveCount(0);
+          await expect(pageContent.locator('a[href="/admin/settings"],a[href="/admin/notifications"]')).toHaveCount(0);
           await expect(main.getByText(/deployment configuration/).first()).toBeVisible();
         }
         if (route === "logs") {
@@ -246,7 +247,7 @@ try {
       await page.getByRole("button", { name: "Admin profile" }).click();
       await page.getByRole("banner").getByRole("link", { name: "Audit Logs", exact: true }).click();
       await expect(page).toHaveURL(`${root}/admin/logs`);
-      await expect(page.getByRole("navigation", { name: "System sections" })).toHaveCount(1);
+      await expect(page.getByRole("navigation", { name: "System subsections" })).toHaveCount(1);
       await verifyNotificationPanel({ page, root, output, width });
     }
     await context.close();
