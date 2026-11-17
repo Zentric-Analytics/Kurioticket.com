@@ -14,7 +14,7 @@ test("mobile web can use the product-specific title while native remains unchang
   assert.match(webResults, /title=\{t\("carsResults\.editCarSearch"\)\}/);
   assert.match(modal, />\s*Edit search\s*</);
   assert.doesNotMatch(modal, />\s*Edit car search\s*</);
-  for (const token of ["maxHeight: \"88%\"", "FLIGHT_QUICK_SHEET_HORIZONTAL_INSET", "FLIGHT_FLOATING_SHEET_BOTTOM_GAP", "borderTopLeftRadius: 24", "borderBottomLeftRadius: 24", "minHeight: 52", "KeyboardAvoidingView", "onRequestClose={onClose}", "submitNavigation=\"replace\"", "onBeforeNavigate={onClose}"]) assert.ok(modal.includes(token), token);
+  for (const token of ["maxHeight: \"88%\"", "FLIGHT_QUICK_SHEET_HORIZONTAL_INSET", "FLIGHT_FLOATING_SHEET_BOTTOM_GAP", "borderTopLeftRadius: 24", "borderBottomLeftRadius: 24", "minHeight: 52", "KeyboardAvoidingView", "onRequestClose={onClose}", "onSubmitSearch=", "pendingSearch.current = next; onClose()"]) assert.ok(modal.includes(token), token);
   assert.doesNotMatch(modal, /maxHeight: \"94%\"|borderTopLeftRadius: 22|minHeight: 60/);
   assert.match(webSheet, /mobile-results-sheet-cars-edit-surface mx-3 mb-3 max-h-\[88dvh\] w-\[calc\(100%_-_24px\)\]/);
   assert.match(webSheet, /rounded-\[24px\] border-0 bg-\[#F5F7FB\] shadow-none/);

@@ -15,7 +15,8 @@ test("all initial native canonical searches replace result chrome with the share
   const travelResults = read("ApprovedResultsScreen.tsx");
   const carResults = read("ApprovedCarResultsScreen.tsx");
   assert.match(travelResults, /if \(status === "loading" \|\| hotelCurrencyPending\) return <NativeBrandedSearchLoading product=\{product\}/);
-  assert.match(carResults, /if\(status==="loading"\) return <NativeBrandedSearchLoading product="car"/);
+  assert.match(carResults, /status==="loading"\?<View style=\{StyleSheet\.absoluteFill\}><NativeBrandedSearchLoading product="car"/);
+  assert.match(carResults, /importantForAccessibility=\{status==="loading"\?"no-hide-descendants":"auto"\}/);
   assert.match(read("NativeBrandedSearchLoading.tsx"), /NativeTravelSearchLoadingScreen/);
 });
 

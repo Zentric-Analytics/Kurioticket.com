@@ -42,7 +42,8 @@ test("native Cars retains its stable virtualized FlatList scrolling", () => {
   assert.match(cars, /<SafeAreaView style=\{\[r\.safe,\{backgroundColor:headerSurfaceColor\}\]\} edges=\{\[\]\}>/);
   assert.match(resultsShell, /<SafeAreaView[^>]*edges=\{\["top"\]\}>\s*<ResultsAvailabilityNotice \/>\s*<View style=\{styles\.safe\}>\{content\}<\/View>\s*<\/SafeAreaView>/);
   assert.match(resultsShell, /if \(initializing\) content = <NativeTravelSearchLoadingScreen product=\{product\} includeTopInset=\{false\} \/>/);
-  assert.match(cars, /if\(status==="loading"\) return <NativeBrandedSearchLoading product="car" includeTopInset=\{false\}\/>/);
+  assert.match(cars, /status==="loading"\?<View style=\{StyleSheet\.absoluteFill\}><NativeBrandedSearchLoading product="car" includeTopInset=\{false\}/);
+  assert.match(cars, /importantForAccessibility=\{status==="loading"\?"no-hide-descendants":"auto"\}/);
   assert.doesNotMatch(owner, /onScroll=\{handleCarScroll\}|onScrollToTop=\{handleCarScroll\}/);
   const horizontal = cars.match(/<ScrollView horizontal[^>]*>/)?.[0];
   assert.ok(horizontal);

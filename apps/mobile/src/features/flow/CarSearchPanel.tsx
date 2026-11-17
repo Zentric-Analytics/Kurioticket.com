@@ -19,7 +19,7 @@ import { SearchResultProductIcons } from "./SearchResultProductIcons";
 import { HotelResultsEditPickerShell } from "./HotelResultsEditPickerShell";
 import { getLocationFieldDisplay } from "../../../../../src/lib/search/locationFieldDisplay";
 
-type Props = { params: Record<string, RouteValue>; embedded?: boolean; editAppearance?: boolean; showSubmit?: boolean; submitLabel?: string; requireManualDetails?: boolean; startWithEmptyRentalDates?: boolean; submitNavigation?: "push" | "replace"; onBeforeNavigate?: () => void };
+type Props = { params: Record<string, RouteValue>; embedded?: boolean; editAppearance?: boolean; showSubmit?: boolean; submitLabel?: string; requireManualDetails?: boolean; startWithEmptyRentalDates?: boolean; submitNavigation?: "push" | "replace"; onBeforeNavigate?: () => void; onSubmitSearch?: (params: ReturnType<typeof carSearchParams>) => void };
 const displayDate = (iso: string) => localDateFromIso(iso)?.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric", year: "numeric" }) ?? iso;
 export const rentalDatesSummary = (pickupDate: string, returnDate: string) => `${pickupDate ? displayDate(pickupDate) : "Pickup date"} — ${returnDate ? displayDate(returnDate) : "Return date"}`;
 const displayResultsEditDate = (iso: string, locale?: string) => localDateFromIso(iso)?.toLocaleDateString(locale, { month: "short", day: "numeric", year: "numeric" }) ?? iso;
@@ -27,7 +27,7 @@ export const resultsEditRentalDatesSummary = (pickupDate: string, returnDate: st
 type CarLocationPickerMode = "pickup" | "return" | undefined;
 const locationTarget = (suggestion: CarLocationSuggestion) => suggestion.canonical ? JSON.stringify(suggestion.canonical) : undefined;
 
-export function CarSearchPanel({ params, editAppearance = false, showSubmit = true, submitLabel = "Search cars", requireManualDetails = false, startWithEmptyRentalDates = false, submitNavigation = "push", onBeforeNavigate }: Props) {
+export function CarSearchPanel({ params, editAppearance = false, showSubmit = true, submitLabel = "Search cars", requireManualDetails = false, startWithEmptyRentalDates = false, submitNavigation = "push", onBeforeNavigate, onSubmitSearch }: Props) {
   const ft = useFlowTheme();
   const initialize = requireManualDetails ? initializeCarsPageForm : startWithEmptyRentalDates ? initializeHomeCarForm : initializeCarForm;
   const initial = useRef<ReturnType<typeof initialize> | undefined>(undefined);
@@ -57,8 +57,10 @@ export function CarSearchPanel({ params, editAppearance = false, showSubmit = tr
   const submit = () => {
     const nextErrors = validateCarForm(form); setErrors(nextErrors);
     if (Object.keys(nextErrors).length) { setNotice("Please correct the highlighted search details."); if (nextErrors.pickupLocation) setLocationPicker("pickup"); else if (nextErrors.dropoffLocation) setLocationPicker("return"); return; }
+    const next = carSearchParams(form);
+    if (onSubmitSearch) { onSubmitSearch(next); return; }
     onBeforeNavigate?.();
-    router[submitNavigation]({ pathname: "/car-results", params: carSearchParams(form) });
+    router[submitNavigation]({ pathname: "/car-results", params: next });
   };
   const commitDates = (pickupDate: string, dropoffDate: string) => { const next={...form,pickupDate,dropoffDate}; const adjusted=next.pickupTime&&next.dropoffTime?adjustDropoff(next):{form:next,adjusted:false}; setForm(adjusted.form); if(adjusted.adjusted)setNotice("Return was adjusted to remain later than pick-up."); clear("pickupDate","dropoffDate","dropoffTime"); setDatesOpen(false); };
   const commitTimes = (pickupTime: string, dropoffTime: string) => { const next={...form,pickupTime,dropoffTime}; const adjusted=next.pickupDate&&next.dropoffDate?adjustDropoff(next):{form:next,adjusted:false}; setForm(adjusted.form); if(adjusted.adjusted)setNotice("Return was adjusted to remain later than pick-up."); clear("pickupTime","dropoffTime"); setTimesOpen(false); };

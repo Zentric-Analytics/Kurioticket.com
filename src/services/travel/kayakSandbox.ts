@@ -5,6 +5,7 @@ import { createHash } from "node:crypto";
 import { kayakImageUrl, kayakImages, kayakFlightLegs, kayakFlightAttributes, kayakAttributes, kayakCarFilterOptions, kayakHotelAmenities, kayakHotelAmenityStatus, type KayakAttribute, type KayakImage, type KayakFlightLeg } from "./kayakPresentation";
 import { KAYAK_SANDBOX_ORIGIN, sandboxBookingUrl } from "./kayakSandboxPublic";
 import { kayakRejectionDiagnostics } from "./kayakRejectionDiagnostics";
+import { carRequestDiagnostics } from "./carRequestDiagnostics";
 import type { FlightFareTerm, FlightOptionalService, FlightProviderCondition, FlightAirlineBaggagePolicy, FlightProviderDetails } from "@/lib/types";
 export { KAYAK_SANDBOX_ORIGIN, sandboxBookingUrl } from "./kayakSandboxPublic";
 
@@ -406,6 +407,8 @@ export class KayakSandboxClient {
       console.info("[kayak-search:stage-timing]", JSON.stringify(timing)),
     private readonly reportRejection = (diagnostic: Awaited<ReturnType<typeof kayakRejectionDiagnostics>>) =>
       console.warn("[kayak-search:http-rejection]", JSON.stringify(diagnostic)),
+    private readonly reportRequest = (diagnostic: ReturnType<typeof carRequestDiagnostics>) =>
+      console.info("[kayak-search:car-request]", JSON.stringify(diagnostic)),
   ) {}
 
   private async request(
@@ -425,6 +428,11 @@ export class KayakSandboxClient {
       apiKey: this.key,
       userTrackId,
     }).toString();
+    const serializedBody = body ? JSON.stringify(body) : undefined;
+    if (path === "/i/api/affiliate/search/car/v1/poll" && object(body).searchStartParameters && serializedBody) {
+      try { this.reportRequest(carRequestDiagnostics(serializedBody, this.userAgent, this.clientIp)); }
+      catch { /* Observability cannot affect provider access. */ }
+    }
     // The sandbox car poll has a documented history of occasionally dropping a
     // connection before returning a response. Retry that narrow, transient
     // transport/edge failure once, with the same track id. Do not retry auth,
@@ -444,7 +452,7 @@ export class KayakSandboxClient {
               : {}),
             ...(empty ? { "sandbox-api-empty": "true" } : {}),
           },
-          ...(body ? { body: JSON.stringify(body) } : {}),
+          ...(serializedBody ? { body: serializedBody } : {}),
         });
         if (!response.ok) {
           if (response.status === 403) {
