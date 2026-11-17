@@ -29,6 +29,26 @@ export function OperationsMetric({ label, value, hint, tone = "neutral" }: {
   );
 }
 
+/** Status indicator uses Homepage Fares' restrained dot-and-label treatment. */
+export function OperationsStatus({ children, tone = "neutral" }: {
+  children: ReactNode;
+  tone?: "info" | "good" | "warn" | "neutral" | "bad";
+}) {
+  const dots = {
+    info: "bg-[#004BB8]",
+    good: "bg-emerald-500",
+    warn: "bg-amber-500",
+    bad: "bg-rose-500",
+    neutral: "bg-[#94A3B8]",
+  };
+  return (
+    <span className="inline-flex shrink-0 items-center gap-1.5 text-[12px] font-medium text-[#475569]">
+      <span aria-hidden="true" className={"h-1.5 w-1.5 rounded-full " + dots[tone]} />
+      {children}
+    </span>
+  );
+}
+
 export function OperationsSection({ children, className = "" }: {
   children: ReactNode;
   className?: string;
