@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { adminNavigation, adminNavigationGroups, getAdminNavForRole, getAdminHeaderGroups, getAdminMoreGroups, isAdminNavItemActive } from "@/lib/adminNavigation";
+import { adminNavigation, adminNavigationGroups, getAdminNavForRole, getAdminHeaderGroups, getAdminWorkspaceSections, isAdminNavItemActive } from "@/lib/adminNavigation";
 
-const originalLabels = ["Overview", "Users", "Providers", "Search Activity", "Trips", "Trip monitoring", "Content", "Homepage Fares", "Hotels", "Cars", "Support", "Deletion Requests", "Audit Logs", "System", "Platform Health", "CMS Health", "Email Delivery", "Settings"];
+const originalLabels = ["Overview", "Users", "Providers", "Search Activity", "Trips", "Trip monitoring", "Content", "Homepage Fares", "Hotels", "Cars", "Support", "Deletion Requests", "Audit Logs", "System", "Platform Health", "CMS Health", "Email Delivery", "Settings", "Visitor Journeys", "Provider Handoffs", "Referral Attribution"];
 
 test("admin navigation restores the flat module order without a duplicate Flights workspace", () => {
   assert.deepEqual(adminNavigation.map((item) => item.label), originalLabels);
@@ -19,14 +19,20 @@ test("admin navigation exposes parent workspaces in the header", () => {
     { label: "System & security", hrefs: ["/admin/system", "/admin/platform-health", "/admin/settings"] },
   ]);
   const visibleHrefs: readonly string[] = adminNavigationGroups.flatMap((group) => group.hrefs);
-  for (const href of ["/admin/journeys", "/admin/redirects", "/admin/referral-attribution", "/admin/flight-status", "/admin/flights", "/admin/account-deletions", "/admin/hotels", "/admin/cars", "/admin/logs"]) {
+  for (const href of ["/admin/journeys", "/admin/redirects", "/admin/referral-attribution", "/admin/flight-status", "/admin/flights", "/admin/account-deletions", "/admin/hotels", "/admin/cars", "/admin/logs", "/admin/email-delivery", "/admin/homepage-fares"]) {
     assert.equal(visibleHrefs.includes(href), false);
   }
 });
 
 test("admin navigation preserves role restrictions", () => {
   assert.deepEqual(getAdminNavForRole("SUPPORT"), []);
-  assert.deepEqual(getAdminNavForRole("ADMIN").filter((item) => item.parentHref).map((item) => [item.label, item.parentHref]), [["Trip monitoring", "/admin/confirmed-trips"], ["Hotels", "/admin/providers"], ["Cars", "/admin/providers"], ["Deletion Requests", "/admin/support"]]);
+  assert.deepEqual(getAdminNavForRole("ADMIN").filter((item) => item.parentHref).map((item) => [item.label, item.parentHref]), [
+    ["Trip monitoring", "/admin/confirmed-trips"], ["Homepage Fares", "/admin/providers"],
+    ["Hotels", "/admin/providers"], ["Cars", "/admin/providers"], ["Deletion Requests", "/admin/support"],
+    ["Audit Logs", "/admin/system"], ["CMS Health", "/admin/system"], ["Email Delivery", "/admin/system"],
+    ["Visitor Journeys", "/admin/users"], ["Provider Handoffs", "/admin/searches/activity"],
+    ["Referral Attribution", "/admin/providers"],
+  ]);
   assert.deepEqual(getAdminNavForRole("USER"), []);
 });
 
@@ -51,12 +57,12 @@ test("horizontal admin navigation keeps child routes under parent workspaces", (
   const system = entries.find(({ item }) => item.href === "/admin/system");
   const homepageFares = entries.find(({ item }) => item.href === "/admin/homepage-fares");
   const settings = entries.find(({ item }) => item.href === "/admin/settings");
-  assert.deepEqual(searches?.children.map((item) => item.href), []);
-  assert.deepEqual(entries.find(({ item }) => item.href === "/admin/users")?.children.map(item => item.href), []);
-  assert.deepEqual(providers?.children.map((item) => item.href), ["/admin/hotels", "/admin/cars"]);
+  assert.deepEqual(searches?.children.map((item) => item.href), ["/admin/redirects"]);
+  assert.deepEqual(entries.find(({ item }) => item.href === "/admin/users")?.children.map(item => item.href), ["/admin/journeys"]);
+  assert.deepEqual(providers?.children.map((item) => item.href), ["/admin/homepage-fares", "/admin/hotels", "/admin/cars", "/admin/referral-attribution"]);
   assert.deepEqual(trips?.children.map((item) => item.href), ["/admin/confirmed-trips/monitoring"]);
   assert.deepEqual(support?.children.map((item) => item.href), ["/admin/account-deletions"]);
-  assert.deepEqual(system?.children.map((item) => item.href), []);
+  assert.deepEqual(system?.children.map((item) => item.href), ["/admin/logs", "/admin/system/cms-health", "/admin/email-delivery"]);
   assert.equal(homepageFares, undefined, "Homepage Fares must not appear in the admin header");
   assert.deepEqual(settings?.children.map((item) => item.href), []);
   assert.equal(entries.some(({ item }) => item.href === "/admin/flights"), false);
@@ -66,13 +72,12 @@ test("horizontal admin navigation keeps child routes under parent workspaces", (
   assert.deepEqual(getAdminHeaderGroups("USER"), []);
 });
 
-test("Audit Logs, CMS Health and Email Delivery remain reachable without System child tabs", () => {
+test("System diagnostic pages have System as their canonical navigation owner", () => {
   for (const href of ["/admin/logs", "/admin/system/cms-health", "/admin/email-delivery"]) {
     const item = getAdminNavForRole("ADMIN").find(entry => entry.href === href);
     assert.ok(item);
-    assert.equal(item.parentHref, undefined);
+    assert.equal(item.parentHref, "/admin/system");
   }
-  assert.equal(getAdminNavForRole("ADMIN").find(item => item.href === "/admin/logs")?.label, "Audit Logs");
 });
 
 test("Notifications has one Settings sidebar owner rather than a duplicate global nav destination", () => {
@@ -84,42 +89,32 @@ test("Notifications has one Settings sidebar owner rather than a duplicate globa
   assert.equal(isAdminNavItemActive("/admin/settings", "/admin/settings/notifications"), true);
 });
 
-test("retired operational report routes remain available without nested menu entries", () => {
-  const retired = ["/admin/journeys", "/admin/redirects", "/admin/referral-attribution", "/admin/flights"];
-  for (const href of retired) {
-    assert.equal(adminNavigation.some(item => item.href === href), false);
-    assert.equal(getAdminHeaderGroups("ADMIN").some(group => group.links.some(link => link.item.href === href || link.children.some(child => child.href === href))), false);
+test("secondary routes are owned by a single parent workspace", () => {
+  const expectations = [
+    ["/admin/users", ["Users Directory", "Visitor Journeys"]],
+    ["/admin/journeys/fixture", ["Users Directory", "Visitor Journeys"]],
+    ["/admin/searches/activity", ["Search Records", "Provider Handoffs"]],
+    ["/admin/redirects", ["Search Records", "Provider Handoffs"]],
+    ["/admin/support", ["Support Tickets", "Deletion Requests"]],
+    ["/admin/account-deletions/fixture", ["Support Tickets", "Deletion Requests"]],
+    ["/admin/providers", ["Provider Health", "Hotels", "Cars", "Homepage Fares", "Referral Attribution"]],
+    ["/admin/hotels", ["Provider Health", "Hotels", "Cars", "Homepage Fares", "Referral Attribution"]],
+    ["/admin/homepage-fares/routes", ["Provider Health", "Hotels", "Cars", "Homepage Fares", "Referral Attribution"]],
+    ["/admin/referral-attribution", ["Provider Health", "Hotels", "Cars", "Homepage Fares", "Referral Attribution"]],
+    ["/admin/system", ["System Overview", "Audit Logs", "CMS Health", "Email Delivery"]],
+    ["/admin/email-delivery", ["System Overview", "Audit Logs", "CMS Health", "Email Delivery"]],
+  ] as const;
+  for (const [path, labels] of expectations) {
+    assert.deepEqual(getAdminWorkspaceSections(path, "ADMIN")?.links.map((link) => link.label), [...labels], path);
   }
+  assert.equal(getAdminWorkspaceSections("/admin/settings", "ADMIN"), null);
+  assert.equal(getAdminWorkspaceSections("/admin/confirmed-trips/monitoring", "ADMIN"), null, "existing Trip tabs are retained");
+  assert.equal(getAdminWorkspaceSections("/admin/content", "ADMIN"), null);
+  assert.equal(getAdminWorkspaceSections("/admin/users", "SUPPORT"), null);
+  assert.equal(getAdminWorkspaceSections("/admin/system", "USER"), null);
 });
-
-test("Homepage Fares remains a direct admin route without appearing in the navbar or activating Providers", () => {
-  const homepageFares = getAdminNavForRole("ADMIN").find((item) => item.href === "/admin/homepage-fares");
-  assert.ok(homepageFares);
-  assert.equal(homepageFares.label, "Homepage Fares");
-  assert.equal(homepageFares.parentHref, undefined);
-  assert.equal(getAdminHeaderGroups("ADMIN").some(group => group.links.some(entry => entry.item.href === "/admin/homepage-fares")), false);
-
-  const providers = getAdminHeaderGroups("ADMIN")
-    .flatMap((group) => group.links)
-    .find((entry) => entry.item.href === "/admin/providers");
-  assert.ok(providers);
-  assert.equal(isAdminNavItemActive(providers.item.href, "/admin/homepage-fares"), false);
-  assert.equal(providers.children.some((child) => isAdminNavItemActive(child.href, "/admin/homepage-fares")), false);
-});
-
-test("secondary menu makes existing operational and diagnostic routes discoverable without changing primary navigation", () => {
-  const groups = getAdminMoreGroups("ADMIN", true);
-  assert.deepEqual(groups.map((group) => group.label), [
-    "Customer operations", "Travel operations", "Diagnostics and access",
-  ]);
-  assert.deepEqual(groups.flatMap((group) => group.links.map((item) => item.href)), [
-    "/admin/journeys", "/admin/redirects", "/admin/confirmed-trips/monitoring",
-    "/admin/account-deletions", "/admin/hotels", "/admin/cars",
-    "/admin/homepage-fares", "/admin/referral-attribution", "/admin/logs",
-    "/admin/system/cms-health", "/admin/email-delivery", "/admin/preview-testers",
-  ]);
-  assert.equal(getAdminMoreGroups("ADMIN", false).flatMap((group) => group.links).some((link) => link.href === "/admin/preview-testers"), false);
-  assert.deepEqual(getAdminMoreGroups("SUPPORT"), []);
-  assert.deepEqual(getAdminMoreGroups("USER"), []);
-  assert.equal(getAdminHeaderGroups("ADMIN", true).flatMap((group) => group.links).some((entry) => entry.item.href === "/admin/homepage-fares"), false);
+test("staging-only Team Access remains separate from permanently available routes", () => {
+  assert.equal(getAdminNavForRole("ADMIN", false).some(item => item.href === "/admin/preview-testers"), false);
+  assert.equal(getAdminNavForRole("ADMIN", true).find(item => item.href === "/admin/preview-testers")?.parentHref, "/admin/settings");
+  assert.equal(getAdminHeaderGroups("ADMIN", true).some(group => group.links.some(entry => entry.item.href === "/admin/preview-testers")), false);
 });
