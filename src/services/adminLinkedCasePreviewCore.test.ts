@@ -20,7 +20,7 @@ function deletionPreview() {
     requestedAt: new Date("2026-11-10T00:00:00.000Z"),
     deletionScheduledAt: new Date("2026-11-17T00:00:00.000Z"),
     cancelledAt: new Date("2026-11-14T00:00:00.000Z"),
-    completedAt: null,
+    completedAt: null as Date | null,
   };
 }
 function supportPreview() {
