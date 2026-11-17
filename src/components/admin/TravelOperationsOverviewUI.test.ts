@@ -51,7 +51,7 @@ test("overview metric, status and table use neutral layout without altering valu
   assert.match(metric, /24-hour window/);
   assert.match(metric, /<dt/);
   assert.match(metric, /<dd/);
-  const status = renderToStaticMarkup(createElement(OperationsStatus, { tone: "bad" }, "Failed"));
+  const status = renderToStaticMarkup(createElement(OperationsStatus, { tone: "bad", children: "Failed" }));
   assert.match(status, /Failed/);
   assert.match(status, /bg-rose-500/);
   const table = renderToStaticMarkup(createElement(OperationsDataTable, {
