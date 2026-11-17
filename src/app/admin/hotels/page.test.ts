@@ -9,7 +9,9 @@ test("hotel admin is an operational overview rather than a readiness-only page",
   assert.match(hotelsPage, /title="Hotel Operations"/);
   assert.match(hotelsPage, /getHotelOperationsSnapshot/);
   assert.match(hotelsPage, /getProviderIntegrationStatuses/);
-  assert.match(hotelsPage, /Recent hotel searches/);
+  assert.doesNotMatch(hotelsPage, /Recent hotel searches|operations\.recentSearches/);
+  assert.match(hotelsPage, /<OperationsDataTable/);
+  assert.match(hotelsPage, /<OperationsMetric/);
   assert.match(hotelsPage, /View hotel searches/);
   assert.match(hotelsPage, /View hotel journeys/);
   assert.doesNotMatch(hotelsPage, /Hotel Search Readiness/);
@@ -30,10 +32,10 @@ test("hotel operations snapshot is environment and service scoped", () => {
 });
 
 test("hotel operations remains read-only and links to canonical search diagnostics", () => {
-  assert.match(hotelsPage, /\/admin\/searches\?product=HOTEL/);
+  assert.match(hotelsPage, /\/admin\/searches\/activity\?product=HOTEL/);
   assert.match(hotelsPage, /\/admin\/searches\//);
-  assert.match(hotelsPage, /Provider-owned reservation/);
-  assert.match(hotelsPage, /provider handoff is not a Kurioticket reservation confirmation/);
+  assert.match(hotelsPage, /booking completion remains provider-owned/);
+  assert.match(hotelsPage, /provider handoffs do not confirm reservations/);
   assert.doesNotMatch(hotelsPage, /fetch\(|method:\s*["'](?:POST|PATCH|DELETE)|<form/);
 });
 
