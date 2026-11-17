@@ -4,8 +4,9 @@ import { notFound } from "next/navigation";
 
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { SupportReplyForm, SupportTicketStatusControl } from "@/components/admin/SupportTicketActions";
+import { LinkedCasePreview } from "@/components/admin/LinkedCasePreview";
 import { formatDateTime } from "@/lib/admin-data";
-import { supportCategoryLabel, supportDeletionRequestHref, supportTicketBackHref } from "@/lib/adminSupportInboxNavigation";
+import { supportCategoryLabel, supportTicketBackHref } from "@/lib/adminSupportInboxNavigation";
 import type { AdminSupportDetail, AdminSupportStatus } from "@/services/adminOperationalReadContract";
 import { adminOperationalReads } from "@/services/adminOperationalReadService";
 
@@ -59,7 +60,7 @@ export default async function AdminSupportTicketPage({ params, searchParams }: P
           <ArrowLeft size={14} aria-hidden="true" /> {backLabel}
         </Link>
 
-        {result.status === "ok" ? <TicketContent ticket={result.data} inbox={inbox} /> : (
+        {result.status === "ok" ? <TicketContent ticket={result.data} /> : (
           <section className="py-10">
             <h2 className="text-[16px] font-semibold text-[#111827]">
               {result.status === "invalid" ? "Invalid ticket reference" : result.status === "forbidden" ? "Admin access required" : "Ticket details unavailable"}
@@ -76,7 +77,7 @@ export default async function AdminSupportTicketPage({ params, searchParams }: P
   );
 }
 
-function TicketContent({ ticket, inbox }: { ticket: AdminSupportDetail; inbox?: string }) {
+function TicketContent({ ticket }: { ticket: AdminSupportDetail }) {
   const contextFields = Object.entries(ticket.source);
   const contactName = ticket.user?.name || (ticket.identity.kind === "registered" ? "Registered requester" : "Guest requester");
   const pill = statusPills[ticket.status];
@@ -145,6 +146,13 @@ function TicketContent({ ticket, inbox }: { ticket: AdminSupportDetail; inbox?: 
               </dl>
             </details>
           ) : null}
+
+          {ticket.deletionRequestId ? (
+            <section aria-label="Related deletion request" className="mt-6 min-w-0 border-t border-[#E5E7EB] pt-4">
+              <h3 className="text-[14px] font-semibold text-[#111827]">Linked deletion request</h3>
+              <LinkedCasePreview origin="support" sourceId={ticket.id} />
+            </section>
+          ) : null}
         </div>
 
         <aside aria-label="Ticket information and management" className="min-w-0 space-y-6">
@@ -171,9 +179,6 @@ function TicketContent({ ticket, inbox }: { ticket: AdminSupportDetail; inbox?: 
               <DetailField label="Created">{formatDateTime(new Date(ticket.createdAt))}</DetailField>
               <DetailField label="Updated">{formatDateTime(new Date(ticket.updatedAt))}</DetailField>
               <DetailField label="Ticket ID"><span className="[overflow-wrap:anywhere] text-[12px]">{ticket.id}</span></DetailField>
-              {ticket.deletionRequestId ? (
-                <DetailField label="Deletion"><Link href={supportDeletionRequestHref(ticket.deletionRequestId, inbox)} className="focus-ring inline-flex items-center rounded-sm text-[13px] font-medium text-[#004BB8] hover:underline">View deletion request</Link></DetailField>
-              ) : null}
             </dl>
             {ticket.identity.userId ? (
               <details className="group mt-2">

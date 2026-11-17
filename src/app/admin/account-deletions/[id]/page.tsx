@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { ArrowLeft, ExternalLink } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { notFound } from "next/navigation";
 
 import { AccountDeletionManageForm } from "@/components/admin/AccountDeletionManageForm";
+import { LinkedCasePreview } from "@/components/admin/LinkedCasePreview";
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { formatDateTime } from "@/lib/admin-data";
-import { deletionRequestBackHref, supportTicketFromDeletionHref } from "@/lib/adminSupportInboxNavigation";
+import { deletionRequestBackHref } from "@/lib/adminSupportInboxNavigation";
 import { getAdminAccountDeletionDetail, type AdminAccountDeletionDetail } from "@/services/adminAccountDeletionDetailService";
 
 export const metadata = { title: "Admin Account Deletion Request" };
@@ -141,13 +142,8 @@ export default async function AdminAccountDeletionDetailPage({ params, searchPar
                 {request.supportTicketId ? (
                   <section aria-labelledby="deletion-linked-ticket-heading" className="min-w-0">
                     <h3 id="deletion-linked-ticket-heading" className={sectionTitle}>Linked Support ticket</h3>
-                    <p className="mt-2 text-[12px] leading-5 text-[#64748B]">This deletion request is connected to a customer Support conversation.</p>
-                    <Link
-                      href={supportTicketFromDeletionHref(request.supportTicketId, request.id, fromSupport, inbox)}
-                      className="focus-ring mt-2 inline-flex items-center gap-1.5 rounded-sm text-[13px] font-medium text-[#004BB8] hover:underline"
-                    >
-                      View Support ticket <ExternalLink size={13} aria-hidden="true" />
-                    </Link>
+                    <p className="mt-2 text-[12px] leading-5 text-[#64748B]">This deletion request is connected to a customer Support ticket.</p>
+                    <LinkedCasePreview origin="deletion" sourceId={request.id} />
                   </section>
                 ) : null}
               </aside>
