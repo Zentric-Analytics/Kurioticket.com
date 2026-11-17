@@ -85,10 +85,16 @@ test("CMS health reports integrity, ordering, fallback and unpublished changes",
   assert.match(hardeningService, /findMissingHomepageCmsScopes\(scopes, homepageCmsMarkets, homepageCmsLocale\)/);
   assert.match(healthPage, /Missing homepage CMS scopes/);
   assert.match(healthPage, /overview\.missingHomepageScopes\.map/);
-  assert.match(healthPage, /<AdminPageShell title="CMS Health" eyebrow="">/);
+  assert.match(healthPage, /<AdminPageShell title="CMS Health" hideHeader>/);
+  // The Hotels-aligned workspace renders one dedicated CMS heading instead of
+  // the generic shell header; the page title and header remain accessible.
+  assert.match(healthPage, /<header className="[^"]*"><h1 className="[^"]*">CMS Health<\/h1><\/header>/);
   assert.doesNotMatch(healthPage, /description="Production integrity/);
   assert.match(healthPage, /aria-label="CMS health summary"/);
-  assert.match(healthPage, /max-w-\[720px\]/);
+  assert.match(healthPage, /max-w-\[1500px\]/);
+  assert.match(healthPage, /aria-label="CMS health metrics"/);
+  assert.match(healthPage, /<dl className="grid min-w-\[680px\] grid-cols-4/);
+  assert.match(healthPage, /overflow-x-auto overscroll-x-contain/);
   assert.match(healthPage, /Healthy/);
   assert.match(healthPage, /Needs attention/);
   assert.match(healthPage, /Fallback retired/);
@@ -96,7 +102,10 @@ test("CMS health reports integrity, ordering, fallback and unpublished changes",
   assert.match(healthPage, /overview\.totals\.retiredFallback/);
   assert.doesNotMatch(healthPage, /Fallback active|fallback active/);
   assert.doesNotMatch(healthPage, /label="Unpublished changes"/);
-  assert.ok((healthPage.match(/text-\[#020617\].*overview\.totals\./g) || []).length >= 3);
+  for (const metric of ["healthy", "unhealthy", "retiredFallback", "scopes"]) {
+    assert.match(healthPage, new RegExp(`value: overview\\.totals\\.${metric}\\b`));
+  }
+  assert.match(healthPage, /<dd[^>]*text-\[#020617\][^>]*>\{metric\.value\.toLocaleString\(\)\}<\/dd>/);
   assert.match(healthPage, /const cmsHealthGroups = \[/);
   assert.match(healthPage, /Homepage destinations/);
   assert.match(healthPage, /Flight routes/);
