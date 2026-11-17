@@ -85,7 +85,7 @@ function WorkspaceSidebar({ pathname, role, showPreviewTesters }: { pathname: st
       : [];
   const uniqueLinks = links.filter((link, index) => links.findIndex(other => other.href === link.href) === index);
   return (
-    <aside aria-label="Admin workspace sidebar" className="min-w-0 border-b border-[#D8E1EC] pb-4 md:border-b-0 md:border-r md:pb-0 md:pr-4">
+    <aside aria-label="Admin workspace sidebar" className="min-w-0 border-b border-[#D8E1EC] pb-4 xl:border-b-0 xl:border-r xl:pb-0 xl:pr-4">
       <h2 className="px-2 text-[15px] font-semibold text-[#020617]">Sections</h2>
       <nav aria-label="Admin sections" className="mt-4 space-y-1">
         {groups.flatMap(group => group.links).filter(entry => entry.item.href !== "/admin").map(entry => {
@@ -272,7 +272,7 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
     <main className="mx-auto w-full max-w-[1920px] px-4 py-5 sm:px-6 lg:px-10">
       <AdminSearchContent>
         {!isOverview && !isSettings && role === "ADMIN" ? (
-          <div className="grid min-w-0 grid-cols-1 gap-5 bg-white md:grid-cols-[208px_minmax(0,1fr)] md:gap-5">
+          <div className="grid min-w-0 grid-cols-1 gap-5 bg-white xl:grid-cols-[208px_minmax(0,1fr)] xl:gap-5">
             <WorkspaceSidebar pathname={pathname} role={role} showPreviewTesters={showPreviewTesters} />
             <div data-admin-page-content className="min-w-0">{children}</div>
           </div>
