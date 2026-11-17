@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { ApplicationSourceSelect } from "@/components/admin/PlatformHealthFilters";
-import { applicationLabel, type PlatformSelection } from "@/lib/platformHealthPresentation";
+import { platformOptions } from "@/lib/platformHealthPresentation";
+import { applicationLabel } from "@/lib/platformHealthPresentation";
 import { redirect } from "next/navigation";
 import { searchWorkspaceTab } from "@/lib/adminSearchWorkspace";
 
@@ -11,7 +11,7 @@ import { getPublicEnvironment } from "@/lib/stagingSafety";
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
 import { SearchMonitorTable } from "@/components/admin/SearchMonitorTable";
-import {  } from "@/components/admin/SearchWorkspaceBackLink";
+
 import { adminOperationalReads } from "@/services/adminOperationalReadService";
 
 export const metadata = { title: "Admin Search Activity" };
@@ -102,46 +102,33 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
                     );
                   })}
                 </nav>
-                <div className="flex shrink-0 items-center gap-5 pr-6 lg:self-center">
-                  <SearchMonitorSelect
-                    label="Date range"
-                    name="range"
-                    value={range}
-                    appearance="plain"
-                    align="end"
-                    autoSubmit
+
+              </div>
+
+              <div className="flex min-w-0 flex-wrap items-end gap-x-3 gap-y-3 py-4 sm:gap-x-4">
+                <div className="w-[155px] max-w-full">
+                  <SearchMonitorSelect label="Date range" name="range" value={range}
+                    appearance="fare"
                     options={[
                       { value: "today", label: "Today" },
                       { value: "7d", label: "Last 7 days" },
                       { value: "30d", label: "Last 30 days" },
                       { value: "all", label: "All time" },
                       ...(range === "custom" ? [{ value: "custom", label: "Custom" }] : []),
-                    ]}
-                  />
-
+                    ]} />
                 </div>
-              </div>
-
-              <div className="flex flex-wrap items-end gap-x-6 gap-y-3 py-3">
-                <div className="w-[170px] max-w-full">
-                  <SearchMonitorSelect
-                    label="Outcome"
-                    appearance="plain"
-                    name="status"
+                <div className="w-[148px] max-w-full">
+                  <SearchMonitorSelect label="Outcome" appearance="fare" name="status"
                     value={one(raw.status)}
                     options={[
                       { value: "", label: "All outcomes" },
                       { value: "SUCCESS", label: "Complete" },
                       { value: "PARTIAL", label: "Partial" },
                       { value: "FAILED", label: "Failed" },
-                    ]}
-                  />
+                    ]} />
                 </div>
-                <div className="w-[170px] max-w-full">
-                  <SearchMonitorSelect
-                    label="Identity"
-                    appearance="plain"
-                    name="identity"
+                <div className="w-[160px] max-w-full">
+                  <SearchMonitorSelect label="Identity" appearance="fare" name="identity"
                     value={one(raw.identity) || "all"}
                     clearFieldNamesOnChange={["userId", "visitorId"]}
                     options={[
@@ -149,18 +136,22 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
                       { value: "registered", label: "Registered" },
                       { value: "guest", label: "Guest" },
                       { value: "unattributed", label: "Unattributed" },
-                    ]}
-                  />
+                    ]} />
                 </div>
-                <div className="w-[220px] max-w-full">
-                  <SearchMonitorSelect label="Provider"
-                    appearance="plain" name="provider" value={one(raw.provider)} options={providerOptions} truncateLabel />
+                <div className="w-[195px] max-w-full">
+                  <SearchMonitorSelect label="Provider" appearance="fare" name="provider"
+                    value={one(raw.provider)} options={providerOptions} truncateLabel />
                 </div>
-                <div className="w-[180px] max-w-full"><ApplicationSourceSelect name="applicationSource" id="search-application" value={(one(raw.applicationSource)||"ALL") as PlatformSelection}/></div>
-                <button
-                  type="submit"
-                  className="h-9 w-[146px] cursor-pointer bg-[#111827] px-4 text-[13px] font-semibold text-white transition-colors hover:bg-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-200"
-                >
+                <div className="w-[175px] max-w-full">
+                  <SearchMonitorSelect label="Application" appearance="fare" name="applicationSource"
+                    value={one(raw.applicationSource)}
+                    options={platformOptions.map(option => ({
+                      value: option.value === "ALL" ? "" : option.value,
+                      label: option.label,
+                    }))} />
+                </div>
+                <button type="submit"
+                  className="inline-flex h-10 shrink-0 items-center justify-center rounded-lg bg-[#004BB8] px-4 text-[13px] font-medium text-white transition-colors hover:bg-[#003D97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
                   Apply filters
                 </button>
               </div>
