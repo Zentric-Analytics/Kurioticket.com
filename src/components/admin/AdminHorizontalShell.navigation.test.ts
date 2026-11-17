@@ -120,4 +120,11 @@ test("global More sections dropdown is replaced with per-workspace navigation", 
   assert.match(shell, /getAdminWorkspaceSections\(pathname, role\)/);
   assert.match(shell, /<WorkspaceSectionNavigation pathname=\{pathname\} role=\{role\}/);
   assert.match(shell, /if \(pathname === "\/admin\/providers"/);
+  assert.match(shell, /isAdminWorkspaceSectionActive\(pathname, item\.href\)/);
+});
+
+test("new section navigation remains responsive and Team Access uses the Settings surface", () => {
+  assert.match(shell, /flex min-w-0 flex-wrap items-end gap-x-5 gap-y-1/);
+  assert.match(shell, /pathname === "\/admin\/preview-testers"/);
+  assert.doesNotMatch(shell, /overflow-x-auto overscroll-x-contain/);
 });
