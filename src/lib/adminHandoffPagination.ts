@@ -1,3 +1,5 @@
+import { referralAttributionReturnHref } from "./adminReferralHandoffNavigation";
+
 /** Cursor history for explicit Previous / Next navigation. This is only
  * presentation state: the data reader validates the actual cursor and filters.
  * Keeping it outside the reader avoids weakening its query contract. */
@@ -19,6 +21,7 @@ function base(raw: Raw) {
     const value = raw[key];
     if (typeof value === "string" && value.length <= 2048 && value.length > 0) params.set(key, value);
   }
+  if (referralAttributionReturnHref(raw)) params.set("referralDays", raw.referralDays as string);
   if (!params.has("limit")) params.set("limit", "50");
   return params;
 }
