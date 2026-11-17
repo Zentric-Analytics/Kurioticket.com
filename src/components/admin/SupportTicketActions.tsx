@@ -51,7 +51,7 @@ export function SupportReplyForm({ ticketId }: { ticketId: string }) {
   return (
     <section aria-labelledby="support-reply-heading" className="min-w-0">
       <h3 id="support-reply-heading" className="mb-2 text-[14px] font-semibold leading-5 text-[#111827]">Reply</h3>
-      <div className="min-w-0 overflow-hidden rounded-xl border border-[#D9DDE3] bg-white">
+      <div className="min-w-0 overflow-hidden rounded-xl border border-[#D8E1EC] bg-white transition-colors focus-within:border-[#9DB4DC] focus-within:ring-2 focus-within:ring-[#EAF2FF]">
         <label htmlFor="support-reply-body" className="sr-only">Reply message</label>
         <textarea
           id="support-reply-body"
@@ -59,7 +59,7 @@ export function SupportReplyForm({ ticketId }: { ticketId: string }) {
           onChange={event => setReply(event.target.value)}
           maxLength={replyMaxLength}
           rows={5}
-          className="block h-[116px] min-h-[116px] w-full resize-y border-0 bg-white px-4 py-3 text-[13px] leading-5 text-[#374151] outline-none placeholder:text-[#9CA3AF] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#B9C6EA]"
+          className="block h-[128px] min-h-[116px] w-full resize-y border-0 bg-white px-4 py-3 text-[13px] leading-6 text-[#374151] outline-none placeholder:text-[#9CA3AF] focus-visible:ring-0"
           placeholder="Write your reply..."
           disabled={isReplyPending}
         />
@@ -70,7 +70,7 @@ export function SupportReplyForm({ ticketId }: { ticketId: string }) {
               type="button"
               onClick={submitReply}
               disabled={isReplyPending || !validReply}
-              className="focus-ring inline-flex h-9 items-center justify-center rounded-lg bg-[#3154EF] px-4 text-[13px] font-semibold text-white transition-colors hover:bg-[#2445D7] disabled:cursor-not-allowed disabled:opacity-75"
+              className="focus-ring inline-flex h-9 items-center justify-center rounded-lg bg-[#3154EF] px-4 text-[13px] font-semibold text-white transition-colors hover:bg-[#2445D7] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] disabled:cursor-not-allowed disabled:opacity-75"
             >
               {isReplyPending ? "Sending…" : "Send reply"}
             </button>
@@ -123,13 +123,13 @@ export function SupportTicketStatusControl({ ticketId, status }: { ticketId: str
 
   return (
     <section aria-labelledby="support-ticket-controls-heading" className="min-w-0">
-      <h3 id="support-ticket-controls-heading" className="border-b border-[#E5E7EB] pb-2.5 text-[14px] font-semibold leading-5 text-[#111827]">
+      <h3 id="support-ticket-controls-heading" className="border-b border-[#E7ECF5] pb-2.5 text-[14px] font-semibold leading-5 text-[#0F172A]">
         Manage ticket
       </h3>
       <fieldset disabled={isStatusPending} className="min-w-0 pt-3">
         <span className="mb-1 block text-[12px] font-medium text-[#64748B]">Status</span>
-        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
-          <div className="min-w-0 rounded-lg border border-[#D9DDE3] bg-white px-2.5 [&_button]:h-9 [&_button]:w-full [&_button]:justify-between [&_select]:h-9 [&_select]:w-full [&_select]:border-0 [&_select]:bg-transparent">
+        <div className="grid min-w-0 grid-cols-1 items-center gap-2 sm:grid-cols-[minmax(0,1fr)_auto] lg:grid-cols-1 xl:grid-cols-[minmax(0,1fr)_auto]">
+          <div className="min-w-0 rounded-lg border border-[#D8E1EC] bg-white px-2.5 [&_button]:h-9 [&_button]:w-full [&_button]:justify-between [&_select]:h-9 [&_select]:w-full [&_select]:border-0 [&_select]:bg-transparent">
             <AdminDirectorySelect
               key={ticketId + "-" + status}
               label="Ticket status"
@@ -145,7 +145,7 @@ export function SupportTicketStatusControl({ ticketId, status }: { ticketId: str
             type="button"
             onClick={updateStatus}
             disabled={isStatusPending || selectedStatus === status}
-            className="focus-ring inline-flex h-9 shrink-0 items-center justify-center whitespace-nowrap rounded-lg border border-[#D9DDE3] bg-white px-3 text-[13px] font-medium text-[#374151] transition-colors hover:border-[#64748B] disabled:cursor-not-allowed disabled:opacity-65"
+            className="focus-ring inline-flex h-9 shrink-0 items-center justify-center whitespace-nowrap rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px] font-medium text-[#374151] transition-colors hover:bg-[#F8FAFC] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] disabled:cursor-not-allowed disabled:opacity-65"
           >
             {isStatusPending ? "Saving…" : "Save status"}
           </button>
