@@ -1,7 +1,6 @@
 import Link from "next/link";
 
 import { AdminButton, AdminDataTable, AdminEmptyState, AdminFilterBar, AdminInput, AdminSelect, AdminStatusBadge } from "@/components/admin/AdminPageShell";
-import { SearchWorkspaceBackLink } from "@/components/admin/SearchWorkspaceBackLink";
 import { ProviderHandoffFilters } from "@/components/admin/ProviderHandoffFilters";
 import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
 import { SearchWorkspacePanelFrame } from "@/components/admin/SearchWorkspacePanelFrame";
@@ -22,7 +21,6 @@ export default async function AdminRedirectsPage({ searchParams, embedded = fals
 
   if (embedded) return (
     <>
-      {!embedded ? <SearchWorkspaceBackLink href="/admin/providers?view=attribution" label="Provider reports" /> : null}
       <SearchWorkspacePanelFrame embedded={embedded}
         title="Provider Handoffs"
         description="Review verified outbound provider handoffs. A handoff records leaving Kurioticket for a provider; it is not proof of a completed booking or payment."
@@ -95,7 +93,6 @@ export default async function AdminRedirectsPage({ searchParams, embedded = fals
   );
   return (
     <section className="w-full min-w-0 bg-white text-[#0F172A]">
-      <SearchWorkspaceBackLink href="/admin/providers?view=attribution" label="Provider reports" />
       <h1 className="sr-only">Provider Handoffs</h1>
       {one(raw.sourcePage) ? (
         <p className="mb-2 text-[12px] text-[#475569]">Source page: <span className="font-semibold text-[#020617]">{one(raw.sourcePage)}</span> <Link href={"/admin/redirects?" + (() => { const params = toParams(raw); params.delete("sourcePage"); params.delete("cursor"); return params.toString(); })()} className="ml-2 font-medium text-[#004BB8] hover:underline">Clear source</Link></p>
