@@ -156,10 +156,10 @@ test("CMS health reports integrity, ordering, fallback and unpublished changes",
   assert.match(healthPage, /href="\/admin\/system"/);
   assert.match(healthPage, /Back to System/);
   assert.doesNotMatch(healthPage, /View audit logs/);
-  assert.match(adminNavigation, /href: "\/admin\/logs", label: "Audit Logs"/);
-  assert.doesNotMatch(adminNavigation, /href: "\/admin\/logs", parentHref: "\/admin\/system"/);
+  assert.match(adminNavigation, /href: "\/admin\/logs", parentHref: "\/admin\/system", label: "Audit Logs"/);
+  assert.match(adminNavigation, /href: "\/admin\/logs", parentHref: "\/admin\/system"/);
   assert.match(adminNavigation, /href: "\/admin\/system\/cms-health"/);
-  assert.doesNotMatch(adminNavigation, /href: "\/admin\/system\/cms-health", parentHref: "\/admin\/system"/);
+  assert.match(adminNavigation, /href: "\/admin\/system\/cms-health", parentHref: "\/admin\/system"/);
   assert.match(legacyHealthPage, /redirect\("\/admin\/system\/cms-health"\)/);
   assert.doesNotMatch(contentPage, /\/admin\/content\/health/);
 });
