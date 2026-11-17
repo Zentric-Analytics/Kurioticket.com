@@ -3,6 +3,7 @@ import { ArrowLeft, ChevronDown } from "lucide-react";
 import { notFound } from "next/navigation";
 
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
+import { CaseDetailHeading, CaseSidebarField, caseAsideClass, caseColumnsClass, caseMainClass, casePageClass } from "@/components/admin/AdminCaseDetailUI";
 import { SupportReplyForm, SupportTicketStatusControl } from "@/components/admin/SupportTicketActions";
 import { LinkedCasePreview } from "@/components/admin/LinkedCasePreview";
 import { formatDateTime } from "@/lib/admin-data";
@@ -31,17 +32,6 @@ function senderName(author: string, ticket: AdminSupportDetail) {
   return author.replaceAll("_", " ").replaceAll("-", " ");
 }
 
-function DetailField({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="grid min-w-0 grid-cols-[73px_minmax(0,1fr)] items-start gap-x-3 py-1 text-[13px] leading-5">
-      <dt className="text-[#64748B]">{label}</dt>
-      <dd className="min-w-0 break-words font-medium text-[#334155]">{children}</dd>
-    </div>
-  );
-}
-
-const sectionHeading = "border-b border-[#E5E7EB] pb-2.5 text-[14px] font-semibold leading-5 text-[#111827]";
-
 export default async function AdminSupportTicketPage({ params, searchParams }: PageProps) {
   const [{ id }, query] = await Promise.all([params, searchParams]);
   const result = await adminOperationalReads.support.detail(id);
@@ -55,8 +45,8 @@ export default async function AdminSupportTicketPage({ params, searchParams }: P
 
   return (
     <AdminPageShell title="Support ticket" hideHeader>
-      <div className="mx-auto w-full max-w-[1138px] bg-white text-[#374151]">
-        <Link href={backHref} className="focus-ring mb-3 inline-flex items-center gap-1.5 rounded-sm text-[12px] font-medium text-[#64748B] hover:text-[#004BB8]">
+      <div className={casePageClass}>
+        <Link href={backHref} className="focus-ring mb-4 inline-flex min-h-9 items-center gap-2 rounded-md px-1 text-[12px] font-medium text-[#64748B] transition-colors hover:text-[#004BB8]">
           <ArrowLeft size={14} aria-hidden="true" /> {backLabel}
         </Link>
 
@@ -84,31 +74,23 @@ function TicketContent({ ticket }: { ticket: AdminSupportDetail }) {
 
   return (
     <>
-      <header className="min-w-0">
-        <div className="flex min-w-0 flex-wrap items-center gap-3">
-          <h2 className="min-w-0 max-w-[1000px] break-words text-[28px] font-semibold leading-9 tracking-tight text-[#111827]">{ticket.subject}</h2>
-          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[#F1F2F5] px-2.5 py-1 text-[12px] font-medium leading-4 text-[#475569]">
-            <span aria-hidden="true" className={"h-1.5 w-1.5 rounded-full " + pill.dot} />
-            {pill.label}
-          </span>
-        </div>
-      </header>
+      <CaseDetailHeading title={ticket.subject} status={pill.label} dot={pill.dot} />
 
-      <div className="mt-5 grid min-w-0 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-8 xl:gap-14">
-        <div className="min-w-0">
+      <div className={caseColumnsClass}>
+        <div className={caseMainClass}>
           <section aria-labelledby="support-conversation-heading" className="min-w-0">
-            <div className="flex items-center justify-between gap-3 border-b border-[#E5E7EB] pb-2.5">
-              <h3 id="support-conversation-heading" className="text-[14px] font-semibold leading-5 text-[#111827]">Conversation</h3>
+            <div className="flex items-center justify-between gap-3 border-b border-[#E7ECF5] pb-3">
+              <h2 id="support-conversation-heading" className="text-[14px] font-semibold leading-5 text-[#0F172A]">Conversation</h2>
               <span className="shrink-0 text-[12px] text-[#64748B]">{ticket.messages.length} {ticket.messages.length === 1 ? "message" : "messages"}</span>
             </div>
             {ticket.messages.length === 0 ? (
               <p className="py-5 text-[13px] text-[#64748B]">No messages have been recorded for this ticket.</p>
             ) : (
-              <ol className="space-y-5 pt-4">
+              <ol className="divide-y divide-[#F1F5F9] pt-1">
                 {ticket.messages.map(message => {
                   const fromSupport = message.author === "admin";
                   return (
-                    <li key={message.id} className="flex min-w-0 items-start gap-3">
+                    <li key={message.id} className="flex min-w-0 items-start gap-3 py-4">
                       <span aria-hidden="true" className={"flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[12px] font-semibold " + (fromSupport ? "bg-[#E5EFFF] text-[#004BB8]" : "bg-[#EDF0FF] text-[#4058BA]")}>
                         {fromSupport ? "S" : "R"}
                       </span>
@@ -126,17 +108,17 @@ function TicketContent({ ticket }: { ticket: AdminSupportDetail }) {
             )}
           </section>
 
-          <div className="mt-6">
+          <div className="min-w-0">
             <SupportReplyForm ticketId={ticket.id} />
           </div>
 
           {contextFields.length ? (
-            <details className="group mt-6">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 border-b border-[#E5E7EB] py-3 text-[14px] font-semibold text-[#111827] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#64748B] [&::-webkit-details-marker]:hidden">
+            <details className="group min-w-0 rounded-xl border border-[#E7ECF5] bg-white">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-xl px-4 py-3 text-[14px] font-semibold text-[#0F172A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] [&::-webkit-details-marker]:hidden">
                 Request context
                 <ChevronDown size={15} aria-hidden="true" className="shrink-0 text-[#64748B] transition-transform group-open:rotate-180" />
               </summary>
-              <dl className="grid min-w-0 gap-x-6 gap-y-2 py-4 sm:grid-cols-2">
+              <dl className="grid min-w-0 gap-x-6 gap-y-4 border-t border-[#E7ECF5] px-4 py-4 sm:grid-cols-2">
                 {contextFields.map(([key, value]) => (
                   <div key={key} className="min-w-0">
                     <dt className="text-[12px] text-[#64748B]">{key.replaceAll("_", " ").replaceAll("-", " ")}</dt>
@@ -148,37 +130,37 @@ function TicketContent({ ticket }: { ticket: AdminSupportDetail }) {
           ) : null}
 
           {ticket.deletionRequestId ? (
-            <section aria-label="Related deletion request" className="mt-6 min-w-0 border-t border-[#E5E7EB] pt-4">
-              <h3 className="text-[14px] font-semibold text-[#111827]">Linked deletion request</h3>
+            <section aria-label="Related deletion request" className="min-w-0 border-t border-[#E7ECF5] pt-5">
+              <h2 className="text-[14px] font-semibold text-[#0F172A]">Linked deletion request</h2>
               <LinkedCasePreview origin="support" sourceId={ticket.id} />
             </section>
           ) : null}
         </div>
 
-        <aside aria-label="Ticket information and management" className="min-w-0 space-y-6">
+        <aside aria-label="Ticket information and management" className={caseAsideClass}>
           <SupportTicketStatusControl ticketId={ticket.id} status={ticket.status} />
 
           <section aria-labelledby="support-requester-heading" className="min-w-0">
-            <h3 id="support-requester-heading" className={sectionHeading}>Requester</h3>
+            <h2 id="support-requester-heading" className="border-b border-[#E7ECF5] pb-2.5 text-[14px] font-semibold text-[#0F172A]">Requester</h2>
             <dl className="space-y-0 pt-2">
-              <DetailField label="Name">{contactName}</DetailField>
-              <DetailField label="Email"><span className="[overflow-wrap:anywhere]">{ticket.email || "—"}</span></DetailField>
-              <DetailField label="Account">
+              <CaseSidebarField label="Name">{contactName}</CaseSidebarField>
+              <CaseSidebarField label="Email"><span className="[overflow-wrap:anywhere]">{ticket.email || "—"}</span></CaseSidebarField>
+              <CaseSidebarField label="Account">
                 <span className="inline-flex items-center rounded-full bg-[#F1F2F5] px-2 py-0.5 text-[12px] leading-4 text-[#475569]">
                   {ticket.identity.kind === "registered" ? "Registered" : "Guest"}
                 </span>
-              </DetailField>
+              </CaseSidebarField>
             </dl>
           </section>
 
           <section aria-labelledby="support-details-heading" className="min-w-0">
-            <h3 id="support-details-heading" className={sectionHeading}>Ticket details</h3>
+            <h2 id="support-details-heading" className="border-b border-[#E7ECF5] pb-2.5 text-[14px] font-semibold text-[#0F172A]">Ticket details</h2>
             <dl className="space-y-0 pt-2">
-              <DetailField label="Category">{supportCategoryLabel(ticket.category)}</DetailField>
-              <DetailField label="Priority">{ticket.priority.charAt(0) + ticket.priority.slice(1).toLowerCase()}</DetailField>
-              <DetailField label="Created">{formatDateTime(new Date(ticket.createdAt))}</DetailField>
-              <DetailField label="Updated">{formatDateTime(new Date(ticket.updatedAt))}</DetailField>
-              <DetailField label="Ticket ID"><span className="[overflow-wrap:anywhere] text-[12px]">{ticket.id}</span></DetailField>
+              <CaseSidebarField label="Category">{supportCategoryLabel(ticket.category)}</CaseSidebarField>
+              <CaseSidebarField label="Priority">{ticket.priority.charAt(0) + ticket.priority.slice(1).toLowerCase()}</CaseSidebarField>
+              <CaseSidebarField label="Created">{formatDateTime(new Date(ticket.createdAt))}</CaseSidebarField>
+              <CaseSidebarField label="Updated">{formatDateTime(new Date(ticket.updatedAt))}</CaseSidebarField>
+              <CaseSidebarField label="Ticket ID"><span className="[overflow-wrap:anywhere] text-[12px]">{ticket.id}</span></CaseSidebarField>
             </dl>
             {ticket.identity.userId ? (
               <details className="group mt-2">
