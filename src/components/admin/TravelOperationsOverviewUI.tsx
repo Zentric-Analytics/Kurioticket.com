@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
-import { formatDateTime } from "@/lib/admin-data";
+
 
 /** Shared, presentation-only styling for the Hotels and Cars workspaces.
  * Keep domain-specific metrics and queries in their existing pages/services. */
@@ -99,7 +99,7 @@ export function groupOperationsProviderIssues(items: readonly OperationsProvider
   return [...groups.values()];
 }
 
-export function OperationsProviderIssues({ items }: { items: readonly OperationsProviderIssue[] }) {
+export function OperationsProviderIssues({ items, formatDate }: { items: readonly OperationsProviderIssue[]; formatDate: (date: Date) => string }) {
   return (
     <div className="mt-4 divide-y divide-[#E7ECF5]">
       {groupOperationsProviderIssues(items).map(group => {
@@ -118,7 +118,7 @@ export function OperationsProviderIssues({ items }: { items: readonly Operations
                 <p className="mt-1 break-words text-[12px] text-[#64748B]">{latest.category}</p>
                 <p className="mt-1 text-[11px] text-[#64748B]">
                   {group.length} {group.length === 1 ? "observation" : "observations"}
-                  {" · Latest " + formatDateTime(new Date(latest.createdAt))}
+                  {" · Latest " + formatDate(new Date(latest.createdAt))}
                 </p>
               </div>
               <span className="inline-flex shrink-0 items-center gap-2">
@@ -132,7 +132,7 @@ export function OperationsProviderIssues({ items }: { items: readonly Operations
             <ol className="mt-3 border-l-2 border-[#E7ECF5] pl-3">
               {group.map(issue => (
                 <li key={issue.id} className="flex min-w-0 flex-wrap items-center justify-between gap-2 py-1.5 text-[12px] text-[#475569]">
-                  <span>{formatDateTime(new Date(issue.createdAt))}</span>
+                  <span>{formatDate(new Date(issue.createdAt))}</span>
                   <span className="tabular-nums">{issue.latencyMs === null ? "Latency unavailable" : issue.latencyMs + " ms"}</span>
                 </li>
               ))}
