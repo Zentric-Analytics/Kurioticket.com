@@ -17,10 +17,10 @@ test("admin navigation exposes parent workspaces in the header", () => {
     { label: "Operations", hrefs: ["/admin", "/admin/users", "/admin/searches/activity", "/admin/confirmed-trips", "/admin/support"] },
     { label: "Provider readiness", hrefs: ["/admin/providers"] },
     { label: "Website content", hrefs: ["/admin/content"] },
-    { label: "System & security", hrefs: ["/admin/system", "/admin/platform-health", "/admin/settings"] },
+    { label: "System & security", hrefs: ["/admin/system", "/admin/settings"] },
   ]);
   const visibleHrefs: readonly string[] = adminNavigationGroups.flatMap((group) => group.hrefs);
-  for (const href of ["/admin/journeys", "/admin/redirects", "/admin/referral-attribution", "/admin/flight-status", "/admin/flights", "/admin/account-deletions", "/admin/hotels", "/admin/cars", "/admin/logs", "/admin/email-delivery", "/admin/homepage-fares"]) {
+  for (const href of ["/admin/journeys", "/admin/redirects", "/admin/referral-attribution", "/admin/flight-status", "/admin/flights", "/admin/account-deletions", "/admin/hotels", "/admin/cars", "/admin/logs", "/admin/email-delivery", "/admin/homepage-fares", "/admin/platform-health"]) {
     assert.equal(visibleHrefs.includes(href), false);
   }
 });
@@ -30,7 +30,7 @@ test("admin navigation preserves role restrictions", () => {
   assert.deepEqual(getAdminNavForRole("ADMIN").filter((item) => item.parentHref).map((item) => [item.label, item.parentHref]), [
     ["Trip monitoring", "/admin/confirmed-trips"], ["Homepage Fares", "/admin/providers"],
     ["Hotels", "/admin/providers"], ["Cars", "/admin/providers"], ["Deletion Requests", "/admin/support"],
-    ["Audit Logs", "/admin/system"], ["CMS Health", "/admin/system"], ["Email Delivery", "/admin/system"],
+    ["Audit Logs", "/admin/system"], ["Platform Health", "/admin/system"], ["CMS Health", "/admin/system"], ["Email Delivery", "/admin/system"],
     ["Visitor Journeys", "/admin/users"], ["Provider Handoffs", "/admin/searches/activity"],
     ["Referral Attribution", "/admin/providers"],
   ]);
@@ -63,7 +63,7 @@ test("horizontal admin navigation keeps child routes under parent workspaces", (
   assert.deepEqual(providers?.children.map((item) => item.href), ["/admin/homepage-fares", "/admin/hotels", "/admin/cars", "/admin/referral-attribution"]);
   assert.deepEqual(trips?.children.map((item) => item.href), ["/admin/confirmed-trips/monitoring"]);
   assert.deepEqual(support?.children.map((item) => item.href), ["/admin/account-deletions"]);
-  assert.deepEqual(system?.children.map((item) => item.href), ["/admin/logs", "/admin/system/cms-health", "/admin/email-delivery"]);
+  assert.deepEqual(system?.children.map((item) => item.href), ["/admin/logs", "/admin/platform-health", "/admin/system/cms-health", "/admin/email-delivery"]);
   assert.equal(homepageFares, undefined, "Homepage Fares must not appear in the admin header");
   assert.deepEqual(settings?.children.map((item) => item.href), ["/admin/preview-testers"], "staging-only Team Access is owned by Settings");
   assert.equal(entries.some(({ item }) => item.href === "/admin/flights"), false);
@@ -74,7 +74,7 @@ test("horizontal admin navigation keeps child routes under parent workspaces", (
 });
 
 test("System diagnostic pages have System as their canonical navigation owner", () => {
-  for (const href of ["/admin/logs", "/admin/system/cms-health", "/admin/email-delivery"]) {
+  for (const href of ["/admin/logs", "/admin/platform-health", "/admin/system/cms-health", "/admin/email-delivery"]) {
     const item = getAdminNavForRole("ADMIN").find(entry => entry.href === href);
     assert.ok(item);
     assert.equal(item.parentHref, "/admin/system");
@@ -102,8 +102,9 @@ test("secondary routes are owned by a single parent workspace", () => {
     ["/admin/hotels", ["Provider Health", "Hotels", "Cars", "Homepage Fares", "Referral Attribution"]],
     ["/admin/homepage-fares/routes", ["Provider Health", "Hotels", "Cars", "Homepage Fares", "Referral Attribution"]],
     ["/admin/referral-attribution", ["Provider Health", "Hotels", "Cars", "Homepage Fares", "Referral Attribution"]],
-    ["/admin/system", ["System Overview", "Audit Logs", "CMS Health", "Email Delivery"]],
-    ["/admin/email-delivery", ["System Overview", "Audit Logs", "CMS Health", "Email Delivery"]],
+    ["/admin/system", ["System Overview", "Platform Health", "Audit Logs", "CMS Health", "Email Delivery"]],
+    ["/admin/email-delivery", ["System Overview", "Platform Health", "Audit Logs", "CMS Health", "Email Delivery"]],
+    ["/admin/platform-health", ["System Overview", "Platform Health", "Audit Logs", "CMS Health", "Email Delivery"]],
   ] as const;
   for (const [path, labels] of expectations) {
     assert.deepEqual(getAdminWorkspaceSections(path, "ADMIN")?.links.map((link) => link.label), [...labels], path);
@@ -134,6 +135,8 @@ test("contextual tabs highlight the actual current subsection, including nested 
     ["/admin/homepage-fares/routes", "/admin/homepage-fares", true],
     ["/admin/referral-attribution", "/admin/providers?view=attribution", true],
     ["/admin/system", "/admin/system", true],
+    ["/admin/platform-health", "/admin/platform-health", true],
+    ["/admin/platform-health", "/admin/system", false],
     ["/admin/system/cms-health", "/admin/system", false],
     ["/admin/system/cms-health", "/admin/system/cms-health", true],
     ["/admin/email-delivery", "/admin/logs", false],
