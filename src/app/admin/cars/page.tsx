@@ -5,7 +5,7 @@ import {
   AdminPageShell,
 } from "@/components/admin/AdminPageShell";
 import { formatDateTime } from "@/lib/admin-data";
-import { OperationsDataTable, OperationsMetric, OperationsProviderIssues, OperationsSection, OperationsStatus } from "@/components/admin/TravelOperationsOverviewUI";
+import { OperationsDataTable, OperationsMetric, OperationsMetricStrip, OperationsProviderIssues, OperationsSection, OperationsStatus } from "@/components/admin/TravelOperationsOverviewUI";
 import { getCarOperationsSnapshot } from "@/services/adminCarOperationsService";
 import { getProviderIntegrationStatuses } from "@/services/travel/providerIntegrationStatus";
 
@@ -29,15 +29,15 @@ export default async function AdminCarsPage() {
             <Link href="/admin/journeys?product=CAR" className="inline-flex min-h-9 items-center rounded-md border border-[#D8E1EC] bg-white px-3 text-[12px] font-medium text-[#334155] transition-colors hover:bg-[#F8FAFC] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">View car journeys</Link>
           </div>
         </header>
-        <div className="space-y-1">
+        <div className="min-w-0 space-y-0">
         {operations ? (
-          <dl className="grid min-w-0 grid-cols-2 border-b border-[#D8E1EC] py-1 sm:grid-cols-3 xl:grid-cols-5">
+          <OperationsMetricStrip>
             <OperationsMetric label="Searches" value={operations.searches.total} hint={operations.windowHours + "-hour window"} tone="info" />
             <OperationsMetric label="Successful" value={operations.searches.successful} hint="Recorded successful car searches" tone="good" />
             <OperationsMetric label="Partial / failed" value={operations.searches.partial + operations.searches.failed} hint={operations.searches.partial + " partial · " + operations.searches.failed + " failed"} tone={operations.searches.partial + operations.searches.failed > 0 ? "warn" : "neutral"} />
             <OperationsMetric label="Zero results" value={operations.searches.successfulZeroResults} hint="Successful searches returning no car offers" tone={operations.searches.successfulZeroResults > 0 ? "warn" : "neutral"} />
             <OperationsMetric label="Average latency" value={operations.searches.averageLatencyMs === null ? "—" : operations.searches.averageLatencyMs + " ms"} hint="Recorded car-search latency" />
-          </dl>
+          </OperationsMetricStrip>
         ) : (
           <AdminEmptyState title="Car telemetry unavailable" message="The current environment could not return car-search telemetry. No zero values were invented." />
         )}
@@ -53,11 +53,11 @@ export default async function AdminCarsPage() {
             <OperationsStatus tone="info">Current environment</OperationsStatus>
           </div>
 
-          <div className="mt-3 grid gap-x-8 gap-y-3 lg:grid-cols-2">
+          <div className="mt-4 grid min-w-0 gap-x-10 gap-y-4 lg:grid-cols-2">
             {carIntegrations.map((integration) => {
               const health = operations?.providerHealth.find((provider) => provider.id === integration.id);
               return (
-                <div key={integration.id} className="border-b border-[#E7ECF5] bg-white py-3">
+                <div key={integration.id} className="min-w-0 border-b border-[#E7ECF5] bg-white py-3">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="font-semibold text-[#020617]">{integration.provider}</p>
@@ -67,7 +67,7 @@ export default async function AdminCarsPage() {
                       {integration.state.replaceAll("_", " ")}
                     </OperationsStatus>
                   </div>
-                  <div className="mt-4 grid gap-2 text-sm sm:grid-cols-2">
+                  <div className="mt-4 grid min-w-0 gap-x-6 gap-y-2 text-sm grid-cols-2">
                     <Stat label="Search" value={integration.searchEnabled ? "Enabled" : "Not enabled"} />
                     <Stat label="Handoff" value={integration.externalHandoffEnabled ? "Enabled" : "Not enabled"} />
                     <Stat label="Calls (24h)" value={health ? String(health.attemptedCalls) : "—"} />
@@ -122,7 +122,7 @@ export default async function AdminCarsPage() {
         ) : null}
 
         {operations ? (
-          <div className="grid gap-4 xl:grid-cols-2">
+          <div className="min-w-0">
             <OperationsSection className="py-5">
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -134,9 +134,9 @@ export default async function AdminCarsPage() {
               {operations.locationIssues.length ? (
                 <div className="mt-4 divide-y divide-[#E7ECF5]">
                   {operations.locationIssues.map((location, index) => (
-                    <div key={(location.origin || "unknown") + "-" + (location.destination || "unknown") + "-" + index} className="flex items-center justify-between gap-4 py-3">
+                    <div key={(location.origin || "unknown") + "-" + (location.destination || "unknown") + "-" + index} className="flex min-w-0 flex-wrap items-start justify-between gap-3 py-3 sm:items-center">
                       <div>
-                        <p className="font-semibold text-[#020617]">{location.origin || "—"} → {location.destination || "—"}</p>
+                        <p className="break-words text-[13px] font-semibold text-[#020617]">{location.origin || "—"} → {location.destination || "—"}</p>
                         <p className="mt-1 text-xs font-semibold text-[#64748B]">{location.lastIssueAt ? "Last issue " + formatDateTime(new Date(location.lastIssueAt)) : "No timestamp"}</p>
                       </div>
                       <OperationsStatus tone="warn">{location.issueCount} {location.issueCount === 1 ? "exception" : "exceptions"}</OperationsStatus>
