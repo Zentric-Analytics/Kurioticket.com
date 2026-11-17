@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 
 import { adminNavigation, adminNavigationGroups, getAdminNavForRole, getAdminHeaderGroups, getAdminWorkspaceSections, isAdminWorkspaceSectionActive, isAdminNavItemActive } from "@/lib/adminNavigation";
 
-const originalLabels = ["Overview", "Users", "Providers", "Search Activity", "Trips", "Trip monitoring", "Content", "Homepage Fares", "Hotels", "Cars", "Support", "Deletion Requests", "Audit Logs", "System", "Platform Health", "CMS Health", "Email Delivery", "Settings", "Visitor Journeys", "Provider Handoffs", "Referral Attribution"];
+const originalLabels = ["Overview", "Users", "Providers", "Search Activity", "Trips", "Trip monitoring", "Content", "Homepage destinations", "Flight routes", "Hotel destinations", "FAQs", "Homepage Fares", "Hotels", "Cars", "Support", "Deletion Requests", "Audit Logs", "System", "Platform Health", "CMS Health", "Email Delivery", "Settings", "Visitor Journeys", "Provider Handoffs", "Referral Attribution"];
 
 test("admin navigation restores the flat module order without a duplicate Flights workspace", () => {
   assert.deepEqual(adminNavigation.map((item) => item.label), originalLabels);
@@ -28,7 +28,10 @@ test("admin navigation exposes parent workspaces in the header", () => {
 test("admin navigation preserves role restrictions", () => {
   assert.deepEqual(getAdminNavForRole("SUPPORT"), []);
   assert.deepEqual(getAdminNavForRole("ADMIN").filter((item) => item.parentHref).map((item) => [item.label, item.parentHref]), [
-    ["Trip monitoring", "/admin/confirmed-trips"], ["Homepage Fares", "/admin/providers"],
+    ["Trip monitoring", "/admin/confirmed-trips"],
+    ["Homepage destinations", "/admin/content"], ["Flight routes", "/admin/content"],
+    ["Hotel destinations", "/admin/content"], ["FAQs", "/admin/content"],
+    ["Homepage Fares", "/admin/providers"],
     ["Hotels", "/admin/providers"], ["Cars", "/admin/providers"], ["Deletion Requests", "/admin/support"],
     ["Audit Logs", "/admin/system"], ["Platform Health", "/admin/system"], ["CMS Health", "/admin/system"], ["Email Delivery", "/admin/system"],
     ["Visitor Journeys", "/admin/users"], ["Provider Handoffs", "/admin/searches/activity"],
@@ -62,6 +65,10 @@ test("horizontal admin navigation keeps child routes under parent workspaces", (
   assert.deepEqual(entries.find(({ item }) => item.href === "/admin/users")?.children.map(item => item.href), ["/admin/journeys"]);
   assert.deepEqual(providers?.children.map((item) => item.href), ["/admin/homepage-fares", "/admin/hotels", "/admin/cars", "/admin/referral-attribution"]);
   assert.deepEqual(trips?.children.map((item) => item.href), ["/admin/confirmed-trips/monitoring"]);
+  assert.deepEqual(entries.find(({ item }) => item.href === "/admin/content")?.children.map(item => item.href), [
+    "/admin/content/homepage/destinations", "/admin/content/homepage/flight-routes",
+    "/admin/content/homepage/hotel-destinations", "/admin/content/faqs",
+  ]);
   assert.deepEqual(support?.children.map((item) => item.href), ["/admin/account-deletions"]);
   assert.deepEqual(system?.children.map((item) => item.href), ["/admin/logs", "/admin/platform-health", "/admin/system/cms-health", "/admin/email-delivery"]);
   assert.equal(homepageFares, undefined, "Homepage Fares must not appear in the admin header");
@@ -98,6 +105,12 @@ test("secondary routes are owned by a single parent workspace", () => {
     ["/admin/redirects", ["Search Records", "Provider Handoffs"]],
     ["/admin/support", ["Support Tickets", "Deletion Requests"]],
     ["/admin/account-deletions/fixture", ["Support Tickets", "Deletion Requests"]],
+    ["/admin/confirmed-trips", ["Trips Directory", "Trip Monitoring"]],
+    ["/admin/confirmed-trips/monitoring", ["Trips Directory", "Trip Monitoring"]],
+    ["/admin/confirmed-trips/records", ["Trips Directory", "Trip Monitoring"]],
+    ["/admin/content", ["Content Overview", "Homepage Destinations", "Flight Routes", "Hotel Destinations", "FAQs"]],
+    ["/admin/content/faqs", ["Content Overview", "Homepage Destinations", "Flight Routes", "Hotel Destinations", "FAQs"]],
+    ["/admin/content/homepage/destinations", ["Content Overview", "Homepage Destinations", "Flight Routes", "Hotel Destinations", "FAQs"]],
     ["/admin/providers", ["Provider Health", "Hotels", "Cars", "Homepage Fares", "Referral Attribution"]],
     ["/admin/hotels", ["Provider Health", "Hotels", "Cars", "Homepage Fares", "Referral Attribution"]],
     ["/admin/homepage-fares/routes", ["Provider Health", "Hotels", "Cars", "Homepage Fares", "Referral Attribution"]],
@@ -110,8 +123,8 @@ test("secondary routes are owned by a single parent workspace", () => {
     assert.deepEqual(getAdminWorkspaceSections(path, "ADMIN")?.links.map((link) => link.label), [...labels], path);
   }
   assert.equal(getAdminWorkspaceSections("/admin/settings", "ADMIN"), null);
-  assert.equal(getAdminWorkspaceSections("/admin/confirmed-trips/monitoring", "ADMIN"), null, "existing Trip tabs are retained");
-  assert.equal(getAdminWorkspaceSections("/admin/content", "ADMIN"), null);
+  assert.equal(getAdminWorkspaceSections("/admin/confirmed-trips/monitoring", "ADMIN")?.label, "Trips");
+  assert.equal(getAdminWorkspaceSections("/admin/content", "ADMIN")?.label, "Content");
   assert.equal(getAdminWorkspaceSections("/admin/users", "SUPPORT"), null);
   assert.equal(getAdminWorkspaceSections("/admin/system", "USER"), null);
 });
@@ -130,6 +143,13 @@ test("contextual tabs highlight the actual current subsection, including nested 
     ["/admin/searches/a1b2c3", "/admin/searches/activity", true],
     ["/admin/redirects/a1b2c3", "/admin/redirects", true],
     ["/admin/redirects", "/admin/searches/activity", false],
+    ["/admin/confirmed-trips", "/admin/confirmed-trips", true],
+    ["/admin/confirmed-trips/records", "/admin/confirmed-trips", true],
+    ["/admin/confirmed-trips/monitoring", "/admin/confirmed-trips/monitoring", true],
+    ["/admin/confirmed-trips/monitoring", "/admin/confirmed-trips", false],
+    ["/admin/content", "/admin/content", true],
+    ["/admin/content/faqs/specific", "/admin/content/faqs", true],
+    ["/admin/content/faqs/specific", "/admin/content", false],
     ["/admin/providers", "/admin/providers", true],
     ["/admin/hotels", "/admin/providers", false],
     ["/admin/homepage-fares/routes", "/admin/homepage-fares", true],

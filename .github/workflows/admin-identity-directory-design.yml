@@ -28,7 +28,15 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          fetch-depth: 0
+          # A full-history fetch can stall on this large repository. Keep the
+          # current PR checkout shallow and fetch only the frozen before-design
+          # revision needed for the actual before/after browser assertions.
+          fetch-depth: 1
+      - name: Fetch pinned Admin directory before-design revision
+        run: |
+          git fetch --no-tags --depth=1 origin 2634e1234a5b31f1eca518a7720763772af6ecf1
+          git cat-file -e '2634e1234a5b31f1eca518a7720763772af6ecf1:src/app/admin/users/page.tsx'
+          git cat-file -e '2634e1234a5b31f1eca518a7720763772af6ecf1:src/components/admin/AdminIdentityTable.tsx'
       - uses: actions/setup-node@v6
         with:
           node-version: 24
