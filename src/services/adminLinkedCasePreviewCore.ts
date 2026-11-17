@@ -88,12 +88,11 @@ export function createAdminLinkedCasePreviewReader({ authorize, database }: Depe
         if (!ticket || ticket.category !== "account_deletion") return { status: "not_found" };
 
         const deletion = await db.accountDeletionRequest.findFirst({
-          where: {
-            supportTicketId: ticket.id,
-            // Support tickets are detached from their user ID after deletion
-            // finalization, so allow that already-verified historical pointer.
-            ...(ticket.userId ? { userId: ticket.userId } : {}),
-          },
+          where: ticket.userId
+            ? { supportTicketId: ticket.id, userId: ticket.userId }
+            // Only a completed deletion can legitimately detach its Support
+            // ticket. Do not treat any other orphaned record as linked.
+            : { supportTicketId: ticket.id, status: "COMPLETED" },
           select: deletionPreviewSelect,
         });
         if (!deletion) return { status: "not_found" };
@@ -114,7 +113,7 @@ export function createAdminLinkedCasePreviewReader({ authorize, database }: Depe
 
       const deletion = await db.accountDeletionRequest.findUnique({
         where: { id: sourceId },
-        select: { id: true, userId: true, supportTicketId: true },
+        select: { id: true, userId: true, supportTicketId: true, status: true },
       });
       if (!deletion?.supportTicketId) return { status: "not_found" };
 
@@ -124,7 +123,9 @@ export function createAdminLinkedCasePreviewReader({ authorize, database }: Depe
         where: {
           id: deletion.supportTicketId,
           category: "account_deletion",
-          OR: [{ userId: deletion.userId }, { userId: null }],
+          ...(deletion.status === "COMPLETED"
+            ? { OR: [{ userId: deletion.userId }, { userId: null }] }
+            : { userId: deletion.userId }),
         },
         select: supportPreviewSelect,
       });
