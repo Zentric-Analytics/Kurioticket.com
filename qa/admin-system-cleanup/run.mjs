@@ -60,11 +60,11 @@ for (const variant of ["before", "after"]) {
   if (variant === "before") {
     // The current shared header imports a secondary-menu API that did not exist
     // in the historical navigation baseline. Keep the old menu data unchanged
-    // and provide an empty no-op for that new API in the before-only fixture.
+    // and provide no-op shims for new APIs in the before-only fixture.
     // This preserves the actual before/after difference without changing prod.
     const oldNavigation = execFileSync("git", ["show", `${baseline}:src/lib/adminNavigation.ts`], { cwd: repo, encoding: "utf8" });
     if (oldNavigation.includes("getAdminMoreGroups")) throw new Error("Historical navigation shim is no longer needed");
-    await put("mocks/navigation.ts", oldNavigation + "\nexport function getAdminMoreGroups(){ return []; }\n");
+    await put("mocks/navigation.ts", oldNavigation + "\nexport function getAdminMoreGroups(){ return []; }\nexport function getAdminWorkspaceSections(){ return null; }\n");
     aliases["@/lib/adminNavigation"] = path.join(temp, "mocks/navigation.ts");
   }
   await put("next.config.mjs", `export default {devIndicators:false,agentRules:false,experimental:{externalDir:true},webpack(config){Object.assign(config.resolve.alias,${JSON.stringify(aliases)});config.resolve.alias["@"]=${JSON.stringify(source)};return config;}};`);
