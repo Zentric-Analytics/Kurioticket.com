@@ -26,5 +26,6 @@ test("child close stays local while parent owns Results Edit submission", () => 
   assert.match(panel, /onChoose=\{\(suggestion\) => \{[\s\S]*?setLocationPicker\(undefined\)/);
   assert.doesNotMatch(locationChild, /router\.(?:push|replace)/);
   assert.match(panel, /onBeforeNavigate\?\.\(\);\s*router\[submitNavigation\]/);
-  assert.match(outer, /onBeforeNavigate=\{onClose\}[\s\S]*?submitLabel="Search"/);
+  assert.match(outer, /onSubmitSearch=\{next => \{ pendingSearch\.current = next; onClose\(\); \}\}[\s\S]*?submitLabel="Search"/);
+  assert.doesNotMatch(outer, /submitNavigation="replace"/);
 });

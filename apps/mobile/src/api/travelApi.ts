@@ -103,6 +103,11 @@ function apiErrorMessage(data: Record<string, unknown>) {
 let operationalSearchCredential: string | null = null;
 let operationalSearchActor: string | null = null;
 const operationalPaths = new Set(["/api/flights/search", "/api/hotels/search", "/api/cars/search", "/api/mobile/v1/hotels/progressive", "/api/redirect"]);
+/** Identify the real Android application and transport, never a browser. */
+export function carSearchClientHeaders(platform: string, version?: string): Record<string, string> {
+  if (platform !== "android" || !version || !/^\d+\.\d+\.\d+(?:[-+][A-Za-z0-9.-]+)?$/.test(version)) return {};
+  return { "User-Agent": `KurioticketMobile/${version} (Android; Native) OkHttp` };
+}
 const operationalCredentialPattern = /^v1\.[0-9a-f-]{36}\.[0-9]{10,13}\.(?:staging|production)\.[A-Za-z0-9_-]{43}$/;
 let accountEpoch = 0;
 let observedSessionToken: string | null | undefined;
@@ -144,6 +149,7 @@ async function request<T>(path: string, init: RequestInit = {}, options: { signa
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",
+        ...(path === "/api/cars/search" ? carSearchClientHeaders(Platform.OS, Constants.expoConfig?.version) : {}),
         "X-Mobile-Platform": Platform.OS,
         ...(Constants.expoConfig?.version ? { "X-Mobile-App-Version": Constants.expoConfig.version } : {}),
         ...(session?.token ? { Authorization: `Bearer ${session.token}` } : {}),

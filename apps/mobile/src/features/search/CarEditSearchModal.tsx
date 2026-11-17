@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import {
   Animated,
   KeyboardAvoidingView,
@@ -22,9 +23,10 @@ type Props = {
   visible: boolean;
   params: Record<string, RouteValue>;
   onClose: () => void;
+  onSubmitSearch: (params: Record<string, string>) => void;
 };
 
-export function CarEditSearchModal({ visible, params, onClose }: Props) {
+export function CarEditSearchModal({ visible, params, onClose, onSubmitSearch }: Props) {
   const ft = useFlowTheme();
   const resultsCanvas = ft.theme.dark ? ft.colors.page : FLIGHT_RESULTS_LIGHT_CANVAS;
   const { bottom: bottomSafeAreaInset } = useSafeAreaInsets();
@@ -32,6 +34,15 @@ export function CarEditSearchModal({ visible, params, onClose }: Props) {
   const internalBottomPadding = Math.max(20, bottomSafeAreaInset - floatingBottomGap);
   const motion = useSearchPickerMotion(visible, { additionalTravelDistance: floatingBottomGap });
   const presentedParams = useRetainedPickerContext(visible, params);
+  const pendingSearch = useRef<Record<string, string> | null>(null);
+  useEffect(() => {
+    if (visible) { pendingSearch.current = null; return; }
+    if (!motion.rendered && pendingSearch.current) {
+      const next = pendingSearch.current;
+      pendingSearch.current = null;
+      onSubmitSearch(next);
+    }
+  }, [visible, motion.rendered, onSubmitSearch]);
   if (!motion.rendered) return null;
 
   return (
@@ -112,8 +123,7 @@ export function CarEditSearchModal({ visible, params, onClose }: Props) {
                 embedded
                 editAppearance
                 params={presentedParams}
-                submitNavigation="replace"
-                onBeforeNavigate={onClose}
+                onSubmitSearch={next => { pendingSearch.current = next; onClose(); }}
                 submitLabel="Search"
               />
             </ScrollView>

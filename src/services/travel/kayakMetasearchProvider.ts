@@ -30,7 +30,8 @@ async function search<T>(vertical: KayakVertical, criteria: Record<string, strin
   const startedAt = Date.now();
   if (!isKayakSandboxEnabled() || !context?.clientIp) return { provider: "KAYAK sandbox", results: [], status: "skipped", latencyMs: Date.now() - startedAt };
   const client = new KayakSandboxClient(process.env.KAYAK_SANDBOX_API_KEY!, undefined, undefined, kayakProviderUserAgent(vertical, context.userAgent), context.clientIp, undefined,
-    diagnostic => console.warn("[kayak-search:http-rejection]", JSON.stringify({ ...diagnostic, requestId: context.requestId })));
+    diagnostic => console.warn("[kayak-search:http-rejection]", JSON.stringify({ ...diagnostic, requestId: context.requestId })),
+    diagnostic => console.info("[kayak-search:car-request]", JSON.stringify({ ...diagnostic, requestId: context.requestId })));
   try {
     const trackId = context.trackId || crypto.randomUUID();
     const resolved = await resolveRegularKayakSearch(vertical, criteria, (term, requested = "hotels") => client.places(requested, term, trackId, context.signal));

@@ -22,6 +22,7 @@ import { CarResultsQuickFilterSheet } from "./CarResultsQuickFilterSheet";
 import { carFilterCopy, carFilterGroupLabel } from "./carFilterCopy";
 import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
 import { CarEditSearchModal } from "./CarEditSearchModal";
+import { carResultsRouteUpdate } from "./carResultsRouteUpdate";
 import { DetailGlassSurface } from "./DetailGlassSurface";
 import { useFeatureAvailability } from "../availability/FeatureAvailability";
 import { getLocationFieldDisplay } from "../../../../../src/lib/search/locationFieldDisplay";
@@ -109,6 +110,13 @@ export function ApprovedCarResultsScreen() {
   const carSummarySecondary=formatCarResultsScheduleSummary({pickupDate:String(payload.pickupDate||""),pickupTime:String(payload.pickupTime||""),dropoffDate:String(payload.dropoffDate||""),dropoffTime:String(payload.dropoffTime||""),locale});
   const carSummaryCompact=formatCompactCarResultsScheduleSummary({pickupDate:String(payload.pickupDate||""),pickupTime:String(payload.pickupTime||""),dropoffDate:String(payload.dropoffDate||""),dropoffTime:String(payload.dropoffTime||""),locale})||carSummarySecondary;
   const edit=()=>setCarEditSearchOpen(true);
+  const applyEditedSearch=useCallback((next:Record<string,string>)=>{
+    const update=carResultsRouteUpdate(next);
+    setFilters({}); setSort("recommended"); setQuickSheetKind(null); setFilterSheetVisible(false);
+    setStatus("loading"); setMessage(""); scrollCarResultsToTop();
+    if(buildSearchPlan("car",update).plan?.key===plan.plan?.key) setRetry(value=>value+1);
+    else router.setParams(update);
+  },[plan.plan?.key,scrollCarResultsToTop]);
   const startCarResultsTransition=()=>{if(carResultsApplyingTimer.current)clearTimeout(carResultsApplyingTimer.current);setCarResultsApplying(true);scrollCarResultsToTop();carResultsApplyingTimer.current=setTimeout(()=>setCarResultsApplying(false),NATIVE_FILTER_RESULTS_TRANSITION_MS);};
   const changeCarFilters=(next:SelectedCarFilters)=>{carFilterSessionDirtyRef.current=true;setFilters(next);};
   const openAllFilters=()=>{carFilterSessionDirtyRef.current=false;setFilterSheetVisible(true);};
@@ -121,8 +129,8 @@ export function ApprovedCarResultsScreen() {
     {!carResultsApplying?<Text accessibilityRole="header" numberOfLines={1} style={[r.carResultCount,{color:theme.textPrimary}]}>{carResultCountLabel(filtered.length)}</Text>:null}
   </View>:null}</>;
   const listEmpty=status==="empty"?<Empty title="No rental cars found" body="Try changing your dates, pickup location, or filters." retry={clearFilters} retryLabel="Clear filters" edit={edit}/>:status==="error"?<Empty title="Car search could not be completed" body={message||"Check your connection and try again."} retry={()=>setRetry((value)=>value+1)} edit={edit}/>:status==="ready"&&carResultsApplying?<CarSkeletons/>:status==="ready"&&!filtered.length?<Empty title="No cars match these filters" body="Clear filters to see the available rental cars." retry={clearFilters} retryLabel="Clear filters" edit={edit}/>:null;
-  if(status==="loading") return <NativeBrandedSearchLoading product="car" includeTopInset={false}/>;
   return <SafeAreaView style={[r.safe,{backgroundColor:headerSurfaceColor}]} edges={[]}>
+    <View style={{flex:1}} pointerEvents={status==="loading"?"none":"auto"} importantForAccessibility={status==="loading"?"no-hide-descendants":"auto"}>
     <View style={[r.carHeaderBackdrop,{backgroundColor:carCanvasColor}]}>
       <View style={[r.carHeaderSurface,{backgroundColor:headerSurfaceColor,borderBottomColor:theme.dark?theme.border:"#D8E1EC"}]}>
         <CarResultsHeader destination={carSummaryDestination} secondaryLine={carSummaryCompact} onEdit={edit} backgroundColor={headerSurfaceColor}/>
@@ -137,9 +145,11 @@ export function ApprovedCarResultsScreen() {
         UIKit then receives the final contentSize before scrolling begins, while
         image prefetching stays independently limited to the first few assets. */}
     <FlatList ref={carScrollRef} style={{backgroundColor:carCanvasColor}} data={listData} keyExtractor={result=>result.id} renderItem={({item,index})=><View style={r.carResultCardSlot}><CarResultCard result={item} rank={index} badge={carBadges.get(item.id)} imageUri={resolveNativeCarImageUri(item.imageUrl)} searchParams={payload} resultBackgroundColor={carCanvasColor} plan={plan.plan} priceAlertsAvailable={availability.priceAlerts}/></View>} ItemSeparatorComponent={CarResultItemSeparator} ListHeaderComponent={listHeader} ListEmptyComponent={listEmpty} initialNumToRender={Math.max(results.length,1)} maxToRenderPerBatch={Math.max(results.length,CAR_RESULT_RENDER_BATCH_SIZE)} windowSize={CAR_RESULT_WINDOW_SIZE} updateCellsBatchingPeriod={CAR_RESULT_BATCHING_PERIOD_MS} removeClippedSubviews={Platform.OS === "android"} showsVerticalScrollIndicator={true} automaticallyAdjustsScrollIndicatorInsets={false} scrollIndicatorInsets={carResultsScrollIndicatorInsets} alwaysBounceVertical={false} bounces={false} overScrollMode="never" keyboardShouldPersistTaps="handled" contentContainerStyle={[r.body,{paddingBottom:Math.max(insets.bottom + 64,64)}]}/>
+    </View>
+    {status==="loading"?<View style={StyleSheet.absoluteFill}><NativeBrandedSearchLoading product="car" includeTopInset={false}/></View>:null}
     <CarFilterSheet visible={filterSheetVisible} results={results} filters={filters} pricePerDay={pricePerDay} onChange={changeCarFilters} onClose={completeCarFilterSession}/>
     {quickSheetKind ? <CarResultsQuickFilterSheet key={quickSheetKind} kind={quickSheetKind} results={results} filters={filters} pricePerDay={pricePerDay} sort={sort} onApplyFilters={(next)=>{changeCarFilters(next);}} onApplySort={(next)=>{if(next!==sort){setSort(next);startCarResultsTransition();}}} onClose={()=>{setQuickSheetKind(null);if(carFilterSessionDirtyRef.current){carFilterSessionDirtyRef.current=false;startCarResultsTransition();}}}/> : null}
-    <CarEditSearchModal visible={carEditSearchOpen} params={params} onClose={()=>setCarEditSearchOpen(false)}/>
+    <CarEditSearchModal visible={carEditSearchOpen} params={params} onClose={()=>setCarEditSearchOpen(false)} onSubmitSearch={applyEditedSearch}/>
   </SafeAreaView>;
 }
 

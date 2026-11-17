@@ -34,13 +34,13 @@ test("availability and foreground transitions cannot own a travel search", () =>
   assert.doesNotMatch(appStateEffect, /searchFlights|searchHotels|load\(/);
 });
 
-test("initial loaders return before filters, counts, cards, navigation, and price alerts", () => {
+test("initial loaders conceal result chrome while preserving the car modal host lifecycle", () => {
   const approvedLoader = approved.indexOf('if (status === "loading" || hotelCurrencyPending) return <NativeBrandedSearchLoading');
-  const carLoader = cars.indexOf('if(status==="loading") return <NativeBrandedSearchLoading');
   const approvedChrome = approved.indexOf("<FlightResultsHeader");
-  const carChrome = cars.indexOf("<CarResultsHeader");
   assert.ok(approvedLoader >= 0 && approvedChrome > approvedLoader, "Flight/Hotel loading returns before result chrome");
-  assert.ok(carLoader >= 0 && carChrome > carLoader, "Car loading returns before result chrome");
+  assert.match(cars, /pointerEvents=\{status==="loading"\?"none":"auto"\} importantForAccessibility=\{status==="loading"\?"no-hide-descendants":"auto"\}/);
+  assert.match(cars, /status==="loading"\?<View style=\{StyleSheet\.absoluteFill\}><NativeBrandedSearchLoading/);
+  assert.ok(cars.indexOf("<CarEditSearchModal") > cars.indexOf("<NativeBrandedSearchLoading"));
   assert.ok(approved.indexOf("<Animated.SectionList") > approvedLoader);
 });
 
