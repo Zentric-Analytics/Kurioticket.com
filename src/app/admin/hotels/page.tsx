@@ -5,7 +5,8 @@ import {
   AdminPageShell,
 } from "@/components/admin/AdminPageShell";
 import { formatDateTime } from "@/lib/admin-data";
-import { OperationsDataTable, OperationsMetric, OperationsMetricStrip, OperationsProviderIssues, OperationsSection, OperationsStatus } from "@/components/admin/TravelOperationsOverviewUI";
+import { ProductSearchJumpLink, ProductSearchRecordsPanel } from "@/components/admin/ProductSearchRecordsPanel";
+import { OperationsMetric, OperationsMetricStrip, OperationsProviderIssues, OperationsSection, OperationsStatus } from "@/components/admin/TravelOperationsOverviewUI";
 import { getHotelOperationsSnapshot } from "@/services/adminHotelOperationsService";
 import { getProviderIntegrationStatuses } from "@/services/travel/providerIntegrationStatus";
 
@@ -25,8 +26,8 @@ export default async function AdminHotelsPage() {
         <header className="flex min-w-0 flex-wrap items-center justify-between gap-3 border-b border-[#D8E1EC] pb-4 pt-1">
           <h1 className="text-[20px] font-semibold leading-7 tracking-[-0.02em] text-[#020617]">Hotel Operations</h1>
           <div className="flex min-w-0 flex-wrap items-center gap-2">
-            <Link href="/admin/searches/activity?product=HOTEL" className="inline-flex min-h-9 items-center rounded-md border border-[#D8E1EC] bg-white px-3 text-[12px] font-medium text-[#334155] transition-colors hover:bg-[#F8FAFC] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">View hotel searches</Link>
-            <Link href="/admin/journeys?product=HOTEL" className="inline-flex min-h-9 items-center rounded-md border border-[#D8E1EC] bg-white px-3 text-[12px] font-medium text-[#334155] transition-colors hover:bg-[#F8FAFC] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">View hotel journeys</Link>
+            <ProductSearchJumpLink product="HOTEL" />
+            
           </div>
         </header>
         <div className="min-w-0 space-y-0">
@@ -84,48 +85,7 @@ export default async function AdminHotelsPage() {
             </div>
           </OperationsSection>
 
-        {operations ? (
-          <OperationsSection className="py-5">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-              <div>
-                <h2 className="font-semibold text-[#020617]">Search exceptions</h2>
-                <p className="mt-1 text-[12px] leading-5 text-[#64748B]">
-                  Recent failed, partial and valid zero-result hotel searches that may need investigation.
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <Link href="/admin/searches/activity?product=HOTEL&status=FAILED" className="rounded-lg border border-[#D8E1EC] bg-white px-3 py-2 text-[12px] font-medium text-[#334155] hover:bg-[#F8FAFC]">
-                  Failed searches
-                </Link>
-                <Link href="/admin/searches/activity?product=HOTEL&status=PARTIAL" className="rounded-lg border border-[#D8E1EC] bg-white px-3 py-2 text-[12px] font-medium text-[#334155] hover:bg-[#F8FAFC]">
-                  Partial searches
-                </Link>
-              </div>
-            </div>
-
-            <div className="mt-4">
-              {operations.exceptionSearches.length ? (
-                <OperationsDataTable
-                  columns={["Observed", "Destination", "Stay", "Exception", "Results", "Latency", "Action"]}
-                  rows={operations.exceptionSearches.map((search) => ({
-                    id: search.id,
-                    cells: [
-                      formatDateTime(new Date(search.createdAt)),
-                      <div key="destination"><p className="font-semibold text-[#020617]">{search.destination || "—"}</p><p className="text-xs text-[#64748B]">{search.requestId || "No request ID"}</p></div>,
-                      search.checkIn ? (search.checkIn.slice(0, 10) + (search.checkOut ? " → " + search.checkOut.slice(0, 10) : "")) : "—",
-                      <OperationsStatus key="kind" tone={search.kind === "FAILED" ? "bad" : "warn"}>{search.kind.replaceAll("_", " ")}</OperationsStatus>,
-                      search.resultCount,
-                      search.latencyMs === null ? "—" : search.latencyMs + " ms",
-                      <Link key="action" href={"/admin/searches/" + search.id + "?environment=" + operations.environment} className="font-semibold text-[#004BB8] hover:text-[#003985]">Open</Link>,
-                    ],
-                  }))}
-                />
-              ) : (
-                <AdminEmptyState title="No recent search exceptions" message="No failed, partial or zero-result hotel searches were recorded in the current 24-hour window." />
-              )}
-            </div>
-          </OperationsSection>
-        ) : null}
+        <ProductSearchRecordsPanel product="HOTEL" />
 
         {operations ? (
           <div className="min-w-0">
