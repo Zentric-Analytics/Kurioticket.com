@@ -6,7 +6,7 @@ import {
   AdminStatusBadge,
 } from "@/components/admin/AdminPageShell";
 import { formatDateTime } from "@/lib/admin-data";
-import { OperationsDataTable, OperationsMetric, OperationsSection } from "@/components/admin/TravelOperationsOverviewUI";
+import { OperationsDataTable, OperationsMetric, OperationsProviderIssues, OperationsSection } from "@/components/admin/TravelOperationsOverviewUI";
 import { getHotelOperationsSnapshot } from "@/services/adminHotelOperationsService";
 import { getProviderIntegrationStatuses } from "@/services/travel/providerIntegrationStatus";
 
@@ -164,23 +164,7 @@ export default async function AdminHotelsPage() {
                 <Link href="/admin/providers?product=hotels" className="text-sm font-semibold text-[#004BB8] hover:text-[#003985]">Providers</Link>
               </div>
               {operations.providerIssues.length ? (
-                <div className="mt-4 divide-y divide-[#E7ECF5]">
-                  {operations.providerIssues.map((issue) => (
-                    <div key={issue.id} className="py-3">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="font-semibold text-[#020617]">{issue.provider}</p>
-                          <p className="mt-1 text-xs font-semibold text-[#64748B]">{formatDateTime(new Date(issue.createdAt))}</p>
-                        </div>
-                        <AdminStatusBadge tone={issue.status === "FAILED" ? "bad" : "warn"}>{issue.status}</AdminStatusBadge>
-                      </div>
-                      <div className="mt-2 flex flex-wrap gap-2 text-xs font-semibold text-[#64748B]">
-                        <span className="rounded-lg bg-slate-50 px-2.5 py-1.5">{issue.category}</span>
-                        <span className="rounded-lg bg-slate-50 px-2.5 py-1.5">{issue.latencyMs === null ? "Latency unavailable" : issue.latencyMs + " ms"}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <OperationsProviderIssues items={operations.providerIssues} />
               ) : (
                 <p className="mt-4 rounded-xl bg-slate-50 p-3 text-[12px] text-[#64748B]">No disabled, degraded or failed hotel-search provider observations were recorded in this window.</p>
               )}
