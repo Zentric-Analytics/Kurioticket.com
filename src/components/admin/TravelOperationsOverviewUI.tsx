@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import { ChevronDown } from "lucide-react";
+import { formatDateTime } from "@/lib/admin-data";
 
 /** Shared, presentation-only styling for the Hotels and Cars workspaces.
  * Keep domain-specific metrics and queries in their existing pages/services. */
@@ -52,6 +54,72 @@ export function OperationsDataTable({ columns, rows }: {
           ))}
         </tbody>
       </table>
+    </div>
+  );
+}
+/** Group repeated provider observations for presentation, not storage.
+ * Every original event remains available within the expanded group. */
+export type OperationsProviderIssue = {
+  id: string;
+  provider: string;
+  status: string;
+  category: string;
+  createdAt: string;
+  latencyMs: number | null;
+};
+
+export function groupOperationsProviderIssues(items: readonly OperationsProviderIssue[]) {
+  const groups = new Map<string, OperationsProviderIssue[]>();
+  for (const item of items) {
+    const key = JSON.stringify([item.provider, item.status, item.category]);
+    const previous = groups.get(key);
+    if (previous) previous.push(item);
+    else groups.set(key, [item]);
+  }
+  return [...groups.values()];
+}
+
+export function OperationsProviderIssues({ items }: { items: readonly OperationsProviderIssue[] }) {
+  return (
+    <div className="mt-4 divide-y divide-[#E7ECF5]">
+      {groupOperationsProviderIssues(items).map(group => {
+        const latest = group[0];
+        const tone = latest.status === "FAILED"
+          ? "text-rose-700 bg-rose-500"
+          : latest.status === "DEGRADED" || latest.status === "DISABLED"
+            ? "text-amber-700 bg-amber-500"
+            : "text-[#475569] bg-[#94A3B8]";
+        const [textTone, dotTone] = tone.split(" ");
+        return (
+          <details key={JSON.stringify([latest.provider, latest.status, latest.category])} className="group py-3">
+            <summary className="flex min-w-0 cursor-pointer list-none flex-wrap items-start justify-between gap-3 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] [&::-webkit-details-marker]:hidden">
+              <div className="min-w-0 flex-1">
+                <p className="break-words text-[13px] font-semibold text-[#020617]">{latest.provider}</p>
+                <p className="mt-1 break-words text-[12px] text-[#64748B]">{latest.category}</p>
+                <p className="mt-1 text-[11px] text-[#64748B]">
+                  {group.length} {group.length === 1 ? "observation" : "observations"}
+                  {" · Latest " + formatDateTime(new Date(latest.createdAt))}
+                </p>
+              </div>
+              <span className="inline-flex shrink-0 items-center gap-2">
+                <span className={"inline-flex items-center gap-1.5 text-[11px] font-medium " + textTone}>
+                  <span aria-hidden="true" className={"h-1.5 w-1.5 rounded-full " + dotTone} />
+                  {latest.status}
+                </span>
+                <ChevronDown size={15} aria-hidden="true" className="text-[#64748B] transition-transform group-open:rotate-180" />
+              </span>
+            </summary>
+            <ol className="mt-3 border-l-2 border-[#E7ECF5] pl-3">
+              {group.map(issue => (
+                <li key={issue.id} className="flex min-w-0 flex-wrap items-center justify-between gap-2 py-1.5 text-[12px] text-[#475569]">
+                  <span>{formatDateTime(new Date(issue.createdAt))}</span>
+                  <span className="tabular-nums">{issue.latencyMs === null ? "Latency unavailable" : issue.latencyMs + " ms"}</span>
+                </li>
+              ))}
+            </ol>
+          </details>
+        );
+      })}
     </div>
   );
 }
