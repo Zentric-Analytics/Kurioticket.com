@@ -106,7 +106,7 @@ export function LinkedCasePreview({ origin, sourceId }: Props) {
               <p role="alert" className="py-4 text-[12px] text-[#9A3412]">{failure}</p>
             ) : preview.kind === "deletion" && origin === "support" ? (
               <>
-                <dl className={"grid min-w-0 grid-cols-1 gap-x-6 gap-y-4 py-4 " + (origin === "support" ? "sm:grid-cols-2" : "")}>
+                <dl className="grid min-w-0 grid-cols-1 gap-x-6 gap-y-4 py-4 sm:grid-cols-2">
                   <Field label="Deletion status" value={deletionStatus[preview.status] ?? preview.status} />
                   <Field label="Requested" value={dateLabel(preview.requestedAt)} />
                   <Field label="Scheduled review" value={dateLabel(preview.deletionScheduledAt)} />
@@ -119,7 +119,7 @@ export function LinkedCasePreview({ origin, sourceId }: Props) {
               </>
             ) : preview.kind === "support" && origin === "deletion" ? (
               <>
-                <dl className={"grid min-w-0 grid-cols-1 gap-x-6 gap-y-4 py-4 " + (origin === "support" ? "sm:grid-cols-2" : "")}>
+                <dl className="grid min-w-0 grid-cols-1 gap-x-6 gap-y-4 py-4">
                   <Field label="Ticket subject" value={preview.subject || "Unavailable"} />
                   <Field label="Ticket status" value={supportStatus[preview.status] ?? preview.status} />
                   <Field label="Priority" value={preview.priority.toLowerCase()} />
