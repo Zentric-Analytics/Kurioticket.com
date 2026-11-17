@@ -7,6 +7,7 @@ import {
   groupOperationsProviderIssues,
   OperationsDataTable,
   OperationsMetric,
+  OperationsMetricStrip,
   OperationsProviderIssues,
   OperationsStatus,
 } from "./TravelOperationsOverviewUI";
@@ -61,4 +62,24 @@ test("overview metric, status and table use neutral layout without altering valu
   assert.match(table, /London/);
   assert.match(table, /FAILED/);
   assert.match(table, /overflow-x-auto/);
+});
+
+test("Hotel and Car metrics stay in a single five-column strip at every desktop breakpoint", () => {
+  const html = renderToStaticMarkup(createElement(OperationsMetricStrip, {
+    children: [
+      createElement(OperationsMetric, { key: "a", label: "Searches", value: 14 }),
+      createElement(OperationsMetric, { key: "b", label: "Successful", value: 4 }),
+      createElement(OperationsMetric, { key: "c", label: "Partial / failed", value: 10 }),
+      createElement(OperationsMetric, { key: "d", label: "Zero results", value: 0 }),
+      createElement(OperationsMetric, { key: "e", label: "Average latency", value: "34,826 ms" }),
+    ],
+  }));
+  assert.match(html, /grid-cols-5/);
+  assert.match(html, /min-w-\[920px\]/);
+  assert.match(html, /overflow-x-auto/);
+  assert.match(html, /aria-label="Search operations metrics"/);
+  assert.doesNotMatch(html, /sm:grid-cols-3|xl:grid-cols-5|grid-cols-2/);
+  for (const label of ["Searches", "Successful", "Partial / failed", "Zero results", "Average latency"]) {
+    assert.ok(html.includes(label), label);
+  }
 });
