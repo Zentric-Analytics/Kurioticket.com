@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { readFileSync } from "node:fs";
 import {
   supportCategoryChoices,
   supportCategoryLabel,
@@ -115,4 +116,36 @@ test("direct deletion navigation does not invent an originating Support inbox", 
   assert.equal(supportTicketBackHref("deletion-1", "deletion-1", "q=private"),
     "/admin/account-deletions/deletion-1");
   assert.equal(supportTicketBackHref("deletion-1", "other", "q=private", "1"), "/admin/support?q=private");
+});
+
+test("Deletion Requests has the same clean white Support workspace and a compact, accessible filter toolbar", () => {
+  const queue = readFileSync("src/app/admin/account-deletions/page.tsx", "utf8");
+  const shell = readFileSync("src/components/admin/AdminHorizontalShell.tsx", "utf8");
+  assert.match(shell, /const accountDeletionWorkspace = pathname === "\/admin\/account-deletions"/);
+  assert.match(shell, /\|\| accountDeletionWorkspace \|\| accountDeletionDetail/);
+  assert.match(queue, /<AdminPageShell title="Account deletion requests" hideHeader>/);
+  assert.match(queue, /aria-label="Filter account deletion requests"/);
+  assert.match(queue, /<AdminDirectorySelect name="status" label="Request status"/);
+  assert.match(queue, /options=\{statusOptions\} plain align="end"/);
+  assert.match(queue, /bg-\[#004BB8\] px-4/);
+  assert.doesNotMatch(queue, /<AdminFilterBar|<AdminDataTable|<AdminStatusBadge/);
+  assert.doesNotMatch(queue, /Review the account-deletion lifecycle through the safe admin queue/);
+});
+
+test("Deletion queue preserves every lifecycle field and review destination when condensing the table", () => {
+  const queue = readFileSync("src/app/admin/account-deletions/page.tsx", "utf8");
+  for (const field of [
+    "request.email", "request.user.email", "request.user.name", "request.userId",
+    "request.user.role", "request.user.status", "request.status",
+    "request.requestedAt", "request.deletionScheduledAt",
+    "request.cancelledAt", "request.completedAt",
+    "request.supportTicketId", "request.adminReference", "request.hasReviewNotes",
+  ]) {
+    assert.ok(queue.includes(field), "Missing required information: " + field);
+  }
+  assert.match(queue, /adminOperationalReads\.deletions\.list\(params\)/);
+  assert.match(queue, /href=\{"\/admin\/account-deletions\/" \+ request\.id\}/);
+  assert.match(queue, /href=\{cursorHref\(raw, result\.data\.nextCursor\)\}/);
+  assert.match(queue, /status: "invalid"|result\.status === "invalid"/);
+  assert.match(queue, /An unavailable read is not shown as an empty queue/);
 });
