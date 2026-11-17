@@ -125,7 +125,11 @@ test("Support preview does not infer relationships from matching email or a diff
 });
 
 test("completed deletions remain readable after Support's account identity is detached", async () => {
-  const f = fixture({ ticket: supportSource({ userId: null }) });
+  const f = fixture({
+    ticket: supportSource({ userId: null }),
+    deletionMatch: { ...deletionPreview(), status: "COMPLETED",
+      completedAt: new Date("2026-11-17T00:00:00.000Z") },
+  });
   const result = await f.read("support", ticketId);
   assert.equal(result.status, "ok");
   const where = (f.calls.at(-1)!.args as { where: unknown }).where;
