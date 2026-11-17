@@ -25,7 +25,7 @@ try {
     await expect(page.getByRole("region", { name: "Users directory" })).toBeVisible();
     await expect(page.getByRole("navigation", { name: "User types" }).getByRole("link", { name: "All (30)" })).toBeVisible();
     const workspace = page.getByRole("navigation", { name: "Users subsections" });
-    await expect(page.getByRole("heading", { name: "Users", exact: true })).toBeVisible();
+    await expect(page.getByRole("complementary", { name: "Users navigation" }).getByRole("heading", { name: "Users", exact: true })).toBeVisible();
     await expect(workspace.getByRole("link", { name: "Users Directory", exact: true })).toBeVisible();
     await expect(workspace.getByRole("link", { name: "Visitor Journeys", exact: true })).toBeVisible();
     await expect(workspace.getByRole("link", { name: "Users Directory", exact: true })).toHaveAttribute("aria-current", "page");
