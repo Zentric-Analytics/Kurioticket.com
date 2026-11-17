@@ -59,3 +59,25 @@ test("changing identity clears stale deep-linked customer IDs without dropping t
     assert.match(source, /name="visitorId" value=\{one\(raw\.visitorId\)\}/);
   }
 });
+
+test("Search Activity filters use one consistent boxed dropdown treatment and explicit Apply", () => {
+  const controls = ["Date range", "Outcome", "Identity", "Provider", "Application"];
+  for (const label of controls) {
+    assert.match(activity, new RegExp(`label="${label}"[^>]*appearance="fare"|label="${label}"[^>]*\\n[^>]*appearance="fare"`));
+  }
+  assert.doesNotMatch(activity, /<ApplicationSourceSelect/);
+  assert.doesNotMatch(activity, /autoSubmit/);
+  assert.match(activity, /option\.value === "ALL" \? "" : option\.value/);
+  assert.match(activity, /clearFieldNamesOnChange=\{\["userId", "visitorId"\]\}/);
+  assert.match(activity, /action="\/admin\/searches\/activity"/);
+  assert.match(activity, /bg-\[#004BB8\].*px-4/);
+  assert.match(activity, /href=\{productHref\(raw, item\.value, range\)\}/);
+});
+
+test("Search Activity owns Provider Handoffs navigation, without a misleading Provider reports return link", () => {
+  const nav = readFileSync("src/lib/adminNavigation.ts", "utf8");
+  assert.match(nav, /href: "\/admin\/redirects", parentHref: "\/admin\/searches\/activity"/);
+  assert.doesNotMatch(redirects, /<SearchWorkspaceBackLink href="\/admin\/providers\?view=attribution" label="Provider reports"/);
+  assert.match(redirects, /handoffDetailHref\(handoff\.id, handoff\.environment, raw\)/);
+  assert.match(redirects, /handoffPreviousPageHref\(raw\)/);
+});

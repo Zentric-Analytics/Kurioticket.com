@@ -413,7 +413,8 @@ test("Tasks 4–6 place the small Referral date filter beside tabs only when sel
 test("Tasks 7–8 use User Activity-style provider handoff filters without losing scoped IDs", () => {
   assert.match(handoffsPage, /<h1 className="sr-only">Provider Handoffs<\/h1>/);
   assert.doesNotMatch(handoffsPage, /Recorded outbound referrals only/);
-  assert.match(handoffsPage, /<SearchWorkspaceBackLink href="\/admin\/providers\?view=attribution"/);
+  assert.doesNotMatch(handoffsPage, /<SearchWorkspaceBackLink href="\/admin\/providers\?view=attribution"/);
+  assert.match(handoffsPage, /handoffDetailHref\(handoff\.id, handoff\.environment, raw\)/);
   assert.match(handoffsPage, /<ProviderHandoffFilters/);
   assert.match(handoffFilters, /aria-label="Search by provider"/);
   assert.match(handoffFilters, /<SearchMonitorSelect label="Product"/);
