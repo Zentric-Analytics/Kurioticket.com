@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useEffect, useId, useState } from "react";
+import { Fragment, useCallback, useEffect, useId, useState } from "react";
 import { ChevronDown, RefreshCw } from "lucide-react";
 
 import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
@@ -90,13 +90,13 @@ export function ProductSearchRecordsPanel({ product }: { product: ProviderProduc
   const [detailLoading, setDetailLoading] = useState(false);
   const cursor = cursors[pageIndex] ?? null;
 
-  const resetPage = () => {
+  const resetPage = useCallback(() => {
     setSelectedId(null);
     setPageIndex(0);
     setCursors([null]);
     setResult(null);
     setLoading(true);
-  };
+  }, []);
   useEffect(() => {
     const openAll = (event: Event) => {
       if ((event as CustomEvent<ProviderProduct>).detail !== product) return;
@@ -107,7 +107,7 @@ export function ProductSearchRecordsPanel({ product }: { product: ProviderProduc
     window.addEventListener("admin-product-search-show-all", openAll);
     if (window.location.hash === "#" + sectionId) openAll(new CustomEvent("admin-product-search-show-all", { detail: product }));
     return () => window.removeEventListener("admin-product-search-show-all", openAll);
-  }, [product, sectionId]);
+  }, [product, sectionId, resetPage]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -165,7 +165,7 @@ export function ProductSearchRecordsPanel({ product }: { product: ProviderProduc
   const rows = page?.items ?? [];
   const showError = !loading && result && result.status !== "ok";
   const nextCursor = page?.nextCursor ?? null;
-  const heading = product === "HOTEL" ? "Search exceptions and records" : "Search exceptions and records";
+  const heading = "Search exceptions and records";
 
   return (
     <section id={sectionId} aria-label={product === "HOTEL" ? "Hotel search records" : "Car search records"} className="min-w-0 scroll-mt-28 border-t border-[#D8E1EC] bg-white py-5">
