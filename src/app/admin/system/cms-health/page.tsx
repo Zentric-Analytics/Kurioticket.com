@@ -38,7 +38,7 @@ export default async function AdminCmsHealthPage() {
   const cmsHealthHotelOptions = overview.available ? await getAdminCmsHotelOptions().catch(() => null) : [];
 
   return (
-    <div className="w-full min-w-0 bg-white text-[#020617]">
+    <div className="mx-auto w-full min-w-0 max-w-[1500px] bg-white text-[#020617]">
       <Link
         href="/admin/system"
         className="focus-ring mb-3 inline-flex items-center gap-1.5 rounded-sm text-[12px] font-medium text-[#64748B] hover:text-[#004BB8]"
@@ -46,7 +46,7 @@ export default async function AdminCmsHealthPage() {
         <ArrowLeft size={14} aria-hidden="true" />
         Back to System
       </Link>
-      <AdminPageShell title="CMS Health" eyebrow="">
+      <AdminPageShell title="CMS Health" hideHeader><header className="border-b border-[#D8E1EC] pb-4 pt-1"><h1 className="text-[20px] font-semibold leading-7 tracking-[-0.02em] text-[#020617]">CMS Health</h1></header>
         {!overview.available ? (
           <section className="border-y border-[#D8E1EC] py-5" aria-labelledby="cms-health-unavailable">
             <h2 id="cms-health-unavailable" className="text-[15px] font-semibold text-[#020617]">
@@ -59,36 +59,24 @@ export default async function AdminCmsHealthPage() {
         ) : (
           <div className="min-w-0">
           {cmsHealthHotelOptions === null ? <div role="alert" className="mb-4 flex flex-wrap items-center gap-3 text-[13px] text-rose-700">Hotel destination choices could not be loaded. <CmsRetryButton /></div> : null}
-          <section aria-label="CMS health summary" className="max-w-[720px] border-b border-[#D8E1EC] pb-5">
-            <div className="divide-y divide-[#E7ECF5]">
-              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-6 py-3">
-                <p className="flex items-center gap-1.5 text-[12px] font-medium text-emerald-700">
-                  <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                  Healthy
-                </p>
-                <p className="text-[13px] font-semibold tabular-nums text-[#020617]">{overview.totals.healthy}</p>
-              </div>
-              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-6 py-3">
-                <p className={`flex items-center gap-1.5 text-[12px] font-medium ${overview.totals.unhealthy ? "text-amber-700" : "text-emerald-700"}`}>
-                  <span
-                    aria-hidden="true"
-                    className={`h-1.5 w-1.5 rounded-full ${overview.totals.unhealthy ? "bg-amber-500" : "bg-emerald-500"}`}
-                  />
-                  Needs attention
-                </p>
-                <p className="text-[13px] font-semibold tabular-nums text-[#020617]">{overview.totals.unhealthy}</p>
-              </div>
-              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-6 py-3">
-                <p className="flex items-center gap-1.5 text-[12px] font-medium text-[#475569]">
-                  <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-slate-400" />
-                  Fallback retired
-                </p>
-                <p className="text-[13px] font-semibold tabular-nums text-[#020617]">{overview.totals.retiredFallback}</p>
-              </div>
-              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-6 py-3">
-                <p className="text-[12px] font-medium text-[#475569]">Total scopes</p>
-                <p className="text-[13px] font-semibold tabular-nums text-[#020617]">{overview.totals.scopes}</p>
-              </div>
+          <section aria-label="CMS health summary" className="w-full min-w-0">
+            <div role="region" tabIndex={0} aria-label="CMS health metrics" className="w-full min-w-0 overflow-x-auto overscroll-x-contain focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
+              <dl className="grid min-w-[680px] grid-cols-4 gap-px border-y border-[#D8E1EC] bg-[#E7ECF5]">
+                {[
+                  { label: "Healthy", value: overview.totals.healthy, dot: "bg-emerald-500" },
+                  { label: "Needs attention", value: overview.totals.unhealthy, dot: overview.totals.unhealthy ? "bg-amber-500" : "bg-emerald-500" },
+                  { label: "Fallback retired", value: overview.totals.retiredFallback, dot: "bg-slate-400" },
+                  { label: "Total scopes", value: overview.totals.scopes, dot: "bg-[#004BB8]" },
+                ].map((metric) => (
+                  <div key={metric.label} className="min-w-0 bg-white px-4 py-4">
+                    <dt className="flex min-w-0 items-center gap-2 text-[12px] font-medium text-[#64748B]">
+                      <span aria-hidden="true" className={`h-1.5 w-1.5 shrink-0 rounded-full ${metric.dot}`} />
+                      {metric.label}
+                    </dt>
+                    <dd className="mt-2 text-[22px] font-semibold leading-7 tabular-nums text-[#020617]">{metric.value.toLocaleString()}</dd>
+                  </div>
+                ))}
+              </dl>
             </div>
           </section>
 
@@ -127,7 +115,7 @@ export default async function AdminCmsHealthPage() {
               </p>
             </section>
           ) : (
-            <section aria-label="CMS area diagnostics" className="border-b border-[#D8E1EC] pb-6 pt-4">
+            <section aria-label="CMS area diagnostics" className="border-b border-[#D8E1EC] pb-6 pt-5">
               <div className="border-y border-[#D8E1EC]">
                 {cmsHealthGroups.map((group) => {
                   const entries = overview.scopes.filter((entry) => entry.type === group.type);
@@ -143,14 +131,14 @@ export default async function AdminCmsHealthPage() {
                       className="group border-b border-[#E7ECF5] last:border-b-0"
                       open={needsAttention > 0}
                     >
-                      <summary className="flex cursor-pointer list-none flex-col gap-2 py-3.5 marker:content-none sm:flex-row sm:items-center sm:justify-between [&::-webkit-details-marker]:hidden">
+                      <summary className="grid cursor-pointer list-none grid-cols-1 gap-3 py-4 marker:content-none sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center [&::-webkit-details-marker]:hidden">
                         <div className="min-w-0">
                           <p className="text-[13px] font-semibold text-[#020617]">{group.label}</p>
                           <p className="mt-0.5 text-[12px] text-[#64748B]">
                             {entries.length} scope{entries.length === 1 ? "" : "s"} · {healthy} healthy · {needsAttention} need{needsAttention === 1 ? "s" : ""} attention
                           </p>
                         </div>
-                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 sm:justify-end">
+                        <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 sm:justify-end">
                           <CmsStatusIndicator
                             label={needsAttention ? `${needsAttention} need attention` : "Healthy"}
                             tone={needsAttention ? "warn" : "good"}
