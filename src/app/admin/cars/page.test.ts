@@ -12,7 +12,9 @@ test("car admin is a provider-aware operational overview", () => {
   assert.match(carsPage, /Search exceptions/);
   assert.match(carsPage, /Locations needing attention/);
   assert.match(carsPage, /Provider exceptions/);
-  assert.match(carsPage, /Recent car searches/);
+  assert.doesNotMatch(carsPage, /Recent car searches|operations\.recentSearches/);
+  assert.match(carsPage, /<OperationsDataTable/);
+  assert.match(carsPage, /<OperationsMetric/);
   assert.doesNotMatch(carsPage, /Car Search Readiness/);
   assert.doesNotMatch(carsPage, /Provider-call telemetry pending/);
 });
@@ -22,7 +24,7 @@ test("car operations snapshot is environment scoped and read-only", () => {
   assert.match(service, /query: \{ path: \["environment"\], equals: environment \}/);
   assert.match(service, /service: "car-search"/);
   assert.match(service, /isolationLevel: "RepeatableRead"/);
-  assert.match(carsPage, /\/admin\/searches\?product=CAR/);
+  assert.match(carsPage, /\/admin\/searches\/activity\?product=CAR/);
   assert.match(carsPage, /\/admin\/journeys\?product=CAR/);
   assert.doesNotMatch(carsPage, /fetch\(|method:\s*["'](?:POST|PATCH|DELETE)|<form/);
 });
@@ -47,7 +49,9 @@ test("car search route persists exact provider telemetry and unsupported searche
 });
 
 test("car telemetry boundary excludes only requests rejected before a valid search record", () => {
-  assert.match(carsPage, /Feature-disabled and invalid-request responses still return before a valid SearchHistory record exists/);
+  assert.match(carsPage, /invalid or feature-disabled requests are excluded/);
+  assert.match(carsPage, /Only valid car searches produce recorded search and provider telemetry/);
+  assert.doesNotMatch(carsPage, /Telemetry boundaries|Operational boundaries/);
   assert.doesNotMatch(carsPage, /unsupported-coverage responses currently return before SearchHistory recording/);
 });
 
