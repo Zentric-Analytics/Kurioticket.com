@@ -24,15 +24,20 @@ try {
     await expect(page.getByRole("heading", { name: "Users directory" })).toHaveCount(1);
     await expect(page.getByRole("region", { name: "Users directory" })).toBeVisible();
     await expect(page.getByRole("navigation", { name: "User types" }).getByRole("link", { name: "All (30)" })).toBeVisible();
+    const sectionNavigation = page.getByRole("navigation", { name: "Admin sections" });
+    await expect(sectionNavigation.getByRole("link", { name: "Users", exact: true })).toBeVisible();
     if (width >= 1100) {
-      await expect(page.getByRole("navigation", { name: "Admin navigation" })).toBeVisible();
-      await expect(page.getByRole("link", { name: "Users", exact: true })).toBeVisible();
+      const headerNavigation = page.getByRole("navigation", { name: "Admin navigation" });
+      await expect(headerNavigation).toBeVisible();
+      await expect(headerNavigation.getByRole("link", { name: "Overview", exact: true })).toBeVisible();
+      await expect(headerNavigation.getByRole("link", { name: "Users", exact: true })).toHaveCount(0);
     } else {
       const toggle = page.getByRole("button", { name: "Open admin navigation" });
       await expect(toggle).toBeVisible();
       await toggle.click();
-      await expect(page.getByRole("navigation", { name: "Admin navigation" })).toBeVisible();
-      await expect(page.getByRole("link", { name: "Users", exact: true })).toBeVisible();
+      const mobileNavigation = page.getByRole("navigation", { name: "Admin navigation" });
+      await expect(mobileNavigation).toBeVisible();
+      await expect(mobileNavigation.getByRole("link", { name: "Users", exact: true })).toBeVisible();
       await page.getByRole("button", { name: "Close admin navigation" }).click();
     }
     const dimensions = await page.evaluate(() => ({
