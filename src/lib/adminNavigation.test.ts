@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { readFileSync } from "node:fs";
 
 import { adminNavigation, adminNavigationGroups, getAdminNavForRole, getAdminHeaderGroups, getAdminWorkspaceSections, isAdminWorkspaceSectionActive, isAdminNavItemActive } from "@/lib/adminNavigation";
 
@@ -139,5 +140,18 @@ test("contextual tabs highlight the actual current subsection, including nested 
   ];
   for (const [path, target, selected] of examples) {
     assert.equal(isAdminWorkspaceSectionActive(path, target), selected, path + " -> " + target);
+  }
+});
+
+test("Hotel and Car operations use canonical Search Activity links without redirect hops", () => {
+  for (const [product, path] of [
+    ["HOTEL", "src/app/admin/hotels/page.tsx"],
+    ["CAR", "src/app/admin/cars/page.tsx"],
+  ] as const) {
+    const source = readFileSync(path, "utf8");
+    assert.ok(source.includes(`href="/admin/searches/activity?product=${product}"`));
+    assert.ok(source.includes(`href="/admin/searches/activity?product=${product}&status=FAILED"`));
+    assert.doesNotMatch(source, /href="\\/admin\\/searches\\?/);
+    assert.match(source, /href=\\{"\\/admin\\/searches\\/" \\+ search\\.id/);
   }
 });
