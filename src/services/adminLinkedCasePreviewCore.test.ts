@@ -44,6 +44,7 @@ function fixture(input: {
   deletion?: ReturnType<typeof deletionSource> | null;
   supportMatch?: ReturnType<typeof supportPreview> | null;
   deletionMatch?: ReturnType<typeof deletionPreview> | null;
+  deletionMatches?: Array<ReturnType<typeof deletionPreview>>;
 } = {}) {
   const calls: Array<{ model: string; method: string; args: unknown }> = [];
   let databaseCalls = 0;
@@ -64,7 +65,10 @@ function fixture(input: {
         },
         accountDeletionRequest: {
           findUnique: async (args: unknown) => record("accountDeletionRequest", "findUnique", args, input.deletion === undefined ? deletionSource() : input.deletion),
-          findFirst: async (args: unknown) => record("accountDeletionRequest", "findFirst", args, input.deletionMatch === undefined ? deletionPreview() : input.deletionMatch),
+          findMany: async (args: unknown) => record("accountDeletionRequest", "findMany", args,
+            input.deletionMatches ?? (input.deletionMatch === undefined
+              ? [deletionPreview()]
+              : input.deletionMatch ? [input.deletionMatch] : [])),
         },
       } as never;
     },
@@ -104,6 +108,7 @@ test("Support preview selects only limited deletion status and lifecycle fields"
   const read = f.calls.find(c => c.model === "accountDeletionRequest")!;
   const args = read.args as { where: Record<string, unknown>; select: Record<string, boolean> };
   assert.deepEqual(args.where, { supportTicketId: ticketId, userId });
+  assert.equal((read.args as { take: number }).take, 2);
   for (const excluded of ["userId", "email", "reviewNotes", "adminReference", "supportTicketId", "user"]) {
     assert.equal(args.select[excluded], undefined, excluded + " must not be selected in a Support preview");
   }
@@ -122,6 +127,18 @@ test("Support preview does not infer relationships from matching email or a diff
   assert.equal(args.where.supportTicketId, ticketId);
   assert.equal(args.where.userId, userId);
   assert.equal("email" in args.where, false);
+});
+
+test("ambiguous deletion records for one Support ticket are not exposed", async () => {
+  const f = fixture({
+    deletionMatches: [
+      deletionPreview(),
+      { ...deletionPreview(), id: "deletion_000002" },
+    ],
+  });
+  assert.deepEqual(await f.read("support", ticketId), { status: "not_found" });
+  const read = f.calls.find(c => c.model === "accountDeletionRequest")!;
+  assert.equal((read.args as { take: number }).take, 2);
 });
 
 test("completed deletions remain readable after Support's account identity is detached", async () => {
