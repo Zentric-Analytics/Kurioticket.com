@@ -6,7 +6,7 @@ import { ProviderHandoffFilters } from "@/components/admin/ProviderHandoffFilter
 import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
 import { SearchWorkspacePanelFrame } from "@/components/admin/SearchWorkspacePanelFrame";
 import { formatDateTime } from "@/lib/admin-data";
-import { handoffDetailHref, referralAttributionReturnHref } from "@/lib/adminReferralHandoffNavigation";
+import { handoffDetailHref, handoffListParams, referralAttributionReturnHref } from "@/lib/adminReferralHandoffNavigation";
 import { handoffNextPageHref, handoffPreviousPageHref } from "@/lib/adminHandoffPagination";
 import { adminOperationalReads } from "@/services/adminOperationalReadService";
 
@@ -105,7 +105,7 @@ export default async function AdminRedirectsPage({ searchParams, embedded = fals
         </nav>
       ) : null}
       {one(raw.sourcePage) ? (
-        <p className="mb-2 text-[12px] text-[#475569]">Source page: <span className="font-semibold text-[#020617]">{one(raw.sourcePage)}</span> <Link href={"/admin/redirects?" + (() => { const params = toParams(raw); params.delete("sourcePage"); params.delete("cursor"); return params.toString(); })()} className="ml-2 font-medium text-[#004BB8] hover:underline">Clear source</Link></p>
+        <p className="mb-2 text-[12px] text-[#475569]">Source page: <span className="font-semibold text-[#020617]">{one(raw.sourcePage)}</span> <Link href={"/admin/redirects?" + (() => { const params = handoffListParams(raw); params.delete("sourcePage"); params.delete("cursor"); params.delete("pageTrail"); return params.toString(); })()} className="ml-2 font-medium text-[#004BB8] hover:underline">Clear source</Link></p>
       ) : null}
       <ProviderHandoffFilters
         initial={{
