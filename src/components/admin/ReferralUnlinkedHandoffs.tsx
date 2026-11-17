@@ -1,6 +1,9 @@
 "use client";
 
 import { Fragment, useEffect, useId, useState } from "react";
+import { RefreshCw } from "lucide-react";
+
+import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
 
 import { referralUnlinkedRecordsParams } from "@/lib/adminReferralHandoffNavigation";
 import type {
@@ -22,8 +25,7 @@ type Props = {
 };
 
 const PAGE_SIZE = 25;
-const selectClass = "h-9 min-w-0 rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px] text-[#020617] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]";
-const actionClass = "inline-flex min-h-9 items-center justify-center rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px] font-medium text-[#004BB8] hover:bg-[#F5F8FF] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] disabled:cursor-not-allowed disabled:opacity-50";
+const actionClass = "inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg border border-[#D8E1EC] bg-white px-3.5 text-[13px] font-medium text-[#004BB8] transition-colors hover:border-[#B8C9DF] hover:bg-[#F5F8FF] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] disabled:cursor-not-allowed disabled:opacity-50";
 
 function dateLabel(value: string) {
   const date = new Date(value);
@@ -32,11 +34,13 @@ function dateLabel(value: string) {
     : new Intl.DateTimeFormat("en", { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" }).format(date) + " UTC";
 }
 
-function DetailField({ label, value }: { label: string; value: string | null }) {
+function DetailField({ label, value, identifier = false }: { label: string; value: string | null; identifier?: boolean }) {
   return (
     <div className="min-w-0">
       <dt className="text-[11px] font-medium text-[#64748B]">{label}</dt>
-      <dd className="mt-1 break-all text-[12px] font-medium leading-5 text-[#020617]">{value || "—"}</dd>
+      <dd className={"mt-1 text-[13px] font-medium leading-5 text-[#020617] " + (identifier ? "break-all" : "break-words")}>
+        {value || "—"}
+      </dd>
     </div>
   );
 }
@@ -63,7 +67,8 @@ export function ReferralUnlinkedHandoffs({ window, environment, unlinkedCount, p
     const controller = new AbortController();
     let active = true;
     setLoadState("loading");
-    setResult(null);
+    // Keep the current rows visible on an explicit refresh; filters and page
+    // navigation clear stale rows synchronously before triggering the read.
 
     const params = referralUnlinkedRecordsParams({
       start: window.start,
@@ -111,7 +116,11 @@ export function ReferralUnlinkedHandoffs({ window, environment, unlinkedCount, p
     setLoadState("loading");
   };
 
-  const list = loadState === "ready" && result?.status === "ok" ? result.data : null;
+  const list = result?.status === "ok" ? result.data : null;
+  const providerOptions = [
+    { value: "", label: "All providers" },
+    ...[...new Set(providers)].sort((a, b) => a.localeCompare(b)).map(name => ({ value: name, label: name })),
+  ];
   const failure = result?.status === "forbidden"
     ? "You do not have permission to view these handoff records."
     : result?.status === "invalid"
@@ -129,9 +138,9 @@ export function ReferralUnlinkedHandoffs({ window, environment, unlinkedCount, p
 
       <div id={panelId} hidden={!expanded}>
       {expanded ? (
-        <div role="region" aria-label="Unlinked provider handoff records"
+        <div role="region" aria-label="Unlinked provider handoff records" aria-busy={loadState === "loading"}
           className="mt-4 min-w-0 border-t border-[#E7ECF5] pt-4">
-          <div className="flex min-w-0 flex-wrap items-end justify-between gap-x-5 gap-y-3">
+          <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
             <div className="min-w-0">
               <h3 className="text-[14px] font-semibold text-[#020617]">Handoff records</h3>
               <p className="mt-1 text-[12px] leading-5 text-[#64748B]">
@@ -139,38 +148,42 @@ export function ReferralUnlinkedHandoffs({ window, environment, unlinkedCount, p
                 This list uses the selected attribution reporting window.
               </p>
             </div>
-            <div className="flex min-w-0 flex-wrap items-end gap-3">
-              <label className="grid min-w-0 gap-1 text-[12px] text-[#475569]">
-                Provider
-                <select className={selectClass + " max-w-[220px]"} value={provider} onChange={event => {
-                  setProvider(event.target.value);
-                  resetPage();
-                }}>
-                  <option value="">All providers</option>
-                  {[...new Set(providers)].sort((a, b) => a.localeCompare(b)).map(name => (
-                    <option value={name} key={name}>{name}</option>
-                  ))}
-                </select>
-              </label>
-              <label className="grid gap-1 text-[12px] text-[#475569]">
-                Product
-                <select className={selectClass} value={product} onChange={event => {
-                  setProduct(event.target.value as ProductFilter);
-                  resetPage();
-                }}>
-                  <option value="">All products</option>
-                  <option value="FLIGHT">Flights</option>
-                  <option value="HOTEL">Hotels</option>
-                </select>
-              </label>
-              <button type="button" className={actionClass} onClick={() => {
-                setSelectedId(null);
-                setReload(value => value + 1);
-              }}>Refresh records</button>
-            </div>
           </div>
-
-          {loadState === "loading" || loadState === "idle" ? (
+          <div role="group" aria-label="Filter unlinked handoff records"
+            className="mt-4 flex min-w-0 flex-wrap items-end gap-3 border-y border-[#E7ECF5] py-3">
+            <div className="min-w-0 flex-[1_1_170px] sm:w-[210px] sm:flex-none">
+              <span className="mb-1 block text-[12px] font-medium text-[#475569]">Provider</span>
+              <SearchMonitorSelect label="Provider" name="provider" appearance="fare"
+                value={provider} options={providerOptions} truncateLabel
+                onValueChange={value => { setProvider(value); resetPage(); }} />
+            </div>
+            <div className="min-w-0 flex-[1_1_150px] sm:w-[170px] sm:flex-none">
+              <span className="mb-1 block text-[12px] font-medium text-[#475569]">Product</span>
+              <SearchMonitorSelect label="Product" name="product" appearance="fare"
+                value={product} options={[
+                  { value: "", label: "All products" },
+                  { value: "FLIGHT", label: "Flights" },
+                  { value: "HOTEL", label: "Hotels" },
+                ]}
+                onValueChange={value => { setProduct(value as ProductFilter); resetPage(); }} />
+            </div>
+            <button type="button" className={actionClass + " w-full sm:w-auto"}
+              disabled={loadState === "loading"}
+              onClick={() => {
+                setLoadState("loading");
+                setReload(value => value + 1);
+              }}>
+              <RefreshCw size={15} aria-hidden="true"
+                className={loadState === "loading" ? "animate-spin" : ""} />
+              {loadState === "loading" ? "Refreshing…" : "Refresh records"}
+            </button>
+          </div>
+          {loadState === "loading" && list ? (
+            <p role="status" className="mt-2 text-[12px] text-[#64748B]">
+              Refreshing current records; existing results remain visible.
+            </p>
+          ) : null}
+          {(loadState === "loading" || loadState === "idle") && !list ? (
             <p role="status" className="py-6 text-[13px] text-[#64748B]">Loading provider handoffs…</p>
           ) : loadState === "error" || !list && result?.status !== "ok" ? (
             <p role="alert" className="py-6 text-[13px] text-[#9A3412]">
@@ -218,33 +231,52 @@ export function ReferralUnlinkedHandoffs({ window, environment, unlinkedCount, p
                             <button type="button" aria-expanded={selectedId === handoff.id}
                               aria-controls={selectedId === handoff.id ? detailId : undefined}
                               onClick={() => setSelectedId(current => current === handoff.id ? null : handoff.id)}
-                              className="text-[12px] font-medium text-[#004BB8] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
+                              className="inline-flex min-h-8 items-center rounded-md px-2 text-[12px] font-semibold text-[#004BB8] hover:bg-[#EAF2FF] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
                               {selectedId === handoff.id ? "Close" : "Details"}
                             </button>
                           </td>
                         </tr>
                         {selectedId === handoff.id ? (
                           <tr>
-                            <td colSpan={9} className="bg-[#FAFBFD] p-4">
-                              <section id={detailId} aria-label="Provider handoff record details">
-                                <div className="flex flex-wrap items-center justify-between gap-2">
-                                  <h4 className="text-[13px] font-semibold">Handoff details</h4>
-                                  <span className="text-[11px] text-[#64748B]">Search link: {handoff.searchCorrelation.kind === "exact" ? "Verified" : "Unavailable"}</span>
+                            <td colSpan={9} className="bg-[#F7F9FC] px-3 py-4 sm:px-5 sm:py-5">
+                              <section id={detailId} aria-label="Provider handoff record details"
+                                className="mx-auto w-full max-w-[960px] rounded-xl border border-[#DBE3EE] bg-white p-4 shadow-[0_4px_18px_-12px_rgba(15,23,42,0.22)] sm:p-5">
+                                <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
+                                  <div className="min-w-0">
+                                    <h4 className="text-[14px] font-semibold text-[#0F172A]">Handoff details</h4>
+                                    <p className="mt-1 text-[12px] text-[#64748B]">Read-only provider referral record</p>
+                                  </div>
+                                  <span className="inline-flex min-h-7 items-center rounded-full border border-[#D8E1EC] bg-[#F8FAFC] px-3 text-[11px] font-medium text-[#475569]">
+                                    Search link: {handoff.searchCorrelation.kind === "exact" ? "Verified" : "Unavailable"}
+                                  </span>
                                 </div>
-                                <dl className="mt-3 grid min-w-0 gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
-                                  <DetailField label="Handoff ID" value={handoff.id} />
-                                  <DetailField label="Provider" value={handoff.provider} />
-                                  <DetailField label="Product" value={handoff.product} />
-                                  <DetailField label="Route or property" value={handoff.route} />
-                                  <DetailField label="Price" value={handoff.price ? handoff.currency + " " + handoff.price : null} />
-                                  <DetailField label="Created" value={dateLabel(handoff.createdAt)} />
-                                  <DetailField label="Source page" value={handoff.sourcePage} />
-                                  <DetailField label="Destination domain" value={handoff.destinationDomain} />
-                                  <DetailField label="Environment" value={handoff.environment} />
-                                  <DetailField label="Identity" value={handoff.identity.kind} />
-                                  <DetailField label="User ID" value={handoff.identity.userId} />
-                                  <DetailField label="Visitor ID" value={handoff.identity.visitorId} />
-                                </dl>
+                                <div className="mt-4 border-t border-[#E7ECF5] pt-4">
+                                  <h5 className="text-[12px] font-semibold text-[#334155]">Handoff information</h5>
+                                  <dl className="mt-3 grid min-w-0 grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
+                                    <DetailField label="Handoff ID" value={handoff.id} identifier />
+                                    <DetailField label="Provider" value={handoff.provider} />
+                                    <DetailField label="Product" value={handoff.product} />
+                                    <DetailField label="Route or property" value={handoff.route} />
+                                    <DetailField label="Price" value={handoff.price ? handoff.currency + " " + handoff.price : null} />
+                                    <DetailField label="Created" value={dateLabel(handoff.createdAt)} />
+                                  </dl>
+                                </div>
+                                <div className="mt-4 border-t border-[#E7ECF5] pt-4">
+                                  <h5 className="text-[12px] font-semibold text-[#334155]">Source &amp; destination</h5>
+                                  <dl className="mt-3 grid min-w-0 grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
+                                    <DetailField label="Source page" value={handoff.sourcePage} />
+                                    <DetailField label="Destination domain" value={handoff.destinationDomain} />
+                                    <DetailField label="Environment" value={handoff.environment} />
+                                  </dl>
+                                </div>
+                                <div className="mt-4 border-t border-[#E7ECF5] pt-4">
+                                  <h5 className="text-[12px] font-semibold text-[#334155]">Identity &amp; correlation</h5>
+                                  <dl className="mt-3 grid min-w-0 grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
+                                    <DetailField label="Identity" value={handoff.identity.kind} />
+                                    <DetailField label="User ID" value={handoff.identity.userId} identifier />
+                                    <DetailField label="Visitor ID" value={handoff.identity.visitorId} identifier />
+                                  </dl>
+                                </div>
                               </section>
                             </td>
                           </tr>
@@ -256,12 +288,14 @@ export function ReferralUnlinkedHandoffs({ window, environment, unlinkedCount, p
               </div>
               <nav aria-label="Unlinked handoff pagination" className="mt-2 flex flex-wrap items-center justify-end gap-4 border-t border-[#E7ECF5] py-3">
                 <span className="text-[12px] tabular-nums text-[#64748B]">Page {pageIndex + 1}</span>
-                <button type="button" className={actionClass} disabled={pageIndex === 0}
-                  onClick={() => { setSelectedId(null); setPageIndex(value => Math.max(0, value - 1)); }}>Previous</button>
-                <button type="button" className={actionClass} disabled={!list.nextCursor}
+                <button type="button" className={actionClass} disabled={pageIndex === 0 || loadState === "loading"}
+                  onClick={() => { setSelectedId(null); setResult(null); setLoadState("loading"); setPageIndex(value => Math.max(0, value - 1)); }}>Previous</button>
+                <button type="button" className={actionClass} disabled={!list.nextCursor || loadState === "loading"}
                   onClick={() => {
                     if (!list.nextCursor) return;
                     setSelectedId(null);
+                    setResult(null);
+                    setLoadState("loading");
                     setPageCursors(previous => [...previous.slice(0, pageIndex + 1), list.nextCursor]);
                     setPageIndex(value => value + 1);
                   }}>Next</button>
