@@ -5,15 +5,16 @@ import test from "node:test";
 const carsPage = readFileSync("src/app/admin/cars/page.tsx", "utf8");
 const service = readFileSync("src/services/adminCarOperationsService.ts", "utf8");
 const route = readFileSync("src/app/api/cars/search/route.ts", "utf8");
+const recordsPanel = readFileSync("src/components/admin/ProductSearchRecordsPanel.tsx", "utf8");
 
 test("car admin is a provider-aware operational overview", () => {
   assert.match(carsPage, /title="Car Operations"/);
   assert.match(carsPage, /Car provider health/);
-  assert.match(carsPage, /Search exceptions/);
+  assert.match(recordsPanel, /Search exceptions and records/);
   assert.match(carsPage, /Locations needing attention/);
   assert.match(carsPage, /Provider exceptions/);
   assert.doesNotMatch(carsPage, /Recent car searches|operations\.recentSearches/);
-  assert.match(carsPage, /<OperationsDataTable/);
+  assert.match(carsPage, /<ProductSearchRecordsPanel product="CAR"/);
   assert.match(carsPage, /<OperationsMetric/);
   assert.doesNotMatch(carsPage, /Car Search Readiness/);
   assert.doesNotMatch(carsPage, /Provider-call telemetry pending/);
@@ -34,8 +35,8 @@ test("car operations snapshot is environment scoped and read-only", () => {
   assert.match(service, /query: \{ path: \["environment"\], equals: environment \}/);
   assert.match(service, /service: "car-search"/);
   assert.match(service, /isolationLevel: "RepeatableRead"/);
-  assert.match(carsPage, /\/admin\/searches\/activity\?product=CAR/);
-  assert.match(carsPage, /\/admin\/journeys\?product=CAR/);
+  assert.match(carsPage, /<ProductSearchJumpLink product="CAR"/);
+  assert.doesNotMatch(carsPage, /\/admin\/journeys|\/admin\/searches\//);
   assert.doesNotMatch(carsPage, /fetch\(|method:\s*["'](?:POST|PATCH|DELETE)|<form/);
 });
 
@@ -96,5 +97,5 @@ test("car exceptions keep failed, partial, and valid zero-result outcomes distin
   assert.match(service, /search\.status === "FAILED" \? "FAILED" : search\.status === "PARTIAL" \? "PARTIAL" : "ZERO_RESULTS"/);
   assert.match(carsPage, /Partial \/ failed/);
   assert.match(carsPage, /Zero results/);
-  assert.match(carsPage, /search\.kind\.replaceAll\("_", " "\)/);
+  assert.match(recordsPanel, /value === "ZERO_RESULTS"/);
 });
