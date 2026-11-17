@@ -146,6 +146,13 @@ function TicketContent({ ticket }: { ticket: AdminSupportDetail }) {
               </dl>
             </details>
           ) : null}
+
+          {ticket.deletionRequestId ? (
+            <section aria-label="Related deletion request" className="mt-6 min-w-0 border-t border-[#E5E7EB] pt-4">
+              <h3 className="text-[14px] font-semibold text-[#111827]">Linked deletion request</h3>
+              <LinkedCasePreview origin="support" sourceId={ticket.id} />
+            </section>
+          ) : null}
         </div>
 
         <aside aria-label="Ticket information and management" className="min-w-0 space-y-6">
@@ -172,9 +179,6 @@ function TicketContent({ ticket }: { ticket: AdminSupportDetail }) {
               <DetailField label="Created">{formatDateTime(new Date(ticket.createdAt))}</DetailField>
               <DetailField label="Updated">{formatDateTime(new Date(ticket.updatedAt))}</DetailField>
               <DetailField label="Ticket ID"><span className="[overflow-wrap:anywhere] text-[12px]">{ticket.id}</span></DetailField>
-              {ticket.deletionRequestId ? (
-                <DetailField label="Deletion"><LinkedCasePreview origin="support" sourceId={ticket.id} /></DetailField>
-              ) : null}
             </dl>
             {ticket.identity.userId ? (
               <details className="group mt-2">
