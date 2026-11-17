@@ -28,7 +28,7 @@ export default async function AdminCarsPage() {
       description="Monitor car-search outcomes, provider readiness, exact provider telemetry, and operational exceptions. Car checkout and reservation completion remain provider-owned."
       actions={
         <div className="flex flex-wrap gap-2">
-          <Link href="/admin/searches?product=CAR" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">
+          <Link href="/admin/searches/activity?product=CAR" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">
             View car searches
           </Link>
           <Link href="/admin/journeys?product=CAR" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">
@@ -101,7 +101,7 @@ export default async function AdminCarsPage() {
                   Recent failed, partial, and valid zero-result car searches, including unsupported provider coverage now recorded with exact provider correlation.
                 </p>
               </div>
-              <Link href="/admin/searches?product=CAR&status=FAILED" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">
+              <Link href="/admin/searches/activity?product=CAR&status=FAILED" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">
                 Failed searches
               </Link>
             </div>
@@ -221,7 +221,7 @@ export default async function AdminCarsPage() {
                   <h2 className="font-black text-slate-950">Recent car searches</h2>
                   <p className="mt-1 text-sm text-slate-600">Latest recorded car searches in this environment.</p>
                 </div>
-                <Link href="/admin/searches?product=CAR" className="text-sm font-black text-indigo-700 hover:text-indigo-900">View all</Link>
+                <Link href="/admin/searches/activity?product=CAR" className="text-sm font-black text-indigo-700 hover:text-indigo-900">View all</Link>
               </div>
               <AdminDataTable
                 columns={["Created", "Pick-up", "Drop-off", "Results", "Latency", "Status", "Action"]}

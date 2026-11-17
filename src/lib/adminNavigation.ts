@@ -156,6 +156,19 @@ const workspaceSections: ReadonlyArray<{
   },
 ] as const;
 
+/**
+ * Highlight exactly one section at a time, including legacy search detail URLs.
+ * Providers renders its query-driven Attribution tab locally on the landing page.
+ */
+export function isAdminWorkspaceSectionActive(pathname: string, href: string): boolean {
+  const destination = href.split("?")[0];
+  if (href.includes("?")) return pathname === "/admin/referral-attribution";
+  if (destination === "/admin/searches/activity"
+    && /^\/admin\/searches\/(?!activity(?:\/|$))[^/]+\/?$/.test(pathname)) return true;
+  return pathname === destination
+    || (destination !== "/admin/system" && pathname.startsWith(destination + "/"));
+}
+
 export type AdminWorkspaceSections = {
   label: string;
   links: Array<{ href: string; label: string }>;

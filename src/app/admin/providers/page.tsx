@@ -127,27 +127,27 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
       <h1 className="sr-only">Providers</h1>
 
       <div className="flex min-w-0 flex-wrap items-end justify-between gap-x-6 gap-y-1 border-b border-[#D8E1EC]">
-        <nav aria-label="Provider reporting sections" className="flex min-w-0 flex-wrap items-end gap-x-6 gap-y-1">
+        <nav aria-label="Provider reporting sections" className="flex min-w-0 flex-wrap items-end gap-x-5 gap-y-1 sm:gap-x-6">
           <Link href="/admin/providers" aria-current={!attribution ? "page" : undefined}
-            className={"inline-flex h-11 shrink-0 items-center whitespace-nowrap border-b-2 px-1 text-[13px] font-medium text-[#020617] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] " +
-              (!attribution ? "border-[#004BB8]" : "border-transparent hover:border-[#D8E1EC]")}>
+            className={"inline-flex h-11 shrink-0 items-center whitespace-nowrap border-b-2 px-1 text-[13px] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] " +
+              (!attribution ? "border-[#004BB8] text-[#004BB8]" : "border-transparent text-[#475569] hover:border-[#D8E1EC] hover:text-[#020617]")}>
             Provider Health
           </Link>
           <Link href="/admin/hotels"
-            className="inline-flex h-11 shrink-0 items-center whitespace-nowrap border-b-2 border-transparent px-1 text-[13px] font-medium text-[#020617] hover:border-[#D8E1EC] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
+            className="inline-flex h-11 shrink-0 items-center whitespace-nowrap border-b-2 border-transparent px-1 text-[13px] font-medium text-[#020617] hover:border-[#D8E1EC] hover:text-[#020617] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
             Hotels
           </Link>
           <Link href="/admin/cars"
-            className="inline-flex h-11 shrink-0 items-center whitespace-nowrap border-b-2 border-transparent px-1 text-[13px] font-medium text-[#020617] hover:border-[#D8E1EC] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
+            className="inline-flex h-11 shrink-0 items-center whitespace-nowrap border-b-2 border-transparent px-1 text-[13px] font-medium text-[#020617] hover:border-[#D8E1EC] hover:text-[#020617] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
             Cars
           </Link>
           <Link href="/admin/homepage-fares"
-            className="inline-flex h-11 shrink-0 items-center whitespace-nowrap border-b-2 border-transparent px-1 text-[13px] font-medium text-[#020617] hover:border-[#D8E1EC] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
+            className="inline-flex h-11 shrink-0 items-center whitespace-nowrap border-b-2 border-transparent px-1 text-[13px] font-medium text-[#020617] hover:border-[#D8E1EC] hover:text-[#020617] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
             Homepage Fares
           </Link>
           <Link href="/admin/providers?view=attribution" aria-current={attribution ? "page" : undefined}
-            className={"inline-flex h-11 shrink-0 items-center whitespace-nowrap border-b-2 px-1 text-[13px] font-medium text-[#020617] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] " +
-              (attribution ? "border-[#004BB8]" : "border-transparent hover:border-[#D8E1EC]")}>
+            className={"inline-flex h-11 shrink-0 items-center whitespace-nowrap border-b-2 px-1 text-[13px] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] " +
+              (attribution ? "border-[#004BB8] text-[#004BB8]" : "border-transparent text-[#475569] hover:border-[#D8E1EC] hover:text-[#020617]")}>
             Referral Attribution
           </Link>
         </nav>

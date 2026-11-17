@@ -28,7 +28,7 @@ export default async function AdminHotelsPage() {
       description="Monitor hotel-search health, provider readiness and recent hotel-search outcomes from recorded production-safe telemetry. Inventory and reservations remain provider-backed and provider-owned."
       actions={
         <div className="flex flex-wrap gap-2">
-          <Link href="/admin/searches?product=HOTEL" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">
+          <Link href="/admin/searches/activity?product=HOTEL" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">
             View hotel searches
           </Link>
           <Link href="/admin/journeys?product=HOTEL" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">
@@ -102,10 +102,10 @@ export default async function AdminHotelsPage() {
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
-                <Link href="/admin/searches?product=HOTEL&status=FAILED" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">
+                <Link href="/admin/searches/activity?product=HOTEL&status=FAILED" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">
                   Failed searches
                 </Link>
-                <Link href="/admin/searches?product=HOTEL&status=PARTIAL" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">
+                <Link href="/admin/searches/activity?product=HOTEL&status=PARTIAL" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-700 hover:bg-slate-50">
                   Partial searches
                 </Link>
               </div>
@@ -215,7 +215,7 @@ export default async function AdminHotelsPage() {
                   <h2 className="font-black text-slate-950">Recent hotel searches</h2>
                   <p className="mt-1 text-sm text-slate-600">Latest recorded hotel searches in this environment.</p>
                 </div>
-                <Link href="/admin/searches?product=HOTEL" className="text-sm font-black text-indigo-700 hover:text-indigo-900">View all</Link>
+                <Link href="/admin/searches/activity?product=HOTEL" className="text-sm font-black text-indigo-700 hover:text-indigo-900">View all</Link>
               </div>
               <AdminDataTable
                 columns={["Created", "Destination", "Stay", "Results", "Latency", "Status", "Action"]}
