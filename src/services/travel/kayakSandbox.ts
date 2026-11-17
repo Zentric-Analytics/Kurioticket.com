@@ -4,6 +4,7 @@ import { isIP } from "node:net";
 import { createHash } from "node:crypto";
 import { kayakImageUrl, kayakImages, kayakFlightLegs, kayakFlightAttributes, kayakAttributes, kayakCarFilterOptions, kayakHotelAmenities, kayakHotelAmenityStatus, type KayakAttribute, type KayakImage, type KayakFlightLeg } from "./kayakPresentation";
 import { KAYAK_SANDBOX_ORIGIN, sandboxBookingUrl } from "./kayakSandboxPublic";
+import { kayakRejectionDiagnostics } from "./kayakRejectionDiagnostics";
 import type { FlightFareTerm, FlightOptionalService, FlightProviderCondition, FlightAirlineBaggagePolicy, FlightProviderDetails } from "@/lib/types";
 export { KAYAK_SANDBOX_ORIGIN, sandboxBookingUrl } from "./kayakSandboxPublic";
 
@@ -403,6 +404,8 @@ export class KayakSandboxClient {
     private readonly clientIp = "",
     private readonly reportTiming: (timing: KayakSearchTiming) => void = timing =>
       console.info("[kayak-search:stage-timing]", JSON.stringify(timing)),
+    private readonly reportRejection = (diagnostic: Awaited<ReturnType<typeof kayakRejectionDiagnostics>>) =>
+      console.warn("[kayak-search:http-rejection]", JSON.stringify(diagnostic)),
   ) {}
 
   private async request(
@@ -444,6 +447,10 @@ export class KayakSandboxClient {
           ...(body ? { body: JSON.stringify(body) } : {}),
         });
         if (!response.ok) {
+          if (response.status === 403) {
+            try { this.reportRejection(await kayakRejectionDiagnostics(response, path, body ? "POST" : "GET", this.userAgent)); }
+            catch { /* Preserve original failure if the diagnostic sink fails. */ }
+          }
           const code = response.status === 429
             ? "rate_limited"
             : [401, 403].includes(response.status)

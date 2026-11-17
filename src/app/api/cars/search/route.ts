@@ -70,7 +70,7 @@ export async function POST(request: Request) {
     });
   };
   try {
-    const { results, status, warnings, providerStatuses, unsupported } = await searchCars(search, { requestId, kayak: { clientIp: getKayakClientIp(request), userAgent: request.headers.get("user-agent") || undefined, signal: request.signal } });
+    const { results, status, warnings, providerStatuses, unsupported } = await searchCars(search, { requestId, kayak: { requestId, clientIp: getKayakClientIp(request), userAgent: request.headers.get("user-agent") || undefined, signal: request.signal } });
     const response = classifyCars(results, search, requestId, warnings);
     if (unsupported) {
       recordSearch(0, "FAILED");
