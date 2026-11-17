@@ -6,7 +6,7 @@ import { groupKayakCarResults } from "@/lib/cars/carResults";
 import { isKayakSandboxEnabled, KayakError, KayakPartialSearchError, KayakSandboxClient, type KayakVertical } from "./kayakSandbox";
 import { resolveRegularKayakSearch } from "./kayakRegularSearch";
 
-export type KayakRequestContext = { clientIp: string; userAgent?: string; trackId?: string; signal?: AbortSignal };
+export type KayakRequestContext = { clientIp: string; userAgent?: string; trackId?: string; requestId?: string; signal?: AbortSignal };
 
 /** Provider row IDs can be positions reused by later searches. Cache and route
  * identities must belong to one result snapshot, never to a global row number. */
@@ -29,7 +29,8 @@ export function kayakProviderUserAgent(vertical: KayakVertical, incoming?: strin
 async function search<T>(vertical: KayakVertical, criteria: Record<string, string>, context?: KayakRequestContext, map?: (offer: Parameters<typeof kayakFlightCardModel>[0]) => T | null): Promise<ProviderResult<T>> {
   const startedAt = Date.now();
   if (!isKayakSandboxEnabled() || !context?.clientIp) return { provider: "KAYAK sandbox", results: [], status: "skipped", latencyMs: Date.now() - startedAt };
-  const client = new KayakSandboxClient(process.env.KAYAK_SANDBOX_API_KEY!, undefined, undefined, kayakProviderUserAgent(vertical, context.userAgent), context.clientIp);
+  const client = new KayakSandboxClient(process.env.KAYAK_SANDBOX_API_KEY!, undefined, undefined, kayakProviderUserAgent(vertical, context.userAgent), context.clientIp, undefined,
+    diagnostic => console.warn("[kayak-search:http-rejection]", JSON.stringify({ ...diagnostic, requestId: context.requestId })));
   try {
     const trackId = context.trackId || crypto.randomUUID();
     const resolved = await resolveRegularKayakSearch(vertical, criteria, (term, requested = "hotels") => client.places(requested, term, trackId, context.signal));
