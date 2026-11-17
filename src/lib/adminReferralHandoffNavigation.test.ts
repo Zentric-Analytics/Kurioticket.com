@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { handoffDetailHref, handoffReturnHref, referralHandoffHref } from "./adminReferralHandoffNavigation";
+import { handoffDetailHref, handoffReturnHref, referralHandoffHref, referralUnlinkedRecordsParams } from "./adminReferralHandoffNavigation";
 
 const from = "2026-10-22T00:00:00.000Z";
 const to = "2026-11-03T12:00:00.000Z";
@@ -49,4 +49,31 @@ test("legitimate pagination history survives detail and back navigation past 204
   assert.equal(detail.searchParams.get("pageTrail"), trail);
   const back = new URL(handoffReturnHref(Object.fromEntries(detail.searchParams)), "https://example.test");
   assert.equal(back.searchParams.get("pageTrail"), trail);
+});
+
+test("Providers inline unlinked records keep the exact attribution window and no cross-workspace href", () => {
+  const params = referralUnlinkedRecordsParams({
+    start: from, end: to, environment: "staging",
+  });
+  assert.equal(params.get("from"), from);
+  assert.equal(params.get("to"), to);
+  assert.equal(params.get("environment"), "staging");
+  assert.equal(params.get("correlation"), "unavailable");
+  assert.equal(params.get("limit"), "25");
+  assert.equal(params.has("cursor"), false);
+  assert.equal(params.has("view"), false);
+});
+
+test("Providers inline filters and pagination retain the unlinked correlation restriction", () => {
+  const params = referralUnlinkedRecordsParams({
+    start: from, end: to, environment: "production",
+    provider: "KAYAK sandbox", product: "HOTEL",
+    cursor: "test_cursor", limit: 25,
+  });
+  assert.equal(params.get("provider"), "KAYAK sandbox");
+  assert.equal(params.get("product"), "HOTEL");
+  assert.equal(params.get("cursor"), "test_cursor");
+  assert.equal(params.get("correlation"), "unavailable");
+  assert.equal(params.get("from"), from);
+  assert.equal(params.get("to"), to);
 });
