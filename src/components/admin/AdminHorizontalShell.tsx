@@ -180,7 +180,7 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
   const contentWorkspace = pathname === "/admin/content" || pathname.startsWith("/admin/content/");
   const auditLogsWorkspace = pathname === "/admin/logs" || pathname === "/admin/logs/";
   const emailDeliveryWorkspace = pathname === "/admin/email-delivery" || pathname === "/admin/email-delivery/";
-  const settingsWorkspace = pathname === "/admin/settings" || pathname.startsWith("/admin/settings/");
+  const settingsWorkspace = pathname === "/admin/settings" || pathname.startsWith("/admin/settings/") || pathname === "/admin/preview-testers";
   const notificationsWorkspace = pathname === "/admin/notifications" || pathname === "/admin/notifications/";
   const homepageFaresWorkspace = pathname === "/admin/homepage-fares" || pathname.startsWith("/admin/homepage-fares/");
   const whiteWorkspace = pathname === "/admin/system" || pathname === "/admin/system/" || pathname === "/admin/system/cms-health" || pathname === "/admin/system/cms-health/" || auditLogsWorkspace || emailDeliveryWorkspace || settingsWorkspace || usersDirectory || searchesWorkspace || supportWorkspace
