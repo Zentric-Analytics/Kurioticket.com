@@ -618,10 +618,11 @@ test("product filtering retains truthful timing metrics for a single-service pro
   assert.equal(kayakFlights.lastSuccessAt, null);
 });
 
-test("provider workflow drilldowns preserve attribution scope and linked search navigation", () => {
+test("provider workflow drilldowns preserve attribution scope and leave Search Activity navigation intact", () => {
   assert.doesNotMatch(referralPage, /provider: item\.provider, product: item\.product/);
   assert.doesNotMatch(referralPage, /sourcePage: item\.sourcePage/);
-  assert.match(referralPage, /correlation: "unavailable"/);
+  assert.match(referralPage, /<ReferralUnlinkedHandoffs/);
+  assert.match(inlineUnlinkedPanel, /referralUnlinkedRecordsParams/);
   assert.match(handoffsPage, /sourcePage: one\(raw.sourcePage\)/);
   assert.match(handoffsPage, /handoffDetailHref\(handoff.id, handoff.environment, raw\)/);
   assert.match(handoffDetailPage, /handoffReturnHref\(raw\)/);
