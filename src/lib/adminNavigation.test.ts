@@ -146,15 +146,15 @@ test("contextual tabs highlight the actual current subsection, including nested 
   }
 });
 
-test("Hotel and Car operations use canonical Search Activity links without redirect hops", () => {
+test("Hotel and Car search records remain in Providers, without redirecting to Search Activity or Users", () => {
   for (const [product, path] of [
     ["HOTEL", "src/app/admin/hotels/page.tsx"],
     ["CAR", "src/app/admin/cars/page.tsx"],
   ] as const) {
     const source = readFileSync(path, "utf8");
-    assert.ok(source.includes(`href="/admin/searches/activity?product=${product}"`));
-    assert.ok(source.includes(`href="/admin/searches/activity?product=${product}&status=FAILED"`));
-    assert.equal(source.includes('href="/admin/searches?product='), false);
-    assert.ok(source.includes('href={"/admin/searches/" + search.id'));
+    assert.ok(source.includes(`<ProductSearchJumpLink product="${product}"`));
+    assert.ok(source.includes(`<ProductSearchRecordsPanel product="${product}"`));
+    assert.equal(source.includes("/admin/searches/"), false);
+    assert.equal(source.includes("/admin/journeys"), false);
   }
 });
