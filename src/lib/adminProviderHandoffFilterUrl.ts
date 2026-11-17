@@ -1,3 +1,5 @@
+import { referralAttributionReturnHref } from "./adminReferralHandoffNavigation";
+
 /** Build a standalone handoff-list URL without breaking deep-linked customer scope. */
 export type ProviderHandoffFilterValues = {
   product: string;
@@ -13,6 +15,8 @@ export type ProviderHandoffFilterScope = {
   from: string;
   to: string;
   sourcePage?: string;
+  /** Safe, non-data reporting context for the Referral Attribution return link. */
+  referralDays?: string;
 };
 
 /** Changing identity is the only operation that removes pinned user/visitor IDs. */
@@ -29,6 +33,7 @@ export function providerHandoffFiltersHref(
   if (scope.from) params.set("from", scope.from);
   if (scope.to) params.set("to", scope.to);
   if (scope.sourcePage) params.set("sourcePage", scope.sourcePage);
+  if (referralAttributionReturnHref({ referralDays: scope.referralDays })) params.set("referralDays", scope.referralDays!);
   if (values.product) params.set("product", values.product);
   if (values.identity && values.identity !== "all") params.set("identity", values.identity);
   if (values.correlation) params.set("correlation", values.correlation);
@@ -76,5 +81,6 @@ export function providerHandoffHistoryFilterHref(search: string): string {
     from: params.get("from") || "",
     to: params.get("to") || "",
     sourcePage: params.get("sourcePage") || "",
+    referralDays: params.get("referralDays") || "",
   });
 }
