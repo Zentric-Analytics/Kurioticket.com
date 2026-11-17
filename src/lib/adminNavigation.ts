@@ -164,7 +164,7 @@ export function isAdminWorkspaceSectionActive(pathname: string, href: string): b
   const destination = href.split("?")[0];
   if (href.includes("?")) return pathname === "/admin/referral-attribution";
   if (destination === "/admin/searches/activity"
-    && /^\\/admin\\/searches\\/(?!activity(?:\\/|$))[^/]+\\/?$/.test(pathname)) return true;
+    && /^\/admin\/searches\/(?!activity(?:\/|$))[^/]+\/?$/.test(pathname)) return true;
   return pathname === destination
     || (destination !== "/admin/system" && pathname.startsWith(destination + "/"));
 }
