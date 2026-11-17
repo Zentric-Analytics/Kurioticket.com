@@ -25,8 +25,11 @@ const tabs = [
   { value: "selections", label: "Selections" },
   { value: "handoffs", label: "Provider handoffs" },
 ] as const;
-const format = (at: Date) => new Intl.DateTimeFormat("en", {
-  dateStyle: "medium", timeStyle: "short", timeZone: "UTC",
+// Keep the UTC instant, but use a compact, unambiguous header label so
+// each date stays on one line beside the workspace sidebar at desktop zoom.
+const format = (at: Date) => new Intl.DateTimeFormat("en-GB", {
+  day: "numeric", month: "short", year: "numeric",
+  hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "UTC",
 }).format(at);
 // One common desktop grid: guest/customer identity spans two fifths, while
 // First seen/Joined, Last active and Events each occupy one fifth.
@@ -170,9 +173,9 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
         </div>
       <section aria-label="Customer identity" className="relative min-w-0">
         <div className={activityColumns + " lg:items-start lg:py-6"}>
-          <div className="flex min-w-0 items-center gap-4 lg:col-span-2 lg:px-6">
+          <div className="flex min-w-0 items-center gap-4 lg:col-span-2 lg:gap-3 lg:px-3 min-[1700px]:gap-4 min-[1700px]:px-6">
             <span aria-hidden="true"
-              className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[var(--muted)] text-xl font-semibold">
+              className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[var(--muted)] text-xl font-semibold min-[1100px]:hidden min-[1700px]:flex">
               {(kind === "guest" ? "G" : (data.title || "U").slice(0,1)).toUpperCase()}
             </span>
             <div className="min-w-0">
@@ -193,8 +196,8 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
           </div>
 
           <dl className="grid min-w-0 grid-cols-1 gap-4 min-[420px]:grid-cols-2 sm:grid-cols-3 lg:contents">
-            <Fact label={kind === "guest" ? "First seen" : "Joined"} className="lg:border-l-0 lg:pl-6"><HeaderTime at={data.firstSeenAt}/></Fact>
-            <Fact label="Last active" className="lg:border-l-0 lg:pl-6">{data.lastSeenAt ? <HeaderTime at={data.lastSeenAt}/> : "—"}</Fact>
+            <Fact label={kind === "guest" ? "First seen" : "Joined"} className="lg:border-l-0 lg:pl-2 2xl:pl-6"><HeaderTime at={data.firstSeenAt}/></Fact>
+            <Fact label="Last active" className="lg:border-l-0 lg:pl-2 2xl:pl-6">{data.lastSeenAt ? <HeaderTime at={data.lastSeenAt}/> : "—"}</Fact>
             <Fact label="Events" testId="activity-events-fact"
               className={"lg:border-l-0 lg:pl-6 " + (kind === "user" ? "lg:pr-28" : "")}>
               {data.events.length}
