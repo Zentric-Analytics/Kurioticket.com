@@ -151,7 +151,7 @@ test("Hotel and Car operations use canonical Search Activity links without redir
     const source = readFileSync(path, "utf8");
     assert.ok(source.includes(`href="/admin/searches/activity?product=${product}"`));
     assert.ok(source.includes(`href="/admin/searches/activity?product=${product}&status=FAILED"`));
-    assert.doesNotMatch(source, /href="\\/admin\\/searches\\?/);
-    assert.match(source, /href=\\{"\\/admin\\/searches\\/" \\+ search\\.id/);
+    assert.equal(source.includes('href="/admin/searches?product='), false);
+    assert.ok(source.includes('href={"/admin/searches/" + search.id'));
   }
 });
