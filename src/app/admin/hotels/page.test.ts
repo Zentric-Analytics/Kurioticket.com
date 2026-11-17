@@ -18,6 +18,16 @@ test("hotel admin is an operational overview rather than a readiness-only page",
   assert.doesNotMatch(hotelsPage, /Kurioticket static catalogue/);
 });
 
+test("hotels operations share Homepage Fares one-row metrics and balanced overview sections", () => {
+  assert.match(hotelsPage, /<OperationsMetricStrip>/);
+  assert.equal((hotelsPage.match(/<OperationsMetric /g) || []).length, 5);
+  assert.doesNotMatch(hotelsPage, /sm:grid-cols-3 xl:grid-cols-5|grid-cols-2 border-b border-\[#D8E1EC\]/);
+  assert.match(hotelsPage, /integrations\.length > 1|hotelIntegrations\.length > 1/);
+  assert.match(hotelsPage, /lg:grid-cols-4/);
+  assert.doesNotMatch(hotelsPage, /grid gap-4 xl:grid-cols-2/);
+  assert.match(hotelsPage, /<OperationsProviderIssues/);
+});
+
 test("hotel operations snapshot is environment and service scoped", () => {
   assert.match(service, /type: "HOTEL"/);
   assert.match(service, /query: \{ path: \["environment"\], equals: environment \}/);
