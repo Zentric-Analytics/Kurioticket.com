@@ -122,13 +122,14 @@ export function ReferralUnlinkedHandoffs({ window, environment, unlinkedCount, p
     <section aria-labelledby="unlinked-handoffs" className="mt-5 min-w-0 border-t border-[#D8E1EC] pt-4">
       <h2 id="unlinked-handoffs" className="text-[15px] font-semibold">Unlinked handoffs</h2>
       <button type="button" aria-expanded={expanded} aria-controls={panelId}
-        onClick={() => { setExpanded(previous => !previous); setSelectedId(null); }}
+        onClick={() => { setExpanded(previous => !previous); setSelectedId(null); setResult(null); setLoadState("idle"); }}
         className="mt-2 text-left text-[13px] font-medium text-[#004BB8] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
         {expanded ? "Hide unlinked handoff records" : "View " + unlinkedCount.toLocaleString() + " handoffs without a linked search"}
       </button>
 
+      <div id={panelId} hidden={!expanded}>
       {expanded ? (
-        <div id={panelId} role="region" aria-label="Unlinked provider handoff records"
+        <div role="region" aria-label="Unlinked provider handoff records"
           className="mt-4 min-w-0 border-t border-[#E7ECF5] pt-4">
           <div className="flex min-w-0 flex-wrap items-end justify-between gap-x-5 gap-y-3">
             <div className="min-w-0">
@@ -215,7 +216,7 @@ export function ReferralUnlinkedHandoffs({ window, environment, unlinkedCount, p
                           <td className="break-words px-2 py-3">{handoff.identity.kind}</td>
                           <td className="px-2 py-3">
                             <button type="button" aria-expanded={selectedId === handoff.id}
-                              aria-controls={detailId}
+                              aria-controls={selectedId === handoff.id ? detailId : undefined}
                               onClick={() => setSelectedId(current => current === handoff.id ? null : handoff.id)}
                               className="text-[12px] font-medium text-[#004BB8] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
                               {selectedId === handoff.id ? "Close" : "Details"}
@@ -269,6 +270,7 @@ export function ReferralUnlinkedHandoffs({ window, environment, unlinkedCount, p
           ) : null}
         </div>
       ) : null}
+      </div>
     </section>
   );
 }
