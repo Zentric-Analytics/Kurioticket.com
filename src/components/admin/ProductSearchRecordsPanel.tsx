@@ -61,19 +61,6 @@ function validStatus(value: unknown): value is ProductSearchResult<never>["statu
   return value === "ok" || value === "invalid" || value === "forbidden" || value === "not_found" || value === "unavailable";
 }
 
-/** A same-page shortcut, not a link to the Search Activity or Users department. */
-export function ProductSearchJumpLink({ product }: { product: ProviderProduct }) {
-  const label = product === "HOTEL" ? "View hotel searches" : "View car searches";
-  const anchor = product === "HOTEL" ? "#hotel-search-records" : "#car-search-records";
-  return (
-    <a href={anchor}
-      className="inline-flex min-h-9 items-center rounded-md border border-[#D8E1EC] bg-white px-3 text-[12px] font-medium text-[#334155] transition-colors hover:bg-[#F8FAFC] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]"
-      onClick={() => window.dispatchEvent(new CustomEvent("admin-product-search-show-all", { detail: product }))}>
-      {label}
-    </a>
-  );
-}
-
 /** All product records, filters, pagination and diagnostics stay inside Providers.
  * Only the server-protected minimal record endpoints are used. */
 export function ProductSearchRecordsPanel({ product }: { product: ProviderProduct }) {
@@ -99,16 +86,12 @@ export function ProductSearchRecordsPanel({ product }: { product: ProviderProduc
     setLoading(true);
   }, []);
   useEffect(() => {
-    const openAll = (event: Event) => {
-      if ((event as CustomEvent<ProviderProduct>).detail !== product) return;
+    // Preserve existing bookmarked URLs without reintroducing a redundant header action.
+    if (window.location.hash === "#" + sectionId) {
       setFilter("ALL");
       resetPage();
-      setReload(value => value + 1);
-    };
-    window.addEventListener("admin-product-search-show-all", openAll);
-    if (window.location.hash === "#" + sectionId) openAll(new CustomEvent("admin-product-search-show-all", { detail: product }));
-    return () => window.removeEventListener("admin-product-search-show-all", openAll);
-  }, [product, sectionId, resetPage]);
+    }
+  }, [sectionId, resetPage]);
 
   useEffect(() => {
     const controller = new AbortController();
