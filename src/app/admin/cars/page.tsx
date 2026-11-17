@@ -5,7 +5,8 @@ import {
   AdminPageShell,
 } from "@/components/admin/AdminPageShell";
 import { formatDateTime } from "@/lib/admin-data";
-import { OperationsDataTable, OperationsMetric, OperationsMetricStrip, OperationsProviderIssues, OperationsSection, OperationsStatus } from "@/components/admin/TravelOperationsOverviewUI";
+import { ProductSearchJumpLink, ProductSearchRecordsPanel } from "@/components/admin/ProductSearchRecordsPanel";
+import { OperationsMetric, OperationsMetricStrip, OperationsProviderIssues, OperationsSection, OperationsStatus } from "@/components/admin/TravelOperationsOverviewUI";
 import { getCarOperationsSnapshot } from "@/services/adminCarOperationsService";
 import { getProviderIntegrationStatuses } from "@/services/travel/providerIntegrationStatus";
 
@@ -25,8 +26,8 @@ export default async function AdminCarsPage() {
         <header className="flex min-w-0 flex-wrap items-center justify-between gap-3 border-b border-[#D8E1EC] pb-4 pt-1">
           <h1 className="text-[20px] font-semibold leading-7 tracking-[-0.02em] text-[#020617]">Car Operations</h1>
           <div className="flex min-w-0 flex-wrap items-center gap-2">
-            <Link href="/admin/searches/activity?product=CAR" className="inline-flex min-h-9 items-center rounded-md border border-[#D8E1EC] bg-white px-3 text-[12px] font-medium text-[#334155] transition-colors hover:bg-[#F8FAFC] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">View car searches</Link>
-            <Link href="/admin/journeys?product=CAR" className="inline-flex min-h-9 items-center rounded-md border border-[#D8E1EC] bg-white px-3 text-[12px] font-medium text-[#334155] transition-colors hover:bg-[#F8FAFC] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">View car journeys</Link>
+            <ProductSearchJumpLink product="CAR" />
+            
           </div>
         </header>
         <div className="min-w-0 space-y-0">
@@ -84,42 +85,7 @@ export default async function AdminCarsPage() {
           </div>
         </OperationsSection>
 
-        {operations ? (
-          <OperationsSection className="py-5">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-              <div>
-                <h2 className="font-semibold text-[#020617]">Search exceptions</h2>
-                <p className="mt-1 text-[12px] leading-5 text-[#64748B]">
-                  Recent failed, partial, and valid zero-result car searches, including unsupported provider coverage now recorded with exact provider correlation.
-                </p>
-              </div>
-              <Link href="/admin/searches/activity?product=CAR&status=FAILED" className="rounded-lg border border-[#D8E1EC] bg-white px-3 py-2 text-[12px] font-medium text-[#334155] hover:bg-[#F8FAFC]">
-                Failed searches
-              </Link>
-            </div>
-            <div className="mt-4">
-              {operations.exceptionSearches.length ? (
-                <OperationsDataTable
-                  columns={["Observed", "Pick-up", "Drop-off", "Exception", "Results", "Latency", "Action"]}
-                  rows={operations.exceptionSearches.map((search) => ({
-                    id: search.id,
-                    cells: [
-                      formatDateTime(new Date(search.createdAt)),
-                      <div key="origin"><p className="font-semibold text-[#020617]">{search.origin || "—"}</p><p className="text-xs text-[#64748B]">{search.requestId || "No request ID"}</p></div>,
-                      search.destination || "—",
-                      <OperationsStatus key="kind" tone={search.kind === "FAILED" ? "bad" : "warn"}>{search.kind.replaceAll("_", " ")}</OperationsStatus>,
-                      search.resultCount,
-                      search.latencyMs === null ? "—" : search.latencyMs + " ms",
-                      <Link key="action" href={"/admin/searches/" + search.id + "?environment=" + operations.environment} className="font-semibold text-[#004BB8] hover:text-[#003985]">Open</Link>,
-                    ],
-                  }))}
-                />
-              ) : (
-                <AdminEmptyState title="No recent car search exceptions" message="No failed, partial, or zero-result car searches were recorded in the current 24-hour window." />
-              )}
-            </div>
-          </OperationsSection>
-        ) : null}
+        <ProductSearchRecordsPanel product="CAR" />
 
         {operations ? (
           <div className="min-w-0">
