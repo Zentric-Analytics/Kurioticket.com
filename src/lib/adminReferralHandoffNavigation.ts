@@ -20,7 +20,7 @@ export function referralHandoffHref(input: {
   if (input.product) params.set("product", input.product.toUpperCase());
   if (input.correlation) params.set("correlation", input.correlation);
   if (input.sourcePage) params.set("sourcePage", input.sourcePage);
-  if (Number.isInteger(input.referralDays) && input.referralDays! >= 1 && input.referralDays! <= 90) {
+  if (typeof input.referralDays === "number" && Number.isInteger(input.referralDays) && input.referralDays >= 1 && input.referralDays <= 90) {
     params.set("referralDays", String(input.referralDays));
   }
   return "/admin/redirects?" + params.toString();
