@@ -31,8 +31,8 @@ test("System diagnostic subpages keep a simple return path without restoring rem
   assert.doesNotMatch(alerts, /actions=\{|Back to System|View audit logs|href="\/admin\/logs"|href="\/admin\/system"/);
   const settings = source("src/app/admin/settings/recent-changes/page.tsx");
   assert.doesNotMatch(settings, /actions=\{|Back to System|href="\/admin\/system"/);
-  assert.match(settings, /href="\/admin\/logs\?range=90d"/);
-  assert.doesNotMatch(settings, /href="\/admin\/logs\?[^"]*(action=|targetType=)/);
+  assert.match(settings, /View full history/);
+  assert.doesNotMatch(settings, /href="\/admin\/logs|\/admin\/logs\?/);
 });
 test("Settings retains feature controls without owning flight fare operations", () => {
   const page = source("src/components/admin/SettingsFeatureSection.tsx");
