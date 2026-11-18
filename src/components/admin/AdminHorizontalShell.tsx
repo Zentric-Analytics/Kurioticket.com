@@ -268,10 +268,10 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
       {mobileOpen ? <div className="max-h-[70vh] overflow-y-auto border-t border-slate-100 bg-white min-[1100px]:hidden"><Navigation groups={groups} pathname={pathname} mobile close={() => setMobileOpen(false)} /></div> : null}
       </AdminSearchHeader>
     </header>
-    <main className="mx-auto w-full max-w-[1920px] px-4 py-5 sm:px-6 lg:px-10">
+    <main className={"mx-auto w-full max-w-[1920px] " + (isOverview ? "px-4 py-5 sm:px-6 lg:px-10" : "px-4 py-5 sm:px-5 lg:px-6")}>
       <AdminSearchContent>
         {!isOverview && !isSettings && role === "ADMIN" ? (
-          <div className="grid min-w-0 grid-cols-1 gap-5 bg-white lg:grid-cols-[232px_minmax(0,1fr)] lg:gap-7">
+          <div className="grid min-w-0 grid-cols-1 gap-5 bg-white lg:grid-cols-[196px_minmax(0,1fr)] lg:gap-4">
             <WorkspaceSidebar pathname={pathname} role={role} showPreviewTesters={showPreviewTesters} />
             <div data-admin-page-content className="min-w-0">{children}</div>
           </div>

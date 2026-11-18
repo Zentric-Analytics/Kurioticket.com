@@ -17,7 +17,7 @@ export default async function PreviewTestersPage() {
   const members = testers.map((tester) => ({ ...tester, roles: normalizeTeamAccessRoles(tester.roles) }));
   return (
     <AdminPageShell title="Team Access" hideHeader>
-      <div className="grid w-full min-w-0 grid-cols-1 gap-5 bg-white text-[#020617] md:grid-cols-[232px_minmax(0,1fr)] md:gap-7">
+      <div className="grid w-full min-w-0 grid-cols-1 gap-5 bg-white text-[#020617] md:grid-cols-[196px_minmax(0,1fr)] md:gap-4">
         <AdminSettingsNavigation showTeamAccess />
         <section aria-label="Team Access" className="w-full min-w-0 pb-4 md:pl-1">
           <h1 className="mb-2 text-[17px] font-semibold text-[#020617]">Team Access</h1>
