@@ -108,6 +108,7 @@ export const legalDocuments: LegalDocument[] = [
         paragraphs: [
           enTranslations["legal.privacy.sections.data-we-collect.paragraph1"],
           enTranslations["legal.privacy.sections.data-we-collect.paragraph2"],
+          "For service reliability and incident response, we measure recent activity across the website and apps. We use short-lived session credentials, the platform, the time of the last activity and, when signed in, a reference to your account session. We use these signals to count active sessions and deduplicate signed-in accounts. This measurement is separate from optional analytics.",
         ],
       },
       {
@@ -140,6 +141,7 @@ export const legalDocuments: LegalDocument[] = [
         paragraphs: [
           "Kurioticket may use cookies for authentication sessions, security, fraud prevention, preference storage, analytics, performance monitoring, and feature experiments.",
           "Some cookies are necessary for login, dashboard access, support tickets, saved travel features, security, and preferences. A short-lived operational search credential may be used for requested search-to-provider continuity independently of optional analytics consent. Necessary search and handoff records may be retained separately from that credential for troubleshooting, support and security in accordance with our retention policy.",
+          "Where permitted, the website uses a short-lived online presence cookie to avoid counting the same browser session twice in operational monitoring. It expires after 30 minutes and may renew while you are active.",
         ],
       },
       {

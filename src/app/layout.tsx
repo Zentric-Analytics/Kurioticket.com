@@ -4,6 +4,7 @@ import "./globals.css";
 
 import { AccountCustomizationHydrator } from "@/components/account/AccountCustomizationHydrator";
 import { AuthProvider } from "@/components/auth/AuthProvider";
+import { isWebsiteOnlinePresenceEnabled } from "@/lib/onlinePresenceCredential";
 import { CurrencyRatesProvider } from "@/components/currency/CurrencyRatesProvider";
 import { LocaleProvider } from "@/components/layout/LocaleProvider";
 import { NewsletterSessionBridge } from "@/components/newsletter/NewsletterSessionBridge";
@@ -128,7 +129,7 @@ export default async function RootLayout({
       data-scroll-behavior="smooth"
     >
       <body className="flex min-h-full flex-col">
-        <AuthProvider>
+        <AuthProvider onlinePresenceEnabled={isWebsiteOnlinePresenceEnabled()}>
           <LocaleProvider
             initialLocale={initialLocale}
             initialLocaleIsExplicit={cookieStore.has(LOCALE_COOKIE_KEY)}

@@ -5,6 +5,7 @@ import { SessionProvider, signOut, useSession } from "next-auth/react";
 import { revokeCurrentAccountSession } from "@/lib/currentSessionRevocation";
 import { AnalyticsConsentBridge } from "@/components/privacy/AnalyticsConsentBridge";
 import { JourneyEventsProvider } from "@/components/privacy/JourneyEventsProvider";
+import { WebsiteOnlinePresence } from "./WebsiteOnlinePresence";
 
 const inactivityTimeoutMs = 15 * 60 * 1000;
 const activityStorageKey = "kurioticket:last-authenticated-activity";
@@ -19,10 +20,11 @@ const activityEvents = [
   "click",
 ] as const;
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export function AuthProvider({ children, onlinePresenceEnabled }: { children: React.ReactNode; onlinePresenceEnabled: boolean }) {
   return (
     <SessionProvider>
       <InactivitySignOut />
+      {onlinePresenceEnabled && <WebsiteOnlinePresence />}
       <JourneyEventsProvider>
         {children}
         <AnalyticsConsentBridge />
