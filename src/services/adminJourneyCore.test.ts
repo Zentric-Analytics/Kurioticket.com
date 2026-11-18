@@ -214,3 +214,38 @@ test("handoff coverage fails closed on missing or irreconcilable aggregates", as
   const missing = fixture([[summary()], [{ total: BigInt(0), success: BigInt(0), partial: BigInt(0), failed: BigInt(0) }]]);
   assert.deepEqual(await missing.service.summary(), { status: "unavailable" });
 });
+
+test("All time accepts the explicit epoch anchor while ordinary intervals remain capped at 90 days", () => {
+  const all = parseAdminJourneyQuery({
+    from: "1970-01-01T00:00:00.000Z",
+    to: now.toISOString(),
+  }, "list", now, "staging");
+  assert.equal(all.status, "ok");
+  if (all.status !== "ok") return;
+  assert.equal(all.data.scope.environment, "staging");
+  assert.equal(all.data.scope.from, "1970-01-01T00:00:00.000Z");
+  assert.equal(parseAdminJourneyQuery({
+    from: "2026-01-01T00:00:00.000Z",
+    to: now.toISOString(),
+  }, "list", now, "staging").status, "invalid");
+  assert.equal(parseAdminJourneyQuery({
+    from: "1970-01-01T00:00:00.000Z",
+    to: new Date(now.getTime() + 86400000).toISOString(),
+  }, "list", now, "staging").status, "invalid");
+});
+
+test("All time cursor preserves consent-aware environment and original historical window", async () => {
+  const f = fixture([[journey(), journey("journey-001")]]);
+  const first = await f.service.list({ from: "1970-01-01T00:00:00.000Z", to: now.toISOString(), limit: "1" });
+  assert.equal(first.status, "ok");
+  if (first.status !== "ok") return;
+  assert.ok(first.data.nextCursor);
+  const continued = parseAdminJourneyQuery({ cursor: first.data.nextCursor! }, "list", now, "staging");
+  assert.equal(continued.status, "ok");
+  if (continued.status !== "ok") return;
+  assert.equal(continued.data.scope.from, "1970-01-01T00:00:00.000Z");
+  assert.equal(continued.data.scope.to, now.toISOString());
+  assert.equal(continued.data.scope.environment, "staging");
+  assert.equal(parseAdminJourneyQuery({ cursor: first.data.nextCursor!, environment: "production" }, "list", now, "staging").status, "invalid");
+  assert.deepEqual(f.transactionOptions[0], { isolationLevel: "RepeatableRead", maxWait: 1000, timeout: 10000 });
+});
