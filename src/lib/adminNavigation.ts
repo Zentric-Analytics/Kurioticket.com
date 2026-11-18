@@ -34,7 +34,7 @@ export const adminNavigationGroups = [
   { label: "Operations", hrefs: ["/admin", "/admin/users", "/admin/searches/activity", "/admin/confirmed-trips", "/admin/support"] },
   { label: "Provider readiness", hrefs: ["/admin/providers"] },
   { label: "Website content", hrefs: ["/admin/content"] },
-  { label: "System & security", hrefs: ["/admin/system", "/admin/settings"] },
+  { label: "System & security", hrefs: ["/admin/system", "/admin/platform-health", "/admin/settings"] },
 ] as const;
 
 export const adminNavigation: AdminNavDefinition[] = [
@@ -56,7 +56,7 @@ export const adminNavigation: AdminNavDefinition[] = [
   { href: "/admin/account-deletions", parentHref: "/admin/support", label: "Deletion Requests", icon: ClipboardList, roles: ["ADMIN"], section: "operations", description: "Review account deletion request lifecycles." },
   { href: "/admin/logs", parentHref: "/admin/system", label: "Audit Logs", icon: BookOpen, roles: ["ADMIN"], section: "controls", description: "Review administrative and security-sensitive actions." },
   { href: "/admin/system", label: "System", icon: LockKeyhole, roles: ["ADMIN"], section: "controls", description: "Review safe runtime health and deployment configuration status." },
-  { href: "/admin/platform-health", parentHref: "/admin/system", label: "Platform Health", icon: Activity, roles: ["ADMIN"], section: "controls", description: "Combined and application-specific operational observations and shared service health." },
+  { href: "/admin/platform-health", label: "Platform Health", icon: Activity, roles: ["ADMIN"], section: "controls", description: "Combined and application-specific operational observations and shared service health." },
   { href: "/admin/system/cms-health", parentHref: "/admin/system", label: "CMS Health", icon: FileText, roles: ["ADMIN"], section: "controls", description: "Monitor content integrity, fallback policy and publishing health." },
   { href: "/admin/email-delivery", parentHref: "/admin/system", label: "Email Delivery", icon: Mail, roles: ["ADMIN"], section: "controls", description: "Monitor transactional email delivery health and test sending readiness." },
   { href: "/admin/settings", label: "Settings", icon: Settings, roles: ["ADMIN"], section: "controls", description: "Manage authoritative persisted platform controls." },
@@ -104,9 +104,9 @@ export function getAdminHeaderGroups(role: AdminRole, includePreviewTesters = fa
 }
 
 /**
- * Each secondary destination has one parent workspace. These are page-level
- * navigation groups; none of these links are repeated in the global header.
- * Keep the routes themselves unchanged for bookmarks and deep links.
+ * Keep existing sidebar shortcuts for system monitoring, including Platform Health,
+ * even when the destination also has its own top-level header link.
+ * All page routes remain stable for bookmarks and deep links.
  */
 const workspaceSections: ReadonlyArray<{
   label: string;
