@@ -75,3 +75,21 @@ test("Team Access retains role editing, audited server API actions and confirmat
   assert.match(mutationApi, /writeAdminAuditLog/);
   assert.match(mutationApi, /sessionVersion: \{ increment: 1 \}/);
 });
+
+test("Team Access uses a compact horizontal Add form and the same UTC picker for Edit", () => {
+  const picker = readFileSync("src/components/admin/TeamAccessExpiryPicker.tsx", "utf8");
+  const utc = readFileSync("src/lib/teamAccessExpiration.ts", "utf8");
+  assert.match(registry, /lg:grid-cols-\\[minmax\\(0,1\\.15fr\\)_minmax\\(0,0\\.9fr\\)_minmax\\(0,1fr\\)\\]/);
+  assert.match(registry, /sm:col-span-2 lg:col-span-1/);
+  assert.match(registry, /TeamAccessExpiryPicker id="team-add-expiry"/);
+  assert.match(registry, /TeamAccessExpiryPicker id=\\{`team-edit-expiry-/);
+  assert.match(registry, /overflow-visible rounded-xl/);
+  assert.doesNotMatch(registry, /type="datetime-local"/);
+  assert.match(picker, /name="expiresAt" value=\\{value\\}/);
+  assert.match(picker, /aria-haspopup="dialog"/);
+  assert.match(picker, /Choose access expiration in UTC/);
+  assert.match(picker, /Clear/);
+  assert.match(picker, /Cancel/);
+  assert.match(picker, /Apply/);
+  assert.match(utc, /toISOString/);
+});

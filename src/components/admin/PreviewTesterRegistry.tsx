@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Lightbulb, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { TeamAccessExpiryPicker } from "./TeamAccessExpiryPicker";
 import { TEAM_ACCESS_ROLE_DEFINITIONS, TEAM_ACCESS_ROLES, effectiveCapabilities, type TeamAccessRole } from "@/lib/teamAccessRoles";
 
 type Actor = { email: string | null; name: string | null } | null;
@@ -41,18 +42,16 @@ export function PreviewTesterRegistry({ testers }: { testers: Tester[] }) {
 
   return (
     <div className="grid min-w-0 gap-5">
-      <form action={add} className="grid min-w-0 gap-4 rounded-xl border border-[#D8E1EC] bg-white p-4 sm:grid-cols-2">
-        <div className="grid min-w-0 gap-1.5">
+      <form action={add} className="grid min-w-0 grid-cols-1 items-end gap-x-4 gap-y-3 rounded-xl border border-[#D8E1EC] bg-white p-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.9fr)_minmax(0,1fr)]">
+        <div className="grid min-w-0 max-w-[360px] gap-1.5">
           <label htmlFor="team-add-email" className="text-[13px] font-semibold text-[#020617]">Email</label>
           <input id="team-add-email" required type="email" name="email" placeholder="Team member email"
             className="h-10 w-full min-w-0 rounded-lg border border-[#D8E1EC] px-3 text-[13px] focus:border-[#004BB8] focus:outline-2 focus:outline-offset-1 focus:outline-[#004BB8]" />
         </div>
-        <div className="grid min-w-0 gap-1.5">
-          <label htmlFor="team-add-expiry" className="text-[13px] font-semibold text-[#020617]">Access expiration</label>
-          <input id="team-add-expiry" type="datetime-local" name="expiresAt"
-            className="h-10 w-full min-w-0 rounded-lg border border-[#D8E1EC] px-3 text-[13px] focus:border-[#004BB8] focus:outline-2 focus:outline-offset-1 focus:outline-[#004BB8]" />
+        <div className="min-w-0 max-w-[280px]">
+          <TeamAccessExpiryPicker id="team-add-expiry" />
         </div>
-        <fieldset className="min-w-0 sm:col-span-2">
+        <fieldset className="min-w-0 self-end sm:col-span-2 lg:col-span-1">
           <legend className="mb-2 text-[13px] font-semibold text-[#020617]">Roles</legend>
           <div className="flex flex-wrap items-center gap-2">
             {TEAM_ACCESS_ROLES.map((role) => (
@@ -70,19 +69,19 @@ export function PreviewTesterRegistry({ testers }: { testers: Tester[] }) {
             ))}
           </div>
         </fieldset>
-        <div className="min-w-0 sm:col-span-2">
+        <div className="min-w-0 max-w-[680px] sm:col-span-2 lg:col-span-3">
           <label htmlFor="team-add-reason" className="sr-only">Approval reason (optional)</label>
           <input id="team-add-reason" name="reason" maxLength={500} placeholder="Approval reason (optional)"
             className="h-10 w-full min-w-0 rounded-lg border border-[#D8E1EC] px-3 text-[13px] focus:border-[#004BB8] focus:outline-2 focus:outline-offset-1 focus:outline-[#004BB8]" />
         </div>
-        <div className="sm:col-span-2">
+        <div className="sm:col-span-2 lg:col-span-3">
           <Button type="submit">Add team member</Button>
         </div>
       </form>
 
       {error ? <p role="alert" className="text-sm text-red-700">{error}</p> : null}
 
-      <section aria-label="Team members" className="min-w-0 overflow-hidden rounded-xl border border-[#D8E1EC] bg-white">
+      <section aria-label="Team members" className="relative min-w-0 overflow-visible rounded-xl border border-[#D8E1EC] bg-white">
         <div className="border-b border-[#E7ECF5] px-4 py-3">
           <h2 className="text-[14px] font-semibold text-[#020617]">Team members</h2>
           <p className="mt-1 text-[12px] text-[#64748B]">Select a member to view access details and manage roles.</p>
@@ -129,17 +128,15 @@ export function PreviewTesterRegistry({ testers }: { testers: Tester[] }) {
                           ))}
                         </div>
                       </fieldset>
-                      <div className="grid min-w-0 gap-3 sm:grid-cols-2">
-                        <label className="grid min-w-0 gap-1 text-[12px] font-medium text-[#475569]">
-                          Access expiration
-                          <input type="datetime-local" name="expiresAt"
-                            defaultValue={tester.expiresAt ? new Date(tester.expiresAt).toISOString().slice(0, 16) : ""}
-                            className="h-10 w-full min-w-0 rounded-lg border border-[#D8E1EC] bg-white px-2 text-[12px]" />
-                        </label>
-                        <label className="grid min-w-0 gap-1 text-[12px] font-medium text-[#475569]">
+                      <div className="grid min-w-0 items-end gap-3 sm:grid-cols-[minmax(0,280px)_minmax(0,1fr)]">
+                        <div className="min-w-0">
+                          <TeamAccessExpiryPicker id={`team-edit-expiry-${tester.id}`}
+                            initialValue={tester.expiresAt ? new Date(tester.expiresAt).toISOString() : ""} compact />
+                        </div>
+                        <label className="grid min-w-0 max-w-[360px] gap-1 text-[12px] font-medium text-[#475569]">
                           Reason
                           <input name="reason" maxLength={500} defaultValue={tester.reason || ""} placeholder="Reason"
-                            className="h-10 w-full min-w-0 rounded-lg border border-[#D8E1EC] bg-white px-2 text-[12px]" />
+                            className="h-10 w-full min-w-0 rounded-lg border border-[#D8E1EC] bg-white px-3 text-[12px] focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#004BB8]" />
                         </label>
                       </div>
                       <div><Button type="submit">Save roles</Button></div>
