@@ -106,6 +106,20 @@ try {
       };
     });
     assert.ok(filterLayout.dateRight <= filterLayout.formRight + 1, "Date control stays inside content");
+    assert.equal(filterLayout.controls.length, 5, "All four dropdowns and Apply filters are rendered");
+    assert.ok(filterLayout.controls.every(control =>
+      control.width > 0 && Math.abs(control.height - 40) < 1 &&
+      control.left >= filterLayout.formLeft - 1 &&
+      control.right <= filterLayout.formRight + 1 &&
+      control.scrollWidth <= control.clientWidth + 1
+    ), "Every Journeys filter must be visible with no horizontal scrolling or clipped labels at " + width + "px: " + JSON.stringify(filterLayout));
+    // On narrow screens the controls can wrap, but only into distinct rows:
+    // controls sharing a row may not overlap or extend outside the form.
+    assert.ok(filterLayout.controls.every((control, index) =>
+      index === 0 || control.top > filterLayout.controls[index - 1].top + 1 ||
+      control.left >= filterLayout.controls[index - 1].right + 1
+    ), "Journey filters must wrap without overlap at " + width + "px: " + JSON.stringify(filterLayout));
+
     if (width >= 1280) {
       assert.equal(new Set(filterLayout.filterTops.concat(filterLayout.applyTop)).size, 1,
         "Four dropdowns and Apply filters stay on one row at " + width + "px");
