@@ -33,7 +33,9 @@ test("journey detail is valid JSX and strips view-only range from backend input"
 test("journey date presets are passed to detail and single-ended historical bounds survive", () => {
   assert.match(list, /p\.set\("range", range\)/);
   assert.match(dates, /if \(one\(raw\.cursor\) \|\| one\(raw\.from\) \|\| one\(raw\.to\)\) return \{\}/);
-  assert.match(controls, /value: "custom", label: "Custom dates"/);
+  assert.match(controls, /value: "all", label: "All time"/);
+  assert.match(controls, /value: "today", label: "Today"/);
+  assert.match(controls, /"Custom dates \(legacy\)"/);
 });
 
 test("custom dates are editable and preset selection does not submit stale bounds", () => {
@@ -65,14 +67,34 @@ test("Journeys directory shares Users styling without modifying consent-aware da
   assert.match(list, /bg-white text-\[#020617\]/);
   assert.match(list, /aria-label="Visitor journeys directory"/);
   assert.match(list, /border-b border-\[#D8E1EC\] bg-white/);
-  assert.match(list, /name="provider" type="search"/);
+  assert.match(list, /<SearchMonitorSelect label="Provider" name="provider" appearance="fare"/);
+  assert.match(list, /buildAdminSearchProviderOptions\(getProviderIntegrationStatuses\(\), one\(raw\.provider\) \|\| null\)/);
+  assert.doesNotMatch(list, /name="environment" label="Environment"|name="provider" type="search"/);
   assert.match(list, /clearFieldNamesOnChange=\{\["userId", "visitorId"\]\}/);
   assert.match(list, /adminJourneys\.list\(input\)/);
   assert.match(list, /Only eligible consented journeys are included/);
-  assert.match(datesView, /<AdminDirectorySelect label="Date range"/);
+  assert.match(datesView, /<SearchMonitorSelect label="Date range"/);
+  assert.match(datesView, /appearance="fare" align="end"/);
   assert.match(datesView, /setCustomValidity\(valid \? "" :/);
   assert.match(history, /aria-label="Journey event history"/);
   assert.match(history, /events\.map\(event =>/);
+});
+
+test("Visitor Journeys defaults to Today, aligns filters in columns and isolates the current environment", () => {
+  assert.match(dates, /return one\(raw\.from\) \|\| one\(raw\.to\) \|\| one\(raw\.cursor\) \? "custom" : "today"/);
+  assert.match(dates, /JOURNEY_ALL_TIME_FROM/);
+  assert.match(list, /getPublicEnvironment\(\)/);
+  assert.match(list, /\.\.\.withoutPagination\(raw\), \.\.\.fixed, environment/);
+  assert.match(list, /<JourneyDateRangeFields initialRange=\{range\}/);
+  assert.match(list, /xl:grid-cols-\[minmax\(0,1fr\)_minmax\(0,1fr\)_minmax\(0,1\.3fr\)_minmax\(0,1fr\)_auto\]/);
+  assert.match(list, /sm:col-span-2 xl:col-span-1 xl:w-auto/);
+  assert.match(list, /name="product" appearance="fare"/);
+  assert.match(list, /name="identity"/);
+  assert.match(list, /name="stage" appearance="fare"/);
+  assert.match(list, /name="provider" appearance="fare"/);
+  assert.match(list, /Apply filters/);
+  assert.match(list, /for \(const key of \["identity","product","stage","provider"/);
+  assert.doesNotMatch(list, /<AdminDirectorySelect|name="environment" label="Environment"|type="search" defaultValue=\{one\(raw\.provider\)\}/);
 });
 
 test("Journey Details shares clean directory layout and preserves event chronology", () => {
