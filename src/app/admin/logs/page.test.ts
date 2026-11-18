@@ -45,8 +45,8 @@ test("Audit Logs fits its four columns into the sidebar workspace and keeps full
 });
 
 test("Every audit row is expandable while target email stays out of the permanent columns", () => {
-  assert.ok(toolbar.includes("Search target email"));
-  assert.ok(toolbar.includes('placeholder="Search target email"'));
+  assert.ok(toolbar.includes('placeholder="Search admin or target email"'));
+  assert.doesNotMatch(toolbar, /placeholder="Search target email"|placeholder="Search admin email"/);
   assert.equal(page.includes("<span>Target email</span>"), false);
   assert.equal(page.includes(">Details</span>"), false);
   assert.equal(page.includes("View ›"), false);
@@ -60,18 +60,21 @@ test("Every audit row is expandable while target email stays out of the permanen
 });
 
 test("Audit Logs toolbar keeps readable balanced filter columns at 100% zoom", () => {
-  assert.ok(toolbar.includes("2xl:flex-row 2xl:items-center"));
-  assert.ok(toolbar.includes("2xl:w-[520px] 2xl:flex-none"));
+  assert.ok(toolbar.includes('data-testid="audit-filters-toolbar"'));
   assert.ok(toolbar.includes("sm:grid-cols-2"));
-  assert.ok(toolbar.includes("lg:grid-cols-[minmax(0,170px)_minmax(0,170px)_minmax(0,170px)_auto]"));
+  assert.ok(toolbar.includes("xl:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_132px]"));
+  assert.ok(toolbar.includes("sm:col-span-2 xl:col-span-1"));
+  assert.equal((toolbar.match(/type="search"/g) || []).length, 1);
   assert.ok(toolbar.includes("compact attached"));
 });
 
 test("Audit Logs search, range, action and target filters wait for explicit Apply", () => {
   assert.ok(toolbar.includes('role="search"'));
   assert.ok(toolbar.includes('aria-label="Search audit logs"'));
-  assert.ok(toolbar.includes('placeholder="Search admin email"'));
-  assert.ok(toolbar.includes('placeholder="Search target email"'));
+  assert.ok(toolbar.includes('placeholder="Search admin or target email"'));
+  assert.ok(toolbar.includes('searchEmail: emailDraft.trim() || null'));
+  assert.ok(toolbar.includes('adminEmail: null'));
+  assert.ok(toolbar.includes('targetEmail: null'));
   assert.ok(toolbar.includes('onClick={applyFilters}'));
   assert.ok(toolbar.includes("Apply filters"));
   assert.ok(toolbar.includes("setDraftRange(next as AuditRange)"));
@@ -103,6 +106,8 @@ test("Audit Logs uses four standard ranges and retains legacy custom-date deep l
   assert.ok(page.includes('params.set("from", "1970-01-01T00:00:00.000Z")'));
   assert.equal(namedFunction(page, "auditParams").includes('params.set("range"'), false);
   assert.match(namedFunction(page, "currentHref"), /params\.set\("range", range\)/);
+  assert.ok(page.includes('searchEmail={one(raw.searchEmail)}'));
+  assert.ok(page.includes('"action", "searchEmail", "adminEmail", "targetType", "targetEmail"'));
 });
 
 test("Audit Logs forwards malformed reader parameters so the safe reader can reject them", () => {
