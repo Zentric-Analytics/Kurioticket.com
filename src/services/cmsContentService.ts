@@ -1,3 +1,4 @@
+import { cmsHotelCountryOptions } from "@/lib/adminCmsHotelCountry";
 import { sortCmsFaqDirectory } from "@/lib/cmsDirectoryPresentation";
 import { z } from "zod";
 
@@ -955,6 +956,19 @@ export async function listAdminCmsContentDirectory(input: {
     isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead,
     timeout: 30_000,
   });
+}
+
+/** Country choices come from all saved hotel destination drafts, not only the
+ * current status/search result. The directory and its dropdown stay consistent
+ * when administrators change the selected status or search term. */
+export async function listAdminCmsHotelCountries(): Promise<string[]> {
+  const db = getOptionalPrisma();
+  if (!db) throw new CmsContentError("UNAVAILABLE", "CMS storage is unavailable.");
+  const rows = await db.cmsContentItem.findMany({
+    where: { type: "HOTEL_DESTINATION", market: "GLOBAL" },
+    select: { draftPayload: true },
+  });
+  return cmsHotelCountryOptions(rows);
 }
 
 /** Canonical choices include a link to the record that already owns an identity. */

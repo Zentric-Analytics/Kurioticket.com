@@ -175,7 +175,8 @@ test("Content returns to the actual source and only retains allowlisted filters"
   assert.equal(unsafe.backHref, "/admin/content");
 
   const faq = faqCmsListNavigation({ status: "DRAFT", cursor: "next-2", q: "how to fly", category: "General" });
-  assert.equal(faq.listHref, "/admin/content/faqs?status=DRAFT&cursor=next-2&q=how+to+fly&category=General");
+  assert.equal(faq.listHref, "/admin/content/faqs?status=DRAFT&cursor=next-2&q=how+to+fly");
+  assert.equal(homepageCmsListNavigation("hotel-destinations", { country: "United Kingdom" }).query, "market=GLOBAL&country=United+Kingdom");
   assert.equal(faqCmsListNavigation({ status: "invalid", cursor: "../admin/system" }).listHref, "/admin/content/faqs");
 });
 
@@ -198,7 +199,7 @@ test("Homepage and flight CMS open on real All markets and retain explicit marke
   assert.match(listPage, /allowedMarket === "ALL" \? undefined : allowedMarket/);
   assert.match(listPage, /getCmsContentMarketOverview\(config\.type, homepageCmsMarkets, homepageCmsLocale\)/);
   assert.match(toolbar, /value: "ALL", label: "All markets"/);
-  assert.match(toolbar, /market !== "ALL"/);
+  assert.match(toolbar, /value: "ALL", label: "All markets"/);
   assert.match(service, /scope\.market \? \{ market: scope\.market \} : \{\}/);
   assert.match(service, /scope\.market\) predicates\.push/);
   assert.match(listPage, /market=\{section !== "hotel-destinations" \? allowedMarket : undefined\}/);
@@ -303,8 +304,10 @@ test("Content lists search the whole CMS dataset with one explicit Apply", () =>
     assert.match(source, /search: one\(raw\.q\) \|\| undefined/);
     assert.doesNotMatch(source, /<AdminButton[^>]*type="submit">Apply/);
   }
-  assert.match(faq, /listAdminCmsFaqCategories/);
-  assert.match(faq, /category: one\(raw\.category\) \|\| undefined/);
+  assert.doesNotMatch(faq, /listAdminCmsFaqCategories|category=|category: one\(raw\.category\)/);
+  assert.match(faq, /faqSearchOnly/);
+  assert.match(home, /listAdminCmsHotelCountries\(\)/);
+  assert.match(home, /filterCmsHotelsByCountry\(listing\.items, country\)/);
   assert.match(toolbar, /role="search"/);
   assert.match(toolbar, /method="get"/);
   assert.match(toolbar, /name="status" value=\{status\}/);
@@ -315,7 +318,10 @@ test("Content lists search the whole CMS dataset with one explicit Apply", () =>
   assert.match(toolbar, /aria-label="Content publication status"/);
   assert.doesNotMatch(toolbar, /onValueChange=\{next => navigate/);
   assert.match(toolbar, /onValueChange=\{setDraftMarket\}/);
-  assert.match(toolbar, /onValueChange=\{setDraftCategory\}/);
+  assert.match(toolbar, /onValueChange=\{setDraftCountry\}/);
+  assert.match(toolbar, /faqSearchOnly\) applyFilters\(\)/);
+  assert.match(toolbar, /flex min-w-0 flex-wrap items-center justify-between/);
+  assert.doesNotMatch(toolbar, /overflow-x-auto|overflow-x-scroll|2xl:flex-row|Clear filters|clearFilters/);
   assert.match(toolbar, /onClick=\{applyFilters\}/);
   assert.match(toolbar, /const loading = isPending;/);
   assert.match(toolbar, /<AdminDirectorySelect/);
@@ -327,6 +333,18 @@ test("Content lists search the whole CMS dataset with one explicit Apply", () =>
   assert.match(service, /encodeCmsListCursor\(scope/);
   assert.match(api, /search: url\.searchParams\.get\("q"\)/);
   assert.match(api, /category: url\.searchParams\.get\("category"\)/);
+});
+
+test("Content filters wrap instead of requiring horizontal scrolling", () => {
+  const toolbar = readFileSync("src/components/admin/ContentDirectoryToolbar.tsx", "utf8");
+  assert.match(toolbar, /aria-label="Content publication status" className="flex min-w-0 max-w-full flex-wrap/);
+  assert.match(toolbar, /flex min-w-0 max-w-full flex-1 flex-wrap/);
+  assert.match(toolbar, /min-w-\[170px\] max-w-\[280px\]/);
+  assert.match(toolbar, /\{!faqSearchOnly \? \(/);
+  assert.doesNotMatch(toolbar, /Clear filters|clearFilters|overflow-x-auto|overflow-x-scroll|whitespace-nowrap border-b border/);
+  const faq = readFileSync("src/app/admin/content/faqs/page.tsx", "utf8");
+  assert.match(faq, /faqSearchOnly/);
+  assert.doesNotMatch(faq, /categories=|category=|listAdminCmsFaqCategories/);
 });
 
 test("Content landing aggregates distinct published snapshots from every supported CMS market", () => {
@@ -411,7 +429,9 @@ test("Homepage and flight directories show all records grouped by market then Or
   assert.match(service, /while \(nextCursor\)/);
   assert.match(service, /await listAdminCmsContent\(\{ \.\.\.pageInput, cursor: nextCursor \}, tx\)/);
   assert.match(service, /reader \?\? getOptionalPrisma\(\)/);
-  assert.match(page, /items: sortHomepageCmsDirectoryItems\(listing\.items\)/);
+  assert.match(page, /items: sortHomepageCmsDirectoryItems\(section === "hotel-destinations"/);
+  assert.match(page, /filterCmsHotelsByCountry\(listing\.items, country\)/);
+  assert.match(page, /: listing\.items\)/);
   assert.match(page, /nextCursor: null/);
   assert.doesNotMatch(page, /Next page|function nextHref|<Link\s/);
 
