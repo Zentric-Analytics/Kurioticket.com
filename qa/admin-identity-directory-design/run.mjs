@@ -31,6 +31,7 @@ await put("next.config.mjs",
   'config.resolve.alias["@/lib/auth-guards"]=path.resolve("mocks/auth-guards.js");\n' +
   'config.resolve.alias["@/lib/prisma"]=path.resolve("mocks/prisma.js");\n' +
   'config.resolve.alias["@/lib/env"]=path.resolve("mocks/env.js");\n' +
+  'config.resolve.alias["@/services/adminJourneyService$"]=path.resolve("mocks/admin-journeys.js");\n' +
   'config.resolve.alias["@"]=' + JSON.stringify(source) + ';return config;}};');
 await put("postcss.config.mjs", 'export default {plugins:{"@tailwindcss/postcss":{}}};');
 await put("app/globals.css",
@@ -51,6 +52,8 @@ await put(
   'export async function GET(){return Response.json({generatedAt:"2026-01-01T00:00:00.000Z",activeCount:0,unreadCount:0,criticalCount:0,warningCount:0});}',
 );
 await put("app/admin/users/page.tsx", await readFile(path.join(source, "app/admin/users/page.tsx"), "utf8"));
+await put("app/admin/journeys/page.tsx", await readFile(path.join(source, "app/admin/journeys/page.tsx"), "utf8"));
+await put("mocks/admin-journeys.js", await readFile(path.join(qa, "journey-fixture.js"), "utf8"));
 // Render a real Overview route for the Admin shell's background exception QA.
 await put("app/admin/page.jsx", 'export default function Overview(){return <div><h1>Admin Overview QA</h1></div>;}');
 await put("mocks/auth-guards.js", 'export async function requireAdminSession(){return {user:{id:"qa-admin-001",role:"ADMIN"}};}');
