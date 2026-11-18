@@ -57,7 +57,7 @@ test("health navigation is ADMIN-only, discoverable and overview has a separate 
     assert.match(page, /<PlatformOverviewSummary/);
     assert.match(page, /requireAdminApiSession/);
     assert.match(overview, /Online Users/);
-    assert.match(overview, /web, Android, and iOS/);
+    assert.match(overview, /website, Admin panel, Android, and iOS/);
     const scope = readFileSync("src/components/admin/SettingsFeatureSection.tsx", "utf8");
     assert.match(scope, /Scope: shared backend/);
     assert.match(scope, /reauthentication/);

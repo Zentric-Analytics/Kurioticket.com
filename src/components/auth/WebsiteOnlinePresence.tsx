@@ -3,11 +3,11 @@
 import { useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { usePathname } from "next/navigation";
-import { isPublicWebsitePresenceRoute } from "@/lib/website-presence";
+import { isWebsiteOnlinePresenceRoute } from "@/lib/onlinePresence";
 import { startWebsiteOnlinePresence } from "@/lib/websiteOnlinePresenceClient";
 
 export function WebsiteOnlinePresence() {
-  const allowed = isPublicWebsitePresenceRoute(usePathname());
+  const pathname = usePathname();
   const { status, data: session } = useSession();
   const tracker = useRef<ReturnType<typeof startWebsiteOnlinePresence> | null>(null);
   const identity = status === "unauthenticated"
@@ -15,6 +15,7 @@ export function WebsiteOnlinePresence() {
     : status === "authenticated" && session?.user?.accountSessionId
       ? `account:${session.user.accountSessionId}`
       : null;
+  const allowed = isWebsiteOnlinePresenceRoute(pathname, status === "authenticated" && identity !== null);
 
   useEffect(() => {
     if (!allowed) return;

@@ -1,12 +1,10 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { AppState, Platform } from "react-native";
 import { getApiBaseUrl } from "../../config/apiUrl";
 import { readSession, subscribeSession } from "../../storage/sessionStorage";
 import { createNativePresenceClient } from "./nativePresenceClient";
 
 export function useNativePresence() {
-  const clientRef = useRef<ReturnType<typeof createNativePresenceClient> | null>(null);
-
   useEffect(() => {
     const platform = Platform.OS;
     if (platform !== "ios" && platform !== "android") return;
@@ -14,7 +12,6 @@ export function useNativePresence() {
     if (!api.ok) return;
 
     const client = createNativePresenceClient(api.baseUrl, platform);
-    clientRef.current = client;
     let state = AppState.currentState;
     let focused = true;
     let disposed = false;
@@ -54,9 +51,6 @@ export function useNativePresence() {
       appState.remove();
       androidFocus.forEach(subscription => subscription.remove());
       client.stop();
-      clientRef.current = null;
     };
   }, []);
-
-  return useCallback(() => clientRef.current?.noteActivity(), []);
 }

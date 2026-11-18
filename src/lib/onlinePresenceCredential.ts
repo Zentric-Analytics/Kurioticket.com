@@ -24,6 +24,21 @@ export function isWebsiteOnlinePresenceEnabled() {
   return process.env.ONLINE_PRESENCE_WEB_ENABLED === "true";
 }
 
+export function hasConsistentWebsitePresenceOrigin(...urls: Array<string | undefined>) {
+  const origins = new Set<string>();
+  try {
+    for (const value of urls) {
+      if (!value) continue;
+      const url = new URL(value);
+      if ((url.protocol !== "https:" && url.protocol !== "http:") || url.username || url.password) return false;
+      origins.add(url.origin);
+    }
+    return origins.size <= 1;
+  } catch {
+    return false;
+  }
+}
+
 function signature(payload: string, secret: string) {
   return createHmac("sha256", secret).update("online-presence-v1:" + payload).digest("base64url");
 }

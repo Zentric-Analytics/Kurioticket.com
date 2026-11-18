@@ -1,7 +1,7 @@
-const heartbeatMs = 30_000;
+import { onlinePresenceHeartbeatMs as heartbeatMs } from "./onlinePresence";
+
 const requestTimeoutMs = 8_000;
 const channelName = "kurioticket:online-presence";
-const interactionEvents = ["pointerdown", "keydown", "wheel"] as const;
 
 type Browser = Pick<Window, "navigator" | "document" | "addEventListener" | "removeEventListener" | "setTimeout" | "clearTimeout" | "fetch"> & {
   BroadcastChannel?: typeof BroadcastChannel;
@@ -36,7 +36,6 @@ export function startWebsiteOnlinePresence(browser: Browser) {
   let serverRetryAt = 0;
   let pendingUntil = 0;
   let attemptedAt = 0;
-  let interactedAt: number | null = null;
   let retryOnWake = false;
   let identity: string | null = null;
   let previousIdentity: string | null = null;
@@ -47,10 +46,9 @@ export function startWebsiteOnlinePresence(browser: Browser) {
   let timer: number | undefined;
   let request: AbortController | undefined;
 
-  function eligible(now: number) {
+  function eligible() {
     return !disposed && !suspended && identity !== null
-      && browser.document.visibilityState === "visible" && browser.navigator.onLine !== false
-      && interactedAt !== null && now - interactedAt < heartbeatMs;
+      && browser.document.visibilityState === "visible" && browser.navigator.onLine !== false;
   }
 
   function nextAttempt() {
@@ -63,11 +61,9 @@ export function startWebsiteOnlinePresence(browser: Browser) {
     browser.clearTimeout(timer);
     timer = undefined;
     const now = Date.now();
-    if (running || !eligible(now)) return;
+    if (running || !eligible()) return;
     const deadline = nextAttempt();
-    if (interactedAt !== null && deadline < interactedAt + heartbeatMs) {
-      timer = browser.setTimeout(() => { void send(); }, Math.max(0, deadline - now));
-    }
+    timer = browser.setTimeout(() => { void send(); }, Math.max(0, deadline - now));
   }
 
   function publish(update: TabUpdate) {
@@ -76,7 +72,7 @@ export function startWebsiteOnlinePresence(browser: Browser) {
 
   async function post() {
     const now = Date.now();
-    if (!eligible(now) || nextAttempt() > now) return;
+    if (!eligible() || nextAttempt() > now) return;
     identityChanged = false;
     attemptedAt = now;
     retryOnWake = false;
@@ -95,7 +91,7 @@ export function startWebsiteOnlinePresence(browser: Browser) {
       let response = await heartbeat();
       if (response.status === 202) {
         // Bootstrap only provisions the cookie. Count presence after the browser sends it back.
-        if (controller.signal.aborted || !eligible(Date.now())) return;
+        if (controller.signal.aborted || !eligible()) return;
         response = await heartbeat();
         if (response.status === 202) {
           serverRetryAt = Math.max(serverRetryAt, Date.now() + 2 * heartbeatMs);
@@ -122,7 +118,7 @@ export function startWebsiteOnlinePresence(browser: Browser) {
   }
 
   async function send() {
-    if (running || !eligible(Date.now())) return;
+    if (running || !eligible()) return;
     running = true;
     try {
       if (locks) {
@@ -165,9 +161,8 @@ export function startWebsiteOnlinePresence(browser: Browser) {
     channel.postMessage("sync");
   }
 
-  function onInteraction(event: Event) {
-    if (!event.isTrusted || browser.document.visibilityState !== "visible") return;
-    interactedAt = Date.now();
+  function onPause() {
+    request?.abort();
     schedule();
   }
 
@@ -181,7 +176,7 @@ export function startWebsiteOnlinePresence(browser: Browser) {
 
   function onPageHide() {
     suspended = true;
-    schedule();
+    onPause();
   }
 
   function onPageShow() {
@@ -189,13 +184,17 @@ export function startWebsiteOnlinePresence(browser: Browser) {
     onWake();
   }
 
-  for (const event of interactionEvents) browser.addEventListener(event, onInteraction, { passive: true });
+  function onVisibilityChange() {
+    if (browser.document.visibilityState === "visible") onWake();
+    else onPause();
+  }
+
   browser.addEventListener("focus", onWake);
   browser.addEventListener("online", onWake);
-  browser.addEventListener("offline", schedule);
+  browser.addEventListener("offline", onPause);
   browser.addEventListener("pagehide", onPageHide);
   browser.addEventListener("pageshow", onPageShow);
-  browser.document.addEventListener("visibilitychange", onWake);
+  browser.document.addEventListener("visibilitychange", onVisibilityChange);
 
   return {
     setIdentity(next: string | null) {
@@ -211,13 +210,12 @@ export function startWebsiteOnlinePresence(browser: Browser) {
       browser.clearTimeout(timer);
       request?.abort();
       channel?.close();
-      for (const event of interactionEvents) browser.removeEventListener(event, onInteraction);
       browser.removeEventListener("focus", onWake);
       browser.removeEventListener("online", onWake);
-      browser.removeEventListener("offline", schedule);
+      browser.removeEventListener("offline", onPause);
       browser.removeEventListener("pagehide", onPageHide);
       browser.removeEventListener("pageshow", onPageShow);
-      browser.document.removeEventListener("visibilitychange", onWake);
+      browser.document.removeEventListener("visibilitychange", onVisibilityChange);
     },
   };
 }

@@ -61,9 +61,9 @@ export default function RootLayout() {
 
 function ThemedRootLayout() {
   const { theme } = useAppTheme();
-  const recordPresenceActivity = useNativePresence();
+  useNativePresence();
   return (
-    <View style={{ flex: 1 }} onTouchStart={recordPresenceActivity}>
+    <View style={{ flex: 1 }}>
       <StatusBar style={theme.dark ? "light" : "dark"} backgroundColor={theme.background} />
       <MobileRecoveryBoundary><Stack
         screenOptions={{

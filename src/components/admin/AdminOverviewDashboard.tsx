@@ -16,6 +16,7 @@ import {
 
 import { ActivityDataInfo } from "@/components/admin/ActivityDataInfo";
 import { AdminOverviewRangeSensitive } from "@/components/admin/AdminOverviewControls";
+import { OnlineUsersValue } from "@/components/admin/OnlineUsersValue";
 import type { getAdminOverview } from "@/services/adminOverviewService";
 import type { getRecentAdminActivity, getSafeSystemStatus } from "@/lib/admin-data";
 
@@ -95,7 +96,7 @@ function MiniMetric({
 
 function SnapshotLink({ label, value, href, icon: Icon, hint, info }: {
   label: string;
-  value: number | string;
+  value: number | string | React.ReactElement;
   href: string;
   icon: LucideIcon;
   hint?: string;
@@ -213,9 +214,6 @@ export function AdminOverviewDashboard({ data, system, activity }: {
   const providerAttention = data.providers.filter((p) =>
     p.operationalState === "DEGRADED" || p.operationalState === "FAILING" || p.operationalState === "NOT_READY"
   ).length;
-  const onlineUsers = data.onlinePresence.status === "ok"
-    ? data.onlinePresence.total
-    : "Unavailable";
 
   return (
     <div className="min-w-0 space-y-3">
@@ -223,10 +221,10 @@ export function AdminOverviewDashboard({ data, system, activity }: {
         <h2 className="mb-2 text-[16px] font-semibold tracking-tight text-slate-950">Operations Snapshot</h2>
         <div className="grid gap-2 sm:grid-cols-2 min-[56.25rem]:grid-cols-4">
           <SnapshotLink href="/admin/users" label="Total accounts" value={data.users.total} icon={Users} hint="Current account records" />
-          <SnapshotLink href="/admin/users" label="Online Users" value={onlineUsers} icon={Activity}
+          <SnapshotLink href="/admin/users" label="Online Users" value={<OnlineUsersValue initial={data.onlinePresence} />} icon={Activity}
             info={(
               <ActivityDataInfo label="How Online Users are counted">
-                Activity in the last {data.onlinePresence.windowSeconds} seconds on web, Android, and iOS.
+                Activity in the last {data.onlinePresence.windowSeconds} seconds on the website, Admin panel, Android, and iOS.
                 Counts each verified account once across devices and each recognized guest session once.
                 A person can have multiple guest sessions.
               </ActivityDataInfo>

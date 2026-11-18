@@ -30,6 +30,7 @@ type Dependencies = {
   authenticate: (request: Request) => Promise<{ id: string; platform: string | null } | null>;
   admit?: (request: Request, sourceId: string, newSource: boolean) => boolean;
   record: (heartbeat: OnlinePresenceHeartbeat) => Promise<void>;
+  onFailure?: (environment: PublicEnvironment) => void;
 };
 
 const browserHeaders = ["origin", "sec-fetch-site", "sec-fetch-mode", "sec-fetch-dest"];
@@ -136,6 +137,7 @@ export function createOnlinePresenceHandler(transport: PresenceTransport, depend
       }
       return response(credential.newSource ? 202 : 204);
     } catch {
+      dependencies.onFailure?.(environment);
       return response(503, "30");
     }
   };

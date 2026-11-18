@@ -1,8 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { createHmac } from "node:crypto";
+import { isWebsiteOnlinePresenceRoute } from "./onlinePresence";
 import { createOnlinePresenceHandler } from "./onlinePresenceRoute";
-import { renewPresenceCredential } from "./onlinePresenceCredential";
+import { hasConsistentWebsitePresenceOrigin, renewPresenceCredential } from "./onlinePresenceCredential";
 
 const now = new Date("2026-11-18T12:00:00Z");
 const secret = "qa-only-operational-presence-signing-material";
@@ -134,8 +135,10 @@ test("only authenticated ingress automation evidence suppresses an otherwise eli
 
 test("invalid authorization is not counted as a guest and storage failures never return success", async () => {
   const never = () => { throw new Error("must not run"); };
+  const failures: string[] = [];
   const deps = { environment: () => "production" as const, now: () => now, secret: () => secret,
-    automationSecret: () => undefined, admit: () => true, authenticate: async () => null, record: async () => {} };
+    automationSecret: () => undefined, admit: () => true, authenticate: async () => null, record: async () => {},
+    onFailure: (environment: string) => failures.push(environment) };
   const invalid = createOnlinePresenceHandler("native", { ...deps, record: never });
   assert.equal((await invalid(native({ authorization: "Bearer invalid" }))).status, 401);
   const invalidWeb = createOnlinePresenceHandler("web", { ...deps, record: never });
@@ -153,4 +156,29 @@ test("invalid authorization is not counted as a guest and storage failures never
   const disabledResponse = await disabled(web());
   assert.equal(disabledResponse.status, 503);
   assert.equal(disabledResponse.headers.get("set-cookie"), null);
+  assert.deepEqual(failures, ["production"], "expected rejections do not signal an outage");
+});
+
+test("operational website presence includes authenticated Admin routes and public guests", () => {
+  for (const path of ["/", "/flights", "/admin-guide"]) {
+    assert.equal(isWebsiteOnlinePresenceRoute(path, false), true);
+  }
+  for (const path of ["/admin", "/admin/users"]) {
+    assert.equal(isWebsiteOnlinePresenceRoute(path, false), false);
+    assert.equal(isWebsiteOnlinePresenceRoute(path, true), true);
+  }
+  for (const path of [null, "/api", "/api/admin", "/mobile", "/mobile/legal"]) {
+    assert.equal(isWebsiteOnlinePresenceRoute(path, true), false);
+  }
+});
+
+test("website monitoring detects invalid or conflicting public origins", () => {
+  assert.equal(hasConsistentWebsitePresenceOrigin(), true);
+  assert.equal(hasConsistentWebsitePresenceOrigin(undefined, "http://localhost:3000"), true);
+  assert.equal(hasConsistentWebsitePresenceOrigin("https://staging.kurioticket.com/", "https://staging.kurioticket.com"), true);
+  assert.equal(hasConsistentWebsitePresenceOrigin("https://kurioticket.com", "https://staging.kurioticket.com"), false);
+  assert.equal(hasConsistentWebsitePresenceOrigin("https://name@kurioticket.com", undefined), false);
+  assert.equal(hasConsistentWebsitePresenceOrigin("not a URL", undefined), false);
+  assert.equal(hasConsistentWebsitePresenceOrigin("http://staging.kurioticket.com", "http://staging.kurioticket.com",
+    "https://staging.kurioticket.com"), false);
 });

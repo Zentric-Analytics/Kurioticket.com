@@ -61,7 +61,7 @@ test("native guests and accounts share one credential through sign-in and logout
   }
 });
 
-test("presence pauses on backgrounding and idleness, then resumes on use", async context => {
+test("foreground presence renews without touch activity and pauses in the background", async context => {
   const { client, requests } = fixture(context, () => ok());
   client.setSession(null);
   assert.equal(requests.length, 0);
@@ -69,32 +69,18 @@ test("presence pauses on backgrounding and idleness, then resumes on use", async
   await flush();
   context.mock.timers.tick(30_000);
   await flush();
-  assert.equal(requests.length, 1, "does not renew on an idle timer");
-
-  client.noteActivity();
-  await flush();
   assert.equal(requests.length, 2);
+  context.mock.timers.tick(30_000);
+  await flush();
+  assert.equal(requests.length, 3);
+
   client.setForeground(false);
   context.mock.timers.tick(120_000);
   await flush();
-  assert.equal(requests.length, 2);
-  client.setForeground(true);
-  await flush();
   assert.equal(requests.length, 3);
-});
-
-test("recent interaction keeps the next cadence-limited heartbeat scheduled", async context => {
-  const { client, requests } = fixture(context, () => ok());
-  client.setSession(null);
   client.setForeground(true);
   await flush();
-  context.mock.timers.tick(20_000);
-  client.noteActivity();
-  await flush();
-  assert.equal(requests.length, 1);
-  context.mock.timers.tick(10_000);
-  await flush();
-  assert.equal(requests.length, 2);
+  assert.equal(requests.length, 4);
 });
 
 test("credential issuance does not start a heartbeat after backgrounding", async context => {
@@ -139,7 +125,6 @@ test("a rejected bearer does not produce anonymous heartbeats before logout", as
   client.setForeground(true);
   await flush();
   context.mock.timers.tick(30_000);
-  client.noteActivity();
   client.setSession({ ...session });
   await flush();
   assert.equal(requests.length, 1);
@@ -159,7 +144,6 @@ test("network failure does not prevent a later heartbeat", async context => {
   client.setForeground(true);
   await flush();
   context.mock.timers.tick(20_000);
-  client.noteActivity();
   context.mock.timers.tick(10_000);
   await flush();
   assert.equal(requests.length, 2);
