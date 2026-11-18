@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { ChevronRight, Search } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
-import { AdminDirectorySelect } from "@/components/admin/AdminDirectorySelect";
+import { AdminDeletionFilters } from "@/components/admin/AdminDeletionFilters";
 import { formatDateTime } from "@/lib/admin-data";
 import { adminOperationalReads } from "@/services/adminOperationalReadService";
 
@@ -10,14 +10,6 @@ export const metadata = { title: "Admin Account Deletions" };
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 type RawFilters = Record<string, string | string[] | undefined>;
-
-const statusOptions = [
-  { value: "", label: "All statuses" },
-  { value: "PENDING", label: "Pending" },
-  { value: "READY_FOR_REVIEW", label: "Ready for review" },
-  { value: "CANCELLED", label: "Cancelled / reactivated" },
-  { value: "COMPLETED", label: "Completed" },
-] as const;
 
 const statusPresentation: Record<string, { label: string; dot: string; text: string }> = {
   PENDING: { label: "Pending", dot: "bg-amber-400", text: "text-[#6B4A10]" },
@@ -35,28 +27,7 @@ export default async function AdminAccountDeletionsPage({ searchParams }: { sear
   return (
     <AdminPageShell title="Account deletion requests" hideHeader>
       <section aria-label="Account deletion requests" className="mx-auto w-full max-w-[1500px] min-w-0 text-[#374151]">
-        <form action="/admin/account-deletions" method="get" role="search"
-          aria-label="Filter account deletion requests"
-          className="min-w-0">
-          <div className="relative pb-3">
-            <Search aria-hidden="true" size={17}
-              className="pointer-events-none absolute left-3.5 top-3.5 text-[#64748B]" />
-            <label htmlFor="admin-deletion-search" className="sr-only">Search deletion requests by email or account name</label>
-            <input id="admin-deletion-search" name="q" type="search"
-              autoComplete="off" maxLength={160} defaultValue={one(raw.q)}
-              placeholder="Search by email or account name"
-              className="h-11 w-full min-w-0 rounded-lg border border-[#D8E1EC] bg-white pl-10 pr-3 text-[13px] text-[#374151] outline-none placeholder:text-[#64748B] transition-colors hover:border-[#94A3B8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#64748B]" />
-          </div>
-          <div className="flex min-w-0 flex-wrap items-center justify-start gap-3 border-b border-[#D8E1EC] pb-2 sm:justify-end">
-            <AdminDirectorySelect name="status" label="Request status" value={one(raw.status)}
-              options={statusOptions} plain align="end" />
-            <button type="submit"
-              className="inline-flex h-9 shrink-0 items-center justify-center rounded-lg bg-[#004BB8] px-4 text-[13px] font-medium text-white transition-colors hover:bg-[#003D97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
-              Apply filters
-            </button>
-          </div>
-        </form>
-
+        <AdminDeletionFilters query={one(raw.q)} status={one(raw.status)} limit={one(raw.limit)}>
         {result.status === "ok" ? (
           result.data.items.length === 0 ? (
             <QueueState title="No deletion requests" message="No account deletion requests match the selected filters." />
@@ -162,6 +133,7 @@ export default async function AdminAccountDeletionsPage({ searchParams }: { sear
             message={"issues" in result ? result.issues.map(issue => issue.field + ": " + issue.message).join(" ") : "The deletion reader could not return queue data. An unavailable read is not shown as an empty queue."}
           />
         )}
+        </AdminDeletionFilters>
       </section>
     </AdminPageShell>
   );
