@@ -8,7 +8,7 @@ const dates = readFileSync("src/lib/adminJourneyDateRange.ts", "utf8");
 const controls = readFileSync("src/components/admin/JourneyDateRangeFields.tsx", "utf8");
 
 test("journey metrics are scoped to one returned list reporting window", () => {
-  assert.match(list, /adminJourneys\.summary\(\{ \.\.\.withoutPagination\(raw\), \.\.\.list\.data\.scope \}\)/);
+  assert.match(list, /adminJourneys\.summary\(\{ \.\.\.withoutPagination\(raw\), \.\.\.list\.data\.scope, environment \}\)/);
   assert.match(list, /adminJourneys\.list\(input\)/);
   assert.doesNotMatch(list, /Promise\.all\(\[\s*adminJourneys\.list/);
 });
