@@ -75,9 +75,9 @@ test("empty activity remains UNKNOWN with no invented latency; Overview lists al
     assert.match(overview, /role="region"/);
     assert.match(overview, /tabindex="0"/);
     assert.match(overview, /overflow-x-auto/);
-    assert.match(overview, /min-w-\\[700px\\] grid-cols-5/);
+    assert.match(overview, /min-w-\[700px\] grid-cols-5/);
     assert.equal((overview.match(/bg-slate-50 p-3/g) || []).length, 5);
-    assert.equal((overview.match(/href="\\/admin\\/platform-health\\?hours=24&amp;application=/g) || []).length, 5);
+    assert.equal((overview.match(/href="\/admin\/platform-health\?hours=24&amp;application=/g) || []).length, 5);
 
     const missing = renderToStaticMarkup(createElement(PlatformOverviewSummary, { data: platformFixture(true), hours: 24 }));
     assert.match(missing, /unavailable/);
