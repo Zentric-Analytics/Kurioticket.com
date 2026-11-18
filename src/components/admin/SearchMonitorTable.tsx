@@ -106,7 +106,7 @@ function SearchMonitorTableState({
 
   return (
     <>
-      <div role="region" aria-label="Search activity table" tabIndex={0} className="focus-ring max-w-full overflow-x-auto">
+      <div role="region" aria-label="Search activity table" tabIndex={0} className="admin-responsive-records focus-ring max-w-full overflow-x-auto">
         <table className="w-full min-w-[1120px] border-collapse text-left"><caption className="sr-only">Search records in the selected application and filter scope</caption>
           <thead>
             <tr className="border-b border-[#E5E7EB] text-[11px] uppercase tracking-[0.08em] text-[#6B7280]">
@@ -124,20 +124,20 @@ function SearchMonitorTableState({
           <tbody>
             {items.map((search) => (
               <tr key={search.id} className="group relative cursor-pointer border-b border-[#E5E7EB] text-[13px] text-[#374151] hover:bg-[#FAFAFA] focus-within:bg-[#F8FAFC]">
-                <td className="whitespace-nowrap px-2 py-3 align-top"><Link href={detailHref(search, detailQuery)} aria-label={"View details for " + productLabel(search.product) + " search " + routeLabel(search.origin, search.destination)} className="absolute inset-0 z-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#004BB8]" tabIndex={0} /><span className="relative pointer-events-none">{formatCreated(search.createdAt, referenceNow)}</span></td>
-                <td className="px-2 py-3 align-top font-semibold text-[#111827]">{productLabel(search.product)}</td><td className="px-2 py-3 align-top">{applicationLabel(search.applicationSource)}{search.appVersion?<span className="mt-0.5 block text-[11px] text-slate-500">v{search.appVersion}</span>:null}</td>
-                <td className="max-w-[260px] px-2 py-3 align-top">
+                <td data-label="Created" className="whitespace-nowrap px-2 py-3 align-top"><Link href={detailHref(search, detailQuery)} aria-label={"View details for " + productLabel(search.product) + " search " + routeLabel(search.origin, search.destination)} className="absolute inset-0 z-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#004BB8]" tabIndex={0} /><span className="relative pointer-events-none">{formatCreated(search.createdAt, referenceNow)}</span></td>
+                <td data-label="Product" className="px-2 py-3 align-top font-semibold text-[#111827]">{productLabel(search.product)}</td><td data-label="Application" className="px-2 py-3 align-top">{applicationLabel(search.applicationSource)}{search.appVersion?<span className="mt-0.5 block text-[11px] text-slate-500">v{search.appVersion}</span>:null}</td>
+                <td data-label="Route / stay" className="max-w-[260px] px-2 py-3 align-top">
                   <p className="font-semibold text-[#111827]">{routeLabel(search.origin, search.destination)}</p>
                   {formatSearchDates(search.checkIn, search.checkOut) ? (
                     <p className="mt-0.5 text-[11px] leading-4 text-[#6B7280]">{formatSearchDates(search.checkIn, search.checkOut)}</p>
                   ) : null}
                 </td>
-                <td className="whitespace-nowrap px-2 py-3 align-top">{search.currency || "—"}</td>
-                <td className="px-2 py-3 align-top">{formatNumber(search.resultCount)}</td>
-                <td className="px-2 py-3 align-top" title={search.providerTelemetry ? [search.providers.join(", "), search.providerTelemetry.successful + " successful", search.providerTelemetry.failed + " failed", search.providerTelemetry.degraded + " degraded", search.providerTelemetry.disabled + " disabled"].filter(Boolean).join(" · ") : "No exact provider telemetry recorded"}>{search.providerTelemetry ? search.providerTelemetry.total : "—"}</td>
-                <td className="whitespace-nowrap px-2 py-3 align-top">{formatLatency(search.latencyMs)}</td>
-                <td className="px-2 py-3 align-top">{identityLabel(search.identity.kind)}</td>
-                <td className="px-2 py-3 align-top"><MonitorStatus status={search.status} /></td>
+                <td data-label="Currency" className="whitespace-nowrap px-2 py-3 align-top">{search.currency || "—"}</td>
+                <td data-label="Results" className="px-2 py-3 align-top">{formatNumber(search.resultCount)}</td>
+                <td data-label="Providers" className="px-2 py-3 align-top" title={search.providerTelemetry ? [search.providers.join(", "), search.providerTelemetry.successful + " successful", search.providerTelemetry.failed + " failed", search.providerTelemetry.degraded + " degraded", search.providerTelemetry.disabled + " disabled"].filter(Boolean).join(" · ") : "No exact provider telemetry recorded"}>{search.providerTelemetry ? search.providerTelemetry.total : "—"}</td>
+                <td data-label="Duration" className="whitespace-nowrap px-2 py-3 align-top">{formatLatency(search.latencyMs)}</td>
+                <td data-label="Identity" className="px-2 py-3 align-top">{identityLabel(search.identity.kind)}</td>
+                <td data-label="Status" className="px-2 py-3 align-top"><MonitorStatus status={search.status} /></td>
               </tr>
             ))}
           </tbody>

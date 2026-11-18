@@ -36,7 +36,7 @@ export function ConfirmedTripRecordsTable({ rows }: Props) {
   return (
     <div className="min-w-0">
       <div role="region" aria-label="Matching confirmed trip records" tabIndex={0}
-        className="max-w-full overflow-x-auto rounded-lg border border-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
+        className="admin-responsive-records max-w-full overflow-x-auto rounded-lg border border-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
         <table className="w-full min-w-[1080px] table-fixed text-left text-xs">
           <caption className="sr-only">Provider-confirmed trip records. Each row links to the existing read-only details page.</caption>
           <colgroup>
@@ -59,33 +59,33 @@ export function ConfirmedTripRecordsTable({ rows }: Props) {
           <tbody className="divide-y divide-slate-100">
             {rows.length ? rows.map(trip => (
               <tr key={trip.id} className="align-top hover:bg-slate-50/70">
-                <td className="px-3 py-3">
+                <td data-label="Created" className="px-3 py-3">
                   <time dateTime={trip.createdAt} className="block text-xs font-medium leading-5 text-slate-900">{dateTime.format(new Date(trip.createdAt))}</time>
                 </td>
-                <td className="px-3 py-3">
+                <td data-label="Type" className="px-3 py-3">
                   <span className="text-[11px] font-semibold leading-4 text-indigo-700">{trip.tripType}</span>
                 </td>
-                <td className="min-w-0 px-3 py-3">
+                <td data-label="Trip" className="min-w-0 px-3 py-3">
                   <p className="break-words text-xs font-medium leading-5 text-slate-900">{trip.origin ? trip.origin + " → " + trip.destination : trip.destination}</p>
                   <p className="mt-0.5 text-[11px] leading-4 text-slate-500">{trip.travelerCount} traveler{trip.travelerCount === 1 ? "" : "s"}</p>
                 </td>
-                <td className="min-w-0 px-3 py-3">
+                <td data-label="Travel dates" className="min-w-0 px-3 py-3">
                   <TripDate value={trip.departureDate} />
                   {trip.returnDate ? <><span className="text-[11px] leading-4 text-slate-400">to</span><TripDate value={trip.returnDate} /></> : null}
                 </td>
-                <td className="min-w-0 px-3 py-3">
+                <td data-label="Provider" className="min-w-0 px-3 py-3">
                   <p className="break-words text-xs font-medium leading-5 text-slate-900">{trip.providerName}</p>
                   <p className="mt-0.5 break-all text-[11px] leading-4 text-slate-500">{trip.providerConfirmationCode}</p>
                 </td>
-                <td className="min-w-0 px-3 py-3">
+                <td data-label="Identity" className="min-w-0 px-3 py-3">
                   <p className="text-[11px] font-semibold leading-4 text-slate-700">Registered</p>
                   <p className="mt-0.5 break-all text-xs leading-5 text-slate-900">{trip.userEmail || "Email unavailable"}</p>
                   <p className="mt-0.5 break-all text-[11px] leading-4 text-slate-500">{trip.userId}</p>
                 </td>
-                <td className="px-3 py-3">
+                <td data-label="Status" className="px-3 py-3">
                   <Status value={trip.status} needsReview={trip.needsStatusReview} />
                 </td>
-                <td className="px-3 py-3">
+                <td data-label="Action" className="px-3 py-3">
                   <Link href={"/admin/confirmed-trips/records/" + encodeURIComponent(trip.id)}
                     aria-label={"View details for confirmation " + trip.providerConfirmationCode}
                     className="inline-flex min-h-8 items-center gap-1 rounded-md text-xs font-semibold text-indigo-700 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2">
@@ -95,7 +95,7 @@ export function ConfirmedTripRecordsTable({ rows }: Props) {
               </tr>
             )) : (
               <tr>
-                <td colSpan={8} className="px-4 py-8 text-center text-sm text-slate-600">No trips match the selected filters.</td>
+                <td data-empty-row colSpan={8} className="px-4 py-8 text-center text-sm text-slate-600">No trips match the selected filters.</td>
               </tr>
             )}
           </tbody>

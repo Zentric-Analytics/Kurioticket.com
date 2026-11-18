@@ -2749,3 +2749,95 @@ textarea {
     overscroll-behavior: contain;
   }
 }
+
+/* Full-width operational tables become readable record panels inside the
+   narrower department workspace; preserve all fields, links and actions. */
+@media (max-width: 1535px) {
+  .admin-responsive-records {
+    overflow-x: visible;
+    width: 100%;
+    max-width: 100%;
+  }
+  .admin-responsive-records table,
+  .admin-responsive-records tbody {
+    display: block;
+    min-width: 0;
+    width: 100%;
+  }
+  .admin-responsive-records table colgroup,
+  .admin-responsive-records table thead {
+    display: none;
+  }
+  .admin-responsive-records tbody {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+    padding: 12px 0;
+  }
+  .admin-responsive-records tbody > tr:not([hidden]) {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px 18px;
+    height: auto;
+    min-height: 0;
+    min-width: 0;
+    padding: 14px;
+    border: 1px solid #d8e1ec;
+    border-radius: 10px;
+    background: #fff;
+  }
+  .admin-responsive-records tbody > tr[hidden] {
+    display: none !important;
+  }
+  .admin-responsive-records tbody > tr > td,
+  .admin-responsive-records tbody > tr > th[scope="row"] {
+    display: block;
+    width: auto;
+    min-width: 0;
+    max-width: 100%;
+    padding: 0;
+    border: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .admin-responsive-records tbody > tr > td:not([data-empty-row]):not([data-detail-panel])::before,
+  .admin-responsive-records tbody > tr > th[scope="row"]::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 4px;
+    color: #64748b;
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 1.4;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+  }
+  .admin-responsive-records tbody > tr > td[data-empty-row],
+  .admin-responsive-records tbody > tr > td[data-detail-panel] {
+    grid-column: 1 / -1;
+  }
+  .admin-responsive-records tbody > tr > td[data-empty-row] {
+    padding: 16px 4px;
+  }
+  .admin-responsive-records tbody > tr > td[data-detail-panel] {
+    border-left: 2px solid #004bb8;
+    padding: 10px 12px;
+  }
+  .admin-responsive-records tbody > tr > td a {
+    position: relative;
+    z-index: 1;
+  }
+  .admin-responsive-records tbody > tr > td .truncate {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .admin-responsive-records tbody > tr > td .whitespace-nowrap,
+  .admin-responsive-records tbody > tr > td time {
+    white-space: normal;
+  }
+}
+@media (min-width: 1280px) and (max-width: 1535px) {
+  .admin-responsive-records tbody {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
