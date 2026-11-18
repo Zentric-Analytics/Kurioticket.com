@@ -61,7 +61,7 @@ test("Activity and Support use white non-Overview workspaces while preserving au
   assert.match(shell, /const accountDeletionDetail = accountDeletionParts\.length === 3/);
   assert.match(shell, /accountDeletionParts\[1\] === "account-deletions"/);
   assert.match(shell, /const visitorJourneysWorkspace = pathname === "\/admin\/journeys" \|\| pathname\.startsWith\("\/admin\/journeys\/"\)/);
-  assert.match(shell, /const whiteWorkspace = .*usersDirectory \|\| visitorJourneysWorkspace \|\| searchesWorkspace \|\| supportWorkspace\s+\|\| providersWorkspace \|\| providerReportingWorkspace \|\| hotelCarsWorkspace \|\| accountDeletionWorkspace \|\| accountDeletionDetail \|\| contentWorkspace \|\| notificationsWorkspace \|\| homepageFaresWorkspace;/);
+  assert.match(shell, /const whiteWorkspace = .*usersDirectory \|\| visitorJourneysWorkspace \|\| searchesWorkspace \|\| supportWorkspace\s+\|\| providersWorkspace \|\| providerReportingWorkspace \|\| hotelCarsWorkspace \|\| accountDeletionWorkspace \|\| accountDeletionDetail \|\| contentWorkspace \|\| notificationsWorkspace \|\| homepageFaresWorkspace \\|\\| !isOverview;/);
   assert.match(shell, /const hotelCarsWorkspace = pathname === "\/admin\/hotels" \|\| pathname === "\/admin\/hotels\/" \|\| pathname === "\/admin\/cars" \|\| pathname === "\/admin\/cars\/";/);
   assert.match(shell, /whiteWorkspace \? "bg-white" : "bg-\[#f1f5fb\]"/);
   assert.match(page, /space-y-6 bg-white/);
