@@ -105,8 +105,8 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
 
               </div>
 
-              <div className="flex min-w-0 flex-wrap items-end gap-x-3 gap-y-3 py-4 sm:gap-x-4">
-                <div className="w-[155px] max-w-full">
+              <div className="grid min-w-0 grid-cols-2 items-end gap-2 py-4 sm:grid-cols-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.1fr)_minmax(0,1.2fr)_minmax(0,1fr)_auto] lg:gap-2.5">
+                <div className="min-w-0">
                   <SearchMonitorSelect label="Date range" name="range" value={range}
                     appearance="fare"
                     options={[
@@ -117,7 +117,7 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
                       ...(range === "custom" ? [{ value: "custom", label: "Custom" }] : []),
                     ]} />
                 </div>
-                <div className="w-[148px] max-w-full">
+                <div className="min-w-0">
                   <SearchMonitorSelect label="Outcome" appearance="fare" name="status"
                     value={one(raw.status)}
                     options={[
@@ -127,7 +127,7 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
                       { value: "FAILED", label: "Failed" },
                     ]} />
                 </div>
-                <div className="w-[160px] max-w-full">
+                <div className="min-w-0">
                   <SearchMonitorSelect label="Identity" appearance="fare" name="identity"
                     value={one(raw.identity) || "all"}
                     clearFieldNamesOnChange={["userId", "visitorId"]}
@@ -138,11 +138,11 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
                       { value: "unattributed", label: "Unattributed" },
                     ]} />
                 </div>
-                <div className="w-[195px] max-w-full">
+                <div className="min-w-0">
                   <SearchMonitorSelect label="Provider" appearance="fare" name="provider"
                     value={one(raw.provider)} options={providerOptions} truncateLabel />
                 </div>
-                <div className="w-[175px] max-w-full">
+                <div className="min-w-0">
                   <SearchMonitorSelect label="Application" appearance="fare" name="applicationSource"
                     value={one(raw.applicationSource)}
                     options={platformOptions.map(option => ({
@@ -151,7 +151,7 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
                     }))} />
                 </div>
                 <button type="submit"
-                  className="inline-flex h-10 shrink-0 items-center justify-center rounded-lg bg-[#004BB8] px-4 text-[13px] font-medium text-white transition-colors hover:bg-[#003D97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
+                  className="inline-flex h-10 w-full items-center justify-center whitespace-nowrap rounded-lg bg-[#004BB8] px-4 text-[13px] font-medium text-white transition-colors hover:bg-[#003D97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] lg:w-auto">
                   Apply filters
                 </button>
               </div>

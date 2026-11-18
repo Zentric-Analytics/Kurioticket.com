@@ -369,8 +369,14 @@ test("Task 3: standalone handoffs preserve filters, records and next-cursor beha
   assert.match(handoffsPage, /<ProviderHandoffFilters/);
   assert.match(handoffFilters, /aria-label="Filter provider handoffs"/);
   assert.match(handoffsPage, /aria-label="Provider handoff records"/);
-  assert.match(handoffsPage, /w-full min-w-0 table-fixed/);
-  assert.match(handoffsPage, /admin-responsive-records/);
+  // The standalone records table has a readable minimum width so narrow
+  // viewports scroll horizontally instead of crushing Search link and Action.
+  assert.match(handoffsPage, /w-full min-w-\[1320px\] table-fixed/);
+  assert.match(handoffsPage, /max-w-full overflow-x-auto/);
+  assert.match(handoffsPage, /<colgroup>/);
+  assert.match(handoffsPage, /whitespace-nowrap px-2 py-3 text-left font-medium/);
+  assert.match(handoffsPage, /whitespace-nowrap py-3 pl-2 pr-2/);
+  assert.doesNotMatch(handoffsPage, /className="admin-responsive-records mt-3/);
   assert.doesNotMatch(handoffsPage, /min-w-\[1080px\]/);
   for (const field of ["product", "identity", "correlation", "provider", "environment"]) {
     assert.match(handoffsPage, new RegExp('name="' + field + '"'));

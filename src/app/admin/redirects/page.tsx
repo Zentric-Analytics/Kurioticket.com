@@ -121,9 +121,9 @@ export default async function AdminRedirectsPage({ searchParams, embedded = fals
           </div>
         ) : (
           <>
-            <div className="admin-responsive-records mt-3 w-full min-w-0 overflow-x-auto" role="region"
+            <div className="mt-3 w-full min-w-0 max-w-full overflow-x-auto" role="region"
               aria-label="Provider handoff records" tabIndex={0}>
-              <table className="w-full min-w-0 table-fixed text-[12px] leading-5">
+              <table className="w-full min-w-[1320px] table-fixed text-[12px] leading-5">
                 <caption className="sr-only">
                   Recorded provider handoffs including the recorded time, product,
                   provider, route, price, source, destination, identity, search correlation and record action.
@@ -131,19 +131,19 @@ export default async function AdminRedirectsPage({ searchParams, embedded = fals
                 <colgroup>
                   <col className="w-[12%]" />
                   <col className="w-[7%]" />
-                  <col className="w-[13%]" />
-                  <col className="w-[12%]" />
-                  <col className="w-[8%]" />
+                  <col className="w-[10%]" />
+                  <col className="w-[14%]" />
+                  <col className="w-[7%]" />
                   <col className="w-[11%]" />
-                  <col className="w-[13%]" />
                   <col className="w-[12%]" />
-                  <col className="w-[8%]" />
-                  <col className="w-[4%]" />
+                  <col className="w-[13%]" />
+                  <col className="w-[9%]" />
+                  <col className="w-[5%]" />
                 </colgroup>
                 <thead className="border-y border-[#D8E1EC] text-[#475569]">
                   <tr>
                     {["Created", "Product", "Provider", "Route / property", "Price", "Source", "Destination", "Identity", "Search link", "Action"].map(label => (
-                      <th key={label} scope="col" className="px-2 py-3 text-left font-medium first:pl-0">
+                      <th key={label} scope="col" className="whitespace-nowrap px-2 py-3 text-left font-medium first:pl-0">
                         {label}
                       </th>
                     ))}
@@ -160,20 +160,20 @@ export default async function AdminRedirectsPage({ searchParams, embedded = fals
                         {handoff.price ? handoff.currency + " " + handoff.price : "—"}
                       </td>
                       <td data-label="Source" className="break-all px-2 py-3 text-[#475569]">{handoff.sourcePage || "—"}</td>
-                      <td data-label="Destination" className="break-all px-2 py-3 text-[#475569]">{handoff.destinationDomain || "—"}</td>
+                      <td data-label="Destination" className="break-words px-2 py-3 text-[#475569]">{handoff.destinationDomain || "—"}</td>
                       <td data-label="Identity" className="min-w-0 px-2 py-3">
                         <span className="block font-medium">{handoff.identity.kind}</span>
                         <span className="block break-all text-[11px] text-[#64748B]">
                           {handoff.identity.userId || handoff.identity.visitorId || "—"}
                         </span>
                       </td>
-                      <td data-label="Search link" className="break-words px-2 py-3">
+                      <td data-label="Search link" className="whitespace-nowrap px-2 py-3">
                         <span className={handoff.searchCorrelation.kind === "exact"
                           ? "font-medium text-emerald-700" : "text-[#64748B]"}>
                           {handoff.searchCorrelation.kind === "exact" ? "Exact" : "Unavailable"}
                         </span>
                       </td>
-                      <td data-label="Action" className="py-3 pl-2">
+                      <td data-label="Action" className="whitespace-nowrap py-3 pl-2 pr-2">
                         <Link href={handoffDetailHref(handoff.id, handoff.environment, raw)}
                           className="font-medium text-[#004BB8] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
                           Open
