@@ -195,7 +195,8 @@ try {
     await expect(outerCard.locator('section[aria-label="Activity summary"] button[aria-label="About activity data"]')).toHaveCount(0);
     await expect(outerCard.locator('section[aria-label="Activity summary"] [role="tooltip"]')).toHaveCount(0);
     await expect(page.getByRole("button",{name:/Manage guest/})).toHaveCount(0);
-    await expect(page.getByRole("button",{name:"Apply Filter"})).toHaveCount(0);
+    await expect(page.getByRole("button",{name:"Apply Filter",exact:true})).toHaveCount(0);
+    await expect(page.getByRole("button",{name:"Apply filters",exact:true})).toBeVisible();
     await expect(page.getByRole("button",{name:"Date range: Last 24 hours"})).toBeVisible();
     await expect(page.getByRole("button",{name:"Activity product: All products"})).toBeVisible();
     await expect(page.getByRole("button",{name:"Activity type: All activity types"})).toBeVisible();
