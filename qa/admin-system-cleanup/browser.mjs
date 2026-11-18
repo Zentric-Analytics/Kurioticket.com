@@ -133,7 +133,7 @@ try {
           await expect(main.getByRole("combobox", { name: "Target type" })).toBeVisible();
           await expect(main.getByPlaceholder("Search admin email")).toBeVisible();
           await expect(main.getByPlaceholder("Search target email")).toBeVisible();
-          await expect(main.getByRole("button", { name: "Apply filters", exact: true })).toHaveCount(0);
+          await expect(main.getByRole("button", { name: "Apply filters", exact: true })).toBeVisible();
           await expect(main.getByRole("link", { name: "Clear filters", exact: true })).toHaveCount(0);
           await expect(main.getByText("Security-sensitive admin and system actions.", { exact: false })).toHaveCount(0);
           await expect(main.getByText(/newest records on this page/)).toHaveCount(0);

@@ -241,29 +241,28 @@ test("CMS all-market navigation preserves draft search, selected market and over
   });
 });
 
-test("Audit Logs preserves same-scope drafts, synchronizes committed filters and cancels custom dates", async () => {
-  const props = { action: "", adminEmail: "", targetType: "", targetEmail: "", range: "7d", fromDate: "2030-01-01", toDate: "2030-01-02", pageHref: "/admin/logs?range=7d" };
+test("Audit Logs drafts never fetch until Apply filters and preserve typed values", async () => {
+  const props = { action: "", adminEmail: "", targetType: "", targetEmail: "", range: "24h", fromDate: "", toDate: "", pageHref: "/admin/logs?range=24h" };
   await withComponentBrowser(bundle(), mount("audit", "AdminAuditLogsToolbar", props), async page => {
     const admin = page.getByRole("searchbox", { name: "Search admin email", exact: true });
     await admin.fill("draft@example.test");
-    await page.evaluate(props => (window as unknown as { fixtureRender: (props: unknown) => void }).fixtureRender(props), props);
-    assert.equal(await admin.inputValue(), "draft@example.test");
     await page.getByRole("combobox", { name: "Date range", exact: true }).click();
-    await page.getByRole("option", { name: "Custom range", exact: true }).click();
-    await page.getByLabel("Custom start date UTC", { exact: true }).fill("2030-01-03");
-    await page.evaluate(props => (window as unknown as { fixtureRender: (props: unknown) => void }).fixtureRender(props), { ...props, adminEmail: "server@example.test", pageHref: "/admin/logs?range=7d&action=CMS", action: "CMS" });
-    assert.equal(await admin.inputValue(), "draft@example.test", "older server results must preserve active typing");
-    assert.equal(await page.getByLabel("Custom start date UTC", { exact: true }).inputValue(), "2030-01-03", "committed filters must not erase open date editing");
-    await page.getByRole("button", { name: "Cancel", exact: true }).click();
-    assert.equal(await page.getByLabel("Custom start date UTC", { exact: true }).count(), 0);
-    await page.getByRole("combobox", { name: "Date range", exact: true }).click();
-    await page.getByRole("option", { name: "Custom range", exact: true }).click();
-    assert.equal(await page.getByLabel("Custom start date UTC", { exact: true }).inputValue(), props.fromDate);
+    await page.getByRole("option", { name: "Last 7 days", exact: true }).click();
+    await page.getByRole("combobox", { name: "Action", exact: true }).click();
+    await page.getByRole("option", { name: "CMS actions", exact: true }).click();
+    await page.getByRole("combobox", { name: "Target type", exact: true }).click();
+    await page.getByRole("option", { name: "Provider", exact: true }).click();
     await page.waitForTimeout(350);
-    const urls = await page.evaluate(() => (window as unknown as { fixtureNavigation: string[] }).fixtureNavigation);
-    assert.equal(new URL(urls.at(-1)!, "http://fixture.local").searchParams.get("adminEmail"), "draft@example.test");
-    await page.evaluate(() => { history.replaceState(null, "", "?range=7d&adminEmail=history%40example.test"); window.dispatchEvent(new PopStateEvent("popstate")); });
-    await page.waitForFunction(() => (document.querySelector('input[placeholder="Search admin email"]') as HTMLInputElement)?.value === "history@example.test");
+    assert.deepEqual(await page.evaluate(() => (window as unknown as { fixtureNavigation: string[] }).fixtureNavigation), []);
+    assert.equal(await admin.inputValue(), "draft@example.test");
+    await page.getByRole("button", { name: "Apply filters", exact: true }).click();
+    await page.waitForFunction(() => (window as unknown as { fixtureNavigation: string[] }).fixtureNavigation.length === 1);
+    const href = await page.evaluate(() => (window as unknown as { fixtureNavigation: string[] }).fixtureNavigation[0]);
+    const url = new URL(href, "http://fixture.local");
+    assert.equal(url.searchParams.get("range"), "7d");
+    assert.equal(url.searchParams.get("action"), "CMS");
+    assert.equal(url.searchParams.get("targetType"), "Provider");
+    assert.equal(url.searchParams.get("adminEmail"), "draft@example.test");
   });
 });
 
