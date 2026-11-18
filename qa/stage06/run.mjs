@@ -47,7 +47,22 @@ try{
   await page.goto(base+'/admin/platform-health',{waitUntil:'networkidle',timeout:120000});await expect(page.getByRole('heading',{name:'Platform Health',exact:true}).first()).toBeAttached();await expect(page.getByText('Search operations',{exact:true})).toBeVisible();
   if(width<1100){await page.getByRole('button',{name:'Open admin navigation'}).click();await expect(page.getByRole('link',{name:'Platform Health',exact:true})).toBeVisible();await page.getByRole('button',{name:'Close admin navigation'}).click();}
   await page.keyboard.press('Control+k');await page.getByRole('textbox',{name:'Search admin workspaces and records'}).fill('Platform Health');await expect(page.getByRole('link',{name:/Platform Health.*Workspace/})).toBeVisible();await page.keyboard.press('Escape');
-  await expect(page.getByLabel('Application',{exact:true})).toHaveValue('ALL');await page.getByLabel('Application',{exact:true}).focus();await page.keyboard.press('i');await page.keyboard.press('Enter');await page.getByLabel('Application',{exact:true}).selectOption('IOS');await page.getByLabel('Activity window',{exact:true}).selectOption('168');await page.getByRole('button',{name:'Apply view',exact:true}).click();await expect(page).toHaveURL(/application=IOS/);await expect(page.getByRole('heading',{name:'iOS activity'})).toBeVisible();
+  const applicationSelect=page.getByRole('combobox',{name:'Application',exact:true});
+  await expect(applicationSelect).toContainText('All Platforms');
+  await applicationSelect.click();
+  await expect(page.getByRole('listbox',{name:'Application'})).toBeVisible();
+  await page.getByRole('listbox',{name:'Application'}).press('i');
+  await page.getByRole('listbox',{name:'Application'}).press('Enter');
+  await expect(applicationSelect).toContainText('iOS');
+  await expect(page.locator('form[aria-label="Platform health filters"] input[name="application"]')).toHaveValue('IOS');
+  const windowSelect=page.getByRole('combobox',{name:'Activity window',exact:true});
+  await windowSelect.click();
+  await page.getByRole('listbox',{name:'Activity window'}).getByRole('option',{name:'Last 7 days'}).click();
+  await expect(page.locator('form[aria-label="Platform health filters"] input[name="hours"]')).toHaveValue('168');
+  await page.getByRole('button',{name:'Apply view',exact:true}).click();
+  await expect(page).toHaveURL(/application=IOS/);
+  await expect(page).toHaveURL(/hours=168/);
+  await expect(page.getByRole('heading',{name:'iOS activity'})).toBeVisible();
   const overflow=await page.evaluate(()=>({document:document.documentElement.scrollWidth,viewport:innerWidth}));expect(overflow.document).toBeLessThanOrEqual(width+1);
   const runningMotion=await page.locator('[data-platform-health]').evaluate(el=>el.getAnimations({subtree:true}).filter(a=>a.playState==='running').length);expect(runningMotion).toBe(0);
   const table=page.getByRole('region',{name:'Scheduled-job observations table'});await table.focus();await page.keyboard.press('ArrowRight');expect(await table.evaluate(el=>el.scrollWidth>=el.clientWidth)).toBeTruthy();
@@ -56,7 +71,7 @@ try{
   expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(width+1);await page.screenshot({path:path.join(output,'search-'+width+'.png'),fullPage:true});
   await page.setExtraHTTPHeaders({'x-qa-unavailable':'1'});await page.goto(base+'/admin/platform-health',{waitUntil:'networkidle'});await expect(page.getByText('Telemetry could not be read')).toHaveCount(3);await page.setExtraHTTPHeaders({});await page.getByRole('button',{name:'Refresh observations'}).click();await expect(page.getByText('Recorded operations · sample size')).toHaveCount(3);
   await page.goto(base+'/admin/platform-health?hours=24&hours=168');await expect(page.getByRole('alert')).toContainText('Choose one application');
-  expect(errors).toEqual([]);results.push({width,overflow,keyboardNativeFilters:true,filterNavigation:true,detailBackContext:true,unknown:true,unavailableRefreshRecovery:true,reducedMotion:true,runningMotion,pageErrors:errors});await context.close();
+  expect(errors).toEqual([]);results.push({width,overflow,keyboardPolishedFilters:true,filterNavigation:true,detailBackContext:true,unknown:true,unavailableRefreshRecovery:true,reducedMotion:true,runningMotion,pageErrors:errors});await context.close();
  }
  const denied=await browser.newContext({extraHTTPHeaders:{'x-qa-role':'SUPPORT'}});const page=await denied.newPage();await page.goto(base+'/admin/platform-health');await expect(page).toHaveURL(/auth\/signin/);await expect(page.getByText('QA admin access required')).toBeVisible();await denied.close();
  await writeFile(path.join(output,'results.json'),JSON.stringify({scope:'Real Next pages/components and CSS with isolated synthetic auth/readers; not staging or production evidence',results,deniedFixtureRole:true},null,2));
