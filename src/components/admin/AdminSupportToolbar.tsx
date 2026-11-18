@@ -156,7 +156,7 @@ export function AdminSupportToolbar({ query, status, priority, category, pageHre
         </form>
       </div>
 
-      <div className="flex min-w-0 flex-col gap-x-4 gap-y-2 border-b border-border lg:flex-row lg:items-end lg:justify-between">
+      <div className="flex min-w-0 flex-col gap-x-4 gap-y-2 border-b border-border 2xl:flex-row 2xl:items-end 2xl:justify-between">
         <nav aria-label="Support ticket status" className="flex min-w-0 max-w-full shrink-0 items-center gap-5 overflow-x-auto">
           {supportStatusTabs.map(item => {
             const active = status === item.value;
@@ -182,7 +182,7 @@ export function AdminSupportToolbar({ query, status, priority, category, pageHre
           method="get"
           aria-label="Filter support tickets"
           onSubmit={applyFilters}
-          className="grid min-w-0 grid-cols-1 items-end gap-2 sm:grid-cols-[minmax(0,160px)_minmax(0,160px)_auto] lg:shrink-0 lg:justify-end"
+          className="grid min-w-0 grid-cols-1 items-end gap-2 sm:grid-cols-[minmax(0,160px)_minmax(0,160px)_auto] sm:justify-end 2xl:shrink-0"
         >
           {["q", "status", "from", "to", "limit"].map(key => base.get(key)
             ? <input key={key} type="hidden" name={key} value={base.get(key) ?? ""} readOnly />
