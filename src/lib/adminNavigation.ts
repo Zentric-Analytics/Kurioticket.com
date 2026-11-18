@@ -169,10 +169,9 @@ const workspaceSections: ReadonlyArray<{
   },
   {
     label: "System",
-    paths: ["/admin/system", "/admin/platform-health", "/admin/logs", "/admin/email-delivery"],
+    paths: ["/admin/system", "/admin/logs", "/admin/email-delivery"],
     links: [
       { href: "/admin/system", label: "System Overview" },
-      { href: "/admin/platform-health", label: "Platform Health" },
       { href: "/admin/logs", label: "Audit Logs" },
       { href: "/admin/system/cms-health", label: "CMS Health" },
       { href: "/admin/email-delivery", label: "Email Delivery" },

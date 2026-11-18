@@ -50,8 +50,6 @@ export default async function HomepageCmsSectionPage({ params, searchParams }: P
         wide
         title={config.title}
         subtitle="Review the current content status."
-        backHref={nav.backHref}
-        backLabel={nav.backLabel}
       >
         <CmsScopeUnavailable available={Boolean(summary?.available)} partial={Boolean(readiness?.hasExistingHomepageData)} />
       </ContentPageFrame>
@@ -84,8 +82,6 @@ export default async function HomepageCmsSectionPage({ params, searchParams }: P
       wide
       title={config.title}
       subtitle={allowedMarket === "ALL" ? "Manage drafts and published content across all markets." : "Manage drafts and published content."}
-      backHref={nav.backHref}
-      backLabel={nav.backLabel}
       actions={<CmsCreateLink path={`/admin/content/homepage/${section}/new`} label={`Add ${config.singular}`} />}
     >
       <div className="space-y-4">
