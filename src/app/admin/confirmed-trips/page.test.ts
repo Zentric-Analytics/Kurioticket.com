@@ -302,7 +302,7 @@ test("Trips rely on the sidebar while preserving monitoring panels", () => {
   for (const source of [page, loading, monitoringPage, monitoringLoading]) {
     assert.doesNotMatch(source, /<TripWorkspaceNavigation|Trip reporting sections/);
   }
-  assert.match(navigation, /href: "\/admin\/confirmed-trips\/monitoring", label: "Trip monitoring"/);
+  assert.match(navigation, /href: "\/admin\/confirmed-trips\/monitoring", label: "Trip Monitoring"/);
   assert.match(monitoringLoading, /<section aria-label="Trip monitoring details" aria-busy="true" className="min-w-0 pt-6">/);
   assert.match(monitoringLoading, /id="trip-confirmations-panel"/);
   assert.match(monitoringLoading, /id="trip-flight-status-panel"/);
