@@ -14,7 +14,8 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-import { AdminOverviewAutoRefresh, AdminOverviewRangeSelect, AdminOverviewRangeSensitive, type OverviewRange } from "@/components/admin/AdminOverviewControls";
+import { ActivityDataInfo } from "@/components/admin/ActivityDataInfo";
+import { AdminOverviewRangeSensitive } from "@/components/admin/AdminOverviewControls";
 import type { getAdminOverview } from "@/services/adminOverviewService";
 import type { getRecentAdminActivity, getSafeSystemStatus } from "@/lib/admin-data";
 
@@ -92,14 +93,15 @@ function MiniMetric({
   );
 }
 
-function SnapshotLink({ label, value, href, icon: Icon, hint }: {
+function SnapshotLink({ label, value, href, icon: Icon, hint, info }: {
   label: string;
   value: number | string;
   href: string;
   icon: LucideIcon;
-  hint: string;
+  hint?: string;
+  info?: React.ReactNode;
 }) {
-  return (
+  const link = (
     <Link href={href} className="focus-ring group flex h-full min-w-0 flex-col rounded-lg border border-slate-200 px-3 py-2 transition hover:border-indigo-300 hover:bg-indigo-50/30">
       <div className="flex items-center justify-between gap-2">
         <Icon size={17} className="text-indigo-700" aria-hidden="true" />
@@ -109,9 +111,16 @@ function SnapshotLink({ label, value, href, icon: Icon, hint }: {
       <p className="mt-0.5 min-w-0 break-words text-[22px] font-semibold leading-[26px] tabular-nums tracking-tight text-slate-950">
         {typeof value === "number" ? count(value) : value}
       </p>
-      <p className="mt-1 min-w-0 break-words text-[11px] leading-4 text-slate-600">{hint}</p>
+      {hint ? <p className="mt-1 min-w-0 break-words text-[11px] leading-4 text-slate-600">{hint}</p> : null}
     </Link>
   );
+
+  return info ? (
+    <div className="relative min-w-0">
+      {link}
+      <div className="absolute right-8 top-1">{info}</div>
+    </div>
+  ) : link;
 }
 
 function AttentionLink({ label, value, href, icon: Icon, tone }: {
@@ -193,11 +202,10 @@ export function AdminOverviewSecondary({ system, activity }: { system: SystemSta
   );
 }
 
-export function AdminOverviewDashboard({ data, system, activity, range }: {
+export function AdminOverviewDashboard({ data, system, activity }: {
   data: OverviewData;
   system: SystemStatus;
   activity: AuditActivity;
-  range: OverviewRange;
 }) {
   const stages = data.journeys.stages;
   const supportAttention = data.support.open + data.support.waitingOnTeam + data.support.waitingOnUser;
@@ -205,25 +213,25 @@ export function AdminOverviewDashboard({ data, system, activity, range }: {
   const providerAttention = data.providers.filter((p) =>
     p.operationalState === "DEGRADED" || p.operationalState === "FAILING" || p.operationalState === "NOT_READY"
   ).length;
-  const websiteActive = data.websitePresence.status === "ok"
-    ? data.websitePresence.total
+  const onlineUsers = data.onlinePresence.status === "ok"
+    ? data.onlinePresence.total
     : "Unavailable";
 
   return (
     <div className="min-w-0 space-y-3">
-      <AdminOverviewAutoRefresh />
-
       <section aria-label="Operations Snapshot" className="min-w-0">
-        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <h2 className="text-[16px] font-semibold tracking-tight text-slate-950">Operations Snapshot</h2>
-            <p className="mt-1 text-xs text-slate-600">Current accounts and selected-range activity at a glance.</p>
-          </div>
-          <AdminOverviewRangeSelect range={range} />
-        </div>
+        <h2 className="mb-2 text-[16px] font-semibold tracking-tight text-slate-950">Operations Snapshot</h2>
         <div className="grid gap-2 sm:grid-cols-2 min-[56.25rem]:grid-cols-4">
           <SnapshotLink href="/admin/users" label="Total accounts" value={data.users.total} icon={Users} hint="Current account records" />
-          <SnapshotLink href="/admin/users" label="Active website users" value={websiteActive} icon={Activity} hint="Consented website identities · last 90s" />
+          <SnapshotLink href="/admin/users" label="Online Users" value={onlineUsers} icon={Activity}
+            info={(
+              <ActivityDataInfo label="How Online Users are counted">
+                Activity in the last {data.onlinePresence.windowSeconds} seconds on web, Android, and iOS.
+                Counts each verified account once across devices and each recognized guest session once.
+                A person can have multiple guest sessions.
+              </ActivityDataInfo>
+            )}
+          />
           <AdminOverviewRangeSensitive fill>
             <SnapshotLink href="/admin/searches/activity" label="Recorded searches" value={data.journeys.operationalSearches.total} icon={Search} hint="Selected reporting range" />
           </AdminOverviewRangeSensitive>
@@ -231,9 +239,6 @@ export function AdminOverviewDashboard({ data, system, activity, range }: {
             <SnapshotLink href="/admin/journeys" label="Customer journeys" value={data.journeys.journeys} icon={Route} hint="Eligible consented journeys · selected range" />
           </AdminOverviewRangeSensitive>
         </div>
-        <p className="mt-2 text-[11px] leading-5 text-slate-600">
-          Active website users excludes native-app activity and visitors who decline analytics; it does not count every person online.
-        </p>
       </section>
 
       {/* Independent content-height stacks keep the Overview concise; full provider diagnostics remain on /admin/providers. */}

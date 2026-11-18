@@ -3,69 +3,60 @@
 import { createContext, useContext, useEffect, useId, useRef, useState, useTransition, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { CalendarDays, Check, ChevronDown, LoaderCircle } from "lucide-react";
-
-export type OverviewRange = "24h" | "7d" | "30d";
+import { overviewPeriodHref, validOverviewCustomDates, type OverviewCustomDates, type OverviewPeriod, type OverviewRange } from "@/lib/adminOverviewRange";
 
 const rangeLabels: Record<OverviewRange, string> = {
   "24h": "Last 24 hours",
   "7d": "Last 7 days",
   "30d": "Last 30 days",
+  custom: "Custom range",
 };
 
 // One navigation state drives the selector and time-range-dependent summaries.
 // Current-range values remain authoritative until the new server data commits.
 type RangeTransitionValue = {
-  range: OverviewRange;
-  requestedRange: OverviewRange | null;
+  requestedPeriod: OverviewPeriod | null;
   isUpdating: boolean;
   error: string | null;
-  selectRange: (range: OverviewRange) => void;
+  selectPeriod: (period: OverviewPeriod) => void;
 };
 const RangeTransitionContext = createContext<RangeTransitionValue | null>(null);
 
-export function AdminOverviewRangeTransitionProvider({ range, children }: { range: OverviewRange; children: ReactNode }) {
+export function AdminOverviewRangeTransitionProvider({ period, children }: { period: OverviewPeriod; children: ReactNode }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [requestedRange, setRequestedRange] = useState<OverviewRange | null>(null);
-  const [failedRange, setFailedRange] = useState<OverviewRange | null>(null);
-  const sawPending = useRef(false);
-  const isUpdating = requestedRange !== null && requestedRange !== range;
+  const [requestedPeriod, setRequestedPeriod] = useState<OverviewPeriod | null>(null);
+  const [failedPeriod, setFailedPeriod] = useState<OverviewPeriod | null>(null);
+  const [wasPending, setWasPending] = useState(isPending);
+  const href = overviewPeriodHref(period);
+  const isUpdating = requestedPeriod !== null && overviewPeriodHref(requestedPeriod) !== href;
 
-  if (requestedRange !== null && requestedRange === range) setRequestedRange(null);
-  useEffect(() => {
-    if (requestedRange !== null && requestedRange === range) {
-      sawPending.current = false;
-    }
-  }, [range, requestedRange]);
-
-  useEffect(() => {
-    if (isPending) {
-      sawPending.current = true;
-    } else if (sawPending.current && isUpdating) {
+  if (wasPending !== isPending) {
+    setWasPending(isPending);
+    if (!isPending && isUpdating) {
       // Navigation ended without a new reporting period committing.
-      sawPending.current = false;
-      setFailedRange(requestedRange);
-      setRequestedRange(null);
+      setFailedPeriod(requestedPeriod);
+      setRequestedPeriod(null);
     }
-  }, [isPending, isUpdating, requestedRange]);
+  }
+  if (requestedPeriod !== null && !isUpdating) setRequestedPeriod(null);
 
-  const selectRange = (nextRange: OverviewRange) => {
-    if (isUpdating || isPending || nextRange === range) return;
-    setFailedRange(null);
-    setRequestedRange(nextRange);
-    sawPending.current = false;
+  const selectPeriod = (nextPeriod: OverviewPeriod) => {
+    const nextHref = overviewPeriodHref(nextPeriod);
+    if (isUpdating || isPending || nextHref === href) return;
+    setFailedPeriod(null);
+    setRequestedPeriod(nextPeriod);
     startTransition(() => {
-      router.push(nextRange === "24h" ? "/admin" : "/admin?range=" + encodeURIComponent(nextRange));
+      router.push(nextHref);
     });
   };
 
   return (
     <RangeTransitionContext.Provider value={{
-      range,
-      requestedRange,
+      requestedPeriod,
       isUpdating,
-      error: failedRange === null ? null : "Unable to load " + rangeLabels[failedRange] + ". Please try again.",
-      selectRange,
+      error: failedPeriod === null ? null : "Unable to load " + rangeLabels[failedPeriod.range] + ". Please try again.",
+      selectPeriod,
     }}>
       {children}
     </RangeTransitionContext.Provider>
@@ -95,8 +86,7 @@ export function AdminOverviewRangeSensitive({ children, fill = false }: { childr
   );
 }
 
-// Keep the established one-minute refresh even though the visible top toolbar
-// has been removed. Historical aggregates are still fetched from the server.
+// Refresh current presence and historical totals without replacing the selected period.
 export function AdminOverviewAutoRefresh() {
   const router = useRouter();
   const transition = useContext(RangeTransitionContext);
@@ -112,16 +102,29 @@ export function AdminOverviewAutoRefresh() {
   return null;
 }
 
-// The selector stays beside Operations Snapshot. A small custom listbox replaces
-// the OS-dependent native options menu so its typography and focus are consistent.
-const rangeOptions: OverviewRange[] = ["24h", "7d", "30d"];
+const rangeOptions: OverviewRange[] = ["24h", "7d", "30d", "custom"];
 
-export function AdminOverviewRangeSelect({ range }: { range: OverviewRange }) {
+export function AdminOverviewRangeSelect({ period, nowDate }: { period: OverviewPeriod; nowDate: string }) {
   const transition = useContext(RangeTransitionContext);
   if (!transition) throw new Error("AdminOverviewRangeSelect must be inside AdminOverviewRangeTransitionProvider");
   const pending = transition.isUpdating;
-  const requestedRange = transition.requestedRange;
+  const { range } = period;
+  const requestedRange = transition.requestedPeriod?.range;
   const [open, setOpen] = useState(false);
+  const [draftDates, setDraftDates] = useState<OverviewCustomDates | null>(null);
+  const href = overviewPeriodHref(period);
+  const [previousHref, setPreviousHref] = useState(href);
+  if (previousHref !== href) {
+    setPreviousHref(href);
+    setDraftDates(null);
+    setOpen(false);
+  }
+  const datePanelId = useId();
+  const startDateRef = useRef<HTMLInputElement>(null);
+  const isEditingDates = draftDates !== null;
+  useEffect(() => {
+    if (isEditingDates) startDateRef.current?.focus();
+  }, [isEditingDates]);
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const optionRefs = useRef<Array<HTMLButtonElement | null>>([]);
@@ -157,15 +160,27 @@ export function AdminOverviewRangeSelect({ range }: { range: OverviewRange }) {
   }, [open]);
 
   const openMenu = () => {
+    setDraftDates(null);
     initialFocusIndex.current = Math.max(0, rangeOptions.indexOf(range));
     setOpen(true);
   };
 
   const selectRange = (nextRange: OverviewRange) => {
     setOpen(false);
+    if (nextRange === "custom") {
+      setDraftDates(period.range === "custom"
+        ? { fromDate: period.fromDate, toDate: period.toDate }
+        : { fromDate: "", toDate: "" });
+      return;
+    }
+    setDraftDates(null);
     triggerRef.current?.focus();
-    if (nextRange === range) return;
-    transition.selectRange(nextRange);
+    transition.selectPeriod({ range: nextRange });
+  };
+
+  const closeDates = () => {
+    setDraftDates(null);
+    triggerRef.current?.focus();
   };
 
   const handleOptionKeyDown = (event: ReactKeyboardEvent<HTMLButtonElement>, index: number) => {
@@ -181,12 +196,17 @@ export function AdminOverviewRangeSelect({ range }: { range: OverviewRange }) {
     if (event.key === "Tab") setOpen(false);
   };
 
+  const validDraft = draftDates !== null && validOverviewCustomDates(draftDates, nowDate);
+  const selectionLabel = period.range === "custom"
+    ? "Custom range · " + period.fromDate + " to " + period.toDate
+    : rangeLabels[range];
+
   return (
-    <div ref={containerRef} className="relative z-20 shrink-0">
+    <div ref={containerRef} className="relative z-20 flex max-w-full flex-col items-end gap-2">
       <button
         ref={triggerRef}
         type="button"
-        aria-label={pending && requestedRange ? "Updating Overview to " + rangeLabels[requestedRange] : "Overview reporting range: " + rangeLabels[range]}
+        aria-label={pending && requestedRange ? "Updating Overview to " + rangeLabels[requestedRange] : "Overview reporting range: " + selectionLabel}
         aria-busy={pending || undefined}
         aria-haspopup="listbox"
         aria-expanded={open}
@@ -205,7 +225,7 @@ export function AdminOverviewRangeSelect({ range }: { range: OverviewRange }) {
           ? <LoaderCircle size={14} className="shrink-0 text-indigo-600 motion-safe:animate-spin" aria-hidden="true" />
           : <CalendarDays size={14} className="shrink-0 text-indigo-600" aria-hidden="true" />
         }
-        <span className="min-w-0 flex-1 text-left">{pending ? "Updating…" : rangeLabels[range]}</span>
+        <span className="min-w-0 flex-1 text-left">{pending ? "Updating…" : selectionLabel}</span>
         <ChevronDown size={13} className={"ml-1 shrink-0 text-slate-500 transition-transform " + (open ? "rotate-180" : "")} aria-hidden="true" />
       </button>
 
@@ -245,6 +265,49 @@ export function AdminOverviewRangeSelect({ range }: { range: OverviewRange }) {
             );
           })}
         </div>
+      ) : null}
+
+      {draftDates ? (
+        <form aria-labelledby={datePanelId}
+          className="flex max-w-full flex-wrap items-end justify-end gap-2 rounded-lg border border-slate-200 bg-white p-2.5"
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (!validDraft) return;
+            closeDates();
+            transition.selectPeriod({ range: "custom", ...draftDates });
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Escape") {
+              event.preventDefault();
+              closeDates();
+            }
+          }}
+        >
+          <span className="sr-only" id={datePanelId}>Custom reporting dates</span>
+          <label className="flex flex-col gap-1 text-[11px] font-medium text-slate-600">
+            From (UTC)
+            <input ref={startDateRef} type="date" value={draftDates.fromDate} max={draftDates.toDate || nowDate}
+              onChange={(event) => setDraftDates({ ...draftDates, fromDate: event.target.value })}
+              className="h-9 w-full max-w-full rounded-lg border border-slate-200 bg-white px-2 text-xs text-slate-950" />
+          </label>
+          <label className="flex flex-col gap-1 text-[11px] font-medium text-slate-600">
+            To (UTC)
+            <input type="date" value={draftDates.toDate} min={draftDates.fromDate || undefined} max={nowDate}
+              onChange={(event) => setDraftDates({ ...draftDates, toDate: event.target.value })}
+              className="h-9 w-full max-w-full rounded-lg border border-slate-200 bg-white px-2 text-xs text-slate-950" />
+          </label>
+          <button type="submit" disabled={pending || !validDraft}
+            className="h-9 rounded-lg bg-[#004BB8] px-3 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40">
+            Apply dates
+          </button>
+          <button type="button" onClick={closeDates}
+            className="focus-ring h-9 rounded-lg px-2 text-xs font-medium text-slate-700 hover:underline">
+            Cancel
+          </button>
+          {draftDates.fromDate && draftDates.toDate && !validDraft ? (
+            <p role="status" className="basis-full text-right text-[11px] text-rose-800">Choose up to 90 days, ending no later than today.</p>
+          ) : null}
+        </form>
       ) : null}
     </div>
   );

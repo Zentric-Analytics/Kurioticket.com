@@ -317,10 +317,24 @@ model AccountSession {
   locationLabel       String?
   user                User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
   securityEvents      SecurityEvent[]
+  onlinePresence      OnlinePresenceSession[]
 
   @@index([userId, revokedAt, expiresAt])
   @@index([userId, lastSeenAt])
   @@index([expiresAt])
+}
+
+model OnlinePresenceSession {
+  environment      String
+  sourceId         String
+  platform         String
+  accountSessionId String?
+  lastSeenAt       DateTime
+  accountSession   AccountSession? @relation(fields: [accountSessionId], references: [id], onDelete: Cascade)
+
+  @@id([environment, sourceId])
+  @@index([environment, lastSeenAt])
+  @@index([accountSessionId])
 }
 
 model SecurityEvent {

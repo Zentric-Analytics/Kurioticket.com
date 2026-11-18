@@ -6,6 +6,7 @@ import { getPublicEnvironment } from "@/lib/stagingSafety";
 import { adminJourneys } from "@/services/adminJourneyService";
 import { getProviderOperationalStatuses } from "@/services/providerOperationalStatus";
 import { getWebsitePresenceSnapshot } from "@/services/websitePresenceService";
+import { getOnlinePresenceSnapshot } from "@/services/onlinePresenceService";
 import { summarizeAccountStatusRows, summarizeAuditEvents, summarizeWorkflowStatusRows } from "@/services/adminOverviewMetrics";
 
 function invalidDate(value: string | null) {
@@ -52,10 +53,11 @@ export async function getAdminOverview(params: URLSearchParams) {
   if (!db) return { status: "unavailable" as const };
 
   try {
-    const [journeys, providers, websitePresence, lifecycle] = await Promise.all([
+    const [journeys, providers, websitePresence, onlinePresence, lifecycle] = await Promise.all([
       adminJourneys.summary({ from, to, environment }),
       getProviderOperationalStatuses(24, environment),
       getWebsitePresenceSnapshot(environment, now),
+      getOnlinePresenceSnapshot(environment, now),
       db.$transaction(async tx => {
         const [userGroups, supportGroups, deletionGroups, adminActions, humanAdminActions, observedVisitorIdentities] = await Promise.all([
           tx.user.groupBy({
@@ -107,6 +109,7 @@ export async function getAdminOverview(params: URLSearchParams) {
       data: {
         scope: { from, to, environment },
         websitePresence,
+        onlinePresence,
         visitorActivity: {
           observedVisitorIdentities: lifecycle.observedVisitorIdentities,
           windowMinutes: 5,

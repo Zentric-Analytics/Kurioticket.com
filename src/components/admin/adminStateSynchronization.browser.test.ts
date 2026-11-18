@@ -11,6 +11,7 @@ const entries = {
   support: "src/components/admin/SupportTicketActions.tsx",
   content: "src/components/admin/ContentDirectoryToolbar.tsx",
   overview: "src/components/admin/AdminOverviewControls.tsx",
+  activityInfo: "src/components/admin/ActivityDataInfo.tsx",
 };
 const router = 'const router={push:url=>{window.fixtureNavigation.push(url);window.fixtureCommitOnNavigation?.(url);},replace:url=>window.fixtureNavigation.push(url),refresh:()=>window.fixtureRefreshes++};exports.useRouter=()=>router;';
 const bundle = () => componentBundle(entries, { "next/navigation": router });
@@ -123,8 +124,8 @@ test("CMS toolbar renders canonical filter links and keeps accumulated navigatio
 
 test("Overview accepted range clears pending state and another requested range remains operable", async () => {
   const setup = `const React=require('react'),{createRoot}=require('react-dom/client'),{AdminOverviewRangeTransitionProvider,AdminOverviewRangeSelect,AdminOverviewRangeSensitive}=require('overview');
-    const root=createRoot(document.getElementById('root'));window.fixtureRender=range=>root.render(React.createElement(AdminOverviewRangeTransitionProvider,{range},
-      React.createElement(AdminOverviewRangeSelect,{range}),React.createElement(AdminOverviewRangeSensitive,null,React.createElement('button',null,'Summary action'))));
+    const root=createRoot(document.getElementById('root'));window.fixtureRender=range=>root.render(React.createElement(AdminOverviewRangeTransitionProvider,{period:{range}},
+      React.createElement(AdminOverviewRangeSelect,{period:{range},nowDate:'2026-11-18'}),React.createElement(AdminOverviewRangeSensitive,null,React.createElement('button',null,'Summary action'))));
       window.fixtureCommitOnNavigation=url=>window.fixtureRender(new URL(url,'http://fixture.local').searchParams.get('range')||'24h');window.fixtureRender('24h');`;
   await withComponentBrowser(bundle(), setup, async page => {
     await page.getByRole("button", { name: "Overview reporting range: Last 24 hours", exact: true }).click();
@@ -135,6 +136,66 @@ test("Overview accepted range clears pending state and another requested range r
     await page.getByRole("option", { name: "Last 30 days", exact: true }).click();
     assert.deepEqual(await page.evaluate(() => (window as unknown as { fixtureNavigation: string[] }).fixtureNavigation), ["/admin?range=7d", "/admin?range=30d"]);
   });
+});
+
+test("Overview preserves the committed period after an unsuccessful navigation", async () => {
+  const setup = `const React=require('react'),{createRoot}=require('react-dom/client'),{AdminOverviewRangeTransitionProvider,AdminOverviewRangeSelect,AdminOverviewRangeSensitive}=require('overview');
+    const period={range:'24h'};
+    createRoot(document.getElementById('root')).render(React.createElement(AdminOverviewRangeTransitionProvider,{period},
+      React.createElement(AdminOverviewRangeSelect,{period,nowDate:'2026-11-18'}),
+      React.createElement(AdminOverviewRangeSensitive,null,React.createElement('button',null,'Summary action'))));`;
+  await withComponentBrowser(bundle(), setup, async page => {
+    const trigger = page.getByRole("button", { name: "Overview reporting range: Last 24 hours", exact: true });
+    await trigger.click();
+    await page.getByRole("option", { name: "Last 7 days", exact: true }).click();
+    await page.getByRole("alert").waitFor();
+    assert.match(await page.getByRole("alert").innerText(), /Unable to load Last 7 days/);
+    assert.equal(await trigger.isEnabled(), true);
+    assert.equal(await page.locator('[data-range-updating="true"]').count(), 0);
+    assert.equal(await page.getByRole("button", { name: "Summary action" }).isEnabled(), true);
+  });
+});
+
+test("the Online Users explanation is available on keyboard focus and dismisses with Escape", async () => {
+  const setup = `const React=require('react'),{createRoot}=require('react-dom/client'),{ActivityDataInfo}=require('activityInfo');
+    createRoot(document.getElementById('root')).render(React.createElement(ActivityDataInfo,
+      {label:'How Online Users are counted'}, 'Activity in the last 90 seconds.'));`;
+  await withComponentBrowser(bundle(), setup, async page => {
+    const trigger = page.getByRole("button", { name: "How Online Users are counted" });
+    await page.keyboard.press("Tab");
+    await page.getByRole("tooltip").waitFor();
+    assert.equal(await page.getByRole("tooltip").innerText(), "Activity in the last 90 seconds.");
+    assert.equal(await trigger.getAttribute("aria-describedby"), await page.getByRole("tooltip").getAttribute("id"));
+    await page.keyboard.press("Escape");
+    assert.equal(await page.getByRole("tooltip").count(), 0);
+    assert.equal(await trigger.evaluate(element => element === document.activeElement), true);
+  }, 390);
+});
+
+test("Overview applies complete custom UTC dates and can revise a committed custom range", async () => {
+  const setup = `const React=require('react'),{createRoot}=require('react-dom/client'),{AdminOverviewRangeTransitionProvider,AdminOverviewRangeSelect}=require('overview');
+    const root=createRoot(document.getElementById('root'));window.fixtureRender=period=>root.render(React.createElement(AdminOverviewRangeTransitionProvider,{period},
+      React.createElement(AdminOverviewRangeSelect,{period,nowDate:'2026-11-18'})));
+    window.fixtureCommitOnNavigation=url=>{const params=new URL(url,'http://fixture.local').searchParams,range=params.get('range')||'24h';
+      window.fixtureRender(range==='custom'?{range,fromDate:params.get('from'),toDate:params.get('to')}:{range})};
+    window.fixtureRender({range:'24h'});`;
+  await withComponentBrowser(bundle(), setup, async page => {
+    await page.getByRole("button", { name: "Overview reporting range: Last 24 hours" }).click();
+    await page.getByRole("option", { name: "Custom range" }).click();
+    await page.getByLabel("From (UTC)", { exact: true }).fill("2026-11-01");
+    assert.equal(await page.getByRole("button", { name: "Apply dates" }).isDisabled(), true);
+    await page.getByLabel("To (UTC)", { exact: true }).fill("2026-11-03");
+    await page.getByRole("button", { name: "Apply dates" }).click();
+    await page.getByRole("button", { name: "Overview reporting range: Custom range" }).click();
+    await page.getByRole("option", { name: "Custom range" }).click();
+    assert.equal(await page.getByLabel("From (UTC)", { exact: true }).inputValue(), "2026-11-01");
+    await page.getByLabel("To (UTC)", { exact: true }).fill("2026-11-04");
+    await page.getByRole("button", { name: "Apply dates" }).click();
+    assert.deepEqual(await page.evaluate(() => (window as unknown as { fixtureNavigation: string[] }).fixtureNavigation), [
+      "/admin?range=custom&from=2026-11-01&to=2026-11-03",
+      "/admin?range=custom&from=2026-11-01&to=2026-11-04",
+    ]);
+  }, 390);
 });
 
 test("CMS acknowledgements with unchanged search do not restart the existing debounce or lose scope", async () => {

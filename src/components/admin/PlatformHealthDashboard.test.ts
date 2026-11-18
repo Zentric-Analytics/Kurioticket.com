@@ -65,21 +65,34 @@ test("empty activity remains UNKNOWN with no invented latency; Overview lists al
     assert.match(empty, /Not measured/);
     assert.doesNotMatch(empty, />Healthy<|>0 ms</);
     const { PlatformOverviewSummary } = jiti("./PlatformOverviewSummary") as typeof import("./PlatformOverviewSummary");
-    const overview = renderToStaticMarkup(createElement(PlatformOverviewSummary, { data: platformFixture(), hours: 24 }));
+    const fixture = platformFixture();
+    const data = { environment: fixture.environment, window: fixture.window, searches: fixture.activity.data!.searches };
+    const overview = renderToStaticMarkup(createElement(PlatformOverviewSummary, { data }));
     for (const label of ["All Platforms", "Website", "iOS", "Android", "Unknown"])
         assert.ok(overview.includes(label));
     assert.match(overview, />48</);
     assert.equal((overview.match(/>12</g) || []).length, 4);
-    assert.match(overview, /Separate from website presence/);
-    assert.match(overview, /aria-label="Platform operations by application"/);
+    assert.match(overview, />Platform Search Activity</);
+    assert.match(overview, />View Search Activity →</);
+    assert.doesNotMatch(overview, /Separate from website presence/);
+    assert.match(overview, /aria-label="Platform search activity by application"/);
     assert.match(overview, /role="region"/);
     assert.match(overview, /tabindex="0"/);
     assert.match(overview, /overflow-x-auto/);
     assert.match(overview, /min-w-\[700px\] grid-cols-5/);
     assert.equal((overview.match(/bg-slate-50 p-3/g) || []).length, 5);
-    assert.equal((overview.match(/href="\/admin\/platform-health\?hours=24&amp;application=/g) || []).length, 5);
+    const links = Array.from(overview.matchAll(/href="([^"]+)"/g), ([, href]) =>
+        new URL(href.replaceAll("&amp;", "&"), "https://example.invalid"));
+    assert.equal(links.length, 6);
+    for (const url of links) {
+        assert.equal(url.pathname, "/admin/searches/activity");
+        assert.equal(url.searchParams.get("range"), "custom");
+        assert.equal(url.searchParams.get("from"), "2026-11-15T00:00:00.000Z");
+        assert.equal(url.searchParams.get("to"), "2026-11-16T00:00:00.000Z");
+    }
+    assert.deepEqual(links.map(url => url.searchParams.get("applicationSource")), [null, null, "WEB", "IOS", "ANDROID", "UNKNOWN"]);
 
-    const missing = renderToStaticMarkup(createElement(PlatformOverviewSummary, { data: platformFixture(true), hours: 24 }));
+    const missing = renderToStaticMarkup(createElement(PlatformOverviewSummary, { data: { ...data, searches: null } }));
     assert.match(missing, /unavailable/);
     assert.doesNotMatch(missing, />0</);
 });
