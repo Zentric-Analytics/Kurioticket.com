@@ -56,7 +56,9 @@ test("System specialist pages remain dedicated routes and appear under System wo
   assert.match(adminShell, /lg:grid-cols-\[196px_minmax\(0,1fr\)\] lg:gap-4/);
   assert.match(adminShell, /<AdminSearchContent>[\s\S]*<WorkspaceSidebar pathname=\{pathname\} role=\{role\} showPreviewTesters=\{showPreviewTesters\} \/>/);
   assert.match(adminShell, /data-admin-page-content className="min-w-0">\{children\}<\/div>/);
-  assert.match(adminShell, /href: "\/admin\/logs", label: "Audit Logs"/);
+  // Audit Logs belongs in the System sidebar, not the profile dropdown.
+  const profileMenu = adminShell.slice(adminShell.indexOf("function AdminHeaderMenus("), adminShell.indexOf("export function AdminHorizontalShell("));
+  assert.doesNotMatch(profileMenu, /href: "\/admin\/logs", label: "Audit Logs"/);
   assert.match(adminShell, /auditLogsWorkspace/);
 
   for (const href of ["/admin/system/cms-health", "/admin/email-delivery", "/admin/logs"]) {
