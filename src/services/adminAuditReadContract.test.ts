@@ -78,3 +78,28 @@ test("Audit Logs all-time cursor includes the entire retained window without loo
     from: "1970-01-01T00:00:00.000Z", to: now.toISOString(), limit: "101",
   }), now).status, "invalid");
 });
+
+test("unified audit email is validated and scoped to pagination without changing legacy field filters", () => {
+  const unified = parseAdminAuditQuery(new URLSearchParams("searchEmail=contact%40example.invalid"), now);
+  assert.equal(unified.status, "ok");
+  if (unified.status !== "ok") return;
+  assert.equal(unified.data.scope.searchEmail, "contact@example.invalid");
+  assert.equal(unified.data.scope.adminEmail, null);
+  assert.equal(unified.data.scope.targetEmail, null);
+
+  const cursor = encodeAdminAuditCursor(unified.data.scope, "2026-10-20T12:00:00.000Z", "audit_789");
+  assert.equal(parseAdminAuditQuery(new URLSearchParams({ cursor, searchEmail: "contact@example.invalid" }), now).status, "ok");
+  assert.equal(parseAdminAuditQuery(new URLSearchParams({ cursor, searchEmail: "another@example.invalid" }), now).status, "invalid");
+  assert.equal(parseAdminAuditQuery(new URLSearchParams("searchEmail=a&searchEmail=b"), now).status, "invalid");
+  assert.equal(parseAdminAuditQuery(new URLSearchParams({ searchEmail: "x".repeat(321) }), now).status, "invalid");
+
+  const legacy = parseAdminAuditQuery(new URLSearchParams({
+    adminEmail: "operator@example.invalid", targetEmail: "traveler@example.invalid",
+  }), now);
+  assert.equal(legacy.status, "ok");
+  if (legacy.status === "ok") {
+    assert.equal(legacy.data.scope.adminEmail, "operator@example.invalid");
+    assert.equal(legacy.data.scope.targetEmail, "traveler@example.invalid");
+    assert.equal(legacy.data.scope.searchEmail, null);
+  }
+});
