@@ -62,37 +62,40 @@ function tabBroadcastChannel() {
   return TestBroadcastChannel as unknown as typeof BroadcastChannel;
 }
 
-test("presence posts only for trusted recent interaction and expires idle or hidden tabs", async t => {
+test("a visible tab starts and renews presence without interaction, then pauses when hidden or offline", async t => {
   const browser = browserHarness(t);
   const tracker = startWebsiteOnlinePresence(browser.windowFor());
   t.after(tracker.dispose);
   tracker.setIdentity("guest");
-  browser.gesture("pointerdown", false);
-  browser.wake("focus");
-  await browser.advance(2000);
-  assert.equal(browser.requests.length, 0);
-
-  browser.gesture();
   await browser.advance(2000);
   const [request] = browser.requests;
-  assert.equal(request.url, "/api/identity/online-presence");
+  assert.equal(request?.url, "/api/identity/online-presence");
   assert.equal(request.init?.method, "POST");
   assert.equal(request.init?.credentials, "same-origin");
   assert.equal(request.init?.referrerPolicy, "origin");
   assert.equal(request.init?.body, undefined);
 
-  browser.gesture("wheel");
-  await browser.advance(2000);
-  assert.equal(browser.requests.length, 1);
+  await browser.advance(31_000);
+  assert.equal(browser.requests.length, 2);
   browser.visibility("hidden");
-  browser.gesture("keydown");
-  await browser.advance(35_000);
+  await browser.advance(100_000);
+  assert.equal(browser.requests.length, 2);
+
   browser.visibility("visible");
   await browser.advance(2000);
-  assert.equal(browser.requests.length, 1);
+  assert.equal(browser.requests.length, 3);
+  browser.navigator.onLine = false;
+  browser.wake("offline");
+  await browser.advance(100_000);
+  assert.equal(browser.requests.length, 3);
+
+  browser.navigator.onLine = true;
+  browser.wake("online");
+  await browser.advance(2000);
+  assert.equal(browser.requests.length, 4);
 });
 
-test("a recent gesture can refresh on cadence and a known identity change sends immediately", async t => {
+test("heartbeats respect the cadence and a known identity change sends immediately", async t => {
   const browser = browserHarness(t);
   const tracker = startWebsiteOnlinePresence(browser.windowFor());
   t.after(tracker.dispose);
