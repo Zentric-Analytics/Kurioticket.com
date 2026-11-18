@@ -166,31 +166,42 @@ export function ProductSearchRecordsPanel({ product }: { product: ProviderProduc
           {loading ? "Refreshing…" : "Refresh records"}
         </button>
       </div>
-      <div className="mt-4 flex min-w-0 flex-wrap items-end gap-3 border-y border-[#E7ECF5] py-3" role="group" aria-label="Search records filters">
-        <div className="w-[180px] max-w-full">
+      <div className="mt-4 grid min-w-0 grid-cols-1 items-center gap-x-3 gap-y-2 border-y border-[#E7ECF5] py-3 sm:grid-cols-[minmax(0,180px)_minmax(0,172px)_minmax(0,1fr)]" role="group" aria-label="Search records filters">
+        <div className="min-w-0">
           <SearchMonitorSelect label="Outcome" name="outcome" appearance="fare" value={filter}
             options={productFilterOptions} onValueChange={value => {
               setFilter(value as ProductSearchFilter); resetPage();
             }} />
         </div>
-        <div className="w-[172px] max-w-full">
+        <div className="min-w-0">
           <SearchMonitorSelect label="Date range" name="period" appearance="fare" value={windowValue}
             options={windowOptions} onValueChange={value => {
               setWindowValue(value as ProductSearchWindow); resetPage();
             }} />
         </div>
-        <p className="pb-2 text-[11px] leading-4 text-[#64748B]">Showing recorded {product === "HOTEL" ? "hotel" : "car"} searches in this deployment only</p>
+        <p className="min-w-0 text-[11px] leading-5 text-[#64748B]">Showing recorded {product === "HOTEL" ? "hotel" : "car"} searches in this deployment only</p>
       </div>
 
       <div role="region" aria-label="Product search records table" aria-busy={loading} tabIndex={0}
-        className="admin-responsive-records mt-3 w-full min-w-0 overflow-x-auto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
-        <table className="w-full min-w-0 table-fixed border-collapse text-left text-[12px] leading-5">
+        className="mt-3 w-full min-w-0 max-w-full overflow-x-auto overscroll-x-contain focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
+        <table className="w-full min-w-[920px] table-fixed border-collapse text-left text-[12px] leading-5">
+          <colgroup>
+            <col className="w-[18%]" />
+            <col className="w-[22%]" />
+            <col className="w-[18%]" />
+            <col className="w-[12%]" />
+            <col className="w-[8%]" />
+            <col className="w-[11%]" />
+            <col className="w-[11%]" />
+          </colgroup>
           <thead>
             <tr className="border-b border-[#D8E1EC] text-[11px] font-medium uppercase tracking-wide text-[#64748B]">
               {(product === "HOTEL"
                 ? ["Observed", "Destination", "Stay", "Outcome", "Results", "Latency", "Action"]
                 : ["Observed", "Pick-up", "Drop-off", "Outcome", "Results", "Latency", "Action"]
-              ).map(text => <th key={text} scope="col" className="px-3 py-3 font-medium first:pl-0">{text}</th>)}
+              ).map(text => <th key={text} scope="col"
+                className={"px-3 py-3 font-medium first:pl-0 " + (text === "Results" || text === "Latency"
+                  ? "text-right" : text === "Action" ? "text-center" : "text-left")}>{text}</th>)}
             </tr>
           </thead>
           <tbody className="divide-y divide-[#E7ECF5]">
@@ -198,12 +209,14 @@ export function ProductSearchRecordsPanel({ product }: { product: ProviderProduc
               const expanded = selectedId === record.id;
               return <Fragment key={record.id}>
                 <tr className="align-top hover:bg-[#FAFBFD]">
-                  <td data-label="Observed" className="whitespace-nowrap px-3 py-3 first:pl-0">{dateLabel(record.createdAt)}</td>
-                  <td data-label={product === "HOTEL" ? "Destination" : "Pick-up"} className="max-w-[240px] px-3 py-3">
-                    <p className="break-words font-medium text-[#020617]">{product === "HOTEL" ? record.destination || "—" : record.origin || "—"}</p>
-                    {record.requestId ? <p className="mt-0.5 break-all text-[11px] text-[#64748B]">{record.requestId}</p> : null}
+                  <td data-label="Observed" className="px-3 py-3 align-top tabular-nums first:pl-0">
+                    <time dateTime={record.createdAt ?? undefined} className="block whitespace-normal leading-5">{dateLabel(record.createdAt)}</time>
                   </td>
-                  <td data-label={product === "HOTEL" ? "Stay" : "Drop-off"} className="max-w-[220px] break-words px-3 py-3">
+                  <td data-label={product === "HOTEL" ? "Destination" : "Pick-up"} className="min-w-0 px-3 py-3">
+                    <p className="break-words font-medium text-[#020617]">{product === "HOTEL" ? record.destination || "—" : record.origin || "—"}</p>
+                    {record.requestId ? <p className="mt-1 break-all text-[11px] leading-4 text-[#64748B]" title={record.requestId}>{record.requestId}</p> : null}
+                  </td>
+                  <td data-label={product === "HOTEL" ? "Stay" : "Drop-off"} className="min-w-0 break-words px-3 py-3">
                     {product === "HOTEL" ? (dateOnly(record.checkIn) + " → " + dateOnly(record.checkOut)) : record.destination || "—"}
                   </td>
                   <td data-label="Outcome" className="whitespace-nowrap px-3 py-3">
@@ -214,7 +227,7 @@ export function ProductSearchRecordsPanel({ product }: { product: ProviderProduc
                   </td>
                   <td data-label="Results" className="px-3 py-3 text-right tabular-nums">{record.resultCount}</td>
                   <td data-label="Latency" className="whitespace-nowrap px-3 py-3 text-right tabular-nums">{record.latencyMs === null ? "—" : record.latencyMs + " ms"}</td>
-                  <td data-label="Action" className="px-3 py-3">
+                  <td data-label="Action" className="px-2 py-3 text-center">
                     <button type="button" aria-expanded={expanded} aria-controls={disclosureId + "-" + record.id}
                       className="inline-flex min-h-8 items-center gap-1.5 rounded-md px-2 font-semibold text-[#004BB8] hover:bg-[#EAF2FF] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]"
                       onClick={() => setSelectedId(current => current === record.id ? null : record.id)}>
@@ -275,7 +288,7 @@ export function ProductSearchRecordsPanel({ product }: { product: ProviderProduc
       {showError ? <p className="py-5 text-[12px] text-[#9A3412]" role="alert">{readError(result)}</p> : null}
       {!loading && page && rows.length === 0 ? <p className="py-5 text-[12px] text-[#64748B]" role="status">No recorded searches match this product, outcome and date range.</p> : null}
       {loading && page ? <p className="mt-2 text-[11px] text-[#64748B]" role="status">Refreshing records; current results remain visible.</p> : null}
-      <div className="mt-3 flex min-w-0 flex-wrap items-center justify-end gap-3">
+      <div className="mt-3 flex min-w-0 flex-wrap items-center justify-end gap-x-3 gap-y-2 border-t border-[#E7ECF5] pt-3">
         <span className="text-[12px] text-[#64748B]">Page {pageIndex + 1} · Up to 25 records per page</span>
         <button type="button" className={buttonClass} disabled={loading || pageIndex === 0}
           onClick={() => {
