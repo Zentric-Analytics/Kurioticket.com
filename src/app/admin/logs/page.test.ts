@@ -59,58 +59,48 @@ test("Every audit row is expandable while target email stays out of the permanen
   assert.ok(page.includes('<AuditTechnicalDetail label="Target email" value={log.targetEmail} />'));
 });
 
-test("Audit Logs keeps search and filters on one compact desktop row at 100% zoom widths", () => {
-  assert.ok(toolbar.includes("lg:flex-row lg:items-center"));
-  assert.ok(toolbar.includes("lg:w-[520px] lg:flex-none"));
-  assert.ok(toolbar.includes("gap-x-4"));
-  assert.ok(toolbar.includes("lg:ml-auto xl:flex-nowrap"));
-  assert.equal(toolbar.includes("lg:flex-nowrap"), false);
-  assert.equal(toolbar.includes("xl:flex-row"), false);
+test("Audit Logs toolbar keeps readable balanced filter columns at 100% zoom", () => {
+  assert.ok(toolbar.includes("2xl:flex-row 2xl:items-center"));
+  assert.ok(toolbar.includes("2xl:w-[520px] 2xl:flex-none"));
+  assert.ok(toolbar.includes("sm:grid-cols-2"));
+  assert.ok(toolbar.includes("lg:grid-cols-[minmax(0,170px)_minmax(0,170px)_minmax(0,170px)_auto]"));
+  assert.ok(toolbar.includes("compact attached"));
 });
 
-test("Audit Logs search mirrors the Users auto-update pattern without an apply button", () => {
+test("Audit Logs search, range, action and target filters wait for explicit Apply", () => {
   assert.ok(toolbar.includes('role="search"'));
   assert.ok(toolbar.includes('aria-label="Search audit logs"'));
   assert.ok(toolbar.includes('placeholder="Search admin email"'));
   assert.ok(toolbar.includes('placeholder="Search target email"'));
-  assert.ok(toolbar.includes("window.setTimeout"));
-  assert.ok(toolbar.includes("}, 300);"));
-  assert.ok(toolbar.includes("router.replace(href, { scroll: false })"));
-  assert.ok(toolbar.includes("adminDraftRef"));
-  assert.ok(toolbar.includes("targetDraftRef"));
-  assert.ok(toolbar.includes("paramsRef"));
-  assert.ok(toolbar.includes("new URLSearchParams(paramsRef.current)"));
-  assert.ok(toolbar.includes("paramsRef.current = new URLSearchParams(query)"));
-  assert.match(toolbar, /paramsRef\.current = new URLSearchParams\(pageHref\.split\("\?"\)\[1\] \|\| ""\);\s*\}, \[pageHref\]\);/);
-  assert.ok(toolbar.includes('window.addEventListener("popstate", onHistoryNavigation)'));
-  assert.ok(toolbar.includes("lastSubmittedSearchRef.current = committedSearchKey"));
-  assert.ok(toolbar.includes("lastSubmittedSearchRef.current !== null && lastSubmittedSearchRef.current !== searchKey"));
-  assert.ok(toolbar.includes("[adminDraft, targetDraft, adminEmail, targetEmail, pageHref, navigate]"));
-  assert.ok(toolbar.includes("if (lastSubmittedSearchRef.current === searchKey)"));
-  assert.doesNotMatch(toolbar, /Apply filters|Clear filters/);
+  assert.ok(toolbar.includes('onClick={applyFilters}'));
+  assert.ok(toolbar.includes("Apply filters"));
+  assert.ok(toolbar.includes("setDraftRange(next as AuditRange)"));
+  assert.ok(toolbar.includes("onValueChange={setDraftAction}"));
+  assert.ok(toolbar.includes("onValueChange={setDraftTargetType}"));
+  assert.doesNotMatch(toolbar, /window\.setTimeout|onValueChange=\{next => navigate/);
+  assert.ok(toolbar.includes("if (isPending || (draftRange === \"custom\" && !validCustom)) return;"));
+  assert.ok(toolbar.includes("router.push(href, { scroll: false })"));
 });
 
-test("Audit Logs filters preserve the safe reader contract and user-page custom-date rules", () => {
-  for (const label of ["Last 24 hours", "Last 7 days", "Last 30 days", "Last 90 days", "Custom range"]) {
+test("Audit Logs uses four standard ranges and retains legacy custom-date deep links", () => {
+  for (const label of ["Last 24 hours", "Last 7 days", "Last 30 days", "All time"]) {
     assert.ok(toolbar.includes(label));
   }
+  assert.ok(toolbar.includes("Last 90 days (legacy)"));
+  assert.ok(toolbar.includes("Custom range (legacy)"));
   for (const label of ["All actions", "CMS actions", "Provider actions", "User actions", "Support actions", "Email actions", "Alert actions"]) {
     assert.ok(toolbar.includes(label));
   }
   for (const label of ["All target types", "User", "Visitor", "Provider", "Support ticket", "Email delivery", "CMS content item"]) {
     assert.ok(toolbar.includes(label));
   }
-  assert.ok(toolbar.includes("onValueChange={changeRange}"));
-  assert.ok(toolbar.includes("onValueChange={next => navigate({ action: next || null })}"));
-  assert.ok(toolbar.includes("onValueChange={next => navigate({ targetType: next || null })}"));
   assert.ok(toolbar.includes('aria-label="Custom start date UTC"'));
   assert.ok(toolbar.includes('aria-label="Custom end date UTC"'));
-  assert.ok(toolbar.includes("Apply dates"));
-  assert.ok(toolbar.includes("disabled={!validCustom || isPending}"));
-  assert.doesNotMatch(toolbar, /Apply filters|Clear filters/);
+  assert.ok(toolbar.includes("Set custom dates"));
   assert.ok(page.includes('params.set("limit", "100")'));
   assert.ok(page.includes('params.has("cursor")'));
-  assert.ok(page.includes('range === "90d"'));
+  assert.ok(page.includes('range === "all"'));
+  assert.ok(page.includes('params.set("from", "1970-01-01T00:00:00.000Z")'));
   assert.equal(namedFunction(page, "auditParams").includes('params.set("range"'), false);
   assert.match(namedFunction(page, "currentHref"), /params\.set\("range", range\)/);
 });
@@ -148,5 +138,5 @@ test("Audit Logs, CMS Health and Email Delivery are grouped under System without
     assert.equal(nav.includes(`href: "${href}", parentHref: "/admin/system"`), true);
   }
   assert.doesNotMatch(shell, /SystemSectionTabs|aria-label="System sections"/);
-  assert.ok(shell.includes('{ href: "/admin/logs", label: "Audit Logs", icon: ShieldCheck }'));
+  assert.doesNotMatch(shell, /\{ href: "\/admin\/logs", label: "Audit Logs", icon: ShieldCheck \}/);
 });
