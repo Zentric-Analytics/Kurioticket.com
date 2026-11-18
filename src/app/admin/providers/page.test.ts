@@ -389,9 +389,9 @@ test("Task 3: standalone handoffs preserve filters, records and next-cursor beha
   }
   assert.match(handoffsPage, /handoff\.identity\.userId \|\| handoff\.identity\.visitorId/);
   assert.match(handoffsPage, /handoff\.searchCorrelation\.kind === "exact"/);
-  assert.match(handoffsPage, /handoffDetailHref\(handoff\.id, handoff\.environment, raw\)/);
-  assert.match(handoffsPage, /handoffNextPageHref\(raw, result\.data\.nextCursor\)/);
-  assert.match(handoffsPage, /handoffPreviousPageHref\(raw\)/);
+  assert.match(handoffsPage, /handoffDetailHref\(handoff\.id, handoff\.environment, scopedRaw\)/);
+  assert.match(handoffsPage, /handoffNextPageHref\(scopedRaw, result\.data\.nextCursor\)/);
+  assert.match(handoffsPage, /handoffPreviousPageHref\(scopedRaw\)/);
   assert.match(handoffsPage, /result\.status === "invalid"/);
 });
 
@@ -636,8 +636,8 @@ test("provider workflow drilldowns preserve attribution scope and leave Search A
   assert.doesNotMatch(referralPage, /sourcePage: item\.sourcePage/);
   assert.match(referralPage, /<ReferralUnlinkedHandoffs/);
   assert.match(inlineUnlinkedPanel, /referralUnlinkedRecordsParams/);
-  assert.match(handoffsPage, /sourcePage: one\(raw.sourcePage\)/);
-  assert.match(handoffsPage, /handoffDetailHref\(handoff.id, handoff.environment, raw\)/);
+  assert.match(handoffsPage, /sourcePage: one\(scopedRaw.sourcePage\)/);
+  assert.match(handoffsPage, /handoffDetailHref\(handoff.id, handoff.environment, scopedRaw\)/);
   assert.match(handoffDetailPage, /handoffReturnHref\(raw\)/);
   assert.match(handoffDetailPage, /encodeURIComponent\(result.data.searchCorrelation.searchHistoryId\)/);
   assert.doesNotMatch(providersPage, /Investigate provider searches/);
