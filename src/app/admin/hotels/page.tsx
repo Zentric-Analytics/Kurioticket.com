@@ -1,12 +1,10 @@
-import Link from "next/link";
-
 import {
   AdminEmptyState,
   AdminPageShell,
 } from "@/components/admin/AdminPageShell";
 import { formatDateTime } from "@/lib/admin-data";
 import { ProductSearchRecordsPanel } from "@/components/admin/ProductSearchRecordsPanel";
-import { OperationsMetric, OperationsMetricStrip, OperationsProviderIssues, OperationsSection, OperationsStatus } from "@/components/admin/TravelOperationsOverviewUI";
+import { OperationsMetric, OperationsMetricStrip, OperationsSection, OperationsStatus } from "@/components/admin/TravelOperationsOverviewUI";
 import { getHotelOperationsSnapshot } from "@/services/adminHotelOperationsService";
 import { getProviderIntegrationStatuses } from "@/services/travel/providerIntegrationStatus";
 
@@ -110,20 +108,6 @@ export default async function AdminHotelsPage() {
               )}
             </OperationsSection>
 
-            <OperationsSection className="py-5">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <h2 className="font-semibold text-[#020617]">Provider exceptions</h2>
-                  <p className="mt-1 text-[12px] leading-5 text-[#64748B]">Recent disabled, degraded or failed hotel-search provider observations. Raw provider error payloads are not exposed.</p>
-                </div>
-                <Link href="/admin/providers?product=hotels" className="text-sm font-semibold text-[#004BB8] hover:text-[#003985]">Providers</Link>
-              </div>
-              {operations.providerIssues.length ? (
-                <OperationsProviderIssues items={operations.providerIssues} formatDate={formatDateTime} />
-              ) : (
-                <p className="mt-4 rounded-xl bg-slate-50 p-3 text-[12px] text-[#64748B]">No disabled, degraded or failed hotel-search provider observations were recorded in this window.</p>
-              )}
-            </OperationsSection>
           </div>
         ) : null}
 
