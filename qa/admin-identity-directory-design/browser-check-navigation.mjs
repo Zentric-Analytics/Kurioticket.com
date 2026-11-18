@@ -66,13 +66,20 @@ try {
     checks.push("Admin navbar responsive at " + width + "px");
   }
 
-  // The new Users-only canvas must not alter the background on other routes.
+  // All non-Overview routes use white, even when showing the pinned old Users page.
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto(root + "/before", { waitUntil: "networkidle" });
   const otherBg = await page.locator("main").evaluate(main => getComputedStyle(main.parentElement).backgroundColor);
-  assert.equal(otherBg, "rgb(241, 245, 251)", "Other Admin routes retain the original canvas");
+  assert.equal(otherBg, "rgb(255, 255, 255)", "Non-Overview pages have a pure-white canvas");
   await page.screenshot({ path: output + "/other-route-navbar-1280.png", fullPage: false });
-  checks.push("Other Admin routes preserve their canvas");
+  checks.push("Other Admin routes have the required white canvas");
+
+  // The sole background exception is the Admin Overview route.
+  await page.goto(root + "/admin", { waitUntil: "networkidle" });
+  const overviewBg = await page.locator("main").evaluate(main => getComputedStyle(main.parentElement).backgroundColor);
+  assert.equal(overviewBg, "rgb(241, 245, 251)", "Overview retains its original background");
+  await page.screenshot({ path: output + "/overview-navbar-1280.png", fullPage: false });
+  checks.push("Overview retains its original canvas");
   assert.deepEqual(errors, [], "No browser errors");
   await writeFile(output + "/navigation-browser-results.json", JSON.stringify({ checks, errors }, null, 2));
   console.log("PASS " + checks.length + " navigation visual checks");

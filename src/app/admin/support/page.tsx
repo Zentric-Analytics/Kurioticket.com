@@ -74,7 +74,7 @@ export default async function AdminSupportPage({ searchParams }: { searchParams:
             </div>
           ) : (
             <>
-              <div className="overflow-x-auto">
+              <div className="admin-responsive-records overflow-x-auto">
                 <table className="w-full min-w-[1100px] table-fixed text-left text-[13px]">
                   <colgroup><col className="w-[18%]" /><col className="w-[29%]" /><col className="w-[9%]" /><col className="w-[12%]" /><col className="w-[8%]" /><col className="w-[12%]" /><col className="w-[12%]" /></colgroup>
                   <thead className="border-b border-[#D8E1EC] bg-white text-[12px] text-[#475569]">
@@ -90,7 +90,7 @@ export default async function AdminSupportPage({ searchParams }: { searchParams:
                       const updatedAt = new Date(ticket.updatedAt);
                       return (
                         <tr key={ticket.id} className="group h-[64px] align-middle text-[13px] text-[#374151] transition-colors hover:bg-[#F8FAFC] focus-within:bg-[#F8FAFC]">
-                          <td className="max-w-[330px] px-3 py-1.5 align-middle">
+                          <td data-label="Ticket" className="max-w-[330px] px-3 py-1.5 align-middle">
                             <Link
                               href={ticketHref(ticket.id, params)}
                               className="block break-words font-semibold text-[#111827] hover:text-[#004BB8] hover:underline focus-visible:outline-[#004BB8]"
@@ -98,22 +98,22 @@ export default async function AdminSupportPage({ searchParams }: { searchParams:
                               {ticket.subject}
                             </Link>
                           </td>
-                          <td className="min-w-0 px-3 py-1.5 align-middle">
+                          <td data-label="Requester" className="min-w-0 px-3 py-1.5 align-middle">
                             <span className="block min-w-0 truncate whitespace-nowrap font-medium text-[#374151]" title={ticket.email || undefined}>
                               {ticket.email || "—"}
                             </span>
                           </td>
-                          <td className={"whitespace-nowrap px-3 py-1.5 align-middle font-semibold " + priorityStyle(ticket.priority)}>
+                          <td data-label="Priority" className={"whitespace-nowrap px-3 py-1.5 align-middle font-semibold " + priorityStyle(ticket.priority)}>
                             {ticket.priority.charAt(0) + ticket.priority.slice(1).toLowerCase()}
                           </td>
-                          <td className="whitespace-nowrap px-3 py-1.5 align-middle">
+                          <td data-label="Status" className="whitespace-nowrap px-3 py-1.5 align-middle">
                             <span className={"inline-flex items-center gap-1.5 font-medium " + status.text}>
                               <span aria-hidden="true" className={"h-1.5 w-1.5 rounded-full " + status.dot} />
                               {status.label}
                             </span>
                           </td>
-                          <td className="px-3 py-1.5 align-middle">{ticket.messageCount}</td>
-                          <td className="px-3 py-1.5 align-middle">
+                          <td data-label="Messages" className="px-3 py-1.5 align-middle">{ticket.messageCount}</td>
+                          <td data-label="Last updated" className="px-3 py-1.5 align-middle">
                             <time dateTime={updatedAt.toISOString()} className="block whitespace-nowrap text-[13px] font-medium text-[#374151]">
                               {new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(updatedAt)}
                               <span className="mt-0.5 block text-[12px] font-normal text-[#64748B]">
@@ -121,7 +121,7 @@ export default async function AdminSupportPage({ searchParams }: { searchParams:
                               </span>
                             </time>
                           </td>
-                          <td className="whitespace-nowrap px-3 py-1.5 align-middle">
+                          <td data-label="Action" className="whitespace-nowrap px-3 py-1.5 align-middle">
                             <Link
                               href={ticketHref(ticket.id, params)}
                               aria-label={"View ticket: " + ticket.subject}

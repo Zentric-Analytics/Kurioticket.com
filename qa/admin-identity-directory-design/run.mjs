@@ -51,6 +51,8 @@ await put(
   'export async function GET(){return Response.json({generatedAt:"2026-01-01T00:00:00.000Z",activeCount:0,unreadCount:0,criticalCount:0,warningCount:0});}',
 );
 await put("app/admin/users/page.tsx", await readFile(path.join(source, "app/admin/users/page.tsx"), "utf8"));
+// Render a real Overview route for the Admin shell's background exception QA.
+await put("app/admin/page.jsx", 'export default function Overview(){return <div><h1>Admin Overview QA</h1></div>;}');
 await put("mocks/auth-guards.js", 'export async function requireAdminSession(){return {user:{id:"qa-admin-001",role:"ADMIN"}};}');
 await put("mocks/env.js", 'export function getAdminEmails(){return ["alana@example.invalid"];}');
 await put("mocks/prisma.js", await readFile(path.join(qa, "data-fixture.js"), "utf8"));

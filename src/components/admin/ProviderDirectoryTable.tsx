@@ -66,7 +66,7 @@ function Fact({ label, value }: { label: string; value: string | { text: string;
  * only after explicit disclosure, without navigating away from the table. */
 export function ProviderDirectoryTable({ rows }: { rows: ProviderDirectoryRecord[] }) {
   const [expanded, setExpanded] = useState<string | null>(null);
-  return <div className="mt-2 min-w-0 overflow-x-auto" role="region"
+  return <div className="admin-responsive-records mt-2 min-w-0 overflow-x-auto" role="region"
     aria-labelledby="provider-directory" tabIndex={0}>
     <table className="w-full min-w-[820px] table-fixed text-left text-[13px]">
       <caption className="sr-only">
@@ -94,7 +94,7 @@ export function ProviderDirectoryTable({ rows }: { rows: ProviderDirectoryRecord
           const open = expanded === row.id;
           return <Fragment key={row.id}>
             <tr className="hover:bg-[#F8FAFC]">
-              <th scope="row" className={cellClass + " font-normal"}>
+              <th scope="row" data-label="Provider" className={cellClass + " font-normal"}>
                 <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
                   <span className="font-semibold">{row.name}</span>
                   <button type="button"
@@ -108,13 +108,13 @@ export function ProviderDirectoryTable({ rows }: { rows: ProviderDirectoryRecord
                 </div>
                 {row.shortLabel ? <span className="mt-0.5 block text-[12px] leading-4 text-[#64748B]">{row.shortLabel}</span> : null}
               </th>
-              <td className={cellClass}>{row.products}</td>
-              <td className={cellClass}><Status {...row.readiness} /></td>
-              <td className={cellClass}><Status {...row.health} /></td>
-              <td className={cellClass}><Time value={row.lastActivity} /></td>
+              <td data-label="Products" className={cellClass}>{row.products}</td>
+              <td data-label="Integration readiness" className={cellClass}><Status {...row.readiness} /></td>
+              <td data-label="Search health" className={cellClass}><Status {...row.health} /></td>
+              <td data-label="Last activity" className={cellClass}><Time value={row.lastActivity} /></td>
             </tr>
             <tr id={"provider-details-" + row.id} hidden={!open} className="bg-white">
-              <td colSpan={5} className="border-l-2 border-[#004BB8] px-4 py-4">
+              <td data-detail-panel colSpan={5} className="border-l-2 border-[#004BB8] px-4 py-4">
                 <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-4">
                   <Fact label="Environment" value={row.detail.environment} />
                   <Fact label="Credentials" value={row.detail.configured} />

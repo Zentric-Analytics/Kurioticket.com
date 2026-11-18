@@ -150,7 +150,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
   const operational = data.source === "operational";
   const order = filters.order === "oldest" ? "oldest" : "newest";
 
-  return <div className="min-w-0 space-y-6 bg-[#F1F5FB] pb-2 text-[#0F172A]">
+  return <div className="min-w-0 space-y-6 bg-white pb-2 text-[#0F172A]">
     <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-2 text-[13px] text-[#475569]">
       <Link href={backHref} className="focus-ring inline-flex items-center gap-1.5 rounded-sm hover:text-[#004BB8]">
         <ArrowLeft size={16} aria-hidden="true" /> Users

@@ -318,7 +318,7 @@ export function HomepageCmsEditor({
 
   return (
     <CmsValidationProvider errors={fieldErrors}>
-      <div onChangeCapture={clearFeedback} className="grid min-w-0 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-8 xl:gap-14">
+      <div onChangeCapture={clearFeedback} className="admin-cms-editor grid min-w-0 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-8 xl:gap-14">
         <section className="w-full min-w-0 max-w-[640px] space-y-4">
           <div>
             <div className="flex flex-wrap items-center gap-2.5">

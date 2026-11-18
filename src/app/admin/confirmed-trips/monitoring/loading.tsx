@@ -1,7 +1,6 @@
 import { FileCheck2, Plane } from "lucide-react";
 
 import { AdminPageShell, AdminSectionCard } from "@/components/admin/AdminPageShell";
-import { TripWorkspaceNavigation } from "@/components/admin/TripWorkspaceNavigation";
 
 function SkeletonLine({ className }: { className: string }) {
   return <div className={"rounded bg-slate-100 motion-safe:animate-pulse " + className} />;
@@ -25,7 +24,7 @@ export default function TripMonitoringLoading() {
   return (
     <AdminPageShell title="Trip monitoring" hideHeader>
       <AdminSectionCard className="min-w-0 p-4 sm:p-5 lg:p-6">
-        <TripWorkspaceNavigation active="monitoring" />
+
         <h1 className="sr-only">Trip monitoring</h1>
         <div role="status" aria-live="polite" className="sr-only">Loading trip monitoring…</div>
 

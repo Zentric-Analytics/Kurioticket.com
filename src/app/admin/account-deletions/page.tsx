@@ -62,7 +62,7 @@ export default async function AdminAccountDeletionsPage({ searchParams }: { sear
             <QueueState title="No deletion requests" message="No account deletion requests match the selected filters." />
           ) : (
             <>
-              <div className="min-w-0 overflow-x-auto" role="region" aria-label="Account deletion request records" tabIndex={0}>
+              <div className="admin-responsive-records min-w-0 overflow-x-auto" role="region" aria-label="Account deletion request records" tabIndex={0}>
                 <table className="w-full min-w-[1080px] table-fixed text-left text-[13px]">
                   <caption className="sr-only">Account deletion requests, lifecycle dates, linked references and management actions</caption>
                   <colgroup>
@@ -92,7 +92,7 @@ export default async function AdminAccountDeletionsPage({ searchParams }: { sear
                       return (
                         <tr key={request.id}
                           className="group min-h-[64px] align-middle text-[13px] transition-colors hover:bg-[#F8FAFC] focus-within:bg-[#F8FAFC]">
-                          <td className="min-w-0 px-3 py-3 align-middle">
+                          <td data-label="Account" className="min-w-0 px-3 py-3 align-middle">
                             <Link href={"/admin/account-deletions/" + request.id}
                               className="block break-words font-semibold text-[#111827] hover:text-[#004BB8] hover:underline focus-visible:outline-[#004BB8]">
                               {accountEmail}
@@ -100,19 +100,19 @@ export default async function AdminAccountDeletionsPage({ searchParams }: { sear
                             <p className="mt-1 break-words text-[12px] text-[#64748B]">{request.user.name || request.userId}</p>
                             <p className="mt-0.5 text-[11px] text-[#64748B]">{request.user.role} · {request.user.status}</p>
                           </td>
-                          <td className="px-3 py-3 align-middle">
+                          <td data-label="Request status" className="px-3 py-3 align-middle">
                             <span className={"inline-flex items-center gap-1.5 font-medium " + status.text}>
                               <span aria-hidden="true" className={"h-1.5 w-1.5 shrink-0 rounded-full " + status.dot} />
                               {status.label}
                             </span>
                           </td>
-                          <td className="px-3 py-3 align-middle text-[12px] leading-5 tabular-nums text-[#475569]">
+                          <td data-label="Requested" className="px-3 py-3 align-middle text-[12px] leading-5 tabular-nums text-[#475569]">
                             {formatDateTime(new Date(request.requestedAt))}
                           </td>
-                          <td className="px-3 py-3 align-middle text-[12px] leading-5 tabular-nums text-[#475569]">
+                          <td data-label="Scheduled" className="px-3 py-3 align-middle text-[12px] leading-5 tabular-nums text-[#475569]">
                             {formatDateTime(new Date(request.deletionScheduledAt))}
                           </td>
-                          <td className="px-3 py-3 align-middle text-[12px] leading-5 tabular-nums">
+                          <td data-label="Resolution" className="px-3 py-3 align-middle text-[12px] leading-5 tabular-nums">
                             {request.cancelledAt ? (
                               <p><span className="block text-[#64748B]">Cancelled</span>{formatDateTime(new Date(request.cancelledAt))}</p>
                             ) : null}
@@ -123,7 +123,7 @@ export default async function AdminAccountDeletionsPage({ searchParams }: { sear
                             ) : null}
                             {!request.cancelledAt && !request.completedAt ? "—" : null}
                           </td>
-                          <td className="min-w-0 px-3 py-3 align-middle text-[12px] leading-5 text-[#475569]">
+                          <td data-label="References / notes" className="min-w-0 px-3 py-3 align-middle text-[12px] leading-5 text-[#475569]">
                             <p className="truncate" title={request.supportTicketId || undefined}>
                               <span className="text-[#64748B]">Ticket: </span>{request.supportTicketId || "—"}
                             </p>
@@ -132,7 +132,7 @@ export default async function AdminAccountDeletionsPage({ searchParams }: { sear
                             </p>
                             <p><span className="text-[#64748B]">Review notes: </span>{request.hasReviewNotes ? "Recorded" : "—"}</p>
                           </td>
-                          <td className="whitespace-nowrap px-3 py-3 align-middle">
+                          <td data-label="Action" className="whitespace-nowrap px-3 py-3 align-middle">
                             <Link href={"/admin/account-deletions/" + request.id}
                               aria-label={"View deletion request for " + accountEmail}
                               className="inline-flex h-9 items-center gap-1 whitespace-nowrap text-[13px] font-medium text-[#004BB8] underline-offset-4 hover:underline focus-visible:outline-[#004BB8]">

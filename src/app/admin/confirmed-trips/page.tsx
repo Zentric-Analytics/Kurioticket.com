@@ -12,7 +12,6 @@ import {
 
 import { TripDirectoryView } from "@/components/admin/TripDirectoryView";
 import { TripFilterControls } from "@/components/admin/TripFilterControls";
-import { TripWorkspaceNavigation } from "@/components/admin/TripWorkspaceNavigation";
 import { AdminPageShell, AdminSectionCard } from "@/components/admin/AdminPageShell";
 import {
   tripDirectoryHref,
@@ -85,12 +84,12 @@ export default async function AdminConfirmedTripsPage({ searchParams }: Props) {
   return (
     <AdminPageShell title="Trips" hideHeader>
       <AdminSectionCard className="min-w-0 p-4 sm:p-5 lg:p-6">
-        <TripWorkspaceNavigation active="trips" />
+
 
         <div className="space-y-10 pt-6">
           <section aria-label="Trip summary" className="min-w-0">
             {directory?.status === "ok" ? (
-              <div className="grid min-w-0 grid-cols-1 gap-0 sm:grid-cols-2 lg:grid-cols-5">
+              <div className="admin-trip-metrics grid min-w-0 grid-cols-1 gap-0 sm:grid-cols-2 lg:grid-cols-5">
                 <TripMetric index={0} label="Confirmed trips" value={directory.totalMatching} icon={FileCheck2} tone="info" />
                 <TripMetric index={1} label="Tracked trips" value="—" icon={Activity} tone="neutral" screenReaderNote="Tracking reporting not connected" />
                 <TripMetric index={2} label="Upcoming" value={directory.statusCounts.upcoming} icon={CalendarCheck} tone="good" />

@@ -69,7 +69,7 @@ export function AdminIdentityTable({
     <section className="mt-3 min-w-0 bg-white">
       <h2 id="identity-directory-title" className="sr-only">Users directory</h2>
       <div
-        className="focus-ring overflow-x-auto"
+        className="admin-responsive-records focus-ring overflow-x-auto"
         role="region"
         aria-labelledby="identity-directory-title"
         tabIndex={0}
@@ -117,7 +117,7 @@ export function AdminIdentityTable({
                   key={`${row.kind}:${record.id}`}
                   className="group h-[64px] align-middle transition-colors hover:bg-[#F8FAFC]"
                 >
-                  <td className="px-3 py-1.5">
+                  <td data-label="Identity" className="px-3 py-1.5">
                     <div className="flex min-w-0 items-center gap-2.5">
                       <span
                         aria-hidden="true"
@@ -152,10 +152,10 @@ export function AdminIdentityTable({
                       </div>
                     </div>
                   </td>
-                  <td className="px-3 py-1.5 text-[13px] font-normal text-[#334155]">
+                  <td data-label="Type" className="px-3 py-1.5 text-[13px] font-normal text-[#334155]">
                     {user ? `Registered · ${label(user.role)}` : "Guest"}
                   </td>
-                  <td className="px-3 py-1.5">
+                  <td data-label="Status" className="px-3 py-1.5">
                     {user ? (
                       <span className={`text-[13px] font-medium ${
                         user.status === "ACTIVE" ? "text-[#047857]"
@@ -168,7 +168,7 @@ export function AdminIdentityTable({
                       <span aria-label="No account status for guest visitor" className="text-[13px] text-[#64748B]">—</span>
                     )}
                   </td>
-                  <td className="px-3 py-1.5">
+                  <td data-label="Joined / First Seen" className="px-3 py-1.5">
                     <IdentityDate
                       at={
                         row.kind === "user"
@@ -177,7 +177,7 @@ export function AdminIdentityTable({
                       }
                     />
                   </td>
-                  <td className="px-3 py-1.5">
+                  <td data-label="Activity" className="px-3 py-1.5">
                     <Link
                       className={activityClass}
                       href={activityHref(row.kind, record.id)}
@@ -193,7 +193,7 @@ export function AdminIdentityTable({
             })}
             {!rows.length ? (
               <tr>
-                <td
+                <td data-empty-row data-label="Identity"
                   colSpan={5}
                   className="px-4 py-12 text-center text-[13px] text-[#475569]"
                 >

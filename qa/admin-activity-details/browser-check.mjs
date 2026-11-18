@@ -137,7 +137,7 @@ async function expectBalancedDesktopHeader(page, context, requireSingleLineEmail
 
 const approvedActivityTypography = {
   rootBackground: "rgb(255, 255, 255)",
-  shellBackground: "rgb(241, 245, 251)",
+  shellBackground: "rgb(255, 255, 255)",
   summaryBackground: "rgba(0, 0, 0, 0)",
   bodyBackground: "rgb(255, 255, 255)",
   outerBorderColor: "rgb(226, 232, 240)",

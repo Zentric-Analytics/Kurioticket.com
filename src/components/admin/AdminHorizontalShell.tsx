@@ -89,11 +89,10 @@ function WorkspaceSidebar({ pathname, role, showPreviewTesters }: { pathname: st
   const providerAttribution = pathname === "/admin/providers" && searchParams.get("view") === "attribution";
 
   return (
-    <aside aria-label={title + " navigation"} className="min-w-0 border-b border-[#D8E1EC] pb-4 lg:border-b-0 lg:border-r lg:pb-0 lg:pr-4">
+    <aside aria-label={title + " navigation"} className="admin-sticky-sidebar min-w-0 border-b border-[#D8E1EC] pb-4 lg:border-b-0 lg:border-r lg:pb-0 lg:pr-4">
       <h2 className="px-2 text-[15px] font-semibold text-[#020617]">{title}</h2>
       <nav aria-label={title + " subsections"} className="mt-4 space-y-4">
         <div>
-          <p className="px-3 text-[10px] font-semibold uppercase tracking-[0.09em] text-[#64748B]">{title}</p>
           <div className="mt-1 flex flex-col gap-0.5">
             {uniqueLinks.map(link => {
               const destination = link.href.split("?")[0];
@@ -186,9 +185,9 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
   const workspaceRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLElement>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
-  // Measure before paint to prevent the card hub from jumping when desktop navigation wraps.
+  // Keep the sticky navigation offset aligned with the real header height, including search and zoom.
   useLayoutEffect(() => {
-    if (!contentLanding || !headerRef.current || !workspaceRef.current) return;
+    if (!headerRef.current || !workspaceRef.current) return;
     const header = headerRef.current;
     const workspace = workspaceRef.current;
     const updateHeaderHeight = () => {
@@ -210,8 +209,8 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  // Search and Support share the clean white operational workspace surface.
-  // Other Admin sections keep their established background unchanged.
+  // Every non-Overview Admin workspace uses a white canvas. Keep the established
+  // Overview surface unchanged; route-specific flags remain for contract QA.
   const usersDirectory = pathname === "/admin/users" || pathname === "/admin/users/";
   const visitorJourneysWorkspace = pathname === "/admin/journeys" || pathname.startsWith("/admin/journeys/");
   const userActivity = /^\/admin\/users\/(?:user|guest)\/[a-z0-9_-]{6,80}\/activity\/?$/i.test(pathname);
@@ -238,9 +237,9 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
   const homepageFaresWorkspace = pathname === "/admin/homepage-fares" || pathname.startsWith("/admin/homepage-fares/");
   // Hotel and Car Operations use the same full-white Providers workspace as Homepage Fares.
   const hotelCarsWorkspace = pathname === "/admin/hotels" || pathname === "/admin/hotels/" || pathname === "/admin/cars" || pathname === "/admin/cars/";
-  const whiteWorkspace = pathname === "/admin/platform-health" || pathname === "/admin/platform-health/" || pathname === "/admin/system" || pathname === "/admin/system/" || pathname === "/admin/system/cms-health" || pathname === "/admin/system/cms-health/" || auditLogsWorkspace || emailDeliveryWorkspace || settingsWorkspace || usersDirectory || visitorJourneysWorkspace || searchesWorkspace || supportWorkspace
-    || providersWorkspace || providerReportingWorkspace || hotelCarsWorkspace || accountDeletionWorkspace || accountDeletionDetail || contentWorkspace || notificationsWorkspace || homepageFaresWorkspace;
-  return <AdminWorkspaceSearchProvider account={adminEmail || "admin"}><div ref={workspaceRef} className={"min-h-screen text-slate-950 " + (userActivity ? "bg-[#f1f5fb]" : whiteWorkspace ? "bg-white" : "bg-[#f1f5fb]")}>
+  const whiteWorkspace = userActivity || pathname === "/admin/platform-health" || pathname === "/admin/platform-health/" || pathname === "/admin/system" || pathname === "/admin/system/" || pathname === "/admin/system/cms-health" || pathname === "/admin/system/cms-health/" || auditLogsWorkspace || emailDeliveryWorkspace || settingsWorkspace || usersDirectory || visitorJourneysWorkspace || searchesWorkspace || supportWorkspace
+    || providersWorkspace || providerReportingWorkspace || hotelCarsWorkspace || accountDeletionWorkspace || accountDeletionDetail || contentWorkspace || notificationsWorkspace || homepageFaresWorkspace || !isOverview;
+  return <AdminWorkspaceSearchProvider account={adminEmail || "admin"}><div ref={workspaceRef} className={"min-h-screen text-slate-950 " + (whiteWorkspace ? "bg-white" : "bg-[#f1f5fb]")}>
     <header ref={headerRef} className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
       <AdminSearchHeader>
       <div className="mx-auto flex h-16 w-full max-w-[1920px] items-center justify-between gap-4 pl-2 pr-4 sm:pr-6 lg:pr-10">
