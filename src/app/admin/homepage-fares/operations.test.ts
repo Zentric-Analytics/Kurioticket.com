@@ -190,12 +190,24 @@ test("Inspect routes navigates reliably even when selecting the same market agai
   assert.doesNotMatch(component, /scrollIntoView|routeInspectorRef|inspectMarketRoutes/);
 });
 
-test("dropdown and status selection update results without scrolling the page", () => {
-  assert.match(component, /onValueChange=\{onSelectMarket\}/);
-  assert.match(component, /onFilterChange\(next as AdminHomepageFareRouteGroupFilter\)/);
+test("Route Inspector waits for Apply before changing the Market and Status results", () => {
+  assert.match(component, /onValueChange=\{setDraftScope\}/);
+  assert.match(component, /onFilterChange\(draftFilter\)/);
   assert.match(component, /onSelectMarket=\{selectRouteScope\}/);
   assert.match(component, /onFilterChange=\{selectRouteFilter\}/);
   assert.doesNotMatch(component, /scrollIntoView|window\.scrollTo/);
+});
+
+test("Route Inspector has balanced draft-only dropdown columns and one Apply button", () => {
+  const inspector = component.slice(component.indexOf("function MarketRouteInspector("), component.indexOf("function SelectedRouteDetails("));
+  assert.match(inspector, /const \[draftScope, setDraftScope\] = useState\(selectedRouteScope\)/);
+  assert.match(inspector, /const \[draftFilter, setDraftFilter\] = useState\(filter\)/);
+  assert.match(inspector, /onValueChange=\{setDraftScope\}/);
+  assert.match(inspector, /onValueChange=\{\(next\) => setDraftFilter/);
+  assert.match(inspector, /onClick=\{\(\) => \{ onSelectMarket\(draftScope\); onFilterChange\(draftFilter\); \}\}/);
+  assert.match(inspector, /Apply filters/);
+  assert.match(inspector, /xl:grid-cols-\[minmax\(0,260px\)_minmax\(0,220px\)_auto\]/);
+  assert.match(inspector, /sm:col-span-2 xl:col-span-1 xl:w-auto/);
 });
 
 test("route inspector renders every filtered route without pagination or fixed page height", () => {
@@ -262,9 +274,9 @@ test("route inspector defaults to All with seven distinct status options", () =>
   assert.match(component, /useState<string>\(\s*initialMarket === ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE/);
   assert.match(component, /value: ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE, label: "All"/);
   assert.doesNotMatch(component, /value: "", label: "Select market"/);
-  assert.match(component, /value=\{selectedRouteScope\}/);
-  assert.match(component, /value=\{filter\}/);
-  assert.match(component, /onFilterChange\(next as AdminHomepageFareRouteGroupFilter\)/);
+  assert.match(component, /value=\{draftScope\}/);
+  assert.match(component, /value=\{draftFilter\}/);
+  assert.match(component, /onFilterChange\(draftFilter\)/);
   const options = component.slice(component.indexOf("const ROUTE_FILTERS:"), component.indexOf("function SummaryMetricCard"));
   const expected = [
     ["all", "All statuses"],
@@ -546,10 +558,10 @@ test("Market coverage retains public market inspection without redundant diagnos
 test("homepage fare route filters use bounded accessible menus and preserve route selection", () => {
   const select = readFileSync("src/components/admin/SearchMonitorSelect.tsx", "utf8");
   const routesPage = readFileSync("src/app/admin/homepage-fares/routes/page.tsx", "utf8");
-  assert.match(component, /sm:grid-cols-\[minmax\(0,320px\)_minmax\(0,240px\)\]/);
+  assert.match(component, /xl:grid-cols-\[minmax\(0,260px\)_minmax\(0,220px\)_auto\]/);
   assert.match(component, /appearance="fare"/);
-  assert.match(component, /onValueChange=\{onSelectMarket\}/);
-  assert.match(component, /value=\{selectedRouteScope\}/);
+  assert.match(component, /onValueChange=\{setDraftScope\}/);
+  assert.match(component, /value=\{draftScope\}/);
   assert.match(component, /ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE/);
   assert.match(routesPage, /initialMarket/);
   assert.equal((component.match(/<select/g) || []).length, 0);
