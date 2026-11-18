@@ -1,6 +1,8 @@
 import "server-only";
 
-import { getOptionalPrisma } from "@/lib/prisma";
+import { randomUUID } from "node:crypto";
+import type { Prisma } from "@/generated/prisma/client";
+import { getOptionalPrisma, isDatabaseConfigured } from "@/lib/prisma";
 import { onlinePresenceWindowSeconds, type OnlinePresenceSnapshot } from "@/lib/onlinePresence";
 import { isWebsiteOnlinePresenceEnabled, presenceSigningSecret } from "@/lib/onlinePresenceCredential";
 import type { OnlinePresenceHeartbeat } from "@/lib/onlinePresenceRoute";
@@ -35,9 +37,7 @@ async function pruneExpiredPresence(environment: PublicEnvironment, now: Date) {
   }
 }
 
-export async function recordOnlinePresence({ environment, sourceId, platform, accountSessionId, now }: OnlinePresenceHeartbeat) {
-  const db = getOptionalPrisma();
-  if (!db) throw new Error("Online presence storage unavailable");
+async function writeOnlinePresence(db: Prisma.TransactionClient, { environment, sourceId, platform, accountSessionId, now }: OnlinePresenceHeartbeat) {
   const writeBefore = new Date(now.getTime() - writeThrottleMs);
 
   // The same credential has one mutable row. Preserve a newer account/guest
@@ -55,38 +55,53 @@ export async function recordOnlinePresence({ environment, sourceId, platform, ac
         OR current."accountSessionId" IS DISTINCT FROM EXCLUDED."accountSessionId"
         OR current."platform" IS DISTINCT FROM EXCLUDED."platform")
   `;
-  await pruneExpiredPresence(environment, now);
+}
+
+export async function recordOnlinePresence(heartbeat: OnlinePresenceHeartbeat) {
+  const db = getOptionalPrisma();
+  if (!db) throw new Error("Online presence storage unavailable");
+  await writeOnlinePresence(db, heartbeat);
+  await pruneExpiredPresence(heartbeat.environment, heartbeat.now);
 }
 
 export async function getOnlinePresenceSnapshot(environment: PublicEnvironment, now = new Date()): Promise<OnlinePresenceSnapshot> {
   const window = { windowSeconds: onlinePresenceWindowSeconds, observedAt: now.toISOString() };
   const unavailable: OnlinePresenceSnapshot = { status: "unavailable", ...window };
-  const db = getOptionalPrisma();
-  if (!db || !presenceSigningSecret() || !isWebsiteOnlinePresenceEnabled()) return unavailable;
+  if (!isDatabaseConfigured() || !presenceSigningSecret() || !isWebsiteOnlinePresenceEnabled()) {
+    return { status: "not_configured", ...window };
+  }
   const cutoff = new Date(now.getTime() - onlinePresenceWindowSeconds * 1000);
 
   try {
-    const [row] = await db.$queryRaw<Array<{ registered: bigint; guests: bigint; receiving: boolean; writable: boolean }>>`
-      SELECT
-        COUNT(DISTINCT u."id") FILTER (
-          WHERE u."status" = 'ACTIVE' AND u."emailVerified" IS NOT NULL
-            AND s."revokedAt" IS NULL AND s."expiresAt" > ${now}
-            AND s."sessionVersion" = u."sessionVersion"
-            AND (NOT COALESCE(security."twoFactorEnabled", false) OR s."assuranceLevel" <> 'PRIMARY')
-        ) AS "registered",
-        COUNT(*) FILTER (WHERE p."accountSessionId" IS NULL) AS "guests",
-        (COUNT(*) > 0) AS "receiving",
-        (current_setting('transaction_read_only') = 'off'
-          AND has_table_privilege('"OnlinePresenceSession"', 'INSERT')
-          AND has_table_privilege('"OnlinePresenceSession"', 'UPDATE')) AS "writable"
-      FROM "OnlinePresenceSession" p
-      LEFT JOIN "AccountSession" s ON s."id" = p."accountSessionId"
-      LEFT JOIN "User" u ON u."id" = s."userId"
-      LEFT JOIN "UserSecuritySettings" security ON security."userId" = u."id"
-      WHERE p."environment" = ${environment} AND p."lastSeenAt" > ${cutoff} AND p."lastSeenAt" <= ${now}
-    `;
+    const db = getOptionalPrisma();
+    if (!db) return unavailable;
+    const sourceId = "probe:" + randomUUID();
+    const [row] = await db.$transaction(async tx => {
+      // Exercise the heartbeat write independently of traffic. No probe row
+      // is visible to readers or survives this transaction.
+      await writeOnlinePresence(tx, { environment, sourceId, platform: "desktop_web", accountSessionId: null, now });
+      const removed = await tx.$executeRaw`
+        DELETE FROM "OnlinePresenceSession" WHERE "environment" = ${environment} AND "sourceId" = ${sourceId}
+      `;
+      if (removed !== 1) throw new Error("Online presence probe could not be removed");
+      return tx.$queryRaw<Array<{ registered: bigint; guests: bigint }>>`
+        SELECT
+          COUNT(DISTINCT u."id") FILTER (
+            WHERE u."status" = 'ACTIVE' AND u."emailVerified" IS NOT NULL
+              AND s."revokedAt" IS NULL AND s."expiresAt" > ${now}
+              AND s."sessionVersion" = u."sessionVersion"
+              AND (NOT COALESCE(security."twoFactorEnabled", false) OR s."assuranceLevel" <> 'PRIMARY')
+          ) AS "registered",
+          COUNT(*) FILTER (WHERE p."accountSessionId" IS NULL) AS "guests"
+        FROM "OnlinePresenceSession" p
+        LEFT JOIN "AccountSession" s ON s."id" = p."accountSessionId"
+        LEFT JOIN "User" u ON u."id" = s."userId"
+        LEFT JOIN "UserSecuritySettings" security ON security."userId" = u."id"
+        WHERE p."environment" = ${environment} AND p."lastSeenAt" > ${cutoff} AND p."lastSeenAt" <= ${now}
+      `;
+    });
     await pruneExpiredPresence(environment, now);
-    if (!row?.receiving || !row.writable) return unavailable;
+    if (!row) return unavailable;
     const registeredAccounts = Number(row.registered);
     const guestSessions = Number(row.guests);
     const total = registeredAccounts + guestSessions;

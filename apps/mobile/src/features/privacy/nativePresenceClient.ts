@@ -1,6 +1,5 @@
 import type { StoredSession } from "../../storage/sessionStorage";
 
-const recentInteractionMs = 30_000;
 const heartbeatIntervalMs = 30_000;
 const requestTimeoutMs = 8_000;
 const missingEndpointBackoffMs = 5 * 60_000;
@@ -20,7 +19,6 @@ function retryTime(response: Response, now: number) {
 export function createNativePresenceClient(baseUrl: string, platform: "ios" | "android", fetcher = fetch) {
   let foreground = false;
   let stopped = false;
-  let lastActivityAt = 0;
   let nextHeartbeatAt = 0;
   let retryAt = 0;
   let session: PresenceSession | undefined;
@@ -65,8 +63,7 @@ export function createNativePresenceClient(baseUrl: string, platform: "ios" | "a
       if (acceptCredential(response) && response.status === 202) {
         const now = Date.now();
         const currentBearer = activeBearer();
-        if (!foreground || now >= lastActivityAt + recentInteractionMs
-            || currentBearer === undefined || currentBearer === rejectedBearer) return;
+        if (!foreground || currentBearer === undefined || currentBearer === rejectedBearer) return;
         bearer = currentBearer;
         nextHeartbeatAt = now + heartbeatIntervalMs;
         response = await postHeartbeat(bearer, signal);
@@ -93,7 +90,6 @@ export function createNativePresenceClient(baseUrl: string, platform: "ios" | "a
 
     const now = Date.now();
     const due = Math.max(now, nextHeartbeatAt, retryAt);
-    if (due >= lastActivityAt + recentInteractionMs) return;
     if (due > now) {
       timer = setTimeout(schedule, due - now);
       return;
@@ -116,13 +112,7 @@ export function createNativePresenceClient(baseUrl: string, platform: "ios" | "a
     setForeground(active: boolean) {
       if (foreground === active) return;
       foreground = active;
-      if (active) lastActivityAt = Date.now();
       schedule();
-    },
-    noteActivity() {
-      if (!foreground) return;
-      lastActivityAt = Date.now();
-      if (timer === undefined) schedule();
     },
     stop() {
       stopped = true;

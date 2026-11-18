@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { createHmac } from "node:crypto";
+import { isWebsiteOnlinePresenceRoute } from "./onlinePresence";
 import { createOnlinePresenceHandler } from "./onlinePresenceRoute";
 import { renewPresenceCredential } from "./onlinePresenceCredential";
 
@@ -153,4 +154,17 @@ test("invalid authorization is not counted as a guest and storage failures never
   const disabledResponse = await disabled(web());
   assert.equal(disabledResponse.status, 503);
   assert.equal(disabledResponse.headers.get("set-cookie"), null);
+});
+
+test("operational website presence includes authenticated Admin routes and public guests", () => {
+  for (const path of ["/", "/flights", "/admin-guide"]) {
+    assert.equal(isWebsiteOnlinePresenceRoute(path, false), true);
+  }
+  for (const path of ["/admin", "/admin/users"]) {
+    assert.equal(isWebsiteOnlinePresenceRoute(path, false), false);
+    assert.equal(isWebsiteOnlinePresenceRoute(path, true), true);
+  }
+  for (const path of [null, "/api", "/api/admin", "/mobile", "/mobile/legal"]) {
+    assert.equal(isWebsiteOnlinePresenceRoute(path, true), false);
+  }
 });

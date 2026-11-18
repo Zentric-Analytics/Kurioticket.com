@@ -86,22 +86,6 @@ export function AdminOverviewRangeSensitive({ children, fill = false }: { childr
   );
 }
 
-// Refresh current presence and historical totals without replacing the selected period.
-export function AdminOverviewAutoRefresh() {
-  const router = useRouter();
-  const transition = useContext(RangeTransitionContext);
-  const isUpdating = transition?.isUpdating ?? false;
-
-  useEffect(() => {
-    const interval = window.setInterval(() => {
-      if (!isUpdating && document.visibilityState === "visible") router.refresh();
-    }, 60_000);
-    return () => window.clearInterval(interval);
-  }, [router, isUpdating]);
-
-  return null;
-}
-
 const rangeOptions: OverviewRange[] = ["24h", "7d", "30d", "custom"];
 
 export function AdminOverviewRangeSelect({ period, nowDate }: { period: OverviewPeriod; nowDate: string }) {

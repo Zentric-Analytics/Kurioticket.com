@@ -46,7 +46,7 @@ test("compact Operations Snapshot has exactly four genuine primary metrics", () 
   const snapshot = display.slice(display.indexOf('aria-label="Operations Snapshot"'), display.indexOf('aria-label="Attention Required"'));
   for (const [label, value] of [
     ["Total accounts", "data.users.total"],
-    ["Online Users", "onlineUsers"],
+    ["Online Users", "<OnlineUsersValue initial={data.onlinePresence} />"],
     ["Recorded searches", "data.journeys.operationalSearches.total"],
     ["Customer journeys", "data.journeys.journeys"],
   ]) {
@@ -131,15 +131,24 @@ test("Four-column Platform Health and recent activity remain compact and complet
   assert.match(dashboard, /className="mt-3 grid gap-3"/);
 });
 
-test("Online Users is a current presence estimate with an accessible explanation and unavailable state", () => {
-  assert.match(display, /data\.onlinePresence\.status === "ok"/);
-  assert.match(display, /data\.onlinePresence\.total/);
-  assert.match(display, /"Unavailable"/);
-  assert.match(display, /label="Online Users"/);
+test("Online Users is a current presence estimate with independent authenticated refresh", () => {
+  const value = readFileSync("src/components/admin/OnlineUsersValue.tsx", "utf8");
+  const route = readFileSync("src/app/api/admin/overview/online-presence/route.ts", "utf8");
+  assert.match(display, /label="Online Users" value=\{<OnlineUsersValue initial=\{data\.onlinePresence\}/);
   assert.match(display, /label="How Online Users are counted"/);
   assert.match(display, /data\.onlinePresence\.windowSeconds/);
   assert.match(display, /guest sessions/i);
   assert.doesNotMatch(display, /websitePresence|visitorActivity\.observedVisitorIdentities/);
+  assert.match(value, /"Unavailable"/);
+  assert.match(value, /"Not configured"/);
+  assert.match(value, /numberFormat\.format\(snapshot\.total\)/);
+  assert.match(value, /fetch\("\/api\/admin\/overview\/online-presence"/);
+  assert.match(value, /setTimeout\(refresh, onlinePresenceHeartbeatMs\)/);
+  assert.match(value, /document\.visibilityState === "visible"/);
+  assert.match(route, /await requireAdminApiSession\(\)/);
+  assert.match(route, /getOnlinePresenceSnapshot\(getPublicEnvironment\(\)\)/);
+  assert.match(route, /"Cache-Control": "private, no-store"/);
+  assert.doesNotMatch(route, /getAdminOverview|searchParams/);
 });
 
 test("Attention Required remains three compact, actionable live queues", () => {
@@ -346,7 +355,7 @@ test("the compact grid remains responsive without horizontal scrolling or crampe
   assert.doesNotMatch(dashboard, /overflow-x-auto|overflow-x-scroll|whitespace-nowrap/);
 });
 
-test("the white parent container, original admin header, and automatic refresh remain", () => {
+test("the white parent container and original admin header remain", () => {
   const shell = readFileSync("src/components/admin/AdminPageShellHistorical.tsx", "utf8");
   const horizontalShell = readFileSync("src/components/admin/AdminHorizontalShell.tsx", "utf8");
   assert.match(page, /title="Operations Dashboard"/);
@@ -356,11 +365,7 @@ test("the white parent container, original admin header, and automatic refresh r
   assert.match(page, /<AdminSectionCard className="min-w-0 p-4 sm:p-5 lg:p-6">/);
   assert.equal((page.match(/<AdminSectionCard /g) ?? []).length, 1);
   assert.match(horizontalShell, /bg-\[#f1f5fb\]/);
-  assert.match(page, /<AdminOverviewAutoRefresh \/>/);
-  assert.match(controls, /window\.setInterval\(\(\) => \{/);
-  assert.match(controls, /!isUpdating && document\.visibilityState === "visible"\) router\.refresh\(\)/);
-  assert.match(controls, /60_000/);
-  assert.match(controls, /window\.clearInterval\(interval\)/);
+  assert.doesNotMatch(controls, /router\.refresh\(\)/);
 });
 
 test("changing reporting ranges consistently exposes a shared loading indicator", () => {
@@ -376,7 +381,6 @@ test("changing reporting ranges consistently exposes a shared loading indicator"
   assert.match(controls, /role="status" aria-live="polite"/);
   assert.match(controls, /role="alert"/);
   assert.match(controls, /setFailedPeriod\(requestedPeriod\)/);
-  assert.match(controls, /!isUpdating && document\.visibilityState === "visible"/);
 });
 
 test("loading state applies only to time-filtered summaries and keeps the page stable", () => {
