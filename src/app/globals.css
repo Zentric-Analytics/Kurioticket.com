@@ -2841,3 +2841,17 @@ textarea {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* Prefer readable metric tiles and a single-column editor inside the sidebar workspace. */
+@media (min-width: 1024px) and (max-width: 1535px) {
+  .admin-trip-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .admin-trip-metrics > * {
+    border-left: 0;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  .admin-cms-editor {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
