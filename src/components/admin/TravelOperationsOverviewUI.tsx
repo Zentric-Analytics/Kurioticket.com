@@ -76,15 +76,15 @@ export function OperationsDataTable({ columns, rows }: {
   rows: Array<{ id: string; cells: ReactNode[] }>;
 }) {
   return (
-    <div role="region" aria-label="Operational records" tabIndex={0} className="w-full min-w-0 overflow-x-auto">
-      <table className="w-full min-w-[860px] border-collapse text-left text-[12px] leading-5">
+    <div role="region" aria-label="Operational records" tabIndex={0} className="admin-responsive-records w-full min-w-0 overflow-x-auto">
+      <table className="w-full min-w-0 table-fixed border-collapse text-left text-[12px] leading-5">
         <thead className="border-y border-[#D8E1EC] text-[11px] font-medium uppercase tracking-wide text-[#64748B]">
           <tr>{columns.map(column => <th scope="col" key={column} className="px-3 py-3 font-medium first:pl-0">{column}</th>)}</tr>
         </thead>
         <tbody className="divide-y divide-[#E7ECF5]">
           {rows.map(row => (
             <tr key={row.id} className="align-top hover:bg-[#FAFBFD]">
-              {row.cells.map((cell, index) => <td key={row.id + "-" + index} className="px-3 py-3 text-[#334155] first:pl-0">{cell}</td>)}
+              {row.cells.map((cell, index) => <td key={row.id + "-" + index} data-label={columns[index]} className="px-3 py-3 text-[#334155] first:pl-0">{cell}</td>)}
             </tr>
           ))}
         </tbody>

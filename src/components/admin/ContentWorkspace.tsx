@@ -91,8 +91,8 @@ export function ContentRecordsTable({
   rows: Array<{ id: string; cells: ReactNode[] }>;
 }) {
   return (
-    <div className="min-w-0 overflow-x-auto bg-white">
-      <table className="w-full min-w-[740px] text-left text-[13px] text-[#374151]">
+    <div className="admin-responsive-records min-w-0 overflow-x-auto bg-white">
+      <table className="w-full min-w-0 table-fixed text-left text-[13px] text-[#374151]">
         <thead>
           <tr className="border-b border-[#D8E1EC] bg-white">
             {columns.map(column => (
@@ -106,7 +106,7 @@ export function ContentRecordsTable({
           {rows.map(row => (
             <tr key={row.id} className="h-[64px] align-middle transition-colors hover:bg-[#F8FAFC]">
               {row.cells.map((cell, i) => (
-                <td key={i} className="px-3 py-1.5 align-middle sm:px-4">{cell}</td>
+                <td key={i} data-label={columns[i]} className="px-3 py-1.5 align-middle sm:px-4">{cell}</td>
               ))}
             </tr>
           ))}
