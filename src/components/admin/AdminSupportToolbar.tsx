@@ -207,18 +207,20 @@ export function AdminSupportToolbar({ query, status, priority, category, pageHre
             align="end"
             onValueChange={setDraftCategory}
           />
-          {hasFilters ? (
-            <Link
-              href="/admin/support"
-              onClick={clearFilters}
-              className="focus-ring inline-flex h-10 items-center whitespace-nowrap text-[12px] font-medium text-[#64748B] hover:text-[#004BB8]"
-            >
-              Clear filters
-            </Link>
-          ) : null}
-          <button type="submit" disabled={isPending} className="focus-ring inline-flex h-10 items-center justify-center whitespace-nowrap rounded-lg bg-[#004BB8] px-4 text-[13px] font-medium text-white hover:bg-[#003D97] disabled:opacity-60">
-            Apply filters
-          </button>
+          <div className="flex min-w-0 items-center justify-end gap-2 whitespace-nowrap">
+            {hasFilters ? (
+              <Link
+                href="/admin/support"
+                onClick={clearFilters}
+                className="focus-ring inline-flex h-10 items-center whitespace-nowrap text-[12px] font-medium text-[#64748B] hover:text-[#004BB8]"
+              >
+                Clear filters
+              </Link>
+            ) : null}
+            <button type="submit" disabled={isPending} className="focus-ring inline-flex h-10 items-center justify-center whitespace-nowrap rounded-lg bg-[#004BB8] px-4 text-[13px] font-medium text-white hover:bg-[#003D97] disabled:opacity-60">
+              Apply filters
+            </button>
+          </div>
         </form>
       </div>
 
