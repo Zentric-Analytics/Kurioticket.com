@@ -50,8 +50,8 @@ test("Activity summary counts filter-wide records instead of paginated timeline 
   assert.doesNotMatch(page, /Counts reflect loaded events only\./);
 });
 
-test("Activity preserves its approved colors while Support joins the white Searches workspace", () => {
-  assert.match(shell, /userActivity \? "bg-\[#f1f5fb\]"/);
+test("Activity and Support use white non-Overview workspaces while preserving authorization boundaries", () => {
+  assert.match(shell, /const whiteWorkspace = !isOverview \|\| userActivity/);
   assert.match(shell, /const supportWorkspace = pathname === "\/admin\/support" \|\| pathname\.startsWith\("\/admin\/support\/"\)/);
   assert.match(shell, /const providersWorkspace = pathname === "\/admin\/providers"/);
   assert.match(shell, /const providerReportingWorkspace = pathname === "\/admin\/referral-attribution"/);
@@ -62,7 +62,7 @@ test("Activity preserves its approved colors while Support joins the white Searc
   assert.match(shell, /const whiteWorkspace = .*usersDirectory \|\| visitorJourneysWorkspace \|\| searchesWorkspace \|\| supportWorkspace\s+\|\| providersWorkspace \|\| providerReportingWorkspace \|\| hotelCarsWorkspace \|\| accountDeletionWorkspace \|\| accountDeletionDetail \|\| contentWorkspace \|\| notificationsWorkspace \|\| homepageFaresWorkspace;/);
   assert.match(shell, /const hotelCarsWorkspace = pathname === "\/admin\/hotels" \|\| pathname === "\/admin\/hotels\/" \|\| pathname === "\/admin\/cars" \|\| pathname === "\/admin\/cars\/";/);
   assert.match(shell, /whiteWorkspace \? "bg-white" : "bg-\[#f1f5fb\]"/);
-  assert.match(page, /space-y-6 bg-\[#F1F5FB\]/);
+  assert.match(page, /space-y-6 bg-white/);
   assert.match(page, /text-\[16px\] font-medium leading-6 tabular-nums text-\[#0F172A\]/);
   assert.match(page, /text-\[16px\] font-medium leading-6 tabular-nums text-\[#0F172A\]/);
   assert.match(page, /text-\[12px\] font-normal text-\[#64748B\]/);
