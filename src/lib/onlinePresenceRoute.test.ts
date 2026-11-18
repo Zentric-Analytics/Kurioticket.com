@@ -135,8 +135,10 @@ test("only authenticated ingress automation evidence suppresses an otherwise eli
 
 test("invalid authorization is not counted as a guest and storage failures never return success", async () => {
   const never = () => { throw new Error("must not run"); };
+  const failures: string[] = [];
   const deps = { environment: () => "production" as const, now: () => now, secret: () => secret,
-    automationSecret: () => undefined, admit: () => true, authenticate: async () => null, record: async () => {} };
+    automationSecret: () => undefined, admit: () => true, authenticate: async () => null, record: async () => {},
+    onFailure: (environment: string) => failures.push(environment) };
   const invalid = createOnlinePresenceHandler("native", { ...deps, record: never });
   assert.equal((await invalid(native({ authorization: "Bearer invalid" }))).status, 401);
   const invalidWeb = createOnlinePresenceHandler("web", { ...deps, record: never });
@@ -154,6 +156,7 @@ test("invalid authorization is not counted as a guest and storage failures never
   const disabledResponse = await disabled(web());
   assert.equal(disabledResponse.status, 503);
   assert.equal(disabledResponse.headers.get("set-cookie"), null);
+  assert.deepEqual(failures, ["production"], "expected rejections do not signal an outage");
 });
 
 test("operational website presence includes authenticated Admin routes and public guests", () => {
@@ -176,4 +179,6 @@ test("website monitoring detects invalid or conflicting public origins", () => {
   assert.equal(hasConsistentWebsitePresenceOrigin("https://kurioticket.com", "https://staging.kurioticket.com"), false);
   assert.equal(hasConsistentWebsitePresenceOrigin("https://name@kurioticket.com", undefined), false);
   assert.equal(hasConsistentWebsitePresenceOrigin("not a URL", undefined), false);
+  assert.equal(hasConsistentWebsitePresenceOrigin("http://staging.kurioticket.com", "http://staging.kurioticket.com",
+    "https://staging.kurioticket.com"), false);
 });

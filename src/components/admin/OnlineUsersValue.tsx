@@ -35,6 +35,7 @@ export function OnlineUsersValue({ initial }: { initial: OnlinePresenceSnapshot 
       try {
         const response = await fetch("/api/admin/overview/online-presence", {
           cache: "no-store",
+          referrerPolicy: "origin",
           signal: controller.signal,
         });
         if (!response.ok) throw new Error("Presence refresh failed");

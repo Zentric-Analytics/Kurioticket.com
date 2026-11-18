@@ -24,12 +24,16 @@ export function isWebsiteOnlinePresenceEnabled() {
   return process.env.ONLINE_PRESENCE_WEB_ENABLED === "true";
 }
 
-export function hasConsistentWebsitePresenceOrigin(publicUrl?: string, authUrl?: string) {
-  if (!publicUrl && !authUrl) return true;
+export function hasConsistentWebsitePresenceOrigin(...urls: Array<string | undefined>) {
+  const origins = new Set<string>();
   try {
-    const origin = new URL(publicUrl || authUrl!);
-    if ((origin.protocol !== "https:" && origin.protocol !== "http:") || origin.username || origin.password) return false;
-    return !publicUrl || !authUrl || new URL(authUrl).origin === origin.origin;
+    for (const value of urls) {
+      if (!value) continue;
+      const url = new URL(value);
+      if ((url.protocol !== "https:" && url.protocol !== "http:") || url.username || url.password) return false;
+      origins.add(url.origin);
+    }
+    return origins.size <= 1;
   } catch {
     return false;
   }

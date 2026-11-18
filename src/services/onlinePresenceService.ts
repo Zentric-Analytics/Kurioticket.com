@@ -3,7 +3,7 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import type { Prisma } from "@/generated/prisma/client";
 import { getOptionalPrisma, isDatabaseConfigured } from "@/lib/prisma";
-import { onlinePresenceWindowSeconds, type OnlinePresenceSnapshot } from "@/lib/onlinePresence";
+import { onlinePresenceHeartbeatMs, onlinePresenceWindowSeconds, type OnlinePresenceSnapshot } from "@/lib/onlinePresence";
 import { hasConsistentWebsitePresenceOrigin, isWebsiteOnlinePresenceEnabled, presenceSigningSecret } from "@/lib/onlinePresenceCredential";
 import type { OnlinePresenceHeartbeat } from "@/lib/onlinePresenceRoute";
 import type { PublicEnvironment } from "@/lib/stagingSafety";
@@ -12,6 +12,15 @@ const retainedForMs = 15 * 60_000;
 const writeThrottleMs = 20_000;
 const cleanupIntervalMs = 60_000;
 const cleanupAgainAt: Record<PublicEnvironment, number> = { staging: 0, production: 0 };
+
+const presenceHealth = globalThis as typeof globalThis & {
+  onlinePresenceFailedThrough?: Partial<Record<PublicEnvironment, number>>;
+};
+
+export function reportOnlinePresenceIngestionFailure(environment: PublicEnvironment) {
+  const failures = presenceHealth.onlinePresenceFailedThrough ??= {};
+  failures[environment] = Date.now() + onlinePresenceHeartbeatMs;
+}
 
 async function pruneExpiredPresence(environment: PublicEnvironment, now: Date) {
   const db = getOptionalPrisma();
@@ -64,13 +73,18 @@ export async function recordOnlinePresence(heartbeat: OnlinePresenceHeartbeat) {
   await pruneExpiredPresence(heartbeat.environment, heartbeat.now);
 }
 
-export async function getOnlinePresenceSnapshot(environment: PublicEnvironment, now = new Date()): Promise<OnlinePresenceSnapshot> {
+export async function getOnlinePresenceSnapshot(
+  environment: PublicEnvironment,
+  now = new Date(),
+  browserReferrer?: string,
+): Promise<OnlinePresenceSnapshot> {
   const window = { windowSeconds: onlinePresenceWindowSeconds, observedAt: now.toISOString() };
   const unavailable: OnlinePresenceSnapshot = { status: "unavailable", ...window };
   if (!isDatabaseConfigured() || !presenceSigningSecret() || !isWebsiteOnlinePresenceEnabled()) {
     return { status: "not_configured", ...window };
   }
-  if (!hasConsistentWebsitePresenceOrigin(process.env.NEXT_PUBLIC_APP_URL, process.env.NEXTAUTH_URL)) return unavailable;
+  if (!hasConsistentWebsitePresenceOrigin(process.env.NEXT_PUBLIC_APP_URL, process.env.NEXTAUTH_URL, browserReferrer)
+      || now.getTime() < (presenceHealth.onlinePresenceFailedThrough?.[environment] ?? 0)) return unavailable;
   const cutoff = new Date(now.getTime() - onlinePresenceWindowSeconds * 1000);
 
   try {

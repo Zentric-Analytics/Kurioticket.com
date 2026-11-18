@@ -146,7 +146,7 @@ test("Online Users is a current presence estimate with independent authenticated
   assert.match(value, /nextRefreshAt = performance\.now\(\) \+ onlinePresenceHeartbeatMs/);
   assert.match(value, /document\.visibilityState === "visible"/);
   assert.match(route, /await requireAdminApiSession\(\)/);
-  assert.match(route, /getOnlinePresenceSnapshot\(getPublicEnvironment\(\)\)/);
+  assert.match(route, /getOnlinePresenceSnapshot\(getPublicEnvironment\(\), new Date\(\), referrer\)/);
   assert.match(route, /"Cache-Control": "private, no-store"/);
   assert.doesNotMatch(route, /getAdminOverview|searchParams/);
 });
