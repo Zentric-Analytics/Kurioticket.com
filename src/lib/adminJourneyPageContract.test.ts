@@ -92,13 +92,13 @@ test("Visitor Journeys keeps all eight records fields and the Action link visibl
   assert.match(users, /admin-responsive-records/);
   assert.match(list, /admin-responsive-records min-w-0 max-w-full overflow-x-auto/);
   assert.match(list, /<table className="w-full min-w-0 table-fixed text-left/);
-  assert.doesNotMatch(list, /min-w-\\[1060px\\]/);
+  assert.doesNotMatch(list, /min-w-\[1060px\]/);
   for (const name of ["Last activity", "Identity", "Products", "Providers", "Searches", "Observed stages", "Events", "Action"]) {
     assert.ok(list.includes(`data-label="${name}"`), `Journey rows need responsive ${name} data`);
   }
-  assert.match(list, /href=\\{detailHref\\(journey.id, list.data.scope, range\\)\\}/);
-  assert.match(list, /aria-label=\\{`View activity for/);
+  assert.match(list, /href=\{detailHref\(journey\.id, list\.data\.scope, range\)\}/);
+  assert.match(list, /aria-label=\{`View activity for/);
   assert.match(list, /View activity/);
-  assert.match(list, /CopyIdentityId id=\\{identityId\\}/);
-  assert.match(responsiveCss, /@container \\(max-width: 800px\\)/);
+  assert.match(list, /CopyIdentityId id=\{identityId\}/);
+  assert.match(responsiveCss, /@container \(max-width: 800px\)/);
 });
