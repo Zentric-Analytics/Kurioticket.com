@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { AdminDirectorySelect } from "@/components/admin/AdminDirectorySelect";
+import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
 import { offsetUtcDateTime, utcDateTimeInput, utcDateTimeIso, type JourneyDateRange } from "@/lib/adminJourneyDateRange";
 
 export function JourneyDateRangeFields({ initialRange, initialFrom, initialTo, now }: {
@@ -27,8 +27,8 @@ export function JourneyDateRangeFields({ initialRange, initialFrom, initialTo, n
     toInputRef.current?.setCustomValidity(valid ? "" : "Choose a valid UTC interval with From before To, no more than 90 days.");
   }, [custom, valid]);
   return (
-    <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2">
-      <AdminDirectorySelect label="Date range" name="range" value={range}
+    <div className="flex min-w-0 flex-wrap items-end justify-end gap-x-3 gap-y-2">
+      <div className="w-[170px] min-w-0"><SearchMonitorSelect label="Date range" name="range" value={range} appearance="fare" align="end"
         onValueChange={value => {
           const next = value as JourneyDateRange;
           if (next === "custom" && range !== "custom") {
@@ -38,14 +38,14 @@ export function JourneyDateRangeFields({ initialRange, initialFrom, initialTo, n
           }
           setRange(next);
         }}
-        plain
         options={[
           { value: "today", label: "Today" },
           { value: "7d", label: "Last 7 days" },
           { value: "30d", label: "Last 30 days" },
-          { value: "90d", label: "Last 90 days" },
-          { value: "custom", label: "Custom dates" },
-        ]} />
+          { value: "all", label: "All time" },
+          ...(range === "90d" ? [{ value: "90d", label: "Last 90 days (legacy)" }] : []),
+          ...(range === "custom" ? [{ value: "custom", label: "Custom dates (legacy)" }] : []),
+        ]} /></div>
       {custom ? (
         <div className="flex min-w-0 flex-wrap items-end gap-3">
           <label className="text-xs text-[#475569]">From (UTC)
