@@ -2,9 +2,9 @@ import Link from "next/link";
 
 import { AdminEmptyState } from "@/components/admin/AdminPageShell";
 import { AdminDirectorySelect } from "@/components/admin/AdminDirectorySelect";
+import { CopyIdentityId } from "@/components/admin/CopyIdentityId";
 import { JourneyDateRangeFields } from "@/components/admin/JourneyDateRangeFields";
 import { journeyWindow, selectedJourneyRange } from "@/lib/adminJourneyDateRange";
-import { ChevronRight } from "lucide-react";
 import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
 import { SearchWorkspacePanelFrame } from "@/components/admin/SearchWorkspacePanelFrame";
 import { formatDateTime } from "@/lib/admin-data";
@@ -38,6 +38,7 @@ export default async function AdminJourneysPage({ searchParams, embedded = false
   return (
     <SearchWorkspacePanelFrame embedded={embedded} title="Visitor Journeys" hideHeader>
       <div className="w-full min-w-0 bg-white text-[#020617]">
+        <h2 className="pb-3 text-[20px] font-semibold leading-7 text-[#020617]">Visitor Journeys</h2>
         {summary?.status === "ok" ? (
           <section aria-label="Journey summary" className="grid min-w-0 grid-cols-2 gap-y-3 border-y border-[#D8E1EC] py-4 sm:grid-cols-3 lg:grid-cols-5 lg:gap-y-0">
             <Metric label="Journeys" value={summary.data.journeys} />
@@ -123,47 +124,52 @@ export default async function AdminJourneysPage({ searchParams, embedded = false
             <AdminEmptyState title="No journeys found" message="No consented journeys match this environment, time window and filter set." />
           ) : (
             <section aria-label="Visitor journeys directory" className="min-w-0 pt-2">
-              <div className="overflow-x-auto" role="region" aria-label="Journey records" tabIndex={0}>
-                <table className="w-full min-w-[1060px] table-fixed text-left text-[13px]">
+              <div className="admin-responsive-records min-w-0 max-w-full overflow-x-auto" role="region" aria-label="Journey records" tabIndex={0}>
+                <table className="w-full min-w-0 table-fixed text-left text-[13px]">
                   <caption className="sr-only">Eligible visitor journeys matching the selected filters</caption>
                   <colgroup>
-                    <col className="w-[14%]" /><col className="w-[18%]" /><col className="w-[12%]" />
-                    <col className="w-[15%]" /><col className="w-[8%]" /><col className="w-[19%]" />
-                    <col className="w-[7%]" /><col className="w-[7%]" />
+                    <col className="w-[15%]" /><col className="w-[16%]" /><col className="w-[9%]" />
+                    <col className="w-[14%]" /><col className="w-[7%]" /><col className="w-[22%]" />
+                    <col className="w-[6%]" /><col className="w-[11%]" />
                   </colgroup>
                   <thead className="border-b border-[#D8E1EC] bg-white text-[12px] text-[#475569]">
                     <tr>
                       {["Last activity", "Identity", "Products", "Providers", "Searches", "Observed stages", "Events", "Action"].map(label => (
-                        <th key={label} scope="col" className="px-3 py-3 font-medium uppercase">{label}</th>
+                        <th key={label} scope="col" className="px-2 py-2.5 text-left font-medium uppercase">{label}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#E7ECF5]">
-                    {list.data.items.map(journey => (
-                      <tr key={journey.id} className="h-[64px] align-top transition-colors hover:bg-[#F8FAFC]">
-                        <td className="px-3 py-3">
+                    {list.data.items.map(journey => {
+                      const identityId = journey.identity.userId || journey.identity.visitorId;
+                      return (
+                      <tr key={journey.id} className="min-h-[56px] align-top transition-colors hover:bg-[#F8FAFC]">
+                        <td data-label="Last activity" className="px-2 py-2.5">
                           <p className="font-medium leading-5 text-[#020617]">{formatDateTime(new Date(journey.lastEventAt))}</p>
                           <p className="mt-1 text-[12px] leading-4 text-[#64748B]">Started {formatDateTime(new Date(journey.startedAt))}</p>
                         </td>
-                        <td className="px-3 py-3">
+                        <td data-label="Identity" className="px-2 py-2.5">
                           <p className="font-medium capitalize text-[#020617]">{journey.identity.kind}</p>
-                          <p className="mt-1 truncate text-[12px] text-[#64748B]"
-                            title={journey.identity.userId || journey.identity.visitorId || undefined}>
-                            {journey.identity.userId || journey.identity.visitorId || "—"}
-                          </p>
+                          <div className="mt-0.5 flex min-w-0 items-center gap-1">
+                            <span className="block min-w-0 flex-1 overflow-hidden text-ellipsis [white-space:nowrap] text-[11px] text-[#64748B]"
+                              title={identityId || undefined}>
+                              {identityId || "—"}
+                            </span>
+                            {identityId ? <CopyIdentityId id={identityId} kind={journey.identity.kind === "registered" ? "user" : "guest"} /> : null}
+                          </div>
                         </td>
-                        <td className="px-3 py-3 text-[#334155]">{journey.products.join(", ") || "—"}</td>
-                        <td className="px-3 py-3 text-[#334155] [overflow-wrap:anywhere]">
+                        <td data-label="Products" className="px-2 py-2.5 text-[#334155]">{journey.products.join(", ") || "—"}</td>
+                        <td data-label="Providers" className="px-2 py-2.5 text-[#334155] [overflow-wrap:anywhere]">
                           {journey.providers.length
                             ? journey.providers.join(", ") + (journey.providerCount > journey.providers.length ? " +" + (journey.providerCount - journey.providers.length) : "")
                             : "—"}
                         </td>
-                        <td className="px-3 py-3 tabular-nums text-[#334155]">{journey.searchCount}</td>
-                        <td className="px-3 py-3">
-                          <div className="flex flex-wrap gap-1.5">
+                        <td data-label="Searches" className="px-2 py-2.5 tabular-nums text-[#334155]">{journey.searchCount}</td>
+                        <td data-label="Observed stages" className="px-2 py-2.5">
+                          <div className="flex min-w-0 flex-wrap gap-1">
                             {stages.filter(stage => journey.stages[stage.value] > 0).map(stage => (
                               <span key={stage.value}
-                                className={"inline-flex items-center rounded-md border px-2 py-1 text-[11px] font-medium leading-4 " +
+                                className={"inline-flex max-w-full items-center rounded-md border px-1.5 py-0.5 text-[10px] font-medium leading-4 [overflow-wrap:anywhere] " +
                                   (stage.value === "PROVIDER_HANDOFF_STARTED"
                                     ? "border-[#A7E6D1] bg-[#F0FDF8] text-[#047857]"
                                     : "border-[#D8E1EC] bg-white text-[#475569]")}>
@@ -172,15 +178,17 @@ export default async function AdminJourneysPage({ searchParams, embedded = false
                             ))}
                           </div>
                         </td>
-                        <td className="px-3 py-3 tabular-nums text-[#334155]">{journey.eventCount}</td>
-                        <td className="px-3 py-3">
+                        <td data-label="Events" className="px-2 py-2.5 tabular-nums text-[#334155]">{journey.eventCount}</td>
+                        <td data-label="Action" className="px-2 py-2.5">
                           <Link href={detailHref(journey.id, list.data.scope, range)}
-                            className="inline-flex items-center gap-1 whitespace-nowrap text-[13px] font-medium text-[#004BB8] underline-offset-4 hover:underline">
-                            View <ChevronRight size={14} aria-hidden="true" />
+                            aria-label={`View activity for ${journey.identity.kind} journey ${journey.id}`}
+                            className="inline-flex min-h-8 items-center text-[12px] font-medium text-[#004BB8] underline-offset-4 hover:underline focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
+                            View activity
                           </Link>
                         </td>
                       </tr>
-                    ))}
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
