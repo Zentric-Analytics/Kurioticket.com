@@ -16,7 +16,11 @@ test("Support search and dropdown filters are drafts until Apply filters", () =>
   assert.match(support, /const isLoadingResults = isPending;/);
   assert.doesNotMatch(support, /setTimeout\(\(\) => \{[^}]*navigate\(\{ q:/);
   assert.doesNotMatch(support, /onValueChange=\{next => navigate\(\{ (?:priority|category):/);
-  assert.match(support, /sm:grid-cols-\[minmax\(0,160px\)_minmax\(0,160px\)_auto\]/);
+  assert.match(support, /className="flex min-w-0 flex-wrap items-center justify-between gap-x-5 gap-y-3/);
+  assert.match(support, /aria-label="Support ticket status" className="flex min-w-0 max-w-full flex-wrap/);
+  assert.match(support, /className="flex min-w-0 max-w-full flex-1 flex-wrap/);
+  assert.doesNotMatch(support, /overflow-x-auto|overflow-x-scroll|Clear filters|clearFilters|hasFilters/);
+  assert.match(support, /<AdminQueueLoadingState label="Loading tickets/);
 });
 
 test("date and outcome records filters are applied together only on request", () => {
