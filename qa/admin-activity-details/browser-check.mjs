@@ -317,6 +317,10 @@ try {
   assert.equal(await page.evaluate(()=>navigator.clipboard.readText()),"qa-guest-activity-0001");
   console.log("PASS every record visible and identity");
 
+  // The default rolling 24-hour period must not invent October records in November.
+  await page.goto(url.split("?")[0]);
+  await expect(page.getByRole("button",{name:"Date range: Last 24 hours"})).toBeVisible();
+  await expect(page.locator("[data-activity-id]")).toHaveCount(0);
   await page.goto(url);
   await page.getByRole("navigation",{name:"Activity tabs"}).getByRole("link",{name:"Searches",exact:true}).click();
   await expect(page).toHaveURL(/tab=searches/);
