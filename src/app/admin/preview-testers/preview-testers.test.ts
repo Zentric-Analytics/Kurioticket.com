@@ -95,7 +95,7 @@ test("Team Access uses a compact horizontal Add form and the same UTC picker for
 });
 
 test("Team Access audit timestamps never depend on the browser timezone during hydration", () => {
-  assert.match(registry, /formatUtcAuditTimestamp\\(tester\\.updatedAt\\)/);
-  assert.match(registry, /formatUtcAuditTimestamp\\(timestamp\\)/);
-  assert.doesNotMatch(registry, /toLocaleString\\(/);
+  assert.ok(registry.includes("formatUtcAuditTimestamp(tester.updatedAt)"));
+  assert.ok(registry.includes("formatUtcAuditTimestamp(timestamp)"));
+  assert.equal(registry.includes("toLocaleString("), false);
 });
