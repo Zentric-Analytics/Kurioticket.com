@@ -27,7 +27,7 @@ test("Settings is the authoritative workspace for persisted administrative contr
   assert.match(settingsPage, /<AdminPageShell title="Settings" hideHeader>/);
   assert.doesNotMatch(settingsPage, /Environment and access|ContextItem|Your access|Settings store/);
   assert.match(settingsNavigation, /label: "Feature controls"/);
-  assert.match(settingsNavigation, /label: "Recent changes"/);
+  assert.match(settingsNavigation, /label: "Settings History"/);
   assert.doesNotMatch(settingsPage, /Managed outside Settings|Runtime & credentials/);
   assert.doesNotMatch(settingsPage, /Homepage Fare Operations|\/admin\/homepage-fares/);
   assert.doesNotMatch(settingsPage, /provider health|system health|email delivery health/i);
@@ -187,28 +187,32 @@ test("settings uses a single administrative workspace instead of dashboard cards
   assert.doesNotMatch(settingsPage, /SummaryItem|Recent control updates|Related operations|Change safeguards|Protected changes/);
 });
 
-test("Recent changes opens unfiltered audit history within the reader's supported 90-day window", () => {
+test("Settings History expands on the same route and supports read-only details", () => {
   const recent = readFileSync("src/app/admin/settings/recent-changes/page.tsx", "utf8");
-  const auditLogs = readFileSync("src/app/admin/logs/page.tsx", "utf8");
-  const auditReader = readFileSync("src/services/adminAuditReadContract.ts", "utf8");
-  assert.match(recent, /href="\/admin\/logs\?range=90d"/);
-  assert.doesNotMatch(recent, /href="\/admin\/logs\?[^"]*(?:action=|targetType=|range=30d)/);
-  assert.match(recent, />\s*View audit history\s*<\/Link>/);
-  assert.match(auditLogs, /range === "90d"/);
-  assert.match(auditReader, /end - start > 90 \* dayMs/);
-});
-
-test("Recent changes reads real settings audit events instead of initialization timestamps", () => {
-  const recent = readFileSync("src/app/admin/settings/recent-changes/page.tsx", "utf8");
-  assert.match(recent, /adminAuditReads\.list/);
-  assert.match(recent, /FEATURE_CONTROL_UPDATED/);
-  assert.match(recent, /ADMIN_NOTIFICATION_PREFERENCE_UPDATED/);
-  assert.match(recent, /history\.map/);
-  assert.match(recent, /Administrator/);
-  assert.match(recent, /No recorded Settings changes in the last 90 days/);
-  assert.match(recent, /Settings audit history is temporarily unavailable/);
+  const reader = readFileSync("src/services/adminSettingsHistoryCore.ts", "utf8");
+  assert.match(recent, /View full history/);
+  assert.match(recent, /historyHref\(range, category\)/);
+  assert.match(recent, /<SettingsHistoryRow key=\{item\.id\} item=\{item\}/);
+  assert.match(recent, /<details data-settings-history-record=\{item\.id\}/);
+  assert.match(recent, /Read-only change record/);
+  assert.match(recent, /name="view" value="full"/);
+  assert.match(recent, /name="range"/);
+  assert.match(recent, /name="category"/);
+  assert.match(recent, /Older records/);
+  assert.match(recent, /Show recent records/);
+  assert.match(reader, /require|authorize/);
+  assert.match(reader, /FEATURE_CONTROL_UPDATED/);
+  assert.match(reader, /TEAM_ACCESS_MEMBER_APPROVED/);
+  assert.match(reader, /ADMIN_NOTIFICATION_PREFERENCE_UPDATED/);
+  assert.match(reader, /orderBy: \[\{ createdAt: "desc" \}, \{ id: "desc" \}\]/);
+  assert.match(reader, /take: limit \+ 1/);
+  assert.match(reader, /Previous state/);
+  assert.match(reader, /New state/);
+  assert.doesNotMatch(recent, /\/admin\/logs\?|href="\/admin\/logs/);
+  assert.doesNotMatch(reader, /ipAddress|userAgent|password|secret/);
   assert.doesNotMatch(recent, /listFeatureControls|recentControlUpdates|featureControls\.controls/);
 });
+
 
 test("Settings omits nonactionable deployment and access documentation", () => {
   assert.doesNotMatch(settingsPage, /Managed outside Settings|Runtime & credentials|Deployment managed|Access managed separately/);
@@ -257,8 +261,8 @@ test("settings routes isolate the right-side content but preserve the working co
   assert.match(featurePanel, /hideCategoryHeading \? undefined/);
   assert.match(notifications, /<AdminAlertAcknowledgeButton/);
   assert.match(notifications, /getAdminAlertSnapshot/);
-  assert.match(changes, /history\.map/);
-  assert.match(changes, /FEATURE_CONTROL_UPDATED/);
+  assert.match(changes, /result.items.map/);
+  assert.match(changes, /adminSettingsHistory\.list/);
   assert.doesNotMatch(notifications, /FeatureControlsPanel|listFeatureControls/);
   assert.doesNotMatch(changes, /AdminAlertAcknowledgeButton/);
 });
@@ -286,7 +290,7 @@ test("Settings sections share restrained desktop widths, headings, and consisten
   assert.doesNotMatch(featureSection, />Feature controls<\/p>/);
   assert.match(featurePanel, /sm:min-w-\[128px\] sm:justify-end/);
   assert.match(notificationPanel, /const visibleAlerts = snapshot\?\.alerts \?\? \[\]/);
-  assert.match(recent, /lg:grid-cols-\[minmax\(0,1fr\)_minmax\(0,1\.1fr\)_minmax\(0,1\.1fr\)_150px\]/);
+  assert.match(recent, /lg:grid-cols-\[minmax\(0,1\.1fr\)_minmax\(0,1\.2fr\)_minmax\(0,1\.3fr\)_minmax\(145px,0\.8fr\)\]/);
   assert.doesNotMatch(settingsLayout, /<AdminHorizontalShell|<AdminHeader/);
 });
 
