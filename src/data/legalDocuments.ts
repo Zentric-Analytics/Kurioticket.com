@@ -9,6 +9,7 @@ import {
 
 const lastUpdated = "May 11, 2026";
 const legalNoticeLastUpdated = "June 28, 2026";
+const presencePolicyLastUpdated = "November 18, 2026";
 
 const legalMonthNames: Record<string, string> = {
   "01": "January",
@@ -100,7 +101,7 @@ export const legalDocuments: LegalDocument[] = [
     slug: "privacy-policy",
     title: enTranslations["legal.privacy.title"],
     summary: enTranslations["legal.privacy.summary"],
-    lastUpdated,
+    lastUpdated: presencePolicyLastUpdated,
     sections: [
       {
         id: "data-we-collect",
@@ -133,7 +134,7 @@ export const legalDocuments: LegalDocument[] = [
     slug: "cookie-policy",
     title: "Cookie Policy",
     summary: "How Kurioticket uses cookies and similar technologies for authentication, security, preferences, analytics, and performance.",
-    lastUpdated,
+    lastUpdated: presencePolicyLastUpdated,
     sections: [
       {
         id: "use",

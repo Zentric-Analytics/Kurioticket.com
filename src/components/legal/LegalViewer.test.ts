@@ -40,6 +40,16 @@ test("clean app-browser route is Preview-safe and contains no site chrome", () =
   assert.match(appRoute, /robots: \{ index: false, follow: false \}/);
 });
 
+test("policies with the operational presence disclosures display their updated revision date", () => {
+  for (const slug of ["privacy-policy", "cookie-policy"]) {
+    const document = legalDocuments.find((entry) => entry.slug === slug)!;
+    const html = renderToStaticMarkup(
+      createElement(LocaleProvider, null, createElement(LegalViewer, { document })),
+    );
+    assert.match(html, /November 18, 2026/);
+  }
+});
+
 for (const slug of ["terms-of-service", "privacy-policy"]) {
   test(`${slug}: clean rendering reuses the web document styling and content without website controls`, () => {
     const document = legalDocuments.find((entry) => entry.slug === slug)!;
