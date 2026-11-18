@@ -149,3 +149,15 @@ test("top-level navbar fits standard desktop widths without wrapping or a menu t
   assert.doesNotMatch(shell, /flex-wrap items-center justify-start gap-x-5/);
   assert.doesNotMatch(shell, /mobileOpen|aria-label=\{mobileOpen/);
 });
+
+test("profile dropdown contains only the three intended links while System retains Audit Logs", () => {
+  const menu = shell.slice(shell.indexOf("function AdminHeaderMenus("), shell.indexOf("export function AdminHorizontalShell("));
+  assert.ok(menu.length > 0, "Profile menu component should be present");
+  assert.match(menu, /href: "\/admin\/settings", label: "Admin settings"/);
+  assert.match(menu, /href: "\/", label: "Switch to public site"/);
+  assert.match(menu, /href: "\/api\/auth\/signout", label: "Logout"/);
+  assert.doesNotMatch(menu, /href: "\/admin\/logs"|label: "Audit Logs"|ShieldCheck/);
+  assert.equal((menu.match(/\{ href:/g) || []).length, 3);
+  const system = getAdminHeaderGroups("ADMIN").flatMap(group => group.links).find(entry => entry.item.href === "/admin/system");
+  assert.ok(system?.children.some(child => child.href === "/admin/logs"));
+});
