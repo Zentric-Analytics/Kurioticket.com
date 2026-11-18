@@ -438,22 +438,22 @@ test("Referral date filter stays available without duplicate Providers tabs", ()
   assert.match(referralWindowFilter, /Last " \+ days \+ " days"/);
 });
 
-test("Tasks 7–8 use User Activity-style provider handoff filters without losing scoped IDs", () => {
-  assert.match(handoffsPage, /<h1 className="sr-only">Provider Handoffs<\/h1>/);
+test("Provider Handoffs uses a compact Apply-only filter row without an environment selector", () => {
   assert.doesNotMatch(handoffsPage, /Recorded outbound referrals only/);
   assert.doesNotMatch(handoffsPage, /<SearchWorkspaceBackLink href="\/admin\/providers\?view=attribution"/);
-  assert.match(handoffsPage, /handoffDetailHref\(handoff\.id, handoff\.environment, raw\)/);
+  assert.match(handoffsPage, /handoffDetailHref\(handoff\.id, handoff\.environment, scopedRaw\)/);
   assert.match(handoffsPage, /<ProviderHandoffFilters/);
-  assert.match(handoffFilters, /aria-label="Search by provider"/);
-  assert.match(handoffFilters, /<SearchMonitorSelect label="Product"/);
-  assert.match(handoffFilters, /<SearchMonitorSelect label="Identity"/);
-  assert.match(handoffFilters, /<SearchMonitorSelect label="Search link"/);
-  assert.match(handoffFilters, /<SearchMonitorSelect label="Environment"/);
-  assert.match(handoffFilters, /appearance="plain"/);
-  assert.match(handoffFilters, /setTimeout\(\(\) => navigate\(next\), 300\)/);
-  assert.match(handoffFilters, /router\.replace\(href, \{ scroll: false \}\)/);
-  assert.match(handoffFilters, /onValueChange=\{value => update\(\{ identity: value \}, false, true\)\}/);
-  assert.doesNotMatch(handoffFilters, /Apply filters/);
+  assert.match(handoffsPage, /buildHandoffProviderOptions\(getProviderIntegrationStatuses\(\)/);
+  assert.match(handoffFilters, /<form[\s\S]*action="\/admin\/redirects"[\s\S]*method="get"/);
+  assert.match(handoffFilters, /<h1[\s\S]*Provider Handoffs[\s\S]*<\/h1>/);
+  assert.match(handoffFilters, /<SearchMonitorSelect label="Date range" name="range"/);
+  for (const field of ["Provider", "Product", "Identity", "Search link"]) {
+    assert.match(handoffFilters, new RegExp('<SearchMonitorSelect label="' + field + '"'));
+  }
+  assert.match(handoffFilters, /xl:grid-cols-\[minmax\(0,1\.1fr\)/);
+  assert.match(handoffFilters, /appearance="fare"/);
+  assert.match(handoffFilters, /Apply filters/);
+  assert.doesNotMatch(handoffFilters, /Search by provider|Current environment|label="Environment"|router\.replace|setTimeout/);
   assert.match(handoffsPage, /if \(embedded\) return \(/);
   assert.match(handoffsPage, /<AdminFilterBar action=\{embedded/);
 });
@@ -486,7 +486,7 @@ test("Task 8 keeps filters and deep-linked date/identity scope correctly across 
   assert.equal(changedIdentity.searchParams.get("identity"), "unattributed");
 });
 
-test("Handoff filter keeps newer local text during stale server refreshes", () => {
+test("Legacy handoff filter helper still rejects stale provider drafts", () => {
   const scope = { userId: "", visitorId: "", from: "", to: "" };
   const base = {
     product: "", identity: "all", correlation: "",
@@ -500,15 +500,14 @@ test("Handoff filter keeps newer local text during stale server refreshes", () =
     scope, latest, "KAYAK sandbox"), true);
   assert.equal(shouldAcceptHandoffFilterResponse(base, scope, latest,
     "KAYAK sandbox", true), true); // Deliberate browser Back/Forward.
-  assert.match(handoffFilters, /latestProviderDraft\.current = patch\.provider/);
-  assert.match(handoffFilters, /shouldAcceptHandoffFilterResponse\(/);
-  assert.match(handoffFilters, /if \(timeout\.current\) clearTimeout\(timeout\.current\)/);
+  assert.match(handoffFilters, /action="\/admin\/redirects"/);
+  assert.doesNotMatch(handoffFilters, /onValueChange=\{value => update|router\.replace/);
 });
 
 test("Handoff identity unscoping stays active during subsequent rapid changes", () => {
-  assert.match(handoffFilters, /const identityScopeCleared = useRef\(false\)/);
-  assert.match(handoffFilters, /if \(changeIdentity\) identityScopeCleared\.current = true/);
-  assert.match(handoffFilters, /providerHandoffFiltersHref\(next, scope, identityScopeCleared\.current\)/);
+  assert.match(handoffFilters, /clearFieldNamesOnChange=\{\["userId", "visitorId"\]\}/);
+  assert.match(handoffFilters, /name="userId"/);
+  assert.match(handoffFilters, /name="visitorId"/);
   const scope = { userId: "account_1", visitorId: "visitor_1",
     from: "2026-10-20", to: "2026-11-03" };
   const identityChanged = {
@@ -550,11 +549,10 @@ test("Handoff browser history only bypasses the stale-response guard for real fi
     currentHref);
   assert.notEqual(providerHandoffHistoryFilterHref("?product=FLIGHT&identity=guest"),
     currentHref);
-  // A cursor-only change must not set the override used for external
-  // filter navigation. Otherwise the next older search response wins.
-  assert.match(handoffFilters, /providerHandoffHistoryFilterHref\(window\.location\.search\) === latestServerFilterHref\.current/);
-  assert.match(handoffFilters, /externalNavigation\.current = false;\s+return;/);
-  assert.match(handoffFilters, /latestServerFilterHref\.current = providerHandoffFiltersHref\(initial, scope\)/);
+  // Pagination keeps the same materialized date scope and original filters.
+  assert.match(handoffsPage, /withHandoffDateScope\(raw, now\)/);
+  assert.match(handoffsPage, /handoffNextPageHref\(scopedRaw, result\.data\.nextCursor\)/);
+  assert.match(handoffsPage, /handoffPreviousPageHref\(scopedRaw\)/);
   assert.equal(shouldAcceptHandoffFilterResponse(original, scope,
     currentHref, "KAYAK sandbox", false), false);
 });
