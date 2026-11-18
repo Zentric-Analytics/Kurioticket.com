@@ -23,7 +23,7 @@ export function PlatformHealthFilters({ hours, application }: {
 }) {
   return (
     <form action="/admin/platform-health" method="get" aria-label="Platform health filters"
-      className="grid min-w-0 grid-cols-1 items-end gap-3 sm:grid-cols-[minmax(0,185px)_minmax(0,185px)_auto] sm:justify-start">
+      className="grid min-w-0 grid-cols-1 items-end gap-3 lg:grid-cols-[minmax(0,185px)_minmax(0,185px)_auto] lg:justify-start">
       <ApplicationSourceSelect value={application} />
       <div className="grid min-w-0 gap-1.5 text-xs font-medium text-[#475569]">
         <label htmlFor="platform-hours">Activity window</label>
