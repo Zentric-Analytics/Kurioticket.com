@@ -48,7 +48,7 @@ try{
  for(const width of [1440,390,320]){
   const context=await browser.newContext({viewport:{width,height:1000},reducedMotion:'reduce',timezoneId:'UTC'});const page=await context.newPage();const errors=[];page.on('pageerror',error=>errors.push(error.message));
   await page.goto(base+'/admin/platform-health',{waitUntil:'networkidle',timeout:120000});await expect(page.getByRole('heading',{name:'Platform Health',exact:true}).first()).toBeAttached();await expect(page.getByText('Search operations',{exact:true})).toBeVisible();
-  if(width<1100){await page.getByRole('button',{name:'Open admin navigation'}).click();await expect(page.getByRole('link',{name:'Platform Health',exact:true})).toBeVisible();await page.getByRole('button',{name:'Close admin navigation'}).click();}
+  await expect(page.getByRole('navigation',{name:'Admin navigation'})).toBeVisible();await expect(page.getByRole('button',{name:'Open admin navigation'})).toHaveCount(0);
   await page.keyboard.press('Control+k');await page.getByRole('textbox',{name:'Search admin workspaces and records'}).fill('Platform Health');await expect(page.getByRole('link',{name:/Platform Health.*Workspace/})).toBeVisible();await page.keyboard.press('Escape');
   const applicationSelect=page.getByRole('combobox',{name:'Application',exact:true});
   await expect(applicationSelect).toContainText('All Platforms');
