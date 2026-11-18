@@ -37,6 +37,10 @@ export function OnlineUsersValue({ initial }: { initial: OnlinePresenceSnapshot 
         });
         if (!response.ok) throw new Error("Presence refresh failed");
         const snapshot: OnlinePresenceSnapshot = await response.json();
+        if (snapshot.status !== "not_configured"
+            && (snapshot.status !== "ok" || !Number.isSafeInteger(snapshot.total) || snapshot.total < 0)) {
+          throw new Error("Invalid presence snapshot");
+        }
         if (activeRequest === controller) setLive(snapshot);
       } catch {
         if (activeRequest === controller) setLive("unavailable");
