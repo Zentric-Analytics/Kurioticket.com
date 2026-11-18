@@ -34,7 +34,7 @@ export const adminNavigationGroups = [
   { label: "Operations", hrefs: ["/admin", "/admin/users", "/admin/searches/activity", "/admin/confirmed-trips", "/admin/support"] },
   { label: "Provider readiness", hrefs: ["/admin/providers"] },
   { label: "Website content", hrefs: ["/admin/content"] },
-  { label: "System & security", hrefs: ["/admin/system", "/admin/settings"] },
+  { label: "System & security", hrefs: ["/admin/system", "/admin/platform-health", "/admin/settings"] },
 ] as const;
 
 export const adminNavigation: AdminNavDefinition[] = [
@@ -91,12 +91,14 @@ export type AdminHeaderGroup = {
 export function getAdminHeaderGroups(role: AdminRole, includePreviewTesters = false): AdminHeaderGroup[] {
   const visible = getAdminNavForRole(role, includePreviewTesters);
   const byHref = new Map(visible.map((item) => [item.href, item]));
+  // A promoted top-level destination must not also activate its former parent tab.
+  const headerHrefs = new Set(adminNavigationGroups.flatMap(group => group.hrefs));
 
   return adminNavigationGroups.map((group) => {
     const links = group.hrefs.flatMap((href) => {
       const item = byHref.get(href);
       if (!item) return [];
-      const children = visible.filter((candidate) => candidate.parentHref === href);
+      const children = visible.filter((candidate) => candidate.parentHref === href && !headerHrefs.has(candidate.href));
       return [{ item, children }];
     });
     return { label: group.label, links };
