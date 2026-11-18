@@ -39,10 +39,11 @@ export function JourneyDateRangeFields({ initialRange, initialFrom, initialTo, n
           setRange(next);
         }}
         options={[
-          { value: "today", label: "Today" },
+          { value: "24h", label: "Last 24 hours" },
           { value: "7d", label: "Last 7 days" },
           { value: "30d", label: "Last 30 days" },
           { value: "all", label: "All time" },
+          ...(range === "today" ? [{ value: "today", label: "Today (legacy)" }] : []),
           ...(range === "90d" ? [{ value: "90d", label: "Last 90 days (legacy)" }] : []),
           ...(range === "custom" ? [{ value: "custom", label: "Custom dates (legacy)" }] : []),
         ]} /></div>
