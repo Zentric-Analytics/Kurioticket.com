@@ -19,6 +19,12 @@ test("health renders separate measures, labels shared scope and retains explicit
     assert.match(html, /name="application"/);
     assert.match(html, /name="hours"/);
     assert.match(html, /action="\/admin\/platform-health"/);
+    assert.match(html, /Window:/);
+    assert.doesNotMatch(html, /Last observed/);
+    assert.match(html, /Refresh observations/);
+    assert.match(html, /Apply view/);
+    assert.match(html, /Shared controls &amp; content/);
+    assert.match(html, /No installed-client content-consumption acknowledgment is collected/);
     for (const href of ["/admin/settings", "/admin/content", "/admin/logs", "/admin/notifications", "/admin/providers", "/admin/email-delivery"])
         assert.ok(html.includes(href));
     assert.match(html, /overflow-x-auto/);
