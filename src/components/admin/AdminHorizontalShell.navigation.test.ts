@@ -28,7 +28,7 @@ test("selected workspaces use the public Hotel navbar palette and underline", ()
   assert.match(shell, /hover:bg-\[#004BB8\]\/5/);
   assert.match(shell, /const underline = selected/);
   assert.match(shell, /after:h-0\.5 after:rounded-full after:bg-\[#004BB8\]/);
-  assert.match(shell, /text-\[15px\] font-semibold/);
+  assert.match(shell, /text-\[13px\] font-semibold/);
   const document = ts.createSourceFile("AdminHorizontalShell.tsx", shell, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
   const headers: ts.JsxOpeningElement[] = [];
   function visit(node: ts.Node) {
@@ -79,10 +79,11 @@ test("selected workspaces use the public Hotel navbar palette and underline", ()
 });
 
 test("navigation keeps parent workspaces visible while child routes stay nested", () => {
-  assert.match(shell, /min-\[1100px\]:block/);
-  assert.match(shell, /min-\[1100px\]:hidden/);
-  assert.doesNotMatch(shell, /overflow-x-auto overscroll-x-contain/);
-  assert.match(shell, /flex w-full flex-wrap items-center/);
+  assert.doesNotMatch(shell, /min-\[1100px\]:block|min-\[1100px\]:hidden/);
+  assert.match(shell, /flex w-max min-w-full flex-nowrap items-center/);
+  assert.match(shell, /overflow-x-auto overscroll-x-contain/);
+  assert.match(shell, /aria-label="Admin navigation links"/);
+  assert.doesNotMatch(shell, /mobileOpen|Open admin navigation|Close admin navigation|<Menu|<X /);
   assert.doesNotMatch(shell, /createPortal/);
   assert.match(shell, /Official Kurioticket mark stays in the top-left header beside the title at every width/);
   const groups = getAdminHeaderGroups("ADMIN", true);
@@ -135,5 +136,16 @@ test("global More sections dropdown is replaced with per-workspace navigation", 
 test("new section navigation remains responsive and Team Access uses the Settings surface", () => {
   assert.match(shell, /flex min-w-0 flex-wrap items-end gap-x-5 gap-y-1/);
   assert.match(shell, /pathname === "\/admin\/preview-testers"/);
-  assert.doesNotMatch(shell, /overflow-x-auto overscroll-x-contain/);
+  assert.match(shell, /overflow-x-auto overscroll-x-contain/);
+});
+
+test("top-level navbar fits standard desktop widths without wrapping or a menu toggle", () => {
+  assert.match(shell, /gap-2 whitespace-nowrap/);
+  assert.match(shell, /h-9 shrink-0 items-center gap-1\.5 whitespace-nowrap/);
+  assert.match(shell, /px-1\.5 text-\[13px\]/);
+  assert.match(shell, /<Icon size=\{13\}/);
+  assert.match(shell, /px-2 pb-2 pt-2 sm:px-3 lg:px-5/);
+  assert.match(shell, /groups=\{isOverview \? groups : overviewGroups\}/);
+  assert.doesNotMatch(shell, /flex-wrap items-center justify-start gap-x-5/);
+  assert.doesNotMatch(shell, /mobileOpen|aria-label=\{mobileOpen/);
 });
