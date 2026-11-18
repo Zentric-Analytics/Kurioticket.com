@@ -27,9 +27,11 @@ try {
         const systemSections = page.getByRole("navigation", { name: "System subsections" });
         if (["system", "logs", "system/cms-health", "email-delivery"].includes(route)) {
           await expect(systemSections).toHaveCount(1);
-          for (const label of ["System Overview", "Platform Health", "Audit Logs", "CMS Health", "Email Delivery"]) {
+          for (const label of ["System Overview", "Audit Logs", "CMS Health", "Email Delivery"]) {
             await expect(systemSections.getByRole("link", { name: label, exact: true })).toHaveCount(1);
           }
+          // Platform Health is a standalone main-nav destination, not a System subsection.
+          await expect(systemSections.getByRole("link", { name: "Platform Health", exact: true })).toHaveCount(0);
         } else {
           await expect(systemSections).toHaveCount(0);
         }
