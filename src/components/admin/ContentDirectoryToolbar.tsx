@@ -90,8 +90,8 @@ export function ContentDirectoryToolbar({
   }, [path, router]);
 
   function submitSearch(event: FormEvent<HTMLFormElement>) {
+    // Enter in the search field does not fetch; the visible Apply button does.
     event.preventDefault();
-    applyFilters();
   }
 
   function applyFilters() {
@@ -216,7 +216,7 @@ export function ContentDirectoryToolbar({
           </div>
         </div>
       </div>
-
+        <noscript><button type="submit" className="mt-2 h-10 rounded-lg border border-[#D8E1EC] px-3 text-[13px] font-medium text-[#374151]">Apply filters</button></noscript>
       </form>
 
       <div aria-busy={loading} className="min-w-0">
