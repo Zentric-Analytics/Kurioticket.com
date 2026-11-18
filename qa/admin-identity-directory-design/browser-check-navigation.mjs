@@ -70,6 +70,42 @@ try {
     checks.push("Admin navbar responsive at " + width + "px");
   }
 
+  // The real Visitor Journeys page uses synthetic QA-only rows; preserve
+  // all eight data fields and keep each Action visible at 100% zoom.
+  for (const width of [1024, 1280, 1366, 1440, 1920, 768, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto(root + "/admin/journeys", { waitUntil: "networkidle" });
+    const journeys = page.getByRole("region", { name: "Journey records" });
+    await expect(journeys).toBeVisible();
+    await expect(page.getByRole("navigation", { name: "Users subsections" })
+      .getByRole("link", { name: "Visitor Journeys", exact: true })).toHaveAttribute("aria-current", "page");
+    await expect(journeys.locator("thead th")).toHaveCount(8);
+    await expect(journeys.locator("tbody tr")).toHaveCount(4);
+    await expect(journeys.locator("tbody tr:first-child td")).toHaveCount(8);
+    const actionLinks = journeys.locator("tbody tr > td:last-child a");
+    await expect(actionLinks).toHaveCount(4);
+    const dims = await journeys.evaluate(element => ({
+      documentWidth: document.documentElement.scrollWidth,
+      viewportWidth: window.innerWidth,
+      regionWidth: element.clientWidth,
+      regionScrollWidth: element.scrollWidth,
+      regionRight: element.getBoundingClientRect().right,
+      actions: Array.from(element.querySelectorAll("tbody tr > td:last-child a")).map(link => {
+        const {left,right} = link.getBoundingClientRect();
+        return {left,right,href:link.getAttribute("href")};
+      }),
+    }));
+    assert.ok(dims.documentWidth <= dims.viewportWidth + 1, "Journeys page must fit viewport: " + JSON.stringify(dims));
+    assert.ok(dims.regionScrollWidth <= dims.regionWidth + 1, "Journeys table must fit records region: " + JSON.stringify(dims));
+    assert.ok(dims.actions.every(a => a.left >= 0 && a.right <= Math.min(dims.viewportWidth, dims.regionRight) + 1),
+      "Each Journey Action must remain visible: " + JSON.stringify(dims));
+    assert.ok(dims.actions.every(a => a.href?.startsWith("/admin/journeys/qa-journey-000")),
+      "Journey Actions must still open scoped journey details");
+    await journeys.scrollIntoViewIfNeeded();
+    await page.screenshot({ path: output + "/visitor-journeys-" + width + ".png", fullPage: false });
+    checks.push("Visitor Journeys Action visibility at " + width + "px");
+  }
+
   // All non-Overview routes use white, even when showing the pinned old Users page.
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto(root + "/before", { waitUntil: "networkidle" });
