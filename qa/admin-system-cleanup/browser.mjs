@@ -200,15 +200,9 @@ try {
         if (route === "settings") {
           await expect(main.getByRole("link", { name: "Open fare operations" })).toHaveCount(0);
           const adminNav = page.getByRole("navigation", { name: "Admin navigation" });
-          if (width === 1440) {
-            await expect(adminNav.getByRole("link", { name: "Homepage Fares", exact: true })).toHaveCount(0);
-          } else {
-            const openMenu = page.getByRole("button", { name: "Open admin navigation" });
-            await expect(openMenu).toBeVisible();
-            await openMenu.click();
-            await expect(adminNav.getByRole("link", { name: "Homepage Fares", exact: true })).toHaveCount(0);
-            await page.getByRole("button", { name: "Close admin navigation" }).click();
-          }
+          await expect(adminNav).toBeVisible();
+          await expect(adminNav.getByRole("link", { name: "Homepage Fares", exact: true })).toHaveCount(0);
+          await expect(page.getByRole("button", { name: "Open admin navigation" })).toHaveCount(0);
         }
         if (route === "notifications" || route === "settings/notifications") {
           await expect(main.locator('a[href="/admin/notifications"]')).toHaveCount(0);
