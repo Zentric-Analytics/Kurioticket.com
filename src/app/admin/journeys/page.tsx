@@ -71,8 +71,8 @@ export default async function AdminJourneysPage({ searchParams, embedded = false
           Necessary operational guest searches remain available in Search Activity.
         </p>
 
-        <div data-testid="journey-filters-toolbar" className="grid min-w-0 grid-cols-1 items-center gap-2 border-y border-[#D8E1EC] py-3 sm:grid-cols-2 xl:flex xl:flex-nowrap xl:items-stretch">
-          <div className="min-w-0 xl:flex-1">
+        <div data-testid="journey-filters-toolbar" className="flex w-full min-w-0 flex-wrap items-center gap-2 border-y border-[#D8E1EC] py-3">
+          <div className="min-w-[138px] flex-[1_1_138px]">
             <SearchMonitorSelect label="Product" name="product" appearance="fare"
               value={one(raw.product)} options={[
                 { value: "", label: "All products" },
@@ -82,7 +82,7 @@ export default async function AdminJourneysPage({ searchParams, embedded = false
                 { value: "PACKAGE", label: "Packages" },
               ]} truncateLabel />
           </div>
-          <div className="min-w-0 xl:flex-1">
+          <div className="min-w-[138px] flex-[1_1_138px]">
             <SearchMonitorSelect label="Identity" name="identity"
               value={one(raw.identity) || "all"} appearance="fare"
               clearFieldNamesOnChange={["userId", "visitorId"]}
@@ -92,19 +92,19 @@ export default async function AdminJourneysPage({ searchParams, embedded = false
                 { value: "guest", label: "Guest" },
               ]} truncateLabel />
           </div>
-          <div className="min-w-0 xl:flex-[1.25_1_0%]">
+          <div className="min-w-[168px] flex-[1.2_1_168px]">
             <SearchMonitorSelect label="Observed stage" name="stage" appearance="fare"
               value={one(raw.stage)} options={[
                 { value: "", label: "All observed stages" },
                 ...stages.map(stage => ({ value: stage.value, label: stage.label })),
               ]} truncateLabel />
           </div>
-          <div className="min-w-0 xl:flex-1">
+          <div className="min-w-[138px] flex-[1_1_138px]">
             <SearchMonitorSelect label="Provider" name="provider" appearance="fare"
               value={one(raw.provider)} options={providerOptions} align="end" truncateLabel />
           </div>
           <button type="submit"
-            className="inline-flex h-10 w-full items-center justify-center whitespace-nowrap rounded-lg bg-[#004BB8] px-4 text-[13px] font-medium text-white transition hover:bg-[#003D97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] sm:col-span-2 xl:w-[132px] xl:shrink-0">
+            className="inline-flex h-10 w-auto shrink-0 items-center justify-center whitespace-nowrap rounded-lg bg-[#004BB8] px-4 text-[13px] font-medium text-white transition hover:bg-[#003D97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
             Apply filters
           </button>
         </div>
