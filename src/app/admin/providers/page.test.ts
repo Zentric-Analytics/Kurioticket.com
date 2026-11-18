@@ -369,7 +369,9 @@ test("Task 3: standalone handoffs preserve filters, records and next-cursor beha
   assert.match(handoffsPage, /<ProviderHandoffFilters/);
   assert.match(handoffFilters, /aria-label="Filter provider handoffs"/);
   assert.match(handoffsPage, /aria-label="Provider handoff records"/);
-  assert.match(handoffsPage, /min-w-\[1080px\] table-fixed/);
+  assert.match(handoffsPage, /w-full min-w-0 table-fixed/);
+  assert.match(handoffsPage, /admin-responsive-records/);
+  assert.doesNotMatch(handoffsPage, /min-w-\[1080px\]/);
   for (const field of ["product", "identity", "correlation", "provider", "environment"]) {
     assert.match(handoffsPage, new RegExp('name="' + field + '"'));
   }
