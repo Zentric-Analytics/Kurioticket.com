@@ -34,7 +34,7 @@ test("journey date presets are passed to detail and single-ended historical boun
   assert.match(list, /p\.set\("range", range\)/);
   assert.match(dates, /if \(one\(raw\.cursor\) \|\| one\(raw\.from\) \|\| one\(raw\.to\)\) return \{\}/);
   assert.match(controls, /value: "all", label: "All time"/);
-  assert.match(controls, /value: "today", label: "Today"/);
+  assert.match(controls, /value: "24h", label: "Last 24 hours"/);
   assert.match(controls, /"Custom dates \(legacy\)"/);
 });
 
@@ -80,8 +80,8 @@ test("Journeys directory shares Users styling without modifying consent-aware da
   assert.match(history, /events\.map\(event =>/);
 });
 
-test("Visitor Journeys defaults to Today, aligns filters in columns and isolates the current environment", () => {
-  assert.match(dates, /return one\(raw\.from\) \|\| one\(raw\.to\) \|\| one\(raw\.cursor\) \? "custom" : "today"/);
+test("Visitor Journeys defaults to Last 24 hours, aligns filters in columns and isolates the current environment", () => {
+  assert.match(dates, /return one\(raw\.from\) \|\| one\(raw\.to\) \|\| one\(raw\.cursor\) \? "custom" : "24h"/);
   assert.match(dates, /JOURNEY_ALL_TIME_FROM/);
   assert.match(list, /getPublicEnvironment\(\)/);
   assert.match(list, /\.\.\.withoutPagination\(raw\), \.\.\.fixed, environment/);

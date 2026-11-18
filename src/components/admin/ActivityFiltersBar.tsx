@@ -13,14 +13,15 @@ const options = {
 };
 const control = "focus-ring h-11 w-full min-w-0 rounded-lg border border-[#E2E8F0] bg-white px-3 text-[13px] text-[#0F172A]";
 function utcWindow(days: number) {
-  const today = new Date().toISOString().slice(0, 10);
-  const start = new Date(Date.now() - (days - 1) * 86400000).toISOString().slice(0, 10);
-  return { from: start, to: today };
+  const to = new Date();
+  return { from: new Date(to.getTime() - days * 86_400_000).toISOString(), to: to.toISOString() };
 }
 export function ActivityFiltersBar({ path, initial, directory, tabs }: { path: string; initial: Values; directory: string; tabs: ReactNode }) {
   const router = useRouter();
   const [values, setValues] = useState(initial);
   const [draftDates, setDraftDates] = useState({ from: initial.from, to: initial.to });
+  const fromDateRef = useRef<HTMLInputElement>(null);
+  const toDateRef = useRef<HTMLInputElement>(null);
   const [editingCustom, setEditingCustom] = useState(false);
   const [pending, startTransition] = useTransition();
   const timeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -54,41 +55,31 @@ export function ActivityFiltersBar({ path, initial, directory, tabs }: { path: s
     submitted.current = url;
     startTransition(() => router.replace(url, { scroll: false }));
   };
-  const update = (patch: Partial<Values>, debounce = false) => {
-    const next = { ...values, ...patch };
-    setValues(next);
-    if (timeout.current) clearTimeout(timeout.current);
-    if (debounce) timeout.current = setTimeout(() => navigate(next), 300);
-    else navigate(next);
+  const update = (patch: Partial<Values>) => {
+    // Update draft state only. An explicit Apply filters click navigates.
+    setValues(current => ({ ...current, ...patch }));
   };
   const rangeOptions = [
-    { value: "all", label: "All dates" },
+    { value: "24h", label: "Last 24 hours" },
     { value: "7d", label: "Last 7 days" },
     { value: "30d", label: "Last 30 days" },
-    { value: "custom", label: "Custom range" },
+    { value: "all", label: "All time" },
+    ...(values.range === "custom" || editingCustom ? [{ value: "custom", label: "Custom range (legacy)" }] : []),
   ];
   const setRange = (range: string) => {
     if (range === "custom") {
-      if (timeout.current) clearTimeout(timeout.current);
-      // A debounced search was not applied; restore the URL-backed query before starting a date draft.
-      setValues(current => ({...current, q: initial.q}));
       setDraftDates({ from: values.range === "custom" ? values.from : "", to: values.range === "custom" ? values.to : "" });
       setEditingCustom(true);
       return;
     }
     setEditingCustom(false);
-    const dates = range === "7d" ? utcWindow(7) : range === "30d" ? utcWindow(30) : {from:"",to:""};
+    const dates = range === "24h" ? utcWindow(1) : range === "7d" ? utcWindow(7) : range === "30d" ? utcWindow(30) : {from:"",to:""};
     update({range, ...dates});
   };
   const validCustom = /^\d{4}-\d{2}-\d{2}$/.test(draftDates.from)
     && /^\d{4}-\d{2}-\d{2}$/.test(draftDates.to)
     && !Number.isNaN(Date.parse(draftDates.from)) && !Number.isNaN(Date.parse(draftDates.to))
     && draftDates.from <= draftDates.to;
-  const applyDates = () => {
-    if (!validCustom) return;
-    setEditingCustom(false);
-    update({ range: "custom", ...draftDates });
-  };
   const cancelDates = () => {
     setEditingCustom(false);
     setValues(current => ({...current, range: initial.range, from: initial.from, to: initial.to}));
@@ -99,36 +90,43 @@ export function ActivityFiltersBar({ path, initial, directory, tabs }: { path: s
       <span className="sr-only">Search activity</span>
       <Search aria-hidden="true" size={16} className="pointer-events-none absolute left-3 top-3.5 text-[#64748B]" />
       <input aria-label="Search activity" value={values.q} maxLength={80} placeholder="Route, destination, or provider"
-        onChange={e => update({q:e.target.value}, true)}
-        onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); if (timeout.current) clearTimeout(timeout.current); navigate(values); } }}
+        onChange={e => update({q:e.target.value})}
+        onKeyDown={e => { if (e.key === "Enter") e.preventDefault(); }}
         className="h-11 w-full min-w-0 rounded-lg border border-[#E2E8F0] bg-white pl-9 pr-3 text-[13px] text-[#0F172A] outline-none placeholder:text-[#64748B] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#64748B]" />
     </label>
-    <div className="flex min-w-0 flex-col gap-x-5 gap-y-2 border-b border-[#E2E8F0] lg:flex-row lg:items-end lg:justify-between">
+    <div className="min-w-0 border-b border-[#E2E8F0] pb-3">
       {tabs}
-      <div className="flex min-w-0 flex-wrap items-center gap-x-6 gap-y-2 pb-2 lg:pb-1">
+      <div className="mt-3 grid min-w-0 grid-cols-1 items-end gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,180px)_minmax(0,180px)_minmax(0,180px)_auto]">
         <SearchMonitorSelect label="Date range" name="range" value={editingCustom ? "custom" : values.range} options={rangeOptions}
-          appearance="plain" onValueChange={setRange} />
+          appearance="fare" onValueChange={setRange} />
         <SearchMonitorSelect label="Activity product" name="product" value={values.product}
-          options={options.product.map(([value,label])=>({value,label}))} appearance="plain"
+          options={options.product.map(([value,label])=>({value,label}))} appearance="fare"
           onValueChange={product=>update({product})} />
         <SearchMonitorSelect label="Activity type" name="stage" value={values.stage}
-          options={options.stage.map(([value,label])=>({value,label}))} appearance="plain"
+          options={options.stage.map(([value,label])=>({value,label}))} appearance="fare"
           onValueChange={stage=>update({stage})} />
+        <button type="button" onClick={() => navigate((editingCustom || values.range === "custom") && validCustom
+          ? { ...values, range: "custom", from: fromDateRef.current?.value || draftDates.from,
+              to: toDateRef.current?.value || draftDates.to } : values)}
+          disabled={pending || ((editingCustom || values.range === "custom") && !validCustom)}
+          className="inline-flex h-10 w-full items-center justify-center whitespace-nowrap rounded-lg bg-[#004BB8] px-4 text-[13px] font-medium text-white hover:bg-[#003D97] disabled:opacity-60 lg:w-auto">
+          Apply filters
+        </button>
       </div>
     </div>
     {(editingCustom || values.range === "custom") ? <div className="flex flex-wrap items-end gap-3">
       <label className="text-xs text-[#64748B]">From (UTC)
-        <input type="date" aria-label="Custom start date UTC" value={draftDates.from}
-          max={draftDates.to || undefined} onChange={e => setDraftDates(current => ({...current, from:e.target.value}))} className={control}/>
+        <input ref={fromDateRef} type="date" aria-label="Custom start date UTC" value={draftDates.from}
+          max={draftDates.to || undefined} onChange={e => { setDraftDates(current => ({...current, from:e.target.value}));
+          setValues(current => ({...current, range:"custom", from:e.target.value})); }} className={control}/>
       </label>
       <label className="text-xs text-[#64748B]">To (UTC)
-        <input type="date" aria-label="Custom end date UTC" value={draftDates.to}
-          min={draftDates.from || undefined} onChange={e => setDraftDates(current => ({...current, to:e.target.value}))} className={control}/>
+        <input ref={toDateRef} type="date" aria-label="Custom end date UTC" value={draftDates.to}
+          min={draftDates.from || undefined} onChange={e => { setDraftDates(current => ({...current, to:e.target.value}));
+          setValues(current => ({...current, range:"custom", to:e.target.value})); }} className={control}/>
       </label>
-      <button type="button" onClick={applyDates} disabled={!validCustom || pending}
-        className="h-11 rounded-lg bg-[#004BB8] px-4 text-[13px] font-medium text-white disabled:cursor-not-allowed disabled:opacity-40">Apply dates</button>
       <button type="button" onClick={cancelDates} className="h-11 px-2 text-[13px] font-medium text-[#475569] hover:underline">Cancel</button>
     </div> : null}
-    <span aria-live="polite" className="sr-only">{pending ? "Refreshing activity…" : ""}</span>
+    <span aria-live="polite" className="sr-only">{pending ? "Loading activity…" : ""}</span>
   </div>;
 }

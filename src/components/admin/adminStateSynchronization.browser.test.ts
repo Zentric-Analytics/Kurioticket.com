@@ -21,7 +21,7 @@ function mount(module: keyof typeof entries, name: string, props: object) {
     window.fixtureRender=props=>root.render(React.createElement(Component,props));window.fixtureRender(${JSON.stringify(props)});`;
 }
 
-test("Activity server-scope resets cancel debounce without remounting or clearing same-scope drafts", async () => {
+test("Activity server-scope resets drafts without background navigation or losing focus", async () => {
   const initial = { tab: "all", q: "server", product: "all", stage: "all", order: "newest", from: "", to: "", range: "all" };
   const props = { path: "/admin/searches/activity", initial, directory: "users", tabs: null };
   await withComponentBrowser(bundle(), mount("activity", "ActivityFiltersBar", props), async page => {
@@ -37,6 +37,8 @@ test("Activity server-scope resets cancel debounce without remounting or clearin
     assert.deepEqual(await page.evaluate(() => (window as unknown as { fixtureNavigation: unknown[] }).fixtureNavigation), [], "old scope cannot submit a pending local search");
     await input.fill("new search");
     await input.press("Enter");
+    assert.deepEqual(await page.evaluate(() => (window as unknown as { fixtureNavigation: string[] }).fixtureNavigation), [], "draft search does not navigate");
+    await page.getByRole("button", { name: "Apply filters", exact: true }).click();
     const navigations = await page.evaluate(() => (window as unknown as { fixtureNavigation: string[] }).fixtureNavigation);
     const url = new URL(navigations.at(-1)!, "http://fixture.local");
     assert.equal(url.searchParams.get("q"), "new search");

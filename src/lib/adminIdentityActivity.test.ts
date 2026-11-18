@@ -38,6 +38,24 @@ test("activity filters validate tab, product, activity stage, date and search", 
   ]) assert.equal(parseActivityFilters(raw).ok, false);
 });
 
+test("rolling activity windows accept strict UTC instants while legacy calendar dates remain valid", () => {
+  const rolling = parseActivityFilters({
+    from: "2026-11-17T18:42:12.000Z",
+    to: "2026-11-18T18:42:12.000Z",
+  });
+  assert.equal(rolling.ok, true);
+  if (rolling.ok) {
+    assert.equal(activityWindow(rolling.filters).gte?.toISOString(), "2026-11-17T18:42:12.000Z");
+    assert.equal(activityWindow(rolling.filters).lt?.toISOString(), "2026-11-18T18:42:12.000Z");
+  }
+  for (const values of [
+    { from: "2026-11-17T18:42:12.000" },
+    { to: "2026-11-18T18:42:12+01:00" },
+    { from: "2026-11-18T18:42:12.000Z", to: "2026-11-18T18:42:12.000Z" },
+    { from: "2026-11-19T18:42:12.000Z", to: "2026-11-18T18:42:12.000Z" },
+  ]) assert.equal(parseActivityFilters(values).ok, false);
+});
+
 test("every tab exposes only its own recorded stages", () => {
   const stages = (tab: ActivityFilters["tab"], stage: ActivityFilters["stage"] = "all") =>
     [...allowedActivityStages({ ...filters, tab, stage })];
