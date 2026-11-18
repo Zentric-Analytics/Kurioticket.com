@@ -67,8 +67,6 @@ export default async function AdminFaqCmsPage({ searchParams }: { searchParams: 
       wide
       title="FAQs"
       subtitle="Manage English FAQ questions and answers."
-      backHref="/admin/content"
-      backLabel="Back to Content"
       actions={summary.active ? <CmsCreateLink path="/admin/content/faqs/new" label="Add FAQ" /> : null}
     >
       <div>
