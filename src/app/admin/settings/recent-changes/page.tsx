@@ -80,7 +80,7 @@ export default async function AdminRecentSettingsChangesPage({ searchParams }: {
   const requestedCategory = single(raw.category);
   const full = single(raw.view) === "full";
   const range: SettingsHistoryRange = ranges.includes(requestedRange as SettingsHistoryRange)
-    ? requestedRange as SettingsHistoryRange : "90d";
+    ? requestedRange as SettingsHistoryRange : full ? "90d" : "7d";
   const category: SettingsHistoryCategory = categories.includes(requestedCategory as SettingsHistoryCategory)
     ? requestedCategory as SettingsHistoryCategory : "all";
   const invalid = Object.keys(raw).some(key => !["range", "category", "view", "cursor"].includes(key)) ||
@@ -101,8 +101,8 @@ export default async function AdminRecentSettingsChangesPage({ searchParams }: {
           <p className="mt-1 text-[12px] leading-5 text-[#64748B]">Review recorded Settings and Team Access changes, who made them, and when.</p>
         </div>
         {full
-          ? <Link href={historyHref(range, category, undefined, false)} className="focus-ring text-[13px] font-medium text-[#004BB8] hover:underline">Show recent records</Link>
-          : <Link href={historyHref(range, category)} className="focus-ring text-[13px] font-medium text-[#004BB8] hover:underline">View full history</Link>}
+          ? <Link href={historyHref("7d", "all", undefined, false)} className="focus-ring text-[13px] font-medium text-[#004BB8] hover:underline">Show recent records</Link>
+          : <Link href={historyHref("90d", "all")} className="focus-ring text-[13px] font-medium text-[#004BB8] hover:underline">View full history</Link>}
       </header>
 
       {full ? (
@@ -123,7 +123,7 @@ export default async function AdminRecentSettingsChangesPage({ searchParams }: {
           <button type="submit" className="focus-ring h-10 rounded-lg bg-[#004BB8] px-4 text-[13px] font-medium text-white hover:bg-[#003D97]">Apply filters</button>
         </form>
       ) : (
-        <p className="border-b border-[#E7ECF5] py-3 text-[12px] text-[#64748B]">Latest recorded changes in the last 90 days. Open full history to filter or review older records.</p>
+        <p className="border-b border-[#E7ECF5] py-3 text-[12px] text-[#64748B]">Latest recorded changes in the last 7 days. Open full history to review up to 90 days of records.</p>
       )}
 
       {result.status !== "ok" ? (
