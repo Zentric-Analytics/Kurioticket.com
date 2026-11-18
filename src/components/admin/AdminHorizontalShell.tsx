@@ -209,8 +209,8 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  // Search and Support share the clean white operational workspace surface.
-  // Other Admin sections keep their established background unchanged.
+  // Every non-Overview Admin workspace uses a white canvas. Keep the established
+  // Overview surface unchanged; route-specific flags remain for contract QA.
   const usersDirectory = pathname === "/admin/users" || pathname === "/admin/users/";
   const visitorJourneysWorkspace = pathname === "/admin/journeys" || pathname.startsWith("/admin/journeys/");
   const userActivity = /^\/admin\/users\/(?:user|guest)\/[a-z0-9_-]{6,80}\/activity\/?$/i.test(pathname);
@@ -237,8 +237,8 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
   const homepageFaresWorkspace = pathname === "/admin/homepage-fares" || pathname.startsWith("/admin/homepage-fares/");
   // Hotel and Car Operations use the same full-white Providers workspace as Homepage Fares.
   const hotelCarsWorkspace = pathname === "/admin/hotels" || pathname === "/admin/hotels/" || pathname === "/admin/cars" || pathname === "/admin/cars/";
-  const whiteWorkspace = !isOverview || userActivity || pathname === "/admin/platform-health" || pathname === "/admin/platform-health/" || pathname === "/admin/system" || pathname === "/admin/system/" || pathname === "/admin/system/cms-health" || pathname === "/admin/system/cms-health/" || auditLogsWorkspace || emailDeliveryWorkspace || settingsWorkspace || usersDirectory || visitorJourneysWorkspace || searchesWorkspace || supportWorkspace
-    || providersWorkspace || providerReportingWorkspace || hotelCarsWorkspace || accountDeletionWorkspace || accountDeletionDetail || contentWorkspace || notificationsWorkspace || homepageFaresWorkspace;
+  const whiteWorkspace = userActivity || pathname === "/admin/platform-health" || pathname === "/admin/platform-health/" || pathname === "/admin/system" || pathname === "/admin/system/" || pathname === "/admin/system/cms-health" || pathname === "/admin/system/cms-health/" || auditLogsWorkspace || emailDeliveryWorkspace || settingsWorkspace || usersDirectory || visitorJourneysWorkspace || searchesWorkspace || supportWorkspace
+    || providersWorkspace || providerReportingWorkspace || hotelCarsWorkspace || accountDeletionWorkspace || accountDeletionDetail || contentWorkspace || notificationsWorkspace || homepageFaresWorkspace || !isOverview;
   return <AdminWorkspaceSearchProvider account={adminEmail || "admin"}><div ref={workspaceRef} className={"min-h-screen text-slate-950 " + (whiteWorkspace ? "bg-white" : "bg-[#f1f5fb]")}>
     <header ref={headerRef} className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
       <AdminSearchHeader>

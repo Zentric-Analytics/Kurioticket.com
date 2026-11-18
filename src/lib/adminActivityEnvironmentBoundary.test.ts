@@ -51,7 +51,9 @@ test("Activity summary counts filter-wide records instead of paginated timeline 
 });
 
 test("Activity and Support use white non-Overview workspaces while preserving authorization boundaries", () => {
-  assert.match(shell, /const whiteWorkspace = !isOverview \|\| userActivity/);
+  assert.match(shell, /const whiteWorkspace = userActivity \|\| pathname === "\/admin\/platform-health"/);
+  assert.match(shell, /homepageFaresWorkspace \|\| !isOverview;/);
+  assert.match(shell, /const isOverview = pathname === "\/admin" \|\| pathname === "\/admin\/"/);
   assert.match(shell, /const supportWorkspace = pathname === "\/admin\/support" \|\| pathname\.startsWith\("\/admin\/support\/"\)/);
   assert.match(shell, /const providersWorkspace = pathname === "\/admin\/providers"/);
   assert.match(shell, /const providerReportingWorkspace = pathname === "\/admin\/referral-attribution"/);
