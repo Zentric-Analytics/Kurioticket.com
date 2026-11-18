@@ -26,7 +26,7 @@ test("hotels operations share Homepage Fares one-row metrics and balanced overvi
   assert.match(hotelsPage, /integrations\.length > 1|hotelIntegrations\.length > 1/);
   assert.match(hotelsPage, /lg:grid-cols-4/);
   assert.doesNotMatch(hotelsPage, /grid gap-4 xl:grid-cols-2/);
-  assert.match(hotelsPage, /<OperationsProviderIssues/);
+  assert.doesNotMatch(hotelsPage, /<OperationsProviderIssues|Provider exceptions|href="\/admin\/providers\?product=hotels"/);
 });
 
 test("hotel operations snapshot is environment and service scoped", () => {
@@ -70,13 +70,13 @@ test("hotel operations does not invent unavailable telemetry", () => {
 });
 
 
-test("hotel operations exposes focused search, destination, and provider exceptions", () => {
+test("hotel operations keeps search and destination exceptions without duplicate provider exceptions UI", () => {
   assert.match(recordsPanel, /Search exceptions and records/);
   assert.match(hotelsPage, /Destinations needing attention/);
-  assert.match(hotelsPage, /Provider exceptions/);
+  assert.doesNotMatch(hotelsPage, /Provider exceptions/);
   assert.match(recordsPanel, /value: "FAILED"/);
   assert.match(recordsPanel, /value: "PARTIAL"/);
-  assert.match(hotelsPage, /Raw provider error payloads are not exposed/);
+  assert.doesNotMatch(hotelsPage, /Raw provider error payloads are not exposed/);
   assert.match(service, /exceptionSearches/);
   assert.match(service, /destinationIssues/);
   assert.match(service, /providerIssues/);
