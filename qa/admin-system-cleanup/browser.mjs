@@ -50,12 +50,12 @@ try {
 
           const summary = main.locator('section[aria-label="System summary"]');
           await expect(summary).toBeVisible();
-          for (const label of ["Environment", "Monitored areas", "Issues requiring attention", "Database"]) {
+          for (const label of ["Environment", "System areas", "Issues requiring attention", "Database"]) {
             await expect(summary.getByText(label, { exact: true })).toBeVisible();
           }
           if (width === 1440) {
             const boxes = await Promise.all(
-              ["Environment", "Monitored areas", "Issues requiring attention", "Database"].map(async label =>
+              ["Environment", "System areas", "Issues requiring attention", "Database"].map(async label =>
                 summary.getByText(label, { exact: true }).boundingBox()
               )
             );
@@ -64,8 +64,7 @@ try {
             expect(Math.max(...tops) - Math.min(...tops)).toBeLessThanOrEqual(2);
           }
 
-          await expect(main.getByRole("link", { name: "View email diagnostics" })).toHaveAttribute("href", "/admin/email-delivery");
-          await expect(main.getByRole("link", { name: "Review provider readiness" })).toHaveAttribute("href", "/admin/providers");
+          await expect(pageContent.getByRole("link")).toHaveCount(0);
           await expect(main.getByText("Live connectivity check", { exact: true })).toBeVisible();
           await expect(main.getByText("Configuration only", { exact: true }).first()).toBeVisible();
           await expect(main.getByText("CMS diagnostics", { exact: true })).toBeVisible();
@@ -90,24 +89,17 @@ try {
           await expect(configurationStatus).toHaveClass(/text-amber-700/);
           await expect(configurationStatus.locator("span").first()).toHaveClass(/bg-amber-500/);
           await expect(main.getByText("Expand a row for what is actually verified.", { exact: true })).toHaveCount(0);
-          await expect(main.locator("details")).toHaveCount(1);
+          await expect(pageContent.locator("details")).toHaveCount(0);
           await expect(main.getByText("Meaning", { exact: true })).toHaveCount(0);
 
           const emailRow = main.locator('[data-system-area="email"]');
           const cmsRow = main.locator('[data-system-area="cms"]');
-          await expect(emailRow.getByRole("link", { name: "Open Email Delivery ›", exact: true })).toHaveAttribute("href", "/admin/email-delivery");
-          await expect(cmsRow.getByRole("link", { name: "Open CMS Health ›", exact: true })).toHaveAttribute("href", "/admin/system/cms-health");
+          await expect(emailRow.getByText("Configuration only", { exact: true })).toBeVisible();
+          await expect(cmsRow.getByText("CMS diagnostics", { exact: true })).toBeVisible();
           await expect(main.locator('[data-system-area="providers"]')).toHaveCount(0);
-          await expect(main.getByRole("link", { name: "Open Providers ›", exact: true })).toHaveCount(0);
-          await expect(emailRow.getByText("View ›", { exact: true })).toHaveCount(0);
-          await expect(cmsRow.getByText("View ›", { exact: true })).toHaveCount(0);
-
-          const adminAccess = main.locator('details[data-system-area="admin-access"]');
-          await expect(adminAccess).toBeVisible();
-          await adminAccess.locator("summary").click();
-          await expect(adminAccess.getByText("Administrator allowlist", { exact: true })).toBeVisible();
-          await expect(adminAccess.getByText("Configured administrators", { exact: true })).toBeVisible();
-          await expect(adminAccess.getByText("Verification", { exact: true })).toBeVisible();
+          await expect(pageContent.locator('[data-system-area="admin-access"]')).toBeVisible();
+          await expect(pageContent.getByText(/administrators listed/)).toBeVisible();
+          await expect(pageContent.getByText("Details", { exact: true })).toHaveCount(0);
 
           await expect(pageContent.locator('a[href="/admin/settings"],a[href="/admin/notifications"]')).toHaveCount(0);
           await expect(main.getByText(/deployment configuration/).first()).toBeVisible();

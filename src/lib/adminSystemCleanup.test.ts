@@ -13,9 +13,9 @@ test("System removes general Alerts shortcuts and circular configuration investi
   const page = source("src/app/admin/system/page.tsx");
   assert.doesNotMatch(page, /View operational alerts|Open Alerts|\/admin\/notifications|\/admin\/settings/);
   assert.match(page, /Issues Requiring Attention/);
-  assert.match(page, /href: "\/admin\/email-delivery"/);
-  assert.match(page, /href: "\/admin\/providers"/);
-  assert.match(page, /Review provider readiness/);
+  assert.doesNotMatch(page, /<Link|href:|actionLabel:/);
+  assert.match(page, /Provider credentials absent/);
+  assert.match(page, /Email configuration incomplete/);
   assert.doesNotMatch(page, /id: "providers"|Open Providers/);
   assert.match(page, /Managed in deployment configuration/);
 });
