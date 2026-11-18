@@ -22,13 +22,16 @@ function HeaderNavLink({ entry, pathname, close }: { entry: HeaderEntry; pathnam
   const Icon = item.icon;
   // Match the public Hotel navbar: white surface, compact semibold type and dark navy copy.
   const style = "text-[#021C2B]/85 hover:bg-[#004BB8]/5 hover:text-[#021C2B]";
+  const size = mobile
+    ? "h-10 gap-2 rounded-xl px-2.5 text-[14px]"
+    : "h-9 gap-1.5 rounded-lg px-1.5 text-[13px]";
   const underline = selected
     ? " after:absolute after:-bottom-1 after:left-1 after:right-1 after:h-0.5 after:rounded-full after:bg-[#004BB8]"
     : "";
   return (
     <Link href={item.href} onClick={close} aria-current={pathname === item.href || pathname === item.href + "/" ? "page" : undefined}
-      className={"relative inline-flex h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-xl px-2.5 text-[15px] font-semibold leading-none tracking-[-0.005em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 " + style + underline}>
-      <Icon size={14} aria-hidden="true" className="h-[13px] w-[13px] shrink-0 xl:h-3.5 xl:w-3.5 2xl:h-4 2xl:w-4" />
+      className={"relative inline-flex shrink-0 items-center whitespace-nowrap font-semibold leading-none tracking-[-0.005em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 " + size + " " + style + underline}>
+      <Icon size={mobile ? 14 : 12} aria-hidden="true" className={mobile ? "h-3.5 w-3.5 shrink-0" : "h-3 w-3 shrink-0"} />
       <span>{item.label}</span>
     </Link>
   );
@@ -37,7 +40,7 @@ function HeaderNavLink({ entry, pathname, close }: { entry: HeaderEntry; pathnam
 function Navigation({ groups, pathname, mobile = false, close }: { groups: HeaderGroup[]; pathname: string; mobile?: boolean; close: () => void }) {
   return <nav aria-label="Admin navigation" className={mobile
     ? "flex flex-col gap-2 p-3"
-    : "flex w-full flex-wrap items-center justify-start gap-x-5 gap-y-2"}>
+    : "flex w-full min-w-0 flex-nowrap items-center justify-start gap-x-2"}>
     {groups.map((group) => (
       <div key={group.label} className={mobile
         ? "flex flex-col gap-1"
@@ -261,7 +264,7 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
         </div>
       </div>
       <div className="hidden border-t border-slate-100 min-[1100px]:block">
-        <div className="mx-auto max-w-[1920px] px-4 pb-2 pt-2 sm:px-6 lg:px-10">
+        <div className="mx-auto max-w-[1920px] px-4 pb-2 pt-2 sm:px-6 lg:pl-3 lg:pr-5">
           <Navigation groups={isOverview ? groups : overviewGroups} pathname={pathname} close={() => {}} />
         </div>
       </div>
