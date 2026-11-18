@@ -231,7 +231,15 @@ try {
     if (variant === "after") {
       await page.goto(`${root}/admin/system`, { waitUntil: "networkidle" });
       await page.getByRole("button", { name: "Admin profile" }).click();
-      await page.getByRole("banner").getByRole("link", { name: "Audit Logs", exact: true }).click();
+      const profileMenu = page.getByRole("banner");
+      await expect(profileMenu.getByRole("link", { name: "Audit Logs", exact: true })).toHaveCount(0);
+      for (const label of ["Admin settings", "Switch to public site", "Logout"]) {
+        await expect(profileMenu.getByRole("link", { name: label, exact: true })).toBeVisible();
+      }
+      await page.keyboard.press("Escape");
+      const systemSubsections = page.getByRole("navigation", { name: "System subsections" });
+      await expect(systemSubsections).toBeVisible();
+      await systemSubsections.getByRole("link", { name: "Audit Logs", exact: true }).click();
       await expect(page).toHaveURL(`${root}/admin/logs`);
       await expect(page.getByRole("navigation", { name: "System subsections" })).toHaveCount(1);
       await verifyNotificationPanel({ page, root, output, width });
