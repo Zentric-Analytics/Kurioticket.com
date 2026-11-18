@@ -195,8 +195,11 @@ export function parseAdminJourneyQuery(
   };
   const start = new Date(from).getTime();
   const end = new Date(to).getTime();
-  if (start >= end || end - start > 90 * dayMs || end > now.getTime()) {
-    return invalid("from", "Use a past UTC time range of more than zero and at most 90 days.");
+  // The explicit epoch anchor is reserved for the All time preset. Every other
+  // interval retains the existing 90-day validation boundary.
+  const isAllTime = from === "1970-01-01T00:00:00.000Z";
+  if (start >= end || (!isAllTime && end - start > 90 * dayMs) || end > now.getTime()) {
+    return invalid("from", "Use a past UTC time range of more than zero and at most 90 days, or select All time.");
   }
   if (scope.identity === "guest" && scope.userId) return invalid("userId", "A guest filter cannot name a registered account.");
   if (cursor) {

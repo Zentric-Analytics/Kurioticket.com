@@ -75,6 +75,34 @@ try {
   for (const width of [1024, 1280, 1366, 1440, 1920, 768, 390]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto(root + "/admin/journeys", { waitUntil: "networkidle" });
+    const journeyFilters = page.getByRole("form", { name: "Filter visitor journeys" });
+    await expect(journeyFilters).toBeVisible();
+    await expect(journeyFilters.getByRole("button", { name: "Date range: Today" })).toBeVisible();
+    await expect(journeyFilters.getByRole("button", { name: "Provider: All providers" })).toBeVisible();
+    await expect(journeyFilters.getByRole("button", { name: "Apply filters" })).toBeVisible();
+    await expect(journeyFilters.getByRole("button", { name: /Environment/ })).toHaveCount(0);
+    const filterLayout = await journeyFilters.evaluate(form => {
+      const select = [...form.querySelectorAll('button')];
+      const heading = form.querySelector('h2');
+      const date = select.find(button => button.getAttribute('aria-label')?.startsWith('Date range:'));
+      const toolbar = select.filter(button => /^(Product:|Identity:|Observed stage:|Provider:)/.test(button.getAttribute('aria-label') || ''));
+      const apply = select.find(button => button.textContent?.trim() === 'Apply filters');
+      return {
+        dateRight: date?.getBoundingClientRect().right || 0,
+        formRight: form.getBoundingClientRect().right,
+        headingTop: heading?.getBoundingClientRect().top || 0,
+        dateTop: date?.getBoundingClientRect().top || 0,
+        filterTops: toolbar.map(button => Math.round(button.getBoundingClientRect().top)),
+        applyTop: Math.round(apply?.getBoundingClientRect().top || 0),
+      };
+    });
+    assert.ok(filterLayout.dateRight <= filterLayout.formRight + 1, "Date control stays inside content");
+    if (width >= 1280) {
+      assert.equal(new Set(filterLayout.filterTops.concat(filterLayout.applyTop)).size, 1,
+        "Four dropdowns and Apply filters stay on one row at " + width + "px");
+      assert.ok(Math.abs(filterLayout.headingTop - filterLayout.dateTop) < 36,
+        "Date range stays in the header at " + width + "px");
+    }
     const journeys = page.getByRole("region", { name: "Journey records" });
     await expect(journeys).toBeVisible();
     await expect(page.getByRole("navigation", { name: "Users subsections" })
