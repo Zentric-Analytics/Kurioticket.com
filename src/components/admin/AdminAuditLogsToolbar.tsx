@@ -5,7 +5,7 @@ import { LoaderCircle, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { AdminDirectorySelect, type AdminDirectoryOption } from "./AdminDirectorySelect";
 
-type AuditRange = "24h" | "7d" | "30d" | "90d" | "custom";
+type AuditRange = "24h" | "7d" | "30d" | "all" | "90d" | "custom";
 
 type Props = {
   action: string;
@@ -22,8 +22,7 @@ const rangeOptions: readonly AdminDirectoryOption[] = [
   { value: "24h", label: "Last 24 hours" },
   { value: "7d", label: "Last 7 days" },
   { value: "30d", label: "Last 30 days" },
-  { value: "90d", label: "Last 90 days" },
-  { value: "custom", label: "Custom range" },
+  { value: "all", label: "All time" },
 ];
 
 const baseActionOptions: readonly AdminDirectoryOption[] = [
@@ -78,6 +77,9 @@ export function AdminAuditLogsToolbar({
 }: Props) {
   const router = useRouter();
   const [customOpen, setCustomOpen] = useState(false);
+  const [draftRange, setDraftRange] = useState<AuditRange>(range);
+  const [draftAction, setDraftAction] = useState(action);
+  const [draftTargetType, setDraftTargetType] = useState(targetType);
   const [rangeSelectVersion, setRangeSelectVersion] = useState(0);
   const [draftDates, setDraftDates] = useState({ from: fromDate, to: toDate });
   const [adminDraft, setAdminDraft] = useState(adminEmail);
@@ -92,7 +94,10 @@ export function AdminAuditLogsToolbar({
 
   useEffect(() => {
     paramsRef.current = new URLSearchParams(pageHref.split("?")[1] || "");
-  }, [pageHref]);
+    setDraftRange(range);
+    setDraftAction(action);
+    setDraftTargetType(targetType);
+  }, [pageHref, range, action, targetType]);
 
   const committedScope = JSON.stringify([pageHref, fromDate, toDate, customOpen]);
   const [previousScope, setPreviousScope] = useState(committedScope);
@@ -144,8 +149,13 @@ export function AdminAuditLogsToolbar({
     return () => window.removeEventListener("popstate", onHistoryNavigation);
   }, []);
 
-  const actionOptions = withCurrentOption(baseActionOptions, action, "Action: ");
-  const targetTypeOptions = withCurrentOption(baseTargetTypeOptions, targetType, "Target: ");
+  const actionOptions = withCurrentOption(baseActionOptions, draftAction, "Action: ");
+  const targetTypeOptions = withCurrentOption(baseTargetTypeOptions, draftTargetType, "Target: ");
+  const options: readonly AdminDirectoryOption[] = [
+    ...rangeOptions,
+    ...(draftRange === "90d" ? [{ value: "90d", label: "Last 90 days (legacy)" }] : []),
+    ...(draftRange === "custom" ? [{ value: "custom", label: "Custom range (legacy)" }] : []),
+  ];
   const todayUtc = new Date().toISOString().slice(0, 10);
   const validCustom = validDate(draftDates.from) && validDate(draftDates.to) && draftDates.from <= draftDates.to && draftDates.to <= todayUtc;
 
@@ -187,75 +197,37 @@ export function AdminAuditLogsToolbar({
   }, [router]);
 
   function changeRange(next: string) {
-    if (next === "custom") {
-      setDraftDates({ from: fromDate, to: toDate });
-      setCustomOpen(true);
-      return;
-    }
-    setCustomOpen(false);
-    navigate({ range: next, fromDate: null, toDate: null });
+    setDraftRange(next as AuditRange);
+    setCustomOpen(next === "custom");
+    if (next === "custom") setDraftDates({ from: fromDate, to: toDate });
   }
 
-  useEffect(() => {
-    if (!searchEditingRef.current) return;
-    const nextAdmin = adminDraft.trim();
-    const nextTarget = targetDraft.trim();
-    const appliedAdmin = adminEmail.trim();
-    const appliedTarget = targetEmail.trim();
-    const searchKey = nextAdmin + "\n" + nextTarget;
-
-    if (nextAdmin === appliedAdmin && nextTarget === appliedTarget) {
-      if (lastSubmittedSearchRef.current !== null && lastSubmittedSearchRef.current !== searchKey) {
-        lastSubmittedSearchRef.current = searchKey;
-        navigate({
-          adminEmail: nextAdmin || null,
-          targetEmail: nextTarget || null,
-        }, true);
-        return;
-      }
-      searchEditingRef.current = false;
-      lastSubmittedSearchRef.current = null;
-      return;
-    }
-    if (lastSubmittedSearchRef.current === searchKey) {
-      navigate({
-        adminEmail: nextAdmin || null,
-        targetEmail: nextTarget || null,
-      }, true);
-      return;
-    }
-
-    const timer = window.setTimeout(() => {
-      if (!searchEditingRef.current || lastSubmittedSearchRef.current === searchKey) return;
-      lastSubmittedSearchRef.current = searchKey;
-      navigate({
-        adminEmail: nextAdmin || null,
-        targetEmail: nextTarget || null,
-      }, true);
-    }, 300);
-    return () => window.clearTimeout(timer);
-  }, [adminDraft, targetDraft, adminEmail, targetEmail, pageHref, navigate]);
+  function applyFilters() {
+    if (isPending || (draftRange === "custom" && !validCustom)) return;
+    navigate({
+      range: draftRange,
+      action: draftAction || null,
+      targetType: draftTargetType || null,
+      adminEmail: adminDraft.trim() || null,
+      targetEmail: targetDraft.trim() || null,
+      fromDate: draftRange === "custom" ? draftDates.from : null,
+      toDate: draftRange === "custom" ? draftDates.to : null,
+    });
+  }
 
   function submitSearch(event: FormEvent<HTMLFormElement>) {
+    // Search text is a draft until the single Apply filters action.
     event.preventDefault();
-    const nextAdmin = adminDraftRef.current.trim();
-    const nextTarget = targetDraftRef.current.trim();
-    const searchKey = nextAdmin + "\n" + nextTarget;
-    lastSubmittedSearchRef.current = searchKey;
-    navigate({
-      adminEmail: nextAdmin || null,
-      targetEmail: nextTarget || null,
-    }, true);
   }
 
   return (
     <div className="border-b border-[#D8E1EC] py-3">
-      <div className="flex min-w-0 flex-col gap-3 lg:flex-row lg:items-center">
+      <div className="flex min-w-0 flex-col gap-3 2xl:flex-row 2xl:items-center">
         <form
           onSubmit={submitSearch}
           role="search"
           aria-label="Search audit logs"
-          className="grid min-w-0 gap-3 md:grid-cols-2 lg:w-[520px] lg:flex-none"
+          className="grid min-w-0 gap-3 sm:grid-cols-2 2xl:w-[520px] 2xl:flex-none"
         >
         <div className="relative min-w-0">
           <Search size={17} aria-hidden="true" className="pointer-events-none absolute left-3.5 top-3.5 text-[#64748B]" />
@@ -293,40 +265,45 @@ export function AdminAuditLogsToolbar({
         </div>
         </form>
 
-        <div className="flex min-w-0 flex-wrap items-end justify-end gap-x-4 gap-y-2 lg:ml-auto xl:flex-nowrap">
+        <div className="grid min-w-0 grid-cols-1 items-end gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,170px)_minmax(0,170px)_minmax(0,170px)_auto] 2xl:ml-auto">
         <AdminDirectorySelect
-          key={range + ":" + rangeSelectVersion}
+          key={draftRange + ":" + rangeSelectVersion}
           name="range"
           label="Date range"
-          value={range}
-          options={rangeOptions}
+          value={draftRange}
+          options={options}
           nativeExcludeValues={["custom"]}
-          plain
+          compact attached
           align="end"
           onValueChange={changeRange}
         />
         <AdminDirectorySelect
           name="action"
           label="Action"
-          value={action}
+          value={draftAction}
           options={actionOptions}
-          plain
+          compact attached
           align="end"
-          onValueChange={next => navigate({ action: next || null })}
+          onValueChange={setDraftAction}
         />
         <AdminDirectorySelect
           name="targetType"
           label="Target type"
-          value={targetType}
+          value={draftTargetType}
           options={targetTypeOptions}
-          plain
+          compact attached
           align="end"
-          onValueChange={next => navigate({ targetType: next || null })}
+          onValueChange={setDraftTargetType}
         />
+        <button type="button" onClick={applyFilters}
+          disabled={isPending || (draftRange === "custom" && !validCustom)}
+          className="inline-flex h-10 min-w-0 items-center justify-center whitespace-nowrap rounded-lg bg-[#004BB8] px-4 text-[13px] font-medium text-white transition hover:bg-[#003D97] disabled:opacity-50">
+          Apply filters
+        </button>
         </div>
       </div>
 
-      {(customOpen || range === "custom") ? (
+      {(customOpen || draftRange === "custom") ? (
         <div className="mt-3 flex flex-wrap items-end gap-3">
           <label className="text-[11px] font-medium text-[#64748B]">
             From (UTC)
@@ -362,17 +339,18 @@ export function AdminAuditLogsToolbar({
             disabled={!validCustom || isPending}
             onClick={() => {
               setCustomOpen(false);
-              navigate({ range: "custom", fromDate: draftDates.from, toDate: draftDates.to });
+              setDraftRange("custom");
             }}
             className="h-10 rounded-lg bg-[#004BB8] px-4 text-[13px] font-medium text-white disabled:cursor-not-allowed disabled:opacity-40"
           >
-            Apply dates
+            Set custom dates
           </button>
           <button
             type="button"
             onClick={() => {
               setCustomOpen(false);
               setDraftDates({ from: fromDate, to: toDate });
+              setDraftRange(range);
               setRangeSelectVersion(version => version + 1);
             }}
             className="h-10 px-2 text-[13px] font-medium text-[#475569] hover:underline"
