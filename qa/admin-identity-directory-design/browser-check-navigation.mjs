@@ -120,22 +120,38 @@ try {
   assert.equal(overviewBg, "rgb(241, 245, 251)", "Overview retains its original background");
   await page.screenshot({ path: output + "/overview-navbar-1280.png", fullPage: false });
   checks.push("Overview retains its original canvas");
-  const overviewNav = page.getByRole("navigation", { name: "Admin navigation" });
   const expectedLabels = ["Overview", "Users", "Search Activity", "Trips", "Support", "Providers", "Content", "System", "Platform Health", "Settings"];
-  for (const label of expectedLabels) {
-    await expect(overviewNav.getByRole("link", { name: label, exact: true })).toHaveCount(1);
+  for (const width of [1280, 1366, 1440, 1920, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto(root + "/admin", { waitUntil: "networkidle" });
+    const overviewNav = page.getByRole("navigation", { name: "Admin navigation" });
+    await expect(overviewNav).toBeVisible();
+    for (const label of expectedLabels) {
+      await expect(overviewNav.getByRole("link", { name: label, exact: true })).toHaveCount(1);
+    }
+    await expect(page.getByRole("button", { name: "Open admin navigation" })).toHaveCount(0);
+    const geometry = await page.evaluate(() => {
+      const nav = document.querySelector('nav[aria-label="Admin navigation"]');
+      const region = document.querySelector('[aria-label="Admin navigation links"]');
+      const links = [...nav.querySelectorAll("a")];
+      return {
+        tops: links.map(link => Math.round(link.getBoundingClientRect().top)),
+        firstLeft: links[0].getBoundingClientRect().left,
+        regionWidth: region.clientWidth,
+        regionScrollWidth: region.scrollWidth,
+        documentWidth: document.documentElement.scrollWidth,
+        viewportWidth: window.innerWidth,
+      };
+    });
+    assert.equal(new Set(geometry.tops).size, 1, "All ten links must remain on one row at " + width + "px");
+    assert.ok(geometry.firstLeft >= 0 && geometry.firstLeft <= 32, "Overview starts close to the left at " + width + "px");
+    if (width >= 1280) {
+      assert.ok(geometry.regionScrollWidth <= geometry.regionWidth + 1, "Desktop nav cannot scroll at " + width + "px and 100% zoom");
+    }
+    assert.ok(geometry.documentWidth <= geometry.viewportWidth + 1, "Navbar cannot overflow the page at " + width + "px");
+    await page.screenshot({ path: output + "/overview-navbar-" + width + ".png", fullPage: false });
+    checks.push("All ten links remain horizontal at " + width + "px");
   }
-  const overviewGeometry = await overviewNav.evaluate(node => {
-    const links = [...node.querySelectorAll("a")];
-    return {
-      tops: links.map(link => Math.round(link.getBoundingClientRect().top)),
-      visibleWidth: node.getBoundingClientRect().width,
-      scrollWidth: node.scrollWidth,
-    };
-  });
-  assert.equal(new Set(overviewGeometry.tops).size, 1, "All ten Overview links must remain on one horizontal line");
-  assert.ok(overviewGeometry.scrollWidth <= overviewGeometry.visibleWidth + 1, "No horizontal nav overflow at 1280px and 100% zoom");
-
   assert.deepEqual(errors, [], "No browser errors");
   await writeFile(output + "/navigation-browser-results.json", JSON.stringify({ checks, errors }, null, 2));
   console.log("PASS " + checks.length + " navigation visual checks");
