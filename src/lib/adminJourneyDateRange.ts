@@ -1,7 +1,7 @@
 /** UI-only date range selection for Admin Journeys.
  * The journey service still receives only its documented ISO UTC bounds.
  */
-export type JourneyDateRange = "today" | "7d" | "30d" | "all" | "90d" | "custom";
+export type JourneyDateRange = "24h" | "today" | "7d" | "30d" | "all" | "90d" | "custom";
 
 /** All retained history; the server still enforces authorization, timeouts and cursor limits. */
 export const JOURNEY_ALL_TIME_FROM = "1970-01-01T00:00:00.000Z";
@@ -15,10 +15,10 @@ function one(value: string | string[] | undefined) {
 
 export function selectedJourneyRange(raw: JourneyDateParams): JourneyDateRange {
   const range = one(raw.range);
-  if (range === "today" || range === "7d" || range === "30d" || range === "all" || range === "90d" || range === "custom") return range;
+  if (range === "24h" || range === "today" || range === "7d" || range === "30d" || range === "all" || range === "90d" || range === "custom") return range;
   // Older URLs and identity-activity drill-downs may contain only explicit
-  // dates; they should never appear as a newly selected Today preset.
-  return one(raw.from) || one(raw.to) || one(raw.cursor) ? "custom" : "today";
+  // dates; they should not be silently reinterpreted as a 24-hour preset.
+  return one(raw.from) || one(raw.to) || one(raw.cursor) ? "custom" : "24h";
 }
 
 export function journeyWindow(raw: JourneyDateParams, now: Date): { from?: string; to?: string } {
@@ -32,7 +32,7 @@ export function journeyWindow(raw: JourneyDateParams, now: Date): { from?: strin
   const to = now.toISOString();
   const from = range === "all" ? JOURNEY_ALL_TIME_FROM
     : range === "today" ? new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())).toISOString()
-    : new Date(now.getTime() - (range === "90d" ? 90 : range === "30d" ? 30 : 7) * dayMs).toISOString();
+    : new Date(now.getTime() - (range === "24h" ? 1 : range === "90d" ? 90 : range === "30d" ? 30 : 7) * dayMs).toISOString();
   return { from, to };
 }
 
