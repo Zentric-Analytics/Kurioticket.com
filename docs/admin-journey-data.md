@@ -57,7 +57,7 @@ Parameters are strings both in the URL and when passing a plain object to the se
 | `limit` | Integer 1–100, list/detail only | List 25; detail 50 |
 | `cursor` | Opaque returned continuation, list/detail only | First page |
 
-The window must be nonempty and no longer than 90 days. Dates are normalized to UTC. The four product names are schema values, not a claim that every product currently emits all four journey stages.
+The window must be nonempty and is limited to 90 days, except for the explicit All time preset anchored at `1970-01-01T00:00:00.000Z`. That preset queries all retained, eligible records within the selected environment; it does not restore deleted or excluded events. The same consent and ownership rules, paginated page limits, transaction controls, and four-second SQL statement timeout continue to apply. A query that exceeds those limits reports `unavailable`, not a fabricated partial total. Dates are normalized to UTC. The four product names are schema values, not a claim that every product currently emits all four journey stages.
 
 ### Cohort and event-window semantics
 
