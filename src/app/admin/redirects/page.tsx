@@ -2,6 +2,9 @@ import Link from "next/link";
 
 import { AdminButton, AdminDataTable, AdminEmptyState, AdminFilterBar, AdminInput, AdminSelect, AdminStatusBadge } from "@/components/admin/AdminPageShell";
 import { ProviderHandoffFilters } from "@/components/admin/ProviderHandoffFilters";
+import { resolveHandoffDateRange, withHandoffDateScope } from "@/lib/adminHandoffDateRange";
+import { buildHandoffProviderOptions } from "@/lib/adminHandoffProviderOptions";
+import { getProviderIntegrationStatuses } from "@/services/travel/providerIntegrationStatus";
 import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
 import { SearchWorkspacePanelFrame } from "@/components/admin/SearchWorkspacePanelFrame";
 import { formatDateTime } from "@/lib/admin-data";
@@ -15,7 +18,10 @@ type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
 export default async function AdminRedirectsPage({ searchParams, embedded = false }: { embedded?: boolean; searchParams: SearchParams }) {
   const raw = await searchParams;
-  const params = toParams(raw);
+  const now = new Date();
+  const dateWindow = resolveHandoffDateRange(raw, now);
+  const scopedRaw = embedded ? raw : withHandoffDateScope(raw, now);
+  const params = toParams(scopedRaw);
   if (!params.has("limit")) params.set("limit", "50");
   const result = await adminOperationalReads.handoffs.list(params);
 
@@ -93,25 +99,31 @@ export default async function AdminRedirectsPage({ searchParams, embedded = fals
   );
   return (
     <section className="w-full min-w-0 bg-white text-[#0F172A]">
-      <h1 className="sr-only">Provider Handoffs</h1>
-      {one(raw.sourcePage) ? (
-        <p className="mb-2 text-[12px] text-[#475569]">Source page: <span className="font-semibold text-[#020617]">{one(raw.sourcePage)}</span> <Link href={"/admin/redirects?" + (() => { const params = toParams(raw); params.delete("sourcePage"); params.delete("cursor"); return params.toString(); })()} className="ml-2 font-medium text-[#004BB8] hover:underline">Clear source</Link></p>
+      {one(scopedRaw.sourcePage) ? (
+        <p className="mb-2 text-[12px] text-[#475569]">Source page: <span className="font-semibold text-[#020617]">{one(scopedRaw.sourcePage)}</span> <Link href={"/admin/redirects?" + (() => { const params = toParams(scopedRaw); if (one(scopedRaw.range)) params.set("range", one(scopedRaw.range)); params.delete("sourcePage"); params.delete("cursor"); return params.toString(); })()} className="ml-2 font-medium text-[#004BB8] hover:underline">Clear source</Link></p>
       ) : null}
       <ProviderHandoffFilters
+        key={JSON.stringify([
+          dateWindow.range, one(raw.range), one(raw.product), one(raw.identity),
+          one(raw.correlation), one(raw.provider), one(raw.environment),
+          one(raw.userId), one(raw.visitorId), one(raw.from), one(raw.to), one(raw.sourcePage),
+        ])}
         initial={{
-          product: one(raw.product),
-          identity: one(raw.identity) || "all",
-          correlation: one(raw.correlation),
-          provider: one(raw.provider),
-          environment: one(raw.environment),
+          product: one(scopedRaw.product),
+          identity: one(scopedRaw.identity) || "all",
+          correlation: one(scopedRaw.correlation),
+          provider: one(scopedRaw.provider),
+          environment: one(scopedRaw.environment),
         }}
         scope={{
-          userId: one(raw.userId),
-          visitorId: one(raw.visitorId),
-          from: one(raw.from),
-          to: one(raw.to),
-          sourcePage: one(raw.sourcePage),
+          userId: one(scopedRaw.userId),
+          visitorId: one(scopedRaw.visitorId),
+          from: one(scopedRaw.from),
+          to: one(scopedRaw.to),
+          sourcePage: one(scopedRaw.sourcePage),
         }}
+        range={dateWindow.range}
+        providerOptions={buildHandoffProviderOptions(getProviderIntegrationStatuses(), one(scopedRaw.provider) || null)}
       />
       {result.status === "ok" ? (
         result.data.items.length === 0 ? (
@@ -174,7 +186,7 @@ export default async function AdminRedirectsPage({ searchParams, embedded = fals
                         </span>
                       </td>
                       <td data-label="Action" className="whitespace-nowrap py-3 pl-2 pr-2">
-                        <Link href={handoffDetailHref(handoff.id, handoff.environment, raw)}
+                        <Link href={handoffDetailHref(handoff.id, handoff.environment, scopedRaw)}
                           className="font-medium text-[#004BB8] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
                           Open
                         </Link>
@@ -184,14 +196,14 @@ export default async function AdminRedirectsPage({ searchParams, embedded = fals
                 </tbody>
               </table>
             </div>
-            {handoffPreviousPageHref(raw) || result.data.nextCursor ? (
+            {handoffPreviousPageHref(scopedRaw) || result.data.nextCursor ? (
               <nav aria-label="Provider handoff pagination" className="flex justify-end gap-5 border-t border-[#E7ECF5] py-3">
-                {handoffPreviousPageHref(raw) ? (
-                  <Link href={handoffPreviousPageHref(raw)!}
+                {handoffPreviousPageHref(scopedRaw) ? (
+                  <Link href={handoffPreviousPageHref(scopedRaw)!}
                     className="text-[13px] font-medium text-[#004BB8] hover:underline">‹ Previous page</Link>
                 ) : null}
                 {result.data.nextCursor ? (
-                  <Link href={handoffNextPageHref(raw, result.data.nextCursor)}
+                  <Link href={handoffNextPageHref(scopedRaw, result.data.nextCursor)}
                     className="text-[13px] font-medium text-[#004BB8] hover:underline">Next page ›</Link>
                 ) : null}
               </nav>
@@ -218,7 +230,7 @@ function one(value: string | string[] | undefined) { return typeof value === "st
 function toParams(raw: Record<string, string | string[] | undefined>) {
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(raw)) {
-    if (key === "pageTrail") continue;
+    if (key === "pageTrail" || key === "range") continue;
     if (Array.isArray(value)) value.forEach((item) => params.append(key, item));
     else if (value) params.set(key, value);
   }
