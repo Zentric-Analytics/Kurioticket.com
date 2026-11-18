@@ -113,6 +113,14 @@ jobs:
           await import("./src/components/admin/ProductSearchRecordsPanel.test.ts");
           await import("./src/lib/adminSearchWorkspace.test.ts");
           await import("./src/lib/adminHandoffDateRange.test.ts");'
+      - name: Validate Support queue filters and loading contracts
+        env:
+          JITI_TSCONFIG_PATHS: ./tsconfig.json
+          JITI_JSX: "true"
+        run: >-
+          node --input-type=module --import jiti/register -e
+          'await import("./src/components/admin/AdminSupportToolbar.manual.test.ts");
+          await import("./src/components/admin/AdminSupportQueueLoading.test.ts");'
       - name: Validate admin CMS contracts and interactions
         run: npm run test:cms
 
