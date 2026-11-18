@@ -183,8 +183,8 @@ export function ProductSearchRecordsPanel({ product }: { product: ProviderProduc
       </div>
 
       <div role="region" aria-label="Product search records table" aria-busy={loading} tabIndex={0}
-        className="mt-3 w-full min-w-0 overflow-x-auto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
-        <table className="w-full min-w-[900px] border-collapse text-left text-[12px] leading-5">
+        className="admin-responsive-records mt-3 w-full min-w-0 overflow-x-auto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
+        <table className="w-full min-w-0 table-fixed border-collapse text-left text-[12px] leading-5">
           <thead>
             <tr className="border-b border-[#D8E1EC] text-[11px] font-medium uppercase tracking-wide text-[#64748B]">
               {(product === "HOTEL"
@@ -198,23 +198,23 @@ export function ProductSearchRecordsPanel({ product }: { product: ProviderProduc
               const expanded = selectedId === record.id;
               return <Fragment key={record.id}>
                 <tr className="align-top hover:bg-[#FAFBFD]">
-                  <td className="whitespace-nowrap px-3 py-3 first:pl-0">{dateLabel(record.createdAt)}</td>
-                  <td className="max-w-[240px] px-3 py-3">
+                  <td data-label="Observed" className="whitespace-nowrap px-3 py-3 first:pl-0">{dateLabel(record.createdAt)}</td>
+                  <td data-label={product === "HOTEL" ? "Destination" : "Pick-up"} className="max-w-[240px] px-3 py-3">
                     <p className="break-words font-medium text-[#020617]">{product === "HOTEL" ? record.destination || "—" : record.origin || "—"}</p>
                     {record.requestId ? <p className="mt-0.5 break-all text-[11px] text-[#64748B]">{record.requestId}</p> : null}
                   </td>
-                  <td className="max-w-[220px] break-words px-3 py-3">
+                  <td data-label={product === "HOTEL" ? "Stay" : "Drop-off"} className="max-w-[220px] break-words px-3 py-3">
                     {product === "HOTEL" ? (dateOnly(record.checkIn) + " → " + dateOnly(record.checkOut)) : record.destination || "—"}
                   </td>
-                  <td className="whitespace-nowrap px-3 py-3">
+                  <td data-label="Outcome" className="whitespace-nowrap px-3 py-3">
                     <span className="inline-flex items-center gap-1.5 font-medium text-[#475569]">
                       <span aria-hidden="true" className={"h-1.5 w-1.5 rounded-full " + statusDot(record.outcome)} />
                       {statusLabel(record.outcome)}
                     </span>
                   </td>
-                  <td className="px-3 py-3 text-right tabular-nums">{record.resultCount}</td>
-                  <td className="whitespace-nowrap px-3 py-3 text-right tabular-nums">{record.latencyMs === null ? "—" : record.latencyMs + " ms"}</td>
-                  <td className="px-3 py-3">
+                  <td data-label="Results" className="px-3 py-3 text-right tabular-nums">{record.resultCount}</td>
+                  <td data-label="Latency" className="whitespace-nowrap px-3 py-3 text-right tabular-nums">{record.latencyMs === null ? "—" : record.latencyMs + " ms"}</td>
+                  <td data-label="Action" className="px-3 py-3">
                     <button type="button" aria-expanded={expanded} aria-controls={disclosureId + "-" + record.id}
                       className="inline-flex min-h-8 items-center gap-1.5 rounded-md px-2 font-semibold text-[#004BB8] hover:bg-[#EAF2FF] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]"
                       onClick={() => setSelectedId(current => current === record.id ? null : record.id)}>
@@ -223,7 +223,7 @@ export function ProductSearchRecordsPanel({ product }: { product: ProviderProduc
                     </button>
                   </td>
                 </tr>
-                {expanded ? <tr className="bg-[#F7F9FC]"><td colSpan={7} className="p-3 sm:p-5">
+                {expanded ? <tr className="bg-[#F7F9FC]"><td data-detail-panel colSpan={7} className="p-3 sm:p-5">
                   <div id={disclosureId + "-" + record.id}
                     role="region" aria-label="Selected product search details" aria-busy={detailLoading}
                     className="rounded-xl border border-[#DBE3EE] bg-white p-4 sm:p-5">

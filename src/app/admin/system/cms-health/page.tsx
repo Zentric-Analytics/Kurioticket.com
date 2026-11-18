@@ -61,7 +61,7 @@ export default async function AdminCmsHealthPage() {
           {cmsHealthHotelOptions === null ? <div role="alert" className="mb-4 flex flex-wrap items-center gap-3 text-[13px] text-rose-700">Hotel destination choices could not be loaded. <CmsRetryButton /></div> : null}
           <section aria-label="CMS health summary" className="w-full min-w-0">
             <div role="region" tabIndex={0} aria-label="CMS health metrics" className="w-full min-w-0 overflow-x-auto overscroll-x-contain focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
-              <dl className="grid min-w-[680px] grid-cols-4 gap-px border-y border-[#D8E1EC] bg-[#E7ECF5]">
+              <dl className="grid min-w-0 grid-cols-2 gap-px border-y border-[#D8E1EC] bg-[#E7ECF5] sm:grid-cols-4">
                 {[
                   { label: "Healthy", value: overview.totals.healthy, dot: "bg-emerald-500" },
                   { label: "Needs attention", value: overview.totals.unhealthy, dot: overview.totals.unhealthy ? "bg-amber-500" : "bg-emerald-500" },
@@ -152,7 +152,7 @@ export default async function AdminCmsHealthPage() {
 
                       <div className="border-t border-[#E7ECF5]">
                         <div className="overflow-x-auto">
-                          <table className="w-full min-w-[900px] table-fixed text-left text-[13px]">
+                          <table className="w-full min-w-0 table-fixed text-left text-[13px]">
                             <colgroup>
                               <col className="w-[24%]" />
                               <col className="w-[14%]" />

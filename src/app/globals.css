@@ -2750,25 +2750,53 @@ textarea {
   }
 }
 
-/* Full-width operational tables become readable record panels inside the
-   narrower department workspace; preserve all fields, links and actions. */
-@media (max-width: 1535px) {
-  .admin-responsive-records {
-    overflow-x: visible;
-    width: 100%;
-    max-width: 100%;
-  }
+/* Keep operational records in their original list/table format at desktop
+   widths. The page itself never grows wider than the right-side workspace. */
+.admin-responsive-records {
+  container-type: inline-size;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
+}
+.admin-responsive-records table {
+  width: 100%;
+  min-width: 0 !important;
+  table-layout: fixed;
+}
+.admin-responsive-records th,
+.admin-responsive-records td {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+.admin-responsive-records th {
+  font-size: 11px;
+}
+.admin-responsive-records td .truncate {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.admin-responsive-records td .whitespace-nowrap,
+.admin-responsive-records td time {
+  white-space: normal;
+}
+
+/* Only when the *content panel* is genuinely narrow, use a compact multi-
+   column list ROW with dividers and field labels, never individual cards.
+   Full tables with column headings are retained at normal desktop widths. */
+@container (max-width: 800px) {
   .admin-responsive-records table,
   .admin-responsive-records tbody {
     display: block;
-    min-width: 0;
     width: 100%;
+    min-width: 0;
   }
-  .admin-responsive-records table colgroup {
+  .admin-responsive-records colgroup {
     display: none;
   }
-  /* Keep the actual table headings in the accessibility tree. */
-  .admin-responsive-records table thead {
+  .admin-responsive-records thead {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -2779,85 +2807,59 @@ textarea {
     white-space: nowrap;
     border: 0;
   }
-  .admin-responsive-records tbody {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 12px;
-    padding: 12px 0;
-  }
   .admin-responsive-records tbody > tr:not([hidden]) {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px 18px;
-    height: auto;
-    min-height: 0;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px 12px;
     min-width: 0;
-    padding: 14px;
-    border: 1px solid #d8e1ec;
-    border-radius: 10px;
-    background: #fff;
+    height: auto;
+    padding: 10px 4px;
+    border-bottom: 1px solid #e2e8f0;
+    background: white;
   }
   .admin-responsive-records tbody > tr[hidden] {
-    display: none !important;
+    display: none;
   }
   .admin-responsive-records tbody > tr > td,
   .admin-responsive-records tbody > tr > th[scope="row"] {
     display: block;
-    width: auto;
     min-width: 0;
+    width: auto;
     max-width: 100%;
     padding: 0;
     border: 0;
-    white-space: normal;
     overflow-wrap: anywhere;
+    white-space: normal;
   }
   .admin-responsive-records tbody > tr > td:not([data-empty-row]):not([data-detail-panel])::before,
   .admin-responsive-records tbody > tr > th[scope="row"]::before {
     content: attr(data-label);
     display: block;
-    margin-bottom: 4px;
-    color: #64748b;
+    margin-bottom: 3px;
     font-size: 10px;
     font-weight: 600;
     line-height: 1.4;
-    text-transform: uppercase;
     letter-spacing: .05em;
+    text-transform: uppercase;
+    color: #64748b;
   }
   .admin-responsive-records tbody > tr > td[data-empty-row],
   .admin-responsive-records tbody > tr > td[data-detail-panel] {
     grid-column: 1 / -1;
   }
-  .admin-responsive-records tbody > tr > td[data-empty-row] {
-    padding: 16px 4px;
-  }
   .admin-responsive-records tbody > tr > td[data-detail-panel] {
-    border-left: 2px solid #004bb8;
     padding: 10px 12px;
-  }
-  .admin-responsive-records tbody > tr > td .truncate {
-    white-space: normal;
-    overflow-wrap: anywhere;
-  }
-  .admin-responsive-records tbody > tr > td .whitespace-nowrap,
-  .admin-responsive-records tbody > tr > td time {
-    white-space: normal;
+    border-left: 2px solid #004bb8;
   }
 }
-@media (min-width: 1280px) and (max-width: 1535px) {
-  .admin-responsive-records tbody {
+@container (max-width: 480px) {
+  .admin-responsive-records tbody > tr:not([hidden]) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-/* Prefer readable metric tiles and a single-column editor inside the sidebar workspace. */
+/* The CMS editor stays single-column only while its right panel is narrow. */
 @media (min-width: 1024px) and (max-width: 1535px) {
-  .admin-trip-metrics {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .admin-trip-metrics > * {
-    border-left: 0;
-    border-bottom: 1px solid #e2e8f0;
-  }
   .admin-cms-editor {
     grid-template-columns: minmax(0, 1fr);
   }

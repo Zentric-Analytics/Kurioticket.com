@@ -71,7 +71,7 @@ test("Flight Status keeps provider safety in backend contracts without explanato
   assert.match(contract, /does not infer operational flight status from a search, a provider handoff, or a booking confirmation/);
   assert.equal((page.match(/<section className="min-w-0 rounded-xl border border-slate-200\/80 bg-white p-3 sm:p-4">/g) || []).length, 4);
   assert.match(page, /<div className="min-w-0 space-y-4">/);
-  assert.match(page, /grid w-full min-w-\[960px\] grid-cols-6 gap-2/);
+  assert.match(page, /grid w-full min-w-0 grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6/);
   assert.match(page, /grid min-w-0 items-start gap-3 lg:grid-cols-2/);
   assert.match(page, /No zero values were invented/);
   assert.match(page, /Flight-status distribution is unavailable\. No counts are assumed/);
@@ -136,7 +136,7 @@ test("latest snapshots and awaiting-first-snapshot sections never disappear at z
 });
 
 test("Flight Status follows the deduplicated monitoring hierarchy", () => {
-  assert.match(page, /grid w-full min-w-\[960px\] grid-cols-6 gap-2/);
+  assert.match(page, /grid w-full min-w-0 grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6/);
   const order = ["Status-feed readiness", "Latest status distribution", "Awaiting first status snapshot", "Latest trusted flight-status snapshots"];
   const locations = order.map(label => page.indexOf(">" + label + "</h2>"));
   assert.ok(locations.every(n => n >= 0), "All operational headings must stay visible");
@@ -165,7 +165,7 @@ test("Flight Status overview has no extra outline or double padding and keeps co
   assert.doesNotMatch(overviewOpeningTag, /\b(?:border|rounded|shadow)(?:-[^\s"]+)?\b/,
     "Overview section must not add a redundant decorative outline");
   assert.doesNotMatch(overview, />Flight status overview<\/h2>/);
-  assert.match(overview, /grid w-full min-w-\[960px\] grid-cols-6 gap-2/);
+  assert.match(overview, /grid w-full min-w-0 grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6/);
   assert.equal((overview.match(/<FlightStatusMetric label=/g) || []).length, 6);
   assert.doesNotMatch(overview, /<AdminMetricCard/);
 
@@ -196,8 +196,9 @@ test("all six Flight Status metrics form one accessible horizontal row without p
   const overview = page.slice(start, end);
   assert.match(overview, /role="region" aria-label="Flight status metrics" tabIndex=\{0\}/);
   assert.match(overview, /min-w-0 max-w-full overflow-x-auto overscroll-x-contain/);
-  assert.match(overview, /grid w-full min-w-\[960px\] grid-cols-6 gap-2/);
-  assert.doesNotMatch(overview, /(?:sm|md|lg|xl|2xl):grid-cols-(?:1|2|3|4|5|6)/);
+  assert.match(overview, /grid w-full min-w-0 grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6/);
+  assert.match(overview, /sm:grid-cols-3 lg:grid-cols-6/);
+  assert.doesNotMatch(overview, /min-w-\[960px\]/);
   assert.equal((overview.match(/<FlightStatusMetric label=/g) || []).length, 6);
   assert.match(page, /flex h-full min-w-0 flex-col rounded-lg/);
   assert.match(page, /min-w-0 break-words text-xs font-normal leading-4/);
@@ -266,7 +267,7 @@ test("Flight Status uses consistent compact sections, balanced readiness facts a
   assert.match(page, /Flight-status distribution is unavailable\. No counts are assumed/);
   assert.match(page, /No zero values were invented/);
   assert.match(page, /getFlightStatusOperationsSnapshot\(undefined, readiness\)/);
-  assert.match(page, /grid w-full min-w-\[960px\] grid-cols-6 gap-2/);
+  assert.match(page, /grid w-full min-w-0 grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6/);
   assert.doesNotMatch(page, /className="[^"]*(?:\bhidden\b|\binvisible\b|\bopacity-0\b)/);
 });
 
@@ -301,7 +302,7 @@ test("unified Trip monitoring owns a single parent while preserving original fli
   assert.deepEqual(positions, [...positions].sort((a, b) => a - b));
   assert.doesNotMatch(page, />Flight status overview<\/h2>|>Snapshot scope<\/h2>/);
   assert.equal((page.match(/<FlightStatusMetric label=/g) || []).length, 6);
-  assert.match(page, /grid w-full min-w-\[960px\] grid-cols-6 gap-2/);
+  assert.match(page, /grid w-full min-w-0 grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6/);
   assert.match(page, /No zero values were invented/);
   assert.match(page, /Flight-status distribution is unavailable\. No counts are assumed/);
   assert.match(page, /operations\.awaitingFirstSnapshot\.map/);

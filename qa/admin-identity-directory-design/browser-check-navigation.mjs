@@ -40,6 +40,10 @@ try {
           && Math.abs(sidebar.top - content.top) <= 1) };
       });
       assert.equal(layout.sideBySide, true, "Users workspace stays two-column at 100% desktop zoom");
+      const sidebarWidth = await page.locator('aside[aria-label="Users navigation"]').evaluate(node => node.getBoundingClientRect().width);
+      assert.ok(sidebarWidth >= 190 && sidebarWidth <= 201, "Compact sidebar must retain readable labels at " + width + "px: " + sidebarWidth);
+      const contentWidth = await page.locator('[data-admin-page-content]').evaluate(node => node.getBoundingClientRect().width);
+      assert.ok(contentWidth > sidebarWidth * 2, "Content workspace must receive the larger share at " + width + "px");
     }
     if (width >= 1100) {
       const headerNavigation = page.getByRole("navigation", { name: "Admin navigation" });

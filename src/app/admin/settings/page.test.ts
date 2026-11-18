@@ -57,7 +57,7 @@ test("settings exposes only real persisted feature controls", () => {
 });
 
 test("settings starts directly with feature controls and retains authorization inputs", () => {
-  assert.match(settingsLayout, /md:grid-cols-\[232px_minmax\(0,1fr\)\]/);
+  assert.match(settingsLayout, /md:grid-cols-\[196px_minmax\(0,1fr\)\]/);
   assert.doesNotMatch(settingsPage, /Environment and access|ContextItem|canEditControls|accessLabel|storeLabel/);
   assert.match(settingsPage, /canControlProduction=\{canControlProduction\}/);
   assert.match(settingsPage, /environment=\{featureControls\.environment\}/);
@@ -277,7 +277,7 @@ test("Settings sections share restrained desktop widths, headings, and consisten
   const notificationPanel = readFileSync("src/components/admin/AdminNotificationsPanel.tsx", "utf8");
   const recent = readFileSync("src/app/admin/settings/recent-changes/page.tsx", "utf8");
   assert.match(settingsLayout, /max-w-\[1040px\]/);
-  assert.match(settingsLayout, /md:grid-cols-\[232px_minmax\(0,1fr\)\]/);
+  assert.match(settingsLayout, /md:grid-cols-\[196px_minmax\(0,1fr\)\]/);
   assert.match(settingsNavigation, /space-y-4/);
   for (const section of [featureSection, notifications, recent]) {
     assert.match(section, /border-b border-\[#D8E1EC\] pb-4/);

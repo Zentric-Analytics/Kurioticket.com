@@ -95,7 +95,9 @@ test("system status uses a compact summary-attention-system-areas hierarchy", ()
 
 test("System specialist pages remain dedicated routes and appear under System workspace navigation", () => {
   assert.doesNotMatch(adminShell, /function SystemSectionTabs|aria-label="System sections"|systemSectionsVisible|systemChildren/);
-  assert.match(adminShell, /<main className="mx-auto w-full max-w-\[1920px\]/);
+  assert.match(adminShell, /<main className=\{"mx-auto w-full max-w-\[1920px\] " \+ \(isOverview/);
+  assert.match(adminShell, /isOverview \? "px-4 py-5 sm:px-6 lg:px-10" : "px-4 py-5 sm:px-5 lg:px-6"/);
+  assert.match(adminShell, /lg:grid-cols-\[196px_minmax\(0,1fr\)\] lg:gap-4/);
   assert.match(adminShell, /<AdminSearchContent>[\s\S]*<WorkspaceSidebar pathname=\{pathname\} role=\{role\} showPreviewTesters=\{showPreviewTesters\} \/>/);
   assert.match(adminShell, /data-admin-page-content className="min-w-0">\{children\}<\/div>/);
   assert.match(adminShell, /href: "\/admin\/logs", label: "Audit Logs"/);

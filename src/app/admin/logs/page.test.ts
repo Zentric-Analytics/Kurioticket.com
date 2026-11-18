@@ -34,12 +34,13 @@ test("Audit Logs keeps the main rows readable and moves technical audit values i
   assert.ok(page.includes('<AuditTechnicalDetail label="Target ID" value={log.targetId || "Not provided"} />'));
 });
 
-test("Audit Logs gives the Admin column priority and keeps desktop emails on one line", () => {
-  assert.ok(page.includes('minmax(150px,0.72fr)_minmax(360px,1.55fr)_minmax(240px,1.1fr)_minmax(220px,0.95fr)'));
+test("Audit Logs fits its four columns into the sidebar workspace and keeps full emails readable", () => {
+  assert.ok(page.includes('minmax(0,0.85fr)_minmax(0,1.6fr)_minmax(0,1.1fr)_minmax(0,0.95fr)'));
   assert.equal(page.includes('minmax(210px,1.15fr)'), false);
   assert.equal(page.includes('minmax(240px,1.35fr)'), false);
-  assert.ok(page.includes('min-w-[1080px]'));
-  assert.ok(page.includes('md:truncate md:whitespace-nowrap'));
+  assert.equal(page.includes('min-w-[1080px]'), false);
+  assert.ok(page.includes('w-full min-w-0'));
+  assert.ok(page.includes('break-all text-[13px]'));
   assert.ok(page.includes('title={log.adminEmail}'));
 });
 
