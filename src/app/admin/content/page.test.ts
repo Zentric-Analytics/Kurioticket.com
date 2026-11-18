@@ -319,7 +319,6 @@ test("Content lists search the whole CMS dataset with one explicit Apply", () =>
   assert.doesNotMatch(toolbar, /onValueChange=\{next => navigate/);
   assert.match(toolbar, /onValueChange=\{setDraftMarket\}/);
   assert.match(toolbar, /onValueChange=\{setDraftCountry\}/);
-  assert.match(toolbar, /onValueChange=\{setDraftMarket\}/);
   assert.match(toolbar, /faqSearchOnly\) applyFilters\(\)/);
   assert.match(toolbar, /flex min-w-0 flex-wrap items-center justify-between/);
   assert.doesNotMatch(toolbar, /overflow-x-auto|overflow-x-scroll|2xl:flex-row|Clear filters|clearFilters/);
