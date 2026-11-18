@@ -2,6 +2,7 @@ export type AdminAuditScope = {
   from: string;
   to: string;
   action: string | null;
+  searchEmail: string | null;
   adminEmail: string | null;
   targetType: string | null;
   targetEmail: string | null;
@@ -41,7 +42,7 @@ type ParseResult<T> =
   | { status: "ok"; data: T }
   | { status: "invalid"; issues: AdminAuditIssue[] };
 
-const allowedKeys = ["from", "to", "action", "adminEmail", "targetType", "targetEmail", "limit", "cursor"] as const;
+const allowedKeys = ["from", "to", "action", "searchEmail", "adminEmail", "targetType", "targetEmail", "limit", "cursor"] as const;
 const dayMs = 24 * 60 * 60 * 1000;
 const iso = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d{1,3})?)?(?:Z|[+-]\d{2}:\d{2})$/;
 const id = /^[A-Za-z0-9_-]{6,128}$/;
@@ -101,6 +102,8 @@ function decodeCursorEnvelope(value: string | null): ParseResult<{
           from: new Date(rawScope.from).toISOString(),
           to: new Date(rawScope.to).toISOString(),
           action: typeof rawScope.action === "string" ? rawScope.action : null,
+          // Old cursor bookmarks predate unified email search; keep their scope valid.
+          searchEmail: typeof rawScope.searchEmail === "string" ? rawScope.searchEmail : null,
           adminEmail: typeof rawScope.adminEmail === "string" ? rawScope.adminEmail : null,
           targetType: typeof rawScope.targetType === "string" ? rawScope.targetType : null,
           targetEmail: typeof rawScope.targetEmail === "string" ? rawScope.targetEmail : null,
@@ -132,6 +135,8 @@ export function parseAdminAuditQuery(params: URLSearchParams, now = new Date()):
   if (parsedTo.status !== "ok") return parsedTo;
   const action = text(params.get("action"), "action", 120);
   if (action.status !== "ok") return action;
+  const searchEmail = text(params.get("searchEmail"), "searchEmail", 320);
+  if (searchEmail.status !== "ok") return searchEmail;
   const adminEmail = text(params.get("adminEmail"), "adminEmail", 320);
   if (adminEmail.status !== "ok") return adminEmail;
   const targetType = text(params.get("targetType"), "targetType", 120);
@@ -162,6 +167,7 @@ export function parseAdminAuditQuery(params: URLSearchParams, now = new Date()):
     from,
     to,
     action: action.data,
+    searchEmail: searchEmail.data,
     adminEmail: adminEmail.data,
     targetType: targetType.data,
     targetEmail: targetEmail.data,

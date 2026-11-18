@@ -10,6 +10,7 @@ type AuditRange = "24h" | "7d" | "30d" | "all" | "90d" | "custom";
 type Props = {
   action: string;
   adminEmail: string;
+  searchEmail: string;
   targetType: string;
   targetEmail: string;
   range: AuditRange;
@@ -68,6 +69,7 @@ function validDate(value: string) {
 export function AdminAuditLogsToolbar({
   action,
   adminEmail,
+  searchEmail,
   targetType,
   targetEmail,
   range,
@@ -82,14 +84,13 @@ export function AdminAuditLogsToolbar({
   const [draftTargetType, setDraftTargetType] = useState(targetType);
   const [rangeSelectVersion, setRangeSelectVersion] = useState(0);
   const [draftDates, setDraftDates] = useState({ from: fromDate, to: toDate });
-  const [adminDraft, setAdminDraft] = useState(adminEmail);
-  const [targetDraft, setTargetDraft] = useState(targetEmail);
+  // The single visible input searches either email column. Legacy adminEmail
+  // and targetEmail deep links remain intact until the operator edits the text.
+  const legacySearchActive = !searchEmail && Boolean(adminEmail || targetEmail);
+  const appliedEmail = searchEmail || (adminEmail && targetEmail ? "" : adminEmail || targetEmail);
+  const [emailDraft, setEmailDraft] = useState(appliedEmail);
+  const [emailEditing, setEmailEditing] = useState(false);
   const [isPending, startTransition] = useTransition();
-  const adminDraftRef = useRef(adminEmail);
-  const targetDraftRef = useRef(targetEmail);
-  const searchEditingRef = useRef(false);
-  const [searchEditing, setSearchEditing] = useState(false);
-  const lastSubmittedSearchRef = useRef<string | null>(null);
   const paramsRef = useRef(new URLSearchParams(pageHref.split("?")[1] || ""));
 
   useEffect(() => {
@@ -105,45 +106,25 @@ export function AdminAuditLogsToolbar({
     setPreviousScope(committedScope);
     if (!customOpen) setDraftDates({ from: fromDate, to: toDate });
   }
-  const searchScope = JSON.stringify([pageHref, adminEmail, targetEmail]);
+  const searchScope = JSON.stringify([pageHref, searchEmail, adminEmail, targetEmail]);
   const [previousSearchScope, setPreviousSearchScope] = useState(searchScope);
   if (previousSearchScope !== searchScope) {
     setPreviousSearchScope(searchScope);
-    const appliedAdmin = adminEmail.trim();
-    const appliedTarget = targetEmail.trim();
-    // Preserve edits while an older server navigation is still arriving.
-    if (!searchEditing) {
-      setAdminDraft(appliedAdmin);
-      setTargetDraft(appliedTarget);
-    } else if (appliedAdmin === adminDraft.trim() && appliedTarget === targetDraft.trim()) {
-      setSearchEditing(false);
-    }
+    // A delayed navigation must never overwrite a draft still being edited.
+    if (!emailEditing) setEmailDraft(appliedEmail);
+    else if (appliedEmail.trim() === emailDraft.trim()) setEmailEditing(false);
   }
-
-  useEffect(() => {
-    if (!searchEditing) {
-      adminDraftRef.current = adminDraft;
-      targetDraftRef.current = targetDraft;
-      searchEditingRef.current = false;
-      lastSubmittedSearchRef.current = null;
-    }
-  }, [searchEditing, adminDraft, targetDraft]);
 
   useEffect(() => {
     const onHistoryNavigation = () => {
       const params = new URLSearchParams(window.location.search);
       paramsRef.current = params;
-      searchEditingRef.current = false;
-      lastSubmittedSearchRef.current = null;
       setCustomOpen(false);
-      setSearchEditing(false);
-
-      const restoredAdmin = (params.get("adminEmail") ?? "").trim();
-      const restoredTarget = (params.get("targetEmail") ?? "").trim();
-      adminDraftRef.current = restoredAdmin;
-      targetDraftRef.current = restoredTarget;
-      setAdminDraft(restoredAdmin);
-      setTargetDraft(restoredTarget);
+      setEmailEditing(false);
+      const admin = (params.get("adminEmail") ?? "").trim();
+      const target = (params.get("targetEmail") ?? "").trim();
+      const unified = (params.get("searchEmail") ?? "").trim();
+      setEmailDraft(unified || (admin && target ? "" : admin || target));
     };
     window.addEventListener("popstate", onHistoryNavigation);
     return () => window.removeEventListener("popstate", onHistoryNavigation);
@@ -159,41 +140,17 @@ export function AdminAuditLogsToolbar({
   const todayUtc = new Date().toISOString().slice(0, 10);
   const validCustom = validDate(draftDates.from) && validDate(draftDates.to) && draftDates.from <= draftDates.to && draftDates.to <= todayUtc;
 
-  const navigate = useCallback((values: Record<string, string | null>, replace = false) => {
+  const navigate = useCallback((values: Record<string, string | null>) => {
     const params = new URLSearchParams(paramsRef.current);
     params.delete("cursor");
-
-    const currentAdmin = adminDraftRef.current.trim();
-    const currentTarget = targetDraftRef.current.trim();
-
-    if (!("adminEmail" in values)) {
-      if (currentAdmin) params.set("adminEmail", currentAdmin);
-      else params.delete("adminEmail");
-    }
-    if (!("targetEmail" in values)) {
-      if (currentTarget) params.set("targetEmail", currentTarget);
-      else params.delete("targetEmail");
-    }
-
     for (const [key, value] of Object.entries(values)) {
       if (value) params.set(key, value);
       else params.delete(key);
     }
-
-    const committedAdmin = (params.get("adminEmail") ?? "").trim();
-    const committedTarget = (params.get("targetEmail") ?? "").trim();
-    const committedSearchKey = committedAdmin + "\n" + committedTarget;
-    if (searchEditingRef.current && committedAdmin === currentAdmin && committedTarget === currentTarget) {
-      lastSubmittedSearchRef.current = committedSearchKey;
-    }
-
     const query = params.toString();
     paramsRef.current = new URLSearchParams(query);
     const href = "/admin/logs" + (query ? "?" + query : "");
-    startTransition(() => {
-      if (replace) router.replace(href, { scroll: false });
-      else router.push(href, { scroll: false });
-    });
+    startTransition(() => router.push(href, { scroll: false }));
   }, [router]);
 
   function changeRange(next: string) {
@@ -208,8 +165,12 @@ export function AdminAuditLogsToolbar({
       range: draftRange,
       action: draftAction || null,
       targetType: draftTargetType || null,
-      adminEmail: adminDraft.trim() || null,
-      targetEmail: targetDraft.trim() || null,
+      // Preserve old field-specific bookmarks unless the search was changed.
+      ...(legacySearchActive && !emailEditing ? {} : {
+        searchEmail: emailDraft.trim() || null,
+        adminEmail: null,
+        targetEmail: null,
+      }),
       fromDate: draftRange === "custom" ? draftDates.from : null,
       toDate: draftRange === "custom" ? draftDates.to : null,
     });
@@ -222,86 +183,75 @@ export function AdminAuditLogsToolbar({
 
   return (
     <div className="border-b border-[#D8E1EC] py-3">
-      <div className="flex min-w-0 flex-col gap-3 2xl:flex-row 2xl:items-center">
-        <form
-          onSubmit={submitSearch}
-          role="search"
-          aria-label="Search audit logs"
-          className="grid min-w-0 gap-3 sm:grid-cols-2 2xl:w-[520px] 2xl:flex-none"
-        >
+      <form
+        onSubmit={submitSearch}
+        role="search"
+        aria-label="Search audit logs"
+        data-testid="audit-filters-toolbar"
+        className="grid min-w-0 grid-cols-1 items-stretch gap-2 sm:grid-cols-2 xl:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_132px] xl:items-center"
+      >
         <div className="relative min-w-0">
-          <Search size={17} aria-hidden="true" className="pointer-events-none absolute left-3.5 top-3.5 text-[#64748B]" />
-          <label className="sr-only" htmlFor="audit-admin-email-search">Search admin email</label>
+          <Search size={16} aria-hidden="true" className="pointer-events-none absolute left-3 top-3 text-[#64748B]" />
+          <label className="sr-only" htmlFor="audit-email-search">Search email</label>
           <input
-            id="audit-admin-email-search"
+            id="audit-email-search"
             type="search"
-            value={adminDraft}
+            maxLength={320}
+            value={emailDraft}
             onChange={event => {
-              adminDraftRef.current = event.target.value;
-              searchEditingRef.current = true;
-              setSearchEditing(true);
-              setAdminDraft(event.target.value);
+              setEmailEditing(true);
+              setEmailDraft(event.target.value);
             }}
-            placeholder="Search admin email"
-            className="h-11 w-full min-w-0 rounded-lg border border-[#D8E1EC] bg-white pl-10 pr-3 text-[13px] text-[#020617] outline-none placeholder:text-[#94A3B8] focus:border-[#94A3B8] focus:ring-0"
+            placeholder="Search admin or target email"
+            className="h-10 w-full min-w-0 rounded-lg border border-[#D8E1EC] bg-white pl-9 pr-3 text-[13px] text-[#020617] outline-none placeholder:text-[#94A3B8] focus-visible:border-[#004BB8]"
           />
         </div>
-        <div className="relative min-w-0">
-          <Search size={17} aria-hidden="true" className="pointer-events-none absolute left-3.5 top-3.5 text-[#64748B]" />
-          <label className="sr-only" htmlFor="audit-target-email-search">Search target email</label>
-          <input
-            id="audit-target-email-search"
-            type="search"
-            value={targetDraft}
-            onChange={event => {
-              targetDraftRef.current = event.target.value;
-              searchEditingRef.current = true;
-              setSearchEditing(true);
-              setTargetDraft(event.target.value);
-            }}
-            placeholder="Search target email"
-            className="h-11 w-full min-w-0 rounded-lg border border-[#D8E1EC] bg-white pl-10 pr-3 text-[13px] text-[#020617] outline-none placeholder:text-[#94A3B8] focus:border-[#94A3B8] focus:ring-0"
+        <div className="min-w-0">
+          <AdminDirectorySelect
+            key={draftRange + ":" + rangeSelectVersion}
+            name="range"
+            label="Date range"
+            value={draftRange}
+            options={options}
+            nativeExcludeValues={["custom"]}
+            compact attached
+            align="end"
+            onValueChange={changeRange}
           />
         </div>
-        </form>
-
-        <div className="grid min-w-0 grid-cols-1 items-end gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,170px)_minmax(0,170px)_minmax(0,170px)_auto] 2xl:ml-auto">
-        <AdminDirectorySelect
-          key={draftRange + ":" + rangeSelectVersion}
-          name="range"
-          label="Date range"
-          value={draftRange}
-          options={options}
-          nativeExcludeValues={["custom"]}
-          compact attached
-          align="end"
-          onValueChange={changeRange}
-        />
-        <AdminDirectorySelect
-          name="action"
-          label="Action"
-          value={draftAction}
-          options={actionOptions}
-          compact attached
-          align="end"
-          onValueChange={setDraftAction}
-        />
-        <AdminDirectorySelect
-          name="targetType"
-          label="Target type"
-          value={draftTargetType}
-          options={targetTypeOptions}
-          compact attached
-          align="end"
-          onValueChange={setDraftTargetType}
-        />
+        <div className="min-w-0">
+          <AdminDirectorySelect
+            name="action"
+            label="Action"
+            value={draftAction}
+            options={actionOptions}
+            compact attached
+            align="end"
+            onValueChange={setDraftAction}
+          />
+        </div>
+        <div className="min-w-0">
+          <AdminDirectorySelect
+            name="targetType"
+            label="Target type"
+            value={draftTargetType}
+            options={targetTypeOptions}
+            compact attached
+            align="end"
+            onValueChange={setDraftTargetType}
+          />
+        </div>
         <button type="button" onClick={applyFilters}
           disabled={isPending || (draftRange === "custom" && !validCustom)}
-          className="inline-flex h-10 min-w-0 items-center justify-center whitespace-nowrap rounded-lg bg-[#004BB8] px-4 text-[13px] font-medium text-white transition hover:bg-[#003D97] disabled:opacity-50">
+          className="inline-flex h-10 w-full min-w-0 items-center justify-center whitespace-nowrap rounded-lg bg-[#004BB8] px-3 text-[13px] font-medium text-white transition hover:bg-[#003D97] disabled:opacity-50 sm:col-span-2 xl:col-span-1">
           Apply filters
         </button>
-        </div>
-      </div>
+      </form>
+      {legacySearchActive && !emailEditing ? (
+        <p className="mt-2 text-[12px] text-[#64748B]">
+          Legacy email filters are active. Edit the search field to search both admin and target emails.
+        </p>
+      ) : null}
 
       {(customOpen || draftRange === "custom") ? (
         <div className="mt-3 flex flex-wrap items-end gap-3">

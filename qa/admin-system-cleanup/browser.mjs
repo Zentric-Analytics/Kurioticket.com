@@ -39,11 +39,7 @@ try {
           await expect(pageContent.getByRole("link", { name, exact: true })).toHaveCount(0);
         }
         const backToSystem = main.getByRole("link", { name: "Back to System", exact: true });
-        if (route === "system/cms-health" || route === "email-delivery") {
-          await expect(backToSystem).toHaveAttribute("href", "/admin/system");
-        } else {
-          await expect(backToSystem).toHaveCount(0);
-        }
+        await expect(backToSystem).toHaveCount(0);
         if (route === "system") {
           await expect(main.getByRole("heading", { name: "System snapshot", exact: true })).toHaveCount(0);
           await expect(main.getByRole("heading", { name: "Configuration", exact: true })).toHaveCount(0);
@@ -133,8 +129,26 @@ try {
           await expect(main.getByRole("combobox", { name: "Date range" })).toBeVisible();
           await expect(main.getByRole("combobox", { name: "Action" })).toBeVisible();
           await expect(main.getByRole("combobox", { name: "Target type" })).toBeVisible();
-          await expect(main.getByPlaceholder("Search admin email")).toBeVisible();
-          await expect(main.getByPlaceholder("Search target email")).toBeVisible();
+          await expect(main.getByPlaceholder("Search admin or target email")).toBeVisible();
+          await expect(main.locator('input[type="search"]')).toHaveCount(1);
+          const toolbar = main.getByTestId("audit-filters-toolbar");
+          await expect(toolbar).toBeVisible();
+          if (width === 1440) {
+            const boxes = await Promise.all([
+              toolbar.getByRole("searchbox"),
+              toolbar.getByRole("combobox", { name: "Date range" }),
+              toolbar.getByRole("combobox", { name: "Action" }),
+              toolbar.getByRole("combobox", { name: "Target type" }),
+              toolbar.getByRole("button", { name: "Apply filters" }),
+            ].map(control => control.boundingBox()));
+            expect(boxes.every(Boolean)).toBeTruthy();
+            expect(new Set(boxes.map(box => Math.round(box.y))).size).toBe(1);
+            expect(boxes.every(box => Math.abs(box.height - 40) <= 1)).toBeTruthy();
+            const right = await toolbar.evaluate(node => node.getBoundingClientRect().right);
+            expect(boxes.every((box, index) => box.width > 0 &&
+              box.x + box.width <= right + 1 &&
+              (index === 0 || box.x >= boxes[index - 1].x + boxes[index - 1].width + 1))).toBeTruthy();
+          }
           await expect(main.getByRole("button", { name: "Apply filters", exact: true })).toBeVisible();
           await expect(main.getByRole("link", { name: "Clear filters", exact: true })).toHaveCount(0);
           await expect(main.getByText("Security-sensitive admin and system actions.", { exact: false })).toHaveCount(0);

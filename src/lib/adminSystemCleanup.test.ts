@@ -19,13 +19,16 @@ test("System removes general Alerts shortcuts and circular configuration investi
   assert.doesNotMatch(page, /id: "providers"|Open Providers/);
   assert.match(page, /Managed in deployment configuration/);
 });
-test("System diagnostic subpages keep a simple return path without restoring removed header shortcuts", () => {
-  for (const path of ["src/app/admin/system/cms-health/page.tsx", "src/app/admin/email-delivery/page.tsx"]) {
+test("System diagnostic subpages use the System sidebar without redundant return links", () => {
+  const nav = source("src/lib/adminNavigation.ts");
+  for (const [path, href] of [
+    ["src/app/admin/system/cms-health/page.tsx", "/admin/system/cms-health"],
+    ["src/app/admin/email-delivery/page.tsx", "/admin/email-delivery"],
+  ]) {
     const page = source(path);
-    assert.match(page, /href="\/admin\/system"/);
-    assert.match(page, /Back to System/);
-    assert.match(page, /ArrowLeft size=\{14\}/);
+    assert.doesNotMatch(page, /href="\/admin\/system"|Back to System|ArrowLeft size=\{14\}/);
     assert.doesNotMatch(page, /actions=\{|View audit logs|href="\/admin\/logs"/);
+    assert.ok(nav.includes(`href: "${href}", parentHref: "/admin/system"`));
   }
   const alerts = source("src/app/admin/notifications/page.tsx");
   assert.doesNotMatch(alerts, /actions=\{|Back to System|View audit logs|href="\/admin\/logs"|href="\/admin\/system"/);
