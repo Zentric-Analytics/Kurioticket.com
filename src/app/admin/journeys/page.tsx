@@ -1,13 +1,15 @@
 import Link from "next/link";
 
 import { AdminEmptyState } from "@/components/admin/AdminPageShell";
-import { AdminDirectorySelect } from "@/components/admin/AdminDirectorySelect";
 import { CopyIdentityId } from "@/components/admin/CopyIdentityId";
 import { JourneyDateRangeFields } from "@/components/admin/JourneyDateRangeFields";
 import { journeyWindow, selectedJourneyRange } from "@/lib/adminJourneyDateRange";
 import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
 import { SearchWorkspacePanelFrame } from "@/components/admin/SearchWorkspacePanelFrame";
 import { formatDateTime } from "@/lib/admin-data";
+import { buildAdminSearchProviderOptions } from "@/lib/adminSearchProviderOptions";
+import { getProviderIntegrationStatuses } from "@/services/travel/providerIntegrationStatus";
+import { getPublicEnvironment } from "@/lib/stagingSafety";
 import { adminJourneys } from "@/services/adminJourneyService";
 import type { AdminJourneyStage } from "@/services/adminJourneyContract";
 
@@ -28,17 +30,32 @@ export default async function AdminJourneysPage({ searchParams, embedded = false
   // Pin both reads to the same explicit bounds, including cursor continuations.
   const range = selectedJourneyRange(raw);
   const fixed = journeyWindow(raw, now);
-  const input: Record<string, unknown> = { ...withoutPagination(raw), ...fixed, limit: one(raw.limit) || "25" };
+  const providerOptions = buildAdminSearchProviderOptions(getProviderIntegrationStatuses(), one(raw.provider) || null);
+  // Always constrain this view to the deployment's configured environment.
+  // Historical environment URLs must not silently switch staging into production.
+  const environment = getPublicEnvironment();
+  const input: Record<string, unknown> = { ...withoutPagination(raw), ...fixed, environment, limit: one(raw.limit) || "25" };
   if (one(raw.cursor)) input.cursor = one(raw.cursor);
   const list = await adminJourneys.list(input);
   const summary = list.status === "ok"
-    ? await adminJourneys.summary({ ...withoutPagination(raw), ...list.data.scope })
+    ? await adminJourneys.summary({ ...withoutPagination(raw), ...list.data.scope, environment })
     : null;
 
   return (
     <SearchWorkspacePanelFrame embedded={embedded} title="Visitor Journeys" hideHeader>
       <div className="w-full min-w-0 bg-white text-[#020617]">
-        <h2 className="pb-3 text-[20px] font-semibold leading-7 text-[#020617]">Visitor Journeys</h2>
+        <form action={embedded ? "/admin/searches/activity" : "/admin/journeys"} method="get"
+          aria-label="Filter visitor journeys" className="min-w-0">
+          {embedded ? <input type="hidden" name="tab" value="journeys" /> : null}
+          {one(raw.userId) ? <input type="hidden" name="userId" value={one(raw.userId)} /> : null}
+          {one(raw.visitorId) ? <input type="hidden" name="visitorId" value={one(raw.visitorId)} /> : null}
+          <div className="flex min-w-0 flex-wrap items-center justify-between gap-3 pb-3">
+            <h2 className="text-[20px] font-semibold leading-7 text-[#020617]">Visitor Journeys</h2>
+            <JourneyDateRangeFields initialRange={range}
+              initialFrom={one(raw.from) || (range === "custom" ? (list.status === "ok" ? list.data.scope.from : "") : "")}
+              initialTo={one(raw.to) || (range === "custom" ? (list.status === "ok" ? list.data.scope.to : "") : "")}
+              now={now.toISOString()} />
+          </div>
         {summary?.status === "ok" ? (
           <section aria-label="Journey summary" className="grid min-w-0 grid-cols-2 gap-y-3 border-y border-[#D8E1EC] py-4 sm:grid-cols-3 lg:grid-cols-5 lg:gap-y-0">
             <Metric label="Journeys" value={summary.data.journeys} />
@@ -54,60 +71,43 @@ export default async function AdminJourneysPage({ searchParams, embedded = false
           Necessary operational guest searches remain available in Search Activity.
         </p>
 
-        <form action={embedded ? "/admin/searches/activity" : "/admin/journeys"} method="get"
-          aria-label="Filter visitor journeys"
-          className="flex min-w-0 flex-wrap items-center gap-x-5 gap-y-3 border-y border-[#D8E1EC] py-3 sm:gap-x-6">
-          {embedded ? <input type="hidden" name="tab" value="journeys" /> : null}
-          {one(raw.userId) ? <input type="hidden" name="userId" value={one(raw.userId)} /> : null}
-          {one(raw.visitorId) ? <input type="hidden" name="visitorId" value={one(raw.visitorId)} /> : null}
-
-          <JourneyDateRangeFields initialRange={range}
-            initialFrom={one(raw.from) || (range === "custom" ? (list.status === "ok" ? list.data.scope.from : "") : "")}
-            initialTo={one(raw.to) || (range === "custom" ? (list.status === "ok" ? list.data.scope.to : "") : "")}
-            now={now.toISOString()} />
-
-          <AdminDirectorySelect name="product" label="Product" value={one(raw.product)}
-            plain options={[
-              { value: "", label: "All products" },
-              { value: "FLIGHT", label: "Flights" },
-              { value: "HOTEL", label: "Hotels" },
-              { value: "CAR", label: "Cars" },
-              { value: "PACKAGE", label: "Packages" },
-            ]} />
-
-          <SearchMonitorSelect label="Identity" name="identity"
-            value={one(raw.identity) || "all"} appearance="plain"
-            clearFieldNamesOnChange={["userId", "visitorId"]}
-            options={[
-              { value: "all", label: "All identities" },
-              { value: "registered", label: "Registered" },
-              { value: "guest", label: "Guest" },
-            ]} />
-
-          <AdminDirectorySelect name="stage" label="Observed stage" value={one(raw.stage)}
-            plain options={[
-              { value: "", label: "All observed stages" },
-              ...stages.map((stage) => ({ value: stage.value, label: stage.label })),
-            ]} />
-
-          <label className="min-w-0">
-            <span className="sr-only">Provider</span>
-            <input name="provider" type="search" defaultValue={one(raw.provider)}
-              placeholder="Provider" aria-label="Provider"
-              className="h-10 w-28 min-w-0 border-0 border-b border-[#CAD3DF] bg-white px-0 text-[13px] text-[#020617] outline-none placeholder:text-[#64748B] focus:border-[#004BB8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#64748B] sm:w-36" />
-          </label>
-
-          <AdminDirectorySelect name="environment" label="Environment" value={one(raw.environment)}
-            plain options={[
-              { value: "", label: "Current environment" },
-              { value: "staging", label: "Staging" },
-              { value: "production", label: "Production" },
-            ]} />
-
+        <div className="grid min-w-0 grid-cols-1 items-center gap-2 border-y border-[#D8E1EC] py-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.3fr)_minmax(0,1fr)_auto]">
+          <div className="min-w-0">
+            <SearchMonitorSelect label="Product" name="product" appearance="fare"
+              value={one(raw.product)} options={[
+                { value: "", label: "All products" },
+                { value: "FLIGHT", label: "Flights" },
+                { value: "HOTEL", label: "Hotels" },
+                { value: "CAR", label: "Cars" },
+                { value: "PACKAGE", label: "Packages" },
+              ]} />
+          </div>
+          <div className="min-w-0">
+            <SearchMonitorSelect label="Identity" name="identity"
+              value={one(raw.identity) || "all"} appearance="fare"
+              clearFieldNamesOnChange={["userId", "visitorId"]}
+              options={[
+                { value: "all", label: "All identities" },
+                { value: "registered", label: "Registered" },
+                { value: "guest", label: "Guest" },
+              ]} />
+          </div>
+          <div className="min-w-0">
+            <SearchMonitorSelect label="Observed stage" name="stage" appearance="fare"
+              value={one(raw.stage)} options={[
+                { value: "", label: "All observed stages" },
+                ...stages.map(stage => ({ value: stage.value, label: stage.label })),
+              ]} />
+          </div>
+          <div className="min-w-0">
+            <SearchMonitorSelect label="Provider" name="provider" appearance="fare"
+              value={one(raw.provider)} options={providerOptions} truncateLabel />
+          </div>
           <button type="submit"
-            className="inline-flex h-9 items-center justify-center rounded-lg bg-[#004BB8] px-4 text-[13px] font-medium text-white transition hover:bg-[#003D97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
+            className="inline-flex h-10 w-full items-center justify-center whitespace-nowrap rounded-lg bg-[#004BB8] px-4 text-[13px] font-medium text-white transition hover:bg-[#003D97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] sm:col-span-2 lg:col-span-1 lg:w-auto">
             Apply filters
           </button>
+        </div>
         </form>
 
         {summary?.status === "ok" ? (
@@ -214,7 +214,7 @@ export default async function AdminJourneysPage({ searchParams, embedded = false
 function one(value: string | string[] | undefined) { return typeof value === "string" ? value : ""; }
 function withoutPagination(raw: Record<string, string | string[] | undefined>) {
   const copy: Record<string, unknown> = {};
-  for (const key of ["environment","identity","product","stage","provider","userId","visitorId","from","to"]) {
+  for (const key of ["identity","product","stage","provider","userId","visitorId","from","to"]) {
     if (raw[key] !== undefined) copy[key] = raw[key];
   }
   return copy;
