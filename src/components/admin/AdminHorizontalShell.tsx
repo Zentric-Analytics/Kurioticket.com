@@ -27,7 +27,7 @@ function HeaderNavLink({ entry, pathname, close }: { entry: HeaderEntry; pathnam
     : "";
   return (
     <Link href={item.href} onClick={close} aria-current={pathname === item.href || pathname === item.href + "/" ? "page" : undefined}
-      className={"relative inline-flex h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-xl px-2.5 text-[15px] font-semibold leading-none tracking-[-0.005em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 " + style + underline}>
+      className={"relative inline-flex h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-xl px-2 text-[15px] font-semibold leading-none tracking-[-0.005em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 " + style + underline}>
       <Icon size={14} aria-hidden="true" className="h-[13px] w-[13px] shrink-0 xl:h-3.5 xl:w-3.5 2xl:h-4 2xl:w-4" />
       <span>{item.label}</span>
     </Link>
@@ -37,7 +37,7 @@ function HeaderNavLink({ entry, pathname, close }: { entry: HeaderEntry; pathnam
 function Navigation({ groups, pathname, mobile = false, close }: { groups: HeaderGroup[]; pathname: string; mobile?: boolean; close: () => void }) {
   return <nav aria-label="Admin navigation" className={mobile
     ? "flex flex-col gap-2 p-3"
-    : "flex w-full flex-wrap items-center justify-start gap-x-5 gap-y-2"}>
+    : "flex w-full flex-nowrap items-center justify-start gap-3"}>
     {groups.map((group) => (
       <div key={group.label} className={mobile
         ? "flex flex-col gap-1"
@@ -257,15 +257,15 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
           <AdminSearchTrigger />
           <AdminHeaderMenus key={pathname} adminEmail={adminEmail} adminName={adminName} role={role} headerRef={headerRef} />
-          <button type="button" className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 min-[1100px]:hidden" onClick={() => setMobileOpen((value) => !value)} aria-label={mobileOpen ? "Close admin navigation" : "Open admin navigation"} aria-expanded={mobileOpen}>{mobileOpen ? <X size={19} /> : <Menu size={19} />}</button>
+          <button type="button" className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 min-[1280px]:hidden" onClick={() => setMobileOpen((value) => !value)} aria-label={mobileOpen ? "Close admin navigation" : "Open admin navigation"} aria-expanded={mobileOpen}>{mobileOpen ? <X size={19} /> : <Menu size={19} />}</button>
         </div>
       </div>
-      <div className="hidden border-t border-slate-100 min-[1100px]:block">
-        <div className="mx-auto max-w-[1920px] px-4 pb-2 pt-2 sm:px-6 lg:px-10">
+      <div className="hidden border-t border-slate-100 min-[1280px]:block">
+        <div className="mx-auto max-w-[1920px] px-4 pb-2 pt-2 sm:px-6">
           <Navigation groups={isOverview ? groups : overviewGroups} pathname={pathname} close={() => {}} />
         </div>
       </div>
-      {mobileOpen ? <div className="max-h-[70vh] overflow-y-auto border-t border-slate-100 bg-white min-[1100px]:hidden"><Navigation groups={groups} pathname={pathname} mobile close={() => setMobileOpen(false)} /></div> : null}
+      {mobileOpen ? <div className="max-h-[70vh] overflow-y-auto border-t border-slate-100 bg-white min-[1280px]:hidden"><Navigation groups={groups} pathname={pathname} mobile close={() => setMobileOpen(false)} /></div> : null}
       </AdminSearchHeader>
     </header>
     <main className={"mx-auto w-full max-w-[1920px] " + (isOverview ? "px-4 py-5 sm:px-6 lg:px-10" : "px-4 py-5 sm:px-5 lg:px-6")}>

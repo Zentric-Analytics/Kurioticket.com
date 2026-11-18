@@ -17,10 +17,10 @@ test("admin navigation exposes parent workspaces in the header", () => {
     { label: "Operations", hrefs: ["/admin", "/admin/users", "/admin/searches/activity", "/admin/confirmed-trips", "/admin/support"] },
     { label: "Provider readiness", hrefs: ["/admin/providers"] },
     { label: "Website content", hrefs: ["/admin/content"] },
-    { label: "System & security", hrefs: ["/admin/system", "/admin/settings"] },
+    { label: "System & security", hrefs: ["/admin/system", "/admin/platform-health", "/admin/settings"] },
   ]);
   const visibleHrefs: readonly string[] = adminNavigationGroups.flatMap((group) => group.hrefs);
-  for (const href of ["/admin/journeys", "/admin/redirects", "/admin/referral-attribution", "/admin/flight-status", "/admin/flights", "/admin/account-deletions", "/admin/hotels", "/admin/cars", "/admin/logs", "/admin/email-delivery", "/admin/homepage-fares", "/admin/platform-health"]) {
+  for (const href of ["/admin/journeys", "/admin/redirects", "/admin/referral-attribution", "/admin/flight-status", "/admin/flights", "/admin/account-deletions", "/admin/hotels", "/admin/cars", "/admin/logs", "/admin/email-delivery", "/admin/homepage-fares"]) {
     assert.equal(visibleHrefs.includes(href), false);
   }
 });
@@ -33,7 +33,7 @@ test("admin navigation preserves role restrictions", () => {
     ["Hotel destinations", "/admin/content"], ["FAQs", "/admin/content"],
     ["Homepage Fares", "/admin/providers"],
     ["Hotels", "/admin/providers"], ["Cars", "/admin/providers"], ["Deletion Requests", "/admin/support"],
-    ["Audit Logs", "/admin/system"], ["Platform Health", "/admin/system"], ["CMS Health", "/admin/system"], ["Email Delivery", "/admin/system"],
+    ["Audit Logs", "/admin/system"], ["CMS Health", "/admin/system"], ["Email Delivery", "/admin/system"],
     ["Visitor Journeys", "/admin/users"], ["Provider Handoffs", "/admin/searches/activity"],
     ["Referral Attribution", "/admin/providers"],
   ]);
@@ -70,7 +70,12 @@ test("horizontal admin navigation keeps child routes under parent workspaces", (
     "/admin/content/homepage/hotel-destinations", "/admin/content/faqs",
   ]);
   assert.deepEqual(support?.children.map((item) => item.href), ["/admin/account-deletions"]);
-  assert.deepEqual(system?.children.map((item) => item.href), ["/admin/logs", "/admin/platform-health", "/admin/system/cms-health", "/admin/email-delivery"]);
+  assert.deepEqual(system?.children.map((item) => item.href), ["/admin/logs", "/admin/system/cms-health", "/admin/email-delivery"]);
+  const platform = entries.find(({ item }) => item.href === "/admin/platform-health");
+  assert.ok(platform, "Platform Health is a top-level navigation link");
+  assert.equal(platform?.children.length, 0);
+  assert.equal(isAdminNavItemActive("/admin/system", "/admin/platform-health"), false);
+  assert.equal(isAdminNavItemActive("/admin/platform-health", "/admin/platform-health"), true);
   assert.equal(homepageFares, undefined, "Homepage Fares must not appear in the admin header");
   assert.deepEqual(settings?.children.map((item) => item.href), ["/admin/preview-testers"], "staging-only Team Access is owned by Settings");
   assert.equal(entries.some(({ item }) => item.href === "/admin/flights"), false);
@@ -80,12 +85,13 @@ test("horizontal admin navigation keeps child routes under parent workspaces", (
   assert.deepEqual(getAdminHeaderGroups("USER"), []);
 });
 
-test("System diagnostic pages have System as their canonical navigation owner", () => {
-  for (const href of ["/admin/logs", "/admin/platform-health", "/admin/system/cms-health", "/admin/email-delivery"]) {
+test("System diagnostic child pages retain their canonical owner; Platform Health is a separate header module", () => {
+  for (const href of ["/admin/logs", "/admin/system/cms-health", "/admin/email-delivery"]) {
     const item = getAdminNavForRole("ADMIN").find(entry => entry.href === href);
     assert.ok(item);
     assert.equal(item.parentHref, "/admin/system");
   }
+  assert.equal(getAdminNavForRole("ADMIN").find(item => item.href === "/admin/platform-health")?.parentHref, undefined);
 });
 
 test("Notifications has one Settings sidebar owner rather than a duplicate global nav destination", () => {

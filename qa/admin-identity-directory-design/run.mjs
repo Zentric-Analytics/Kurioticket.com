@@ -56,6 +56,7 @@ await put("app/admin/journeys/page.tsx", await readFile(path.join(source, "app/a
 await put("mocks/admin-journeys.js", await readFile(path.join(qa, "journey-fixture.js"), "utf8"));
 // Render a real Overview route for the Admin shell's background exception QA.
 await put("app/admin/page.jsx", 'export default function Overview(){return <div><h1>Admin Overview QA</h1></div>;}');
+await put("app/admin/platform-health/page.jsx", 'export default function PlatformHealth(){return <div><h1>Platform Health QA</h1></div>;}');
 await put("mocks/auth-guards.js", 'export async function requireAdminSession(){return {user:{id:"qa-admin-001",role:"ADMIN"}};}');
 await put("mocks/env.js", 'export function getAdminEmails(){return ["alana@example.invalid"];}');
 await put("mocks/prisma.js", await readFile(path.join(qa, "data-fixture.js"), "utf8"));
