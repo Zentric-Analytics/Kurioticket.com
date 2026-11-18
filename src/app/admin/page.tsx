@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { AdminPageShell, AdminSectionCard } from "@/components/admin/AdminPageShell";
 import { AdminOverviewDashboard, AdminOverviewSecondary } from "@/components/admin/AdminOverviewDashboard";
 import {
+  AdminOverviewAutoRefresh,
   AdminOverviewRangeSelect,
   AdminOverviewRangeSensitive,
   AdminOverviewRangeTransitionProvider,
@@ -36,6 +37,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
     <AdminPageShell title="Operations Dashboard" hideHeader>
       <AdminSectionCard className="min-w-0 p-4 sm:p-5 lg:p-6">
         <AdminOverviewRangeTransitionProvider period={reporting.period}>
+          <AdminOverviewAutoRefresh />
           <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
             <span className="self-start rounded-md bg-slate-100 px-2.5 py-1.5 text-xs font-semibold text-slate-700">
               {platform.environment === "staging" ? "Staging" : "Production"}

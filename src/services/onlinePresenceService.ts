@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import type { Prisma } from "@/generated/prisma/client";
 import { getOptionalPrisma, isDatabaseConfigured } from "@/lib/prisma";
 import { onlinePresenceWindowSeconds, type OnlinePresenceSnapshot } from "@/lib/onlinePresence";
-import { isWebsiteOnlinePresenceEnabled, presenceSigningSecret } from "@/lib/onlinePresenceCredential";
+import { hasConsistentWebsitePresenceOrigin, isWebsiteOnlinePresenceEnabled, presenceSigningSecret } from "@/lib/onlinePresenceCredential";
 import type { OnlinePresenceHeartbeat } from "@/lib/onlinePresenceRoute";
 import type { PublicEnvironment } from "@/lib/stagingSafety";
 
@@ -42,7 +42,7 @@ async function writeOnlinePresence(db: Prisma.TransactionClient, { environment, 
 
   // The same credential has one mutable row. Preserve a newer account/guest
   // state if responses arrive out of order, and suppress redundant writes.
-  await db.$executeRaw`
+  return db.$executeRaw`
     INSERT INTO "OnlinePresenceSession" AS current
       ("environment", "sourceId", "platform", "accountSessionId", "lastSeenAt")
     VALUES (${environment}, ${sourceId}, ${platform}, ${accountSessionId}, ${now})
@@ -70,6 +70,7 @@ export async function getOnlinePresenceSnapshot(environment: PublicEnvironment, 
   if (!isDatabaseConfigured() || !presenceSigningSecret() || !isWebsiteOnlinePresenceEnabled()) {
     return { status: "not_configured", ...window };
   }
+  if (!hasConsistentWebsitePresenceOrigin(process.env.NEXT_PUBLIC_APP_URL, process.env.NEXTAUTH_URL)) return unavailable;
   const cutoff = new Date(now.getTime() - onlinePresenceWindowSeconds * 1000);
 
   try {
@@ -77,9 +78,12 @@ export async function getOnlinePresenceSnapshot(environment: PublicEnvironment, 
     if (!db) return unavailable;
     const sourceId = "probe:" + randomUUID();
     const [row] = await db.$transaction(async tx => {
-      // Exercise the heartbeat write independently of traffic. No probe row
-      // is visible to readers or survives this transaction.
-      await writeOnlinePresence(tx, { environment, sourceId, platform: "desktop_web", accountSessionId: null, now });
+      // Exercise heartbeat inserts and renewal writes. The synthetic
+      // row stays private to this transaction and is removed before counting.
+      const probe = { environment, sourceId, platform: "desktop_web", accountSessionId: null } as const;
+      const inserted = await writeOnlinePresence(tx, { ...probe, now: new Date(now.getTime() - writeThrottleMs) });
+      const renewed = await writeOnlinePresence(tx, { ...probe, now });
+      if (inserted !== 1 || renewed !== 1) throw new Error("Online presence probe could not be written");
       const removed = await tx.$executeRaw`
         DELETE FROM "OnlinePresenceSession" WHERE "environment" = ${environment} AND "sourceId" = ${sourceId}
       `;

@@ -143,7 +143,7 @@ test("Online Users is a current presence estimate with independent authenticated
   assert.match(value, /"Not configured"/);
   assert.match(value, /numberFormat\.format\(snapshot\.total\)/);
   assert.match(value, /fetch\("\/api\/admin\/overview\/online-presence"/);
-  assert.match(value, /setTimeout\(refresh, onlinePresenceHeartbeatMs\)/);
+  assert.match(value, /nextRefreshAt = performance\.now\(\) \+ onlinePresenceHeartbeatMs/);
   assert.match(value, /document\.visibilityState === "visible"/);
   assert.match(route, /await requireAdminApiSession\(\)/);
   assert.match(route, /getOnlinePresenceSnapshot\(getPublicEnvironment\(\)\)/);
@@ -355,7 +355,7 @@ test("the compact grid remains responsive without horizontal scrolling or crampe
   assert.doesNotMatch(dashboard, /overflow-x-auto|overflow-x-scroll|whitespace-nowrap/);
 });
 
-test("the white parent container and original admin header remain", () => {
+test("the white parent container, original admin header, and summary refresh remain", () => {
   const shell = readFileSync("src/components/admin/AdminPageShellHistorical.tsx", "utf8");
   const horizontalShell = readFileSync("src/components/admin/AdminHorizontalShell.tsx", "utf8");
   assert.match(page, /title="Operations Dashboard"/);
@@ -365,7 +365,9 @@ test("the white parent container and original admin header remain", () => {
   assert.match(page, /<AdminSectionCard className="min-w-0 p-4 sm:p-5 lg:p-6">/);
   assert.equal((page.match(/<AdminSectionCard /g) ?? []).length, 1);
   assert.match(horizontalShell, /bg-\[#f1f5fb\]/);
-  assert.doesNotMatch(controls, /router\.refresh\(\)/);
+  assert.match(page, /<AdminOverviewAutoRefresh \/>/);
+  assert.match(controls, /!isUpdating && document\.visibilityState === "visible"\) router\.refresh\(\)/);
+  assert.match(controls, /60_000/);
 });
 
 test("changing reporting ranges consistently exposes a shared loading indicator", () => {

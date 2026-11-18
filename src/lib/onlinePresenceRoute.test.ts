@@ -3,7 +3,7 @@ import test from "node:test";
 import { createHmac } from "node:crypto";
 import { isWebsiteOnlinePresenceRoute } from "./onlinePresence";
 import { createOnlinePresenceHandler } from "./onlinePresenceRoute";
-import { renewPresenceCredential } from "./onlinePresenceCredential";
+import { hasConsistentWebsitePresenceOrigin, renewPresenceCredential } from "./onlinePresenceCredential";
 
 const now = new Date("2026-11-18T12:00:00Z");
 const secret = "qa-only-operational-presence-signing-material";
@@ -167,4 +167,13 @@ test("operational website presence includes authenticated Admin routes and publi
   for (const path of [null, "/api", "/api/admin", "/mobile", "/mobile/legal"]) {
     assert.equal(isWebsiteOnlinePresenceRoute(path, true), false);
   }
+});
+
+test("website monitoring detects invalid or conflicting public origins", () => {
+  assert.equal(hasConsistentWebsitePresenceOrigin(), true);
+  assert.equal(hasConsistentWebsitePresenceOrigin(undefined, "http://localhost:3000"), true);
+  assert.equal(hasConsistentWebsitePresenceOrigin("https://staging.kurioticket.com/", "https://staging.kurioticket.com"), true);
+  assert.equal(hasConsistentWebsitePresenceOrigin("https://kurioticket.com", "https://staging.kurioticket.com"), false);
+  assert.equal(hasConsistentWebsitePresenceOrigin("https://name@kurioticket.com", undefined), false);
+  assert.equal(hasConsistentWebsitePresenceOrigin("not a URL", undefined), false);
 });

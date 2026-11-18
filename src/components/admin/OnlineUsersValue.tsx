@@ -11,6 +11,7 @@ export function OnlineUsersValue({ initial }: { initial: OnlinePresenceSnapshot 
   useEffect(() => {
     let timer: number | undefined;
     let activeRequest: AbortController | undefined;
+    let nextRefreshAt = performance.now() + onlinePresenceHeartbeatMs;
 
     function pause() {
       window.clearTimeout(timer);
@@ -21,7 +22,7 @@ export function OnlineUsersValue({ initial }: { initial: OnlinePresenceSnapshot 
     function schedule() {
       window.clearTimeout(timer);
       if (document.visibilityState === "visible") {
-        timer = window.setTimeout(refresh, onlinePresenceHeartbeatMs);
+        timer = window.setTimeout(refresh, Math.max(0, nextRefreshAt - performance.now()));
       }
     }
 
@@ -29,6 +30,7 @@ export function OnlineUsersValue({ initial }: { initial: OnlinePresenceSnapshot 
       if (document.visibilityState !== "visible" || activeRequest) return;
       const controller = new AbortController();
       activeRequest = controller;
+      nextRefreshAt = performance.now() + onlinePresenceHeartbeatMs;
       const timeout = window.setTimeout(() => controller.abort(), 8_000);
       try {
         const response = await fetch("/api/admin/overview/online-presence", {

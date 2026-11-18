@@ -24,6 +24,17 @@ export function isWebsiteOnlinePresenceEnabled() {
   return process.env.ONLINE_PRESENCE_WEB_ENABLED === "true";
 }
 
+export function hasConsistentWebsitePresenceOrigin(publicUrl?: string, authUrl?: string) {
+  if (!publicUrl && !authUrl) return true;
+  try {
+    const origin = new URL(publicUrl || authUrl!);
+    if ((origin.protocol !== "https:" && origin.protocol !== "http:") || origin.username || origin.password) return false;
+    return !publicUrl || !authUrl || new URL(authUrl).origin === origin.origin;
+  } catch {
+    return false;
+  }
+}
+
 function signature(payload: string, secret: string) {
   return createHmac("sha256", secret).update("online-presence-v1:" + payload).digest("base64url");
 }

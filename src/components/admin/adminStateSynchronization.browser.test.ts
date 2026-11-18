@@ -12,6 +12,7 @@ const entries = {
   content: "src/components/admin/ContentDirectoryToolbar.tsx",
   overview: "src/components/admin/AdminOverviewControls.tsx",
   activityInfo: "src/components/admin/ActivityDataInfo.tsx",
+  onlineUsers: "src/components/admin/OnlineUsersValue.tsx",
 };
 const router = 'const router={push:url=>{window.fixtureNavigation.push(url);window.fixtureCommitOnNavigation?.(url);},replace:url=>window.fixtureNavigation.push(url),refresh:()=>window.fixtureRefreshes++};exports.useRouter=()=>router;';
 const bundle = () => componentBundle(entries, { "next/navigation": router });
@@ -153,6 +154,41 @@ test("Overview preserves the committed period after an unsuccessful navigation",
     assert.equal(await trigger.isEnabled(), true);
     assert.equal(await page.locator('[data-range-updating="true"]').count(), 0);
     assert.equal(await page.getByRole("button", { name: "Summary action" }).isEnabled(), true);
+  });
+});
+
+test("Online Users pauses while hidden and refreshes on return when the sample is stale", async () => {
+  const setup = `const React=require('react'),{createRoot}=require('react-dom/client'),{OnlineUsersValue}=require('onlineUsers');
+    const root=createRoot(document.getElementById('root'));
+    window.fixtureRequests=[];
+    window.fixtureVisibility='visible';
+    Object.defineProperty(document,'visibilityState',{get:()=>window.fixtureVisibility});
+    window.fixtureSetVisibility=value=>{
+      window.fixtureVisibility=value;
+      document.dispatchEvent(new Event('visibilitychange'));
+    };
+    window.fetch=async url=>{
+      window.fixtureRequests.push(url);
+      return new Response(JSON.stringify({status:'ok',total:1}));
+    };
+    window.fixtureMount=()=>root.render(React.createElement(OnlineUsersValue,{initial:{status:'ok',total:0}}));`;
+  await withComponentBrowser(bundle(), setup, async page => {
+    await page.clock.install();
+    await page.evaluate(() => (window as unknown as { fixtureMount: () => void }).fixtureMount());
+    await page.getByText("0", { exact: true }).waitFor();
+    const changeVisibility = (state: string) => page.evaluate(
+      value => (window as unknown as { fixtureSetVisibility: (state: string) => void }).fixtureSetVisibility(value),
+      state,
+    );
+    const observedRequests = () => page.evaluate(() => (window as unknown as { fixtureRequests: string[] }).fixtureRequests);
+    await page.clock.runFor(10_000);
+    await changeVisibility("hidden");
+    await page.clock.runFor(60_000);
+    assert.deepEqual(await observedRequests(), []);
+    await changeVisibility("visible");
+    await page.clock.runFor(100);
+    await page.getByText("1", { exact: true }).waitFor();
+    assert.deepEqual(await observedRequests(), ["/api/admin/overview/online-presence"]);
   });
 });
 
