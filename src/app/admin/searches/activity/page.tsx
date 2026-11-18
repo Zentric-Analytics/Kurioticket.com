@@ -105,7 +105,7 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
 
               </div>
 
-              <div className="grid min-w-0 grid-cols-2 items-end gap-2 py-4 sm:grid-cols-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.1fr)_minmax(0,1.2fr)_minmax(0,1fr)_auto] lg:gap-2.5">
+              <div className="grid min-w-0 grid-cols-2 items-end gap-2 py-4 sm:grid-cols-3 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.1fr)_minmax(0,1.2fr)_minmax(0,1fr)_auto] xl:gap-2.5">
                 <div className="min-w-0">
                   <SearchMonitorSelect label="Date range" name="range" value={range}
                     appearance="fare"
@@ -152,7 +152,7 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
                     }))} />
                 </div>
                 <button type="submit"
-                  className="inline-flex h-10 w-full items-center justify-center whitespace-nowrap rounded-lg bg-[#004BB8] px-4 text-[13px] font-medium text-white transition-colors hover:bg-[#003D97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] lg:w-auto">
+                  className="inline-flex h-10 w-full items-center justify-center whitespace-nowrap rounded-lg bg-[#004BB8] px-4 text-[13px] font-medium text-white transition-colors hover:bg-[#003D97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] xl:w-auto">
                   Apply filters
                 </button>
               </div>
