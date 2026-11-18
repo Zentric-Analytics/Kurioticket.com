@@ -44,3 +44,34 @@ test("Preview tester migration is additive and has no destructive statements", (
   assert.doesNotMatch(migration, /\b(DROP\s+(TABLE|COLUMN|TYPE)|TRUNCATE|DELETE\s+FROM|UPDATE\s+\S+\s+SET)\b/i);
   assert.doesNotMatch(migration, /ON DELETE CASCADE/i);
 });
+
+const registry = readFileSync("src/components/admin/PreviewTesterRegistry.tsx", "utf8");
+
+test("Team Access uses compact expandable member records without hiding administrative actions off-screen", () => {
+  assert.match(registry, /aria-label="Team members"/);
+  assert.match(registry, /<details key=\{tester.id\}/);
+  assert.match(registry, /<summary className=/);
+  assert.match(registry, /Edit member access/);
+  assert.match(registry, /EffectiveAccess roles=\{tester.roles\}/);
+  assert.match(registry, /actorTimestamp\(tester.approvedByAdmin, tester.approvedAt\)/);
+  assert.match(registry, /actorTimestamp\(tester.suspendedByAdmin, tester.suspendedAt\)/);
+  assert.match(registry, /actorTimestamp\(tester.revokedByAdmin, tester.revokedAt\)/);
+  assert.doesNotMatch(registry, /min-w-\[1500px\]|overflow-x-auto rounded-xl/);
+  for (const action of ["reactivate", "suspend", "revoke"]) {
+    assert.ok(registry.includes('change(tester.id, tester.updatedAt, "' + action + '")'), action);
+  }
+});
+
+test("Team Access retains role editing, audited server API actions and confirmation gates", () => {
+  assert.match(registry, /<form action=\{add\}/);
+  assert.match(registry, /<form action=\{update\}/);
+  assert.match(registry, /role-\$\{role\}/);
+  assert.match(registry, /name="expiresAt"/);
+  assert.match(registry, /name="reason"/);
+  assert.match(registry, /name="updatedAt"/);
+  assert.match(registry, /Save roles/);
+  assert.match(registry, /Add team member/);
+  assert.match(registry, /window.confirm/);
+  assert.match(mutationApi, /writeAdminAuditLog/);
+  assert.match(mutationApi, /sessionVersion: \{ increment: 1 \}/);
+});
