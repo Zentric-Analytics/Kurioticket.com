@@ -81,7 +81,7 @@ try {
   }
 
   for (const kind of ["guest", "user"]) {
-    await page.goto(base + "/admin/users/" + kind + "/qa-complete-history-0001/activity");
+    await page.goto(base + "/admin/users/" + kind + "/qa-complete-history-0001/activity?range=all");
     const history = page.getByRole("region", { name: "Activity history", exact: true });
     await expect(history.locator("[data-activity-id]")).toHaveCount(1005);
     await expect(history.locator("[data-activity-id] a")).toHaveCount(0);
