@@ -152,7 +152,7 @@ export default async function AdminCmsHealthPage() {
 
                       <div className="border-t border-[#E7ECF5]">
                         <div className="overflow-x-auto">
-                          <table className="w-full min-w-[900px] table-fixed text-left text-[13px]">
+                          <table className="w-full min-w-0 table-fixed text-left text-[13px]">
                             <colgroup>
                               <col className="w-[24%]" />
                               <col className="w-[14%]" />

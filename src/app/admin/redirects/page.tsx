@@ -121,9 +121,9 @@ export default async function AdminRedirectsPage({ searchParams, embedded = fals
           </div>
         ) : (
           <>
-            <div className="mt-3 w-full min-w-0 overflow-x-auto" role="region"
+            <div className="admin-responsive-records mt-3 w-full min-w-0 overflow-x-auto" role="region"
               aria-label="Provider handoff records" tabIndex={0}>
-              <table className="w-full min-w-[1080px] table-fixed text-[12px] leading-5">
+              <table className="w-full min-w-0 table-fixed text-[12px] leading-5">
                 <caption className="sr-only">
                   Recorded provider handoffs including the recorded time, product,
                   provider, route, price, source, destination, identity, search correlation and record action.
@@ -152,28 +152,28 @@ export default async function AdminRedirectsPage({ searchParams, embedded = fals
                 <tbody className="divide-y divide-[#E7ECF5]">
                   {result.data.items.map(handoff => (
                     <tr key={handoff.id} className="align-top hover:bg-[#FAFBFD]">
-                      <td className="py-3 pr-2 tabular-nums">{formatDateTime(new Date(handoff.createdAt))}</td>
-                      <td className="break-words px-2 py-3 font-medium">{handoff.product}</td>
-                      <th scope="row" className="break-words px-2 py-3 text-left font-medium">{handoff.provider}</th>
-                      <td className="break-words px-2 py-3">{handoff.route || "—"}</td>
-                      <td className="break-words px-2 py-3 tabular-nums">
+                      <td data-label="Created" className="py-3 pr-2 tabular-nums">{formatDateTime(new Date(handoff.createdAt))}</td>
+                      <td data-label="Product" className="break-words px-2 py-3 font-medium">{handoff.product}</td>
+                      <th scope="row" data-label="Provider" className="break-words px-2 py-3 text-left font-medium">{handoff.provider}</th>
+                      <td data-label="Route / property" className="break-words px-2 py-3">{handoff.route || "—"}</td>
+                      <td data-label="Price" className="break-words px-2 py-3 tabular-nums">
                         {handoff.price ? handoff.currency + " " + handoff.price : "—"}
                       </td>
-                      <td className="break-all px-2 py-3 text-[#475569]">{handoff.sourcePage || "—"}</td>
-                      <td className="break-all px-2 py-3 text-[#475569]">{handoff.destinationDomain || "—"}</td>
-                      <td className="min-w-0 px-2 py-3">
+                      <td data-label="Source" className="break-all px-2 py-3 text-[#475569]">{handoff.sourcePage || "—"}</td>
+                      <td data-label="Destination" className="break-all px-2 py-3 text-[#475569]">{handoff.destinationDomain || "—"}</td>
+                      <td data-label="Identity" className="min-w-0 px-2 py-3">
                         <span className="block font-medium">{handoff.identity.kind}</span>
                         <span className="block break-all text-[11px] text-[#64748B]">
                           {handoff.identity.userId || handoff.identity.visitorId || "—"}
                         </span>
                       </td>
-                      <td className="break-words px-2 py-3">
+                      <td data-label="Search link" className="break-words px-2 py-3">
                         <span className={handoff.searchCorrelation.kind === "exact"
                           ? "font-medium text-emerald-700" : "text-[#64748B]"}>
                           {handoff.searchCorrelation.kind === "exact" ? "Exact" : "Unavailable"}
                         </span>
                       </td>
-                      <td className="py-3 pl-2">
+                      <td data-label="Action" className="py-3 pl-2">
                         <Link href={handoffDetailHref(handoff.id, handoff.environment, raw)}
                           className="font-medium text-[#004BB8] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
                           Open
