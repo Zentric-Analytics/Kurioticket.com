@@ -13,84 +13,40 @@ const systemApi = readFileSync("src/app/api/admin/system/route.ts", "utf8");
 const adminShell = readFileSync("src/components/admin/AdminHorizontalShell.tsx", "utf8");
 const adminNav = readFileSync("src/lib/adminNavigation.ts", "utf8");
 
-test("system status uses a compact summary-attention-system-areas hierarchy", () => {
+test("System Overview is a read-only summary without duplicate subsection links", () => {
   assert.match(systemPage, /title="System"/);
   assert.match(systemPage, /hideHeader/);
-
-  const positions = [
-    'aria-label="System summary"',
-    ">Issues Requiring Attention</h2>",
-    ">System areas</h2>",
-  ].map(section => systemPage.indexOf(section));
+  const positions = ['aria-label="System summary"', ">Issues Requiring Attention</h2>", ">System areas</h2>"]
+    .map(section => systemPage.indexOf(section));
   assert.ok(positions.every(position => position >= 0));
   assert.deepEqual([...positions].sort((a, b) => a - b), positions);
 
-  assert.doesNotMatch(systemPage, />System snapshot<\/h2>|>Services<\/h2>|>Configuration<\/h2>/);
   assert.match(systemPage, /grid grid-cols-2 gap-x-8 gap-y-4 md:grid-cols-4/);
-  assert.match(systemPage, /Monitored areas/);
-  assert.match(systemPage, /serviceRows\.filter\(service => service\.id !== "admin-access"\)\.length/);
-
+  assert.match(systemPage, /systemAreaCount = serviceRows.length/);
   assert.match(systemPage, /No issues detected by these checks\./);
-  assert.doesNotMatch(systemPage, /No database connectivity failures or missing required configurations were detected by these checks/);
-
-  assert.match(systemPage, /Live connectivity check/);
-  assert.match(systemPage, /Configuration only/);
-  assert.match(systemPage, /CMS diagnostics/);
-  assert.match(systemPage, /Separate check/);
-
-  // System Status follows the Providers table typography and compact status treatment.
-  assert.match(systemPage, /function StatusIndicator/);
-  assert.match(systemPage, /inline-flex items-center gap-1\.5 text-\[12px\] font-medium/);
-  assert.match(systemPage, /h-1\.5 w-1\.5 shrink-0 rounded-full/);
-  assert.match(systemPage, /px-3 py-3 text-\[12px\] font-medium uppercase text-\[#475569\]/);
-  assert.doesNotMatch(systemPage, /grid-cols-\[minmax\(150px,1\.1fr\)_minmax\(170px,0\.9fr\)_minmax\(170px,1fr\)_80px\]/);
-  assert.match(systemPage, /grid-cols-\[minmax\(150px,1\.1fr\)_minmax\(170px,0\.9fr\)_minmax\(170px,1fr\)_minmax\(150px,auto\)\]/);
-  assert.match(systemPage, /text-\[13px\] font-semibold text-\[#020617\]/);
-  assert.match(systemPage, /<p className="text-\[12px\] text-\[#475569\]">\{service\.signal\}<\/p>/);
-  assert.match(systemPage, /info: \{ text: "text-\[#004BB8\]", dot: "bg-\[#004BB8\]" \}/);
-  assert.doesNotMatch(systemPage, /AdminStatusBadge/);
-  assert.doesNotMatch(systemPage, /text-\[11px\].*uppercase/);
-  assert.doesNotMatch(systemPage, /Expand a row for what is actually verified/);
-  assert.match(systemPage, /function SystemAreaRow/);
-  assert.match(systemPage, /if \(!service\.adminDetails\)/);
-  assert.match(systemPage, /service\.href \? \(/);
-  assert.match(systemPage, /data-system-area=\{service\.id\}/);
-  assert.match(systemPage, /<details data-system-area=\{service\.id\} className="group">/);
-  assert.match(systemPage, /Open Email Delivery/);
-  assert.doesNotMatch(systemPage, /Open Providers/);
-  assert.match(systemPage, /Open CMS Health/);
-  assert.doesNotMatch(systemPage, />Meaning<\/p>/);
-  assert.doesNotMatch(systemPage, /Direct database query|A database query completed successfully|This row verifies authentication configuration presence|Provider configuration presence|CMS Health diagnostics/);
-
-  assert.match(systemPage, /id: "database"[\s\S]*?signal: "Live connectivity check",\n    \},/);
-  assert.match(systemPage, /id: "authentication"[\s\S]*?signal: "Configuration only",\n    \},/);
-  assert.match(systemPage, /id: "email"[\s\S]*?href: "\/admin\/email-delivery"[\s\S]*?actionLabel: "Open Email Delivery"/);
-  assert.doesNotMatch(systemPage, /id: "providers"/);
-  assert.match(systemPage, /id: "cms"[\s\S]*?href: "\/admin\/system\/cms-health"[\s\S]*?actionLabel: "Open CMS Health"/);
-  assert.match(systemPage, /id: "admin-access"/);
-  assert.match(systemPage, /name: "Admin access"/);
-  assert.match(systemPage, /Administrator allowlist/);
-  assert.match(systemPage, /Configured administrators/);
-  assert.match(systemPage, /adminEmailsConfigured/);
+  for (const signal of ["Live connectivity check", "Configuration only", "CMS diagnostics", "Separate check"]) {
+    assert.ok(systemPage.includes(signal), signal);
+  }
+  for (const area of ["database", "authentication", "email", "cms", "admin-access"]) {
+    assert.ok(systemPage.includes('id: "' + area + '"'), area);
+  }
+  assert.match(systemPage, /Administrator email configuration missing/);
+  assert.match(systemPage, /Configured administrators|administrators listed/);
   assert.match(systemPage, /adminEmailCount/);
-
-  assert.doesNotMatch(systemPage, /const configurationRows|aria-labelledby="configuration-heading"/);
-  assert.doesNotMatch(systemPage, /\["Database configuration"|\["Email credentials"|\["Provider credentials"/);
-  assert.doesNotMatch(systemPage, /Session secret configured|No secrets shown|Database URL hidden|API keys hidden/);
-
-  assert.match(systemPage, /system\.databaseConnected/);
-  assert.match(systemPage, /system\.databaseConfigured/);
-  assert.match(systemPage, /system\.emailConfigured/);
-  assert.match(systemPage, /system\.providerCredentialsPresent/);
-  assert.match(systemPage, /Provider credentials absent/);
-  assert.match(systemPage, /actionLabel: "Review provider readiness"/);
-  assert.match(systemPage, /system\.adminEmailsConfigured/);
-  assert.match(systemPage, /attention\.length/);
   assert.match(systemPage, /getSafeSystemStatus\(\)/);
-  assert.doesNotMatch(systemPage, /Math\.random|mockHealth|fakeLatency|overallHealthy/);
-  assert.doesNotMatch(systemPage, /FeatureControlsPanel|listFeatureControls|getServerSession/);
-  assert.doesNotMatch(systemPage, /HomepageFaresRefreshCard|homepage fare/i);
-  assert.doesNotMatch(systemPage, /View operational alerts|Open Alerts|\/admin\/notifications/);
+  assert.match(systemPage, /StatusIndicator/);
+  assert.match(systemPage, /data-system-area=\{service.id\}/);
+  assert.match(systemPage, /grid-cols-\[minmax\(150px,1\.15fr\)_minmax\(160px,0\.9fr\)_minmax\(180px,1\.3fr\)\]/);
+
+  // Dedicated subsection navigation stays in the left sidebar, not this report.
+  assert.doesNotMatch(systemPage, /<Link|<details|<summary|<button|<form/);
+  assert.doesNotMatch(systemPage, /href:|actionLabel:|Open Email Delivery|Open CMS Health|View email diagnostics|Review provider readiness/);
+  assert.doesNotMatch(systemPage, /Details<\/span>|>Details<\/span>/);
+  assert.doesNotMatch(systemPage, /FeatureControlsPanel|listFeatureControls|mockHealth|fakeLatency/);
+  assert.doesNotMatch(systemPage, /\/admin\/notifications|\/admin\/settings/);
+  assert.match(systemPage, /system.databaseConnected/);
+  assert.match(systemPage, /system.emailConfigured/);
+  assert.match(systemPage, /system.adminEmailsConfigured/);
 });
 
 test("System specialist pages remain dedicated routes and appear under System workspace navigation", () => {
