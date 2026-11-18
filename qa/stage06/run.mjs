@@ -33,6 +33,9 @@ await put('app/auth/signin/page.jsx',`export default function Denied(){return <h
 await put('app/api/admin/notifications/route.js',`export async function GET(){return Response.json({generatedAt:new Date().toISOString(),activeCount:0,unreadCount:0,criticalCount:0,warningCount:0,alerts:[]})}`);
 await put('app/api/admin/search/route.js',`export async function GET(){return Response.json({pages:[{id:'health',title:'Platform Health',detail:'Combined operational health',href:'/admin/platform-health',status:'Workspace'}],users:[],searches:[],providers:[],databaseUnavailable:false})}`);
 for(const route of ['platform-health','searches/activity','searches/[id]'])await put('app/admin/'+route+'/page.tsx',await readFile(path.join(source,'app/admin',route,'page.tsx'),'utf8'));
+await put('app/admin/preview-testers/page.jsx',`import {PreviewTesterRegistry} from '@/components/admin/PreviewTesterRegistry';
+const member={id:'qa-member',email:'test-member@example.invalid',status:'ACTIVE',roles:['TESTER'],expiresAt:new Date('2026-11-18T17:40:00.000Z'),approvedAt:new Date('2026-11-01T08:00:00.000Z'),suspendedAt:null,revokedAt:null,updatedAt:new Date('2026-11-15T00:00:00.000Z'),reason:'QA only',approvedByAdmin:null,suspendedByAdmin:null,revokedByAdmin:null};
+export default function TeamAccessUIFixture(){return <div className="min-w-0 bg-white"><h1 className="mb-4 text-xl font-semibold">Team Access QA</h1><PreviewTesterRegistry testers={[member]}/></div>;}`);
 for(const file of ['loading.tsx','error.tsx'])await put('app/admin/platform-health/'+file,await readFile(path.join(source,'app/admin/platform-health',file),'utf8'));
 await put('app/admin/error.tsx',await readFile(path.join(source,'app/admin/error.tsx'),'utf8'));
 const log=createWriteStream(path.join(output,'fixture-server.log'));
@@ -47,16 +50,92 @@ try{
   await page.goto(base+'/admin/platform-health',{waitUntil:'networkidle',timeout:120000});await expect(page.getByRole('heading',{name:'Platform Health',exact:true}).first()).toBeAttached();await expect(page.getByText('Search operations',{exact:true})).toBeVisible();
   if(width<1100){await page.getByRole('button',{name:'Open admin navigation'}).click();await expect(page.getByRole('link',{name:'Platform Health',exact:true})).toBeVisible();await page.getByRole('button',{name:'Close admin navigation'}).click();}
   await page.keyboard.press('Control+k');await page.getByRole('textbox',{name:'Search admin workspaces and records'}).fill('Platform Health');await expect(page.getByRole('link',{name:/Platform Health.*Workspace/})).toBeVisible();await page.keyboard.press('Escape');
-  await expect(page.getByLabel('Application',{exact:true})).toHaveValue('ALL');await page.getByLabel('Application',{exact:true}).focus();await page.keyboard.press('i');await page.keyboard.press('Enter');await page.getByLabel('Application',{exact:true}).selectOption('IOS');await page.getByLabel('Activity window',{exact:true}).selectOption('168');await page.getByRole('button',{name:'Apply view',exact:true}).click();await expect(page).toHaveURL(/application=IOS/);await expect(page.getByRole('heading',{name:'iOS activity'})).toBeVisible();
+  const applicationSelect=page.getByRole('combobox',{name:'Application',exact:true});
+  await expect(applicationSelect).toContainText('All Platforms');
+  await applicationSelect.click();
+  await expect(page.getByRole('listbox',{name:'Application'})).toBeVisible();
+  await page.getByRole('listbox',{name:'Application'}).press('i');
+  await page.getByRole('listbox',{name:'Application'}).press('Enter');
+  await expect(applicationSelect).toContainText('iOS');
+  await expect(page.locator('form[aria-label="Platform health filters"] input[name="application"]')).toHaveValue('IOS');
+  const windowSelect=page.getByRole('combobox',{name:'Activity window',exact:true});
+  await windowSelect.click();
+  await page.getByRole('listbox',{name:'Activity window'}).getByRole('option',{name:'Last 7 days'}).click();
+  await expect(page.locator('form[aria-label="Platform health filters"] input[name="hours"]')).toHaveValue('168');
+  await page.getByRole('button',{name:'Apply view',exact:true}).click();
+  await expect(page).toHaveURL(/application=IOS/);
+  await expect(page).toHaveURL(/hours=168/);
+  await expect(page.getByRole('heading',{name:'iOS activity'})).toBeVisible();
   const overflow=await page.evaluate(()=>({document:document.documentElement.scrollWidth,viewport:innerWidth}));expect(overflow.document).toBeLessThanOrEqual(width+1);
   const runningMotion=await page.locator('[data-platform-health]').evaluate(el=>el.getAnimations({subtree:true}).filter(a=>a.playState==='running').length);expect(runningMotion).toBe(0);
   const table=page.getByRole('region',{name:'Scheduled-job observations table'});await table.focus();await page.keyboard.press('ArrowRight');expect(await table.evaluate(el=>el.scrollWidth>=el.clientWidth)).toBeTruthy();
   await page.screenshot({path:path.join(output,'health-'+width+'.png'),fullPage:true});
-  await page.getByRole('link',{name:'Investigate searches',exact:false}).click();await expect(page).toHaveURL(/applicationSource=IOS/);await expect(page.getByRole('cell',{name:'iOS v1.2.3'})).toBeVisible();await page.getByRole('link',{name:/View details for Flight search/}).click();await expect(page.getByText('Application source',{exact:true})).toBeVisible();await expect(page.getByText('1.2.3',{exact:true})).toBeVisible();await page.getByRole('link',{name:'Search activity',exact:true}).click();await expect(page).toHaveURL(/applicationSource=IOS/);await page.getByLabel('Application',{exact:true}).selectOption('UNKNOWN');await page.getByRole('button',{name:'Apply filters'}).click();await expect(page.getByRole('cell',{name:'Unknown',exact:true})).toBeVisible();
-  expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(width+1);await page.screenshot({path:path.join(output,'search-'+width+'.png'),fullPage:true});
+  await page.getByRole('link',{name:'Investigate searches',exact:false}).click();await expect(page).toHaveURL(/applicationSource=IOS/);await expect(page.getByRole('cell',{name:'iOS v1.2.3'})).toBeVisible();await page.getByRole('link',{name:/View details for Flight search/}).click();await expect(page.getByText('Application source',{exact:true})).toBeVisible();await expect(page.getByText('1.2.3',{exact:true})).toBeVisible();await page.getByRole('link',{name:'Search activity',exact:true}).click();await expect(page).toHaveURL(/applicationSource=IOS/);await page.getByRole('button',{name:/^Application:/}).click();await page.getByRole('listbox',{name:'Application'}).getByRole('option',{name:'Unknown',exact:true}).click();await page.getByRole('button',{name:'Apply filters'}).click();await expect(page.getByRole('cell',{name:'Unknown',exact:true})).toBeVisible();
+  const searchOverflow=await page.evaluate(()=>{
+    const content=Array.from(document.querySelectorAll('body *'));
+    return {
+      document:document.documentElement.scrollWidth,viewport:innerWidth,
+      outside:content.map(el=>{
+        const r=el.getBoundingClientRect(),style=getComputedStyle(el);
+        return {tag:el.tagName,className:typeof el.className==='string'?el.className.slice(0,160):'',left:Math.round(r.left),right:Math.round(r.right),width:Math.round(r.width),scrollWidth:el.scrollWidth,clientWidth:el.clientWidth,overflowX:style.overflowX};
+      }).filter(x=>x.right>innerWidth+1&&x.width>40).slice(0,35),
+    };
+  });
+  if(searchOverflow.document>width+1)console.error('SEARCH_ACTIVITY_OVERFLOW_DIAGNOSTIC',JSON.stringify(searchOverflow));
+  expect(searchOverflow.document).toBeLessThanOrEqual(width+1);
+  await page.screenshot({path:path.join(output,'search-'+width+'.png'),fullPage:true});
   await page.setExtraHTTPHeaders({'x-qa-unavailable':'1'});await page.goto(base+'/admin/platform-health',{waitUntil:'networkidle'});await expect(page.getByText('Telemetry could not be read')).toHaveCount(3);await page.setExtraHTTPHeaders({});await page.getByRole('button',{name:'Refresh observations'}).click();await expect(page.getByText('Recorded operations · sample size')).toHaveCount(3);
-  await page.goto(base+'/admin/platform-health?hours=24&hours=168');await expect(page.getByRole('alert')).toContainText('Choose one application');
-  expect(errors).toEqual([]);results.push({width,overflow,keyboardNativeFilters:true,filterNavigation:true,detailBackContext:true,unknown:true,unavailableRefreshRecovery:true,reducedMotion:true,runningMotion,pageErrors:errors});await context.close();
+  await page.goto(base+'/admin/platform-health?hours=24&hours=168');await expect(page.getByRole('alert').filter({hasText:'Choose one application'})).toContainText('Choose one application');
+  expect(errors).toEqual([]);results.push({width,overflow,keyboardPolishedFilters:true,filterNavigation:true,detailBackContext:true,unknown:true,unavailableRefreshRecovery:true,reducedMotion:true,runningMotion,pageErrors:errors});await context.close();
+ }
+
+ // Actual Team Access client component and calendar/time picker (synthetic member).
+ // Assert aligned, bounded desktop fields and unchanged UTC edit values.
+ for (const width of [1440, 1280, 1024, 390]) {
+  const context=await browser.newContext({viewport:{width,height:900},reducedMotion:'reduce',timezoneId:'America/Los_Angeles'});
+  const page=await context.newPage();const errors=[];page.on('pageerror',error=>errors.push(error.message));
+  await page.goto(base+'/admin/preview-testers',{waitUntil:'networkidle',timeout:120000});
+  await expect(page.getByRole('heading',{name:'Team Access QA'})).toBeVisible();
+  const addForm=page.locator('form').filter({has:page.getByRole('button',{name:'Add team member',exact:true})});
+  const email=addForm.locator('#team-add-email');
+  const expiry=addForm.locator('#team-add-expiry-trigger');
+  const roles=addForm.locator('fieldset');
+  await expect(email).toBeVisible();await expect(expiry).toBeVisible();
+  if (width>=1024) {
+   const [emailBox,expiryBox,rolesBox]=await Promise.all([email.boundingBox(),expiry.boundingBox(),roles.boundingBox()]);
+   if(!emailBox||!expiryBox||!rolesBox)throw Error('Add Team Access fields were not laid out');
+   expect(emailBox.x+emailBox.width).toBeLessThanOrEqual(expiryBox.x);
+   expect(expiryBox.x+expiryBox.width).toBeLessThanOrEqual(rolesBox.x);
+  }
+  await expiry.click();
+  const calendar=page.getByRole('dialog',{name:'Choose access expiration in UTC'});
+  await expect(calendar).toBeVisible();
+  await expect(calendar.getByRole('button',{name:'Previous month'})).toBeVisible();
+  await calendar.getByRole('button',{name:'Next month'}).click();
+  await calendar.locator('button[role="gridcell"]').first().click();
+  await calendar.getByRole('textbox',{name:'Hour (UTC)'}).fill('17');
+  await calendar.getByRole('textbox',{name:'Minute (UTC)'}).fill('40');
+  await calendar.getByRole('button',{name:'Apply',exact:true}).click();
+  await expect(calendar).toBeHidden();
+  const addIso=await addForm.locator('input[name="expiresAt"]').inputValue();
+  expect(addIso).toMatch(/T17:40:00\.000Z$/);
+  await expiry.click();await page.getByRole('dialog',{name:'Choose access expiration in UTC'}).getByRole('button',{name:'Clear'}).click();
+  await expect(addForm.locator('input[name="expiresAt"]')).toHaveValue('');
+  await page.locator('details[data-team-member="qa-member"] > summary').click();
+  const editForm=page.locator('details[data-team-member="qa-member"] form').first();
+  await expect(editForm.locator('input[name="expiresAt"]')).toHaveValue('2026-11-18T17:40:00.000Z');
+  await editForm.locator('#team-edit-expiry-qa-member-trigger').click();
+  const editPicker=page.getByRole('dialog',{name:'Choose access expiration in UTC'});
+  await expect(editPicker.getByRole('textbox',{name:'Hour (UTC)'})).toHaveValue('17');
+  await expect(editPicker.getByRole('textbox',{name:'Minute (UTC)'})).toHaveValue('40');
+  await editPicker.getByRole('button',{name:'Cancel'}).click();
+  await expect(editForm.locator('input[name="expiresAt"]')).toHaveValue('2026-11-18T17:40:00.000Z');
+  const overflow=await page.evaluate(()=>({scrollWidth:document.documentElement.scrollWidth,width:innerWidth}));
+  expect(overflow.scrollWidth).toBeLessThanOrEqual(overflow.width+1);
+  expect(errors).toEqual([]);
+  await page.screenshot({path:path.join(output,'team-access-'+width+'.png'),fullPage:false});
+  results.push({teamAccessWidth:width,utcEditUnchanged:true,expirationsWorking:true,overflow,errors});
+  await context.close();
  }
  const denied=await browser.newContext({extraHTTPHeaders:{'x-qa-role':'SUPPORT'}});const page=await denied.newPage();await page.goto(base+'/admin/platform-health');await expect(page).toHaveURL(/auth\/signin/);await expect(page.getByText('QA admin access required')).toBeVisible();await denied.close();
  await writeFile(path.join(output,'results.json'),JSON.stringify({scope:'Real Next pages/components and CSS with isolated synthetic auth/readers; not staging or production evidence',results,deniedFixtureRole:true},null,2));

@@ -1,0 +1,56 @@
+name: Admin Team Access and Platform Health UI QA
+
+on:
+  pull_request:
+    branches: [dev]
+    paths:
+      - src/components/admin/PreviewTesterRegistry.tsx
+      - src/components/admin/TeamAccessExpiryPicker.tsx
+      - src/lib/teamAccessExpiration.ts
+      - src/lib/teamAccessExpiration.test.ts
+      - src/app/admin/preview-testers/preview-testers.test.ts
+      - src/components/admin/PlatformHealthFilters.tsx
+      - src/components/admin/PlatformHealthDashboard.test.ts
+      - qa/stage06/run.mjs
+      - .github/workflows/admin-team-platform-ui.yml
+
+permissions:
+  contents: read
+
+jobs:
+  ui-regression:
+    name: Verify Team Access and Platform Health controls
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout proposed changes
+        uses: actions/checkout@v5
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Validate controls, form permissions and UTC conversions
+        env:
+          JITI_TSCONFIG_PATHS: ./tsconfig.json
+          JITI_JSX: "true"
+        run: >-
+          node --test --import jiti/register
+          src/app/admin/preview-testers/preview-testers.test.ts
+          src/lib/teamAccessExpiration.test.ts
+          src/components/admin/PlatformHealthDashboard.test.ts
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Verify real Admin controls with synthetic data at responsive widths
+        run: node qa/stage06/run.mjs
+        env:
+          STAGE06_QA_OUTPUT: ${{ runner.temp }}/admin-team-platform-evidence
+      - name: Upload UI regression evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: admin-team-platform-ui-evidence
+          path: ${{ runner.temp }}/admin-team-platform-evidence/
+          if-no-files-found: warn

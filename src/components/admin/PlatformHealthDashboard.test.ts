@@ -84,15 +84,17 @@ test("empty activity remains UNKNOWN with no invented latency; Overview lists al
     assert.doesNotMatch(missing, />0</);
 });
 
-test("Platform Health filter dropdowns remain native, readable and preserve their exact options", () => {
-    assert.match(filtersSource, /<AdminSelect/);
-    assert.match(filtersSource, /ChevronDown/);
-    assert.match(filtersSource, /appearance-none/);
-    assert.match(filtersSource, /pointer-events-none/);
+test("Platform Health filter dropdowns use polished accessible Admin selectors with native SSR fallback", () => {
+    const directorySource = readFileSync("src/components/admin/AdminDirectorySelect.tsx", "utf8");
+    assert.match(filtersSource, /<AdminDirectorySelect/);
+    assert.match(filtersSource, /compact attached/);
+    assert.match(directorySource, /role="combobox"/);
+    assert.match(directorySource, /role="listbox"/);
+    assert.match(directorySource, /<select/);
     assert.match(filtersSource, /action="\/admin\/platform-health"/);
     assert.match(filtersSource, /method="get"/);
-    for (const value of ["24", "168", "720"]) {
-      assert.ok(filtersSource.includes('value="' + value + '"'));
+    for (const value of ["24", "168", "720", "ALL", "WEB", "IOS", "ANDROID", "UNKNOWN"]) {
+      assert.ok((filtersSource + readFileSync("src/lib/platformHealthPresentation.ts", "utf8")).includes('"' + value + '"'));
     }
     assert.match(filtersSource, /sm:grid-cols-2/);
     assert.match(filtersSource, /lg:grid-cols-/);

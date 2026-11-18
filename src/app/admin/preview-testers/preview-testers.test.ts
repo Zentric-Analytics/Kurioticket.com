@@ -66,7 +66,8 @@ test("Team Access retains role editing, audited server API actions and confirmat
   assert.match(registry, /<form action=\{add\}/);
   assert.match(registry, /<form action=\{update\}/);
   assert.match(registry, /role-\$\{role\}/);
-  assert.match(registry, /name="expiresAt"/);
+  assert.match(registry, /formData.get\("expiresAt"\)/);
+  assert.match(readFileSync("src/components/admin/TeamAccessExpiryPicker.tsx", "utf8"), /name="expiresAt"/);
   assert.match(registry, /name="reason"/);
   assert.match(registry, /name="updatedAt"/);
   assert.match(registry, /Save roles/);
@@ -74,4 +75,27 @@ test("Team Access retains role editing, audited server API actions and confirmat
   assert.match(registry, /window.confirm/);
   assert.match(mutationApi, /writeAdminAuditLog/);
   assert.match(mutationApi, /sessionVersion: \{ increment: 1 \}/);
+});
+
+test("Team Access uses a compact horizontal Add form and the same UTC picker for Edit", () => {
+  const picker = readFileSync("src/components/admin/TeamAccessExpiryPicker.tsx", "utf8");
+  const utc = readFileSync("src/lib/teamAccessExpiration.ts", "utf8");
+  assert.ok(registry.includes("lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.9fr)_minmax(0,1fr)]"));
+  assert.ok(registry.includes("sm:col-span-2 lg:col-span-1"));
+  assert.ok(registry.includes('TeamAccessExpiryPicker id="team-add-expiry"'));
+  assert.ok(registry.includes("TeamAccessExpiryPicker id={"));
+  assert.ok(registry.includes("overflow-visible rounded-xl"));
+  assert.doesNotMatch(registry, /type="datetime-local"/);
+  assert.ok(picker.includes('name="expiresAt" value={value}'));
+  assert.ok(picker.includes('aria-haspopup="dialog"'));
+  for (const text of ["Choose access expiration in UTC", "Clear", "Cancel", "Apply"]) {
+    assert.ok(picker.includes(text), text);
+  }
+  assert.match(utc, /toISOString/);
+});
+
+test("Team Access audit timestamps never depend on the browser timezone during hydration", () => {
+  assert.ok(registry.includes("formatUtcAuditTimestamp(tester.updatedAt)"));
+  assert.ok(registry.includes("formatUtcAuditTimestamp(timestamp)"));
+  assert.equal(registry.includes("toLocaleString("), false);
 });
