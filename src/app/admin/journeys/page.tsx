@@ -71,7 +71,7 @@ export default async function AdminJourneysPage({ searchParams, embedded = false
           Necessary operational guest searches remain available in Search Activity.
         </p>
 
-        <div className="grid min-w-0 grid-cols-1 items-center gap-2 border-y border-[#D8E1EC] py-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.3fr)_minmax(0,1fr)_auto]">
+        <div className="grid min-w-0 grid-cols-1 items-center gap-2 border-y border-[#D8E1EC] py-3 sm:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.3fr)_minmax(0,1fr)_auto]">
           <div className="min-w-0">
             <SearchMonitorSelect label="Product" name="product" appearance="fare"
               value={one(raw.product)} options={[
@@ -104,7 +104,7 @@ export default async function AdminJourneysPage({ searchParams, embedded = false
               value={one(raw.provider)} options={providerOptions} truncateLabel />
           </div>
           <button type="submit"
-            className="inline-flex h-10 w-full items-center justify-center whitespace-nowrap rounded-lg bg-[#004BB8] px-4 text-[13px] font-medium text-white transition hover:bg-[#003D97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] sm:col-span-2 lg:col-span-1 lg:w-auto">
+            className="inline-flex h-10 w-full items-center justify-center whitespace-nowrap rounded-lg bg-[#004BB8] px-4 text-[13px] font-medium text-white transition hover:bg-[#003D97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] sm:col-span-2 xl:col-span-1 xl:w-auto">
             Apply filters
           </button>
         </div>
