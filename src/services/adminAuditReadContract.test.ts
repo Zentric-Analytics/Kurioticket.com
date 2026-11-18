@@ -55,3 +55,26 @@ test("audit pagination preserves the original default time window", () => {
     assert.deepEqual(later.data.scope, first.data.scope);
   }
 });
+
+test("Audit Logs all-time cursor includes the entire retained window without loosening ordinary range guards", () => {
+  const first = parseAdminAuditQuery(new URLSearchParams({
+    from: "1970-01-01T00:00:00.000Z", to: now.toISOString(),
+    action: "USER",
+  }), now);
+  assert.equal(first.status, "ok");
+  if (first.status !== "ok") return;
+  assert.equal(first.data.scope.from, "1970-01-01T00:00:00.000Z");
+  assert.equal(first.data.limit, 50);
+  const cursor = encodeAdminAuditCursor(first.data.scope, "2026-10-20T12:00:00.000Z", "audit_789");
+  assert.equal(parseAdminAuditQuery(new URLSearchParams({ cursor, action: "USER" }), now).status, "ok");
+  assert.equal(parseAdminAuditQuery(new URLSearchParams({ cursor, action: "PROVIDER" }), now).status, "invalid");
+  assert.equal(parseAdminAuditQuery(new URLSearchParams({
+    from: "2026-01-01T00:00:00.000Z", to: now.toISOString(),
+  }), now).status, "invalid");
+  assert.equal(parseAdminAuditQuery(new URLSearchParams({
+    from: "1970-01-01T00:00:00.000Z", to: new Date(now.getTime() + 1).toISOString(),
+  }), now).status, "invalid");
+  assert.equal(parseAdminAuditQuery(new URLSearchParams({
+    from: "1970-01-01T00:00:00.000Z", to: now.toISOString(), limit: "101",
+  }), now).status, "invalid");
+});

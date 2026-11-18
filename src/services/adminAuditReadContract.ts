@@ -147,7 +147,10 @@ export function parseAdminAuditQuery(params: URLSearchParams, now = new Date()):
   const from = parsedFrom.data ?? cursorScope?.from ?? new Date(new Date(to).getTime() - 7 * dayMs).toISOString();
   const start = Date.parse(from);
   const end = Date.parse(to);
-  if (start >= end || end > now.getTime() || end - start > 90 * dayMs) {
+  // Only the explicit All time anchor bypasses the ordinary 90-day window.
+  // The audit reader still enforces authentication, indexed keyset paging, and a 100-row limit.
+  const allTime = from === "1970-01-01T00:00:00.000Z";
+  if (start >= end || end > now.getTime() || (!allTime && end - start > 90 * dayMs)) {
     return invalid("from", "Use a past time range of more than zero and at most 90 days.");
   }
 
