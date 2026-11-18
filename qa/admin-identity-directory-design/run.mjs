@@ -30,8 +30,8 @@ await put("next.config.mjs",
   'export default {devIndicators:false,agentRules:false,experimental:{externalDir:true},webpack(config){\n' +
   'config.resolve.alias["@/lib/auth-guards"]=path.resolve("mocks/auth-guards.js");\n' +
   'config.resolve.alias["@/lib/prisma"]=path.resolve("mocks/prisma.js");\n' +
-  'config.resolve.alias["@/lib/env"]=path.resolve("mocks/env.js");\n\' +
-  \'config.resolve.alias["@/services/adminJourneyService$"]=path.resolve("mocks/admin-journeys.js");\n' +
+  'config.resolve.alias["@/lib/env"]=path.resolve("mocks/env.js");\n' +
+  'config.resolve.alias["@/services/adminJourneyService$"]=path.resolve("mocks/admin-journeys.js");\n' +
   'config.resolve.alias["@"]=' + JSON.stringify(source) + ';return config;}};');
 await put("postcss.config.mjs", 'export default {plugins:{"@tailwindcss/postcss":{}}};');
 await put("app/globals.css",
