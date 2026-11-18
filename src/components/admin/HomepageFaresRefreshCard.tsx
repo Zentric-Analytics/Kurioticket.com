@@ -644,7 +644,7 @@ export function HomepageFaresRefreshCard({ view = "operations", initialMarket = 
           tabIndex={0}
           className="mt-4 max-w-full overflow-x-auto overscroll-x-contain focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]"
         >
-          <dl aria-label="Fare readiness metrics" className="grid min-w-[920px] grid-cols-5 gap-px border-y border-[#D8E1EC] bg-[#E7ECF5]">
+          <dl aria-label="Fare readiness metrics" className="grid min-w-0 grid-cols-2 gap-px border-y border-[#D8E1EC] bg-[#E7ECF5] sm:grid-cols-3 lg:grid-cols-5">
               <SummaryMetricCard label="Fresh fares" value={statusPayload.dataAvailable ? statusPayload.summary.fresh : readinessFallbackValue} tone={statusPayload.dataAvailable ? "good" : readinessFallbackTone} />
               <SummaryMetricCard label="Last-known-good" value={statusPayload.dataAvailable ? statusPayload.summary.last_known_good : readinessFallbackValue} tone={statusPayload.dataAvailable ? "info" : readinessFallbackTone} />
               <SummaryMetricCard label="Missing routes" value={statusPayload.dataAvailable ? statusPayload.summary.missing : readinessFallbackValue} tone={!statusPayload.dataAvailable ? readinessFallbackTone : statusPayload.summary.missing ? "warning" : "neutral"} />

@@ -64,7 +64,7 @@ test("overview metric, status and table use neutral layout without altering valu
   assert.match(table, /overflow-x-auto/);
 });
 
-test("Hotel and Car metrics stay in a single five-column strip at every desktop breakpoint", () => {
+test("Hotel and Car metrics stay horizontal on desktop with smaller-screen fallback", () => {
   const html = renderToStaticMarkup(createElement(OperationsMetricStrip, {
     children: [
       createElement(OperationsMetric, { key: "a", label: "Searches", value: 14 }),
@@ -75,10 +75,12 @@ test("Hotel and Car metrics stay in a single five-column strip at every desktop 
     ],
   }));
   assert.match(html, /grid-cols-5/);
-  assert.match(html, /min-w-\[920px\]/);
+  assert.match(html, /min-w-0 grid-cols-2/);
+  assert.match(html, /lg:grid-cols-5/);
+  assert.doesNotMatch(html, /min-w-\[920px\]/);
   assert.match(html, /overflow-x-auto/);
   assert.match(html, /aria-label="Search operations metrics"/);
-  assert.doesNotMatch(html, /sm:grid-cols-3|xl:grid-cols-5|grid-cols-2/);
+  assert.match(html, /sm:grid-cols-3 lg:grid-cols-5/);
   for (const label of ["Searches", "Successful", "Partial / failed", "Zero results", "Average latency"]) {
     assert.ok(html.includes(label), label);
   }
