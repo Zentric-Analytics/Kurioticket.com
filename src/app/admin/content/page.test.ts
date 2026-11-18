@@ -239,9 +239,9 @@ test("Content's nested pages use the preserved return context", () => {
   const directory = readFileSync("src/components/admin/ContentDirectoryToolbar.tsx", "utf8");
   assert.match(directory, /router\.replace\(url, \{ scroll: false \}\)/);
   assert.match(directory, /window\.addEventListener\("popstate"/);
-  assert.match(directory, /setTimeout/);
+  assert.doesNotMatch(directory, /window\.setTimeout/);
   assert.match(directory, /<AdminDirectorySelect/);
-  assert.doesNotMatch(directory, /Apply filters/);
+  assert.match(directory, /Apply filters/);
   for (const path of ["src/components/admin/HomepageCmsListClient.tsx", "src/components/admin/FaqCmsListClient.tsx"]) {
     const list = readFileSync(path, "utf8");
     assert.doesNotMatch(list, /Search this page|Search questions, answers or categories/);
@@ -291,7 +291,7 @@ test("Only Content editors retain navigation back links; the four directories us
   }
 });
 
-test("Content lists search the whole CMS dataset and filters apply instantly", () => {
+test("Content lists search the whole CMS dataset with one explicit Apply", () => {
   const home = readFileSync("src/app/admin/content/homepage/[section]/page.tsx", "utf8");
   const faq = readFileSync("src/app/admin/content/faqs/page.tsx", "utf8");
   const service = readFileSync("src/services/cmsContentService.ts", "utf8");
@@ -313,7 +313,11 @@ test("Content lists search the whole CMS dataset and filters apply instantly", (
   assert.equal((toolbar.match(/<form\b/g) ?? []).length, 1);
   assert.equal((toolbar.match(/<\/form>/g) ?? []).length, 1);
   assert.match(toolbar, /aria-label="Content publication status"/);
-  assert.match(toolbar, /onValueChange=\{next => navigate/);
+  assert.doesNotMatch(toolbar, /onValueChange=\{next => navigate/);
+  assert.match(toolbar, /onValueChange=\{setDraftMarket\}/);
+  assert.match(toolbar, /onValueChange=\{setDraftCategory\}/);
+  assert.match(toolbar, /onClick=\{applyFilters\}/);
+  assert.match(toolbar, /const loading = isPending;/);
   assert.match(toolbar, /<AdminDirectorySelect/);
   assert.match(service, /db\.\$queryRaw/);
   assert.match(service, /jsonb_each_text/);
