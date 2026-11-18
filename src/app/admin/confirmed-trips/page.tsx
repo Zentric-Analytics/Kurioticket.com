@@ -12,7 +12,6 @@ import {
 
 import { TripDirectoryView } from "@/components/admin/TripDirectoryView";
 import { TripFilterControls } from "@/components/admin/TripFilterControls";
-import { TripWorkspaceNavigation } from "@/components/admin/TripWorkspaceNavigation";
 import { AdminPageShell, AdminSectionCard } from "@/components/admin/AdminPageShell";
 import {
   tripDirectoryHref,
@@ -85,7 +84,7 @@ export default async function AdminConfirmedTripsPage({ searchParams }: Props) {
   return (
     <AdminPageShell title="Trips" hideHeader>
       <AdminSectionCard className="min-w-0 p-4 sm:p-5 lg:p-6">
-        <TripWorkspaceNavigation active="trips" />
+
 
         <div className="space-y-10 pt-6">
           <section aria-label="Trip summary" className="min-w-0">

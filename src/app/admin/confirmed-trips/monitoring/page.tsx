@@ -3,7 +3,6 @@ import { FileCheck2, Plane } from "lucide-react";
 import { AdminPageShell, AdminSectionCard } from "@/components/admin/AdminPageShell";
 import { TripConfirmationsMonitoringPanel } from "@/components/admin/TripConfirmationsMonitoringPanel";
 import { TripFlightStatusMonitoringPanel } from "@/components/admin/TripFlightStatusMonitoringPanel";
-import { TripWorkspaceNavigation } from "@/components/admin/TripWorkspaceNavigation";
 import { requireAdminSession } from "@/lib/auth-guards";
 
 export const metadata = { title: "Admin Trip Monitoring" };
@@ -14,7 +13,7 @@ export default async function AdminTripMonitoringPage() {
   return (
     <AdminPageShell title="Trip monitoring" hideHeader>
       <AdminSectionCard className="min-w-0 p-4 sm:p-5 lg:p-6">
-        <TripWorkspaceNavigation active="monitoring" />
+
         <h1 className="sr-only">Trip monitoring</h1>
 
         <section aria-label="Trip monitoring details" className="min-w-0 pt-6">

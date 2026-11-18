@@ -1,5 +1,4 @@
 import { AdminPageShell, AdminSectionCard } from "@/components/admin/AdminPageShell";
-import { TripWorkspaceNavigation } from "@/components/admin/TripWorkspaceNavigation";
 
 const metricLabels = ["Confirmed trips", "Tracked trips", "Upcoming", "Past", "Cancelled"];
 
@@ -7,7 +6,7 @@ export default function ConfirmedTripsLoading() {
   return (
     <AdminPageShell title="Trips" hideHeader>
       <AdminSectionCard className="min-w-0 p-4 sm:p-5 lg:p-6">
-        <TripWorkspaceNavigation active="trips" />
+
         <div role="status" aria-live="polite" className="sr-only">Loading confirmed-trip information…</div>
         <div aria-busy="true" className="space-y-10 pt-6">
           <section aria-label="Trip summary" className="min-w-0">

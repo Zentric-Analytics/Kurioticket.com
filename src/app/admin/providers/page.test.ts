@@ -409,9 +409,10 @@ test("Task 3: handoff detail groups every field without tiles or losing verifica
   assert.match(adminShell, /providersWorkspace \|\| providerReportingWorkspace/);
 });
 
-test("Tasks 4–6 place the small Referral date filter beside tabs only when selected", () => {
+test("Referral date filter stays available without duplicate Providers tabs", () => {
   assert.match(providersPage, /attribution \? \(/);
-  assert.match(providersPage, /<nav aria-label="Provider reporting sections"/);
+  assert.doesNotMatch(providersPage, /<nav aria-label="Provider reporting sections"/);
+  assert.match(providersPage, /<div className="flex min-w-0 justify-end border-b border-\[#D8E1EC\] pb-2">/);
   assert.match(providersPage, /<ReferralWindowFilter days=\{attributionDays \?\? 30\} embedded \/>/);
   assert.doesNotMatch(providersPage, /attributionEnvironment === "production"/);
   assert.doesNotMatch(referralPage, /summary\.environment === "production"/);
