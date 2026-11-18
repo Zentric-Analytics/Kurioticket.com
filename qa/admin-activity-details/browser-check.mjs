@@ -349,7 +349,8 @@ try {
   await expect(page.getByLabel("Custom start date UTC")).toBeVisible();
   await expect(page.getByLabel("Custom end date UTC")).toBeVisible();
   await page.getByLabel("Custom end date UTC").fill("2026-10-24");
-  await page.getByRole("button",{name:"Set custom dates"}).click();
+  // No intermediate date action: the same Apply filters button commits both dates.
+  await expect(page.getByRole("button",{name:"Set custom dates"})).toHaveCount(0);
   await expect(page).toHaveURL(/to=2026-10-23/);
   await page.getByRole("button",{name:"Apply filters",exact:true}).click();
   await expect(page).toHaveURL(/to=2026-10-24/);
