@@ -106,7 +106,7 @@ try{
   await calendar.getByRole('button',{name:'Apply',exact:true}).click();
   await expect(calendar).toBeHidden();
   const addIso=await addForm.locator('input[name="expiresAt"]').inputValue();
-  expect(addIso).toMatch(/T17:40:00\\.000Z$/);
+  expect(addIso).toMatch(/T17:40:00\.000Z$/);
   await expiry.click();await page.getByRole('dialog',{name:'Choose access expiration in UTC'}).getByRole('button',{name:'Clear'}).click();
   await expect(addForm.locator('input[name="expiresAt"]')).toHaveValue('');
   await page.locator('details[data-team-member="qa-member"] > summary').click();
