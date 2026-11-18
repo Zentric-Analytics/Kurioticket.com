@@ -108,7 +108,9 @@ export function ActivityFiltersBar({ path, initial, directory, tabs }: { path: s
         <SearchMonitorSelect label="Activity type" name="stage" value={values.stage}
           options={options.stage.map(([value,label])=>({value,label}))} appearance="fare"
           onValueChange={stage=>update({stage})} />
-        <button type="button" onClick={() => navigate(values)} disabled={pending}
+        <button type="button" onClick={() => navigate((editingCustom || values.range === "custom") && validCustom
+          ? { ...values, range: "custom", ...draftDates } : values)}
+          disabled={pending || ((editingCustom || values.range === "custom") && !validCustom)}
           className="inline-flex h-10 w-full items-center justify-center whitespace-nowrap rounded-lg bg-[#004BB8] px-4 text-[13px] font-medium text-white hover:bg-[#003D97] disabled:opacity-60 lg:w-auto">
           Apply filters
         </button>
