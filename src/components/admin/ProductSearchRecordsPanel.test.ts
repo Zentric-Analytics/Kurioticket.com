@@ -41,6 +41,25 @@ test("both product directories render independently accessible, responsive read-
   }
 });
 
+test("hotel and car records retain aligned columns and readable full record values", () => {
+  for (const product of ["HOTEL", "CAR"] as const) {
+    const html = renderToStaticMarkup(createElement(ProductSearchRecordsPanel, { product }));
+    assert.match(html, /min-w-\[920px\] table-fixed/);
+    assert.match(html, /<colgroup>/);
+    assert.equal((html.match(/<col class="w-\[/g) || []).length, 7);
+    assert.match(html, /text-right[^"]*"[^>]*>Results<\/th>/);
+    assert.match(html, /text-right[^"]*"[^>]*>Latency<\/th>/);
+    assert.match(html, /text-center[^"]*"[^>]*>Action<\/th>/);
+    assert.match(html, /overscroll-x-contain/);
+    assert.doesNotMatch(html, /class="admin-responsive-records/);
+    assert.match(html, /Search records filters/);
+  }
+  assert.match(panelSource, /<time dateTime=\{record.createdAt \?\? undefined\}/);
+  assert.match(panelSource, /title=\{record.requestId\}/);
+  assert.match(panelSource, /setSelectedId\(current => current === record.id \? null : record.id\)/);
+  assert.match(panelSource, /min-w-0 break-words px-3 py-3/);
+});
+
 test("filters, cursor navigation and inline details retain only a single product", () => {
   assert.match(panelSource, /new URLSearchParams\(\{ product, filter, window: windowValue \}\)/);
   assert.match(panelSource, /new URLSearchParams\(\{ product \}\)/);
