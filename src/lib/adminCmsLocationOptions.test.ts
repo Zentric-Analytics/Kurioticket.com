@@ -204,7 +204,9 @@ test("hotel CMS canonical search protects the mapped destination and uses visibl
   assert.match(api, /hotelDestination\.image \?/);
   assert.match(api, /image: hotelDestination\.image/);
   assert.match(api, /hotelDestination\.imageAlt\?\.trim\(\) \|\| destination\.imageAlt/);
-  assert.match(listing, /items: sortHomepageCmsDirectoryItems\(listing\.items\)/);
+  assert.match(listing, /items: sortHomepageCmsDirectoryItems\(section === "hotel-destinations"/);
+  assert.match(listing, /filterCmsHotelsByCountry\(listing\.items, country\)/);
+  assert.match(listing, /: listing\.items\)/);
   assert.deepEqual(sortHomepageCmsDirectoryItems([
     { market: "GLOBAL", sortOrder: 4, key: "hotel-london" },
     { market: "GLOBAL", sortOrder: 1, key: "hotel-new-york" },

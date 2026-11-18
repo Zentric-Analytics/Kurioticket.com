@@ -9,7 +9,7 @@ function one(value: string | string[] | undefined): string {
   return typeof value === "string" ? value : "";
 }
 
-function optionalContext(input: RawQuery, params: URLSearchParams, options: { faq?: boolean } = {}) {
+function optionalContext(input: RawQuery, params: URLSearchParams) {
   const status = one(input.status).trim().toUpperCase();
   if (statuses.has(status)) params.set("status", status);
 
@@ -21,10 +21,6 @@ function optionalContext(input: RawQuery, params: URLSearchParams, options: { fa
   // from an editor when present in its URL.
   const query = one(input.q).trim();
   if (query && query.length <= 160 && !/[\x00-\x1f\x7f]/.test(query)) params.set("q", query);
-  if (options.faq) {
-    const category = one(input.category).trim();
-    if (category && category.length <= 80 && !/[\x00-\x1f\x7f]/.test(category)) params.set("category", category);
-  }
 }
 
 /** Only known Content routes can be return destinations; no user-supplied URLs. */
@@ -40,6 +36,12 @@ export function homepageCmsListNavigation(
     : requestedMarket === "ALL" || supportedMarkets.has(requestedMarket) ? requestedMarket : validFallback;
   const params = new URLSearchParams({ market });
   optionalContext(input, params);
+  // Hotel destinations share the GLOBAL CMS market: preserve their country
+  // selection through editor links without treating it as a CMS market.
+  if (section === "hotel-destinations") {
+    const country = one(input.country).trim();
+    if (country && country.length <= 120 && !/[\x00-\x1f\x7f]/.test(country)) params.set("country", country);
+  }
   // Homepage CMS directories all render one complete list; stale paged links
   // must never persist after returning from an editor.
   params.delete("cursor");
@@ -56,7 +58,7 @@ export function homepageCmsListNavigation(
 
 export function faqCmsListNavigation(input: RawQuery) {
   const params = new URLSearchParams();
-  optionalContext(input, params, { faq: true });
+  optionalContext(input, params);
   const query = params.toString();
   return { query, listHref: "/admin/content/faqs" + (query ? "?" + query : "") };
 }

@@ -70,10 +70,12 @@ const oldActivity = execFileSync("git", [
 ], { cwd: repo, encoding: "utf8" })
   .replace('from "@/components/admin/ActivityTimeline"', 'from "./BeforeActivityTimeline"');
 await put("app/before/OldActivityPage.tsx", oldActivity);
+// The synthetic activity records are from October. Recent baselines now default
+// to Last 24 hours, so compare the same complete history with All time (QA only).
 await put("app/before/page.tsx", [
   'import OldActivityPage from "./OldActivityPage";',
   'export default async function BeforeActivityPage({searchParams}){ const raw=await searchParams;',
-  '  return <OldActivityPage params={Promise.resolve({kind:raw.kind === "user" ? "user" : "guest",id:raw.kind === "user" ? "qa-realistic-identity-0001" : "qa-guest-activity-0001"})} searchParams={Promise.resolve({})} />;',
+  '  return <OldActivityPage params={Promise.resolve({kind:raw.kind === "user" ? "user" : "guest",id:raw.kind === "user" ? "qa-realistic-identity-0001" : "qa-guest-activity-0001"})} searchParams={Promise.resolve({range:"all"})} />;',
   '}',
 ].join("\n"));
 
