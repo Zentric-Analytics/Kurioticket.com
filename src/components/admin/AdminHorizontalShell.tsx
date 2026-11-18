@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { RefObject } from "react";
-import { ChevronDown, LogOut, Menu, Settings, ShieldCheck, X, Building2 } from "lucide-react";
+import { ChevronDown, LogOut, Settings, ShieldCheck, Building2 } from "lucide-react";
 import { getAdminHeaderGroups, getAdminNavForRole, getAdminWorkspaceSections, isAdminNavItemActive, isAdminWorkspaceSectionActive, type AdminRole } from "@/lib/adminNavigation";
 import { KurioticketLogo } from "@/components/brand/KurioticketLogo";
 import { AdminWorkspaceSearchProvider, AdminSearchTrigger, AdminSearchHeader, AdminSearchContent } from "./AdminWorkspaceSearch";
@@ -14,7 +14,7 @@ import { AdminNotificationsPanel } from "./AdminNotificationsPanel";
 type HeaderGroup = ReturnType<typeof getAdminHeaderGroups>[number];
 type HeaderEntry = HeaderGroup["links"][number];
 
-function HeaderNavLink({ entry, pathname, close }: { entry: HeaderEntry; pathname: string; mobile?: boolean; close: () => void }) {
+function HeaderNavLink({ entry, pathname, close }: { entry: HeaderEntry; pathname: string; close: () => void }) {
   const { item } = entry;
   const selected =
     isAdminNavItemActive(item.href, pathname) ||
@@ -27,26 +27,21 @@ function HeaderNavLink({ entry, pathname, close }: { entry: HeaderEntry; pathnam
     : "";
   return (
     <Link href={item.href} onClick={close} aria-current={pathname === item.href || pathname === item.href + "/" ? "page" : undefined}
-      className={"relative inline-flex h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-xl px-2.5 text-[15px] font-semibold leading-none tracking-[-0.005em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 " + style + underline}>
-      <Icon size={14} aria-hidden="true" className="h-[13px] w-[13px] shrink-0 xl:h-3.5 xl:w-3.5 2xl:h-4 2xl:w-4" />
+      className={"relative inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-1.5 text-[13px] font-semibold leading-none tracking-[-0.005em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 " + style + underline}>
+      <Icon size={13} aria-hidden="true" className="h-[13px] w-[13px] shrink-0" />
       <span>{item.label}</span>
     </Link>
   );
 }
 
-function Navigation({ groups, pathname, mobile = false, close }: { groups: HeaderGroup[]; pathname: string; mobile?: boolean; close: () => void }) {
-  return <nav aria-label="Admin navigation" className={mobile
-    ? "flex flex-col gap-2 p-3"
-    : "flex w-full flex-wrap items-center justify-start gap-x-5 gap-y-2"}>
-    {groups.map((group) => (
-      <div key={group.label} className={mobile
-        ? "flex flex-col gap-1"
-        : "contents"}>
-                {mobile ? <p className="px-3 pt-2 text-[11px] font-bold uppercase tracking-widest text-slate-400">{group.label}</p> : null}
-        {group.links.map((entry) => <HeaderNavLink key={entry.item.href} entry={entry} pathname={pathname} mobile={mobile} close={close} />)}
-      </div>
-    ))}
-  </nav>;
+function Navigation({ groups, pathname, close }: { groups: HeaderGroup[]; pathname: string; close: () => void }) {
+  return (
+    <nav aria-label="Admin navigation" className="flex w-max min-w-full flex-nowrap items-center justify-start gap-2 whitespace-nowrap">
+      {groups.flatMap(group => group.links).map(entry =>
+        <HeaderNavLink key={entry.item.href} entry={entry} pathname={pathname} close={close} />
+      )}
+    </nav>
+  );
 }
 
 function WorkspaceSectionNavigation({ pathname, role }: { pathname: string; role: AdminRole }) {
@@ -184,7 +179,6 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
   const contentLanding = pathname === "/admin/content" || pathname === "/admin/content/";
   const workspaceRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLElement>(null);
-  const [mobileOpen, setMobileOpen] = useState(false);
   // Keep the sticky navigation offset aligned with the real header height, including search and zoom.
   useLayoutEffect(() => {
     if (!headerRef.current || !workspaceRef.current) return;
@@ -201,13 +195,7 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
       workspace.style.removeProperty("--admin-header-height");
     };
   }, [contentLanding]);
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setMobileOpen(false);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
+
 
   // Every non-Overview Admin workspace uses a white canvas. Keep the established
   // Overview surface unchanged; route-specific flags remain for contract QA.
@@ -257,15 +245,14 @@ export function AdminHorizontalShell({ children, adminEmail, adminName, adminRol
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
           <AdminSearchTrigger />
           <AdminHeaderMenus key={pathname} adminEmail={adminEmail} adminName={adminName} role={role} headerRef={headerRef} />
-          <button type="button" className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 min-[1100px]:hidden" onClick={() => setMobileOpen((value) => !value)} aria-label={mobileOpen ? "Close admin navigation" : "Open admin navigation"} aria-expanded={mobileOpen}>{mobileOpen ? <X size={19} /> : <Menu size={19} />}</button>
         </div>
       </div>
-      <div className="hidden border-t border-slate-100 min-[1100px]:block">
-        <div className="mx-auto max-w-[1920px] px-4 pb-2 pt-2 sm:px-6 lg:px-10">
+      <div className="min-w-0 border-t border-slate-100">
+        <div role="region" aria-label="Admin navigation links" tabIndex={0}
+          className="mx-auto w-full max-w-[1920px] overflow-x-auto overscroll-x-contain px-2 pb-2 pt-2 sm:px-3 lg:px-5 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#004BB8]">
           <Navigation groups={isOverview ? groups : overviewGroups} pathname={pathname} close={() => {}} />
         </div>
       </div>
-      {mobileOpen ? <div className="max-h-[70vh] overflow-y-auto border-t border-slate-100 bg-white min-[1100px]:hidden"><Navigation groups={groups} pathname={pathname} mobile close={() => setMobileOpen(false)} /></div> : null}
       </AdminSearchHeader>
     </header>
     <main className={"mx-auto w-full max-w-[1920px] " + (isOverview ? "px-4 py-5 sm:px-6 lg:px-10" : "px-4 py-5 sm:px-5 lg:px-6")}>
