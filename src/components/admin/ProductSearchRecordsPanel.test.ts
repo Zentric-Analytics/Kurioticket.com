@@ -20,7 +20,7 @@ test("both product pages remove redundant header search links without losing rec
     assert.doesNotMatch(source, /ProductSearchJumpLink|View hotel searches|View car searches/);
     assert.match(source, /<ProductSearchRecordsPanel product=/);
     assert.match(source, /<OperationsMetricStrip>/);
-    assert.match(source, /<OperationsProviderIssues/);
+    assert.doesNotMatch(source, /<OperationsProviderIssues|Provider exceptions/);
   }
   assert.doesNotMatch(panelSource, /export function ProductSearchJumpLink/);
   assert.match(panelSource, /window.location.hash === "#" \+ sectionId/);

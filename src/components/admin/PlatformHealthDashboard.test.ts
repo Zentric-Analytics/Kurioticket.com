@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { readFileSync } from "node:fs";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { createJiti } from "jiti";
@@ -9,6 +10,7 @@ const jiti = createJiti(import.meta.url, { jsx: { runtime: "automatic" }, fsCach
 const { PlatformHealthDashboard } = jiti("./PlatformHealthDashboard") as typeof import("./PlatformHealthDashboard");
 const { OperationalStatus } = jiti("./OperationalStatus") as typeof import("./OperationalStatus");
 const { AppRouterContext } = jiti("next/dist/shared/lib/app-router-context.shared-runtime") as typeof import("next/dist/shared/lib/app-router-context.shared-runtime");
+const filtersSource = readFileSync("src/components/admin/PlatformHealthFilters.tsx", "utf8");
 const router = { push() { }, replace() { }, refresh() { }, back() { }, forward() { }, prefetch() { } };
 function render(unavailable = false, application: "ALL" | "IOS" = "ALL") { return renderToStaticMarkup(createElement(AppRouterContext.Provider, { value: router as never }, createElement(PlatformHealthDashboard, { data: platformFixture(unavailable), hours: 24, application }))); }
 test("health renders separate measures, labels shared scope and retains explicit native UNKNOWN", () => {
@@ -72,4 +74,23 @@ test("empty activity remains UNKNOWN with no invented latency; Overview lists al
     const missing = renderToStaticMarkup(createElement(PlatformOverviewSummary, { data: platformFixture(true), hours: 24 }));
     assert.match(missing, /unavailable/);
     assert.doesNotMatch(missing, />0</);
+});
+
+test("Platform Health filter dropdowns remain native, readable and preserve their exact options", () => {
+    assert.match(filtersSource, /<AdminSelect/);
+    assert.match(filtersSource, /ChevronDown/);
+    assert.match(filtersSource, /appearance-none/);
+    assert.match(filtersSource, /pointer-events-none/);
+    assert.match(filtersSource, /action="\/admin\/platform-health"/);
+    assert.match(filtersSource, /method="get"/);
+    for (const value of ["24", "168", "720"]) {
+      assert.ok(filtersSource.includes('value="' + value + '"'));
+    }
+    assert.match(filtersSource, /sm:grid-cols-2/);
+    assert.match(filtersSource, /lg:grid-cols-/);
+    assert.match(filtersSource, /Apply view/);
+    const html = render();
+    for (const option of ["All Platforms", "Website", "iOS", "Android", "Unknown", "Last 24 hours", "Last 7 days", "Last 30 days"]) {
+      assert.ok(html.includes(option), option);
+    }
 });

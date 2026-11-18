@@ -12,7 +12,7 @@ test("car admin is a provider-aware operational overview", () => {
   assert.match(carsPage, /Car provider health/);
   assert.match(recordsPanel, /Search exceptions and records/);
   assert.match(carsPage, /Locations needing attention/);
-  assert.match(carsPage, /Provider exceptions/);
+  assert.doesNotMatch(carsPage, /Provider exceptions/);
   assert.doesNotMatch(carsPage, /Recent car searches|operations\.recentSearches/);
   assert.match(carsPage, /<ProductSearchRecordsPanel product="CAR"/);
   assert.match(carsPage, /<OperationsMetric/);
@@ -27,7 +27,7 @@ test("cars operations share Homepage Fares one-row metrics and balanced overview
   assert.match(carsPage, /integrations\.length > 1|carIntegrations\.length > 1/);
   assert.match(carsPage, /lg:grid-cols-4/);
   assert.doesNotMatch(carsPage, /grid gap-4 xl:grid-cols-2/);
-  assert.match(carsPage, /<OperationsProviderIssues/);
+  assert.doesNotMatch(carsPage, /<OperationsProviderIssues|href="\/admin\/providers\?product=cars"/);
 });
 
 test("car operations snapshot is environment scoped and read-only", () => {
