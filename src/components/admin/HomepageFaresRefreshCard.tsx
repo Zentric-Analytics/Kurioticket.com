@@ -1211,6 +1211,12 @@ function MarketRouteInspector({
   onSelectMarket: (marketCode: string) => void;
   onFilterChange: (filter: AdminHomepageFareRouteGroupFilter) => void;
 }) {
+  // Market and status only update the rendered routes after an explicit Apply.
+  // This is an in-memory view filter; refresh/readiness polling stays unchanged.
+  const [draftScope, setDraftScope] = useState(selectedRouteScope);
+  const [draftFilter, setDraftFilter] = useState(filter);
+  useEffect(() => { setDraftScope(selectedRouteScope); }, [selectedRouteScope]);
+  useEffect(() => { setDraftFilter(filter); }, [filter]);
   const marketOptions = [
     { value: ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE, label: "All" },
     ...publicGroups.map((group) => ({ value: group.marketCode, label: group.marketLabel })),
@@ -1223,7 +1229,7 @@ function MarketRouteInspector({
 
   return (
     <section aria-label="Route inspection filters and results" className="min-w-0">
-      <div className="grid gap-x-4 gap-y-3 border-b border-[#E7ECF5] py-4 sm:grid-cols-[minmax(0,320px)_minmax(0,240px)]">
+      <div className="grid min-w-0 grid-cols-1 items-end gap-x-3 gap-y-3 border-b border-[#E7ECF5] py-4 sm:grid-cols-2 xl:grid-cols-[minmax(0,260px)_minmax(0,220px)_auto] xl:justify-start">
         <div className="min-w-0">
           <p className="mb-1.5 text-[12px] font-medium text-[#64748B]">Market</p>
           <SearchMonitorSelect
@@ -1231,9 +1237,9 @@ function MarketRouteInspector({
             name="homepage-fare-market"
             appearance="fare"
             truncateLabel
-            value={selectedRouteScope}
+            value={draftScope}
             options={marketOptions}
-            onValueChange={onSelectMarket}
+            onValueChange={setDraftScope}
           />
         </div>
         <div className="min-w-0">
@@ -1243,11 +1249,16 @@ function MarketRouteInspector({
             name="homepage-fare-status"
             appearance="fare"
             truncateLabel
-            value={filter}
+            value={draftFilter}
             options={ROUTE_FILTERS.map(({ key, label }) => ({ value: key, label }))}
-            onValueChange={(next) => onFilterChange(next as AdminHomepageFareRouteGroupFilter)}
+            onValueChange={(next) => setDraftFilter(next as AdminHomepageFareRouteGroupFilter)}
           />
         </div>
+        <button type="button"
+          onClick={() => { onSelectMarket(draftScope); onFilterChange(draftFilter); }}
+          className="inline-flex h-10 w-full items-center justify-center whitespace-nowrap rounded-lg bg-[#004BB8] px-4 text-[13px] font-medium text-white transition hover:bg-[#003D97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] sm:col-span-2 xl:col-span-1 xl:w-auto">
+          Apply filters
+        </button>
       </div>
 
       <SelectedRouteDetails
