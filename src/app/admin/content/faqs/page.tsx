@@ -11,7 +11,6 @@ import {
   CmsContentError,
   getCmsContentScopeSummary,
   listAdminCmsFaqPage,
-  listAdminCmsFaqCategories,
 } from "@/services/cmsContentService";
 import { faqCmsScope } from "@/services/faqCmsService";
 import { faqCmsListNavigation } from "@/lib/adminContentNavigation";
@@ -42,8 +41,6 @@ export default async function AdminFaqCmsPage({ searchParams }: { searchParams: 
       archived: 0,
     }));
 
-  const categories = summary.available ? await listAdminCmsFaqCategories().catch(() => []) : [];
-
   let listing:
     | Awaited<ReturnType<typeof listAdminCmsFaqPage>>
     | null = null;
@@ -55,7 +52,6 @@ export default async function AdminFaqCmsPage({ searchParams }: { searchParams: 
         status,
         cursor,
         search: one(raw.q) || undefined,
-        category: one(raw.category) || undefined,
       });
     } catch (error) {
       listingError = error instanceof CmsContentError ? error.message : "FAQ CMS data is unavailable.";
@@ -97,8 +93,7 @@ export default async function AdminFaqCmsPage({ searchParams }: { searchParams: 
               path="/admin/content/faqs"
               query={nav.query}
               status={statusRaw}
-              category={one(raw.category)}
-              categories={categories}
+              faqSearchOnly
               searchLabel="Search FAQs"
             >
             {listingError ? (

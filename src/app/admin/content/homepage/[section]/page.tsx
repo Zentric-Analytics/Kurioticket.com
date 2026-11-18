@@ -9,11 +9,13 @@ import { CmsCreateLink } from "@/components/admin/CmsCreateLink";
 import type { CmsContentStatus } from "@/generated/prisma/enums";
 import { getHomepageCmsSection, homepageCmsSections, sortHomepageCmsDirectoryItems } from "@/lib/adminHomepageCms";
 import { homepageCmsListNavigation } from "@/lib/adminContentNavigation";
+import { filterCmsHotelsByCountry } from "@/lib/adminCmsHotelCountry";
 import {
   CmsContentError,
   getCmsContentScopeSummary,
   getCmsContentMarketOverview,
   listAdminCmsContentDirectory,
+  listAdminCmsHotelCountries,
 } from "@/services/cmsContentService";
 import { homepageCmsLocale, homepageCmsMarkets, getHomepageCmsInitializationReadiness } from "@/services/homepageCmsService";
 
@@ -56,6 +58,13 @@ export default async function HomepageCmsSectionPage({ params, searchParams }: P
     );
   }
 
+  // Country choices are collected across all statuses so changing a tab does not
+  // make options disappear. Hotel records remain scoped to the GLOBAL CMS market.
+  const hotelCountries = section === "hotel-destinations"
+    ? await listAdminCmsHotelCountries().catch(() => [])
+    : [];
+  const country = hotelCountries.includes(one(raw.country).trim()) ? one(raw.country).trim() : "";
+
   let listing: Awaited<ReturnType<typeof listAdminCmsContentDirectory>> | null = null;
   let error: string | null = null;
   try {
@@ -70,7 +79,9 @@ export default async function HomepageCmsSectionPage({ params, searchParams }: P
     // service's existing cursor pagination remains available to other screens.
     listing = await listAdminCmsContentDirectory(listInput);
     listing = {
-      items: sortHomepageCmsDirectoryItems(listing.items),
+      items: sortHomepageCmsDirectoryItems(section === "hotel-destinations"
+        ? filterCmsHotelsByCountry(listing.items, country)
+        : listing.items),
       nextCursor: null,
     };
   } catch (caught) {
@@ -91,6 +102,8 @@ export default async function HomepageCmsSectionPage({ params, searchParams }: P
           status={statusRaw}
           market={section !== "hotel-destinations" ? allowedMarket : undefined}
           markets={section !== "hotel-destinations" ? homepageCmsMarkets : []}
+          country={section === "hotel-destinations" ? country : undefined}
+          countries={hotelCountries}
           searchLabel={section === "flight-routes" ? "Search flight routes" : section === "hotel-destinations" ? "Search hotel destinations" : "Search destinations"}
         >
         {error ? (
