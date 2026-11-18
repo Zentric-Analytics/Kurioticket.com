@@ -45,9 +45,13 @@ export default async function AdminReferralAttributionPage({
       {!embedded ? (
         <div className="mb-4">
           <SearchWorkspaceBackLink href="/admin/providers" label="Providers" />
-          <h1 className="text-[18px] font-semibold">Referral Attribution</h1>
+          <header className="border-b border-[#D8E1EC] pb-4 pt-1">
+            <h1 className="text-[20px] font-semibold leading-7 tracking-[-0.02em] text-[#020617]">
+              Referral Attribution
+            </h1>
+          </header>
         </div>
-      ) : <h1 className="sr-only">Referral Attribution</h1>}
+      ) : null}
 
       {!embedded ? (
         <div className="flex min-w-0 flex-wrap items-center justify-between gap-3 border-b border-[#D8E1EC] pb-2">
