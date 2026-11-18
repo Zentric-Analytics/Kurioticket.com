@@ -110,20 +110,20 @@ test("content overview shows four equal, fully clickable management cards", () =
   assert.doesNotMatch(contentPage, /ContentSectionHeading|homepageAreas|helpAreas|Manage destinations|Manage FAQs/);
 });
 
-test("Content hub centers vertically below the desktop Admin header without changing cards", () => {
-  assert.match(contentPage, /min-\[1100px\]:flex min-\[1100px\]:min-h-\[calc\(100dvh-var\(--admin-header-height,120px\)-40px\)\] min-\[1100px\]:items-center/);
+test("Content hub stays aligned to the sidebar and retains four CMS overview cards", () => {
+  assert.match(contentPage, /<div className="w-full pt-2">/);
   assert.doesNotMatch(contentPage, /100dvh-160px/);
   const shell = readFileSync("src/components/admin/AdminHorizontalShell.tsx", "utf8");
   assert.match(shell, /contentLanding = pathname === "\/admin\/content"/);
   assert.match(shell, /headerRef = useRef<HTMLElement>\(null\)/);
   assert.match(shell, /import \{ useEffect, useLayoutEffect, useRef, useState \} from "react"/);
-  assert.match(shell, /useLayoutEffect\(\(\) => \{\s*if \(!contentLanding/);
+  assert.match(shell, /useLayoutEffect\(\(\) => \{\s*if \(!headerRef\.current \|\| !workspaceRef\.current/);
   assert.match(shell, /getBoundingClientRect\(\)\.height/);
   assert.match(shell, /new ResizeObserver\(updateHeaderHeight\)/);
   assert.match(shell, /observer\.observe\(header\)/);
   assert.match(shell, /observer\.disconnect\(\)/);
   assert.match(shell, /workspace\.style\.removeProperty\("--admin-header-height"\)/);
-  assert.match(contentPage, /mx-auto w-full max-w-\[900px\] space-y-4/);
+  assert.match(contentPage, /w-full max-w-\[1100px\] space-y-4/);
   assert.match(contentPage, /grid auto-rows-fr grid-cols-1 gap-3 sm:grid-cols-2/);
   assert.match(contentPage, /href=\{area\.href\}/);
   assert.match(contentPage, /<ContentPageFrame title="Content" visuallyHideTitle>/);

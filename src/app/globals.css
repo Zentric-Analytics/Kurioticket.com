@@ -2725,3 +2725,27 @@ textarea {
     scroll-behavior: auto !important;
   }
 }
+
+/* Keep department navigation accessible while only the workspace content scrolls.
+   The offset is measured from the real Admin header so 100% zoom and search
+   expansion do not cover the first navigation item. */
+@media (min-width: 1024px) {
+  .admin-sticky-sidebar {
+    position: sticky;
+    top: calc(var(--admin-header-height, 112px) + 16px);
+    align-self: start;
+    max-height: calc(100dvh - var(--admin-header-height, 112px) - 32px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}
+@media (min-width: 768px) {
+  .admin-sticky-settings-sidebar {
+    position: sticky;
+    top: calc(var(--admin-header-height, 112px) + 16px);
+    align-self: start;
+    max-height: calc(100dvh - var(--admin-header-height, 112px) - 32px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}

@@ -30,7 +30,7 @@ export function AdminSettingsNavigation({ showTeamAccess = false }: { showTeamAc
   const pathname = usePathname();
 
   return (
-    <aside className="min-w-0 border-b border-[#D8E1EC] pb-4 md:border-b-0 md:border-r md:pb-0 md:pr-4">
+    <aside className="admin-sticky-settings-sidebar min-w-0 border-b border-[#D8E1EC] pb-4 md:border-b-0 md:border-r md:pb-0 md:pr-4">
       <h2 className="px-2 text-[15px] font-semibold text-[#020617]">Settings</h2>
       <nav aria-label="Settings sections" className="mt-4 space-y-4">
         {[...groups.slice(0, 2), ...(showTeamAccess ? [{ label: "Access", links: [{ label: "Team Access", href: "/admin/preview-testers", icon: UserCheck }] }] : []), ...groups.slice(2)].map((group) => (
