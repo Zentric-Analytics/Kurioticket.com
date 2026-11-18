@@ -87,9 +87,11 @@ test("Visitor Journeys defaults to Last 24 hours, keeps responsive filters on on
   assert.match(list, /\.\.\.withoutPagination\(raw\), \.\.\.fixed, environment/);
   assert.match(list, /<JourneyDateRangeFields initialRange=\{range\}/);
   assert.match(list, /data-testid="journey-filters-toolbar"/);
-  assert.match(list, /sm:grid-cols-2 xl:flex xl:flex-nowrap xl:items-stretch/);
-  assert.match(list, /xl:flex-\[1\.25_1_0%\]/);
-  assert.match(list, /sm:col-span-2 xl:w-\[132px\] xl:shrink-0/);
+  assert.match(list, /flex w-full min-w-0 flex-wrap items-center gap-2/);
+  assert.match(list, /flex-\[1\.2_1_168px\]/);
+  assert.match(list, /h-10 w-auto shrink-0/);
+  assert.match(list, /min-w-\[138px\] flex-\[1_1_138px\]/);
+  assert.doesNotMatch(list, /xl:flex-nowrap|sm:col-span-2|w-full items-center justify-center whitespace-nowrap rounded-lg bg-\[#004BB8\]/);
   assert.match(list, /align="end" truncateLabel/);
   assert.match(list, /name="product" appearance="fare"/);
   assert.match(list, /name="identity"/);
