@@ -45,20 +45,20 @@ try {
       const contentWidth = await page.locator('[data-admin-page-content]').evaluate(node => node.getBoundingClientRect().width);
       assert.ok(contentWidth > sidebarWidth * 2, "Content workspace must receive the larger share at " + width + "px");
     }
-    if (width >= 1100) {
-      const headerNavigation = page.getByRole("navigation", { name: "Admin navigation" });
-      await expect(headerNavigation).toBeVisible();
-      await expect(headerNavigation.getByRole("link", { name: "Overview", exact: true })).toBeVisible();
-      await expect(headerNavigation.getByRole("link", { name: "Users", exact: true })).toHaveCount(0);
-    } else {
-      const toggle = page.getByRole("button", { name: "Open admin navigation" });
-      await expect(toggle).toBeVisible();
-      await toggle.click();
-      const mobileNavigation = page.getByRole("navigation", { name: "Admin navigation" });
-      await expect(mobileNavigation).toBeVisible();
-      await expect(mobileNavigation.getByRole("link", { name: "Users", exact: true })).toBeVisible();
-      await page.getByRole("button", { name: "Close admin navigation" }).click();
-    }
+    const headerNavigation = page.getByRole("navigation", { name: "Admin navigation" });
+    await expect(headerNavigation).toBeVisible();
+    await expect(headerNavigation.getByRole("link", { name: "Overview", exact: true })).toBeVisible();
+    await expect(headerNavigation.getByRole("link", { name: "Users", exact: true })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Open admin navigation" })).toHaveCount(0);
+    const navGeometry = await headerNavigation.evaluate(node => {
+      const links = [...node.querySelectorAll("a")];
+      const first = links[0]?.getBoundingClientRect();
+      return {
+        rowCount: new Set(links.map(link => Math.round(link.getBoundingClientRect().top))).size,
+        firstLeft: first?.left || 0,
+      };
+    });
+    assert.equal(navGeometry.rowCount, 1, "Admin navigation remains a single horizontal row at " + width + "px");
     const dimensions = await page.evaluate(() => ({
       document: document.documentElement.scrollWidth,
       viewport: window.innerWidth,
@@ -120,6 +120,22 @@ try {
   assert.equal(overviewBg, "rgb(241, 245, 251)", "Overview retains its original background");
   await page.screenshot({ path: output + "/overview-navbar-1280.png", fullPage: false });
   checks.push("Overview retains its original canvas");
+  const overviewNav = page.getByRole("navigation", { name: "Admin navigation" });
+  const expectedLabels = ["Overview", "Users", "Search Activity", "Trips", "Support", "Providers", "Content", "System", "Platform Health", "Settings"];
+  for (const label of expectedLabels) {
+    await expect(overviewNav.getByRole("link", { name: label, exact: true })).toHaveCount(1);
+  }
+  const overviewGeometry = await overviewNav.evaluate(node => {
+    const links = [...node.querySelectorAll("a")];
+    return {
+      tops: links.map(link => Math.round(link.getBoundingClientRect().top)),
+      visibleWidth: node.getBoundingClientRect().width,
+      scrollWidth: node.scrollWidth,
+    };
+  });
+  assert.equal(new Set(overviewGeometry.tops).size, 1, "All ten Overview links must remain on one horizontal line");
+  assert.ok(overviewGeometry.scrollWidth <= overviewGeometry.visibleWidth + 1, "No horizontal nav overflow at 1280px and 100% zoom");
+
   assert.deepEqual(errors, [], "No browser errors");
   await writeFile(output + "/navigation-browser-results.json", JSON.stringify({ checks, errors }, null, 2));
   console.log("PASS " + checks.length + " navigation visual checks");
