@@ -23,11 +23,12 @@ test("Platform Health and Hotels share a white workspace and restrained typograp
 test("CMS Health presents all four authoritative summary totals horizontally", () => {
   assert.match(cms, /max-w-\[1500px\] bg-white text-\[#020617\]/);
   assert.match(cms, /aria-label="CMS health metrics"/);
-  assert.match(cms, /min-w-\[680px\] grid-cols-4/);
+  assert.match(cms, /min-w-0 grid-cols-2/);
   for (const value of ["overview.totals.healthy", "overview.totals.unhealthy", "overview.totals.retiredFallback", "overview.totals.scopes"]) {
     assert.ok(cms.includes(value), value);
   }
   assert.match(cms, /overview\.scopes\.filter/);
   assert.match(cms, /<CmsScopeHealthRow/);
   assert.match(cms, /overflow-x-auto/);
+  assert.match(cms, /sm:grid-cols-4/);
 });

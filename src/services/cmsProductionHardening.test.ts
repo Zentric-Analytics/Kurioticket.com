@@ -93,8 +93,9 @@ test("CMS health reports integrity, ordering, fallback and unpublished changes",
   assert.match(healthPage, /aria-label="CMS health summary"/);
   assert.match(healthPage, /max-w-\[1500px\]/);
   assert.match(healthPage, /aria-label="CMS health metrics"/);
-  assert.match(healthPage, /<dl className="grid min-w-\[680px\] grid-cols-4/);
+  assert.match(healthPage, /<dl className="grid min-w-0 grid-cols-2/);
   assert.match(healthPage, /overflow-x-auto overscroll-x-contain/);
+  assert.match(healthPage, /sm:grid-cols-4/);
   assert.match(healthPage, /Healthy/);
   assert.match(healthPage, /Needs attention/);
   assert.match(healthPage, /Fallback retired/);
