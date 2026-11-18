@@ -71,7 +71,19 @@ try{
   const table=page.getByRole('region',{name:'Scheduled-job observations table'});await table.focus();await page.keyboard.press('ArrowRight');expect(await table.evaluate(el=>el.scrollWidth>=el.clientWidth)).toBeTruthy();
   await page.screenshot({path:path.join(output,'health-'+width+'.png'),fullPage:true});
   await page.getByRole('link',{name:'Investigate searches',exact:false}).click();await expect(page).toHaveURL(/applicationSource=IOS/);await expect(page.getByRole('cell',{name:'iOS v1.2.3'})).toBeVisible();await page.getByRole('link',{name:/View details for Flight search/}).click();await expect(page.getByText('Application source',{exact:true})).toBeVisible();await expect(page.getByText('1.2.3',{exact:true})).toBeVisible();await page.getByRole('link',{name:'Search activity',exact:true}).click();await expect(page).toHaveURL(/applicationSource=IOS/);await page.getByRole('button',{name:/^Application:/}).click();await page.getByRole('listbox',{name:'Application'}).getByRole('option',{name:'Unknown',exact:true}).click();await page.getByRole('button',{name:'Apply filters'}).click();await expect(page.getByRole('cell',{name:'Unknown',exact:true})).toBeVisible();
-  expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(width+1);await page.screenshot({path:path.join(output,'search-'+width+'.png'),fullPage:true});
+  const searchOverflow=await page.evaluate(()=>{
+    const content=Array.from(document.querySelectorAll('body *'));
+    return {
+      document:document.documentElement.scrollWidth,viewport:innerWidth,
+      outside:content.map(el=>{
+        const r=el.getBoundingClientRect(),style=getComputedStyle(el);
+        return {tag:el.tagName,className:typeof el.className==='string'?el.className.slice(0,160):'',left:Math.round(r.left),right:Math.round(r.right),width:Math.round(r.width),scrollWidth:el.scrollWidth,clientWidth:el.clientWidth,overflowX:style.overflowX};
+      }).filter(x=>x.right>innerWidth+1&&x.width>40).slice(0,35),
+    };
+  });
+  if(searchOverflow.document>width+1)console.error('SEARCH_ACTIVITY_OVERFLOW_DIAGNOSTIC',JSON.stringify(searchOverflow));
+  expect(searchOverflow.document).toBeLessThanOrEqual(width+1);
+  await page.screenshot({path:path.join(output,'search-'+width+'.png'),fullPage:true});
   await page.setExtraHTTPHeaders({'x-qa-unavailable':'1'});await page.goto(base+'/admin/platform-health',{waitUntil:'networkidle'});await expect(page.getByText('Telemetry could not be read')).toHaveCount(3);await page.setExtraHTTPHeaders({});await page.getByRole('button',{name:'Refresh observations'}).click();await expect(page.getByText('Recorded operations · sample size')).toHaveCount(3);
   await page.goto(base+'/admin/platform-health?hours=24&hours=168');await expect(page.getByRole('alert').filter({hasText:'Choose one application'})).toContainText('Choose one application');
   expect(errors).toEqual([]);results.push({width,overflow,keyboardPolishedFilters:true,filterNavigation:true,detailBackContext:true,unknown:true,unavailableRefreshRecovery:true,reducedMotion:true,runningMotion,pageErrors:errors});await context.close();
