@@ -116,7 +116,7 @@ test("Audit Logs forwards malformed reader parameters so the safe reader can rej
 
 test("Canceling custom date editing restores the applied range selector", () => {
   assert.ok(toolbar.includes("rangeSelectVersion"));
-  assert.ok(toolbar.includes('key={range + ":" + rangeSelectVersion}'));
+  assert.ok(toolbar.includes('key={draftRange + ":" + rangeSelectVersion}'));
   assert.ok(toolbar.includes("setRangeSelectVersion(version => version + 1)"));
 });
 
