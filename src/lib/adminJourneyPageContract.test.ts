@@ -80,14 +80,17 @@ test("Journeys directory shares Users styling without modifying consent-aware da
   assert.match(history, /events\.map\(event =>/);
 });
 
-test("Visitor Journeys defaults to Last 24 hours, aligns filters in columns and isolates the current environment", () => {
+test("Visitor Journeys defaults to Last 24 hours, keeps responsive filters on one desktop row and isolates environment", () => {
   assert.match(dates, /return one\(raw\.from\) \|\| one\(raw\.to\) \|\| one\(raw\.cursor\) \? "custom" : "24h"/);
   assert.match(dates, /JOURNEY_ALL_TIME_FROM/);
   assert.match(list, /getPublicEnvironment\(\)/);
   assert.match(list, /\.\.\.withoutPagination\(raw\), \.\.\.fixed, environment/);
   assert.match(list, /<JourneyDateRangeFields initialRange=\{range\}/);
-  assert.match(list, /xl:grid-cols-\[minmax\(0,1fr\)_minmax\(0,1fr\)_minmax\(0,1\.3fr\)_minmax\(0,1fr\)_auto\]/);
-  assert.match(list, /sm:col-span-2 xl:col-span-1 xl:w-auto/);
+  assert.match(list, /data-testid="journey-filters-toolbar"/);
+  assert.match(list, /sm:grid-cols-2 xl:flex xl:flex-nowrap xl:items-stretch/);
+  assert.match(list, /xl:flex-\[1\.25_1_0%\]/);
+  assert.match(list, /sm:col-span-2 xl:w-\[132px\] xl:shrink-0/);
+  assert.match(list, /align="end" truncateLabel/);
   assert.match(list, /name="product" appearance="fare"/);
   assert.match(list, /name="identity"/);
   assert.match(list, /name="stage" appearance="fare"/);

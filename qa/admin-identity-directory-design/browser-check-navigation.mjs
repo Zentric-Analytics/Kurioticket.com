@@ -94,12 +94,32 @@ try {
         dateTop: date?.getBoundingClientRect().top || 0,
         filterTops: toolbar.map(button => Math.round(button.getBoundingClientRect().top)),
         applyTop: Math.round(apply?.getBoundingClientRect().top || 0),
+        controls: [...toolbar, apply].filter(Boolean).map(button => {
+          const rect = button.getBoundingClientRect();
+          return {
+            left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom,
+            height: rect.height, width: rect.width,
+            scrollWidth: button.scrollWidth, clientWidth: button.clientWidth,
+          };
+        }),
+        formLeft: form.getBoundingClientRect().left,
       };
     });
     assert.ok(filterLayout.dateRight <= filterLayout.formRight + 1, "Date control stays inside content");
     if (width >= 1280) {
       assert.equal(new Set(filterLayout.filterTops.concat(filterLayout.applyTop)).size, 1,
         "Four dropdowns and Apply filters stay on one row at " + width + "px");
+      assert.equal(filterLayout.controls.length, 5, "All five controls are rendered");
+      assert.ok(filterLayout.controls.every(control =>
+        control.width > 0 && Math.abs(control.height - 40) < 1 &&
+        control.left >= filterLayout.formLeft - 1 && control.right <= filterLayout.formRight + 1 &&
+        control.scrollWidth <= control.clientWidth + 1
+      ), "All controls stay fully inside the filter row without clipped or overflowing buttons: " + JSON.stringify(filterLayout));
+      assert.ok(filterLayout.controls.every((control, index) =>
+        index === 0 || control.left >= filterLayout.controls[index - 1].right + 1
+      ), "Dropdowns and Apply filters must not overlap: " + JSON.stringify(filterLayout));
+      assert.ok(filterLayout.controls[4].width <= 140,
+        "Apply filters must remain compact at " + width + "px");
       assert.ok(Math.abs(filterLayout.headingTop - filterLayout.dateTop) < 36,
         "Date range stays in the header at " + width + "px");
     }
