@@ -2,7 +2,7 @@ import { getOptionalPrisma } from "@/lib/prisma";
 import { journeySourcePath } from "@/lib/search-journey";
 import { getPublicEnvironment } from "@/lib/stagingSafety";
 
-const defaultDays = 30;
+export const DEFAULT_ATTRIBUTION_DAYS = 7;
 const maximumDays = 90;
 
 type AttributionGroupRow = {
@@ -39,7 +39,7 @@ export type ReferralAttributionSummary = {
 };
 
 export function parseAttributionDays(value: string | null): number | null {
-  if (value === null) return defaultDays;
+  if (value === null) return DEFAULT_ATTRIBUTION_DAYS;
   if (!/^[1-9]\d*$/.test(value)) return null;
   const days = Number(value);
   return days <= maximumDays ? days : null;
