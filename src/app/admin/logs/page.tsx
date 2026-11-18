@@ -8,7 +8,7 @@ import { adminAuditReads } from "@/services/adminAuditReadService";
 export const metadata = { title: "Admin Audit Logs" };
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
-type AuditRange = "24h" | "7d" | "30d" | "90d" | "custom";
+type AuditRange = "24h" | "7d" | "30d" | "all" | "90d" | "custom";
 
 const rowGrid = "md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.6fr)_minmax(0,1.1fr)_minmax(0,0.95fr)]";
 
@@ -185,7 +185,7 @@ function one(value: string | string[] | undefined) {
 }
 
 function normalizeRange(value: string): AuditRange {
-  return value === "24h" || value === "30d" || value === "90d" || value === "custom" ? value : "7d";
+  return value === "24h" || value === "7d" || value === "30d" || value === "all" || value === "90d" || value === "custom" ? value : "24h";
 }
 
 function auditParams(raw: Record<string, string | string[] | undefined>, range: AuditRange, now: Date) {
@@ -209,6 +209,12 @@ function auditParams(raw: Record<string, string | string[] | undefined>, range: 
     const toDate = one(raw.toDate);
     params.set("from", /^\d{4}-\d{2}-\d{2}$/.test(fromDate) ? fromDate + "T00:00:00.000Z" : fromDate);
     params.set("to", customEndIso(toDate, now));
+    return params;
+  }
+
+  if (range === "all") {
+    params.set("from", "1970-01-01T00:00:00.000Z");
+    params.set("to", now.toISOString());
     return params;
   }
 
