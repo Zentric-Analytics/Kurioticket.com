@@ -420,8 +420,11 @@ test("Task 3: handoff detail groups every field without tiles or losing verifica
 test("Referral date filter stays available without duplicate Providers tabs", () => {
   assert.match(providersPage, /attribution \? \(/);
   assert.doesNotMatch(providersPage, /<nav aria-label="Provider reporting sections"/);
-  assert.match(providersPage, /<div className="flex min-w-0 justify-end border-b border-\[#D8E1EC\] pb-2">/);
-  assert.match(providersPage, /<ReferralWindowFilter days=\{attributionDays \?\? 30\} embedded \/>/);
+  assert.match(providersPage, /<header className="flex min-w-0 flex-wrap items-center justify-between gap-3 border-b border-\[#D8E1EC\] pb-4 pt-1">/);
+  assert.match(providersPage, /<h1 className="text-\[20px\] font-semibold leading-7 tracking-\[-0\.02em\] text-\[#020617\]">\s*Referral Attribution\s*<\/h1>/);
+  assert.match(providersPage, /<ReferralWindowFilter days=\{attributionDays \?\? DEFAULT_ATTRIBUTION_DAYS\} embedded \/>/);
+  assert.match(referralPage, /\) : null\}/);
+  assert.doesNotMatch(referralPage, /<h1 className="sr-only">Referral Attribution<\/h1>/);
   assert.doesNotMatch(providersPage, /attributionEnvironment === "production"/);
   assert.doesNotMatch(referralPage, /summary\.environment === "production"/);
   assert.match(referralPage, /\{!embedded \? \(/);

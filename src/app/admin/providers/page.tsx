@@ -1,6 +1,6 @@
 import AdminReferralAttributionPage from "@/app/admin/referral-attribution/page";
 import { ReferralWindowFilter } from "@/components/admin/ReferralWindowFilter";
-import { parseAttributionDays } from "@/services/referralAttributionService";
+import { DEFAULT_ATTRIBUTION_DAYS, parseAttributionDays } from "@/services/referralAttributionService";
 import Link from "next/link";
 
 import { Info } from "lucide-react";
@@ -124,12 +124,15 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
 
   return (
     <div className="w-full min-w-0 bg-white text-[#020617]">
-      <h1 className="sr-only">Providers</h1>
+      {!attribution ? <h1 className="sr-only">Providers</h1> : null}
 
       {attribution ? (
-        <div className="flex min-w-0 justify-end border-b border-[#D8E1EC] pb-2">
-          <ReferralWindowFilter days={attributionDays ?? 30} embedded />
-        </div>
+        <header className="flex min-w-0 flex-wrap items-center justify-between gap-3 border-b border-[#D8E1EC] pb-4 pt-1">
+          <h1 className="text-[20px] font-semibold leading-7 tracking-[-0.02em] text-[#020617]">
+            Referral Attribution
+          </h1>
+          <ReferralWindowFilter days={attributionDays ?? DEFAULT_ATTRIBUTION_DAYS} embedded />
+        </header>
       ) : null}
 
       {attribution ? (
