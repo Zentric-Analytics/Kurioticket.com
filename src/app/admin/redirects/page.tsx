@@ -103,6 +103,11 @@ export default async function AdminRedirectsPage({ searchParams, embedded = fals
         <p className="mb-2 text-[12px] text-[#475569]">Source page: <span className="font-semibold text-[#020617]">{one(scopedRaw.sourcePage)}</span> <Link href={"/admin/redirects?" + (() => { const params = toParams(scopedRaw); if (one(scopedRaw.range)) params.set("range", one(scopedRaw.range)); params.delete("sourcePage"); params.delete("cursor"); return params.toString(); })()} className="ml-2 font-medium text-[#004BB8] hover:underline">Clear source</Link></p>
       ) : null}
       <ProviderHandoffFilters
+        key={JSON.stringify([
+          dateWindow.range, one(raw.range), one(raw.product), one(raw.identity),
+          one(raw.correlation), one(raw.provider), one(raw.environment),
+          one(raw.userId), one(raw.visitorId), one(raw.from), one(raw.to), one(raw.sourcePage),
+        ])}
         initial={{
           product: one(scopedRaw.product),
           identity: one(scopedRaw.identity) || "all",
