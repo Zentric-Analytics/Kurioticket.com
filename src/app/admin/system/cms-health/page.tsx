@@ -1,6 +1,4 @@
 import { CmsRetryButton } from "@/components/admin/CmsRetryButton";
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { CmsScopeHealthRow } from "@/components/admin/CmsScopeHealthRow";
@@ -39,13 +37,6 @@ export default async function AdminCmsHealthPage() {
 
   return (
     <div className="mx-auto w-full min-w-0 max-w-[1500px] bg-white text-[#020617]">
-      <Link
-        href="/admin/system"
-        className="focus-ring mb-3 inline-flex items-center gap-1.5 rounded-sm text-[12px] font-medium text-[#64748B] hover:text-[#004BB8]"
-      >
-        <ArrowLeft size={14} aria-hidden="true" />
-        Back to System
-      </Link>
       <AdminPageShell title="CMS Health" hideHeader><header className="border-b border-[#D8E1EC] pb-4 pt-1"><h1 className="text-[20px] font-semibold leading-7 tracking-[-0.02em] text-[#020617]">CMS Health</h1></header>
         {!overview.available ? (
           <section className="border-y border-[#D8E1EC] py-5" aria-labelledby="cms-health-unavailable">

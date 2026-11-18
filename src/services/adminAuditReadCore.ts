@@ -59,10 +59,23 @@ export function createAdminAuditReadService(dependencies: Dependencies) {
           ...(scope.adminEmail ? { adminEmail: { contains: scope.adminEmail, mode: "insensitive" } } : {}),
           ...(scope.targetType ? { targetType: { equals: scope.targetType, mode: "insensitive" } } : {}),
           ...(scope.targetEmail ? { targetEmail: { contains: scope.targetEmail, mode: "insensitive" } } : {}),
-          ...(cursor ? {
-            OR: [
-              { createdAt: { lt: new Date(cursor.at) } },
-              { createdAt: new Date(cursor.at), id: { lt: cursor.id } },
+          // Unified email matches either the acting admin or affected account.
+          // Keep both OR clauses inside AND when paging, so cursor filtering
+          // never replaces the email condition or broadens the result set.
+          ...((scope.searchEmail || cursor) ? {
+            AND: [
+              ...(scope.searchEmail ? [{
+                OR: [
+                  { adminEmail: { contains: scope.searchEmail, mode: "insensitive" as const } },
+                  { targetEmail: { contains: scope.searchEmail, mode: "insensitive" as const } },
+                ],
+              }] : []),
+              ...(cursor ? [{
+                OR: [
+                  { createdAt: { lt: new Date(cursor.at) } },
+                  { createdAt: new Date(cursor.at), id: { lt: cursor.id } },
+                ],
+              }] : []),
             ],
           } : {}),
         };

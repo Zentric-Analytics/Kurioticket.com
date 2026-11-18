@@ -278,9 +278,10 @@ test("CMS all-market navigation preserves draft search, selected market and over
 });
 
 test("Audit Logs drafts never fetch until Apply filters and preserve typed values", async () => {
-  const props = { action: "", adminEmail: "", targetType: "", targetEmail: "", range: "24h", fromDate: "", toDate: "", pageHref: "/admin/logs?range=24h" };
+  const props = { action: "", adminEmail: "", searchEmail: "", targetType: "", targetEmail: "", range: "24h", fromDate: "", toDate: "", pageHref: "/admin/logs?range=24h" };
   await withComponentBrowser(bundle(), mount("audit", "AdminAuditLogsToolbar", props), async page => {
-    const admin = page.getByRole("searchbox", { name: "Search admin email", exact: true });
+    const admin = page.getByRole("searchbox", { name: "Search email", exact: true });
+    assert.equal(await page.getByRole("searchbox").count(), 1);
     await admin.fill("draft@example.test");
     await page.getByRole("combobox", { name: "Date range", exact: true }).click();
     await page.getByRole("option", { name: "Last 7 days", exact: true }).click();
@@ -298,7 +299,9 @@ test("Audit Logs drafts never fetch until Apply filters and preserve typed value
     assert.equal(url.searchParams.get("range"), "7d");
     assert.equal(url.searchParams.get("action"), "CMS");
     assert.equal(url.searchParams.get("targetType"), "Provider");
-    assert.equal(url.searchParams.get("adminEmail"), "draft@example.test");
+    assert.equal(url.searchParams.get("searchEmail"), "draft@example.test");
+    assert.equal(url.searchParams.has("adminEmail"), false);
+    assert.equal(url.searchParams.has("targetEmail"), false);
   });
 });
 

@@ -43,6 +43,7 @@ export default async function AdminLogsPage({ searchParams }: { searchParams: Se
         <AdminAuditLogsToolbar
           action={one(raw.action)}
           adminEmail={one(raw.adminEmail)}
+          searchEmail={one(raw.searchEmail)}
           targetType={one(raw.targetType)}
           targetEmail={one(raw.targetEmail)}
           range={range}
@@ -237,7 +238,7 @@ function customEndIso(value: string, now: Date) {
 function currentHref(raw: Record<string, string | string[] | undefined>, range: AuditRange) {
   const params = new URLSearchParams();
   params.set("range", range);
-  for (const key of ["action", "adminEmail", "targetType", "targetEmail", "fromDate", "toDate", "cursor"] as const) {
+  for (const key of ["action", "searchEmail", "adminEmail", "targetType", "targetEmail", "fromDate", "toDate", "cursor"] as const) {
     const value = one(raw[key]);
     if (value) params.set(key, value);
   }
