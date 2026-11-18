@@ -111,7 +111,8 @@ jobs:
           await import("./src/app/admin/cars/page.test.ts");
           await import("./src/services/adminProductSearchRecordsCore.test.ts");
           await import("./src/components/admin/ProductSearchRecordsPanel.test.ts");
-          await import("./src/lib/adminSearchWorkspace.test.ts");'
+          await import("./src/lib/adminSearchWorkspace.test.ts");
+          await import("./src/lib/adminHandoffDateRange.test.ts");'
       - name: Validate admin CMS contracts and interactions
         run: npm run test:cms
 

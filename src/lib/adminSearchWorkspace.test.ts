@@ -78,6 +78,6 @@ test("Search Activity owns Provider Handoffs navigation, without a misleading Pr
   const nav = readFileSync("src/lib/adminNavigation.ts", "utf8");
   assert.match(nav, /href: "\/admin\/redirects", parentHref: "\/admin\/searches\/activity"/);
   assert.doesNotMatch(redirects, /<SearchWorkspaceBackLink href="\/admin\/providers\?view=attribution" label="Provider reports"/);
-  assert.match(redirects, /handoffDetailHref\(handoff\.id, handoff\.environment, raw\)/);
-  assert.match(redirects, /handoffPreviousPageHref\(raw\)/);
+  assert.match(redirects, /handoffDetailHref\(handoff\.id, handoff\.environment, scopedRaw\)/);
+  assert.match(redirects, /handoffPreviousPageHref\(scopedRaw\)/);
 });

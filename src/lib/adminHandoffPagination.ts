@@ -15,7 +15,7 @@ function trail(raw: Raw): string[] {
 
 function base(raw: Raw) {
   const params = new URLSearchParams();
-  for (const key of ["environment", "product", "identity", "userId", "visitorId", "provider", "correlation", "sourcePage", "from", "to", "limit"]) {
+  for (const key of ["environment", "product", "identity", "userId", "visitorId", "provider", "correlation", "sourcePage", "from", "to", "range", "limit"]) {
     const value = raw[key];
     if (typeof value === "string" && value.length <= 2048 && value.length > 0) params.set(key, value);
   }
