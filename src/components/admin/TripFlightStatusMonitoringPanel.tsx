@@ -18,7 +18,7 @@ export async function TripFlightStatusMonitoringPanel() {
         <section id="flight-status-overview-title" aria-label="Flight status overview" className="min-w-0">
           {operations ? (
             <div role="region" aria-label="Flight status metrics" tabIndex={0} className="min-w-0 max-w-full overflow-x-auto overscroll-x-contain rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400">
-              <div className="grid w-full min-w-[960px] grid-cols-6 gap-2">
+              <div className="grid w-full min-w-0 grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
               <FlightStatusMetric label="Confirmed flights" value={operations.metrics.confirmedFlights} hint="Provider-confirmed trips" tone="info" />
               <FlightStatusMetric label="Provider matched" value={operations.metrics.feedEligibleFlights} hint="Provider eligible" />
               <FlightStatusMetric label="Tracked" value={operations.metrics.trackedFlights} hint="Stored snapshot" tone={operations.metrics.trackedFlights > 0 ? "good" : "neutral"} />

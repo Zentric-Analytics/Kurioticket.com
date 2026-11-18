@@ -29,15 +29,15 @@ export function OperationsMetric({ label, value, hint, tone = "neutral" }: {
   );
 }
 
-/** Same continuous five-column metric strip used by Homepage Fare Operations.
- * Narrow screens scroll only the metric region; metrics never wrap into rows. */
+/** Five readable columns at desktop width, with compact metric rows on small
+ * screens. Do not impose a fixed minimum width on the right-side workspace. */
 export function OperationsMetricStrip({ children }: { children: ReactNode }) {
   return (
     <div role="region" tabIndex={0}
-      aria-label="Operations metrics (scroll horizontally on narrow screens)"
+      aria-label="Operations metrics"
       className="w-full min-w-0 overflow-x-auto overscroll-x-contain focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
       <dl aria-label="Search operations metrics"
-        className="grid min-w-[920px] grid-cols-5 gap-px border-y border-[#D8E1EC] bg-[#E7ECF5]">
+        className="grid min-w-0 grid-cols-2 gap-px border-y border-[#D8E1EC] bg-[#E7ECF5] sm:grid-cols-3 lg:grid-cols-5">
         {children}
       </dl>
     </div>
