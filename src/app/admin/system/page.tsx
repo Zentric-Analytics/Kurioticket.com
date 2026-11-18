@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { getSafeSystemStatus } from "@/lib/admin-data";
 import { getAdminEmails } from "@/lib/env";
@@ -6,7 +5,7 @@ import { getAdminEmails } from "@/lib/env";
 export const metadata = { title: "Admin System" };
 
 type StatusTone = "good" | "bad" | "warn" | "neutral" | "info";
-type AttentionItem = { label: string; detail: string; href?: string; actionLabel?: string };
+type AttentionItem = { label: string; detail: string };
 type ServiceItem = {
   id: string;
   name: string;
@@ -15,8 +14,6 @@ type ServiceItem = {
   signal: string;
   verification?: string;
   adminDetails?: { allowlist: string; configuredAdministrators: number };
-  href?: string;
-  actionLabel?: string;
 };
 
 const statusStyles: Record<StatusTone, { text: string; dot: string }> = {
@@ -37,61 +34,21 @@ function StatusIndicator({ value, tone }: { value: string; tone: StatusTone }) {
   );
 }
 
+/** Read-only overview: specialized diagnostics are reached from the persistent System sidebar. */
 function SystemAreaRow({ service }: { service: ServiceItem }) {
-  const rowContent = (
-    <>
-      <div className="min-w-0">
-        <span className="text-[13px] font-semibold text-[#020617]">{service.name}</span>
-      </div>
-      <div className="min-w-0">
-        <StatusIndicator value={service.status} tone={service.tone} />
-      </div>
-      <p className="text-[12px] text-[#475569]">{service.signal}</p>
-    </>
-  );
-
-  if (!service.adminDetails) {
-    return (
-      <div data-system-area={service.id} className="grid gap-2 px-3 py-3 md:grid-cols-[minmax(150px,1.1fr)_minmax(170px,0.9fr)_minmax(170px,1fr)_minmax(150px,auto)] md:items-center md:gap-4">
-        {rowContent}
-        {service.href ? (
-          <Link href={service.href} className="text-[12px] font-medium text-[#004BB8] hover:underline md:text-right">
-            {service.actionLabel} ›
-          </Link>
-        ) : (
-          <span aria-hidden="true" />
-        )}
-      </div>
-    );
-  }
-
   return (
-    <details data-system-area={service.id} className="group">
-      <summary className="grid cursor-pointer list-none gap-2 px-3 py-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] md:grid-cols-[minmax(150px,1.1fr)_minmax(170px,0.9fr)_minmax(170px,1fr)_minmax(150px,auto)] md:items-center md:gap-4 [&::-webkit-details-marker]:hidden">
-        {rowContent}
-        <span className="text-[12px] font-medium text-[#004BB8] md:text-right">
-          <span className="group-open:hidden">View ›</span>
-          <span className="hidden group-open:inline">Hide ‹</span>
-        </span>
-      </summary>
-
-      <div className="border-t border-[#EEF2F7] px-3 py-3">
-        <div className="grid max-w-[900px] gap-x-8 gap-y-3 sm:grid-cols-3">
-          <div className="min-w-0">
-            <p className="text-[12px] text-[#64748B]">Administrator allowlist</p>
-            <p className="mt-1 text-[13px] text-[#020617]">{service.adminDetails.allowlist}</p>
-          </div>
-          <div className="min-w-0">
-            <p className="text-[12px] text-[#64748B]">Configured administrators</p>
-            <p className="mt-1 text-[13px] tabular-nums text-[#020617]">{service.adminDetails.configuredAdministrators}</p>
-          </div>
-          <div className="min-w-0">
-            <p className="text-[12px] text-[#64748B]">Verification</p>
-            <p className="mt-1 text-[13px] text-[#020617]">{service.verification}</p>
-          </div>
-        </div>
+    <div data-system-area={service.id} className="grid min-w-0 gap-x-4 gap-y-1.5 px-3 py-3 md:grid-cols-[minmax(150px,1.1fr)_minmax(150px,0.85fr)_minmax(220px,1.4fr)] md:items-start">
+      <p className="min-w-0 text-[13px] font-semibold text-[#020617]">{service.name}</p>
+      <div className="min-w-0"><StatusIndicator value={service.status} tone={service.tone} /></div>
+      <div className="min-w-0">
+        <p className="text-[12px] text-[#475569]">{service.signal}</p>
+        {service.adminDetails ? (
+          <p className="mt-1 text-[11px] text-[#64748B]">
+            Administrator allowlist: {service.adminDetails.allowlist} · {service.adminDetails.configuredAdministrators} configured entries
+          </p>
+        ) : null}
       </div>
-    </details>
+    </div>
   );
 }
 
@@ -99,9 +56,8 @@ export default async function AdminSystemPage() {
   const system = await getSafeSystemStatus();
   const adminEmailCount = getAdminEmails().length;
 
-  // A successful database query is the only direct connectivity signal on this page.
-  // Every other row is intentionally described as configuration/readiness or as a
-  // link to its dedicated diagnostics so the UI never invents service health.
+  // A database query is the only direct connectivity check. Other statuses
+  // indicate configuration or separate monitoring; none is upgraded to healthy.
   const databaseLabel = system.databaseConnected
     ? "Connected"
     : system.databaseConfigured ? "Configured, disconnected" : "Disconnected";
@@ -121,15 +77,11 @@ export default async function AdminSystemPage() {
   });
   if (!system.emailConfigured) attention.push({
     label: "Email configuration incomplete",
-    detail: "Email credentials are not fully configured. This does not represent delivery health.",
-    href: "/admin/email-delivery",
-    actionLabel: "View email diagnostics",
+    detail: "Email credentials are incomplete. Delivery health is checked separately.",
   });
   if (!system.providerCredentialsPresent) attention.push({
     label: "Provider credentials absent",
-    detail: "No provider credentials were detected. Review provider integration readiness.",
-    href: "/admin/providers",
-    actionLabel: "Review provider readiness",
+    detail: "No provider credentials were detected. Provider readiness is checked separately.",
   });
   if (!system.adminEmailsConfigured) attention.push({
     label: "Administrator email configuration missing",
@@ -157,17 +109,13 @@ export default async function AdminSystemPage() {
       status: system.emailConfigured ? "Configured" : "Incomplete",
       tone: system.emailConfigured ? "info" : "warn",
       signal: "Configuration only",
-      href: "/admin/email-delivery",
-      actionLabel: "Open Email Delivery",
     },
     {
       id: "cms",
       name: "CMS",
       status: "Separate check",
       tone: "neutral",
-      signal: "CMS diagnostics",
-      href: "/admin/system/cms-health",
-      actionLabel: "Open CMS Health",
+      signal: "Separate CMS check",
     },
     {
       id: "admin-access",
@@ -183,7 +131,7 @@ export default async function AdminSystemPage() {
     },
   ];
 
-  const monitoredAreaCount = serviceRows.filter(service => service.id !== "admin-access").length;
+  const listedAreaCount = serviceRows.length;
 
   return (
     <AdminPageShell title="System" hideHeader>
@@ -195,8 +143,8 @@ export default async function AdminSystemPage() {
               <p className="mt-1 text-[14px] font-semibold">{system.appEnvironment}</p>
             </div>
             <div className="min-w-0">
-              <p className="text-[12px] text-[#64748B]">Monitored areas</p>
-              <p className="mt-1 text-[14px] font-semibold tabular-nums">{monitoredAreaCount}</p>
+              <p className="text-[12px] text-[#64748B]">System areas</p>
+              <p className="mt-1 text-[14px] font-semibold tabular-nums">{listedAreaCount}</p>
             </div>
             <div className="min-w-0">
               <p className="text-[12px] text-[#64748B]">Issues requiring attention</p>
@@ -216,16 +164,11 @@ export default async function AdminSystemPage() {
           {attention.length ? (
             <ul className="mt-2 max-w-[980px] divide-y divide-[#E7ECF5]">
               {attention.map((item) => (
-                <li key={item.label} className="flex flex-wrap items-start justify-between gap-3 py-2.5 first:pt-0 last:pb-0">
+                <li key={item.label} className="py-2.5 first:pt-0 last:pb-0">
                   <div className="min-w-0 max-w-[760px]">
                     <p className="text-[13px] font-medium text-[#020617]">{item.label}</p>
                     <p className="mt-1 text-[12px] leading-5 text-[#64748B]">{item.detail}</p>
                   </div>
-                  {item.href ? (
-                    <Link href={item.href} className="shrink-0 text-[13px] font-medium text-[#004BB8] hover:underline">
-                      {item.actionLabel}
-                    </Link>
-                  ) : null}
                 </li>
               ))}
             </ul>
@@ -238,11 +181,10 @@ export default async function AdminSystemPage() {
           <h2 id="system-areas-heading" className="text-[15px] font-semibold text-[#020617]">System areas</h2>
 
           <div className="mt-2.5 border-y border-[#E7ECF5]">
-            <div className="hidden grid-cols-[minmax(150px,1.1fr)_minmax(170px,0.9fr)_minmax(170px,1fr)_minmax(150px,auto)] gap-4 border-b border-[#D8E1EC] px-3 py-3 text-[12px] font-medium uppercase text-[#475569] md:grid">
+            <div className="hidden grid-cols-[minmax(150px,1.1fr)_minmax(150px,0.85fr)_minmax(220px,1.4fr)] gap-4 border-b border-[#D8E1EC] px-3 py-3 text-[12px] font-medium uppercase text-[#475569] md:grid">
               <span>Area</span>
               <span>Status</span>
               <span>Signal</span>
-              <span className="text-right">Details</span>
             </div>
 
             <div className="divide-y divide-[#E7ECF5]">
