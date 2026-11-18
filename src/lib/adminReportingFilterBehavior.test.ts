@@ -1,0 +1,39 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import test from "node:test";
+
+import { journeyWindow, selectedJourneyRange } from "./adminJourneyDateRange";
+
+const searchActivity = readFileSync("src/app/admin/searches/activity/page.tsx", "utf8");
+const journeys = readFileSync("src/app/admin/journeys/page.tsx", "utf8");
+const journeyControls = readFileSync("src/components/admin/JourneyDateRangeFields.tsx", "utf8");
+
+test("Visitor Journeys uses a true rolling 24-hour default without altering retained history", () => {
+  const now = new Date("2026-11-18T19:37:25.000Z");
+  assert.equal(selectedJourneyRange({}), "24h");
+  assert.deepEqual(journeyWindow({}, now), {
+    from: "2026-11-17T19:37:25.000Z",
+    to: "2026-11-18T19:37:25.000Z",
+  });
+  assert.equal(selectedJourneyRange({ from: "2026-11-10T00:00:00.000Z" }), "custom");
+  assert.equal(selectedJourneyRange({ range: "today" }), "today");
+  assert.deepEqual(journeyWindow({ range: "all" }, now), {
+    from: "1970-01-01T00:00:00.000Z",
+    to: now.toISOString(),
+  });
+});
+
+test("multiple-filter Journeys and Search Activity pages retain Apply-only submission", () => {
+  assert.match(journeys, /aria-label="Filter visitor journeys"/);
+  assert.match(journeys, /<button type="submit"/);
+  assert.match(journeys, /Apply filters/);
+  assert.match(journeyControls, /value: "24h", label: "Last 24 hours"/);
+  assert.match(journeyControls, /value: "7d", label: "Last 7 days"/);
+  assert.match(journeyControls, /value: "30d", label: "Last 30 days"/);
+  assert.match(journeyControls, /value: "all", label: "All time"/);
+  assert.match(searchActivity, /value: "24h", label: "Last 24 hours"/);
+  assert.match(searchActivity, /return hasLegacyScope \? "all" : "24h"/);
+  assert.match(searchActivity, /from\.setTime\(now\.getTime\(\) - 24 \* 60 \* 60 \* 1000\)/);
+  assert.match(searchActivity, /<button type="submit"/);
+  assert.match(searchActivity, /Apply filters/);
+});

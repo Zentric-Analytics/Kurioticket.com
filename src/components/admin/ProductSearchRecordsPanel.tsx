@@ -68,6 +68,9 @@ export function ProductSearchRecordsPanel({ product }: { product: ProviderProduc
   const sectionId = product === "HOTEL" ? "hotel-search-records" : "car-search-records";
   const [filter, setFilter] = useState<ProductSearchFilter>("EXCEPTIONS");
   const [windowValue, setWindowValue] = useState<ProductSearchWindow>("24h");
+  // Draft selectors must never trigger a records request until Apply filters.
+  const [draftFilter, setDraftFilter] = useState<ProductSearchFilter>("EXCEPTIONS");
+  const [draftWindow, setDraftWindow] = useState<ProductSearchWindow>("24h");
   const [pageIndex, setPageIndex] = useState(0);
   const [cursors, setCursors] = useState<Array<string | null>>([null]);
   const [reload, setReload] = useState(0);
@@ -89,6 +92,7 @@ export function ProductSearchRecordsPanel({ product }: { product: ProviderProduc
     // Preserve existing bookmarked URLs without reintroducing a redundant header action.
     if (window.location.hash === "#" + sectionId) {
       setFilter("ALL");
+      setDraftFilter("ALL");
       resetPage();
     }
   }, [sectionId, resetPage]);
@@ -145,6 +149,14 @@ export function ProductSearchRecordsPanel({ product }: { product: ProviderProduc
     return () => { current = false; controller.abort(); };
   }, [product, selectedId]);
 
+  const applyFilters = () => {
+    setFilter(draftFilter);
+    setWindowValue(draftWindow);
+    resetPage();
+    // Reapply the same filters from page one without leaving a perpetual spinner.
+    if (draftFilter === filter && draftWindow === windowValue && pageIndex === 0) setReload(value => value + 1);
+  };
+
   const page = result?.status === "ok" ? result.data : null;
   const rows = page?.items ?? [];
   const showError = !loading && result && result.status !== "ok";
@@ -166,21 +178,21 @@ export function ProductSearchRecordsPanel({ product }: { product: ProviderProduc
           {loading ? "Refreshing…" : "Refresh records"}
         </button>
       </div>
-      <div className="mt-4 grid min-w-0 grid-cols-1 items-center gap-x-3 gap-y-2 border-y border-[#E7ECF5] py-3 sm:grid-cols-[minmax(0,180px)_minmax(0,172px)_minmax(0,1fr)]" role="group" aria-label="Search records filters">
+      <div className="mt-4 grid min-w-0 grid-cols-1 items-center gap-x-3 gap-y-2 border-y border-[#E7ECF5] py-3 sm:grid-cols-[minmax(0,180px)_minmax(0,180px)_auto] sm:justify-start" role="group" aria-label="Search records filters">
         <div className="min-w-0">
-          <SearchMonitorSelect label="Outcome" name="outcome" appearance="fare" value={filter}
-            options={productFilterOptions} onValueChange={value => {
-              setFilter(value as ProductSearchFilter); resetPage();
-            }} />
+          <SearchMonitorSelect label="Outcome" name="outcome" appearance="fare" value={draftFilter}
+            options={productFilterOptions} onValueChange={value => setDraftFilter(value as ProductSearchFilter)} />
         </div>
         <div className="min-w-0">
-          <SearchMonitorSelect label="Date range" name="period" appearance="fare" value={windowValue}
-            options={windowOptions} onValueChange={value => {
-              setWindowValue(value as ProductSearchWindow); resetPage();
-            }} />
+          <SearchMonitorSelect label="Date range" name="period" appearance="fare" value={draftWindow}
+            options={windowOptions} onValueChange={value => setDraftWindow(value as ProductSearchWindow)} />
         </div>
-        <p className="min-w-0 text-[11px] leading-5 text-[#64748B]">Showing recorded {product === "HOTEL" ? "hotel" : "car"} searches in this deployment only</p>
+        <button type="button" onClick={applyFilters} disabled={loading}
+          className="inline-flex h-10 items-center justify-center whitespace-nowrap rounded-lg bg-[#004BB8] px-4 text-[13px] font-medium text-white transition-colors hover:bg-[#003D97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] disabled:opacity-60">
+          Apply filters
+        </button>
       </div>
+      <p className="mt-2 text-[11px] leading-5 text-[#64748B]">Showing recorded {product === "HOTEL" ? "hotel" : "car"} searches in this deployment only</p>
 
       <div role="region" aria-label="Product search records table" aria-busy={loading} tabIndex={0}
         className="mt-3 w-full min-w-0 max-w-full overflow-x-auto overscroll-x-contain focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">

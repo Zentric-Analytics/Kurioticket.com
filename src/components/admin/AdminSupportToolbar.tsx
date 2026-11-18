@@ -39,9 +39,11 @@ type Props = {
 export function AdminSupportToolbar({ query, status, priority, category, pageHref, children }: Props) {
   const router = useRouter();
   const [searchText, setSearchText] = useState(query);
+  const [draftPriority, setDraftPriority] = useState(priority);
+  const [draftCategory, setDraftCategory] = useState(category);
   const [isPending, startTransition] = useTransition();
-  // Hide stale ticket rows as soon as a search is edited, including during debounce.
-  const isLoadingResults = isPending || searchText.trim().slice(0, 160) !== query.trim().slice(0, 160);
+  // Draft edits must not mark records as loading until Apply is submitted.
+  const isLoadingResults = isPending;
   const textRef = useRef(query);
   const editingRef = useRef(false);
   const lastSubmittedRef = useRef<string | null>(null);
@@ -49,7 +51,9 @@ export function AdminSupportToolbar({ query, status, priority, category, pageHre
 
   useEffect(() => {
     paramsRef.current = new URLSearchParams(pageHref.split("?")[1] || "");
-  }, [pageHref]);
+    setDraftPriority(priority);
+    setDraftCategory(category);
+  }, [pageHref, priority, category]);
 
   // Keep the search input synchronized on Back/Forward, as on Users.
   useEffect(() => {
@@ -77,7 +81,7 @@ export function AdminSupportToolbar({ query, status, priority, category, pageHre
   }, [query, pageHref]);
 
   const navigate = useCallback((values: Record<string, string>, replace = false) => {
-    const nextQuery = textRef.current.trim().slice(0, 160);
+    const nextQuery = query.trim().slice(0, 160);
     const url = supportInboxHref(paramsRef.current, { q: nextQuery, ...values });
     paramsRef.current = new URLSearchParams(url.split("?")[1] || "");
     lastSubmittedRef.current = ("q" in values || nextQuery !== query) ? nextQuery : null;
@@ -87,39 +91,21 @@ export function AdminSupportToolbar({ query, status, priority, category, pageHre
     });
   }, [router, query]);
 
-  // Match Users: search as you type, with a short debounce and no submit button.
-  useEffect(() => {
-    const nextQuery = searchText.trim().slice(0, 160);
-    if (nextQuery === query) {
-      if (lastSubmittedRef.current !== null && lastSubmittedRef.current !== nextQuery) {
-        navigate({ q: nextQuery }, true);
-        editingRef.current = false;
-      } else {
-        editingRef.current = false;
-        lastSubmittedRef.current = null;
-      }
-      return;
-    }
-    if (!editingRef.current || nextQuery === lastSubmittedRef.current) return;
-    const timer = window.setTimeout(() => {
-      if (lastSubmittedRef.current === nextQuery || !editingRef.current) return;
-      navigate({ q: nextQuery }, true);
-    }, 300);
-    return () => window.clearTimeout(timer);
-  }, [searchText, query, navigate]);
-
+  // The Search field and both dropdowns stay drafts until Apply filters.
   function submitSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const nextQuery = textRef.current.trim().slice(0, 160);
-    if (nextQuery !== lastSubmittedRef.current && (nextQuery !== query || lastSubmittedRef.current !== null)) {
-      navigate({ q: nextQuery }, true);
-    }
+    // Pressing Enter in the search box does not submit multiple independent filters.
   }
 
   const base = new URLSearchParams(pageHref.split("?")[1] || "");
   const href = (changes: Record<string, string>) => supportInboxHref(base, changes);
   const hasFilters = ["status", "priority", "category", "q", "from", "to"]
     .some(key => Boolean(base.get(key)));
+
+  function applyFilters(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    navigate({ q: searchText.trim().slice(0, 160), priority: draftPriority, category: draftCategory });
+  }
 
   function navigateLink(event: MouseEvent<HTMLAnchorElement>, values: Record<string, string>) {
     if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
@@ -134,6 +120,8 @@ export function AdminSupportToolbar({ query, status, priority, category, pageHre
     lastSubmittedRef.current = null;
     textRef.current = "";
     setSearchText("");
+    setDraftPriority("");
+    setDraftCategory("");
     paramsRef.current = new URLSearchParams();
     startTransition(() => router.push("/admin/support", { scroll: false }));
   }
@@ -168,7 +156,7 @@ export function AdminSupportToolbar({ query, status, priority, category, pageHre
         </form>
       </div>
 
-      <div className="flex min-w-0 flex-col gap-x-4 gap-y-2 border-b border-border lg:flex-row lg:items-end lg:justify-between">
+      <div className="flex min-w-0 flex-col gap-x-4 gap-y-2 border-b border-border 2xl:flex-row 2xl:items-end 2xl:justify-between">
         <nav aria-label="Support ticket status" className="flex min-w-0 max-w-full shrink-0 items-center gap-5 overflow-x-auto">
           {supportStatusTabs.map(item => {
             const active = status === item.value;
@@ -193,7 +181,8 @@ export function AdminSupportToolbar({ query, status, priority, category, pageHre
           action="/admin/support"
           method="get"
           aria-label="Filter support tickets"
-          className="flex min-w-0 flex-wrap items-end gap-x-6 gap-y-2 lg:shrink-0 lg:justify-end"
+          onSubmit={applyFilters}
+          className="grid min-w-0 grid-cols-1 items-end gap-2 sm:grid-cols-[minmax(0,160px)_minmax(0,160px)_auto] sm:justify-end 2xl:shrink-0"
         >
           {["q", "status", "from", "to", "limit"].map(key => base.get(key)
             ? <input key={key} type="hidden" name={key} value={base.get(key) ?? ""} readOnly />
@@ -202,36 +191,36 @@ export function AdminSupportToolbar({ query, status, priority, category, pageHre
             key={"priority-" + priority}
             name="priority"
             label="Ticket priority"
-            value={priority}
+            value={draftPriority}
             options={supportPriorityOptions}
             plain
             align="end"
-            onValueChange={next => navigate({ priority: next })}
+            onValueChange={setDraftPriority}
           />
           <AdminDirectorySelect
             key={"category-" + category}
             name="category"
             label="Ticket category"
-            value={category}
-            options={supportCategoryChoices(category)}
+            value={draftCategory}
+            options={supportCategoryChoices(draftCategory)}
             plain
             align="end"
-            onValueChange={next => navigate({ category: next })}
+            onValueChange={setDraftCategory}
           />
-          {hasFilters ? (
-            <Link
-              href="/admin/support"
-              onClick={clearFilters}
-              className="focus-ring inline-flex h-10 items-center whitespace-nowrap text-[12px] font-medium text-[#64748B] hover:text-[#004BB8]"
-            >
-              Clear filters
-            </Link>
-          ) : null}
-          <noscript>
-            <button type="submit" className="focus-ring rounded-lg border border-border px-3 py-2 text-[13px] font-medium text-foreground">
-              Update filters
+          <div className="flex min-w-0 items-center justify-end gap-2 whitespace-nowrap">
+            {hasFilters ? (
+              <Link
+                href="/admin/support"
+                onClick={clearFilters}
+                className="focus-ring inline-flex h-10 items-center whitespace-nowrap text-[12px] font-medium text-[#64748B] hover:text-[#004BB8]"
+              >
+                Clear filters
+              </Link>
+            ) : null}
+            <button type="submit" disabled={isPending} className="focus-ring inline-flex h-10 items-center justify-center whitespace-nowrap rounded-lg bg-[#004BB8] px-4 text-[13px] font-medium text-white hover:bg-[#003D97] disabled:opacity-60">
+              Apply filters
             </button>
-          </noscript>
+          </div>
         </form>
       </div>
 

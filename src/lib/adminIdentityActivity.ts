@@ -64,7 +64,15 @@ function validDay(day: string) {
   const parsed = new Date(day + "T00:00:00.000Z");
   return Number.isFinite(parsed.getTime()) && parsed.toISOString().slice(0, 10) === day;
 }
-/** Dates represent inclusive UTC calendar days; an empty pair means all recorded dates. */
+/** Legacy dates are inclusive UTC calendar days; UTC instants support rolling presets. */
+function validUtcInstant(value: string) {
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(value)) return false;
+  const timestamp = new Date(value);
+  return Number.isFinite(timestamp.getTime()) && timestamp.toISOString() === value;
+}
+function dateFilterStart(value: string) { return new Date(value.length === 10 ? value + "T00:00:00.000Z" : value); }
+function dateFilterEnd(value: string) { return value.length === 10 ? new Date(dateFilterStart(value).getTime() + 86_400_000) : new Date(value); }
+
 export function parseActivityFilters(raw: Query): ParseResult {
   if (Object.values(raw).some(Array.isArray)) return { ok: false, error: "Repeated filters are not supported." };
   const tab = one(raw.tab) || "all";
@@ -77,15 +85,15 @@ export function parseActivityFilters(raw: Query): ParseResult {
   if (!activityTabs.includes(tab as ActivityTab) || !activityStages.includes(stage as ActivityStage)
     || !activityProducts.includes(product as ActivityProduct)
     || !["newest", "oldest"].includes(order)) return { ok: false, error: "Unsupported activity filter." };
-  if ((from && !validDay(from)) || (to && !validDay(to))
-    || (from && to && from > to)) return { ok: false, error: "Enter a valid UTC date range." };
+  if ((from && !validDay(from) && !validUtcInstant(from)) || (to && !validDay(to) && !validUtcInstant(to))
+    || (from && to && dateFilterStart(from).getTime() >= dateFilterEnd(to).getTime())) return { ok: false, error: "Enter a valid UTC date range." };
   if (q.length > 80 || /[\u0000-\u001f\u007f]/.test(q)) return { ok: false, error: "Search text must contain at most 80 ordinary characters." };
   return { ok: true, filters: { tab: tab as ActivityTab, stage: stage as ActivityStage, product: product as ActivityProduct, from, to, q, order: order as ActivityOrder } };
 }
 export function activityWindow(filters: ActivityFilters) {
   return {
-    ...(filters.from ? { gte: new Date(filters.from + "T00:00:00.000Z") } : {}),
-    ...(filters.to ? { lt: new Date(new Date(filters.to + "T00:00:00.000Z").getTime() + 86_400_000) } : {}),
+    ...(filters.from ? { gte: dateFilterStart(filters.from) } : {}),
+    ...(filters.to ? { lt: dateFilterEnd(filters.to) } : {}),
   };
 }
 export type JourneyStage = Exclude<ActivityStage, "all" | "ACCOUNT_ACTIVITY">;

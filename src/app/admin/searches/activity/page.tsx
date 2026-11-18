@@ -17,7 +17,7 @@ import { adminOperationalReads } from "@/services/adminOperationalReadService";
 export const metadata = { title: "Admin Search Activity" };
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
-type RangeKey = "today" | "7d" | "30d" | "all" | "custom";
+type RangeKey = "24h" | "today" | "7d" | "30d" | "all" | "custom";
 
 export default async function AdminSearchActivityPage({ searchParams }: { searchParams: SearchParams }) {
   const supplied = await searchParams;
@@ -105,15 +105,16 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
 
               </div>
 
-              <div className="grid min-w-0 grid-cols-2 items-end gap-2 py-4 sm:grid-cols-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.1fr)_minmax(0,1.2fr)_minmax(0,1fr)_auto] lg:gap-2.5">
+              <div className="grid min-w-0 grid-cols-2 items-end gap-2 py-4 sm:grid-cols-3 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.1fr)_minmax(0,1.2fr)_minmax(0,1fr)_auto] xl:gap-2.5">
                 <div className="min-w-0">
                   <SearchMonitorSelect label="Date range" name="range" value={range}
                     appearance="fare"
                     options={[
-                      { value: "today", label: "Today" },
+                      { value: "24h", label: "Last 24 hours" },
                       { value: "7d", label: "Last 7 days" },
                       { value: "30d", label: "Last 30 days" },
                       { value: "all", label: "All time" },
+                      ...(range === "today" ? [{ value: "today", label: "Today (legacy)" }] : []),
                       ...(range === "custom" ? [{ value: "custom", label: "Custom" }] : []),
                     ]} />
                 </div>
@@ -151,7 +152,7 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
                     }))} />
                 </div>
                 <button type="submit"
-                  className="inline-flex h-10 w-full items-center justify-center whitespace-nowrap rounded-lg bg-[#004BB8] px-4 text-[13px] font-medium text-white transition-colors hover:bg-[#003D97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] lg:w-auto">
+                  className="inline-flex h-10 w-full items-center justify-center whitespace-nowrap rounded-lg bg-[#004BB8] px-4 text-[13px] font-medium text-white transition-colors hover:bg-[#003D97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] xl:w-auto">
                   Apply filters
                 </button>
               </div>
@@ -198,10 +199,10 @@ function Metric({ label, value, tone }: { label: string; value: number; tone: "a
 
 function resolveRange(raw: Record<string, string | string[] | undefined>): RangeKey {
   const requested = one(raw.range);
-  if (requested === "today" || requested === "7d" || requested === "30d" || requested === "all") return requested;
+  if (requested === "24h" || requested === "today" || requested === "7d" || requested === "30d" || requested === "all") return requested;
   if (one(raw.from) || one(raw.to)) return "custom";
   const hasLegacyScope = Object.entries(raw).some(([key, value]) => key !== "range" && Boolean(Array.isArray(value) ? value.length : value));
-  return hasLegacyScope ? "all" : "today";
+  return hasLegacyScope ? "all" : "24h";
 }
 
 function toBackendParams(raw: Record<string, string | string[] | undefined>, range: RangeKey) {
@@ -220,6 +221,7 @@ function toBackendParams(raw: Record<string, string | string[] | undefined>, ran
   if (range !== "all" && range !== "custom") {
     const now = new Date();
     const from = new Date(now);
+    if (range === "24h") from.setTime(now.getTime() - 24 * 60 * 60 * 1000);
     if (range === "today") from.setUTCHours(0, 0, 0, 0);
     if (range === "7d") from.setUTCDate(from.getUTCDate() - 7);
     if (range === "30d") from.setUTCDate(from.getUTCDate() - 30);

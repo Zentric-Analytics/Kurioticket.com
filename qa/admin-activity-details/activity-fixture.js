@@ -53,12 +53,15 @@ export async function loadAdminIdentityActivity(kind, id, filters, cursor, readM
     || (filters.tab === "searches" && ["SEARCH_COMPLETED", "RESULTS_VIEWED"].includes(stage))
     || (filters.tab === "selections" && stage === "OFFER_SELECTED")
     || (filters.tab === "handoffs" && stage === "PROVIDER_HANDOFF_STARTED");
+  const fromBound = filters.from ? new Date(filters.from.length === 10 ? filters.from + "T00:00:00.000Z" : filters.from) : null;
+  const toBound = filters.to ? (filters.to.length === 10
+    ? new Date(Date.parse(filters.to + "T00:00:00.000Z") + 86400000) : new Date(filters.to)) : null;
   const matches = row => tabMatch(row.stage)
     && (filters.stage === "all" || row.stage === filters.stage)
     && (filters.product === "all" || row.product === filters.product)
     && (!filters.q || (row.detail + row.label).toLowerCase().includes(filters.q.toLowerCase()))
-    && (!filters.from || row.at >= new Date(filters.from + "T00:00:00.000Z"))
-    && (!filters.to || row.at < new Date(new Date(filters.to + "T00:00:00.000Z").getTime() + 86400000));
+    && (!fromBound || row.at >= fromBound)
+    && (!toBound || row.at < toBound);
   const sourceRows = id === "qa-complete-history-0001" ? completeHistory : [...recorded, ...olderRecorded, ...newerRecorded];
   const allMatched = id === "qa-no-events-0001" ? [] : sourceRows.filter(matches);
   const summary = {

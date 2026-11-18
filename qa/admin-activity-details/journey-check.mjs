@@ -5,7 +5,9 @@ const output = process.env.ADMIN_ACTIVITY_QA_OUTPUT;
 const browser = await chromium.launch({headless:true,args:["--no-sandbox"]});
 try {
   const page = await browser.newPage({viewport:{width:1280,height:900}});
-  const path = "/admin/users/guest/qa-guest-activity-0001/activity?tab=searches&q=LOS&directory=tab%3Dguests";
+  // The retained QA journey is older than the default rolling 24-hour window.
+  // Scope this historical navigation fixture explicitly without changing the UI default.
+  const path = "/admin/users/guest/qa-guest-activity-0001/activity?tab=searches&q=LOS&range=all&directory=tab%3Dguests";
   await page.goto(base + path);
   await expect(page.locator('[data-activity-id]')).toHaveCount(2);
   const link = page.getByRole('link',{name:'View journey for Flight · LOS → IST'});
@@ -34,11 +36,12 @@ try {
   assert.equal(returned.pathname,'/admin/users/guest/qa-guest-activity-0001/activity');
   assert.equal(returned.searchParams.get('tab'),'searches');
   assert.equal(returned.searchParams.get('q'),'LOS');
+  assert.equal(returned.searchParams.get('range'),'all');
   assert.equal(returned.searchParams.get('directory'),'tab=guests');
   await expect(page.locator('[data-activity-id]')).toHaveCount(2);
   // Exercise an actual long-context request through Next/Node, not only URL helpers.
   const longDirectory = "客".repeat(1000);
-  await page.goto(base + "/admin/users/guest/qa-guest-activity-0001/activity?" + new URLSearchParams({q:"LOS",directory:longDirectory}));
+  await page.goto(base + "/admin/users/guest/qa-guest-activity-0001/activity?" + new URLSearchParams({q:"LOS",range:"all",directory:longDirectory}));
   const longLink = page.getByRole('link',{name:'View journey for Flight · LOS → IST'});
   assert.ok((await longLink.getAttribute("href")).length < 8192);
   await longLink.click();
@@ -47,5 +50,6 @@ try {
   await expect(page).toHaveURL(/\/admin\/users\/guest\/qa-guest-activity-0001\/activity\?/);
   assert.equal(new URL(page.url()).searchParams.get("directory"),longDirectory);
   assert.equal(new URL(page.url()).searchParams.get("q"),"LOS");
+  assert.equal(new URL(page.url()).searchParams.get("range"),"all");
   console.log('PASS journey association, recorded sequence, filtered return and long international context');
 } finally { await browser.close(); }

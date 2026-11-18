@@ -91,3 +91,21 @@ test("both new Providers API endpoints independently authorize requests and rest
   assert.match(detailRoute, /adminOperationalReadResponse/);
   assert.doesNotMatch(listRoute + detailRoute, /POST|PATCH|DELETE/);
 });
+
+test("hotel and car search filters keep draft selections until Apply filters", () => {
+  assert.match(panelSource, /const \[draftFilter, setDraftFilter\] = useState<ProductSearchFilter>\("EXCEPTIONS"\)/);
+  assert.match(panelSource, /const \[draftWindow, setDraftWindow\] = useState<ProductSearchWindow>\("24h"\)/);
+  assert.match(panelSource, /value=\{draftFilter\}/);
+  assert.match(panelSource, /value=\{draftWindow\}/);
+  assert.match(panelSource, /setDraftFilter\(value as ProductSearchFilter\)/);
+  assert.match(panelSource, /setDraftWindow\(value as ProductSearchWindow\)/);
+  assert.match(panelSource, /const applyFilters = \(\) => \{/);
+  assert.match(panelSource, /setFilter\(draftFilter\)/);
+  assert.match(panelSource, /setWindowValue\(draftWindow\)/);
+  assert.match(panelSource, /onClick=\{applyFilters\}/);
+  assert.match(panelSource, /Apply filters/);
+  assert.match(panelSource, /sm:grid-cols-\[minmax\(0,180px\)_minmax\(0,180px\)_auto\]/);
+  // Requests use applied state and do not depend on the draft values.
+  assert.match(panelSource, /new URLSearchParams\(\{ product, filter, window: windowValue \}\)/);
+  assert.match(panelSource, /\[product, filter, windowValue, cursor, reload\]/);
+});

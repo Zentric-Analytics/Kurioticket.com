@@ -114,6 +114,17 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
   if (!validActivityIdentity(kind, id)) notFound();
   const session = await requireAdminSession("/admin/users/" + kind + "/" + id + "/activity");
   const raw = { ...(await searchParams) };
+  // The customer activity reader now supports exact UTC instants for rolling
+  // presets; legacy bookmarked UTC calendar dates remain unchanged.
+  const selectedRange = typeof raw.range === "string" ? raw.range : "";
+  const reportingRange = selectedRange || "24h";
+  if (!raw.from && !raw.to && ["24h", "7d", "30d"].includes(reportingRange)) {
+    const to = new Date();
+    const days = reportingRange === "30d" ? 30 : reportingRange === "7d" ? 7 : 1;
+    raw.from = new Date(to.getTime() - days * 86_400_000).toISOString();
+    raw.to = to.toISOString();
+    raw.range = reportingRange;
+  }
   // Existing Journeys bookmarks now display the unfiltered activity tab.
   // Preserve their other filters without leaving an invisible selected tab.
   if (raw.tab === "journeys") delete raw.tab;
@@ -248,7 +259,7 @@ export default async function AdminIdentityActivityPage({ params, searchParams }
         <section aria-label="Activity filters" className="min-w-0">
           <ActivityFiltersBar path={basePath} directory={typeof raw.directory === "string" && raw.directory.length <= 1000 ? raw.directory : ""}
             initial={{tab:filters.tab,q:filters.q,product:filters.product,stage:filters.stage,order,
-              from:filters.from,to:filters.to,range:typeof raw.range === "string" && ["7d","30d","custom"].includes(raw.range) ? raw.range : (filters.from || filters.to ? "custom" : "all")}}
+              from:filters.from,to:filters.to,range:typeof raw.range === "string" && ["24h","7d","30d","all","custom"].includes(raw.range) ? raw.range : (filters.from || filters.to ? "custom" : "24h")}}
             tabs={<nav aria-label="Activity tabs" className="flex max-w-full shrink-0 gap-7 overflow-x-auto">
               {tabs.map(tab => <Link key={tab.value}
                 href={activityHref(basePath, queryParams, { tab: tab.value, cursor: null })}
