@@ -13,7 +13,7 @@ const statusApi = readFileSync("src/app/api/admin/homepage-fares/status/route.ts
 const refreshApi = readFileSync("src/app/api/admin/homepage-fares/refresh/route.ts", "utf8");
 
 test("public content management exposes homepage and FAQ CMS areas while fare operations stay separate", () => {
-  assert.match(contentPage, /<ContentPageFrame title="Content" visuallyHideTitle/);
+  assert.match(contentPage, /<ContentPageFrame title="Content" visuallyHideTitle wide>/);
 
   for (const section of [
     "Homepage destinations",
@@ -31,10 +31,9 @@ test("public content management exposes homepage and FAQ CMS areas while fare op
   assert.match(contentPage, /title: "Flight routes"/);
   assert.match(contentPage, /title: "Hotel destinations"/);
   // Technical utilities must not become permanent Content navigation cards.
-  // The conditional CMS Health *diagnostic link* is intentional for incomplete markets.
+  // CMS Health alerts remain visible as read-only status without another navigation shortcut.
   assert.doesNotMatch(contentPage, /title: "(?:Homepage CMS overview|Homepage fare operations|CMS Health)"/);
-  assert.doesNotMatch(contentPage, /href: "\/admin\/system\/cms-health"/);
-  assert.match(contentPage, /href="\/admin\/system\/cms-health"/);
+  assert.doesNotMatch(contentPage, /href: "\/admin\/system\/cms-health"|href="\/admin\/system\/cms-health"/);
   assert.match(contentPage, /contentScopeStatus\(destinationSummary\)/);
   assert.match(contentPage, /if \(summary\.needsSetup\) return "Setup required"/);
   assert.match(contentPage, /summary\?\.available && summary\.active \? summary\.publishedInScope/);
@@ -42,11 +41,11 @@ test("public content management exposes homepage and FAQ CMS areas while fare op
   assert.match(contentPage, /contentScopeStatus\(hotelSummary\)/);
   assert.match(contentPage, /publishedContentCount\(destinationSummary\)/);
   assert.match(contentPage, /Published records/);
-  assert.match(contentPage, /Review CMS Health/);
-  assert.match(contentPage, /href="\/admin\/system\/cms-health"/);
+  assert.match(contentPage, /Some homepage content markets need CMS setup/);
+  assert.match(contentPage, /role="status"/);
   assert.match(contentPage, /CMS managed/);
   assert.match(contentPage, /Setup required/);
-  assert.match(contentPage, /href: "\/admin\/content\/faqs"/);
+  assert.match(contentPage, /title: "FAQs"/);
   assert.doesNotMatch(contentPage, /HomepageFaresRefreshCard/);
   assert.doesNotMatch(contentPage, /Upload image|Approve content/i);
 });
@@ -93,24 +92,22 @@ test("homepage fare admin APIs preserve authorization, audit logging, and refres
   }
 });
 
-test("content overview shows four equal, fully clickable management cards", () => {
-  assert.match(contentPage, /<nav aria-label="Content management" className="grid auto-rows-fr grid-cols-1 gap-3 sm:grid-cols-2">/);
-  assert.equal((contentPage.match(/href: "\/admin\/content\/(?:homepage\/(?:destinations|flight-routes|hotel-destinations)|faqs)"/g) ?? []).length, 4);
-  assert.match(contentPage, /href=\{area\.href\}/);
-  assert.match(contentPage, /className="group focus-ring flex h-full min-w-0 cursor-pointer flex-col gap-3 rounded-lg/);
-  assert.match(contentPage, /cursor-pointer/);
-  assert.doesNotMatch(contentPage, /min-h-\[178px\]|justify-between gap-6/);
+test("Content Overview is a read-only four-card summary, not a duplicate navigation menu", () => {
+  assert.match(contentPage, /<section aria-label="Content publication overview"/);
+  assert.match(contentPage, /grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4/);
+  assert.equal((contentPage.match(/title: "(?:Homepage destinations|Flight routes|Hotel destinations|FAQs)"/g) ?? []).length, 4);
+  assert.match(contentPage, /<article[\s\S]*key=\{area\.title\}/);
+  assert.match(contentPage, /min-w-0 flex-col justify-between gap-4/);
+  assert.match(contentPage, /break-words text-\[14px\]/);
   assert.match(contentPage, /text-\[24px\]/);
   assert.match(contentPage, /flex flex-wrap items-baseline gap-x-2\.5 gap-y-1/);
-  assert.match(contentPage, /hover:border-\[#6D28D9\]/);
-  assert.match(contentPage, /focus-visible:outline-\[#6D28D9\]/);
   assert.match(contentPage, /area\.value/);
-  assert.doesNotMatch(contentPage, /area\.scope|scope: "US market"|scope: "Global"|scope: "English"/);
   assert.match(contentPage, /area\.status !== "CMS managed"/);
-  assert.doesNotMatch(contentPage, /ContentSectionHeading|homepageAreas|helpAreas|Manage destinations|Manage FAQs/);
+  assert.doesNotMatch(contentPage, /<Link|<nav|<button|href=|href:|ArrowUpRight|cursor-pointer|group-hover|focus-visible:outline-\[#6D28D9\]/);
+  assert.doesNotMatch(contentPage, /area\.scope|scope: "US market"|scope: "Global"|scope: "English"/);
 });
 
-test("Content hub stays aligned to the sidebar and retains four CMS overview cards", () => {
+test("Content hub uses full available workspace width without squeezing its four cards", () => {
   assert.match(contentPage, /<div className="w-full pt-2">/);
   assert.doesNotMatch(contentPage, /100dvh-160px/);
   const shell = readFileSync("src/components/admin/AdminHorizontalShell.tsx", "utf8");
@@ -123,11 +120,10 @@ test("Content hub stays aligned to the sidebar and retains four CMS overview car
   assert.match(shell, /observer\.observe\(header\)/);
   assert.match(shell, /observer\.disconnect\(\)/);
   assert.match(shell, /workspace\.style\.removeProperty\("--admin-header-height"\)/);
-  assert.match(contentPage, /w-full max-w-\[1100px\] space-y-4/);
-  assert.match(contentPage, /grid auto-rows-fr grid-cols-1 gap-3 sm:grid-cols-2/);
-  assert.match(contentPage, /href=\{area\.href\}/);
-  assert.match(contentPage, /<ContentPageFrame title="Content" visuallyHideTitle>/);
-  assert.doesNotMatch(contentPage, /min-h-\[178px\]|justify-between gap-6/);
+  assert.match(contentPage, /w-full min-w-0 space-y-4/);
+  assert.match(contentPage, /xl:grid-cols-4/);
+  assert.match(contentPage, /<ContentPageFrame title="Content" visuallyHideTitle wide>/);
+  assert.doesNotMatch(contentPage, /min-h-\[178px\]|max-w-\[1100px\]/);
 });
 
 test("FAQ directory has no redundant counters before search and status filters", () => {
@@ -235,7 +231,7 @@ test("Content's nested pages use the preserved return context", () => {
     "src/app/admin/content/faqs/new/page.tsx",
     "src/app/admin/content/faqs/[id]/page.tsx",
   ].map(path => readFileSync(path, "utf8"));
-  for (const content of files) assert.match(content, /nav\.(?:backHref|listHref|query)/);
+  for (const content of files) assert.match(content, /nav\.(?:listHref|query)|backHref=/);
   const homepageEditor = readFileSync("src/components/admin/HomepageCmsEditor.tsx", "utf8");
   const faqEditor = readFileSync("src/components/admin/FaqCmsEditor.tsx", "utf8");
   assert.match(homepageEditor, /listQuery \? "\?" \+ listQuery/);
@@ -254,7 +250,7 @@ test("Content's nested pages use the preserved return context", () => {
   assert.match(readFileSync("src/components/admin/CmsCreateLink.tsx", "utf8"), /useSearchParams/);
 });
 
-test("Content management uses consistent arrow back links and clean page framing", () => {
+test("Only Content editors retain navigation back links; the four directories use the sidebar", () => {
   const frame = readFileSync("src/components/admin/ContentWorkspace.tsx", "utf8");
   assert.match(frame, /ArrowLeft size=\{14\}/);
   assert.match(frame, /href=\{backHref\}/);
@@ -262,21 +258,29 @@ test("Content management uses consistent arrow back links and clean page framing
   assert.match(frame, /max-w-\[1138px\]/);
   assert.match(frame, /max-w-\[1500px\]/);
   assert.match(frame, /export function ContentSectionHeading/);
-  const pages = [
-    "src/app/admin/content/homepage/page.tsx",
+  const directories = [
     "src/app/admin/content/homepage/[section]/page.tsx",
+    "src/app/admin/content/faqs/page.tsx",
+  ];
+  for (const page of directories) {
+    const source = readFileSync(page, "utf8");
+    assert.match(source, /<ContentPageFrame/);
+    assert.doesNotMatch(source, /backHref=|backLabel=/);
+    assert.doesNotMatch(source, /<AdminLinkButton[^>]*>Back/);
+  }
+  const editorPages = [
     "src/app/admin/content/homepage/[section]/new/page.tsx",
     "src/app/admin/content/homepage/[section]/[id]/page.tsx",
-    "src/app/admin/content/faqs/page.tsx",
     "src/app/admin/content/faqs/new/page.tsx",
     "src/app/admin/content/faqs/[id]/page.tsx",
   ];
-  for (const page of pages) {
+  for (const page of editorPages) {
     const source = readFileSync(page, "utf8");
     assert.match(source, /<ContentPageFrame/);
     assert.match(source, /backHref=/);
-    assert.doesNotMatch(source, /<AdminLinkButton[^>]*>Back/);
   }
+  const homepageSummary = readFileSync("src/app/admin/content/homepage/page.tsx", "utf8");
+  assert.match(homepageSummary, /backHref="\/admin\/content"/);
   const home = readFileSync("src/components/admin/HomepageCmsEditor.tsx", "utf8");
   const faq = readFileSync("src/components/admin/FaqCmsEditor.tsx", "utf8");
   for (const source of [home, faq]) {
