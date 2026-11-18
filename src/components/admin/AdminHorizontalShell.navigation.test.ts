@@ -133,6 +133,11 @@ test("global More sections dropdown is replaced with per-workspace navigation", 
   assert.match(shell, /isAdminWorkspaceSectionActive\(pathname, item\.href\)/);
 });
 
+test("Platform Health uses its independent top-level workspace rather than a System sidebar entry", () => {
+  assert.match(shell, /const isStandalonePlatformHealth = pathname === "\/admin\/platform-health"/);
+  assert.match(shell, /!isOverview && !isSettings && !isStandalonePlatformHealth && role === "ADMIN"/);
+});
+
 test("new section navigation remains responsive and Team Access uses the Settings surface", () => {
   assert.match(shell, /flex min-w-0 flex-wrap items-end gap-x-5 gap-y-1/);
   assert.match(shell, /pathname === "\/admin\/preview-testers"/);

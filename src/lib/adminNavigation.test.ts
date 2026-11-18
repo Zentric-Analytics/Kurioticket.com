@@ -88,6 +88,8 @@ test("System diagnostic pages keep their canonical System owner while Platform H
     assert.equal(item.parentHref, "/admin/system");
   }
   assert.equal(getAdminNavForRole("ADMIN").find(entry => entry.href === "/admin/platform-health")?.parentHref, undefined);
+  assert.ok(getAdminHeaderGroups("ADMIN").flatMap(group => group.links).some(entry => entry.item.href === "/admin/platform-health"));
+  assert.ok(!getAdminWorkspaceSections("/admin/system", "ADMIN")?.links.some(link => link.href === "/admin/platform-health"));
 });
 
 test("Notifications has one Settings sidebar owner rather than a duplicate global nav destination", () => {
@@ -117,13 +119,13 @@ test("secondary routes are owned by a single parent workspace", () => {
     ["/admin/hotels", ["Provider Health", "Hotels", "Cars", "Homepage Fares", "Referral Attribution"]],
     ["/admin/homepage-fares/routes", ["Provider Health", "Hotels", "Cars", "Homepage Fares", "Referral Attribution"]],
     ["/admin/referral-attribution", ["Provider Health", "Hotels", "Cars", "Homepage Fares", "Referral Attribution"]],
-    ["/admin/system", ["System Overview", "Platform Health", "Audit Logs", "CMS Health", "Email Delivery"]],
-    ["/admin/email-delivery", ["System Overview", "Platform Health", "Audit Logs", "CMS Health", "Email Delivery"]],
-    ["/admin/platform-health", ["System Overview", "Platform Health", "Audit Logs", "CMS Health", "Email Delivery"]],
+    ["/admin/system", ["System Overview", "Audit Logs", "CMS Health", "Email Delivery"]],
+    ["/admin/email-delivery", ["System Overview", "Audit Logs", "CMS Health", "Email Delivery"]],
   ] as const;
   for (const [path, labels] of expectations) {
     assert.deepEqual(getAdminWorkspaceSections(path, "ADMIN")?.links.map((link) => link.label), [...labels], path);
   }
+  assert.equal(getAdminWorkspaceSections("/admin/platform-health", "ADMIN"), null, "Standalone Platform Health is not a System subsection");
   assert.equal(getAdminWorkspaceSections("/admin/settings", "ADMIN"), null);
   assert.equal(getAdminWorkspaceSections("/admin/confirmed-trips/monitoring", "ADMIN")?.label, "Trips");
   assert.equal(getAdminWorkspaceSections("/admin/content", "ADMIN")?.label, "Content");
