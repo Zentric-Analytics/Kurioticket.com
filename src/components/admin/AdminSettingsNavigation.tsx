@@ -21,7 +21,7 @@ const groups = [
   {
     label: "Audit",
     links: [
-      { label: "Recent changes", href: "/admin/settings/recent-changes", icon: History },
+      { label: "Settings History", href: "/admin/settings/recent-changes", icon: History },
     ],
   },
 ] as const;
