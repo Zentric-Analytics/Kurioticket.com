@@ -11,7 +11,7 @@ const page = await context.newPage();
 page.setDefaultTimeout(25000);
 const errors=[];
 page.on("pageerror",error=>errors.push(error.message));
-const url=base+"/admin/users/guest/qa-guest-activity-0001/activity";
+const url=base+"/admin/users/guest/qa-guest-activity-0001/activity?range=all";
 
 async function inspectActivityTypography(page) {
   return page.evaluate(() => {
@@ -197,7 +197,7 @@ try {
     await expect(page.getByRole("button",{name:/Manage guest/})).toHaveCount(0);
     await expect(page.getByRole("button",{name:"Apply Filter",exact:true})).toHaveCount(0);
     await expect(page.getByRole("button",{name:"Apply filters",exact:true})).toBeVisible();
-    await expect(page.getByRole("button",{name:"Date range: Last 24 hours"})).toBeVisible();
+    await expect(page.getByRole("button",{name:"Date range: All time"})).toBeVisible();
     await expect(page.getByRole("button",{name:"Activity product: All products"})).toBeVisible();
     await expect(page.getByRole("button",{name:"Activity type: All activity types"})).toBeVisible();
     await expect(page.getByRole("button",{name:/Sort activity/})).toHaveCount(0);
@@ -223,7 +223,7 @@ try {
   // at 90%, 100%, 110%, keeping device scale fixed (no CSS zoom hacks).
   for (const zoom of [0.9, 1, 1.1]) {
     await page.setViewportSize({width: Math.round(1280/zoom), height: Math.round(900/zoom)});
-    await page.goto(base + "/admin/users/user/qa-registered-0001/activity");
+    await page.goto(base + "/admin/users/user/qa-registered-0001/activity?range=all");
     await expectAlignedColumns(page);
     await expectHeaderTimePresentation(page, "Registered zoom " + zoom);
     await expectBalancedDesktopHeader(page, "Registered zoom " + zoom);
@@ -233,7 +233,7 @@ try {
 
   // Registered accounts use the same fact grid, including protected-admin labels.
   await page.setViewportSize({width:1024,height:900});
-  await page.goto(base + "/admin/users/user/qa-registered-0001/activity");
+  await page.goto(base + "/admin/users/user/qa-registered-0001/activity?range=all");
   await expectAlignedColumns(page);
   await page.screenshot({caret:"initial",path:output+"/after-registered-activity-1024.png",fullPage:true});
 
@@ -271,17 +271,17 @@ try {
   await expect(page.locator("[data-activity-id]")).toHaveCount(14);
   await expect(page.locator('[data-activity-id="j-qa-older-search"]')).toBeVisible();
   await expect(page.locator('[data-activity-id="j-qa-newer-search"]')).toBeVisible();
-  await page.goto(url+"?cursor=older-qa-page");
+  await page.goto(url+"&cursor=older-qa-page");
   await expect(page.getByText("14 recorded events",{exact:true})).toBeVisible();
   totals = page.getByRole("region",{name:"Activity summary"});
   await expect(totals.locator('[data-testid="activity-metric-value"]')).toHaveText(["5","2","5","1","6"]);
-  await page.goto(url+"?tab=searches&stage=SEARCH_COMPLETED&product=FLIGHT&q=LOS");
+  await page.goto(url+"&tab=searches&stage=SEARCH_COMPLETED&product=FLIGHT&q=LOS");
   totals = page.getByRole("region",{name:"Activity summary"});
   await expect(totals.locator('[data-testid="activity-metric-value"]')).toHaveText(["1","0","0","0","1"]);
-  await page.goto(url+"?tab=handoffs");
+  await page.goto(url+"&tab=handoffs");
   totals = page.getByRole("region",{name:"Activity summary"});
   await expect(totals.locator('[data-testid="activity-metric-value"]')).toHaveText(["0","0","0","1","1"]);
-  await page.goto(url+"?tab=journeys&q=LOS");
+  await page.goto(url+"&tab=journeys&q=LOS");
   await expect(page.getByRole("navigation",{name:"Activity tabs"}).getByRole("link",{name:"All activity"})).toHaveAttribute("aria-current","page");
   await expect(page.getByRole("navigation",{name:"Activity tabs"}).getByRole("link",{name:"Journeys"})).toHaveCount(0);
   await expect(page.getByRole("navigation",{name:"Activity tabs"}).getByRole("link",{name:"Searches"})).not.toHaveAttribute("href",/tab=journeys/);
@@ -289,7 +289,7 @@ try {
 
   // No scrolling, load-more click or additional page request is needed for any row.
   for (const kind of ["guest","user"]) {
-    const fullUrl = base+"/admin/users/"+kind+"/qa-complete-history-0001/activity";
+    const fullUrl = base+"/admin/users/"+kind+"/qa-complete-history-0001/activity?range=all";
     const response = await page.goto(fullUrl);
     assert.ok((await response.text()).includes("s-qa-complete-1004"), "oldest row present in initial server response");
     await expect(page.locator("[data-activity-id]")).toHaveCount(1005);
@@ -299,14 +299,14 @@ try {
     assert.equal(new Set(ids).size,1005);
     assert.equal(ids[0],"s-qa-complete-0000");
     assert.equal(ids.at(-1),"s-qa-complete-1004");
-    await page.goto(fullUrl+"?product=FLIGHT&from=2026-10-22&to=2026-10-22");
+    await page.goto(fullUrl+"&product=FLIGHT&from=2026-10-22&to=2026-10-22");
     await expect(page.locator("[data-activity-id]")).toHaveCount(503);
     await expect(page.getByRole("region",{name:"Activity summary"}).locator('[data-testid="activity-metric-value"]').first()).toHaveText("503");
   }
   console.log("PASS 1005 events upfront for guests and registered users with complete filters");
 
   await page.setViewportSize({width:1280,height:900});
-  await page.goto(url+"?directory=sort%3Dname_asc%26identity%3DGUEST%26page%3D2");
+  await page.goto(url+"&directory=sort%3Dname_asc%26identity%3DGUEST%26page%3D2");
   await expect(page.locator("[data-activity-id]")).toHaveCount(14);
   for(const stamp of ["5:59","5:58","5:57","5:56"]) await expect(page.getByRole("main")).toContainText(stamp);
   await page.screenshot({caret:"initial",path:output+"/after-all-selections-visible-1280.png",fullPage:true});
@@ -341,7 +341,7 @@ try {
   await page.getByRole("button",{name:"Apply filters",exact:true}).click();
   await expect(page).not.toHaveURL(/product=FLIGHT/);
   // Legacy custom-date URLs remain editable without adding a fifth preset option.
-  await page.goto(url+"?range=custom&from=2026-10-01&to=2026-10-23");
+  await page.goto(url.split("?")[0]+"?range=custom&from=2026-10-01&to=2026-10-23");
   await expect(page.getByLabel("Custom start date UTC")).toBeVisible();
   await expect(page.getByLabel("Custom end date UTC")).toBeVisible();
   await page.getByLabel("Custom end date UTC").fill("2026-10-24");
@@ -356,7 +356,7 @@ try {
   await expect(page).toHaveURL(/range=7d/);
   console.log("PASS custom dates and standard presets load only after Apply filters");
 
-  await page.goto(url+"?order=oldest");
+  await page.goto(url+"&order=oldest");
   await expect(page.getByRole("button",{name:/Sort activity/})).toHaveCount(0);
   await page.getByRole("navigation",{name:"Activity tabs"}).getByRole("link",{name:"Searches",exact:true}).click();
   await expect(page).not.toHaveURL(/order=oldest/);
@@ -365,13 +365,13 @@ try {
   await page.goto(base+"/admin/users/guest/qa-no-events-0001/activity");
   await expect(page.getByText("No activity matches your filters")).toBeVisible();
   await page.screenshot({caret:"initial",path:output+"/after-approved-empty-state-1536.png",fullPage:true});
-  await page.goto(url+"?cursor=bad");
+  await page.goto(url+"&cursor=bad");
   await expect(page.getByText("Activity page link expired")).toHaveCount(0);
   await expect(page.getByText("14 recorded events",{exact:true})).toBeVisible();
   await expect(page.getByRole("link",{name:/Load (older|newer) activity/})).toHaveCount(0);
   console.log("PASS empty and obsolete cursor");
 
-  await page.goto(base+"/admin/users/user/qa-registered-0001/activity");
+  await page.goto(base+"/admin/users/user/qa-registered-0001/activity?range=all");
   await expect(page.getByRole("heading",{name:"QA registered customer"})).toBeVisible();
   await expect(page.getByText("customer.qa@example.invalid",{exact:true})).toBeVisible();
   await expect(page.getByRole("heading",{name:"Related records"})).toHaveCount(0);
