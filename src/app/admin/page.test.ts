@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
 import { compile } from "tailwindcss";
+import { overviewPeriodHref, resolveOverviewRange } from "@/lib/adminOverviewRange";
 
 const page = readFileSync("src/app/admin/page.tsx", "utf8");
 const dashboard = readFileSync("src/components/admin/AdminOverviewDashboard.tsx", "utf8");
@@ -33,11 +34,19 @@ test("Overview continues to use canonical authenticated, real data services", ()
   assert.match(service, /journeys\.status !== "ok" \|\| !providers/);
 });
 
+test("the single reporting filter precedes both Overview reports", () => {
+  const selectors = Array.from(page.matchAll(/<AdminOverviewRangeSelect\b/g));
+  assert.equal(selectors.length, 1);
+  assert.ok(selectors[0].index < page.indexOf("<PlatformOverviewSummary"));
+  assert.ok(page.indexOf("<PlatformOverviewSummary") < page.indexOf("<AdminOverviewDashboard"));
+  assert.doesNotMatch(display, /<AdminOverviewRangeSelect/);
+});
+
 test("compact Operations Snapshot has exactly four genuine primary metrics", () => {
   const snapshot = display.slice(display.indexOf('aria-label="Operations Snapshot"'), display.indexOf('aria-label="Attention Required"'));
   for (const [label, value] of [
     ["Total accounts", "data.users.total"],
-    ["Active website users", "websiteActive"],
+    ["Online Users", "onlineUsers"],
     ["Recorded searches", "data.journeys.operationalSearches.total"],
     ["Customer journeys", "data.journeys.journeys"],
   ]) {
@@ -46,7 +55,6 @@ test("compact Operations Snapshot has exactly four genuine primary metrics", () 
   assert.equal((snapshot.match(/<SnapshotLink /g) ?? []).length, 4);
   assert.match(snapshot, /min-\[56\.25rem\]:grid-cols-4/);
   assert.match(snapshot, /sm:grid-cols-2/);
-  assert.match(snapshot, /<AdminOverviewRangeSelect range=\{range\} \/>/);
   assert.doesNotMatch(snapshot, /data\.users\.(?:active|suspended|deleted)/);
   assert.doesNotMatch(snapshot, /data\.audit\.human/);
 });
@@ -123,16 +131,15 @@ test("Four-column Platform Health and recent activity remain compact and complet
   assert.match(dashboard, /className="mt-3 grid gap-3"/);
 });
 
-test("live presence keeps consent, 90-second window, and explicit unavailable state", () => {
-  assert.match(display, /data\.websitePresence\.status === "ok"/);
-  assert.match(display, /data\.websitePresence\.total/);
+test("Online Users is a current presence estimate with an accessible explanation and unavailable state", () => {
+  assert.match(display, /data\.onlinePresence\.status === "ok"/);
+  assert.match(display, /data\.onlinePresence\.total/);
   assert.match(display, /"Unavailable"/);
-  assert.match(display, /Consented website identities · last 90s/);
-  assert.match(display, /excludes native-app activity and visitors who decline analytics/);
-  assert.match(display, /does not count every person online/);
-  assert.match(service, /getWebsitePresenceSnapshot\(environment, now\)/);
-  assert.match(readFileSync("src/components/privacy/AnalyticsConsentBridge.tsx", "utf8"), /websitePresenceHeartbeatMs/);
-  assert.doesNotMatch(display, /visitorActivity\.observedVisitorIdentities/);
+  assert.match(display, /label="Online Users"/);
+  assert.match(display, /label="How Online Users are counted"/);
+  assert.match(display, /data\.onlinePresence\.windowSeconds/);
+  assert.match(display, /guest sessions/i);
+  assert.doesNotMatch(display, /websitePresence|visitorActivity\.observedVisitorIdentities/);
 });
 
 test("Attention Required remains three compact, actionable live queues", () => {
@@ -349,7 +356,7 @@ test("the white parent container, original admin header, and automatic refresh r
   assert.match(page, /<AdminSectionCard className="min-w-0 p-4 sm:p-5 lg:p-6">/);
   assert.equal((page.match(/<AdminSectionCard /g) ?? []).length, 1);
   assert.match(horizontalShell, /bg-\[#f1f5fb\]/);
-  assert.match(display, /<AdminOverviewAutoRefresh \/>/);
+  assert.match(page, /<AdminOverviewAutoRefresh \/>/);
   assert.match(controls, /window\.setInterval\(\(\) => \{/);
   assert.match(controls, /!isUpdating && document\.visibilityState === "visible"\) router\.refresh\(\)/);
   assert.match(controls, /60_000/);
@@ -357,18 +364,18 @@ test("the white parent container, original admin header, and automatic refresh r
 });
 
 test("changing reporting ranges consistently exposes a shared loading indicator", () => {
-  assert.match(page, /<AdminOverviewRangeTransitionProvider range=\{range\}>/);
+  assert.match(page, /<AdminOverviewRangeTransitionProvider period=\{reporting\.period\}>/);
   assert.match(controls, /const RangeTransitionContext = createContext/);
-  assert.match(controls, /setRequestedRange\(nextRange\)/);
-  assert.match(controls, /router\.push\(nextRange === "24h"/);
-  assert.match(controls, /transition\.selectRange\(nextRange\)/);
-  assert.match(controls, /if \(isUpdating \|\| isPending \|\| nextRange === range\) return/);
+  assert.match(controls, /setRequestedPeriod\(nextPeriod\)/);
+  assert.match(controls, /router\.push\(nextHref\)/);
+  assert.match(controls, /transition\.selectPeriod\(\{ range: nextRange \}\)/);
+  assert.match(controls, /if \(isUpdating \|\| isPending \|\| nextHref === href\) return/);
   assert.match(controls, /disabled=\{pending\}/);
   assert.match(controls, /aria-busy=\{pending \|\| undefined\}/);
   assert.match(controls, /LoaderCircle size=\{14\}/);
   assert.match(controls, /role="status" aria-live="polite"/);
   assert.match(controls, /role="alert"/);
-  assert.match(controls, /setFailedRange\(requestedRange\)/);
+  assert.match(controls, /setFailedPeriod\(requestedPeriod\)/);
   assert.match(controls, /!isUpdating && document\.visibilityState === "visible"/);
 });
 
@@ -378,30 +385,68 @@ test("loading state applies only to time-filtered summaries and keeps the page s
   assert.match(controls, /inert=\{updating\}/);
   assert.match(controls, /motion-safe:animate-pulse/);
   assert.equal((display.match(/<AdminOverviewRangeSensitive(?: fill)?>/g) ?? []).length, 5);
+  assert.match(page, /<AdminOverviewRangeSensitive>\s*<PlatformOverviewSummary/);
   for (const label of ["Recorded searches", "Customer journeys"]) {
     assert.match(display, new RegExp('<AdminOverviewRangeSensitive fill>\\s*<SnapshotLink[^>]+label="' + label + '"'));
   }
   for (const title of ["Search Performance", "Visitor Activity", "Provider Handoffs"]) {
     assert.match(display, new RegExp('<AdminOverviewRangeSensitive>\\s*<Section title="' + title + '"'));
   }
-  assert.doesNotMatch(display, /<AdminOverviewRangeSensitive fill>\s*<SnapshotLink[^>]+label="(?:Total accounts|Active website users)"/);
+  assert.doesNotMatch(display, /<AdminOverviewRangeSensitive fill>\s*<SnapshotLink[^>]+label="(?:Total accounts|Online Users)"/);
   for (const title of ["Support Workload", "Deletion Workload"]) {
     assert.doesNotMatch(display, new RegExp('<AdminOverviewRangeSensitive>\\s*<Section title="' + title + '"'));
   }
 });
 
-test("the 24-hour default and other historical range selections remain intact", () => {
-  assert.match(page, /selected === "7d" \|\| selected === "30d" \? selected : "24h"/);
-  assert.match(page, /range === "30d" \? 30 \* dayMs : range === "7d" \? 7 \* dayMs : dayMs/);
-  assert.match(page, /query\.set\("from"/);
-  assert.match(page, /query\.set\("to"/);
-  assert.match(controls, /const rangeOptions: OverviewRange\[\] = \["24h", "7d", "30d"\]/);
-  assert.match(controls, /router\.push\(nextRange === "24h" \? "\/admin" : "\/admin\?range=" \+ encodeURIComponent\(nextRange\)\)/);
+test("reporting presets and custom UTC dates resolve to their exact bounds", () => {
+  const now = new Date("2026-11-18T12:30:00.000Z");
+  for (const [range, from, href] of [
+    ["24h", "2026-11-17T12:30:00.000Z", "/admin"],
+    ["7d", "2026-11-11T12:30:00.000Z", "/admin?range=7d"],
+    ["30d", "2026-10-19T12:30:00.000Z", "/admin?range=30d"],
+  ]) {
+    const reporting = resolveOverviewRange({ range }, now);
+    assert.equal(reporting.from.toISOString(), from);
+    assert.equal(reporting.to.toISOString(), now.toISOString());
+    assert.equal(overviewPeriodHref(reporting.period), href);
+  }
+  assert.equal(resolveOverviewRange(undefined, now).period.range, "24h");
+  assert.equal(resolveOverviewRange({ range: ["7d", "30d"] }, now).period.range, "24h");
+
+  const historical = resolveOverviewRange({ range: "custom", from: "2026-11-01", to: "2026-11-01" }, now);
+  assert.equal(historical.from.toISOString(), "2026-11-01T00:00:00.000Z");
+  assert.equal(historical.to.toISOString(), "2026-11-02T00:00:00.000Z");
+  assert.equal(overviewPeriodHref(historical.period), "/admin?range=custom&from=2026-11-01&to=2026-11-01");
+  const today = resolveOverviewRange({ range: "custom", from: "2026-11-17", to: "2026-11-18" }, now);
+  assert.equal(today.from.toISOString(), "2026-11-17T00:00:00.000Z");
+  assert.equal(today.to.toISOString(), now.toISOString());
+});
+
+test("invalid or overly wide custom reports use the 24-hour fallback with a visible error", () => {
+  const now = new Date("2026-11-18T12:30:00Z");
+  for (const [from, to] of [
+    ["2026-02-30", "2026-03-01"],
+    ["2026-11-18", "2026-11-19"],
+    ["2026-11-04", "2026-11-03"],
+    ["2026-08-19", "2026-11-17"],
+    [["2026-11-04", "2026-11-05"], "2026-11-06"],
+    ["", "2026-11-18"],
+  ]) {
+    const result = resolveOverviewRange({ range: "custom", from, to }, now);
+    assert.equal(result.period.range, "24h");
+    assert.equal(result.invalidCustom, true);
+  }
+  assert.match(page, /reporting\.invalidCustom[\s\S]*role="alert"/);
+});
+
+test("the Overview and platform report use the same bounds while live operational reads use their own clocks", () => {
+  assert.match(page, /const query = new URLSearchParams\(\{ from: reporting\.from\.toISOString\(\), to: reporting\.to\.toISOString\(\) \}\)/);
+  assert.match(page, /readPlatformSearchActivity\(reporting\.from, reporting\.to\)/);
   assert.match(controls, /role="listbox"/);
   assert.match(controls, /aria-haspopup="listbox"/);
   assert.match(controls, /aria-expanded=\{open\}/);
   assert.match(service, /getProviderOperationalStatuses\(24, environment\)/);
-  assert.match(service, /getWebsitePresenceSnapshot\(environment, now\)/);
+  assert.match(service, /getOnlinePresenceSnapshot\(environment, now\)/);
 });
 
 test("backend metrics retain strict account, audit, queue and environment validation", () => {
@@ -419,12 +464,13 @@ test("backend metrics retain strict account, audit, queue and environment valida
   assert.match(journeyCore, /"resultCount" <= 0/);
 });
 
-test("the required CI gate still validates overview integrity and consented presence", () => {
+test("the required CI gate validates overview integrity and both presence contracts", () => {
   const workflow = readFileSync(".github/workflows/pr-required-gates.yml", "utf8");
   const metrics = readFileSync("src/services/adminOverviewMetrics.ts", "utf8");
   const presence = readFileSync("src/services/websitePresenceService.ts", "utf8");
-  assert.match(workflow, /Validate Admin Overview metrics and consented presence/);
-  for (const path of ["src/services/adminOverviewMetrics.test.ts", "src/lib/website-presence.test.ts", "src/app/admin/page.test.ts"]) {
+  assert.match(workflow, /Validate Admin Overview metrics and presence/);
+  for (const path of ["src/services/adminOverviewMetrics.test.ts", "src/lib/website-presence.test.ts",
+    "src/lib/onlinePresenceRoute.test.ts", "src/lib/websiteOnlinePresenceClient.test.ts", "src/app/admin/page.test.ts"]) {
     assert.ok(workflow.includes(path), path);
   }
   assert.match(metrics, /Unknown admin Overview workflow status/);

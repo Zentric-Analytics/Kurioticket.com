@@ -48,7 +48,7 @@ test("source-filtered search investigation keeps filters and excludes source fro
     assert.ok(!searchWorkspaceHref("handoffs", raw).includes("applicationSource"));
     assert.equal(applicationLabel(undefined), "Unknown");
 });
-test("health navigation is ADMIN-only, discoverable and overview preserves website presence definitions", () => {
+test("health navigation is ADMIN-only, discoverable and overview has a separate live presence metric", () => {
     assert.ok(getAdminNavForRole("ADMIN").some(item => item.href === "/admin/platform-health"));
     assert.deepEqual(getAdminNavForRole("USER"), []);
     assert.deepEqual(getAdminNavForRole("SUPPORT"), []);
@@ -56,8 +56,8 @@ test("health navigation is ADMIN-only, discoverable and overview preserves websi
     const page = readFileSync("src/app/admin/page.tsx", "utf8"), overview = readFileSync("src/components/admin/AdminOverviewDashboard.tsx", "utf8");
     assert.match(page, /<PlatformOverviewSummary/);
     assert.match(page, /requireAdminApiSession/);
-    assert.match(overview, /Active website users/);
-    assert.match(overview, /excludes native-app activity/);
+    assert.match(overview, /Online Users/);
+    assert.match(overview, /web, Android, and iOS/);
     const scope = readFileSync("src/components/admin/SettingsFeatureSection.tsx", "utf8");
     assert.match(scope, /Scope: shared backend/);
     assert.match(scope, /reauthentication/);

@@ -28,5 +28,5 @@ test("root layout adds no environment-specific safe-area banner or spacer", () =
   const layout = source("app/_layout.tsx");
 
   assert.doesNotMatch(layout, /PreviewBanner|SafeAreaView|isPreview/);
-  assert.match(layout, /<View style=\{\{ flex: 1 \}\}>\s*<StatusBar[\s\S]*?<Stack/);
+  assert.match(layout, /<View style=\{\{ flex: 1 \}\}[^>]*>\s*<StatusBar[\s\S]*?<Stack/);
 });

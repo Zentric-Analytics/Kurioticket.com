@@ -20,6 +20,7 @@ import { FeatureAvailabilityProvider } from "../src/features/availability/Featur
 import { MobileLocalizationProvider } from "../src/localization/MobileLocalizationProvider";
 import { createForegroundUpdateHandler, ensureLatestUpdate } from "../src/updates/ensureLatestUpdate";
 import { startVisitorIdentity } from "../src/features/privacy/visitorIdentity";
+import { useNativePresence } from "../src/features/privacy/useNativePresence";
 import { MobileRecoveryBoundary } from "../src/features/auth/MobileRecoveryBoundary";
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -60,8 +61,9 @@ export default function RootLayout() {
 
 function ThemedRootLayout() {
   const { theme } = useAppTheme();
+  const recordPresenceActivity = useNativePresence();
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1 }} onTouchStart={recordPresenceActivity}>
       <StatusBar style={theme.dark ? "light" : "dark"} backgroundColor={theme.background} />
       <MobileRecoveryBoundary><Stack
         screenOptions={{

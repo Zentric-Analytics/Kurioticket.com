@@ -8,6 +8,28 @@ import { getCmsHealthOverview } from "@/services/cmsHardeningService";
 import { partitionOperationalGroups, projectScheduledJobRun, type ScheduledJobRun, type OperationalGroup } from "./platformOperationsContract";
 import { getAdminAlertSnapshot } from "./adminAlertService";
 
+/** Overview only needs search counts in the shared reporting window. */
+export async function readPlatformSearchActivity(from: Date, to: Date) {
+  const environment = getPublicEnvironment();
+  const window = { from: from.toISOString(), to: to.toISOString() };
+  let searches: ReturnType<typeof partitionOperationalGroups>["searches"] | null = null;
+  try {
+    const db = getOptionalPrisma();
+    if (db) {
+      const rows = await db.$queryRaw<OperationalGroup[]>`
+        SELECT 'searches' AS kind, query->>'applicationSource' AS source,
+          status::text, COUNT(*) AS count, 0 AS latency
+        FROM "SearchHistory"
+        WHERE "createdAt" >= ${from} AND "createdAt" < ${to}
+          AND query->>'environment' = ${environment}
+        GROUP BY 1, 2, 3
+      `;
+      searches = partitionOperationalGroups(rows).searches;
+    }
+  } catch { /* Failed reads do not describe an empty window. */ }
+  return { environment, window, searches };
+}
+
 /** Aggregate-only operational read. No account IDs, device IDs, raw errors,
  * traveler queries or URLs are returned. Accounts/sessions are not event totals. */
 export async function readPlatformOperations(hours = 24) {

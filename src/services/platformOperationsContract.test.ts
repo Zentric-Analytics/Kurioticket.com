@@ -94,6 +94,51 @@ test("operational service scopes aggregate SQL to its environment and outages re
   assert.doesNotMatch(JSON.stringify(unavailable), /private database/);
 });
 
+test("Overview search activity observes exact bounds in the deployment and distinguishes no rows from failure", async () => {
+  const from = new Date("2026-11-01T00:00:00.000Z");
+  const to = new Date("2026-11-09T17:30:43.751Z");
+  let state: "records" | "empty" | "unavailable" = "records";
+  const modules: Record<string, unknown> = {
+    "server-only": {},
+    "@/lib/prisma": { getOptionalPrisma: () => ({ $queryRaw: async (sql: TemplateStringsArray, ...params: unknown[]) => {
+      assert.match(sql.join("?"), /FROM "SearchHistory"[\s\S]*"createdAt" >= \? AND "createdAt" < \?/);
+      assert.doesNotMatch(sql.join("?"), /RedirectLog|ApiProviderLog/);
+      assert.deepEqual(params, [from, to, "staging"]);
+      if (state === "unavailable") throw new Error("database down");
+      return state === "empty" ? [] : [
+        { kind: "searches", source: "WEB", status: "SUCCESS", count: 3, latency: 0 },
+        { kind: "searches", source: null, status: "FAILED", count: 2, latency: 0 },
+      ];
+    } }) },
+    "@/lib/stagingSafety": { getPublicEnvironment: () => "staging" },
+    "@/lib/admin-data": {},
+    "@/services/providerOperationalStatus": {},
+    "@/services/emailDeliveryService": {},
+    "@/services/cmsHardeningService": {},
+    "./platformOperationsContract": { partitionOperationalGroups },
+    "./adminAlertService": {},
+  };
+  const exports: { readPlatformSearchActivity: (from: Date, to: Date) => Promise<{
+    window: { from: string; to: string };
+    searches: ReturnType<typeof partitionOperationalGroups>["searches"] | null;
+  }> } = {} as never;
+  runInNewContext(ts.transpileModule(readFileSync("src/services/platformOperationsService.ts", "utf8"), {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+  }).outputText, { exports, Date, require: (name: string) => { assert.ok(name in modules, name); return modules[name]; } });
+
+  const result = await exports.readPlatformSearchActivity(from, to);
+  assert.equal(result.window.from, from.toISOString());
+  assert.equal(result.window.to, to.toISOString());
+  assert.equal(result.searches?.combined.total, 5);
+  assert.equal(result.searches?.applications.WEB.total, 3);
+  assert.equal(result.searches?.applications.UNKNOWN.total, 2);
+
+  state = "empty";
+  assert.equal((await exports.readPlatformSearchActivity(from, to)).searches?.combined.total, 0);
+  state = "unavailable";
+  assert.equal((await exports.readPlatformSearchActivity(from, to)).searches, null);
+});
+
 test("job projections require coherent persisted completion evidence and never turn RUNNING into failure", () => {
   const createdAt = new Date("2026-11-01T00:00:00Z"), now = new Date("2026-11-01T00:10:00Z");
   const row = { provider: "price-alerts", status: "DEGRADED", createdAt, latencyMs: 0, metadata: { environment: "staging", state: "RUNNING" } };
