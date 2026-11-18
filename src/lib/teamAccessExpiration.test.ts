@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   composeUtcExpiration, formatUtcExpiration, moveUtcMonth,
-  parseUtcExpiration, utcMonthGrid,
+  parseUtcExpiration, utcMonthGrid, formatUtcAuditTimestamp,
 } from "./teamAccessExpiration";
 
 test("UTC Team Access picker serializes explicit instants without local timezone drift", () => {
@@ -28,4 +28,9 @@ test("UTC calendar grid handles leap months and adjacent month navigation", () =
   assert.equal(utcMonthGrid("2026-02").filter(Boolean).length, 28);
   assert.equal(moveUtcMonth("2026-12", 1), "2027-01");
   assert.equal(moveUtcMonth("2026-01", -1), "2025-12");
+});
+
+test("Team Access audit timestamps render identically on UTC servers and non-UTC browsers", () => {
+  assert.equal(formatUtcAuditTimestamp("2026-11-01T08:00:00.000Z"), "2026-11-01 08:00 UTC");
+  assert.equal(formatUtcAuditTimestamp(new Date("2026-11-18T17:40:00.000Z")), "2026-11-18 17:40 UTC");
 });

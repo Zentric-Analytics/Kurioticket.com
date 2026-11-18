@@ -49,3 +49,9 @@ export function formatUtcExpiration(value: string | Date | null | undefined): st
     timeZone: "UTC", month: "short", day: "numeric", year: "numeric",
   }).format(date) + " · " + parsed.hour + ":" + parsed.minute + " UTC";
 }
+
+/** SSR/hydration-stable audit timestamp; never depends on viewer or server locale. */
+export function formatUtcAuditTimestamp(value: Date | string): string {
+  const iso = new Date(value).toISOString();
+  return iso.slice(0, 10) + " " + iso.slice(11, 16) + " UTC";
+}

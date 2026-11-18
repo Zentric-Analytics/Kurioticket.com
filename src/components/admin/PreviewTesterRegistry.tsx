@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Lightbulb, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { TeamAccessExpiryPicker } from "./TeamAccessExpiryPicker";
+import { formatUtcAuditTimestamp } from "@/lib/teamAccessExpiration";
 import { TEAM_ACCESS_ROLE_DEFINITIONS, TEAM_ACCESS_ROLES, effectiveCapabilities, type TeamAccessRole } from "@/lib/teamAccessRoles";
 
 type Actor = { email: string | null; name: string | null } | null;
@@ -145,7 +146,7 @@ export function PreviewTesterRegistry({ testers }: { testers: Tester[] }) {
                       <EffectiveAccess roles={tester.roles} />
                       <dl className="grid min-w-0 gap-x-4 gap-y-2 text-[12px] sm:grid-cols-2">
                         <div className="min-w-0"><dt className="font-medium text-[#64748B]">Approved</dt><dd className="mt-1 break-words text-[#334155]">{actorTimestamp(tester.approvedByAdmin, tester.approvedAt)}</dd></div>
-                        <div className="min-w-0"><dt className="font-medium text-[#64748B]">Updated</dt><dd className="mt-1 break-words text-[#334155]">{new Date(tester.updatedAt).toLocaleString()}</dd></div>
+                        <div className="min-w-0"><dt className="font-medium text-[#64748B]">Updated</dt><dd className="mt-1 break-words text-[#334155]">{formatUtcAuditTimestamp(tester.updatedAt)}</dd></div>
                         <div className="min-w-0"><dt className="font-medium text-[#64748B]">Suspended</dt><dd className="mt-1 break-words text-[#334155]">{actorTimestamp(tester.suspendedByAdmin, tester.suspendedAt)}</dd></div>
                         <div className="min-w-0"><dt className="font-medium text-[#64748B]">Revoked</dt><dd className="mt-1 break-words text-[#334155]">{actorTimestamp(tester.revokedByAdmin, tester.revokedAt)}</dd></div>
                       </dl>
@@ -180,5 +181,5 @@ function RoleInfo({ role, onClose }: { role: TeamAccessRole; onClose: () => void
 
 function actorTimestamp(actor: Actor, timestamp: Date | null) {
   if (!timestamp) return "—";
-  return `${actor?.name || actor?.email || "Unknown"} · ${new Date(timestamp).toLocaleString()}`;
+  return `${actor?.name || actor?.email || "Unknown"} · ${formatUtcAuditTimestamp(timestamp)}`;
 }
