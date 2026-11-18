@@ -2764,9 +2764,20 @@ textarea {
     min-width: 0;
     width: 100%;
   }
-  .admin-responsive-records table colgroup,
-  .admin-responsive-records table thead {
+  .admin-responsive-records table colgroup {
     display: none;
+  }
+  /* Keep the actual table headings in the accessibility tree. */
+  .admin-responsive-records table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
   }
   .admin-responsive-records tbody {
     display: grid;
@@ -2822,10 +2833,6 @@ textarea {
   .admin-responsive-records tbody > tr > td[data-detail-panel] {
     border-left: 2px solid #004bb8;
     padding: 10px 12px;
-  }
-  .admin-responsive-records tbody > tr > td a {
-    position: relative;
-    z-index: 1;
   }
   .admin-responsive-records tbody > tr > td .truncate {
     white-space: normal;
