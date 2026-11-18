@@ -3,7 +3,7 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import type { Prisma } from "@/generated/prisma/client";
 import { getOptionalPrisma, isDatabaseConfigured } from "@/lib/prisma";
-import { onlinePresenceHeartbeatMs, onlinePresenceWindowSeconds, type OnlinePresenceSnapshot } from "@/lib/onlinePresence";
+import { onlinePresenceWindowSeconds, type OnlinePresenceSnapshot } from "@/lib/onlinePresence";
 import { hasConsistentWebsitePresenceOrigin, isWebsiteOnlinePresenceEnabled, presenceSigningSecret } from "@/lib/onlinePresenceCredential";
 import type { OnlinePresenceHeartbeat } from "@/lib/onlinePresenceRoute";
 import type { PublicEnvironment } from "@/lib/stagingSafety";
@@ -19,7 +19,8 @@ const presenceHealth = globalThis as typeof globalThis & {
 
 export function reportOnlinePresenceIngestionFailure(environment: PublicEnvironment) {
   const failures = presenceHealth.onlinePresenceFailedThrough ??= {};
-  failures[environment] = Date.now() + onlinePresenceHeartbeatMs;
+  // Keep the reported failure through the client's Retry-After and next attempt.
+  failures[environment] = Date.now() + onlinePresenceWindowSeconds * 1000;
 }
 
 async function pruneExpiredPresence(environment: PublicEnvironment, now: Date) {
