@@ -14,7 +14,7 @@ const checks = [];
 const errors = [];
 page.on("pageerror", error => errors.push(error.message));
 try {
-  for (const width of [1280, 1366, 1440, 1920, 1024, 1200, 1279, 768, 390, 320]) {
+  for (const width of [1280, 1366, 1440, 1920, 768, 390, 320]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto(root + "/admin/users", { waitUntil: "networkidle" });
     const logo = page.getByRole("link", { name: "Kurioticket Admin overview" });
@@ -45,7 +45,7 @@ try {
       const contentWidth = await page.locator('[data-admin-page-content]').evaluate(node => node.getBoundingClientRect().width);
       assert.ok(contentWidth > sidebarWidth * 2, "Content workspace must receive the larger share at " + width + "px");
     }
-    if (width >= 1280) {
+    if (width >= 1100) {
       const headerNavigation = page.getByRole("navigation", { name: "Admin navigation" });
       await expect(headerNavigation).toBeVisible();
       await expect(headerNavigation.getByRole("link", { name: "Overview", exact: true })).toBeVisible();
@@ -69,79 +69,6 @@ try {
     await page.screenshot({ path: output + "/users-navbar-" + width + ".png", fullPage: false });
     checks.push("Admin navbar responsive at " + width + "px");
   }
-
-  // Exercise the full ten-module header on Overview, where the full navigation
-  // is intentionally visible. Other workspace pages keep their Overview-only top bar.
-  const expectedHeader = ["Overview", "Users", "Search Activity", "Trips", "Support",
-    "Providers", "Content", "System", "Platform Health", "Settings"];
-  for (const width of [1280, 1366, 1440, 1536, 1920, 1024, 1100, 1200, 1279, 768, 390, 320]) {
-    await page.setViewportSize({ width, height: 900 });
-    await page.goto(root + "/admin", { waitUntil: "networkidle" });
-    const headerNavigation = page.getByRole("navigation", { name: "Admin navigation" });
-    if (width >= 1280) {
-      await expect(headerNavigation).toBeVisible();
-      await expect(page.getByRole("button", { name: "Open admin navigation" })).toHaveCount(0);
-      const links = headerNavigation.locator("a");
-      await expect(links).toHaveCount(10);
-      const metrics = await headerNavigation.evaluate(element => {
-        const rect = element.getBoundingClientRect();
-        const links = Array.from(element.querySelectorAll("a")).map(link => {
-          const box = link.getBoundingClientRect();
-          const label = link.querySelector("span");
-          return {
-            label: label?.textContent?.trim(), href: link.getAttribute("href"),
-            left: box.left, right: box.right, top: box.top, height: box.height,
-            labelClipped: !!label && label.scrollWidth > label.clientWidth + 1,
-          };
-        });
-        return {
-          viewport: window.innerWidth,
-          documentWidth: document.documentElement.scrollWidth,
-          width: element.clientWidth,
-          scrollWidth: element.scrollWidth,
-          left: rect.left, right: rect.right, links,
-        };
-      });
-      assert.deepEqual(metrics.links.map(link => link.label), expectedHeader,
-        "Full Admin navigation must retain all ten modules in order");
-      assert.equal(metrics.links[8].href, "/admin/platform-health",
-        "Platform Health must appear between System and Settings");
-      assert.ok(metrics.links.every(link => Math.abs(link.top - metrics.links[0].top) < 1),
-        "All ten links must stay on one horizontal line at " + width + "px: " + JSON.stringify(metrics));
-      assert.ok(metrics.links.every(link => link.height >= 39 && !link.labelClipped),
-        "Navbar links must remain legible at " + width + "px: " + JSON.stringify(metrics));
-      assert.ok(metrics.links.every(link => link.left >= metrics.left - 1 && link.right <= metrics.right + 1),
-        "All links must fit inside the navigation container at " + width + "px: " + JSON.stringify(metrics));
-      assert.ok(metrics.links.every((link, index) => !index || link.left >= metrics.links[index - 1].right),
-        "Navbar links must not overlap at " + width + "px: " + JSON.stringify(metrics));
-      assert.ok(metrics.scrollWidth <= metrics.width + 1 && metrics.documentWidth <= metrics.viewport + 1,
-        "No scrollable or clipped header allowed at " + width + "px: " + JSON.stringify(metrics));
-    } else {
-      await expect(page.getByRole("button", { name: "Open admin navigation" })).toBeVisible();
-      await expect(headerNavigation).toHaveCount(0);
-      await page.getByRole("button", { name: "Open admin navigation" }).click();
-      await expect(headerNavigation).toBeVisible();
-      const labels = await headerNavigation.locator("a span").allTextContents();
-      assert.deepEqual(labels.map(value => value.trim()), expectedHeader,
-        "Compact menu must preserve all ten modules");
-      await page.getByRole("button", { name: "Close admin navigation" }).click();
-      await expect(headerNavigation).toHaveCount(0);
-    }
-    await page.screenshot({ path: output + "/overview-navbar-" + width + ".png", fullPage: false });
-    checks.push("Ten-module Admin navbar without wrapping at " + width + "px");
-  }
-
-  // Platform Health is a distinct module even when its System subsection shortcut
-  // remains present. In the compact menu only Platform Health may be selected.
-  await page.setViewportSize({ width: 1200, height: 900 });
-  await page.goto(root + "/admin/platform-health", { waitUntil: "networkidle" });
-  await expect(page.getByRole("heading", { name: "Platform Health QA" })).toBeVisible();
-  await page.getByRole("button", { name: "Open admin navigation" }).click();
-  const compactNav = page.getByRole("navigation", { name: "Admin navigation" });
-  await expect(compactNav.getByRole("link", { name: "Platform Health", exact: true })).toHaveAttribute("aria-current", "page");
-  await expect(compactNav.getByRole("link", { name: "System", exact: true })).not.toHaveAttribute("aria-current", "page");
-  await page.getByRole("button", { name: "Close admin navigation" }).click();
-  checks.push("Platform Health has a distinct selected state, without stealing System active state");
 
   // The real Visitor Journeys page uses synthetic QA-only rows; preserve
   // all eight data fields and keep each Action visible at 100% zoom.

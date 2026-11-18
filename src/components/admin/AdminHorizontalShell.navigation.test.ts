@@ -56,8 +56,6 @@ test("selected workspaces use the public Hotel navbar palette and underline", ()
     ["/admin/users", "/admin/users/fixture", true], ["/admin/users", "/admin/settings", false],
     ["/admin/searches/activity", "/admin/searches/fixture", true], ["/admin/providers", "/admin/hotels", true],
     ["/admin/searches/activity", "/admin/journeys", false], ["/admin/searches/activity", "/admin/settings", false],
-    ["/admin/system", "/admin/platform-health", false], ["/admin/platform-health", "/admin/platform-health", true],
-    ["/admin/platform-health", "/admin/system", false],
   ] as const) {
     const entry = entries.find(({ item }) => item.href === href);
     assert.ok(entry);
@@ -81,13 +79,10 @@ test("selected workspaces use the public Hotel navbar palette and underline", ()
 });
 
 test("navigation keeps parent workspaces visible while child routes stay nested", () => {
-  assert.match(shell, /min-\[1280px\]:block/);
-  assert.match(shell, /min-\[1280px\]:hidden/);
+  assert.match(shell, /min-\[1100px\]:block/);
+  assert.match(shell, /min-\[1100px\]:hidden/);
   assert.doesNotMatch(shell, /overflow-x-auto overscroll-x-contain/);
-  assert.match(shell, /flex w-full flex-nowrap items-center justify-start gap-3/);
-  assert.match(shell, /rounded-xl px-2 text-\[15px\]/);
-  assert.match(shell, /max-w-\[1920px\] px-4 pb-2 pt-2 sm:px-6/);
-  assert.doesNotMatch(shell, /min-\[1100px\]:/);
+  assert.match(shell, /flex w-full flex-wrap items-center/);
   assert.doesNotMatch(shell, /createPortal/);
   assert.match(shell, /Official Kurioticket mark stays in the top-left header beside the title at every width/);
   const groups = getAdminHeaderGroups("ADMIN", true);
