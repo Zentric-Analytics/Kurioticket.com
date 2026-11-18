@@ -28,7 +28,7 @@ test("selected workspaces use the public Hotel navbar palette and underline", ()
   assert.match(shell, /hover:bg-\[#004BB8\]\/5/);
   assert.match(shell, /const underline = selected/);
   assert.match(shell, /after:h-0\.5 after:rounded-full after:bg-\[#004BB8\]/);
-  assert.match(shell, /text-\[15px\] font-semibold/);
+  assert.match(shell, /h-9 gap-1\.5 rounded-lg px-1\.5 text-\[13px\]/);
   const document = ts.createSourceFile("AdminHorizontalShell.tsx", shell, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
   const headers: ts.JsxOpeningElement[] = [];
   function visit(node: ts.Node) {
@@ -56,6 +56,7 @@ test("selected workspaces use the public Hotel navbar palette and underline", ()
     ["/admin/users", "/admin/users/fixture", true], ["/admin/users", "/admin/settings", false],
     ["/admin/searches/activity", "/admin/searches/fixture", true], ["/admin/providers", "/admin/hotels", true],
     ["/admin/searches/activity", "/admin/journeys", false], ["/admin/searches/activity", "/admin/settings", false],
+    ["/admin/system", "/admin/platform-health", false], ["/admin/platform-health", "/admin/platform-health", true],
   ] as const) {
     const entry = entries.find(({ item }) => item.href === href);
     assert.ok(entry);
@@ -82,12 +83,17 @@ test("navigation keeps parent workspaces visible while child routes stay nested"
   assert.match(shell, /min-\[1100px\]:block/);
   assert.match(shell, /min-\[1100px\]:hidden/);
   assert.doesNotMatch(shell, /overflow-x-auto overscroll-x-contain/);
-  assert.match(shell, /flex w-full flex-wrap items-center/);
+  assert.match(shell, /flex w-full min-w-0 flex-nowrap items-center justify-start gap-x-2/);
+  assert.match(shell, /lg:pl-3 lg:pr-5/);
+  assert.match(shell, /"h-3 w-3 shrink-0"/);
+  assert.doesNotMatch(shell, /flex w-full flex-wrap items-center/);
   assert.doesNotMatch(shell, /createPortal/);
   assert.match(shell, /Official Kurioticket mark stays in the top-left header beside the title at every width/);
   const groups = getAdminHeaderGroups("ADMIN", true);
   const entries = groups.flatMap(group => group.links);
   assert.deepEqual(entries.map(({ item }) => item.label), ["Overview", "Users", "Search Activity", "Trips", "Support", "Providers", "Content", "System", "Platform Health", "Settings"]);
+  assert.equal(new Set(entries.map(entry => entry.item.href)).size, 10, "ten unique desktop destinations");
+  assert.equal(entries.find(entry => entry.item.href === "/admin/system")?.children.some(child => child.href === "/admin/platform-health"), false, "promoted Platform Health is not simultaneously a System header child");
   const searches = entries.find(({ item }) => item.href === "/admin/searches/activity");
   const providers = entries.find(({ item }) => item.href === "/admin/providers");
   assert.deepEqual(searches?.children.map((item) => item.label), ["Provider Handoffs"]);
