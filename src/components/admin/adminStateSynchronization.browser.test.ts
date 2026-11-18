@@ -198,21 +198,17 @@ test("Overview applies complete custom UTC dates and can revise a committed cust
   }, 390);
 });
 
-test("CMS acknowledgements with unchanged search do not restart the existing debounce or lose scope", async () => {
+test("CMS filter drafts survive same-scope updates and only Apply filters navigates", async () => {
   const props = { path: "/admin/content/faqs", query: "q=old&from=overview", status: "", searchLabel: "Search FAQs", children: "Records" };
-  const timers = `window.fixtureTimers=new Map();window.fixtureTimerId=100000;const originalSet=window.setTimeout,originalClear=window.clearTimeout;
-    window.setTimeout=(fn,delay,...args)=>{if(delay!==300)return originalSet(fn,delay,...args);const id=++window.fixtureTimerId;window.fixtureTimers.set(id,fn);return id;};
-    window.clearTimeout=id=>{if(!window.fixtureTimers.delete(id))originalClear(id);};`;
-  await withComponentBrowser(bundle(), timers + mount("content", "ContentDirectoryToolbar", props), async page => {
+  await withComponentBrowser(bundle(), mount("content", "ContentDirectoryToolbar", props), async page => {
     const input = page.getByRole("searchbox", { name: "Search FAQs", exact: true });
     await input.fill("draft search");
-    await page.waitForFunction(() => (window as unknown as { fixtureTimers: Map<number, unknown> }).fixtureTimers.size === 1);
-    const first = await page.evaluate(() => [...(window as unknown as { fixtureTimers: Map<number, unknown> }).fixtureTimers.keys()]);
-    await page.evaluate(props => (window as unknown as { fixtureRender: (props: unknown) => void }).fixtureRender(props), { ...props, query: "q=old&from=overview&status=DRAFT", status: "DRAFT" });
-    await page.waitForFunction(() => document.querySelector('input[name="status"]')?.getAttribute("value") === "DRAFT");
+    await page.evaluate(props => (window as unknown as { fixtureRender: (props: unknown) => void }).fixtureRender(props),
+      { ...props, query: "q=old&from=overview&status=DRAFT", status: "DRAFT" });
     assert.equal(await input.inputValue(), "draft search");
-    assert.deepEqual(await page.evaluate(() => [...(window as unknown as { fixtureTimers: Map<number, unknown> }).fixtureTimers.keys()]), first, "server acknowledgement must not cancel/restart the user's timer");
-    await page.evaluate(() => { const timers = (window as unknown as { fixtureTimers: Map<number, () => void> }).fixtureTimers; const callbacks = [...timers.values()]; timers.clear(); callbacks.forEach(fn => fn()); });
+    await page.waitForTimeout(350);
+    assert.deepEqual(await page.evaluate(() => (window as unknown as { fixtureNavigation: string[] }).fixtureNavigation), []);
+    await page.getByRole("button", { name: "Apply filters", exact: true }).click();
     await page.waitForFunction(() => (window as unknown as { fixtureNavigation: string[] }).fixtureNavigation.length === 1);
     const href = await page.evaluate(() => (window as unknown as { fixtureNavigation: string[] }).fixtureNavigation[0]);
     const url = new URL(href, "http://fixture.local");
@@ -230,6 +226,10 @@ test("CMS all-market navigation preserves draft search, selected market and over
     await input.fill("draft market search");
     await page.getByRole("combobox", { name: "Content market", exact: true }).click();
     await page.getByRole("option", { name: "Canada", exact: true }).click();
+    assert.deepEqual(await page.evaluate(() => (window as unknown as { fixtureNavigation: string[] }).fixtureNavigation), [],
+      "Market choice must remain a draft");
+    await page.getByRole("button", { name: "Apply filters", exact: true }).click();
+    await page.waitForFunction(() => (window as unknown as { fixtureNavigation: string[] }).fixtureNavigation.length === 1);
     const href = await page.evaluate(() => (window as unknown as { fixtureNavigation: string[] }).fixtureNavigation.at(-1)!);
     const url = new URL(href, "http://fixture.local");
     assert.equal(url.searchParams.get("market"), "CANADA");
