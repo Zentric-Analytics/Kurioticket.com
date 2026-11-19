@@ -8,7 +8,7 @@ import type { SettingsHistoryCategory, SettingsHistoryEntry, SettingsHistoryRang
 export const metadata = { title: "Admin Settings - Settings History" };
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
-const ranges = ["24h", "7d", "30d", "all", "custom", "90d"] as const;
+const ranges = ["today", "24h", "7d", "30d", "all", "custom", "90d"] as const;
 const categories = ["all", "product", "automation", "team", "legacy"] as const;
 const categoryLabels: Record<SettingsHistoryCategory, string> = {
   all: "All Settings", product: "Product availability", automation: "Travel automation",
@@ -83,7 +83,7 @@ export default async function AdminRecentSettingsChangesPage({ searchParams }: {
   const fromDate = single(raw.fromDate) || "";
   const toDate = single(raw.toDate) || "";
   const range: SettingsHistoryRange = ranges.includes(requestedRange as SettingsHistoryRange)
-    ? requestedRange as SettingsHistoryRange : "24h";
+    ? requestedRange as SettingsHistoryRange : "today";
   const category: SettingsHistoryCategory = categories.includes(requestedCategory as SettingsHistoryCategory)
     ? requestedCategory as SettingsHistoryCategory : "all";
   const invalid = Object.keys(raw).some(key => !["range", "category", "view", "cursor", "fromDate", "toDate"].includes(key)) ||
