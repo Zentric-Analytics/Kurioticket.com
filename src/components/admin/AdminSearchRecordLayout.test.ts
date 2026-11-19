@@ -38,6 +38,21 @@ test("Search Records fits its workspace with all ten fields visible and compact 
   assert.match(css, /white-space: nowrap/);
 });
 
+test("Search Records metric headings and identity values stay on one line without table scroll", () => {
+  const css = readFileSync("src/app/globals.css", "utf8");
+  const widthsMatch = searchTable.match(/\[13, 8, 11, 11, 9, 8, 10, 9, 10, 11\]/);
+  assert.ok(widthsMatch, "Table columns must reserve sufficient width for metric headings");
+  for (const column of ["Currency", "Results", "Providers", "Duration", "Identity"]) {
+    assert.ok(css.includes(`.admin-search-records td[data-label="${column}"]`), `${column} must not break its values`);
+    assert.ok(searchTable.includes(`data-label="${column}"`), `${column} must remain in the table`);
+  }
+  assert.match(css, /\.admin-search-records thead th,/);
+  assert.match(css, /white-space: nowrap;/);
+  assert.match(css, /@container \(min-width: 801px\) and \(max-width: 1050px\)/);
+  assert.doesNotMatch(searchTable, /min-w-\[1180px\]|overflow-x-auto/);
+  assert.match(searchTable, /data-search-route-preview/);
+});
+
 test("Provider Handoffs has a readable correlation and action column without squeezing table cells", () => {
   assert.match(handoffPage, /aria-label="Provider handoff records"/);
   assert.match(handoffPage, /min-w-\[1320px\] table-fixed/);
