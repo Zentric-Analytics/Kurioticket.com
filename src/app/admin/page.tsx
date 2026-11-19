@@ -32,7 +32,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
     getSafeSystemStatus(),
     getRecentAdminActivity(),
     readPlatformSearchActivity(reporting.from, reporting.to),
-    getAdminAlertSnapshot().catch(() => null),
+    getAdminAlertSnapshot(undefined, new Date(), { forceRefreshCandidates: false }).catch(() => null),
   ]);
 
   return (
