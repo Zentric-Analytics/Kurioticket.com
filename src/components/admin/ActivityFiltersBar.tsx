@@ -59,7 +59,8 @@ export function ActivityFiltersBar({ path, initial, directory, tabs }: { path: s
     // Update draft state only. An explicit Apply filters click navigates.
     setValues(current => ({ ...current, ...patch }));
   };
-  const rangeOptions = ADMIN_REPORTING_RANGE_OPTIONS;
+  const rangeOptions = [...ADMIN_REPORTING_RANGE_OPTIONS,
+    ...(values.range === "24h" ? [{ value: "24h", label: "Last 24 hrs (legacy)" }] : [])];
   const setRange = (range: string) => {
     if (range === "custom") {
       setDraftDates({ from: values.range === "custom" ? values.from : "", to: values.range === "custom" ? values.to : "" });
@@ -67,7 +68,8 @@ export function ActivityFiltersBar({ path, initial, directory, tabs }: { path: s
       return;
     }
     setEditingCustom(false);
-    const dates = range === "24h" ? utcWindow(1) : range === "7d" ? utcWindow(7) : range === "30d" ? utcWindow(30) : {from:"",to:""};
+    const dates = range === "today" ? { from: new Date(new Date().setUTCHours(0, 0, 0, 0)).toISOString(), to: new Date().toISOString() }
+      : range === "24h" ? utcWindow(1) : range === "7d" ? utcWindow(7) : range === "30d" ? utcWindow(30) : {from:"",to:""};
     update({range, ...dates});
   };
   const validCustom = /^\d{4}-\d{2}-\d{2}$/.test(draftDates.from)
