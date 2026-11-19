@@ -27,3 +27,18 @@ export function summarizeAttentionRequired(input: {
     deletionPending: input.deletions.pending,
   };
 }
+
+/** Global incident counts complement the dedicated provider and support queues.
+ * Acknowledged incidents remain active until their underlying condition clears.
+ * Source exclusions avoid counting the same provider/support problem twice.
+ */
+export function summarizePlatformIncidents(
+  alerts: readonly { source: string; severity: "CRITICAL" | "WARNING" }[],
+) {
+  const incidents = alerts.filter(alert => alert.source !== "PROVIDER" && alert.source !== "SUPPORT");
+  return {
+    total: incidents.length,
+    critical: incidents.filter(alert => alert.severity === "CRITICAL").length,
+    warning: incidents.filter(alert => alert.severity === "WARNING").length,
+  };
+}
