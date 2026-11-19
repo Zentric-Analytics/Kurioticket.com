@@ -181,8 +181,8 @@ test("all recorded searches are separate from consented search events", () => {
     assert.ok(search.includes('label="' + label + '" value={data.journeys.operationalSearches.' + key + "}"), label);
   }
   assert.equal((search.match(/<MiniMetric /g) ?? []).length, 4);
-  assert.match(search, /Includes unattributed searches/);
-  assert.match(search, /success does not guarantee offers/);
+  assert.doesNotMatch(search, /Includes unattributed searches/);
+  assert.doesNotMatch(search, /success does not guarantee offers/);
   assert.match(search, /href="\/admin\/searches\/activity"/);
   assert.doesNotMatch(search, /partialWithResults|partialWithoutResults/);
   assert.match(readFileSync("src/app/admin/searches/activity/page.tsx", "utf8"), /AdminPageShell/);
@@ -308,7 +308,7 @@ test("audit summary limits display to three latest actions, retaining full recor
   assert.match(audit, /item\.timestamp/);
   assert.match(audit, /activity\.status === "unavailable"/);
   assert.match(audit, /recent\.length === 0/);
-  assert.match(dashboard, /Latest three actions across all dates/);
+  assert.doesNotMatch(dashboard, /Latest three actions across all dates/);
   assert.match(dashboard, /href="\/admin\/logs"/);
   assert.match(adminData, /take: limit/);
   assert.match(adminData, /timeZone: "UTC"/);
