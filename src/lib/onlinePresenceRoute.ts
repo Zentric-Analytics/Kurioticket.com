@@ -6,8 +6,6 @@ import type { PublicEnvironment } from "@/lib/stagingSafety";
 import type { OnlinePresencePlatform } from "./onlinePresence";
 import {
   equalPresenceSignatures,
-  presenceCookieName,
-  presenceCredentialTtlSeconds,
   presenceTokenHeader,
   renewPresenceCredential,
   type PresenceTransport,
@@ -104,8 +102,10 @@ export function createOnlinePresenceHandler(transport: PresenceTransport, depend
     const secret = dependencies.secret();
     if (!secret) return response(503, "60");
 
+    // The browser holds the signed credential only in page memory. Do not set a new
+    // tracking cookie or use analytics consent identifiers for operational presence.
     const cookies = transport === "web" ? requestCookies(request) : null;
-    const supplied = cookies ? cookies.get(presenceCookieName) ?? null : request.headers.get(presenceTokenHeader);
+    const supplied = request.headers.get(presenceTokenHeader);
     const credential = renewPresenceCredential(supplied, { environment, transport, now: now.getTime(), secret });
     const admit = dependencies.admit ?? admitHeartbeat;
     if (!admit(request, credential.sourceId, credential.newSource)) return response(429, "30");
@@ -128,12 +128,7 @@ export function createOnlinePresenceHandler(transport: PresenceTransport, depend
       }
 
       if (credential.renewed) {
-        if (transport === "native") headers.set(presenceTokenHeader, credential.token);
-        else {
-          const secure = process.env.NODE_ENV === "production" || new URL(request.url).protocol === "https:" ? "; Secure" : "";
-          headers.set("Set-Cookie", presenceCookieName + "=" + credential.token
-            + "; Path=/api/identity/online-presence; Max-Age=" + presenceCredentialTtlSeconds + "; HttpOnly; SameSite=Strict" + secure);
-        }
+        headers.set(presenceTokenHeader, credential.token);
       }
       return response(credential.newSource ? 202 : 204);
     } catch {
