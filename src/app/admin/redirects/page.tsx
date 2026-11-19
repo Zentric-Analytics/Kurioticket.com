@@ -134,7 +134,7 @@ export default async function AdminRedirectsPage({ searchParams, embedded = fals
           </div>
         ) : (
           <>
-            <div className="admin-responsive-records admin-handoff-records mt-3 w-full min-w-0 max-w-full" role="region"
+            <div className="admin-handoff-records mt-3 w-full min-w-0 max-w-full" role="region"
               aria-label="Provider handoff records" tabIndex={0}>
               <table className="w-full min-w-0 table-fixed text-[12px] leading-5">
                 <caption className="sr-only">
@@ -156,7 +156,7 @@ export default async function AdminRedirectsPage({ searchParams, embedded = fals
                 <thead className="border-y border-[#D8E1EC] text-[#475569]">
                   <tr>
                     {["Created", "Product", "Provider", "Route / property", "Price", "Source", "Destination", "Identity", "Search link", "Action"].map(label => (
-                      <th key={label} scope="col" className="whitespace-nowrap px-2 py-3 text-left font-medium first:pl-0">
+                      <th key={label} scope="col" className="px-1.5 py-3 text-left font-medium first:pl-0">
                         {label}
                       </th>
                     ))}
@@ -165,33 +165,33 @@ export default async function AdminRedirectsPage({ searchParams, embedded = fals
                 <tbody className="divide-y divide-[#E7ECF5]">
                   {result.data.items.map(handoff => (
                     <tr key={handoff.id} className="align-top hover:bg-[#FAFBFD]">
-                      <td data-label="Created" className="py-3 pr-2 tabular-nums">{formatDateTime(new Date(handoff.createdAt))}</td>
-                      <td data-label="Product" className="break-words px-2 py-3 font-medium">{handoff.product}</td>
-                      <th scope="row" data-label="Provider" className="break-words px-2 py-3 text-left font-medium">{handoff.provider}</th>
-                      <td data-label="Route / property" className="min-w-0 px-2 py-3">
+                      <td data-label="Created" className="py-3 pr-1.5 tabular-nums">{formatDateTime(new Date(handoff.createdAt))}</td>
+                      <td data-label="Product" className="px-1.5 py-3 font-medium">{handoff.product}</td>
+                      <th scope="row" data-label="Provider" className="px-1.5 py-3 text-left font-medium">{handoff.provider}</th>
+                      <td data-label="Route / property" className="min-w-0 px-1.5 py-3">
                         <span data-handoff-route-preview className="block min-w-0 max-w-full overflow-hidden text-ellipsis whitespace-nowrap"
                           title={handoff.route || undefined} aria-label={handoff.route || "No route recorded"}>
                           {adminHandoffRoutePreview(handoff.route)}
                         </span>
                       </td>
-                      <td data-label="Price" className="break-words px-2 py-3 tabular-nums">
+                      <td data-label="Price" className="px-1.5 py-3 tabular-nums">
                         {handoff.price ? handoff.currency + " " + handoff.price : "—"}
                       </td>
-                      <td data-label="Source" className="break-all px-1 py-3 text-[#475569]">{handoff.sourcePage || "—"}</td>
-                      <td data-label="Destination" className="break-words px-1 py-3 text-[#475569]">{handoff.destinationDomain || "—"}</td>
-                      <td data-label="Identity" className="min-w-0 px-2 py-3">
+                      <td data-label="Source" className="min-w-0 px-1 py-3 text-[#475569]"><span data-handoff-compact title={handoff.sourcePage || undefined}>{handoff.sourcePage || "—"}</span></td>
+                      <td data-label="Destination" className="min-w-0 px-1 py-3 text-[#475569]"><span data-handoff-compact title={handoff.destinationDomain || undefined}>{handoff.destinationDomain || "—"}</span></td>
+                      <td data-label="Identity" className="min-w-0 px-1.5 py-3">
                         <span className="block font-medium">{handoff.identity.kind}</span>
-                        <span className="block break-all text-[11px] text-[#64748B]">
+                        <span data-handoff-compact className="text-[11px] text-[#64748B]" title={handoff.identity.userId || handoff.identity.visitorId || undefined}>
                           {handoff.identity.userId || handoff.identity.visitorId || "—"}
                         </span>
                       </td>
-                      <td data-label="Search link" className="whitespace-nowrap px-2 py-3">
+                      <td data-label="Search link" className="px-1.5 py-3">
                         <span className={handoff.searchCorrelation.kind === "exact"
                           ? "font-medium text-emerald-700" : "text-[#64748B]"}>
                           {handoff.searchCorrelation.kind === "exact" ? "Exact" : "Unavailable"}
                         </span>
                       </td>
-                      <td data-label="Action" className="whitespace-nowrap py-3 pl-2 pr-2">
+                      <td data-label="Action" className="py-3 pl-1.5 pr-1">
                         <Link href={handoffDetailHref(handoff.id, handoff.environment, scopedRaw)}
                           className="font-medium text-[#004BB8] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
                           Open

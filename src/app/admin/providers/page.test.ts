@@ -369,18 +369,20 @@ test("Task 3: standalone handoffs preserve filters, records and next-cursor beha
   assert.match(handoffsPage, /<ProviderHandoffFilters/);
   assert.match(handoffFilters, /aria-label="Filter provider handoffs"/);
   assert.match(handoffsPage, /aria-label="Provider handoff records"/);
-  // Standalone Handoffs fits the available workspace and switches to the
-  // labeled-record layout when 10 columns would become cramped.
-  assert.match(handoffsPage, /admin-responsive-records admin-handoff-records mt-3/);
+  // The standalone Handoffs directory must remain a ten-column table rather
+  // than switching to stacked labeled cards at desktop widths.
+  assert.match(handoffsPage, /className="admin-handoff-records mt-3/);
   assert.match(handoffsPage, /w-full min-w-0 table-fixed/);
   assert.doesNotMatch(handoffsPage, /min-w-\[1320px\]|overflow-x-auto/);
   assert.match(handoffsPage, /<colgroup>/);
-  assert.match(handoffsPage, /whitespace-nowrap px-2 py-3 text-left font-medium/);
-  assert.match(handoffsPage, /whitespace-nowrap py-3 pl-2 pr-2/);
+  assert.match(handoffsPage, /px-1.5 py-3 text-left font-medium first:pl-0/);
+  assert.match(handoffsPage, /data-handoff-compact/);
   assert.match(handoffsPage, /adminHandoffRoutePreview\(handoff.route\)/);
   assert.match(handoffsPage, /title=\{handoff.route \|\| undefined\}/);
   const responsiveCss = readFileSync("src/app/globals.css", "utf8");
-  assert.match(responsiveCss, /@container \(min-width: 801px\) and \(max-width: 1050px\)/);
+  assert.match(responsiveCss, /\.admin-handoff-records tbody > tr \{/);
+  assert.match(responsiveCss, /display: table-row;/);
+  assert.doesNotMatch(responsiveCss.slice(responsiveCss.indexOf("/* Keep Provider Handoffs as"), responsiveCss.indexOf("/* Display ten characters")), /grid-template-columns: repeat\(3/);
   assert.match(responsiveCss, /\.admin-handoff-records td \[data-handoff-route-preview\]/);
   for (const field of ["product", "identity", "correlation", "provider", "environment"]) {
     assert.match(handoffsPage, new RegExp('name="' + field + '"'));
