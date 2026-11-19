@@ -31,7 +31,7 @@ type Database = Pick<PrismaClient, "adminAuditLog">;
 type Dependencies = { authorize: () => Promise<boolean>; database: () => Database | null; now?: () => Date };
 type Position = { at: string; id: string };
 type Scope = { range: SettingsHistoryRange; category: SettingsHistoryCategory; from: string; to: string };
-const windows: Record<SettingsHistoryRange, number> = {
+const windows: Record<Exclude<SettingsHistoryRange, "all" | "custom">, number> = {
   "24h": 24 * 60 * 60 * 1000,
   "7d": 7 * 24 * 60 * 60 * 1000,
   "30d": 30 * 24 * 60 * 60 * 1000,
@@ -169,7 +169,7 @@ function scopeFor(query: SettingsQuery, now: Date): { scope: Scope; position: Po
         if (payload.from !== "1970-01-01T00:00:00.000Z") return null;
       } else if (query.range === "custom") {
         if (!custom || payload.from !== custom.from || Date.parse(payload.to) > Date.parse(custom.to)) return null;
-      } else if (to - from !== windows[query.range]) return null;
+      } else if (to - from !== windows[query.range as keyof typeof windows]) return null;
       scope = payload;
       position = { at: new Date(at).toISOString(), id: decoded.id };
     } catch { return null; }
