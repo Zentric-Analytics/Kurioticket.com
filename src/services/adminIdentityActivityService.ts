@@ -159,8 +159,8 @@ export async function loadAdminIdentityActivity(
       ? { OR: [
           { product },
           { searchHistory: { is: { type: product } } },
-          ...(["FLIGHT", "HOTEL"].includes(product)
-            ? [{ redirectLog: { is: { type: product as "FLIGHT" | "HOTEL" } } }] : []),
+          ...(["FLIGHT", "HOTEL", "CAR"].includes(product)
+            ? [{ redirectLog: { is: { type: product as "FLIGHT" | "HOTEL" | "CAR" } } }] : []),
         ] } : {};
     const eventQ: Prisma.JourneyEventWhereInput = q ? {
       OR: [
@@ -194,7 +194,7 @@ export async function loadAdminIdentityActivity(
       AND: [
         redirectOwner, environmentScope.handoff, { createdAt: window },
         ...(isOperationalGuest ? [] : [excludeCanonicalLegacyRows("PROVIDER_HANDOFF_STARTED", scopedJourneyOwner, window, productEventFilter, eventQ)]),
-        ...(product === "FLIGHT" || product === "HOTEL" ? [{ type: product }] : []),
+        ...(product === "FLIGHT" || product === "HOTEL" || product === "CAR" ? [{ type: product }] : []),
         ...(q && !legacyStageLabelMatchesQuery("PROVIDER_HANDOFF_STARTED", q)
           ? [{ OR: [{ provider: ci(q) }, { route: ci(q) }] }] : []),
       ],
@@ -208,7 +208,7 @@ export async function loadAdminIdentityActivity(
       ],
     };
     const canReadHandoffs = allowed.has("PROVIDER_HANDOFF_STARTED")
-      && (!product || product === "FLIGHT" || product === "HOTEL");
+      && (!product || product === "FLIGHT" || product === "HOTEL" || product === "CAR");
 
     // Only count canonical events that the timeline itself can display.
     // Each attached source must belong to the *same* visitor as its journey;
