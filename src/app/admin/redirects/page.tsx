@@ -145,13 +145,13 @@ export default async function AdminRedirectsPage({ searchParams, embedded = fals
                   <col className="w-[12%]" />
                   <col className="w-[7%]" />
                   <col className="w-[10%]" />
-                  <col className="w-[13%]" />
+                  <col className="w-[14%]" />
                   <col className="w-[8%]" />
                   <col className="w-[10%]" />
-                  <col className="w-[12%]" />
+                  <col className="w-[10%]" />
                   <col className="w-[13%]" />
                   <col className="w-[9%]" />
-                  <col className="w-[6%]" />
+                  <col className="w-[7%]" />
                 </colgroup>
                 <thead className="border-y border-[#D8E1EC] text-[#475569]">
                   <tr>
