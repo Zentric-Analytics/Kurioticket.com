@@ -144,21 +144,21 @@ test("Online Users is a current presence estimate with independent authenticated
   assert.doesNotMatch(route, /getAdminOverview|searchParams/);
 });
 
-test("Attention Required remains three compact, actionable live queues", () => {
-  assert.match(display, /supportAttention = data\.support\.open \+ data\.support\.waitingOnTeam \+ data\.support\.waitingOnUser/);
-  assert.match(display, /deletionAttention = data\.deletions\.pending \+ data\.deletions\.readyForReview/);
-  assert.match(display, /p\.operationalState === "DEGRADED"/);
-  assert.match(display, /p\.operationalState === "FAILING"/);
-  assert.match(display, /p\.operationalState === "NOT_READY"/);
+test("Attention Required separates actionable conditions from setup and waiting work", () => {
+  assert.match(display, /summarizeAttentionRequired\(data\)/);
   for (const [label, link] of [
-    ["Provider issues", "/admin/providers"],
-    ["Support queue", "/admin/support"],
+    ["Provider health issues", "/admin/providers"],
+    ["Support needs action", "/admin/support"],
     ["Deletion reviews", "/admin/account-deletions"],
   ]) {
     assert.ok(display.includes('href="' + link + '" label="' + label + '"'), label);
   }
+  for (const field of ["providerHealthIssues", "providerSetupIssues", "supportNeedsAction", "supportWaitingOnUser", "deletionReviews", "deletionPending"]) {
+    assert.match(display, new RegExp("attention\\." + field));
+  }
   assert.equal((display.match(/<AttentionLink /g) ?? []).length, 3);
-  assert.match(display, /Provider health: last 24 hours. Support and deletion queues: current/);
+  assert.doesNotMatch(display, /supportAttention = data\\.support\\.open/);
+  assert.doesNotMatch(display, /deletionAttention = data\\.deletions\\.pending/);
 });
 
 test("visitor cards display exactly four real consented action-event counts", () => {
@@ -210,15 +210,12 @@ test("provider handoffs remain recorded redirects, never confirmed bookings", ()
   assert.match(prismaSchema, /enum RedirectType \{\s*FLIGHT\s*HOTEL\s*CAR\s*\}/);
 });
 
-test("Overview omits duplicate Provider Health but preserves live provider issue detection", () => {
+test("Overview omits duplicate Provider Health and distinguishes health from setup", () => {
   assert.doesNotMatch(display, /<Section title="Provider Health"/);
   assert.doesNotMatch(dashboard, /function ProviderSummary\(|function StatusBadge\(|function operationalTone\(|function operationalLabel\(/);
-  assert.match(display, /providerAttention = data\.providers\.filter/);
-  for (const state of ["DEGRADED", "FAILING", "NOT_READY"]) {
-    assert.ok(display.includes('p.operationalState === "' + state + '"'), state + " must still contribute to provider issues");
-  }
-  assert.match(display, /<AttentionLink href="\/admin\/providers" label="Provider issues" value=\{providerAttention\}/);
-  assert.match(display, /Provider health: last 24 hours\. Support and deletion queues: current\./);
+  assert.match(display, /summarizeAttentionRequired\(data\)/);
+  assert.match(display, /<AttentionLink href="\/admin\/providers" label="Provider health issues" value=\{attention\.providerHealthIssues\}/);
+  assert.match(display, /attention\.providerSetupIssues/);
   assert.match(providersPage, /getProviderOperationalStatuses\(monitoringHours, undefined, monitoringRange \?\? undefined\)/);
   assert.match(providersPage, /provider\.serviceBreakdown\.map/);
   assert.match(providersPage, /formatProviderFailureRatePct\(provider\.failureRatePct, provider\.failedCalls\)/);
@@ -265,7 +262,8 @@ test("Attention Required is compact and vertically stacked in its own card", () 
   assert.match(attention, /<div className="grid gap-1\.5">/);
   assert.doesNotMatch(attention, /md:grid-cols-3|lg:grid-cols-3|grid-cols-3/);
   assert.equal((attention.match(/<AttentionLink /g) ?? []).length, 3);
-  assert.match(attention, /Provider health: last 24 hours. Support and deletion queues: current/);
+  assert.match(attention, /Provider health issues/);
+  assert.match(attention, /not ready \(setup, not failures\)/);
 
   const link = dashboard.slice(dashboard.indexOf("function AttentionLink("), dashboard.indexOf("function PlatformSummary("));
   assert.match(link, /px-3 py-2/);
