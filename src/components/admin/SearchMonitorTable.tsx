@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { applicationLabel } from "@/lib/platformHealthPresentation";
+import { searchRoutePreview } from "@/lib/adminSearchRoutePreview";
 import { useEffect, useRef, useState } from "react";
 
 import type { AdminSearchRead } from "@/services/adminOperationalReadContract";
@@ -106,8 +107,8 @@ function SearchMonitorTableState({
 
   return (
     <>
-      <div role="region" aria-label="Search activity table" tabIndex={0} className="focus-ring w-full min-w-0 max-w-full overflow-x-auto">
-        <table className="w-full min-w-[1180px] table-fixed border-collapse text-left">
+      <div role="region" aria-label="Search activity table" tabIndex={0} className="admin-responsive-records admin-search-records focus-ring w-full min-w-0 max-w-full">
+        <table className="w-full min-w-0 table-fixed border-collapse text-left">
           <colgroup>
             {[15, 9, 12, 16, 8, 7, 9, 8, 7, 9].map((width, index) => <col key={index} style={{ width: `${width}%` }} />)}
           </colgroup>
@@ -128,20 +129,27 @@ function SearchMonitorTableState({
           <tbody>
             {items.map((search) => (
               <tr key={search.id} className="group relative cursor-pointer border-b border-[#E5E7EB] text-[13px] text-[#374151] hover:bg-[#FAFAFA] focus-within:bg-[#F8FAFC]">
-                <td data-label="Created" className="whitespace-nowrap px-2 py-3 align-top"><Link href={detailHref(search, detailQuery)} aria-label={"View details for " + productLabel(search.product) + " search " + routeLabel(search.origin, search.destination)} className="absolute inset-0 z-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#004BB8]" tabIndex={0} /><span className="relative pointer-events-none">{formatCreated(search.createdAt, referenceNow)}</span></td>
-                <td data-label="Product" className="whitespace-nowrap px-2 py-3 align-top font-semibold text-[#111827]">{productLabel(search.product)}</td><td data-label="Application" className="break-words px-2 py-3 align-top">{applicationLabel(search.applicationSource)}{search.appVersion?<span className="mt-0.5 block text-[11px] text-slate-500">v{search.appVersion}</span>:null}</td>
-                <td data-label="Route / stay" className="break-words px-2 py-3 align-top">
-                  <p className="font-semibold text-[#111827]">{routeLabel(search.origin, search.destination)}</p>
+                <td data-label="Created" className="px-2 py-3 align-top"><Link href={detailHref(search, detailQuery)} aria-label={"View details for " + productLabel(search.product) + " search " + routeLabel(search.origin, search.destination)} className="absolute inset-0 z-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#004BB8]" tabIndex={0} /><span className="relative pointer-events-none">{formatCreated(search.createdAt, referenceNow)}</span></td>
+                <td data-label="Product" className="px-2 py-3 align-top font-semibold text-[#111827]">{productLabel(search.product)}</td><td data-label="Application" className="break-words px-2 py-3 align-top">{applicationLabel(search.applicationSource)}{search.appVersion?<span className="mt-0.5 block text-[11px] text-slate-500">v{search.appVersion}</span>:null}</td>
+                <td data-label="Route / stay" className="min-w-0 px-2 py-3 align-top">
+                  <p data-search-route-preview className="overflow-hidden text-ellipsis whitespace-nowrap font-semibold text-[#111827]"
+                     title={routeLabel(search.origin, search.destination)}
+                     aria-label={routeLabel(search.origin, search.destination)}>
+                    {searchRoutePreview(routeLabel(search.origin, search.destination))}
+                  </p>
                   {formatSearchDates(search.checkIn, search.checkOut) ? (
-                    <p className="mt-0.5 text-[11px] leading-4 text-[#6B7280]">{formatSearchDates(search.checkIn, search.checkOut)}</p>
+                    <p data-search-route-dates className="mt-0.5 overflow-hidden text-ellipsis whitespace-nowrap text-[11px] leading-4 text-[#6B7280]"
+                       title={formatSearchDates(search.checkIn, search.checkOut)}>
+                      {formatSearchDates(search.checkIn, search.checkOut)}
+                    </p>
                   ) : null}
                 </td>
-                <td data-label="Currency" className="whitespace-nowrap px-2 py-3 align-top">{search.currency || "—"}</td>
+                <td data-label="Currency" className="px-2 py-3 align-top">{search.currency || "—"}</td>
                 <td data-label="Results" className="px-2 py-3 align-top">{formatNumber(search.resultCount)}</td>
                 <td data-label="Providers" className="px-2 py-3 align-top" title={search.providerTelemetry ? [search.providers.join(", "), search.providerTelemetry.successful + " successful", search.providerTelemetry.failed + " failed", search.providerTelemetry.degraded + " degraded", search.providerTelemetry.disabled + " disabled"].filter(Boolean).join(" · ") : "No exact provider telemetry recorded"}>{search.providerTelemetry ? search.providerTelemetry.total : "—"}</td>
-                <td data-label="Duration" className="whitespace-nowrap px-2 py-3 align-top">{formatLatency(search.latencyMs)}</td>
+                <td data-label="Duration" className="px-2 py-3 align-top">{formatLatency(search.latencyMs)}</td>
                 <td data-label="Identity" className="px-2 py-3 align-top">{identityLabel(search.identity.kind)}</td>
-                <td data-label="Status" className="whitespace-nowrap px-2 py-3 align-top"><MonitorStatus status={search.status} /></td>
+                <td data-label="Status" className="px-2 py-3 align-top"><MonitorStatus status={search.status} /></td>
               </tr>
             ))}
           </tbody>

@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { platformOptions } from "@/lib/platformHealthPresentation";
-import { applicationLabel } from "@/lib/platformHealthPresentation";
 import { redirect } from "next/navigation";
 import { searchWorkspaceTab } from "@/lib/adminSearchWorkspace";
 
@@ -57,7 +56,6 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
         
         {result.status === "ok" && summary.status === "ok" ? (
           <>
-            <p className="mb-3 text-xs text-slate-500">{applicationLabel(summary.data.scope.applicationSource || "ALL")} · {currentEnvironment} · Search records only</p>
             <div className="grid grid-cols-2 border-y border-[#E5E7EB] md:grid-cols-4">
               <Metric label="All searches" value={summary.data.total} tone="all" />
               <Metric label="Complete" value={summary.data.success} tone="complete" />
@@ -76,7 +74,7 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
                 </>
               ) : null}
 
-              <div className="flex flex-col gap-3 border-b border-[#E5E7EB] py-3 lg:flex-row lg:items-center lg:justify-between">
+              <div data-testid="search-records-products-row" className="flex min-w-0 flex-col gap-3 border-b border-[#E5E7EB] py-3 lg:flex-row lg:items-center lg:justify-between">
                 <nav aria-label="Search products" className="flex flex-wrap items-center gap-x-5 gap-y-2">
                   {[
                     { label: "All", value: "" },
@@ -102,11 +100,7 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
                     );
                   })}
                 </nav>
-
-              </div>
-
-              <div data-testid="search-records-filter-row" className="grid min-w-0 grid-cols-1 items-center gap-2 py-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-[repeat(5,minmax(0,1fr))_120px] lg:gap-2">
-                <div className="min-w-0">
+                <div data-testid="search-records-date-range" className="w-full min-w-0 shrink-0 lg:w-[164px]">
                   <SearchMonitorSelect label="Date range" name="range" value={range}
                     appearance="fare"
                     options={[
@@ -118,6 +112,9 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
                       ...(range === "custom" ? [{ value: "custom", label: "Custom" }] : []),
                     ]} truncateLabel />
                 </div>
+              </div>
+
+              <div data-testid="search-records-filter-row" className="grid min-w-0 grid-cols-1 items-center gap-2 py-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-[repeat(4,minmax(0,1fr))_120px] lg:gap-2">
                 <div className="min-w-0">
                   <SearchMonitorSelect label="Outcome" appearance="fare" name="status"
                     value={one(raw.status)}
