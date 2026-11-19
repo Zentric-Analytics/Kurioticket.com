@@ -92,6 +92,7 @@ export type AdminJourneySummary = {
     withRequestId: number;
     flights: number;
     hotels: number;
+    cars: number;
   };
   operationalSearches: AdminJourneySearchCounts & { scope: "environment_and_date_only"; partialWithResults: number; partialWithoutResults: number };
 };
