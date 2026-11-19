@@ -13,7 +13,7 @@ import type { CarOffer, CarSearchParams, NormalizedCarResult } from "@/lib/cars/
 import { CarPriceAlertControl } from "@/components/results/CarPriceAlertControl";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import { sandboxBookingUrl } from "@/services/travel/kayakSandboxPublic";
-import { carHandoffHref } from "@/lib/cars/carHandoffHref";
+import { recordCarHandoffClick } from "@/lib/cars/carHandoffTracking";
 import { getCarRateDisclosureSections, getCarRatePaymentLabel, type CarRateDisclosureSection } from "@/lib/cars/carRateDisclosure";
 
 type Props = {
@@ -118,8 +118,7 @@ export function CarDealPicker({
   const dialogHeadingRef = useRef<HTMLHeadingElement>(null);
   const selectedGroup = groups.find(group => group.key === detailsKey);
   const selectedOffer = selectedGroup?.primaryOffer;
-  const selectedRateBookingHref = selectedOffer && approvedProviderBookingUrl(car, selectedOffer)
-    ? carHandoffHref(car.id, selectedOffer.id, "car-results") : null;
+  const selectedRateBookingHref = selectedOffer ? approvedProviderBookingUrl(car, selectedOffer) : null;
   const disclosureSections = selectedOffer ? getCarRateDisclosureSections(selectedOffer) : [];
   const paymentFacts = disclosureSections.find(section => section.id === "payment")?.facts ?? [];
 
@@ -151,8 +150,9 @@ export function CarDealPicker({
     displayCurrency: selectedOption.currency, convertSourceEstimate: true,
     rates: currencyRates.rates, isFallbackRate: currencyRates.isFallback,
   }).formatted;
-  const isolateProviderAction = (event: MouseEvent<HTMLAnchorElement>) => {
+  const isolateProviderAction = (event: MouseEvent<HTMLAnchorElement>, offerId: string) => {
     event.stopPropagation();
+    recordCarHandoffClick(car.id, offerId, "car-results");
   };
   if (!groups.length) return null;
 
@@ -171,8 +171,7 @@ export function CarDealPicker({
       >
         {groups.map((group, index) => {
           const offer = group.primaryOffer;
-          const bookingHref = approvedProviderBookingUrl(car, offer)
-            ? carHandoffHref(car.id, offer.id, "car-results") : null;
+          const bookingHref = approvedProviderBookingUrl(car, offer);
           const hasDetails = car.inventorySource === "kayak-sandbox" && Boolean(offer.suppliedFacts?.length);
           const responsiveVisibility = expanded || index < INITIAL_VISIBLE_OFFER_COUNT
             ? "grid"
@@ -236,7 +235,7 @@ export function CarDealPicker({
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label={"View deal from " + group.providerName}
-                    onClick={isolateProviderAction}
+                    onClick={(event) => isolateProviderAction(event, offer.id)}
                     className={[(compact ? "text-[13px] leading-4" : "text-[11px] leading-4 lg:text-[12px]"), `inline-flex ${compact ? "min-h-9" : "min-h-6"} shrink-0 items-center gap-0.5 whitespace-nowrap font-semibold text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35`].join(" ")}
                     data-car-deal-provider-view-deal
                   >
@@ -348,7 +347,7 @@ export function CarDealPicker({
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label={"View deal from " + selectedGroup.providerName}
-                    onClick={isolateProviderAction}
+                    onClick={(event) => isolateProviderAction(event, selectedOffer!.id)}
                     data-car-rate-view-deal
                     className="inline-flex min-h-11 w-full max-w-[240px] items-center justify-center rounded-lg bg-[#004BB8] px-5 py-2.5 text-[14px] font-semibold leading-5 text-white transition-colors hover:bg-[#003B91] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 focus-visible:ring-offset-2"
                   >
