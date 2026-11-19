@@ -46,7 +46,7 @@ export function parsePlatformRefreshSnapshot(payload: unknown, hours: number): P
   if (payload.providerHealth !== null && !Array.isArray(payload.providerHealth)) return null;
   if (payload.alerts !== null && !isRecord(payload.alerts)) return null;
   if (payload.release !== null && !isRecord(payload.release)) return null;
-  return payload as PlatformOperations;
+  return payload as unknown as PlatformOperations;
 }
 
 /** Explicit UTC avoids a server/client hydration timezone mismatch. */
