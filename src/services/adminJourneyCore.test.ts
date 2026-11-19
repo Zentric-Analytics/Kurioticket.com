@@ -155,7 +155,7 @@ test("summary keeps distinct identities, stage observations, search outcomes and
   const f = fixture([[summary()], [{ total: BigInt(20), success: BigInt(15), partial: BigInt(3), failed: BigInt(2), partialWithResults: BigInt(1), partialWithoutResults: BigInt(2) }],
     [coverage({ total: BigInt(9), withVisitorIdentity: BigInt(5), withoutVisitorIdentity: BigInt(4),
       inConsentedJourneys: BigInt(5), outsideConsentedJourneys: BigInt(4),
-      exactSearchLinks: BigInt(5), withRequestId: BigInt(5), flights: BigInt(6), hotels: BigInt(3) })]]);
+      exactSearchLinks: BigInt(5), withRequestId: BigInt(5), flights: BigInt(4), hotels: BigInt(3), cars: BigInt(2) })]]);
   const result = await f.service.summary({ product: "FLIGHT" });
   assert.equal(result.status, "ok");
   if (result.status !== "ok") return;
@@ -169,7 +169,7 @@ test("summary keeps distinct identities, stage observations, search outcomes and
     scope: "environment_and_date_only", total: 9,
     withVisitorIdentity: 5, withoutVisitorIdentity: 4,
     inConsentedJourneys: 5, outsideConsentedJourneys: 4,
-    exactSearchLinks: 5, eligibleWithoutExactSearch: 0, withRequestId: 5, flights: 6, hotels: 3, cars: 0,
+    exactSearchLinks: 5, eligibleWithoutExactSearch: 0, withRequestId: 5, flights: 4, hotels: 3, cars: 2,
   });
   assert.deepEqual(result.data.operationalSearches, { scope: "environment_and_date_only", total: 20, success: 15, partial: 3, failed: 2, partialWithResults: 1, partialWithoutResults: 2 });
   assert.doesNotThrow(() => JSON.stringify(result));
