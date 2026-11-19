@@ -36,8 +36,8 @@ test("Users and Provider Handoffs default to 24h but retain unbounded history wh
 test("Record directories expose custom UTC bounds without a second independent Apply action", () => {
   const code = readFileSync("src/components/admin/AdminOperationalDateRangeFields.tsx", "utf8");
   assert.match(code, /ADMIN_REPORTING_RANGE_OPTIONS/);
-  assert.match(code, /type="datetime-local"/);
-  assert.match(code, /setCustomValidity/);
+  assert.match(code, /<AdminCalendarInput mode="datetime-local"/);
+  assert.match(code, /Date\.parse\(start\) < endTime/);
   assert.match(code, /type="hidden" name="from"/);
   assert.match(code, /type="hidden" name="to"/);
   assert.doesNotMatch(code, /Apply custom range/);

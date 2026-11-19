@@ -1,5 +1,6 @@
 "use client";
 
+import { AdminCalendarInput } from "@/components/admin/AdminCalendarInput";
 import { useState, useTransition } from "react";
 import { LoaderCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -87,23 +88,20 @@ export function EmailDeliveryRangeFilter({ range, fromDate, toDate }: Props) {
         <div className="flex flex-wrap items-end gap-2">
           <label className="text-[11px] font-medium text-[#64748B]">
             From (UTC)
-            <input
-              type="date"
-              aria-label="Email delivery custom start date UTC"
+            <AdminCalendarInput
+              ariaLabel="Email delivery custom start date UTC"
               value={draftDates.from}
               max={draftDates.to || todayUtc}
               onChange={(event) => {
                 setCustomOpen(true);
                 setDraftDates((current) => ({ ...current, from: event.target.value }));
               }}
-              className="mt-1 block h-10 rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px] text-[#020617]"
-            />
+              className="w-[210px] max-w-full" />
           </label>
           <label className="text-[11px] font-medium text-[#64748B]">
             To (UTC)
-            <input
-              type="date"
-              aria-label="Email delivery custom end date UTC"
+            <AdminCalendarInput
+              ariaLabel="Email delivery custom end date UTC"
               value={draftDates.to}
               min={draftDates.from || undefined}
               max={todayUtc}
@@ -111,8 +109,7 @@ export function EmailDeliveryRangeFilter({ range, fromDate, toDate }: Props) {
                 setCustomOpen(true);
                 setDraftDates((current) => ({ ...current, to: event.target.value }));
               }}
-              className="mt-1 block h-10 rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px] text-[#020617]"
-            />
+              className="w-[210px] max-w-full" />
           </label>
           <button
             type="button"

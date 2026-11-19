@@ -1,5 +1,6 @@
 "use client";
 
+import { AdminCalendarInput } from "@/components/admin/AdminCalendarInput";
 import { useState } from "react";
 import { AdminDirectorySelect } from "./AdminDirectorySelect";
 import { ADMIN_REPORTING_RANGE_OPTIONS } from "@/lib/adminReportingRanges";
@@ -32,14 +33,14 @@ export function SettingsHistoryRangeControl({
     </div>
     {selected === "custom" ? <div className="order-last col-span-full flex min-w-0 flex-wrap items-end gap-3" data-testid="settings-history-custom-range">
       <label className="flex flex-col gap-1 text-[12px] text-[#475569]">From (UTC)
-        <input type="date" name="fromDate" required value={from} max={to || today}
+        <AdminCalendarInput name="fromDate" required value={from} max={to || today}
           onChange={event => setFrom(event.target.value)}
-          className="h-10 rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px]" />
+          className="w-[210px] max-w-full" />
       </label>
       <label className="flex flex-col gap-1 text-[12px] text-[#475569]">To (UTC)
-        <input type="date" name="toDate" required value={to} min={from || undefined} max={today}
+        <AdminCalendarInput name="toDate" required value={to} min={from || undefined} max={today}
           onChange={event => setTo(event.target.value)}
-          className="h-10 rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px]" />
+          className="w-[210px] max-w-full" />
       </label>
       {!valid ? <p role="alert" className="text-[12px] text-rose-700">Choose valid past UTC dates no more than 90 days apart.</p> : null}
     </div> : null}

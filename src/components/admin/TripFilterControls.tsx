@@ -1,5 +1,6 @@
 "use client";
 
+import { AdminCalendarInput } from "@/components/admin/AdminCalendarInput";
 import { useMemo, useState, type KeyboardEvent } from "react";
 
 import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
@@ -115,13 +116,13 @@ export function TripFilterControls({ filters, range, providerNames }: Props) {
         </div>
         {selectedRange === "custom" ? <div className="flex w-full min-w-0 flex-wrap items-end gap-2">
           <label className="text-xs font-medium text-slate-700">From (UTC)
-            <input type="date" name="from" required value={customFrom} max={customTo || undefined}
-              onChange={event => setCustomFrom(event.target.value)} className={inputClass} />
+            <AdminCalendarInput name="from" required value={customFrom} max={customTo || undefined}
+              onChange={event => setCustomFrom(event.target.value)} className="w-[210px] max-w-full" />
           </label>
           <label className="text-xs font-medium text-slate-700">To (UTC)
-            <input type="date" name="to" required value={customTo} min={customFrom || undefined}
+            <AdminCalendarInput name="to" required value={customTo} min={customFrom || undefined}
               max={new Date().toISOString().slice(0, 10)} onChange={event => setCustomTo(event.target.value)}
-              className={inputClass} />
+              className="w-[210px] max-w-full" />
           </label>
           {!customValid ? <span role="alert" className="text-xs text-rose-700">Choose valid UTC dates with From before To.</span> : null}
         </div> : null}

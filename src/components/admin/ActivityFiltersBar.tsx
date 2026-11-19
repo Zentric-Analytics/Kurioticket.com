@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition, type ReactNode } from "react";
 import { SearchMonitorSelect } from "./SearchMonitorSelect";
+import { AdminCalendarInput } from "./AdminCalendarInput";
 import { ADMIN_REPORTING_RANGE_OPTIONS } from "@/lib/adminReportingRanges";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
@@ -21,8 +22,6 @@ export function ActivityFiltersBar({ path, initial, directory, tabs }: { path: s
   const router = useRouter();
   const [values, setValues] = useState(initial);
   const [draftDates, setDraftDates] = useState({ from: initial.from, to: initial.to });
-  const fromDateRef = useRef<HTMLInputElement>(null);
-  const toDateRef = useRef<HTMLInputElement>(null);
   const [editingCustom, setEditingCustom] = useState(false);
   const [pending, startTransition] = useTransition();
   const timeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -101,8 +100,8 @@ export function ActivityFiltersBar({ path, initial, directory, tabs }: { path: s
           options={options.stage.map(([value,label])=>({value,label}))} appearance="fare"
           onValueChange={stage=>update({stage})} />
         <button type="button" onClick={() => navigate((editingCustom || values.range === "custom") && validCustom
-          ? { ...values, range: "custom", from: fromDateRef.current?.value || draftDates.from,
-              to: toDateRef.current?.value || draftDates.to } : values)}
+          ? { ...values, range: "custom", from: draftDates.from,
+              to: draftDates.to } : values)}
           disabled={pending || ((editingCustom || values.range === "custom") && !validCustom)}
           className="inline-flex h-10 w-full items-center justify-center whitespace-nowrap rounded-lg bg-[#004BB8] px-4 text-[13px] font-medium text-white hover:bg-[#003D97] disabled:opacity-60 lg:w-auto">
           Apply filters
@@ -111,14 +110,14 @@ export function ActivityFiltersBar({ path, initial, directory, tabs }: { path: s
     </div>
     {(editingCustom || values.range === "custom") ? <div className="flex flex-wrap items-end gap-3">
       <label className="text-xs text-[#64748B]">From (UTC)
-        <input ref={fromDateRef} type="date" aria-label="Custom start date UTC" value={draftDates.from}
+        <AdminCalendarInput ariaLabel="Custom start date UTC" value={draftDates.from}
           max={draftDates.to || undefined} onChange={e => { setDraftDates(current => ({...current, from:e.target.value}));
-          setValues(current => ({...current, range:"custom", from:e.target.value})); }} className={control}/>
+          setValues(current => ({...current, range:"custom", from:e.target.value})); }} className="w-[210px] max-w-full" />
       </label>
       <label className="text-xs text-[#64748B]">To (UTC)
-        <input ref={toDateRef} type="date" aria-label="Custom end date UTC" value={draftDates.to}
+        <AdminCalendarInput ariaLabel="Custom end date UTC" value={draftDates.to}
           min={draftDates.from || undefined} onChange={e => { setDraftDates(current => ({...current, to:e.target.value}));
-          setValues(current => ({...current, range:"custom", to:e.target.value})); }} className={control}/>
+          setValues(current => ({...current, range:"custom", to:e.target.value})); }} className="w-[210px] max-w-full" />
       </label>
       <button type="button" onClick={cancelDates} className="h-11 px-2 text-[13px] font-medium text-[#475569] hover:underline">Cancel</button>
     </div> : null}

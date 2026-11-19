@@ -206,6 +206,18 @@ test("provider health sections prioritize attention and use a flat compact layou
   assert.match(providersPage, /aria-labelledby="service-breakdown-heading"/);
 });
 
+test("Provider Health range sits to the right of product tabs, not beside attention warnings", () => {
+  const attention = providersPage.indexOf('aria-labelledby="provider-attention"');
+  const directory = providersPage.indexOf('aria-labelledby="provider-directory"');
+  const tabs = providersPage.indexOf('aria-label="Filter providers by product"');
+  const range = providersPage.indexOf('<ProviderHealthWindowFilter product={filter}');
+  const table = providersPage.indexOf('<ProviderDirectoryTable rows={directoryRows}');
+  assert.ok(attention >= 0 && attention < directory && directory < tabs && tabs < range && range < table);
+  assert.equal((providersPage.match(/<ProviderHealthWindowFilter product=\{filter\}/g) || []).length, 1);
+  assert.match(providersPage, /data-testid="provider-product-range-row"/);
+  assert.match(providersPage, /mt-2 flex min-w-0 flex-wrap items-center justify-between/);
+});
+
 test("provider attention uses a single dropdown and safely bounded date selection", () => {
   assert.match(providersPage, /parseProviderHealthRange\(raw, monitoringNow\)/);
   assert.match(providersPage, /ProviderHealthWindowFilter/);

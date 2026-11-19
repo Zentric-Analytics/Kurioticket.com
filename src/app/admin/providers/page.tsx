@@ -147,7 +147,6 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
               <h2 id="provider-attention" className="text-[15px] font-semibold text-[#020617]">
                 Providers requiring attention
               </h2>
-              <ProviderHealthWindowFilter product={filter} hours={monitoringHours} custom={monitoringRange} />
             </div>
             {monitoringSelection.error ? (
               <p className="mt-3 text-[13px] text-rose-700" role="alert">{monitoringSelection.error}</p>
@@ -265,18 +264,23 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
 
           <section aria-labelledby="provider-directory" className="border-b border-[#D8E1EC] pb-6 pt-6">
             <h2 id="provider-directory" className="text-[15px] font-semibold text-[#020617]">All providers</h2>
-            
-            <nav aria-label="Filter providers by product"
-              className="mt-2 flex min-w-0 gap-5 overflow-x-auto border-b border-[#D8E1EC]">
-              {productFilters.map(item => (
-                <Link key={item.key} href={providerHealthRangeHref(item.key, monitoringRange, monitoringHours)}
-                  aria-current={filter === item.key ? "page" : undefined}
-                  className={"inline-flex h-10 shrink-0 items-center whitespace-nowrap border-b-2 px-1 text-[13px] font-medium text-[#020617] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] " +
-                    (filter === item.key ? "border-[#004BB8]" : "border-transparent hover:border-[#D8E1EC]")}>
-                  {item.label}
-                </Link>
-              ))}
-            </nav>
+            <div data-testid="provider-product-range-row"
+              className="mt-2 flex min-w-0 flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-[#D8E1EC]">
+              <nav aria-label="Filter providers by product"
+                className="flex min-w-0 flex-wrap items-center gap-x-5 gap-y-1">
+                {productFilters.map(item => (
+                  <Link key={item.key} href={providerHealthRangeHref(item.key, monitoringRange, monitoringHours)}
+                    aria-current={filter === item.key ? "page" : undefined}
+                    className={"inline-flex h-10 shrink-0 items-center whitespace-nowrap border-b-2 px-1 text-[13px] font-medium text-[#020617] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] " +
+                      (filter === item.key ? "border-[#004BB8]" : "border-transparent hover:border-[#D8E1EC]")}>
+                    {item.label}
+                  </Link>
+                ))}
+              </nav>
+              <div className="relative z-10 ml-auto min-w-[152px] max-w-full pb-1">
+                <ProviderHealthWindowFilter product={filter} hours={monitoringHours} custom={monitoringRange} />
+              </div>
+            </div>
             <ProviderDirectoryTable rows={directoryRows} />
           </section>
 

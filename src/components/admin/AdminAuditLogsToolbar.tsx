@@ -1,5 +1,6 @@
 "use client";
 
+import { AdminCalendarInput } from "@/components/admin/AdminCalendarInput";
 import { useCallback, useEffect, useRef, useState, useTransition, type FormEvent } from "react";
 import { LoaderCircle, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -252,23 +253,20 @@ export function AdminAuditLogsToolbar({
         <div className="mt-3 flex flex-wrap items-end gap-3">
           <label className="text-[11px] font-medium text-[#64748B]">
             From (UTC)
-            <input
-              type="date"
-              aria-label="Custom start date UTC"
+            <AdminCalendarInput
+              ariaLabel="Custom start date UTC"
               value={draftDates.from}
               max={draftDates.to || todayUtc}
               onChange={event => {
                 setCustomOpen(true);
                 setDraftDates(current => ({ ...current, from: event.target.value }));
               }}
-              className="mt-1 block h-10 rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px] text-[#020617]"
-            />
+              className="w-[210px] max-w-full" />
           </label>
           <label className="text-[11px] font-medium text-[#64748B]">
             To (UTC)
-            <input
-              type="date"
-              aria-label="Custom end date UTC"
+            <AdminCalendarInput
+              ariaLabel="Custom end date UTC"
               value={draftDates.to}
               min={draftDates.from || undefined}
               max={todayUtc}
@@ -276,8 +274,7 @@ export function AdminAuditLogsToolbar({
                 setCustomOpen(true);
                 setDraftDates(current => ({ ...current, to: event.target.value }));
               }}
-              className="mt-1 block h-10 rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px] text-[#020617]"
-            />
+              className="w-[210px] max-w-full" />
           </label>
           <button
             type="button"
