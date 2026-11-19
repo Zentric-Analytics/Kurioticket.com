@@ -127,6 +127,7 @@ enum ProviderStatus {
 enum RedirectType {
   FLIGHT
   HOTEL
+  CAR
 }
 
 enum AnalyticsEventType {
