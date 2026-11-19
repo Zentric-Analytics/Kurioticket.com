@@ -102,7 +102,7 @@ export function startWebsiteOnlinePresence(browser: Browser) {
       let response = await heartbeat();
       if (response.status === 202) rememberCredential(response);
       if (response.status === 202) {
-        // Bootstrap only provisions the cookie. Count presence after the browser sends it back.
+        // Bootstrap only issues the in-memory credential. Count presence after the browser returns it.
         if (controller.signal.aborted || !eligible()) return;
         response = await heartbeat();
         if (response.status === 202) rememberCredential(response);
