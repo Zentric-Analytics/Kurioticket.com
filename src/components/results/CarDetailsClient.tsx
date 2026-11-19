@@ -49,6 +49,7 @@ import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { getDealsGuidedConfirmationActionId } from "@/lib/deals/dealsConfirmationIds";
 import { sandboxBookingUrl } from "@/services/travel/kayakSandboxPublic";
+import { carHandoffHref } from "@/lib/cars/carHandoffHref";
 
 export type CarDetailsPrimaryAction =
   | { kind: "standalone-disabled-provider"; label: string }
@@ -256,7 +257,7 @@ export function CarDetailsExperience({
       ? {
           kind: "sandbox-handoff",
           label: copy("carDetails.continueDeal"),
-          href: selectedSandboxHref,
+          href: carHandoffHref(car.id, primaryOffer!.id, "car-details"),
         }
       : {
           kind: "standalone-disabled-provider",
@@ -272,7 +273,7 @@ export function CarDetailsExperience({
       ? {
           kind: "sandbox-handoff",
           label: copy("carDetails.continueDeal"),
-          href,
+          href: carHandoffHref(car.id, offer.id, "car-details"),
         }
       : {
           kind: "standalone-disabled-provider",
@@ -1033,7 +1034,7 @@ export function CarDetailsClient({
     ? {
         kind: "sandbox-handoff",
         label: copy("carDetails.continueDeal"),
-        href: sandboxHref,
+        href: carHandoffHref(car.id, getPrimaryCarOffer(car)!.id, "car-details"),
       }
     : {
         kind: "standalone-disabled-provider",
