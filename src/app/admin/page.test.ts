@@ -44,27 +44,31 @@ test("the single reporting filter precedes both Overview reports", () => {
   assert.doesNotMatch(display, /<AdminOverviewRangeSelect/);
 });
 
-test("Operations Snapshot keeps only accounts and live Online Users", () => {
-  const snapshot = display.slice(display.indexOf('aria-label="Operations Snapshot"'), display.indexOf('aria-label="Attention Required"'));
+test("Operations Snapshot includes handoffs and visitor metrics without the removed headline cards", () => {
+  const snapshot = display.slice(display.indexOf('aria-label="Operations Snapshot"'), display.indexOf("<AdminOverviewSecondary system={system} activity={activity} />"));
+  const accountGroup = snapshot.slice(snapshot.indexOf('aria-label="Account snapshot"'));
   for (const [label, value] of [
     ["Total accounts", "data.users.total"],
     ["Online Users", "<OnlineUsersValue initial={data.onlinePresence} />"],
   ]) {
-    assert.ok(snapshot.includes('label="' + label + '" value={' + value + "}"), label);
+    assert.ok(accountGroup.includes('label="' + label + '" value={' + value + "}"), label);
   }
   assert.equal((snapshot.match(/<SnapshotLink /g) ?? []).length, 2);
-  assert.match(snapshot, /grid gap-2 sm:grid-cols-2/);
-  assert.doesNotMatch(snapshot, /Recorded searches|Customer journeys/);
-  assert.doesNotMatch(snapshot, /data\.journeys\.operationalSearches|data\.journeys\.journeys/);
+  assert.match(snapshot, /aria-label="Account snapshot" className="grid min-w-0 grid-cols-2 items-stretch gap-2"/);
+  assert.doesNotMatch(snapshot, /label="Recorded searches"|label="Customer journeys"/);
+  assert.match(snapshot, /<Section title="Visitor Activity"/);
+  assert.match(snapshot, /<Section title="Provider Handoffs"/);
 });
 
-test("Operations Snapshot generated CSS uses two equal columns on desktop", async () => {
-  const snapshot = display.slice(display.indexOf('aria-label="Operations Snapshot"'), display.indexOf('aria-label="Attention Required"'));
-  const grid = snapshot.match(/<div className="(grid gap-2 sm:grid-cols-2)">/);
-  assert.ok(grid, "the responsive two-metric snapshot must exist");
+test("Operations Snapshot account metrics stay two columns beside Attention Required", async () => {
+  const snapshot = display.slice(display.indexOf('aria-label="Operations Snapshot"'), display.indexOf("<AdminOverviewSecondary system={system} activity={activity} />"));
+  const accounts = snapshot.indexOf('aria-label="Account snapshot"');
+  const attention = snapshot.indexOf('aria-label="Attention Required"');
+  assert.ok(attention >= 0 && accounts > attention, "account cards must follow Attention Required in the same grid row");
+  assert.match(snapshot, /items-stretch gap-3 lg:grid-cols-2/);
   const engine = await compile("@theme { --breakpoint-sm: 40rem; } @tailwind utilities;");
-  const generatedCss = engine.build(grid[1].split(/\s+/));
-  assert.match(generatedCss, /\.sm\\:grid-cols-2/);
+  const generatedCss = engine.build(["grid", "grid-cols-2"]);
+  assert.match(generatedCss, /grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
 });
 
 test("compact snapshot links keep cards equal height and explanatory text readable", () => {
@@ -223,17 +227,22 @@ test("complete provider diagnostics remain on the linked Providers page", () => 
   assert.doesNotMatch(dashboard, /errorMessage/);
 });
 
-test("Preview layout pairs Attention Required with Provider Handoffs without losing workloads", () => {
-  const pairStart = display.indexOf("{/* Operational attention and outward handoffs form the same desktop row. */}");
-  const remainingStart = display.indexOf("{/* Keep remaining detailed summaries compact and accessible. */}");
-  assert.ok(pairStart >= 0 && remainingStart > pairStart);
-  const paired = display.slice(pairStart, remainingStart);
-  assert.match(paired, /grid min-w-0 items-start gap-3 lg:grid-cols-2/);
-  assert.ok(paired.indexOf('aria-label="Attention Required"') < paired.indexOf('<Section title="Provider Handoffs"'));
-  assert.match(paired, /<AdminOverviewRangeSensitive fill>/);
-  const remaining = display.slice(remainingStart, display.indexOf("<AdminOverviewSecondary system={system} activity={activity} />", remainingStart));
-  for (const title of ["Visitor Activity", "Support Workload", "Deletion Workload"]) {
-    assert.ok(remaining.includes('<Section title="' + title + '"'), title);
+test("Preview pairs Visitor Activity with Provider Handoffs and account metrics with Attention Required", () => {
+  const snapshot = display.slice(display.indexOf('aria-label="Operations Snapshot"'), display.indexOf("<AdminOverviewSecondary system={system} activity={activity} />"));
+  const activityPair = snapshot.indexOf("{/* Customer activity and actual outbound provider handoffs share the snapshot row. */}");
+  const attentionPair = snapshot.indexOf("{/* The two account totals sit beside Attention Required, not above it. */}");
+  const workPair = snapshot.indexOf('<Section title="Support Workload"');
+  assert.ok(activityPair >= 0 && attentionPair > activityPair && workPair > attentionPair);
+  const activity = snapshot.slice(activityPair, attentionPair);
+  assert.match(activity, /grid min-w-0 items-stretch gap-3 lg:grid-cols-2/);
+  assert.ok(activity.indexOf('<Section title="Visitor Activity"') < activity.indexOf('<Section title="Provider Handoffs"'));
+  assert.equal((activity.match(/<AdminOverviewRangeSensitive fill>/g) ?? []).length, 2);
+  const attention = snapshot.slice(attentionPair, workPair);
+  assert.match(attention, /grid min-w-0 items-stretch gap-3 lg:grid-cols-2/);
+  assert.ok(attention.indexOf('aria-label="Attention Required"') < attention.indexOf('aria-label="Account snapshot"'));
+  assert.equal((attention.match(/<SnapshotLink /g) ?? []).length, 2);
+  for (const title of ["Support Workload", "Deletion Workload"]) {
+    assert.ok(snapshot.includes('<Section title="' + title + '"'), title);
   }
   assert.doesNotMatch(display, /<Section title="Search Performance"/);
   assert.doesNotMatch(display, /overflow-x-auto|overflow-x-scroll|whitespace-nowrap/);
@@ -327,7 +336,7 @@ test("no fake totals, old full-report panels, or hidden full diagnostics remain 
 });
 
 test("the compact grid remains responsive without horizontal scrolling or cramped desktop cards", () => {
-  assert.match(display, /grid gap-2 sm:grid-cols-2/);
+  assert.match(display, /grid min-w-0 grid-cols-2 items-stretch gap-2/);
   assert.match(page, /items-stretch gap-3 lg:grid-cols-2/);
   assert.match(display, /<div className="grid gap-1\.5">/);
   assert.match(display, /grid min-w-0 items-start gap-3 lg:grid-cols-2/);
