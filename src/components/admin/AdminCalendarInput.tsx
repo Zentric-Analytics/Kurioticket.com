@@ -106,7 +106,6 @@ export function AdminCalendarInput({
   const [open, setOpen] = useState(false);
   const [month, setMonth] = useState(() => realDate(value.slice(0, 10))
     ? value.slice(0, 7) : new Date().toISOString().slice(0, 7));
-  const [draftDay, setDraftDay] = useState("");
   const [hour, setHour] = useState("00");
   const [minute, setMinute] = useState("00");
   const [position, setPosition] = useState({ top: 0, left: 0, width: 324, maxHeight: 430 });
@@ -138,7 +137,6 @@ export function AdminCalendarInput({
     const currentDay = realDate(value.slice(0, 10)) ? value.slice(0, 10) : "";
     const initialMonth = currentDay || (min && realDate(min.slice(0, 10)) && today < min.slice(0, 10)
       ? min.slice(0, 10) : today);
-    setDraftDay(currentDay);
     setMonth(initialMonth.slice(0, 7));
     const time = mode === "datetime-local" && /^\d{2}:\d{2}$/.test(value.slice(11, 16))
       ? value.slice(11, 16) : defaultTime;
@@ -270,10 +268,10 @@ export function AdminCalendarInput({
               <button type="button" role="gridcell" key={day}
                 aria-label={new Intl.DateTimeFormat("en-US", { timeZone: "UTC", weekday: "long", month: "long", day: "numeric", year: "numeric" })
                   .format(new Date(day + "T00:00:00.000Z"))}
-                aria-selected={draftDay === day} disabled={!withinBounds(day, min, max)}
+                aria-selected={value.slice(0, 10) === day} disabled={!withinBounds(day, min, max) || !timeValid}
                 onClick={() => chooseDay(day)}
                 className={"grid h-8 min-w-0 place-items-center rounded-lg text-[12px] disabled:cursor-not-allowed disabled:opacity-30 " + focusRing + " " +
-                  (draftDay === day ? "bg-[#004BB8] font-semibold text-white" :
+                  (value.slice(0, 10) === day ? "bg-[#004BB8] font-semibold text-white" :
                     day === today ? "border border-[#004BB8] text-[#004BB8] hover:bg-[#F1F7FF]" :
                       "text-[#334155] hover:bg-[#F1F7FF]")}>
                 {Number(day.slice(8, 10))}
