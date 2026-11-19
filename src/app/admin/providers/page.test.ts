@@ -333,7 +333,7 @@ test("Task 3: referral attribution uses compact preset auto-apply and white metr
   assert.match(referralWindowFilter, /router\.replace\(target, \{ scroll: false \}\)/);
   assert.match(referralWindowFilter, /name="days"/);
   assert.match(referralWindowFilter, /name="view" value="attribution"/);
-  for (const window of ["7","14","30","60","90"]) {
+  for (const window of ["1","7","30"]) {
     assert.match(referralWindowFilter, new RegExp('value: "' + window + '"'));
   }
   assert.match(referralPage, /summary\.dataAvailable \? summary\.handoffs\.total\.toLocaleString\(\) : "—"/);
@@ -441,7 +441,7 @@ test("Referral date filter stays available without duplicate Providers tabs", ()
   assert.match(referralWindowFilter, /router\.replace\(target, \{ scroll: false \}\)/);
   assert.match(referralWindowFilter, /name="view" value="attribution"/);
   assert.match(referralWindowFilter, /<noscript>/);
-  assert.match(referralWindowFilter, /Last " \+ days \+ " days"/);
+  assert.match(referralWindowFilter, /Last " \+ days \+ " days \(legacy\)"/);
 });
 
 test("Provider Handoffs uses a compact Apply-only filter row without an environment selector", () => {
@@ -452,7 +452,8 @@ test("Provider Handoffs uses a compact Apply-only filter row without an environm
   assert.match(handoffsPage, /buildHandoffProviderOptions\(getProviderIntegrationStatuses\(\)/);
   assert.match(handoffFilters, /<form[\s\S]*action="\/admin\/redirects"[\s\S]*method="get"/);
   assert.match(handoffFilters, /<h1[\s\S]*Provider Handoffs[\s\S]*<\/h1>/);
-  assert.match(handoffFilters, /<SearchMonitorSelect label="Date range" name="range"/);
+  assert.match(handoffFilters, /<AdminOperationalDateRangeFields/);
+  assert.match(readFileSync("src/components/admin/AdminOperationalDateRangeFields.tsx", "utf8"), /<SearchMonitorSelect label="Date range" name="range"/);
   // Product options must match the backend FLIGHT/HOTEL/CAR handoff contract.
   for (const [value, label] of [["", "All products"], ["FLIGHT", "Flights"], ["HOTEL", "Hotels"], ["CAR", "Cars"]]) {
     assert.ok(handoffFilters.includes(`{ value: "${value}", label: "${label}" }`));
@@ -465,12 +466,12 @@ test("Provider Handoffs uses a compact Apply-only filter row without an environm
   assert.ok(handoffFilters.indexOf('data-testid="provider-handoffs-date-range"') < handoffFilters.indexOf('<SearchMonitorSelect label="Provider"'));
   assert.match(handoffFilters, /lg:grid-cols-\[repeat\(5,minmax\(0,1fr\)\)_120px\]/);
   assert.match(handoffFilters, /sm:grid-cols-2 md:grid-cols-3/);
-  assert.match(handoffFilters, /data-testid="provider-handoffs-date-range"/);
+  assert.match(handoffFilters, /testId="provider-handoffs-date-range"/);
   assert.match(handoffFilters, /<SearchMonitorSelect label="Date range" name="range"/);
   for (const heading of ["Date range", "Provider", "Product", "Identity", "Search link"]) {
     assert.doesNotMatch(handoffFilters, new RegExp(`>\\s*${heading}<\\/span>`));
   }
-  assert.equal((handoffFilters.match(/truncateLabel/g) || []).length, 5);
+  assert.equal((handoffFilters.match(/truncateLabel/g) || []).length, 4);
   assert.match(handoffFilters, /appearance="fare"/);
   assert.match(handoffFilters, /Apply filters/);
   assert.doesNotMatch(handoffFilters, /Search by provider|Current environment|label="Environment"|router\.replace|setTimeout/);
