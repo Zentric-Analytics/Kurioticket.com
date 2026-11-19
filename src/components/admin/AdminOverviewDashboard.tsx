@@ -253,7 +253,7 @@ export function AdminOverviewDashboard({ data, system, activity }: {
                 <MiniMetric label="Without visitor identity" value={data.journeys.operationalHandoffs.withoutVisitorIdentity} />
                 <MiniMetric label="Flights" value={data.journeys.operationalHandoffs.flights} />
                 <MiniMetric label="Hotels" value={data.journeys.operationalHandoffs.hotels} />
-                <MiniMetric label="Cars" value="—" hint="Not tracked" />
+                <MiniMetric label="Cars" value={data.journeys.operationalHandoffs.cars} />
               </div>
             </Section>
           </AdminOverviewRangeSensitive>
