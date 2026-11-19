@@ -68,7 +68,7 @@ test("Operations Snapshot account metrics stay two columns beside Attention Requ
   assert.match(snapshot, /items-stretch gap-3 lg:grid-cols-2/);
   const engine = await compile("@theme { --breakpoint-sm: 40rem; } @tailwind utilities;");
   const generatedCss = engine.build(["grid", "grid-cols-2"]);
-  assert.match(generatedCss, /grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+  assert.match(generatedCss, /grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/);
 });
 
 test("compact snapshot links keep cards equal height and explanatory text readable", () => {
