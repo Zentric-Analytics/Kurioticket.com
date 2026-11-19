@@ -4,14 +4,17 @@ export const platformOptions = [{ value: "ALL", label: "All Platforms" }, { valu
 export function applicationLabel(source?: string | null) { return platformOptions.find(option => option.value === source)?.label ?? "Unknown"; }
 export function parsePlatformHealthView(params: URLSearchParams): {
     hours: number;
+    period: "today" | "rolling";
     application: PlatformSelection;
 } | null {
-    if ([...params.keys()].some(key => !["hours", "application"].includes(key)) || ["hours", "application"].some(key => params.getAll(key).length > 1))
+    if ([...params.keys()].some(key => !["hours", "application", "period"].includes(key)) || ["hours", "application", "period"].some(key => params.getAll(key).length > 1))
         return null;
     const hours = params.get("hours") ?? "24", application = params.get("application") ?? "ALL";
-    if (!["24", "168", "720"].includes(hours) || !platformOptions.some(option => option.value === application))
+    const period = params.get("period") ?? (params.has("hours") ? "rolling" : "today");
+    if (!["24", "168", "720"].includes(hours) || !["today", "rolling"].includes(period) ||
+        (period === "today" && hours !== "24") || !platformOptions.some(option => option.value === application))
         return null;
-    return { hours: Number(hours), application: application as PlatformSelection };
+    return { hours: Number(hours), period: period as "today" | "rolling", application: application as PlatformSelection };
 }
 export function failureRate(value: {
     total: number;
