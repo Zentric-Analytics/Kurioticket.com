@@ -129,8 +129,8 @@ export default async function AdminJourneysPage({ searchParams, embedded = false
                   <caption className="sr-only">Eligible visitor journeys matching the selected filters</caption>
                   <colgroup>
                     <col className="w-[15%]" /><col className="w-[15%]" /><col className="w-[9%]" />
-                    <col className="w-[13%]" /><col className="w-[10%]" /><col className="w-[22%]" />
-                    <col className="w-[6%]" /><col className="w-[10%]" />
+                    <col className="w-[12%]" /><col className="w-[10%]" /><col className="w-[22%]" />
+                    <col className="w-[6%]" /><col className="w-[11%]" />
                   </colgroup>
                   <thead className="border-b border-[#D8E1EC] bg-white text-[12px] text-[#475569]">
                     <tr>
