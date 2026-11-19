@@ -9,6 +9,7 @@ import { parseCarLocationTarget } from "@/lib/cars/carSearchLocationTarget";
 import { carSearchUrlParams } from "@/lib/cars/carResults";
 import { getCarDetails } from "@/services/travel/carAggregator";
 import { getKayakClientIp } from "@/lib/kayak-client-ip";
+import { journeyRequestId } from "@/lib/journeyEventClient";
 
 const value = (input: string | string[] | undefined) => (Array.isArray(input) ? input[0] : input)?.trim() || "";
 export default async function CarDetailsPage({ params, searchParams }: { params: Promise<{id:string}>; searchParams: Promise<Record<string,string|string[]|undefined>> }) {
@@ -49,5 +50,5 @@ export default async function CarDetailsPage({ params, searchParams }: { params:
     flushMobileBottom
     hideDesktopTravelNav
     hideMobileCategoryTabs
-  /></div><div className="pt-[env(safe-area-inset-top)] lg:pt-0" data-car-details-mobile-safe-area>{car ? <CarDetailsClient car={car} search={search} resultsHref={resultsHref} /> : <main className="flex-1 bg-surface-muted/40"><section className="border-b border-border bg-white"><div className="page-shell py-20"><div role="status" className="mx-auto max-w-xl rounded-xl border border-slate-200 bg-white p-10 text-center"><h1 className="text-2xl font-extrabold">Car unavailable</h1><p className="mt-3 text-slate-600">This vehicle cannot be displayed for the current search.</p><Link href={resultsHref} className="mt-6 inline-flex rounded-lg bg-[#004BB8] px-5 py-3 font-bold text-white">Back to Cars results</Link></div></div></section></main>}</div><div className="hidden lg:block" data-car-details-desktop-footer><Footer variant="brand-legal-only" /></div></>;
+  /></div><div className="pt-[env(safe-area-inset-top)] lg:pt-0" data-car-details-mobile-safe-area>{car ? <CarDetailsClient car={car} search={search} resultsHref={resultsHref} requestId={journeyRequestId(value(query.requestId))} /> : <main className="flex-1 bg-surface-muted/40"><section className="border-b border-border bg-white"><div className="page-shell py-20"><div role="status" className="mx-auto max-w-xl rounded-xl border border-slate-200 bg-white p-10 text-center"><h1 className="text-2xl font-extrabold">Car unavailable</h1><p className="mt-3 text-slate-600">This vehicle cannot be displayed for the current search.</p><Link href={resultsHref} className="mt-6 inline-flex rounded-lg bg-[#004BB8] px-5 py-3 font-bold text-white">Back to Cars results</Link></div></div></section></main>}</div><div className="hidden lg:block" data-car-details-desktop-footer><Footer variant="brand-legal-only" /></div></>;
 }
