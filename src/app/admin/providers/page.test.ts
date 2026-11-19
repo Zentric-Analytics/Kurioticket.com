@@ -450,7 +450,15 @@ test("Provider Handoffs uses a compact Apply-only filter row without an environm
   for (const field of ["Provider", "Product", "Identity", "Search link"]) {
     assert.match(handoffFilters, new RegExp('<SearchMonitorSelect label="' + field + '"'));
   }
-  assert.match(handoffFilters, /xl:grid-cols-\[minmax\(0,1\.1fr\)/);
+  assert.match(handoffFilters, /data-testid="provider-handoffs-filter-row"/);
+  assert.match(handoffFilters, /xl:grid-cols-\[repeat\(4,minmax\(0,1fr\)\)_132px\]/);
+  assert.match(handoffFilters, /sm:grid-cols-2 lg:grid-cols-3/);
+  assert.match(handoffFilters, /w-\[164px\]/);
+  assert.match(handoffFilters, /<SearchMonitorSelect label="Date range" name="range"/);
+  for (const heading of ["Date range", "Provider", "Product", "Identity", "Search link"]) {
+    assert.doesNotMatch(handoffFilters, new RegExp(`>\\s*${heading}<\\/span>`));
+  }
+  assert.equal((handoffFilters.match(/truncateLabel/g) || []).length, 4);
   assert.match(handoffFilters, /appearance="fare"/);
   assert.match(handoffFilters, /Apply filters/);
   assert.doesNotMatch(handoffFilters, /Search by provider|Current environment|label="Environment"|router\.replace|setTimeout/);

@@ -68,7 +68,6 @@ export function ProviderHandoffFilters({
           Provider Handoffs
         </h1>
         <div className="w-[164px] min-w-0">
-          <span className="mb-1.5 block text-[11px] font-medium text-[#64748B]">Date range</span>
           <SearchMonitorSelect label="Date range" name="range"
             value={selectedRange} options={dateOptions} appearance="fare" align="end"
             onValueChange={value => setSelectedRange(value as HandoffDateRange)} />
@@ -87,33 +86,29 @@ export function ProviderHandoffFilters({
         </>
       ) : null}
 
-      <div className="grid min-w-0 grid-cols-2 items-end gap-3 border-b border-[#D8E1EC] py-4 sm:grid-cols-3 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.85fr)_minmax(0,0.95fr)_minmax(0,1.15fr)_auto] xl:gap-2.5">
+      <div data-testid="provider-handoffs-filter-row" className="grid min-w-0 grid-cols-1 items-center gap-2 border-b border-[#D8E1EC] py-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-[repeat(4,minmax(0,1fr))_132px] xl:gap-2.5">
         <div className="min-w-0">
-          <span className="mb-1.5 block text-[11px] font-medium text-[#64748B]">Provider</span>
           <SearchMonitorSelect label="Provider" name="provider"
             value={initial.provider} options={providerOptions} appearance="fare"
             truncateLabel />
         </div>
         <div className="min-w-0">
-          <span className="mb-1.5 block text-[11px] font-medium text-[#64748B]">Product</span>
           <SearchMonitorSelect label="Product" name="product"
-            value={initial.product} options={productOptions} appearance="fare" />
+            value={initial.product} options={productOptions} appearance="fare" truncateLabel />
         </div>
         <div className="min-w-0">
-          <span className="mb-1.5 block text-[11px] font-medium text-[#64748B]">Identity</span>
           <SearchMonitorSelect label="Identity" name="identity"
             value={initial.identity} options={identityOptions} appearance="fare"
-            clearFieldNamesOnChange={["userId", "visitorId"]} />
+            clearFieldNamesOnChange={["userId", "visitorId"]} truncateLabel />
         </div>
         <div className="min-w-0">
-          <span className="mb-1.5 block text-[11px] font-medium text-[#64748B]">Search link</span>
           <SearchMonitorSelect label="Search link" name="correlation"
-            value={initial.correlation} options={correlationOptions} appearance="fare"
+            value={initial.correlation} options={correlationOptions} appearance="fare" align="end"
             truncateLabel />
         </div>
         <button
           type="submit"
-          className="inline-flex h-10 w-full items-center justify-center whitespace-nowrap rounded-lg bg-[#004BB8] px-4 text-[13px] font-medium text-white transition-colors hover:bg-[#003D97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8] xl:w-auto"
+          className="inline-flex h-10 w-full min-w-0 items-center justify-center whitespace-nowrap rounded-lg bg-[#004BB8] px-3 text-[13px] font-medium text-white transition-colors hover:bg-[#003D97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]"
         >
           Apply filters
         </button>
