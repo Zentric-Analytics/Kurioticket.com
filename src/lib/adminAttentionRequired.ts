@@ -27,3 +27,24 @@ export function summarizeAttentionRequired(input: {
     deletionPending: input.deletions.pending,
   };
 }
+
+/** Global incident counts complement the dedicated provider and support queues.
+ * Acknowledged incidents remain active until their underlying condition clears.
+ * Source exclusions avoid counting the same provider/support problem twice.
+ */
+export function summarizePlatformIncidents(
+  alerts: readonly { key: string; source: string; severity: "CRITICAL" | "WARNING" }[],
+) {
+  const incidents = alerts.filter(alert => {
+    // Exclude only conditions represented by the dedicated queue counters.
+    // Telemetry outages for providers/support are separate problems, not duplicates.
+    const existingProviderHealth = alert.source === "PROVIDER" && /^provider\.[^.]+\.operational$/.test(alert.key);
+    const existingUrgentSupport = alert.source === "SUPPORT" && /^expanded\.(staging|production)\.support\.(OPEN|WAITING_ON_TEAM)$/.test(alert.key);
+    return !existingProviderHealth && !existingUrgentSupport;
+  });
+  return {
+    total: incidents.length,
+    critical: incidents.filter(alert => alert.severity === "CRITICAL").length,
+    warning: incidents.filter(alert => alert.severity === "WARNING").length,
+  };
+}

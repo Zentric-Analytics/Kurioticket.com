@@ -13,6 +13,7 @@ import { getRecentAdminActivity, getSafeSystemStatus } from "@/lib/admin-data";
 import { resolveOverviewRange } from "@/lib/adminOverviewRange";
 import { requireAdminSession } from "@/lib/auth-guards";
 import { getAdminOverview } from "@/services/adminOverviewService";
+import { getAdminAlertSnapshot } from "@/services/adminAlertService";
 import { readPlatformSearchActivity } from "@/services/platformOperationsService";
 
 export const metadata = { title: "Admin" };
@@ -26,11 +27,12 @@ export default async function AdminPage({ searchParams }: PageProps) {
 
   const reporting = resolveOverviewRange(await searchParams);
   const query = new URLSearchParams({ from: reporting.from.toISOString(), to: reporting.to.toISOString() });
-  const [overview, system, activity, platform] = await Promise.all([
+  const [overview, system, activity, platform, incidents] = await Promise.all([
     getAdminOverview(query),
     getSafeSystemStatus(),
     getRecentAdminActivity(),
     readPlatformSearchActivity(reporting.from, reporting.to),
+    getAdminAlertSnapshot(undefined, new Date(), { forceRefreshCandidates: false }).catch(() => null),
   ]);
 
   return (
@@ -67,7 +69,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
             )}
           </div>
           {overview.status === "ok" ? (
-            <AdminOverviewDashboard data={overview.data} system={system} activity={activity} />
+            <AdminOverviewDashboard data={overview.data} system={system} activity={activity} incidents={incidents} />
           ) : (
             <>
               <section role="status" className="border-b border-slate-200/90 py-5">
