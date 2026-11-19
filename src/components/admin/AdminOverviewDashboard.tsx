@@ -37,15 +37,17 @@ function Section({
   children,
   description,
   action,
+  fill = false,
 }: {
   title: string;
   href: string;
   children: React.ReactNode;
   description?: string;
   action?: React.ReactNode;
+  fill?: boolean;
 }) {
   return (
-    <section aria-label={title} className="min-w-0 rounded-xl border border-slate-200 bg-white p-3 sm:p-4">
+    <section aria-label={title} className={`min-w-0 rounded-xl border border-slate-200 bg-white p-3 sm:p-4${fill ? " h-full" : ""}`}>
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <div className="min-w-0">
           <h2 className="text-[15px] font-semibold tracking-tight text-slate-950">{title}</h2>
@@ -204,7 +206,7 @@ export function AdminOverviewSecondary({ system, activity }: { system: SystemSta
 
 export function SearchPerformanceSummary({ data }: { data: OverviewData }) {
   return (
-    <Section title="Search Performance" href="/admin/searches/activity">
+    <Section title="Search Performance" href="/admin/searches/activity" fill>
               <div className="grid grid-cols-2 gap-1.5">
                 <MiniMetric label="Total" value={data.journeys.operationalSearches.total} />
                 <MiniMetric label="Successful" value={data.journeys.operationalSearches.success} tone="good" />
