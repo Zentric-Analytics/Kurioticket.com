@@ -1,5 +1,7 @@
 "use client";
 
+import { useJourneyEvents } from "@/components/privacy/JourneyEventsProvider";
+
 
 import Image from "next/image";
 import Link from "next/link";
@@ -47,6 +49,7 @@ export function FlightCard({
   providerLabel,
   actionAriaLabel,
   onAction,
+  searchRequestId,
 }: {
   flight: PublicFlightResult;
   isAccented?: boolean;
@@ -58,6 +61,8 @@ export function FlightCard({
   onAction?: (flight: PublicFlightResult) => void;
   searchRequestId?: string | null;
 }) {
+  const journeyEvents = useJourneyEvents();
+  const rememberDetailsContext = () => journeyEvents.rememberDetailsContext("flight", flight.id, searchRequestId ?? null);
   const { t: dictionary, locale } = useLocale();
   const router = useRouter();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
@@ -162,7 +167,7 @@ export function FlightCard({
         detailsHref={resolvedDetailsHref}
         providerLabel={providerLabel}
         onAction={onAction}
-        
+        onSelect={rememberDetailsContext}
       />
     <Card
       data-flight-result-card
@@ -178,10 +183,12 @@ export function FlightCard({
           return;
         }
         if (onAction) {
+          rememberDetailsContext();
           onAction(flight);
           return;
         }
         if (resolvedDetailsHref) {
+          rememberDetailsContext();
           router.push(resolvedDetailsHref);
         }
       }}
@@ -247,7 +254,7 @@ export function FlightCard({
               viewFlightLabel={resolvedActionLabel}
               viewFlightAriaLabel={actionAriaLabel}
               onAction={onAction ? () => onAction(flight) : undefined}
-              
+              onSelect={rememberDetailsContext}
               actions={renderFlightUtilityActions("lg:hidden")}
             />
           </div>
