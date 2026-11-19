@@ -5,6 +5,7 @@ import { PlatformHealthRefresh } from "./PlatformHealthRefresh";
 import { PlatformActivitySummary } from "./PlatformActivitySummary";
 import { ScheduledJobObservations } from "./ScheduledJobObservations";
 import { OperationalStatus } from "./OperationalStatus";
+import { PlatformHealthAttention } from "./PlatformHealthAttention";
 import { applicationLabel, searchInvestigationHref, type PlatformSelection } from "@/lib/platformHealthPresentation";
 import type { readPlatformOperations } from "@/services/platformOperationsService";
 export type PlatformOperations = Awaited<ReturnType<typeof readPlatformOperations>>;
@@ -38,6 +39,7 @@ export function PlatformHealthDashboard({ data, hours, application }: {
     <div className="min-w-0 flex-1"><PlatformHealthFilters hours={hours} application={application}/></div>
     <PlatformHealthRefresh />
   </div>
+  <PlatformHealthAttention data={data} application={application}/>
   <OperationsSection className="py-5" >
     <div className="mb-4 min-w-0">
       <h2 id="platform-activity-heading" className="text-[14px] font-semibold text-[#020617]">{applicationLabel(application)} activity</h2>
