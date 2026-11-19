@@ -14,6 +14,7 @@ const productOptions = [
   { value: "", label: "All products" },
   { value: "FLIGHT", label: "Flights" },
   { value: "HOTEL", label: "Hotels" },
+  { value: "CAR", label: "Cars" },
 ];
 const identityOptions = [
   { value: "all", label: "All identities" },
