@@ -37,27 +37,29 @@ test("zero actionable issues does not imply setup or waiting work is absent", ()
   assert.equal(result.deletionReviews, 0);
 });
 
-test("platform incidents cover all existing sources except already counted queues", () => {
+test("platform incidents cover sources without duplicating provider health and urgent support", () => {
   const snapshot = summarizePlatformIncidents([
-    { source: "SYSTEM", severity: "CRITICAL" },
-    { source: "SEARCH", severity: "WARNING" },
-    { source: "EMAIL", severity: "WARNING" },
-    { source: "CMS", severity: "WARNING" },
-    { source: "HOMEPAGE_FARES", severity: "CRITICAL" },
-    { source: "CONFIRMED_TRIPS", severity: "WARNING" },
-    { source: "FLIGHT_STATUS", severity: "WARNING" },
-    { source: "USERS", severity: "WARNING" },
-    { source: "PROVIDER", severity: "CRITICAL" },
-    { source: "SUPPORT", severity: "WARNING" },
+    { key: "system.database.unavailable", source: "SYSTEM", severity: "CRITICAL" },
+    { key: "expanded.staging.search.FLIGHT", source: "SEARCH", severity: "WARNING" },
+    { key: "email.delivery.degraded", source: "EMAIL", severity: "WARNING" },
+    { key: "cms.integrity.unhealthy", source: "CMS", severity: "WARNING" },
+    { key: "homepage-fares.readiness", source: "HOMEPAGE_FARES", severity: "CRITICAL" },
+    { key: "confirmed-trips.deliveries.rejected", source: "CONFIRMED_TRIPS", severity: "WARNING" },
+    { key: "flight-status.stale", source: "FLIGHT_STATUS", severity: "WARNING" },
+    { key: "expanded.staging.users.admin-mfa-disabled", source: "USERS", severity: "WARNING" },
+    { key: "provider.duffel.operational", source: "PROVIDER", severity: "CRITICAL" },
+    { key: "expanded.staging.support.OPEN", source: "SUPPORT", severity: "WARNING" },
+    // Monitoring gaps still need action, despite sharing a queue's source.
+    { key: "providers.telemetry.unavailable", source: "PROVIDER", severity: "WARNING" },
+    { key: "expanded.staging.support.telemetry", source: "SUPPORT", severity: "WARNING" },
   ]);
-  assert.deepEqual(snapshot, { total: 8, critical: 2, warning: 6 });
+  assert.deepEqual(snapshot, { total: 10, critical: 2, warning: 8 });
 });
 
-test("platform incidents count active acknowledged records, not just unread", () => {
-  const alerts: Array<{ source: string; severity: "CRITICAL" | "WARNING"; acknowledged: boolean }> = [
-    { source: "SEARCH", severity: "CRITICAL", acknowledged: true },
-    { source: "SEARCH", severity: "WARNING", acknowledged: false },
+test("acknowledged but active incidents count independent of unread status", () => {
+  const alerts: Array<{ key: string; source: string; severity: "CRITICAL" | "WARNING"; acknowledged: boolean }> = [
+    { key: "expanded.staging.search.FLIGHT", source: "SEARCH", severity: "CRITICAL", acknowledged: true },
+    { key: "email.delivery.degraded", source: "EMAIL", severity: "WARNING", acknowledged: false },
   ];
-  const result = summarizePlatformIncidents(alerts);
-  assert.deepEqual(result, { total: 2, critical: 1, warning: 1 });
+  assert.deepEqual(summarizePlatformIncidents(alerts), { total: 2, critical: 1, warning: 1 });
 });
