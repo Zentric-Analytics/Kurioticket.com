@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
+import { AdminCalendarInput } from "@/components/admin/AdminCalendarInput";
 import { ADMIN_REPORTING_RANGE_OPTIONS } from "@/lib/adminReportingRanges";
 import { offsetUtcDateTime, utcDateTimeInput, utcDateTimeIso, type JourneyDateRange } from "@/lib/adminJourneyDateRange";
 
@@ -11,7 +12,6 @@ export function JourneyDateRangeFields({ initialRange, initialFrom, initialTo, n
   const [range, setRange] = useState<JourneyDateRange>(initialRange);
   const [from, setFrom] = useState(utcDateTimeInput(initialFrom));
   const [to, setTo] = useState(utcDateTimeInput(initialTo));
-  const toInputRef = useRef<HTMLInputElement>(null);
   const custom = range === "custom";
   const startIso = utcDateTimeIso(from);
   const endIso = utcDateTimeIso(to);
@@ -20,13 +20,6 @@ export function JourneyDateRangeFields({ initialRange, initialFrom, initialTo, n
     && Date.parse(startIso) < Date.parse(endIso)
     && Date.parse(endIso) <= current
     && Date.parse(endIso) - Date.parse(startIso) <= 90 * 86400000);
-  // Min/max date controls alone are inclusive and don't enforce strictly
-  // increasing endpoints. Attach the rule to the native form validity API
-  // so invalid custom bounds cannot be submitted to the journey reader.
-  useEffect(() => {
-    if (!custom) return;
-    toInputRef.current?.setCustomValidity(valid ? "" : "Choose a valid UTC interval with From before To, no more than 90 days.");
-  }, [custom, valid]);
   return (
     <>
       <div data-testid="journey-date-range" className="min-w-0"><SearchMonitorSelect label="Date range" name="range" value={range} appearance="fare" align="end" truncateLabel
@@ -47,17 +40,17 @@ export function JourneyDateRangeFields({ initialRange, initialFrom, initialTo, n
       {custom ? (
         <div data-testid="journey-custom-date-fields" className="order-last col-span-full flex min-w-0 flex-wrap items-end gap-3">
           <label className="text-xs text-[#475569]">From (UTC)
-            <input type="datetime-local" required value={from}
+            <AdminCalendarInput mode="datetime-local" required value={from}
               max={to ? offsetUtcDateTime(to, -1) : now.slice(0, 16)}
               min={to ? offsetUtcDateTime(to, -90 * 24 * 60) : undefined}
               onChange={e => setFrom(e.target.value)}
-              className="ml-2 h-10 min-w-0 rounded-lg border border-[#D8E1EC] bg-white px-2 text-[13px] text-[#020617] outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#64748B]" />
+              className="ml-2 w-[220px] max-w-full" />
           </label>
           <label className="text-xs text-[#475569]">To (UTC)
-            <input ref={toInputRef} type="datetime-local" required value={to}
+            <AdminCalendarInput mode="datetime-local" required value={to}
               min={from ? offsetUtcDateTime(from, 1) : undefined}
               max={from ? (offsetUtcDateTime(from, 90 * 24 * 60) < now.slice(0,16) ? offsetUtcDateTime(from, 90 * 24 * 60) : now.slice(0,16)) : now.slice(0,16)} onChange={e => setTo(e.target.value)}
-              className="ml-2 h-10 min-w-0 rounded-lg border border-[#D8E1EC] bg-white px-2 text-[13px] text-[#020617] outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#64748B]" />
+              className="ml-2 w-[220px] max-w-full" />
           </label>
           <input name="from" type="hidden" value={startIso} />
           <input name="to" type="hidden" value={endIso} />
