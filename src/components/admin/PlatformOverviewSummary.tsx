@@ -11,10 +11,6 @@ export function PlatformOverviewSummary({ data }: {
     <section aria-labelledby="platform-overview-title" className="h-full min-w-0 rounded-xl border border-slate-200 bg-white p-3 sm:p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 id="platform-overview-title" className="text-sm font-semibold text-slate-950">Platform Search Activity</h2>
-        <Link href={searchInvestigationHref(window, "ALL")} prefetch={false}
-          className="focus-ring shrink-0 rounded text-sm font-semibold text-[#004BB8]">
-          View Search Activity →
-        </Link>
       </div>
 
       {searches ? (
