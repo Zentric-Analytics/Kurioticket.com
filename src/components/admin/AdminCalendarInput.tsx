@@ -170,7 +170,9 @@ export function AdminCalendarInput({
   return (
     <>
       <input type={mode} name={name} value={value} required={required} min={min} max={max}
-        readOnly tabIndex={-1} aria-hidden="true" className="sr-only" />
+        onChange={() => undefined}
+        onInvalid={event => { event.preventDefault(); openCalendar(); }}
+        tabIndex={-1} aria-hidden="true" className="sr-only" />
       <button id={id} type="button" ref={triggerRef} disabled={disabled}
         aria-label={ariaLabel || (mode === "date" ? "Choose date" : "Choose date and time")}
         aria-haspopup="dialog" aria-expanded={open} aria-controls={open ? popupId : undefined}
