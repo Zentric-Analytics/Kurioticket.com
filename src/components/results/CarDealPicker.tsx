@@ -13,6 +13,7 @@ import type { CarOffer, CarSearchParams, NormalizedCarResult } from "@/lib/cars/
 import { CarPriceAlertControl } from "@/components/results/CarPriceAlertControl";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import { sandboxBookingUrl } from "@/services/travel/kayakSandboxPublic";
+import { carHandoffHref } from "@/lib/cars/carHandoffHref";
 import { getCarRateDisclosureSections, getCarRatePaymentLabel, type CarRateDisclosureSection } from "@/lib/cars/carRateDisclosure";
 
 type Props = {
@@ -117,7 +118,8 @@ export function CarDealPicker({
   const dialogHeadingRef = useRef<HTMLHeadingElement>(null);
   const selectedGroup = groups.find(group => group.key === detailsKey);
   const selectedOffer = selectedGroup?.primaryOffer;
-  const selectedRateBookingHref = selectedOffer ? approvedProviderBookingUrl(car, selectedOffer) : null;
+  const selectedRateBookingHref = selectedOffer && approvedProviderBookingUrl(car, selectedOffer)
+    ? carHandoffHref(car.id, selectedOffer.id, "car-results") : null;
   const disclosureSections = selectedOffer ? getCarRateDisclosureSections(selectedOffer) : [];
   const paymentFacts = disclosureSections.find(section => section.id === "payment")?.facts ?? [];
 
@@ -169,7 +171,8 @@ export function CarDealPicker({
       >
         {groups.map((group, index) => {
           const offer = group.primaryOffer;
-          const bookingHref = approvedProviderBookingUrl(car, offer);
+          const bookingHref = approvedProviderBookingUrl(car, offer)
+            ? carHandoffHref(car.id, offer.id, "car-results") : null;
           const hasDetails = car.inventorySource === "kayak-sandbox" && Boolean(offer.suppliedFacts?.length);
           const responsiveVisibility = expanded || index < INITIAL_VISIBLE_OFFER_COUNT
             ? "grid"
