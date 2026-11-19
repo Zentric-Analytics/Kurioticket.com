@@ -69,13 +69,16 @@ export type HotelOperationsSnapshot = {
 export async function getHotelOperationsSnapshot(
   windowHours = 24,
   environment: PublicEnvironment = getPublicEnvironment(),
+  period: "today" | "rolling" = "rolling",
 ): Promise<HotelOperationsSnapshot | null> {
   const db = getOptionalPrisma();
   if (!db) return null;
 
   const hours = Number.isInteger(windowHours) && windowHours >= 1 && windowHours <= 168 ? windowHours : 24;
   const now = new Date();
-  const since = new Date(now.getTime() - hours * 60 * 60 * 1000);
+  const since = period === "today"
+    ? new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
+    : new Date(now.getTime() - hours * 60 * 60 * 1000);
   const searchWhere: Prisma.SearchHistoryWhereInput = {
     type: "HOTEL",
     createdAt: { gte: since, lte: now },
