@@ -86,18 +86,22 @@ try {
     await page.getByRole("button", { name: label, exact: true }).click();
     const calendar = page.getByRole("dialog", { name: label });
     await expect(calendar).toBeVisible();
-    const [year, month, day] = isoDate.split("-").map(Number);
-    const today = new Date();
-    const difference = (today.getUTCFullYear() - year) * 12 + today.getUTCMonth() + 1 - month;
-    const direction = difference < 0 ? "Next month" : "Previous month";
-    for (let i = 0; i < Math.abs(difference); i++) {
-      await calendar.getByRole("button", { name: direction }).click();
-    }
+    await expect(calendar.getByRole("combobox")).toHaveCount(0);
+    await expect(calendar.getByRole("button", { name: "Apply date" })).toHaveCount(0);
+    const [year, month] = isoDate.split("-").map(Number);
+    const monthNames = ["January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"];
+    const currentTitle = await calendar.getByRole("heading").innerText();
+    const [currentMonth, currentYear] = currentTitle.split(" ");
+    let delta = (year - Number(currentYear)) * 12 + month - (monthNames.indexOf(currentMonth) + 1);
+    while (delta <= -12) { await calendar.getByRole("button", { name: "Previous year" }).click(); delta += 12; }
+    while (delta >= 12) { await calendar.getByRole("button", { name: "Next year" }).click(); delta -= 12; }
+    while (delta < 0) { await calendar.getByRole("button", { name: "Previous month" }).click(); delta++; }
+    while (delta > 0) { await calendar.getByRole("button", { name: "Next month" }).click(); delta--; }
     const fullDate = new Intl.DateTimeFormat("en-US", {
       timeZone: "UTC", weekday: "long", month: "long", day: "numeric", year: "numeric",
     }).format(new Date(isoDate + "T00:00:00.000Z"));
     await calendar.getByRole("gridcell", { name: fullDate }).click();
-    await calendar.getByRole("button", { name: "Apply date" }).click();
     await expect(calendar).toHaveCount(0);
   };
   await expect(page.getByRole("button", { name: "Custom start date UTC" })).toBeVisible();

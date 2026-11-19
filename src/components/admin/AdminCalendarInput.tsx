@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { CalendarDays, ChevronLeft, ChevronRight, Clock3 } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Clock3 } from "lucide-react";
 
 type CalendarMode = "date" | "datetime-local";
 type Props = {
@@ -61,14 +61,39 @@ function withinBounds(day: string, min?: string, max?: string): boolean {
   return (!min || day >= min.slice(0, 10)) && (!max || day <= max.slice(0, 10));
 }
 
+
+/** A day click commits directly. For datetime bounds, keep the chosen day
+ * and clamp only the time to the allowed edge of that day. No timezone conversion
+ * occurs here: the parent form still owns UTC/local interpretation. */
+function selectedCalendarValue(
+  day: string, mode: CalendarMode, hour: string, minute: string,
+  min?: string, max?: string,
+): string | null {
+  if (!realDate(day) || !withinBounds(day, min, max)) return null;
+  if (mode === "date") {
+    return (!min || day >= min.slice(0, 10)) && (!max || day <= max.slice(0, 10)) ? day : null;
+  }
+  if (!/^\\d{1,2}$/.test(hour) || !/^\\d{1,2}$/.test(minute)
+      || Number(hour) > 23 || Number(minute) > 59) return null;
+  const normalizedMin = min?.length === 10 ? min + "T00:00" : min;
+  const normalizedMax = max?.length === 10 ? max + "T23:59" : max;
+  let candidate = day + "T" + hour.padStart(2, "0") + ":" + minute.padStart(2, "0");
+  if (normalizedMin && candidate < normalizedMin) candidate = normalizedMin;
+  if (normalizedMax && candidate > normalizedMax) candidate = normalizedMax;
+  if (!candidate.startsWith(day + "T") ||
+      (normalizedMin && candidate < normalizedMin) ||
+      (normalizedMax && candidate > normalizedMax)) return null;
+  return candidate;
+}
+
 /**
  * Shared admin date/date-time calendar. Every field uses an identical popover,
  * including UTC readers and local-time queue readers. The value is deliberately
  * a timezone-free ISO date or datetime-local string; callers retain control of
  * how it is converted to the backend's existing timezone contract.
  *
- * Selecting a date or time only edits this field after the popup's Apply button;
- * the page's Apply filters action remains the sole operation that loads records.
+ * Selecting an available day immediately updates this draft field and closes the
+ * calendar; the page's existing Apply filters action still controls data reads.
  */
 export function AdminCalendarInput({
   value, onChange, onValueChange, mode = "date", min, max, name, id, ariaLabel,
@@ -81,7 +106,6 @@ export function AdminCalendarInput({
   const [open, setOpen] = useState(false);
   const [month, setMonth] = useState(() => realDate(value.slice(0, 10))
     ? value.slice(0, 7) : new Date().toISOString().slice(0, 7));
-  const [draftDay, setDraftDay] = useState("");
   const [hour, setHour] = useState("00");
   const [minute, setMinute] = useState("00");
   const [position, setPosition] = useState({ top: 0, left: 0, width: 324, maxHeight: 430 });
@@ -90,14 +114,18 @@ export function AdminCalendarInput({
   const today = timeZone === "local"
     ? [now.getFullYear(), String(now.getMonth() + 1).padStart(2, "0"), String(now.getDate()).padStart(2, "0")].join("-")
     : now.toISOString().slice(0, 10);
-  const selectedTime = mode === "datetime-local"
-    ? hour.padStart(2, "0") + ":" + minute.padStart(2, "0")
-    : "";
-  const draftValue = mode === "date" ? draftDay : draftDay + "T" + selectedTime;
-  const timeValid = mode === "date" ||
-    (/^\d{1,2}$/.test(hour) && /^\d{1,2}$/.test(minute) && Number(hour) <= 23 && Number(minute) <= 59);
-  const valid = realDate(draftDay) && timeValid && withinBounds(draftDay, min, max) &&
-    (!min || draftValue >= min) && (!max || draftValue <= max);
+  const timeValid = mode === "date" || (
+    /^\\d{1,2}$/.test(hour) && /^\\d{1,2}$/.test(minute) &&
+    Number(hour) <= 23 && Number(minute) <= 59
+  );
+
+  const chooseDay = (day: string) => {
+    const selected = selectedCalendarValue(day, mode, hour, minute, min, max);
+    if (!selected) return;
+    onValueChange?.(selected);
+    onChange?.({ target: { value: selected } });
+    close(true);
+  };
 
   const close = (returnFocus = false) => {
     setOpen(false);
@@ -109,7 +137,6 @@ export function AdminCalendarInput({
     const currentDay = realDate(value.slice(0, 10)) ? value.slice(0, 10) : "";
     const initialMonth = currentDay || (min && realDate(min.slice(0, 10)) && today < min.slice(0, 10)
       ? min.slice(0, 10) : today);
-    setDraftDay(currentDay);
     setMonth(initialMonth.slice(0, 7));
     const time = mode === "datetime-local" && /^\d{2}:\d{2}$/.test(value.slice(11, 16))
       ? value.slice(11, 16) : defaultTime;
@@ -187,89 +214,83 @@ export function AdminCalendarInput({
           data-testid="admin-calendar-popup"
           style={{ position: "fixed", top: position.top, left: position.left, width: position.width, maxHeight: position.maxHeight }}
           className="z-[200] max-w-[calc(100vw-24px)] overflow-y-auto overscroll-contain rounded-xl border border-[#CAD6E5] bg-white p-3 shadow-[0_18px_45px_-12px_rgba(2,6,23,0.28)] outline-none">
-          <div className="mb-3 flex items-center justify-between gap-2">
-            <button type="button" aria-label="Previous month" onClick={() => setMonth(current => shiftMonth(current, -1))}
-              className={"grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-[#D8E1EC] text-[#334155] hover:bg-[#F1F7FF] " + focusRing}>
-              <ChevronLeft size={17} aria-hidden="true" />
-            </button>
-            <div className="flex min-w-0 items-center gap-1">
-              <h3 className="sr-only">{title}</h3>
-              <select aria-label="Calendar month" value={month.slice(5, 7)}
-                onChange={event => setMonth(current => current.slice(0, 5) + event.target.value)}
-                className={"h-8 max-w-[130px] rounded-lg border border-transparent bg-white px-1 text-[12px] font-semibold text-[#020617] hover:border-[#D8E1EC] " + focusRing}>
-                {["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map((label, index) => (
-                  <option key={label} value={String(index + 1).padStart(2, "0")}>{label}</option>
-                ))}
-              </select>
-              <select aria-label="Calendar year" value={month.slice(0, 4)}
-                onChange={event => setMonth(event.target.value + "-" + month.slice(5, 7))}
-                className={"h-8 w-[78px] rounded-lg border border-transparent bg-white px-1 text-[12px] font-semibold text-[#020617] hover:border-[#D8E1EC] " + focusRing}>
-                {Array.from({ length: 151 }, (_, index) => 1950 + index).map(year => (
-                  <option key={year} value={String(year)}>{year}</option>
-                ))}
-              </select>
+          <div className="mb-3 flex items-center justify-between gap-1.5">
+            <div className="flex shrink-0 items-center gap-0.5">
+              <button type="button" aria-label="Previous year" title="Previous year"
+                onClick={() => setMonth(current => shiftMonth(current, -12))}
+                className={"grid h-8 w-8 place-items-center rounded-lg text-[#475569] hover:bg-[#F1F7FF] " + focusRing}>
+                <ChevronsLeft size={16} aria-hidden="true" />
+              </button>
+              <button type="button" aria-label="Previous month" title="Previous month"
+                onClick={() => setMonth(current => shiftMonth(current, -1))}
+                className={"grid h-8 w-8 place-items-center rounded-lg text-[#475569] hover:bg-[#F1F7FF] " + focusRing}>
+                <ChevronLeft size={16} aria-hidden="true" />
+              </button>
             </div>
-            <button type="button" aria-label="Next month" onClick={() => setMonth(current => shiftMonth(current, 1))}
-              className={"grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-[#D8E1EC] text-[#334155] hover:bg-[#F1F7FF] " + focusRing}>
-              <ChevronRight size={17} aria-hidden="true" />
-            </button>
+            <h3 aria-live="polite" className="min-w-0 flex-1 text-center text-[13px] font-semibold tracking-tight text-[#020617]">{title}</h3>
+            <div className="flex shrink-0 items-center gap-0.5">
+              <button type="button" aria-label="Next month" title="Next month"
+                onClick={() => setMonth(current => shiftMonth(current, 1))}
+                className={"grid h-8 w-8 place-items-center rounded-lg text-[#475569] hover:bg-[#F1F7FF] " + focusRing}>
+                <ChevronRight size={16} aria-hidden="true" />
+              </button>
+              <button type="button" aria-label="Next year" title="Next year"
+                onClick={() => setMonth(current => shiftMonth(current, 12))}
+                className={"grid h-8 w-8 place-items-center rounded-lg text-[#475569] hover:bg-[#F1F7FF] " + focusRing}>
+                <ChevronsRight size={16} aria-hidden="true" />
+              </button>
+            </div>
           </div>
-          <div role="grid" aria-label="Calendar dates" className="grid grid-cols-7 gap-1">
+          {mode === "datetime-local" ? (
+            <div className="mb-3 rounded-lg bg-[#F8FAFC] px-3 py-2.5">
+              <div className="mb-1.5 flex items-center gap-1.5 text-[12px] font-medium text-[#334155]">
+                <Clock3 size={15} aria-hidden="true" /> Time ({timeZone === "UTC" ? "UTC" : "local"}, 24-hour)
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-[11px] text-[#64748B]">Hour
+                  <input type="number" min={0} max={23} inputMode="numeric" value={hour}
+                    onChange={event => setHour(event.target.value)}
+                    className={"mt-1 h-9 w-16 rounded-lg border border-[#D8E1EC] bg-white px-2 text-center text-[13px] text-[#020617] " + focusRing} />
+                </label>
+                <span className="mt-4 text-[#334155]">:</span>
+                <label className="text-[11px] text-[#64748B]">Minute
+                  <input type="number" min={0} max={59} inputMode="numeric" value={minute}
+                    onChange={event => setMinute(event.target.value)}
+                    className={"mt-1 h-9 w-16 rounded-lg border border-[#D8E1EC] bg-white px-2 text-center text-[13px] text-[#020617] " + focusRing} />
+                </label>
+                <span className="text-[11px] leading-4 text-[#64748B]">Choose time, then a day</span>
+              </div>
+            </div>
+          ) : null}
+                    <div role="grid" aria-label="Calendar dates" className="grid grid-cols-7 gap-1">
             {weekdays.map(day => <span role="columnheader" key={day} className="py-1 text-center text-[11px] font-semibold text-[#64748B]">{day}</span>)}
             {monthDays(month).map((day, index) => day ? (
               <button type="button" role="gridcell" key={day}
                 aria-label={new Intl.DateTimeFormat("en-US", { timeZone: "UTC", weekday: "long", month: "long", day: "numeric", year: "numeric" })
                   .format(new Date(day + "T00:00:00.000Z"))}
-                aria-selected={draftDay === day} disabled={!withinBounds(day, min, max)}
-                onClick={() => setDraftDay(day)}
+                aria-selected={value.slice(0, 10) === day} disabled={!withinBounds(day, min, max) || !timeValid}
+                onClick={() => chooseDay(day)}
                 className={"grid h-8 min-w-0 place-items-center rounded-lg text-[12px] disabled:cursor-not-allowed disabled:opacity-30 " + focusRing + " " +
-                  (draftDay === day ? "bg-[#004BB8] font-semibold text-white" :
+                  (value.slice(0, 10) === day ? "bg-[#004BB8] font-semibold text-white" :
                     day === today ? "border border-[#004BB8] text-[#004BB8] hover:bg-[#F1F7FF]" :
                       "text-[#334155] hover:bg-[#F1F7FF]")}>
                 {Number(day.slice(8, 10))}
               </button>
             ) : <span aria-hidden="true" key={"blank-" + index} />)}
           </div>
-          {mode === "datetime-local" ? (
-            <div className="mt-3 border-t border-[#E7ECF5] pt-3">
-              <div className="mb-2 flex items-center gap-1.5 text-[12px] font-semibold text-[#334155]">
-                <Clock3 size={15} aria-hidden="true" /> Time (24-hour clock)
-              </div>
-              <div className="flex items-center gap-2">
-                <label className="text-[11px] text-[#64748B]">Hour
-                  <input type="number" min={0} max={23} inputMode="numeric" value={hour}
-                    onChange={event => setHour(event.target.value)}
-                    className={"mt-1 h-9 w-16 rounded-lg border border-[#D8E1EC] px-2 text-center text-[13px] text-[#020617] " + focusRing} />
-                </label>
-                <span className="mt-4 text-[#334155]">:</span>
-                <label className="text-[11px] text-[#64748B]">Minute
-                  <input type="number" min={0} max={59} inputMode="numeric" value={minute}
-                    onChange={event => setMinute(event.target.value)}
-                    className={"mt-1 h-9 w-16 rounded-lg border border-[#D8E1EC] px-2 text-center text-[13px] text-[#020617] " + focusRing} />
-                </label>
-              </div>
-            </div>
-          ) : null}
-          {!valid && draftDay ? <p role="status" className="mt-2 text-[11px] text-rose-700">
-            Choose a date{mode === "datetime-local" ? " and time" : ""} within the permitted range.
+          {!timeValid ? <p role="status" className="mt-2 text-[11px] text-rose-700">
+            Enter a valid hour and minute before choosing a day.
           </p> : null}
-          <div className="mt-3 flex items-center justify-between gap-2 border-t border-[#E7ECF5] pt-3">
-            <button type="button" disabled={!withinBounds(today, min, max)}
-              onClick={() => { setDraftDay(today); setMonth(today.slice(0, 7)); }}
-              className={"rounded-lg px-2 py-2 text-[12px] font-medium text-[#004BB8] hover:bg-[#F1F7FF] disabled:opacity-30 " + focusRing}>
+          <div className="mt-3 flex items-center justify-between border-t border-[#E7ECF5] pt-2.5">
+            <button type="button" disabled={!withinBounds(today, min, max) || !timeValid}
+              onClick={() => chooseDay(today)}
+              className={"rounded-lg px-2.5 py-1.5 text-[12px] font-medium text-[#004BB8] hover:bg-[#F1F7FF] disabled:cursor-not-allowed disabled:opacity-30 " + focusRing}>
               Today
             </button>
-            <div className="flex items-center gap-2">
-              <button type="button" onClick={() => close(true)}
-                className={"rounded-lg border border-[#D8E1EC] px-3 py-2 text-[12px] font-medium text-[#475569] hover:bg-[#F8FAFC] " + focusRing}>
-                Cancel
-              </button>
-              <button type="button" disabled={!valid}
-                onClick={() => { if (valid) { onValueChange?.(draftValue); onChange?.({ target: { value: draftValue } }); close(true); } }}
-                className={"rounded-lg bg-[#004BB8] px-3 py-2 text-[12px] font-semibold text-white hover:bg-[#003D97] disabled:cursor-not-allowed disabled:opacity-40 " + focusRing}>
-                Apply date
-              </button>
-            </div>
+            <button type="button" onClick={() => close(true)}
+              className={"rounded-lg px-2.5 py-1.5 text-[12px] font-medium text-[#64748B] hover:bg-[#F8FAFC] " + focusRing}>
+              Close
+            </button>
           </div>
         </div>, document.body
       ) : null}

@@ -55,7 +55,7 @@ test("Provider health drafts reset only on committed scope changes and never rea
     await page.getByRole("button", { name: "Provider health start date UTC" }).click();
     const providerCalendar = page.getByRole("dialog", { name: "Provider health start date UTC" });
     await providerCalendar.getByRole("button", { name: "Today" }).click();
-    await providerCalendar.getByRole("button", { name: "Apply date" }).click();
+    assert.equal(await providerCalendar.count(), 0, "Today selects immediately and closes the calendar");
     assert.deepEqual(await page.evaluate(() => (window as unknown as { fixtureNavigation: string[] }).fixtureNavigation), []);
     await page.evaluate(() => (window as unknown as { fixtureRender: (props: unknown) => void }).fixtureRender({ product: "CAR", hours: 72, custom: null }));
     await page.getByRole("button", { name: "Date range: Last 3 days", exact: true }).waitFor();
@@ -224,13 +224,21 @@ test("Overview applies complete custom UTC dates and can revise a committed cust
     const selectCalendarDate = async (label: string, iso: string) => {
       await page.getByRole("button", { name: label, exact: true }).click();
       const calendar = page.getByRole("dialog", { name: label, exact: true });
-      await calendar.getByRole("combobox", { name: "Calendar month" }).selectOption(iso.slice(5, 7));
-      await calendar.getByRole("combobox", { name: "Calendar year" }).selectOption(iso.slice(0, 4));
+      assert.equal(await calendar.getByRole("combobox").count(), 0, "No nested month/year dropdowns");
+      const monthNames = ["January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"];
+      const [currentMonth, currentYear] = (await calendar.getByRole("heading").innerText()).split(" ");
+      const [year, month] = iso.split("-").map(Number);
+      let delta = (year - Number(currentYear)) * 12 + month - (monthNames.indexOf(currentMonth) + 1);
+      while (delta <= -12) { await calendar.getByRole("button", { name: "Previous year" }).click(); delta += 12; }
+      while (delta >= 12) { await calendar.getByRole("button", { name: "Next year" }).click(); delta -= 12; }
+      while (delta < 0) { await calendar.getByRole("button", { name: "Previous month" }).click(); delta++; }
+      while (delta > 0) { await calendar.getByRole("button", { name: "Next month" }).click(); delta--; }
       const title = new Intl.DateTimeFormat("en-US", {
         timeZone: "UTC", weekday: "long", month: "long", day: "numeric", year: "numeric",
       }).format(new Date(iso + "T00:00:00.000Z"));
       await calendar.getByRole("gridcell", { name: title }).click();
-      await calendar.getByRole("button", { name: "Apply date" }).click();
+      assert.equal(await calendar.count(), 0, "Date selection closes the popup");
     };
     await page.getByRole("button", { name: "Overview reporting range: Last 24 hrs" }).click();
     await page.getByRole("option", { name: "Custom range" }).click();

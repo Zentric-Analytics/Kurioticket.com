@@ -362,10 +362,10 @@ try {
   await expect(page.getByRole("button", { name: "Custom end date UTC" })).toBeVisible();
   await page.getByRole("button", { name: "Custom end date UTC" }).click();
   const endCalendar = page.getByRole("dialog", { name: "Custom end date UTC" });
-  await endCalendar.getByRole("combobox", { name: "Calendar month" }).selectOption("10");
-  await endCalendar.getByRole("combobox", { name: "Calendar year" }).selectOption("2026");
+  await expect(endCalendar.getByRole("heading")).toHaveText("October 2026");
+  await expect(endCalendar.getByRole("combobox")).toHaveCount(0);
   await endCalendar.getByRole("gridcell", { name: "Saturday, October 24, 2026" }).click();
-  await endCalendar.getByRole("button", { name: "Apply date" }).click();
+  await expect(endCalendar).toHaveCount(0);
   // No intermediate date action: the same Apply filters button commits both dates.
   await expect(page.getByRole("button",{name:"Set custom dates"})).toHaveCount(0);
   await expect(page).toHaveURL(/to=2026-10-23/);
