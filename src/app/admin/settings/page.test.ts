@@ -225,7 +225,7 @@ test("Settings History permanently shows its filters and paginated read-only det
   assert.match(recent, /<SettingsHistoryRow key=\{item\.id\} item=\{item\}/);
   assert.match(recent, /<details data-settings-history-record=\{item\.id\}/);
   assert.match(recent, /Read-only change record/);
-  assert.match(recent, /name="range"/);
+  assert.match(readFileSync("src/components/admin/SettingsHistoryRangeControl.tsx", "utf8"), /name="range"/);
   assert.match(recent, /name="category"/);
   assert.match(recent, /Older records/);
   assert.match(recent, /Back to newest/);
