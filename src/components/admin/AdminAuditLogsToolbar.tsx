@@ -188,7 +188,7 @@ export function AdminAuditLogsToolbar({
         role="search"
         aria-label="Search audit logs"
         data-testid="audit-filters-toolbar"
-        className="grid min-w-0 grid-cols-1 items-stretch gap-2 sm:grid-cols-2 xl:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_132px] xl:items-center"
+        className="grid min-w-0 grid-cols-1 items-stretch gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.6fr)_repeat(3,minmax(0,1fr))_120px] lg:items-center"
       >
         <div className="relative min-w-0">
           <Search size={16} aria-hidden="true" className="pointer-events-none absolute left-3 top-3 text-[#64748B]" />
@@ -243,7 +243,7 @@ export function AdminAuditLogsToolbar({
         </div>
         <button type="button" onClick={applyFilters}
           disabled={isPending || (draftRange === "custom" && !validCustom)}
-          className="inline-flex h-10 w-full min-w-0 items-center justify-center whitespace-nowrap rounded-lg bg-[#004BB8] px-3 text-[13px] font-medium text-white transition hover:bg-[#003D97] disabled:opacity-50 sm:col-span-2 xl:col-span-1">
+          className="inline-flex h-10 w-full min-w-0 items-center justify-center whitespace-nowrap rounded-lg bg-[#004BB8] px-3 text-[13px] font-medium text-white transition hover:bg-[#003D97] disabled:opacity-50 sm:col-span-2 lg:col-span-1">
           Apply filters
         </button>
       </form>
