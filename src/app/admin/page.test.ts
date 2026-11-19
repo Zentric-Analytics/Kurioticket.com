@@ -236,17 +236,17 @@ test("complete provider diagnostics remain on the linked Providers page", () => 
   assert.doesNotMatch(dashboard, /errorMessage/);
 });
 
-test("Preview pairs Visitor Activity with Provider Handoffs and account metrics with Attention Required", () => {
+test("Preview places Attention Required and accounts before Visitor Activity and Provider Handoffs", () => {
   const snapshot = display.slice(display.indexOf('aria-label="Operations Snapshot"'), display.indexOf("<AdminOverviewSecondary system={system} activity={activity} />"));
   const activityPair = snapshot.indexOf("{/* Customer activity and actual outbound provider handoffs share the snapshot row. */}");
   const attentionPair = snapshot.indexOf("{/* The two account totals sit beside Attention Required, not above it. */}");
   const workPair = snapshot.indexOf('<Section title="Support Workload"');
-  assert.ok(activityPair >= 0 && attentionPair > activityPair && workPair > attentionPair);
-  const activity = snapshot.slice(activityPair, attentionPair);
+  assert.ok(attentionPair >= 0 && activityPair > attentionPair && workPair > activityPair);
+  const activity = snapshot.slice(activityPair, workPair);
   assert.match(activity, /grid min-w-0 items-stretch gap-3 lg:grid-cols-2/);
   assert.ok(activity.indexOf('<Section title="Visitor Activity"') < activity.indexOf('<Section title="Provider Handoffs"'));
   assert.equal((activity.match(/<AdminOverviewRangeSensitive fill>/g) ?? []).length, 2);
-  const attention = snapshot.slice(attentionPair, workPair);
+  const attention = snapshot.slice(attentionPair, activityPair);
   assert.match(attention, /grid min-w-0 items-stretch gap-3 lg:grid-cols-2/);
   assert.ok(attention.indexOf('aria-label="Attention Required"') < attention.indexOf('aria-label="Account snapshot"'));
   assert.equal((attention.match(/<SnapshotLink /g) ?? []).length, 2);
@@ -297,7 +297,7 @@ test("platform readiness shows four concise indicators without claiming auth or 
   assert.match(health, /Key present, not tested/);
   assert.match(health, /Not connected/);
   assert.match(health, /items\.map/);
-  assert.match(dashboard, /<Section title="Platform Health" href="\/admin\/system"/);
+  assert.match(dashboard, /<Section title="System Health" href="\/admin\/system"/);
 });
 
 test("audit summary limits display to three latest actions, retaining full records in Logs", () => {
