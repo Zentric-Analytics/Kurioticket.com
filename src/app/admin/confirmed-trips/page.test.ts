@@ -241,10 +241,8 @@ test("six directory filters use a compact left-anchored toolbar with a polished 
   assert.match(statuses, /\{ value: "all", label: "Confirmed" \}/);
   assert.match(statuses, /\{ value: "TRACKED", label: "Tracked", disabled: true \}/);
   assert.doesNotMatch(products + statuses, /All types|label: "Confirmed trips"|label: "Tracked trips"/);
-  const options = Array.from(ranges.matchAll(/\{ value: "([^"]+)", label: "([^"]+)" \}/g)).map(([, value, label]) => [value, label]);
-  assert.deepEqual(options, [
-    ["24h", "Last 24 hrs"], ["7d", "Last 7 days"], ["30d", "Last 30 days"], ["all", "All time"], ["custom", "Custom range"],
-  ]);
+  assert.match(ranges, /const rangeOptions = ADMIN_REPORTING_RANGE_OPTIONS/);
+  assert.match(controls, /ADMIN_REPORTING_RANGE_OPTIONS/);
   assert.doesNotMatch(ranges, /Custom dates|UTC days|shortLabel/);
   assert.match(controls, /name="identity" value=\{filters\.identity\} options=\{identityOptions\}/);
   assert.match(controls, /\{ value: "all", label: "All identities" \}/);
@@ -261,13 +259,13 @@ test("six directory filters use a compact left-anchored toolbar with a polished 
   assert.match(dropdown, /if \(!options\.some\(\(option\) => option\.value === next && !option\.disabled\)\) return/);
   assert.match(dropdown, /aria-haspopup="listbox"|role="listbox"/);
   assert.doesNotMatch(controls, /Clear filters|href="\/admin\/confirmed-trips#trip-directory"/);
-  assert.match(controls, /<button type="submit" className="inline-flex h-8 items-center justify-center whitespace-nowrap rounded-md bg-indigo-700 px-2\.5 text-\[11px\]/);
+  assert.match(controls, /<button type="submit" disabled=\{selectedRange === "custom" && !customValid\}/);
   assert.match(controls, />Apply<\/button>/);
   assert.doesNotMatch(controls, />Apply filters<\/button>/);
   assert.match(workspace, /requested \|\| \(raw\.from \|\| raw\.to \? "custom" : "24h"\)/);
   assert.match(workspace, /parseAdminTripFilters\(\{ \.\.\.raw, from, to \}\)/);
-  assert.match(page, /if \(parsed\.ok && parsed\.range === "custom"\)/);
-  assert.match(page, /redirect\(tripDirectoryHref\(parsed\.filters\)\)/);
+  assert.doesNotMatch(page, /if \(parsed\.ok && parsed\.range === "custom"\)/);
+  assert.doesNotMatch(page, /redirect\(tripDirectoryHref\(parsed\.filters\)\)/);
   assert.match(directory, /<input type="date" name="from"/);
   assert.match(directory, /<input type="date" name="to"/);
   assert.match(loading, /flex min-w-0 flex-wrap items-end gap-x-2 gap-y-2\.5/);
