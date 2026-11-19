@@ -7,7 +7,7 @@ import { lockConsentedVisitor } from "@/services/visitorActivityIdentity";
 import { applicationMetadata, type ApplicationAttribution } from "@/lib/application-source";
 
 export type ProviderHandoffActivity = {
-  type: "flight" | "hotel";
+  type: "flight" | "hotel" | "car";
   provider: string;
   route?: string;
   price?: number;
@@ -59,7 +59,7 @@ async function correlate(tx: Prisma.TransactionClient, input: AttributedHandoff,
   if ((!sameOperationalSession && !sameConsentedVisitor)
     || (sameOperationalSession && search.userId !== input.userId)
     || (search.userId && search.userId !== input.userId)
-    || search.type !== (input.type === "flight" ? "FLIGHT" : "HOTEL")) {
+    || search.type !== (input.type === "flight" ? "FLIGHT" : input.type === "hotel" ? "HOTEL" : "CAR")) {
     return { searchHistoryId: null, correlation: "rejected" as const };
   }
   return { searchHistoryId: search.id, correlation: "linked" as const };
@@ -87,7 +87,7 @@ export function createProviderHandoffStore(
         if (existing) {
           const metadata = metadataObject(existing.metadata);
           if (existing.visitorId !== visitorId || (existing.userId && existing.userId !== input.userId)
-            || existing.type !== (input.type === "flight" ? "FLIGHT" : "HOTEL")
+            || existing.type !== (input.type === "flight" ? "FLIGHT" : input.type === "hotel" ? "HOTEL" : "CAR")
             || existing.provider !== input.provider || metadata.resultId !== input.resultId
             || (visitorId && requestId && metadata.requestId !== requestId)
             || (input.operationalSessionId && metadata.operationalSessionId !== input.operationalSessionId)) return null;
@@ -99,7 +99,7 @@ export function createProviderHandoffStore(
         }
         const redirect = await tx.redirectLog.create({ data: {
           handoffKey, userId: input.userId, visitorId,
-          type: input.type === "flight" ? "FLIGHT" : "HOTEL",
+          type: input.type === "flight" ? "FLIGHT" : input.type === "hotel" ? "HOTEL" : "CAR",
           provider: input.provider, route: input.route, price: input.price, currency: input.currency,
           destinationUrl: input.destinationUrl, userType: input.userId ? "user" : "guest",
           sourcePage: journeySourcePath(input.sourcePage) ?? "unknown",
