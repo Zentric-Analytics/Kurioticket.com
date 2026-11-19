@@ -27,6 +27,7 @@ export function AdminOperationalDateRangeFields({
   const [from, setFrom] = useState(utcDateTimeInput(initialFrom));
   const [to, setTo] = useState(utcDateTimeInput(initialTo));
   const lastScope = useRef(JSON.stringify([initialRange, initialFrom, initialTo]));
+  const endInputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     const scope = JSON.stringify([initialRange, initialFrom, initialTo]);
     if (lastScope.current === scope) return;
@@ -41,6 +42,10 @@ export function AdminOperationalDateRangeFields({
   const endTime = Date.parse(end);
   const valid = Boolean(start && end && Date.parse(start) < endTime &&
     endTime <= Date.parse(now) && endTime - Date.parse(start) <= 90 * 86400000);
+  useEffect(() => {
+    if (!custom) return;
+    endInputRef.current?.setCustomValidity(valid ? "" : "Choose valid UTC dates within 90 days, with From before To.");
+  }, [custom, valid]);
   return <>
     <div data-testid={testId} className="min-w-0">
       <SearchMonitorSelect label="Date range" name="range" value={range}
@@ -61,7 +66,7 @@ export function AdminOperationalDateRangeFields({
             className="h-10 min-w-0 rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px] text-[#334155]" />
         </label>
         <label className="flex min-w-0 flex-col gap-1 text-[12px] text-[#475569]">To (UTC)
-          <input type="datetime-local" required value={to} onChange={event => setTo(event.target.value)}
+          <input ref={endInputRef} type="datetime-local" required value={to} onChange={event => setTo(event.target.value)}
             min={from || undefined} max={now.slice(0,16)}
             className="h-10 min-w-0 rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px] text-[#334155]" />
         </label>
@@ -70,9 +75,6 @@ export function AdminOperationalDateRangeFields({
         {!valid ? <span role="alert" className="text-[12px] text-rose-700">
           Choose valid UTC dates within 90 days, with From before To and no future date.
         </span> : null}
-        <button type="submit" disabled={!valid} className="h-10 rounded-lg bg-[#004BB8] px-4 text-[13px] font-medium text-white disabled:opacity-40">
-          Apply custom range
-        </button>
       </div>
     ) : null}
   </>;
