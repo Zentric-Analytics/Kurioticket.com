@@ -193,12 +193,20 @@ test("provider handoffs remain recorded redirects, never confirmed bookings", ()
   assert.match(handoffs, /operationalHandoffs\.total/);
   assert.match(handoffs, /operationalHandoffs\.inConsentedJourneys/);
   assert.match(handoffs, /operationalHandoffs\.withoutVisitorIdentity/);
-  assert.match(handoffs, /Redirects are not bookings/);
-  assert.match(handoffs, /Missing attribution does not prove declined consent/);
+  assert.match(handoffs, /operationalHandoffs\.flights/);
+  assert.match(handoffs, /operationalHandoffs\.hotels/);
+  assert.match(handoffs, /label="Without visitor identity"/);
+  assert.match(handoffs, /label="Cars" value="—" hint="Not tracked"/);
+  assert.match(handoffs, /grid grid-cols-2 gap-1\.5 sm:grid-cols-3/);
+  assert.doesNotMatch(handoffs, /Redirects are not bookings|Unattributed|Recorded outbound redirects/);
   assert.match(handoffs, /href="\/admin\/redirects"/);
-  assert.equal((handoffs.match(/<MiniMetric /g) ?? []).length, 3);
+  assert.equal((handoffs.match(/<MiniMetric /g) ?? []).length, 6);
   const contract = readFileSync("src/services/adminJourneyCore.ts", "utf8");
   assert.match(contract, /totalRedirects !== inConsentedJourneys \+ outsideConsentedJourneys/);
+  assert.match(contract, /r\."type"::text = 'FLIGHT'/);
+  assert.match(contract, /r\."type"::text = 'HOTEL'/);
+  const prismaSchema = readFileSync("prisma/schema.prisma", "utf8");
+  assert.match(prismaSchema, /enum RedirectType \{\s*FLIGHT\s*HOTEL\s*\}/);
 });
 
 test("Overview omits duplicate Provider Health but preserves live provider issue detection", () => {
