@@ -36,7 +36,8 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
   const raw = await searchParams;
   const filter = normalizeProductFilter(raw.product);
   const attribution = raw.view === "attribution";
-  const attributionDays = parseAttributionDays(typeof raw.days === "string" ? raw.days : null);
+  const attributionPeriod = raw.period === "today" || raw.days === "today" || (raw.days === undefined && raw.period === undefined) ? "today" : "rolling";
+  const attributionDays = parseAttributionDays(raw.days === "today" ? null : typeof raw.days === "string" ? raw.days : null);
   const monitoringNow = new Date();
   const monitoringSelection = parseProviderHealthRange(raw, monitoringNow);
   const monitoringPeriod = raw.period === "custom" ? "custom"
@@ -133,7 +134,7 @@ export default async function AdminProvidersPage({ searchParams }: { searchParam
           <h1 className="text-[20px] font-semibold leading-7 tracking-[-0.02em] text-[#020617]">
             Referral Attribution
           </h1>
-          <ReferralWindowFilter days={attributionDays ?? DEFAULT_ATTRIBUTION_DAYS} embedded />
+          <ReferralWindowFilter days={attributionDays ?? DEFAULT_ATTRIBUTION_DAYS} period={attributionPeriod} embedded />
         </header>
       ) : null}
 
