@@ -25,7 +25,7 @@ const productFilterOptions = [
   { value: "ZERO_RESULTS", label: "Zero results" },
 ] as const;
 const windowOptions = [
-  { value: "24h", label: "Last 24 hrs" },
+  { value: "today", label: "Today" },
   { value: "7d", label: "Last 7 days" },
   { value: "30d", label: "Last 30 days" },
   { value: "all", label: "All time" },
@@ -67,7 +67,7 @@ export function ProductSearchRecordsPanel({ product }: { product: ProviderProduc
   const disclosureId = useId();
   const sectionId = product === "HOTEL" ? "hotel-search-records" : "car-search-records";
   const [filter, setFilter] = useState<ProductSearchFilter>("EXCEPTIONS");
-  const [windowValue, setWindowValue] = useState<ProductSearchWindow>("24h");
+  const [windowValue, setWindowValue] = useState<ProductSearchWindow>("today");
   // Draft selectors must never trigger a records request until Apply filters.
   const [draftFilter, setDraftFilter] = useState<ProductSearchFilter>("EXCEPTIONS");
   const [draftWindow, setDraftWindow] = useState<ProductSearchWindow>("24h");
@@ -169,7 +169,7 @@ export function ProductSearchRecordsPanel({ product }: { product: ProviderProduc
         <div className="min-w-0">
           <h2 className="text-[14px] font-semibold text-[#020617]">{heading}</h2>
           <p className="mt-1 text-[12px] leading-5 text-[#64748B]">
-            Product-specific searches, including failures and valid zero-result searches. The summary metrics above use a 24-hour window.
+            Product-specific searches, including failures and valid zero-result searches. The summary metrics above use today (UTC).
           </p>
         </div>
         <button type="button" disabled={loading} className={buttonClass}
