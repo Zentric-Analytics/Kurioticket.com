@@ -453,6 +453,10 @@ test("Provider Handoffs uses a compact Apply-only filter row without an environm
   assert.match(handoffFilters, /<form[\s\S]*action="\/admin\/redirects"[\s\S]*method="get"/);
   assert.match(handoffFilters, /<h1[\s\S]*Provider Handoffs[\s\S]*<\/h1>/);
   assert.match(handoffFilters, /<SearchMonitorSelect label="Date range" name="range"/);
+  // Product options must match the backend FLIGHT/HOTEL/CAR handoff contract.
+  for (const [value, label] of [["", "All products"], ["FLIGHT", "Flights"], ["HOTEL", "Hotels"], ["CAR", "Cars"]]) {
+    assert.ok(handoffFilters.includes(`{ value: "${value}", label: "${label}" }`));
+  }
   for (const field of ["Provider", "Product", "Identity", "Search link"]) {
     assert.match(handoffFilters, new RegExp('<SearchMonitorSelect label="' + field + '"'));
   }
