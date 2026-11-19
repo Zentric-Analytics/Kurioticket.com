@@ -20,11 +20,11 @@ const activityEvents = [
   "click",
 ] as const;
 
-export function AuthProvider({ children, onlinePresenceEnabled }: { children: React.ReactNode; onlinePresenceEnabled: boolean }) {
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider>
       <InactivitySignOut />
-      {onlinePresenceEnabled && <WebsiteOnlinePresence />}
+      <WebsiteOnlinePresence />
       <JourneyEventsProvider>
         {children}
         <AnalyticsConsentBridge />
