@@ -267,7 +267,7 @@ test("six directory filters use a compact left-anchored toolbar with a polished 
   assert.match(controls, /<button type="submit" disabled=\{selectedRange === "custom" && !customValid\}/);
   assert.match(controls, />Apply<\/button>/);
   assert.doesNotMatch(controls, />Apply filters<\/button>/);
-  assert.match(workspace, /requested \|\| \(raw\.from \|\| raw\.to \? "custom" : "24h"\)/);
+  assert.match(workspace, /requested \|\| \(raw\.from \|\| raw\.to \? "custom" : "today"\)/);
   assert.match(workspace, /parseAdminTripFilters\(\{ \.\.\.raw, from, to \}\)/);
   assert.doesNotMatch(page, /if \(parsed\.ok && parsed\.range === "custom"\)/);
   assert.doesNotMatch(page, /redirect\(tripDirectoryHref\(parsed\.filters\)\)/);
