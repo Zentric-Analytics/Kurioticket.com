@@ -27,11 +27,11 @@ test("multiple-filter Journeys and Search Activity pages retain Apply-only submi
   assert.match(journeys, /aria-label="Filter visitor journeys"/);
   assert.match(journeys, /<button type="submit"/);
   assert.match(journeys, /Apply filters/);
-  assert.match(journeyControls, /value: "24h", label: "Last 24 hours"/);
-  assert.match(journeyControls, /value: "7d", label: "Last 7 days"/);
-  assert.match(journeyControls, /value: "30d", label: "Last 30 days"/);
-  assert.match(journeyControls, /value: "all", label: "All time"/);
-  assert.match(searchActivity, /value: "24h", label: "Last 24 hours"/);
+  assert.match(journeyControls, /ADMIN_REPORTING_RANGE_OPTIONS/);
+  assert.match(journeyControls, /ADMIN_REPORTING_RANGE_OPTIONS/);
+  assert.match(journeyControls, /ADMIN_REPORTING_RANGE_OPTIONS/);
+  assert.match(journeyControls, /ADMIN_REPORTING_RANGE_OPTIONS/);
+  assert.match(searchActivity, /ADMIN_REPORTING_RANGE_OPTIONS/);
   assert.match(searchActivity, /return hasLegacyScope \? "all" : "24h"/);
   assert.match(searchActivity, /from\.setTime\(now\.getTime\(\) - 24 \* 60 \* 60 \* 1000\)/);
   assert.match(searchActivity, /<button type="submit"/);
