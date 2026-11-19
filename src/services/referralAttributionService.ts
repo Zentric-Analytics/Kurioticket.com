@@ -75,8 +75,11 @@ function emptySummary(
   days: number,
   environment: ReferralAttributionSummary["environment"],
   end: Date,
+  period: "today" | "rolling" = "rolling",
 ): ReferralAttributionSummary {
-  const start = new Date(end.getTime() - days * 86_400_000);
+  const start = period === "today"
+    ? new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate()))
+    : new Date(end.getTime() - days * 86_400_000);
   return {
     dataAvailable: false,
     environment,
@@ -98,13 +101,16 @@ export function createReferralAttributionService(
   async function getSummary(
     days: number,
     environment: ReferralAttributionSummary["environment"],
+    period: "today" | "rolling" = "rolling",
   ): Promise<ReferralAttributionSummary> {
     const end = now();
-    const unavailable = emptySummary(days, environment, end);
+    const unavailable = emptySummary(days, environment, end, period);
     const db = getDatabase();
     if (!db) return unavailable;
 
-    const start = new Date(end.getTime() - days * 86_400_000);
+    const start = period === "today"
+      ? new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate()))
+      : new Date(end.getTime() - days * 86_400_000);
     // New handoff records carry their originating environment. Excluding legacy,
     // unlabelled rows avoids combining staging and production attribution.
     const redirectWhere = {
