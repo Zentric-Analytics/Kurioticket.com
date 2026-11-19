@@ -1,9 +1,10 @@
 /** Best-effort operational telemetry only: never delay or change the provider checkout link. */
-export function recordCarHandoffClick(resultId: string, offerId: string, sourcePage: "car-results" | "car-details") {
+export function recordCarHandoffClick(resultId: string, offerId: string, sourcePage: "car-results" | "car-details", requestId?: string | null) {
   if (typeof navigator === "undefined") return;
   try {
     const payload = JSON.stringify({
       resultId, offerId, sourcePage,
+      ...(requestId ? { requestId } : {}),
       handoffId: crypto.randomUUID(),
     });
     const blob = new Blob([payload], { type: "application/json" });
