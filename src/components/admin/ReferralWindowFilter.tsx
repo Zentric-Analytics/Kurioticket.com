@@ -8,10 +8,7 @@ import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
 const presetWindows = [
   { value: "1", label: "Last 24 hrs" },
   { value: "7", label: "Last 7 days" },
-  { value: "14", label: "Last 14 days" },
   { value: "30", label: "Last 30 days" },
-  { value: "60", label: "Last 60 days" },
-  { value: "90", label: "Last 90 days" },
 ];
 
 /**
@@ -24,7 +21,7 @@ export function ReferralWindowFilter({ days, embedded }: { days: number; embedde
   const [pending, startTransition] = useTransition();
   const options = presetWindows.some(option => option.value === String(days))
     ? presetWindows
-    : [...presetWindows, { value: String(days), label: "Last " + days + " days" }];
+    : [...presetWindows, { value: String(days), label: "Last " + days + " days (legacy)" }];
 
   const applyPreset = (value: string) => {
     const target = embedded
