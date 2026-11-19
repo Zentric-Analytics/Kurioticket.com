@@ -130,7 +130,9 @@ function SignalList({ signals, empty }: { signals: Signal[]; empty: string }) {
     <ul className="divide-y divide-[#E7ECF5]">
       {shown.map(signal => <li key={signal.key} className="min-w-0 px-3 py-2.5">
         <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
-          <Link href={signal.href} className="focus-ring min-w-0 break-words text-[13px] font-semibold text-[#004BB8] hover:underline">{signal.label} →</Link>
+          {signal.href.startsWith("#")
+            ? <span className="min-w-0 break-words text-[13px] font-semibold text-[#020617]">{signal.label}</span>
+            : <Link href={signal.href} className="focus-ring min-w-0 break-words text-[13px] font-semibold text-[#004BB8] hover:underline">{signal.label} →</Link>}
           <OperationalStatus state={signal.state}/>
         </div>
         <p className="mt-1 text-[11px] text-[#64748B]">{signal.scope} · {signal.detail}</p>

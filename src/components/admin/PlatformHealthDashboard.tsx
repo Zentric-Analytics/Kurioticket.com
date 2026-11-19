@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import { OperationsSection } from "./TravelOperationsOverviewUI";
 import { PlatformHealthFilters } from "./PlatformHealthFilters";
@@ -24,11 +27,15 @@ function ServiceSignal({ title, state, children, href }: {
       {href ? <Link href={href} className="focus-ring mt-3 inline-block rounded-sm text-[12px] font-semibold text-[#004BB8] hover:underline">Investigate {title.toLowerCase()} →</Link> : null}
     </section>;
 }
-export function PlatformHealthDashboard({ data, hours, application }: {
+export function PlatformHealthDashboard({ data: initialData, hours, application }: {
     data: PlatformOperations;
     hours: number;
     application: PlatformSelection;
 }) {
+    const [localSnapshot, setLocalSnapshot] = useState<{ origin: PlatformOperations; value: PlatformOperations }>({ origin: initialData, value: initialData });
+    // A later server view with the same filters must replace stale client observations.
+    const data = localSnapshot.origin === initialData ? localSnapshot.value : initialData;
+    const acceptRefresh = (fresh: PlatformOperations) => setLocalSnapshot({ origin: initialData, value: fresh });
     const activity = data.activity.data;
     const measures = [{ key: "searches", label: "Search operations", href: searchInvestigationHref(data.window, application), linkLabel: "Investigate searches" }, { key: "providerCalls", label: "Provider calls", href: "/admin/providers", linkLabel: "Investigate shared providers" }, { key: "handoffs", label: "Referral handoffs", href: "/admin/redirects?" + new URLSearchParams({ environment: data.environment, from: data.window.from, to: data.window.to }), linkLabel: "Investigate handoffs (all applications)" }] as const;
     return <div className="mx-auto w-full min-w-0 max-w-[1500px] bg-white text-[#020617]" data-platform-health>
@@ -37,7 +44,7 @@ export function PlatformHealthDashboard({ data, hours, application }: {
   </header>
   <div className="flex min-w-0 flex-wrap items-end justify-between gap-3 border-b border-[#D8E1EC] py-4">
     <div className="min-w-0 flex-1"><PlatformHealthFilters hours={hours} application={application}/></div>
-    <PlatformHealthRefresh />
+    <PlatformHealthRefresh hours={hours} lastRefreshedAt={data.window.to} onRefreshed={acceptRefresh} />
   </div>
   <PlatformHealthAttention data={data} application={application}/>
   <OperationsSection className="py-5" >

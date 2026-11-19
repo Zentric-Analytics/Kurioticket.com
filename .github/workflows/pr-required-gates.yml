@@ -64,6 +64,17 @@ jobs:
           node --input-type=module --import jiti/register -e
           'await import("./src/services/adminOperationalReadContract.test.ts");
           await import("./src/services/adminOperationalReadCore.test.ts");'
+      - name: Validate Platform Health refresh and investigation UI contracts
+        env:
+          JITI_TSCONFIG_PATHS: ./tsconfig.json
+          JITI_JSX: "true"
+        run: >-
+          node --input-type=module --import jiti/register -e
+          'await import("./src/lib/platformHealthRefresh.test.ts");
+          await import("./src/components/admin/PlatformHealthRefresh.test.ts");
+          await import("./src/components/admin/PlatformHealthAttention.test.ts");
+          await import("./src/components/admin/PlatformHealthDashboard.test.ts");'
+
       - name: Validate provider-bound Confirmed Trips and delivery history
         env:
           JITI_TSCONFIG_PATHS: ./tsconfig.json
