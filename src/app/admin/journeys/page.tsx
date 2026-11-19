@@ -49,12 +49,8 @@ export default async function AdminJourneysPage({ searchParams, embedded = false
           {embedded ? <input type="hidden" name="tab" value="journeys" /> : null}
           {one(raw.userId) ? <input type="hidden" name="userId" value={one(raw.userId)} /> : null}
           {one(raw.visitorId) ? <input type="hidden" name="visitorId" value={one(raw.visitorId)} /> : null}
-          <div className="flex min-w-0 flex-wrap items-center justify-between gap-3 pb-3">
+          <div className="pb-3">
             <h2 className="text-[20px] font-semibold leading-7 text-[#020617]">Visitor Journeys</h2>
-            <JourneyDateRangeFields initialRange={range}
-              initialFrom={one(raw.from) || (range === "custom" ? (list.status === "ok" ? list.data.scope.from : "") : "")}
-              initialTo={one(raw.to) || (range === "custom" ? (list.status === "ok" ? list.data.scope.to : "") : "")}
-              now={now.toISOString()} />
           </div>
         {summary?.status === "ok" ? (
           <section aria-label="Journey summary" className="grid min-w-0 grid-cols-2 gap-y-3 border-y border-[#D8E1EC] py-4 sm:grid-cols-3 lg:grid-cols-5 lg:gap-y-0">
@@ -71,8 +67,12 @@ export default async function AdminJourneysPage({ searchParams, embedded = false
           Necessary operational guest searches remain available in Search Activity.
         </p>
 
-        <div data-testid="journey-filters-toolbar" className="flex w-full min-w-0 flex-wrap items-center gap-2 border-y border-[#D8E1EC] py-3">
-          <div className="min-w-[138px] flex-[1_1_138px]">
+        <div data-testid="journey-filters-toolbar" className="grid w-full min-w-0 grid-cols-1 items-center gap-2 border-y border-[#D8E1EC] py-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-[repeat(5,minmax(0,1fr))_120px]">
+            <JourneyDateRangeFields initialRange={range}
+              initialFrom={one(raw.from) || (range === "custom" ? (list.status === "ok" ? list.data.scope.from : "") : "")}
+              initialTo={one(raw.to) || (range === "custom" ? (list.status === "ok" ? list.data.scope.to : "") : "")}
+              now={now.toISOString()} />
+          <div className="min-w-0">
             <SearchMonitorSelect label="Product" name="product" appearance="fare"
               value={one(raw.product)} options={[
                 { value: "", label: "All products" },
@@ -82,7 +82,7 @@ export default async function AdminJourneysPage({ searchParams, embedded = false
                 { value: "PACKAGE", label: "Packages" },
               ]} truncateLabel />
           </div>
-          <div className="min-w-[138px] flex-[1_1_138px]">
+          <div className="min-w-0">
             <SearchMonitorSelect label="Identity" name="identity"
               value={one(raw.identity) || "all"} appearance="fare"
               clearFieldNamesOnChange={["userId", "visitorId"]}
@@ -92,19 +92,19 @@ export default async function AdminJourneysPage({ searchParams, embedded = false
                 { value: "guest", label: "Guest" },
               ]} truncateLabel />
           </div>
-          <div className="min-w-[168px] flex-[1.2_1_168px]">
+          <div className="min-w-0">
             <SearchMonitorSelect label="Observed stage" name="stage" appearance="fare"
               value={one(raw.stage)} options={[
                 { value: "", label: "All observed stages" },
                 ...stages.map(stage => ({ value: stage.value, label: stage.label })),
               ]} truncateLabel />
           </div>
-          <div className="min-w-[138px] flex-[1_1_138px]">
+          <div className="min-w-0">
             <SearchMonitorSelect label="Provider" name="provider" appearance="fare"
               value={one(raw.provider)} options={providerOptions} align="end" truncateLabel />
           </div>
           <button type="submit"
-            className="inline-flex h-10 w-auto shrink-0 items-center justify-center whitespace-nowrap rounded-lg bg-[#004BB8] px-4 text-[13px] font-medium text-white transition hover:bg-[#003D97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
+            className="inline-flex h-10 w-full min-w-0 items-center justify-center whitespace-nowrap rounded-lg bg-[#004BB8] px-4 text-[13px] font-medium text-white transition hover:bg-[#003D97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
             Apply filters
           </button>
         </div>

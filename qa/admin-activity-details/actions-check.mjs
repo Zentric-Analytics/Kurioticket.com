@@ -33,11 +33,33 @@ function journeyScope(href) {
 }
 
 async function capture(filename) {
-  // Disclosure clicks and keyboard focus legitimately scroll the viewport.
-  // Reset it before full-page capture so the sticky header is not photographed
-  // partway down the document. This affects test capture only, not product CSS.
-  await page.evaluate(() => window.scrollTo({ top: 0, left: 0, behavior: "instant" }));
-  // Browser scroll anchoring can leave a 1-2px rounding offset on narrow pages.
+  // Focused links, smooth scrolling and scroll anchoring can move narrow
+  // browser viewports after a scrollTo(0, 0). Normalize only the QA capture
+  // environment; never change the application styles for this assertion.
+  await page.evaluate(async () => {
+    const active = document.activeElement;
+    if (active instanceof HTMLElement) active.blur();
+    const html = document.documentElement;
+    const body = document.body;
+    const htmlBehavior = html.style.scrollBehavior;
+    const bodyBehavior = body.style.scrollBehavior;
+    const htmlAnchor = html.style.overflowAnchor;
+    const bodyAnchor = body.style.overflowAnchor;
+    html.style.scrollBehavior = "auto";
+    body.style.scrollBehavior = "auto";
+    html.style.overflowAnchor = "none";
+    body.style.overflowAnchor = "none";
+    try {
+      window.scrollTo(0, 0);
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      window.scrollTo(0, 0);
+    } finally {
+      html.style.scrollBehavior = htmlBehavior;
+      body.style.scrollBehavior = bodyBehavior;
+      html.style.overflowAnchor = htmlAnchor;
+      body.style.overflowAnchor = bodyAnchor;
+    }
+  });
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeLessThanOrEqual(2);
   await page.screenshot({caret:"initial", path: output + "/" + filename, fullPage: true });
 }

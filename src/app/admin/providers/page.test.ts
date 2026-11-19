@@ -457,14 +457,16 @@ test("Provider Handoffs uses a compact Apply-only filter row without an environm
     assert.match(handoffFilters, new RegExp('<SearchMonitorSelect label="' + field + '"'));
   }
   assert.match(handoffFilters, /data-testid="provider-handoffs-filter-row"/);
-  assert.match(handoffFilters, /lg:grid-cols-\[repeat\(4,minmax\(0,1fr\)\)_120px\]/);
+  assert.ok(handoffFilters.indexOf('data-testid="provider-handoffs-filter-row"') < handoffFilters.indexOf('data-testid="provider-handoffs-date-range"'));
+  assert.ok(handoffFilters.indexOf('data-testid="provider-handoffs-date-range"') < handoffFilters.indexOf('<SearchMonitorSelect label="Provider"'));
+  assert.match(handoffFilters, /lg:grid-cols-\[repeat\(5,minmax\(0,1fr\)\)_120px\]/);
   assert.match(handoffFilters, /sm:grid-cols-2 md:grid-cols-3/);
-  assert.match(handoffFilters, /w-\[164px\]/);
+  assert.match(handoffFilters, /data-testid="provider-handoffs-date-range"/);
   assert.match(handoffFilters, /<SearchMonitorSelect label="Date range" name="range"/);
   for (const heading of ["Date range", "Provider", "Product", "Identity", "Search link"]) {
     assert.doesNotMatch(handoffFilters, new RegExp(`>\\s*${heading}<\\/span>`));
   }
-  assert.equal((handoffFilters.match(/truncateLabel/g) || []).length, 4);
+  assert.equal((handoffFilters.match(/truncateLabel/g) || []).length, 5);
   assert.match(handoffFilters, /appearance="fare"/);
   assert.match(handoffFilters, /Apply filters/);
   assert.doesNotMatch(handoffFilters, /Search by provider|Current environment|label="Environment"|router\.replace|setTimeout/);
