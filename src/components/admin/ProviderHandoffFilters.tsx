@@ -63,15 +63,10 @@ export function ProviderHandoffFilters({
       aria-label="Filter provider handoffs"
       className="min-w-0"
     >
-      <header className="flex min-w-0 flex-wrap items-end justify-between gap-x-5 gap-y-3 border-b border-[#D8E1EC] pb-4 pt-1">
+      <header className="border-b border-[#D8E1EC] pb-4 pt-1">
         <h1 className="text-[20px] font-semibold leading-7 tracking-[-0.02em] text-[#020617]">
           Provider Handoffs
         </h1>
-        <div className="w-[164px] min-w-0">
-          <SearchMonitorSelect label="Date range" name="range"
-            value={selectedRange} options={dateOptions} appearance="fare" align="end"
-            onValueChange={value => setSelectedRange(value as HandoffDateRange)} />
-        </div>
       </header>
 
       {/* These scopes are intentional backend context, not user-facing filters. */}
@@ -86,7 +81,12 @@ export function ProviderHandoffFilters({
         </>
       ) : null}
 
-      <div data-testid="provider-handoffs-filter-row" className="grid min-w-0 grid-cols-1 items-center gap-2 border-b border-[#D8E1EC] py-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-[repeat(4,minmax(0,1fr))_120px] lg:gap-2">
+      <div data-testid="provider-handoffs-filter-row" className="grid min-w-0 grid-cols-1 items-center gap-2 border-b border-[#D8E1EC] py-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-[repeat(5,minmax(0,1fr))_120px] lg:gap-2">
+        <div data-testid="provider-handoffs-date-range" className="min-w-0">
+          <SearchMonitorSelect label="Date range" name="range"
+            value={selectedRange} options={dateOptions} appearance="fare"
+            onValueChange={value => setSelectedRange(value as HandoffDateRange)} truncateLabel />
+        </div>
         <div className="min-w-0">
           <SearchMonitorSelect label="Provider" name="provider"
             value={initial.provider} options={providerOptions} appearance="fare"

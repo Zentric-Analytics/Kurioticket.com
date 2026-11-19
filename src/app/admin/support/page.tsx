@@ -4,6 +4,7 @@ import { ChevronRight } from "lucide-react";
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { AdminSupportToolbar } from "@/components/admin/AdminSupportToolbar";
 import { supportTicketDetailHref } from "@/lib/adminSupportInboxNavigation";
+import { resolveAdminQueueWindow } from "@/lib/adminQueueDateRange";
 import type { AdminSupportPriority, AdminSupportStatus } from "@/services/adminOperationalReadContract";
 import { adminOperationalReads } from "@/services/adminOperationalReadService";
 
@@ -52,20 +53,23 @@ function priorityStyle(priority: AdminSupportPriority) {
 
 export default async function AdminSupportPage({ searchParams }: { searchParams: SearchParams }) {
   const raw = await searchParams;
-  const params = scopedParams(raw);
+  const window = resolveAdminQueueWindow({ range: one(raw.range), from: one(raw.from), to: one(raw.to) });
+  const applied = { ...raw, from: window.from || undefined, to: window.to || undefined };
+  const params = scopedParams(applied);
   // Forward the continuation cursor only to the ticket read. Status tabs and
   // filter submissions use scopedParams without cursor, so they start at page one.
   if (one(raw.cursor)) params.set("cursor", one(raw.cursor));
   if (!params.has("limit")) params.set("limit", "50");
   // Keep the current activity-based ticket ordering and cursor contract unchanged.
   const result = await adminOperationalReads.support.list(params);
-  const toolbarQuery = scopedParams(raw).toString();
-  const pageHref = "/admin/support" + (toolbarQuery ? "?" + toolbarQuery : "");
+  const toolbarParams = scopedParams(applied);
+  toolbarParams.set("range", window.range);
+  const pageHref = "/admin/support?" + toolbarParams.toString();
 
   return (
     <AdminPageShell title="Support" hideHeader>
       <div className="mx-auto w-full max-w-[1500px] text-[#374151]">
-        <AdminSupportToolbar query={one(raw.q)} status={one(raw.status)} priority={one(raw.priority)} category={one(raw.category)} pageHref={pageHref}>
+        <AdminSupportToolbar query={one(raw.q)} status={one(raw.status)} priority={one(raw.priority)} category={one(raw.category)} range={window.range} from={window.from} to={window.to} pageHref={pageHref}>
         {result.status === "ok" ? (
           result.data.items.length === 0 ? (
             <div className="border-b border-[#E5E7EB] px-2 py-10 text-center">
@@ -139,7 +143,7 @@ export default async function AdminSupportPage({ searchParams }: { searchParams:
               {result.data.nextCursor ? (
                 <div className="flex justify-end border-b border-[#E5E7EB] px-2 py-3">
                   <Link
-                    href={cursorHref(raw, result.data.nextCursor)}
+                    href={cursorHref(applied, result.data.nextCursor) + "&range=" + window.range}
                     className="text-[13px] font-semibold text-[#004BB8] hover:underline focus-visible:outline-[#004BB8]"
                   >
                     Next page

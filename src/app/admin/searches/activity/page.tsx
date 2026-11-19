@@ -74,33 +74,8 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
                 </>
               ) : null}
 
-              <div data-testid="search-records-products-row" className="flex min-w-0 flex-col gap-3 border-b border-[#E5E7EB] py-3 lg:flex-row lg:items-center lg:justify-between">
-                <nav aria-label="Search products" className="flex flex-wrap items-center gap-x-5 gap-y-2">
-                  {[
-                    { label: "All", value: "" },
-                    { label: "Flights", value: "FLIGHT" },
-                    { label: "Hotels", value: "HOTEL" },
-                    { label: "Cars", value: "CAR" },
-                    { label: "Packages", value: "PACKAGE" },
-                  ].map((item) => {
-                    const active = one(raw.product) === item.value;
-                    return (
-                      <Link
-                        key={item.label}
-                        href={productHref(raw, item.value, range)}
-                        className={
-                          "relative pb-2 text-[13px] font-semibold transition-colors " +
-                          (active
-                            ? "text-[#004BB8] after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:bg-[#004BB8]"
-                            : "text-[#475569] hover:text-[#111827]")
-                        }
-                      >
-                        {item.label}
-                      </Link>
-                    );
-                  })}
-                </nav>
-                <div data-testid="search-records-date-range" className="w-full min-w-0 shrink-0 lg:w-[164px]">
+              <div data-testid="search-records-filter-row" className="grid min-w-0 grid-cols-1 items-center gap-2 py-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-[repeat(5,minmax(0,1fr))_120px] lg:gap-2">
+                <div data-testid="search-records-date-range" className="min-w-0">
                   <SearchMonitorSelect label="Date range" name="range" value={range}
                     appearance="fare"
                     options={[
@@ -112,9 +87,6 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
                       ...(range === "custom" ? [{ value: "custom", label: "Custom" }] : []),
                     ]} truncateLabel />
                 </div>
-              </div>
-
-              <div data-testid="search-records-filter-row" className="grid min-w-0 grid-cols-1 items-center gap-2 py-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-[repeat(4,minmax(0,1fr))_120px] lg:gap-2">
                 <div className="min-w-0">
                   <SearchMonitorSelect label="Outcome" appearance="fare" name="status"
                     value={one(raw.status)}
@@ -152,6 +124,33 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
                   className="inline-flex h-10 w-full min-w-0 items-center justify-center whitespace-nowrap rounded-lg bg-[#004BB8] px-3 text-[13px] font-medium text-white transition-colors hover:bg-[#003D97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
                   Apply filters
                 </button>
+              </div>
+              <div data-testid="search-records-products-row" className="flex min-w-0 items-center border-t border-[#E5E7EB] py-3">
+                <nav aria-label="Search products" className="flex flex-wrap items-center gap-x-5 gap-y-2">
+                  {[
+                    { label: "All", value: "" },
+                    { label: "Flights", value: "FLIGHT" },
+                    { label: "Hotels", value: "HOTEL" },
+                    { label: "Cars", value: "CAR" },
+                    { label: "Packages", value: "PACKAGE" },
+                  ].map((item) => {
+                    const active = one(raw.product) === item.value;
+                    return (
+                      <Link
+                        key={item.label}
+                        href={productHref(raw, item.value, range)}
+                        className={
+                          "relative pb-2 text-[13px] font-semibold transition-colors " +
+                          (active
+                            ? "text-[#004BB8] after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:bg-[#004BB8]"
+                            : "text-[#475569] hover:text-[#111827]")
+                        }
+                      >
+                        {item.label}
+                      </Link>
+                    );
+                  })}
+                </nav>
               </div>
             </form>
 

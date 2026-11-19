@@ -27,8 +27,8 @@ export function JourneyDateRangeFields({ initialRange, initialFrom, initialTo, n
     toInputRef.current?.setCustomValidity(valid ? "" : "Choose a valid UTC interval with From before To, no more than 90 days.");
   }, [custom, valid]);
   return (
-    <div className="flex min-w-0 flex-wrap items-end justify-end gap-x-3 gap-y-2">
-      <div className="w-[170px] min-w-0"><SearchMonitorSelect label="Date range" name="range" value={range} appearance="fare" align="end"
+    <>
+      <div data-testid="journey-date-range" className="min-w-0"><SearchMonitorSelect label="Date range" name="range" value={range} appearance="fare" align="end" truncateLabel
         onValueChange={value => {
           const next = value as JourneyDateRange;
           if (next === "custom" && range !== "custom") {
@@ -48,7 +48,7 @@ export function JourneyDateRangeFields({ initialRange, initialFrom, initialTo, n
           ...(range === "custom" ? [{ value: "custom", label: "Custom dates (legacy)" }] : []),
         ]} /></div>
       {custom ? (
-        <div className="flex min-w-0 flex-wrap items-end gap-3">
+        <div data-testid="journey-custom-date-fields" className="order-last col-span-full flex min-w-0 flex-wrap items-end gap-3">
           <label className="text-xs text-[#475569]">From (UTC)
             <input type="datetime-local" required value={from}
               max={to ? offsetUtcDateTime(to, -1) : now.slice(0, 16)}
@@ -67,6 +67,6 @@ export function JourneyDateRangeFields({ initialRange, initialFrom, initialTo, n
           {!valid ? <span role="alert" className="text-xs text-rose-600">Choose valid past UTC dates, up to 90 days apart, with From before To.</span> : null}
         </div>
       ) : null}
-    </div>
+    </>
   );
 }

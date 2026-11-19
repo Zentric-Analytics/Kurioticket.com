@@ -4,6 +4,7 @@ import { ChevronRight } from "lucide-react";
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { AdminDeletionFilters } from "@/components/admin/AdminDeletionFilters";
 import { formatDateTime } from "@/lib/admin-data";
+import { resolveAdminQueueWindow } from "@/lib/adminQueueDateRange";
 import { adminOperationalReads } from "@/services/adminOperationalReadService";
 
 export const metadata = { title: "Admin Account Deletions" };
@@ -20,14 +21,17 @@ const statusPresentation: Record<string, { label: string; dot: string; text: str
 
 export default async function AdminAccountDeletionsPage({ searchParams }: { searchParams: SearchParams }) {
   const raw = await searchParams;
-  const params = toParams(raw);
+  const window = resolveAdminQueueWindow({ range: one(raw.range), from: one(raw.from), to: one(raw.to) });
+  const applied = { ...raw, from: window.from || undefined, to: window.to || undefined };
+  const params = toParams(applied);
   if (!params.has("limit")) params.set("limit", "50");
   const result = await adminOperationalReads.deletions.list(params);
 
   return (
     <AdminPageShell title="Account deletion requests" hideHeader>
       <section aria-label="Account deletion requests" className="mx-auto w-full max-w-[1500px] min-w-0 text-[#374151]">
-        <AdminDeletionFilters query={one(raw.q)} status={one(raw.status)} limit={one(raw.limit)}>
+        <h1 className="mb-4 text-[20px] font-semibold leading-7 text-[#020617]">Deletion Requests</h1>
+        <AdminDeletionFilters query={one(raw.q)} status={one(raw.status)} limit={one(raw.limit)} range={window.range} from={window.from} to={window.to}>
         {result.status === "ok" ? (
           result.data.items.length === 0 ? (
             <QueueState title="No deletion requests" message="No account deletion requests match the selected filters." />
@@ -119,7 +123,7 @@ export default async function AdminAccountDeletionsPage({ searchParams }: { sear
               {result.data.nextCursor ? (
                 <nav aria-label="Deletion request pagination"
                   className="flex justify-end border-b border-[#E7ECF5] px-3 py-3">
-                  <Link href={cursorHref(raw, result.data.nextCursor)}
+                  <Link href={cursorHref(applied, result.data.nextCursor) + "&range=" + window.range}
                     className="text-[13px] font-medium text-[#004BB8] hover:underline focus-visible:outline-[#004BB8]">
                     Next page
                   </Link>
@@ -151,9 +155,9 @@ function QueueState({ title, message }: { title: string; message: string }) {
 function one(value: string | string[] | undefined) { return typeof value === "string" ? value : ""; }
 function toParams(raw: RawFilters) {
   const params = new URLSearchParams();
-  for (const [key, value] of Object.entries(raw)) {
-    if (Array.isArray(value)) value.forEach((item) => params.append(key, item));
-    else if (value) params.set(key, value);
+  for (const key of ["status", "q", "limit", "from", "to", "cursor"] as const) {
+    const value = one(raw[key]);
+    if (value) params.set(key, value);
   }
   return params;
 }
