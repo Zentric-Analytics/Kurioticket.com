@@ -16,6 +16,8 @@ import {
 } from "react";
 
 import { AdminDirectorySelect } from "@/components/admin/AdminDirectorySelect";
+import { AdminQueueCustomDates, AdminQueueDateSelect } from "./AdminQueueDateControls";
+import { localQueueDateTime, resolveAdminQueueWindow, validateCustomQueueWindow, type AdminQueueRange } from "@/lib/adminQueueDateRange";
 import {
   supportCategoryChoices,
   supportInboxHref,
@@ -28,16 +30,23 @@ type Props = {
   status: string;
   priority: string;
   category: string;
+  range: AdminQueueRange;
+  from: string;
+  to: string;
   pageHref: string;
   children: ReactNode;
 };
 
 /** Search above a responsive tabs/filters row. Applied filters stay separate from drafts. */
-export function AdminSupportToolbar({ query, status, priority, category, pageHref, children }: Props) {
+export function AdminSupportToolbar({ query, status, priority, category, range, from, to, pageHref, children }: Props) {
   const router = useRouter();
   const [searchText, setSearchText] = useState(query);
   const [draftPriority, setDraftPriority] = useState(priority);
   const [draftCategory, setDraftCategory] = useState(category);
+  const [draftRange, setDraftRange] = useState<AdminQueueRange>(range);
+  const [customFrom, setCustomFrom] = useState(localQueueDateTime(from));
+  const [customTo, setCustomTo] = useState(localQueueDateTime(to));
+  const [dateError, setDateError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   // Draft edits must not mark records as loading until Apply is submitted.
   const isLoadingResults = isPending;
@@ -50,7 +59,11 @@ export function AdminSupportToolbar({ query, status, priority, category, pageHre
     paramsRef.current = new URLSearchParams(pageHref.split("?")[1] || "");
     setDraftPriority(priority);
     setDraftCategory(category);
-  }, [pageHref, priority, category]);
+    setDraftRange(range);
+    setCustomFrom(localQueueDateTime(from));
+    setCustomTo(localQueueDateTime(to));
+    setDateError(null);
+  }, [pageHref, priority, category, range, from, to]);
 
   // Keep the search input synchronized on Back/Forward, as on Users.
   useEffect(() => {
@@ -92,7 +105,18 @@ export function AdminSupportToolbar({ query, status, priority, category, pageHre
   const href = (changes: Record<string, string>) => supportInboxHref(base, changes);
   function applyFilters(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    navigate({ q: searchText.trim().slice(0, 160), priority: draftPriority, category: draftCategory });
+    if (draftRange === "custom") {
+      const error = validateCustomQueueWindow(customFrom, customTo);
+      if (error) { setDateError(error); return; }
+    }
+    const customWindow = draftRange === "custom" ? {
+      range: draftRange,
+      from: new Date(customFrom).toISOString(),
+      to: new Date(customTo).toISOString(),
+    } : resolveAdminQueueWindow({ range: draftRange });
+    setDateError(null);
+    navigate({ q: searchText.trim().slice(0, 160), priority: draftPriority, category: draftCategory,
+      range: draftRange, from: customWindow.from, to: customWindow.to });
   }
 
   function navigateLink(event: MouseEvent<HTMLAnchorElement>, values: Record<string, string>) {
@@ -112,22 +136,15 @@ export function AdminSupportToolbar({ query, status, priority, category, pageHre
         onSubmit={applyFilters}
         className="min-w-0 border-b border-[#D8E1EC] pb-3"
       >
-        {["status", "from", "to", "limit"].map(key => base.get(key)
+        {["status", "limit"].map(key => base.get(key)
           ? <input key={key} type="hidden" name={key} value={base.get(key) ?? ""} readOnly />
           : null)}
-        <div data-testid="support-search-row" className="mb-3 min-w-0">
-          <div className="relative w-full min-w-0 max-w-[420px]">
+        <div data-testid="support-search-row" className="grid min-w-0 grid-cols-1 items-center gap-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-[minmax(0,2fr)_repeat(3,minmax(0,1fr))_120px]">
+          <div className="relative min-w-0">
             <Search size={17} aria-hidden="true" className="pointer-events-none absolute left-3.5 top-3 text-muted" />
             <label className="sr-only" htmlFor="admin-support-search">Search support tickets</label>
-            <input
-              id="admin-support-search"
-              type="search"
-              name="q"
-              autoComplete="off"
-              autoCorrect="off"
-              autoCapitalize="off"
-              spellCheck={false}
-              maxLength={160}
+            <input id="admin-support-search" type="search" name="q" autoComplete="off"
+              autoCorrect="off" autoCapitalize="off" spellCheck={false} maxLength={160}
               value={searchText}
               onChange={event => {
                 textRef.current = event.target.value;
@@ -135,11 +152,29 @@ export function AdminSupportToolbar({ query, status, priority, category, pageHre
                 setSearchText(event.target.value);
               }}
               placeholder="Search by subject, name or email"
-              className="h-10 w-full min-w-0 rounded-lg border border-[#D8E1EC] bg-white pl-10 pr-3 text-[13px] text-foreground placeholder:text-muted outline-none transition-colors hover:border-[#94A3B8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#64748B]"
-            />
+              className="h-10 w-full min-w-0 rounded-lg border border-[#D8E1EC] bg-white pl-10 pr-3 text-[13px] text-foreground placeholder:text-muted outline-none transition-colors hover:border-[#94A3B8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#64748B]" />
+          </div>
+          <AdminQueueDateSelect range={draftRange} onChange={value => { setDraftRange(value); setDateError(null); }} />
+          <div data-testid="support-filter-controls" className="contents">
+            <div className="min-w-0">
+              <AdminDirectorySelect key={"priority-" + priority} name="priority" label="Ticket priority"
+                value={draftPriority} options={supportPriorityOptions} compact
+                onValueChange={setDraftPriority} />
+            </div>
+            <div className="min-w-0">
+              <AdminDirectorySelect key={"category-" + category} name="category" label="Ticket category"
+                value={draftCategory} options={supportCategoryChoices(draftCategory)} compact
+                onValueChange={setDraftCategory} />
+            </div>
+            <button type="submit" disabled={isPending}
+              className="focus-ring inline-flex h-10 w-full min-w-0 items-center justify-center whitespace-nowrap rounded-lg bg-[#004BB8] px-2 text-[13px] font-medium text-white hover:bg-[#003D97] disabled:opacity-60">
+              Apply filters
+            </button>
           </div>
         </div>
-        <div data-testid="support-status-filter-row" className="flex min-w-0 flex-wrap items-center justify-between gap-x-4 gap-y-2 2xl:flex-nowrap">
+        <AdminQueueCustomDates range={draftRange} from={customFrom} to={customTo}
+          setFrom={setCustomFrom} setTo={setCustomTo} error={dateError} />
+        <div data-testid="support-status-filter-row" className="mt-3 border-t border-[#E5E7EB] pt-2">
           <nav aria-label="Support ticket status" className="flex min-w-0 max-w-full flex-wrap items-center gap-x-4 gap-y-1 2xl:flex-nowrap">
             {supportStatusTabs.map(item => {
               const active = status === item.value;
@@ -159,38 +194,6 @@ export function AdminSupportToolbar({ query, status, priority, category, pageHre
               );
             })}
         </nav>
-          <div data-testid="support-filter-controls" className="flex w-full min-w-0 flex-wrap items-center justify-start gap-2 sm:w-auto sm:flex-nowrap 2xl:shrink-0 2xl:justify-end">
-            <div className="w-full min-w-0 sm:w-[148px] sm:shrink-0">
-              <AdminDirectorySelect
-                key={"priority-" + priority}
-                name="priority"
-                label="Ticket priority"
-                value={draftPriority}
-                options={supportPriorityOptions}
-                plain
-                align="end"
-                onValueChange={setDraftPriority}
-              />
-            </div>
-            <div className="w-full min-w-0 sm:w-[165px] sm:shrink-0">
-              <AdminDirectorySelect
-                key={"category-" + category}
-                name="category"
-                label="Ticket category"
-                value={draftCategory}
-                options={supportCategoryChoices(draftCategory)}
-                plain
-                align="end"
-                onValueChange={setDraftCategory}
-              />
-            </div>
-            <button
-              type="submit" disabled={isPending}
-              className="focus-ring inline-flex h-10 shrink-0 items-center justify-center whitespace-nowrap rounded-lg bg-[#004BB8] px-4 text-[13px] font-medium text-white hover:bg-[#003D97] disabled:opacity-60"
-            >
-              Apply filters
-            </button>
-          </div>
         </div>
       </form>
 
