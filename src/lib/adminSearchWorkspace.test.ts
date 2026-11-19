@@ -72,8 +72,8 @@ test("Search Activity filters use one consistent boxed dropdown treatment and ex
   assert.match(activity, /action="\/admin\/searches\/activity"/);
   assert.match(activity, /bg-\[#004BB8\] px-3/);
   assert.match(activity, /data-testid="search-records-filter-row"/);
-  assert.match(activity, /xl:grid-cols-\[repeat\(5,minmax\(0,1fr\)\)_132px\]/);
-  assert.match(activity, /sm:grid-cols-2 lg:grid-cols-3/);
+  assert.match(activity, /lg:grid-cols-\[repeat\(5,minmax\(0,1fr\)\)_120px\]/);
+  assert.match(activity, /sm:grid-cols-2 md:grid-cols-3/);
   assert.equal((activity.match(/truncateLabel/g) || []).length, 5);
   assert.match(activity, /align="end" truncateLabel/);
   assert.match(activity, /name="applicationSource"/);
