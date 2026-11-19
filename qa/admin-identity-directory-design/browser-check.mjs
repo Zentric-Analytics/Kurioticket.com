@@ -127,7 +127,7 @@ try {
     await expect(native).toHaveURL(/q=Zara/);
     await native.getByRole("combobox",{name:"Date range"}).selectOption("all");
     await native.getByRole("combobox",{name:"Account role"}).selectOption("SUPPORT");
-    await native.getByRole("button",{name:"Apply filters"}).click();
+    await native.locator('noscript button[type="submit"]').click();
     await expect(native).toHaveURL(/role=SUPPORT/);
   } finally { await noJS.close(); }
   assert.deepEqual(errors,[],"No uncaught browser errors");
