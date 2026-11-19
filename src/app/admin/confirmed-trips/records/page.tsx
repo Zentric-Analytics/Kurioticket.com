@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Search, ArrowLeft } from "lucide-react";
 import { TripDirectoryView } from "@/components/admin/TripDirectoryView";
+import { AdminUncontrolledCalendarInput } from "@/components/admin/AdminCalendarInput";
 import { AdminPageShell, AdminSectionCard } from "@/components/admin/AdminPageShell";
 import { requireAdminSession } from "@/lib/auth-guards";
 import { parseAdminTripFilters, tripDirectoryHref } from "@/lib/adminConfirmedTripsDirectory";
@@ -62,10 +63,10 @@ export default async function AdminConfirmedTripRecordsPage({ searchParams }: Pr
             </select>
           </label>
           <label className="min-w-0 text-xs font-medium text-slate-700">From (UTC)
-            <input type="date" name="from" defaultValue={filters.from} className={inputClass + " mt-1"} />
+            <AdminUncontrolledCalendarInput name="from" defaultValue={filters.from} className="mt-1 w-full max-w-full" ariaLabel="Confirmed trips start date UTC" />
           </label>
           <label className="min-w-0 text-xs font-medium text-slate-700">To (UTC)
-            <input type="date" name="to" defaultValue={filters.to} className={inputClass + " mt-1"} />
+            <AdminUncontrolledCalendarInput name="to" defaultValue={filters.to} className="mt-1 w-full max-w-full" ariaLabel="Confirmed trips end date UTC" />
           </label>
           <div className="flex min-w-0 items-end gap-2 lg:col-span-2">
             <button type="submit" className="h-9 min-w-0 rounded-lg bg-indigo-700 px-4 text-xs font-semibold text-white hover:bg-indigo-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">Apply filters</button>
