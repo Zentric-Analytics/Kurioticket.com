@@ -15,7 +15,8 @@ import {
 import { ActivityDataInfo } from "@/components/admin/ActivityDataInfo";
 import { AdminOverviewRangeSensitive } from "@/components/admin/AdminOverviewControls";
 import { OnlineUsersValue } from "@/components/admin/OnlineUsersValue";
-import { summarizeAttentionRequired } from "@/lib/adminAttentionRequired";
+import { summarizeAttentionRequired, summarizePlatformIncidents } from "@/lib/adminAttentionRequired";
+import type { AdminAlertSnapshot } from "@/services/adminAlertService";
 import type { getAdminOverview } from "@/services/adminOverviewService";
 import type { getRecentAdminActivity, getSafeSystemStatus } from "@/lib/admin-data";
 
@@ -127,18 +128,18 @@ function SnapshotLink({ label, value, href, icon: Icon, hint, info }: {
 
 function AttentionLink({ label, value, href, icon: Icon, tone, detail }: {
   label: string;
-  value: number;
+  value: number | string;
   href: string;
   icon: LucideIcon;
   tone: Tone;
   detail?: string;
 }) {
-  const colored = value > 0;
+  const colored = typeof value === "number" && value > 0;
   return (
     <Link href={href} className="focus-ring group flex min-w-0 items-center gap-2.5 rounded-lg border border-slate-200 px-3 py-2 transition hover:border-indigo-300 hover:bg-slate-50">
       <Icon size={18} className={colored && tone === "bad" ? "text-rose-700" : colored ? "text-amber-700" : "text-slate-500"} aria-hidden="true" />
       <span className="min-w-0 flex-1"><span className="block text-[13px] font-medium leading-5 text-slate-800">{label}</span>{detail ? <span className="block text-[11px] leading-4 text-slate-600">{detail}</span> : null}</span>
-      <strong className={"text-lg font-semibold tabular-nums " + (colored && tone === "bad" ? "text-rose-800" : colored ? "text-amber-800" : "text-slate-900")}>{count(value)}</strong>
+      <strong className={"text-lg font-semibold tabular-nums " + (colored && tone === "bad" ? "text-rose-800" : colored ? "text-amber-800" : "text-slate-900")}>{typeof value === "number" ? count(value) : value}</strong>
       <ArrowUpRight size={14} className="shrink-0 text-slate-400 group-hover:text-indigo-700" aria-hidden="true" />
     </Link>
   );
@@ -219,13 +220,15 @@ export function SearchPerformanceSummary({ data }: { data: OverviewData }) {
   );
 }
 
-export function AdminOverviewDashboard({ data, system, activity }: {
+export function AdminOverviewDashboard({ data, system, activity, incidents }: {
   data: OverviewData;
   system: SystemStatus;
   activity: AuditActivity;
+  incidents: AdminAlertSnapshot | null;
 }) {
   const stages = data.journeys.stages;
   const attention = summarizeAttentionRequired(data);
+  const platformIssues = incidents ? summarizePlatformIncidents(incidents.alerts) : null;
 
   return (
     <div className="min-w-0 space-y-3">
@@ -237,6 +240,7 @@ export function AdminOverviewDashboard({ data, system, activity }: {
           <section aria-label="Attention Required" className="min-w-0 rounded-xl border border-slate-200 p-3 sm:p-4">
             <h2 className="mb-2 text-[15px] font-semibold text-slate-950">Attention Required</h2>
             <div className="grid gap-1.5">
+              <AttentionLink href="/admin/settings/notifications" label="Platform issues" value={platformIssues?.total ?? "Unknown"} detail={platformIssues ? `${count(platformIssues.critical)} critical · ${count(platformIssues.warning)} warnings · excludes provider and support incidents` : "Alert monitoring unavailable; not zero"} icon={Activity} tone="bad" />
               <AttentionLink href="/admin/providers" label="Provider health issues" value={attention.providerHealthIssues} detail={`${count(attention.providerSetupIssues)} not ready (setup, not failures) · last 24h`} icon={Activity} tone="bad" />
               <AttentionLink href="/admin/support" label="Support needs action" value={attention.supportNeedsAction} detail={`${count(attention.supportWaitingOnUser)} waiting on user (excluded)`} icon={Headphones} tone="warn" />
               <AttentionLink href="/admin/account-deletions" label="Deletion reviews" value={attention.deletionReviews} detail={`${count(attention.deletionPending)} pending, not yet ready (excluded)`} icon={Trash2} tone="warn" />
