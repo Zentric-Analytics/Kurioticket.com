@@ -271,8 +271,8 @@ test("six directory filters use a compact left-anchored toolbar with a polished 
   assert.match(workspace, /parseAdminTripFilters\(\{ \.\.\.raw, from, to \}\)/);
   assert.doesNotMatch(page, /if \(parsed\.ok && parsed\.range === "custom"\)/);
   assert.doesNotMatch(page, /redirect\(tripDirectoryHref\(parsed\.filters\)\)/);
-  assert.match(directory, /<input type="date" name="from"/);
-  assert.match(directory, /<input type="date" name="to"/);
+  assert.match(directory, /<AdminUncontrolledCalendarInput name="from"/);
+  assert.match(directory, /<AdminUncontrolledCalendarInput name="to"/);
   assert.match(loading, /flex min-w-0 flex-wrap items-end gap-x-2 gap-y-2\.5/);
   assert.match(loading, /"Search trips", "sm:w-\[180px\]"/);
   assert.match(loading, /"Provider", "sm:w-\[135px\]"/);
