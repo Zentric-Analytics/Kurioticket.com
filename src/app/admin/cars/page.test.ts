@@ -45,9 +45,9 @@ test("car provider health separates attempted calls from disabled coverage", () 
   assert.match(service, /attemptedCalls/);
   assert.match(service, /disabledCalls/);
   assert.match(service, /failedCalls/);
-  assert.match(carsPage, /Calls \(24h\)/);
-  assert.match(carsPage, /Disabled \(24h\)/);
-  assert.match(carsPage, /Failed \(24h\)/);
+  assert.match(carsPage, /Calls \(Today\)/);
+  assert.match(carsPage, /Disabled \(Today\)/);
+  assert.match(carsPage, /Failed \(Today\)/);
 });
 
 test("car search route persists exact provider telemetry and unsupported searches", () => {
