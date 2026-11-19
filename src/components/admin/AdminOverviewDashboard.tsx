@@ -191,7 +191,7 @@ function RecentActivity({ activity }: { activity: AuditActivity }) {
 export function AdminOverviewSecondary({ system, activity }: { system: SystemStatus; activity: AuditActivity }) {
   return (
     <div className="mt-3 grid gap-3">
-      <Section title="Platform Health" href="/admin/system">
+      <Section title="System Health" href="/admin/system">
         <PlatformSummary system={system} />
       </Section>
       <Section title="Recent Admin Activity" href="/admin/logs" description="Latest three actions across all dates.">
