@@ -178,11 +178,11 @@ export function FlightCard({
           return;
         }
         if (onAction) {
-                    onAction(flight);
+          onAction(flight);
           return;
         }
         if (resolvedDetailsHref) {
-                    router.push(resolvedDetailsHref);
+          router.push(resolvedDetailsHref);
         }
       }}
     >
