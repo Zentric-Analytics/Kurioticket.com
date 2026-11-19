@@ -55,7 +55,7 @@ export function AdminOperationalDateRangeFields({
         }} truncateLabel />
     </div>
     {custom ? (
-      <div data-testid={testId + "-custom"} className="col-span-full flex min-w-0 flex-wrap items-end gap-3 rounded-lg border border-[#D8E1EC] p-3">
+      <div data-testid={testId + "-custom"} className="col-span-full flex min-w-0 flex-wrap items-end gap-3 border-t border-[#E7ECF5] py-3">
         <label className="flex min-w-0 flex-col gap-1 text-[12px] text-[#475569]">From (UTC)
           <AdminCalendarInput mode="datetime-local" required value={from} onChange={event => setFrom(event.target.value)}
             max={to || now.slice(0,16)}
