@@ -2907,8 +2907,35 @@ textarea {
    workspace. In particular, never convert an 801-1050px panel to the
    three-column labeled-record layout: that made each record appear as a card.
    Compress column spacing and font metrics instead of changing table display. */
+.admin-handoff-records {
+  container-type: inline-size;
+  overflow-x: clip;
+}
+.admin-handoff-records table {
+  width: 100%;
+  min-width: 0;
+  table-layout: fixed;
+}
+.admin-handoff-records tbody > tr {
+  display: table-row;
+}
+.admin-handoff-records thead {
+  display: table-header-group;
+}
+.admin-handoff-records tbody > tr > td,
+.admin-handoff-records tbody > tr > th[scope="row"] {
+  min-width: 0;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+.admin-handoff-records tbody > tr > td::before,
+.admin-handoff-records tbody > tr > th[scope="row"]::before {
+  content: none;
+}
 .admin-handoff-records thead th {
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   overflow-wrap: normal;
   word-break: normal;
 }
