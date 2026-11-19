@@ -33,7 +33,10 @@ export function startWebsiteOnlinePresence(browser: Browser) {
   let locks: LockManager | undefined = browser.navigator.locks;
   const channel = openChannel(browser);
   const fallbackJitter = Math.floor(80 + Math.random() * 220);
-  let lockAvailableAt = locks ? 0 : Date.now() + fallbackJitter;
+  // Give existing tabs a short BroadcastChannel round-trip to share their credential
+  // before a new tab can create a second anonymous source.
+  const initialSyncDelayMs = channel ? 400 : 0;
+  let lockAvailableAt = Date.now() + Math.max(initialSyncDelayMs, locks ? 0 : fallbackJitter);
   // Memory-only credential shared among active same-origin tabs. Never persisted.
   let credential: string | null = null;
   let acceptedAt = 0;
