@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { summarizeAttentionRequired } from "./adminAttentionRequired";
+import { summarizeAttentionRequired, summarizePlatformIncidents } from "./adminAttentionRequired";
 
 test("provider health failures are separate from not-ready setup", () => {
   const result = summarizeAttentionRequired({
@@ -35,4 +35,28 @@ test("zero actionable issues does not imply setup or waiting work is absent", ()
   assert.equal(result.providerSetupIssues, 1);
   assert.equal(result.supportNeedsAction, 0);
   assert.equal(result.deletionReviews, 0);
+});
+
+test("platform incidents cover all existing sources except already counted queues", () => {
+  const snapshot = summarizePlatformIncidents([
+    { source: "SYSTEM", severity: "CRITICAL" },
+    { source: "SEARCH", severity: "WARNING" },
+    { source: "EMAIL", severity: "WARNING" },
+    { source: "CMS", severity: "WARNING" },
+    { source: "HOMEPAGE_FARES", severity: "CRITICAL" },
+    { source: "CONFIRMED_TRIPS", severity: "WARNING" },
+    { source: "FLIGHT_STATUS", severity: "WARNING" },
+    { source: "USERS", severity: "WARNING" },
+    { source: "PROVIDER", severity: "CRITICAL" },
+    { source: "SUPPORT", severity: "WARNING" },
+  ]);
+  assert.deepEqual(snapshot, { total: 8, critical: 2, warning: 6 });
+});
+
+test("platform incidents count active acknowledged records, not just unread", () => {
+  const result = summarizePlatformIncidents([
+    { source: "SEARCH", severity: "CRITICAL", acknowledged: true },
+    { source: "SEARCH", severity: "WARNING", acknowledged: false },
+  ]);
+  assert.deepEqual(result, { total: 2, critical: 1, warning: 1 });
 });
