@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState, useTransition, type FormEvent
 import { LoaderCircle, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { AdminDirectorySelect, type AdminDirectoryOption } from "./AdminDirectorySelect";
+import { ADMIN_REPORTING_RANGE_OPTIONS } from "@/lib/adminReportingRanges";
 
 type AuditRange = "24h" | "7d" | "30d" | "all" | "90d" | "custom";
 
@@ -19,12 +20,7 @@ type Props = {
   pageHref: string;
 };
 
-const rangeOptions: readonly AdminDirectoryOption[] = [
-  { value: "24h", label: "Last 24 hours" },
-  { value: "7d", label: "Last 7 days" },
-  { value: "30d", label: "Last 30 days" },
-  { value: "all", label: "All time" },
-];
+const rangeOptions: readonly AdminDirectoryOption[] = ADMIN_REPORTING_RANGE_OPTIONS;
 
 const baseActionOptions: readonly AdminDirectoryOption[] = [
   { value: "", label: "All actions" },
@@ -135,7 +131,6 @@ export function AdminAuditLogsToolbar({
   const options: readonly AdminDirectoryOption[] = [
     ...rangeOptions,
     ...(draftRange === "90d" ? [{ value: "90d", label: "Last 90 days (legacy)" }] : []),
-    ...(draftRange === "custom" ? [{ value: "custom", label: "Custom range (legacy)" }] : []),
   ];
   const todayUtc = new Date().toISOString().slice(0, 10);
   const validCustom = validDate(draftDates.from) && validDate(draftDates.to) && draftDates.from <= draftDates.to && draftDates.to <= todayUtc;

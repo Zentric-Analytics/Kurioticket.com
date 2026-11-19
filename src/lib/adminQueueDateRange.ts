@@ -2,12 +2,11 @@
 export type AdminQueueRange = "24h" | "today" | "7d" | "30d" | "custom" | "all";
 
 export const adminQueueRangeOptions = [
-  { value: "24h", label: "Last 24 hours" },
-  { value: "today", label: "Today (UTC)" },
+  { value: "24h", label: "Last 24 hrs" },
   { value: "7d", label: "Last 7 days" },
   { value: "30d", label: "Last 30 days" },
-  { value: "custom", label: "Custom date range" },
   { value: "all", label: "All time" },
+  { value: "custom", label: "Custom range" },
 ] as const;
 
 export type AdminQueueWindow = { range: AdminQueueRange; from: string; to: string };

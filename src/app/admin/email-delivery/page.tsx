@@ -299,7 +299,7 @@ function resolveRange(raw: Record<string, string | string[] | undefined>) {
       to: now,
       fromDate: "",
       toDate: "",
-      label: range === "7d" ? "Last 7 days" : range === "30d" ? "Last 30 days" : range === "90d" ? "Last 90 days" : "Last 24 hours",
+      label: range === "7d" ? "Last 7 days" : range === "30d" ? "Last 30 days" : range === "90d" ? "Last 90 days" : "Last 24 hrs",
       error: "",
     };
   }

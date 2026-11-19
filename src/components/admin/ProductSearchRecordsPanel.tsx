@@ -25,7 +25,7 @@ const productFilterOptions = [
   { value: "ZERO_RESULTS", label: "Zero results" },
 ] as const;
 const windowOptions = [
-  { value: "24h", label: "Last 24 hours" },
+  { value: "24h", label: "Last 24 hrs" },
   { value: "7d", label: "Last 7 days" },
   { value: "30d", label: "Last 30 days" },
   { value: "all", label: "All time" },

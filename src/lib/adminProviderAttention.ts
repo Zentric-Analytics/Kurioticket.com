@@ -1,6 +1,6 @@
 /** Provider-health history is observational; older windows never imply a live incident. */
 export const providerHealthWindows = [
-  { hours: 24, label: "Last 24 hours" },
+  { hours: 24, label: "Last 24 hrs" },
   { hours: 72, label: "Last 3 days" },
   { hours: 168, label: "Last 7 days" },
 ] as const;

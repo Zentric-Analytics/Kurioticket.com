@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+
 
 import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
+import { AdminOperationalDateRangeFields } from "@/components/admin/AdminOperationalDateRangeFields";
 import type { HandoffDateRange } from "@/lib/adminHandoffDateRange";
 import type {
   ProviderHandoffFilterScope,
@@ -27,12 +28,7 @@ const correlationOptions = [
   { value: "exact", label: "Linked to search" },
   { value: "unavailable", label: "Search link unavailable" },
 ];
-const rangeOptions = [
-  { value: "today", label: "Today" },
-  { value: "7d", label: "Last 7 days" },
-  { value: "30d", label: "Last 30 days" },
-  { value: "all", label: "All time" },
-];
+
 
 /**
  * The standalone handoffs workspace has one explicit apply action: choosing
@@ -51,10 +47,6 @@ export function ProviderHandoffFilters({
   range: HandoffDateRange;
   providerOptions: readonly HandoffProviderOption[];
 }) {
-  const [selectedRange, setSelectedRange] = useState<HandoffDateRange>(range);
-  const dateOptions = range === "custom"
-    ? [...rangeOptions, { value: "custom", label: "Custom range" }]
-    : rangeOptions;
 
   return (
     <form
@@ -75,19 +67,16 @@ export function ProviderHandoffFilters({
       {scope.userId ? <input type="hidden" name="userId" value={scope.userId} /> : null}
       {scope.visitorId ? <input type="hidden" name="visitorId" value={scope.visitorId} /> : null}
       {scope.sourcePage ? <input type="hidden" name="sourcePage" value={scope.sourcePage} /> : null}
-      {selectedRange === "custom" ? (
-        <>
-          {scope.from ? <input type="hidden" name="from" value={scope.from} /> : null}
-          {scope.to ? <input type="hidden" name="to" value={scope.to} /> : null}
-        </>
-      ) : null}
 
       <div data-testid="provider-handoffs-filter-row" className="grid min-w-0 grid-cols-1 items-center gap-2 border-b border-[#D8E1EC] py-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-[repeat(5,minmax(0,1fr))_120px] lg:gap-2">
-        <div data-testid="provider-handoffs-date-range" className="min-w-0">
-          <SearchMonitorSelect label="Date range" name="range"
-            value={selectedRange} options={dateOptions} appearance="fare"
-            onValueChange={value => setSelectedRange(value as HandoffDateRange)} truncateLabel />
-        </div>
+        <AdminOperationalDateRangeFields
+          testId="provider-handoffs-date-range"
+          initialRange={range}
+          initialFrom={scope.from || ""}
+          initialTo={scope.to || ""}
+          now={new Date().toISOString()}
+          legacyOptions={range === "today" ? [{ value: "today", label: "Today (legacy)" }] : []}
+        />
         <div className="min-w-0">
           <SearchMonitorSelect label="Provider" name="provider"
             value={initial.provider} options={providerOptions} appearance="fare"

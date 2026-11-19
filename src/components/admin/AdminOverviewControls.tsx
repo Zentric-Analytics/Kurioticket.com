@@ -6,7 +6,7 @@ import { CalendarDays, Check, ChevronDown, LoaderCircle } from "lucide-react";
 import { overviewPeriodHref, validOverviewCustomDates, type OverviewCustomDates, type OverviewPeriod, type OverviewRange } from "@/lib/adminOverviewRange";
 
 const rangeLabels: Record<OverviewRange, string> = {
-  "24h": "Last 24 hours",
+  "24h": "Last 24 hrs",
   "7d": "Last 7 days",
   "30d": "Last 30 days",
   custom: "Custom range",

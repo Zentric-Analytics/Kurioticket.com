@@ -78,12 +78,26 @@ test("settings history queries only approved action types and orders newest firs
 test("settings history rejects unsupported filters and malicious cursors without reading data", async () => {
   const { reader, queries } = fixture();
   for (const query of [
-    { range: "all", category: "all" },
+    { range: "custom", category: "all" },
     { range: "7d", category: "invalid" },
     { range: "7d", category: "all", cursor: "not-a-valid-cursor" },
     { range: "7d", category: "all", limit: 100 },
   ] as never[]) assert.deepEqual(await reader.list(query), { status: "invalid" });
   assert.equal(queries.length, 0);
+});
+
+test("Settings History allows paginated All time while validating bounded custom UTC dates", async () => {
+  const { reader, queries } = fixture();
+  const all = await reader.list({ range: "all", category: "all" });
+  assert.equal(all.status, "ok");
+  assert.match(JSON.stringify(queries[0].where), /1970-01-01T00:00:00.000Z/);
+  const custom = await reader.list({
+    range: "custom", category: "all", fromDate: "2026-11-01", toDate: "2026-11-18",
+  });
+  assert.equal(custom.status, "ok");
+  assert.match(JSON.stringify(queries[1].where), /2026-11-01T00:00:00.000Z/);
+  assert.deepEqual(await reader.list({ range: "custom", category: "all", fromDate: "2026-02-30", toDate: "2026-11-18" }), { status: "invalid" });
+  assert.deepEqual(await reader.list({ range: "custom", category: "all", fromDate: "2026-01-01", toDate: "2026-11-18" }), { status: "invalid" });
 });
 
 test("settings history category stays scoped to approved features and team actions", async () => {

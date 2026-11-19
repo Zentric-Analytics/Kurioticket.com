@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AdminDirectorySelect } from "@/components/admin/AdminDirectorySelect";
+import { SettingsHistoryRangeControl } from "@/components/admin/SettingsHistoryRangeControl";
 
 import { adminSettingsHistory } from "@/services/adminSettingsHistoryService";
 import type { SettingsHistoryCategory, SettingsHistoryEntry, SettingsHistoryRange } from "@/services/adminSettingsHistoryCore";
@@ -7,11 +8,8 @@ import type { SettingsHistoryCategory, SettingsHistoryEntry, SettingsHistoryRang
 export const metadata = { title: "Admin Settings - Settings History" };
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
-const ranges = ["24h", "7d", "30d", "90d"] as const;
+const ranges = ["24h", "7d", "30d", "all", "custom", "90d"] as const;
 const categories = ["all", "product", "automation", "team", "legacy"] as const;
-const rangeLabels: Record<SettingsHistoryRange, string> = {
-  "24h": "Last 24 hours", "7d": "Last 7 days", "30d": "Last 30 days", "90d": "Last 90 days",
-};
 const categoryLabels: Record<SettingsHistoryCategory, string> = {
   all: "All Settings", product: "Product availability", automation: "Travel automation",
   team: "Team Access", legacy: "Legacy notifications",
@@ -27,10 +25,14 @@ function formatAuditDate(value: string) {
     dateStyle: "medium", timeStyle: "short", timeZone: "UTC",
   }).format(new Date(value)) + " UTC";
 }
-function historyHref(range: SettingsHistoryRange, category: SettingsHistoryCategory, cursor?: string, full = true) {
+function historyHref(range: SettingsHistoryRange, category: SettingsHistoryCategory, cursor?: string, full = true, fromDate = "", toDate = "") {
   const params = new URLSearchParams({ range, category });
   if (full) params.set("view", "full");
   if (cursor) params.set("cursor", cursor);
+  if (range === "custom") {
+    if (fromDate) params.set("fromDate", fromDate);
+    if (toDate) params.set("toDate", toDate);
+  }
   return fullHistoryPath + "?" + params.toString();
 }
 function ReadOnlyDetail({ label, value }: { label: string; value: string }) {
@@ -79,19 +81,23 @@ export default async function AdminRecentSettingsChangesPage({ searchParams }: {
   const raw = await searchParams ?? {};
   const requestedRange = single(raw.range);
   const requestedCategory = single(raw.category);
+  const fromDate = single(raw.fromDate) || "";
+  const toDate = single(raw.toDate) || "";
   const full = single(raw.view) === "full";
   const range: SettingsHistoryRange = ranges.includes(requestedRange as SettingsHistoryRange)
     ? requestedRange as SettingsHistoryRange : "24h";
   const category: SettingsHistoryCategory = categories.includes(requestedCategory as SettingsHistoryCategory)
     ? requestedCategory as SettingsHistoryCategory : "all";
-  const invalid = Object.keys(raw).some(key => !["range", "category", "view", "cursor"].includes(key)) ||
+  const invalid = Object.keys(raw).some(key => !["range", "category", "view", "cursor", "fromDate", "toDate"].includes(key)) ||
     Object.values(raw).some(value => Array.isArray(value)) ||
     (requestedRange !== undefined && !ranges.includes(requestedRange as SettingsHistoryRange)) ||
     (requestedCategory !== undefined && !categories.includes(requestedCategory as SettingsHistoryCategory)) ||
     (single(raw.view) !== undefined && single(raw.view) !== "full") ||
-    (single(raw.cursor) !== undefined && !full);
+    (single(raw.cursor) !== undefined && !full) ||
+    ((fromDate || toDate) && range !== "custom");
   const result = invalid ? { status: "invalid" as const } : await adminSettingsHistory.list({
     range, category, cursor: full ? single(raw.cursor) : undefined, limit: full ? 25 : 6,
+    fromDate, toDate,
   });
 
   return (
@@ -111,11 +117,8 @@ export default async function AdminRecentSettingsChangesPage({ searchParams }: {
           data-testid="settings-history-filter-row"
           className="grid w-full min-w-0 grid-cols-1 items-center gap-2 border-b border-[#E7ECF5] py-3 sm:grid-cols-2 lg:grid-cols-[190px_220px_136px]">
           <input type="hidden" name="view" value="full" />
-          <div className="min-w-0" data-testid="settings-history-range-control">
-            <AdminDirectorySelect label="Time range" name="range" value={range}
-              options={ranges.map(value => ({ value, label: rangeLabels[value] }))}
-              compact attached />
-          </div>
+          <SettingsHistoryRangeControl range={range} fromDate={fromDate} toDate={toDate}
+            today={new Date().toISOString().slice(0, 10)} />
           <div className="min-w-0" data-testid="settings-history-category-control">
             <AdminDirectorySelect label="Section" name="category" value={category}
               options={categories.map(value => ({ value, label: categoryLabels[value] }))}
@@ -124,7 +127,7 @@ export default async function AdminRecentSettingsChangesPage({ searchParams }: {
           <button type="submit" className="focus-ring h-10 w-full min-w-0 whitespace-nowrap rounded-lg bg-[#004BB8] px-3 text-[13px] font-medium text-white hover:bg-[#003D97]">Apply filters</button>
         </form>
       ) : (
-        <p className="border-b border-[#E7ECF5] py-3 text-[12px] text-[#64748B]">Latest recorded changes in the last 24 hours. Open full history to review up to 90 days of records.</p>
+        <p className="border-b border-[#E7ECF5] py-3 text-[12px] text-[#64748B]">Latest recorded changes in the last 24 hrs. Open full history to review older records.</p>
       )}
 
       {result.status !== "ok" ? (
@@ -147,8 +150,8 @@ export default async function AdminRecentSettingsChangesPage({ searchParams }: {
             <span>Newest first · {result.items.length} recorded changes shown{full ? " · Read only" : ""}</span>
             {full ? (
               <div className="flex flex-wrap gap-3">
-                {single(raw.cursor) ? <Link href={historyHref(range, category)} className="font-medium text-[#004BB8] hover:underline">Back to newest</Link> : null}
-                {result.nextCursor ? <Link href={historyHref(range, category, result.nextCursor)} className="font-medium text-[#004BB8] hover:underline">Older records →</Link> : null}
+                {single(raw.cursor) ? <Link href={historyHref(range, category, undefined, true, fromDate, toDate)} className="font-medium text-[#004BB8] hover:underline">Back to newest</Link> : null}
+                {result.nextCursor ? <Link href={historyHref(range, category, result.nextCursor, true, fromDate, toDate)} className="font-medium text-[#004BB8] hover:underline">Older records →</Link> : null}
               </div>
             ) : null}
           </div>

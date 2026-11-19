@@ -5,8 +5,8 @@ import {
   type AdminTripStatus,
 } from "./adminConfirmedTripsDirectory";
 
-/** Date windows use UTC calendar days, not rolling 24-hour intervals. */
-export const adminTripWorkspaceRanges = ["all", "today", "7d", "30d", "custom"] as const;
+/** Rolling presets use exact UTC instants; legacy Today and custom UTC days remain supported. */
+export const adminTripWorkspaceRanges = ["24h", "all", "today", "7d", "30d", "custom"] as const;
 export type AdminTripWorkspaceRange = (typeof adminTripWorkspaceRanges)[number];
 
 type RawQuery = Record<string, string | string[] | undefined>;
@@ -35,14 +35,24 @@ export function parseAdminTripWorkspace(raw: RawQuery, now = new Date()): Resolv
     return { ok: false, error: "Unsupported trip time range." };
   }
   if (!Number.isFinite(now.getTime())) return { ok: false, error: "Invalid time reference." };
-  const range: AdminTripWorkspaceRange = (requested || (raw.from || raw.to ? "custom" : "today")) as AdminTripWorkspaceRange;
+  const range: AdminTripWorkspaceRange = (requested || (raw.from || raw.to ? "custom" : "24h")) as AdminTripWorkspaceRange;
   const dateFields = {
     from: typeof raw.from === "string" && range === "custom" ? raw.from : "",
     to: typeof raw.to === "string" && range === "custom" ? raw.to : "",
   };
   const day = utcDay(now);
-  const from = range === "today" ? day : range === "7d" ? calendarStart(now, 7) : range === "30d" ? calendarStart(now, 30) : dateFields.from;
-  const to = range === "today" || range === "7d" || range === "30d" ? day : dateFields.to;
+  const rollingDays = range === "24h" ? 1 : range === "7d" ? 7 : range === "30d" ? 30 : 0;
+  // A signed/paginated URL can preserve exact interval instants, rather than
+  // recalculating them while a user navigates records.
+  const preserved = rollingDays && typeof raw.from === "string" && typeof raw.to === "string" &&
+    /^\d{4}-\d{2}-\d{2}T/.test(raw.from) && /^\d{4}-\d{2}-\d{2}T/.test(raw.to) &&
+    Date.parse(raw.to) <= now.getTime() &&
+    Date.parse(raw.to) - Date.parse(raw.from) === rollingDays * 86_400_000;
+  const from = range === "today" ? day
+    : rollingDays ? preserved ? raw.from as string : new Date(now.getTime() - rollingDays * 86_400_000).toISOString()
+      : dateFields.from;
+  const to = range === "today" ? day
+    : rollingDays ? preserved ? raw.to as string : now.toISOString() : dateFields.to;
   const parsed = parseAdminTripFilters({ ...raw, from, to });
   return parsed.ok
     ? { ok: true, range, filters: parsed.filters, dateFields }
@@ -64,10 +74,8 @@ export function tripWorkspaceHref(
   if (status !== "all") params.set("status", status);
   if (filters.identity !== "all") params.set("identity", filters.identity);
   if (range !== "all") params.set("range", range);
-  if (range === "custom") {
-    if (filters.from) params.set("from", filters.from);
-    if (filters.to) params.set("to", filters.to);
-  }
+  if (filters.from && range !== "all" && range !== "today") params.set("from", filters.from);
+  if (filters.to && range !== "all" && range !== "today") params.set("to", filters.to);
   const query = params.toString();
   return "/admin/confirmed-trips" + (query ? "?" + query : "") + "#trip-directory";
 }

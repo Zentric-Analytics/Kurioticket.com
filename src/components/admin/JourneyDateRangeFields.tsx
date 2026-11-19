@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
+import { ADMIN_REPORTING_RANGE_OPTIONS } from "@/lib/adminReportingRanges";
 import { offsetUtcDateTime, utcDateTimeInput, utcDateTimeIso, type JourneyDateRange } from "@/lib/adminJourneyDateRange";
 
 export function JourneyDateRangeFields({ initialRange, initialFrom, initialTo, now }: {
@@ -39,13 +40,9 @@ export function JourneyDateRangeFields({ initialRange, initialFrom, initialTo, n
           setRange(next);
         }}
         options={[
-          { value: "24h", label: "Last 24 hours" },
-          { value: "7d", label: "Last 7 days" },
-          { value: "30d", label: "Last 30 days" },
-          { value: "all", label: "All time" },
+          ...ADMIN_REPORTING_RANGE_OPTIONS,
           ...(range === "today" ? [{ value: "today", label: "Today (legacy)" }] : []),
           ...(range === "90d" ? [{ value: "90d", label: "Last 90 days (legacy)" }] : []),
-          ...(range === "custom" ? [{ value: "custom", label: "Custom dates (legacy)" }] : []),
         ]} /></div>
       {custom ? (
         <div data-testid="journey-custom-date-fields" className="order-last col-span-full flex min-w-0 flex-wrap items-end gap-3">

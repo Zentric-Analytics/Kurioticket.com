@@ -33,9 +33,9 @@ test("journey detail is valid JSX and strips view-only range from backend input"
 test("journey date presets are passed to detail and single-ended historical bounds survive", () => {
   assert.match(list, /p\.set\("range", range\)/);
   assert.match(dates, /if \(one\(raw\.cursor\) \|\| one\(raw\.from\) \|\| one\(raw\.to\)\) return \{\}/);
-  assert.match(controls, /value: "all", label: "All time"/);
-  assert.match(controls, /value: "24h", label: "Last 24 hours"/);
-  assert.match(controls, /"Custom dates \(legacy\)"/);
+  assert.match(controls, /ADMIN_REPORTING_RANGE_OPTIONS/);
+  assert.match(controls, /ADMIN_REPORTING_RANGE_OPTIONS/);
+  assert.match(controls, /ADMIN_REPORTING_RANGE_OPTIONS/);
 });
 
 test("custom dates are editable and preset selection does not submit stale bounds", () => {

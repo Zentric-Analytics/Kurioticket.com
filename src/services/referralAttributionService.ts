@@ -2,7 +2,7 @@ import { getOptionalPrisma } from "@/lib/prisma";
 import { journeySourcePath } from "@/lib/search-journey";
 import { getPublicEnvironment } from "@/lib/stagingSafety";
 
-export const DEFAULT_ATTRIBUTION_DAYS = 7;
+export const DEFAULT_ATTRIBUTION_DAYS = 1;
 const maximumDays = 90;
 
 type AttributionGroupRow = {
