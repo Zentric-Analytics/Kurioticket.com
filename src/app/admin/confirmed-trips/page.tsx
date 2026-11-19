@@ -69,7 +69,7 @@ export default async function AdminConfirmedTripsPage({ searchParams }: Props) {
   // Custom dates are now visible in the directory filter form. Legacy
   // date-only links remain editable and no longer redirect to a different page.
   const filters = parsed.ok ? parsed.filters : blankFilters;
-  const range = parsed.ok ? parsed.range : "24h";
+  const range = parsed.ok ? parsed.range : "today";
   // The product/provider snapshot supplies provider names to the directory filter.
   // Confirmation readiness and delivery telemetry are now loaded only on Trip operations.
   const [operations, directory] = await Promise.all([
