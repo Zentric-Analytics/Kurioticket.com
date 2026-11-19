@@ -228,6 +228,9 @@ test("a new tab reuses the first tab's credential before creating another guest"
   const secondTracker = startWebsiteOnlinePresence({ ...second.windowFor(), ...transport });
   t.after(secondTracker.dispose);
   secondTracker.setIdentity("guest");
+  // BroadcastChannel delivery is queued as a microtask. Deliver the shared
+  // credential before advancing the mocked clock past the sync grace.
+  await first.advance(0);
   await first.advance(1000);
   assert.equal(second.requests.length, 0, "the existing credential should suppress a new guest bootstrap");
   firstTracker.dispose();
