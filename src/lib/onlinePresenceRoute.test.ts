@@ -8,7 +8,6 @@ import { hasConsistentWebsitePresenceOrigin, renewPresenceCredential } from "./o
 const now = new Date("2026-11-18T12:00:00Z");
 const secret = "qa-only-operational-presence-signing-material";
 const automationSecret = "qa-only-trusted-edge-automation-signing-material";
-const cookieName = "kt_online_presence";
 const tokenHeader = "x-kt-presence-session";
 const webPath = "/api/identity/online-presence";
 const nativePath = "/api/mobile/v1/presence";
@@ -37,26 +36,20 @@ function native(headers: HeadersInit = {}) {
   return new Request(origin + nativePath, { method: "POST", headers: { "x-mobile-platform": "android", ...headers } });
 }
 
-test("a guest uses a secure temporary web cookie independently of analytics consent", async () => {
+test("a guest uses a memory-only signed web credential independently of optional analytics consent", async () => {
   const { handler, records } = fixture();
   const post = handler("web");
   const first = await post(web({ cookie: "kt_analytics_consent=declined", "sec-ch-ua-mobile": "?1" }));
   assert.equal(first.status, 202);
   assert.equal(records.length, 0);
   assert.equal((await post(web())).status, 202);
-  assert.equal(records.length, 0, "a lost or rejected issuance response contributes no guest");
-  assert.equal(first.headers.get(tokenHeader), null);
+  assert.equal(records.length, 0, "an unreturned credential cannot contribute a guest");
+  assert.equal(first.headers.get("set-cookie"), null, "presence must not create a new browser cookie");
   assert.match(first.headers.get("cache-control") ?? "", /no-store/);
-  const cookie = first.headers.get("set-cookie") ?? "";
-  assert.match(cookie, /^kt_online_presence=/);
-  assert.match(cookie, /HttpOnly/i);
-  assert.match(cookie, /Secure/i);
-  assert.match(cookie, /SameSite=Strict/i);
-  assert.match(cookie, /Path=\/api\/identity\/online-presence/i);
-  assert.doesNotMatch(cookie, /Domain=/i);
-  const credential = cookie.split(";")[0];
-  assert.equal((await post(web({ cookie: credential, "sec-ch-ua-mobile": "?1" }))).status, 204);
-  const second = await post(web({ cookie: credential + "; __Secure-next-auth.session-token.0=jwt" }));
+  const credential = first.headers.get(tokenHeader);
+  assert.ok(credential);
+  assert.equal((await post(web({ [tokenHeader]: credential, "sec-ch-ua-mobile": "?1" }))).status, 204);
+  const second = await post(web({ [tokenHeader]: credential, cookie: "__Secure-next-auth.session-token.0=jwt" }));
   assert.equal(second.status, 204);
   assert.equal(second.headers.get("set-cookie"), null);
   assert.equal(records[0].platform, "mobile_web");
@@ -82,11 +75,12 @@ test("native guest credentials are transport and environment bound and transitio
   assert.ok(stagingToken);
   assert.equal((await staging(native({ [tokenHeader]: stagingToken }))).status, 204);
   const website = handler("web");
-  const issued = await website(web({ cookie: cookieName + "=" + token }));
+  const issued = await website(web({ [tokenHeader]: token }));
   assert.equal(issued.status, 202);
-  const webCookie = issued.headers.get("set-cookie")?.split(";")[0];
-  assert.ok(webCookie);
-  assert.equal((await website(web({ cookie: webCookie }))).status, 204);
+  const webCredential = issued.headers.get(tokenHeader);
+  assert.ok(webCredential);
+  assert.equal(issued.headers.get("set-cookie"), null);
+  assert.equal((await website(web({ [tokenHeader]: webCredential }))).status, 204);
   assert.equal(records[0].platform, "android");
   assert.equal(records[1].platform, "ios");
   assert.equal(records[0].sourceId, records[1].sourceId);
@@ -123,13 +117,14 @@ test("only authenticated ingress automation evidence suppresses an otherwise eli
   const post = handler("web");
   const verified = await post(web({ "x-kt-verified-automation": sign(stamp) }));
   assert.equal(verified.status, 204);
+  assert.equal(verified.headers.get(tokenHeader), null);
   assert.equal(verified.headers.get("set-cookie"), null);
   assert.equal(records.length, 0);
-  const cookie = (await post(web())).headers.get("set-cookie")?.split(";")[0];
-  assert.ok(cookie);
-  const untrusted = await post(web({ cookie, "user-agent": "Googlebot", "cf-verified-bot": "true", "x-kt-verified-automation": stamp + ".spoofer" }));
+  const token = (await post(web())).headers.get(tokenHeader);
+  assert.ok(token);
+  const untrusted = await post(web({ [tokenHeader]: token, "user-agent": "Googlebot", "cf-verified-bot": "true", "x-kt-verified-automation": stamp + ".spoofer" }));
   assert.equal(untrusted.status, 204);
-  await post(web({ cookie, "x-kt-verified-automation": sign(String(now.getTime() - 61_000)) }));
+  await post(web({ [tokenHeader]: token, "x-kt-verified-automation": sign(String(now.getTime() - 61_000)) }));
   assert.equal(records.length, 2);
 });
 
@@ -155,7 +150,7 @@ test("invalid authorization is not counted as a guest and storage failures never
   const disabled = createOnlinePresenceHandler("web", { ...deps, enabled: () => false, record: never });
   const disabledResponse = await disabled(web());
   assert.equal(disabledResponse.status, 503);
-  assert.equal(disabledResponse.headers.get("set-cookie"), null);
+  assert.equal(disabledResponse.headers.get(tokenHeader), null);
   assert.deepEqual(failures, ["production"], "expected rejections do not signal an outage");
 });
 
