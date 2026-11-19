@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ChevronDown } from "lucide-react";
+import { AdminDirectorySelect } from "@/components/admin/AdminDirectorySelect";
 
 import { adminSettingsHistory } from "@/services/adminSettingsHistoryService";
 import type { SettingsHistoryCategory, SettingsHistoryEntry, SettingsHistoryRange } from "@/services/adminSettingsHistoryCore";
@@ -109,23 +109,17 @@ export default async function AdminRecentSettingsChangesPage({ searchParams }: {
       {full ? (
         <form action={fullHistoryPath} method="get" aria-label="Settings history filters"
           data-testid="settings-history-filter-row"
-          className="grid w-full min-w-0 grid-cols-1 items-center gap-2 border-b border-[#E7ECF5] py-3 sm:grid-cols-2 lg:grid-cols-[180px_216px_140px]">
+          className="grid w-full min-w-0 grid-cols-1 items-center gap-2 border-b border-[#E7ECF5] py-3 sm:grid-cols-2 lg:grid-cols-[190px_220px_136px]">
           <input type="hidden" name="view" value="full" />
-          <div className="relative min-w-0">
-            <label htmlFor="settings-history-range" className="sr-only">Time range</label>
-            <select id="settings-history-range" name="range" defaultValue={range}
-              className="focus-ring h-10 w-full min-w-0 cursor-pointer appearance-none rounded-lg border border-[#D8E1EC] bg-white pl-3 pr-9 text-[13px] font-medium text-[#334155] shadow-[0_1px_0_rgba(2,6,23,0.04)] outline-none transition-colors hover:border-[#94A3B8] focus:border-[#004BB8]">
-              {ranges.map(value => <option key={value} value={value}>{rangeLabels[value]}</option>)}
-            </select>
-            <ChevronDown size={16} aria-hidden="true" className="pointer-events-none absolute right-3 top-3 text-[#64748B]" />
+          <div className="min-w-0" data-testid="settings-history-range-control">
+            <AdminDirectorySelect label="Time range" name="range" value={range}
+              options={ranges.map(value => ({ value, label: rangeLabels[value] }))}
+              compact attached />
           </div>
-          <div className="relative min-w-0">
-            <label htmlFor="settings-history-category" className="sr-only">Section</label>
-            <select id="settings-history-category" name="category" defaultValue={category}
-              className="focus-ring h-10 w-full min-w-0 cursor-pointer appearance-none rounded-lg border border-[#D8E1EC] bg-white pl-3 pr-9 text-[13px] font-medium text-[#334155] shadow-[0_1px_0_rgba(2,6,23,0.04)] outline-none transition-colors hover:border-[#94A3B8] focus:border-[#004BB8]">
-              {categories.map(value => <option key={value} value={value}>{categoryLabels[value]}</option>)}
-            </select>
-            <ChevronDown size={16} aria-hidden="true" className="pointer-events-none absolute right-3 top-3 text-[#64748B]" />
+          <div className="min-w-0" data-testid="settings-history-category-control">
+            <AdminDirectorySelect label="Section" name="category" value={category}
+              options={categories.map(value => ({ value, label: categoryLabels[value] }))}
+              compact attached />
           </div>
           <button type="submit" className="focus-ring h-10 w-full min-w-0 whitespace-nowrap rounded-lg bg-[#004BB8] px-3 text-[13px] font-medium text-white hover:bg-[#003D97]">Apply filters</button>
         </form>

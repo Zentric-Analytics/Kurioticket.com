@@ -187,20 +187,27 @@ test("settings uses a single administrative workspace instead of dashboard cards
   assert.doesNotMatch(settingsPage, /SummaryItem|Recent control updates|Related operations|Change safeguards|Protected changes/);
 });
 
-test("Settings History uses an accessible polished filter row with 24-hour default", () => {
+test("Settings History uses polished accessible shared dropdowns and a 24-hour default", () => {
   const history = readFileSync("src/app/admin/settings/recent-changes/page.tsx", "utf8");
+  const dropdown = readFileSync("src/components/admin/AdminDirectorySelect.tsx", "utf8");
   assert.match(history, /requestedRange as SettingsHistoryRange : "24h"/);
   assert.match(history, /historyHref\("24h", "all", undefined, false\)/);
   assert.match(history, /historyHref\("24h", "all"\)/);
   assert.match(history, /Latest recorded changes in the last 24 hours/);
   assert.match(history, /data-testid="settings-history-filter-row"/);
-  assert.match(history, /lg:grid-cols-\[180px_216px_140px\]/);
-  assert.match(history, /<label htmlFor="settings-history-range" className="sr-only">Time range<\/label>/);
-  assert.match(history, /<label htmlFor="settings-history-category" className="sr-only">Section<\/label>/);
-  assert.match(history, /name="range" defaultValue=\{range\}/);
-  assert.match(history, /name="category" defaultValue=\{category\}/);
+  assert.match(history, /lg:grid-cols-\[190px_220px_136px\]/);
+  assert.match(history, /data-testid="settings-history-range-control"/);
+  assert.match(history, /data-testid="settings-history-category-control"/);
+  assert.match(history, /<AdminDirectorySelect label="Time range" name="range" value=\{range\}/);
+  assert.match(history, /<AdminDirectorySelect label="Section" name="category" value=\{category\}/);
+  assert.equal((history.match(/compact attached \/>/g) || []).length, 2);
+  assert.doesNotMatch(history, /<select id="settings-history-(range|category)"/);
+  assert.match(dropdown, /role="combobox"/);
+  assert.match(dropdown, /role="listbox"/);
+  assert.match(dropdown, /role="option"/);
+  assert.match(dropdown, /<input ref=\{hiddenRef\} type="hidden" name=\{name\}/);
+  assert.match(dropdown, /<select\s+id=\{listboxId \+ "-native"\}/);
   assert.match(history, /type="submit" className="focus-ring h-10/);
-  assert.match(history, /aria-hidden="true"/);
   assert.match(history, /<SettingsHistoryRow key=\{item.id\} item=\{item\}/);
 });
 
