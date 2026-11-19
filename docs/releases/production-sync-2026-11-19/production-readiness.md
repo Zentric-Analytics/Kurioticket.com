@@ -55,6 +55,10 @@ Both recorded production platform baselines use production-0.3.0; candidate uses
 
 Authenticated production Recovery Dashboard advertises seven-day PITR and at-least-seven-day export retention. No dated export integrity evidence or completed isolated production restore test was obtained. Availability is not tested restorability. The earlier staging recovery attempt produced no copy; its PR #6721 staging-only deferral does not apply here. Recovery remains a production release blocker. Do not start PITR, create exports/resources, change database access or contact support under this assignment.
 
+## Public endpoint observation limitation
+
+Read-only public health/association requests timed out from this task environment, and the independent in-app browser health navigation also ended in ERR_CONNECTION_TIMED_OUT. No HTTP application status was obtained. Render deployment metadata reports LIVE and read-only database queries succeeded, but neither proves current public reachability. Recheck from a functioning external network before approval; do not interpret these timeouts as a proven application outage or successful health check.
+
 ## Proposed cutover — explicit owner authorization required
 
 1. Review exact candidate/PR checks, freeze main identity and verify no conflicting deploy/cron/operator activity. If main moves, reconcile only that reviewed production delta and rerun affected checks; do not ingest later dev.

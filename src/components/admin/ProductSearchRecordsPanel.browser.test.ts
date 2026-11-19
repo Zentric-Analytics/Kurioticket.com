@@ -13,7 +13,7 @@ test("product records preserve today's applied range and react to an exact bookm
     assert.equal(await page.getByRole("button", { name: "Date range: Today", exact: true }).count(), 1);
     await apply.click();
     assert.equal(await page.getByRole("button", { name: "Date range: Today", exact: true }).count(), 1);
-    const initial = await page.evaluate("window.requests");
+    const initial = await page.evaluate<Array<{ url: string; method: string; credentials: string }>>("window.requests");
     assert.ok(initial.length >= 2);
     for (const request of initial) {
       const url = new URL(request.url, "http://fixture.local");
@@ -24,7 +24,7 @@ test("product records preserve today's applied range and react to an exact bookm
     }
     await page.evaluate("window.location.hash='car-search-records'");
     await page.getByRole("button", { name: "Outcome: All searches", exact: true }).waitFor();
-    const final = await page.evaluate("window.requests.at(-1).url");
+    const final = await page.evaluate<string>("window.requests.at(-1).url");
     assert.equal(new URL(final, "http://fixture.local").searchParams.get("filter"), "ALL");
     assert.equal(new URL(final, "http://fixture.local").searchParams.get("product"), "CAR");
   });
