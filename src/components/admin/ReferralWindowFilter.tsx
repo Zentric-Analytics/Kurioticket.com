@@ -6,6 +6,7 @@ import { useTransition } from "react";
 import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
 
 const presetWindows = [
+  { value: "1", label: "Last 24 hrs" },
   { value: "7", label: "Last 7 days" },
   { value: "14", label: "Last 14 days" },
   { value: "30", label: "Last 30 days" },
