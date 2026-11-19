@@ -169,7 +169,7 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
     setSelectedFareKey(fare.key);
   }
 
-  function selectDeal(offerId: string, forHandoff = false) {
+  function selectDeal(offerId: string, _forHandoff = false) {
     setSelectedDealOfferId(offerId);
   }
 
