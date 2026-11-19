@@ -11,10 +11,10 @@ export function escapePrismaContainsQuery(query: string) {
   return query.replace(/[\\%_]/g, character => "\\" + character);
 }
 
-export const ADMIN_IDENTITY_DATES = ["all", "today", "last7", "last30", "thisMonth", "lastMonth", "last3", "custom"] as const;
+export const ADMIN_IDENTITY_DATES = ["24h", "all", "today", "last7", "last30", "thisMonth", "lastMonth", "last3", "custom"] as const;
 export type AdminIdentityDate = (typeof ADMIN_IDENTITY_DATES)[number];
 export function parseAdminIdentityDate(value?: string): AdminIdentityDate {
-  return ADMIN_IDENTITY_DATES.includes(value as AdminIdentityDate) ? value as AdminIdentityDate : "all";
+  return ADMIN_IDENTITY_DATES.includes(value as AdminIdentityDate) ? value as AdminIdentityDate : "24h";
 }
 export function validAdminIdentityCustomDates(from?: string, to?: string) {
   const parse = (value?: string) => {
@@ -29,6 +29,10 @@ export function validAdminIdentityCustomDates(from?: string, to?: string) {
 export function adminIdentityDateBounds(date: AdminIdentityDate, now = new Date(), from?: string, to?: string) {
   if (date === "all") return null;
   if (date === "custom") return validAdminIdentityCustomDates(from, to);
+  if (date === "24h" || date === "last7" || date === "last30") {
+    const days = date === "24h" ? 1 : date === "last7" ? 7 : 30;
+    return { from: new Date(now.getTime() - days * 86_400_000), to: now };
+  }
   const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
   const month = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
   const tomorrow = new Date(today.getTime() + 86400000);
