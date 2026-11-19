@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import {
   Activity,
   ArrowRight,
@@ -67,13 +66,10 @@ function TripMetric({
 export default async function AdminConfirmedTripsPage({ searchParams }: Props) {
   const raw = (await searchParams) ?? {};
   const parsed = parseAdminTripWorkspace(raw);
-  // Preserve legacy custom-date bookmarks without applying invisible filters
-  // to the simplified five-field Trip Directory workspace.
-  if (parsed.ok && parsed.range === "custom") {
-    redirect(tripDirectoryHref(parsed.filters));
-  }
+  // Custom dates are now visible in the directory filter form. Legacy
+  // date-only links remain editable and no longer redirect to a different page.
   const filters = parsed.ok ? parsed.filters : blankFilters;
-  const range = parsed.ok ? parsed.range : "today";
+  const range = parsed.ok ? parsed.range : "24h";
   // The product/provider snapshot supplies provider names to the directory filter.
   // Confirmation readiness and delivery telemetry are now loaded only on Trip operations.
   const [operations, directory] = await Promise.all([
