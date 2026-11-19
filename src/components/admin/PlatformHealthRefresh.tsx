@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { AlertCircle, Check, RefreshCw } from "lucide-react";
 import { formatPlatformRefreshTime, parsePlatformRefreshSnapshot } from "@/lib/platformHealthRefresh";
 import type { PlatformOperations } from "./PlatformHealthDashboard";
