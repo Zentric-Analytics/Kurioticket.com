@@ -2,7 +2,7 @@
 export type AdminQueueRange = "24h" | "today" | "7d" | "30d" | "custom" | "all";
 
 export const adminQueueRangeOptions = [
-  { value: "24h", label: "Last 24 hrs" },
+  { value: "today", label: "Today" },
   { value: "7d", label: "Last 7 days" },
   { value: "30d", label: "Last 30 days" },
   { value: "all", label: "All time" },
@@ -12,17 +12,17 @@ export const adminQueueRangeOptions = [
 export type AdminQueueWindow = { range: AdminQueueRange; from: string; to: string };
 
 export function isAdminQueueRange(value: string): value is AdminQueueRange {
-  return adminQueueRangeOptions.some(option => option.value === value);
+  return value === "24h" || adminQueueRangeOptions.some(option => option.value === value);
 }
 
-/** A missing range means 24h on initial load, or custom for legacy dated URLs. */
+/** A missing range means Today (midnight UTC to now), or custom for legacy dated URLs. */
 export function resolveAdminQueueWindow(
   raw: { range?: string; from?: string; to?: string },
   now: Date = new Date(),
 ): AdminQueueWindow {
   const range: AdminQueueRange = isAdminQueueRange(raw.range || "")
     ? raw.range as AdminQueueRange
-    : raw.from || raw.to ? "custom" : "24h";
+    : raw.from || raw.to ? "custom" : "today";
   if (range === "all") return { range, from: "", to: "" };
   if (range === "custom") return { range, from: raw.from || "", to: raw.to || "" };
   // Reuse the exact applied interval across pagination and status-tab navigation.
