@@ -52,11 +52,14 @@ test("Provider health drafts reset only on committed scope changes and never rea
   await withComponentBrowser(bundle(), mount("providers", "ProviderHealthWindowFilter", { product: "CAR", hours: 24, custom: null }), async page => {
     await page.getByRole("button", { name: "Date range: Last 24 hrs", exact: true }).click();
     await page.getByRole("option", { name: "Custom range", exact: true }).click();
-    await page.getByLabel("From", { exact: true }).fill("2030-01-02");
+    await page.getByRole("button", { name: "Provider health start date UTC" }).click();
+    const providerCalendar = page.getByRole("dialog", { name: "Provider health start date UTC" });
+    await providerCalendar.getByRole("button", { name: "Today" }).click();
+    await providerCalendar.getByRole("button", { name: "Apply date" }).click();
     assert.deepEqual(await page.evaluate(() => (window as unknown as { fixtureNavigation: string[] }).fixtureNavigation), []);
     await page.evaluate(() => (window as unknown as { fixtureRender: (props: unknown) => void }).fixtureRender({ product: "CAR", hours: 72, custom: null }));
     await page.getByRole("button", { name: "Date range: Last 3 days", exact: true }).waitFor();
-    assert.equal(await page.getByLabel("From", { exact: true }).count(), 0);
+    assert.equal(await page.getByRole("button", { name: "Provider health start date UTC" }).count(), 0);
     await page.getByRole("button", { name: "Date range: Last 3 days", exact: true }).click();
     await page.getByRole("option", { name: "Last 7 days", exact: true }).click();
     const urls = await page.evaluate(() => (window as unknown as { fixtureNavigation: string[] }).fixtureNavigation);
@@ -218,16 +221,27 @@ test("Overview applies complete custom UTC dates and can revise a committed cust
       window.fixtureRender(range==='custom'?{range,fromDate:params.get('from'),toDate:params.get('to')}:{range})};
     window.fixtureRender({range:'24h'});`;
   await withComponentBrowser(bundle(), setup, async page => {
+    const selectCalendarDate = async (label: string, iso: string) => {
+      await page.getByRole("button", { name: label, exact: true }).click();
+      const calendar = page.getByRole("dialog", { name: label, exact: true });
+      await calendar.getByRole("combobox", { name: "Calendar month" }).selectOption(iso.slice(5, 7));
+      await calendar.getByRole("combobox", { name: "Calendar year" }).selectOption(iso.slice(0, 4));
+      const title = new Intl.DateTimeFormat("en-US", {
+        timeZone: "UTC", weekday: "long", month: "long", day: "numeric", year: "numeric",
+      }).format(new Date(iso + "T00:00:00.000Z"));
+      await calendar.getByRole("gridcell", { name: title }).click();
+      await calendar.getByRole("button", { name: "Apply date" }).click();
+    };
     await page.getByRole("button", { name: "Overview reporting range: Last 24 hrs" }).click();
     await page.getByRole("option", { name: "Custom range" }).click();
-    await page.getByLabel("From (UTC)", { exact: true }).fill("2026-11-01");
+    await selectCalendarDate("From (UTC)", "2026-11-01");
     assert.equal(await page.getByRole("button", { name: "Apply dates" }).isDisabled(), true);
-    await page.getByLabel("To (UTC)", { exact: true }).fill("2026-11-03");
+    await selectCalendarDate("To (UTC)", "2026-11-03");
     await page.getByRole("button", { name: "Apply dates" }).click();
     await page.getByRole("button", { name: "Overview reporting range: Custom range" }).click();
     await page.getByRole("option", { name: "Custom range" }).click();
-    assert.equal(await page.getByLabel("From (UTC)", { exact: true }).inputValue(), "2026-11-01");
-    await page.getByLabel("To (UTC)", { exact: true }).fill("2026-11-04");
+    assert.match(await page.getByRole("button", { name: "From (UTC)" }).innerText(), /11\/01\/2026/);
+    await selectCalendarDate("To (UTC)", "2026-11-04");
     await page.getByRole("button", { name: "Apply dates" }).click();
     assert.deepEqual(await page.evaluate(() => (window as unknown as { fixtureNavigation: string[] }).fixtureNavigation), [
       "/admin?range=custom&from=2026-11-01&to=2026-11-03",
