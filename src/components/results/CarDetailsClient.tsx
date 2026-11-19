@@ -179,6 +179,7 @@ export function CarDetailsExperience({
   primaryAction,
   presentation,
   primaryOffer: suppliedPrimaryOffer,
+  requestId,
   modelHeadingLevel = 1,
   sectionHeadingLevel = 2,
   itemHeadingLevel = 3,
@@ -191,6 +192,7 @@ export function CarDetailsExperience({
   primaryAction: CarDetailsPrimaryAction;
   presentation: "standalone-content" | "guided-content";
   primaryOffer?: CarOffer | null;
+  requestId?: string | null;
   modelHeadingLevel?: HeadingLevel;
   sectionHeadingLevel?: HeadingLevel;
   itemHeadingLevel?: HeadingLevel;
@@ -1055,6 +1057,7 @@ export function CarDetailsClient({
               car={car}
               search={search}
               presentation="standalone-content"
+              requestId={requestId}
               primaryAction={primaryAction}
               mobileBackControl={
                 <Link
