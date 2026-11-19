@@ -192,7 +192,23 @@ export function AdminCalendarInput({
               className={"grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-[#D8E1EC] text-[#334155] hover:bg-[#F1F7FF] " + focusRing}>
               <ChevronLeft size={17} aria-hidden="true" />
             </button>
-            <h3 className="text-[13px] font-semibold text-[#020617]">{title}</h3>
+            <div className="flex min-w-0 items-center gap-1">
+              <h3 className="sr-only">{title}</h3>
+              <select aria-label="Calendar month" value={month.slice(5, 7)}
+                onChange={event => setMonth(current => current.slice(0, 5) + event.target.value)}
+                className={"h-8 max-w-[130px] rounded-lg border border-transparent bg-white px-1 text-[12px] font-semibold text-[#020617] hover:border-[#D8E1EC] " + focusRing}>
+                {["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map((label, index) => (
+                  <option key={label} value={String(index + 1).padStart(2, "0")}>{label}</option>
+                ))}
+              </select>
+              <select aria-label="Calendar year" value={month.slice(0, 4)}
+                onChange={event => setMonth(event.target.value + "-" + month.slice(5, 7))}
+                className={"h-8 w-[78px] rounded-lg border border-transparent bg-white px-1 text-[12px] font-semibold text-[#020617] hover:border-[#D8E1EC] " + focusRing}>
+                {Array.from({ length: 151 }, (_, index) => 1950 + index).map(year => (
+                  <option key={year} value={String(year)}>{year}</option>
+                ))}
+              </select>
+            </div>
             <button type="button" aria-label="Next month" onClick={() => setMonth(current => shiftMonth(current, 1))}
               className={"grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-[#D8E1EC] text-[#334155] hover:bg-[#F1F7FF] " + focusRing}>
               <ChevronRight size={17} aria-hidden="true" />
