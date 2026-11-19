@@ -522,10 +522,12 @@ export function CarsResultsClient({
   values,
   initialResults,
   inventoryStatus,
+  requestId,
 }: {
   values: CarsResultsValues;
   initialResults: NormalizedCarResult[];
   inventoryStatus: CarInventoryStatus;
+  requestId?: string | null;
 }) {
   const { locale, t: dictionary } = useLocale();
   const router = useRouter();
@@ -1842,6 +1844,7 @@ export function CarsResultsClient({
           hasSearchContext={hasSearchContext}
           mobileSearchInteractionActive={mobileSearchOpen || mobileSearchClosing}
           resultHeadingId="cars-results-heading"
+          requestId={requestId}
           detailsHrefForCar={(car) => resultActionHref(car, buildCarDetailsHref(car.id, values))}
         />
       </div>
@@ -1861,6 +1864,7 @@ export function CarsResultsExperience({
   resultHeading,
   embedded = false,
   detailsHrefForCar,
+  requestId,
   actionLabel,
   actionAriaLabelForCar,
   onSelectCar,
@@ -1880,6 +1884,7 @@ export function CarsResultsExperience({
   isCarSelectable?: (car: NormalizedCarResult) => boolean;
   mobileSearchInteractionActive?: boolean;
   detailsHrefForCar: (car: NormalizedCarResult) => string | null;
+  requestId?: string | null;
   actionLabel?: string;
   actionAriaLabelForCar?: (car: NormalizedCarResult) => string;
   onSelectCar?: (car: NormalizedCarResult) => void;
@@ -2958,6 +2963,7 @@ export function CarsResultsExperience({
                       key={car.id}
                       car={car}
                       search={search}
+                      requestId={requestId}
                       badge={desktopBadges.get(car.id)}
                       mobileBadge={badges.get(car.id) ?? null}
                       detailsHref={detailsHrefForCar(car)}
