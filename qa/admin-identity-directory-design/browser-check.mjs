@@ -40,18 +40,19 @@ try {
       ["IDENTITY","TYPE","STATUS","JOINED / FIRST SEEN","ACTIVITY"]);
     const geometry = await page.evaluate(() => {
       const search = document.getElementById("admin-user-search").getBoundingClientRect();
-      const controls = [...document.querySelectorAll('form[aria-label="Filter users"] button[role="combobox"]')].map(node => {
-        const rect=node.getBoundingClientRect();
-        return { top: rect.top, bottom:rect.bottom, border: getComputedStyle(node).borderBottomWidth, triangle: Boolean(node.querySelector('svg path[d="M0 0h8L4 5z"]')) };
-      });
-      return { searchWidth:search.width, viewport:innerWidth, doc:document.documentElement.scrollWidth,
-        controls, tabs:document.querySelector('nav[aria-label="User types"]').getBoundingClientRect().top,
-        searchTop:search.top };
+      const filter = document.querySelector('form[aria-label="Filter users"]').getBoundingClientRect();
+      const controls = [...document.querySelectorAll('form[aria-label="Filter users"] button[role="combobox"]')]
+        .map(node => node.getBoundingClientRect());
+      return { searchWidth: search.width, viewport: innerWidth, doc: document.documentElement.scrollWidth,
+        controls: controls.map(rect=>({top:rect.top,bottom:rect.bottom})),
+        filterTop:filter.top, tabs:document.querySelector('nav[aria-label="User types"]').getBoundingClientRect().top };
     });
     assert.ok(geometry.doc <= geometry.viewport + 1, "No horizontal document overflow");
-    assert.ok(geometry.searchWidth > geometry.viewport * 0.65, "Full-width search input");
-    assert.ok(geometry.controls.every(x=>x.border==="0px" && x.triangle), "Text-only filters use solid triangle arrows");
-    assert.ok(geometry.tabs > geometry.searchTop, "Tabs follow full-width search");
+    assert.ok(geometry.searchWidth > 0, "Search remains visible");
+    assert.ok(geometry.tabs > geometry.filterTop, "Tabs follow filter bar");
+    if (width >= 1280) assert.ok(geometry.controls.every(rect=>Math.abs(rect.top - geometry.filterTop)<14),
+      "Desktop filter controls belong to the same horizontal row");
+    await expect(page.getByRole("button",{name:"Apply filters",exact:true})).toBeVisible();
     await expect(page.getByRole("link",{name:"Clear filters"})).toHaveCount(0);
     await expect(page.getByRole("navigation",{name:"Identity pagination"})).toHaveCount(0);
     await combo("Date range").click();
@@ -65,45 +66,51 @@ try {
   await expect(page.getByRole("navigation",{name:"Identity pagination"})).toHaveCount(0);
   await expect(page.locator("tbody tr")).toHaveCount(30);
   await search().fill("Zara");
+  await expect(page).not.toHaveURL(/q=Zara/);
+  await expect(page.locator("tbody tr")).toHaveCount(30);
+  await search().press("Enter");
+  await expect(page).not.toHaveURL(/q=Zara/);
+  await page.getByRole("button",{name:"Apply filters",exact:true}).click();
   await expect(page).toHaveURL(/q=Zara/);
   await expect(page.locator("tbody tr")).toHaveCount(1);
   await search().fill("qa-guest-001");
-  await search().press("Enter");
+  await expect(page).not.toHaveURL(/q=qa-guest-001/);
+  await page.getByRole("button",{name:"Apply filters",exact:true}).click();
   await expect(page).toHaveURL(/q=qa-guest-001/);
   await search().fill("");
-  await search().press("Enter");
+  await page.getByRole("button",{name:"Apply filters",exact:true}).click();
   await expect(page.locator("tbody tr")).toHaveCount(30);
-  console.log("PASS search and Enter");
+  console.log("PASS apply-only directory search and Enter suppression");
   await choose("Date range","Custom range");
   await expect(page.getByLabel("Custom start date UTC")).toBeVisible();
-  await expect(page.getByRole("button",{name:"Apply dates"})).toBeDisabled();
   await page.getByLabel("Custom start date UTC").fill("2026-10-01");
   await page.getByLabel("Custom end date UTC").fill("2026-10-23");
   await expect(page).not.toHaveURL(/date=custom/);
-  await page.getByRole("button",{name:"Apply dates"}).click();
+  await page.getByRole("button",{name:"Apply filters",exact:true}).click();
   await expect(page).toHaveURL(/date=custom/);
   await expect(page).toHaveURL(/from=2026-10-01/);
   await expect(page).toHaveURL(/to=2026-10-23/);
   await choose("Date range","All dates");
+  await choose("Account role","Support");
+  await choose("Account status","Active");
+  await expect(page).not.toHaveURL(/role=SUPPORT/);
+  await page.getByRole("button",{name:"Apply filters",exact:true}).click();
+  await expect(page).toHaveURL(/date=all/);
   await expect(page).not.toHaveURL(/from=/);
   await expect(page).not.toHaveURL(/to=/);
-  await choose("Date range","Last 7 days");
-  await expect(page).toHaveURL(/date=last7/);
-  await choose("Account role","Support");
   await expect(page).toHaveURL(/role=SUPPORT/);
-  await expect(page).toHaveURL(/date=last7/);
-  await choose("Account status","Active");
   await expect(page).toHaveURL(/status=ACTIVE/);
   await expect(page.getByRole("link",{name:"Clear filters"})).toHaveCount(0);
   await choose("Date range","All dates");
   await choose("Account role","All roles");
   await choose("Account status","All statuses");
-  await expect(page).toHaveURL(/date=all/);
+  await page.getByRole("button",{name:"Apply filters",exact:true}).click();
   await expect(page).toHaveURL(/role=ALL/);
   await expect(page).toHaveURL(/status=ALL/);
-  console.log("PASS combined filters and clear");
+  console.log("PASS combined filters only after Apply");
   for (const [date,label] of [["last7","Last 7 days"],["last30","Last 30 days"],["all","All dates"]]) {
     await choose("Date range",label);
+    await page.getByRole("button",{name:"Apply filters",exact:true}).click();
     await expect(page).toHaveURL(new RegExp("date="+date));
   }
   await tabs().getByRole("link",{name:/Guests/}).click();
