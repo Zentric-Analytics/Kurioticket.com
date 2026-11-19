@@ -117,7 +117,8 @@ test("Visitor Journeys keeps all eight records fields and the Action link visibl
   const users = readFileSync("src/components/admin/AdminIdentityTable.tsx", "utf8");
   const responsiveCss = readFileSync("src/app/globals.css", "utf8");
   assert.match(users, /admin-responsive-records/);
-  assert.match(list, /admin-responsive-records min-w-0 max-w-full overflow-x-auto/);
+  assert.match(list, /admin-responsive-records admin-journey-records min-w-0 max-w-full/);
+  assert.doesNotMatch(list, /admin-responsive-records min-w-0 max-w-full overflow-x-auto/);
   assert.match(list, /<table className="w-full min-w-0 table-fixed text-left/);
   assert.doesNotMatch(list, /min-w-\[1060px\]/);
   for (const name of ["Last activity", "Identity", "Products", "Providers", "Searches", "Observed stages", "Events", "Action"]) {
@@ -128,4 +129,15 @@ test("Visitor Journeys keeps all eight records fields and the Action link visibl
   assert.match(list, /View activity/);
   assert.match(list, /CopyIdentityId id=\{identityId\}/);
   assert.match(responsiveCss, /@container \(max-width: 800px\)/);
+});
+
+test("Visitor Journeys SEARCHES heading is complete, not broken or clipped", () => {
+  const css = readFileSync("src/app/globals.css", "utf8");
+  assert.match(list, /<col className="w-\[10%\]" \/><col className="w-\[22%\]"/);
+  assert.match(list, /label === "Searches" \? " whitespace-nowrap" : ""/);
+  assert.doesNotMatch(list, /whitespace-nowrap overflow-hidden text-ellipsis" : ""/);
+  assert.match(css, /\.admin-journey-records thead th/);
+  assert.ok(css.includes('.admin-journey-records td[data-label="Searches"]'));
+  assert.match(list, /data-label="Searches"/);
+  assert.doesNotMatch(list, /admin-journey-records[^"]*overflow-x-auto/);
 });
