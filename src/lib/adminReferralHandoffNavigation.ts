@@ -5,7 +5,7 @@ export function referralHandoffHref(input: {
   end: string;
   environment: "staging" | "production";
   provider?: string;
-  product?: "flight" | "hotel";
+  product?: "flight" | "hotel" | "car";
   correlation?: "exact" | "unavailable";
   sourcePage?: string;
 }) {
@@ -30,7 +30,7 @@ export function referralUnlinkedRecordsParams(input: {
   end: string;
   environment: "staging" | "production";
   provider?: string;
-  product?: "FLIGHT" | "HOTEL";
+  product?: "FLIGHT" | "HOTEL" | "CAR";
   cursor?: string | null;
   limit?: number;
 }) {
