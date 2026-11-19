@@ -40,6 +40,7 @@ import type { CarOffer, NormalizedCarResult } from "@/lib/cars/types";
 import type { CarSearchParams } from "@/lib/cars/types";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import { sandboxBookingUrl } from "@/services/travel/kayakSandboxPublic";
+import { recordCarHandoffClick } from "@/lib/cars/carHandoffTracking";
 
 const title = (value: string) =>
   value.replaceAll("-", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
@@ -795,6 +796,7 @@ export function CarResultCard({
                 {providerBookingHref ? (
                   <a
                     href={providerBookingHref}
+                    onClick={() => recordCarHandoffClick(car.id, offer.id, "car-results")}
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label={`View deal from ${offer.bookingProviderName || offer.rentalCompanyName}`}
