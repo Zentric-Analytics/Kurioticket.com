@@ -124,7 +124,7 @@ export default async function AdminJourneysPage({ searchParams, embedded = false
             <AdminEmptyState title="No journeys found" message="No consented journeys match this environment, time window and filter set." />
           ) : (
             <section aria-label="Visitor journeys directory" className="min-w-0 pt-2">
-              <div className="admin-responsive-records min-w-0 max-w-full overflow-x-auto" role="region" aria-label="Journey records" tabIndex={0}>
+              <div className="admin-responsive-records admin-journey-records min-w-0 max-w-full" role="region" aria-label="Journey records" tabIndex={0}>
                 <table className="w-full min-w-0 table-fixed text-left text-[13px]">
                   <caption className="sr-only">Eligible visitor journeys matching the selected filters</caption>
                   <colgroup>
@@ -135,7 +135,7 @@ export default async function AdminJourneysPage({ searchParams, embedded = false
                   <thead className="border-b border-[#D8E1EC] bg-white text-[12px] text-[#475569]">
                     <tr>
                       {["Last activity", "Identity", "Products", "Providers", "Searches", "Observed stages", "Events", "Action"].map(label => (
-                        <th key={label} scope="col" className={"px-2 py-2.5 text-left font-medium uppercase" + (label === "Searches" ? " whitespace-nowrap overflow-hidden text-ellipsis" : "")}>{label}</th>
+                        <th key={label} scope="col" className={"px-2 py-2.5 text-left font-medium uppercase" + (label === "Searches" ? " whitespace-nowrap" : "")}>{label}</th>
                       ))}
                     </tr>
                   </thead>
