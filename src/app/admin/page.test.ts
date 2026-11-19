@@ -149,7 +149,8 @@ test("Online Users is a current presence estimate with independent authenticated
 test("Attention Required separates actionable conditions from setup and waiting work", () => {
   assert.match(display, /summarizeAttentionRequired\(data\)/);
   assert.match(display, /summarizePlatformIncidents\(incidents\.alerts\)/);
-  assert.match(display, /Alert monitoring unavailable; not zero/);
+  assert.match(display, /platformIssues\?\.total \?\? "Unknown"/);
+  assert.doesNotMatch(display, /Alert monitoring unavailable; not zero/);
   for (const [label, link] of [
     ["Platform issues", "/admin/settings/notifications"],
     ["Provider health issues", "/admin/providers"],
@@ -158,7 +159,7 @@ test("Attention Required separates actionable conditions from setup and waiting 
   ]) {
     assert.ok(display.includes('href="' + link + '" label="' + label + '"'), label);
   }
-  for (const field of ["providerHealthIssues", "providerSetupIssues", "supportNeedsAction", "supportWaitingOnUser", "deletionReviews", "deletionPending"]) {
+  for (const field of ["providerHealthIssues", "supportNeedsAction", "deletionReviews"]) {
     assert.match(display, new RegExp("attention\\." + field));
   }
   assert.equal((display.match(/<AttentionLink /g) ?? []).length, 4);
@@ -220,7 +221,7 @@ test("Overview omits duplicate Provider Health and distinguishes health from set
   assert.doesNotMatch(dashboard, /function ProviderSummary\(|function StatusBadge\(|function operationalTone\(|function operationalLabel\(/);
   assert.match(display, /summarizeAttentionRequired\(data\)/);
   assert.match(display, /<AttentionLink href="\/admin\/providers" label="Provider health issues" value=\{attention\.providerHealthIssues\}/);
-  assert.match(display, /attention\.providerSetupIssues/);
+  assert.doesNotMatch(display, /attention\.providerSetupIssues/);
   assert.match(providersPage, /getProviderOperationalStatuses\(monitoringHours, undefined, monitoringRange \?\? undefined\)/);
   assert.match(providersPage, /provider\.serviceBreakdown\.map/);
   assert.match(providersPage, /formatProviderFailureRatePct\(provider\.failureRatePct, provider\.failedCalls\)/);
@@ -268,7 +269,8 @@ test("Attention Required is compact and vertically stacked in its own card", () 
   assert.doesNotMatch(attention, /md:grid-cols-3|lg:grid-cols-3|grid-cols-3/);
   assert.equal((attention.match(/<AttentionLink /g) ?? []).length, 4);
   assert.match(attention, /Provider health issues/);
-  assert.match(attention, /not ready \(setup, not failures\)/);
+  assert.doesNotMatch(attention, /not ready \(setup, not failures\)/);
+  assert.doesNotMatch(attention, / detail=\{/);
 
   const link = dashboard.slice(dashboard.indexOf("function AttentionLink("), dashboard.indexOf("function PlatformSummary("));
   assert.match(link, /px-3 py-2/);
