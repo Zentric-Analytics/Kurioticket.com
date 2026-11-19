@@ -94,6 +94,19 @@ test("Team Access uses a compact horizontal Add form and the same UTC picker for
   assert.match(utc, /toISOString/);
 });
 
+test("Team Access keeps the Add button aligned to the right of Approval reason and wired to submit", () => {
+  const region = registry.slice(registry.indexOf('data-testid="team-access-approval-actions"'), registry.indexOf('</form>'));
+  assert.match(region, /sm:grid-cols-\[minmax\(0,1fr\)_auto\]/);
+  assert.match(region, /sm:col-span-2/);
+  assert.match(region, /lg:col-span-3/);
+  assert.match(region, /id="team-add-reason" name="reason"/);
+  assert.match(region, /h-10 w-full min-w-0 rounded-lg border/);
+  assert.match(region, /<Button type="submit" size="sm" className="h-10 w-full shrink-0 whitespace-nowrap px-4 sm:w-auto">Add team member<\/Button>/);
+  assert.ok(region.indexOf('id="team-add-reason"') < region.indexOf('<Button type="submit"'));
+  assert.match(registry, /<form action=\{add\}/);
+  assert.match(registry, /formData.get\("reason"\)/);
+});
+
 test("Team Access audit timestamps never depend on the browser timezone during hydration", () => {
   assert.ok(registry.includes("formatUtcAuditTimestamp(tester.updatedAt)"));
   assert.ok(registry.includes("formatUtcAuditTimestamp(timestamp)"));

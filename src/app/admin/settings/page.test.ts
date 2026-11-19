@@ -187,6 +187,23 @@ test("settings uses a single administrative workspace instead of dashboard cards
   assert.doesNotMatch(settingsPage, /SummaryItem|Recent control updates|Related operations|Change safeguards|Protected changes/);
 });
 
+test("Settings History uses an accessible polished filter row with 24-hour default", () => {
+  const history = readFileSync("src/app/admin/settings/recent-changes/page.tsx", "utf8");
+  assert.match(history, /requestedRange as SettingsHistoryRange : "24h"/);
+  assert.match(history, /historyHref\("24h", "all", undefined, false\)/);
+  assert.match(history, /historyHref\("24h", "all"\)/);
+  assert.match(history, /Latest recorded changes in the last 24 hours/);
+  assert.match(history, /data-testid="settings-history-filter-row"/);
+  assert.match(history, /lg:grid-cols-\[180px_216px_140px\]/);
+  assert.match(history, /<label htmlFor="settings-history-range" className="sr-only">Time range<\/label>/);
+  assert.match(history, /<label htmlFor="settings-history-category" className="sr-only">Section<\/label>/);
+  assert.match(history, /name="range" defaultValue=\{range\}/);
+  assert.match(history, /name="category" defaultValue=\{category\}/);
+  assert.match(history, /type="submit" className="focus-ring h-10/);
+  assert.match(history, /aria-hidden="true"/);
+  assert.match(history, /<SettingsHistoryRow key=\{item.id\} item=\{item\}/);
+});
+
 test("Settings History expands on the same route and supports read-only details", () => {
   const recent = readFileSync("src/app/admin/settings/recent-changes/page.tsx", "utf8");
   const reader = readFileSync("src/services/adminSettingsHistoryCore.ts", "utf8");
