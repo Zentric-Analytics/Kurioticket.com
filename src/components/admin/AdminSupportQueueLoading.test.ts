@@ -38,7 +38,7 @@ test("Both admin queues reuse one consistent loading state only on Apply", () =>
   assert.match(deletionPage, /adminOperationalReads\.deletions\.list\(params\)/);
   assert.match(deletionPage, /cursorHref\(applied, result\.data\.nextCursor\)/);
   assert.match(deletionPage, /const applied = \{ \.\.\.raw, from: window\.from \|\| undefined, to: window\.to \|\| undefined \}/);
-  assert.match(deletionPage, /"\\&range=" \+ window\.range/);
+  assert.match(deletionPage, /"&range=" \+ window\.range/);
 });
 
 test("Neither queue replaces unavailable or invalid reads with empty records", () => {
