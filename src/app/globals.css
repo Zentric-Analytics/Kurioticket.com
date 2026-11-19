@@ -2858,6 +2858,51 @@ textarea {
   }
 }
 
+/* Keep these two operational tables legible as a table at standard desktop
+   widths. This overrides the generic wrap-anywhere rule only for their headers
+   and short metric/identity values, not for other admin record tables. */
+.admin-search-records thead th,
+.admin-journey-records thead th {
+  white-space: nowrap;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+.admin-search-records td[data-label="Currency"],
+.admin-search-records td[data-label="Results"],
+.admin-search-records td[data-label="Providers"],
+.admin-search-records td[data-label="Duration"],
+.admin-search-records td[data-label="Identity"],
+.admin-journey-records td[data-label="Searches"] {
+  white-space: nowrap;
+  overflow-wrap: normal;
+  word-break: normal;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Preserve the full table until the normal narrow-panel record layout takes
+   over at 800px. Compact header spacing here avoids clipping at intermediate
+   content widths without introducing a horizontal scrollbar. */
+@container (min-width: 801px) and (max-width: 1050px) {
+  .admin-search-records thead th {
+    padding-inline: 4px;
+    font-size: 10px;
+    letter-spacing: 0;
+  }
+  .admin-search-records td[data-label="Currency"],
+  .admin-search-records td[data-label="Results"],
+  .admin-search-records td[data-label="Providers"],
+  .admin-search-records td[data-label="Duration"],
+  .admin-search-records td[data-label="Identity"] {
+    padding-inline: 4px;
+    font-size: 11px;
+  }
+  .admin-journey-records thead th {
+    padding-inline: 4px;
+    font-size: 11px;
+    letter-spacing: 0;
+  }
+}
+
 /* Search Records keeps route/dates on a single compact line, including when
    the generic narrow-panel record layout relaxes other cells to wrap. */
 .admin-search-records td [data-search-route-preview],
