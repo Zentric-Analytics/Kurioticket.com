@@ -135,8 +135,7 @@ export function FlightDetailsExperience({ id, mode = "standalone", backHref, pri
     if (primaryAction.kind === "provider") {
       journeyEvents.offerSelected("flight", flight.id, flight.provider);
       primaryAction.onActivate();
-    }
-    else if (resultReceivedAt !== null) primaryAction.onActivate(flight, resultReceivedAt);
+    } else if (resultReceivedAt !== null) primaryAction.onActivate(flight, resultReceivedAt);
   };
 
   const content = (
