@@ -54,21 +54,21 @@ test("Operations Snapshot includes handoffs and visitor metrics without the remo
     assert.ok(accountGroup.includes('label="' + label + '" value={' + value + "}"), label);
   }
   assert.equal((snapshot.match(/<SnapshotLink /g) ?? []).length, 2);
-  assert.match(snapshot, /aria-label="Account snapshot" className="grid min-w-0 grid-cols-2 items-stretch gap-2"/);
+  assert.match(snapshot, /aria-label="Account snapshot" className="grid min-w-0 grid-cols-1 grid-rows-2 items-stretch gap-2"/);
   assert.doesNotMatch(snapshot, /label="Recorded searches"|label="Customer journeys"/);
   assert.match(snapshot, /<Section title="Visitor Activity"/);
   assert.match(snapshot, /<Section title="Provider Handoffs"/);
 });
 
-test("Operations Snapshot account metrics stay two columns beside Attention Required", async () => {
+test("Operations Snapshot account metrics stack in two rows beside Attention Required", async () => {
   const snapshot = display.slice(display.indexOf('aria-label="Operations Snapshot"'), display.indexOf("<AdminOverviewSecondary system={system} activity={activity} />"));
   const accounts = snapshot.indexOf('aria-label="Account snapshot"');
   const attention = snapshot.indexOf('aria-label="Attention Required"');
   assert.ok(attention >= 0 && accounts > attention, "account cards must follow Attention Required in the same grid row");
   assert.match(snapshot, /items-stretch gap-3 lg:grid-cols-2/);
   const engine = await compile("@theme { --breakpoint-sm: 40rem; } @tailwind utilities;");
-  const generatedCss = engine.build(["grid", "grid-cols-2"]);
-  assert.match(generatedCss, /grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/);
+  const generatedCss = engine.build(["grid", "grid-cols-1", "grid-rows-2"]);
+  assert.match(generatedCss, /grid-template-rows:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/);
 });
 
 test("compact snapshot links keep cards equal height and explanatory text readable", () => {
@@ -336,7 +336,7 @@ test("no fake totals, old full-report panels, or hidden full diagnostics remain 
 });
 
 test("the compact grid remains responsive without horizontal scrolling or cramped desktop cards", () => {
-  assert.match(display, /grid min-w-0 grid-cols-2 items-stretch gap-2/);
+  assert.match(display, /grid min-w-0 grid-cols-1 grid-rows-2 items-stretch gap-2/);
   assert.match(page, /items-stretch gap-3 lg:grid-cols-2/);
   assert.match(display, /<div className="grid gap-1\.5">/);
   assert.match(display, /grid min-w-0 items-start gap-3 lg:grid-cols-2/);
