@@ -58,4 +58,5 @@ test("health summary is accessible, has investigation links, and preserves cauti
   assert.match(html, /\/admin\/providers/);
   assert.match(html, /Installed iOS and Android apps/);
   assert.doesNotMatch(html, /Overall healthy|100% uptime|Crash-free/);
+  assert.doesNotMatch(html, /href="#/, "Do not navigate to a duplicate panel on the same page");
 });
