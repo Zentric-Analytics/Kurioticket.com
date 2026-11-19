@@ -233,6 +233,31 @@ export function AdminOverviewDashboard({ data, system, activity }: {
       <section aria-label="Operations Snapshot" className="min-w-0 space-y-3">
         <h2 className="text-[16px] font-semibold tracking-tight text-slate-950">Operations Snapshot</h2>
 
+        {/* The two account totals sit beside Attention Required, not above it. */}
+        <div className="grid min-w-0 items-stretch gap-3 lg:grid-cols-2">
+          <section aria-label="Attention Required" className="min-w-0 rounded-xl border border-slate-200 p-3 sm:p-4">
+            <h2 className="mb-2 text-[15px] font-semibold text-slate-950">Attention Required</h2>
+            <div className="grid gap-1.5">
+              <AttentionLink href="/admin/providers" label="Provider issues" value={providerAttention} icon={Activity} tone="bad" />
+              <AttentionLink href="/admin/support" label="Support queue" value={supportAttention} icon={Headphones} tone="warn" />
+              <AttentionLink href="/admin/account-deletions" label="Deletion reviews" value={deletionAttention} icon={Trash2} tone="warn" />
+            </div>
+            <p className="mt-2 text-[11px] leading-4 text-slate-600">Provider health: last 24 hours. Support and deletion queues: current.</p>
+          </section>
+          <div aria-label="Account snapshot" className="grid min-w-0 grid-cols-1 grid-rows-2 items-stretch gap-2">
+            <SnapshotLink href="/admin/users" label="Total accounts" value={data.users.total} icon={Users} hint="Current account records" />
+            <SnapshotLink href="/admin/users" label="Online Users" value={<OnlineUsersValue initial={data.onlinePresence} />} icon={Activity}
+              info={(
+                <ActivityDataInfo label="How Online Users are counted">
+                  Activity in the last {data.onlinePresence.windowSeconds} seconds on the website, Admin panel, Android, and iOS.
+                  Counts each verified account once across devices and each recognized guest session once.
+                  A person can have multiple guest sessions.
+                </ActivityDataInfo>
+              )}
+            />
+          </div>
+        </div>
+
         {/* Customer activity and actual outbound provider handoffs share the snapshot row. */}
         <div className="grid min-w-0 items-stretch gap-3 lg:grid-cols-2">
           <AdminOverviewRangeSensitive fill>
@@ -257,31 +282,6 @@ export function AdminOverviewDashboard({ data, system, activity }: {
               </div>
             </Section>
           </AdminOverviewRangeSensitive>
-        </div>
-
-        {/* The two account totals sit beside Attention Required, not above it. */}
-        <div className="grid min-w-0 items-stretch gap-3 lg:grid-cols-2">
-          <section aria-label="Attention Required" className="min-w-0 rounded-xl border border-slate-200 p-3 sm:p-4">
-            <h2 className="mb-2 text-[15px] font-semibold text-slate-950">Attention Required</h2>
-            <div className="grid gap-1.5">
-              <AttentionLink href="/admin/providers" label="Provider issues" value={providerAttention} icon={Activity} tone="bad" />
-              <AttentionLink href="/admin/support" label="Support queue" value={supportAttention} icon={Headphones} tone="warn" />
-              <AttentionLink href="/admin/account-deletions" label="Deletion reviews" value={deletionAttention} icon={Trash2} tone="warn" />
-            </div>
-            <p className="mt-2 text-[11px] leading-4 text-slate-600">Provider health: last 24 hours. Support and deletion queues: current.</p>
-          </section>
-          <div aria-label="Account snapshot" className="grid min-w-0 grid-cols-1 grid-rows-2 items-stretch gap-2">
-            <SnapshotLink href="/admin/users" label="Total accounts" value={data.users.total} icon={Users} hint="Current account records" />
-            <SnapshotLink href="/admin/users" label="Online Users" value={<OnlineUsersValue initial={data.onlinePresence} />} icon={Activity}
-              info={(
-                <ActivityDataInfo label="How Online Users are counted">
-                  Activity in the last {data.onlinePresence.windowSeconds} seconds on the website, Admin panel, Android, and iOS.
-                  Counts each verified account once across devices and each recognized guest session once.
-                  A person can have multiple guest sessions.
-                </ActivityDataInfo>
-              )}
-            />
-          </div>
         </div>
 
         <div className="grid min-w-0 items-start gap-3 lg:grid-cols-2">
