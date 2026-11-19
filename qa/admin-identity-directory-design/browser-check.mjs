@@ -82,9 +82,27 @@ try {
   await expect(page.locator("tbody tr")).toHaveCount(30);
   console.log("PASS apply-only directory search and Enter suppression");
   await choose("Date range","Custom range");
-  await expect(page.getByLabel("Custom start date UTC")).toBeVisible();
-  await page.getByLabel("Custom start date UTC").fill("2026-10-01");
-  await page.getByLabel("Custom end date UTC").fill("2026-10-23");
+  const pickCalendarDate = async (label, isoDate) => {
+    await page.getByRole("button", { name: label, exact: true }).click();
+    const calendar = page.getByRole("dialog", { name: label });
+    await expect(calendar).toBeVisible();
+    const [year, month, day] = isoDate.split("-").map(Number);
+    const today = new Date();
+    const difference = (today.getUTCFullYear() - year) * 12 + today.getUTCMonth() + 1 - month;
+    const direction = difference < 0 ? "Next month" : "Previous month";
+    for (let i = 0; i < Math.abs(difference); i++) {
+      await calendar.getByRole("button", { name: direction }).click();
+    }
+    const fullDate = new Intl.DateTimeFormat("en-US", {
+      timeZone: "UTC", weekday: "long", month: "long", day: "numeric", year: "numeric",
+    }).format(new Date(isoDate + "T00:00:00.000Z"));
+    await calendar.getByRole("gridcell", { name: fullDate }).click();
+    await calendar.getByRole("button", { name: "Apply date" }).click();
+    await expect(calendar).toHaveCount(0);
+  };
+  await expect(page.getByRole("button", { name: "Custom start date UTC" })).toBeVisible();
+  await pickCalendarDate("Custom start date UTC", "2026-10-01");
+  await pickCalendarDate("Custom end date UTC", "2026-10-23");
   await expect(page).not.toHaveURL(/date=custom/);
   await page.getByRole("button",{name:"Apply filters",exact:true}).click();
   await expect(page).toHaveURL(/date=custom/);
