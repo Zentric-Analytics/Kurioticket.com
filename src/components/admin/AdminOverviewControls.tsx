@@ -265,7 +265,7 @@ export function AdminOverviewRangeSelect({ period, nowDate }: { period: Overview
 
       {draftDates ? (
         <form aria-labelledby={datePanelId}
-          className="flex max-w-full flex-wrap items-end justify-end gap-2 rounded-lg border border-slate-200 bg-white p-2.5"
+          className="absolute right-0 top-full z-40 mt-2 flex w-[min(440px,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] flex-wrap items-end justify-end gap-2 rounded-xl border border-[#CAD6E5] bg-white p-3 shadow-[0_16px_40px_-14px_rgba(2,6,23,0.24)]"
           onSubmit={(event) => {
             event.preventDefault();
             if (!validDraft) return;
