@@ -404,7 +404,8 @@ test("loading state covers platform, search performance, visitor and handoff met
 test("reporting presets and custom UTC dates resolve to their exact bounds", () => {
   const now = new Date("2026-11-18T12:30:00.000Z");
   for (const [range, from, href] of [
-    ["24h", "2026-11-17T12:30:00.000Z", "/admin"],
+    ["today", "2026-11-18T00:00:00.000Z", "/admin"],
+    ["24h", "2026-11-17T12:30:00.000Z", "/admin?range=24h"],
     ["7d", "2026-11-11T12:30:00.000Z", "/admin?range=7d"],
     ["30d", "2026-10-19T12:30:00.000Z", "/admin?range=30d"],
   ]) {
@@ -413,8 +414,8 @@ test("reporting presets and custom UTC dates resolve to their exact bounds", () 
     assert.equal(reporting.to.toISOString(), now.toISOString());
     assert.equal(overviewPeriodHref(reporting.period), href);
   }
-  assert.equal(resolveOverviewRange(undefined, now).period.range, "24h");
-  assert.equal(resolveOverviewRange({ range: ["7d", "30d"] }, now).period.range, "24h");
+  assert.equal(resolveOverviewRange(undefined, now).period.range, "today");
+  assert.equal(resolveOverviewRange({ range: ["7d", "30d"] }, now).period.range, "today");
 
   const historical = resolveOverviewRange({ range: "custom", from: "2026-11-01", to: "2026-11-01" }, now);
   assert.equal(historical.from.toISOString(), "2026-11-01T00:00:00.000Z");
@@ -425,7 +426,7 @@ test("reporting presets and custom UTC dates resolve to their exact bounds", () 
   assert.equal(today.to.toISOString(), now.toISOString());
 });
 
-test("invalid or overly wide custom reports use the 24-hour fallback with a visible error", () => {
+test("invalid or overly wide custom reports fall back to Today UTC with a visible error", () => {
   const now = new Date("2026-11-18T12:30:00Z");
   for (const [from, to] of [
     ["2026-02-30", "2026-03-01"],
@@ -436,7 +437,7 @@ test("invalid or overly wide custom reports use the 24-hour fallback with a visi
     ["", "2026-11-18"],
   ]) {
     const result = resolveOverviewRange({ range: "custom", from, to }, now);
-    assert.equal(result.period.range, "24h");
+    assert.equal(result.period.range, "today");
     assert.equal(result.invalidCustom, true);
   }
   assert.match(page, /reporting\.invalidCustom[\s\S]*role="alert"/);
