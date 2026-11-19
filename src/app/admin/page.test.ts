@@ -167,8 +167,8 @@ test("visitor cards display exactly four real consented action-event counts", ()
     assert.match(visitor, new RegExp("stages\\." + stage + "\\.events"));
   }
   assert.equal((visitor.match(/<MiniMetric /g) ?? []).length, 4);
-  assert.match(visitor, /Events can repeat/);
-  assert.match(visitor, /Handoffs are not confirmed bookings/);
+  assert.doesNotMatch(visitor, /Events can repeat/);
+  assert.doesNotMatch(visitor, /Handoffs are not confirmed bookings/);
   assert.doesNotMatch(visitor, /\.journeys\}/);
   assert.match(visitor, /href="\/admin\/journeys"/);
 });
@@ -196,7 +196,7 @@ test("provider handoffs remain recorded redirects, never confirmed bookings", ()
   assert.match(handoffs, /operationalHandoffs\.flights/);
   assert.match(handoffs, /operationalHandoffs\.hotels/);
   assert.match(handoffs, /label="Without visitor identity"/);
-  assert.match(handoffs, /label="Cars" value="—" hint="Not tracked"/);
+  assert.match(handoffs, /operationalHandoffs\.cars/);
   assert.match(handoffs, /grid grid-cols-2 gap-1\.5 sm:grid-cols-3/);
   assert.doesNotMatch(handoffs, /Redirects are not bookings|Unattributed|Recorded outbound redirects/);
   assert.match(handoffs, /href="\/admin\/redirects"/);
@@ -205,8 +205,9 @@ test("provider handoffs remain recorded redirects, never confirmed bookings", ()
   assert.match(contract, /totalRedirects !== inConsentedJourneys \+ outsideConsentedJourneys/);
   assert.match(contract, /r\."type"::text = 'FLIGHT'/);
   assert.match(contract, /r\."type"::text = 'HOTEL'/);
+  assert.match(contract, /r\."type"::text = 'CAR'/);
   const prismaSchema = readFileSync("prisma/schema.prisma", "utf8");
-  assert.match(prismaSchema, /enum RedirectType \{\s*FLIGHT\s*HOTEL\s*\}/);
+  assert.match(prismaSchema, /enum RedirectType \{\s*FLIGHT\s*HOTEL\s*CAR\s*\}/);
 });
 
 test("Overview omits duplicate Provider Health but preserves live provider issue detection", () => {
