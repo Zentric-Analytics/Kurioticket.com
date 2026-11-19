@@ -36,7 +36,7 @@ export type AdminSearchScope = ScopeBase & {
 };
 export type AdminHandoffScope = ScopeBase & {
   environment: PublicEnvironment;
-  product: "FLIGHT" | "HOTEL" | null;
+  product: "FLIGHT" | "HOTEL" | "CAR" | null;
   identity: AdminIdentityFilter;
   userId: string | null;
   visitorId: string | null;
@@ -334,7 +334,7 @@ export function parseAdminHandoffQuery(params: URLSearchParams, fallbackEnvironm
   const base = baseScope(raw.data);
   if (base.status !== "ok") return base;
   const env = environment(raw.data.environment, fallbackEnvironment);
-  const product = enumValue(raw.data.product, "product", ["FLIGHT", "HOTEL"] as const);
+  const product = enumValue(raw.data.product, "product", ["FLIGHT", "HOTEL", "CAR"] as const);
   const idFilter = identity(raw.data.identity);
   const userId = optionalId(raw.data.userId, "userId");
   const visitorId = optionalId(raw.data.visitorId, "visitorId");
