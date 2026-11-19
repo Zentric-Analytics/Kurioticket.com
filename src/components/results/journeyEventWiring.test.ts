@@ -25,7 +25,13 @@ test("opening flight or hotel details does not count as selecting an offer", () 
   assert.match(hotel, /href=\{resolvedDetailsHref\}/);
   assert.match(mobile, /router\.push\(detailsHref\)/);
   // The results cards no longer wire a selection callback to mobile or desktop navigation.
-  assert.doesNotMatch(flight, /onSelect=\{/);
+  assert.match(flight, /onSelect=\{rememberDetailsContext\}/);
+  assert.match(flight, /journeyEvents\.rememberDetailsContext\("flight", flight\.id, searchRequestId \?\? null\)/);
+  assert.match(hotel, /journeyEvents\.rememberDetailsContext\("hotel", hotel\.id, searchRequestId \?\? null\)/);
+  assert.equal((hotel.match(/onClick=\{rememberDetailsContext\}/g) ?? []).length, 2);
+  const recorder = readFileSync(new URL("../privacy/JourneyEventsProvider.tsx", import.meta.url), "utf8");
+  assert.match(recorder, /rememberDetailsContext\(product, resultId, requestId\)/);
+  assert.match(recorder, /rememberJourneySelection\(product, resultId, valid, actor, window\.sessionStorage\)/);
 });
 
 test("normal flight and hotel detail handoffs record the selected offer independently of server handoff logging", () => {
