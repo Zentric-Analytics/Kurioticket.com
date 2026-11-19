@@ -492,7 +492,6 @@ export function HotelCard({
       {resolvedDetailsHref ? (
         <Link
           href={resolvedDetailsHref}
-          
           aria-hidden="true"
           tabIndex={-1}
           className="absolute inset-0 z-10 cursor-pointer"
@@ -773,7 +772,6 @@ export function HotelCard({
                 ) : (
                   <LinkButton
                     href={resolvedDetailsHref}
-                    
                     aria-label={actionAriaLabel}
                     variant="accent"
                     size="sm"
