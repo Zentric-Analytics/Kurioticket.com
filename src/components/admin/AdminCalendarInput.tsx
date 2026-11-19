@@ -7,7 +7,8 @@ import { CalendarDays, ChevronLeft, ChevronRight, Clock3 } from "lucide-react";
 type CalendarMode = "date" | "datetime-local";
 type Props = {
   value: string;
-  onChange: (value: string) => void;
+  onChange?: (event: { target: { value: string } }) => void;
+  onValueChange?: (value: string) => void;
   mode?: CalendarMode;
   min?: string;
   max?: string;
@@ -17,6 +18,8 @@ type Props = {
   className?: string;
   disabled?: boolean;
   defaultTime?: string;
+  timeZone?: "UTC" | "local";
+  required?: boolean;
 };
 
 const weekdays = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
@@ -68,8 +71,8 @@ function withinBounds(day: string, min?: string, max?: string): boolean {
  * the page's Apply filters action remains the sole operation that loads records.
  */
 export function AdminCalendarInput({
-  value, onChange, mode = "date", min, max, name, id, ariaLabel,
-  className = "", disabled = false, defaultTime = "00:00",
+  value, onChange, onValueChange, mode = "date", min, max, name, id, ariaLabel,
+  className = "", disabled = false, defaultTime = "00:00", timeZone = "UTC", required = false,
 }: Props) {
   const generatedId = useId();
   const popupId = id ? id + "-calendar" : generatedId;
@@ -83,9 +86,12 @@ export function AdminCalendarInput({
   const [minute, setMinute] = useState("00");
   const [position, setPosition] = useState({ top: 0, left: 0, width: 324, maxHeight: 430 });
 
-  const today = new Date().toISOString().slice(0, 10);
+  const now = new Date();
+  const today = timeZone === "local"
+    ? [now.getFullYear(), String(now.getMonth() + 1).padStart(2, "0"), String(now.getDate()).padStart(2, "0")].join("-")
+    : now.toISOString().slice(0, 10);
   const selectedTime = mode === "datetime-local"
-    ? String(Number(hour)).padStart(2, "0") + ":" + String(Number(minute)).padStart(2, "0")
+    ? hour.padStart(2, "0") + ":" + minute.padStart(2, "0")
     : "";
   const draftValue = mode === "date" ? draftDay : draftDay + "T" + selectedTime;
   const timeValid = mode === "date" ||
@@ -163,7 +169,8 @@ export function AdminCalendarInput({
     .format(new Date(month + "-01T00:00:00.000Z"));
   return (
     <>
-      {name ? <input type="hidden" name={name} value={value} readOnly /> : null}
+      <input type={mode} name={name} value={value} required={required} min={min} max={max}
+        readOnly tabIndex={-1} aria-hidden="true" className="sr-only" />
       <button id={id} type="button" ref={triggerRef} disabled={disabled}
         aria-label={ariaLabel || (mode === "date" ? "Choose date" : "Choose date and time")}
         aria-haspopup="dialog" aria-expanded={open} aria-controls={open ? popupId : undefined}
@@ -240,7 +247,7 @@ export function AdminCalendarInput({
                 Cancel
               </button>
               <button type="button" disabled={!valid}
-                onClick={() => { if (valid) { onChange(draftValue); close(true); } }}
+                onClick={() => { if (valid) { onValueChange?.(draftValue); onChange?.({ target: { value: draftValue } }); close(true); } }}
                 className={"rounded-lg bg-[#004BB8] px-3 py-2 text-[12px] font-semibold text-white hover:bg-[#003D97] disabled:cursor-not-allowed disabled:opacity-40 " + focusRing}>
                 Apply date
               </button>
