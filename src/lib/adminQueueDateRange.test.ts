@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   adminQueueRangeOptions, localQueueDateTime, resolveAdminQueueWindow,
   toAdminQueueDateParams, validateCustomQueueWindow,
+  type AdminQueueWindow,
 } from "./adminQueueDateRange";
 
 const now = new Date("2026-11-19T12:00:00.000Z");
@@ -19,7 +20,7 @@ test("date ranges include Today UTC, 7 days, 30 days and all time", () => {
   assert.deepEqual(resolveAdminQueueWindow({ range: "all", from: now.toISOString(), to: now.toISOString() }, now), { range: "all", from: "", to: "" });
 });
 test("pagination and status navigation preserve the anchored selected window", () => {
-  const saved = { range: "24h", from: "2026-11-18T09:30:00.000Z", to: "2026-11-19T09:30:00.000Z" };
+  const saved: AdminQueueWindow = { range: "24h", from: "2026-11-18T09:30:00.000Z", to: "2026-11-19T09:30:00.000Z" };
   assert.deepEqual(resolveAdminQueueWindow(saved, now), saved);
   assert.equal(toAdminQueueDateParams(saved).get("from"), saved.from);
   assert.equal(toAdminQueueDateParams(saved).get("to"), saved.to);
