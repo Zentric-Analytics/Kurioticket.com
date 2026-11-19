@@ -57,7 +57,10 @@ function urlWith(base: URLSearchParams, values: Record<string, string>) {
   params.delete("identity"); // Old bookmarks remain valid; new URLs use tab=.
   params.delete("activity");
   params.delete("page");
-  if ("date" in values && values.date !== "custom") { params.delete("from"); params.delete("to"); }
+  if ("date" in values && values.date !== "custom") {
+    params.delete("from");
+    params.delete("to");
+  }
   for (const [key, value] of Object.entries(values)) {
     if (key === "q" && !value) params.delete("q");
     else params.set(key, value);
@@ -66,123 +69,89 @@ function urlWith(base: URLSearchParams, values: Record<string, string>) {
 }
 
 /**
- * Keeps search, sort and filters independent without changing server-side
- * SQL/count/pagination semantics. Only the client navigation is optimistic:
- * the table always comes from the authorized server component.
+ * Search and filters are draft-only until Apply filters is clicked.
+ * Identity tabs remain independent navigation over the last applied filters.
+ * The server remains authoritative for scoped identity records and counts.
  */
 export function AdminUsersToolbar({
   query, role, status, tab, sort, date, from, to, registeredCount, guestCount, pageHref, children,
 }: Props) {
   const router = useRouter();
   const [searchText, setSearchText] = useState(query);
-  const [customOpen, setCustomOpen] = useState(false);
-  const [selectorVersion, setSelectorVersion] = useState(0);
+  const [draftDate, setDraftDate] = useState<AdminIdentityDate>(date);
+  const [draftRole, setDraftRole] = useState(role);
+  const [draftStatus, setDraftStatus] = useState(status);
   const [draftDates, setDraftDates] = useState({ from, to });
+  const [dateError, setDateError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
-  const textRef = useRef(query);
-  const editingRef = useRef(false);
-  const lastSubmittedRef = useRef<string | null>(null);
   const paramsRef = useRef(new URLSearchParams(pageHref.split("?")[1] || ""));
 
+  // Navigations (tabs, Back/Forward, Apply) restore the authoritative URL.
+  // Editing the search field or a dropdown never updates paramsRef or reloads data.
   useEffect(() => {
     paramsRef.current = new URLSearchParams(pageHref.split("?")[1] || "");
-  }, [pageHref]);
-  const dateKey = JSON.stringify([from,to,customOpen]);
-  const [previousDateKey,setPreviousDateKey] = useState(dateKey);
-  if (previousDateKey !== dateKey) { setPreviousDateKey(dateKey); if (!customOpen) setDraftDates({from,to}); }
+    setSearchText(query);
+    setDraftDate(date);
+    setDraftRole(role);
+    setDraftStatus(status);
+    setDraftDates({ from, to });
+    setDateError(null);
+  }, [pageHref, query, date, role, status, from, to]);
 
   useEffect(() => {
     const onHistoryNavigation = () => {
-      // Back/Forward is authoritative, even if a local draft or search is pending.
-      editingRef.current = false;
-      lastSubmittedRef.current = null;
-      paramsRef.current = new URLSearchParams(window.location.search);
-      setCustomOpen(false);
-      const restoredQuery = (paramsRef.current.get("q") ?? "").trim().slice(0, 120);
-      textRef.current = restoredQuery;
-      setSearchText(restoredQuery);
+      const params = new URLSearchParams(window.location.search);
+      paramsRef.current = params;
+      setSearchText(params.get("q") || "");
+      setDraftDate((params.get("date") || "all") as AdminIdentityDate);
+      setDraftRole(params.get("role") || "ALL");
+      setDraftStatus(params.get("status") || "ALL");
+      setDraftDates({ from: params.get("from") || "", to: params.get("to") || "" });
+      setDateError(null);
     };
     window.addEventListener("popstate", onHistoryNavigation);
     return () => window.removeEventListener("popstate", onHistoryNavigation);
   }, []);
 
-  // When navigating Back/Forward, reflect the URL in the input. Do not
-  // overwrite an in-progress keystroke with an earlier response.
-  useEffect(() => {
-    if (!editingRef.current) {
-      textRef.current = query;
-      setSearchText(query);
-      lastSubmittedRef.current = null;
-    } else if (query === textRef.current.trim()) {
-      editingRef.current = false;
-      lastSubmittedRef.current = null;
-    }
-  }, [query, pageHref]);
-
-  const navigate = useCallback((values: Record<string, string>, replace = false) => {
-    const nextQuery = textRef.current.trim().slice(0, 120);
-    const url = urlWith(paramsRef.current, { q: nextQuery, ...values });
+  const navigate = useCallback((values: Record<string, string>) => {
+    const url = urlWith(paramsRef.current, values);
     paramsRef.current = new URLSearchParams(url.split("?")[1] || "");
-    // Only search changes participate in search debounce deduplication.
-    lastSubmittedRef.current = ("q" in values || nextQuery !== query) ? nextQuery : null;
-    startTransition(() => {
-      if (replace) router.replace(url, { scroll: false });
-      else router.push(url, { scroll: false });
-    });
-  }, [router, query]);
+    startTransition(() => router.push(url, { scroll: false }));
+  }, [router]);
 
-  useEffect(() => {
-    const nextQuery = searchText.trim().slice(0, 120);
-    if (nextQuery === query) {
-      if (lastSubmittedRef.current !== null && lastSubmittedRef.current !== nextQuery) {
-        // A different search is in flight: explicitly restore this input.
-        navigate({ q: nextQuery }, true);
-        // Restoration is an explicit committed navigation, not a continuing edit.
-        editingRef.current = false;
-      } else {
-        editingRef.current = false;
-        lastSubmittedRef.current = null;
-      }
-      return;
-    }
-    if (!editingRef.current || nextQuery === lastSubmittedRef.current) return;
-    // Enter and other immediate actions may have committed this value while
-    // the debounce was pending. Never issue a second navigation for it.
-    const timer = window.setTimeout(() => {
-      if (lastSubmittedRef.current === nextQuery || !editingRef.current) return;
-      navigate({ q: nextQuery }, true);
-    }, 300);
-    return () => window.clearTimeout(timer);
-  }, [searchText, query, navigate]);
-
-  const validCustom = /^\d{4}-\d{2}-\d{2}$/.test(draftDates.from) && /^\d{4}-\d{2}-\d{2}$/.test(draftDates.to)
-    && !Number.isNaN(Date.parse(draftDates.from)) && !Number.isNaN(Date.parse(draftDates.to))
+  const validCustom = /^\d{4}-\d{2}-\d{2}$/.test(draftDates.from)
+    && /^\d{4}-\d{2}-\d{2}$/.test(draftDates.to)
+    && !Number.isNaN(Date.parse(draftDates.from))
+    && !Number.isNaN(Date.parse(draftDates.to))
     && draftDates.from <= draftDates.to;
-  function changeDate(next: string) {
-    if (next === "custom") {
-      editingRef.current = false;
-      textRef.current = query;
-      setSearchText(query);
-      lastSubmittedRef.current = null;
-      setDraftDates({from,to});
-      setCustomOpen(true);
+
+  function onSearchSubmit(event: FormEvent<HTMLFormElement>) {
+    // Enter must not submit a draft. Only clicking Apply filters navigates.
+    event.preventDefault();
+  }
+
+  function applyFilters() {
+    if (isPending) return;
+    if (draftDate === "custom" && !validCustom) {
+      setDateError("Choose a valid start and end date (UTC).");
       return;
     }
-    setCustomOpen(false);
-    navigate({date:next});
-  }
-  function onSearchSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const nextQuery = textRef.current.trim().slice(0, 120);
-    if (nextQuery !== lastSubmittedRef.current && (nextQuery !== query || lastSubmittedRef.current !== null)) {
-      navigate({ q: nextQuery }, true);
-    }
+    setDateError(null);
+    navigate({
+      q: searchText.trim().slice(0, 120),
+      date: draftDate,
+      role: draftRole,
+      status: draftStatus,
+      ...(draftDate === "custom" ? { from: draftDates.from, to: draftDates.to } : {}),
+    });
   }
 
   const base = new URLSearchParams(pageHref.split("?")[1] || "");
   const href = (values: Record<string, string>) => urlWith(base, values);
   const counts: Record<UserTab, number> = {
-    ALL: registeredCount + guestCount, REGISTERED: registeredCount, GUEST: guestCount,
+    ALL: registeredCount + guestCount,
+    REGISTERED: registeredCount,
+    GUEST: guestCount,
   };
 
   function navigateLink(event: MouseEvent<HTMLAnchorElement>, values: Record<string, string>) {
@@ -192,95 +161,91 @@ export function AdminUsersToolbar({
   }
 
   return <div className="min-w-0">
-    <div className="pb-3">
-      <form action="/admin/users" method="get" onSubmit={onSearchSubmit} role="search" className="relative min-w-0">
-        <input type="hidden" name="role" value={role} readOnly />
-        <input type="hidden" name="status" value={status} readOnly />
-        <input type="hidden" name="sort" value={sort} readOnly />
-        <input type="hidden" name="date" value={date} readOnly />
-        {from ? <input type="hidden" name="from" value={from} readOnly /> : null}
-        {to ? <input type="hidden" name="to" value={to} readOnly /> : null}
-        <input type="hidden" name="tab" value={tab} readOnly />
-        <Search size={17} aria-hidden="true" className="pointer-events-none absolute left-3.5 top-3.5 text-muted"/>
+    <form action="/admin/users" method="get" onSubmit={onSearchSubmit} role="search"
+      aria-label="Filter users"
+      data-testid="users-directory-filter-row"
+      className="grid w-full min-w-0 grid-cols-1 items-center gap-2 border-b border-[#D8E1EC] pb-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-[minmax(0,2fr)_repeat(3,minmax(0,1fr))_128px]">
+      <input type="hidden" name="sort" value={sort} readOnly />
+      <input type="hidden" name="tab" value={tab} readOnly />
+      {tab === "GUEST" ? <input type="hidden" name="status" value={status} readOnly /> : null}
+      {draftDate === "custom" && validCustom ? <>
+        <input type="hidden" name="from" value={draftDates.from} readOnly />
+        <input type="hidden" name="to" value={draftDates.to} readOnly />
+      </> : null}
+
+      <div className="relative min-w-0">
+        <Search size={17} aria-hidden="true" className="pointer-events-none absolute left-3.5 top-3 text-muted" />
         <label className="sr-only" htmlFor="admin-user-search">Search users</label>
-        <input
-          id="admin-user-search"
-          type="search"
-          name="q"
-          maxLength={120}
-          value={searchText}
-          onChange={event => {
-            textRef.current = event.target.value;
-            editingRef.current = true;
-            // Retain the pending navigation to detect when an edit restores the previous query.
-            setSearchText(event.target.value);
-          }}
+        <input id="admin-user-search" type="search" name="q" maxLength={120}
+          value={searchText} onChange={event => setSearchText(event.target.value)}
           placeholder="Search by name, email, user ID, or guest ID"
-          className="h-11 w-full min-w-0 rounded-lg border border-[#D8E1EC] bg-white pl-10 pr-3 text-[13px] text-foreground placeholder:text-muted outline-none transition-colors hover:border-[#D8E1EC] focus:border-[#94A3B8] focus:outline-none focus:ring-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#64748B] focus-visible:ring-0"
-        />
-      </form>
+          className="h-10 w-full min-w-0 rounded-lg border border-[#D8E1EC] bg-white pl-10 pr-3 text-[13px] text-foreground placeholder:text-muted outline-none transition-colors hover:border-[#94A3B8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#64748B]" />
+      </div>
+      <div className="min-w-0">
+        <AdminDirectorySelect name="date" label="Date range" nativeExcludeValues={["custom"]}
+          value={draftDate} options={dateOptions} compact
+          onValueChange={next => { setDraftDate(next as AdminIdentityDate); setDateError(null); }} />
+      </div>
+      <div className="min-w-0">
+        <AdminDirectorySelect name="role" label="Account role" value={draftRole} options={roles}
+          compact onValueChange={setDraftRole} />
+      </div>
+      {tab !== "GUEST" ? <div className="min-w-0">
+        <AdminDirectorySelect name="status" label="Account status" value={draftStatus} options={statuses}
+          compact onValueChange={setDraftStatus} />
+      </div> : <div className="min-w-0" aria-label="Account status does not apply to guests">
+        <div className="flex h-10 items-center rounded-lg border border-[#E5E7EB] bg-[#F8FAFC] px-3 text-[13px] text-[#64748B]">
+          Status not applicable
+        </div>
+      </div>}
+      <button type="button" onClick={applyFilters} disabled={isPending}
+        className="focus-ring inline-flex h-10 w-full min-w-0 items-center justify-center whitespace-nowrap rounded-lg bg-[#004BB8] px-2 text-[13px] font-medium text-white hover:bg-[#003D97] disabled:opacity-60">
+        Apply filters
+      </button>
+      <noscript>
+        <button type="submit" className="h-10 rounded-lg border border-[#D8E1EC] px-3 text-[13px] font-medium">
+          Apply filters
+        </button>
+      </noscript>
+    </form>
 
-    </div>
-
-    <div className="flex min-w-0 flex-col gap-x-4 gap-y-2 border-b border-border lg:flex-row lg:items-end lg:justify-between">
-      <nav aria-label="User types" className="flex min-w-0 max-w-full shrink-0 items-center gap-5 overflow-x-auto">
-        {tabs.map(item => <Link
-          key={item.value}
-          href={href({ tab: item.value })}
-          aria-current={tab === item.value ? "page" : undefined}
-          onClick={event => navigateLink(event, { tab: item.value })}
-          className={"focus-ring inline-flex h-11 shrink-0 items-center whitespace-nowrap border-b-2 px-1 text-[13px] " +
-            (tab === item.value
-              ? "border-blue font-medium text-foreground"
-              : "border-transparent font-normal text-muted hover:text-foreground")}
-        >
-          {item.label} ({counts[item.value].toLocaleString()})
-        </Link>)}
-      </nav>
-
-      <form action="/admin/users" method="get"
-        aria-label="Filter users"
-        className="flex min-w-0 flex-wrap items-end gap-x-6 gap-y-2 lg:shrink-0 lg:justify-end">
-        <input type="hidden" name="q" value={query} readOnly />
-        <input type="hidden" name="sort" value={sort} readOnly />
-        <input type="hidden" name="tab" value={tab} readOnly />
-        {tab === "GUEST" ? <input type="hidden" name="status" value={status} readOnly /> : null}
-
-        <AdminDirectorySelect key={"date-" + date + "-" + selectorVersion} name="date" label="Date range" nativeExcludeValues={["custom"]}
-          value={customOpen ? "custom" : date} options={dateOptions} plain align="end" onValueChange={changeDate} />
-        <AdminDirectorySelect key={"role-" + role} name="role" label="Account role" value={role} options={roles}
-          plain align="end" onValueChange={next => navigate({ role: next })} />
-        {tab !== "GUEST" ? <AdminDirectorySelect key={"status-" + status} name="status" label="Account status"
-          value={status} options={statuses} plain align="end" onValueChange={next => navigate({ status: next })} /> : null}
-        <noscript>
-          <button type="submit" className="focus-ring col-span-2 rounded-lg border border-border px-3 py-2 text-[13px] font-medium text-foreground">
-            Update filters
-          </button>
-        </noscript>
-      </form>
-    </div>
-    {(customOpen || date === "custom") ? <div className="flex flex-wrap items-end gap-3 py-3">
-      <label className="text-xs text-[#475569]">From (UTC)
+    {draftDate === "custom" ? <div data-testid="users-custom-date-fields" className="flex min-w-0 flex-wrap items-end gap-3 border-b border-[#D8E1EC] py-3">
+      <label className="flex min-w-0 flex-col gap-1 text-xs text-[#475569]">From (UTC)
         <input type="date" aria-label="Custom start date UTC" value={draftDates.from}
-          max={draftDates.to || undefined} onChange={event => { setCustomOpen(true); setDraftDates(current => ({...current,from:event.target.value})); }}
-          className="mt-1 block h-11 min-w-0 rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px] text-[#020617]"/>
+          max={draftDates.to || undefined} onChange={event => { setDraftDates(current => ({ ...current, from: event.target.value })); setDateError(null); }}
+          className="h-10 min-w-0 rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px] text-[#020617]" />
       </label>
-      <label className="text-xs text-[#475569]">To (UTC)
+      <label className="flex min-w-0 flex-col gap-1 text-xs text-[#475569]">To (UTC)
         <input type="date" aria-label="Custom end date UTC" value={draftDates.to}
-          min={draftDates.from || undefined} onChange={event => { setCustomOpen(true); setDraftDates(current => ({...current,to:event.target.value})); }}
-          className="mt-1 block h-11 min-w-0 rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px] text-[#020617]"/>
+          min={draftDates.from || undefined} onChange={event => { setDraftDates(current => ({ ...current, to: event.target.value })); setDateError(null); }}
+          className="h-10 min-w-0 rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px] text-[#020617]" />
       </label>
-      <button type="button" disabled={!validCustom || isPending}
-        onClick={() => { setCustomOpen(false); navigate({date:"custom",from:draftDates.from,to:draftDates.to}); }}
-        className="h-11 rounded-lg bg-[#004BB8] px-4 text-[13px] font-medium text-white disabled:cursor-not-allowed disabled:opacity-40">Apply dates</button>
-      <button type="button" onClick={() => { setCustomOpen(false); setDraftDates({from,to}); setSelectorVersion(version => version + 1); }}
-        className="h-11 px-2 text-[13px] font-medium text-[#475569] hover:underline">Cancel</button>
+      <button type="button" onClick={() => { setDraftDate(date); setDraftDates({ from, to }); setDateError(null); }}
+        className="h-10 px-2 text-[13px] font-medium text-[#475569] hover:underline">
+        Cancel custom dates
+      </button>
+      {dateError ? <p role="alert" className="text-[12px] font-medium text-rose-700">{dateError}</p> : null}
     </div> : null}
+
+    <nav aria-label="User types" className="flex min-w-0 items-center gap-5 border-b border-[#D8E1EC]">
+      {tabs.map(item => <Link
+        key={item.value}
+        href={href({ tab: item.value })}
+        aria-current={tab === item.value ? "page" : undefined}
+        onClick={event => navigateLink(event, { tab: item.value })}
+        className={"focus-ring inline-flex h-11 shrink-0 items-center whitespace-nowrap border-b-2 px-1 text-[13px] " +
+          (tab === item.value
+            ? "border-blue font-medium text-foreground"
+            : "border-transparent font-normal text-muted hover:text-foreground")}
+      >
+        {item.label} ({counts[item.value].toLocaleString()})
+      </Link>)}
+    </nav>
 
     <div aria-busy={isPending} className="relative min-w-0">
       {isPending ? <div role="status" aria-live="polite"
         className="absolute inset-0 z-10 flex min-h-[180px] items-start justify-center bg-white/75 pt-14 text-[13px] font-medium text-foreground">
-        <span className="inline-flex items-center gap-2"><LoaderCircle size={18} className="animate-spin text-blue" aria-hidden="true"/>Loading users…</span>
+        <span className="inline-flex items-center gap-2"><LoaderCircle size={18} className="animate-spin text-blue" aria-hidden="true" />Loading users…</span>
       </div> : null}
       <div className={isPending ? "opacity-40" : undefined}>{children}</div>
     </div>
