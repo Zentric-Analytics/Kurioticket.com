@@ -67,6 +67,23 @@ test("a consented handoff is appended to the search journey after its redirect l
   });
 });
 
+test("verified car handoffs use the shared redirect record and CAR journey product", async () => {
+  let record: unknown;
+  let journey: unknown;
+  let event: unknown;
+  const car = { ...handoff, type: "car" as const, sourcePage: "/cars/details", resultId: "car-123" };
+  await recordProviderHandoffActivity(request, car, {
+    identity: async () => ({ userId: null, visitorId: "guest-123" }),
+    redirect: async value => { record = value; return "car-redirect-123"; },
+    event: async value => { event = value; },
+    journey: async value => { journey = value; return null; },
+  });
+  assert.deepEqual(record, { ...car, userId: null, visitorId: "guest-123" });
+  assert.equal((event as { name: string }).name, "car_partner_redirect");
+  assert.equal((journey as { product: string }).product, "CAR");
+  assert.equal((journey as { redirectLogId: string }).redirectLogId, "car-redirect-123");
+});
+
 test("session lookup failure cannot manufacture account ownership", async () => {
   await recordProviderHandoffActivity(request, handoff, {
     identity: async () => { throw new Error("session unavailable"); },
