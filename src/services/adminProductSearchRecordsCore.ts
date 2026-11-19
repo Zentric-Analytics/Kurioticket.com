@@ -4,7 +4,7 @@ import { classifyProviderIssue, providerSearchService } from "@/services/searchF
 
 export type ProviderProduct = "HOTEL" | "CAR";
 export type ProductSearchFilter = "ALL" | "EXCEPTIONS" | "SUCCESS" | "PARTIAL" | "FAILED" | "ZERO_RESULTS";
-export type ProductSearchWindow = "24h" | "7d" | "30d" | "all";
+export type ProductSearchWindow = "today" | "24h" | "7d" | "30d" | "all";
 
 export type ProductSearchRecord = {
   id: string;
@@ -56,7 +56,7 @@ type Dependencies = {
 const LIMIT = 25;
 const ID = /^[A-Za-z0-9_-]{6,128}$/;
 const filters: readonly ProductSearchFilter[] = ["ALL", "EXCEPTIONS", "SUCCESS", "PARTIAL", "FAILED", "ZERO_RESULTS"];
-const windows: readonly ProductSearchWindow[] = ["24h", "7d", "30d", "all"];
+const windows: readonly ProductSearchWindow[] = ["today", "24h", "7d", "30d", "all"];
 const searchSelect = {
   id: true, requestId: true, type: true, origin: true, destination: true,
   checkIn: true, checkOut: true, status: true, resultCount: true,
@@ -165,7 +165,8 @@ function scopeWhere(product: ProviderProduct, filter: ProductSearchFilter, windo
     query: { path: ["environment"], equals: environment },
     createdAt: {
       lte: asOf,
-      ...(hours ? { gte: new Date(asOf.getTime() - hours * 60 * 60_000) } : {}),
+      ...(window === "today" ? { gte: new Date(Date.UTC(asOf.getUTCFullYear(), asOf.getUTCMonth(), asOf.getUTCDate())) }
+          : hours ? { gte: new Date(asOf.getTime() - hours * 60 * 60_000) } : {}),
     },
     ...(filter === "SUCCESS" || filter === "PARTIAL" || filter === "FAILED" ? { status: filter } : {}),
     ...(filter === "ZERO_RESULTS" ? { status: "SUCCESS" as const, resultCount: 0 } : {}),
@@ -190,7 +191,7 @@ export function createAdminProductSearchRecordsReader(deps: Dependencies) {
         const product = productValue(params);
         if (!product) return invalid("product", "Specify HOTEL or CAR.");
         const filter = params.get("filter") || "ALL";
-        const window = params.get("window") || "24h";
+        const window = params.get("window") || "today";
         if (!filters.includes(filter as ProductSearchFilter)) return invalid("filter", "Invalid record filter.");
         if (!windows.includes(window as ProductSearchWindow)) return invalid("window", "Invalid reporting window.");
         const typedFilter = filter as ProductSearchFilter;
