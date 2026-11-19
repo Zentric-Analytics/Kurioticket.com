@@ -18,7 +18,7 @@ export function selectedJourneyRange(raw: JourneyDateParams): JourneyDateRange {
   if (range === "24h" || range === "today" || range === "7d" || range === "30d" || range === "all" || range === "90d" || range === "custom") return range;
   // Older URLs and identity-activity drill-downs may contain only explicit
   // dates; they should not be silently reinterpreted as a 24-hour preset.
-  return one(raw.from) || one(raw.to) || one(raw.cursor) ? "custom" : "24h";
+  return one(raw.from) || one(raw.to) || one(raw.cursor) ? "custom" : "today";
 }
 
 export function journeyWindow(raw: JourneyDateParams, now: Date): { from?: string; to?: string } {

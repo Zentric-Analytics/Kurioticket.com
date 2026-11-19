@@ -8,8 +8,11 @@ import { buildHandoffProviderOptions } from "./adminHandoffProviderOptions";
 
 const now = new Date("2026-11-18T17:48:00.000Z");
 
-test("Last 24 hrs is default; legacy Today, 7/30 days and all-time still work", () => {
+test("Today UTC is default; explicit rolling 24h, 7/30 days and all-time still work", () => {
   assert.deepEqual(resolveHandoffDateRange({}, now), {
+    range: "today", from: "2026-11-18T00:00:00.000Z", to: null,
+  });
+  assert.deepEqual(resolveHandoffDateRange({ range: "24h" }, now), {
     range: "24h", from: "2026-11-17T17:48:00.000Z", to: null,
   });
   assert.deepEqual(resolveHandoffDateRange({ range: "today" }, now), {

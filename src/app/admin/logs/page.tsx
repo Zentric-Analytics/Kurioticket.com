@@ -8,7 +8,7 @@ import { adminAuditReads } from "@/services/adminAuditReadService";
 export const metadata = { title: "Admin Audit Logs" };
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
-type AuditRange = "24h" | "7d" | "30d" | "all" | "90d" | "custom";
+type AuditRange = "today" | "24h" | "7d" | "30d" | "all" | "90d" | "custom";
 
 const rowGrid = "md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.6fr)_minmax(0,1.1fr)_minmax(0,0.95fr)]";
 
@@ -186,7 +186,7 @@ function one(value: string | string[] | undefined) {
 }
 
 function normalizeRange(value: string): AuditRange {
-  return value === "24h" || value === "7d" || value === "30d" || value === "all" || value === "90d" || value === "custom" ? value : "24h";
+  return value === "today" || value === "24h" || value === "7d" || value === "30d" || value === "all" || value === "90d" || value === "custom" ? value : "today";
 }
 
 function auditParams(raw: Record<string, string | string[] | undefined>, range: AuditRange, now: Date) {
@@ -223,7 +223,9 @@ function auditParams(raw: Record<string, string | string[] | undefined>, range: 
     : range === "30d" ? 30 * 24 * 60 * 60 * 1000
       : range === "90d" ? 90 * 24 * 60 * 60 * 1000
         : 7 * 24 * 60 * 60 * 1000;
-  params.set("from", new Date(now.getTime() - durationMs).toISOString());
+  params.set("from", (range === "today"
+    ? new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
+    : new Date(now.getTime() - durationMs)).toISOString());
   params.set("to", now.toISOString());
   return params;
 }

@@ -5,13 +5,13 @@ import { parseAdminTripWorkspace, tripWorkspaceHref } from "./adminTripWorkspace
 
 const now = new Date("2026-11-03T15:42:00.000Z");
 
-test("Trips default to a rolling Last 24 hrs while legacy Today keeps UTC calendar-day semantics", () => {
+test("Trips default to Today UTC while legacy rolling 24h remains available", () => {
   const current = parseAdminTripWorkspace({}, now);
   assert.equal(current.ok, true);
   if (!current.ok) return;
-  assert.equal(current.range, "24h");
-  assert.equal(current.filters.from, "2026-11-02T15:42:00.000Z");
-  assert.equal(current.filters.to, "2026-11-03T15:42:00.000Z");
+  assert.equal(current.range, "today");
+  assert.equal(current.filters.from, "2026-11-03");
+  assert.equal(current.filters.to, "2026-11-03");
 
   const today = parseAdminTripWorkspace({ range: "today", product: "FLIGHT", status: "CANCELLED" }, now);
   assert.equal(today.ok, true);
@@ -27,9 +27,12 @@ test("Trips default to a rolling Last 24 hrs while legacy Today keeps UTC calend
   const month = parseAdminTripWorkspace({ range: "30d" }, now);
   assert.equal(month.ok, true);
   if (month.ok) assert.deepEqual([month.filters.from, month.filters.to], ["2026-10-04T15:42:00.000Z", "2026-11-03T15:42:00.000Z"]);
-  const saved = parseAdminTripWorkspace({ range: "24h", from: current.filters.from, to: current.filters.to }, new Date(now.getTime() + 60000));
+  const legacy = parseAdminTripWorkspace({range:"24h"},now);
+  assert.equal(legacy.ok, true);
+  if (!legacy.ok) return;
+  const saved = parseAdminTripWorkspace({ range: "24h", from: legacy.filters.from, to: legacy.filters.to }, new Date(now.getTime() + 60000));
   assert.equal(saved.ok, true);
-  if (saved.ok) assert.deepEqual(saved.filters, current.filters);
+  if (saved.ok) assert.deepEqual(saved.filters, legacy.filters);
 });
 
 test("custom dates remain editable and invalid or repeated ranges fail closed", () => {

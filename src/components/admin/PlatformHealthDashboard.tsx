@@ -27,9 +27,10 @@ function ServiceSignal({ title, state, children, href }: {
       {href ? <Link href={href} className="focus-ring mt-3 inline-block rounded-sm text-[12px] font-semibold text-[#004BB8] hover:underline">Investigate {title.toLowerCase()} →</Link> : null}
     </section>;
 }
-export function PlatformHealthDashboard({ data: initialData, hours, application }: {
+export function PlatformHealthDashboard({ data: initialData, hours, period, application }: {
     data: PlatformOperations;
     hours: number;
+    period: "today" | "rolling";
     application: PlatformSelection;
 }) {
     const [localSnapshot, setLocalSnapshot] = useState<{ origin: PlatformOperations; value: PlatformOperations }>({ origin: initialData, value: initialData });
@@ -43,8 +44,8 @@ export function PlatformHealthDashboard({ data: initialData, hours, application 
     <h1 className="text-[20px] font-semibold leading-7 tracking-[-0.02em] text-[#020617]">Platform Health</h1>
   </header>
   <div className="flex min-w-0 flex-wrap items-end justify-between gap-3 border-b border-[#D8E1EC] py-4">
-    <div className="min-w-0 flex-1"><PlatformHealthFilters hours={hours} application={application}/></div>
-    <PlatformHealthRefresh hours={hours} lastRefreshedAt={data.window.to} onRefreshed={acceptRefresh} />
+    <div className="min-w-0 flex-1"><PlatformHealthFilters hours={hours} period={period} application={application}/></div>
+    <PlatformHealthRefresh hours={hours} period={period} lastRefreshedAt={data.window.to} onRefreshed={acceptRefresh} />
   </div>
   <PlatformHealthAttention data={data} application={application}/>
   <OperationsSection className="py-5" >

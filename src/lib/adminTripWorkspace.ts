@@ -5,7 +5,7 @@ import {
   type AdminTripStatus,
 } from "./adminConfirmedTripsDirectory";
 
-/** Rolling presets use exact UTC instants; legacy Today and custom UTC days remain supported. */
+/** Today defaults to the current UTC calendar day; legacy rolling 24h deep links remain valid. */
 export const adminTripWorkspaceRanges = ["24h", "all", "today", "7d", "30d", "custom"] as const;
 export type AdminTripWorkspaceRange = (typeof adminTripWorkspaceRanges)[number];
 
@@ -35,7 +35,7 @@ export function parseAdminTripWorkspace(raw: RawQuery, now = new Date()): Resolv
     return { ok: false, error: "Unsupported trip time range." };
   }
   if (!Number.isFinite(now.getTime())) return { ok: false, error: "Invalid time reference." };
-  const range: AdminTripWorkspaceRange = (requested || (raw.from || raw.to ? "custom" : "24h")) as AdminTripWorkspaceRange;
+  const range: AdminTripWorkspaceRange = (requested || (raw.from || raw.to ? "custom" : "today")) as AdminTripWorkspaceRange;
   const dateFields = {
     from: typeof raw.from === "string" && range === "custom" ? raw.from : "",
     to: typeof raw.to === "string" && range === "custom" ? raw.to : "",

@@ -280,7 +280,7 @@ function one(value: string | string[] | undefined) {
 }
 
 function normalizeRange(value: string): EmailDeliveryRange {
-  return value === "7d" || value === "30d" || value === "90d" || value === "custom" ? value : "24h";
+  return value === "today" || value === "24h" || value === "7d" || value === "30d" || value === "90d" || value === "custom" ? value : "today";
 }
 
 function resolveRange(raw: Record<string, string | string[] | undefined>) {
@@ -295,11 +295,11 @@ function resolveRange(raw: Record<string, string | string[] | undefined>) {
             : 24 * 60 * 60 * 1000;
     return {
       range,
-      from: new Date(now.getTime() - durationMs),
+      from: range === "today" ? new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())) : new Date(now.getTime() - durationMs),
       to: now,
       fromDate: "",
       toDate: "",
-      label: range === "7d" ? "Last 7 days" : range === "30d" ? "Last 30 days" : range === "90d" ? "Last 90 days" : "Last 24 hrs",
+      label: range === "today" ? "Today" : range === "7d" ? "Last 7 days" : range === "30d" ? "Last 30 days" : range === "90d" ? "Last 90 days" : "Last 24 hrs",
       error: "",
     };
   }

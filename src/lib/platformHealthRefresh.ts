@@ -20,12 +20,16 @@ function isOperationalTotals(value: unknown): boolean {
 
 /** Reject malformed / unrelated results before replacing the visible snapshot.
  * Unknown or unavailable *service* states remain valid observations. */
-export function parsePlatformRefreshSnapshot(payload: unknown, hours: number): PlatformOperations | null {
+export function parsePlatformRefreshSnapshot(payload: unknown, hours: number, period: "today" | "rolling" = "rolling"): PlatformOperations | null {
   if (!isRecord(payload) || ![24, 168, 720].includes(hours)) return null;
   if (payload.environment !== "staging" && payload.environment !== "production") return null;
   if (!isRecord(payload.window) || typeof payload.window.from !== "string" || typeof payload.window.to !== "string") return null;
   const from = Date.parse(payload.window.from), to = Date.parse(payload.window.to);
-  if (!Number.isFinite(from) || !Number.isFinite(to) || Math.abs(to - from - hours * 3_600_000) > 1_000) return null;
+  if (!Number.isFinite(from) || !Number.isFinite(to)) return null;
+  const expectedFrom = period === "today"
+    ? Date.UTC(new Date(to).getUTCFullYear(), new Date(to).getUTCMonth(), new Date(to).getUTCDate())
+    : to - hours * 3_600_000;
+  if (Math.abs(from - expectedFrom) > 1_000) return null;
   if (!isRecord(payload.activity) || !["AVAILABLE", "MONITORING_UNAVAILABLE"].includes(String(payload.activity.state))) return null;
   if (payload.activity.data === null) {
     if (payload.activity.state !== "MONITORING_UNAVAILABLE") return null;

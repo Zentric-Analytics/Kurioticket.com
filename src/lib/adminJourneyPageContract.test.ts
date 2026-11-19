@@ -80,8 +80,8 @@ test("Journeys directory shares Users styling without modifying consent-aware da
   assert.match(history, /events\.map\(event =>/);
 });
 
-test("Visitor Journeys defaults to Last 24 hours, keeps responsive filters on one desktop row and isolates environment", () => {
-  assert.match(dates, /return one\(raw\.from\) \|\| one\(raw\.to\) \|\| one\(raw\.cursor\) \? "custom" : "24h"/);
+test("Visitor Journeys defaults to Today UTC, keeps responsive filters on one desktop row and isolates environment", () => {
+  assert.match(dates, /return one\(raw\.from\) \|\| one\(raw\.to\) \|\| one\(raw\.cursor\) \? "custom" : "today"/);
   assert.match(dates, /JOURNEY_ALL_TIME_FROM/);
   assert.match(list, /getPublicEnvironment\(\)/);
   assert.match(list, /\.\.\.withoutPagination\(raw\), \.\.\.fixed, environment/);

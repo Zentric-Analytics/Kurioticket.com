@@ -14,10 +14,10 @@ test("provider health supports only the bounded monitoring windows", () => {
 });
 
 test("provider health window navigation preserves product and current default", () => {
-  assert.equal(providerHealthHref(24, "all"), "/admin/providers");
+  assert.equal(providerHealthHref(24, "all"), "/admin/providers?hours=24");
   assert.equal(providerHealthHref(72, "all"), "/admin/providers?hours=72");
   assert.equal(providerHealthHref(168, "hotels"), "/admin/providers?product=hotels&hours=168");
-  assert.equal(providerHealthHref(24, "flights"), "/admin/providers?product=flights");
+  assert.equal(providerHealthHref(24, "flights"), "/admin/providers?product=flights&hours=24");
 });
 
 test("search investigation URLs scope search creation dates, not provider-call timestamps", () => {
@@ -34,6 +34,10 @@ test("search investigation URLs scope search creation dates, not provider-call t
 
 test("custom monitoring date windows include full UTC dates, bound history, and preserve product", () => {
   const now = new Date("2026-11-03T12:00:00.000Z");
+  const today = parseProviderHealthRange({}, now);
+  assert.equal(today.range?.from.toISOString(), "2026-11-03T00:00:00.000Z");
+  assert.equal(today.range?.to.toISOString(), now.toISOString());
+  assert.equal(providerHealthRangeHref("flights", today.range, today.hours, "today"), "/admin/providers?product=flights");
   const valid = parseProviderHealthRange({ period: "custom", from: "2026-11-01", to: "2026-11-03" }, now);
   assert.equal(valid.error, null);
   assert.equal(valid.range?.from.toISOString(), "2026-11-01T00:00:00.000Z");

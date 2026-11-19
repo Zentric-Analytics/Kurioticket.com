@@ -34,7 +34,7 @@ export function JourneyDateRangeFields({ initialRange, initialFrom, initialTo, n
         }}
         options={[
           ...ADMIN_REPORTING_RANGE_OPTIONS,
-          ...(range === "today" ? [{ value: "today", label: "Today (legacy)" }] : []),
+          ...(range === "24h" ? [{ value: "24h", label: "Last 24 hrs (legacy)" }] : []),
           ...(range === "90d" ? [{ value: "90d", label: "Last 90 days (legacy)" }] : []),
         ]} /></div>
       {custom ? (

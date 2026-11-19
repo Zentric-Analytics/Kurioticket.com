@@ -23,8 +23,9 @@ export function ApplicationSourceSelect({ value = "ALL", name = "application", i
   );
 }
 
-export function PlatformHealthFilters({ hours, application }: {
+export function PlatformHealthFilters({ hours, period, application }: {
   hours: number;
+  period: "today" | "rolling";
   application: PlatformSelection;
 }) {
   return (
@@ -35,11 +36,12 @@ export function PlatformHealthFilters({ hours, application }: {
         <span className="text-[12px] font-medium text-[#475569]">Activity window</span>
         <AdminDirectorySelect
           label="Activity window"
-          name="hours"
-          value={String(hours)}
+          name="window"
+          value={period === "today" ? "today" : String(hours)}
           options={[
-            { value: "24", label: "Last 24 hrs" },
+            { value: "today", label: "Today" },
             { value: "168", label: "Last 7 days" },
+            ...(period === "rolling" && hours === 24 ? [{ value: "24", label: "Last 24 hrs (legacy)" }] : []),
             { value: "720", label: "Last 30 days" },
           ]}
           compact attached

@@ -221,7 +221,7 @@ test("Provider Health range sits to the right of product tabs, not beside attent
 test("provider attention uses a single dropdown and safely bounded date selection", () => {
   assert.match(providersPage, /parseProviderHealthRange\(raw, monitoringNow\)/);
   assert.match(providersPage, /ProviderHealthWindowFilter/);
-  assert.match(providersPage, /providerHealthRangeHref\(item\.key, monitoringRange, monitoringHours\)/);
+  assert.match(providersPage, /providerHealthRangeHref\(item\.key, monitoringRange, monitoringHours, monitoringPeriod\)/);
   assert.doesNotMatch(providersPage, /Provider health signals \(historical\)/);
   assert.doesNotMatch(providersPage, /Historical outcomes in this window do not necessarily represent an active incident/);
   assert.match(providersPage, /Providers requiring attention/);
@@ -339,13 +339,13 @@ test("Task 2: breakdown reasons are stacked with aligned counts, not comma-joine
 
 test("Task 3: referral attribution uses compact preset auto-apply and white metric summaries", () => {
   assert.match(referralPage, /requireAdminApiSession\(\)/);
-  assert.match(referralPage, /parseAttributionDays\(daysValue\)/);
-  assert.match(referralPage, /getReferralAttributionSummary\(days, environment\)/);
-  assert.match(referralPage, /<ReferralWindowFilter days=\{days\} embedded=\{false\} \/>/);
+  assert.match(referralPage, /parseAttributionDays\(daysValue === "today" \? null : daysValue\)/);
+  assert.match(referralPage, /getReferralAttributionSummary\(days, environment, period\)/);
+  assert.match(referralPage, /<ReferralWindowFilter days=\{days\} embedded=\{false\} period=\{period\} \/>/);
   assert.match(referralWindowFilter, /router\.replace\(target, \{ scroll: false \}\)/);
   assert.match(referralWindowFilter, /name="days"/);
   assert.match(referralWindowFilter, /name="view" value="attribution"/);
-  for (const window of ["1","7","30"]) {
+  for (const window of ["today","7","30"]) {
     assert.match(referralWindowFilter, new RegExp('value: "' + window + '"'));
   }
   assert.match(referralPage, /summary\.dataAvailable \? summary\.handoffs\.total\.toLocaleString\(\) : "—"/);
@@ -440,7 +440,7 @@ test("Referral date filter stays available without duplicate Providers tabs", ()
   assert.doesNotMatch(providersPage, /<nav aria-label="Provider reporting sections"/);
   assert.match(providersPage, /<header className="flex min-w-0 flex-wrap items-center justify-between gap-3 border-b border-\[#D8E1EC\] pb-4 pt-1">/);
   assert.match(providersPage, /<h1 className="text-\[20px\] font-semibold leading-7 tracking-\[-0\.02em\] text-\[#020617\]">\s*Referral Attribution\s*<\/h1>/);
-  assert.match(providersPage, /<ReferralWindowFilter days=\{attributionDays \?\? DEFAULT_ATTRIBUTION_DAYS\} embedded \/>/);
+  assert.match(providersPage, /<ReferralWindowFilter days=\{attributionDays \?\? DEFAULT_ATTRIBUTION_DAYS\} period=\{attributionPeriod\} embedded \/>/);
   assert.match(referralPage, /\) : null\}/);
   assert.doesNotMatch(referralPage, /<h1 className="sr-only">Referral Attribution<\/h1>/);
   assert.doesNotMatch(providersPage, /attributionEnvironment === "production"/);
