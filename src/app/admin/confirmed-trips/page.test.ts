@@ -224,7 +224,12 @@ test("six directory filters use a compact left-anchored toolbar with a polished 
   for (const name of ["q", "provider", "product", "status", "identity", "range"]) {
     assert.match(controls, new RegExp('name="' + name + '"'));
   }
-  assert.doesNotMatch(controls, /name="from"|name="to"|type="date"/);
+  // Custom dates are now part of the main filter form rather than a hidden
+  // alternate directory. Presets still submit no custom inputs.
+  assert.match(controls, /selectedRange === "custom"/);
+  assert.match(controls, /name="from"/);
+  assert.match(controls, /name="to"/);
+  assert.match(controls, /customValid/);
   assert.match(controls, /flex min-w-0 flex-wrap items-end gap-x-2 gap-y-2\.5/);
   for (const width of ["sm:w-[180px]", "sm:w-[135px]", "sm:w-[110px]", "sm:w-[120px]"]) {
     assert.ok(controls.includes(width), "Missing compact toolbar width: " + width);
