@@ -5,12 +5,13 @@ import test from "node:test";
 const route = readFileSync(new URL("./route.ts", import.meta.url), "utf8");
 
 test("Car handoff rejects headerless and cross-origin posts before cache or writes", () => {
-  const browserGuard = route.indexOf('origin !== new URL(request.url).origin');
+  const browserGuard = route.indexOf('!origin || !isSameOriginRequest(request)');
   const fetchSiteGuard = route.indexOf('request.headers.get("sec-fetch-site") !== "same-origin"');
   const cacheRead = route.indexOf('getProviderResult<NormalizedCarResult>("car", body.resultId)');
   const persist = route.indexOf("await recordProviderHandoffActivity(request,");
   assert.ok(browserGuard > 0 && fetchSiteGuard > browserGuard);
   assert.ok(cacheRead > fetchSiteGuard && persist > cacheRead);
+  assert.match(route, /import \{ isSameOriginRequest \} from "@\/lib\/visitor-identity"/);
 });
 
 test("Car handoff rate limits and bounds requests before provider lookup", () => {
