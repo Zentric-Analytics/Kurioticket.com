@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { SearchMonitorSelect } from "./SearchMonitorSelect";
 import { AdminCalendarInput } from "./AdminCalendarInput";
 import { ADMIN_REPORTING_RANGE_OPTIONS, type AdminReportingRange } from "@/lib/adminReportingRanges";
-import { utcDateTimeInput, utcDateTimeIso } from "@/lib/adminJourneyDateRange";
+import { offsetUtcDateTime, utcDateTimeInput, utcDateTimeIso } from "@/lib/adminJourneyDateRange";
 
 /** Used only by operational record directories supporting ISO from/to.
  * Custom UTC bounds appear on their own row, without disturbing the desktop
@@ -58,12 +58,14 @@ export function AdminOperationalDateRangeFields({
       <div data-testid={testId + "-custom"} className="col-span-full flex min-w-0 flex-wrap items-end gap-3 border-t border-[#E7ECF5] py-3">
         <label className="flex min-w-0 flex-col gap-1 text-[12px] text-[#475569]">From (UTC)
           <AdminCalendarInput mode="datetime-local" required value={from} onChange={event => setFrom(event.target.value)}
-            max={to || now.slice(0,16)}
+            min={to ? offsetUtcDateTime(to, -90 * 24 * 60) : undefined}
+            max={to ? offsetUtcDateTime(to, -1) : now.slice(0, 16)}
             className="w-[220px] max-w-full" />
         </label>
         <label className="flex min-w-0 flex-col gap-1 text-[12px] text-[#475569]">To (UTC)
           <AdminCalendarInput mode="datetime-local" required value={to} onChange={event => setTo(event.target.value)}
-            min={from || undefined} max={now.slice(0,16)}
+            min={from ? offsetUtcDateTime(from, 1) : undefined}
+            max={from ? (offsetUtcDateTime(from, 90 * 24 * 60) < now.slice(0, 16) ? offsetUtcDateTime(from, 90 * 24 * 60) : now.slice(0, 16)) : now.slice(0, 16)}
             className="w-[220px] max-w-full" />
         </label>
         <input type="hidden" name="from" value={start} />
