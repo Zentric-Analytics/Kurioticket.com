@@ -51,7 +51,7 @@ function matches(value: any, condition: any): boolean {
   });
 }
 
-function setup(kind: "guest" | "user" | "operational", count = 1105, products = ["FLIGHT", "HOTEL"], includeOfferJourneys = false) {
+function setup(kind: "guest" | "user" | "operational", count = 1105, products = ["FLIGHT", "HOTEL"], includeOfferJourneys = false, handoffProduct: "FLIGHT" | "HOTEL" | "CAR" = "HOTEL") {
   const userId = "qa-complete-account";
   const visitorId = "qa-complete-visitor";
   const id = kind === "user" ? userId : kind === "operational" ? "qa-operational-session" : visitorId;
@@ -75,7 +75,7 @@ function setup(kind: "guest" | "user" | "operational", count = 1105, products = 
   }));
   const handoffRows: Row[] = Array.from({ length: 53 }, (_, index) => ({
     ...owner, id: "qa-handoff-" + String(index).padStart(6, "0"),
-    createdAt: new Date(+baseTime - index * 1500), type: "HOTEL", provider: "Provider A",
+    createdAt: new Date(+baseTime - index * 1500), type: handoffProduct, provider: "Provider A",
     route: "Accra", metadata, journeyEvents: [],
   }));
   const analyticsRows: Row[] = kind === "operational" ? [] : Array.from({ length: 51 }, (_, index) => ({
@@ -202,6 +202,18 @@ for (const kind of ["guest", "user", "operational"] as const) {
     assert.equal(scenario.transactions(), 1);
   });
 }
+
+test("operational Cars identity activity includes CAR redirects when filtered", async () => {
+  const scenario = setup("operational", 3, ["CAR"], false, "CAR");
+  const filtered = await scenario.load({ ...allFilters, product: "CAR" });
+  assert.equal(filtered.status, "ok");
+  assert.equal(filtered.data.summary.providerHandoffs, 53);
+  assert.equal(filtered.data.summary.searches, 3);
+  assert.equal(filtered.data.events.filter((event: Row) => event.id.startsWith("qa-handoff-")).length, 53);
+  const hotelOnly = await scenario.load({ ...allFilters, product: "HOTEL" });
+  assert.equal(hotelOnly.status, "ok");
+  assert.equal(hotelOnly.data.summary.providerHandoffs, 0);
+});
 
 test("offer selections and distinct journeys follow the exact authorized, filtered activity window", async () => {
   for (const kind of ["guest", "user"] as const) {
