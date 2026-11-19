@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, type KeyboardEvent } from "react";
+import { useMemo, useState, type KeyboardEvent } from "react";
 
 import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
+import { ADMIN_REPORTING_RANGE_OPTIONS } from "@/lib/adminReportingRanges";
 import type { AdminTripFilters } from "@/lib/adminConfirmedTripsDirectory";
 import type { AdminTripWorkspaceRange } from "@/lib/adminTripWorkspace";
 
@@ -33,12 +34,8 @@ const identityOptions = [
   { value: "registered", label: "Registered" },
   { value: "guest", label: "Guest", disabled: true },
 ] as const;
-const rangeOptions = [
-  { value: "today", label: "Today" },
-  { value: "7d", label: "Last 7 days" },
-  { value: "30d", label: "Last 30 days" },
-  { value: "all", label: "All time" },
-] as const;
+const rangeOptions = ADMIN_REPORTING_RANGE_OPTIONS;
+
 
 const fieldLabel = "block min-w-0 text-[11px] font-medium leading-4 text-slate-700 2xl:text-xs";
 const inputClass = "mt-1 block h-9 w-full min-w-0 max-w-full rounded-lg border border-slate-200 bg-white px-2 text-[11px] text-slate-900 placeholder:text-slate-500 focus-visible:border-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/25 2xl:text-xs";
@@ -57,6 +54,12 @@ function keepFiltersDraftUntilApply(event: KeyboardEvent<HTMLFormElement>) {
  * remain draft selections until the administrator explicitly presses Apply.
  */
 export function TripFilterControls({ filters, range, providerNames }: Props) {
+  const [selectedRange, setSelectedRange] = useState(range);
+  const [customFrom, setCustomFrom] = useState(filters.from.slice(0, 10));
+  const [customTo, setCustomTo] = useState(filters.to.slice(0, 10));
+  const customValid = /^\d{4}-\d{2}-\d{2}$/.test(customFrom) &&
+    /^\d{4}-\d{2}-\d{2}$/.test(customTo) && customFrom <= customTo &&
+    customTo <= new Date().toISOString().slice(0, 10);
   const providerOptions = useMemo(() => {
     const names = new Set(providerNames.filter(Boolean));
     if (filters.provider) names.add(filters.provider);
@@ -100,12 +103,28 @@ export function TripFilterControls({ filters, range, providerNames }: Props) {
         <div className={fieldLabel + " w-full sm:w-[120px]"}>
           <span>Time range</span>
           <div className="mt-1">
-            <SearchMonitorSelect label="Time range" name="range" value={range} options={rangeOptions} appearance="boxed" truncateLabel />
+            <SearchMonitorSelect label="Date range" name="range" value={selectedRange}
+              onValueChange={value => setSelectedRange(value as AdminTripWorkspaceRange)}
+              options={[...rangeOptions, ...(selectedRange === "today" ? [{ value: "today", label: "Today (legacy)" }] : [])]}
+              appearance="boxed" truncateLabel />
           </div>
         </div>
         <div className="w-full min-w-0 sm:w-auto">
-          <button type="submit" className="inline-flex h-8 items-center justify-center whitespace-nowrap rounded-md bg-indigo-700 px-2.5 text-[11px] font-semibold text-white hover:bg-indigo-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">Apply</button>
+          <button type="submit" disabled={selectedRange === "custom" && !customValid}
+            className="inline-flex h-8 items-center justify-center whitespace-nowrap rounded-md bg-indigo-700 px-2.5 text-[11px] font-semibold text-white hover:bg-indigo-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:opacity-40">Apply</button>
         </div>
+        {selectedRange === "custom" ? <div className="flex w-full min-w-0 flex-wrap items-end gap-2">
+          <label className="text-xs font-medium text-slate-700">From (UTC)
+            <input type="date" name="from" required value={customFrom} max={customTo || undefined}
+              onChange={event => setCustomFrom(event.target.value)} className={inputClass} />
+          </label>
+          <label className="text-xs font-medium text-slate-700">To (UTC)
+            <input type="date" name="to" required value={customTo} min={customFrom || undefined}
+              max={new Date().toISOString().slice(0, 10)} onChange={event => setCustomTo(event.target.value)}
+              className={inputClass} />
+          </label>
+          {!customValid ? <span role="alert" className="text-xs text-rose-700">Choose valid UTC dates with From before To.</span> : null}
+        </div> : null}
       </div>
     </form>
   );
