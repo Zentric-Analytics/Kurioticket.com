@@ -107,6 +107,19 @@ test("hotel list enforces product, current environment, 24h window and all three
   assert.equal(JSON.stringify(where).includes("userId"), false);
 });
 
+test("Today is the default hotel and car record window with UTC-midnight bounds", async () => {
+  for (const product of ["HOTEL", "CAR"] as const) {
+    const { reader, calls } = setup();
+    const result = await reader.list(params(product));
+    assert.equal(result.status, "ok");
+    if (result.status !== "ok") continue;
+    assert.equal(result.data.window, "today");
+    const where = (calls.list[0] as { where: { createdAt: { gte: Date; lte: Date } } }).where;
+    assert.equal(where.createdAt.gte.toISOString(), "2026-11-17T00:00:00.000Z");
+    assert.equal(where.createdAt.lte.toISOString(), current.toISOString());
+  }
+});
+
 test("car zero-results reader excludes failed searches and does not return registered customer identity", async () => {
   const { reader, calls } = setup({ records: [record({
     type: "CAR", origin: "Heathrow", destination: "Heathrow", status: "SUCCESS", resultCount: 0,
@@ -137,7 +150,8 @@ test("cursor keeps exact product, filter, time window, environment and fixed as-
   assert.equal(first.data.items.length, 25);
   assert.ok(first.data.nextCursor);
   const token = first.data.nextCursor!;
-  assert.equal((await reader.list(params("HOTEL", "EXCEPTIONS", "24h", token))).status, "ok");
+  assert.equal((await reader.list(params("HOTEL", "EXCEPTIONS", "today", token))).status, "ok");
+  assert.equal((await reader.list(params("HOTEL", "EXCEPTIONS", "24h", token))).status, "invalid");
   assert.equal((await reader.list(params("CAR", "EXCEPTIONS", "24h", token))).status, "invalid");
   assert.equal((await reader.list(params("HOTEL", "FAILED", "24h", token))).status, "invalid");
   assert.equal((await reader.list(params("HOTEL", "EXCEPTIONS", "7d", token))).status, "invalid");
