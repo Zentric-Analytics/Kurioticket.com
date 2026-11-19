@@ -1,5 +1,6 @@
 "use client";
 
+import { AdminCalendarInput } from "@/components/admin/AdminCalendarInput";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, useTransition, type FormEvent, type MouseEvent, type ReactNode } from "react";
 import { LoaderCircle, Search } from "lucide-react";
@@ -212,14 +213,14 @@ export function AdminUsersToolbar({
 
     {draftDate === "custom" ? <div data-testid="users-custom-date-fields" className="flex min-w-0 flex-wrap items-end gap-3 border-b border-[#D8E1EC] py-3">
       <label className="flex min-w-0 flex-col gap-1 text-xs text-[#475569]">From (UTC)
-        <input type="date" aria-label="Custom start date UTC" value={draftDates.from}
+        <AdminCalendarInput ariaLabel="Custom start date UTC" value={draftDates.from}
           max={draftDates.to || undefined} onChange={event => { setDraftDates(current => ({ ...current, from: event.target.value })); setDateError(null); }}
-          className="h-10 min-w-0 rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px] text-[#020617]" />
+          className="w-[210px] max-w-full" />
       </label>
       <label className="flex min-w-0 flex-col gap-1 text-xs text-[#475569]">To (UTC)
-        <input type="date" aria-label="Custom end date UTC" value={draftDates.to}
+        <AdminCalendarInput ariaLabel="Custom end date UTC" value={draftDates.to}
           min={draftDates.from || undefined} onChange={event => { setDraftDates(current => ({ ...current, to: event.target.value })); setDateError(null); }}
-          className="h-10 min-w-0 rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px] text-[#020617]" />
+          className="w-[210px] max-w-full" />
       </label>
       <button type="button" onClick={() => { setDraftDate(date); setDraftDates({ from, to }); setDateError(null); }}
         className="h-10 px-2 text-[13px] font-medium text-[#475569] hover:underline">
