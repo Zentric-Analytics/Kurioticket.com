@@ -48,22 +48,19 @@ function DetailField({ label, value, identifier = false }: { label: string; valu
 /** Providers-only presentation of the existing protected, read-only handoff
  * records. No Search Activity route or new data/authorization path is created. */
 export function ReferralUnlinkedHandoffs({ window, environment, unlinkedCount, providers }: Props) {
-  const panelId = useId();
   const detailId = useId();
-  const [expanded, setExpanded] = useState(false);
   const [provider, setProvider] = useState("");
   const [product, setProduct] = useState<ProductFilter>("");
   const [pageCursors, setPageCursors] = useState<Array<string | null>>([null]);
   const [pageIndex, setPageIndex] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [reload, setReload] = useState(0);
-  const [loadState, setLoadState] = useState<LoadState>("idle");
+  const [loadState, setLoadState] = useState<LoadState>("loading");
   const [result, setResult] = useState<HandoffListResult | null>(null);
 
   const cursor = pageCursors[pageIndex] ?? null;
 
   useEffect(() => {
-    if (!expanded) return;
     const controller = new AbortController();
     let active = true;
     setLoadState("loading");
@@ -106,7 +103,7 @@ export function ReferralUnlinkedHandoffs({ window, environment, unlinkedCount, p
       active = false;
       controller.abort();
     };
-  }, [expanded, window.start, window.end, environment, provider, product, cursor, reload]);
+  }, [window.start, window.end, environment, provider, product, cursor, reload]);
 
   const resetPage = () => {
     setPageCursors([null]);
@@ -129,17 +126,14 @@ export function ReferralUnlinkedHandoffs({ window, environment, unlinkedCount, p
 
   return (
     <section aria-labelledby="unlinked-handoffs" className="mt-5 min-w-0 border-t border-[#D8E1EC] pt-4">
-      <h2 id="unlinked-handoffs" className="text-[15px] font-semibold">Unlinked handoffs</h2>
-      <button type="button" aria-expanded={expanded} aria-controls={panelId}
-        onClick={() => { setExpanded(previous => !previous); setSelectedId(null); setResult(null); setLoadState("idle"); }}
-        className="mt-2 text-left text-[13px] font-medium text-[#004BB8] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]">
-        {expanded ? "Hide unlinked handoff records" : "View " + unlinkedCount.toLocaleString() + " handoffs without a linked search"}
-      </button>
-
-      <div id={panelId} hidden={!expanded}>
-      {expanded ? (
-        <div role="region" aria-label="Unlinked provider handoff records" aria-busy={loadState === "loading"}
-          className="mt-4 min-w-0 border-t border-[#E7ECF5] pt-4">
+      <div className="flex min-w-0 flex-wrap items-baseline justify-between gap-2">
+        <h2 id="unlinked-handoffs" className="text-[15px] font-semibold">Unlinked handoffs</h2>
+        <span className="text-[12px] tabular-nums text-[#64748B]">
+          {unlinkedCount.toLocaleString()} recorded in this reporting window
+        </span>
+      </div>
+      <div role="region" aria-label="Unlinked provider handoff records" aria-busy={loadState === "loading"}
+        className="mt-3 min-w-0 border-t border-[#E7ECF5] pt-3">
           <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
             <div className="min-w-0">
               <h3 className="text-[14px] font-semibold text-[#020617]">Handoff records</h3>
@@ -303,8 +297,6 @@ export function ReferralUnlinkedHandoffs({ window, environment, unlinkedCount, p
               </nav>
             </>
           ) : null}
-        </div>
-      ) : null}
       </div>
     </section>
   );
