@@ -2858,6 +2858,19 @@ textarea {
   }
 }
 
+/* Search Records keeps route/dates on a single compact line, including when
+   the generic narrow-panel record layout relaxes other cells to wrap. */
+.admin-search-records td [data-search-route-preview],
+.admin-search-records td [data-search-route-dates] {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* The CMS editor stays single-column only while its right panel is narrow. */
 @media (min-width: 1024px) and (max-width: 1535px) {
   .admin-cms-editor {
