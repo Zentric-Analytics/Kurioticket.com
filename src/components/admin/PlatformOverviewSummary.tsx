@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArrowUpRight } from "lucide-react";
 import { applicationLabel, platformOptions, searchInvestigationHref } from "@/lib/platformHealthPresentation";
 import type { readPlatformSearchActivity } from "@/services/platformOperationsService";
 
@@ -11,6 +12,11 @@ export function PlatformOverviewSummary({ data }: {
     <section aria-labelledby="platform-overview-title" className="h-full min-w-0 rounded-xl border border-slate-200 bg-white p-3 sm:p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 id="platform-overview-title" className="text-sm font-semibold text-slate-950">Platform Search Activity</h2>
+        <Link href={searchInvestigationHref(window, "ALL")} prefetch={false}
+          className="focus-ring inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-indigo-700 hover:text-indigo-900 hover:underline"
+          aria-label="View Platform Search Activity details">
+          View details <ArrowUpRight size={14} aria-hidden="true" />
+        </Link>
       </div>
 
       {searches ? (
