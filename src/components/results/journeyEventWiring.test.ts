@@ -32,9 +32,9 @@ test("normal flight and hotel detail handoffs record the selected offer independ
   const flight = source("./flightDetails/StandaloneFlightDetails.tsx");
   const mobileFare = source("./flightDetails/MobileNativeFareInformationDeck.tsx");
   const hotel = source("./HotelDetailsClient.tsx");
-  assert.doesNotMatch(flight.slice(flight.indexOf("function selectFare("), flight.indexOf("function handleFareKeyDown(")), /journeyEvents\\.offerSelected/);
-  assert.match(flight, /async function continueToOffer[\\s\\S]*?journeyEvents.offerSelected[\\s\\S]*?fetch\\("\\/api\\/redirect"/);
-  assert.doesNotMatch(flight.slice(flight.indexOf("function selectDeal("), flight.indexOf("function handleFareKeyDown(")), /journeyEvents\\.offerSelected/);
+  assert.doesNotMatch(flight.slice(flight.indexOf("function selectFare("), flight.indexOf("function handleFareKeyDown(")), /journeyEvents\.offerSelected/);
+  assert.match(flight, /async function continueToOffer[\s\S]*?journeyEvents.offerSelected[\s\S]*?fetch\("\/api\/redirect"/);
+  assert.doesNotMatch(flight.slice(flight.indexOf("function selectDeal("), flight.indexOf("function handleFareKeyDown(")), /journeyEvents\.offerSelected/);
   assert.match(flight, /onSelectDeal\(deal.offerId, true\);\s*onViewDeal\(deal.offerId\)/);
   assert.match(mobileFare, /onSelectDeal\(deal.offerId, true\);\s*onViewDeal\(deal.offerId\)/);
   assert.match(hotel, /async function runProviderRedirect[\s\S]*?journeyEvents.offerSelected\("hotel", id, selectedOffer.provider\)[\s\S]*?fetch\("\/api\/redirect"/);
