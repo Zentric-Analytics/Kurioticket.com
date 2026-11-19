@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { AdminDirectorySelect } from "@/components/admin/AdminDirectorySelect";
 import { SettingsHistoryRangeControl } from "@/components/admin/SettingsHistoryRangeControl";
-import { ADMIN_REPORTING_RANGE_LABELS } from "@/lib/adminReportingRanges";
 
 import { adminSettingsHistory } from "@/services/adminSettingsHistoryService";
 import type { SettingsHistoryCategory, SettingsHistoryEntry, SettingsHistoryRange } from "@/services/adminSettingsHistoryCore";
@@ -11,9 +10,6 @@ export const metadata = { title: "Admin Settings - Settings History" };
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 const ranges = ["24h", "7d", "30d", "all", "custom", "90d"] as const;
 const categories = ["all", "product", "automation", "team", "legacy"] as const;
-const rangeLabels: Record<SettingsHistoryRange, string> = {
-  ...ADMIN_REPORTING_RANGE_LABELS, "90d": "Last 90 days (legacy)",
-};
 const categoryLabels: Record<SettingsHistoryCategory, string> = {
   all: "All Settings", product: "Product availability", automation: "Travel automation",
   team: "Team Access", legacy: "Legacy notifications",
