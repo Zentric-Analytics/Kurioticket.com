@@ -48,7 +48,8 @@ test("Search Records metric headings and identity values stay on one line withou
   }
   assert.match(css, /\.admin-search-records thead th,/);
   assert.match(css, /white-space: nowrap;/);
-  assert.match(css, /@container \(min-width: 801px\) and \(max-width: 1050px\)/);
+  assert.match(css, /\.admin-handoff-records tbody > tr \{/);
+  assert.match(css, /display: table-row;/);
   assert.doesNotMatch(searchTable, /min-w-\[1180px\]|overflow-x-auto/);
   assert.match(searchTable, /data-search-route-preview/);
 });
@@ -56,13 +57,13 @@ test("Search Records metric headings and identity values stay on one line withou
 test("Provider Handoffs retains all ten fields without a horizontally scrolling table", () => {
   const css = readFileSync("src/app/globals.css", "utf8");
   assert.match(handoffPage, /aria-label="Provider handoff records"/);
-  assert.match(handoffPage, /admin-responsive-records admin-handoff-records/);
+  assert.match(handoffPage, /className="admin-handoff-records mt-3/);
   assert.match(handoffPage, /w-full min-w-0 table-fixed/);
   assert.doesNotMatch(handoffPage, /min-w-\[1320px\]|overflow-x-auto/);
   assert.match(handoffPage, /<colgroup>/);
   assert.equal((handoffPage.match(/<td data-label=/g) || []).length, 9);
   assert.match(handoffPage, /<th scope="row" data-label="Provider"/);
-  assert.match(handoffPage, /whitespace-nowrap px-2 py-3/);
+  assert.match(handoffPage, /data-handoff-compact/);
   assert.match(handoffPage, /adminHandoffRoutePreview\(handoff.route\)/);
   assert.match(handoffPage, /handoffDetailHref\(handoff.id, handoff.environment, scopedRaw\)/);
   assert.match(css, /@container \(min-width: 801px\) and \(max-width: 1050px\)/);
