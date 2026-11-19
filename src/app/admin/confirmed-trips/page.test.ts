@@ -243,14 +243,14 @@ test("six directory filters use a compact left-anchored toolbar with a polished 
   assert.doesNotMatch(products + statuses, /All types|label: "Confirmed trips"|label: "Tracked trips"/);
   const options = Array.from(ranges.matchAll(/\{ value: "([^"]+)", label: "([^"]+)" \}/g)).map(([, value, label]) => [value, label]);
   assert.deepEqual(options, [
-    ["today", "Today"], ["7d", "Last 7 days"], ["30d", "Last 30 days"], ["all", "All time"],
+    ["24h", "Last 24 hrs"], ["7d", "Last 7 days"], ["30d", "Last 30 days"], ["all", "All time"], ["custom", "Custom range"],
   ]);
   assert.doesNotMatch(ranges, /Custom dates|UTC days|shortLabel/);
   assert.match(controls, /name="identity" value=\{filters\.identity\} options=\{identityOptions\}/);
   assert.match(controls, /\{ value: "all", label: "All identities" \}/);
   assert.match(controls, /\{ value: "registered", label: "Registered" \}/);
   assert.match(controls, /\{ value: "guest", label: "Guest", disabled: true \}/);
-  assert.match(controls, /name="range" value=\{range\} options=\{rangeOptions\}/);
+  assert.match(controls, /name="range" value=\{selectedRange\}/);
   assert.match(controls, /name="status" value=\{filters\.status\} options=\{statusOptions\}/);
   assert.doesNotMatch(controls, /description: "Not connected"|description: "Provider-confirmed trips are account-linked"/);
   assert.match(controls, /appearance="boxed"/);
@@ -264,7 +264,7 @@ test("six directory filters use a compact left-anchored toolbar with a polished 
   assert.match(controls, /<button type="submit" className="inline-flex h-8 items-center justify-center whitespace-nowrap rounded-md bg-indigo-700 px-2\.5 text-\[11px\]/);
   assert.match(controls, />Apply<\/button>/);
   assert.doesNotMatch(controls, />Apply filters<\/button>/);
-  assert.match(workspace, /requested \|\| \(raw\.from \|\| raw\.to \? "custom" : "today"\)/);
+  assert.match(workspace, /requested \|\| \(raw\.from \|\| raw\.to \? "custom" : "24h"\)/);
   assert.match(workspace, /parseAdminTripFilters\(\{ \.\.\.raw, from, to \}\)/);
   assert.match(page, /if \(parsed\.ok && parsed\.range === "custom"\)/);
   assert.match(page, /redirect\(tripDirectoryHref\(parsed\.filters\)\)/);
