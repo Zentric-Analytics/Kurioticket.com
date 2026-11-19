@@ -1845,7 +1845,7 @@ export function CarsResultsClient({
           mobileSearchInteractionActive={mobileSearchOpen || mobileSearchClosing}
           resultHeadingId="cars-results-heading"
           requestId={requestId}
-          detailsHrefForCar={(car) => resultActionHref(car, buildCarDetailsHref(car.id, values))}
+          detailsHrefForCar={(car) => resultActionHref(car, `${buildCarDetailsHref(car.id, values)}${requestId ? `&requestId=${encodeURIComponent(requestId)}` : ""}`)}
         />
       </div>
     </main>
