@@ -209,7 +209,7 @@ test("operational Cars identity activity includes CAR redirects when filtered", 
   assert.equal(filtered.status, "ok");
   assert.equal(filtered.data.summary.providerHandoffs, 53);
   assert.equal(filtered.data.summary.searches, 3);
-  assert.equal(filtered.data.events.filter((event: Row) => event.id.startsWith("qa-handoff-")).length, 53);
+  assert.equal(filtered.data.events.filter((event: Row) => event.stage === "PROVIDER_HANDOFF_STARTED" && event.product === "CAR").length, 53);
   const hotelOnly = await scenario.load({ ...allFilters, product: "HOTEL" });
   assert.equal(hotelOnly.status, "ok");
   assert.equal(hotelOnly.data.summary.providerHandoffs, 0);
