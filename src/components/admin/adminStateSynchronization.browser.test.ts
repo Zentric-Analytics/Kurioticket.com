@@ -50,7 +50,7 @@ test("Activity server-scope resets drafts without background navigation or losin
 
 test("Provider health drafts reset only on committed scope changes and never read incomplete dates", async () => {
   await withComponentBrowser(bundle(), mount("providers", "ProviderHealthWindowFilter", { product: "CAR", hours: 24, custom: null }), async page => {
-    await page.getByRole("button", { name: "Date range: Last 24 hours", exact: true }).click();
+    await page.getByRole("button", { name: "Date range: Last 24 hrs", exact: true }).click();
     await page.getByRole("option", { name: "Custom range", exact: true }).click();
     await page.getByLabel("From", { exact: true }).fill("2030-01-02");
     assert.deepEqual(await page.evaluate(() => (window as unknown as { fixtureNavigation: string[] }).fixtureNavigation), []);
@@ -131,7 +131,7 @@ test("Overview accepted range clears pending state and another requested range r
       React.createElement(AdminOverviewRangeSelect,{period:{range},nowDate:'2026-11-18'}),React.createElement(AdminOverviewRangeSensitive,null,React.createElement('button',null,'Summary action'))));
       window.fixtureCommitOnNavigation=url=>window.fixtureRender(new URL(url,'http://fixture.local').searchParams.get('range')||'24h');window.fixtureRender('24h');`;
   await withComponentBrowser(bundle(), setup, async page => {
-    await page.getByRole("button", { name: "Overview reporting range: Last 24 hours", exact: true }).click();
+    await page.getByRole("button", { name: "Overview reporting range: Last 24 hrs", exact: true }).click();
     await page.getByRole("option", { name: "Last 7 days", exact: true }).click();
     await page.getByRole("button", { name: "Overview reporting range: Last 7 days", exact: true }).waitFor();
     assert.equal(await page.locator('[data-range-updating="true"]').count(), 0);
@@ -148,7 +148,7 @@ test("Overview preserves the committed period after an unsuccessful navigation",
       React.createElement(AdminOverviewRangeSelect,{period,nowDate:'2026-11-18'}),
       React.createElement(AdminOverviewRangeSensitive,null,React.createElement('button',null,'Summary action'))));`;
   await withComponentBrowser(bundle(), setup, async page => {
-    const trigger = page.getByRole("button", { name: "Overview reporting range: Last 24 hours", exact: true });
+    const trigger = page.getByRole("button", { name: "Overview reporting range: Last 24 hrs", exact: true });
     await trigger.click();
     await page.getByRole("option", { name: "Last 7 days", exact: true }).click();
     await page.getByRole("alert").waitFor();
@@ -218,7 +218,7 @@ test("Overview applies complete custom UTC dates and can revise a committed cust
       window.fixtureRender(range==='custom'?{range,fromDate:params.get('from'),toDate:params.get('to')}:{range})};
     window.fixtureRender({range:'24h'});`;
   await withComponentBrowser(bundle(), setup, async page => {
-    await page.getByRole("button", { name: "Overview reporting range: Last 24 hours" }).click();
+    await page.getByRole("button", { name: "Overview reporting range: Last 24 hrs" }).click();
     await page.getByRole("option", { name: "Custom range" }).click();
     await page.getByLabel("From (UTC)", { exact: true }).fill("2026-11-01");
     assert.equal(await page.getByRole("button", { name: "Apply dates" }).isDisabled(), true);
