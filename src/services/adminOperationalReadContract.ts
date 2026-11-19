@@ -138,7 +138,7 @@ export type AdminSearchDetail = AdminSearchRead & {
 export type AdminHandoffRead = {
   id: string;
   identity: AdminOperationalIdentity;
-  product: "FLIGHT" | "HOTEL";
+  product: "FLIGHT" | "HOTEL" | "CAR";
   provider: string;
   route: string | null;
   price: string | null;
