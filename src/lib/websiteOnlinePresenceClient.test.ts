@@ -170,7 +170,7 @@ test("browser-identified webdriver automation sends no heartbeat", async t => {
   assert.equal(browser.requests.length, 0);
 });
 
-test("concurrent tabs serialize first-cookie issuance and share one send cadence", async t => {
+test("concurrent tabs serialize first credential issuance and share one send cadence", async t => {
   let taken = false;
   const locks = {
     async request(name: string, options: { ifAvailable: boolean }, enter: LockGrantedCallback<unknown>) {
@@ -196,7 +196,7 @@ test("concurrent tabs serialize first-cookie issuance and share one send cadence
   first.setResponse(() => response.promise);
   first.gesture();
   second.gesture();
-  await first.advance(2);
+  await first.advance(500);
   assert.equal(first.requests.length, 1);
   assert.equal(second.requests.length, 0);
   response.resolve(new Response(null, { status: 204 }));
@@ -211,7 +211,32 @@ test("concurrent tabs serialize first-cookie issuance and share one send cadence
   assert.equal(second.requests.length, 1);
 });
 
-test("a tab without Web Locks waits for current cookie issuance and can retry when it fails", async t => {
+test("a new tab reuses the first tab's credential before creating another guest", async t => {
+  const token = "v1." + "a".repeat(36) + ".1234567890123.staging.web." + "b".repeat(43);
+  const transport = { BroadcastChannel: tabBroadcastChannel() };
+  const first = browserHarness(t);
+  first.setResponse(async () => new Response(null, first.requests.length === 1
+    ? { status: 202, headers: { "x-kt-presence-session": token } }
+    : { status: 204 }));
+  const firstTracker = startWebsiteOnlinePresence({ ...first.windowFor(), ...transport });
+  t.after(firstTracker.dispose);
+  firstTracker.setIdentity("guest");
+  await first.advance(1000);
+  assert.equal(first.requests.length, 2);
+
+  const second = browserHarness(t, {}, false);
+  const secondTracker = startWebsiteOnlinePresence({ ...second.windowFor(), ...transport });
+  t.after(secondTracker.dispose);
+  secondTracker.setIdentity("guest");
+  await first.advance(1000);
+  assert.equal(second.requests.length, 0, "the existing credential should suppress a new guest bootstrap");
+  firstTracker.dispose();
+  await first.advance(31_000);
+  assert.equal(second.requests.length, 1);
+  assert.equal((second.requests[0].init?.headers as Record<string, string>)["x-kt-presence-session"], token);
+});
+
+test("a tab without Web Locks waits for current credential issuance and can retry when it fails", async t => {
   const transport = { BroadcastChannel: tabBroadcastChannel() };
   const first = browserHarness(t);
   const firstTracker = startWebsiteOnlinePresence({ ...first.windowFor(), ...transport });
