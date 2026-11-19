@@ -19,6 +19,7 @@ import { getCarRateDisclosureSections, getCarRatePaymentLabel, type CarRateDiscl
 type Props = {
   car: NormalizedCarResult;
   search: CarSearchParams;
+  requestId?: string | null;
   selectedOfferId: string;
   onSelectOffer: (offer: CarOffer) => void;
   expanded: boolean;
@@ -104,6 +105,7 @@ function RateSectionIcon({ id }: { id: CarRateDisclosureSection["id"] }) {
 export function CarDealPicker({
   car,
   search,
+  requestId,
   compact = false,
   expanded,
   onExpandedChange,
@@ -152,7 +154,7 @@ export function CarDealPicker({
   }).formatted;
   const isolateProviderAction = (event: MouseEvent<HTMLAnchorElement>, offerId: string) => {
     event.stopPropagation();
-    recordCarHandoffClick(car.id, offerId, "car-results");
+    recordCarHandoffClick(car.id, offerId, "car-results", requestId);
   };
   if (!groups.length) return null;
 
