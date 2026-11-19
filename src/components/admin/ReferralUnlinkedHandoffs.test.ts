@@ -17,9 +17,10 @@ test("Referral Attribution renders unlinked handoff records immediately without 
   assert.match(html, /aria-label="Unlinked provider handoff records"/);
   assert.match(html, /aria-label="Filter unlinked handoff records"/);
   assert.match(html, /Loading provider handoffs/);
-  assert.match(html, /Refresh records/);
+  assert.match(html, /Refreshing…/);
   assert.doesNotMatch(html, /View 12 handoffs without a linked search|Hide unlinked handoff records/);
-  assert.doesNotMatch(html, /hidden=""|aria-expanded="false"/);
+  assert.doesNotMatch(html, /hidden=""/);
+  assert.doesNotMatch(source, /setExpanded|aria-controls=\{panelId\}/);
   assert.doesNotMatch(html, /href="\/admin\/(?:redirects|searches)/);
 });
 
