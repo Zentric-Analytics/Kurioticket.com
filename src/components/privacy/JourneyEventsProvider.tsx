@@ -14,10 +14,11 @@ function browserAllowsAnalytics() {
 type Recorder = {
   resultsViewed: (requestId: string | null) => void;
   offerSelected: (product: "flight" | "hotel", resultId: string, provider?: string, requestId?: string | null) => void;
+  rememberDetailsContext: (product: "flight" | "hotel", resultId: string, requestId: string | null) => void;
   prepareHandoff: (product: "flight" | "hotel", resultId: string) => ProviderHandoffMetadataReader;
 };
 const browserActionId = () => crypto.randomUUID();
-const quiet: Recorder = { resultsViewed: () => undefined, offerSelected: () => undefined, prepareHandoff: () => createProviderHandoffMetadata(() => null, browserActionId) };
+const quiet: Recorder = { resultsViewed: () => undefined, offerSelected: () => undefined, rememberDetailsContext: () => undefined, prepareHandoff: () => createProviderHandoffMetadata(() => null, browserActionId) };
 const JourneyEventsContext = createContext<Recorder>(quiet);
 
 /** Keep valid user-action delivery alive across internal navigation, but never across an account/consent change. */
@@ -79,6 +80,13 @@ export function JourneyEventsProvider({ children }: { children: ReactNode }) {
     },
     resultsViewed(requestId) {
       if (requestId) sender.send({ type: "RESULTS_VIEWED", requestId, sourcePage: window.location.pathname });
+    },
+    rememberDetailsContext(product, resultId, requestId) {
+      if (!browserAllowsAnalytics()) return;
+      const valid = journeyRequestId(requestId);
+      if (!valid) return;
+      try { rememberJourneySelection(product, resultId, valid, actor, window.sessionStorage); }
+      catch { /* No analytics event is emitted while opening details. */ }
     },
     offerSelected(product, resultId, provider, explicitRequestId) {
       try {

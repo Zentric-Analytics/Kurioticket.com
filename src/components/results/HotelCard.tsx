@@ -2,6 +2,7 @@
 
 import { useJourneyEvents } from "@/components/privacy/JourneyEventsProvider";
 
+
 import Image from "next/image";
 import styles from "./HotelResultsMobile.module.css";
 import Link from "next/link";
@@ -150,7 +151,7 @@ export function HotelCard({
   searchRequestId,
 }: HotelCardProps) {
   const journeyEvents = useJourneyEvents();
-  const recordSelection = () => { if (searchRequestId) journeyEvents.offerSelected("hotel", hotel.id, hotel.provider, searchRequestId); };
+  const rememberDetailsContext = () => journeyEvents.rememberDetailsContext("hotel", hotel.id, searchRequestId ?? null);
   const { locale, t: dictionary } = useLocale();
   const { selectedOption } = useRegion();
   const currencyRates = useCurrencyRates();
@@ -496,7 +497,7 @@ export function HotelCard({
       {resolvedDetailsHref ? (
         <Link
           href={resolvedDetailsHref}
-          onClick={recordSelection}
+          onClick={rememberDetailsContext}
           aria-hidden="true"
           tabIndex={-1}
           className="absolute inset-0 z-10 cursor-pointer"
@@ -777,7 +778,7 @@ export function HotelCard({
                 ) : (
                   <LinkButton
                     href={resolvedDetailsHref}
-                    onClick={recordSelection}
+                    onClick={rememberDetailsContext}
                     aria-label={actionAriaLabel}
                     variant="accent"
                     size="sm"

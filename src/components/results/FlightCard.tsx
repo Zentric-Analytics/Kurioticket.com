@@ -2,6 +2,7 @@
 
 import { useJourneyEvents } from "@/components/privacy/JourneyEventsProvider";
 
+
 import Image from "next/image";
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
@@ -61,7 +62,7 @@ export function FlightCard({
   searchRequestId?: string | null;
 }) {
   const journeyEvents = useJourneyEvents();
-  const recordSelection = () => { if (searchRequestId) journeyEvents.offerSelected("flight", flight.id, flight.provider, searchRequestId); };
+  const rememberDetailsContext = () => journeyEvents.rememberDetailsContext("flight", flight.id, searchRequestId ?? null);
   const { t: dictionary, locale } = useLocale();
   const router = useRouter();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
@@ -166,7 +167,7 @@ export function FlightCard({
         detailsHref={resolvedDetailsHref}
         providerLabel={providerLabel}
         onAction={onAction}
-        onSelect={recordSelection}
+        onSelect={rememberDetailsContext}
       />
     <Card
       data-flight-result-card
@@ -182,12 +183,12 @@ export function FlightCard({
           return;
         }
         if (onAction) {
-          recordSelection();
+          rememberDetailsContext();
           onAction(flight);
           return;
         }
         if (resolvedDetailsHref) {
-          recordSelection();
+          rememberDetailsContext();
           router.push(resolvedDetailsHref);
         }
       }}
@@ -253,7 +254,7 @@ export function FlightCard({
               viewFlightLabel={resolvedActionLabel}
               viewFlightAriaLabel={actionAriaLabel}
               onAction={onAction ? () => onAction(flight) : undefined}
-              onSelect={recordSelection}
+              onSelect={rememberDetailsContext}
               actions={renderFlightUtilityActions("lg:hidden")}
             />
           </div>

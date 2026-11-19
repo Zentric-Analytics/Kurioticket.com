@@ -132,9 +132,10 @@ export function FlightDetailsExperience({ id, mode = "standalone", backHref, pri
   const actionDisabled = primaryAction.kind === "provider" ? !hasProviderLink : !primaryAction.enabled || primaryAction.pending || resultReceivedAt === null;
   const activateFlight = () => {
     if (actionDisabled) return;
-    journeyEvents.offerSelected("flight", flight.id, flight.provider);
-    if (primaryAction.kind === "provider") primaryAction.onActivate();
-    else if (resultReceivedAt !== null) primaryAction.onActivate(flight, resultReceivedAt);
+    if (primaryAction.kind === "provider") {
+      journeyEvents.offerSelected("flight", flight.id, flight.provider);
+      primaryAction.onActivate();
+    } else if (resultReceivedAt !== null) primaryAction.onActivate(flight, resultReceivedAt);
   };
 
   const content = (

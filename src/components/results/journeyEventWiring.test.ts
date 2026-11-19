@@ -14,23 +14,33 @@ test("both results surfaces use the response request ID and gate emission on vis
   }
 });
 
-test("real result-card activation records selection before existing navigation without instrumenting scroll or save", () => {
+test("opening flight or hotel details does not count as selecting an offer", () => {
   const flight = source("./FlightCard.tsx");
   const mobile = source("./MobileFlightCard.tsx");
   const hotel = source("./HotelCard.tsx");
-  assert.match(flight, /recordSelection\(\);\s*router.push\(resolvedDetailsHref\)/);
-  assert.match(flight, /onClick=\{onSelect\}/);
-  assert.match(mobile, /onSelect\?\.\(\); router.push\(detailsHref\)/);
-  assert.equal((hotel.match(/onClick=\{recordSelection\}/g) ?? []).length, 2);
-  assert.match(hotel, /journeyEvents.offerSelected\("hotel", hotel.id, hotel.provider, searchRequestId\)/);
+  assert.match(flight, /router\.push\(resolvedDetailsHref\)/);
+  assert.match(flight, /detailsHref=\{resolvedDetailsHref\}/);
+  assert.doesNotMatch(flight, /recordSelection|journeyEvents\.offerSelected|onSelect=\{recordSelection\}/);
+  assert.doesNotMatch(hotel, /recordSelection|journeyEvents\.offerSelected/);
+  assert.match(hotel, /href=\{resolvedDetailsHref\}/);
+  assert.match(mobile, /router\.push\(detailsHref\)/);
+  // The results cards no longer wire a selection callback to mobile or desktop navigation.
+  assert.match(flight, /onSelect=\{rememberDetailsContext\}/);
+  assert.match(flight, /journeyEvents\.rememberDetailsContext\("flight", flight\.id, searchRequestId \?\? null\)/);
+  assert.match(hotel, /journeyEvents\.rememberDetailsContext\("hotel", hotel\.id, searchRequestId \?\? null\)/);
+  assert.equal((hotel.match(/onClick=\{rememberDetailsContext\}/g) ?? []).length, 2);
+  const recorder = readFileSync(new URL("../privacy/JourneyEventsProvider.tsx", import.meta.url), "utf8");
+  assert.match(recorder, /rememberDetailsContext\(product, resultId, requestId\)/);
+  assert.match(recorder, /rememberJourneySelection\(product, resultId, valid, actor, window\.sessionStorage\)/);
 });
 
 test("normal flight and hotel detail handoffs record the selected offer independently of server handoff logging", () => {
   const flight = source("./flightDetails/StandaloneFlightDetails.tsx");
   const mobileFare = source("./flightDetails/MobileNativeFareInformationDeck.tsx");
   const hotel = source("./HotelDetailsClient.tsx");
-  assert.match(flight, /function selectFare[\s\S]*?journeyEvents.offerSelected\("flight", id, fare.offer.provider\)/);
+  assert.doesNotMatch(flight.slice(flight.indexOf("function selectFare("), flight.indexOf("function handleFareKeyDown(")), /journeyEvents\.offerSelected/);
   assert.match(flight, /async function continueToOffer[\s\S]*?journeyEvents.offerSelected[\s\S]*?fetch\("\/api\/redirect"/);
+  assert.doesNotMatch(flight.slice(flight.indexOf("function selectDeal("), flight.indexOf("function handleFareKeyDown(")), /journeyEvents\.offerSelected/);
   assert.match(flight, /onSelectDeal\(deal.offerId, true\);\s*onViewDeal\(deal.offerId\)/);
   assert.match(mobileFare, /onSelectDeal\(deal.offerId, true\);\s*onViewDeal\(deal.offerId\)/);
   assert.match(hotel, /async function runProviderRedirect[\s\S]*?journeyEvents.offerSelected\("hotel", id, selectedOffer.provider\)[\s\S]*?fetch\("\/api\/redirect"/);
