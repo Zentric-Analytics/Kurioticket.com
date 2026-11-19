@@ -32,6 +32,8 @@ await put('app/page.jsx',`export default function Home(){return <p>Isolated Stag
 await put('app/auth/signin/page.jsx',`export default function Denied(){return <h1>QA admin access required</h1>}`);
 await put('app/api/admin/notifications/route.js',`export async function GET(){return Response.json({generatedAt:new Date().toISOString(),activeCount:0,unreadCount:0,criticalCount:0,warningCount:0,alerts:[]})}`);
 await put('app/api/admin/search/route.js',`export async function GET(){return Response.json({pages:[{id:'health',title:'Platform Health',detail:'Combined operational health',href:'/admin/platform-health',status:'Workspace'}],users:[],searches:[],providers:[],databaseUnavailable:false})}`);
+// Exercise the real refresh endpoint with the synthetic operational reader instead of a 404.
+await put('app/api/admin/platform-operations/route.ts',await readFile(path.join(source,'app/api/admin/platform-operations/route.ts'),'utf8'));
 for(const route of ['platform-health','searches/activity','searches/[id]'])await put('app/admin/'+route+'/page.tsx',await readFile(path.join(source,'app/admin',route,'page.tsx'),'utf8'));
 await put('app/admin/preview-testers/page.jsx',`import {PreviewTesterRegistry} from '@/components/admin/PreviewTesterRegistry';
 const member={id:'qa-member',email:'test-member@example.invalid',status:'ACTIVE',roles:['TESTER'],expiresAt:new Date('2026-11-18T17:40:00.000Z'),approvedAt:new Date('2026-11-01T08:00:00.000Z'),suspendedAt:null,revokedAt:null,updatedAt:new Date('2026-11-15T00:00:00.000Z'),reason:'QA only',approvedByAdmin:null,suspendedByAdmin:null,revokedByAdmin:null};
