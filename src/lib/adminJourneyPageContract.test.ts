@@ -87,10 +87,14 @@ test("Visitor Journeys defaults to Last 24 hours, keeps responsive filters on on
   assert.match(list, /\.\.\.withoutPagination\(raw\), \.\.\.fixed, environment/);
   assert.match(list, /<JourneyDateRangeFields initialRange=\{range\}/);
   assert.match(list, /data-testid="journey-filters-toolbar"/);
-  assert.match(list, /flex w-full min-w-0 flex-wrap items-center gap-2/);
-  assert.match(list, /flex-\[1\.2_1_168px\]/);
-  assert.match(list, /h-10 w-auto shrink-0/);
-  assert.match(list, /min-w-\[138px\] flex-\[1_1_138px\]/);
+  assert.ok(list.indexOf('data-testid="journey-filters-toolbar"') < list.indexOf('<JourneyDateRangeFields'));
+  assert.match(controls, /data-testid="journey-date-range"/);
+  assert.match(controls, /data-testid="journey-custom-date-fields"/);
+  assert.match(controls, /order-last col-span-full/);
+  assert.match(list, /grid w-full min-w-0 grid-cols-1 items-center gap-2/);
+  assert.match(list, /lg:grid-cols-\[repeat\(5,minmax\(0,1fr\)\)_120px\]/);
+  assert.match(list, /h-10 w-full min-w-0/);
+  assert.match(list, /sm:grid-cols-2 md:grid-cols-3/);
   assert.doesNotMatch(list, /xl:flex-nowrap|sm:col-span-2|w-full items-center justify-center whitespace-nowrap rounded-lg bg-\[#004BB8\]/);
   assert.match(list, /align="end" truncateLabel/);
   assert.match(list, /name="product" appearance="fare"/);
