@@ -369,8 +369,8 @@ test("Task 3: standalone handoffs preserve filters, records and next-cursor beha
   assert.match(handoffsPage, /<ProviderHandoffFilters/);
   assert.match(handoffFilters, /aria-label="Filter provider handoffs"/);
   assert.match(handoffsPage, /aria-label="Provider handoff records"/);
-  // Standalone Handoffs fits the available workspace and switches to the
-  // labeled-record layout when 10 columns would become cramped.
+  // The standalone Handoffs directory must remain a ten-column table rather
+  // than switching to stacked labeled cards at desktop widths.
   assert.match(handoffsPage, /className="admin-handoff-records mt-3/);
   assert.match(handoffsPage, /w-full min-w-0 table-fixed/);
   assert.doesNotMatch(handoffsPage, /min-w-\[1320px\]|overflow-x-auto/);
