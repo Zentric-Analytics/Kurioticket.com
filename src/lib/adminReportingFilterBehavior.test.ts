@@ -8,11 +8,11 @@ const searchActivity = readFileSync("src/app/admin/searches/activity/page.tsx", 
 const journeys = readFileSync("src/app/admin/journeys/page.tsx", "utf8");
 const journeyControls = readFileSync("src/components/admin/JourneyDateRangeFields.tsx", "utf8");
 
-test("Visitor Journeys uses a true rolling 24-hour default without altering retained history", () => {
+test("Visitor Journeys defaults to the current UTC day without altering retained history", () => {
   const now = new Date("2026-11-18T19:37:25.000Z");
-  assert.equal(selectedJourneyRange({}), "24h");
+  assert.equal(selectedJourneyRange({}), "today");
   assert.deepEqual(journeyWindow({}, now), {
-    from: "2026-11-17T19:37:25.000Z",
+    from: "2026-11-18T00:00:00.000Z",
     to: "2026-11-18T19:37:25.000Z",
   });
   assert.equal(selectedJourneyRange({ from: "2026-11-10T00:00:00.000Z" }), "custom");
@@ -32,7 +32,7 @@ test("multiple-filter Journeys and Search Activity pages retain Apply-only submi
   assert.match(journeyControls, /ADMIN_REPORTING_RANGE_OPTIONS/);
   assert.match(journeyControls, /ADMIN_REPORTING_RANGE_OPTIONS/);
   assert.match(searchActivity, /ADMIN_REPORTING_RANGE_OPTIONS/);
-  assert.match(searchActivity, /return hasLegacyScope \? "all" : "24h"/);
+  assert.match(searchActivity, /return hasLegacyScope \? "all" : "today"/);
   assert.match(searchActivity, /from\.setTime\(now\.getTime\(\) - 24 \* 60 \* 60 \* 1000\)/);
   assert.match(searchActivity, /<button type="submit"/);
   assert.match(searchActivity, /Apply filters/);
