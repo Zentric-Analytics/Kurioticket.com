@@ -24,7 +24,7 @@ function sectionSource(title: string): string {
 
 test("Overview continues to use canonical authenticated, real data services", () => {
   assert.match(page, /getAdminOverview\(query\)/);
-  assert.match(page, /getAdminAlertSnapshot\(\)\.catch\(\(\) => null\)/);
+  assert.match(page, /getAdminAlertSnapshot\(undefined, new Date\(\), \{ forceRefreshCandidates: false \}\)\.catch\(\(\) => null\)/);
   assert.match(page, /incidents=\{incidents\}/);
   assert.match(page, /getSafeSystemStatus\(\)/);
   assert.match(page, /getRecentAdminActivity\(\)/);
