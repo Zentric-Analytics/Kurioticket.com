@@ -24,6 +24,8 @@ function sectionSource(title: string): string {
 
 test("Overview continues to use canonical authenticated, real data services", () => {
   assert.match(page, /getAdminOverview\(query\)/);
+  assert.match(page, /getAdminAlertSnapshot\(\)\.catch\(\(\) => null\)/);
+  assert.match(page, /incidents=\{incidents\}/);
   assert.match(page, /getSafeSystemStatus\(\)/);
   assert.match(page, /getRecentAdminActivity\(\)/);
   assert.match(page, /overview\.status === "ok"/);
@@ -146,7 +148,10 @@ test("Online Users is a current presence estimate with independent authenticated
 
 test("Attention Required separates actionable conditions from setup and waiting work", () => {
   assert.match(display, /summarizeAttentionRequired\(data\)/);
+  assert.match(display, /summarizePlatformIncidents\(incidents\.alerts\)/);
+  assert.match(display, /Alert monitoring unavailable; not zero/);
   for (const [label, link] of [
+    ["Platform issues", "/admin/settings/notifications"],
     ["Provider health issues", "/admin/providers"],
     ["Support needs action", "/admin/support"],
     ["Deletion reviews", "/admin/account-deletions"],
@@ -156,7 +161,7 @@ test("Attention Required separates actionable conditions from setup and waiting 
   for (const field of ["providerHealthIssues", "providerSetupIssues", "supportNeedsAction", "supportWaitingOnUser", "deletionReviews", "deletionPending"]) {
     assert.match(display, new RegExp("attention\\." + field));
   }
-  assert.equal((display.match(/<AttentionLink /g) ?? []).length, 3);
+  assert.equal((display.match(/<AttentionLink /g) ?? []).length, 4);
   assert.doesNotMatch(display, /supportAttention = data\\.support\\.open/);
   assert.doesNotMatch(display, /deletionAttention = data\\.deletions\\.pending/);
 });
@@ -261,7 +266,7 @@ test("Attention Required is compact and vertically stacked in its own card", () 
   const attention = display.slice(start, end);
   assert.match(attention, /<div className="grid gap-1\.5">/);
   assert.doesNotMatch(attention, /md:grid-cols-3|lg:grid-cols-3|grid-cols-3/);
-  assert.equal((attention.match(/<AttentionLink /g) ?? []).length, 3);
+  assert.equal((attention.match(/<AttentionLink /g) ?? []).length, 4);
   assert.match(attention, /Provider health issues/);
   assert.match(attention, /not ready \(setup, not failures\)/);
 
