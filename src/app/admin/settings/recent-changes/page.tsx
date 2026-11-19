@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ChevronDown } from "lucide-react";
 
 import { adminSettingsHistory } from "@/services/adminSettingsHistoryService";
 import type { SettingsHistoryCategory, SettingsHistoryEntry, SettingsHistoryRange } from "@/services/adminSettingsHistoryCore";
@@ -80,7 +81,7 @@ export default async function AdminRecentSettingsChangesPage({ searchParams }: {
   const requestedCategory = single(raw.category);
   const full = single(raw.view) === "full";
   const range: SettingsHistoryRange = ranges.includes(requestedRange as SettingsHistoryRange)
-    ? requestedRange as SettingsHistoryRange : full ? "90d" : "7d";
+    ? requestedRange as SettingsHistoryRange : "24h";
   const category: SettingsHistoryCategory = categories.includes(requestedCategory as SettingsHistoryCategory)
     ? requestedCategory as SettingsHistoryCategory : "all";
   const invalid = Object.keys(raw).some(key => !["range", "category", "view", "cursor"].includes(key)) ||
@@ -101,29 +102,35 @@ export default async function AdminRecentSettingsChangesPage({ searchParams }: {
           <p className="mt-1 text-[12px] leading-5 text-[#64748B]">Review recorded Settings and Team Access changes, who made them, and when.</p>
         </div>
         {full
-          ? <Link href={historyHref("7d", "all", undefined, false)} className="focus-ring text-[13px] font-medium text-[#004BB8] hover:underline">Show recent records</Link>
-          : <Link href={historyHref("90d", "all")} className="focus-ring text-[13px] font-medium text-[#004BB8] hover:underline">View full history</Link>}
+          ? <Link href={historyHref("24h", "all", undefined, false)} className="focus-ring text-[13px] font-medium text-[#004BB8] hover:underline">Show recent records</Link>
+          : <Link href={historyHref("24h", "all")} className="focus-ring text-[13px] font-medium text-[#004BB8] hover:underline">View full history</Link>}
       </header>
 
       {full ? (
-        <form action={fullHistoryPath} method="get" aria-label="Settings history filters" className="flex min-w-0 flex-wrap items-end gap-3 border-b border-[#E7ECF5] py-3">
+        <form action={fullHistoryPath} method="get" aria-label="Settings history filters"
+          data-testid="settings-history-filter-row"
+          className="grid w-full min-w-0 grid-cols-1 items-center gap-2 border-b border-[#E7ECF5] py-3 sm:grid-cols-2 lg:grid-cols-[180px_216px_140px]">
           <input type="hidden" name="view" value="full" />
-          <label className="grid min-w-[140px] gap-1 text-[12px] font-medium text-[#475569]">
-            Time range
-            <select name="range" defaultValue={range} className="h-10 rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px] text-[#334155]">
+          <div className="relative min-w-0">
+            <label htmlFor="settings-history-range" className="sr-only">Time range</label>
+            <select id="settings-history-range" name="range" defaultValue={range}
+              className="focus-ring h-10 w-full min-w-0 cursor-pointer appearance-none rounded-lg border border-[#D8E1EC] bg-white pl-3 pr-9 text-[13px] font-medium text-[#334155] shadow-[0_1px_0_rgba(2,6,23,0.04)] outline-none transition-colors hover:border-[#94A3B8] focus:border-[#004BB8]">
               {ranges.map(value => <option key={value} value={value}>{rangeLabels[value]}</option>)}
             </select>
-          </label>
-          <label className="grid min-w-[165px] gap-1 text-[12px] font-medium text-[#475569]">
-            Section
-            <select name="category" defaultValue={category} className="h-10 rounded-lg border border-[#D8E1EC] bg-white px-3 text-[13px] text-[#334155]">
+            <ChevronDown size={16} aria-hidden="true" className="pointer-events-none absolute right-3 top-3 text-[#64748B]" />
+          </div>
+          <div className="relative min-w-0">
+            <label htmlFor="settings-history-category" className="sr-only">Section</label>
+            <select id="settings-history-category" name="category" defaultValue={category}
+              className="focus-ring h-10 w-full min-w-0 cursor-pointer appearance-none rounded-lg border border-[#D8E1EC] bg-white pl-3 pr-9 text-[13px] font-medium text-[#334155] shadow-[0_1px_0_rgba(2,6,23,0.04)] outline-none transition-colors hover:border-[#94A3B8] focus:border-[#004BB8]">
               {categories.map(value => <option key={value} value={value}>{categoryLabels[value]}</option>)}
             </select>
-          </label>
-          <button type="submit" className="focus-ring h-10 rounded-lg bg-[#004BB8] px-4 text-[13px] font-medium text-white hover:bg-[#003D97]">Apply filters</button>
+            <ChevronDown size={16} aria-hidden="true" className="pointer-events-none absolute right-3 top-3 text-[#64748B]" />
+          </div>
+          <button type="submit" className="focus-ring h-10 w-full min-w-0 whitespace-nowrap rounded-lg bg-[#004BB8] px-3 text-[13px] font-medium text-white hover:bg-[#003D97]">Apply filters</button>
         </form>
       ) : (
-        <p className="border-b border-[#E7ECF5] py-3 text-[12px] text-[#64748B]">Latest recorded changes in the last 7 days. Open full history to review up to 90 days of records.</p>
+        <p className="border-b border-[#E7ECF5] py-3 text-[12px] text-[#64748B]">Latest recorded changes in the last 24 hours. Open full history to review up to 90 days of records.</p>
       )}
 
       {result.status !== "ok" ? (
@@ -154,7 +161,7 @@ export default async function AdminRecentSettingsChangesPage({ searchParams }: {
         </>
       ) : (
         <p role="status" className="border-b border-[#D8E1EC] py-5 text-[13px] text-[#64748B]">
-          No recorded changes match this selection. Older events may be outside the supported 90-day history window.
+          No recorded changes match this selection. Choose a longer time range to review older records.
         </p>
       )}
     </section>
