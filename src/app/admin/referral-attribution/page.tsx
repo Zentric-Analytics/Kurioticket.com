@@ -28,7 +28,8 @@ export default async function AdminReferralAttributionPage({
 
   const raw = await searchParams;
   const daysValue = typeof raw.days === "string" ? raw.days : null;
-  const days = parseAttributionDays(daysValue);
+  const period = raw.period === "today" || daysValue === "today" || (daysValue === null && raw.period === undefined) ? "today" : "rolling";
+  const days = parseAttributionDays(daysValue === "today" ? null : daysValue);
   if (days === null) {
     return <section className="min-w-0 bg-white py-4">
       {!embedded ? <SearchWorkspaceBackLink href="/admin/providers" label="Providers" /> : null}
@@ -38,7 +39,7 @@ export default async function AdminReferralAttributionPage({
   }
 
   const environment = currentReferralAttributionEnvironment();
-  const summary = await getReferralAttributionSummary(days, environment);
+  const summary = await getReferralAttributionSummary(days, environment, period);
 
   return (
     <section aria-label="Referral Attribution" className="w-full min-w-0 bg-white text-[#0F172A]">
@@ -55,7 +56,7 @@ export default async function AdminReferralAttributionPage({
 
       {!embedded ? (
         <div className="flex min-w-0 flex-wrap items-center justify-between gap-3 border-b border-[#D8E1EC] pb-2">
-          <ReferralWindowFilter days={days} embedded={false} />
+          <ReferralWindowFilter days={days} embedded={false} period={period} />
         </div>
       ) : null}
 
