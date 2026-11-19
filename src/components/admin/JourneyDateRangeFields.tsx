@@ -48,7 +48,7 @@ export function JourneyDateRangeFields({ initialRange, initialFrom, initialTo, n
           ...(range === "custom" ? [{ value: "custom", label: "Custom dates (legacy)" }] : []),
         ]} /></div>
       {custom ? (
-        <div data-testid="journey-custom-date-fields" className="col-span-full flex min-w-0 flex-wrap items-end gap-3">
+        <div data-testid="journey-custom-date-fields" className="order-last col-span-full flex min-w-0 flex-wrap items-end gap-3">
           <label className="text-xs text-[#475569]">From (UTC)
             <input type="datetime-local" required value={from}
               max={to ? offsetUtcDateTime(to, -1) : now.slice(0, 16)}
