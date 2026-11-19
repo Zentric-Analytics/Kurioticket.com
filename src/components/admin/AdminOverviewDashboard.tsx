@@ -247,13 +247,15 @@ export function AdminOverviewDashboard({ data, system, activity }: {
             </Section>
           </AdminOverviewRangeSensitive>
           <AdminOverviewRangeSensitive fill>
-            <Section title="Provider Handoffs" href="/admin/redirects" description="Recorded outbound redirects · selected range.">
-              <div className="grid grid-cols-3 gap-1.5">
+            <Section title="Provider Handoffs" href="/admin/redirects">
+              <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
                 <MiniMetric label="Recorded" value={data.journeys.operationalHandoffs.total} />
                 <MiniMetric label="In consented journeys" value={data.journeys.operationalHandoffs.inConsentedJourneys} />
-                <MiniMetric label="Unattributed" value={data.journeys.operationalHandoffs.withoutVisitorIdentity} />
+                <MiniMetric label="Without visitor identity" value={data.journeys.operationalHandoffs.withoutVisitorIdentity} />
+                <MiniMetric label="Flights" value={data.journeys.operationalHandoffs.flights} />
+                <MiniMetric label="Hotels" value={data.journeys.operationalHandoffs.hotels} />
+                <MiniMetric label="Cars" value="—" hint="Not tracked" />
               </div>
-              <p className="mt-2 text-[11px] text-slate-600">Redirects are not bookings. Missing attribution does not prove declined consent.</p>
             </Section>
           </AdminOverviewRangeSensitive>
         </div>
