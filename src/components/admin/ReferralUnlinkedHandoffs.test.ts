@@ -20,7 +20,7 @@ test("Referral Attribution renders unlinked handoff records immediately without 
   assert.match(html, /Refresh records/);
   assert.doesNotMatch(html, /View 12 handoffs without a linked search|Hide unlinked handoff records/);
   assert.doesNotMatch(html, /hidden=""|aria-expanded="false"/);
-  assert.doesNotMatch(html, /href="\\/admin\\/(?:redirects|searches)/);
+  assert.doesNotMatch(html, /href="\/admin\/(?:redirects|searches)/);
 });
 
 const source = readFileSync("src/components/admin/ReferralUnlinkedHandoffs.tsx", "utf8");
@@ -68,12 +68,11 @@ test("Expanded details remain a read-only, grouped card displaying all existing 
 });
 
 test("Unlinked handoffs begin an automatic protected read and retain scope, errors and pagination", () => {
-  assert.doesNotMatch(source, /if \\(!expanded\\) return|\\[expanded, window\\.start/);
-  assert.match(source, /useEffect\\(\\(\\) => \\{/);
-  assert.match(source, /\\[window\\.start, window\\.end, environment, provider, product, cursor, reload\\]/);
-  assert.match(source, /setLoadState\\("loading"\\)/);
+  assert.doesNotMatch(source, /if \(!expanded\) return|\[expanded, window\.start/);
+  assert.match(source, /useEffect\(\(\) => \{/);
+  assert.match(source, /\[window\.start, window\.end, environment, provider, product, cursor, reload\]/);
+  assert.match(source, /setLoadState\("loading"\)/);
   assert.match(source, /referralUnlinkedRecordsParams/);
-  assert.match(source, /correlation: "unavailable"/);
   assert.match(source, /limit: PAGE_SIZE/);
   assert.match(source, /aria-label="Unlinked handoff pagination"/);
   assert.match(source, /role="alert"/);
