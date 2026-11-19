@@ -38,11 +38,18 @@ test("Search Records fits its workspace with all ten fields visible and compact 
   assert.match(css, /white-space: nowrap/);
 });
 
-test("Provider Handoffs has a readable correlation and action column without squeezing table cells", () => {
+test("Provider Handoffs retains all ten fields without a horizontally scrolling table", () => {
+  const css = readFileSync("src/app/globals.css", "utf8");
   assert.match(handoffPage, /aria-label="Provider handoff records"/);
-  assert.match(handoffPage, /min-w-\[1320px\] table-fixed/);
+  assert.match(handoffPage, /admin-responsive-records admin-handoff-records/);
+  assert.match(handoffPage, /w-full min-w-0 table-fixed/);
+  assert.doesNotMatch(handoffPage, /min-w-\[1320px\]|overflow-x-auto/);
   assert.match(handoffPage, /<colgroup>/);
-  assert.doesNotMatch(handoffPage, /className="admin-responsive-records mt-3/);
+  assert.equal((handoffPage.match(/<td data-label=/g) || []).length, 9);
+  assert.match(handoffPage, /<th scope="row" data-label="Provider"/);
   assert.match(handoffPage, /whitespace-nowrap px-2 py-3/);
-  assert.match(handoffPage, /handoffDetailHref\(handoff.id, handoff.environment, raw\)/);
+  assert.match(handoffPage, /adminHandoffRoutePreview\(handoff.route\)/);
+  assert.match(handoffPage, /handoffDetailHref\(handoff.id, handoff.environment, scopedRaw\)/);
+  assert.match(css, /@container \(min-width: 801px\) and \(max-width: 1050px\)/);
+  assert.match(css, /\.admin-handoff-records td \[data-handoff-route-preview\]/);
 });
