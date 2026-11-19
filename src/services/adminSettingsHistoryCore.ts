@@ -1,6 +1,6 @@
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 
-export type SettingsHistoryRange = "24h" | "7d" | "30d" | "90d";
+export type SettingsHistoryRange = "24h" | "7d" | "30d" | "90d" | "all" | "custom";
 export type SettingsHistoryCategory = "all" | "product" | "automation" | "team" | "legacy";
 export type SettingsHistoryDetail = { label: string; value: string };
 export type SettingsHistoryEntry = {
@@ -24,6 +24,8 @@ type SettingsQuery = {
   category: SettingsHistoryCategory;
   cursor?: string;
   limit?: 6 | 25;
+  fromDate?: string;
+  toDate?: string;
 };
 type Database = Pick<PrismaClient, "adminAuditLog">;
 type Dependencies = { authorize: () => Promise<boolean>; database: () => Database | null; now?: () => Date };
@@ -128,8 +130,27 @@ function permittedWhere(category: SettingsHistoryCategory): Prisma.AdminAuditLog
   }
   return result;
 }
+function customScopeDates(query: SettingsQuery, now: Date) {
+  const fromDate = query.fromDate ?? "";
+  const toDate = query.toDate ?? "";
+  const isoDay = (value: string) => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+    const date = new Date(value + "T00:00:00.000Z");
+    return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value ? date : null;
+  };
+  const from = isoDay(fromDate);
+  const toStart = isoDay(toDate);
+  if (!from || !toStart || from > toStart || toStart > now ||
+      toStart.getTime() - from.getTime() >= 90 * 86_400_000) return null;
+  const to = new Date(Math.min(toStart.getTime() + 86_400_000, now.getTime()));
+  return { from: from.toISOString(), to: to.toISOString() };
+}
+
 function scopeFor(query: SettingsQuery, now: Date): { scope: Scope; position: Position | null } | null {
-  if (!(query.range in windows) || !categories.includes(query.category) || (query.limit !== undefined && query.limit !== 6 && query.limit !== 25)) return null;
+  if (!(query.range in windows || query.range === "all" || query.range === "custom") ||
+    !categories.includes(query.category) || (query.limit !== undefined && query.limit !== 6 && query.limit !== 25)) return null;
+  const custom = query.range === "custom" ? customScopeDates(query, now) : null;
+  if (query.range === "custom" && !custom) return null;
   let scope: Scope;
   let position: Position | null = null;
   if (query.cursor) {
@@ -143,16 +164,26 @@ function scopeFor(query: SettingsQuery, now: Date): { scope: Scope; position: Po
         !/^[A-Za-z0-9_-]{6,128}$/.test(decoded.id)) return null;
       const from = Date.parse(payload.from), to = Date.parse(payload.to), at = Date.parse(decoded.at);
       if (!Number.isFinite(from) || !Number.isFinite(to) || !Number.isFinite(at) ||
-        to > now.getTime() || from >= to || to - from !== windows[query.range] || at < from || at >= to) return null;
+        to > now.getTime() || from >= to || at < from || at >= to) return null;
+      if (query.range === "all") {
+        if (payload.from !== "1970-01-01T00:00:00.000Z") return null;
+      } else if (query.range === "custom") {
+        if (!custom || payload.from !== custom.from || Date.parse(payload.to) > Date.parse(custom.to)) return null;
+      } else if (to - from !== windows[query.range]) return null;
       scope = payload;
       position = { at: new Date(at).toISOString(), id: decoded.id };
     } catch { return null; }
   } else {
     const to = now.getTime();
-    scope = { range: query.range, category: query.category, from: new Date(to - windows[query.range]).toISOString(), to: new Date(to).toISOString() };
+    scope = query.range === "all"
+      ? { range: "all", category: query.category, from: "1970-01-01T00:00:00.000Z", to: now.toISOString() }
+      : query.range === "custom" && custom
+        ? { range: "custom", category: query.category, ...custom }
+        : { range: query.range, category: query.category, from: new Date(to - windows[query.range as keyof typeof windows]).toISOString(), to: now.toISOString() };
   }
   return { scope, position };
 }
+
 function nextCursor(scope: Scope, position: Position) {
   return Buffer.from(JSON.stringify({ v: 1, scope, ...position }), "utf8").toString("base64url");
 }
