@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useId, useRef, useState, useTransition, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { CalendarDays, Check, ChevronDown, LoaderCircle } from "lucide-react";
+import { AdminCalendarInput } from "@/components/admin/AdminCalendarInput";
 import { overviewPeriodHref, validOverviewCustomDates, type OverviewCustomDates, type OverviewPeriod, type OverviewRange } from "@/lib/adminOverviewRange";
 
 const rangeLabels: Record<OverviewRange, string> = {
@@ -120,11 +121,6 @@ export function AdminOverviewRangeSelect({ period, nowDate }: { period: Overview
     setOpen(false);
   }
   const datePanelId = useId();
-  const startDateRef = useRef<HTMLInputElement>(null);
-  const isEditingDates = draftDates !== null;
-  useEffect(() => {
-    if (isEditingDates) startDateRef.current?.focus();
-  }, [isEditingDates]);
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const optionRefs = useRef<Array<HTMLButtonElement | null>>([]);
@@ -286,15 +282,15 @@ export function AdminOverviewRangeSelect({ period, nowDate }: { period: Overview
           <span className="sr-only" id={datePanelId}>Custom reporting dates</span>
           <label className="flex flex-col gap-1 text-[11px] font-medium text-slate-600">
             From (UTC)
-            <input ref={startDateRef} type="date" value={draftDates.fromDate} max={draftDates.toDate || nowDate}
+            <AdminCalendarInput value={draftDates.fromDate} max={draftDates.toDate || nowDate}
               onChange={(event) => setDraftDates({ ...draftDates, fromDate: event.target.value })}
-              className="h-9 w-full max-w-full rounded-lg border border-slate-200 bg-white px-2 text-xs text-slate-950" />
+              className="w-[180px] max-w-full" />
           </label>
           <label className="flex flex-col gap-1 text-[11px] font-medium text-slate-600">
             To (UTC)
-            <input type="date" value={draftDates.toDate} min={draftDates.fromDate || undefined} max={nowDate}
+            <AdminCalendarInput value={draftDates.toDate} min={draftDates.fromDate || undefined} max={nowDate}
               onChange={(event) => setDraftDates({ ...draftDates, toDate: event.target.value })}
-              className="h-9 w-full max-w-full rounded-lg border border-slate-200 bg-white px-2 text-xs text-slate-950" />
+              className="w-[180px] max-w-full" />
           </label>
           <button type="submit" disabled={pending || !validDraft}
             className="h-9 rounded-lg bg-[#004BB8] px-3 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40">
