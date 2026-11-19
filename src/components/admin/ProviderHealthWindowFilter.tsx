@@ -68,10 +68,10 @@ export function ProviderHealthWindowFilter({ product, hours, custom }: Props) {
       {selection === "custom" ? (
         <div className="absolute right-0 top-full z-30 mt-2 flex w-[min(450px,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] flex-wrap items-end justify-end gap-2 rounded-xl border border-[#D8E1EC] bg-white p-3 text-[12px] shadow-[0_12px_36px_-12px_rgba(2,6,23,0.24)]">
           <label className="flex min-w-0 flex-1 flex-col gap-1 text-[#475569]">From (UTC)
-            <AdminCalendarInput value={from} onChange={setFrom} max={to || new Date().toISOString().slice(0, 10)} ariaLabel="Provider health start date UTC" className="w-full" />
+            <AdminCalendarInput value={from} onValueChange={setFrom} max={to || new Date().toISOString().slice(0, 10)} ariaLabel="Provider health start date UTC" className="w-full" />
           </label>
           <label className="flex min-w-0 flex-1 flex-col gap-1 text-[#475569]">To (UTC)
-            <AdminCalendarInput value={to} onChange={setTo} min={from || undefined} max={new Date().toISOString().slice(0, 10)} ariaLabel="Provider health end date UTC" className="w-full" />
+            <AdminCalendarInput value={to} onValueChange={setTo} min={from || undefined} max={new Date().toISOString().slice(0, 10)} ariaLabel="Provider health end date UTC" className="w-full" />
           </label>
           <div className="flex w-full justify-end gap-2 pt-1">
             <button type="button" onClick={() => { setSelection(custom ? "custom" : String(hours)); setError(""); }}
