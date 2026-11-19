@@ -128,14 +128,14 @@ export default async function AdminJourneysPage({ searchParams, embedded = false
                 <table className="w-full min-w-0 table-fixed text-left text-[13px]">
                   <caption className="sr-only">Eligible visitor journeys matching the selected filters</caption>
                   <colgroup>
-                    <col className="w-[15%]" /><col className="w-[16%]" /><col className="w-[9%]" />
-                    <col className="w-[14%]" /><col className="w-[7%]" /><col className="w-[22%]" />
-                    <col className="w-[6%]" /><col className="w-[11%]" />
+                    <col className="w-[15%]" /><col className="w-[15%]" /><col className="w-[9%]" />
+                    <col className="w-[13%]" /><col className="w-[10%]" /><col className="w-[22%]" />
+                    <col className="w-[6%]" /><col className="w-[10%]" />
                   </colgroup>
                   <thead className="border-b border-[#D8E1EC] bg-white text-[12px] text-[#475569]">
                     <tr>
                       {["Last activity", "Identity", "Products", "Providers", "Searches", "Observed stages", "Events", "Action"].map(label => (
-                        <th key={label} scope="col" className="px-2 py-2.5 text-left font-medium uppercase">{label}</th>
+                        <th key={label} scope="col" className={"px-2 py-2.5 text-left font-medium uppercase" + (label === "Searches" ? " whitespace-nowrap overflow-hidden text-ellipsis" : "")}>{label}</th>
                       ))}
                     </tr>
                   </thead>
