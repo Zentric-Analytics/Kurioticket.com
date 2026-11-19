@@ -10,13 +10,13 @@ test("Search Records aligns date range beside product tabs, leaving four compact
   assert.match(searchPage, /data-testid="search-records-products-row"/);
   assert.match(searchPage, /data-testid="search-records-date-range"/);
   assert.match(searchPage, /lg:flex-row lg:items-center lg:justify-between/);
-  assert.match(searchPage, /lg:w-\\[164px\\]/);
+  assert.match(searchPage, /lg:w-\[164px\]/);
   assert.match(searchPage, /data-testid="search-records-filter-row"/);
-  assert.match(searchPage, /lg:grid-cols-\\[repeat\\(4,minmax\\(0,1fr\\)\\)_120px\\]/);
+  assert.match(searchPage, /lg:grid-cols-\[repeat\(4,minmax\(0,1fr\)\)_120px\]/);
   assert.equal((searchPage.match(/<SearchMonitorSelect label="Date range"/g) || []).length, 1);
   assert.ok(searchPage.indexOf('aria-label="Search products"') < searchPage.indexOf('data-testid="search-records-date-range"'));
   assert.ok(searchPage.indexOf('data-testid="search-records-date-range"') < searchPage.indexOf('data-testid="search-records-filter-row"'));
-  assert.doesNotMatch(searchPage, /Search records only<\\/p>/);
+  assert.doesNotMatch(searchPage, /Search records only<\/p>/);
   assert.match(searchPage, /Apply filters/);
 });
 
@@ -25,16 +25,16 @@ test("Search Records fits its workspace with all ten fields visible and compact 
   assert.match(searchTable, /aria-label="Search activity table"/);
   assert.match(searchTable, /admin-responsive-records admin-search-records/);
   assert.match(searchTable, /w-full min-w-0 table-fixed border-collapse/);
-  assert.doesNotMatch(searchTable, /min-w-\\[1180px\\]|overflow-x-auto/);
+  assert.doesNotMatch(searchTable, /min-w-\[1180px\]|overflow-x-auto/);
   assert.match(searchTable, /<colgroup>/);
   assert.equal((searchTable.match(/<th scope="col"/g) || []).length, 10);
   assert.equal((searchTable.match(/<td data-label=/g) || []).length, 10);
-  assert.match(searchTable, /searchRoutePreview\\(routeLabel\\(search.origin, search.destination\\)\\)/);
-  assert.match(searchTable, /title=\\{routeLabel\\(search.origin, search.destination\\)\\}/);
-  assert.match(searchTable, /aria-label=\\{routeLabel\\(search.origin, search.destination\\)\\}/);
-  assert.match(searchTable, /detailHref\\(search, detailQuery\\)/);
-  assert.match(css, /@container \\(max-width: 800px\\)/);
-  assert.match(css, /\\.admin-search-records td \\[data-search-route-preview\\]/);
+  assert.match(searchTable, /searchRoutePreview\(routeLabel\(search.origin, search.destination\)\)/);
+  assert.match(searchTable, /title=\{routeLabel\(search.origin, search.destination\)\}/);
+  assert.match(searchTable, /aria-label=\{routeLabel\(search.origin, search.destination\)\}/);
+  assert.match(searchTable, /detailHref\(search, detailQuery\)/);
+  assert.match(css, /@container \(max-width: 800px\)/);
+  assert.match(css, /\.admin-search-records td \[data-search-route-preview\]/);
   assert.match(css, /white-space: nowrap/);
 });
 
