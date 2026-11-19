@@ -6,19 +6,21 @@ import { renderToStaticMarkup } from "react-dom/server";
 
 import { ReferralUnlinkedHandoffs } from "./ReferralUnlinkedHandoffs";
 
-test("Referral Attribution unlinked handoffs are an inline, collapsed control rather than a navigation link", () => {
+test("Referral Attribution renders unlinked handoff records immediately without a reveal control", () => {
   const html = renderToStaticMarkup(createElement(ReferralUnlinkedHandoffs, {
     window: { start: "2026-11-01T00:00:00.000Z", end: "2026-11-17T00:00:00.000Z" },
     environment: "staging",
     unlinkedCount: 12,
     providers: ["Duffel", "KAYAK sandbox"],
   }));
-  assert.match(html, /View 12 handoffs without a linked search/);
-  assert.match(html, /aria-expanded="false"/);
-  assert.match(html, /aria-controls=/);
-  assert.match(html, /hidden=""/);
-  assert.doesNotMatch(html, /href="\/admin\/(?:redirects|searches)/);
-  assert.doesNotMatch(html, /Loading provider handoffs/);
+  assert.match(html, /12 recorded in this reporting window/);
+  assert.match(html, /aria-label="Unlinked provider handoff records"/);
+  assert.match(html, /aria-label="Filter unlinked handoff records"/);
+  assert.match(html, /Loading provider handoffs/);
+  assert.match(html, /Refresh records/);
+  assert.doesNotMatch(html, /View 12 handoffs without a linked search|Hide unlinked handoff records/);
+  assert.doesNotMatch(html, /hidden=""|aria-expanded="false"/);
+  assert.doesNotMatch(html, /href="\\/admin\\/(?:redirects|searches)/);
 });
 
 const source = readFileSync("src/components/admin/ReferralUnlinkedHandoffs.tsx", "utf8");
@@ -63,4 +65,16 @@ test("Expanded details remain a read-only, grouped card displaying all existing 
   }
   assert.match(source, /setSelectedId\(current => current === handoff\.id \? null : handoff\.id\)/);
   assert.match(source, /<td colSpan=\{9\}/);
+});
+
+test("Unlinked handoffs begin an automatic protected read and retain scope, errors and pagination", () => {
+  assert.doesNotMatch(source, /if \\(!expanded\\) return|\\[expanded, window\\.start/);
+  assert.match(source, /useEffect\\(\\(\\) => \\{/);
+  assert.match(source, /\\[window\\.start, window\\.end, environment, provider, product, cursor, reload\\]/);
+  assert.match(source, /setLoadState\\("loading"\\)/);
+  assert.match(source, /referralUnlinkedRecordsParams/);
+  assert.match(source, /correlation: "unavailable"/);
+  assert.match(source, /limit: PAGE_SIZE/);
+  assert.match(source, /aria-label="Unlinked handoff pagination"/);
+  assert.match(source, /role="alert"/);
 });
