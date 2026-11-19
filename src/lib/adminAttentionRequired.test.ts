@@ -54,9 +54,10 @@ test("platform incidents cover all existing sources except already counted queue
 });
 
 test("platform incidents count active acknowledged records, not just unread", () => {
-  const result = summarizePlatformIncidents([
+  const alerts: Array<{ source: string; severity: "CRITICAL" | "WARNING"; acknowledged: boolean }> = [
     { source: "SEARCH", severity: "CRITICAL", acknowledged: true },
     { source: "SEARCH", severity: "WARNING", acknowledged: false },
-  ]);
+  ];
+  const result = summarizePlatformIncidents(alerts);
   assert.deepEqual(result, { total: 2, critical: 1, warning: 1 });
 });
