@@ -62,8 +62,8 @@ test("Every audit row is expandable while target email stays out of the permanen
 test("Audit Logs toolbar keeps readable balanced filter columns at 100% zoom", () => {
   assert.ok(toolbar.includes('data-testid="audit-filters-toolbar"'));
   assert.ok(toolbar.includes("sm:grid-cols-2"));
-  assert.ok(toolbar.includes("xl:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_132px]"));
-  assert.ok(toolbar.includes("sm:col-span-2 xl:col-span-1"));
+  assert.ok(toolbar.includes("lg:grid-cols-[minmax(0,1.6fr)_repeat(3,minmax(0,1fr))_120px]"));
+  assert.ok(toolbar.includes("sm:col-span-2 lg:col-span-1"));
   assert.equal((toolbar.match(/type="search"/g) || []).length, 1);
   assert.ok(toolbar.includes("compact attached"));
 });
