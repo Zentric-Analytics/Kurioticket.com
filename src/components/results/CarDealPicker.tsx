@@ -13,11 +13,13 @@ import type { CarOffer, CarSearchParams, NormalizedCarResult } from "@/lib/cars/
 import { CarPriceAlertControl } from "@/components/results/CarPriceAlertControl";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import { sandboxBookingUrl } from "@/services/travel/kayakSandboxPublic";
+import { recordCarHandoffClick } from "@/lib/cars/carHandoffTracking";
 import { getCarRateDisclosureSections, getCarRatePaymentLabel, type CarRateDisclosureSection } from "@/lib/cars/carRateDisclosure";
 
 type Props = {
   car: NormalizedCarResult;
   search: CarSearchParams;
+  requestId?: string | null;
   selectedOfferId: string;
   onSelectOffer: (offer: CarOffer) => void;
   expanded: boolean;
@@ -103,6 +105,7 @@ function RateSectionIcon({ id }: { id: CarRateDisclosureSection["id"] }) {
 export function CarDealPicker({
   car,
   search,
+  requestId,
   compact = false,
   expanded,
   onExpandedChange,
@@ -149,8 +152,9 @@ export function CarDealPicker({
     displayCurrency: selectedOption.currency, convertSourceEstimate: true,
     rates: currencyRates.rates, isFallbackRate: currencyRates.isFallback,
   }).formatted;
-  const isolateProviderAction = (event: MouseEvent<HTMLAnchorElement>) => {
+  const isolateProviderAction = (event: MouseEvent<HTMLAnchorElement>, offerId: string) => {
     event.stopPropagation();
+    recordCarHandoffClick(car.id, offerId, "car-results", requestId);
   };
   if (!groups.length) return null;
 
@@ -233,7 +237,7 @@ export function CarDealPicker({
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label={"View deal from " + group.providerName}
-                    onClick={isolateProviderAction}
+                    onClick={(event) => isolateProviderAction(event, offer.id)}
                     className={[(compact ? "text-[13px] leading-4" : "text-[11px] leading-4 lg:text-[12px]"), `inline-flex ${compact ? "min-h-9" : "min-h-6"} shrink-0 items-center gap-0.5 whitespace-nowrap font-semibold text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35`].join(" ")}
                     data-car-deal-provider-view-deal
                   >
@@ -345,7 +349,7 @@ export function CarDealPicker({
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label={"View deal from " + selectedGroup.providerName}
-                    onClick={isolateProviderAction}
+                    onClick={(event) => isolateProviderAction(event, selectedOffer!.id)}
                     data-car-rate-view-deal
                     className="inline-flex min-h-11 w-full max-w-[240px] items-center justify-center rounded-lg bg-[#004BB8] px-5 py-2.5 text-[14px] font-semibold leading-5 text-white transition-colors hover:bg-[#003B91] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 focus-visible:ring-offset-2"
                   >

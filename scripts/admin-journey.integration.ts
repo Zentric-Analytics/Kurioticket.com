@@ -252,7 +252,7 @@ test("observed stage metrics handle progressive ordering, repeated selections, m
   const legacy = await redirect(first.id, time(8, 65), { userId: owner.id });
   // A tagged redirect without a visitor must still count operationally, but
   // must never be invented into a consented journey.
-  await redirect(null, time(8, 70), { metadata: { environment: "staging" } });
+  await redirect(null, time(8, 70), { type: "FLIGHT", metadata: { environment: "staging" } });
   await redirect(guest.id, time(8, 71), { metadata: { environment: "staging", requestId: randomUUID() } });
   // Previously recorded events disappear from the eligible cohort after consent
   // withdrawal, but their environment-tagged redirects remain operational rows.
@@ -291,6 +291,7 @@ test("observed stage metrics handle progressive ordering, repeated selections, m
     withVisitorIdentity: 3, withoutVisitorIdentity: 1,
     inConsentedJourneys: 1, outsideConsentedJourneys: 3,
     exactSearchLinks: 1, eligibleWithoutExactSearch: 0, withRequestId: 2,
+    flights: 1, hotels: 3, cars: 0,
   });
   assert.deepEqual(result.operationalSearches, { scope: "environment_and_date_only", total: 8, success: 4, partial: 2, failed: 2, partialWithResults: 2, partialWithoutResults: 0 });
   const detail = ok(await service.detail(j.id, window(8)));

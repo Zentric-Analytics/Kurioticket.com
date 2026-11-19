@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { AdminPageShell, AdminSectionCard } from "@/components/admin/AdminPageShell";
-import { AdminOverviewDashboard, AdminOverviewSecondary } from "@/components/admin/AdminOverviewDashboard";
+import { AdminOverviewDashboard, AdminOverviewSecondary, SearchPerformanceSummary } from "@/components/admin/AdminOverviewDashboard";
 import {
   AdminOverviewAutoRefresh,
   AdminOverviewRangeSelect,
@@ -51,9 +51,21 @@ export default async function AdminPage({ searchParams }: PageProps) {
               Choose valid UTC dates within a 90-day range. Showing the last 24 hours.
             </p>
           ) : null}
-          <AdminOverviewRangeSensitive>
-            <PlatformOverviewSummary data={platform} />
-          </AdminOverviewRangeSensitive>
+          <div className="mb-3 grid min-w-0 items-stretch gap-3 lg:grid-cols-2">
+            <AdminOverviewRangeSensitive fill>
+              <PlatformOverviewSummary data={platform} />
+            </AdminOverviewRangeSensitive>
+            {overview.status === "ok" ? (
+              <AdminOverviewRangeSensitive fill>
+                <SearchPerformanceSummary data={overview.data} />
+              </AdminOverviewRangeSensitive>
+            ) : (
+              <section role="status" className="min-w-0 rounded-xl border border-slate-200 bg-white p-3 sm:p-4">
+                <h2 className="text-[15px] font-semibold text-slate-950">Search Performance</h2>
+                <p className="mt-2 text-sm text-slate-600">Search performance is unavailable.</p>
+              </section>
+            )}
+          </div>
           {overview.status === "ok" ? (
             <AdminOverviewDashboard data={overview.data} system={system} activity={activity} />
           ) : (

@@ -40,7 +40,7 @@ export default async function AdminRedirectsPage({ searchParams, embedded = fals
           {one(raw.from) ? <input type="hidden" name="from" value={one(raw.from)} /> : null}
           {one(raw.to) ? <input type="hidden" name="to" value={one(raw.to)} /> : null}
           <AdminSelect name="product" defaultValue={one(raw.product)}>
-            <option value="">All products</option><option value="FLIGHT">Flights</option><option value="HOTEL">Hotels</option>
+            <option value="">All products</option><option value="FLIGHT">Flights</option><option value="HOTEL">Hotels</option><option value="CAR">Cars</option>
           </AdminSelect>
           <SearchMonitorSelect
             label="Identity"

@@ -53,7 +53,7 @@ export async function recordProviderHandoffActivity(
       ...attribution,
       type: "PROVIDER_HANDOFF_STARTED",
       eventKey: journeyEventKey("redirect", redirectLogId),
-      product: input.type === "flight" ? "FLIGHT" : "HOTEL",
+      product: input.type === "flight" ? "FLIGHT" : input.type === "hotel" ? "HOTEL" : "CAR",
       provider: input.provider,
       redirectLogId,
       ...(receipt?.searchHistoryId ? { searchHistoryId: receipt.searchHistoryId } : {}),

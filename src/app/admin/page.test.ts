@@ -14,11 +14,12 @@ const adminData = readFileSync("src/lib/admin-data.ts", "utf8");
 const display = dashboard.slice(dashboard.indexOf("export function AdminOverviewDashboard("));
 
 function sectionSource(title: string): string {
-  const start = display.indexOf('<Section title="' + title + '"');
+  const source = title === "Search Performance" ? dashboard : display;
+  const start = source.indexOf('<Section title="' + title + '"');
   assert.ok(start >= 0, title + " section must exist");
-  const end = display.indexOf("</Section>", start);
+  const end = source.indexOf("</Section>", start);
   assert.ok(end > start, title + " section must close");
-  return display.slice(start, end + "</Section>".length);
+  return source.slice(start, end + "</Section>".length);
 }
 
 test("Overview continues to use canonical authenticated, real data services", () => {
@@ -38,44 +39,36 @@ test("the single reporting filter precedes both Overview reports", () => {
   const selectors = Array.from(page.matchAll(/<AdminOverviewRangeSelect\b/g));
   assert.equal(selectors.length, 1);
   assert.ok(selectors[0].index < page.indexOf("<PlatformOverviewSummary"));
-  assert.ok(page.indexOf("<PlatformOverviewSummary") < page.indexOf("<AdminOverviewDashboard"));
+  assert.ok(page.indexOf("<PlatformOverviewSummary") < page.indexOf("<SearchPerformanceSummary"));
+  assert.ok(page.indexOf("<SearchPerformanceSummary") < page.indexOf("<AdminOverviewDashboard"));
   assert.doesNotMatch(display, /<AdminOverviewRangeSelect/);
 });
 
-test("compact Operations Snapshot has exactly four genuine primary metrics", () => {
-  const snapshot = display.slice(display.indexOf('aria-label="Operations Snapshot"'), display.indexOf('aria-label="Attention Required"'));
+test("Operations Snapshot includes handoffs and visitor metrics without the removed headline cards", () => {
+  const snapshot = display.slice(display.indexOf('aria-label="Operations Snapshot"'), display.indexOf("<AdminOverviewSecondary system={system} activity={activity} />"));
+  const accountGroup = snapshot.slice(snapshot.indexOf('aria-label="Account snapshot"'));
   for (const [label, value] of [
     ["Total accounts", "data.users.total"],
     ["Online Users", "<OnlineUsersValue initial={data.onlinePresence} />"],
-    ["Recorded searches", "data.journeys.operationalSearches.total"],
-    ["Customer journeys", "data.journeys.journeys"],
   ]) {
-    assert.ok(snapshot.includes('label="' + label + '" value={' + value + "}"), label);
+    assert.ok(accountGroup.includes('label="' + label + '" value={' + value + "}"), label);
   }
-  assert.equal((snapshot.match(/<SnapshotLink /g) ?? []).length, 4);
-  assert.match(snapshot, /min-\[56\.25rem\]:grid-cols-4/);
-  assert.match(snapshot, /sm:grid-cols-2/);
-  assert.doesNotMatch(snapshot, /data\.users\.(?:active|suspended|deleted)/);
-  assert.doesNotMatch(snapshot, /data\.audit\.human/);
+  assert.equal((snapshot.match(/<SnapshotLink /g) ?? []).length, 2);
+  assert.match(snapshot, /aria-label="Account snapshot" className="grid min-w-0 grid-cols-1 grid-rows-2 items-stretch gap-2"/);
+  assert.doesNotMatch(snapshot, /label="Recorded searches"|label="Customer journeys"/);
+  assert.match(snapshot, /<Section title="Visitor Activity"/);
+  assert.match(snapshot, /<Section title="Provider Handoffs"/);
 });
 
-test("Operations Snapshot generated CSS keeps four columns above the 900px breakpoint", async () => {
-  const snapshot = display.slice(display.indexOf('aria-label="Operations Snapshot"'), display.indexOf('aria-label="Attention Required"'));
-  const grid = snapshot.match(/<div className="(grid gap-2 sm:grid-cols-2 [^"]+)">/);
-  assert.ok(grid, "the responsive snapshot grid must exist");
-
-  const classes = grid[1].split(/\s+/);
-  assert.ok(classes.includes("min-[56.25rem]:grid-cols-4"), "use a rem breakpoint to match Tailwind's defaults");
-  assert.ok(!classes.includes("min-[900px]:grid-cols-4"), "do not mix px breakpoints with rem breakpoints");
-
+test("Operations Snapshot account metrics stack in two rows beside Attention Required", async () => {
+  const snapshot = display.slice(display.indexOf('aria-label="Operations Snapshot"'), display.indexOf("<AdminOverviewSecondary system={system} activity={activity} />"));
+  const accounts = snapshot.indexOf('aria-label="Account snapshot"');
+  const attention = snapshot.indexOf('aria-label="Attention Required"');
+  assert.ok(attention >= 0 && accounts > attention, "account cards must follow Attention Required in the same grid row");
+  assert.match(snapshot, /items-stretch gap-3 lg:grid-cols-2/);
   const engine = await compile("@theme { --breakpoint-sm: 40rem; } @tailwind utilities;");
-  const generatedCss = engine.build(classes);
-  const twoColumnRule = generatedCss.indexOf(".sm\\:grid-cols-2");
-  const fourColumnRule = generatedCss.indexOf(".min-\\[56\\.25rem\\]\\:grid-cols-4");
-
-  assert.ok(twoColumnRule >= 0, "Tailwind must emit the two-column fallback");
-  assert.ok(fourColumnRule > twoColumnRule, "Tailwind must emit the four-column rule after the fallback");
-  assert.match(generatedCss.slice(fourColumnRule), /@media \(width >= 56\.25rem\)/);
+  const generatedCss = engine.build(["grid", "grid-cols-1", "grid-rows-2"]);
+  assert.match(generatedCss, /grid-template-rows:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/);
 });
 
 test("compact snapshot links keep cards equal height and explanatory text readable", () => {
@@ -174,8 +167,8 @@ test("visitor cards display exactly four real consented action-event counts", ()
     assert.match(visitor, new RegExp("stages\\." + stage + "\\.events"));
   }
   assert.equal((visitor.match(/<MiniMetric /g) ?? []).length, 4);
-  assert.match(visitor, /Events can repeat/);
-  assert.match(visitor, /Handoffs are not confirmed bookings/);
+  assert.doesNotMatch(visitor, /Events can repeat/);
+  assert.doesNotMatch(visitor, /Handoffs are not confirmed bookings/);
   assert.doesNotMatch(visitor, /\.journeys\}/);
   assert.match(visitor, /href="\/admin\/journeys"/);
 });
@@ -188,8 +181,8 @@ test("all recorded searches are separate from consented search events", () => {
     assert.ok(search.includes('label="' + label + '" value={data.journeys.operationalSearches.' + key + "}"), label);
   }
   assert.equal((search.match(/<MiniMetric /g) ?? []).length, 4);
-  assert.match(search, /Includes unattributed searches/);
-  assert.match(search, /success does not guarantee offers/);
+  assert.doesNotMatch(search, /Includes unattributed searches/);
+  assert.doesNotMatch(search, /success does not guarantee offers/);
   assert.match(search, /href="\/admin\/searches\/activity"/);
   assert.doesNotMatch(search, /partialWithResults|partialWithoutResults/);
   assert.match(readFileSync("src/app/admin/searches/activity/page.tsx", "utf8"), /AdminPageShell/);
@@ -200,12 +193,21 @@ test("provider handoffs remain recorded redirects, never confirmed bookings", ()
   assert.match(handoffs, /operationalHandoffs\.total/);
   assert.match(handoffs, /operationalHandoffs\.inConsentedJourneys/);
   assert.match(handoffs, /operationalHandoffs\.withoutVisitorIdentity/);
-  assert.match(handoffs, /Redirects are not bookings/);
-  assert.match(handoffs, /Missing attribution does not prove declined consent/);
+  assert.match(handoffs, /operationalHandoffs\.flights/);
+  assert.match(handoffs, /operationalHandoffs\.hotels/);
+  assert.match(handoffs, /label="Without visitor identity"/);
+  assert.match(handoffs, /operationalHandoffs\.cars/);
+  assert.match(handoffs, /grid grid-cols-2 gap-1\.5 sm:grid-cols-3/);
+  assert.doesNotMatch(handoffs, /Redirects are not bookings|Unattributed|Recorded outbound redirects/);
   assert.match(handoffs, /href="\/admin\/redirects"/);
-  assert.equal((handoffs.match(/<MiniMetric /g) ?? []).length, 3);
+  assert.equal((handoffs.match(/<MiniMetric /g) ?? []).length, 6);
   const contract = readFileSync("src/services/adminJourneyCore.ts", "utf8");
   assert.match(contract, /totalRedirects !== inConsentedJourneys \+ outsideConsentedJourneys/);
+  assert.match(contract, /r\."type"::text = 'FLIGHT'/);
+  assert.match(contract, /r\."type"::text = 'HOTEL'/);
+  assert.match(contract, /r\."type"::text = 'CAR'/);
+  const prismaSchema = readFileSync("prisma/schema.prisma", "utf8");
+  assert.match(prismaSchema, /enum RedirectType \{\s*FLIGHT\s*HOTEL\s*CAR\s*\}/);
 });
 
 test("Overview omits duplicate Provider Health but preserves live provider issue detection", () => {
@@ -234,27 +236,24 @@ test("complete provider diagnostics remain on the linked Providers page", () => 
   assert.doesNotMatch(dashboard, /errorMessage/);
 });
 
-test("Overview remaining cards form independently stacked columns without excess height", () => {
-  const gridStart = display.indexOf('<div className="grid min-w-0 items-start gap-3 lg:grid-cols-2">');
-  assert.ok(gridStart >= 0, "responsive two-column Overview must exist");
-  const stack = '<div className="flex min-w-0 flex-col gap-3">';
-  const leftStart = display.indexOf(stack, gridStart);
-  const rightStart = display.indexOf(stack, leftStart + stack.length);
-  assert.ok(leftStart > gridStart && rightStart > leftStart, "both content-height stacks must exist");
-
-  const left = display.slice(leftStart, rightStart);
-  const right = display.slice(rightStart, display.indexOf("<AdminOverviewSecondary system={system} activity={activity} />", rightStart));
-
-  assert.match(left, /aria-label="Attention Required"/);
-  assert.deepEqual([...left.matchAll(/<Section title="([^"]+)"/g)].map((match) => match[1]), [
-    "Search Performance", "Support Workload",
-  ]);
-  assert.deepEqual([...right.matchAll(/<Section title="([^"]+)"/g)].map((match) => match[1]), [
-    "Visitor Activity", "Provider Handoffs", "Deletion Workload",
-  ]);
-  assert.doesNotMatch(left, /h-full|flex-1|row-span|absolute/);
-  assert.doesNotMatch(right, /h-full|flex-1|row-span|absolute/);
-  assert.doesNotMatch(display, /<Section title="Provider Health"/);
+test("Preview places Attention Required and accounts before Visitor Activity and Provider Handoffs", () => {
+  const snapshot = display.slice(display.indexOf('aria-label="Operations Snapshot"'), display.indexOf("<AdminOverviewSecondary system={system} activity={activity} />"));
+  const activityPair = snapshot.indexOf("{/* Customer activity and actual outbound provider handoffs share the snapshot row. */}");
+  const attentionPair = snapshot.indexOf("{/* The two account totals sit beside Attention Required, not above it. */}");
+  const workPair = snapshot.indexOf('<Section title="Support Workload"');
+  assert.ok(attentionPair >= 0 && activityPair > attentionPair && workPair > activityPair);
+  const activity = snapshot.slice(activityPair, workPair);
+  assert.match(activity, /grid min-w-0 items-stretch gap-3 lg:grid-cols-2/);
+  assert.ok(activity.indexOf('<Section title="Visitor Activity"') < activity.indexOf('<Section title="Provider Handoffs"'));
+  assert.equal((activity.match(/<AdminOverviewRangeSensitive fill>/g) ?? []).length, 2);
+  const attention = snapshot.slice(attentionPair, activityPair);
+  assert.match(attention, /grid min-w-0 items-stretch gap-3 lg:grid-cols-2/);
+  assert.ok(attention.indexOf('aria-label="Attention Required"') < attention.indexOf('aria-label="Account snapshot"'));
+  assert.equal((attention.match(/<SnapshotLink /g) ?? []).length, 2);
+  for (const title of ["Support Workload", "Deletion Workload"]) {
+    assert.ok(snapshot.includes('<Section title="' + title + '"'), title);
+  }
+  assert.doesNotMatch(display, /<Section title="Search Performance"/);
   assert.doesNotMatch(display, /overflow-x-auto|overflow-x-scroll|whitespace-nowrap/);
 });
 
@@ -298,7 +297,7 @@ test("platform readiness shows four concise indicators without claiming auth or 
   assert.match(health, /Key present, not tested/);
   assert.match(health, /Not connected/);
   assert.match(health, /items\.map/);
-  assert.match(dashboard, /<Section title="Platform Health" href="\/admin\/system"/);
+  assert.match(dashboard, /<Section title="System Health" href="\/admin\/system"/);
 });
 
 test("audit summary limits display to three latest actions, retaining full records in Logs", () => {
@@ -309,7 +308,7 @@ test("audit summary limits display to three latest actions, retaining full recor
   assert.match(audit, /item\.timestamp/);
   assert.match(audit, /activity\.status === "unavailable"/);
   assert.match(audit, /recent\.length === 0/);
-  assert.match(dashboard, /Latest three actions across all dates/);
+  assert.doesNotMatch(dashboard, /Latest three actions across all dates/);
   assert.match(dashboard, /href="\/admin\/logs"/);
   assert.match(adminData, /take: limit/);
   assert.match(adminData, /timeZone: "UTC"/);
@@ -346,7 +345,8 @@ test("no fake totals, old full-report panels, or hidden full diagnostics remain 
 });
 
 test("the compact grid remains responsive without horizontal scrolling or cramped desktop cards", () => {
-  assert.match(display, /grid gap-2 sm:grid-cols-2 min-\[56\.25rem\]:grid-cols-4/);
+  assert.match(display, /grid min-w-0 grid-cols-1 grid-rows-2 items-stretch gap-2/);
+  assert.match(page, /items-stretch gap-3 lg:grid-cols-2/);
   assert.match(display, /<div className="grid gap-1\.5">/);
   assert.match(display, /grid min-w-0 items-start gap-3 lg:grid-cols-2/);
   assert.match(dashboard, /grid grid-cols-2 gap-1\.5/);
@@ -385,23 +385,22 @@ test("changing reporting ranges consistently exposes a shared loading indicator"
   assert.match(controls, /setFailedPeriod\(requestedPeriod\)/);
 });
 
-test("loading state applies only to time-filtered summaries and keeps the page stable", () => {
+test("loading state covers platform, search performance, visitor and handoff metrics", () => {
   assert.match(controls, /export function AdminOverviewRangeSensitive/);
   assert.match(controls, /data-range-updating=\{updating \? "true" : "false"\}/);
   assert.match(controls, /inert=\{updating\}/);
   assert.match(controls, /motion-safe:animate-pulse/);
-  assert.equal((display.match(/<AdminOverviewRangeSensitive(?: fill)?>/g) ?? []).length, 5);
-  assert.match(page, /<AdminOverviewRangeSensitive>\s*<PlatformOverviewSummary/);
-  for (const label of ["Recorded searches", "Customer journeys"]) {
-    assert.match(display, new RegExp('<AdminOverviewRangeSensitive fill>\\s*<SnapshotLink[^>]+label="' + label + '"'));
+  assert.equal((display.match(/<AdminOverviewRangeSensitive(?: fill)?>/g) ?? []).length, 2);
+  assert.match(page, /<AdminOverviewRangeSensitive fill>\s*<PlatformOverviewSummary/);
+  assert.match(page, /<AdminOverviewRangeSensitive fill>\s*<SearchPerformanceSummary/);
+  for (const title of ["Visitor Activity", "Provider Handoffs"]) {
+    assert.match(display, new RegExp('<AdminOverviewRangeSensitive fill>\\s*<Section title="' + title + '"'));
   }
-  for (const title of ["Search Performance", "Visitor Activity", "Provider Handoffs"]) {
-    assert.match(display, new RegExp('<AdminOverviewRangeSensitive>\\s*<Section title="' + title + '"'));
-  }
-  assert.doesNotMatch(display, /<AdminOverviewRangeSensitive fill>\s*<SnapshotLink[^>]+label="(?:Total accounts|Online Users)"/);
   for (const title of ["Support Workload", "Deletion Workload"]) {
-    assert.doesNotMatch(display, new RegExp('<AdminOverviewRangeSensitive>\\s*<Section title="' + title + '"'));
+    assert.doesNotMatch(display, new RegExp('<AdminOverviewRangeSensitive fill>\\s*<Section title="' + title + '"'));
   }
+  assert.doesNotMatch(display, /<AdminOverviewRangeSensitive fill>\s*<SnapshotLink/);
+  assert.match(page, /Search performance is unavailable/);
 });
 
 test("reporting presets and custom UTC dates resolve to their exact bounds", () => {

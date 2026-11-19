@@ -279,7 +279,7 @@ test("Rate details keeps a centered footer outside scroll with the inspected pro
   assert.match(sheet, /rel="noopener noreferrer"/);
   assert.match(sheet, /data-car-rate-view-deal-unavailable/);
   assert.match(sheet, /\sdisabled\s+data-car-rate-view-deal-unavailable/);
-  assert.match(sheet, /onClick=\{isolateProviderAction\}/);
+  assert.match(sheet, /onClick=\{\(event\) => isolateProviderAction\(event, selectedOffer!\.id\)\}/);
 });
 
 test("Rate details footer View deal text is centered without arrows on mobile and desktop", () => {

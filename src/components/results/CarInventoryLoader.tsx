@@ -64,5 +64,5 @@ export function CarInventoryLoader({ values, fallback }: {
     }}>Retry search</button>
   </main>;
   if (results === null) return fallback;
-  return <CarsResultsClient values={values} initialResults={results} inventoryStatus="available" />;
+  return <CarsResultsClient values={values} initialResults={results} inventoryStatus="available" requestId={requestId} />;
 }

@@ -6,8 +6,6 @@ import {
   Headphones,
   KeyRound,
   Mail,
-  Route,
-  Search,
   ShieldCheck,
   Trash2,
   Users,
@@ -39,15 +37,17 @@ function Section({
   children,
   description,
   action,
+  fill = false,
 }: {
   title: string;
   href: string;
   children: React.ReactNode;
   description?: string;
   action?: React.ReactNode;
+  fill?: boolean;
 }) {
   return (
-    <section aria-label={title} className="min-w-0 rounded-xl border border-slate-200 bg-white p-3 sm:p-4">
+    <section aria-label={title} className={`min-w-0 rounded-xl border border-slate-200 bg-white p-3 sm:p-4${fill ? " h-full" : ""}`}>
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <div className="min-w-0">
           <h2 className="text-[15px] font-semibold tracking-tight text-slate-950">{title}</h2>
@@ -193,13 +193,27 @@ function RecentActivity({ activity }: { activity: AuditActivity }) {
 export function AdminOverviewSecondary({ system, activity }: { system: SystemStatus; activity: AuditActivity }) {
   return (
     <div className="mt-3 grid gap-3">
-      <Section title="Platform Health" href="/admin/system">
+      <Section title="System Health" href="/admin/system">
         <PlatformSummary system={system} />
       </Section>
-      <Section title="Recent Admin Activity" href="/admin/logs" description="Latest three actions across all dates.">
+      <Section title="Recent Admin Activity" href="/admin/logs">
         <RecentActivity activity={activity} />
       </Section>
     </div>
+  );
+}
+
+
+export function SearchPerformanceSummary({ data }: { data: OverviewData }) {
+  return (
+    <Section title="Search Performance" href="/admin/searches/activity" fill>
+              <div className="grid grid-cols-2 gap-1.5">
+                <MiniMetric label="Total" value={data.journeys.operationalSearches.total} />
+                <MiniMetric label="Successful" value={data.journeys.operationalSearches.success} tone="good" />
+                <MiniMetric label="Failed" value={data.journeys.operationalSearches.failed} tone={data.journeys.operationalSearches.failed ? "bad" : "neutral"} />
+                <MiniMetric label="Partial" value={data.journeys.operationalSearches.partial} />
+              </div>
+            </Section>
   );
 }
 
@@ -217,31 +231,11 @@ export function AdminOverviewDashboard({ data, system, activity }: {
 
   return (
     <div className="min-w-0 space-y-3">
-      <section aria-label="Operations Snapshot" className="min-w-0">
-        <h2 className="mb-2 text-[16px] font-semibold tracking-tight text-slate-950">Operations Snapshot</h2>
-        <div className="grid gap-2 sm:grid-cols-2 min-[56.25rem]:grid-cols-4">
-          <SnapshotLink href="/admin/users" label="Total accounts" value={data.users.total} icon={Users} hint="Current account records" />
-          <SnapshotLink href="/admin/users" label="Online Users" value={<OnlineUsersValue initial={data.onlinePresence} />} icon={Activity}
-            info={(
-              <ActivityDataInfo label="How Online Users are counted">
-                Activity in the last {data.onlinePresence.windowSeconds} seconds on the website, Admin panel, Android, and iOS.
-                Counts each verified account once across devices and each recognized guest session once.
-                A person can have multiple guest sessions.
-              </ActivityDataInfo>
-            )}
-          />
-          <AdminOverviewRangeSensitive fill>
-            <SnapshotLink href="/admin/searches/activity" label="Recorded searches" value={data.journeys.operationalSearches.total} icon={Search} hint="Selected reporting range" />
-          </AdminOverviewRangeSensitive>
-          <AdminOverviewRangeSensitive fill>
-            <SnapshotLink href="/admin/journeys" label="Customer journeys" value={data.journeys.journeys} icon={Route} hint="Eligible consented journeys · selected range" />
-          </AdminOverviewRangeSensitive>
-        </div>
-      </section>
+      <section aria-label="Operations Snapshot" className="min-w-0 space-y-3">
+        <h2 className="text-[16px] font-semibold tracking-tight text-slate-950">Operations Snapshot</h2>
 
-      {/* Independent content-height stacks keep the Overview concise; full provider diagnostics remain on /admin/providers. */}
-      <div className="grid min-w-0 items-start gap-3 lg:grid-cols-2">
-        <div className="flex min-w-0 flex-col gap-3">
+        {/* The two account totals sit beside Attention Required, not above it. */}
+        <div className="grid min-w-0 items-stretch gap-3 lg:grid-cols-2">
           <section aria-label="Attention Required" className="min-w-0 rounded-xl border border-slate-200 p-3 sm:p-4">
             <h2 className="mb-2 text-[15px] font-semibold text-slate-950">Attention Required</h2>
             <div className="grid gap-1.5">
@@ -251,19 +245,47 @@ export function AdminOverviewDashboard({ data, system, activity }: {
             </div>
             <p className="mt-2 text-[11px] leading-4 text-slate-600">Provider health: last 24 hours. Support and deletion queues: current.</p>
           </section>
+          <div aria-label="Account snapshot" className="grid min-w-0 grid-cols-1 grid-rows-2 items-stretch gap-2">
+            <SnapshotLink href="/admin/users" label="Total accounts" value={data.users.total} icon={Users} hint="Current account records" />
+            <SnapshotLink href="/admin/users" label="Online Users" value={<OnlineUsersValue initial={data.onlinePresence} />} icon={Activity}
+              info={(
+                <ActivityDataInfo label="How Online Users are counted">
+                  Activity in the last {data.onlinePresence.windowSeconds} seconds on the website, Admin panel, Android, and iOS.
+                  Counts each verified account once across devices and each recognized guest session once.
+                  A person can have multiple guest sessions.
+                </ActivityDataInfo>
+              )}
+            />
+          </div>
+        </div>
 
-          <AdminOverviewRangeSensitive>
-            <Section title="Search Performance" href="/admin/searches/activity" description="All recorded search operations · selected range.">
+        {/* Customer activity and actual outbound provider handoffs share the snapshot row. */}
+        <div className="grid min-w-0 items-stretch gap-3 lg:grid-cols-2">
+          <AdminOverviewRangeSensitive fill>
+            <Section title="Visitor Activity" href="/admin/journeys">
               <div className="grid grid-cols-2 gap-1.5">
-                <MiniMetric label="Total" value={data.journeys.operationalSearches.total} />
-                <MiniMetric label="Successful" value={data.journeys.operationalSearches.success} tone="good" />
-                <MiniMetric label="Failed" value={data.journeys.operationalSearches.failed} tone={data.journeys.operationalSearches.failed ? "bad" : "neutral"} />
-                <MiniMetric label="Partial" value={data.journeys.operationalSearches.partial} />
+                <MiniMetric label="Search events" value={stages.SEARCH_COMPLETED.events} />
+                <MiniMetric label="Results views" value={stages.RESULTS_VIEWED.events} />
+                <MiniMetric label="Offer selections" value={stages.OFFER_SELECTED.events} />
+                <MiniMetric label="Provider handoffs" value={stages.PROVIDER_HANDOFF_STARTED.events} />
               </div>
-              <p className="mt-2 text-[11px] text-slate-600">Includes unattributed searches; success does not guarantee offers.</p>
             </Section>
           </AdminOverviewRangeSensitive>
+          <AdminOverviewRangeSensitive fill>
+            <Section title="Provider Handoffs" href="/admin/redirects">
+              <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
+                <MiniMetric label="Recorded" value={data.journeys.operationalHandoffs.total} />
+                <MiniMetric label="In consented journeys" value={data.journeys.operationalHandoffs.inConsentedJourneys} />
+                <MiniMetric label="Without visitor identity" value={data.journeys.operationalHandoffs.withoutVisitorIdentity} />
+                <MiniMetric label="Flights" value={data.journeys.operationalHandoffs.flights} />
+                <MiniMetric label="Hotels" value={data.journeys.operationalHandoffs.hotels} />
+                <MiniMetric label="Cars" value={data.journeys.operationalHandoffs.cars} />
+              </div>
+            </Section>
+          </AdminOverviewRangeSensitive>
+        </div>
 
+        <div className="grid min-w-0 items-start gap-3 lg:grid-cols-2">
           <Section title="Support Workload" href="/admin/support">
             <div className="grid grid-cols-3 gap-1.5">
               <MiniMetric label="Open" value={data.support.open} />
@@ -271,32 +293,6 @@ export function AdminOverviewDashboard({ data, system, activity }: {
               <MiniMetric label="Waiting on user" value={data.support.waitingOnUser} />
             </div>
           </Section>
-        </div>
-
-        <div className="flex min-w-0 flex-col gap-3">
-          <AdminOverviewRangeSensitive>
-            <Section title="Visitor Activity" href="/admin/journeys" description="Recorded consented events · selected range.">
-              <div className="grid grid-cols-2 gap-1.5">
-                <MiniMetric label="Search events" value={stages.SEARCH_COMPLETED.events} />
-                <MiniMetric label="Results views" value={stages.RESULTS_VIEWED.events} />
-                <MiniMetric label="Offer selections" value={stages.OFFER_SELECTED.events} />
-                <MiniMetric label="Provider handoffs" value={stages.PROVIDER_HANDOFF_STARTED.events} />
-              </div>
-              <p className="mt-2 text-[11px] text-slate-600">Events can repeat. Handoffs are not confirmed bookings.</p>
-            </Section>
-          </AdminOverviewRangeSensitive>
-
-          <AdminOverviewRangeSensitive>
-            <Section title="Provider Handoffs" href="/admin/redirects" description="Recorded outbound redirects · selected range.">
-              <div className="grid grid-cols-3 gap-1.5">
-                <MiniMetric label="Recorded" value={data.journeys.operationalHandoffs.total} />
-                <MiniMetric label="In consented journeys" value={data.journeys.operationalHandoffs.inConsentedJourneys} />
-                <MiniMetric label="Unattributed" value={data.journeys.operationalHandoffs.withoutVisitorIdentity} />
-              </div>
-              <p className="mt-2 text-[11px] text-slate-600">Redirects are not bookings. Missing attribution does not prove declined consent.</p>
-            </Section>
-          </AdminOverviewRangeSensitive>
-
           <Section title="Deletion Workload" href="/admin/account-deletions">
             <div className="grid grid-cols-3 gap-1.5">
               <MiniMetric label="Pending" value={data.deletions.pending} />
@@ -305,7 +301,7 @@ export function AdminOverviewDashboard({ data, system, activity }: {
             </div>
           </Section>
         </div>
-      </div>
+      </section>
 
       <AdminOverviewSecondary system={system} activity={activity} />
     </div>

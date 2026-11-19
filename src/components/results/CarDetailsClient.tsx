@@ -49,10 +49,11 @@ import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { getDealsGuidedConfirmationActionId } from "@/lib/deals/dealsConfirmationIds";
 import { sandboxBookingUrl } from "@/services/travel/kayakSandboxPublic";
+import { recordCarHandoffClick } from "@/lib/cars/carHandoffTracking";
 
 export type CarDetailsPrimaryAction =
   | { kind: "standalone-disabled-provider"; label: string }
-  | { kind: "sandbox-handoff"; label: string; href: string }
+  | { kind: "sandbox-handoff"; label: string; href: string; onClick?: () => void }
   | {
       kind: "guided-car";
       enabled: boolean;
@@ -178,6 +179,7 @@ export function CarDetailsExperience({
   primaryAction,
   presentation,
   primaryOffer: suppliedPrimaryOffer,
+  requestId,
   modelHeadingLevel = 1,
   sectionHeadingLevel = 2,
   itemHeadingLevel = 3,
@@ -190,6 +192,7 @@ export function CarDetailsExperience({
   primaryAction: CarDetailsPrimaryAction;
   presentation: "standalone-content" | "guided-content";
   primaryOffer?: CarOffer | null;
+  requestId?: string | null;
   modelHeadingLevel?: HeadingLevel;
   sectionHeadingLevel?: HeadingLevel;
   itemHeadingLevel?: HeadingLevel;
@@ -257,6 +260,7 @@ export function CarDetailsExperience({
           kind: "sandbox-handoff",
           label: copy("carDetails.continueDeal"),
           href: selectedSandboxHref,
+          onClick: () => recordCarHandoffClick(car.id, primaryOffer!.id, "car-details", requestId),
         }
       : {
           kind: "standalone-disabled-provider",
@@ -273,6 +277,7 @@ export function CarDetailsExperience({
           kind: "sandbox-handoff",
           label: copy("carDetails.continueDeal"),
           href,
+          onClick: () => recordCarHandoffClick(car.id, offer.id, "car-details", requestId),
         }
       : {
           kind: "standalone-disabled-provider",
@@ -993,10 +998,12 @@ export function CarDetailsClient({
   car,
   search,
   resultsHref,
+  requestId,
 }: {
   car: NormalizedCarResult;
   search: LocationBoundCarSearchParams;
   resultsHref: string;
+  requestId?: string | null;
 }) {
   const { t } = useLocale();
   const { start: startRouteProgress } = useRouteProgress();
@@ -1034,6 +1041,7 @@ export function CarDetailsClient({
         kind: "sandbox-handoff",
         label: copy("carDetails.continueDeal"),
         href: sandboxHref,
+        onClick: () => recordCarHandoffClick(car.id, getPrimaryCarOffer(car)!.id, "car-details", requestId),
       }
     : {
         kind: "standalone-disabled-provider",
@@ -1049,6 +1057,7 @@ export function CarDetailsClient({
               car={car}
               search={search}
               presentation="standalone-content"
+              requestId={requestId}
               primaryAction={primaryAction}
               mobileBackControl={
                 <Link
@@ -1359,7 +1368,7 @@ function CarPriceComparisonSection({
                       target="_blank"
                       rel="noopener noreferrer"
                       referrerPolicy="no-referrer"
-                      onClick={() => onSelectOffer(offer.id)}
+                      onClick={() => { onSelectOffer(offer.id); offerAction.onClick?.(); }}
                       className={actionClassName}
                       data-car-details-desktop-deal-cta
                     >
@@ -1656,6 +1665,7 @@ function BookingSummary({
       {action.kind === "sandbox-handoff" ? (
         <a
           href={action.href}
+          onClick={action.onClick}
           target="_blank"
           rel="noopener noreferrer"
           referrerPolicy="no-referrer"
@@ -1848,6 +1858,7 @@ function MobileBookingDock({
           >
             <a
               href={action.href}
+              onClick={action.onClick}
               target="_blank"
               rel="noopener noreferrer"
               referrerPolicy="no-referrer"

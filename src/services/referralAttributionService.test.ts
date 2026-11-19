@@ -62,6 +62,26 @@ test("attribution summary reports handoffs by provider and safe source path with
   assert.equal(isolationLevel, "RepeatableRead");
 });
 
+test("car and hotel handoffs from the same provider stay separate in referral attribution", async () => {
+  const service = createReferralAttributionService(() => ({
+    $transaction: async fn => fn({
+      redirectLog: {
+        count: async () => 3,
+        groupBy: async () => [
+          { provider: "KAYAK sandbox", type: "HOTEL", sourcePage: "/hotels/details", _count: { _all: 1 } },
+          { provider: "KAYAK sandbox", type: "CAR", sourcePage: "/cars/details", _count: { _all: 2 } },
+        ],
+      },
+    }),
+  }), () => fixedNow);
+  const summary = await service.getSummary(7, "staging");
+  assert.equal(summary.dataAvailable, true);
+  assert.deepEqual(summary.providers, [
+    { provider: "KAYAK sandbox", product: "car", handoffs: 2 },
+    { provider: "KAYAK sandbox", product: "hotel", handoffs: 1 },
+  ]);
+});
+
 test("attribution defaults to unavailable rather than inventing zero-conversion data", async () => {
   const service = createReferralAttributionService(() => null, () => fixedNow);
   const summary = await service.getSummary(30, "staging");

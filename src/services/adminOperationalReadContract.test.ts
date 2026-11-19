@@ -56,3 +56,10 @@ test("handoff source-page scope accepts normalized paths and rejects external UR
     assert.equal(parseAdminHandoffQuery(params, "staging").status, "invalid");
   }
 });
+
+test("Cars handoff filtering accepts CAR and rejects unsupported products", () => {
+  const cars = parseAdminHandoffQuery(new URLSearchParams("product=CAR"), "staging");
+  assert.equal(cars.status, "ok");
+  if (cars.status === "ok") assert.equal(cars.data.scope.product, "CAR");
+  assert.equal(parseAdminHandoffQuery(new URLSearchParams("product=PACKAGE"), "staging").status, "invalid");
+});

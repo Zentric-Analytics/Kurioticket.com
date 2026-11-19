@@ -32,6 +32,11 @@ test("Provider and Product filters reuse the polished accessible monitor select 
   assert.doesNotMatch(source, /router\.push|router\.replace|\/admin\/redirects|\/admin\/searches/);
 });
 
+test("unlinked handoff product select includes Cars", () => {
+  assert.match(source, /type ProductFilter = "" \| "FLIGHT" \| "HOTEL" \| "CAR"/);
+  assert.match(source, /\{ value: "CAR", label: "Cars" \}/);
+});
+
 test("Refresh control preserves selected filters, existing rows, and current cursor while loading", () => {
   assert.match(source, /<RefreshCw size=\{15\}/);
   assert.match(source, /loadState === "loading" \? "Refreshing…" : "Refresh records"/);
