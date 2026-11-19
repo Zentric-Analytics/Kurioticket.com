@@ -14,7 +14,7 @@ import type {
 } from "@/services/adminOperationalReadContract";
 
 type HandoffListResult = AdminOperationalResult<AdminOperationalList<AdminHandoffRead, AdminHandoffScope>>;
-type ProductFilter = "" | "FLIGHT" | "HOTEL";
+type ProductFilter = "" | "FLIGHT" | "HOTEL" | "CAR";
 type LoadState = "idle" | "loading" | "ready" | "error";
 
 type Props = {
@@ -164,6 +164,7 @@ export function ReferralUnlinkedHandoffs({ window, environment, unlinkedCount, p
                   { value: "", label: "All products" },
                   { value: "FLIGHT", label: "Flights" },
                   { value: "HOTEL", label: "Hotels" },
+                  { value: "CAR", label: "Cars" },
                 ]}
                 onValueChange={value => { setProduct(value as ProductFilter); resetPage(); }} />
             </div>
