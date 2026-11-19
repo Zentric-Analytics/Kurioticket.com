@@ -110,7 +110,7 @@ function SearchMonitorTableState({
       <div role="region" aria-label="Search activity table" tabIndex={0} className="admin-responsive-records admin-search-records focus-ring w-full min-w-0 max-w-full">
         <table className="w-full min-w-0 table-fixed border-collapse text-left">
           <colgroup>
-            {[15, 9, 12, 16, 8, 7, 9, 8, 7, 9].map((width, index) => <col key={index} style={{ width: `${width}%` }} />)}
+            {[13, 8, 11, 11, 9, 8, 10, 9, 10, 11].map((width, index) => <col key={index} style={{ width: `${width}%` }} />)}
           </colgroup>
           <caption className="sr-only">Search records in the selected application and filter scope</caption>
           <thead>
