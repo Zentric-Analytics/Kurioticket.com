@@ -2903,6 +2903,80 @@ textarea {
   }
 }
 
+/* Provider Handoffs has ten detail fields. Keep the complete desktop table
+   when there is room, then switch to the existing labeled record-row treatment
+   before a 10-column table would start scrolling or overlap. Scoped here so
+   other admin tables keep their established responsive thresholds. */
+@container (min-width: 801px) and (max-width: 1050px) {
+  .admin-handoff-records table,
+  .admin-handoff-records tbody {
+    display: block;
+    width: 100%;
+    min-width: 0;
+  }
+  .admin-handoff-records colgroup {
+    display: none;
+  }
+  .admin-handoff-records thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  .admin-handoff-records tbody > tr:not([hidden]) {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px 12px;
+    min-width: 0;
+    height: auto;
+    padding: 10px 4px;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  .admin-handoff-records tbody > tr[hidden] {
+    display: none;
+  }
+  .admin-handoff-records tbody > tr > td,
+  .admin-handoff-records tbody > tr > th[scope="row"] {
+    display: block;
+    min-width: 0;
+    width: auto;
+    max-width: 100%;
+    padding: 0;
+    border: 0;
+    overflow-wrap: anywhere;
+    white-space: normal;
+  }
+  .admin-handoff-records tbody > tr > td::before,
+  .admin-handoff-records tbody > tr > th[scope="row"]::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 3px;
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 1.4;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    color: #64748b;
+  }
+}
+
+/* Display ten characters without losing the complete handoff route. Generic
+   responsive-record styles otherwise reset nowrap inside td to normal. */
+.admin-handoff-records td [data-handoff-route-preview] {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* Search Records keeps route/dates on a single compact line, including when
    the generic narrow-panel record layout relaxes other cells to wrap. */
 .admin-search-records td [data-search-route-preview],

@@ -9,6 +9,7 @@ import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
 import { SearchWorkspacePanelFrame } from "@/components/admin/SearchWorkspacePanelFrame";
 import { formatDateTime } from "@/lib/admin-data";
 import { handoffDetailHref } from "@/lib/adminReferralHandoffNavigation";
+import { adminHandoffRoutePreview } from "@/lib/adminHandoffRoutePreview";
 import { handoffNextPageHref, handoffPreviousPageHref } from "@/lib/adminHandoffPagination";
 import { adminOperationalReads } from "@/services/adminOperationalReadService";
 
@@ -77,7 +78,7 @@ export default async function AdminRedirectsPage({ searchParams, embedded = fals
                     formatDateTime(new Date(handoff.createdAt)),
                     <AdminStatusBadge key="product" tone="info">{handoff.product}</AdminStatusBadge>,
                     <span key="provider" className="font-semibold text-slate-950">{handoff.provider}</span>,
-                    handoff.route || "—",
+                    <span key="route-preview" title={handoff.route || undefined} aria-label={handoff.route || "No route recorded"}>{adminHandoffRoutePreview(handoff.route)}</span>,
                     handoff.price ? handoff.currency + " " + handoff.price : "—",
                     handoff.sourcePage || "—",
                     handoff.destinationDomain || "—",
@@ -133,9 +134,9 @@ export default async function AdminRedirectsPage({ searchParams, embedded = fals
           </div>
         ) : (
           <>
-            <div className="mt-3 w-full min-w-0 max-w-full overflow-x-auto" role="region"
+            <div className="admin-responsive-records admin-handoff-records mt-3 w-full min-w-0 max-w-full" role="region"
               aria-label="Provider handoff records" tabIndex={0}>
-              <table className="w-full min-w-[1320px] table-fixed text-[12px] leading-5">
+              <table className="w-full min-w-0 table-fixed text-[12px] leading-5">
                 <caption className="sr-only">
                   Recorded provider handoffs including the recorded time, product,
                   provider, route, price, source, destination, identity, search correlation and record action.
@@ -145,12 +146,12 @@ export default async function AdminRedirectsPage({ searchParams, embedded = fals
                   <col className="w-[7%]" />
                   <col className="w-[10%]" />
                   <col className="w-[14%]" />
-                  <col className="w-[7%]" />
-                  <col className="w-[11%]" />
-                  <col className="w-[12%]" />
+                  <col className="w-[8%]" />
+                  <col className="w-[10%]" />
+                  <col className="w-[10%]" />
                   <col className="w-[13%]" />
                   <col className="w-[9%]" />
-                  <col className="w-[5%]" />
+                  <col className="w-[7%]" />
                 </colgroup>
                 <thead className="border-y border-[#D8E1EC] text-[#475569]">
                   <tr>
@@ -167,12 +168,17 @@ export default async function AdminRedirectsPage({ searchParams, embedded = fals
                       <td data-label="Created" className="py-3 pr-2 tabular-nums">{formatDateTime(new Date(handoff.createdAt))}</td>
                       <td data-label="Product" className="break-words px-2 py-3 font-medium">{handoff.product}</td>
                       <th scope="row" data-label="Provider" className="break-words px-2 py-3 text-left font-medium">{handoff.provider}</th>
-                      <td data-label="Route / property" className="break-words px-2 py-3">{handoff.route || "—"}</td>
+                      <td data-label="Route / property" className="min-w-0 px-2 py-3">
+                        <span data-handoff-route-preview className="block min-w-0 max-w-full overflow-hidden text-ellipsis whitespace-nowrap"
+                          title={handoff.route || undefined} aria-label={handoff.route || "No route recorded"}>
+                          {adminHandoffRoutePreview(handoff.route)}
+                        </span>
+                      </td>
                       <td data-label="Price" className="break-words px-2 py-3 tabular-nums">
                         {handoff.price ? handoff.currency + " " + handoff.price : "—"}
                       </td>
-                      <td data-label="Source" className="break-all px-2 py-3 text-[#475569]">{handoff.sourcePage || "—"}</td>
-                      <td data-label="Destination" className="break-words px-2 py-3 text-[#475569]">{handoff.destinationDomain || "—"}</td>
+                      <td data-label="Source" className="break-all px-1 py-3 text-[#475569]">{handoff.sourcePage || "—"}</td>
+                      <td data-label="Destination" className="break-words px-1 py-3 text-[#475569]">{handoff.destinationDomain || "—"}</td>
                       <td data-label="Identity" className="min-w-0 px-2 py-3">
                         <span className="block font-medium">{handoff.identity.kind}</span>
                         <span className="block break-all text-[11px] text-[#64748B]">
