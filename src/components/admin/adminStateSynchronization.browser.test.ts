@@ -104,24 +104,24 @@ test("Support status refresh resets selection while PATCH errors and exact ticke
   });
 });
 
-test("CMS toolbar renders canonical filter links and keeps accumulated navigation, pagination reset and overview provenance", async () => {
-  await withComponentBrowser(bundle(), mount("content", "ContentDirectoryToolbar", { path: "/admin/content/faqs", query: "q=old&cursor=page-2&from=overview", status: "", searchLabel: "Search FAQs", children: "Existing records" }), async page => {
+test("CMS status tabs navigate using applied filters, while FAQ search waits for Apply", async () => {
+  await withComponentBrowser(bundle(), mount("content", "ContentDirectoryToolbar", { path: "/admin/content/faqs", query: "q=old&cursor=page-2&from=overview", status: "", faqSearchOnly: true, searchLabel: "Search FAQs", children: "Existing records" }), async page => {
     assert.equal(await page.locator('input[name="from"]').inputValue(), "overview");
     const published = page.getByRole("link", { name: "Published", exact: true });
     const href = new URL((await published.getAttribute("href"))!, "http://fixture.local");
     assert.equal(href.searchParams.get("q"), "old");
     assert.equal(href.searchParams.get("cursor"), null);
-    await page.getByRole("searchbox", { name: "Search FAQs", exact: true }).fill("new text");
+    const input = page.getByRole("searchbox", { name: "Search FAQs", exact: true });
+    await input.fill("new text");
+    await input.press("Enter");
+    assert.deepEqual(await page.evaluate(() => (window as unknown as { fixtureNavigation: string[] }).fixtureNavigation), [], "FAQ search must not submit on Enter");
     await published.click();
     const urls = await page.evaluate(() => (window as unknown as { fixtureNavigation: string[] }).fixtureNavigation);
     const next = new URL(urls.at(-1)!, "http://fixture.local");
     assert.equal(next.searchParams.get("status"), "PUBLISHED");
-    assert.equal(next.searchParams.get("q"), "new text");
+    assert.equal(next.searchParams.get("q"), "old", "status tabs use the applied query, not draft text");
     assert.equal(next.searchParams.get("cursor"), null);
     assert.equal(next.searchParams.get("from"), "overview");
-    await page.getByRole("link", { name: "Clear filters", exact: true }).click();
-    const clear = await page.evaluate(() => (window as unknown as { fixtureNavigation: string[] }).fixtureNavigation.at(-1));
-    assert.equal(clear, "/admin/content/faqs?from=overview");
   });
 });
 

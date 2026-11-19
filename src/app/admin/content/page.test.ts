@@ -319,8 +319,8 @@ test("Content lists search the whole CMS dataset with one explicit Apply", () =>
   assert.doesNotMatch(toolbar, /onValueChange=\{next => navigate/);
   assert.match(toolbar, /onValueChange=\{setDraftMarket\}/);
   assert.match(toolbar, /onValueChange=\{setDraftCountry\}/);
-  assert.match(toolbar, /faqSearchOnly\) applyFilters\(\)/);
-  assert.match(toolbar, /flex min-w-0 flex-wrap items-center justify-between/);
+  assert.match(toolbar, /function submitSearch\(event: FormEvent<HTMLFormElement>\)/);
+  assert.match(toolbar, /data-testid="cms-content-filter-row"/);
   assert.doesNotMatch(toolbar, /overflow-x-auto|overflow-x-scroll|2xl:flex-row|Clear filters|clearFilters/);
   assert.match(toolbar, /onClick=\{applyFilters\}/);
   assert.match(toolbar, /const loading = isPending;/);
@@ -335,14 +335,19 @@ test("Content lists search the whole CMS dataset with one explicit Apply", () =>
   assert.match(api, /category: url\.searchParams\.get\("category"\)/);
 });
 
-test("Content filters wrap instead of requiring horizontal scrolling", () => {
+test("Content search and filters appear above publication tabs with a real Apply control", () => {
   const toolbar = readFileSync("src/components/admin/ContentDirectoryToolbar.tsx", "utf8");
-  assert.match(toolbar, /aria-label="Content publication status" className="flex min-w-0 max-w-full flex-wrap/);
-  assert.match(toolbar, /flex min-w-0 max-w-full flex-1 flex-wrap/);
-  assert.match(toolbar, /min-w-\[170px\] max-w-\[280px\]/);
-  assert.match(toolbar, /\{!faqSearchOnly \? \(/);
-  assert.doesNotMatch(toolbar, /Clear filters|clearFilters|overflow-x-auto|overflow-x-scroll|whitespace-nowrap border-b border/);
   const faq = readFileSync("src/app/admin/content/faqs/page.tsx", "utf8");
+  assert.match(toolbar, /data-testid="cms-content-filter-row"/);
+  assert.match(toolbar, /lg:grid-cols-\[minmax\(0,2fr\)_minmax\(0,1fr\)_120px\]/);
+  assert.match(toolbar, /lg:grid-cols-\[minmax\(0,1fr\)_120px\]/);
+  assert.match(toolbar, /data-testid="cms-content-status-row"/);
+  assert.ok(toolbar.indexOf('data-testid="cms-content-filter-row"') < toolbar.indexOf('data-testid="cms-content-status-row"'));
+  assert.match(toolbar, /onClick=\{applyFilters\}/);
+  assert.match(toolbar, /if \(isPending\) return/);
+  assert.match(toolbar, /function submitSearch\(event: FormEvent<HTMLFormElement>\) \{\s*event.preventDefault\(\)/);
+  assert.match(toolbar, /aria-label="Content publication status"/);
+  assert.doesNotMatch(toolbar, /Clear filters|clearFilters|overflow-x-auto|overflow-x-scroll/);
   assert.match(faq, /faqSearchOnly/);
   assert.doesNotMatch(faq, /categories=|category=|listAdminCmsFaqCategories/);
 });
