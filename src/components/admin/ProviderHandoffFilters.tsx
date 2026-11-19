@@ -75,7 +75,7 @@ export function ProviderHandoffFilters({
           initialFrom={scope.from || ""}
           initialTo={scope.to || ""}
           now={new Date().toISOString()}
-          legacyOptions={range === "today" ? [{ value: "today", label: "Today (legacy)" }] : []}
+          legacyOptions={range === "24h" ? [{ value: "24h", label: "Last 24 hrs (legacy)" }] : []}
         />
         <div className="min-w-0">
           <SearchMonitorSelect label="Provider" name="provider"
