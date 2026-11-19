@@ -141,55 +141,55 @@ export function AdminSupportToolbar({ query, status, priority, category, pageHre
         </div>
         <div data-testid="support-status-filter-row" className="flex min-w-0 flex-wrap items-center justify-between gap-x-4 gap-y-2 2xl:flex-nowrap">
           <nav aria-label="Support ticket status" className="flex min-w-0 max-w-full flex-wrap items-center gap-x-4 gap-y-1 2xl:flex-nowrap">
-          {supportStatusTabs.map(item => {
-            const active = status === item.value;
-            return (
-              <Link
-                key={item.value}
-                href={href({ status: item.value })}
-                aria-current={active ? "page" : undefined}
-                onClick={event => navigateLink(event, { status: item.value })}
-                className={"focus-ring inline-flex h-10 shrink-0 items-center whitespace-nowrap border-b-2 px-1 text-[13px] " +
-                  (active
-                    ? "border-blue font-medium text-foreground"
-                    : "border-transparent font-normal text-muted hover:text-foreground")}
-              >
-                {item.label}
-              </Link>
-            );
-          })}
+            {supportStatusTabs.map(item => {
+              const active = status === item.value;
+              return (
+                <Link
+                  key={item.value}
+                  href={href({ status: item.value })}
+                  aria-current={active ? "page" : undefined}
+                  onClick={event => navigateLink(event, { status: item.value })}
+                  className={"focus-ring inline-flex h-10 shrink-0 items-center whitespace-nowrap border-b-2 px-1 text-[13px] " +
+                    (active
+                      ? "border-blue font-medium text-foreground"
+                      : "border-transparent font-normal text-muted hover:text-foreground")}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
         </nav>
           <div data-testid="support-filter-controls" className="flex w-full min-w-0 flex-wrap items-center justify-start gap-2 sm:w-auto sm:flex-nowrap 2xl:shrink-0 2xl:justify-end">
-          <div className="w-full min-w-0 sm:w-[148px] sm:shrink-0">
-            <AdminDirectorySelect
-              key={"priority-" + priority}
-              name="priority"
-              label="Ticket priority"
-              value={draftPriority}
-              options={supportPriorityOptions}
-              plain
-              align="end"
-              onValueChange={setDraftPriority}
-            />
-          </div>
-          <div className="w-full min-w-0 sm:w-[165px] sm:shrink-0">
-            <AdminDirectorySelect
-              key={"category-" + category}
-              name="category"
-              label="Ticket category"
-              value={draftCategory}
-              options={supportCategoryChoices(draftCategory)}
-              plain
-              align="end"
-              onValueChange={setDraftCategory}
-            />
-          </div>
-          <button
-            type="submit" disabled={isPending}
-            className="focus-ring inline-flex h-10 shrink-0 items-center justify-center whitespace-nowrap rounded-lg bg-[#004BB8] px-4 text-[13px] font-medium text-white hover:bg-[#003D97] disabled:opacity-60"
-          >
-            Apply filters
-          </button>
+            <div className="w-full min-w-0 sm:w-[148px] sm:shrink-0">
+              <AdminDirectorySelect
+                key={"priority-" + priority}
+                name="priority"
+                label="Ticket priority"
+                value={draftPriority}
+                options={supportPriorityOptions}
+                plain
+                align="end"
+                onValueChange={setDraftPriority}
+              />
+            </div>
+            <div className="w-full min-w-0 sm:w-[165px] sm:shrink-0">
+              <AdminDirectorySelect
+                key={"category-" + category}
+                name="category"
+                label="Ticket category"
+                value={draftCategory}
+                options={supportCategoryChoices(draftCategory)}
+                plain
+                align="end"
+                onValueChange={setDraftCategory}
+              />
+            </div>
+            <button
+              type="submit" disabled={isPending}
+              className="focus-ring inline-flex h-10 shrink-0 items-center justify-center whitespace-nowrap rounded-lg bg-[#004BB8] px-4 text-[13px] font-medium text-white hover:bg-[#003D97] disabled:opacity-60"
+            >
+              Apply filters
+            </button>
           </div>
         </div>
       </form>
