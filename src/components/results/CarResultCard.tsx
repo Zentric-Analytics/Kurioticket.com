@@ -89,6 +89,7 @@ export function CarResultCard({
   mobileBadge,
   detailsHref,
   search,
+  requestId,
   onSelect,
   selectedDealOfferId,
   onDealOfferSelected,
@@ -105,6 +106,7 @@ export function CarResultCard({
   mobileBadge?: CarResultBadge | null;
   detailsHref: string | null;
   search: CarSearchParams;
+  requestId?: string | null;
   onSelect?: (car: NormalizedCarResult) => void;
   selectedDealOfferId?: string;
   onDealOfferSelected?: (carId: string, offerId: string) => void;
@@ -470,6 +472,7 @@ export function CarResultCard({
                 <CarDealPicker
                   car={car}
                   search={search}
+                  requestId={requestId}
                   selectedOfferId={offer.id}
                   onSelectOffer={selectDealOffer}
                   compact
@@ -796,7 +799,7 @@ export function CarResultCard({
                 {providerBookingHref ? (
                   <a
                     href={providerBookingHref}
-                    onClick={() => recordCarHandoffClick(car.id, offer.id, "car-results")}
+                    onClick={() => recordCarHandoffClick(car.id, offer.id, "car-results", requestId)}
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label={`View deal from ${offer.bookingProviderName || offer.rentalCompanyName}`}
