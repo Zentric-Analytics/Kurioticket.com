@@ -1,6 +1,8 @@
+import { adminUtcTodayStart } from "./adminReportingRanges";
+
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-export type OverviewRange = "24h" | "7d" | "30d" | "custom";
+export type OverviewRange = "today" | "24h" | "7d" | "30d" | "custom";
 export type OverviewCustomDates = { fromDate: string; toDate: string };
 export type OverviewPeriod =
   | { range: Exclude<OverviewRange, "custom"> }
@@ -31,13 +33,13 @@ export function resolveOverviewRange(
     }
   }
 
-  const range = raw.range === "7d" || raw.range === "30d" ? raw.range : "24h";
+  const range = raw.range === "24h" || raw.range === "7d" || raw.range === "30d" ? raw.range : "today";
   const duration = range === "30d" ? 30 * DAY_MS : range === "7d" ? 7 * DAY_MS : DAY_MS;
-  return { period: { range }, from: new Date(now.getTime() - duration), to: now, today, invalidCustom: raw.range === "custom" };
+  return { period: { range }, from: range === "today" ? adminUtcTodayStart(now) : new Date(now.getTime() - duration), to: now, today, invalidCustom: raw.range === "custom" };
 }
 
 export function overviewPeriodHref(period: OverviewPeriod) {
-  if (period.range === "24h") return "/admin";
+  if (period.range === "today") return "/admin";
   const params = new URLSearchParams({ range: period.range });
   if (period.range === "custom") {
     params.set("from", period.fromDate);
