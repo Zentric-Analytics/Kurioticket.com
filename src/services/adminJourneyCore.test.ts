@@ -37,7 +37,7 @@ function coverage(overrides: Record<string, bigint> = {}) {
     total: BigInt(0), withVisitorIdentity: BigInt(0), withoutVisitorIdentity: BigInt(0),
     inConsentedJourneys: BigInt(0), outsideConsentedJourneys: BigInt(0),
     exactSearchLinks: BigInt(0), eligibleWithoutExactSearch: BigInt(0),
-    withRequestId: BigInt(0), ...overrides,
+    withRequestId: BigInt(0), flights: BigInt(0), hotels: BigInt(0), ...overrides,
   };
 }
 
@@ -155,7 +155,7 @@ test("summary keeps distinct identities, stage observations, search outcomes and
   const f = fixture([[summary()], [{ total: BigInt(20), success: BigInt(15), partial: BigInt(3), failed: BigInt(2), partialWithResults: BigInt(1), partialWithoutResults: BigInt(2) }],
     [coverage({ total: BigInt(9), withVisitorIdentity: BigInt(5), withoutVisitorIdentity: BigInt(4),
       inConsentedJourneys: BigInt(5), outsideConsentedJourneys: BigInt(4),
-      exactSearchLinks: BigInt(5), withRequestId: BigInt(5) })]]);
+      exactSearchLinks: BigInt(5), withRequestId: BigInt(5), flights: BigInt(6), hotels: BigInt(3) })]]);
   const result = await f.service.summary({ product: "FLIGHT" });
   assert.equal(result.status, "ok");
   if (result.status !== "ok") return;
@@ -169,7 +169,7 @@ test("summary keeps distinct identities, stage observations, search outcomes and
     scope: "environment_and_date_only", total: 9,
     withVisitorIdentity: 5, withoutVisitorIdentity: 4,
     inConsentedJourneys: 5, outsideConsentedJourneys: 4,
-    exactSearchLinks: 5, eligibleWithoutExactSearch: 0, withRequestId: 5,
+    exactSearchLinks: 5, eligibleWithoutExactSearch: 0, withRequestId: 5, flights: 6, hotels: 3,
   });
   assert.deepEqual(result.data.operationalSearches, { scope: "environment_and_date_only", total: 20, success: 15, partial: 3, failed: 2, partialWithResults: 1, partialWithoutResults: 2 });
   assert.doesNotThrow(() => JSON.stringify(result));
@@ -195,6 +195,9 @@ test("user-controlled provider text stays a SQL parameter across list, detail an
   // Operational provider redirect coverage must not be narrowed by a journey-cohort filter.
   assert.equal(operationalHandoffQuery.values.includes(provider), false);
   assert.equal(operationalHandoffQuery.sql.includes(provider), false);
+  assert.match(operationalHandoffQuery.sql, /r\."type"::text = 'FLIGHT'/);
+  assert.match(operationalHandoffQuery.sql, /r\."type"::text = 'HOTEL'/);
+  assert.match(operationalHandoffQuery.sql, /r\."metadata"->>'environment'/);
 });
 
 test("handoff coverage fails closed on missing or irreconcilable aggregates", async () => {
@@ -206,6 +209,8 @@ test("handoff coverage fails closed on missing or irreconcilable aggregates", as
       inConsentedJourneys: BigInt(1), exactSearchLinks: BigInt(2) }),
     coverage({ total: BigInt(1), withoutVisitorIdentity: BigInt(1),
       inConsentedJourneys: BigInt(1), exactSearchLinks: BigInt(1) }),
+    coverage({ total: BigInt(2), withVisitorIdentity: BigInt(2),
+      outsideConsentedJourneys: BigInt(2), flights: BigInt(2), hotels: BigInt(1) }),
   ];
   for (const bad of cases) {
     const f = fixture([[summary()], [{ total: BigInt(0), success: BigInt(0), partial: BigInt(0), failed: BigInt(0) }], [bad]]);
