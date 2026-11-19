@@ -13,7 +13,7 @@ const router = { push() {}, replace() {}, refresh() {}, back() {}, forward() {},
 
 test("triage distinguishes degraded operations from missing evidence without inventing overall health", () => {
   const { issues, gaps } = summarizePlatformHealthAttention(platformFixture(), "ALL");
-  assert.deepEqual(issues, []);
+  assert.deepEqual(issues.map(issue => issue.key), ["scheduled-jobs"], "fixture contains one recorded failed job");
   assert.ok(gaps.some(gap => gap.key === "installed-apps" && gap.state === "UNKNOWN"));
   assert.ok(gaps.some(gap => gap.key === "providers-unavailable"));
   assert.ok(!gaps.some(gap => gap.key === "activity-unavailable"));
@@ -56,7 +56,9 @@ test("health summary is accessible, has investigation links, and preserves cauti
   assert.match(html, /Unknown or unavailable/);
   assert.match(html, /Not an overall platform health score/);
   assert.match(html, /\/admin\/providers/);
-  assert.match(html, /Installed iOS and Android apps/);
+  // The compact summary shows the first three gaps; verify remaining evidence is retained.
+  assert.ok(summarizePlatformHealthAttention(platformFixture(), "ALL").gaps.some(gap => gap.key === "installed-apps"));
+  assert.match(html, /1 more signal/);
   assert.doesNotMatch(html, /Overall healthy|100% uptime|Crash-free/);
   assert.doesNotMatch(html, /href="#/, "Do not navigate to a duplicate panel on the same page");
 });
