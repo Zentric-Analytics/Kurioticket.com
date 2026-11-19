@@ -12,7 +12,7 @@ export const metadata = { title: "Admin Car Operations" };
 
 export default async function AdminCarsPage() {
   const [operations, integrations] = await Promise.all([
-    getCarOperationsSnapshot(),
+    getCarOperationsSnapshot(24, undefined, "today"),
     Promise.resolve(getProviderIntegrationStatuses()),
   ]);
 
@@ -27,7 +27,7 @@ export default async function AdminCarsPage() {
         <div className="min-w-0 space-y-0">
         {operations ? (
           <OperationsMetricStrip>
-            <OperationsMetric label="Searches" value={operations.searches.total} hint={operations.windowHours + "-hour window"} tone="info" />
+            <OperationsMetric label="Searches" value={operations.searches.total} hint="Today (UTC)" tone="info" />
             <OperationsMetric label="Successful" value={operations.searches.successful} hint="Recorded successful car searches" tone="good" />
             <OperationsMetric label="Partial / failed" value={operations.searches.partial + operations.searches.failed} hint={operations.searches.partial + " partial · " + operations.searches.failed + " failed"} tone={operations.searches.partial + operations.searches.failed > 0 ? "warn" : "neutral"} />
             <OperationsMetric label="Zero results" value={operations.searches.successfulZeroResults} hint="Successful searches returning no car offers" tone={operations.searches.successfulZeroResults > 0 ? "warn" : "neutral"} />
