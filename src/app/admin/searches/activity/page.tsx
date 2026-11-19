@@ -9,7 +9,7 @@ import { getProviderIntegrationStatuses } from "@/services/travel/providerIntegr
 import { getPublicEnvironment } from "@/lib/stagingSafety";
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { SearchMonitorSelect } from "@/components/admin/SearchMonitorSelect";
-import { ADMIN_REPORTING_RANGE_OPTIONS } from "@/lib/adminReportingRanges";
+import { AdminOperationalDateRangeFields } from "@/components/admin/AdminOperationalDateRangeFields";
 import { SearchMonitorTable } from "@/components/admin/SearchMonitorTable";
 
 import { adminOperationalReads } from "@/services/adminOperationalReadService";
@@ -68,22 +68,16 @@ export default async function AdminSearchActivityPage({ searchParams }: { search
               {one(raw.product) ? <input type="hidden" name="product" value={one(raw.product)} /> : null}
               {one(raw.userId) ? <input type="hidden" name="userId" value={one(raw.userId)} /> : null}
               {one(raw.visitorId) ? <input type="hidden" name="visitorId" value={one(raw.visitorId)} /> : null}
-              {range === "custom" ? (
-                <>
-                  {one(raw.from) ? <input type="hidden" name="from" value={one(raw.from)} /> : null}
-                  {one(raw.to) ? <input type="hidden" name="to" value={one(raw.to)} /> : null}
-                </>
-              ) : null}
 
               <div data-testid="search-records-filter-row" className="grid min-w-0 grid-cols-1 items-center gap-2 py-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-[repeat(5,minmax(0,1fr))_120px] lg:gap-2">
-                <div data-testid="search-records-date-range" className="min-w-0">
-                  <SearchMonitorSelect label="Date range" name="range" value={range}
-                    appearance="fare"
-                    options={[
-                      ...ADMIN_REPORTING_RANGE_OPTIONS,
-                      ...(range === "today" ? [{ value: "today", label: "Today (legacy)" }] : []),
-                    ]} truncateLabel />
-                </div>
+                <AdminOperationalDateRangeFields
+                  testId="search-records-date-range"
+                  initialRange={range}
+                  initialFrom={one(raw.from)}
+                  initialTo={one(raw.to)}
+                  now={new Date().toISOString()}
+                  legacyOptions={range === "today" ? [{ value: "today", label: "Today (legacy)" }] : []}
+                />
                 <div className="min-w-0">
                   <SearchMonitorSelect label="Outcome" appearance="fare" name="status"
                     value={one(raw.status)}
