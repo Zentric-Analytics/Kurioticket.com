@@ -36,7 +36,7 @@ export function PlatformHealthFilters({ hours, period, application }: {
         <span className="text-[12px] font-medium text-[#475569]">Activity window</span>
         <AdminDirectorySelect
           label="Activity window"
-          name="period"
+          name="window"
           value={period === "today" ? "today" : String(hours)}
           options={[
             { value: "today", label: "Today" },
