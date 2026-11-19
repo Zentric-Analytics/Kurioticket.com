@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import type { Prisma } from "@/generated/prisma/client";
 import { getOptionalPrisma, isDatabaseConfigured } from "@/lib/prisma";
 import { onlinePresenceWindowSeconds, type OnlinePresenceSnapshot } from "@/lib/onlinePresence";
-import { hasConsistentWebsitePresenceOrigin, isWebsiteOnlinePresenceEnabled, presenceSigningSecret } from "@/lib/onlinePresenceCredential";
+import { hasConsistentWebsitePresenceOrigin, presenceSigningSecret } from "@/lib/onlinePresenceCredential";
 import type { OnlinePresenceHeartbeat } from "@/lib/onlinePresenceRoute";
 import type { PublicEnvironment } from "@/lib/stagingSafety";
 
@@ -81,7 +81,7 @@ export async function getOnlinePresenceSnapshot(
 ): Promise<OnlinePresenceSnapshot> {
   const window = { windowSeconds: onlinePresenceWindowSeconds, observedAt: now.toISOString() };
   const unavailable: OnlinePresenceSnapshot = { status: "unavailable", ...window };
-  if (!isDatabaseConfigured() || !presenceSigningSecret() || !isWebsiteOnlinePresenceEnabled()) {
+  if (!isDatabaseConfigured() || !presenceSigningSecret()) {
     return { status: "not_configured", ...window };
   }
   if (!hasConsistentWebsitePresenceOrigin(process.env.NEXT_PUBLIC_APP_URL, process.env.NEXTAUTH_URL, browserReferrer)
